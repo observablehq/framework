@@ -1,18 +1,31 @@
 {
   "name": "@observablehq/cli",
   "type": "module",
-  "bin": {
-    "preview": "bin/preview.js"
-  },
+  "private": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/observablehq/cli.git"
   },
   "files": [
-    "bin/**/*.js",
     "src/**/*.js"
   ],
+  "scripts": {
+    "dev": "tsx watch ./src/preview.ts",
+    "test": "yarn test:lint && yarn test:prettier",
+    "test:lint": "eslint src",
+    "test:prettier": "prettier --check src"
+  },
   "dependencies": {
     "markdown-it": "^13.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.7.1",
+    "@typescript-eslint/eslint-plugin": "^6.7.3",
+    "@typescript-eslint/parser": "^6.7.3",
+    "eslint": "^8.50.0",
+    "eslint-config-prettier": "^9.0.0",
+    "prettier": "^3.0.3",
+    "tsx": "^3.13.0",
+    "typescript": "^5.2.2"
   }
 }
