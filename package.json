@@ -1,0 +1,18 @@
+{
+  "name": "@observablehq/cli",
+  "type": "module",
+  "bin": {
+    "preview": "bin/preview.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/observablehq/cli.git"
+  },
+  "files": [
+    "bin/**/*.js",
+    "src/**/*.js"
+  ],
+  "dependencies": {
+    "markdown-it": "^13.0.2"
+  }
+}
