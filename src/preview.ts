@@ -14,6 +14,7 @@ const port = process.env.PORT ? +process.env.PORT : 3000;
 
 // TODO
 // - header and footer
+// - syntax highlighting for code blocks
 // - serve different notebooks (routing)
 // - 'o' in the terminal opens the browser
 // - websocket keepalive via ping
@@ -24,8 +25,10 @@ const server = createServer(async (req, res) => {
   if (req.url === "/") {
     const source = await readFile("./docs/index.md", "utf-8");
     res.statusCode = 200;
-    res.setHeader("Content-Type", "text/html");
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.write(`<!DOCTYPE html>
+<meta charset="utf-8">
+<link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
 <script type="module">
 
 import {open} from "/_observablehq/client.js";
@@ -39,7 +42,7 @@ open({hash: ${JSON.stringify(computeHash(source))}});
     send(req, req.url.slice("/_observablehq".length), {root: "./public"}).pipe(res);
   } else {
     res.statusCode = 404;
-    res.setHeader("Content-Type", "text/plain");
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.end("Not Found");
   }
 });
