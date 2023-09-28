@@ -17,6 +17,7 @@
     "test:prettier": "prettier --check src"
   },
   "dependencies": {
+    "highlight.js": "^11.8.0",
     "markdown-it": "^13.0.2",
     "send": "^0.18.0",
     "ws": "^8.14.2"
