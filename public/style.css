@@ -31,7 +31,8 @@ html {
 }
 
 body {
-  margin: 2em auto;
+  margin: auto;
+  padding: 2em 1em;
   max-width: 1080px;
 }
 
