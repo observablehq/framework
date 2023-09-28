@@ -2,13 +2,12 @@ import type {FSWatcher} from "fs";
 import {watch} from "fs";
 import {readFile} from "fs/promises";
 import {createServer} from "http";
-import MarkdownIt from "markdown-it";
 import send from "send";
 import type {WebSocket} from "ws";
 import {WebSocketServer} from "ws";
 import {computeHash} from "./hash.js";
+import {render} from "./render.js";
 
-const md = MarkdownIt();
 const hostname = process.env.HOSTNAME ?? "127.0.0.1";
 const port = process.env.PORT ? +process.env.PORT : 3000;
 
@@ -23,21 +22,9 @@ const port = process.env.PORT ? +process.env.PORT : 3000;
 
 const server = createServer(async (req, res) => {
   if (req.url === "/") {
-    const source = await readFile("./docs/index.md", "utf-8");
     res.statusCode = 200;
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.write(`<!DOCTYPE html>
-<meta charset="utf-8">
-<link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
-<script type="module">
-
-import {open} from "/_observablehq/client.js";
-
-open({hash: ${JSON.stringify(computeHash(source))}});
-
-</script>
-  `);
-    res.end(md.render(source));
+    res.end(await render("./docs/index.md"));
   } else if (req.url?.startsWith("/_observablehq/")) {
     send(req, req.url.slice("/_observablehq".length), {root: "./public"}).pipe(res);
   } else {

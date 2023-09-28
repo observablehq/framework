@@ -21,3 +21,8 @@ jobs:
           echo ::add-matcher::.github/eslint.json
           yarn run eslint src --format=compact
       - run: yarn test:prettier
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: test-output-changes
+          path: test/output/*-changed.*
