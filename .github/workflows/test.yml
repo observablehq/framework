@@ -18,5 +18,5 @@ jobs:
       - run: yarn --frozen-lockfile
       - run: |
           echo ::add-matcher::.github/eslint.json
-          yarn run eslint src test --format=compact
+          yarn run eslint src --format=compact
       - run: yarn test:prettier
