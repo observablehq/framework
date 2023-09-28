@@ -1,4 +1,3 @@
-import {createHash} from "crypto";
 import type {FSWatcher} from "fs";
 import {watch} from "fs";
 import {readFile} from "fs/promises";
@@ -7,6 +6,7 @@ import MarkdownIt from "markdown-it";
 import send from "send";
 import type {WebSocket} from "ws";
 import {WebSocketServer} from "ws";
+import {computeHash} from "./hash.js";
 
 const md = MarkdownIt();
 const hostname = process.env.HOSTNAME ?? "127.0.0.1";
@@ -56,10 +56,6 @@ socketServer.on("connection", (socket, req) => {
     socket.close();
   }
 });
-
-function computeHash(source: string): string {
-  return createHash("sha256").update(source).digest("hex");
-}
 
 function handleWatch(socket: WebSocket) {
   let watcher: FSWatcher | null = null;

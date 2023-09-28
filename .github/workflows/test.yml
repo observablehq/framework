@@ -16,6 +16,7 @@ jobs:
           node-version: 18
           cache: 'yarn'
       - run: yarn --frozen-lockfile
+      - run: yarn test:mocha
       - run: |
           echo ::add-matcher::.github/eslint.json
           yarn run eslint src --format=compact
