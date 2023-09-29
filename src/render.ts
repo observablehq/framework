@@ -1,23 +1,10 @@
 import {readFile} from "fs/promises";
-import MarkdownIt from "markdown-it";
 import {computeHash} from "./hash.js";
-import hljs from "highlight.js";
-
-const md = MarkdownIt({
-  html: true,
-  highlight(str, language) {
-    if (language && hljs.getLanguage(language)) {
-      try {
-        return hljs.highlight(str, {language}).value;
-      } catch (error) {
-        console.error(error);
-      }
-    }
-  }
-});
+import {parseMarkdown} from "./markdown.js";
 
 export async function render(path: string): Promise<string> {
   const source = await readFile(path, "utf-8");
+  const parseResult = parseMarkdown(source);
   return `<!DOCTYPE html>
 <meta charset="utf-8">
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
@@ -27,6 +14,8 @@ import {Runtime, Inspector} from "https://cdn.jsdelivr.net/npm/@observablehq/run
 import {open} from "/_observablehq/client.js";
 
 open({hash: ${JSON.stringify(computeHash(source))}});
+
+const codeBlocks = ${JSON.stringify(parseResult.codeBlocks)};
 
 const runtime = new Runtime();
 const main = runtime.module();
@@ -42,5 +31,5 @@ main
   }));
 
 </script>
-${md.render(source)}`;
+${parseResult.html}`;
 }

@@ -23,6 +23,7 @@
     "ws": "^8.14.2"
   },
   "devDependencies": {
+    "@types/markdown-it": "^13.0.2",
     "@types/mocha": "^10.0.2",
     "@types/node": "^20.7.1",
     "@types/ws": "^8.5.6",
