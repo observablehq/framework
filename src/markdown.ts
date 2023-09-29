@@ -1,7 +1,7 @@
 import MarkdownIt from "markdown-it";
 import {RenderRule} from "markdown-it/lib/renderer";
 import hljs from "highlight.js";
-import {parseJavaScript} from "./javascript.js";
+import {transpileJavaScript} from "./javascript.js";
 
 interface ParseContext {
   id: number;
@@ -21,23 +21,7 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
     const [language, option] = token.info.split(" ");
     if (language === "js" && option !== "no-run") {
       const id = `observablehq-${++context.id}`;
-      try {
-        const input = token.content;
-        const node = parseJavaScript(input);
-        const inputs = Array.from(new Set(node.references.map((r) => r.name)));
-        context.js += `
-main
-  .variable(new Inspector(document.querySelector("#${id}")))
-  .define(${JSON.stringify(inputs)}, (${inputs}) => (\n${input}\n));
-`;
-      } catch (error) {
-        if (!(error instanceof SyntaxError)) throw error;
-        context.js += `
-main
-  .variable(new Inspector(document.querySelector("#${id}")))
-  .define(() => { throw new SyntaxError(${JSON.stringify(error.message)}); });
-`;
-      }
+      context.js += transpileJavaScript(token.content, id);
       result += `<div id="${id}"></div>\n`;
     }
     if (language !== "js" || option === "show" || option === "no-run") {
