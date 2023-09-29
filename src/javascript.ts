@@ -33,7 +33,7 @@ export function transpileJavaScript(input: string, id: number): string {
     // - handle name collision with exports
     // - don’t clear display greedily on pending; wait until the first new display happens?
     return `
-main.variable(((root) => ({pending: () => (root.innerHTML = "")}))(document.querySelector("#cell-${id}")), {shadow: {display: () => (((root) => (value) => (new Inspector(root.appendChild(document.createElement("DIV"))).fulfilled(value), value))(document.querySelector("#cell-${id}")))}}).define("cell ${id}", ${JSON.stringify(
+main.variable(((root) => ({pending: () => (root.innerHTML = "")}))(document.querySelector("#cell-${id}")), {shadow: {display: () => (((root) => (value) => (new Inspector(root.appendChild(document.createElement("SPAN"))).fulfilled(value), value))(document.querySelector("#cell-${id}")))}}).define("cell ${id}", ${JSON.stringify(
       inputs
     )}, ${node.async ? "async " : ""}(${inputs}) => {${node.declarations?.length ? "\nconst exports = {};" : ""}
 ${String(body).trim()}${node.declarations?.length ? "\nreturn exports;" : ""}
@@ -51,28 +51,12 @@ main.define(${JSON.stringify(name)}, ["cell ${id}"], (exports) => exports.${name
   } catch (error) {
     if (!(error instanceof SyntaxError)) throw error;
     return `
-// define(${JSON.stringify(id)}, [], () => { throw new SyntaxError(${JSON.stringify(error.message)}); });
+main.variable(new Inspector(document.querySelector("#cell-${id}"))).define("cell ${id}", [], () => { throw new SyntaxError(${JSON.stringify(
+      error.message
+    )}); });
 `;
   }
 }
-
-// function display(variable, root) {
-//   let version = 0;
-//   return (value) => {
-//     if (variable._version > version) {
-//       version = variable._version;
-//       root.innerHTML = "";
-//     }
-//     (new Inspector(root)).fulfilled(value);
-//   };
-// }
-
-// function define(id, inputs, body) {
-//   const root = document.querySelector(\`#$\{id}\`);
-//   const variable = main
-//     .variable({rejected: (error) => (new Inspector(root)).rejected(error)}, {shadow: {display: () => display(variable, root)}})
-//     .define(inputs, body);
-// }
 
 export function parseJavaScript(
   input: string,

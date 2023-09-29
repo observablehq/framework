@@ -43,11 +43,9 @@ const PLACEHOLDER_TYPE = "placeholder";
 
 const parsePlaceholder: RuleInline = (state, silent) => {
   if (silent || state.pos + 2 > state.posMax) return false;
-
   const marker1 = state.src.charCodeAt(state.pos);
   const marker2 = state.src.charCodeAt(state.pos + 1);
   if (!(marker1 === CODE_DOLLAR && marker2 === CODE_BRACEL)) return false;
-
   let inQuote = 0;
   for (let pos = state.pos + 2; pos < state.posMax; pos++) {
     const code = state.src.charCodeAt(pos);
@@ -76,11 +74,12 @@ const parsePlaceholder: RuleInline = (state, silent) => {
   return false;
 };
 
-const renderPlaceholder: RenderRule = (_tokens, _idx, _options, env) => {
+const renderPlaceholder: RenderRule = (tokens, idx, _options, env) => {
   const context = env as ParseContext;
-  const id = `cell-${++context.id}`;
-  // TODO: add tokens[idx].content to context
-  return `<span id=${id}></span>`;
+  const id = ++context.id;
+  const token = tokens[idx];
+  context.js += transpileJavaScript(token.content, id);
+  return `<span id="cell-${id}"></span>`;
 };
 
 export function parseMarkdown(source: string): ParseResult {

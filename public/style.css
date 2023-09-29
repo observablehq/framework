@@ -359,7 +359,6 @@ a[href],
 .observablehq--inspect {
   font: var(--monospace-font);
   overflow-x: auto;
-  display: block;
   padding: 4px 0; /* matches a one-line editor */
   white-space: pre;
 }
