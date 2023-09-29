@@ -29,15 +29,14 @@ export function transpileJavaScript(input: string, id: number): string {
         }
       }
     }
-    // TODO only add exports if there are declarations
-    // TODO handle name collision with exports
+    // TODO
+    // - handle name collision with exports
+    // - don’t clear display greedily on pending; wait until the first new display happens?
     return `
-main.variable(true, {shadow: {display: () => (((root) => (value) => new Inspector(root.appendChild(document.createElement("DIV"))).fulfilled(value))(document.querySelector("#cell-${id}")))}}).define("cell ${id}", ${JSON.stringify(
+main.variable(((root) => ({pending: () => (root.innerHTML = "")}))(document.querySelector("#cell-${id}")), {shadow: {display: () => (((root) => (value) => (new Inspector(root.appendChild(document.createElement("DIV"))).fulfilled(value), value))(document.querySelector("#cell-${id}")))}}).define("cell ${id}", ${JSON.stringify(
       inputs
-    )}, ${node.async ? "async " : ""}(${inputs}) => {
-const exports = {};
-${String(body).trim()}
-return exports;
+    )}, ${node.async ? "async " : ""}(${inputs}) => {${node.declarations?.length ? "\nconst exports = {};" : ""}
+${String(body).trim()}${node.declarations?.length ? "\nreturn exports;" : ""}
 });${
       node.declarations
         ? node.declarations

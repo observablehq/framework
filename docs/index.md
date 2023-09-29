@@ -2,10 +2,14 @@
 ## This is Markdown
 
 ```js
+const fill = Generators.input(display(Inputs.color({label: "Color", value: d3.rgb("steelblue").formatHex()})));
+```
+
+```js
 Plot.plot({
   y: {percent: true},
   marks: [
-    Plot.barY(alphabet, {x: "letter", y: "frequency", fill: "steelblue", sort: {x: "-y"}}),
+    Plot.barY(alphabet, {x: "letter", y: "frequency", fill, sort: {x: "-y"}}),
     Plot.ruleY([0])
   ]
 })

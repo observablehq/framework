@@ -236,6 +236,10 @@ figcaption {
   color: var(--syntax-unknown-variable);
 }
 
+.observablehq {
+  margin: 17px 0;
+}
+
 .observablehq--expanded,
 .observablehq--collapsed,
 .observablehq--function,

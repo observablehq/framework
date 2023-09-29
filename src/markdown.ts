@@ -23,7 +23,7 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
     if (language === "js" && option !== "no-run") {
       const id = ++context.id;
       context.js += transpileJavaScript(token.content, id);
-      result += `<div id="cell-${id}"></div>\n`;
+      result += `<div id="cell-${id}" class="observablehq"></div>\n`;
     }
     if (language !== "js" || option === "show" || option === "no-run") {
       result += baseRenderer(tokens, idx, options, env, self);
