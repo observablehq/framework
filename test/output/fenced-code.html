@@ -5,16 +5,29 @@
 
 import {open} from "/_observablehq/client.js";
 
-open({hash: "LXIZDqAkTMZkUDoegj+Jr4g1VOyv9ooMKPkkdz0jP8w="});
+open({hash: "6p4bOCV5Y8ck9i4vHTqLDblg4/vrHjOsrlRSwgt3bws="});
 
-const codeBlocks = [
-  {
-    "language": "js",
-    "content": "function add(a, b) {\n  return a + b;\n}\n",
-    "id": "codeblock-1"
-  }
-];
+</script>
+<script type="module">
+
+import {Runtime, Inspector} from "https://cdn.jsdelivr.net/npm/@observablehq/runtime@5/+esm";
+
+const runtime = new Runtime();
+const main = runtime.module();
+
+main
+  .variable(new Inspector(document.querySelector("#observablehq-1")))
+  .define([], () => (
+function add(a, b) {
+  return a + b;
+}
+
+));
 
 </script>
 <h1>Fenced code</h1>
-<!-- codeblock-1 -->
+<div id="observablehq-1"></div>
+<pre><code class="language-js"><span class="hljs-keyword">function</span> <span class="hljs-title function_">add</span>(<span class="hljs-params">a, b</span>) {
+  <span class="hljs-keyword">return</span> a + b;
+}
+</code></pre>

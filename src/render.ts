@@ -14,8 +14,14 @@ import {open} from "/_observablehq/client.js";
 
 open({hash: ${JSON.stringify(computeHash(source))}});
 
-const codeBlocks = ${JSON.stringify(parseResult.codeBlocks, null, 2)};
+</script>
+<script type="module">
 
+import {Runtime, Inspector} from "https://cdn.jsdelivr.net/npm/@observablehq/runtime@5/+esm";
+
+const runtime = new Runtime();
+const main = runtime.module();
+${parseResult.js}
 </script>
 ${parseResult.html}`;
 }

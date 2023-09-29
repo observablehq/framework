@@ -17,6 +17,8 @@
     "test:prettier": "prettier --check src test"
   },
   "dependencies": {
+    "acorn": "^8.10.0",
+    "acorn-walk": "^8.2.0",
     "highlight.js": "^11.8.0",
     "markdown-it": "^13.0.2",
     "send": "^0.18.0",
