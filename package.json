@@ -12,7 +12,7 @@
   "scripts": {
     "dev": "tsx watch ./src/preview.ts",
     "test": "yarn test:mocha && yarn test:lint && yarn test:prettier",
-    "test:mocha": "node --loader tsx ./node_modules/.bin/mocha 'test/**/*-test.*'",
+    "test:mocha": "mkdir -p test/output && node --loader tsx ./node_modules/.bin/mocha 'test/**/*-test.*'",
     "test:lint": "eslint src test",
     "test:prettier": "prettier --check src test"
   },
