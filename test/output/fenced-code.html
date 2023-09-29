@@ -15,7 +15,7 @@ import {Runtime, Inspector} from "https://cdn.jsdelivr.net/npm/@observablehq/run
 const runtime = new Runtime();
 const main = runtime.module();
 
-main.variable(((root) => ({pending: () => (root.innerHTML = "")}))(document.querySelector("#cell-1")), {shadow: {display: () => (((root) => (value) => (new Inspector(root.appendChild(document.createElement("SPAN"))).fulfilled(value), value))(document.querySelector("#cell-1")))}}).define("cell 1", ["display"], (display) => {
+main.variable(((root) => ({pending: () => (root.innerHTML = ""), rejected: (error) => new Inspector(root).rejected(error)}))(document.querySelector("#cell-1")), {shadow: {display: () => (((root) => (value) => (new Inspector(root.appendChild(document.createElement("SPAN"))).fulfilled(value), value))(document.querySelector("#cell-1")))}}).define(null, ["display"], (display) => {
 display((
 function add(a, b) {
   return a + b;
