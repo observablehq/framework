@@ -117,6 +117,7 @@ export function findReferences(node, globals, input) {
     if (name === "undefined") return;
     for (let i = parents.length - 2; i >= 0; --i) {
       if (hasLocal(parents[i], name)) {
+        node.declarationDepth = i; // TODO link to declaration?
         return;
       }
     }

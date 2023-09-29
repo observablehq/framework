@@ -352,66 +352,12 @@ a[href],
   color: #e7040f;
 }
 
-.observablehq {
-  position: relative;
-  margin: 17px 0;
-  min-height: 1.5rem; /* the standard line-height */
-}
-
-.observablehq:before {
-  content: "";
-  position: absolute;
-  left: -14px;
-  top: 0;
-  bottom: 1px;
-  width: 4px;
-  transition: background-color 250ms linear;
-}
-
-.observablehq--running.observablehq--worker:before,
-.observablehq--changed.observablehq--worker:before {
-  background-color: hsl(217, 13%, 70%);
-  transition: none;
-}
-
-.observablehq--error:before {
-  background-color: #e7040f;
-}
-
-.observablehq:empty:after,
-.observablehq > link:only-child,
-.observablehq > style:only-child,
 .observablehq--inspect {
   font: var(--monospace-font);
   overflow-x: auto;
   display: block;
   padding: 4px 0; /* matches a one-line editor */
   white-space: pre;
-}
-
-.observablehq--worker:not(.observablehq--running):empty:after {
-  content: "<detached>";
-  color: var(--syntax-comment);
-  font-style: oblique;
-}
-
-.observablehq > link:only-child,
-.observablehq > style:only-child {
-  visibility: hidden;
-  white-space: nowrap;
-  color: var(--syntax-keyword);
-}
-
-.observablehq > link:only-child:before {
-  content: "<link>";
-  visibility: visible;
-  text-decoration: none;
-  pointer-events: none;
-}
-
-.observablehq > style:only-child:before {
-  content: "<style>";
-  visibility: visible;
 }
 
 .observablehq--inspect.observablehq--import {

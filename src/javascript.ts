@@ -1,25 +1,79 @@
 import type {Options} from "acorn";
 import {Parser, tokTypes} from "acorn";
+import {findAssignments} from "./javascript/assignments.js";
 import {findAwaits} from "./javascript/awaits.js";
 import {findDeclarations} from "./javascript/declarations.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import {findReferences} from "./javascript/references.js";
+import {Sourcemap} from "./sourcemap.js";
 
-export function transpileJavaScript(input: string, id: string): string {
+export function transpileJavaScript(input: string, id: number): string {
   try {
     const node = parseJavaScript(input);
     const inputs = Array.from(new Set(node.references.map((r) => r.name)));
-    if (node.expression && !inputs.includes("display")) (input = `display((\n${input}\n))`), inputs.push("display"); // implicit display
+    if (node.expression && !inputs.includes("display")) (input = `display((\n${input}\n))`), inputs.push("display");
+    const body = new Sourcemap(input);
+    if (node.assignments) {
+      for (const assignment of node.assignments) {
+        switch (assignment.type) {
+          case "VariableDeclarator":
+            body.insertLeft(assignment.init.start, `(exports.${assignment.id.name} = `);
+            body.insertRight(assignment.init.end, `)`);
+            break;
+          case "AssignmentExpression":
+            body.insertLeft(assignment.right.start, `(exports.${assignment.left.name} = `);
+            body.insertRight(assignment.right.end, `)`);
+            break;
+          default:
+            throw new Error(`unknown assignment type: ${assignment.type}`);
+        }
+      }
+    }
+    // TODO only add exports if there are declarations
+    // TODO handle name collision with exports
     return `
-define(${JSON.stringify(id)}, ${JSON.stringify(inputs)}, ${node.async ? "async " : ""}(${inputs}) => {\n${input}\n});
+main.variable(true, {shadow: {display: () => (((root) => (value) => new Inspector(root.appendChild(document.createElement("DIV"))).fulfilled(value))(document.querySelector("#cell-${id}")))}}).define("cell ${id}", ${JSON.stringify(
+      inputs
+    )}, ${node.async ? "async " : ""}(${inputs}) => {
+const exports = {};
+${String(body).trim()}
+return exports;
+});${
+      node.declarations
+        ? node.declarations
+            .map(
+              ({name}) => `
+main.define(${JSON.stringify(name)}, ["cell ${id}"], (exports) => exports.${name});`
+            )
+            .join("")
+        : ""
+    }
 `;
   } catch (error) {
     if (!(error instanceof SyntaxError)) throw error;
     return `
-define(${JSON.stringify(id)}, [], () => { throw new SyntaxError(${JSON.stringify(error.message)}); });
+// define(${JSON.stringify(id)}, [], () => { throw new SyntaxError(${JSON.stringify(error.message)}); });
 `;
   }
 }
+
+// function display(variable, root) {
+//   let version = 0;
+//   return (value) => {
+//     if (variable._version > version) {
+//       version = variable._version;
+//       root.innerHTML = "";
+//     }
+//     (new Inspector(root)).fulfilled(value);
+//   };
+// }
+
+// function define(id, inputs, body) {
+//   const root = document.querySelector(\`#$\{id}\`);
+//   const variable = main
+//     .variable({rejected: (error) => (new Inspector(root)).rejected(error)}, {shadow: {display: () => display(variable, root)}})
+//     .define(inputs, body);
+// }
 
 export function parseJavaScript(
   input: string,
@@ -29,10 +83,14 @@ export function parseJavaScript(
   // First attempt to parse as an expression; if this fails, parse as a program.
   const expression = maybeParseExpression(input, options);
   const body = expression ?? (Parser.parse(input, options) as any);
+  const references = findReferences(body, globals, input);
+  const declarations = expression ? null : findDeclarations(body, globals, input);
+  const assignments = expression ? null : findAssignments(body);
   return {
     body,
-    declarations: expression ? null : findDeclarations(body, globals, input),
-    references: findReferences(body, globals, input),
+    declarations,
+    assignments,
+    references,
     expression: !!expression,
     async: findAwaits(body).length > 0
   };
@@ -43,6 +101,10 @@ export function parseJavaScript(
 function maybeParseExpression(input, options) {
   const parser = new Parser(options, input, 0);
   parser.nextToken();
-  const node = (parser as any).parseExpression();
-  return parser.type === tokTypes.eof ? node : null;
+  try {
+    const node = (parser as any).parseExpression();
+    return parser.type === tokTypes.eof ? node : null;
+  } catch {
+    return null;
+  }
 }

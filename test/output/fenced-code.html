@@ -15,37 +15,20 @@ import {Runtime, Inspector} from "https://cdn.jsdelivr.net/npm/@observablehq/run
 const runtime = new Runtime();
 const main = runtime.module();
 
-function display(variable, root) {
-  let version = 0;
-  return (value) => {
-    if (variable._version > version) {
-      version = variable._version;
-      root.innerHTML = "";
-    }
-    (new Inspector(root)).fulfilled(value);
-  };
-}
-
-function define(id, inputs, body) {
-  const root = document.querySelector(`#${id}`);
-  const variable = main
-    .variable({rejected: (error) => (new Inspector(root)).rejected(error)}, {shadow: {display: () => display(variable, root)}})
-    .define(inputs, body);
-}
-
-
-define("observablehq-1", ["display"], (display) => {
+main.variable(true, {shadow: {display: () => (((root) => (value) => new Inspector(root.appendChild(document.createElement("DIV"))).fulfilled(value))(document.querySelector("#cell-1")))}}).define("cell 1", ["display"], (display) => {
+const exports = {};
 display((
 function add(a, b) {
   return a + b;
 }
 
 ))
+return exports;
 });
 
 </script>
 <h1>Fenced code</h1>
-<div id="observablehq-1"></div>
+<div id="cell-1"></div>
 <pre><code class="language-js"><span class="hljs-keyword">function</span> <span class="hljs-title function_">add</span>(<span class="hljs-params">a, b</span>) {
   <span class="hljs-keyword">return</span> a + b;
 }

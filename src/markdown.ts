@@ -1,8 +1,8 @@
-import MarkdownIt from "markdown-it";
-import {RenderRule} from "markdown-it/lib/renderer";
 import hljs from "highlight.js";
-import {transpileJavaScript} from "./javascript.js";
+import MarkdownIt from "markdown-it";
 import {RuleInline} from "markdown-it/lib/parser_inline.js";
+import {RenderRule} from "markdown-it/lib/renderer.js";
+import {transpileJavaScript} from "./javascript.js";
 
 interface ParseContext {
   id: number;
@@ -21,9 +21,9 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
     const token = tokens[idx];
     const [language, option] = token.info.split(" ");
     if (language === "js" && option !== "no-run") {
-      const id = `observablehq-${++context.id}`;
+      const id = ++context.id;
       context.js += transpileJavaScript(token.content, id);
-      result += `<div id="${id}"></div>\n`;
+      result += `<div id="cell-${id}"></div>\n`;
     }
     if (language !== "js" || option === "show" || option === "no-run") {
       result += baseRenderer(tokens, idx, options, env, self);
@@ -74,14 +74,14 @@ const parsePlaceholder: RuleInline = (state, silent) => {
     }
   }
   return false;
-}
+};
 
 const renderPlaceholder: RenderRule = (_tokens, _idx, _options, env) => {
   const context = env as ParseContext;
-  const id = `observablehq-${++context.id}`;
+  const id = `cell-${++context.id}`;
   // TODO: add tokens[idx].content to context
-  return `<span id=${id} />`;
-}
+  return `<span id=${id}></span>`;
+};
 
 export function parseMarkdown(source: string): ParseResult {
   const md = MarkdownIt({
@@ -97,7 +97,6 @@ export function parseMarkdown(source: string): ParseResult {
       return ""; // defaults to escapeHtml(str)
     }
   });
-
   md.inline.ruler.push(PLACEHOLDER_TYPE, parsePlaceholder);
   md.renderer.rules[PLACEHOLDER_TYPE] = renderPlaceholder;
   md.renderer.rules.fence = makeFenceRenderer(md.renderer.rules.fence!);
