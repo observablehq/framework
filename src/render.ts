@@ -4,6 +4,7 @@ import {computeHash} from "./hash.js";
 import hljs from "highlight.js";
 
 const md = MarkdownIt({
+  html: true,
   highlight(str, language) {
     if (language && hljs.getLanguage(language)) {
       try {
@@ -22,9 +23,23 @@ export async function render(path: string): Promise<string> {
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
 <script type="module">
 
+import {Runtime, Inspector} from "https://cdn.jsdelivr.net/npm/@observablehq/runtime@5/+esm";
 import {open} from "/_observablehq/client.js";
 
 open({hash: ${JSON.stringify(computeHash(source))}});
+
+const runtime = new Runtime();
+const main = runtime.module();
+
+main
+  .variable(new Inspector(document.querySelector("#plot")))
+  .define("plot", ["Plot", "alphabet"], (Plot, alphabet) => Plot.plot({
+    y: {percent: true},
+    marks: [
+      Plot.barY(alphabet, {x: "letter", y: "frequency", fill: "steelblue", sort: {x: "-y"}}),
+      Plot.ruleY([0])
+    ]
+  }));
 
 </script>
 ${md.render(source)}`;
