@@ -2,6 +2,7 @@ import MarkdownIt from "markdown-it";
 import {RenderRule} from "markdown-it/lib/renderer";
 import hljs from "highlight.js";
 import {transpileJavaScript} from "./javascript.js";
+import {RuleInline} from "markdown-it/lib/parser_inline.js";
 
 interface ParseContext {
   id: number;
@@ -31,6 +32,57 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
   };
 }
 
+const CODE_DOLLAR = 36;
+const CODE_BRACEL = 123;
+const CODE_BRACER = 125;
+const CODE_BACKSLASH = 92;
+const CODE_QUOTE = 34;
+const CODE_SINGLE_QUOTE = 39;
+const CODE_BACKTICK = 96;
+const PLACEHOLDER_TYPE = "placeholder";
+
+const parsePlaceholder: RuleInline = (state, silent) => {
+  if (silent || state.pos + 2 > state.posMax) return false;
+
+  const marker1 = state.src.charCodeAt(state.pos);
+  const marker2 = state.src.charCodeAt(state.pos + 1);
+  if (!(marker1 === CODE_DOLLAR && marker2 === CODE_BRACEL)) return false;
+
+  let inQuote = 0;
+  for (let pos = state.pos + 2; pos < state.posMax; pos++) {
+    const code = state.src.charCodeAt(pos);
+    if (code === CODE_BACKSLASH) {
+      pos++; // skip next character
+      continue;
+    }
+    if (inQuote) {
+      if (code === inQuote) inQuote = 0;
+      continue;
+    }
+    switch (code) {
+      case CODE_QUOTE:
+      case CODE_SINGLE_QUOTE:
+      case CODE_BACKTICK:
+        inQuote = code;
+        break;
+      case CODE_BRACER: {
+        const token = state.push(PLACEHOLDER_TYPE, "", 0);
+        token.content = state.src.slice(state.pos + 2, pos);
+        state.pos = pos + 1;
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+const renderPlaceholder: RenderRule = (_tokens, _idx, _options, env) => {
+  const context = env as ParseContext;
+  const id = `observablehq-${++context.id}`;
+  // TODO: add tokens[idx].content to context
+  return `<span id=${id} />`;
+}
+
 export function parseMarkdown(source: string): ParseResult {
   const md = MarkdownIt({
     html: true,
@@ -42,11 +94,13 @@ export function parseMarkdown(source: string): ParseResult {
           console.error(error);
         }
       }
-      return "";
+      return ""; // defaults to escapeHtml(str)
     }
   });
-  const renderer = md.renderer;
-  renderer.rules.fence = makeFenceRenderer(renderer.rules.fence!);
+
+  md.inline.ruler.push(PLACEHOLDER_TYPE, parsePlaceholder);
+  md.renderer.rules[PLACEHOLDER_TYPE] = renderPlaceholder;
+  md.renderer.rules.fence = makeFenceRenderer(md.renderer.rules.fence!);
   const context: ParseContext = {id: 0, js: ""};
   const tokens = md.parse(source, context);
   const html = md.renderer.render(tokens, md.options, context);
