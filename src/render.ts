@@ -21,6 +21,25 @@ import {Runtime, Inspector} from "https://cdn.jsdelivr.net/npm/@observablehq/run
 
 const runtime = new Runtime();
 const main = runtime.module();
+
+function display(variable, root) {
+  let version = 0;
+  return (value) => {
+    if (variable._version > version) {
+      version = variable._version;
+      root.innerHTML = "";
+    }
+    (new Inspector(root)).fulfilled(value);
+  };
+}
+
+function define(id, inputs, body) {
+  const root = document.querySelector(\`#$\{id}\`);
+  const variable = main
+    .variable({rejected: (error) => (new Inspector(root)).rejected(error)}, {shadow: {display: () => display(variable, root)}})
+    .define(inputs, body);
+}
+
 ${parseResult.js}
 </script>
 ${parseResult.html}`;

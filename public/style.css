@@ -49,12 +49,12 @@ h6 {
   margin-bottom: 0.25rem;
 }
 
-h2 ~ p,
-h3 ~ p,
-h4 ~ p,
-h2 ~ table,
-h3 ~ table,
-h4 ~ table {
+h2 + p,
+h3 + p,
+h4 + p,
+h2 + table,
+h3 + table,
+h4 + table {
   margin-top: 0;
 }
 
