@@ -15,14 +15,25 @@ import {Runtime, Inspector} from "https://cdn.jsdelivr.net/npm/@observablehq/run
 const runtime = new Runtime();
 const main = runtime.module();
 
-main.variable(((root) => ({pending: () => (root.innerHTML = ""), rejected: (error) => new Inspector(root).rejected(error)}))(document.querySelector("#cell-1")), {shadow: {display: () => (((root) => (value) => (new Inspector(root.appendChild(document.createElement("SPAN"))).fulfilled(value), value))(document.querySelector("#cell-1")))}}).define(null, ["display"], (display) => {
+function define({id, inputs, outputs, body}) {
+  const root = document.querySelector(`#cell-${id}`);
+  const v = main.variable({pending: () => (root.innerHTML = ""), rejected: (error) => new Inspector(root).rejected(error)}, {shadow: {}});
+  const display = (value) => (new Inspector(root.appendChild(document.createElement("SPAN"))).fulfilled(value), value);
+  v._shadow.set("display", new v.constructor(2, main).define([], () => display));
+  v._shadow.set("view", new v.constructor(2, main).define(["Generators"], (Generators) => (value) => Generators.input(display(value))));
+  v.define(outputs.length ? `cell ${id}` : null, inputs, body);
+  for (const o of outputs) main.define(o, [`cell ${id}`], (exports) => exports[o]);
+}
+
+
+define({id: 1, inputs: ["display"], outputs: [], body: (display) => {
 display((
 function add(a, b) {
   return a + b;
 }
 
 ))
-});
+}});
 
 </script>
 <h1>Fenced code</h1>
