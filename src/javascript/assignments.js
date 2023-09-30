@@ -12,15 +12,13 @@ export function findAssignments(node) {
         break;
       case "ClassDeclaration":
       case "FunctionDeclaration":
-        throw new Error(`not yet implemented type: ${child.type}`);
-      // declareLocal(child.id);
-      // break;
+        console.log(child);
+        assignments.push(child);
+        break;
       case "ImportDefaultSpecifier":
       case "ImportSpecifier":
       case "ImportNamespaceSpecifier":
-        throw new Error(`not yet implemented type: ${child.type}`);
-      // declareLocal(child.local);
-      // break;
+        throw new Error(`import not yet implemented: ${child.type}`);
       case "Class":
       case "Function":
         throw new Error(`unexpected type: ${child.type}`);

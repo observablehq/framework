@@ -27,6 +27,11 @@ export function transpileJavaScript(input: string, id: number, options: ParseOpt
             body.insertLeft(assignment.right.start, `(exports.${assignment.left.name} = `);
             body.insertRight(assignment.right.end, `)`);
             break;
+          case "ClassDeclaration":
+          case "FunctionDeclaration":
+            body.insertLeft(assignment.start, `(exports.${assignment.id.name} = `);
+            body.insertRight(assignment.end, `)`);
+            break;
           default:
             throw new Error(`unknown assignment type: ${assignment.type}`);
         }
@@ -61,7 +66,9 @@ export function parseJavaScript(
 ) {
   const options: Options = {...otherOptions, ecmaVersion: 13, sourceType: "module"};
   // First attempt to parse as an expression; if this fails, parse as a program.
-  const expression = maybeParseExpression(input, options);
+  let expression = maybeParseExpression(input, options);
+  if (expression?.type === "ClassExpression" && expression.id) expression = null; // treat named class as program
+  if (expression?.type === "FunctionExpression" && expression.id) expression = null; // treat named function as program
   if (!expression && !allowProgram) throw new SyntaxError("invalid expression");
   const body = expression ?? (Parser.parse(input, options) as any);
   const references = findReferences(body, globals, input);

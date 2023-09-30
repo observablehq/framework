@@ -17,6 +17,8 @@ TODO
   - ✅ display(…) function
   - ✅ implicit display(…) for expressions
   - ✅ better view shorthand for Generators.input(display(input))
+  - ✅ top-level function declaration
+  - ✅ top-level class declaration
   - top-level destructuring patterns (const [x, y] = [0, 0.10])
   - handle exports name collision
   - asynchronous reactive top-level assignment (let y; await; y = 1)
