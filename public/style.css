@@ -236,8 +236,12 @@ figcaption {
   color: var(--syntax-unknown-variable);
 }
 
-.observablehq {
+.observablehq--block {
   margin: 17px 0;
+}
+
+.observablehq--block .observablehq {
+  display: block;
 }
 
 .observablehq--expanded,
