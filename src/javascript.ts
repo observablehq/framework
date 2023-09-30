@@ -37,29 +37,29 @@ export function transpileJavaScript(input: string, id: number, options: ParseOpt
       }
     }
     return `
-define({id: ${id}, inputs: ${JSON.stringify(inputs)}, outputs: ${JSON.stringify(
-      node.declarations?.map(({name}) => name) ?? []
-    )}, body: ${node.async ? "async " : ""}(${inputs}) => {${node.declarations?.length ? "\nconst exports = {};" : ""}
+define({id: ${id}, inputs: ${JSON.stringify(inputs)}${options.inline ? `, inline: true` : ""}${
+      node.declarations?.length ? `, outputs: ${JSON.stringify(node.declarations.map(({name}) => name))}` : ""
+    }, body: ${node.async ? "async " : ""}(${inputs}) => {${node.declarations?.length ? "\nconst exports = {};" : ""}
 ${String(body).trim()}${node.declarations?.length ? "\nreturn exports;" : ""}
 }});
 `;
   } catch (error) {
     if (!(error instanceof SyntaxError)) throw error;
     return `
-define({id: ${id}, inputs: [], outputs: [], body: () => { throw new SyntaxError(${JSON.stringify(error.message)}); }});
+define({id: ${id}, body: () => { throw new SyntaxError(${JSON.stringify(error.message)}); }});
 `;
   }
 }
 
 export interface ParseOptions {
-  allowProgram?: boolean;
+  inline?: boolean;
 }
 
 export function parseJavaScript(
   input: string,
   {
     globals = defaultGlobals,
-    allowProgram = true,
+    inline = false,
     ...otherOptions
   }: Partial<Options> & ParseOptions & {globals?: Set<string>} = {}
 ) {
@@ -68,7 +68,7 @@ export function parseJavaScript(
   let expression = maybeParseExpression(input, options);
   if (expression?.type === "ClassExpression" && expression.id) expression = null; // treat named class as program
   if (expression?.type === "FunctionExpression" && expression.id) expression = null; // treat named function as program
-  if (!expression && !allowProgram) throw new SyntaxError("invalid expression");
+  if (!expression && inline) throw new SyntaxError("invalid expression");
   const body = expression ?? (Parser.parse(input, options) as any);
   const references = findReferences(body, globals, input);
   const declarations = expression ? null : findDeclarations(body, globals, input);

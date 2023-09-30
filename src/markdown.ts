@@ -84,7 +84,7 @@ const renderPlaceholder: RenderRule = (tokens, idx, _options, env) => {
   const context = env as ParseContext;
   const id = ++context.id;
   const token = tokens[idx];
-  context.js += transpileJavaScript(token.content, id, {allowProgram: false});
+  context.js += transpileJavaScript(token.content, id, {inline: true});
   return `<span id="cell-${id}"></span>`;
 };
 

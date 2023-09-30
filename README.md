@@ -26,7 +26,7 @@ TODO
   - comprehensive tests for the compiler
   - static feature detection: files, databases, secrets
 - rename view(…) to input(…)?
-- embedded JavaScript expressions behave like htl.html (no inspector)
+- ✅ embedded JavaScript expressions behave like htl.html (no inspector)
 - file attachments
 - database clients (databases registered in YAML or observablehq.json)
 - secrets (defined via environment variable?)
