@@ -29,8 +29,7 @@ export function transpileJavaScript(input: string, id: number, options: ParseOpt
             break;
           case "ClassDeclaration":
           case "FunctionDeclaration":
-            body.insertLeft(assignment.start, `(exports.${assignment.id.name} = `);
-            body.insertRight(assignment.end, `)`);
+            body.insertRight(assignment.end, `\nexports.${assignment.id.name} = ${assignment.id.name};`);
             break;
           default:
             throw new Error(`unknown assignment type: ${assignment.type}`);

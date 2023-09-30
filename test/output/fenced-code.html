@@ -28,9 +28,10 @@ function define({id, inputs, outputs, body}) {
 
 define({id: 1, inputs: [], outputs: ["add"], body: () => {
 const exports = {};
-(exports.add = function add(a, b) {
+function add(a, b) {
   return a + b;
-})
+}
+exports.add = add;
 return exports;
 }});
 
