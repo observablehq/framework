@@ -47,10 +47,11 @@ const parsePlaceholder: RuleInline = (state, silent) => {
   const marker2 = state.src.charCodeAt(state.pos + 1);
   if (!(marker1 === CODE_DOLLAR && marker2 === CODE_BRACEL)) return false;
   let inQuote = 0;
-  for (let pos = state.pos + 2; pos < state.posMax; pos++) {
+  let braces = 0;
+  for (let pos = state.pos + 2; pos < state.posMax; ++pos) {
     const code = state.src.charCodeAt(pos);
     if (code === CODE_BACKSLASH) {
-      pos++; // skip next character
+      ++pos; // skip next character
       continue;
     }
     if (inQuote) {
@@ -63,12 +64,17 @@ const parsePlaceholder: RuleInline = (state, silent) => {
       case CODE_BACKTICK:
         inQuote = code;
         break;
-      case CODE_BRACER: {
-        const token = state.push(PLACEHOLDER_TYPE, "", 0);
-        token.content = state.src.slice(state.pos + 2, pos);
-        state.pos = pos + 1;
-        return true;
-      }
+      case CODE_BRACEL:
+        ++braces;
+        break;
+      case CODE_BRACER:
+        if (--braces < 0) {
+          const token = state.push(PLACEHOLDER_TYPE, "", 0);
+          token.content = state.src.slice(state.pos + 2, pos);
+          state.pos = pos + 1;
+          return true;
+        }
+        break;
     }
   }
   return false;
