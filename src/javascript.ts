@@ -29,33 +29,17 @@ export function transpileJavaScript(input: string, id: number, options: ParseOpt
         }
       }
     }
-    // TODO
-    // - handle name collision with exports
-    // - don’t clear display greedily on pending; wait until the first new display happens?
     return `
-main.variable(((root) => ({pending: () => (root.innerHTML = ""), rejected: (error) => new Inspector(root).rejected(error)}))(document.querySelector("#cell-${id}")), {shadow: {display: () => (((root) => (value) => (new Inspector(root.appendChild(document.createElement("SPAN"))).fulfilled(value), value))(document.querySelector("#cell-${id}")))}}).define(${
-      node.declarations?.length ? `"cell ${id}"` : null
-    }, ${JSON.stringify(inputs)}, ${node.async ? "async " : ""}(${inputs}) => {${
-      node.declarations?.length ? "\nconst exports = {};" : ""
-    }
+define({id: ${id}, inputs: ${JSON.stringify(inputs)}, outputs: ${JSON.stringify(
+      node.declarations?.map(({name}) => name) ?? []
+    )}, body: ${node.async ? "async " : ""}(${inputs}) => {${node.declarations?.length ? "\nconst exports = {};" : ""}
 ${String(body).trim()}${node.declarations?.length ? "\nreturn exports;" : ""}
-});${
-      node.declarations?.length
-        ? node.declarations
-            .map(
-              ({name}) => `
-main.define(${JSON.stringify(name)}, ["cell ${id}"], (exports) => exports.${name});`
-            )
-            .join("")
-        : ""
-    }
+}});
 `;
   } catch (error) {
     if (!(error instanceof SyntaxError)) throw error;
     return `
-main.variable(new Inspector(document.querySelector("#cell-${id}"))).define(() => { throw new SyntaxError(${JSON.stringify(
-      error.message
-    )}); });
+define({id: ${id}, inputs: [], outputs: [], body: () => { throw new SyntaxError(${JSON.stringify(error.message)}); }});
 `;
   }
 }

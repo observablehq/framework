@@ -16,11 +16,11 @@ TODO
   - ✅ assignments to top-level declarations
   - ✅ display(…) function
   - ✅ implicit display(…) for expressions
+  - ✅ better view shorthand for Generators.input(display(input))
   - handle exports name collision
   - asynchronous reactive top-level assignment (let y; await; y = 1)
   - implicit declaration for unbound assignment (x = 1)
   - static feature detection: files, databases, secrets
-  - better view shorthand for Generators.input(display(input))
 - file attachments
 - database clients (databases registered in YAML or observablehq.json)
 - secrets (defined via environment variable?)
