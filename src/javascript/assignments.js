@@ -12,7 +12,6 @@ export function findAssignments(node) {
         break;
       case "ClassDeclaration":
       case "FunctionDeclaration":
-        console.log(child);
         assignments.push(child);
         break;
       case "ImportDefaultSpecifier":
