@@ -23,7 +23,10 @@ TODO
   - handle exports name collision
   - asynchronous reactive top-level assignment (let y; await; y = 1)
   - implicit declaration for unbound assignment (x = 1)
+  - comprehensive tests for the compiler
   - static feature detection: files, databases, secrets
+- rename view(…) to input(…)?
+- embedded JavaScript expressions behave like htl.html (no inspector)
 - file attachments
 - database clients (databases registered in YAML or observablehq.json)
 - secrets (defined via environment variable?)
@@ -44,10 +47,11 @@ TODO
 - snapshot cache
   - proxied fetch
   - database client queries
-- static site generation
+- static site generation (yarn build)
   - including file attachments
   - including database client query snapshots
   - including fetch snapshots
+  - for secrets, use encrypted hash parameters?
 - incremental update
   - when Markdown changes
   - when JavaScript changes (both expressions and code blocks)
@@ -63,6 +67,8 @@ TODO
   - equivalent to version locking/integrity sha
 - standard library 2.0
   - remove deprecated features for standard library
+  - Generators.asyncInput
+- support ES observables in addition to generators?
 - self-host Observable Runtime instead of jsDelivr CDN
 - better theme colors for highlight.js
 - better logic for clearing display after invalidation
@@ -70,6 +76,7 @@ TODO
 - header and footer (meta tags, last updated date)
 - table of contents (right sidebar)
 - cross-notebook navigation (left sidebar)
+- footer has link to edit me on GitHub
 - client-side search (minisearch)?
 - themes
   - default light/dark theme
