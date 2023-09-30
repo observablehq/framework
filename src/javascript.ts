@@ -11,7 +11,10 @@ export function transpileJavaScript(input: string, id: number, options: ParseOpt
   try {
     const node = parseJavaScript(input, options);
     const inputs = Array.from(new Set(node.references.map((r) => r.name)));
-    if (node.expression && !inputs.includes("display")) (input = `display((\n${input.trim()}\n))`), inputs.push("display");
+    if (node.expression && !inputs.includes("display")) {
+      input = `display((\n${input.trim()}\n))`;
+      inputs.push("display");
+    }
     const body = new Sourcemap(input);
     if (node.assignments) {
       for (const assignment of node.assignments) {
