@@ -1,3 +1,23 @@
+import {Runtime, Inspector} from "https://cdn.jsdelivr.net/npm/@observablehq/runtime@5/+esm";
+
+const runtime = new Runtime();
+const main = runtime.module();
+
+export function define({id, inline, inputs = [], outputs = [], body}) {
+  const root = document.querySelector(`#cell-${id}`);
+  const observer = {pending: () => (root.innerHTML = ""), rejected: (error) => new Inspector(root).rejected(error)};
+  const v = main.variable(observer, {shadow: {}});
+  const display = inline
+    ? (val) => (typeof val !== "string" && val?.[Symbol.iterator] ? root.append(...val) : root.append(val), val)
+    : (val) => (new Inspector(root.appendChild(document.createElement("SPAN"))).fulfilled(val), val);
+  const _display = new v.constructor(2, main).define([], () => display);
+  v._shadow.set("display", _display);
+  const _view = new v.constructor(2, main).define(["Generators"], (G) => (value) => G.input(display(value)));
+  v._shadow.set("view", _view); // can’t use shadow because depends on Generators; could use closure though
+  v.define(outputs.length ? `cell ${id}` : null, inputs, body);
+  for (const o of outputs) main.define(o, [`cell ${id}`], (exports) => exports[o]);
+}
+
 export function open({hash} = {}) {
   const socket = new WebSocket(Object.assign(new URL("/_observablehq", location.href), {protocol: "ws"}));
 
