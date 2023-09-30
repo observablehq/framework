@@ -2,7 +2,7 @@
 ## This is Markdown
 
 ```js
-const fill = view(Inputs.color({label: "Color", value: d3.rgb("steelblue").formatHex()}));
+const fill = view(Inputs.color({label: "Fill", value: "#4682b4"}));
 ```
 
 ```js
