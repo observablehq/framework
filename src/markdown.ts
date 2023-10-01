@@ -100,8 +100,12 @@ const parseFrontBlock: RuleBlock = (state, startLine, endLine) => {
 
   function isDelimiter(line: number) {
     const startPos = state.bMarks[line];
-    return state.eMarks[line] === startPos + 3 && state.src.charCodeAt(startPos) === CODE_DASH
-      && state.src.charCodeAt(startPos + 1) === CODE_DASH && state.src.charCodeAt(startPos + 2) === CODE_DASH;
+    return (
+      state.eMarks[line] === startPos + 3 &&
+      state.src.charCodeAt(startPos) === CODE_DASH &&
+      state.src.charCodeAt(startPos + 1) === CODE_DASH &&
+      state.src.charCodeAt(startPos + 2) === CODE_DASH
+    );
   }
 
   if (isDelimiter(startLine)) {
