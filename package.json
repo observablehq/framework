@@ -22,7 +22,8 @@
     "highlight.js": "^11.8.0",
     "markdown-it": "^13.0.2",
     "send": "^0.18.0",
-    "ws": "^8.14.2"
+    "ws": "^8.14.2",
+    "yaml": "^2.3.2"
   },
   "devDependencies": {
     "@types/markdown-it": "^13.0.2",
