@@ -1,4 +1,4 @@
-define({id: 0, inputs: [], outputs: ["Foo"], body: () => {
+define({id: 0, outputs: ["Foo"], body: () => {
 class Foo {}
 return {Foo};
 }});

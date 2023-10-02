@@ -1,21 +1,19 @@
 import hljs from "highlight.js";
-import {parse} from "yaml";
+import matter from "gray-matter";
 import MarkdownIt from "markdown-it";
 import {RuleInline} from "markdown-it/lib/parser_inline.js";
 import {RenderRule} from "markdown-it/lib/renderer.js";
 import {transpileJavaScript} from "./javascript.js";
-import {RuleBlock} from "markdown-it/lib/parser_block.js";
 
 interface ParseContext {
   id: number;
   js: string;
-  front?: any;
 }
 
 export interface ParseResult {
   html: string;
   js: string;
-  front?: any;
+  data: {[key: string]: any} | null;
 }
 
 function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
@@ -36,7 +34,6 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
   };
 }
 
-const CODE_DASH = 45;
 const CODE_DOLLAR = 36;
 const CODE_BRACEL = 123;
 const CODE_BRACER = 125;
@@ -45,7 +42,6 @@ const CODE_QUOTE = 34;
 const CODE_SINGLE_QUOTE = 39;
 const CODE_BACKTICK = 96;
 const PLACEHOLDER_TYPE = "placeholder";
-const FRONT_TYPE = "front";
 
 const parsePlaceholder: RuleInline = (state, silent) => {
   if (silent || state.pos + 2 > state.posMax) return false;
@@ -94,39 +90,8 @@ const renderPlaceholder: RenderRule = (tokens, idx, _options, env) => {
   return `<span id="cell-${id}"></span>`;
 };
 
-const parseFrontBlock: RuleBlock = (state, startLine, endLine) => {
-  const context = state.env as ParseContext;
-  if (startLine > 0) return false;
-
-  function isDelimiter(line: number) {
-    const startPos = state.bMarks[line];
-    return (
-      state.eMarks[line] === startPos + 3 &&
-      state.src.charCodeAt(startPos) === CODE_DASH &&
-      state.src.charCodeAt(startPos + 1) === CODE_DASH &&
-      state.src.charCodeAt(startPos + 2) === CODE_DASH
-    );
-  }
-
-  if (isDelimiter(startLine)) {
-    let line = startLine + 1;
-    while (!isDelimiter(line) && line <= endLine) line++;
-    if (line > startLine + 1) {
-      state.line = line + 1;
-      const token = state.push(FRONT_TYPE, "", 0);
-      token.content = state.getLines(startLine + 1, line, 0, true);
-      try {
-        context.front = parse(token.content);
-      } catch (error) {
-        console.error("Error to parsing front section:", error.message);
-      }
-      return true;
-    }
-  }
-  return false;
-};
-
 export function parseMarkdown(source: string): ParseResult {
+  const parts = matter(source);
   const md = MarkdownIt({
     html: true,
     highlight(str, language) {
@@ -142,10 +107,15 @@ export function parseMarkdown(source: string): ParseResult {
   });
   md.inline.ruler.push(PLACEHOLDER_TYPE, parsePlaceholder);
   md.renderer.rules[PLACEHOLDER_TYPE] = renderPlaceholder;
-  md.block.ruler.before("hr", FRONT_TYPE, parseFrontBlock);
   md.renderer.rules.fence = makeFenceRenderer(md.renderer.rules.fence!);
   const context: ParseContext = {id: 0, js: ""};
-  const tokens = md.parse(source, context);
+  const tokens = md.parse(parts.content, context);
   const html = md.renderer.render(tokens, md.options, context);
-  return {html, ...context};
+  return {html, data: isEmpty(parts.data) ? null : parts.data, ...context};
+}
+
+// TODO Use gray-matter’s parts.isEmpty, but only when it’s accurate.
+function isEmpty(object) {
+  for (const key in object) return false;
+  return true;
 }
