@@ -47,6 +47,7 @@ export function findReferences(node, globals, input) {
   function declareFunction(node) {
     node.params.forEach((param) => declarePattern(param, node));
     if (node.id) declareLocal(node, node.id);
+    if (node.type !== "ArrowFunctionExpression") declareLocal(node, {name: "arguments"});
   }
 
   function declareCatchClause(node) {

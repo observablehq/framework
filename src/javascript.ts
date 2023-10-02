@@ -24,8 +24,12 @@ export function transpileJavaScript(input: string, id: number, options: ParseOpt
             body.insertRight(assignment.init.end, `)`);
             break;
           case "AssignmentExpression":
-            body.insertLeft(assignment.right.start, `(exports.${assignment.left.name} = `);
-            body.insertRight(assignment.right.end, `)`);
+            if (assignment.operator === "=") {
+              body.insertLeft(assignment.right.start, `(exports.${assignment.left.name} = `);
+              body.insertRight(assignment.right.end, `)`);
+            } else {
+              throw new Error(`unknown assignment operator: ${assignment.operator}`);
+            }
             break;
           case "ClassDeclaration":
           case "FunctionDeclaration":

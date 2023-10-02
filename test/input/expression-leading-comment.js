@@ -1,0 +1,2 @@
+// Hello, comment.
+42
