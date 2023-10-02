@@ -19,7 +19,9 @@ export function transpileJavaScript(input: string, id: number, options: ParseOpt
     return `define({id: ${id}${inputs.length ? `, inputs: ${JSON.stringify(inputs)}` : ""}${
       options.inline ? `, inline: true` : ""
     }${node.declarations?.length ? `, outputs: ${JSON.stringify(node.declarations.map(({name}) => name))}` : ""}${
-      files.length ? `, files: ${JSON.stringify(files.map((f) => ({name: f.name, mimeType: mime.getType(f.name)})))}` : ""
+      files.length
+        ? `, files: ${JSON.stringify(files.map((f) => ({name: f.name, mimeType: mime.getType(f.name)})))}`
+        : ""
     }, body: ${node.async ? "async " : ""}(${inputs}) => {
 ${input.trim()}${node.declarations?.length ? `\nreturn {${node.declarations.map(({name}) => name)}};` : ""}
 }});
