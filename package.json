@@ -34,6 +34,7 @@
     "@typescript-eslint/parser": "^6.7.3",
     "eslint": "^8.50.0",
     "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
     "mocha": "^10.2.0",
     "prettier": "^3.0.3",
     "tsx": "^3.13.0",

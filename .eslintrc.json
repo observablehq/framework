@@ -1,6 +1,13 @@
 {
-  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended", "prettier"],
-  "plugins": ["@typescript-eslint"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "plugins": [
+    "@typescript-eslint",
+    "prettier"
+  ],
   "parser": "@typescript-eslint/parser",
   "env": {
     "es2020": true,
@@ -15,6 +22,11 @@
     "@typescript-eslint/no-empty-function": 0,
     "@typescript-eslint/no-explicit-any": 0,
     "@typescript-eslint/no-this-alias": 0,
-    "@typescript-eslint/no-unused-vars": ["error", {"ignoreRestSiblings": true}]
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "ignoreRestSiblings": true
+      }
+    ]
   }
 }
