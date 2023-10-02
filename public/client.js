@@ -3,7 +3,11 @@ import {Runtime, Inspector} from "https://cdn.jsdelivr.net/npm/@observablehq/run
 const runtime = new Runtime();
 const main = runtime.module();
 
-export function define({id, inline, inputs = [], outputs = [], body}) {
+const attachedFiles = new Map();
+const resolveFile = (name) => attachedFiles.get(name);
+main.builtin("FileAttachment", runtime.fileAttachments(resolveFile));
+
+export function define({id, inline, inputs = [], outputs = [], files = [], body}) {
   const root = document.querySelector(`#cell-${id}`);
   const observer = {pending: () => (root.innerHTML = ""), rejected: (error) => new Inspector(root).rejected(error)};
   const v = main.variable(observer, {shadow: {}});
@@ -16,6 +20,7 @@ export function define({id, inline, inputs = [], outputs = [], body}) {
   v._shadow.set("view", _view); // can’t use shadow because depends on Generators; could use closure though
   v.define(outputs.length ? `cell ${id}` : null, inputs, body);
   for (const o of outputs) main.define(o, [`cell ${id}`], (exports) => exports[o]);
+  for (const f of files) attachedFiles.set(f.name, {url: `/_file/${f.name}`, mimeType: f.mimeType});
 }
 
 export function open({hash} = {}) {

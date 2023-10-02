@@ -27,6 +27,8 @@ const server = createServer(async (req, res) => {
     res.end(await render("./docs/index.md"));
   } else if (req.url?.startsWith("/_observablehq/")) {
     send(req, req.url.slice("/_observablehq".length), {root: "./public"}).pipe(res);
+  } else if (req.url?.startsWith("/_file/")) {
+    send(req, req.url.slice("/_file".length), {root: "./docs"}).pipe(res);
   } else {
     res.statusCode = 404;
     res.setHeader("Content-Type", "text/plain; charset=utf-8");

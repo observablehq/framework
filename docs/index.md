@@ -1,6 +1,31 @@
 # Hello, world!
 ## This is Markdown
 
+Look, ma! I loaded a CSV file.
+
+```js
+const gistemp = await FileAttachment("gistemp.csv").csv({typed: true})
+```
+
+```js
+Plot.plot({
+  y: {
+    grid: true,
+    tickFormat: "+f",
+    label: "Surface temperature anomaly (°F)"
+  },
+  color: {
+    scheme: "BuRd"
+  },
+  marks: [
+    Plot.ruleY([0]),
+    Plot.dot(gistemp, {x: "Date", y: "Anomaly", stroke: "Anomaly"})
+  ]
+})
+```
+
+And here’s an input.
+
 ```js
 const fill = view(Inputs.color({label: "Fill", value: "#4682b4"}));
 ```
