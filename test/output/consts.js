@@ -1,5 +1,4 @@
 define({id: 0, inputs: [], outputs: ["x","y"], body: () => {
-const exports = {};
-const x = (exports.x = 1), y = (exports.y = 2);
-return exports;
+const x = 1, y = 2;
+return {x,y};
 }});

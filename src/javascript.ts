@@ -5,7 +5,6 @@ import {findAwaits} from "./javascript/awaits.js";
 import {findDeclarations} from "./javascript/declarations.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import {findReferences} from "./javascript/references.js";
-import {Sourcemap} from "./sourcemap.js";
 
 export function transpileJavaScript(input: string, id: number, options: ParseOptions = {}): string {
   try {
@@ -15,39 +14,10 @@ export function transpileJavaScript(input: string, id: number, options: ParseOpt
       input = `display((\n${input.trim()}\n))`;
       inputs.push("display");
     }
-    const body = new Sourcemap(input);
-    if (node.assignments) {
-      for (const assignment of node.assignments) {
-        switch (assignment.type) {
-          case "VariableDeclarator":
-            body.insertLeft(assignment.init.start, `(exports.${assignment.id.name} = `);
-            body.insertRight(assignment.init.end, `)`);
-            break;
-          case "AssignmentExpression":
-            if (assignment.operator === "=") {
-              body.insertLeft(assignment.right.start, `(exports.${assignment.left.name} = `);
-              body.insertRight(assignment.right.end, `)`);
-            } else {
-              throw new Error(`unknown assignment operator: ${assignment.operator}`);
-            }
-            break;
-          case "ClassDeclaration":
-          case "FunctionDeclaration":
-            body.insertRight(assignment.end, `\nexports.${assignment.id.name} = ${assignment.id.name};`);
-            break;
-          case "UpdateExpression":
-            body.insertLeft(assignment.start, `(`);
-            body.insertRight(assignment.end, `, exports.${assignment.argument.name} = ${assignment.argument.name})`);
-            break;
-          default:
-            throw new Error(`unknown assignment type: ${assignment.type}`);
-        }
-      }
-    }
     return `define({id: ${id}, inputs: ${JSON.stringify(inputs)}${options.inline ? `, inline: true` : ""}${
       node.declarations?.length ? `, outputs: ${JSON.stringify(node.declarations.map(({name}) => name))}` : ""
-    }, body: ${node.async ? "async " : ""}(${inputs}) => {${node.declarations?.length ? "\nconst exports = {};" : ""}
-${String(body).trim()}${node.declarations?.length ? "\nreturn exports;" : ""}
+    }, body: ${node.async ? "async " : ""}(${inputs}) => {
+${input.trim()}${node.declarations?.length ? `\nreturn {${node.declarations.map(({name}) => name)}};` : ""}
 }});
 `;
   } catch (error) {

@@ -19,11 +19,10 @@ TODO
   - ✅ better view shorthand for Generators.input(display(input))
   - ✅ top-level function declaration
   - ✅ top-level class declaration
-  - top-level destructuring patterns (const [x, y] = [0, 0.10])
-  - handle exports name collision
+  - ✅ top-level destructuring patterns (const [x, y] = [0, 0.10])
+  - ✅ comprehensive tests for the compiler
   - asynchronous reactive top-level assignment (let y; await; y = 1)
   - implicit declaration for unbound assignment (x = 1)
-  - comprehensive tests for the compiler
   - static feature detection: files, databases, secrets
 - rename view(…) to input(…)?
 - ✅ embedded JavaScript expressions behave like htl.html (no inspector)

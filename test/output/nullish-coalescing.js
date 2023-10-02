@@ -1,4 +1,4 @@
 define({id: 0, inputs: [], outputs: ["foo"], body: () => {
-function foo() { return arguments.length; }
+const foo = null ?? "default string";
 return {foo};
 }});

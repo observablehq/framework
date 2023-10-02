@@ -1,4 +1,6 @@
 define({id: 0, inputs: [], outputs: ["foo"], body: () => {
-function foo() { return arguments.length; }
+function* foo() {
+  yield 42;
+}
 return {foo};
 }});
