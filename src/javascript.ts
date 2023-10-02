@@ -1,6 +1,5 @@
 import type {Options} from "acorn";
 import {Parser, tokTypes} from "acorn";
-import {findAssignments} from "./javascript/assignments.js";
 import {findAwaits} from "./javascript/awaits.js";
 import {findDeclarations} from "./javascript/declarations.js";
 import {defaultGlobals} from "./javascript/globals.js";
@@ -50,11 +49,9 @@ export function parseJavaScript(
   const body = expression ?? (Parser.parse(input, options) as any);
   const references = findReferences(body, globals, input);
   const declarations = expression ? null : findDeclarations(body, globals, input);
-  const assignments = expression ? null : findAssignments(body);
   return {
     body,
     declarations,
-    assignments,
     references,
     expression: !!expression,
     async: findAwaits(body).length > 0

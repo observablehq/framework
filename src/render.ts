@@ -14,9 +14,13 @@ import {open, define} from "/_observablehq/client.js";
 
 open({hash: ${JSON.stringify(computeHash(source))}});
 ${parseResult.js}
-</script>${parseResult.data ? `
+</script>${
+    parseResult.data
+      ? `
 <script type="application/json">
 ${JSON.stringify(parseResult.data)}
-</script>` : ""}
+</script>`
+      : ""
+  }
 ${parseResult.html}`;
 }

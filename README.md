@@ -13,7 +13,6 @@ TODO
   - ✅ top-level declarations
   - ✅ unbound references (inputs)
   - ✅ awaits
-  - ✅ assignments to top-level declarations
   - ✅ display(…) function
   - ✅ implicit display(…) for expressions
   - ✅ better view shorthand for Generators.input(display(input))
