@@ -20,12 +20,12 @@ TODO
   - ✅ top-level class declaration
   - ✅ top-level destructuring patterns (const [x, y] = [0, 0.10])
   - ✅ comprehensive tests for the compiler
+  - ✅ static feature detection: files, databases, secrets
   - asynchronous reactive top-level assignment (let y; await; y = 1)
   - implicit declaration for unbound assignment (x = 1)
-  - static feature detection: files, databases, secrets
 - rename view(…) to input(…)?
 - ✅ embedded JavaScript expressions behave like htl.html (no inspector)
-- file attachments
+- ✅ file attachments
 - database clients (databases registered in YAML or observablehq.json)
 - secrets (defined via environment variable?)
 - proxied fetch (bypass CORS; registered in YAML or observablehq.json)
@@ -67,7 +67,7 @@ TODO
   - remove deprecated features for standard library
   - Generators.asyncInput
 - support ES observables in addition to generators?
-- self-host Observable Runtime instead of jsDelivr CDN
+- ✅ self-host Observable Runtime instead of jsDelivr CDN
 - better theme colors for highlight.js
 - better logic for clearing display after invalidation
 - Symbol.for("observablehq.display") for custom inspectors?
