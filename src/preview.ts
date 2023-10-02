@@ -25,6 +25,8 @@ const server = createServer(async (req, res) => {
     res.statusCode = 200;
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.end(await render("./docs/index.md"));
+  } else if (req.url === "/_observablehq/runtime.js") {
+    send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
   } else if (req.url?.startsWith("/_observablehq/")) {
     send(req, req.url.slice("/_observablehq".length), {root: "./public"}).pipe(res);
   } else if (req.url?.startsWith("/_file/")) {

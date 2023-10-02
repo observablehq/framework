@@ -16,6 +16,7 @@
     "test:lint": "eslint src test"
   },
   "dependencies": {
+    "@observablehq/runtime": "^5.9.3",
     "acorn": "^8.10.0",
     "acorn-walk": "^8.2.0",
     "gray-matter": "^4.0.3",

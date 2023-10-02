@@ -4,7 +4,7 @@
 Look, ma! I loaded a CSV file.
 
 ```js
-const gistemp = await FileAttachment("gistemp.csv").csv({typed: true})
+const gistemp = FileAttachment("gistemp.csv").csv({typed: true});
 ```
 
 ```js

@@ -1,4 +1,4 @@
-import {Runtime, Inspector} from "https://cdn.jsdelivr.net/npm/@observablehq/runtime@5/+esm";
+import {Runtime, Inspector} from "/_observablehq/runtime.js";
 
 const runtime = new Runtime();
 const main = runtime.module();
