@@ -31,13 +31,16 @@ export function transpileJavaScript(input: string, id: number, options: ParseOpt
           case "FunctionDeclaration":
             body.insertRight(assignment.end, `\nexports.${assignment.id.name} = ${assignment.id.name};`);
             break;
+          case "UpdateExpression":
+            body.insertLeft(assignment.start, `(`);
+            body.insertRight(assignment.end, `, exports.${assignment.argument.name} = ${assignment.argument.name})`);
+            break;
           default:
             throw new Error(`unknown assignment type: ${assignment.type}`);
         }
       }
     }
-    return `
-define({id: ${id}, inputs: ${JSON.stringify(inputs)}${options.inline ? `, inline: true` : ""}${
+    return `define({id: ${id}, inputs: ${JSON.stringify(inputs)}${options.inline ? `, inline: true` : ""}${
       node.declarations?.length ? `, outputs: ${JSON.stringify(node.declarations.map(({name}) => name))}` : ""
     }, body: ${node.async ? "async " : ""}(${inputs}) => {${node.declarations?.length ? "\nconst exports = {};" : ""}
 ${String(body).trim()}${node.declarations?.length ? "\nreturn exports;" : ""}
@@ -45,8 +48,7 @@ ${String(body).trim()}${node.declarations?.length ? "\nreturn exports;" : ""}
 `;
   } catch (error) {
     if (!(error instanceof SyntaxError)) throw error;
-    return `
-define({id: ${id}, body: () => { throw new SyntaxError(${JSON.stringify(error.message)}); }});
+    return `define({id: ${id}, body: () => { throw new SyntaxError(${JSON.stringify(error.message)}); }});
 `;
   }
 }

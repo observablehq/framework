@@ -26,7 +26,7 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
     const [language, option] = token.info.split(" ");
     if (language === "js" && option !== "no-run") {
       const id = ++context.id;
-      context.js += transpileJavaScript(token.content, id);
+      context.js += `\n${transpileJavaScript(token.content, id)}`;
       result += `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`;
     }
     if (language !== "js" || option === "show" || option === "no-run") {
@@ -90,7 +90,7 @@ const renderPlaceholder: RenderRule = (tokens, idx, _options, env) => {
   const context = env as ParseContext;
   const id = ++context.id;
   const token = tokens[idx];
-  context.js += transpileJavaScript(token.content, id, {inline: true});
+  context.js += `\n${transpileJavaScript(token.content, id, {inline: true})}`;
   return `<span id="cell-${id}"></span>`;
 };
 
