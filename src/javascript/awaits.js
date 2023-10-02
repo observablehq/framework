@@ -5,6 +5,9 @@ export function findAwaits(node) {
 
   recursive(node, null, {
     Function() {}, // ignore anything inside a function
+    ForOfStatement(node) {
+      if (node.await) nodes.push(node);
+    },
     AwaitExpression(node) {
       nodes.push(node);
     }
