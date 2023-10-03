@@ -3,7 +3,6 @@ import hljs from "highlight.js";
 import MarkdownIt from "markdown-it";
 import type {RuleCore} from "markdown-it/lib/parser_core.js";
 import type {RenderRule} from "markdown-it/lib/renderer.js";
-import {computeHash} from "./hash.js";
 import {transpileJavaScript} from "./javascript.js";
 
 interface ParseContext {
@@ -11,7 +10,7 @@ interface ParseContext {
   js: string;
 }
 
-interface ParseResult {
+export interface ParseResult {
   html: string;
   js: string;
   data: {[key: string]: any} | null;
@@ -153,28 +152,6 @@ const renderPlaceholder: RenderRule = (tokens, idx, options, context: ParseConte
   context.js += `\n${transpileJavaScript(token.content, id, {inline: true})}`;
   return `<span id="cell-${id}"></span>`;
 };
-
-export function transpileMarkdown(source: string): string {
-  const parseResult = parseMarkdown(source);
-  return `<!DOCTYPE html>
-<meta charset="utf-8">
-<link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
-<script type="module">
-
-import {open, define} from "/_observablehq/client.js";
-
-open({hash: ${JSON.stringify(computeHash(source))}});
-${parseResult.js}
-</script>${
-    parseResult.data
-      ? `
-<script type="application/json">
-${JSON.stringify(parseResult.data)}
-</script>`
-      : ""
-  }
-${parseResult.html}`;
-}
 
 export function parseMarkdown(source: string): ParseResult {
   const parts = matter(source);
