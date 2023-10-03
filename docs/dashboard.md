@@ -2,6 +2,12 @@
 
 This is a dashboard.
 
+<div class="grid grid-cols-3" style="grid-auto-rows: 85px;">
+  <div style="display: flex; align-items: center;">${resize((width, height) => BigNumber(4300, {width, height, title: "Sales", trend: -0.08}))}</div>
+  <div style="display: flex; align-items: center;">${resize((width, height) => BigNumber(1234, {width, height, title: "Revenue", format: "$,.0f", trend: 0.08}))}</div>
+  <div style="display: flex; align-items: center;">${resize((width, height) => BigNumber(42, {width, height, title: "Widgets"}))}</div>
+</div>
+
 <div class="grid grid-cols-3">
   <div class="grid-colspan-2 grid-rowspan-2">${resize((width, height) => Plot.plot({
     width,
@@ -9,7 +15,7 @@ This is a dashboard.
     margin: 17,
     marginLeft: 40,
     y: {grid: true},
-    marks: [Plot.lineY(aapl, {x: "Date", y: "Close"})]
+    marks: [Plot.lineY(aapl, {x: "Date", y: "Close", tip: true})]
   }))}</div>
   <div>${resize((width, height) => Plot.plot({
     width,
@@ -63,6 +69,29 @@ function resize(run) {
   });
   observer.observe(div);
   return div;
+}
+
+function BigNumber(number, {
+  width,
+  height,
+  title = "",
+  format = ",",
+  trend = 0,
+  trendFormat = "+~%",
+  trendColor = trend > 0 ? "green" : trend < 0 ? "red" : "orange",
+  trendArrow = trend > 0 ? "↗︎" : trend < 0 ? "↘︎" : "→",
+  plot
+} = {}) {
+  if (typeof format !== "function") format = d3.format(format);
+  if (typeof trendFormat !== "function") trendFormat = d3.format(trendFormat);
+  return htl.html`<div style="display: flex; flex-direction: column; font-family: var(--sans-serif);">
+  <div style="text-transform: uppercase; font-size: 12px;">${title}</div>
+  <div style="display: flex; column-gap: 10px; align-items: baseline;">
+    <div style="font-size: 32px; font-weight: bold; line-height: 1;">${format(number)}</div>
+    <div style="font-size: 14px; color: ${trendColor};">${trendFormat(trend)} ${trendArrow}</div>
+  </div>
+  ${plot && Plot.plot({width, height, ...plot})}
+</div>`;
 }
 ```
 
