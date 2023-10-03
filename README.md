@@ -23,7 +23,9 @@ TODO
   - ✅ static feature detection: files, databases, secrets
   - asynchronous reactive top-level assignment (let y; await; y = 1)
   - implicit declaration for unbound assignment (x = 1)
-- rename view(…) to input(…)?
+- more robust inline expressions
+  - handle template strings `…` (code_inline)
+  - handle backslashes (text_special)
 - ✅ embedded JavaScript expressions behave like htl.html (no inspector)
 - ✅ file attachments
 - database clients (databases registered in YAML or observablehq.json)
@@ -31,9 +33,6 @@ TODO
 - proxied fetch (bypass CORS; registered in YAML or observablehq.json)
 - data table display for tabular data (query results, CSV, _etc._)
 - SQL fenced code blocks
-- more robust inline expressions
-  - handle template strings `…` (code_inline)
-  - handle backslashes (text_special)
 - fenced code block options
   - echo to show code in output
   - output name for SQL cells
@@ -41,10 +40,10 @@ TODO
 - HTML fenced code blocks?
 - TeX fenced code blocks?
 - Graphviz/dot fenced code blocks?
-- testing
-- routing
+- routing to different notebooks
 - detect broken socket and reconnect
 - detect server restart and reload
+- HTTPS with self-signed certificate or something?
 - snapshot cache
   - proxied fetch
   - database client queries
@@ -69,7 +68,6 @@ TODO
 - standard library 2.0
   - remove deprecated features for standard library
   - Generators.asyncInput
-- support ES observables in addition to generators?
 - ✅ self-host Observable Runtime instead of jsDelivr CDN
 - better theme colors for highlight.js
 - better logic for clearing display after invalidation
@@ -83,6 +81,3 @@ TODO
   - default light/dark theme
   - dashboard theme for wide layout
   - custom header and footer
-- websocket keepalive via ping
-- websocket automatic re-opening when it closes
-- HTTPS with self-signed certificate or something?
