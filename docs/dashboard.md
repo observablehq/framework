@@ -20,11 +20,7 @@ This is a dashboard.
       Plot.lineY(aapl, {x: "Date", y: "Close", channels: {Volume: "Volume"}, tip: {format: {x: true, y: true}}})
     ]
   }))}</div>
-  <div>${resize((width, height) => Plot.plot({
-    width,
-    height,
-    marks: [Plot.frame()]
-  }))}</div>
+  <div>${tex.block`\displaystyle {\begin{aligned}&C(0,t)=0{\text{ for all }}t\\&C(S,t)\rightarrow S-K{\text{ as }}S\rightarrow \infty \\&C(S,T)=\max\{S-K,0\}\end{aligned}}`}</div>
   <div>${resize((width, height) => Plot.plot({
     width,
     height,
@@ -56,11 +52,7 @@ This is a dashboard.
 This dashboard features a bento box layout. I am writing some words here to demonstrate how prose might fit between sections of a dashboard. Currently you have to write a lot of CSS grid, but we could create reusable components.
 
 <div class="grid grid-cols-3">
-  <div>${resize((width, height) => Plot.plot({
-    width,
-    height,
-    marks: [Plot.frame()]
-  }))}</div>
+  <div class="grid-colspan-2" style="padding: 0;">${Inputs.table(aapl)}</div>
   <div>${resize((width, height) => Plot.plot({
     width,
     height,

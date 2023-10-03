@@ -12,7 +12,7 @@ export function define({id, inline, inputs = [], outputs = [], files = [], body}
   const observer = {pending: () => (root.innerHTML = ""), rejected: (error) => new Inspector(root).rejected(error)};
   const v = main.variable(observer, {shadow: {}});
   const display = inline
-    ? (val) => (typeof val !== "string" && val?.[Symbol.iterator] ? root.append(...val) : root.append(val), val)
+    ? (val) => (val instanceof Node || typeof val === "string" || !val?.[Symbol.iterator] ? root.append(val) : root.append(...val), val) // prettier-ignore
     : (val) => (new Inspector(root.appendChild(document.createElement("SPAN"))).fulfilled(val), val);
   const _display = new v.constructor(2, main).define([], () => display);
   v._shadow.set("display", _display);
