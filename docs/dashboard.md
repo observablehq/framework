@@ -3,9 +3,9 @@
 This is a dashboard.
 
 <div class="grid grid-cols-3" style="grid-auto-rows: 85px;">
-  <div style="display: flex; align-items: center;">${resize((width, height) => BigNumber(4300, {width, height, title: "Sales", trend: -0.08}))}</div>
-  <div style="display: flex; align-items: center;">${resize((width, height) => BigNumber(1234, {width, height, title: "Revenue", format: "$,.0f", trend: 0.08}))}</div>
-  <div style="display: flex; align-items: center;">${resize((width, height) => BigNumber(42, {width, height, title: "Widgets"}))}</div>
+  <div style="display: flex; align-items: center;">${resize((width, height) => BigNumber(aapl.at(-1).Close, {width, height, title: "Close", trend: (aapl.at(-1).Close - aapl.at(-2).Close) / aapl.at(-2).Close}))}</div>
+  <div style="display: flex; align-items: center;">${resize((width, height) => BigNumber(aapl.at(-1).Volume, {width, height, title: "Trading volume", format: ".3~s", trend: (aapl.at(-1).Volume - aapl.at(-2).Volume) / aapl.at(-2).Volume}))}</div>
+  <div style="display: flex; align-items: center;">${resize((width, height) => BigNumber(d3.extent(aapl.slice(-90), (d) => d.Close).map((d) => d.toFixed(1)).join("–"), {width, height, title: "90-day range", trend: null}))}</div>
 </div>
 
 <div class="grid grid-cols-3">
@@ -17,7 +17,7 @@ This is a dashboard.
     y: {grid: true},
     marks: [
       Plot.axisY({label: "Price ($)"}),
-      Plot.lineY(aapl, {x: "Date", y: "Close", tip: true})
+      Plot.lineY(aapl, {x: "Date", y: "Close", channels: {Volume: "Volume"}, tip: {format: {x: true, y: true}}})
     ]
   }))}</div>
   <div>${resize((width, height) => Plot.plot({
@@ -88,21 +88,21 @@ function BigNumber(
     width,
     height,
     title = "",
-    format = ",",
-    trend = 0,
-    trendFormat = "+~%",
+    format = ",.2~f",
+    trend,
+    trendFormat = "+.1~%",
     trendColor = trend > 0 ? "green" : trend < 0 ? "red" : "orange",
     trendArrow = trend > 0 ? "↗︎" : trend < 0 ? "↘︎" : "→",
     plot
   } = {}
 ) {
-  if (typeof format !== "function") format = d3.format(format);
+  if (typeof format !== "function") format = typeof number === "string" ? String : d3.format(format);
   if (typeof trendFormat !== "function") trendFormat = d3.format(trendFormat);
   return htl.html`<div style="display: flex; flex-direction: column; font-family: var(--sans-serif);">
   <div style="text-transform: uppercase; font-size: 12px;">${title}</div>
   <div style="display: flex; flex-wrap: wrap; column-gap: 10px; align-items: baseline;">
     <div style="font-size: 32px; font-weight: bold; line-height: 1;">${format(number)}</div>
-    <div style="font-size: 14px; color: ${trendColor};">${trendFormat(trend)} ${trendArrow}</div>
+    ${trend === null ? null : htl.html`<div style="font-size: 14px; color: ${trendColor};">${trendFormat(trend)} ${trendArrow}</div>`}
   </div>
   ${plot && Plot.plot({width, height, ...plot})}
 </div>`;
