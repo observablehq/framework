@@ -9,12 +9,14 @@ import {transpileJavaScript} from "./javascript.js";
 interface ParseContext {
   id: number;
   js: string;
+  files: {name: string; mimeType: string}[];
 }
 
 export interface ParseResult {
   html: string;
   js: string;
   data: {[key: string]: any} | null;
+  files: {name: string; mimeType: string}[];
 }
 
 function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
@@ -24,7 +26,9 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
     let result = "";
     if (language === "js" && option !== "no-run") {
       const id = ++context.id;
-      context.js += `\n${transpileJavaScript(token.content, id)}`;
+      const transpile = transpileJavaScript(token.content, id);
+      context.js += `\n${transpile.js}`;
+      context.files.push(...transpile.files);
       result += `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`;
     }
     if (language !== "js" || option === "show" || option === "no-run") {
@@ -165,7 +169,9 @@ const transformPlaceholderCore: RuleCore = (state) => {
 const renderPlaceholder: RenderRule = (tokens, idx, options, context: ParseContext) => {
   const id = ++context.id;
   const token = tokens[idx];
-  context.js += `\n${transpileJavaScript(token.content, id, {inline: true})}`;
+  const transpile = transpileJavaScript(token.content, id, {inline: true});
+  context.js += `\n${transpile.js}`;
+  context.files.push(...transpile.files);
   return `<span id="cell-${id}"></span>`;
 };
 
@@ -188,7 +194,7 @@ export function parseMarkdown(source: string): ParseResult {
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
   md.renderer.rules.placeholder = renderPlaceholder;
   md.renderer.rules.fence = makeFenceRenderer(md.renderer.rules.fence!);
-  const context: ParseContext = {id: 0, js: ""};
+  const context: ParseContext = {id: 0, js: "", files: []};
   const tokens = md.parse(parts.content, context);
   const html = md.renderer.render(tokens, md.options, context);
   return {html, data: isEmpty(parts.data) ? null : parts.data, ...context};

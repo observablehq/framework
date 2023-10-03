@@ -20,14 +20,14 @@ describe("transpileJavaScript(input)", () => {
       } catch (error) {
         if (error.code === "ENOENT" && process.env.CI !== "true") {
           console.warn(`! generating ${outfile}`);
-          await writeFile(outfile, actual, "utf8");
+          await writeFile(outfile, actual.js, "utf8");
           return;
         } else {
           throw error;
         }
       }
 
-      const equal = expected === actual;
+      const equal = expected === actual.js;
 
       if (equal) {
         if (process.env.CI !== "true") {
@@ -42,7 +42,7 @@ describe("transpileJavaScript(input)", () => {
         }
       } else {
         console.warn(`! generating ${diffile}`);
-        await writeFile(diffile, actual, "utf8");
+        await writeFile(diffile, actual.js, "utf8");
       }
 
       assert.ok(equal, `${name} must match snapshot`);

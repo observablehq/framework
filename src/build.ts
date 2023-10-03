@@ -33,10 +33,12 @@ async function build(context: CommandContext) {
     }
   });
 
-  // Render .md files.
+  // Render .md files, building a list of file attachments as we go.
+  const fileAttachments: {name: string; mimeType: string}[] = [];
   for (const {content, outputPath, sourcePath} of sources) {
     console.log("render", sourcePath, "→", outputPath);
-    const html = renderServerless(content);
+    const render = renderServerless(content);
+    fileAttachments.push(...render.files.map((f) => ({...f, sourcePath})));
     const outputDirectory = outputPath.lastIndexOf("/") > 0 ? outputPath.slice(0, outputPath.lastIndexOf("/")) : null;
     if (outputDirectory) {
       try {
@@ -45,13 +47,23 @@ async function build(context: CommandContext) {
         throw new Error(`Unable to create output directory ${outputDirectory}: ${error.message}`);
       }
     }
-    await writeFile(outputPath, html);
+    await writeFile(outputPath, render.html);
   }
 
   // Copy over the public directory.
   await visitFiles("public", outputDirectory + "/_observablehq", "public", (sourcePath, outputPath) => {
     console.log("copy", sourcePath, "→", outputPath);
     return copyFile(sourcePath, outputPath);
+  });
+
+  // Copy over the referenced files
+  // TODO: This needs more work and consideration for nested directories.
+  await visitFiles(files, outputDirectory + "/_files", sourceRootDirectory, async (sourcePath, outputPath) => {
+    const basename = path.basename(sourcePath);
+    if (fileAttachments.some((f) => f.name === basename)) {
+      console.log("copy", sourcePath, "→", outputPath);
+      return copyFile(sourcePath, outputPath);
+    }
   });
 
   // Copy over required distribution files from node_modules.

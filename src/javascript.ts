@@ -7,29 +7,41 @@ import {defaultGlobals} from "./javascript/globals.js";
 import {findReferences} from "./javascript/references.js";
 import {findFeatures} from "./javascript/features.js";
 
-export function transpileJavaScript(input: string, id: number, options: ParseOptions = {}): string {
+export interface Transpile {
+  js: string;
+  files: {name: string; mimeType: string}[];
+}
+
+export function transpileJavaScript(input: string, id: number, options: ParseOptions = {}): Transpile {
   try {
     const node = parseJavaScript(input, options);
-    const files = node.features.filter((d) => d.type === "FileAttachment");
+    const files = node.features
+      .filter((d) => d.type === "FileAttachment")
+      .map((f) => ({name: f.name, mimeType: mime.getType(f.name)}));
     const inputs = Array.from(new Set(node.references.map((r) => r.name)));
     if (node.expression && !inputs.includes("display")) {
       input = `display((\n${input.trim()}\n))`;
       inputs.push("display");
     }
-    return `define({id: ${id}${inputs.length ? `, inputs: ${JSON.stringify(inputs)}` : ""}${
-      options.inline ? `, inline: true` : ""
-    }${node.declarations?.length ? `, outputs: ${JSON.stringify(node.declarations.map(({name}) => name))}` : ""}${
-      files.length
-        ? `, files: ${JSON.stringify(files.map((f) => ({name: f.name, mimeType: mime.getType(f.name)})))}`
-        : ""
-    }, body: ${node.async ? "async " : ""}(${inputs}) => {
+    return {
+      js: `define({id: ${id}${inputs.length ? `, inputs: ${JSON.stringify(inputs)}` : ""}${
+        options.inline ? `, inline: true` : ""
+      }${node.declarations?.length ? `, outputs: ${JSON.stringify(node.declarations.map(({name}) => name))}` : ""}${
+        files.length ? `, files: ${JSON.stringify(files)}` : ""
+      }, body: ${node.async ? "async " : ""}(${inputs}) => {
 ${input.trim()}${node.declarations?.length ? `\nreturn {${node.declarations.map(({name}) => name)}};` : ""}
 }});
-`;
+`,
+      files
+    };
   } catch (error) {
     if (!(error instanceof SyntaxError)) throw error;
-    return `define({id: ${id}, body: () => { throw new SyntaxError(${JSON.stringify(error.message)}); }});
-`;
+    return {
+      // TODO: Add error details to the response to improve code rendering.
+      js: `define({id: ${id}, body: () => { throw new SyntaxError(${JSON.stringify(error.message)}); }});
+`,
+      files: []
+    };
   }
 }
 

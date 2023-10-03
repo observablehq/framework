@@ -2,14 +2,19 @@ import type {ParseResult} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
 import {computeHash} from "./hash.js";
 
+export interface Render {
+  html: string;
+  files: {name: string; mimeType: string}[];
+}
+
 export function renderPreview(source: string): string {
   const parseResult = parseMarkdown(source);
   return generatePreviewPage(parseResult, computeHash(source));
 }
 
-export function renderServerless(source: string): string {
+export function renderServerless(source: string): Render {
   const parseResult = parseMarkdown(source);
-  return generateServerlessPage(parseResult);
+  return {html: generatePreviewPage(parseResult, computeHash(source)), files: parseResult.files};
 }
 
 export function generatePreviewPage(parseResult: ParseResult, hash: string): string {
