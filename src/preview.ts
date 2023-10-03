@@ -1,12 +1,12 @@
 import {watch, type FSWatcher} from "node:fs";
-import {mkdir, readFile, stat, writeFile} from "node:fs/promises";
+import {readFile} from "node:fs/promises";
 import {IncomingMessage, RequestListener, createServer} from "node:http";
 import {join, normalize} from "node:path";
 import util from "node:util";
 import send from "send";
 import {WebSocketServer, type WebSocket} from "ws";
 import {computeHash} from "./hash.js";
-import {renderPreview, renderServerless} from "./render.js";
+import {renderPreview} from "./render.js";
 
 // TODO Replace with dynamic routing.
 const routes = new Map([
@@ -112,9 +112,7 @@ function handleWatch(socket: WebSocket) {
 }
 
 interface CommandContext {
-  serve: boolean;
-  build: boolean;
-  output?: string;
+  root?: string;
   hostname: string;
   port: number;
   files: string[];
@@ -124,21 +122,13 @@ function makeCommandContext(): CommandContext {
   const {values, positionals} = util.parseArgs({
     allowPositionals: true,
     options: {
+      root: {
+        type: "string",
+        short: "r"
+      },
       hostname: {
         type: "string",
         short: "h"
-      },
-      output: {
-        type: "string",
-        short: "o"
-      },
-      build: {
-        type: "boolean",
-        short: "b"
-      },
-      serve: {
-        type: "boolean",
-        short: "s"
       },
       port: {
         type: "string",
@@ -148,54 +138,11 @@ function makeCommandContext(): CommandContext {
   });
 
   return {
-    serve: values.serve ?? false,
-    build: values.build ?? false,
-    output: values.output,
+    root: values.root,
     hostname: values.hostname ?? process.env.HOSTNAME ?? "127.0.0.1",
     port: values.port ? +values.port : process.env.PORT ? +process.env.PORT : 3000,
     files: positionals
   };
-}
-
-async function build(context: CommandContext) {
-  const {files, output = "./dist"} = context;
-
-  const sources: {
-    outputPath: string;
-    sourcePath: string;
-    content: string;
-  }[] = [];
-
-  // Make sure all files are readable before starting to write output files.
-  for (let sourcePath of files) {
-    let content;
-    try {
-      if ((await stat(sourcePath)).isDirectory()) {
-        sourcePath += "/index.md";
-      }
-      const outputPath =
-        output + (output.length && output[output.length - 1] !== "/" ? "/" : "") + sourcePath.replace(/\.md$/, ".html");
-      content = await readFile(sourcePath, "utf-8");
-      sources.push({sourcePath, outputPath, content});
-    } catch (error) {
-      throw new Error(`Unable to read ${sourcePath}: ${error.message}`);
-    }
-  }
-
-  for (const {content, outputPath} of sources) {
-    console.log("Building", outputPath);
-    const html = renderServerless(content);
-    const outputDirectory = outputPath.lastIndexOf("/") > 0 ? outputPath.slice(0, outputPath.lastIndexOf("/")) : null;
-    if (outputDirectory) {
-      try {
-        console.log("Creating directory", outputDirectory);
-        await mkdir(outputDirectory, {recursive: true});
-      } catch (error) {
-        throw new Error(`Unable to create output directory ${outputDirectory}: ${error.message}`);
-      }
-    }
-    await writeFile(outputPath, html);
-  }
 }
 
 // TODO A --root option should indicate the current working directory within
@@ -204,37 +151,7 @@ async function build(context: CommandContext) {
 // root is ./docs, then / should serve ./docs/index.md, and that same Markdown
 // file should be generated as ./dist/index.html when using --output ./dist.
 
-// TODO If files are not specified, we would recursively find .md files in the
-// root. We could also support a glob pattern that enumerates the Markdown files
-// that should be built. Any files that are listed that are not Markdown files
-// should be ignored.
-
-// TODO We also need to copy over the /_observablehq/client.js for define; in
-// fact, we should copy the entire public directory to ./dist/_observablehq.
-
-// TODO We also need to copy over dist/runtime.js from node_modules.
-
-// TODO We also need to copy over any referenced file attachments; these live in
-// ./dist/_file (currently; perhaps they should be somewhere else)?
-
-// TODO The “preview” command is for previewing (serving); we should separate
-// the build command to a separate file.
-
-const USAGE = `Usage: preview [--serve --port n | --build --output dir] [files...]`;
-
 await (async function () {
   const context = makeCommandContext();
-  if (context.serve) {
-    new Server(context).start();
-  } else if (context.build) {
-    if (!context.files.length) {
-      console.error(USAGE);
-      process.exit(1);
-    }
-    await build(context);
-    process.exit(0);
-  } else {
-    console.error(USAGE);
-    process.exit(1);
-  }
+  new Server(context).start();
 })();
