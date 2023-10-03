@@ -2,9 +2,9 @@ import assert from "assert";
 import {readdirSync, statSync} from "fs";
 import {readFile, unlink, writeFile} from "fs/promises";
 import {basename, join, resolve} from "path";
-import {transpileMarkdown} from "../src/markdown.js";
+import {renderPreview} from "../src/render.js";
 
-describe("transpileMarkdown(input)", () => {
+describe("renderPreview(input)", () => {
   for (const name of readdirSync("./test/input")) {
     if (!name.endsWith(".md")) continue;
     const path = join("./test/input", name);
@@ -12,7 +12,7 @@ describe("transpileMarkdown(input)", () => {
     it(`test/input/${name}`, async () => {
       const outfile = resolve("./test/output", `${basename(name, ".md")}.html`);
       const diffile = resolve("./test/output", `${basename(name, ".md")}-changed.html`);
-      const actual = await transpileMarkdown(await readFile(path, "utf8"));
+      const actual = renderPreview(await readFile(path, "utf8"));
       let expected;
 
       try {

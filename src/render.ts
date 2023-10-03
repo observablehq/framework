@@ -1,19 +1,18 @@
-import {readFile} from "fs/promises";
-import {ParseResult, parseMarkdown} from "./markdown.js";
+import type {ParseResult} from "./markdown.js";
+import {parseMarkdown} from "./markdown.js";
 import {computeHash} from "./hash.js";
 
-export async function render(path: string): Promise<string> {
-  const source = await readFile(path, "utf-8");
+export function renderPreview(source: string): string {
   const parseResult = parseMarkdown(source);
   return generatePreviewPage(parseResult, computeHash(source));
 }
 
-export function renderServerlessSource(source: string): string {
+export function renderServerless(source: string): string {
   const parseResult = parseMarkdown(source);
   return generateServerlessPage(parseResult);
 }
 
-export function generatePreviewPage(parseResult: ParseResult, hash): string {
+export function generatePreviewPage(parseResult: ParseResult, hash: string): string {
   return `<!DOCTYPE html>
 <meta charset="utf-8">
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">

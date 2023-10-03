@@ -1,22 +1,11 @@
-import type {FSWatcher} from "fs";
-import fs from "fs";
-import {readFile} from "fs/promises";
+import {watch, type FSWatcher} from "fs";
+import {mkdir, readFile, stat, writeFile} from "fs/promises";
 import {IncomingMessage, RequestListener, createServer} from "http";
-import send from "send";
-import type {WebSocket} from "ws";
-import {WebSocketServer} from "ws";
-import {computeHash} from "./hash.js";
-import {render, renderServerlessSource} from "./render.js";
 import util from "node:util";
-
-// TODO
-// - header and footer
-// - syntax highlighting for code blocks
-// - serve different notebooks (routing)
-// - 'o' in the terminal opens the browser
-// - websocket keepalive via ping
-// - websocket automatic re-opening when it closes
-// - HTTPS with self-signed certificate or something?
+import send from "send";
+import {WebSocketServer, type WebSocket} from "ws";
+import {computeHash} from "./hash.js";
+import {renderPreview, renderServerless} from "./render.js";
 
 class Server {
   private _server: ReturnType<typeof createServer>;
@@ -43,7 +32,7 @@ class Server {
     if (req.url === "/") {
       res.statusCode = 200;
       res.setHeader("Content-Type", "text/html; charset=utf-8");
-      res.end(await render("./docs/index.md"));
+      res.end(renderPreview(await readFile("./docs/index.md", "utf-8")));
     } else if (req.url === "/_observablehq/runtime.js") {
       send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
     } else if (req.url?.startsWith("/_observablehq/")) {
@@ -67,8 +56,9 @@ class Server {
   }
 }
 
-function handleWatch(socket: WebSocket, filePath) {
+function handleWatch(socket: WebSocket, filePath: string) {
   let watcher: FSWatcher | null = null;
+  console.log("socket open");
 
   socket.on("message", (data) => {
     // TODO error handling
@@ -78,7 +68,7 @@ function handleWatch(socket: WebSocket, filePath) {
       case "hello": {
         if (watcher) throw new Error("already watching");
         let currentHash = message.hash;
-        watcher = fs.watch(filePath, async () => {
+        watcher = watch(filePath, async () => {
           const source = await readFile(filePath, "utf-8");
           const hash = computeHash(source);
           if (currentHash !== hash) {
@@ -168,7 +158,7 @@ async function build(context: CommandContext) {
   for (let sourcePath of files) {
     let content;
     try {
-      if (fs.statSync(sourcePath).isDirectory()) {
+      if ((await stat(sourcePath)).isDirectory()) {
         sourcePath += "/index.md";
       }
       const outputPath =
@@ -180,20 +170,20 @@ async function build(context: CommandContext) {
     }
   }
 
-  sources.forEach(({content, outputPath}) => {
+  for (const {content, outputPath} of sources) {
     console.log("Building", outputPath);
-    const html = renderServerlessSource(content);
+    const html = renderServerless(content);
     const outputDirectory = outputPath.lastIndexOf("/") > 0 ? outputPath.slice(0, outputPath.lastIndexOf("/")) : null;
     if (outputDirectory) {
       try {
         console.log("Creating directory", outputDirectory);
-        fs.mkdirSync(outputDirectory, {recursive: true});
+        await mkdir(outputDirectory, {recursive: true});
       } catch (error) {
         throw new Error(`Unable to create output directory ${outputDirectory}: ${error.message}`);
       }
     }
-    fs.writeFileSync(outputPath, html);
-  });
+    await writeFile(outputPath, html);
+  }
 }
 
 const USAGE = `Usage: preview [--serve --port n | --build --output dir] [files...]`;
