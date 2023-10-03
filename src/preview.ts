@@ -197,7 +197,13 @@ async function build(context: CommandContext) {
 // that should be built. Any files that are listed that are not Markdown files
 // should be ignored.
 
-// TODO We also need to copy over the /_observablehq/client.js for define.
+// TODO We also need to copy over the /_observablehq/client.js for define; in
+// fact, we should copy the entire public directory to ./dist/_observablehq.
+
+// TODO We also need to copy over dist/runtime.js from node_modules.
+
+// TODO We also need to copy over any referenced file attachments; these live in
+// ./dist/_file (currently; perhaps they should be somewhere else)?
 
 const USAGE = `Usage: preview [--serve --port n | --build --output dir] [files...]`;
 
