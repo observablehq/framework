@@ -1,14 +1,13 @@
-import assert from "assert";
-import {readdirSync, statSync} from "fs";
-import {readFile, unlink, writeFile} from "fs/promises";
-import {basename, join, resolve} from "path";
+import assert from "node:assert";
+import {readdir, readFile, stat, unlink, writeFile} from "node:fs/promises";
+import {basename, join, resolve} from "node:path";
 import {renderPreview} from "../src/render.js";
 
-describe("renderPreview(input)", () => {
-  for (const name of readdirSync("./test/input")) {
+describe("renderPreview(input)", async () => {
+  for (const name of await readdir("./test/input")) {
     if (!name.endsWith(".md")) continue;
     const path = join("./test/input", name);
-    if (!statSync(path).isFile()) continue;
+    if (!(await stat(path)).isFile()) continue;
     it(`test/input/${name}`, async () => {
       const outfile = resolve("./test/output", `${basename(name, ".md")}.html`);
       const diffile = resolve("./test/output", `${basename(name, ".md")}-changed.html`);
