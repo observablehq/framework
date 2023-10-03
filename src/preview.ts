@@ -1,6 +1,6 @@
-import {watch, type FSWatcher} from "fs";
-import {mkdir, readFile, stat, writeFile} from "fs/promises";
-import {IncomingMessage, RequestListener, createServer} from "http";
+import {watch, type FSWatcher} from "node:fs";
+import {mkdir, readFile, stat, writeFile} from "node:fs/promises";
+import {IncomingMessage, RequestListener, createServer} from "node:http";
 import util from "node:util";
 import send from "send";
 import {WebSocketServer, type WebSocket} from "ws";
