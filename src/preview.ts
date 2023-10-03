@@ -205,6 +205,9 @@ async function build(context: CommandContext) {
 // TODO We also need to copy over any referenced file attachments; these live in
 // ./dist/_file (currently; perhaps they should be somewhere else)?
 
+// TODO The “preview” command is for previewing (serving); we should separate
+// the build command to a separate file.
+
 const USAGE = `Usage: preview [--serve --port n | --build --output dir] [files...]`;
 
 await (async function () {
