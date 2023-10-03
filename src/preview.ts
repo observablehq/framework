@@ -11,15 +11,6 @@ import {render} from "./render.js";
 const hostname = process.env.HOSTNAME ?? "127.0.0.1";
 const port = process.env.PORT ? +process.env.PORT : 3000;
 
-// TODO
-// - header and footer
-// - syntax highlighting for code blocks
-// - serve different notebooks (routing)
-// - 'o' in the terminal opens the browser
-// - websocket keepalive via ping
-// - websocket automatic re-opening when it closes
-// - HTTPS with self-signed certificate or something?
-
 const server = createServer(async (req, res) => {
   if (req.url === "/") {
     res.statusCode = 200;

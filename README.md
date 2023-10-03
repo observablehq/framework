@@ -83,3 +83,6 @@ TODO
   - default light/dark theme
   - dashboard theme for wide layout
   - custom header and footer
+- websocket keepalive via ping
+- websocket automatic re-opening when it closes
+- HTTPS with self-signed certificate or something?
