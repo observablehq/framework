@@ -97,6 +97,13 @@ function BigNumber(number, {
 
 <style type="text/css">
 
+@media (prefers-color-scheme: light) {
+  :root {
+    --theme-background-color-alt: rgb(var(--theme-background-rgb));
+    --theme-background-color: rgba(var(--theme-foreground-rgb), 0.05);
+  }
+}
+
 .grid {
   margin: 1rem 0;
   display: grid;
