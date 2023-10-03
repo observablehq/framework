@@ -102,7 +102,7 @@ function transformPlaceholderBlock(token) {
     output.push({type: "placeholder", content: input.slice(j + 2, k - 1)});
     i = k;
   });
-  if (i === 0) return token;
+  if (i === 0) return [token];
   else if (i < input.length) output.push({...token, content: input.slice(i)});
   return output;
 }
