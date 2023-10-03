@@ -28,7 +28,7 @@ export function open({hash} = {}) {
 
   socket.onopen = () => {
     console.info("socket open");
-    send({type: "hello", hash});
+    send({type: "hello", path: location.pathname, hash});
   };
 
   socket.onmessage = (event) => {
