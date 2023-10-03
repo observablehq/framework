@@ -2,6 +2,7 @@ import matter from "gray-matter";
 import hljs from "highlight.js";
 import MarkdownIt from "markdown-it";
 import type {RuleCore} from "markdown-it/lib/parser_core.js";
+import type {RuleInline} from "markdown-it/lib/parser_inline.js";
 import type {RenderRule} from "markdown-it/lib/renderer.js";
 import {transpileJavaScript} from "./javascript.js";
 
@@ -106,37 +107,52 @@ function transformPlaceholderBlock(token) {
   return output;
 }
 
-function transformPlaceholderInline(token) {
-  const input = token.children;
-  const output: any[] = [];
-  for (const child of input) {
-    if (child.type === "text") {
-      let i = 0;
-      const content = child.content;
-      parsePlaceholder(content, (j, k) => {
-        output.push({...child, content: content.slice(i, j)});
-        output.push({type: "placeholder", content: content.slice(j + 2, k - 1)});
-        i = k;
-      });
-      if (i === 0) output.push(child);
-      else if (i < content.length) output.push({...child, content: content.slice(i)});
-    } else {
-      output.push(child);
+const transformPlaceholderInline: RuleInline = (state, silent) => {
+  if (silent || state.pos + 2 > state.posMax) return false;
+  const marker1 = state.src.charCodeAt(state.pos);
+  const marker2 = state.src.charCodeAt(state.pos + 1);
+  if (!(marker1 === CODE_DOLLAR && marker2 === CODE_BRACEL)) return false;
+  let quote = 0;
+  let braces = 0;
+  for (let pos = state.pos + 2; pos < state.posMax; ++pos) {
+    const code = state.src.charCodeAt(pos);
+    if (code === CODE_BACKSLASH) {
+      ++pos; // skip next character
+      continue;
+    }
+    if (quote) {
+      if (code === quote) quote = 0;
+      continue;
+    }
+    switch (code) {
+      case CODE_QUOTE:
+      case CODE_SINGLE_QUOTE:
+      case CODE_BACKTICK:
+        quote = code;
+        break;
+      case CODE_BRACEL:
+        ++braces;
+        break;
+      case CODE_BRACER:
+        if (--braces < 0) {
+          const token = state.push("placeholder", "", 0);
+          token.content = state.src.slice(state.pos + 2, pos);
+          state.pos = pos + 1;
+          return true;
+        }
+        break;
     }
   }
-  return {...token, children: output};
-}
+  return false;
+};
 
-const transformPlaceholder: RuleCore = (state) => {
+const transformPlaceholderCore: RuleCore = (state) => {
   const input = state.tokens;
   const output: any[] = [];
   for (const token of input) {
     switch (token.type) {
       case "html_block":
         output.push(...transformPlaceholderBlock(token));
-        break;
-      case "inline":
-        output.push(transformPlaceholderInline(token));
         break;
       default:
         output.push(token);
@@ -168,7 +184,8 @@ export function parseMarkdown(source: string): ParseResult {
       return ""; // defaults to escapeHtml(str)
     }
   });
-  md.core.ruler.before("linkify", "placeholder", transformPlaceholder);
+  md.inline.ruler.push("placeholder", transformPlaceholderInline);
+  md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
   md.renderer.rules.placeholder = renderPlaceholder;
   md.renderer.rules.fence = makeFenceRenderer(md.renderer.rules.fence!);
   const context: ParseContext = {id: 0, js: ""};

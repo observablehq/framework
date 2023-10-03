@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
+<script type="module">
+
+import {open, define} from "/_observablehq/client.js";
+
+open({hash: "BLF6tgkXYoOzaL1UHiABGhBvL40I3vs8ZV6evzzLxeg="});
+
+define({id: 1, inputs: ["tex","display"], inline: true, body: (tex,display) => {
+display((
+tex`\KaTeX`
+))
+}});
+
+define({id: 2, inputs: ["tex","display"], inline: true, body: (tex,display) => {
+display((
+tex`E = mc^2`
+))
+}});
+
+</script>
+<h1>Hello, <span id="cell-1"></span></h1>
+<p>My favorite equation is <span id="cell-2"></span>.</p>
