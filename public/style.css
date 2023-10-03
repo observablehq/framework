@@ -2,7 +2,11 @@
 @import url("https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap");
 
 :root {
-  --syntax-normal: #1b1e23;
+  --theme-background-rgb: 255, 255, 255;
+  --theme-foreground-rgb: 27, 30, 35;
+  --theme-background-color: rgb(var(--theme-background-rgb));
+  --theme-background-color-alt: rgba(var(--theme-foreground-rgb), 0.05);
+  --theme-foreground-color: rgb(var(--theme-foreground-rgb));
   --syntax-comment: #828282;
   --syntax-diff: #24292e;
   --syntax-diff-bg: #ffffff;
@@ -15,7 +19,6 @@
   --syntax-known-variable: #005f87;
   --syntax-matchbracket: #20bbfc;
   --syntax-key: #6636b4;
-  --hr: rgba(0, 0, 0, 0.05);
   --monospace: Menlo, Consolas, monospace;
   --monospace-font: 14px/1.5 var(--monospace);
   --serif: "Source Serif Pro", "Iowan Old Style", "Apple Garamond", "Palatino Linotype", "Times New Roman", "Droid Serif", Times, serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
@@ -27,7 +30,8 @@ html {
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #1b1e23;
+  background: var(--theme-background-color);
+  color: var(--theme-foreground-color);
 }
 
 body {
@@ -42,7 +46,7 @@ h3,
 h4,
 h5,
 h6 {
-  color: #333;
+  color: rgb(var(--theme-foreground-rgb), 0.9);
   font-weight: 700;
   line-height: 1.15;
   margin-top: 0;
@@ -59,6 +63,7 @@ h4 + table {
 }
 
 h1 + h2 {
+  color: var(--theme-foreground-color);
   font-size: 20px;
   font-style: italic;
   font-weight: normal;
@@ -116,7 +121,7 @@ blockquote {
   margin: 1rem 1.5rem;
 }
 
-ul,
+ul
 ol {
   padding-left: 28px;
 }
@@ -126,11 +131,11 @@ hr {
   margin: 1rem 0;
   padding: 1rem 0;
   border: none;
-  background: no-repeat center/100% 1px linear-gradient(to right, var(--hr), var(--hr));
+  background: no-repeat center/100% 1px linear-gradient(to right, rgba(var(--theme-foreground-rgb), 0.1), rgba(var(--theme-foreground-rgb), 0.1));
 }
 
 pre {
-  background: rgb(245, 245, 245);
+  background-color: var(--theme-background-color-alt);
   margin: 1rem -14px;
   padding: 5px 14px;
   border-radius: 4px;
@@ -181,13 +186,13 @@ td > pre:only-child {
 }
 
 th {
-  color: #111;
+  color: rgb(var(--theme-foreground-rgb), 0.9);
   text-align: left;
   vertical-align: bottom;
 }
 
 td {
-  color: #444;
+  color: rgb(var(--theme-foreground-rgb), 0.8);
   vertical-align: top;
 }
 
@@ -201,11 +206,11 @@ th:last-child, td:last-child {
 }
 
 tr:not(:last-child) {
-  border-bottom: solid 1px #eee;
+  border-bottom: solid 1px rgb(var(--theme-foreground-rgb), 0.1);
 }
 
 thead tr {
-  border-bottom: solid 1px #ccc;
+  border-bottom: solid 1px rgb(var(--theme-foreground-rgb), 0.3);
 }
 
 figure,
@@ -399,4 +404,45 @@ a[href],
 
 .observablehq--string-expand:active {
   background: #ddd;
+}
+
+.oi-3a86ea-table thead th {
+  background: var(--theme-background-color) !important;
+}
+
+.oi-3a86ea-table tr:not(:last-child) td,
+.oi-3a86ea-table tr:not(:last-child) th {
+  border-bottom: solid 1px rgba(var(--theme-foreground-rgb), 0.1) !important;
+}
+
+.oi-3a86ea-table thead tr td,
+.oi-3a86ea-table thead tr th {
+  border-bottom: solid 1px rgba(var(--theme-foreground-rgb), 0.3) !important;
+}
+
+svg.plot-d6a7b5,
+svg.plot-d6a7b5-ramp {
+  background: none;
+}
+
+svg.plot-d6a7b5 [aria-label="tip"][fill="white"],
+svg.plot-d6a7b5 [aria-label="tip"] [fill="white"] {
+  fill: var(--theme-background-color);
+}
+
+svg.plot-d6a7b5 marker[stroke="white"],
+svg.plot-d6a7b5 [aria-label^="crosshair"][stroke="white"] {
+  stroke: var(--theme-background-color);
+}
+
+svg.plot-d6a7b5 marker[fill="white"] {
+  fill: var(--theme-background-color);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --theme-foreground-rgb: 223, 223, 214;
+    --theme-background-rgb: 31, 31, 31;
+    --theme-background-color-alt: rgba(0, 0, 0, 0.3);
+  }
 }
