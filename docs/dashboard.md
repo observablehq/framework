@@ -100,7 +100,7 @@ function BigNumber(number, {
 @media (prefers-color-scheme: light) {
   :root {
     --theme-background-color-alt: rgb(var(--theme-background-rgb));
-    --theme-background-color: rgba(var(--theme-foreground-rgb), 0.05);
+    --theme-background-color: color-mix(in srgb, var(--theme-foreground-color) 5%, white);
   }
 }
 
