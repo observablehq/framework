@@ -1,13 +1,14 @@
 import assert from "node:assert";
-import {readdir, readFile, stat, unlink, writeFile} from "node:fs/promises";
+import {readdirSync, statSync} from "node:fs";
+import {readFile, unlink, writeFile} from "node:fs/promises";
 import {basename, join, resolve} from "node:path";
 import {transpileJavaScript} from "../src/javascript.js";
 
-describe("transpileJavaScript(input)", async () => {
-  for (const name of await readdir("./test/input")) {
+describe("transpileJavaScript(input)", () => {
+  for (const name of readdirSync("./test/input")) {
     if (!name.endsWith(".js")) continue;
     const path = join("./test/input", name);
-    if (!(await stat(path)).isFile()) continue;
+    if (!statSync(path).isFile()) continue;
     it(`test/input/${name}`, async () => {
       const outfile = resolve("./test/output", `${basename(name, ".js")}.js`);
       const diffile = resolve("./test/output", `${basename(name, ".js")}-changed.js`);

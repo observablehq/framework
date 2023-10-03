@@ -23,9 +23,9 @@ TODO
   - ✅ static feature detection: files, databases, secrets
   - asynchronous reactive top-level assignment (let y; await; y = 1)
   - implicit declaration for unbound assignment (x = 1)
-- more robust inline expressions
-  - handle template strings `…` (code_inline)
-  - handle backslashes (text_special)
+- ✅ more robust inline expressions
+  - ✅ handle template strings `…` (code_inline)
+  - ✅ handle backslashes (text_special)
 - ✅ embedded JavaScript expressions behave like htl.html (no inspector)
 - ✅ file attachments
 - database clients (databases registered in YAML or observablehq.json)
