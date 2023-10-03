@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "dev": "tsx watch ./src/preview.ts --serve",
-    "build": "tsx ./src/preview.ts --build --output ./dist",
+    "build": "tsx ./src/preview.ts --build --output ./dist ./docs",
     "test": "yarn test:mocha && yarn test:lint",
     "test:mocha": "mkdir -p test/output && node --loader tsx ./node_modules/.bin/mocha 'test/**/*-test.*'",
     "test:lint": "eslint src test"

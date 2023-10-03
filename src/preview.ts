@@ -186,6 +186,19 @@ async function build(context: CommandContext) {
   }
 }
 
+// TODO A --root option should indicate the current working directory within
+// which to find Markdown files, for both --serve and --build. The serving paths
+// and generated file paths should be relative to the root. For example, if the
+// root is ./docs, then / should serve ./docs/index.md, and that same Markdown
+// file should be generated as ./dist/index.html when using --output ./dist.
+
+// TODO If files are not specified, we would recursively find .md files in the
+// root. We could also support a glob pattern that enumerates the Markdown files
+// that should be built. Any files that are listed that are not Markdown files
+// should be ignored.
+
+// TODO We also need to copy over the /_observablehq/client.js for define.
+
 const USAGE = `Usage: preview [--serve --port n | --build --output dir] [files...]`;
 
 await (async function () {

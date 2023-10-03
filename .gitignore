@@ -1,4 +1,5 @@
 .DS_Store
+dist/
 node_modules/
 test/output/*-changed.*
 yarn-error.log
