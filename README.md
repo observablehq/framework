@@ -31,6 +31,9 @@ TODO
 - proxied fetch (bypass CORS; registered in YAML or observablehq.json)
 - data table display for tabular data (query results, CSV, _etc._)
 - SQL fenced code blocks
+- more robust inline expressions
+  - handle template strings `…` (code_inline)
+  - handle backslashes (text_special)
 - fenced code block options
   - echo to show code in output
   - output name for SQL cells

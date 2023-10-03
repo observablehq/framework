@@ -48,23 +48,32 @@ function parsePlaceholder(content: string, replacer: (i: number, j: number) => v
     const cj = content.charCodeAt(j);
     if (cj === CODE_BACKSLASH) {
       ++j; // skip next character
-    } else if (cj === CODE_DOLLAR) {
+      continue;
+    }
+    if (cj === CODE_DOLLAR) {
       afterDollar = true;
-    } else {
-      if (cj === CODE_BRACEL && afterDollar) {
-        let inQuote = 0; // TODO detect comments, too
+      continue;
+    }
+    if (afterDollar) {
+      if (cj === CODE_BRACEL) {
+        let quote = 0; // TODO detect comments, too
         let braces = 0;
-        inner: for (let k = j + 1; k < n; ++k) {
+        let k = j + 1;
+        inner: for (; k < n; ++k) {
           const ck = content.charCodeAt(k);
-          if (inQuote) {
-            if (ck === inQuote) inQuote = 0;
+          if (ck === CODE_BACKSLASH) {
+            ++k;
+            continue;
+          }
+          if (quote) {
+            if (ck === quote) quote = 0;
             continue;
           }
           switch (ck) {
             case CODE_QUOTE:
             case CODE_SINGLE_QUOTE:
             case CODE_BACKTICK:
-              inQuote = ck;
+              quote = ck;
               break;
             case CODE_BRACEL:
               ++braces;
@@ -77,6 +86,7 @@ function parsePlaceholder(content: string, replacer: (i: number, j: number) => v
               break;
           }
         }
+        j = k;
       }
       afterDollar = false;
     }
