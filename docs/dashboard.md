@@ -2,24 +2,33 @@
 
 This is a dashboard.
 
+```js
+const mainplot = resize((width, height) => Plot.plot({
+  width,
+  height,
+  margin: 17,
+  marginLeft: 40,
+  y: {grid: true},
+  marks: [
+    Plot.axisY({label: "Price ($)"}),
+    Plot.lineY(aapl, {x: "Date", y: "Close", channels: {Volume: "Volume"}, tip: {format: {x: true, y: true}}})
+  ]
+}));
+
+const focus = Generators.observe((notify) => {
+  notify(aapl.at(-1));
+  mainplot.oninput = () => notify(mainplot.querySelector("svg").value ?? aapl.at(-1));
+});
+```
+
 <div class="grid grid-cols-3" style="grid-auto-rows: 85px;">
-  <div style="display: flex; align-items: center;">${resize((width, height) => BigNumber(aapl.at(-1).Close, {width, height, title: "Close", trend: (aapl.at(-1).Close - aapl.at(-2).Close) / aapl.at(-2).Close}))}</div>
-  <div style="display: flex; align-items: center;">${resize((width, height) => BigNumber(aapl.at(-1).Volume, {width, height, title: "Trading volume", format: ".3~s", trend: (aapl.at(-1).Volume - aapl.at(-2).Volume) / aapl.at(-2).Volume}))}</div>
+  <div style="display: flex; align-items: center;">${resize((width, height) => BigNumber(focus.Close, {width, height, title: "Close", trend: (focus.Close - aapl.at(-2).Close) / aapl.at(-2).Close}))}</div>
+  <div style="display: flex; align-items: center;">${resize((width, height) => BigNumber(focus.Volume, {width, height, title: "Trading volume", format: ".3~s", trend: (focus.Volume - aapl.at(-2).Volume) / aapl.at(-2).Volume}))}</div>
   <div style="display: flex; align-items: center;">${resize((width, height) => BigNumber(d3.extent(aapl.slice(-90), (d) => d.Close).map((d) => d.toFixed(1)).join("–"), {width, height, title: "90-day range", trend: null}))}</div>
 </div>
 
 <div class="grid grid-cols-3">
-  <div class="grid-colspan-2 grid-rowspan-2">${resize((width, height) => Plot.plot({
-    width,
-    height,
-    margin: 17,
-    marginLeft: 40,
-    y: {grid: true},
-    marks: [
-      Plot.axisY({label: "Price ($)"}),
-      Plot.lineY(aapl, {x: "Date", y: "Close", channels: {Volume: "Volume"}, tip: {format: {x: true, y: true}}})
-    ]
-  }))}</div>
+  <div class="grid-colspan-2 grid-rowspan-2">${mainplot}</div>
   <div>${tex.block`\displaystyle {\begin{aligned}&C(0,t)=0{\text{ for all }}t\\&C(S,t)\rightarrow S-K{\text{ as }}S\rightarrow \infty \\&C(S,T)=\max\{S-K,0\}\end{aligned}}`}</div>
   <div>${resize((width, height) => Plot.plot({
     width,
