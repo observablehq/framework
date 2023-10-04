@@ -12,7 +12,7 @@ describe("renderPreview(input)", () => {
     it(`test/input/${name}`, async () => {
       const outfile = resolve("./test/output", `${basename(name, ".md")}.html`);
       const diffile = resolve("./test/output", `${basename(name, ".md")}-changed.html`);
-      const actual = renderPreview(await readFile(path, "utf8"));
+      const actual = renderPreview(await readFile(path, "utf8")).html;
       let expected;
 
       try {

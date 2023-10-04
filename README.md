@@ -69,6 +69,7 @@ TODO
   - remove deprecated features for standard library
   - Generators.asyncInput
 - ✅ self-host Observable Runtime instead of jsDelivr CDN
+- add tests for serverless (build) output, too
 - better theme colors for highlight.js
 - better logic for clearing display after invalidation
 - Symbol.for("observablehq.display") for custom inspectors?

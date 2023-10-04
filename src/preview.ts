@@ -43,7 +43,7 @@ class Server {
     } else if (routes.has(pathname)) {
       res.statusCode = 200;
       res.setHeader("Content-Type", "text/html; charset=utf-8");
-      res.end(renderPreview(await readFile(routes.get(pathname)!, "utf-8")));
+      res.end(renderPreview(await readFile(routes.get(pathname)!, "utf-8")).html);
     } else if (pathname === "/_observablehq/runtime.js") {
       send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
     } else if (pathname.startsWith("/_observablehq/")) {

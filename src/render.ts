@@ -7,14 +7,14 @@ export interface Render {
   files: {name: string; mimeType: string}[];
 }
 
-export function renderPreview(source: string): string {
+export function renderPreview(source: string): Render {
   const parseResult = parseMarkdown(source);
-  return generatePreviewPage(parseResult, computeHash(source));
+  return {html: generatePreviewPage(parseResult, computeHash(source)), files: parseResult.files};
 }
 
 export function renderServerless(source: string): Render {
   const parseResult = parseMarkdown(source);
-  return {html: generatePreviewPage(parseResult, computeHash(source)), files: parseResult.files};
+  return {html: generateServerlessPage(parseResult), files: parseResult.files};
 }
 
 export function generatePreviewPage(parseResult: ParseResult, hash: string): string {
@@ -45,7 +45,6 @@ export function generateServerlessPage(parseResult: ParseResult): string {
 <script type="module">
 
 import {define} from "/_observablehq/client.js";
-
 ${parseResult.js}
 </script>${
     parseResult.data
