@@ -20,7 +20,7 @@ export function define({id, inline, inputs = [], outputs = [], files = [], body}
   v._shadow.set("view", _view); // can’t use shadow because depends on Generators; could use closure though
   v.define(outputs.length ? `cell ${id}` : null, inputs, body);
   for (const o of outputs) main.define(o, [`cell ${id}`], (exports) => exports[o]);
-  for (const f of files) attachedFiles.set(f.name, {url: `/_file/${f.name}`, mimeType: f.mimeType});
+  for (const f of files) attachedFiles.set(f.name, {url: String(new URL(`/_file/${f.name}`, location)), mimeType: f.mimeType});
 }
 
 export function open({hash} = {}) {
