@@ -10,6 +10,10 @@
   "files": [
     "src/**/*.js"
   ],
+  "bin": {
+    "build": "bin/build.ts",
+    "preview": "bin/preview.ts"
+  },
   "scripts": {
     "dev": "tsx watch ./src/preview.ts",
     "build": "rm -rf dist && tsx ./src/build.ts --output ./dist --root ./docs",
@@ -26,6 +30,7 @@
     "markdown-it": "^13.0.2",
     "mime": "^3.0.0",
     "send": "^0.18.0",
+    "tsx": "^3.13.0",
     "ws": "^8.14.2"
   },
   "devDependencies": {
@@ -40,7 +45,6 @@
     "eslint-plugin-prettier": "^5.0.0",
     "mocha": "^10.2.0",
     "prettier": "^3.0.3",
-    "tsx": "^3.13.0",
     "typescript": "^5.2.2"
   }
 }
