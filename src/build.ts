@@ -120,7 +120,7 @@ async function visitFiles(
 // TODO We also need to copy over any referenced file attachments; these live in
 // ./dist/_file (currently; perhaps they should be somewhere else)?
 
-const USAGE = `Usage: build [--root dir] [--output dir] [files...]`;
+const USAGE = `Usage: observable build [--root dir] [--output dir] [files...]`;
 
 interface CommandContext {
   root?: string;
