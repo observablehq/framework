@@ -3,7 +3,7 @@ import util from "node:util";
 import {renderServerless} from "./render.js";
 import path from "node:path";
 
-const DEFAULT_PACKAGES = ["@observablehq/runtime"];
+const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
 
 async function build(context: CommandContext) {
   const {root = "./docs", output = "dist", files} = context;
@@ -68,12 +68,10 @@ async function build(context: CommandContext) {
 
   // Copy over required distribution files from node_modules.
   // TODO: Note that this requires that the build command be run relative to the node_modules directory.
-  for (const pack of DEFAULT_PACKAGES) {
-    const packagePath = `node_modules/${pack}/dist`;
-    await visitFiles(packagePath, outputDirectory + "/_observablehq", packagePath, (sourcePath, outputPath) => {
-      console.log("copy", sourcePath, "→", outputPath);
-      return copyFile(sourcePath, outputPath);
-    });
+  for (const [sourcePath, targetPath] of EXTRA_FILES) {
+    const outputPath = path.join(outputDirectory, targetPath);
+    console.log("copy", sourcePath, "→", outputPath);
+    await copyFile(sourcePath, outputPath);
   }
 }
 
