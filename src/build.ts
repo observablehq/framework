@@ -2,6 +2,7 @@ import {copyFile, mkdir, readFile, readdir, stat, writeFile} from "node:fs/promi
 import util from "node:util";
 import {renderServerless} from "./render.js";
 import path from "node:path";
+import url from "node:url";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
 
@@ -50,8 +51,9 @@ async function build(context: CommandContext) {
     await writeFile(outputPath, render.html);
   }
 
-  // Copy over the public directory.
-  await visitFiles("public", outputDirectory + "/_observablehq", "public", (sourcePath, outputPath) => {
+  // Copy over the ../public directory.
+  const publicPath = path.join(path.dirname(url.fileURLToPath(import.meta.url)), "..", "public");
+  await visitFiles(publicPath, outputDirectory + "/_observablehq", publicPath, (sourcePath, outputPath) => {
     console.log("copy", sourcePath, "→", outputPath);
     return copyFile(sourcePath, outputPath);
   });
