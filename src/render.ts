@@ -20,6 +20,7 @@ export function renderServerless(source: string): Render {
 export function generatePreviewPage(parseResult: ParseResult, hash: string): string {
   return `<!DOCTYPE html>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
 <script type="module">
 
@@ -41,6 +42,7 @@ ${parseResult.html}`;
 export function generateServerlessPage(parseResult: ParseResult): string {
   return `<!DOCTYPE html>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
 <script type="module">
 

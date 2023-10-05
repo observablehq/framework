@@ -1,5 +1,6 @@
 {
   "name": "@observablehq/cli",
+  "license": "UNLICENSED",
   "version": "0.0.4",
   "type": "module",
   "publishConfig": {
