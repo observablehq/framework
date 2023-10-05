@@ -1,16 +1,16 @@
 import {copyFile, mkdir, readFile, readdir, stat, writeFile} from "node:fs/promises";
-import util from "node:util";
+import {basename, dirname, join, normalize} from "node:path";
+import {fileURLToPath} from "node:url";
+import {parseArgs} from "node:util";
 import {renderServerless} from "./render.js";
-import path from "node:path";
-import url from "node:url";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
 
 async function build(context: CommandContext) {
   const {root = "./docs", output = "dist", files} = context;
 
-  const sourceRootDirectory = path.normalize(root);
-  const outputDirectory = path.normalize(output);
+  const sourceRootDirectory = normalize(root);
+  const outputDirectory = normalize(output);
 
   if (files.length === 0) {
     files.push(sourceRootDirectory);
@@ -52,7 +52,7 @@ async function build(context: CommandContext) {
   }
 
   // Copy over the ../public directory.
-  const publicPath = path.join(path.dirname(url.fileURLToPath(import.meta.url)), "..", "public");
+  const publicPath = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
   await visitFiles(publicPath, outputDirectory + "/_observablehq", publicPath, (sourcePath, outputPath) => {
     console.log("copy", sourcePath, "→", outputPath);
     return copyFile(sourcePath, outputPath);
@@ -61,8 +61,8 @@ async function build(context: CommandContext) {
   // Copy over the referenced files
   // TODO: This needs more work and consideration for nested directories.
   await visitFiles(files, outputDirectory + "/_file", sourceRootDirectory, async (sourcePath, outputPath) => {
-    const basename = path.basename(sourcePath);
-    if (fileAttachments.some((f) => f.name === basename)) {
+    const sourceName = basename(sourcePath);
+    if (fileAttachments.some((f) => f.name === sourceName)) {
       console.log("copy", sourcePath, "→", outputPath);
       return copyFile(sourcePath, outputPath);
     }
@@ -71,7 +71,7 @@ async function build(context: CommandContext) {
   // Copy over required distribution files from node_modules.
   // TODO: Note that this requires that the build command be run relative to the node_modules directory.
   for (const [sourcePath, targetPath] of EXTRA_FILES) {
-    const outputPath = path.join(outputDirectory, targetPath);
+    const outputPath = join(outputDirectory, targetPath);
     console.log("copy", sourcePath, "→", outputPath);
     await copyFile(sourcePath, outputPath);
   }
@@ -83,20 +83,20 @@ async function visitFiles(
   root: string,
   visitor: (sourcePath: string, outputPath: string) => Promise<void>
 ) {
-  const sourceRootDirectory = path.normalize(root);
-  const outputDirectory = path.normalize(output);
+  const sourceRootDirectory = normalize(root);
+  const outputDirectory = normalize(output);
 
   const visited = new Set<number>();
-  const files: string[] = Array.isArray(source) ? source.map((file) => path.normalize(file)) : [path.normalize(source)];
+  const files: string[] = Array.isArray(source) ? source.map((file) => normalize(file)) : [normalize(source)];
 
   for (const file of files) {
-    const sourcePath = path.normalize(file);
+    const sourcePath = normalize(file);
     const status = await stat(sourcePath);
     if (status.isDirectory()) {
       if (visited.has(status.ino)) throw new Error("Circular directory structure with " + sourcePath);
       visited.add(status.ino);
       for (const entry of await readdir(sourcePath)) {
-        files.push(path.join(sourcePath, entry));
+        files.push(join(sourcePath, entry));
       }
       continue;
     }
@@ -104,7 +104,7 @@ async function visitFiles(
     const subPath = sourcePath.startsWith(sourceRootDirectory + "/")
       ? sourcePath.slice(sourceRootDirectory.length + 1)
       : sourcePath;
-    const outputPath = path.join(outputDirectory, subPath);
+    const outputPath = join(outputDirectory, subPath);
 
     const dest = outputPath.lastIndexOf("/") > 0 ? outputPath.slice(0, outputPath.lastIndexOf("/")) : null;
     if (dest) {
@@ -131,7 +131,7 @@ interface CommandContext {
 }
 
 function makeCommandContext(): CommandContext {
-  const {values, positionals} = util.parseArgs({
+  const {values, positionals} = parseArgs({
     allowPositionals: true,
     options: {
       root: {

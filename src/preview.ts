@@ -3,7 +3,7 @@ import {readFile} from "node:fs/promises";
 import {IncomingMessage, RequestListener, createServer} from "node:http";
 import {dirname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
-import util from "node:util";
+import {parseArgs} from "node:util";
 import send from "send";
 import {WebSocketServer, type WebSocket} from "ws";
 import {computeHash} from "./hash.js";
@@ -122,7 +122,7 @@ interface CommandContext {
 }
 
 function makeCommandContext(): CommandContext {
-  const {values, positionals} = util.parseArgs({
+  const {values, positionals} = parseArgs({
     allowPositionals: true,
     options: {
       root: {
