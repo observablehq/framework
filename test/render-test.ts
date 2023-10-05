@@ -9,9 +9,12 @@ describe("renderPreview(input)", () => {
     if (!name.endsWith(".md")) continue;
     const path = join("./test/input", name);
     if (!statSync(path).isFile()) continue;
-    it(`test/input/${name}`, async () => {
-      const outfile = resolve("./test/output", `${basename(name, ".md")}.html`);
-      const diffile = resolve("./test/output", `${basename(name, ".md")}-changed.html`);
+    const only = name.startsWith("only.");
+    const skip = name.startsWith("skip.");
+    const outname = only || skip ? name.slice(5) : name;
+    (only ? it.only : skip ? it.skip : it)(`test/input/${name}`, async () => {
+      const outfile = resolve("./test/output", `${basename(outname, ".md")}.html`);
+      const diffile = resolve("./test/output", `${basename(outname, ".md")}-changed.html`);
       const actual = renderPreview(await readFile(path, "utf8")).html;
       let expected;
 

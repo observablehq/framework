@@ -99,6 +99,7 @@ function parsePlaceholder(content: string, replacer: (i: number, j: number) => v
 
 function transformPlaceholderBlock(token) {
   const input = token.content;
+  if (/^\s*<script(\s|>)/.test(input)) return [token]; // ignore <script> elements
   const output: any[] = [];
   let i = 0;
   parsePlaceholder(input, (j, k) => {

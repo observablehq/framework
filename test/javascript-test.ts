@@ -9,9 +9,12 @@ describe("transpileJavaScript(input)", () => {
     if (!name.endsWith(".js")) continue;
     const path = join("./test/input", name);
     if (!statSync(path).isFile()) continue;
-    it(`test/input/${name}`, async () => {
-      const outfile = resolve("./test/output", `${basename(name, ".js")}.js`);
-      const diffile = resolve("./test/output", `${basename(name, ".js")}-changed.js`);
+    const only = name.startsWith("only.");
+    const skip = name.startsWith("skip.");
+    const outname = only || skip ? name.slice(5) : name;
+    (only ? it.only : skip ? it.skip : it)(`test/input/${name}`, async () => {
+      const outfile = resolve("./test/output", `${basename(outname, ".js")}.js`);
+      const diffile = resolve("./test/output", `${basename(outname, ".js")}-changed.js`);
       const actual = await transpileJavaScript(await readFile(path, "utf8"), 0);
       let expected;
 
