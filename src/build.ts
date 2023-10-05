@@ -60,7 +60,7 @@ async function build(context: CommandContext) {
 
   // Copy over the referenced files
   // TODO: This needs more work and consideration for nested directories.
-  await visitFiles(files, outputDirectory + "/_files", sourceRootDirectory, async (sourcePath, outputPath) => {
+  await visitFiles(files, outputDirectory + "/_file", sourceRootDirectory, async (sourcePath, outputPath) => {
     const basename = path.basename(sourcePath);
     if (fileAttachments.some((f) => f.name === basename)) {
       console.log("copy", sourcePath, "→", outputPath);
