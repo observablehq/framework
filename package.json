@@ -2,7 +2,9 @@
   "name": "@observablehq/cli",
   "version": "0.0.1",
   "type": "module",
-  "private": true,
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/observablehq/cli.git"
