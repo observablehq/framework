@@ -32,12 +32,12 @@ html {
   -moz-osx-font-smoothing: grayscale;
   background: var(--theme-background-color);
   color: var(--theme-foreground-color);
+  margin: 2rem 1rem;
 }
 
 body {
   margin: auto;
-  padding: 2rem 1rem;
-  max-width: 1080px;
+  max-width: 1152px;
 }
 
 h1,
