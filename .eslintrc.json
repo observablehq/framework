@@ -5,28 +5,40 @@
     "plugin:prettier/recommended"
   ],
   "plugins": [
-    "@typescript-eslint",
-    "prettier"
+    "@typescript-eslint"
   ],
   "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "project": "./tsconfig.json",
+    "sourceType": "module"
+  },
   "env": {
     "es2020": true,
-    "node": true,
-    "browser": true
+    "node": true
   },
   "rules": {
+    "@typescript-eslint/consistent-type-imports": [ "warn", { "prefer": "type-imports" } ],
+    "@typescript-eslint/no-empty-function": 0,
+    "@typescript-eslint/no-explicit-any": 0,
+    "@typescript-eslint/no-this-alias": 0,
+    "@typescript-eslint/no-unused-vars": [ "error", { "ignoreRestSiblings": true } ],
     "no-cond-assign": 0,
     "no-constant-condition": 0,
     "no-sparse-arrays": 0,
     "no-unexpected-multiline": 0,
-    "@typescript-eslint/no-empty-function": 0,
-    "@typescript-eslint/no-explicit-any": 0,
-    "@typescript-eslint/no-this-alias": 0,
-    "@typescript-eslint/no-unused-vars": [
-      "error",
-      {
-        "ignoreRestSiblings": true
-      }
-    ]
-  }
+    "object-shorthand": [ "warn", "always" ],
+    "prettier/prettier": [ "warn" ]
+  },
+  "overrides": [
+    {
+      "files": [ "public/**" ],
+      "env": {
+        "es2020": true,
+        "node": false,
+        "browser": true
+        }
+    }
+  ],
+  "root": true
 }

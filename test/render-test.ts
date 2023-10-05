@@ -3,6 +3,7 @@ import {readdirSync, statSync} from "node:fs";
 import {readFile, unlink, writeFile} from "node:fs/promises";
 import {basename, join, resolve} from "node:path";
 import {renderPreview} from "../src/render.js";
+import {isNodeError} from "../src/error.js";
 
 describe("renderPreview(input)", () => {
   for (const name of readdirSync("./test/input")) {
@@ -21,7 +22,7 @@ describe("renderPreview(input)", () => {
       try {
         expected = await readFile(outfile, "utf8");
       } catch (error) {
-        if (error.code === "ENOENT" && process.env.CI !== "true") {
+        if (isNodeError(error) && error.code === "ENOENT" && process.env.CI !== "true") {
           console.warn(`! generating ${outfile}`);
           await writeFile(outfile, actual, "utf8");
           return;
@@ -38,7 +39,7 @@ describe("renderPreview(input)", () => {
             await unlink(diffile);
             console.warn(`! deleted ${diffile}`);
           } catch (error) {
-            if (error.code !== "ENOENT") {
+            if (!isNodeError(error) || error.code !== "ENOENT") {
               throw error;
             }
           }

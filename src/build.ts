@@ -3,6 +3,7 @@ import {basename, dirname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
 import {renderServerless} from "./render.js";
+import {isNodeError} from "./error.js";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
 
@@ -30,7 +31,7 @@ async function build(context: CommandContext) {
       const content = await readFile(sourcePath, "utf-8");
       sources.push({sourcePath, outputPath, content});
     } catch (error) {
-      throw new Error(`Unable to read ${sourcePath}: ${error.message}`);
+      throw new Error(`Unable to read ${sourcePath}: ${isNodeError(error) ? error.message : "unknown error"}`);
     }
   });
 
@@ -45,7 +46,11 @@ async function build(context: CommandContext) {
       try {
         await mkdir(outputDirectory, {recursive: true});
       } catch (error) {
-        throw new Error(`Unable to create output directory ${outputDirectory}: ${error.message}`);
+        throw new Error(
+          `Unable to create output directory ${outputDirectory}: ${
+            isNodeError(error) ? error.message : "unknown error"
+          }`
+        );
       }
     }
     await writeFile(outputPath, render.html);
@@ -111,7 +116,9 @@ async function visitFiles(
       try {
         await mkdir(dest, {recursive: true});
       } catch (error) {
-        throw new Error(`Unable to create output directory ${dest}: ${error.message}`);
+        throw new Error(
+          `Unable to create output directory ${dest}: ${isNodeError(error) ? error.message : "unknown error"}`
+        );
       }
     }
 
