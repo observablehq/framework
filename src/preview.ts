@@ -1,7 +1,8 @@
 import {watch, type FSWatcher} from "node:fs";
 import {readFile} from "node:fs/promises";
 import {IncomingMessage, RequestListener, createServer} from "node:http";
-import {join, normalize} from "node:path";
+import {dirname, join, normalize} from "node:path";
+import {fileURLToPath} from "node:url";
 import util from "node:util";
 import send from "send";
 import {WebSocketServer, type WebSocket} from "ws";
@@ -13,6 +14,8 @@ const routes = new Map([
   ["/index", "./docs/index.md"],
   ["/dashboard", "./docs/dashboard.md"]
 ]);
+
+const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
 class Server {
   private _server: ReturnType<typeof createServer>;
@@ -47,7 +50,7 @@ class Server {
     } else if (pathname === "/_observablehq/runtime.js") {
       send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
     } else if (pathname.startsWith("/_observablehq/")) {
-      send(req, pathname.slice("/_observablehq".length), {root: "./public"}).pipe(res);
+      send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
     } else if (pathname.startsWith("/_file/")) {
       send(req, pathname.slice("/_file".length), {root: "./docs"}).pipe(res);
     } else {
