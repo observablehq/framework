@@ -28,6 +28,8 @@ TODO
   - ✅ handle backslashes (text_special)
 - ✅ embedded JavaScript expressions behave like htl.html (no inspector)
 - ✅ file attachments
+- check that files exist before registering file attachments
+- either disable script tags, or prevent parsing embedded expressions within them
 - database clients (databases registered in YAML or observablehq.json)
 - secrets (defined via environment variable?)
 - proxied fetch (bypass CORS; registered in YAML or observablehq.json)
