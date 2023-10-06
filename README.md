@@ -46,6 +46,7 @@ TODO
 - detect broken socket and reconnect
 - detect server restart and reload
 - HTTPS with self-signed certificate or something?
+- show errors with line numbers 
 - snapshot cache
   - proxied fetch
   - database client queries
