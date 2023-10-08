@@ -9,24 +9,28 @@ export interface Render {
 
 export function renderPreview(source: string): Render {
   const parseResult = parseMarkdown(source);
-  return {html: generatePreviewPage(parseResult, computeHash(source)), files: parseResult.files};
+  return {html: render(parseResult, {preview: true, hash: computeHash(source)}), files: parseResult.files};
 }
 
 export function renderServerless(source: string): Render {
   const parseResult = parseMarkdown(source);
-  return {html: generateServerlessPage(parseResult), files: parseResult.files};
+  return {html: render(parseResult), files: parseResult.files};
 }
 
-export function generatePreviewPage(parseResult: ParseResult, hash: string): string {
+type RenderOptions =
+  | {preview?: false; hash?: never} // serverless mode
+  | {preview: true; hash: string}; // preview mode
+
+function render(parseResult: ParseResult, {preview, hash}: RenderOptions = {}): string {
   return `<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
 <script type="module">
 
-import {open, define} from "/_observablehq/client.js";
+import {${preview ? "open, " : ""}define} from "/_observablehq/client.js";
 
-open({hash: ${JSON.stringify(hash)}});
+${preview ? `open({hash: ${JSON.stringify(hash)}});\n` : ""}
 ${parseResult.js}
 </script>${
     parseResult.data
@@ -36,25 +40,7 @@ ${JSON.stringify(parseResult.data)}
 </script>`
       : ""
   }
-${parseResult.html}`;
-}
-
-export function generateServerlessPage(parseResult: ParseResult): string {
-  return `<!DOCTYPE html>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
-<script type="module">
-
-import {define} from "/_observablehq/client.js";
-${parseResult.js}
-</script>${
-    parseResult.data
-      ? `
-<script type="application/json">
-${JSON.stringify(parseResult.data)}
-</script>`
-      : ""
-  }
-${parseResult.html}`;
+<main>
+${parseResult.html}
+</main>`;
 }
