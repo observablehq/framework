@@ -2,7 +2,7 @@ import {watch, type FSWatcher} from "node:fs";
 import {readFile, stat} from "node:fs/promises";
 import type {IncomingMessage, RequestListener} from "node:http";
 import {createServer} from "node:http";
-import {dirname, extname, join, normalize} from "node:path";
+import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
 import send from "send";
@@ -49,41 +49,43 @@ class Server {
       } else if (pathname.startsWith("/_file/")) {
         send(req, pathname.slice("/_file".length), {root: this.root}).pipe(res);
       } else {
-        let path = join(this.root, pathname);
+        const path = join(this.root, pathname);
         if (this.root !== "./" && !path.startsWith(this.root)) throw new Error("Invalid path");
 
+        // If this path resolves to a directory, then redirect to /index within
+        // that directory. TODO: Check for existence of the index.md file first.
         try {
-          const pathStat = await stat(path);
-          if (pathStat.isDirectory()) {
-            // TODO: Consider whether to check for existence of index.* here.
+          if ((await stat(path)).isDirectory()) {
             res.writeHead(302, {Location: join(pathname, "index" + search)});
             res.end();
             return;
           }
         } catch (error) {
-          if (!isNodeError(error) || error.code != "ENOENT" || extname(path) !== "") {
-            throw error;
-          }
-          try {
-            if ((await stat(path + ".md")).isFile()) {
-              path += ".md";
-            }
-          } catch (error) {
-            throw new HttpError("Not found", 404);
-          }
+          if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error
         }
 
-        if (path.endsWith(".md")) {
-          res.end(renderPreview(await readFile(path, "utf-8")).html);
-        } else {
-          send(req, pathname, {root: this.root}).pipe(res);
+        // If this path ends with .html, then redirect to drop the .html. TODO:
+        // Check for the existence of the .md file first.
+        if (extname(path) === ".html") {
+          res.writeHead(302, {Location: join(dirname(pathname), basename(pathname, ".html")) + search});
+          res.end();
+          return;
+        }
+
+        // Otherwise, serve the corresponding Markdown file, if it exists.
+        // Anything else should 404; static files should be matched above.
+        try {
+          res.end(renderPreview(await readFile(path + ".md", "utf-8")).html);
+        } catch (error) {
+          if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error
+          throw new HttpError("Not found", 404);
         }
       }
     } catch (error) {
       console.error(error);
       res.statusCode = isHttpError(error) ? error.statusCode : 500;
       res.setHeader("Content-Type", "text/plain; charset=utf-8");
-      res.end(error instanceof Error ? error.message : "Opps, an error occurred");
+      res.end(error instanceof Error ? error.message : "Oops, an error occurred");
     }
   };
 
