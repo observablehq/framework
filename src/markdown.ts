@@ -198,7 +198,7 @@ export function parseMarkdown(source: string): ParseResult {
   const context: ParseContext = {id: 0, js: "", files: []};
   const tokens = md.parse(parts.content, context);
   const html = md.renderer.render(tokens, md.options, context);
-  return {html, data: isEmpty(parts.data) ? null : parts.data, ...context};
+  return {html, js: context.js, data: isEmpty(parts.data) ? null : parts.data, files: context.files};
 }
 
 // TODO Use gray-matter’s parts.isEmpty, but only when it’s accurate.
