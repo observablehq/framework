@@ -2,8 +2,8 @@ import {copyFile, mkdir, readFile, readdir, stat, writeFile} from "node:fs/promi
 import {basename, dirname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
-import {renderServerless} from "./render.js";
 import {isNodeError} from "./error.js";
+import {renderServerless} from "./render.js";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
 

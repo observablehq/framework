@@ -2,8 +2,8 @@ import assert from "node:assert";
 import {readdirSync, statSync} from "node:fs";
 import {readFile, unlink, writeFile} from "node:fs/promises";
 import {basename, join, resolve} from "node:path";
-import {renderPreview} from "../src/render.js";
 import {isNodeError} from "../src/error.js";
+import {renderPreview} from "../src/render.js";
 
 describe("renderPreview(input)", () => {
   for (const name of readdirSync("./test/input")) {

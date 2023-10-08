@@ -7,9 +7,9 @@ import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
 import send from "send";
 import {WebSocketServer, type WebSocket} from "ws";
+import {HttpError, isHttpError, isNodeError} from "./error.js";
 import {computeHash} from "./hash.js";
 import {renderPreview} from "./render.js";
-import {HttpError, isHttpError, isNodeError} from "./error.js";
 
 const DEFAULT_ROOT = "docs";
 
