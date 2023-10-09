@@ -1,5 +1,5 @@
 import {watch, type FSWatcher} from "node:fs";
-import {readFile, stat} from "node:fs/promises";
+import {access, constants, readFile, stat} from "node:fs/promises";
 import type {IncomingMessage, RequestListener} from "node:http";
 import {createServer} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
@@ -41,7 +41,7 @@ class Server {
   }
 
   _handleRequest: RequestListener = async (req, res) => {
-    const {pathname, search} = new URL(req.url!, "http://localhost");
+    let {pathname, search} = new URL(req.url!, "http://localhost");
     try {
       if (pathname === "/_observablehq/runtime.js") {
         send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
@@ -50,16 +50,24 @@ class Server {
       } else if (pathname.startsWith("/_file/")) {
         send(req, pathname.slice("/_file".length), {root: this.root}).pipe(res);
       } else {
-        const path = join(this.root, pathname);
+        let path = join(this.root, pathname);
         if (this.root !== "./" && !path.startsWith(this.root)) throw new Error("Invalid path");
 
-        // If this path resolves to a directory, then redirect to /index within
-        // that directory. TODO: Check for existence of the index.md file first.
+        // If this path is for /index, redirect to the parent directory for a
+        // tidy path. (This must be done before implicitly adding /index below!)
+        if (basename(path, ".html") === "index") {
+          res.writeHead(302, {Location: dirname(pathname) + search});
+          res.end();
+          return;
+        }
+
+        // If this path resolves to a directory, then add an implicit /index to
+        // the end of the path, assuming that the corresponding index.md exists.
         try {
-          if ((await stat(path)).isDirectory()) {
-            res.writeHead(302, {Location: join(pathname, "index" + search)});
-            res.end();
-            return;
+          if ((await stat(path)).isDirectory() && (await stat(join(path, "index") + ".md")).isFile()) {
+            await access(join(path, "index") + ".md", constants.R_OK);
+            pathname = join(pathname, "index");
+            path = join(path, "index");
           }
         } catch (error) {
           if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error
