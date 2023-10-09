@@ -30,7 +30,7 @@ TODO
 - ✅ file attachments
 - ✅ check that files exist before registering file attachments
 - ✅ prevent parsing embedded expressions within script tags
-- fix width definition when sidebar is open
+- ✅ fix width definition when sidebar is open
 - generate bootstrapped docs for the cli repo
 - database clients (databases registered in YAML or observablehq.json)
 - secrets (defined via environment variable?)

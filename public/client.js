@@ -1,11 +1,24 @@
-import {Runtime, Inspector} from "/_observablehq/runtime.js";
+import {Runtime, Library, Inspector} from "/_observablehq/runtime.js";
 
-const runtime = new Runtime();
+const library = Object.assign(new Library(), {width});
+const runtime = new Runtime(library);
 const main = runtime.module();
 
 const attachedFiles = new Map();
 const resolveFile = (name) => attachedFiles.get(name);
 main.builtin("FileAttachment", runtime.fileAttachments(resolveFile));
+
+function width() {
+  return library.Generators.observe((notify) => {
+    let width;
+    const observer = new ResizeObserver(([entry]) => {
+      const w = entry.contentRect.width;
+      if (w !== width) notify((width = w));
+    });
+    observer.observe(document.querySelector("main"));
+    return () => observer.disconnect();
+  });
+}
 
 export function define({id, inline, inputs = [], outputs = [], files = [], body}) {
   const root = document.querySelector(`#cell-${id}`);
