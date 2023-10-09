@@ -103,7 +103,7 @@ main {
   #observablehq-sidebar {
     display: initial;
   }
-  #observablehq-center {
+  #observablehq-center.observablehq--sidebar {
     padding-left: calc(240px + 2rem);
   }
 }

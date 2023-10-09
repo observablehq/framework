@@ -1,5 +1,5 @@
 import {watch, type FSWatcher} from "node:fs";
-import {readFile, readdir, stat} from "node:fs/promises";
+import {readFile, stat} from "node:fs/promises";
 import type {IncomingMessage, RequestListener} from "node:http";
 import {createServer} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
@@ -9,8 +9,8 @@ import send from "send";
 import {WebSocketServer, type WebSocket} from "ws";
 import {HttpError, isHttpError, isNodeError} from "./error.js";
 import {computeHash} from "./hash.js";
-import {type ParseResult, parseMarkdown} from "./markdown.js";
-import {type RenderOptions, renderPreview} from "./render.js";
+import {readPages} from "./navigation.js";
+import {renderPreview} from "./render.js";
 
 const DEFAULT_ROOT = "docs";
 
@@ -76,7 +76,7 @@ class Server {
         // Otherwise, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
         try {
-          const pages = await this._readPages(); // TODO cache
+          const pages = await readPages(this.root); // TODO cache? watcher?
           res.end(renderPreview(await readFile(path + ".md", "utf-8"), {path: pathname, pages}).html);
         } catch (error) {
           if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error
@@ -90,24 +90,6 @@ class Server {
       res.end(error instanceof Error ? error.message : "Oops, an error occurred");
     }
   };
-
-  async _readPages() {
-    const pages: RenderOptions["pages"] = [];
-    for (const file of await readdir(this.root)) {
-      if (extname(file) !== ".md") continue;
-      let parsed: ParseResult;
-      try {
-        parsed = parseMarkdown(await readFile(join(this.root, file), "utf-8"));
-      } catch (error) {
-        if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error
-        continue;
-      }
-      const page = {path: `/${basename(file, ".md")}`, name: parsed.title ?? "Untitled"};
-      if (page.path === "/index") pages.unshift(page);
-      else pages.push(page);
-    }
-    return pages;
-  }
 
   _handleConnection = (socket: WebSocket, req: IncomingMessage) => {
     if (req.url === "/_observablehq") {

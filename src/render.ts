@@ -1,6 +1,6 @@
+import {computeHash} from "./hash.js";
 import type {ParseResult} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
-import {computeHash} from "./hash.js";
 
 export interface Render {
   html: string;
@@ -27,6 +27,7 @@ type RenderInternalOptions =
   | {preview: true; hash: string}; // preview
 
 function render(parseResult: ParseResult, {path, pages, preview, hash}: RenderOptions & RenderInternalOptions): string {
+  const showSidebar = pages && pages.length > 1;
   return `<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -46,7 +47,7 @@ ${JSON.stringify(parseResult.data)}
       : ""
   }
 ${
-  pages
+  showSidebar
     ? `<nav id="observablehq-sidebar">
   <ol>${pages
     ?.map(
@@ -60,7 +61,7 @@ ${
 </nav>
 `
     : ""
-}<div id="observablehq-center">
+}<div id="observablehq-center"${showSidebar ? ` class="observablehq--sidebar"` : ""}>
 <main>
 ${parseResult.html}</main>
 </div>
