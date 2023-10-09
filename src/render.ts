@@ -54,7 +54,7 @@ ${
     ?.map(
       (p) => `
     <li class="observablehq-link${p.path === path ? " observablehq-link-active" : ""}"><a href="${escapeDoubleQuoted(
-      p.path
+      p.path.replace(/\/index$/, "/")
     )}">${escapeData(p.name)}</a></li>`
     )
     .join("")}

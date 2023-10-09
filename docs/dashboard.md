@@ -1,6 +1,4 @@
-# Hello dashboard
-
-This is a dashboard.
+# Example dashboard
 
 ```js
 const mainplot = resize((width, height) => Plot.plot({
