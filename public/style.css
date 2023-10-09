@@ -119,7 +119,7 @@ main {
   }
   pre {
     border-radius: 4px;
-    max-width: calc(100vw - 240px - 6rem);
+    max-width: calc(min(960px, 100vw - 240px - 6rem));
   }
 }
 
