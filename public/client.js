@@ -8,8 +8,10 @@ const attachedFiles = new Map();
 const resolveFile = (name) => attachedFiles.get(name);
 main.builtin("FileAttachment", runtime.fileAttachments(resolveFile));
 
+const Generators = library.Generators;
+
 function width() {
-  return library.Generators.observe((notify) => {
+  return Generators.observe((notify) => {
     let width;
     const observer = new ResizeObserver(([entry]) => {
       const w = entry.contentRect.width;
@@ -23,14 +25,15 @@ function width() {
 export function define({id, inline, inputs = [], outputs = [], files = [], body}) {
   const root = document.querySelector(`#cell-${id}`);
   const observer = {pending: () => (root.innerHTML = ""), rejected: (error) => new Inspector(root).rejected(error)};
-  const v = main.variable(observer, {shadow: {}});
   const display = inline
     ? (val) => (val instanceof Node || typeof val === "string" || !val?.[Symbol.iterator] ? root.append(val) : root.append(...val), val) // prettier-ignore
     : (val) => (new Inspector(root.appendChild(document.createElement("SPAN"))).fulfilled(val), val);
-  const _display = new v.constructor(2, main).define([], () => display);
-  v._shadow.set("display", _display);
-  const _view = new v.constructor(2, main).define(["Generators"], (G) => (value) => G.input(display(value)));
-  v._shadow.set("view", _view); // can’t use shadow because depends on Generators; could use closure though
+  const v = main.variable(observer, {
+    shadow: {
+      display: () => display,
+      view: () => (val) => Generators.input(display(val))
+    }
+  });
   v.define(outputs.length ? `cell ${id}` : null, inputs, body);
   for (const o of outputs) main.define(o, [`cell ${id}`], (exports) => exports[o]);
   for (const f of files) attachedFiles.set(f.name, {url: String(new URL(`/_file/${f.name}`, location)), mimeType: f.mimeType}); // prettier-ignore
