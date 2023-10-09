@@ -110,12 +110,16 @@ main {
   color: var(--theme-foreground-focus);
 }
 
-@media (min-width: 960px) {
+@media (min-width: calc(640px + 4rem + 0.5rem + 240px + 2rem)) {
   #observablehq-sidebar {
     display: initial;
   }
   #observablehq-center.observablehq--sidebar {
     padding-left: calc(240px + 3rem);
+  }
+  pre {
+    border-radius: 4px;
+    max-width: calc(100vw - 240px - 6rem);
   }
 }
 
@@ -188,8 +192,7 @@ h3,
 h4,
 h5,
 h6,
-.katex-display,
-pre {
+.katex-display {
   max-width: 640px;
 }
 
@@ -220,7 +223,6 @@ pre {
   margin: 1rem -1rem;
   min-height: 1.5em;
   padding: 0.5rem 1rem;
-  border-radius: 4px;
   overflow-x: auto;
 }
 
