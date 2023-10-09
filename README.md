@@ -29,7 +29,7 @@ TODO
 - ✅ embedded JavaScript expressions behave like htl.html (no inspector)
 - ✅ file attachments
 - check that files exist before registering file attachments
-- either disable script tags, or prevent parsing embedded expressions within them
+- ✅ prevent parsing embedded expressions within script tags
 - database clients (databases registered in YAML or observablehq.json)
 - secrets (defined via environment variable?)
 - proxied fetch (bypass CORS; registered in YAML or observablehq.json)
@@ -42,11 +42,11 @@ TODO
 - HTML fenced code blocks?
 - TeX fenced code blocks?
 - Graphviz/dot fenced code blocks?
-- routing to different notebooks
+- ✅ routing to different notebooks
 - detect broken socket and reconnect
 - detect server restart and reload
 - HTTPS with self-signed certificate or something?
-- show errors with line numbers 
+- show errors with line numbers on the console
 - snapshot cache
   - proxied fetch
   - database client queries
@@ -78,11 +78,12 @@ TODO
 - Symbol.for("observablehq.display") for custom inspectors?
 - header and footer (meta tags, last updated date)
 - table of contents (right sidebar)
-- automatic title from first h1 and/or YAML title option
-- cross-notebook navigation (left sidebar)
+- ✅ automatic title from first h1 and/or YAML title option
+- ✅ cross-notebook navigation (left sidebar)
 - footer has link to edit me on GitHub
 - client-side search (minisearch)?
+- generate preload link rel for file attachments, Plot, d3, etc.
 - themes
-  - default light/dark theme
+  - ✅ default light/dark theme
   - dashboard theme for wide layout
   - custom header and footer
