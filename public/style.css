@@ -97,11 +97,16 @@ main {
   color: inherit;
 }
 
+.observablehq-link-active {
+  position: relative;
+}
+
 .observablehq-link-active::before {
-  position: absolute;
   content: "";
-  height: 2rem;
-  left: 0;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -1rem;
   width: 3px;
   background: var(--theme-foreground-focus);
 }
