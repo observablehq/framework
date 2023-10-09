@@ -63,8 +63,10 @@ TODO
   - when other live code changes (e.g., SQL, TeX)
   - when attached files change
 - imports
-  - ✅ dynamic imports of relative string literal paths
-  - local ES modules
+  - ✅ dynamic imports of ES modules
+  - ✅ static imports of ES modules
+  - ✅ local ES modules detected as file attachments
+  - parallelize multiple static import statements
   - npm packages
   - local Observable Markdown files
   - cloud Observable notebooks?

@@ -37,6 +37,18 @@ export function findDeclarations(node, globals, input) {
     }
   }
 
+  function declareImportSpecifier(node) {
+    switch (node.type) {
+      case "ImportSpecifier":
+      case "ImportNamespaceSpecifier":
+      case "ImportDefaultSpecifier":
+        declareLocal(node.local);
+        break;
+      default:
+        throw new Error("Unrecognized import type: " + node.type);
+    }
+  }
+
   for (const child of node.body) {
     switch (child.type) {
       case "VariableDeclaration":
@@ -46,10 +58,8 @@ export function findDeclarations(node, globals, input) {
       case "FunctionDeclaration":
         declareLocal(child.id);
         break;
-      case "ImportDefaultSpecifier":
-      case "ImportSpecifier":
-      case "ImportNamespaceSpecifier":
-        declareLocal(child.local);
+      case "ImportDeclaration":
+        child.specifiers.forEach((specifier) => declareImportSpecifier(specifier));
         break;
       case "Class":
       case "Function":

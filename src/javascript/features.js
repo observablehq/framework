@@ -31,15 +31,18 @@ export function findFeatures(node, references, input) {
       features.push({type: callee.name, name: getStringLiteralValue(arg)});
     },
     // Promote dynamic imports with static literals to file attachment references.
-    ImportExpression(node) {
-      if (isStringLiteral(node.source)) {
-        const value = getStringLiteralValue(node.source);
-        if (value.startsWith("./")) {
-          features.push({type: "FileAttachment", name: value});
-        }
+    ImportExpression: findImport,
+    ImportDeclaration: findImport
+  });
+
+  function findImport(node) {
+    if (isStringLiteral(node.source)) {
+      const value = getStringLiteralValue(node.source);
+      if (value.startsWith("./")) {
+        features.push({type: "FileAttachment", name: value});
       }
     }
-  });
+  }
 
   return features;
 }

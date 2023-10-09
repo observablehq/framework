@@ -79,6 +79,18 @@ export function findReferences(node, globals, input) {
     }
   }
 
+  function declareImportSpecifier(node, parent) {
+    switch (node.type) {
+      case "ImportSpecifier":
+      case "ImportNamespaceSpecifier":
+      case "ImportDefaultSpecifier":
+        declareLocal(parent, node.local);
+        break;
+      default:
+        throw new Error("Unrecognized import type: " + node.type);
+    }
+  }
+
   ancestor(node, {
     VariableDeclaration(node, parents) {
       let parent = null;
@@ -110,7 +122,10 @@ export function findReferences(node, globals, input) {
       declareLocal(parent, node.id);
     },
     Class: declareClass,
-    CatchClause: declareCatchClause
+    CatchClause: declareCatchClause,
+    ImportDeclaration(node, [root]) {
+      node.specifiers.forEach((specifier) => declareImportSpecifier(specifier, root));
+    }
   });
 
   function identifier(node, parents) {
