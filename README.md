@@ -89,6 +89,9 @@ TODO
 - footer has link to edit me on GitHub
 - client-side search (minisearch)?
 - generate preload link rel for file attachments, Plot, d3, etc.
+- implicitly await ${…} expressions before calling display?
+- promote img, video, audio, and picture elements to file attachments
+- add rel="nofollow noindex" to external links by default
 - themes
   - ✅ default light/dark theme
   - dashboard theme for wide layout
