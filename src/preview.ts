@@ -1,5 +1,5 @@
 import {watch, type FSWatcher} from "node:fs";
-import {readFile, stat} from "node:fs/promises";
+import {readFile, readdir, stat} from "node:fs/promises";
 import type {IncomingMessage, RequestListener} from "node:http";
 import {createServer} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
@@ -9,7 +9,8 @@ import send from "send";
 import {WebSocketServer, type WebSocket} from "ws";
 import {HttpError, isHttpError, isNodeError} from "./error.js";
 import {computeHash} from "./hash.js";
-import {renderPreview} from "./render.js";
+import {type ParseResult, parseMarkdown} from "./markdown.js";
+import {type RenderOptions, renderPreview} from "./render.js";
 
 const DEFAULT_ROOT = "docs";
 
@@ -18,9 +19,9 @@ const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public")
 class Server {
   private _server: ReturnType<typeof createServer>;
   private _socketServer: WebSocketServer;
-  private readonly port: number;
-  private readonly hostname: string;
-  private readonly root: string;
+  readonly port: number;
+  readonly hostname: string;
+  readonly root: string;
 
   constructor({port, hostname, root}: CommandContext) {
     this.port = port;
@@ -33,9 +34,9 @@ class Server {
     this._socketServer.on("connection", this._handleConnection);
   }
 
-  start() {
-    this._server.listen(this.port, this.hostname, () => {
-      console.log(`Server running at http://${this.hostname}:${this.port}/`);
+  async start() {
+    return new Promise<void>((resolve) => {
+      this._server.listen(this.port, this.hostname, resolve);
     });
   }
 
@@ -75,7 +76,8 @@ class Server {
         // Otherwise, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
         try {
-          res.end(renderPreview(await readFile(path + ".md", "utf-8")).html);
+          const pages = await this._readPages(); // TODO cache
+          res.end(renderPreview(await readFile(path + ".md", "utf-8"), {path: pathname, pages}).html);
         } catch (error) {
           if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error
           throw new HttpError("Not found", 404);
@@ -88,6 +90,24 @@ class Server {
       res.end(error instanceof Error ? error.message : "Oops, an error occurred");
     }
   };
+
+  async _readPages() {
+    const pages: RenderOptions["pages"] = [];
+    for (const file of await readdir(this.root)) {
+      if (extname(file) !== ".md") continue;
+      let parsed: ParseResult;
+      try {
+        parsed = parseMarkdown(await readFile(join(this.root, file), "utf-8"));
+      } catch (error) {
+        if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error
+        continue;
+      }
+      const page = {path: `/${basename(file, ".md")}`, name: parsed.title ?? "Untitled"};
+      if (page.path === "/index") pages.unshift(page);
+      else pages.push(page);
+    }
+    return pages;
+  }
 
   _handleConnection = (socket: WebSocket, req: IncomingMessage) => {
     if (req.url === "/_observablehq") {
@@ -190,5 +210,7 @@ function makeCommandContext(): CommandContext {
 
 await (async function () {
   const context = makeCommandContext();
-  new Server(context).start();
+  const server = new Server(context);
+  await server.start();
+  console.log(`Server running at http://${server.hostname}:${server.port}/`);
 })();

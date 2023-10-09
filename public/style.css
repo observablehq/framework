@@ -7,6 +7,7 @@
   --theme-background-color: rgb(var(--theme-background-rgb));
   --theme-background-color-alt: rgba(var(--theme-foreground-rgb), 0.05);
   --theme-foreground-color: rgb(var(--theme-foreground-rgb));
+  --theme-foreground-focus: #20bbfc;
   --syntax-comment: #828282;
   --syntax-diff: #24292e;
   --syntax-diff-bg: #ffffff;
@@ -32,12 +33,79 @@ html {
   -moz-osx-font-smoothing: grayscale;
   background: var(--theme-background-color);
   color: var(--theme-foreground-color);
-  margin: 2rem 1rem;
 }
 
 body {
-  margin: auto;
+  margin: 0;
+}
+
+main {
+  margin: 2rem auto;
   max-width: 1152px;
+}
+
+#observablehq-center {
+  margin: 1rem;
+}
+
+#observablehq-sidebar {
+  display: none;
+  position: fixed;
+  background: var(--theme-background-color-alt);
+  color: var(--theme-foreground-color);
+  font: 14px var(--sans-serif);
+  font-weight: 600;
+  width: 240px;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  padding: 1rem;
+}
+
+#observablehq-sidebar ol {
+  margin: 0;
+  padding: 0;
+}
+
+#observablehq-sidebar ol li {
+  display: block;
+  margin: 0;
+}
+
+.observablehq-link a {
+  display: block;
+  padding: 0.5rem 1rem;
+}
+
+.observablehq-link a:hover {
+  background: var(--theme-background-color);
+}
+
+.observablehq-link a[href] {
+  color: inherit;
+}
+
+.observablehq-link-active::before {
+  position: absolute;
+  content: "";
+  height: 2rem;
+  left: 0;
+  width: 3px;
+  background: var(--theme-foreground-focus);
+}
+
+.observablehq-link-active a[href] {
+  color: var(--theme-foreground-focus);
+}
+
+@media (min-width: 1200px) {
+  #observablehq-sidebar {
+    display: initial;
+  }
+  #observablehq-center {
+    padding-left: calc(240px + 2rem);
+  }
 }
 
 h1,
@@ -87,7 +155,9 @@ h6 code {
   font-size: 90%;
 }
 
-pre, code, tt {
+pre,
+code,
+tt {
   font-family: var(--monospace);
   font-size: 14px;
   line-height: 1.5;
@@ -121,8 +191,7 @@ blockquote {
   margin: 1rem 1.5rem;
 }
 
-ul
-ol {
+ul ol {
   padding-left: 28px;
 }
 
@@ -201,7 +270,8 @@ td {
   padding: 3px 6.5px 3px 0;
 }
 
-th:last-child, td:last-child {
+th:last-child,
+td:last-child {
   padding-right: 0;
 }
 

@@ -13,6 +13,7 @@ interface ParseContext {
 }
 
 export interface ParseResult {
+  title: string | null;
   html: string;
   js: string;
   data: {[key: string]: any} | null;
@@ -198,11 +199,29 @@ export function parseMarkdown(source: string): ParseResult {
   const context: ParseContext = {id: 0, js: "", files: []};
   const tokens = md.parse(parts.content, context);
   const html = md.renderer.render(tokens, md.options, context);
-  return {html, js: context.js, data: isEmpty(parts.data) ? null : parts.data, files: context.files};
+  return {
+    html,
+    js: context.js,
+    data: isEmpty(parts.data) ? null : parts.data,
+    title: parts.data?.title ?? findTitle(tokens) ?? null,
+    files: context.files
+  };
 }
 
 // TODO Use gray-matter’s parts.isEmpty, but only when it’s accurate.
 function isEmpty(object) {
   for (const key in object) return false;
   return true;
+}
+
+// TODO Make this smarter.
+function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | undefined {
+  for (const [i, token] of tokens.entries()) {
+    if (token.type === "heading_open" && token.tag === "h1") {
+      const next = tokens[i + 1];
+      if (next?.type === "inline" && next.children?.[0]?.type === "text") {
+        return next.content;
+      }
+    }
+  }
 }
