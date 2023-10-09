@@ -315,7 +315,8 @@ figcaption {
   margin: 17px 0;
 }
 
-.observablehq--block .observablehq {
+.observablehq--block .observablehq,
+.observablehq--block .observablehq--inspect {
   display: block;
 }
 
@@ -438,7 +439,6 @@ a[href],
 .observablehq--inspect {
   font: var(--monospace-font);
   overflow-x: auto;
-  padding: 4px 0; /* matches a one-line editor */
   white-space: pre;
 }
 

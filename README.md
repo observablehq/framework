@@ -28,7 +28,7 @@ TODO
   - ✅ handle backslashes (text_special)
 - ✅ embedded JavaScript expressions behave like htl.html (no inspector)
 - ✅ file attachments
-- check that files exist before registering file attachments
+- ✅ check that files exist before registering file attachments
 - ✅ prevent parsing embedded expressions within script tags
 - database clients (databases registered in YAML or observablehq.json)
 - secrets (defined via environment variable?)

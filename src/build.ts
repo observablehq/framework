@@ -4,8 +4,8 @@ import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
 import {visitFiles, visitMarkdownFiles} from "./files.js";
-import {renderServerless} from "./render.js";
 import {readPages} from "./navigation.js";
+import {renderServerless} from "./render.js";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
 
@@ -25,7 +25,7 @@ async function build(context: CommandContext) {
     const outputPath = join(outputRoot, join(dirname(sourceFile), basename(sourceFile, ".md") + ".html"));
     console.log("render", sourcePath, "→", outputPath);
     const path = `/${join(dirname(sourceFile), basename(sourceFile, ".md"))}`;
-    const render = renderServerless(await readFile(sourcePath, "utf-8"), {path, pages});
+    const render = renderServerless(await readFile(sourcePath, "utf-8"), {root: sourceRoot, path, pages});
     files.push(...render.files.map((f) => join(sourceFile, "..", f.name)));
     await prepareOutput(outputPath);
     await writeFile(outputPath, render.html);
@@ -93,8 +93,8 @@ function makeCommandContext(): CommandContext {
     process.exit(1);
   }
   return {
-    sourceRoot: normalize(values.root),
-    outputRoot: normalize(values.output)
+    sourceRoot: normalize(values.root).replace(/\/$/, ""),
+    outputRoot: normalize(values.output).replace(/\/$/, "")
   };
 }
 

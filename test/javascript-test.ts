@@ -16,7 +16,7 @@ describe("transpileJavaScript(input)", () => {
     (only ? it.only : skip ? it.skip : it)(`test/input/${name}`, async () => {
       const outfile = resolve("./test/output", `${basename(outname, ".js")}.js`);
       const diffile = resolve("./test/output", `${basename(outname, ".js")}-changed.js`);
-      const actual = await transpileJavaScript(await readFile(path, "utf8"), 0);
+      const actual = await transpileJavaScript(await readFile(path, "utf8"), {id: 0, root: "test/input"});
       let expected;
 
       try {

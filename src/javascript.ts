@@ -6,17 +6,26 @@ import {findDeclarations} from "./javascript/declarations.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import {findReferences} from "./javascript/references.js";
 import {findFeatures} from "./javascript/features.js";
+import {accessSync, constants, statSync} from "node:fs";
+import {join} from "node:path";
+import {isNodeError} from "./error.js";
 
 export interface Transpile {
   js: string;
   files: {name: string; mimeType: string}[];
 }
 
-export function transpileJavaScript(input: string, id: number, options: ParseOptions = {}): Transpile {
+export interface TranspileOptions {
+  id: number;
+  root: string;
+}
+
+export function transpileJavaScript(input: string, {id, root, ...options}: TranspileOptions & ParseOptions): Transpile {
   try {
     const node = parseJavaScript(input, options);
     const files = node.features
-      .filter((d) => d.type === "FileAttachment")
+      .filter((f) => f.type === "FileAttachment")
+      .filter((f) => canReadSync(join(root, f.name)))
       .map((f) => ({name: f.name, mimeType: mime.getType(f.name)}));
     const inputs = Array.from(new Set(node.references.map((r) => r.name)));
     if (node.expression && !inputs.includes("display")) {
@@ -45,19 +54,25 @@ ${input.trim()}${node.declarations?.length ? `\nreturn {${node.declarations.map(
   }
 }
 
+function canReadSync(path: string): boolean {
+  try {
+    accessSync(path, constants.R_OK);
+    return statSync(path).isFile();
+  } catch (error) {
+    if (isNodeError(error) && error.code === "ENOENT") return false;
+    throw error;
+  }
+}
+
 export interface ParseOptions {
   inline?: boolean;
 }
 
 export function parseJavaScript(
   input: string,
-  {
-    globals = defaultGlobals,
-    inline = false,
-    ...otherOptions
-  }: Partial<Options> & ParseOptions & {globals?: Set<string>} = {}
+  {globals = defaultGlobals, inline = false}: Partial<Options> & ParseOptions & {globals?: Set<string>} = {}
 ) {
-  const options: Options = {...otherOptions, ecmaVersion: 13, sourceType: "module"};
+  const options: Options = {ecmaVersion: 13, sourceType: "module"};
   // First attempt to parse as an expression; if this fails, parse as a program.
   let expression = maybeParseExpression(input, options);
   if (expression?.type === "ClassExpression" && expression.id) expression = null; // treat named class as program

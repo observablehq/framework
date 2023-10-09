@@ -8,17 +8,18 @@ export interface Render {
 }
 
 export interface RenderOptions {
+  root: string;
   path?: string;
   pages?: {path: string; name: string}[];
 }
 
-export function renderPreview(source: string, options: RenderOptions = {}): Render {
-  const parseResult = parseMarkdown(source);
+export function renderPreview(source: string, options: RenderOptions): Render {
+  const parseResult = parseMarkdown(source, options.root);
   return {html: render(parseResult, {...options, preview: true, hash: computeHash(source)}), files: parseResult.files};
 }
 
-export function renderServerless(source: string, options: RenderOptions = {}): Render {
-  const parseResult = parseMarkdown(source);
+export function renderServerless(source: string, options: RenderOptions): Render {
+  const parseResult = parseMarkdown(source, options.root);
   return {html: render(parseResult, options), files: parseResult.files};
 }
 

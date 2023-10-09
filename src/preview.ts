@@ -12,8 +12,6 @@ import {computeHash} from "./hash.js";
 import {readPages} from "./navigation.js";
 import {renderPreview} from "./render.js";
 
-const DEFAULT_ROOT = "docs";
-
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
 class Server {
@@ -26,8 +24,7 @@ class Server {
   constructor({port, hostname, root}: CommandContext) {
     this.port = port;
     this.hostname = hostname;
-    root = normalize(root || DEFAULT_ROOT);
-    this.root = root === "." ? "./" : root;
+    this.root = root;
     this._server = createServer();
     this._server.on("request", this._handleRequest);
     this._socketServer = new WebSocketServer({server: this._server});
@@ -41,7 +38,8 @@ class Server {
   }
 
   _handleRequest: RequestListener = async (req, res) => {
-    let {pathname, search} = new URL(req.url!, "http://localhost");
+    const url = new URL(req.url!, "http://localhost");
+    let {pathname} = url;
     try {
       if (pathname === "/_observablehq/runtime.js") {
         send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
@@ -50,13 +48,13 @@ class Server {
       } else if (pathname.startsWith("/_file/")) {
         send(req, pathname.slice("/_file".length), {root: this.root}).pipe(res);
       } else {
+        if (normalize(pathname).startsWith("..")) throw new Error("Invalid path: " + pathname);
         let path = join(this.root, pathname);
-        if (this.root !== "./" && !path.startsWith(this.root)) throw new Error("Invalid path");
 
         // If this path is for /index, redirect to the parent directory for a
         // tidy path. (This must be done before implicitly adding /index below!)
         if (basename(path, ".html") === "index") {
-          res.writeHead(302, {Location: dirname(pathname) + search});
+          res.writeHead(302, {Location: dirname(pathname) + url.search});
           res.end();
           return;
         }
@@ -76,7 +74,7 @@ class Server {
         // If this path ends with .html, then redirect to drop the .html. TODO:
         // Check for the existence of the .md file first.
         if (extname(path) === ".html") {
-          res.writeHead(302, {Location: join(dirname(pathname), basename(pathname, ".html")) + search});
+          res.writeHead(302, {Location: join(dirname(pathname), basename(pathname, ".html")) + url.search});
           res.end();
           return;
         }
@@ -85,7 +83,7 @@ class Server {
         // Anything else should 404; static files should be matched above.
         try {
           const pages = await readPages(this.root); // TODO cache? watcher?
-          res.end(renderPreview(await readFile(path + ".md", "utf-8"), {path: pathname, pages}).html);
+          res.end(renderPreview(await readFile(path + ".md", "utf-8"), {root: this.root, path: pathname, pages}).html);
         } catch (error) {
           if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error
           throw new HttpError("Not found", 404);
@@ -119,9 +117,10 @@ function handleWatch(socket: WebSocket, root: string) {
       switch (message.type) {
         case "hello": {
           if (watcher) throw new Error("already watching");
-          const path = normalize(join(root || "", message.path + ".md"));
-          if ((root !== "./" && !path.startsWith(root)) || path.startsWith("../"))
-            throw new Error("File not found: " + message.path);
+          let {path} = message;
+          if (normalize(path).startsWith("..")) throw new Error("Invalid path: " + path);
+          if (path.endsWith("/")) path += "index";
+          path = join(root, normalize(path) + ".md");
           let currentHash = message.hash;
           watcher = watch(path, async () => {
             const source = await readFile(path, "utf-8");
@@ -136,7 +135,7 @@ function handleWatch(socket: WebSocket, root: string) {
       }
     } catch (error) {
       console.error("Protocol error", error);
-      // TODO: Send error to client, close socket?
+      socket.terminate();
     }
   });
 
@@ -158,20 +157,21 @@ function handleWatch(socket: WebSocket, root: string) {
   }
 }
 
+const USAGE = `Usage: observable preview [--root dir] [--hostname host] [--port port]`;
+
 interface CommandContext {
-  root?: string;
+  root: string;
   hostname: string;
   port: number;
-  files: string[];
 }
 
 function makeCommandContext(): CommandContext {
-  const {values, positionals} = parseArgs({
-    allowPositionals: true,
+  const {values} = parseArgs({
     options: {
       root: {
         type: "string",
-        short: "r"
+        short: "r",
+        default: "docs"
       },
       hostname: {
         type: "string",
@@ -183,12 +183,14 @@ function makeCommandContext(): CommandContext {
       }
     }
   });
-
+  if (!values.root) {
+    console.error(USAGE);
+    process.exit(1);
+  }
   return {
-    root: values.root,
+    root: normalize(values.root).replace(/\/$/, ""),
     hostname: values.hostname ?? process.env.HOSTNAME ?? "127.0.0.1",
-    port: values.port ? +values.port : process.env.PORT ? +process.env.PORT : 3000,
-    files: positionals
+    port: values.port ? +values.port : process.env.PORT ? +process.env.PORT : 3000
   };
 }
 

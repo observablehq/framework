@@ -20,14 +20,14 @@ export interface ParseResult {
   files: {name: string; mimeType: string}[];
 }
 
-function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
+function makeFenceRenderer(root: string, baseRenderer: RenderRule): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
     const token = tokens[idx];
     const [language, option] = token.info.split(" ");
     let result = "";
     if (language === "js" && option !== "no-run") {
       const id = ++context.id;
-      const transpile = transpileJavaScript(token.content, id);
+      const transpile = transpileJavaScript(token.content, {id, root});
       context.js += `\n${transpile.js}`;
       context.files.push(...transpile.files);
       result += `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`;
@@ -168,16 +168,18 @@ const transformPlaceholderCore: RuleCore = (state) => {
   state.tokens = output;
 };
 
-const renderPlaceholder: RenderRule = (tokens, idx, options, context: ParseContext) => {
-  const id = ++context.id;
-  const token = tokens[idx];
-  const transpile = transpileJavaScript(token.content, id, {inline: true});
-  context.js += `\n${transpile.js}`;
-  context.files.push(...transpile.files);
-  return `<span id="cell-${id}"></span>`;
-};
+function makePlaceholderRenderer(root: string): RenderRule {
+  return (tokens, idx, options, context: ParseContext) => {
+    const id = ++context.id;
+    const token = tokens[idx];
+    const transpile = transpileJavaScript(token.content, {id, root, inline: true});
+    context.js += `\n${transpile.js}`;
+    context.files.push(...transpile.files);
+    return `<span id="cell-${id}"></span>`;
+  };
+}
 
-export function parseMarkdown(source: string): ParseResult {
+export function parseMarkdown(source: string, root: string): ParseResult {
   const parts = matter(source);
   const md = MarkdownIt({
     html: true,
@@ -194,8 +196,8 @@ export function parseMarkdown(source: string): ParseResult {
   });
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
-  md.renderer.rules.placeholder = renderPlaceholder;
-  md.renderer.rules.fence = makeFenceRenderer(md.renderer.rules.fence!);
+  md.renderer.rules.placeholder = makePlaceholderRenderer(root);
+  md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!);
   const context: ParseContext = {id: 0, js: "", files: []};
   const tokens = md.parse(parts.content, context);
   const html = md.renderer.render(tokens, md.options, context);
