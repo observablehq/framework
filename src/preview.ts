@@ -38,6 +38,7 @@ class Server {
   }
 
   _handleRequest: RequestListener = async (req, res) => {
+    console.log(req.method, req.url);
     const url = new URL(req.url!, "http://localhost");
     let {pathname} = url;
     try {
