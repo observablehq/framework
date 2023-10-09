@@ -63,8 +63,9 @@ TODO
   - when other live code changes (e.g., SQL, TeX)
   - when attached files change
 - imports
-  - npm packages
+  - ✅ dynamic imports of relative string literal paths
   - local ES modules
+  - npm packages
   - local Observable Markdown files
   - cloud Observable notebooks?
   - configurable import map?

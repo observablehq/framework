@@ -6,9 +6,11 @@ import {findDeclarations} from "./javascript/declarations.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import {findReferences} from "./javascript/references.js";
 import {findFeatures} from "./javascript/features.js";
+import {rewriteImports} from "./javascript/imports.js";
 import {accessSync, constants, statSync} from "node:fs";
 import {join} from "node:path";
 import {isNodeError} from "./error.js";
+import {Sourcemap} from "./sourcemap.js";
 
 export interface Transpile {
   js: string;
@@ -28,17 +30,21 @@ export function transpileJavaScript(input: string, {id, root, ...options}: Trans
       .filter((f) => canReadSync(join(root, f.name)))
       .map((f) => ({name: f.name, mimeType: mime.getType(f.name)}));
     const inputs = Array.from(new Set(node.references.map((r) => r.name)));
+    const output = new Sourcemap(input);
+    trim(output, input);
     if (node.expression && !inputs.includes("display")) {
-      input = `display((\n${input.trim()}\n))`;
+      output.insertLeft(0, "display((\n");
+      output.insertRight(input.length, "\n))");
       inputs.push("display");
     }
+    rewriteImports(output, node);
     return {
       js: `define({id: ${id}${inputs.length ? `, inputs: ${JSON.stringify(inputs)}` : ""}${
         options.inline ? `, inline: true` : ""
       }${node.declarations?.length ? `, outputs: ${JSON.stringify(node.declarations.map(({name}) => name))}` : ""}${
         files.length ? `, files: ${JSON.stringify(files)}` : ""
       }, body: ${node.async ? "async " : ""}(${inputs}) => {
-${input.trim()}${node.declarations?.length ? `\nreturn {${node.declarations.map(({name}) => name)}};` : ""}
+${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.map(({name}) => name)}};` : ""}
 }});
 `,
       files
@@ -52,6 +58,11 @@ ${input.trim()}${node.declarations?.length ? `\nreturn {${node.declarations.map(
       files: []
     };
   }
+}
+
+function trim(output: Sourcemap, input: string): void {
+  if (input.startsWith("\n")) output.delete(0, 1); // TODO better trim
+  if (input.endsWith("\n")) output.delete(input.length - 1, input.length); // TODO better trim
 }
 
 function canReadSync(path: string): boolean {

@@ -24,23 +24,33 @@ export function findFeatures(node, references, input) {
       }
 
       // Forbid dynamic calls.
-      if (
-        args.length !== 1 ||
-        !(
-          (arg.type === "Literal" && /^['"]/.test(arg.raw)) ||
-          (arg.type === "TemplateLiteral" && arg.expressions.length === 0)
-        )
-      ) {
+      if (args.length !== 1 || !isStringLiteral(arg)) {
         throw syntaxError(`${callee.name} requires a single literal string argument`, node, input);
       }
 
-      features.push({
-        type: callee.name,
-        name: arg.type === "Literal" ? arg.value : arg.quasis[0].value.cooked,
-        expression: node
-      });
+      features.push({type: callee.name, name: getStringLiteralValue(arg)});
+    },
+    // Promote dynamic imports with static literals to file attachment references.
+    ImportExpression(node) {
+      if (isStringLiteral(node.source)) {
+        const value = getStringLiteralValue(node.source);
+        if (value.startsWith("./")) {
+          features.push({type: "FileAttachment", name: value});
+        }
+      }
     }
   });
 
   return features;
+}
+
+export function isStringLiteral(node) {
+  return (
+    (node.type === "Literal" && /^['"]/.test(node.raw)) ||
+    (node.type === "TemplateLiteral" && node.expressions.length === 0)
+  );
+}
+
+export function getStringLiteralValue(node) {
+  return node.type === "Literal" ? node.value : node.quasis[0].value.cooked;
 }

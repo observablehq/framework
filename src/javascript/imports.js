@@ -1,19 +1,15 @@
-import {syntaxError} from "./syntaxError.js";
+import {simple} from "acorn-walk";
+import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
-export function findImports(program, input) {
-  const node = program.body.find(isExport);
-  if (node) throw syntaxError("Illegal export declaration", node, input);
-  return program.body.filter(isImport);
-}
-
-function isImport(node) {
-  return node.type === "ImportDeclaration";
-}
-
-function isExport(node) {
-  return (
-    node.type === "ExportNamedDeclaration" ||
-    node.type === "ExportDefaultDeclaration" ||
-    node.type === "ExportAllDeclaration"
-  );
+export function rewriteImports(output, node) {
+  simple(node.body, {
+    ImportExpression(node) {
+      if (isStringLiteral(node.source)) {
+        const value = getStringLiteralValue(node.source);
+        if (value.startsWith("./")) {
+          output.insertLeft(node.source.start + 3, "_file/");
+        }
+      }
+    }
+  });
 }
