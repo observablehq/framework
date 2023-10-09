@@ -99,7 +99,7 @@ main {
   color: var(--theme-foreground-focus);
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 960px) {
   #observablehq-sidebar {
     display: initial;
   }
