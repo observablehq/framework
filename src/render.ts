@@ -32,13 +32,14 @@ function render(parseResult: ParseResult, {path, pages, preview, hash}: RenderOp
   return `<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
+${
+  parseResult.title ? `<title>${escapeData(parseResult.title)}</title>\n` : ""
+}<link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
 <script type="module">
 
 import {${preview ? "open, " : ""}define} from "/_observablehq/client.js";
 
-${preview ? `open({hash: ${JSON.stringify(hash)}});\n` : ""}
-${parseResult.js}
+${preview ? `open({hash: ${JSON.stringify(hash)}});\n` : ""}${parseResult.js}
 </script>${
     parseResult.data
       ? `

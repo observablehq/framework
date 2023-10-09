@@ -80,7 +80,8 @@ TODO
 - Symbol.for("observablehq.display") for custom inspectors?
 - header and footer (meta tags, last updated date)
 - table of contents (right sidebar)
-- ✅ automatic title from first h1 and/or YAML title option
+- ✅ parse title from first h1 and/or YAML title option
+- ✅ generate title element
 - ✅ cross-notebook navigation (left sidebar)
 - footer has link to edit me on GitHub
 - client-side search (minisearch)?
