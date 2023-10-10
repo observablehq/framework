@@ -66,9 +66,7 @@ const hello = new Promise((resolve) => {
 
 Hello is: ${hello}.
 
-Values that change over time, such as interactive inputs and animation parameters, are represented as [async generators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator).
-
-Often, you won’t implement an async generator directly; instead you’ll use a built-in implementation such as Generators.input. This function takes an input element and returns a generator that yields the input’s value whenever it changes. (You can also use the [Observable Inputs](https://github.com/observablehq/inputs) to construct beautiful inputs.) For example, try entering your name into the box below:
+Values that change over time, such as interactive inputs and animation parameters, are represented as [async generators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator). You won’t typically implement a generator directly; instead you’ll use a built-in implementation. For example, Generators.input takes an input element and returns a generator that yields the input’s value whenever it changes. (You can also use the [Observable Inputs](https://github.com/observablehq/inputs) to construct beautiful inputs.) Try entering your name into the box below:
 
 ```js show
 const nameInput = Inputs.text({label: "Name", placeholder: "Enter your name"});
@@ -79,13 +77,13 @@ display(nameInput);
 
 Name is: ${name}.
 
-For convenience, the built-in view function combines displaying the given input element with returning its corresponding generator. The above can be shortened as:
+The built-in view function conveniently combines displaying a given input element and returning its corresponding generator. The above can be shortened as:
 
 ```js no-run
 const name = view(Inputs.text({label: "Name", placeholder: "Enter your name"}));
 ```
 
-For even more control, you can use the built-in Generators.observe to write a custom generator. This one yields the current pointer coordinates:
+As another example, here is using the built-in Generators.observe to represent the current coordinates of the pointer:
 
 ```js show
 const pointer = Generators.observe((notify) => {
