@@ -1,10 +1,12 @@
 import {computeHash} from "./hash.js";
+import type {FileReference, ImportReference} from "./javascript.js";
 import type {ParseResult} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
 
 export interface Render {
   html: string;
-  files: {name: string; mimeType: string}[];
+  files: FileReference[];
+  imports: ImportReference[];
 }
 
 export interface RenderOptions {
@@ -15,12 +17,20 @@ export interface RenderOptions {
 
 export function renderPreview(source: string, options: RenderOptions): Render {
   const parseResult = parseMarkdown(source, options.root);
-  return {html: render(parseResult, {...options, preview: true, hash: computeHash(source)}), files: parseResult.files};
+  return {
+    html: render(parseResult, {...options, preview: true, hash: computeHash(source)}),
+    files: parseResult.files,
+    imports: parseResult.imports
+  };
 }
 
 export function renderServerless(source: string, options: RenderOptions): Render {
   const parseResult = parseMarkdown(source, options.root);
-  return {html: render(parseResult, options), files: parseResult.files};
+  return {
+    html: render(parseResult, options),
+    files: parseResult.files,
+    imports: parseResult.imports
+  };
 }
 
 type RenderInternalOptions =
@@ -36,6 +46,16 @@ ${
   parseResult.title ? `<title>${escapeData(parseResult.title)}</title>\n` : ""
 }<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
+<script type="importmap">
+${JSON.stringify({
+  imports: Object.fromEntries(
+    parseResult.imports
+      .filter(({name}) => name.startsWith("npm:"))
+      .map(({name}) => [name, `https://cdn.jsdelivr.net/npm/${name.slice(4)}/+esm`])
+      .concat([["npm:@observablehq/runtime", "/_observablehq/runtime.js"]])
+  )
+})}
+</script>
 <link rel="modulepreload" href="/_observablehq/runtime.js">
 <script type="module">
 

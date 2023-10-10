@@ -4,12 +4,13 @@ import MarkdownIt from "markdown-it";
 import type {RuleCore} from "markdown-it/lib/parser_core.js";
 import type {RuleInline} from "markdown-it/lib/parser_inline.js";
 import type {RenderRule} from "markdown-it/lib/renderer.js";
-import {transpileJavaScript} from "./javascript.js";
+import {type FileReference, type ImportReference, transpileJavaScript} from "./javascript.js";
 
 interface ParseContext {
   id: number;
   js: string;
-  files: {name: string; mimeType: string}[];
+  files: FileReference[];
+  imports: ImportReference[];
 }
 
 export interface ParseResult {
@@ -17,7 +18,8 @@ export interface ParseResult {
   html: string;
   js: string;
   data: {[key: string]: any} | null;
-  files: {name: string; mimeType: string}[];
+  files: FileReference[];
+  imports: ImportReference[];
 }
 
 function makeFenceRenderer(root: string, baseRenderer: RenderRule): RenderRule {
@@ -30,6 +32,7 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule): RenderRule {
       const transpile = transpileJavaScript(token.content, {id, root});
       context.js += `\n${transpile.js}`;
       context.files.push(...transpile.files);
+      context.imports.push(...transpile.imports);
       result += `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`;
     }
     if (language !== "js" || option === "show" || option === "no-run") {
@@ -198,7 +201,7 @@ export function parseMarkdown(source: string, root: string): ParseResult {
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
   md.renderer.rules.placeholder = makePlaceholderRenderer(root);
   md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!);
-  const context: ParseContext = {id: 0, js: "", files: []};
+  const context: ParseContext = {id: 0, js: "", files: [], imports: []};
   const tokens = md.parse(parts.content, context);
   const html = md.renderer.render(tokens, md.options, context);
   return {
@@ -206,7 +209,8 @@ export function parseMarkdown(source: string, root: string): ParseResult {
     js: context.js,
     data: isEmpty(parts.data) ? null : parts.data,
     title: parts.data?.title ?? findTitle(tokens) ?? null,
-    files: context.files
+    files: context.files,
+    imports: context.imports
   };
 }
 

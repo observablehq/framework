@@ -67,14 +67,14 @@ TODO
   - ✅ dynamic imports of ES modules
   - ✅ static imports of ES modules
   - ✅ local ES modules detected as file attachments
-  - parallelize multiple static import statements
-  - parse imports from npm:module and generate the corresponding import map
-  - npm packages
+  - ✅ parse imports from npm:module and generate the corresponding import map
+  - ✅ npm packages
+  - parallelize awaits when multiple static import statements
   - local Observable Markdown files
   - cloud Observable notebooks?
-  - configurable import map?
-  - self-host recommended libraries?
-  - equivalent to version locking/integrity sha
+  - use ES module imports for recommended libraries
+  - during build, download ES modules from jsDelivr
+  - equivalent to version locking/integrity sha?
 - standard library 2.0
   - remove deprecated features for standard library
   - Generators.asyncInput

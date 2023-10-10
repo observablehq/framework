@@ -1,6 +1,26 @@
 import {simple} from "acorn-walk";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
+export function findImports(root) {
+  const imports = [];
+
+  simple(root, {
+    ImportExpression: findImport,
+    ImportDeclaration: findImport
+  });
+
+  function findImport(node) {
+    if (isStringLiteral(node.source)) {
+      const value = getStringLiteralValue(node.source);
+      if (value.startsWith("npm:")) {
+        imports.push({name: value});
+      }
+    }
+  }
+
+  return imports;
+}
+
 // TODO parallelize multiple static imports
 export function rewriteImports(output, root) {
   simple(root.body, {
