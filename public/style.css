@@ -1,9 +1,11 @@
 :root {
   --theme-background-rgb: 255, 255, 255;
   --theme-foreground-rgb: 27, 30, 35;
-  --theme-background-color: rgb(var(--theme-background-rgb));
-  --theme-background-color-alt: rgba(var(--theme-foreground-rgb), 0.05);
-  --theme-foreground-color: rgb(var(--theme-foreground-rgb));
+  --theme-background: rgb(var(--theme-background-rgb));
+  --theme-background-alt: rgba(var(--theme-foreground-rgb), 0.05);
+  --theme-foreground: rgb(var(--theme-foreground-rgb));
+  --theme-foreground-muted: rgb(var(--theme-foreground-rgb), 0.7);
+  --theme-foreground-faint: rgb(var(--theme-foreground-rgb), 0.5);
   --theme-foreground-focus: #20bbfc;
   --syntax-comment: #828282;
   --syntax-diff: #24292e;
@@ -28,8 +30,8 @@ html {
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--theme-background-color);
-  color: var(--theme-foreground-color);
+  background: var(--theme-background);
+  color: var(--theme-foreground);
 }
 
 body {
@@ -59,8 +61,8 @@ main {
 #observablehq-sidebar {
   display: none;
   position: fixed;
-  background: var(--theme-background-color-alt);
-  color: var(--theme-foreground-color);
+  background: var(--theme-background-alt);
+  color: var(--theme-foreground);
   font: 14px var(--sans-serif);
   font-weight: 600;
   width: 240px;
@@ -87,7 +89,7 @@ main {
 }
 
 .observablehq-link a:hover {
-  background: var(--theme-background-color);
+  background: var(--theme-background);
 }
 
 .observablehq-link a[href] {
@@ -148,7 +150,7 @@ h4 + table {
 }
 
 h1 + h2 {
-  color: var(--theme-foreground-color);
+  color: var(--theme-foreground);
   font-size: 20px;
   font-style: italic;
   font-weight: normal;
@@ -221,11 +223,39 @@ hr {
 }
 
 pre {
-  background-color: var(--theme-background-color-alt);
+  position: relative;
+  background-color: var(--theme-background-alt);
   margin: 1rem -1rem;
   min-height: 1.5em;
   padding: 0.5rem 1rem;
   overflow-x: auto;
+}
+
+pre .language-md::after,
+pre .language-js::after,
+pre .language-sh::after,
+pre .language-sql::after {
+  position: absolute;
+  right: 0.5rem;
+  top: 0.5rem;
+  font: 12px var(--sans-serif);
+  color: var(--theme-foreground-muted);
+}
+
+pre .language-md::after {
+  content: "md";
+}
+
+pre .language-js::after {
+  content: "js";
+}
+
+pre .language-sh::after {
+  content: "sh";
+}
+
+pre .language-sql::after {
+  content: "sql";
 }
 
 input:not([type]),
@@ -498,7 +528,7 @@ a[href],
 }
 
 .oi-3a86ea-table thead th {
-  background: var(--theme-background-color) !important;
+  background: var(--theme-background) !important;
 }
 
 .oi-3a86ea-table tr:not(:last-child) td,
@@ -518,22 +548,22 @@ svg.plot-d6a7b5-ramp {
 
 svg.plot-d6a7b5 [aria-label="tip"][fill="white"],
 svg.plot-d6a7b5 [aria-label="tip"] [fill="white"] {
-  fill: var(--theme-background-color);
+  fill: var(--theme-background);
 }
 
 svg.plot-d6a7b5 marker[stroke="white"],
 svg.plot-d6a7b5 [aria-label^="crosshair"][stroke="white"] {
-  stroke: var(--theme-background-color);
+  stroke: var(--theme-background);
 }
 
 svg.plot-d6a7b5 marker[fill="white"] {
-  fill: var(--theme-background-color);
+  fill: var(--theme-background);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --theme-foreground-rgb: 223, 223, 214;
     --theme-background-rgb: 31, 31, 31;
-    --theme-background-color-alt: rgba(0, 0, 0, 0.3);
+    --theme-background-alt: rgba(0, 0, 0, 0.3);
   }
 }

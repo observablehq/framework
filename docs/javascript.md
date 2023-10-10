@@ -26,9 +26,13 @@ The parser first parses the input as an expression; if that fails, it parses it 
 
 Inline JavaScript expressions interpolate live values into Markdown. They are often used to display dynamic numbers such as metrics, or to arrange visual elements such as charts into rich HTML layouts.
 
+For example, this paragraph simulates rolling a 20-sided dice:
+
 ```md
-1 + 2 = ${1 + 2}
+You rolled ${Math.floor(Math.random() * 20) + 1}.
 ```
+
+You rolled ${Math.floor(Math.random() * 20) + 1}. Reload the page to re-roll.
 
 Unlike code blocks, expressions cannot declare top-level variables.
 
@@ -73,11 +77,11 @@ const pointer = Generators.observe((notify) => {
 
 Pointer is: ${pointer.map(Math.round).join(", ")}.
 
-## Displaying content
+### Displaying content
 
 A JavaScript fenced code block containing an expression will automatically display its value, as will an inline JavaScript expression. You can also manually display elements or inspect values by calling the built-in **display** function.
 
-### display(*value*)
+#### display(*value*)
 
 If *value* is a DOM node, adds it to the DOM. Otherwise, converts the given *value* to a suitable DOM node and displays that instead. Returns the given *value*.
 
@@ -85,6 +89,22 @@ When *value* is not a DOM node, the display is different for fenced code blocks 
 
 You can call display multiple times within the same code block (or even inline expression) to display multiple values. The display will be automatically cleared if the associated code block or inline expression is re-run.
 
-### view(*input*)
+#### view(*input*)
 
 It’s equivalent to Generators.input(display(*input*)). Use it to display an input element while also declaring the input’s current value as a reactive top-level variable.
+
+### Imports
+
+You can import a library from npm like so:
+
+```js show
+import confetti from "npm:canvas-confetti";
+```
+
+Now you can reference the imported `confetti` anywhere on the page.
+
+```js show
+Inputs.button("Throw confetti!", {reduce: () => confetti()})
+```
+
+You can also import JavaScript from local ES modules. This allows you to move code out of Markdown and into vanilla JavaScript files that can be shared by multiple pages — or even another application. And you can write tests for your code.

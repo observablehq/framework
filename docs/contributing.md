@@ -2,7 +2,7 @@
 
 If you’d like to contribute to the Observable CLI, here’s how. Clone the [git repo](https://github.com/observablehq/cli), and then run [Yarn (1.x)](https://classic.yarnpkg.com/lang/en/docs/install/) to install dependencies:
 
-```
+```sh
 git clone git@github.com:observablehq/cli.git
 cd cli
 yarn
@@ -10,7 +10,7 @@ yarn
 
 Next start the local preview server like so:
 
-```
+```sh
 yarn dev
 ```
 
@@ -25,13 +25,13 @@ The local preview server restarts automatically if you edit any of the TypeScrip
 
 To generate the static site:
 
-```
+```sh
 yarn build
 ```
 
 This creates the `dist` folder. View the site using your preferred web server, such as:
 
-```
+```sh
 http-server dist
 ```
 
