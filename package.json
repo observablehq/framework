@@ -32,6 +32,7 @@
     "@observablehq/runtime": "^5.9.3",
     "acorn": "^8.10.0",
     "acorn-walk": "^8.2.0",
+    "fast-array-diff": "^1.1.0",
     "gray-matter": "^4.0.3",
     "highlight.js": "^11.8.0",
     "markdown-it": "^13.0.2",

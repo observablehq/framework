@@ -5,14 +5,28 @@ import MarkdownItAnchor from "markdown-it-anchor";
 import type {RuleCore} from "markdown-it/lib/parser_core.js";
 import type {RuleInline} from "markdown-it/lib/parser_inline.js";
 import type {RenderRule} from "markdown-it/lib/renderer.js";
-import {type FileReference, type ImportReference, transpileJavaScript} from "./javascript.js";
+import type {FileReference, ImportReference, Transpile} from "./javascript.js";
+import {transpileJavaScript} from "./javascript.js";
+import type {PatchItem} from "fast-array-diff";
+import {getPatch} from "fast-array-diff";
+import type Renderer from "markdown-it/lib/renderer.js";
+import equal from "fast-deep-equal";
 
-interface ParseContext {
-  id: number;
-  js: string;
-  files: FileReference[];
-  imports: ImportReference[];
+export interface HtmlPiece {
+  type: "html";
+  id: string;
+  html: string;
+  cellIds?: string[];
 }
+
+type TranspiledCell = Transpile["cell"];
+
+export interface CellPiece extends TranspiledCell {
+  type: "cell";
+  inline: boolean;
+}
+
+export type ParsePiece = HtmlPiece | CellPiece;
 
 export interface ParseResult {
   title: string | null;
@@ -21,6 +35,21 @@ export interface ParseResult {
   data: {[key: string]: any} | null;
   files: FileReference[];
   imports: ImportReference[];
+  pieces: HtmlPiece[];
+  cells: CellPiece[];
+}
+
+interface RenderPiece {
+  html: string;
+  code: (Transpile["cell"] & {inline: boolean})[];
+}
+
+interface ParseContext {
+  id: number;
+  js: string;
+  pieces: RenderPiece[];
+  files: {name: string; mimeType: string}[];
+  imports: ImportReference[];
 }
 
 function makeFenceRenderer(root: string, baseRenderer: RenderRule): RenderRule {
@@ -28,17 +57,23 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule): RenderRule {
     const token = tokens[idx];
     const [language, option] = token.info.split(" ");
     let result = "";
+    let count = 0;
     if (language === "js" && option !== "no-run") {
       const id = ++context.id;
       const transpile = transpileJavaScript(token.content, {id, root});
+      extendPiece(context, {code: [{...transpile.cell, inline: false}]});
       context.js += `\n${transpile.js}`;
       context.files.push(...transpile.files);
       context.imports.push(...transpile.imports);
       result += `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`;
+      count++;
     }
     if (language !== "js" || option === "show" || option === "no-run") {
       result += baseRenderer(tokens, idx, options, context, self);
+      count++;
     }
+    // Tokens should always be rendered as a single block element.
+    if (count > 1) result = "<div>" + result + "</div>";
     return result;
   };
 }
@@ -178,9 +213,69 @@ function makePlaceholderRenderer(root: string): RenderRule {
     const token = tokens[idx];
     const transpile = transpileJavaScript(token.content, {id, root, inline: true});
     context.js += `\n${transpile.js}`;
+    extendPiece(context, {code: [{...transpile.cell, inline: true}]});
     context.files.push(...transpile.files);
     return `<span id="cell-${id}"></span>`;
   };
+}
+
+function extendPiece(context: ParseContext, extend: Partial<RenderPiece>) {
+  if (context.pieces.length === 0) context.pieces.push({html: "", code: []});
+  const last = context.pieces[context.pieces.length - 1];
+  context.pieces[context.pieces.length - 1] = {
+    html: last.html + (extend.html ?? ""),
+    code: [...last.code, ...(extend.code ? extend.code : [])]
+  };
+}
+
+function renderIntoPieces(renderer: Renderer): Renderer["render"] {
+  return (tokens, options, context: ParseContext) => {
+    let i,
+      len,
+      type,
+      result = "";
+    const rules = renderer.rules;
+    for (i = 0, len = tokens.length; i < len; i++) {
+      type = tokens[i].type;
+
+      let piece = "";
+      if (type === "inline") {
+        piece = renderer.renderInline(tokens[i].children!, options, context);
+      } else if (typeof rules[type] !== "undefined") {
+        if (tokens[i].level === 0 && tokens[i].nesting !== -1) context.pieces.push({html: "", code: []});
+        piece = rules[type]!(tokens, i, options, context, renderer);
+      } else {
+        if (tokens[i].level === 0 && tokens[i].nesting !== -1) context.pieces.push({html: "", code: []});
+        piece = renderer.renderToken(tokens, i, options);
+      }
+      extendPiece(context, {html: piece});
+      result += piece;
+    }
+
+    return result;
+  };
+}
+
+function toParsePieces(pieces: RenderPiece[]): HtmlPiece[] {
+  return pieces.map((piece) => ({
+    type: "html",
+    id: "",
+    cellIds: piece.code.map((code) => `${code.id}`),
+    html: piece.html
+  }));
+}
+
+function toParseCells(pieces: RenderPiece[]): CellPiece[] {
+  const cellPieces: CellPiece[] = [];
+  pieces.forEach((piece) =>
+    piece.code.forEach((code) =>
+      cellPieces.push({
+        type: "cell",
+        ...code
+      })
+    )
+  );
+  return cellPieces;
 }
 
 export function parseMarkdown(source: string, root: string): ParseResult {
@@ -203,7 +298,8 @@ export function parseMarkdown(source: string, root: string): ParseResult {
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
   md.renderer.rules.placeholder = makePlaceholderRenderer(root);
   md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!);
-  const context: ParseContext = {id: 0, js: "", files: [], imports: []};
+  md.renderer.render = renderIntoPieces(md.renderer);
+  const context: ParseContext = {id: 0, js: "", files: [], imports: [], pieces: []};
   const tokens = md.parse(parts.content, context);
   const html = md.renderer.render(tokens, md.options, context);
   return {
@@ -212,7 +308,9 @@ export function parseMarkdown(source: string, root: string): ParseResult {
     data: isEmpty(parts.data) ? null : parts.data,
     title: parts.data?.title ?? findTitle(tokens) ?? null,
     files: context.files,
-    imports: context.imports
+    imports: context.imports,
+    pieces: toParsePieces(context.pieces),
+    cells: toParseCells(context.pieces)
   };
 }
 
@@ -238,4 +336,18 @@ function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | undefined 
       }
     }
   }
+}
+
+function diffReducer(patch: PatchItem<ParsePiece>) {
+  // Remove body from remove updates, we just need the ids.
+  if (patch.type === "remove") {
+    return {...patch, items: patch.items.map((item) => ({type: item.type, id: item.id, cellIds: item.cellIds}))};
+  }
+  return patch;
+}
+
+export function diffMarkdown(prevParse: ParseResult, nextParse: ParseResult) {
+  return getPatch<ParsePiece>(prevParse.pieces, nextParse.pieces, equal)
+    .concat(getPatch(prevParse.cells, nextParse.cells, equal))
+    .map(diffReducer);
 }

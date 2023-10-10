@@ -22,6 +22,9 @@ export interface ImportReference {
 }
 
 export interface Transpile {
+  // TODO: Create a better type for the transpiled result.
+  cell: Record<string, any>;
+  // TODO: Replace usages of js with cell and remove js here.
   js: string;
   files: FileReference[];
   imports: ImportReference[];
@@ -48,7 +51,19 @@ export function transpileJavaScript(input: string, {id, root, ...options}: Trans
       inputs.push("display");
     }
     rewriteImports(output, node);
+
+    const cell = {
+      id: `${id}`,
+      ...(inputs.length ? {inputs} : null),
+      ...(options.inline ? {inline: true} : null),
+      ...(node.declarations?.length ? {outputs: node.declarations.map(({name}) => name)} : null),
+      ...(files.length ? {files} : null),
+      body: `${node.async ? "async " : ""}(${inputs}) => {
+${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.map(({name}) => name)}};` : ""}
+}`
+    };
     return {
+      cell,
       js: `define({id: ${id}${inputs.length ? `, inputs: ${JSON.stringify(inputs)}` : ""}${
         options.inline ? `, inline: true` : ""
       }${node.declarations?.length ? `, outputs: ${JSON.stringify(node.declarations.map(({name}) => name))}` : ""}${
@@ -63,6 +78,7 @@ ${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.ma
   } catch (error) {
     if (!(error instanceof SyntaxError)) throw error;
     return {
+      cell: {},
       // TODO: Add error details to the response to improve code rendering.
       js: `define({id: ${id}, body: () => { throw new SyntaxError(${JSON.stringify(error.message)}); }});
 `,

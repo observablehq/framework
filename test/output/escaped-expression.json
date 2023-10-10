@@ -2,5 +2,14 @@
   "data": null,
   "title": null,
   "files": [],
-  "imports": []
+  "imports": [],
+  "pieces": [
+    {
+      "type": "html",
+      "id": "",
+      "cellIds": [],
+      "html": "<p>${1 + 2}</p>\n"
+    }
+  ],
+  "cells": []
 }

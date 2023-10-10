@@ -2,5 +2,32 @@
   "data": null,
   "title": "Fenced code",
   "files": [],
-  "imports": []
+  "imports": [],
+  "pieces": [
+    {
+      "type": "html",
+      "id": "",
+      "cellIds": [],
+      "html": "<h1 id=\"fenced-code\" tabindex=\"-1\"><a class=\"observablehq-header-anchor\" href=\"#fenced-code\">Fenced code</a></h1>\n"
+    },
+    {
+      "type": "html",
+      "id": "",
+      "cellIds": [
+        "1"
+      ],
+      "html": "<div><div id=\"cell-1\" class=\"observablehq observablehq--block\"></div>\n<pre><code class=\"language-js\"><span class=\"hljs-keyword\">function</span> <span class=\"hljs-title function_\">add</span>(<span class=\"hljs-params\">a, b</span>) {\n  <span class=\"hljs-keyword\">return</span> a + b;\n}\n</code></pre>\n</div>"
+    }
+  ],
+  "cells": [
+    {
+      "type": "cell",
+      "id": "1",
+      "outputs": [
+        "add"
+      ],
+      "body": "() => {\nfunction add(a, b) {\n  return a + b;\n}\nreturn {add};\n}",
+      "inline": false
+    }
+  ]
 }

@@ -11,6 +11,7 @@ import {HttpError, isHttpError, isNodeError} from "./error.js";
 import {computeHash} from "./hash.js";
 import {readPages} from "./navigation.js";
 import {renderPreview} from "./render.js";
+import {diffMarkdown, parseMarkdown} from "./markdown.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
@@ -111,7 +112,7 @@ function handleWatch(socket: WebSocket, root: string) {
   let watcher: FSWatcher | null = null;
   console.log("socket open");
 
-  socket.on("message", (data) => {
+  socket.on("message", async (data) => {
     try {
       const message = JSON.parse(String(data));
       console.log("↑", message);
@@ -122,13 +123,20 @@ function handleWatch(socket: WebSocket, root: string) {
           if (normalize(path).startsWith("..")) throw new Error("Invalid path: " + path);
           if (path.endsWith("/")) path += "index";
           path = join(root, normalize(path) + ".md");
+          const contents = await readFile(path, "utf-8");
           let currentHash = message.hash;
+          let currentParse = parseMarkdown(contents, root);
           watcher = watch(path, async () => {
-            const source = await readFile(path, "utf-8");
-            const hash = computeHash(source);
-            if (currentHash !== hash) {
-              send({type: "reload"});
-              currentHash = hash;
+            // TODO: Sometimes this gets an ENOENT
+            const updatedContents = await readFile(path, "utf-8");
+            const updatedParse = parseMarkdown(updatedContents, root);
+            const updatedHash = computeHash(updatedContents);
+            if (currentHash !== updatedHash) {
+              const length = currentParse.pieces.length;
+              const diff = diffMarkdown(currentParse, updatedParse);
+              currentParse = updatedParse;
+              currentHash = updatedHash;
+              send({type: "update", length, diff});
             }
           });
           break;

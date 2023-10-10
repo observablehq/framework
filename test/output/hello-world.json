@@ -2,5 +2,20 @@
   "data": null,
   "title": "Hello, world!",
   "files": [],
-  "imports": []
+  "imports": [],
+  "pieces": [
+    {
+      "type": "html",
+      "id": "",
+      "cellIds": [],
+      "html": "<h1 id=\"hello%2C-world!\" tabindex=\"-1\"><a class=\"observablehq-header-anchor\" href=\"#hello%2C-world!\">Hello, world!</a></h1>\n"
+    },
+    {
+      "type": "html",
+      "id": "",
+      "cellIds": [],
+      "html": "<p>This is a test.</p>\n"
+    }
+  ],
+  "cells": []
 }

@@ -2,5 +2,45 @@
   "data": null,
   "title": "Hello, ",
   "files": [],
-  "imports": []
+  "imports": [],
+  "pieces": [
+    {
+      "type": "html",
+      "id": "",
+      "cellIds": [
+        "1"
+      ],
+      "html": "<h1 id=\"hello%2C\" tabindex=\"-1\"><a class=\"observablehq-header-anchor\" href=\"#hello%2C\">Hello, <span id=\"cell-1\"></span></a></h1>\n"
+    },
+    {
+      "type": "html",
+      "id": "",
+      "cellIds": [
+        "2"
+      ],
+      "html": "<p>My favorite equation is <span id=\"cell-2\"></span>.</p>\n"
+    }
+  ],
+  "cells": [
+    {
+      "type": "cell",
+      "id": "1",
+      "inputs": [
+        "tex",
+        "display"
+      ],
+      "inline": true,
+      "body": "(tex,display) => {\ndisplay((\ntex`\\KaTeX`\n))\n}"
+    },
+    {
+      "type": "cell",
+      "id": "2",
+      "inputs": [
+        "tex",
+        "display"
+      ],
+      "inline": true,
+      "body": "(tex,display) => {\ndisplay((\ntex`E = mc^2`\n))\n}"
+    }
+  ]
 }
