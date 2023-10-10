@@ -112,8 +112,11 @@ function BigNumber(
 
 @media (prefers-color-scheme: light) {
   :root {
-    --theme-background-color-alt: rgb(var(--theme-background-rgb));
-    --theme-background-color: color-mix(in srgb, var(--theme-foreground-color) 5%, white);
+    --theme-background: color-mix(in srgb, var(--theme-background-alt) 95%, black);
+    --theme-background-alt: rgb(255, 255, 255);
+  }
+  #observablehq-sidebar {
+    background: none;
   }
 }
 
@@ -125,8 +128,8 @@ function BigNumber(
 }
 
 .grid > * {
-  background: var(--theme-background-color-alt);
-  border: solid 1px rgba(var(--theme-foreground-rgb), 0.2);
+  background: var(--theme-background-alt);
+  border: solid 1px var(--theme-foreground-faintest);
   border-radius: 0.75rem;
   padding: 1rem;
   overflow: hidden;
