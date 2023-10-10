@@ -56,15 +56,36 @@ To prevent variables from being visible outside the current block, make them loc
 
 ### Reactive references
 
-References to top-level variables in other code blocks are reactive: promises are implicitly awaited and generators are implicitly consumed. For example, within the block below, `hello` is a Promise; but if you reference `hello` from another block, that block won’t run until `hello` resolves, where it will see a string.
+References to top-level variables in other code blocks are reactive: promises are implicitly awaited and generators are implicitly consumed. For example, within the block below, `hello` is a Promise. If you reference `hello` from another block, the other block won’t run until `hello` resolves and it will see a string.
 
 ```js show
-const hello = Promises.delay(1000, "hello");
+const hello = new Promise((resolve) => {
+  setTimeout(() => resolve("hello"), 1000);
+});
 ```
 
 Hello is: ${hello}.
 
-And here is an example using Generators.observe:
+Values that change over time, such as interactive inputs and animation parameters, are represented as [async generators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator).
+
+Often, you won’t implement an async generator directly; instead you’ll use a built-in implementation such as Generators.input. This function takes an input element and returns a generator that yields the input’s value whenever it changes. (You can also use the [Observable Inputs](https://github.com/observablehq/inputs) to construct beautiful inputs.) For example, try entering your name into the box below:
+
+```js show
+const nameInput = Inputs.text({label: "Name", placeholder: "Enter your name"});
+const name = Generators.input(nameInput);
+
+display(nameInput);
+```
+
+Name is: ${name}.
+
+For convenience, the built-in view function combines displaying the given input element with returning its corresponding generator. The above can be shortened as:
+
+```js no-run
+const name = view(Inputs.text({label: "Name", placeholder: "Enter your name"}));
+```
+
+For even more control, you can use the built-in Generators.observe to write a custom generator. This one yields the current pointer coordinates:
 
 ```js show
 const pointer = Generators.observe((notify) => {
@@ -79,19 +100,19 @@ Pointer is: ${pointer.map(Math.round).join(", ")}.
 
 ### Displaying content
 
-A JavaScript fenced code block containing an expression will automatically display its value, as will an inline JavaScript expression. You can also manually display elements or inspect values by calling the built-in **display** function.
+A JavaScript fenced code block containing an expression will automatically display its value, as will an inline JavaScript expression. You can also manually display elements or inspect values by calling the built-in display function.
 
 #### display(*value*)
 
 If *value* is a DOM node, adds it to the DOM. Otherwise, converts the given *value* to a suitable DOM node and displays that instead. Returns the given *value*.
 
-When *value* is not a DOM node, the display is different for fenced code blocks and inline expressions. In fenced code blocks, display will use the [Observable Inspector](https://github.com/observablehq/inspector); whereas for inline expressions, display will coerce non-DOM values to strings and will display multiple values when passed an iterable.
+When *value* is not a DOM node, display will automatically create a suitable corresponding DOM node to display. The exact behavior depends on the input *value*, and whether display is called within a fenced code block or an inline expression. In fenced code blocks, display will use the [Observable Inspector](https://github.com/observablehq/inspector); in inline expressions, display will coerce non-DOM values to strings, and will concatenate values when passed an iterable.
 
-You can call display multiple times within the same code block (or even inline expression) to display multiple values. The display will be automatically cleared if the associated code block or inline expression is re-run.
+You can call display multiple times within the same code block or inline expression to display multiple values. The display will be automatically cleared if the associated code block or inline expression is re-run.
 
 #### view(*input*)
 
-It’s equivalent to Generators.input(display(*input*)). Use it to display an input element while also declaring the input’s current value as a reactive top-level variable.
+As described above, this function displays the given *input* and then returns its corresponding generator via Generators.input. Use this to display an input element while also declaring the input’s current value as a reactive top-level variable.
 
 ### Imports
 
