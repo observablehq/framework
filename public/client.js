@@ -8,7 +8,7 @@ const attachedFiles = new Map();
 const resolveFile = (name) => attachedFiles.get(name);
 main.builtin("FileAttachment", runtime.fileAttachments(resolveFile));
 
-const variablesById = new Map();
+const cellsById = new Map();
 const Generators = library.Generators;
 
 function width() {
@@ -23,11 +23,12 @@ function width() {
   });
 }
 
-export function define({id, inline, inputs = [], outputs = [], files = [], body}) {
-  id = String(id);
+export function define(cell) {
+  const {id: idParam, inline, inputs = [], outputs = [], files = [], body} = cell;
+  const id = String(idParam);
   const variables = [];
-  variablesById.get(id)?.forEach((v) => v.delete());
-  variablesById.set(id, variables);
+  cellsById.get(id)?.variables.forEach((v) => v.delete());
+  cellsById.set(id, {cell, variables});
   const root = document.querySelector(`#cell-${id}`);
   const observer = {pending: () => (root.innerHTML = ""), rejected: (error) => new Inspector(root).rejected(error)};
   const display = inline
@@ -84,7 +85,10 @@ export function open({hash} = {}) {
                     } else {
                       root.children[newPos++].insertAdjacentHTML("beforebegin", item.html);
                     }
-                    // TODO: update inline cells in this item
+                    item.cellIds.forEach((id) => {
+                      const cell = cellsById.get(id);
+                      if (cell) define(cell.cell);
+                    });
                     break;
                   case "cell":
                     {
@@ -113,8 +117,8 @@ export function open({hash} = {}) {
                     break;
                   case "cell":
                     {
-                      variablesById.get(item.id)?.forEach((v) => v.delete());
-                      variablesById.delete(item.id);
+                      cellsById.get(item.id)?.variables.forEach((v) => v.delete());
+                      cellsById.delete(item.id);
                     }
                     break;
                 }
