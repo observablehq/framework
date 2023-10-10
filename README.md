@@ -49,6 +49,7 @@ TODO
 - detect server restart and reload
 - HTTPS with self-signed certificate or something?
 - show errors with line numbers on the console
+- serve root (don’t assume /)
 - snapshot cache
   - proxied fetch
   - database client queries
@@ -67,6 +68,7 @@ TODO
   - ✅ static imports of ES modules
   - ✅ local ES modules detected as file attachments
   - parallelize multiple static import statements
+  - parse imports from npm:module and generate the corresponding import map
   - npm packages
   - local Observable Markdown files
   - cloud Observable notebooks?

@@ -34,7 +34,9 @@ function render(parseResult: ParseResult, {path, pages, preview, hash}: RenderOp
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 ${
   parseResult.title ? `<title>${escapeData(parseResult.title)}</title>\n` : ""
-}<link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
+}<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
+<link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
+<link rel="modulepreload" href="/_observablehq/runtime.js">
 <script type="module">
 
 import {${preview ? "open, " : ""}define} from "/_observablehq/client.js";
