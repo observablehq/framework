@@ -38,7 +38,7 @@ TODO
 - data table display for tabular data (query results, CSV, _etc._)
 - SQL fenced code blocks
 - fenced code block options
-  - echo to show code in output
+  - ✅ echo to show code in output
   - output name for SQL cells
   - source database for SQL cells
 - HTML fenced code blocks?
@@ -49,19 +49,19 @@ TODO
 - detect server restart and reload
 - HTTPS with self-signed certificate or something?
 - show errors with line numbers on the console
-- serve root (don’t assume /)
+- ✅ serve root (don’t assume /)
 - snapshot cache
   - proxied fetch
   - database client queries
 - static site generation (yarn build)
-  - including file attachments
+  - ✅ including file attachments
   - including database client query snapshots
   - including fetch snapshots
   - for secrets, use encrypted hash parameters?
 - incremental update
-  - when Markdown changes
-  - when JavaScript changes (both expressions and code blocks)
-  - when other live code changes (e.g., SQL, TeX)
+  - ✅ when Markdown changes
+  - ✅ when JavaScript changes (both expressions and code blocks)
+  - ✅ when other live code changes (e.g., SQL, TeX)
   - when attached files change
 - imports
   - ✅ dynamic imports of ES modules
