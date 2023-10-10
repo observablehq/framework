@@ -1,6 +1,7 @@
 import matter from "gray-matter";
 import hljs from "highlight.js";
 import MarkdownIt from "markdown-it";
+import MarkdownItAnchor from "markdown-it-anchor";
 import type {RuleCore} from "markdown-it/lib/parser_core.js";
 import type {RuleInline} from "markdown-it/lib/parser_inline.js";
 import type {RenderRule} from "markdown-it/lib/renderer.js";
@@ -197,6 +198,7 @@ export function parseMarkdown(source: string, root: string): ParseResult {
       return ""; // defaults to escapeHtml(str)
     }
   });
+  md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
   md.renderer.rules.placeholder = makePlaceholderRenderer(root);
@@ -225,8 +227,14 @@ function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | undefined 
   for (const [i, token] of tokens.entries()) {
     if (token.type === "heading_open" && token.tag === "h1") {
       const next = tokens[i + 1];
-      if (next?.type === "inline" && next.children?.[0]?.type === "text") {
-        return next.content;
+      if (next?.type === "inline") {
+        const text = next.children
+          ?.filter((t) => t.type === "text")
+          .map((t) => t.content)
+          .join("");
+        if (text) {
+          return text;
+        }
       }
     }
   }

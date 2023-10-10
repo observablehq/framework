@@ -358,6 +358,10 @@ figcaption {
   color: var(--syntax-unknown-variable);
 }
 
+a[href].observablehq-header-anchor {
+  color: inherit;
+}
+
 .observablehq--block {
   margin: 1rem 0;
 }

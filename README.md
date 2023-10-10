@@ -94,6 +94,7 @@ TODO
 - implicitly await ${…} expressions before calling display?
 - promote img, video, audio, and picture elements to file attachments
 - add rel="nofollow noindex" to external links by default
+- ✅ automatic anchor links for heading elements
 - themes
   - ✅ default light/dark theme
   - dashboard theme for wide layout
