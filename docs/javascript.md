@@ -1,14 +1,28 @@
 # JavaScript reference
 
-Observable Markdown features live, reactive JavaScript. There are two ways to write live JavaScript: fenced code blocks (<code>```js</code>) and inline expressions (<code>$\{…}</code>).
+Observable Markdown features live, reactive JavaScript. There are two ways to write live JavaScript: fenced code blocks and inline expressions.
 
 ### Fenced code blocks
 
-Code blocks are often used to display content such as charts and inputs. They can also declare top-level variables, say to load data or declare helper functions. Code blocks can contain either a single expression or zero or more statements. (The parser first parses the input as an expression; if that fails, it parses it as a program.)
+Code blocks are often used to display content such as charts and inputs. They can also declare top-level variables, say to load data or declare helper functions.
+
+````md
+```js
+1 + 2
+```
+````
+
+Code blocks can contain either a single expression, as above, or zero or more statements. (The parser first parses the input as an expression; if that fails, it parses it as a program.)
 
 ### Inline expressions
 
-Expressions implicitly display their associated value; they are often used to interpolate dynamic values such as metrics into prose, or to arrange visual elements such as charts into rich HTML layouts. Unlike code blocks, expressions cannot declare top-level variables.
+Expressions implicitly display their associated value; they are often used to interpolate dynamic values such as metrics into prose, or to arrange visual elements such as charts into rich HTML layouts.
+
+```md
+1 + 2 = ${1 + 2}
+```
+
+Unlike code blocks, expressions cannot declare top-level variables.
 
 ### Top-level variables
 
