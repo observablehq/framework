@@ -79,11 +79,12 @@ TODO
   - remove deprecated features for standard library
   - Generators.asyncInput
 - ✅ self-host Observable Runtime instead of jsDelivr CDN
-- promote fetch to file attachment
+- ✅ promote local fetch to file attachment
 - add tests for serverless (build) output, too
 - better theme colors for highlight.js
 - better logic for clearing display after invalidation
 - Symbol.for("observablehq.display") for custom inspectors?
+- copy buttons for code blocks
 - header and footer (meta tags, last updated date)
 - table of contents (right sidebar)
 - ✅ parse title from first h1 and/or YAML title option

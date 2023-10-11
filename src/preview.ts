@@ -1,7 +1,6 @@
 import {watch, type FSWatcher} from "node:fs";
 import {access, constants, readFile, stat} from "node:fs/promises";
-import type {IncomingMessage, RequestListener} from "node:http";
-import {createServer} from "node:http";
+import {createServer, type IncomingMessage, type RequestListener} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
@@ -9,9 +8,9 @@ import send from "send";
 import {WebSocketServer, type WebSocket} from "ws";
 import {HttpError, isHttpError, isNodeError} from "./error.js";
 import {computeHash} from "./hash.js";
+import {diffMarkdown, parseMarkdown} from "./markdown.js";
 import {readPages} from "./navigation.js";
 import {renderPreview} from "./render.js";
-import {diffMarkdown, parseMarkdown} from "./markdown.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 

@@ -12,6 +12,12 @@ export function findFeatures(node, references, input) {
         arguments: [arg]
       } = node;
 
+      // Promote fetches with static literals to file attachment references.
+      if (isLocalFetch(node, references)) {
+        features.push({type: "FileAttachment", name: getStringLiteralValue(arg)});
+        return;
+      }
+
       // Ignore function calls that are not references to the feature. For
       // example, if there’s a local variable called Secret, that will mask the
       // built-in Secret and won’t be considered a feature.
@@ -45,6 +51,22 @@ export function findFeatures(node, references, input) {
   }
 
   return features;
+}
+
+export function isLocalFetch(node, references) {
+  if (node.type !== "CallExpression") return false;
+  const {
+    callee,
+    arguments: [arg]
+  } = node;
+  return (
+    callee.type === "Identifier" &&
+    callee.name === "fetch" &&
+    !references.includes(callee) &&
+    arg &&
+    isStringLiteral(arg) &&
+    getStringLiteralValue(arg).startsWith("./")
+  );
 }
 
 export function isStringLiteral(node) {

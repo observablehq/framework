@@ -1,7 +1,6 @@
 import {computeHash} from "./hash.js";
-import type {FileReference, ImportReference} from "./javascript.js";
-import type {ParseResult} from "./markdown.js";
-import {parseMarkdown} from "./markdown.js";
+import {type FileReference, type ImportReference} from "./javascript.js";
+import {parseMarkdown, type ParseResult} from "./markdown.js";
 
 export interface Render {
   html: string;
