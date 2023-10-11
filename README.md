@@ -38,7 +38,7 @@ TODO
 - data table display for tabular data (query results, CSV, _etc._)
 - SQL fenced code blocks
 - fenced code block options
-  - echo to show code in output
+  - ✅ echo to show code in output
   - output name for SQL cells
   - source database for SQL cells
 - HTML fenced code blocks?
@@ -49,19 +49,19 @@ TODO
 - detect server restart and reload
 - HTTPS with self-signed certificate or something?
 - show errors with line numbers on the console
-- serve root (don’t assume /)
+- ✅ serve root (don’t assume /)
 - snapshot cache
   - proxied fetch
   - database client queries
 - static site generation (yarn build)
-  - including file attachments
+  - ✅ including file attachments
   - including database client query snapshots
   - including fetch snapshots
   - for secrets, use encrypted hash parameters?
 - incremental update
-  - when Markdown changes
-  - when JavaScript changes (both expressions and code blocks)
-  - when other live code changes (e.g., SQL, TeX)
+  - ✅ when Markdown changes
+  - ✅ when JavaScript changes (both expressions and code blocks)
+  - ✅ when other live code changes (e.g., SQL, TeX)
   - when attached files change
 - imports
   - ✅ dynamic imports of ES modules
@@ -69,20 +69,22 @@ TODO
   - ✅ local ES modules detected as file attachments
   - ✅ parse imports from npm:module and generate the corresponding import map
   - ✅ npm packages
+  - ✅ use ES module imports for (most) recommended libraries
   - parallelize awaits when multiple static import statements
-  - local Observable Markdown files
+  - local Markdown files
   - cloud Observable notebooks?
-  - use ES module imports for recommended libraries
   - during build, download ES modules from jsDelivr
   - equivalent to version locking/integrity sha?
 - standard library 2.0
   - remove deprecated features for standard library
   - Generators.asyncInput
 - ✅ self-host Observable Runtime instead of jsDelivr CDN
+- ✅ promote local fetch to file attachment
 - add tests for serverless (build) output, too
 - better theme colors for highlight.js
 - better logic for clearing display after invalidation
 - Symbol.for("observablehq.display") for custom inspectors?
+- copy buttons for code blocks
 - header and footer (meta tags, last updated date)
 - table of contents (right sidebar)
 - ✅ parse title from first h1 and/or YAML title option

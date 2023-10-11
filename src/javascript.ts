@@ -1,15 +1,15 @@
-import type {Options} from "acorn";
-import {Parser, tokTypes} from "acorn";
+import {Parser, tokTypes, type Options} from "acorn";
 import mime from "mime";
-import {findAwaits} from "./javascript/awaits.js";
-import {findDeclarations} from "./javascript/declarations.js";
-import {defaultGlobals} from "./javascript/globals.js";
-import {findReferences} from "./javascript/references.js";
-import {findFeatures} from "./javascript/features.js";
-import {findImports, rewriteImports} from "./javascript/imports.js";
 import {accessSync, constants, statSync} from "node:fs";
 import {join} from "node:path";
 import {isNodeError} from "./error.js";
+import {findAwaits} from "./javascript/awaits.js";
+import {findDeclarations} from "./javascript/declarations.js";
+import {findFeatures} from "./javascript/features.js";
+import {rewriteFetches} from "./javascript/fetches.js";
+import {defaultGlobals} from "./javascript/globals.js";
+import {findImports, rewriteImports} from "./javascript/imports.js";
+import {findReferences} from "./javascript/references.js";
 import {Sourcemap} from "./sourcemap.js";
 
 export interface FileReference {
@@ -51,7 +51,7 @@ export function transpileJavaScript(input: string, {id, root, ...options}: Trans
       inputs.push("display");
     }
     rewriteImports(output, node);
-
+    rewriteFetches(output, node);
     const cell = {
       id: `${id}`,
       ...(inputs.length ? {inputs} : null),

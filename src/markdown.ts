@@ -1,16 +1,13 @@
+import {getPatch, type PatchItem} from "fast-array-diff";
+import equal from "fast-deep-equal";
 import matter from "gray-matter";
 import hljs from "highlight.js";
 import MarkdownIt from "markdown-it";
 import MarkdownItAnchor from "markdown-it-anchor";
-import type {RuleCore} from "markdown-it/lib/parser_core.js";
-import type {RuleInline} from "markdown-it/lib/parser_inline.js";
-import type {RenderRule} from "markdown-it/lib/renderer.js";
-import type {FileReference, ImportReference, Transpile} from "./javascript.js";
-import {transpileJavaScript} from "./javascript.js";
-import type {PatchItem} from "fast-array-diff";
-import {getPatch} from "fast-array-diff";
-import type Renderer from "markdown-it/lib/renderer.js";
-import equal from "fast-deep-equal";
+import {type RuleCore} from "markdown-it/lib/parser_core.js";
+import {type RuleInline} from "markdown-it/lib/parser_inline.js";
+import {type default as Renderer, type RenderRule} from "markdown-it/lib/renderer.js";
+import {transpileJavaScript, type FileReference, type ImportReference, type Transpile} from "./javascript.js";
 
 export interface HtmlPiece {
   type: "html";

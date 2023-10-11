@@ -1,0 +1,44 @@
+{
+  "data": null,
+  "title": "Local fetch",
+  "files": [
+    {
+      "name": "./local-fetch.md",
+      "mimeType": "text/markdown"
+    }
+  ],
+  "imports": [],
+  "pieces": [
+    {
+      "type": "html",
+      "id": "",
+      "cellIds": [],
+      "html": "<h1 id=\"local-fetch\" tabindex=\"-1\"><a class=\"observablehq-header-anchor\" href=\"#local-fetch\">Local fetch</a></h1>\n"
+    },
+    {
+      "type": "html",
+      "id": "",
+      "cellIds": [
+        "1"
+      ],
+      "html": "<div id=\"cell-1\" class=\"observablehq observablehq--block\"></div>\n"
+    }
+  ],
+  "cells": [
+    {
+      "type": "cell",
+      "id": "1",
+      "inputs": [
+        "display"
+      ],
+      "files": [
+        {
+          "name": "./local-fetch.md",
+          "mimeType": "text/markdown"
+        }
+      ],
+      "body": "(display) => {\ndisplay((\nfetch(\"./_file/local-fetch.md\")\n))\n}",
+      "inline": false
+    }
+  ]
+}

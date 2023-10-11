@@ -1,6 +1,6 @@
 import {Runtime, Library, Inspector} from "npm:@observablehq/runtime";
 
-const library = Object.assign(new Library(), {width});
+const library = Object.assign(new Library(), {width, ...recommendedLibraries()});
 const runtime = new Runtime(library);
 const main = runtime.module();
 
@@ -8,9 +8,11 @@ const attachedFiles = new Map();
 const resolveFile = (name) => attachedFiles.get(name);
 main.builtin("FileAttachment", runtime.fileAttachments(resolveFile));
 
-const variablesById = new Map();
+const cellsById = new Map();
 const Generators = library.Generators;
 
+// Override the width definition to use main instead of body (and also use a
+// ResizeObserver instead of listening for window resize events).
 function width() {
   return Generators.observe((notify) => {
     let width;
@@ -23,11 +25,34 @@ function width() {
   });
 }
 
-export function define({id, inline, inputs = [], outputs = [], files = [], body}) {
-  id = String(id);
+// Override the common recommended libraries so that if a user imports them,
+// they get the same version that the standard library provides (rather than
+// loading the library twice). Also, it’s nice to avoid require!
+function recommendedLibraries() {
+  return {
+    d3: () => import("npm:d3"),
+    htl: () => import("npm:htl"),
+    Plot: () => import("npm:@observablehq/plot"),
+    Inputs: () => {
+      // TODO Observable Inputs needs to include the CSS in the dist folder
+      // published to npm, and we should replace the __ns__ namespace with
+      // oi-{hash} in the ES module distribution, somehow.
+      const inputs = import("npm:@observablehq/inputs");
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "https://cdn.jsdelivr.net/gh/observablehq/inputs/src/style.css";
+      document.head.append(link);
+      return inputs;
+    }
+  };
+}
+
+export function define(cell) {
+  const {id: idParam, inline, inputs = [], outputs = [], files = [], body} = cell;
+  const id = String(idParam);
   const variables = [];
-  variablesById.get(id)?.forEach((v) => v.delete());
-  variablesById.set(id, variables);
+  cellsById.get(id)?.variables.forEach((v) => v.delete());
+  cellsById.set(id, {cell, variables});
   const root = document.querySelector(`#cell-${id}`);
   const observer = {pending: () => (root.innerHTML = ""), rejected: (error) => new Inspector(root).rejected(error)};
   const display = inline
@@ -84,7 +109,10 @@ export function open({hash} = {}) {
                     } else {
                       root.children[newPos++].insertAdjacentHTML("beforebegin", item.html);
                     }
-                    // TODO: update inline cells in this item
+                    item.cellIds.forEach((id) => {
+                      const cell = cellsById.get(id);
+                      if (cell) define(cell.cell);
+                    });
                     break;
                   case "cell":
                     {
@@ -113,8 +141,8 @@ export function open({hash} = {}) {
                     break;
                   case "cell":
                     {
-                      variablesById.get(item.id)?.forEach((v) => v.delete());
-                      variablesById.delete(item.id);
+                      cellsById.get(item.id)?.variables.forEach((v) => v.delete());
+                      cellsById.delete(item.id);
                     }
                     break;
                 }

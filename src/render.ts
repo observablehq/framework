@@ -1,7 +1,6 @@
 import {computeHash} from "./hash.js";
-import type {FileReference, ImportReference} from "./javascript.js";
-import type {ParseResult} from "./markdown.js";
-import {parseMarkdown} from "./markdown.js";
+import {type FileReference, type ImportReference} from "./javascript.js";
+import {parseMarkdown, type ParseResult} from "./markdown.js";
 
 export interface Render {
   html: string;
@@ -47,14 +46,20 @@ ${
 }<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
 <script type="importmap">
-${JSON.stringify({
-  imports: Object.fromEntries(
-    parseResult.imports
-      .filter(({name}) => name.startsWith("npm:"))
-      .map(({name}) => [name, `https://cdn.jsdelivr.net/npm/${name.slice(4)}/+esm`])
-      .concat([["npm:@observablehq/runtime", "/_observablehq/runtime.js"]])
-  )
-})}
+${JSON.stringify(
+  {
+    imports: Object.fromEntries(
+      parseResult.imports
+        .map(({name}) => name)
+        .filter((name) => name.startsWith("npm:"))
+        .concat(["npm:d3", "npm:htl", "npm:@observablehq/plot", "npm:@observablehq/inputs"]) // recommended libraries
+        .map((name) => [name, `https://cdn.jsdelivr.net/npm/${name.slice(4)}/+esm`])
+        .concat([["npm:@observablehq/runtime", "/_observablehq/runtime.js"]])
+    )
+  },
+  null,
+  2
+)}
 </script>
 <link rel="modulepreload" href="/_observablehq/runtime.js">
 <script type="module">
@@ -86,7 +91,7 @@ ${
 `
     : ""
 }<div id="observablehq-center"${showSidebar ? ` class="observablehq--sidebar"` : ""}>
-<main>
+<main class="observablehq">
 ${parseResult.html}</main>
 </div>
 `;

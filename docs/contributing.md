@@ -1,6 +1,6 @@
 # Contributing
 
-If you’d like to contribute to the Observable CLI, here’s how. Clone the [git repo](https://github.com/observablehq/cli), and then run [Yarn (1.x)](https://classic.yarnpkg.com/lang/en/docs/install/) to install dependencies:
+If you’d like to contribute to the Observable CLI, here’s how. First clone the [git repo](https://github.com/observablehq/cli) and run [Yarn (1.x)](https://classic.yarnpkg.com/lang/en/docs/install/) to install dependencies:
 
 ```sh
 git clone git@github.com:observablehq/cli.git
@@ -8,18 +8,13 @@ cd cli
 yarn
 ```
 
-Next start the local preview server like so:
+Next start the local preview server:
 
 ```sh
 yarn dev
 ```
 
-Then visit <http://127.0.0.1:3000> and you should see something like this:
-
-<figure>
-  ${await FileAttachment("localhost.webp").image()}
-  <figcaption>http://127.0.0.1:3000</figcaption>
-</figure>
+Lastly visit <http://127.0.0.1:3000>.
 
 The local preview server restarts automatically if you edit any of the TypeScript files, though you may need to reload. The default page is [docs/index.md](https://github.com/observablehq/cli/blob/main/docs/index.md?plain=1); if you edit that file and save changes, the live preview in the browser will automatically update.
 
