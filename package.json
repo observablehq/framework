@@ -1,7 +1,7 @@
 {
   "name": "@observablehq/cli",
   "license": "UNLICENSED",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "type": "module",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
