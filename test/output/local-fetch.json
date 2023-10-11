@@ -37,8 +37,7 @@
           "mimeType": "text/markdown"
         }
       ],
-      "body": "(display) => {\ndisplay((\nfetch(\"./_file/local-fetch.md\")\n))\n}",
-      "inline": false
+      "body": "(display) => {\ndisplay((\nfetch(\"./_file/local-fetch.md\")\n))\n}"
     }
   ]
 }

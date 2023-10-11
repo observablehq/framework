@@ -17,7 +17,7 @@ describe("parseMarkdown(input)", () => {
     (only ? it.only : skip ? it.skip : it)(`test/input/${name}`, async () => {
       const snapshot = parseMarkdown(await readFile(path, "utf8"), "test/input");
       let allequal = true;
-      for (const ext of ["html", "js", "json"]) {
+      for (const ext of ["html", "json"]) {
         const actual = ext === "json" ? jsonMeta(snapshot) : snapshot[ext];
         const outfile = resolve("./test/output", `${basename(outname, ".md")}.${ext}`);
         const diffile = resolve("./test/output", `${basename(outname, ".md")}-changed.${ext}`);
@@ -59,7 +59,7 @@ describe("parseMarkdown(input)", () => {
   }
 });
 
-function jsonMeta({html, js, ...rest}: ParseResult): string {
+function jsonMeta({html, ...rest}: ParseResult): string {
   return JSON.stringify(rest, null, 2);
 }
 

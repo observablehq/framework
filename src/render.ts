@@ -32,6 +32,14 @@ export function renderServerless(source: string, options: RenderOptions): Render
   };
 }
 
+export function renderDefineCell(cell) {
+  const {id, inline, inputs, outputs, files, body} = cell;
+  return `define({${Object.entries({id, inline, inputs, outputs, files})
+    .filter((arg) => arg[1] !== undefined)
+    .map((arg) => `${arg[0]}: ${JSON.stringify(arg[1])}`)
+    .join(", ")}, body: ${body}});\n`;
+}
+
 type RenderInternalOptions =
   | {preview?: false; hash?: never} // serverless
   | {preview: true; hash: string}; // preview
@@ -66,7 +74,9 @@ ${JSON.stringify(
 
 import {${preview ? "open, " : ""}define} from "/_observablehq/client.js";
 
-${preview ? `open({hash: ${JSON.stringify(hash)}});\n` : ""}${parseResult.js}
+${preview ? `open({hash: ${JSON.stringify(hash)}});\n` : ""}${parseResult.cells
+    .map((cell) => renderDefineCell(cell))
+    .join("")}
 </script>${
     parseResult.data
       ? `

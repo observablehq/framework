@@ -1,4 +1,4 @@
-define({id: 0, outputs: ["add","subtract"], body: () => {
+define({id: "0", outputs: ["add","subtract"], body: () => {
 function add(a, b) {
   return a + b;
 }

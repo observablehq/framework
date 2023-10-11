@@ -26,8 +26,7 @@
       "outputs": [
         "add"
       ],
-      "body": "() => {\nfunction add(a, b) {\n  return a + b;\n}\nreturn {add};\n}",
-      "inline": false
+      "body": "() => {\nfunction add(a, b) {\n  return a + b;\n}\nreturn {add};\n}"
     }
   ]
 }

@@ -1,4 +1,4 @@
-define({id: 0, outputs: ["x"], body: () => {
+define({id: "0", outputs: ["x"], body: () => {
 let x = 0;
 ++x;
 x++;

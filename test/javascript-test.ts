@@ -4,6 +4,7 @@ import {readFile, unlink, writeFile} from "node:fs/promises";
 import {basename, join, resolve} from "node:path";
 import {isNodeError} from "../src/error.js";
 import {transpileJavaScript} from "../src/javascript.js";
+import {renderDefineCell} from "../src/render.js";
 
 describe("transpileJavaScript(input)", () => {
   for (const name of readdirSync("./test/input")) {
@@ -16,7 +17,9 @@ describe("transpileJavaScript(input)", () => {
     (only ? it.only : skip ? it.skip : it)(`test/input/${name}`, async () => {
       const outfile = resolve("./test/output", `${basename(outname, ".js")}.js`);
       const diffile = resolve("./test/output", `${basename(outname, ".js")}-changed.js`);
-      const actual = await transpileJavaScript(await readFile(path, "utf8"), {id: 0, root: "test/input"});
+      const actual = renderDefineCell(
+        await transpileJavaScript(await readFile(path, "utf8"), {id: 0, root: "test/input"})
+      );
       let expected;
 
       try {
@@ -24,14 +27,14 @@ describe("transpileJavaScript(input)", () => {
       } catch (error) {
         if (isNodeError(error) && error.code === "ENOENT" && process.env.CI !== "true") {
           console.warn(`! generating ${outfile}`);
-          await writeFile(outfile, actual.js, "utf8");
+          await writeFile(outfile, actual, "utf8");
           return;
         } else {
           throw error;
         }
       }
 
-      const equal = expected === actual.js;
+      const equal = expected === actual;
 
       if (equal) {
         if (process.env.CI !== "true") {
@@ -46,7 +49,7 @@ describe("transpileJavaScript(input)", () => {
         }
       } else {
         console.warn(`! generating ${diffile}`);
-        await writeFile(diffile, actual.js, "utf8");
+        await writeFile(diffile, actual, "utf8");
       }
 
       assert.ok(equal, `${name} must match snapshot`);

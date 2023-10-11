@@ -20,11 +20,8 @@ export interface HtmlPiece {
   cellIds?: string[];
 }
 
-type TranspiledCell = Transpile["cell"];
-
-export interface CellPiece extends TranspiledCell {
+export interface CellPiece extends Transpile {
   type: "cell";
-  inline: boolean;
 }
 
 export type ParsePiece = HtmlPiece | CellPiece;
@@ -32,7 +29,6 @@ export type ParsePiece = HtmlPiece | CellPiece;
 export interface ParseResult {
   title: string | null;
   html: string;
-  js: string;
   data: {[key: string]: any} | null;
   files: FileReference[];
   imports: ImportReference[];
@@ -42,7 +38,7 @@ export interface ParseResult {
 
 interface RenderPiece {
   html: string;
-  code: (Transpile["cell"] & {inline: boolean})[];
+  code: Transpile[];
 }
 
 interface ParseContext {
@@ -86,10 +82,9 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule): RenderRule {
         root,
         sourceLine: context.startLine + context.currentLine
       });
-      extendPiece(context, {code: [{...transpile.cell, inline: false}]});
-      context.js += `\n${transpile.js}`;
-      context.files.push(...transpile.files);
-      context.imports.push(...transpile.imports);
+      extendPiece(context, {code: [transpile]});
+      if (transpile.files) context.files.push(...transpile.files);
+      if (transpile.imports) context.imports.push(...transpile.imports);
       result += `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`;
       count++;
     }
@@ -242,9 +237,8 @@ function makePlaceholderRenderer(root: string): RenderRule {
       inline: true,
       sourceLine: context.startLine + context.currentLine
     });
-    context.js += `\n${transpile.js}`;
-    extendPiece(context, {code: [{...transpile.cell, inline: true}]});
-    context.files.push(...transpile.files);
+    extendPiece(context, {code: [transpile]});
+    if (transpile.files) context.files.push(...transpile.files);
     return `<span id="cell-${id}"></span>`;
   };
 }
@@ -346,7 +340,6 @@ export function parseMarkdown(source: string, root: string): ParseResult {
   const html = md.renderer.render(tokens, md.options, context);
   return {
     html,
-    js: context.js,
     data: isEmpty(parts.data) ? null : parts.data,
     title: parts.data?.title ?? findTitle(tokens) ?? null,
     files: context.files,
@@ -383,7 +376,14 @@ function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | undefined 
 function diffReducer(patch: PatchItem<ParsePiece>) {
   // Remove body from remove updates, we just need the ids.
   if (patch.type === "remove") {
-    return {...patch, items: patch.items.map((item) => ({type: item.type, id: item.id, cellIds: item.cellIds}))};
+    return {
+      ...patch,
+      items: patch.items.map((item) => ({
+        type: item.type,
+        id: item.id,
+        ...("cellIds" in item ? {cellIds: item.cellIds} : null)
+      }))
+    };
   }
   return patch;
 }

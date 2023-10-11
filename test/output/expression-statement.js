@@ -1,3 +1,3 @@
-define({id: 0, body: () => {
+define({id: "0", body: () => {
 1 + 2;
 }});

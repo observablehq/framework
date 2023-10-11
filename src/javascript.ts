@@ -21,12 +21,13 @@ export interface ImportReference {
 }
 
 export interface Transpile {
-  // TODO: Create a better type for the transpiled result.
-  cell: Record<string, any>;
-  // TODO: Replace usages of js with cell and remove js here.
-  js: string;
-  files: FileReference[];
-  imports: ImportReference[];
+  id: string;
+  inputs?: string[];
+  outputs?: string[];
+  inline?: boolean;
+  body: string;
+  files?: FileReference[];
+  imports?: ImportReference[];
 }
 
 export interface TranspileOptions {
@@ -41,7 +42,7 @@ export function transpileJavaScript(input: string, {id, root, ...options}: Trans
       .filter((f) => f.type === "FileAttachment")
       .filter((f) => canReadSync(join(root, f.name)))
       .map((f) => ({name: f.name, mimeType: mime.getType(f.name)}));
-    const inputs = Array.from(new Set(node.references.map((r) => r.name)));
+    const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
     const output = new Sourcemap(input);
     trim(output, input);
     if (node.expression && !inputs.includes("display")) {
@@ -51,7 +52,7 @@ export function transpileJavaScript(input: string, {id, root, ...options}: Trans
     }
     rewriteImports(output, node);
     rewriteFetches(output, node);
-    const cell = {
+    return {
       id: `${id}`,
       ...(inputs.length ? {inputs} : null),
       ...(options.inline ? {inline: true} : null),
@@ -59,20 +60,8 @@ export function transpileJavaScript(input: string, {id, root, ...options}: Trans
       ...(files.length ? {files} : null),
       body: `${node.async ? "async " : ""}(${inputs}) => {
 ${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.map(({name}) => name)}};` : ""}
-}`
-    };
-    return {
-      cell,
-      js: `define({id: ${id}${inputs.length ? `, inputs: ${JSON.stringify(inputs)}` : ""}${
-        options.inline ? `, inline: true` : ""
-      }${node.declarations?.length ? `, outputs: ${JSON.stringify(node.declarations.map(({name}) => name))}` : ""}${
-        files.length ? `, files: ${JSON.stringify(files)}` : ""
-      }, body: ${node.async ? "async " : ""}(${inputs}) => {
-${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.map(({name}) => name)}};` : ""}
-}});
-`,
-      files,
-      imports: node.imports
+}`,
+      ...(node.imports.length ? {imports: node.imports} : null)
     };
   } catch (error) {
     if (!(error instanceof SyntaxError)) throw error;
@@ -89,12 +78,8 @@ ${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.ma
     // whether we want to show the file name here.
     console.error(`${error.name}: ${message}`);
     return {
-      cell: {},
-      // TODO: Add error details to the response to improve code rendering.
-      js: `define({id: ${id}, body: () => { throw new SyntaxError(${JSON.stringify(error.message)}); }});
-`,
-      files: [],
-      imports: []
+      id: `${id}`,
+      body: `() => { throw new SyntaxError(${JSON.stringify(error.message)}); }`
     };
   }
 }

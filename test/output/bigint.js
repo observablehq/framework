@@ -1,4 +1,4 @@
-define({id: 0, inputs: ["foo","display"], body: (foo,display) => {
+define({id: "0", inputs: ["foo","display"], body: (foo,display) => {
 display((
 foo + 42n
 ))

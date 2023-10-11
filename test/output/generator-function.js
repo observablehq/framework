@@ -1,4 +1,4 @@
-define({id: 0, outputs: ["foo"], body: () => {
+define({id: "0", outputs: ["foo"], body: () => {
 function* foo() {
   yield 42;
 }

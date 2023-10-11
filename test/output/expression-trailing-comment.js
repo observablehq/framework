@@ -1,4 +1,4 @@
-define({id: 0, inputs: ["display"], body: (display) => {
+define({id: "0", inputs: ["display"], body: (display) => {
 display((
 42 // Hello, comment.
 ))

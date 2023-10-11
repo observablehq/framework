@@ -1,1 +1,1 @@
-define({id: 0, body: () => { throw new SyntaxError("Global 'Array' cannot be redefined (1:6)"); }});
+define({id: "0", body: () => { throw new SyntaxError("Global 'Array' cannot be redefined (1:6)"); }});
