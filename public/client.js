@@ -1,6 +1,6 @@
 import {Runtime, Library, Inspector} from "npm:@observablehq/runtime";
 
-const library = Object.assign(new Library(), {width});
+const library = Object.assign(new Library(), {width, ...recommendedLibraries()});
 const runtime = new Runtime(library);
 const main = runtime.module();
 
@@ -11,6 +11,8 @@ main.builtin("FileAttachment", runtime.fileAttachments(resolveFile));
 const cellsById = new Map();
 const Generators = library.Generators;
 
+// Override the width definition to use main instead of body (and also use a
+// ResizeObserver instead of listening for window resize events).
 function width() {
   return Generators.observe((notify) => {
     let width;
@@ -21,6 +23,18 @@ function width() {
     observer.observe(document.querySelector("main"));
     return () => observer.disconnect();
   });
+}
+
+// Override the common recommended libraries so that if a user imports them,
+// they get the same version that the standard library provides (rather than
+// loading the library twice). Also, it’s nice to avoid require!
+function recommendedLibraries() {
+  return {
+    d3: () => import("npm:d3"),
+    htl: () => import("npm:htl"),
+    Plot: () => import("npm:@observablehq/plot"),
+    Inputs: () => import("npm:@observablehq/inputs")
+  };
 }
 
 export function define(cell) {
