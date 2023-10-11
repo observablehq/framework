@@ -17,13 +17,13 @@ Current features:
 - Local preview server with hot module replacement
 - Static site generator
 - File attachments
-- Dark mode
+- Light and dark mode
 - Navigation sidebar
 
 In development:
 
 - Table of contents sidebar
-- Databases
+- Database queries
 - Database query snapshots
 - Data tables for interactive visual summaries of tabular data
 - SQL code blocks

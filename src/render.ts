@@ -85,7 +85,7 @@ ${
 `
     : ""
 }<div id="observablehq-center"${showSidebar ? ` class="observablehq--sidebar"` : ""}>
-<main>
+<main class="observablehq">
 ${parseResult.html}</main>
 </div>
 `;
