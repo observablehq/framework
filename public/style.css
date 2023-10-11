@@ -539,21 +539,21 @@ a[href],
   background: #ddd;
 }
 
-.oi-3a86ea button, .oi-3a86ea input, .oi-3a86ea select, .oi-3a86ea table, .oi-3a86ea textarea {
+.__ns__ button, .__ns__ input, .__ns__ select, .__ns__ table, .__ns__ textarea {
   color: initial !important;
 }
 
-.oi-3a86ea-table thead th {
+.__ns__-table thead th {
   background: var(--theme-background) !important;
 }
 
-.oi-3a86ea-table tr:not(:last-child) td,
-.oi-3a86ea-table tr:not(:last-child) th {
+.__ns__-table tr:not(:last-child) td,
+.__ns__-table tr:not(:last-child) th {
   border-bottom: solid 1px var(--theme-foreground-faintest) !important;
 }
 
-.oi-3a86ea-table thead tr td,
-.oi-3a86ea-table thead tr th {
+.__ns__-table thead tr td,
+.__ns__-table thead tr th {
   border-bottom: solid 1px var(--theme-foreground-fainter) !important;
 }
 

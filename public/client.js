@@ -33,7 +33,17 @@ function recommendedLibraries() {
     d3: () => import("npm:d3"),
     htl: () => import("npm:htl"),
     Plot: () => import("npm:@observablehq/plot"),
-    Inputs: () => import("npm:@observablehq/inputs")
+    Inputs: () => {
+      // TODO Observable Inputs needs to include the CSS in the dist folder
+      // published to npm, and we should replace the __ns__ namespace with
+      // oi-{hash} in the ES module distribution, somehow.
+      const inputs = import("npm:@observablehq/inputs");
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "https://cdn.jsdelivr.net/gh/observablehq/inputs/src/style.css";
+      document.head.append(link);
+      return inputs;
+    }
   };
 }
 
