@@ -11,8 +11,8 @@ The **Observable command-line interface (CLI)** is a static site generator for c
 
 Current features:
 
-- Markdown
-- Reactive JavaScript, as both fenced code blocks and inline expressions
+- [Observable Markdown](./markdown)
+- [Reactive JavaScript](./javascript), as both fenced code blocks and inline expressions
 - Import from npm and local ES modules
 - Local preview server with hot module replacement
 - Static site generator
