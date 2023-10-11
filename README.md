@@ -70,7 +70,7 @@ TODO
   - ✅ parse imports from npm:module and generate the corresponding import map
   - ✅ npm packages
   - parallelize awaits when multiple static import statements
-  - local Observable Markdown files
+  - local Markdown files
   - cloud Observable notebooks?
   - use ES module imports for recommended libraries
   - during build, download ES modules from jsDelivr
@@ -79,6 +79,7 @@ TODO
   - remove deprecated features for standard library
   - Generators.asyncInput
 - ✅ self-host Observable Runtime instead of jsDelivr CDN
+- promote fetch to file attachment
 - add tests for serverless (build) output, too
 - better theme colors for highlight.js
 - better logic for clearing display after invalidation

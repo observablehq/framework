@@ -1,40 +1,6 @@
 # JavaScript reference
 
-Observable Markdown features live, reactive JavaScript. There are two ways to write live JavaScript: fenced code blocks and inline expressions.
-
-### Fenced code blocks
-
-JavaScript fenced code blocks are often used to display content such as charts and inputs. They can also declare top-level variables, say to load data or declare helper functions. An expression code block looks like this (note the lack of semicolon):
-
-````md
-```js
-1 + 2
-```
-````
-
-A program code block looks like this:
-
-````md
-```js
-const x = 1 + 2;
-```
-````
-
-The parser first parses the input as an expression; if that fails, it parses it as a program.
-
-### Inline expressions
-
-Inline JavaScript expressions interpolate live values into Markdown. They are often used to display dynamic numbers such as metrics, or to arrange visual elements such as charts into rich HTML layouts.
-
-For example, this paragraph simulates rolling a 20-sided dice:
-
-```md
-You rolled ${Math.floor(Math.random() * 20) + 1}.
-```
-
-You rolled ${Math.floor(Math.random() * 20) + 1}. Reload the page to re-roll.
-
-Unlike code blocks, expressions cannot declare top-level variables.
+Observable Markdown supports reactive JavaScript as both fenced code blocks and inline expressions. JavaScript runs on the client, powered by the [Observable Runtime](https://github.com/observablehq/runtime). (In the future, JavaScript may also run during build to support data snapshot generation and server-side rendering.)
 
 ### Top-level variables
 
@@ -44,7 +10,7 @@ A top-level variable declared in a JavaScript fenced code block can be reference
 const x = 1, y = 2;
 ```
 
-Then you can reference `x` and `y` elsewhere on the page. Top-level variable declarations are [hoisted](https://developer.mozilla.org/en-US/docs/Glossary/Hoisting); you can reference variables even if the defining code block appears later on the page. If multiple blocks define top-level variables with the same name, references to these variables will throw a duplicate definition error.
+Then you can reference `x` and `y` elsewhere on the page (with values ${x} and ${y}, respectively). Top-level variable declarations are [hoisted](https://developer.mozilla.org/en-US/docs/Glossary/Hoisting); you can reference variables even if the defining code block appears later on the page. If multiple blocks define top-level variables with the same name, references to these variables will throw a duplicate definition error.
 
 To prevent variables from being visible outside the current block, make them local with a block statement:
 
@@ -127,3 +93,15 @@ Inputs.button("Throw confetti!", {reduce: () => confetti()})
 ```
 
 You can also import JavaScript from local ES modules. This allows you to move code out of Markdown and into vanilla JavaScript files that can be shared by multiple pages — or even another application. And you can write tests for your code.
+
+### Files
+
+You can load files using the built-in FileAttachment function.
+
+```js show
+const gistemp = await FileAttachment("gistemp.csv").csv({typed: true});
+```
+
+The following type-specific methods are supported: csv, html, image, json, sqlite, text, tsv, xlsx, xml, and zip. There are also generic methods: arrayBuffer, blob, and url. Each method returns a promise to the file’s contents (or URL).
+
+We use static analysis to determine which files are used so that we can include only referenced files when building. The FileAttachment function accepts only literal strings; code such as `FileAttachment("my" + "file.csv")` or similar dynamic invocation is invalid syntax.

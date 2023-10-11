@@ -4,62 +4,34 @@ title: Overview
 
 # Observable CLI
 
-The **Observable command-line interface (CLI)** is a static site generator for creating beautiful notebooks, reports, and dashboards in Observable Markdown with reactive JavaScript. Use it to
+The **Observable command-line interface (CLI)** is a static site generator for creating beautiful notebooks, reports, and dashboards written in Markdown with reactive JavaScript. Use it to
 
-- develop and preview Observable Markdown pages locally;
-- build and host pages on any static file server, including GitHub Pages;
-- or deploy and develop pages collaboratively on the Observable cloud platform.
+- develop and preview pages locally; and
+- build and host pages on any static file server, including GitHub Pages.
 
-For example, here is a chart using [Observable Plot](https://observablehq.com/plot):
+Current features:
 
-```js
-const gistemp = await FileAttachment("gistemp.csv").csv({typed: true});
+- Markdown
+- Reactive JavaScript, as both fenced code blocks and inline expressions
+- Import from npm and local ES modules
+- Local preview server with hot module replacement
+- Static site generator
+- File attachments
+- Dark mode
+- Navigation sidebar
 
-display(
-  Plot.plot({
-    y: {grid: true},
-    marks: [
-      Plot.ruleY([0]),
-      Plot.dot(gistemp, {x: "Date", y: "Anomaly", stroke: "Anomaly", tip: true})
-    ]
-  })
-);
-```
+In development:
 
-This chart is implemented as a live fenced code block:
+- Table of contents sidebar
+- Databases
+- Database query snapshots
+- Data tables for interactive visual summaries of tabular data
+- SQL code blocks
+- Server-side fetch
+- Server-side fetch snapshots
+- Secrets (environment variables)
+- ${tex`\TeX`} and Graphviz blocks
+- Incremental reloading for file attachments
+- Custom headers, footers, and themes
 
-````md
-```js
-const gistemp = await FileAttachment("gistemp.csv").csv({typed: true});
-
-display(
-  Plot.plot({
-    y: {grid: true},
-    marks: [
-      Plot.ruleY([0]),
-      Plot.dot(gistemp, {x: "Date", y: "Anomaly", stroke: "Anomaly", tip: true})
-    ]
-  })
-);
-```
-````
-
-You can also write inline expressions such as 1 + 2 = ${1 + 2}:
-
-```md
-You can also write inline expressions such as 1 + 2 = ${1 + 2}.
-```
-
-Observable Markdown uses the [Observable Runtime](https://github.com/observablehq/runtime) for reactivity. Dynamic values are defined as async generators, say using [Inputs](https://github.com/observablehq/inputs). For example, try entering your name into the box below.
-
-```js show
-const name = view(Inputs.text({label: "Name", placeholder: "Enter your name"}));
-```
-
-Hello, _${name || "anonymous"}!_
-
-```md
-Hello, _${name || "anonymous"}!_
-```
-
-In the near future, Observable Markdown will support database clients and SQL fenced code blocks, too, so you’ll be able to query databases too.
+In the future, the Observable CLI will integrate seamlessly with the [Observable cloud platform](https://observablehq.com), making it easy for you to deploy and develop pages collaboratively with your team.
