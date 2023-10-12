@@ -36,6 +36,6 @@ If you prefer using https for local development, add an SSL key and certificate 
 yarn cert
 ```
 
-You will have to accept the self-signed certificate in each of your browsers.
+Then open <https://127.0.0.1:3001> (you will have to accept the self-signed certificate in each of your browsers).
 
 This documentation site is built on GitHub using the Observable CLI; see the [deploy workflow](https://github.com/observablehq/cli/blob/main/.github/workflows/deploy.yml). Please open a pull request if you’d like to contribute to the documentation or to CLI features. Contributors are expected to follow our [code of conduct](https://github.com/observablehq/.github/blob/master/CODE_OF_CONDUCT.md). 🙏
