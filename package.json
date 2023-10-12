@@ -22,7 +22,7 @@
     "observable": "bin/observable.ts"
   },
   "scripts": {
-    "dev": "tsx watch ./src/preview.ts",
+    "dev": "tsx watch ./src/preview.ts $(test -e ./ssl && echo '-s')",
     "build": "rm -rf dist && ./bin/observable.ts build",
     "cert": "mkdir -p ssl && openssl req -nodes -batch -new -x509 -keyout ssl/server.key -out ssl/server.cert -subj '/CN=localhost/O=observable cli' -days 3650",
     "test": "yarn test:mocha && yarn test:lint",

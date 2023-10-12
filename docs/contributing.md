@@ -30,16 +30,12 @@ This creates the `dist` folder. View the site using your preferred web server, s
 http-server dist
 ```
 
-If you prefer using https for local development, add the SSL key and certificate files to the ssl folder, then call:
-
-```sh
-bin/observable.ts preview --ssl
-```
-
-You will then have to accept the self-signed certificate in each of your browsers. To generate the files, you can run:
+If you prefer using https for local development, add an SSL key and certificate files to the ssl folder. To generate the files, you can run:
 
 ```sh
 yarn cert
 ```
+
+You will have to accept the self-signed certificate in each of your browsers.
 
 This documentation site is built on GitHub using the Observable CLI; see the [deploy workflow](https://github.com/observablehq/cli/blob/main/.github/workflows/deploy.yml). Please open a pull request if you’d like to contribute to the documentation or to CLI features. Contributors are expected to follow our [code of conduct](https://github.com/observablehq/.github/blob/master/CODE_OF_CONDUCT.md). 🙏
