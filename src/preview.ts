@@ -183,7 +183,7 @@ function makeCommandContext(): CommandContext {
       },
       hostname: {
         type: "string",
-        short: "h"
+        alias: "host"
       },
       port: {
         type: "string",
