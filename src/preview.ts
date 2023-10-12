@@ -1,5 +1,6 @@
-import {watch, type FSWatcher} from "node:fs";
+import {watch, readFileSync, type FSWatcher} from "node:fs";
 import {access, constants, readFile, stat} from "node:fs/promises";
+import {createServer as createServerS} from "node:https";
 import {createServer, type IncomingMessage, type RequestListener} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
@@ -20,12 +21,14 @@ class Server {
   readonly port: number;
   readonly hostname: string;
   readonly root: string;
+  readonly protocol: "http" | "https";
 
-  constructor({port, hostname, root}: CommandContext) {
+  constructor({port, hostname, root, ssl}: CommandContext) {
     this.port = port;
     this.hostname = hostname;
     this.root = root;
-    this._server = createServer();
+    this.protocol = ssl ? "https" : "http";
+    this._server = ssl ? createServerS(ssl) : createServer();
     this._server.on("request", this._handleRequest);
     this._socketServer = new WebSocketServer({server: this._server});
     this._socketServer.on("connection", this._handleConnection);
@@ -39,7 +42,7 @@ class Server {
 
   _handleRequest: RequestListener = async (req, res) => {
     console.log(req.method, req.url);
-    const url = new URL(req.url!, "http://localhost");
+    const url = new URL(req.url!, `${this.protocol}://localhost`);
     let {pathname} = url;
     try {
       if (pathname === "/_observablehq/runtime.js") {
@@ -165,12 +168,16 @@ function handleWatch(socket: WebSocket, root: string) {
   }
 }
 
-const USAGE = `Usage: observable preview [--root dir] [--hostname host] [--port port]`;
+const USAGE = `Usage: observable preview [--root dir] [--hostname host] [--port port] [-ssl ssldir]`;
 
 interface CommandContext {
   root: string;
   hostname: string;
   port: number;
+  ssl?: {
+    key: string;
+    cert: string;
+  };
 }
 
 function makeCommandContext(): CommandContext {
@@ -188,6 +195,10 @@ function makeCommandContext(): CommandContext {
       port: {
         type: "string",
         short: "p"
+      },
+      ssl: {
+        type: "boolean",
+        short: "s"
       }
     }
   });
@@ -195,10 +206,25 @@ function makeCommandContext(): CommandContext {
     console.error(USAGE);
     process.exit(1);
   }
+  let ssl;
+  if (values.ssl) {
+    const sslDir = typeof values.ssl === "string" ? values.ssl : values.ssl === true ? "ssl" : null;
+    if (!sslDir) throw new Error(`unsupported ssl option ${values.ssl}`);
+    try {
+      ssl = {
+        key: readFileSync(`${sslDir}/server.key`),
+        cert: readFileSync(`${sslDir}/server.cert`)
+      };
+    } catch (e) {
+      console.warn(`⚠️  run yarn cert to add cert files to ${sslDir}/`);
+      throw e;
+    }
+  }
   return {
     root: normalize(values.root).replace(/\/$/, ""),
     hostname: values.hostname ?? process.env.HOSTNAME ?? "127.0.0.1",
-    port: values.port ? +values.port : process.env.PORT ? +process.env.PORT : 3000
+    port: values.port ? +values.port : process.env.PORT ? +process.env.PORT : ssl ? 3001 : 3000,
+    ssl
   };
 }
 
@@ -212,5 +238,5 @@ await (async function () {
   const context = makeCommandContext();
   const server = new Server(context);
   await server.start();
-  console.log(`Server running at http://${server.hostname}:${server.port}/`);
+  console.log(`Server running at ${server.protocol}://${server.hostname}:${server.port}/`);
 })();

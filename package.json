@@ -24,6 +24,7 @@
   "scripts": {
     "dev": "tsx watch ./src/preview.ts",
     "build": "rm -rf dist && ./bin/observable.ts build",
+    "cert": "mkdir -p ssl && openssl req -nodes -batch -new -x509 -keyout ssl/server.key -out ssl/server.cert -subj '/CN=localhost/O=observable cli' -days 3650",
     "test": "yarn test:mocha && yarn test:lint",
     "test:mocha": "mkdir -p test/output && node --loader tsx ./node_modules/.bin/mocha 'test/**/*-test.*'",
     "test:lint": "eslint src test public"
