@@ -74,9 +74,7 @@ ${JSON.stringify(
 
 import {${preview ? "open, " : ""}define} from "/_observablehq/client.js";
 
-${preview ? `open({hash: ${JSON.stringify(hash)}});\n` : ""}${parseResult.cells
-    .map((cell) => renderDefineCell(cell))
-    .join("")}
+${preview ? `open({hash: ${JSON.stringify(hash)}});\n` : ""}${parseResult.cells.map(renderDefineCell).join("")}
 </script>${
     parseResult.data
       ? `

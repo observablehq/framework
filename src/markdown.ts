@@ -12,6 +12,7 @@ import mime from "mime";
 import {join} from "path";
 import {canReadSync} from "./files.js";
 import {transpileJavaScript, type FileReference, type ImportReference, type Transpile} from "./javascript.js";
+import {computeHash} from "./hash.js";
 
 export interface HtmlPiece {
   type: "html";
@@ -42,8 +43,6 @@ interface RenderPiece {
 }
 
 interface ParseContext {
-  id: number;
-  js: string;
   pieces: RenderPiece[];
   files: {name: string; mimeType: string | null}[];
   imports: ImportReference[];
@@ -69,6 +68,16 @@ function makeHtmlRenderer(root: string, baseRenderer: RenderRule): RenderRule {
   };
 }
 
+function uniqueCodeId(context: ParseContext, content: string): string {
+  const hash = String(computeHash(content));
+  let id = hash;
+  let count = 1;
+  while (context.pieces.some((piece) => piece.code.some((code) => code.id === id))) {
+    id = `${hash}-${count++}`;
+  }
+  return id;
+}
+
 function makeFenceRenderer(root: string, baseRenderer: RenderRule): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
     const token = tokens[idx];
@@ -76,7 +85,7 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule): RenderRule {
     let result = "";
     let count = 0;
     if (language === "js" && option !== "no-run") {
-      const id = ++context.id;
+      const id = uniqueCodeId(context, token.content);
       const transpile = transpileJavaScript(token.content, {
         id,
         root,
@@ -163,12 +172,12 @@ function transformPlaceholderBlock(token) {
   const output: any[] = [];
   let i = 0;
   parsePlaceholder(input, (j, k) => {
-    output.push({...token, content: input.slice(i, j)});
-    output.push({type: "placeholder", content: input.slice(j + 2, k - 1)});
+    output.push({...token, level: i > 0 ? token.level + 1 : token.level, content: input.slice(i, j)});
+    output.push({type: "placeholder", level: token.level + 1, content: input.slice(j + 2, k - 1)});
     i = k;
   });
   if (i === 0) return [token];
-  else if (i < input.length) output.push({...token, content: input.slice(i)});
+  else if (i < input.length) output.push({...token, content: input.slice(i), nesting: -1});
   return output;
 }
 
@@ -229,7 +238,7 @@ const transformPlaceholderCore: RuleCore = (state) => {
 
 function makePlaceholderRenderer(root: string): RenderRule {
   return (tokens, idx, options, context: ParseContext) => {
-    const id = ++context.id;
+    const id = uniqueCodeId(context, tokens[idx].content);
     const token = tokens[idx];
     const transpile = transpileJavaScript(token.content, {
       id,
@@ -335,7 +344,7 @@ export function parseMarkdown(source: string, root: string): ParseResult {
   md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
   md.renderer.render = renderIntoPieces(md.renderer);
-  const context: ParseContext = {id: 0, js: "", files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
+  const context: ParseContext = {files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
   const tokens = md.parse(parts.content, context);
   const html = md.renderer.render(tokens, md.options, context);
   return {

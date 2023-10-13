@@ -13,7 +13,7 @@ import {Sourcemap} from "./sourcemap.js";
 
 export interface FileReference {
   name: string;
-  mimeType: string;
+  mimeType: string | null;
 }
 
 export interface ImportReference {
@@ -31,7 +31,7 @@ export interface Transpile {
 }
 
 export interface TranspileOptions {
-  id: number;
+  id: string;
   root: string;
 }
 
@@ -53,7 +53,7 @@ export function transpileJavaScript(input: string, {id, root, ...options}: Trans
     rewriteImports(output, node);
     rewriteFetches(output, node);
     return {
-      id: `${id}`,
+      id,
       ...(inputs.length ? {inputs} : null),
       ...(options.inline ? {inline: true} : null),
       ...(node.declarations?.length ? {outputs: node.declarations.map(({name}) => name)} : null),

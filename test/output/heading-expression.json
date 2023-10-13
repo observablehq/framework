@@ -8,15 +8,15 @@
       "type": "html",
       "id": "",
       "cellIds": [
-        "1"
+        "6212702c7a0d68f00b8b23b5aecfca631a96c20d2cad78cd874611ac87cdbce1"
       ],
-      "html": "<h1 id=\"\" tabindex=\"-1\"><a class=\"observablehq-header-anchor\" href=\"#\"><span id=\"cell-1\"></span></a></h1>\n"
+      "html": "<h1 id=\"\" tabindex=\"-1\"><a class=\"observablehq-header-anchor\" href=\"#\"><span id=\"cell-6212702c7a0d68f00b8b23b5aecfca631a96c20d2cad78cd874611ac87cdbce1\"></span></a></h1>\n"
     }
   ],
   "cells": [
     {
       "type": "cell",
-      "id": "1",
+      "id": "6212702c7a0d68f00b8b23b5aecfca631a96c20d2cad78cd874611ac87cdbce1",
       "inputs": [
         "display"
       ],
