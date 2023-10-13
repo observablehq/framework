@@ -93,7 +93,7 @@ export function open({hash} = {}) {
           location.reload();
           break;
         }
-        message.diff.forEach(({type, newPos, oldPos, items}) => {
+        message.diff.forEach(({type, newPos, items}) => {
           switch (type) {
             case "add":
               items.forEach((item) => {
@@ -133,8 +133,8 @@ export function open({hash} = {}) {
               items.forEach((item) => {
                 switch (item.type) {
                   case "html":
-                    if (oldPos < root.children.length) {
-                      root.removeChild(root.children[oldPos]);
+                    if (newPos < root.children.length) {
+                      root.removeChild(root.children[newPos]);
                     } else {
                       console.log("remove out of range", item);
                     }
