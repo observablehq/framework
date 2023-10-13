@@ -77,6 +77,18 @@ ${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.ma
     };
   } catch (error) {
     if (!(error instanceof SyntaxError)) throw error;
+    let message = error.message;
+    const match = /^(.+)\s\((\d+):(\d+)\)$/.exec(message);
+    if (match) {
+      const line = +match[2] + (options?.sourceLine ?? 0);
+      const column = +match[3] + 1;
+      message = `${match[1]} at line ${line}, column ${column}`;
+    } else if (options?.sourceLine) {
+      message = `${message} at line ${options.sourceLine + 1}`;
+    }
+    // TODO: Consider showing a code snippet along with the error. Also, consider
+    // whether we want to show the file name here.
+    console.error(`${error.name}: ${message}`);
     return {
       cell: {},
       // TODO: Add error details to the response to improve code rendering.
@@ -105,6 +117,7 @@ function canReadSync(path: string): boolean {
 
 export interface ParseOptions {
   inline?: boolean;
+  sourceLine?: number;
 }
 
 export function parseJavaScript(

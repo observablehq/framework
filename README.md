@@ -48,7 +48,7 @@ TODO
 - detect broken socket and reconnect
 - detect server restart and reload
 - HTTPS with self-signed certificate or something?
-- show errors with line numbers on the console
+- ✅ show errors with line numbers on the console
 - ✅ serve root (don’t assume /)
 - snapshot cache
   - proxied fetch

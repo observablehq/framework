@@ -47,6 +47,8 @@ interface ParseContext {
   pieces: RenderPiece[];
   files: {name: string; mimeType: string}[];
   imports: ImportReference[];
+  startLine: number;
+  currentLine: number;
 }
 
 function makeFenceRenderer(root: string, baseRenderer: RenderRule): RenderRule {
@@ -57,7 +59,11 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule): RenderRule {
     let count = 0;
     if (language === "js" && option !== "no-run") {
       const id = ++context.id;
-      const transpile = transpileJavaScript(token.content, {id, root});
+      const transpile = transpileJavaScript(token.content, {
+        id,
+        root,
+        sourceLine: context.startLine + context.currentLine
+      });
       extendPiece(context, {code: [{...transpile.cell, inline: false}]});
       context.js += `\n${transpile.js}`;
       context.files.push(...transpile.files);
@@ -208,11 +214,23 @@ function makePlaceholderRenderer(root: string): RenderRule {
   return (tokens, idx, options, context: ParseContext) => {
     const id = ++context.id;
     const token = tokens[idx];
-    const transpile = transpileJavaScript(token.content, {id, root, inline: true});
+    const transpile = transpileJavaScript(token.content, {
+      id,
+      root,
+      inline: true,
+      sourceLine: context.startLine + context.currentLine
+    });
     context.js += `\n${transpile.js}`;
     extendPiece(context, {code: [{...transpile.cell, inline: true}]});
     context.files.push(...transpile.files);
     return `<span id="cell-${id}"></span>`;
+  };
+}
+
+function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
+  return (tokens, idx, options, context: ParseContext, self) => {
+    context.currentLine++;
+    return baseRenderer(tokens, idx, options, context, self);
   };
 }
 
@@ -234,6 +252,9 @@ function renderIntoPieces(renderer: Renderer): Renderer["render"] {
     const rules = renderer.rules;
     for (i = 0, len = tokens.length; i < len; i++) {
       type = tokens[i].type;
+      if (tokens[i].map) {
+        context.currentLine = tokens[i].map![0];
+      }
 
       let piece = "";
       if (type === "inline") {
@@ -277,6 +298,8 @@ function toParseCells(pieces: RenderPiece[]): CellPiece[] {
 
 export function parseMarkdown(source: string, root: string): ParseResult {
   const parts = matter(source);
+  // TODO: We need to know what line in the source the markdown starts on and pass that
+  // as startLine in the parse context below.
   const md = MarkdownIt({
     html: true,
     highlight(str, language) {
@@ -295,8 +318,9 @@ export function parseMarkdown(source: string, root: string): ParseResult {
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
   md.renderer.rules.placeholder = makePlaceholderRenderer(root);
   md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!);
+  md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
   md.renderer.render = renderIntoPieces(md.renderer);
-  const context: ParseContext = {id: 0, js: "", files: [], imports: [], pieces: []};
+  const context: ParseContext = {id: 0, js: "", files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
   const tokens = md.parse(parts.content, context);
   const html = md.renderer.render(tokens, md.options, context);
   return {
