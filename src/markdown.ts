@@ -2,11 +2,15 @@ import {getPatch, type PatchItem} from "fast-array-diff";
 import equal from "fast-deep-equal";
 import matter from "gray-matter";
 import hljs from "highlight.js";
+import {parseHTML} from "linkedom";
 import MarkdownIt from "markdown-it";
 import MarkdownItAnchor from "markdown-it-anchor";
 import {type RuleCore} from "markdown-it/lib/parser_core.js";
 import {type RuleInline} from "markdown-it/lib/parser_inline.js";
 import {type default as Renderer, type RenderRule} from "markdown-it/lib/renderer.js";
+import mime from "mime";
+import {join} from "path";
+import {canReadSync} from "./files.js";
 import {transpileJavaScript, type FileReference, type ImportReference, type Transpile} from "./javascript.js";
 
 export interface HtmlPiece {
@@ -45,10 +49,28 @@ interface ParseContext {
   id: number;
   js: string;
   pieces: RenderPiece[];
-  files: {name: string; mimeType: string}[];
+  files: {name: string; mimeType: string | null}[];
   imports: ImportReference[];
   startLine: number;
   currentLine: number;
+}
+
+function makeHtmlRenderer(root: string, baseRenderer: RenderRule): RenderRule {
+  return (tokens, idx, options, context: ParseContext, self) => {
+    const {document} = parseHTML(tokens[idx].content);
+    let modified = false;
+    for (const element of document.querySelectorAll("link[href]") as any as Iterable<Element>) {
+      const href = element.getAttribute("href")!;
+      if (/^(\w+:)\/\//.test(href)) continue; // absolute url
+      if (canReadSync(join(root, href))) {
+        context.files.push({name: href, mimeType: mime.getType(href)});
+        element.setAttribute("href", `/_file/${href}`);
+        modified = true;
+      }
+    }
+    if (modified) tokens[idx].content = document.documentElement.outerHTML;
+    return baseRenderer(tokens, idx, options, context, self);
+  };
 }
 
 function makeFenceRenderer(root: string, baseRenderer: RenderRule): RenderRule {
@@ -245,17 +267,15 @@ function extendPiece(context: ParseContext, extend: Partial<RenderPiece>) {
 
 function renderIntoPieces(renderer: Renderer): Renderer["render"] {
   return (tokens, options, context: ParseContext) => {
-    let i,
-      len,
-      type,
-      result = "";
+    let i;
+    let len;
+    let type;
+    let result = "";
     const rules = renderer.rules;
+
     for (i = 0, len = tokens.length; i < len; i++) {
       type = tokens[i].type;
-      if (tokens[i].map) {
-        context.currentLine = tokens[i].map![0];
-      }
-
+      if (tokens[i].map) context.currentLine = tokens[i].map![0];
       let piece = "";
       if (type === "inline") {
         piece = renderer.renderInline(tokens[i].children!, options, context);
@@ -317,6 +337,7 @@ export function parseMarkdown(source: string, root: string): ParseResult {
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
   md.renderer.rules.placeholder = makePlaceholderRenderer(root);
+  md.renderer.rules.html_block = makeHtmlRenderer(root, md.renderer.rules.html_block!);
   md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
   md.renderer.render = renderIntoPieces(md.renderer);

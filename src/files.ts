@@ -1,5 +1,17 @@
+import {accessSync, constants, statSync} from "node:fs";
 import {readdir, stat} from "node:fs/promises";
 import {extname, join, normalize, relative} from "node:path";
+import {isNodeError} from "./error.js";
+
+export function canReadSync(path: string): boolean {
+  try {
+    accessSync(path, constants.R_OK);
+    return statSync(path).isFile();
+  } catch (error) {
+    if (isNodeError(error) && error.code === "ENOENT") return false;
+    throw error;
+  }
+}
 
 export async function* visitMarkdownFiles(root: string): AsyncGenerator<string> {
   for await (const file of visitFiles(root)) {

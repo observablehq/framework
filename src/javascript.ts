@@ -1,8 +1,7 @@
 import {Parser, tokTypes, type Options} from "acorn";
 import mime from "mime";
-import {accessSync, constants, statSync} from "node:fs";
 import {join} from "node:path";
-import {isNodeError} from "./error.js";
+import {canReadSync} from "./files.js";
 import {findAwaits} from "./javascript/awaits.js";
 import {findDeclarations} from "./javascript/declarations.js";
 import {findFeatures} from "./javascript/features.js";
@@ -103,16 +102,6 @@ ${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.ma
 function trim(output: Sourcemap, input: string): void {
   if (input.startsWith("\n")) output.delete(0, 1); // TODO better trim
   if (input.endsWith("\n")) output.delete(input.length - 1, input.length); // TODO better trim
-}
-
-function canReadSync(path: string): boolean {
-  try {
-    accessSync(path, constants.R_OK);
-    return statSync(path).isFile();
-  } catch (error) {
-    if (isNodeError(error) && error.code === "ENOENT") return false;
-    throw error;
-  }
 }
 
 export interface ParseOptions {
