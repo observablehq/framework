@@ -188,6 +188,17 @@ body {
   }
 }
 
+@media (hover: hover) {
+  #observablehq-sidebar-toggle:not(:checked):not(:hover)::before {
+    content: "";
+  }
+  @media (min-width: calc(640px + 4rem + 0.5rem + 240px + 2rem)) {
+    #observablehq-sidebar-toggle:indeterminate:not(:checked):not(:hover)::before {
+      content: "⟨";
+    }
+  }
+}
+
 h1,
 h2,
 h3,
