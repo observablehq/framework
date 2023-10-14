@@ -47,18 +47,19 @@ body {
   margin: 0;
 }
 
-main {
+main,
+#observablehq-footer {
   margin: 2rem auto;
   max-width: 1152px;
-  min-height: calc(100vh - 17rem);
-  padding-bottom: 10rem;
 }
 
-#observablehq-center::after {
-  content: "© 2023 Observable, Inc.";
+main {
+  min-height: calc(100vh - 17rem);
+}
+
+#observablehq-footer {
   display: block;
-  margin: 2rem auto;
-  max-width: 1152px;
+  margin-top: 10rem;
   font: 12px var(--sans-serif);
   color: var(--theme-foreground-faint);
 }
