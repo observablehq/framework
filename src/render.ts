@@ -109,7 +109,7 @@ ${
 `
     : ""
 }<div id="observablehq-center">
-<main class="observablehq">
+<main id="observablehq-main" class="observablehq">
 ${parseResult.html}</main>
 <footer id="observablehq-footer">© ${new Date().getUTCFullYear()} Observable, Inc.</footer>
 </div>

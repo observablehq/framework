@@ -47,13 +47,13 @@ body {
   margin: 0;
 }
 
-main,
+#observablehq-main,
 #observablehq-footer {
   margin: 2rem auto;
   max-width: 1152px;
 }
 
-main {
+#observablehq-main {
   min-height: calc(100vh - 17rem);
 }
 
