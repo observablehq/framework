@@ -85,7 +85,8 @@ ${JSON.stringify(parseResult.data)}
   }
 ${
   showSidebar
-    ? `<nav id="observablehq-sidebar">
+    ? `<input id="observablehq-sidebar-toggle" type="checkbox">
+<nav id="observablehq-sidebar">
   <ol>${pages
     ?.map(
       (p) => `
@@ -96,9 +97,10 @@ ${
     .join("")}
   </ol>
 </nav>
+<script>document.querySelector("#observablehq-sidebar-toggle").checked = matchMedia("(min-width: calc(640px + 4rem + 0.5rem + 240px + 2rem))").matches;</script>
 `
     : ""
-}<div id="observablehq-center"${showSidebar ? ` class="observablehq--sidebar"` : ""}>
+}<div id="observablehq-center">
 <main class="observablehq">
 ${parseResult.html}</main>
 </div>

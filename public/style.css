@@ -68,7 +68,6 @@ main {
 }
 
 #observablehq-sidebar {
-  display: none;
   position: fixed;
   background: var(--theme-background-alt);
   color: var(--theme-foreground);
@@ -78,7 +77,7 @@ main {
   z-index: 1;
   top: 0;
   bottom: 0;
-  left: 0;
+  left: calc(-240px - 2rem);
   padding: 1rem;
 }
 
@@ -90,6 +89,26 @@ main {
 #observablehq-sidebar ol li {
   display: block;
   margin: 0;
+}
+
+#observablehq-sidebar-toggle {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  appearance: none;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+#observablehq-sidebar-toggle::before {
+  content: "≡";
+  padding: 2px;
+  color: var(--theme-foreground-faint);
+  font-size: 20px;
 }
 
 .observablehq-link a {
@@ -123,11 +142,23 @@ main {
   color: var(--theme-foreground-focus);
 }
 
+#observablehq-sidebar-toggle:checked + #observablehq-sidebar {
+  left: 0;
+  box-shadow: 0 0 8px 8px rgba(0, 0, 0, 0.5);
+}
+
+#observablehq-sidebar {
+  transition: left 150ms ease;
+}
+
 @media (min-width: calc(640px + 4rem + 0.5rem + 240px + 2rem)) {
   #observablehq-sidebar {
-    display: initial;
+    transition: none;
   }
-  #observablehq-center.observablehq--sidebar {
+  #observablehq-sidebar-toggle:checked + #observablehq-sidebar {
+    box-shadow: none;
+  }
+  #observablehq-sidebar-toggle:checked ~ #observablehq-center {
     padding-left: calc(240px + 3rem);
   }
   pre {
