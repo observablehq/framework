@@ -37,7 +37,7 @@ const focus = Generators.observe((notify) => {
   }))}</div>
 </div>
 
-<div class="grid grid-cols-3">
+<div class="grid grid-cols-3" style="grid-auto-rows: 200px;">
   <div class="grid-colspan-2">${resize((width, height) => Plot.plot({
     width,
     height,
