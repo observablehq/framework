@@ -106,6 +106,7 @@ body {
   padding: 2px;
   cursor: pointer;
   z-index: 2;
+  background: none;
   color: var(--theme-foreground-faint);
   font-weight: 700;
   font-size: 20px;

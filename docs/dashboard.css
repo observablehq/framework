@@ -3,9 +3,11 @@
     --theme-background: color-mix(in srgb, var(--theme-background-alt) 95%, black);
     --theme-background-alt: rgb(255, 255, 255);
   }
-  #observablehq-sidebar {
-    background: var(--theme-background);
-  }
+}
+
+#observablehq-main,
+#observablehq-footer {
+  max-width: initial;
 }
 
 .grid {
