@@ -1,3 +1,5 @@
+<link rel="stylesheet" type="text/css" href="dashboard.css">
+
 # Example dashboard
 
 ```js
@@ -20,9 +22,9 @@ const focus = Generators.observe((notify) => {
 ```
 
 <div class="grid grid-cols-3" style="grid-auto-rows: 85px;">
-  <div style="display: flex; align-items: center;">${resize((width, height) => BigNumber(focus.Close, {width, height, title: "Close", trend: (focus.Close - aapl.at(-2).Close) / aapl.at(-2).Close}))}</div>
-  <div style="display: flex; align-items: center;">${resize((width, height) => BigNumber(focus.Volume, {width, height, title: "Trading volume", format: ".3~s", trend: (focus.Volume - aapl.at(-2).Volume) / aapl.at(-2).Volume}))}</div>
-  <div style="display: flex; align-items: center;">${resize((width, height) => BigNumber(d3.extent(aapl.slice(-90), (d) => d.Close).map((d) => d.toFixed(1)).join("–"), {width, height, title: "90-day range", trend: null}))}</div>
+  <div style="display: flex; align-items: center;">${BigNumber(focus.Close, {width, title: "Close", trend: (focus.Close - aapl.at(-2).Close) / aapl.at(-2).Close})}</div>
+  <div style="display: flex; align-items: center;">${BigNumber(focus.Volume, {width, title: "Trading volume", format: ".3~s", trend: (focus.Volume - aapl.at(-2).Volume) / aapl.at(-2).Volume})}</div>
+  <div style="display: flex; align-items: center;">${BigNumber(d3.extent(aapl.slice(-90), (d) => d.Close).map((d) => d.toFixed(1)).join("–"), {width, title: "90-day range", trend: null})}</div>
 </div>
 
 <div class="grid grid-cols-3">
@@ -107,43 +109,3 @@ function BigNumber(
 </div>`;
 }
 ```
-
-<style type="text/css">
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --theme-background: color-mix(in srgb, var(--theme-background-alt) 95%, black);
-    --theme-background-alt: rgb(255, 255, 255);
-  }
-  #observablehq-sidebar {
-    background: none;
-  }
-}
-
-.grid {
-  margin: 1rem 0;
-  display: grid;
-  grid-auto-rows: 192px;
-  gap: 1rem;
-}
-
-.grid > * {
-  background: var(--theme-background-alt);
-  border: solid 1px var(--theme-foreground-faintest);
-  border-radius: 0.75rem;
-  padding: 1rem;
-  overflow: hidden;
-}
-
-.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-
-.grid-colspan-2 { grid-column: span 2; }
-.grid-colspan-3 { grid-column: span 3; }
-.grid-colspan-4 { grid-column: span 4; }
-.grid-rowspan-2 { grid-row: span 2; }
-.grid-rowspan-3 { grid-row: span 3; }
-.grid-rowspan-4 { grid-row: span 4; }
-
-</style>

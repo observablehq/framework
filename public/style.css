@@ -94,21 +94,22 @@ main {
 #observablehq-sidebar-toggle {
   position: fixed;
   top: 0;
-  bottom: 0;
   left: 0;
+  height: 100%;
+  width: 1rem;
   appearance: none;
   display: flex;
   align-items: center;
   margin: 0;
+  padding: 2px;
   cursor: pointer;
   z-index: 2;
+  color: var(--theme-foreground-faint);
+  font-size: 20px;
 }
 
 #observablehq-sidebar-toggle::before {
   content: "≡";
-  padding: 2px;
-  color: var(--theme-foreground-faint);
-  font-size: 20px;
 }
 
 .observablehq-link a {
@@ -144,11 +145,17 @@ main {
 
 #observablehq-sidebar-toggle:checked + #observablehq-sidebar {
   left: 0;
-  box-shadow: 0 0 8px 8px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 8px 4px rgba(0, 0, 0, 0.1);
 }
 
 #observablehq-sidebar {
   transition: left 150ms ease;
+}
+
+@media (prefers-color-scheme: dark) {
+  #observablehq-sidebar-toggle:checked + #observablehq-sidebar {
+    box-shadow: 0 0 8px 4px rgba(0, 0, 0, 0.5);
+  }
 }
 
 @media (min-width: calc(640px + 4rem + 0.5rem + 240px + 2rem)) {
