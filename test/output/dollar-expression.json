@@ -8,15 +8,15 @@
       "type": "html",
       "id": "",
       "cellIds": [
-        "6212702c7a0d68f00b8b23b5aecfca631a96c20d2cad78cd874611ac87cdbce1"
+        "6212702c"
       ],
-      "html": "<p>$<span id=\"cell-6212702c7a0d68f00b8b23b5aecfca631a96c20d2cad78cd874611ac87cdbce1\"></span></p>\n"
+      "html": "<p>$<span id=\"cell-6212702c\"></span></p>\n"
     }
   ],
   "cells": [
     {
       "type": "cell",
-      "id": "6212702c7a0d68f00b8b23b5aecfca631a96c20d2cad78cd874611ac87cdbce1",
+      "id": "6212702c",
       "inputs": [
         "display"
       ],

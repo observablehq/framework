@@ -19,15 +19,15 @@
       "type": "html",
       "id": "",
       "cellIds": [
-        "06e1c6cdea7720eb12226af270c5e547a399e16ef935ababdd364c38c9bce5a2"
+        "06e1c6cd"
       ],
-      "html": "<div id=\"cell-06e1c6cdea7720eb12226af270c5e547a399e16ef935ababdd364c38c9bce5a2\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<div id=\"cell-06e1c6cd\" class=\"observablehq observablehq--block\"></div>\n"
     }
   ],
   "cells": [
     {
       "type": "cell",
-      "id": "06e1c6cdea7720eb12226af270c5e547a399e16ef935ababdd364c38c9bce5a2",
+      "id": "06e1c6cd",
       "inputs": [
         "display"
       ],

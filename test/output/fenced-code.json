@@ -14,15 +14,15 @@
       "type": "html",
       "id": "",
       "cellIds": [
-        "fe9e095ef56a9999b1b76d6c863ccf89e19a55bcaa854ffc83a6f4390d151971"
+        "fe9e095e"
       ],
-      "html": "<div><div id=\"cell-fe9e095ef56a9999b1b76d6c863ccf89e19a55bcaa854ffc83a6f4390d151971\" class=\"observablehq observablehq--block\"></div>\n<pre><code class=\"language-js\"><span class=\"hljs-keyword\">function</span> <span class=\"hljs-title function_\">add</span>(<span class=\"hljs-params\">a, b</span>) {\n  <span class=\"hljs-keyword\">return</span> a + b;\n}\n</code></pre>\n</div>"
+      "html": "<div><div id=\"cell-fe9e095e\" class=\"observablehq observablehq--block\"></div>\n<pre><code class=\"language-js\"><span class=\"hljs-keyword\">function</span> <span class=\"hljs-title function_\">add</span>(<span class=\"hljs-params\">a, b</span>) {\n  <span class=\"hljs-keyword\">return</span> a + b;\n}\n</code></pre>\n</div>"
     }
   ],
   "cells": [
     {
       "type": "cell",
-      "id": "fe9e095ef56a9999b1b76d6c863ccf89e19a55bcaa854ffc83a6f4390d151971",
+      "id": "fe9e095e",
       "outputs": [
         "add"
       ],

@@ -69,7 +69,7 @@ function makeHtmlRenderer(root: string, baseRenderer: RenderRule): RenderRule {
 }
 
 function uniqueCodeId(context: ParseContext, content: string): string {
-  const hash = String(computeHash(content));
+  const hash = computeHash(content).slice(0, 8);
   let id = hash;
   let count = 1;
   while (context.pieces.some((piece) => piece.code.some((code) => code.id === id))) {
