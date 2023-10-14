@@ -100,16 +100,22 @@ main {
   appearance: none;
   display: flex;
   align-items: center;
+  justify-content: center;
   margin: 0;
   padding: 2px;
   cursor: pointer;
   z-index: 2;
   color: var(--theme-foreground-faint);
+  font-weight: 700;
   font-size: 20px;
 }
 
 #observablehq-sidebar-toggle::before {
-  content: "≡";
+  content: "⟩";
+}
+
+#observablehq-sidebar-toggle:checked::before {
+  content: "⟨";
 }
 
 .observablehq-link a {
@@ -162,10 +168,16 @@ main {
   #observablehq-sidebar {
     transition: none;
   }
-  #observablehq-sidebar-toggle:checked + #observablehq-sidebar {
+  #observablehq-sidebar-toggle:indeterminate::before {
+    content: "⟨";
+  }
+  #observablehq-sidebar-toggle:checked + #observablehq-sidebar,
+  #observablehq-sidebar-toggle:indeterminate + #observablehq-sidebar {
+    left: 0;
     box-shadow: none;
   }
-  #observablehq-sidebar-toggle:checked ~ #observablehq-center {
+  #observablehq-sidebar-toggle:checked ~ #observablehq-center,
+  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center {
     padding-left: calc(240px + 3rem);
   }
   pre {
