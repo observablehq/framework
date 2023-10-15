@@ -115,6 +115,7 @@ function getImportPreloads(parseResult: ParseResult): Iterable<string> {
   const specifiers = new Set<string>(["npm:@observablehq/runtime"]);
   for (const {name} of parseResult.imports) specifiers.add(name);
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
+  if (inputs.has("dot")) specifiers.add("npm:@viz-js/viz");
   if (inputs.has("d3") || inputs.has("Plot")) specifiers.add("npm:d3");
   if (inputs.has("Plot")) specifiers.add("npm:@observablehq/plot");
   if (inputs.has("htl") || inputs.has("html") || inputs.has("svg") || inputs.has("Inputs")) specifiers.add("npm:htl");

@@ -64,6 +64,41 @@ function recommendedLibraries() {
     html: () => import("https://cdn.jsdelivr.net/npm/htl/+esm").then((htl) => htl.html),
     svg: () => import("https://cdn.jsdelivr.net/npm/htl/+esm").then((htl) => htl.svg),
     Plot: () => import("https://cdn.jsdelivr.net/npm/@observablehq/plot/+esm"),
+    dot: async () => {
+      // TODO Incorporate this into the standard library.
+      const viz = await import("https://cdn.jsdelivr.net/npm/@viz-js/viz/+esm").then(({instance}) => instance());
+      return function dot(strings) {
+        let string = strings[0] + "";
+        let i = 0;
+        let n = arguments.length;
+        while (++i < n) string += arguments[i] + "" + strings[i];
+        const svg = viz.renderSVGElement(string, {
+          graphAttributes: {
+            bgcolor: "none"
+          },
+          nodeAttributes: {
+            color: "#00000101",
+            fontcolor: "#00000101",
+            fontname: "var(--sans-serif)",
+            fontsize: "12"
+          },
+          edgeAttributes: {
+            color: "#00000101"
+          }
+        });
+        for (const e of svg.querySelectorAll("[stroke='#000001'][stroke-opacity='0.003922']")) {
+          e.setAttribute("stroke", "currentColor");
+          e.removeAttribute("stroke-opacity");
+        }
+        for (const e of svg.querySelectorAll("[fill='#000001'][fill-opacity='0.003922']")) {
+          e.setAttribute("fill", "currentColor");
+          e.removeAttribute("fill-opacity");
+        }
+        svg.remove();
+        svg.style = "max-width: 100%; height: auto;";
+        return svg;
+      };
+    },
     Inputs: () => {
       // TODO Observable Inputs needs to include the CSS in the dist folder
       // published to npm, and we should replace the __ns__ namespace with
