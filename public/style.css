@@ -184,7 +184,6 @@ body {
   }
   pre {
     border-radius: 4px;
-    max-width: calc(min(960px, 100vw - 240px - 6rem));
   }
 }
 
@@ -298,6 +297,7 @@ pre {
   position: relative;
   background-color: var(--theme-background-alt);
   margin: 1rem -1rem;
+  max-width: 960px;
   min-height: 1.5em;
   padding: 0.5rem 1rem;
   overflow-x: auto;
