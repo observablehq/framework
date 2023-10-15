@@ -99,7 +99,7 @@ You can also import JavaScript from local ES modules. This allows you to move co
 You can load files using the built-in FileAttachment function.
 
 ```js show
-const gistemp = await FileAttachment("gistemp.csv").csv({typed: true});
+const gistemp = FileAttachment("gistemp.csv").csv({typed: true});
 ```
 
 The following type-specific methods are supported: csv, html, image, json, sqlite, text, tsv, xlsx, xml, and zip. There are also generic methods: arrayBuffer, blob, and url. Each method returns a promise to the file’s contents (or URL).
