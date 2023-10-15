@@ -30,12 +30,16 @@ export interface Transpile {
   imports?: ImportReference[];
 }
 
-export interface TranspileOptions {
+export interface ParseOptions {
   id: string;
   root: string;
+  inline?: boolean;
+  sourceLine?: number;
+  globals?: Set<string>;
 }
 
-export function transpileJavaScript(input: string, {id, root, ...options}: TranspileOptions & ParseOptions): Transpile {
+export function transpileJavaScript(input: string, options: ParseOptions): Transpile {
+  const {root, id} = options;
   try {
     const node = parseJavaScript(input, options);
     const files = node.features
@@ -89,26 +93,20 @@ function trim(output: Sourcemap, input: string): void {
   if (input.endsWith("\n")) output.delete(input.length - 1, input.length); // TODO better trim
 }
 
-export interface ParseOptions {
-  inline?: boolean;
-  sourceLine?: number;
-}
+export const parseOptions: Options = {ecmaVersion: 13, sourceType: "module"};
 
-export function parseJavaScript(
-  input: string,
-  {globals = defaultGlobals, inline = false}: Partial<Options> & ParseOptions & {globals?: Set<string>} = {}
-) {
-  const options: Options = {ecmaVersion: 13, sourceType: "module"};
+export function parseJavaScript(input: string, options: ParseOptions) {
+  const {globals = defaultGlobals, inline = false, root} = options;
   // First attempt to parse as an expression; if this fails, parse as a program.
-  let expression = maybeParseExpression(input, options);
+  let expression = maybeParseExpression(input, parseOptions);
   if (expression?.type === "ClassExpression" && expression.id) expression = null; // treat named class as program
   if (expression?.type === "FunctionExpression" && expression.id) expression = null; // treat named function as program
   if (!expression && inline) throw new SyntaxError("invalid expression");
-  const body = expression ?? (Parser.parse(input, options) as any);
+  const body = expression ?? (Parser.parse(input, parseOptions) as any);
   const references = findReferences(body, globals, input);
   const declarations = expression ? null : findDeclarations(body, globals, input);
   const features = findFeatures(body, references, input);
-  const imports = findImports(body);
+  const imports = findImports(body, root);
   return {
     body,
     declarations,

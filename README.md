@@ -70,7 +70,7 @@ TODO
   - ✅ parse imports from npm:module and generate the corresponding import map
   - ✅ npm packages
   - ✅ use ES module imports for (most) recommended libraries
-  - parse local ES modules for npm imports; add to import map and module preload
+  - ✅ parse local ES modules for npm imports; add to import map and module preload
   - parallelize awaits when multiple static import statements
   - local Markdown files
   - cloud Observable notebooks?
