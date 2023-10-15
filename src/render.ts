@@ -55,9 +55,12 @@ ${
 }<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
 <script type="importmap">
-${JSON.stringify({imports: Object.fromEntries(imports)}, null, 2)}
+${JSON.stringify({imports: Object.fromEntries(Array.from(imports, ([name, [href]]) => [name, href]))}, null, 2)}
 </script>
-${imports.map(([, href]) => `<link rel="modulepreload" href="${href}">`).join("\n")}
+${Array.from(imports.values())
+  .filter(([, preload]) => preload)
+  .map(([href]) => `<link rel="modulepreload" href="${href}">`)
+  .join("\n")}
 <script type="module">
 
 import {${preview ? "open, " : ""}define} from "/_observablehq/client.js";
@@ -104,23 +107,30 @@ ${parseResult.html}</main>
 `;
 }
 
-function getImportMap(parseResult: ParseResult): [name: string, href: string][] {
-  const modules = new Set(["npm:@observablehq/runtime"]);
-  if (parseResult.cells.some((c) => c.inputs?.includes("d3") || c.inputs?.includes("Plot"))) modules.add("npm:d3");
-  if (parseResult.cells.some((c) => c.inputs?.includes("Plot"))) modules.add("npm:@observablehq/plot");
-  if (parseResult.cells.some((c) => c.inputs?.includes("htl") || c.inputs?.includes("Inputs"))) modules.add("npm:htl");
-  if (parseResult.cells.some((c) => c.inputs?.includes("Inputs"))) modules.add("npm:@observablehq/inputs");
-  for (const {name} of parseResult.imports) {
-    if (name.startsWith("npm:")) {
-      modules.add(name);
-    }
+// These are always supplied in the import map so that npm imports work from
+// local ES modules. TODO We’ll need to parse local ES modules and detect their
+// npm imports; and we’ll want to preload those modules, too!
+const baseImportMap: Map<string, [href: string, preload: boolean]> = new Map([
+  ["npm:@observablehq/inputs", ["https://cdn.jsdelivr.net/npm/@observablehq/inputs/+esm", false]],
+  ["npm:@observablehq/plot", ["https://cdn.jsdelivr.net/npm/@observablehq/plot/+esm", false]],
+  ["npm:@observablehq/runtime", ["/_observablehq/runtime.js", true]],
+  ["npm:d3", ["https://cdn.jsdelivr.net/npm/d3/+esm", false]],
+  ["npm:htl", ["https://cdn.jsdelivr.net/npm/htl/+esm", false]]
+]);
+
+function getImportMap(parseResult: ParseResult): Map<string, [href: string, preload: boolean]> {
+  const map = new Map(baseImportMap);
+  const imports = parseResult.imports.map(({name}) => name);
+  const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
+  if (inputs.has("d3") || inputs.has("Plot")) imports.push("npm:d3");
+  if (inputs.has("Plot")) imports.push("npm:@observablehq/plot");
+  if (inputs.has("htl") || inputs.has("Inputs")) imports.push("npm:htl");
+  if (inputs.has("Inputs")) imports.push("npm:@observablehq/inputs");
+  for (const name of imports) {
+    if (map.has(name)) map.set(name, [map.get(name)![0], true]);
+    else map.set(name, [`https://cdn.jsdelivr.net/npm/${name.slice(4)}/+esm`, true]);
   }
-  return Array.from(modules, (name) => [
-    name,
-    name === "npm:@observablehq/runtime"
-      ? "/_observablehq/runtime.js" // self-hosted
-      : `https://cdn.jsdelivr.net/npm/${name.slice(4)}/+esm`
-  ]);
+  return map;
 }
 
 // TODO Adopt Hypertext Literal?
