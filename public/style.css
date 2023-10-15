@@ -181,6 +181,7 @@ body {
   #observablehq-sidebar-toggle:checked ~ #observablehq-center,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center {
     padding-left: calc(240px + 3rem);
+    padding-right: 1rem;
   }
   pre {
     border-radius: 4px;
