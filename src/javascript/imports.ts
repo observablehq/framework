@@ -59,13 +59,14 @@ export function findImports(body, root) {
 }
 
 // TODO parallelize multiple static imports
+// TODO need to know the local path of the importing notebook; this assumes it’s in the root
 export function rewriteImports(output, root) {
   simple(root.body, {
     ImportExpression(node: any) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
         if (value.startsWith("./")) {
-          output.insertLeft(node.source.start + 3, "_file/");
+          output.replaceLeft(node.source.start + 1, node.source.start + 3, "/_file/");
         }
       }
     },
@@ -82,7 +83,7 @@ export function rewriteImports(output, root) {
               : node.specifiers.some(isNamespaceSpecifier)
               ? node.specifiers.find(isNamespaceSpecifier).local.name
               : "{}"
-          } = await import(${value.startsWith("./") ? JSON.stringify("./_file/" + value.slice(2)) : node.source.raw});`
+          } = await import(${value.startsWith("./") ? JSON.stringify("/_file/" + value.slice(2)) : node.source.raw});`
         );
       }
     }
