@@ -46,6 +46,7 @@ type RenderInternalOptions =
 
 function render(parseResult: ParseResult, {path, pages, preview, hash}: RenderOptions & RenderInternalOptions): string {
   const showSidebar = pages && pages.length > 1;
+  const imports = getImportMap(parseResult);
   return `<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -54,22 +55,9 @@ ${
 }<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
 <script type="importmap">
-${JSON.stringify(
-  {
-    imports: Object.fromEntries(
-      parseResult.imports
-        .map(({name}) => name)
-        .filter((name) => name.startsWith("npm:"))
-        .concat(["npm:d3", "npm:htl", "npm:@observablehq/plot", "npm:@observablehq/inputs"]) // recommended libraries
-        .map((name) => [name, `https://cdn.jsdelivr.net/npm/${name.slice(4)}/+esm`])
-        .concat([["npm:@observablehq/runtime", "/_observablehq/runtime.js"]])
-    )
-  },
-  null,
-  2
-)}
+${JSON.stringify({imports: Object.fromEntries(imports)}, null, 2)}
 </script>
-<link rel="modulepreload" href="/_observablehq/runtime.js">
+${imports.map(([, href]) => `<link rel="modulepreload" href="${href}">`).join("\n")}
 <script type="module">
 
 import {${preview ? "open, " : ""}define} from "/_observablehq/client.js";
@@ -114,6 +102,25 @@ ${parseResult.html}</main>
 <footer id="observablehq-footer">© ${new Date().getUTCFullYear()} Observable, Inc.</footer>
 </div>
 `;
+}
+
+function getImportMap(parseResult: ParseResult): [name: string, href: string][] {
+  const modules = new Set(["npm:@observablehq/runtime"]);
+  if (parseResult.cells.some((c) => c.inputs?.includes("d3") || c.inputs?.includes("Plot"))) modules.add("npm:d3");
+  if (parseResult.cells.some((c) => c.inputs?.includes("Plot"))) modules.add("npm:@observablehq/plot");
+  if (parseResult.cells.some((c) => c.inputs?.includes("htl") || c.inputs?.includes("Inputs"))) modules.add("npm:htl");
+  if (parseResult.cells.some((c) => c.inputs?.includes("Inputs"))) modules.add("npm:@observablehq/inputs");
+  for (const {name} of parseResult.imports) {
+    if (name.startsWith("npm:")) {
+      modules.add(name);
+    }
+  }
+  return Array.from(modules, (name) => [
+    name,
+    name === "npm:@observablehq/runtime"
+      ? "/_observablehq/runtime.js" // self-hosted
+      : `https://cdn.jsdelivr.net/npm/${name.slice(4)}/+esm`
+  ]);
 }
 
 // TODO Adopt Hypertext Literal?
