@@ -106,6 +106,7 @@ export function open({hash} = {}) {
                     }
                     if (newPos >= root.children.length) {
                       root.children[root.children.length - 1].insertAdjacentHTML("afterend", item.html);
+                      newPos++;
                     } else {
                       root.children[newPos++].insertAdjacentHTML("beforebegin", item.html);
                     }
