@@ -7,7 +7,7 @@
   --theme-foreground-faint: color-mix(in srgb, var(--theme-foreground) 50%, var(--theme-background));
   --theme-foreground-fainter: color-mix(in srgb, var(--theme-foreground) 30%, var(--theme-background));
   --theme-foreground-faintest: color-mix(in srgb, var(--theme-foreground) 10%, var(--theme-background));
-  --theme-foreground-focus: #20bbfc;
+  --theme-foreground-focus: #3182bd;
   --syntax-comment: #828282;
   --syntax-diff: #24292e;
   --syntax-diff-bg: #ffffff;
@@ -31,6 +31,7 @@
     --theme-foreground: rgb(223, 223, 214);
     --theme-background: rgb(31, 31, 31);
     --theme-background-alt: color-mix(in srgb, var(--theme-background) 70%, black);
+    --theme-foreground-focus: #20bbfc;
   }
 }
 
@@ -147,6 +148,7 @@ body {
   background: var(--theme-foreground-focus);
 }
 
+a[href],
 .observablehq-link-active a[href] {
   color: var(--theme-foreground-focus);
 }
@@ -452,8 +454,7 @@ a[href].observablehq-header-anchor {
 .observablehq--function,
 .observablehq--import,
 .observablehq--string:before,
-.observablehq--string:after,
-.observablehq--gray {
+.observablehq--string:after {
   color: var(--syntax-normal);
 }
 
@@ -500,21 +501,14 @@ a[href].observablehq-header-anchor {
   color: var(--syntax-keyword);
 }
 
-a[href],
-.observablehq--keyword,
-.observablehq--blue {
+.observablehq--keyword {
   color: #3182bd;
 }
 
 .hljs-deletion,
 .hljs-variable,
-.observablehq--forbidden,
-.observablehq--pink {
+.observablehq--forbidden {
   color: #e377c2;
-}
-
-.observablehq--orange {
-  color: #e6550d;
 }
 
 .observablehq--null,
@@ -532,8 +526,7 @@ a[href],
 .observablehq--number,
 .observablehq--date,
 .observablehq--regexp,
-.observablehq--symbol,
-.observablehq--green {
+.observablehq--symbol {
   color: var(--syntax-number);
 }
 
@@ -552,14 +545,12 @@ a[href],
 .hljs-template-tag,
 .hljs-template-variable,
 .hljs-addition,
-.observablehq--string,
-.observablehq--purple {
+.observablehq--string {
   color: var(--syntax-string);
 }
 
 /* Note: Tachyons' dark-red */
-.observablehq--error,
-.observablehq--red {
+.observablehq--error {
   color: #e7040f;
 }
 
