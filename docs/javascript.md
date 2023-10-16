@@ -26,7 +26,9 @@ References to top-level variables in other code blocks are reactive: promises ar
 
 ```js show
 const hello = new Promise((resolve) => {
-  setTimeout(() => resolve("hello"), 1000);
+  setTimeout(() => {
+    resolve("hello");
+  }, 1000);
 });
 ```
 
