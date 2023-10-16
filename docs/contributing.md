@@ -31,3 +31,24 @@ http-server dist
 ```
 
 This documentation site is built on GitHub using the Observable CLI; see the [deploy workflow](https://github.com/observablehq/cli/blob/main/.github/workflows/deploy.yml). Please open a pull request if you’d like to contribute to the documentation or to CLI features. Contributors are expected to follow our [code of conduct](https://github.com/observablehq/.github/blob/master/CODE_OF_CONDUCT.md). 🙏
+
+## Releasing
+
+(Note: This documentation is for Observable maintainers.) To release a new version of the CLI, first update the [package.json](https://github.com/observablehq/cli/blob/main/package.json) file by following the standard process for committing code changes:
+
+1. Create a new branch.
+2. Edit the `version` field in the [package.json](https://github.com/observablehq/cli/blob/main/package.json) file as desired.
+3. Commit your change to your branch.
+4. Push your branch up to GitHub.
+5. Open a pull request and ask for a review.
+6. Once approved, merge your pull request to the `main` branch.
+
+Once the above is done, you can publish the release via GitHub:
+
+1. Go to [**Draft a new release**](https://github.com/observablehq/cli/releases/new).
+2. Under **Choose a tag**, enter the new version with a `v` *e.g.* `v0.0.5`.
+3. Click **Create new tag: v0.0.5**.
+4. Leave the **Target** as `main`.
+5. Click **Publish release**.
+
+That’s it! The [publish action](https://github.com/observablehq/cli/actions/workflows/publish.yml) will take care of the rest.
