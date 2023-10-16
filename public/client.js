@@ -1,6 +1,6 @@
 import {Runtime, Library, Inspector} from "npm:@observablehq/runtime";
 
-const library = Object.assign(new Library(), {width, ...recommendedLibraries()});
+const library = Object.assign(new Library(), {width, searchParams, ...recommendedLibraries()});
 const runtime = new Runtime(library);
 const main = runtime.module();
 
@@ -23,6 +23,11 @@ function width() {
     observer.observe(document.querySelector("main"));
     return () => observer.disconnect();
   });
+}
+
+// TODO Add to the standard library.
+function searchParams() {
+  return new URLSearchParams(location.search);
 }
 
 // Override the common recommended libraries so that if a user imports them,
