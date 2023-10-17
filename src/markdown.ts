@@ -1,4 +1,4 @@
-import {getPatch, type PatchItem} from "fast-array-diff";
+import {getPatch, type Patch, type PatchItem} from "fast-array-diff";
 import equal from "fast-deep-equal";
 import matter from "gray-matter";
 import hljs from "highlight.js";
@@ -397,8 +397,34 @@ function diffReducer(patch: PatchItem<ParsePiece>) {
   return patch;
 }
 
+// Cells are unordered
+function getCellsPatch(prevCells: CellPiece[], nextCells: CellPiece[]): Patch<ParsePiece> {
+  return prevCells
+    .filter((prev) => !nextCells.some((next) => equal(prev, next)))
+    .map(
+      (cell): PatchItem<ParsePiece> => ({
+        type: "remove",
+        oldPos: prevCells.indexOf(cell),
+        newPos: -1,
+        items: [cell]
+      })
+    )
+    .concat(
+      nextCells
+        .filter((next) => !prevCells.some((prev) => equal(next, prev)))
+        .map(
+          (cell): PatchItem<ParsePiece> => ({
+            type: "add",
+            oldPos: -1,
+            newPos: nextCells.indexOf(cell),
+            items: [cell]
+          })
+        )
+    );
+}
+
 export function diffMarkdown(prevParse: ParseResult, nextParse: ParseResult) {
   return getPatch<ParsePiece>(prevParse.pieces, nextParse.pieces, equal)
-    .concat(getPatch(prevParse.cells, nextParse.cells, equal))
+    .concat(getCellsPatch(prevParse.cells, nextParse.cells))
     .map(diffReducer);
 }
