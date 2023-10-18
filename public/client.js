@@ -49,22 +49,39 @@ function recommendedLibraries() {
 }
 
 export function define(cell) {
-  const {id: idParam, inline, inputs = [], outputs = [], files = [], body} = cell;
-  const id = String(idParam);
+  const {id, inline, inputs = [], outputs = [], files = [], body} = cell;
   const variables = [];
   cellsById.get(id)?.variables.forEach((v) => v.delete());
   cellsById.set(id, {cell, variables});
   const root = document.querySelector(`#cell-${id}`);
-  const observer = {pending: () => (root.innerHTML = ""), rejected: (error) => new Inspector(root).rejected(error)};
+  let reset = null;
+  const clear = () => ((root.innerHTML = ""), (reset = null));
+  const inspector = () => new Inspector(root.appendChild(document.createElement("SPAN")));
   const display = inline
-    ? (val) => (val instanceof Node || typeof val === "string" || !val?.[Symbol.iterator] ? root.append(val) : root.append(...val), val) // prettier-ignore
-    : (val) => (new Inspector(root.appendChild(document.createElement("SPAN"))).fulfilled(val), val);
-  const v = main.variable(observer, {
-    shadow: {
-      display: () => display,
-      view: () => (val) => Generators.input(display(val))
+    ? (v) => {
+        reset?.();
+        if (v instanceof Node || typeof v === "string" || !v?.[Symbol.iterator]) root.append(v);
+        else root.append(...v);
+        return v;
+      }
+    : (v) => {
+        reset?.();
+        inspector().fulfilled(v);
+        return v;
+      };
+  const v = main.variable(
+    {
+      pending: () => (reset = clear),
+      fulfilled: () => reset?.(),
+      rejected: (error) => (reset?.(), inspector().rejected(error))
+    },
+    {
+      shadow: {
+        display: () => display,
+        view: () => (v) => Generators.input(display(v))
+      }
     }
-  });
+  );
   v.define(outputs.length ? `cell ${id}` : null, inputs, body);
   variables.push(v);
   for (const o of outputs) variables.push(main.define(o, [`cell ${id}`], (exports) => exports[o]));
