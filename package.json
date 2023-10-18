@@ -59,5 +59,8 @@
     "mocha": "^10.2.0",
     "prettier": "^3.0.3",
     "typescript": "^5.2.2"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
