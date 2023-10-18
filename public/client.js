@@ -30,6 +30,7 @@ function width() {
 // loading the library twice). Also, it’s nice to avoid require!
 function recommendedLibraries() {
   return {
+    DatabaseClient: () => import("./database.js").then((m) => m.default),
     d3: () => import("npm:d3"),
     htl: () => import("npm:htl"),
     Plot: () => import("npm:@observablehq/plot"),

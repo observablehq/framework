@@ -11,6 +11,7 @@ import {computeHash} from "./hash.js";
 import {diffMarkdown, parseMarkdown} from "./markdown.js";
 import {readPages} from "./navigation.js";
 import {renderPreview} from "./render.js";
+import {handleDatabase} from "./database.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
@@ -48,6 +49,8 @@ class Server {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_file/")) {
         send(req, pathname.slice("/_file".length), {root: this.root}).pipe(res);
+      } else if (pathname.startsWith("/_database/")) {
+        handleDatabase(req, res, pathname.slice("/_database".length));
       } else {
         if (normalize(pathname).startsWith("..")) throw new Error("Invalid path: " + pathname);
         let path = join(this.root, pathname);

@@ -1,6 +1,7 @@
 {
   "data": null,
   "title": "Local fetch",
+  "databases": [],
   "files": [
     {
       "name": "./local-fetch.md",
