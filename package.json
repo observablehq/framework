@@ -30,7 +30,6 @@
     "test:lint": "eslint src test public"
   },
   "dependencies": {
-    "@folder/xdg": "^4.0.1",
     "@observablehq/runtime": "^5.9.3",
     "acorn": "^8.10.0",
     "acorn-walk": "^8.2.0",
