@@ -186,3 +186,22 @@ export function open({hash} = {}) {
     socket.send(JSON.stringify(message));
   }
 }
+
+{
+  const toggle = document.querySelector("#observablehq-sidebar-toggle");
+  let indeterminate = toggle.indeterminate;
+  toggle.onclick = () => {
+    const matches = matchMedia("(min-width: calc(640px + 4rem + 0.5rem + 240px + 2rem))").matches;
+    if (indeterminate) (toggle.checked = !matches), (indeterminate = false);
+    else if (toggle.checked === matches) indeterminate = true;
+    toggle.indeterminate = indeterminate;
+    if (indeterminate) localStorage.removeItem("observablehq-sidebar");
+    else localStorage.setItem("observablehq-sidebar", toggle.checked);
+  };
+  addEventListener("keypress", (event) => {
+    if (event.key === "b" && event.metaKey && !event.ctrlKey) {
+      toggle.click();
+      event.preventDefault();
+    }
+  });
+}

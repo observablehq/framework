@@ -90,12 +90,9 @@ ${
 </nav>
 <script>{
   const toggle = document.querySelector("#observablehq-sidebar-toggle");
-  let indeterminate = toggle.indeterminate = true;
-  toggle.onclick = () => {
-    const matches = matchMedia("(min-width: calc(640px + 4rem + 0.5rem + 240px + 2rem))").matches;
-    if (indeterminate) toggle.checked = !matches, indeterminate = false;
-    else if (toggle.checked === matches) toggle.indeterminate = indeterminate = true;
-  };
+  const initialState = localStorage.getItem("observablehq-sidebar");
+  if (initialState) toggle.checked = initialState === "true";
+  else toggle.indeterminate = true;
 }</script>
 `
     : ""
