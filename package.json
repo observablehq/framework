@@ -23,12 +23,14 @@
   },
   "scripts": {
     "dev": "tsx watch ./src/preview.ts",
+    "obs-login": "tsx ./src/login.ts",
     "build": "rm -rf dist && ./bin/observable.ts build",
     "test": "yarn test:mocha && yarn test:lint",
     "test:mocha": "mkdir -p test/output && node --loader tsx ./node_modules/.bin/mocha 'test/**/*-test.*'",
     "test:lint": "eslint src test public"
   },
   "dependencies": {
+    "@folder/xdg": "^4.0.1",
     "@observablehq/runtime": "^5.9.3",
     "acorn": "^8.10.0",
     "acorn-walk": "^8.2.0",
@@ -40,6 +42,7 @@
     "markdown-it": "^13.0.2",
     "markdown-it-anchor": "^8.6.7",
     "mime": "^3.0.0",
+    "open": "^9.1.0",
     "send": "^0.18.0",
     "tsx": "^3.13.0",
     "ws": "^8.14.2"
