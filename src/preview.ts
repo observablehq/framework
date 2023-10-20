@@ -8,6 +8,7 @@ import send from "send";
 import {WebSocketServer, type WebSocket} from "ws";
 import {HttpError, isHttpError, isNodeError} from "./error.js";
 import {computeHash} from "./hash.js";
+import type {ParseResult} from "./markdown.js";
 import {diffMarkdown, parseMarkdown} from "./markdown.js";
 import {readPages} from "./navigation.js";
 import {renderPreview} from "./render.js";
@@ -107,9 +108,52 @@ class Server {
   };
 }
 
+class FileWatchers {
+  watchers: FSWatcher[];
+
+  constructor(root: string, files: {name: string}[], cb: (name: string) => void) {
+    const fileset = [...new Set(files.map(({name}) => name))];
+    this.watchers = fileset.map((name) => watch(join(root, name), async () => cb(name)));
+  }
+
+  close() {
+    this.watchers.forEach((w) => w.close());
+    this.watchers = [];
+  }
+}
+
 function handleWatch(socket: WebSocket, root: string) {
-  let watcher: FSWatcher | null = null;
+  let markdownWatcher: FSWatcher | null = null;
+  let attachmentWatcher: FileWatchers | null = null;
   console.log("socket open");
+
+  function refreshAttachment(parseResult: ParseResult) {
+    return (name: string) =>
+      send({
+        type: "refresh",
+        cellIds: parseResult.cells.filter((cell) => cell.files?.some((f) => f.name === name)).map((cell) => cell.id)
+      });
+  }
+
+  async function readMarkdown(p: string, r: string) {
+    const contents = await readFile(p, "utf-8");
+    return {contents, parse: parseMarkdown(contents, r), hash: computeHash(contents)};
+  }
+
+  async function refreshMarkdown(path: string) {
+    let current = await readMarkdown(path, root);
+    attachmentWatcher = new FileWatchers(root, current.parse.files, refreshAttachment(current.parse));
+    return async () => {
+      // TODO: Sometimes this gets an ENOENT as a transitional state.
+      const updated = await readMarkdown(path, root);
+      if (current.hash !== updated.hash) {
+        send({type: "update", length: current.parse.pieces.length, diff: diffMarkdown(current.parse, updated.parse)});
+        attachmentWatcher?.close();
+        attachmentWatcher = new FileWatchers(root, updated.parse.files, refreshAttachment(updated.parse));
+        current = updated;
+      }
+    };
+  }
 
   socket.on("message", async (data) => {
     try {
@@ -117,27 +161,12 @@ function handleWatch(socket: WebSocket, root: string) {
       console.log("↑", message);
       switch (message.type) {
         case "hello": {
-          if (watcher) throw new Error("already watching");
+          if (markdownWatcher || attachmentWatcher) throw new Error("already watching");
           let {path} = message;
           if (normalize(path).startsWith("..")) throw new Error("Invalid path: " + path);
           if (path.endsWith("/")) path += "index";
           path = join(root, normalize(path) + ".md");
-          const contents = await readFile(path, "utf-8");
-          let currentHash = message.hash;
-          let currentParse = parseMarkdown(contents, root);
-          watcher = watch(path, async () => {
-            // TODO: Sometimes this gets an ENOENT
-            const updatedContents = await readFile(path, "utf-8");
-            const updatedParse = parseMarkdown(updatedContents, root);
-            const updatedHash = computeHash(updatedContents);
-            if (currentHash !== updatedHash) {
-              const length = currentParse.pieces.length;
-              const diff = diffMarkdown(currentParse, updatedParse);
-              currentParse = updatedParse;
-              currentHash = updatedHash;
-              send({type: "update", length, diff});
-            }
-          });
+          markdownWatcher = watch(path, await refreshMarkdown(path));
           break;
         }
       }
@@ -152,9 +181,13 @@ function handleWatch(socket: WebSocket, root: string) {
   });
 
   socket.on("close", () => {
-    if (watcher) {
-      watcher.close();
-      watcher = null;
+    if (attachmentWatcher) {
+      attachmentWatcher.close();
+      attachmentWatcher = null;
+    }
+    if (markdownWatcher) {
+      markdownWatcher.close();
+      markdownWatcher = null;
     }
     console.log("socket close");
   });

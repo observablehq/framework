@@ -103,6 +103,12 @@ export function open({hash} = {}) {
         location.reload();
         break;
       }
+      case "refresh":
+        message.cellIds.forEach((id) => {
+          const cell = cellsById.get(id);
+          if (cell) define(cell.cell);
+        });
+        break;
       case "update": {
         const root = document.querySelector("main");
         if (root.children.length !== message.length) {
