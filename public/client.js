@@ -111,11 +111,12 @@ export function open({hash} = {}) {
         break;
       case "update": {
         const root = document.querySelector("main");
-        if (root.children.length !== message.length) {
+        if (message.previousHash !== hash) {
           console.log("contents out of sync");
           location.reload();
           break;
         }
+        hash = message.updatedHash;
         message.diff.forEach(({type, newPos, items}) => {
           switch (type) {
             case "add":

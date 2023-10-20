@@ -1,3 +1,4 @@
+import type {WatchEventType} from "node:fs";
 import {watch, type FSWatcher} from "node:fs";
 import {access, constants, readFile, stat} from "node:fs/promises";
 import {createServer, type IncomingMessage, type RequestListener} from "node:http";
@@ -7,9 +8,8 @@ import {parseArgs} from "node:util";
 import send from "send";
 import {WebSocketServer, type WebSocket} from "ws";
 import {HttpError, isHttpError, isNodeError} from "./error.js";
-import {computeHash} from "./hash.js";
 import type {ParseResult} from "./markdown.js";
-import {diffMarkdown, parseMarkdown} from "./markdown.js";
+import {diffMarkdown, readMarkdown} from "./markdown.js";
 import {readPages} from "./navigation.js";
 import {renderPreview} from "./render.js";
 
@@ -135,19 +135,19 @@ function handleWatch(socket: WebSocket, root: string) {
       });
   }
 
-  async function readMarkdown(p: string, r: string) {
-    const contents = await readFile(p, "utf-8");
-    return {contents, parse: parseMarkdown(contents, r), hash: computeHash(contents)};
-  }
-
   async function refreshMarkdown(path: string) {
     let current = await readMarkdown(path, root);
     attachmentWatcher = new FileWatchers(root, current.parse.files, refreshAttachment(current.parse));
-    return async () => {
-      // TODO: Sometimes this gets an ENOENT as a transitional state.
+    return async (event: WatchEventType) => {
+      if (event !== "change") return; // TODO: decide how to handle a "rename" event
       const updated = await readMarkdown(path, root);
       if (current.hash !== updated.hash) {
-        send({type: "update", length: current.parse.pieces.length, diff: diffMarkdown(current.parse, updated.parse)});
+        send({
+          type: "update",
+          diff: diffMarkdown(current, updated),
+          previousHash: current.hash,
+          updatedHash: updated.hash
+        });
         attachmentWatcher?.close();
         attachmentWatcher = new FileWatchers(root, updated.parse.files, refreshAttachment(updated.parse));
         current = updated;

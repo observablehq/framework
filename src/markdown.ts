@@ -13,6 +13,13 @@ import {join} from "path";
 import {canReadSync} from "./files.js";
 import {transpileJavaScript, type FileReference, type ImportReference, type Transpile} from "./javascript.js";
 import {computeHash} from "./hash.js";
+import {readFile} from "fs/promises";
+
+export interface ReadMarkdownResult {
+  contents: string;
+  parse: ParseResult;
+  hash: string;
+}
 
 export interface HtmlPiece {
   type: "html";
@@ -423,8 +430,13 @@ function getCellsPatch(prevCells: CellPiece[], nextCells: CellPiece[]): Patch<Pa
     );
 }
 
-export function diffMarkdown(prevParse: ParseResult, nextParse: ParseResult) {
+export function diffMarkdown({parse: prevParse}: ReadMarkdownResult, {parse: nextParse}: ReadMarkdownResult) {
   return getPatch<ParsePiece>(prevParse.pieces, nextParse.pieces, equal)
     .concat(getCellsPatch(prevParse.cells, nextParse.cells))
     .map(diffReducer);
+}
+
+export async function readMarkdown(path: string, root: string): Promise<ReadMarkdownResult> {
+  const contents = await readFile(path, "utf-8");
+  return {contents, parse: parseMarkdown(contents, root), hash: computeHash(contents)};
 }
