@@ -33,6 +33,7 @@ export interface Transpile {
 export interface ParseOptions {
   id: string;
   root: string;
+  absFilePath?: string;
   inline?: boolean;
   sourceLine?: number;
   globals?: Set<string>;
@@ -96,7 +97,7 @@ function trim(output: Sourcemap, input: string): void {
 export const parseOptions: Options = {ecmaVersion: 13, sourceType: "module"};
 
 export function parseJavaScript(input: string, options: ParseOptions) {
-  const {globals = defaultGlobals, inline = false, root} = options;
+  const {globals = defaultGlobals, inline = false, root, absFilePath} = options;
   // First attempt to parse as an expression; if this fails, parse as a program.
   let expression = maybeParseExpression(input, parseOptions);
   if (expression?.type === "ClassExpression" && expression.id) expression = null; // treat named class as program
@@ -106,7 +107,7 @@ export function parseJavaScript(input: string, options: ParseOptions) {
   const references = findReferences(body, globals, input);
   const declarations = expression ? null : findDeclarations(body, globals, input);
   const features = findFeatures(body, references, input);
-  const imports = findImports(body, root);
+  const imports = findImports(body, root, absFilePath);
   return {
     body,
     declarations,

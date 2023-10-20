@@ -1,11 +1,12 @@
 import {Parser} from "acorn";
+import type {Node} from "acorn";
 import {simple} from "acorn-walk";
 import {readFileSync} from "node:fs";
 import {dirname, join, relative, resolve} from "node:path";
 import {parseOptions} from "../javascript.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
-export function findImports(body, root) {
+export function findImports(body: Node, root: string, absFilePath?: string) {
   const imports: {name: string}[] = [];
   const paths = new Set<string>();
 
@@ -19,7 +20,11 @@ export function findImports(body, root) {
   function findImport(node) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
-      if (value.startsWith("./")) findLocalImports(join(root, value));
+      if (!value.includes(":")) {
+        const path =
+          absFilePath && dirname(absFilePath) !== root ? join(dirname(absFilePath), value) : join(root, value);
+        findLocalImports(path);
+      }
       imports.push({name: value});
     }
   }
@@ -44,7 +49,7 @@ export function findImports(body, root) {
     function findLocalImport(node) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
-        if (value.startsWith("./")) {
+        if (!value.includes(":")) {
           const subpath = resolve(dirname(path), value);
           findLocalImports(subpath);
           imports.push({name: `./${relative(root, subpath)}`});
@@ -65,7 +70,7 @@ export function rewriteImports(output, root) {
     ImportExpression(node: any) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
-        if (value.startsWith("./")) {
+        if (!value.includes(":")) {
           output.replaceLeft(node.source.start + 1, node.source.start + 3, "/_file/");
         }
       }
@@ -83,7 +88,7 @@ export function rewriteImports(output, root) {
               : node.specifiers.some(isNamespaceSpecifier)
               ? node.specifiers.find(isNamespaceSpecifier).local.name
               : "{}"
-          } = await import(${value.startsWith("./") ? JSON.stringify("/_file/" + value.slice(2)) : node.source.raw});`
+          } = await import(${!value.includes(":") ? JSON.stringify("/_file/" + value.slice(2)) : node.source.raw});`
         );
       }
     }
