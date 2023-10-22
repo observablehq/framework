@@ -32,6 +32,8 @@ function recommendedLibraries() {
   return {
     d3: () => import("npm:d3"),
     htl: () => import("npm:htl"),
+    html: () => import("npm:htl").then((htl) => htl.html),
+    svg: () => import("npm:htl").then((htl) => htl.svg),
     Plot: () => import("npm:@observablehq/plot"),
     Inputs: () => {
       // TODO Observable Inputs needs to include the CSS in the dist folder
