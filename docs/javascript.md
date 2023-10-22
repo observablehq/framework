@@ -10,7 +10,7 @@ A top-level variable declared in a JavaScript fenced code block can be reference
 const x = 1, y = 2;
 ```
 
-Then you can reference `x` and `y` elsewhere on the page (with values ${x} and ${y}, respectively). Top-level variable declarations are [hoisted](https://developer.mozilla.org/en-US/docs/Glossary/Hoisting); you can reference variables even if the defining code block appears later on the page. If multiple blocks define top-level variables with the same name, references to these variables will throw a duplicate definition error.
+Then you can reference `x` and `y` elsewhere on the page (with values ${x} and ${y}, respectively). Top-level variable declarations are [hoisted](https://developer.mozilla.org/en-US/docs/Glossary/Hoisting); you can reference variables even if the defining code block appears later on the page, and code runs in topological rather than top-down document order. If multiple blocks define top-level variables with the same name, references to these variables will throw a duplicate definition error.
 
 To prevent variables from being visible outside the current block, make them local with a block statement:
 
@@ -22,7 +22,7 @@ To prevent variables from being visible outside the current block, make them loc
 
 ### Reactive references
 
-References to top-level variables in other code blocks are reactive: promises are implicitly awaited and generators are implicitly consumed. For example, within the block below, `hello` is a Promise. If you reference `hello` from another block, the other block won’t run until `hello` resolves and it will see a string.
+References to top-level variables in other code blocks are reactive: promises are implicitly awaited and generators are implicitly consumed. For example, within the block below, `hello` is a promise. If you reference `hello` from another block, the other block won’t run until `hello` resolves and it will see a string.
 
 ```js show
 const hello = new Promise((resolve) => {
@@ -34,24 +34,24 @@ const hello = new Promise((resolve) => {
 
 Hello is: ${hello}.
 
-Values that change over time, such as interactive inputs and animation parameters, are represented as [async generators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator). You won’t typically implement a generator directly; instead you’ll use a built-in implementation. For example, Generators.input takes an input element and returns a generator that yields the input’s value whenever it changes. (You can also use the [Observable Inputs](https://github.com/observablehq/inputs) to construct beautiful inputs.) Try entering your name into the box below:
+Values that change over time, such as interactive inputs and animation parameters, are represented as [async generators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator). You won’t typically implement a generator directly; instead you’ll use a built-in implementation such as the `view` function. You can also use [Observable Inputs](https://github.com/observablehq/inputs) to quickly construct HTML input elements. Try entering your name into the box below:
 
 ```js show
+const name = view(Inputs.text({label: "Name", placeholder: "Enter your name"}));
+```
+
+Name is: ${name}.
+
+The `view` function calls `Generators.input` under the hood, which takes an input element and returns a generator that yields the input’s value whenever it changes. The code above can be written more explicitly as:
+
+```js no-run
 const nameInput = Inputs.text({label: "Name", placeholder: "Enter your name"});
 const name = Generators.input(nameInput);
 
 display(nameInput);
 ```
 
-Name is: ${name}.
-
-The built-in view function conveniently combines displaying a given input element and returning its corresponding generator. The above can be shortened as:
-
-```js no-run
-const name = view(Inputs.text({label: "Name", placeholder: "Enter your name"}));
-```
-
-As another example, here is using the built-in Generators.observe to represent the current coordinates of the pointer:
+As another example, you can use the built-in `Generators.observe` to represent the current pointer coordinates:
 
 ```js show
 const pointer = Generators.observe((notify) => {
@@ -64,21 +64,41 @@ const pointer = Generators.observe((notify) => {
 
 Pointer is: ${pointer.map(Math.round).join(", ")}.
 
+#### Mutable(*value*)
+
+Normally, only the cell that declares a value can define it or assign to it. (This constraint may helpfully encourage you to decouple code.) You can however use the `Mutable` function to declare a mutable generator, allowing other cells to mutate the generator’s value. This approach is akin to React’s `useState` hook. For example:
+
+```js show
+const count = Mutable(0);
+const increment = () => ++count.value;
+const reset = () => count.value = 0;
+```
+
+In another cell, you can now create buttons to increment and reset the count like so:
+
+```js show
+Inputs.button([["Increment", increment], ["Reset", reset]])
+```
+
+Count is: ${count}.
+
+Within the defining cell, `count` is a generator, and `count.value` can be read and written to as desired; in other cells, `count` is the generator’s current value. Other cells that reference `count` will re-run automatically whenever `count.value` is reassigned — so be careful you don’t cause an infinite loop!
+
 ### Displaying content
 
-A JavaScript fenced code block containing an expression will automatically display its value, as will an inline JavaScript expression. You can also manually display elements or inspect values by calling the built-in display function.
+A JavaScript fenced code block containing an expression will automatically display its value, as will an inline JavaScript expression. You can also manually display elements or inspect values by calling the built-in `display` function.
 
 #### display(*value*)
 
-If *value* is a DOM node, adds it to the DOM. Otherwise, converts the given *value* to a suitable DOM node and displays that instead. Returns the given *value*.
+If `value` is a DOM node, adds it to the DOM. Otherwise, converts the given `value` to a suitable DOM node and displays that instead. Returns the given `value`.
 
-When *value* is not a DOM node, display will automatically create a suitable corresponding DOM node to display. The exact behavior depends on the input *value*, and whether display is called within a fenced code block or an inline expression. In fenced code blocks, display will use the [Observable Inspector](https://github.com/observablehq/inspector); in inline expressions, display will coerce non-DOM values to strings, and will concatenate values when passed an iterable.
+When `value` is not a DOM node, display will automatically create a suitable corresponding DOM node to display. The exact behavior depends on the input `value`, and whether display is called within a fenced code block or an inline expression. In fenced code blocks, display will use the [Observable Inspector](https://github.com/observablehq/inspector); in inline expressions, display will coerce non-DOM values to strings, and will concatenate values when passed an iterable.
 
 You can call display multiple times within the same code block or inline expression to display multiple values. The display will be automatically cleared if the associated code block or inline expression is re-run.
 
 #### view(*input*)
 
-As described above, this function displays the given *input* and then returns its corresponding generator via Generators.input. Use this to display an input element while also declaring the input’s current value as a reactive top-level variable.
+As described above, this function displays the given `input` and then returns its corresponding generator via `Generators.input`. Use this to display an input element while also declaring the input’s current value as a reactive top-level variable.
 
 ### Imports
 
@@ -98,12 +118,12 @@ You can also import JavaScript from local ES modules. This allows you to move co
 
 ### Files
 
-You can load files using the built-in FileAttachment function.
+You can load files using the built-in `FileAttachment` function.
 
 ```js show
 const gistemp = FileAttachment("gistemp.csv").csv({typed: true});
 ```
 
-The following type-specific methods are supported: csv, html, image, json, sqlite, text, tsv, xlsx, xml, and zip. There are also generic methods: arrayBuffer, blob, and url. Each method returns a promise to the file’s contents (or URL).
+The following type-specific methods are supported: *csv*, *html*, *image*, *json*, *sqlite*, *text*, *tsv*, *xlsx*, *xml*, and *zip*. There are also generic methods: *arrayBuffer*, *blob*, and *url*. Each method returns a promise to the file’s contents (or URL).
 
-We use static analysis to determine which files are used so that we can include only referenced files when building. The FileAttachment function accepts only literal strings; code such as `FileAttachment("my" + "file.csv")` or similar dynamic invocation is invalid syntax.
+We use static analysis to determine which files are used so that we can include only referenced files when building. The `FileAttachment` function accepts only literal strings; code such as `FileAttachment("my" + "file.csv")` or similar dynamic invocation is invalid syntax.

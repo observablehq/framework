@@ -1,6 +1,6 @@
 import {Runtime, Library, Inspector} from "npm:@observablehq/runtime";
 
-const library = Object.assign(new Library(), {width, ...recommendedLibraries()});
+const library = Object.assign(new Library(), {width, Mutable, ...recommendedLibraries()});
 const runtime = new Runtime(library);
 const main = runtime.module();
 
@@ -23,6 +23,27 @@ function width() {
     observer.observe(document.querySelector("main"));
     return () => observer.disconnect();
   });
+}
+
+// Mutable returns a generator with a value getter/setting that allows the
+// generated value to be mutated. Therefore, direct mutation is only allowed
+// within the defining cell, but the cell can also export functions that allows
+// other cells to mutate the value as desired.
+function Mutable() {
+  return function Mutable(value) {
+    let change;
+    return Object.defineProperty(
+      Generators.observe((_) => {
+        change = _;
+        if (value !== undefined) change(value);
+      }),
+      "value",
+      {
+        get: () => value,
+        set: (x) => void change((value = x)) // eslint-disable-line no-setter-return
+      }
+    );
+  };
 }
 
 // Override the common recommended libraries so that if a user imports them,

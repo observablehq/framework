@@ -44,7 +44,7 @@ const x = 1 + 2;
 const x = 1 + 2;
 ```
 
-A program code block doesn’t display anything by default, but you can call the built-in [display function](./javascript#display(value)) explicitly. The above block defines the top-level variable `x` with a value of ${x}.
+A program code block doesn’t display anything by default, but you can call the built-in [`display` function](./javascript#display(value)) explicitly. The above block defines the top-level variable `x` with a value of ${x}.
 
 (A technical note: the parser first attempts to parse the input as an expression; if that fails, it parses it as a program. So, code such as `{foo: 1}` is interpreted as an object literal rather than a block with a labeled statement.)
 
