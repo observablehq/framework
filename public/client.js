@@ -146,12 +146,10 @@ export function open({hash} = {}) {
               items.forEach((item) => {
                 switch (item.type) {
                   case "html":
-                    if (root.children.length === 0) {
-                      root.insertAdjacentHTML("beforeend", item.html);
-                    } else if (newPos < root.children.length) {
+                    if (newPos < root.children.length) {
                       root.children[newPos].insertAdjacentHTML("beforebegin", item.html);
                     } else {
-                      root.lastElementChild.insertAdjacentHTML("afterend", item.html);
+                      root.insertAdjacentHTML("beforeend", item.html);
                     }
                     ++newPos;
                     item.cellIds.forEach((id) => {
