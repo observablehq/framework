@@ -147,16 +147,13 @@ export function open({hash} = {}) {
                 switch (item.type) {
                   case "html":
                     if (root.children.length === 0) {
-                      var template = document.createElement("template");
-                      template.innerHTML = item.html;
-                      root.appendChild(template.content.firstChild);
-                    }
-                    if (newPos >= root.children.length) {
-                      root.children[root.children.length - 1].insertAdjacentHTML("afterend", item.html);
-                      newPos++;
+                      root.insertAdjacentHTML("beforeend", item.html);
+                    } else if (newPos < root.children.length) {
+                      root.children[newPos].insertAdjacentHTML("beforebegin", item.html);
                     } else {
-                      root.children[newPos++].insertAdjacentHTML("beforebegin", item.html);
+                      root.lastElementChild.insertAdjacentHTML("afterend", item.html);
                     }
+                    ++newPos;
                     item.cellIds.forEach((id) => {
                       const cell = cellsById.get(id);
                       if (cell) define(cell.cell);
