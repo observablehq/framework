@@ -5,6 +5,8 @@ import open from "open";
 import {HttpError, isHttpError} from "./error.js";
 import {setObservableApiKey} from "./auth.js";
 
+const OBSERVABLEHQ_HOST = process.env["OBSERVABLEHQ_HOST"] ?? "https://observablehq.com";
+
 interface CommandContext {
   nonce: string;
 }
@@ -14,13 +16,13 @@ async function main() {
   const server = new Server({nonce});
   await server.start();
 
-  const url = new URL("https://observable.test:5000/token");
+  const url = new URL("/token", OBSERVABLEHQ_HOST);
   const name = `Observable CLI on ${os.hostname()}`;
   const request = {nonce, port: server.port, name};
   // assign base64 encoded request to url.searchParams.request
   url.searchParams.set("request", Buffer.from(JSON.stringify(request)).toString("base64"));
 
-  console.log("Press Enter to open observablehq.com in your browser...");
+  console.log(`Press Enter to open ${url.hostname} in your browser...`);
   await waitForEnter();
   await open(url.toString());
   // execution continues in the server's request handler
