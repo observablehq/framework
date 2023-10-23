@@ -12,8 +12,8 @@ export async function readPages(root: string): Promise<NonNullable<RenderOptions
     if (extname(file) !== ".md") continue;
     let parsed: ParseResult;
     try {
-      const absFilePath = join(root, file);
-      parsed = parseMarkdown(await readFile(absFilePath, "utf-8"), root, absFilePath);
+      const sourcePath = join(root, file);
+      parsed = parseMarkdown(await readFile(sourcePath, "utf-8"), root, sourcePath);
     } catch (error) {
       if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error
       continue;

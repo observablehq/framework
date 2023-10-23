@@ -1,5 +1,6 @@
 import {simple} from "acorn-walk";
 import {syntaxError} from "./syntaxError.js";
+import {isLocalImport} from "./helpers.js";
 
 export function findFeatures(node, references, input) {
   const features = [];
@@ -36,7 +37,7 @@ export function findFeatures(node, references, input) {
 
       features.push({type: callee.name, name: getStringLiteralValue(arg)});
     },
-    // Promote dynamic imports with static literals to file attachment references.
+    // Promote dynamic and static imports with static literals to file attachment references.
     ImportExpression: findImport,
     ImportDeclaration: findImport
   });
@@ -44,7 +45,7 @@ export function findFeatures(node, references, input) {
   function findImport(node) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
-      if (value.startsWith("./")) {
+      if (isLocalImport(value)) {
         features.push({type: "FileAttachment", name: value});
       }
     }

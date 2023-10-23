@@ -1,6 +1,5 @@
 import {Parser, tokTypes, type Options} from "acorn";
 import mime from "mime";
-import {join} from "node:path";
 import {canReadSync} from "./files.js";
 import {findAwaits} from "./javascript/awaits.js";
 import {findDeclarations} from "./javascript/declarations.js";
@@ -10,6 +9,8 @@ import {defaultGlobals} from "./javascript/globals.js";
 import {findImports, rewriteImports} from "./javascript/imports.js";
 import {findReferences} from "./javascript/references.js";
 import {Sourcemap} from "./sourcemap.js";
+import type {Node} from "acorn";
+import {getPathFromRoot} from "./javascript/helpers.js";
 
 export interface FileReference {
   name: string;
@@ -33,19 +34,19 @@ export interface Transpile {
 export interface ParseOptions {
   id: string;
   root: string;
-  absFilePath?: string;
+  sourcePath?: string;
   inline?: boolean;
   sourceLine?: number;
   globals?: Set<string>;
 }
 
 export function transpileJavaScript(input: string, options: ParseOptions): Transpile {
-  const {root, id} = options;
+  const {root, id, sourcePath} = options;
   try {
     const node = parseJavaScript(input, options);
     const files = node.features
       .filter((f) => f.type === "FileAttachment")
-      .filter((f) => canReadSync(join(root, f.name)))
+      .filter((f) => canReadSync(getPathFromRoot(root, sourcePath, f.name)))
       .map((f) => ({name: f.name, mimeType: mime.getType(f.name)}));
     const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
     const output = new Sourcemap(input);
@@ -55,7 +56,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
       output.insertRight(input.length, "\n))");
       inputs.push("display");
     }
-    rewriteImports(output, node);
+    rewriteImports(output, node, root, sourcePath);
     rewriteFetches(output, node);
     return {
       id,
@@ -96,8 +97,18 @@ function trim(output: Sourcemap, input: string): void {
 
 export const parseOptions: Options = {ecmaVersion: 13, sourceType: "module"};
 
-export function parseJavaScript(input: string, options: ParseOptions) {
-  const {globals = defaultGlobals, inline = false, root, absFilePath} = options;
+export interface ParsedJavaScriptNode {
+  body: Node;
+  declarations: {name: string}[] | null;
+  references: {name: string}[];
+  features: {type: unknown; name: string}[];
+  imports: {name: string}[];
+  expression: boolean;
+  async: boolean;
+}
+
+export function parseJavaScript(input: string, options: ParseOptions): ParsedJavaScriptNode {
+  const {globals = defaultGlobals, inline = false, root, sourcePath} = options;
   // First attempt to parse as an expression; if this fails, parse as a program.
   let expression = maybeParseExpression(input, parseOptions);
   if (expression?.type === "ClassExpression" && expression.id) expression = null; // treat named class as program
@@ -107,7 +118,7 @@ export function parseJavaScript(input: string, options: ParseOptions) {
   const references = findReferences(body, globals, input);
   const declarations = expression ? null : findDeclarations(body, globals, input);
   const features = findFeatures(body, references, input);
-  const imports = findImports(body, root, absFilePath);
+  const imports = findImports(body, root, sourcePath);
   return {
     body,
     declarations,

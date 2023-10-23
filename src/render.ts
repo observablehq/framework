@@ -1,3 +1,4 @@
+import {join} from "node:path";
 import {computeHash} from "./hash.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
 import {parseMarkdown, type ParseResult} from "./markdown.js";
@@ -15,7 +16,11 @@ export interface RenderOptions {
 }
 
 export function renderPreview(source: string, options: RenderOptions): Render {
-  const parseResult = parseMarkdown(source, options.root);
+  const parseResult = parseMarkdown(
+    source,
+    options.root,
+    options.path ? join(options.root, options.path) + ".md" : undefined
+  );
   return {
     html: render(parseResult, {...options, preview: true, hash: computeHash(source)}),
     files: parseResult.files,
@@ -24,7 +29,11 @@ export function renderPreview(source: string, options: RenderOptions): Render {
 }
 
 export function renderServerless(source: string, options: RenderOptions): Render {
-  const parseResult = parseMarkdown(source, options.root);
+  const parseResult = parseMarkdown(
+    source,
+    options.root,
+    options.path ? join(options.root, options.path) + ".md" : undefined
+  );
   return {
     html: render(parseResult, options),
     files: parseResult.files,
@@ -58,7 +67,7 @@ ${
 ${JSON.stringify({imports: Object.fromEntries(Array.from(imports, ([name, href]) => [name, href]))}, null, 2)}
 </script>
 ${Array.from(imports.values())
-  .concat(parseResult.imports.filter(({name}) => name.startsWith("./")).map(({name}) => `/_file/${name.slice(2)}`))
+  .concat(parseResult.imports.filter(({name}) => !name.startsWith("npm")).map(({name}) => `/_file/${name}`))
   .map((href) => `<link rel="modulepreload" href="${href}">`)
   .join("\n")}
 <script type="module">

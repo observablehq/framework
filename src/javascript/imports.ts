@@ -2,11 +2,13 @@ import {Parser} from "acorn";
 import type {Node} from "acorn";
 import {simple} from "acorn-walk";
 import {readFileSync} from "node:fs";
-import {dirname, join, relative, resolve} from "node:path";
+import {dirname, join} from "node:path";
+import type {ParsedJavaScriptNode} from "../javascript.js";
 import {parseOptions} from "../javascript.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
+import {isLocalImport, getPathFromRoot} from "./helpers.js";
 
-export function findImports(body: Node, root: string, absFilePath?: string) {
+export function findImports(body: Node, root: string, sourcePath?: string) {
   const imports: {name: string}[] = [];
   const paths = new Set<string>();
 
@@ -20,12 +22,12 @@ export function findImports(body: Node, root: string, absFilePath?: string) {
   function findImport(node) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
-      if (!value.includes(":")) {
-        const path =
-          absFilePath && dirname(absFilePath) !== root ? join(dirname(absFilePath), value) : join(root, value);
+      if (isLocalImport(value)) {
+        const path = getPathFromRoot(root, sourcePath, value);
         findLocalImports(path);
+      } else {
+        imports.push({name: value});
       }
-      imports.push({name: value});
     }
   }
 
@@ -49,28 +51,27 @@ export function findImports(body: Node, root: string, absFilePath?: string) {
     function findLocalImport(node) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
-        if (!value.includes(":")) {
-          const subpath = resolve(dirname(path), value);
+        if (isLocalImport(value)) {
+          const subpath = join(dirname(path), value);
           findLocalImports(subpath);
-          imports.push({name: `./${relative(root, subpath)}`});
+          imports.push({name: path.slice(root.length + 1)});
         } else {
           imports.push({name: value});
         }
       }
     }
   }
-
   return imports;
 }
 
 // TODO parallelize multiple static imports
-// TODO need to know the local path of the importing notebook; this assumes it’s in the root
-export function rewriteImports(output, root) {
-  simple(root.body, {
+export function rewriteImports(output: any, rootNode: ParsedJavaScriptNode, root: string, sourcePath?: string) {
+  simple(rootNode.body, {
     ImportExpression(node: any) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
-        if (!value.includes(":")) {
+        // TODO(cmo) - FIX - this isn't right
+        if (isLocalImport(value)) {
           output.replaceLeft(node.source.start + 1, node.source.start + 3, "/_file/");
         }
       }
@@ -78,7 +79,7 @@ export function rewriteImports(output, root) {
     ImportDeclaration(node: any) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
-        root.async = true;
+        rootNode.async = true;
         output.replaceLeft(
           node.start,
           node.end,
@@ -88,7 +89,11 @@ export function rewriteImports(output, root) {
               : node.specifiers.some(isNamespaceSpecifier)
               ? node.specifiers.find(isNamespaceSpecifier).local.name
               : "{}"
-          } = await import(${!value.includes(":") ? JSON.stringify("/_file/" + value.slice(2)) : node.source.raw});`
+          } = await import(${
+            sourcePath && isLocalImport(value)
+              ? JSON.stringify("/_file/" + getPathFromRoot(root, sourcePath, value).slice(root.length + 1))
+              : node.source.raw
+          });`
         );
       }
     }
