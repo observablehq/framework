@@ -1,6 +1,6 @@
 import {Runtime, Library, Inspector} from "npm:@observablehq/runtime";
 
-const library = Object.assign(new Library(), {width, ...recommendedLibraries()});
+const library = Object.assign(new Library(), {width, Mutable, ...recommendedLibraries()});
 const runtime = new Runtime(library);
 const main = runtime.module();
 
@@ -25,6 +25,27 @@ function width() {
   });
 }
 
+// Mutable returns a generator with a value getter/setting that allows the
+// generated value to be mutated. Therefore, direct mutation is only allowed
+// within the defining cell, but the cell can also export functions that allows
+// other cells to mutate the value as desired.
+function Mutable() {
+  return function Mutable(value) {
+    let change;
+    return Object.defineProperty(
+      Generators.observe((_) => {
+        change = _;
+        if (value !== undefined) change(value);
+      }),
+      "value",
+      {
+        get: () => value,
+        set: (x) => void change((value = x)) // eslint-disable-line no-setter-return
+      }
+    );
+  };
+}
+
 // Override the common recommended libraries so that if a user imports them,
 // they get the same version that the standard library provides (rather than
 // loading the library twice). Also, it’s nice to avoid require!
@@ -33,6 +54,8 @@ function recommendedLibraries() {
     DatabaseClient: () => import("./database.js").then((m) => m.default),
     d3: () => import("npm:d3"),
     htl: () => import("npm:htl"),
+    html: () => import("npm:htl").then((htl) => htl.html),
+    svg: () => import("npm:htl").then((htl) => htl.svg),
     Plot: () => import("npm:@observablehq/plot"),
     Inputs: () => {
       // TODO Observable Inputs needs to include the CSS in the dist folder
@@ -104,30 +127,32 @@ export function open({hash} = {}) {
         location.reload();
         break;
       }
+      case "refresh":
+        message.cellIds.forEach((id) => {
+          const cell = cellsById.get(id);
+          if (cell) define(cell.cell);
+        });
+        break;
       case "update": {
         const root = document.querySelector("main");
-        if (root.children.length !== message.length) {
+        if (message.previousHash !== hash) {
           console.log("contents out of sync");
           location.reload();
           break;
         }
+        hash = message.updatedHash;
         message.diff.forEach(({type, newPos, items}) => {
           switch (type) {
             case "add":
               items.forEach((item) => {
                 switch (item.type) {
                   case "html":
-                    if (root.children.length === 0) {
-                      var template = document.createElement("template");
-                      template.innerHTML = item.html;
-                      root.appendChild(template.content.firstChild);
-                    }
-                    if (newPos >= root.children.length) {
-                      root.children[root.children.length - 1].insertAdjacentHTML("afterend", item.html);
-                      newPos++;
+                    if (newPos < root.children.length) {
+                      root.children[newPos].insertAdjacentHTML("beforebegin", item.html);
                     } else {
-                      root.children[newPos++].insertAdjacentHTML("beforebegin", item.html);
+                      root.insertAdjacentHTML("beforeend", item.html);
                     }
+                    ++newPos;
                     item.cellIds.forEach((id) => {
                       const cell = cellsById.get(id);
                       if (cell) define(cell.cell);
@@ -186,4 +211,23 @@ export function open({hash} = {}) {
     console.info("↑", message);
     socket.send(JSON.stringify(message));
   }
+}
+
+{
+  const toggle = document.querySelector("#observablehq-sidebar-toggle");
+  let indeterminate = toggle.indeterminate;
+  toggle.onclick = () => {
+    const matches = matchMedia("(min-width: calc(640px + 4rem + 0.5rem + 240px + 2rem))").matches;
+    if (indeterminate) (toggle.checked = !matches), (indeterminate = false);
+    else if (toggle.checked === matches) indeterminate = true;
+    toggle.indeterminate = indeterminate;
+    if (indeterminate) localStorage.removeItem("observablehq-sidebar");
+    else localStorage.setItem("observablehq-sidebar", toggle.checked);
+  };
+  addEventListener("keypress", (event) => {
+    if (event.key === "b" && event.metaKey && !event.ctrlKey) {
+      toggle.click();
+      event.preventDefault();
+    }
+  });
 }
