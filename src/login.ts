@@ -4,6 +4,7 @@ import os from "node:os";
 import open from "open";
 import {HttpError, isHttpError} from "./error.js";
 import {setObservableApiKey} from "./auth.js";
+import {isatty} from "node:tty";
 
 const OBSERVABLEHQ_HOST = process.env["OBSERVABLEHQ_HOST"] ?? "https://observablehq.com";
 
@@ -22,9 +23,14 @@ async function main() {
   // assign base64 encoded request to url.searchParams.request
   url.searchParams.set("request", Buffer.from(JSON.stringify(request)).toString("base64"));
 
-  console.log(`Press Enter to open ${url.hostname} in your browser...`);
-  await waitForEnter();
-  await open(url.toString());
+  if (isatty(process.stdin.fd)) {
+    console.log(`Press Enter to open ${url.hostname} in your browser...`);
+    await waitForEnter();
+    await open(url.toString());
+  } else {
+    console.log(`Open this link in your browser to continue authentication:`);
+    console.log(`\n\t${url.toString()}\n`);
+  }
   // execution continues in the server's request handler
 }
 
