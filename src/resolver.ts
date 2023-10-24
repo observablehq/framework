@@ -44,17 +44,13 @@ export async function readDatabaseProxyConfig(): Promise<DatabaseProxyConfig | n
 
 function readDatabaseConfig(config: DatabaseProxyConfig | null, name): DatabaseConfig {
   if (!config) throw new Error(`Missing database configuration file "${configFile}"`);
-  try {
-    if (!name) throw new Error(`No database name specified`);
-    const raw = (config && config[name]) as DatabaseConfig | null;
-    if (!raw) throw new Error(`No configuration found for "${name}"`);
-    return {
-      ...decodeSecret(raw.secret),
-      url: raw.url
-    } as DatabaseConfig;
-  } catch (error) {
-    throw new Error(`Unable to read database configuration file "${configFile}"`);
-  }
+  if (!name) throw new Error(`No database name specified`);
+  const raw = (config && config[name]) as DatabaseConfig | null;
+  if (!raw) throw new Error(`No configuration found for "${name}"`);
+  return {
+    ...decodeSecret(raw.secret),
+    url: raw.url
+  } as DatabaseConfig;
 }
 
 function decodeSecret(secret: string): Record<string, string> {

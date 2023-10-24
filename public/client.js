@@ -9,11 +9,11 @@ const resolveFile = (name) => attachedFiles.get(name);
 main.builtin("FileAttachment", runtime.fileAttachments(resolveFile));
 
 const databaseTokens = new Map();
-const resolveDatabaseToken = (name) => {
+async function resolveDatabaseToken(name) {
   const token = databaseTokens.get(name);
-  if (!token) Promise.reject(new Error(`Database configuration for ${name} not found`));
-  return Promise.resolve(token);
-};
+  if (!token) throw new Error(`Database configuration for ${name} not found`);
+  return token;
+}
 
 const cellsById = new Map();
 const Generators = library.Generators;
