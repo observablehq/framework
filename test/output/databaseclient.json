@@ -1,11 +1,6 @@
 {
   "data": null,
   "title": null,
-  "databases": [
-    {
-      "name": "dwh-local-proxy"
-    }
-  ],
   "files": [],
   "imports": [],
   "pieces": [
