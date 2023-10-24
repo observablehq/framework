@@ -326,7 +326,7 @@ function toParseCells(pieces: RenderPiece[]): CellPiece[] {
   return cellPieces;
 }
 
-export function parseMarkdown(source: string, root: string /* options */): ParseResult {
+export function parseMarkdown(source: string, root: string): ParseResult {
   const parts = matter(source);
   // TODO: We need to know what line in the source the markdown starts on and pass that
   // as startLine in the parse context below.

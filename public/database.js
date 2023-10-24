@@ -47,11 +47,6 @@ class DatabaseClientImpl {
     return data;
   }
 
-  // TODO: Does this serve any purpose?
-  async queryRow(...params) {
-    return (await this.query(...params))[0] || null;
-  }
-
   queryTag(strings, ...args) {
     switch (this.type) {
       case "oracle":
