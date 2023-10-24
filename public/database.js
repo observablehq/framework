@@ -53,7 +53,15 @@ class DatabaseClientImpl {
   }
 
   queryTag(strings, ...args) {
-    // TODO: This is Database-dialect specific
+    switch (this.type) {
+      case "oracle":
+      case "databricks":
+        return [strings.reduce((prev, curr, i) => `${prev}:${i}${curr}`), args];
+      case "mysql":
+        return [strings.reduce((prev, curr, i) => `${prev}@${i}${curr}`), args];
+      case "postgres":
+        return [strings.reduce((prev, curr, i) => `${prev}$${i}${curr}`), args];
+    }
     return [strings.join("?"), args];
   }
 
