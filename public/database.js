@@ -1,46 +1,22 @@
-export default function DatabaseClient(name) {
-  if (new.target === undefined) {
-    return requestToken((name += "")).then(({type}) => {
-      return new DatabaseClientImpl(name, type);
-    });
-  }
-  if (new.target === DatabaseClient) {
-    throw new TypeError("DatabaseClient is not a constructor");
-  }
-  Object.defineProperties(this, {
-    name: {value: name, enumerable: true}
-  });
+export function makeDatabaseClient(resolveToken) {
+  return function DatabaseClient(name) {
+    if (new.target !== undefined) throw new TypeError("DatabaseClient is not a constructor");
+    return resolveToken((name += "")).then((token) => new DatabaseClientImpl(name, token));
+  };
 }
 
-const tokenRequests = new Map();
+class DatabaseClientImpl {
+  #token;
 
-async function requestToken(name) {
-  if (!name) throw new Error("Database name is not defined");
-  if (tokenRequests.has(name)) {
-    return await tokenRequests.get(name);
+  constructor(name, token) {
+    this.name = name;
+    this.#token = token;
   }
-  const response = await fetch(`/_database/${name}/token`).then((response) => {
-    if (response.ok) {
-      return response.json().then((json) => json);
-    }
-    invalidateToken(name);
-    throw new Error(`Error ${response.statusText || response.status} creating database client '${name}':`);
-  });
-  tokenRequests.set(name, response);
-  return response;
-}
-
-function invalidateToken(name) {
-  tokenRequests.delete(name);
-}
-
-class DatabaseClientImpl extends DatabaseClient {
   async query(sql, params, {signal} = {}) {
-    const token = await requestToken(this.name);
-    const response = await fetch(`${token.origin}/query`, {
+    const response = await fetch(`${this.#token.url}query`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token.token}`,
+        Authorization: `Bearer ${this.#token.token}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({sql, params}),
@@ -48,7 +24,6 @@ class DatabaseClientImpl extends DatabaseClient {
     });
     if (!response.ok) {
       if (response.status === 401) {
-        invalidateToken(this.name, token); // Force refresh on next query.
         throw new Error("Unauthorized: invalid or expired token. Try again?");
       }
       const contentType = response.headers.get("content-type");

@@ -11,7 +11,6 @@ import {type default as Renderer, type RenderRule} from "markdown-it/lib/rendere
 import mime from "mime";
 import {join} from "path";
 import {canReadSync} from "./files.js";
-import type {DatabaseReference} from "./javascript.js";
 import {transpileJavaScript, type FileReference, type ImportReference, type Transpile} from "./javascript.js";
 import {computeHash} from "./hash.js";
 import {readFile} from "fs/promises";
@@ -39,7 +38,6 @@ export interface ParseResult {
   title: string | null;
   html: string;
   data: {[key: string]: any} | null;
-  databases: DatabaseReference[];
   files: FileReference[];
   imports: ImportReference[];
   pieces: HtmlPiece[];
@@ -53,7 +51,6 @@ interface RenderPiece {
 
 interface ParseContext {
   pieces: RenderPiece[];
-  databases: DatabaseReference[];
   files: {name: string; mimeType: string | null}[];
   imports: ImportReference[];
   startLine: number;
@@ -102,7 +99,6 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule): RenderRule {
         sourceLine: context.startLine + context.currentLine
       });
       extendPiece(context, {code: [transpile]});
-      if (transpile.databases) context.databases.push(...transpile.databases);
       if (transpile.files) context.files.push(...transpile.files);
       if (transpile.imports) context.imports.push(...transpile.imports);
       result += `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`;
@@ -258,7 +254,6 @@ function makePlaceholderRenderer(root: string): RenderRule {
       sourceLine: context.startLine + context.currentLine
     });
     extendPiece(context, {code: [transpile]});
-    if (transpile.databases) context.databases.push(...transpile.databases);
     if (transpile.files) context.files.push(...transpile.files);
     return `<span id="cell-${id}"></span>`;
   };
@@ -331,7 +326,7 @@ function toParseCells(pieces: RenderPiece[]): CellPiece[] {
   return cellPieces;
 }
 
-export function parseMarkdown(source: string, root: string): ParseResult {
+export function parseMarkdown(source: string, root: string /* options */): ParseResult {
   const parts = matter(source);
   // TODO: We need to know what line in the source the markdown starts on and pass that
   // as startLine in the parse context below.
@@ -356,14 +351,13 @@ export function parseMarkdown(source: string, root: string): ParseResult {
   md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
   md.renderer.render = renderIntoPieces(md.renderer);
-  const context: ParseContext = {databases: [], files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
+  const context: ParseContext = {files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
   const tokens = md.parse(parts.content, context);
   const html = md.renderer.render(tokens, md.options, context);
   return {
     html,
     data: isEmpty(parts.data) ? null : parts.data,
     title: parts.data?.title ?? findTitle(tokens) ?? null,
-    databases: context.databases,
     files: context.files,
     imports: context.imports,
     pieces: toParsePieces(context.pieces),

@@ -6,6 +6,7 @@ import {parseArgs} from "node:util";
 import {visitFiles, visitMarkdownFiles} from "./files.js";
 import {readPages} from "./navigation.js";
 import {renderServerless} from "./render.js";
+import {makeCLIResolver} from "./resolver.js";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
 
@@ -25,7 +26,12 @@ async function build(context: CommandContext) {
     const outputPath = join(outputRoot, join(dirname(sourceFile), basename(sourceFile, ".md") + ".html"));
     console.log("render", sourcePath, "→", outputPath);
     const path = `/${join(dirname(sourceFile), basename(sourceFile, ".md"))}`;
-    const render = renderServerless(await readFile(sourcePath, "utf-8"), {root: sourceRoot, path, pages});
+    const render = renderServerless(await readFile(sourcePath, "utf-8"), {
+      root: sourceRoot,
+      path,
+      pages,
+      resolver: await makeCLIResolver()
+    });
     files.push(...render.files.map((f) => join(sourceFile, "..", f.name)));
     await prepareOutput(outputPath);
     await writeFile(outputPath, render.html);

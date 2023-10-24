@@ -8,6 +8,13 @@ const attachedFiles = new Map();
 const resolveFile = (name) => attachedFiles.get(name);
 main.builtin("FileAttachment", runtime.fileAttachments(resolveFile));
 
+const databaseTokens = new Map();
+const resolveDatabaseToken = (name) => {
+  const token = databaseTokens.get(name);
+  if (!token) Promise.reject(new Error(`Database configuration for ${name} not found`));
+  return Promise.resolve(token);
+};
+
 const cellsById = new Map();
 const Generators = library.Generators;
 
@@ -51,7 +58,7 @@ function Mutable() {
 // loading the library twice). Also, it’s nice to avoid require!
 function recommendedLibraries() {
   return {
-    DatabaseClient: () => import("./database.js").then((m) => m.default),
+    DatabaseClient: () => import("./database.js").then((db) => db.makeDatabaseClient(resolveDatabaseToken)),
     d3: () => import("npm:d3"),
     htl: () => import("npm:htl"),
     html: () => import("npm:htl").then((htl) => htl.html),
@@ -72,7 +79,7 @@ function recommendedLibraries() {
 }
 
 export function define(cell) {
-  const {id, inline, inputs = [], outputs = [], files = [], body} = cell;
+  const {id, inline, inputs = [], outputs = [], files = [], databases = [], body} = cell;
   const variables = [];
   cellsById.get(id)?.variables.forEach((v) => v.delete());
   cellsById.set(id, {cell, variables});
@@ -109,6 +116,7 @@ export function define(cell) {
   variables.push(v);
   for (const o of outputs) variables.push(main.define(o, [`cell ${id}`], (exports) => exports[o]));
   for (const f of files) attachedFiles.set(f.name, {url: String(new URL(`/_file/${f.name}`, location)), mimeType: f.mimeType}); // prettier-ignore
+  for (const d of databases) databaseTokens.set(d.name, d);
 }
 
 export function open({hash} = {}) {
@@ -165,6 +173,7 @@ export function open({hash} = {}) {
                         inline: item.inline,
                         inputs: item.inputs,
                         outputs: item.outputs,
+                        databases: item.databases,
                         files: item.files,
                         body: (0, eval)(item.body)
                       });
