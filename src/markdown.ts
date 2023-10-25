@@ -9,11 +9,11 @@ import {type RuleCore} from "markdown-it/lib/parser_core.js";
 import {type RuleInline} from "markdown-it/lib/parser_inline.js";
 import {type default as Renderer, type RenderRule} from "markdown-it/lib/renderer.js";
 import mime from "mime";
-import {join} from "path";
+import {readFile} from "node:fs/promises";
+import {join} from "node:path";
 import {canReadSync} from "./files.js";
-import {transpileJavaScript, type FileReference, type ImportReference, type Transpile} from "./javascript.js";
 import {computeHash} from "./hash.js";
-import {readFile} from "fs/promises";
+import {transpileJavaScript, type FileReference, type ImportReference, type Transpile} from "./javascript.js";
 
 export interface ReadMarkdownResult {
   contents: string;
@@ -57,22 +57,15 @@ interface ParseContext {
   currentLine: number;
 }
 
-function makeHtmlRenderer(root: string, baseRenderer: RenderRule): RenderRule {
-  return (tokens, idx, options, context: ParseContext, self) => {
-    const {document} = parseHTML(tokens[idx].content);
-    let modified = false;
-    for (const element of document.querySelectorAll("link[href]") as any as Iterable<Element>) {
-      const href = element.getAttribute("href")!;
-      if (/^(\w+:)\/\//.test(href)) continue; // absolute url
-      if (canReadSync(join(root, href))) {
-        context.files.push({name: href, mimeType: mime.getType(href)});
-        element.setAttribute("href", `/_file/${href}`);
-        modified = true;
-      }
-    }
-    if (modified) tokens[idx].content = document.documentElement.outerHTML;
-    return baseRenderer(tokens, idx, options, context, self);
-  };
+const TEXT_NODE = 3; // Node.TEXT_NODE
+
+// Returns true if the given document contains exactly one top-level element,
+// ignoring any surrounding whitespace text nodes.
+function isSingleElement(document: Document): boolean {
+  let {firstChild: first, lastChild: last} = document;
+  while (first?.nodeType === TEXT_NODE && !first?.textContent?.trim()) first = first.nextSibling;
+  while (last?.nodeType === TEXT_NODE && !last?.textContent?.trim()) last = last.previousSibling;
+  return first !== null && first === last && first.nodeType !== TEXT_NODE;
 }
 
 function uniqueCodeId(context: ParseContext, content: string): string {
@@ -275,33 +268,47 @@ function extendPiece(context: ParseContext, extend: Partial<RenderPiece>) {
   };
 }
 
-function renderIntoPieces(renderer: Renderer): Renderer["render"] {
+function renderIntoPieces(renderer: Renderer, root: string): Renderer["render"] {
   return (tokens, options, context: ParseContext) => {
-    let i;
-    let len;
-    let type;
-    let result = "";
     const rules = renderer.rules;
-
-    for (i = 0, len = tokens.length; i < len; i++) {
-      type = tokens[i].type;
+    for (let i = 0, len = tokens.length; i < len; i++) {
+      const type = tokens[i].type;
       if (tokens[i].map) context.currentLine = tokens[i].map![0];
-      let piece = "";
+      let html = "";
       if (type === "inline") {
-        piece = renderer.renderInline(tokens[i].children!, options, context);
+        html = renderer.renderInline(tokens[i].children!, options, context);
       } else if (typeof rules[type] !== "undefined") {
         if (tokens[i].level === 0 && tokens[i].nesting !== -1) context.pieces.push({html: "", code: []});
-        piece = rules[type]!(tokens, i, options, context, renderer);
+        html = rules[type]!(tokens, i, options, context, renderer);
       } else {
         if (tokens[i].level === 0 && tokens[i].nesting !== -1) context.pieces.push({html: "", code: []});
-        piece = renderer.renderToken(tokens, i, options);
+        html = renderer.renderToken(tokens, i, options);
       }
-      extendPiece(context, {html: piece});
-      result += piece;
+      extendPiece(context, {html});
     }
-
+    let result = "";
+    for (const piece of context.pieces) {
+      result += piece.html = normalizePieceHtml(piece.html, root, context);
+    }
     return result;
   };
+}
+
+// In addition to extract references to files (such as from linked stylesheets),
+// this ensures that the HTML for each piece generates exactly one top-level
+// element. This is necessary for incremental update, and ensures that our
+// parsing of the Markdown is consistent with the resulting HTML structure.
+function normalizePieceHtml(html: string, root: string, context: ParseContext): string {
+  const {document} = parseHTML(html);
+  for (const element of document.querySelectorAll("link[href]") as any as Iterable<Element>) {
+    const href = element.getAttribute("href")!;
+    if (/^(\w+:)\/\//.test(href)) continue; // absolute url
+    if (canReadSync(join(root, href))) {
+      context.files.push({name: href, mimeType: mime.getType(href)});
+      element.setAttribute("href", `/_file/${href}`);
+    }
+  }
+  return isSingleElement(document) ? String(document) : `<span>${document}</span>`;
 }
 
 function toParsePieces(pieces: RenderPiece[]): HtmlPiece[] {
@@ -347,13 +354,12 @@ export function parseMarkdown(source: string, root: string): ParseResult {
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
   md.renderer.rules.placeholder = makePlaceholderRenderer(root);
-  md.renderer.rules.html_block = makeHtmlRenderer(root, md.renderer.rules.html_block!);
   md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
-  md.renderer.render = renderIntoPieces(md.renderer);
+  md.renderer.render = renderIntoPieces(md.renderer, root);
   const context: ParseContext = {files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
   const tokens = md.parse(parts.content, context);
-  const html = md.renderer.render(tokens, md.options, context);
+  const html = md.renderer.render(tokens, md.options, context); // Note: mutates context.pieces, context.files!
   return {
     html,
     data: isEmpty(parts.data) ? null : parts.data,
