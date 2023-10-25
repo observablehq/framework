@@ -1,4 +1,4 @@
-import type {WatchEventType} from "node:fs";
+import type {WatchListener} from "node:fs";
 import {watch, type FSWatcher} from "node:fs";
 import {access, constants, readFile, stat} from "node:fs/promises";
 import {createServer, type IncomingMessage, type RequestListener} from "node:http";
@@ -135,22 +135,34 @@ function handleWatch(socket: WebSocket, root: string) {
       });
   }
 
-  async function refreshMarkdown(path: string) {
+  async function refreshMarkdown(path: string): Promise<WatchListener<string>> {
     let current = await readMarkdown(path, root);
     attachmentWatcher = new FileWatchers(root, current.parse.files, refreshAttachment(current.parse));
-    return async (event: WatchEventType) => {
-      if (event !== "change") return; // TODO: decide how to handle a "rename" event
-      const updated = await readMarkdown(path, root);
-      if (current.hash !== updated.hash) {
-        send({
-          type: "update",
-          diff: diffMarkdown(current, updated),
-          previousHash: current.hash,
-          updatedHash: updated.hash
-        });
-        attachmentWatcher?.close();
-        attachmentWatcher = new FileWatchers(root, updated.parse.files, refreshAttachment(updated.parse));
-        current = updated;
+    return async (event) => {
+      switch (event) {
+        case "change": {
+          const updated = await readMarkdown(path, root);
+          if (current.hash !== updated.hash) {
+            send({
+              type: "update",
+              diff: diffMarkdown(current, updated),
+              previousHash: current.hash,
+              updatedHash: updated.hash
+            });
+            attachmentWatcher?.close();
+            attachmentWatcher = new FileWatchers(root, updated.parse.files, refreshAttachment(updated.parse));
+            current = updated;
+          }
+          break;
+        }
+        case "rename": {
+          send({
+            type: "reload"
+          });
+          break;
+        }
+        default:
+          throw new Error("Unrecognized event: " + event);
       }
     };
   }
