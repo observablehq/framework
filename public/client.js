@@ -140,59 +140,61 @@ export function open({hash} = {}) {
           break;
         }
         hash = message.updatedHash;
-        message.diff.forEach(({type, newPos, items}) => {
+        let offset = 0;
+        for (const {type, oldPos, items} of message.diff) {
           switch (type) {
-            case "add":
-              items.forEach((item) => {
+            case "add": {
+              for (const item of items) {
                 switch (item.type) {
                   case "html":
-                    if (newPos < root.children.length) {
-                      root.children[newPos].insertAdjacentHTML("beforebegin", item.html);
+                    if (oldPos + offset < root.children.length) {
+                      root.children[oldPos + offset].insertAdjacentHTML("beforebegin", item.html);
                     } else {
                       root.insertAdjacentHTML("beforeend", item.html);
                     }
-                    ++newPos;
+                    ++offset;
                     item.cellIds.forEach((id) => {
                       const cell = cellsById.get(id);
                       if (cell) define(cell.cell);
                     });
                     break;
                   case "cell":
-                    {
-                      define({
-                        id: item.id,
-                        inline: item.inline,
-                        inputs: item.inputs,
-                        outputs: item.outputs,
-                        files: item.files,
-                        body: (0, eval)(item.body)
-                      });
-                    }
+                    define({
+                      id: item.id,
+                      inline: item.inline,
+                      inputs: item.inputs,
+                      outputs: item.outputs,
+                      files: item.files,
+                      body: (0, eval)(item.body)
+                    });
                     break;
                 }
-              });
+              }
               break;
-            case "remove":
-              items.forEach((item) => {
+            }
+            case "remove": {
+              let removes = 0;
+              for (const item of items) {
                 switch (item.type) {
                   case "html":
-                    if (newPos < root.children.length) {
-                      root.removeChild(root.children[newPos]);
+                    if (oldPos + offset < root.children.length) {
+                      root.children[oldPos + offset].remove();
+                      ++removes;
                     } else {
-                      console.log("remove out of range", item);
+                      console.error(`remove out of range: ${oldPos + offset} ≮ ${root.children.length}`);
                     }
                     break;
                   case "cell":
-                    {
-                      cellsById.get(item.id)?.variables.forEach((v) => v.delete());
-                      cellsById.delete(item.id);
-                    }
+                    cellsById.get(item.id)?.variables.forEach((v) => v.delete());
+                    cellsById.delete(item.id);
                     break;
                 }
-              });
+              }
+              offset -= removes;
               break;
+            }
           }
-        });
+        }
         break;
       }
     }
