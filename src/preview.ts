@@ -156,9 +156,9 @@ function handleWatch(socket: WebSocket, root: string) {
           break;
         }
         case "rename": {
-          send({
-            type: "reload"
-          });
+          attachmentWatcher?.close();
+          markdownWatcher?.close();
+          markdownWatcher = watch(path, await refreshMarkdown(path));
           break;
         }
         default:
