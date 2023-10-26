@@ -3,7 +3,15 @@ import {readdir, stat} from "node:fs/promises";
 import {extname, join, normalize, relative} from "node:path";
 import {isNodeError} from "./error.js";
 
-export function canReadSync(path: string): boolean {
+// A file is local if it exists in the root folder or a subfolder. Returns the
+// normalized path from the root.
+export function maybeLocalFile(ref: string | null, root: string): string | false {
+  if (typeof ref !== "string" || /^(\w+:)\/\//.test(ref)) return false; // absolute url
+  ref = normalize(ref);
+  return !ref.startsWith("../") && canReadSync(join(root, ref)) ? ref : false;
+}
+
+function canReadSync(path: string): boolean {
   try {
     accessSync(path, constants.R_OK);
     return statSync(path).isFile();

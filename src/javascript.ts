@@ -1,7 +1,6 @@
 import {Parser, tokTypes, type Options} from "acorn";
 import mime from "mime";
-import {join} from "node:path";
-import {canReadSync} from "./files.js";
+import {maybeLocalFile} from "./files.js";
 import {findAwaits} from "./javascript/awaits.js";
 import {findDeclarations} from "./javascript/declarations.js";
 import {findFeatures} from "./javascript/features.js";
@@ -44,7 +43,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
     const node = parseJavaScript(input, options);
     const files = node.features
       .filter((f) => f.type === "FileAttachment")
-      .filter((f) => canReadSync(join(root, f.name)))
+      .filter((f) => maybeLocalFile(f.name, root))
       .map((f) => ({name: f.name, mimeType: mime.getType(f.name)}));
     const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
     const output = new Sourcemap(input);
