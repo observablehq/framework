@@ -294,10 +294,10 @@ function renderIntoPieces(renderer: Renderer, root: string): Renderer["render"] 
   };
 }
 
-// In addition to extract references to files (such as from linked stylesheets),
-// this ensures that the HTML for each piece generates exactly one top-level
-// element. This is necessary for incremental update, and ensures that our
-// parsing of the Markdown is consistent with the resulting HTML structure.
+// In addition to extracting references to files (such as from linked
+// stylesheets), this ensures that the HTML for each piece generates exactly one
+// top-level element. This is necessary for incremental update, and ensures that
+// our parsing of the Markdown is consistent with the resulting HTML structure.
 function normalizePieceHtml(html: string, root: string, context: ParseContext): string {
   const {document} = parseHTML(html);
   for (const element of document.querySelectorAll("link[href]") as any as Iterable<Element>) {
