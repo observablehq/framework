@@ -88,10 +88,11 @@ function uniqueCodeId(context: ParseContext, content: string): string {
 function makeFenceRenderer(root: string, baseRenderer: RenderRule): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
     const token = tokens[idx];
-    const [language, option] = token.info.split(" ");
+    // TODO: Pass context to parseCodeInfo and blend in defaults
+    const {language, attributes} = parseCodeInfo(token.info);
     let result = "";
     let count = 0;
-    if (language === "js" && option !== "no-run") {
+    if (language === "js" && !optionEnabled(attributes, "no-run")) {
       const id = uniqueCodeId(context, token.content);
       const transpile = transpileJavaScript(token.content, {
         id,
@@ -104,7 +105,7 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule): RenderRule {
       result += `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`;
       count++;
     }
-    if (language !== "js" || option === "show" || option === "no-run") {
+    if (language !== "js" || optionEnabled(attributes, "show") || optionEnabled(attributes, "no-run")) {
       result += baseRenderer(tokens, idx, options, context, self);
       count++;
     }
@@ -121,6 +122,12 @@ const CODE_BACKSLASH = 92;
 const CODE_QUOTE = 34;
 const CODE_SINGLE_QUOTE = 39;
 const CODE_BACKTICK = 96;
+const CODE_EQUALS = 61;
+const CODE_PERIOD = 46;
+const CODE_POUND = 35;
+const CODE_DASH = 45;
+const CODE_UNDERSCORE = 95;
+const CODE_COLON = 58;
 
 function parsePlaceholder(content: string, replacer: (i: number, j: number) => void) {
   let afterDollar = false;
@@ -171,6 +178,163 @@ function parsePlaceholder(content: string, replacer: (i: number, j: number) => v
       afterDollar = false;
     }
   }
+}
+
+function isSpace(c: number) {
+  return c === 0x20 || c === 0x09;
+}
+
+function isAlpha(c: number) {
+  return (c >= 65 && c <= 90) || (c >= 97 && c <= 122);
+}
+
+function isAlphaNum(c: number) {
+  return (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || (c >= 48 && c <= 57);
+}
+
+function isIdentifier(c: number) {
+  return isAlphaNum(c) || c === CODE_DASH || c === CODE_UNDERSCORE || c === CODE_COLON || c === CODE_PERIOD;
+}
+
+interface Attribute {
+  name: string;
+  value?: string | boolean;
+}
+
+function parseAttributes(content: string): Attribute[] {
+  const tokens: Attribute[] = [];
+
+  if (content.charAt(0) !== "{") return [];
+
+  let start = 0;
+  let state = "begin";
+  let inQuote = 0;
+  let quotedValue = "";
+
+  for (let j = 1, n = content.length; j < n; ++j) {
+    const cj = content.charCodeAt(j);
+    const cjj = j + 1 < n ? content.charCodeAt(j + 1) : 0;
+    if ((state === "begin" || state === "skip") && cj === CODE_BRACER) break;
+    switch (state) {
+      case "begin":
+        if (isSpace(cj)) continue;
+        start = j--;
+        state = "start";
+        break;
+
+      case "skip":
+        // Ignore stray punctuation and numbers
+        if (isSpace(cj)) state = "begin";
+        break;
+
+      case "start":
+        if (isAlpha(cj)) {
+          state = "key";
+        } else if (isAlpha(cj) || ((cj === CODE_PERIOD || cj === CODE_POUND) && isAlpha(cjj))) {
+          state = "classid";
+        } else {
+          state = "skip";
+        }
+        break;
+
+      case "quote":
+        if (cj === CODE_BACKSLASH) {
+          quotedValue += content.slice(start + 1, j);
+          start = j++;
+        } else if (cj === inQuote) {
+          quotedValue += content.slice(start + 1, j);
+          if (tokens.length > 0) {
+            tokens[tokens.length - 1] = {...tokens[tokens.length - 1], value: quotedValue};
+          }
+          quotedValue = "";
+          state = "begin";
+        }
+        break;
+
+      case "classid":
+        if (!isIdentifier(cj)) {
+          tokens.push({name: content.slice(start, j--)});
+          state = "begin";
+          j--;
+        }
+        break;
+
+      case "key":
+        if (!isIdentifier(cj)) {
+          tokens.push({name: content.slice(start, j), value: true});
+          if (cj === CODE_EQUALS) {
+            start = j + 1;
+            state = "valuestart";
+          } else {
+            state = "begin";
+            j--;
+          }
+        }
+        break;
+
+      case "valuestart":
+        if (cj === CODE_QUOTE || cj === CODE_SINGLE_QUOTE) {
+          inQuote = cj;
+          state = "quote";
+          break;
+        } else if (isIdentifier(cj)) {
+          state = "value";
+          j--;
+        } else {
+          state = "skip";
+        }
+        break;
+
+      case "value":
+        if (!isIdentifier(cj)) {
+          if (tokens.length > 0) {
+            let value: string | boolean = content.slice(start, j);
+            if (value.toLowerCase() === "true") {
+              value = true;
+            } else if (value.toLowerCase() === "false") {
+              value = false;
+            }
+            tokens[tokens.length - 1].value = value;
+          }
+          j--;
+          state = "begin";
+        }
+    }
+  }
+  if (state === "key" || state === "classid") tokens.push({name: content.slice(start)});
+  return tokens;
+}
+
+interface CodeInfo {
+  language?: string;
+  classes?: string[];
+  id?: string;
+  attributes?: Attribute[];
+}
+
+function parseCodeInfo(info: string): CodeInfo {
+  const match = /^(?<language>\w*)(?:\s*(?<attributes>{.*}))?$/.exec(info);
+  if (!match) return {};
+  let language = match.groups?.language;
+  let attributes: Attribute[] = [];
+  let classes: string[] = [];
+  let id: string | undefined;
+  if (match.groups?.attributes) {
+    attributes = parseAttributes(match.groups?.attributes);
+    if (!language && attributes.length) {
+      language = attributes.shift()?.name;
+    }
+    classes = attributes.filter((attr) => attr.name.charCodeAt(0) === CODE_PERIOD).map((attr) => attr.name.slice(1));
+    id = attributes.findLast((attr) => attr.name.charCodeAt(0) === CODE_POUND)?.name.slice(1);
+    attributes = attributes.filter(
+      (attr) => attr.name.charCodeAt(0) !== CODE_PERIOD && attr.name.charCodeAt(0) !== CODE_POUND
+    );
+  }
+  return {language, classes, id, attributes};
+}
+
+function optionEnabled(attributes: Attribute[] | undefined, name: string) {
+  return attributes && attributes.some((attr) => attr.name === name && attr.value === true);
 }
 
 function transformPlaceholderBlock(token) {

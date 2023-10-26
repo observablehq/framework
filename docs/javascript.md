@@ -6,7 +6,7 @@ Observable Markdown supports reactive JavaScript as both fenced code blocks and 
 
 A top-level variable declared in a JavaScript fenced code block can be referenced in another code block or inline expression on the same page. So if you say:
 
-```js show
+```{js show}
 const x = 1, y = 2;
 ```
 
@@ -14,7 +14,7 @@ Then you can reference `x` and `y` elsewhere on the page (with values ${x} and $
 
 To prevent variables from being visible outside the current block, make them local with a block statement:
 
-```js show
+```{js show}
 {
   const z = 3;
 }
@@ -24,7 +24,7 @@ To prevent variables from being visible outside the current block, make them loc
 
 References to top-level variables in other code blocks are reactive: promises are implicitly awaited and generators are implicitly consumed. For example, within the block below, `hello` is a promise. If you reference `hello` from another block, the other block won’t run until `hello` resolves and it will see a string.
 
-```js show
+```{js show}
 const hello = new Promise((resolve) => {
   setTimeout(() => {
     resolve("hello");
@@ -36,7 +36,7 @@ Hello is: ${hello}.
 
 Values that change over time, such as interactive inputs and animation parameters, are represented as [async generators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator). You won’t typically implement a generator directly; instead you’ll use a built-in implementation such as the `view` function. You can also use [Observable Inputs](https://github.com/observablehq/inputs) to quickly construct HTML input elements. Try entering your name into the box below:
 
-```js show
+```{js show}
 const name = view(Inputs.text({label: "Name", placeholder: "Enter your name"}));
 ```
 
@@ -44,7 +44,7 @@ Name is: ${name}.
 
 The `view` function calls `Generators.input` under the hood, which takes an input element and returns a generator that yields the input’s value whenever it changes. The code above can be written more explicitly as:
 
-```js no-run
+```{js no-run}
 const nameInput = Inputs.text({label: "Name", placeholder: "Enter your name"});
 const name = Generators.input(nameInput);
 
@@ -53,7 +53,7 @@ display(nameInput);
 
 As another example, you can use the built-in `Generators.observe` to represent the current pointer coordinates:
 
-```js show
+```{js show}
 const pointer = Generators.observe((notify) => {
   const pointermoved = (event) => notify([event.clientX, event.clientY]);
   addEventListener("pointermove", pointermoved);
@@ -68,7 +68,7 @@ Pointer is: ${pointer.map(Math.round).join(", ")}.
 
 Normally, only the cell that declares a value can define it or assign to it. (This constraint may helpfully encourage you to decouple code.) You can however use the `Mutable` function to declare a mutable generator, allowing other cells to mutate the generator’s value. This approach is akin to React’s `useState` hook. For example:
 
-```js show
+```{js show}
 const count = Mutable(0);
 const increment = () => ++count.value;
 const reset = () => count.value = 0;
@@ -76,7 +76,7 @@ const reset = () => count.value = 0;
 
 In another cell, you can now create buttons to increment and reset the count like so:
 
-```js show
+```{js show}
 Inputs.button([["Increment", increment], ["Reset", reset]])
 ```
 
@@ -104,13 +104,13 @@ As described above, this function displays the given `input` and then returns it
 
 You can import a library from npm like so:
 
-```js show
+```{js show}
 import confetti from "npm:canvas-confetti";
 ```
 
 Now you can reference the imported `confetti` anywhere on the page.
 
-```js show
+```{js show}
 Inputs.button("Throw confetti!", {reduce: () => confetti()})
 ```
 
@@ -120,7 +120,7 @@ You can also import JavaScript from local ES modules. This allows you to move co
 
 You can load files using the built-in `FileAttachment` function.
 
-```js show
+```{js show}
 const gistemp = FileAttachment("gistemp.csv").csv({typed: true});
 ```
 
