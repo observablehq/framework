@@ -10,7 +10,6 @@ import {findImports, rewriteImports} from "./javascript/imports.js";
 import {findReferences} from "./javascript/references.js";
 import {Sourcemap} from "./sourcemap.js";
 import type {Node} from "acorn";
-import {getPathFromRoot} from "./javascript/helpers.js";
 
 export interface FileReference {
   name: string;
@@ -46,7 +45,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
     const node = parseJavaScript(input, options);
     const files = node.features
       .filter((f) => f.type === "FileAttachment")
-      .filter((f) => canReadSync(getPathFromRoot(root, sourcePath, f.name)))
+      .filter((f) => canReadSync(f.name))
       .map((f) => ({name: f.name, mimeType: mime.getType(f.name)}));
     const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
     const output = new Sourcemap(input);
@@ -117,8 +116,8 @@ export function parseJavaScript(input: string, options: ParseOptions): ParsedJav
   const body = expression ?? (Parser.parse(input, parseOptions) as any);
   const references = findReferences(body, globals, input);
   const declarations = expression ? null : findDeclarations(body, globals, input);
-  const features = findFeatures(body, references, input);
   const imports = findImports(body, root, sourcePath);
+  const features = findFeatures(body, root, sourcePath, imports, references, input);
   return {
     body,
     declarations,

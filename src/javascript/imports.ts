@@ -54,7 +54,7 @@ export function findImports(body: Node, root: string, sourcePath?: string) {
         if (isLocalImport(value)) {
           const subpath = join(dirname(path), value);
           findLocalImports(subpath);
-          imports.push({name: path.slice(root.length + 1)});
+          imports.push({name: path});
         } else {
           imports.push({name: value});
         }

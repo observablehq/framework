@@ -26,7 +26,7 @@ async function build(context: CommandContext) {
     console.log("render", sourcePath, "→", outputPath);
     const path = `/${join(dirname(sourceFile), basename(sourceFile, ".md"))}`;
     const render = renderServerless(await readFile(sourcePath, "utf-8"), {root: sourceRoot, path, pages});
-    files.push(...render.files.map((f) => join(sourceFile, "..", f.name)));
+    files.push(...render.files.map((f) => f.name));
     await prepareOutput(outputPath);
     await writeFile(outputPath, render.html);
   }
@@ -42,9 +42,8 @@ async function build(context: CommandContext) {
   }
 
   // Copy over the referenced files.
-  for (const file of files) {
-    const sourcePath = join(sourceRoot, file);
-    const outputPath = join(outputRoot, "_file", file);
+  for (const sourcePath of files) {
+    const outputPath = join(outputRoot, "_file", sourcePath.slice(sourceRoot.length + 1));
     console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);
     await copyFile(sourcePath, outputPath);

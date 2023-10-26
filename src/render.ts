@@ -24,7 +24,7 @@ export function renderPreview(source: string, options: RenderOptions): Render {
   return {
     html: render(parseResult, {...options, preview: true, hash: computeHash(source)}),
     files: parseResult.files,
-    imports: parseResult.imports
+    imports: parseResult.imports,
   };
 }
 
@@ -32,7 +32,7 @@ export function renderServerless(source: string, options: RenderOptions): Render
   const parseResult = parseMarkdown(
     source,
     options.root,
-    options.path ? join(options.root, options.path) + ".md" : undefined
+    options.path ? join(options.root, options.path) + ".md" : undefined,
   );
   return {
     html: render(parseResult, options),
@@ -41,19 +41,22 @@ export function renderServerless(source: string, options: RenderOptions): Render
   };
 }
 
-export function renderDefineCell(cell) {
+export function renderDefineCell(cell, root = undefined) {
   const {id, inline, inputs, outputs, files, body} = cell;
   return `define({${Object.entries({id, inline, inputs, outputs, files})
     .filter((arg) => arg[1] !== undefined)
     .map((arg) => `${arg[0]}: ${JSON.stringify(arg[1])}`)
-    .join(", ")}, body: ${body}});\n`;
+    .join(", ")}, body: ${body}}, '${root}');\n`;
 }
 
 type RenderInternalOptions =
   | {preview?: false; hash?: never} // serverless
   | {preview: true; hash: string}; // preview
 
-function render(parseResult: ParseResult, {path, pages, preview, hash}: RenderOptions & RenderInternalOptions): string {
+function render(
+  parseResult: ParseResult,
+  {root, path, pages, preview, hash}: RenderOptions & RenderInternalOptions
+): string {
   const showSidebar = pages && pages.length > 1;
   const imports = getImportMap(parseResult);
   return `<!DOCTYPE html>
@@ -67,14 +70,20 @@ ${
 ${JSON.stringify({imports: Object.fromEntries(Array.from(imports, ([name, href]) => [name, href]))}, null, 2)}
 </script>
 ${Array.from(imports.values())
-  .concat(parseResult.imports.filter(({name}) => !name.startsWith("npm")).map(({name}) => `/_file/${name}`))
+  .concat(
+    parseResult.imports
+      .filter(({name}) => name.startsWith(root))
+      .map(({name}) => join("/_file/", name.replace(root, "")))
+  )
   .map((href) => `<link rel="modulepreload" href="${href}">`)
   .join("\n")}
 <script type="module">
 
 import {${preview ? "open, " : ""}define} from "/_observablehq/client.js";
 
-${preview ? `open({hash: ${JSON.stringify(hash)}});\n` : ""}${parseResult.cells.map(renderDefineCell).join("")}
+${preview ? `open({hash: ${JSON.stringify(hash)}});\n` : ""}${parseResult.cells
+    .map((cell) => renderDefineCell(cell, root))
+    .join("")}
 </script>${
     parseResult.data
       ? `

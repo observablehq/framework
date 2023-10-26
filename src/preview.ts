@@ -113,7 +113,7 @@ class FileWatchers {
 
   constructor(root: string, files: {name: string}[], cb: (name: string) => void) {
     const fileset = [...new Set(files.map(({name}) => name))];
-    this.watchers = fileset.map((name) => watch(join(root, name), async () => cb(name)));
+    this.watchers = fileset.map((name) => watch(name, async () => cb(name)));
   }
 
   close() {

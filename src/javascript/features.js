@@ -1,8 +1,8 @@
 import {simple} from "acorn-walk";
 import {syntaxError} from "./syntaxError.js";
-import {isLocalImport} from "./helpers.js";
+import {getPathFromRoot, isLocalImport} from "./helpers.js";
 
-export function findFeatures(node, references, input) {
+export function findFeatures(node, root, sourcePath, imports, references, input) {
   const features = [];
 
   simple(node, {
@@ -12,10 +12,9 @@ export function findFeatures(node, references, input) {
         arguments: args,
         arguments: [arg]
       } = node;
-
       // Promote fetches with static literals to file attachment references.
       if (isLocalFetch(node, references)) {
-        features.push({type: "FileAttachment", name: getStringLiteralValue(arg)});
+        features.push({type: "FileAttachment", name: getPathFromRoot(root, sourcePath, getStringLiteralValue(arg))});
         return;
       }
 
@@ -34,8 +33,7 @@ export function findFeatures(node, references, input) {
       if (args.length !== 1 || !isStringLiteral(arg)) {
         throw syntaxError(`${callee.name} requires a single literal string argument`, node, input);
       }
-
-      features.push({type: callee.name, name: getStringLiteralValue(arg)});
+      features.push({type: callee.name, name: getPathFromRoot(root, sourcePath, getStringLiteralValue(arg))});
     },
     // Promote dynamic and static imports with static literals to file attachment references.
     ImportExpression: findImport,
@@ -46,7 +44,12 @@ export function findFeatures(node, references, input) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
       if (isLocalImport(value)) {
-        features.push({type: "FileAttachment", name: value});
+        const pathFromRoot = getPathFromRoot(root, sourcePath, value);
+        features.push({type: "FileAttachment", name: pathFromRoot});
+        // add transitive imports
+        features.push(
+          ...imports.filter((im) => im.name !== pathFromRoot).map((im) => ({type: "FileAttachment", name: im.name}))
+        );
       }
     }
   }
@@ -66,7 +69,7 @@ export function isLocalFetch(node, references) {
     !references.includes(callee) &&
     arg &&
     isStringLiteral(arg) &&
-    getStringLiteralValue(arg).startsWith("./")
+    isLocalImport(getStringLiteralValue(arg))
   );
 }
 
