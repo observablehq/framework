@@ -138,27 +138,31 @@ function handleWatch(socket: WebSocket, root: string) {
   async function refreshMarkdown(path: string): Promise<WatchListener<string>> {
     let current = await readMarkdown(path, root);
     attachmentWatcher = new FileWatchers(root, current.parse.files, refreshAttachment(current.parse));
-    return async (event) => {
+    return async function watcher(event) {
       switch (event) {
-        case "change": {
-          const updated = await readMarkdown(path, root);
-          if (current.hash !== updated.hash) {
-            send({
-              type: "update",
-              diff: diffMarkdown(current, updated),
-              previousHash: current.hash,
-              updatedHash: updated.hash
-            });
-            attachmentWatcher?.close();
-            attachmentWatcher = new FileWatchers(root, updated.parse.files, refreshAttachment(updated.parse));
-            current = updated;
+        case "rename": {
+          markdownWatcher?.close();
+          try {
+            markdownWatcher = watch(path, watcher);
+          } catch (error) {
+            if (isNodeError(error) && error.code === "ENOENT") {
+              console.error(`file no longer exists: ${path}`);
+              socket.terminate();
+              return;
+            }
+            throw error;
           }
+          setTimeout(() => watcher("change"), 150); // delay to avoid a possibly-empty file
           break;
         }
-        case "rename": {
+        case "change": {
+          const updated = await readMarkdown(path, root);
+          if (current.hash === updated.hash) break;
+          const diff = diffMarkdown(current, updated);
+          send({type: "update", diff, previousHash: current.hash, updatedHash: updated.hash});
           attachmentWatcher?.close();
-          markdownWatcher?.close();
-          markdownWatcher = watch(path, await refreshMarkdown(path));
+          attachmentWatcher = new FileWatchers(root, updated.parse.files, refreshAttachment(updated.parse));
+          current = updated;
           break;
         }
         default:
