@@ -1,4 +1,4 @@
-import type {WatchEventType} from "node:fs";
+import type {WatchListener} from "node:fs";
 import {watch, type FSWatcher} from "node:fs";
 import {access, constants, readFile, stat} from "node:fs/promises";
 import {createServer, type IncomingMessage, type RequestListener} from "node:http";
@@ -162,22 +162,38 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
       });
   }
 
-  async function refreshMarkdown(path: string) {
+  async function refreshMarkdown(path: string): Promise<WatchListener<string>> {
     let current = await readMarkdown(path, root);
     attachmentWatcher = new FileWatchers(root, current.parse.files, refreshAttachment(current.parse));
-    return async (event: WatchEventType) => {
-      if (event !== "change") return; // TODO: decide how to handle a "rename" event
-      const updated = await readMarkdown(path, root);
-      if (current.hash !== updated.hash) {
-        send({
-          type: "update",
-          diff: resolveDiffs(diffMarkdown(current, updated), resolver),
-          previousHash: current.hash,
-          updatedHash: updated.hash
-        });
-        attachmentWatcher?.close();
-        attachmentWatcher = new FileWatchers(root, updated.parse.files, refreshAttachment(updated.parse));
-        current = updated;
+    return async function watcher(event) {
+      switch (event) {
+        case "rename": {
+          markdownWatcher?.close();
+          try {
+            markdownWatcher = watch(path, watcher);
+          } catch (error) {
+            if (isNodeError(error) && error.code === "ENOENT") {
+              console.error(`file no longer exists: ${path}`);
+              socket.terminate();
+              return;
+            }
+            throw error;
+          }
+          setTimeout(() => watcher("change"), 150); // delay to avoid a possibly-empty file
+          break;
+        }
+        case "change": {
+          const updated = await readMarkdown(path, root);
+          if (current.hash === updated.hash) break;
+          const diff = resolveDiffs(diffMarkdown(current, updated), resolver);
+          send({type: "update", diff, previousHash: current.hash, updatedHash: updated.hash});
+          attachmentWatcher?.close();
+          attachmentWatcher = new FileWatchers(root, updated.parse.files, refreshAttachment(updated.parse));
+          current = updated;
+          break;
+        }
+        default:
+          throw new Error("Unrecognized event: " + event);
       }
     };
   }

@@ -55,7 +55,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
     const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
     const output = new Sourcemap(input);
     trim(output, input);
-    if (node.expression && !inputs.includes("display")) {
+    if (node.expression && !inputs.includes("display") && !inputs.includes("view")) {
       output.insertLeft(0, "display((\n");
       output.insertRight(input.length, "\n))");
       inputs.push("display");
