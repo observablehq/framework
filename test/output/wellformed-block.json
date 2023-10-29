@@ -1,0 +1,21 @@
+{
+  "data": null,
+  "title": "Well-formed block",
+  "files": [],
+  "imports": [],
+  "pieces": [
+    {
+      "type": "html",
+      "id": "",
+      "cellIds": [],
+      "html": "<h1 id=\"well-formed-block\" tabindex=\"-1\"><a class=\"observablehq-header-anchor\" href=\"#well-formed-block\">Well-formed block</a></h1>\n"
+    },
+    {
+      "type": "html",
+      "id": "",
+      "cellIds": [],
+      "html": "<div>\n  <div>content</div>\n</div>\n"
+    }
+  ],
+  "cells": []
+}

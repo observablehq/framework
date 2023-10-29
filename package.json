@@ -1,7 +1,7 @@
 {
   "name": "@observablehq/cli",
   "license": "UNLICENSED",
-  "version": "0.0.30",
+  "version": "0.0.33",
   "type": "module",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
@@ -25,7 +25,7 @@
     "dev": "tsx watch ./src/preview.ts",
     "build": "rm -rf dist && ./bin/observable.ts build",
     "test": "yarn test:mocha && yarn test:lint",
-    "test:mocha": "mkdir -p test/output && node --loader tsx ./node_modules/.bin/mocha 'test/**/*-test.*'",
+    "test:mocha": "mkdir -p test/output && tsx ./node_modules/.bin/mocha 'test/**/*-test.*'",
     "test:lint": "eslint src test public"
   },
   "dependencies": {
