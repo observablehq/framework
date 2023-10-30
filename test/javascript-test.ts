@@ -18,7 +18,7 @@ describe("transpileJavaScript(input)", () => {
       const outfile = resolve("./test/output", `${basename(outname, ".js")}.js`);
       const diffile = resolve("./test/output", `${basename(outname, ".js")}-changed.js`);
       const actual = renderDefineCell(
-        await transpileJavaScript(await readFile(path, "utf8"), {id: "0", root: "test/input"})
+        await transpileJavaScript(await readFile(path, "utf8"), {id: "0", root: "test/input", sourcePath: "/"})
       );
       let expected;
 
