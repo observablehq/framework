@@ -21,6 +21,7 @@ async function build(context: CommandContext) {
   // Render .md files, building a list of file attachments as we go.
   const pages = await readPages(sourceRoot);
   const files: string[] = [];
+  const resolver = await makeCLIResolver();
   for await (const sourceFile of visitMarkdownFiles(sourceRoot)) {
     const sourcePath = join(sourceRoot, sourceFile);
     const outputPath = join(outputRoot, join(dirname(sourceFile), basename(sourceFile, ".md") + ".html"));
@@ -30,7 +31,7 @@ async function build(context: CommandContext) {
       root: sourceRoot,
       path,
       pages,
-      resolver: await makeCLIResolver()
+      resolver
     });
     files.push(...render.files.map((f) => join(sourceFile, "..", f.name)));
     await prepareOutput(outputPath);

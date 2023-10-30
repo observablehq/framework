@@ -13,7 +13,8 @@ class DatabaseClientImpl {
     this.#token = token;
   }
   async query(sql, params, {signal} = {}) {
-    const response = await fetch(`${this.#token.url}query`, {
+    const queryUrl = new URL("/query", this.#token.url).toString();
+    const response = await fetch(queryUrl, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${this.#token.token}`,
