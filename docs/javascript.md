@@ -6,7 +6,7 @@
 
 You may be accustomed to code running sequentially from top to bottom, and manually evaluating code in a notebook; Observable is different: we use [dataflow](https://en.wikipedia.org/wiki/Dataflow_programming), as in a spreadsheet, to *automatically* run code in topological order as determined by [top-level variable](#top-level-variables) references. For example, here we reference variables `x` and `y` even though they are defined in a code block below:
 
-```js show
+```{js show}
 x + y
 ```
 
