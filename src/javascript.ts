@@ -1,5 +1,6 @@
-import {Parser, tokTypes, type Options} from "acorn";
+import {Parser, tokTypes, type Node, type Options} from "acorn";
 import mime from "mime";
+import {join} from "node:path";
 import {canReadSync} from "./files.js";
 import {findAwaits} from "./javascript/awaits.js";
 import {findDeclarations} from "./javascript/declarations.js";
@@ -9,7 +10,6 @@ import {defaultGlobals} from "./javascript/globals.js";
 import {findImports, rewriteImports} from "./javascript/imports.js";
 import {findReferences} from "./javascript/references.js";
 import {Sourcemap} from "./sourcemap.js";
-import type {Node} from "acorn";
 
 export interface FileReference {
   name: string;
@@ -18,6 +18,7 @@ export interface FileReference {
 
 export interface ImportReference {
   name: string;
+  type: "global" | "local";
 }
 
 export interface Transpile {
@@ -33,7 +34,7 @@ export interface Transpile {
 export interface ParseOptions {
   id: string;
   root: string;
-  sourcePath?: string;
+  sourcePath: string;
   inline?: boolean;
   sourceLine?: number;
   globals?: Set<string>;
@@ -45,7 +46,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
     const node = parseJavaScript(input, options);
     const files = node.features
       .filter((f) => f.type === "FileAttachment")
-      .filter((f) => canReadSync(f.name))
+      .filter((f) => canReadSync(join(root, f.name)))
       .map((f) => ({name: f.name, mimeType: mime.getType(f.name)}));
     const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
     const output = new Sourcemap(input);
@@ -55,7 +56,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
       output.insertRight(input.length, "\n))");
       inputs.push("display");
     }
-    rewriteImports(output, node, root, sourcePath);
+    rewriteImports(output, node, sourcePath);
     rewriteFetches(output, node);
     return {
       id,
@@ -101,7 +102,7 @@ export interface ParsedJavaScriptNode {
   declarations: {name: string}[] | null;
   references: {name: string}[];
   features: {type: unknown; name: string}[];
-  imports: {name: string}[];
+  imports: {type: "global" | "local"; name: string}[];
   expression: boolean;
   async: boolean;
 }
@@ -116,8 +117,8 @@ export function parseJavaScript(input: string, options: ParseOptions): ParsedJav
   const body = expression ?? (Parser.parse(input, parseOptions) as any);
   const references = findReferences(body, globals, input);
   const declarations = expression ? null : findDeclarations(body, globals, input);
-  const imports = findImports(body, root, sourcePath);
-  const features = findFeatures(body, root, sourcePath, imports, references, input);
+  const {imports, features: importFeatures} = findImports(body, root, sourcePath);
+  const features = [...importFeatures, ...findFeatures(body, sourcePath, references, input)];
   return {
     body,
     declarations,

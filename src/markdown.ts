@@ -78,7 +78,7 @@ function uniqueCodeId(context: ParseContext, content: string): string {
   return id;
 }
 
-function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath?: string): RenderRule {
+function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: string): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
     const token = tokens[idx];
     const [language, option] = token.info.split(" ");
@@ -237,13 +237,14 @@ const transformPlaceholderCore: RuleCore = (state) => {
   state.tokens = output;
 };
 
-function makePlaceholderRenderer(root: string): RenderRule {
+function makePlaceholderRenderer(root: string, sourcePath: string): RenderRule {
   return (tokens, idx, options, context: ParseContext) => {
     const id = uniqueCodeId(context, tokens[idx].content);
     const token = tokens[idx];
     const transpile = transpileJavaScript(token.content, {
       id,
       root,
+      sourcePath,
       inline: true,
       sourceLine: context.startLine + context.currentLine
     });
@@ -334,7 +335,7 @@ function toParseCells(pieces: RenderPiece[]): CellPiece[] {
   return cellPieces;
 }
 
-export function parseMarkdown(source: string, root: string, sourcePath?: string): ParseResult {
+export function parseMarkdown(source: string, root: string, sourcePath: string): ParseResult {
   const parts = matter(source);
   // TODO: We need to know what line in the source the markdown starts on and pass that
   // as startLine in the parse context below.
@@ -354,7 +355,7 @@ export function parseMarkdown(source: string, root: string, sourcePath?: string)
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
-  md.renderer.rules.placeholder = makePlaceholderRenderer(root);
+  md.renderer.rules.placeholder = makePlaceholderRenderer(root, sourcePath);
   md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!, sourcePath);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
   md.renderer.render = renderIntoPieces(md.renderer, root);
@@ -445,5 +446,5 @@ export function diffMarkdown({parse: prevParse}: ReadMarkdownResult, {parse: nex
 
 export async function readMarkdown(path: string, root: string): Promise<ReadMarkdownResult> {
   const contents = await readFile(path, "utf-8");
-  return {contents, parse: parseMarkdown(contents, root), hash: computeHash(contents)};
+  return {contents, parse: parseMarkdown(contents, root, path), hash: computeHash(contents)};
 }

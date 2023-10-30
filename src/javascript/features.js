@@ -1,8 +1,9 @@
 import {simple} from "acorn-walk";
 import {syntaxError} from "./syntaxError.js";
-import {getPathFromRoot, isLocalImport} from "./helpers.js";
+import {isLocalImport} from "./imports.ts";
+import {dirname, join} from "node:path";
 
-export function findFeatures(node, root, sourcePath, imports, references, input) {
+export function findFeatures(node, sourcePath, references, input) {
   const features = [];
 
   simple(node, {
@@ -14,7 +15,7 @@ export function findFeatures(node, root, sourcePath, imports, references, input)
       } = node;
       // Promote fetches with static literals to file attachment references.
       if (isLocalFetch(node, references)) {
-        features.push({type: "FileAttachment", name: getPathFromRoot(root, sourcePath, getStringLiteralValue(arg))});
+        features.push({type: "FileAttachment", name: join(dirname(sourcePath), getStringLiteralValue(arg))});
         return;
       }
 
@@ -33,26 +34,9 @@ export function findFeatures(node, root, sourcePath, imports, references, input)
       if (args.length !== 1 || !isStringLiteral(arg)) {
         throw syntaxError(`${callee.name} requires a single literal string argument`, node, input);
       }
-      features.push({type: callee.name, name: getPathFromRoot(root, sourcePath, getStringLiteralValue(arg))});
-    },
-    // Promote dynamic and static imports with static literals to file attachment references.
-    ImportExpression: findImport,
-    ImportDeclaration: findImport
-  });
-
-  function findImport(node) {
-    if (isStringLiteral(node.source)) {
-      const value = getStringLiteralValue(node.source);
-      if (isLocalImport(value)) {
-        const pathFromRoot = getPathFromRoot(root, sourcePath, value);
-        features.push({type: "FileAttachment", name: pathFromRoot});
-        // add transitive imports
-        features.push(
-          ...imports.filter((im) => im.name !== pathFromRoot).map((im) => ({type: "FileAttachment", name: im.name}))
-        );
-      }
+      features.push({type: callee.name, name: getStringLiteralValue(arg)});
     }
-  }
+  });
 
   return features;
 }

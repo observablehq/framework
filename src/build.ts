@@ -42,8 +42,9 @@ async function build(context: CommandContext) {
   }
 
   // Copy over the referenced files.
-  for (const sourcePath of files) {
-    const outputPath = join(outputRoot, "_file", sourcePath.slice(sourceRoot.length + 1));
+  for (const file of files) {
+    const sourcePath = join(sourceRoot, file);
+    const outputPath = join(outputRoot, "_file", file);
     console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);
     await copyFile(sourcePath, outputPath);

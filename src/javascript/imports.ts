@@ -6,10 +6,10 @@ import {dirname, join} from "node:path";
 import type {ParsedJavaScriptNode} from "../javascript.js";
 import {parseOptions} from "../javascript.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
-import {isLocalImport, getPathFromRoot} from "./helpers.js";
 
-export function findImports(body: Node, root: string, sourcePath?: string) {
-  const imports: {name: string}[] = [];
+export function findImports(body: Node, root, sourcePath: string) {
+  const imports: {name: string; type: "global" | "local"}[] = [];
+  const features: {name: string; type: string}[] = [];
   const paths = new Set<string>();
 
   simple(body, {
@@ -23,10 +23,9 @@ export function findImports(body: Node, root: string, sourcePath?: string) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
       if (isLocalImport(value)) {
-        const path = getPathFromRoot(root, sourcePath, value);
-        findLocalImports(path);
+        findLocalImports(join(dirname(sourcePath), value));
       } else {
-        imports.push({name: value});
+        imports.push({name: value, type: "global"});
       }
     }
   }
@@ -36,8 +35,10 @@ export function findImports(body: Node, root: string, sourcePath?: string) {
   function findLocalImports(path) {
     if (paths.has(path)) return;
     paths.add(path);
+    imports.push({type: "local", name: path});
+    features.push({type: "FileAttachment", name: path});
     try {
-      const input = readFileSync(path, "utf-8");
+      const input = readFileSync(join(root, path), "utf-8");
       const program = Parser.parse(input, parseOptions);
       simple(program, {
         ImportDeclaration: findLocalImport,
@@ -54,23 +55,23 @@ export function findImports(body: Node, root: string, sourcePath?: string) {
         if (isLocalImport(value)) {
           const subpath = join(dirname(path), value);
           findLocalImports(subpath);
-          imports.push({name: path});
         } else {
-          imports.push({name: value});
+          imports.push({name: value, type: "global"});
+          // non-local imports don't need to be promoted to file attachments
         }
       }
     }
   }
-  return imports;
+
+  return {imports, features};
 }
 
 // TODO parallelize multiple static imports
-export function rewriteImports(output: any, rootNode: ParsedJavaScriptNode, root: string, sourcePath?: string) {
+export function rewriteImports(output: any, rootNode: ParsedJavaScriptNode, sourcePath: string) {
   simple(rootNode.body, {
     ImportExpression(node: any) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
-        // TODO(cmo) - FIX - this isn't right
         if (isLocalImport(value)) {
           output.replaceLeft(node.source.start + 1, node.source.start + 3, "/_file/");
         }
@@ -90,9 +91,7 @@ export function rewriteImports(output: any, rootNode: ParsedJavaScriptNode, root
               ? node.specifiers.find(isNamespaceSpecifier).local.name
               : "{}"
           } = await import(${
-            sourcePath && isLocalImport(value)
-              ? JSON.stringify("/_file/" + getPathFromRoot(root, sourcePath, value).slice(root.length + 1))
-              : node.source.raw
+            isLocalImport(value) ? JSON.stringify(join("/_file/", join(dirname(sourcePath), value))) : node.source.raw
           });`
         );
       }
@@ -106,6 +105,10 @@ function rewriteImportSpecifier(node) {
     : node.imported.name === node.local.name
     ? node.local.name
     : `${node.imported.name}: ${node.local.name}`;
+}
+
+export function isLocalImport(value) {
+  return ["./", "../", "/"].some((prefix) => value.startsWith(prefix));
 }
 
 function isNamespaceSpecifier(node) {

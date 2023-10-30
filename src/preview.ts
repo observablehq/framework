@@ -85,7 +85,9 @@ class Server {
         // Anything else should 404; static files should be matched above.
         try {
           const pages = await readPages(this.root); // TODO cache? watcher?
-          res.end(renderPreview(await readFile(path + ".md", "utf-8"), {root: this.root, path: pathname, pages}).html);
+          res.end(
+            renderPreview(await readFile(path + ".md", "utf-8"), {root: this.root, path: pathname + ".md", pages}).html
+          );
         } catch (error) {
           if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error
           throw new HttpError("Not found", 404);
@@ -113,7 +115,7 @@ class FileWatchers {
 
   constructor(root: string, files: {name: string}[], cb: (name: string) => void) {
     const fileset = [...new Set(files.map(({name}) => name))];
-    this.watchers = fileset.map((name) => watch(name, async () => cb(name)));
+    this.watchers = fileset.map((name) => watch(join(root, name), async () => cb(name)));
   }
 
   close() {
