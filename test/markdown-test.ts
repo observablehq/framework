@@ -3,7 +3,7 @@ import {readdirSync, statSync} from "node:fs";
 import {readFile, unlink, writeFile} from "node:fs/promises";
 import {basename, join, resolve} from "node:path";
 import {isNodeError} from "../src/error.js";
-import {type ParseResult, parseMarkdown} from "../src/markdown.js";
+import {type ParseResult, parseMarkdown, parseCodeInfo} from "../src/markdown.js";
 import deepEqual from "fast-deep-equal";
 
 describe("parseMarkdown(input)", () => {
@@ -57,6 +57,31 @@ describe("parseMarkdown(input)", () => {
       assert.ok(allequal, `${name} must match snapshot`);
     });
   }
+  it("parses attributes", () => {
+    const attributes = [
+      {info: "{js}", value: {language: "js"}},
+      {info: "{js .foo .bar}", value: {language: "js", classes: ["foo", "bar"]}},
+      {
+        info: "{js .foo .bar #baz}",
+        value: {language: "js", classes: ["foo", "bar"], id: "baz"},
+        attributes: [],
+        classes: []
+      },
+      {info: "{js #baz}", value: {language: "js", id: "baz"}},
+      {info: "{js .foo}", value: {language: "js", classes: ["foo"]}},
+      {
+        info: '{js attr1 attr2=true attr3="hello"}',
+        value: {language: "js", attributes: {attr1: true, attr2: true, attr3: "hello"}}
+      }
+    ];
+    for (const {info, value} of attributes) {
+      assert.deepStrictEqual(
+        parseCodeInfo(info),
+        {attributes: {}, classes: [], id: undefined, ...value},
+        `mismatch for ${info}`
+      );
+    }
+  });
 });
 
 function jsonMeta({html, ...rest}: ParseResult): string {

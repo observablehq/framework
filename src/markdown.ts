@@ -81,8 +81,8 @@ function uniqueCodeId(context: ParseContext, content: string): string {
 function makeFenceRenderer(root: string, baseRenderer: RenderRule): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
     const token = tokens[idx];
-    // TODO: Pass context to parseCodeInfo and blend in defaults
     const {language, attributes} = parseCodeInfo(token.info);
+    token.info = language ?? "";
     let result = "";
     let count = 0;
     if (language === "js" && !optionEnabled(attributes, "no-run")) {
@@ -194,10 +194,14 @@ interface Attribute {
   value?: string | boolean;
 }
 
-function parseAttributes(content: string): Attribute[] {
+function parseAttributes(content: string): {
+  classes: string[];
+  id: string | undefined;
+  attributes: Record<string, any>;
+} {
   const tokens: Attribute[] = [];
 
-  if (content.charAt(0) !== "{") return [];
+  if (content.charAt(0) !== "{") return {attributes: {}, classes: [], id: undefined};
 
   let start = 0;
   let state = "begin";
@@ -248,7 +252,6 @@ function parseAttributes(content: string): Attribute[] {
         if (!isIdentifier(cj)) {
           tokens.push({name: content.slice(start, j--)});
           state = "begin";
-          j--;
         }
         break;
 
@@ -295,39 +298,48 @@ function parseAttributes(content: string): Attribute[] {
     }
   }
   if (state === "key" || state === "classid") tokens.push({name: content.slice(start)});
-  return tokens;
+
+  const attributes = {};
+  const classes: string[] = [];
+  let id: string | undefined;
+
+  for (const token of tokens) {
+    const c = token.name.charCodeAt(0);
+    if (c === CODE_PERIOD) classes.push(token.name.slice(1));
+    else if (c === CODE_POUND) id = token.name.slice(1);
+    else attributes[token.name] = token.value;
+  }
+  return {classes, id, attributes};
 }
 
 interface CodeInfo {
-  language?: string;
-  classes?: string[];
-  id?: string;
-  attributes?: Attribute[];
+  language: string | undefined;
+  classes: string[];
+  id: string | undefined;
+  attributes: Record<string, string | boolean>;
 }
 
-function parseCodeInfo(info: string): CodeInfo {
+export function parseCodeInfo(info: string): CodeInfo {
   const match = /^(?<language>\w*)(?:\s*(?<attributes>{.*}))?$/.exec(info);
-  if (!match) return {};
+  if (!match) return {language: undefined, attributes: {}, classes: [], id: undefined};
   let language = match.groups?.language;
-  let attributes: Attribute[] = [];
-  let classes: string[] = [];
-  let id: string | undefined;
   if (match.groups?.attributes) {
-    attributes = parseAttributes(match.groups?.attributes);
-    if (!language && attributes.length) {
-      language = attributes.shift()?.name;
+    const parsed = parseAttributes(match.groups.attributes);
+    if (!language && parsed.attributes && Object.keys(parsed.attributes).length > 0) {
+      const key = Object.keys(parsed.attributes!)[0];
+      if (parsed.attributes[key] === true) {
+        language = key;
+        delete parsed.attributes[key];
+      }
     }
-    classes = attributes.filter((attr) => attr.name.charCodeAt(0) === CODE_PERIOD).map((attr) => attr.name.slice(1));
-    id = attributes.findLast((attr) => attr.name.charCodeAt(0) === CODE_POUND)?.name.slice(1);
-    attributes = attributes.filter(
-      (attr) => attr.name.charCodeAt(0) !== CODE_PERIOD && attr.name.charCodeAt(0) !== CODE_POUND
-    );
+    return {language, ...parsed};
   }
-  return {language, classes, id, attributes};
+  // TODO: blend in defaults from context
+  return {language, attributes: {}, classes: [], id: undefined};
 }
 
-function optionEnabled(attributes: Attribute[] | undefined, name: string) {
-  return attributes && attributes.some((attr) => attr.name === name && attr.value === true);
+function optionEnabled(attributes: Record<string, boolean | string> | undefined, name: string) {
+  return attributes && attributes[name] === true;
 }
 
 function transformPlaceholderBlock(token) {
