@@ -66,6 +66,11 @@ ${Array.from(imports.values())
   .concat(parseResult.imports.filter(({name}) => name.startsWith("./")).map(({name}) => `/_file/${name.slice(2)}`))
   .map((href) => `<link rel="modulepreload" href="${href}">`)
   .join("\n")}
+${
+  parseResult.cells.some((cell) => cell.databases?.length)
+    ? `<link rel="modulepreload" href="/_observablehq/database.js">`
+    : ""
+}
 <script type="module">
 
 import {${preview ? "open, " : ""}define} from "/_observablehq/client.js";
