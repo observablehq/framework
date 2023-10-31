@@ -38,7 +38,12 @@ const configFile = join(homedir(), ".observablehq");
 const key = `database-proxy`;
 
 export async function readDatabaseProxyConfig(): Promise<DatabaseProxyConfig | null> {
-  const observableConfig = JSON.parse(await readFile(configFile, "utf-8")) as ObservableConfig | null;
+  let observableConfig;
+  try {
+    observableConfig = JSON.parse(await readFile(configFile, "utf-8")) as ObservableConfig | null;
+  } catch (error) {
+    // Ignore missing config file
+  }
   return observableConfig && observableConfig[key];
 }
 
