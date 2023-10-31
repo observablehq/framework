@@ -12,8 +12,7 @@ import type {ParseResult} from "./markdown.js";
 import {diffMarkdown, readMarkdown} from "./markdown.js";
 import {readPages} from "./navigation.js";
 import {renderPreview} from "./render.js";
-import type {CellResolver} from "./resolver.js";
-import {makeCLIResolver} from "./resolver.js";
+import {makeCLIResolver, type CellResolver} from "./resolver.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
@@ -136,16 +135,11 @@ class FileWatchers {
 }
 
 function resolveDiffs(diff: ReturnType<typeof diffMarkdown>, resolver: CellResolver): ReturnType<typeof diffMarkdown> {
-  for (const item of diff) {
-    if (item.type === "add") {
-      for (const addItem of item.items) {
-        if (addItem.type === "cell" && "databases" in addItem) {
-          Object.assign(addItem, resolver(addItem));
-        }
-      }
-    }
-  }
-  return diff;
+  return diff.map((item) =>
+    item.type === "add"
+      ? {...item, items: item.items.map((addItem) => (addItem.type === "cell" ? resolver(addItem) : addItem))}
+      : item
+  );
 }
 
 function handleWatch(socket: WebSocket, options: {root: string; resolver: CellResolver}) {
