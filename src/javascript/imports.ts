@@ -3,8 +3,7 @@ import type {Node} from "acorn";
 import {simple} from "acorn-walk";
 import {readFileSync} from "node:fs";
 import {dirname, join} from "node:path";
-import type {ParsedJavaScriptNode} from "../javascript.js";
-import {parseOptions} from "../javascript.js";
+import {type JavaScriptNode, parseOptions} from "../javascript.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
 export function findImports(body: Node, root, sourcePath: string) {
@@ -67,7 +66,7 @@ export function findImports(body: Node, root, sourcePath: string) {
 }
 
 // TODO parallelize multiple static imports
-export function rewriteImports(output: any, rootNode: ParsedJavaScriptNode, sourcePath: string) {
+export function rewriteImports(output: any, rootNode: JavaScriptNode, sourcePath: string) {
   simple(rootNode.body, {
     ImportExpression(node: any) {
       if (isStringLiteral(node.source)) {

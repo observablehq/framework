@@ -11,12 +11,12 @@ export interface Render {
 
 export interface RenderOptions {
   root: string;
-  path: string;
+  sourcePath: string;
   pages?: {path: string; name: string}[];
 }
 
 export function renderPreview(source: string, options: RenderOptions): Render {
-  const parseResult = parseMarkdown(source, options.root, options.path);
+  const parseResult = parseMarkdown(source, options.root, options.sourcePath);
   return {
     html: render(parseResult, {...options, preview: true, hash: computeHash(source)}),
     files: parseResult.files,
@@ -25,7 +25,7 @@ export function renderPreview(source: string, options: RenderOptions): Render {
 }
 
 export function renderServerless(source: string, options: RenderOptions): Render {
-  const parseResult = parseMarkdown(source, options.root, options.path);
+  const parseResult = parseMarkdown(source, options.root, options.sourcePath);
   return {
     html: render(parseResult, options),
     files: parseResult.files,
@@ -45,7 +45,10 @@ type RenderInternalOptions =
   | {preview?: false; hash?: never} // serverless
   | {preview: true; hash: string}; // preview
 
-function render(parseResult: ParseResult, {path, pages, preview, hash}: RenderOptions & RenderInternalOptions): string {
+function render(
+  parseResult: ParseResult,
+  {sourcePath, pages, preview, hash}: RenderOptions & RenderInternalOptions
+): string {
   const showSidebar = pages && pages.length > 1;
   const imports = getImportMap(parseResult);
   return `<!DOCTYPE html>
@@ -82,9 +85,9 @@ ${
   <ol>${pages
     ?.map(
       (p) => `
-    <li class="observablehq-link${p.path === path ? " observablehq-link-active" : ""}"><a href="${escapeDoubleQuoted(
-      p.path.replace(/\/index$/, "/")
-    )}">${escapeData(p.name)}</a></li>`
+    <li class="observablehq-link${
+      p.path === sourcePath ? " observablehq-link-active" : ""
+    }"><a href="${escapeDoubleQuoted(p.path.replace(/\/index$/, "/"))}">${escapeData(p.name)}</a></li>`
     )
     .join("")}
   </ol>

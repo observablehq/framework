@@ -97,7 +97,7 @@ function trim(output: Sourcemap, input: string): void {
 
 export const parseOptions: Options = {ecmaVersion: 13, sourceType: "module"};
 
-export interface ParsedJavaScriptNode {
+export interface JavaScriptNode {
   body: Node;
   declarations: {name: string}[] | null;
   references: {name: string}[];
@@ -107,7 +107,7 @@ export interface ParsedJavaScriptNode {
   async: boolean;
 }
 
-export function parseJavaScript(input: string, options: ParseOptions): ParsedJavaScriptNode {
+function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
   const {globals = defaultGlobals, inline = false, root, sourcePath} = options;
   // First attempt to parse as an expression; if this fails, parse as a program.
   let expression = maybeParseExpression(input, parseOptions);

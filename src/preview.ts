@@ -86,7 +86,8 @@ class Server {
         try {
           const pages = await readPages(this.root); // TODO cache? watcher?
           res.end(
-            renderPreview(await readFile(path + ".md", "utf-8"), {root: this.root, path: pathname + ".md", pages}).html
+            renderPreview(await readFile(path + ".md", "utf-8"), {root: this.root, sourcePath: pathname + ".md", pages})
+              .html
           );
         } catch (error) {
           if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error
