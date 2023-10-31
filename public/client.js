@@ -96,7 +96,9 @@ export function define(cell) {
       }
     : (v) => {
         reset?.();
-        inspector().fulfilled(v);
+        const custom = v?.[Symbol.for("observablehq.display")];
+        if (custom != null && typeof custom !== "function") throw new Error(`Unsupported custom inspector ${custom}`);
+        inspector().fulfilled(custom ? custom(v) : v);
         return v;
       };
   const v = main.variable(
