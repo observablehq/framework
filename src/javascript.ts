@@ -10,6 +10,10 @@ import {findImports, rewriteImports} from "./javascript/imports.js";
 import {findReferences} from "./javascript/references.js";
 import {Sourcemap} from "./sourcemap.js";
 
+export interface DatabaseReference {
+  name: string;
+}
+
 export interface FileReference {
   name: string;
   mimeType: string | null;
@@ -25,6 +29,7 @@ export interface Transpile {
   outputs?: string[];
   inline?: boolean;
   body: string;
+  databases?: DatabaseReference[];
   files?: FileReference[];
   imports?: ImportReference[];
 }
@@ -41,6 +46,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
   const {root, id} = options;
   try {
     const node = parseJavaScript(input, options);
+    const databases = node.features.filter((f) => f.type === "DatabaseClient").map((f) => ({name: f.name}));
     const files = node.features
       .filter((f) => f.type === "FileAttachment")
       .filter((f) => maybeLocalFile(f.name, root))
@@ -60,6 +66,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
       ...(inputs.length ? {inputs} : null),
       ...(options.inline ? {inline: true} : null),
       ...(node.declarations?.length ? {outputs: node.declarations.map(({name}) => name)} : null),
+      ...(databases.length ? {databases} : null),
       ...(files.length ? {files} : null),
       body: `${node.async ? "async " : ""}(${inputs}) => {
 ${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.map(({name}) => name)}};` : ""}

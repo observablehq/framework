@@ -1,7 +1,7 @@
 export class HttpError extends Error {
   public readonly statusCode: number;
 
-  constructor(message: string, statusCode: number, cause?: Error) {
+  constructor(message: string, statusCode: number, cause?: any) {
     super(message ?? `HTTP status ${statusCode}`, cause);
     this.statusCode = statusCode;
     Error.captureStackTrace(this, HttpError);
