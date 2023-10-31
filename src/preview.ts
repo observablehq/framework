@@ -12,6 +12,8 @@ import type {ParseResult} from "./markdown.js";
 import {diffMarkdown, readMarkdown} from "./markdown.js";
 import {readPages} from "./navigation.js";
 import {renderPreview} from "./render.js";
+import type {CellResolver} from "./resolver.js";
+import {makeCLIResolver} from "./resolver.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
@@ -21,6 +23,7 @@ class Server {
   readonly port: number;
   readonly hostname: string;
   readonly root: string;
+  private _resolver: CellResolver | undefined;
 
   constructor({port, hostname, root}: CommandContext) {
     this.port = port;
@@ -33,6 +36,7 @@ class Server {
   }
 
   async start() {
+    this._resolver = await makeCLIResolver();
     return new Promise<void>((resolve) => {
       this._server.listen(this.port, this.hostname, resolve);
     });
@@ -85,7 +89,16 @@ class Server {
         // Anything else should 404; static files should be matched above.
         try {
           const pages = await readPages(this.root); // TODO cache? watcher?
-          res.end(renderPreview(await readFile(path + ".md", "utf-8"), {root: this.root, path: pathname, pages}).html);
+          res.end(
+            (
+              await renderPreview(await readFile(path + ".md", "utf-8"), {
+                root: this.root,
+                path: pathname,
+                pages,
+                resolver: this._resolver!
+              })
+            ).html
+          );
         } catch (error) {
           if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error
           throw new HttpError("Not found", 404);
@@ -101,7 +114,7 @@ class Server {
 
   _handleConnection = (socket: WebSocket, req: IncomingMessage) => {
     if (req.url === "/_observablehq") {
-      handleWatch(socket, this.root);
+      handleWatch(socket, {root: this.root, resolver: this._resolver!});
     } else {
       socket.close();
     }
@@ -122,7 +135,21 @@ class FileWatchers {
   }
 }
 
-function handleWatch(socket: WebSocket, root: string) {
+function resolveDiffs(diff: ReturnType<typeof diffMarkdown>, resolver: CellResolver): ReturnType<typeof diffMarkdown> {
+  for (const item of diff) {
+    if (item.type === "add") {
+      for (const addItem of item.items) {
+        if (addItem.type === "cell" && "databases" in addItem) {
+          Object.assign(addItem, resolver(addItem));
+        }
+      }
+    }
+  }
+  return diff;
+}
+
+function handleWatch(socket: WebSocket, options: {root: string; resolver: CellResolver}) {
+  const {root, resolver} = options;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
   console.log("socket open");
@@ -158,7 +185,7 @@ function handleWatch(socket: WebSocket, root: string) {
         case "change": {
           const updated = await readMarkdown(path, root);
           if (current.hash === updated.hash) break;
-          const diff = diffMarkdown(current, updated);
+          const diff = resolveDiffs(diffMarkdown(current, updated), resolver);
           send({type: "update", diff, previousHash: current.hash, updatedHash: updated.hash});
           attachmentWatcher?.close();
           attachmentWatcher = new FileWatchers(root, updated.parse.files, refreshAttachment(updated.parse));

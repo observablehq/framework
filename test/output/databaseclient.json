@@ -1,0 +1,34 @@
+{
+  "data": null,
+  "title": null,
+  "files": [],
+  "imports": [],
+  "pieces": [
+    {
+      "type": "html",
+      "id": "",
+      "cellIds": [
+        "1e6b99bd"
+      ],
+      "html": "<div id=\"cell-1e6b99bd\" class=\"observablehq observablehq--block\"></div>\n"
+    }
+  ],
+  "cells": [
+    {
+      "type": "cell",
+      "id": "1e6b99bd",
+      "inputs": [
+        "DatabaseClient"
+      ],
+      "outputs": [
+        "db"
+      ],
+      "databases": [
+        {
+          "name": "dwh-local-proxy"
+        }
+      ],
+      "body": "(DatabaseClient) => {\nconst db = DatabaseClient(\"dwh-local-proxy\");\nreturn {db};\n}"
+    }
+  ]
+}
