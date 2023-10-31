@@ -1,6 +1,7 @@
 import {join} from "node:path";
 import {computeHash} from "./hash.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
+import type {CellPiece} from "./markdown.js";
 import {parseMarkdown, type ParseResult} from "./markdown.js";
 
 export interface Render {
@@ -13,6 +14,7 @@ export interface RenderOptions {
   root: string;
   sourcePath: string;
   pages?: {path: string; name: string}[];
+  resolver: (cell: CellPiece) => CellPiece;
 }
 
 export function renderPreview(source: string, options: RenderOptions): Render {
@@ -34,8 +36,8 @@ export function renderServerless(source: string, options: RenderOptions): Render
 }
 
 export function renderDefineCell(cell) {
-  const {id, inline, inputs, outputs, files, body} = cell;
-  return `define({${Object.entries({id, inline, inputs, outputs, files})
+  const {id, inline, inputs, outputs, files, body, databases} = cell;
+  return `define({${Object.entries({id, inline, inputs, outputs, files, databases})
     .filter((arg) => arg[1] !== undefined)
     .map((arg) => `${arg[0]}: ${JSON.stringify(arg[1])}`)
     .join(", ")}, body: ${body}});\n`;
@@ -47,7 +49,7 @@ type RenderInternalOptions =
 
 function render(
   parseResult: ParseResult,
-  {sourcePath, pages, preview, hash}: RenderOptions & RenderInternalOptions
+  {sourcePath, pages, preview, hash, resolver}: RenderOptions & RenderInternalOptions
 ): string {
   const showSidebar = pages && pages.length > 1;
   const imports = getImportMap(parseResult);
@@ -65,11 +67,19 @@ ${Array.from(imports.values())
   .concat(parseResult.imports.filter(({type}) => type === "local").map(({name}) => join("/_file/", name)))
   .map((href) => `<link rel="modulepreload" href="${href}">`)
   .join("\n")}
+${
+  parseResult.cells.some((cell) => cell.databases?.length)
+    ? `<link rel="modulepreload" href="/_observablehq/database.js">`
+    : ""
+}
 <script type="module">
 
 import {${preview ? "open, " : ""}define} from "/_observablehq/client.js";
 
-${preview ? `open({hash: ${JSON.stringify(hash)}});\n` : ""}${parseResult.cells.map(renderDefineCell).join("")}
+${preview ? `open({hash: ${JSON.stringify(hash)}});\n` : ""}${parseResult.cells
+    .map(resolver)
+    .map(renderDefineCell)
+    .join("")}
 </script>${
     parseResult.data
       ? `
