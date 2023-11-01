@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node --loader tsx/esm
+#!/usr/bin/env tsx
 
 const command = process.argv.splice(2, 1)[0];
 
