@@ -1,4 +1,3 @@
-import {join} from "node:path";
 import {computeHash} from "./hash.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
 import type {CellPiece} from "./markdown.js";
@@ -51,6 +50,7 @@ function render(
   parseResult: ParseResult,
   {sourcePath, pages, preview, hash, resolver}: RenderOptions & RenderInternalOptions
 ): string {
+  const servingPath = sourcePath.replace(".md", "");
   const showSidebar = pages && pages.length > 1;
   const imports = getImportMap(parseResult);
   return `<!DOCTYPE html>
@@ -64,7 +64,7 @@ ${
 ${JSON.stringify({imports: Object.fromEntries(Array.from(imports, ([name, href]) => [name, href]))}, null, 2)}
 </script>
 ${Array.from(imports.values())
-  .concat(parseResult.imports.filter(({type}) => type === "local").map(({name}) => join("/_file/", name)))
+  .concat(parseResult.imports.filter(({type}) => type === "local").map(({name}) => `/_file/${name}`))
   .map((href) => `<link rel="modulepreload" href="${href}">`)
   .join("\n")}
 ${
@@ -96,7 +96,7 @@ ${
     ?.map(
       (p) => `
     <li class="observablehq-link${
-      p.path === sourcePath ? " observablehq-link-active" : ""
+      p.path === servingPath ? " observablehq-link-active" : ""
     }"><a href="${escapeDoubleQuoted(p.path.replace(/\/index$/, "/"))}">${escapeData(p.name)}</a></li>`
     )
     .join("")}

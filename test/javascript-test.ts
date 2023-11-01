@@ -6,25 +6,30 @@ import {isNodeError} from "../src/error.js";
 import {transpileJavaScript} from "../src/javascript.js";
 import {renderDefineCell} from "../src/render.js";
 
-function isValidJsFile(inputRoot: string, fileName: string) {
+function isJsFile(inputRoot: string, fileName: string) {
   if (!fileName.endsWith(".js")) return false;
   const path = join(inputRoot, fileName);
   return statSync(path).isFile();
 }
 
 describe("transpileJavaScript(input)", () => {
-  const transpileJavascriptInputsPath = "./test/input";
-  for (const name of readdirSync(transpileJavascriptInputsPath)) {
-    if (!isValidJsFile(transpileJavascriptInputsPath, name)) continue;
+  const TRANSPILE_TEST_CASES = "./test/input";
+  const TRANSPILE_TEST_RESULTS = "./test/output";
+  for (const name of readdirSync(TRANSPILE_TEST_CASES)) {
+    if (!isJsFile(TRANSPILE_TEST_CASES, name)) continue;
     const only = name.startsWith("only.");
     const skip = name.startsWith("skip.");
     const outname = only || skip ? name.slice(5) : name;
-    const path = join("./test/input", name);
+    const path = join(TRANSPILE_TEST_CASES, name);
     (only ? it.only : skip ? it.skip : it)(path, async () => {
-      const outfile = resolve("./test/output", `${basename(outname, ".js")}.js`);
-      const diffile = resolve("./test/output", `${basename(outname, ".js")}-changed.js`);
+      const outfile = resolve(TRANSPILE_TEST_RESULTS, `${basename(outname, ".js")}.js`);
+      const diffile = resolve(TRANSPILE_TEST_RESULTS, `${basename(outname, ".js")}-changed.js`);
       const actual = renderDefineCell(
-        await transpileJavaScript(await readFile(path, "utf8"), {id: "0", root: "test/input", sourcePath: "/"})
+        await transpileJavaScript(await readFile(path, "utf8"), {
+          id: "0",
+          root: normalize(TRANSPILE_TEST_CASES),
+          sourcePath: "/"
+        })
       );
       let expected;
 
@@ -64,19 +69,20 @@ describe("transpileJavaScript(input)", () => {
 });
 
 describe("imports", () => {
-  const importsInputsPath = "./test/input/imports";
-  for (const name of readdirSync(importsInputsPath)) {
-    if (!isValidJsFile(importsInputsPath, name) || !name.includes("import")) continue;
+  const IMPORT_TEST_CASES = "./test/input/imports";
+  const IMPORT_TEST_RESULTS = "./test/output/imports";
+  for (const name of readdirSync(IMPORT_TEST_CASES)) {
+    if (!isJsFile(IMPORT_TEST_CASES, name) || !name.includes("import")) continue;
     const only = name.startsWith("only.");
     const skip = name.startsWith("skip.");
     const outname = only || skip ? name.slice(5) : name;
-    const path = join(importsInputsPath, name);
+    const path = join(IMPORT_TEST_CASES, name);
     (only ? it.only : skip ? it.skip : it)(path, async () => {
-      const outfile = resolve("./test/output/imports", `${basename(outname, ".js")}.js`);
+      const outfile = resolve(IMPORT_TEST_RESULTS, `${basename(outname, ".js")}.js`);
       const actual = renderDefineCell(
         await transpileJavaScript(await readFile(path, "utf8"), {
           id: "0",
-          root: normalize(importsInputsPath),
+          root: normalize(IMPORT_TEST_CASES),
           sourcePath: "/"
         })
       );

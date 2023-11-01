@@ -37,7 +37,6 @@ describe("parseMarkdown(input)", () => {
         }
 
         const equal = ext === "json" ? jsonEqual(expected, actual) : expected === actual;
-        if (!equal) console.log({expected, actual});
 
         if (equal) {
           if (process.env.CI !== "true") {
