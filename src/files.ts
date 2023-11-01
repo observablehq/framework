@@ -5,7 +5,12 @@ import {isNodeError} from "./error.js";
 
 // A file is local if it exists in the root folder or a subfolder.
 export function isLocalFile(ref: string | null, root: string): boolean {
-  return typeof ref === "string" && !normalize(ref).startsWith("../") && canReadSync(join(root, ref));
+  return (
+    typeof ref === "string" &&
+    !/^(\w+:)\/\//.test(ref) &&
+    !normalize(ref).startsWith("../") &&
+    canReadSync(join(root, ref))
+  );
 }
 
 export function pathFromRoot(ref: string | null, root: string): string | null {
