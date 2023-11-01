@@ -64,7 +64,11 @@ ${
 ${JSON.stringify({imports: Object.fromEntries(Array.from(imports, ([name, href]) => [name, href]))}, null, 2)}
 </script>
 ${Array.from(imports.values())
-  .concat(parseResult.imports.filter(({type}) => type === "local").map(({name}) => `/_file/${name}`))
+  .concat(
+    parseResult.imports
+      .filter(({type}) => type === "local")
+      .map(({name}) => `/_file/${name.startsWith("/") ? name.slice(1) : name}`)
+  )
   .map((href) => `<link rel="modulepreload" href="${href}">`)
   .join("\n")}
 ${
