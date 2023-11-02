@@ -83,7 +83,7 @@ describe("imports", () => {
         await transpileJavaScript(await readFile(path, "utf8"), {
           id: "0",
           root: normalize(IMPORT_TEST_CASES),
-          sourcePath: "/"
+          sourcePath: "/index"
         })
       );
 

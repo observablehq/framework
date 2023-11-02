@@ -92,7 +92,7 @@ class Server {
           res.end(
             renderPreview(await readFile(path + ".md", "utf-8"), {
               root: this.root,
-              sourcePath: pathname + ".md",
+              path: pathname,
               pages,
               resolver: this._resolver!
             }).html

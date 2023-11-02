@@ -6,7 +6,7 @@ import {dirname, join} from "node:path";
 import {type JavaScriptNode, parseOptions} from "../javascript.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
-export function findImports(body: Node, root, sourcePath: string) {
+export function findImports(body: Node, root: string, sourcePath: string) {
   const imports: {name: string; type: "global" | "local"}[] = [];
   const features: {name: string; type: string}[] = [];
   const paths = new Set<string>();

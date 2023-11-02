@@ -11,13 +11,13 @@ export interface Render {
 
 export interface RenderOptions {
   root: string;
-  sourcePath: string;
+  path: string;
   pages?: {path: string; name: string}[];
   resolver: (cell: CellPiece) => CellPiece;
 }
 
 export function renderPreview(source: string, options: RenderOptions): Render {
-  const parseResult = parseMarkdown(source, options.root, options.sourcePath);
+  const parseResult = parseMarkdown(source, options.root, options.path);
   return {
     html: render(parseResult, {...options, preview: true, hash: computeHash(source)}),
     files: parseResult.files,
@@ -26,7 +26,7 @@ export function renderPreview(source: string, options: RenderOptions): Render {
 }
 
 export function renderServerless(source: string, options: RenderOptions): Render {
-  const parseResult = parseMarkdown(source, options.root, options.sourcePath);
+  const parseResult = parseMarkdown(source, options.root, options.path);
   return {
     html: render(parseResult, options),
     files: parseResult.files,
@@ -48,9 +48,8 @@ type RenderInternalOptions =
 
 function render(
   parseResult: ParseResult,
-  {sourcePath, pages, preview, hash, resolver}: RenderOptions & RenderInternalOptions
+  {path: servingPath, pages, preview, hash, resolver}: RenderOptions & RenderInternalOptions
 ): string {
-  const servingPath = sourcePath.replace(".md", "");
   const showSidebar = pages && pages.length > 1;
   const imports = getImportMap(parseResult);
   return `<!DOCTYPE html>
