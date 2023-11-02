@@ -1,7 +1,8 @@
-import {open, rename, unlink} from "node:fs/promises";
+import {open} from "node:fs/promises";
 import {spawn} from "node:child_process";
 import {join} from "node:path";
 import {getStats} from "./files.js";
+import {renameSync, unlinkSync} from "node:fs";
 
 const runningCommands = new Map<string, Promise<void>>();
 
@@ -23,13 +24,14 @@ export async function runCommand(commandPath: string, outputPath: string) {
         subprocess.stdout.on("data", (data) => cacheFileStream.write(data));
         subprocess.on("error", (error) => console.error(`${commandPath}: ${error.message}`));
         subprocess.on("close", (code) => {
-          cacheFd.close();
-          if (code === 0) {
-            rename(cacheTempPath, outputPath);
-          } else {
-            unlink(cacheTempPath);
-          }
-          resolve();
+          cacheFd.close().then(() => {
+            if (code === 0) {
+              renameSync(cacheTempPath, outputPath);
+            } else {
+              unlinkSync(cacheTempPath);
+            }
+            resolve();
+          }, reject);
         });
       } catch (error) {
         reject(error);
