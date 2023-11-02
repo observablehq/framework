@@ -1,3 +1,4 @@
+import type {Stats} from "node:fs";
 import {accessSync, constants, statSync} from "node:fs";
 import {readdir, stat} from "node:fs/promises";
 import {extname, join, normalize, relative} from "node:path";
@@ -35,4 +36,13 @@ export async function* visitFiles(root: string): AsyncGenerator<string> {
       yield relative(root, path);
     }
   }
+}
+
+export async function getStats(path: string): Promise<Stats | undefined> {
+  try {
+    return await stat(path);
+  } catch (error) {
+    if (!isNodeError(error) || error.code !== "ENOENT") throw error;
+  }
+  return;
 }

@@ -1,5 +1,5 @@
 import type {WatchListener} from "node:fs";
-import {watch, type FSWatcher} from "node:fs";
+import {watch, type FSWatcher, watchFile, unwatchFile} from "node:fs";
 import {access, constants, readFile, stat} from "node:fs/promises";
 import {createServer, type IncomingMessage, type RequestListener} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
@@ -14,6 +14,8 @@ import {readPages} from "./navigation.js";
 import {renderPreview} from "./render.js";
 import type {CellResolver} from "./resolver.js";
 import {makeCLIResolver} from "./resolver.js";
+import {findLoader, runCommand} from "./dataloader.js";
+import {getStats} from "./files.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
@@ -23,12 +25,14 @@ class Server {
   readonly port: number;
   readonly hostname: string;
   readonly root: string;
+  readonly cacheRoot: string;
   private _resolver: CellResolver | undefined;
 
   constructor({port, hostname, root}: CommandContext) {
     this.port = port;
     this.hostname = hostname;
     this.root = root;
+    this.cacheRoot = join(this.root, "../_cache");
     this._server = createServer();
     this._server.on("request", this._handleRequest);
     this._socketServer = new WebSocketServer({server: this._server});
@@ -52,7 +56,34 @@ class Server {
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_file/")) {
-        send(req, pathname.slice("/_file".length), {root: this.root}).pipe(res);
+        const path = pathname.slice("/_file".length);
+        const filepath = join(this.root, path);
+        try {
+          await access(filepath, constants.R_OK);
+          send(req, pathname.slice("/_file".length), {root: this.root}).pipe(res);
+        } catch (error) {
+          if (isNodeError(error) && error.code !== "ENOENT") {
+            throw error;
+          }
+        }
+
+        // Look for a data loader for this file.
+        const {path: loaderPath, stats: loaderStat} = await findLoader(this.root, path);
+        if (loaderStat) {
+          const cachePath = join(this.cacheRoot, filepath);
+          const cacheStat = await getStats(cachePath);
+          if (cacheStat && cacheStat.mtimeMs > loaderStat.mtimeMs) {
+            send(req, filepath, {root: this.cacheRoot}).pipe(res);
+            return;
+          }
+          if (!(loaderStat.mode & constants.S_IXUSR)) {
+            throw new HttpError("Data loader is not executable", 404);
+          }
+          await runCommand(loaderPath, cachePath);
+          send(req, filepath, {root: this.cacheRoot}).pipe(res);
+          return;
+        }
+        throw new HttpError("Not found", 404);
       } else {
         if (normalize(pathname).startsWith("..")) throw new Error("Invalid path: " + pathname);
         let path = join(this.root, pathname);
@@ -122,16 +153,38 @@ class Server {
 }
 
 class FileWatchers {
-  watchers: FSWatcher[];
+  watchedFiles: string[] = [];
 
-  constructor(root: string, files: {name: string}[], cb: (name: string) => void) {
-    const fileset = [...new Set(files.map(({name}) => name))];
-    this.watchers = fileset.map((name) => watch(join(root, name), async () => cb(name)));
+  constructor(
+    readonly root: string,
+    readonly files: {name: string}[],
+    readonly cb: (name: string) => void
+  ) {}
+
+  async start() {
+    if (this.watchedFiles.length) throw new Error("already watching");
+    const fileset = [...new Set(this.files.map(({name}) => name))];
+    for (const name of fileset) {
+      const file = await this.watchPath(this.root, name);
+      this.watchedFiles.push(file);
+      watchFile(file, async (previous, current) => {
+        if (current.mtimeMs === previous.mtimeMs) return;
+        this.cb(name);
+      });
+    }
   }
 
-  close() {
-    this.watchers.forEach((w) => w.close());
-    this.watchers = [];
+  async watchPath(root: string, name: string) {
+    const path = join(root, name);
+    const stats = await getStats(path);
+    if (stats?.isFile()) return path;
+    const {path: loaderPath, stats: loaderStat} = await findLoader(root, name);
+    return loaderStat?.isFile() ? loaderPath : path;
+  }
+
+  end() {
+    for (const file of this.watchedFiles) unwatchFile(file);
+    this.watchedFiles = [];
   }
 }
 
@@ -165,6 +218,7 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
   async function refreshMarkdown(path: string): Promise<WatchListener<string>> {
     let current = await readMarkdown(path, root);
     attachmentWatcher = new FileWatchers(root, current.parse.files, refreshAttachment(current.parse));
+    await attachmentWatcher.start();
     return async function watcher(event) {
       switch (event) {
         case "rename": {
@@ -187,7 +241,7 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
           if (current.hash === updated.hash) break;
           const diff = resolveDiffs(diffMarkdown(current, updated), resolver);
           send({type: "update", diff, previousHash: current.hash, updatedHash: updated.hash});
-          attachmentWatcher?.close();
+          attachmentWatcher?.end();
           attachmentWatcher = new FileWatchers(root, updated.parse.files, refreshAttachment(updated.parse));
           current = updated;
           break;
@@ -225,7 +279,7 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
 
   socket.on("close", () => {
     if (attachmentWatcher) {
-      attachmentWatcher.close();
+      attachmentWatcher.end();
       attachmentWatcher = null;
     }
     if (markdownWatcher) {
