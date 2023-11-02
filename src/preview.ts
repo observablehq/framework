@@ -1,5 +1,5 @@
 import type {WatchListener} from "node:fs";
-import {watch, type FSWatcher, watchFile, unwatchFile} from "node:fs";
+import {watch, type FSWatcher} from "node:fs";
 import {access, constants, readFile, stat} from "node:fs/promises";
 import {createServer, type IncomingMessage, type RequestListener} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
@@ -153,7 +153,7 @@ class Server {
 }
 
 class FileWatchers {
-  watchedFiles: string[] = [];
+  watchers: FSWatcher[] = [];
 
   constructor(
     readonly root: string,
@@ -161,20 +161,24 @@ class FileWatchers {
     readonly cb: (name: string) => void
   ) {}
 
-  async start() {
-    if (this.watchedFiles.length) throw new Error("already watching");
+  async watchAll() {
     const fileset = [...new Set(this.files.map(({name}) => name))];
     for (const name of fileset) {
-      const file = await this.watchPath(this.root, name);
-      this.watchedFiles.push(file);
-      watchFile(file, async (previous, current) => {
-        if (current.mtimeMs === previous.mtimeMs) return;
-        this.cb(name);
-      });
+      const watchPath = await FileWatchers.getWatchPath(this.root, name);
+      let prevState = await getStats(watchPath);
+      this.watchers.push(
+        watch(watchPath, async () => {
+          const newState = await getStats(watchPath);
+          // Ignore if the file was truncated or not modified.
+          if (prevState?.mtimeMs === newState?.mtimeMs || newState?.size === 0) return;
+          prevState = newState;
+          this.cb(name);
+        })
+      );
     }
   }
 
-  async watchPath(root: string, name: string) {
+  static async getWatchPath(root: string, name: string) {
     const path = join(root, name);
     const stats = await getStats(path);
     if (stats?.isFile()) return path;
@@ -182,9 +186,9 @@ class FileWatchers {
     return loaderStat?.isFile() ? loaderPath : path;
   }
 
-  end() {
-    for (const file of this.watchedFiles) unwatchFile(file);
-    this.watchedFiles = [];
+  close() {
+    this.watchers.forEach((w) => w.close());
+    this.watchers = [];
   }
 }
 
@@ -218,7 +222,7 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
   async function refreshMarkdown(path: string): Promise<WatchListener<string>> {
     let current = await readMarkdown(path, root);
     attachmentWatcher = new FileWatchers(root, current.parse.files, refreshAttachment(current.parse));
-    await attachmentWatcher.start();
+    await attachmentWatcher.watchAll();
     return async function watcher(event) {
       switch (event) {
         case "rename": {
@@ -241,7 +245,7 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
           if (current.hash === updated.hash) break;
           const diff = resolveDiffs(diffMarkdown(current, updated), resolver);
           send({type: "update", diff, previousHash: current.hash, updatedHash: updated.hash});
-          attachmentWatcher?.end();
+          attachmentWatcher?.close();
           attachmentWatcher = new FileWatchers(root, updated.parse.files, refreshAttachment(updated.parse));
           current = updated;
           break;
@@ -279,7 +283,7 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
 
   socket.on("close", () => {
     if (attachmentWatcher) {
-      attachmentWatcher.end();
+      attachmentWatcher.close();
       attachmentWatcher = null;
     }
     if (markdownWatcher) {

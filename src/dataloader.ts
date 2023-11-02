@@ -45,8 +45,11 @@ export async function runCommand(commandPath: string, outputPath: string) {
 }
 
 export async function findLoader(root: string, name: string) {
-  // TODO: Look in the directory for any file with a known extension?
-  const path = join(root, name) + ".js";
-  const stats = await getStats(path);
-  return {path, stats};
+  // TODO: It may be more efficient use fs.readdir
+  for (const ext of [".js", ".ts"]) {
+    const path = join(root, name) + ext;
+    const stats = await getStats(path);
+    if (stats) return {path, stats};
+  }
+  return;
 }
