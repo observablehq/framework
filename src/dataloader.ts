@@ -51,5 +51,5 @@ export async function findLoader(root: string, name: string) {
     const stats = await getStats(path);
     if (stats) return {path, stats};
   }
-  return;
+  return {};
 }
