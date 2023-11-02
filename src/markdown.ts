@@ -10,8 +10,7 @@ import {type RuleInline} from "markdown-it/lib/parser_inline.js";
 import {type default as Renderer, type RenderRule} from "markdown-it/lib/renderer.js";
 import mime from "mime";
 import {readFile} from "node:fs/promises";
-import {join} from "node:path";
-import {canReadSync} from "./files.js";
+import {pathFromRoot} from "./files.js";
 import {computeHash} from "./hash.js";
 import {transpileJavaScript, type FileReference, type ImportReference, type Transpile} from "./javascript.js";
 
@@ -301,9 +300,8 @@ function renderIntoPieces(renderer: Renderer, root: string): Renderer["render"] 
 function normalizePieceHtml(html: string, root: string, context: ParseContext): string {
   const {document} = parseHTML(html);
   for (const element of document.querySelectorAll("link[href]") as any as Iterable<Element>) {
-    const href = element.getAttribute("href")!;
-    if (/^(\w+:)\/\//.test(href)) continue; // absolute url
-    if (canReadSync(join(root, href))) {
+    const href = pathFromRoot(element.getAttribute("href"), root);
+    if (href) {
       context.files.push({name: href, mimeType: mime.getType(href)});
       element.setAttribute("href", `/_file/${href}`);
     }
