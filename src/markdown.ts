@@ -443,6 +443,6 @@ export function diffMarkdown({parse: prevParse}: ReadMarkdownResult, {parse: nex
 }
 
 export async function readMarkdown(path: string, root: string): Promise<ReadMarkdownResult> {
-  const contents = await readFile(path, "utf-8");
+  const contents = await readFile(pathFromRoot(path, root)!, "utf-8");
   return {contents, parse: parseMarkdown(contents, root, path), hash: computeHash(contents)};
 }

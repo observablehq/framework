@@ -206,8 +206,8 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
           let {path} = message;
           if (normalize(path).startsWith("..")) throw new Error("Invalid path: " + path);
           if (path.endsWith("/")) path += "index";
-          path = join(root, normalize(path) + ".md");
-          markdownWatcher = watch(path, await refreshMarkdown(path));
+          path = normalize(path) + ".md";
+          markdownWatcher = watch(join(root, path), await refreshMarkdown(path));
           break;
         }
       }
