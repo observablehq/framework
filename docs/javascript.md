@@ -131,6 +131,11 @@ You can import a library from npm like so:
 import confetti from "npm:canvas-confetti";
 ```
 
+```js show
+import {sumRoot} from "./testImportRoot.js"
+display(sumRoot(1, 3));
+```
+
 Now you can reference the imported `confetti` anywhere on the page.
 
 ```js show
