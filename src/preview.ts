@@ -84,7 +84,6 @@ class Server {
           send(req, filepath, {root: this.cacheRoot}).pipe(res);
           return;
         }
-        throw new HttpError("Not found", 404);
       } else {
         if (normalize(pathname).startsWith("..")) throw new Error("Invalid path: " + pathname);
         let path = join(this.root, pathname);
