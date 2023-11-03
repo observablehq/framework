@@ -1,10 +1,11 @@
-import {createServer, type RequestListener} from "node:http";
+import {createServer, type ServerResponse, type RequestListener} from "node:http";
 import {randomBytes} from "node:crypto";
 import os from "node:os";
 import open from "open";
 import {HttpError, isHttpError} from "./error.js";
 import {setObservableApiKey} from "./auth.js";
 import {isatty} from "node:tty";
+import type {IncomingMessage} from "http";
 
 const OBSERVABLEHQ_HOST = process.env["OBSERVABLEHQ_HOST"] ?? "https://observablehq.com";
 
@@ -64,44 +65,9 @@ class Server {
     const url = new URL(req.url!, "http://localhost");
     const {pathname} = url;
     try {
-      if (pathname === "/api-key") {
-        const body: any = await new Promise((resolve, reject) => {
-          const chunks: string[] = [];
-          req.setEncoding("utf8");
-          req.on("readable", () => {
-            let chunk: string;
-            while (null !== (chunk = req.read())) {
-              chunks.push(chunk);
-            }
-          });
-
-          req.on("end", () => {
-            resolve(JSON.parse(chunks.join("")));
-          });
-
-          req.on("error", reject);
-        });
-
-        if (body.nonce !== this._nonce) {
-          throw new HttpError("Invalid nonce", 400);
-        }
-
-        await setObservableApiKey(body.id, body.key);
-
-        res.statusCode = 201;
-        res.setHeader("Access-Control-Allow-Origin", "*");
-        await Promise.race([
-          // ignoring any potential errors ending the response
-          new Promise((resolve) => res.end(() => resolve(undefined))),
-          new Promise((resolve) => setTimeout(resolve, 500))
-        ]);
-
-        console.log("Successfully logged in.");
-        process.exit(0);
-      } else {
-        // Anything else should 404
-        throw new HttpError("Not found", 404);
-      }
+      if (req.method === "OPTIONS" && pathname === "/api-key") return await this.optionsApiKey(req, res);
+      if (req.method === "POST" && pathname === "/api-key") return await this.postApiKey(req, res);
+      throw new HttpError("Not found", 404);
     } catch (error) {
       console.error(error);
       res.statusCode = isHttpError(error) ? error.statusCode : 500;
@@ -109,6 +75,51 @@ class Server {
       res.end(error instanceof Error ? error.message : "Oops, an error occurred");
     }
   };
+
+  private async optionsApiKey(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Origin", OBSERVABLEHQ_HOST);
+  }
+
+  private async postApiKey(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    const body: any = await new Promise((resolve, reject) => {
+      const chunks: string[] = [];
+      req.setEncoding("utf8");
+      req.on("readable", () => {
+        let chunk: string;
+        while (null !== (chunk = req.read())) {
+          chunks.push(chunk);
+        }
+      });
+
+      req.on("end", () => {
+        try {
+          resolve(JSON.parse(chunks.join("")));
+        } catch (err) {
+          reject(new HttpError("Invalid JSON", 400));
+        }
+      });
+
+      req.on("error", reject);
+    });
+
+    if (body.nonce !== this._nonce) {
+      throw new HttpError("Invalid nonce", 400);
+    }
+
+    await setObservableApiKey(body.id, body.key);
+
+    res.statusCode = 201;
+    res.setHeader("Access-Control-Allow-Origin", OBSERVABLEHQ_HOST);
+    await Promise.race([
+      // ignoring any potential errors ending the response
+      new Promise((resolve) => res.end(() => resolve(undefined))),
+      new Promise((resolve) => setTimeout(resolve, 500))
+    ]);
+
+    console.log("Successfully logged in.");
+    process.exit(0);
+  }
 }
 
 function waitForEnter() {
