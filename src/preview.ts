@@ -18,6 +18,7 @@ import {findLoader, runCommand} from "./dataloader.js";
 import {getStats} from "./files.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
+const cacheRoot = join(dirname(fileURLToPath(import.meta.url)), "..", ".observablehq", "cache");
 
 class Server {
   private _server: ReturnType<typeof createServer>;
@@ -28,11 +29,11 @@ class Server {
   readonly cacheRoot: string;
   private _resolver: CellResolver | undefined;
 
-  constructor({port, hostname, root}: CommandContext) {
+  constructor({port, hostname, root, cacheRoot}: CommandContext) {
     this.port = port;
     this.hostname = hostname;
     this.root = root;
-    this.cacheRoot = join(this.root, "../_cache");
+    this.cacheRoot = cacheRoot;
     this._server = createServer();
     this._server.on("request", this._handleRequest);
     this._socketServer = new WebSocketServer({server: this._server});
@@ -305,6 +306,7 @@ interface CommandContext {
   root: string;
   hostname: string;
   port: number;
+  cacheRoot: string;
 }
 
 function makeCommandContext(): CommandContext {
@@ -332,7 +334,8 @@ function makeCommandContext(): CommandContext {
   return {
     root: normalize(values.root).replace(/\/$/, ""),
     hostname: values.hostname ?? process.env.HOSTNAME ?? "127.0.0.1",
-    port: values.port ? +values.port : process.env.PORT ? +process.env.PORT : 3000
+    port: values.port ? +values.port : process.env.PORT ? +process.env.PORT : 3000,
+    cacheRoot
   };
 }
 

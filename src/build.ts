@@ -1,9 +1,9 @@
-import {access, constants, copyFile, mkdir, readFile, writeFile} from "node:fs/promises";
+import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
 import {basename, dirname, join, normalize, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
-import {getStats, visitFiles, visitMarkdownFiles} from "./files.js";
+import {getStats, prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
 import {readPages} from "./navigation.js";
 import {renderServerless} from "./render.js";
 import {makeCLIResolver} from "./resolver.js";
@@ -61,7 +61,6 @@ async function build(context: CommandContext) {
         continue;
       }
       console.log("generate", path, "→", outputPath);
-      await prepareOutput(outputPath);
       await runCommand(path, outputPath);
       continue;
     }
@@ -78,12 +77,6 @@ async function build(context: CommandContext) {
     await prepareOutput(outputPath);
     await copyFile(sourcePath, outputPath);
   }
-}
-
-async function prepareOutput(outputPath: string): Promise<void> {
-  const outputDir = dirname(outputPath);
-  if (outputDir === ".") return;
-  await mkdir(outputDir, {recursive: true});
 }
 
 const USAGE = `Usage: observable build [--root dir] [--output dir]`;
