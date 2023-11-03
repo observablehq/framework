@@ -48,7 +48,7 @@ export async function runCommand(commandPath: string, outputPath: string) {
 
 export async function findLoader(root: string, name: string) {
   // TODO: It may be more efficient use fs.readdir
-  for (const ext of [".js", ".ts"]) {
+  for (const ext of [".js", ".ts", ".sh"]) {
     const path = join(root, name) + ext;
     const stats = await getStats(path);
     if (stats) return {path, stats};
