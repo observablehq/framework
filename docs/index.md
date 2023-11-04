@@ -92,9 +92,3 @@ In development:
 - Custom headers, footers, and themes
 
 In the future, the Observable CLI will integrate seamlessly with the [Observable cloud platform](https://observablehq.com), making it easy for you to deploy and develop pages collaboratively with your team.
-
-```js
-import {sumRoot} from "./testImportRoot.js";
-display(sumRoot(3, 12));
-display('hello');
-```
