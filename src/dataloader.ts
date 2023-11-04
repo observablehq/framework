@@ -1,6 +1,6 @@
 import {spawn} from "node:child_process";
 import {type Stats} from "node:fs";
-import {open, rename, unlink} from "node:fs/promises";
+import {constants, open, rename, unlink} from "node:fs/promises";
 import {maybeStat, prepareOutput} from "./files.js";
 
 const runningCommands = new Map<string, Promise<void>>();
@@ -47,7 +47,9 @@ export async function maybeLoader(name: string): Promise<Loader | null> {
   for (const ext of [".js", ".ts", ".sh"]) {
     const path = name + ext;
     const stats = await maybeStat(path);
-    if (stats) return {path, stats};
+    if (stats && stats.mode & constants.S_IXUSR) {
+      return {path, stats};
+    }
   }
   return null;
 }

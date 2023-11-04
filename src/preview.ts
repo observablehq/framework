@@ -75,9 +75,6 @@ class Server {
             send(req, filepath, {root: this.cacheRoot}).pipe(res);
             return;
           }
-          if (!(loader.stats.mode & constants.S_IXUSR)) {
-            throw new HttpError("Data loader is not executable", 404);
-          }
           await runLoader(loader.path, cachePath);
           send(req, filepath, {root: this.cacheRoot}).pipe(res);
           return;
