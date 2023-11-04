@@ -65,9 +65,11 @@ export function rewriteImports(output, root) {
     ImportExpression(node: any) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
-        if (value.startsWith("./")) {
-          output.replaceLeft(node.source.start + 1, node.source.start + 3, "/_file/");
-        }
+        output.replaceLeft(
+          node.source.start,
+          node.source.end,
+          JSON.stringify(value.startsWith("./") ? `/_file/${value.slice(2)}` : resolveImport(value))
+        );
       }
     },
     ImportDeclaration(node: any) {
@@ -83,7 +85,9 @@ export function rewriteImports(output, root) {
               : node.specifiers.some(isNamespaceSpecifier)
               ? node.specifiers.find(isNamespaceSpecifier).local.name
               : "{}"
-          } = await import(${value.startsWith("./") ? JSON.stringify("/_file/" + value.slice(2)) : node.source.raw});`
+          } = await import(${JSON.stringify(
+            value.startsWith("./") ? `/_file/${value.slice(2)}` : resolveImport(value)
+          )});`
         );
       }
     }
@@ -104,4 +108,12 @@ function isNamespaceSpecifier(node) {
 
 function isNotNamespaceSpecifier(node) {
   return node.type !== "ImportNamespaceSpecifier";
+}
+
+export function resolveImport(specifier: string): string {
+  return !specifier.startsWith("npm:")
+    ? specifier
+    : specifier === "npm:@observablehq/runtime"
+    ? "/_observablehq/runtime.js"
+    : `https://cdn.jsdelivr.net/npm/${specifier.slice(4)}/+esm`;
 }
