@@ -9,7 +9,7 @@ switch (command) {
     break;
   }
   case "build":
-    import("../src/build.js");
+    import("../src/build.js").then((build) => build.execute());
     break;
   case "preview":
     import("../src/preview.js");
@@ -22,3 +22,5 @@ switch (command) {
     process.exit(1);
     break;
 }
+
+process.exit(0);
