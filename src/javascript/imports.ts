@@ -115,5 +115,5 @@ export function resolveImport(specifier: string): string {
     ? specifier
     : specifier === "npm:@observablehq/runtime"
     ? "/_observablehq/runtime.js"
-    : `https://cdn.jsdelivr.net/npm/${specifier.slice(4)}/+esm`;
+    : `https://cdn.jsdelivr.net/npm/${specifier.slice("npm:".length)}/+esm`;
 }
