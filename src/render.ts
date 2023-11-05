@@ -63,11 +63,6 @@ ${Array.from(getImportPreloads(parseResult))
   .concat(parseResult.imports.filter(({name}) => name.startsWith("./")).map(({name}) => `/_file/${name.slice(2)}`))
   .map((href) => `<link rel="modulepreload" href="${href}">`)
   .join("\n")}
-${
-  parseResult.cells.some((cell) => cell.databases?.length)
-    ? `<link rel="modulepreload" href="/_observablehq/database.js">`
-    : ""
-}
 <script type="module">
 
 import {${preview ? "open, " : ""}define} from "/_observablehq/client.js";
@@ -128,6 +123,9 @@ function getImportPreloads(parseResult: ParseResult): Iterable<string> {
     if (resolved.startsWith("/") || resolved.startsWith("https://")) {
       preloads.push(resolved);
     }
+  }
+  if (parseResult.cells.some((cell) => cell.databases?.length)) {
+    preloads.push("/_observablehq/database.js");
   }
   return preloads;
 }
