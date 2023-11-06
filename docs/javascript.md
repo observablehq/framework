@@ -107,6 +107,25 @@ Count is: ${htl.html`<span class="flash">${count}</span>`}.
 
 Within the defining code block, `count` is a generator and `count.value` can be read and written to as desired; in other code, `count` is the generator’s current value. Other code that references `count` will re-run automatically whenever `count.value` is reassigned — so be careful you don’t cause an infinite loop!
 
+#### searchParams
+
+The `searchParams` object lists the page URL’s [search parameters](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams). The object’s entries can be read to, for example, initialize inputs to a value passed as a parameter:
+
+```js
+const x = view(Inputs.range([0, 10], {value: searchParams.get("x")}))
+```
+
+Conversely, you can use this object to create a new page URL that reflects the state of the page’s inputs:
+
+```js
+display(Inputs.button("Hello", {
+  reduce: () => {
+    searchParams.set("x", x);
+    history.replaceState({}, null, `/foo?${searchParams}`);
+  }
+}))
+```
+
 ## Displaying content
 
 A JavaScript fenced code block containing an expression will automatically display its value, as will an inline JavaScript expression. You can also manually display elements or inspect values by calling the built-in `display` function.
