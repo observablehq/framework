@@ -1,5 +1,6 @@
 import {Parser, tokTypes, type Options} from "acorn";
 import mime from "mime";
+import {isLocalFile} from "./files.js";
 import {findAwaits} from "./javascript/awaits.js";
 import {findDeclarations} from "./javascript/declarations.js";
 import {findFeatures} from "./javascript/features.js";
@@ -42,12 +43,12 @@ export interface ParseOptions {
 }
 
 export function transpileJavaScript(input: string, options: ParseOptions): Transpile {
-  const {id} = options;
+  const {root, id} = options;
   try {
     const node = parseJavaScript(input, options);
     const databases = node.features.filter((f) => f.type === "DatabaseClient").map((f) => ({name: f.name}));
     const files = node.features
-      .filter((f) => f.type === "FileAttachment")
+      .filter((f) => f.type === "FileAttachment" && isLocalFile(f.name, root))
       .map((f) => ({name: f.name, mimeType: mime.getType(f.name)}));
     const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
     const output = new Sourcemap(input);
