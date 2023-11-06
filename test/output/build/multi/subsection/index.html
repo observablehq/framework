@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Sub-Section</title>
+<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
+<link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
+<script type="importmap">
+{
+  "imports": {
+    "npm:@observablehq/runtime": "/_observablehq/runtime.js"
+  }
+}
+</script>
+<link rel="modulepreload" href="/_observablehq/runtime.js">
+
+<script type="module">
+
+import {define} from "/_observablehq/client.js";
+
+
+</script>
+<input id="observablehq-sidebar-toggle" type="checkbox">
+<nav id="observablehq-sidebar">
+  <ol>
+    <li class="observablehq-link observablehq-link-active"><a href="/subsection/">Sub-Section</a></li>
+    <li class="observablehq-link"><a href="/">Multi test</a></li>
+  </ol>
+</nav>
+<script>{
+  const toggle = document.querySelector("#observablehq-sidebar-toggle");
+  const initialState = localStorage.getItem("observablehq-sidebar");
+  if (initialState) toggle.checked = initialState === "true";
+  else toggle.indeterminate = true;
+}</script>
+<div id="observablehq-center">
+<main id="observablehq-main" class="observablehq">
+<h1 id="sub-section" tabindex="-1"><a class="observablehq-header-anchor" href="#sub-section">Sub-Section</a></h1>
+<p>This is a sub-section of the multi-section page.</p>
+</main>
+<footer id="observablehq-footer">© 2023 Observable, Inc.</footer>
+</div>
