@@ -66,14 +66,16 @@ export function findImports(body: Node, root: string, sourcePath: string) {
 }
 
 // TODO parallelize multiple static imports
-export function rewriteImports(output: any, rootNode: JavaScriptNode, sourcePath: string) {
+export function rewriteImports(output: any, rootNode: JavaScriptNode) {
   simple(rootNode.body, {
     ImportExpression(node: any) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
-        if (isLocalImport(value)) {
-          output.replaceLeft(node.source.start + 1, node.source.start + 3, "/_file/");
-        }
+        output.replaceLeft(
+          node.source.start,
+          node.source.end,
+          JSON.stringify(value.startsWith("./") ? `/_file/${value.slice(2)}` : resolveImport(value))
+        );
       }
     },
     ImportDeclaration(node: any) {
@@ -89,9 +91,9 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode, sourcePath
               : node.specifiers.some(isNamespaceSpecifier)
               ? node.specifiers.find(isNamespaceSpecifier).local.name
               : "{}"
-          } = await import(${
-            isLocalImport(value) ? JSON.stringify(join("/_file/", join(dirname(sourcePath), value))) : node.source.raw
-          });`
+          } = await import(${JSON.stringify(
+            value.startsWith("./") ? `/_file/${value.slice(2)}` : resolveImport(value)
+          )});`
         );
       }
     }
@@ -116,4 +118,12 @@ function isNamespaceSpecifier(node) {
 
 function isNotNamespaceSpecifier(node) {
   return node.type !== "ImportNamespaceSpecifier";
+}
+
+export function resolveImport(specifier: string): string {
+  return !specifier.startsWith("npm:")
+    ? specifier
+    : specifier === "npm:@observablehq/runtime"
+    ? "/_observablehq/runtime.js"
+    : `https://cdn.jsdelivr.net/npm/${specifier.slice("npm:".length)}/+esm`;
 }

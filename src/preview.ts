@@ -62,6 +62,7 @@ class Server {
         try {
           await access(filepath, constants.R_OK);
           send(req, pathname.slice("/_file".length), {root: this.root}).pipe(res);
+          return;
         } catch (error) {
           if (isNodeError(error) && error.code !== "ENOENT") {
             throw error;
