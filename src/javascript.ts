@@ -1,7 +1,5 @@
 import {Parser, tokTypes, type Options} from "acorn";
 import mime from "mime";
-import {join} from "node:path";
-import {canReadSync} from "./files.js";
 import {findAwaits} from "./javascript/awaits.js";
 import {findDeclarations} from "./javascript/declarations.js";
 import {findFeatures} from "./javascript/features.js";
@@ -10,6 +8,10 @@ import {defaultGlobals} from "./javascript/globals.js";
 import {findImports, rewriteImports} from "./javascript/imports.js";
 import {findReferences} from "./javascript/references.js";
 import {Sourcemap} from "./sourcemap.js";
+
+export interface DatabaseReference {
+  name: string;
+}
 
 export interface FileReference {
   name: string;
@@ -26,6 +28,7 @@ export interface Transpile {
   outputs?: string[];
   inline?: boolean;
   body: string;
+  databases?: DatabaseReference[];
   files?: FileReference[];
   imports?: ImportReference[];
 }
@@ -39,17 +42,17 @@ export interface ParseOptions {
 }
 
 export function transpileJavaScript(input: string, options: ParseOptions): Transpile {
-  const {root, id} = options;
+  const {id} = options;
   try {
     const node = parseJavaScript(input, options);
+    const databases = node.features.filter((f) => f.type === "DatabaseClient").map((f) => ({name: f.name}));
     const files = node.features
       .filter((f) => f.type === "FileAttachment")
-      .filter((f) => canReadSync(join(root, f.name)))
       .map((f) => ({name: f.name, mimeType: mime.getType(f.name)}));
     const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
     const output = new Sourcemap(input);
     trim(output, input);
-    if (node.expression && !inputs.includes("display")) {
+    if (node.expression && !inputs.includes("display") && !inputs.includes("view")) {
       output.insertLeft(0, "display((\n");
       output.insertRight(input.length, "\n))");
       inputs.push("display");
@@ -61,6 +64,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
       ...(inputs.length ? {inputs} : null),
       ...(options.inline ? {inline: true} : null),
       ...(node.declarations?.length ? {outputs: node.declarations.map(({name}) => name)} : null),
+      ...(databases.length ? {databases} : null),
       ...(files.length ? {files} : null),
       body: `${node.async ? "async " : ""}(${inputs}) => {
 ${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.map(({name}) => name)}};` : ""}

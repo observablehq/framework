@@ -1,11 +1,13 @@
-import {access, constants, copyFile, mkdir, readFile, writeFile} from "node:fs/promises";
+import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
 import {basename, dirname, join, normalize, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
-import {visitFiles, visitMarkdownFiles} from "./files.js";
+import {getStats, prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
 import {readPages} from "./navigation.js";
 import {renderServerless} from "./render.js";
+import {makeCLIResolver} from "./resolver.js";
+import {findLoader, runCommand} from "./dataloader.js";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
 
@@ -20,12 +22,18 @@ async function build(context: CommandContext) {
   // Render .md files, building a list of file attachments as we go.
   const pages = await readPages(sourceRoot);
   const files: string[] = [];
+  const resolver = await makeCLIResolver();
   for await (const sourceFile of visitMarkdownFiles(sourceRoot)) {
     const sourcePath = join(sourceRoot, sourceFile);
     const outputPath = join(outputRoot, join(dirname(sourceFile), basename(sourceFile, ".md") + ".html"));
     console.log("render", sourcePath, "→", outputPath);
     const path = `/${join(dirname(sourceFile), basename(sourceFile, ".md"))}`;
-    const render = renderServerless(await readFile(sourcePath, "utf-8"), {root: sourceRoot, path, pages});
+    const render = renderServerless(await readFile(sourcePath, "utf-8"), {
+      root: sourceRoot,
+      path,
+      pages,
+      resolver
+    });
     files.push(...render.files.map((f) => join(sourceFile, "..", f.name)));
     await prepareOutput(outputPath);
     await writeFile(outputPath, render.html);
@@ -45,6 +53,17 @@ async function build(context: CommandContext) {
   for (const file of files) {
     const sourcePath = join(sourceRoot, file);
     const outputPath = join(outputRoot, "_file", file);
+    const stats = await getStats(sourcePath);
+    if (!stats) {
+      const {path} = await findLoader("", sourcePath);
+      if (!path) {
+        console.error("missing referenced file", sourcePath);
+        continue;
+      }
+      console.log("generate", path, "→", outputPath);
+      await runCommand(path, outputPath);
+      continue;
+    }
     console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);
     await copyFile(sourcePath, outputPath);
@@ -58,12 +77,6 @@ async function build(context: CommandContext) {
     await prepareOutput(outputPath);
     await copyFile(sourcePath, outputPath);
   }
-}
-
-async function prepareOutput(outputPath: string): Promise<void> {
-  const outputDir = dirname(outputPath);
-  if (outputDir === ".") return;
-  await mkdir(outputDir, {recursive: true});
 }
 
 const USAGE = `Usage: observable build [--root dir] [--output dir]`;

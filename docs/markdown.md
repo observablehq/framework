@@ -1,6 +1,10 @@
 # Markdown reference
 
-See [GitHub’s guide to Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) for an introduction. In addition to standard Markdown features — headings, formatting, tables, and the like — Observable Markdown supports [reactive JavaScript](./javascript).
+See [GitHub’s guide to Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) for an introduction.
+
+## JavaScript in Markdown
+
+In addition to standard Markdown features — headings, formatting, tables, images, and the like — Observable Markdown supports [reactive JavaScript](./javascript) that runs on the client. Live JavaScript can be expressed either as [fenced code blocks](#fenced-code-blocks) (<code>```js</code>) or [inline expressions](#inline-expressions) (<code>$\{…}</code>).
 
 ### Fenced code blocks
 
@@ -44,7 +48,7 @@ const x = 1 + 2;
 const x = 1 + 2;
 ```
 
-A program code block doesn’t display anything by default, but you can call the built-in [display function](./javascript#display(value)) explicitly. The above block defines the top-level variable `x` with a value of ${x}.
+A program code block doesn’t display anything by default, but you can call the built-in [`display` function](./javascript#display(value)) explicitly. The above block defines the top-level variable `x` with a value of ${x}.
 
 (A technical note: the parser first attempts to parse the input as an expression; if that fails, it parses it as a program. So, code such as `{foo: 1}` is interpreted as an object literal rather than a block with a labeled statement.)
 
@@ -68,3 +72,47 @@ const number = Generators.input(numberInput);
 ```
 
 Unlike code blocks, expressions cannot declare top-level variables.
+
+## HTML in Markdown
+
+You can write HTML directly into Markdown. HTML is useful for greater control over layout, say to use CSS grid for a responsive bento box layout in a dashboard, or adding an external stylesheet via a link element. For example, here is an HTML details element:
+
+````html
+<details>
+  <summary>Click me</summary>
+  This text is not visible by default.
+</details>
+````
+
+This produces:
+
+<details>
+  <summary>Click me</summary>
+  This text is not visible by default.
+</details>
+
+In Markdown, blank lines denote separate HTML blocks; be sure to avoid blank lines if you want to treat a chunk of HTML as a single block. For example, write this:
+
+```md
+<!-- 👍 one HTML block -->
+<ul>
+  <li>one</li>
+  <li>two</li>
+  <li>three</li>
+</ul>
+```
+
+Don’t write this:
+
+```md
+<!-- 👎 three HTML blocks -->
+<ul>
+
+  <li>one</li>
+  <li>two</li>
+  <li>three</li>
+
+</ul>
+```
+
+In the latter case, the li elements become top-level and wrapped in a span, rather than children of the ul.

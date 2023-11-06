@@ -1,9 +1,24 @@
+import type {Stats} from "node:fs";
 import {accessSync, constants, statSync} from "node:fs";
-import {readdir, stat} from "node:fs/promises";
-import {extname, join, normalize, relative} from "node:path";
+import {mkdir, readdir, stat} from "node:fs/promises";
+import {dirname, extname, join, normalize, relative} from "node:path";
 import {isNodeError} from "./error.js";
 
-export function canReadSync(path: string): boolean {
+// A file is local if it exists in the root folder or a subfolder.
+export function isLocalFile(ref: string | null, root: string): boolean {
+  return (
+    typeof ref === "string" &&
+    !/^(\w+:)\/\//.test(ref) &&
+    !normalize(ref).startsWith("../") &&
+    canReadSync(join(root, ref))
+  );
+}
+
+export function pathFromRoot(ref: string | null, root: string): string | null {
+  return isLocalFile(ref, root) ? join(root, ref!) : null;
+}
+
+function canReadSync(path: string): boolean {
   try {
     accessSync(path, constants.R_OK);
     return statSync(path).isFile();
@@ -35,4 +50,19 @@ export async function* visitFiles(root: string): AsyncGenerator<string> {
       yield relative(root, path);
     }
   }
+}
+
+export async function getStats(path: string): Promise<Stats | undefined> {
+  try {
+    return await stat(path);
+  } catch (error) {
+    if (!isNodeError(error) || error.code !== "ENOENT") throw error;
+  }
+  return;
+}
+
+export async function prepareOutput(outputPath: string): Promise<void> {
+  const outputDir = dirname(outputPath);
+  if (outputDir === ".") return;
+  await mkdir(outputDir, {recursive: true});
 }

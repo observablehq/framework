@@ -1,12 +1,19 @@
 import {Runtime, Library, Inspector} from "npm:@observablehq/runtime";
 
-const library = Object.assign(new Library(), {width, searchParams, ...recommendedLibraries()});
+const library = Object.assign(new Library(), {width, searchParams, Mutable, ...recommendedLibraries()});
 const runtime = new Runtime(library);
 const main = runtime.module();
 
 const attachedFiles = new Map();
 const resolveFile = (name) => attachedFiles.get(name);
 main.builtin("FileAttachment", runtime.fileAttachments(resolveFile));
+
+const databaseTokens = new Map();
+async function resolveDatabaseToken(name) {
+  const token = databaseTokens.get(name);
+  if (!token) throw new Error(`Database configuration for ${name} not found`);
+  return token;
+}
 
 const cellsById = new Map();
 const Generators = library.Generators;
@@ -30,13 +37,37 @@ function searchParams() {
   return new URLSearchParams(location.search);
 }
 
+// Mutable returns a generator with a value getter/setting that allows the
+// generated value to be mutated. Therefore, direct mutation is only allowed
+// within the defining cell, but the cell can also export functions that allows
+// other cells to mutate the value as desired.
+function Mutable() {
+  return function Mutable(value) {
+    let change;
+    return Object.defineProperty(
+      Generators.observe((_) => {
+        change = _;
+        if (value !== undefined) change(value);
+      }),
+      "value",
+      {
+        get: () => value,
+        set: (x) => void change((value = x)) // eslint-disable-line no-setter-return
+      }
+    );
+  };
+}
+
 // Override the common recommended libraries so that if a user imports them,
 // they get the same version that the standard library provides (rather than
 // loading the library twice). Also, it’s nice to avoid require!
 function recommendedLibraries() {
   return {
+    DatabaseClient: () => import("./database.js").then((db) => db.makeDatabaseClient(resolveDatabaseToken)),
     d3: () => import("npm:d3"),
     htl: () => import("npm:htl"),
+    html: () => import("npm:htl").then((htl) => htl.html),
+    svg: () => import("npm:htl").then((htl) => htl.svg),
     Plot: () => import("npm:@observablehq/plot"),
     Inputs: () => {
       // TODO Observable Inputs needs to include the CSS in the dist folder
@@ -53,26 +84,44 @@ function recommendedLibraries() {
 }
 
 export function define(cell) {
-  const {id: idParam, inline, inputs = [], outputs = [], files = [], body} = cell;
-  const id = String(idParam);
+  const {id, inline, inputs = [], outputs = [], files = [], databases = [], body} = cell;
   const variables = [];
   cellsById.get(id)?.variables.forEach((v) => v.delete());
   cellsById.set(id, {cell, variables});
   const root = document.querySelector(`#cell-${id}`);
-  const observer = {pending: () => (root.innerHTML = ""), rejected: (error) => new Inspector(root).rejected(error)};
+  let reset = null;
+  const clear = () => ((root.innerHTML = ""), (reset = null));
+  const inspector = () => new Inspector(root.appendChild(document.createElement("SPAN")));
   const display = inline
-    ? (val) => (val instanceof Node || typeof val === "string" || !val?.[Symbol.iterator] ? root.append(val) : root.append(...val), val) // prettier-ignore
-    : (val) => (new Inspector(root.appendChild(document.createElement("SPAN"))).fulfilled(val), val);
-  const v = main.variable(observer, {
-    shadow: {
-      display: () => display,
-      view: () => (val) => Generators.input(display(val))
+    ? (v) => {
+        reset?.();
+        if (v instanceof Node || typeof v === "string" || !v?.[Symbol.iterator]) root.append(v);
+        else root.append(...v);
+        return v;
+      }
+    : (v) => {
+        reset?.();
+        inspector().fulfilled(v);
+        return v;
+      };
+  const v = main.variable(
+    {
+      pending: () => (reset = clear),
+      fulfilled: () => reset?.(),
+      rejected: (error) => (reset?.(), inspector().rejected(error))
+    },
+    {
+      shadow: {
+        display: () => display,
+        view: () => (v) => Generators.input(display(v))
+      }
     }
-  });
+  );
   v.define(outputs.length ? `cell ${id}` : null, inputs, body);
   variables.push(v);
   for (const o of outputs) variables.push(main.define(o, [`cell ${id}`], (exports) => exports[o]));
   for (const f of files) attachedFiles.set(f.name, {url: String(new URL(`/_file/${f.name}`, location)), mimeType: f.mimeType}); // prettier-ignore
+  for (const d of databases) databaseTokens.set(d.name, d);
 }
 
 export function open({hash} = {}) {
@@ -91,71 +140,76 @@ export function open({hash} = {}) {
         location.reload();
         break;
       }
+      case "refresh":
+        message.cellIds.forEach((id) => {
+          const cell = cellsById.get(id);
+          if (cell) define(cell.cell);
+        });
+        break;
       case "update": {
         const root = document.querySelector("main");
-        if (root.children.length !== message.length) {
+        if (message.previousHash !== hash) {
           console.log("contents out of sync");
           location.reload();
           break;
         }
-        message.diff.forEach(({type, newPos, items}) => {
+        hash = message.updatedHash;
+        let offset = 0;
+        for (const {type, oldPos, items} of message.diff) {
           switch (type) {
-            case "add":
-              items.forEach((item) => {
+            case "add": {
+              for (const item of items) {
                 switch (item.type) {
                   case "html":
-                    if (root.children.length === 0) {
-                      var template = document.createElement("template");
-                      template.innerHTML = item.html;
-                      root.appendChild(template.content.firstChild);
-                    }
-                    if (newPos >= root.children.length) {
-                      root.children[root.children.length - 1].insertAdjacentHTML("afterend", item.html);
-                      newPos++;
+                    if (oldPos + offset < root.children.length) {
+                      root.children[oldPos + offset].insertAdjacentHTML("beforebegin", item.html);
                     } else {
-                      root.children[newPos++].insertAdjacentHTML("beforebegin", item.html);
+                      root.insertAdjacentHTML("beforeend", item.html);
                     }
+                    ++offset;
                     item.cellIds.forEach((id) => {
                       const cell = cellsById.get(id);
                       if (cell) define(cell.cell);
                     });
                     break;
                   case "cell":
-                    {
-                      define({
-                        id: item.id,
-                        inline: item.inline,
-                        inputs: item.inputs,
-                        outputs: item.outputs,
-                        files: item.files,
-                        body: (0, eval)(item.body)
-                      });
-                    }
+                    define({
+                      id: item.id,
+                      inline: item.inline,
+                      inputs: item.inputs,
+                      outputs: item.outputs,
+                      databases: item.databases,
+                      files: item.files,
+                      body: (0, eval)(item.body)
+                    });
                     break;
                 }
-              });
+              }
               break;
-            case "remove":
-              items.forEach((item) => {
+            }
+            case "remove": {
+              let removes = 0;
+              for (const item of items) {
                 switch (item.type) {
                   case "html":
-                    if (newPos < root.children.length) {
-                      root.removeChild(root.children[newPos]);
+                    if (oldPos + offset < root.children.length) {
+                      root.children[oldPos + offset].remove();
+                      ++removes;
                     } else {
-                      console.log("remove out of range", item);
+                      console.error(`remove out of range: ${oldPos + offset} ≮ ${root.children.length}`);
                     }
                     break;
                   case "cell":
-                    {
-                      cellsById.get(item.id)?.variables.forEach((v) => v.delete());
-                      cellsById.delete(item.id);
-                    }
+                    cellsById.get(item.id)?.variables.forEach((v) => v.delete());
+                    cellsById.delete(item.id);
                     break;
                 }
-              });
+              }
+              offset -= removes;
               break;
+            }
           }
-        });
+        }
         break;
       }
     }
@@ -173,4 +227,23 @@ export function open({hash} = {}) {
     console.info("↑", message);
     socket.send(JSON.stringify(message));
   }
+}
+
+{
+  const toggle = document.querySelector("#observablehq-sidebar-toggle");
+  let indeterminate = toggle.indeterminate;
+  toggle.onclick = () => {
+    const matches = matchMedia("(min-width: calc(640px + 4rem + 0.5rem + 240px + 2rem))").matches;
+    if (indeterminate) (toggle.checked = !matches), (indeterminate = false);
+    else if (toggle.checked === matches) indeterminate = true;
+    toggle.indeterminate = indeterminate;
+    if (indeterminate) localStorage.removeItem("observablehq-sidebar");
+    else localStorage.setItem("observablehq-sidebar", toggle.checked);
+  };
+  addEventListener("keypress", (event) => {
+    if (event.key === "b" && event.metaKey && !event.ctrlKey) {
+      toggle.click();
+      event.preventDefault();
+    }
+  });
 }
