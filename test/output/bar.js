@@ -1,4 +1,4 @@
 define({id: "0", outputs: ["bar"], body: () => {
-const bar = new Symbol("bar");
+const bar = Symbol("bar");
 return {bar};
 }});
