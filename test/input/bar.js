@@ -1,1 +1,1 @@
-const bar = new Symbol("bar");
+const bar = Symbol("bar");
