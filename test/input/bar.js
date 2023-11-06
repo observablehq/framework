@@ -1,0 +1,1 @@
+const bar = new Symbol("bar");
