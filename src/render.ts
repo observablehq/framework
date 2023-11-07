@@ -48,7 +48,7 @@ type RenderInternalOptions =
 
 function render(
   parseResult: ParseResult,
-  {path: servingPath, pages, preview, hash, resolver}: RenderOptions & RenderInternalOptions
+  {path, pages, preview, hash, resolver}: RenderOptions & RenderInternalOptions
 ): string {
   const showSidebar = pages && pages.length > 1;
   return `<!DOCTYPE html>
@@ -59,12 +59,6 @@ ${
 }<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
 ${Array.from(getImportPreloads(parseResult))
-  .concat(
-    parseResult.imports
-      .filter(({type}) => type === "local")
-      .map(({name}) => `/_file/${name.startsWith("/") ? name.slice(1) : name}`),
-    parseResult.cells.some((cell) => cell.databases?.length) ? "/_observablehq/database.js" : []
-  )
   .map((href) => `<link rel="modulepreload" href="${href}">`)
   .join("\n")}
 <script type="module">
@@ -90,9 +84,9 @@ ${
   <ol>${pages
     ?.map(
       (p) => `
-    <li class="observablehq-link${
-      p.path === servingPath ? " observablehq-link-active" : ""
-    }"><a href="${escapeDoubleQuoted(p.path.replace(/\/index$/, "/"))}">${escapeData(p.name)}</a></li>`
+    <li class="observablehq-link${p.path === path ? " observablehq-link-active" : ""}"><a href="${escapeDoubleQuoted(
+      p.path.replace(/\/index$/, "/")
+    )}">${escapeData(p.name)}</a></li>`
     )
     .join("")}
   </ol>
@@ -115,9 +109,7 @@ ${parseResult.html}</main>
 
 function getImportPreloads(parseResult: ParseResult): Iterable<string> {
   const specifiers = new Set<string>(["npm:@observablehq/runtime"]);
-  for (const {name, type} of parseResult.imports) {
-    if (type === "global") specifiers.add(name);
-  }
+  for (const {name, type} of parseResult.imports) specifiers.add(`${type === "local" ? "/_file" : ""}${name}`);
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
   if (inputs.has("d3") || inputs.has("Plot")) specifiers.add("npm:d3");
   if (inputs.has("Plot")) specifiers.add("npm:@observablehq/plot");

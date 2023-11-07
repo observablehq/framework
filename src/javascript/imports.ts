@@ -31,6 +31,7 @@ export function findImports(body: Node, root: string, sourcePath: string) {
 
   // If this is an import of a local ES module, recursively parse the module to
   // find transitive imports.
+  // path is the full URI path without /_file
   function findLocalImports(path) {
     if (paths.has(path)) return;
     paths.add(path);
