@@ -126,7 +126,7 @@ function getImportPreloads(parseResult: ParseResult): Iterable<string> {
   const preloads: string[] = [];
   for (const specifier of specifiers) {
     const resolved = resolveImport(specifier);
-    if (resolved.startsWith("/_observablehq") || resolved.startsWith("https://")) {
+    if (resolved.startsWith("/_observablehq/") || resolved.startsWith("https://")) {
       preloads.push(resolved);
     }
   }
