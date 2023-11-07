@@ -117,10 +117,7 @@ function getImportPreloads(parseResult: ParseResult): Iterable<string> {
   if (inputs.has("Inputs")) specifiers.add("npm:@observablehq/inputs");
   const preloads: string[] = [];
   for (const specifier of specifiers) {
-    const resolved = resolveImport(specifier);
-    if (resolved.startsWith("/_observablehq/") || resolved.startsWith("https://")) {
-      preloads.push(resolved);
-    }
+    preloads.push(resolveImport(specifier));
   }
   if (parseResult.cells.some((cell) => cell.databases?.length)) {
     preloads.push("/_observablehq/database.js");
