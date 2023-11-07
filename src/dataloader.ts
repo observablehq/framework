@@ -42,7 +42,7 @@ export async function runLoader(commandPath: string, outputPath: string) {
   return command;
 }
 
-export async function maybeLoader(name: string): Promise<Loader | null> {
+export async function findLoader(name: string): Promise<Loader | undefined> {
   // TODO: It may be more efficient use fs.readdir
   for (const ext of [".js", ".ts", ".sh"]) {
     const path = name + ext;
@@ -51,5 +51,4 @@ export async function maybeLoader(name: string): Promise<Loader | null> {
       return {path, stats};
     }
   }
-  return null;
 }

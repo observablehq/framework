@@ -6,7 +6,7 @@ import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
 import send from "send";
 import {WebSocketServer, type WebSocket} from "ws";
-import {maybeLoader, runLoader} from "./dataloader.js";
+import {findLoader, runLoader} from "./dataloader.js";
 import {HttpError, isHttpError, isNodeError} from "./error.js";
 import {maybeStat} from "./files.js";
 import {diffMarkdown, readMarkdown, type ParseResult} from "./markdown.js";
@@ -67,7 +67,7 @@ class Server {
         }
 
         // Look for a data loader for this file.
-        const loader = await maybeLoader(filepath);
+        const loader = await findLoader(filepath);
         if (loader) {
           const cachePath = join(this.cacheRoot, filepath);
           const cacheStat = await maybeStat(cachePath);
@@ -178,7 +178,7 @@ class FileWatchers {
     const path = join(root, name);
     const stats = await maybeStat(path);
     if (stats?.isFile()) return path;
-    const loader = await maybeLoader(path);
+    const loader = await findLoader(path);
     return loader?.stats.isFile() ? loader.path : path;
   }
 

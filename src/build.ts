@@ -3,7 +3,7 @@ import {basename, dirname, join, normalize, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
-import {maybeLoader, runLoader} from "./dataloader.js";
+import {findLoader, runLoader} from "./dataloader.js";
 import {maybeStat, prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
 import {readPages} from "./navigation.js";
 import {renderServerless} from "./render.js";
@@ -55,7 +55,7 @@ async function build(context: CommandContext) {
     const outputPath = join(outputRoot, "_file", file);
     const stats = await maybeStat(sourcePath);
     if (!stats) {
-      const loader = await maybeLoader(sourcePath);
+      const loader = await findLoader(sourcePath);
       if (!loader) {
         console.error("missing referenced file", sourcePath);
         continue;
