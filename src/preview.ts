@@ -1,5 +1,4 @@
-import type {WatchListener} from "node:fs";
-import {watch, type FSWatcher} from "node:fs";
+import {watch, type WatchListener, type FSWatcher} from "node:fs";
 import {access, constants, readFile, stat} from "node:fs/promises";
 import {createServer, type IncomingMessage, type RequestListener} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
@@ -7,15 +6,15 @@ import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
 import send from "send";
 import {WebSocketServer, type WebSocket} from "ws";
+import {findLoader, runCommand} from "./dataloader.js";
 import {HttpError, isHttpError, isNodeError} from "./error.js";
+import {getStats} from "./files.js";
 import type {ParseResult} from "./markdown.js";
 import {diffMarkdown, readMarkdown} from "./markdown.js";
 import {readPages} from "./navigation.js";
 import {renderPreview} from "./render.js";
 import type {CellResolver} from "./resolver.js";
 import {makeCLIResolver} from "./resolver.js";
-import {findLoader, runCommand} from "./dataloader.js";
-import {getStats} from "./files.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 const cacheRoot = join(dirname(fileURLToPath(import.meta.url)), "..", ".observablehq", "cache");

@@ -1,8 +1,8 @@
-import {open} from "node:fs/promises";
 import {spawn} from "node:child_process";
+import {renameSync, unlinkSync} from "node:fs";
+import {open} from "node:fs/promises";
 import {join} from "node:path";
 import {getStats, prepareOutput} from "./files.js";
-import {renameSync, unlinkSync} from "node:fs";
 
 const runningCommands = new Map<string, Promise<void>>();
 

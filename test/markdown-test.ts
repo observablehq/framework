@@ -2,9 +2,9 @@ import assert from "node:assert";
 import {readdirSync, statSync} from "node:fs";
 import {readFile, unlink, writeFile} from "node:fs/promises";
 import {basename, join, resolve} from "node:path";
+import deepEqual from "fast-deep-equal";
 import {isNodeError} from "../src/error.js";
 import {type ParseResult, parseMarkdown} from "../src/markdown.js";
-import deepEqual from "fast-deep-equal";
 
 describe("parseMarkdown(input)", () => {
   for (const name of readdirSync("./test/input")) {

@@ -1,7 +1,7 @@
-import {Parser} from "acorn";
-import {simple} from "acorn-walk";
 import {readFileSync} from "node:fs";
 import {dirname, join, relative, resolve} from "node:path";
+import {Parser} from "acorn";
+import {simple} from "acorn-walk";
 import {parseOptions} from "../javascript.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 

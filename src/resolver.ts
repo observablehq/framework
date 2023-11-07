@@ -1,7 +1,7 @@
-import {homedir} from "os";
-import {join} from "path";
 import {createHmac} from "node:crypto";
 import {readFile} from "node:fs/promises";
+import {homedir} from "os";
+import {join} from "path";
 import type {CellPiece} from "./markdown.js";
 
 export type CellResolver = (cell: CellPiece) => CellPiece;
