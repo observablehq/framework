@@ -78,16 +78,16 @@ function uniqueCodeId(context: ParseContext, content: string): string {
   return id;
 }
 
-function isLive(language) {
-  return language === "js" || language === "dot" || language === "tex";
-}
-
-function getSource(content, language) {
-  return language === "tex"
+function getLiveSource(content, language, option) {
+  return option === "no-run"
+    ? undefined
+    : language === "js"
+    ? content
+    : language === "tex"
     ? transpileTag(content, "tex.block", true)
     : language === "dot"
     ? transpileTag(content, "dot", false)
-    : content;
+    : undefined;
 }
 
 function makeFenceRenderer(root: string, baseRenderer: RenderRule): RenderRule {
@@ -96,9 +96,9 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule): RenderRule {
     const [language, option] = token.info.split(" ");
     let result = "";
     let count = 0;
-    if (isLive(language) && option !== "no-run") {
+    const source = getLiveSource(token.content, language, option);
+    if (source != null) {
       const id = uniqueCodeId(context, token.content);
-      const source = getSource(token.content, language);
       const sourceLine = context.startLine + context.currentLine;
       const transpile = transpileJavaScript(source, {id, root, sourceLine});
       extendPiece(context, {code: [transpile]});
@@ -107,7 +107,7 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule): RenderRule {
       result += `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`;
       count++;
     }
-    if (!isLive(language) || option === "show" || option === "no-run") {
+    if (source == null || option === "show") {
       result += baseRenderer(tokens, idx, options, context, self);
       count++;
     }
