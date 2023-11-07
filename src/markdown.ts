@@ -87,6 +87,8 @@ function getLiveSource(content, language, option) {
     ? transpileTag(content, "tex.block", true)
     : language === "dot"
     ? transpileTag(content, "dot", false)
+    : language === "mermaid"
+    ? transpileTag(content, "await mermaid", false)
     : undefined;
 }
 
