@@ -13,6 +13,7 @@ import {readFile} from "node:fs/promises";
 import {pathFromRoot} from "./files.js";
 import {computeHash} from "./hash.js";
 import {transpileJavaScript, type FileReference, type ImportReference, type Transpile} from "./javascript.js";
+import {transpileTag} from "./tag.js";
 
 export interface ReadMarkdownResult {
   contents: string;
@@ -77,26 +78,38 @@ function uniqueCodeId(context: ParseContext, content: string): string {
   return id;
 }
 
+function getLiveSource(content, language, option) {
+  return option === "no-run"
+    ? undefined
+    : language === "js"
+    ? content
+    : language === "tex"
+    ? transpileTag(content, "tex.block", true)
+    : language === "dot"
+    ? transpileTag(content, "dot", false)
+    : language === "mermaid"
+    ? transpileTag(content, "await mermaid", false)
+    : undefined;
+}
+
 function makeFenceRenderer(root: string, baseRenderer: RenderRule): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
     const token = tokens[idx];
     const [language, option] = token.info.split(" ");
     let result = "";
     let count = 0;
-    if (language === "js" && option !== "no-run") {
+    const source = getLiveSource(token.content, language, option);
+    if (source != null) {
       const id = uniqueCodeId(context, token.content);
-      const transpile = transpileJavaScript(token.content, {
-        id,
-        root,
-        sourceLine: context.startLine + context.currentLine
-      });
+      const sourceLine = context.startLine + context.currentLine;
+      const transpile = transpileJavaScript(source, {id, root, sourceLine});
       extendPiece(context, {code: [transpile]});
       if (transpile.files) context.files.push(...transpile.files);
       if (transpile.imports) context.imports.push(...transpile.imports);
       result += `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`;
       count++;
     }
-    if (language !== "js" || option === "show" || option === "no-run") {
+    if (source == null || option === "show") {
       result += baseRenderer(tokens, idx, options, context, self);
       count++;
     }

@@ -1,0 +1,27 @@
+{
+  "data": null,
+  "title": null,
+  "files": [],
+  "imports": [],
+  "pieces": [
+    {
+      "type": "html",
+      "id": "",
+      "cellIds": [
+        "1ffa6d4f"
+      ],
+      "html": "<div id=\"cell-1ffa6d4f\" class=\"observablehq observablehq--block\"></div>\n"
+    }
+  ],
+  "cells": [
+    {
+      "type": "cell",
+      "id": "1ffa6d4f",
+      "inputs": [
+        "mermaid",
+        "display"
+      ],
+      "body": "async (mermaid,display) => {\ndisplay((\nawait mermaid`graph TD;\n    A-->B;\n    A-->C;\n    B-->D;\n    C-->D;\n`\n))\n}"
+    }
+  ]
+}

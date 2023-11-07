@@ -119,6 +119,8 @@ function getImportPreloads(parseResult: ParseResult): Iterable<string> {
   if (inputs.has("Plot")) specifiers.add("npm:@observablehq/plot");
   if (inputs.has("htl") || inputs.has("html") || inputs.has("svg") || inputs.has("Inputs")) specifiers.add("npm:htl");
   if (inputs.has("Inputs")) specifiers.add("npm:@observablehq/inputs");
+  if (inputs.has("dot")) specifiers.add("npm:@viz-js/viz");
+  if (inputs.has("mermaid")) specifiers.add("npm:mermaid").add("npm:d3");
   const preloads: string[] = [];
   for (const specifier of specifiers) {
     const resolved = resolveImport(specifier);

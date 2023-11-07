@@ -1,0 +1,27 @@
+{
+  "data": null,
+  "title": null,
+  "files": [],
+  "imports": [],
+  "pieces": [
+    {
+      "type": "html",
+      "id": "",
+      "cellIds": [
+        "5ceee90d"
+      ],
+      "html": "<div id=\"cell-5ceee90d\" class=\"observablehq observablehq--block\"></div>\n"
+    }
+  ],
+  "cells": [
+    {
+      "type": "cell",
+      "id": "5ceee90d",
+      "inputs": [
+        "tex",
+        "display"
+      ],
+      "body": "(tex,display) => {\ndisplay((\ntex.block`\\int_0^1 (x + y)dx\n`\n))\n}"
+    }
+  ]
+}
