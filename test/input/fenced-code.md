@@ -1,6 +1,6 @@
 # Fenced code
 
-```{js show}
+```js {show}
 function add(a, b) {
   return a + b;
 }
@@ -18,7 +18,7 @@ function langOutside() {
 }
 ```
 
-```{js .class1 .class2 first second=123 third=bye mything="\"hello\"" }
+```js {show: false, run: false}
 function langAndAttributes() {
   return 1;
 }

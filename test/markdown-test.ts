@@ -57,29 +57,59 @@ describe("parseMarkdown(input)", () => {
       assert.ok(allequal, `${name} must match snapshot`);
     });
   }
-  it("parses attributes", () => {
+  it("parses fenced code info", () => {
     const attributes = [
-      {info: "{js}", value: {language: "js"}},
-      {info: "{js .foo .bar}", value: {language: "js", classes: ["foo", "bar"]}},
+      // Base cases
+      {info: "js", value: {language: "js", attributes: {}}},
+      {info: "javascript", value: {language: "javascript", attributes: {}}},
+      {info: "js ", value: {language: "js", attributes: {}}},
+      {info: "js 3839", value: {language: "js", attributes: {}}},
+      {info: "js {show}", value: {language: "js", attributes: {show: true}}},
+      {info: "{show}", value: {language: undefined, attributes: {show: true}}},
+      {info: "{show:true}", value: {language: undefined, attributes: {show: true}}},
+      {info: "{ show :true}", value: {language: undefined, attributes: {show: true}}},
+      {info: "{show: true}", value: {language: undefined, attributes: {show: true}}},
+      {info: "{show : true}", value: {language: undefined, attributes: {show: true}}},
+      {info: "{show: true, run}", value: {language: undefined, attributes: {show: true, run: true}}},
+      {info: "{show: true, run: false}", value: {language: undefined, attributes: {show: true, run: false}}},
+      {info: '{show: true, run: "false"}', value: {language: undefined, attributes: {show: true, run: false}}},
       {
-        info: "{js .foo .bar #baz}",
-        value: {language: "js", classes: ["foo", "bar"], id: "baz"},
-        attributes: [],
-        classes: []
+        info: "{show: true, run: abc, display: efg}",
+        value: {language: undefined, attributes: {show: true, run: "abc", display: "efg"}}
       },
-      {info: "{js #baz}", value: {language: "js", id: "baz"}},
-      {info: "{js .foo}", value: {language: "js", classes: ["foo"]}},
       {
-        info: '{js attr1 attr2=true attr3="hello"}',
-        value: {language: "js", attributes: {attr1: true, attr2: true, attr3: "hello"}}
-      }
+        info: "{show:true,run:abc,display:efg}",
+        value: {language: undefined, attributes: {show: true, run: "abc", display: "efg"}}
+      },
+      {
+        info: "{show:true,run:abc,display:efg}",
+        value: {language: undefined, attributes: {show: true, run: "abc", display: "efg"}}
+      },
+
+      // Error cases
+      {info: "js {show:true", value: {language: "js", attributes: {show: true}}},
+      {info: "js show:true}", value: {language: "js", attributes: {}}},
+      {info: "js {show:true,show:false}", value: {language: "js", attributes: {show: false}}},
+      {info: "{show: true run}", value: {language: undefined, attributes: {show: true}}},
+      {info: "{1one: true, show: false}", value: {language: undefined, attributes: {show: false}}},
+      {info: "{show: abc$(}", value: {language: undefined, attributes: {show: "abc"}}},
+      {info: "{show:abc,,display:def ", value: {language: undefined, attributes: {show: "abc", display: "def"}}},
+
+      // Class names
+      {info: "js {.class1}", value: {language: "js", attributes: {}, classes: ["class1"]}},
+      {info: "js {show:true,.class1}", value: {language: "js", attributes: {show: true}, classes: ["class1"]}},
+      {
+        info: "js {show:true,.class1,display:abc,.class2}",
+        value: {language: "js", attributes: {show: true, display: "abc"}, classes: ["class1", "class2"]}
+      },
+
+      // IDs
+      {info: "js {#myid}", value: {language: "js", attributes: {}, id: "myid"}},
+      {info: "{#myid, show:true}", value: {language: undefined, attributes: {show: true}, id: "myid"}},
+      {info: "{#myid: abc, show:true}", value: {language: undefined, attributes: {show: true}, id: undefined}}
     ];
     for (const {info, value} of attributes) {
-      assert.deepStrictEqual(
-        parseCodeInfo(info),
-        {attributes: {}, classes: [], id: undefined, ...value},
-        `mismatch for ${info}`
-      );
+      assert.deepStrictEqual(parseCodeInfo(info), {classes: [], id: undefined, ...value}, `mismatch for '${info}'`);
     }
   });
 });

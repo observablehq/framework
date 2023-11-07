@@ -114,12 +114,12 @@ const CODE_BACKSLASH = 92;
 const CODE_QUOTE = 34;
 const CODE_SINGLE_QUOTE = 39;
 const CODE_BACKTICK = 96;
-const CODE_EQUALS = 61;
 const CODE_PERIOD = 46;
 const CODE_POUND = 35;
 const CODE_DASH = 45;
 const CODE_UNDERSCORE = 95;
 const CODE_COLON = 58;
+const CODE_COMMA = 44;
 
 function parsePlaceholder(content: string, replacer: (i: number, j: number) => void) {
   let afterDollar = false;
@@ -185,7 +185,7 @@ function isAlphaNum(c: number) {
 }
 
 function isIdentifier(c: number) {
-  return isAlphaNum(c) || c === CODE_DASH || c === CODE_UNDERSCORE || c === CODE_COLON || c === CODE_PERIOD;
+  return isAlphaNum(c) || c === CODE_DASH || c === CODE_UNDERSCORE || c === CODE_PERIOD;
 }
 
 interface Attribute {
@@ -205,7 +205,7 @@ function parseAttributes(content: string): {
   let start = 0;
   let state = "begin";
   let inQuote = 0;
-  let quotedValue = "";
+  let quotedValue: string | boolean = "";
 
   for (let j = 1, n = content.length; j < n; ++j) {
     const cj = content.charCodeAt(j);
@@ -213,14 +213,23 @@ function parseAttributes(content: string): {
     if ((state === "begin" || state === "skip") && cj === CODE_BRACER) break;
     switch (state) {
       case "begin":
-        if (isSpace(cj)) continue;
+        if (isSpace(cj) || cj === CODE_COMMA) continue;
         start = j--;
         state = "start";
         break;
 
+      case "separator":
+        if (cj === CODE_COMMA) state = "begin";
+        break;
+
       case "skip":
         // Ignore stray punctuation and numbers
-        if (isSpace(cj)) state = "begin";
+        if (isSpace(cj) || cj === CODE_COMMA) state = "begin";
+        break;
+
+      case "keyseparator":
+        if (cj === CODE_COMMA) state = "begin";
+        if (cj === CODE_COLON) state = "valuestart";
         break;
 
       case "start":
@@ -229,7 +238,7 @@ function parseAttributes(content: string): {
         } else if (isAlpha(cj) || ((cj === CODE_PERIOD || cj === CODE_POUND) && isAlpha(cjj))) {
           state = "classid";
         } else {
-          state = "skip";
+          state = "separator";
         }
         break;
 
@@ -240,42 +249,45 @@ function parseAttributes(content: string): {
         } else if (cj === inQuote) {
           quotedValue += content.slice(start + 1, j);
           if (tokens.length > 0) {
+            if (quotedValue.toLowerCase() === "true") {
+              quotedValue = true;
+            } else if (quotedValue.toLowerCase() === "false") {
+              quotedValue = false;
+            }
             tokens[tokens.length - 1] = {...tokens[tokens.length - 1], value: quotedValue};
           }
           quotedValue = "";
-          state = "begin";
+          state = "separator";
         }
         break;
 
       case "classid":
         if (!isIdentifier(cj)) {
-          tokens.push({name: content.slice(start, j--)});
-          state = "begin";
+          if (isSpace(cj) || cj === CODE_COMMA || cj === CODE_BRACER) {
+            tokens.push({name: content.slice(start, j--)});
+          }
+          state = "separator";
         }
         break;
 
       case "key":
         if (!isIdentifier(cj)) {
-          tokens.push({name: content.slice(start, j), value: true});
-          if (cj === CODE_EQUALS) {
-            start = j + 1;
-            state = "valuestart";
-          } else {
-            state = "begin";
-            j--;
-          }
+          tokens.push({name: content.slice(start, j--), value: true});
+          state = "keyseparator";
         }
         break;
 
       case "valuestart":
         if (cj === CODE_QUOTE || cj === CODE_SINGLE_QUOTE) {
           inQuote = cj;
+          start = j;
           state = "quote";
           break;
         } else if (isIdentifier(cj)) {
+          start = j;
           state = "value";
           j--;
-        } else {
+        } else if (!isSpace(cj)) {
           state = "skip";
         }
         break;
@@ -292,7 +304,7 @@ function parseAttributes(content: string): {
             tokens[tokens.length - 1].value = value;
           }
           j--;
-          state = "begin";
+          state = "keyseparator";
         }
     }
   }
@@ -319,18 +331,27 @@ interface CodeInfo {
 }
 
 export function parseCodeInfo(info: string): CodeInfo {
-  const match = /^(?<language>\w*)(?:\s*(?<attributes>{.*}))?$/.exec(info);
+  // Code info grammar:
+  //   info: [language_id] ows [attributes]
+  //   language_id: word_char+
+  //   attributes: '{' attribute_list '}'
+  //   attribute_list: attribute | attribute_list ',' attribute
+  //   attribute: key | key ':' value | class_name | id_name
+  //   key: ows identifier ows
+  //   value: ows value_content ows
+  //   value_content: quoted_string | identifier | true | false | "true" | "false"
+  //   class_name: '.' identifier
+  //   id_name: '#' identifier
+  //   identifier: identifier_start identifier_continue*
+  //   identifier_start: [a-zA-Z]
+  //   identifier_continue: [a-zA-Z0-9-_.]
+  //   quoted_string: '"' ([^"] | \")* '"' | "'" ([^'] | \')* "'"
+  //   ows: [ \t]*
+  const match = /^((?<language>\w+)?)(\s*(?<attributes>.*))?\s*$/.exec(info);
   if (!match) return {language: undefined, attributes: {}, classes: [], id: undefined};
-  let language = match.groups?.language;
+  const language = match.groups?.language;
   if (match.groups?.attributes) {
     const parsed = parseAttributes(match.groups.attributes);
-    if (!language && parsed.attributes && Object.keys(parsed.attributes).length > 0) {
-      const key = Object.keys(parsed.attributes!)[0];
-      if (parsed.attributes[key] === true) {
-        language = key;
-        delete parsed.attributes[key];
-      }
-    }
     return {language, ...parsed};
   }
   // TODO: blend in defaults from context
