@@ -11,11 +11,14 @@ export interface Loader {
 }
 
 export async function runLoader(commandPath: string, outputPath: string) {
+  const c = process.stdout.isTTY
+    ? {info: "\x1b[33m", success: "\x1b[36m", error: "\x1b[31m", close: "\x1b[0m"}
+    : {info: "", success: "", error: "", close: ""};
   if (runningCommands.has(commandPath)) return runningCommands.get(commandPath);
   const time = performance.now();
-  const id = `\x1b[36m[${((time * 10000) | 1).toString(16)}]\x1b[0m`;
+  const id = `${c.success}[${((time * 10000) | 1).toString(16)}]${c.close}`;
   let code;
-  console.info(id, `"${commandPath}"`, "\x1b[33mstart\x1b[0m", new Date());
+  console.info(id, `"${commandPath}"`, `${c.info}start${c.close}`, new Date());
   const command = (async () => {
     const outputTempPath = outputPath + ".tmp";
     await prepareOutput(outputTempPath);
@@ -46,7 +49,7 @@ export async function runLoader(commandPath: string, outputPath: string) {
     console.info(
       id,
       `"${commandPath}"`,
-      code === 0 ? "\x1b[36msuccess\x1b[0m" : "\x1b[31merror\x1b[0m",
+      code === 0 ? `${c.success}success${c.close}` : `${c.error}error${c.close}`,
       `${Math.floor(performance.now() - time)}ms`,
       code === 0 ? bytes((await maybeStat(outputPath))?.size) : ""
     );
