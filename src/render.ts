@@ -1,8 +1,8 @@
 import {computeHash} from "./hash.js";
 import {resolveImport} from "./javascript/imports.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
+import {type CellPiece, type ParseResult} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
-import type {CellPiece, ParseResult} from "./markdown.js";
 
 export interface Render {
   html: string;
@@ -60,7 +60,10 @@ ${
 }<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
 ${Array.from(getImportPreloads(parseResult))
-  .concat(parseResult.imports.filter(({name}) => name.startsWith("./")).map(({name}) => `/_file/${name.slice(2)}`))
+  .concat(
+    parseResult.imports.filter(({name}) => name.startsWith("./")).map(({name}) => `/_file/${name.slice(2)}`),
+    parseResult.cells.some((cell) => cell.databases?.length) ? "/_observablehq/database.js" : []
+  )
   .map((href) => `<link rel="modulepreload" href="${href}">`)
   .join("\n")}
 <script type="module">
