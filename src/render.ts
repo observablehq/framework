@@ -60,7 +60,11 @@ ${
 }<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
 ${Array.from(getImportPreloads(parseResult))
-  .concat(parseResult.imports.filter(({name}) => name.startsWith("./")).map(({name}) => `/_file/${name.slice(2)}`))
+  .concat(
+    parseResult.imports
+      .filter(({type}) => type === "local")
+      .map(({name}) => `/_file/${name.startsWith("/") ? name.slice(1) : name}`)
+  )
   .map((href) => `<link rel="modulepreload" href="${href}">`)
   .join("\n")}
 <script type="module">
@@ -111,7 +115,9 @@ ${parseResult.html}</main>
 
 function getImportPreloads(parseResult: ParseResult): Iterable<string> {
   const specifiers = new Set<string>(["npm:@observablehq/runtime"]);
-  for (const {name} of parseResult.imports) specifiers.add(name);
+  for (const {name, type} of parseResult.imports) {
+    if (type === "global") specifiers.add(name);
+  }
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
   if (inputs.has("d3") || inputs.has("Plot")) specifiers.add("npm:d3");
   if (inputs.has("Plot")) specifiers.add("npm:@observablehq/plot");
@@ -120,7 +126,7 @@ function getImportPreloads(parseResult: ParseResult): Iterable<string> {
   const preloads: string[] = [];
   for (const specifier of specifiers) {
     const resolved = resolveImport(specifier);
-    if (resolved.startsWith("/") || resolved.startsWith("https://")) {
+    if (resolved.startsWith("/_observablehq") || resolved.startsWith("https://")) {
       preloads.push(resolved);
     }
   }

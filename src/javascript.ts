@@ -44,7 +44,7 @@ export interface ParseOptions {
 }
 
 export function transpileJavaScript(input: string, options: ParseOptions): Transpile {
-  const {id, sourcePath} = options;
+  const {id, root, sourcePath} = options;
   try {
     const node = parseJavaScript(input, options);
     const databases = node.features.filter((f) => f.type === "DatabaseClient").map((f) => ({name: f.name}));
@@ -59,8 +59,8 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
       output.insertRight(input.length, "\n))");
       inputs.push("display");
     }
-    rewriteImports(output, node, sourcePath);
-    rewriteFetches(output, node);
+    rewriteImports(output, node, root, sourcePath);
+    rewriteFetches(output, node, root, sourcePath);
     return {
       id,
       ...(inputs.length ? {inputs} : null),
@@ -122,7 +122,7 @@ function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
   const references = findReferences(body, globals, input);
   const declarations = expression ? null : findDeclarations(body, globals, input);
   const {imports, features: importFeatures} = findImports(body, root, sourcePath);
-  const features = [...importFeatures, ...findFeatures(body, sourcePath, references, input)];
+  const features = [...importFeatures, ...findFeatures(body, root, sourcePath, references, input)];
   return {
     body,
     declarations,

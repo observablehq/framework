@@ -85,6 +85,7 @@ class Server {
           send(req, filepath, {root: this.cacheRoot}).pipe(res);
           return;
         }
+        throw new HttpError("Not found", 404);
       } else {
         if (normalize(pathname).startsWith("..")) throw new Error("Invalid path: " + pathname);
         let path = join(this.root, pathname);
@@ -122,12 +123,14 @@ class Server {
         try {
           const pages = await readPages(this.root); // TODO cache? watcher?
           res.end(
-            renderPreview(await readFile(path + ".md", "utf-8"), {
-              root: this.root,
-              path: pathname,
-              pages,
-              resolver: this._resolver!
-            }).html
+            (
+              await renderPreview(await readFile(path + ".md", "utf-8"), {
+                root: this.root,
+                path: pathname,
+                pages,
+                resolver: this._resolver!
+              })
+            ).html
           );
         } catch (error) {
           if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error

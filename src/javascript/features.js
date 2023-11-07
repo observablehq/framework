@@ -3,7 +3,7 @@ import {syntaxError} from "./syntaxError.js";
 import {isLocalImport} from "./imports.ts";
 import {dirname, join} from "node:path";
 
-export function findFeatures(node, sourcePath, references, input) {
+export function findFeatures(node, root, sourcePath, references, input) {
   const features = [];
 
   simple(node, {
@@ -14,7 +14,7 @@ export function findFeatures(node, sourcePath, references, input) {
         arguments: [arg]
       } = node;
       // Promote fetches with static literals to file attachment references.
-      if (isLocalFetch(node, references)) {
+      if (isLocalFetch(node, references, root, sourcePath)) {
         features.push({type: "FileAttachment", name: join(dirname(sourcePath), getStringLiteralValue(arg))});
         return;
       }
@@ -41,7 +41,7 @@ export function findFeatures(node, sourcePath, references, input) {
   return features;
 }
 
-export function isLocalFetch(node, references) {
+export function isLocalFetch(node, references, root, sourcePath) {
   if (node.type !== "CallExpression") return false;
   const {
     callee,
@@ -53,7 +53,7 @@ export function isLocalFetch(node, references) {
     !references.includes(callee) &&
     arg &&
     isStringLiteral(arg) &&
-    isLocalImport(getStringLiteralValue(arg))
+    isLocalImport(getStringLiteralValue(arg), root, sourcePath)
   );
 }
 

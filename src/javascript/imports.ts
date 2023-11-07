@@ -21,7 +21,7 @@ export function findImports(body: Node, root: string, sourcePath: string) {
   function findImport(node) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
-      if (isLocalImport(value)) {
+      if (isLocalImport(value, root, sourcePath)) {
         findLocalImports(join(dirname(sourcePath), value));
       } else {
         imports.push({name: value, type: "global"});
@@ -51,7 +51,7 @@ export function findImports(body: Node, root: string, sourcePath: string) {
     function findLocalImport(node) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
-        if (isLocalImport(value)) {
+        if (isLocalImport(value, root, path)) {
           const subpath = join(dirname(path), value);
           findLocalImports(subpath);
         } else {
@@ -66,7 +66,7 @@ export function findImports(body: Node, root: string, sourcePath: string) {
 }
 
 // TODO parallelize multiple static imports
-export function rewriteImports(output: any, rootNode: JavaScriptNode) {
+export function rewriteImports(output: any, rootNode: JavaScriptNode, root: string, sourcePath: string) {
   simple(rootNode.body, {
     ImportExpression(node: any) {
       if (isStringLiteral(node.source)) {
@@ -74,7 +74,11 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode) {
         output.replaceLeft(
           node.source.start,
           node.source.end,
-          JSON.stringify(value.startsWith("./") ? `/_file/${value.slice(2)}` : resolveImport(value))
+          JSON.stringify(
+            isLocalImport(value, root, sourcePath)
+              ? join("/_file/", join(dirname(sourcePath), value))
+              : resolveImport(value)
+          )
         );
       }
     },
@@ -92,7 +96,9 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode) {
               ? node.specifiers.find(isNamespaceSpecifier).local.name
               : "{}"
           } = await import(${JSON.stringify(
-            value.startsWith("./") ? `/_file/${value.slice(2)}` : resolveImport(value)
+            isLocalImport(value, root, sourcePath)
+              ? join("/_file/", join(dirname(sourcePath), value))
+              : resolveImport(value)
           )});`
         );
       }
@@ -108,8 +114,11 @@ function rewriteImportSpecifier(node) {
     : `${node.imported.name}: ${node.local.name}`;
 }
 
-export function isLocalImport(value) {
-  return ["./", "../", "/"].some((prefix) => value.startsWith(prefix));
+export function isLocalImport(value: string, root: string, sourcePath: string) {
+  return (
+    ["./", "../", "/"].some((prefix) => value.startsWith(prefix)) &&
+    join(root + "/", sourcePath, value).startsWith(root)
+  );
 }
 
 function isNamespaceSpecifier(node) {
