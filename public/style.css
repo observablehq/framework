@@ -317,7 +317,7 @@ pre .language-sql::after {
   color: var(--theme-foreground-muted);
   background: var(--theme-background-alt);
   background: linear-gradient(to right, transparent, var(--theme-background-alt) 50%);
-  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  padding: 0.5rem 2.5rem 0.5rem 1rem;
 }
 
 pre .language-md::after {
@@ -633,4 +633,66 @@ svg.plot-d6a7b5 [aria-label^="crosshair"][stroke="white"] {
 
 svg.plot-d6a7b5 marker[fill="white"] {
   fill: var(--theme-background);
+}
+
+/* support for mark-it-down-copy: https://github.com/ReAlign/markdown-it-copy */
+
+.m-mdic-copy-wrapper {
+  position: absolute;
+  right: 0;
+  top: 0;
+  font: 12px var(--sans-serif);
+  color: var(--theme-foreground-muted);
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+}
+.m-mdic-copy-wrapper span.u-mdic-copy-code_lang {
+  position: absolute;
+  right: 0;
+  top: 0;
+  /* top: 3px; */
+  /* right: calc(100% + 4px); */
+  font-family: system-ui;
+  font-size: 12px;
+  line-height: 18px;
+  color: #666;
+  opacity: 0.3;
+}
+.m-mdic-copy-wrapper div.u-mdic-copy-notify {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  /* padding: 3px 6px; */
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  font-family: system-ui;
+  font-size: 12px;
+  line-height: 18px;
+  color: #666;
+  opacity: 0.3;
+  outline: none;
+  opacity: 1;
+  right: 100%;
+  /* padding-right: 4px; */
+}
+.m-mdic-copy-wrapper button.u-mdic-copy-btn {
+  position: relative;
+  top: 0;
+  right: 0;
+  /* padding: 3px 6px; */
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  font-family: system-ui;
+  font-size: 12px;
+  line-height: 18px;
+  color: #666;
+  opacity: 0.3;
+  outline: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.m-mdic-copy-wrapper button.u-mdic-copy-btn:hover {
+  opacity: 1;
 }

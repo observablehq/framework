@@ -39,6 +39,8 @@
     "linkedom": "^0.15.6",
     "markdown-it": "^13.0.2",
     "markdown-it-anchor": "^8.6.7",
+    "markdown-it-code-copy": "^0.1.1",
+    "markdown-it-copy": "^1.2.0",
     "mime": "^3.0.0",
     "send": "^0.18.0",
     "tsx": "^3.13.0",
