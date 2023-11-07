@@ -149,29 +149,25 @@ class Server {
 }
 
 class FileWatchers {
-  watchers: FSWatcher[] = [];
+  #watchers: FSWatcher[] = [];
 
-  constructor(
-    readonly root: string,
-    readonly files: {name: string}[],
-    readonly cb: (name: string) => void
-  ) {}
-
-  async watchAll() {
-    const fileset = [...new Set(this.files.map(({name}) => name))];
+  static async watchAll(root: string, files: {name: string}[], cb: (name: string) => void) {
+    const watchers = new FileWatchers();
+    const fileset = [...new Set(files.map(({name}) => name))];
     for (const name of fileset) {
-      const watchPath = await FileWatchers.getWatchPath(this.root, name);
+      const watchPath = await FileWatchers.getWatchPath(root, name);
       let prevState = await maybeStat(watchPath);
-      this.watchers.push(
+      watchers.#watchers.push(
         watch(watchPath, async () => {
           const newState = await maybeStat(watchPath);
           // Ignore if the file was truncated or not modified.
           if (prevState?.mtimeMs === newState?.mtimeMs || newState?.size === 0) return;
           prevState = newState;
-          this.cb(name);
+          cb(name);
         })
       );
     }
+    return watchers;
   }
 
   static async getWatchPath(root: string, name: string) {
@@ -183,8 +179,8 @@ class FileWatchers {
   }
 
   close() {
-    this.watchers.forEach((w) => w.close());
-    this.watchers = [];
+    this.#watchers.forEach((w) => w.close());
+    this.#watchers = [];
   }
 }
 
@@ -212,8 +208,7 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
 
   async function refreshMarkdown(path: string): Promise<WatchListener<string>> {
     let current = await readMarkdown(path, root);
-    attachmentWatcher = new FileWatchers(root, current.parse.files, refreshAttachment(current.parse));
-    await attachmentWatcher.watchAll();
+    attachmentWatcher = await FileWatchers.watchAll(root, current.parse.files, refreshAttachment(current.parse));
     return async function watcher(event) {
       switch (event) {
         case "rename": {
@@ -237,7 +232,7 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
           const diff = resolveDiffs(diffMarkdown(current, updated), resolver);
           send({type: "update", diff, previousHash: current.hash, updatedHash: updated.hash});
           attachmentWatcher?.close();
-          attachmentWatcher = new FileWatchers(root, updated.parse.files, refreshAttachment(updated.parse));
+          attachmentWatcher = await FileWatchers.watchAll(root, updated.parse.files, refreshAttachment(updated.parse));
           current = updated;
           break;
         }
