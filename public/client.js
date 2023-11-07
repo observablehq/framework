@@ -1,4 +1,4 @@
-import {Runtime, Library, Inspector} from "npm:@observablehq/runtime";
+import {Runtime, Library, Inspector} from "/_observablehq/runtime.js";
 
 const library = Object.assign(new Library(), {width, Mutable, ...recommendedLibraries()});
 const runtime = new Runtime(library);
@@ -7,6 +7,13 @@ const main = runtime.module();
 const attachedFiles = new Map();
 const resolveFile = (name) => attachedFiles.get(name);
 main.builtin("FileAttachment", runtime.fileAttachments(resolveFile));
+
+const databaseTokens = new Map();
+async function resolveDatabaseToken(name) {
+  const token = databaseTokens.get(name);
+  if (!token) throw new Error(`Database configuration for ${name} not found`);
+  return token;
+}
 
 const cellsById = new Map();
 const Generators = library.Generators;
@@ -51,16 +58,17 @@ function Mutable() {
 // loading the library twice). Also, it’s nice to avoid require!
 function recommendedLibraries() {
   return {
-    d3: () => import("npm:d3"),
-    htl: () => import("npm:htl"),
-    html: () => import("npm:htl").then((htl) => htl.html),
-    svg: () => import("npm:htl").then((htl) => htl.svg),
-    Plot: () => import("npm:@observablehq/plot"),
+    DatabaseClient: () => import("./database.js").then((db) => db.makeDatabaseClient(resolveDatabaseToken)),
+    d3: () => import("https://cdn.jsdelivr.net/npm/d3/+esm"),
+    htl: () => import("https://cdn.jsdelivr.net/npm/htl/+esm"),
+    html: () => import("https://cdn.jsdelivr.net/npm/htl/+esm").then((htl) => htl.html),
+    svg: () => import("https://cdn.jsdelivr.net/npm/htl/+esm").then((htl) => htl.svg),
+    Plot: () => import("https://cdn.jsdelivr.net/npm/@observablehq/plot/+esm"),
     Inputs: () => {
       // TODO Observable Inputs needs to include the CSS in the dist folder
       // published to npm, and we should replace the __ns__ namespace with
       // oi-{hash} in the ES module distribution, somehow.
-      const inputs = import("npm:@observablehq/inputs");
+      const inputs = import("https://cdn.jsdelivr.net/npm/@observablehq/inputs/+esm");
       const link = document.createElement("link");
       link.rel = "stylesheet";
       link.href = "https://cdn.jsdelivr.net/gh/observablehq/inputs/src/style.css";
@@ -71,7 +79,7 @@ function recommendedLibraries() {
 }
 
 export function define(cell) {
-  const {id, inline, inputs = [], outputs = [], files = [], body} = cell;
+  const {id, inline, inputs = [], outputs = [], files = [], databases = [], body} = cell;
   const variables = [];
   cellsById.get(id)?.variables.forEach((v) => v.delete());
   cellsById.set(id, {cell, variables});
@@ -108,6 +116,7 @@ export function define(cell) {
   variables.push(v);
   for (const o of outputs) variables.push(main.define(o, [`cell ${id}`], (exports) => exports[o]));
   for (const f of files) attachedFiles.set(f.name, {url: String(new URL(`/_file/${f.name}`, location)), mimeType: f.mimeType}); // prettier-ignore
+  for (const d of databases) databaseTokens.set(d.name, d);
 }
 
 export function open({hash} = {}) {
@@ -164,6 +173,7 @@ export function open({hash} = {}) {
                       inline: item.inline,
                       inputs: item.inputs,
                       outputs: item.outputs,
+                      databases: item.databases,
                       files: item.files,
                       body: (0, eval)(item.body)
                     });

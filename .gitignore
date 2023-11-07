@@ -1,4 +1,5 @@
 .DS_Store
+.observablehq
 dist/
 node_modules/
 test/output/*-changed.*
