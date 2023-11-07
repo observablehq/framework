@@ -10,6 +10,12 @@ export interface Loader {
   stats: Stats;
 }
 
+function makeCommand(commandPath) {
+  if (commandPath.endsWith(".js")) return {command: "node", options: [commandPath]};
+  if (commandPath.endsWith(".ts")) return {command: "tsx", options: [commandPath]};
+  return {command: commandPath, options: []};
+}
+
 export async function runLoader(commandPath: string, outputPath: string) {
   if (runningCommands.has(commandPath)) return runningCommands.get(commandPath);
   const command = (async () => {
@@ -17,7 +23,8 @@ export async function runLoader(commandPath: string, outputPath: string) {
     await prepareOutput(outputTempPath);
     const cacheFd = await open(outputTempPath, "w");
     const cacheFileStream = cacheFd.createWriteStream({highWaterMark: 1024 * 1024});
-    const subprocess = spawn(commandPath, [], {
+    const {command, options} = makeCommand(commandPath);
+    const subprocess = spawn(command, options, {
       argv0: commandPath,
       //cwd: dirname(commandPath), // TODO: Need to change commandPath to be relative this?
       windowsHide: true,
