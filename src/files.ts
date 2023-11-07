@@ -51,14 +51,13 @@ export async function* visitFiles(root: string): AsyncGenerator<string> {
   }
 }
 
-// Like fs.stat, but returns null instead of throwing ENOENT if not found.
-export async function maybeStat(path: string): Promise<Stats | null> {
+// Like fs.stat, but returns undefined instead of throwing ENOENT if not found.
+export async function maybeStat(path: string): Promise<Stats | undefined> {
   try {
     return await stat(path);
   } catch (error) {
     if (!isNodeError(error) || error.code !== "ENOENT") throw error;
   }
-  return null;
 }
 
 export async function prepareOutput(outputPath: string): Promise<void> {
