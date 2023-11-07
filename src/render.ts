@@ -1,8 +1,7 @@
 import {computeHash} from "./hash.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
 import {resolveImport} from "./javascript/imports.js";
-import type {CellPiece} from "./markdown.js";
-import {parseMarkdown, type ParseResult} from "./markdown.js";
+import {parseMarkdown, type CellPiece, type ParseResult} from "./markdown.js";
 
 export interface Render {
   html: string;
@@ -63,7 +62,8 @@ ${Array.from(getImportPreloads(parseResult))
   .concat(
     parseResult.imports
       .filter(({type}) => type === "local")
-      .map(({name}) => `/_file/${name.startsWith("/") ? name.slice(1) : name}`)
+      .map(({name}) => `/_file/${name.startsWith("/") ? name.slice(1) : name}`),
+    parseResult.cells.some((cell) => cell.databases?.length) ? "/_observablehq/database.js" : []
   )
   .map((href) => `<link rel="modulepreload" href="${href}">`)
   .join("\n")}

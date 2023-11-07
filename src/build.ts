@@ -3,11 +3,11 @@ import {basename, dirname, join, normalize, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
-import {getStats, prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
+import {findLoader, runLoader} from "./dataloader.js";
+import {maybeStat, prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
 import {readPages} from "./navigation.js";
 import {renderServerless} from "./render.js";
 import {makeCLIResolver} from "./resolver.js";
-import {findLoader, runCommand} from "./dataloader.js";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
 
@@ -53,15 +53,16 @@ async function build(context: CommandContext) {
   for (const file of files) {
     const sourcePath = join(sourceRoot, file);
     const outputPath = join(outputRoot, "_file", file);
-    const stats = await getStats(sourcePath);
+    const stats = await maybeStat(sourcePath);
     if (!stats) {
-      const {path} = await findLoader("", sourcePath);
-      if (!path) {
+      const loader = await findLoader(sourcePath);
+      if (!loader) {
         console.error("missing referenced file", sourcePath);
         continue;
       }
+      const {path} = loader;
       console.log("generate", path, "→", outputPath);
-      await runCommand(path, outputPath);
+      await runLoader(path, outputPath);
       continue;
     }
     console.log("copy", sourcePath, "→", outputPath);
