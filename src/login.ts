@@ -18,7 +18,7 @@ async function main() {
   const server = new Server({nonce});
   await server.start();
 
-  const url = new URL("/token", OBSERVABLEHQ_HOST);
+  const url = new URL("/settings/api-keys/generate", OBSERVABLEHQ_HOST);
   const name = `Observable CLI on ${os.hostname()}`;
   const request = {nonce, port: server.port, name, scopes: ["projects:deploy"]};
   // assign base64 encoded request to url.searchParams.request
