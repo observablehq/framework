@@ -1,11 +1,11 @@
-import {watch, type WatchListener, type FSWatcher} from "node:fs";
+import {type FSWatcher, type WatchListener, watch} from "node:fs";
 import {access, constants, readFile, stat} from "node:fs/promises";
-import {createServer, type IncomingMessage, type RequestListener} from "node:http";
+import {type IncomingMessage, type RequestListener, createServer} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
 import send from "send";
-import {WebSocketServer, type WebSocket} from "ws";
+import {type WebSocket, WebSocketServer} from "ws";
 import {findLoader, runLoader} from "./dataloader.js";
 import {HttpError, isHttpError, isNodeError} from "./error.js";
 import {maybeStat} from "./files.js";

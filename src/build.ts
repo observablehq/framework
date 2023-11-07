@@ -4,7 +4,7 @@ import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
 import {findLoader, runLoader} from "./dataloader.js";
-import {prepareOutput, visitFiles, visitMarkdownFiles, maybeStat} from "./files.js";
+import {maybeStat, prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
 import {readPages} from "./navigation.js";
 import {renderServerless} from "./render.js";
 import {makeCLIResolver} from "./resolver.js";

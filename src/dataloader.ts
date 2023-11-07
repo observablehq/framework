@@ -1,7 +1,7 @@
 import {spawn} from "node:child_process";
 import {type Stats} from "node:fs";
-import {open, constants, rename, unlink} from "node:fs/promises";
-import {prepareOutput, maybeStat} from "./files.js";
+import {constants, open, rename, unlink} from "node:fs/promises";
+import {maybeStat, prepareOutput} from "./files.js";
 
 const runningCommands = new Map<string, Promise<void>>();
 

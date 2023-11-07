@@ -1,5 +1,5 @@
 import {readFile} from "node:fs/promises";
-import {getPatch, type Patch, type PatchItem} from "fast-array-diff";
+import {type Patch, type PatchItem, getPatch} from "fast-array-diff";
 import equal from "fast-deep-equal";
 import matter from "gray-matter";
 import hljs from "highlight.js";
@@ -7,12 +7,12 @@ import {parseHTML} from "linkedom";
 import MarkdownIt from "markdown-it";
 import {type RuleCore} from "markdown-it/lib/parser_core.js";
 import {type RuleInline} from "markdown-it/lib/parser_inline.js";
-import {type default as Renderer, type RenderRule} from "markdown-it/lib/renderer.js";
+import {type RenderRule, type default as Renderer} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
 import mime from "mime";
 import {pathFromRoot} from "./files.js";
 import {computeHash} from "./hash.js";
-import {transpileJavaScript, type FileReference, type ImportReference, type Transpile} from "./javascript.js";
+import {type FileReference, type ImportReference, type Transpile, transpileJavaScript} from "./javascript.js";
 
 export interface ReadMarkdownResult {
   contents: string;
