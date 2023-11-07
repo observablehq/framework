@@ -1,0 +1,1 @@
+const foo = await import("./other/foo.js");
