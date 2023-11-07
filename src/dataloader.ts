@@ -12,6 +12,10 @@ export interface Loader {
 
 export async function runLoader(commandPath: string, outputPath: string) {
   if (runningCommands.has(commandPath)) return runningCommands.get(commandPath);
+  const time = performance.now();
+  const id = `\x1b[36m[${((time * 10000) | 1).toString(16)}]\x1b[0m`;
+  let code;
+  console.info(id, `"${commandPath}"`, "\x1b[33mstart\x1b[0m", new Date());
   const command = (async () => {
     const outputTempPath = outputPath + ".tmp";
     await prepareOutput(outputTempPath);
@@ -26,7 +30,7 @@ export async function runLoader(commandPath: string, outputPath: string) {
       // signal: // abort signal
     });
     subprocess.stdout.pipe(cacheFileStream);
-    const code = await new Promise((resolve, reject) => {
+    code = await new Promise((resolve, reject) => {
       subprocess.on("error", reject); // (error) => console.error(`${commandPath}: ${error.message}`));
       subprocess.on("close", resolve);
     });
@@ -37,7 +41,16 @@ export async function runLoader(commandPath: string, outputPath: string) {
       await unlink(outputTempPath);
     }
   })();
-  command.finally(() => runningCommands.delete(commandPath));
+  command.finally(async () => {
+    runningCommands.delete(commandPath);
+    console.info(
+      id,
+      `"${commandPath}"`,
+      code === 0 ? "\x1b[36msuccess\x1b[0m" : "\x1b[31merror\x1b[0m",
+      `${Math.floor(performance.now() - time)}ms`,
+      code === 0 ? bytes((await maybeStat(outputPath))?.size) : ""
+    );
+  });
   runningCommands.set(commandPath, command);
   return command;
 }
@@ -51,4 +64,10 @@ export async function findLoader(name: string): Promise<Loader | undefined> {
       return {path, stats};
     }
   }
+}
+
+function bytes(size) {
+  if (!size) return "\x1b[31mempty output\x1b[0m";
+  const e = Math.floor(Math.log(size) / Math.log(1024));
+  return `${+(size / 1024 ** e).toFixed(2)} ${["bytes", "KiB", "MiB", "GiB", "TiB"][e]}`;
 }
