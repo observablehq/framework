@@ -18,7 +18,7 @@ export interface CommandContext {
   addPublic?: boolean;
 }
 
-export async function build(context: CommandContext) {
+export async function build(context: CommandContext = makeCommandContext()) {
   const {sourceRoot, outputRoot, addPublic = true} = context;
 
   // Make sure all files are readable before starting to write output files.
@@ -115,9 +115,4 @@ function makeCommandContext(): CommandContext {
     sourceRoot: normalize(values.root).replace(/\/$/, ""),
     outputRoot: normalize(values.output).replace(/\/$/, "")
   };
-}
-
-export async function execute() {
-  const context = makeCommandContext();
-  await build(context);
 }
