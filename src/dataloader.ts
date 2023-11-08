@@ -1,54 +1,102 @@
 import {spawn} from "node:child_process";
-import {type Stats} from "node:fs";
-import {constants, open, rename, unlink} from "node:fs/promises";
+import {access, constants, open} from "node:fs/promises";
+import {join} from "node:path";
 import {maybeStat, prepareOutput} from "./files.js";
 
-const runningCommands = new Map<string, Promise<void>>();
+const runningCommands = new Map<string, Promise<string>>();
 
-export interface Loader {
-  path: string;
-  stats: Stats;
-}
+export class Loader {
+  /**
+   * The command to run; such as "node" for a JavaScript loader, or the path to
+   * loader executable relative to the current working directory.
+   */
+  readonly command: string;
 
-export async function runLoader(commandPath: string, outputPath: string) {
-  if (runningCommands.has(commandPath)) return runningCommands.get(commandPath);
-  const command = (async () => {
-    const outputTempPath = outputPath + ".tmp";
-    await prepareOutput(outputTempPath);
-    const cacheFd = await open(outputTempPath, "w");
-    const cacheFileStream = cacheFd.createWriteStream({highWaterMark: 1024 * 1024});
-    const subprocess = spawn(commandPath, [], {
-      argv0: commandPath,
-      //cwd: dirname(commandPath), // TODO: Need to change commandPath to be relative this?
-      windowsHide: true,
-      stdio: ["ignore", "pipe", "inherit"]
-      // timeout: // time in ms
-      // signal: // abort signal
-    });
-    subprocess.stdout.pipe(cacheFileStream);
-    const code = await new Promise((resolve, reject) => {
-      subprocess.on("error", reject); // (error) => console.error(`${commandPath}: ${error.message}`));
-      subprocess.on("close", resolve);
-    });
-    await cacheFd.close();
-    if (code === 0) {
-      await rename(outputTempPath, outputPath);
-    } else {
-      await unlink(outputTempPath);
+  /**
+   * Any args to pass to the command. For a JavaScript or TypeScript loader, it
+   * is the path to the loader script relative to the current working directory.
+   */
+  readonly args: string[];
+
+  /**
+   * The path to the loader script or executable relative to the current working
+   * directory. This is exposed so that clients can check which file to watch to
+   * see if the loader is edited (and in which case it needs to be re-run).
+   */
+  readonly path: string;
+
+  /**
+   * The source root relative to the current working directory, such as docs.
+   */
+  readonly sourceRoot: string;
+
+  /**
+   * The path to the loader script’s output relative to the destination root.
+   * This is where the loader’s output is served, but the loader generates the
+   * file in the .observablehq/cache directory within the source root.
+   */
+  readonly targetPath: string;
+
+  private constructor({command, args, path, sourceRoot, targetPath}) {
+    this.command = command;
+    this.args = args;
+    this.path = path;
+    this.sourceRoot = sourceRoot;
+    this.targetPath = targetPath;
+  }
+
+  /**
+   * Finds the loader for the specified target path, relative to the specified
+   * source root, if it exists. If there is no such loader, returns undefined.
+   */
+  static async find(sourceRoot: string, targetPath: string): Promise<Loader | undefined> {
+    for (const ext of [".js", ".ts", ".sh"]) {
+      const sourcePath = targetPath + ext;
+      const path = join(sourceRoot, sourcePath);
+      try {
+        await access(path, ext === ".sh" ? constants.X_OK : constants.R_OK);
+      } catch {
+        continue;
+      }
+      return new Loader({
+        command: ext === ".js" ? "node" : ext === ".ts" ? "tsx" : path,
+        args: ext === ".js" || ext === ".ts" ? [path] : [],
+        path,
+        sourceRoot,
+        targetPath
+      });
     }
-  })();
-  command.finally(() => runningCommands.delete(commandPath));
-  runningCommands.set(commandPath, command);
-  return command;
-}
+  }
 
-export async function findLoader(name: string): Promise<Loader | undefined> {
-  // TODO: It may be more efficient use fs.readdir
-  for (const ext of [".js", ".ts", ".sh"]) {
-    const path = name + ext;
-    const stats = await maybeStat(path);
-    if (stats && stats.mode & constants.S_IXUSR) {
-      return {path, stats};
-    }
+  /**
+   * Runs this loader, returning the path to the generated output file relative
+   * to the source root; this is within the .observablehq/cache folder within
+   * the source root.
+   */
+  async load(): Promise<string> {
+    let command = runningCommands.get(this.path);
+    if (command) return command;
+    command = (async () => {
+      const outputPath = join(".observablehq", "cache", this.targetPath);
+      const cachePath = join(this.sourceRoot, outputPath);
+      const loaderStat = await maybeStat(this.path);
+      const cacheStat = await maybeStat(cachePath);
+      if (cacheStat && cacheStat.mtimeMs > loaderStat!.mtimeMs) return outputPath;
+      await prepareOutput(cachePath);
+      const cacheFd = await open(cachePath, "w");
+      const cacheFileStream = cacheFd.createWriteStream({highWaterMark: 1024 * 1024});
+      const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", "pipe", "inherit"]});
+      subprocess.stdout.pipe(cacheFileStream);
+      const code = await new Promise((resolve, reject) => {
+        subprocess.on("error", reject);
+        subprocess.on("close", resolve);
+      });
+      await cacheFd.close();
+      if (code !== 0) throw new Error(`loader exited with code ${code}`);
+      return outputPath;
+    })();
+    command.finally(() => runningCommands.delete(this.path));
+    runningCommands.set(this.path, command);
+    return command;
   }
 }

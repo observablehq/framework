@@ -3,7 +3,7 @@ import {basename, dirname, join, normalize, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
-import {findLoader, runLoader} from "./dataloader.js";
+import {Loader} from "./dataloader.js";
 import {maybeStat, prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
 import {readPages} from "./navigation.js";
 import {renderServerless} from "./render.js";
@@ -51,19 +51,18 @@ async function build(context: CommandContext) {
 
   // Copy over the referenced files.
   for (const file of files) {
-    const sourcePath = join(sourceRoot, file);
+    let sourcePath = join(sourceRoot, file);
     const outputPath = join(outputRoot, "_file", file);
     const stats = await maybeStat(sourcePath);
     if (!stats) {
-      const loader = await findLoader(sourcePath);
+      const loader = await Loader.find(sourceRoot, file);
       if (!loader) {
         console.error("missing referenced file", sourcePath);
         continue;
       }
-      const {path} = loader;
-      console.log("generate", path, "→", outputPath);
-      await runLoader(path, outputPath);
-      continue;
+      process.stdout.write(`generate ${loader.path} → `);
+      sourcePath = join(sourceRoot, await loader.load());
+      console.log(sourcePath);
     }
     console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);
