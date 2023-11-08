@@ -1,6 +1,6 @@
 import {spawn} from "node:child_process";
 import {type Stats} from "node:fs";
-import {constants, open, rename, unlink} from "node:fs/promises";
+import {open, rename, unlink} from "node:fs/promises";
 import {maybeStat, prepareOutput} from "./files.js";
 
 const runningCommands = new Map<string, Promise<void>>();
@@ -13,7 +13,7 @@ export interface Loader {
 function makeCommand(commandPath) {
   if (commandPath.endsWith(".js")) return {command: "node", options: [commandPath]};
   if (commandPath.endsWith(".ts")) return {command: "tsx", options: [commandPath]};
-  return {command: commandPath, options: []};
+  return {command: "sh", options: [commandPath]};
 }
 
 export async function runLoader(commandPath: string, outputPath: string) {
@@ -54,8 +54,6 @@ export async function findLoader(name: string): Promise<Loader | undefined> {
   for (const ext of [".js", ".ts", ".sh"]) {
     const path = name + ext;
     const stats = await maybeStat(path);
-    if (stats && stats.mode & constants.S_IXUSR) {
-      return {path, stats};
-    }
+    if (stats) return {path, stats};
   }
 }
