@@ -332,8 +332,8 @@ interface CodeInfo {
 
 export function parseCodeInfo(info: string): CodeInfo {
   // Code info grammar:
-  //   info: [language_id] ows [attributes]
-  //   language_id: word_char+
+  //   info: empty | language_id | attributes | language_id ows attributes
+  //   language_id: [\w]+
   //   attributes: '{' attribute_list '}'
   //   attribute_list: attribute | attribute_list ',' attribute
   //   attribute: key | key ':' value | class_name | id_name
@@ -342,9 +342,7 @@ export function parseCodeInfo(info: string): CodeInfo {
   //   value_content: quoted_string | identifier | true | false | "true" | "false"
   //   class_name: '.' identifier
   //   id_name: '#' identifier
-  //   identifier: identifier_start identifier_continue*
-  //   identifier_start: [a-zA-Z]
-  //   identifier_continue: [a-zA-Z0-9-_.]
+  //   identifier: [a-zA-Z] [a-zA-Z0-9-_.]*
   //   quoted_string: '"' ([^"] | \")* '"' | "'" ([^'] | \')* "'"
   //   ows: [ \t]*
   const match = /^((?<language>\w+)?)(\s*(?<attributes>.*))?\s*$/.exec(info);
