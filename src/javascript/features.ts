@@ -53,7 +53,6 @@ export function isLocalFetch(node, references, root, sourcePath) {
     callee.type === "Identifier" &&
     callee.name === "fetch" &&
     !references.includes(callee) &&
-    arg &&
     isStringLiteral(arg) &&
     isLocalImport(getStringLiteralValue(arg), root, sourcePath)
   );
@@ -61,8 +60,9 @@ export function isLocalFetch(node, references, root, sourcePath) {
 
 export function isStringLiteral(node) {
   return (
-    (node.type === "Literal" && /^['"]/.test(node.raw)) ||
-    (node.type === "TemplateLiteral" && node.expressions.length === 0)
+    node &&
+    ((node.type === "Literal" && /^['"]/.test(node.raw)) ||
+      (node.type === "TemplateLiteral" && node.expressions.length === 0))
   );
 }
 
