@@ -370,11 +370,11 @@ export function parseCodeInfo(info: string): CodeInfo {
     const parsed = parseAttributes(match.groups.attributes);
     return {language, ...parsed};
   }
-  // TODO: blend in defaults from context
   return {language, attributes: {}, classes: [], id: undefined};
 }
 
 function optionEnabled(attributes: Record<string, boolean | string> | undefined, name: string) {
+  // TODO: blend in defaults from context
   return attributes && attributes[name] === true;
 }
 
