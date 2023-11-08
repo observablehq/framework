@@ -1,6 +1,6 @@
 import {spawn} from "node:child_process";
 import {existsSync} from "node:fs";
-import {open} from "node:fs/promises";
+import {open, rename, unlink} from "node:fs/promises";
 import {join} from "node:path";
 import {maybeStat, prepareOutput} from "./files.js";
 
@@ -79,17 +79,23 @@ export class Loader {
       const loaderStat = await maybeStat(this.path);
       const cacheStat = await maybeStat(cachePath);
       if (cacheStat && cacheStat.mtimeMs > loaderStat!.mtimeMs) return outputPath;
-      await prepareOutput(cachePath);
-      const cacheFd = await open(cachePath, "w");
-      const cacheFileStream = cacheFd.createWriteStream({highWaterMark: 1024 * 1024});
+      const tempPath = join(".observablehq", "cache", `${this.targetPath}.${process.pid}`);
+      await prepareOutput(tempPath);
+      const tempFd = await open(tempPath, "w");
+      const tempFileStream = tempFd.createWriteStream({highWaterMark: 1024 * 1024});
       const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", "pipe", "inherit"]});
-      subprocess.stdout.pipe(cacheFileStream);
+      subprocess.stdout.pipe(tempFileStream);
       const code = await new Promise((resolve, reject) => {
         subprocess.on("error", reject);
         subprocess.on("close", resolve);
       });
-      await cacheFd.close();
-      if (code !== 0) throw new Error(`loader exited with code ${code}`);
+      await tempFd.close();
+      if (code === 0) {
+        await rename(tempPath, cachePath);
+      } else {
+        await unlink(tempPath);
+        throw new Error(`loader exited with code ${code}`);
+      }
       return outputPath;
     })();
     command.finally(() => runningCommands.delete(this.path));
