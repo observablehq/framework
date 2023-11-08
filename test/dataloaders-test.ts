@@ -30,4 +30,7 @@ describe("data loaders are called with the appropriate command", () => {
       await unlink(outputPath);
     }
   });
+  it("a .js data loader is not called with tsx", async () => {
+    assert.rejects(runLoader("test/dataloaders/data4-error.txt.sh", "/dev/null"));
+  });
 });
