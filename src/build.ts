@@ -27,14 +27,14 @@ async function build(context: CommandContext) {
     const sourcePath = join(sourceRoot, sourceFile);
     const outputPath = join(outputRoot, join(dirname(sourceFile), basename(sourceFile, ".md") + ".html"));
     console.log("render", sourcePath, "→", outputPath);
-    const path = `/${join(dirname(sourceFile), basename(sourceFile, ".md"))}`;
+    const path = join(dirname(sourceFile), basename(sourceFile, ".md"));
     const render = renderServerless(await readFile(sourcePath, "utf-8"), {
       root: sourceRoot,
       path,
       pages,
       resolver
     });
-    files.push(...render.files.map((f) => f.name));
+    files.push(...render.files.map((f) => join(dirname(sourceFile), f.name)));
     await prepareOutput(outputPath);
     await writeFile(outputPath, render.html);
   }

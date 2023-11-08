@@ -9,6 +9,7 @@ import {WebSocketServer, type WebSocket} from "ws";
 import {findLoader, runLoader} from "./dataloader.js";
 import {HttpError, isHttpError, isNodeError} from "./error.js";
 import {maybeStat} from "./files.js";
+import {type FileReference} from "./javascript.js";
 import {diffMarkdown, readMarkdown, type ParseResult} from "./markdown.js";
 import {readPages} from "./navigation.js";
 import {renderPreview} from "./render.js";
@@ -81,7 +82,7 @@ class Server {
         }
         throw new HttpError("Not found", 404);
       } else {
-        if (normalize(pathname).startsWith("..")) throw new Error("Invalid path: " + pathname);
+        if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
         let path = join(this.root, pathname);
 
         // If this path is for /index, redirect to the parent directory for a
@@ -120,7 +121,7 @@ class Server {
             (
               await renderPreview(await readFile(path + ".md", "utf-8"), {
                 root: this.root,
-                path: pathname,
+                path: pathname.slice("/".length),
                 pages,
                 resolver: this._resolver!
               })
@@ -151,9 +152,9 @@ class Server {
 class FileWatchers {
   #watchers: FSWatcher[] = [];
 
-  static async watchAll(root: string, files: {name: string}[], cb: (name: string) => void) {
+  static async watchAll(root: string, files: FileReference[], cb: (name: string) => void) {
     const watchers = new FileWatchers();
-    const fileset = [...new Set(files.map(({name}) => name))];
+    const fileset = [...new Set(files.map(({name}) => name))]; // TODO need resolved files here, relative to dirname(sourcePath)
     for (const name of fileset) {
       const watchPath = await FileWatchers.getWatchPath(root, name);
       let prevState = await maybeStat(watchPath);
@@ -250,9 +251,9 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
         case "hello": {
           if (markdownWatcher || attachmentWatcher) throw new Error("already watching");
           let {path} = message;
-          if (normalize(path).startsWith("..")) throw new Error("Invalid path: " + path);
+          if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + path);
           if (path.endsWith("/")) path += "index";
-          path = normalize(path) + ".md";
+          path = path.slice("/".length) + ".md";
           markdownWatcher = watch(join(root, path), await refreshMarkdown(path));
           break;
         }

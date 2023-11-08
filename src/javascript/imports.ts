@@ -1,14 +1,13 @@
-import {Parser} from "acorn";
-import type {Node} from "acorn";
+import {Parser, type Node} from "acorn";
 import {simple} from "acorn-walk";
 import {readFileSync} from "node:fs";
 import {dirname, join} from "node:path";
-import {type JavaScriptNode, parseOptions} from "../javascript.js";
+import {parseOptions, type Feature, type ImportReference, type JavaScriptNode} from "../javascript.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
 export function findImports(body: Node, root: string, sourcePath: string) {
-  const imports: {name: string; type: "global" | "local"}[] = [];
-  const features: {name: string; type: string}[] = [];
+  const imports: ImportReference[] = [];
+  const features: Feature[] = [];
   const paths = new Set<string>();
 
   simple(body, {

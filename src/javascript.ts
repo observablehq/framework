@@ -23,6 +23,15 @@ export interface ImportReference {
   type: "global" | "local";
 }
 
+export interface Feature {
+  type: "FileAttachment" | "DatabaseClient" | "Secret";
+  name: string;
+}
+
+export interface Identifier {
+  name: string;
+}
+
 export interface Transpile {
   id: string;
   inputs?: string[];
@@ -47,10 +56,12 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
   const {id, root, sourcePath} = options;
   try {
     const node = parseJavaScript(input, options);
-    const databases = node.features.filter((f) => f.type === "DatabaseClient").map((f) => ({name: f.name}));
+    const databases = node.features
+      .filter((f) => f.type === "DatabaseClient")
+      .map((f): DatabaseReference => ({name: f.name}));
     const files = node.features
       .filter((f) => f.type === "FileAttachment")
-      .map((f) => ({name: f.name, mimeType: mime.getType(f.name)}));
+      .map((f): FileReference => ({name: f.name, mimeType: mime.getType(f.name)}));
     const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
     const output = new Sourcemap(input);
     trim(output, input);
@@ -103,12 +114,12 @@ export const parseOptions: Options = {ecmaVersion: 13, sourceType: "module"};
 
 export interface JavaScriptNode {
   body: Node;
-  declarations: {name: string}[] | null;
-  references: {name: string}[];
-  features: {type: unknown; name: string}[];
-  imports: {type: "global" | "local"; name: string}[];
-  expression: boolean;
-  async: boolean;
+  declarations: Identifier[] | null; // null for expressions that can’t declare top-level variables, a.k.a outputs
+  references: Identifier[]; // the unbound references, a.k.a. inputs
+  features: Feature[];
+  imports: ImportReference[];
+  expression: boolean; // is this an expression or a program cell?
+  async: boolean; // does this use top-level await?
 }
 
 function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
