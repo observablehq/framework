@@ -12,8 +12,14 @@ import {makeCLIResolver} from "./resolver.js";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
 
-async function build(context: CommandContext) {
-  const {sourceRoot, outputRoot} = context;
+export interface CommandContext {
+  sourceRoot: string;
+  outputRoot: string;
+  addPublic?: boolean;
+}
+
+export async function build(context: CommandContext) {
+  const {sourceRoot, outputRoot, addPublic = true} = context;
 
   // Make sure all files are readable before starting to write output files.
   for await (const sourceFile of visitMarkdownFiles(sourceRoot)) {
@@ -42,13 +48,15 @@ async function build(context: CommandContext) {
   }
 
   // Copy over the public directory.
-  const publicRoot = join(dirname(relative(cwd(), fileURLToPath(import.meta.url))), "..", "public");
-  for await (const publicFile of visitFiles(publicRoot)) {
-    const sourcePath = join(publicRoot, publicFile);
-    const outputPath = join(outputRoot, "_observablehq", publicFile);
-    console.log("copy", sourcePath, "→", outputPath);
-    await prepareOutput(outputPath);
-    await copyFile(sourcePath, outputPath);
+  if (addPublic) {
+    const publicRoot = join(dirname(relative(cwd(), fileURLToPath(import.meta.url))), "..", "public");
+    for await (const publicFile of visitFiles(publicRoot)) {
+      const sourcePath = join(publicRoot, publicFile);
+      const outputPath = join(outputRoot, "_observablehq", publicFile);
+      console.log("copy", sourcePath, "→", outputPath);
+      await prepareOutput(outputPath);
+      await copyFile(sourcePath, outputPath);
+    }
   }
 
   // Copy over the referenced files.
@@ -72,20 +80,17 @@ async function build(context: CommandContext) {
 
   // Copy over required distribution files from node_modules.
   // TODO: Note that this requires that the build command be run relative to the node_modules directory.
-  for (const [sourcePath, targetFile] of EXTRA_FILES) {
-    const outputPath = join(outputRoot, targetFile);
-    console.log("copy", sourcePath, "→", outputPath);
-    await prepareOutput(outputPath);
-    await copyFile(sourcePath, outputPath);
+  if (addPublic) {
+    for (const [sourcePath, targetFile] of EXTRA_FILES) {
+      const outputPath = join(outputRoot, targetFile);
+      console.log("copy", sourcePath, "→", outputPath);
+      await prepareOutput(outputPath);
+      await copyFile(sourcePath, outputPath);
+    }
   }
 }
 
 const USAGE = `Usage: observable build [--root dir] [--output dir]`;
-
-interface CommandContext {
-  sourceRoot: string;
-  outputRoot: string;
-}
 
 function makeCommandContext(): CommandContext {
   const {values} = parseArgs({
@@ -112,8 +117,7 @@ function makeCommandContext(): CommandContext {
   };
 }
 
-await (async function () {
+export async function execute() {
   const context = makeCommandContext();
   await build(context);
-  process.exit(0);
-})();
+}
