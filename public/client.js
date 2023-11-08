@@ -1,4 +1,4 @@
-import {Runtime, Library, Inspector} from "npm:@observablehq/runtime";
+import {Runtime, Library, Inspector} from "/_observablehq/runtime.js";
 
 const library = Object.assign(new Library(), {width, Mutable, ...recommendedLibraries()});
 const runtime = new Runtime(library);
@@ -59,22 +59,75 @@ function Mutable() {
 function recommendedLibraries() {
   return {
     DatabaseClient: () => import("./database.js").then((db) => db.makeDatabaseClient(resolveDatabaseToken)),
-    d3: () => import("npm:d3"),
-    htl: () => import("npm:htl"),
-    html: () => import("npm:htl").then((htl) => htl.html),
-    svg: () => import("npm:htl").then((htl) => htl.svg),
-    Plot: () => import("npm:@observablehq/plot"),
+    d3: () => import("https://cdn.jsdelivr.net/npm/d3/+esm"),
+    htl: () => import("https://cdn.jsdelivr.net/npm/htl/+esm"),
+    html: () => import("https://cdn.jsdelivr.net/npm/htl/+esm").then((htl) => htl.html),
+    svg: () => import("https://cdn.jsdelivr.net/npm/htl/+esm").then((htl) => htl.svg),
+    Plot: () => import("https://cdn.jsdelivr.net/npm/@observablehq/plot/+esm"),
     Inputs: () => {
       // TODO Observable Inputs needs to include the CSS in the dist folder
       // published to npm, and we should replace the __ns__ namespace with
       // oi-{hash} in the ES module distribution, somehow.
-      const inputs = import("npm:@observablehq/inputs");
+      const inputs = import("https://cdn.jsdelivr.net/npm/@observablehq/inputs/+esm");
       const link = document.createElement("link");
       link.rel = "stylesheet";
       link.href = "https://cdn.jsdelivr.net/gh/observablehq/inputs/src/style.css";
       document.head.append(link);
       return inputs;
+    },
+    dot,
+    mermaid
+  };
+}
+
+// TODO Incorporate this into the standard library.
+async function dot() {
+  const {instance} = await import("https://cdn.jsdelivr.net/npm/@viz-js/viz/+esm");
+  const viz = await instance();
+  return function dot(strings) {
+    let string = strings[0] + "";
+    let i = 0;
+    let n = arguments.length;
+    while (++i < n) string += arguments[i] + "" + strings[i];
+    const svg = viz.renderSVGElement(string, {
+      graphAttributes: {
+        bgcolor: "none"
+      },
+      nodeAttributes: {
+        color: "#00000101",
+        fontcolor: "#00000101",
+        fontname: "var(--sans-serif)",
+        fontsize: "12"
+      },
+      edgeAttributes: {
+        color: "#00000101"
+      }
+    });
+    for (const e of svg.querySelectorAll("[stroke='#000001'][stroke-opacity='0.003922']")) {
+      e.setAttribute("stroke", "currentColor");
+      e.removeAttribute("stroke-opacity");
     }
+    for (const e of svg.querySelectorAll("[fill='#000001'][fill-opacity='0.003922']")) {
+      e.setAttribute("fill", "currentColor");
+      e.removeAttribute("fill-opacity");
+    }
+    svg.remove();
+    svg.style = "max-width: 100%; height: auto;";
+    return svg;
+  };
+}
+
+// TODO Incorporate this into the standard library.
+async function mermaid() {
+  let nextId = 0;
+  const {default: mer} = await import("https://cdn.jsdelivr.net/npm/mermaid/+esm");
+  mer.initialize({startOnLoad: false, securityLevel: "loose", theme: "neutral"});
+  return async function mermaid() {
+    const div = document.createElement("div");
+    div.innerHTML = (await mer.render(`mermaid-${++nextId}`, String.raw.apply(String, arguments))).svg;
+    const svg = div.firstChild;
+    svg.remove();
+    return svg;
   };
 }
 
