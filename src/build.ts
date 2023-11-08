@@ -34,7 +34,7 @@ async function build(context: CommandContext) {
       pages,
       resolver
     });
-    files.push(...render.files.map((f) => join(sourceFile, "..", f.name)));
+    files.push(...render.files.map((f) => f.name));
     await prepareOutput(outputPath);
     await writeFile(outputPath, render.html);
   }
