@@ -1,6 +1,6 @@
 # Generators
 
-When code refers to a [generator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator) defined in another code block, the referencing code automatically runs each time the generator yields a value. Values that change over time, such as interactive inputs and animation parameters, are often represented as generators. For example, you can use [Observable Inputs](https://github.com/observablehq/inputs) and the built-in [`view` function](#view(input)) to construct a live text input. Try entering your name into the box below:
+When code refers to a [generator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator) defined in another code block, the referencing code automatically runs each time the generator yields a value. Values that change over time, such as interactive inputs and animation parameters, are often represented as generators. For example, you can use [Observable Inputs](https://github.com/observablehq/inputs) and the built-in [`view` function](./inputs) to construct a live text input. Try entering your name into the box below:
 
 ```js show
 const name = view(Inputs.text({label: "Name", placeholder: "Enter your name"}));
