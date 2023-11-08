@@ -18,7 +18,7 @@ display((
 Input.table(f1)
 ))
 }});
-define({id: "aaa5c01d", outputs: ["f2"], files: [{"name":"/file2.csv","mimeType":"text/csv"}], body: () => {
+define({id: "aaa5c01d", outputs: ["f2"], files: [{"name":"./file2.csv","mimeType":"text/csv"}], body: () => {
 const f2 = fetch("./_file/file2.csv");
 return {f2};
 }});
@@ -27,7 +27,7 @@ return {f2};
 <input id="observablehq-sidebar-toggle" type="checkbox">
 <nav id="observablehq-sidebar">
   <ol>
-    <li class="observablehq-link"><a href="/subsection/">Sub-Section</a></li>
+    <li class="observablehq-link"><a href="/subsection">Sub-Section</a></li>
     <li class="observablehq-link observablehq-link-active"><a href="/">Multi test</a></li>
   </ol>
 </nav>

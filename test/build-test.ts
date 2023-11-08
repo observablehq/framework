@@ -29,8 +29,8 @@ describe("build", async () => {
       const expectedFiles = new Set(findFiles(expectedDir));
       const missingFiles = difference(actualFiles, expectedFiles);
       const unexpectedFiles = difference(expectedFiles, actualFiles);
-      if (missingFiles.size > 0) assert.fail(`Missing output files: ${Array.from(missingFiles).join()}`);
-      if (unexpectedFiles.size > 0) assert.fail(`Unexpected output files: ${Array.from(unexpectedFiles).join()}`);
+      if (missingFiles.size > 0) assert.fail(`Missing output files: ${Array.from(missingFiles).join(", ")}`);
+      if (unexpectedFiles.size > 0) assert.fail(`Unexpected output files: ${Array.from(unexpectedFiles).join(", ")}`);
 
       for (const path of expectedFiles) {
         const actual = await readFile(join(actualDir, path), "utf8");

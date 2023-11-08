@@ -20,7 +20,7 @@ export async function readPages(root: string): Promise<NonNullable<RenderOptions
       continue;
     }
     const name = basename(file, ".md");
-    const page = {path: `/${join(dirname(file), name)}`, name: parsed.title ?? "Untitled"};
+    const page = {path: join(dirname(file), name), name: parsed.title ?? "Untitled"};
     if (name === "index") pages.unshift(page);
     else pages.push(page);
   }
