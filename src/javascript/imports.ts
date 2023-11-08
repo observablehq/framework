@@ -1,12 +1,14 @@
 import {Parser} from "acorn";
+import type {Node} from "acorn";
 import {simple} from "acorn-walk";
 import {readFileSync} from "node:fs";
-import {dirname, join, relative, resolve} from "node:path";
-import {parseOptions} from "../javascript.js";
+import {dirname, join} from "node:path";
+import {type JavaScriptNode, parseOptions} from "../javascript.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
-export function findImports(body, root) {
-  const imports: {name: string}[] = [];
+export function findImports(body: Node, root: string, sourcePath: string) {
+  const imports: {name: string; type: "global" | "local"}[] = [];
+  const features: {name: string; type: string}[] = [];
   const paths = new Set<string>();
 
   simple(body, {
@@ -19,18 +21,24 @@ export function findImports(body, root) {
   function findImport(node) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
-      if (value.startsWith("./")) findLocalImports(join(root, value));
-      imports.push({name: value});
+      if (isLocalImport(value, root, sourcePath)) {
+        findLocalImports(join(dirname(sourcePath), value));
+      } else {
+        imports.push({name: value, type: "global"});
+      }
     }
   }
 
   // If this is an import of a local ES module, recursively parse the module to
   // find transitive imports.
+  // path is the full URI path without /_file
   function findLocalImports(path) {
     if (paths.has(path)) return;
     paths.add(path);
+    imports.push({type: "local", name: path});
+    features.push({type: "FileAttachment", name: path});
     try {
-      const input = readFileSync(path, "utf-8");
+      const input = readFileSync(join(root, path), "utf-8");
       const program = Parser.parse(input, parseOptions);
       simple(program, {
         ImportDeclaration: findLocalImport,
@@ -44,38 +52,41 @@ export function findImports(body, root) {
     function findLocalImport(node) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
-        if (value.startsWith("./")) {
-          const subpath = resolve(dirname(path), value);
+        if (isLocalImport(value, root, path)) {
+          const subpath = join(dirname(path), value);
           findLocalImports(subpath);
-          imports.push({name: `./${relative(root, subpath)}`});
         } else {
-          imports.push({name: value});
+          imports.push({name: value, type: "global"});
+          // non-local imports don't need to be promoted to file attachments
         }
       }
     }
   }
 
-  return imports;
+  return {imports, features};
 }
 
 // TODO parallelize multiple static imports
-// TODO need to know the local path of the importing notebook; this assumes it’s in the root
-export function rewriteImports(output, root) {
-  simple(root.body, {
+export function rewriteImports(output: any, rootNode: JavaScriptNode, root: string, sourcePath: string) {
+  simple(rootNode.body, {
     ImportExpression(node: any) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
         output.replaceLeft(
           node.source.start,
           node.source.end,
-          JSON.stringify(value.startsWith("./") ? `/_file/${value.slice(2)}` : resolveImport(value))
+          JSON.stringify(
+            isLocalImport(value, root, sourcePath)
+              ? join("/_file/", join(dirname(sourcePath), value))
+              : resolveImport(value)
+          )
         );
       }
     },
     ImportDeclaration(node: any) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
-        root.async = true;
+        rootNode.async = true;
         output.replaceLeft(
           node.start,
           node.end,
@@ -86,7 +97,9 @@ export function rewriteImports(output, root) {
               ? node.specifiers.find(isNamespaceSpecifier).local.name
               : "{}"
           } = await import(${JSON.stringify(
-            value.startsWith("./") ? `/_file/${value.slice(2)}` : resolveImport(value)
+            isLocalImport(value, root, sourcePath)
+              ? join("/_file/", join(dirname(sourcePath), value))
+              : resolveImport(value)
           )});`
         );
       }
@@ -100,6 +113,13 @@ function rewriteImportSpecifier(node) {
     : node.imported.name === node.local.name
     ? node.local.name
     : `${node.imported.name}: ${node.local.name}`;
+}
+
+export function isLocalImport(value: string, root: string, sourcePath: string): boolean {
+  return (
+    ["./", "../", "/"].some((prefix) => value.startsWith(prefix)) &&
+    join(root + "/", dirname(sourcePath), value).startsWith(root)
+  );
 }
 
 function isNamespaceSpecifier(node) {
