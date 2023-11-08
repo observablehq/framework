@@ -10,15 +10,18 @@ export interface Loader {
   stats: Stats;
 }
 
+const error = color(31);
+const success = color(32);
+const warning = color(33);
+function color(code) {
+  return process.stdout.isTTY ? (text) => `\x1b[${code}m${text}\x1b[0m` : String;
+}
+
 export async function runLoader(commandPath: string, outputPath: string) {
-  const c = process.stdout.isTTY
-    ? {info: "\x1b[33m", success: "\x1b[36m", error: "\x1b[31m", close: "\x1b[0m"}
-    : {info: "", success: "", error: "", close: ""};
   if (runningCommands.has(commandPath)) return runningCommands.get(commandPath);
   const time = performance.now();
-  const id = `${c.success}[${((time * 10000) | 1).toString(16)}]${c.close}`;
   let code;
-  console.info(id, `"${commandPath}"`, `${c.info}start${c.close}`, new Date());
+  console.info(`${commandPath} start`);
   const command = (async () => {
     const outputTempPath = outputPath + ".tmp";
     await prepareOutput(outputTempPath);
@@ -47,11 +50,13 @@ export async function runLoader(commandPath: string, outputPath: string) {
   command.finally(async () => {
     runningCommands.delete(commandPath);
     console.info(
-      id,
-      `"${commandPath}"`,
-      code === 0 ? `${c.success}success${c.close}` : `${c.error}error${c.close}`,
-      `${Math.floor(performance.now() - time)}ms`,
-      code === 0 ? bytes((await maybeStat(outputPath))?.size) : ""
+      `${commandPath} ${
+        code === 0
+          ? `${success("success")} ${outputBytes((await maybeStat(outputPath))?.size)} in ${Math.floor(
+              performance.now() - time
+            )}ms`
+          : error("error")
+      }`
     );
   });
   runningCommands.set(commandPath, command);
@@ -69,8 +74,8 @@ export async function findLoader(name: string): Promise<Loader | undefined> {
   }
 }
 
-function bytes(size) {
-  if (!size) return "\x1b[31mempty output\x1b[0m";
+function outputBytes(size) {
+  if (!size) return warning("empty output");
   const e = Math.floor(Math.log(size) / Math.log(1024));
-  return `${+(size / 1024 ** e).toFixed(2)} ${["bytes", "KiB", "MiB", "GiB", "TiB"][e]}`;
+  return `output ${+(size / 1024 ** e).toFixed(2)} ${["bytes", "KiB", "MiB", "GiB", "TiB"][e]}`;
 }
