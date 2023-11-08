@@ -35,6 +35,7 @@ export async function runLoader(commandPath: string, outputPath: string) {
       await rename(outputTempPath, outputPath);
     } else {
       await unlink(outputTempPath);
+      unlink(outputPath);
     }
   })();
   command.finally(() => runningCommands.delete(commandPath));
