@@ -1,7 +1,7 @@
 import {computeHash} from "./hash.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
-import type {CellPiece} from "./markdown.js";
-import {parseMarkdown, type ParseResult} from "./markdown.js";
+import {resolveImport} from "./javascript/imports.js";
+import {parseMarkdown, type CellPiece, type ParseResult} from "./markdown.js";
 
 export interface Render {
   html: string;
@@ -11,13 +11,13 @@ export interface Render {
 
 export interface RenderOptions {
   root: string;
-  path?: string;
+  path: string;
   pages?: {path: string; name: string}[];
   resolver: (cell: CellPiece) => CellPiece;
 }
 
 export function renderPreview(source: string, options: RenderOptions): Render {
-  const parseResult = parseMarkdown(source, options.root);
+  const parseResult = parseMarkdown(source, options.root, options.path);
   return {
     html: render(parseResult, {...options, preview: true, hash: computeHash(source)}),
     files: parseResult.files,
@@ -26,7 +26,7 @@ export function renderPreview(source: string, options: RenderOptions): Render {
 }
 
 export function renderServerless(source: string, options: RenderOptions): Render {
-  const parseResult = parseMarkdown(source, options.root);
+  const parseResult = parseMarkdown(source, options.root, options.path);
   return {
     html: render(parseResult, options),
     files: parseResult.files,
@@ -51,7 +51,6 @@ function render(
   {path, pages, preview, hash, resolver}: RenderOptions & RenderInternalOptions
 ): string {
   const showSidebar = pages && pages.length > 1;
-  const imports = getImportMap(parseResult);
   return `<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -59,18 +58,9 @@ ${
   parseResult.title ? `<title>${escapeData(parseResult.title)}</title>\n` : ""
 }<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
-<script type="importmap">
-${JSON.stringify({imports: Object.fromEntries(Array.from(imports, ([name, href]) => [name, href]))}, null, 2)}
-</script>
-${Array.from(imports.values())
-  .concat(parseResult.imports.filter(({name}) => name.startsWith("./")).map(({name}) => `/_file/${name.slice(2)}`))
+${Array.from(getImportPreloads(parseResult))
   .map((href) => `<link rel="modulepreload" href="${href}">`)
   .join("\n")}
-${
-  parseResult.cells.some((cell) => cell.databases?.length)
-    ? `<link rel="modulepreload" href="/_observablehq/database.js">`
-    : ""
-}
 <script type="module">
 
 import {${preview ? "open, " : ""}define} from "/_observablehq/client.js";
@@ -117,17 +107,24 @@ ${parseResult.html}</main>
 `;
 }
 
-function getImportMap(parseResult: ParseResult): Map<string, string> {
-  const map = new Map([["npm:@observablehq/runtime", "/_observablehq/runtime.js"]]);
-  const npm = new Set<string>();
-  for (const {name} of parseResult.imports) if (name.startsWith("npm:")) npm.add(name);
+function getImportPreloads(parseResult: ParseResult): Iterable<string> {
+  const specifiers = new Set<string>(["npm:@observablehq/runtime"]);
+  for (const {name, type} of parseResult.imports) specifiers.add(`${type === "local" ? "/_file" : ""}${name}`);
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
-  if (inputs.has("d3") || inputs.has("Plot")) npm.add("npm:d3");
-  if (inputs.has("Plot")) npm.add("npm:@observablehq/plot");
-  if (inputs.has("htl") || inputs.has("html") || inputs.has("svg") || inputs.has("Inputs")) npm.add("npm:htl");
-  if (inputs.has("Inputs")) npm.add("npm:@observablehq/inputs");
-  for (const name of npm) map.set(name, `https://cdn.jsdelivr.net/npm/${name.slice(4)}/+esm`);
-  return map;
+  if (inputs.has("d3") || inputs.has("Plot")) specifiers.add("npm:d3");
+  if (inputs.has("Plot")) specifiers.add("npm:@observablehq/plot");
+  if (inputs.has("htl") || inputs.has("html") || inputs.has("svg") || inputs.has("Inputs")) specifiers.add("npm:htl");
+  if (inputs.has("Inputs")) specifiers.add("npm:@observablehq/inputs");
+  if (inputs.has("dot")) specifiers.add("npm:@viz-js/viz");
+  if (inputs.has("mermaid")) specifiers.add("npm:mermaid").add("npm:d3");
+  const preloads: string[] = [];
+  for (const specifier of specifiers) {
+    preloads.push(resolveImport(specifier));
+  }
+  if (parseResult.cells.some((cell) => cell.databases?.length)) {
+    preloads.push("/_observablehq/database.js");
+  }
+  return preloads;
 }
 
 // TODO Adopt Hypertext Literal?

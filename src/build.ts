@@ -3,11 +3,11 @@ import {basename, dirname, join, normalize, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
-import {getStats, prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
+import {Loader} from "./dataloader.js";
+import {maybeStat, prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
 import {readPages} from "./navigation.js";
 import {renderServerless} from "./render.js";
 import {makeCLIResolver} from "./resolver.js";
-import {findLoader, runCommand} from "./dataloader.js";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
 
@@ -40,7 +40,7 @@ export async function build(context: CommandContext) {
       pages,
       resolver
     });
-    files.push(...render.files.map((f) => join(sourceFile, "..", f.name)));
+    files.push(...render.files.map((f) => f.name));
     await prepareOutput(outputPath);
     await writeFile(outputPath, render.html);
   }
@@ -59,18 +59,18 @@ export async function build(context: CommandContext) {
 
   // Copy over the referenced files.
   for (const file of files) {
-    const sourcePath = join(sourceRoot, file);
+    let sourcePath = join(sourceRoot, file);
     const outputPath = join(outputRoot, "_file", file);
-    const stats = await getStats(sourcePath);
+    const stats = await maybeStat(sourcePath);
     if (!stats) {
-      const {path} = await findLoader("", sourcePath);
-      if (!path) {
+      const loader = Loader.find(sourceRoot, file);
+      if (!loader) {
         console.error("missing referenced file", sourcePath);
         continue;
       }
-      console.log("generate", path, "→", outputPath);
-      await runCommand(path, outputPath);
-      continue;
+      process.stdout.write(`generate ${loader.path} → `);
+      sourcePath = join(sourceRoot, await loader.load());
+      console.log(sourcePath);
     }
     console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);
