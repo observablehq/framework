@@ -3,6 +3,7 @@ export default {
     {path: "/index", name: "Overview"},
     {path: "/getting-started", name: "Getting started"},
     {path: "/markdown", name: "Markdown"},
+    {path: "/html", name: "HTML"},
     {path: "/javascript", name: "JavaScript"},
     {path: "/javascript/reactivity", name: "Reactivity"},
     {path: "/javascript/display", name: "Display"},
@@ -15,7 +16,6 @@ export default {
     {path: "/javascript/dot", name: "Dot"},
     {path: "/javascript/mermaid", name: "Mermaid"},
     {path: "/javascript/tex", name: "TeX"},
-    {path: "/html", name: "HTML"},
     {path: "/loaders", name: "Data loaders"},
     {path: "/contributing", name: "Contributing"},
   ]
