@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 
-const configName = ".observablehqrc";
+const configName = ".observablehq";
 
 interface Config {
   auth?: {
