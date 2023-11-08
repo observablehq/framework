@@ -1,7 +1,7 @@
 import {Parser, type Node} from "acorn";
 import {simple} from "acorn-walk";
 import {readFileSync} from "node:fs";
-import {dirname, join} from "node:path";
+import {dirname, join, normalize} from "node:path";
 import {parseOptions, type ImportReference, type JavaScriptNode} from "../javascript.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
@@ -20,7 +20,7 @@ export function findImports(body: Node, root: string, sourcePath: string) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
       if (isLocalImport(value, root, sourcePath)) {
-        findLocalImports(value);
+        findLocalImports(normalize(value));
       } else {
         imports.push({name: value, type: "global"});
       }
