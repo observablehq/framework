@@ -19,10 +19,9 @@ function color(code) {
 
 export async function runLoader(commandPath: string, outputPath: string) {
   if (runningCommands.has(commandPath)) return runningCommands.get(commandPath);
-  const time = performance.now();
-  let code;
-  console.info(`${commandPath} start`);
   const command = (async () => {
+    console.info(`${commandPath} start`);
+    const time = performance.now();
     const outputTempPath = outputPath + ".tmp";
     await prepareOutput(outputTempPath);
     const cacheFd = await open(outputTempPath, "w");
@@ -36,7 +35,7 @@ export async function runLoader(commandPath: string, outputPath: string) {
       // signal: // abort signal
     });
     subprocess.stdout.pipe(cacheFileStream);
-    code = await new Promise((resolve, reject) => {
+    const code = await new Promise((resolve, reject) => {
       subprocess.on("error", reject); // (error) => console.error(`${commandPath}: ${error.message}`));
       subprocess.on("close", resolve);
     });
@@ -46,9 +45,6 @@ export async function runLoader(commandPath: string, outputPath: string) {
     } else {
       await unlink(outputTempPath);
     }
-  })();
-  command.finally(async () => {
-    runningCommands.delete(commandPath);
     console.info(
       `${commandPath} ${
         code === 0
@@ -58,7 +54,8 @@ export async function runLoader(commandPath: string, outputPath: string) {
           : error("error")
       }`
     );
-  });
+  })();
+  command.finally(() => runningCommands.delete(commandPath));
   runningCommands.set(commandPath, command);
   return command;
 }
