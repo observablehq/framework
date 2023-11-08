@@ -66,7 +66,12 @@ class Server {
         // Look for a data loader for this file.
         const loader = Loader.find(this.root, path);
         if (loader) {
-          const outpath = await loader.load();
+          let outpath;
+          try {
+            outpath = await loader.load();
+          } catch {
+            throw new HttpError("Internal error", 500);
+          }
           send(req, outpath, {root: this.root}).pipe(res);
           return;
         }
