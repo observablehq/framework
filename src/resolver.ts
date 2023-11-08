@@ -2,16 +2,11 @@ import {createHmac} from "node:crypto";
 import {readFile} from "node:fs/promises";
 import {homedir} from "node:os";
 import {join} from "node:path";
-import {type CellPiece} from "./markdown.js";
+import type {CellPiece} from "./markdown.js";
+
+const DEFAULT_DATABASE_TOKEN_DURATION = 60 * 60 * 1000 * 36; // 36 hours in ms
 
 export type CellResolver = (cell: CellPiece) => CellPiece;
-
-export interface ResolvedDatabaseReference {
-  name: string;
-  origin: string;
-  token: string;
-  type: string;
-}
 
 interface DatabaseProxyItem {
   secret: string;
@@ -38,13 +33,24 @@ const configFile = join(homedir(), ".observablehq");
 const key = `database-proxy`;
 
 export async function readDatabaseProxyConfig(): Promise<DatabaseProxyConfig | null> {
-  let observableConfig;
+  let observableConfig: ObservableConfig | null = null;
   try {
-    observableConfig = JSON.parse(await readFile(configFile, "utf-8")) as ObservableConfig | null;
+    observableConfig = (JSON.parse(await readFile(configFile, "utf-8")) as ObservableConfig) || null;
   } catch {
     // Ignore missing config file
   }
-  return observableConfig && observableConfig[key];
+  const envConfig = {};
+  for (const property in process.env) {
+    const match = property.match(/^OBSERVABLEHQ_DB_SECRET_(.+)$/);
+    if (match) {
+      try {
+        envConfig[match[1]] = JSON.parse(Buffer.from(process.env[property]!, "base64").toString("utf8"));
+      } catch {
+        console.error("Unable to parse environment variable", property);
+      }
+    }
+  }
+  return {...(observableConfig && observableConfig[key]), ...envConfig};
 }
 
 function readDatabaseConfig(config: DatabaseProxyConfig | null, name): DatabaseConfig {
@@ -62,13 +68,19 @@ function decodeSecret(secret: string): Record<string, string> {
   return JSON.parse(Buffer.from(secret, "base64").toString("utf8"));
 }
 
-function encodeToken(payload: {name: string}, secret): string {
+function encodeToken(payload: {name: string; exp: number}, secret: string): string {
   const data = JSON.stringify(payload);
   const hmac = createHmac("sha256", Buffer.from(secret, "hex")).update(data).digest();
   return `${Buffer.from(data).toString("base64")}.${Buffer.from(hmac).toString("base64")}`;
 }
 
-export async function makeCLIResolver(): Promise<CellResolver> {
+interface ResolverOptions {
+  databaseTokenDuration?: number;
+}
+
+export async function makeCLIResolver({
+  databaseTokenDuration = DEFAULT_DATABASE_TOKEN_DURATION
+}: ResolverOptions = {}): Promise<CellResolver> {
   const config = await readDatabaseProxyConfig();
   return (cell: CellPiece): CellPiece => {
     if (cell.databases !== undefined) {
@@ -83,7 +95,7 @@ export async function makeCLIResolver(): Promise<CellResolver> {
             url.port = String(db.port);
             return {
               ...ref,
-              token: encodeToken(ref, db.secret),
+              token: encodeToken({...ref, exp: Date.now() + databaseTokenDuration}, db.secret),
               type: db.type,
               url: url.toString()
             };
