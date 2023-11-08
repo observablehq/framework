@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import {readdirSync, statSync} from "node:fs";
-import {readFile, unlink, writeFile} from "node:fs/promises";
+import {mkdir, readFile, unlink, writeFile} from "node:fs/promises";
 import {basename, join, resolve} from "node:path";
 import {isNodeError} from "../src/error.js";
 import {transpileJavaScript} from "../src/javascript.js";
@@ -44,6 +44,7 @@ function runTests({
       } catch (error) {
         if (isNodeError(error) && error.code === "ENOENT" && process.env.CI !== "true") {
           console.warn(`! generating ${outfile}`);
+          await mkdir(outputRoot, {recursive: true});
           await writeFile(outfile, actual, "utf8");
           return;
         } else {
