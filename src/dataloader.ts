@@ -8,16 +8,17 @@ const runningCommands = new Map<string, Promise<string>>();
 
 export class Loader {
   /**
-   * The command to run; such as "node" for a JavaScript loader, or the path to
-   * loader executable relative to the current working directory.
+   * The command to run, such as "node" for a JavaScript loader, "tsx" for
+   * TypeScript, and "sh" for a shell script.
    */
-  readonly command: string;
+  private readonly command: string;
 
   /**
-   * Any args to pass to the command. For a JavaScript or TypeScript loader, it
-   * is the path to the loader script relative to the current working directory.
+   * Args to pass to the command; currently this is a single argument of the
+   * path to the loader script relative to the current working directory. (TODO
+   * Support passing additional arguments to loaders.)
    */
-  readonly args: string[];
+  private readonly args: string[];
 
   /**
    * The path to the loader script or executable relative to the current working
