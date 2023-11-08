@@ -153,15 +153,19 @@ class FileWatchers {
     for (const name of fileset) {
       const watchPath = await FileWatchers.getWatchPath(root, name);
       let prevState = await maybeStat(watchPath);
-      watchers.#watchers.push(
-        watch(watchPath, async () => {
+      let watcher;
+      try {
+        watcher = watch(watchPath, async () => {
           const newState = await maybeStat(watchPath);
           // Ignore if the file was truncated or not modified.
           if (prevState?.mtimeMs === newState?.mtimeMs || newState?.size === 0) return;
           prevState = newState;
           cb(name);
-        })
-      );
+        });
+      } catch {
+        continue; // ignore missing files
+      }
+      watchers.#watchers.push(watcher);
     }
     return watchers;
   }
