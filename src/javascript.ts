@@ -1,4 +1,4 @@
-import {Parser, tokTypes, type Options} from "acorn";
+import {Parser, tokTypes, type Node, type Options} from "acorn";
 import mime from "mime";
 import {findAwaits} from "./javascript/awaits.js";
 import {findDeclarations} from "./javascript/declarations.js";
@@ -20,6 +20,7 @@ export interface FileReference {
 
 export interface ImportReference {
   name: string;
+  type: "global" | "local";
 }
 
 export interface Transpile {
@@ -36,13 +37,14 @@ export interface Transpile {
 export interface ParseOptions {
   id: string;
   root: string;
+  sourcePath: string;
   inline?: boolean;
   sourceLine?: number;
   globals?: Set<string>;
 }
 
 export function transpileJavaScript(input: string, options: ParseOptions): Transpile {
-  const {id} = options;
+  const {id, root, sourcePath} = options;
   try {
     const node = parseJavaScript(input, options);
     const databases = node.features.filter((f) => f.type === "DatabaseClient").map((f) => ({name: f.name}));
@@ -57,8 +59,8 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
       output.insertRight(input.length, "\n))");
       inputs.push("display");
     }
-    rewriteImports(output, node);
-    rewriteFetches(output, node);
+    rewriteImports(output, node, root, sourcePath);
+    rewriteFetches(output, node, root, sourcePath);
     return {
       id,
       ...(inputs.length ? {inputs} : null),
@@ -99,8 +101,18 @@ function trim(output: Sourcemap, input: string): void {
 
 export const parseOptions: Options = {ecmaVersion: 13, sourceType: "module"};
 
-export function parseJavaScript(input: string, options: ParseOptions) {
-  const {globals = defaultGlobals, inline = false, root} = options;
+export interface JavaScriptNode {
+  body: Node;
+  declarations: {name: string}[] | null;
+  references: {name: string}[];
+  features: {type: unknown; name: string}[];
+  imports: {type: "global" | "local"; name: string}[];
+  expression: boolean;
+  async: boolean;
+}
+
+function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
+  const {globals = defaultGlobals, inline = false, root, sourcePath} = options;
   // First attempt to parse as an expression; if this fails, parse as a program.
   let expression = maybeParseExpression(input, parseOptions);
   if (expression?.type === "ClassExpression" && expression.id) expression = null; // treat named class as program
@@ -109,8 +121,8 @@ export function parseJavaScript(input: string, options: ParseOptions) {
   const body = expression ?? (Parser.parse(input, parseOptions) as any);
   const references = findReferences(body, globals, input);
   const declarations = expression ? null : findDeclarations(body, globals, input);
-  const features = findFeatures(body, references, input);
-  const imports = findImports(body, root);
+  const {imports, features: importFeatures} = findImports(body, root, sourcePath);
+  const features = [...importFeatures, ...findFeatures(body, root, sourcePath, references, input)];
   return {
     body,
     declarations,
