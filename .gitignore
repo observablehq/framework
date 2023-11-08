@@ -1,6 +1,6 @@
 .DS_Store
-.observablehq
 dist/
+docs/.observablehq/cache
 node_modules/
 test/output/*-changed.*
 yarn-error.log
