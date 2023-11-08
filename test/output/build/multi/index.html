@@ -4,15 +4,7 @@
 <title>Multi test</title>
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
-<script type="importmap">
-{
-  "imports": {
-    "npm:@observablehq/runtime": "/_observablehq/runtime.js"
-  }
-}
-</script>
 <link rel="modulepreload" href="/_observablehq/runtime.js">
-
 <script type="module">
 
 import {define} from "/_observablehq/client.js";
@@ -26,7 +18,7 @@ display((
 Input.table(f1)
 ))
 }});
-define({id: "aaa5c01d", outputs: ["f2"], files: [{"name":"./file2.csv","mimeType":"text/csv"}], body: () => {
+define({id: "aaa5c01d", outputs: ["f2"], files: [{"name":"/file2.csv","mimeType":"text/csv"}], body: () => {
 const f2 = fetch("./_file/file2.csv");
 return {f2};
 }});
