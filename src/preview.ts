@@ -6,16 +6,15 @@ import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
 import send from "send";
 import {WebSocketServer, type WebSocket} from "ws";
-import {findLoader, runLoader} from "./dataloader.js";
 import {HttpError, isHttpError, isNodeError} from "./error.js";
 import {maybeStat} from "./files.js";
+import {Loader} from "./dataloader.js";
 import {diffMarkdown, readMarkdown, type ParseResult} from "./markdown.js";
 import {readPages} from "./navigation.js";
 import {renderPreview} from "./render.js";
 import {makeCLIResolver, type CellResolver} from "./resolver.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
-const cacheRoot = join(dirname(fileURLToPath(import.meta.url)), "..", ".observablehq", "cache");
 
 class Server {
   private _server: ReturnType<typeof createServer>;
@@ -23,14 +22,12 @@ class Server {
   readonly port: number;
   readonly hostname: string;
   readonly root: string;
-  readonly cacheRoot: string;
   private _resolver: CellResolver | undefined;
 
-  constructor({port, hostname, root, cacheRoot}: CommandContext) {
+  constructor({port, hostname, root}: CommandContext) {
     this.port = port;
     this.hostname = hostname;
     this.root = root;
-    this.cacheRoot = cacheRoot;
     this._server = createServer();
     this._server.on("request", this._handleRequest);
     this._socketServer = new WebSocketServer({server: this._server});
@@ -67,16 +64,15 @@ class Server {
         }
 
         // Look for a data loader for this file.
-        const loader = await findLoader(filepath);
+        const loader = Loader.find(this.root, path);
         if (loader) {
-          const cachePath = join(this.cacheRoot, filepath);
-          const cacheStat = await maybeStat(cachePath);
-          if (cacheStat && cacheStat.mtimeMs > loader.stats.mtimeMs) {
-            send(req, filepath, {root: this.cacheRoot}).pipe(res);
-            return;
+          let outpath;
+          try {
+            outpath = await loader.load();
+          } catch {
+            throw new HttpError("Internal error", 500);
           }
-          await runLoader(loader.path, cachePath);
-          send(req, filepath, {root: this.cacheRoot}).pipe(res);
+          send(req, outpath, {root: this.root}).pipe(res);
           return;
         }
         throw new HttpError("Not found", 404);
@@ -157,15 +153,19 @@ class FileWatchers {
     for (const name of fileset) {
       const watchPath = await FileWatchers.getWatchPath(root, name);
       let prevState = await maybeStat(watchPath);
-      watchers.#watchers.push(
-        watch(watchPath, async () => {
+      let watcher;
+      try {
+        watcher = watch(watchPath, async () => {
           const newState = await maybeStat(watchPath);
           // Ignore if the file was truncated or not modified.
           if (prevState?.mtimeMs === newState?.mtimeMs || newState?.size === 0) return;
           prevState = newState;
           cb(name);
-        })
-      );
+        });
+      } catch {
+        continue; // ignore missing files
+      }
+      watchers.#watchers.push(watcher);
     }
     return watchers;
   }
@@ -174,8 +174,8 @@ class FileWatchers {
     const path = join(root, name);
     const stats = await maybeStat(path);
     if (stats?.isFile()) return path;
-    const loader = await findLoader(path);
-    return loader?.stats.isFile() ? loader.path : path;
+    const loader = Loader.find(root, name);
+    return loader?.path ?? path;
   }
 
   close() {
@@ -291,7 +291,6 @@ interface CommandContext {
   root: string;
   hostname: string;
   port: number;
-  cacheRoot: string;
 }
 
 function makeCommandContext(): CommandContext {
@@ -319,8 +318,7 @@ function makeCommandContext(): CommandContext {
   return {
     root: normalize(values.root).replace(/\/$/, ""),
     hostname: values.hostname ?? process.env.HOSTNAME ?? "127.0.0.1",
-    port: values.port ? +values.port : process.env.PORT ? +process.env.PORT : 3000,
-    cacheRoot
+    port: values.port ? +values.port : process.env.PORT ? +process.env.PORT : 3000
   };
 }
 
