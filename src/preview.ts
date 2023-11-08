@@ -15,7 +15,6 @@ import {renderPreview} from "./render.js";
 import {makeCLIResolver, type CellResolver} from "./resolver.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
-const cacheRoot = join(dirname(fileURLToPath(import.meta.url)), "..", ".observablehq", "cache");
 
 class Server {
   private _server: ReturnType<typeof createServer>;
@@ -53,6 +52,8 @@ class Server {
         send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
+      } else if (pathname.startsWith("/.observablehq/")) {
+        throw new HttpError("Not found", 404);
       } else if (pathname.startsWith("/_file/")) {
         const path = pathname.slice("/_file".length);
         const filepath = join(this.root, path);
@@ -285,7 +286,7 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
   }
 }
 
-const USAGE = `Usage: observable preview [--root dir] [--hostname host] [--port port]`;
+const USAGE = `Usage: observable preview [--root dir] [--hostname host] [--port port] [--cache dir]`;
 
 interface CommandContext {
   root: string;
@@ -297,6 +298,10 @@ interface CommandContext {
 function makeCommandContext(): CommandContext {
   const {values} = parseArgs({
     options: {
+      cache: {
+        type: "string",
+        default: "docs/.observablehq/cache"
+      },
       root: {
         type: "string",
         short: "r",
@@ -320,15 +325,9 @@ function makeCommandContext(): CommandContext {
     root: normalize(values.root).replace(/\/$/, ""),
     hostname: values.hostname ?? process.env.HOSTNAME ?? "127.0.0.1",
     port: values.port ? +values.port : process.env.PORT ? +process.env.PORT : 3000,
-    cacheRoot
+    cacheRoot: values.cache ?? join(values.root, ".observablehq", "cache")
   };
 }
-
-// TODO A --root option should indicate the current working directory within
-// which to find Markdown files, for both --serve and --build. The serving paths
-// and generated file paths should be relative to the root. For example, if the
-// root is ./docs, then / should serve ./docs/index.md, and that same Markdown
-// file should be generated as ./dist/index.html when using --output ./dist.
 
 await (async function () {
   const context = makeCommandContext();

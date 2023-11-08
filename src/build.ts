@@ -1,10 +1,10 @@
-import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
+import {access, constants, readFile, writeFile} from "node:fs/promises";
 import {basename, dirname, join, normalize, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
 import {findLoader, runLoader} from "./dataloader.js";
-import {maybeStat, prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
+import {copyBuildFile, maybeStat, prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
 import {readPages} from "./navigation.js";
 import {renderServerless} from "./render.js";
 import {makeCLIResolver} from "./resolver.js";
@@ -44,9 +44,7 @@ async function build(context: CommandContext) {
   for await (const publicFile of visitFiles(publicRoot)) {
     const sourcePath = join(publicRoot, publicFile);
     const outputPath = join(outputRoot, "_observablehq", publicFile);
-    console.log("copy", sourcePath, "→", outputPath);
-    await prepareOutput(outputPath);
-    await copyFile(sourcePath, outputPath);
+    await copyBuildFile(sourcePath, outputPath);
   }
 
   // Copy over the referenced files.
@@ -60,29 +58,36 @@ async function build(context: CommandContext) {
         console.error("missing referenced file", sourcePath);
         continue;
       }
+      if (context.cacheRoot) {
+        const cachePath = join(context.cacheRoot, file);
+        const cacheStats = await maybeStat(cachePath);
+        if (!cacheStats || cacheStats.mtimeMs < loader.stats.mtimeMs) {
+          console.log("generate into cache", loader.path, "→", cachePath);
+          await runLoader(loader.path, cachePath);
+        }
+        await copyBuildFile(cachePath, outputPath, "copy from cache");
+        continue;
+      }
       const {path} = loader;
       console.log("generate", path, "→", outputPath);
       await runLoader(path, outputPath);
       continue;
     }
-    console.log("copy", sourcePath, "→", outputPath);
-    await prepareOutput(outputPath);
-    await copyFile(sourcePath, outputPath);
+    await copyBuildFile(sourcePath, outputPath);
   }
 
   // Copy over required distribution files from node_modules.
   // TODO: Note that this requires that the build command be run relative to the node_modules directory.
   for (const [sourcePath, targetFile] of EXTRA_FILES) {
     const outputPath = join(outputRoot, targetFile);
-    console.log("copy", sourcePath, "→", outputPath);
-    await prepareOutput(outputPath);
-    await copyFile(sourcePath, outputPath);
+    await copyBuildFile(sourcePath, outputPath);
   }
 }
 
-const USAGE = `Usage: observable build [--root dir] [--output dir]`;
+const USAGE = `Usage: observable build [--root dir] [--output dir] [--cache dir]`;
 
 interface CommandContext {
+  cacheRoot: string | null;
   sourceRoot: string;
   outputRoot: string;
 }
@@ -90,6 +95,10 @@ interface CommandContext {
 function makeCommandContext(): CommandContext {
   const {values} = parseArgs({
     options: {
+      cache: {
+        type: "string",
+        optional: true
+      },
       root: {
         type: "string",
         short: "r",
@@ -108,7 +117,8 @@ function makeCommandContext(): CommandContext {
   }
   return {
     sourceRoot: normalize(values.root).replace(/\/$/, ""),
-    outputRoot: normalize(values.output).replace(/\/$/, "")
+    outputRoot: normalize(values.output).replace(/\/$/, ""),
+    cacheRoot: values.cache ? normalize(values.cache).replace(/\/$/, "") : null
   };
 }
 

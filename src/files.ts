@@ -1,5 +1,5 @@
 import {accessSync, constants, statSync, type Stats} from "node:fs";
-import {mkdir, readdir, stat} from "node:fs/promises";
+import {copyFile, mkdir, readdir, stat} from "node:fs/promises";
 import {dirname, extname, join, normalize, relative} from "node:path";
 import {isNodeError} from "./error.js";
 
@@ -64,4 +64,10 @@ export async function prepareOutput(outputPath: string): Promise<void> {
   const outputDir = dirname(outputPath);
   if (outputDir === ".") return;
   await mkdir(outputDir, {recursive: true});
+}
+
+export async function copyBuildFile(sourcePath: string, outputPath: string, message: string = "copy"): Promise<void> {
+  console.log(message, sourcePath, "→", outputPath);
+  await prepareOutput(outputPath);
+  await copyFile(sourcePath, outputPath);
 }
