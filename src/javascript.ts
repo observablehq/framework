@@ -132,8 +132,8 @@ function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
   const body = expression ?? (Parser.parse(input, parseOptions) as any);
   const references = findReferences(body, globals, input);
   const declarations = expression ? null : findDeclarations(body, globals, input);
-  const {imports, features: importFeatures} = findImports(body, root, sourcePath);
-  const features = [...importFeatures, ...findFeatures(body, root, sourcePath, references, input)];
+  const imports = findImports(body, root, sourcePath);
+  const features = findFeatures(body, root, sourcePath, references, input);
   return {
     body,
     declarations,
@@ -148,7 +148,7 @@ function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
 // Parses a single expression; like parseExpressionAt, but returns null if
 // additional input follows the expression.
 function maybeParseExpression(input, options) {
-  const parser = new Parser(options, input, 0);
+  const parser = new (Parser as any)(options, input, 0); // private constructor
   parser.nextToken();
   try {
     const node = (parser as any).parseExpression();

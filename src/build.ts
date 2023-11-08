@@ -35,6 +35,7 @@ async function build(context: CommandContext) {
       resolver
     });
     files.push(...render.files.map((f) => join(dirname(sourceFile), f.name)));
+    files.push(...render.imports.map((f) => join(dirname(sourceFile), f.name)));
     await prepareOutput(outputPath);
     await writeFile(outputPath, render.html);
   }

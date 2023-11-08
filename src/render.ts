@@ -109,7 +109,7 @@ ${parseResult.html}</main>
 
 function getImportPreloads(parseResult: ParseResult): Iterable<string> {
   const specifiers = new Set<string>(["npm:@observablehq/runtime"]);
-  for (const {name, type} of parseResult.imports) specifiers.add(`${type === "local" ? "/_file" : ""}${name}`);
+  for (const {name, type} of parseResult.imports) specifiers.add(`${type === "local" ? "/_file/" : ""}${name}`);
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
   if (inputs.has("d3") || inputs.has("Plot")) specifiers.add("npm:d3");
   if (inputs.has("Plot")) specifiers.add("npm:@observablehq/plot");

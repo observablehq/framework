@@ -9,7 +9,6 @@ import {WebSocketServer, type WebSocket} from "ws";
 import {findLoader, runLoader} from "./dataloader.js";
 import {HttpError, isHttpError, isNodeError} from "./error.js";
 import {maybeStat} from "./files.js";
-import {type FileReference} from "./javascript.js";
 import {diffMarkdown, readMarkdown, type ParseResult} from "./markdown.js";
 import {readPages} from "./navigation.js";
 import {renderPreview} from "./render.js";
@@ -152,10 +151,18 @@ class Server {
 class FileWatchers {
   #watchers: FSWatcher[] = [];
 
-  static async watchAll(root: string, files: FileReference[], cb: (name: string) => void) {
+  static async watchAll(
+    path: string,
+    root: string,
+    parseResult: ParseResult,
+    cb: (parseResult: ParseResult, name: string) => void
+  ) {
     const watchers = new FileWatchers();
-    const fileset = [...new Set(files.map(({name}) => name))]; // TODO need resolved files here, relative to dirname(sourcePath)
-    for (const name of fileset) {
+    const {files, imports} = parseResult;
+    for (const name of new Set([
+      ...files.map((f) => join(dirname(path), f.name)),
+      ...imports.map((i) => join(dirname(path), i.name))
+    ])) {
       const watchPath = await FileWatchers.getWatchPath(root, name);
       let prevState = await maybeStat(watchPath);
       watchers.#watchers.push(
@@ -164,7 +171,7 @@ class FileWatchers {
           // Ignore if the file was truncated or not modified.
           if (prevState?.mtimeMs === newState?.mtimeMs || newState?.size === 0) return;
           prevState = newState;
-          cb(name);
+          cb(parseResult, name);
         })
       );
     }
@@ -199,17 +206,16 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
   let attachmentWatcher: FileWatchers | null = null;
   console.log("socket open");
 
-  function refreshAttachment(parseResult: ParseResult) {
-    return (name: string) =>
-      send({
-        type: "refresh",
-        cellIds: parseResult.cells.filter((cell) => cell.files?.some((f) => f.name === name)).map((cell) => cell.id)
-      });
+  function refreshAttachment(parseResult: ParseResult, name: string) {
+    send({
+      type: "refresh",
+      cellIds: parseResult.cells.filter((cell) => cell.files?.some((f) => f.name === name)).map((cell) => cell.id)
+    });
   }
 
   async function refreshMarkdown(path: string): Promise<WatchListener<string>> {
     let current = await readMarkdown(path, root);
-    attachmentWatcher = await FileWatchers.watchAll(root, current.parse.files, refreshAttachment(current.parse));
+    attachmentWatcher = await FileWatchers.watchAll(path, root, current.parse, refreshAttachment);
     return async function watcher(event) {
       switch (event) {
         case "rename": {
@@ -233,7 +239,7 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
           const diff = resolveDiffs(diffMarkdown(current, updated), resolver);
           send({type: "update", diff, previousHash: current.hash, updatedHash: updated.hash});
           attachmentWatcher?.close();
-          attachmentWatcher = await FileWatchers.watchAll(root, updated.parse.files, refreshAttachment(updated.parse));
+          attachmentWatcher = await FileWatchers.watchAll(path, root, updated.parse, refreshAttachment);
           current = updated;
           break;
         }

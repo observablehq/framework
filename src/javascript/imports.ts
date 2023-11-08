@@ -2,12 +2,11 @@ import {Parser, type Node} from "acorn";
 import {simple} from "acorn-walk";
 import {readFileSync} from "node:fs";
 import {dirname, join} from "node:path";
-import {parseOptions, type Feature, type ImportReference, type JavaScriptNode} from "../javascript.js";
+import {parseOptions, type ImportReference, type JavaScriptNode} from "../javascript.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
 export function findImports(body: Node, root: string, sourcePath: string) {
   const imports: ImportReference[] = [];
-  const features: Feature[] = [];
   const paths = new Set<string>();
 
   simple(body, {
@@ -21,7 +20,7 @@ export function findImports(body: Node, root: string, sourcePath: string) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
       if (isLocalImport(value, root, sourcePath)) {
-        findLocalImports(join(dirname(sourcePath), value));
+        findLocalImports(value);
       } else {
         imports.push({name: value, type: "global"});
       }
@@ -29,13 +28,12 @@ export function findImports(body: Node, root: string, sourcePath: string) {
   }
 
   // If this is an import of a local ES module, recursively parse the module to
-  // find transitive imports.
-  // path is the full URI path without /_file
+  // find transitive imports. The path is always relative to the source path of
+  // the Markdown file, even across transitive imports.
   function findLocalImports(path) {
     if (paths.has(path)) return;
     paths.add(path);
     imports.push({type: "local", name: path});
-    features.push({type: "FileAttachment", name: path});
     try {
       const input = readFileSync(join(root, path), "utf-8");
       const program = Parser.parse(input, parseOptions);
@@ -51,9 +49,8 @@ export function findImports(body: Node, root: string, sourcePath: string) {
     function findLocalImport(node) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
-        if (isLocalImport(value, root, path)) {
-          const subpath = join(dirname(path), value);
-          findLocalImports(subpath);
+        if (isLocalImport(value, root, sourcePath)) {
+          findLocalImports(join(path, value));
         } else {
           imports.push({name: value, type: "global"});
           // non-local imports don't need to be promoted to file attachments
@@ -62,7 +59,7 @@ export function findImports(body: Node, root: string, sourcePath: string) {
     }
   }
 
-  return {imports, features};
+  return imports;
 }
 
 // TODO parallelize multiple static imports
