@@ -98,7 +98,7 @@ export class Loader {
       }
       return outputPath;
     })();
-    command.finally(() => runningCommands.delete(this.path));
+    command.finally(() => runningCommands.delete(this.path)).catch(() => {});
     runningCommands.set(this.path, command);
     return command;
   }
