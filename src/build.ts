@@ -55,7 +55,7 @@ async function build(context: CommandContext) {
     const outputPath = join(outputRoot, "_file", file);
     const stats = await maybeStat(sourcePath);
     if (!stats) {
-      const loader = await Loader.find(sourceRoot, file);
+      const loader = Loader.find(sourceRoot, file);
       if (!loader) {
         console.error("missing referenced file", sourcePath);
         continue;

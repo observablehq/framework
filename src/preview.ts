@@ -64,7 +64,7 @@ class Server {
         }
 
         // Look for a data loader for this file.
-        const loader = await Loader.find(this.root, path);
+        const loader = Loader.find(this.root, path);
         if (loader) {
           const outpath = await loader.load();
           send(req, outpath, {root: this.root}).pipe(res);
@@ -165,7 +165,7 @@ class FileWatchers {
     const path = join(root, name);
     const stats = await maybeStat(path);
     if (stats?.isFile()) return path;
-    const loader = await Loader.find(root, name);
+    const loader = Loader.find(root, name);
     return loader?.path ?? path;
   }
 

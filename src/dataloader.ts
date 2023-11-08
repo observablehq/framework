@@ -1,5 +1,6 @@
 import {spawn} from "node:child_process";
-import {access, constants, open} from "node:fs/promises";
+import {existsSync} from "node:fs";
+import {open} from "node:fs/promises";
 import {join} from "node:path";
 import {maybeStat, prepareOutput} from "./files.js";
 
@@ -49,18 +50,14 @@ export class Loader {
    * Finds the loader for the specified target path, relative to the specified
    * source root, if it exists. If there is no such loader, returns undefined.
    */
-  static async find(sourceRoot: string, targetPath: string): Promise<Loader | undefined> {
+  static find(sourceRoot: string, targetPath: string): Loader | undefined {
     for (const ext of [".js", ".ts", ".sh"]) {
       const sourcePath = targetPath + ext;
       const path = join(sourceRoot, sourcePath);
-      try {
-        await access(path, ext === ".sh" ? constants.X_OK : constants.R_OK);
-      } catch {
-        continue;
-      }
+      if (!existsSync(path)) continue;
       return new Loader({
-        command: ext === ".js" ? "node" : ext === ".ts" ? "tsx" : path,
-        args: ext === ".js" || ext === ".ts" ? [path] : [],
+        command: ext === ".js" ? "node" : ext === ".ts" ? "tsx" : "sh",
+        args: [path],
         path,
         sourceRoot,
         targetPath
