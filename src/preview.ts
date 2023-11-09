@@ -260,7 +260,7 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
           let {path} = message;
           if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + path);
           if (path.endsWith("/")) path += "index";
-          path = path.slice("/".length) + ".md";
+          path += ".md";
           markdownWatcher = watch(join(root, path), await refreshMarkdown(path));
           break;
         }
