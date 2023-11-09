@@ -1,7 +1,7 @@
 import {spawn} from "node:child_process";
-import {existsSync} from "node:fs";
-import {open, rename, unlink} from "node:fs/promises";
-import {join} from "node:path";
+import {existsSync, statSync} from "node:fs";
+import {mkdir, open, rename, unlink} from "node:fs/promises";
+import {dirname, join} from "node:path";
 import {maybeStat, prepareOutput} from "./files.js";
 
 const runningCommands = new Map<string, Promise<string>>();
@@ -71,36 +71,71 @@ export class Loader {
    * to the source root; this is within the .observablehq/cache folder within
    * the source root.
    */
-  async load(): Promise<string> {
+  async load({verbose = true}: {verbose?: boolean} = {}): Promise<string> {
     let command = runningCommands.get(this.path);
-    if (command) return command;
-    command = (async () => {
-      const outputPath = join(".observablehq", "cache", this.targetPath);
-      const cachePath = join(this.sourceRoot, outputPath);
-      const loaderStat = await maybeStat(this.path);
-      const cacheStat = await maybeStat(cachePath);
-      if (cacheStat && cacheStat.mtimeMs > loaderStat!.mtimeMs) return outputPath;
-      const tempPath = join(".observablehq", "cache", `${this.targetPath}.${process.pid}`);
-      await prepareOutput(tempPath);
-      const tempFd = await open(tempPath, "w");
-      const tempFileStream = tempFd.createWriteStream({highWaterMark: 1024 * 1024});
-      const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", "pipe", "inherit"]});
-      subprocess.stdout.pipe(tempFileStream);
-      const code = await new Promise((resolve, reject) => {
-        subprocess.on("error", reject);
-        subprocess.on("close", resolve);
-      });
-      await tempFd.close();
-      if (code === 0) {
-        await rename(tempPath, cachePath);
-      } else {
-        await unlink(tempPath);
-        throw new Error(`loader exited with code ${code}`);
-      }
-      return outputPath;
-    })();
-    command.finally(() => runningCommands.delete(this.path)).catch(() => {});
-    runningCommands.set(this.path, command);
+    if (!command) {
+      command = (async () => {
+        const outputPath = join(".observablehq", "cache", this.targetPath);
+        const cachePath = join(this.sourceRoot, outputPath);
+        const loaderStat = await maybeStat(this.path);
+        const cacheStat = await maybeStat(cachePath);
+        if (cacheStat && cacheStat.mtimeMs > loaderStat!.mtimeMs) return outputPath;
+        const tempPath = join(this.sourceRoot, ".observablehq", "cache", `${this.targetPath}.${process.pid}`);
+        await prepareOutput(tempPath);
+        const tempFd = await open(tempPath, "w");
+        const tempFileStream = tempFd.createWriteStream({highWaterMark: 1024 * 1024});
+        const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", "pipe", "inherit"]});
+        subprocess.stdout.pipe(tempFileStream);
+        const code = await new Promise((resolve, reject) => {
+          subprocess.on("error", reject);
+          subprocess.on("close", resolve);
+        });
+        await tempFd.close();
+        if (code === 0) {
+          await mkdir(dirname(cachePath), {recursive: true});
+          await rename(tempPath, cachePath);
+        } else {
+          await unlink(tempPath);
+          throw new Error(`loader exited with code ${code}`);
+        }
+        return outputPath;
+      })();
+      command.finally(() => runningCommands.delete(this.path)).catch(() => {});
+      runningCommands.set(this.path, command);
+    }
+    if (verbose) {
+      console.info(`${this.path} start`);
+      const start = performance.now();
+      command.then(
+        (path) => {
+          console.info(
+            `${this.path} ${green("success")} ${formatSize(statSync(path).size)} in ${formatElapsed(start)}`
+          );
+        },
+        (error) => {
+          console.info(`${this.path} ${red("error")} after ${formatElapsed(start)}: ${error.message}`);
+        }
+      );
+    }
     return command;
   }
+}
+
+const red = color(31);
+const green = color(32);
+const yellow = color(33);
+
+function color(code) {
+  return process.stdout.isTTY ? (text) => `\x1b[${code}m${text}\x1b[0m` : String;
+}
+
+function formatSize(size) {
+  if (!size) return yellow("empty output");
+  const e = Math.floor(Math.log(size) / Math.log(1024));
+  return `output ${+(size / 1024 ** e).toFixed(2)} ${["bytes", "KiB", "MiB", "GiB", "TiB"][e]}`;
+}
+
+function formatElapsed(start) {
+  const elapsed = performance.now() - start;
+  return `${Math.floor(elapsed)}ms`;
 }

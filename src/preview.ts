@@ -1,18 +1,18 @@
-import {watch, type FSWatcher, type WatchListener} from "node:fs";
+import {type FSWatcher, type WatchListener, existsSync, watch} from "node:fs";
 import {access, constants, readFile, stat} from "node:fs/promises";
-import {createServer, type IncomingMessage, type RequestListener} from "node:http";
+import {type IncomingMessage, type RequestListener, createServer} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
 import send from "send";
-import {WebSocketServer, type WebSocket} from "ws";
+import {type WebSocket, WebSocketServer} from "ws";
+import {Loader} from "./dataloader.js";
 import {HttpError, isHttpError, isNodeError} from "./error.js";
 import {maybeStat} from "./files.js";
-import {Loader} from "./dataloader.js";
-import {diffMarkdown, readMarkdown, type ParseResult} from "./markdown.js";
+import {type ParseResult, diffMarkdown, readMarkdown} from "./markdown.js";
 import {readPages} from "./navigation.js";
 import {renderPreview} from "./render.js";
-import {makeCLIResolver, type CellResolver} from "./resolver.js";
+import {type CellResolver, makeCLIResolver} from "./resolver.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
@@ -77,7 +77,7 @@ class Server {
         }
         throw new HttpError("Not found", 404);
       } else {
-        if (normalize(pathname).startsWith("..")) throw new Error("Invalid path: " + pathname);
+        if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
         let path = join(this.root, pathname);
 
         // If this path is for /index, redirect to the parent directory for a
@@ -147,11 +147,19 @@ class Server {
 class FileWatchers {
   #watchers: FSWatcher[] = [];
 
-  static async watchAll(root: string, files: {name: string}[], cb: (name: string) => void) {
+  static async watchAll(
+    path: string,
+    root: string,
+    parseResult: ParseResult,
+    cb: (parseResult: ParseResult, name: string) => void
+  ) {
     const watchers = new FileWatchers();
-    const fileset = [...new Set(files.map(({name}) => name))];
-    for (const name of fileset) {
-      const watchPath = await FileWatchers.getWatchPath(root, name);
+    const {files, imports} = parseResult;
+    for (const name of new Set([
+      ...files.map((f) => join(dirname(path), f.name)),
+      ...imports.map((i) => join(dirname(path), i.name))
+    ])) {
+      const watchPath = FileWatchers.getWatchPath(root, name);
       let prevState = await maybeStat(watchPath);
       let watcher;
       try {
@@ -160,7 +168,7 @@ class FileWatchers {
           // Ignore if the file was truncated or not modified.
           if (prevState?.mtimeMs === newState?.mtimeMs || newState?.size === 0) return;
           prevState = newState;
-          cb(name);
+          cb(parseResult, name);
         });
       } catch {
         continue; // ignore missing files
@@ -170,12 +178,9 @@ class FileWatchers {
     return watchers;
   }
 
-  static async getWatchPath(root: string, name: string) {
+  static getWatchPath(root: string, name: string): string {
     const path = join(root, name);
-    const stats = await maybeStat(path);
-    if (stats?.isFile()) return path;
-    const loader = Loader.find(root, name);
-    return loader?.path ?? path;
+    return existsSync(path) ? path : Loader.find(root, name)?.path ?? path;
   }
 
   close() {
@@ -198,17 +203,16 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
   let attachmentWatcher: FileWatchers | null = null;
   console.log("socket open");
 
-  function refreshAttachment(parseResult: ParseResult) {
-    return (name: string) =>
-      send({
-        type: "refresh",
-        cellIds: parseResult.cells.filter((cell) => cell.files?.some((f) => f.name === name)).map((cell) => cell.id)
-      });
+  function refreshAttachment(parseResult: ParseResult, name: string) {
+    send({
+      type: "refresh",
+      cellIds: parseResult.cells.filter((cell) => cell.files?.some((f) => f.name === name)).map((cell) => cell.id)
+    });
   }
 
   async function refreshMarkdown(path: string): Promise<WatchListener<string>> {
     let current = await readMarkdown(path, root);
-    attachmentWatcher = await FileWatchers.watchAll(root, current.parse.files, refreshAttachment(current.parse));
+    attachmentWatcher = await FileWatchers.watchAll(path, root, current.parse, refreshAttachment);
     return async function watcher(event) {
       switch (event) {
         case "rename": {
@@ -232,7 +236,7 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
           const diff = resolveDiffs(diffMarkdown(current, updated), resolver);
           send({type: "update", diff, previousHash: current.hash, updatedHash: updated.hash});
           attachmentWatcher?.close();
-          attachmentWatcher = await FileWatchers.watchAll(root, updated.parse.files, refreshAttachment(updated.parse));
+          attachmentWatcher = await FileWatchers.watchAll(path, root, updated.parse, refreshAttachment);
           current = updated;
           break;
         }
@@ -250,9 +254,9 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
         case "hello": {
           if (markdownWatcher || attachmentWatcher) throw new Error("already watching");
           let {path} = message;
-          if (normalize(path).startsWith("..")) throw new Error("Invalid path: " + path);
+          if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + path);
           if (path.endsWith("/")) path += "index";
-          path = normalize(path) + ".md";
+          path = path.slice("/".length) + ".md";
           markdownWatcher = watch(join(root, path), await refreshMarkdown(path));
           break;
         }
@@ -321,12 +325,6 @@ function makeCommandContext(): CommandContext {
     port: values.port ? +values.port : process.env.PORT ? +process.env.PORT : 3000
   };
 }
-
-// TODO A --root option should indicate the current working directory within
-// which to find Markdown files, for both --serve and --build. The serving paths
-// and generated file paths should be relative to the root. For example, if the
-// root is ./docs, then / should serve ./docs/index.md, and that same Markdown
-// file should be generated as ./dist/index.html when using --output ./dist.
 
 await (async function () {
   const context = makeCommandContext();
