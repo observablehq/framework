@@ -62,7 +62,6 @@ ${
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
 <link rel="stylesheet" type="text/css" href="/_observablehq/markdown-it-copy.css">
 ${Array.from(getImportPreloads(parseResult, path))
-
   .map((href) => `<link rel="modulepreload" href="${href}">`)
   .join("\n")}
 <script type="module">
