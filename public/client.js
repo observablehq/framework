@@ -75,9 +75,34 @@ function recommendedLibraries() {
       document.head.append(link);
       return inputs;
     },
+    tex,
     dot,
     mermaid
   };
+}
+
+// TODO Incorporate this into the standard library.
+async function tex() {
+  const {default: katex} = await import("https://cdn.jsdelivr.net/npm/katex/+esm");
+  const tex = renderer();
+
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = "https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css";
+  link.crossOrigin = "anonymous";
+  document.head.appendChild(link);
+
+  function renderer(options) {
+    return function () {
+      const root = document.createElement("div");
+      katex.render(String.raw.apply(String, arguments), root, options);
+      return root.removeChild(root.firstChild);
+    };
+  }
+
+  tex.options = renderer;
+  tex.block = renderer({displayMode: true});
+  return tex;
 }
 
 // TODO Incorporate this into the standard library.
@@ -123,11 +148,9 @@ async function mermaid() {
   const {default: mer} = await import("https://cdn.jsdelivr.net/npm/mermaid/+esm");
   mer.initialize({startOnLoad: false, securityLevel: "loose", theme: "neutral"});
   return async function mermaid() {
-    const div = document.createElement("div");
-    div.innerHTML = (await mer.render(`mermaid-${++nextId}`, String.raw.apply(String, arguments))).svg;
-    const svg = div.firstChild;
-    svg.remove();
-    return svg;
+    const root = document.createElement("div");
+    root.innerHTML = (await mer.render(`mermaid-${++nextId}`, String.raw.apply(String, arguments))).svg;
+    return root.removeChild(root.firstChild);
   };
 }
 
