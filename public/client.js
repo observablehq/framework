@@ -95,7 +95,7 @@ async function tex() {
   function renderer(options) {
     return function () {
       const root = document.createElement("div");
-      katex.render(String.raw.apply(String, arguments), root, options);
+      katex.render(String.raw.apply(String, arguments), root, {...options, output: "html"});
       return root.removeChild(root.firstChild);
     };
   }
