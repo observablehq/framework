@@ -4,8 +4,8 @@ import assert from "node:assert";
 
 describe("data loaders are called with the appropriate command", () => {
   it("a .js data loader is called with node", async () => {
-    const loader = Loader.find("test", "dataloaders/data1.txt");
-    const out = await loader!.load();
+    const loader = Loader.find("test", "dataloaders/data1.txt")!;
+    const out = await loader.load();
     assert.strictEqual(await readFile("test/" + out, "utf-8"), "node\n");
   });
   it("a .ts data loader is called with tsx", async () => {
