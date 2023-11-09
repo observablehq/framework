@@ -2,7 +2,9 @@ import assert from "node:assert";
 import {readFile} from "node:fs/promises";
 import {Loader} from "../src/dataloader.js";
 
-describe("data loaders are called with the appropriate command", () => {
+const out6 = await pretest("dataloaders/data6.txt");
+
+describe("data loaders are called with the appropriate command", async () => {
   it("a .js data loader is called with node", async () => {
     const loader = Loader.find("test", "dataloaders/data1.txt")!;
     const out = await loader.load({verbose: false});
@@ -28,10 +30,18 @@ describe("data loaders are called with the appropriate command", () => {
     const out = await loader.load({verbose: false});
     assert.strictEqual(await readFile("test/" + out, "utf-8"), "python3\n");
   });
-  // Skipping because this requires R to be installed (which is slow in CI).
-  it.skip("a .R data loader is called with Rscript", async () => {
-    const loader = Loader.find("test", "dataloaders/data6.txt")!;
-    const out = await loader.load({verbose: false});
-    assert.strictEqual(await readFile("test/" + out, "utf-8"), "Rscript\n");
-  });
+
+  (out6 ? it : it.skip)("a .R data loader is called with Rscript", async () =>
+    assert.strictEqual(await readFile("test/" + out6, "utf-8"), "Rscript\n")
+  );
 });
+
+async function pretest(resource) {
+  let loader: any;
+  try {
+    loader = Loader.find("test", resource)!;
+    return await loader.load({verbose: false});
+  } catch (error) {
+    return (error as any)?.code === "ENOENT" ? false : loader.path.slice(loader.sourceRoot.length + 1);
+  }
+}
