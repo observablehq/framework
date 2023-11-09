@@ -1,6 +1,10 @@
+/* hide the langauge label provided by MarkdownIt */
+
 pre code::after {
   display: none;
 }
+
+/* copied from default.css with minimal changes positioning & color */
 
 pre {
   position: relative;
