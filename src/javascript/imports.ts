@@ -35,7 +35,7 @@ export function findImports(body: Node, root: string, sourcePath: string) {
     paths.add(path);
     imports.push({type: "local", name: path});
     try {
-      const input = readFileSync(join(root, path), "utf-8");
+      const input = readFileSync(join(root, dirname(sourcePath), path), "utf-8");
       const program = Parser.parse(input, parseOptions);
       simple(program, {
         ImportDeclaration: findLocalImport,
@@ -50,7 +50,7 @@ export function findImports(body: Node, root: string, sourcePath: string) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
         if (isLocalImport(value, root, sourcePath)) {
-          findLocalImports(join(path, value));
+          findLocalImports(join(dirname(path), value));
         } else {
           imports.push({name: value, type: "global"});
           // non-local imports don't need to be promoted to file attachments
