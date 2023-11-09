@@ -1,26 +1,29 @@
 import assert from "node:assert";
 import {readdirSync, statSync} from "node:fs";
-import {readFile, unlink, writeFile} from "node:fs/promises";
+import {mkdir, readFile, unlink, writeFile} from "node:fs/promises";
 import {basename, join, resolve} from "node:path";
 import deepEqual from "fast-deep-equal";
 import {isNodeError} from "../src/error.js";
 import {type ParseResult, parseMarkdown} from "../src/markdown.js";
 
 describe("parseMarkdown(input)", () => {
-  for (const name of readdirSync("./test/input")) {
+  const inputRoot = "test/input";
+  const outputRoot = "test/output";
+  for (const name of readdirSync(inputRoot)) {
     if (!name.endsWith(".md")) continue;
-    const path = join("./test/input", name);
+    const path = join(inputRoot, name);
     if (!statSync(path).isFile()) continue;
     const only = name.startsWith("only.");
     const skip = name.startsWith("skip.");
     const outname = only || skip ? name.slice(5) : name;
+
     (only ? it.only : skip ? it.skip : it)(`test/input/${name}`, async () => {
-      const snapshot = parseMarkdown(await readFile(path, "utf8"), "test/input");
+      const snapshot = parseMarkdown(await readFile(path, "utf8"), "test/input", name);
       let allequal = true;
       for (const ext of ["html", "json"]) {
         const actual = ext === "json" ? jsonMeta(snapshot) : snapshot[ext];
-        const outfile = resolve("./test/output", `${basename(outname, ".md")}.${ext}`);
-        const diffile = resolve("./test/output", `${basename(outname, ".md")}-changed.${ext}`);
+        const outfile = resolve(outputRoot, `${basename(outname, ".md")}.${ext}`);
+        const diffile = resolve(outputRoot, `${basename(outname, ".md")}-changed.${ext}`);
         let expected;
 
         try {
@@ -28,6 +31,7 @@ describe("parseMarkdown(input)", () => {
         } catch (error) {
           if (isNodeError(error) && error.code === "ENOENT" && process.env.CI !== "true") {
             console.warn(`! generating ${outfile}`);
+            await mkdir(outputRoot, {recursive: true});
             await writeFile(outfile, actual, "utf8");
             continue;
           } else {

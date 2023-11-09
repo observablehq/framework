@@ -74,7 +74,83 @@ function recommendedLibraries() {
       link.href = "https://cdn.jsdelivr.net/gh/observablehq/inputs/src/style.css";
       document.head.append(link);
       return inputs;
+    },
+    tex,
+    dot,
+    mermaid
+  };
+}
+
+// TODO Incorporate this into the standard library.
+async function tex() {
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = "https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css";
+  link.crossOrigin = "anonymous";
+  document.head.appendChild(link);
+
+  const {default: katex} = await import("https://cdn.jsdelivr.net/npm/katex/+esm");
+  const tex = renderer();
+
+  function renderer(options) {
+    return function () {
+      const root = document.createElement("div");
+      katex.render(String.raw.apply(String, arguments), root, {...options, output: "html"});
+      return root.removeChild(root.firstChild);
+    };
+  }
+
+  tex.options = renderer;
+  tex.block = renderer({displayMode: true});
+  return tex;
+}
+
+// TODO Incorporate this into the standard library.
+async function dot() {
+  const {instance} = await import("https://cdn.jsdelivr.net/npm/@viz-js/viz/+esm");
+  const viz = await instance();
+  return function dot(strings) {
+    let string = strings[0] + "";
+    let i = 0;
+    let n = arguments.length;
+    while (++i < n) string += arguments[i] + "" + strings[i];
+    const svg = viz.renderSVGElement(string, {
+      graphAttributes: {
+        bgcolor: "none"
+      },
+      nodeAttributes: {
+        color: "#00000101",
+        fontcolor: "#00000101",
+        fontname: "var(--sans-serif)",
+        fontsize: "12"
+      },
+      edgeAttributes: {
+        color: "#00000101"
+      }
+    });
+    for (const e of svg.querySelectorAll("[stroke='#000001'][stroke-opacity='0.003922']")) {
+      e.setAttribute("stroke", "currentColor");
+      e.removeAttribute("stroke-opacity");
     }
+    for (const e of svg.querySelectorAll("[fill='#000001'][fill-opacity='0.003922']")) {
+      e.setAttribute("fill", "currentColor");
+      e.removeAttribute("fill-opacity");
+    }
+    svg.remove();
+    svg.style = "max-width: 100%; height: auto;";
+    return svg;
+  };
+}
+
+// TODO Incorporate this into the standard library.
+async function mermaid() {
+  let nextId = 0;
+  const {default: mer} = await import("https://cdn.jsdelivr.net/npm/mermaid/+esm");
+  mer.initialize({startOnLoad: false, securityLevel: "loose", theme: "neutral"});
+  return async function mermaid() {
+    const root = document.createElement("div");
+    root.innerHTML = (await mer.render(`mermaid-${++nextId}`, String.raw.apply(String, arguments))).svg;
+    return root.removeChild(root.firstChild);
   };
 }
 
@@ -115,7 +191,7 @@ export function define(cell) {
   v.define(outputs.length ? `cell ${id}` : null, inputs, body);
   variables.push(v);
   for (const o of outputs) variables.push(main.define(o, [`cell ${id}`], (exports) => exports[o]));
-  for (const f of files) attachedFiles.set(f.name, {url: String(new URL(`/_file/${f.name}`, location)), mimeType: f.mimeType}); // prettier-ignore
+  for (const f of files) attachedFiles.set(f.name, {url: `/_file${(new URL(f.name, location)).pathname}`, mimeType: f.mimeType}); // prettier-ignore
   for (const d of databases) databaseTokens.set(d.name, d);
 }
 
@@ -224,8 +300,8 @@ export function open({hash} = {}) {
   }
 }
 
-{
-  const toggle = document.querySelector("#observablehq-sidebar-toggle");
+const toggle = document.querySelector("#observablehq-sidebar-toggle");
+if (toggle) {
   let indeterminate = toggle.indeterminate;
   toggle.onclick = () => {
     const matches = matchMedia("(min-width: calc(640px + 4rem + 0.5rem + 240px + 2rem))").matches;
