@@ -1,22 +1,11 @@
 import {createHmac} from "node:crypto";
-import {readFile} from "node:fs/promises";
-import {homedir} from "node:os";
-import {join} from "node:path";
 import type {CellPiece} from "./markdown.js";
 
 const DEFAULT_DATABASE_TOKEN_DURATION = 60 * 60 * 1000 * 36; // 36 hours in ms
 
 export type CellResolver = (cell: CellPiece) => CellPiece;
 
-interface DatabaseProxyItem {
-  secret: string;
-}
-
-type DatabaseProxyConfig = Record<string, DatabaseProxyItem>;
-
-interface ObservableConfig {
-  "database-proxy": DatabaseProxyConfig;
-}
+type DatabaseProxyConfig = Record<string, DatabaseConfig>;
 
 interface DatabaseConfig {
   host: string;
@@ -26,46 +15,23 @@ interface DatabaseConfig {
   secret: string;
   ssl: "disabled" | "enabled";
   type: string;
-  url: string;
 }
 
-const configFile = join(homedir(), ".observablehq");
-const key = `database-proxy`;
-
-export async function readDatabaseProxyConfig(): Promise<DatabaseProxyConfig | null> {
-  let observableConfig: ObservableConfig | null = null;
-  try {
-    observableConfig = (JSON.parse(await readFile(configFile, "utf-8")) as ObservableConfig) || null;
-  } catch {
-    // Ignore missing config file
-  }
-  const envConfig = {};
-  for (const property in process.env) {
+function getDatabaseProxyConfig(env: typeof process.env): DatabaseProxyConfig {
+  const envConfig: DatabaseProxyConfig = {};
+  for (const property in env) {
     const match = property.match(/^OBSERVABLEHQ_DB_SECRET_(.+)$/);
     if (match) {
       try {
-        envConfig[match[1]] = JSON.parse(Buffer.from(process.env[property]!, "base64").toString("utf8"));
+        envConfig[match[1]] = JSON.parse(
+          Buffer.from(process.env[property]!, "base64").toString("utf8")
+        ) as DatabaseConfig;
       } catch {
         console.error("Unable to parse environment variable", property);
       }
     }
   }
-  return {...(observableConfig && observableConfig[key]), ...envConfig};
-}
-
-function readDatabaseConfig(config: DatabaseProxyConfig | null, name): DatabaseConfig {
-  if (!config) throw new Error(`Missing database configuration file "${configFile}"`);
-  if (!name) throw new Error(`No database name specified`);
-  const raw = (config && config[name]) as DatabaseConfig | null;
-  if (!raw) throw new Error(`No configuration found for "${name}"`);
-  return {
-    ...decodeSecret(raw.secret),
-    url: raw.url
-  } as DatabaseConfig;
-}
-
-function decodeSecret(secret: string): Record<string, string> {
-  return JSON.parse(Buffer.from(secret, "base64").toString("utf8"));
+  return envConfig;
 }
 
 function encodeToken(payload: {name: string; exp: number}, secret: string): string {
@@ -76,18 +42,20 @@ function encodeToken(payload: {name: string; exp: number}, secret: string): stri
 
 interface ResolverOptions {
   databaseTokenDuration?: number;
+  env?: typeof process.env;
 }
 
 export async function makeCLIResolver({
-  databaseTokenDuration = DEFAULT_DATABASE_TOKEN_DURATION
+  databaseTokenDuration = DEFAULT_DATABASE_TOKEN_DURATION,
+  env = process.env
 }: ResolverOptions = {}): Promise<CellResolver> {
-  const config = await readDatabaseProxyConfig();
+  const config = getDatabaseProxyConfig(env);
   return (cell: CellPiece): CellPiece => {
     if (cell.databases !== undefined) {
       cell = {
         ...cell,
         databases: cell.databases.map((ref) => {
-          const db = readDatabaseConfig(config, ref.name);
+          const db = config[ref.name];
           if (db) {
             const url = new URL("http://localhost");
             url.protocol = db.ssl !== "disabled" ? "https:" : "http:";
