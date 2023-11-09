@@ -1,9 +1,10 @@
-import {access, constants, copyFile, mkdir, readFile, writeFile} from "node:fs/promises";
+import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
 import {basename, dirname, join, normalize, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
-import {visitFiles, visitMarkdownFiles} from "./files.js";
+import {findLoader, runLoader} from "./dataloader.js";
+import {maybeStat, prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
 import {readPages} from "./navigation.js";
 import {renderServerless} from "./render.js";
 import {makeCLIResolver} from "./resolver.js";
@@ -33,7 +34,7 @@ async function build(context: CommandContext) {
       pages,
       resolver
     });
-    files.push(...render.files.map((f) => join(sourceFile, "..", f.name)));
+    files.push(...render.files.map((f) => f.name));
     await prepareOutput(outputPath);
     await writeFile(outputPath, render.html);
   }
@@ -52,6 +53,18 @@ async function build(context: CommandContext) {
   for (const file of files) {
     const sourcePath = join(sourceRoot, file);
     const outputPath = join(outputRoot, "_file", file);
+    const stats = await maybeStat(sourcePath);
+    if (!stats) {
+      const loader = await findLoader(sourcePath);
+      if (!loader) {
+        console.error("missing referenced file", sourcePath);
+        continue;
+      }
+      const {path} = loader;
+      console.log("generate", path, "→", outputPath);
+      await runLoader(path, outputPath);
+      continue;
+    }
     console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);
     await copyFile(sourcePath, outputPath);
@@ -65,12 +78,6 @@ async function build(context: CommandContext) {
     await prepareOutput(outputPath);
     await copyFile(sourcePath, outputPath);
   }
-}
-
-async function prepareOutput(outputPath: string): Promise<void> {
-  const outputDir = dirname(outputPath);
-  if (outputDir === ".") return;
-  await mkdir(outputDir, {recursive: true});
 }
 
 const USAGE = `Usage: observable build [--root dir] [--output dir]`;

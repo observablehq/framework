@@ -1,7 +1,9 @@
 import {simple} from "acorn-walk";
 import {syntaxError} from "./syntaxError.js";
+import {isLocalImport} from "./imports.ts";
+import {dirname, join} from "node:path";
 
-export function findFeatures(node, references, input) {
+export function findFeatures(node, root, sourcePath, references, input) {
   const features = [];
 
   simple(node, {
@@ -11,10 +13,9 @@ export function findFeatures(node, references, input) {
         arguments: args,
         arguments: [arg]
       } = node;
-
       // Promote fetches with static literals to file attachment references.
-      if (isLocalFetch(node, references)) {
-        features.push({type: "FileAttachment", name: getStringLiteralValue(arg)});
+      if (isLocalFetch(node, references, root, sourcePath)) {
+        features.push({type: "FileAttachment", name: join(dirname(sourcePath), getStringLiteralValue(arg))});
         return;
       }
 
@@ -33,27 +34,14 @@ export function findFeatures(node, references, input) {
       if (args.length !== 1 || !isStringLiteral(arg)) {
         throw syntaxError(`${callee.name} requires a single literal string argument`, node, input);
       }
-
       features.push({type: callee.name, name: getStringLiteralValue(arg)});
-    },
-    // Promote dynamic imports with static literals to file attachment references.
-    ImportExpression: findImport,
-    ImportDeclaration: findImport
-  });
-
-  function findImport(node) {
-    if (isStringLiteral(node.source)) {
-      const value = getStringLiteralValue(node.source);
-      if (value.startsWith("./")) {
-        features.push({type: "FileAttachment", name: value});
-      }
     }
-  }
+  });
 
   return features;
 }
 
-export function isLocalFetch(node, references) {
+export function isLocalFetch(node, references, root, sourcePath) {
   if (node.type !== "CallExpression") return false;
   const {
     callee,
@@ -65,7 +53,7 @@ export function isLocalFetch(node, references) {
     !references.includes(callee) &&
     arg &&
     isStringLiteral(arg) &&
-    getStringLiteralValue(arg).startsWith("./")
+    isLocalImport(getStringLiteralValue(arg), root, sourcePath)
   );
 }
 

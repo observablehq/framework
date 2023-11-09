@@ -1,6 +1,6 @@
-import {accessSync, constants, statSync} from "node:fs";
-import {readdir, stat} from "node:fs/promises";
-import {extname, join, normalize, relative} from "node:path";
+import {accessSync, constants, statSync, type Stats} from "node:fs";
+import {mkdir, readdir, stat} from "node:fs/promises";
+import {dirname, extname, join, normalize, relative} from "node:path";
 import {isNodeError} from "./error.js";
 
 // A file is local if it exists in the root folder or a subfolder.
@@ -49,4 +49,19 @@ export async function* visitFiles(root: string): AsyncGenerator<string> {
       yield relative(root, path);
     }
   }
+}
+
+// Like fs.stat, but returns undefined instead of throwing ENOENT if not found.
+export async function maybeStat(path: string): Promise<Stats | undefined> {
+  try {
+    return await stat(path);
+  } catch (error) {
+    if (!isNodeError(error) || error.code !== "ENOENT") throw error;
+  }
+}
+
+export async function prepareOutput(outputPath: string): Promise<void> {
+  const outputDir = dirname(outputPath);
+  if (outputDir === ".") return;
+  await mkdir(outputDir, {recursive: true});
 }

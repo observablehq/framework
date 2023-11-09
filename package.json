@@ -1,7 +1,7 @@
 {
   "name": "@observablehq/cli",
   "license": "UNLICENSED",
-  "version": "0.0.33",
+  "version": "0.0.34",
   "type": "module",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
@@ -26,7 +26,7 @@
     "obs-auth": "tsx ./src/auth.ts",
     "build": "rm -rf dist && ./bin/observable.ts build",
     "test": "yarn test:mocha && yarn test:lint",
-    "test:mocha": "mkdir -p test/output && tsx ./node_modules/.bin/mocha 'test/**/*-test.*'",
+    "test:mocha": "tsx ./node_modules/.bin/mocha 'test/**/*-test.*'",
     "test:lint": "eslint src test public"
   },
   "dependencies": {

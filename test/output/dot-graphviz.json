@@ -1,0 +1,27 @@
+{
+  "data": null,
+  "title": null,
+  "files": [],
+  "imports": [],
+  "pieces": [
+    {
+      "type": "html",
+      "id": "",
+      "cellIds": [
+        "391a3a26"
+      ],
+      "html": "<div id=\"cell-391a3a26\" class=\"observablehq observablehq--block\"></div>\n"
+    }
+  ],
+  "cells": [
+    {
+      "type": "cell",
+      "id": "391a3a26",
+      "inputs": [
+        "dot",
+        "display"
+      ],
+      "body": "(dot,display) => {\ndisplay((\ndot`digraph D {\n\n  A [shape=diamond]\n  B [shape=box]\n  C [shape=circle]\n\n  A -> B [style=dashed]\n  A -> C\n  A -> D [penwidth=5, arrowhead=none]\n\n}\n`\n))\n}"
+    }
+  ]
+}
