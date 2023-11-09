@@ -66,7 +66,7 @@ export function findImports(body: Node, root: string, sourcePath: string) {
           findLocalImports(join(dirname(path), value));
         } else {
           imports.push({name: value, type: "global"});
-          // non-local imports don't need to be promoted to file attachments
+          // non-local imports don't need to be traversed
         }
       }
     }
@@ -86,7 +86,7 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode, root: stri
           node.source.end,
           JSON.stringify(
             isLocalImport(value, root, sourcePath)
-              ? join("/_file/", join(dirname(sourcePath), value))
+              ? join("/_import/", join(dirname(sourcePath), value))
               : resolveImport(value)
           )
         );
@@ -107,7 +107,7 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode, root: stri
               : "{}"
           } = await import(${JSON.stringify(
             isLocalImport(value, root, sourcePath)
-              ? join("/_file/", join(dirname(sourcePath), value))
+              ? join("/_import/", join(dirname(sourcePath), value))
               : resolveImport(value)
           )});`
         );
