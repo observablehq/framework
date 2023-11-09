@@ -1,4 +1,5 @@
 export default {
+  title: "Observable CLI",
   pages: [
     {path: "/index", name: "Overview"},
     {path: "/getting-started", name: "Getting started"},
@@ -13,7 +14,7 @@ export default {
     {path: "/javascript/mutables", name: "Mutables"},
     {path: "/javascript/imports", name: "Imports"},
     {path: "/javascript/inputs", name: "Inputs"},
-    {path: "/dot", name: "Dot"},
+    {path: "/dot", name: "DOT"},
     {path: "/mermaid", name: "Mermaid"},
     {path: "/tex", name: "TeX"},
     {path: "/loaders", name: "Data loaders"},

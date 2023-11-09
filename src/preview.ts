@@ -6,6 +6,7 @@ import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
 import send from "send";
 import {type WebSocket, WebSocketServer} from "ws";
+import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {HttpError, isHttpError, isNodeError} from "./error.js";
 import {maybeStat} from "./files.js";
@@ -120,6 +121,7 @@ class Server {
                 root: this.root,
                 path: pathname,
                 pages,
+                title: (await readConfig(this.root))?.title,
                 resolver: this._resolver!
               })
             ).html

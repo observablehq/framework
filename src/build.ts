@@ -4,6 +4,7 @@ import {basename, dirname, join, normalize, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
+import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
 import {readPages} from "./navigation.js";
@@ -28,6 +29,7 @@ export async function build(context: CommandContext = makeCommandContext()) {
   }
 
   // Render .md files, building a list of file attachments as we go.
+  const config = await readConfig(sourceRoot);
   const pages = await readPages(sourceRoot);
   const files: string[] = [];
   const imports: string[] = [];
@@ -41,6 +43,7 @@ export async function build(context: CommandContext = makeCommandContext()) {
       root: sourceRoot,
       path,
       pages,
+      title: config?.title,
       resolver
     });
     files.push(...render.files.map((f) => join(dirname(sourceFile), f.name)));
