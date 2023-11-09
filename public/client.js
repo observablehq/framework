@@ -191,7 +191,7 @@ export function define(cell) {
   v.define(outputs.length ? `cell ${id}` : null, inputs, body);
   variables.push(v);
   for (const o of outputs) variables.push(main.define(o, [`cell ${id}`], (exports) => exports[o]));
-  for (const f of files) attachedFiles.set(f.name, {url: String(new URL(`/_file/${f.name}`, location)), mimeType: f.mimeType}); // prettier-ignore
+  for (const f of files) attachedFiles.set(f.name, {url: `/_file${(new URL(f.name, location)).pathname}`, mimeType: f.mimeType}); // prettier-ignore
   for (const d of databases) databaseTokens.set(d.name, d);
 }
 
@@ -300,8 +300,8 @@ export function open({hash} = {}) {
   }
 }
 
-{
-  const toggle = document.querySelector("#observablehq-sidebar-toggle");
+const toggle = document.querySelector("#observablehq-sidebar-toggle");
+if (toggle) {
   let indeterminate = toggle.indeterminate;
   toggle.onclick = () => {
     const matches = matchMedia("(min-width: calc(640px + 4rem + 0.5rem + 240px + 2rem))").matches;
