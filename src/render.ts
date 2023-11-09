@@ -1,7 +1,8 @@
+import {dirname, join} from "node:path";
 import {computeHash} from "./hash.js";
-import {type FileReference, type ImportReference} from "./javascript.js";
 import {resolveImport} from "./javascript/imports.js";
-import {parseMarkdown, type CellPiece, type ParseResult} from "./markdown.js";
+import {type FileReference, type ImportReference} from "./javascript.js";
+import {type CellPiece, type ParseResult, parseMarkdown} from "./markdown.js";
 
 export interface Render {
   html: string;
@@ -59,7 +60,7 @@ ${
 }<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
-${Array.from(getImportPreloads(parseResult))
+${Array.from(getImportPreloads(parseResult, path))
   .map((href) => `<link rel="modulepreload" href="${href}">`)
   .join("\n")}
 <script type="module">
@@ -86,7 +87,7 @@ ${
     ?.map(
       (p) => `
     <li class="observablehq-link${p.path === path ? " observablehq-link-active" : ""}"><a href="${escapeDoubleQuoted(
-      p.path.replace(/\/index$/, "/")
+      p.path.replace(/\/index$/, "") || "/"
     )}">${escapeData(p.name)}</a></li>`
     )
     .join("")}
@@ -108,9 +109,15 @@ ${parseResult.html}</main>
 `;
 }
 
-function getImportPreloads(parseResult: ParseResult): Iterable<string> {
+function getImportPreloads(parseResult: ParseResult, path: string): Iterable<string> {
   const specifiers = new Set<string>(["npm:@observablehq/runtime"]);
-  for (const {name, type} of parseResult.imports) specifiers.add(`${type === "local" ? "/_file" : ""}${name}`);
+  for (const {name, type} of parseResult.imports) {
+    if (type === "local") {
+      specifiers.add(`/_file${join(dirname(path), name)}`);
+    } else {
+      specifiers.add(name);
+    }
+  }
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
   if (inputs.has("d3") || inputs.has("Plot")) specifiers.add("npm:d3");
   if (inputs.has("Plot")) specifiers.add("npm:@observablehq/plot");
@@ -118,6 +125,7 @@ function getImportPreloads(parseResult: ParseResult): Iterable<string> {
   if (inputs.has("Inputs")) specifiers.add("npm:@observablehq/inputs");
   if (inputs.has("dot")) specifiers.add("npm:@viz-js/viz");
   if (inputs.has("mermaid")) specifiers.add("npm:mermaid").add("npm:d3");
+  if (inputs.has("tex")) specifiers.add("npm:katex");
   const preloads: string[] = [];
   for (const specifier of specifiers) {
     preloads.push(resolveImport(specifier));

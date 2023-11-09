@@ -1,18 +1,19 @@
-import {getPatch, type Patch, type PatchItem} from "fast-array-diff";
+import {readFile} from "node:fs/promises";
+import {dirname, join} from "node:path";
+import {type Patch, type PatchItem, getPatch} from "fast-array-diff";
 import equal from "fast-deep-equal";
 import matter from "gray-matter";
 import hljs from "highlight.js";
 import {parseHTML} from "linkedom";
 import MarkdownIt from "markdown-it";
-import MarkdownItAnchor from "markdown-it-anchor";
 import {type RuleCore} from "markdown-it/lib/parser_core.js";
 import {type RuleInline} from "markdown-it/lib/parser_inline.js";
-import {type default as Renderer, type RenderRule} from "markdown-it/lib/renderer.js";
+import {type RenderRule, type default as Renderer} from "markdown-it/lib/renderer.js";
+import MarkdownItAnchor from "markdown-it-anchor";
 import mime from "mime";
-import {readFile} from "node:fs/promises";
-import {pathFromRoot} from "./files.js";
+import {isLocalFile, pathFromRoot} from "./files.js";
 import {computeHash} from "./hash.js";
-import {transpileJavaScript, type FileReference, type ImportReference, type Transpile} from "./javascript.js";
+import {type FileReference, type ImportReference, type Transpile, transpileJavaScript} from "./javascript.js";
 import {transpileTag} from "./tag.js";
 
 export interface ReadMarkdownResult {
@@ -51,7 +52,7 @@ interface RenderPiece {
 
 interface ParseContext {
   pieces: RenderPiece[];
-  files: {name: string; mimeType: string | null}[];
+  files: FileReference[];
   imports: ImportReference[];
   startLine: number;
   currentLine: number;
@@ -266,6 +267,7 @@ function makePlaceholderRenderer(root: string, sourcePath: string): RenderRule {
     });
     extendPiece(context, {code: [transpile]});
     if (transpile.files) context.files.push(...transpile.files);
+    if (transpile.imports) context.imports.push(...transpile.imports);
     return `<span id="cell-${id}"></span>`;
   };
 }
@@ -286,7 +288,7 @@ function extendPiece(context: ParseContext, extend: Partial<RenderPiece>) {
   };
 }
 
-function renderIntoPieces(renderer: Renderer, root: string): Renderer["render"] {
+function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string): Renderer["render"] {
   return (tokens, options, context: ParseContext) => {
     const rules = renderer.rules;
     for (let i = 0, len = tokens.length; i < len; i++) {
@@ -306,7 +308,7 @@ function renderIntoPieces(renderer: Renderer, root: string): Renderer["render"] 
     }
     let result = "";
     for (const piece of context.pieces) {
-      result += piece.html = normalizePieceHtml(piece.html, root, context);
+      result += piece.html = normalizePieceHtml(piece.html, root, sourcePath, context);
     }
     return result;
   };
@@ -316,13 +318,14 @@ function renderIntoPieces(renderer: Renderer, root: string): Renderer["render"] 
 // stylesheets), this ensures that the HTML for each piece generates exactly one
 // top-level element. This is necessary for incremental update, and ensures that
 // our parsing of the Markdown is consistent with the resulting HTML structure.
-function normalizePieceHtml(html: string, root: string, context: ParseContext): string {
+function normalizePieceHtml(html: string, root: string, sourcePath: string, context: ParseContext): string {
   const {document} = parseHTML(html);
   for (const element of document.querySelectorAll("link[href]") as any as Iterable<Element>) {
-    const href = pathFromRoot(element.getAttribute("href"), root);
-    if (href) {
+    const href = element.getAttribute("href")!;
+    const path = join(dirname(sourcePath), href);
+    if (isLocalFile(path, root)) {
       context.files.push({name: href, mimeType: mime.getType(href)});
-      element.setAttribute("href", `/_file/${href}`);
+      element.setAttribute("href", `/_file/${path}`);
     }
   }
   return isSingleElement(document) ? String(document) : `<span>${document}</span>`;
@@ -373,7 +376,7 @@ export function parseMarkdown(source: string, root: string, sourcePath: string):
   md.renderer.rules.placeholder = makePlaceholderRenderer(root, sourcePath);
   md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!, sourcePath);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
-  md.renderer.render = renderIntoPieces(md.renderer, root);
+  md.renderer.render = renderIntoPieces(md.renderer, root, sourcePath);
   const context: ParseContext = {files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
   const tokens = md.parse(parts.content, context);
   const html = md.renderer.render(tokens, md.options, context); // Note: mutates context.pieces, context.files!

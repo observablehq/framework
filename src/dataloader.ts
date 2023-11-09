@@ -1,7 +1,7 @@
 import {spawn} from "node:child_process";
 import {existsSync} from "node:fs";
-import {open, rename, unlink} from "node:fs/promises";
-import {join} from "node:path";
+import {mkdir, open, rename, unlink} from "node:fs/promises";
+import {dirname, join} from "node:path";
 import {maybeStat, prepareOutput} from "./files.js";
 
 const runningCommands = new Map<string, Promise<string>>();
@@ -82,7 +82,7 @@ export class Loader {
       const loaderStat = await maybeStat(this.path);
       const cacheStat = await maybeStat(cachePath);
       if (cacheStat && cacheStat.mtimeMs > loaderStat!.mtimeMs) return outputPath;
-      const tempPath = join(".observablehq", "cache", `${this.targetPath}.${process.pid}`);
+      const tempPath = join(this.sourceRoot, ".observablehq", "cache", `${this.targetPath}.${process.pid}`);
       await prepareOutput(tempPath);
       const tempFd = await open(tempPath, "w");
       const tempFileStream = tempFd.createWriteStream({highWaterMark: 1024 * 1024});
@@ -99,6 +99,7 @@ export class Loader {
         )} in ${Math.floor(performance.now() - time)}ms`}`
       );
       if (code === 0) {
+        await mkdir(dirname(cachePath), {recursive: true});
         await rename(tempPath, cachePath);
       } else {
         await unlink(tempPath);
