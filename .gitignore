@@ -3,4 +3,5 @@ dist/
 docs/.observablehq/cache
 node_modules/
 test/output/*-changed.*
+test/.observablehq/cache
 yarn-error.log
