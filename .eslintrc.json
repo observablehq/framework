@@ -1,6 +1,11 @@
 {
-  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended", "plugin:prettier/recommended"],
-  "plugins": ["@typescript-eslint"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:import/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "plugins": ["@typescript-eslint", "import"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 2020,
@@ -17,12 +22,30 @@
     "@typescript-eslint/no-explicit-any": 0,
     "@typescript-eslint/no-this-alias": 0,
     "@typescript-eslint/no-unused-vars": ["error", {"ignoreRestSiblings": true}],
+    "import/first": "warn",
+    "import/newline-after-import": "warn",
+    "import/no-import-module-exports": "warn",
+    "import/no-namespace": "error",
+    "import/no-relative-packages": "warn",
+    "import/no-unresolved": "off",
+    "import/no-unused-modules": "error",
+    "import/order": [
+      "warn",
+      {
+        "groups": ["builtin", "external", "parent", "sibling", "index"],
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": true
+        }
+      }
+    ],
     "no-cond-assign": 0,
     "no-constant-condition": 0,
     "no-sparse-arrays": 0,
     "no-unexpected-multiline": 0,
     "object-shorthand": ["warn", "always"],
-    "prettier/prettier": ["warn"]
+    "prettier/prettier": ["warn"],
+    "sort-imports": ["warn", {"ignoreDeclarationSort": true}]
   },
   "overrides": [
     {

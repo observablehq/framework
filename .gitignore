@@ -1,6 +1,7 @@
 .DS_Store
-.observablehq
+**/.observablehq/cache/
 dist/
 node_modules/
 test/output/*-changed.*
+test/output/build/*-changed/
 yarn-error.log

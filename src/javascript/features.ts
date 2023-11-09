@@ -1,10 +1,10 @@
 import {simple} from "acorn-walk";
+import {type Feature} from "../javascript.js";
+import {isLocalImport} from "./imports.js";
 import {syntaxError} from "./syntaxError.js";
-import {isLocalImport} from "./imports.ts";
-import {dirname, join} from "node:path";
 
 export function findFeatures(node, root, sourcePath, references, input) {
-  const features = [];
+  const features: Feature[] = [];
 
   simple(node, {
     CallExpression(node) {
@@ -13,9 +13,10 @@ export function findFeatures(node, root, sourcePath, references, input) {
         arguments: args,
         arguments: [arg]
       } = node;
+
       // Promote fetches with static literals to file attachment references.
       if (isLocalFetch(node, references, root, sourcePath)) {
-        features.push({type: "FileAttachment", name: join(dirname(sourcePath), getStringLiteralValue(arg))});
+        features.push({type: "FileAttachment", name: getStringLiteralValue(arg)});
         return;
       }
 
@@ -34,6 +35,7 @@ export function findFeatures(node, root, sourcePath, references, input) {
       if (args.length !== 1 || !isStringLiteral(arg)) {
         throw syntaxError(`${callee.name} requires a single literal string argument`, node, input);
       }
+
       features.push({type: callee.name, name: getStringLiteralValue(arg)});
     }
   });
@@ -51,7 +53,6 @@ export function isLocalFetch(node, references, root, sourcePath) {
     callee.type === "Identifier" &&
     callee.name === "fetch" &&
     !references.includes(callee) &&
-    arg &&
     isStringLiteral(arg) &&
     isLocalImport(getStringLiteralValue(arg), root, sourcePath)
   );
@@ -59,8 +60,9 @@ export function isLocalFetch(node, references, root, sourcePath) {
 
 export function isStringLiteral(node) {
   return (
-    (node.type === "Literal" && /^['"]/.test(node.raw)) ||
-    (node.type === "TemplateLiteral" && node.expressions.length === 0)
+    node &&
+    ((node.type === "Literal" && /^['"]/.test(node.raw)) ||
+      (node.type === "TemplateLiteral" && node.expressions.length === 0))
   );
 }
 

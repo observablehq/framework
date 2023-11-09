@@ -1,4 +1,4 @@
-import {accessSync, constants, statSync, type Stats} from "node:fs";
+import {type Stats, accessSync, constants, statSync} from "node:fs";
 import {mkdir, readdir, stat} from "node:fs/promises";
 import {dirname, extname, join, normalize, relative} from "node:path";
 import {isNodeError} from "./error.js";
