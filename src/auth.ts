@@ -23,7 +23,7 @@ async function main() {
       break;
     }
     default: {
-      console.error("Usage: observable login <subcommand>");
+      console.error("Usage: observable auth <subcommand>");
       console.error("    login\tlogin with your ObservableHQ credentials");
       console.error("    whoami\tdisplay the current loggedin user");
     }
@@ -37,7 +37,13 @@ async function loginCommand() {
 
   const url = new URL("/settings/api-keys/generate", OBSERVABLEHQ_UI_HOST);
   const name = `Observable CLI on ${os.hostname()}`;
-  const request = {nonce, port: server.port, name, scopes: ["projects:deploy", "projects:create"]};
+  const request = {
+    nonce,
+    port: server.port,
+    name,
+    scopes: ["projects:deploy", "projects:create"],
+    version: "2023-11-06"
+  };
   url.searchParams.set("request", Buffer.from(JSON.stringify(request)).toString("base64"));
 
   if (isatty(process.stdin.fd)) {
@@ -55,7 +61,7 @@ async function whoamiCommand() {
   const key = await getObservableApiKey();
   if (key) {
     const req = await fetch(new URL("/cli/user", OBSERVABLEHQ_API_HOST), {
-      headers: {Authorization: `apikey ${key}`}
+      headers: {Authorization: `apikey ${key}`, "X-Observable-Api-Version": "2023-11-06"}
     });
     if (req.status === 401) {
       console.log("Your API key is invalid. Run `observable auth login` to log in again.");
