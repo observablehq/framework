@@ -4,12 +4,11 @@ import {dirname, extname, join, normalize, relative} from "node:path";
 import {isNodeError} from "./error.js";
 
 // A path is local if it doesn’t go outside the the root.
-export function isLocalPath(path: string | null): boolean {
-  return (
-    typeof path === "string" && // not null
-    !/^(\w+:)\/\//.test(path) && // not a URL with protocol
-    !normalize(path).startsWith("../") // does not go outside the root
-  );
+export function getLocalPath(sourcePath: string, name: string): string | null {
+  if (/^(\w+:)\/\//.test(name)) return null; // URL
+  const path = join(dirname(sourcePath.startsWith("/") ? sourcePath.slice("/".length) : sourcePath), name);
+  if (path.startsWith("../")) return null; // goes above root
+  return path;
 }
 
 export async function* visitMarkdownFiles(root: string): AsyncGenerator<string> {

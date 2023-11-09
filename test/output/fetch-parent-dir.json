@@ -110,13 +110,7 @@
     {
       "type": "cell",
       "id": "02cc5429",
-      "inputs": [
-        "FileAttachment"
-      ],
-      "outputs": [
-        "fail2"
-      ],
-      "body": "(FileAttachment) => {\nconst fail2 = FileAttachment(\"../NOENT.md\").text()\nreturn {fail2};\n}"
+      "body": "() => { throw new SyntaxError(\"non-local file path: \\\"../NOENT.md\\\" (1:14)\"); }"
     },
     {
       "type": "cell",
@@ -129,13 +123,7 @@
     {
       "type": "cell",
       "id": "4078d1e8",
-      "inputs": [
-        "FileAttachment"
-      ],
-      "outputs": [
-        "fail4"
-      ],
-      "body": "(FileAttachment) => {\nconst fail4 = FileAttachment(\"../README.md\").text()\nreturn {fail4};\n}"
+      "body": "() => { throw new SyntaxError(\"non-local file path: \\\"../README.md\\\" (1:14)\"); }"
     },
     {
       "type": "cell",

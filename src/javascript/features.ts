@@ -1,4 +1,5 @@
 import {simple} from "acorn-walk";
+import {getLocalPath} from "../files.js";
 import {type Feature} from "../javascript.js";
 import {isLocalImport} from "./imports.js";
 import {syntaxError} from "./syntaxError.js";
@@ -36,7 +37,13 @@ export function findFeatures(node, root, sourcePath, references, input) {
         throw syntaxError(`${callee.name} requires a single literal string argument`, node, input);
       }
 
-      features.push({type: callee.name, name: getStringLiteralValue(arg)});
+      // Forbid file attachments that are not local paths.
+      const value = getStringLiteralValue(arg);
+      if (callee.name === "FileAttachment" && !getLocalPath(sourcePath, value)) {
+        throw syntaxError(`non-local file path: "${value}"`, node, input);
+      }
+
+      features.push({type: callee.name, name: value});
     }
   });
 

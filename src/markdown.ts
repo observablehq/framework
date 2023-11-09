@@ -1,5 +1,5 @@
 import {readFile} from "node:fs/promises";
-import {dirname, join} from "node:path";
+import {join} from "node:path";
 import {type Patch, type PatchItem, getPatch} from "fast-array-diff";
 import equal from "fast-deep-equal";
 import matter from "gray-matter";
@@ -11,7 +11,7 @@ import {type RuleInline} from "markdown-it/lib/parser_inline.js";
 import {type RenderRule, type default as Renderer} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
 import mime from "mime";
-import {isLocalPath} from "./files.js";
+import {getLocalPath} from "./files.js";
 import {computeHash} from "./hash.js";
 import {type FileReference, type ImportReference, type Transpile, transpileJavaScript} from "./javascript.js";
 import {transpileTag} from "./tag.js";
@@ -322,8 +322,8 @@ function normalizePieceHtml(html: string, root: string, sourcePath: string, cont
   const {document} = parseHTML(html);
   for (const element of document.querySelectorAll("link[href]") as any as Iterable<Element>) {
     const href = element.getAttribute("href")!;
-    const path = join(dirname(sourcePath), href);
-    if (isLocalPath(path)) {
+    const path = getLocalPath(sourcePath, href);
+    if (path) {
       context.files.push({name: href, mimeType: mime.getType(href)});
       element.setAttribute("href", `/_file/${path}`);
     }
