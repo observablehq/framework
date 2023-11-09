@@ -32,9 +32,9 @@ export async function build(context: CommandContext = makeCommandContext()) {
   const resolver = await makeCLIResolver();
   for await (const sourceFile of visitMarkdownFiles(sourceRoot)) {
     const sourcePath = join(sourceRoot, sourceFile);
-    const outputPath = join(outputRoot, join(dirname(sourceFile), basename(sourceFile, ".md") + ".html"));
+    const outputPath = join(outputRoot, dirname(sourceFile), basename(sourceFile, ".md") + ".html");
     console.log("render", sourcePath, "→", outputPath);
-    const path = join(dirname(sourceFile), basename(sourceFile, ".md"));
+    const path = `/${join(dirname(sourceFile), basename(sourceFile, ".md"))}`;
     const render = renderServerless(await readFile(sourcePath, "utf-8"), {
       root: sourceRoot,
       path,

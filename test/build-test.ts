@@ -52,6 +52,7 @@ function* findFiles(root: string): Iterable<string> {
       if (visited.has(status.ino)) throw new Error(`Circular directory: ${path}`);
       visited.add(status.ino);
       for (const entry of readdirSync(path)) {
+        if (entry === ".DS_store") continue; // macOS
         queue.push(join(path, entry));
       }
     } else {

@@ -85,8 +85,8 @@ ${
   <ol>${pages
     ?.map(
       (p) => `
-    <li class="observablehq-link${p.path === path ? " observablehq-link-active" : ""}"><a href="/${escapeDoubleQuoted(
-      p.path.replace(/(^|\/)index$/, "")
+    <li class="observablehq-link${p.path === path ? " observablehq-link-active" : ""}"><a href="${escapeDoubleQuoted(
+      p.path.replace(/\/index$/, "") || "/"
     )}">${escapeData(p.name)}</a></li>`
     )
     .join("")}
@@ -112,7 +112,7 @@ function getImportPreloads(parseResult: ParseResult, path: string): Iterable<str
   const specifiers = new Set<string>(["npm:@observablehq/runtime"]);
   for (const {name, type} of parseResult.imports) {
     if (type === "local") {
-      specifiers.add(`/_file/${join(dirname(path), name)}`);
+      specifiers.add(`/_file${join(dirname(path), name)}`);
     } else {
       specifiers.add(name);
     }
