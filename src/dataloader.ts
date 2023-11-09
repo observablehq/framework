@@ -113,10 +113,10 @@ export class Loader {
   }
 }
 
-// Utilities for the log
 const error = color(31);
 const success = color(32);
 const warning = color(33);
+
 function color(code) {
   return process.stdout.isTTY ? (text) => `\x1b[${code}m${text}\x1b[0m` : String;
 }
