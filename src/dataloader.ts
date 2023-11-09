@@ -80,7 +80,7 @@ export class Loader {
       const loaderStat = await maybeStat(this.path);
       const cacheStat = await maybeStat(cachePath);
       if (cacheStat && cacheStat.mtimeMs > loaderStat!.mtimeMs) return outputPath;
-      const tempPath = join(".observablehq", "cache", `${this.targetPath}.${process.pid}`);
+      const tempPath = join(this.sourceRoot, ".observablehq", "cache", `${this.targetPath}.${process.pid}`);
       await prepareOutput(tempPath);
       const tempFd = await open(tempPath, "w");
       const tempFileStream = tempFd.createWriteStream({highWaterMark: 1024 * 1024});
