@@ -15,11 +15,12 @@ const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.j
 export interface CommandContext {
   sourceRoot: string;
   outputRoot: string;
+  verbose?: boolean;
   addPublic?: boolean;
 }
 
 export async function build(context: CommandContext = makeCommandContext()) {
-  const {sourceRoot, outputRoot, addPublic = true} = context;
+  const {sourceRoot, outputRoot, verbose = true, addPublic = true} = context;
 
   // Make sure all files are readable before starting to write output files.
   for await (const sourceFile of visitMarkdownFiles(sourceRoot)) {
@@ -33,7 +34,7 @@ export async function build(context: CommandContext = makeCommandContext()) {
   for await (const sourceFile of visitMarkdownFiles(sourceRoot)) {
     const sourcePath = join(sourceRoot, sourceFile);
     const outputPath = join(outputRoot, dirname(sourceFile), basename(sourceFile, ".md") + ".html");
-    console.log("render", sourcePath, "→", outputPath);
+    if (verbose) console.log("render", sourcePath, "→", outputPath);
     const path = `/${join(dirname(sourceFile), basename(sourceFile, ".md"))}`;
     const render = renderServerless(await readFile(sourcePath, "utf-8"), {
       root: sourceRoot,
@@ -53,7 +54,7 @@ export async function build(context: CommandContext = makeCommandContext()) {
     for await (const publicFile of visitFiles(publicRoot)) {
       const sourcePath = join(publicRoot, publicFile);
       const outputPath = join(outputRoot, "_observablehq", publicFile);
-      console.log("copy", sourcePath, "→", outputPath);
+      if (verbose) console.log("copy", sourcePath, "→", outputPath);
       await prepareOutput(outputPath);
       await copyFile(sourcePath, outputPath);
     }
@@ -69,11 +70,11 @@ export async function build(context: CommandContext = makeCommandContext()) {
         console.error("missing referenced file", sourcePath);
         continue;
       }
-      process.stdout.write(`generate ${loader.path} → `);
+      if (verbose) process.stdout.write(`generate ${loader.path} → `);
       sourcePath = join(sourceRoot, await loader.load());
-      console.log(sourcePath);
+      if (verbose) console.log(sourcePath);
     }
-    console.log("copy", sourcePath, "→", outputPath);
+    if (verbose) console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);
     await copyFile(sourcePath, outputPath);
   }
@@ -83,7 +84,7 @@ export async function build(context: CommandContext = makeCommandContext()) {
   if (addPublic) {
     for (const [sourcePath, targetFile] of EXTRA_FILES) {
       const outputPath = join(outputRoot, targetFile);
-      console.log("copy", sourcePath, "→", outputPath);
+      if (verbose) console.log("copy", sourcePath, "→", outputPath);
       await prepareOutput(outputPath);
       await copyFile(sourcePath, outputPath);
     }

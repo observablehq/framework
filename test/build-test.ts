@@ -22,7 +22,7 @@ describe("build", async () => {
 
       await rm(actualDir, {recursive: true, force: true});
       if (generate) console.warn(`! generating ${expectedDir}`);
-      await build({sourceRoot: path, outputRoot: generate ? expectedDir : actualDir, addPublic: false});
+      await build({sourceRoot: path, outputRoot: generate ? expectedDir : actualDir, verbose: false, addPublic: false});
       if (generate) return;
 
       const actualFiles = new Set(findFiles(actualDir));
