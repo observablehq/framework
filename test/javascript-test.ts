@@ -34,7 +34,8 @@ function runTests({
         await transpileJavaScript(await readFile(path, "utf8"), {
           id: "0",
           root: inputRoot,
-          sourcePath: name
+          sourcePath: name,
+          verbose: false
         })
       );
       let expected;

@@ -50,10 +50,11 @@ export interface ParseOptions {
   inline?: boolean;
   sourceLine?: number;
   globals?: Set<string>;
+  verbose?: boolean;
 }
 
 export function transpileJavaScript(input: string, options: ParseOptions): Transpile {
-  const {id, root, sourcePath} = options;
+  const {id, root, sourcePath, verbose = true} = options;
   try {
     const node = parseJavaScript(input, options);
     const databases = node.features
@@ -97,7 +98,7 @@ ${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.ma
     }
     // TODO: Consider showing a code snippet along with the error. Also, consider
     // whether we want to show the file name here.
-    console.error(`${error.name}: ${message}`);
+    if (verbose) console.error(`${error.name}: ${message}`);
     return {
       id: `${id}`,
       body: `() => { throw new SyntaxError(${JSON.stringify(error.message)}); }`
