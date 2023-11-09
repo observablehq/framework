@@ -1,4 +1,5 @@
 export default {
+  title: "Observable CLI",
   pages: [
     {path: "/index", name: "Overview"},
     {path: "/getting-started", name: "Getting started"},
