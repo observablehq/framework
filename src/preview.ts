@@ -326,12 +326,6 @@ function makeCommandContext(): CommandContext {
   };
 }
 
-// TODO A --root option should indicate the current working directory within
-// which to find Markdown files, for both --serve and --build. The serving paths
-// and generated file paths should be relative to the root. For example, if the
-// root is ./docs, then / should serve ./docs/index.md, and that same Markdown
-// file should be generated as ./dist/index.html when using --output ./dist.
-
 await (async function () {
   const context = makeCommandContext();
   const server = new Server(context);
