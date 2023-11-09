@@ -125,6 +125,7 @@ function getImportPreloads(parseResult: ParseResult, path: string): Iterable<str
   if (inputs.has("Inputs")) specifiers.add("npm:@observablehq/inputs");
   if (inputs.has("dot")) specifiers.add("npm:@viz-js/viz");
   if (inputs.has("mermaid")) specifiers.add("npm:mermaid").add("npm:d3");
+  if (inputs.has("tex")) specifiers.add("npm:katex");
   const preloads: string[] = [];
   for (const specifier of specifiers) {
     preloads.push(resolveImport(specifier));
