@@ -28,7 +28,8 @@ describe("data loaders are called with the appropriate command", () => {
     const out = await loader.load({verbose: false});
     assert.strictEqual(await readFile("test/" + out, "utf-8"), "python3\n");
   });
-  it("a .R data loader is called with Rscript", async () => {
+  // Skipping because this requires R to be installed (which is slow in CI).
+  it.skip("a .R data loader is called with Rscript", async () => {
     const loader = Loader.find("test", "dataloaders/data6.txt")!;
     const out = await loader.load({verbose: false});
     assert.strictEqual(await readFile("test/" + out, "utf-8"), "Rscript\n");
