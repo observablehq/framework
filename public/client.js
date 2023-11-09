@@ -83,14 +83,14 @@ function recommendedLibraries() {
 
 // TODO Incorporate this into the standard library.
 async function tex() {
-  const {default: katex} = await import("https://cdn.jsdelivr.net/npm/katex/+esm");
-  const tex = renderer();
-
   const link = document.createElement("link");
   link.rel = "stylesheet";
   link.href = "https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css";
   link.crossOrigin = "anonymous";
   document.head.appendChild(link);
+
+  const {default: katex} = await import("https://cdn.jsdelivr.net/npm/katex/+esm");
+  const tex = renderer();
 
   function renderer(options) {
     return function () {
