@@ -1,8 +1,8 @@
-import {Parser, type Node} from "acorn";
-import {simple} from "acorn-walk";
 import {readFileSync} from "node:fs";
 import {dirname, join, normalize} from "node:path";
-import {parseOptions, type ImportReference, type JavaScriptNode} from "../javascript.js";
+import {type Node, Parser} from "acorn";
+import {simple} from "acorn-walk";
+import {type ImportReference, type JavaScriptNode, parseOptions} from "../javascript.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
 export function findImports(body: Node, root: string, sourcePath: string) {

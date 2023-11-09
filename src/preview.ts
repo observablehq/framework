@@ -1,18 +1,18 @@
-import {existsSync, watch, type FSWatcher, type WatchListener} from "node:fs";
+import {type FSWatcher, type WatchListener, existsSync, watch} from "node:fs";
 import {access, constants, readFile, stat} from "node:fs/promises";
-import {createServer, type IncomingMessage, type RequestListener} from "node:http";
+import {type IncomingMessage, type RequestListener, createServer} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
 import send from "send";
-import {WebSocketServer, type WebSocket} from "ws";
+import {type WebSocket, WebSocketServer} from "ws";
 import {Loader} from "./dataloader.js";
 import {HttpError, isHttpError, isNodeError} from "./error.js";
 import {maybeStat} from "./files.js";
-import {diffMarkdown, readMarkdown, type ParseResult} from "./markdown.js";
+import {type ParseResult, diffMarkdown, readMarkdown} from "./markdown.js";
 import {readPages} from "./navigation.js";
 import {renderPreview} from "./render.js";
-import {makeCLIResolver, type CellResolver} from "./resolver.js";
+import {type CellResolver, makeCLIResolver} from "./resolver.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 

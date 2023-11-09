@@ -1,8 +1,8 @@
 import {dirname, join} from "node:path";
 import {computeHash} from "./hash.js";
-import {type FileReference, type ImportReference} from "./javascript.js";
 import {resolveImport} from "./javascript/imports.js";
-import {parseMarkdown, type CellPiece, type ParseResult} from "./markdown.js";
+import {type FileReference, type ImportReference} from "./javascript.js";
+import {type CellPiece, type ParseResult, parseMarkdown} from "./markdown.js";
 
 export interface Render {
   html: string;

@@ -1,4 +1,4 @@
-import {Parser, tokTypes, type Node, type Options} from "acorn";
+import {type Node, type Options, Parser, tokTypes} from "acorn";
 import mime from "mime";
 import {findAwaits} from "./javascript/awaits.js";
 import {findDeclarations} from "./javascript/declarations.js";
