@@ -6,6 +6,16 @@ import {maybeStat, prepareOutput} from "./files.js";
 
 const runningCommands = new Map<string, Promise<string>>();
 
+const languages = {
+  ".js": "node",
+  ".ts": "tsx",
+  ".py": "python3",
+  ".r": "RScript",
+  ".R": "RScript",
+  ".sh": "sh",
+  ".exe": null
+};
+
 export class Loader {
   /**
    * The command to run, such as "node" for a JavaScript loader, "tsx" for
@@ -52,13 +62,13 @@ export class Loader {
    * source root, if it exists. If there is no such loader, returns undefined.
    */
   static find(sourceRoot: string, targetPath: string): Loader | undefined {
-    for (const ext of [".js", ".ts", ".sh"]) {
+    for (const ext in languages) {
       const sourcePath = targetPath + ext;
       const path = join(sourceRoot, sourcePath);
       if (!existsSync(path)) continue;
       return new Loader({
-        command: ext === ".js" ? "node" : ext === ".ts" ? "tsx" : "sh",
-        args: [path],
+        command: languages[ext] ?? path,
+        args: languages[ext] == null ? [] : [path],
         path,
         sourceRoot,
         targetPath
