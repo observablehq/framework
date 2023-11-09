@@ -1,7 +1,7 @@
 import {spawn} from "node:child_process";
 import {existsSync} from "node:fs";
-import {open, rename, unlink} from "node:fs/promises";
-import {join} from "node:path";
+import {mkdir, open, rename, unlink} from "node:fs/promises";
+import {dirname, join} from "node:path";
 import {maybeStat, prepareOutput} from "./files.js";
 
 const runningCommands = new Map<string, Promise<string>>();
@@ -92,6 +92,7 @@ export class Loader {
       });
       await tempFd.close();
       if (code === 0) {
+        await mkdir(dirname(cachePath), {recursive: true});
         await rename(tempPath, cachePath);
       } else {
         await unlink(tempPath);
