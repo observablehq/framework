@@ -5,8 +5,6 @@ const DEFAULT_DATABASE_TOKEN_DURATION = 60 * 60 * 1000 * 36; // 36 hours in ms
 
 export type CellResolver = (cell: CellPiece) => CellPiece;
 
-type DatabaseProxyConfig = Record<string, DatabaseConfig>;
-
 interface DatabaseConfig {
   host: string;
   name: string;
@@ -17,19 +15,16 @@ interface DatabaseConfig {
   type: string;
 }
 
-function getDatabaseProxyConfig(env: typeof process.env): DatabaseProxyConfig {
-  const envConfig: DatabaseProxyConfig = {};
-  for (const property in env) {
-    const match = property.match(/^OBSERVABLEHQ_DB_SECRET_(.+)$/);
-    if (match) {
-      try {
-        envConfig[match[1]] = JSON.parse(Buffer.from(env[property]!, "base64").toString("utf8")) as DatabaseConfig;
-      } catch {
-        console.error("Unable to parse environment variable", property);
-      }
+function getDatabaseProxyConfig(env: typeof process.env, name: string): DatabaseConfig | null {
+  const property = `OBSERVABLEHQ_DB_SECRET_${name}`;
+  if (env[property]) {
+    const config = JSON.parse(Buffer.from(env[property]!, "base64").toString("utf8")) as DatabaseConfig;
+    if (!config.host || !config.port || !config.secret) {
+      throw new Error(`Invalid database config: ${property}`);
     }
+    return config;
   }
-  return envConfig;
+  return null;
 }
 
 function encodeToken(payload: {name: string; exp: number}, secret: string): string {
@@ -47,13 +42,12 @@ export async function makeCLIResolver({
   databaseTokenDuration = DEFAULT_DATABASE_TOKEN_DURATION,
   env = process.env
 }: ResolverOptions = {}): Promise<CellResolver> {
-  const config = getDatabaseProxyConfig(env);
   return (cell: CellPiece): CellPiece => {
     if (cell.databases !== undefined) {
       cell = {
         ...cell,
         databases: cell.databases.map((ref) => {
-          const db = config[ref.name];
+          const db = getDatabaseProxyConfig(env, ref.name);
           if (db) {
             const url = new URL("http://localhost");
             url.protocol = db.ssl !== "disabled" ? "https:" : "http:";
