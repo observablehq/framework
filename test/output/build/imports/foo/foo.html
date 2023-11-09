@@ -6,15 +6,15 @@
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
 <link rel="modulepreload" href="/_observablehq/runtime.js">
-<link rel="modulepreload" href="/_file/bar/bar.js">
-<link rel="modulepreload" href="/_file/bar/baz.js">
-<link rel="modulepreload" href="/_file/foo/foo.js">
+<link rel="modulepreload" href="/_import/bar/bar.js">
+<link rel="modulepreload" href="/_import/bar/baz.js">
+<link rel="modulepreload" href="/_import/foo/foo.js">
 <script type="module">
 
 import {define} from "/_observablehq/client.js";
 
 define({id: "d54e931e", inputs: ["display"], outputs: ["bar"], body: async (display) => {
-const {bar} = await import("/_file/bar/bar.js");
+const {bar} = await import("/_import/bar/bar.js");
 
 display(bar);
 return {bar};
