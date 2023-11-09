@@ -277,8 +277,8 @@ export function open({hash} = {}) {
   }
 }
 
-{
-  const toggle = document.querySelector("#observablehq-sidebar-toggle");
+const toggle = document.querySelector("#observablehq-sidebar-toggle");
+if (toggle) {
   let indeterminate = toggle.indeterminate;
   toggle.onclick = () => {
     const matches = matchMedia("(min-width: calc(640px + 4rem + 0.5rem + 240px + 2rem))").matches;
