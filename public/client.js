@@ -116,7 +116,11 @@ async function dot() {
     while (++i < n) string += arguments[i] + "" + strings[i];
     const svg = viz.renderSVGElement(string, {
       graphAttributes: {
-        bgcolor: "none"
+        bgcolor: "none",
+        color: "#00000101",
+        fontcolor: "#00000101",
+        fontname: "var(--sans-serif)",
+        fontsize: "12"
       },
       nodeAttributes: {
         color: "#00000101",
@@ -146,7 +150,8 @@ async function dot() {
 async function mermaid() {
   let nextId = 0;
   const {default: mer} = await import("https://cdn.jsdelivr.net/npm/mermaid/+esm");
-  mer.initialize({startOnLoad: false, securityLevel: "loose", theme: "neutral"});
+  const theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "neutral";
+  mer.initialize({startOnLoad: false, securityLevel: "loose", theme});
   return async function mermaid() {
     const root = document.createElement("div");
     root.innerHTML = (await mer.render(`mermaid-${++nextId}`, String.raw.apply(String, arguments))).svg;
