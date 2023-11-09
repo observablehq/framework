@@ -43,7 +43,7 @@ export async function build(context: CommandContext = makeCommandContext()) {
       resolver
     });
     files.push(...render.files.map((f) => join(dirname(sourceFile), f.name)));
-    files.push(...render.imports.map((f) => join(dirname(sourceFile), f.name)));
+    files.push(...render.imports.filter((i) => i.type === "local").map((i) => join(dirname(sourceFile), i.name)));
     await prepareOutput(outputPath);
     await writeFile(outputPath, render.html);
   }
@@ -71,7 +71,7 @@ export async function build(context: CommandContext = makeCommandContext()) {
         continue;
       }
       if (verbose) process.stdout.write(`generate ${loader.path} → `);
-      sourcePath = join(sourceRoot, await loader.load());
+      sourcePath = join(sourceRoot, await loader.load({verbose}));
       if (verbose) console.log(sourcePath);
     }
     if (verbose) console.log("copy", sourcePath, "→", outputPath);

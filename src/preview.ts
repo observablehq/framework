@@ -116,7 +116,7 @@ class Server {
             (
               await renderPreview(await readFile(path + ".md", "utf-8"), {
                 root: this.root,
-                path: pathname.slice("/".length),
+                path: pathname,
                 pages,
                 resolver: this._resolver!
               })
