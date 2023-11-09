@@ -323,7 +323,7 @@ function normalizePieceHtml(html: string, root: string, sourcePath: string, cont
   for (const element of document.querySelectorAll("link[href]") as any as Iterable<Element>) {
     const href = element.getAttribute("href")!;
     const path = join(dirname(sourcePath), href);
-    if (isLocalFile(path, root)) {
+    if (isLocalFile(root, path)) {
       context.files.push({name: href, mimeType: mime.getType(href)});
       element.setAttribute("href", `/_file/${path}`);
     }

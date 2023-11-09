@@ -4,7 +4,7 @@ import {dirname, extname, join, normalize, relative} from "node:path";
 import {isNodeError} from "./error.js";
 
 // A file is local if it exists in the root folder or a subfolder.
-export function isLocalFile(ref: string | null, root: string): boolean {
+export function isLocalFile(root: string, ref: string | null): boolean {
   return (
     typeof ref === "string" &&
     !/^(\w+:)\/\//.test(ref) &&
@@ -14,7 +14,7 @@ export function isLocalFile(ref: string | null, root: string): boolean {
 }
 
 export function pathFromRoot(ref: string | null, root: string): string | null {
-  return isLocalFile(ref, root) ? join(root, ref!) : null;
+  return isLocalFile(root, ref) ? join(root, ref!) : null;
 }
 
 function canReadSync(path: string): boolean {
