@@ -109,7 +109,9 @@ export class Loader {
       command.then(
         (path) => {
           console.info(
-            `${this.path} ${green("success")} ${formatSize(statSync(path).size)} in ${formatElapsed(start)}`
+            `${this.path} ${green("success")} ${formatSize(
+              statSync(join(this.sourceRoot, path)).size
+            )} in ${formatElapsed(start)}`
           );
         },
         (error) => {
