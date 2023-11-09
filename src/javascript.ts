@@ -1,7 +1,6 @@
 import {type Node, type Options, Parser, tokTypes} from "acorn";
 import mime from "mime";
-import {Loader} from "./dataloader.js";
-import {isLocalFile} from "./files.js";
+import {isLocalPath} from "./files.js";
 import {findAwaits} from "./javascript/awaits.js";
 import {findDeclarations} from "./javascript/declarations.js";
 import {findFeatures} from "./javascript/features.js";
@@ -64,7 +63,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
       .filter((f) => f.type === "DatabaseClient")
       .map((f): DatabaseReference => ({name: f.name}));
     const files = node.features
-      .filter((f) => f.type === "FileAttachment" && (isLocalFile(root, f.name) || Loader.find(root, f.name)))
+      .filter((f) => f.type === "FileAttachment" && isLocalPath(f.name))
       .map((f): FileReference => ({name: f.name, mimeType: mime.getType(f.name)}));
     const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
     const output = new Sourcemap(input);

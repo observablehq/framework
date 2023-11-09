@@ -3,6 +3,14 @@
   "title": "Parent dir",
   "files": [
     {
+      "name": "./NOENT.md",
+      "mimeType": "text/markdown"
+    },
+    {
+      "name": "./NOENT.md",
+      "mimeType": "text/markdown"
+    },
+    {
       "name": "./tex-expression.md",
       "mimeType": "text/markdown"
     },
@@ -135,6 +143,12 @@
       "outputs": [
         "fail5"
       ],
+      "files": [
+        {
+          "name": "./NOENT.md",
+          "mimeType": "text/markdown"
+        }
+      ],
       "body": "() => {\nconst fail5 = fetch(\"./_file/NOENT.md\").then(d => d.text())\nreturn {fail5};\n}"
     },
     {
@@ -145,6 +159,12 @@
       ],
       "outputs": [
         "fail6"
+      ],
+      "files": [
+        {
+          "name": "./NOENT.md",
+          "mimeType": "text/markdown"
+        }
       ],
       "body": "(FileAttachment) => {\nconst fail6 = FileAttachment(\"./NOENT.md\").text()\nreturn {fail6};\n}"
     },
