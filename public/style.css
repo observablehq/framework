@@ -81,6 +81,7 @@ body {
   bottom: 0;
   left: calc(-240px - 2rem);
   padding: 1rem;
+  overflow-y: scroll;
 }
 
 #observablehq-sidebar ol {
@@ -307,6 +308,9 @@ pre {
 }
 
 pre .language-md::after,
+pre .language-tex::after,
+pre .language-dot::after,
+pre .language-mermaid::after,
 pre .language-js::after,
 pre .language-sh::after,
 pre .language-sql::after {
@@ -320,21 +324,13 @@ pre .language-sql::after {
   padding: 0.5rem 0.5rem 0.5rem 1rem;
 }
 
-pre .language-md::after {
-  content: "md";
-}
-
-pre .language-js::after {
-  content: "js";
-}
-
-pre .language-sh::after {
-  content: "sh";
-}
-
-pre .language-sql::after {
-  content: "sql";
-}
+pre .language-md::after { content: "md"; }
+pre .language-js::after { content: "js"; }
+pre .language-sh::after { content: "sh"; }
+pre .language-sql::after { content: "sql"; }
+pre .language-tex::after { content: "tex"; }
+pre .language-dot::after { content: "dot"; }
+pre .language-mermaid::after { content: "mermaid"; }
 
 input:not([type]),
 input[type="email"],

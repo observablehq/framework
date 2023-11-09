@@ -1,4 +1,4 @@
-import {Parser, tokTypes, type Options} from "acorn";
+import {type Node, type Options, Parser, tokTypes} from "acorn";
 import mime from "mime";
 import {isLocalFile} from "./files.js";
 import {findAwaits} from "./javascript/awaits.js";
@@ -21,6 +21,16 @@ export interface FileReference {
 
 export interface ImportReference {
   name: string;
+  type: "global" | "local";
+}
+
+export interface Feature {
+  type: "FileAttachment" | "DatabaseClient" | "Secret";
+  name: string;
+}
+
+export interface Identifier {
+  name: string;
 }
 
 export interface Transpile {
@@ -37,19 +47,23 @@ export interface Transpile {
 export interface ParseOptions {
   id: string;
   root: string;
+  sourcePath: string;
   inline?: boolean;
   sourceLine?: number;
   globals?: Set<string>;
+  verbose?: boolean;
 }
 
 export function transpileJavaScript(input: string, options: ParseOptions): Transpile {
-  const {root, id} = options;
+  const {id, root, sourcePath, verbose = true} = options;
   try {
     const node = parseJavaScript(input, options);
-    const databases = node.features.filter((f) => f.type === "DatabaseClient").map((f) => ({name: f.name}));
+    const databases = node.features
+      .filter((f) => f.type === "DatabaseClient")
+      .map((f): DatabaseReference => ({name: f.name}));
     const files = node.features
       .filter((f) => f.type === "FileAttachment" && isLocalFile(f.name, root))
-      .map((f) => ({name: f.name, mimeType: mime.getType(f.name)}));
+      .map((f): FileReference => ({name: f.name, mimeType: mime.getType(f.name)}));
     const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
     const output = new Sourcemap(input);
     trim(output, input);
@@ -58,8 +72,8 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
       output.insertRight(input.length, "\n))");
       inputs.push("display");
     }
-    rewriteImports(output, node);
-    rewriteFetches(output, node);
+    rewriteImports(output, node, root, sourcePath);
+    rewriteFetches(output, node, root, sourcePath);
     return {
       id,
       ...(inputs.length ? {inputs} : null),
@@ -85,7 +99,7 @@ ${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.ma
     }
     // TODO: Consider showing a code snippet along with the error. Also, consider
     // whether we want to show the file name here.
-    console.error(`${error.name}: ${message}`);
+    if (verbose) console.error(`${error.name}: ${message}`);
     return {
       id: `${id}`,
       body: `() => { throw new SyntaxError(${JSON.stringify(error.message)}); }`
@@ -100,8 +114,18 @@ function trim(output: Sourcemap, input: string): void {
 
 export const parseOptions: Options = {ecmaVersion: 13, sourceType: "module"};
 
-export function parseJavaScript(input: string, options: ParseOptions) {
-  const {globals = defaultGlobals, inline = false, root} = options;
+export interface JavaScriptNode {
+  body: Node;
+  declarations: Identifier[] | null; // null for expressions that can’t declare top-level variables, a.k.a outputs
+  references: Identifier[]; // the unbound references, a.k.a. inputs
+  features: Feature[];
+  imports: ImportReference[];
+  expression: boolean; // is this an expression or a program cell?
+  async: boolean; // does this use top-level await?
+}
+
+function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
+  const {globals = defaultGlobals, inline = false, root, sourcePath} = options;
   // First attempt to parse as an expression; if this fails, parse as a program.
   let expression = maybeParseExpression(input, parseOptions);
   if (expression?.type === "ClassExpression" && expression.id) expression = null; // treat named class as program
@@ -110,8 +134,8 @@ export function parseJavaScript(input: string, options: ParseOptions) {
   const body = expression ?? (Parser.parse(input, parseOptions) as any);
   const references = findReferences(body, globals, input);
   const declarations = expression ? null : findDeclarations(body, globals, input);
-  const features = findFeatures(body, references, input);
-  const imports = findImports(body, root);
+  const imports = findImports(body, root, sourcePath);
+  const features = findFeatures(body, root, sourcePath, references, input);
   return {
     body,
     declarations,
@@ -126,7 +150,7 @@ export function parseJavaScript(input: string, options: ParseOptions) {
 // Parses a single expression; like parseExpressionAt, but returns null if
 // additional input follows the expression.
 function maybeParseExpression(input, options) {
-  const parser = new Parser(options, input, 0);
+  const parser = new (Parser as any)(options, input, 0); // private constructor
   parser.nextToken();
   try {
     const node = (parser as any).parseExpression();

@@ -1,5 +1,5 @@
-import {computeHash} from "../src/hash.js";
 import assert from "node:assert";
+import {computeHash} from "../src/hash.js";
 
 describe("computeHash(content)", () => {
   it("returns the expected result", () => {
