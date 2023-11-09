@@ -58,6 +58,7 @@ ${
   parseResult.title ? `<title>${escapeData(parseResult.title)}</title>\n` : ""
 }<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
+<link rel="stylesheet" type="text/css" href="/_observablehq/markdown-it-copy.css">
 ${Array.from(getImportPreloads(parseResult))
   .map((href) => `<link rel="modulepreload" href="${href}">`)
   .join("\n")}

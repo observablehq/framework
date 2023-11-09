@@ -1,0 +1,61 @@
+pre code::after {
+  display: none;
+}
+
+pre {
+  position: relative;
+}
+.m-mdic-copy-wrapper {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+}
+.m-mdic-copy-wrapper span.u-mdic-copy-code_lang {
+  position: absolute;
+  top: 3px;
+  right: calc(100% + 4px);
+  font-family: system-ui;
+  font-size: 12px;
+  line-height: 18px;
+  color: #666;
+  opacity: 1;
+}
+.m-mdic-copy-wrapper div.u-mdic-copy-notify {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  font-family: system-ui;
+  font-size: 12px;
+  line-height: 18px;
+  color: #666;
+  opacity: 0.3;
+  outline: none;
+  opacity: 1;
+  right: 100%;
+  padding-right: 40px;
+}
+.m-mdic-copy-wrapper button.u-mdic-copy-btn {
+  position: relative;
+  top: 0;
+  right: 0;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  font-family: system-ui;
+  font-size: 12px;
+  line-height: 18px;
+  color: #666;
+  opacity: 1;
+  outline: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.m-mdic-copy-wrapper button.u-mdic-copy-btn:hover {
+  opacity: 1;
+}

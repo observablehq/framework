@@ -5,7 +5,6 @@ import hljs from "highlight.js";
 import {parseHTML} from "linkedom";
 import MarkdownIt from "markdown-it";
 import MarkdownItAnchor from "markdown-it-anchor";
-import MarkdownItCodeCopy from "markdown-it-code-copy";
 import MarkdownItCopy from "markdown-it-copy";
 import {type RuleCore} from "markdown-it/lib/parser_core.js";
 import {type RuleInline} from "markdown-it/lib/parser_inline.js";
@@ -370,7 +369,11 @@ export function parseMarkdown(source: string, root: string, sourcePath: string):
     }
   });
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
-// md.use(MarkdownItCopy, { _btnText: "⎌" });
+  md.use(MarkdownItCopy, {
+    showCodeLanguage: true,
+    successText: "success",
+    failText: "fail"
+  });
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
   md.renderer.rules.placeholder = makePlaceholderRenderer(root, sourcePath);
