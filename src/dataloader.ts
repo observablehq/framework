@@ -10,8 +10,8 @@ const languages = {
   ".js": "node",
   ".ts": "tsx",
   ".py": "python3",
-  ".r": "RScript",
-  ".R": "RScript",
+  ".r": "Rscript",
+  ".R": "Rscript",
   ".sh": "sh",
   ".exe": null
 };
