@@ -18,9 +18,9 @@ E = mc^2
 
 The second is an inline expression using the `tex` tagged template literal provided by the Observable standard library:
 
-````md
+```md
 My favorite equation is ${tex`E = mc^2`}.
-````
+```
 
 This produces:
 
