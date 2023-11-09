@@ -14,14 +14,16 @@ switch (command) {
   case "preview":
     import("../src/preview.js");
     break;
-  case "login":
-    import("../src/login.js");
+  case "auth":
+    import("../src/auth.js");
     break;
   default:
     console.error(`Usage: observable <command>`);
     console.error(`   build\tgenerate a static site`);
     console.error(`   preview\trun the live preview server`);
-    console.error(`   login\tauthenticate with the Observable Cloud`);
+    // "auth" is short enough that the tab that follows up doesn't align with
+    // the other commands. Makes it line up.
+    console.error(`   auth \tmanage authentication with the Observable Cloud`);
     console.error(` --version\tprint the version`);
     process.exit(1);
     break;
