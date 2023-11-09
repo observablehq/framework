@@ -4,6 +4,7 @@ import {basename, dirname, join, normalize, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
+import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
 import {readPages} from "./navigation.js";
@@ -28,8 +29,10 @@ export async function build(context: CommandContext = makeCommandContext()) {
   }
 
   // Render .md files, building a list of file attachments as we go.
+  const config = await readConfig(sourceRoot);
   const pages = await readPages(sourceRoot);
   const files: string[] = [];
+  const imports: string[] = [];
   const resolver = await makeCLIResolver();
   for await (const sourceFile of visitMarkdownFiles(sourceRoot)) {
     const sourcePath = join(sourceRoot, sourceFile);
@@ -40,10 +43,11 @@ export async function build(context: CommandContext = makeCommandContext()) {
       root: sourceRoot,
       path,
       pages,
+      title: config?.title,
       resolver
     });
     files.push(...render.files.map((f) => join(dirname(sourceFile), f.name)));
-    files.push(...render.imports.filter((i) => i.type === "local").map((i) => join(dirname(sourceFile), i.name)));
+    imports.push(...render.imports.filter((i) => i.type === "local").map((i) => join(dirname(sourceFile), i.name)));
     await prepareOutput(outputPath);
     await writeFile(outputPath, render.html);
   }
@@ -73,6 +77,19 @@ export async function build(context: CommandContext = makeCommandContext()) {
       if (verbose) process.stdout.write(`generate ${loader.path} → `);
       sourcePath = join(sourceRoot, await loader.load({verbose}));
       if (verbose) console.log(sourcePath);
+    }
+    if (verbose) console.log("copy", sourcePath, "→", outputPath);
+    await prepareOutput(outputPath);
+    await copyFile(sourcePath, outputPath);
+  }
+
+  // Copy over the imported modules.
+  for (const file of imports) {
+    const sourcePath = join(sourceRoot, file);
+    const outputPath = join(outputRoot, "_import", file);
+    if (!existsSync(sourcePath)) {
+      console.error("missing referenced file", sourcePath);
+      continue;
     }
     if (verbose) console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);

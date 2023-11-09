@@ -6,6 +6,7 @@ import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
 import send from "send";
 import {type WebSocket, WebSocketServer} from "ws";
+import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {HttpError, isHttpError, isNodeError} from "./error.js";
 import {maybeStat} from "./files.js";
@@ -50,6 +51,8 @@ class Server {
         send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
+      } else if (pathname.startsWith("/_import/")) {
+        send(req, pathname.slice("/_import".length), {root: this.root}).pipe(res);
       } else if (pathname.startsWith("/_file/")) {
         const path = pathname.slice("/_file".length);
         const filepath = join(this.root, path);
@@ -118,6 +121,7 @@ class Server {
                 root: this.root,
                 path: pathname,
                 pages,
+                title: (await readConfig(this.root))?.title,
                 resolver: this._resolver!
               })
             ).html

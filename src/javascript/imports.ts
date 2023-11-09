@@ -1,9 +1,24 @@
 import {readFileSync} from "node:fs";
 import {dirname, join, normalize} from "node:path";
-import {type Node, Parser} from "acorn";
+import {type ExportAllDeclaration, type ExportNamedDeclaration, type Node, Parser} from "acorn";
 import {simple} from "acorn-walk";
 import {type ImportReference, type JavaScriptNode, parseOptions} from "../javascript.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
+
+export function findExports(body: Node) {
+  const exports: (ExportAllDeclaration | ExportNamedDeclaration)[] = [];
+
+  simple(body, {
+    ExportAllDeclaration: findExport,
+    ExportNamedDeclaration: findExport
+  });
+
+  function findExport(node: ExportAllDeclaration | ExportNamedDeclaration) {
+    exports.push(node);
+  }
+
+  return exports;
+}
 
 export function findImports(body: Node, root: string, sourcePath: string) {
   const imports: ImportReference[] = [];
@@ -11,9 +26,7 @@ export function findImports(body: Node, root: string, sourcePath: string) {
 
   simple(body, {
     ImportDeclaration: findImport,
-    ImportExpression: findImport,
-    ExportAllDeclaration: findImport,
-    ExportNamedDeclaration: findImport
+    ImportExpression: findImport
   });
 
   function findImport(node) {
@@ -53,7 +66,7 @@ export function findImports(body: Node, root: string, sourcePath: string) {
           findLocalImports(join(dirname(path), value));
         } else {
           imports.push({name: value, type: "global"});
-          // non-local imports don't need to be promoted to file attachments
+          // non-local imports don't need to be traversed
         }
       }
     }
@@ -73,7 +86,7 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode, root: stri
           node.source.end,
           JSON.stringify(
             isLocalImport(value, root, sourcePath)
-              ? join("/_file/", join(dirname(sourcePath), value))
+              ? join("/_import/", join(dirname(sourcePath), value))
               : resolveImport(value)
           )
         );
@@ -94,7 +107,7 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode, root: stri
               : "{}"
           } = await import(${JSON.stringify(
             isLocalImport(value, root, sourcePath)
-              ? join("/_file/", join(dirname(sourcePath), value))
+              ? join("/_import/", join(dirname(sourcePath), value))
               : resolveImport(value)
           )});`
         );

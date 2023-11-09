@@ -7,8 +7,9 @@ import {findDeclarations} from "./javascript/declarations.js";
 import {findFeatures} from "./javascript/features.js";
 import {rewriteFetches} from "./javascript/fetches.js";
 import {defaultGlobals} from "./javascript/globals.js";
-import {findImports, rewriteImports} from "./javascript/imports.js";
+import {findExports, findImports, rewriteImports} from "./javascript/imports.js";
 import {findReferences} from "./javascript/references.js";
+import {syntaxError} from "./javascript/syntaxError.js";
 import {Sourcemap} from "./sourcemap.js";
 
 export interface DatabaseReference {
@@ -133,6 +134,8 @@ function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
   if (expression?.type === "FunctionExpression" && expression.id) expression = null; // treat named function as program
   if (!expression && inline) throw new SyntaxError("invalid expression");
   const body = expression ?? (Parser.parse(input, parseOptions) as any);
+  const exports = findExports(body);
+  if (exports.length) throw syntaxError("Unexpected token 'export'", exports[0], input); // disallow exports
   const references = findReferences(body, globals, input);
   const declarations = expression ? null : findDeclarations(body, globals, input);
   const imports = findImports(body, root, sourcePath);

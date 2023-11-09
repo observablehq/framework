@@ -1,4 +1,5 @@
 import {dirname, join} from "node:path";
+import {type Config} from "./config.js";
 import {computeHash} from "./hash.js";
 import {resolveImport} from "./javascript/imports.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
@@ -10,10 +11,9 @@ export interface Render {
   imports: ImportReference[];
 }
 
-export interface RenderOptions {
+export interface RenderOptions extends Config {
   root: string;
   path: string;
-  pages?: {path: string; name: string}[];
   resolver: (cell: CellPiece) => CellPiece;
 }
 
@@ -49,14 +49,19 @@ type RenderInternalOptions =
 
 function render(
   parseResult: ParseResult,
-  {path, pages, preview, hash, resolver}: RenderOptions & RenderInternalOptions
+  {path, pages, title, preview, hash, resolver}: RenderOptions & RenderInternalOptions
 ): string {
   const showSidebar = pages && pages.length > 1;
   return `<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 ${
-  parseResult.title ? `<title>${escapeData(parseResult.title)}</title>\n` : ""
+  parseResult.title || title
+    ? `<title>${[parseResult.title, parseResult.title === title ? null : title]
+        .filter((title): title is string => !!title)
+        .map((title) => escapeData(title))
+        .join(" | ")}</title>\n`
+    : ""
 }<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
@@ -113,7 +118,7 @@ function getImportPreloads(parseResult: ParseResult, path: string): Iterable<str
   const specifiers = new Set<string>(["npm:@observablehq/runtime"]);
   for (const {name, type} of parseResult.imports) {
     if (type === "local") {
-      specifiers.add(`/_file${join(dirname(path), name)}`);
+      specifiers.add(`/_import${join(dirname(path), name)}`);
     } else {
       specifiers.add(name);
     }

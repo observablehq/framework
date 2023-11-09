@@ -1,9 +1,9 @@
 import {stat} from "node:fs/promises";
 import {join} from "node:path";
-import {type RenderOptions} from "./render.js";
 
 export interface Config {
-  pages?: RenderOptions["pages"];
+  title?: string;
+  pages?: {path: string; name: string}[];
 }
 
 export async function readConfig(root: string): Promise<Config | undefined> {
