@@ -1,6 +1,6 @@
-import {Loader} from "../src/dataloader.js";
-import {readFile} from "node:fs/promises";
 import assert from "node:assert";
+import {readFile} from "node:fs/promises";
+import {Loader} from "../src/dataloader.js";
 
 describe("data loaders are called with the appropriate command", () => {
   it("a .js data loader is called with node", async () => {
