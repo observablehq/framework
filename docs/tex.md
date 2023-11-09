@@ -4,7 +4,15 @@ ${tex`\TeX`} is a language for typesetting mathematical formulae. Observable Mar
 
 There are two ways to use TeX. The first is a `tex` fenced code block:
 
-```tex show
+````md
+```tex
+E = mc^2
+```
+````
+
+This produces a centered block:
+
+```tex
 E = mc^2
 ```
 
@@ -15,6 +23,10 @@ My favorite equation is ${tex`E = mc^2`}.
 ````
 
 This produces:
+
+```tex
+E = \prod_{i=1}^n{\text{Owen}^\pi}
+```
 
 My favorite equation is ${tex`E = mc^2`}.
 
