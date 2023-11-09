@@ -75,6 +75,8 @@ export class Loader {
     let command = runningCommands.get(this.path);
     if (command) return command;
     command = (async () => {
+      console.info(`${this.path} start`);
+      const time = performance.now();
       const outputPath = join(".observablehq", "cache", this.targetPath);
       const cachePath = join(this.sourceRoot, outputPath);
       const loaderStat = await maybeStat(this.path);
@@ -91,6 +93,11 @@ export class Loader {
         subprocess.on("close", resolve);
       });
       await tempFd.close();
+      console.info(
+        `${this.path} ${`${code === 0 ? success("success") : error("error")} ${outputBytes(
+          (await maybeStat(tempPath))?.size
+        )} in ${Math.floor(performance.now() - time)}ms`}`
+      );
       if (code === 0) {
         await mkdir(dirname(cachePath), {recursive: true});
         await rename(tempPath, cachePath);
@@ -104,4 +111,18 @@ export class Loader {
     runningCommands.set(this.path, command);
     return command;
   }
+}
+
+const error = color(31);
+const success = color(32);
+const warning = color(33);
+
+function color(code) {
+  return process.stdout.isTTY ? (text) => `\x1b[${code}m${text}\x1b[0m` : String;
+}
+
+function outputBytes(size) {
+  if (!size) return warning("empty output");
+  const e = Math.floor(Math.log(size) / Math.log(1024));
+  return `output ${+(size / 1024 ** e).toFixed(2)} ${["bytes", "KiB", "MiB", "GiB", "TiB"][e]}`;
 }
