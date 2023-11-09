@@ -54,7 +54,7 @@ async function writeConfig({configPath, config}: {configPath: string; config: Co
     console.warn(`Warning: ${err}`);
     // Try to write the file anyways
   }
-  await fs.writeFile(configPath, JSON.stringify(config));
+  await fs.writeFile(configPath, JSON.stringify(config, null, 2));
 }
 
 await writeConfig(await loadConfig());
