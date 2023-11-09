@@ -24,10 +24,6 @@ My favorite equation is ${tex`E = mc^2`}.
 
 This produces:
 
-```tex
-E = \prod_{i=1}^n{\text{Owen}^\pi}
-```
-
 My favorite equation is ${tex`E = mc^2`}.
 
 Here are some more examples.
