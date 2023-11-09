@@ -6,7 +6,6 @@ import matter from "gray-matter";
 import hljs from "highlight.js";
 import {parseHTML} from "linkedom";
 import MarkdownIt from "markdown-it";
-import MarkdownItAnchor from "markdown-it-anchor";
 import MarkdownItCopy from "markdown-it-copy";
 import {type RuleCore} from "markdown-it/lib/parser_core.js";
 import {type RuleInline} from "markdown-it/lib/parser_inline.js";
