@@ -51,6 +51,8 @@ class Server {
         send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
+      } else if (pathname.startsWith("/_import/")) {
+        send(req, pathname.slice("/_import".length), {root: this.root}).pipe(res);
       } else if (pathname.startsWith("/_file/")) {
         const path = pathname.slice("/_file".length);
         const filepath = join(this.root, path);

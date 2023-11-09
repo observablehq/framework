@@ -118,7 +118,7 @@ function getImportPreloads(parseResult: ParseResult, path: string): Iterable<str
   const specifiers = new Set<string>(["npm:@observablehq/runtime"]);
   for (const {name, type} of parseResult.imports) {
     if (type === "local") {
-      specifiers.add(`/_file${join(dirname(path), name)}`);
+      specifiers.add(`/_import${join(dirname(path), name)}`);
     } else {
       specifiers.add(name);
     }
