@@ -23,9 +23,7 @@ function getDatabaseProxyConfig(env: typeof process.env): DatabaseProxyConfig {
     const match = property.match(/^OBSERVABLEHQ_DB_SECRET_(.+)$/);
     if (match) {
       try {
-        envConfig[match[1]] = JSON.parse(
-          Buffer.from(process.env[property]!, "base64").toString("utf8")
-        ) as DatabaseConfig;
+        envConfig[match[1]] = JSON.parse(Buffer.from(env[property]!, "base64").toString("utf8")) as DatabaseConfig;
       } catch {
         console.error("Unable to parse environment variable", property);
       }
