@@ -16,7 +16,7 @@ export function findFeatures(node, root, sourcePath, references, input) {
       } = node;
 
       // Promote fetches with static literals to file attachment references.
-      if (isLocalFetch(node, references, root, sourcePath)) {
+      if (isLocalFetch(node, references, sourcePath)) {
         features.push({type: "FileAttachment", name: getStringLiteralValue(arg)});
         return;
       }
@@ -50,7 +50,7 @@ export function findFeatures(node, root, sourcePath, references, input) {
   return features;
 }
 
-export function isLocalFetch(node, references, root, sourcePath) {
+export function isLocalFetch(node, references, sourcePath) {
   if (node.type !== "CallExpression") return false;
   const {
     callee,
@@ -61,7 +61,7 @@ export function isLocalFetch(node, references, root, sourcePath) {
     callee.name === "fetch" &&
     !references.includes(callee) &&
     isStringLiteral(arg) &&
-    isLocalImport(getStringLiteralValue(arg), root, sourcePath)
+    isLocalImport(getStringLiteralValue(arg), sourcePath)
   );
 }
 

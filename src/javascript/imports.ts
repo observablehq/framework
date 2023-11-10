@@ -32,7 +32,7 @@ export function findImports(body: Node, root: string, sourcePath: string) {
   function findImport(node) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
-      if (isLocalImport(value, root, sourcePath)) {
+      if (isLocalImport(value, sourcePath)) {
         findLocalImports(normalize(value));
       } else {
         imports.push({name: value, type: "global"});
@@ -62,7 +62,7 @@ export function findImports(body: Node, root: string, sourcePath: string) {
     function findLocalImport(node) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
-        if (isLocalImport(value, root, sourcePath)) {
+        if (isLocalImport(value, sourcePath)) {
           findLocalImports(join(dirname(path), value));
         } else {
           imports.push({name: value, type: "global"});
@@ -78,21 +78,21 @@ export function findImports(body: Node, root: string, sourcePath: string) {
 // TODO parallelize multiple static imports
 export function rewriteImports(output: any, rootNode: JavaScriptNode, root: string, sourcePath: string) {
   simple(rootNode.body, {
-    ImportExpression(node: any) {
+    ImportExpression(node) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
         output.replaceLeft(
           node.source.start,
           node.source.end,
           JSON.stringify(
-            isLocalImport(value, root, sourcePath)
+            isLocalImport(value, sourcePath)
               ? join("/_import/", join(dirname(sourcePath), value))
               : resolveImport(value)
           )
         );
       }
     },
-    ImportDeclaration(node: any) {
+    ImportDeclaration(node) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
         rootNode.async = true;
@@ -102,11 +102,9 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode, root: stri
           `const ${
             node.specifiers.some(isNotNamespaceSpecifier)
               ? `{${node.specifiers.filter(isNotNamespaceSpecifier).map(rewriteImportSpecifier).join(", ")}}`
-              : node.specifiers.some(isNamespaceSpecifier)
-              ? node.specifiers.find(isNamespaceSpecifier).local.name
-              : "{}"
+              : node.specifiers.find(isNamespaceSpecifier)?.local.name ?? "{}"
           } = await import(${JSON.stringify(
-            isLocalImport(value, root, sourcePath)
+            isLocalImport(value, sourcePath)
               ? join("/_import/", join(dirname(sourcePath), value))
               : resolveImport(value)
           )});`
@@ -124,10 +122,10 @@ function rewriteImportSpecifier(node) {
     : `${node.imported.name}: ${node.local.name}`;
 }
 
-export function isLocalImport(value: string, root: string, sourcePath: string): boolean {
+export function isLocalImport(value: string, sourcePath: string): boolean {
   return (
     ["./", "../", "/"].some((prefix) => value.startsWith(prefix)) &&
-    join(root + "/", dirname(sourcePath), value).startsWith(root)
+    !join(".", dirname(sourcePath), value).startsWith("../")
   );
 }
 
