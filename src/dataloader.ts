@@ -114,18 +114,16 @@ export class Loader {
       runningCommands.set(this.path, command);
     }
     if (verbose) {
-      console.info(`${this.path} start`);
+      process.stdout.write(`load ${this.path} → `);
       const start = performance.now();
       command.then(
         (path) => {
-          console.info(
-            `${this.path} ${green("success")} ${formatSize(
-              statSync(join(this.sourceRoot, path)).size
-            )} in ${formatElapsed(start)}`
+          console.log(
+            `${green("success")} ${formatSize(statSync(join(this.sourceRoot, path)).size)} in ${formatElapsed(start)}`
           );
         },
         (error) => {
-          console.info(`${this.path} ${red("error")} after ${formatElapsed(start)}: ${error.message}`);
+          console.log(`${red("error")} after ${formatElapsed(start)}: ${error.message}`);
         }
       );
     }

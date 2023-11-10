@@ -74,9 +74,7 @@ export async function build(context: CommandContext = makeCommandContext()) {
         console.error("missing referenced file", sourcePath);
         continue;
       }
-      if (verbose) process.stdout.write(`generate ${loader.path} → `);
       sourcePath = join(sourceRoot, await loader.load({verbose}));
-      if (verbose) console.log(sourcePath);
     }
     if (verbose) console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);
