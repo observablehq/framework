@@ -84,6 +84,18 @@ ${JSON.stringify(parseResult.data)}
 </script>`
       : ""
   }
+<script>
+  {
+    const theme = document.cookie.match(/(^|;)\\s*theme=(dark|light)/)?.[2];
+    if (theme) document.querySelector("html").setAttribute("data-theme", theme);
+  }
+  function toggleTheme() {
+    const newtheme = getComputedStyle(document.documentElement).getPropertyValue("--theme") === "light" ? "dark" : "light";
+    document.querySelector("html").setAttribute("data-theme", newtheme);
+    document.cookie = "theme=" + newtheme + ";max-age=31536000; path=/";
+  }
+</script>
+<a id=moon onclick=toggleTheme()></a>
 ${
   showSidebar
     ? `<input id="observablehq-sidebar-toggle" type="checkbox">
