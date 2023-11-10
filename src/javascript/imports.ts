@@ -76,7 +76,7 @@ export function findImports(body: Node, root: string, sourcePath: string) {
 }
 
 // TODO parallelize multiple static imports
-export function rewriteImports(output: any, rootNode: JavaScriptNode, root: string, sourcePath: string) {
+export function rewriteImports(output: any, rootNode: JavaScriptNode, sourcePath: string) {
   simple(rootNode.body, {
     ImportExpression(node) {
       if (isStringLiteral(node.source)) {

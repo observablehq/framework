@@ -1,7 +1,7 @@
 import {simple} from "acorn-walk";
 import {isLocalFetch} from "./features.js";
 
-export function rewriteFetches(output, rootNode, root, sourcePath) {
+export function rewriteFetches(output, rootNode, sourcePath) {
   simple(rootNode.body, {
     CallExpression(node) {
       if (isLocalFetch(node, rootNode.references, sourcePath)) {
