@@ -131,12 +131,12 @@ function getImportPreloads(parseResult: ParseResult, path: string): Iterable<str
   if (inputs.has("dot")) specifiers.add("npm:@viz-js/viz");
   if (inputs.has("mermaid")) specifiers.add("npm:mermaid").add("npm:d3");
   if (inputs.has("tex")) specifiers.add("npm:katex");
-  const preloads: string[] = [];
+  const preloads = new Set<string>();
   for (const specifier of specifiers) {
-    preloads.push(resolveImport(specifier));
+    preloads.add(resolveImport(specifier));
   }
   if (parseResult.cells.some((cell) => cell.databases?.length)) {
-    preloads.push("/_observablehq/database.js");
+    preloads.add("/_observablehq/database.js");
   }
   return preloads;
 }

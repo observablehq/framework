@@ -6,6 +6,7 @@
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
 <link rel="modulepreload" href="/_observablehq/runtime.js">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/d3/+esm">
 <link rel="modulepreload" href="/_import/bar/bar.js">
 <link rel="modulepreload" href="/_import/bar/baz.js">
 <link rel="modulepreload" href="/_import/foo/foo.js">
@@ -13,18 +14,19 @@
 
 import {define} from "/_observablehq/client.js";
 
-define({id: "d54e931e", inputs: ["display"], outputs: ["bar"], body: async (display) => {
+define({id: "a9220fae", inputs: ["display"], outputs: ["d3","bar"], body: async (display) => {
+const d3 = await import("https://cdn.jsdelivr.net/npm/d3/+esm");
 const {bar} = await import("/_import/bar/bar.js");
 
 display(bar);
-return {bar};
+return {d3,bar};
 }});
 
 </script>
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 <h1 id="foo" tabindex="-1"><a class="observablehq-header-anchor" href="#foo">Foo</a></h1>
-<div id="cell-d54e931e" class="observablehq observablehq--block"></div>
+<div id="cell-a9220fae" class="observablehq observablehq--block"></div>
 </main>
 <footer id="observablehq-footer">© 2023 Observable, Inc.</footer>
 </div>
