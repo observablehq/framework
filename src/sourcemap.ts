@@ -1,11 +1,24 @@
-import {lineBreakG} from "acorn";
+const lineBreakG = /\r\n?|\n|\u2028|\u2029/g;
+
+interface Edit {
+  start: number;
+  end: number;
+  value: string;
+}
+
+export interface Position {
+  line: number;
+  column: number;
+}
 
 export class Sourcemap {
+  private readonly _input: string;
+  private readonly _edits: Edit[];
   constructor(input = "") {
     this._input = input;
     this._edits = [];
   }
-  _bisectLeft(index) {
+  private _bisectLeft(index: number): number {
     let lo = 0;
     let hi = this._edits.length;
     while (lo < hi) {
@@ -15,7 +28,7 @@ export class Sourcemap {
     }
     return lo;
   }
-  _bisectRight(index) {
+  private _bisectRight(index: number): number {
     let lo = 0;
     let hi = this._edits.length;
     while (lo < hi) {
@@ -25,25 +38,25 @@ export class Sourcemap {
     }
     return lo;
   }
-  insertLeft(index, value) {
+  insertLeft(index: number, value: string): void {
     this.replaceLeft(index, index, value);
   }
-  insertRight(index, value) {
+  insertRight(index: number, value: string): void {
     this.replaceRight(index, index, value);
   }
-  delete(start, end) {
+  delete(start: number, end: number): void {
     this.replaceRight(start, end, "");
   }
-  replaceLeft(start, end, value) {
+  replaceLeft(start: number, end: number, value: string): void {
     this._edits.splice(this._bisectLeft(start), 0, {start, end, value});
   }
-  replaceRight(start, end, value) {
+  replaceRight(start: number, end: number, value: string): void {
     this._edits.splice(this._bisectRight(start), 0, {start, end, value});
   }
-  translate(position) {
+  translate(position: Position): Position {
     let index = 0;
-    let ci = {line: 1, column: 0};
-    let co = {line: 1, column: 0};
+    let ci: Position = {line: 1, column: 0};
+    let co: Position = {line: 1, column: 0};
     for (const {start, end, value} of this._edits) {
       if (start > index) {
         const l = positionLength(this._input, index, start);
@@ -65,7 +78,7 @@ export class Sourcemap {
     const l = positionSubtract(position, co);
     return positionAdd(ci, l);
   }
-  toString() {
+  toString(): string {
     let output = "";
     let index = 0;
     for (const {start, end, value} of this._edits) {
@@ -78,13 +91,13 @@ export class Sourcemap {
   }
 }
 
-function positionCompare(a, b) {
+function positionCompare(a: Position, b: Position): number {
   return a.line - b.line || a.column - b.column;
 }
 
-function positionLength(input, start = 0, end = input.length) {
-  let match,
-    line = 0;
+function positionLength(input: string, start = 0, end = input.length): Position {
+  let match: RegExpExecArray | null;
+  let line = 0;
   lineBreakG.lastIndex = start;
   while ((match = lineBreakG.exec(input)) && match.index < end) {
     ++line;
@@ -93,10 +106,10 @@ function positionLength(input, start = 0, end = input.length) {
   return {line, column: end - start};
 }
 
-function positionSubtract(b, a) {
+function positionSubtract(b: Position, a: Position): Position {
   return b.line === a.line ? {line: 0, column: b.column - a.column} : {line: b.line - a.line, column: b.column};
 }
 
-function positionAdd(p, l) {
+function positionAdd(p: Position, l: Position): Position {
   return l.line === 0 ? {line: p.line, column: p.column + l.column} : {line: p.line + l.line, column: l.column};
 }
