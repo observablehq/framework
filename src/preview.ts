@@ -169,11 +169,8 @@ class FileWatchers {
   ) {
     const watchers = new FileWatchers();
     const {files, imports} = parseResult;
-    for (const name of new Set([
-      ...files.map((f) => join(dirname(path), f.name)),
-      ...imports.map((i) => join(dirname(path), i.name))
-    ])) {
-      const watchPath = FileWatchers.getWatchPath(root, name);
+    for (const name of new Set([...files.map((f) => f.name), ...imports.map((i) => i.name)])) {
+      const watchPath = FileWatchers.getWatchPath(root, join(dirname(path), name));
       let prevState = await maybeStat(watchPath);
       let watcher;
       try {
