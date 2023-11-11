@@ -234,7 +234,7 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
         case "rename": {
           markdownWatcher?.close();
           try {
-            markdownWatcher = watch(path, watcher);
+            markdownWatcher = watch(join(root, path), watcher);
           } catch (error) {
             if (isNodeError(error) && error.code === "ENOENT") {
               console.error(`file no longer exists: ${path}`);
