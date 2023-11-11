@@ -4,6 +4,7 @@ import {type Patch, type PatchItem, getPatch} from "fast-array-diff";
 import equal from "fast-deep-equal";
 import matter from "gray-matter";
 import hljs from "highlight.js";
+import katex from "katex";
 import {parseHTML} from "linkedom";
 import MarkdownIt from "markdown-it";
 import {type RuleCore} from "markdown-it/lib/parser_core.js";
@@ -79,18 +80,32 @@ function uniqueCodeId(context: ParseContext, content: string): string {
   return id;
 }
 
-function getLiveSource(content, language, option) {
+function getLiveSource(content, language, option): {source?: string; html?: string} {
   return option === "no-run"
-    ? undefined
+    ? {}
     : language === "js"
-    ? content
+    ? {source: content}
     : language === "tex"
-    ? transpileTag(content, "tex.block", true)
+    ? maybeStaticTeX(content, true)
     : language === "dot"
-    ? transpileTag(content, "dot", false)
+    ? {source: transpileTag(content, "dot", false)}
     : language === "mermaid"
-    ? transpileTag(content, "await mermaid", false)
-    : undefined;
+    ? {source: transpileTag(content, "await mermaid", false)}
+    : {};
+}
+
+function maybeStaticTeX(content, displayMode) {
+  try {
+    // TODO smarter detection of ${} contents
+    // TODO smarter insertion of the TeX stylesheet
+    return {
+      html:
+        katex.renderToString(content, {displayMode}) +
+        `<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">`
+    };
+  } catch {
+    return {source: transpileTag(content, displayMode ? "tex.block" : "tex", true)};
+  }
 }
 
 function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: string): RenderRule {
@@ -99,7 +114,7 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
     const [language, option] = token.info.split(" ");
     let result = "";
     let count = 0;
-    const source = getLiveSource(token.content, language, option);
+    const {source, html} = getLiveSource(token.content, language, option);
     if (source != null) {
       const id = uniqueCodeId(context, token.content);
       const sourceLine = context.startLine + context.currentLine;
@@ -115,6 +130,7 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
       result += `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`;
       count++;
     }
+    if (html !== undefined) result += html;
     if (source == null || option === "show") {
       result += baseRenderer(tokens, idx, options, context, self);
       count++;
@@ -258,6 +274,13 @@ function makePlaceholderRenderer(root: string, sourcePath: string): RenderRule {
   return (tokens, idx, options, context: ParseContext) => {
     const id = uniqueCodeId(context, tokens[idx].content);
     const token = tokens[idx];
+
+    // inline TeX?
+    if (token.content.match(/^tex[`]/)) {
+      const {html} = maybeStaticTeX(token.content.slice(4, -1), false);
+      if (html !== undefined) return `<span id="cell-${id}">${html}</span>`;
+    }
+
     const transpile = transpileJavaScript(token.content, {
       id,
       root,

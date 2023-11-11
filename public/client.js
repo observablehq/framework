@@ -161,6 +161,7 @@ async function mermaid() {
 
 export function define(cell) {
   const {id, inline, inputs = [], outputs = [], files = [], databases = [], body} = cell;
+  if (body === undefined) return;
   const variables = [];
   cellsById.get(id)?.variables.forEach((v) => v.delete());
   cellsById.set(id, {cell, variables});

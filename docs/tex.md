@@ -48,3 +48,13 @@ c = \pm\sqrt{a^2 + b^2}
     \f\hat\xi\,e^{2 \pi i \xi x}
     \,d\xi
 ```
+
+When possible, a ${tex`\TeX`} expression is compiled server-side, for faster rendering; however, when it uses variables, it needs to load the katex library, and to be compiled client-side:
+
+```js
+const a = view(Inputs.range([0, 5], {step: 1}));
+```
+
+```tex show
+\int_0^1 x^${a}dx = \frac1${a + 1}
+```
