@@ -86,7 +86,7 @@ function getLiveSource(content, language, option): {source?: string; html?: stri
     : language === "js"
     ? {source: content}
     : language === "tex"
-    ? maybeStaticTeX(content, true)
+    ? maybeStaticTeX(content, {displayMode: true})
     : language === "dot"
     ? {source: transpileTag(content, "dot", false)}
     : language === "mermaid"
@@ -94,7 +94,7 @@ function getLiveSource(content, language, option): {source?: string; html?: stri
     : {};
 }
 
-function maybeStaticTeX(content, displayMode) {
+function maybeStaticTeX(content, {displayMode = false} = {}) {
   // We try SSR first. katex.renderToString errors when the expression contains
   // some ${interpolation}, so this guarantees that interpolations will be
   // handled in the browser. By way of consequence, TeX errors stemming from
@@ -281,7 +281,7 @@ function makePlaceholderRenderer(root: string, sourcePath: string): RenderRule {
 
     // inline TeX?
     if (token.content.startsWith("tex`") && token.content.endsWith("`")) {
-      const {html} = maybeStaticTeX(token.content.slice(4, -1), false);
+      const {html} = maybeStaticTeX(token.content.slice(4, -1));
       if (html != null) return `<span id="cell-${id}">${html}</span>`;
     }
 
