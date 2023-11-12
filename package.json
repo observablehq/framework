@@ -31,7 +31,7 @@
   },
   "c8": {
     "all": true,
-    "include": ["src/**/*.js"],
+    "include": ["src/**/*.js", "src/**/*.ts"],
     "reporter": ["text", "lcov"]
   },
   "dependencies": {
