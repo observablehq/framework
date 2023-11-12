@@ -95,9 +95,13 @@ function getLiveSource(content, language, option): {source?: string; html?: stri
 }
 
 function maybeStaticTeX(content, displayMode) {
+  // We try SSR first. katex.renderToString errors when the expression contains
+  // some ${interpolation}, so this guarantees that interpolations will be
+  // handled in the browser. By way of consequence, TeX errors stemming from
+  // static text (e.g., ParseError on tex`\left{x}`) are handled in the browser,
+  // and don't stop the build process.
   try {
-    // TODO smarter detection of ${} contents
-    // TODO smarter insertion of the TeX stylesheet
+    // TODO: unique insertion of the TeX stylesheet?
     return {
       html:
         katex.renderToString(content, {displayMode}) +
@@ -130,7 +134,7 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
       result += `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`;
       count++;
     }
-    if (html !== undefined) result += html;
+    if (html != null) result += html;
     if (source == null || option === "show") {
       result += baseRenderer(tokens, idx, options, context, self);
       count++;
@@ -276,9 +280,9 @@ function makePlaceholderRenderer(root: string, sourcePath: string): RenderRule {
     const token = tokens[idx];
 
     // inline TeX?
-    if (token.content.match(/^tex[`]/)) {
+    if (token.content.startsWith("tex`") && token.content.endsWith("`")) {
       const {html} = maybeStaticTeX(token.content.slice(4, -1), false);
-      if (html !== undefined) return `<span id="cell-${id}">${html}</span>`;
+      if (html != null) return `<span id="cell-${id}">${html}</span>`;
     }
 
     const transpile = transpileJavaScript(token.content, {
