@@ -1,102 +1,126 @@
 # Data loaders
 
-_(Is this “loaders” or “data loaders”—Or is it “programs” or “dynamic files”, or “data snapshots”… something else? It could be documented as part of “[files](./javascript/files)”)_
+**Data loaders** generate files — typically static snapshots of data — at build time. For example, a data loader might query a database and output a CSV or Parquet file, or server-side render a chart and output a PNG image.
 
-Observable Markdown can run an external programme to retrieve and cache a snapshot of some data. Such a programme is called a data loader.
+Why generate data at build time? Conventional dashboards are often slow or unreliable because database queries are executed for each viewer on load. This conventional approach may also allow viewers to run arbitrary queries, increasing security risk by giving viewers more access than necessary. Data loaders, in contrast, encourage you to prepare static data snapshots at build time. This results in dashboards that load _instantly_ and without giving viewers more access than necessary.
 
-It might, typically, run a query against a database, minimize the result and output it as a csv payload to be retrieved by the `FileAttachment` function (or a local `fetch`).
+Data loaders can be written in any programming language. They can even invoke binary executables such as ffmpeg or DuckDB! For convenience, the Observable CLI has built-in support for common languages: JavaScript, TypeScript, Python, and R.
 
-Observable Markdown has special affordances for a few languages (such as JavaScript, TypeScript, python and R), but a data loader can literally be anything that runs on your computer, from ffmpeg to DuckDB.
-
-For a simple example, let’s say we want to generate a list of recent earthquakes, a resource that will ultimately live as a file under the /data/earthquakes.csv URL on the generated site. We can write a programme in JavaScript that fetches the most recent data from the USGS API, and outputs a csv to STDOUT, with a subset of the properties in the original file:
+For example, say you want a list of recent earthquakes as an `earthquakes.csv` file. Create a corresponding JavaScript data loader, `earthquakes.csv.js`, which queries the [USGS API](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php) and outputs CSV to stdout:
 
 ```js no-run show
-console.log("magnitude,longitude,latitude");
-fetch("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson")
-  .then((response) => response.json())
-  .then((collection) => {
-    console.warn(collection.features);
-    collection.features.forEach((feature) => {
-      console.log(`${feature.properties.mag},${feature.geometry.coordinates.join(",")}`);
-    });
-  });
+process.stdout.write("magnitude,longitude,latitude\n");
+const response = await fetch("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson");
+const collection = await response.json();
+for (const feature of collection.features) {
+  process.stdout.write(`${feature.properties.mag},${feature.geometry.coordinates.join(",")}`);
+}
 ```
 
-We save this script as docs/data/earthquakes.csv.js, and load a page with the following code:
+Next, load `earthquakes.csv` as a normal [file](./javascript/files):
 
 ```js show
-const quakes = FileAttachment("data/earthquakes.csv").csv({typed: true})
+const quakes = FileAttachment("earthquakes.csv").csv({typed: true});
 ```
 
-and the data appears, ready to create a map or a table:
+And that’s it! The CLI automatically runs the data loader. (More details below.)
+
+Now we can display the earthquakes in a map:
 
 ```js
-Inputs.table(quakes, {width: 420})
+const world = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@1/world/110m.json").then((response) => response.json());
+const land = topojson.feature(world, world.objects.land);
 ```
 
-## Caching
-
-The data loader is run once and — if successful — its output is saved to a cache file, and then used both for the dev server and the build script. When you edit any data loader, it transparently runs again as soon as the resource is needed. 
-
-The only time when you’ll want to purge the cache is when you want to ensure that the result is fresh with respect to the external data source. Typically, if you generate a dashboard daily with the build command, run the following commands in order:
-
-```sh
-rm -rf docs/.observablehq/cache
-yarn build
+```js show
+Plot.plot({
+  projection: {
+    type: "orthographic",
+    rotate: [110, -30]
+  },
+  marks: [
+    Plot.graticule(),
+    Plot.sphere(),
+    Plot.geo(land, {stroke: "var(--theme-foreground-faint)"}),
+    Plot.dot(quakes, {x: "longitude", y: "latitude", r: "magnitude", stroke: "#f43f5e"})
+  ]
+})
 ```
 
-## Building
+Here are some more details on data loaders.
 
-A resource that depends on a data loader is built if and only if it is referenced in at least one page of the project (as a FileAttachment or a local fetch). In other words, Observable Markdown does _not_ scour the docs/ directory for data loaders; only the resources that are actually consumed by a page are built.
+## Routing
 
-## Logging & error handling
+When a file is referenced, either via [`FileAttachment`](./javascript/files) or [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API), if the file does not exist, the CLI will look for a file of the same name with a double extension to see if there is a corresponding data loader. The following second extensions are checked, in order, with the corresponding language and interpreter:
 
-Data loader runs output logs at the start of their execution, and at the end, with a status (success or error), execution time, and in case of success the size (in bytes) of the generated resource.
+* `.js` - JavaScript (`node`)
+* `.ts` - TypeScript (`tsx`)
+* `.py` - Python (`python3`)
+* `.R` - R (`Rscript`)
+* `.sh` - shell script (`sh`)
+* `.exe` - arbitrary executable
 
-When an error happens during the execution of a data loader, it is shown in that log. The calling page on the development server shows an error `RuntimeError: Unable to load file: data/earthquakes.csv`. If the data loader error happens during the build script, the build stops (and displays the error).
+For example, for the file `earthquakes.csv`, the following data loaders are considered:
 
-To _guarantee_ that a generated resource is complete, the data loader must exit with a non-zero return code in case of an error. This always happens if there is a Syntax Error, but for some scripts you’ll want to assert that all the requirements are met.
+* `earthquakes.csv.js`
+* `earthquakes.csv.ts`
+* `earthquakes.csv.py`
+* `earthquakes.csv.R`
+* `earthquakes.csv.sh`
+* `earthquakes.csv.exe`
 
-A data loader does not error if the output is empty (it might be a legitimate output in some cases), but displays a warning in the logs.
+If you use `.py` or `.R`, the corresponding interpreter (`python3` or `Rscript`, respectively) must be installed and available on your `$PATH`. Any additional modules, packages, libraries, _etc._, must also be installed before you can use them.
 
-## API
-
-A data loader can be a binary programme or a script. When a resource is requested (via FileAttachment or a local fetch) for /path/to/resource.extension, and if a corresponding file does not already exist in the project, Observable Markdown looks for files such as /path/to/resource.extension.{language} for all supported languages, and finally /path/to/resource.extension.exe, in that order.
-
-If any of these files exists, it is called either as a script with the associated interpreter for any of the supported languages, or as a binary (or `#!` script) for .exe files.
-
-The following interpreters (or more informally, languages) are supported:
-
-* .js - node (JavaScript)
-* .ts - tsx (TypeScript)
-* .py - python3
-* .R - Rscript
-
-If you use .py or .R, you need to make sure that the corresponding interpreter is installed and accessible from Observable Markdown. Any modules, packages, etc., must also be installed before you can use them (errors will appear in the logs).
-
-**.exe** data loaders are run directly. They can be binary programmes (_e.g.,_ compiled from C language), but most likely will follow the “shebang” convention, written as scripts where the first line points to the interpreter:
+Whereas `.js`, `.ts`, `.py`, `.R`, and `.sh` data loaders are run via interpreters, `.exe` data loaders are run directly and must have the executable bit set. This is typically done via [`chmod`](https://en.wikipedia.org/wiki/Chmod). For example:
 
 ```sh
+chmod +x docs/earthquakes.csv.exe
+```
+
+While a `.exe` data loader may be any binary executable (_e.g.,_ compiled from C), it is often convenient to specify another interpreter using a [shebang](https://en.wikipedia.org/wiki/Shebang_(Unix)). For example, to write a data loader in Julia:
+
+```julia
 #!/usr/bin/env julia
 
 println("hello world")
 ```
 
-This allows data loaders to be written with absolutely _any_ language that is installed on the machine.
+If multiple requests are made concurrently for the same data loader, the data loader will only run once; each concurrent request will receive the same response.
 
-.exe files must be executable to run as data loaders. Typically this is done in the Terminal with the following command:
+## Output
+
+Data loaders must output to [stdout](https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)). The first extension (such as `.csv`) is not considered by the CLI; the data loader is solely responsible for producing the expected output (such as CSV). If you wish to log additional information from within a data loader, be sure to log to stderr, say by using [`console.warn`](https://developer.mozilla.org/en-US/docs/Web/API/console/warn); otherwise the logs will be included in the output file and sent to the client.
+
+## Caching
+
+When a data loader runs successfully, its output is saved to the cache within the source root, typically `docs/.observablehq/cache`.
+
+The Observable CLI considers the cache “fresh” if the modification time of the cached output is newer than the modification time of the corresponding data loader. So, if you edit a data loader (or update its modification time with `touch`), the cache is invalidated. When previewing a page that uses the data loader, the preview server will detect that the data loader was edited and automatically run it, pushing the new data down to the client and re-evaluating any referencing code — no reload required!
+
+To purge the data loader cache, delete the cache. For example:
 
 ```sh
-chmod +x docs/data.csv.exe
+rm -rf docs/.observablehq/cache
 ```
 
-The script or programme is expected to write the resource’s contents to [STDOUT](https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)), and exit with a return code of 0.
+## Building
 
-## Debugging
+A data loader is run during build if and only if its corresponding output file is referenced in at least one page. The CLI does _not_ scour the source directory (typically `docs`) for data loaders.
 
-Besides the logs, you can debug a data loader by calling it directly:
+The data loader cache is respected during build. This allows you to bypass some or all data loaders during build, if the previously built data is still fresh. To force the CLI to use the data loader cache, ensure that the modification times of the cache are greater than those of the data loaders, say by using `touch` on all files in the cache.
 
 ```sh
-❯ ./docs/julia.txt.exe
-hello world
+find docs/.observablehq/cache -type f -exec touch {} +
 ```
+
+## Errors
+
+When a data loader fails, it _must_ return a non-zero [exit code](https://en.wikipedia.org/wiki/Exit_status). If a data loader produces a zero exit code, the CLI will assume that it was successful and will cache and serve the output to the client. Empty output is not by itself considered an error; however, a warning is displayed in the preview server and build logs.
+
+During preview, data loader errors will be shown in the preview server log, and a 500 HTTP status code will be returned to the client that attempted to load the corresponding file. This typically results in an error such as:
+
+```
+RuntimeError: Unable to load file: earthquakes.csv
+```
+
+When any data loader fails, the entire build fails.
