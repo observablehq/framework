@@ -1,9 +1,11 @@
 import {readFile} from "node:fs/promises";
 import {join} from "node:path";
+import {instance} from "@viz-js/viz";
 import {type Patch, type PatchItem, getPatch} from "fast-array-diff";
 import equal from "fast-deep-equal";
 import matter from "gray-matter";
 import hljs from "highlight.js";
+import jsdom from "jsdom";
 import katex from "katex";
 import {parseHTML} from "linkedom";
 import MarkdownIt from "markdown-it";
@@ -61,6 +63,9 @@ interface ParseContext {
 
 const TEXT_NODE = 3; // Node.TEXT_NODE
 
+// For Dot SSR
+const viz = await instance();
+
 // Returns true if the given document contains exactly one top-level element,
 // ignoring any surrounding whitespace text nodes.
 function isSingleElement(document: Document): boolean {
@@ -88,7 +93,7 @@ function getLiveSource(content, language, option): {source?: string; html?: stri
     : language === "tex"
     ? maybeStaticTeX(content, {displayMode: true})
     : language === "dot"
-    ? {source: transpileTag(content, "dot", false)}
+    ? maybeStaticDot(content)
     : language === "mermaid"
     ? {source: transpileTag(content, "await mermaid", false)}
     : {};
@@ -110,6 +115,59 @@ function maybeStaticTeX(content, {displayMode = false} = {}) {
   } catch {
     return {source: transpileTag(content, displayMode ? "tex.block" : "tex", true)};
   }
+}
+
+function maybeStaticDot(content) {
+  // We try SSR first. katex.renderToString errors when the expression contains
+  // some ${interpolation}, so this guarantees that interpolations will be
+  // handled in the browser. By way of consequence, TeX errors stemming from
+  // static text (e.g., ParseError on tex`\left{x}`) are handled in the browser,
+  // and don't stop the build process.
+  try {
+    // TODO: unique insertion of the TeX stylesheet?
+    return {html: dot(content)};
+  } catch {
+    return {source: transpileTag(content, "dot", true)};
+  }
+}
+
+// SSR, see client.js for the client counterpart
+function dot(string) {
+  const {JSDOM} = jsdom;
+  const {DOMParser} = global;
+  global.DOMParser = new JSDOM().window.DOMParser;
+  const svg = viz.renderSVGElement(string, {
+    graphAttributes: {
+      bgcolor: "none",
+      color: "#00000101",
+      fontcolor: "#00000101",
+      fontname: "var(--sans-serif)",
+      fontsize: "12"
+    },
+    nodeAttributes: {
+      color: "#00000101",
+      fontcolor: "#00000101",
+      fontname: "var(--sans-serif)",
+      fontsize: "12"
+    },
+    edgeAttributes: {
+      color: "#00000101"
+    }
+  });
+  // @ts-expect-error stupid
+  for (const e of svg.querySelectorAll("[stroke='#000001'][stroke-opacity='0.003922']")) {
+    e.setAttribute("stroke", "currentColor");
+    e.removeAttribute("stroke-opacity");
+  }
+  // @ts-expect-error stupid
+  for (const e of svg.querySelectorAll("[fill='#000001'][fill-opacity='0.003922']")) {
+    e.setAttribute("fill", "currentColor");
+    e.removeAttribute("fill-opacity");
+  }
+  // @ts-expect-error stupid
+  svg.style = "max-width: 100%; height: auto;";
+  global.DOMParser = DOMParser;
+  return svg.outerHTML;
 }
 
 function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: string): RenderRule {
