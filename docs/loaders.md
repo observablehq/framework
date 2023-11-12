@@ -6,7 +6,7 @@ Why generate data at build time? Conventional dashboards are often slow or unrel
 
 Data loaders can be written in any programming language. They can even invoke binary executables such as ffmpeg or DuckDB! For convenience, the Observable CLI has built-in support for common languages: JavaScript, TypeScript, Python, and R.
 
-For example, say you want a list of recent earthquakes as an `earthquakes.csv` file. Create a corresponding JavaScript data loader, `earthquakes.csv.js`, which queries the [USGS API](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php) and outputs CSV to stdout:
+For example, say you want to map recent earthquakes. Create a JavaScript data loader, `earthquakes.csv.js`, which queries the [USGS API](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php) and outputs CSV to stdout.
 
 ```js no-run show
 process.stdout.write("magnitude,longitude,latitude\n");
@@ -17,7 +17,7 @@ for (const feature of collection.features) {
 }
 ```
 
-Next, load `earthquakes.csv` as a normal [file](./javascript/files):
+To access your data from Markdown, add a [JavaScript fenced code block](./javascript) and load `earthquakes.csv` as a [file](./javascript/files).
 
 ```js show
 const quakes = FileAttachment("earthquakes.csv").csv({typed: true});
@@ -51,7 +51,7 @@ Here are some more details on data loaders.
 
 ## Routing
 
-When a file is referenced, either via [`FileAttachment`](./javascript/files) or [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API), if the file does not exist, the CLI will look for a file of the same name with a double extension to see if there is a corresponding data loader. The following second extensions are checked, in order, with the corresponding language and interpreter:
+Data loaders live in `docs` alongside your other source files. When a file is referenced from JavaScript, either via [`FileAttachment`](./javascript/files) or [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API), if the file does not exist, the CLI will look for a file of the same name with a double extension to see if there is a corresponding data loader. The following second extensions are checked, in order, with the corresponding language and interpreter:
 
 * `.js` - JavaScript (`node`)
 * `.ts` - TypeScript (`tsx`)
