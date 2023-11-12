@@ -1,4 +1,4 @@
-# Files
+# JavaScript: Files
 
 You can load files using the built-in `FileAttachment` function.
 

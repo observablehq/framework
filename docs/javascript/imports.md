@@ -1,4 +1,4 @@
-# Imports
+# JavaScript: Imports
 
 You can import a library from npm like so:
 
