@@ -1,11 +1,11 @@
-import {createServer, type ServerResponse, type RequestListener} from "node:http";
+import type {IncomingMessage} from "http";
 import {randomBytes} from "node:crypto";
+import {type RequestListener, type ServerResponse, createServer} from "node:http";
 import os from "node:os";
+import {isatty} from "node:tty";
 import open from "open";
 import {HttpError, isHttpError} from "./error.js";
-import {setObservableApiKey, getObservableApiKey} from "./toolConfig.js";
-import {isatty} from "node:tty";
-import type {IncomingMessage} from "http";
+import {getObservableApiKey, setObservableApiKey} from "./toolConfig.js";
 
 const OBSERVABLEHQ_UI_HOST = getObservableUiHost();
 const OBSERVABLEHQ_API_HOST = getObservableApiHost();
