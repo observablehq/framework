@@ -72,9 +72,9 @@ body {
 #observablehq-sidebar {
   position: fixed;
   background: var(--theme-background-alt);
-  color: var(--theme-foreground);
+  color: var(--theme-foreground-muted);
   font: 14px var(--sans-serif);
-  font-weight: 600;
+  font-weight: 500;
   width: 240px;
   z-index: 1;
   top: 0;
@@ -85,13 +85,59 @@ body {
 }
 
 #observablehq-sidebar ol {
+  list-style: none;
   margin: 0;
   padding: 0;
 }
 
-#observablehq-sidebar ol li {
-  display: block;
+#observablehq-sidebar > ol,
+#observablehq-sidebar > details {
+  position: relative;
+  padding: 0.5rem 0 0;
+  margin: 0.5rem 0;
+}
+
+#observablehq-sidebar ol {
+  padding-bottom: 1rem;
+}
+
+#observablehq-sidebar > ol,
+#observablehq-sidebar > details {
+  position: relative;
+  border-top: solid 1px var(--theme-foreground-faintest);
+}
+
+#observablehq-sidebar > ol:first-child {
+  border-top: none;
+  font-weight: 700;
+  padding: 0;
   margin: 0;
+  color: var(--theme-foreground);
+}
+
+#observablehq-sidebar summary {
+  list-style: none;
+  font-weight: 700;
+  color: var(--theme-foreground);
+}
+
+#observablehq-sidebar summary::marker {
+  display: none;
+}
+
+#observablehq-sidebar summary::after {
+  position: absolute;
+  right: 1rem;
+  margin-top: -0.25rem;
+  font-weight: 700;
+  font-size: 20px;
+  content: "⟩";
+  transition: transform 250ms ease;
+  transform-origin: 50% 50%;
+}
+
+#observablehq-sidebar details[open] summary:after {
+  transform: rotate(90deg);
 }
 
 #observablehq-sidebar-toggle {
@@ -122,13 +168,19 @@ body {
   content: "⟨";
 }
 
+#observablehq-sidebar summary,
 .observablehq-link a {
   display: block;
   padding: 0.5rem 1rem;
 }
 
+#observablehq-sidebar summary:hover,
 .observablehq-link a:hover {
   background: var(--theme-background);
+}
+
+.observablehq-link a:hover {
+  color: var(--theme-foreground-focus);
 }
 
 .observablehq-link a[href] {

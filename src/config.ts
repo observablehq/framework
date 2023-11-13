@@ -1,9 +1,20 @@
 import {stat} from "node:fs/promises";
 import {join} from "node:path";
 
+export interface Page {
+  name: string;
+  path: string;
+}
+
+export interface Section {
+  name: string;
+  open?: boolean;
+  pages: Page[];
+}
+
 export interface Config {
   title?: string;
-  pages?: {path: string; name: string}[];
+  pages?: (Page | Section)[]; // TODO rename to sidebar?
 }
 
 export async function readConfig(root: string): Promise<Config | undefined> {
