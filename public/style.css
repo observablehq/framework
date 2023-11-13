@@ -121,6 +121,7 @@ body {
   color: var(--theme-foreground);
 }
 
+#observablehq-sidebar summary::-webkit-details-marker,
 #observablehq-sidebar summary::marker {
   display: none;
 }
