@@ -223,7 +223,7 @@ export function open({hash, eval: compile} = {}) {
         });
         break;
       case "update": {
-        const root = document.querySelector("main");
+        const root = document.querySelector("#observablehq-cells");
         if (message.previousHash !== hash) {
           console.log("contents out of sync");
           location.reload();
@@ -351,4 +351,17 @@ function enableCopyButtons() {
 
 async function copy({currentTarget}) {
   await navigator.clipboard.writeText(currentTarget.parentElement.textContent.trimEnd());
+}
+
+const toc = document.querySelector("#observablehq-toc");
+const activeLink = "observablehq-link-active";
+if (toc) {
+  const link = toc.querySelector(`a[href='${window.location.hash}']`);
+  let selected = link && link.parentElement;
+  if (selected) selected.classList.add(activeLink);
+  window.addEventListener("hashchange", function (event) {
+    if (selected) selected.classList.remove(activeLink);
+    selected = toc.querySelector(`a[href='${event.target.location.hash}']`).parentElement;
+    selected.classList.add(activeLink);
+  });
 }

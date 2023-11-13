@@ -10,8 +10,10 @@
   --theme-foreground-focus: #3182bd;
   --monospace: Menlo, Consolas, monospace;
   --monospace-font: 14px/1.5 var(--monospace);
-  --serif: "Source Serif Pro", "Iowan Old Style", "Apple Garamond", "Palatino Linotype", "Times New Roman", "Droid Serif", Times, serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  --sans-serif: -apple-system, BlinkMacSystemFont, "avenir next", avenir, helvetica, "helvetica neue", ubuntu, roboto, noto, "segoe ui", arial, sans-serif;
+  --serif: "Source Serif Pro", "Iowan Old Style", "Apple Garamond", "Palatino Linotype", "Times New Roman",
+    "Droid Serif", Times, serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --sans-serif: -apple-system, BlinkMacSystemFont, "avenir next", avenir, helvetica, "helvetica neue", ubuntu, roboto,
+    noto, "segoe ui", arial, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -44,6 +46,48 @@ body {
 
 #observablehq-main {
   min-height: calc(100vh - 17rem);
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+#observablehq-cells {
+  flex-grow: 1;
+}
+
+#observablehq-center {
+  margin: 1rem;
+}
+
+#observablehq-toc {
+  position: sticky;
+  align-self: flex-start;
+  top: 1rem;
+  width: 100px;
+  margin: 0;
+  margin-left: 2rem;
+  padding-left: 12px;
+  padding-right: 12px;
+  border-left: solid 1px var(--theme-foreground-faintest);
+}
+
+#observablehq-toc nav ol {
+  margin: 0;
+  padding-inline-start: 5px;
+}
+
+#observablehq-toc div {
+  font: 16px var(--sans-serif);
+  color: var(--theme-foreground-mute);
+  margin-bottom: 8px;
+}
+
+#observablehq-toc nav ol li {
+  font: 14px var(--sans-serif);
+  font-weight: 350;
+  line-height: 1.5;
+  list-style-type: none;
+  color: var(--theme-foreground-faint);
 }
 
 #observablehq-footer {
@@ -229,7 +273,8 @@ body {
   color: var(--theme-foreground-focus);
 }
 
-.observablehq-link a[href] {
+.observablehq-link a[href],
+.observablehq-secondary-link a[href] {
   color: inherit;
 }
 
@@ -424,7 +469,8 @@ hr {
   margin: 1rem 0;
   padding: 1rem 0;
   border: none;
-  background: no-repeat center/100% 1px linear-gradient(to right, var(--theme-foreground-faintest), var(--theme-foreground-faintest));
+  background: no-repeat center/100% 1px
+    linear-gradient(to right, var(--theme-foreground-faintest), var(--theme-foreground-faintest));
 }
 
 pre {
@@ -454,6 +500,40 @@ pre[data-language]::after {
 
 pre[data-copy]::after {
   content: attr(data-copy);
+}
+
+pre code.language-md::after {
+  content: "md";
+}
+pre code.language-js::after {
+  content: "js";
+}
+pre code.language-sh::after {
+  content: "sh";
+}
+pre code.language-sql::after {
+  content: "sql";
+}
+pre code.language-tex::after {
+  content: "tex";
+}
+pre code.language-dot::after {
+  content: "dot";
+}
+pre code.language-mermaid::after {
+  content: "mermaid";
+}
+pre[data-copy="copy"] code::after {
+  content: "copy";
+}
+pre[data-copy="copied"] code::after {
+  content: "copied";
+}
+pre[data-copy="error"] code::after {
+  content: "error";
+}
+pre code::after {
+  pointer-events: none;
 }
 
 input:not([type]),
@@ -762,7 +842,11 @@ a[href].observablehq-header-anchor {
   color: var(--syntax-keyword);
 }
 
-.__ns__ button, .__ns__ input, .__ns__ select, .__ns__ table, .__ns__ textarea {
+.__ns__ button,
+.__ns__ input,
+.__ns__ select,
+.__ns__ table,
+.__ns__ textarea {
   color: initial !important;
 }
 

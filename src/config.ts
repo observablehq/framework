@@ -12,9 +12,15 @@ export interface Section {
   pages: Page[];
 }
 
+export interface TableOfContents {
+  label?: string;
+  level: string[];
+}
+
 export interface Config {
   title?: string;
   pages?: (Page | Section)[]; // TODO rename to sidebar?
+  toc?: TableOfContents;
 }
 
 export async function readConfig(root: string): Promise<Config | undefined> {

@@ -127,11 +127,13 @@ class Server {
         // Anything else should 404; static files should be matched above.
         try {
           pages = await readPages(this.root); // TODO cache? watcher?
+          const config = await readConfig(this.root);
           const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {
             root: this.root,
             path: pathname,
             pages,
-            title: (await readConfig(this.root))?.title,
+            title: config?.title,
+            toc: config?.toc,
             resolver: this._resolver!
           });
           end(req, res, html, "text/html");

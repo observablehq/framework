@@ -88,3 +88,42 @@ observable build
 Creates `dist`.
 
 You can use `npx http-server dist` to preview your built site.
+
+## Configuration
+
+Add a `config.js` or `config.ts` file under the `.observablehq` directory. Example config:
+
+```
+{
+  title: "Hello World",
+  pages: [
+    {name: "Getting started", path: "/getting-started"},
+    {
+      name: "JavaScript",
+      pages: [
+        {name: "Reactivity", path: "/javascript/reactivity"},
+        {name: "Display", path: "/javascript/display"},
+      ]
+    }
+  ],
+  toc: {
+    label: "Contents",
+    level: 2
+  }
+}
+```
+
+You can configure:
+
+### `title`
+
+Customize the title on the left sidebar.
+
+### `pages`
+
+A page has a name and path. The page path corresponds to the path of the `.md` file from your root directory. For example, if `docs` is your root directory, the `docs/javascript.md` file corresponds to the `/javascript` path
+
+### `table of contents on a page`
+
+`label` is the name of the TOC (table of contents) section. `level` can be a number from 1-6 or an array of numbers with length 2.
+For example, `level: 2` constructs the TOC from only h2 headers. `level: [1, 3]` constructs the TOC with h1, h2, and h3 headers.

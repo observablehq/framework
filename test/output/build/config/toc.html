@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Index</title>
+<title>Section</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="./_observablehq/style.css">
@@ -15,11 +15,8 @@ import {define} from "./_observablehq/client.js";
 <input id="observablehq-sidebar-toggle" type="checkbox">
 <nav id="observablehq-sidebar">
   <ol>
-    <li class="observablehq-link observablehq-link-active"><a href="./">Home</a></li>
-  </ol>
-  <ol>
-    <li class="observablehq-link observablehq-link-active"><a href="./">Index</a></li>
-    <li class="observablehq-link"><a href="./one">One&#60;Two</a></li>
+    <li class="observablehq-link"><a href="./">Index</a></li>
+    <li class="observablehq-link"><a href="./one">One</a></li>
     <li class="observablehq-link"><a href="./sub/two">Two</a></li>
   </ol>
 </nav>
@@ -31,15 +28,22 @@ import {define} from "./_observablehq/client.js";
 }</script>
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
-<div id="observablehq-cells"><h1 id="index" tabindex="-1"><a class="observablehq-header-anchor" href="#index">Index</a></h1>
-<ul>
-<li><a href="./one">one</a></li>
-<li><a href="./sub/two">two</a></li>
-</ul>
+<div id="observablehq-cells"><h1 id="section" tabindex="-1"><a class="observablehq-header-anchor" href="#section">Section</a></h1>
+<h2 id="subsection-1" tabindex="-1"><a class="observablehq-header-anchor" href="#subsection-1">Subsection 1</a></h2>
+<p>Some text here</p>
+<h2 id="subsection-2" tabindex="-1"><a class="observablehq-header-anchor" href="#subsection-2">Subsection 2</a></h2>
+<p>Some text here again</p>
 </div>
-</main>
-<footer id="observablehq-footer">
-<nav><a rel="next" href="./one"><span>One&#60;Two</span></a></nav>
-<div>© 2023 Observable, Inc.</div>
-</footer>
+
+<div id="observablehq-toc">
+  <div role='heading'>Contents</div>
+  <nav>
+    <ol><li class="observablehq-secondary-link">
+            <a href="#subsection-1">Subsection 1</a>
+          </li><li class="observablehq-secondary-link">
+            <a href="#subsection-2">Subsection 2</a>
+          </li>
+    </ol>
+  </nav></div></main>
+<footer id="observablehq-footer">© 2023 Observable, Inc.</footer>
 </div>

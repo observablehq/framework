@@ -1,4 +1,5 @@
 import {dirname, join} from "node:path";
+import {parseHTML} from "linkedom";
 import {type Config, type Page, type Section} from "./config.js";
 import {computeHash} from "./hash.js";
 import {resolveImport} from "./javascript/imports.js";
@@ -52,7 +53,7 @@ type RenderInternalOptions =
 
 function render(
   parseResult: ParseResult,
-  {path, pages, title, preview, hash, resolver}: RenderOptions & RenderInternalOptions
+  {path, pages, title, toc: tocConfig, preview, hash, resolver}: RenderOptions & RenderInternalOptions
 ): string {
   return `<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? `\n<base href="/">` : ""}
@@ -89,7 +90,9 @@ ${JSON.stringify(parseResult.data)}
 ${pages.length > 0 ? sidebar(title, pages, path) : ""}
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
-${parseResult.html}</main>
+<div id="observablehq-cells">${parseResult.html}</div>
+${tableOfContents(parseResult, tocConfig)}
+</main>
 ${footer(path, {pages, title})}
 </div>
 `;
@@ -142,6 +145,49 @@ function sidebar(title: string | undefined, pages: (Page | Section)[], path: str
   if (initialState) toggle.checked = initialState === "true";
   else toggle.indeterminate = true;
 }</script>`;
+}
+
+function tableOfContentsSections(
+  parseResult: ParseResult,
+  globalConfig?: Config["toc"]
+): {label: string; headers: string[]} {
+  const pageConfig = parseResult.data?.toc;
+  const headers: string[] = [];
+  if (pageConfig) {
+    pageConfig.level?.split(",").forEach((header: string) => headers.push(header.trim()));
+  } else if (globalConfig) {
+    globalConfig.level?.forEach((header) => headers.push(header.trim()));
+  }
+  return {label: pageConfig?.label ?? globalConfig?.label ?? "Sections", headers};
+}
+
+function tableOfContents(parseResult: ParseResult, tocConfig: RenderOptions["toc"]) {
+  const toc = tableOfContentsSections(parseResult, tocConfig);
+  let showToc = toc.headers.length > 0;
+  let headers;
+  if (showToc) {
+    headers = Array.from(parseHTML(parseResult.html).document.querySelectorAll(toc.headers.join(", "))).map((node) => ({
+      label: node.firstElementChild?.textContent,
+      href: node.firstElementChild?.getAttribute("href")
+    }));
+  }
+  showToc = showToc && headers?.length > 0;
+  return showToc
+    ? `
+<div id="observablehq-toc">
+  <div role='heading'>${toc.label}</div>
+  <nav>
+    <ol>${headers
+      .map(
+        ({label, href}) =>
+          `<li class="observablehq-secondary-link">
+            <a href="${href}">${label}</a>
+          </li>`
+      )
+      .join("")}
+    </ol>
+  </nav></div>`
+    : "";
 }
 
 function renderListItem(p: Page, path: string): string {
