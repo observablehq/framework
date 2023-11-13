@@ -22,7 +22,7 @@ switch (command) {
     console.error(`   build\tgenerate a static site`);
     console.error(`   preview\trun the live preview server`);
     // "auth" is short enough that the tab that follows up doesn't align with
-    // the other commands. Makes it line up.
+    // the other commands. The trailing space makes it line up.
     console.error(`   auth \tmanage authentication with the Observable Cloud`);
     console.error(` --version\tprint the version`);
     process.exit(1);

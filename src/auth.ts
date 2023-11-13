@@ -90,11 +90,14 @@ class LoginServer {
   constructor({nonce}: {nonce: string}) {
     this._nonce = nonce;
     this._server = createServer();
-    this._server.on("request", this._handleRequest);
+    this._server.on("request", (request, response) => this._handleRequest(request, response));
   }
 
   async start() {
     return new Promise<void>((resolve) => {
+      // A port of 0 binds to an arbitrary open port. This prevents port
+      // conflicts, and also makes it more difficult for potentially malicious
+      // third parties to find the auth server.
       this._server.listen(0, "localhost", resolve);
     });
   }
@@ -109,25 +112,30 @@ class LoginServer {
     return address.port;
   }
 
-  _handleRequest: RequestListener = async (req, res) => {
-    const url = new URL(req.url!, "http://localhost");
-    const {pathname} = url;
+  _handleRequest: RequestListener = async (request, response) => {
+    const {pathname} = new URL(request.url!, "http://localhost");
     try {
-      if (!this.isTrustedOrigin(req)) throw new HttpError("Bad request", 400);
+      if (!this.isTrustedOrigin(request)) throw new HttpError("Bad request", 400);
 
-      if (req.method === "OPTIONS" && pathname === "/api-key") return await this.optionsApiKey(req, res);
-      if (req.method === "POST" && pathname === "/api-key") return await this.postApiKey(req, res);
+      if (request.method === "OPTIONS" && pathname === "/api-key") return await this.optionsApiKey(request, response);
+      if (request.method === "POST" && pathname === "/api-key") return await this.postApiKey(request, response);
       throw new HttpError("Not found", 404);
     } catch (error) {
       console.error(error);
-      res.statusCode = isHttpError(error) ? error.statusCode : 500;
-      res.setHeader("Content-Type", "text/plain; charset=utf-8");
-      res.end(error instanceof Error ? error.message : "Oops, an error occurred");
+      response.statusCode = isHttpError(error) ? error.statusCode : 500;
+      response.setHeader("Content-Type", "application/json");
+      response.end(
+        JSON.stringify({
+          success: false,
+          message: error instanceof Error ? error.message : "Oops, an error occurred"
+        })
+      );
     }
   };
 
   private async optionsApiKey(req: IncomingMessage, res: ServerResponse): Promise<void> {
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    // Relies on a "trusted origin" check in `_handleRequest`.
     if (req.headers["origin"]) res.setHeader("Access-Control-Allow-Origin", req.headers["origin"]);
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
     res.end();
@@ -192,6 +200,7 @@ class LoginServer {
   }
 }
 
+/** Waits for the user to press enter. */
 function waitForEnter() {
   return new Promise((resolve) => {
     function onData(chunk) {
