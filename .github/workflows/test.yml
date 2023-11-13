@@ -24,4 +24,6 @@ jobs:
         if: failure()
         with:
           name: test-output-changes
-          path: test/output/*-changed.*
+          path: |
+            test/output/*-changed.*
+            test/output/build/*-changed/

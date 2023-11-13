@@ -5,14 +5,14 @@ const command = process.argv.splice(2, 1)[0];
 switch (command) {
   case "-v":
   case "--version": {
-    import("../package.json").then(({version}: any) => console.log(version));
+    await import("../package.json").then(({version}: any) => console.log(version));
     break;
   }
   case "build":
-    import("../src/build.js");
+    await import("../src/build.js").then((build) => build.build());
     break;
   case "preview":
-    import("../src/preview.js");
+    await import("../src/preview.js");
     break;
   case "auth":
     import("../src/auth.js");

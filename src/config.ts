@@ -1,60 +1,34 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-import os from "node:os";
+import {stat} from "node:fs/promises";
+import {join} from "node:path";
 
-const configName = ".observablehq";
-
-interface Config {
-  auth?: {
-    id: string;
-    key: string;
-  };
+export interface Page {
+  name: string;
+  path: string;
 }
 
-export async function setObservableApiKey(id: string, key: string): Promise<void> {
-  const {config, configPath} = await loadConfig();
-  config.auth = {id, key};
-  await writeConfig({configPath, config});
+export interface Section {
+  name: string;
+  open?: boolean;
+  pages: Page[];
 }
 
-export async function getObservableApiKey(): Promise<string | null> {
-  const {config} = await loadConfig();
-  return config.auth?.key ?? null;
+export interface Config {
+  title?: string;
+  pages?: (Page | Section)[]; // TODO rename to sidebar?
 }
 
-async function loadConfig(): Promise<{configPath: string; config: Config}> {
-  let cursor = path.resolve(process.cwd());
-  while (true) {
-    const configPath = path.join(cursor, configName);
-    let content: string | null = null;
+export async function readConfig(root: string): Promise<Config | undefined> {
+  for (const ext of [".js", ".ts"]) {
     try {
-      content = await fs.readFile(configPath, "utf8");
-    } catch (err) {
-      const nextCursor = path.dirname(cursor);
-      if (nextCursor === cursor) break;
-      cursor = nextCursor;
-    }
-
-    if (content !== null) {
-      try {
-        return {config: JSON.parse(content), configPath};
-      } catch (err) {
-        console.error(`Problem parsing config file at ${configPath}: ${err}`);
-      }
+      const configPath = join(process.cwd(), root, ".observablehq", "config" + ext);
+      const configStat = await stat(configPath);
+      // By using the modification time of the config, we ensure that we pick up
+      // any changes to the config on reload. TODO It would be better to either
+      // restart the preview server when the config changes, or for the preview
+      // server to watch the config file and hot-reload it automatically.
+      return (await import(`${configPath}?${configStat.mtimeMs}`)).default;
+    } catch {
+      continue;
     }
   }
-
-  return {config: {}, configPath: path.join(os.homedir(), configName)};
 }
-
-async function writeConfig({configPath, config}: {configPath: string; config: Config}): Promise<void> {
-  try {
-    await fs.mkdir(path.dirname(configPath), {recursive: true});
-  } catch (err) {
-    console.warn(`Warning: ${err}`);
-    // Try to write the file anyways
-  }
-  await fs.writeFile(configPath, JSON.stringify(config, null, 2));
-}
-
-await writeConfig(await loadConfig());

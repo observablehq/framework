@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Build test case</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
+<link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
+<link rel="modulepreload" href="/_observablehq/runtime.js">
+<script type="module">
+
+import {define} from "/_observablehq/client.js";
+
+define({id: "115586ff", inputs: ["FileAttachment"], outputs: ["result"], files: [{"name":"data.txt","mimeType":"text/plain"}], body: (FileAttachment) => {
+let result = FileAttachment("data.txt").text();
+return {result};
+}});
+define({id: "815178e4", inputs: ["display","result"], body: (display,result) => {
+display(result);
+}});
+
+</script>
+<div id="observablehq-center">
+<main id="observablehq-main" class="observablehq">
+<h1 id="build-test-case" tabindex="-1"><a class="observablehq-header-anchor" href="#build-test-case">Build test case</a></h1>
+<div id="cell-115586ff" class="observablehq observablehq--block"></div>
+<div id="cell-815178e4" class="observablehq observablehq--block"></div>
+</main>
+<footer id="observablehq-footer">© 2023 Observable, Inc.</footer>
+</div>

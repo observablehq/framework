@@ -3,7 +3,7 @@ import {randomBytes} from "node:crypto";
 import os from "node:os";
 import open from "open";
 import {HttpError, isHttpError} from "./error.js";
-import {setObservableApiKey, getObservableApiKey} from "./config.js";
+import {setObservableApiKey, getObservableApiKey} from "./toolConfig.js";
 import {isatty} from "node:tty";
 import type {IncomingMessage} from "http";
 
