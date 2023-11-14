@@ -72,9 +72,8 @@ function jsonEqual(a: string, b: string): boolean {
 }
 
 function applySpecialCaseFilters(snapshotContent: string): string {
-  // if this contains markdown-it-copy logic, strip out
-  // j-notify id, which is always regerated and thus differnt
-  // on every run
+  // if the snapshot contains markdown-it-copy code, strip out j-notify id,
+  // which is regenerated on every run and thus always different
 
   if (snapshotContent.includes("mdic")) {
     return snapshotContent.replace(/(id=\\?\\?"j-notify)([\d-]*)/g, "$1");
