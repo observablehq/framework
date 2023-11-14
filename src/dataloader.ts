@@ -89,7 +89,9 @@ export class Loader {
         const cachePath = join(this.sourceRoot, outputPath);
         const loaderStat = await maybeStat(this.path);
         const cacheStat = await maybeStat(cachePath);
-        if (cacheStat && cacheStat.mtimeMs > loaderStat!.mtimeMs) return outputPath;
+        if (!cacheStat) verbose && process.stdout.write(faint("[missing] "));
+        else if (cacheStat.mtimeMs < loaderStat!.mtimeMs) verbose && process.stdout.write(faint("[stale] "));
+        else return verbose && process.stdout.write(faint("[fresh] ")), outputPath;
         const tempPath = join(this.sourceRoot, ".observablehq", "cache", `${this.targetPath}.${process.pid}`);
         await prepareOutput(tempPath);
         const tempFd = await open(tempPath, "w");
@@ -114,18 +116,16 @@ export class Loader {
       runningCommands.set(this.path, command);
     }
     if (verbose) {
-      console.info(`${this.path} start`);
+      process.stdout.write(`load ${this.path} → `);
       const start = performance.now();
       command.then(
         (path) => {
-          console.info(
-            `${this.path} ${green("success")} ${formatSize(
-              statSync(join(this.sourceRoot, path)).size
-            )} in ${formatElapsed(start)}`
+          console.log(
+            `${green("success")} ${formatSize(statSync(join(this.sourceRoot, path)).size)} in ${formatElapsed(start)}`
           );
         },
         (error) => {
-          console.info(`${this.path} ${red("error")} after ${formatElapsed(start)}: ${error.message}`);
+          console.log(`${red("error")} after ${formatElapsed(start)}: ${error.message}`);
         }
       );
     }
@@ -133,6 +133,7 @@ export class Loader {
   }
 }
 
+const faint = color(2);
 const red = color(31);
 const green = color(32);
 const yellow = color(33);

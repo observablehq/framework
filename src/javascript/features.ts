@@ -1,4 +1,5 @@
 import {simple} from "acorn-walk";
+import {getLocalPath} from "../files.js";
 import {type Feature} from "../javascript.js";
 import {isLocalImport} from "./imports.js";
 import {syntaxError} from "./syntaxError.js";
@@ -15,7 +16,7 @@ export function findFeatures(node, root, sourcePath, references, input) {
       } = node;
 
       // Promote fetches with static literals to file attachment references.
-      if (isLocalFetch(node, references, root, sourcePath)) {
+      if (isLocalFetch(node, references, sourcePath)) {
         features.push({type: "FileAttachment", name: getStringLiteralValue(arg)});
         return;
       }
@@ -36,14 +37,20 @@ export function findFeatures(node, root, sourcePath, references, input) {
         throw syntaxError(`${callee.name} requires a single literal string argument`, node, input);
       }
 
-      features.push({type: callee.name, name: getStringLiteralValue(arg)});
+      // Forbid file attachments that are not local paths.
+      const value = getStringLiteralValue(arg);
+      if (callee.name === "FileAttachment" && !getLocalPath(sourcePath, value)) {
+        throw syntaxError(`non-local file path: "${value}"`, node, input);
+      }
+
+      features.push({type: callee.name, name: value});
     }
   });
 
   return features;
 }
 
-export function isLocalFetch(node, references, root, sourcePath) {
+export function isLocalFetch(node, references, sourcePath) {
   if (node.type !== "CallExpression") return false;
   const {
     callee,
@@ -54,7 +61,7 @@ export function isLocalFetch(node, references, root, sourcePath) {
     callee.name === "fetch" &&
     !references.includes(callee) &&
     isStringLiteral(arg) &&
-    isLocalImport(getStringLiteralValue(arg), root, sourcePath)
+    isLocalImport(getStringLiteralValue(arg), sourcePath)
   );
 }
 

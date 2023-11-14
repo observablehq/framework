@@ -1,5 +1,5 @@
 import {readFile} from "node:fs/promises";
-import {dirname, join} from "node:path";
+import {join} from "node:path";
 import {type Patch, type PatchItem, getPatch} from "fast-array-diff";
 import equal from "fast-deep-equal";
 import matter from "gray-matter";
@@ -12,7 +12,7 @@ import {type RenderRule, type default as Renderer} from "markdown-it/lib/rendere
 import MarkdownItAnchor from "markdown-it-anchor";
 import MarkdownItCopy from "markdown-it-copy";
 import mime from "mime";
-import {isLocalFile, pathFromRoot} from "./files.js";
+import {getLocalPath} from "./files.js";
 import {computeHash} from "./hash.js";
 import {type FileReference, type ImportReference, type Transpile, transpileJavaScript} from "./javascript.js";
 import {transpileTag} from "./tag.js";
@@ -323,8 +323,8 @@ function normalizePieceHtml(html: string, root: string, sourcePath: string, cont
   const {document} = parseHTML(html);
   for (const element of document.querySelectorAll("link[href]") as any as Iterable<Element>) {
     const href = element.getAttribute("href")!;
-    const path = join(dirname(sourcePath), href);
-    if (isLocalFile(path, root)) {
+    const path = getLocalPath(sourcePath, href);
+    if (path) {
       context.files.push({name: href, mimeType: mime.getType(href)});
       element.setAttribute("href", `/_file/${path}`);
     }
@@ -469,6 +469,6 @@ export function diffMarkdown({parse: prevParse}: ReadMarkdownResult, {parse: nex
 }
 
 export async function readMarkdown(path: string, root: string): Promise<ReadMarkdownResult> {
-  const contents = await readFile(pathFromRoot(path, root)!, "utf-8");
+  const contents = await readFile(join(root, path), "utf-8");
   return {contents, parse: parseMarkdown(contents, root, path), hash: computeHash(contents)};
 }

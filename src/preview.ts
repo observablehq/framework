@@ -1,4 +1,5 @@
-import {type FSWatcher, type WatchListener, existsSync, watch} from "node:fs";
+import {createHash} from "node:crypto";
+import {type FSWatcher, existsSync, watch} from "node:fs";
 import {access, constants, readFile, stat} from "node:fs/promises";
 import {type IncomingMessage, type RequestListener, createServer} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
@@ -51,6 +52,8 @@ class Server {
         send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
+      } else if (pathname.startsWith("/_import/")) {
+        send(req, pathname.slice("/_import".length), {root: this.root}).pipe(res);
       } else if (pathname.startsWith("/_file/")) {
         const path = pathname.slice("/_file".length);
         const filepath = join(this.root, path);
@@ -113,17 +116,26 @@ class Server {
         // Anything else should 404; static files should be matched above.
         try {
           const pages = await readPages(this.root); // TODO cache? watcher?
-          res.end(
-            (
-              await renderPreview(await readFile(path + ".md", "utf-8"), {
-                root: this.root,
-                path: pathname,
-                pages,
-                title: (await readConfig(this.root))?.title,
-                resolver: this._resolver!
-              })
-            ).html
-          );
+          const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {
+            root: this.root,
+            path: pathname,
+            pages,
+            title: (await readConfig(this.root))?.title,
+            resolver: this._resolver!
+          });
+          const etag = `"${createHash("sha256").update(html).digest("base64")}"`;
+          res.setHeader("Content-Type", "text/html; charset=utf-8");
+          res.setHeader("Date", new Date().toUTCString());
+          res.setHeader("Last-Modified", new Date().toUTCString());
+          res.setHeader("ETag", etag);
+          if (req.headers["if-none-match"] === etag) {
+            res.statusCode = 304;
+            res.end();
+          } else if (req.method === "HEAD") {
+            res.end();
+          } else {
+            res.end(html);
+          }
         } catch (error) {
           if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error
           throw new HttpError("Not found", 404);
@@ -157,11 +169,8 @@ class FileWatchers {
   ) {
     const watchers = new FileWatchers();
     const {files, imports} = parseResult;
-    for (const name of new Set([
-      ...files.map((f) => join(dirname(path), f.name)),
-      ...imports.map((i) => join(dirname(path), i.name))
-    ])) {
-      const watchPath = FileWatchers.getWatchPath(root, name);
+    for (const name of new Set([...files.map((f) => f.name), ...imports.map((i) => i.name)])) {
+      const watchPath = FileWatchers.getWatchPath(root, join(dirname(path), name));
       let prevState = await maybeStat(watchPath);
       let watcher;
       try {
@@ -212,15 +221,20 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
     });
   }
 
-  async function refreshMarkdown(path: string): Promise<WatchListener<string>> {
+  async function hello({path, hash: initialHash}: {path: string; hash: string}): Promise<void> {
+    if (markdownWatcher || attachmentWatcher) throw new Error("already watching");
+    if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + path);
+    if (path.endsWith("/")) path += "index";
+    path += ".md";
     let current = await readMarkdown(path, root);
+    if (current.hash !== initialHash) return void send({type: "reload"});
     attachmentWatcher = await FileWatchers.watchAll(path, root, current.parse, refreshAttachment);
-    return async function watcher(event) {
+    markdownWatcher = watch(join(root, path), async function watcher(event) {
       switch (event) {
         case "rename": {
           markdownWatcher?.close();
           try {
-            markdownWatcher = watch(path, watcher);
+            markdownWatcher = watch(join(root, path), watcher);
           } catch (error) {
             if (isNodeError(error) && error.code === "ENOENT") {
               console.error(`file no longer exists: ${path}`);
@@ -245,7 +259,7 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
         default:
           throw new Error("Unrecognized event: " + event);
       }
-    };
+    });
   }
 
   socket.on("message", async (data) => {
@@ -254,12 +268,7 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
       console.log("↑", message);
       switch (message.type) {
         case "hello": {
-          if (markdownWatcher || attachmentWatcher) throw new Error("already watching");
-          let {path} = message;
-          if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + path);
-          if (path.endsWith("/")) path += "index";
-          path = path.slice("/".length) + ".md";
-          markdownWatcher = watch(join(root, path), await refreshMarkdown(path));
+          await hello(message);
           break;
         }
       }

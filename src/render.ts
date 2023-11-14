@@ -1,5 +1,5 @@
 import {dirname, join} from "node:path";
-import {type Config} from "./config.js";
+import {type Config, type Page} from "./config.js";
 import {computeHash} from "./hash.js";
 import {resolveImport} from "./javascript/imports.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
@@ -88,13 +88,44 @@ ${JSON.stringify(parseResult.data)}
 ${
   showSidebar
     ? `<input id="observablehq-sidebar-toggle" type="checkbox">
-<nav id="observablehq-sidebar">
+<nav id="observablehq-sidebar">${
+        title
+          ? `
+  <ol>
+    <li class="observablehq-link">
+      <a href="/">${escapeData(title)}</a>
+    </li>
+  </ol>`
+          : ""
+      }
   <ol>${pages
-    ?.map(
-      (p) => `
-    <li class="observablehq-link${p.path === path ? " observablehq-link-active" : ""}"><a href="${escapeDoubleQuoted(
-      p.path.replace(/\/index$/, "") || "/"
-    )}">${escapeData(p.name)}</a></li>`
+    ?.map((p, i) =>
+      "pages" in p
+        ? `${i > 0 && "path" in pages[i - 1] ? "</ol>" : ""}
+    <details${p.open === undefined || p.open ? " open" : ""}>
+      <summary>${escapeData(p.name)}</summary>
+      <ol>${p.pages
+        .map(
+          (p) => `
+        ${renderListItem(p, path)}`
+        )
+        .join("")}
+      </ol>
+    </details>`
+        : "path" in p
+        ? `${
+            i === 0
+              ? `
+    `
+              : !("path" in pages[i - 1])
+              ? `
+  </ol>
+  <ol>
+    `
+              : `
+    `
+          }${renderListItem(p, path)}`
+        : null
     )
     .join("")}
   </ol>
@@ -115,11 +146,17 @@ ${parseResult.html}</main>
 `;
 }
 
+function renderListItem(p: Page, path: string): string {
+  return `<li class="observablehq-link${
+    p.path === path ? " observablehq-link-active" : ""
+  }"><a href="${escapeDoubleQuoted(p.path.replace(/\/index$/, "") || "/")}">${escapeData(p.name)}</a></li>`;
+}
+
 function getImportPreloads(parseResult: ParseResult, path: string): Iterable<string> {
   const specifiers = new Set<string>(["npm:@observablehq/runtime"]);
   for (const {name, type} of parseResult.imports) {
     if (type === "local") {
-      specifiers.add(`/_file${join(dirname(path), name)}`);
+      specifiers.add(`/_import${join(dirname(path), name)}`);
     } else {
       specifiers.add(name);
     }
@@ -132,12 +169,12 @@ function getImportPreloads(parseResult: ParseResult, path: string): Iterable<str
   if (inputs.has("dot")) specifiers.add("npm:@viz-js/viz");
   if (inputs.has("mermaid")) specifiers.add("npm:mermaid").add("npm:d3");
   if (inputs.has("tex")) specifiers.add("npm:katex");
-  const preloads: string[] = [];
+  const preloads = new Set<string>();
   for (const specifier of specifiers) {
-    preloads.push(resolveImport(specifier));
+    preloads.add(resolveImport(specifier));
   }
   if (parseResult.cells.some((cell) => cell.databases?.length)) {
-    preloads.push("/_observablehq/database.js");
+    preloads.add("/_observablehq/database.js");
   }
   return preloads;
 }

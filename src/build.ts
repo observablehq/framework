@@ -32,6 +32,7 @@ export async function build(context: CommandContext = makeCommandContext()) {
   const config = await readConfig(sourceRoot);
   const pages = await readPages(sourceRoot);
   const files: string[] = [];
+  const imports: string[] = [];
   const resolver = await makeCLIResolver();
   for await (const sourceFile of visitMarkdownFiles(sourceRoot)) {
     const sourcePath = join(sourceRoot, sourceFile);
@@ -46,7 +47,7 @@ export async function build(context: CommandContext = makeCommandContext()) {
       resolver
     });
     files.push(...render.files.map((f) => join(dirname(sourceFile), f.name)));
-    files.push(...render.imports.filter((i) => i.type === "local").map((i) => join(dirname(sourceFile), i.name)));
+    imports.push(...render.imports.filter((i) => i.type === "local").map((i) => join(dirname(sourceFile), i.name)));
     await prepareOutput(outputPath);
     await writeFile(outputPath, render.html);
   }
@@ -73,9 +74,20 @@ export async function build(context: CommandContext = makeCommandContext()) {
         console.error("missing referenced file", sourcePath);
         continue;
       }
-      if (verbose) process.stdout.write(`generate ${loader.path} → `);
       sourcePath = join(sourceRoot, await loader.load({verbose}));
-      if (verbose) console.log(sourcePath);
+    }
+    if (verbose) console.log("copy", sourcePath, "→", outputPath);
+    await prepareOutput(outputPath);
+    await copyFile(sourcePath, outputPath);
+  }
+
+  // Copy over the imported modules.
+  for (const file of imports) {
+    const sourcePath = join(sourceRoot, file);
+    const outputPath = join(outputRoot, "_import", file);
+    if (!existsSync(sourcePath)) {
+      console.error("missing referenced file", sourcePath);
+      continue;
     }
     if (verbose) console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);

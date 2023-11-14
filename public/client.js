@@ -323,3 +323,14 @@ if (toggle) {
     }
   });
 }
+
+// Prevent double-clicking the summary toggle from selecting text.
+function preventDoubleClick(event) {
+  if (event.detail > 1) {
+    event.preventDefault();
+  }
+}
+
+for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
+  summary.onmousedown = preventDoubleClick;
+}
