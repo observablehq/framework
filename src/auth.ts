@@ -6,6 +6,7 @@ import {isatty} from "node:tty";
 import open from "open";
 import {HttpError, isHttpError} from "./error.js";
 import {getObservableApiKey, setObservableApiKey} from "./toolConfig.js";
+import packageJson from "../package.json";
 
 const OBSERVABLEHQ_UI_HOST = getObservableUiHost();
 const OBSERVABLEHQ_API_HOST = getObservableApiHost();
@@ -41,7 +42,11 @@ export async function whoami() {
   const key = await getObservableApiKey();
   if (key) {
     const req = await fetch(new URL("/cli/user", OBSERVABLEHQ_API_HOST), {
-      headers: {Authorization: `apikey ${key}`, "X-Observable-Api-Version": "2023-11-06"}
+      headers: {
+        Authorization: `apikey ${key}`,
+        "X-Observable-Api-Version": "2023-11-06",
+        "User-Agent": `Observable CLI ${packageJson.version}`
+      }
     });
     if (req.status === 401) {
       console.log("Your API key is invalid. Run `observable login` to log in again.");
