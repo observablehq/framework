@@ -10,27 +10,7 @@ import {getObservableApiKey, setObservableApiKey} from "./toolConfig.js";
 const OBSERVABLEHQ_UI_HOST = getObservableUiHost();
 const OBSERVABLEHQ_API_HOST = getObservableApiHost();
 
-async function main() {
-  const command = process.argv.splice(2, 1)[0];
-
-  switch (command) {
-    case "login": {
-      loginCommand();
-      break;
-    }
-    case "whoami": {
-      whoamiCommand();
-      break;
-    }
-    default: {
-      console.error("Usage: observable auth <subcommand>");
-      console.error("    login\tlogin with your ObservableHQ credentials");
-      console.error("    whoami\tdisplay the current loggedin user");
-    }
-  }
-}
-
-async function loginCommand() {
+export async function login() {
   const nonce = randomBytes(8).toString("base64");
   const server = new LoginServer({nonce});
   await server.start();
@@ -57,14 +37,14 @@ async function loginCommand() {
   // execution continues in the server's request handler
 }
 
-async function whoamiCommand() {
+export async function whoami() {
   const key = await getObservableApiKey();
   if (key) {
     const req = await fetch(new URL("/cli/user", OBSERVABLEHQ_API_HOST), {
       headers: {Authorization: `apikey ${key}`, "X-Observable-Api-Version": "2023-11-06"}
     });
     if (req.status === 401) {
-      console.log("Your API key is invalid. Run `observable auth login` to log in again.");
+      console.log("Your API key is invalid. Run `observable login` to log in again.");
       return;
     }
     const user = await req.json();
@@ -77,9 +57,7 @@ async function whoamiCommand() {
     }
     console.log();
   } else {
-    console.log(
-      `You haven't authenticated with ${OBSERVABLEHQ_UI_HOST.hostname}. Run "observable auth login" to log in.`
-    );
+    console.log(`You haven't authenticated with ${OBSERVABLEHQ_UI_HOST.hostname}. Run "observable login" to log in.`);
   }
 }
 
