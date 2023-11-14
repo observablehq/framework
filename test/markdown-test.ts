@@ -71,13 +71,13 @@ function jsonEqual(a: string, b: string): boolean {
   return deepEqual(JSON.parse(a), JSON.parse(b));
 }
 
-function applySpecialCaseFilters(snapshotContent: string) :string {
+function applySpecialCaseFilters(snapshotContent: string): string {
   // if this contains markdown-it-copy logic, strip out
   // j-notify id, which is always regerated and thus differnt
   // on every run
 
   if (snapshotContent.includes("mdic")) {
-    return snapshotContent.replace(/(id=\\?\\?"j-notify)([\d\-]*)/g, "$1");
+    return snapshotContent.replace(/(id=\\?\\?"j-notify)([\d-]*)/g, "$1");
   }
 
   return snapshotContent;
