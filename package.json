@@ -25,8 +25,14 @@
     "dev": "tsx watch ./src/preview.ts",
     "build": "rm -rf dist && ./bin/observable.ts build",
     "test": "yarn test:mocha && yarn test:lint",
+    "test:coverage": "npx c8 yarn test:mocha",
     "test:mocha": "rm -rf test/.observablehq/cache && tsx ./node_modules/.bin/mocha 'test/**/*-test.*'",
     "test:lint": "eslint src test public"
+  },
+  "c8": {
+    "all": true,
+    "include": ["src/**/*.js", "src/**/*.ts"],
+    "reporter": ["text", "lcov"]
   },
   "dependencies": {
     "@observablehq/runtime": "^5.9.4",
