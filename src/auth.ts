@@ -220,5 +220,3 @@ function getObservableApiHost(): URL {
 function formatUser(user) {
   return user.name ? `${user.name} (@${user.login})` : `@${user.login}`;
 }
-
-await main();

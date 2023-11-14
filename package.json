@@ -23,7 +23,6 @@
   },
   "scripts": {
     "dev": "tsx watch ./src/preview.ts",
-    "obs-auth": "tsx ./src/auth.ts",
     "build": "rm -rf dist && ./bin/observable.ts build",
     "test": "yarn test:mocha && yarn test:lint",
     "test:mocha": "rm -rf test/.observablehq/cache && tsx ./node_modules/.bin/mocha 'test/**/*-test.*'",
