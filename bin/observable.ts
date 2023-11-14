@@ -16,6 +16,7 @@ switch (command) {
     break;
   case "login":
     await import("../src/auth.js").then((auth) => auth.login());
+    break;
   case "whoami":
     await import("../src/auth.js").then((auth) => auth.whoami());
     break;
