@@ -1,6 +1,6 @@
 # JavaScript
 
-[Observable Markdown](./markdown) supports reactive JavaScript. JavaScript runs on the client, powered by the [Observable Runtime](https://github.com/observablehq/runtime). (In the future, JavaScript may also run during build to support data snapshot generation and server-side rendering.)
+[Observable Markdown](../markdown) supports reactive JavaScript. JavaScript runs on the client, powered by the [Observable Runtime](https://github.com/observablehq/runtime). (In the future, JavaScript may also run during build to support data snapshot generation and server-side rendering.)
 
 In addition to standard Markdown features — headings, formatting, tables, images, and the like — Observable Markdown supports reactive JavaScript that runs on the client. Live JavaScript can be expressed either as [fenced code blocks](#fenced-code-blocks) (<code>```js</code>) or [inline expressions](#inline-expressions) (<code>$\{…}</code>).
 
@@ -46,7 +46,7 @@ const x = 1 + 2;
 const x = 1 + 2;
 ```
 
-A program code block doesn’t display anything by default, but you can call the built-in [`display` function](./javascript/display) explicitly. The above block defines the top-level variable `x` with a value of ${x}.
+A program code block doesn’t display anything by default, but you can call the built-in [`display` function](./display) explicitly. The above block defines the top-level variable `x` with a value of ${x}.
 
 (A technical note: the parser first attempts to parse the input as an expression; if that fails, it parses it as a program. So, code such as `{foo: 1}` is interpreted as an object literal rather than a block with a labeled statement.)
 

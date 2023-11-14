@@ -3,7 +3,7 @@ export default {
   pages: [
     {name: "Getting started", path: "/getting-started"},
     {name: "Markdown", path: "/markdown"},
-    {name: "JavaScript", path: "/javascript"},
+    {name: "JavaScript", path: "/javascript/"},
     {name: "Data loaders", path: "/loaders"},
     {
       name: "JavaScript",
