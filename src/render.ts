@@ -43,6 +43,18 @@ export function renderDefineCell(cell) {
     .join(", ")}, body: ${body}});\n`;
 }
 
+function renderFooter(
+//  {path, pages, title, preview, hash, resolver}: RenderOptions & RenderInternalOptions
+): string {
+  return `
+<footer id="observablehq-footer">
+<div>prev</div>
+<div>next</div>
+© ${new Date().getUTCFullYear()} Observable, Inc.
+</footer>`;
+}
+
+
 type RenderInternalOptions =
   | {preview?: false; hash?: never} // serverless
   | {preview: true; hash: string}; // preview
@@ -52,6 +64,8 @@ function render(
   {path, pages, title, preview, hash, resolver}: RenderOptions & RenderInternalOptions
 ): string {
   const showSidebar = pages && pages.length > 1;
+  console.log({ pages, path });
+
   return `<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -140,7 +154,7 @@ ${
 }<div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 ${parseResult.html}</main>
-<footer id="observablehq-footer">© ${new Date().getUTCFullYear()} Observable, Inc.</footer>
+${renderFooter()}
 </div>
 `;
 }
