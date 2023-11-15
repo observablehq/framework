@@ -85,11 +85,7 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode, sourcePath
         output.replaceLeft(
           node.source.start,
           node.source.end,
-          JSON.stringify(
-            isLocalImport(value, sourcePath)
-              ? relativeUrl(sourcePath, join("/_import/", dirname(sourcePath), value))
-              : resolveImport(value)
-          )
+          JSON.stringify(isLocalImport(value, sourcePath) ? relativeImport(sourcePath, value) : resolveImport(value))
         );
       }
     },
