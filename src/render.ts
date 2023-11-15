@@ -48,7 +48,7 @@ function renderPagerLink(page, isPrev = true) {
   return `<div class="pager">
 ${
   !page
-    ? `<!---->`
+    ? ``
     : `<a class="${isPrev ? "prev" : "next"}" href="${page.path}">
 <span class="desc">${isPrev ? "Previous" : "Next"} page</span>
 <span class="title">${page.name}</span>
