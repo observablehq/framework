@@ -1,9 +1,10 @@
-import {dirname, join, relative} from "node:path";
+import {dirname, join} from "node:path";
 import {type Config, type Page} from "./config.js";
 import {computeHash} from "./hash.js";
 import {resolveImport} from "./javascript/imports.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
 import {type CellPiece, type ParseResult, parseMarkdown} from "./markdown.js";
+import {relativeUrl} from "./url.js";
 
 export interface Render {
   html: string;
@@ -15,16 +16,6 @@ export interface RenderOptions extends Config {
   root: string;
   path: string;
   resolver: (cell: CellPiece) => CellPiece;
-}
-
-// path.relative, but source is a file path, not a directory, and target might be a directory
-export function to(source, target) {
-  if (target.startsWith("https:")) return target;
-  if (!source.startsWith("/")) source = "/" + source;
-  return relative(source + ".", target)
-    .slice(1)
-    .replace(/^[.]\/[.]/, ".")
-    .replace(/^([.]+)$/, "$1/");
 }
 
 export function renderPreview(source: string, options: RenderOptions): Render {
@@ -74,13 +65,13 @@ ${
     : ""
 }<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
-<link rel="stylesheet" type="text/css" href="${to(path, "/_observablehq/style.css")}">
+<link rel="stylesheet" type="text/css" href="${relativeUrl(path, "/_observablehq/style.css")}">
 ${Array.from(getImportPreloads(parseResult, path))
-  .map((href) => `<link rel="modulepreload" href="${to(path, href)}">`)
+  .map((href) => `<link rel="modulepreload" href="${relativeUrl(path, href)}">`)
   .join("\n")}
 <script type="module">
 
-import {${preview ? "open, " : ""}define} from "${to(path, "/_observablehq/client.js")}";
+import {${preview ? "open, " : ""}define} from "${relativeUrl(path, "/_observablehq/client.js")}";
 
 ${preview ? `open({hash: ${JSON.stringify(hash)}});\n` : ""}${parseResult.cells
     .map(resolver)
@@ -102,7 +93,7 @@ ${
           ? `
   <ol>
     <li class="observablehq-link">
-      <a href="${to(path, "/")}">${escapeData(title)}</a>
+      <a href="${relativeUrl(path, "/")}">${escapeData(title)}</a>
     </li>
   </ol>`
           : ""
@@ -158,7 +149,9 @@ ${parseResult.html}</main>
 function renderListItem(p: Page, path: string): string {
   return `<li class="observablehq-link${
     p.path === path ? " observablehq-link-active" : ""
-  }"><a href="${escapeDoubleQuoted(to(path, p.path.replace(/\/index$/, "") || "/"))}">${escapeData(p.name)}</a></li>`;
+  }"><a href="${escapeDoubleQuoted(relativeUrl(path, p.path.replace(/\/index$/, "") || "/"))}">${escapeData(
+    p.name
+  )}</a></li>`;
 }
 
 function getImportPreloads(parseResult: ParseResult, path: string): Iterable<string> {

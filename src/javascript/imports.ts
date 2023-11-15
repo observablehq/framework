@@ -3,7 +3,7 @@ import {dirname, join, normalize} from "node:path";
 import {type ExportAllDeclaration, type ExportNamedDeclaration, type Node, Parser} from "acorn";
 import {simple} from "acorn-walk";
 import {type ImportReference, type JavaScriptNode, parseOptions} from "../javascript.js";
-import {to} from "../render.js";
+import {relativeUrl} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
 export function findExports(body: Node) {
@@ -87,7 +87,7 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode, sourcePath
           node.source.end,
           JSON.stringify(
             isLocalImport(value, sourcePath)
-              ? to(sourcePath, join("/_import/", dirname(sourcePath), value))
+              ? relativeUrl(sourcePath, join("/_import/", dirname(sourcePath), value))
               : resolveImport(value)
           )
         );
@@ -106,7 +106,7 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode, sourcePath
               : node.specifiers.find(isNamespaceSpecifier)?.local.name ?? "{}"
           } = await import(${JSON.stringify(
             isLocalImport(value, sourcePath)
-              ? to(sourcePath, join("/_import/", dirname(sourcePath), value))
+              ? relativeUrl(sourcePath, join("/_import/", dirname(sourcePath), value))
               : resolveImport(value)
           )});`
         );
