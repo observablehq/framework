@@ -87,7 +87,6 @@ function render(
   {path, pages, title, preview, hash, resolver}: RenderOptions & RenderInternalOptions
 ): string {
   const showSidebar = pages && pages.length > 1;
-
   return `<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
