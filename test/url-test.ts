@@ -6,6 +6,7 @@ describe("relativeUrls", () => {
     assert.strictEqual(relativeUrl("/", "https://whatever"), "https://whatever");
     assert.strictEqual(relativeUrl("/", "http://example.org"), "http://example.org");
     assert.strictEqual(relativeUrl("/", "https://example.org/"), "https://example.org/");
+    assert.strictEqual(relativeUrl("/", "mailto:hello@example.org"), "mailto:hello@example.org");
   });
   it("return the expected result", () => {
     assert.strictEqual(relativeUrl("/", "/"), "./");

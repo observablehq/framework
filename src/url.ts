@@ -1,5 +1,6 @@
 // Returns the relative path from "/file/path/to/a" to "/file/path/of/b". To
-// make relative imports work, paths to the same directory are prefixed with "./".
+// make relative imports work, paths to the same directory are prefixed with
+// "./", and paths that start without a slash are considered from the root.
 export function relativeUrl(source, target) {
   if (/^\w+:/.test(target)) return target;
   const from = `/${source}`.split(/[/]+/g).slice(0, -1);

@@ -105,14 +105,16 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode, sourcePath
               ? `{${node.specifiers.filter(isNotNamespaceSpecifier).map(rewriteImportSpecifier).join(", ")}}`
               : node.specifiers.find(isNamespaceSpecifier)?.local.name ?? "{}"
           } = await import(${JSON.stringify(
-            isLocalImport(value, sourcePath)
-              ? relativeUrl(sourcePath, join("/_import/", dirname(sourcePath), value))
-              : resolveImport(value)
+            isLocalImport(value, sourcePath) ? relativeImport(sourcePath, value) : resolveImport(value)
           )});`
         );
       }
     }
   });
+}
+
+function relativeImport(sourcePath, value) {
+  return relativeUrl(sourcePath, join("/_import/", dirname(sourcePath), value));
 }
 
 function rewriteImportSpecifier(node) {
