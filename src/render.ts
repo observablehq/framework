@@ -1,5 +1,5 @@
 import {dirname, join} from "node:path";
-import {type Config, type Page} from "./config.js";
+import {type Config, type Page, type Section} from "./config.js";
 import {computeHash} from "./hash.js";
 import {resolveImport} from "./javascript/imports.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
@@ -59,7 +59,9 @@ function renderPagerLink(page, isPrev = true) {
 }
 
 function renderFooter(
-  {path, pages, title}: RenderOptions & RenderInternalOptions
+  path: string,
+  pages: (Page | Section)[],
+  title: string
 ): string {
   function establishFlatPages(pages) {
     return pages.flatMap(({ name, path, pages}) => !!path
@@ -91,9 +93,8 @@ type RenderInternalOptions =
 
 function render(
   parseResult: ParseResult,
-  options: RenderOptions & RenderInternalOptions
+  {path, pages, title, preview, hash, resolver}: RenderOptions & RenderInternalOptions
 ): string {
-  const {path, pages, title, preview, hash, resolver} = options;
   const showSidebar = pages && pages.length > 1;
 
   return `<!DOCTYPE html>
@@ -184,7 +185,7 @@ ${
 }<div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 ${parseResult.html}</main>
-${renderFooter(options)}
+${renderFooter(path, pages, title)}
 </div>
 `;
 }
