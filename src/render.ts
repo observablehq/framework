@@ -44,32 +44,30 @@ export function renderDefineCell(cell) {
     .join(", ")}, body: ${body}});\n`;
 }
 
-// function establishPageMap(pages, map = {}) {
-//   pages.reduce(_map, {
-// }
-
-function establishFlatPages(pages) {
-  return pages.map(({ name, path, pages}) => !!path
-    ? { path, name }
-    : establishFlatPages(pages)
-  ).flat();
-}
-
-function renderPageLink(page, isPrev = true) {
-  return !page
-    ? ``
-    : `
-      <div id="observablehq-pager">
-        <a id="observablehq-pager-link" href="${page.path}">
-          <span class="desc">${isPrev ? "Previous" : "Next"} page</span>
-          <span class="title">${page.name}</span>
-        </a>
-      </div>`;
+function renderPagerLink(page, isPrev = true) {
+  return `
+    <div id="observablehq-pager">
+      ${!page
+        ? ``
+        :`
+          <a class="${isPrev ? "prev" : "next"}" href="${page.path}">
+            <span class="desc">${isPrev ? "Previous" : "Next"} page</span>
+            <span class="title">${page.name}</span>
+          </a>`
+       }
+    </div>`;
 }
 
 function renderFooter(
   {path, pages, title}: RenderOptions & RenderInternalOptions
 ): string {
+  function establishFlatPages(pages) {
+    return pages.flatMap(({ name, path, pages}) => !!path
+      ? { path, name }
+      : establishFlatPages(pages)
+    );
+  };
+
   const flatPages = establishFlatPages(pages);
   const currentIndex = flatPages.findIndex(page => page.path === path);
   const prev = flatPages[currentIndex - 1];
@@ -78,11 +76,11 @@ function renderFooter(
   return `
     <footer id="observablehq-footer">
       <nav id="observablehq-prev-next">
-        ${renderPageLink(prev, true)}
-        ${renderPageLink(next, false)}
+        ${renderPagerLink(prev, true)}
+        ${renderPagerLink(next, false)}
       </nav>
       <span id="observablehq-copyright">
-       © ${new Date().getUTCFullYear()} Observable, Inc.
+        © ${new Date().getUTCFullYear()} Observable, Inc.
       </span>
     </footer>`;
 }
