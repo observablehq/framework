@@ -1,5 +1,6 @@
 .DS_Store
 **/.observablehq/cache/
+coverage/
 dist/
 node_modules/
 test/output/*-changed.*
