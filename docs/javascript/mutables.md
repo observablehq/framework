@@ -1,4 +1,4 @@
-# Mutables
+# JavaScript: Mutables
 
 Normally, only the code block that declares a top-level variable can define it or assign to it. (This constraint may helpfully encourage you to decouple code.) You can however use the `Mutable` function to declare a mutable generator, allowing other code to mutate the generator’s value. This approach is akin to React’s `useState` hook. For example:
 

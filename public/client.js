@@ -1,4 +1,4 @@
-import {Inspector, Library, Runtime} from "/_observablehq/runtime.js";
+import {Inspector, Library, Runtime} from "./runtime.js";
 
 const library = Object.assign(new Library(), {width, Mutable, ...recommendedLibraries()});
 const runtime = new Runtime(library);
@@ -323,3 +323,50 @@ if (toggle) {
     }
   });
 }
+
+// Prevent double-clicking the summary toggle from selecting text.
+function preventDoubleClick(event) {
+  if (event.detail > 1) {
+    event.preventDefault();
+  }
+}
+
+for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
+  summary.onmousedown = preventDoubleClick;
+}
+
+// copy code cells
+document.addEventListener("pointerover", ({target}) => {
+  if (typeof navigator?.clipboard?.writeText !== "function") return;
+  if (target.nodeName === "PRE" && !target.getAttribute("data-copy")) {
+    target.addEventListener("pointermove", move);
+    target.addEventListener("pointerleave", out);
+  }
+  function out() {
+    target.removeEventListener("pointermove", move);
+    target.removeEventListener("pointerleave", out);
+    target.removeEventListener("click", copy);
+    target.removeAttribute("data-copy");
+  }
+  function move({offsetX: x}) {
+    if (30 + x > parseInt(getComputedStyle(target).width)) {
+      if (!target.getAttribute("data-copy")) {
+        target.setAttribute("data-copy", "copy");
+        target.addEventListener("click", copy);
+      }
+    } else {
+      if (target.getAttribute("data-copy")) {
+        target.removeAttribute("data-copy");
+        target.removeEventListener("click", copy);
+      }
+    }
+  }
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(target.textContent);
+      target.setAttribute("data-copy", "copied");
+    } catch {
+      target.setAttribute("data-copy", "error");
+    }
+  }
+});

@@ -1,4 +1,4 @@
-# Inputs
+# JavaScript: Inputs
 
 You can use the built-in [`view` function](#view(input)) and an HTML input element to create a reactive input. For example, here is a slider:
 

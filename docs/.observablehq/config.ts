@@ -1,23 +1,32 @@
 export default {
   title: "Observable CLI",
   pages: [
-    {path: "/index", name: "Overview"},
-    {path: "/getting-started", name: "Getting started"},
-    {path: "/markdown", name: "Markdown"},
-    {path: "/html", name: "HTML"},
-    {path: "/javascript", name: "JavaScript"},
-    {path: "/javascript/reactivity", name: "Reactivity"},
-    {path: "/javascript/display", name: "Display"},
-    {path: "/javascript/files", name: "Files"},
-    {path: "/javascript/promises", name: "Promises"},
-    {path: "/javascript/generators", name: "Generators"},
-    {path: "/javascript/mutables", name: "Mutables"},
-    {path: "/javascript/imports", name: "Imports"},
-    {path: "/javascript/inputs", name: "Inputs"},
-    {path: "/dot", name: "DOT"},
-    {path: "/mermaid", name: "Mermaid"},
-    {path: "/tex", name: "TeX"},
-    {path: "/loaders", name: "Data loaders"},
-    {path: "/contributing", name: "Contributing"},
+    {name: "Getting started", path: "/getting-started"},
+    {name: "Markdown", path: "/markdown"},
+    {name: "JavaScript", path: "/javascript"},
+    {name: "Data loaders", path: "/loaders"},
+    {
+      name: "JavaScript",
+      pages: [
+        {name: "Reactivity", path: "/javascript/reactivity"},
+        {name: "Display", path: "/javascript/display"},
+        {name: "Files", path: "/javascript/files"},
+        {name: "Promises", path: "/javascript/promises"},
+        {name: "Generators", path: "/javascript/generators"},
+        {name: "Mutables", path: "/javascript/mutables"},
+        {name: "Imports", path: "/javascript/imports"},
+        {name: "Inputs", path: "/javascript/inputs"}
+      ]
+    },
+    {
+      name: "Features",
+      pages: [
+        {name: "HTML", path: "/html"},
+        {name: "DOT", path: "/dot"},
+        {name: "Mermaid", path: "/mermaid"},
+        {name: "TeX", path: "/tex"}
+      ]
+    },
+    {name: "Contributing", path: "/contributing"}
   ]
 };

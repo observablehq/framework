@@ -45,9 +45,9 @@ class Server {
 
   _handleRequest: RequestListener = async (req, res) => {
     console.log(req.method, req.url);
-    const url = new URL(req.url!, "http://localhost");
-    let {pathname} = url;
     try {
+      const url = new URL(req.url!, "http://localhost");
+      let {pathname} = url;
       if (pathname === "/_observablehq/runtime.js") {
         send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
       } else if (pathname.startsWith("/_observablehq/")) {
@@ -169,11 +169,8 @@ class FileWatchers {
   ) {
     const watchers = new FileWatchers();
     const {files, imports} = parseResult;
-    for (const name of new Set([
-      ...files.map((f) => join(dirname(path), f.name)),
-      ...imports.map((i) => join(dirname(path), i.name))
-    ])) {
-      const watchPath = FileWatchers.getWatchPath(root, name);
+    for (const name of new Set([...files.map((f) => f.name), ...imports.map((i) => i.name)])) {
+      const watchPath = FileWatchers.getWatchPath(root, join(dirname(path), name));
       let prevState = await maybeStat(watchPath);
       let watcher;
       try {
@@ -237,7 +234,7 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
         case "rename": {
           markdownWatcher?.close();
           try {
-            markdownWatcher = watch(path, watcher);
+            markdownWatcher = watch(join(root, path), watcher);
           } catch (error) {
             if (isNodeError(error) && error.code === "ENOENT") {
               console.error(`file no longer exists: ${path}`);
