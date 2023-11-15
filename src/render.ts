@@ -45,17 +45,14 @@ export function renderDefineCell(cell) {
 }
 
 function renderPagerLink(page, isPrev = true) {
-  return `
-    <div id="observablehq-pager">
-      ${!page
-        ? ``
-        :`
-          <a class="${isPrev ? "prev" : "next"}" href="${page.path}">
-            <span class="desc">${isPrev ? "Previous" : "Next"} page</span>
-            <span class="title">${page.name}</span>
-          </a>`
-       }
-    </div>`;
+  return `<div id="observablehq-pager">
+${!page
+  ? `<!---->`
+  : `<a class="${isPrev ? "prev" : "next"}" href="${page.path}">
+<span class="desc">${isPrev ? "Previous" : "Next"} page</span>
+<span class="title">${page.name}</span>
+</a>`}
+</div>`;
 }
 
 function renderFooter(
@@ -70,21 +67,25 @@ function renderFooter(
     );
   };
 
-  const flatPages = establishFlatPages(pages);
+  // hard-code the link bath to the root and call it "Home"
+
+  const flatPages = [
+    { path: "/index", name: "Home" },
+    ...establishFlatPages(pages)
+  ];
   const currentIndex = flatPages.findIndex(page => page.path === path);
   const prev = flatPages[currentIndex - 1];
   const next = flatPages[currentIndex + 1];
 
-  return `
-    <footer id="observablehq-footer">
-      <nav id="observablehq-prev-next">
-        ${renderPagerLink(prev, true)}
-        ${renderPagerLink(next, false)}
-      </nav>
-      <span id="observablehq-copyright">
-        © ${new Date().getUTCFullYear()} Observable, Inc.
-      </span>
-    </footer>`;
+  return`<footer id="observablehq-footer">
+<nav id="observablehq-prev-next">
+${renderPagerLink(prev, true)}
+${renderPagerLink(next, false)}
+</nav>
+<span id="observablehq-copyright">
+© ${new Date().getUTCFullYear()} Observable, Inc.
+</span>
+</footer>`;
 }
 
 type RenderInternalOptions =
