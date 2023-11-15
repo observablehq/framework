@@ -1,4 +1,4 @@
-import {Inspector, Library, Runtime} from "/_observablehq/runtime.js";
+import {Inspector, Library, Runtime} from "./runtime.js";
 
 const library = Object.assign(new Library(), {width, Mutable, ...recommendedLibraries()});
 const runtime = new Runtime(library);
