@@ -149,7 +149,7 @@ ${parseResult.html}</main>
 function renderListItem(p: Page, path: string): string {
   return `<li class="observablehq-link${
     p.path === path ? " observablehq-link-active" : ""
-  }"><a href="${escapeDoubleQuoted(relativeUrl(path, p.path.replace(/\/index$/, "") || "/"))}">${escapeData(
+  }"><a href="${escapeDoubleQuoted(relativeUrl(path, p.path.replace(/\/index$/, "/") || "/"))}">${escapeData(
     p.name
   )}</a></li>`;
 }
