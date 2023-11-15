@@ -45,7 +45,7 @@ export function renderDefineCell(cell) {
 }
 
 function renderPagerLink(page, isPrev = true) {
-  return `<div id="observablehq-pager">
+  return `<div class="pager">
 ${
   !page
     ? `<!---->`
@@ -69,11 +69,11 @@ function renderFooter(path: string, pages: (Page | Section)[]): string {
   const next = flatPages[currentIndex + 1];
 
   return `<footer id="observablehq-footer">
-<nav id="observablehq-prev-next">
+<nav class="prev-next">
 ${renderPagerLink(prev, true)}
 ${renderPagerLink(next, false)}
 </nav>
-<span id="observablehq-copyright">
+<span class="copyright">
 © ${new Date().getUTCFullYear()} Observable, Inc.
 </span>
 </footer>`;
