@@ -17,7 +17,7 @@ for (const feature of collection.features) {
 }
 ```
 
-To access your data from Markdown, add a [JavaScript fenced code block](./javascript) and load `earthquakes.csv` as a [file](./javascript/files).
+To access your data from Markdown, add a [JavaScript fenced code block](./javascript/) and load `earthquakes.csv` as a [file](./javascript/files).
 
 ```js show
 const quakes = FileAttachment("earthquakes.csv").csv({typed: true});
