@@ -46,38 +46,29 @@ export function renderDefineCell(cell) {
 
 function renderPagerLink(page, isPrev = true) {
   return `<div id="observablehq-pager">
-${!page
-  ? `<!---->`
-  : `<a class="${isPrev ? "prev" : "next"}" href="${page.path}">
+${
+  !page
+    ? `<!---->`
+    : `<a class="${isPrev ? "prev" : "next"}" href="${page.path}">
 <span class="desc">${isPrev ? "Previous" : "Next"} page</span>
 <span class="title">${page.name}</span>
-</a>`}
-</div>`;
+</a>`
+}</div>`;
 }
 
-function renderFooter(
-  path: string,
-  pages: (Page | Section)[],
-  title: string
-): string {
+function renderFooter(path: string, pages: (Page | Section)[]): string {
   function establishFlatPages(pages) {
-    return pages.flatMap(({ name, path, pages}) => !!path
-      ? { path, name }
-      : establishFlatPages(pages)
-    );
-  };
+    return pages.flatMap(({name, path, pages}) => (path ? {path, name} : establishFlatPages(pages)));
+  }
 
   // hard-code the link bath to the root and call it "Home"
 
-  const flatPages = [
-    { path: "/index", name: "Home" },
-    ...establishFlatPages(pages)
-  ];
-  const currentIndex = flatPages.findIndex(page => page.path === path);
+  const flatPages = [{path: "/index", name: "Home"}, ...establishFlatPages(pages)];
+  const currentIndex = flatPages.findIndex((page) => page.path === path);
   const prev = flatPages[currentIndex - 1];
   const next = flatPages[currentIndex + 1];
 
-  return`<footer id="observablehq-footer">
+  return `<footer id="observablehq-footer">
 <nav id="observablehq-prev-next">
 ${renderPagerLink(prev, true)}
 ${renderPagerLink(next, false)}
@@ -186,7 +177,7 @@ ${
 }<div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 ${parseResult.html}</main>
-${renderFooter(path, pages, title)}
+${renderFooter(path, pages)}
 </div>
 `;
 }
