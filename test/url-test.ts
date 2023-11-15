@@ -28,6 +28,11 @@ describe("relativeUrls", () => {
     assert.strictEqual(relativeUrl("/foo/bar", "/foo.csv"), "../foo.csv");
     assert.strictEqual(relativeUrl("/foo/bar", "/foo/"), "./");
     assert.strictEqual(relativeUrl("/foo/bar", "/baz/bar"), "../baz/bar");
+    assert.strictEqual(relativeUrl("foo", "bar"), "./bar");
+    assert.strictEqual(relativeUrl("foo/bar", "baz"), "../baz");
+    assert.strictEqual(relativeUrl("foo/bar", "foo"), "../foo");
+    assert.strictEqual(relativeUrl("foo/bar", "foo.csv"), "../foo.csv");
+    assert.strictEqual(relativeUrl("foo/bar", "foo/"), "./");
     assert.strictEqual(relativeUrl("foo/bar", "baz/bar"), "../baz/bar");
     assert.strictEqual(relativeUrl("foo////baz", "baz//bar"), "../baz/bar");
   });
