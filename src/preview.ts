@@ -45,9 +45,9 @@ class Server {
 
   _handleRequest: RequestListener = async (req, res) => {
     console.log(req.method, req.url);
-    const url = new URL(req.url!, "http://localhost");
-    let {pathname} = url;
     try {
+      const url = new URL(req.url!, "http://localhost");
+      let {pathname} = url;
       if (pathname === "/_observablehq/runtime.js") {
         send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
       } else if (pathname.startsWith("/_observablehq/")) {
