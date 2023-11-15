@@ -3,6 +3,7 @@ import {dirname, join, normalize} from "node:path";
 import {type ExportAllDeclaration, type ExportNamedDeclaration, type Node, Parser} from "acorn";
 import {simple} from "acorn-walk";
 import {type ImportReference, type JavaScriptNode, parseOptions} from "../javascript.js";
+import {relativeUrl} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
 export function findExports(body: Node) {
@@ -84,11 +85,7 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode, sourcePath
         output.replaceLeft(
           node.source.start,
           node.source.end,
-          JSON.stringify(
-            isLocalImport(value, sourcePath)
-              ? join("/_import/", join(dirname(sourcePath), value))
-              : resolveImport(value)
-          )
+          JSON.stringify(isLocalImport(value, sourcePath) ? relativeImport(sourcePath, value) : resolveImport(value))
         );
       }
     },
@@ -104,14 +101,16 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode, sourcePath
               ? `{${node.specifiers.filter(isNotNamespaceSpecifier).map(rewriteImportSpecifier).join(", ")}}`
               : node.specifiers.find(isNamespaceSpecifier)?.local.name ?? "{}"
           } = await import(${JSON.stringify(
-            isLocalImport(value, sourcePath)
-              ? join("/_import/", join(dirname(sourcePath), value))
-              : resolveImport(value)
+            isLocalImport(value, sourcePath) ? relativeImport(sourcePath, value) : resolveImport(value)
           )});`
         );
       }
     }
   });
+}
+
+function relativeImport(sourcePath, value) {
+  return relativeUrl(sourcePath, join("/_import/", dirname(sourcePath), value));
 }
 
 function rewriteImportSpecifier(node) {
