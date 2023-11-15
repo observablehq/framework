@@ -63,10 +63,11 @@ function renderFooter(path: string, pages: (Page | Section)[]): string {
 
   // hard-code the link bath to the root and call it "Home"
 
-  const flatPages = [{path: "/index", name: "Home"}, ...establishFlatPages(pages)];
+  const flatPages = establishFlatPages(pages);
   const currentIndex = flatPages.findIndex((page) => page.path === path);
-  const prev = flatPages[currentIndex - 1];
-  const next = flatPages[currentIndex + 1];
+  const [prev, next] = currentIndex > -1
+    ? [ flatPages[currentIndex - 1], flatPages[currentIndex + 1]]
+    : [ null, null ];
 
   return `<footer id="observablehq-footer">
 <nav class="prev-next">
