@@ -63,9 +63,7 @@ function renderFooter(path: string, pages: (Page | Section)[]): string {
 
   const flatPages = establishFlatPages(pages);
   const currentIndex = flatPages.findIndex((page) => page.path === path);
-  const [prev, next] = currentIndex > -1
-    ? [ flatPages[currentIndex - 1], flatPages[currentIndex + 1]]
-    : [ null, null ];
+  const [prev, next] = currentIndex > -1 ? [flatPages[currentIndex - 1], flatPages[currentIndex + 1]] : [null, null];
 
   return `<footer id="observablehq-footer">
 <nav class="prev-next">
