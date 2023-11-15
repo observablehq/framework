@@ -61,8 +61,6 @@ function renderFooter(path: string, pages: (Page | Section)[]): string {
     return pages.flatMap(({name, path, pages}) => (path ? {path, name} : establishFlatPages(pages)));
   }
 
-  // hard-code the link bath to the root and call it "Home"
-
   const flatPages = establishFlatPages(pages);
   const currentIndex = flatPages.findIndex((page) => page.path === path);
   const [prev, next] = currentIndex > -1
