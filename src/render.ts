@@ -43,17 +43,48 @@ export function renderDefineCell(cell) {
     .join(", ")}, body: ${body}});\n`;
 }
 
-function renderFooter(
-//  {path, pages, title, preview, hash, resolver}: RenderOptions & RenderInternalOptions
-): string {
-  return `
-<footer id="observablehq-footer">
-<div>prev</div>
-<div>next</div>
-© ${new Date().getUTCFullYear()} Observable, Inc.
-</footer>`;
+// function establishPageMap(pages, map = {}) {
+//   pages.reduce(_map, {
+// }
+
+function establishFlatPages(pages) {
+  return pages.map(({ name, path, pages}) => !!path
+    ? { path, name }
+    : establishFlatPages(pages)
+  ).flat();
 }
 
+function renderPageLink(page, isPrev = true) {
+  return !page
+    ? ``
+    : `
+      <div id="observablehq-pager">
+        <a id="observablehq-pager-link" href="${page.path}">
+          <span class="desc">${isPrev ? "Previous" : "Next"} page</span>
+          <span class="title">${page.name}</span>
+        </a>
+      </div>`;
+}
+
+function renderFooter(
+  {path, pages, title}: RenderOptions & RenderInternalOptions
+): string {
+  const flatPages = establishFlatPages(pages);
+  const currentIndex = flatPages.findIndex(page => page.path === path);
+  const prev = flatPages[currentIndex - 1];
+  const next = flatPages[currentIndex + 1];
+
+  return `
+    <footer id="observablehq-footer">
+      <nav id="observablehq-prev-next">
+        ${renderPageLink(prev, true)}
+        ${renderPageLink(next, false)}
+      </nav>
+      <span id="observablehq-copyright">
+       © ${new Date().getUTCFullYear()} Observable, Inc.
+      </span>
+    </footer>`;
+}
 
 type RenderInternalOptions =
   | {preview?: false; hash?: never} // serverless
@@ -61,10 +92,10 @@ type RenderInternalOptions =
 
 function render(
   parseResult: ParseResult,
-  {path, pages, title, preview, hash, resolver}: RenderOptions & RenderInternalOptions
+  options: RenderOptions & RenderInternalOptions
 ): string {
+  const {path, pages, title, preview, hash, resolver} = options;
   const showSidebar = pages && pages.length > 1;
-  console.log({ pages, path });
 
   return `<!DOCTYPE html>
 <meta charset="utf-8">
@@ -154,7 +185,7 @@ ${
 }<div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 ${parseResult.html}</main>
-${renderFooter()}
+${renderFooter(options)}
 </div>
 `;
 }

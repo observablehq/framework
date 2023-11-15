@@ -61,6 +61,32 @@ body {
 #observablehq-footer {
   display: block;
   margin-top: 10rem;
+}
+
+#observablehq-prev-next {
+  display: flex;
+  justify-content: space-between;
+}
+
+#observablehq-prev-next {
+  display: flex;
+  justify-content: space-between;
+}
+
+#observablehq-pager {
+  border: 1px solid red;
+  border-radius: 8px;
+  padding: 1em;
+  margin: 1em;
+  flex: 110;
+}
+
+#observablehq-pager-link {
+  display: flex;
+  flex-direction: column;
+}
+
+#observablehq-copyright {
   font: 12px var(--sans-serif);
   color: var(--theme-foreground-faint);
 }
