@@ -5,7 +5,7 @@ import {isNodeError} from "./error.js";
 
 // A path is local if it doesn’t go outside the the root.
 export function getLocalPath(sourcePath: string, name: string): string | null {
-  if (/^(\w+:)\/\//.test(name)) return null; // URL
+  if (/^\w+:/.test(name)) return null; // URL
   const path = join(dirname(sourcePath.startsWith("/") ? sourcePath.slice("/".length) : sourcePath), name);
   if (path.startsWith("../")) return null; // goes above root
   return path;
