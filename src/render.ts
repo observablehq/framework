@@ -45,20 +45,6 @@ export function renderDefineCell(cell) {
     .join(", ")}, body: ${body}});\n`;
 }
 
-function renderFooter(path: string, {prev, next}: {prev?: Page; next?: Page} = {}): string {
-  return `<footer id="observablehq-footer">
-    ${
-      !(prev || next)
-        ? ``
-        : `<nav>
-          ${!prev ? "" : `<a class="prev" href="${prev.path}"><span>${prev.name}</span></a>`}
-          ${!next ? "" : `<a class="next" href="${next.path}"><span>${next.name}</span></a>`}
-          </nav>`
-    }
-    <div>© ${new Date().getUTCFullYear()} Observable, Inc.</div>
-</footer>`;
-}
-
 type RenderInternalOptions =
   | {preview?: false; hash?: never} // serverless
   | {preview: true; hash: string}; // preview
@@ -156,7 +142,7 @@ ${
 }<div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 ${parseResult.html}</main>
-${renderFooter(path, pager(path, pages))}
+${footer(path, pager(path, pages))}
 </div>
 `;
 }
@@ -210,7 +196,7 @@ function entity(character) {
   return `&#${character.charCodeAt(0).toString()};`;
 }
 
-// Pager links (prev, next) are computed once for a given pages navigation.
+// Pager links in the footer are computed once for a given navigation.
 const _pagers = new WeakMap();
 function pager(path: string, pages?: (Page | Section)[]): {prev?: Page; next?: Page} | undefined {
   if (!pages) return;
@@ -232,4 +218,15 @@ function pager(path: string, pages?: (Page | Section)[]): {prev?: Page; next?: P
       else yield {path, name};
     }
   }
+}
+
+function footer(path: string, {prev, next}: {prev?: Page; next?: Page} = {}): string {
+  return `<footer id="observablehq-footer">\n${
+    !(prev || next)
+      ? ``
+      : `<nav>${!prev ? "" : `<a class="prev" href="${prev.path}"><span>${prev.name}</span></a>`}${
+          !next ? "" : `<a class="next" href="${next.path}"><span>${next.name}</span></a>`
+        }</nav>\n`
+  }<div>© ${new Date().getUTCFullYear()} Observable, Inc.</div>
+</footer>`;
 }
