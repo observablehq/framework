@@ -14,7 +14,7 @@ Inputs.button("Throw confetti!", {reduce: () => confetti()})
 
 You can also import JavaScript from local ES modules. For example, if this is `foo.js`:
 
-```js no-run
+```js run=false
 export const foo = 42;
 ```
 

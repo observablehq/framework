@@ -13,6 +13,7 @@ import MarkdownItAnchor from "markdown-it-anchor";
 import mime from "mime";
 import {getLocalPath} from "./files.js";
 import {computeHash} from "./hash.js";
+import {parseInfo} from "./info.js";
 import {type FileReference, type ImportReference, type Transpile, transpileJavaScript} from "./javascript.js";
 import {transpileTag} from "./tag.js";
 
@@ -79,16 +80,20 @@ function uniqueCodeId(context: ParseContext, content: string): string {
   return id;
 }
 
-function getLiveSource(content: string, language: string | undefined, attributes: Record<string, boolean | string>) {
-  return optionEnabled(attributes, "no-run")
+function isFalse(attribute: string | undefined): boolean {
+  return attribute?.toLowerCase() === "false";
+}
+
+function getLiveSource(content: string, tag: string, attributes: Record<string, string>) {
+  return isFalse(attributes.run)
     ? undefined
-    : language === "js"
+    : tag === "js"
     ? content
-    : language === "tex"
+    : tag === "tex"
     ? transpileTag(content, "tex.block", true)
-    : language === "dot"
+    : tag === "dot"
     ? transpileTag(content, "dot", false)
-    : language === "mermaid"
+    : tag === "mermaid"
     ? transpileTag(content, "await mermaid", false)
     : undefined;
 }
@@ -96,11 +101,11 @@ function getLiveSource(content: string, language: string | undefined, attributes
 function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: string): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
     const token = tokens[idx];
-    const {language, attributes} = parseCodeInfo(token.info);
-    token.info = language ?? "";
+    const {tag, attributes} = parseInfo(token.info);
+    token.info = tag;
     let result = "";
     let count = 0;
-    const source = getLiveSource(token.content, language, attributes);
+    const source = getLiveSource(token.content, tag, attributes);
     if (source != null) {
       const id = uniqueCodeId(context, token.content);
       const sourceLine = context.startLine + context.currentLine;
@@ -116,7 +121,8 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
       result += `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`;
       count++;
     }
-    if (source == null || optionEnabled(attributes, "show")) {
+    // TODO we could hide non-live code here with show=false?
+    if (source == null || ("show" in attributes && !isFalse(attributes.show))) {
       result += baseRenderer(tokens, idx, options, context, self);
       count++;
     }
@@ -133,12 +139,6 @@ const CODE_BACKSLASH = 92;
 const CODE_QUOTE = 34;
 const CODE_SINGLE_QUOTE = 39;
 const CODE_BACKTICK = 96;
-const CODE_PERIOD = 46;
-const CODE_POUND = 35;
-const CODE_DASH = 45;
-const CODE_UNDERSCORE = 95;
-const CODE_COLON = 58;
-const CODE_COMMA = 44;
 
 function parsePlaceholder(content: string, replacer: (i: number, j: number) => void) {
   let afterDollar = false;
@@ -189,194 +189,6 @@ function parsePlaceholder(content: string, replacer: (i: number, j: number) => v
       afterDollar = false;
     }
   }
-}
-
-function isSpace(c: number) {
-  return c === 0x20 || c === 0x09;
-}
-
-function isAlpha(c: number) {
-  return (c >= 65 && c <= 90) || (c >= 97 && c <= 122);
-}
-
-function isAlphaNum(c: number) {
-  return (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || (c >= 48 && c <= 57);
-}
-
-function isIdentifier(c: number) {
-  return isAlphaNum(c) || c === CODE_DASH || c === CODE_UNDERSCORE || c === CODE_PERIOD;
-}
-
-interface Attribute {
-  name: string;
-  value?: string | boolean;
-}
-
-function parseAttributes(content: string): {
-  classes: string[];
-  id: string | undefined;
-  attributes: Record<string, any>;
-} {
-  const tokens: Attribute[] = [];
-
-  if (content.charAt(0) !== "{") return {attributes: {}, classes: [], id: undefined};
-
-  let start = 0;
-  let state = "begin";
-  let inQuote = 0;
-  let quotedValue: string | boolean = "";
-
-  for (let j = 1, n = content.length; j < n; ++j) {
-    const cj = content.charCodeAt(j);
-    const cjj = j + 1 < n ? content.charCodeAt(j + 1) : 0;
-    if ((state === "begin" || state === "skip") && cj === CODE_BRACER) break;
-    switch (state) {
-      case "begin":
-        if (isSpace(cj) || cj === CODE_COMMA) continue;
-        start = j--;
-        state = "start";
-        break;
-
-      case "separator":
-        if (cj === CODE_COMMA) state = "begin";
-        break;
-
-      case "skip":
-        // Ignore stray punctuation and numbers
-        if (isSpace(cj) || cj === CODE_COMMA) state = "begin";
-        break;
-
-      case "keyseparator":
-        if (cj === CODE_COMMA) state = "begin";
-        if (cj === CODE_COLON) state = "valuestart";
-        break;
-
-      case "start":
-        if (isAlpha(cj)) {
-          state = "key";
-        } else if (isAlpha(cj) || ((cj === CODE_PERIOD || cj === CODE_POUND) && isAlpha(cjj))) {
-          state = "classid";
-        } else {
-          state = "separator";
-        }
-        break;
-
-      case "quote":
-        if (cj === CODE_BACKSLASH) {
-          quotedValue += content.slice(start + 1, j);
-          start = j++;
-        } else if (cj === inQuote) {
-          quotedValue += content.slice(start + 1, j);
-          if (tokens.length > 0) {
-            if (quotedValue.toLowerCase() === "true") {
-              quotedValue = true;
-            } else if (quotedValue.toLowerCase() === "false") {
-              quotedValue = false;
-            }
-            tokens[tokens.length - 1] = {...tokens[tokens.length - 1], value: quotedValue};
-          }
-          quotedValue = "";
-          state = "separator";
-        }
-        break;
-
-      case "classid":
-        if (!isIdentifier(cj)) {
-          if (isSpace(cj) || cj === CODE_COMMA || cj === CODE_BRACER) {
-            tokens.push({name: content.slice(start, j--)});
-          }
-          state = "separator";
-        }
-        break;
-
-      case "key":
-        if (!isIdentifier(cj)) {
-          tokens.push({name: content.slice(start, j--), value: true});
-          state = "keyseparator";
-        }
-        break;
-
-      case "valuestart":
-        if (cj === CODE_QUOTE || cj === CODE_SINGLE_QUOTE) {
-          inQuote = cj;
-          start = j;
-          state = "quote";
-          break;
-        } else if (isIdentifier(cj)) {
-          start = j;
-          state = "value";
-          j--;
-        } else if (!isSpace(cj)) {
-          state = "skip";
-        }
-        break;
-
-      case "value":
-        if (!isIdentifier(cj)) {
-          if (tokens.length > 0) {
-            let value: string | boolean = content.slice(start, j);
-            if (value.toLowerCase() === "true") {
-              value = true;
-            } else if (value.toLowerCase() === "false") {
-              value = false;
-            }
-            tokens[tokens.length - 1].value = value;
-          }
-          j--;
-          state = "keyseparator";
-        }
-    }
-  }
-  if (state === "key" || state === "classid") tokens.push({name: content.slice(start)});
-
-  const attributes = {};
-  const classes: string[] = [];
-  let id: string | undefined;
-
-  for (const token of tokens) {
-    const c = token.name.charCodeAt(0);
-    if (c === CODE_PERIOD) classes.push(token.name.slice(1));
-    else if (c === CODE_POUND) id = token.name.slice(1);
-    else attributes[token.name] = token.value;
-  }
-  return {classes, id, attributes};
-}
-
-export interface CodeInfo {
-  language: string | undefined;
-  classes: string[];
-  id: string | undefined;
-  attributes: Record<string, string | boolean>;
-}
-
-export function parseCodeInfo(info: string): CodeInfo {
-  // Code info grammar:
-  //   info: empty | language_id | attributes | language_id ows attributes
-  //   language_id: [\w]+
-  //   attributes: '{' attribute_list '}'
-  //   attribute_list: attribute | attribute_list ',' attribute
-  //   attribute: key | key ':' value | class_name | id_name
-  //   key: ows identifier ows
-  //   value: ows value_content ows
-  //   value_content: quoted_string | identifier | true | false | "true" | "false"
-  //   class_name: '.' identifier
-  //   id_name: '#' identifier
-  //   identifier: [a-zA-Z] [a-zA-Z0-9-_.]*
-  //   quoted_string: '"' ([^"] | \")* '"' | "'" ([^'] | \')* "'"
-  //   ows: [ \t]*
-  const match = /^((?<language>\w+)?)(\s*(?<attributes>.*))?\s*$/.exec(info);
-  if (!match) return {language: undefined, attributes: {}, classes: [], id: undefined};
-  const language = match.groups?.language;
-  if (match.groups?.attributes) {
-    const parsed = parseAttributes(match.groups.attributes);
-    return {language, ...parsed};
-  }
-  return {language, attributes: {}, classes: [], id: undefined};
-}
-
-function optionEnabled(attributes: Record<string, boolean | string> | undefined, name: string) {
-  // TODO: blend in defaults from context
-  return attributes && attributes[name] === true;
 }
 
 function transformPlaceholderBlock(token) {
