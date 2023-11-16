@@ -30,7 +30,7 @@ export async function build(context: CommandContext = makeCommandContext()) {
 
   // Render .md files, building a list of file attachments as we go.
   const config = await readConfig(sourceRoot);
-  const pages = await readPages(sourceRoot);
+  const pages = config?.pages ?? (await readPages(sourceRoot));
   const files: string[] = [];
   const imports: string[] = [];
   const resolver = await makeCLIResolver();

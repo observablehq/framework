@@ -15,6 +15,7 @@ export interface Render {
 export interface RenderOptions extends Config {
   root: string;
   path: string;
+  pages?: (Page | Section)[];
   resolver: (cell: CellPiece) => CellPiece;
 }
 
@@ -44,21 +45,16 @@ export function renderDefineCell(cell) {
     .join(", ")}, body: ${body}});\n`;
 }
 
-function renderPagerLink(page, prev) {
-  return !page ? `` : `<a class="${prev ? "prev" : "next"}" href="${page.path}"><span>${page.name}</span></a>`;
-}
-
-function renderFooter(path: string, pages: (Page | Section)[]): string {
-  function establishFlatPages(pages) {
-    return pages.flatMap(({name, path, pages}) => (path ? {path, name} : establishFlatPages(pages)));
-  }
-  const flatPages = establishFlatPages(pages);
-  const currentIndex = flatPages.findIndex((page) => page.path === path);
-  const [prev, next] =
-    currentIndex > -1 ? [flatPages?.[currentIndex - 1], flatPages?.[currentIndex + 1]] : [null, null];
-
+function renderFooter(path: string, {prev, next}: {prev?: Page; next?: Page} = {}): string {
   return `<footer id="observablehq-footer">
-    ${!(prev || next) ? `` : `<nav>${renderPagerLink(prev, true)}${renderPagerLink(next, false)}</nav>`}
+    ${
+      !(prev || next)
+        ? ``
+        : `<nav>
+          ${!prev ? `` : `<a class="prev" href="${prev.path}"><span>${prev.name}</span></a>`}
+          ${!next ? `` : `<a class="next" href="${next.path}"><span>${next.name}</span></a>`}
+          </nav>`
+    }
     <div>© ${new Date().getUTCFullYear()} Observable, Inc.</div>
 </footer>`;
 }
@@ -160,7 +156,7 @@ ${
 }<div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 ${parseResult.html}</main>
-${renderFooter(path, pages)}
+${renderFooter(path, pager(path, pages))}
 </div>
 `;
 }
@@ -212,4 +208,28 @@ function escapeData(value: string): string {
 
 function entity(character) {
   return `&#${character.charCodeAt(0).toString()};`;
+}
+
+// Pager links (prev, next) are computed once for a given pages navigation.
+const _pagers = new WeakMap();
+function pager(path: string, pages?: (Page | Section)[]): {prev?: Page; next?: Page} | undefined {
+  if (!pages) return;
+  if (!_pagers.has(pages)) {
+    const links = new Map();
+    let prev;
+    for (const page of walk(pages)) {
+      links.set(page.path, {prev, next: undefined});
+      if (prev) links.get(prev.path).next = page;
+      prev = page;
+    }
+    _pagers.set(pages, links);
+  }
+  return _pagers.get(pages).get(path);
+
+  function* walk(pages) {
+    for (const {path, name, pages: children} of pages) {
+      if (children) yield* walk(children);
+      else yield {path, name};
+    }
+  }
 }
