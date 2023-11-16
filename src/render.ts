@@ -45,12 +45,7 @@ export function renderDefineCell(cell) {
 }
 
 function renderPagerLink(page, prev) {
-  return !page
-    ? ``
-    : `<a class="${prev ? "prev" : "next"}" href="${page.path}">
-  <span class="desc">${prev ? "Previous" : "Next"} page</span>
-  <span class="title">${page.name}</span>
-</a>`;
+  return !page ? `` : `<a class="${prev ? "prev" : "next"}" href="${page.path}"><span>${page.name}</span></a>`;
 }
 
 function renderFooter(path: string, pages: (Page | Section)[]): string {
@@ -63,13 +58,8 @@ function renderFooter(path: string, pages: (Page | Section)[]): string {
     currentIndex > -1 ? [flatPages?.[currentIndex - 1], flatPages?.[currentIndex + 1]] : [null, null];
 
   return `<footer id="observablehq-footer">
-<nav class="prev-next">
-${renderPagerLink(prev, true)}
-${renderPagerLink(next, false)}
-</nav>
-<span class="copyright">
-© ${new Date().getUTCFullYear()} Observable, Inc.
-</span>
+    ${!(prev || next) ? `` : `<nav>${renderPagerLink(prev, true)}${renderPagerLink(next, false)}</nav>`}
+    <div>© ${new Date().getUTCFullYear()} Observable, Inc.</div>
 </footer>`;
 }
 

@@ -62,20 +62,18 @@ body {
   display: block;
   margin-top: 10rem;
   font: 12px var(--sans-serif);
+  color: var(--theme-foreground-faint);
 }
 
-#observablehq-footer .prev-next {
+#observablehq-footer nav {
   display: grid;
   column-gap: 1rem;
   grid-template-columns: repeat(2,1fr);
   margin-bottom: 1rem;
 }
 
-#observablehq-footer a {
+#observablehq-footer nav a {
   display: block;
-}
-
-#observablehq-footer a {
   border: 1px solid var(--theme-foreground-fainter);
   text-decoration: none;
   border-radius: 8px;
@@ -85,28 +83,32 @@ body {
   flex-direction: column;
 }
 
-#observablehq-footer a:hover {
-  border: 1px solid var(--theme-foreground);
-}
-
-#observablehq-footer .prev {
-  align-items: start;
-}
-
-#observablehq-footer .next {
-  align-items: end;
-}
-
-#observablehq-footer .desc {
-  color: var(--theme-foreground-faint);
-}
-
-#observablehq-footer .title {
+#observablehq-footer nav a span {
   font-size: 14px;
 }
 
-#observablehq-footer .copyright {
+#observablehq-footer nav a.prev {
+  align-items: start;
+}
+
+#observablehq-footer nav a.next {
+  align-items: end;
+}
+
+#observablehq-footer a::before {
   color: var(--theme-foreground-faint);
+}
+
+#observablehq-footer a.prev::before {
+  content: "Previous page";
+}
+
+#observablehq-footer a.next::before {
+  content: "Next page";
+}
+
+#observablehq-footer nav a:hover {
+  border-color: var(--theme-foreground);
 }
 
 #observablehq-center {
