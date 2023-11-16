@@ -18,6 +18,7 @@ export interface CommandEffects {
   log: (...args: any[]) => void;
   isatty: (fd: number) => boolean;
   waitForEnter: () => Promise<void>;
+  getObservableApiKey: () => Promise<string | null>;
   setObservableApiKey: (id: string, key: string) => Promise<void>;
   exitSuccess: () => void;
 }
@@ -29,6 +30,7 @@ const defaultEffects: CommandEffects = {
   log: console.log,
   isatty,
   waitForEnter,
+  getObservableApiKey,
   setObservableApiKey,
   exitSuccess: () => process.exit(0)
 };
@@ -62,7 +64,7 @@ export async function login(effects = defaultEffects) {
 }
 
 export async function whoami(effects = defaultEffects) {
-  const key = await getObservableApiKey();
+  const key = await effects.getObservableApiKey();
   if (key) {
     const req = await fetch(new URL("/cli/user", OBSERVABLEHQ_API_HOST), {
       headers: {
@@ -253,7 +255,7 @@ function getObservableUiHost(): URL {
   }
 }
 
-function getObservableApiHost(): URL {
+export function getObservableApiHost(): URL {
   const urlText = process.env["OBSERVABLEHQ_API_HOST"];
   if (urlText) {
     try {
