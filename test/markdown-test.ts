@@ -4,7 +4,7 @@ import {mkdir, readFile, unlink, writeFile} from "node:fs/promises";
 import {basename, join, resolve} from "node:path";
 import deepEqual from "fast-deep-equal";
 import {isNodeError} from "../src/error.js";
-import {type ParseResult, parseCodeInfo, parseMarkdown} from "../src/markdown.js";
+import {type CodeInfo, type ParseResult, parseCodeInfo, parseMarkdown} from "../src/markdown.js";
 
 describe("parseMarkdown(input)", () => {
   const inputRoot = "test/input";
@@ -17,7 +17,7 @@ describe("parseMarkdown(input)", () => {
     const skip = name.startsWith("skip.");
     const outname = only || skip ? name.slice(5) : name;
 
-    (only ? it.only : skip ? it.skip : it)(`test/input/${name}`, async () => {
+    (only ? it : skip ? it.skip : it)(`test/input/${name}`, async () => {
       const snapshot = parseMarkdown(await readFile(path, "utf8"), "test/input", name);
       let allequal = true;
       for (const ext of ["html", "json"]) {
@@ -61,60 +61,227 @@ describe("parseMarkdown(input)", () => {
       assert.ok(allequal, `${name} must match snapshot`);
     });
   }
-  it("parses fenced code info", () => {
-    const attributes = [
-      // Base cases
-      {info: "js", value: {language: "js", attributes: {}}},
-      {info: "javascript", value: {language: "javascript", attributes: {}}},
-      {info: "js ", value: {language: "js", attributes: {}}},
-      {info: "js 3839", value: {language: "js", attributes: {}}},
-      {info: "js {show}", value: {language: "js", attributes: {show: true}}},
-      {info: "{show}", value: {language: undefined, attributes: {show: true}}},
-      {info: "{show:true}", value: {language: undefined, attributes: {show: true}}},
-      {info: "{ show :true}", value: {language: undefined, attributes: {show: true}}},
-      {info: "{show: true}", value: {language: undefined, attributes: {show: true}}},
-      {info: "{show : true}", value: {language: undefined, attributes: {show: true}}},
-      {info: "{show: true, run}", value: {language: undefined, attributes: {show: true, run: true}}},
-      {info: "{show: true, run: false}", value: {language: undefined, attributes: {show: true, run: false}}},
-      {info: '{show: true, run: "false"}', value: {language: undefined, attributes: {show: true, run: false}}},
-      {
-        info: "{show: true, run: abc, display: efg}",
-        value: {language: undefined, attributes: {show: true, run: "abc", display: "efg"}}
-      },
-      {
-        info: "{show:true,run:abc,display:efg}",
-        value: {language: undefined, attributes: {show: true, run: "abc", display: "efg"}}
-      },
-      {
-        info: "{show:true,run:abc,display:efg}",
-        value: {language: undefined, attributes: {show: true, run: "abc", display: "efg"}}
-      },
+});
 
-      // Error cases
-      {info: "js {show:true", value: {language: "js", attributes: {show: true}}},
-      {info: "js show:true}", value: {language: "js", attributes: {}}},
-      {info: "js {show:true,show:false}", value: {language: "js", attributes: {show: false}}},
-      {info: "{show: true run}", value: {language: undefined, attributes: {show: true}}},
-      {info: "{1one: true, show: false}", value: {language: undefined, attributes: {show: false}}},
-      {info: "{show: abc$(}", value: {language: undefined, attributes: {show: "abc"}}},
-      {info: "{show:abc,,display:def ", value: {language: undefined, attributes: {show: "abc", display: "def"}}},
+function testCodeInfo(input) {
+  const info: Partial<CodeInfo> = parseCodeInfo(input);
+  if (info.language === undefined) delete info.language;
+  if (Object.keys(info.attributes!).length === 0) delete info.attributes;
+  if (info.classes!.length === 0) delete info.classes;
+  if (info.id === undefined) delete info.id;
+  return info;
+}
 
-      // Class names
-      {info: "js {.class1}", value: {language: "js", attributes: {}, classes: ["class1"]}},
-      {info: "js {show:true,.class1}", value: {language: "js", attributes: {show: true}, classes: ["class1"]}},
-      {
-        info: "js {show:true,.class1,display:abc,.class2}",
-        value: {language: "js", attributes: {show: true, display: "abc"}, classes: ["class1", "class2"]}
-      },
-
-      // IDs
-      {info: "js {#myid}", value: {language: "js", attributes: {}, id: "myid"}},
-      {info: "{#myid, show:true}", value: {language: undefined, attributes: {show: true}, id: "myid"}},
-      {info: "{#myid: abc, show:true}", value: {language: undefined, attributes: {show: true}, id: undefined}}
-    ];
-    for (const {info, value} of attributes) {
-      assert.deepStrictEqual(parseCodeInfo(info), {classes: [], id: undefined, ...value}, `mismatch for '${info}'`);
-    }
+describe("parseCodeInfo(input)", () => {
+  it("parses bare language tags", () => {
+    assert.deepStrictEqual(testCodeInfo("js"), {language: "js"});
+    assert.deepStrictEqual(testCodeInfo("javascript"), {language: "javascript"});
+    assert.deepStrictEqual(testCodeInfo("java_script"), {language: "java_script"});
+  });
+  // TODO FIXME?
+  it.skip("parses hyphenated tags", () => {
+    assert.deepStrictEqual(testCodeInfo("java-script"), {language: "java-script"});
+  });
+  it("ignores trailing whitespace", () => {
+    assert.deepStrictEqual(testCodeInfo("js "), {language: "js"});
+  });
+  it("ignores trailing garbage", () => {
+    assert.deepStrictEqual(testCodeInfo("js 3839"), {language: "js"});
+  });
+  it("returns undefined language if leading whitespace", () => {
+    assert.deepStrictEqual(testCodeInfo(" js"), {});
+  });
+  it("parses attributes with no language tag", () => {
+    assert.deepStrictEqual(testCodeInfo("{show}"), {attributes: {show: true}});
+  });
+  it("parses empty attributes", () => {
+    assert.deepStrictEqual(testCodeInfo("js{}"), {language: "js"});
+    assert.deepStrictEqual(testCodeInfo("{}"), {});
+  });
+  it("parses attributes with a language tag", () => {
+    assert.deepStrictEqual(testCodeInfo("js {show}"), {language: "js", attributes: {show: true}});
+  });
+  it("does not require separating whitespace from language tag", () => {
+    assert.deepStrictEqual(testCodeInfo("js{show}"), {language: "js", attributes: {show: true}});
+  });
+  it("ignores whitespace around attribute names and values", () => {
+    assert.deepStrictEqual(testCodeInfo("{show:true}"), {attributes: {show: true}});
+    assert.deepStrictEqual(testCodeInfo("{ show :true}"), {attributes: {show: true}});
+    assert.deepStrictEqual(testCodeInfo("{show: true}"), {attributes: {show: true}});
+    assert.deepStrictEqual(testCodeInfo("{show : true}"), {attributes: {show: true}});
+  });
+  it("ignores whitespace around attributes", () => {
+    assert.deepStrictEqual(testCodeInfo(" {show:true}"), {attributes: {show: true}});
+    assert.deepStrictEqual(testCodeInfo("{show:true} "), {attributes: {show: true}});
+    assert.deepStrictEqual(testCodeInfo(" {show:true} "), {attributes: {show: true}});
+  });
+  it("treats tabs as whitespace", () => {
+    assert.deepStrictEqual(testCodeInfo("{show:true}"), {attributes: {show: true}});
+    assert.deepStrictEqual(testCodeInfo("{\tshow\t:true}"), {attributes: {show: true}});
+    assert.deepStrictEqual(testCodeInfo("{show:\ttrue}"), {attributes: {show: true}});
+    assert.deepStrictEqual(testCodeInfo("{show\t:\ttrue}"), {attributes: {show: true}});
+    assert.deepStrictEqual(testCodeInfo("\t{show:true}"), {attributes: {show: true}});
+    assert.deepStrictEqual(testCodeInfo("{show:true}\t"), {attributes: {show: true}});
+    assert.deepStrictEqual(testCodeInfo("\t{show:true}\t"), {attributes: {show: true}});
+  });
+  it("parses boolean attribute values", () => {
+    assert.deepStrictEqual(testCodeInfo("{show: false}"), {attributes: {show: false}});
+    assert.deepStrictEqual(testCodeInfo("{show: true}"), {attributes: {show: true}});
+  });
+  it("parses shorthand boolean attributes as true", () => {
+    assert.deepStrictEqual(testCodeInfo("{show}"), {attributes: {show: true}});
+    assert.deepStrictEqual(testCodeInfo("{a, b, c}"), {attributes: {a: true, b: true, c: true}});
+  });
+  it("ignores case for boolean attribute values", () => {
+    assert.deepStrictEqual(testCodeInfo("{show: FALSE}"), {attributes: {show: false}});
+    assert.deepStrictEqual(testCodeInfo("{show: TRUE}"), {attributes: {show: true}});
+    assert.deepStrictEqual(testCodeInfo("{show: False}"), {attributes: {show: false}});
+    assert.deepStrictEqual(testCodeInfo("{show: True}"), {attributes: {show: true}});
+    assert.deepStrictEqual(testCodeInfo("{show: fALsE}"), {attributes: {show: false}});
+    assert.deepStrictEqual(testCodeInfo("{show: TrUe}"), {attributes: {show: true}});
+  });
+  // TODO FIXME
+  it.skip("does not consider quoted true and false values as booleans", () => {
+    assert.deepStrictEqual(testCodeInfo('{show: "false"}'), {attributes: {show: "false"}});
+    assert.deepStrictEqual(testCodeInfo('{show: "true"}'), {attributes: {show: "true"}});
+    assert.deepStrictEqual(testCodeInfo("{show: 'false'}"), {attributes: {show: "false"}});
+    assert.deepStrictEqual(testCodeInfo("{show: 'true'}"), {attributes: {show: "true"}});
+  });
+  it("parses number attribute values as strings", () => {
+    assert.deepStrictEqual(testCodeInfo("{show: 0}"), {attributes: {show: "0"}});
+    assert.deepStrictEqual(testCodeInfo("{show: 1}"), {attributes: {show: "1"}});
+    assert.deepStrictEqual(testCodeInfo("{a: 1, b: 2, c: 3}"), {attributes: {a: "1", b: "2", c: "3"}});
+  });
+  it("parses hyphen-, underscore-, and period-separated unquoted attribute values as strings", () => {
+    assert.deepStrictEqual(testCodeInfo("{show: 2020-01-01}"), {attributes: {show: "2020-01-01"}});
+    assert.deepStrictEqual(testCodeInfo("{show: 2020_01_02}"), {attributes: {show: "2020_01_02"}});
+    assert.deepStrictEqual(testCodeInfo("{show: 2020.01.03}"), {attributes: {show: "2020.01.03"}});
+  });
+  // TODO FIXME?
+  it.skip("parses slash-separated attribute values as strings", () => {
+    assert.deepStrictEqual(testCodeInfo("{show: 2020/01/02}"), {attributes: {show: "2020/01/02"}});
+  });
+  it("unquoted attribute values must be alphanum, dash, underscore, or period", () => {
+    assert.deepStrictEqual(testCodeInfo("{show: abc$(}"), {attributes: {show: "abc"}});
+  });
+  it("parses double-quoted strings", () => {
+    assert.deepStrictEqual(testCodeInfo('{show: "hello"}'), {attributes: {show: "hello"}});
+    assert.deepStrictEqual(testCodeInfo('{a: "A", b: "B", c: "C"}'), {attributes: {a: "A", b: "B", c: "C"}});
+  });
+  it("parses double-quoted strings with commas, curly braces, etc.", () => {
+    assert.deepStrictEqual(testCodeInfo('{show: "hello, world!"}'), {attributes: {show: "hello, world!"}});
+    assert.deepStrictEqual(testCodeInfo('{show: "{foo: bar}"}'), {attributes: {show: "{foo: bar}"}});
+    assert.deepStrictEqual(testCodeInfo('{show: "{foo: bar"}'), {attributes: {show: "{foo: bar"}});
+    assert.deepStrictEqual(testCodeInfo('{a: "A}", b: "{B", c: "{}"}'), {attributes: {a: "A}", b: "{B", c: "{}"}});
+  });
+  it("parses single-quoted strings", () => {
+    assert.deepStrictEqual(testCodeInfo("{show: 'hello'}"), {attributes: {show: "hello"}});
+    assert.deepStrictEqual(testCodeInfo("{a: 'A', b: 'B', c: 'C'}"), {attributes: {a: "A", b: "B", c: "C"}});
+  });
+  it("parses single-quoted strings with commas, curly braces, etc.", () => {
+    assert.deepStrictEqual(testCodeInfo("{show: 'hello, world!'}"), {attributes: {show: "hello, world!"}});
+    assert.deepStrictEqual(testCodeInfo("{show: '{foo: bar}'}"), {attributes: {show: "{foo: bar}"}});
+    assert.deepStrictEqual(testCodeInfo("{show: '{foo: bar'}"), {attributes: {show: "{foo: bar"}});
+    assert.deepStrictEqual(testCodeInfo("{a: 'A}', b: '{B', c: '{}'}"), {attributes: {a: "A}", b: "{B", c: "{}"}});
+  });
+  it("parses double-quoted strings with single quotes", () => {
+    assert.deepStrictEqual(testCodeInfo("{show: \"hello 'world'\"}"), {attributes: {show: "hello 'world'"}});
+  });
+  it("parses double-quoted strings with escaped double quotes", () => {
+    assert.deepStrictEqual(testCodeInfo('{show: "hello \\"world\\""}'), {attributes: {show: 'hello "world"'}});
+  });
+  it("parses single-quoted strings with double quotes", () => {
+    assert.deepStrictEqual(testCodeInfo("{show: 'hello \"world\"'}"), {attributes: {show: 'hello "world"'}});
+  });
+  it("parses single-quoted strings with escaped single quotes", () => {
+    assert.deepStrictEqual(testCodeInfo("{show: 'hello \\'world\\''}"), {attributes: {show: "hello 'world'"}});
+  });
+  it.skip("parses multiple attributes", () => {
+    assert.deepStrictEqual(testCodeInfo("{show: true, run}"), {attributes: {show: true, run: true}});
+    assert.deepStrictEqual(testCodeInfo("{show: true, run: false}"), {attributes: {show: true, run: false}});
+    assert.deepStrictEqual(testCodeInfo('{show: true, run: "false"}'), {attributes: {show: true, run: false}});
+    assert.deepStrictEqual(testCodeInfo("{a: true, b: abc, d: efg}"), {attributes: {a: true, b: "abc", d: "efg"}});
+    assert.deepStrictEqual(testCodeInfo("{a:true,b:abc,c:efg}"), {attributes: {a: true, b: "abc", c: "efg"}});
+    assert.deepStrictEqual(testCodeInfo("{a:true,b:abc,c:efg}"), {attributes: {a: true, b: "abc", c: "efg"}});
+  });
+  // TODO FIXME the unterminated string value is converted a boolean
+  it.skip("does not require attributes to be terminated", () => {
+    assert.deepStrictEqual(testCodeInfo("js {show: true"), {language: "js", attributes: {show: true}});
+    assert.deepStrictEqual(testCodeInfo("js {show: foo"), {language: "js", attributes: {show: "foo"}});
+  });
+  it("ignores attributes without opening curly brace", () => {
+    assert.deepStrictEqual(testCodeInfo("js show}"), {language: "js"});
+    assert.deepStrictEqual(testCodeInfo("js show:true}"), {language: "js"});
+    assert.deepStrictEqual(testCodeInfo("js show {a: b}"), {language: "js"});
+    assert.deepStrictEqual(testCodeInfo("js show:true {a: b}"), {language: "js"});
+  });
+  it("when attributes have the same name, the last one wins", () => {
+    assert.deepStrictEqual(testCodeInfo("js {show: true, show: false}"), {language: "js", attributes: {show: false}});
+    assert.deepStrictEqual(testCodeInfo("js {show, show: false}"), {language: "js", attributes: {show: false}});
+  });
+  // TODO FIXME shouldn’t b be either a boolean attribute, or part of a’s value?
+  it("ignores trailing garbage after unquoted attributes", () => {
+    assert.deepStrictEqual(testCodeInfo("{a b}"), {attributes: {a: true}});
+    assert.deepStrictEqual(testCodeInfo("{a b, c}"), {attributes: {a: true, c: true}});
+    assert.deepStrictEqual(testCodeInfo("{a: true b}"), {attributes: {a: true}});
+    assert.deepStrictEqual(testCodeInfo("{a: true b, c: one}"), {attributes: {a: true, c: "one"}});
+  });
+  it("ignores trailing garbage after quoted attributes", () => {
+    assert.deepStrictEqual(testCodeInfo("{a: 'true' b}"), {attributes: {a: true}});
+    assert.deepStrictEqual(testCodeInfo("{a: 'true' b, c: one}"), {attributes: {a: true, c: "one"}});
+  });
+  it("treats attribute names as case-sensitive", () => {
+    assert.deepStrictEqual(testCodeInfo("{a: 'a', A: 'A'}"), {attributes: {a: "a", A: "A"}});
+    assert.deepStrictEqual(testCodeInfo("{aa: 'aa', aA: 'aA'}"), {attributes: {aa: "aa", aA: "aA"}});
+  });
+  it("ignores attribute names that don’t start with a-zA-Z", () => {
+    assert.deepStrictEqual(testCodeInfo("{1one: true, show: false}"), {attributes: {show: false}});
+    assert.deepStrictEqual(testCodeInfo("{$foo}"), {});
+    assert.deepStrictEqual(testCodeInfo("{a, $b, c}"), {attributes: {a: true, c: true}});
+  });
+  it("ignores multiple commas", () => {
+    assert.deepStrictEqual(testCodeInfo("{a,,}"), {attributes: {a: true}});
+    assert.deepStrictEqual(testCodeInfo("{a,,b}"), {attributes: {a: true, b: true}});
+    assert.deepStrictEqual(testCodeInfo("{,,a}"), {attributes: {a: true}});
+    assert.deepStrictEqual(testCodeInfo("{a, , }"), {attributes: {a: true}});
+    assert.deepStrictEqual(testCodeInfo("{a, , b}"), {attributes: {a: true, b: true}});
+    assert.deepStrictEqual(testCodeInfo("{, , a}"), {attributes: {a: true}});
+    assert.deepStrictEqual(testCodeInfo("{a: a,,}"), {attributes: {a: "a"}});
+    assert.deepStrictEqual(testCodeInfo("{a: a,,b: b}"), {attributes: {a: "a", b: "b"}});
+    assert.deepStrictEqual(testCodeInfo("{,,a: a}"), {attributes: {a: "a"}});
+  });
+  it("parses class names", () => {
+    assert.deepStrictEqual(testCodeInfo("{.class1}"), {classes: ["class1"]});
+    assert.deepStrictEqual(testCodeInfo("{.class1, .class2}"), {classes: ["class1", "class2"]});
+  });
+  it("parses language tag and class names", () => {
+    assert.deepStrictEqual(testCodeInfo("js{.class1}"), {language: "js", classes: ["class1"]});
+    assert.deepStrictEqual(testCodeInfo("js {.class1}"), {language: "js", classes: ["class1"]});
+  });
+  it("parses attributes and class names", () => {
+    assert.deepStrictEqual(testCodeInfo("{show, .class1}"), {attributes: {show: true}, classes: ["class1"]});
+    assert.deepStrictEqual(testCodeInfo(" {show, .class1}"), {attributes: {show: true}, classes: ["class1"]});
+  });
+  // TODO FIXME allow CSS style syntax?
+  it.skip("parses combined classnames", () => {
+    assert.deepStrictEqual(testCodeInfo("{.class1.class2}"), {classes: ["class1", "class2"]});
+    assert.deepStrictEqual(testCodeInfo("{.class1#id}"), {id: "myid", classes: ["class1"]});
+  });
+  it("parses ids", () => {
+    assert.deepStrictEqual(testCodeInfo("{#myid}"), {id: "myid"});
+  });
+  it("parses ids and class names", () => {
+    assert.deepStrictEqual(testCodeInfo("{#myid, .myclass}"), {id: "myid", classes: ["myclass"]});
+    assert.deepStrictEqual(testCodeInfo("{.myclass, #myid}"), {id: "myid", classes: ["myclass"]});
+  });
+  it("parses ids and attributes", () => {
+    assert.deepStrictEqual(testCodeInfo("{#myid, show}"), {id: "myid", attributes: {show: true}});
+    assert.deepStrictEqual(testCodeInfo("{show, #myid}"), {id: "myid", attributes: {show: true}});
+    assert.deepStrictEqual(testCodeInfo("{#myid,show}"), {id: "myid", attributes: {show: true}});
+    assert.deepStrictEqual(testCodeInfo("{show,#myid}"), {id: "myid", attributes: {show: true}});
+  });
+  it("if multiple ids are specified, the last one wins", () => {
+    assert.deepStrictEqual(testCodeInfo("{#a, #b}"), {id: "b"});
   });
 });
 

@@ -342,7 +342,7 @@ function parseAttributes(content: string): {
   return {classes, id, attributes};
 }
 
-interface CodeInfo {
+export interface CodeInfo {
   language: string | undefined;
   classes: string[];
   id: string | undefined;
