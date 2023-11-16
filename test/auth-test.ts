@@ -28,7 +28,7 @@ describe("login command", () => {
       assert.equal(sendApiKeyResponse.status, 201);
       // The CLI then writes the API key to the config file
       assert.deepEqual(await effects.setApiKeyDeferred.promise, {id: "MOCK-ID", apiKey: "MOCK-KEY"});
-      effects._assertExactLogs([/^Successfully logged in/]);
+      effects._assertExactLogs([/^Press Enter to open/, /^Successfully logged in/]);
       await effects.exitDeferred.promise;
     } finally {
       // this prevents the tests from hanging in case the test fails

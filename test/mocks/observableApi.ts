@@ -1,4 +1,4 @@
-import {type RequestHandler, type ResponseResolver, http, HttpResponse} from "msw";
+import {HttpResponse, type RequestHandler, type ResponseResolver, http} from "msw";
 import {type SetupServer, setupServer} from "msw/node";
 import {getObservableApiHost} from "../../src/auth.js";
 
