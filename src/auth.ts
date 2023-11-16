@@ -1,19 +1,41 @@
 import type {IncomingMessage} from "http";
 import {randomBytes} from "node:crypto";
 import {type RequestListener, type ServerResponse, createServer} from "node:http";
+import type {Socket} from "node:net";
 import os from "node:os";
 import {isatty} from "node:tty";
 import open from "open";
+import packageJson from "../package.json";
 import {HttpError, isHttpError} from "./error.js";
 import {getObservableApiKey, setObservableApiKey} from "./toolConfig.js";
-import packageJson from "../package.json";
 
 const OBSERVABLEHQ_UI_HOST = getObservableUiHost();
 const OBSERVABLEHQ_API_HOST = getObservableApiHost();
 
-export async function login() {
+/** Actions this command needs to take wrt its environment that may need mocked out. */
+export interface CommandEffects {
+  openUrlInBrowser: (url: string) => Promise<void>;
+  log: (...args: any[]) => void;
+  isatty: (fd: number) => boolean;
+  waitForEnter: () => Promise<void>;
+  setObservableApiKey: (id: string, key: string) => Promise<void>;
+  exitSuccess: () => void;
+}
+
+const defaultEffects: CommandEffects = {
+  openUrlInBrowser: async (target) => {
+    await open(target);
+  },
+  log: console.log,
+  isatty,
+  waitForEnter,
+  setObservableApiKey,
+  exitSuccess: () => process.exit(0)
+};
+
+export async function login(effects = defaultEffects) {
   const nonce = randomBytes(8).toString("base64");
-  const server = new LoginServer({nonce});
+  const server = new LoginServer({nonce, effects});
   await server.start();
 
   const url = new URL("/settings/api-keys/generate", OBSERVABLEHQ_UI_HOST);
@@ -27,18 +49,19 @@ export async function login() {
   };
   url.searchParams.set("request", Buffer.from(JSON.stringify(request)).toString("base64"));
 
-  if (isatty(process.stdin.fd)) {
-    console.log(`Press Enter to open ${url.hostname} in your browser...`);
-    await waitForEnter();
-    await open(url.toString());
+  if (effects.isatty(process.stdin.fd)) {
+    effects.log(`Press Enter to open ${url.hostname} in your browser...`);
+    await effects.waitForEnter();
+    await effects.openUrlInBrowser(url.toString());
   } else {
-    console.log(`Open this link in your browser to continue authentication:`);
-    console.log(`\n\t${url.toString()}\n`);
+    effects.log(`Open this link in your browser to continue authentication:`);
+    effects.log(`\n\t${url.toString()}\n`);
   }
+  return server; // for testing
   // execution continues in the server's request handler
 }
 
-export async function whoami() {
+export async function whoami(effects = defaultEffects) {
   const key = await getObservableApiKey();
   if (key) {
     const req = await fetch(new URL("/cli/user", OBSERVABLEHQ_API_HOST), {
@@ -49,44 +72,67 @@ export async function whoami() {
       }
     });
     if (req.status === 401) {
-      console.log("Your API key is invalid. Run `observable login` to log in again.");
+      effects.log("Your API key is invalid. Run `observable login` to log in again.");
       return;
     }
     const user = await req.json();
-    console.log();
-    console.log(`You are logged into ${OBSERVABLEHQ_UI_HOST.hostname} as ${formatUser(user)}.`);
-    console.log();
-    console.log("You have access to the following workspaces:");
+    effects.log();
+    effects.log(`You are logged into ${OBSERVABLEHQ_UI_HOST.hostname} as ${formatUser(user)}.`);
+    effects.log();
+    effects.log("You have access to the following workspaces:");
     for (const workspace of user.workspaces) {
-      console.log(` * ${formatUser(workspace)}`);
+      effects.log(` * ${formatUser(workspace)}`);
     }
-    console.log();
+    effects.log();
   } else {
-    console.log(`You haven't authenticated with ${OBSERVABLEHQ_UI_HOST.hostname}. Run "observable login" to log in.`);
+    effects.log(`You haven't authenticated with ${OBSERVABLEHQ_UI_HOST.hostname}. Run "observable login" to log in.`);
   }
 }
 
 class LoginServer {
   private _server: ReturnType<typeof createServer>;
   private _nonce: string;
+  private _effects: CommandEffects;
+  isRunning: boolean;
+  private _sockets: Set<Socket>;
 
-  constructor({nonce}: {nonce: string}) {
+  constructor({nonce, effects}: {nonce: string; effects: CommandEffects}) {
     this._nonce = nonce;
+    this._effects = effects;
     this._server = createServer();
     this._server.on("request", (request, response) => this._handleRequest(request, response));
+    this.isRunning = false;
+    this._sockets = new Set();
+
+    // track open sockets so we can manually close them in a hurry in tests
+    this._server.on("connection", (socket) => {
+      this._sockets.add(socket);
+      socket.once("close", () => this._sockets.delete(socket));
+    });
   }
 
   async start() {
-    return new Promise<void>((resolve) => {
+    await new Promise<void>((resolve) => {
       // A port of 0 binds to an arbitrary open port. This prevents port
       // conflicts, and also makes it more difficult for potentially malicious
       // third parties to find the auth server.
       this._server.listen(0, "localhost", resolve);
     });
+    this.isRunning = true;
   }
 
+  /** Immediately stops the server, rudely dropping any active or kept-alive connections. */
   async stop(): Promise<void> {
-    await new Promise((resolve, reject) => this._server.close((err) => (err ? reject(err) : resolve(undefined))));
+    const promise = new Promise((resolve, reject) =>
+      this._server.close((err) => (err ? reject(err) : resolve(undefined)))
+    );
+    // Destroy any pending sockets so that we stop immediately instead of
+    // waiting for keep-alives. Useful so that tests don't hang.
+    for (const socket of this._sockets) {
+      socket.destroy();
+    }
+    await promise;
+    this.isRunning = false;
   }
 
   get port() {
@@ -150,7 +196,7 @@ class LoginServer {
       throw new HttpError("Invalid nonce", 400);
     }
 
-    await setObservableApiKey(body.id, body.key);
+    await this._effects.setObservableApiKey(body.id, body.key);
 
     res.statusCode = 201;
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -162,8 +208,9 @@ class LoginServer {
       new Promise((resolve) => setTimeout(resolve, 500))
     ]);
 
-    console.log("Successfully logged in.");
-    process.exit(0);
+    this._effects.log("Successfully logged in.");
+    await this.stop();
+    this._effects.exitSuccess();
   }
 
   isTrustedOrigin(req: IncomingMessage): boolean {
@@ -184,7 +231,7 @@ class LoginServer {
 }
 
 /** Waits for the user to press enter. */
-function waitForEnter() {
+function waitForEnter(): Promise<void> {
   return new Promise((resolve) => {
     function onData(chunk) {
       if (chunk[0] === "\n".charCodeAt(0)) {
