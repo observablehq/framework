@@ -115,8 +115,7 @@ class Server {
         // Otherwise, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
         try {
-          const config = await readConfig(this.root);
-          const pages = config?.pages ?? (await readPages(this.root)); // TODO cache? watcher?
+          const pages = await readPages(this.root); // TODO cache? watcher?
           const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {
             root: this.root,
             path: pathname,
