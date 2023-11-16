@@ -123,12 +123,7 @@ describe("parseInfo(input)", () => {
   it("parses single-quoted strings with double quotes", () => {
     assert.deepStrictEqual(parseInfo("js echo='hello \"world\"'"), {tag: "js", attributes: {echo: 'hello "world"'}});
   });
-  // TODO HTML doesn’t do this; you use &quot; to escape. What should we do?
-  it.skip("parses quoted strings with escaped quotes", () => {
-    assert.deepStrictEqual(parseInfo('js echo="hello \\"world\\""'), {tag: "js", attributes: {echo: 'hello "world"'}});
-    assert.deepStrictEqual(parseInfo("js echo='hello \\'world\\''"), {tag: "js", attributes: {echo: "hello 'world'"}});
-  });
-  it.skip("parses attribute values with escaped entites", () => {
+  it("parses attribute values with escaped entites", () => {
     assert.deepStrictEqual(parseInfo("js echo=&quot;world&quot;"), {tag: "js", attributes: {echo: '"world"'}});
     assert.deepStrictEqual(parseInfo('js echo="&quot;world&quot;"'), {tag: "js", attributes: {echo: '"world"'}});
     assert.deepStrictEqual(parseInfo("js echo='&quot;world&quot;'"), {tag: "js", attributes: {echo: '"world"'}});

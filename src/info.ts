@@ -1,3 +1,5 @@
+import he from "he";
+
 const //
   CODE_TAB = 9,
   CODE_LF = 10,
@@ -145,5 +147,5 @@ function lower(input: string, start: number, end: number): string {
 }
 
 function decode(input: string, start: number, end: number): string {
-  return input.slice(start, end); // TODO .replace(/&quot;/gi, '"') etc.
+  return he.decode(input.slice(start, end));
 }
