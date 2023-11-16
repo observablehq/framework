@@ -4,7 +4,7 @@ Values that change over time, such as interactive inputs and animation parameter
 
 For example, here is a generator that increments once a second:
 
-```js show
+```js echo
 const j = (async function* () {
   for (let j = 0; true; ++j) {
     yield j;
@@ -17,7 +17,7 @@ The value of j is: ${j}.
 
 If the generator is synchronous, the generator will yield every animation frame, which is typically 60 frames per second:
 
-```js show
+```js echo
 const i = (function* () {
   for (let i = 0; true; ++i) {
     yield i;
@@ -29,7 +29,7 @@ The value of i is: ${i}.
 
 As another example, you can use the built-in `Generators.observe` to represent the current pointer coordinates:
 
-```js show
+```js echo
 const pointer = Generators.observe((notify) => {
   const pointermoved = (event) => notify([event.clientX, event.clientY]);
   addEventListener("pointermove", pointermoved);
@@ -42,7 +42,7 @@ Pointer is: ${pointer.map(Math.round).join(", ")}.
 
 A WebSocket that lists for Blockchain transactions:
 
-```js show
+```js echo
 const socket = new WebSocket("wss://ws.blockchain.info/inv");
 invalidation.then(() => socket.close());
 socket.addEventListener("open", () => socket.send(JSON.stringify({op: "unconfirmed_sub"})));
@@ -78,7 +78,7 @@ Inputs.table(
 
 An HTML input element and `Generators.input`:
 
-```js show
+```js echo
 const nameInput = display(document.createElement("input"));
 const name = Generators.input(nameInput);
 ```

@@ -2,7 +2,7 @@
 
 You can use the built-in [`view` function](#view(input)) and an HTML input element to create a reactive input. For example, here is a slider:
 
-```js show
+```js echo
 const gain = view(Inputs.range([0, 11], {value: 5, step: 0.1, label: "Gain"}));
 ```
 
@@ -45,7 +45,7 @@ These fancy inputs are designed to work with tabular data such as CSV or TSV [fi
 
 Do something when a button is clicked. [Examples ›](https://observablehq.com/@observablehq/input-button) [API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#button)
 
-```js show
+```js echo
 const clicks = view(Inputs.button("Click me"));
 ```
 
@@ -59,7 +59,7 @@ clicks
 
 Toggle between two values (on or off). [Examples ›](https://observablehq.com/@observablehq/input-toggle) [API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#toggle)
 
-```js show
+```js echo
 const mute = view(Inputs.toggle({label: "Mute"}));
 ```
 
@@ -73,7 +73,7 @@ mute
 
 Choose any from a set. [Examples ›](https://observablehq.com/@observablehq/input-checkbox) [API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#checkbox)
 
-```js show
+```js echo
 const flavors = view(Inputs.checkbox(["salty", "sweet", "bitter", "sour", "umami"], {label: "Flavors"}));
 ```
 
@@ -87,7 +87,7 @@ flavors
 
 Choose one from a set. [Examples ›](https://observablehq.com/@observablehq/input-radio) [API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#radio)
 
-```js show
+```js echo
 const flavor = view(Inputs.radio(["salty", "sweet", "bitter", "sour", "umami"], {label: "Flavor"}));
 ```
 
@@ -101,7 +101,7 @@ flavor
 
 Pick a number. [Examples ›](https://observablehq.com/@observablehq/input-range) [API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#range)
 
-```js show
+```js echo
 const n = view(Inputs.range([0, 255], {step: 1, label: "Favorite number"}));
 ```
 
@@ -120,7 +120,7 @@ const capitals = FileAttachment("us-state-capitals.tsv").tsv({typed: true});
 const stateNames = capitals.then((capitals) => capitals.map(d => d.State));
 ```
 
-```js show
+```js echo
 const homeState = view(Inputs.select([null].concat(stateNames), {label: "Home state"}));
 ```
 
@@ -128,7 +128,7 @@ const homeState = view(Inputs.select([null].concat(stateNames), {label: "Home st
 homeState
 ```
 
-```js show
+```js echo
 const visitedStates = view(Inputs.select(stateNames, {label: "Visited states", multiple: true}));
 ```
 
@@ -142,7 +142,7 @@ visitedStates
 
 Enter freeform single-line text. [Examples ›](https://observablehq.com/@observablehq/input-text) [API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#text)
 
-```js show
+```js echo
 const name = view(Inputs.text({label: "Name", placeholder: "What’s your name?"}));
 ```
 
@@ -156,7 +156,7 @@ name
 
 Enter freeform multi-line text. [Examples ›](https://observablehq.com/@observablehq/input-textarea) [API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#textarea)
 
-```js show
+```js echo
 const bio = view(Inputs.textarea({label: "Biography", placeholder: "What’s your story?"}));
 ```
 
@@ -170,7 +170,7 @@ bio
 
 Choose a date, or a date and time. [Examples ›](https://observablehq.com/@observablehq/input-date) [API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#date)
 
-```js show
+```js echo
 const birthday = view(Inputs.date({label: "Birthday"}));
 ```
 
@@ -184,7 +184,7 @@ birthday
 
 Choose a color. [Examples ›](https://observablehq.com/@observablehq/input-color) [API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#color)
 
-```js show
+```js echo
 const color = view(Inputs.color({label: "Favorite color", value: "#4682b4"}));
 ```
 
@@ -198,7 +198,7 @@ color
 
 Choose a local file. [Examples ›](https://observablehq.com/@observablehq/input-file) [API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#file)
 
-```js show
+```js echo
 const file = view(Inputs.file({label: "CSV file", accept: ".csv", required: true}));
 ```
 
@@ -212,7 +212,7 @@ data = file.csv({typed: true})
 
 Query a tabular dataset. [Examples ›](https://observablehq.com/@observablehq/input-search) [API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#search)
 
-```js show
+```js echo
 const search = view(Inputs.search(capitals, {placeholder: "Search U.S. capitals"}));
 ```
 
@@ -226,7 +226,7 @@ search // see table below!
 
 Browse a tabular dataset. [Examples ›](https://observablehq.com/@observablehq/input-table) [API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#table)
 
-```js show
+```js echo
 const rows = view(Inputs.table(search));
 ```
 

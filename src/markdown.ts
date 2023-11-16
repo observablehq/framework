@@ -121,8 +121,8 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
       result += `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`;
       count++;
     }
-    // TODO we could hide non-live code here with show=false?
-    if (source == null || ("show" in attributes && !isFalse(attributes.show))) {
+    // TODO we could hide non-live code here with echo=false?
+    if (source == null || ("echo" in attributes && !isFalse(attributes.echo))) {
       result += baseRenderer(tokens, idx, options, context, self);
       count++;
     }

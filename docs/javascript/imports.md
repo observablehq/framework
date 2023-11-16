@@ -2,13 +2,13 @@
 
 You can import a library from npm like so:
 
-```js show
+```js echo
 import confetti from "npm:canvas-confetti";
 ```
 
 Now you can reference the imported `confetti` anywhere on the page.
 
-```js show
+```js echo
 Inputs.button("Throw confetti!", {reduce: () => confetti()})
 ```
 
@@ -20,7 +20,7 @@ export const foo = 42;
 
 Then you can say
 
-```js show
+```js echo
 import {foo} from "./foo.js"
 ```
 

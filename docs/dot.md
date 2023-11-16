@@ -24,15 +24,15 @@ digraph G {
 
 Here are some more examples.
 
-```dot show
+```dot echo
 graph { n0 -- n1 -- n2 -- n3 -- n0 }
 ```
 
-```dot show
+```dot echo
 digraph { x -> y -> z }
 ```
 
-```dot show
+```dot echo
 digraph G {
   subgraph cluster_0 {
     a0 -> a1 -> a2 -> a3

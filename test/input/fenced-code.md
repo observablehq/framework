@@ -1,6 +1,6 @@
 # Fenced code
 
-```js show
+```js echo
 function add(a, b) {
   return a + b;
 }

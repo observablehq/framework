@@ -1,6 +1,6 @@
 # Fenced code options
 
-```js show
+```js echo
 function add(a, b) {
   return a + b;
 }
@@ -12,13 +12,13 @@ function bareJs() {
 }
 ```
 
-```js show
+```js echo
 function langOutside() {
   return 1;
 }
 ```
 
-```js show=false whatever
+```js echo=false whatever
 function langAndAttributes() {
   return 1;
 }

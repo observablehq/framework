@@ -20,24 +20,24 @@ describe("parseInfo(input)", () => {
   });
   it("returns empty tag if leading whitespace", () => {
     assert.deepStrictEqual(parseInfo(" js"), {tag: "", attributes: {js: ""}});
-    assert.deepStrictEqual(parseInfo(" show"), {tag: "", attributes: {show: ""}});
+    assert.deepStrictEqual(parseInfo(" echo"), {tag: "", attributes: {echo: ""}});
   });
   it("parses bare attributes", () => {
-    assert.deepStrictEqual(parseInfo("js show"), {tag: "js", attributes: {show: ""}});
+    assert.deepStrictEqual(parseInfo("js echo"), {tag: "js", attributes: {echo: ""}});
     assert.deepStrictEqual(parseInfo("js 3839"), {tag: "js", attributes: {3839: ""}});
     assert.deepStrictEqual(parseInfo("js a b c"), {tag: "js", attributes: {a: "", b: "", c: ""}});
   });
   it("parses unquoted attribute values", () => {
-    assert.deepStrictEqual(parseInfo("js show=yes"), {tag: "js", attributes: {show: "yes"}});
-    assert.deepStrictEqual(parseInfo("js show=true"), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js show=0"), {tag: "js", attributes: {show: "0"}});
-    assert.deepStrictEqual(parseInfo("js show=1"), {tag: "js", attributes: {show: "1"}});
-    assert.deepStrictEqual(parseInfo("js show=a,b"), {tag: "js", attributes: {show: "a,b"}});
-    assert.deepStrictEqual(parseInfo("js show=2020-01-01"), {tag: "js", attributes: {show: "2020-01-01"}});
-    assert.deepStrictEqual(parseInfo("js show=2020_01_02"), {tag: "js", attributes: {show: "2020_01_02"}});
-    assert.deepStrictEqual(parseInfo("js show=2020.01.03"), {tag: "js", attributes: {show: "2020.01.03"}});
-    assert.deepStrictEqual(parseInfo("js show=2020/01/02"), {tag: "js", attributes: {show: "2020/01/02"}});
-    assert.deepStrictEqual(parseInfo("js show=abc$("), {tag: "js", attributes: {show: "abc$("}});
+    assert.deepStrictEqual(parseInfo("js echo=yes"), {tag: "js", attributes: {echo: "yes"}});
+    assert.deepStrictEqual(parseInfo("js echo=true"), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js echo=0"), {tag: "js", attributes: {echo: "0"}});
+    assert.deepStrictEqual(parseInfo("js echo=1"), {tag: "js", attributes: {echo: "1"}});
+    assert.deepStrictEqual(parseInfo("js echo=a,b"), {tag: "js", attributes: {echo: "a,b"}});
+    assert.deepStrictEqual(parseInfo("js echo=2020-01-01"), {tag: "js", attributes: {echo: "2020-01-01"}});
+    assert.deepStrictEqual(parseInfo("js echo=2020_01_02"), {tag: "js", attributes: {echo: "2020_01_02"}});
+    assert.deepStrictEqual(parseInfo("js echo=2020.01.03"), {tag: "js", attributes: {echo: "2020.01.03"}});
+    assert.deepStrictEqual(parseInfo("js echo=2020/01/02"), {tag: "js", attributes: {echo: "2020/01/02"}});
+    assert.deepStrictEqual(parseInfo("js echo=abc$("), {tag: "js", attributes: {echo: "abc$("}});
   });
   it("attribute names are terminated by slash or gt", () => {
     assert.deepStrictEqual(parseInfo("js foo/bar"), {tag: "js", attributes: {foo: "", bar: ""}});
@@ -55,97 +55,97 @@ describe("parseInfo(input)", () => {
     assert.deepStrictEqual(parseInfo("js >foo"), {tag: "js", attributes: {foo: ""}});
   });
   it("unquoted attribute values are terminated by gt", () => {
-    assert.deepStrictEqual(parseInfo("js show=>"), {tag: "js", attributes: {show: ""}});
-    assert.deepStrictEqual(parseInfo("js show=abc>"), {tag: "js", attributes: {show: "abc"}});
+    assert.deepStrictEqual(parseInfo("js echo=>"), {tag: "js", attributes: {echo: ""}});
+    assert.deepStrictEqual(parseInfo("js echo=abc>"), {tag: "js", attributes: {echo: "abc"}});
   });
   it("ignores whitespace around attribute names and unquoted values", () => {
-    assert.deepStrictEqual(parseInfo("js show=true"), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js show= true"), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js show = true"), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js  show =true"), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js show=true "), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js show= true "), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js show = true "), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js  show =true "), {tag: "js", attributes: {show: "true"}});
+    assert.deepStrictEqual(parseInfo("js echo=true"), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js echo= true"), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js echo = true"), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js  echo =true"), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js echo=true "), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js echo= true "), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js echo = true "), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js  echo =true "), {tag: "js", attributes: {echo: "true"}});
   });
   it("ignores whitespace around single-quoted values", () => {
-    assert.deepStrictEqual(parseInfo("js show='true'"), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js show= 'true'"), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js show = 'true'"), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js  show ='true'"), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js show='true' "), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js show= 'true' "), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js show = 'true' "), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js  show ='true' "), {tag: "js", attributes: {show: "true"}});
+    assert.deepStrictEqual(parseInfo("js echo='true'"), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js echo= 'true'"), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js echo = 'true'"), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js  echo ='true'"), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js echo='true' "), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js echo= 'true' "), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js echo = 'true' "), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js  echo ='true' "), {tag: "js", attributes: {echo: "true"}});
   });
   it("ignores whitespace around double-quoted values", () => {
-    assert.deepStrictEqual(parseInfo('js show="true"'), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo('js show= "true"'), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo('js show = "true"'), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo('js  show ="true"'), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo('js show="true" '), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo('js show= "true" '), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo('js show = "true" '), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo('js  show ="true" '), {tag: "js", attributes: {show: "true"}});
+    assert.deepStrictEqual(parseInfo('js echo="true"'), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo('js echo= "true"'), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo('js echo = "true"'), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo('js  echo ="true"'), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo('js echo="true" '), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo('js echo= "true" '), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo('js echo = "true" '), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo('js  echo ="true" '), {tag: "js", attributes: {echo: "true"}});
   });
   it("treats tabs as whitespace", () => {
-    assert.deepStrictEqual(parseInfo("js\tshow=true"), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js\tshow=\ttrue"), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js\tshow\t=\ttrue"), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js\tshow\t=true"), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js\tshow=true\t"), {tag: "js", attributes: {show: "true"}});
+    assert.deepStrictEqual(parseInfo("js\techo=true"), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js\techo=\ttrue"), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js\techo\t=\ttrue"), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js\techo\t=true"), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js\techo=true\t"), {tag: "js", attributes: {echo: "true"}});
   });
   it("preserves the case of attribute values", () => {
-    assert.deepStrictEqual(parseInfo("js show=FALSE"), {tag: "js", attributes: {show: "FALSE"}});
-    assert.deepStrictEqual(parseInfo("js show=TRUE"), {tag: "js", attributes: {show: "TRUE"}});
-    assert.deepStrictEqual(parseInfo("js show=False"), {tag: "js", attributes: {show: "False"}});
-    assert.deepStrictEqual(parseInfo("js show=True"), {tag: "js", attributes: {show: "True"}});
-    assert.deepStrictEqual(parseInfo("js show=fALsE"), {tag: "js", attributes: {show: "fALsE"}});
-    assert.deepStrictEqual(parseInfo("js show=TrUe"), {tag: "js", attributes: {show: "TrUe"}});
+    assert.deepStrictEqual(parseInfo("js echo=FALSE"), {tag: "js", attributes: {echo: "FALSE"}});
+    assert.deepStrictEqual(parseInfo("js echo=TRUE"), {tag: "js", attributes: {echo: "TRUE"}});
+    assert.deepStrictEqual(parseInfo("js echo=False"), {tag: "js", attributes: {echo: "False"}});
+    assert.deepStrictEqual(parseInfo("js echo=True"), {tag: "js", attributes: {echo: "True"}});
+    assert.deepStrictEqual(parseInfo("js echo=fALsE"), {tag: "js", attributes: {echo: "fALsE"}});
+    assert.deepStrictEqual(parseInfo("js echo=TrUe"), {tag: "js", attributes: {echo: "TrUe"}});
   });
   it("parses double-quoted attribute values", () => {
-    assert.deepStrictEqual(parseInfo('js show="yes"'), {tag: "js", attributes: {show: "yes"}});
-    assert.deepStrictEqual(parseInfo('js show="true"'), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo('js show="1"'), {tag: "js", attributes: {show: "1"}});
-    assert.deepStrictEqual(parseInfo('js show="a,b"'), {tag: "js", attributes: {show: "a,b"}});
-    assert.deepStrictEqual(parseInfo('js show="<foo>"'), {tag: "js", attributes: {show: "<foo>"}});
+    assert.deepStrictEqual(parseInfo('js echo="yes"'), {tag: "js", attributes: {echo: "yes"}});
+    assert.deepStrictEqual(parseInfo('js echo="true"'), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo('js echo="1"'), {tag: "js", attributes: {echo: "1"}});
+    assert.deepStrictEqual(parseInfo('js echo="a,b"'), {tag: "js", attributes: {echo: "a,b"}});
+    assert.deepStrictEqual(parseInfo('js echo="<foo>"'), {tag: "js", attributes: {echo: "<foo>"}});
   });
   it("parses single-quoted attribute values", () => {
-    assert.deepStrictEqual(parseInfo("js show='yes'"), {tag: "js", attributes: {show: "yes"}});
-    assert.deepStrictEqual(parseInfo("js show='true'"), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo("js show='1'"), {tag: "js", attributes: {show: "1"}});
-    assert.deepStrictEqual(parseInfo("js show='a,b'"), {tag: "js", attributes: {show: "a,b"}});
-    assert.deepStrictEqual(parseInfo("js show='<foo>'"), {tag: "js", attributes: {show: "<foo>"}});
+    assert.deepStrictEqual(parseInfo("js echo='yes'"), {tag: "js", attributes: {echo: "yes"}});
+    assert.deepStrictEqual(parseInfo("js echo='true'"), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo("js echo='1'"), {tag: "js", attributes: {echo: "1"}});
+    assert.deepStrictEqual(parseInfo("js echo='a,b'"), {tag: "js", attributes: {echo: "a,b"}});
+    assert.deepStrictEqual(parseInfo("js echo='<foo>'"), {tag: "js", attributes: {echo: "<foo>"}});
   });
   it("parses double-quoted strings with single quotes", () => {
-    assert.deepStrictEqual(parseInfo("js show=\"hello 'world'\""), {tag: "js", attributes: {show: "hello 'world'"}});
+    assert.deepStrictEqual(parseInfo("js echo=\"hello 'world'\""), {tag: "js", attributes: {echo: "hello 'world'"}});
   });
   it("parses single-quoted strings with double quotes", () => {
-    assert.deepStrictEqual(parseInfo("js show='hello \"world\"'"), {tag: "js", attributes: {show: 'hello "world"'}});
+    assert.deepStrictEqual(parseInfo("js echo='hello \"world\"'"), {tag: "js", attributes: {echo: 'hello "world"'}});
   });
   // TODO HTML doesn’t do this; you use &quot; to escape. What should we do?
   it.skip("parses quoted strings with escaped quotes", () => {
-    assert.deepStrictEqual(parseInfo('js show="hello \\"world\\""'), {tag: "js", attributes: {show: 'hello "world"'}});
-    assert.deepStrictEqual(parseInfo("js show='hello \\'world\\''"), {tag: "js", attributes: {show: "hello 'world'"}});
+    assert.deepStrictEqual(parseInfo('js echo="hello \\"world\\""'), {tag: "js", attributes: {echo: 'hello "world"'}});
+    assert.deepStrictEqual(parseInfo("js echo='hello \\'world\\''"), {tag: "js", attributes: {echo: "hello 'world'"}});
   });
   it.skip("parses attribute values with escaped entites", () => {
-    assert.deepStrictEqual(parseInfo("js show=&quot;world&quot;"), {tag: "js", attributes: {show: '"world"'}});
-    assert.deepStrictEqual(parseInfo('js show="&quot;world&quot;"'), {tag: "js", attributes: {show: '"world"'}});
-    assert.deepStrictEqual(parseInfo("js show='&quot;world&quot;'"), {tag: "js", attributes: {show: '"world"'}});
+    assert.deepStrictEqual(parseInfo("js echo=&quot;world&quot;"), {tag: "js", attributes: {echo: '"world"'}});
+    assert.deepStrictEqual(parseInfo('js echo="&quot;world&quot;"'), {tag: "js", attributes: {echo: '"world"'}});
+    assert.deepStrictEqual(parseInfo("js echo='&quot;world&quot;'"), {tag: "js", attributes: {echo: '"world"'}});
   });
   it("parses multiple attributes", () => {
-    assert.deepStrictEqual(parseInfo(" show=true run"), {tag: "", attributes: {show: "true", run: ""}});
-    assert.deepStrictEqual(parseInfo(" show=true run=false"), {tag: "", attributes: {show: "true", run: "false"}});
-    assert.deepStrictEqual(parseInfo(' show=true run="false"'), {tag: "", attributes: {show: "true", run: "false"}});
+    assert.deepStrictEqual(parseInfo(" echo=true run"), {tag: "", attributes: {echo: "true", run: ""}});
+    assert.deepStrictEqual(parseInfo(" echo=true run=false"), {tag: "", attributes: {echo: "true", run: "false"}});
+    assert.deepStrictEqual(parseInfo(' echo=true run="false"'), {tag: "", attributes: {echo: "true", run: "false"}});
     assert.deepStrictEqual(parseInfo(" a=true b=abc d=efg"), {tag: "", attributes: {a: "true", b: "abc", d: "efg"}});
   });
   it("does not require quoted attribute values to be terminated", () => {
-    assert.deepStrictEqual(parseInfo("js show='true"), {tag: "js", attributes: {show: "true"}});
-    assert.deepStrictEqual(parseInfo('js show="foo'), {tag: "js", attributes: {show: "foo"}});
+    assert.deepStrictEqual(parseInfo("js echo='true"), {tag: "js", attributes: {echo: "true"}});
+    assert.deepStrictEqual(parseInfo('js echo="foo'), {tag: "js", attributes: {echo: "foo"}});
   });
   it("when attributes have the same name, the last one wins", () => {
-    assert.deepStrictEqual(parseInfo("js show=true show=false"), {tag: "js", attributes: {show: "false"}});
-    assert.deepStrictEqual(parseInfo("js show show=false"), {tag: "js", attributes: {show: "false"}});
+    assert.deepStrictEqual(parseInfo("js echo=true echo=false"), {tag: "js", attributes: {echo: "false"}});
+    assert.deepStrictEqual(parseInfo("js echo echo=false"), {tag: "js", attributes: {echo: "false"}});
   });
   it("lowercases attribute names", () => {
     assert.deepStrictEqual(parseInfo(" A=A"), {tag: "", attributes: {a: "A"}});
