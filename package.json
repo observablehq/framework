@@ -60,6 +60,7 @@
     "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-prettier": "^5.0.0",
     "mocha": "^10.2.0",
+    "msw": "^2.0.7",
     "prettier": "^3.0.3",
     "typescript": "^5.2.2"
   },
