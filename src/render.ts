@@ -51,8 +51,8 @@ function renderFooter(path: string, {prev, next}: {prev?: Page; next?: Page} = {
       !(prev || next)
         ? ``
         : `<nav>
-          ${!prev ? `` : `<a class="prev" href="${prev.path}"><span>${prev.name}</span></a>`}
-          ${!next ? `` : `<a class="next" href="${next.path}"><span>${next.name}</span></a>`}
+          ${!prev ? "" : `<a class="prev" href="${prev.path}"><span>${prev.name}</span></a>`}
+          ${!next ? "" : `<a class="next" href="${next.path}"><span>${next.name}</span></a>`}
           </nav>`
     }
     <div>© ${new Date().getUTCFullYear()} Observable, Inc.</div>
