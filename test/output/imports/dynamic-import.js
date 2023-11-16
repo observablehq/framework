@@ -1,4 +1,4 @@
-define({id: "0", outputs: ["foo"], files: [{"name":"/bar.js","mimeType":"application/javascript"}], body: async () => {
-const foo = await import("/_file/bar.js");
+define({id: "0", outputs: ["foo"], body: async () => {
+const foo = await import("./_import/bar.js");
 return {foo};
 }});

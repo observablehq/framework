@@ -3,7 +3,7 @@
   "title": "Local fetch",
   "files": [
     {
-      "name": "/local-fetch.md",
+      "name": "./local-fetch.md",
       "mimeType": "text/markdown"
     }
   ],
@@ -33,7 +33,7 @@
       ],
       "files": [
         {
-          "name": "/local-fetch.md",
+          "name": "./local-fetch.md",
           "mimeType": "text/markdown"
         }
       ],

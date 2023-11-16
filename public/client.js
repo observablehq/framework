@@ -1,4 +1,4 @@
-import {Runtime, Library, Inspector} from "/_observablehq/runtime.js";
+import {Inspector, Library, Runtime} from "./runtime.js";
 
 const library = Object.assign(new Library(), {width, Mutable, ...recommendedLibraries()});
 const runtime = new Runtime(library);
@@ -75,9 +75,34 @@ function recommendedLibraries() {
       document.head.append(link);
       return inputs;
     },
+    tex,
     dot,
     mermaid
   };
+}
+
+// TODO Incorporate this into the standard library.
+async function tex() {
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = "https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css";
+  link.crossOrigin = "anonymous";
+  document.head.appendChild(link);
+
+  const {default: katex} = await import("https://cdn.jsdelivr.net/npm/katex/+esm");
+  const tex = renderer();
+
+  function renderer(options) {
+    return function () {
+      const root = document.createElement("div");
+      katex.render(String.raw.apply(String, arguments), root, {...options, output: "html"});
+      return root.removeChild(root.firstChild);
+    };
+  }
+
+  tex.options = renderer;
+  tex.block = renderer({displayMode: true});
+  return tex;
 }
 
 // TODO Incorporate this into the standard library.
@@ -91,7 +116,11 @@ async function dot() {
     while (++i < n) string += arguments[i] + "" + strings[i];
     const svg = viz.renderSVGElement(string, {
       graphAttributes: {
-        bgcolor: "none"
+        bgcolor: "none",
+        color: "#00000101",
+        fontcolor: "#00000101",
+        fontname: "var(--sans-serif)",
+        fontsize: "12"
       },
       nodeAttributes: {
         color: "#00000101",
@@ -121,13 +150,12 @@ async function dot() {
 async function mermaid() {
   let nextId = 0;
   const {default: mer} = await import("https://cdn.jsdelivr.net/npm/mermaid/+esm");
-  mer.initialize({startOnLoad: false, securityLevel: "loose", theme: "neutral"});
+  const theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "neutral";
+  mer.initialize({startOnLoad: false, securityLevel: "loose", theme});
   return async function mermaid() {
-    const div = document.createElement("div");
-    div.innerHTML = (await mer.render(`mermaid-${++nextId}`, String.raw.apply(String, arguments))).svg;
-    const svg = div.firstChild;
-    svg.remove();
-    return svg;
+    const root = document.createElement("div");
+    root.innerHTML = (await mer.render(`mermaid-${++nextId}`, String.raw.apply(String, arguments))).svg;
+    return root.removeChild(root.firstChild);
   };
 }
 
@@ -168,7 +196,7 @@ export function define(cell) {
   v.define(outputs.length ? `cell ${id}` : null, inputs, body);
   variables.push(v);
   for (const o of outputs) variables.push(main.define(o, [`cell ${id}`], (exports) => exports[o]));
-  for (const f of files) attachedFiles.set(f.name, {url: String(new URL(`/_file/${f.name}`, location)), mimeType: f.mimeType}); // prettier-ignore
+  for (const f of files) attachedFiles.set(f.name, {url: `/_file${(new URL(f.name, location)).pathname}`, mimeType: f.mimeType}); // prettier-ignore
   for (const d of databases) databaseTokens.set(d.name, d);
 }
 
@@ -277,8 +305,8 @@ export function open({hash} = {}) {
   }
 }
 
-{
-  const toggle = document.querySelector("#observablehq-sidebar-toggle");
+const toggle = document.querySelector("#observablehq-sidebar-toggle");
+if (toggle) {
   let indeterminate = toggle.indeterminate;
   toggle.onclick = () => {
     const matches = matchMedia("(min-width: calc(640px + 4rem + 0.5rem + 240px + 2rem))").matches;
@@ -295,3 +323,50 @@ export function open({hash} = {}) {
     }
   });
 }
+
+// Prevent double-clicking the summary toggle from selecting text.
+function preventDoubleClick(event) {
+  if (event.detail > 1) {
+    event.preventDefault();
+  }
+}
+
+for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
+  summary.onmousedown = preventDoubleClick;
+}
+
+// copy code cells
+document.addEventListener("pointerover", ({target}) => {
+  if (typeof navigator?.clipboard?.writeText !== "function") return;
+  if (target.nodeName === "PRE" && !target.getAttribute("data-copy")) {
+    target.addEventListener("pointermove", move);
+    target.addEventListener("pointerleave", out);
+  }
+  function out() {
+    target.removeEventListener("pointermove", move);
+    target.removeEventListener("pointerleave", out);
+    target.removeEventListener("click", copy);
+    target.removeAttribute("data-copy");
+  }
+  function move({offsetX: x}) {
+    if (30 + x > parseInt(getComputedStyle(target).width)) {
+      if (!target.getAttribute("data-copy")) {
+        target.setAttribute("data-copy", "copy");
+        target.addEventListener("click", copy);
+      }
+    } else {
+      if (target.getAttribute("data-copy")) {
+        target.removeAttribute("data-copy");
+        target.removeEventListener("click", copy);
+      }
+    }
+  }
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(target.textContent);
+      target.setAttribute("data-copy", "copied");
+    } catch {
+      target.setAttribute("data-copy", "error");
+    }
+  }
+});

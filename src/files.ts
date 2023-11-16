@@ -1,30 +1,14 @@
-import {accessSync, constants, statSync, type Stats} from "node:fs";
+import {type Stats} from "node:fs";
 import {mkdir, readdir, stat} from "node:fs/promises";
 import {dirname, extname, join, normalize, relative} from "node:path";
 import {isNodeError} from "./error.js";
 
-// A file is local if it exists in the root folder or a subfolder.
-export function isLocalFile(ref: string | null, root: string): boolean {
-  return (
-    typeof ref === "string" &&
-    !/^(\w+:)\/\//.test(ref) &&
-    !normalize(ref).startsWith("../") &&
-    canReadSync(join(root, ref))
-  );
-}
-
-export function pathFromRoot(ref: string | null, root: string): string | null {
-  return isLocalFile(ref, root) ? join(root, ref!) : null;
-}
-
-function canReadSync(path: string): boolean {
-  try {
-    accessSync(path, constants.R_OK);
-    return statSync(path).isFile();
-  } catch (error) {
-    if (isNodeError(error) && error.code === "ENOENT") return false;
-    throw error;
-  }
+// A path is local if it doesn’t go outside the the root.
+export function getLocalPath(sourcePath: string, name: string): string | null {
+  if (/^\w+:/.test(name)) return null; // URL
+  const path = join(dirname(sourcePath.startsWith("/") ? sourcePath.slice("/".length) : sourcePath), name);
+  if (path.startsWith("../")) return null; // goes above root
+  return path;
 }
 
 export async function* visitMarkdownFiles(root: string): AsyncGenerator<string> {

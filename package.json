@@ -1,7 +1,7 @@
 {
   "name": "@observablehq/cli",
   "license": "UNLICENSED",
-  "version": "0.0.34",
+  "version": "0.0.40",
   "type": "module",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
@@ -25,13 +25,19 @@
     "dev": "tsx watch ./src/preview.ts",
     "build": "rm -rf dist && ./bin/observable.ts build",
     "test": "yarn test:mocha && yarn test:lint",
-    "test:mocha": "mkdir -p test/output && tsx ./node_modules/.bin/mocha 'test/**/*-test.*'",
+    "test:coverage": "npx c8 yarn test:mocha",
+    "test:mocha": "rm -rf test/.observablehq/cache && tsx ./node_modules/.bin/mocha 'test/**/*-test.*'",
     "test:lint": "eslint src test public"
+  },
+  "c8": {
+    "all": true,
+    "include": ["src/**/*.js", "src/**/*.ts"],
+    "reporter": ["text", "lcov"]
   },
   "dependencies": {
     "@observablehq/runtime": "^5.9.4",
-    "acorn": "^8.10.0",
-    "acorn-walk": "^8.2.0",
+    "acorn": "^8.11.2",
+    "acorn-walk": "^8.3.0",
     "fast-array-diff": "^1.1.0",
     "fast-deep-equal": "^3.1.3",
     "gray-matter": "^4.0.3",
@@ -53,8 +59,10 @@
     "@types/ws": "^8.5.6",
     "@typescript-eslint/eslint-plugin": "^6.7.3",
     "@typescript-eslint/parser": "^6.7.3",
+    "d3-array": "^3.2.4",
     "eslint": "^8.50.0",
     "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-prettier": "^5.0.0",
     "mocha": "^10.2.0",
     "prettier": "^3.0.3",

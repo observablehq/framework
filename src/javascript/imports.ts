@@ -1,28 +1,40 @@
-import {Parser} from "acorn";
-import type {Node} from "acorn";
-import {simple} from "acorn-walk";
 import {readFileSync} from "node:fs";
-import {dirname, join} from "node:path";
-import {type JavaScriptNode, parseOptions} from "../javascript.js";
+import {dirname, join, normalize} from "node:path";
+import {type ExportAllDeclaration, type ExportNamedDeclaration, type Node, Parser} from "acorn";
+import {simple} from "acorn-walk";
+import {type ImportReference, type JavaScriptNode, parseOptions} from "../javascript.js";
+import {relativeUrl} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
+export function findExports(body: Node) {
+  const exports: (ExportAllDeclaration | ExportNamedDeclaration)[] = [];
+
+  simple(body, {
+    ExportAllDeclaration: findExport,
+    ExportNamedDeclaration: findExport
+  });
+
+  function findExport(node: ExportAllDeclaration | ExportNamedDeclaration) {
+    exports.push(node);
+  }
+
+  return exports;
+}
+
 export function findImports(body: Node, root: string, sourcePath: string) {
-  const imports: {name: string; type: "global" | "local"}[] = [];
-  const features: {name: string; type: string}[] = [];
+  const imports: ImportReference[] = [];
   const paths = new Set<string>();
 
   simple(body, {
     ImportDeclaration: findImport,
-    ImportExpression: findImport,
-    ExportAllDeclaration: findImport,
-    ExportNamedDeclaration: findImport
+    ImportExpression: findImport
   });
 
   function findImport(node) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
-      if (isLocalImport(value, root, sourcePath)) {
-        findLocalImports(join(dirname(sourcePath), value));
+      if (isLocalImport(value, sourcePath)) {
+        findLocalImports(normalize(value));
       } else {
         imports.push({name: value, type: "global"});
       }
@@ -30,15 +42,14 @@ export function findImports(body: Node, root: string, sourcePath: string) {
   }
 
   // If this is an import of a local ES module, recursively parse the module to
-  // find transitive imports.
-  // path is the full URI path without /_file
+  // find transitive imports. The path is always relative to the source path of
+  // the Markdown file, even across transitive imports.
   function findLocalImports(path) {
     if (paths.has(path)) return;
     paths.add(path);
     imports.push({type: "local", name: path});
-    features.push({type: "FileAttachment", name: path});
     try {
-      const input = readFileSync(join(root, path), "utf-8");
+      const input = readFileSync(join(root, dirname(sourcePath), path), "utf-8");
       const program = Parser.parse(input, parseOptions);
       simple(program, {
         ImportDeclaration: findLocalImport,
@@ -52,38 +63,33 @@ export function findImports(body: Node, root: string, sourcePath: string) {
     function findLocalImport(node) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
-        if (isLocalImport(value, root, path)) {
-          const subpath = join(dirname(path), value);
-          findLocalImports(subpath);
+        if (isLocalImport(value, sourcePath)) {
+          findLocalImports(join(dirname(path), value));
         } else {
           imports.push({name: value, type: "global"});
-          // non-local imports don't need to be promoted to file attachments
+          // non-local imports don't need to be traversed
         }
       }
     }
   }
 
-  return {imports, features};
+  return imports;
 }
 
 // TODO parallelize multiple static imports
-export function rewriteImports(output: any, rootNode: JavaScriptNode, root: string, sourcePath: string) {
+export function rewriteImports(output: any, rootNode: JavaScriptNode, sourcePath: string) {
   simple(rootNode.body, {
-    ImportExpression(node: any) {
+    ImportExpression(node) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
         output.replaceLeft(
           node.source.start,
           node.source.end,
-          JSON.stringify(
-            isLocalImport(value, root, sourcePath)
-              ? join("/_file/", join(dirname(sourcePath), value))
-              : resolveImport(value)
-          )
+          JSON.stringify(isLocalImport(value, sourcePath) ? relativeImport(sourcePath, value) : resolveImport(value))
         );
       }
     },
-    ImportDeclaration(node: any) {
+    ImportDeclaration(node) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
         rootNode.async = true;
@@ -93,18 +99,18 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode, root: stri
           `const ${
             node.specifiers.some(isNotNamespaceSpecifier)
               ? `{${node.specifiers.filter(isNotNamespaceSpecifier).map(rewriteImportSpecifier).join(", ")}}`
-              : node.specifiers.some(isNamespaceSpecifier)
-              ? node.specifiers.find(isNamespaceSpecifier).local.name
-              : "{}"
+              : node.specifiers.find(isNamespaceSpecifier)?.local.name ?? "{}"
           } = await import(${JSON.stringify(
-            isLocalImport(value, root, sourcePath)
-              ? join("/_file/", join(dirname(sourcePath), value))
-              : resolveImport(value)
+            isLocalImport(value, sourcePath) ? relativeImport(sourcePath, value) : resolveImport(value)
           )});`
         );
       }
     }
   });
+}
+
+function relativeImport(sourcePath, value) {
+  return relativeUrl(sourcePath, join("/_import/", dirname(sourcePath), value));
 }
 
 function rewriteImportSpecifier(node) {
@@ -115,10 +121,10 @@ function rewriteImportSpecifier(node) {
     : `${node.imported.name}: ${node.local.name}`;
 }
 
-export function isLocalImport(value: string, root: string, sourcePath: string): boolean {
+export function isLocalImport(value: string, sourcePath: string): boolean {
   return (
     ["./", "../", "/"].some((prefix) => value.startsWith(prefix)) &&
-    join(root + "/", dirname(sourcePath), value).startsWith(root)
+    !join(".", dirname(sourcePath), value).startsWith("../")
   );
 }
 

@@ -1,7 +1,3 @@
----
-title: Overview
----
-
 # Observable CLI
 
 ```js

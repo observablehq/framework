@@ -72,25 +72,73 @@ body {
 #observablehq-sidebar {
   position: fixed;
   background: var(--theme-background-alt);
-  color: var(--theme-foreground);
+  color: var(--theme-foreground-muted);
   font: 14px var(--sans-serif);
-  font-weight: 600;
+  font-weight: 500;
   width: 240px;
   z-index: 1;
   top: 0;
   bottom: 0;
   left: calc(-240px - 2rem);
   padding: 1rem;
+  overflow-y: scroll;
 }
 
 #observablehq-sidebar ol {
+  list-style: none;
   margin: 0;
   padding: 0;
 }
 
-#observablehq-sidebar ol li {
-  display: block;
+#observablehq-sidebar > ol,
+#observablehq-sidebar > details {
+  position: relative;
+  padding: 0.5rem 0 0;
+  margin: 0.5rem 0;
+}
+
+#observablehq-sidebar ol {
+  padding-bottom: 1rem;
+}
+
+#observablehq-sidebar > ol,
+#observablehq-sidebar > details {
+  position: relative;
+  border-top: solid 1px var(--theme-foreground-faintest);
+}
+
+#observablehq-sidebar > ol:first-child {
+  border-top: none;
+  font-weight: 700;
+  padding: 0;
   margin: 0;
+  color: var(--theme-foreground);
+}
+
+#observablehq-sidebar summary {
+  list-style: none;
+  font-weight: 700;
+  color: var(--theme-foreground);
+}
+
+#observablehq-sidebar summary::-webkit-details-marker,
+#observablehq-sidebar summary::marker {
+  display: none;
+}
+
+#observablehq-sidebar summary::after {
+  position: absolute;
+  right: 1rem;
+  margin-top: -0.25rem;
+  font-weight: 700;
+  font-size: 20px;
+  content: "⟩";
+  transition: transform 250ms ease;
+  transform-origin: 50% 50%;
+}
+
+#observablehq-sidebar details[open] summary:after {
+  transform: rotate(90deg);
 }
 
 #observablehq-sidebar-toggle {
@@ -121,13 +169,19 @@ body {
   content: "⟨";
 }
 
+#observablehq-sidebar summary,
 .observablehq-link a {
   display: block;
   padding: 0.5rem 1rem;
 }
 
+#observablehq-sidebar summary:hover,
 .observablehq-link a:hover {
   background: var(--theme-background);
+}
+
+.observablehq-link a:hover {
+  color: var(--theme-foreground-focus);
 }
 
 .observablehq-link a[href] {
@@ -306,10 +360,7 @@ pre {
   overflow-x: auto;
 }
 
-pre .language-md::after,
-pre .language-js::after,
-pre .language-sh::after,
-pre .language-sql::after {
+pre code::after {
   position: absolute;
   right: 0;
   top: 0;
@@ -320,21 +371,17 @@ pre .language-sql::after {
   padding: 0.5rem 0.5rem 0.5rem 1rem;
 }
 
-pre .language-md::after {
-  content: "md";
-}
-
-pre .language-js::after {
-  content: "js";
-}
-
-pre .language-sh::after {
-  content: "sh";
-}
-
-pre .language-sql::after {
-  content: "sql";
-}
+pre code.language-md::after { content: "md"; }
+pre code.language-js::after { content: "js"; }
+pre code.language-sh::after { content: "sh"; }
+pre code.language-sql::after { content: "sql"; }
+pre code.language-tex::after { content: "tex"; }
+pre code.language-dot::after { content: "dot"; }
+pre code.language-mermaid::after { content: "mermaid"; }
+pre[data-copy="copy"] code::after { content: "copy"; }
+pre[data-copy="copied"] code::after { content: "copied"; }
+pre[data-copy="error"] code::after { content: "error"; }
+pre code::after { pointer-events: none; }
 
 input:not([type]),
 input[type="email"],
