@@ -44,26 +44,23 @@ export function renderDefineCell(cell) {
     .join(", ")}, body: ${body}});\n`;
 }
 
-function renderPagerLink(page, isPrev = true) {
-  return `<div class="pager">
-${
-  !page
+function renderPagerLink(page, prev) {
+  return !page
     ? ``
-    : `<a class="${isPrev ? "prev" : "next"}" href="${page.path}">
-<span class="desc">${isPrev ? "Previous" : "Next"} page</span>
-<span class="title">${page.name}</span>
-</a>`
-}</div>`;
+    : `<a class="${prev ? "prev" : "next"}" href="${page.path}">
+  <span class="desc">${prev ? "Previous" : "Next"} page</span>
+  <span class="title">${page.name}</span>
+</a>`;
 }
 
 function renderFooter(path: string, pages: (Page | Section)[]): string {
   function establishFlatPages(pages) {
     return pages.flatMap(({name, path, pages}) => (path ? {path, name} : establishFlatPages(pages)));
   }
-
   const flatPages = establishFlatPages(pages);
   const currentIndex = flatPages.findIndex((page) => page.path === path);
-  const [prev, next] = currentIndex > -1 ? [flatPages?.[currentIndex - 1], flatPages?.[currentIndex + 1]] : [null, null];
+  const [prev, next] =
+    currentIndex > -1 ? [flatPages?.[currentIndex - 1], flatPages?.[currentIndex + 1]] : [null, null];
 
   return `<footer id="observablehq-footer">
 <nav class="prev-next">
