@@ -207,13 +207,13 @@ function footer(path: string, options?: Pick<Config, "pages" | "title">): string
       : `<nav>${
           !link.prev
             ? ""
-            : `<a id="observablehq-prev" href="${escapeDoubleQuoted(prettyPath(link.prev.path))}"><span>${escapeData(
+            : `<a rel="prev" href="${escapeDoubleQuoted(prettyPath(link.prev.path))}"><span>${escapeData(
                 link.prev.name
               )}</span></a>`
         }${
           !link.next
             ? ""
-            : `<a id="observablehq-next" href="${escapeDoubleQuoted(prettyPath(link.next.path))}"><span>${escapeData(
+            : `<a rel="next" href="${escapeDoubleQuoted(prettyPath(link.next.path))}"><span>${escapeData(
                 link.next.name
               )}</span></a>`
         }</nav>\n`

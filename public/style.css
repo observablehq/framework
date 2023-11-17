@@ -95,26 +95,25 @@ body {
   border-color: var(--theme-foreground-focus);
 }
 
-#observablehq-prev {
+#observablehq-footer nav a[rel="prev"] {
   grid-column: 1;
   align-items: start;
 }
 
-#observablehq-next {
+#observablehq-footer nav a[rel="next"] {
   grid-column: 2;
   align-items: end;
 }
 
-#observablehq-prev::before,
-#observablehq-next::before {
+#observablehq-footer nav a::before {
   color: var(--theme-foreground-faint);
 }
 
-#observablehq-prev::before {
+#observablehq-footer nav a[rel="prev"]::before {
   content: "Previous page";
 }
 
-#observablehq-next::before {
+#observablehq-footer nav a[rel="next"]::before {
   content: "Next page";
 }
 
