@@ -1,6 +1,7 @@
 export default {
   title: "Observable CLI",
   pages: [
+    {name: "Observable CLI", path: "/index"},
     {name: "Getting started", path: "/getting-started"},
     {name: "Markdown", path: "/markdown"},
     {name: "JavaScript", path: "/javascript"},

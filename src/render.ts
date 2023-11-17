@@ -54,7 +54,6 @@ function render(
   parseResult: ParseResult,
   {path, pages, title, preview, hash, resolver}: RenderOptions & RenderInternalOptions
 ): string {
-  const showSidebar = pages && pages.length > 1;
   return `<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -87,21 +86,29 @@ ${JSON.stringify(parseResult.data)}
 </script>`
       : ""
   }
-${
-  showSidebar
-    ? `<input id="observablehq-sidebar-toggle" type="checkbox">
-<nav id="observablehq-sidebar">${
-        title
-          ? `
+${sidebar(title, pages, path)}
+<div id="observablehq-center">
+<main id="observablehq-main" class="observablehq">
+${parseResult.html}</main>
+${footer(path, {pages, title})}
+</div>
+`;
+}
+
+function sidebar(title: string | undefined, pages: (Page | Section)[] | undefined, path: string): string {
+  if (!pages || pages.length < 2) return "";
+  const homeIndex = pages.findIndex((p) => "path" in p && p.path === "/index");
+  return `<input id="observablehq-sidebar-toggle" type="checkbox">
+<nav id="observablehq-sidebar">
   <ol>
-    <li class="observablehq-link">
-      <a href="${relativeUrl(path, "/")}">${escapeData(title)}</a>
-    </li>
-  </ol>`
-          : ""
-      }
+    <li class="observablehq-link${path === "/index" ? " observablehq-link-active" : ""}"><a href="${relativeUrl(
+      path,
+      "/"
+    )}">${escapeData(title ?? pages[homeIndex]?.name ?? "Home")}</a></li>
+  </ol>
   <ol>${pages
-    ?.map((p, i) =>
+    .slice(homeIndex === 0 ? 1 : 0)
+    .map((p, i) =>
       "pages" in p
         ? `${i > 0 && "path" in pages[i - 1] ? "</ol>" : ""}
     <details${p.open === undefined || p.open ? " open" : ""}>
@@ -137,15 +144,7 @@ ${
   const initialState = localStorage.getItem("observablehq-sidebar");
   if (initialState) toggle.checked = initialState === "true";
   else toggle.indeterminate = true;
-}</script>
-`
-    : ""
-}<div id="observablehq-center">
-<main id="observablehq-main" class="observablehq">
-${parseResult.html}</main>
-${footer(path, {pages, title})}
-</div>
-`;
+}</script>`;
 }
 
 function renderListItem(p: Page, path: string): string {
