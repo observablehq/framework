@@ -48,8 +48,8 @@ class Server {
     try {
       const url = new URL(req.url!, "http://localhost");
       let {pathname} = url;
-      const config = {base: "/", ...(await readConfig(this.root))};
-      const {base} = config;
+      const config = await readConfig(this.root);
+      const {base = "/"} = config;
       if (!base || !pathname.startsWith(base)) {
         if (!base.match(/^[/]\w+[/]$/)) throw new Error(`unsupported base option ${base}`);
         if (pathname === "/") {
