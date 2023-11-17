@@ -10,7 +10,7 @@
 
 import {define} from "./_observablehq/client.js";
 
-define({id: "115586ff", inputs: ["FileAttachment"], outputs: ["result"], files: [{"name":"data.txt","mimeType":"text/plain"}], body: (FileAttachment) => {
+define({id: "115586ff", inputs: ["FileAttachment"], outputs: ["result"], files: [{"name":"data.txt","mimeType":"text/plain","path":"./_file/data.txt"}], body: (FileAttachment) => {
 let result = FileAttachment("data.txt").text();
 return {result};
 }});
@@ -41,7 +41,7 @@ display(result);
 <div id="cell-815178e4" class="observablehq observablehq--block"></div>
 </main>
 <footer id="observablehq-footer">
-<nav><a rel="prev" href="/"><span>Home</span></a></nav>
+<nav><a rel="prev" href="./"><span>Home</span></a></nav>
 <div>© 2023 Observable, Inc.</div>
 </footer>
 </div>

@@ -10,12 +10,12 @@ import {type RuleCore} from "markdown-it/lib/parser_core.js";
 import {type RuleInline} from "markdown-it/lib/parser_inline.js";
 import {type RenderRule, type default as Renderer} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
-import mime from "mime";
-import {getLocalPath} from "./files.js";
+import {fileReference, getLocalPath} from "./files.js";
 import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
 import {type FileReference, type ImportReference, type Transpile, transpileJavaScript} from "./javascript.js";
 import {transpileTag} from "./tag.js";
+import {relativeUrl} from "./url.js";
 
 export interface ReadMarkdownResult {
   contents: string;
@@ -329,8 +329,8 @@ function normalizePieceHtml(html: string, root: string, sourcePath: string, cont
     const href = element.getAttribute("href")!;
     const path = getLocalPath(sourcePath, href);
     if (path) {
-      context.files.push({name: href, mimeType: mime.getType(href)});
-      element.setAttribute("href", `/_file/${path}`);
+      context.files.push(fileReference(href, sourcePath));
+      element.setAttribute("href", relativeUrl(sourcePath, `/_file/${path}`));
     }
   }
   return isSingleElement(document) ? String(document) : `<span>${document}</span>`;

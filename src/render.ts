@@ -198,15 +198,17 @@ function entity(character) {
 function footer(path: string, options?: Pick<Config, "pages" | "title">): string {
   const link = pager(path, options);
   return `<footer id="observablehq-footer">\n${
-    link ? `${pagenav(link)}\n` : ""
+    link ? `${pagenav(path, link)}\n` : ""
   }<div>© ${new Date().getUTCFullYear()} Observable, Inc.</div>
 </footer>`;
 }
 
-function pagenav({prev, next}: PageLink): string {
-  return `<nav>${prev ? pagelink(prev, "prev") : ""}${next ? pagelink(next, "next") : ""}</nav>`;
+function pagenav(path: string, {prev, next}: PageLink): string {
+  return `<nav>${prev ? pagelink(path, prev, "prev") : ""}${next ? pagelink(path, next, "next") : ""}</nav>`;
 }
 
-function pagelink({path, name}: Page, rel: "prev" | "next"): string {
-  return `<a rel="${rel}" href="${escapeDoubleQuoted(prettyPath(path))}"><span>${escapeData(name)}</span></a>`;
+function pagelink(path: string, page: Page, rel: "prev" | "next"): string {
+  return `<a rel="${rel}" href="${escapeDoubleQuoted(relativeUrl(path, prettyPath(page.path)))}"><span>${escapeData(
+    page.name
+  )}</span></a>`;
 }
