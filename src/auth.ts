@@ -87,7 +87,7 @@ export async function whoami(effects = defaultEffects) {
     }
     effects.log();
   } else {
-    effects.log(`You haven't authenticated with ${OBSERVABLEHQ_UI_HOST.hostname}. Run "observable login" to log in.`);
+    effects.log(`You haven't authenticated with ${OBSERVABLEHQ_UI_HOST.hostname}. Please run "observable login"`);
   }
 }
 
