@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import {pager} from "../src/pager.js";
 
-describe.only("pager(path, options)", () => {
+describe("pager(path, options)", () => {
   it("returns the previous and next links for three pages", () => {
     const config = {
       pages: [
