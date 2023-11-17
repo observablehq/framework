@@ -26,7 +26,7 @@ graph TD;
 
 Here are some more examples.
 
-```mermaid show
+```mermaid echo
 sequenceDiagram
     participant Alice
     participant Bob
@@ -40,7 +40,7 @@ sequenceDiagram
     Bob-->>John: Jolly good!
 ```
 
-```mermaid show
+```mermaid echo
 classDiagram
 Class01 <|-- AveryLongClass : Cool
 Class03 *-- Class04

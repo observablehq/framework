@@ -13,6 +13,7 @@ import MarkdownItAnchor from "markdown-it-anchor";
 import mime from "mime";
 import {getLocalPath} from "./files.js";
 import {computeHash} from "./hash.js";
+import {parseInfo} from "./info.js";
 import {type FileReference, type ImportReference, type Transpile, transpileJavaScript} from "./javascript.js";
 import {transpileTag} from "./tag.js";
 
@@ -79,16 +80,18 @@ function uniqueCodeId(context: ParseContext, content: string): string {
   return id;
 }
 
-function getLiveSource(content, language, option) {
-  return option === "no-run"
-    ? undefined
-    : language === "js"
+function isFalse(attribute: string | undefined): boolean {
+  return attribute?.toLowerCase() === "false";
+}
+
+function getLiveSource(content: string, tag: string): string | undefined {
+  return tag === "js"
     ? content
-    : language === "tex"
+    : tag === "tex"
     ? transpileTag(content, "tex.block", true)
-    : language === "dot"
+    : tag === "dot"
     ? transpileTag(content, "dot", false)
-    : language === "mermaid"
+    : tag === "mermaid"
     ? transpileTag(content, "await mermaid", false)
     : undefined;
 }
@@ -96,10 +99,11 @@ function getLiveSource(content, language, option) {
 function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: string): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
     const token = tokens[idx];
-    const [language, option] = token.info.split(" ");
+    const {tag, attributes} = parseInfo(token.info);
+    token.info = tag;
     let result = "";
     let count = 0;
-    const source = getLiveSource(token.content, language, option);
+    const source = isFalse(attributes.run) ? undefined : getLiveSource(token.content, tag);
     if (source != null) {
       const id = uniqueCodeId(context, token.content);
       const sourceLine = context.startLine + context.currentLine;
@@ -115,7 +119,8 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
       result += `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`;
       count++;
     }
-    if (source == null || option === "show") {
+    // TODO we could hide non-live code here with echo=false?
+    if (source == null || (attributes.echo != null && !isFalse(attributes.echo))) {
       result += baseRenderer(tokens, idx, options, context, self);
       count++;
     }

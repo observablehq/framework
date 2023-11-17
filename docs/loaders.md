@@ -8,7 +8,7 @@ Data loaders can be written in any programming language. They can even invoke bi
 
 For example, say you want to map recent earthquakes. Create a JavaScript data loader, `earthquakes.csv.js`, which queries the [USGS API](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php) and outputs CSV to stdout.
 
-```js no-run show
+```js run=false echo
 process.stdout.write("magnitude,longitude,latitude\n");
 const response = await fetch("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson");
 const collection = await response.json();
@@ -19,7 +19,7 @@ for (const feature of collection.features) {
 
 To access your data from Markdown, add a [JavaScript fenced code block](./javascript) and load `earthquakes.csv` as a [file](./javascript/files).
 
-```js show
+```js echo
 const quakes = FileAttachment("earthquakes.csv").csv({typed: true});
 ```
 
@@ -32,7 +32,7 @@ const world = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@1/world/110m
 const land = topojson.feature(world, world.objects.land);
 ```
 
-```js show
+```js echo
 Plot.plot({
   projection: {
     type: "orthographic",

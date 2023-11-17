@@ -2,7 +2,7 @@
 
 You can load files using the built-in `FileAttachment` function.
 
-```js show
+```js echo
 const gistemp = FileAttachment("gistemp.csv").csv({typed: true});
 ```
 

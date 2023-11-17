@@ -4,7 +4,7 @@ TK Something about how this is nice for incremental updates during preview, but 
 
 You may be accustomed to code running sequentially from top to bottom, and manually evaluating code in a notebook; Observable is different: we use [dataflow](https://en.wikipedia.org/wiki/Dataflow_programming), as in a spreadsheet, to *automatically* run code in topological order as determined by [top-level variable](#top-level-variables) references. For example, here we reference variables `x` and `y` even though they are defined in a code block below:
 
-```js show
+```js echo
 x + y
 ```
 
@@ -14,7 +14,7 @@ When code (such as `x + y`) references variables (such as `x` and `y`) defined b
 
 A top-level variable declared in a JavaScript fenced code block can be referenced in another code block or inline expression on the same page. So if you say:
 
-```js show
+```js echo
 const x = 1, y = 2;
 ```
 
@@ -22,7 +22,7 @@ Then you can reference `x` and `y` elsewhere on the page (with values ${x} and $
 
 To prevent variables from being visible outside the current block, make them local with a block statement:
 
-```js show
+```js echo
 {
   const z = 3;
 }

@@ -28,11 +28,11 @@ My favorite equation is ${tex`E = mc^2`}.
 
 Here are some more examples.
 
-```tex show
+```tex echo
 c = \pm\sqrt{a^2 + b^2}
 ```
 
-```tex show
+```tex echo
 \Delta E^*_{00} = \sqrt{
   \Big(\frac{\Delta L'}{k_LS_L}\Big)^2 +
   \Big(\frac{\Delta C'}{k_CS_C}\Big)^2 +
@@ -42,7 +42,7 @@ c = \pm\sqrt{a^2 + b^2}
   \frac{\Delta H'}{k_HS_H}}
 ```
 
-```tex show
+```tex echo
 \def\f#1#2{#1f(#2)}
 \f\relax{x} = \int_{-\infty}^\infty
     \f\hat\xi\,e^{2 \pi i \xi x}
