@@ -4,7 +4,7 @@ import {computeHash} from "./hash.js";
 import {resolveImport} from "./javascript/imports.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
 import {type CellPiece, type ParseResult, parseMarkdown} from "./markdown.js";
-import {pager} from "./pager.js";
+import {type PageLink, pager} from "./pager.js";
 import {relativeUrl} from "./url.js";
 
 export interface Render {
@@ -198,21 +198,15 @@ function entity(character) {
 function footer(path: string, options?: Pick<Config, "pages" | "title">): string {
   const link = pager(path, options);
   return `<footer id="observablehq-footer">\n${
-    !link
-      ? ``
-      : `<nav>${
-          !link.prev
-            ? ""
-            : `<a rel="prev" href="${escapeDoubleQuoted(prettyPath(link.prev.path))}"><span>${escapeData(
-                link.prev.name
-              )}</span></a>`
-        }${
-          !link.next
-            ? ""
-            : `<a rel="next" href="${escapeDoubleQuoted(prettyPath(link.next.path))}"><span>${escapeData(
-                link.next.name
-              )}</span></a>`
-        }</nav>\n`
+    !link ? `` : `${pagenav(link)}\n`
   }<div>© ${new Date().getUTCFullYear()} Observable, Inc.</div>
 </footer>`;
+}
+
+function pagenav({prev, next}: PageLink): string {
+  return `<nav>${prev ? pagelink(prev, "prev") : ""}${next ? pagelink(next, "next") : ""}</nav>`;
+}
+
+function pagelink({path, name}: Page, rel: "prev" | "next"): string {
+  return `<a rel="${rel}" href="${escapeDoubleQuoted(prettyPath(path))}"><span>${escapeData(name)}</span></a>`;
 }
