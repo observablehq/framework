@@ -208,15 +208,15 @@ function footer(path: string, options?: Pick<Config, "pages" | "title">): string
       : `<nav>${
           !link.prev
             ? ""
-            : `<a rel="prev" href="${escapeDoubleQuoted(prettyPath(link.prev.path))}"><span>${escapeData(
-                link.prev.name
-              )}</span></a>`
+            : `<a rel="prev" href="${escapeDoubleQuoted(
+                relativeUrl(path, prettyPath(link.prev.path))
+              )}"><span>${escapeData(link.prev.name)}</span></a>`
         }${
           !link.next
             ? ""
-            : `<a rel="next" href="${escapeDoubleQuoted(prettyPath(link.next.path))}"><span>${escapeData(
-                link.next.name
-              )}</span></a>`
+            : `<a rel="next" href="${escapeDoubleQuoted(
+                relativeUrl(path, prettyPath(link.next.path))
+              )}"><span>${escapeData(link.next.name)}</span></a>`
         }</nav>\n`
   }<div>© ${new Date().getUTCFullYear()} Observable, Inc.</div>
 </footer>`;
