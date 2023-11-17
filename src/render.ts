@@ -86,7 +86,7 @@ ${JSON.stringify(parseResult.data)}
 </script>`
       : ""
   }
-${sidebar(title, pages, path)}
+${pages.length < 1 ? "" : sidebar(title, pages, path)}
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 ${parseResult.html}</main>
@@ -95,8 +95,7 @@ ${footer(path, {pages, title})}
 `;
 }
 
-function sidebar(title: string | undefined, pages: (Page | Section)[] | undefined, path: string): string {
-  if (!pages || pages.length < 2) return "";
+function sidebar(title: string | undefined, pages: (Page | Section)[], path: string): string {
   return `<input id="observablehq-sidebar-toggle" type="checkbox">
 <nav id="observablehq-sidebar">
   <ol>
