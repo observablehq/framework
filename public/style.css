@@ -48,7 +48,8 @@ body {
   margin: 0;
 }
 
-#observablehq-main {
+#observablehq-main,
+#observablehq-footer {
   margin: 2rem auto;
   max-width: 1152px;
 }
@@ -59,7 +60,6 @@ body {
 
 #observablehq-footer {
   display: block;
-  max-width: 640px;
   margin-top: 10rem;
   font: 12px var(--sans-serif);
   color: var(--theme-foreground-faint);
@@ -67,6 +67,7 @@ body {
 
 #observablehq-footer nav {
   display: grid;
+  max-width: 640px;
   grid-template-columns: 1fr 1fr;
   column-gap: 1rem;
   margin-bottom: 1rem;
