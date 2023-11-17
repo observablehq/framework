@@ -14,6 +14,7 @@ export interface Section {
 
 export interface Config {
   title?: string;
+  base?: string;
   pages?: (Page | Section)[]; // TODO rename to sidebar?
 }
 
