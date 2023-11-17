@@ -9,9 +9,8 @@
 <script type="module">
 
 import {define} from "./_observablehq/client.js";
-globalThis._FileAttachmentBase = "./_file/";
 
-define({id: "115586ff", inputs: ["FileAttachment"], outputs: ["result"], files: [{"name":"data.txt","mimeType":"text/plain"}], body: (FileAttachment) => {
+define({id: "115586ff", inputs: ["FileAttachment"], outputs: ["result"], files: [{"name":"data.txt","mimeType":"text/plain","path":"./_file/data.txt"}], body: (FileAttachment) => {
 let result = FileAttachment("data.txt").text();
 return {result};
 }});

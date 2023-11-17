@@ -1,7 +1,10 @@
 import {type Stats} from "node:fs";
 import {mkdir, readdir, stat} from "node:fs/promises";
 import {dirname, extname, join, normalize, relative} from "node:path";
+import mime from "mime";
 import {isNodeError} from "./error.js";
+import type {FileReference} from "./javascript.js";
+import {relativeUrl} from "./url.js";
 
 // A path is local if it doesn’t go outside the the root.
 export function getLocalPath(sourcePath: string, name: string): string | null {
@@ -9,6 +12,24 @@ export function getLocalPath(sourcePath: string, name: string): string | null {
   const path = join(dirname(sourcePath.startsWith("/") ? sourcePath.slice("/".length) : sourcePath), name);
   if (path.startsWith("../")) return null; // goes above root
   return path;
+}
+
+export function fileReference(name: string, root: string): FileReference {
+  return {
+    name,
+    mimeType: mime.getType(name),
+    path: normalizeRelativePath(relativeUrl(root, "/_file/" + dirname(root) + "/" + name))
+  };
+}
+
+function normalizeRelativePath(path) {
+  const parts = path.split("/").filter((d) => d !== ".");
+  for (let r = 1; r < parts.length; ) {
+    if (parts[r] === ".." && parts[r - 1] !== "..") parts.splice(--r, 2);
+    else ++r;
+  }
+  if (parts[0] !== "..") parts.unshift(".");
+  return parts.join("/");
 }
 
 export async function* visitMarkdownFiles(root: string): AsyncGenerator<string> {

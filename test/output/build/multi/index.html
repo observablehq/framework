@@ -9,9 +9,8 @@
 <script type="module">
 
 import {define} from "./_observablehq/client.js";
-globalThis._FileAttachmentBase = "./_file/";
 
-define({id: "1bcb5df5", inputs: ["FileAttachment"], outputs: ["f1"], files: [{"name":"file1.csv","mimeType":"text/csv"}], body: (FileAttachment) => {
+define({id: "1bcb5df5", inputs: ["FileAttachment"], outputs: ["f1"], files: [{"name":"file1.csv","mimeType":"text/csv","path":"./_file/file1.csv"}], body: (FileAttachment) => {
 const f1 = FileAttachment("file1.csv").csv();
 return {f1};
 }});
@@ -20,7 +19,7 @@ display((
 Input.table(f1)
 ))
 }});
-define({id: "aaa5c01d", outputs: ["f2"], files: [{"name":"./file2.csv","mimeType":"text/csv"}], body: () => {
+define({id: "aaa5c01d", outputs: ["f2"], files: [{"name":"./file2.csv","mimeType":"text/csv","path":"./_file/file2.csv"}], body: () => {
 const f2 = fetch("./_file/file2.csv");
 return {f2};
 }});

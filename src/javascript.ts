@@ -1,5 +1,5 @@
 import {type Node, type Options, Parser, tokTypes} from "acorn";
-import mime from "mime";
+import {fileReference} from "./files.js";
 import {findAwaits} from "./javascript/awaits.js";
 import {findDeclarations} from "./javascript/declarations.js";
 import {findFeatures} from "./javascript/features.js";
@@ -17,6 +17,8 @@ export interface DatabaseReference {
 export interface FileReference {
   name: string;
   mimeType: string | null;
+  /** The relative path from the document to the file in _file */
+  path: string;
 }
 
 export interface ImportReference {
@@ -63,7 +65,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
       .map((f): DatabaseReference => ({name: f.name}));
     const files = node.features
       .filter((f) => f.type === "FileAttachment")
-      .map((f): FileReference => ({name: f.name, mimeType: mime.getType(f.name)}));
+      .map(({name}) => fileReference(name, sourcePath));
     const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
     const output = new Sourcemap(input);
     trim(output, input);
