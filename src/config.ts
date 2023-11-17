@@ -32,7 +32,8 @@ export async function readConfig(root: string): Promise<Config | undefined> {
     } catch {
       continue;
     }
-    if (!config?.base.match(/^[/]\w+[/]$/)) throw new Error(`invalid base: ${config.base}`);
+    if (typeof config?.base === "string" && !config.base.match(/^[/]\w+[/]$/))
+      throw new Error(`invalid base: ${config.base}`);
     return config;
   }
 }
