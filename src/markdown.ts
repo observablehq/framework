@@ -84,10 +84,8 @@ function isFalse(attribute: string | undefined): boolean {
   return attribute?.toLowerCase() === "false";
 }
 
-function getLiveSource(content: string, tag: string, attributes: Record<string, string>) {
-  return isFalse(attributes.run)
-    ? undefined
-    : tag === "js"
+function getLiveSource(content: string, tag: string): string | undefined {
+  return tag === "js"
     ? content
     : tag === "tex"
     ? transpileTag(content, "tex.block", true)
@@ -105,7 +103,7 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
     token.info = tag;
     let result = "";
     let count = 0;
-    const source = getLiveSource(token.content, tag, attributes);
+    const source = isFalse(attributes.run) ? undefined : getLiveSource(token.content, tag);
     if (source != null) {
       const id = uniqueCodeId(context, token.content);
       const sourceLine = context.startLine + context.currentLine;
@@ -122,7 +120,7 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
       count++;
     }
     // TODO we could hide non-live code here with echo=false?
-    if (source == null || ("echo" in attributes && !isFalse(attributes.echo))) {
+    if (source == null || (attributes.echo != null && !isFalse(attributes.echo))) {
       result += baseRenderer(tokens, idx, options, context, self);
       count++;
     }
