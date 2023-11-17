@@ -18,7 +18,7 @@ export function fileReference(name: string, root: string): FileReference {
   return {
     name,
     mimeType: mime.getType(name),
-    path: normalizeRelativePath(relativeUrl(root, "/_file/" + dirname(root) + "/" + name))
+    path: normalizeRelativePath(relativeUrl(root, `/_file/${dirname(root)}/${name}`))
   };
 }
 
