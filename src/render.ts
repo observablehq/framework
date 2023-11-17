@@ -86,7 +86,7 @@ ${JSON.stringify(parseResult.data)}
 </script>`
       : ""
   }
-${pages.length < 1 ? "" : sidebar(title, pages, path)}
+${pages.length > 0 ? sidebar(title, pages, path) : ""}
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 ${parseResult.html}</main>
@@ -198,7 +198,7 @@ function entity(character) {
 function footer(path: string, options?: Pick<Config, "pages" | "title">): string {
   const link = pager(path, options);
   return `<footer id="observablehq-footer">\n${
-    !link ? `` : `${pagenav(link)}\n`
+    link ? `${pagenav(link)}\n` : ""
   }<div>© ${new Date().getUTCFullYear()} Observable, Inc.</div>
 </footer>`;
 }
