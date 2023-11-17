@@ -6,7 +6,7 @@ import {visitFiles} from "./files.js";
 import {type ParseResult, parseMarkdown} from "./markdown.js";
 import {type RenderOptions} from "./render.js";
 
-export async function readPages(root: string): Promise<RenderOptions["pages"]> {
+export async function readPages(root: string): Promise<NonNullable<RenderOptions["pages"]>> {
   const config = await readConfig(root);
   if (config?.pages) return config?.pages;
   const pages: RenderOptions["pages"] = [];

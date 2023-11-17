@@ -16,7 +16,7 @@ export interface Render {
 export interface RenderOptions extends Config {
   root: string;
   path: string;
-  pages?: (Page | Section)[];
+  pages: (Page | Section)[];
   resolver: (cell: CellPiece) => CellPiece;
 }
 
