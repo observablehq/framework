@@ -4,6 +4,7 @@ import {computeHash} from "./hash.js";
 import {resolveImport} from "./javascript/imports.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
 import {type CellPiece, type ParseResult, parseMarkdown} from "./markdown.js";
+import {pager} from "./pager.js";
 import {relativeUrl} from "./url.js";
 
 export interface Render {
@@ -142,7 +143,7 @@ ${
 }<div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 ${parseResult.html}</main>
-${footer(path, pager(path, pages))}
+${footer(path, {pages, title})}
 </div>
 `;
 }
@@ -150,9 +151,11 @@ ${footer(path, pager(path, pages))}
 function renderListItem(p: Page, path: string): string {
   return `<li class="observablehq-link${
     p.path === path ? " observablehq-link-active" : ""
-  }"><a href="${escapeDoubleQuoted(relativeUrl(path, p.path.replace(/\/index$/, "/") || "/"))}">${escapeData(
-    p.name
-  )}</a></li>`;
+  }"><a href="${escapeDoubleQuoted(relativeUrl(path, prettyPath(p.path)))}">${escapeData(p.name)}</a></li>`;
+}
+
+function prettyPath(path: string): string {
+  return path.replace(/\/index$/, "/") || "/";
 }
 
 function getImportPreloads(parseResult: ParseResult, path: string): Iterable<string> {
@@ -196,36 +199,23 @@ function entity(character) {
   return `&#${character.charCodeAt(0).toString()};`;
 }
 
-// Pager links in the footer are computed once for a given navigation.
-const _pagers = new WeakMap();
-function pager(path: string, pages?: (Page | Section)[]): {prev?: Page; next?: Page} | undefined {
-  if (!pages) return;
-  if (!_pagers.has(pages)) {
-    const links = new Map();
-    let prev;
-    for (const page of walk(pages)) {
-      links.set(page.path, {prev, next: undefined});
-      if (prev) links.get(prev.path).next = page;
-      prev = page;
-    }
-    _pagers.set(pages, links);
-  }
-  return _pagers.get(pages).get(path);
-
-  function* walk(pages) {
-    for (const {path, name, pages: children} of pages) {
-      if (children) yield* walk(children);
-      else yield {path, name};
-    }
-  }
-}
-
-function footer(path: string, {prev, next}: {prev?: Page; next?: Page} = {}): string {
+function footer(path: string, options?: Pick<Config, "pages" | "title">): string {
+  const link = pager(path, options);
   return `<footer id="observablehq-footer">\n${
-    !(prev || next)
+    !link
       ? ``
-      : `<nav>${!prev ? "" : `<a class="prev" href="${prev.path}"><span>${prev.name}</span></a>`}${
-          !next ? "" : `<a class="next" href="${next.path}"><span>${next.name}</span></a>`
+      : `<nav>${
+          !link.prev
+            ? ""
+            : `<a id="observablehq-prev" href="${escapeDoubleQuoted(prettyPath(link.prev.path))}"><span>${escapeData(
+                link.prev.name
+              )}</span></a>`
+        }${
+          !link.next
+            ? ""
+            : `<a id="observablehq-next" href="${escapeDoubleQuoted(prettyPath(link.next.path))}"><span>${escapeData(
+                link.next.name
+              )}</span></a>`
         }</nav>\n`
   }<div>© ${new Date().getUTCFullYear()} Observable, Inc.</div>
 </footer>`;
