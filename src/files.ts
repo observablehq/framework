@@ -14,11 +14,11 @@ export function getLocalPath(sourcePath: string, name: string): string | null {
   return path;
 }
 
-export function fileReference(name: string, root: string): FileReference {
+export function fileReference(name: string, sourcePath: string): FileReference {
   return {
     name,
     mimeType: mime.getType(name),
-    path: normalizeRelativePath(relativeUrl(root, `/_file/${dirname(root)}/${name}`))
+    path: normalizeRelativePath(relativeUrl(sourcePath, `/_file/${dirname(sourcePath)}/${name}`))
   };
 }
 
