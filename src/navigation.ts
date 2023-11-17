@@ -8,7 +8,7 @@ import {type RenderOptions} from "./render.js";
 
 export async function readPages(root: string): Promise<RenderOptions["pages"]> {
   const config = await readConfig(root);
-  if (config?.pages !== undefined) return !config.pages ? undefined : config.pages;
+  if (config?.pages) return config?.pages;
   const pages: RenderOptions["pages"] = [];
   for await (const file of visitFiles(root)) {
     if (extname(file) !== ".md") continue;
