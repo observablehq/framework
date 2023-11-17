@@ -4,7 +4,8 @@
   "files": [
     {
       "name": "./local-fetch.md",
-      "mimeType": "text/markdown"
+      "mimeType": "text/markdown",
+      "path": "./_file/local-fetch.md"
     }
   ],
   "imports": [],
@@ -34,7 +35,8 @@
       "files": [
         {
           "name": "./local-fetch.md",
-          "mimeType": "text/markdown"
+          "mimeType": "text/markdown",
+          "path": "./_file/local-fetch.md"
         }
       ],
       "body": "(display) => {\ndisplay((\nfetch(\"./_file/local-fetch.md\")\n))\n}"

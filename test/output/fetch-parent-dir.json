@@ -4,19 +4,23 @@
   "files": [
     {
       "name": "./NOENT.md",
-      "mimeType": "text/markdown"
+      "mimeType": "text/markdown",
+      "path": "./_file/NOENT.md"
     },
     {
       "name": "./NOENT.md",
-      "mimeType": "text/markdown"
+      "mimeType": "text/markdown",
+      "path": "./_file/NOENT.md"
     },
     {
       "name": "./tex-expression.md",
-      "mimeType": "text/markdown"
+      "mimeType": "text/markdown",
+      "path": "./_file/tex-expression.md"
     },
     {
       "name": "./tex-expression.md",
-      "mimeType": "text/markdown"
+      "mimeType": "text/markdown",
+      "path": "./_file/tex-expression.md"
     }
   ],
   "imports": [],
@@ -134,7 +138,8 @@
       "files": [
         {
           "name": "./NOENT.md",
-          "mimeType": "text/markdown"
+          "mimeType": "text/markdown",
+          "path": "./_file/NOENT.md"
         }
       ],
       "body": "() => {\nconst fail5 = fetch(\"./_file/NOENT.md\").then(d => d.text())\nreturn {fail5};\n}"
@@ -151,7 +156,8 @@
       "files": [
         {
           "name": "./NOENT.md",
-          "mimeType": "text/markdown"
+          "mimeType": "text/markdown",
+          "path": "./_file/NOENT.md"
         }
       ],
       "body": "(FileAttachment) => {\nconst fail6 = FileAttachment(\"./NOENT.md\").text()\nreturn {fail6};\n}"
@@ -165,7 +171,8 @@
       "files": [
         {
           "name": "./tex-expression.md",
-          "mimeType": "text/markdown"
+          "mimeType": "text/markdown",
+          "path": "./_file/tex-expression.md"
         }
       ],
       "body": "() => {\nconst ok1 = fetch(\"./_file/tex-expression.md\").then(d => d.text())\nreturn {ok1};\n}"
@@ -182,7 +189,8 @@
       "files": [
         {
           "name": "./tex-expression.md",
-          "mimeType": "text/markdown"
+          "mimeType": "text/markdown",
+          "path": "./_file/tex-expression.md"
         }
       ],
       "body": "(FileAttachment) => {\nconst ok2 = FileAttachment(\"./tex-expression.md\").text()\nreturn {ok2};\n}"

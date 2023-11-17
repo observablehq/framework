@@ -196,8 +196,7 @@ export function define(cell) {
   v.define(outputs.length ? `cell ${id}` : null, inputs, body);
   variables.push(v);
   for (const o of outputs) variables.push(main.define(o, [`cell ${id}`], (exports) => exports[o]));
-  const fadir = new URL(globalThis._FileAttachmentBase, location).href;
-  for (const f of files) attachedFiles.set(f.name, {url: new URL(f.name, fadir).pathname, mimeType: f.mimeType});
+  for (const f of files) attachedFiles.set(f.name, {url: f.path, mimeType: f.mimeType});
   for (const d of databases) databaseTokens.set(d.name, d);
 }
 

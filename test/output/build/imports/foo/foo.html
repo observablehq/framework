@@ -24,12 +24,28 @@ return {d3,bar};
 }});
 
 </script>
+<input id="observablehq-sidebar-toggle" type="checkbox">
+<nav id="observablehq-sidebar">
+  <ol>
+    <li class="observablehq-link"><a href="../">Home</a></li>
+  </ol>
+  <ol>
+    <li class="observablehq-link observablehq-link-active"><a href="./foo">Foo</a></li>
+  </ol>
+</nav>
+<script>{
+  const toggle = document.querySelector("#observablehq-sidebar-toggle");
+  const initialState = localStorage.getItem("observablehq-sidebar");
+  if (initialState) toggle.checked = initialState === "true";
+  else toggle.indeterminate = true;
+}</script>
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 <h1 id="foo" tabindex="-1"><a class="observablehq-header-anchor" href="#foo">Foo</a></h1>
 <div id="cell-a9220fae" class="observablehq observablehq--block"></div>
 </main>
 <footer id="observablehq-footer">
+<nav><a rel="prev" href="../"><span>Home</span></a></nav>
 <div>© 2023 Observable, Inc.</div>
 </footer>
 </div>

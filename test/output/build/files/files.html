@@ -10,22 +10,22 @@
 import {define} from "./_observablehq/client.js";
 globalThis._FileAttachmentBase = "./_file/";
 
-define({id: "a7808707", inputs: ["display"], files: [{"name":"./file-top.csv","mimeType":"text/csv"}], body: (display) => {
+define({id: "a7808707", inputs: ["display"], files: [{"name":"./file-top.csv","mimeType":"text/csv","path":"./_file/file-top.csv"}], body: (display) => {
 display((
 fetch("./_file/file-top.csv")
 ))
 }});
-define({id: "03b99abc", inputs: ["display"], files: [{"name":"./subsection/file-sub.csv","mimeType":"text/csv"}], body: (display) => {
+define({id: "03b99abc", inputs: ["display"], files: [{"name":"./subsection/file-sub.csv","mimeType":"text/csv","path":"./_file/subsection/file-sub.csv"}], body: (display) => {
 display((
 fetch("./_file/subsection/file-sub.csv")
 ))
 }});
-define({id: "10037545", inputs: ["FileAttachment","display"], files: [{"name":"file-top.csv","mimeType":"text/csv"}], body: (FileAttachment,display) => {
+define({id: "10037545", inputs: ["FileAttachment","display"], files: [{"name":"file-top.csv","mimeType":"text/csv","path":"./_file/file-top.csv"}], body: (FileAttachment,display) => {
 display((
 FileAttachment("file-top.csv")
 ))
 }});
-define({id: "453a8147", inputs: ["FileAttachment","display"], files: [{"name":"subsection/file-sub.csv","mimeType":"text/csv"}], body: (FileAttachment,display) => {
+define({id: "453a8147", inputs: ["FileAttachment","display"], files: [{"name":"subsection/file-sub.csv","mimeType":"text/csv","path":"./_file/subsection/file-sub.csv"}], body: (FileAttachment,display) => {
 display((
 FileAttachment("subsection/file-sub.csv")
 ))
@@ -34,6 +34,9 @@ FileAttachment("subsection/file-sub.csv")
 </script>
 <input id="observablehq-sidebar-toggle" type="checkbox">
 <nav id="observablehq-sidebar">
+  <ol>
+    <li class="observablehq-link"><a href="./">Home</a></li>
+  </ol>
   <ol>
     <li class="observablehq-link observablehq-link-active"><a href="./files">Untitled</a></li>
     <li class="observablehq-link"><a href="./subsection/subfiles">Untitled</a></li>
@@ -55,7 +58,7 @@ FileAttachment("subsection/file-sub.csv")
 <div id="cell-453a8147" class="observablehq observablehq--block"></div>
 </main>
 <footer id="observablehq-footer">
-<nav><a rel="next" href="./subsection/subfiles"><span>Untitled</span></a></nav>
+<nav><a rel="prev" href="./"><span>Home</span></a><a rel="next" href="./subsection/subfiles"><span>Untitled</span></a></nav>
 <div>© 2023 Observable, Inc.</div>
 </footer>
 </div>

@@ -10,22 +10,22 @@
 import {define} from "../_observablehq/client.js";
 globalThis._FileAttachmentBase = "../_file/subsection/";
 
-define({id: "62f1fd0c", inputs: ["display"], files: [{"name":"../file-top.csv","mimeType":"text/csv"}], body: (display) => {
+define({id: "62f1fd0c", inputs: ["display"], files: [{"name":"../file-top.csv","mimeType":"text/csv","path":"../_file/file-top.csv"}], body: (display) => {
 display((
 fetch("../_file/file-top.csv")
 ))
 }});
-define({id: "94d347ec", inputs: ["display"], files: [{"name":"./file-sub.csv","mimeType":"text/csv"}], body: (display) => {
+define({id: "94d347ec", inputs: ["display"], files: [{"name":"./file-sub.csv","mimeType":"text/csv","path":"../_file/subsection/file-sub.csv"}], body: (display) => {
 display((
 fetch("../_file/subsection/file-sub.csv")
 ))
 }});
-define({id: "ef9a31ef", inputs: ["FileAttachment","display"], files: [{"name":"../file-top.csv","mimeType":"text/csv"}], body: (FileAttachment,display) => {
+define({id: "ef9a31ef", inputs: ["FileAttachment","display"], files: [{"name":"../file-top.csv","mimeType":"text/csv","path":"../_file/file-top.csv"}], body: (FileAttachment,display) => {
 display((
 FileAttachment("../file-top.csv")
 ))
 }});
-define({id: "834ecf9f", inputs: ["FileAttachment","display"], files: [{"name":"file-sub.csv","mimeType":"text/csv"}], body: (FileAttachment,display) => {
+define({id: "834ecf9f", inputs: ["FileAttachment","display"], files: [{"name":"file-sub.csv","mimeType":"text/csv","path":"../_file/subsection/file-sub.csv"}], body: (FileAttachment,display) => {
 display((
 FileAttachment("file-sub.csv")
 ))
@@ -34,6 +34,9 @@ FileAttachment("file-sub.csv")
 </script>
 <input id="observablehq-sidebar-toggle" type="checkbox">
 <nav id="observablehq-sidebar">
+  <ol>
+    <li class="observablehq-link"><a href="../">Home</a></li>
+  </ol>
   <ol>
     <li class="observablehq-link"><a href="../files">Untitled</a></li>
     <li class="observablehq-link observablehq-link-active"><a href="./subfiles">Untitled</a></li>
