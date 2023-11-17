@@ -97,17 +97,15 @@ ${footer(path, {pages, title})}
 
 function sidebar(title: string | undefined, pages: (Page | Section)[] | undefined, path: string): string {
   if (!pages || pages.length < 2) return "";
-  const homeIndex = pages.findIndex((p) => "path" in p && p.path === "/index");
   return `<input id="observablehq-sidebar-toggle" type="checkbox">
 <nav id="observablehq-sidebar">
   <ol>
     <li class="observablehq-link${path === "/index" ? " observablehq-link-active" : ""}"><a href="${relativeUrl(
       path,
       "/"
-    )}">${escapeData(title ?? pages[homeIndex]?.name ?? "Home")}</a></li>
+    )}">${escapeData(title ?? "Home")}</a></li>
   </ol>
   <ol>${pages
-    .slice(homeIndex === 0 ? 1 : 0)
     .map((p, i) =>
       "pages" in p
         ? `${i > 0 && "path" in pages[i - 1] ? "</ol>" : ""}
