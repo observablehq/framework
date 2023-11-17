@@ -11,6 +11,7 @@ import {type RuleInline} from "markdown-it/lib/parser_inline.js";
 import {type RenderRule, type default as Renderer} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
 import mime from "mime";
+import {relativeUrl} from "../src/url.js";
 import {getLocalPath} from "./files.js";
 import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
@@ -330,7 +331,7 @@ function normalizePieceHtml(html: string, root: string, sourcePath: string, cont
     const path = getLocalPath(sourcePath, href);
     if (path) {
       context.files.push({name: href, mimeType: mime.getType(href)});
-      element.setAttribute("href", `/_file/${path}`);
+      element.setAttribute("href", relativeUrl(sourcePath, `/_file/${path}`));
     }
   }
   return isSingleElement(document) ? String(document) : `<span>${document}</span>`;

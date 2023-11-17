@@ -73,6 +73,7 @@ ${Array.from(getImportPreloads(parseResult, path))
 <script type="module">
 
 import {${preview ? "open, " : ""}define} from "${relativeUrl(path, "/_observablehq/client.js")}";
+globalThis._FileAttachmentDir = ${JSON.stringify(relativeUrl(path, "/_file/"))};
 
 ${preview ? `open({hash: ${JSON.stringify(hash)}});\n` : ""}${parseResult.cells
     .map(resolver)

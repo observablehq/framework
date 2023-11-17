@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
+<link rel="stylesheet" type="text/css" href="./_observablehq/style.css">
+<link rel="modulepreload" href="./_observablehq/runtime.js">
+<script type="module">
+
+import {define} from "./_observablehq/client.js";
+globalThis._FileAttachmentDir = "./_file/";
+
+define({id: "a7808707", inputs: ["display"], files: [{"name":"./file-top.csv","mimeType":"text/csv"}], body: (display) => {
+display((
+fetch("./_file/file-top.csv")
+))
+}});
+define({id: "03b99abc", inputs: ["display"], files: [{"name":"./subsection/file-sub.csv","mimeType":"text/csv"}], body: (display) => {
+display((
+fetch("./_file/subsection/file-sub.csv")
+))
+}});
+define({id: "10037545", inputs: ["FileAttachment","display"], files: [{"name":"file-top.csv","mimeType":"text/csv"}], body: (FileAttachment,display) => {
+display((
+FileAttachment("file-top.csv")
+))
+}});
+define({id: "453a8147", inputs: ["FileAttachment","display"], files: [{"name":"subsection/file-sub.csv","mimeType":"text/csv"}], body: (FileAttachment,display) => {
+display((
+FileAttachment("subsection/file-sub.csv")
+))
+}});
+
+</script>
+<input id="observablehq-sidebar-toggle" type="checkbox">
+<nav id="observablehq-sidebar">
+  <ol>
+    <li class="observablehq-link observablehq-link-active"><a href="./files">Untitled</a></li>
+    <li class="observablehq-link"><a href="./subsection/subfiles">Untitled</a></li>
+  </ol>
+</nav>
+<script>{
+  const toggle = document.querySelector("#observablehq-sidebar-toggle");
+  const initialState = localStorage.getItem("observablehq-sidebar");
+  if (initialState) toggle.checked = initialState === "true";
+  else toggle.indeterminate = true;
+}</script>
+<div id="observablehq-center">
+<main id="observablehq-main" class="observablehq">
+<span><link rel="stylesheet" href="./_file/custom-styles.css">
+<link rel="stylesheet" href="./_file/subsection/additional-styles.css">
+</span><div id="cell-a7808707" class="observablehq observablehq--block"></div>
+<div id="cell-03b99abc" class="observablehq observablehq--block"></div>
+<div id="cell-10037545" class="observablehq observablehq--block"></div>
+<div id="cell-453a8147" class="observablehq observablehq--block"></div>
+</main>
+<footer id="observablehq-footer">
+<nav><a class="next" href="/subsection/subfiles"><span>Untitled</span></a></nav>
+<div>© 2023 Observable, Inc.</div>
+</footer>
+</div>

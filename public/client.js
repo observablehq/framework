@@ -196,7 +196,7 @@ export function define(cell) {
   v.define(outputs.length ? `cell ${id}` : null, inputs, body);
   variables.push(v);
   for (const o of outputs) variables.push(main.define(o, [`cell ${id}`], (exports) => exports[o]));
-  for (const f of files) attachedFiles.set(f.name, {url: `/_file${(new URL(f.name, location)).pathname}`, mimeType: f.mimeType}); // prettier-ignore
+  for (const f of files) attachedFiles.set(f.name, {url: globalThis._FileAttachmentDir + `${(new URL(f.name, location)).pathname}`, mimeType: f.mimeType}); // prettier-ignore
   for (const d of databases) databaseTokens.set(d.name, d);
 }
 
