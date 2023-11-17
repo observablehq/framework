@@ -6,9 +6,9 @@ import {visitFiles} from "./files.js";
 import {type ParseResult, parseMarkdown} from "./markdown.js";
 import {type RenderOptions} from "./render.js";
 
-export async function readPages(root: string): Promise<NonNullable<RenderOptions["pages"]>> {
+export async function readPages(root: string): Promise<RenderOptions["pages"]> {
   const config = await readConfig(root);
-  if (config?.pages) return config?.pages;
+  if (config?.pages !== undefined) return !config.pages ? undefined : config.pages;
   const pages: RenderOptions["pages"] = [];
   for await (const file of visitFiles(root)) {
     if (extname(file) !== ".md") continue;
