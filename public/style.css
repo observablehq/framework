@@ -187,6 +187,11 @@ body {
   content: "⟩";
   transition: transform 250ms ease;
   transform-origin: 50% 50%;
+  color: var(--theme-foreground-muted);
+}
+
+#observablehq-sidebar summary:hover::after {
+  color: var(--theme-foreground);
 }
 
 #observablehq-sidebar details[open] summary:after {
@@ -208,7 +213,7 @@ body {
   cursor: pointer;
   z-index: 2;
   background: none;
-  color: var(--theme-foreground-faint);
+  color: var(--theme-foreground-muted);
   font-weight: 700;
   font-size: 20px;
 }
