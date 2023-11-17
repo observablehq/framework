@@ -65,6 +65,58 @@ body {
   color: var(--theme-foreground-faint);
 }
 
+#observablehq-footer nav {
+  display: grid;
+  max-width: 640px;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+#observablehq-footer nav a {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--theme-foreground-fainter);
+  border-radius: 8px;
+  padding: 1rem;
+  line-height: 1rem;
+  text-decoration: none;
+}
+
+#observablehq-footer nav a span {
+  font-size: 14px;
+}
+
+#observablehq-footer nav a:hover span {
+  text-decoration: underline;
+}
+
+#observablehq-footer nav a:hover {
+  border-color: var(--theme-foreground-focus);
+}
+
+#observablehq-footer nav a[rel="prev"] {
+  grid-column: 1;
+  align-items: start;
+}
+
+#observablehq-footer nav a[rel="next"] {
+  grid-column: 2;
+  align-items: end;
+}
+
+#observablehq-footer nav a::before {
+  color: var(--theme-foreground-faint);
+}
+
+#observablehq-footer nav a[rel="prev"]::before {
+  content: "Previous page";
+}
+
+#observablehq-footer nav a[rel="next"]::before {
+  content: "Next page";
+}
+
 #observablehq-center {
   margin: 1rem;
 }
@@ -360,13 +412,7 @@ pre {
   overflow-x: auto;
 }
 
-pre .language-md::after,
-pre .language-tex::after,
-pre .language-dot::after,
-pre .language-mermaid::after,
-pre .language-js::after,
-pre .language-sh::after,
-pre .language-sql::after {
+pre code::after {
   position: absolute;
   right: 0;
   top: 0;
@@ -377,13 +423,17 @@ pre .language-sql::after {
   padding: 0.5rem 0.5rem 0.5rem 1rem;
 }
 
-pre .language-md::after { content: "md"; }
-pre .language-js::after { content: "js"; }
-pre .language-sh::after { content: "sh"; }
-pre .language-sql::after { content: "sql"; }
-pre .language-tex::after { content: "tex"; }
-pre .language-dot::after { content: "dot"; }
-pre .language-mermaid::after { content: "mermaid"; }
+pre code.language-md::after { content: "md"; }
+pre code.language-js::after { content: "js"; }
+pre code.language-sh::after { content: "sh"; }
+pre code.language-sql::after { content: "sql"; }
+pre code.language-tex::after { content: "tex"; }
+pre code.language-dot::after { content: "dot"; }
+pre code.language-mermaid::after { content: "mermaid"; }
+pre[data-copy="copy"] code::after { content: "copy"; }
+pre[data-copy="copied"] code::after { content: "copied"; }
+pre[data-copy="error"] code::after { content: "error"; }
+pre code::after { pointer-events: none; }
 
 input:not([type]),
 input[type="email"],

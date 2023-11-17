@@ -1,9 +1,11 @@
 import {dirname, join} from "node:path";
-import {type Config, type Page} from "./config.js";
+import {type Config, type Page, type Section} from "./config.js";
 import {computeHash} from "./hash.js";
 import {resolveImport} from "./javascript/imports.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
 import {type CellPiece, type ParseResult, parseMarkdown} from "./markdown.js";
+import {type PageLink, pager} from "./pager.js";
+import {relativeUrl} from "./url.js";
 
 export interface Render {
   html: string;
@@ -14,6 +16,7 @@ export interface Render {
 export interface RenderOptions extends Config {
   root: string;
   path: string;
+  pages: (Page | Section)[];
   resolver: (cell: CellPiece) => CellPiece;
 }
 
@@ -51,7 +54,6 @@ function render(
   parseResult: ParseResult,
   {path, pages, title, preview, hash, resolver}: RenderOptions & RenderInternalOptions
 ): string {
-  const showSidebar = pages && pages.length > 1;
   return `<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -64,13 +66,13 @@ ${
     : ""
 }<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
-<link rel="stylesheet" type="text/css" href="/_observablehq/style.css">
+<link rel="stylesheet" type="text/css" href="${relativeUrl(path, "/_observablehq/style.css")}">
 ${Array.from(getImportPreloads(parseResult, path))
-  .map((href) => `<link rel="modulepreload" href="${href}">`)
+  .map((href) => `<link rel="modulepreload" href="${relativeUrl(path, href)}">`)
   .join("\n")}
 <script type="module">
 
-import {${preview ? "open, " : ""}define} from "/_observablehq/client.js";
+import {${preview ? "open, " : ""}define} from "${relativeUrl(path, "/_observablehq/client.js")}";
 
 ${preview ? `open({hash: ${JSON.stringify(hash)}});\n` : ""}${parseResult.cells
     .map(resolver)
@@ -84,21 +86,26 @@ ${JSON.stringify(parseResult.data)}
 </script>`
       : ""
   }
-${
-  showSidebar
-    ? `<input id="observablehq-sidebar-toggle" type="checkbox">
-<nav id="observablehq-sidebar">${
-        title
-          ? `
+${pages.length > 0 ? sidebar(title, pages, path) : ""}
+<div id="observablehq-center">
+<main id="observablehq-main" class="observablehq">
+${parseResult.html}</main>
+${footer(path, {pages, title})}
+</div>
+`;
+}
+
+function sidebar(title: string | undefined, pages: (Page | Section)[], path: string): string {
+  return `<input id="observablehq-sidebar-toggle" type="checkbox">
+<nav id="observablehq-sidebar">
   <ol>
-    <li class="observablehq-link">
-      <a href="/">${escapeData(title)}</a>
-    </li>
-  </ol>`
-          : ""
-      }
+    <li class="observablehq-link${path === "/index" ? " observablehq-link-active" : ""}"><a href="${relativeUrl(
+      path,
+      "/"
+    )}">${escapeData(title ?? "Home")}</a></li>
+  </ol>
   <ol>${pages
-    ?.map((p, i) =>
+    .map((p, i) =>
       "pages" in p
         ? `${i > 0 && "path" in pages[i - 1] ? "</ol>" : ""}
     <details${p.open === undefined || p.open ? " open" : ""}>
@@ -134,21 +141,17 @@ ${
   const initialState = localStorage.getItem("observablehq-sidebar");
   if (initialState) toggle.checked = initialState === "true";
   else toggle.indeterminate = true;
-}</script>
-`
-    : ""
-}<div id="observablehq-center">
-<main id="observablehq-main" class="observablehq">
-${parseResult.html}</main>
-<footer id="observablehq-footer">© ${new Date().getUTCFullYear()} Observable, Inc.</footer>
-</div>
-`;
+}</script>`;
 }
 
 function renderListItem(p: Page, path: string): string {
   return `<li class="observablehq-link${
     p.path === path ? " observablehq-link-active" : ""
-  }"><a href="${escapeDoubleQuoted(p.path.replace(/\/index$/, "") || "/")}">${escapeData(p.name)}</a></li>`;
+  }"><a href="${escapeDoubleQuoted(relativeUrl(path, prettyPath(p.path)))}">${escapeData(p.name)}</a></li>`;
+}
+
+function prettyPath(path: string): string {
+  return path.replace(/\/index$/, "/") || "/";
 }
 
 function getImportPreloads(parseResult: ParseResult, path: string): Iterable<string> {
@@ -190,4 +193,22 @@ function escapeData(value: string): string {
 
 function entity(character) {
   return `&#${character.charCodeAt(0).toString()};`;
+}
+
+function footer(path: string, options?: Pick<Config, "pages" | "title">): string {
+  const link = pager(path, options);
+  return `<footer id="observablehq-footer">\n${
+    link ? `${pagenav(path, link)}\n` : ""
+  }<div>© ${new Date().getUTCFullYear()} Observable, Inc.</div>
+</footer>`;
+}
+
+function pagenav(path: string, {prev, next}: PageLink): string {
+  return `<nav>${prev ? pagelink(path, prev, "prev") : ""}${next ? pagelink(path, next, "next") : ""}</nav>`;
+}
+
+function pagelink(path: string, page: Page, rel: "prev" | "next"): string {
+  return `<a rel="${rel}" href="${escapeDoubleQuoted(relativeUrl(path, prettyPath(page.path)))}"><span>${escapeData(
+    page.name
+  )}</span></a>`;
 }
