@@ -51,7 +51,7 @@ class Server {
       const config = {base: "/", ...(await readConfig(this.root))};
       const {base} = config;
       if (!base || !pathname.startsWith(base)) {
-        if (!base.startsWith("/") || !base.endsWith("/")) throw new Error(`unsupported base option ${base}`);
+        if (!base.match(/^[/]\w+[/]$/)) throw new Error(`unsupported base option ${base}`);
         if (pathname === "/") {
           res.writeHead(302, {Location: base});
           res.end();
