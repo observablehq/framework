@@ -67,7 +67,8 @@ body {
 
 #observablehq-footer nav {
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  max-width: 640px;
+  grid-template-columns: 1fr 1fr;
   column-gap: 1rem;
   margin-bottom: 1rem;
 }
