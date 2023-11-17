@@ -49,9 +49,8 @@ class Server {
       const url = new URL(req.url!, "http://localhost");
       let {pathname} = url;
       const config = await readConfig(this.root);
-      const {base = "/"} = config;
+      const {base = "/"} = config ?? {};
       if (!base || !pathname.startsWith(base)) {
-        if (!base.match(/^[/]\w+[/]$/)) throw new Error(`unsupported base option ${base}`);
         if (pathname === "/") {
           res.writeHead(302, {Location: base});
           res.end();
@@ -59,7 +58,7 @@ class Server {
         }
         throw new HttpError("Not found", 404);
       }
-      pathname = pathname.slice(config.base.length - 1);
+      pathname = pathname.slice(base.length - 1);
       if (pathname === "/_observablehq/runtime.js") {
         send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
       } else if (pathname.startsWith("/_observablehq/")) {
@@ -132,7 +131,7 @@ class Server {
             root: this.root,
             path: pathname,
             pages,
-            title: config.title,
+            title: config?.title,
             resolver: this._resolver!
           });
           const etag = `"${createHash("sha256").update(html).digest("base64")}"`;

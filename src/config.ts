@@ -20,6 +20,7 @@ export interface Config {
 
 export async function readConfig(root: string): Promise<Config | undefined> {
   for (const ext of [".js", ".ts"]) {
+    let config;
     try {
       const configPath = join(process.cwd(), root, ".observablehq", "config" + ext);
       const configStat = await stat(configPath);
@@ -27,9 +28,11 @@ export async function readConfig(root: string): Promise<Config | undefined> {
       // any changes to the config on reload. TODO It would be better to either
       // restart the preview server when the config changes, or for the preview
       // server to watch the config file and hot-reload it automatically.
-      return (await import(`${configPath}?${configStat.mtimeMs}`)).default;
+      config = (await import(`${configPath}?${configStat.mtimeMs}`)).default;
     } catch {
       continue;
     }
+    if (!config?.base.match(/^[/]\w+[/]$/)) throw new Error(`unsupported base option ${config.base}`);
+    return config;
   }
 }
