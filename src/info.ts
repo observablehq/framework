@@ -147,5 +147,5 @@ function lower(input: string, start: number, end: number): string {
 }
 
 function decode(input: string, start: number, end: number): string {
-  return he.decode(input.slice(start, end));
+  return he.decode(input.slice(start, end), {isAttributeValue: true});
 }

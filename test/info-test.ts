@@ -128,6 +128,10 @@ describe("parseInfo(input)", () => {
     assert.deepStrictEqual(parseInfo('js echo="&quot;world&quot;"'), {tag: "js", attributes: {echo: '"world"'}});
     assert.deepStrictEqual(parseInfo("js echo='&quot;world&quot;'"), {tag: "js", attributes: {echo: '"world"'}});
   });
+  it("parses attribute values with ambiguous ampersands", () => {
+    assert.deepStrictEqual(parseInfo("js echo=foo&ampbar"), {tag: "js", attributes: {echo: "foo&ampbar"}});
+    assert.deepStrictEqual(parseInfo("js echo=foo&amp;bar"), {tag: "js", attributes: {echo: "foo&bar"}});
+  });
   it("parses multiple attributes", () => {
     assert.deepStrictEqual(parseInfo(" echo=true run"), {tag: "", attributes: {echo: "true", run: ""}});
     assert.deepStrictEqual(parseInfo(" echo=true run=false"), {tag: "", attributes: {echo: "true", run: "false"}});
