@@ -32,7 +32,7 @@ export async function readConfig(root: string): Promise<Config | undefined> {
     } catch {
       continue;
     }
-    if (!config?.base.match(/^[/]\w+[/]$/)) throw new Error(`unsupported base option ${config.base}`);
+    if (!config?.base.match(/^[/]\w+[/]$/)) throw new Error(`invalid base: ${config.base}`);
     return config;
   }
 }
