@@ -1,8 +1,8 @@
 import {spawn} from "node:child_process";
 import {existsSync, statSync} from "node:fs";
-import {mkdir, open, rename, unlink} from "node:fs/promises";
-import {dirname, extname, join} from "node:path";
-import {maybeStat, prepareOutput} from "./files.js";
+import {mkdir, open, readFile, rename, unlink, writeFile} from "node:fs/promises";
+import {basename, dirname, extname, join} from "node:path";
+import {maybeStat, prepareOutput, visitFiles} from "./files.js";
 
 const runningCommands = new Map<string, Promise<string>>();
 
@@ -100,7 +100,20 @@ export class Loader {
         await prepareOutput(tempPath);
         const tempFd = await open(tempPath, "w");
         const tempFileStream = tempFd.createWriteStream({highWaterMark: 1024 * 1024});
-        const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", "pipe", "inherit"]});
+
+        // Special treatment for files.uri loaders: we create a temporary
+        // working directory, and spawn the process from that directory; any
+        // files written are then saved to files/ and the payload is the list of
+        // URIs, with the output as a comment on top.
+        const dir =
+          this.targetPath.endsWith(".uri") &&
+          join(this.sourceRoot, ".observablehq", "cache", `${this.targetPath.slice(0, -4)}.${process.pid}`);
+        if (dir) await prepareOutput(`${dir}/.`);
+        const subprocess = spawn(this.command, this.args, {
+          windowsHide: true,
+          cwd: dir || undefined,
+          stdio: ["ignore", "pipe", "inherit"]
+        });
         subprocess.stdout.pipe(tempFileStream);
         const code = await new Promise((resolve, reject) => {
           subprocess.on("error", reject);
@@ -110,6 +123,31 @@ export class Loader {
         if (code === 0) {
           await mkdir(dirname(cachePath), {recursive: true});
           await rename(tempPath, cachePath);
+          if (dir) {
+            const filesPath = cachePath.slice(0, -".uri".length);
+            let deleteOld;
+            {
+              // ideally this block should be atomic.
+              try {
+                await rename(filesPath, `${filesPath}.old`);
+                deleteOld = true;
+              } catch {
+                deleteOld = false;
+              }
+              await rename(dir, filesPath);
+            }
+            // Compute the new payload
+            let payload = (await readFile(cachePath, "utf-8")).trim().replaceAll(/^/gm, "# ") + "\n\n";
+            const relativeDirName = basename(filesPath);
+            for await (const file of visitFiles(filesPath)) {
+              console.error(file);
+              payload += `./${relativeDirName}/${file}\n`;
+            }
+            await writeFile(cachePath, payload);
+            if (deleteOld) {
+              // TODO delete old directory
+            }
+          }
         } else {
           await unlink(tempPath);
           throw new Error(`loader exited with code ${code}`);
