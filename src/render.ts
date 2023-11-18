@@ -56,7 +56,9 @@ function render(
 ): string {
   return `<!DOCTYPE html>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+${
+  path === "/404" ? `<base href="/">\n` : ""
+}<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 ${
   parseResult.title || title
     ? `<title>${[parseResult.title, parseResult.title === title ? null : title]
