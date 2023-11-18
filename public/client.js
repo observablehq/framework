@@ -336,37 +336,35 @@ for (const summary of document.querySelectorAll("#observablehq-sidebar summary")
 }
 
 // copy code cells
-document.addEventListener("pointerover", ({target}) => {
-  if (typeof navigator?.clipboard?.writeText !== "function") return;
-  if (target.nodeName === "PRE" && !target.getAttribute("data-copy")) {
-    target.addEventListener("pointermove", move);
-    target.addEventListener("pointerleave", out);
-  }
-  function out() {
-    target.removeEventListener("pointermove", move);
-    target.removeEventListener("pointerleave", out);
-    target.removeEventListener("click", copy);
-    target.removeAttribute("data-copy");
-  }
-  function move({offsetX: x}) {
-    if (30 + x > parseInt(getComputedStyle(target).width)) {
-      if (!target.getAttribute("data-copy")) {
-        target.setAttribute("data-copy", "copy");
-        target.addEventListener("click", copy);
-      }
-    } else {
-      if (target.getAttribute("data-copy")) {
-        target.removeAttribute("data-copy");
-        target.removeEventListener("click", copy);
-      }
+for (const pre of document.querySelectorAll("pre")) {
+  pre.addEventListener("pointermove", copymove);
+  pre.addEventListener("pointerleave", copyleave);
+}
+
+function copyleave({currentTarget}) {
+  currentTarget.removeEventListener("click", copy);
+  currentTarget.removeAttribute("data-copy");
+}
+
+function copymove({currentTarget, offsetX}) {
+  if (60 + offsetX > currentTarget.clientWidth) {
+    if (!currentTarget.hasAttribute("data-copy")) {
+      currentTarget.setAttribute("data-copy", "copy");
+      currentTarget.addEventListener("click", copy);
+    }
+  } else {
+    if (currentTarget.hasAttribute("data-copy")) {
+      currentTarget.removeAttribute("data-copy");
+      currentTarget.removeEventListener("click", copy);
     }
   }
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(target.textContent);
-      target.setAttribute("data-copy", "copied");
-    } catch {
-      target.setAttribute("data-copy", "error");
-    }
+}
+
+async function copy({currentTarget}) {
+  try {
+    await navigator.clipboard.writeText(currentTarget.textContent);
+    currentTarget.setAttribute("data-copy", "copied");
+  } catch {
+    currentTarget.setAttribute("data-copy", "error");
   }
-});
+}
