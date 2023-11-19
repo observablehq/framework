@@ -37,7 +37,7 @@
 }
 
 hr {
-  margin: 4rem auto;
+  margin: 2rem auto;
   max-width: 30rem;
 }
 
