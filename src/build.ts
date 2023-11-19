@@ -7,6 +7,7 @@ import {parseArgs} from "node:util";
 import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
+import {resolveSources} from "./javascript/imports.js";
 import {readPages} from "./navigation.js";
 import {renderServerless} from "./render.js";
 import {makeCLIResolver} from "./resolver.js";
@@ -91,7 +92,7 @@ export async function build(context: CommandContext = makeCommandContext()) {
     }
     if (verbose) console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);
-    await copyFile(sourcePath, outputPath);
+    await writeFile(outputPath, resolveSources(await readFile(sourcePath, "utf-8")));
   }
 
   // Copy over required distribution files from node_modules.

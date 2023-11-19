@@ -1,7 +1,8 @@
 import {createHash} from "node:crypto";
 import {type FSWatcher, existsSync, watch} from "node:fs";
 import {access, constants, readFile, stat} from "node:fs/promises";
-import {type IncomingMessage, type RequestListener, createServer} from "node:http";
+import {createServer} from "node:http";
+import type {IncomingMessage, RequestListener, ServerResponse} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
 import {parseArgs} from "node:util";
@@ -11,6 +12,7 @@ import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {HttpError, isHttpError, isNodeError} from "./error.js";
 import {maybeStat} from "./files.js";
+import {resolveSources} from "./javascript/imports.js";
 import {type ParseResult, diffMarkdown, readMarkdown} from "./markdown.js";
 import {readPages} from "./navigation.js";
 import {renderPreview} from "./render.js";
@@ -53,7 +55,14 @@ class Server {
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
-        send(req, pathname.slice("/_import".length), {root: this.root}).pipe(res);
+        let js: string;
+        try {
+          js = await readFile(join(this.root, pathname.slice("/_import".length)), "utf-8");
+        } catch (error) {
+          if (isNodeError(error) && error.code !== "ENOENT") throw error;
+          throw new HttpError("Not found", 404);
+        }
+        end(req, res, resolveSources(js), "text/javascript");
       } else if (pathname.startsWith("/_file/")) {
         const path = pathname.slice("/_file".length);
         const filepath = join(this.root, path);
@@ -123,19 +132,7 @@ class Server {
             title: (await readConfig(this.root))?.title,
             resolver: this._resolver!
           });
-          const etag = `"${createHash("sha256").update(html).digest("base64")}"`;
-          res.setHeader("Content-Type", "text/html; charset=utf-8");
-          res.setHeader("Date", new Date().toUTCString());
-          res.setHeader("Last-Modified", new Date().toUTCString());
-          res.setHeader("ETag", etag);
-          if (req.headers["if-none-match"] === etag) {
-            res.statusCode = 304;
-            res.end();
-          } else if (req.method === "HEAD") {
-            res.end();
-          } else {
-            res.end(html);
-          }
+          end(req, res, html, "text/html");
         } catch (error) {
           if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error
           throw new HttpError("Not found", 404);
@@ -156,6 +153,24 @@ class Server {
       socket.close();
     }
   };
+}
+
+// Like send, but for in-memory dynamic content.
+function end(req: IncomingMessage, res: ServerResponse, content: string, type: string): void {
+  const etag = `"${createHash("sha256").update(content).digest("base64")}"`;
+  const date = new Date().toUTCString();
+  res.setHeader("Content-Type", `${type}; charset=utf-8`);
+  res.setHeader("Date", date);
+  res.setHeader("Last-Modified", date);
+  res.setHeader("ETag", etag);
+  if (req.headers["if-none-match"] === etag) {
+    res.statusCode = 304;
+    res.end();
+  } else if (req.method === "HEAD") {
+    res.end();
+  } else {
+    res.end(content);
+  }
 }
 
 class FileWatchers {

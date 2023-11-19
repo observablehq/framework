@@ -1,8 +1,10 @@
 import {readFileSync} from "node:fs";
 import {dirname, join, normalize} from "node:path";
-import {type ExportAllDeclaration, type ExportNamedDeclaration, type Node, Parser} from "acorn";
+import {Parser} from "acorn";
+import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression, Node} from "acorn";
 import {simple} from "acorn-walk";
 import {type ImportReference, type JavaScriptNode, parseOptions} from "../javascript.js";
+import {Sourcemap} from "../sourcemap.js";
 import {relativeUrl} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
@@ -74,6 +76,27 @@ export function findImports(body: Node, root: string, sourcePath: string) {
   }
 
   return imports;
+}
+
+export function resolveSources(input: string) {
+  const body = Parser.parse(input, parseOptions) as any;
+  const output = new Sourcemap(input);
+
+  simple(body, {
+    ImportDeclaration: resolveSource,
+    ImportExpression: resolveSource,
+    ExportAllDeclaration: resolveSource,
+    ExportNamedDeclaration: resolveSource
+  });
+
+  function resolveSource(node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration) {
+    if (isStringLiteral(node.source)) {
+      const value = getStringLiteralValue(node.source);
+      output.replaceLeft(node.source.start, node.source.end, JSON.stringify(resolveImport(value)));
+    }
+  }
+
+  return String(output);
 }
 
 // TODO parallelize multiple static imports
