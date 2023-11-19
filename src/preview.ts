@@ -47,6 +47,7 @@ class Server {
 
   _handleRequest: RequestListener = async (req, res) => {
     console.log(req.method, req.url);
+    let pages;
     try {
       const url = new URL(req.url!, "http://localhost");
       let {pathname} = url;
@@ -124,7 +125,7 @@ class Server {
         // Otherwise, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
         try {
-          const pages = await readPages(this.root); // TODO cache? watcher?
+          pages = await readPages(this.root); // TODO cache? watcher?
           const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {
             root: this.root,
             path: pathname,
@@ -141,6 +142,20 @@ class Server {
     } catch (error) {
       console.error(error);
       res.statusCode = isHttpError(error) ? error.statusCode : 500;
+      if (req.method === "GET" && res.statusCode === 404) {
+        try {
+          const {html} = await renderPreview(await readFile(join(this.root, "404.md"), "utf-8"), {
+            root: this.root,
+            path: "/404",
+            pages,
+            resolver: this._resolver!
+          });
+          end(req, res, html, "text/html");
+          return;
+        } catch {
+          // ignore secondary error (e.g., no 404.md); show the original 404
+        }
+      }
       res.setHeader("Content-Type", "text/plain; charset=utf-8");
       res.end(error instanceof Error ? error.message : "Oops, an error occurred");
     }
