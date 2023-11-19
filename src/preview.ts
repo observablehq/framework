@@ -144,17 +144,16 @@ class Server {
       res.statusCode = isHttpError(error) ? error.statusCode : 500;
       if (req.method === "GET" && res.statusCode === 404) {
         try {
-          const {html} = await renderPreview(await readFile(this.root + "/404.md", "utf-8"), {
+          const {html} = await renderPreview(await readFile(join(this.root, "404.md"), "utf-8"), {
             root: this.root,
             path: "/404",
             pages,
             resolver: this._resolver!
           });
-          res.setHeader("Content-Type", "text/html; charset=utf-8");
-          res.end(html);
+          end(req, res, html, "text/html");
           return;
         } catch {
-          // no 404 template, never mind
+          // ignore secondary error (e.g., no 404.md); show the original 404
         }
       }
       res.setHeader("Content-Type", "text/plain; charset=utf-8");

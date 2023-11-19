@@ -55,10 +55,8 @@ function render(
   {path, pages, title, preview, hash, resolver}: RenderOptions & RenderInternalOptions
 ): string {
   return `<!DOCTYPE html>
-<meta charset="utf-8">
-${
-  path === "/404" ? `<base href="/">\n` : ""
-}<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta charset="utf-8">${path === "/404" ? `\n<base href="/">` : ""}
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 ${
   parseResult.title || title
     ? `<title>${[parseResult.title, parseResult.title === title ? null : title]
