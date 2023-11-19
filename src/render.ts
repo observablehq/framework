@@ -74,7 +74,7 @@ ${Array.from(getImportPreloads(parseResult, path))
 
 import {${preview ? "open, " : ""}define} from "${relativeUrl(path, "/_observablehq/client.js")}";
 
-${preview ? `open({hash: ${JSON.stringify(hash)}});\n` : ""}${parseResult.cells
+${preview ? `open({hash: ${JSON.stringify(hash)}, eval: (body) => (0, eval)(body)});\n` : ""}${parseResult.cells
     .map(resolver)
     .map(renderDefineCell)
     .join("")}
