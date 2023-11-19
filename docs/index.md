@@ -16,7 +16,7 @@
 
 <div style="display: flex; flex-direction: column; align-items: center; font-family: var(--sans-serif); margin: 4rem 0; text-wrap: balance; text-align: center;">
   <span style="font-weight: 900; font-size: var(--hero-font-size); line-height: 1; padding: 2rem 0; background: linear-gradient(30deg, var(--theme-foreground-focus), currentColor); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">The best dashboards are built by developers</span>
-  <span style="font-weight: 500; max-width: 34em; font-size: 20px; color: var(--theme-foreground-muted);">Build and deploy fast, beautiful dashboards, reports, and data apps from the command line with the open-source Observable CLI. Write Markdown, JavaScript, SQL, Python, R, ${tex`\TeX`}… and whatever language you like.</span>
+  <span style="font-weight: 500; max-width: 34em; font-size: 20px; color: var(--theme-foreground-muted);">Build and deploy fast, beautiful dashboards, reports, and data apps from the command line with the open-source Observable&nbsp;CLI. Write JavaScript, SQL, Python, R… and any language you like.</span>
 </div>
 
 <div style="display: flex; flex-direction: column; align-items: center; font-family: var(--sans-serif); margin: 4rem 0 8rem; text-wrap: balance; text-align: center;">
@@ -47,7 +47,7 @@ hr {
 
 If your business wants to win, you need best-in-class dashboards and analysis to outsmart your competitors — you need the expressiveness of code. Leverage the full power of modern browsers, and use our popular open-source libraries [D3.js](https://d3js.org) and [Observable Plot](https://observablehq.com/plot/), to create powerful interactive data visualizations and apps.
 
-But you want to move fast, too. We get it. Unlike general-purple web frameworks and site builders, the Observable CLI is optimized for business intelligence. Pages are simply [Markdown](./markdown) with [reactive JavaScript](./javascript) code blocks for charts and inputs. Our batteries-included approach with beautiful components makes it easy to get started. And you can develop custom components when you need them.
+But you want to move fast, too. We get it. Unlike general-purpose web frameworks and site builders, the Observable CLI is optimized for business intelligence. Pages are simply [Markdown](./markdown) with [reactive JavaScript](./javascript) code blocks for charts and inputs. Our batteries-included approach with beautiful components makes it easy to get started. And you can develop custom components when you need them.
 
 ---
 
