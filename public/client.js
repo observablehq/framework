@@ -200,7 +200,7 @@ export function define(cell) {
   for (const d of databases) databaseTokens.set(d.name, d);
 }
 
-export function open({hash} = {}) {
+export function open({hash, eval: compile} = {}) {
   const socket = new WebSocket(Object.assign(new URL("/_observablehq", location.href), {protocol: "ws"}));
 
   socket.onopen = () => {
@@ -256,7 +256,7 @@ export function open({hash} = {}) {
                       outputs: item.outputs,
                       databases: item.databases,
                       files: item.files,
-                      body: (0, eval)(item.body)
+                      body: compile(item.body)
                     });
                     break;
                 }

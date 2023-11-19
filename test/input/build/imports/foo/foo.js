@@ -1,4 +1,4 @@
-import "https://cdn.jsdelivr.net/npm/d3/+esm";
+import "npm:d3";
 import {bar} from "../bar/bar.js";
 
 export const foo = "foo";
