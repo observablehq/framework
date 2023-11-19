@@ -16,7 +16,7 @@
 
 <div style="display: flex; flex-direction: column; align-items: center; font-family: var(--sans-serif); margin: 4rem 0; text-wrap: balance; text-align: center;">
   <span style="font-weight: 900; font-size: var(--hero-font-size); line-height: 1; padding: 2rem 0; background: linear-gradient(30deg, var(--theme-foreground-focus), currentColor); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">The best dashboards are built by developers</span>
-  <span style="font-weight: 500; max-width: 34em; font-size: 20px; color: var(--theme-foreground-muted);">Build and deploy fast, beautiful dashboards, reports, and data apps from the command line with the open-source Observable&nbsp;CLI. Write JavaScript, SQL, Python, R… and any language you like.</span>
+  <span style="font-weight: 500; max-width: 34em; font-size: 20px; color: var(--theme-foreground-muted);">Create and deploy fast, beautiful dashboards, reports, and data apps from the command line with the open-source Observable&nbsp;CLI. Write JavaScript, SQL, Python, R… and any language you like.</span>
 </div>
 
 <div style="display: flex; flex-direction: column; align-items: center; font-family: var(--sans-serif); margin: 4rem 0 8rem; text-wrap: balance; text-align: center;">
