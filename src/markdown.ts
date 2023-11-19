@@ -59,6 +59,7 @@ interface ParseContext {
   currentLine: number;
 }
 
+const ELEMENT_NODE = 1; // Node.ELEMENT_NODE
 const TEXT_NODE = 3; // Node.TEXT_NODE
 
 // Returns true if the given document contains exactly one top-level element,
@@ -67,7 +68,7 @@ function isSingleElement(document: Document): boolean {
   let {firstChild: first, lastChild: last} = document;
   while (first?.nodeType === TEXT_NODE && !first?.textContent?.trim()) first = first.nextSibling;
   while (last?.nodeType === TEXT_NODE && !last?.textContent?.trim()) last = last.previousSibling;
-  return first !== null && first === last && first.nodeType !== TEXT_NODE;
+  return first !== null && first === last && first.nodeType === ELEMENT_NODE;
 }
 
 function uniqueCodeId(context: ParseContext, content: string): string {
