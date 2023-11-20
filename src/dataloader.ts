@@ -66,7 +66,10 @@ export class Loader {
       const sourcePath = targetPath + ext;
       const path = join(sourceRoot, sourcePath);
       if (!existsSync(path)) continue;
-      if (extname(targetPath) === "") throw new Error(`data loaders must have a double extension`);
+      if (extname(targetPath) === "") {
+        console.warn(`invalid data loader path: ${sourcePath}`);
+        return;
+      }
       return new Loader({
         command: languages[ext] ?? path,
         args: languages[ext] == null ? [] : [path],
