@@ -1,5 +1,6 @@
 import assert from "node:assert";
-import {type CommandEffects, login, whoami} from "../src/auth.js";
+import {MockAgent, setGlobalDispatcher} from "undici";
+import {type CommandEffects, login, whoami, getObservableApiHost} from "../src/auth.js";
 import {ObservableApiMock} from "./mocks/observableApi.js";
 
 describe("login command", () => {
@@ -49,15 +50,33 @@ describe("whoami command", () => {
   });
 
   it("works when there is an API key that is invalid", async () => {
-    const mock = new ObservableApiMock().handleWhoAmI().start();
+    // const mock = new ObservableApiMock().handleWhoAmIInvalid().start();
+
+    const mockAgent = new MockAgent();
+    setGlobalDispatcher(mockAgent);
+    mockAgent.disableNetConnect();
+
+    // MockPool
+    const mockPool = mockAgent.get(getObservableApiHost().toString());
+    mockPool.intercept({path: /.*/}).reply(200, "foo");
+
     const effects = new MockEffects({apiKey: "MOCK-INVALID-KEY"});
     await whoami(effects);
     effects._assertExactLogs([/^Your API key is invalid/]);
-    mock.close();
+    // mock.close();
   });
 
   it("works when there is a valid API key", async () => {
-    const mock = new ObservableApiMock().handleWhoAmI().start();
+    // const mock = new ObservableApiMock().handleWhoAmIValid().start();
+
+    const mockAgent = new MockAgent();
+    setGlobalDispatcher(mockAgent);
+    mockAgent.disableNetConnect();
+    const mockPool = mockAgent.get("https://api.observablehq.com");
+    // const mockPool = mockAgent.get(getObservableApiHost().toString());
+    mockPool.intercept({path: "/cli/user"}).reply(200, "foo");
+    // let response = await mockAgent.request({method: "GET", path: "/cli/user"});
+
     const effects = new MockEffects({apiKey: "MOCK-VALID-KEY"});
     await whoami(effects);
     effects._assertExactLogs([
@@ -65,7 +84,7 @@ describe("whoami command", () => {
       /^You have access to the following workspaces/,
       /Mock User's Workspace/
     ]);
-    mock.close();
+    // mock.close();
   });
 });
 

@@ -66,7 +66,9 @@ export async function login(effects = defaultEffects) {
 export async function whoami(effects = defaultEffects) {
   const key = await effects.getObservableApiKey();
   if (key) {
-    const req = await fetch(new URL("/cli/user", OBSERVABLEHQ_API_HOST), {
+    const fetchUrl = new URL("/cli/user", OBSERVABLEHQ_API_HOST);
+    console.log({whoamiUrl: fetchUrl.toString()});
+    const req = await fetch(fetchUrl, {
       headers: {
         Authorization: `apikey ${key}`,
         "X-Observable-Api-Version": "2023-11-06",
