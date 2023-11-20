@@ -1,8 +1,10 @@
 import {readFileSync} from "node:fs";
-import {dirname, join, normalize} from "node:path";
-import {type ExportAllDeclaration, type ExportNamedDeclaration, type Node, Parser} from "acorn";
+import {dirname, join, normalize, relative} from "node:path";
+import {Parser} from "acorn";
+import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression, Node} from "acorn";
 import {simple} from "acorn-walk";
 import {type ImportReference, type JavaScriptNode, parseOptions} from "../javascript.js";
+import {Sourcemap} from "../sourcemap.js";
 import {relativeUrl} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
@@ -45,6 +47,7 @@ export function findImports(body: Node, root: string, sourcePath: string) {
   // find transitive imports. The path is always relative to the source path of
   // the Markdown file, even across transitive imports.
   function findLocalImports(path) {
+    if (path.startsWith("/")) path = relative(dirname(sourcePath), path);
     if (paths.has(path)) return;
     paths.add(path);
     imports.push({type: "local", name: path});
@@ -64,7 +67,7 @@ export function findImports(body: Node, root: string, sourcePath: string) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
         if (isLocalImport(value, sourcePath)) {
-          findLocalImports(join(dirname(path), value));
+          findLocalImports(value.startsWith("/") ? normalize(value) : join(dirname(path), value));
         } else {
           imports.push({name: value, type: "global"});
           // non-local imports don't need to be traversed
@@ -74,6 +77,31 @@ export function findImports(body: Node, root: string, sourcePath: string) {
   }
 
   return imports;
+}
+
+export function resolveSources(input: string, sourcePath: string) {
+  const body = Parser.parse(input, parseOptions) as any;
+  const output = new Sourcemap(input);
+
+  simple(body, {
+    ImportDeclaration: resolveSource,
+    ImportExpression: resolveSource,
+    ExportAllDeclaration: resolveSource,
+    ExportNamedDeclaration: resolveSource
+  });
+
+  function resolveSource(node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration) {
+    if (isStringLiteral(node.source)) {
+      const value = getStringLiteralValue(node.source);
+      output.replaceLeft(
+        node.source.start,
+        node.source.end,
+        JSON.stringify(value.startsWith("/") ? relativeImport(sourcePath, value) : resolveImport(value))
+      );
+    }
+  }
+
+  return String(output);
 }
 
 // TODO parallelize multiple static imports
@@ -110,7 +138,7 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode, sourcePath
 }
 
 function relativeImport(sourcePath, value) {
-  return relativeUrl(sourcePath, join("/_import/", dirname(sourcePath), value));
+  return relativeUrl(sourcePath, join("/_import/", value.startsWith("/") ? "." : dirname(sourcePath), value));
 }
 
 function rewriteImportSpecifier(node) {

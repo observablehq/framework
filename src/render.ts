@@ -55,7 +55,7 @@ function render(
   {path, pages, title, preview, hash, resolver}: RenderOptions & RenderInternalOptions
 ): string {
   return `<!DOCTYPE html>
-<meta charset="utf-8">
+<meta charset="utf-8">${path === "/404" ? `\n<base href="/">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 ${
   parseResult.title || title
@@ -74,7 +74,7 @@ ${Array.from(getImportPreloads(parseResult, path))
 
 import {${preview ? "open, " : ""}define} from "${relativeUrl(path, "/_observablehq/client.js")}";
 
-${preview ? `open({hash: ${JSON.stringify(hash)}});\n` : ""}${parseResult.cells
+${preview ? `open({hash: ${JSON.stringify(hash)}, eval: (body) => (0, eval)(body)});\n` : ""}${parseResult.cells
     .map(resolver)
     .map(renderDefineCell)
     .join("")}
