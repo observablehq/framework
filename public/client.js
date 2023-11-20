@@ -353,15 +353,130 @@ async function copy({currentTarget}) {
   await navigator.clipboard.writeText(currentTarget.parentElement.textContent.trimEnd());
 }
 
+class Node {
+  constructor(value) {
+    this.value = value;
+    this.previous = null;
+    this.next = null;
+  }
+}
+
+class DoublyLinkedList {
+  constructor() {
+    this.first = null;
+    this.last = null;
+    this.size = 0;
+  }
+
+  insert(value) {
+    this.size++;
+    let newNode = new Node(value);
+    if (this.last) {
+      this.last.next = newNode;
+      newNode.previous = this.last;
+      this.last = newNode;
+      return newNode;
+    }
+    this.first = this.last = newNode;
+    return newNode;
+  }
+
+  remove() {
+    if (this.last) {
+      this.size--;
+      let removedTail = this.last;
+      let beforeTail = this.last.previous;
+      this.last = beforeTail;
+      if (this.last) {
+        this.last.next = null;
+      } else {
+        this.first = null;
+      }
+      return removedTail;
+    }
+    return undefined;
+  }
+}
+
 const toc = document.querySelector("#observablehq-toc");
-const activeLink = "observablehq-link-active";
+const secondaryActiveLinkClass = "observablehq-secondary-link-active";
+let headingNodes = document.querySelectorAll("h2");
+let headings = new DoublyLinkedList();
+headingNodes.forEach((headingNode) => headings.insert(headingNode));
+
 if (toc) {
-  const link = toc.querySelector(`a[href='${window.location.hash}']`);
-  let selected = link && link.parentElement;
-  if (selected) selected.classList.add(activeLink);
-  window.addEventListener("hashchange", function (event) {
-    if (selected) selected.classList.remove(activeLink);
-    selected = toc.querySelector(`a[href='${event.target.location.hash}']`).parentElement;
-    selected.classList.add(activeLink);
+  highlightSection();
+}
+
+function highlightSection() {
+  function getHeaderPositionY(heading) {
+    return heading && heading.getBoundingClientRect().y + window.scrollY;
+  }
+
+  function isTopOfPage() {
+    return window.scrollY === 0;
+  }
+
+  function isBottomOfPage() {
+    return window.scrollY + window.innerHeight >= document.body.scrollHeight;
+  }
+
+  function highlightSection(hash) {
+    return document.querySelector(`nav ol li a[href="${hash}"]`).parentElement.classList.add(secondaryActiveLinkClass);
+  }
+
+  function unhighlightSection(hash) {
+    return document
+      .querySelector(`nav ol li a[href="${hash}"]`)
+      .parentElement.classList.remove(secondaryActiveLinkClass);
+  }
+
+  function headingInView(heading) {
+    if (!heading) return false;
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const bounding = heading.getBoundingClientRect();
+    return viewportHeight - bounding.top > 0 && bounding.left > 0;
+  }
+
+  let currHeading;
+  document.addEventListener("scroll", () => {
+    if (isTopOfPage()) {
+      // top heading in view
+      if (headingInView(headings.first.value)) {
+        if (currHeading) unhighlightSection(currHeading.value.firstElementChild.getAttribute("href"));
+        currHeading = headings.first;
+        highlightSection(currHeading.value.firstElementChild.getAttribute("href"));
+      }
+    } else if (isBottomOfPage()) {
+      // reached the bottom
+      if (currHeading) unhighlightSection(currHeading.value.firstElementChild.getAttribute("href"));
+      if (headings.last.value) {
+        currHeading = headings.last;
+        highlightSection(currHeading.value.firstElementChild.getAttribute("href"));
+      }
+    } else {
+      if (!currHeading) {
+        if (headingInView(headings.first.value)) {
+          // first section is not at the top of the page
+          // it hasn't been set yet, setting now
+          currHeading = headings.first;
+          highlightSection(currHeading.value.firstElementChild.getAttribute("href"));
+        }
+      } else {
+        if (currHeading.next && window.scrollY >= getHeaderPositionY(currHeading.next.value)) {
+          // scrolling down
+          if (currHeading) unhighlightSection(currHeading.value.firstElementChild.getAttribute("href"));
+          highlightSection(currHeading.next.value.firstElementChild.getAttribute("href"));
+          currHeading = currHeading.next;
+        } else {
+          // scrolling up
+          if (currHeading !== headings.first && window.scrollY < getHeaderPositionY(currHeading.value)) {
+            if (currHeading) unhighlightSection(currHeading.value.firstElementChild.getAttribute("href"));
+            highlightSection(currHeading.previous.value.firstElementChild.getAttribute("href"));
+            currHeading = currHeading.previous;
+          }
+        }
+      }
+    }
   });
 }

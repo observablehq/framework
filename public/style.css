@@ -278,7 +278,8 @@ body {
   color: inherit;
 }
 
-.observablehq-link-active {
+.observablehq-link-active,
+.observablehq-secondary-link {
   position: relative;
 }
 
@@ -290,6 +291,27 @@ body {
   left: -1rem;
   width: 3px;
   background: var(--theme-foreground-focus);
+}
+
+.observablehq-secondary-link-active::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -1rem;
+  width: 2px;
+  background: var(--theme-foreground-focus);
+  opacity: 1;
+  animation: fadein 0.25s ease-in-out;
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0.5;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 a[href],
