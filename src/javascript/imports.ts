@@ -79,7 +79,7 @@ export function findImports(body: Node, root: string, sourcePath: string) {
   return imports;
 }
 
-export function resolveSources(input: string) {
+export function resolveSources(input: string, sourcePath: string) {
   const body = Parser.parse(input, parseOptions) as any;
   const output = new Sourcemap(input);
 
@@ -96,7 +96,7 @@ export function resolveSources(input: string) {
       output.replaceLeft(
         node.source.start,
         node.source.end,
-        JSON.stringify(value.startsWith("/") ? `/_import${value}` : resolveImport(value))
+        JSON.stringify(value.startsWith("/") ? relativeImport(sourcePath, value) : resolveImport(value))
       );
     }
   }

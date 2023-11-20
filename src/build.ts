@@ -93,7 +93,7 @@ export async function build(context: CommandContext = makeCommandContext()) {
     }
     if (verbose) console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);
-    await writeFile(outputPath, resolveSources(await readFile(sourcePath, "utf-8")));
+    await writeFile(outputPath, resolveSources(await readFile(sourcePath, "utf-8"), file));
   }
 
   // Copy over required distribution files from node_modules.

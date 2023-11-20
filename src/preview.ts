@@ -56,14 +56,15 @@ class Server {
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
+        const file = pathname.slice("/_import".length);
         let js: string;
         try {
-          js = await readFile(join(this.root, pathname.slice("/_import".length)), "utf-8");
+          js = await readFile(join(this.root, file), "utf-8");
         } catch (error) {
           if (isNodeError(error) && error.code !== "ENOENT") throw error;
           throw new HttpError("Not found", 404);
         }
-        end(req, res, resolveSources(js), "text/javascript");
+        end(req, res, resolveSources(js, file), "text/javascript");
       } else if (pathname.startsWith("/_file/")) {
         const path = pathname.slice("/_file".length);
         const filepath = join(this.root, path);
