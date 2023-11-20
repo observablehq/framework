@@ -6,7 +6,7 @@ The Observable CLI is a Node.js application and is published to npm as [`@observ
 
 We recommend starting with a project template.
 
-```
+```sh
 npm create @observablehq
 ```
 
@@ -61,11 +61,11 @@ This is the home page for your site. You can have as many additional pages as yo
 
 You can also install the CLI as a dependency on an existing project if you don’t want to create a new project from a template as above. You can even install the CLI globally so that the `observable` command is available across projects.
 
-```
+```sh
 npm install @observablehq/cli
 ```
 
-```
+```sh
 yarn add @observablehq/cli
 ```
 
@@ -73,7 +73,7 @@ yarn add @observablehq/cli
 
 ## Preview
 
-```
+```sh
 observable preview
 ```
 
@@ -81,7 +81,7 @@ Visit <http://localhost:3000>.
 
 ## Build
 
-```
+```sh
 observable build
 ```
 

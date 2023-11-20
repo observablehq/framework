@@ -405,7 +405,7 @@ pre {
   overflow-x: auto;
 }
 
-pre code::after {
+pre::after {
   position: absolute;
   right: 0;
   top: 0;
@@ -416,17 +416,13 @@ pre code::after {
   padding: 0.5rem 0.5rem 0.5rem 1rem;
 }
 
-pre code.language-md::after { content: "md"; }
-pre code.language-js::after { content: "js"; }
-pre code.language-sh::after { content: "sh"; }
-pre code.language-sql::after { content: "sql"; }
-pre code.language-tex::after { content: "tex"; }
-pre code.language-dot::after { content: "dot"; }
-pre code.language-mermaid::after { content: "mermaid"; }
-pre[data-copy="copy"] code::after { content: "copy"; }
-pre[data-copy="copied"] code::after { content: "copied"; }
-pre[data-copy="error"] code::after { content: "error"; }
-pre code::after { pointer-events: none; }
+pre[data-language]::after {
+  content: attr(data-language);
+}
+
+pre[data-copy]::after {
+  content: attr(data-copy);
+}
 
 input:not([type]),
 input[type="email"],

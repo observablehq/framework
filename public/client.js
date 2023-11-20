@@ -286,6 +286,7 @@ export function open({hash, eval: compile} = {}) {
             }
           }
         }
+        enableCopyButtons();
         break;
       }
     }
@@ -335,10 +336,13 @@ for (const summary of document.querySelectorAll("#observablehq-sidebar summary")
   summary.onmousedown = preventDoubleClick;
 }
 
-// copy code cells
-for (const pre of document.querySelectorAll("pre")) {
-  pre.addEventListener("pointermove", copymove);
-  pre.addEventListener("pointerleave", copyleave);
+enableCopyButtons();
+
+function enableCopyButtons() {
+  for (const pre of document.querySelectorAll("pre")) {
+    pre.addEventListener("pointermove", copymove);
+    pre.addEventListener("pointerleave", copyleave);
+  }
 }
 
 function copyleave({currentTarget}) {

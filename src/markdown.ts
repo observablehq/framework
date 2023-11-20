@@ -320,12 +320,10 @@ function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string):
   };
 }
 
-// In addition to extracting references to files (such as from linked
-// stylesheets), this ensures that the HTML for each piece generates exactly one
-// top-level element. This is necessary for incremental update, and ensures that
-// our parsing of the Markdown is consistent with the resulting HTML structure.
 function normalizePieceHtml(html: string, root: string, sourcePath: string, context: ParseContext): string {
   const {document} = parseHTML(html);
+
+  // Extracting references to files (such as from linked stylesheets).
   for (const element of document.querySelectorAll("link[href]") as any as Iterable<Element>) {
     const href = element.getAttribute("href")!;
     const path = getLocalPath(sourcePath, href);
@@ -334,6 +332,26 @@ function normalizePieceHtml(html: string, root: string, sourcePath: string, cont
       element.setAttribute("href", relativeUrl(sourcePath, `/_file/${path}`));
     }
   }
+
+  // Syntax highlighting for <code> elements. The code could contain an inline
+  // expression within, or other HTML, but we only highlight text nodes that are
+  // direct children of code elements.
+  for (const code of document.querySelectorAll("code[class*='language-']") as any as Iterable<Element>) {
+    const language = [...(code.classList as any).keys()]
+      .find((c) => c.startsWith("language-"))
+      ?.slice("language-".length);
+    if (!language || !hljs.getLanguage(language)) continue;
+    if (code.parentElement?.tagName === "PRE") code.parentElement.setAttribute("data-language", language);
+    let html = "";
+    for (const child of [...(code.childNodes as any as Iterable<Node>)]) {
+      html += child.nodeType === TEXT_NODE ? hljs.highlight(child.textContent!, {language}).value : String(child);
+    }
+    code.innerHTML = html;
+  }
+
+  // Ensure that the HTML for each piece generates exactly one top-level
+  // element. This is necessary for incremental update, and ensures that our
+  // parsing of the Markdown is consistent with the resulting HTML structure.
   return isSingleElement(document) ? String(document) : `<span>${document}</span>`;
 }
 
@@ -363,19 +381,7 @@ export function parseMarkdown(source: string, root: string, sourcePath: string):
   const parts = matter(source);
   // TODO: We need to know what line in the source the markdown starts on and pass that
   // as startLine in the parse context below.
-  const md = MarkdownIt({
-    html: true,
-    highlight(str, language) {
-      if (language && hljs.getLanguage(language)) {
-        try {
-          return hljs.highlight(str, {language}).value;
-        } catch (error) {
-          console.error(error);
-        }
-      }
-      return ""; // defaults to escapeHtml(str)
-    }
-  });
+  const md = MarkdownIt({html: true});
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
