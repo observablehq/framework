@@ -14,7 +14,7 @@ export interface Section {
 
 export interface TableOfContents {
   label?: string;
-  level: string[];
+  show?: boolean;
 }
 
 export interface Config {

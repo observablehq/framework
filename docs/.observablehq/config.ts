@@ -30,7 +30,6 @@ export default {
     {name: "Contributing", path: "/contributing"}
   ],
   toc: {
-    label: "Contents",
-    level: ["h2"]
+    label: "Contents"
   }
 };

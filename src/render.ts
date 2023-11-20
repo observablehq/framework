@@ -152,11 +152,11 @@ function tableOfContentsSections(
   globalConfig?: Config["toc"]
 ): {label: string; headers: string[]} {
   const pageConfig = parseResult.data?.toc;
+  const pageShow = pageConfig?.show;
+  const globalShow = globalConfig?.show;
   const headers: string[] = [];
-  if (pageConfig) {
-    pageConfig.level?.split(",").forEach((header: string) => headers.push(header.trim()));
-  } else if (globalConfig) {
-    globalConfig.level?.forEach((header) => headers.push(header.trim()));
+  if (pageShow || globalShow) {
+    headers.push("h2");
   }
   return {label: pageConfig?.label ?? globalConfig?.label ?? "Sections", headers};
 }
@@ -174,6 +174,7 @@ function tableOfContents(parseResult: ParseResult, tocConfig: RenderOptions["toc
   showToc = showToc && headers?.length > 0;
   return showToc
     ? `
+<button id="menu-btn"></button>
 <div id="observablehq-toc">
   <div role='heading'>${toc.label}</div>
   <nav>

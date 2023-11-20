@@ -1,3 +1,8 @@
+---
+toc:
+  show: true
+---
+
 # Data loaders
 
 **Data loaders** generate files — typically static snapshots of data — at build time. For example, a data loader might query a database and output a CSV or Parquet file, or server-side render a chart and output a PNG image.
@@ -28,7 +33,9 @@ And that’s it! The CLI automatically runs the data loader. (More details below
 Now we can display the earthquakes in a map:
 
 ```js
-const world = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@1/world/110m.json").then((response) => response.json());
+const world = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@1/world/110m.json").then((response) =>
+  response.json()
+);
 const land = topojson.feature(world, world.objects.land);
 ```
 
@@ -44,7 +51,7 @@ Plot.plot({
     Plot.geo(land, {stroke: "var(--theme-foreground-faint)"}),
     Plot.dot(quakes, {x: "longitude", y: "latitude", r: "magnitude", stroke: "#f43f5e"})
   ]
-})
+});
 ```
 
 Here are some more details on data loaders.
@@ -53,21 +60,21 @@ Here are some more details on data loaders.
 
 Data loaders live in `docs` alongside your other source files. When a file is referenced from JavaScript, either via [`FileAttachment`](./javascript/files) or [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API), if the file does not exist, the CLI will look for a file of the same name with a double extension to see if there is a corresponding data loader. The following second extensions are checked, in order, with the corresponding language and interpreter:
 
-* `.js` - JavaScript (`node`)
-* `.ts` - TypeScript (`tsx`)
-* `.py` - Python (`python3`)
-* `.R` - R (`Rscript`)
-* `.sh` - shell script (`sh`)
-* `.exe` - arbitrary executable
+- `.js` - JavaScript (`node`)
+- `.ts` - TypeScript (`tsx`)
+- `.py` - Python (`python3`)
+- `.R` - R (`Rscript`)
+- `.sh` - shell script (`sh`)
+- `.exe` - arbitrary executable
 
 For example, for the file `earthquakes.csv`, the following data loaders are considered:
 
-* `earthquakes.csv.js`
-* `earthquakes.csv.ts`
-* `earthquakes.csv.py`
-* `earthquakes.csv.R`
-* `earthquakes.csv.sh`
-* `earthquakes.csv.exe`
+- `earthquakes.csv.js`
+- `earthquakes.csv.ts`
+- `earthquakes.csv.py`
+- `earthquakes.csv.R`
+- `earthquakes.csv.sh`
+- `earthquakes.csv.exe`
 
 If you use `.py` or `.R`, the corresponding interpreter (`python3` or `Rscript`, respectively) must be installed and available on your `$PATH`. Any additional modules, packages, libraries, _etc._, must also be installed before you can use them.
 
@@ -77,7 +84,7 @@ Whereas `.js`, `.ts`, `.py`, `.R`, and `.sh` data loaders are run via interprete
 chmod +x docs/earthquakes.csv.exe
 ```
 
-While a `.exe` data loader may be any binary executable (_e.g.,_ compiled from C), it is often convenient to specify another interpreter using a [shebang](https://en.wikipedia.org/wiki/Shebang_(Unix)). For example, to write a data loader in Julia:
+While a `.exe` data loader may be any binary executable (_e.g.,_ compiled from C), it is often convenient to specify another interpreter using a [shebang](<https://en.wikipedia.org/wiki/Shebang_(Unix)>). For example, to write a data loader in Julia:
 
 ```julia
 #!/usr/bin/env julia
@@ -89,7 +96,7 @@ If multiple requests are made concurrently for the same data loader, the data lo
 
 ## Output
 
-Data loaders must output to [stdout](https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)). The first extension (such as `.csv`) is not considered by the CLI; the data loader is solely responsible for producing the expected output (such as CSV). If you wish to log additional information from within a data loader, be sure to log to stderr, say by using [`console.warn`](https://developer.mozilla.org/en-US/docs/Web/API/console/warn); otherwise the logs will be included in the output file and sent to the client.
+Data loaders must output to [stdout](<https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)>). The first extension (such as `.csv`) is not considered by the CLI; the data loader is solely responsible for producing the expected output (such as CSV). If you wish to log additional information from within a data loader, be sure to log to stderr, say by using [`console.warn`](https://developer.mozilla.org/en-US/docs/Web/API/console/warn); otherwise the logs will be included in the output file and sent to the client.
 
 ## Caching
 

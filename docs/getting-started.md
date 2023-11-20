@@ -1,3 +1,8 @@
+---
+toc:
+  show: true
+---
+
 # Getting started
 
 The Observable CLI is a Node.js application and is published to npm as [`@observablehq/cli`](https://www.npmjs.com/package/@observablehq/cli). As the name suggests, the CLI lives on the command line; the instructions below are intended to run in your [terminal](https://support.apple.com/guide/terminal/open-or-quit-terminal-apd5265185d-f365-44cb-8b09-71a064a42125/mac). You’ll need to install [Node.js 18 or later](https://nodejs.org/) before you can install the CLI.
@@ -107,8 +112,8 @@ Add a `config.js` or `config.ts` file under the `.observablehq` directory. Examp
     }
   ],
   toc: {
-    label: "Contents",
-    level: 2
+    label: "Contents"
+    show: true
   }
 }
 ```
@@ -125,5 +130,4 @@ A page has a name and path. The page path corresponds to the path of the `.md` f
 
 ### `table of contents on a page`
 
-`label` is the name of the TOC (table of contents) section. `level` can be a number from 1-6 or an array of numbers with length 2.
-For example, `level: 2` constructs the TOC from only h2 headers. `level: [1, 3]` constructs the TOC with h1, h2, and h3 headers.
+`label` is the name of the TOC (table of contents) section. Setting `show` to `true` renders the TOC globally with `h2` tags.

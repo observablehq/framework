@@ -470,6 +470,8 @@ function highlightSection() {
             if (currHeading) unhighlightSection(currHeading.value.firstElementChild.getAttribute("href"));
             highlightSection(currHeading.previous.value.firstElementChild.getAttribute("href"));
             currHeading = currHeading.previous;
+          } else if (!headingInView(currHeading.value)) {
+            unhighlightSection(currHeading.value.firstElementChild.getAttribute("href"));
           }
         }
       }

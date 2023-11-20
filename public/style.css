@@ -71,6 +71,16 @@ body {
   border-left: solid 1px var(--theme-foreground-faintest);
 }
 
+#menu-btn {
+  display: none;
+}
+
+@media (max-width: calc(1152px - 100px)) {
+  #observablehq-toc {
+    display: none;
+  }
+}
+
 #observablehq-toc nav ol {
   margin: 0;
   padding-inline-start: 5px;

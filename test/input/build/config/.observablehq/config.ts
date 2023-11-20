@@ -5,7 +5,6 @@ export default {
     {path: "/sub/two", name: "Two"}
   ],
   toc: {
-    label: "Contents",
-    level: ["h2"]
+    label: "Contents"
   }
 };
