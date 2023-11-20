@@ -30,6 +30,7 @@ async function loadConfig(): Promise<{configPath: string; config: Config}> {
     try {
       content = await fs.readFile(configPath, "utf8");
     } catch (err) {
+      if (!(err instanceof Error) || err["code"] !== "ENOENT") throw err;
       const nextCursor = path.dirname(cursor);
       if (nextCursor === cursor) break;
       cursor = nextCursor;
