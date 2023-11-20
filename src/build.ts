@@ -47,8 +47,9 @@ export async function build(context: CommandContext = makeCommandContext()) {
       title,
       resolver
     });
-    files.push(...render.files.map((f) => join(dirname(sourceFile), f.name)));
-    imports.push(...render.imports.filter((i) => i.type === "local").map((i) => join(dirname(sourceFile), i.name)));
+    const resolveFile = ({name}) => join(name.startsWith("/") ? "." : dirname(sourceFile), name);
+    files.push(...render.files.map(resolveFile));
+    imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
     await prepareOutput(outputPath);
     await writeFile(outputPath, render.html);
   }
