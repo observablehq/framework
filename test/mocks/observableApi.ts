@@ -28,45 +28,30 @@ export class ObservableApiMock {
     }
   }
 
-  public handleWhoAmIValid(): ObservableApiMock {
-    this._handlers.push((pool) =>
-      pool
-        .intercept({
-          path: "/cli/user",
-          headers: headersMatcher({authorization: "apikey MOCK-VALID-KEY"})
+  handleGetUser({valid = true}: {valid?: boolean} = {}): ObservableApiMock {
+    const status = valid ? 200 : 401;
+    const response = valid
+      ? JSON.stringify({
+          id: "0000000000000000",
+          login: "mock-user",
+          name: "Mock User",
+          tier: "public",
+          has_workspace: false,
+          workspaces: [
+            {
+              id: "0000000000000001",
+              login: "mock-user-ws",
+              name: "Mock User's Workspace",
+              tier: "pro",
+              type: "team",
+              role: "owner"
+            }
+          ]
         })
-        .reply(
-          200,
-          JSON.stringify({
-            id: "0000000000000000",
-            login: "mock-user",
-            name: "Mock User",
-            tier: "public",
-            has_workspace: false,
-            workspaces: [
-              {
-                id: "0000000000000001",
-                login: "mock-user-ws",
-                name: "Mock User's Workspace",
-                tier: "pro",
-                type: "team",
-                role: "owner"
-              }
-            ]
-          })
-        )
-    );
-    return this;
-  }
-
-  public handleWhoAmIInvalid(): ObservableApiMock {
+      : "Unauthorized";
+    const headers = {authorization: valid ? "apikey MOCK-VALID-KEY" : "apikey MOCK-INVALID-KEY"};
     this._handlers.push((pool) =>
-      pool
-        .intercept({
-          path: "/cli/user",
-          headers: headersMatcher({authorization: "apikey MOCK-INVALID-KEY"})
-        })
-        .reply(401, "Unauthorized")
+      pool.intercept({path: "/cli/user", headers: headersMatcher(headers)}).reply(status, response)
     );
     return this;
   }
