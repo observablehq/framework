@@ -1,8 +1,9 @@
 import {spawn} from "node:child_process";
-import {existsSync, statSync} from "node:fs";
-import {mkdir, open, readFile, rename, unlink, writeFile} from "node:fs/promises";
+import fs, {createReadStream, existsSync, statSync} from "node:fs";
+import {mkdir, open, rename, rm, unlink, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path";
-import {maybeStat, prepareOutput, visitFiles} from "./files.js";
+import tar from "tar-fs";
+import {maybeStat, prepareOutput} from "./files.js";
 
 const runningCommands = new Map<string, Promise<string>>();
 
@@ -100,54 +101,20 @@ export class Loader {
         await prepareOutput(tempPath);
         const tempFd = await open(tempPath, "w");
         const tempFileStream = tempFd.createWriteStream({highWaterMark: 1024 * 1024});
-
-        // Special treatment for files.uri loaders: we create a temporary
-        // working directory, and spawn the process from that directory; any
-        // files written are then saved to files/ and the payload is the list of
-        // URIs, with the output as a comment on top.
-        const dir =
-          this.targetPath.endsWith(".uri") &&
-          join(this.sourceRoot, ".observablehq", "cache", `${this.targetPath.slice(0, -4)}.${process.pid}`);
-        if (dir) await prepareOutput(`${dir}/.`);
-        const subprocess = spawn(this.command, this.args, {
-          windowsHide: true,
-          cwd: dir || undefined,
-          stdio: ["ignore", "pipe", "inherit"]
-        });
+        const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", "pipe", "inherit"]});
         subprocess.stdout.pipe(tempFileStream);
-        const code = await new Promise((resolve, reject) => {
+        let code = await new Promise((resolve, reject) => {
           subprocess.on("error", reject);
           subprocess.on("close", resolve);
         });
         await tempFd.close();
         if (code === 0) {
           await mkdir(dirname(cachePath), {recursive: true});
+          if (this.targetPath.endsWith(".uri") || this.targetPath.endsWith(".list"))
+            code = await processMultiple(cachePath, tempPath);
+        }
+        if (code === 0) {
           await rename(tempPath, cachePath);
-          if (dir) {
-            const filesPath = cachePath.slice(0, -".uri".length);
-            let deleteOld;
-            {
-              // ideally this block should be atomic.
-              try {
-                await rename(filesPath, `${filesPath}.old`);
-                deleteOld = true;
-              } catch {
-                deleteOld = false;
-              }
-              await rename(dir, filesPath);
-            }
-            // Compute the new payload
-            let payload = (await readFile(cachePath, "utf-8")).trim().replaceAll(/^/gm, "# ") + "\n\n";
-            const relativeDirName = basename(filesPath);
-            for await (const file of visitFiles(filesPath)) {
-              console.error(file);
-              payload += `./${relativeDirName}/${file}\n`;
-            }
-            await writeFile(cachePath, payload);
-            if (deleteOld) {
-              // TODO delete old directory
-            }
-          }
         } else {
           await unlink(tempPath);
           throw new Error(`loader exited with code ${code}`);
@@ -193,4 +160,58 @@ function formatSize(size) {
 function formatElapsed(start) {
   const elapsed = performance.now() - start;
   return `${Math.floor(elapsed)}ms`;
+}
+
+// Special treatment for files.{uri,list} loaders: we expect the payload to be a
+// tar stream, extract the files to a flat directory and output a list of URIs.
+async function processMultiple(cachePath, tempPath) {
+  const filesPath = cachePath.slice(0, -extname(cachePath).length);
+  const tempFilesPath = `${filesPath}.${process.pid}`;
+  const files = new Set<string>();
+  const duplicates: string[] = [];
+  try {
+    await new Promise((finish, error) => {
+      createReadStream(tempPath)
+        .pipe(
+          tar.extract(tempFilesPath, {
+            fs,
+            map(header) {
+              // flatten; reject invisible files, duplicate names, non-files…
+              const name = basename(header.name);
+              if (header.type === "file" && !name.startsWith(".")) {
+                if (!files.has(name)) {
+                  files.add(name);
+                  return Object.assign(header, {name});
+                }
+                duplicates.push(header.name);
+              }
+              return Object.assign(header, {name: "."});
+            },
+            ignore(_, header) {
+              return !files.has(header.name);
+            },
+            finish
+          })
+        )
+        .on("error", error);
+    });
+  } catch (error) {
+    console.warn("Error decoding the output. Is this a tar file?");
+    return 1;
+  }
+  if (duplicates.length) {
+    console.warn(`Duplicate file names: ${duplicates}`);
+    return 1;
+  }
+  let rmOld: string | false;
+  try {
+    await rename(filesPath, (rmOld = `${filesPath}.old.${process.pid}`));
+  } catch {
+    rmOld = false;
+  }
+  await rename(tempFilesPath, filesPath);
+  const relativeDirName = basename(filesPath);
+  await writeFile(tempPath, Array.from(files, (file) => `./${relativeDirName}/${file}\n`).join(""));
+  if (rmOld) await rm(rmOld, {recursive: true});
+  return 0;
 }
