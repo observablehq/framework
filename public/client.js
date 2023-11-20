@@ -381,20 +381,14 @@ class DoublyLinkedList {
     return newNode;
   }
 
-  remove() {
-    if (this.last) {
-      this.size--;
-      let removedTail = this.last;
-      let beforeTail = this.last.previous;
-      this.last = beforeTail;
-      if (this.last) {
-        this.last.next = null;
-      } else {
-        this.first = null;
+  find(hash) {
+    let node = this.first;
+    while (node) {
+      if (node.value.firstElementChild.getAttribute("href") === hash) {
+        return node;
       }
-      return removedTail;
+      node = node.next;
     }
-    return undefined;
   }
 }
 
@@ -439,7 +433,9 @@ function highlightSection() {
   }
 
   let currHeading;
-  document.addEventListener("scroll", () => {
+  let debounce;
+  function handleScroll() {
+    if (debounce) return;
     if (isTopOfPage()) {
       // top heading in view
       if (headingInView(headings.first.value)) {
@@ -463,7 +459,7 @@ function highlightSection() {
           highlightSection(currHeading.value.firstElementChild.getAttribute("href"));
         }
       } else {
-        if (currHeading.next && window.scrollY >= getHeaderPositionY(currHeading.next.value)) {
+        if (currHeading.next && window.scrollY > getHeaderPositionY(currHeading.next.value)) {
           // scrolling down
           if (currHeading) unhighlightSection(currHeading.value.firstElementChild.getAttribute("href"));
           highlightSection(currHeading.next.value.firstElementChild.getAttribute("href"));
@@ -478,5 +474,20 @@ function highlightSection() {
         }
       }
     }
-  });
+  }
+  document.addEventListener("scroll", handleScroll);
+
+  function highlightHash() {
+    if (location.hash) {
+      debounce = true;
+      if (currHeading) unhighlightSection(currHeading.value.firstElementChild.getAttribute("href"));
+      currHeading = headings.find(location.hash);
+      highlightSection(currHeading.value.firstElementChild.getAttribute("href"));
+      setTimeout(() => (debounce = false), 1000);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", highlightHash);
+
+  window.addEventListener("hashchange", highlightHash);
 }
