@@ -200,7 +200,7 @@ export function define(cell) {
   for (const d of databases) databaseTokens.set(d.name, d);
 }
 
-export function open({hash} = {}) {
+export function open({hash, eval: compile} = {}) {
   const socket = new WebSocket(Object.assign(new URL("/_observablehq", location.href), {protocol: "ws"}));
 
   socket.onopen = () => {
@@ -256,7 +256,7 @@ export function open({hash} = {}) {
                       outputs: item.outputs,
                       databases: item.databases,
                       files: item.files,
-                      body: (0, eval)(item.body)
+                      body: compile(item.body)
                     });
                     break;
                 }
@@ -286,6 +286,7 @@ export function open({hash} = {}) {
             }
           }
         }
+        enableCopyButtons();
         break;
       }
     }
@@ -335,38 +336,19 @@ for (const summary of document.querySelectorAll("#observablehq-sidebar summary")
   summary.onmousedown = preventDoubleClick;
 }
 
-// copy code cells
-document.addEventListener("pointerover", ({target}) => {
-  if (typeof navigator?.clipboard?.writeText !== "function") return;
-  if (target.nodeName === "PRE" && !target.getAttribute("data-copy")) {
-    target.addEventListener("pointermove", move);
-    target.addEventListener("pointerleave", out);
+const copyButton = document.createElement("template");
+copyButton.innerHTML = `<button title="Copy code" class="observablehq-pre-copy"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6C2 5.44772 2.44772 5 3 5H10C10.5523 5 11 5.44772 11 6V13C11 13.5523 10.5523 14 10 14H3C2.44772 14 2 13.5523 2 13V6Z M4 2.00004L12 2.00001C13.1046 2 14 2.89544 14 4.00001V12"></path></svg></button>`;
+
+enableCopyButtons();
+
+function enableCopyButtons() {
+  for (const pre of document.querySelectorAll("pre")) {
+    const button = pre.appendChild(copyButton.content.cloneNode(true).firstChild);
+    button.addEventListener("click", copy);
+    pre.style.position = "relative";
   }
-  function out() {
-    target.removeEventListener("pointermove", move);
-    target.removeEventListener("pointerleave", out);
-    target.removeEventListener("click", copy);
-    target.removeAttribute("data-copy");
-  }
-  function move({offsetX: x}) {
-    if (30 + x > parseInt(getComputedStyle(target).width)) {
-      if (!target.getAttribute("data-copy")) {
-        target.setAttribute("data-copy", "copy");
-        target.addEventListener("click", copy);
-      }
-    } else {
-      if (target.getAttribute("data-copy")) {
-        target.removeAttribute("data-copy");
-        target.removeEventListener("click", copy);
-      }
-    }
-  }
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(target.textContent);
-      target.setAttribute("data-copy", "copied");
-    } catch {
-      target.setAttribute("data-copy", "error");
-    }
-  }
-});
+}
+
+async function copy({currentTarget}) {
+  await navigator.clipboard.writeText(currentTarget.parentElement.textContent.trimEnd());
+}

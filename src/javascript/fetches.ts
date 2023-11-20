@@ -8,8 +8,9 @@ export function rewriteFetches(output, rootNode, sourcePath) {
     CallExpression(node) {
       if (isLocalFetch(node, rootNode.references, sourcePath)) {
         const arg = node.arguments[0];
-        const value = relativeUrl(sourcePath, "/_file/" + join(dirname(sourcePath), getStringLiteralValue(arg)));
-        output.replaceLeft(arg.start, arg.end, JSON.stringify(value));
+        const value = getStringLiteralValue(arg);
+        const path = `/_file/${join(value.startsWith("/") ? "." : dirname(sourcePath), value)}`;
+        output.replaceLeft(arg.start, arg.end, JSON.stringify(relativeUrl(sourcePath, path)));
       }
     }
   });

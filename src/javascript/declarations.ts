@@ -1,9 +1,8 @@
+import type {Program} from "acorn";
 import {syntaxError} from "./syntaxError.js";
 
-export function findDeclarations(node, globals, input) {
-  if (node.type !== "Program") throw new Error(`unexpected type: ${node.type}`);
-
-  const declarations = [];
+export function findDeclarations(node: Program, globals, input) {
+  const declarations: Node[] = [];
 
   function declareLocal(node) {
     if (globals.has(node.name) || node.name === "arguments") {
@@ -32,8 +31,6 @@ export function findDeclarations(node, globals, input) {
       case "AssignmentPattern":
         declarePattern(node.left);
         break;
-      default:
-        throw new Error("Unrecognized pattern type: " + node.type);
     }
   }
 
@@ -44,8 +41,6 @@ export function findDeclarations(node, globals, input) {
       case "ImportDefaultSpecifier":
         declareLocal(node.local);
         break;
-      default:
-        throw new Error("Unrecognized import type: " + node.type);
     }
   }
 
@@ -61,9 +56,6 @@ export function findDeclarations(node, globals, input) {
       case "ImportDeclaration":
         child.specifiers.forEach((specifier) => declareImportSpecifier(specifier));
         break;
-      case "Class":
-      case "Function":
-        throw new Error(`unexpected type: ${child.type}`);
     }
   }
 
