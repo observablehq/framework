@@ -49,7 +49,7 @@ describe("whoami command", () => {
   });
 
   it("works when there is an API key that is invalid", async () => {
-    const mock = new ObservableApiMock().handleWhoAmI().start();
+    const mock = new ObservableApiMock().handleWhoAmIInvalid().start();
     const effects = new MockEffects({apiKey: "MOCK-INVALID-KEY"});
     await whoami(effects);
     effects._assertExactLogs([/^Your API key is invalid/]);
@@ -57,7 +57,7 @@ describe("whoami command", () => {
   });
 
   it("works when there is a valid API key", async () => {
-    const mock = new ObservableApiMock().handleWhoAmI().start();
+    const mock = new ObservableApiMock().handleWhoAmIValid().start();
     const effects = new MockEffects({apiKey: "MOCK-VALID-KEY"});
     await whoami(effects);
     effects._assertExactLogs([
