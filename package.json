@@ -53,6 +53,7 @@
     "markdown-it": "^13.0.2",
     "markdown-it-anchor": "^8.6.7",
     "mime": "^3.0.0",
+    "open": "^9.1.0",
     "send": "^0.18.0",
     "tsx": "^3.13.0",
     "ws": "^8.14.2"
@@ -75,7 +76,8 @@
     "eslint-plugin-prettier": "^5.0.0",
     "mocha": "^10.2.0",
     "prettier": "^3.0.3",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "undici": "^5.27.2"
   },
   "engines": {
     "node": ">=18"
