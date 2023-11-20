@@ -1,6 +1,7 @@
+import type {CallExpression, Literal, TemplateLiteral} from "acorn";
 import {simple} from "acorn-walk";
 import {getLocalPath} from "../files.js";
-import {type Feature} from "../javascript.js";
+import type {Feature} from "../javascript.js";
 import {isLocalImport} from "./imports.js";
 import {syntaxError} from "./syntaxError.js";
 
@@ -50,8 +51,7 @@ export function findFeatures(node, root, sourcePath, references, input) {
   return features;
 }
 
-export function isLocalFetch(node, references, sourcePath) {
-  if (node.type !== "CallExpression") return false;
+export function isLocalFetch(node: CallExpression, references, sourcePath) {
   const {
     callee,
     arguments: [arg]
@@ -65,7 +65,7 @@ export function isLocalFetch(node, references, sourcePath) {
   );
 }
 
-export function isStringLiteral(node) {
+export function isStringLiteral(node: any): node is Literal | TemplateLiteral {
   return (
     node &&
     ((node.type === "Literal" && /^['"]/.test(node.raw)) ||
@@ -73,6 +73,7 @@ export function isStringLiteral(node) {
   );
 }
 
-export function getStringLiteralValue(node) {
-  return node.type === "Literal" ? node.value : node.quasis[0].value.cooked;
+// Note: only valid if isStringLiteral returned true;
+export function getStringLiteralValue(node: any): string {
+  return node.type === "Literal" ? (node.value as string) : node.quasis[0].value.cooked!;
 }

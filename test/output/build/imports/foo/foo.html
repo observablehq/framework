@@ -10,16 +10,20 @@
 <link rel="modulepreload" href="../_import/bar/bar.js">
 <link rel="modulepreload" href="../_import/bar/baz.js">
 <link rel="modulepreload" href="../_import/foo/foo.js">
+<link rel="modulepreload" href="../_import/top.js">
 <script type="module">
 
 import {define} from "../_observablehq/client.js";
 
-define({id: "a9220fae", inputs: ["display"], outputs: ["d3","bar"], body: async (display) => {
+define({id: "9c60abc0", inputs: ["display"], outputs: ["d3","bar","top"], files: [{"name":"/top.js","mimeType":"application/javascript","path":"../_file/foo/top.js"}], body: async (display) => {
 const d3 = await import("https://cdn.jsdelivr.net/npm/d3/+esm");
 const {bar} = await import("../_import/bar/bar.js");
+const {top} = await import("../_import/top.js");
 
 display(bar);
-return {d3,bar};
+display(top);
+fetch("../_file/top.js");
+return {d3,bar,top};
 }});
 
 </script>
@@ -41,7 +45,7 @@ return {d3,bar};
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 <h1 id="foo" tabindex="-1"><a class="observablehq-header-anchor" href="#foo">Foo</a></h1>
-<div id="cell-a9220fae" class="observablehq observablehq--block"></div>
+<div id="cell-9c60abc0" class="observablehq observablehq--block"></div>
 </main>
 <footer id="observablehq-footer">
 <nav><a rel="prev" href="../"><span>Home</span></a></nav>

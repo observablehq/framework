@@ -1,0 +1,15 @@
+{
+  "data": null,
+  "title": null,
+  "files": [],
+  "imports": [],
+  "pieces": [
+    {
+      "type": "html",
+      "id": "",
+      "cellIds": [],
+      "html": "<span><!-- this is a comment -->\n</span>"
+    }
+  ],
+  "cells": []
+}

@@ -11,7 +11,7 @@ export async function readPages(root: string): Promise<NonNullable<RenderOptions
   if (config?.pages) return config?.pages;
   const pages: RenderOptions["pages"] = [];
   for await (const file of visitFiles(root)) {
-    if (extname(file) !== ".md") continue;
+    if (file === "404.md" || extname(file) !== ".md") continue;
     let parsed: ParseResult;
     try {
       parsed = parseMarkdown(await readFile(join(root, file), "utf-8"), root, file);

@@ -7,6 +7,7 @@ import {parseArgs} from "node:util";
 import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
+import {resolveSources} from "./javascript/imports.js";
 import {readPages} from "./navigation.js";
 import {renderServerless} from "./render.js";
 import {makeCLIResolver} from "./resolver.js";
@@ -46,8 +47,9 @@ export async function build(context: CommandContext = makeCommandContext()) {
       title,
       resolver
     });
-    files.push(...render.files.map((f) => join(dirname(sourceFile), f.name)));
-    imports.push(...render.imports.filter((i) => i.type === "local").map((i) => join(dirname(sourceFile), i.name)));
+    const resolveFile = ({name}) => join(name.startsWith("/") ? "." : dirname(sourceFile), name);
+    files.push(...render.files.map(resolveFile));
+    imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
     await prepareOutput(outputPath);
     await writeFile(outputPath, render.html);
   }
@@ -91,7 +93,7 @@ export async function build(context: CommandContext = makeCommandContext()) {
     }
     if (verbose) console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);
-    await copyFile(sourcePath, outputPath);
+    await writeFile(outputPath, resolveSources(await readFile(sourcePath, "utf-8"), file));
   }
 
   // Copy over required distribution files from node_modules.

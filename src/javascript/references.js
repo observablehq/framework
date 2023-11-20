@@ -74,8 +74,6 @@ export function findReferences(node, globals, input) {
       case "AssignmentPattern":
         declarePattern(node.left, parent);
         break;
-      default:
-        throw new Error("Unrecognized pattern type: " + node.type);
     }
   }
 
@@ -86,8 +84,6 @@ export function findReferences(node, globals, input) {
       case "ImportDefaultSpecifier":
         declareLocal(parent, node.local);
         break;
-      default:
-        throw new Error("Unrecognized import type: " + node.type);
     }
   }
 

@@ -8,18 +8,6 @@
   --theme-foreground-fainter: color-mix(in srgb, var(--theme-foreground) 30%, var(--theme-background));
   --theme-foreground-faintest: color-mix(in srgb, var(--theme-foreground) 10%, var(--theme-background));
   --theme-foreground-focus: #3182bd;
-  --syntax-comment: #828282;
-  --syntax-diff: #24292e;
-  --syntax-diff-bg: #ffffff;
-  --syntax-number: #20a5ba;
-  --syntax-keyword: #c30771;
-  --syntax-atom: #10a778;
-  --syntax-string: #008ec4;
-  --syntax-error: #ffbedc;
-  --syntax-unknown-variable: #838383;
-  --syntax-known-variable: #005f87;
-  --syntax-matchbracket: #20bbfc;
-  --syntax-key: #6636b4;
   --monospace: Menlo, Consolas, monospace;
   --monospace-font: 14px/1.5 var(--monospace);
   --serif: "Source Serif Pro", "Iowan Old Style", "Apple Garamond", "Palatino Linotype", "Times New Roman", "Droid Serif", Times, serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
@@ -312,6 +300,38 @@ a[href],
   }
 }
 
+.observablehq-pre-copy {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: none;
+  color: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 0 8px;
+  margin: 4px;
+  height: 30px;
+  cursor: pointer;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+}
+
+pre:hover .observablehq-pre-copy,
+pre .observablehq-pre-copy:focus {
+  background: var(--theme-background-alt);
+  color: var(--theme-foreground-faint);
+}
+
+pre .observablehq-pre-copy:hover {
+  color: var(--theme-foreground-muted);
+}
+
+pre .observablehq-pre-copy:active {
+  color: var(--theme-foreground);
+  background: var(--theme-foreground-faintest);
+}
+
 h1,
 h2,
 h3,
@@ -417,7 +437,7 @@ pre {
   overflow-x: auto;
 }
 
-pre code::after {
+pre::after {
   position: absolute;
   right: 0;
   top: 0;
@@ -428,17 +448,13 @@ pre code::after {
   padding: 0.5rem 0.5rem 0.5rem 1rem;
 }
 
-pre code.language-md::after { content: "md"; }
-pre code.language-js::after { content: "js"; }
-pre code.language-sh::after { content: "sh"; }
-pre code.language-sql::after { content: "sql"; }
-pre code.language-tex::after { content: "tex"; }
-pre code.language-dot::after { content: "dot"; }
-pre code.language-mermaid::after { content: "mermaid"; }
-pre[data-copy="copy"] code::after { content: "copy"; }
-pre[data-copy="copied"] code::after { content: "copied"; }
-pre[data-copy="error"] code::after { content: "error"; }
-pre code::after { pointer-events: none; }
+pre[data-language]::after {
+  content: attr(data-language);
+}
+
+pre[data-copy]::after {
+  content: attr(data-copy);
+}
 
 input:not([type]),
 input[type="email"],
@@ -537,7 +553,7 @@ figure > h3 {
 
 figcaption {
   font: small var(--sans-serif);
-  color: var(--syntax-unknown-variable);
+  color: var(--theme-foreground-muted);
 }
 
 a[href].observablehq-header-anchor {
@@ -553,15 +569,6 @@ a[href].observablehq-header-anchor {
   display: block;
 }
 
-.observablehq--expanded,
-.observablehq--collapsed,
-.observablehq--function,
-.observablehq--import,
-.observablehq--string:before,
-.observablehq--string:after {
-  color: var(--syntax-normal);
-}
-
 .observablehq--collapsed,
 .observablehq--expanded.observablehq--inspect a {
   cursor: pointer;
@@ -575,87 +582,6 @@ a[href].observablehq-header-anchor {
 .observablehq--field {
   text-indent: -1rem;
   margin-left: 1rem;
-}
-
-.observablehq--prototype-key,
-.observablehq--empty,
-.hljs-comment {
-  color: var(--syntax-comment);
-}
-
-.hljs-built_in {
-  color: var(--syntax-known-variable);
-}
-
-.observablehq--unknown {
-  color: var(--syntax-unknown-variable);
-}
-
-/* NOTE: please keep hljs-* styles up to date in src/syntax.css */
-.hljs-keyword,
-.hljs-selector-tag,
-.hljs-section,
-.hljs-doctag,
-.hljs-type,
-.hljs-tag,
-.hljs-name,
-.hljs-selector-id,
-.hljs-selector-class,
-.hljs-strong {
-  color: var(--syntax-keyword);
-}
-
-.observablehq--keyword {
-  color: #3182bd;
-}
-
-.hljs-deletion,
-.hljs-variable,
-.observablehq--forbidden {
-  color: #e377c2;
-}
-
-.observablehq--null,
-.observablehq--undefined,
-.observablehq--boolean,
-.hljs-literal {
-  color: var(--syntax-atom);
-}
-
-.hljs-number,
-.hljs-regexp,
-.hljs-bullet,
-.hljs-link,
-.observablehq--bigint,
-.observablehq--number,
-.observablehq--date,
-.observablehq--regexp,
-.observablehq--symbol {
-  color: var(--syntax-number);
-}
-
-.observablehq--index,
-.observablehq--key {
-  color: var(--syntax-key);
-}
-
-.observablehq--empty {
-  font-style: oblique;
-}
-
-.hljs-string,
-.hljs-meta,
-.hljs-symbol,
-.hljs-template-tag,
-.hljs-template-variable,
-.hljs-addition,
-.observablehq--string {
-  color: var(--syntax-string);
-}
-
-/* Note: Tachyons' dark-red */
-.observablehq--error {
-  color: #e7040f;
 }
 
 .observablehq--inspect {
@@ -682,20 +608,158 @@ a[href].observablehq-header-anchor {
   padding: 2px 6px;
   border-radius: 2px;
   font-size: 80%;
-  background: #eee;
-  color: var(--syntax-normal);
+  background: var(--theme-background-alt);
   cursor: pointer;
   vertical-align: middle;
-  position: sticky;
-  right: 0;
 }
 
-.observablehq--string-expand:hover {
-  background: #ddd;
+:root {
+  --syntax-keyword: #d73a49;
+  --syntax-entity: #6f42c1;
+  --syntax-constant: #005cc5;
+  --syntax-string: #032f62;
+  --syntax-variable: #e36209;
+  --syntax-comment: var(--theme-foreground-muted);
+  --syntax-entity-tag: #22863a;
+  --syntax-storage-modifier-import: #24292e;
+  --syntax-markup-heading: #005cc5;
+  --syntax-markup-list: #735c0f;
+  --syntax-markup-italic: #24292e;
+  --syntax-markup-bold: #24292e;
+  --syntax-markup-inserted: #22863a;
+  --syntax-markup-inserted-background: #f0fff4;
+  --syntax-markup-deleted: #b31d28;
+  --syntax-markup-deleted-background: #ffeef0;
 }
 
-.observablehq--string-expand:active {
-  background: #ddd;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --syntax-keyword: #ff7b72;
+    --syntax-entity: #d2a8ff;
+    --syntax-constant: #79c0ff;
+    --syntax-string: #a5d6ff;
+    --syntax-variable: #ffa657;
+    --syntax-comment: var(--theme-foreground-muted);
+    --syntax-entity-tag: #7ee787;
+    --syntax-storage-modifier-import: #c9d1d9;
+    --syntax-markup-heading: #1f6feb;
+    --syntax-markup-list: #f2cc60;
+    --syntax-markup-italic: #c9d1d9;
+    --syntax-markup-bold: #c9d1d9;
+    --syntax-markup-inserted: #aff5b4;
+    --syntax-markup-inserted-background: #033a16;
+    --syntax-markup-deleted: #ffdcd7;
+    --syntax-markup-deleted-background: #67060c;
+  }
+}
+
+.observablehq--keyword,
+.hljs-doctag,
+.hljs-keyword,
+.hljs-meta .hljs-keyword,
+.hljs-template-tag,
+.hljs-template-variable,
+.hljs-type,
+.hljs-variable.language_ {
+  color: var(--syntax-keyword);
+}
+
+.observablehq--symbol,
+.hljs-title,
+.hljs-title.class_,
+.hljs-title.class_.inherited__,
+.hljs-title.function_ {
+  color: var(--syntax-entity);
+}
+
+.observablehq--null,
+.observablehq--undefined,
+.observablehq--boolean,
+.observablehq--bigint,
+.observablehq--number,
+.observablehq--date,
+.observablehq--index,
+.observablehq--key,
+.hljs-attr,
+.hljs-attribute,
+.hljs-literal,
+.hljs-meta,
+.hljs-number,
+.hljs-operator,
+.hljs-variable,
+.hljs-selector-attr,
+.hljs-selector-class,
+.hljs-selector-id {
+  color: var(--syntax-constant);
+}
+
+.observablehq--regexp,
+.observablehq--string,
+.hljs-regexp,
+.hljs-string,
+.hljs-meta .hljs-string {
+  color: var(--syntax-string);
+}
+
+.hljs-built_in,
+.hljs-symbol {
+  color: var(--syntax-variable);
+}
+
+.observablehq--prototype-key,
+.observablehq--empty,
+.hljs-comment,
+.hljs-formula {
+  color: var(--syntax-comment);
+}
+
+.observablehq--forbidden,
+.hljs-name,
+.hljs-quote,
+.hljs-selector-tag,
+.hljs-selector-pseudo {
+  color: var(--syntax-entity-tag);
+}
+
+.hljs-subst {
+  color: var(--syntax-storage-modifier-import);
+}
+
+.hljs-section {
+  color: var(--syntax-markup-heading);
+  font-weight: bold;
+}
+
+.hljs-bullet {
+  color: var(--syntax-markup-list);
+}
+
+.hljs-emphasis {
+  color: var(--syntax-markup-italic);
+  font-style: italic;
+}
+
+.hljs-strong {
+  color: var(--syntax-markup-bold);
+  font-weight: bold;
+}
+
+.hljs-addition {
+  color: var(--syntax-markup-inserted);
+  background-color: var(--syntax-markup-inserted-background);
+}
+
+.hljs-deletion {
+  color: var(--syntax-markup-deleted);
+  background-color: var(--syntax-markup-deleted-background);
+}
+
+.observablehq--empty {
+  font-style: oblique;
+}
+
+.observablehq--error {
+  color: var(--syntax-keyword);
 }
 
 .__ns__ button, .__ns__ input, .__ns__ select, .__ns__ table, .__ns__ textarea {
