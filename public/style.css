@@ -300,6 +300,38 @@ a[href],
   }
 }
 
+.observablehq-pre-copy {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: none;
+  color: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 0 8px;
+  margin: 4px;
+  height: 30px;
+  cursor: pointer;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+}
+
+pre:hover .observablehq-pre-copy,
+pre .observablehq-pre-copy:focus {
+  background: var(--theme-background-alt);
+  color: var(--theme-foreground-faint);
+}
+
+pre .observablehq-pre-copy:hover {
+  color: var(--theme-foreground-muted);
+}
+
+pre .observablehq-pre-copy:active {
+  color: var(--theme-foreground);
+  background: var(--theme-foreground-faintest);
+}
+
 h1,
 h2,
 h3,
