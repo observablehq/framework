@@ -1,4 +1,4 @@
-import type {Literal, TemplateLiteral} from "acorn";
+import type {CallExpression, Literal, TemplateLiteral} from "acorn";
 import {simple} from "acorn-walk";
 import {getLocalPath} from "../files.js";
 import type {Feature} from "../javascript.js";
@@ -51,8 +51,7 @@ export function findFeatures(node, root, sourcePath, references, input) {
   return features;
 }
 
-export function isLocalFetch(node, references, sourcePath) {
-  if (node.type !== "CallExpression") return false;
+export function isLocalFetch(node: CallExpression, references, sourcePath) {
   const {
     callee,
     arguments: [arg]
