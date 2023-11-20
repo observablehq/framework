@@ -1,3 +1,8 @@
+---
+toc:
+  show: true
+---
+
 # Getting started
 
 The Observable CLI is a Node.js application and is published to npm as [`@observablehq/cli`](https://www.npmjs.com/package/@observablehq/cli). As the name suggests, the CLI lives on the command line; the instructions below are intended to run in your [terminal](https://support.apple.com/guide/terminal/open-or-quit-terminal-apd5265185d-f365-44cb-8b09-71a064a42125/mac). You’ll need to install [Node.js 18 or later](https://nodejs.org/) before you can install the CLI.
@@ -88,3 +93,41 @@ observable build
 Creates `dist`.
 
 You can use `npx http-server dist` to preview your built site.
+
+## Configuration
+
+Add a `config.js` or `config.ts` file under the `.observablehq` directory. Example config:
+
+```
+{
+  title: "Hello World",
+  pages: [
+    {name: "Getting started", path: "/getting-started"},
+    {
+      name: "JavaScript",
+      pages: [
+        {name: "Reactivity", path: "/javascript/reactivity"},
+        {name: "Display", path: "/javascript/display"},
+      ]
+    }
+  ],
+  toc: {
+    label: "Contents"
+    show: true
+  }
+}
+```
+
+You can configure:
+
+### `title`
+
+Customize the title on the left sidebar.
+
+### `pages`
+
+A page has a name and path. The page path corresponds to the path of the `.md` file from your root directory. For example, if `docs` is your root directory, the `docs/javascript.md` file corresponds to the `/javascript` path.
+
+### `table of contents on a page`
+
+`label` is the name of the TOC (table of contents) section. Setting `show` to `true` renders the TOC globally with `h2` tags.

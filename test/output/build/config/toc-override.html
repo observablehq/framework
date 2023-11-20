@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>H1: Section</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
+<link rel="stylesheet" type="text/css" href="./_observablehq/style.css">
+<link rel="modulepreload" href="./_observablehq/runtime.js">
+<script type="module">
+
+import {define} from "./_observablehq/client.js";
+
+
+</script>
+<script type="application/json">
+{"toc":{"label":"TOC","show":true}}
+</script>
+<input id="observablehq-sidebar-toggle" type="checkbox">
+<nav id="observablehq-sidebar">
+  <ol>
+    <li class="observablehq-link"><a href="./">Home</a></li>
+  </ol>
+  <ol>
+    <li class="observablehq-link"><a href="./">Index</a></li>
+    <li class="observablehq-link"><a href="./one">One&#60;Two</a></li>
+    <li class="observablehq-link"><a href="./sub/two">Two</a></li>
+  </ol>
+</nav>
+<script>{
+  const toggle = document.querySelector("#observablehq-sidebar-toggle");
+  const initialState = localStorage.getItem("observablehq-sidebar");
+  if (initialState) toggle.checked = initialState === "true";
+  else toggle.indeterminate = true;
+}</script><div id="observablehq-toc">
+  <div role='heading'>TOC</div>
+  <nav><ol><li class="observablehq-secondary-link">
+            <a href="#h2%3A-section-1">H2: Section 1</a>
+          </li><li class="observablehq-secondary-link">
+            <a href="#h2%3A-section-2">H2: Section 2</a>
+          </li></ol>
+  </nav></div>
+<div id="observablehq-center">
+<main id="observablehq-main" class="observablehq">
+<h1 id="h1%3A-section" tabindex="-1"><a class="observablehq-header-anchor" href="#h1%3A-section">H1: Section</a></h1>
+<h2 id="h2%3A-section-1" tabindex="-1"><a class="observablehq-header-anchor" href="#h2%3A-section-1">H2: Section 1</a></h2>
+<p>Some text here</p>
+<h2 id="h2%3A-section-2" tabindex="-1"><a class="observablehq-header-anchor" href="#h2%3A-section-2">H2: Section 2</a></h2>
+<p>Some text here again</p>
+<h3 id="h3%3A-section-1" tabindex="-1"><a class="observablehq-header-anchor" href="#h3%3A-section-1">H3: Section 1</a></h3>
+</main>
+<footer id="observablehq-footer">
+<div>© 2023 Observable, Inc.</div>
+</footer>
+</div>
