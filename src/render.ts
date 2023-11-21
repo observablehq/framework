@@ -91,7 +91,7 @@ ${JSON.stringify(parseResult.data)}
 ${pages.length > 0 ? sidebar(title, pages, path) : ""}
 <div id="observablehq-center">
 ${table}
-<main id="observablehq-main" class="observablehq">
+<main id="observablehq-main" class="observablehq${table ? " has-toc" : ""}">
 ${parseResult.html}
 </main>
 ${footer(path, {pages, title})}
