@@ -80,14 +80,7 @@ ${preview ? `open({hash: ${JSON.stringify(hash)}, eval: (body) => (0, eval)(body
     .map(resolver)
     .map(renderDefineCell)
     .join("")}
-</script>${
-    parseResult.data
-      ? `
-<script type="application/json">
-${JSON.stringify(parseResult.data)}
-</script>`
-      : ""
-  }
+</script>
 ${pages.length > 0 ? sidebar(title, pages, path) : ""}
 ${table}<div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
