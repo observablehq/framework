@@ -12,3 +12,6 @@ Some text here
 Some text here again
 
 ### H3: Section 1
+
+## H2 &lt;script>alert(1)&lt;/script> not nice
+

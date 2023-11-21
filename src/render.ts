@@ -90,10 +90,8 @@ ${JSON.stringify(parseResult.data)}
   }
 ${pages.length > 0 ? sidebar(title, pages, path) : ""}
 <div id="observablehq-center">
-${table}
-<main id="observablehq-main" class="observablehq${table ? " has-toc" : ""}">
-${parseResult.html}
-</main>
+${table}<main id="observablehq-main" class="observablehq${table ? " has-toc" : ""}">
+${parseResult.html}</main>
 ${footer(path, {pages, title})}
 </div>
 `;
@@ -164,11 +162,12 @@ function tableOfContents(parseResult: ParseResult, toc: RenderOptions["toc"]) {
 <nav><ol>\n${headers
         .map(
           ({label, href}) =>
-            `<li class="observablehq-secondary-link">
-            <a href="${escapeDoubleQuoted(href)}">${escapeData(label)}</a></li>`
+            `<li class="observablehq-secondary-link"><a href="${escapeDoubleQuoted(href)}">${escapeData(
+              label
+            )}</a></li>`
         )
         .join("\n")}\n</ol></nav>
-</details>`
+</details>\n`
     : "";
 }
 
