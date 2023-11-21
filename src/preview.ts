@@ -10,7 +10,7 @@ import send from "send";
 import {type WebSocket, WebSocketServer} from "ws";
 import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
-import {HttpError, isHttpError, isNodeError} from "./error.js";
+import {HttpError, isEnoent, isHttpError} from "./error.js";
 import {maybeStat} from "./files.js";
 import {resolveSources} from "./javascript/imports.js";
 import {type ParseResult, diffMarkdown, readMarkdown} from "./markdown.js";
@@ -72,7 +72,7 @@ class Server {
         try {
           js = await readFile(join(this.root, file), "utf-8");
         } catch (error) {
-          if (isNodeError(error) && error.code !== "ENOENT") throw error;
+          if (!isEnoent(error)) throw error;
           throw new HttpError("Not found", 404);
         }
         end(req, res, resolveSources(js, file), "text/javascript");
@@ -84,9 +84,7 @@ class Server {
           send(req, pathname.slice("/_file".length), {root: this.root}).pipe(res);
           return;
         } catch (error) {
-          if (isNodeError(error) && error.code !== "ENOENT") {
-            throw error;
-          }
+          if (!isEnoent(error)) throw error;
         }
 
         // Look for a data loader for this file.
@@ -123,7 +121,7 @@ class Server {
             path = join(path, "index");
           }
         } catch (error) {
-          if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error
+          if (!isEnoent(error)) throw error; // internal error
         }
 
         // If this path ends with .html, then redirect to drop the .html. TODO:
@@ -138,16 +136,18 @@ class Server {
         // Anything else should 404; static files should be matched above.
         try {
           pages = await readPages(this.root); // TODO cache? watcher?
+          const config = await readConfig(this.root);
           const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {
             root: this.root,
             path: pathname,
             pages,
             title: config?.title,
+            toc: config?.toc,
             resolver: this._resolver!
           });
           end(req, res, html, "text/html");
         } catch (error) {
-          if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error
+          if (!isEnoent(error)) throw error; // internal error
           throw new HttpError("Not found", 404);
         }
       }
@@ -278,12 +278,10 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
           try {
             markdownWatcher = watch(join(root, path), watcher);
           } catch (error) {
-            if (isNodeError(error) && error.code === "ENOENT") {
-              console.error(`file no longer exists: ${path}`);
-              socket.terminate();
-              return;
-            }
-            throw error;
+            if (!isEnoent(error)) throw error;
+            console.error(`file no longer exists: ${path}`);
+            socket.terminate();
+            return;
           }
           setTimeout(() => watcher("change"), 150); // delay to avoid a possibly-empty file
           break;

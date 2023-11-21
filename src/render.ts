@@ -1,4 +1,5 @@
 import {dirname, join} from "node:path";
+import {parseHTML} from "linkedom";
 import {type Config, type Page, type Section} from "./config.js";
 import {computeHash} from "./hash.js";
 import {resolveImport} from "./javascript/imports.js";
@@ -52,8 +53,9 @@ type RenderInternalOptions =
 
 function render(
   parseResult: ParseResult,
-  {path, pages, title, preview, hash, resolver}: RenderOptions & RenderInternalOptions
+  {path, pages, title, toc, preview, hash, resolver}: RenderOptions & RenderInternalOptions
 ): string {
+  const table = tableOfContents(parseResult, toc);
   return `<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? `\n<base href="/">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -88,7 +90,7 @@ ${JSON.stringify(parseResult.data)}
   }
 ${pages.length > 0 ? sidebar(title, pages, path) : ""}
 <div id="observablehq-center">
-<main id="observablehq-main" class="observablehq">
+${table}<main id="observablehq-main" class="observablehq${table ? " has-toc" : ""}">
 ${parseResult.html}</main>
 ${footer(path, {pages, title})}
 </div>
@@ -142,6 +144,31 @@ function sidebar(title: string | undefined, pages: (Page | Section)[], path: str
   if (initialState) toggle.checked = initialState === "true";
   else toggle.indeterminate = true;
 }</script>`;
+}
+
+function tableOfContents(parseResult: ParseResult, toc: RenderOptions["toc"]) {
+  const pageTocConfig = parseResult.data?.toc;
+  const headers =
+    (pageTocConfig?.show ?? toc?.show) &&
+    Array.from(parseHTML(parseResult.html).document.querySelectorAll("h2"))
+      .map((node) => ({
+        label: node.textContent,
+        href: node.firstElementChild?.getAttribute("href")
+      }))
+      .filter((d) => d.label && d.href);
+  return headers?.length
+    ? `<details open id="observablehq-toc">
+<summary><span>${pageTocConfig?.label ?? toc?.label ?? "Contents"}</span></summary>
+<nav><ol>\n${headers
+        .map(
+          ({label, href}) =>
+            `<li class="observablehq-secondary-link"><a href="${escapeDoubleQuoted(href)}">${escapeData(
+              label
+            )}</a></li>`
+        )
+        .join("\n")}\n</ol></nav>
+</details>\n`
+    : "";
 }
 
 function renderListItem(p: Page, path: string): string {

@@ -2,7 +2,7 @@ import {type Stats} from "node:fs";
 import {mkdir, readdir, stat} from "node:fs/promises";
 import {dirname, extname, join, normalize, relative} from "node:path";
 import mime from "mime";
-import {isNodeError} from "./error.js";
+import {isEnoent} from "./error.js";
 import type {FileReference} from "./javascript.js";
 import {relativeUrl} from "./url.js";
 
@@ -45,7 +45,7 @@ export async function* visitFiles(root: string): AsyncGenerator<string> {
   for (const path of queue) {
     const status = await stat(path);
     if (status.isDirectory()) {
-      if (visited.has(status.ino)) throw new Error(`Circular directory: ${path}`);
+      if (visited.has(status.ino)) continue; // circular symlink
       visited.add(status.ino);
       for (const entry of await readdir(path)) {
         queue.push(join(path, entry));
@@ -61,7 +61,7 @@ export async function maybeStat(path: string): Promise<Stats | undefined> {
   try {
     return await stat(path);
   } catch (error) {
-    if (!isNodeError(error) || error.code !== "ENOENT") throw error;
+    if (!isEnoent(error)) throw error;
   }
 }
 

@@ -1,7 +1,7 @@
 import {spawn} from "node:child_process";
 import {existsSync, statSync} from "node:fs";
 import {mkdir, open, rename, unlink} from "node:fs/promises";
-import {dirname, join} from "node:path";
+import {dirname, extname, join} from "node:path";
 import {maybeStat, prepareOutput} from "./files.js";
 
 const runningCommands = new Map<string, Promise<string>>();
@@ -66,6 +66,10 @@ export class Loader {
       const sourcePath = targetPath + ext;
       const path = join(sourceRoot, sourcePath);
       if (!existsSync(path)) continue;
+      if (extname(targetPath) === "") {
+        console.warn(`invalid data loader path: ${sourcePath}`);
+        return;
+      }
       return new Loader({
         command: languages[ext] ?? path,
         args: languages[ext] == null ? [] : [path],
