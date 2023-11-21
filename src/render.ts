@@ -53,8 +53,9 @@ type RenderInternalOptions =
 
 function render(
   parseResult: ParseResult,
-  {path, pages, title, toc: tocConfig, preview, hash, resolver}: RenderOptions & RenderInternalOptions
+  {path, pages, title, toc, preview, hash, resolver}: RenderOptions & RenderInternalOptions
 ): string {
+  const table = tableOfContents(parseResult, toc);
   return `<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? `\n<base href="/">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -87,10 +88,12 @@ ${JSON.stringify(parseResult.data)}
 </script>`
       : ""
   }
-${pages.length > 0 ? sidebar(title, pages, path) : ""}${tableOfContents(parseResult, tocConfig)}
+${pages.length > 0 ? sidebar(title, pages, path) : ""}
 <div id="observablehq-center">
+${table}
 <main id="observablehq-main" class="observablehq">
-${parseResult.html}</main>
+${parseResult.html}
+</main>
 ${footer(path, {pages, title})}
 </div>
 `;
