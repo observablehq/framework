@@ -3,7 +3,7 @@ import {readdirSync, statSync} from "node:fs";
 import {mkdir, readFile, unlink, writeFile} from "node:fs/promises";
 import {basename, join, resolve} from "node:path";
 import deepEqual from "fast-deep-equal";
-import {isNodeError} from "../src/error.js";
+import {isEnoent} from "../src/error.js";
 import {type ParseResult, parseMarkdown} from "../src/markdown.js";
 
 describe("parseMarkdown(input)", () => {
@@ -29,14 +29,11 @@ describe("parseMarkdown(input)", () => {
         try {
           expected = await readFile(outfile, "utf8");
         } catch (error) {
-          if (isNodeError(error) && error.code === "ENOENT" && process.env.CI !== "true") {
-            console.warn(`! generating ${outfile}`);
-            await mkdir(outputRoot, {recursive: true});
-            await writeFile(outfile, actual, "utf8");
-            continue;
-          } else {
-            throw error;
-          }
+          if (!isEnoent(error) || process.env.CI === "true") throw error;
+          console.warn(`! generating ${outfile}`);
+          await mkdir(outputRoot, {recursive: true});
+          await writeFile(outfile, actual, "utf8");
+          continue;
         }
 
         const equal = ext === "json" ? jsonEqual(expected, actual) : expected === actual;
@@ -47,9 +44,7 @@ describe("parseMarkdown(input)", () => {
               await unlink(diffile);
               console.warn(`! deleted ${diffile}`);
             } catch (error) {
-              if (!isNodeError(error) || error.code !== "ENOENT") {
-                throw error;
-              }
+              if (!isEnoent(error)) throw error;
             }
           }
         } else {

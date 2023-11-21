@@ -1,19 +1,21 @@
 export class HttpError extends Error {
   public readonly statusCode: number;
 
-  constructor(message: string, statusCode: number, cause?: any) {
-    super(message ?? `HTTP status ${statusCode}`, cause);
+  constructor(message: string, statusCode: number, options?: ErrorOptions) {
+    super(message, options);
     this.statusCode = statusCode;
     Error.captureStackTrace(this, HttpError);
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isNodeError(error: any): error is NodeJS.ErrnoException {
-  return error instanceof Error && "errno" in error;
+export function isEnoent(error: unknown): error is NodeJS.ErrnoException {
+  return isSystemError(error) && error.code === "ENOENT";
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isHttpError(error: any): error is HttpError {
+export function isSystemError(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error && "code" in error;
+}
+
+export function isHttpError(error: unknown): error is HttpError {
   return error instanceof Error && "statusCode" in error;
 }

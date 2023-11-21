@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import {isEnoent} from "./error.js";
 
 const configName = ".observablehq";
 
@@ -29,8 +30,8 @@ async function loadConfig(): Promise<{configPath: string; config: Config}> {
     let content: string | null = null;
     try {
       content = await fs.readFile(configPath, "utf8");
-    } catch (err) {
-      if (!(err instanceof Error) || err["code"] !== "ENOENT") throw err;
+    } catch (error) {
+      if (!isEnoent(error)) throw error;
       const nextCursor = path.dirname(cursor);
       if (nextCursor === cursor) break;
       cursor = nextCursor;

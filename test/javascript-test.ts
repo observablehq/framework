@@ -2,7 +2,7 @@ import assert from "node:assert";
 import {readdirSync, statSync} from "node:fs";
 import {mkdir, readFile, unlink, writeFile} from "node:fs/promises";
 import {basename, join, resolve} from "node:path";
-import {isNodeError} from "../src/error.js";
+import {isEnoent} from "../src/error.js";
 import {transpileJavaScript} from "../src/javascript.js";
 import {renderDefineCell} from "../src/render.js";
 
@@ -43,14 +43,11 @@ function runTests({
       try {
         expected = await readFile(outfile, "utf8");
       } catch (error) {
-        if (isNodeError(error) && error.code === "ENOENT" && process.env.CI !== "true") {
-          console.warn(`! generating ${outfile}`);
-          await mkdir(outputRoot, {recursive: true});
-          await writeFile(outfile, actual, "utf8");
-          return;
-        } else {
-          throw error;
-        }
+        if (!isEnoent(error) || process.env.CI === "true") throw error;
+        console.warn(`! generating ${outfile}`);
+        await mkdir(outputRoot, {recursive: true});
+        await writeFile(outfile, actual, "utf8");
+        return;
       }
 
       const equal = expected === actual;
@@ -61,9 +58,7 @@ function runTests({
             await unlink(diffile);
             console.warn(`! deleted ${diffile}`);
           } catch (error) {
-            if (!isNodeError(error) || error.code !== "ENOENT") {
-              throw error;
-            }
+            if (!isEnoent(error)) throw error;
           }
         }
       } else {
