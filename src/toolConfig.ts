@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import {isEnoent} from "./error.js";
 
 const observabelConfigName = ".observablehq";
 const projectConfigName = ".project";
@@ -59,7 +60,8 @@ async function loadConfig(
     let content: string | null = null;
     try {
       content = await fs.readFile(configPath, "utf8");
-    } catch (err) {
+    } catch (error) {
+      if (!isEnoent(error)) throw error;
       if (stopAtProjectRoot) {
         try {
           await fs.stat(path.join(cursor, "package.json"));

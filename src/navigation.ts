@@ -1,7 +1,7 @@
 import {readFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path";
 import {readConfig} from "./config.js";
-import {isNodeError} from "./error.js";
+import {isEnoent} from "./error.js";
 import {visitFiles} from "./files.js";
 import {type ParseResult, parseMarkdown} from "./markdown.js";
 import {type RenderOptions} from "./render.js";
@@ -16,7 +16,7 @@ export async function readPages(root: string): Promise<NonNullable<RenderOptions
     try {
       parsed = parseMarkdown(await readFile(join(root, file), "utf-8"), root, file);
     } catch (error) {
-      if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error
+      if (!isEnoent(error)) throw error; // internal error
       continue;
     }
     const name = basename(file, ".md");

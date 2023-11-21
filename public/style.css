@@ -229,11 +229,69 @@ body {
   color: var(--theme-foreground-focus);
 }
 
-.observablehq-link a[href] {
+
+#observablehq-toc {
+  display: none; /** TODO - mobile view **/
+  width: 6em;
+  position: absolute;
+  right: 1rem;
+  background: var(--theme-background);
+  padding-left: 2rem;
+  padding-right: 2rem;
+  user-select: none;
+}
+#observablehq-toc:not([open]) summary span  {
+  display: none;
+}
+
+#observablehq-toc summary::marker {
+  content: '';
+}
+#observablehq-toc ::-webkit-details-marker {
+  display: none;
+}
+
+@media (min-width: calc(1152px + 6em)) {
+  #observablehq-toc {
+    display: block;
+    position: fixed;
+    top: 1rem;
+    border-left: solid 1px var(--theme-foreground-faintest);
+  }
+  #observablehq-toc summary {
+    pointer-events: none;
+  }
+  #observablehq-main.has-toc {
+    padding-right: 11em;
+  }
+}
+
+#observablehq-toc nav ol {
+  margin: 0;
+  padding-inline-start: 5px;
+}
+
+#observablehq-toc>* {
+  color: var(--theme-foreground-mute);
+  margin-bottom: 8px;
+  font: 14px var(--sans-serif);
+}
+
+#observablehq-toc nav ol li {
+  font: 12px var(--sans-serif);
+  font-weight: 350;
+  line-height: 1.5;
+  list-style-type: none;
+  color: var(--theme-foreground-faint);
+}
+
+.observablehq-link a[href],
+.observablehq-secondary-link a[href] {
   color: inherit;
 }
 
-.observablehq-link-active {
+.observablehq-link-active,
+.observablehq-secondary-link-active {
   position: relative;
 }
 
@@ -248,7 +306,8 @@ body {
 }
 
 a[href],
-.observablehq-link-active a[href] {
+.observablehq-link-active a[href],
+.observablehq-secondary-link-active a[href] {
   color: var(--theme-foreground-focus);
 }
 
@@ -317,6 +376,7 @@ a[href],
   align-items: center;
 }
 
+pre[data-copy] .observablehq-pre-copy,
 pre:hover .observablehq-pre-copy,
 pre .observablehq-pre-copy:focus {
   background: var(--theme-background-alt);
@@ -450,10 +510,6 @@ pre::after {
 
 pre[data-language]::after {
   content: attr(data-language);
-}
-
-pre[data-copy]::after {
-  content: attr(data-copy);
 }
 
 input:not([type]),
