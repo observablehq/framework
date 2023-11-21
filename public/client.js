@@ -343,9 +343,7 @@ enableCopyButtons();
 
 function enableCopyButtons() {
   for (const pre of document.querySelectorAll("pre")) {
-    const button = pre.appendChild(copyButton.content.cloneNode(true).firstChild);
-    button.addEventListener("click", copy);
-    pre.style.position = "relative";
+    pre.appendChild(copyButton.content.cloneNode(true).firstChild).addEventListener("click", copy);
   }
 }
 
