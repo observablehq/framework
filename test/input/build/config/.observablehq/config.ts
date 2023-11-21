@@ -3,5 +3,8 @@ export default {
     {path: "/index", name: "Index"},
     {path: "/one", name: "One<Two"},
     {path: "/sub/two", name: "Two"}
-  ]
+  ],
+  toc: {
+    label: "On this page"
+  }
 };

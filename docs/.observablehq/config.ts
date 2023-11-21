@@ -28,5 +28,8 @@ export default {
       ]
     },
     {name: "Contributing", path: "/contributing"}
-  ]
+  ],
+  toc: {
+    show: true
+  }
 };
