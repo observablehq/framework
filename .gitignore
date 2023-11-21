@@ -6,3 +6,7 @@ node_modules/
 test/output/*-changed.*
 test/output/build/*-changed/
 yarn-error.log
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

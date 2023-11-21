@@ -25,6 +25,8 @@
     "dev": "tsx watch ./src/preview.ts",
     "build": "rm -rf dist && ./bin/observable.ts build",
     "test": "yarn test:mocha && yarn test:lint",
+    "test:integration": "yarn playwright test",
+    "test:integration-ui": "yarn test:integration --ui",
     "test:coverage": "c8 yarn test:mocha",
     "test:mocha": "rm -rf test/.observablehq/cache && tsx ./node_modules/.bin/mocha 'test/**/*-test.*'",
     "test:lint": "eslint src test public"
@@ -59,6 +61,7 @@
     "ws": "^8.14.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.40.0",
     "@types/he": "^1.2.3",
     "@types/markdown-it": "^13.0.2",
     "@types/mime": "^3.0.2",
@@ -70,11 +73,13 @@
     "@typescript-eslint/parser": "^6.7.3",
     "c8": "^8.0.1",
     "d3-array": "^3.2.4",
+    "dotenv": "^16.3.1",
     "eslint": "^8.50.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-prettier": "^5.0.0",
     "mocha": "^10.2.0",
+    "playwright": "^1.40.0",
     "prettier": "^3.0.3",
     "typescript": "^5.2.2",
     "undici": "^5.27.2"
