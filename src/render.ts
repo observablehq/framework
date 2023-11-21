@@ -148,42 +148,27 @@ function sidebar(title: string | undefined, pages: (Page | Section)[], path: str
 }</script>`;
 }
 
-function tableOfContentsSections(
-  parseResult: ParseResult,
-  globalConfig?: Config["toc"]
-): {label: string; headers: string[]} {
-  const pageConfig = parseResult.data?.toc;
-  const pageShow = pageConfig?.show;
-  const globalShow = globalConfig?.show;
-  const headers: string[] = [];
-  if (pageShow || globalShow) {
-    headers.push("h2");
-  }
-  return {label: pageConfig?.label ?? globalConfig?.label ?? "Contents", headers};
-}
-
-function tableOfContents(parseResult: ParseResult, tocConfig: RenderOptions["toc"]) {
-  const toc = tableOfContentsSections(parseResult, tocConfig);
-  let showToc = toc.headers.length > 0;
-  let headers;
-  if (showToc) {
-    headers = Array.from(parseHTML(parseResult.html).document.querySelectorAll(toc.headers.join(", "))).map((node) => ({
-      label: node.firstElementChild?.textContent,
-      href: node.firstElementChild?.getAttribute("href")
-    }));
-  }
-  showToc = showToc && headers?.length > 0;
-  return showToc
-    ? `<div id="observablehq-toc">
-  <div role='heading'>${toc.label}</div>
-  <nav><ol>${headers
-    .map(
-      ({label, href}) => `<li class="observablehq-secondary-link">
-            <a href="${escapeDoubleQuoted(href)}">${escapeData(label)}</a>
-          </li>`
-    )
-    .join("")}</ol>
-  </nav></div>`
+function tableOfContents(parseResult: ParseResult, toc: RenderOptions["toc"]) {
+  const pageTocConfig = parseResult.data?.toc;
+  const headers =
+    (pageTocConfig?.show ?? toc?.show) &&
+    Array.from(parseHTML(parseResult.html).document.querySelectorAll("h2"))
+      .map((node) => ({
+        label: node.textContent,
+        href: node.firstElementChild?.getAttribute("href")
+      }))
+      .filter((d) => d.label && d.href);
+  return headers?.length
+    ? `<details open id="observablehq-toc">
+<summary><span>${pageTocConfig?.label ?? toc?.label ?? "Contents"}</span></summary>
+<nav><ol>\n${headers
+        .map(
+          ({label, href}) =>
+            `<li class="observablehq-secondary-link">
+            <a href="${escapeDoubleQuoted(href)}">${escapeData(label)}</a></li>`
+        )
+        .join("\n")}\n</ol></nav>
+</details>`
     : "";
 }
 
