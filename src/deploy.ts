@@ -93,7 +93,7 @@ async function getNewProjectSlug(): Promise<string> {
 }
 
 async function getNewProjectWorkspace(workspaces: WorkspaceResponse[]): Promise<string> {
-  const workspaceNames = workspaces.map(x => x.name);
+  const workspaceNames = workspaces.map((x) => x.name);
   const index = await promptUserForChoiceIndex("Available Workspaces", workspaceNames);
   return workspaces[index].id;
 }
@@ -148,7 +148,7 @@ async function getDeployFiles(): Promise<DeployFile[]> {
 }
 
 async function filesInDir(dir: string, files: string[] = []): Promise<string[]> {
-  const fileList = await fs.readdir(dir)
+  const fileList = await fs.readdir(dir);
   for (const file of fileList) {
     const name = `${dir}/${file}`;
     const stat = await fs.stat(name);
