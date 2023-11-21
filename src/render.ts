@@ -156,7 +156,7 @@ function tableOfContentsSections(
   if (pageShow || globalShow) {
     headers.push("h2");
   }
-  return {label: pageConfig?.label ?? globalConfig?.label ?? "Sections", headers};
+  return {label: pageConfig?.label ?? globalConfig?.label ?? "Contents", headers};
 }
 
 function tableOfContents(parseResult: ParseResult, tocConfig: RenderOptions["toc"]) {

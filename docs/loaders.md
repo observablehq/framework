@@ -1,8 +1,3 @@
----
-toc:
-  show: true
----
-
 # Data loaders
 
 **Data loaders** generate files — typically static snapshots of data — at build time. For example, a data loader might query a database and output a CSV or Parquet file, or server-side render a chart and output a PNG image.
