@@ -78,6 +78,15 @@ export async function build(context: CommandContext = makeCommandContext()) {
         continue;
       }
       sourcePath = join(sourceRoot, await loader.load({verbose}));
+      if (file.endsWith(".uri")) {
+        for (const p of (await readFile(sourcePath, "utf-8")).split("\n").filter((d) => d && !d.startsWith("#"))) {
+          const sourcePath = join(sourceRoot, ".observablehq/cache", dirname(file), p);
+          const outputPath = join(outputRoot, "_file", dirname(file), p);
+          if (verbose) console.log("copy", sourcePath, "→", outputPath);
+          await prepareOutput(outputPath);
+          await copyFile(sourcePath, outputPath);
+        }
+      }
     }
     if (verbose) console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);
