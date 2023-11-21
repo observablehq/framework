@@ -1,5 +1,6 @@
-<link rel=stylesheet href="custom-styles.css" />
-<link rel=stylesheet href="subsection/additional-styles.css" />
+<link rel="stylesheet" href="custom-styles.css">
+<link rel="stylesheet" href="subsection/additional-styles.css">
+<link rel="stylesheet" href="https://example.com/style.css">
 
 ```js
 fetch("./file-top.csv")
