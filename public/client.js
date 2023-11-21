@@ -354,15 +354,13 @@ async function copy({currentTarget}) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  if (location.hash) highlight(location.hash);
+  if (location.hash) highlightToc(location.hash);
+  window.addEventListener("hashchange", () => {
+    highlightToc(location.hash);
+  });
+  function highlightToc(hash) {
+    const currentSelected = document.querySelector("li.observablehq-secondary-link-active");
+    if (currentSelected) currentSelected.classList.remove("observablehq-secondary-link-active");
+    document.querySelector(`li a[href="${hash}"]`)?.parentElement.classList.add("observablehq-secondary-link-active");
+  }
 });
-
-window.addEventListener("hashchange", () => {
-  highlight(location.hash);
-});
-
-export function highlight(hash) {
-  const currentSelected = document.querySelector("li.observablehq-secondary-link-active");
-  if (currentSelected) currentSelected.classList.remove("observablehq-secondary-link-active");
-  document.querySelector(`li a[href="${hash}"]`).parentElement.classList.add("observablehq-secondary-link-active");
-}
