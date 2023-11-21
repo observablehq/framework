@@ -89,8 +89,8 @@ ${JSON.stringify(parseResult.data)}
       : ""
   }
 ${pages.length > 0 ? sidebar(title, pages, path) : ""}
-<div id="observablehq-center">
-${table}<main id="observablehq-main" class="observablehq${table ? " has-toc" : ""}">
+${table}<div id="observablehq-center">
+<main id="observablehq-main" class="observablehq">
 ${parseResult.html}</main>
 ${footer(path, {pages, title})}
 </div>
@@ -157,17 +157,20 @@ function tableOfContents(parseResult: ParseResult, toc: RenderOptions["toc"]) {
       }))
       .filter((d) => d.label && d.href);
   return headers?.length
-    ? `<details open id="observablehq-toc">
-<summary><span>${pageTocConfig?.label ?? toc?.label ?? "Contents"}</span></summary>
-<nav><ol>\n${headers
-        .map(
-          ({label, href}) =>
-            `<li class="observablehq-secondary-link"><a href="${escapeDoubleQuoted(href)}">${escapeData(
-              label
-            )}</a></li>`
-        )
-        .join("\n")}\n</ol></nav>
-</details>\n`
+    ? `<aside id="observablehq-toc">
+<nav>
+<div>${pageTocConfig?.label ?? toc?.label ?? "Contents"}</div>
+<ol>
+${headers
+  .map(
+    ({label, href}) =>
+      `<li class="observablehq-secondary-link"><a href="${escapeDoubleQuoted(href)}">${escapeData(label)}</a></li>`
+  )
+  .join("\n")}
+</ol>
+</nav>
+</aside>
+`
     : "";
 }
 
