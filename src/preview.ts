@@ -88,6 +88,17 @@ class Server {
           send(req, outpath, {root: this.root}).pipe(res);
           return;
         }
+
+        // Is it a part of a multi-file loader?
+        const cache = ".observablehq/cache/" + dirname(filepath).slice("_file".length);
+        try {
+          await access(this.root + "/" + cache + ".uri", constants.R_OK);
+          send(req, cache + "/" + basename(filepath), {root: this.root}).pipe(res);
+          return;
+        } catch (error) {
+          if (!isEnoent(error)) throw error;
+        }
+
         throw new HttpError("Not found", 404);
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
