@@ -45,7 +45,7 @@ export async function* visitFiles(root: string): AsyncGenerator<string> {
   for (const path of queue) {
     const status = await stat(path);
     if (status.isDirectory()) {
-      if (visited.has(status.ino)) throw new Error(`Circular directory: ${path}`);
+      if (visited.has(status.ino)) continue; // circular symlink
       visited.add(status.ino);
       for (const entry of await readdir(path)) {
         queue.push(join(path, entry));
