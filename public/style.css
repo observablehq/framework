@@ -286,14 +286,12 @@ body {
 }
 
 .observablehq-link a[href],
-.observablehq-secondary-link a[href]
- {
+.observablehq-secondary-link a[href] {
   color: inherit;
 }
 
 .observablehq-link-active,
-.observablehq-secondary-link-active
- {
+.observablehq-secondary-link-active {
   position: relative;
 }
 
