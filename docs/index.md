@@ -25,7 +25,7 @@ toc:
 </div>
 
 <div style="display: flex; flex-direction: column; align-items: center; font-family: var(--sans-serif); margin: 4rem 0 8rem; text-wrap: balance; text-align: center;">
-  <pre style="width: 20rem; text-align: initial;"><code class="language-sh">npm create @observablehq</code></pre>
+  <pre style="width: 20rem; text-align: initial;" data-copy><code class="language-sh">npm create @observablehq</code></pre>
   <a href="./getting-started">Get started →</a>
 </div>
 

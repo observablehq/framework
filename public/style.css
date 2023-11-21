@@ -376,6 +376,7 @@ a[href],
   align-items: center;
 }
 
+pre[data-copy] .observablehq-pre-copy,
 pre:hover .observablehq-pre-copy,
 pre .observablehq-pre-copy:focus {
   background: var(--theme-background-alt);
@@ -509,10 +510,6 @@ pre::after {
 
 pre[data-language]::after {
   content: attr(data-language);
-}
-
-pre[data-copy]::after {
-  content: attr(data-copy);
 }
 
 input:not([type]),
