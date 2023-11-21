@@ -176,7 +176,7 @@ function tableOfContents(parseResult: ParseResult, tocConfig: RenderOptions["toc
   <nav><ol>${headers
     .map(
       ({label, href}) => `<li class="observablehq-secondary-link">
-            <a href="${href}">${label}</a>
+            <a href="${escapeDoubleQuoted(href)}">${escapeData(label)}</a>
           </li>`
     )
     .join("")}</ol>
