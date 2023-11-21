@@ -159,7 +159,7 @@ function tableOfContents(parseResult: ParseResult, toc: RenderOptions["toc"]) {
   return headers?.length
     ? `<aside id="observablehq-toc">
 <nav>
-<div>${pageTocConfig?.label ?? toc?.label ?? "Contents"}</div>
+<div>${escapeData(pageTocConfig?.label ?? toc?.label ?? "Contents")}</div>
 <ol>
 ${headers
   .map(
