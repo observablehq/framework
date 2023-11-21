@@ -11,6 +11,9 @@ switch (command) {
   case "build":
     await import("../src/build.js").then((build) => build.build());
     break;
+  case "deploy":
+    await import("../src/deploy.js").then((deploy) => deploy.deploy());
+    break;
   case "preview":
     await import("../src/preview.js");
     break;
@@ -23,6 +26,7 @@ switch (command) {
   default:
     console.error(`Usage: observable <command>`);
     console.error(`   build\tgenerate a static site`);
+    console.error(`   deploy\tdeploy a project`);
     console.error(`   preview\trun the live preview server`);
     console.error(`   login\tmanage authentication with the Observable Cloud`);
     console.error(`   whoami\tcheck authentication status`);

@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import {type CommandEffects, login, whoami} from "../src/auth.js";
+import {MockLogger} from "./mocks/logger.js";
 import {ObservableApiMock} from "./mocks/observableApi.js";
 
 describe("login command", () => {
@@ -28,7 +29,7 @@ describe("login command", () => {
       assert.equal(sendApiKeyResponse.status, 201);
       // The CLI then writes the API key to the config file
       assert.deepEqual(await effects.setApiKeyDeferred.promise, {id: "MOCK-ID", apiKey: "MOCK-KEY"});
-      effects._assertExactLogs([/^Press Enter to open/, /^Successfully logged in/]);
+      effects.logger.assertExactLogs([/^Press Enter to open/, /^Successfully logged in/]);
       await effects.exitDeferred.promise;
     } finally {
       // this prevents the tests from hanging in case the test fails
@@ -45,14 +46,14 @@ describe("whoami command", () => {
   it("works when there is no API key", async () => {
     const effects = new MockEffects({apiKey: null});
     await whoami(effects);
-    effects._assertExactLogs([/^You haven't authenticated with/]);
+    effects.logger.assertExactLogs([/^You haven't authenticated with/]);
   });
 
   it("works when there is an API key that is invalid", async () => {
     const mock = new ObservableApiMock().handleGetUser({valid: false}).start();
     const effects = new MockEffects({apiKey: "MOCK-INVALID-KEY"});
     await whoami(effects);
-    effects._assertExactLogs([/^Your API key is invalid/]);
+    effects.logger.assertExactLogs([/^Your API key is invalid/]);
     mock.close();
   });
 
@@ -60,7 +61,7 @@ describe("whoami command", () => {
     const mock = new ObservableApiMock().handleGetUser({valid: true}).start();
     const effects = new MockEffects({apiKey: "MOCK-VALID-KEY"});
     await whoami(effects);
-    effects._assertExactLogs([
+    effects.logger.assertExactLogs([
       /^You are logged into.*as Mock User/,
       /^You have access to the following workspaces/,
       /Mock User's Workspace/
@@ -83,7 +84,7 @@ class Deferred<T = unknown> {
 }
 
 class MockEffects implements CommandEffects {
-  public logLines: any[][] = [];
+  public logger = new MockLogger();
   public openBrowserDeferred = new Deferred<string>();
   public setApiKeyDeferred = new Deferred<{id: string; apiKey: string}>();
   public exitDeferred = new Deferred<void>();
@@ -93,30 +94,11 @@ class MockEffects implements CommandEffects {
     this._observableApiKey = apiKey;
   }
 
-  _assertExactLogs(expected: RegExp[], {skipBlanks = true} = {}) {
-    const filteredLogs = this.logLines.filter((logArgs) => {
-      if (skipBlanks) return logArgs.length > 0;
-      return true;
-    });
-
-    for (let i = 0; i < expected.length; i++) {
-      const logArgs = filteredLogs[i];
-      assert.equal(logArgs.length, 1, "Only know how to assert log lines with a single argument");
-      assert.ok(
-        logArgs[0].match(expected[i]),
-        `Expected log line ${i} to match ${expected[i]}, but got ${JSON.stringify(logArgs[0])}`
-      );
-    }
-  }
-
   getObservableApiKey() {
     return Promise.resolve(this._observableApiKey);
   }
   isatty() {
     return true;
-  }
-  log(...args: any[]) {
-    this.logLines.push(args);
   }
   openUrlInBrowser(url: string) {
     this.openBrowserDeferred.resolve(url);

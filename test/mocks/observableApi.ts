@@ -1,6 +1,8 @@
 import {type Dispatcher, type Interceptable, MockAgent, getGlobalDispatcher, setGlobalDispatcher} from "undici";
-import {getObservableApiHost} from "../../src/auth.js";
+import {getObservableApiHost} from "../../src/observableApiClient.js";
 
+export const validApiKey = "MOCK-VALID-KEY";
+export const invalidApiKey = "MOCK-INVALID-KEY";
 export class ObservableApiMock {
   private _agent: MockAgent | null = null;
   private _handlers: ((pool: Interceptable) => void)[] = [];
@@ -49,12 +51,66 @@ export class ObservableApiMock {
           ]
         })
       : "Unauthorized";
-    const headers = {authorization: valid ? "apikey MOCK-VALID-KEY" : "apikey MOCK-INVALID-KEY"};
+    const headers = authorizationHeader(valid);
     this._handlers.push((pool) =>
       pool.intercept({path: "/cli/user", headers: headersMatcher(headers)}).reply(status, response)
     );
     return this;
   }
+
+  handlePostProject({projectId, valid = true}: {projectId?: string; valid?: boolean} = {}): ObservableApiMock {
+    const status = valid ? 200 : 401;
+    const response = valid ? JSON.stringify({id: projectId}) : "Unauthorized";
+    const headers = authorizationHeader(valid);
+    this._handlers.push((pool) =>
+      pool.intercept({path: "/cli/project", method: "POST", headers: headersMatcher(headers)}).reply(status, response)
+    );
+    return this;
+  }
+
+  handlePostDeploy({
+    projectId,
+    deployId,
+    valid = true
+  }: {projectId?: string; deployId?: string; valid?: boolean} = {}): ObservableApiMock {
+    const status = valid ? 200 : 401;
+    const response = valid ? JSON.stringify({id: deployId}) : "Unauthorized";
+    const headers = authorizationHeader(valid);
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: `/cli/project/${projectId}/deploy`, method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response)
+    );
+    return this;
+  }
+
+  handlePostDeployFile({deployId, valid = true}: {deployId?: string; valid?: boolean} = {}): ObservableApiMock {
+    const status = valid ? 204 : 401;
+    const response = valid ? "" : "Unauthorized";
+    const headers = authorizationHeader(valid);
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: `/cli/deploy/${deployId}/file`, method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response)
+    );
+    return this;
+  }
+
+  handlePostDeployUploaded({deployId, valid = true}: {deployId?: string; valid?: boolean} = {}): ObservableApiMock {
+    const status = valid ? 204 : 401;
+    const response = valid ? "" : "Unauthorized";
+    const headers = authorizationHeader(valid);
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: `/cli/deploy/${deployId}/uploaded`, method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response)
+    );
+    return this;
+  }
+}
+
+function authorizationHeader(valid: boolean) {
+  return {authorization: valid ? `apikey ${validApiKey}` : `apikey ${invalidApiKey}`};
 }
 
 /** All headers in `expected` must be present and have the expected value.
