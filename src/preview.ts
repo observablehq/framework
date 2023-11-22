@@ -14,7 +14,6 @@ import {HttpError, isEnoent, isHttpError} from "./error.js";
 import {maybeStat} from "./files.js";
 import {resolveSources} from "./javascript/imports.js";
 import {type ParseResult, diffMarkdown, readMarkdown} from "./markdown.js";
-import {readPages} from "./navigation.js";
 import {renderPreview} from "./render.js";
 import {type CellResolver, makeCLIResolver} from "./resolver.js";
 
@@ -47,7 +46,6 @@ class Server {
 
   _handleRequest: RequestListener = async (req, res) => {
     console.log(req.method, req.url);
-    let pages;
     try {
       const url = new URL(req.url!, "http://localhost");
       let {pathname} = url;
@@ -124,15 +122,12 @@ class Server {
         // Otherwise, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
         try {
-          pages = await readPages(this.root); // TODO cache? watcher?
           const config = await readConfig(this.root);
           const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {
             root: this.root,
             path: pathname,
-            pages,
-            title: config?.title,
-            toc: config?.toc,
-            resolver: this._resolver!
+            resolver: this._resolver!,
+            ...config
           });
           end(req, res, html, "text/html");
         } catch (error) {
@@ -145,11 +140,12 @@ class Server {
       res.statusCode = isHttpError(error) ? error.statusCode : 500;
       if (req.method === "GET" && res.statusCode === 404) {
         try {
+          const config = await readConfig(this.root);
           const {html} = await renderPreview(await readFile(join(this.root, "404.md"), "utf-8"), {
             root: this.root,
             path: "/404",
-            pages,
-            resolver: this._resolver!
+            resolver: this._resolver!,
+            ...config
           });
           end(req, res, html, "text/html");
           return;

@@ -6,11 +6,10 @@ export type PageLink =
   | {prev: Page; next: undefined}; // last page
 
 // Pager links in the footer are computed once for a given navigation.
-const pagers = new WeakMap<NonNullable<Config["pages"]>, Map<string, PageLink>>();
+const pagers = new WeakMap<Config["pages"], Map<string, PageLink>>();
 
-export function pager(path: string, options: Pick<Config, "pages" | "title"> = {}): PageLink | undefined {
+export function pager(path: string, options: Pick<Config, "pages" | "title"> = {pages: []}): PageLink | undefined {
   const {pages, title} = options;
-  if (!pages) return;
   let links = pagers.get(pages);
   if (!links) {
     links = new Map<string, PageLink>();
@@ -32,7 +31,7 @@ export function pager(path: string, options: Pick<Config, "pages" | "title"> = {
 
 // Walks the unique pages in the site so as to avoid creating cycles. Implicitly
 // adds a link at the beginning to the home page (/index).
-function* walk(pages: NonNullable<Config["pages"]>, title = "Home", visited = new Set<string>()): Generator<Page> {
+function* walk(pages: Config["pages"], title = "Home", visited = new Set<string>()): Generator<Page> {
   if (!visited.has("/index")) yield (visited.add("/index"), {name: title, path: "/index"});
   for (const page of pages) {
     if ("pages" in page) yield* walk(page.pages, title, visited);

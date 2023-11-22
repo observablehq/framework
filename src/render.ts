@@ -1,6 +1,6 @@
 import {dirname, join} from "node:path";
 import {parseHTML} from "linkedom";
-import {type Config, type Page, type Section} from "./config.js";
+import {type Config, type Page, type Section, mergeToc} from "./config.js";
 import {computeHash} from "./hash.js";
 import {resolveImport} from "./javascript/imports.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
@@ -17,7 +17,6 @@ export interface Render {
 export interface RenderOptions extends Config {
   root: string;
   path: string;
-  pages: (Page | Section)[];
   resolver: (cell: CellPiece) => CellPiece;
 }
 
@@ -139,19 +138,16 @@ function sidebar(title: string | undefined, pages: (Page | Section)[], path: str
 }
 
 function tableOfContents(parseResult: ParseResult, toc: RenderOptions["toc"]) {
-  const pageTocConfig = parseResult.data?.toc;
-  const headers =
-    (pageTocConfig?.show ?? toc?.show) &&
-    Array.from(parseHTML(parseResult.html).document.querySelectorAll("h2"))
-      .map((node) => ({
-        label: node.textContent,
-        href: node.firstElementChild?.getAttribute("href")
-      }))
-      .filter((d) => d.label && d.href);
+  const {show, label} = mergeToc(parseResult.data?.toc, toc);
+  const headers = show
+    ? Array.from(parseHTML(parseResult.html).document.querySelectorAll("h2"))
+        .map((node) => ({label: node.textContent, href: node.firstElementChild?.getAttribute("href")}))
+        .filter((d): d is {label: string; href: string} => !!d.label && !!d.href)
+    : null;
   return headers?.length
     ? `<aside id="observablehq-toc">
 <nav>
-<div>${escapeData(pageTocConfig?.label ?? toc?.label ?? "Contents")}</div>
+<div>${escapeData(label)}</div>
 <ol>
 ${headers
   .map(

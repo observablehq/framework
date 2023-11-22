@@ -8,7 +8,6 @@ import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
 import {resolveSources} from "./javascript/imports.js";
-import {readPages} from "./navigation.js";
 import {renderServerless} from "./render.js";
 import {makeCLIResolver} from "./resolver.js";
 
@@ -30,7 +29,6 @@ export async function build(context: CommandContext = makeCommandContext()) {
   }
 
   // Render .md files, building a list of file attachments as we go.
-  const pages = await readPages(sourceRoot);
   const config = await readConfig(sourceRoot);
   const files: string[] = [];
   const imports: string[] = [];
@@ -43,10 +41,8 @@ export async function build(context: CommandContext = makeCommandContext()) {
     const render = renderServerless(await readFile(sourcePath, "utf-8"), {
       root: sourceRoot,
       path,
-      pages,
-      title: config?.title,
-      toc: config?.toc,
-      resolver
+      resolver,
+      ...config
     });
     const resolveFile = ({name}) => join(name.startsWith("/") ? "." : dirname(sourceFile), name);
     files.push(...render.files.map(resolveFile));
