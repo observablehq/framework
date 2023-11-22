@@ -14,7 +14,7 @@ const OBSERVABLEHQ_UI_HOST = getObservableUiHost();
 
 export const commandRequiresAuthenticationMessage = `You need to be authenticated to ${
   getObservableUiHost().hostname
-}} to run this command. Please run "observable login" to log in.`;
+}} to run this command. Please run \`observable login\`.`;
 
 /** Actions this command needs to take wrt its environment that may need mocked out. */
 export interface CommandEffects {
