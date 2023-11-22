@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import {type CommandEffects, commandRequiresAuthenticationMessage, login, whoami} from "../src/auth.js";
+import {type CommandEffects, login, whoami} from "../src/auth.js";
 import {MockLogger} from "./mocks/logger.js";
 import {ObservableApiMock} from "./mocks/observableApi.js";
 
