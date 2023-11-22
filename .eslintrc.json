@@ -44,7 +44,7 @@
     "no-sparse-arrays": 0,
     "no-unexpected-multiline": 0,
     "object-shorthand": ["warn", "always"],
-    "prettier/prettier": ["warn"],
+    "prettier/prettier": ["warn", {"embeddedLanguageFormatting": "off"}],
     "sort-imports": ["warn", {"ignoreDeclarationSort": true}]
   },
   "overrides": [

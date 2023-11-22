@@ -2,6 +2,7 @@ import {dirname, join} from "node:path";
 import {parseHTML} from "linkedom";
 import {type Config, type Page, type Section} from "./config.js";
 import {computeHash} from "./hash.js";
+import {type Html, html} from "./html.js";
 import {resolveImport} from "./javascript/imports.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
 import {type CellPiece, type ParseResult, parseMarkdown} from "./markdown.js";
@@ -39,7 +40,7 @@ export function renderServerless(source: string, options: RenderOptions): Render
   };
 }
 
-export function renderDefineCell(cell) {
+export function renderDefineCell(cell): string {
   const {id, inline, inputs, outputs, files, body, databases} = cell;
   return `define({${Object.entries({id, inline, inputs, outputs, files, databases})
     .filter((arg) => arg[1] !== undefined)
@@ -55,79 +56,71 @@ function render(
   parseResult: ParseResult,
   {path, pages, title, toc, preview, hash, resolver}: RenderOptions & RenderInternalOptions
 ): string {
-  const table = tableOfContents(parseResult, toc);
-  return `<!DOCTYPE html>
-<meta charset="utf-8">${path === "/404" ? `\n<base href="/">` : ""}
+  const pageTocConfig = parseResult.data?.toc;
+  const tocLabel = pageTocConfig?.label ?? toc?.label;
+  const tocHeaders = (pageTocConfig?.show ?? toc?.show) && findHeaders(parseResult);
+  return String(html`<!DOCTYPE html>
+<meta charset="utf-8">${path === "/404" ? html`\n<base href="/">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 ${
   parseResult.title || title
-    ? `<title>${[parseResult.title, parseResult.title === title ? null : title]
+    ? html`<title>${[parseResult.title, parseResult.title === title ? null : title]
         .filter((title): title is string => !!title)
-        .map((title) => escapeData(title))
         .join(" | ")}</title>\n`
     : ""
 }<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
-<link rel="stylesheet" type="text/css" href="${escapeDoubleQuoted(relativeUrl(path, "/_observablehq/style.css"))}">
-${Array.from(getImportPreloads(parseResult, path))
-  .map((href) => `<link rel="modulepreload" href="${escapeDoubleQuoted(relativeUrl(path, href))}">`)
-  .join("\n")}
-<script type="module">
+<link rel="stylesheet" type="text/css" href="${relativeUrl(path, "/_observablehq/style.css")}">${Array.from(
+    getImportPreloads(parseResult, path),
+    (href) => html`\n<link rel="modulepreload" href="${relativeUrl(path, href)}">`
+  )}
+<script type="module">${html.unsafe(`
 
 import {${preview ? "open, " : ""}define} from ${JSON.stringify(relativeUrl(path, "/_observablehq/client.js"))};
 
 ${preview ? `open({hash: ${JSON.stringify(hash)}, eval: (body) => (0, eval)(body)});\n` : ""}${parseResult.cells
     .map(resolver)
     .map(renderDefineCell)
-    .join("")}
+    .join("")}`)}
 </script>
 ${pages.length > 0 ? sidebar(title, pages, path) : ""}
-${table}<div id="observablehq-center">
+${tocHeaders?.length > 0 ? tableOfContents(tocHeaders, tocLabel) : ""}<div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
-${parseResult.html}</main>
+${html.unsafe(parseResult.html)}</main>
 ${footer(path, {pages, title})}
 </div>
-`;
+`);
 }
 
-function sidebar(title: string | undefined, pages: (Page | Section)[], path: string): string {
-  return `<input id="observablehq-sidebar-toggle" type="checkbox">
+function sidebar(title: string | undefined, pages: (Page | Section)[], path: string): Html {
+  return html`<input id="observablehq-sidebar-toggle" type="checkbox">
 <nav id="observablehq-sidebar">
   <ol>
-    <li class="observablehq-link${path === "/index" ? " observablehq-link-active" : ""}"><a href="${escapeDoubleQuoted(
-      relativeUrl(path, "/")
-    )}">${escapeData(title ?? "Home")}</a></li>
+    <li class="observablehq-link${path === "/index" ? " observablehq-link-active" : ""}"><a href="${relativeUrl(
+      path,
+      "/"
+    )}">${title ?? "Home"}</a></li>
   </ol>
-  <ol>${pages
-    .map((p, i) =>
-      "pages" in p
-        ? `${i > 0 && "path" in pages[i - 1] ? "</ol>" : ""}
+  <ol>${pages.map((p, i) =>
+    "pages" in p
+      ? html`${i > 0 && "path" in pages[i - 1] ? html`</ol>` : ""}
     <details${p.open === undefined || p.open ? " open" : ""}>
-      <summary>${escapeData(p.name)}</summary>
-      <ol>${p.pages
-        .map(
-          (p) => `
-        ${renderListItem(p, path)}`
-        )
-        .join("")}
+      <summary>${p.name}</summary>
+      <ol>${p.pages.map((p) => renderListItem(p, path))}
       </ol>
     </details>`
-        : "path" in p
-        ? `${
-            i === 0
-              ? `
-    `
-              : !("path" in pages[i - 1])
-              ? `
+      : "path" in p
+      ? html`${
+          i === 0
+            ? ``
+            : !("path" in pages[i - 1])
+            ? html`
   </ol>
-  <ol>
-    `
-              : `
-    `
-          }${renderListItem(p, path)}`
-        : null
-    )
-    .join("")}
+  <ol>`
+            : ``
+        }${renderListItem(p, path)}`
+      : ""
+  )}
   </ol>
 </nav>
 <script>{
@@ -138,38 +131,34 @@ function sidebar(title: string | undefined, pages: (Page | Section)[], path: str
 }</script>`;
 }
 
-function tableOfContents(parseResult: ParseResult, toc: RenderOptions["toc"]) {
-  const pageTocConfig = parseResult.data?.toc;
-  const headers =
-    (pageTocConfig?.show ?? toc?.show) &&
-    Array.from(parseHTML(parseResult.html).document.querySelectorAll("h2"))
-      .map((node) => ({
-        label: node.textContent,
-        href: node.firstElementChild?.getAttribute("href")
-      }))
-      .filter((d) => d.label && d.href);
-  return headers?.length
-    ? `<aside id="observablehq-toc">
+interface Header {
+  label: string;
+  href: string;
+}
+
+function findHeaders(parseResult: ParseResult): Header[] {
+  return Array.from(parseHTML(parseResult.html).document.querySelectorAll("h2"))
+    .map((node) => ({label: node.textContent, href: node.firstElementChild?.getAttribute("href")}))
+    .filter((d): d is Header => !!d.label && !!d.href);
+}
+
+function tableOfContents(headers: Header[], label = "Contents"): Html {
+  return html`<aside id="observablehq-toc">
 <nav>
-<div>${escapeData(pageTocConfig?.label ?? toc?.label ?? "Contents")}</div>
-<ol>
-${headers
-  .map(
-    ({label, href}) =>
-      `<li class="observablehq-secondary-link"><a href="${escapeDoubleQuoted(href)}">${escapeData(label)}</a></li>`
-  )
-  .join("\n")}
+<div>${label}</div>
+<ol>${headers.map(
+    ({label, href}) => html`\n<li class="observablehq-secondary-link"><a href="${href}">${label}</a></li>`
+  )}
 </ol>
 </nav>
 </aside>
-`
-    : "";
+`;
 }
 
-function renderListItem(p: Page, path: string): string {
-  return `<li class="observablehq-link${
+function renderListItem(p: Page, path: string): Html {
+  return html`\n    <li class="observablehq-link${
     p.path === path ? " observablehq-link-active" : ""
-  }"><a href="${escapeDoubleQuoted(relativeUrl(path, prettyPath(p.path)))}">${escapeData(p.name)}</a></li>`;
+  }"><a href="${relativeUrl(path, prettyPath(p.path))}">${p.name}</a></li>`;
 }
 
 function prettyPath(path: string): string {
@@ -203,34 +192,18 @@ function getImportPreloads(parseResult: ParseResult, path: string): Iterable<str
   return preloads;
 }
 
-// TODO Adopt Hypertext Literal?
-function escapeDoubleQuoted(value): string {
-  return `${value}`.replace(/["&]/g, entity);
-}
-
-// TODO Adopt Hypertext Literal?
-function escapeData(value: string): string {
-  return `${value}`.replace(/[<&]/g, entity);
-}
-
-function entity(character) {
-  return `&#${character.charCodeAt(0).toString()};`;
-}
-
-function footer(path: string, options?: Pick<Config, "pages" | "title">): string {
+function footer(path: string, options?: Pick<Config, "pages" | "title">): Html {
   const link = pager(path, options);
-  return `<footer id="observablehq-footer">\n${
-    link ? `${pagenav(path, link)}\n` : ""
+  return html`<footer id="observablehq-footer">\n${
+    link ? html`${pagenav(path, link)}\n` : ""
   }<div>© ${new Date().getUTCFullYear()} Observable, Inc.</div>
 </footer>`;
 }
 
-function pagenav(path: string, {prev, next}: PageLink): string {
-  return `<nav>${prev ? pagelink(path, prev, "prev") : ""}${next ? pagelink(path, next, "next") : ""}</nav>`;
+function pagenav(path: string, {prev, next}: PageLink): Html {
+  return html`<nav>${prev ? pagelink(path, prev, "prev") : ""}${next ? pagelink(path, next, "next") : ""}</nav>`;
 }
 
-function pagelink(path: string, page: Page, rel: "prev" | "next"): string {
-  return `<a rel="${escapeDoubleQuoted(rel)}" href="${escapeDoubleQuoted(
-    relativeUrl(path, prettyPath(page.path))
-  )}"><span>${escapeData(page.name)}</span></a>`;
+function pagelink(path: string, page: Page, rel: "prev" | "next"): Html {
+  return html`<a rel="${rel}" href="${relativeUrl(path, prettyPath(page.path))}"><span>${page.name}</span></a>`;
 }
