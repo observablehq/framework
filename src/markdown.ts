@@ -343,6 +343,7 @@ function normalizePieceHtml(html: string, root: string, sourcePath: string, cont
     if (!language || !hljs.getLanguage(language)) continue;
     if (code.parentElement?.tagName === "PRE") code.parentElement.setAttribute("data-language", language);
     let html = "";
+    code.normalize(); // coalesce adjacent text nodes
     for (const child of [...(code.childNodes as any as Iterable<Node>)]) {
       html += child.nodeType === TEXT_NODE ? hljs.highlight(child.textContent!, {language}).value : String(child);
     }
