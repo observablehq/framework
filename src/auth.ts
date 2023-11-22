@@ -12,6 +12,10 @@ import {getObservableApiKey, setObservableApiKey} from "./toolConfig.js";
 
 const OBSERVABLEHQ_UI_HOST = getObservableUiHost();
 
+export const commandRequiresAuthenticationMessage = `You need to be authenticated to ${
+  getObservableUiHost().hostname
+}} to run this command. Please run "observable login" to log in.`;
+
 /** Actions this command needs to take wrt its environment that may need mocked out. */
 export interface CommandEffects {
   openUrlInBrowser: (url: string) => Promise<void>;
@@ -89,9 +93,7 @@ export async function whoami(effects = defaultEffects) {
       }
     }
   } else {
-    effects.logger.log(
-      `You haven't authenticated with ${OBSERVABLEHQ_UI_HOST.hostname}. Please run "observable login"`
-    );
+    effects.logger.log(commandRequiresAuthenticationMessage);
   }
 }
 

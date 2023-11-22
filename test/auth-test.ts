@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import {type CommandEffects, login, whoami} from "../src/auth.js";
+import {type CommandEffects, commandRequiresAuthenticationMessage, login, whoami} from "../src/auth.js";
 import {MockLogger} from "./mocks/logger.js";
 import {ObservableApiMock} from "./mocks/observableApi.js";
 
@@ -46,7 +46,7 @@ describe("whoami command", () => {
   it("works when there is no API key", async () => {
     const effects = new MockEffects({apiKey: null});
     await whoami(effects);
-    effects.logger.assertExactLogs([/^You haven't authenticated with/]);
+    effects.logger.assertExactLogs([/^You need to be authenticated/]);
   });
 
   it("works when there is an API key that is invalid", async () => {

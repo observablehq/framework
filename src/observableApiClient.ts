@@ -48,10 +48,9 @@ export function getObservableApiHost(): URL {
 }
 
 export class ObservableApiClient {
-  private _apiKey?: string;
-  private _apiHost?: URL;
-  private _apiVersion?: string;
-  private _logger?: Logger;
+  private _apiHeaders: [string, string][] = [];
+  private _apiHost: URL;
+  private _logger: Logger;
 
   constructor({
     apiKey,
@@ -60,19 +59,14 @@ export class ObservableApiClient {
   }: {
     apiHost?: URL;
     apiKey: string;
-    logger?: Logger;
+    logger: Logger;
   }) {
     this._apiHost = apiHost;
-    this._apiKey = apiKey;
-    this._apiVersion = packageJson.version;
     this._logger = logger;
-  }
-
-  private apiHeaders(): [string, string][] {
-    return [
+    this._apiHeaders = [
       ["Accept", "application/json"],
-      ["Authorization", `apikey ${this._apiKey}`],
-      ["User-Agent", `Observable CLI ${this._apiVersion}`],
+      ["Authorization", `apikey ${apiKey}`],
+      ["User-Agent", `Observable CLI ${packageJson.version}`],
       ["X-Observable-Api-Version", "2023-11-06"]
     ];
   }
@@ -81,7 +75,7 @@ export class ObservableApiClient {
     const url = new URL("/cli/user", this._apiHost);
     const response = await fetch(url, {
       method: "GET",
-      headers: this.apiHeaders()
+      headers: this._apiHeaders
     });
     if (response.status !== 200) {
       throw new HttpError("Unexpected response status", response.status);
@@ -94,7 +88,7 @@ export class ObservableApiClient {
     const url = new URL("/cli/project", this._apiHost);
     const response = await fetch(url, {
       method: "POST",
-      headers: [...this.apiHeaders(), ["Content-Type", "application/json"]],
+      headers: [...this._apiHeaders, ["Content-Type", "application/json"]],
       body: JSON.stringify({slug, workspace})
     });
     if (response.status !== 200) {
@@ -108,7 +102,7 @@ export class ObservableApiClient {
     const url = new URL(`/cli/project/${projectId}/deploy`, this._apiHost);
     const response = await fetch(url, {
       method: "POST",
-      headers: [...this.apiHeaders(), ["Content-Type", "application/json"]],
+      headers: [...this._apiHeaders, ["Content-Type", "application/json"]],
       body: JSON.stringify({})
     });
     if (response.status !== 200) {
@@ -129,7 +123,7 @@ export class ObservableApiClient {
     body.append("client_name", relativePath);
     const response = await fetch(url, {
       method: "POST",
-      headers: this.apiHeaders(),
+      headers: this._apiHeaders,
       body
     });
 
@@ -143,9 +137,10 @@ export class ObservableApiClient {
     const url = new URL(`/cli/deploy/${deployId}/uploaded`, this._apiHost);
     const response = await fetch(url, {
       method: "POST",
-      headers: [...this.apiHeaders(), ["Content-Type", "application/json"]],
+      headers: [...this._apiHeaders, ["Content-Type", "application/json"]],
       body: JSON.stringify({})
     });
+
     if (response.status !== 200 && response.status !== 204) {
       throw new HttpError("Unexpected response status", response.status);
     }

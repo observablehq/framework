@@ -1,8 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import {createInterface} from "node:readline";
+import {commandRequiresAuthenticationMessage} from "./auth.js";
 import type {Logger, WorkspaceResponse} from "./observableApiClient.js";
-import {ObservableApiClient} from "./observableApiClient.js";
+import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
 import type {ProjectConfig} from "./toolConfig.js";
 import {getObservableApiKey, getProjectId, setProjectConfig} from "./toolConfig.js";
 
@@ -31,7 +32,7 @@ const defaultEffects: CommandEffects = {
 export async function deploy(effects = defaultEffects): Promise<void> {
   const apiKey = await effects.getObservableApiKey();
   if (!apiKey) {
-    effects.logger.log(`You haven't authenticated. Run "observable login" to authenticate.`);
+    effects.logger.log(commandRequiresAuthenticationMessage);
     return;
   }
   const apiClient = new ObservableApiClient({
@@ -48,7 +49,7 @@ export async function deploy(effects = defaultEffects): Promise<void> {
     const currentUserResponse = await apiClient.getCurrentUser();
 
     const slug = await effects.getNewProjectSlug();
-    let workspaceId: string = "";
+    let workspaceId: string | null = null;
     if (currentUserResponse.workspaces.length == 0) {
       effects.logger.error("Current user doesn't have any Observable workspaces!");
       return;
@@ -58,11 +59,13 @@ export async function deploy(effects = defaultEffects): Promise<void> {
       workspaceId = await effects.getNewProjectWorkspace(currentUserResponse.workspaces);
     }
 
-    projectId = await apiClient.postProject(slug, workspaceId);
-    if (!projectId) {
-      effects.logger.error("Unable to create new project");
-      return;
+    try {
+      projectId = await apiClient.postProject(slug, workspaceId);
+    } catch (error) {
+      effects.logger.error("Unable to create new project!");
+      throw error;
     }
+
     await effects.setProjectConfig({id: projectId, slug});
     effects.logger.log(`Created new project id ${projectId}`);
   }
@@ -85,7 +88,7 @@ export async function deploy(effects = defaultEffects): Promise<void> {
 
   // Mark the deploy as uploaded.
   await apiClient.postDeployUploaded(deployId);
-  effects.logger.log(`Deployed project now visible at https://observable.test:5000/p/${projectId}`);
+  effects.logger.log(`Deployed project now visible at ${getObservableUiHost()}/p/${projectId}`);
 }
 
 async function getNewProjectSlug(): Promise<string> {

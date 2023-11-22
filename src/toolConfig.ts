@@ -89,11 +89,5 @@ async function loadConfig(
 }
 
 async function writeConfig({configPath, config}: {configPath: string; config: any}): Promise<void> {
-  try {
-    await fs.mkdir(path.dirname(configPath), {recursive: true});
-  } catch (err) {
-    console.warn(`Warning: ${err}`);
-    // Try to write the file anyways
-  }
   await fs.writeFile(configPath, JSON.stringify(config, null, 2));
 }
