@@ -300,7 +300,7 @@ a[href],
   }
 }
 
-@media (min-width: calc(640px + 4rem + 0.5rem + 240px + 2rem)) {
+@media (min-width: calc(640px + 17px * 4 + 240px + 17px * 2)) {
   #observablehq-sidebar {
     transition: none;
   }
@@ -322,7 +322,7 @@ a[href],
   }
 }
 
-@media (min-width: calc(640px + 4rem + 0.5rem + 160px + 2rem)) {
+@media (min-width: calc(640px + 17px * 4 + 160px + 17px * 2)) {
   #observablehq-toc ~ #observablehq-center {
     padding-right: calc(160px + 3rem);
   }
@@ -334,14 +334,14 @@ a[href],
   }
 }
 
-@media (min-width: calc(640px + 4rem + 0.5rem + 240px + 2rem)) {
+@media (min-width: calc(640px + 17px * 4 + 240px + 17px * 2)) {
   #observablehq-sidebar-toggle:checked ~ #observablehq-toc,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc {
     display: none;
   }
 }
 
-@media (min-width: calc(640px + 4rem + 0.5rem + 240px + 2rem + 160px + 2rem)) {
+@media (min-width: calc(640px + 17px * 4 + 240px + 17px * 2 + 160px + 17px * 2)) {
   #observablehq-sidebar-toggle:checked ~ #observablehq-toc,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc,
   #observablehq-toc {
@@ -358,7 +358,7 @@ a[href],
   #observablehq-sidebar-toggle:not(:checked):not(:hover)::before {
     content: "";
   }
-  @media (min-width: calc(640px + 4rem + 0.5rem + 240px + 2rem)) {
+  @media (min-width: calc(640px + 17px * 4 + 240px + 17px * 2)) {
     #observablehq-sidebar-toggle:indeterminate:not(:checked):not(:hover)::before {
       content: "⟨";
     }
