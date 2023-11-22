@@ -98,7 +98,7 @@ function normalizeToc(spec: any): TableOfContents {
 }
 
 export function mergeToc(spec: any, toc: TableOfContents): TableOfContents {
-  let {label = toc.label, show = toc.show} = typeof spec === "boolean" ? {show: spec} : spec ?? {};
+  let {label = toc.label, show = toc.show} = typeof spec !== "object" ? {show: spec} : spec ?? {};
   label = String(label);
   show = Boolean(show);
   return {label, show};

@@ -60,5 +60,9 @@ describe("mergeToc(spec, toc)", () => {
     assert.deepStrictEqual(mergeToc({label: "On this page"}, toc), {label: "On this page", show: true});
     assert.deepStrictEqual(mergeToc(false, toc), {label: "Contents", show: false});
     assert.deepStrictEqual(mergeToc(true, toc), {label: "Contents", show: true});
+    assert.deepStrictEqual(mergeToc(undefined, toc), {label: "Contents", show: true});
+    assert.deepStrictEqual(mergeToc(null, toc), {label: "Contents", show: true});
+    assert.deepStrictEqual(mergeToc(0, toc), {label: "Contents", show: false});
+    assert.deepStrictEqual(mergeToc(1, toc), {label: "Contents", show: true});
   });
 });
