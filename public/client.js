@@ -343,9 +343,7 @@ enableCopyButtons();
 
 function enableCopyButtons() {
   for (const pre of document.querySelectorAll("pre")) {
-    const button = pre.appendChild(copyButton.content.cloneNode(true).firstChild);
-    button.addEventListener("click", copy);
-    pre.style.position = "relative";
+    pre.appendChild(copyButton.content.cloneNode(true).firstChild).addEventListener("click", copy);
   }
 }
 
@@ -353,14 +351,18 @@ async function copy({currentTarget}) {
   await navigator.clipboard.writeText(currentTarget.parentElement.textContent.trimEnd());
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  if (location.hash) highlightToc(location.hash);
-  window.addEventListener("hashchange", () => {
-    highlightToc(location.hash);
-  });
-  function highlightToc(hash) {
-    const currentSelected = document.querySelector("li.observablehq-secondary-link-active");
-    if (currentSelected) currentSelected.classList.remove("observablehq-secondary-link-active");
-    document.querySelector(`li a[href="${hash}"]`)?.parentElement.classList.add("observablehq-secondary-link-active");
+if (location.hash) addEventListener("DOMContentLoaded", highlightToc);
+addEventListener("hashchange", highlightToc);
+
+function highlightToc() {
+  for (const link of document.querySelectorAll(".observablehq-secondary-link-active")) {
+    link.classList.remove("observablehq-secondary-link-active");
   }
-});
+  for (const link of document.querySelectorAll(".observablehq-secondary-link")) {
+    const a = link.querySelector("a[href]");
+    if (a?.getAttribute("href") === location.hash) {
+      link.classList.add("observablehq-secondary-link-active");
+      break;
+    }
+  }
+}

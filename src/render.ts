@@ -68,29 +68,22 @@ ${
     : ""
 }<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
-<link rel="stylesheet" type="text/css" href="${relativeUrl(path, "/_observablehq/style.css")}">
+<link rel="stylesheet" type="text/css" href="${escapeDoubleQuoted(relativeUrl(path, "/_observablehq/style.css"))}">
 ${Array.from(getImportPreloads(parseResult, path))
-  .map((href) => `<link rel="modulepreload" href="${relativeUrl(path, href)}">`)
+  .map((href) => `<link rel="modulepreload" href="${escapeDoubleQuoted(relativeUrl(path, href))}">`)
   .join("\n")}
 <script type="module">
 
-import {${preview ? "open, " : ""}define} from "${relativeUrl(path, "/_observablehq/client.js")}";
+import {${preview ? "open, " : ""}define} from ${JSON.stringify(relativeUrl(path, "/_observablehq/client.js"))};
 
 ${preview ? `open({hash: ${JSON.stringify(hash)}, eval: (body) => (0, eval)(body)});\n` : ""}${parseResult.cells
     .map(resolver)
     .map(renderDefineCell)
     .join("")}
-</script>${
-    parseResult.data
-      ? `
-<script type="application/json">
-${JSON.stringify(parseResult.data)}
-</script>`
-      : ""
-  }
+</script>
 ${pages.length > 0 ? sidebar(title, pages, path) : ""}
-<div id="observablehq-center">
-${table}<main id="observablehq-main" class="observablehq${table ? " has-toc" : ""}">
+${table}<div id="observablehq-center">
+<main id="observablehq-main" class="observablehq">
 ${parseResult.html}</main>
 ${footer(path, {pages, title})}
 </div>
@@ -101,9 +94,8 @@ function sidebar(title: string | undefined, pages: (Page | Section)[], path: str
   return `<input id="observablehq-sidebar-toggle" type="checkbox">
 <nav id="observablehq-sidebar">
   <ol>
-    <li class="observablehq-link${path === "/index" ? " observablehq-link-active" : ""}"><a href="${relativeUrl(
-      path,
-      "/"
+    <li class="observablehq-link${path === "/index" ? " observablehq-link-active" : ""}"><a href="${escapeDoubleQuoted(
+      relativeUrl(path, "/")
     )}">${escapeData(title ?? "Home")}</a></li>
   </ol>
   <ol>${pages
@@ -157,17 +149,20 @@ function tableOfContents(parseResult: ParseResult, toc: RenderOptions["toc"]) {
       }))
       .filter((d) => d.label && d.href);
   return headers?.length
-    ? `<details open id="observablehq-toc">
-<summary><span>${pageTocConfig?.label ?? toc?.label ?? "Contents"}</span></summary>
-<nav><ol>\n${headers
-        .map(
-          ({label, href}) =>
-            `<li class="observablehq-secondary-link"><a href="${escapeDoubleQuoted(href)}">${escapeData(
-              label
-            )}</a></li>`
-        )
-        .join("\n")}\n</ol></nav>
-</details>\n`
+    ? `<aside id="observablehq-toc">
+<nav>
+<div>${escapeData(pageTocConfig?.label ?? toc?.label ?? "Contents")}</div>
+<ol>
+${headers
+  .map(
+    ({label, href}) =>
+      `<li class="observablehq-secondary-link"><a href="${escapeDoubleQuoted(href)}">${escapeData(label)}</a></li>`
+  )
+  .join("\n")}
+</ol>
+</nav>
+</aside>
+`
     : "";
 }
 
@@ -235,7 +230,7 @@ function pagenav(path: string, {prev, next}: PageLink): string {
 }
 
 function pagelink(path: string, page: Page, rel: "prev" | "next"): string {
-  return `<a rel="${rel}" href="${escapeDoubleQuoted(relativeUrl(path, prettyPath(page.path)))}"><span>${escapeData(
-    page.name
-  )}</span></a>`;
+  return `<a rel="${escapeDoubleQuoted(rel)}" href="${escapeDoubleQuoted(
+    relativeUrl(path, prettyPath(page.path))
+  )}"><span>${escapeData(page.name)}</span></a>`;
 }
