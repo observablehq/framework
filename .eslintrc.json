@@ -45,7 +45,8 @@
     "no-unexpected-multiline": 0,
     "object-shorthand": ["warn", "always"],
     "prettier/prettier": ["warn", {"embeddedLanguageFormatting": "off"}],
-    "sort-imports": ["warn", {"ignoreDeclarationSort": true}]
+    "sort-imports": ["warn", {"ignoreDeclarationSort": true}],
+    "quotes": "warn"
   },
   "overrides": [
     {

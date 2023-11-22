@@ -112,12 +112,12 @@ function sidebar(title: string | undefined, pages: (Page | Section)[], path: str
       : "path" in p
       ? html`${
           i === 0
-            ? ``
+            ? ""
             : !("path" in pages[i - 1])
             ? html`
   </ol>
   <ol>`
-            : ``
+            : ""
         }${renderListItem(p, path)}`
       : ""
   )}

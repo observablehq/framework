@@ -33,6 +33,6 @@ describe("html(strings, ...values)", () => {
   });
   it("does not escape interpolated values if instanceof Html", () => {
     assert.deepStrictEqual(String(html`<b>${html`dollar&pound`}</b>`), "<b>dollar&pound</b>");
-    assert.deepStrictEqual(String(html`<b>${html.unsafe(`dollar&pound`)}</b>`), "<b>dollar&pound</b>");
+    assert.deepStrictEqual(String(html`<b>${html.unsafe("dollar&pound")}</b>`), "<b>dollar&pound</b>");
   });
 });
