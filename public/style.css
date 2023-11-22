@@ -326,6 +326,9 @@ a[href],
   #observablehq-toc ~ #observablehq-center {
     padding-right: calc(160px + 3rem);
   }
+  #observablehq-toc ~ #observablehq-center pre {
+    border-radius: 4px;
+  }
   #observablehq-toc {
     display: block;
   }
