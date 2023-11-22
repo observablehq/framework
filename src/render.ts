@@ -99,6 +99,7 @@ function sidebar(title: string | undefined, pages: (Page | Section)[], path: str
     )}">${escapeData(title ?? "Home")}</a></li>
   </ol>
   <ol>${pages
+    .filter((p) => ("path" in p ? (p.path !== "/index" ? true : false) : true))
     .map((p, i) =>
       "pages" in p
         ? `${i > 0 && "path" in pages[i - 1] ? "</ol>" : ""}
