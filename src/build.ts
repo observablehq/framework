@@ -78,6 +78,7 @@ export async function build(context: CommandContext = makeCommandContext()) {
         continue;
       }
       sourcePath = join(sourceRoot, await loader.load({verbose}));
+      if (!existsSync(sourcePath)) continue;
     }
     if (verbose) console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);
