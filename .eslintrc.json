@@ -46,7 +46,7 @@
     "object-shorthand": ["warn", "always"],
     "prettier/prettier": ["warn", {"embeddedLanguageFormatting": "off"}],
     "sort-imports": ["warn", {"ignoreDeclarationSort": true}],
-    "quotes": "warn"
+    "quotes": ["warn", "double", {"avoidEscape": true}]
   },
   "overrides": [
     {
