@@ -6,7 +6,7 @@ import {simple} from "acorn-walk";
 import {type ImportReference, type JavaScriptNode, parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
 import {relativeUrl} from "../url.js";
-import {getStringLiteralValue, isStringLiteral} from "./features.js";
+import {getStringLiteralValue, isLocalFetch, isStringLiteral} from "./features.js";
 
 export function findExports(body: Node) {
   const exports: (ExportAllDeclaration | ExportNamedDeclaration)[] = [];
@@ -52,6 +52,9 @@ export function findImports(body: Node, root: string, sourcePath: string) {
     paths.add(path);
     imports.push({type: "local", name: path});
     try {
+
+      const load = join(root, dirname(sourcePath), path);
+
       const input = readFileSync(join(root, dirname(sourcePath), path), "utf-8");
       const program = Parser.parse(input, parseOptions);
       simple(program, {
@@ -87,7 +90,8 @@ export function resolveSources(input: string, sourcePath: string) {
     ImportDeclaration: resolveSource,
     ImportExpression: resolveSource,
     ExportAllDeclaration: resolveSource,
-    ExportNamedDeclaration: resolveSource
+    ExportNamedDeclaration: resolveSource,
+    CallExpression: resolveFetch,
   });
 
   function resolveSource(node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration) {
@@ -96,6 +100,18 @@ export function resolveSources(input: string, sourcePath: string) {
       output.replaceLeft(
         node.source.start,
         node.source.end,
+        JSON.stringify(value.startsWith("/") ? relativeImport(sourcePath, value) : resolveImport(value))
+      );
+    }
+  }
+
+  function resolveFetch(node: CallExpression) {
+    if (isLocalFetch(node, [], sourcePath)) {
+      const url = node.arguments[0];
+      const value = getStringLiteralValue(url);
+      output.replaceLeft(
+        url.start,
+        url.end,
         JSON.stringify(value.startsWith("/") ? relativeImport(sourcePath, value) : resolveImport(value))
       );
     }
