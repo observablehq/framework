@@ -63,7 +63,6 @@ export class Loader {
     this.sourceRoot = sourceRoot;
     this.targetPath = targetPath;
     this.inflate = inflate;
-    console.warn("new loader for", {command, args, path, sourceRoot, targetPath, inflate});
   }
 
   /**
