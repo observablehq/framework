@@ -1,6 +1,5 @@
 ---
-toc:
-  show: false
+toc: false
 ---
 
 <a href="https://observablehq.com" style="color: inherit;">
