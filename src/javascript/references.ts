@@ -4,7 +4,6 @@ import type {
   BlockStatement,
   CatchClause,
   Class,
-  Expression,
   ForInStatement,
   ForOfStatement,
   ForStatement,
@@ -13,11 +12,9 @@ import type {
   Identifier,
   Node,
   Pattern,
-  Program,
-  VariableDeclaration
+  Program
 } from "acorn";
-import {ancestor, simple} from "acorn-walk";
-import {syntaxError} from "./syntaxError.js";
+import {ancestor} from "acorn-walk";
 
 // Based on https://github.com/ForbesLindesay/acorn-globals
 // Copyright (c) 2014 Forbes Lindesay
@@ -38,6 +35,7 @@ function isScope(node: Node): node is Func | Program {
 function isBlockScope(node: Node): node is Func | Program | BlockStatement | ForInStatement | ForOfStatement | ForStatement {
   return (
     node.type === "BlockStatement" ||
+    node.type === "SwitchStatement" ||
     node.type === "ForInStatement" ||
     node.type === "ForOfStatement" ||
     node.type === "ForStatement" ||
@@ -45,7 +43,7 @@ function isBlockScope(node: Node): node is Func | Program | BlockStatement | For
   );
 }
 
-export function findReferences(node: Node, globals: Set<string>, input: string): Node[] {
+export function findReferences(node: Node, globals: Set<string>): Node[] {
   const locals = new Map<Node, Set<string>>();
   const globalSet = new Set<string>(globals);
   const references: Node[] = [];
@@ -122,7 +120,7 @@ export function findReferences(node: Node, globals: Set<string>, input: string):
     ArrowFunctionExpression: declareFunction,
     ClassDeclaration(node, state, parents) {
       let parent: Node | null = null;
-      for (let i = parents.length - 2; i >= 0 && parent === null; i--) {
+      for (let i = parents.length - 2; i >= 0 && parent === null; --i) {
         if (isScope(parents[i])) {
           parent = parents[i];
         }
@@ -136,7 +134,7 @@ export function findReferences(node: Node, globals: Set<string>, input: string):
     }
   });
 
-  function identifier(node: Identifier, state, parents: Node[]) {
+  function identifier(node: Identifier, state: never, parents: Node[]) {
     const name = node.name;
     if (name === "undefined") return;
     for (let i = parents.length - 2; i >= 0; --i) {
@@ -156,42 +154,6 @@ export function findReferences(node: Node, globals: Set<string>, input: string):
       }
     },
     Identifier: identifier
-  });
-
-  function checkConst(node: Expression | Pattern | VariableDeclaration) {
-    switch (node.type) {
-      case "Identifier":
-        if (references.includes(node)) throw syntaxError(`Assignment to external variable '${node.name}'`, node, input);
-        if (globals.has(node.name)) throw syntaxError(`Assignment to global '${node.name}'`, node, input);
-        break;
-      case "ObjectPattern":
-        node.properties.forEach((node) => checkConst(node.type === "Property" ? node.value : node));
-        break;
-      case "ArrayPattern":
-        node.elements.forEach((node) => node && checkConst(node));
-        break;
-      case "RestElement":
-        checkConst(node.argument);
-        break;
-    }
-  }
-
-  simple(node, {
-    AssignmentExpression(node) {
-      checkConst(node.left);
-    },
-    AssignmentPattern(node) {
-      checkConst(node.left);
-    },
-    UpdateExpression(node) {
-      checkConst(node.argument);
-    },
-    ForOfStatement(node) {
-      checkConst(node.left);
-    },
-    ForInStatement(node) {
-      checkConst(node.left);
-    }
   });
 
   return references;

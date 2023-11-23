@@ -1,29 +1,26 @@
-import type {Program} from "acorn";
+import type {Identifier, Pattern, Program} from "acorn";
 import {syntaxError} from "./syntaxError.js";
 
-export function findDeclarations(node: Program, globals, input) {
-  const declarations: Node[] = [];
+export function findDeclarations(node: Program, globals: Set<string>, input: string): Identifier[] {
+  const declarations: Identifier[] = [];
 
-  function declareLocal(node) {
+  function declareLocal(node: Identifier) {
     if (globals.has(node.name) || node.name === "arguments") {
       throw syntaxError(`Global '${node.name}' cannot be redefined`, node, input);
     }
     declarations.push(node);
   }
 
-  function declarePattern(node) {
+  function declarePattern(node: Pattern) {
     switch (node.type) {
       case "Identifier":
         declareLocal(node);
         break;
       case "ObjectPattern":
-        node.properties.forEach((node) => declarePattern(node));
+        node.properties.forEach((node) => declarePattern(node.type === "Property" ? node.value : node));
         break;
       case "ArrayPattern":
         node.elements.forEach((node) => node && declarePattern(node));
-        break;
-      case "Property":
-        declarePattern(node.value);
         break;
       case "RestElement":
         declarePattern(node.argument);
@@ -34,27 +31,17 @@ export function findDeclarations(node: Program, globals, input) {
     }
   }
 
-  function declareImportSpecifier(node) {
-    switch (node.type) {
-      case "ImportSpecifier":
-      case "ImportNamespaceSpecifier":
-      case "ImportDefaultSpecifier":
-        declareLocal(node.local);
-        break;
-    }
-  }
-
   for (const child of node.body) {
     switch (child.type) {
       case "VariableDeclaration":
-        child.declarations.forEach((declaration) => declarePattern(declaration.id));
+        child.declarations.forEach((node) => declarePattern(node.id));
         break;
       case "ClassDeclaration":
       case "FunctionDeclaration":
         declareLocal(child.id);
         break;
       case "ImportDeclaration":
-        child.specifiers.forEach((specifier) => declareImportSpecifier(specifier));
+        child.specifiers.forEach((node) => declareLocal(node.local));
         break;
     }
   }
