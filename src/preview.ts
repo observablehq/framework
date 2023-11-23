@@ -329,7 +329,7 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
   }
 }
 
-const USAGE = `Usage: observable preview [--root dir] [--hostname host] [--port port]`;
+const USAGE = "Usage: observable preview [--root dir] [--hostname host] [--port port]";
 
 interface CommandContext {
   root: string;

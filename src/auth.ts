@@ -56,7 +56,7 @@ export async function login(effects = defaultEffects) {
     await effects.waitForEnter();
     await effects.openUrlInBrowser(url.toString());
   } else {
-    effects.log(`Open this link in your browser to continue authentication:`);
+    effects.log("Open this link in your browser to continue authentication:");
     effects.log(`\n\t${url.toString()}\n`);
   }
   return server; // for testing

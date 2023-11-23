@@ -110,7 +110,7 @@ export async function build(context: CommandContext = makeCommandContext()) {
   }
 }
 
-const USAGE = `Usage: observable build [--root dir] [--output dir]`;
+const USAGE = "Usage: observable build [--root dir] [--output dir]";
 
 function makeCommandContext(): CommandContext {
   const {values} = parseArgs({
