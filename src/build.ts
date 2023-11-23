@@ -1,9 +1,8 @@
 import {existsSync} from "node:fs";
 import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
-import {basename, dirname, join, normalize, relative} from "node:path";
+import {basename, dirname, join, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
-import {parseArgs} from "node:util";
 import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
@@ -13,16 +12,14 @@ import {makeCLIResolver} from "./resolver.js";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
 
-export interface CommandContext {
+export interface BuildOptions {
   sourceRoot: string;
   outputRoot: string;
   verbose?: boolean;
   addPublic?: boolean;
 }
 
-export async function build(context: CommandContext = makeCommandContext()) {
-  const {sourceRoot, outputRoot, verbose = true, addPublic = true} = context;
-
+export async function build({sourceRoot, outputRoot, verbose = true, addPublic = true}: BuildOptions): Promise<void> {
   // Make sure all files are readable before starting to write output files.
   for await (const sourceFile of visitMarkdownFiles(sourceRoot)) {
     await access(join(sourceRoot, sourceFile), constants.R_OK);
@@ -103,31 +100,4 @@ export async function build(context: CommandContext = makeCommandContext()) {
       await copyFile(sourcePath, outputPath);
     }
   }
-}
-
-const USAGE = "Usage: observable build [--root dir] [--output dir]";
-
-function makeCommandContext(): CommandContext {
-  const {values} = parseArgs({
-    options: {
-      root: {
-        type: "string",
-        short: "r",
-        default: "docs"
-      },
-      output: {
-        type: "string",
-        short: "o",
-        default: "dist"
-      }
-    }
-  });
-  if (!values.root || !values.output) {
-    console.error(USAGE);
-    process.exit(1);
-  }
-  return {
-    sourceRoot: normalize(values.root).replace(/\/$/, ""),
-    outputRoot: normalize(values.output).replace(/\/$/, "")
-  };
 }

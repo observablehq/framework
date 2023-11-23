@@ -22,7 +22,7 @@
     "observable": "bin/observable.ts"
   },
   "scripts": {
-    "dev": "tsx watch ./src/preview.ts",
+    "dev": "tsx watch ./bin/observable.ts preview",
     "build": "rm -rf dist && ./bin/observable.ts build",
     "test": "yarn test:mocha && yarn test:tsc && yarn test:lint",
     "test:coverage": "c8 yarn test:mocha",
