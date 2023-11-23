@@ -90,33 +90,25 @@ ${renderFooter(path, {pages, title})}
 `);
 }
 
-function renderSidebar(title: string | undefined, pages: (Page | Section)[], path: string): Html {
+function renderSidebar(title = "Home", pages: (Page | Section)[], path: string): Html {
   return html`<input id="observablehq-sidebar-toggle" type="checkbox">
 <nav id="observablehq-sidebar">
   <ol>
     <li class="observablehq-link${path === "/index" ? " observablehq-link-active" : ""}"><a href="${relativeUrl(
       path,
       "/"
-    )}">${title ?? "Home"}</a></li>
+    )}">${title}</a></li>
   </ol>
   <ol>${pages.map((p, i) =>
     "pages" in p
       ? html`${i > 0 && "path" in pages[i - 1] ? html`</ol>` : ""}
-    <details${p.open === undefined || p.open ? " open" : ""}>
+    <details${p.open ? " open" : ""}>
       <summary>${p.name}</summary>
       <ol>${p.pages.map((p) => renderListItem(p, path))}
       </ol>
     </details>`
       : "path" in p
-      ? html`${
-          i === 0
-            ? ""
-            : !("path" in pages[i - 1])
-            ? html`
-  </ol>
-  <ol>`
-            : ""
-        }${renderListItem(p, path)}`
+      ? html`${i > 0 && "pages" in pages[i - 1] ? html`\n  </ol>\n  <ol>` : ""}${renderListItem(p, path)}`
       : ""
   )}
   </ol>
