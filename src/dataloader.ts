@@ -3,7 +3,7 @@ import {existsSync, statSync} from "node:fs";
 import {mkdir, open, rename, unlink} from "node:fs/promises";
 import {dirname, extname, join} from "node:path";
 import {maybeStat, prepareOutput} from "./files.js";
-import {green, red, yellow} from "./tty.js";
+import {faint, green, red, yellow} from "./tty.js";
 
 const runningCommands = new Map<string, Promise<string>>();
 
