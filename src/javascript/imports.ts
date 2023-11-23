@@ -1,15 +1,16 @@
+import {createHash} from "node:crypto";
 import {readFileSync} from "node:fs";
-import {dirname, join, normalize, relative} from "node:path";
+import {dirname, join, relative} from "node:path";
 import {Parser} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression, Node} from "acorn";
 import {simple} from "acorn-walk";
 import {isEnoent} from "../error.js";
-import {computeHash} from "../hash.js";
 import {type ImportReference, type JavaScriptNode, parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
-import {relativeUrl} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
+// Finds all export declarations in the specified node. (This is used to
+// disallow exports within JavaScript code blocks.)
 export function findExports(body: Node): (ExportAllDeclaration | ExportNamedDeclaration)[] {
   const exports: (ExportAllDeclaration | ExportNamedDeclaration)[] = [];
 
@@ -25,7 +26,10 @@ export function findExports(body: Node): (ExportAllDeclaration | ExportNamedDecl
   return exports;
 }
 
-export function findImports(body: Node, root: string, sourcePath: string): ImportReference[] {
+// Finds all imports (both static and dynamic) in the specified node.
+// Recursively processes any imported local ES modules. The returned transitive
+// import paths are relative to the given source path.
+export function findImports(body: Node, root: string, path: string): ImportReference[] {
   const imports: ImportReference[] = [];
   const paths = new Set<string>();
 
@@ -37,64 +41,104 @@ export function findImports(body: Node, root: string, sourcePath: string): Impor
   function findImport(node) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
-      if (isLocalImport(value, sourcePath)) {
-        findLocalImports(normalize(value));
+      if (isLocalImport(value, path)) {
+        addLocalImports(root, join(value.startsWith("/") ? "." : dirname(path), value), paths, imports);
       } else {
         imports.push({name: value, type: "global"});
       }
     }
   }
 
-  // If this is an import of a local ES module, recursively parse the module to
-  // find transitive imports. The path is always relative to the source path of
-  // the Markdown file, even across transitive imports.
-  function findLocalImports(path) {
-    if (path.startsWith("/")) path = relative(dirname(sourcePath), path);
-    if (paths.has(path)) return;
-    paths.add(path);
-    imports.push({type: "local", name: path});
-    try {
-      const input = readFileSync(join(root, dirname(sourcePath), path), "utf-8");
-      const program = Parser.parse(input, parseOptions);
-      simple(program, {
-        ImportDeclaration: findLocalImport,
-        ImportExpression: findLocalImport,
-        ExportAllDeclaration: findLocalImport,
-        ExportNamedDeclaration: findLocalImport
-      });
-    } catch {
-      // ignore missing files and syntax errors
-    }
-    function findLocalImport(node) {
-      if (isStringLiteral(node.source)) {
-        const value = getStringLiteralValue(node.source);
-        if (isLocalImport(value, sourcePath)) {
-          findLocalImports(value.startsWith("/") ? normalize(value) : join(dirname(path), value));
-        } else {
-          imports.push({name: value, type: "global"});
-          // non-local imports don't need to be traversed
-        }
-      }
+  // Make all local paths relative to the source path.
+  for (const i of imports) {
+    if (i.type === "local") {
+      i.name = getRelativePath(path, i.name);
     }
   }
 
   return imports;
 }
 
-function getHash(path: string): string {
-  let source = "";
+// Parses the module at the specified path to find transitive imports,
+// processing imported modules recursively. Accumulates visited paths, and
+// appends to imports. The paths here are always relative to the root (unlike
+// findImports above!).
+function addLocalImports(
+  root: string,
+  path: string,
+  paths: Set<string> = new Set(),
+  imports: ImportReference[] = []
+): ImportReference[] {
+  if (paths.has(path)) return imports;
+  paths.add(path);
+  imports.push({type: "local", name: path});
   try {
-    source = readFileSync(path, "utf-8");
+    const input = readFileSync(join(root, path), "utf-8");
+    const program = Parser.parse(input, parseOptions);
+    simple(program, {
+      ImportDeclaration: findImport,
+      ImportExpression: findImport,
+      ExportAllDeclaration: findImport,
+      ExportNamedDeclaration: findImport
+    });
+  } catch {
+    // ignore missing files and syntax errors
+  }
+  function findImport(node) {
+    if (isStringLiteral(node.source)) {
+      const value = getStringLiteralValue(node.source);
+      if (isLocalImport(value, path)) {
+        addLocalImports(root, join(value.startsWith("/") ? "." : dirname(path), value), paths, imports);
+      } else {
+        imports.push({name: value, type: "global"});
+        // non-local imports don't need to be traversed
+      }
+    }
+  }
+  return imports;
+}
+
+// Resolves the content hash for the module at the specified path within the
+// given source root. This involves parsing the specified module to process
+// transitive imports.
+function getModuleHash(root: string, path: string): string {
+  const hash = createHash("sha256");
+  try {
+    hash.update(readFileSync(join(root, path), "utf-8"));
   } catch (error) {
     if (!isEnoent(error)) throw error;
   }
-  return computeHash(source).slice(0, 16);
+  // TODO can’t simply concatenate here; we need a delimiter
+  for (const i of addLocalImports(root, path)) {
+    if (i.type === "local") {
+      try {
+        hash.update(readFileSync(join(root, i.name), "utf-8"));
+      } catch (error) {
+        if (!isEnoent(error)) throw error;
+        continue;
+      }
+    }
+  }
+  return hash.digest("hex").slice(0, 16);
 }
 
-function maybeHash(root: string, sourcePath: string, value: string): string {
-  return isLocalImport(value, sourcePath) ? `${value}?sha=${getHash(join(root, dirname(sourcePath), value))}` : value;
+// If the given is a local import, applies the ?sha query string based on the
+// content hash of the imported module and its transitively imported modules.
+function resolveImportHash(root: string, path: string, specifier: string): string {
+  return isLocalImport(specifier, path)
+    ? `${specifier}?sha=${getModuleHash(root, join(specifier.startsWith("/") ? "." : dirname(path), specifier))}`
+    : specifier;
 }
 
+// Computes the relative path from the given source file to the given target,
+// assuming that both are relative to the same working directory (typically the
+// source root). The returned string always starts with a "./" or "../".
+function getRelativePath(source: string, target: string): string {
+  const path = relative(join(".", dirname(source)), join(".", target));
+  return path.startsWith(".") ? path : `./${path}`;
+}
+
+// Rewrites import specifiers in the specified ES module source.
 export function resolveSources(input: string, root: string, sourcePath: string): string {
   const body = Parser.parse(input, parseOptions) as any;
   const output = new Sourcemap(input);
@@ -108,11 +152,11 @@ export function resolveSources(input: string, root: string, sourcePath: string):
 
   function resolveSource(node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration) {
     if (isStringLiteral(node.source)) {
-      const value = maybeHash(root, sourcePath, getStringLiteralValue(node.source));
+      const value = resolveImportHash(root, sourcePath, getStringLiteralValue(node.source));
       output.replaceLeft(
         node.source.start,
         node.source.end,
-        JSON.stringify(value.startsWith("/") ? relativeImport(sourcePath, value) : resolveImport(value))
+        JSON.stringify(resolveImport(value.startsWith("/") ? getRelativePath(sourcePath, value) : value))
       );
     }
   }
@@ -125,17 +169,17 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode, root: stri
   simple(rootNode.body, {
     ImportExpression(node) {
       if (isStringLiteral(node.source)) {
-        const value = maybeHash(root, sourcePath, getStringLiteralValue(node.source));
+        const value = getStringLiteralValue(node.source);
         output.replaceLeft(
           node.source.start,
           node.source.end,
-          JSON.stringify(isLocalImport(value, sourcePath) ? relativeImport(sourcePath, value) : resolveImport(value))
+          JSON.stringify(resolveMarkdownImport(root, sourcePath, value))
         );
       }
     },
     ImportDeclaration(node) {
       if (isStringLiteral(node.source)) {
-        const value = maybeHash(root, sourcePath, getStringLiteralValue(node.source));
+        const value = getStringLiteralValue(node.source);
         rootNode.async = true;
         output.replaceLeft(
           node.start,
@@ -144,17 +188,21 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode, root: stri
             node.specifiers.some(isNotNamespaceSpecifier)
               ? `{${node.specifiers.filter(isNotNamespaceSpecifier).map(rewriteImportSpecifier).join(", ")}}`
               : node.specifiers.find(isNamespaceSpecifier)?.local.name ?? "{}"
-          } = await import(${JSON.stringify(
-            isLocalImport(value, sourcePath) ? relativeImport(sourcePath, value) : resolveImport(value)
-          )});`
+          } = await import(${JSON.stringify(resolveMarkdownImport(root, sourcePath, value))});`
         );
       }
     }
   });
 }
 
+function resolveMarkdownImport(root, sourcePath, value) {
+  return isLocalImport(value, sourcePath)
+    ? relativeImport(sourcePath, resolveImportHash(root, sourcePath, value))
+    : resolveImport(value);
+}
+
 function relativeImport(sourcePath, value) {
-  return relativeUrl(sourcePath, join("/_import/", value.startsWith("/") ? "." : dirname(sourcePath), value));
+  return getRelativePath(sourcePath, join("/_import/", value.startsWith("/") ? "." : dirname(sourcePath), value));
 }
 
 function rewriteImportSpecifier(node) {

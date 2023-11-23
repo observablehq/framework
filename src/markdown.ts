@@ -1,5 +1,6 @@
+import {createHash} from "node:crypto";
 import {readFile} from "node:fs/promises";
-import {join} from "node:path";
+import {dirname, join} from "node:path";
 import {type Patch, type PatchItem, getPatch} from "fast-array-diff";
 import equal from "fast-deep-equal";
 import matter from "gray-matter";
@@ -10,6 +11,7 @@ import {type RuleCore} from "markdown-it/lib/parser_core.js";
 import {type RuleInline} from "markdown-it/lib/parser_inline.js";
 import {type RenderRule, type default as Renderer} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
+import {isEnoent} from "./error.js";
 import {fileReference, getLocalPath} from "./files.js";
 import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
@@ -477,5 +479,28 @@ export function diffMarkdown({parse: prevParse}: ReadMarkdownResult, {parse: nex
 
 export async function readMarkdown(path: string, root: string): Promise<ReadMarkdownResult> {
   const contents = await readFile(join(root, path), "utf-8");
-  return {contents, parse: parseMarkdown(contents, root, path), hash: computeHash(contents)};
+  const parse = parseMarkdown(contents, root, path);
+  const hash = await computeMarkdownHash(contents, root, path, parse);
+  return {contents, parse, hash};
+}
+
+export async function computeMarkdownHash(
+  contents: string,
+  root: string,
+  path: string,
+  parse: ParseResult
+): Promise<string> {
+  const hash = createHash("sha256").update(contents);
+  // TODO can’t simply concatenate here; we need a delimiter
+  for (const i of parse.imports) {
+    if (i.type === "local") {
+      try {
+        hash.update(await readFile(join(root, dirname(path), i.name), "utf-8"));
+      } catch (error) {
+        if (!isEnoent(error)) throw error;
+        continue;
+      }
+    }
+  }
+  return hash.digest("hex");
 }

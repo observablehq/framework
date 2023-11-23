@@ -1,11 +1,10 @@
 import {dirname, join} from "node:path";
 import {parseHTML} from "linkedom";
 import {type Config, type Page, type Section, mergeToc} from "./config.js";
-import {computeHash} from "./hash.js";
 import {type Html, html} from "./html.js";
 import {resolveImport} from "./javascript/imports.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
-import {type CellPiece, type ParseResult, parseMarkdown} from "./markdown.js";
+import {type CellPiece, type ParseResult, computeMarkdownHash, parseMarkdown} from "./markdown.js";
 import {type PageLink, pager} from "./pager.js";
 import {relativeUrl} from "./url.js";
 
@@ -21,10 +20,14 @@ export interface RenderOptions extends Config {
   resolver: (cell: CellPiece) => CellPiece;
 }
 
-export function renderPreview(source: string, options: RenderOptions): Render {
+export async function renderPreview(source: string, options: RenderOptions): Promise<Render> {
   const parseResult = parseMarkdown(source, options.root, options.path);
   return {
-    html: render(parseResult, {...options, preview: true, hash: computeHash(source)}),
+    html: render(parseResult, {
+      ...options,
+      preview: true,
+      hash: await computeMarkdownHash(source, options.root, options.path, parseResult) // TODO parseResult.hash
+    }),
     files: parseResult.files,
     imports: parseResult.imports
   };
