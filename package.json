@@ -24,10 +24,11 @@
   "scripts": {
     "dev": "tsx watch ./src/preview.ts",
     "build": "rm -rf dist && ./bin/observable.ts build",
-    "test": "yarn test:mocha && yarn test:lint",
+    "test": "yarn test:mocha && yarn test:tsc && yarn test:lint",
     "test:coverage": "c8 yarn test:mocha",
     "test:mocha": "rm -rf test/.observablehq/cache && tsx ./node_modules/.bin/mocha 'test/**/*-test.*'",
-    "test:lint": "eslint src test public"
+    "test:lint": "eslint src test public",
+    "test:tsc": "tsc --noEmit"
   },
   "c8": {
     "all": true,
