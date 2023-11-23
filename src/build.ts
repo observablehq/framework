@@ -87,7 +87,7 @@ export async function build({sourceRoot, outputRoot, verbose = true, addPublic =
     }
     if (verbose) console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);
-    await writeFile(outputPath, resolveSources(await readFile(sourcePath, "utf-8"), file));
+    await writeFile(outputPath, resolveSources(await readFile(sourcePath, "utf-8"), sourceRoot, file));
   }
 
   // Copy over required distribution files from node_modules.

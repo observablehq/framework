@@ -3,12 +3,14 @@ import {dirname, join, normalize, relative} from "node:path";
 import {Parser} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression, Node} from "acorn";
 import {simple} from "acorn-walk";
+import {isEnoent} from "../error.js";
+import {computeHash} from "../hash.js";
 import {type ImportReference, type JavaScriptNode, parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
 import {relativeUrl} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
-export function findExports(body: Node) {
+export function findExports(body: Node): (ExportAllDeclaration | ExportNamedDeclaration)[] {
   const exports: (ExportAllDeclaration | ExportNamedDeclaration)[] = [];
 
   simple(body, {
@@ -23,7 +25,7 @@ export function findExports(body: Node) {
   return exports;
 }
 
-export function findImports(body: Node, root: string, sourcePath: string) {
+export function findImports(body: Node, root: string, sourcePath: string): ImportReference[] {
   const imports: ImportReference[] = [];
   const paths = new Set<string>();
 
@@ -79,7 +81,21 @@ export function findImports(body: Node, root: string, sourcePath: string) {
   return imports;
 }
 
-export function resolveSources(input: string, sourcePath: string) {
+function getHash(path: string): string {
+  let source = "";
+  try {
+    source = readFileSync(path, "utf-8");
+  } catch (error) {
+    if (!isEnoent(error)) throw error;
+  }
+  return computeHash(source).slice(0, 16);
+}
+
+function maybeHash(root: string, sourcePath: string, value: string): string {
+  return isLocalImport(value, sourcePath) ? `${value}?sha=${getHash(join(root, dirname(sourcePath), value))}` : value;
+}
+
+export function resolveSources(input: string, root: string, sourcePath: string): string {
   const body = Parser.parse(input, parseOptions) as any;
   const output = new Sourcemap(input);
 
@@ -92,7 +108,7 @@ export function resolveSources(input: string, sourcePath: string) {
 
   function resolveSource(node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration) {
     if (isStringLiteral(node.source)) {
-      const value = getStringLiteralValue(node.source);
+      const value = maybeHash(root, sourcePath, getStringLiteralValue(node.source));
       output.replaceLeft(
         node.source.start,
         node.source.end,
@@ -105,11 +121,11 @@ export function resolveSources(input: string, sourcePath: string) {
 }
 
 // TODO parallelize multiple static imports
-export function rewriteImports(output: any, rootNode: JavaScriptNode, sourcePath: string) {
+export function rewriteImports(output: any, rootNode: JavaScriptNode, root: string, sourcePath: string): void {
   simple(rootNode.body, {
     ImportExpression(node) {
       if (isStringLiteral(node.source)) {
-        const value = getStringLiteralValue(node.source);
+        const value = maybeHash(root, sourcePath, getStringLiteralValue(node.source));
         output.replaceLeft(
           node.source.start,
           node.source.end,
@@ -119,7 +135,7 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode, sourcePath
     },
     ImportDeclaration(node) {
       if (isStringLiteral(node.source)) {
-        const value = getStringLiteralValue(node.source);
+        const value = maybeHash(root, sourcePath, getStringLiteralValue(node.source));
         rootNode.async = true;
         output.replaceLeft(
           node.start,

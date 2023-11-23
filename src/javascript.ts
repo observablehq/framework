@@ -58,7 +58,7 @@ export interface ParseOptions {
 }
 
 export function transpileJavaScript(input: string, options: ParseOptions): Transpile {
-  const {id, sourcePath, verbose = true} = options;
+  const {id, root, sourcePath, verbose = true} = options;
   try {
     const node = parseJavaScript(input, options);
     const databases = node.features
@@ -75,7 +75,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
       output.insertRight(input.length, "\n))");
       inputs.push("display");
     }
-    rewriteImports(output, node, sourcePath);
+    rewriteImports(output, node, root, sourcePath);
     rewriteFetches(output, node, sourcePath);
     return {
       id,

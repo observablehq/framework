@@ -17,8 +17,8 @@ import {define} from "../_observablehq/client.js";
 
 define({id: "9c60abc0", inputs: ["display"], outputs: ["d3","bar","top"], files: [{"name":"/top.js","mimeType":"application/javascript","path":"../_file/foo/top.js"}], body: async (display) => {
 const d3 = await import("https://cdn.jsdelivr.net/npm/d3/+esm");
-const {bar} = await import("../_import/bar/bar.js");
-const {top} = await import("../_import/top.js");
+const {bar} = await import("../_import/bar/bar.js?sha=7b0c5b1eef9d9dd6");
+const {top} = await import("../_import/top.js?sha=e3b0c44298fc1c14");
 
 display(bar);
 display(top);

@@ -79,7 +79,7 @@ export class Server {
           if (!isEnoent(error)) throw error;
           throw new HttpError("Not found", 404);
         }
-        end(req, res, resolveSources(js, file), "text/javascript");
+        end(req, res, resolveSources(js, this.root, file), "text/javascript");
       } else if (pathname.startsWith("/_file/")) {
         const path = pathname.slice("/_file".length);
         const filepath = join(this.root, path);
