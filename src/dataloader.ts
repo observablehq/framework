@@ -1,7 +1,8 @@
 import {spawn} from "node:child_process";
 import {existsSync, statSync} from "node:fs";
-import {mkdir, open, rename, unlink} from "node:fs/promises";
+import {mkdir, open, readFile, rename, unlink, writeFile} from "node:fs/promises";
 import {dirname, extname, join} from "node:path";
+import JSZip from "jszip";
 import {HttpError} from "./error.js";
 import {maybeStat, prepareOutput} from "./files.js";
 
@@ -162,7 +163,7 @@ export class Loader {
         );
       }
     }
-    return !this.inflate ? command : command.then((path) => inflate(this.sourceRoot, path, this.inflate));
+    return !this.inflate ? command : command.then((path) => inflate(this.sourceRoot, path, this.inflate!));
   }
 }
 
@@ -207,8 +208,7 @@ function formatElapsed(start) {
   return `${Math.floor(elapsed)}ms`;
 }
 
-// TODO: use jszip
-async function inflate(sourceRoot, path, filename) {
+async function inflate(sourceRoot: string, path: string, filename: string): Promise<string> {
   const targetPath = join(
     ".observablehq/cache",
     path.slice(0, -".zip".length).replace(/^\.observablehq\/cache/, ""),
@@ -219,32 +219,18 @@ async function inflate(sourceRoot, path, filename) {
   const archivePath = join(sourceRoot, path);
   const archiveStat = await maybeStat(archivePath);
   if (cacheStat && cacheStat.mtimeMs >= archiveStat!.mtimeMs) return targetPath;
-
-  const tempPath = `${cachePath}.${process.pid}`;
-  await prepareOutput(tempPath);
-  const tempFd = await open(tempPath, "w");
-  const tempFileStream = tempFd.createWriteStream({highWaterMark: 1024 * 1024});
-  const subprocess = spawn("unzip", ["-j", "-p", archivePath, filename], {
-    windowsHide: true,
-    stdio: ["ignore", "pipe", "inherit"]
-  });
-  subprocess.stdout.pipe(tempFileStream);
-  const code = await new Promise((resolve, reject) => {
-    subprocess.on("error", reject);
-    subprocess.on("close", resolve);
-  });
-  await tempFd.close();
-  if (code === 0) {
-    await mkdir(dirname(cachePath), {recursive: true});
-    await rename(tempPath, cachePath);
-    console.log(`${green("inflated")} ${filename} from ${path}`);
-    return targetPath;
-  } else {
-    if (code === 11) {
-      console.log(`${red("inflate: missing")} ${filename} from ${path}`);
-      await unlink(tempPath);
-      return targetPath;
+  try {
+    const contents = await new JSZip()
+      .loadAsync(readFile(archivePath))
+      .then((zip) => zip.file(filename)?.async("nodebuffer"));
+    if (contents) {
+      await prepareOutput(cachePath);
+      await writeFile(cachePath, contents);
     }
+    console.log(`${contents ? green("inflated") : red("inflate: missing")} ${filename} from ${path}`);
+  } catch (error) {
+    console.log(error);
     throw new HttpError("Internal error", 500);
   }
+  return targetPath;
 }

@@ -49,6 +49,7 @@
     "gray-matter": "^4.0.3",
     "he": "^1.2.0",
     "highlight.js": "^11.8.0",
+    "jszip": "^3.10.1",
     "linkedom": "^0.15.6",
     "markdown-it": "^13.0.2",
     "markdown-it-anchor": "^8.6.7",
