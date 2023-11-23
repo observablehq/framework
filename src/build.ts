@@ -67,7 +67,7 @@ export async function build({sourceRoot, outputRoot, verbose = true, addPublic =
     if (!existsSync(sourcePath)) {
       const loader = Loader.find(sourceRoot, file);
       if (!loader) {
-        console.error("missing referenced file", sourcePath);
+        if (verbose) console.error("missing referenced file", sourcePath);
         continue;
       }
       sourcePath = join(sourceRoot, await loader.load({verbose}));
@@ -82,7 +82,7 @@ export async function build({sourceRoot, outputRoot, verbose = true, addPublic =
     const sourcePath = join(sourceRoot, file);
     const outputPath = join(outputRoot, "_import", file);
     if (!existsSync(sourcePath)) {
-      console.error("missing referenced file", sourcePath);
+      if (verbose) console.error("missing referenced file", sourcePath);
       continue;
     }
     if (verbose) console.log("copy", sourcePath, "→", outputPath);
