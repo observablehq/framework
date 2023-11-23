@@ -98,7 +98,7 @@ function escapeTemplateElements(source: Sourcemap, {quasis}: TemplateLiteral, ra
 }
 
 function escapeBacktick(source: Sourcemap, {start, end}: TemplateElement): void {
-  const input = source._input;
+  const input = source.input;
   for (let i = start; i < end; ++i) {
     if (input.charCodeAt(i) === CODE_BACKTICK) {
       source.insertRight(i, "\\");
@@ -107,7 +107,7 @@ function escapeBacktick(source: Sourcemap, {start, end}: TemplateElement): void 
 }
 
 function interpolateBacktick(source: Sourcemap, {start, end}: TemplateElement): void {
-  const input = source._input;
+  const input = source.input;
   let oddBackslashes = false;
   for (let i = start; i < end; ++i) {
     switch (input.charCodeAt(i)) {
@@ -133,7 +133,7 @@ function interpolateBacktick(source: Sourcemap, {start, end}: TemplateElement): 
 }
 
 function escapeBackslash(source: Sourcemap, {start, end}: TemplateElement): void {
-  const input = source._input;
+  const input = source.input;
   let afterDollar = false;
   let oddBackslashes = false;
   for (let i = start; i < end; ++i) {
@@ -161,7 +161,7 @@ function escapeBackslash(source: Sourcemap, {start, end}: TemplateElement): void
 }
 
 function interpolateTerminalBackslash(source: Sourcemap): void {
-  const input = source._input;
+  const input = source.input;
   let oddBackslashes = false;
   for (let i = input.length - 1; i >= 0; i--) {
     if (input.charCodeAt(i) === CODE_BACKSLASH) oddBackslashes = !oddBackslashes;
