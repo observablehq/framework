@@ -17,5 +17,5 @@ await FileAttachment("dynamic/not-found.txt").text()
 ```
 
 ```js
-await FileAttachment("dynamic.zip")
+// await FileAttachment("dynamic.zip")
 ```
