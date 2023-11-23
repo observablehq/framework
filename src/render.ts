@@ -68,9 +68,9 @@ ${
     : ""
 }<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
-<link rel="stylesheet" type="text/css" href="${relativeUrl(path, "/_observablehq/style.css")}">${Array.from(
-    getImportPreloads(parseResult, path),
-    (href) => html`\n<link rel="modulepreload" href="${relativeUrl(path, href)}">`
+<link rel="stylesheet" type="text/css" href="${relativeUrl(path, "/_observablehq/style.css")}">${renderImportPreloads(
+    parseResult,
+    path
   )}
 <script type="module">${html.unsafe(`
 
@@ -81,16 +81,16 @@ ${preview ? `open({hash: ${JSON.stringify(hash)}, eval: (body) => (0, eval)(body
     .map(renderDefineCell)
     .join("")}`)}
 </script>
-${pages.length > 0 ? sidebar(title, pages, path) : ""}
-${headers.length > 0 ? tableOfContents(headers, toc.label) : ""}<div id="observablehq-center">
+${pages.length > 0 ? renderSidebar(title, pages, path) : ""}
+${headers.length > 0 ? renderToc(headers, toc.label) : ""}<div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 ${html.unsafe(parseResult.html)}</main>
-${footer(path, {pages, title})}
+${renderFooter(path, {pages, title})}
 </div>
 `);
 }
 
-function sidebar(title: string | undefined, pages: (Page | Section)[], path: string): Html {
+function renderSidebar(title: string | undefined, pages: (Page | Section)[], path: string): Html {
   return html`<input id="observablehq-sidebar-toggle" type="checkbox">
 <nav id="observablehq-sidebar">
   <ol>
@@ -140,7 +140,7 @@ function findHeaders(parseResult: ParseResult): Header[] {
     .filter((d): d is Header => !!d.label && !!d.href);
 }
 
-function tableOfContents(headers: Header[], label = "Contents"): Html {
+function renderToc(headers: Header[], label = "Contents"): Html {
   return html`<aside id="observablehq-toc">
 <nav>
 <div>${label}</div>
@@ -163,7 +163,7 @@ function prettyPath(path: string): string {
   return path.replace(/\/index$/, "/") || "/";
 }
 
-function getImportPreloads(parseResult: ParseResult, path: string): Iterable<string> {
+function renderImportPreloads(parseResult: ParseResult, path: string): Html {
   const specifiers = new Set<string>(["npm:@observablehq/runtime"]);
   for (const {name, type} of parseResult.imports) {
     if (type === "local") {
@@ -187,21 +187,20 @@ function getImportPreloads(parseResult: ParseResult, path: string): Iterable<str
   if (parseResult.cells.some((cell) => cell.databases?.length)) {
     preloads.add("/_observablehq/database.js");
   }
-  return preloads;
+  return html`${Array.from(preloads, (href) => html`\n<link rel="modulepreload" href="${relativeUrl(path, href)}">`)}`;
 }
 
-function footer(path: string, options?: Pick<Config, "pages" | "title">): Html {
+function renderFooter(path: string, options?: Pick<Config, "pages" | "title">): Html {
   const link = pager(path, options);
-  return html`<footer id="observablehq-footer">\n${
-    link ? html`${pagenav(path, link)}\n` : ""
-  }<div>© ${new Date().getUTCFullYear()} Observable, Inc.</div>
+  return html`<footer id="observablehq-footer">${link ? renderPager(path, link) : ""}
+<div>© ${new Date().getUTCFullYear()} Observable, Inc.</div>
 </footer>`;
 }
 
-function pagenav(path: string, {prev, next}: PageLink): Html {
-  return html`<nav>${prev ? pagelink(path, prev, "prev") : ""}${next ? pagelink(path, next, "next") : ""}</nav>`;
+function renderPager(path: string, {prev, next}: PageLink): Html {
+  return html`\n<nav>${prev ? renderRel(path, prev, "prev") : ""}${next ? renderRel(path, next, "next") : ""}</nav>`;
 }
 
-function pagelink(path: string, page: Page, rel: "prev" | "next"): Html {
+function renderRel(path: string, page: Page, rel: "prev" | "next"): Html {
   return html`<a rel="${rel}" href="${relativeUrl(path, prettyPath(page.path))}"><span>${page.name}</span></a>`;
 }
