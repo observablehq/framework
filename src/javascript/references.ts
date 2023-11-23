@@ -1,3 +1,21 @@
+import type {
+  AnonymousFunctionDeclaration,
+  ArrowFunctionExpression,
+  BlockStatement,
+  CatchClause,
+  Class,
+  Expression,
+  ForInStatement,
+  ForOfStatement,
+  ForStatement,
+  FunctionDeclaration,
+  FunctionExpression,
+  Identifier,
+  Node,
+  Pattern,
+  Program,
+  VariableDeclaration
+} from "acorn";
 import {ancestor, simple} from "acorn-walk";
 import {syntaxError} from "./syntaxError.js";
 
@@ -5,7 +23,9 @@ import {syntaxError} from "./syntaxError.js";
 // Copyright (c) 2014 Forbes Lindesay
 // https://github.com/ForbesLindesay/acorn-globals/blob/master/LICENSE
 
-function isScope(node) {
+type Func = FunctionExpression | FunctionDeclaration | ArrowFunctionExpression | AnonymousFunctionDeclaration;
+
+function isScope(node: Node): node is Func | Program {
   return (
     node.type === "FunctionExpression" ||
     node.type === "FunctionDeclaration" ||
@@ -14,7 +34,8 @@ function isScope(node) {
   );
 }
 
-function isBlockScope(node) {
+// prettier-ignore
+function isBlockScope(node: Node): node is Func | Program | BlockStatement | ForInStatement | ForOfStatement | ForStatement {
   return (
     node.type === "BlockStatement" ||
     node.type === "ForInStatement" ||
@@ -24,49 +45,46 @@ function isBlockScope(node) {
   );
 }
 
-export function findReferences(node, globals, input) {
-  const locals = new Map();
-  const globalSet = new Set(globals);
-  const references = [];
+export function findReferences(node: Node, globals: Set<string>, input: string): Node[] {
+  const locals = new Map<Node, Set<string>>();
+  const globalSet = new Set<string>(globals);
+  const references: Node[] = [];
 
-  function hasLocal(node, name) {
+  function hasLocal(node: Node, name: string): boolean {
     const l = locals.get(node);
     return l ? l.has(name) : false;
   }
 
-  function declareLocal(node, id) {
+  function declareLocal(node: Node, id: {name: string}): void {
     const l = locals.get(node);
     if (l) l.add(id.name);
     else locals.set(node, new Set([id.name]));
   }
 
-  function declareClass(node) {
+  function declareClass(node: Class) {
     if (node.id) declareLocal(node, node.id);
   }
 
-  function declareFunction(node) {
+  function declareFunction(node: Func) {
     node.params.forEach((param) => declarePattern(param, node));
     if (node.id) declareLocal(node, node.id);
     if (node.type !== "ArrowFunctionExpression") declareLocal(node, {name: "arguments"});
   }
 
-  function declareCatchClause(node) {
+  function declareCatchClause(node: CatchClause) {
     if (node.param) declarePattern(node.param, node);
   }
 
-  function declarePattern(node, parent) {
+  function declarePattern(node: Pattern, parent: Node) {
     switch (node.type) {
       case "Identifier":
         declareLocal(parent, node);
         break;
       case "ObjectPattern":
-        node.properties.forEach((node) => declarePattern(node, parent));
+        node.properties.forEach((node) => declarePattern(node.type === "Property" ? node.value : node, parent));
         break;
       case "ArrayPattern":
         node.elements.forEach((node) => node && declarePattern(node, parent));
-        break;
-      case "Property":
-        declarePattern(node.value, parent);
         break;
       case "RestElement":
         declarePattern(node.argument, parent);
@@ -74,62 +92,55 @@ export function findReferences(node, globals, input) {
       case "AssignmentPattern":
         declarePattern(node.left, parent);
         break;
-    }
-  }
-
-  function declareImportSpecifier(node, parent) {
-    switch (node.type) {
-      case "ImportSpecifier":
-      case "ImportNamespaceSpecifier":
-      case "ImportDefaultSpecifier":
-        declareLocal(parent, node.local);
+      case "MemberExpression":
+        // ignored
         break;
     }
   }
 
   ancestor(node, {
-    VariableDeclaration(node, parents) {
-      let parent = null;
+    VariableDeclaration(node, state, parents) {
+      let parent: Node | null = null;
       for (let i = parents.length - 1; i >= 0 && parent === null; --i) {
         if (node.kind === "var" ? isScope(parents[i]) : isBlockScope(parents[i])) {
           parent = parents[i];
         }
       }
-      node.declarations.forEach((declaration) => declarePattern(declaration.id, parent));
+      node.declarations.forEach((declaration) => declarePattern(declaration.id, parent!));
     },
-    FunctionDeclaration(node, parents) {
-      let parent = null;
+    FunctionDeclaration(node, state, parents) {
+      let parent: Node | null = null;
       for (let i = parents.length - 2; i >= 0 && parent === null; --i) {
         if (isScope(parents[i])) {
           parent = parents[i];
         }
       }
-      declareLocal(parent, node.id);
+      if (node.id) declareLocal(parent!, node.id);
       declareFunction(node);
     },
-    Function: declareFunction,
-    ClassDeclaration(node, parents) {
-      let parent = null;
+    FunctionExpression: declareFunction,
+    ArrowFunctionExpression: declareFunction,
+    ClassDeclaration(node, state, parents) {
+      let parent: Node | null = null;
       for (let i = parents.length - 2; i >= 0 && parent === null; i--) {
         if (isScope(parents[i])) {
           parent = parents[i];
         }
       }
-      declareLocal(parent, node.id);
+      if (node.id) declareLocal(parent!, node.id);
     },
-    Class: declareClass,
+    ClassExpression: declareClass,
     CatchClause: declareCatchClause,
-    ImportDeclaration(node, [root]) {
-      node.specifiers.forEach((specifier) => declareImportSpecifier(specifier, root));
+    ImportDeclaration(node, state, [root]) {
+      node.specifiers.forEach((specifier) => declareLocal(root, specifier.local));
     }
   });
 
-  function identifier(node, parents) {
-    let name = node.name;
+  function identifier(node: Identifier, state, parents: Node[]) {
+    const name = node.name;
     if (name === "undefined") return;
     for (let i = parents.length - 2; i >= 0; --i) {
       if (hasLocal(parents[i], name)) {
-        node.declarationDepth = i; // TODO link to declaration?
         return;
       }
     }
@@ -139,34 +150,29 @@ export function findReferences(node, globals, input) {
   }
 
   ancestor(node, {
-    VariablePattern: identifier,
+    Pattern(node, state, parents) {
+      if (node.type === "Identifier") {
+        identifier(node, state, parents);
+      }
+    },
     Identifier: identifier
   });
 
-  function checkConst(node) {
-    switch (node?.type) {
+  function checkConst(node: Expression | Pattern | VariableDeclaration) {
+    switch (node.type) {
       case "Identifier":
-      case "VariablePattern": {
         if (references.includes(node)) throw syntaxError(`Assignment to external variable '${node.name}'`, node, input);
         if (globals.has(node.name)) throw syntaxError(`Assignment to global '${node.name}'`, node, input);
         break;
-      }
-      case "ArrayPattern": {
-        for (const element of node.elements) checkConst(element);
+      case "ObjectPattern":
+        node.properties.forEach((node) => checkConst(node.type === "Property" ? node.value : node));
         break;
-      }
-      case "ObjectPattern": {
-        for (const property of node.properties) checkConst(property);
+      case "ArrayPattern":
+        node.elements.forEach((node) => node && checkConst(node));
         break;
-      }
-      case "Property": {
-        checkConst(node.value);
-        break;
-      }
-      case "RestElement": {
+      case "RestElement":
         checkConst(node.argument);
         break;
-      }
     }
   }
 
