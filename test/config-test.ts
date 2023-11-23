@@ -1,7 +1,28 @@
 import assert from "node:assert";
-import {normalizeConfig as config, mergeToc} from "../src/config.js";
+import {normalizeConfig as config, mergeToc, readConfig} from "../src/config.js";
 
 const root = "test/input/build/config";
+
+describe("readConfig(root)", () => {
+  it("imports the config file at the specified root", async () => {
+    assert.deepStrictEqual(await readConfig("test/input/build/config"), {
+      pages: [
+        {path: "/index", name: "Index"},
+        {path: "/one", name: "One<Two"},
+        {path: "/sub/two", name: "Two"}
+      ],
+      title: undefined,
+      toc: {label: "On this page", show: true}
+    });
+  });
+  it("returns the default config if no config file is found", async () => {
+    assert.deepStrictEqual(await readConfig("test/input/build/simple"), {
+      pages: [{name: "Build test case", path: "/simple"}],
+      title: undefined,
+      toc: {label: "Contents", show: true}
+    });
+  });
+});
 
 describe("normalizeConfig(spec, root)", () => {
   it("coerces the title to a string", async () => {

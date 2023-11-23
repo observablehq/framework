@@ -23,9 +23,10 @@ describe("html(strings, ...values)", () => {
     assert.deepStrictEqual(String(html`<b>${{toString: () => 42}}</b>`), "<b>42</b>");
   });
   it("concatenates iterables", () => {
-    assert.deepStrictEqual(String(html`<b>${[1, 2, 3]}</b>`), "<b>123</b>");
-    assert.deepStrictEqual(String(html`<b>${new Set([1, 2, 3])}</b>`), "<b>123</b>");
+    assert.deepStrictEqual(String(html`<b>${[1, 2, null, 3]}</b>`), "<b>123</b>");
+    assert.deepStrictEqual(String(html`<b>${new Set([1, 2, null, 3])}</b>`), "<b>123</b>");
     assert.deepStrictEqual(String(html`<b>${["dollar", "&pound"]}</b>`), "<b>dollar&amp;pound</b>");
+    assert.deepStrictEqual(String(html`<b>${["dollar", html`&pound`]}</b>`), "<b>dollar&pound</b>");
   });
   it("ignores null and undefined", () => {
     assert.deepStrictEqual(String(html`<b>${null}</b>`), "<b></b>");

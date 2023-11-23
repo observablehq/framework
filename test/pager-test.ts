@@ -15,6 +15,25 @@ describe("pager(path, options)", () => {
     assert.deepStrictEqual(pager("/b", config), {prev: {name: "a", path: "/a"}, next: {name: "c", path: "/c"}});
     assert.deepStrictEqual(pager("/c", config), {prev: {name: "b", path: "/b"}, next: undefined});
   });
+  it("returns the previous and next links for three pages with sections", () => {
+    const config = {
+      pages: [
+        {
+          name: "section",
+          open: true,
+          pages: [
+            {name: "a", path: "/a"},
+            {name: "b", path: "/b"},
+            {name: "c", path: "/c"}
+          ]
+        }
+      ]
+    };
+    assert.deepStrictEqual(pager("/index", config), {prev: undefined, next: {name: "a", path: "/a"}});
+    assert.deepStrictEqual(pager("/a", config), {prev: {name: "Home", path: "/index"}, next: {name: "b", path: "/b"}});
+    assert.deepStrictEqual(pager("/b", config), {prev: {name: "a", path: "/a"}, next: {name: "c", path: "/c"}});
+    assert.deepStrictEqual(pager("/c", config), {prev: {name: "b", path: "/b"}, next: undefined});
+  });
   it("returns the previous and next links for two pages", () => {
     const config = {
       pages: [

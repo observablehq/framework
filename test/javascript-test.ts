@@ -31,7 +31,7 @@ function runTests({
       const outfile = resolve(outputRoot, `${basename(outname, ".js")}.js`);
       const diffile = resolve(outputRoot, `${basename(outname, ".js")}-changed.js`);
       const actual = renderDefineCell(
-        await transpileJavaScript(await readFile(path, "utf8"), {
+        transpileJavaScript(await readFile(path, "utf8"), {
           id: "0",
           root: inputRoot,
           sourcePath: name,
@@ -71,17 +71,54 @@ function runTests({
   }
 }
 
-describe("transpileJavaScript(input)", () => {
+describe("transpileJavaScript(input, options)", () => {
   runTests({
     inputRoot: "test/input",
     outputRoot: "test/output"
   });
-});
-
-describe("imports", () => {
   runTests({
     inputRoot: "test/input/imports",
     outputRoot: "test/output/imports",
     filter: (name) => name.endsWith("-import.js")
+  });
+  it("trims leading and trailing newlines", () => {
+    const {body} = transpileJavaScript("\ntest\n", {
+      id: "0",
+      root: "test/input",
+      sourcePath: "index.js",
+      verbose: false
+    });
+    assert.strictEqual(body, "(test,display) => {\ndisplay((\ntest\n))\n}");
+  });
+  it("rethrows unexpected errors", () => {
+    const expected = new Error();
+    assert.throws(
+      () =>
+        transpileJavaScript(
+          {
+            toString(): string {
+              throw expected;
+            }
+          } as string,
+          {
+            id: "0",
+            root: "test/input",
+            sourcePath: "index.js",
+            verbose: false
+          }
+        ),
+      expected
+    );
+  });
+  it("respects the sourceLine option", () => {
+    const {body} = transpileJavaScript("foo,", {
+      id: "0",
+      root: "test/input",
+      sourcePath: "index.js",
+      sourceLine: 12,
+      inline: true,
+      verbose: false
+    });
+    assert.strictEqual(body, '() => { throw new SyntaxError("invalid expression"); }');
   });
 });
