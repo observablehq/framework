@@ -137,7 +137,7 @@ function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
   const body = expression ?? (Parser.parse(input, parseOptions) as any);
   const exports = findExports(body);
   if (exports.length) throw syntaxError("Unexpected token 'export'", exports[0], input); // disallow exports
-  const references = findReferences(body, globals, input);
+  const references = findReferences(body, globals);
   findAssignments(body, references, globals, input);
   const declarations = expression ? null : findDeclarations(body, globals, input);
   const imports = findImports(body, root, sourcePath);

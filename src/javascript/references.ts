@@ -43,10 +43,10 @@ function isBlockScope(node: Node): node is Func | Program | BlockStatement | For
   );
 }
 
-export function findReferences(node: Node, globals: Set<string>): Node[] {
+export function findReferences(node: Node, globals: Set<string>): Identifier[] {
   const locals = new Map<Node, Set<string>>();
   const globalSet = new Set<string>(globals);
-  const references: Node[] = [];
+  const references: Identifier[] = [];
 
   function hasLocal(node: Node, name: string): boolean {
     const l = locals.get(node);
