@@ -90,9 +90,6 @@ export function findReferences(node: Node, globals: Set<string>): Identifier[] {
       case "AssignmentPattern":
         declarePattern(node.left, parent);
         break;
-      case "MemberExpression":
-        // ignored
-        break;
     }
   }
 
