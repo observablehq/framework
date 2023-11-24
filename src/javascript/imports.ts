@@ -120,7 +120,7 @@ function getModuleHash(root: string, path: string): string {
       }
     }
   }
-  return hash.digest("hex").slice(0, 16);
+  return hash.digest("hex");
 }
 
 // If the given is a local import, applies the ?sha query string based on the
