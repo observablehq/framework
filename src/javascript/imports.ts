@@ -1,7 +1,14 @@
 import {readFileSync} from "node:fs";
 import {dirname, join, normalize, relative} from "node:path";
 import {Parser} from "acorn";
-import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression, Node} from "acorn";
+import type {
+  CallExpression,
+  ExportAllDeclaration,
+  ExportNamedDeclaration,
+  ImportDeclaration,
+  ImportExpression,
+  Node
+} from "acorn";
 import {simple} from "acorn-walk";
 import {type ImportReference, type JavaScriptNode, parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
