@@ -18,18 +18,8 @@ export function fileReference(name: string, sourcePath: string): FileReference {
   return {
     name,
     mimeType: mime.getType(name),
-    path: normalizeRelativePath(relativeUrl(sourcePath, `/_file/${dirname(sourcePath)}/${name}`))
+    path: relativeUrl(sourcePath, `/_file/${dirname(sourcePath)}/${name}`)
   };
-}
-
-function normalizeRelativePath(path) {
-  const parts = path.split("/").filter((d) => d !== ".");
-  for (let r = 1; r < parts.length; ) {
-    if (parts[r] === ".." && parts[r - 1] !== "..") parts.splice(--r, 2);
-    else ++r;
-  }
-  if (parts[0] !== "..") parts.unshift(".");
-  return parts.join("/");
 }
 
 export async function* visitMarkdownFiles(root: string): AsyncGenerator<string> {

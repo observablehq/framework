@@ -1,12 +1,13 @@
 import {createHash} from "node:crypto";
 import {readFileSync} from "node:fs";
-import {dirname, join, relative} from "node:path";
+import {dirname, join} from "node:path";
 import {Parser} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression, Node} from "acorn";
 import {simple} from "acorn-walk";
 import {isEnoent} from "../error.js";
 import {type ImportReference, type JavaScriptNode, parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
+import {relativeUrl} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
 // Finds all export declarations in the specified node. (This is used to
@@ -52,7 +53,7 @@ export function findImports(body: Node, root: string, path: string): ImportRefer
   // Make all local paths relative to the source path.
   for (const i of imports) {
     if (i.type === "local") {
-      i.name = getRelativePath(path, i.name);
+      i.name = relativeUrl(path, i.name);
     }
   }
 
@@ -130,14 +131,6 @@ function resolveImportHash(root: string, path: string, specifier: string): strin
     : specifier;
 }
 
-// Computes the relative path from the given source file to the given target,
-// assuming that both are relative to the same working directory (typically the
-// source root). The returned string always starts with a "./" or "../".
-function getRelativePath(source: string, target: string): string {
-  const path = relative(join(".", dirname(source)), join(".", target));
-  return path.startsWith(".") ? path : `./${path}`;
-}
-
 // Rewrites import specifiers in the specified ES module source.
 export function resolveSources(input: string, root: string, sourcePath: string): string {
   const body = Parser.parse(input, parseOptions) as any;
@@ -156,7 +149,7 @@ export function resolveSources(input: string, root: string, sourcePath: string):
       output.replaceLeft(
         node.source.start,
         node.source.end,
-        JSON.stringify(resolveImport(value.startsWith("/") ? getRelativePath(sourcePath, value) : value))
+        JSON.stringify(resolveImport(value.startsWith("/") ? relativeUrl(sourcePath, value) : value))
       );
     }
   }
@@ -202,7 +195,7 @@ function resolveMarkdownImport(root, sourcePath, value) {
 }
 
 function relativeImport(sourcePath, value) {
-  return getRelativePath(sourcePath, join("/_import/", value.startsWith("/") ? "." : dirname(sourcePath), value));
+  return relativeUrl(sourcePath, join("/_import/", value.startsWith("/") ? "." : dirname(sourcePath), value));
 }
 
 function rewriteImportSpecifier(node) {
