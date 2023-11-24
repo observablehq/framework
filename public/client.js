@@ -337,18 +337,32 @@ for (const summary of document.querySelectorAll("#observablehq-sidebar summary")
 }
 
 const copyButton = document.createElement("template");
-copyButton.innerHTML = `<button title="Copy code" class="observablehq-pre-copy"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6C2 5.44772 2.44772 5 3 5H10C10.5523 5 11 5.44772 11 6V13C11 13.5523 10.5523 14 10 14H3C2.44772 14 2 13.5523 2 13V6Z M4 2.00004L12 2.00001C13.1046 2 14 2.89544 14 4.00001V12"></path></svg></button>`;
+copyButton.innerHTML = '<button title="Copy code" class="observablehq-pre-copy"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6C2 5.44772 2.44772 5 3 5H10C10.5523 5 11 5.44772 11 6V13C11 13.5523 10.5523 14 10 14H3C2.44772 14 2 13.5523 2 13V6Z M4 2.00004L12 2.00001C13.1046 2 14 2.89544 14 4.00001V12"></path></svg></button>'; // prettier-ignore
 
 enableCopyButtons();
 
 function enableCopyButtons() {
   for (const pre of document.querySelectorAll("pre")) {
-    const button = pre.appendChild(copyButton.content.cloneNode(true).firstChild);
-    button.addEventListener("click", copy);
-    pre.style.position = "relative";
+    pre.appendChild(copyButton.content.cloneNode(true).firstChild).addEventListener("click", copy);
   }
 }
 
 async function copy({currentTarget}) {
   await navigator.clipboard.writeText(currentTarget.parentElement.textContent.trimEnd());
+}
+
+if (location.hash) addEventListener("DOMContentLoaded", highlightToc);
+addEventListener("hashchange", highlightToc);
+
+function highlightToc() {
+  for (const link of document.querySelectorAll(".observablehq-secondary-link-active")) {
+    link.classList.remove("observablehq-secondary-link-active");
+  }
+  for (const link of document.querySelectorAll(".observablehq-secondary-link")) {
+    const a = link.querySelector("a[href]");
+    if (a?.getAttribute("href") === location.hash) {
+      link.classList.add("observablehq-secondary-link-active");
+      break;
+    }
+  }
 }

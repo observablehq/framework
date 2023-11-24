@@ -2,7 +2,7 @@ import assert from "node:assert";
 import {readdirSync, statSync} from "node:fs";
 import {mkdir, readFile, unlink, writeFile} from "node:fs/promises";
 import {basename, join, resolve} from "node:path";
-import {isNodeError} from "../src/error.js";
+import {isEnoent} from "../src/error.js";
 import {transpileJavaScript} from "../src/javascript.js";
 import {renderDefineCell} from "../src/render.js";
 
@@ -31,7 +31,7 @@ function runTests({
       const outfile = resolve(outputRoot, `${basename(outname, ".js")}.js`);
       const diffile = resolve(outputRoot, `${basename(outname, ".js")}-changed.js`);
       const actual = renderDefineCell(
-        await transpileJavaScript(await readFile(path, "utf8"), {
+        transpileJavaScript(await readFile(path, "utf8"), {
           id: "0",
           root: inputRoot,
           sourcePath: name,
@@ -43,14 +43,11 @@ function runTests({
       try {
         expected = await readFile(outfile, "utf8");
       } catch (error) {
-        if (isNodeError(error) && error.code === "ENOENT" && process.env.CI !== "true") {
-          console.warn(`! generating ${outfile}`);
-          await mkdir(outputRoot, {recursive: true});
-          await writeFile(outfile, actual, "utf8");
-          return;
-        } else {
-          throw error;
-        }
+        if (!isEnoent(error) || process.env.CI === "true") throw error;
+        console.warn(`! generating ${outfile}`);
+        await mkdir(outputRoot, {recursive: true});
+        await writeFile(outfile, actual, "utf8");
+        return;
       }
 
       const equal = expected === actual;
@@ -61,9 +58,7 @@ function runTests({
             await unlink(diffile);
             console.warn(`! deleted ${diffile}`);
           } catch (error) {
-            if (!isNodeError(error) || error.code !== "ENOENT") {
-              throw error;
-            }
+            if (!isEnoent(error)) throw error;
           }
         }
       } else {
@@ -76,17 +71,54 @@ function runTests({
   }
 }
 
-describe("transpileJavaScript(input)", () => {
+describe("transpileJavaScript(input, options)", () => {
   runTests({
     inputRoot: "test/input",
     outputRoot: "test/output"
   });
-});
-
-describe("imports", () => {
   runTests({
     inputRoot: "test/input/imports",
     outputRoot: "test/output/imports",
     filter: (name) => name.endsWith("-import.js")
+  });
+  it("trims leading and trailing newlines", () => {
+    const {body} = transpileJavaScript("\ntest\n", {
+      id: "0",
+      root: "test/input",
+      sourcePath: "index.js",
+      verbose: false
+    });
+    assert.strictEqual(body, "(test,display) => {\ndisplay((\ntest\n))\n}");
+  });
+  it("rethrows unexpected errors", () => {
+    const expected = new Error();
+    assert.throws(
+      () =>
+        transpileJavaScript(
+          {
+            toString(): string {
+              throw expected;
+            }
+          } as string,
+          {
+            id: "0",
+            root: "test/input",
+            sourcePath: "index.js",
+            verbose: false
+          }
+        ),
+      expected
+    );
+  });
+  it("respects the sourceLine option", () => {
+    const {body} = transpileJavaScript("foo,", {
+      id: "0",
+      root: "test/input",
+      sourcePath: "index.js",
+      sourceLine: 12,
+      inline: true,
+      verbose: false
+    });
+    assert.strictEqual(body, '() => { throw new SyntaxError("invalid expression"); }');
   });
 });

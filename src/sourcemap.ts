@@ -1,11 +1,25 @@
+// @ts-expect-error lineBreakG is private
 import {lineBreakG} from "acorn";
 
+interface Edit {
+  value: string;
+  start: number;
+  end: number;
+}
+
+interface Position {
+  line: number;
+  column: number;
+}
+
 export class Sourcemap {
-  constructor(input = "") {
-    this._input = input;
+  readonly input: string;
+  private readonly _edits: Edit[];
+  constructor(input: string) {
+    this.input = input;
     this._edits = [];
   }
-  _bisectLeft(index) {
+  private _bisectLeft(index: number): number {
     let lo = 0;
     let hi = this._edits.length;
     while (lo < hi) {
@@ -15,7 +29,7 @@ export class Sourcemap {
     }
     return lo;
   }
-  _bisectRight(index) {
+  private _bisectRight(index: number): number {
     let lo = 0;
     let hi = this._edits.length;
     while (lo < hi) {
@@ -25,35 +39,35 @@ export class Sourcemap {
     }
     return lo;
   }
-  insertLeft(index, value) {
+  insertLeft(index: number, value: string): void {
     this.replaceLeft(index, index, value);
   }
-  insertRight(index, value) {
+  insertRight(index: number, value: string): void {
     this.replaceRight(index, index, value);
   }
-  delete(start, end) {
+  delete(start: number, end: number) {
     this.replaceRight(start, end, "");
   }
-  replaceLeft(start, end, value) {
+  replaceLeft(start: number, end: number, value: string): void {
     this._edits.splice(this._bisectLeft(start), 0, {start, end, value});
   }
-  replaceRight(start, end, value) {
+  replaceRight(start: number, end: number, value: string): void {
     this._edits.splice(this._bisectRight(start), 0, {start, end, value});
   }
-  translate(position) {
+  translate(position: Position): Position {
     let index = 0;
-    let ci = {line: 1, column: 0};
-    let co = {line: 1, column: 0};
+    let ci: Position = {line: 1, column: 0};
+    let co: Position = {line: 1, column: 0};
     for (const {start, end, value} of this._edits) {
       if (start > index) {
-        const l = positionLength(this._input, index, start);
+        const l = positionLength(this.input, index, start);
         const ci2 = positionAdd(ci, l);
         const co2 = positionAdd(co, l);
         if (positionCompare(co2, position) > 0) break;
         ci = ci2;
         co = co2;
       }
-      const il = positionLength(this._input, start, end);
+      const il = positionLength(this.input, start, end);
       const ol = positionLength(value);
       const ci2 = positionAdd(ci, il);
       const co2 = positionAdd(co, ol);
@@ -65,26 +79,26 @@ export class Sourcemap {
     const l = positionSubtract(position, co);
     return positionAdd(ci, l);
   }
-  toString() {
+  toString(): string {
     let output = "";
     let index = 0;
     for (const {start, end, value} of this._edits) {
-      if (start > index) output += this._input.slice(index, start);
+      if (start > index) output += this.input.slice(index, start);
       output += value;
       index = end;
     }
-    output += this._input.slice(index);
+    output += this.input.slice(index);
     return output;
   }
 }
 
-function positionCompare(a, b) {
+function positionCompare(a: Position, b: Position): number {
   return a.line - b.line || a.column - b.column;
 }
 
-function positionLength(input, start = 0, end = input.length) {
-  let match,
-    line = 0;
+function positionLength(input: string, start = 0, end = input.length): Position {
+  let match: RegExpExecArray;
+  let line = 0;
   lineBreakG.lastIndex = start;
   while ((match = lineBreakG.exec(input)) && match.index < end) {
     ++line;
@@ -93,10 +107,10 @@ function positionLength(input, start = 0, end = input.length) {
   return {line, column: end - start};
 }
 
-function positionSubtract(b, a) {
+function positionSubtract(b: Position, a: Position): Position {
   return b.line === a.line ? {line: 0, column: b.column - a.column} : {line: b.line - a.line, column: b.column};
 }
 
-function positionAdd(p, l) {
+function positionAdd(p: Position, l: Position): Position {
   return l.line === 0 ? {line: p.line, column: p.column + l.column} : {line: p.line + l.line, column: l.column};
 }

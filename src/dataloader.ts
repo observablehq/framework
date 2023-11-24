@@ -1,8 +1,9 @@
 import {spawn} from "node:child_process";
 import {existsSync, statSync} from "node:fs";
 import {mkdir, open, rename, unlink} from "node:fs/promises";
-import {dirname, join} from "node:path";
+import {dirname, extname, join} from "node:path";
 import {maybeStat, prepareOutput} from "./files.js";
+import {faint, green, red, yellow} from "./tty.js";
 
 const runningCommands = new Map<string, Promise<string>>();
 
@@ -66,6 +67,10 @@ export class Loader {
       const sourcePath = targetPath + ext;
       const path = join(sourceRoot, sourcePath);
       if (!existsSync(path)) continue;
+      if (extname(targetPath) === "") {
+        console.warn(`invalid data loader path: ${sourcePath}`);
+        return;
+      }
       return new Loader({
         command: languages[ext] ?? path,
         args: languages[ext] == null ? [] : [path],
@@ -131,15 +136,6 @@ export class Loader {
     }
     return command;
   }
-}
-
-const faint = color(2);
-const red = color(31);
-const green = color(32);
-const yellow = color(33);
-
-function color(code) {
-  return process.stdout.isTTY ? (text) => `\x1b[${code}m${text}\x1b[0m` : String;
 }
 
 function formatSize(size) {

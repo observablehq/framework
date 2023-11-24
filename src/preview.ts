@@ -5,30 +5,41 @@ import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, ServerResponse} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
-import {parseArgs} from "node:util";
 import send from "send";
 import {type WebSocket, WebSocketServer} from "ws";
+import {version} from "../package.json";
 import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
-import {HttpError, isHttpError, isNodeError} from "./error.js";
+import {HttpError, isEnoent, isHttpError} from "./error.js";
 import {maybeStat} from "./files.js";
 import {resolveSources} from "./javascript/imports.js";
 import {type ParseResult, diffMarkdown, readMarkdown} from "./markdown.js";
-import {readPages} from "./navigation.js";
 import {renderPreview} from "./render.js";
 import {type CellResolver, makeCLIResolver} from "./resolver.js";
+import {bold, faint, green, underline} from "./tty.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
-class Server {
-  private _server: ReturnType<typeof createServer>;
-  private _socketServer: WebSocketServer;
+export interface PreviewOptions {
+  root: string;
+  hostname: string;
+  port: number;
+  verbose?: boolean;
+}
+
+export async function preview(options: PreviewOptions): Promise<Server> {
+  return Server.start(options);
+}
+
+export class Server {
+  private readonly _server: ReturnType<typeof createServer>;
+  private readonly _socketServer: WebSocketServer;
+  private readonly _resolver: CellResolver;
   readonly port: number;
   readonly hostname: string;
   readonly root: string;
-  private _resolver: CellResolver | undefined;
 
-  constructor({port, hostname, root}: CommandContext) {
+  private constructor({port, hostname, root}: PreviewOptions, resolver: CellResolver) {
     this.port = port;
     this.hostname = hostname;
     this.root = root;
@@ -36,18 +47,22 @@ class Server {
     this._server.on("request", this._handleRequest);
     this._socketServer = new WebSocketServer({server: this._server});
     this._socketServer.on("connection", this._handleConnection);
+    this._resolver = resolver;
   }
 
-  async start() {
-    this._resolver = await makeCLIResolver();
-    return new Promise<void>((resolve) => {
-      this._server.listen(this.port, this.hostname, resolve);
-    });
+  static async start({verbose = true, ...options}: PreviewOptions) {
+    const server = new Server(options, await makeCLIResolver());
+    await new Promise<void>((resolve) => server._server.listen(server.port, server.hostname, resolve));
+    if (verbose) {
+      console.log(`${green(bold("Observable CLI"))}\t${faint(`v${version}`)}`);
+      console.log(`${faint("↳")} ${underline(`http://${server.hostname}:${server.port}/`)}`);
+      console.log("");
+    }
+    return server;
   }
 
   _handleRequest: RequestListener = async (req, res) => {
-    console.log(req.method, req.url);
-    let pages;
+    console.log(faint(req.method!), req.url);
     try {
       const url = new URL(req.url!, "http://localhost");
       let {pathname} = url;
@@ -61,7 +76,7 @@ class Server {
         try {
           js = await readFile(join(this.root, file), "utf-8");
         } catch (error) {
-          if (isNodeError(error) && error.code !== "ENOENT") throw error;
+          if (!isEnoent(error)) throw error;
           throw new HttpError("Not found", 404);
         }
         end(req, res, resolveSources(js, file), "text/javascript");
@@ -73,9 +88,7 @@ class Server {
           send(req, pathname.slice("/_file".length), {root: this.root}).pipe(res);
           return;
         } catch (error) {
-          if (isNodeError(error) && error.code !== "ENOENT") {
-            throw error;
-          }
+          if (!isEnoent(error)) throw error;
         }
 
         // Look for a data loader for this file.
@@ -112,7 +125,7 @@ class Server {
             path = join(path, "index");
           }
         } catch (error) {
-          if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error
+          if (!isEnoent(error)) throw error; // internal error
         }
 
         // If this path ends with .html, then redirect to drop the .html. TODO:
@@ -126,17 +139,16 @@ class Server {
         // Otherwise, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
         try {
-          pages = await readPages(this.root); // TODO cache? watcher?
+          const config = await readConfig(this.root);
           const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {
             root: this.root,
             path: pathname,
-            pages,
-            title: (await readConfig(this.root))?.title,
-            resolver: this._resolver!
+            resolver: this._resolver,
+            ...config
           });
           end(req, res, html, "text/html");
         } catch (error) {
-          if (!isNodeError(error) || error.code !== "ENOENT") throw error; // internal error
+          if (!isEnoent(error)) throw error; // internal error
           throw new HttpError("Not found", 404);
         }
       }
@@ -145,11 +157,12 @@ class Server {
       res.statusCode = isHttpError(error) ? error.statusCode : 500;
       if (req.method === "GET" && res.statusCode === 404) {
         try {
+          const config = await readConfig(this.root);
           const {html} = await renderPreview(await readFile(join(this.root, "404.md"), "utf-8"), {
             root: this.root,
             path: "/404",
-            pages,
-            resolver: this._resolver!
+            resolver: this._resolver,
+            ...config
           });
           end(req, res, html, "text/html");
           return;
@@ -164,7 +177,7 @@ class Server {
 
   _handleConnection = (socket: WebSocket, req: IncomingMessage) => {
     if (req.url === "/_observablehq") {
-      handleWatch(socket, {root: this.root, resolver: this._resolver!});
+      handleWatch(socket, req, {root: this.root, resolver: this._resolver});
     } else {
       socket.close();
     }
@@ -239,11 +252,11 @@ function resolveDiffs(diff: ReturnType<typeof diffMarkdown>, resolver: CellResol
   );
 }
 
-function handleWatch(socket: WebSocket, options: {root: string; resolver: CellResolver}) {
+function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: string; resolver: CellResolver}) {
   const {root, resolver} = options;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
-  console.log("socket open");
+  console.log(faint("socket open"), req.url);
 
   function refreshAttachment(parseResult: ParseResult, name: string) {
     send({
@@ -267,12 +280,10 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
           try {
             markdownWatcher = watch(join(root, path), watcher);
           } catch (error) {
-            if (isNodeError(error) && error.code === "ENOENT") {
-              console.error(`file no longer exists: ${path}`);
-              socket.terminate();
-              return;
-            }
-            throw error;
+            if (!isEnoent(error)) throw error;
+            console.error(`file no longer exists: ${path}`);
+            socket.terminate();
+            return;
           }
           setTimeout(() => watcher("change"), 150); // delay to avoid a possibly-empty file
           break;
@@ -296,7 +307,7 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
   socket.on("message", async (data) => {
     try {
       const message = JSON.parse(String(data));
-      console.log("↑", message);
+      console.log(faint("↑"), message);
       switch (message.type) {
         case "hello": {
           await hello(message);
@@ -322,55 +333,11 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
       markdownWatcher.close();
       markdownWatcher = null;
     }
-    console.log("socket close");
+    console.log(faint("socket close"), req.url);
   });
 
   function send(message) {
-    console.log("↓", message);
+    console.log(faint("↓"), message);
     socket.send(JSON.stringify(message));
   }
 }
-
-const USAGE = `Usage: observable preview [--root dir] [--hostname host] [--port port]`;
-
-interface CommandContext {
-  root: string;
-  hostname: string;
-  port: number;
-}
-
-function makeCommandContext(): CommandContext {
-  const {values} = parseArgs({
-    options: {
-      root: {
-        type: "string",
-        short: "r",
-        default: "docs"
-      },
-      hostname: {
-        type: "string",
-        short: "h"
-      },
-      port: {
-        type: "string",
-        short: "p"
-      }
-    }
-  });
-  if (!values.root) {
-    console.error(USAGE);
-    process.exit(1);
-  }
-  return {
-    root: normalize(values.root).replace(/\/$/, ""),
-    hostname: values.hostname ?? process.env.HOSTNAME ?? "127.0.0.1",
-    port: values.port ? +values.port : process.env.PORT ? +process.env.PORT : 3000
-  };
-}
-
-await (async function () {
-  const context = makeCommandContext();
-  const server = new Server(context);
-  await server.start();
-  console.log(`Server running at http://${server.hostname}:${server.port}/`);
-})();
