@@ -123,12 +123,10 @@ function getModuleHash(root: string, path: string): string {
   return hash.digest("hex");
 }
 
-// If the given is a local import, applies the ?sha query string based on the
+// Given the specified local import, applies the ?sha query string based on the
 // content hash of the imported module and its transitively imported modules.
 function resolveImportHash(root: string, path: string, specifier: string): string {
-  return isLocalImport(specifier, path)
-    ? `${specifier}?sha=${getModuleHash(root, join(specifier.startsWith("/") ? "." : dirname(path), specifier))}`
-    : specifier;
+  return `${specifier}?sha=${getModuleHash(root, join(specifier.startsWith("/") ? "." : dirname(path), specifier))}`;
 }
 
 // Rewrites import specifiers in the specified ES module source.
@@ -193,17 +191,23 @@ export function rewriteImports(
 
 export function createModulePreviewResolver(root: string): ImportResolver {
   return (sourcePath, value) => {
-    value = resolveImportHash(root, sourcePath, value);
-    return value.startsWith("/") ? relativeUrl(sourcePath, value) : resolveImport(value);
+    return relativeUrl(
+      sourcePath,
+      isLocalImport(value, sourcePath)
+        ? join(value.startsWith("/") ? "." : dirname(sourcePath), resolveImportHash(root, sourcePath, value))
+        : resolveImport(value)
+    );
   };
 }
 
 export function createMarkdownPreviewResolver(root: string): ImportResolver {
   return (sourcePath, value) => {
-    value = resolveImportHash(root, sourcePath, value);
-    return isLocalImport(value, sourcePath)
-      ? relativeUrl(sourcePath, join("_import", value.startsWith("/") ? "." : dirname(sourcePath), value))
-      : resolveImport(value);
+    return relativeUrl(
+      sourcePath,
+      isLocalImport(value, sourcePath)
+        ? join("_import", value.startsWith("/") ? "." : dirname(sourcePath), resolveImportHash(root, sourcePath, value))
+        : resolveImport(value)
+    );
   };
 }
 
