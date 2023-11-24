@@ -149,7 +149,7 @@ export function resolveSources(input: string, root: string, sourcePath: string):
       output.replaceLeft(
         node.source.start,
         node.source.end,
-        JSON.stringify(resolveImport(value.startsWith("/") ? relativeUrl(sourcePath, value) : value))
+        JSON.stringify(value.startsWith("/") ? relativeUrl(sourcePath, value) : resolveImport(value))
       );
     }
   }
