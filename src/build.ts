@@ -6,7 +6,7 @@ import {fileURLToPath} from "node:url";
 import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
-import {resolveSources} from "./javascript/imports.js";
+import {createModulePreviewResolver, rewriteModule} from "./javascript/imports.js";
 import {renderServerless} from "./render.js";
 import {makeCLIResolver} from "./resolver.js";
 
@@ -78,6 +78,7 @@ export async function build({sourceRoot, outputRoot, verbose = true, addPublic =
   }
 
   // Copy over the imported modules.
+  const importResolver = createModulePreviewResolver(sourceRoot);
   for (const file of imports) {
     const sourcePath = join(sourceRoot, file);
     const outputPath = join(outputRoot, "_import", file);
@@ -87,7 +88,7 @@ export async function build({sourceRoot, outputRoot, verbose = true, addPublic =
     }
     if (verbose) console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);
-    await writeFile(outputPath, resolveSources(await readFile(sourcePath, "utf-8"), sourceRoot, file));
+    await writeFile(outputPath, rewriteModule(await readFile(sourcePath, "utf-8"), file, importResolver));
   }
 
   // Copy over required distribution files from node_modules.

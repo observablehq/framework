@@ -13,7 +13,7 @@ import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError} from "./error.js";
 import {maybeStat} from "./files.js";
-import {resolveSources} from "./javascript/imports.js";
+import {createModulePreviewResolver, rewriteModule} from "./javascript/imports.js";
 import {diffMarkdown, readMarkdown} from "./markdown.js";
 import type {ParseResult, ReadMarkdownResult} from "./markdown.js";
 import {renderPreview} from "./render.js";
@@ -81,7 +81,7 @@ export class Server {
           if (!isEnoent(error)) throw error;
           throw new HttpError("Not found", 404);
         }
-        end(req, res, resolveSources(js, this.root, file), "text/javascript");
+        end(req, res, rewriteModule(js, file, createModulePreviewResolver(this.root)), "text/javascript");
       } else if (pathname.startsWith("/_file/")) {
         const path = pathname.slice("/_file".length);
         const filepath = join(this.root, path);

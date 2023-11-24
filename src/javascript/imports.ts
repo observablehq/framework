@@ -132,24 +132,23 @@ function resolveImportHash(root: string, path: string, specifier: string): strin
 }
 
 // Rewrites import specifiers in the specified ES module source.
-export function resolveSources(input: string, root: string, sourcePath: string): string {
+export function rewriteModule(input: string, sourcePath: string, resolver: ImportResolver): string {
   const body = Parser.parse(input, parseOptions) as any;
   const output = new Sourcemap(input);
 
   simple(body, {
-    ImportDeclaration: resolveSource,
-    ImportExpression: resolveSource,
-    ExportAllDeclaration: resolveSource,
-    ExportNamedDeclaration: resolveSource
+    ImportDeclaration: rewriteImport,
+    ImportExpression: rewriteImport,
+    ExportAllDeclaration: rewriteImport,
+    ExportNamedDeclaration: rewriteImport
   });
 
-  function resolveSource(node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration) {
+  function rewriteImport(node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration) {
     if (isStringLiteral(node.source)) {
-      const value = resolveImportHash(root, sourcePath, getStringLiteralValue(node.source));
       output.replaceLeft(
         node.source.start,
         node.source.end,
-        JSON.stringify(value.startsWith("/") ? relativeUrl(sourcePath, value) : resolveImport(value))
+        JSON.stringify(resolver(sourcePath, getStringLiteralValue(node.source)))
       );
     }
   }
@@ -157,23 +156,27 @@ export function resolveSources(input: string, root: string, sourcePath: string):
   return String(output);
 }
 
-// TODO parallelize multiple static imports
-export function rewriteImports(output: any, rootNode: JavaScriptNode, root: string, sourcePath: string): void {
-  simple(rootNode.body, {
+// Rewrites import specifiers in the specified JavaScript fenced code block or
+// inline expression. TODO parallelize multiple static imports
+export function rewriteImports(
+  output: Sourcemap,
+  cell: JavaScriptNode,
+  sourcePath: string,
+  resolver: ImportResolver
+): void {
+  simple(cell.body, {
     ImportExpression(node) {
       if (isStringLiteral(node.source)) {
-        const value = getStringLiteralValue(node.source);
         output.replaceLeft(
           node.source.start,
           node.source.end,
-          JSON.stringify(resolveMarkdownImport(root, sourcePath, value))
+          JSON.stringify(resolver(sourcePath, getStringLiteralValue(node.source)))
         );
       }
     },
     ImportDeclaration(node) {
       if (isStringLiteral(node.source)) {
-        const value = getStringLiteralValue(node.source);
-        rootNode.async = true;
+        cell.async = true;
         output.replaceLeft(
           node.start,
           node.end,
@@ -181,22 +184,30 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode, root: stri
             node.specifiers.some(isNotNamespaceSpecifier)
               ? `{${node.specifiers.filter(isNotNamespaceSpecifier).map(rewriteImportSpecifier).join(", ")}}`
               : node.specifiers.find(isNamespaceSpecifier)?.local.name ?? "{}"
-          } = await import(${JSON.stringify(resolveMarkdownImport(root, sourcePath, value))});`
+          } = await import(${JSON.stringify(resolver(sourcePath, getStringLiteralValue(node.source)))});`
         );
       }
     }
   });
 }
 
-function resolveMarkdownImport(root, sourcePath, value) {
-  return isLocalImport(value, sourcePath)
-    ? relativeImport(sourcePath, resolveImportHash(root, sourcePath, value))
-    : resolveImport(value);
+export function createModulePreviewResolver(root: string): ImportResolver {
+  return (sourcePath, value) => {
+    value = resolveImportHash(root, sourcePath, value);
+    return value.startsWith("/") ? relativeUrl(sourcePath, value) : resolveImport(value);
+  };
 }
 
-function relativeImport(sourcePath, value) {
-  return relativeUrl(sourcePath, join("/_import/", value.startsWith("/") ? "." : dirname(sourcePath), value));
+export function createMarkdownPreviewResolver(root: string): ImportResolver {
+  return (sourcePath, value) => {
+    value = resolveImportHash(root, sourcePath, value);
+    return isLocalImport(value, sourcePath)
+      ? relativeUrl(sourcePath, join("_import", value.startsWith("/") ? "." : dirname(sourcePath), value))
+      : resolveImport(value);
+  };
 }
+
+export type ImportResolver = (path: string, specifier: string) => string;
 
 function rewriteImportSpecifier(node) {
   return node.type === "ImportDefaultSpecifier"
