@@ -52,9 +52,6 @@ export function findImports(body: Node, root: string, sourcePath: string) {
     paths.add(path);
     imports.push({type: "local", name: path});
     try {
-
-      const load = join(root, dirname(sourcePath), path);
-
       const input = readFileSync(join(root, dirname(sourcePath), path), "utf-8");
       const program = Parser.parse(input, parseOptions);
       simple(program, {
@@ -91,7 +88,7 @@ export function resolveSources(input: string, sourcePath: string) {
     ImportExpression: resolveSource,
     ExportAllDeclaration: resolveSource,
     ExportNamedDeclaration: resolveSource,
-    CallExpression: resolveFetch,
+    CallExpression: resolveFetch
   });
 
   function resolveSource(node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration) {
