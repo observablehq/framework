@@ -124,7 +124,7 @@ export function resolveSources(input: string, sourcePath: string) {
       output.replaceLeft(
         url.start,
         url.end,
-        JSON.stringify(value.startsWith("/") ? relativeImport(sourcePath, value) : resolveImport(value))
+        JSON.stringify(relativeImport(sourcePath, value))
       );
     }
   }
