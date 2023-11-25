@@ -65,7 +65,8 @@ export function findImports(body: Node, root: string, sourcePath: string) {
         ImportDeclaration: findLocalImport,
         ImportExpression: findLocalImport,
         ExportAllDeclaration: findLocalImport,
-        ExportNamedDeclaration: findLocalImport
+        ExportNamedDeclaration: findLocalImport,
+        CallExpression: findLocalFetch
       });
     } catch {
       // ignore missing files and syntax errors
@@ -80,6 +81,13 @@ export function findImports(body: Node, root: string, sourcePath: string) {
           // non-local imports don't need to be traversed
         }
       }
+    }
+  }
+
+  function findLocalFetch(node) {
+    if (isLocalFetch(node, [], sourcePath)) {
+      const value = getStringLiteralValue(node.arguments[0]);
+      imports.push({ name: value, type: "local" });
     }
   }
 
