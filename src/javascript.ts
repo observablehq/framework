@@ -6,7 +6,7 @@ import {findDeclarations} from "./javascript/declarations.js";
 import {findFeatures} from "./javascript/features.js";
 import {rewriteFetches} from "./javascript/fetches.js";
 import {defaultGlobals} from "./javascript/globals.js";
-import {createMarkdownPreviewResolver, findExports, findImports, rewriteImports} from "./javascript/imports.js";
+import {createImportResolver, findExports, findImports, rewriteImports} from "./javascript/imports.js";
 import {findReferences} from "./javascript/references.js";
 import {syntaxError} from "./javascript/syntaxError.js";
 import {Sourcemap} from "./sourcemap.js";
@@ -75,7 +75,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
       output.insertRight(input.length, "\n))");
       inputs.push("display");
     }
-    rewriteImports(output, node, sourcePath, createMarkdownPreviewResolver(root));
+    rewriteImports(output, node, sourcePath, createImportResolver(root, "_import"));
     rewriteFetches(output, node, sourcePath);
     return {
       id,

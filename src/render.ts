@@ -1,7 +1,7 @@
 import {parseHTML} from "linkedom";
 import {type Config, type Page, type Section, mergeToc} from "./config.js";
 import {type Html, html} from "./html.js";
-import {type ImportResolver, createMarkdownPreviewResolver} from "./javascript/imports.js";
+import {type ImportResolver, createImportResolver} from "./javascript/imports.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
 import {type CellPiece, type ParseResult, computeMarkdownHash, parseMarkdown} from "./markdown.js";
 import {type PageLink, pager} from "./pager.js";
@@ -73,7 +73,7 @@ ${
 <link rel="stylesheet" type="text/css" href="${relativeUrl(path, "/_observablehq/style.css")}">${renderImportPreloads(
     parseResult,
     path,
-    createMarkdownPreviewResolver(root)
+    createImportResolver(root, "_import")
   )}
 <script type="module">${html.unsafe(`
 

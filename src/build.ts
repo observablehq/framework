@@ -6,7 +6,7 @@ import {fileURLToPath} from "node:url";
 import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
-import {createModulePreviewResolver, rewriteModule} from "./javascript/imports.js";
+import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {renderServerless} from "./render.js";
 import {makeCLIResolver} from "./resolver.js";
 
@@ -78,7 +78,7 @@ export async function build({sourceRoot, outputRoot, verbose = true, addPublic =
   }
 
   // Copy over the imported modules.
-  const importResolver = createModulePreviewResolver(sourceRoot);
+  const importResolver = createImportResolver(sourceRoot);
   for (const file of imports) {
     const sourcePath = join(sourceRoot, file);
     const outputPath = join(outputRoot, "_import", file);

@@ -189,23 +189,12 @@ export function rewriteImports(
   });
 }
 
-export function createModulePreviewResolver(root: string): ImportResolver {
+export function createImportResolver(root: string, base = "."): ImportResolver {
   return (sourcePath, value) => {
     return relativeUrl(
       sourcePath,
       isLocalImport(value, sourcePath)
-        ? join(value.startsWith("/") ? "." : dirname(sourcePath), resolveImportHash(root, sourcePath, value))
-        : resolveImport(value)
-    );
-  };
-}
-
-export function createMarkdownPreviewResolver(root: string): ImportResolver {
-  return (sourcePath, value) => {
-    return relativeUrl(
-      sourcePath,
-      isLocalImport(value, sourcePath)
-        ? join("_import", value.startsWith("/") ? "." : dirname(sourcePath), resolveImportHash(root, sourcePath, value))
+        ? join(base, value.startsWith("/") ? "." : dirname(sourcePath), resolveImportHash(root, sourcePath, value))
         : resolveImport(value)
     );
   };
