@@ -56,8 +56,9 @@ export abstract class Loader {
     const exact = this.findExact(sourceRoot, targetPath);
     if (exact) return exact;
     let dir = targetPath;
-    while ("/" !== (dir = dirname(dir))) {
-      const archive = dir + ".zip";
+    let parent: string;
+    while ((parent = dirname(dir)) !== dir) {
+      const archive = (dir = parent) + ".zip";
       if (existsSync(join(sourceRoot, archive))) {
         return new Extractor({
           preload: async () => archive,
