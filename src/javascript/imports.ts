@@ -32,7 +32,7 @@ export function findExports(body: Node): (ExportAllDeclaration | ExportNamedDecl
 // import paths are relative to the given source path.
 export function findImports(body: Node, root: string, path: string): ImportReference[] {
   const imports: ImportReference[] = [];
-  const paths = new Set<string>();
+  const paths: string[] = [];
 
   simple(body, {
     ImportDeclaration: findImport,
@@ -43,12 +43,15 @@ export function findImports(body: Node, root: string, path: string): ImportRefer
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
       if (isLocalImport(value, path)) {
-        parseLocalImports(root, join(value.startsWith("/") ? "." : dirname(path), value), paths, imports);
+        paths.push(join(value.startsWith("/") ? "." : dirname(path), value));
       } else {
         imports.push({name: value, type: "global"});
       }
     }
   }
+
+  // Recursively process any imported local ES modules.
+  imports.push(...parseLocalImports(root, paths));
 
   // Make all local paths relative to the source path.
   for (const i of imports) {
@@ -64,32 +67,37 @@ export function findImports(body: Node, root: string, path: string): ImportRefer
 // processing imported modules recursively. Accumulates visited paths, and
 // appends to imports. The paths here are always relative to the root (unlike
 // findImports above!).
-function parseLocalImports(
-  root: string,
-  path: string,
-  paths: Set<string> = new Set(),
-  imports: ImportReference[] = []
-): ImportReference[] {
-  if (paths.has(path)) return imports;
-  paths.add(path);
-  imports.push({type: "local", name: path});
-  try {
-    const input = readFileSync(join(root, path), "utf-8");
-    const program = Parser.parse(input, parseOptions);
-    simple(program, {
-      ImportDeclaration: findImport,
-      ImportExpression: findImport,
-      ExportAllDeclaration: findImport,
-      ExportNamedDeclaration: findImport
-    });
-  } catch (error) {
-    if (!isEnoent(error) && !(error instanceof SyntaxError)) throw error;
+export function parseLocalImports(root: string, paths: string[]): ImportReference[] {
+  const imports: ImportReference[] = [];
+  const set = new Set(paths);
+  for (const path of set) {
+    imports.push({type: "local", name: path});
+    try {
+      const input = readFileSync(join(root, path), "utf-8");
+      const program = Parser.parse(input, parseOptions);
+      simple(
+        program,
+        {
+          ImportDeclaration: findImport,
+          ImportExpression: findImport,
+          ExportAllDeclaration: findImport,
+          ExportNamedDeclaration: findImport
+        },
+        undefined,
+        path
+      );
+    } catch (error) {
+      if (!isEnoent(error) && !(error instanceof SyntaxError)) throw error;
+    }
   }
-  function findImport(node) {
+  function findImport(
+    node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration,
+    path: string
+  ) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
       if (isLocalImport(value, path)) {
-        parseLocalImports(root, join(value.startsWith("/") ? "." : dirname(path), value), paths, imports);
+        set.add(join(value.startsWith("/") ? "." : dirname(path), value));
       } else {
         imports.push({name: value, type: "global"});
         // non-local imports don't need to be traversed
@@ -190,7 +198,7 @@ function getModuleHash(root: string, path: string): string {
     if (!isEnoent(error)) throw error;
   }
   // TODO can’t simply concatenate here; we need a delimiter
-  for (const i of parseLocalImports(root, path)) {
+  for (const i of parseLocalImports(root, [path])) {
     if (i.type === "local") {
       try {
         hash.update(readFileSync(join(root, i.name), "utf-8"));
