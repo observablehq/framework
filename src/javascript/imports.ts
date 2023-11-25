@@ -82,8 +82,8 @@ function parseLocalImports(
       ExportAllDeclaration: findImport,
       ExportNamedDeclaration: findImport
     });
-  } catch {
-    // ignore missing files and syntax errors
+  } catch (error) {
+    if (!isEnoent(error) && !(error instanceof SyntaxError)) throw error;
   }
   function findImport(node) {
     if (isStringLiteral(node.source)) {
