@@ -43,7 +43,7 @@ export function findImports(body: Node, root: string, path: string): ImportRefer
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
       if (isLocalImport(value, path)) {
-        addLocalImports(root, join(value.startsWith("/") ? "." : dirname(path), value), paths, imports);
+        parseLocalImports(root, join(value.startsWith("/") ? "." : dirname(path), value), paths, imports);
       } else {
         imports.push({name: value, type: "global"});
       }
@@ -64,7 +64,7 @@ export function findImports(body: Node, root: string, path: string): ImportRefer
 // processing imported modules recursively. Accumulates visited paths, and
 // appends to imports. The paths here are always relative to the root (unlike
 // findImports above!).
-function addLocalImports(
+function parseLocalImports(
   root: string,
   path: string,
   paths: Set<string> = new Set(),
@@ -89,7 +89,7 @@ function addLocalImports(
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
       if (isLocalImport(value, path)) {
-        addLocalImports(root, join(value.startsWith("/") ? "." : dirname(path), value), paths, imports);
+        parseLocalImports(root, join(value.startsWith("/") ? "." : dirname(path), value), paths, imports);
       } else {
         imports.push({name: value, type: "global"});
         // non-local imports don't need to be traversed
@@ -110,7 +110,7 @@ function getModuleHash(root: string, path: string): string {
     if (!isEnoent(error)) throw error;
   }
   // TODO can’t simply concatenate here; we need a delimiter
-  for (const i of addLocalImports(root, path)) {
+  for (const i of parseLocalImports(root, path)) {
     if (i.type === "local") {
       try {
         hash.update(readFileSync(join(root, i.name), "utf-8"));
