@@ -5,6 +5,7 @@ import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
+import {isEnoent} from "./error.js";
 import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
 import {resolveSources} from "./javascript/imports.js";
 import {renderServerless} from "./render.js";
@@ -70,7 +71,12 @@ export async function build({sourceRoot, outputRoot, verbose = true, addPublic =
         if (verbose) console.error("missing referenced file", sourcePath);
         continue;
       }
-      sourcePath = join(sourceRoot, await loader.load({verbose}));
+      try {
+        sourcePath = join(sourceRoot, await loader.load({verbose}));
+      } catch (error) {
+        if (!isEnoent(error)) throw error;
+        continue;
+      }
     }
     if (verbose) console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);

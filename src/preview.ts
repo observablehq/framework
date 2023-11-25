@@ -94,14 +94,12 @@ export class Server {
         // Look for a data loader for this file.
         const loader = Loader.find(this.root, path);
         if (loader) {
-          let outpath;
           try {
-            outpath = await loader.load();
-          } catch {
-            throw new HttpError("Internal error", 500);
+            send(req, await loader.load(), {root: this.root}).pipe(res);
+            return;
+          } catch (error) {
+            if (!isEnoent(error)) throw error;
           }
-          send(req, outpath, {root: this.root}).pipe(res);
-          return;
         }
         throw new HttpError("Not found", 404);
       } else {
