@@ -1,8 +1,9 @@
 import {spawn} from "node:child_process";
-import {type WriteStream, existsSync, statSync} from "node:fs";
+import {type WriteStream, createReadStream, existsSync, statSync} from "node:fs";
 import {mkdir, open, readFile, rename, unlink} from "node:fs/promises";
 import {dirname, extname, join} from "node:path";
 import JSZip from "jszip";
+import {extract} from "tar-stream";
 import {maybeStat, prepareOutput} from "./files.js";
 import {faint, green, red, yellow} from "./tty.js";
 
@@ -58,25 +59,27 @@ export abstract class Loader {
     let dir = targetPath;
     let parent: string;
     while ((parent = dirname(dir)) !== dir) {
-      const archive = (dir = parent) + ".zip";
-      if (existsSync(join(sourceRoot, archive))) {
-        return new Extractor({
-          preload: async () => archive,
-          inflatePath: targetPath.slice(archive.length - "zip".length),
-          path: join(sourceRoot, archive),
-          sourceRoot,
-          targetPath
-        });
-      }
-      const archiveLoader = this.findExact(sourceRoot, archive);
-      if (archiveLoader) {
-        return new Extractor({
-          preload: async ({verbose}) => archiveLoader.load({verbose}),
-          inflatePath: targetPath.slice(archive.length - "zip".length),
-          path: archiveLoader.path,
-          sourceRoot,
-          targetPath
-        });
+      for (const [ext, Extractor] of extractors) {
+        const archive = (dir = parent) + ext;
+        if (existsSync(join(sourceRoot, archive))) {
+          return new Extractor({
+            preload: async () => archive,
+            inflatePath: targetPath.slice(archive.length - ext.length + 1),
+            path: join(sourceRoot, archive),
+            sourceRoot,
+            targetPath
+          });
+        }
+        const archiveLoader = this.findExact(sourceRoot, archive);
+        if (archiveLoader) {
+          return new Extractor({
+            preload: async ({verbose}) => archiveLoader.load({verbose}),
+            inflatePath: targetPath.slice(archive.length - ext.length + 1),
+            path: archiveLoader.path,
+            sourceRoot,
+            targetPath
+          });
+        }
       }
     }
   }
@@ -189,7 +192,7 @@ class CommandLoader extends Loader {
   }
 }
 
-class Extractor extends Loader {
+class ZipExtractor extends Loader {
   private readonly preload: (options?: LoadOptions) => Promise<string>;
   private readonly inflatePath: string;
 
@@ -207,6 +210,38 @@ class Extractor extends Loader {
     await new Promise((resolve, reject) => pipe.on("error", reject).on("finish", resolve));
   }
 }
+
+class TarExtractor extends Loader {
+  private readonly preload: (options?: LoadOptions) => Promise<string>;
+  private readonly inflatePath: string;
+
+  constructor({preload, inflatePath, path, sourceRoot, targetPath}) {
+    super({path, sourceRoot, targetPath});
+    this.preload = preload;
+    this.inflatePath = inflatePath;
+  }
+
+  async exec(out: WriteStream, options: LoadOptions = {}): Promise<void> {
+    const archivePath = join(this.sourceRoot, await this.preload(options));
+    const tar = extract();
+    createReadStream(archivePath).pipe(tar);
+    for await (const entry of tar) {
+      if (entry.header.name === this.inflatePath) {
+        const pipe = entry.pipe(out);
+        await new Promise((resolve, reject) => pipe.on("error", reject).on("finish", resolve));
+        return;
+      } else {
+        entry.resume();
+      }
+    }
+    throw Object.assign(new Error("file not found"), {code: "ENOENT"});
+  }
+}
+
+const extractors = [
+  [".zip", ZipExtractor],
+  [".tar", TarExtractor]
+] as const;
 
 function formatSize(size) {
   if (!size) return yellow("empty output");
