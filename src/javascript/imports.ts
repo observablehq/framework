@@ -99,36 +99,6 @@ function parseLocalImports(
   return imports;
 }
 
-// Resolves the content hash for the module at the specified path within the
-// given source root. This involves parsing the specified module to process
-// transitive imports.
-function getModuleHash(root: string, path: string): string {
-  const hash = createHash("sha256");
-  try {
-    hash.update(readFileSync(join(root, path), "utf-8"));
-  } catch (error) {
-    if (!isEnoent(error)) throw error;
-  }
-  // TODO can’t simply concatenate here; we need a delimiter
-  for (const i of parseLocalImports(root, path)) {
-    if (i.type === "local") {
-      try {
-        hash.update(readFileSync(join(root, i.name), "utf-8"));
-      } catch (error) {
-        if (!isEnoent(error)) throw error;
-        continue;
-      }
-    }
-  }
-  return hash.digest("hex");
-}
-
-// Given the specified local import, applies the ?sha query string based on the
-// content hash of the imported module and its transitively imported modules.
-function resolveImportHash(root: string, path: string, specifier: string): string {
-  return `${specifier}?sha=${getModuleHash(root, join(specifier.startsWith("/") ? "." : dirname(path), specifier))}`;
-}
-
 // Rewrites import specifiers in the specified ES module source.
 export function rewriteModule(input: string, sourcePath: string, resolver: ImportResolver): string {
   const body = Parser.parse(input, parseOptions) as any;
@@ -189,18 +159,49 @@ export function rewriteImports(
   });
 }
 
+export type ImportResolver = (path: string, specifier: string) => string;
+
 export function createImportResolver(root: string, base = "."): ImportResolver {
   return (sourcePath, value) => {
-    return relativeUrl(
-      sourcePath,
-      isLocalImport(value, sourcePath)
-        ? join(base, value.startsWith("/") ? "." : dirname(sourcePath), resolveImportHash(root, sourcePath, value))
-        : resolveImport(value)
-    );
+    return isLocalImport(value, sourcePath)
+      ? relativeUrl(sourcePath, join(base, value.startsWith("/") ? "." : dirname(sourcePath), resolveImportHash(root, sourcePath, value))) // prettier-ignore
+      : value === "npm:@observablehq/runtime"
+      ? relativeUrl(sourcePath, "_observablehq/runtime.js")
+      : value.startsWith("npm:")
+      ? `https://cdn.jsdelivr.net/npm/${value.slice("npm:".length)}/+esm`
+      : value;
   };
 }
 
-export type ImportResolver = (path: string, specifier: string) => string;
+// Given the specified local import, applies the ?sha query string based on the
+// content hash of the imported module and its transitively imported modules.
+function resolveImportHash(root: string, path: string, specifier: string): string {
+  return `${specifier}?sha=${getModuleHash(root, join(specifier.startsWith("/") ? "." : dirname(path), specifier))}`;
+}
+
+// Resolves the content hash for the module at the specified path within the
+// given source root. This involves parsing the specified module to process
+// transitive imports.
+function getModuleHash(root: string, path: string): string {
+  const hash = createHash("sha256");
+  try {
+    hash.update(readFileSync(join(root, path), "utf-8"));
+  } catch (error) {
+    if (!isEnoent(error)) throw error;
+  }
+  // TODO can’t simply concatenate here; we need a delimiter
+  for (const i of parseLocalImports(root, path)) {
+    if (i.type === "local") {
+      try {
+        hash.update(readFileSync(join(root, i.name), "utf-8"));
+      } catch (error) {
+        if (!isEnoent(error)) throw error;
+        continue;
+      }
+    }
+  }
+  return hash.digest("hex");
+}
 
 function rewriteImportSpecifier(node) {
   return node.type === "ImportDefaultSpecifier"
@@ -223,12 +224,4 @@ function isNamespaceSpecifier(node) {
 
 function isNotNamespaceSpecifier(node) {
   return node.type !== "ImportNamespaceSpecifier";
-}
-
-export function resolveImport(specifier: string): string {
-  return !specifier.startsWith("npm:")
-    ? specifier
-    : specifier === "npm:@observablehq/runtime"
-    ? "/_observablehq/runtime.js"
-    : `https://cdn.jsdelivr.net/npm/${specifier.slice("npm:".length)}/+esm`;
 }
