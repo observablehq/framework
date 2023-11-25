@@ -124,3 +124,16 @@ RuntimeError: Unable to load file: earthquakes.csv
 ```
 
 When any data loader fails, the entire build fails.
+
+## Archives
+
+A file can be pulled from a zip archive when referenced with the name `{archive}/{file}`.
+
+For instance, calling:
+>  `FileAttachment("earthquakes/202309.csv").csv({typed: true})`
+
+extracts the `202309.csv` file from the `earthquakes.zip` archive.
+
+The archive can be a static file or the output of a dynamic data loader such as `earthquakes.zip.R`. This allows you to run a single data analysis script to generate several outputs in one go, then collect them on your page as individual file attachments.
+
+Like with any other file, these file attachments are live in preview, and are added to the build if and only if referenced directly.

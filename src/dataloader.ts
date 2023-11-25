@@ -1,7 +1,8 @@
 import {spawn} from "node:child_process";
-import {existsSync, statSync} from "node:fs";
-import {mkdir, open, rename, unlink} from "node:fs/promises";
+import {type WriteStream, existsSync, statSync} from "node:fs";
+import {mkdir, open, readFile, rename, unlink} from "node:fs/promises";
 import {dirname, extname, join} from "node:path";
+import JSZip from "jszip";
 import {maybeStat, prepareOutput} from "./files.js";
 import {faint, green, red, yellow} from "./tty.js";
 
@@ -17,20 +18,11 @@ const languages = {
   ".exe": null
 };
 
-export class Loader {
-  /**
-   * The command to run, such as "node" for a JavaScript loader, "tsx" for
-   * TypeScript, and "sh" for a shell script.
-   */
-  private readonly command: string;
+export interface LoadOptions {
+  verbose?: boolean;
+}
 
-  /**
-   * Args to pass to the command; currently this is a single argument of the
-   * path to the loader script relative to the current working directory. (TODO
-   * Support passing additional arguments to loaders.)
-   */
-  private readonly args: string[];
-
+export abstract class Loader {
   /**
    * The path to the loader script or executable relative to the current working
    * directory. This is exposed so that clients can check which file to watch to
@@ -50,9 +42,7 @@ export class Loader {
    */
   readonly targetPath: string;
 
-  private constructor({command, args, path, sourceRoot, targetPath}) {
-    this.command = command;
-    this.args = args;
+  constructor({path, sourceRoot, targetPath}) {
     this.path = path;
     this.sourceRoot = sourceRoot;
     this.targetPath = targetPath;
@@ -63,15 +53,43 @@ export class Loader {
    * source root, if it exists. If there is no such loader, returns undefined.
    */
   static find(sourceRoot: string, targetPath: string): Loader | undefined {
+    const exact = this.findExact(sourceRoot, targetPath);
+    if (exact) return exact;
+    let dir = targetPath;
+    let parent: string;
+    while ((parent = dirname(dir)) !== dir) {
+      const archive = (dir = parent) + ".zip";
+      if (existsSync(join(sourceRoot, archive))) {
+        return new Extractor({
+          preload: async () => archive,
+          inflatePath: targetPath.slice(archive.length - "zip".length),
+          path: join(sourceRoot, archive),
+          sourceRoot,
+          targetPath
+        });
+      }
+      const archiveLoader = this.findExact(sourceRoot, archive);
+      if (archiveLoader) {
+        return new Extractor({
+          preload: async ({verbose}) => archiveLoader.load({verbose}),
+          inflatePath: targetPath.slice(archive.length - "zip".length),
+          path: archiveLoader.path,
+          sourceRoot,
+          targetPath
+        });
+      }
+    }
+  }
+
+  private static findExact(sourceRoot: string, targetPath: string): Loader | undefined {
     for (const ext in languages) {
-      const sourcePath = targetPath + ext;
-      const path = join(sourceRoot, sourcePath);
-      if (!existsSync(path)) continue;
+      if (!existsSync(join(sourceRoot, targetPath + ext))) continue;
       if (extname(targetPath) === "") {
-        console.warn(`invalid data loader path: ${sourcePath}`);
+        console.warn(`invalid data loader path: ${targetPath + ext}`);
         return;
       }
-      return new Loader({
+      const path = join(sourceRoot, targetPath + ext);
+      return new CommandLoader({
         command: languages[ext] ?? path,
         args: languages[ext] == null ? [] : [path],
         path,
@@ -86,8 +104,10 @@ export class Loader {
    * to the source root; this is within the .observablehq/cache folder within
    * the source root.
    */
-  async load({verbose = true}: {verbose?: boolean} = {}): Promise<string> {
-    let command = runningCommands.get(this.path);
+  async load(options: LoadOptions = {}): Promise<string> {
+    const {verbose = true} = options;
+    const key = join(this.sourceRoot, this.targetPath);
+    let command = runningCommands.get(key);
     if (!command) {
       command = (async () => {
         const outputPath = join(".observablehq", "cache", this.targetPath);
@@ -100,20 +120,15 @@ export class Loader {
         const tempPath = join(this.sourceRoot, ".observablehq", "cache", `${this.targetPath}.${process.pid}`);
         await prepareOutput(tempPath);
         const tempFd = await open(tempPath, "w");
-        const tempFileStream = tempFd.createWriteStream({highWaterMark: 1024 * 1024});
-        const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", "pipe", "inherit"]});
-        subprocess.stdout.pipe(tempFileStream);
-        const code = await new Promise((resolve, reject) => {
-          subprocess.on("error", reject);
-          subprocess.on("close", resolve);
-        });
-        await tempFd.close();
-        if (code === 0) {
+        try {
+          await this.exec(tempFd.createWriteStream({highWaterMark: 1024 * 1024}), options);
           await mkdir(dirname(cachePath), {recursive: true});
           await rename(tempPath, cachePath);
-        } else {
+        } catch (error) {
           await unlink(tempPath);
-          throw new Error(`loader exited with code ${code}`);
+          throw error;
+        } finally {
+          await tempFd.close();
         }
         return outputPath;
       })();
@@ -135,6 +150,61 @@ export class Loader {
       );
     }
     return command;
+  }
+
+  abstract exec(out: WriteStream, options?: LoadOptions): Promise<void>;
+}
+
+class CommandLoader extends Loader {
+  /**
+   * The command to run, such as "node" for a JavaScript loader, "tsx" for
+   * TypeScript, and "sh" for a shell script. "noop" when we only need to
+   * inflate a file from a static archive.
+   */
+  private readonly command: string;
+
+  /**
+   * Args to pass to the command; currently this is a single argument of the
+   * path to the loader script relative to the current working directory. (TODO
+   * Support passing additional arguments to loaders.)
+   */
+  private readonly args: string[];
+
+  constructor({command, args, path, sourceRoot, targetPath}) {
+    super({path, sourceRoot, targetPath});
+    this.command = command;
+    this.args = args;
+  }
+
+  async exec(out: WriteStream): Promise<void> {
+    const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", "pipe", "inherit"]});
+    subprocess.stdout.pipe(out);
+    const code = await new Promise((resolve, reject) => {
+      subprocess.on("error", reject);
+      subprocess.on("close", resolve);
+    });
+    if (code !== 0) {
+      throw new Error(`exited with code ${code}`);
+    }
+  }
+}
+
+class Extractor extends Loader {
+  private readonly preload: (options?: LoadOptions) => Promise<string>;
+  private readonly inflatePath: string;
+
+  constructor({preload, inflatePath, path, sourceRoot, targetPath}) {
+    super({path, sourceRoot, targetPath});
+    this.preload = preload;
+    this.inflatePath = inflatePath;
+  }
+
+  async exec(out: WriteStream, options: LoadOptions = {}): Promise<void> {
+    const archivePath = join(this.sourceRoot, await this.preload(options));
+    const file = (await JSZip.loadAsync(await readFile(archivePath))).file(this.inflatePath);
+    if (!file) throw Object.assign(new Error("file not found"), {code: "ENOENT"});
+    const pipe = file.nodeStream().pipe(out);
+    await new Promise((resolve, reject) => pipe.on("error", reject).on("finish", resolve));
   }
 }
 
