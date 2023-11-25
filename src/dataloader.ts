@@ -4,6 +4,7 @@ import {mkdir, open, readFile, rename, unlink} from "node:fs/promises";
 import {dirname, extname, join} from "node:path";
 import JSZip from "jszip";
 import {maybeStat, prepareOutput} from "./files.js";
+import {faint, green, red, yellow} from "./tty.js";
 
 const runningCommands = new Map<string, Promise<string>>();
 
@@ -204,15 +205,6 @@ class Extractor extends Loader {
     const pipe = file.nodeStream().pipe(out);
     await new Promise((resolve, reject) => pipe.on("error", reject).on("finish", resolve));
   }
-}
-
-const faint = color(2);
-const red = color(31);
-const green = color(32);
-const yellow = color(33);
-
-function color(code) {
-  return process.stdout.isTTY ? (text) => `\x1b[${code}m${text}\x1b[0m` : String;
 }
 
 function formatSize(size) {
