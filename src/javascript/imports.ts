@@ -87,7 +87,7 @@ export function findImports(body: Node, root: string, sourcePath: string) {
   function findLocalFetch(node) {
     if (isLocalFetch(node, [], sourcePath)) {
       const value = getStringLiteralValue(node.arguments[0]);
-      imports.push({ name: value, type: "local" });
+      imports.push({name: value, type: "local"});
     }
   }
 
