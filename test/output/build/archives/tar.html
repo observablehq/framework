@@ -30,6 +30,16 @@ display((
 await FileAttachment("dynamic-tar/does-not-exist.txt").text()
 ))
 }});
+define({id: "7e5740fd", inputs: ["FileAttachment","display"], files: [{"name":"dynamic-tar-gz/file.txt","mimeType":"text/plain","path":"./_file/dynamic-tar-gz/file.txt"}], body: async (FileAttachment,display) => {
+display((
+await FileAttachment("dynamic-tar-gz/file.txt").text()
+))
+}});
+define({id: "d0a58efd", inputs: ["FileAttachment","display"], files: [{"name":"dynamic-tar-gz/does-not-exist.txt","mimeType":"text/plain","path":"./_file/dynamic-tar-gz/does-not-exist.txt"}], body: async (FileAttachment,display) => {
+display((
+await FileAttachment("dynamic-tar-gz/does-not-exist.txt").text()
+))
+}});
 
 </script>
 <input id="observablehq-sidebar-toggle" type="checkbox">
@@ -55,6 +65,8 @@ await FileAttachment("dynamic-tar/does-not-exist.txt").text()
 <div id="cell-d84cd7fb" class="observablehq observablehq--block"></div>
 <div id="cell-86bd51aa" class="observablehq observablehq--block"></div>
 <div id="cell-95938c22" class="observablehq observablehq--block"></div>
+<div id="cell-7e5740fd" class="observablehq observablehq--block"></div>
+<div id="cell-d0a58efd" class="observablehq observablehq--block"></div>
 </main>
 <footer id="observablehq-footer">
 <nav><a rel="prev" href="./"><span>Home</span></a><a rel="next" href="./zip"><span>Zip</span></a></nav>

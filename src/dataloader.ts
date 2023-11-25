@@ -2,6 +2,7 @@ import {spawn} from "node:child_process";
 import {type WriteStream, createReadStream, existsSync, statSync} from "node:fs";
 import {mkdir, open, readFile, rename, unlink} from "node:fs/promises";
 import {dirname, extname, join} from "node:path";
+import {createGunzip} from "node:zlib";
 import JSZip from "jszip";
 import {extract} from "tar-stream";
 import {maybeStat, prepareOutput} from "./files.js";
@@ -155,7 +156,7 @@ export abstract class Loader {
     return command;
   }
 
-  abstract exec(out: WriteStream, options?: LoadOptions): Promise<void>;
+  abstract exec(output: WriteStream, options?: LoadOptions): Promise<void>;
 }
 
 class CommandLoader extends Loader {
@@ -179,9 +180,9 @@ class CommandLoader extends Loader {
     this.args = args;
   }
 
-  async exec(out: WriteStream): Promise<void> {
+  async exec(output: WriteStream): Promise<void> {
     const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", "pipe", "inherit"]});
-    subprocess.stdout.pipe(out);
+    subprocess.stdout.pipe(output);
     const code = await new Promise((resolve, reject) => {
       subprocess.on("error", reject);
       subprocess.on("close", resolve);
@@ -202,11 +203,11 @@ class ZipExtractor extends Loader {
     this.inflatePath = inflatePath;
   }
 
-  async exec(out: WriteStream, options: LoadOptions = {}): Promise<void> {
+  async exec(output: WriteStream, options: LoadOptions = {}): Promise<void> {
     const archivePath = join(this.sourceRoot, await this.preload(options));
     const file = (await JSZip.loadAsync(await readFile(archivePath))).file(this.inflatePath);
     if (!file) throw Object.assign(new Error("file not found"), {code: "ENOENT"});
-    const pipe = file.nodeStream().pipe(out);
+    const pipe = file.nodeStream().pipe(output);
     await new Promise((resolve, reject) => pipe.on("error", reject).on("finish", resolve));
   }
 }
@@ -214,20 +215,23 @@ class ZipExtractor extends Loader {
 class TarExtractor extends Loader {
   private readonly preload: (options?: LoadOptions) => Promise<string>;
   private readonly inflatePath: string;
+  private readonly gunzip: boolean;
 
-  constructor({preload, inflatePath, path, sourceRoot, targetPath}) {
+  constructor({preload, inflatePath, path, sourceRoot, targetPath, gunzip = false}) {
     super({path, sourceRoot, targetPath});
     this.preload = preload;
     this.inflatePath = inflatePath;
+    this.gunzip = gunzip;
   }
 
-  async exec(out: WriteStream, options: LoadOptions = {}): Promise<void> {
+  async exec(output: WriteStream, options: LoadOptions = {}): Promise<void> {
     const archivePath = join(this.sourceRoot, await this.preload(options));
     const tar = extract();
-    createReadStream(archivePath).pipe(tar);
+    const input = createReadStream(archivePath);
+    (this.gunzip ? input.pipe(createGunzip()) : input).pipe(tar);
     for await (const entry of tar) {
       if (entry.header.name === this.inflatePath) {
-        const pipe = entry.pipe(out);
+        const pipe = entry.pipe(output);
         await new Promise((resolve, reject) => pipe.on("error", reject).on("finish", resolve));
         return;
       } else {
@@ -238,9 +242,16 @@ class TarExtractor extends Loader {
   }
 }
 
+class TarGzExtractor extends TarExtractor {
+  constructor(options) {
+    super({...options, gunzip: true});
+  }
+}
+
 const extractors = [
   [".zip", ZipExtractor],
-  [".tar", TarExtractor]
+  [".tar", TarExtractor],
+  [".tar.gz", TarGzExtractor]
 ] as const;
 
 function formatSize(size) {
