@@ -162,14 +162,14 @@ export function rewriteImports(
 export type ImportResolver = (path: string, specifier: string) => string;
 
 export function createImportResolver(root: string, base = "."): ImportResolver {
-  return (sourcePath, value) => {
-    return isLocalImport(value, sourcePath)
-      ? relativeUrl(sourcePath, join(base, value.startsWith("/") ? "." : dirname(sourcePath), resolveImportHash(root, sourcePath, value))) // prettier-ignore
-      : value === "npm:@observablehq/runtime"
-      ? relativeUrl(sourcePath, "_observablehq/runtime.js")
-      : value.startsWith("npm:")
-      ? `https://cdn.jsdelivr.net/npm/${value.slice("npm:".length)}/+esm`
-      : value;
+  return (path, specifier) => {
+    return isLocalImport(specifier, path)
+      ? relativeUrl(path, join(base, specifier.startsWith("/") ? "." : dirname(path), resolveImportHash(root, path, specifier))) // prettier-ignore
+      : specifier === "npm:@observablehq/runtime"
+      ? relativeUrl(path, "_observablehq/runtime.js")
+      : specifier.startsWith("npm:")
+      ? `https://cdn.jsdelivr.net/npm/${specifier.slice("npm:".length)}/+esm`
+      : specifier;
   };
 }
 
