@@ -121,11 +121,7 @@ export function resolveSources(input: string, sourcePath: string) {
     if (isLocalFetch(node, [], sourcePath)) {
       const url = node.arguments[0];
       const value = getStringLiteralValue(url);
-      output.replaceLeft(
-        url.start,
-        url.end,
-        JSON.stringify(relativeImport(sourcePath, value))
-      );
+      output.replaceLeft(url.start, url.end, JSON.stringify(relativeImport(sourcePath, value)));
     }
   }
 
