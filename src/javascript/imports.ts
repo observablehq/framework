@@ -211,10 +211,10 @@ function rewriteImportSpecifier(node) {
     : `${node.imported.name}: ${node.local.name}`;
 }
 
-export function isLocalImport(value: string, sourcePath: string): boolean {
+export function isLocalImport(specifier: string, path: string): boolean {
   return (
-    ["./", "../", "/"].some((prefix) => value.startsWith(prefix)) &&
-    !join(".", dirname(sourcePath), value).startsWith("../")
+    ["./", "../", "/"].some((prefix) => specifier.startsWith(prefix)) &&
+    !join(".", specifier.startsWith("/") ? "." : dirname(path), specifier).startsWith("../")
   );
 }
 
