@@ -1,5 +1,5 @@
 import {spawn} from "node:child_process";
-import {existsSync, statSync} from "node:fs";
+import {type WriteStream, existsSync, statSync} from "node:fs";
 import {mkdir, open, readFile, rename, unlink} from "node:fs/promises";
 import {dirname, extname, join} from "node:path";
 import JSZip from "jszip";
@@ -102,7 +102,55 @@ export abstract class Loader {
    * to the source root; this is within the .observablehq/cache folder within
    * the source root.
    */
-  abstract load(options?: LoadOptions): Promise<string>;
+  async load(options: LoadOptions = {}): Promise<string> {
+    const {verbose = true} = options;
+    const key = join(this.sourceRoot, this.targetPath);
+    let command = runningCommands.get(key);
+    if (!command) {
+      command = (async () => {
+        const outputPath = join(".observablehq", "cache", this.targetPath);
+        const cachePath = join(this.sourceRoot, outputPath);
+        const loaderStat = await maybeStat(this.path);
+        const cacheStat = await maybeStat(cachePath);
+        if (!cacheStat) verbose && process.stdout.write(faint("[missing] "));
+        else if (cacheStat.mtimeMs < loaderStat!.mtimeMs) verbose && process.stdout.write(faint("[stale] "));
+        else return verbose && process.stdout.write(faint("[fresh] ")), outputPath;
+        const tempPath = join(this.sourceRoot, ".observablehq", "cache", `${this.targetPath}.${process.pid}`);
+        await prepareOutput(tempPath);
+        const tempFd = await open(tempPath, "w");
+        try {
+          await this.exec(tempFd.createWriteStream({highWaterMark: 1024 * 1024}), options);
+          await mkdir(dirname(cachePath), {recursive: true});
+          await rename(tempPath, cachePath);
+        } catch (error) {
+          await unlink(tempPath);
+          throw error;
+        } finally {
+          await tempFd.close();
+        }
+        return outputPath;
+      })();
+      command.finally(() => runningCommands.delete(this.path)).catch(() => {});
+      runningCommands.set(this.path, command);
+    }
+    if (verbose) {
+      process.stdout.write(`load ${this.path} → `);
+      const start = performance.now();
+      command.then(
+        (path) => {
+          console.log(
+            `${green("success")} ${formatSize(statSync(join(this.sourceRoot, path)).size)} in ${formatElapsed(start)}`
+          );
+        },
+        (error) => {
+          console.log(`${red("error")} after ${formatElapsed(start)}: ${error.message}`);
+        }
+      );
+    }
+    return command;
+  }
+
+  abstract exec(out: WriteStream, options?: LoadOptions): Promise<void>;
 }
 
 class CommandLoader extends Loader {
@@ -126,55 +174,16 @@ class CommandLoader extends Loader {
     this.args = args;
   }
 
-  async load({verbose = true}: LoadOptions = {}): Promise<string> {
-    let command = runningCommands.get(this.path);
-    if (!command) {
-      command = (async () => {
-        const outputPath = join(".observablehq", "cache", this.targetPath);
-        const cachePath = join(this.sourceRoot, outputPath);
-        const loaderStat = await maybeStat(this.path);
-        const cacheStat = await maybeStat(cachePath);
-        if (!cacheStat) verbose && process.stdout.write(faint("[missing] "));
-        else if (cacheStat.mtimeMs < loaderStat!.mtimeMs) verbose && process.stdout.write(faint("[stale] "));
-        else return verbose && process.stdout.write(faint("[fresh] ")), outputPath;
-        const tempPath = join(this.sourceRoot, ".observablehq", "cache", `${this.targetPath}.${process.pid}`);
-        await prepareOutput(tempPath);
-        const tempFd = await open(tempPath, "w");
-        const tempFileStream = tempFd.createWriteStream({highWaterMark: 1024 * 1024});
-        const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", "pipe", "inherit"]});
-        subprocess.stdout.pipe(tempFileStream);
-        const code = await new Promise((resolve, reject) => {
-          subprocess.on("error", reject);
-          subprocess.on("close", resolve);
-        });
-        await tempFd.close();
-        if (code === 0) {
-          await mkdir(dirname(cachePath), {recursive: true});
-          await rename(tempPath, cachePath);
-        } else {
-          await unlink(tempPath);
-          throw new Error(`loader exited with code ${code}`);
-        }
-        return outputPath;
-      })();
-      command.finally(() => runningCommands.delete(this.path)).catch(() => {});
-      runningCommands.set(this.path, command);
+  async exec(out: WriteStream): Promise<void> {
+    const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", "pipe", "inherit"]});
+    subprocess.stdout.pipe(out);
+    const code = await new Promise((resolve, reject) => {
+      subprocess.on("error", reject);
+      subprocess.on("close", resolve);
+    });
+    if (code !== 0) {
+      throw new Error(`exited with code ${code}`);
     }
-    if (verbose) {
-      process.stdout.write(`load ${this.path} → `);
-      const start = performance.now();
-      command.then(
-        (path) => {
-          console.log(
-            `${green("success")} ${formatSize(statSync(join(this.sourceRoot, path)).size)} in ${formatElapsed(start)}`
-          );
-        },
-        (error) => {
-          console.log(`${red("error")} after ${formatElapsed(start)}: ${error.message}`);
-        }
-      );
-    }
-    return command;
   }
 }
 
@@ -188,58 +197,12 @@ class Extractor extends Loader {
     this.inflatePath = inflatePath;
   }
 
-  async load(options: LoadOptions = {}): Promise<string> {
-    const {verbose = true} = options;
-    const path = join(this.sourceRoot, this.targetPath);
-    let command = runningCommands.get(path);
-    if (!command) {
-      command = (async () => {
-        const archivePath = join(this.sourceRoot, await this.preload(options));
-        const outputPath = join(".observablehq", "cache", this.targetPath);
-        const cachePath = join(this.sourceRoot, outputPath);
-        const loaderStat = await maybeStat(this.path);
-        const cacheStat = await maybeStat(cachePath);
-        if (!cacheStat) verbose && process.stdout.write(faint("[missing] "));
-        else if (cacheStat.mtimeMs < loaderStat!.mtimeMs) verbose && process.stdout.write(faint("[stale] "));
-        else return verbose && process.stdout.write(faint("[fresh] ")), outputPath;
-        const tempPath = join(this.sourceRoot, ".observablehq", "cache", `${this.targetPath}.${process.pid}`);
-        await prepareOutput(tempPath);
-        const tempFd = await open(tempPath, "w");
-        try {
-          const tempFileStream = tempFd.createWriteStream({highWaterMark: 1024 * 1024});
-          const zip = await JSZip.loadAsync(await readFile(archivePath));
-          const file = await zip.file(this.inflatePath);
-          if (!file) throw Object.assign(new Error("file not found"), {code: "ENOENT"});
-          const pipe = file.nodeStream().pipe(tempFileStream);
-          await new Promise((resolve, reject) => pipe.on("error", reject).on("finish", resolve));
-          await mkdir(dirname(cachePath), {recursive: true});
-          await rename(tempPath, cachePath);
-        } catch (error) {
-          await unlink(tempPath);
-          throw error;
-        } finally {
-          await tempFd.close();
-        }
-        return outputPath;
-      })();
-      command.finally(() => runningCommands.delete(path)).catch(() => {});
-      runningCommands.set(path, command);
-    }
-    if (verbose) {
-      process.stdout.write(`load ${this.path} → `);
-      const start = performance.now();
-      command.then(
-        (path) => {
-          console.log(
-            `${green("success")} ${formatSize(statSync(join(this.sourceRoot, path)).size)} in ${formatElapsed(start)}`
-          );
-        },
-        (error) => {
-          console.log(`${red("error")} after ${formatElapsed(start)}: ${error.message}`);
-        }
-      );
-    }
-    return command;
+  async exec(out: WriteStream, options: LoadOptions = {}): Promise<void> {
+    const archivePath = join(this.sourceRoot, await this.preload(options));
+    const file = (await JSZip.loadAsync(await readFile(archivePath))).file(this.inflatePath);
+    if (!file) throw Object.assign(new Error("file not found"), {code: "ENOENT"});
+    const pipe = file.nodeStream().pipe(out);
+    await new Promise((resolve, reject) => pipe.on("error", reject).on("finish", resolve));
   }
 }
 
