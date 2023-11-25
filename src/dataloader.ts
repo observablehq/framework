@@ -24,6 +24,12 @@ export interface LoadOptions {
   verbose?: boolean;
 }
 
+export interface LoaderOptions {
+  path: string;
+  sourceRoot: string;
+  targetPath: string;
+}
+
 export abstract class Loader {
   /**
    * The path to the loader script or executable relative to the current working
@@ -44,7 +50,7 @@ export abstract class Loader {
    */
   readonly targetPath: string;
 
-  constructor({path, sourceRoot, targetPath}) {
+  constructor({path, sourceRoot, targetPath}: LoaderOptions) {
     this.path = path;
     this.sourceRoot = sourceRoot;
     this.targetPath = targetPath;
@@ -74,7 +80,7 @@ export abstract class Loader {
         const archiveLoader = this.findExact(sourceRoot, archive);
         if (archiveLoader) {
           return new Extractor({
-            preload: async ({verbose}) => archiveLoader.load({verbose}),
+            preload: async (options) => archiveLoader.load(options),
             inflatePath: targetPath.slice(archive.length - ext.length + 1),
             path: archiveLoader.path,
             sourceRoot,
@@ -159,6 +165,11 @@ export abstract class Loader {
   abstract exec(output: WriteStream, options?: LoadOptions): Promise<void>;
 }
 
+interface CommandLoaderOptions extends LoaderOptions {
+  command: string;
+  args: string[];
+}
+
 class CommandLoader extends Loader {
   /**
    * The command to run, such as "node" for a JavaScript loader, "tsx" for
@@ -174,8 +185,8 @@ class CommandLoader extends Loader {
    */
   private readonly args: string[];
 
-  constructor({command, args, path, sourceRoot, targetPath}) {
-    super({path, sourceRoot, targetPath});
+  constructor({command, args, ...options}: CommandLoaderOptions) {
+    super(options);
     this.command = command;
     this.args = args;
   }
@@ -193,12 +204,17 @@ class CommandLoader extends Loader {
   }
 }
 
+interface ZipExtractorOptions extends LoaderOptions {
+  preload: Loader["load"];
+  inflatePath: string;
+}
+
 class ZipExtractor extends Loader {
-  private readonly preload: (options?: LoadOptions) => Promise<string>;
+  private readonly preload: Loader["load"];
   private readonly inflatePath: string;
 
-  constructor({preload, inflatePath, path, sourceRoot, targetPath}) {
-    super({path, sourceRoot, targetPath});
+  constructor({preload, inflatePath, ...options}: ZipExtractorOptions) {
+    super(options);
     this.preload = preload;
     this.inflatePath = inflatePath;
   }
@@ -212,13 +228,19 @@ class ZipExtractor extends Loader {
   }
 }
 
+interface TarExtractorOptions extends LoaderOptions {
+  preload: Loader["load"];
+  inflatePath: string;
+  gunzip?: boolean;
+}
+
 class TarExtractor extends Loader {
-  private readonly preload: (options?: LoadOptions) => Promise<string>;
+  private readonly preload: Loader["load"];
   private readonly inflatePath: string;
   private readonly gunzip: boolean;
 
-  constructor({preload, inflatePath, path, sourceRoot, targetPath, gunzip = false}) {
-    super({path, sourceRoot, targetPath});
+  constructor({preload, inflatePath, gunzip = false, ...options}: TarExtractorOptions) {
+    super(options);
     this.preload = preload;
     this.inflatePath = inflatePath;
     this.gunzip = gunzip;
@@ -243,7 +265,7 @@ class TarExtractor extends Loader {
 }
 
 class TarGzExtractor extends TarExtractor {
-  constructor(options) {
+  constructor(options: TarExtractorOptions) {
     super({...options, gunzip: true});
   }
 }
