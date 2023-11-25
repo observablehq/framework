@@ -291,9 +291,9 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: st
       }
       case "change": {
         const updated = await readMarkdown(path, root);
-        if (current.hash === updated.hash) break;
+        if (current.parse.hash === updated.parse.hash) break;
         const diff = resolveDiffs(diffMarkdown(current, updated), resolver);
-        send({type: "update", diff, previousHash: current.hash, updatedHash: updated.hash});
+        send({type: "update", diff, previousHash: current.parse.hash, updatedHash: updated.parse.hash});
         current = updated;
         attachmentWatcher?.close();
         attachmentWatcher = await FileWatchers.watchAll(path, root, updated.parse, refreshAttachment);
@@ -309,7 +309,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: st
     if (path.endsWith("/")) path += "index";
     path += ".md";
     current = await readMarkdown(path, root);
-    if (current.hash !== initialHash) return void send({type: "reload"});
+    if (current.parse.hash !== initialHash) return void send({type: "reload"});
     attachmentWatcher = await FileWatchers.watchAll(path, root, current.parse, refreshAttachment);
     markdownWatcher = watch(join(root, path), watcher);
   }

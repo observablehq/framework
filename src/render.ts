@@ -3,7 +3,7 @@ import {type Config, type Page, type Section, mergeToc} from "./config.js";
 import {type Html, html} from "./html.js";
 import {type ImportResolver, createImportResolver} from "./javascript/imports.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
-import {type CellPiece, type ParseResult, computeMarkdownHash, parseMarkdown} from "./markdown.js";
+import {type CellPiece, type ParseResult, parseMarkdown} from "./markdown.js";
 import {type PageLink, pager} from "./pager.js";
 import {relativeUrl} from "./url.js";
 
@@ -20,20 +20,16 @@ export interface RenderOptions extends Config {
 }
 
 export async function renderPreview(source: string, options: RenderOptions): Promise<Render> {
-  const parseResult = parseMarkdown(source, options.root, options.path);
+  const parseResult = await parseMarkdown(source, options.root, options.path);
   return {
-    html: render(parseResult, {
-      ...options,
-      preview: true,
-      hash: await computeMarkdownHash(source, options.root, options.path, parseResult) // TODO parseResult.hash
-    }),
+    html: render(parseResult, {...options, preview: true}),
     files: parseResult.files,
     imports: parseResult.imports
   };
 }
 
-export function renderServerless(source: string, options: RenderOptions): Render {
-  const parseResult = parseMarkdown(source, options.root, options.path);
+export async function renderServerless(source: string, options: RenderOptions): Promise<Render> {
+  const parseResult = await parseMarkdown(source, options.root, options.path);
   return {
     html: render(parseResult, options),
     files: parseResult.files,
@@ -50,12 +46,12 @@ export function renderDefineCell(cell): string {
 }
 
 type RenderInternalOptions =
-  | {preview?: false; hash?: never} // serverless
-  | {preview: true; hash: string}; // preview
+  | {preview?: false} // serverless
+  | {preview: true}; // preview
 
 function render(
   parseResult: ParseResult,
-  {root, path, pages, title, toc, preview, hash, resolver}: RenderOptions & RenderInternalOptions
+  {root, path, pages, title, toc, preview, resolver}: RenderOptions & RenderInternalOptions
 ): string {
   toc = mergeToc(parseResult.data?.toc, toc);
   const headers = toc.show ? findHeaders(parseResult) : [];
@@ -79,10 +75,9 @@ ${
 
 import {${preview ? "open, " : ""}define} from ${JSON.stringify(relativeUrl(path, "/_observablehq/client.js"))};
 
-${preview ? `open({hash: ${JSON.stringify(hash)}, eval: (body) => (0, eval)(body)});\n` : ""}${parseResult.cells
-    .map(resolver)
-    .map(renderDefineCell)
-    .join("")}`)}
+${
+  preview ? `open({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
+}${parseResult.cells.map(resolver).map(renderDefineCell).join("")}`)}
 </script>
 ${pages.length > 0 ? renderSidebar(title, pages, path) : ""}
 ${headers.length > 0 ? renderToc(headers, toc.label) : ""}<div id="observablehq-center">

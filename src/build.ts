@@ -35,7 +35,7 @@ export async function build({sourceRoot, outputRoot, verbose = true, addPublic =
     const outputPath = join(outputRoot, dirname(sourceFile), basename(sourceFile, ".md") + ".html");
     if (verbose) console.log("render", sourcePath, "→", outputPath);
     const path = `/${join(dirname(sourceFile), basename(sourceFile, ".md"))}`;
-    const render = renderServerless(await readFile(sourcePath, "utf-8"), {
+    const render = await renderServerless(await readFile(sourcePath, "utf-8"), {
       root: sourceRoot,
       path,
       resolver,

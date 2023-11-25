@@ -23,5 +23,6 @@
       "inline": true,
       "body": "(display) => {\ndisplay((\n1 + 2\n))\n}"
     }
-  ]
+  ],
+  "hash": "8ec3a8e125394f6357cd56e3b191d738b4645a0c97cd403fe19fcff17a5a2127"
 }
