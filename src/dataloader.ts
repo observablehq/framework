@@ -273,7 +273,8 @@ class TarGzExtractor extends TarExtractor {
 const extractors = [
   [".zip", ZipExtractor],
   [".tar", TarExtractor],
-  [".tar.gz", TarGzExtractor]
+  [".tar.gz", TarGzExtractor],
+  [".tgz", TarGzExtractor]
 ] as const;
 
 function formatSize(size) {

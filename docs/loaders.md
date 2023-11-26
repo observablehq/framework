@@ -138,7 +138,7 @@ The following extensions are supported:
 
 * .zip - for the [zip](https://en.wikipedia.org/wiki/ZIP_%28file_format%29) archive format
 * .tar - for [tarballs](https://en.wikipedia.org/wiki/Tar_%28computing%29)
-* .tar.gz - for [compressed tarballs](https://en.wikipedia.org/wiki/Gzip)
+* .tar.gz (and .tgz) - for [compressed tarballs](https://en.wikipedia.org/wiki/Gzip)
 
 The archive can be a static file or the output of a dynamic data loader such as `earthquakes.zip.R`. This allows you to run a single data analysis script to generate several outputs in one go, then collect them on your page as individual file attachments.
 
