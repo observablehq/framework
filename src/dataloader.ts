@@ -59,34 +59,40 @@ export abstract class Loader {
   /**
    * Finds the loader for the specified target path, relative to the specified
    * source root, if it exists. If there is no such loader, returns undefined.
+   * For files within archives, we find the first parent folder that exists, but
+   * abort if we find a matching folder or reach the source root; for example,
+   * if docs/data exists, we won’t look for a docs/data.zip.
    */
   static find(sourceRoot: string, targetPath: string): Loader | undefined {
     const exact = this.findExact(sourceRoot, targetPath);
     if (exact) return exact;
-    let dir = targetPath;
-    let parent: string;
-    while ((parent = dirname(dir)) !== dir) {
-      for (const [ext, Extractor] of extractors) {
-        const archive = (dir = parent) + ext;
-        if (existsSync(join(sourceRoot, archive))) {
-          return new Extractor({
-            preload: async () => archive,
-            inflatePath: targetPath.slice(archive.length - ext.length + 1),
-            path: join(sourceRoot, archive),
-            sourceRoot,
-            targetPath
-          });
-        }
-        const archiveLoader = this.findExact(sourceRoot, archive);
-        if (archiveLoader) {
-          return new Extractor({
-            preload: async (options) => archiveLoader.load(options),
-            inflatePath: targetPath.slice(archive.length - ext.length + 1),
-            path: archiveLoader.path,
-            sourceRoot,
-            targetPath
-          });
-        }
+    let dir = dirname(targetPath);
+    for (let parent: string; true; dir = parent) {
+      parent = dirname(dir);
+      if (parent === dir) return; // reached source root
+      if (existsSync(join(sourceRoot, dir))) return; // found folder
+      if (existsSync(join(sourceRoot, parent))) break; // found parent
+    }
+    for (const [ext, Extractor] of extractors) {
+      const archive = dir + ext;
+      if (existsSync(join(sourceRoot, archive))) {
+        return new Extractor({
+          preload: async () => archive,
+          inflatePath: targetPath.slice(archive.length - ext.length + 1),
+          path: join(sourceRoot, archive),
+          sourceRoot,
+          targetPath
+        });
+      }
+      const archiveLoader = this.findExact(sourceRoot, archive);
+      if (archiveLoader) {
+        return new Extractor({
+          preload: async (options) => archiveLoader.load(options),
+          inflatePath: targetPath.slice(archive.length - ext.length + 1),
+          path: archiveLoader.path,
+          sourceRoot,
+          targetPath
+        });
       }
     }
   }
