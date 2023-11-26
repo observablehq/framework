@@ -6,7 +6,11 @@ const main = runtime.module();
 
 const attachedFiles = new Map();
 const resolveFile = (name) => attachedFiles.get(name);
-main.builtin("FileAttachment", runtime.fileAttachments(resolveFile));
+
+// https://github.com/observablehq/cli/issues/190
+const FileAttachment = runtime.fileAttachments(resolveFile);
+FileAttachment.prototype.url = async function() { return String(new URL(await this._url, location)); }; // prettier-ignore
+main.builtin("FileAttachment", FileAttachment);
 
 const databaseTokens = new Map();
 async function resolveDatabaseToken(name) {
