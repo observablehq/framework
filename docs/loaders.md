@@ -127,12 +127,18 @@ When any data loader fails, the entire build fails.
 
 ## Archives
 
-A file can be pulled from a zip archive when referenced with the name `{archive}/{file}`.
+A file can be pulled from an archive when referenced with the name `{archive}/{file}`.
 
 For instance, calling:
 >  `FileAttachment("earthquakes/202309.csv").csv({typed: true})`
 
 extracts the `202309.csv` file from the `earthquakes.zip` archive.
+
+The following extensions are supported:
+
+* .zip - for the [zip](https://en.wikipedia.org/wiki/ZIP_%28file_format%29) archive format
+* .tar - for [tarballs](https://en.wikipedia.org/wiki/Tar_%28computing%29)
+* .tar.gz (and .tgz) - for [compressed tarballs](https://en.wikipedia.org/wiki/Gzip)
 
 The archive can be a static file or the output of a dynamic data loader such as `earthquakes.zip.R`. This allows you to run a single data analysis script to generate several outputs in one go, then collect them on your page as individual file attachments.
 
