@@ -1,5 +1,5 @@
 import {createHash} from "node:crypto";
-import {existsSync, watch} from "node:fs";
+import {watch} from "node:fs";
 import type {FSWatcher, WatchEventType} from "node:fs";
 import {access, constants, readFile, stat} from "node:fs/promises";
 import {createServer} from "node:http";
@@ -12,14 +12,13 @@ import {version} from "../package.json";
 import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError} from "./error.js";
-import {maybeStat} from "./files.js";
+import {FileWatchers} from "./fileWatchers.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {diffMarkdown, readMarkdown} from "./markdown.js";
 import type {ParseResult, ReadMarkdownResult} from "./markdown.js";
 import {renderPreview} from "./render.js";
 import {type CellResolver, makeCLIResolver} from "./resolver.js";
 import {bold, faint, green, underline} from "./tty.js";
-import {resolvePath} from "./url.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
@@ -203,54 +202,20 @@ function end(req: IncomingMessage, res: ServerResponse, content: string, type: s
   }
 }
 
-class FileWatchers {
-  #watchers: FSWatcher[] = [];
-
-  static async watchAll(
-    path: string,
-    root: string,
-    parseResult: ParseResult,
-    cb: (parseResult: ParseResult, name: string) => void
-  ) {
-    const watchers = new FileWatchers();
-    const {files, imports} = parseResult;
-    for (const name of new Set([...files.map((f) => f.name), ...imports.map((i) => i.name)])) {
-      const watchPath = FileWatchers.getWatchPath(root, resolvePath(path, name));
-      let prevState = await maybeStat(watchPath);
-      let watcher;
-      try {
-        watcher = watch(watchPath, async () => {
-          const newState = await maybeStat(watchPath);
-          // Ignore if the file was truncated or not modified.
-          if (prevState?.mtimeMs === newState?.mtimeMs || newState?.size === 0) return;
-          prevState = newState;
-          cb(parseResult, name);
-        });
-      } catch {
-        continue; // ignore missing files
-      }
-      watchers.#watchers.push(watcher);
-    }
-    return watchers;
-  }
-
-  static getWatchPath(root: string, name: string): string {
-    const path = join(root, name);
-    return existsSync(path) ? path : Loader.find(root, name)?.path ?? path;
-  }
-
-  close() {
-    this.#watchers.forEach((w) => w.close());
-    this.#watchers = [];
-  }
-}
-
 function resolveDiffs(diff: ReturnType<typeof diffMarkdown>, resolver: CellResolver): ReturnType<typeof diffMarkdown> {
   return diff.map((item) =>
     item.type === "add"
       ? {...item, items: item.items.map((addItem) => (addItem.type === "cell" ? resolver(addItem) : addItem))}
       : item
   );
+}
+
+function getWatchPaths(parseResult: ParseResult): string[] {
+  const paths: string[] = [];
+  const {files, imports} = parseResult;
+  for (const f of files) paths.push(f.name);
+  for (const i of imports) paths.push(i.name);
+  return paths;
 }
 
 function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: string; resolver: CellResolver}) {
@@ -261,7 +226,8 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: st
   let attachmentWatcher: FileWatchers | null = null;
   console.log(faint("socket open"), req.url);
 
-  function refreshAttachment({cells}: ParseResult, name: string) {
+  function refreshAttachment(name: string) {
+    const {cells} = current!.parse;
     if (cells.some((cell) => cell.imports?.some((i) => i.name === name))) {
       watcher("change"); // trigger re-compilation of JavaScript to get new import hashes
     } else {
@@ -295,7 +261,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: st
         send({type: "update", diff, previousHash: current.parse.hash, updatedHash: updated.parse.hash});
         current = updated;
         attachmentWatcher?.close();
-        attachmentWatcher = await FileWatchers.watchAll(path, root, updated.parse, refreshAttachment);
+        attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(updated.parse), refreshAttachment);
         break;
       }
     }
@@ -309,7 +275,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: st
     path += ".md";
     current = await readMarkdown(path, root);
     if (current.parse.hash !== initialHash) return void send({type: "reload"});
-    attachmentWatcher = await FileWatchers.watchAll(path, root, current.parse, refreshAttachment);
+    attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(current.parse), refreshAttachment);
     markdownWatcher = watch(join(root, path), watcher);
   }
 
