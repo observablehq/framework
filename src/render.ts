@@ -1,9 +1,7 @@
-import {dirname, join} from "node:path";
 import {parseHTML} from "linkedom";
 import {type Config, type Page, type Section, mergeToc} from "./config.js";
-import {computeHash} from "./hash.js";
 import {type Html, html} from "./html.js";
-import {resolveImport} from "./javascript/imports.js";
+import {type ImportResolver, createImportResolver} from "./javascript/imports.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
 import {type CellPiece, type ParseResult, parseMarkdown} from "./markdown.js";
 import {type PageLink, pager} from "./pager.js";
@@ -21,17 +19,17 @@ export interface RenderOptions extends Config {
   resolver: (cell: CellPiece) => CellPiece;
 }
 
-export function renderPreview(source: string, options: RenderOptions): Render {
-  const parseResult = parseMarkdown(source, options.root, options.path);
+export async function renderPreview(source: string, options: RenderOptions): Promise<Render> {
+  const parseResult = await parseMarkdown(source, options.root, options.path);
   return {
-    html: render(parseResult, {...options, preview: true, hash: computeHash(source)}),
+    html: render(parseResult, {...options, preview: true}),
     files: parseResult.files,
     imports: parseResult.imports
   };
 }
 
-export function renderServerless(source: string, options: RenderOptions): Render {
-  const parseResult = parseMarkdown(source, options.root, options.path);
+export async function renderServerless(source: string, options: RenderOptions): Promise<Render> {
+  const parseResult = await parseMarkdown(source, options.root, options.path);
   return {
     html: render(parseResult, options),
     files: parseResult.files,
@@ -48,12 +46,12 @@ export function renderDefineCell(cell): string {
 }
 
 type RenderInternalOptions =
-  | {preview?: false; hash?: never} // serverless
-  | {preview: true; hash: string}; // preview
+  | {preview?: false} // serverless
+  | {preview: true}; // preview
 
 function render(
   parseResult: ParseResult,
-  {path, pages, title, toc, preview, hash, resolver}: RenderOptions & RenderInternalOptions
+  {root, path, pages, title, toc, preview, resolver}: RenderOptions & RenderInternalOptions
 ): string {
   toc = mergeToc(parseResult.data?.toc, toc);
   const headers = toc.show ? findHeaders(parseResult) : [];
@@ -70,16 +68,16 @@ ${
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="${relativeUrl(path, "/_observablehq/style.css")}">${renderImportPreloads(
     parseResult,
-    path
+    path,
+    createImportResolver(root, "_import")
   )}
 <script type="module">${html.unsafe(`
 
 import {${preview ? "open, " : ""}define} from ${JSON.stringify(relativeUrl(path, "/_observablehq/client.js"))};
 
-${preview ? `open({hash: ${JSON.stringify(hash)}, eval: (body) => (0, eval)(body)});\n` : ""}${parseResult.cells
-    .map(resolver)
-    .map(renderDefineCell)
-    .join("")}`)}
+${
+  preview ? `open({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
+}${parseResult.cells.map(resolver).map(renderDefineCell).join("")}`)}
 </script>
 ${pages.length > 0 ? renderSidebar(title, pages, path) : ""}
 ${headers.length > 0 ? renderToc(headers, toc.label) : ""}<div id="observablehq-center">
@@ -155,15 +153,9 @@ function prettyPath(path: string): string {
   return path.replace(/\/index$/, "/") || "/";
 }
 
-function renderImportPreloads(parseResult: ParseResult, path: string): Html {
+function renderImportPreloads(parseResult: ParseResult, path: string, resolver: ImportResolver): Html {
   const specifiers = new Set<string>(["npm:@observablehq/runtime"]);
-  for (const {name, type} of parseResult.imports) {
-    if (type === "local") {
-      specifiers.add(`/_import${join(dirname(path), name)}`);
-    } else {
-      specifiers.add(name);
-    }
-  }
+  for (const {name} of parseResult.imports) specifiers.add(name);
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
   if (inputs.has("d3") || inputs.has("Plot")) specifiers.add("npm:d3");
   if (inputs.has("Plot")) specifiers.add("npm:@observablehq/plot");
@@ -174,12 +166,12 @@ function renderImportPreloads(parseResult: ParseResult, path: string): Html {
   if (inputs.has("tex")) specifiers.add("npm:katex");
   const preloads = new Set<string>();
   for (const specifier of specifiers) {
-    preloads.add(resolveImport(specifier));
+    preloads.add(resolver(path, specifier));
   }
   if (parseResult.cells.some((cell) => cell.databases?.length)) {
-    preloads.add("/_observablehq/database.js");
+    preloads.add(relativeUrl(path, "/_observablehq/database.js"));
   }
-  return html`${Array.from(preloads, (href) => html`\n<link rel="modulepreload" href="${relativeUrl(path, href)}">`)}`;
+  return html`${Array.from(preloads, (href) => html`\n<link rel="modulepreload" href="${href}">`)}`;
 }
 
 function renderFooter(path: string, options?: Pick<Config, "pages" | "title">): Html {

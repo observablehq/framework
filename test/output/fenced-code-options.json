@@ -76,5 +76,6 @@
       ],
       "body": "() => {\nfunction langAndAttributes() {\n  return 1;\n}\nreturn {langAndAttributes};\n}"
     }
-  ]
+  ],
+  "hash": "4a504e4c5acc0bb9280318a79d7bc86cc13388975e4dcb6a8cf9eb619fecb1cb"
 }

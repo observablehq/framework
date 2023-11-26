@@ -7,9 +7,10 @@ import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {isEnoent} from "./error.js";
 import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
-import {resolveSources} from "./javascript/imports.js";
+import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {renderServerless} from "./render.js";
 import {makeCLIResolver} from "./resolver.js";
+import {resolvePath} from "./url.js";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
 
@@ -35,14 +36,14 @@ export async function build({sourceRoot, outputRoot, verbose = true, addPublic =
     const sourcePath = join(sourceRoot, sourceFile);
     const outputPath = join(outputRoot, dirname(sourceFile), basename(sourceFile, ".md") + ".html");
     if (verbose) console.log("render", sourcePath, "→", outputPath);
-    const path = `/${join(dirname(sourceFile), basename(sourceFile, ".md"))}`;
-    const render = renderServerless(await readFile(sourcePath, "utf-8"), {
+    const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
+    const render = await renderServerless(await readFile(sourcePath, "utf-8"), {
       root: sourceRoot,
       path,
       resolver,
       ...config
     });
-    const resolveFile = ({name}) => join(name.startsWith("/") ? "." : dirname(sourceFile), name);
+    const resolveFile = ({name}) => resolvePath(sourceFile, name);
     files.push(...render.files.map(resolveFile));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
     await prepareOutput(outputPath);
@@ -84,6 +85,7 @@ export async function build({sourceRoot, outputRoot, verbose = true, addPublic =
   }
 
   // Copy over the imported modules.
+  const importResolver = createImportResolver(sourceRoot);
   for (const file of imports) {
     const sourcePath = join(sourceRoot, file);
     const outputPath = join(outputRoot, "_import", file);
@@ -93,7 +95,7 @@ export async function build({sourceRoot, outputRoot, verbose = true, addPublic =
     }
     if (verbose) console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);
-    await writeFile(outputPath, resolveSources(await readFile(sourcePath, "utf-8"), file));
+    await writeFile(outputPath, rewriteModule(await readFile(sourcePath, "utf-8"), file, importResolver));
   }
 
   // Copy over required distribution files from node_modules.

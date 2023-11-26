@@ -30,5 +30,6 @@
       ],
       "body": "(DatabaseClient) => {\nconst db = DatabaseClient(\"dwh-local-proxy\");\nreturn {db};\n}"
     }
-  ]
+  ],
+  "hash": "13e37c0cb2e2c70827dfbf255e4761839a7c02ba786bac6c7fe74ec2d2c78eb7"
 }
