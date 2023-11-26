@@ -1,14 +1,20 @@
+import {createHash} from "node:crypto";
 import {readFileSync} from "node:fs";
-import {dirname, join, normalize, relative} from "node:path";
+import {join} from "node:path";
 import {Parser} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression, Node} from "acorn";
 import {simple} from "acorn-walk";
+import {isEnoent} from "../error.js";
 import {type ImportReference, type JavaScriptNode, parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
-import {relativeUrl} from "../url.js";
+import {relativeUrl, resolvePath} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
-export function findExports(body: Node) {
+/**
+ * Finds all export declarations in the specified node. (This is used to
+ * disallow exports within JavaScript code blocks.)
+ */
+export function findExports(body: Node): (ExportAllDeclaration | ExportNamedDeclaration)[] {
   const exports: (ExportAllDeclaration | ExportNamedDeclaration)[] = [];
 
   simple(body, {
@@ -23,9 +29,14 @@ export function findExports(body: Node) {
   return exports;
 }
 
-export function findImports(body: Node, root: string, sourcePath: string) {
+/**
+ * Finds all imports (both static and dynamic) in the specified node.
+ * Recursively processes any imported local ES modules. The returned transitive
+ * import paths are relative to the given source path.
+ */
+export function findImports(body: Node, root: string, path: string): ImportReference[] {
   const imports: ImportReference[] = [];
-  const paths = new Set<string>();
+  const paths: string[] = [];
 
   simple(body, {
     ImportDeclaration: findImport,
@@ -35,68 +46,91 @@ export function findImports(body: Node, root: string, sourcePath: string) {
   function findImport(node) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
-      if (isLocalImport(value, sourcePath)) {
-        findLocalImports(normalize(value));
+      if (isLocalImport(value, path)) {
+        paths.push(resolvePath(path, value));
       } else {
         imports.push({name: value, type: "global"});
       }
     }
   }
 
-  // If this is an import of a local ES module, recursively parse the module to
-  // find transitive imports. The path is always relative to the source path of
-  // the Markdown file, even across transitive imports.
-  function findLocalImports(path) {
-    if (path.startsWith("/")) path = relative(dirname(sourcePath), path);
-    if (paths.has(path)) return;
-    paths.add(path);
-    imports.push({type: "local", name: path});
-    try {
-      const input = readFileSync(join(root, dirname(sourcePath), path), "utf-8");
-      const program = Parser.parse(input, parseOptions);
-      simple(program, {
-        ImportDeclaration: findLocalImport,
-        ImportExpression: findLocalImport,
-        ExportAllDeclaration: findLocalImport,
-        ExportNamedDeclaration: findLocalImport
-      });
-    } catch {
-      // ignore missing files and syntax errors
-    }
-    function findLocalImport(node) {
-      if (isStringLiteral(node.source)) {
-        const value = getStringLiteralValue(node.source);
-        if (isLocalImport(value, sourcePath)) {
-          findLocalImports(value.startsWith("/") ? normalize(value) : join(dirname(path), value));
-        } else {
-          imports.push({name: value, type: "global"});
-          // non-local imports don't need to be traversed
-        }
-      }
+  // Recursively process any imported local ES modules.
+  imports.push(...parseLocalImports(root, paths));
+
+  // Make all local paths relative to the source path.
+  for (const i of imports) {
+    if (i.type === "local") {
+      i.name = relativeUrl(path, i.name);
     }
   }
 
   return imports;
 }
 
-export function resolveSources(input: string, sourcePath: string) {
+/**
+ * Parses the module at the specified path to find transitive imports,
+ * processing imported modules recursively. Accumulates visited paths, and
+ * appends to imports. The paths here are always relative to the root (unlike
+ * findImports above!).
+ */
+export function parseLocalImports(root: string, paths: string[]): ImportReference[] {
+  const imports: ImportReference[] = [];
+  const set = new Set(paths);
+  for (const path of set) {
+    imports.push({type: "local", name: path});
+    try {
+      const input = readFileSync(join(root, path), "utf-8");
+      const program = Parser.parse(input, parseOptions);
+      simple(
+        program,
+        {
+          ImportDeclaration: findImport,
+          ImportExpression: findImport,
+          ExportAllDeclaration: findImport,
+          ExportNamedDeclaration: findImport
+        },
+        undefined,
+        path
+      );
+    } catch (error) {
+      if (!isEnoent(error) && !(error instanceof SyntaxError)) throw error;
+    }
+  }
+  function findImport(
+    node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration,
+    path: string
+  ) {
+    if (isStringLiteral(node.source)) {
+      const value = getStringLiteralValue(node.source);
+      if (isLocalImport(value, path)) {
+        set.add(resolvePath(path, value));
+      } else {
+        imports.push({name: value, type: "global"});
+        // non-local imports don't need to be traversed
+      }
+    }
+  }
+  return imports;
+}
+
+/** Rewrites import specifiers in the specified ES module source. */
+export function rewriteModule(input: string, sourcePath: string, resolver: ImportResolver): string {
   const body = Parser.parse(input, parseOptions) as any;
   const output = new Sourcemap(input);
 
   simple(body, {
-    ImportDeclaration: resolveSource,
-    ImportExpression: resolveSource,
-    ExportAllDeclaration: resolveSource,
-    ExportNamedDeclaration: resolveSource
+    ImportDeclaration: rewriteImport,
+    ImportExpression: rewriteImport,
+    ExportAllDeclaration: rewriteImport,
+    ExportNamedDeclaration: rewriteImport
   });
 
-  function resolveSource(node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration) {
+  function rewriteImport(node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration) {
     if (isStringLiteral(node.source)) {
-      const value = getStringLiteralValue(node.source);
       output.replaceLeft(
         node.source.start,
         node.source.end,
-        JSON.stringify(value.startsWith("/") ? relativeImport(sourcePath, value) : resolveImport(value))
+        JSON.stringify(resolver(sourcePath, getStringLiteralValue(node.source)))
       );
     }
   }
@@ -104,23 +138,29 @@ export function resolveSources(input: string, sourcePath: string) {
   return String(output);
 }
 
-// TODO parallelize multiple static imports
-export function rewriteImports(output: any, rootNode: JavaScriptNode, sourcePath: string) {
-  simple(rootNode.body, {
+/**
+ * Rewrites import specifiers in the specified JavaScript fenced code block or
+ * inline expression. TODO parallelize multiple static imports.
+ */
+export function rewriteImports(
+  output: Sourcemap,
+  cell: JavaScriptNode,
+  sourcePath: string,
+  resolver: ImportResolver
+): void {
+  simple(cell.body, {
     ImportExpression(node) {
       if (isStringLiteral(node.source)) {
-        const value = getStringLiteralValue(node.source);
         output.replaceLeft(
           node.source.start,
           node.source.end,
-          JSON.stringify(isLocalImport(value, sourcePath) ? relativeImport(sourcePath, value) : resolveImport(value))
+          JSON.stringify(resolver(sourcePath, getStringLiteralValue(node.source)))
         );
       }
     },
     ImportDeclaration(node) {
       if (isStringLiteral(node.source)) {
-        const value = getStringLiteralValue(node.source);
-        rootNode.async = true;
+        cell.async = true;
         output.replaceLeft(
           node.start,
           node.end,
@@ -128,17 +168,59 @@ export function rewriteImports(output: any, rootNode: JavaScriptNode, sourcePath
             node.specifiers.some(isNotNamespaceSpecifier)
               ? `{${node.specifiers.filter(isNotNamespaceSpecifier).map(rewriteImportSpecifier).join(", ")}}`
               : node.specifiers.find(isNamespaceSpecifier)?.local.name ?? "{}"
-          } = await import(${JSON.stringify(
-            isLocalImport(value, sourcePath) ? relativeImport(sourcePath, value) : resolveImport(value)
-          )});`
+          } = await import(${JSON.stringify(resolver(sourcePath, getStringLiteralValue(node.source)))});`
         );
       }
     }
   });
 }
 
-function relativeImport(sourcePath, value) {
-  return relativeUrl(sourcePath, join("/_import/", value.startsWith("/") ? "." : dirname(sourcePath), value));
+export type ImportResolver = (path: string, specifier: string) => string;
+
+export function createImportResolver(root: string, base = "."): ImportResolver {
+  return (path, specifier) => {
+    return isLocalImport(specifier, path)
+      ? relativeUrl(path, resolvePath(base, path, resolveImportHash(root, path, specifier)))
+      : specifier === "npm:@observablehq/runtime"
+      ? relativeUrl(path, "_observablehq/runtime.js")
+      : specifier.startsWith("npm:")
+      ? `https://cdn.jsdelivr.net/npm/${specifier.slice("npm:".length)}/+esm`
+      : specifier;
+  };
+}
+
+/**
+ * Given the specified local import, applies the ?sha query string based on the
+ * content hash of the imported module and its transitively imported modules.
+ */
+function resolveImportHash(root: string, path: string, specifier: string): string {
+  return `${specifier}?sha=${getModuleHash(root, resolvePath(path, specifier))}`;
+}
+
+/**
+ * Resolves the content hash for the module at the specified path within the
+ * given source root. This involves parsing the specified module to process
+ * transitive imports.
+ */
+function getModuleHash(root: string, path: string): string {
+  const hash = createHash("sha256");
+  try {
+    hash.update(readFileSync(join(root, path), "utf-8"));
+  } catch (error) {
+    if (!isEnoent(error)) throw error;
+  }
+  // TODO can’t simply concatenate here; we need a delimiter
+  for (const i of parseLocalImports(root, [path])) {
+    if (i.type === "local") {
+      try {
+        hash.update(readFileSync(join(root, i.name), "utf-8"));
+      } catch (error) {
+        if (!isEnoent(error)) throw error;
+        continue;
+      }
+    }
+  }
+  return hash.digest("hex");
 }
 
 function rewriteImportSpecifier(node) {
@@ -149,10 +231,9 @@ function rewriteImportSpecifier(node) {
     : `${node.imported.name}: ${node.local.name}`;
 }
 
-export function isLocalImport(value: string, sourcePath: string): boolean {
+export function isLocalImport(specifier: string, path: string): boolean {
   return (
-    ["./", "../", "/"].some((prefix) => value.startsWith(prefix)) &&
-    !join(".", dirname(sourcePath), value).startsWith("../")
+    ["./", "../", "/"].some((prefix) => specifier.startsWith(prefix)) && !resolvePath(path, specifier).startsWith("../")
   );
 }
 
@@ -162,12 +243,4 @@ function isNamespaceSpecifier(node) {
 
 function isNotNamespaceSpecifier(node) {
   return node.type !== "ImportNamespaceSpecifier";
-}
-
-export function resolveImport(specifier: string): string {
-  return !specifier.startsWith("npm:")
-    ? specifier
-    : specifier === "npm:@observablehq/runtime"
-    ? "/_observablehq/runtime.js"
-    : `https://cdn.jsdelivr.net/npm/${specifier.slice("npm:".length)}/+esm`;
 }

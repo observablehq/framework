@@ -23,5 +23,6 @@
       ],
       "body": "(dot,display) => {\ndisplay((\ndot`digraph D {\n\n  A [shape=diamond]\n  B [shape=box]\n  C [shape=circle]\n\n  A -> B [style=dashed]\n  A -> C\n  A -> D [penwidth=5, arrowhead=none]\n\n}\n`\n))\n}"
     }
-  ]
+  ],
+  "hash": "3a62af050e650638e3aa41d5a6f413d07e30ee63a74a8c5eb9b7e4c217b9a7bc"
 }

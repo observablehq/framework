@@ -1,5 +1,6 @@
 import {createHash} from "node:crypto";
-import {type FSWatcher, existsSync, watch} from "node:fs";
+import {existsSync, watch} from "node:fs";
+import type {FSWatcher, WatchEventType} from "node:fs";
 import {access, constants, readFile, stat} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, ServerResponse} from "node:http";
@@ -12,11 +13,13 @@ import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError} from "./error.js";
 import {maybeStat} from "./files.js";
-import {resolveSources} from "./javascript/imports.js";
-import {type ParseResult, diffMarkdown, readMarkdown} from "./markdown.js";
+import {createImportResolver, rewriteModule} from "./javascript/imports.js";
+import {diffMarkdown, readMarkdown} from "./markdown.js";
+import type {ParseResult, ReadMarkdownResult} from "./markdown.js";
 import {renderPreview} from "./render.js";
 import {type CellResolver, makeCLIResolver} from "./resolver.js";
 import {bold, faint, green, underline} from "./tty.js";
+import {resolvePath} from "./url.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
@@ -79,7 +82,7 @@ export class Server {
           if (!isEnoent(error)) throw error;
           throw new HttpError("Not found", 404);
         }
-        end(req, res, resolveSources(js, file), "text/javascript");
+        end(req, res, rewriteModule(js, file, createImportResolver(this.root)), "text/javascript");
       } else if (pathname.startsWith("/_file/")) {
         const path = pathname.slice("/_file".length);
         const filepath = join(this.root, path);
@@ -212,7 +215,7 @@ class FileWatchers {
     const watchers = new FileWatchers();
     const {files, imports} = parseResult;
     for (const name of new Set([...files.map((f) => f.name), ...imports.map((i) => i.name)])) {
-      const watchPath = FileWatchers.getWatchPath(root, join(dirname(path), name));
+      const watchPath = FileWatchers.getWatchPath(root, resolvePath(path, name));
       let prevState = await maybeStat(watchPath);
       let watcher;
       try {
@@ -252,54 +255,62 @@ function resolveDiffs(diff: ReturnType<typeof diffMarkdown>, resolver: CellResol
 
 function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: string; resolver: CellResolver}) {
   const {root, resolver} = options;
+  let path: string | null = null;
+  let current: ReadMarkdownResult | null = null;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
   console.log(faint("socket open"), req.url);
 
-  function refreshAttachment(parseResult: ParseResult, name: string) {
-    send({
-      type: "refresh",
-      cellIds: parseResult.cells.filter((cell) => cell.files?.some((f) => f.name === name)).map((cell) => cell.id)
-    });
+  function refreshAttachment({cells}: ParseResult, name: string) {
+    if (cells.some((cell) => cell.imports?.some((i) => i.name === name))) {
+      watcher("change"); // trigger re-compilation of JavaScript to get new import hashes
+    } else {
+      const affectedCells = cells.filter((cell) => cell.files?.some((f) => f.name === name));
+      if (affectedCells.length > 0) {
+        send({type: "refresh", cellIds: affectedCells.map((cell) => cell.id)});
+      }
+    }
   }
 
-  async function hello({path, hash: initialHash}: {path: string; hash: string}): Promise<void> {
+  async function watcher(event: WatchEventType) {
+    if (!path || !current) throw new Error("not initialized");
+    switch (event) {
+      case "rename": {
+        markdownWatcher?.close();
+        try {
+          markdownWatcher = watch(join(root, path), watcher);
+        } catch (error) {
+          if (!isEnoent(error)) throw error;
+          console.error(`file no longer exists: ${path}`);
+          socket.terminate();
+          return;
+        }
+        setTimeout(() => watcher("change"), 150); // delay to avoid a possibly-empty file
+        break;
+      }
+      case "change": {
+        const updated = await readMarkdown(path, root);
+        if (current.parse.hash === updated.parse.hash) break;
+        const diff = resolveDiffs(diffMarkdown(current, updated), resolver);
+        send({type: "update", diff, previousHash: current.parse.hash, updatedHash: updated.parse.hash});
+        current = updated;
+        attachmentWatcher?.close();
+        attachmentWatcher = await FileWatchers.watchAll(path, root, updated.parse, refreshAttachment);
+        break;
+      }
+    }
+  }
+
+  async function hello({path: initialPath, hash: initialHash}: {path: string; hash: string}): Promise<void> {
     if (markdownWatcher || attachmentWatcher) throw new Error("already watching");
-    if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + path);
+    path = initialPath;
+    if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
     path += ".md";
-    let current = await readMarkdown(path, root);
-    if (current.hash !== initialHash) return void send({type: "reload"});
+    current = await readMarkdown(path, root);
+    if (current.parse.hash !== initialHash) return void send({type: "reload"});
     attachmentWatcher = await FileWatchers.watchAll(path, root, current.parse, refreshAttachment);
-    markdownWatcher = watch(join(root, path), async function watcher(event) {
-      switch (event) {
-        case "rename": {
-          markdownWatcher?.close();
-          try {
-            markdownWatcher = watch(join(root, path), watcher);
-          } catch (error) {
-            if (!isEnoent(error)) throw error;
-            console.error(`file no longer exists: ${path}`);
-            socket.terminate();
-            return;
-          }
-          setTimeout(() => watcher("change"), 150); // delay to avoid a possibly-empty file
-          break;
-        }
-        case "change": {
-          const updated = await readMarkdown(path, root);
-          if (current.hash === updated.hash) break;
-          const diff = resolveDiffs(diffMarkdown(current, updated), resolver);
-          send({type: "update", diff, previousHash: current.hash, updatedHash: updated.hash});
-          attachmentWatcher?.close();
-          attachmentWatcher = await FileWatchers.watchAll(path, root, updated.parse, refreshAttachment);
-          current = updated;
-          break;
-        }
-        default:
-          throw new Error("Unrecognized event: " + event);
-      }
-    });
+    markdownWatcher = watch(join(root, path), watcher);
   }
 
   socket.on("message", async (data) => {

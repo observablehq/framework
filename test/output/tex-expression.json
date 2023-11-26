@@ -42,5 +42,6 @@
       "inline": true,
       "body": "(tex,display) => {\ndisplay((\ntex`E = mc^2`\n))\n}"
     }
-  ]
+  ],
+  "hash": "04b17ab609176283b368bd541e20011a106f2f8d08defb3c655e9ebf3ccbc5e8"
 }
