@@ -10,8 +10,8 @@ You can run a query using `db.sql`:
 
 ```js echo
 const bins = db.sql`SELECT
-  floor(ra / 2) * 2 AS ra,
-  floor(dec / 2) * 2 AS dec,
+  floor(ra / 2) * 2 + 1 AS ra,
+  floor(dec / 2) * 2 + 1 AS dec,
   count() AS count
 FROM
   gaia
@@ -27,12 +27,13 @@ Plot.plot({
   x: {domain: [0, 360]},
   y: {domain: [-90, 90]},
   marks: [
+    Plot.frame({fill: 0}),
     Plot.raster(bins, {
       x: "ra",
       y: "dec",
       fill: "count",
-      width: 360 / 2 + 1,
-      height: 180 / 2 + 1,
+      width: 360 / 2,
+      height: 180 / 2,
       imageRendering: "pixelated"
     })
   ]
