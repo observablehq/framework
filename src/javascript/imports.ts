@@ -1,13 +1,13 @@
 import {createHash} from "node:crypto";
 import {readFileSync} from "node:fs";
-import {dirname, join} from "node:path";
+import {join} from "node:path";
 import {Parser} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression, Node} from "acorn";
 import {simple} from "acorn-walk";
 import {isEnoent} from "../error.js";
 import {type ImportReference, type JavaScriptNode, parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
-import {relativeUrl} from "../url.js";
+import {relativeUrl, resolvePath} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
 // Finds all export declarations in the specified node. (This is used to
@@ -43,7 +43,7 @@ export function findImports(body: Node, root: string, path: string): ImportRefer
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
       if (isLocalImport(value, path)) {
-        paths.push(join(value.startsWith("/") ? "." : dirname(path), value));
+        paths.push(resolvePath(path, value));
       } else {
         imports.push({name: value, type: "global"});
       }
@@ -97,7 +97,7 @@ export function parseLocalImports(root: string, paths: string[]): ImportReferenc
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
       if (isLocalImport(value, path)) {
-        set.add(join(value.startsWith("/") ? "." : dirname(path), value));
+        set.add(resolvePath(path, value));
       } else {
         imports.push({name: value, type: "global"});
         // non-local imports don't need to be traversed
@@ -172,7 +172,7 @@ export type ImportResolver = (path: string, specifier: string) => string;
 export function createImportResolver(root: string, base = "."): ImportResolver {
   return (path, specifier) => {
     return isLocalImport(specifier, path)
-      ? relativeUrl(path, join(base, specifier.startsWith("/") ? "." : dirname(path), resolveImportHash(root, path, specifier))) // prettier-ignore
+      ? relativeUrl(path, resolvePath(base, path, resolveImportHash(root, path, specifier))) // prettier-ignore
       : specifier === "npm:@observablehq/runtime"
       ? relativeUrl(path, "_observablehq/runtime.js")
       : specifier.startsWith("npm:")
@@ -184,7 +184,7 @@ export function createImportResolver(root: string, base = "."): ImportResolver {
 // Given the specified local import, applies the ?sha query string based on the
 // content hash of the imported module and its transitively imported modules.
 function resolveImportHash(root: string, path: string, specifier: string): string {
-  return `${specifier}?sha=${getModuleHash(root, join(specifier.startsWith("/") ? "." : dirname(path), specifier))}`;
+  return `${specifier}?sha=${getModuleHash(root, resolvePath(path, specifier))}`;
 }
 
 // Resolves the content hash for the module at the specified path within the
@@ -221,8 +221,7 @@ function rewriteImportSpecifier(node) {
 
 export function isLocalImport(specifier: string, path: string): boolean {
   return (
-    ["./", "../", "/"].some((prefix) => specifier.startsWith(prefix)) &&
-    !join(".", specifier.startsWith("/") ? "." : dirname(path), specifier).startsWith("../")
+    ["./", "../", "/"].some((prefix) => specifier.startsWith(prefix)) && !resolvePath(path, specifier).startsWith("../")
   );
 }
 

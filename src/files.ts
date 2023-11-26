@@ -4,12 +4,12 @@ import {dirname, extname, join, normalize, relative} from "node:path";
 import mime from "mime";
 import {isEnoent} from "./error.js";
 import type {FileReference} from "./javascript.js";
-import {relativeUrl} from "./url.js";
+import {relativeUrl, resolvePath} from "./url.js";
 
 // A path is local if it doesn’t go outside the the root.
 export function getLocalPath(sourcePath: string, name: string): string | null {
   if (/^\w+:/.test(name)) return null; // URL
-  const path = join(dirname(sourcePath.startsWith("/") ? sourcePath.slice("/".length) : sourcePath), name);
+  const path = resolvePath(sourcePath, name);
   if (path.startsWith("../")) return null; // goes above root
   return path;
 }
@@ -18,7 +18,7 @@ export function fileReference(name: string, sourcePath: string): FileReference {
   return {
     name,
     mimeType: mime.getType(name),
-    path: relativeUrl(sourcePath, join("_file", name.startsWith("/") ? "." : dirname(sourcePath), name))
+    path: relativeUrl(sourcePath, resolvePath("_file", sourcePath, name))
   };
 }
 

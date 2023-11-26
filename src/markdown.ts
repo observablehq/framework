@@ -331,7 +331,7 @@ function normalizePieceHtml(html: string, root: string, sourcePath: string, cont
     const path = getLocalPath(sourcePath, href);
     if (path) {
       context.files.push(fileReference(href, sourcePath));
-      element.setAttribute("href", relativeUrl(sourcePath, `/_file/${path}`));
+      element.setAttribute("href", relativeUrl(sourcePath, join("_file", path)));
     }
   }
 
