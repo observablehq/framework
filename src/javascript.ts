@@ -1,4 +1,4 @@
-import {type Node, type Options, Parser, tokTypes} from "acorn";
+import {type Identifier, type Node, type Options, Parser, tokTypes} from "acorn";
 import {fileReference} from "./files.js";
 import {findAssignments} from "./javascript/assignments.js";
 import {findAwaits} from "./javascript/awaits.js";
@@ -29,10 +29,6 @@ export interface ImportReference {
 
 export interface Feature {
   type: "FileAttachment" | "DatabaseClient" | "Secret";
-  name: string;
-}
-
-export interface Identifier {
   name: string;
 }
 
