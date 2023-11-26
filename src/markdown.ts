@@ -1,6 +1,6 @@
 import {createHash} from "node:crypto";
 import {readFile} from "node:fs/promises";
-import {dirname, join} from "node:path";
+import {join} from "node:path";
 import {type Patch, type PatchItem, getPatch} from "fast-array-diff";
 import equal from "fast-deep-equal";
 import matter from "gray-matter";
@@ -17,7 +17,7 @@ import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
 import {type FileReference, type ImportReference, type Transpile, transpileJavaScript} from "./javascript.js";
 import {transpileTag} from "./tag.js";
-import {relativeUrl} from "./url.js";
+import {relativeUrl, resolvePath} from "./url.js";
 
 export interface ReadMarkdownResult {
   contents: string;
@@ -418,7 +418,7 @@ async function computeMarkdownHash(
   for (const i of imports) {
     if (i.type === "local") {
       try {
-        hash.update(await readFile(join(root, dirname(path), i.name), "utf-8"));
+        hash.update(await readFile(resolvePath(root, path, i.name), "utf-8"));
       } catch (error) {
         if (!isEnoent(error)) throw error;
         continue;

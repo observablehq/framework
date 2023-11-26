@@ -19,6 +19,7 @@ import type {ParseResult, ReadMarkdownResult} from "./markdown.js";
 import {renderPreview} from "./render.js";
 import {type CellResolver, makeCLIResolver} from "./resolver.js";
 import {bold, faint, green, underline} from "./tty.js";
+import {resolvePath} from "./url.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
@@ -214,7 +215,7 @@ class FileWatchers {
     const watchers = new FileWatchers();
     const {files, imports} = parseResult;
     for (const name of new Set([...files.map((f) => f.name), ...imports.map((i) => i.name)])) {
-      const watchPath = FileWatchers.getWatchPath(root, join(dirname(path), name));
+      const watchPath = FileWatchers.getWatchPath(root, resolvePath(path, name));
       let prevState = await maybeStat(watchPath);
       let watcher;
       try {
