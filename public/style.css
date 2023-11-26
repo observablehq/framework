@@ -269,7 +269,8 @@ body {
   position: relative;
 }
 
-.observablehq-link-active::before {
+.observablehq-link-active::before,
+.observablehq-secondary-link-active::before {
   content: "";
   position: absolute;
   top: 0;
