@@ -10,8 +10,10 @@ import {Sourcemap} from "../sourcemap.js";
 import {relativeUrl, resolvePath} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
-// Finds all export declarations in the specified node. (This is used to
-// disallow exports within JavaScript code blocks.)
+/**
+ * Finds all export declarations in the specified node. (This is used to
+ * disallow exports within JavaScript code blocks.)
+ */
 export function findExports(body: Node): (ExportAllDeclaration | ExportNamedDeclaration)[] {
   const exports: (ExportAllDeclaration | ExportNamedDeclaration)[] = [];
 
@@ -27,9 +29,11 @@ export function findExports(body: Node): (ExportAllDeclaration | ExportNamedDecl
   return exports;
 }
 
-// Finds all imports (both static and dynamic) in the specified node.
-// Recursively processes any imported local ES modules. The returned transitive
-// import paths are relative to the given source path.
+/**
+ * Finds all imports (both static and dynamic) in the specified node.
+ * Recursively processes any imported local ES modules. The returned transitive
+ * import paths are relative to the given source path.
+ */
 export function findImports(body: Node, root: string, path: string): ImportReference[] {
   const imports: ImportReference[] = [];
   const paths: string[] = [];
@@ -63,10 +67,12 @@ export function findImports(body: Node, root: string, path: string): ImportRefer
   return imports;
 }
 
-// Parses the module at the specified path to find transitive imports,
-// processing imported modules recursively. Accumulates visited paths, and
-// appends to imports. The paths here are always relative to the root (unlike
-// findImports above!).
+/**
+ * Parses the module at the specified path to find transitive imports,
+ * processing imported modules recursively. Accumulates visited paths, and
+ * appends to imports. The paths here are always relative to the root (unlike
+ * findImports above!).
+ */
 export function parseLocalImports(root: string, paths: string[]): ImportReference[] {
   const imports: ImportReference[] = [];
   const set = new Set(paths);
@@ -107,7 +113,7 @@ export function parseLocalImports(root: string, paths: string[]): ImportReferenc
   return imports;
 }
 
-// Rewrites import specifiers in the specified ES module source.
+/** Rewrites import specifiers in the specified ES module source. */
 export function rewriteModule(input: string, sourcePath: string, resolver: ImportResolver): string {
   const body = Parser.parse(input, parseOptions) as any;
   const output = new Sourcemap(input);
@@ -132,8 +138,10 @@ export function rewriteModule(input: string, sourcePath: string, resolver: Impor
   return String(output);
 }
 
-// Rewrites import specifiers in the specified JavaScript fenced code block or
-// inline expression. TODO parallelize multiple static imports
+/**
+ * Rewrites import specifiers in the specified JavaScript fenced code block or
+ * inline expression. TODO parallelize multiple static imports.
+ */
 export function rewriteImports(
   output: Sourcemap,
   cell: JavaScriptNode,
@@ -172,7 +180,7 @@ export type ImportResolver = (path: string, specifier: string) => string;
 export function createImportResolver(root: string, base = "."): ImportResolver {
   return (path, specifier) => {
     return isLocalImport(specifier, path)
-      ? relativeUrl(path, resolvePath(base, path, resolveImportHash(root, path, specifier))) // prettier-ignore
+      ? relativeUrl(path, resolvePath(base, path, resolveImportHash(root, path, specifier)))
       : specifier === "npm:@observablehq/runtime"
       ? relativeUrl(path, "_observablehq/runtime.js")
       : specifier.startsWith("npm:")
@@ -181,15 +189,19 @@ export function createImportResolver(root: string, base = "."): ImportResolver {
   };
 }
 
-// Given the specified local import, applies the ?sha query string based on the
-// content hash of the imported module and its transitively imported modules.
+/**
+ * Given the specified local import, applies the ?sha query string based on the
+ * content hash of the imported module and its transitively imported modules.
+ */
 function resolveImportHash(root: string, path: string, specifier: string): string {
   return `${specifier}?sha=${getModuleHash(root, resolvePath(path, specifier))}`;
 }
 
-// Resolves the content hash for the module at the specified path within the
-// given source root. This involves parsing the specified module to process
-// transitive imports.
+/**
+ * Resolves the content hash for the module at the specified path within the
+ * given source root. This involves parsing the specified module to process
+ * transitive imports.
+ */
 function getModuleHash(root: string, path: string): string {
   const hash = createHash("sha256");
   try {
