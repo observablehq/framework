@@ -55,13 +55,14 @@ export async function login(effects = defaultEffects) {
   };
   url.searchParams.set("request", Buffer.from(JSON.stringify(request)).toString("base64"));
 
+  const {logger} = effects;
   if (effects.isatty(process.stdin.fd)) {
-    effects.logger.log(`Press Enter to open ${url.hostname} in your browser...`);
+    logger.log(`Press Enter to open ${url.hostname} in your browser...`);
     await effects.waitForEnter();
     await effects.openUrlInBrowser(url.toString());
   } else {
-    effects.logger.log(`Open this link in your browser to continue authentication:`);
-    effects.logger.log(`\n\t${url.toString()}\n`);
+    logger.log("Open this link in your browser to continue authentication:");
+    logger.log(`\n\t${url.toString()}\n`);
   }
   return server; // for testing
   // execution continues in the server's request handler
@@ -69,31 +70,32 @@ export async function login(effects = defaultEffects) {
 
 export async function whoami(effects = defaultEffects) {
   const apiKey = await effects.getObservableApiKey();
+  const {logger} = effects;
   if (apiKey) {
     const apiClient = new ObservableApiClient({
       apiKey,
-      logger: effects.logger
+      logger
     });
 
     try {
       const user = await apiClient.getCurrentUser();
-      effects.logger.log();
-      effects.logger.log(`You are logged into ${OBSERVABLEHQ_UI_HOST.hostname} as ${formatUser(user)}.`);
-      effects.logger.log();
-      effects.logger.log("You have access to the following workspaces:");
+      logger.log();
+      logger.log(`You are logged into ${OBSERVABLEHQ_UI_HOST.hostname} as ${formatUser(user)}.`);
+      logger.log();
+      logger.log("You have access to the following workspaces:");
       for (const workspace of user.workspaces) {
-        effects.logger.log(` * ${formatUser(workspace)}`);
+        logger.log(` * ${formatUser(workspace)}`);
       }
-      effects.logger.log();
+      logger.log();
     } catch (error) {
       if (isHttpError(error) && error.statusCode == 401) {
-        effects.logger.log("Your API key is invalid. Run `observable login` to log in again.");
+        logger.log("Your API key is invalid. Run `observable login` to log in again.");
       } else {
         throw error;
       }
     }
   } else {
-    effects.logger.log(commandRequiresAuthenticationMessage);
+    logger.log(commandRequiresAuthenticationMessage);
   }
 }
 

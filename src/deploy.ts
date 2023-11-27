@@ -31,27 +31,28 @@ const defaultEffects: CommandEffects = {
 // Deploy a project to ObservableHQ.
 export async function deploy(effects = defaultEffects): Promise<void> {
   const apiKey = await effects.getObservableApiKey();
+  const {logger} = effects;
   if (!apiKey) {
-    effects.logger.log(commandRequiresAuthenticationMessage);
+    logger.log(commandRequiresAuthenticationMessage);
     return;
   }
   const apiClient = new ObservableApiClient({
     apiKey,
-    logger: effects.logger
+    logger
   });
 
   // Find the existing project or create a new one.
   let projectId = await effects.getProjectId();
   if (projectId) {
-    effects.logger.log(`Found existing project ${projectId}`);
+    logger.log(`Found existing project ${projectId}`);
   } else {
-    effects.logger.log("Creating a new project");
+    logger.log("Creating a new project");
     const currentUserResponse = await apiClient.getCurrentUser();
 
     const slug = await effects.getNewProjectSlug();
     let workspaceId: string | null = null;
     if (currentUserResponse.workspaces.length == 0) {
-      effects.logger.error("Current user doesn't have any Observable workspaces!");
+      logger.error("Current user doesn't have any Observable workspaces!");
       return;
     } else if (currentUserResponse.workspaces.length == 1) {
       workspaceId = currentUserResponse.workspaces[0].id;
@@ -62,15 +63,15 @@ export async function deploy(effects = defaultEffects): Promise<void> {
     try {
       projectId = await apiClient.postProject(slug, workspaceId);
     } catch (error) {
-      effects.logger.error("Unable to create new project!");
+      logger.error("Unable to create new project!");
       throw error;
     }
 
     await effects.setProjectConfig({id: projectId, slug});
-    effects.logger.log(`Created new project id ${projectId}`);
+    logger.log(`Created new project id ${projectId}`);
   }
 
-  effects.logger.log(`Deploying project id ${projectId}`);
+  logger.log(`Deploying project id ${projectId}`);
 
   // Create the new deploy.
   const deployId = await apiClient.postDeploy(projectId);
@@ -78,7 +79,7 @@ export async function deploy(effects = defaultEffects): Promise<void> {
     console.error("Unable to create new deploy");
     return;
   }
-  effects.logger.log(`Created new deploy id ${deployId}`);
+  logger.log(`Created new deploy id ${deployId}`);
 
   // Upload all the deploy files.
   const deployFiles = await effects.getDeployFiles();
@@ -88,7 +89,7 @@ export async function deploy(effects = defaultEffects): Promise<void> {
 
   // Mark the deploy as uploaded.
   await apiClient.postDeployUploaded(deployId);
-  effects.logger.log(`Deployed project now visible at ${getObservableUiHost()}/p/${projectId}`);
+  logger.log(`Deployed project now visible at ${getObservableUiHost()}/p/${projectId}`);
 }
 
 async function getNewProjectSlug(): Promise<string> {
