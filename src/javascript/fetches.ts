@@ -1,15 +1,16 @@
-import {dirname, join} from "node:path";
 import {simple} from "acorn-walk";
-import {relativeUrl} from "../url.js";
+import {type JavaScriptNode} from "../javascript.js";
+import {type Sourcemap} from "../sourcemap.js";
+import {relativeUrl, resolvePath} from "../url.js";
 import {getStringLiteralValue, isLocalFetch} from "./features.js";
 
-export function rewriteFetches(output, rootNode, sourcePath) {
+export function rewriteFetches(output: Sourcemap, rootNode: JavaScriptNode, sourcePath: string): void {
   simple(rootNode.body, {
     CallExpression(node) {
       if (isLocalFetch(node, rootNode.references, sourcePath)) {
         const arg = node.arguments[0];
         const value = getStringLiteralValue(arg);
-        const path = `/_file/${join(value.startsWith("/") ? "." : dirname(sourcePath), value)}`;
+        const path = resolvePath("_file", sourcePath, value);
         output.replaceLeft(arg.start, arg.end, JSON.stringify(relativeUrl(sourcePath, path)));
       }
     }

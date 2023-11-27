@@ -1,11 +1,17 @@
-import type {CallExpression, Literal, TemplateLiteral} from "acorn";
+import type {CallExpression, Identifier, Literal, Node, TemplateLiteral} from "acorn";
 import {simple} from "acorn-walk";
 import {getLocalPath} from "../files.js";
 import type {Feature} from "../javascript.js";
 import {isLocalImport} from "./imports.js";
 import {syntaxError} from "./syntaxError.js";
 
-export function findFeatures(node, root, sourcePath, references, input) {
+export function findFeatures(
+  node: Node,
+  root: string,
+  sourcePath: string,
+  references: Identifier[],
+  input: string
+): Feature[] {
   const features: Feature[] = [];
 
   simple(node, {
@@ -51,7 +57,7 @@ export function findFeatures(node, root, sourcePath, references, input) {
   return features;
 }
 
-export function isLocalFetch(node: CallExpression, references, sourcePath) {
+export function isLocalFetch(node: CallExpression, references: Identifier[], sourcePath: string): boolean {
   const {
     callee,
     arguments: [arg]

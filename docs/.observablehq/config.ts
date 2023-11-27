@@ -15,7 +15,8 @@ export default {
         {name: "Generators", path: "/javascript/generators"},
         {name: "Mutables", path: "/javascript/mutables"},
         {name: "Imports", path: "/javascript/imports"},
-        {name: "Inputs", path: "/javascript/inputs"}
+        {name: "Inputs", path: "/javascript/inputs"},
+        {name: "DuckDB", path: "/javascript/duckdb"}
       ]
     },
     {

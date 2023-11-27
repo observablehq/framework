@@ -1,8 +1,12 @@
 import {spawn} from "node:child_process";
-import {existsSync, statSync} from "node:fs";
-import {mkdir, open, rename, unlink} from "node:fs/promises";
+import {type WriteStream, createReadStream, existsSync, statSync} from "node:fs";
+import {mkdir, open, readFile, rename, unlink} from "node:fs/promises";
 import {dirname, extname, join} from "node:path";
+import {createGunzip} from "node:zlib";
+import JSZip from "jszip";
+import {extract} from "tar-stream";
 import {maybeStat, prepareOutput} from "./files.js";
+import {faint, green, red, yellow} from "./tty.js";
 
 const runningCommands = new Map<string, Promise<string>>();
 
@@ -16,20 +20,17 @@ const languages = {
   ".exe": null
 };
 
-export class Loader {
-  /**
-   * The command to run, such as "node" for a JavaScript loader, "tsx" for
-   * TypeScript, and "sh" for a shell script.
-   */
-  private readonly command: string;
+export interface LoadOptions {
+  verbose?: boolean;
+}
 
-  /**
-   * Args to pass to the command; currently this is a single argument of the
-   * path to the loader script relative to the current working directory. (TODO
-   * Support passing additional arguments to loaders.)
-   */
-  private readonly args: string[];
+export interface LoaderOptions {
+  path: string;
+  sourceRoot: string;
+  targetPath: string;
+}
 
+export abstract class Loader {
   /**
    * The path to the loader script or executable relative to the current working
    * directory. This is exposed so that clients can check which file to watch to
@@ -49,9 +50,7 @@ export class Loader {
    */
   readonly targetPath: string;
 
-  private constructor({command, args, path, sourceRoot, targetPath}) {
-    this.command = command;
-    this.args = args;
+  constructor({path, sourceRoot, targetPath}: LoaderOptions) {
     this.path = path;
     this.sourceRoot = sourceRoot;
     this.targetPath = targetPath;
@@ -60,17 +59,53 @@ export class Loader {
   /**
    * Finds the loader for the specified target path, relative to the specified
    * source root, if it exists. If there is no such loader, returns undefined.
+   * For files within archives, we find the first parent folder that exists, but
+   * abort if we find a matching folder or reach the source root; for example,
+   * if docs/data exists, we won’t look for a docs/data.zip.
    */
   static find(sourceRoot: string, targetPath: string): Loader | undefined {
+    const exact = this.findExact(sourceRoot, targetPath);
+    if (exact) return exact;
+    let dir = dirname(targetPath);
+    for (let parent: string; true; dir = parent) {
+      parent = dirname(dir);
+      if (parent === dir) return; // reached source root
+      if (existsSync(join(sourceRoot, dir))) return; // found folder
+      if (existsSync(join(sourceRoot, parent))) break; // found parent
+    }
+    for (const [ext, Extractor] of extractors) {
+      const archive = dir + ext;
+      if (existsSync(join(sourceRoot, archive))) {
+        return new Extractor({
+          preload: async () => archive,
+          inflatePath: targetPath.slice(archive.length - ext.length + 1),
+          path: join(sourceRoot, archive),
+          sourceRoot,
+          targetPath
+        });
+      }
+      const archiveLoader = this.findExact(sourceRoot, archive);
+      if (archiveLoader) {
+        return new Extractor({
+          preload: async (options) => archiveLoader.load(options),
+          inflatePath: targetPath.slice(archive.length - ext.length + 1),
+          path: archiveLoader.path,
+          sourceRoot,
+          targetPath
+        });
+      }
+    }
+  }
+
+  private static findExact(sourceRoot: string, targetPath: string): Loader | undefined {
     for (const ext in languages) {
-      const sourcePath = targetPath + ext;
-      const path = join(sourceRoot, sourcePath);
-      if (!existsSync(path)) continue;
+      if (!existsSync(join(sourceRoot, targetPath + ext))) continue;
       if (extname(targetPath) === "") {
-        console.warn(`invalid data loader path: ${sourcePath}`);
+        console.warn(`invalid data loader path: ${targetPath + ext}`);
         return;
       }
-      return new Loader({
+      const path = join(sourceRoot, targetPath + ext);
+      return new CommandLoader({
         command: languages[ext] ?? path,
         args: languages[ext] == null ? [] : [path],
         path,
@@ -85,8 +120,10 @@ export class Loader {
    * to the source root; this is within the .observablehq/cache folder within
    * the source root.
    */
-  async load({verbose = true}: {verbose?: boolean} = {}): Promise<string> {
-    let command = runningCommands.get(this.path);
+  async load(options: LoadOptions = {}): Promise<string> {
+    const {verbose = true} = options;
+    const key = join(this.sourceRoot, this.targetPath);
+    let command = runningCommands.get(key);
     if (!command) {
       command = (async () => {
         const outputPath = join(".observablehq", "cache", this.targetPath);
@@ -99,20 +136,15 @@ export class Loader {
         const tempPath = join(this.sourceRoot, ".observablehq", "cache", `${this.targetPath}.${process.pid}`);
         await prepareOutput(tempPath);
         const tempFd = await open(tempPath, "w");
-        const tempFileStream = tempFd.createWriteStream({highWaterMark: 1024 * 1024});
-        const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", "pipe", "inherit"]});
-        subprocess.stdout.pipe(tempFileStream);
-        const code = await new Promise((resolve, reject) => {
-          subprocess.on("error", reject);
-          subprocess.on("close", resolve);
-        });
-        await tempFd.close();
-        if (code === 0) {
+        try {
+          await this.exec(tempFd.createWriteStream({highWaterMark: 1024 * 1024}), options);
           await mkdir(dirname(cachePath), {recursive: true});
           await rename(tempPath, cachePath);
-        } else {
+        } catch (error) {
           await unlink(tempPath);
-          throw new Error(`loader exited with code ${code}`);
+          throw error;
+        } finally {
+          await tempFd.close();
         }
         return outputPath;
       })();
@@ -135,16 +167,121 @@ export class Loader {
     }
     return command;
   }
+
+  abstract exec(output: WriteStream, options?: LoadOptions): Promise<void>;
 }
 
-const faint = color(2);
-const red = color(31);
-const green = color(32);
-const yellow = color(33);
-
-function color(code) {
-  return process.stdout.isTTY ? (text) => `\x1b[${code}m${text}\x1b[0m` : String;
+interface CommandLoaderOptions extends LoaderOptions {
+  command: string;
+  args: string[];
 }
+
+class CommandLoader extends Loader {
+  /**
+   * The command to run, such as "node" for a JavaScript loader, "tsx" for
+   * TypeScript, and "sh" for a shell script. "noop" when we only need to
+   * inflate a file from a static archive.
+   */
+  private readonly command: string;
+
+  /**
+   * Args to pass to the command; currently this is a single argument of the
+   * path to the loader script relative to the current working directory. (TODO
+   * Support passing additional arguments to loaders.)
+   */
+  private readonly args: string[];
+
+  constructor({command, args, ...options}: CommandLoaderOptions) {
+    super(options);
+    this.command = command;
+    this.args = args;
+  }
+
+  async exec(output: WriteStream): Promise<void> {
+    const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", "pipe", "inherit"]});
+    subprocess.stdout.pipe(output);
+    const code = await new Promise((resolve, reject) => {
+      subprocess.on("error", reject);
+      subprocess.on("close", resolve);
+    });
+    if (code !== 0) {
+      throw new Error(`exited with code ${code}`);
+    }
+  }
+}
+
+interface ZipExtractorOptions extends LoaderOptions {
+  preload: Loader["load"];
+  inflatePath: string;
+}
+
+class ZipExtractor extends Loader {
+  private readonly preload: Loader["load"];
+  private readonly inflatePath: string;
+
+  constructor({preload, inflatePath, ...options}: ZipExtractorOptions) {
+    super(options);
+    this.preload = preload;
+    this.inflatePath = inflatePath;
+  }
+
+  async exec(output: WriteStream, options: LoadOptions = {}): Promise<void> {
+    const archivePath = join(this.sourceRoot, await this.preload(options));
+    const file = (await JSZip.loadAsync(await readFile(archivePath))).file(this.inflatePath);
+    if (!file) throw Object.assign(new Error("file not found"), {code: "ENOENT"});
+    const pipe = file.nodeStream().pipe(output);
+    await new Promise((resolve, reject) => pipe.on("error", reject).on("finish", resolve));
+  }
+}
+
+interface TarExtractorOptions extends LoaderOptions {
+  preload: Loader["load"];
+  inflatePath: string;
+  gunzip?: boolean;
+}
+
+class TarExtractor extends Loader {
+  private readonly preload: Loader["load"];
+  private readonly inflatePath: string;
+  private readonly gunzip: boolean;
+
+  constructor({preload, inflatePath, gunzip = false, ...options}: TarExtractorOptions) {
+    super(options);
+    this.preload = preload;
+    this.inflatePath = inflatePath;
+    this.gunzip = gunzip;
+  }
+
+  async exec(output: WriteStream, options: LoadOptions = {}): Promise<void> {
+    const archivePath = join(this.sourceRoot, await this.preload(options));
+    const tar = extract();
+    const input = createReadStream(archivePath);
+    (this.gunzip ? input.pipe(createGunzip()) : input).pipe(tar);
+    for await (const entry of tar) {
+      if (entry.header.name === this.inflatePath) {
+        const pipe = entry.pipe(output);
+        await new Promise((resolve, reject) => pipe.on("error", reject).on("finish", resolve));
+        return;
+      } else {
+        entry.resume();
+      }
+    }
+    throw Object.assign(new Error("file not found"), {code: "ENOENT"});
+  }
+}
+
+class TarGzExtractor extends TarExtractor {
+  constructor(options: TarExtractorOptions) {
+    super({...options, gunzip: true});
+  }
+}
+
+const extractors = [
+  [".zip", ZipExtractor],
+  [".tar", TarExtractor],
+  [".tar.gz", TarGzExtractor],
+  [".tgz", TarGzExtractor]
+] as const;
 
 function formatSize(size) {
   if (!size) return yellow("empty output");

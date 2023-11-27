@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import {existsSync, readdirSync, statSync} from "node:fs";
-import {readFile, rm} from "node:fs/promises";
+import {open, readFile, rm} from "node:fs/promises";
 import {join, normalize, relative} from "node:path";
 import {difference} from "d3-array";
 import {build} from "../src/build.js";
@@ -19,10 +19,23 @@ describe("build", async () => {
       const actualDir = join(outputRoot, `${outname}-changed`);
       const expectedDir = join(outputRoot, outname);
       const generate = !existsSync(expectedDir) && process.env.CI !== "true";
+      const outputDir = generate ? expectedDir : actualDir;
+      const addPublic = name.endsWith("-public");
 
       await rm(actualDir, {recursive: true, force: true});
       if (generate) console.warn(`! generating ${expectedDir}`);
-      await build({sourceRoot: path, outputRoot: generate ? expectedDir : actualDir, verbose: false, addPublic: false});
+      await build({sourceRoot: path, outputRoot: outputDir, verbose: false, addPublic});
+
+      // In the addPublic case, we don’t want to test the contents of the public
+      // files because they change often; replace them with empty files so we
+      // can at least check that the expected files exist.
+      if (addPublic) {
+        const publicDir = join(outputDir, "_observablehq");
+        for (const file of findFiles(publicDir)) {
+          await (await open(join(publicDir, file), "w")).close();
+        }
+      }
+
       if (generate) return;
 
       const actualFiles = new Set(findFiles(actualDir));

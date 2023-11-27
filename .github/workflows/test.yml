@@ -16,7 +16,8 @@ jobs:
           node-version: 18
           cache: 'yarn'
       - run: yarn --frozen-lockfile
-      - run: yarn test:mocha
+      - run: yarn c8 --check-coverage -x src/preview.ts -x src/toolConfig.ts --lines 80 --per-file yarn test:mocha
+      - run: yarn test:tsc
       - run: |
           echo ::add-matcher::.github/eslint.json
           yarn run eslint src test --format=compact

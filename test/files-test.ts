@@ -1,5 +1,33 @@
 import assert from "node:assert";
-import {visitFiles} from "../src/files.js";
+import {stat} from "node:fs/promises";
+import {maybeStat, prepareOutput, visitFiles} from "../src/files.js";
+
+describe("prepareOutput(path)", () => {
+  it("does nothing if passed the current directory", async () => {
+    assert.strictEqual(await prepareOutput("."), undefined);
+  });
+});
+
+describe("maybeStat(path)", () => {
+  it("returns stat if the file does not exist", async () => {
+    assert.deepStrictEqual(await maybeStat("README.md"), await stat("README.md"));
+  });
+  it("rethrows unexpected error", async () => {
+    const expected = new Error();
+    assert.rejects(
+      () =>
+        maybeStat({
+          toString(): string {
+            throw expected;
+          }
+        } as string),
+      expected
+    );
+  });
+  it("returns undefined if the file does not exist", async () => {
+    assert.strictEqual(await maybeStat("does/not/exist.txt"), undefined);
+  });
+});
 
 describe("visitFiles(root)", () => {
   it("visits all files in a directory, return the relative path from the root", async () => {

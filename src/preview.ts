@@ -1,34 +1,47 @@
 import {createHash} from "node:crypto";
-import {type FSWatcher, existsSync, watch} from "node:fs";
+import {watch} from "node:fs";
+import type {FSWatcher, WatchEventType} from "node:fs";
 import {access, constants, readFile, stat} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, ServerResponse} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
-import {parseArgs} from "node:util";
 import send from "send";
 import {type WebSocket, WebSocketServer} from "ws";
+import {version} from "../package.json";
 import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError} from "./error.js";
-import {maybeStat} from "./files.js";
-import {resolveSources} from "./javascript/imports.js";
-import {type ParseResult, diffMarkdown, readMarkdown} from "./markdown.js";
-import {readPages} from "./navigation.js";
+import {FileWatchers} from "./fileWatchers.js";
+import {createImportResolver, rewriteModule} from "./javascript/imports.js";
+import {diffMarkdown, readMarkdown} from "./markdown.js";
+import type {ParseResult, ReadMarkdownResult} from "./markdown.js";
 import {renderPreview} from "./render.js";
 import {type CellResolver, makeCLIResolver} from "./resolver.js";
+import {bold, faint, green, underline} from "./tty.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
-class Server {
-  private _server: ReturnType<typeof createServer>;
-  private _socketServer: WebSocketServer;
+export interface PreviewOptions {
+  root: string;
+  hostname: string;
+  port: number;
+  verbose?: boolean;
+}
+
+export async function preview(options: PreviewOptions): Promise<Server> {
+  return Server.start(options);
+}
+
+export class Server {
+  private readonly _server: ReturnType<typeof createServer>;
+  private readonly _socketServer: WebSocketServer;
+  private readonly _resolver: CellResolver;
   readonly port: number;
   readonly hostname: string;
   readonly root: string;
-  private _resolver: CellResolver | undefined;
 
-  constructor({port, hostname, root}: CommandContext) {
+  private constructor({port, hostname, root}: PreviewOptions, resolver: CellResolver) {
     this.port = port;
     this.hostname = hostname;
     this.root = root;
@@ -36,18 +49,22 @@ class Server {
     this._server.on("request", this._handleRequest);
     this._socketServer = new WebSocketServer({server: this._server});
     this._socketServer.on("connection", this._handleConnection);
+    this._resolver = resolver;
   }
 
-  async start() {
-    this._resolver = await makeCLIResolver();
-    return new Promise<void>((resolve) => {
-      this._server.listen(this.port, this.hostname, resolve);
-    });
+  static async start({verbose = true, ...options}: PreviewOptions) {
+    const server = new Server(options, await makeCLIResolver());
+    await new Promise<void>((resolve) => server._server.listen(server.port, server.hostname, resolve));
+    if (verbose) {
+      console.log(`${green(bold("Observable CLI"))}\t${faint(`v${version}`)}`);
+      console.log(`${faint("↳")} ${underline(`http://${server.hostname}:${server.port}/`)}`);
+      console.log("");
+    }
+    return server;
   }
 
   _handleRequest: RequestListener = async (req, res) => {
-    console.log(req.method, req.url);
-    let pages;
+    console.log(faint(req.method!), req.url);
     try {
       const url = new URL(req.url!, "http://localhost");
       let {pathname} = url;
@@ -64,7 +81,7 @@ class Server {
           if (!isEnoent(error)) throw error;
           throw new HttpError("Not found", 404);
         }
-        end(req, res, resolveSources(js, file), "text/javascript");
+        end(req, res, rewriteModule(js, file, createImportResolver(this.root)), "text/javascript");
       } else if (pathname.startsWith("/_file/")) {
         const path = pathname.slice("/_file".length);
         const filepath = join(this.root, path);
@@ -79,14 +96,12 @@ class Server {
         // Look for a data loader for this file.
         const loader = Loader.find(this.root, path);
         if (loader) {
-          let outpath;
           try {
-            outpath = await loader.load();
-          } catch {
-            throw new HttpError("Internal error", 500);
+            send(req, await loader.load(), {root: this.root}).pipe(res);
+            return;
+          } catch (error) {
+            if (!isEnoent(error)) throw error;
           }
-          send(req, outpath, {root: this.root}).pipe(res);
-          return;
         }
         throw new HttpError("Not found", 404);
       } else {
@@ -124,15 +139,12 @@ class Server {
         // Otherwise, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
         try {
-          pages = await readPages(this.root); // TODO cache? watcher?
           const config = await readConfig(this.root);
           const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {
             root: this.root,
             path: pathname,
-            pages,
-            title: config?.title,
-            toc: config?.toc,
-            resolver: this._resolver!
+            resolver: this._resolver,
+            ...config
           });
           end(req, res, html, "text/html");
         } catch (error) {
@@ -145,11 +157,12 @@ class Server {
       res.statusCode = isHttpError(error) ? error.statusCode : 500;
       if (req.method === "GET" && res.statusCode === 404) {
         try {
+          const config = await readConfig(this.root);
           const {html} = await renderPreview(await readFile(join(this.root, "404.md"), "utf-8"), {
             root: this.root,
             path: "/404",
-            pages,
-            resolver: this._resolver!
+            resolver: this._resolver,
+            ...config
           });
           end(req, res, html, "text/html");
           return;
@@ -164,7 +177,7 @@ class Server {
 
   _handleConnection = (socket: WebSocket, req: IncomingMessage) => {
     if (req.url === "/_observablehq") {
-      handleWatch(socket, {root: this.root, resolver: this._resolver!});
+      handleWatch(socket, req, {root: this.root, resolver: this._resolver});
     } else {
       socket.close();
     }
@@ -189,48 +202,6 @@ function end(req: IncomingMessage, res: ServerResponse, content: string, type: s
   }
 }
 
-class FileWatchers {
-  #watchers: FSWatcher[] = [];
-
-  static async watchAll(
-    path: string,
-    root: string,
-    parseResult: ParseResult,
-    cb: (parseResult: ParseResult, name: string) => void
-  ) {
-    const watchers = new FileWatchers();
-    const {files, imports} = parseResult;
-    for (const name of new Set([...files.map((f) => f.name), ...imports.map((i) => i.name)])) {
-      const watchPath = FileWatchers.getWatchPath(root, join(dirname(path), name));
-      let prevState = await maybeStat(watchPath);
-      let watcher;
-      try {
-        watcher = watch(watchPath, async () => {
-          const newState = await maybeStat(watchPath);
-          // Ignore if the file was truncated or not modified.
-          if (prevState?.mtimeMs === newState?.mtimeMs || newState?.size === 0) return;
-          prevState = newState;
-          cb(parseResult, name);
-        });
-      } catch {
-        continue; // ignore missing files
-      }
-      watchers.#watchers.push(watcher);
-    }
-    return watchers;
-  }
-
-  static getWatchPath(root: string, name: string): string {
-    const path = join(root, name);
-    return existsSync(path) ? path : Loader.find(root, name)?.path ?? path;
-  }
-
-  close() {
-    this.#watchers.forEach((w) => w.close());
-    this.#watchers = [];
-  }
-}
-
 function resolveDiffs(diff: ReturnType<typeof diffMarkdown>, resolver: CellResolver): ReturnType<typeof diffMarkdown> {
   return diff.map((item) =>
     item.type === "add"
@@ -239,62 +210,79 @@ function resolveDiffs(diff: ReturnType<typeof diffMarkdown>, resolver: CellResol
   );
 }
 
-function handleWatch(socket: WebSocket, options: {root: string; resolver: CellResolver}) {
+function getWatchPaths(parseResult: ParseResult): string[] {
+  const paths: string[] = [];
+  const {files, imports} = parseResult;
+  for (const f of files) paths.push(f.name);
+  for (const i of imports) paths.push(i.name);
+  return paths;
+}
+
+function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: string; resolver: CellResolver}) {
   const {root, resolver} = options;
+  let path: string | null = null;
+  let current: ReadMarkdownResult | null = null;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
-  console.log("socket open");
+  console.log(faint("socket open"), req.url);
 
-  function refreshAttachment(parseResult: ParseResult, name: string) {
-    send({
-      type: "refresh",
-      cellIds: parseResult.cells.filter((cell) => cell.files?.some((f) => f.name === name)).map((cell) => cell.id)
-    });
+  function refreshAttachment(name: string) {
+    const {cells} = current!.parse;
+    if (cells.some((cell) => cell.imports?.some((i) => i.name === name))) {
+      watcher("change"); // trigger re-compilation of JavaScript to get new import hashes
+    } else {
+      const affectedCells = cells.filter((cell) => cell.files?.some((f) => f.name === name));
+      if (affectedCells.length > 0) {
+        send({type: "refresh", cellIds: affectedCells.map((cell) => cell.id)});
+      }
+    }
   }
 
-  async function hello({path, hash: initialHash}: {path: string; hash: string}): Promise<void> {
+  async function watcher(event: WatchEventType) {
+    if (!path || !current) throw new Error("not initialized");
+    switch (event) {
+      case "rename": {
+        markdownWatcher?.close();
+        try {
+          markdownWatcher = watch(join(root, path), watcher);
+        } catch (error) {
+          if (!isEnoent(error)) throw error;
+          console.error(`file no longer exists: ${path}`);
+          socket.terminate();
+          return;
+        }
+        setTimeout(() => watcher("change"), 150); // delay to avoid a possibly-empty file
+        break;
+      }
+      case "change": {
+        const updated = await readMarkdown(path, root);
+        if (current.parse.hash === updated.parse.hash) break;
+        const diff = resolveDiffs(diffMarkdown(current, updated), resolver);
+        send({type: "update", diff, previousHash: current.parse.hash, updatedHash: updated.parse.hash});
+        current = updated;
+        attachmentWatcher?.close();
+        attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(updated.parse), refreshAttachment);
+        break;
+      }
+    }
+  }
+
+  async function hello({path: initialPath, hash: initialHash}: {path: string; hash: string}): Promise<void> {
     if (markdownWatcher || attachmentWatcher) throw new Error("already watching");
-    if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + path);
+    path = initialPath;
+    if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
     path += ".md";
-    let current = await readMarkdown(path, root);
-    if (current.hash !== initialHash) return void send({type: "reload"});
-    attachmentWatcher = await FileWatchers.watchAll(path, root, current.parse, refreshAttachment);
-    markdownWatcher = watch(join(root, path), async function watcher(event) {
-      switch (event) {
-        case "rename": {
-          markdownWatcher?.close();
-          try {
-            markdownWatcher = watch(join(root, path), watcher);
-          } catch (error) {
-            if (!isEnoent(error)) throw error;
-            console.error(`file no longer exists: ${path}`);
-            socket.terminate();
-            return;
-          }
-          setTimeout(() => watcher("change"), 150); // delay to avoid a possibly-empty file
-          break;
-        }
-        case "change": {
-          const updated = await readMarkdown(path, root);
-          if (current.hash === updated.hash) break;
-          const diff = resolveDiffs(diffMarkdown(current, updated), resolver);
-          send({type: "update", diff, previousHash: current.hash, updatedHash: updated.hash});
-          attachmentWatcher?.close();
-          attachmentWatcher = await FileWatchers.watchAll(path, root, updated.parse, refreshAttachment);
-          current = updated;
-          break;
-        }
-        default:
-          throw new Error("Unrecognized event: " + event);
-      }
-    });
+    current = await readMarkdown(path, root);
+    if (current.parse.hash !== initialHash) return void send({type: "reload"});
+    attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(current.parse), refreshAttachment);
+    markdownWatcher = watch(join(root, path), watcher);
   }
 
   socket.on("message", async (data) => {
     try {
       const message = JSON.parse(String(data));
-      console.log("↑", message);
+      console.log(faint("↑"), message);
       switch (message.type) {
         case "hello": {
           await hello(message);
@@ -320,55 +308,11 @@ function handleWatch(socket: WebSocket, options: {root: string; resolver: CellRe
       markdownWatcher.close();
       markdownWatcher = null;
     }
-    console.log("socket close");
+    console.log(faint("socket close"), req.url);
   });
 
   function send(message) {
-    console.log("↓", message);
+    console.log(faint("↓"), message);
     socket.send(JSON.stringify(message));
   }
 }
-
-const USAGE = `Usage: observable preview [--root dir] [--hostname host] [--port port]`;
-
-interface CommandContext {
-  root: string;
-  hostname: string;
-  port: number;
-}
-
-function makeCommandContext(): CommandContext {
-  const {values} = parseArgs({
-    options: {
-      root: {
-        type: "string",
-        short: "r",
-        default: "docs"
-      },
-      hostname: {
-        type: "string",
-        short: "h"
-      },
-      port: {
-        type: "string",
-        short: "p"
-      }
-    }
-  });
-  if (!values.root) {
-    console.error(USAGE);
-    process.exit(1);
-  }
-  return {
-    root: normalize(values.root).replace(/\/$/, ""),
-    hostname: values.hostname ?? process.env.HOSTNAME ?? "127.0.0.1",
-    port: values.port ? +values.port : process.env.PORT ? +process.env.PORT : 3000
-  };
-}
-
-await (async function () {
-  const context = makeCommandContext();
-  const server = new Server(context);
-  await server.start();
-  console.log(`Server running at http://${server.hostname}:${server.port}/`);
-})();

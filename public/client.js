@@ -6,7 +6,11 @@ const main = runtime.module();
 
 const attachedFiles = new Map();
 const resolveFile = (name) => attachedFiles.get(name);
-main.builtin("FileAttachment", runtime.fileAttachments(resolveFile));
+
+// https://github.com/observablehq/cli/issues/190
+const FileAttachment = runtime.fileAttachments(resolveFile);
+FileAttachment.prototype.url = async function() { return String(new URL(await this._url, location)); }; // prettier-ignore
+main.builtin("FileAttachment", FileAttachment);
 
 const databaseTokens = new Map();
 async function resolveDatabaseToken(name) {
@@ -337,15 +341,13 @@ for (const summary of document.querySelectorAll("#observablehq-sidebar summary")
 }
 
 const copyButton = document.createElement("template");
-copyButton.innerHTML = `<button title="Copy code" class="observablehq-pre-copy"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6C2 5.44772 2.44772 5 3 5H10C10.5523 5 11 5.44772 11 6V13C11 13.5523 10.5523 14 10 14H3C2.44772 14 2 13.5523 2 13V6Z M4 2.00004L12 2.00001C13.1046 2 14 2.89544 14 4.00001V12"></path></svg></button>`;
+copyButton.innerHTML = '<button title="Copy code" class="observablehq-pre-copy"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6C2 5.44772 2.44772 5 3 5H10C10.5523 5 11 5.44772 11 6V13C11 13.5523 10.5523 14 10 14H3C2.44772 14 2 13.5523 2 13V6Z M4 2.00004L12 2.00001C13.1046 2 14 2.89544 14 4.00001V12"></path></svg></button>'; // prettier-ignore
 
 enableCopyButtons();
 
 function enableCopyButtons() {
   for (const pre of document.querySelectorAll("pre")) {
-    const button = pre.appendChild(copyButton.content.cloneNode(true).firstChild);
-    button.addEventListener("click", copy);
-    pre.style.position = "relative";
+    pre.appendChild(copyButton.content.cloneNode(true).firstChild).addEventListener("click", copy);
   }
 }
 
@@ -353,14 +355,52 @@ async function copy({currentTarget}) {
   await navigator.clipboard.writeText(currentTarget.parentElement.textContent.trimEnd());
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  if (location.hash) highlightToc(location.hash);
-  window.addEventListener("hashchange", () => {
-    highlightToc(location.hash);
-  });
-  function highlightToc(hash) {
-    const currentSelected = document.querySelector("li.observablehq-secondary-link-active");
-    if (currentSelected) currentSelected.classList.remove("observablehq-secondary-link-active");
-    document.querySelector(`li a[href="${hash}"]`)?.parentElement.classList.add("observablehq-secondary-link-active");
-  }
-});
+const toc = document.querySelector("#observablehq-toc");
+if (toc) {
+  const highlight = toc.appendChild(document.createElement("div"));
+  highlight.classList.add("observablehq-secondary-link-highlight");
+  const headings = Array.from(document.querySelectorAll("#observablehq-main h2")).reverse();
+  const links = toc.querySelectorAll(".observablehq-secondary-link");
+  const relink = () => {
+    for (const link of links) {
+      link.classList.remove("observablehq-secondary-link-active");
+    }
+    // If there’s a location.hash, highlight that if it’s at the top of the viewport.
+    if (location.hash) {
+      for (const heading of headings) {
+        const hash = heading.querySelector("a[href]")?.hash;
+        if (hash === location.hash) {
+          const top = heading.getBoundingClientRect().top;
+          if (0 < top && top < 40) {
+            for (const link of links) {
+              if (link.querySelector("a[href]")?.hash === hash) {
+                link.classList.add("observablehq-secondary-link-active");
+                return link;
+              }
+            }
+            return;
+          }
+          break;
+        }
+      }
+    }
+    // Otherwise, highlight the last one that’s above the center of the viewport.
+    for (const heading of headings) {
+      if (heading.getBoundingClientRect().top >= innerHeight * 0.5) continue;
+      const hash = heading.querySelector("a[href]")?.hash;
+      for (const link of links) {
+        if (link.querySelector("a[href]")?.hash === hash) {
+          link.classList.add("observablehq-secondary-link-active");
+          return link;
+        }
+      }
+      break;
+    }
+  };
+  const intersected = () => {
+    const link = relink();
+    highlight.style = link ? `top: ${link.offsetTop}px; height: ${link.offsetHeight}px;` : "";
+  };
+  const observer = new IntersectionObserver(intersected, {rootMargin: "0px 0px -50% 0px"});
+  for (const heading of headings) observer.observe(heading);
+}

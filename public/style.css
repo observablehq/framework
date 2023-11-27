@@ -124,7 +124,8 @@ body {
   overflow-y: scroll;
 }
 
-#observablehq-sidebar ol {
+#observablehq-sidebar ol,
+#observablehq-toc ol {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -156,7 +157,6 @@ body {
 }
 
 #observablehq-sidebar summary {
-  list-style: none;
   font-weight: 700;
   color: var(--theme-foreground);
 }
@@ -229,60 +229,34 @@ body {
   color: var(--theme-foreground-focus);
 }
 
-
 #observablehq-toc {
-  display: none; /** TODO - mobile view **/
-  width: 6em;
-  position: absolute;
-  right: 1rem;
-  background: var(--theme-background);
-  padding-left: 2rem;
-  padding-right: 2rem;
-  user-select: none;
-}
-#observablehq-toc:not([open]) summary span  {
   display: none;
+  position: fixed;
+  color: var(--theme-foreground-muted);
+  font: 400 14px var(--sans-serif);
+  z-index: 1;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: scroll;
 }
 
-#observablehq-toc summary::marker {
-  content: '';
-}
-#observablehq-toc ::-webkit-details-marker {
-  display: none;
-}
-
-@media (min-width: calc(1152px + 6em)) {
-  #observablehq-toc {
-    display: block;
-    position: fixed;
-    top: 1rem;
-    border-left: solid 1px var(--theme-foreground-faintest);
-  }
-  #observablehq-toc summary {
-    pointer-events: none;
-  }
-  #observablehq-main.has-toc {
-    padding-right: 11em;
-  }
+#observablehq-toc nav {
+  width: 160px;
+  margin: 2rem 0;
+  padding: 0 1rem;
+  border-left: solid 1px var(--theme-foreground-faintest);
 }
 
-#observablehq-toc nav ol {
-  margin: 0;
-  padding-inline-start: 5px;
+#observablehq-toc div {
+  font-weight: 700;
+  color: var(--theme-foreground);
+  margin-bottom: 0.5rem;
 }
 
-#observablehq-toc>* {
-  color: var(--theme-foreground-mute);
-  margin-bottom: 8px;
-  font: 14px var(--sans-serif);
-}
-
-#observablehq-toc nav ol li {
-  font: 12px var(--sans-serif);
-  font-weight: 350;
-  line-height: 1.5;
-  list-style-type: none;
-  color: var(--theme-foreground-faint);
+.observablehq-secondary-link a {
+  display: block;
+  padding: 0.25rem 0;
 }
 
 .observablehq-link a[href],
@@ -295,14 +269,25 @@ body {
   position: relative;
 }
 
-.observablehq-link-active::before {
+.observablehq-link-active::before,
+.observablehq-secondary-link-highlight {
   content: "";
   position: absolute;
+  width: 3px;
+  background: var(--theme-foreground-focus);
+}
+
+.observablehq-link-active::before {
   top: 0;
   bottom: 0;
   left: -1rem;
-  width: 3px;
-  background: var(--theme-foreground-focus);
+}
+
+.observablehq-secondary-link-highlight {
+  left: 1px;
+  top: 2rem;
+  height: 0;
+  transition: top 150ms ease, height 150ms ease;
 }
 
 a[href],
@@ -326,7 +311,7 @@ a[href],
   }
 }
 
-@media (min-width: calc(640px + 4rem + 0.5rem + 240px + 2rem)) {
+@media (min-width: calc(640px + 17px * 4 + 240px + 17px * 2)) {
   #observablehq-sidebar {
     transition: none;
   }
@@ -348,11 +333,43 @@ a[href],
   }
 }
 
+@media (min-width: calc(640px + 17px * 4 + 160px + 17px * 2)) {
+  #observablehq-toc ~ #observablehq-center {
+    padding-right: calc(160px + 3rem);
+  }
+  #observablehq-toc ~ #observablehq-center pre {
+    border-radius: 4px;
+  }
+  #observablehq-toc {
+    display: block;
+  }
+}
+
+@media (min-width: calc(640px + 17px * 4 + 240px + 17px * 2)) {
+  #observablehq-sidebar-toggle:checked ~ #observablehq-toc,
+  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc {
+    display: none;
+  }
+}
+
+@media (min-width: calc(640px + 17px * 4 + 240px + 17px * 2 + 160px + 17px * 2)) {
+  #observablehq-sidebar-toggle:checked ~ #observablehq-toc,
+  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc,
+  #observablehq-toc {
+    display: block;
+  }
+  #observablehq-sidebar-toggle:checked ~ #observablehq-toc ~ #observablehq-center,
+  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc ~ #observablehq-center,
+  #observablehq-toc ~ #observablehq-center {
+    padding-right: calc(160px + 3rem);
+  }
+}
+
 @media (hover: hover) {
   #observablehq-sidebar-toggle:not(:checked):not(:hover)::before {
     content: "";
   }
-  @media (min-width: calc(640px + 4rem + 0.5rem + 240px + 2rem)) {
+  @media (min-width: calc(640px + 17px * 4 + 240px + 17px * 2)) {
     #observablehq-sidebar-toggle:indeterminate:not(:checked):not(:hover)::before {
       content: "⟨";
     }
@@ -403,6 +420,7 @@ h6 {
   line-height: 1.15;
   margin-top: 0;
   margin-bottom: 0.25rem;
+  scroll-margin-top: 1rem;
 }
 
 h2 + p,

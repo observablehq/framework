@@ -1,6 +1,6 @@
 ---
 toc:
-  label: TOC
+  label: dollar&pound
   show: true
 ---
 

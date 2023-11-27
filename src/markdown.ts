@@ -1,3 +1,4 @@
+import {createHash} from "node:crypto";
 import {readFile} from "node:fs/promises";
 import {join} from "node:path";
 import {type Patch, type PatchItem, getPatch} from "fast-array-diff";
@@ -10,17 +11,17 @@ import {type RuleCore} from "markdown-it/lib/parser_core.js";
 import {type RuleInline} from "markdown-it/lib/parser_inline.js";
 import {type RenderRule, type default as Renderer} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
+import {isEnoent} from "./error.js";
 import {fileReference, getLocalPath} from "./files.js";
 import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
 import {type FileReference, type ImportReference, type Transpile, transpileJavaScript} from "./javascript.js";
 import {transpileTag} from "./tag.js";
-import {relativeUrl} from "./url.js";
+import {relativeUrl, resolvePath} from "./url.js";
 
 export interface ReadMarkdownResult {
   contents: string;
   parse: ParseResult;
-  hash: string;
 }
 
 export interface HtmlPiece {
@@ -44,6 +45,7 @@ export interface ParseResult {
   imports: ImportReference[];
   pieces: HtmlPiece[];
   cells: CellPiece[];
+  hash: string;
 }
 
 interface RenderPiece {
@@ -329,7 +331,7 @@ function normalizePieceHtml(html: string, root: string, sourcePath: string, cont
     const path = getLocalPath(sourcePath, href);
     if (path) {
       context.files.push(fileReference(href, sourcePath));
-      element.setAttribute("href", relativeUrl(sourcePath, `/_file/${path}`));
+      element.setAttribute("href", relativeUrl(sourcePath, join("_file", path)));
     }
   }
 
@@ -343,6 +345,7 @@ function normalizePieceHtml(html: string, root: string, sourcePath: string, cont
     if (!language || !hljs.getLanguage(language)) continue;
     if (code.parentElement?.tagName === "PRE") code.parentElement.setAttribute("data-language", language);
     let html = "";
+    code.normalize(); // coalesce adjacent text nodes
     for (const child of [...(code.childNodes as any as Iterable<Node>)]) {
       html += child.nodeType === TEXT_NODE ? hljs.highlight(child.textContent!, {language}).value : String(child);
     }
@@ -377,7 +380,7 @@ function toParseCells(pieces: RenderPiece[]): CellPiece[] {
   return cellPieces;
 }
 
-export function parseMarkdown(source: string, root: string, sourcePath: string): ParseResult {
+export async function parseMarkdown(source: string, root: string, sourcePath: string): Promise<ParseResult> {
   const parts = matter(source);
   // TODO: We need to know what line in the source the markdown starts on and pass that
   // as startLine in the parse context below.
@@ -399,8 +402,30 @@ export function parseMarkdown(source: string, root: string, sourcePath: string):
     files: context.files,
     imports: context.imports,
     pieces: toParsePieces(context.pieces),
-    cells: toParseCells(context.pieces)
+    cells: toParseCells(context.pieces),
+    hash: await computeMarkdownHash(source, root, sourcePath, context.imports)
   };
+}
+
+async function computeMarkdownHash(
+  contents: string,
+  root: string,
+  path: string,
+  imports: ImportReference[]
+): Promise<string> {
+  const hash = createHash("sha256").update(contents);
+  // TODO can’t simply concatenate here; we need a delimiter
+  for (const i of imports) {
+    if (i.type === "local") {
+      try {
+        hash.update(await readFile(resolvePath(root, path, i.name), "utf-8"));
+      } catch (error) {
+        if (!isEnoent(error)) throw error;
+        continue;
+      }
+    }
+  }
+  return hash.digest("hex");
 }
 
 // TODO Use gray-matter’s parts.isEmpty, but only when it’s accurate.
@@ -476,5 +501,6 @@ export function diffMarkdown({parse: prevParse}: ReadMarkdownResult, {parse: nex
 
 export async function readMarkdown(path: string, root: string): Promise<ReadMarkdownResult> {
   const contents = await readFile(join(root, path), "utf-8");
-  return {contents, parse: parseMarkdown(contents, root, path), hash: computeHash(contents)};
+  const parse = await parseMarkdown(contents, root, path);
+  return {contents, parse};
 }

@@ -1,36 +1,33 @@
 import {existsSync} from "node:fs";
 import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
-import {basename, dirname, join, normalize, relative} from "node:path";
+import {basename, dirname, join, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
-import {parseArgs} from "node:util";
 import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
+import {isEnoent} from "./error.js";
 import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
-import {resolveSources} from "./javascript/imports.js";
-import {readPages} from "./navigation.js";
+import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {renderServerless} from "./render.js";
 import {makeCLIResolver} from "./resolver.js";
+import {resolvePath} from "./url.js";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
 
-export interface CommandContext {
+export interface BuildOptions {
   sourceRoot: string;
   outputRoot: string;
   verbose?: boolean;
   addPublic?: boolean;
 }
 
-export async function build(context: CommandContext = makeCommandContext()) {
-  const {sourceRoot, outputRoot, verbose = true, addPublic = true} = context;
-
+export async function build({sourceRoot, outputRoot, verbose = true, addPublic = true}: BuildOptions): Promise<void> {
   // Make sure all files are readable before starting to write output files.
   for await (const sourceFile of visitMarkdownFiles(sourceRoot)) {
     await access(join(sourceRoot, sourceFile), constants.R_OK);
   }
 
   // Render .md files, building a list of file attachments as we go.
-  const pages = await readPages(sourceRoot);
   const config = await readConfig(sourceRoot);
   const files: string[] = [];
   const imports: string[] = [];
@@ -39,16 +36,14 @@ export async function build(context: CommandContext = makeCommandContext()) {
     const sourcePath = join(sourceRoot, sourceFile);
     const outputPath = join(outputRoot, dirname(sourceFile), basename(sourceFile, ".md") + ".html");
     if (verbose) console.log("render", sourcePath, "→", outputPath);
-    const path = `/${join(dirname(sourceFile), basename(sourceFile, ".md"))}`;
-    const render = renderServerless(await readFile(sourcePath, "utf-8"), {
+    const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
+    const render = await renderServerless(await readFile(sourcePath, "utf-8"), {
       root: sourceRoot,
       path,
-      pages,
-      title: config?.title,
-      toc: config?.toc,
-      resolver
+      resolver,
+      ...config
     });
-    const resolveFile = ({name}) => join(name.startsWith("/") ? "." : dirname(sourceFile), name);
+    const resolveFile = ({name}) => resolvePath(sourceFile, name);
     files.push(...render.files.map(resolveFile));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
     await prepareOutput(outputPath);
@@ -74,10 +69,15 @@ export async function build(context: CommandContext = makeCommandContext()) {
     if (!existsSync(sourcePath)) {
       const loader = Loader.find(sourceRoot, file);
       if (!loader) {
-        console.error("missing referenced file", sourcePath);
+        if (verbose) console.error("missing referenced file", sourcePath);
         continue;
       }
-      sourcePath = join(sourceRoot, await loader.load({verbose}));
+      try {
+        sourcePath = join(sourceRoot, await loader.load({verbose}));
+      } catch (error) {
+        if (!isEnoent(error)) throw error;
+        continue;
+      }
     }
     if (verbose) console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);
@@ -85,16 +85,17 @@ export async function build(context: CommandContext = makeCommandContext()) {
   }
 
   // Copy over the imported modules.
+  const importResolver = createImportResolver(sourceRoot);
   for (const file of imports) {
     const sourcePath = join(sourceRoot, file);
     const outputPath = join(outputRoot, "_import", file);
     if (!existsSync(sourcePath)) {
-      console.error("missing referenced file", sourcePath);
+      if (verbose) console.error("missing referenced file", sourcePath);
       continue;
     }
     if (verbose) console.log("copy", sourcePath, "→", outputPath);
     await prepareOutput(outputPath);
-    await writeFile(outputPath, resolveSources(await readFile(sourcePath, "utf-8"), file));
+    await writeFile(outputPath, rewriteModule(await readFile(sourcePath, "utf-8"), file, importResolver));
   }
 
   // Copy over required distribution files from node_modules.
@@ -107,31 +108,4 @@ export async function build(context: CommandContext = makeCommandContext()) {
       await copyFile(sourcePath, outputPath);
     }
   }
-}
-
-const USAGE = `Usage: observable build [--root dir] [--output dir]`;
-
-function makeCommandContext(): CommandContext {
-  const {values} = parseArgs({
-    options: {
-      root: {
-        type: "string",
-        short: "r",
-        default: "docs"
-      },
-      output: {
-        type: "string",
-        short: "o",
-        default: "dist"
-      }
-    }
-  });
-  if (!values.root || !values.output) {
-    console.error(USAGE);
-    process.exit(1);
-  }
-  return {
-    sourceRoot: normalize(values.root).replace(/\/$/, ""),
-    outputRoot: normalize(values.output).replace(/\/$/, "")
-  };
 }
