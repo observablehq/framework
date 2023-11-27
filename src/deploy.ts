@@ -1,7 +1,7 @@
-import fs from "node:fs/promises";
 import path from "node:path";
 import {createInterface} from "node:readline";
 import {commandRequiresAuthenticationMessage} from "./auth.js";
+import {visitFiles} from "./files.js";
 import type {Logger, WorkspaceResponse} from "./observableApiClient.js";
 import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
 import type {ProjectConfig} from "./toolConfig.js";
@@ -142,25 +142,12 @@ async function promptUserForChoiceIndex(title: string, choices: string[]): Promi
 async function getDeployFiles(): Promise<DeployFile[]> {
   // TODO: we eventually want to build into a separate only-for-this-deploy tmp directory.
   const dir = "dist";
-  const files: string[] = await filesInDir(dir);
-  return files.map((x) => {
-    return {
-      path: x,
-      relativePath: x.replace(dir + path.sep, "")
-    };
-  });
-}
-
-async function filesInDir(dir: string, files: string[] = []): Promise<string[]> {
-  const fileList = await fs.readdir(dir);
-  for (const file of fileList) {
-    const name = `${dir}/${file}`;
-    const stat = await fs.stat(name);
-    if (stat.isDirectory()) {
-      filesInDir(name, files);
-    } else {
-      files.push(name);
-    }
+  const deployFiles: DeployFile[] = [];
+  for await (const file of visitFiles(dir)) {
+    deployFiles.push({
+      path: path.join(dir, file),
+      relativePath: file
+    });
   }
-  return files;
+  return deployFiles;
 }
