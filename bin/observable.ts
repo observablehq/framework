@@ -79,7 +79,7 @@ switch (command) {
   default:
     console.error("Usage: observable <command>");
     console.error("   build\tgenerate a static site");
-    console.error("   deploy\tdeploy a project");    
+    console.error("   deploy\tdeploy a project");
     console.error("   preview\trun the live preview server");
     console.error("   login\tmanage authentication with the Observable Cloud");
     console.error("   whoami\tcheck authentication status");
