@@ -269,6 +269,7 @@ body {
   position: relative;
 }
 
+.observablehq-link-active::before,
 .observablehq-secondary-link-highlight {
   content: "";
   position: absolute;
