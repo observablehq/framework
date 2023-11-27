@@ -24,7 +24,7 @@
   "scripts": {
     "dev": "tsx watch ./bin/observable.ts preview",    
     "build": "rm -rf dist && ./bin/observable.ts build",
-    "deploy": "./bin/observable.ts build",
+    "deploy": "./bin/observable.ts deploy",
     "test": "yarn test:mocha && yarn test:tsc && yarn test:lint",
     "test:coverage": "c8 yarn test:mocha",
     "test:mocha": "rm -rf test/.observablehq/cache test/input/build/*/.observablehq/cache && tsx ./node_modules/.bin/mocha 'test/**/*-test.*'",
