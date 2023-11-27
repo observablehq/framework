@@ -269,15 +269,24 @@ body {
   position: relative;
 }
 
-.observablehq-link-active::before,
-.observablehq-secondary-link-active::before {
+.observablehq-secondary-link-highlight {
   content: "";
   position: absolute;
+  width: 3px;
+  background: var(--theme-foreground-focus);
+}
+
+.observablehq-link-active::before {
   top: 0;
   bottom: 0;
   left: -1rem;
-  width: 3px;
-  background: var(--theme-foreground-focus);
+}
+
+.observablehq-secondary-link-highlight {
+  left: 1px;
+  top: 2rem;
+  height: 0;
+  transition: top 150ms ease, height 150ms ease;
 }
 
 a[href],
