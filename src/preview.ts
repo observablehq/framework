@@ -18,6 +18,7 @@ import {diffMarkdown, readMarkdown} from "./markdown.js";
 import type {ParseResult, ReadMarkdownResult} from "./markdown.js";
 import {renderPreview} from "./render.js";
 import {type CellResolver, makeCLIResolver} from "./resolver.js";
+import {rollupClient} from "./rollup.js";
 import {bold, faint, green, underline} from "./tty.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
@@ -70,6 +71,8 @@ export class Server {
       let {pathname} = url;
       if (pathname === "/_observablehq/runtime.js") {
         send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
+      } else if (pathname === "/_observablehq/client.js") {
+        end(req, res, await rollupClient("./src/client/preview.js"), "text/javascript");
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {

@@ -40,8 +40,8 @@ describe("build", async () => {
 
       const actualFiles = new Set(findFiles(actualDir));
       const expectedFiles = new Set(findFiles(expectedDir));
-      const missingFiles = difference(actualFiles, expectedFiles);
-      const unexpectedFiles = difference(expectedFiles, actualFiles);
+      const missingFiles = difference(expectedFiles, actualFiles);
+      const unexpectedFiles = difference(actualFiles, expectedFiles);
       if (missingFiles.size > 0) assert.fail(`Missing output files: ${Array.from(missingFiles).join(", ")}`);
       if (unexpectedFiles.size > 0) assert.fail(`Unexpected output files: ${Array.from(unexpectedFiles).join(", ")}`);
 
