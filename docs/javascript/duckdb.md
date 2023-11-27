@@ -24,6 +24,7 @@ Now let’s make a chart with [Plot’s raster mark](https://observablehq.com/pl
 
 ```js echo
 Plot.plot({
+  aspectRatio: 1,
   x: {domain: [0, 360]},
   y: {domain: [-90, 90]},
   marks: [
