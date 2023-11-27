@@ -357,9 +357,11 @@ async function copy({currentTarget}) {
 
 const toc = document.querySelector("#observablehq-toc");
 if (toc) {
+  const highlight = toc.appendChild(document.createElement("div"));
+  highlight.classList.add("observablehq-secondary-link-highlight");
   const headings = Array.from(document.querySelectorAll("#observablehq-main h2")).reverse();
   const links = toc.querySelectorAll(".observablehq-secondary-link");
-  const intersected = () => {
+  const relink = () => {
     for (const link of links) {
       link.classList.remove("observablehq-secondary-link-active");
     }
@@ -373,7 +375,7 @@ if (toc) {
             for (const link of links) {
               if (link.querySelector("a[href]")?.hash === hash) {
                 link.classList.add("observablehq-secondary-link-active");
-                break;
+                return link;
               }
             }
             return;
@@ -389,11 +391,15 @@ if (toc) {
       for (const link of links) {
         if (link.querySelector("a[href]")?.hash === hash) {
           link.classList.add("observablehq-secondary-link-active");
-          break;
+          return link;
         }
       }
       break;
     }
+  };
+  const intersected = () => {
+    const link = relink();
+    highlight.style = link ? `top: ${link.offsetTop}px; height: ${link.offsetHeight}px;` : "";
   };
   const observer = new IntersectionObserver(intersected, {rootMargin: "0px 0px -50% 0px"});
   for (const heading of headings) observer.observe(heading);

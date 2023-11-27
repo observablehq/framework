@@ -270,7 +270,7 @@ body {
 }
 
 .observablehq-link-active::before,
-.observablehq-secondary-link-active::before {
+.observablehq-secondary-link-highlight {
   content: "";
   position: absolute;
   top: 0;
@@ -278,6 +278,13 @@ body {
   left: -1rem;
   width: 3px;
   background: var(--theme-foreground-focus);
+}
+
+.observablehq-secondary-link-highlight {
+  left: 1px;
+  top: unset;
+  height: unset;
+  transition: top 150ms ease, height 150ms ease;
 }
 
 a[href],
