@@ -12,7 +12,7 @@ import type {
 } from "acorn";
 import {simple} from "acorn-walk";
 import {isEnoent} from "../error.js";
-import type {Feature, type ImportReference, type JavaScriptNode} from "../javascript.js";
+import {type Feature, type ImportReference, type JavaScriptNode} from "../javascript.js";
 import {parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
 import {relativeUrl, resolvePath} from "../url.js";
