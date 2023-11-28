@@ -27,7 +27,7 @@
     "test": "yarn test:mocha && yarn test:tsc && yarn test:lint",
     "test:coverage": "c8 yarn test:mocha",
     "test:mocha": "rm -rf test/.observablehq/cache test/input/build/*/.observablehq/cache && tsx ./node_modules/.bin/mocha 'test/**/*-test.*'",
-    "test:lint": "eslint src test public",
+    "test:lint": "eslint src test",
     "test:tsc": "tsc --noEmit"
   },
   "c8": {
@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "@observablehq/runtime": "^5.9.4",
+    "@rollup/plugin-terser": "^0.4.4",
     "acorn": "^8.11.2",
     "acorn-walk": "^8.3.0",
     "fast-array-diff": "^1.1.0",
@@ -56,6 +57,7 @@
     "markdown-it-anchor": "^8.6.7",
     "mime": "^3.0.0",
     "open": "^9.1.0",
+    "rollup": "^4.6.0",
     "send": "^0.18.0",
     "tar-stream": "^3.1.6",
     "tsx": "^3.13.0",
