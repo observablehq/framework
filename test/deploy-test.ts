@@ -112,21 +112,6 @@ describe("deploy", () => {
     effects.logger.assertExactLogs([/^You need to be authenticated/]);
   });
 
-  it("fails fast with an invalid API key", async () => {
-    const apiMock = new ObservableApiMock().handleGetUser({status: 401}).start();
-    const effects = new MockEffects({apiKey: invalidApiKey, projectId: null});
-
-    try {
-      await deploy(effects);
-      assert.fail("Should have thrown");
-    } catch (error) {
-      assert.ok(isHttpError(error));
-      assert.equal(error.statusCode, 401);
-    }
-
-    apiMock.close();
-  });
-
   it("handles multiple user workspaces", async () => {
     const projectId = "project123";
     const deployId = "deploy456";
@@ -157,6 +142,21 @@ describe("deploy", () => {
     effects.logger.assertExactErrors([/^Current user doesn't have any Observable workspaces/]);
   });
 
+  it("throws an error with an invalid API key", async () => {
+    const apiMock = new ObservableApiMock().handleGetUser({status: 401}).start();
+    const effects = new MockEffects({apiKey: invalidApiKey, projectId: null});
+
+    try {
+      await deploy(effects);
+      assert.fail("Should have thrown");
+    } catch (error) {
+      assert.ok(isHttpError(error));
+      assert.equal(error.statusCode, 401);
+    }
+
+    apiMock.close();
+  });
+
   it("throws an error if project creation fails", async () => {
     const apiMock = new ObservableApiMock().handleGetUser().handlePostProject({status: 500}).start();
     const effects = new MockEffects({apiKey: validApiKey, projectId: null});
@@ -179,6 +179,51 @@ describe("deploy", () => {
       .handleGetUser()
       .handlePostProject({projectId})
       .handlePostDeploy({projectId, deployId, status: 500})
+      .start();
+    const effects = new MockEffects({apiKey: validApiKey, projectId: null});
+
+    try {
+      await deploy(effects, "test/example-dist");
+      fail("Should have thrown an error");
+    } catch (error) {
+      assert.ok(isHttpError(error));
+      assert.equal(error.statusCode, 500);
+    }
+
+    apiMock.close();
+  });
+
+  it("throws an error if file upload fails", async () => {
+    const projectId = "project123";
+    const deployId = "deploy456";
+    const apiMock = new ObservableApiMock()
+      .handleGetUser()
+      .handlePostProject({projectId})
+      .handlePostDeploy({projectId, deployId})
+      .handlePostDeployFile({deployId, status: 500})
+      .start();
+    const effects = new MockEffects({apiKey: validApiKey, projectId: null});
+
+    try {
+      await deploy(effects, "test/example-dist");
+      fail("Should have thrown an error");
+    } catch (error) {
+      assert.ok(isHttpError(error));
+      assert.equal(error.statusCode, 500);
+    }
+
+    apiMock.close();
+  });
+
+  it("throws an error if deploy uploaded fails", async () => {
+    const projectId = "project123";
+    const deployId = "deploy456";
+    const apiMock = new ObservableApiMock()
+      .handleGetUser()
+      .handlePostProject({projectId})
+      .handlePostDeploy({projectId, deployId})
+      .handlePostDeployFile({deployId})
+      .handlePostDeployUploaded({deployId, status: 500})
       .start();
     const effects = new MockEffects({apiKey: validApiKey, projectId: null});
 
