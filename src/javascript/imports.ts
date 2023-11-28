@@ -2,15 +2,21 @@ import {createHash} from "node:crypto";
 import {readFileSync} from "node:fs";
 import {join} from "node:path";
 import {Parser} from "acorn";
-import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression, Node} from "acorn";
+import type {CallExpression, ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression, Node} from "acorn";
 import {simple} from "acorn-walk";
 import {isEnoent} from "../error.js";
 import {parseOptions} from "../javascript.js";
-import type {Feature, type ImportReference, type JavaScriptNode} from "../javascript.js";
+import type {Feature} from "../javascript.js";
+import {type ImportReference, type JavaScriptNode} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
 import {relativeUrl, resolvePath} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 import {findFetches, rewriteFetch} from "./fetches.js";
+
+export interface ImportsAndFetches {
+  imports: ImportReference[],
+  fetches: Feature[],
+}
 
 /**
  * Finds all export declarations in the specified node. (This is used to
@@ -36,7 +42,8 @@ export function findExports(body: Node): (ExportAllDeclaration | ExportNamedDecl
  * Recursively processes any imported local ES modules. The returned transitive
  * import paths are relative to the given source path.
  */
-export function findImports(body: Node, root: string, path: string): (ImportReference | Feature)[] {
+
+export function findImports(body: Node, root: string, path: string): ImportsAndFetches {
   const imports: ImportReference[] = [];
   const fetches: Feature[] = [];
   const paths: string[] = [];
@@ -78,7 +85,7 @@ export function findImports(body: Node, root: string, path: string): (ImportRefe
  * appends to imports. The paths here are always relative to the root (unlike
  * findImports above!).
  */
-export function parseLocalImports(root: string, paths: string[]): ImportReference[] {
+export function parseLocalImports(root: string, paths: string[]): ImportsAndFetches {
   const imports: ImportReference[] = [];
   const fetches: Feature[] = [];
   const set = new Set(paths);

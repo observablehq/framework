@@ -1,6 +1,7 @@
 import {simple} from "acorn-walk";
 import {type Feature, type JavaScriptNode} from "../javascript.js";
 import {type Sourcemap} from "../sourcemap.js";
+import type {CallExpression, Identifier, Node} from "acorn";
 import {relativeUrl, resolvePath} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 import {isLocalImport} from "./imports.js";
