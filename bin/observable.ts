@@ -2,8 +2,17 @@
 
 import {normalize} from "node:path";
 import {type ParseArgsConfig, parseArgs} from "node:util";
+import {RealOutputFileConsumer} from "../src/build.js";
 
 const command = process.argv.splice(2, 1)[0];
+
+const ROOT_OPTION = {
+  root: {
+    type: "string",
+    short: "r",
+    default: "docs"
+  }
+} as const;
 
 switch (command) {
   case "-v":
@@ -16,11 +25,7 @@ switch (command) {
       values: {root, output}
     } = helpArgs(command, {
       options: {
-        root: {
-          type: "string",
-          short: "r",
-          default: "docs"
-        },
+        ...ROOT_OPTION,
         output: {
           type: "string",
           short: "o",
@@ -31,14 +36,21 @@ switch (command) {
     await import("../src/build.js").then((build) =>
       build.build({
         sourceRoot: normalize(root!).replace(/\/$/, ""),
-        outputRoot: normalize(output!).replace(/\/$/, "")
+        output: new RealOutputFileConsumer(normalize(output!).replace(/\/$/, ""))
       })
     );
     break;
   }
-  case "deploy":
-    await import("../src/deploy.js").then((deploy) => deploy.deploy({sourceRoot: "docs", deployRoot: "dist"}));
+  case "deploy": {
+    const {
+      values: {root}
+    } = helpArgs(command, {
+      options: {...ROOT_OPTION}
+    });
+    const sourceRoot = normalize(root!).replace(/\/$/, "");
+    await import("../src/deploy.js").then((deploy) => deploy.deploy({sourceRoot}));
     break;
+  }
   case "preview": {
     const {
       values: {root, hostname, port}
