@@ -6,11 +6,11 @@ export type PageLink =
   | {prev: Page; next: undefined}; // last page
 
 // Pager links in the footer are computed once for a given navigation.
-const pagers = new WeakMap<Config["pages"], Map<string, PageLink>>();
+const linkCache = new WeakMap<Config["pages"], Map<string, PageLink>>();
 
-export function pager(path: string, options: Pick<Config, "pages" | "title"> = {pages: []}): PageLink | undefined {
+export function findLink(path: string, options: Pick<Config, "pages" | "title"> = {pages: []}): PageLink | undefined {
   const {pages, title} = options;
-  let links = pagers.get(pages);
+  let links = linkCache.get(pages);
   if (!links) {
     links = new Map<string, PageLink>();
     let prev: Page | undefined;
@@ -24,7 +24,7 @@ export function pager(path: string, options: Pick<Config, "pages" | "title"> = {
       prev = page;
     }
     if (links.size === 1) links.clear(); // no links if only one page
-    pagers.set(pages, links);
+    linkCache.set(pages, links);
   }
   return links.get(path);
 }

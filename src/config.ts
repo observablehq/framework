@@ -22,6 +22,7 @@ export interface TableOfContents {
 export interface Config {
   title?: string;
   pages: (Page | Section)[]; // TODO rename to sidebar?
+  pager: boolean; // defaults to true
   toc: TableOfContents;
 }
 
@@ -56,11 +57,12 @@ async function readPages(root: string): Promise<Page[]> {
 }
 
 export async function normalizeConfig(spec: any, root: string): Promise<Config> {
-  let {title, pages = await readPages(root), toc = true} = spec;
+  let {title, pages = await readPages(root), pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
+  pager = Boolean(pager);
   toc = normalizeToc(toc);
-  return {title, pages, toc};
+  return {title, pages, pager, toc};
 }
 
 function normalizePageOrSection(spec: any): Page | Section {
