@@ -15,7 +15,9 @@ describe("parseLocalImports(root, paths)", () => {
   });
   it("finds all local imports in multiple files", () => {
     assert.deepStrictEqual(
-      parseLocalImports("test/input/imports", ["transitive-static-import.js", "dynamic-import.js"]).imports.sort(compareImport),
+      parseLocalImports("test/input/imports", ["transitive-static-import.js", "dynamic-import.js"]).imports.sort(
+        compareImport
+      ),
       [
         {name: "bar.js", type: "local"},
         {name: "dynamic-import.js", type: "local"},

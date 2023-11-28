@@ -2,20 +2,26 @@ import {createHash} from "node:crypto";
 import {readFileSync} from "node:fs";
 import {join} from "node:path";
 import {Parser} from "acorn";
-import type {CallExpression, ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression, Node} from "acorn";
+import type {
+  CallExpression,
+  ExportAllDeclaration,
+  ExportNamedDeclaration,
+  ImportDeclaration,
+  ImportExpression,
+  Node
+} from "acorn";
 import {simple} from "acorn-walk";
 import {isEnoent} from "../error.js";
+import type {Feature, type ImportReference, type JavaScriptNode} from "../javascript.js";
 import {parseOptions} from "../javascript.js";
-import type {Feature} from "../javascript.js";
-import {type ImportReference, type JavaScriptNode} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
 import {relativeUrl, resolvePath} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 import {findFetches, rewriteFetch} from "./fetches.js";
 
 export interface ImportsAndFetches {
-  imports: ImportReference[],
-  fetches: Feature[],
+  imports: ImportReference[];
+  fetches: Feature[];
 }
 
 /**
