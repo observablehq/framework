@@ -746,19 +746,11 @@ a[href].observablehq-header-anchor {
   color: var(--syntax-entity);
 }
 
-.observablehq--null,
-.observablehq--undefined,
-.observablehq--boolean,
-.observablehq--bigint,
-.observablehq--number,
-.observablehq--date,
 .observablehq--index,
 .observablehq--key,
 .hljs-attr,
 .hljs-attribute,
-.hljs-literal,
 .hljs-meta,
-.hljs-number,
 .hljs-operator,
 .hljs-variable,
 .hljs-selector-attr,
@@ -775,7 +767,10 @@ a[href].observablehq-header-anchor {
   color: var(--syntax-string);
 }
 
+.observablehq--null,
+.observablehq--undefined,
 .hljs-built_in,
+.hljs-literal,
 .hljs-symbol {
   color: var(--syntax-variable);
 }
@@ -787,8 +782,13 @@ a[href].observablehq-header-anchor {
   color: var(--syntax-comment);
 }
 
+.observablehq--bigint,
+.observablehq--boolean,
+.observablehq--date,
 .observablehq--forbidden,
+.observablehq--number,
 .hljs-name,
+.hljs-number,
 .hljs-quote,
 .hljs-selector-tag,
 .hljs-selector-pseudo {
