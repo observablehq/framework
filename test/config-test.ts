@@ -12,14 +12,16 @@ describe("readConfig(root)", () => {
         {path: "/sub/two", name: "Two"}
       ],
       title: undefined,
-      toc: {label: "On this page", show: true}
+      toc: {label: "On this page", show: true},
+      pager: true
     });
   });
   it("returns the default config if no config file is found", async () => {
     assert.deepStrictEqual(await readConfig("test/input/build/simple"), {
       pages: [{name: "Build test case", path: "/simple"}],
       title: undefined,
-      toc: {label: "Contents", show: true}
+      toc: {label: "Contents", show: true},
+      pager: true
     });
   });
 });
@@ -71,6 +73,15 @@ describe("normalizeConfig(spec, root)", () => {
   it("promotes boolean toc to toc.show", async () => {
     assert.deepStrictEqual((await config({pages: [], toc: true}, root)).toc, {label: "Contents", show: true});
     assert.deepStrictEqual((await config({pages: [], toc: false}, root)).toc, {label: "Contents", show: false});
+  });
+  it("coerces pager", async () => {
+    assert.strictEqual((await config({pages: [], pager: 0}, root)).pager, false);
+    assert.strictEqual((await config({pages: [], pager: 1}, root)).pager, true);
+    assert.strictEqual((await config({pages: [], pager: ""}, root)).pager, false);
+    assert.strictEqual((await config({pages: [], pager: "0"}, root)).pager, true);
+  });
+  it("populates default pager", async () => {
+    assert.strictEqual((await config({pages: []}, root)).pager, true);
   });
 });
 
