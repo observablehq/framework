@@ -54,7 +54,7 @@ switch (command) {
         port: {
           type: "string",
           short: "p",
-          default: process.env.PORT ?? "3000"
+          default: process.env.PORT
         }
       }
     });
@@ -62,7 +62,7 @@ switch (command) {
       preview.preview({
         root: normalize(root!).replace(/\/$/, ""),
         hostname: hostname!,
-        port: +port!
+        port: port === undefined ? undefined : +port
       })
     );
     break;
