@@ -10,6 +10,7 @@ import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {renderServerless} from "./render.js";
 import {makeCLIResolver} from "./resolver.js";
+import {getClientPath, rollupClient} from "./rollup.js";
 import {resolvePath} from "./url.js";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
@@ -50,9 +51,16 @@ export async function build({sourceRoot, outputRoot, verbose = true, addPublic =
     await writeFile(outputPath, render.html);
   }
 
-  // Copy over the public directory.
   if (addPublic) {
-    const publicRoot = join(dirname(relative(cwd(), fileURLToPath(import.meta.url))), "..", "public");
+    // Generate the client bundle.
+    const clientPath = getClientPath();
+    const code = await rollupClient(clientPath, {minify: true});
+    const outputPath = join(outputRoot, "_observablehq", "client.js");
+    if (verbose) console.log("bundle", clientPath, "→", outputPath);
+    await prepareOutput(outputPath);
+    await writeFile(outputPath, code);
+    // Copy over the public directory.
+    const publicRoot = relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), "..", "public"));
     for await (const publicFile of visitFiles(publicRoot)) {
       const sourcePath = join(publicRoot, publicFile);
       const outputPath = join(outputRoot, "_observablehq", publicFile);
