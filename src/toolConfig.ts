@@ -88,6 +88,12 @@ async function loadConfig(
   return {config: {}, configPath: path.join(os.homedir(), configName)};
 }
 
-async function writeConfig({configPath, config}: {configPath: string; config: any}): Promise<void> {
+async function writeConfig({
+  configPath,
+  config
+}: {
+  configPath: string;
+  config: ObservableConfig | ProjectConfig;
+}): Promise<void> {
   await fs.writeFile(configPath, JSON.stringify(config, null, 2));
 }

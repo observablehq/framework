@@ -37,7 +37,7 @@ export function getObservableApiHost(): URL {
     try {
       return new URL(urlText);
     } catch (error) {
-      console.error(`Invalid OBSERVABLEHQ_HOST environment variable: ${error}`);
+      console.error(`Invalid OBSERVABLEHQ_API_HOST environment variable: ${error}`);
       process.exit(1);
     }
   }
@@ -113,7 +113,7 @@ export class ObservableApiClient {
   }
 
   async postDeployFile(deployId: string, filePath: string, relativePath: string): Promise<void> {
-    this._logger?.log(`Uploading ${filePath}`);
+    this._logger.log(`Uploading ${filePath}`);
 
     const url = new URL(`/cli/deploy/${deployId}/file`, this._apiHost);
     const body = new FormData();
@@ -133,7 +133,7 @@ export class ObservableApiClient {
   }
 
   async postDeployUploaded(deployId: string): Promise<void> {
-    this._logger?.log(`Marking deploy id ${deployId} upload complete`);
+    this._logger.log(`Marking deploy id ${deployId} upload complete`);
     const url = new URL(`/cli/deploy/${deployId}/uploaded`, this._apiHost);
     const response = await fetch(url, {
       method: "POST",

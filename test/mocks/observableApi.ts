@@ -9,6 +9,10 @@ export class ObservableApiMock {
   private _handlers: ((pool: Interceptable) => void)[] = [];
   private _originalDispatcher: Dispatcher | null = null;
 
+  public debug() {
+    console.log("Pending interceptors:", this._agent?.pendingInterceptors());
+  }
+
   public start(): ObservableApiMock {
     this._agent = new MockAgent();
     this._agent.disableNetConnect();
@@ -31,53 +35,31 @@ export class ObservableApiMock {
     }
   }
 
-  handleGetUser(
-    {valid = true, workspaces = [mockWorkspaces[0]]}: {valid?: boolean; workspaces?: any[]} = {
-      valid: true,
-      workspaces: [mockWorkspaces[0]]
-    }
-  ): ObservableApiMock {
-    const status = valid ? 200 : 401;
-    const response = valid
-      ? JSON.stringify({
-          id: "0000000000000000",
-          login: "mock-user",
-          name: "Mock User",
-          tier: "public",
-          has_workspace: false,
-          workspaces
-        })
-      : emptyErrorBody;
-    const headers = authorizationHeader(valid);
+  handleGetUser({user = userWithOneWorkspace, status = 200}: {user?: any; status?: number} = {}): ObservableApiMock {
+    const response = status == 200 ? JSON.stringify(user) : emptyErrorBody;
+    const headers = authorizationHeader(status != 401);
     this._handlers.push((pool) =>
       pool.intercept({path: "/cli/user", headers: headersMatcher(headers)}).reply(status, response)
     );
     return this;
   }
 
-  handlePostProject(
-    {projectId, valid = true, errorStatus}: {projectId?: string; valid?: boolean; errorStatus?: number} = {valid: true}
-  ): ObservableApiMock {
-    const status = errorStatus || (valid ? 200 : 401);
-    const response = errorStatus || !valid ? emptyErrorBody : JSON.stringify({id: projectId});
-    const headers = authorizationHeader(valid);
+  handlePostProject({projectId, status = 200}: {projectId?: string; status?: number} = {}): ObservableApiMock {
+    const response = status == 200 ? JSON.stringify({id: projectId}) : emptyErrorBody;
+    const headers = authorizationHeader(status != 401);
     this._handlers.push((pool) =>
       pool.intercept({path: "/cli/project", method: "POST", headers: headersMatcher(headers)}).reply(status, response)
     );
     return this;
   }
 
-  handlePostDeploy(
-    {
-      projectId,
-      deployId,
-      valid = true,
-      errorStatus
-    }: {projectId?: string; deployId?: string; valid?: boolean; errorStatus?: number} = {valid: true}
-  ): ObservableApiMock {
-    const status = errorStatus || (valid ? 200 : 401);
-    const response = errorStatus || !valid ? emptyErrorBody : JSON.stringify({id: deployId});
-    const headers = authorizationHeader(valid);
+  handlePostDeploy({
+    projectId,
+    deployId,
+    status = 200
+  }: {projectId?: string; deployId?: string; status?: number} = {}): ObservableApiMock {
+    const response = status == 200 ? JSON.stringify({id: deployId}) : emptyErrorBody;
+    const headers = authorizationHeader(status != 401);
     this._handlers.push((pool) =>
       pool
         .intercept({path: `/cli/project/${projectId}/deploy`, method: "POST", headers: headersMatcher(headers)})
@@ -86,12 +68,9 @@ export class ObservableApiMock {
     return this;
   }
 
-  handlePostDeployFile(
-    {deployId, valid = true, errorStatus}: {deployId?: string; valid?: boolean; errorStatus?: number} = {valid: true}
-  ): ObservableApiMock {
-    const status = errorStatus || (valid ? 204 : 401);
-    const response = errorStatus || !valid ? emptyErrorBody : "";
-    const headers = authorizationHeader(valid);
+  handlePostDeployFile({deployId, status = 204}: {deployId?: string; status?: number} = {}): ObservableApiMock {
+    const response = status == 204 ? "" : emptyErrorBody;
+    const headers = authorizationHeader(status != 401);
     this._handlers.push((pool) =>
       pool
         .intercept({path: `/cli/deploy/${deployId}/file`, method: "POST", headers: headersMatcher(headers)})
@@ -100,12 +79,9 @@ export class ObservableApiMock {
     return this;
   }
 
-  handlePostDeployUploaded(
-    {deployId, valid = true, errorStatus}: {deployId?: string; valid?: boolean; errorStatus?: number} = {valid: true}
-  ): ObservableApiMock {
-    const status = errorStatus || (valid ? 204 : 401);
-    const response = errorStatus || !valid ? emptyErrorBody : JSON.stringify({id: deployId, status: "uploaded"});
-    const headers = authorizationHeader(valid);
+  handlePostDeployUploaded({deployId, status = 204}: {deployId?: string; status?: number} = {}): ObservableApiMock {
+    const response = status == 204 ? JSON.stringify({id: deployId, status: "uploaded"}) : emptyErrorBody;
+    const headers = authorizationHeader(status != 401);
     this._handlers.push((pool) =>
       pool
         .intercept({path: `/cli/deploy/${deployId}/uploaded`, method: "POST", headers: headersMatcher(headers)})
@@ -114,25 +90,6 @@ export class ObservableApiMock {
     return this;
   }
 }
-
-export const mockWorkspaces = [
-  {
-    id: "0000000000000001",
-    login: "mock-user-ws",
-    name: "Mock User's Workspace",
-    tier: "pro",
-    type: "team",
-    role: "owner"
-  },
-  {
-    id: "0000000000000002",
-    login: "mock-user-ws-2",
-    name: "Mock User's Second Workspace",
-    tier: "pro",
-    type: "team",
-    role: "owner"
-  }
-];
 
 function authorizationHeader(valid: boolean) {
   return {authorization: valid ? `apikey ${validApiKey}` : `apikey ${invalidApiKey}`};
@@ -152,3 +109,44 @@ function headersMatcher(expected: Record<string, string>): (headers: Record<stri
     return true;
   };
 }
+
+const userBase = {
+  id: "0000000000000000",
+  login: "mock-user",
+  name: "Mock User",
+  tier: "public",
+  has_workspace: false
+};
+
+const workspace1 = {
+  id: "0000000000000001",
+  login: "mock-user-ws",
+  name: "Mock User's Workspace",
+  tier: "pro",
+  type: "team",
+  role: "owner"
+};
+
+const workspace2 = {
+  id: "0000000000000002",
+  login: "mock-user-ws-2",
+  name: "Mock User's Second Workspace",
+  tier: "pro",
+  type: "team",
+  role: "owner"
+};
+
+export const userWithZeroWorkspaces = {
+  ...userBase,
+  workspaces: []
+};
+
+export const userWithOneWorkspace = {
+  ...userBase,
+  workspaces: [workspace1]
+};
+
+export const userWithTwoWorkspaces = {
+  ...userBase,
+  workspaces: [workspace1, workspace2]
+};
