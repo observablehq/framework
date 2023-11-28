@@ -15,14 +15,14 @@
 
 import {define} from "../_observablehq/client.js";
 
-define({id: "9c60abc0", inputs: ["display"], outputs: ["d3","bar","top"], files: [{"name":"/top.js","mimeType":"application/javascript","path":"../_file/top.js"}], body: async (display) => {
+define({id: "9c60abc0", inputs: ["display"], outputs: ["d3","bar","top"], files: [{"name":"/top.js","mimeType":"application/javascript","path":"../top.js"}], body: async (display) => {
 const d3 = await import("https://cdn.jsdelivr.net/npm/d3/+esm");
 const {bar} = await import("../_import/bar/bar.js?sha=2e71da6918681d51fd9e7ed79b03aed514771c2e1583af42783665aff3f5ef5e");
 const {top} = await import("../_import/top.js?sha=43e37c2a4fe9ca94e62d0d8acd5dbd8bdd5f0ec845503964f465979c4c82c2a3");
 
 display(bar);
 display(top);
-fetch("../_file/top.js");
+fetch("../top.js");
 return {d3,bar,top};
 }});
 

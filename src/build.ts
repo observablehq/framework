@@ -73,7 +73,7 @@ export async function build({sourceRoot, outputRoot, verbose = true, addPublic =
   // Copy over the referenced files.
   for (const file of files) {
     let sourcePath = join(sourceRoot, file);
-    const outputPath = join(outputRoot, "_file", file);
+    const outputPath = join(outputRoot, file);
     if (!existsSync(sourcePath)) {
       const loader = Loader.find(sourceRoot, file);
       if (!loader) {

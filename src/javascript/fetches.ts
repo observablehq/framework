@@ -10,8 +10,8 @@ export function rewriteFetches(output: Sourcemap, rootNode: JavaScriptNode, sour
       if (isLocalFetch(node, rootNode.references, sourcePath)) {
         const arg = node.arguments[0];
         const value = getStringLiteralValue(arg);
-        const path = resolvePath("_file", sourcePath, value);
-        output.replaceLeft(arg.start, arg.end, JSON.stringify(relativeUrl(sourcePath, path)));
+        const path = relativeUrl(sourcePath, resolvePath(sourcePath, value)); // TODO simplify?
+        output.replaceLeft(arg.start, arg.end, JSON.stringify(path));
       }
     }
   });

@@ -5,22 +5,22 @@
     {
       "name": "./NOENT.md",
       "mimeType": "text/markdown",
-      "path": "./_file/NOENT.md"
+      "path": "./NOENT.md"
     },
     {
       "name": "./NOENT.md",
       "mimeType": "text/markdown",
-      "path": "./_file/NOENT.md"
+      "path": "./NOENT.md"
     },
     {
       "name": "./tex-expression.md",
       "mimeType": "text/markdown",
-      "path": "./_file/tex-expression.md"
+      "path": "./tex-expression.md"
     },
     {
       "name": "./tex-expression.md",
       "mimeType": "text/markdown",
-      "path": "./_file/tex-expression.md"
+      "path": "./tex-expression.md"
     }
   ],
   "imports": [],
@@ -139,10 +139,10 @@
         {
           "name": "./NOENT.md",
           "mimeType": "text/markdown",
-          "path": "./_file/NOENT.md"
+          "path": "./NOENT.md"
         }
       ],
-      "body": "() => {\nconst fail5 = fetch(\"./_file/NOENT.md\").then(d => d.text())\nreturn {fail5};\n}"
+      "body": "() => {\nconst fail5 = fetch(\"./NOENT.md\").then(d => d.text())\nreturn {fail5};\n}"
     },
     {
       "type": "cell",
@@ -157,7 +157,7 @@
         {
           "name": "./NOENT.md",
           "mimeType": "text/markdown",
-          "path": "./_file/NOENT.md"
+          "path": "./NOENT.md"
         }
       ],
       "body": "(FileAttachment) => {\nconst fail6 = FileAttachment(\"./NOENT.md\").text()\nreturn {fail6};\n}"
@@ -172,10 +172,10 @@
         {
           "name": "./tex-expression.md",
           "mimeType": "text/markdown",
-          "path": "./_file/tex-expression.md"
+          "path": "./tex-expression.md"
         }
       ],
-      "body": "() => {\nconst ok1 = fetch(\"./_file/tex-expression.md\").then(d => d.text())\nreturn {ok1};\n}"
+      "body": "() => {\nconst ok1 = fetch(\"./tex-expression.md\").then(d => d.text())\nreturn {ok1};\n}"
     },
     {
       "type": "cell",
@@ -190,7 +190,7 @@
         {
           "name": "./tex-expression.md",
           "mimeType": "text/markdown",
-          "path": "./_file/tex-expression.md"
+          "path": "./tex-expression.md"
         }
       ],
       "body": "(FileAttachment) => {\nconst ok2 = FileAttachment(\"./tex-expression.md\").text()\nreturn {ok2};\n}"

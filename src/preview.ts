@@ -85,28 +85,6 @@ export class Server {
           throw new HttpError("Not found", 404);
         }
         end(req, res, rewriteModule(js, file, createImportResolver(this.root)), "text/javascript");
-      } else if (pathname.startsWith("/_file/")) {
-        const path = pathname.slice("/_file".length);
-        const filepath = join(this.root, path);
-        try {
-          await access(filepath, constants.R_OK);
-          send(req, pathname.slice("/_file".length), {root: this.root}).pipe(res);
-          return;
-        } catch (error) {
-          if (!isEnoent(error)) throw error;
-        }
-
-        // Look for a data loader for this file.
-        const loader = Loader.find(this.root, path);
-        if (loader) {
-          try {
-            send(req, await loader.load(), {root: this.root}).pipe(res);
-            return;
-          } catch (error) {
-            if (!isEnoent(error)) throw error;
-          }
-        }
-        throw new HttpError("Not found", 404);
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
         let path = join(this.root, pathname);
@@ -137,6 +115,29 @@ export class Server {
           res.writeHead(302, {Location: join(dirname(pathname), basename(pathname, ".html")) + url.search});
           res.end();
           return;
+        }
+
+        // This handles a static file.
+        try {
+          await access(path, constants.R_OK);
+          if ((await stat(path)).isFile()) {
+            send(req, pathname, {root: this.root}).pipe(res);
+            return;
+          }
+        } catch (error) {
+          if (!isEnoent(error)) throw error;
+        }
+
+        // Look for a data loader for this file.
+        const loader = Loader.find(this.root, pathname);
+        if (loader) {
+          try {
+            send(req, await loader.load(), {root: this.root}).pipe(res);
+            return;
+          } catch (error) {
+            console.warn("yyayaaxxxx");
+            if (!isEnoent(error)) throw error;
+          }
         }
 
         // Otherwise, serve the corresponding Markdown file, if it exists.

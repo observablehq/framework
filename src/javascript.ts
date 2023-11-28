@@ -18,7 +18,7 @@ export interface DatabaseReference {
 export interface FileReference {
   name: string;
   mimeType: string | null;
-  /** The relative path from the document to the file in _file */
+  /** The relative path from the document to the file */
   path: string;
 }
 
