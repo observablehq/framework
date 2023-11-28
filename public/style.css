@@ -634,6 +634,10 @@ a[href].observablehq-header-anchor {
   color: inherit;
 }
 
+.observablehq--block:empty {
+  display: none;
+}
+
 .observablehq--block {
   margin: 1rem 0;
 }
