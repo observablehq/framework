@@ -8,7 +8,7 @@ import {isEnoent} from "../error.js";
 import type {Feature} from "../javascript.js";
 import {type ImportReference, type JavaScriptNode, parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
-import {findFetches} from "./fetches.js";
+import {findFetches, rewriteFetch} from "./fetches.js";
 import {relativeUrl, resolvePath} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
@@ -59,7 +59,9 @@ export function findImports(body: Node, root: string, path: string): (ImportRefe
   }
 
   // Recursively process any imported local ES modules.
-  imports.push(...parseLocalImports(root, paths));
+  const features = parseLocalImports(root, paths)
+  imports.push(...features.imports);
+  fetches.push(...features.fetches);
 
   // Make all local paths relative to the source path.
   for (const i of imports) {
@@ -68,7 +70,7 @@ export function findImports(body: Node, root: string, path: string): (ImportRefe
     }
   }
 
-  return imports;
+  return { imports, fetches };
 }
 
 /**
@@ -78,7 +80,8 @@ export function findImports(body: Node, root: string, path: string): (ImportRefe
  * findImports above!).
  */
 export function parseLocalImports(root: string, paths: string[]): ImportReference[] {
-  const imports: (ImportReference|Feature)[] = [];
+  const imports: ImportReference[] = [];
+  const fetches: Feature[] = [];
   const set = new Set(paths);
   for (const path of set) {
     imports.push({type: "local", name: path});
@@ -96,7 +99,7 @@ export function parseLocalImports(root: string, paths: string[]): ImportReferenc
         undefined,
         path
       );
-      imports.push(...findFetches(program, path));
+      fetches.push(...findFetches(program, path));
     } catch (error) {
       if (!isEnoent(error) && !(error instanceof SyntaxError)) throw error;
     }
@@ -115,7 +118,7 @@ export function parseLocalImports(root: string, paths: string[]): ImportReferenc
       }
     }
   }
-  return imports;
+  return { imports, fetches };
 }
 
 /** Rewrites import specifiers in the specified ES module source. */
@@ -127,7 +130,10 @@ export function rewriteModule(input: string, sourcePath: string, resolver: Impor
     ImportDeclaration: rewriteImport,
     ImportExpression: rewriteImport,
     ExportAllDeclaration: rewriteImport,
-    ExportNamedDeclaration: rewriteImport
+    ExportNamedDeclaration: rewriteImport,
+    CallExpression: function(node: CallExpression) {
+      rewriteFetch(node, output, body, sourcePath);
+    }
   });
 
   function rewriteImport(node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration) {
@@ -217,7 +223,8 @@ function getModuleHash(root: string, path: string): string {
     if (!isEnoent(error)) throw error;
   }
   // TODO can’t simply concatenate here; we need a delimiter
-  for (const i of parseLocalImports(root, [path])) {
+  const {imports, fetches} = parseLocalImports(root, [path]);
+  for (const i of [...imports, ...fetches]) {
     if (i.type === "local") {
       try {
         hash.update(readFileSync(join(root, i.name), "utf-8"));
