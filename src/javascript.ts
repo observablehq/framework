@@ -138,6 +138,16 @@ function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
   const declarations = expression ? null : findDeclarations(body, globals, input);
   const imports = findImports(body, root, sourcePath);
   const features = findFeatures(body, root, sourcePath, references, input);
+
+  // const _imports = findImports(body, root, sourcePath);
+  // const imports = _imports.filter(d => d.name !== "./wuzzy.json");
+  // const wuzzies = _imports.filter(d => d.name === "./wuzzy.json");
+  // const features = [
+  //   ...findFeatures(body, root, sourcePath, references, input),
+  //   ...wuzzies
+  // ];
+  // console.log({ imports, features });
+
   return {
     body,
     declarations,

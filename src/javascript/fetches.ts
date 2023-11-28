@@ -2,7 +2,9 @@ import {simple} from "acorn-walk";
 import {type JavaScriptNode} from "../javascript.js";
 import {type Sourcemap} from "../sourcemap.js";
 import {relativeUrl, resolvePath} from "../url.js";
-import {getStringLiteralValue, isLocalFetch} from "./features.js";
+import {isLocalImport} from "./imports.js";
+import {getStringLiteralValue, isStringLiteral} from "./features.js";
+import type {Feature} from "../javascript.js";
 
 export function rewriteFetches(output: Sourcemap, rootNode: JavaScriptNode, sourcePath: string): void {
   simple(rootNode.body, {
@@ -15,4 +17,36 @@ export function rewriteFetches(output: Sourcemap, rootNode: JavaScriptNode, sour
       }
     }
   });
+}
+
+export function findFetches(body: Node, path: string) {
+  const fetches: Feature[] = [];
+
+  simple(body, { CallExpression: findFetch }, undefined, path);
+
+  // Promote fetches with static literals to file attachment references.
+
+  function findFetch(node: CallExpression, sourcePath: string) {
+    if (isLocalFetch(node, [], sourcePath)) {
+      const { arguments: [arg] } = node;
+      // fetches.push({type: "FileAttachment", name: getStringLiteralValue(arg)});
+      fetches.push({type: "local", name: getStringLiteralValue(arg)});
+    }
+  }
+
+  return fetches;
+}
+
+export function isLocalFetch(node: CallExpression, references: Identifier[], sourcePath: string): boolean {
+  const {
+    callee,
+    arguments: [arg]
+  } = node;
+  return (
+    callee.type === "Identifier" &&
+    callee.name === "fetch" &&
+    !references.includes(callee) &&
+    isStringLiteral(arg) &&
+    isLocalImport(getStringLiteralValue(arg), sourcePath)
+  );
 }

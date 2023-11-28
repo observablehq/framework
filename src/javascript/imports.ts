@@ -5,8 +5,10 @@ import {Parser} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression, Node} from "acorn";
 import {simple} from "acorn-walk";
 import {isEnoent} from "../error.js";
+import type {Feature} from "../javascript.js";
 import {type ImportReference, type JavaScriptNode, parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
+import {findFetches} from "./fetches.js";
 import {relativeUrl, resolvePath} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 
@@ -29,13 +31,15 @@ export function findExports(body: Node): (ExportAllDeclaration | ExportNamedDecl
   return exports;
 }
 
+
 /**
  * Finds all imports (both static and dynamic) in the specified node.
  * Recursively processes any imported local ES modules. The returned transitive
  * import paths are relative to the given source path.
  */
-export function findImports(body: Node, root: string, path: string): ImportReference[] {
+export function findImports(body: Node, root: string, path: string): (ImportReference|Feature)[] {
   const imports: ImportReference[] = [];
+  const fetches: Feature[] = [];
   const paths: string[] = [];
 
   simple(body, {
@@ -74,7 +78,7 @@ export function findImports(body: Node, root: string, path: string): ImportRefer
  * findImports above!).
  */
 export function parseLocalImports(root: string, paths: string[]): ImportReference[] {
-  const imports: ImportReference[] = [];
+  const imports: (ImportReference|Feature)[] = [];
   const set = new Set(paths);
   for (const path of set) {
     imports.push({type: "local", name: path});
@@ -87,11 +91,12 @@ export function parseLocalImports(root: string, paths: string[]): ImportReferenc
           ImportDeclaration: findImport,
           ImportExpression: findImport,
           ExportAllDeclaration: findImport,
-          ExportNamedDeclaration: findImport
+          ExportNamedDeclaration: findImport,
         },
         undefined,
         path
       );
+      imports.push(...findFetches(program, path));
     } catch (error) {
       if (!isEnoent(error) && !(error instanceof SyntaxError)) throw error;
     }
@@ -127,6 +132,8 @@ export function rewriteModule(input: string, sourcePath: string, resolver: Impor
 
   function rewriteImport(node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration) {
     if (isStringLiteral(node.source)) {
+
+      const rewrite = JSON.stringify(resolver(sourcePath, getStringLiteralValue(node.source)));
       output.replaceLeft(
         node.source.start,
         node.source.end,
@@ -171,7 +178,7 @@ export function rewriteImports(
           } = await import(${JSON.stringify(resolver(sourcePath, getStringLiteralValue(node.source)))});`
         );
       }
-    }
+    },
   });
 }
 
