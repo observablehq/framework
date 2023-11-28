@@ -135,7 +135,6 @@ export class Server {
             send(req, await loader.load(), {root: this.root}).pipe(res);
             return;
           } catch (error) {
-            console.warn("yyayaaxxxx");
             if (!isEnoent(error)) throw error;
           }
         }
