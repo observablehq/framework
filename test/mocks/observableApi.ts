@@ -9,10 +9,6 @@ export class ObservableApiMock {
   private _handlers: ((pool: Interceptable) => void)[] = [];
   private _originalDispatcher: Dispatcher | null = null;
 
-  public debug() {
-    console.log("Pending interceptors:", this._agent?.pendingInterceptors());
-  }
-
   public start(): ObservableApiMock {
     this._agent = new MockAgent();
     this._agent.disableNetConnect();
