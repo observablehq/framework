@@ -2,7 +2,6 @@
 
 import {normalize} from "node:path";
 import {type ParseArgsConfig, parseArgs} from "node:util";
-import {RealOutputFileConsumer} from "../src/build.js";
 
 const command = process.argv.splice(2, 1)[0];
 
@@ -36,7 +35,7 @@ switch (command) {
     await import("../src/build.js").then((build) =>
       build.build({
         sourceRoot: normalize(root!).replace(/\/$/, ""),
-        output: new RealOutputFileConsumer(normalize(output!).replace(/\/$/, ""))
+        outputRoot: normalize(output!).replace(/\/$/, "")
       })
     );
     break;

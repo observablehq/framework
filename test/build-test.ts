@@ -3,8 +3,8 @@ import {existsSync, readdirSync, statSync} from "node:fs";
 import {open, readFile} from "node:fs/promises";
 import {join, normalize, relative} from "node:path";
 import {difference} from "d3-array";
-import type {OutputFileConsumer} from "../src/build.js";
-import {RealOutputFileConsumer, build} from "../src/build.js";
+import type {BuildOutput} from "../src/build.js";
+import {build} from "../src/build.js";
 
 describe("build", async () => {
   // Each sub-directory of test/input/build is a test case.
@@ -22,10 +22,10 @@ describe("build", async () => {
 
       const generate = !existsSync(expectedDir) && process.env.CI !== "true";
       if (generate) {
-        await generateSnapshots({sourceRoot: path, outputDir: expectedDir, addPublic});
+        await generateSnapshots({sourceRoot: path, outputRoot: expectedDir, addPublic});
         return;
       }
-      const output = new TestOutputFileConsumer(addPublic);
+      const output = new TestOutput(addPublic);
       await build({sourceRoot: path, output, verbose: false, addPublic});
 
       const actualFiles = output.fileNames;
@@ -44,15 +44,15 @@ describe("build", async () => {
   }
 });
 
-async function generateSnapshots({sourceRoot, outputDir, addPublic}) {
-  console.warn(`! generating ${outputDir}`);
-  await build({sourceRoot, output: new RealOutputFileConsumer(outputDir), verbose: false, addPublic});
+async function generateSnapshots({sourceRoot, outputRoot, addPublic}) {
+  console.warn(`! generating ${outputRoot}`);
+  await build({sourceRoot, outputRoot, verbose: false, addPublic});
 
   // In the addPublic case, we don’t want to test the contents of the public
   // files because they change often; replace them with empty files so we
   // can at least check that the expected files exist.
   if (addPublic) {
-    const publicDir = join(outputDir, "_observablehq");
+    const publicDir = join(outputRoot, "_observablehq");
     for (const file of findFiles(publicDir)) {
       await (await open(join(publicDir, file), "w")).close();
     }
@@ -81,7 +81,7 @@ function isPublicPath(path: string): boolean {
   return path.startsWith("_observablehq");
 }
 
-class TestOutputFileConsumer implements OutputFileConsumer {
+class TestOutput implements BuildOutput {
   files: Record<string, Buffer> = {};
   fileNames: Set<string> = new Set();
 

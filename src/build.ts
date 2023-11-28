@@ -17,17 +17,26 @@ const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.j
 
 export interface BuildOptions {
   sourceRoot: string;
-  output: OutputFileConsumer;
+  outputRoot?: string;
+  output?: BuildOutput | null;
   verbose?: boolean;
   addPublic?: boolean;
 }
 
-export interface OutputFileConsumer {
+export interface BuildOutput {
   copyFile: (sourcePath: string, relativeOutputPath: string, clientAction?: string) => Promise<void>;
   writeFile: (relativeOutputPath: string, contents: Buffer, clientAction: string) => Promise<void>;
 }
 
-export async function build({sourceRoot, output, verbose = true, addPublic = true}: BuildOptions): Promise<void> {
+export async function build({
+  sourceRoot,
+  outputRoot,
+  output = outputRoot ? new DefaultOutput(outputRoot) : null,
+  verbose = true,
+  addPublic = true
+}: BuildOptions): Promise<void> {
+  if (!output)
+    throw new Error("Either `output` must be specified, or `outputRoot` specified and `output` left as default.");
   // Make sure all files are readable before starting to write output files.
   for await (const sourceFile of visitMarkdownFiles(sourceRoot)) {
     await access(join(sourceRoot, sourceFile), constants.R_OK);
@@ -115,7 +124,7 @@ export async function build({sourceRoot, output, verbose = true, addPublic = tru
   }
 }
 
-export class RealOutputFileConsumer implements OutputFileConsumer {
+class DefaultOutput implements BuildOutput {
   constructor(private outputRoot: string) {}
   async copyFile(sourcePath: string, relativeOutputPath: string, clientAction = "copy"): Promise<void> {
     const outputPath = join(this.outputRoot, relativeOutputPath);

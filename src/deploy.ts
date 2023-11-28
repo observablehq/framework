@@ -1,6 +1,6 @@
 import readline from "node:readline/promises";
 import {commandRequiresAuthenticationMessage} from "./auth.js";
-import type {OutputFileConsumer} from "./build.js";
+import type {BuildOutput} from "./build.js";
 import {build} from "./build.js";
 import type {Logger} from "./observableApiClient.js";
 import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
@@ -82,7 +82,7 @@ export async function deploy({sourceRoot}: DeployOptions, effects: DeployEffects
   // Build the project
   await build({
     sourceRoot,
-    output: new DeployOutputFileConsumer(apiClient, logger, deployId)
+    output: new DeployOutput(apiClient, logger, deployId)
   });
 
   // Mark the deploy as uploaded.
@@ -130,7 +130,7 @@ async function promptUserForChoiceIndex(
   }
 }
 
-class DeployOutputFileConsumer implements OutputFileConsumer {
+class DeployOutput implements BuildOutput {
   constructor(
     readonly apiClient,
     readonly logger: Logger,
