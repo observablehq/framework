@@ -1,7 +1,7 @@
 import assert from "node:assert";
-import {pager} from "../src/pager.js";
+import {findLink as pager} from "../src/pager.js";
 
-describe("pager(path, options)", () => {
+describe("findLink(path, options)", () => {
   it("returns the previous and next links for three pages", () => {
     const config = {
       pages: [
