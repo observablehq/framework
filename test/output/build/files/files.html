@@ -9,12 +9,12 @@
 
 import {define} from "./_observablehq/client.js";
 
-define({id: "a7808707", inputs: ["display"], files: [{"name":"./file-top.csv","mimeType":"text/csv","path":"./_file/file-top.csv"}], body: (display) => {
+define({id: "a7808707", inputs: ["display"], body: (display) => {
 display((
 fetch("./_file/file-top.csv")
 ))
 }});
-define({id: "03b99abc", inputs: ["display"], files: [{"name":"./subsection/file-sub.csv","mimeType":"text/csv","path":"./_file/subsection/file-sub.csv"}], body: (display) => {
+define({id: "03b99abc", inputs: ["display"], body: (display) => {
 display((
 fetch("./_file/subsection/file-sub.csv")
 ))
