@@ -5,12 +5,12 @@ import {Parser} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression, Node} from "acorn";
 import {simple} from "acorn-walk";
 import {isEnoent} from "../error.js";
-import type {Feature} from "../javascript.js";
-import {type ImportReference, type JavaScriptNode, parseOptions} from "../javascript.js";
+import {parseOptions} from "../javascript.js";
+import type {Feature, type ImportReference, type JavaScriptNode} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
-import {findFetches, rewriteFetch} from "./fetches.js";
 import {relativeUrl, resolvePath} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
+import {findFetches, rewriteFetch} from "./fetches.js";
 
 /**
  * Finds all export declarations in the specified node. (This is used to
@@ -31,13 +31,12 @@ export function findExports(body: Node): (ExportAllDeclaration | ExportNamedDecl
   return exports;
 }
 
-
 /**
  * Finds all imports (both static and dynamic) in the specified node.
  * Recursively processes any imported local ES modules. The returned transitive
  * import paths are relative to the given source path.
  */
-export function findImports(body: Node, root: string, path: string): (ImportReference|Feature)[] {
+export function findImports(body: Node, root: string, path: string): (ImportReference | Feature)[] {
   const imports: ImportReference[] = [];
   const fetches: Feature[] = [];
   const paths: string[] = [];
@@ -59,7 +58,7 @@ export function findImports(body: Node, root: string, path: string): (ImportRefe
   }
 
   // Recursively process any imported local ES modules.
-  const features = parseLocalImports(root, paths)
+  const features = parseLocalImports(root, paths);
   imports.push(...features.imports);
   fetches.push(...features.fetches);
 
@@ -70,7 +69,7 @@ export function findImports(body: Node, root: string, path: string): (ImportRefe
     }
   }
 
-  return { imports, fetches };
+  return {imports, fetches};
 }
 
 /**
@@ -94,7 +93,7 @@ export function parseLocalImports(root: string, paths: string[]): ImportReferenc
           ImportDeclaration: findImport,
           ImportExpression: findImport,
           ExportAllDeclaration: findImport,
-          ExportNamedDeclaration: findImport,
+          ExportNamedDeclaration: findImport
         },
         undefined,
         path
@@ -118,7 +117,7 @@ export function parseLocalImports(root: string, paths: string[]): ImportReferenc
       }
     }
   }
-  return { imports, fetches };
+  return {imports, fetches};
 }
 
 /** Rewrites import specifiers in the specified ES module source. */
@@ -131,15 +130,13 @@ export function rewriteModule(input: string, sourcePath: string, resolver: Impor
     ImportExpression: rewriteImport,
     ExportAllDeclaration: rewriteImport,
     ExportNamedDeclaration: rewriteImport,
-    CallExpression: function(node: CallExpression) {
+    CallExpression(node: CallExpression) {
       rewriteFetch(node, output, body, sourcePath);
     }
   });
 
   function rewriteImport(node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration) {
     if (isStringLiteral(node.source)) {
-
-      const rewrite = JSON.stringify(resolver(sourcePath, getStringLiteralValue(node.source)));
       output.replaceLeft(
         node.source.start,
         node.source.end,
@@ -184,7 +181,7 @@ export function rewriteImports(
           } = await import(${JSON.stringify(resolver(sourcePath, getStringLiteralValue(node.source)))});`
         );
       }
-    },
+    }
   });
 }
 

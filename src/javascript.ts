@@ -136,7 +136,7 @@ function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
   const references = findReferences(body, globals);
   findAssignments(body, references, globals, input);
   const declarations = expression ? null : findDeclarations(body, globals, input);
-  const { imports, fetches } = findImports(body, root, sourcePath);
+  const {imports, fetches} = findImports(body, root, sourcePath);
   const features = findFeatures(body, root, sourcePath, references, input);
 
   return {

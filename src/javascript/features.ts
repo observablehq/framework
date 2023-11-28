@@ -1,4 +1,4 @@
-import type {CallExpression, Identifier, Literal, Node, TemplateLiteral} from "acorn";
+import type {Identifier, Literal, Node, TemplateLiteral} from "acorn";
 import {simple} from "acorn-walk";
 import {getLocalPath} from "../files.js";
 import type {Feature} from "../javascript.js";

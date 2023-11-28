@@ -1,10 +1,9 @@
 import {simple} from "acorn-walk";
-import {type JavaScriptNode} from "../javascript.js";
+import {type Feature, type JavaScriptNode} from "../javascript.js";
 import {type Sourcemap} from "../sourcemap.js";
 import {relativeUrl, resolvePath} from "../url.js";
-import {isLocalImport} from "./imports.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
-import type {Feature} from "../javascript.js";
+import {isLocalImport} from "./imports.js";
 
 export function rewriteFetches(output: Sourcemap, rootNode: JavaScriptNode, sourcePath: string): void {
   simple(rootNode.body, {
@@ -26,14 +25,15 @@ export function rewriteFetch(node: CallExpression, output: Sourcemap, rootNode: 
 export function findFetches(body: Node, path: string) {
   const fetches: Feature[] = [];
 
-  simple(body, { CallExpression: findFetch }, undefined, path);
+  simple(body, {CallExpression: findFetch}, undefined, path);
 
   // Promote fetches with static literals to file attachment references.
 
   function findFetch(node: CallExpression, sourcePath: string) {
     if (isLocalFetch(node, [], sourcePath)) {
-      const { arguments: [arg] } = node;
-      // fetches.push({type: "FileAttachment", name: getStringLiteralValue(arg)});
+      const {
+        arguments: [arg]
+      } = node;
       fetches.push({type: "FileAttachment", name: getStringLiteralValue(arg)});
     }
   }
