@@ -35,6 +35,7 @@ describe("visitFiles(root)", () => {
       "custom-styles.css",
       "file-top.csv",
       "files.md",
+      "another/file-another.csv",
       "subsection/additional-styles.css",
       "subsection/file-sub.csv",
       "subsection/subfiles.md"

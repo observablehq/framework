@@ -19,6 +19,11 @@ display((
 fetch("./file-sub.csv")
 ))
 }});
+define({id: "41cecaf7", inputs: ["display"], files: [{"name":"../another/file-another.csv","mimeType":"text/csv","path":"../another/file-another.csv"}], body: (display) => {
+display((
+fetch("../another/file-another.csv")
+))
+}});
 define({id: "ef9a31ef", inputs: ["FileAttachment","display"], files: [{"name":"../file-top.csv","mimeType":"text/csv","path":"../file-top.csv"}], body: (FileAttachment,display) => {
 display((
 FileAttachment("../file-top.csv")
@@ -53,6 +58,7 @@ FileAttachment("file-sub.csv")
 <link rel="stylesheet" href="./additional-styles.css">
 </span><div id="cell-62f1fd0c" class="observablehq observablehq--block"></div>
 <div id="cell-94d347ec" class="observablehq observablehq--block"></div>
+<div id="cell-41cecaf7" class="observablehq observablehq--block"></div>
 <div id="cell-ef9a31ef" class="observablehq observablehq--block"></div>
 <div id="cell-834ecf9f" class="observablehq observablehq--block"></div>
 </main>

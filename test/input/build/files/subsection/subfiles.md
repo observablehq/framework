@@ -10,6 +10,10 @@ fetch("./file-sub.csv")
 ```
 
 ```js
+fetch("../another/file-another.csv")
+```
+
+```js
 FileAttachment("../file-top.csv")
 ```
 
