@@ -316,24 +316,58 @@ function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string):
     }
     let result = "";
     for (const piece of context.pieces) {
-      result += piece.html = normalizePieceHtml(piece.html, root, sourcePath, context);
+      result += piece.html = normalizePieceHtml(piece.html, sourcePath, context);
     }
     return result;
   };
 }
 
-function normalizePieceHtml(html: string, root: string, sourcePath: string, context: ParseContext): string {
+const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcset"}[] = Object.freeze([
+  {query: "img[src]", src: "src"},
+  {query: "img[srcset]", src: "srcset"},
+  {query: "picture source[srcset]", src: "srcset"},
+  {query: "video[src]", src: "src"},
+  {query: "video source[src]", src: "src"},
+  {query: "audio[src]", src: "src"},
+  {query: "audio source[src]", src: "src"},
+  {query: "link[href]", src: "href"}
+]);
+export function normalizePieceHtml(html: string, sourcePath: string, context: ParseContext): string {
   const {document} = parseHTML(html);
 
   // Extracting references to files (such as from linked stylesheets).
-  for (const element of document.querySelectorAll("link[href]") as any as Iterable<Element>) {
-    const href = element.getAttribute("href")!;
-    const path = getLocalPath(sourcePath, href);
-    if (path) {
-      context.files.push(fileReference(href, sourcePath));
-      element.setAttribute("href", relativeUrl(sourcePath, join("_file", path)));
+  const files = new Set<FileReference>();
+  for (const {query, src} of SUPPORTED_PROPERTIES) {
+    for (const element of document.querySelectorAll(query) as any as Iterable<Element>) {
+      if (src === "srcset") {
+        const srcset = element.getAttribute(src);
+        const paths =
+          srcset &&
+          srcset
+            .split(",")
+            .map((p) => {
+              const parts = p.trim().split(/\s+/);
+              const source = parts[0];
+              const path = getLocalPath(sourcePath, source);
+              if (path) {
+                files.add(fileReference(source, sourcePath));
+                return `${relativeUrl(sourcePath, join("_file", path))} ${parts.slice(1).join(" ")}`;
+              }
+              return parts.join(" ");
+            })
+            .filter((p) => !!p);
+        if (paths && paths.length > 0) element.setAttribute(src, paths.join(", "));
+      } else {
+        const source = element.getAttribute(src);
+        const path = getLocalPath(sourcePath, source!);
+        if (path) {
+          files.add(fileReference(source!, sourcePath));
+          element.setAttribute(src, relativeUrl(sourcePath, join("_file", path)));
+        }
+      }
     }
   }
+  if (files.size > 0) context.files.push(...files);
 
   // Syntax highlighting for <code> elements. The code could contain an inline
   // expression within, or other HTML, but we only highlight text nodes that are
