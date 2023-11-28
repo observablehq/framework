@@ -31,7 +31,12 @@ export class ObservableApiMock {
     }
   }
 
-  handleGetUser({valid = true}: {valid?: boolean} = {valid: true}): ObservableApiMock {
+  handleGetUser(
+    {valid = true, workspaces = [mockWorkspaces[0]]}: {valid?: boolean; workspaces?: any[]} = {
+      valid: true,
+      workspaces: [mockWorkspaces[0]]
+    }
+  ): ObservableApiMock {
     const status = valid ? 200 : 401;
     const response = valid
       ? JSON.stringify({
@@ -40,16 +45,7 @@ export class ObservableApiMock {
           name: "Mock User",
           tier: "public",
           has_workspace: false,
-          workspaces: [
-            {
-              id: "0000000000000001",
-              login: "mock-user-ws",
-              name: "Mock User's Workspace",
-              tier: "pro",
-              type: "team",
-              role: "owner"
-            }
-          ]
+          workspaces
         })
       : emptyErrorBody;
     const headers = authorizationHeader(valid);
@@ -60,10 +56,10 @@ export class ObservableApiMock {
   }
 
   handlePostProject(
-    {projectId, valid = true}: {projectId?: string; valid?: boolean} = {valid: true}
+    {projectId, valid = true, errorStatus}: {projectId?: string; valid?: boolean; errorStatus?: number} = {valid: true}
   ): ObservableApiMock {
-    const status = valid ? 200 : 401;
-    const response = valid ? JSON.stringify({id: projectId}) : emptyErrorBody;
+    const status = errorStatus || (valid ? 200 : 401);
+    const response = errorStatus || !valid ? emptyErrorBody : JSON.stringify({id: projectId});
     const headers = authorizationHeader(valid);
     this._handlers.push((pool) =>
       pool.intercept({path: "/cli/project", method: "POST", headers: headersMatcher(headers)}).reply(status, response)
@@ -72,10 +68,15 @@ export class ObservableApiMock {
   }
 
   handlePostDeploy(
-    {projectId, deployId, valid = true}: {projectId?: string; deployId?: string; valid?: boolean} = {valid: true}
+    {
+      projectId,
+      deployId,
+      valid = true,
+      errorStatus
+    }: {projectId?: string; deployId?: string; valid?: boolean; errorStatus?: number} = {valid: true}
   ): ObservableApiMock {
-    const status = valid ? 200 : 401;
-    const response = valid ? JSON.stringify({id: deployId}) : emptyErrorBody;
+    const status = errorStatus || (valid ? 200 : 401);
+    const response = errorStatus || !valid ? emptyErrorBody : JSON.stringify({id: deployId});
     const headers = authorizationHeader(valid);
     this._handlers.push((pool) =>
       pool
@@ -86,11 +87,10 @@ export class ObservableApiMock {
   }
 
   handlePostDeployFile(
-    {deployId, valid = true}: {deployId?: string; valid?: boolean} = {valid: true}
+    {deployId, valid = true, errorStatus}: {deployId?: string; valid?: boolean; errorStatus?: number} = {valid: true}
   ): ObservableApiMock {
-    const status = valid ? 204 : 401;
-    const response = valid ? "" : emptyErrorBody;
-
+    const status = errorStatus || (valid ? 204 : 401);
+    const response = errorStatus || !valid ? emptyErrorBody : "";
     const headers = authorizationHeader(valid);
     this._handlers.push((pool) =>
       pool
@@ -101,10 +101,10 @@ export class ObservableApiMock {
   }
 
   handlePostDeployUploaded(
-    {deployId, valid = true}: {deployId?: string; valid?: boolean} = {valid: true}
+    {deployId, valid = true, errorStatus}: {deployId?: string; valid?: boolean; errorStatus?: number} = {valid: true}
   ): ObservableApiMock {
-    const status = valid ? 204 : 401;
-    const response = valid ? JSON.stringify({id: deployId, status: "uploaded"}) : emptyErrorBody;
+    const status = errorStatus || (valid ? 204 : 401);
+    const response = errorStatus || !valid ? emptyErrorBody : JSON.stringify({id: deployId, status: "uploaded"});
     const headers = authorizationHeader(valid);
     this._handlers.push((pool) =>
       pool
@@ -114,6 +114,25 @@ export class ObservableApiMock {
     return this;
   }
 }
+
+export const mockWorkspaces = [
+  {
+    id: "0000000000000001",
+    login: "mock-user-ws",
+    name: "Mock User's Workspace",
+    tier: "pro",
+    type: "team",
+    role: "owner"
+  },
+  {
+    id: "0000000000000002",
+    login: "mock-user-ws-2",
+    name: "Mock User's Second Workspace",
+    tier: "pro",
+    type: "team",
+    role: "owner"
+  }
+];
 
 function authorizationHeader(valid: boolean) {
   return {authorization: valid ? `apikey ${validApiKey}` : `apikey ${invalidApiKey}`};

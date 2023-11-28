@@ -14,10 +14,23 @@ export class MockLogger implements Logger {
   }
 
   assertExactLogs(expected: RegExp[], {skipBlanks = true} = {}) {
-    const filteredLogs = this.logLines.filter((logArgs) => {
+    this.assertLogLines(expected, this.logLines, {skipBlanks});
+  }
+
+  assertExactErrors(expected: RegExp[], {skipBlanks = true} = {}) {
+    this.assertLogLines(expected, this.errorLines, {skipBlanks});
+  }
+
+  assertLogLines(expected: RegExp[], logLines: any[][], {skipBlanks = true} = {}) {
+    const filteredLogs = logLines.filter((logArgs) => {
       if (skipBlanks) return logArgs.length > 0;
       return true;
     });
+
+    assert.ok(
+      filteredLogs.length >= expected.length,
+      `Expecting at least ${expected.length} log lines, but only found ${filteredLogs.length}`
+    );
 
     for (let i = 0; i < expected.length; i++) {
       const logArgs = filteredLogs[i];

@@ -1,8 +1,8 @@
 import path from "node:path";
-import {createInterface} from "node:readline";
+import readline from "node:readline/promises";
 import {commandRequiresAuthenticationMessage} from "./auth.js";
 import {visitFiles} from "./files.js";
-import type {Logger, WorkspaceResponse} from "./observableApiClient.js";
+import type {Logger} from "./observableApiClient.js";
 import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
 import type {ProjectConfig} from "./toolConfig.js";
 import {getObservableApiKey, getProjectId, setProjectConfig} from "./toolConfig.js";
@@ -11,25 +11,23 @@ type DeployFile = {path: string; relativePath: string};
 export interface CommandEffects {
   getObservableApiKey: () => Promise<string | null>;
   getProjectId: () => Promise<string | null>;
-  getNewProjectSlug: () => Promise<string>;
-  getNewProjectWorkspace: (workspaces: WorkspaceResponse[]) => Promise<string>;
   setProjectConfig: (config: ProjectConfig) => Promise<void>;
-  getDeployFiles: () => Promise<DeployFile[]>;
   logger: Logger;
+  inputStream: NodeJS.ReadableStream;
+  outputStream: NodeJS.WritableStream;
 }
 
 const defaultEffects: CommandEffects = {
   getObservableApiKey,
   getProjectId,
-  getNewProjectSlug,
-  getNewProjectWorkspace,
   setProjectConfig,
-  getDeployFiles,
-  logger: console
+  inputStream: process.stdin,
+  logger: console,
+  outputStream: process.stdout
 };
 
 // Deploy a project to ObservableHQ.
-export async function deploy(effects = defaultEffects): Promise<void> {
+export async function deploy(effects = defaultEffects, dir = "dist"): Promise<void> {
   const apiKey = await effects.getObservableApiKey();
   const {logger} = effects;
   if (!apiKey) {
@@ -48,8 +46,7 @@ export async function deploy(effects = defaultEffects): Promise<void> {
   } else {
     logger.log("Creating a new project");
     const currentUserResponse = await apiClient.getCurrentUser();
-
-    const slug = await effects.getNewProjectSlug();
+    const slug = await promptUserForInput(effects.inputStream, effects.outputStream, "New project name: ");
     let workspaceId: string | null = null;
     if (currentUserResponse.workspaces.length == 0) {
       logger.error("Current user doesn't have any Observable workspaces!");
@@ -57,16 +54,17 @@ export async function deploy(effects = defaultEffects): Promise<void> {
     } else if (currentUserResponse.workspaces.length == 1) {
       workspaceId = currentUserResponse.workspaces[0].id;
     } else {
-      workspaceId = await effects.getNewProjectWorkspace(currentUserResponse.workspaces);
+      const workspaceNames = currentUserResponse.workspaces.map((x) => x.name);
+      const index = await promptUserForChoiceIndex(
+        effects.inputStream,
+        effects.outputStream,
+        "Available Workspaces",
+        workspaceNames
+      );
+      workspaceId = currentUserResponse.workspaces[index].id;
     }
 
-    try {
-      projectId = await apiClient.postProject(slug, workspaceId);
-    } catch (error) {
-      logger.error("Unable to create new project!");
-      throw error;
-    }
-
+    projectId = await apiClient.postProject(slug, workspaceId);
     await effects.setProjectConfig({id: projectId, slug});
     logger.log(`Created new project id ${projectId}`);
   }
@@ -75,14 +73,10 @@ export async function deploy(effects = defaultEffects): Promise<void> {
 
   // Create the new deploy.
   const deployId = await apiClient.postDeploy(projectId);
-  if (!deployId) {
-    console.error("Unable to create new deploy");
-    return;
-  }
   logger.log(`Created new deploy id ${deployId}`);
 
   // Upload all the deploy files.
-  const deployFiles = await effects.getDeployFiles();
+  const deployFiles = await getDeployFiles(dir);
   for (const deployFile of deployFiles) {
     await apiClient.postDeployFile(deployId, deployFile.path, deployFile.relativePath);
   }
@@ -92,32 +86,28 @@ export async function deploy(effects = defaultEffects): Promise<void> {
   logger.log(`Deployed project now visible at ${getObservableUiHost()}/p/${projectId}`);
 }
 
-async function getNewProjectSlug(): Promise<string> {
-  return promptUserForInput("New project name: ");
-}
-
-async function getNewProjectWorkspace(workspaces: WorkspaceResponse[]): Promise<string> {
-  const workspaceNames = workspaces.map((x) => x.name);
-  const index = await promptUserForChoiceIndex("Available Workspaces", workspaceNames);
-  return workspaces[index].id;
-}
-
-async function promptUserForInput(question: string): Promise<string> {
-  const readline = createInterface({input: process.stdin, output: process.stdout});
+async function promptUserForInput(
+  inputStream: NodeJS.ReadableStream,
+  outputStream: NodeJS.WritableStream,
+  question: string
+): Promise<string> {
+  const rl = readline.createInterface({input: inputStream, output: outputStream});
   try {
-    let value: string = "";
-    do {
-      value = await new Promise((resolve) => {
-        readline.question(question, resolve);
-      });
-    } while (!value);
+    let value: string | null = null;
+    do value = await rl.question(question);
+    while (!value);
     return value;
   } finally {
-    readline.close();
+    rl.close();
   }
 }
 
-async function promptUserForChoiceIndex(title: string, choices: string[]): Promise<number> {
+async function promptUserForChoiceIndex(
+  inputStream: NodeJS.ReadableStream,
+  outputStream: NodeJS.WritableStream,
+  title: string,
+  choices: string[]
+): Promise<number> {
   const validChoices: string[] = [];
   const promptLines: string[] = ["", title, "=".repeat(title.length)];
   for (let i = 0; i < choices.length; i++) {
@@ -125,23 +115,18 @@ async function promptUserForChoiceIndex(title: string, choices: string[]): Promi
     promptLines.push(`${i + 1}. ${choices[i]}`);
   }
   const question = promptLines.join("\n") + "\nChoice: ";
-  const readline = createInterface({input: process.stdin, output: process.stdout});
+  const rl = readline.createInterface({input: inputStream, output: outputStream});
   try {
-    let value: string = "";
-    do {
-      value = await new Promise((resolve) => {
-        readline.question(question, resolve);
-      });
-    } while (!validChoices.includes(value));
-    return parseInt(value) - 1;
+    let value: string | null = null;
+    do value = await rl.question(question);
+    while (!validChoices.includes(value));
+    return parseInt(value) - 1; // zero-indexed
   } finally {
-    readline.close();
+    rl.close();
   }
 }
 
-async function getDeployFiles(): Promise<DeployFile[]> {
-  // TODO: we eventually want to build into a separate only-for-this-deploy tmp directory.
-  const dir = "dist";
+async function getDeployFiles(dir: string): Promise<DeployFile[]> {
   const deployFiles: DeployFile[] = [];
   for await (const file of visitFiles(dir)) {
     deployFiles.push({
