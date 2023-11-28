@@ -43,7 +43,7 @@
       "cellIds": [
         "7f64da9c"
       ],
-      "html": "<div id=\"cell-7f64da9c\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<template id=\"cell-7f64da9c\"></template>\n"
     },
     {
       "type": "html",
@@ -51,7 +51,7 @@
       "cellIds": [
         "02cc5429"
       ],
-      "html": "<div id=\"cell-02cc5429\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<template id=\"cell-02cc5429\"></template>\n"
     },
     {
       "type": "html",
@@ -59,7 +59,7 @@
       "cellIds": [
         "506a5b26"
       ],
-      "html": "<div id=\"cell-506a5b26\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<template id=\"cell-506a5b26\"></template>\n"
     },
     {
       "type": "html",
@@ -67,7 +67,7 @@
       "cellIds": [
         "4078d1e8"
       ],
-      "html": "<div id=\"cell-4078d1e8\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<template id=\"cell-4078d1e8\"></template>\n"
     },
     {
       "type": "html",
@@ -75,7 +75,7 @@
       "cellIds": [
         "4043aea7"
       ],
-      "html": "<div id=\"cell-4043aea7\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<template id=\"cell-4043aea7\"></template>\n"
     },
     {
       "type": "html",
@@ -83,7 +83,7 @@
       "cellIds": [
         "96f2427a"
       ],
-      "html": "<div id=\"cell-96f2427a\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<template id=\"cell-96f2427a\"></template>\n"
     },
     {
       "type": "html",
@@ -91,7 +91,7 @@
       "cellIds": [
         "57d7a0f9"
       ],
-      "html": "<div id=\"cell-57d7a0f9\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<template id=\"cell-57d7a0f9\"></template>\n"
     },
     {
       "type": "html",
@@ -99,7 +99,7 @@
       "cellIds": [
         "207b0b42"
       ],
-      "html": "<div id=\"cell-207b0b42\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<template id=\"cell-207b0b42\"></template>\n"
     }
   ],
   "cells": [

@@ -10,7 +10,7 @@
       "cellIds": [
         "1e6b99bd"
       ],
-      "html": "<div id=\"cell-1e6b99bd\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<template id=\"cell-1e6b99bd\"></template>\n"
     }
   ],
   "cells": [

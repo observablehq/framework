@@ -119,7 +119,9 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
       extendPiece(context, {code: [transpile]});
       if (transpile.files) context.files.push(...transpile.files);
       if (transpile.imports) context.imports.push(...transpile.imports);
-      result += `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`;
+      result += transpile.inputs?.some((input) => input === "display" || input === "view")
+        ? `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`
+        : `<template id="cell-${id}"></template>\n`;
       count++;
     }
     // TODO we could hide non-live code here with echo=false?
