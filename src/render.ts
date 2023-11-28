@@ -4,7 +4,7 @@ import {type Html, html} from "./html.js";
 import {type ImportResolver, createImportResolver} from "./javascript/imports.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
 import {type CellPiece, type ParseResult, parseMarkdown} from "./markdown.js";
-import {type PageLink, findLink} from "./pager.js";
+import {findLink} from "./pager.js";
 import {relativeUrl} from "./url.js";
 
 export interface Render {
@@ -53,37 +53,76 @@ function render(parseResult: ParseResult, options: RenderOptions & RenderInterna
   const {root, path, pages, title, preview, resolver} = options;
   const toc = mergeToc(parseResult.data?.toc, options.toc);
   const headers = toc.show ? findHeaders(parseResult) : [];
-  return String(html`<!DOCTYPE html>
-<meta charset="utf-8">${path === "/404" ? html`\n<base href="/">` : ""}
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-${
-  parseResult.title || title
-    ? html`<title>${[parseResult.title, parseResult.title === title ? null : title]
-        .filter((title): title is string => !!title)
-        .join(" | ")}</title>\n`
-    : ""
-}<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
-<link rel="stylesheet" type="text/css" href="${relativeUrl(path, "/_observablehq/style.css")}">${renderImportPreloads(
-    parseResult,
-    path,
-    createImportResolver(root, "_import")
-  )}
-<script type="module">${html.unsafe(`
+
+  const elements = {
+    base: path === "/404" ? '\n<base href="/">' : "",
+    title:
+      parseResult.title || title
+        ? html.unsafe(
+            `<title>${[parseResult.title, parseResult.title === title ? null : title]
+              .filter((title): title is string => !!title)
+              .join(" | ")}</title>\n`
+          )
+        : "",
+    root: relativeUrl(path, "/"),
+    preloads: renderImportPreloads(parseResult, path, createImportResolver(root, "_import")),
+    module: html.unsafe(
+      `<script type="module">${html.unsafe(`
 
 import {${preview ? "open, " : ""}define} from ${JSON.stringify(relativeUrl(path, "/_observablehq/client.js"))};
 
 ${
   preview ? `open({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
-}${parseResult.cells.map(resolver).map(renderDefineCell).join("")}`)}
-</script>
-${pages.length > 0 ? renderSidebar(title, pages, path) : ""}
-${headers.length > 0 ? renderToc(headers, toc.label) : ""}<div id="observablehq-center">
-<main id="observablehq-main" class="observablehq">
-${html.unsafe(parseResult.html)}</main>
-${renderFooter(path, options)}
-</div>
-`);
+}${parseResult.cells.map(resolver).map(renderDefineCell).join("")}`)}\n</script>`
+    ),
+    sidebar: pages.length > 0 ? renderSidebar(title, pages, path) : "",
+    toc: headers.length > 0 ? renderToc(headers, toc.label) : "",
+    main: html.unsafe(parseResult.html),
+    pager: renderPager(path, options),
+    copyright: `© ${new Date().getUTCFullYear()} Observable, Inc.`
+  };
+
+  return template(
+    `<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<head>
+  {{title}}
+  {{base}}
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
+<link rel="stylesheet" type="text/css" href="{{root}}_observablehq/style.css">
+  {{preloads}}
+  {{module}}
+</head>
+<body>
+  {{sidebar}}
+  {{toc}}
+  <div id="observablehq-center">
+    <main id="observablehq-main" class="observablehq">
+      {{main}}
+    </main>
+    <footer id="observablehq-footer">
+      {{pager}}
+      <div>{{copyright}}</div>
+    </footer>
+  </div>
+</body>
+`,
+    elements
+  );
+}
+
+// TODO types
+function template(str, values) {
+  const a = str.split(/\{\{(\w+)\}\}/g);
+  const b = [] as string[];
+  const replace = [] as (string | Html)[];
+  for (let i = 0; i < a.length; i += 2) {
+    b.push(a[i]);
+    replace.push(values[a[i + 1]]);
+  }
+  return String(html(b, ...replace));
 }
 
 function renderSidebar(title = "Home", pages: (Page | Section)[], path: string): Html {
@@ -172,15 +211,13 @@ function renderImportPreloads(parseResult: ParseResult, path: string, resolver: 
   return html`${Array.from(preloads, (href) => html`\n<link rel="modulepreload" href="${href}">`)}`;
 }
 
-function renderFooter(path: string, options: Pick<Config, "pages" | "pager" | "title">): Html {
-  const link = options.pager ? findLink(path, options) : null;
-  return html`<footer id="observablehq-footer">${link ? renderPager(path, link) : ""}
-<div>© ${new Date().getUTCFullYear()} Observable, Inc.</div>
-</footer>`;
-}
-
-function renderPager(path: string, {prev, next}: PageLink): Html {
-  return html`\n<nav>${prev ? renderRel(path, prev, "prev") : ""}${next ? renderRel(path, next, "next") : ""}</nav>`;
+function renderPager(path: string, options: Pick<Config, "pages" | "pager" | "title">): Html | "" {
+  const link = options.pager && findLink(path, options);
+  return link
+    ? html`\n<nav>${link.prev ? renderRel(path, link.prev, "prev") : ""}${
+        link.next ? renderRel(path, link.next, "next") : ""
+      }</nav>`
+    : "";
 }
 
 function renderRel(path: string, page: Page, rel: "prev" | "next"): Html {
