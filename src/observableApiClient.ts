@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import packageJson from "../package.json";
 import {HttpError} from "./error.js";
+import type {ApiKey} from "./toolConfig.js";
 
 export type Logger = {log: (...args: any[]) => void; error: (...args: any[]) => void};
 
@@ -58,14 +59,14 @@ export class ObservableApiClient {
     logger = console
   }: {
     apiHost?: URL;
-    apiKey: string;
+    apiKey: ApiKey;
     logger: Logger;
   }) {
     this._apiHost = apiHost;
     this._logger = logger;
     this._apiHeaders = [
       ["Accept", "application/json"],
-      ["Authorization", `apikey ${apiKey}`],
+      ["Authorization", `apikey ${apiKey.key}`],
       ["User-Agent", `Observable CLI ${packageJson.version}`],
       ["X-Observable-Api-Version", "2023-11-06"]
     ];

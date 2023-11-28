@@ -1,8 +1,10 @@
 import assert, {fail} from "node:assert";
 import {Readable, Writable} from "node:stream";
+import {commandRequiresAuthenticationMessage} from "../src/auth.js";
 import type {DeployEffects} from "../src/deploy.js";
 import {deploy} from "../src/deploy.js";
 import {isHttpError} from "../src/error.js";
+import type {Logger} from "../src/observableApiClient.js";
 import type {DeployConfig} from "../src/toolConfig.js";
 import {MockLogger} from "./mocks/logger.js";
 import {
@@ -48,8 +50,12 @@ class MockEffects implements DeployEffects {
     });
   }
 
-  async getObservableApiKey() {
-    return this._observableApiKey;
+  async getObservableApiKey(logger: Logger) {
+    if (!this._observableApiKey) {
+      logger.log(commandRequiresAuthenticationMessage);
+      throw new Error("no key available in this test");
+    }
+    return {source: "test" as const, key: this._observableApiKey};
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -103,10 +109,16 @@ describe("deploy", () => {
     const apiMock = new ObservableApiMock().start();
     const effects = new MockEffects({apiKey: null});
 
-    await deploy({sourceRoot: "docs", deployRoot: "test/example-dist"}, effects);
+    try {
+      await deploy({sourceRoot: "test/example-test"}, effects);
+      assert.ok(false, "expected error");
+    } catch (err) {
+      if (!(err instanceof Error)) throw err;
+      assert.equal(err.message, "no key available in this test");
+      effects.logger.assertExactLogs([/^You need to be authenticated/]);
+    }
 
     apiMock.close();
-    effects.logger.assertExactLogs([/^You need to be authenticated/]);
   });
 
   it("handles multiple user workspaces", async () => {

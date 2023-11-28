@@ -29,7 +29,8 @@
     "test:coverage": "c8 yarn test:mocha",
     "test:mocha": "rm -rf test/.observablehq/cache test/input/build/*/.observablehq/cache && tsx ./node_modules/.bin/mocha 'test/**/*-test.*'",
     "test:lint": "eslint src test",
-    "test:tsc": "tsc --noEmit"
+    "test:tsc": "tsc --noEmit",
+    "observable": "tsx ./bin/observable.ts"
   },
   "c8": {
     "all": true,

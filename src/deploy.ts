@@ -1,10 +1,9 @@
 import path from "node:path";
 import readline from "node:readline/promises";
-import {commandRequiresAuthenticationMessage} from "./auth.js";
 import {visitFiles} from "./files.js";
 import type {Logger} from "./observableApiClient.js";
 import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
-import type {DeployConfig} from "./toolConfig.js";
+import type {ApiKey, DeployConfig} from "./toolConfig.js";
 import {getDeployConfig, getObservableApiKey, setDeployConfig} from "./toolConfig.js";
 
 type DeployFile = {path: string; relativePath: string};
@@ -14,7 +13,7 @@ export interface DeployOptions {
   deployRoot?: string;
 }
 export interface DeployEffects {
-  getObservableApiKey: () => Promise<string | null>;
+  getObservableApiKey: (logger: Logger) => Promise<ApiKey>;
   getDeployConfig: (sourceRoot: string) => Promise<DeployConfig | null>;
   setDeployConfig: (sourceRoot: string, config: DeployConfig) => Promise<void>;
   logger: Logger;
@@ -36,12 +35,8 @@ export async function deploy(
   {sourceRoot = "docs", deployRoot = "dist"}: DeployOptions,
   effects = defaultEffects
 ): Promise<void> {
-  const apiKey = await effects.getObservableApiKey();
   const {logger} = effects;
-  if (!apiKey) {
-    logger.log(commandRequiresAuthenticationMessage);
-    return;
-  }
+  const apiKey = await effects.getObservableApiKey(logger);
   const apiClient = new ObservableApiClient({
     apiKey,
     logger
