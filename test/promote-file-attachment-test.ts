@@ -52,11 +52,6 @@ describe("file attachments", () => {
           mimeType: "image/jpeg",
           name: "small.jpg",
           path: "./_file/small.jpg"
-        },
-        {
-          mimeType: "image/jpeg",
-          name: "large.jpg",
-          path: "./_file/large.jpg"
         }
       ]);
     });
@@ -108,6 +103,35 @@ describe("file attachments", () => {
           mimeType: "video/quicktime",
           name: "observable.mov",
           path: "./_file/observable.mov"
+        }
+      ]);
+    });
+
+    it("picture source[srcset]", () => {
+      const htmlStr = html`<picture>
+      <source srcset="observable-logo-wide.png" media="(min-width: 600px)"/>
+      <img src="observable-logo-narrow.png" />
+    </picture>`;
+
+      const expected = html`<picture>
+      <source srcset="./_file/observable-logo-wide.png" media="(min-width: 600px)">
+      <img src="./_file/observable-logo-narrow.png">
+    </picture>`;
+
+      const context = mockContext();
+      const actual = normalizePieceHtml(htmlStr, sourcePath, context);
+
+      assert.equal(actual, expected);
+      assert.deepEqual(context.files, [
+        {
+          mimeType: "image/png",
+          name: "observable-logo-narrow.png",
+          path: "./_file/observable-logo-narrow.png"
+        },
+        {
+          mimeType: "image/png",
+          name: "observable-logo-wide.png",
+          path: "./_file/observable-logo-wide.png"
         }
       ]);
     });

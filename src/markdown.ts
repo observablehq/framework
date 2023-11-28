@@ -17,7 +17,7 @@ import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
 import {type FileReference, type ImportReference, type Transpile, transpileJavaScript} from "./javascript.js";
 import {transpileTag} from "./tag.js";
-import {relativeUrl, resolvePath} from "./url.js";
+import {resolvePath} from "./url.js";
 
 export interface ReadMarkdownResult {
   contents: string;
@@ -336,7 +336,7 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
   const {document} = parseHTML(html);
 
   // Extracting references to files (such as from linked stylesheets).
-  const files = new Set<FileReference>();
+  const filePaths = new Set<FileReference["path"]>();
   for (const {query, src} of SUPPORTED_PROPERTIES) {
     for (const element of document.querySelectorAll(query) as any as Iterable<Element>) {
       if (src === "srcset") {
@@ -350,8 +350,12 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
               const source = parts[0];
               const path = getLocalPath(sourcePath, source);
               if (path) {
-                files.add(fileReference(source, sourcePath));
-                return `${relativeUrl(sourcePath, join("_file", path))} ${parts.slice(1).join(" ")}`;
+                const file = fileReference(source, sourcePath);
+                if (!filePaths.has(file.path)) {
+                  filePaths.add(file.path);
+                  context.files.push(file);
+                }
+                return `${file.path} ${parts.slice(1).join(" ")}`.trim();
               }
               return parts.join(" ");
             })
@@ -361,13 +365,16 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
         const source = element.getAttribute(src);
         const path = getLocalPath(sourcePath, source!);
         if (path) {
-          files.add(fileReference(source!, sourcePath));
-          element.setAttribute(src, relativeUrl(sourcePath, join("_file", path)));
+          const file = fileReference(source!, sourcePath);
+          if (!filePaths.has(file.path)) {
+            filePaths.add(file.path);
+            context.files.push(file);
+          }
+          element.setAttribute(src, file.path);
         }
       }
     }
   }
-  if (files.size > 0) context.files.push(...files);
 
   // Syntax highlighting for <code> elements. The code could contain an inline
   // expression within, or other HTML, but we only highlight text nodes that are
