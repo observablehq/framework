@@ -72,8 +72,9 @@ export async function build({sourceRoot, outputRoot, verbose = true, addPublic =
 
   // Copy over the referenced files.
   for (const file of files) {
-    let sourcePath = join(sourceRoot, file);
     const outputPath = join(outputRoot, file);
+    if (existsSync(outputPath + ".html")) continue; // skip pages
+    let sourcePath = join(sourceRoot, file);
     if (!existsSync(sourcePath)) {
       const loader = Loader.find(sourceRoot, file);
       if (!loader) {

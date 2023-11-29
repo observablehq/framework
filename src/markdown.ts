@@ -323,6 +323,7 @@ function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string):
 }
 
 const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcset"}[] = Object.freeze([
+  {query: "a[href]", src: "href"},
   {query: "audio[src]", src: "src"},
   {query: "audio source[src]", src: "src"},
   {query: "img[src]", src: "src"},
