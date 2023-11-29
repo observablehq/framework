@@ -134,6 +134,11 @@ export class PreviewServer {
         try {
           if ((await stat(path)).isDirectory() && (await stat(join(path, "index") + ".md")).isFile()) {
             await access(join(path, "index") + ".md", constants.R_OK);
+            if (!pathname.endsWith("/")) {
+              res.writeHead(302, {Location: pathname + "/" + url.search});
+              res.end();
+              return;
+            }
             pathname = join(pathname, "index");
             path = join(path, "index");
           }
