@@ -323,14 +323,14 @@ function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string):
 }
 
 const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcset"}[] = Object.freeze([
-  {query: "img[src]", src: "src"},
-  {query: "img[srcset]", src: "srcset"},
-  {query: "picture source[srcset]", src: "srcset"},
-  {query: "video[src]", src: "src"},
-  {query: "video source[src]", src: "src"},
   {query: "audio[src]", src: "src"},
   {query: "audio source[src]", src: "src"},
-  {query: "link[href]", src: "href"}
+  {query: "img[src]", src: "src"},
+  {query: "img[srcset]", src: "srcset"},
+  {query: "link[href]", src: "href"},
+  {query: "picture source[srcset]", src: "srcset"},
+  {query: "video[src]", src: "src"},
+  {query: "video source[src]", src: "src"}
 ]);
 export function normalizePieceHtml(html: string, sourcePath: string, context: ParseContext): string {
   const {document} = parseHTML(html);
