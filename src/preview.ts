@@ -3,7 +3,7 @@ import {watch} from "node:fs";
 import type {FSWatcher, WatchEventType} from "node:fs";
 import {access, constants, readFile, stat} from "node:fs/promises";
 import {createServer} from "node:http";
-import type {IncomingMessage, RequestListener, ServerResponse} from "node:http";
+import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
 import send from "send";
@@ -11,7 +11,7 @@ import {type WebSocket, WebSocketServer} from "ws";
 import {version} from "../package.json";
 import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
-import {HttpError, isEnoent, isHttpError} from "./error.js";
+import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {diffMarkdown, readMarkdown} from "./markdown.js";
@@ -26,42 +26,52 @@ const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public")
 export interface PreviewOptions {
   root: string;
   hostname: string;
-  port: number;
+  port?: number;
   verbose?: boolean;
 }
 
-export async function preview(options: PreviewOptions): Promise<Server> {
-  return Server.start(options);
+export async function preview(options: PreviewOptions): Promise<PreviewServer> {
+  return PreviewServer.start(options);
 }
 
-export class Server {
+export class PreviewServer {
   private readonly _server: ReturnType<typeof createServer>;
   private readonly _socketServer: WebSocketServer;
   private readonly _resolver: CellResolver;
-  readonly port: number;
-  readonly hostname: string;
   readonly root: string;
 
-  private constructor({port, hostname, root}: PreviewOptions, resolver: CellResolver) {
-    this.port = port;
-    this.hostname = hostname;
+  private constructor({server, root}: {server: Server; root: string}, resolver: CellResolver) {
     this.root = root;
-    this._server = createServer();
+    this._server = server;
     this._server.on("request", this._handleRequest);
     this._socketServer = new WebSocketServer({server: this._server});
     this._socketServer.on("connection", this._handleConnection);
     this._resolver = resolver;
   }
 
-  static async start({verbose = true, ...options}: PreviewOptions) {
-    const server = new Server(options, await makeCLIResolver());
-    await new Promise<void>((resolve) => server._server.listen(server.port, server.hostname, resolve));
+  static async start({verbose = true, hostname, port, ...options}: PreviewOptions) {
+    const server = createServer();
+    if (port === undefined) {
+      for (port = 3000; true; ++port) {
+        try {
+          await new Promise<void>((resolve, reject) => {
+            server.once("error", reject);
+            server.listen(port, hostname, resolve);
+          });
+          break;
+        } catch (error) {
+          if (!isSystemError(error) || error.code !== "EADDRINUSE") throw error;
+        }
+      }
+    } else {
+      await new Promise<void>((resolve) => server.listen(port, hostname, resolve));
+    }
     if (verbose) {
       console.log(`${green(bold("Observable CLI"))}\t${faint(`v${version}`)}`);
-      console.log(`${faint("↳")} ${underline(`http://${server.hostname}:${server.port}/`)}`);
+      console.log(`${faint("↳")} ${underline(`http://${hostname}:${port}/`)}`);
       console.log("");
     }
-    return server;
+    return new PreviewServer({server, ...options}, await makeCLIResolver());
   }
 
   _handleRequest: RequestListener = async (req, res) => {
