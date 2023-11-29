@@ -112,6 +112,11 @@ export class PreviewServer {
         try {
           if ((await stat(path)).isDirectory() && (await stat(join(path, "index") + ".md")).isFile()) {
             await access(join(path, "index") + ".md", constants.R_OK);
+            if (!path.endsWith("/")) {
+              res.writeHead(302, {Location: pathname + "/" + url.search});
+              res.end();
+              return;
+            }
             pathname = join(pathname, "index");
             path = join(path, "index");
           }
@@ -119,12 +124,19 @@ export class PreviewServer {
           if (!isEnoent(error)) throw error; // internal error
         }
 
-        // If this path ends with .html, then redirect to drop the .html. TODO:
-        // Check for the existence of the .md file first.
-        if (extname(path) === ".html") {
-          res.writeHead(302, {Location: join(dirname(pathname), basename(pathname, ".html")) + url.search});
-          res.end();
+        // Serve the corresponding Markdown file, if it exists.
+        try {
+          const config = await readConfig(this.root);
+          const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {
+            root: this.root,
+            path: pathname,
+            resolver: this._resolver,
+            ...config
+          });
+          end(req, res, html, "text/html");
           return;
+        } catch (error) {
+          if (!isEnoent(error)) throw error;
         }
 
         // Handle a static file.
@@ -135,6 +147,19 @@ export class PreviewServer {
           }
         } catch (error) {
           if (!isEnoent(error)) throw error;
+        }
+
+        // If this path ends with .html and a .md file exists, redirect.
+        if (extname(path) === ".html") {
+          try {
+            if ((await stat(path.slice(0, -".html".length) + ".md")).isFile()) {
+              res.writeHead(302, {Location: join(dirname(pathname), basename(pathname, ".html")) + url.search});
+              res.end();
+              return;
+            }
+          } catch (error) {
+            if (!isEnoent(error)) throw error;
+          }
         }
 
         // Look for a data loader for this file.
@@ -148,21 +173,8 @@ export class PreviewServer {
           }
         }
 
-        // Otherwise, serve the corresponding Markdown file, if it exists.
-        // Anything else should 404.
-        try {
-          const config = await readConfig(this.root);
-          const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {
-            root: this.root,
-            path: pathname,
-            resolver: this._resolver,
-            ...config
-          });
-          end(req, res, html, "text/html");
-        } catch (error) {
-          if (!isEnoent(error)) throw error; // internal error
-          throw new HttpError("Not found", 404);
-        }
+        // Otherwise, 404.
+        throw new HttpError("Not found", 404);
       }
     } catch (error) {
       console.error(error);
