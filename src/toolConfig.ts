@@ -3,9 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import {isEnoent} from "./error.js";
 
-const observabelConfigName = ".observablehq";
-const projectConfigName = ".project";
-
+const observableConfigName = ".observablehq";
 interface ObservableConfig {
   auth?: {
     id: string;
@@ -13,9 +11,12 @@ interface ObservableConfig {
   };
 }
 
-export interface ProjectConfig {
-  id?: string;
-  slug?: string;
+export interface DeployConfig {
+  project?: {
+    id?: string;
+    slug?: string;
+    workspace?: string;
+  };
 }
 
 export async function getObservableApiKey(): Promise<string | null> {
@@ -26,51 +27,36 @@ export async function getObservableApiKey(): Promise<string | null> {
 export async function setObservableApiKey(id: string, key: string): Promise<void> {
   const {config, configPath} = await loadObservableConfig();
   config.auth = {id, key};
-  await writeConfig({config, configPath});
+  await writeObservableConfig({config, configPath});
 }
 
-export async function getProjectId(): Promise<string | null> {
-  const {config} = await loadProjectConfig();
-  return config.id ?? null;
+export async function getDeployConfig(root: string): Promise<DeployConfig | null> {
+  const deployConfigPath = path.join(process.cwd(), root, ".observablehq", "deploy.json");
+  let content: string | null = null;
+  try {
+    content = await fs.readFile(deployConfigPath, "utf8");
+  } catch (error) {
+    content = "{}";
+  }
+  return JSON.parse(content);
 }
 
-export async function setProjectConfig(newConfig: ProjectConfig): Promise<void> {
-  const {config, configPath} = await loadProjectConfig();
-  await writeConfig({
-    config: {...config, ...newConfig},
-    configPath
-  });
+export async function setDeployConfig(root: string, newConfig: DeployConfig): Promise<void> {
+  const deployConfigPath = path.join(process.cwd(), root, ".observablehq", "deploy.json");
+  const oldConfig = (await getDeployConfig(root)) || {};
+  const merged = {...oldConfig, ...newConfig};
+  await fs.writeFile(deployConfigPath, JSON.stringify(merged, null, 2));
 }
 
 async function loadObservableConfig(): Promise<{configPath: string; config: ObservableConfig}> {
-  return loadConfig(observabelConfigName);
-}
-
-async function loadProjectConfig(): Promise<{configPath: string; config: ProjectConfig}> {
-  return loadConfig(projectConfigName, true);
-}
-
-async function loadConfig(
-  configName: string,
-  stopAtProjectRoot: boolean = false
-): Promise<{configPath: string; config: any}> {
   let cursor = path.resolve(process.cwd());
   while (true) {
-    const configPath = path.join(cursor, configName);
+    const configPath = path.join(cursor, observableConfigName);
     let content: string | null = null;
     try {
       content = await fs.readFile(configPath, "utf8");
     } catch (error) {
       if (!isEnoent(error)) throw error;
-      if (stopAtProjectRoot) {
-        try {
-          await fs.stat(path.join(cursor, "package.json"));
-          // Existence of package.json means we're at project root, so stop.
-          return {config: {}, configPath: path.join(cursor, configName)};
-        } catch (error) {
-          // Ignore failed stat.
-        }
-      }
       const nextCursor = path.dirname(cursor);
       if (nextCursor === cursor) break;
       cursor = nextCursor;
@@ -85,15 +71,15 @@ async function loadConfig(
     }
   }
 
-  return {config: {}, configPath: path.join(os.homedir(), configName)};
+  return {config: {}, configPath: path.join(os.homedir(), observableConfigName)};
 }
 
-async function writeConfig({
+async function writeObservableConfig({
   configPath,
   config
 }: {
   configPath: string;
-  config: ObservableConfig | ProjectConfig;
+  config: ObservableConfig;
 }): Promise<void> {
   await fs.writeFile(configPath, JSON.stringify(config, null, 2));
 }

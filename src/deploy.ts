@@ -4,14 +4,14 @@ import {commandRequiresAuthenticationMessage} from "./auth.js";
 import {visitFiles} from "./files.js";
 import type {Logger} from "./observableApiClient.js";
 import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
-import type {ProjectConfig} from "./toolConfig.js";
-import {getObservableApiKey, getProjectId, setProjectConfig} from "./toolConfig.js";
+import type {DeployConfig} from "./toolConfig.js";
+import {getDeployConfig, getObservableApiKey, setDeployConfig} from "./toolConfig.js";
 
 type DeployFile = {path: string; relativePath: string};
 export interface CommandEffects {
   getObservableApiKey: () => Promise<string | null>;
-  getProjectId: () => Promise<string | null>;
-  setProjectConfig: (config: ProjectConfig) => Promise<void>;
+  getDeployConfig: (root: string) => Promise<DeployConfig | null>;
+  setDeployConfig: (root: string, config: DeployConfig) => Promise<void>;
   logger: Logger;
   inputStream: NodeJS.ReadableStream;
   outputStream: NodeJS.WritableStream;
@@ -19,15 +19,15 @@ export interface CommandEffects {
 
 const defaultEffects: CommandEffects = {
   getObservableApiKey,
-  getProjectId,
-  setProjectConfig,
+  getDeployConfig,
+  setDeployConfig,
   inputStream: process.stdin,
   logger: console,
   outputStream: process.stdout
 };
 
 // Deploy a project to ObservableHQ.
-export async function deploy(effects = defaultEffects, dir = "dist"): Promise<void> {
+export async function deploy(effects = defaultEffects, root = "docs", dir = "dist"): Promise<void> {
   const apiKey = await effects.getObservableApiKey();
   const {logger} = effects;
   if (!apiKey) {
@@ -40,7 +40,8 @@ export async function deploy(effects = defaultEffects, dir = "dist"): Promise<vo
   });
 
   // Find the existing project or create a new one.
-  let projectId = await effects.getProjectId();
+  const deployConfig = await effects.getDeployConfig(root);
+  let projectId = deployConfig?.project?.id;
   if (projectId) {
     logger.log(`Found existing project ${projectId}`);
   } else {
@@ -65,7 +66,7 @@ export async function deploy(effects = defaultEffects, dir = "dist"): Promise<vo
     }
 
     projectId = await apiClient.postProject(slug, workspaceId);
-    await effects.setProjectConfig({id: projectId, slug});
+    await effects.setDeployConfig(root, {project: {id: projectId, slug, workspace: workspaceId}});
     logger.log(`Created new project id ${projectId}`);
   }
 

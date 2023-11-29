@@ -3,7 +3,7 @@ import {Readable, Writable} from "node:stream";
 import type {CommandEffects} from "../src/deploy.js";
 import {deploy} from "../src/deploy.js";
 import {isHttpError} from "../src/error.js";
-import type {ProjectConfig} from "../src/toolConfig.js";
+import type {DeployConfig} from "../src/toolConfig.js";
 import {MockLogger} from "./mocks/logger.js";
 import {
   ObservableApiMock,
@@ -14,24 +14,25 @@ import {
 } from "./mocks/observableApi.js";
 
 class MockEffects implements CommandEffects {
-  public projectConfig: ProjectConfig | null = null;
   public logger = new MockLogger();
   public inputStream = new Readable();
   public outputStream: NodeJS.WritableStream;
   public _observableApiKey: string | null = null;
-  public _projectName = "My Project Name";
-  public _projectId: string | null = null;
-  public _deployFiles = [{path: "test/example-dist/index.html", relativePath: "index.html"}];
+  public _deployConfig: DeployConfig | null = null;
+  public _projectSlug = "my-project-slug";
 
-  constructor({apiKey = null, projectId = null}: {apiKey?: string | null; projectId?: string | null} = {}) {
+  constructor({
+    apiKey = validApiKey,
+    deployConfig = null
+  }: {apiKey?: string | null; deployConfig?: DeployConfig | null} = {}) {
     this._observableApiKey = apiKey;
-    this._projectId = projectId;
+    this._deployConfig = deployConfig;
     const that = this;
     this.outputStream = new Writable({
       write(data, _enc, callback) {
         const dataString = data.toString();
         if (dataString == "New project name: ") {
-          that.inputStream.push(`${that._projectName}\n`);
+          that.inputStream.push(`${that._projectSlug}\n`);
           // Having to null/reinit inputStream seems wrong.
           // TODO: find the correct way to submit to readline but keep the same
           // inputStream across multiple readline interactions.
@@ -51,16 +52,12 @@ class MockEffects implements CommandEffects {
     return this._observableApiKey;
   }
 
-  async getProjectId() {
-    return this._projectId;
+  async getDeployConfig() {
+    return this._deployConfig;
   }
 
-  async setProjectConfig(config: ProjectConfig) {
-    this.projectConfig = config;
-  }
-
-  async getDeployFiles() {
-    return this._deployFiles;
+  async setDeployConfig(root: string, config: DeployConfig) {
+    this._deployConfig = config;
   }
 }
 
@@ -75,36 +72,35 @@ describe("deploy", () => {
       .handlePostDeployFile({deployId})
       .handlePostDeployUploaded({deployId})
       .start();
-    const effects = new MockEffects({apiKey: validApiKey, projectId: null});
+    const effects = new MockEffects();
 
     await deploy(effects, "test/example-dist");
 
     apiMock.close();
-    // Verify we saved the new project config.
-    assert.equal(effects.projectConfig?.id, projectId);
-    assert.equal(effects.projectConfig?.slug, effects._projectName);
+    const deployConfig = await effects.getDeployConfig();
+    assert.equal(deployConfig?.project?.id, projectId);
+    assert.equal(deployConfig?.project?.slug, effects._projectSlug);
   });
 
   it("makes expected API calls for an existing project", async () => {
     const projectId = "project123";
+    const deployConfig = {project: {id: projectId}};
     const deployId = "deploy456";
     const apiMock = new ObservableApiMock()
       .handlePostDeploy({projectId, deployId})
       .handlePostDeployFile({deployId})
       .handlePostDeployUploaded({deployId})
       .start();
-    const effects = new MockEffects({apiKey: validApiKey, projectId});
+    const effects = new MockEffects({deployConfig});
 
     await deploy(effects, "test/example-dist");
 
     apiMock.close();
-    // Verify we never re-saved the project config.
-    assert.equal(effects.projectConfig, null);
   });
 
   it("shows message for missing API key", async () => {
     const apiMock = new ObservableApiMock().start();
-    const effects = new MockEffects({apiKey: null, projectId: null});
+    const effects = new MockEffects({apiKey: null});
 
     await deploy(effects, "test/example-dist");
 
@@ -122,19 +118,19 @@ describe("deploy", () => {
       .handlePostDeployFile({deployId})
       .handlePostDeployUploaded({deployId})
       .start();
-    const effects = new MockEffects({apiKey: validApiKey, projectId: null});
+    const effects = new MockEffects({apiKey: validApiKey});
 
     await deploy(effects, "test/example-dist");
 
     apiMock.close();
-    // Verify we saved the new project config.
-    assert.equal(effects.projectConfig?.id, projectId);
-    assert.equal(effects.projectConfig?.slug, effects._projectName);
+    const deployConfig = await effects.getDeployConfig();
+    assert.equal(deployConfig?.project?.id, projectId);
+    assert.equal(deployConfig?.project?.slug, effects._projectSlug);
   });
 
   it("logs an error during project creation when user has no workspaces", async () => {
     const apiMock = new ObservableApiMock().handleGetUser({user: userWithZeroWorkspaces}).start();
-    const effects = new MockEffects({apiKey: validApiKey, projectId: null});
+    const effects = new MockEffects();
 
     await deploy(effects, "test/example-dist");
 
@@ -144,7 +140,7 @@ describe("deploy", () => {
 
   it("throws an error with an invalid API key", async () => {
     const apiMock = new ObservableApiMock().handleGetUser({status: 401}).start();
-    const effects = new MockEffects({apiKey: invalidApiKey, projectId: null});
+    const effects = new MockEffects({apiKey: invalidApiKey});
 
     try {
       await deploy(effects);
@@ -159,7 +155,7 @@ describe("deploy", () => {
 
   it("throws an error if project creation fails", async () => {
     const apiMock = new ObservableApiMock().handleGetUser().handlePostProject({status: 500}).start();
-    const effects = new MockEffects({apiKey: validApiKey, projectId: null});
+    const effects = new MockEffects();
 
     try {
       await deploy(effects, "test/example-dist");
@@ -180,7 +176,7 @@ describe("deploy", () => {
       .handlePostProject({projectId})
       .handlePostDeploy({projectId, deployId, status: 500})
       .start();
-    const effects = new MockEffects({apiKey: validApiKey, projectId: null});
+    const effects = new MockEffects();
 
     try {
       await deploy(effects, "test/example-dist");
@@ -202,7 +198,7 @@ describe("deploy", () => {
       .handlePostDeploy({projectId, deployId})
       .handlePostDeployFile({deployId, status: 500})
       .start();
-    const effects = new MockEffects({apiKey: validApiKey, projectId: null});
+    const effects = new MockEffects();
 
     try {
       await deploy(effects, "test/example-dist");
@@ -225,12 +221,14 @@ describe("deploy", () => {
       .handlePostDeployFile({deployId})
       .handlePostDeployUploaded({deployId, status: 500})
       .start();
-    const effects = new MockEffects({apiKey: validApiKey, projectId: null});
+    const effects = new MockEffects();
 
+    // console.log(apiMock.pendingInterceptors());
     try {
       await deploy(effects, "test/example-dist");
       fail("Should have thrown an error");
     } catch (error) {
+      console.log(error);
       assert.ok(isHttpError(error));
       assert.equal(error.statusCode, 500);
     }

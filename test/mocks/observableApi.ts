@@ -31,6 +31,10 @@ export class ObservableApiMock {
     }
   }
 
+  public pendingInterceptors() {
+    return this._agent?.pendingInterceptors();
+  }
+
   handleGetUser({user = userWithOneWorkspace, status = 200}: {user?: any; status?: number} = {}): ObservableApiMock {
     const response = status == 200 ? JSON.stringify(user) : emptyErrorBody;
     const headers = authorizationHeader(status != 401);
