@@ -3,7 +3,7 @@ import {Readable, Writable} from "node:stream";
 import type {DeployEffects} from "../src/deploy.js";
 import {deploy} from "../src/deploy.js";
 import {isHttpError} from "../src/error.js";
-import type {DeployConfig} from "../src/toolConfig.js";
+import type {DeployConfig} from "../src/observableApiConfig.js";
 import {MockLogger} from "./mocks/logger.js";
 import {
   ObservableApiMock,

@@ -278,7 +278,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: st
           socket.terminate();
           return;
         }
-        setTimeout(() => watcher("change"), 150); // delay to avoid a possibly-empty file
+        setTimeout(() => watcher("change"), 100); // delay to avoid a possibly-empty file
         break;
       }
       case "change": {

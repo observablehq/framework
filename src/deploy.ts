@@ -4,8 +4,8 @@ import type {BuildOutput} from "./build.js";
 import {build} from "./build.js";
 import type {Logger} from "./observableApiClient.js";
 import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
-import type {DeployConfig} from "./toolConfig.js";
-import {getDeployConfig, getObservableApiKey, setDeployConfig} from "./toolConfig.js";
+import type {DeployConfig} from "./observableApiConfig.js";
+import {getDeployConfig, getObservableApiKey, setDeployConfig} from "./observableApiConfig.js";
 
 export interface DeployOptions {
   sourceRoot: string;
