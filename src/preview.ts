@@ -142,8 +142,7 @@ export class PreviewServer {
         // If this path resolves to a directory, then add an implicit /index to
         // the end of the path, assuming that the corresponding index.md exists.
         try {
-          if ((await stat(path)).isDirectory() && (await stat(join(path, "index") + ".md")).isFile()) {
-            await access(join(path, "index") + ".md", constants.R_OK);
+          if ((await stat(path)).isDirectory() && (await stat(join(path, "index.md"))).isFile()) {
             if (!pathname.endsWith("/")) {
               res.writeHead(302, {Location: pathname + "/" + url.search});
               res.end();
