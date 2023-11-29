@@ -1,5 +1,5 @@
 export async function dot() {
-  const {instance} = await import("https://cdn.jsdelivr.net/npm/@viz-js/viz/+esm");
+  const {instance} = await import("npm:@viz-js/viz");
   const viz = await instance();
   return function dot(strings) {
     let string = strings[0] + "";

@@ -9,6 +9,7 @@ import {relativeUrl, resolvePath} from "./url.js";
 // A path is local if it doesn’t go outside the the root.
 export function getLocalPath(sourcePath: string, name: string): string | null {
   if (/^\w+:/.test(name)) return null; // URL
+  if (name.startsWith("#")) return null; // anchor tag
   const path = resolvePath(sourcePath, name);
   if (path.startsWith("../")) return null; // goes above root
   return path;

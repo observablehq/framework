@@ -15,20 +15,20 @@ npm create @observablehq
 After answering a few questions, this will create a new project folder containing several files like so:
 
 ```
-└─ example-project
-   ├─ docs
-   │  ├─ .observablehq
-   │  │  ├─ cache
-   │  │  └─ config.ts
-   │  ├─ components
-   │  │  └─ dotmap.js
-   │  ├─ data
-   │  │  └─ earthquakes.csv.ts
-   │  └─ index.md
-   ├─ .gitignore
-   ├─ README.md
-   ├─ package-lock.json
-   └─ package.json
+.
+├─ docs
+│  ├─ .observablehq
+│  │  ├─ cache
+│  │  └─ config.ts
+│  ├─ components
+│  │  └─ dotmap.js
+│  ├─ data
+│  │  └─ earthquakes.csv.ts
+│  └─ index.md
+├─ .gitignore
+├─ README.md
+├─ package-lock.json
+└─ package.json
 ```
 
 How are projects typically structured?

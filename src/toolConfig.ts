@@ -3,30 +3,55 @@ import os from "node:os";
 import path from "node:path";
 import {isEnoent} from "./error.js";
 
-const configName = ".observablehq";
-
-interface Config {
+const userConfigName = ".observablehq";
+interface UserConfig {
   auth?: {
     id: string;
     key: string;
   };
 }
 
-export async function setObservableApiKey(id: string, key: string): Promise<void> {
-  const {config, configPath} = await loadConfig();
-  config.auth = {id, key};
-  await writeConfig({configPath, config});
+export interface DeployConfig {
+  project?: {
+    id?: string;
+    slug?: string;
+    workspace?: string;
+  };
 }
 
 export async function getObservableApiKey(): Promise<string | null> {
-  const {config} = await loadConfig();
+  const {config} = await loadUserConfig();
   return config.auth?.key ?? null;
 }
 
-async function loadConfig(): Promise<{configPath: string; config: Config}> {
+export async function setObservableApiKey(id: string, key: string): Promise<void> {
+  const {config, configPath} = await loadUserConfig();
+  config.auth = {id, key};
+  await writeUserConfig({config, configPath});
+}
+
+export async function getDeployConfig(sourceRoot: string): Promise<DeployConfig | null> {
+  const deployConfigPath = path.join(process.cwd(), sourceRoot, ".observablehq", "deploy.json");
+  let content: string | null = null;
+  try {
+    content = await fs.readFile(deployConfigPath, "utf8");
+  } catch (error) {
+    content = "{}";
+  }
+  return JSON.parse(content);
+}
+
+export async function setDeployConfig(sourceRoot: string, newConfig: DeployConfig): Promise<void> {
+  const deployConfigPath = path.join(process.cwd(), sourceRoot, ".observablehq", "deploy.json");
+  const oldConfig = (await getDeployConfig(sourceRoot)) || {};
+  const merged = {...oldConfig, ...newConfig};
+  await fs.writeFile(deployConfigPath, JSON.stringify(merged, null, 2));
+}
+
+async function loadUserConfig(): Promise<{configPath: string; config: UserConfig}> {
   let cursor = path.resolve(process.cwd());
   while (true) {
-    const configPath = path.join(cursor, configName);
+    const configPath = path.join(cursor, userConfigName);
     let content: string | null = null;
     try {
       content = await fs.readFile(configPath, "utf8");
@@ -46,9 +71,9 @@ async function loadConfig(): Promise<{configPath: string; config: Config}> {
     }
   }
 
-  return {config: {}, configPath: path.join(os.homedir(), configName)};
+  return {config: {}, configPath: path.join(os.homedir(), userConfigName)};
 }
 
-async function writeConfig({configPath, config}: {configPath: string; config: Config}): Promise<void> {
+async function writeUserConfig({configPath, config}: {configPath: string; config: UserConfig}): Promise<void> {
   await fs.writeFile(configPath, JSON.stringify(config, null, 2));
 }
