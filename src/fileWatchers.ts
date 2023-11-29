@@ -29,7 +29,7 @@ export class FileWatchers {
               console.error(`file no longer exists: ${path}`);
               return;
             }
-            setTimeout(() => watched("change"), 150); // delay to avoid a possibly-empty file
+            setTimeout(() => watched("change"), 100); // delay to avoid a possibly-empty file
             return;
           }
           const newStat = await maybeStat(watchPath);
