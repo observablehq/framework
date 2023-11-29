@@ -1,6 +1,7 @@
 import {makeDatabaseClient} from "./database.js";
+import {inspect, inspectError} from "./inspect.js";
 import {makeLibrary} from "./library.js";
-import {Inspector, Runtime} from "./runtime.js";
+import {Runtime} from "./runtime.js";
 
 const library = makeLibrary();
 const {Generators} = library;
@@ -36,7 +37,6 @@ export function define(cell) {
   const root = document.querySelector(`#cell-${id}`);
   let reset = null;
   const clear = () => ((root.innerHTML = ""), (reset = null));
-  const inspector = () => new Inspector(root.appendChild(document.createElement("SPAN")));
   const display = inline
     ? (v) => {
         reset?.();
@@ -46,15 +46,14 @@ export function define(cell) {
       }
     : (v) => {
         reset?.();
-        if (isNode(v)) root.append(v);
-        else inspector().fulfilled(v);
+        root.append(isNode(v) ? v : inspect(v));
         return v;
       };
   const v = main.variable(
     {
       pending: () => (reset = clear),
       fulfilled: () => reset?.(),
-      rejected: (error) => (reset?.(), inspector().rejected(error))
+      rejected: (error) => (reset?.(), root.append(inspectError(error)))
     },
     {
       shadow: {
