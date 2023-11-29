@@ -127,9 +127,8 @@ export class PreviewServer {
           return;
         }
 
-        // This handles a static file.
+        // Handle a static file.
         try {
-          await access(path, constants.R_OK);
           if ((await stat(path)).isFile()) {
             send(req, pathname, {root: this.root}).pipe(res);
             return;
@@ -150,7 +149,7 @@ export class PreviewServer {
         }
 
         // Otherwise, serve the corresponding Markdown file, if it exists.
-        // Anything else should 404; static files should be matched above.
+        // Anything else should 404.
         try {
           const config = await readConfig(this.root);
           const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {
