@@ -77,7 +77,7 @@ export class ObservableApiClient {
       method: "GET",
       headers: this._apiHeaders
     });
-    if (response.status !== 200) {
+    if (!response.ok) {
       throw new HttpError("Unexpected response status", response.status);
     }
     const responseJson = await response.json();
@@ -91,7 +91,7 @@ export class ObservableApiClient {
       headers: [...this._apiHeaders, ["Content-Type", "application/json"]],
       body: JSON.stringify({slug, workspace})
     });
-    if (response.status !== 200) {
+    if (!response.ok) {
       throw new HttpError("Unexpected response status", response.status);
     }
     const responseJson = await response.json();
@@ -105,7 +105,7 @@ export class ObservableApiClient {
       headers: [...this._apiHeaders, ["Content-Type", "application/json"]],
       body: JSON.stringify({})
     });
-    if (response.status !== 200) {
+    if (!response.ok) {
       throw new HttpError("Unexpected response status", response.status);
     }
     const responseJson = await response.json();
@@ -127,7 +127,7 @@ export class ObservableApiClient {
       body
     });
 
-    if (response.status !== 200 && response.status !== 204) {
+    if (!response.ok) {
       throw new HttpError("Unexpected response status", response.status);
     }
   }
@@ -141,7 +141,7 @@ export class ObservableApiClient {
       body: JSON.stringify({})
     });
 
-    if (response.status !== 200 && response.status !== 204) {
+    if (!response.ok) {
       throw new HttpError("Unexpected response status", response.status);
     }
   }
