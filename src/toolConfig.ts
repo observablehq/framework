@@ -3,8 +3,8 @@ import os from "node:os";
 import path from "node:path";
 import {isEnoent} from "./error.js";
 
-const observableConfigName = ".observablehq";
-interface ObservableConfig {
+const userConfigName = ".observablehq";
+interface UserConfig {
   auth?: {
     id: string;
     key: string;
@@ -20,14 +20,14 @@ export interface DeployConfig {
 }
 
 export async function getObservableApiKey(): Promise<string | null> {
-  const {config} = await loadObservableConfig();
+  const {config} = await loadUserConfig();
   return config.auth?.key ?? null;
 }
 
 export async function setObservableApiKey(id: string, key: string): Promise<void> {
-  const {config, configPath} = await loadObservableConfig();
+  const {config, configPath} = await loadUserConfig();
   config.auth = {id, key};
-  await writeObservableConfig({config, configPath});
+  await writeUserConfig({config, configPath});
 }
 
 export async function getDeployConfig(sourceRoot: string): Promise<DeployConfig | null> {
@@ -48,10 +48,10 @@ export async function setDeployConfig(sourceRoot: string, newConfig: DeployConfi
   await fs.writeFile(deployConfigPath, JSON.stringify(merged, null, 2));
 }
 
-async function loadObservableConfig(): Promise<{configPath: string; config: ObservableConfig}> {
+async function loadUserConfig(): Promise<{configPath: string; config: UserConfig}> {
   let cursor = path.resolve(process.cwd());
   while (true) {
-    const configPath = path.join(cursor, observableConfigName);
+    const configPath = path.join(cursor, userConfigName);
     let content: string | null = null;
     try {
       content = await fs.readFile(configPath, "utf8");
@@ -71,15 +71,9 @@ async function loadObservableConfig(): Promise<{configPath: string; config: Obse
     }
   }
 
-  return {config: {}, configPath: path.join(os.homedir(), observableConfigName)};
+  return {config: {}, configPath: path.join(os.homedir(), userConfigName)};
 }
 
-async function writeObservableConfig({
-  configPath,
-  config
-}: {
-  configPath: string;
-  config: ObservableConfig;
-}): Promise<void> {
+async function writeUserConfig({configPath, config}: {configPath: string; config: UserConfig}): Promise<void> {
   await fs.writeFile(configPath, JSON.stringify(config, null, 2));
 }
