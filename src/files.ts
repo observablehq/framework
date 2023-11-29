@@ -19,7 +19,7 @@ export function fileReference(name: string, sourcePath: string): FileReference {
   return {
     name,
     mimeType: mime.getType(name),
-    path: relativeUrl(sourcePath, resolvePath(sourcePath, name)) // TODO simplify?
+    path: relativeUrl(sourcePath, resolvePath(sourcePath, name))
   };
 }
 
