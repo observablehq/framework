@@ -74,7 +74,7 @@ describe("deploy", () => {
       .start();
     const effects = new MockEffects();
 
-    await deploy(effects, "test/example-dist");
+    await deploy(effects, "docs", "test/example-dist");
 
     apiMock.close();
     const deployConfig = await effects.getDeployConfig();
@@ -93,7 +93,7 @@ describe("deploy", () => {
       .start();
     const effects = new MockEffects({deployConfig});
 
-    await deploy(effects, "test/example-dist");
+    await deploy(effects, "docs", "test/example-dist");
 
     apiMock.close();
   });
@@ -102,7 +102,7 @@ describe("deploy", () => {
     const apiMock = new ObservableApiMock().start();
     const effects = new MockEffects({apiKey: null});
 
-    await deploy(effects, "test/example-dist");
+    await deploy(effects, "docs", "test/example-dist");
 
     apiMock.close();
     effects.logger.assertExactLogs([/^You need to be authenticated/]);
@@ -120,7 +120,7 @@ describe("deploy", () => {
       .start();
     const effects = new MockEffects({apiKey: validApiKey});
 
-    await deploy(effects, "test/example-dist");
+    await deploy(effects, "docs", "test/example-dist");
 
     apiMock.close();
     const deployConfig = await effects.getDeployConfig();
@@ -132,7 +132,7 @@ describe("deploy", () => {
     const apiMock = new ObservableApiMock().handleGetUser({user: userWithZeroWorkspaces}).start();
     const effects = new MockEffects();
 
-    await deploy(effects, "test/example-dist");
+    await deploy(effects, "docs", "test/example-dist");
 
     apiMock.close();
     effects.logger.assertExactErrors([/^Current user doesn't have any Observable workspaces/]);
@@ -158,7 +158,7 @@ describe("deploy", () => {
     const effects = new MockEffects();
 
     try {
-      await deploy(effects, "test/example-dist");
+      await deploy(effects, "docs", "test/example-dist");
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -179,7 +179,7 @@ describe("deploy", () => {
     const effects = new MockEffects();
 
     try {
-      await deploy(effects, "test/example-dist");
+      await deploy(effects, "docs", "test/example-dist");
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -201,7 +201,7 @@ describe("deploy", () => {
     const effects = new MockEffects();
 
     try {
-      await deploy(effects, "test/example-dist");
+      await deploy(effects, "docs", "test/example-dist");
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -225,7 +225,7 @@ describe("deploy", () => {
 
     // console.log(apiMock.pendingInterceptors());
     try {
-      await deploy(effects, "test/example-dist");
+      await deploy(effects, "docs", "test/example-dist");
       fail("Should have thrown an error");
     } catch (error) {
       console.log(error);
