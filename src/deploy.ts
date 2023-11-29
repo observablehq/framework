@@ -8,7 +8,12 @@ import type {DeployConfig} from "./toolConfig.js";
 import {getDeployConfig, getObservableApiKey, setDeployConfig} from "./toolConfig.js";
 
 type DeployFile = {path: string; relativePath: string};
-export interface CommandEffects {
+
+export interface DeployOptions {
+  sourceRoot: string;
+  deployRoot?: string;
+}
+export interface DeployEffects {
   getObservableApiKey: () => Promise<string | null>;
   getDeployConfig: (sourceRoot: string) => Promise<DeployConfig | null>;
   setDeployConfig: (sourceRoot: string, config: DeployConfig) => Promise<void>;
@@ -17,7 +22,7 @@ export interface CommandEffects {
   outputStream: NodeJS.WritableStream;
 }
 
-const defaultEffects: CommandEffects = {
+const defaultEffects: DeployEffects = {
   getObservableApiKey,
   getDeployConfig,
   setDeployConfig,
@@ -28,8 +33,8 @@ const defaultEffects: CommandEffects = {
 
 // Deploy a project to ObservableHQ.
 export async function deploy(
-  effects = defaultEffects,
-  {sourceRoot = "docs", deployRoot = "dist"}: {sourceRoot?: string; deployRoot?: string} = {}
+  {sourceRoot = "docs", deployRoot = "dist"}: DeployOptions,
+  effects = defaultEffects
 ): Promise<void> {
   const apiKey = await effects.getObservableApiKey();
   const {logger} = effects;

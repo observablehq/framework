@@ -37,7 +37,7 @@ switch (command) {
     break;
   }
   case "deploy":
-    await import("../src/deploy.js").then((deploy) => deploy.deploy());
+    await import("../src/deploy.js").then((deploy) => deploy.deploy({sourceRoot: "docs", deployRoot: "dist"}));
     break;
   case "preview": {
     const {
