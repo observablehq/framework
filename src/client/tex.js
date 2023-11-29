@@ -5,7 +5,7 @@ export async function tex() {
   link.crossOrigin = "anonymous";
   document.head.appendChild(link);
 
-  const {default: katex} = await import("https://cdn.jsdelivr.net/npm/katex/+esm");
+  const {default: katex} = await import("npm:katex");
   const tex = renderer();
 
   function renderer(options) {
