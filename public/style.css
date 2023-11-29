@@ -332,7 +332,7 @@ a[href],
   #observablehq-sidebar-toggle:indeterminate::before {
     content: "⟨";
   }
-  #observablehq-sidebar-backdrop {
+  #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar-backdrop {
     display: none;
   }
   #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar,
@@ -344,9 +344,6 @@ a[href],
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center {
     padding-left: calc(240px + 3rem);
     padding-right: 1rem;
-  }
-  #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar-backdrop {
-    display: none;
   }
   pre {
     border-radius: 4px;
