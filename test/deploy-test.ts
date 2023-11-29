@@ -14,7 +14,6 @@ import {
 } from "./mocks/observableApi.js";
 
 class MockDeployEffects implements DeployEffects {
-  public deployConfig: DeployConfig | null = null;
   public logger = new MockLogger();
   public inputStream = new Readable();
   public outputStream: NodeJS.WritableStream;
