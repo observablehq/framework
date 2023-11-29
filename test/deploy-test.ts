@@ -76,7 +76,7 @@ describe("deploy", () => {
       .handlePostDeployUploaded({deployId})
       .start();
 
-    const effects = new MockDeployEffects({apiKey: validApiKey, deployConfig: null});
+    const effects = new MockDeployEffects();
     await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
 
     apiMock.close();
@@ -95,7 +95,7 @@ describe("deploy", () => {
       .handlePostDeployUploaded({deployId})
       .start();
 
-    const effects = new MockDeployEffects({apiKey: validApiKey, deployConfig});
+    const effects = new MockDeployEffects({deployConfig});
     await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
 
     apiMock.close();
@@ -103,7 +103,7 @@ describe("deploy", () => {
 
   it("shows message for missing API key", async () => {
     const apiMock = new ObservableApiMock().start();
-    const effects = new MockDeployEffects({apiKey: null, deployConfig: null});
+    const effects = new MockDeployEffects({apiKey: null});
 
     await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
 
@@ -121,7 +121,7 @@ describe("deploy", () => {
       .handlePostDeployFile({deployId, repeat: 3})
       .handlePostDeployUploaded({deployId})
       .start();
-    const effects = new MockDeployEffects({apiKey: validApiKey, deployConfig: null});
+    const effects = new MockDeployEffects();
 
     await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
 
@@ -133,7 +133,7 @@ describe("deploy", () => {
 
   it("logs an error during project creation when user has no workspaces", async () => {
     const apiMock = new ObservableApiMock().handleGetUser({user: userWithZeroWorkspaces}).start();
-    const effects = new MockDeployEffects({apiKey: validApiKey, deployConfig: null});
+    const effects = new MockDeployEffects();
 
     await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
 
@@ -143,7 +143,7 @@ describe("deploy", () => {
 
   it("throws an error with an invalid API key", async () => {
     const apiMock = new ObservableApiMock().handleGetUser({status: 401}).start();
-    const effects = new MockDeployEffects({apiKey: invalidApiKey, deployConfig: null});
+    const effects = new MockDeployEffects({apiKey: invalidApiKey});
 
     try {
       await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
@@ -158,7 +158,7 @@ describe("deploy", () => {
 
   it("throws an error if project creation fails", async () => {
     const apiMock = new ObservableApiMock().handleGetUser().handlePostProject({status: 500}).start();
-    const effects = new MockDeployEffects({apiKey: validApiKey, deployConfig: null});
+    const effects = new MockDeployEffects();
 
     try {
       await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
@@ -179,7 +179,7 @@ describe("deploy", () => {
       .handlePostProject({projectId})
       .handlePostDeploy({projectId, deployId, status: 500})
       .start();
-    const effects = new MockDeployEffects({apiKey: validApiKey, deployConfig: null});
+    const effects = new MockDeployEffects();
 
     try {
       await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
@@ -201,7 +201,7 @@ describe("deploy", () => {
       .handlePostDeploy({projectId, deployId})
       .handlePostDeployFile({deployId, status: 500})
       .start();
-    const effects = new MockDeployEffects({apiKey: validApiKey, deployConfig: null});
+    const effects = new MockDeployEffects();
 
     try {
       await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
@@ -224,7 +224,7 @@ describe("deploy", () => {
       .handlePostDeployFile({deployId, repeat: 3})
       .handlePostDeployUploaded({deployId, status: 500})
       .start();
-    const effects = new MockDeployEffects({apiKey: validApiKey, deployConfig: null});
+    const effects = new MockDeployEffects();
 
     try {
       await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
