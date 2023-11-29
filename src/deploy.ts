@@ -10,8 +10,8 @@ import {getDeployConfig, getObservableApiKey, setDeployConfig} from "./toolConfi
 type DeployFile = {path: string; relativePath: string};
 export interface CommandEffects {
   getObservableApiKey: () => Promise<string | null>;
-  getDeployConfig: (root: string) => Promise<DeployConfig | null>;
-  setDeployConfig: (root: string, config: DeployConfig) => Promise<void>;
+  getDeployConfig: (sourceRoot: string) => Promise<DeployConfig | null>;
+  setDeployConfig: (sourceRoot: string, config: DeployConfig) => Promise<void>;
   logger: Logger;
   inputStream: NodeJS.ReadableStream;
   outputStream: NodeJS.WritableStream;
@@ -27,7 +27,10 @@ const defaultEffects: CommandEffects = {
 };
 
 // Deploy a project to ObservableHQ.
-export async function deploy(effects = defaultEffects, root = "docs", dir = "dist"): Promise<void> {
+export async function deploy(
+  effects = defaultEffects,
+  {sourceRoot = "docs", deployRoot = "dist"}: {sourceRoot?: string; deployRoot?: string} = {}
+): Promise<void> {
   const apiKey = await effects.getObservableApiKey();
   const {logger} = effects;
   if (!apiKey) {
@@ -40,7 +43,7 @@ export async function deploy(effects = defaultEffects, root = "docs", dir = "dis
   });
 
   // Find the existing project or create a new one.
-  const deployConfig = await effects.getDeployConfig(root);
+  const deployConfig = await effects.getDeployConfig(sourceRoot);
   let projectId = deployConfig?.project?.id;
   if (projectId) {
     logger.log(`Found existing project ${projectId}`);
@@ -66,7 +69,7 @@ export async function deploy(effects = defaultEffects, root = "docs", dir = "dis
     }
 
     projectId = await apiClient.postProject(slug, workspaceId);
-    await effects.setDeployConfig(root, {project: {id: projectId, slug, workspace: workspaceId}});
+    await effects.setDeployConfig(sourceRoot, {project: {id: projectId, slug, workspace: workspaceId}});
     logger.log(`Created new project id ${projectId}`);
   }
 
@@ -77,7 +80,7 @@ export async function deploy(effects = defaultEffects, root = "docs", dir = "dis
   logger.log(`Created new deploy id ${deployId}`);
 
   // Upload all the deploy files.
-  const deployFiles = await getDeployFiles(dir);
+  const deployFiles = await getDeployFiles(deployRoot);
   for (const deployFile of deployFiles) {
     await apiClient.postDeployFile(deployId, deployFile.path, deployFile.relativePath);
   }

@@ -30,8 +30,8 @@ export async function setObservableApiKey(id: string, key: string): Promise<void
   await writeObservableConfig({config, configPath});
 }
 
-export async function getDeployConfig(root: string): Promise<DeployConfig | null> {
-  const deployConfigPath = path.join(process.cwd(), root, ".observablehq", "deploy.json");
+export async function getDeployConfig(sourceRoot: string): Promise<DeployConfig | null> {
+  const deployConfigPath = path.join(process.cwd(), sourceRoot, ".observablehq", "deploy.json");
   let content: string | null = null;
   try {
     content = await fs.readFile(deployConfigPath, "utf8");
@@ -41,9 +41,9 @@ export async function getDeployConfig(root: string): Promise<DeployConfig | null
   return JSON.parse(content);
 }
 
-export async function setDeployConfig(root: string, newConfig: DeployConfig): Promise<void> {
-  const deployConfigPath = path.join(process.cwd(), root, ".observablehq", "deploy.json");
-  const oldConfig = (await getDeployConfig(root)) || {};
+export async function setDeployConfig(sourceRoot: string, newConfig: DeployConfig): Promise<void> {
+  const deployConfigPath = path.join(process.cwd(), sourceRoot, ".observablehq", "deploy.json");
+  const oldConfig = (await getDeployConfig(sourceRoot)) || {};
   const merged = {...oldConfig, ...newConfig};
   await fs.writeFile(deployConfigPath, JSON.stringify(merged, null, 2));
 }
