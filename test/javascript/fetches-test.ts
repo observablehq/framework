@@ -10,7 +10,7 @@ describe("parseLocalFetches(root, paths)", () => {
       {name: "./foo-data.json", type: "FileAttachment"}
     ]);
   });
-  it("find all local fetches in multiple files", () => {
+  it("find all local fetches in through transivite import", () => {
     assert.deepStrictEqual(parseLocalImports("test/input/build/fetches", ["top.js"]).fetches.sort(compareImport), [
       {name: "./foo-data.csv", type: "FileAttachment"},
       {name: "./foo-data.json", type: "FileAttachment"},
