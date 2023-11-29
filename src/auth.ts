@@ -8,7 +8,7 @@ import open from "open";
 import {HttpError, isHttpError} from "./error.js";
 import type {Logger} from "./observableApiClient.js";
 import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
-import {getObservableApiKey, setObservableApiKey} from "./toolConfig.js";
+import {getObservableApiKey, setObservableApiKey} from "./observableApiConfig.js";
 
 const OBSERVABLEHQ_UI_HOST = getObservableUiHost();
 
