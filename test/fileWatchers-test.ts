@@ -194,16 +194,23 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
     }
   });
   it("handles a file being renamed and removed", async () => {
-    const names = new Set<string>();
+    let names: Set<string>;
     const watch = (name: string) => names.add(name);
     try {
       writeFileSync("test/input/build/files/temp.csv", "hello", "utf-8");
-      const watcher = await FileWatchers.of(root, "files.md", ["temp.csv"], watch);
+      const watcher = await FileWatchers.of(root, "files.md", ["file-top.csv", "temp.csv"], watch);
       try {
+        // First delete the temp file. We don’t care if this is reported as a change or not.
+        names = new Set<string>();
         await pause();
         unlinkSync("test/input/build/files/temp.csv");
-        await pause(150); // avoid debounce
-        assert.deepStrictEqual(names, new Set([])); // not reported as change
+        await pause(150);
+
+        // Then touch a different file to make sure the watcher is still alive.
+        names = new Set<string>();
+        touch("test/input/build/files/file-top.csv");
+        await pause();
+        assert.deepStrictEqual(names, new Set(["file-top.csv"]));
       } finally {
         watcher.close();
       }
