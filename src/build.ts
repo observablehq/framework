@@ -24,15 +24,21 @@ export interface BuildOptions {
 }
 
 export interface BuildOutput {
-  copyFile: (sourcePath: string, relativeOutputPath: string, clientAction?: string) => Promise<void>;
-  writeFile: (relativeOutputPath: string, contents: Buffer, clientAction: string) => Promise<void>;
+  /**
+   * @param outputPath The path of this file relative to the outputRoot. For
+   *   example, in a local build this should be relative to the dist directory. */
+  copyFile: (sourcePath: string, outputPath: string, clientAction?: string) => Promise<void>;
+  /**
+   * @param outputPath The path of this file relative to the outputRoot. For
+   *   example, in a local build this should be relative to the dist directory. */
+  writeFile: (outputPath: string, contents: Buffer | string, clientAction: string) => Promise<void>;
 }
 
 export async function build({
   sourceRoot,
   outputRoot,
-  output = outputRoot ? new DefaultOutput(outputRoot) : null,
   verbose = true,
+  output = outputRoot === undefined ? null : new DefaultOutput(outputRoot, {verbose}),
   addPublic = true
 }: BuildOptions): Promise<void> {
   if (!output)
@@ -60,7 +66,7 @@ export async function build({
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
     files.push(...render.files.map(resolveFile));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
-    output.writeFile(outputPath, Buffer.from(render.html), `render ${sourcePath}`);
+    output.writeFile(outputPath, render.html, `render ${sourcePath}`);
   }
 
   if (addPublic) {
@@ -69,7 +75,7 @@ export async function build({
     const code = await rollupClient(clientPath, {minify: true});
     const outputPath = join("_observablehq", "client.js");
     if (verbose) console.log("bundle", clientPath, "→", outputPath);
-    await output.writeFile(outputPath, Buffer.from(code), "bundle");
+    await output.writeFile(outputPath, code, "bundle");
     // Copy over the public directory.
     const publicRoot = relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), "..", "public"));
     for await (const publicFile of visitFiles(publicRoot)) {
@@ -110,7 +116,7 @@ export async function build({
     }
     await output.writeFile(
       outputPath,
-      Buffer.from(rewriteModule(await readFile(sourcePath, "utf-8"), file, importResolver)),
+      rewriteModule(await readFile(sourcePath, "utf-8"), file, importResolver),
       "copy"
     );
   }
@@ -125,17 +131,23 @@ export async function build({
 }
 
 class DefaultOutput implements BuildOutput {
-  constructor(private outputRoot: string) {}
-  async copyFile(sourcePath: string, relativeOutputPath: string, clientAction = "copy"): Promise<void> {
-    const outputPath = join(this.outputRoot, relativeOutputPath);
-    console.log(clientAction, sourcePath, "→", outputPath);
-    await prepareOutput(outputPath);
-    await copyFile(sourcePath, outputPath);
+  verbose: boolean;
+  constructor(
+    private outputRoot: string,
+    {verbose}: {verbose: boolean}
+  ) {
+    this.verbose = verbose;
   }
-  async writeFile(relativeOutputPath: string, contents: string | Buffer, clientAction: string): Promise<void> {
-    const outputPath = join(this.outputRoot, relativeOutputPath);
-    console.log(clientAction, "→", outputPath);
-    await prepareOutput(outputPath);
-    await writeFile(outputPath, contents);
+  async copyFile(sourcePath: string, outputPath: string, clientAction = "copy"): Promise<void> {
+    const destination = join(this.outputRoot, outputPath);
+    if (this.verbose) console.log(clientAction, sourcePath, "→", outputPath);
+    await prepareOutput(destination);
+    await copyFile(sourcePath, destination);
+  }
+  async writeFile(outputPath: string, contents: string | Buffer, clientAction: string): Promise<void> {
+    const destination = join(this.outputRoot, outputPath);
+    if (this.verbose) console.log(clientAction, "→", destination);
+    await prepareOutput(destination);
+    await writeFile(destination, contents);
   }
 }

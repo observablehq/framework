@@ -132,15 +132,15 @@ async function promptUserForChoiceIndex(
 
 class DeployOutput implements BuildOutput {
   constructor(
-    readonly apiClient,
+    readonly apiClient: ObservableApiClient,
     readonly logger: Logger,
     readonly deployId: string
   ) {}
-  async copyFile(sourcePath, outputPath, clientAction: string = "copy") {
+  async copyFile(sourcePath: string, outputPath: string, clientAction: string = "copy") {
     this.logger.log(clientAction, sourcePath, "→ upload", outputPath);
     await this.apiClient.postDeployFile(this.deployId, sourcePath, outputPath);
   }
-  async writeFile(outputPath: string, content: Buffer, clientAction: string) {
+  async writeFile(outputPath: string, content: Buffer | string, clientAction: string) {
     this.logger.log(clientAction, "→ upload", outputPath);
     await this.apiClient.postDeployFileContents(this.deployId, content, outputPath);
   }

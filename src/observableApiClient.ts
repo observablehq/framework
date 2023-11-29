@@ -121,7 +121,8 @@ export class ObservableApiClient {
     return await this.postDeployFileContents(deployId, buffer, relativePath);
   }
 
-  async postDeployFileContents(deployId: string, contents: Buffer, relativePath: string): Promise<void> {
+  async postDeployFileContents(deployId: string, contents: Buffer | string, relativePath: string): Promise<void> {
+    if (typeof contents === "string") contents = Buffer.from(contents);
     const url = new URL(`/cli/deploy/${deployId}/file`, this._apiHost);
     const body = new FormData();
     const blob = new Blob([contents]);
