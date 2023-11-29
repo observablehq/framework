@@ -17,12 +17,32 @@ const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.j
 
 export interface BuildOptions {
   sourceRoot: string;
-  outputRoot: string;
+  outputRoot?: string;
+  output?: BuildOutput | null;
   verbose?: boolean;
   addPublic?: boolean;
 }
 
-export async function build({sourceRoot, outputRoot, verbose = true, addPublic = true}: BuildOptions): Promise<void> {
+export interface BuildOutput {
+  /**
+   * @param outputPath The path of this file relative to the outputRoot. For
+   *   example, in a local build this should be relative to the dist directory. */
+  copyFile: (sourcePath: string, outputPath: string, clientAction?: string) => Promise<void>;
+  /**
+   * @param outputPath The path of this file relative to the outputRoot. For
+   *   example, in a local build this should be relative to the dist directory. */
+  writeFile: (outputPath: string, contents: Buffer | string, clientAction: string) => Promise<void>;
+}
+
+export async function build({
+  sourceRoot,
+  outputRoot,
+  verbose = true,
+  output = outputRoot === undefined ? null : new DefaultOutput(outputRoot, {verbose}),
+  addPublic = true
+}: BuildOptions): Promise<void> {
+  if (!output)
+    throw new Error("Either `output` must be specified, or `outputRoot` specified and `output` left as default.");
   // Make sure all files are readable before starting to write output files.
   for await (const sourceFile of visitMarkdownFiles(sourceRoot)) {
     await access(join(sourceRoot, sourceFile), constants.R_OK);
@@ -35,8 +55,7 @@ export async function build({sourceRoot, outputRoot, verbose = true, addPublic =
   const resolver = await makeCLIResolver();
   for await (const sourceFile of visitMarkdownFiles(sourceRoot)) {
     const sourcePath = join(sourceRoot, sourceFile);
-    const outputPath = join(outputRoot, dirname(sourceFile), basename(sourceFile, ".md") + ".html");
-    if (verbose) console.log("render", sourcePath, "→", outputPath);
+    const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
     const render = await renderServerless(await readFile(sourcePath, "utf-8"), {
       root: sourceRoot,
@@ -47,33 +66,29 @@ export async function build({sourceRoot, outputRoot, verbose = true, addPublic =
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
     files.push(...render.files.map(resolveFile));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
-    await prepareOutput(outputPath);
-    await writeFile(outputPath, render.html);
+    output.writeFile(outputPath, render.html, `render ${sourcePath}`);
   }
 
   if (addPublic) {
     // Generate the client bundle.
     const clientPath = getClientPath();
     const code = await rollupClient(clientPath, {minify: true});
-    const outputPath = join(outputRoot, "_observablehq", "client.js");
+    const outputPath = join("_observablehq", "client.js");
     if (verbose) console.log("bundle", clientPath, "→", outputPath);
-    await prepareOutput(outputPath);
-    await writeFile(outputPath, code);
+    await output.writeFile(outputPath, code, "bundle");
     // Copy over the public directory.
     const publicRoot = relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), "..", "public"));
     for await (const publicFile of visitFiles(publicRoot)) {
       const sourcePath = join(publicRoot, publicFile);
-      const outputPath = join(outputRoot, "_observablehq", publicFile);
-      if (verbose) console.log("copy", sourcePath, "→", outputPath);
-      await prepareOutput(outputPath);
-      await copyFile(sourcePath, outputPath);
+      const outputPath = join("_observablehq", publicFile);
+      await output.copyFile(sourcePath, outputPath);
     }
   }
 
   // Copy over the referenced files.
   for (const file of files) {
     let sourcePath = join(sourceRoot, file);
-    const outputPath = join(outputRoot, "_file", file);
+    const outputPath = join("_file", file);
     if (!existsSync(sourcePath)) {
       const loader = Loader.find(sourceRoot, file);
       if (!loader) {
@@ -87,33 +102,52 @@ export async function build({sourceRoot, outputRoot, verbose = true, addPublic =
         continue;
       }
     }
-    if (verbose) console.log("copy", sourcePath, "→", outputPath);
-    await prepareOutput(outputPath);
-    await copyFile(sourcePath, outputPath);
+    await output.copyFile(sourcePath, outputPath);
   }
 
   // Copy over the imported modules.
   const importResolver = createImportResolver(sourceRoot);
   for (const file of imports) {
     const sourcePath = join(sourceRoot, file);
-    const outputPath = join(outputRoot, "_import", file);
+    const outputPath = join("_import", file);
     if (!existsSync(sourcePath)) {
       if (verbose) console.error("missing referenced file", sourcePath);
       continue;
     }
-    if (verbose) console.log("copy", sourcePath, "→", outputPath);
-    await prepareOutput(outputPath);
-    await writeFile(outputPath, rewriteModule(await readFile(sourcePath, "utf-8"), file, importResolver));
+    await output.writeFile(
+      outputPath,
+      rewriteModule(await readFile(sourcePath, "utf-8"), file, importResolver),
+      "copy"
+    );
   }
 
   // Copy over required distribution files from node_modules.
   // TODO: Note that this requires that the build command be run relative to the node_modules directory.
   if (addPublic) {
     for (const [sourcePath, targetFile] of EXTRA_FILES) {
-      const outputPath = join(outputRoot, targetFile);
-      if (verbose) console.log("copy", sourcePath, "→", outputPath);
-      await prepareOutput(outputPath);
-      await copyFile(sourcePath, outputPath);
+      await output.copyFile(sourcePath, targetFile);
     }
+  }
+}
+
+class DefaultOutput implements BuildOutput {
+  verbose: boolean;
+  constructor(
+    private outputRoot: string,
+    {verbose}: {verbose: boolean}
+  ) {
+    this.verbose = verbose;
+  }
+  async copyFile(sourcePath: string, outputPath: string, clientAction = "copy"): Promise<void> {
+    const destination = join(this.outputRoot, outputPath);
+    if (this.verbose) console.log(clientAction, sourcePath, "→", outputPath);
+    await prepareOutput(destination);
+    await copyFile(sourcePath, destination);
+  }
+  async writeFile(outputPath: string, contents: string | Buffer, clientAction: string): Promise<void> {
+    const destination = join(this.outputRoot, outputPath);
+    if (this.verbose) console.log(clientAction, "→", destination);
+    await prepareOutput(destination);
+    await writeFile(destination, contents);
   }
 }

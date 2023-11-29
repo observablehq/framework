@@ -3,10 +3,15 @@ import type {Logger} from "../../src/observableApiClient.js";
 
 export class MockLogger implements Logger {
   public logLines: any[][] = [];
+  public warnLines: any[][] = [];
   public errorLines: any[][] = [];
 
   log(...args: any[]) {
     this.logLines.push(args);
+  }
+
+  warn(...args: any[]) {
+    this.warnLines.push(args);
   }
 
   error(...args: any[]) {

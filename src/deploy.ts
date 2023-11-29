@@ -1,18 +1,16 @@
-import path from "node:path";
 import readline from "node:readline/promises";
 import {commandRequiresAuthenticationMessage} from "./auth.js";
-import {visitFiles} from "./files.js";
+import type {BuildOutput} from "./build.js";
+import {build} from "./build.js";
 import type {Logger} from "./observableApiClient.js";
 import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
 import type {DeployConfig} from "./observableApiConfig.js";
 import {getDeployConfig, getObservableApiKey, setDeployConfig} from "./observableApiConfig.js";
 
-type DeployFile = {path: string; relativePath: string};
-
 export interface DeployOptions {
   sourceRoot: string;
-  deployRoot?: string;
 }
+
 export interface DeployEffects {
   getObservableApiKey: () => Promise<string | null>;
   getDeployConfig: (sourceRoot: string) => Promise<DeployConfig | null>;
@@ -31,11 +29,8 @@ const defaultEffects: DeployEffects = {
   outputStream: process.stdout
 };
 
-// Deploy a project to ObservableHQ.
-export async function deploy(
-  {sourceRoot = "docs", deployRoot = "dist"}: DeployOptions,
-  effects = defaultEffects
-): Promise<void> {
+/** Deploy a project to ObservableHQ */
+export async function deploy({sourceRoot}: DeployOptions, effects: DeployEffects = defaultEffects): Promise<void> {
   const apiKey = await effects.getObservableApiKey();
   const {logger} = effects;
   if (!apiKey) {
@@ -84,11 +79,11 @@ export async function deploy(
   const deployId = await apiClient.postDeploy(projectId);
   logger.log(`Created new deploy id ${deployId}`);
 
-  // Upload all the deploy files.
-  const deployFiles = await getDeployFiles(deployRoot);
-  for (const deployFile of deployFiles) {
-    await apiClient.postDeployFile(deployId, deployFile.path, deployFile.relativePath);
-  }
+  // Build the project
+  await build({
+    sourceRoot,
+    output: new DeployOutput(apiClient, logger, deployId)
+  });
 
   // Mark the deploy as uploaded.
   await apiClient.postDeployUploaded(deployId);
@@ -135,13 +130,18 @@ async function promptUserForChoiceIndex(
   }
 }
 
-async function getDeployFiles(dir: string): Promise<DeployFile[]> {
-  const deployFiles: DeployFile[] = [];
-  for await (const file of visitFiles(dir)) {
-    deployFiles.push({
-      path: path.join(dir, file),
-      relativePath: file
-    });
+class DeployOutput implements BuildOutput {
+  constructor(
+    readonly apiClient: ObservableApiClient,
+    readonly logger: Logger,
+    readonly deployId: string
+  ) {}
+  async copyFile(sourcePath: string, outputPath: string, clientAction: string = "copy") {
+    this.logger.log(clientAction, sourcePath, "→ upload", outputPath);
+    await this.apiClient.postDeployFile(this.deployId, sourcePath, outputPath);
   }
-  return deployFiles;
+  async writeFile(outputPath: string, content: Buffer | string, clientAction: string) {
+    this.logger.log(clientAction, "→ upload", outputPath);
+    await this.apiClient.postDeployFileContents(this.deployId, content, outputPath);
+  }
 }
