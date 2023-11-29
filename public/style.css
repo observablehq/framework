@@ -345,6 +345,9 @@ a[href],
     padding-left: calc(240px + 3rem);
     padding-right: 1rem;
   }
+  #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar-backdrop {
+    display: none;
+  }
   pre {
     border-radius: 4px;
   }
