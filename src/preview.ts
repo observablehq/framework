@@ -123,10 +123,20 @@ export class PreviewServer {
 
         // If this path is for /index, redirect to the parent directory for a
         // tidy path. (This must be done before implicitly adding /index below!)
+        // Respect precedence of dir/index.md over dir.md in choosing between
+        // dir/ and dir!
         if (basename(path, ".html") === "index") {
-          res.writeHead(302, {Location: dirname(pathname) + url.search});
-          res.end();
-          return;
+          try {
+            await stat(join(dirname(path), "index.md"));
+            res.writeHead(302, {Location: dirname(pathname) + "/" + url.search});
+            res.end();
+            return;
+          } catch (error) {
+            if (!isEnoent(error)) throw error;
+            res.writeHead(302, {Location: dirname(pathname) + url.search});
+            res.end();
+            return;
+          }
         }
 
         // If this path resolves to a directory, then add an implicit /index to
