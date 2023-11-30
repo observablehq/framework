@@ -57,7 +57,7 @@ export async function build(
   for await (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
-    effects.logger.log(`${faint("render")} ${sourcePath} ${faint("→")} ${outputPath}`);
+    effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
     const render = await renderServerless(await readFile(sourcePath, "utf-8"), {root, path, resolver, ...config});
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
@@ -70,7 +70,7 @@ export async function build(
     // Generate the client bundle.
     const clientPath = getClientPath();
     const outputPath = join("_observablehq", "client.js");
-    effects.logger.log(`${faint("bundle")} ${clientPath} ${faint("→")} ${outputPath}`);
+    effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
     const code = await rollupClient(clientPath, {minify: true});
     await effects.writeFile(outputPath, code);
     // Copy over the public directory.
@@ -78,7 +78,7 @@ export async function build(
     for await (const publicFile of visitFiles(publicRoot)) {
       const sourcePath = join(publicRoot, publicFile);
       const outputPath = join("_observablehq", publicFile);
-      effects.logger.log(`${faint("copy")} ${sourcePath} ${faint("→")} ${outputPath}`);
+      effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
       await effects.copyFile(sourcePath, outputPath);
     }
   }
@@ -100,7 +100,7 @@ export async function build(
         continue;
       }
     }
-    effects.logger.log(`${faint("copy")} ${sourcePath} ${faint("→")} ${outputPath}`);
+    effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     await effects.copyFile(sourcePath, outputPath);
   }
 
@@ -113,7 +113,7 @@ export async function build(
       effects.logger.error("missing referenced file", sourcePath);
       continue;
     }
-    effects.logger.log(`${faint("copy")} ${sourcePath} ${faint("→")} ${outputPath}`);
+    effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     const contents = rewriteModule(await readFile(sourcePath, "utf-8"), file, importResolver);
     await effects.writeFile(outputPath, contents);
   }
@@ -122,7 +122,7 @@ export async function build(
   // TODO: Note that this requires that the build command be run relative to the node_modules directory.
   if (addPublic) {
     for (const [sourcePath, outputPath] of EXTRA_FILES) {
-      effects.logger.log(`${faint("copy")} ${sourcePath} ${faint("→")} ${outputPath}`);
+      effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
       await effects.copyFile(sourcePath, outputPath);
     }
   }
@@ -140,11 +140,13 @@ class DefaultEffects implements BuildEffects {
   }
   async copyFile(sourcePath: string, outputPath: string): Promise<void> {
     const destination = join(this.outputRoot, outputPath);
+    this.logger.log(destination);
     await prepareOutput(destination);
     await copyFile(sourcePath, destination);
   }
   async writeFile(outputPath: string, contents: string | Buffer): Promise<void> {
     const destination = join(this.outputRoot, outputPath);
+    this.logger.log(destination);
     await prepareOutput(destination);
     await writeFile(destination, contents);
   }

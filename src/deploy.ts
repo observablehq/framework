@@ -136,9 +136,11 @@ class DeployBuildEffects implements BuildEffects {
     this.output = effects.output;
   }
   async copyFile(sourcePath: string, outputPath: string) {
+    this.logger.log(outputPath);
     await this.apiClient.postDeployFile(this.deployId, sourcePath, outputPath);
   }
   async writeFile(outputPath: string, content: Buffer | string) {
+    this.logger.log(outputPath);
     await this.apiClient.postDeployFileContents(this.deployId, content, outputPath);
   }
 }
