@@ -72,6 +72,7 @@ ${main}</main>
 
 function renderSidebar(title = "Home", pages: (Page | Section)[], path: string): Html {
   return html`\n<input id="observablehq-sidebar-toggle" type="checkbox">
+<label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
   <ol>
     <li class="observablehq-link${path === "/index" ? " observablehq-link-active" : ""}"><a href="${relativeUrl(
