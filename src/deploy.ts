@@ -1,8 +1,8 @@
 import readline from "node:readline/promises";
 import {commandRequiresAuthenticationMessage} from "./auth.js";
-import type {BuildOutput} from "./build.js";
+import type {BuildEffects} from "./build.js";
 import {build} from "./build.js";
-import type {Logger} from "./observableApiClient.js";
+import type {Logger, Writer} from "./logger.js";
 import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
 import type {DeployConfig} from "./observableApiConfig.js";
 import {getDeployConfig, getObservableApiKey, setDeployConfig} from "./observableApiConfig.js";
@@ -16,31 +16,28 @@ export interface DeployEffects {
   getDeployConfig: (sourceRoot: string) => Promise<DeployConfig | null>;
   setDeployConfig: (sourceRoot: string, config: DeployConfig) => Promise<void>;
   logger: Logger;
-  inputStream: NodeJS.ReadableStream;
-  outputStream: NodeJS.WritableStream;
+  input: NodeJS.ReadableStream;
+  output: NodeJS.WritableStream;
 }
 
 const defaultEffects: DeployEffects = {
   getObservableApiKey,
   getDeployConfig,
   setDeployConfig,
-  inputStream: process.stdin,
   logger: console,
-  outputStream: process.stdout
+  input: process.stdin,
+  output: process.stdout
 };
 
 /** Deploy a project to ObservableHQ */
-export async function deploy({sourceRoot}: DeployOptions, effects: DeployEffects = defaultEffects): Promise<void> {
+export async function deploy({sourceRoot}: DeployOptions, effects = defaultEffects): Promise<void> {
   const apiKey = await effects.getObservableApiKey();
   const {logger} = effects;
   if (!apiKey) {
     logger.log(commandRequiresAuthenticationMessage);
     return;
   }
-  const apiClient = new ObservableApiClient({
-    apiKey,
-    logger
-  });
+  const apiClient = new ObservableApiClient({apiKey, logger});
 
   // Find the existing project or create a new one.
   const deployConfig = await effects.getDeployConfig(sourceRoot);
@@ -50,7 +47,7 @@ export async function deploy({sourceRoot}: DeployOptions, effects: DeployEffects
   } else {
     logger.log("Creating a new project");
     const currentUserResponse = await apiClient.getCurrentUser();
-    const slug = await promptUserForInput(effects.inputStream, effects.outputStream, "New project name: ");
+    const slug = await promptUserForInput(effects.input, effects.output, "New project name: ");
     let workspaceId: string | null = null;
     if (currentUserResponse.workspaces.length == 0) {
       logger.error("Current user doesn't have any Observable workspaces!");
@@ -60,8 +57,8 @@ export async function deploy({sourceRoot}: DeployOptions, effects: DeployEffects
     } else {
       const workspaceNames = currentUserResponse.workspaces.map((x) => x.name);
       const index = await promptUserForChoiceIndex(
-        effects.inputStream,
-        effects.outputStream,
+        effects.input,
+        effects.output,
         "Available Workspaces",
         workspaceNames
       );
@@ -80,10 +77,7 @@ export async function deploy({sourceRoot}: DeployOptions, effects: DeployEffects
   logger.log(`Created new deploy id ${deployId}`);
 
   // Build the project
-  await build({
-    sourceRoot,
-    output: new DeployOutput(apiClient, logger, deployId)
-  });
+  await build({sourceRoot}, new DeployBuildEffects(apiClient, deployId, effects));
 
   // Mark the deploy as uploaded.
   await apiClient.postDeployUploaded(deployId);
@@ -91,11 +85,11 @@ export async function deploy({sourceRoot}: DeployOptions, effects: DeployEffects
 }
 
 async function promptUserForInput(
-  inputStream: NodeJS.ReadableStream,
-  outputStream: NodeJS.WritableStream,
+  input: NodeJS.ReadableStream,
+  output: NodeJS.WritableStream,
   question: string
 ): Promise<string> {
-  const rl = readline.createInterface({input: inputStream, output: outputStream});
+  const rl = readline.createInterface({input, output});
   try {
     let value: string | null = null;
     do value = await rl.question(question);
@@ -107,8 +101,8 @@ async function promptUserForInput(
 }
 
 async function promptUserForChoiceIndex(
-  inputStream: NodeJS.ReadableStream,
-  outputStream: NodeJS.WritableStream,
+  input: NodeJS.ReadableStream,
+  output: NodeJS.WritableStream,
   title: string,
   choices: string[]
 ): Promise<number> {
@@ -119,7 +113,7 @@ async function promptUserForChoiceIndex(
     promptLines.push(`${i + 1}. ${choices[i]}`);
   }
   const question = promptLines.join("\n") + "\nChoice: ";
-  const rl = readline.createInterface({input: inputStream, output: outputStream});
+  const rl = readline.createInterface({input, output});
   try {
     let value: string | null = null;
     do value = await rl.question(question);
@@ -130,18 +124,21 @@ async function promptUserForChoiceIndex(
   }
 }
 
-class DeployOutput implements BuildOutput {
+class DeployBuildEffects implements BuildEffects {
+  readonly logger: Logger;
+  readonly output: Writer;
   constructor(
-    readonly apiClient: ObservableApiClient,
-    readonly logger: Logger,
-    readonly deployId: string
-  ) {}
-  async copyFile(sourcePath: string, outputPath: string, clientAction: string = "copy") {
-    this.logger.log(clientAction, sourcePath, "→ upload", outputPath);
+    private readonly apiClient: ObservableApiClient,
+    private readonly deployId: string,
+    effects: DeployEffects
+  ) {
+    this.logger = effects.logger;
+    this.output = effects.output;
+  }
+  async copyFile(sourcePath: string, outputPath: string) {
     await this.apiClient.postDeployFile(this.deployId, sourcePath, outputPath);
   }
-  async writeFile(outputPath: string, content: Buffer | string, clientAction: string) {
-    this.logger.log(clientAction, "→ upload", outputPath);
+  async writeFile(outputPath: string, content: Buffer | string) {
     await this.apiClient.postDeployFileContents(this.deployId, content, outputPath);
   }
 }

@@ -1,12 +1,7 @@
 import fs from "node:fs/promises";
 import packageJson from "../package.json";
 import {HttpError} from "./error.js";
-
-export type Logger = {
-  log: (...args: any[]) => void;
-  warn: (...args: any[]) => void;
-  error: (...args: any[]) => void;
-};
+import type {Logger} from "./logger.js";
 
 export interface GetCurrentUserResponse {
   id: string;
@@ -16,6 +11,7 @@ export interface GetCurrentUserResponse {
   has_workspace: boolean;
   workspaces: WorkspaceResponse[];
 }
+
 export interface WorkspaceResponse {
   id: string;
   login: string;

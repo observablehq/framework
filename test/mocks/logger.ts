@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import type {Logger} from "../../src/observableApiClient.js";
+import type {Logger} from "../../src/logger.js";
 
 export class MockLogger implements Logger {
   public logLines: any[][] = [];

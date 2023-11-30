@@ -15,8 +15,8 @@ import {
 
 class MockDeployEffects implements DeployEffects {
   public logger = new MockLogger();
-  public inputStream = new Readable();
-  public outputStream: NodeJS.WritableStream;
+  public input = new Readable();
+  public output: NodeJS.WritableStream;
   public _observableApiKey: string | null = null;
   public _deployConfig: DeployConfig | null = null;
   public _projectSlug = "my-project-slug";
@@ -28,20 +28,20 @@ class MockDeployEffects implements DeployEffects {
     this._observableApiKey = apiKey;
     this._deployConfig = deployConfig;
     const that = this;
-    this.outputStream = new Writable({
+    this.output = new Writable({
       write(data, _enc, callback) {
         const dataString = data.toString();
         if (dataString == "New project name: ") {
-          that.inputStream.push(`${that._projectSlug}\n`);
-          // Having to null/reinit inputStream seems wrong.
+          that.input.push(`${that._projectSlug}\n`);
+          // Having to null/reinit input seems wrong.
           // TODO: find the correct way to submit to readline but keep the same
-          // inputStream across multiple readline interactions.
-          that.inputStream.push(null);
-          that.inputStream = new Readable();
+          // input stream across multiple readline interactions.
+          that.input.push(null);
+          that.input = new Readable();
         } else if (dataString.includes("Choice: ")) {
-          that.inputStream.push("1\n");
-          that.inputStream.push(null);
-          that.inputStream = new Readable();
+          that.input.push("1\n");
+          that.input.push(null);
+          that.input = new Readable();
         }
         callback();
       }
