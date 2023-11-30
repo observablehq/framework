@@ -63,7 +63,7 @@ export async function build(
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
     files.push(...render.files.map(resolveFile));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
-    effects.writeFile(outputPath, render.html);
+    await effects.writeFile(outputPath, render.html);
   }
 
   if (addPublic) {
