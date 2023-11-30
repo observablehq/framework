@@ -31,15 +31,16 @@ export function findFetches(body: Node, path: string) {
   // Promote fetches with static literals to file attachment references.
 
   function findFetch(node: CallExpression, sourcePath: string) {
-    if (isLocalFetch(node, [], sourcePath)) {
-      const {
-        arguments: [arg]
-      } = node;
-      fetches.push({type: "FileAttachment", name: getStringLiteralValue(arg)});
-    }
+    fetches.push(...maybeExtractFetch(node, sourcePath));
   }
 
   return fetches;
+}
+
+export function maybeExtractFetch(node: CallExpression, sourcePath: string) {
+  return isLocalFetch(node, [], sourcePath)
+    ? [{type: "FileAttachment", name: getStringLiteralValue(node.arguments[0])}]
+    : []
 }
 
 export function isLocalFetch(node: CallExpression, references: Identifier[], sourcePath: string): boolean {

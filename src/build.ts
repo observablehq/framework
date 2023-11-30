@@ -45,7 +45,7 @@ export async function build({sourceRoot, outputRoot, verbose = true, addPublic =
       ...config
     });
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
-    files.push(...render.files.map(resolveFile));
+    files.push(...[...render.files, ...render.imports.filter((i) => i.type === "FileAttachment")].map(resolveFile));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
     await prepareOutput(outputPath);
     await writeFile(outputPath, render.html);
