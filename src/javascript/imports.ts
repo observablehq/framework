@@ -17,7 +17,7 @@ import {parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
 import {relativeUrl, resolvePath} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
-import {findFetches, maybeExtractFetch, rewriteFetch} from "./fetches.js";
+import {findFetches, maybeExtractFetch, rewriteIfLocalFetch} from "./fetches.js";
 
 export interface ImportsAndFetches {
   imports: ImportReference[];
@@ -149,7 +149,7 @@ export function rewriteModule(input: string, sourcePath: string, resolver: Impor
     ExportAllDeclaration: rewriteImport,
     ExportNamedDeclaration: rewriteImport,
     CallExpression(node: CallExpression) {
-      rewriteFetch(node, output, body, sourcePath);
+      rewriteIfLocalFetch(node, output, body, sourcePath);
     }
   });
 

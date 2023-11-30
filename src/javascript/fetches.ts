@@ -9,12 +9,17 @@ import {isLocalImport} from "./imports.js";
 export function rewriteFetches(output: Sourcemap, rootNode: JavaScriptNode, sourcePath: string): void {
   simple(rootNode.body, {
     CallExpression(node) {
-      rewriteFetch(node, output, rootNode, sourcePath);
+      rewriteIfLocalFetch(node, output, rootNode, sourcePath);
     }
   });
 }
 
-export function rewriteFetch(node: CallExpression, output: Sourcemap, rootNode: JavaScriptNode, sourcePath: string) {
+export function rewriteIfLocalFetch(
+  node: CallExpression,
+  output: Sourcemap,
+  rootNode: JavaScriptNode,
+  sourcePath: string
+) {
   if (isLocalFetch(node, rootNode.references || [], sourcePath)) {
     const arg = node.arguments[0];
     const value = getStringLiteralValue(arg);
