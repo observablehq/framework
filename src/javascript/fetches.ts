@@ -1,4 +1,4 @@
-import type {CallExpression, Identifier, Node} from "acorn";
+import type {CallExpression, Identifier, Node, Program} from "acorn";
 import {simple} from "acorn-walk";
 import {type Feature, type JavaScriptNode} from "../javascript.js";
 import {type Sourcemap} from "../sourcemap.js";
@@ -17,10 +17,10 @@ export function rewriteFetches(output: Sourcemap, rootNode: JavaScriptNode, sour
 export function rewriteIfLocalFetch(
   node: CallExpression,
   output: Sourcemap,
-  rootNode: JavaScriptNode,
+  rootNode: JavaScriptNode | Program,
   sourcePath: string
 ) {
-  if (isLocalFetch(node, rootNode.references || [], sourcePath)) {
+  if (isLocalFetch(node, "references" in rootNode ? rootNode.references : [], sourcePath)) {
     const arg = node.arguments[0];
     const value = getStringLiteralValue(arg);
     const path = resolvePath("_file", sourcePath, value);
@@ -53,6 +53,7 @@ export function isLocalFetch(node: CallExpression, references: Identifier[], sou
     callee,
     arguments: [arg]
   } = node;
+
   return (
     callee.type === "Identifier" &&
     callee.name === "fetch" &&

@@ -8,7 +8,8 @@ import type {
   ExportNamedDeclaration,
   ImportDeclaration,
   ImportExpression,
-  Node
+  Node,
+  Program
 } from "acorn";
 import {simple} from "acorn-walk";
 import {isEnoent} from "../error.js";
@@ -104,7 +105,7 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFetc
     imports.push({type: "local", name: path});
     try {
       const input = readFileSync(join(root, path), "utf-8");
-      const program = Parser.parse(input, parseOptions);
+      const program = Parser.parse(input, parseOptions) as Program;
       simple(
         program,
         {
@@ -140,7 +141,7 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFetc
 
 /** Rewrites import specifiers in the specified ES module source. */
 export function rewriteModule(input: string, sourcePath: string, resolver: ImportResolver): string {
-  const body = Parser.parse(input, parseOptions) as any;
+  const body = Parser.parse(input, parseOptions) as Program;
   const output = new Sourcemap(input);
 
   simple(body, {
