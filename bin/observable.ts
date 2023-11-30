@@ -82,10 +82,10 @@ switch (command) {
     break;
   }
   case "login":
-    await import("../src/auth.js").then((auth) => auth.login());
+    await import("../src/observableApiAuth.js").then((auth) => auth.login());
     break;
   case "whoami":
-    await import("../src/auth.js").then((auth) => auth.whoami());
+    await import("../src/observableApiAuth.js").then((auth) => auth.whoami());
     break;
   default:
     console.error("Usage: observable <command>");

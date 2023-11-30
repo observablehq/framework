@@ -1,6 +1,6 @@
 import assert, {fail} from "node:assert";
 import {Readable, Writable} from "node:stream";
-import {commandRequiresAuthenticationMessage} from "../src/auth.js";
+import {commandRequiresAuthenticationMessage} from "../src/observableApiAuth.js";
 import type {DeployEffects} from "../src/deploy.js";
 import {deploy} from "../src/deploy.js";
 import {isHttpError} from "../src/error.js";

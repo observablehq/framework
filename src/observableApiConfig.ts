@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import {commandRequiresAuthenticationMessage} from "./auth.js";
+import {commandRequiresAuthenticationMessage} from "./observableApiAuth.js";
 import {isEnoent} from "./error.js";
 import type {Logger} from "./observableApiClient.js";
 
