@@ -2,6 +2,7 @@ import {readFile, stat} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path";
 import {visitFiles} from "./files.js";
 import {parseMarkdown} from "./markdown.js";
+import {type Template, page} from "./page.js";
 
 export interface Page {
   name: string;
@@ -21,6 +22,7 @@ export interface TableOfContents {
 
 export interface Config {
   title?: string;
+  template: Template;
   pages: (Page | Section)[]; // TODO rename to sidebar?
   pager: boolean; // defaults to true
   toc: TableOfContents;
@@ -62,7 +64,8 @@ export async function normalizeConfig(spec: any, root: string): Promise<Config> 
   pages = Array.from(pages, normalizePageOrSection);
   pager = Boolean(pager);
   toc = normalizeToc(toc);
-  return {title, pages, pager, toc};
+  const {template = page} = spec;
+  return {title, template, pages, pager, toc};
 }
 
 function normalizePageOrSection(spec: any): Page | Section {
