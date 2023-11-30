@@ -1,7 +1,13 @@
 {
   "data": null,
   "title": "Local fetch",
-  "files": [],
+  "files": [
+    {
+      "name": "./local-fetch.md",
+      "mimeType": "text/markdown",
+      "path": "./_file/local-fetch.md"
+    }
+  ],
   "imports": [],
   "pieces": [
     {
@@ -25,6 +31,13 @@
       "id": "06e1c6cd",
       "inputs": [
         "display"
+      ],
+      "files": [
+        {
+          "name": "./local-fetch.md",
+          "mimeType": "text/markdown",
+          "path": "./_file/local-fetch.md"
+        }
       ],
       "body": "(display) => {\ndisplay((\nfetch(\"./_file/local-fetch.md\")\n))\n}"
     }
