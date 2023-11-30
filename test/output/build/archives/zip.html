@@ -7,9 +7,7 @@
 <link rel="stylesheet" type="text/css" href="./_observablehq/style.css">
 <link rel="modulepreload" href="./_observablehq/runtime.js">
 <script type="module">
-
 import {define} from "./_observablehq/client.js";
-
 define({id: "d3b9d0ee", inputs: ["FileAttachment","display"], files: [{"name":"static/file.txt","mimeType":"text/plain","path":"./_file/static/file.txt"}], body: async (FileAttachment,display) => {
 display((
 await FileAttachment("static/file.txt").text()
