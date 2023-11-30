@@ -12,7 +12,6 @@ import {version} from "../package.json";
 import {readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
-import {maybeStat} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {diffMarkdown, readMarkdown} from "./markdown.js";
