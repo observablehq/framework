@@ -4,7 +4,7 @@ import {type Html, html} from "./html.js";
 import {type ImportResolver, createImportResolver} from "./javascript/imports.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
 import {type CellPiece, type ParseResult, parseMarkdown} from "./markdown.js";
-import {type PageLink, pager} from "./pager.js";
+import {type PageLink, findLink} from "./pager.js";
 import {relativeUrl} from "./url.js";
 
 export interface Render {
@@ -49,11 +49,9 @@ type RenderInternalOptions =
   | {preview?: false} // serverless
   | {preview: true}; // preview
 
-function render(
-  parseResult: ParseResult,
-  {root, path, pages, title, toc, preview, resolver}: RenderOptions & RenderInternalOptions
-): string {
-  toc = mergeToc(parseResult.data?.toc, toc);
+function render(parseResult: ParseResult, options: RenderOptions & RenderInternalOptions): string {
+  const {root, path, pages, title, preview, resolver} = options;
+  const toc = mergeToc(parseResult.data?.toc, options.toc);
   const headers = toc.show ? findHeaders(parseResult) : [];
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="/">` : ""}
@@ -83,13 +81,14 @@ ${pages.length > 0 ? renderSidebar(title, pages, path) : ""}
 ${headers.length > 0 ? renderToc(headers, toc.label) : ""}<div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 ${html.unsafe(parseResult.html)}</main>
-${renderFooter(path, {pages, title})}
+${renderFooter(path, options)}
 </div>
 `);
 }
 
 function renderSidebar(title = "Home", pages: (Page | Section)[], path: string): Html {
   return html`<input id="observablehq-sidebar-toggle" type="checkbox">
+<label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
   <ol>
     <li class="observablehq-link${path === "/index" ? " observablehq-link-active" : ""}"><a href="${relativeUrl(
@@ -174,8 +173,8 @@ function renderImportPreloads(parseResult: ParseResult, path: string, resolver: 
   return html`${Array.from(preloads, (href) => html`\n<link rel="modulepreload" href="${href}">`)}`;
 }
 
-function renderFooter(path: string, options?: Pick<Config, "pages" | "title">): Html {
-  const link = pager(path, options);
+function renderFooter(path: string, options: Pick<Config, "pages" | "pager" | "title">): Html {
+  const link = options.pager ? findLink(path, options) : null;
   return html`<footer id="observablehq-footer">${link ? renderPager(path, link) : ""}
 <div>© ${new Date().getUTCFullYear()} Observable, Inc.</div>
 </footer>`;

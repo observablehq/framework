@@ -5,6 +5,14 @@ import {type ParseArgsConfig, parseArgs} from "node:util";
 
 const command = process.argv.splice(2, 1)[0];
 
+const ROOT_OPTION = {
+  root: {
+    type: "string",
+    short: "r",
+    default: "docs"
+  }
+} as const;
+
 switch (command) {
   case "-v":
   case "--version": {
@@ -16,11 +24,7 @@ switch (command) {
       values: {root, output}
     } = helpArgs(command, {
       options: {
-        root: {
-          type: "string",
-          short: "r",
-          default: "docs"
-        },
+        ...ROOT_OPTION,
         output: {
           type: "string",
           short: "o",
@@ -34,6 +38,16 @@ switch (command) {
         outputRoot: normalize(output!).replace(/\/$/, "")
       })
     );
+    break;
+  }
+  case "deploy": {
+    const {
+      values: {root}
+    } = helpArgs(command, {
+      options: {...ROOT_OPTION}
+    });
+    const sourceRoot = normalize(root!).replace(/\/$/, "");
+    await import("../src/deploy.js").then((deploy) => deploy.deploy({sourceRoot}));
     break;
   }
   case "preview": {
@@ -54,7 +68,7 @@ switch (command) {
         port: {
           type: "string",
           short: "p",
-          default: process.env.PORT ?? "3000"
+          default: process.env.PORT
         }
       }
     });
@@ -62,7 +76,7 @@ switch (command) {
       preview.preview({
         root: normalize(root!).replace(/\/$/, ""),
         hostname: hostname!,
-        port: +port!
+        port: port === undefined ? undefined : +port
       })
     );
     break;
@@ -76,6 +90,7 @@ switch (command) {
   default:
     console.error("Usage: observable <command>");
     console.error("   build\tgenerate a static site");
+    console.error("   deploy\tdeploy a project");
     console.error("   preview\trun the live preview server");
     console.error("   login\tmanage authentication with the Observable Cloud");
     console.error("   whoami\tcheck authentication status");
