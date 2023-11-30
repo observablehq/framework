@@ -55,74 +55,61 @@ function render(parseResult: ParseResult, options: RenderOptions & RenderInterna
   const headers = toc.show ? findHeaders(parseResult) : [];
 
   const elements = {
-    base: path === "/404" ? '\n<base href="/">' : "",
     title:
       parseResult.title || title
-        ? html.unsafe(
-            `<title>${[parseResult.title, parseResult.title === title ? null : title]
+        ? String(
+            html`<title>${[parseResult.title, parseResult.title === title ? null : title]
               .filter((title): title is string => !!title)
               .join(" | ")}</title>\n`
           )
         : "",
+    main: parseResult.html,
     root: relativeUrl(path, "/"),
-    preloads: renderImportPreloads(parseResult, path, createImportResolver(root, "_import")),
-    module: html.unsafe(
-      `<script type="module">${html.unsafe(`
+    base: path === "/404" ? '<base href="/">\n' : "",
+    data: parseResult.data,
+    preloads: String(renderImportPreloads(parseResult, path, createImportResolver(root, "_import"))),
+    module: String(
+      html`<script type="module">
 
-import {${preview ? "open, " : ""}define} from ${JSON.stringify(relativeUrl(path, "/_observablehq/client.js"))};
+${html.unsafe(
+  `import {${preview ? "open, " : ""}define} from ${JSON.stringify(
+    relativeUrl(path, "/_observablehq/client.js")
+  )};\n\n${preview ? `open({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""}
+${parseResult.cells.map(resolver).map(renderDefineCell).join("")}`
+)}
 
-${
-  preview ? `open({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
-}${parseResult.cells.map(resolver).map(renderDefineCell).join("")}`)}\n</script>`
-    ),
-    sidebar: pages.length > 0 ? renderSidebar(title, pages, path) : "",
-    toc: headers.length > 0 ? renderToc(headers, toc.label) : "",
-    main: html.unsafe(parseResult.html),
-    pager: renderPager(path, options),
-    copyright: `© ${new Date().getUTCFullYear()} Observable, Inc.`
+</script>`
+    )
   };
 
-  return template(
-    `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <head>
-  {{title}}
-  {{base}}
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+${elements.title}${elements.base}<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
-<link rel="stylesheet" type="text/css" href="{{root}}_observablehq/style.css">
-  {{preloads}}
-  {{module}}
+<link rel="stylesheet" type="text/css" href="${elements.root}_observablehq/style.css">${
+    elements.data?.template
+      ? `\n<link rel="stylesheet" type="text/css" href="${elements.root}_observablehq/${elements.data.template}.css">`
+      : ""
+  }
+${elements.preloads}
+${elements.module}
 </head>
 <body>
-  {{sidebar}}
-  {{toc}}
-  <div id="observablehq-center">
-    <main id="observablehq-main" class="observablehq">
-      {{main}}
-    </main>
-    <footer id="observablehq-footer">
-      {{pager}}
-      <div>{{copyright}}</div>
-    </footer>
-  </div>
+${pages.length > 0 ? renderSidebar(title, pages, path) : ""}
+${headers.length > 0 ? renderToc(headers, toc.label) : ""}
+<div id="observablehq-center">
+<main id="observablehq-main" class="observablehq">
+${elements.main}
+</main>
+<footer id="observablehq-footer">
+${renderPager(path, options)}
+<div>© ${new Date().getUTCFullYear()} Observable, Inc.</div>
+</footer>
+</div>
 </body>
-`,
-    elements
-  );
-}
-
-// TODO types
-function template(str, values) {
-  const a = str.split(/\{\{(\w+)\}\}/g);
-  const b = [] as string[];
-  const replace = [] as (string | Html)[];
-  for (let i = 0; i < a.length; i += 2) {
-    b.push(a[i]);
-    replace.push(values[a[i + 1]]);
-  }
-  return String(html(b, ...replace));
+`;
 }
 
 function renderSidebar(title = "Home", pages: (Page | Section)[], path: string): Html {
