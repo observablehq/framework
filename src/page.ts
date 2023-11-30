@@ -44,7 +44,7 @@ export type Template = (
      */
     root?: string;
   },
-  options: Config
+  options: Omit<Config, "template">
 ) => string;
 
 export const page: Template = ({path, data, preloads, module, main, title, base, root}, options) => {
