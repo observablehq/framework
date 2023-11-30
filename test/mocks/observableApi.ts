@@ -1,6 +1,9 @@
 import {type Dispatcher, type Interceptable, MockAgent, getGlobalDispatcher, setGlobalDispatcher} from "undici";
-import {getObservableApiHost} from "../../src/auth.js";
+import {getObservableApiHost} from "../../src/observableApiClient.js";
 
+export const validApiKey = "MOCK-VALID-KEY";
+export const invalidApiKey = "MOCK-INVALID-KEY";
+const emptyErrorBody = JSON.stringify({errors: []});
 export class ObservableApiMock {
   private _agent: MockAgent | null = null;
   private _handlers: ((pool: Interceptable) => void)[] = [];
@@ -28,33 +31,74 @@ export class ObservableApiMock {
     }
   }
 
-  handleGetUser({valid = true}: {valid?: boolean} = {}): ObservableApiMock {
-    const status = valid ? 200 : 401;
-    const response = valid
-      ? JSON.stringify({
-          id: "0000000000000000",
-          login: "mock-user",
-          name: "Mock User",
-          tier: "public",
-          has_workspace: false,
-          workspaces: [
-            {
-              id: "0000000000000001",
-              login: "mock-user-ws",
-              name: "Mock User's Workspace",
-              tier: "pro",
-              type: "team",
-              role: "owner"
-            }
-          ]
-        })
-      : "Unauthorized";
-    const headers = {authorization: valid ? "apikey MOCK-VALID-KEY" : "apikey MOCK-INVALID-KEY"};
+  public pendingInterceptors() {
+    return this._agent?.pendingInterceptors();
+  }
+
+  handleGetUser({user = userWithOneWorkspace, status = 200}: {user?: any; status?: number} = {}): ObservableApiMock {
+    const response = status == 200 ? JSON.stringify(user) : emptyErrorBody;
+    const headers = authorizationHeader(status != 401);
     this._handlers.push((pool) =>
       pool.intercept({path: "/cli/user", headers: headersMatcher(headers)}).reply(status, response)
     );
     return this;
   }
+
+  handlePostProject({projectId, status = 200}: {projectId?: string; status?: number} = {}): ObservableApiMock {
+    const response = status == 200 ? JSON.stringify({id: projectId}) : emptyErrorBody;
+    const headers = authorizationHeader(status != 401);
+    this._handlers.push((pool) =>
+      pool.intercept({path: "/cli/project", method: "POST", headers: headersMatcher(headers)}).reply(status, response)
+    );
+    return this;
+  }
+
+  handlePostDeploy({
+    projectId,
+    deployId,
+    status = 200
+  }: {projectId?: string; deployId?: string; status?: number} = {}): ObservableApiMock {
+    const response = status == 200 ? JSON.stringify({id: deployId}) : emptyErrorBody;
+    const headers = authorizationHeader(status != 401);
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: `/cli/project/${projectId}/deploy`, method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response)
+    );
+    return this;
+  }
+
+  handlePostDeployFile({
+    deployId,
+    status = 204,
+    repeat = 1
+  }: {deployId?: string; status?: number; repeat?: number} = {}): ObservableApiMock {
+    const response = status == 204 ? "" : emptyErrorBody;
+    const headers = authorizationHeader(status != 401);
+    this._handlers.push((pool) => {
+      for (let i = 0; i < repeat; i++) {
+        pool
+          .intercept({path: `/cli/deploy/${deployId}/file`, method: "POST", headers: headersMatcher(headers)})
+          .reply(status, response);
+      }
+    });
+    return this;
+  }
+
+  handlePostDeployUploaded({deployId, status = 204}: {deployId?: string; status?: number} = {}): ObservableApiMock {
+    const response = status == 204 ? JSON.stringify({id: deployId, status: "uploaded"}) : emptyErrorBody;
+    const headers = authorizationHeader(status != 401);
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: `/cli/deploy/${deployId}/uploaded`, method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response)
+    );
+    return this;
+  }
+}
+
+function authorizationHeader(valid: boolean) {
+  return {authorization: valid ? `apikey ${validApiKey}` : `apikey ${invalidApiKey}`};
 }
 
 /** All headers in `expected` must be present and have the expected value.
@@ -71,3 +115,44 @@ function headersMatcher(expected: Record<string, string>): (headers: Record<stri
     return true;
   };
 }
+
+const userBase = {
+  id: "0000000000000000",
+  login: "mock-user",
+  name: "Mock User",
+  tier: "public",
+  has_workspace: false
+};
+
+const workspace1 = {
+  id: "0000000000000001",
+  login: "mock-user-ws",
+  name: "Mock User's Workspace",
+  tier: "pro",
+  type: "team",
+  role: "owner"
+};
+
+const workspace2 = {
+  id: "0000000000000002",
+  login: "mock-user-ws-2",
+  name: "Mock User's Second Workspace",
+  tier: "pro",
+  type: "team",
+  role: "owner"
+};
+
+export const userWithZeroWorkspaces = {
+  ...userBase,
+  workspaces: []
+};
+
+export const userWithOneWorkspace = {
+  ...userBase,
+  workspaces: [workspace1]
+};
+
+export const userWithTwoWorkspaces = {
+  ...userBase,
+  workspaces: [workspace1, workspace2]
+};

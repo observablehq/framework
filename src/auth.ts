@@ -5,17 +5,21 @@ import type {Socket} from "node:net";
 import os from "node:os";
 import {isatty} from "node:tty";
 import open from "open";
-import packageJson from "../package.json";
 import {HttpError, isHttpError} from "./error.js";
-import {getObservableApiKey, setObservableApiKey} from "./toolConfig.js";
+import type {Logger} from "./logger.js";
+import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
+import {getObservableApiKey, setObservableApiKey} from "./observableApiConfig.js";
 
 const OBSERVABLEHQ_UI_HOST = getObservableUiHost();
-const OBSERVABLEHQ_API_HOST = getObservableApiHost();
+
+export const commandRequiresAuthenticationMessage = `You need to be authenticated to ${
+  getObservableUiHost().hostname
+} to run this command. Please run \`observable login\`.`;
 
 /** Actions this command needs to take wrt its environment that may need mocked out. */
 export interface CommandEffects {
   openUrlInBrowser: (url: string) => Promise<void>;
-  log: (...args: any[]) => void;
+  logger: Logger;
   isatty: (fd: number) => boolean;
   waitForEnter: () => Promise<void>;
   getObservableApiKey: () => Promise<string | null>;
@@ -24,10 +28,8 @@ export interface CommandEffects {
 }
 
 const defaultEffects: CommandEffects = {
-  openUrlInBrowser: async (target) => {
-    await open(target);
-  },
-  log: console.log,
+  openUrlInBrowser: async (target) => void (await open(target)),
+  logger: console,
   isatty,
   waitForEnter,
   getObservableApiKey,
@@ -51,43 +53,47 @@ export async function login(effects = defaultEffects) {
   };
   url.searchParams.set("request", Buffer.from(JSON.stringify(request)).toString("base64"));
 
+  const {logger} = effects;
   if (effects.isatty(process.stdin.fd)) {
-    effects.log(`Press Enter to open ${url.hostname} in your browser...`);
+    logger.log(`Press Enter to open ${url.hostname} in your browser...`);
     await effects.waitForEnter();
     await effects.openUrlInBrowser(url.toString());
   } else {
-    effects.log("Open this link in your browser to continue authentication:");
-    effects.log(`\n\t${url.toString()}\n`);
+    logger.log("Open this link in your browser to continue authentication:");
+    logger.log(`\n\t${url.toString()}\n`);
   }
   return server; // for testing
   // execution continues in the server's request handler
 }
 
 export async function whoami(effects = defaultEffects) {
-  const key = await effects.getObservableApiKey();
-  if (key) {
-    const req = await fetch(new URL("/cli/user", OBSERVABLEHQ_API_HOST), {
-      headers: {
-        Authorization: `apikey ${key}`,
-        "X-Observable-Api-Version": "2023-11-06",
-        "User-Agent": `Observable CLI ${packageJson.version}`
-      }
+  const apiKey = await effects.getObservableApiKey();
+  const {logger} = effects;
+  if (apiKey) {
+    const apiClient = new ObservableApiClient({
+      apiKey,
+      logger
     });
-    if (req.status === 401) {
-      effects.log("Your API key is invalid. Run `observable login` to log in again.");
-      return;
+
+    try {
+      const user = await apiClient.getCurrentUser();
+      logger.log();
+      logger.log(`You are logged into ${OBSERVABLEHQ_UI_HOST.hostname} as ${formatUser(user)}.`);
+      logger.log();
+      logger.log("You have access to the following workspaces:");
+      for (const workspace of user.workspaces) {
+        logger.log(` * ${formatUser(workspace)}`);
+      }
+      logger.log();
+    } catch (error) {
+      if (isHttpError(error) && error.statusCode == 401) {
+        logger.log("Your API key is invalid. Run `observable login` to log in again.");
+      } else {
+        throw error;
+      }
     }
-    const user = await req.json();
-    effects.log();
-    effects.log(`You are logged into ${OBSERVABLEHQ_UI_HOST.hostname} as ${formatUser(user)}.`);
-    effects.log();
-    effects.log("You have access to the following workspaces:");
-    for (const workspace of user.workspaces) {
-      effects.log(` * ${formatUser(workspace)}`);
-    }
-    effects.log();
   } else {
-    effects.log(`You haven't authenticated with ${OBSERVABLEHQ_UI_HOST.hostname}. Please run "observable login"`);
+    logger.log(commandRequiresAuthenticationMessage);
   }
 }
 
@@ -210,7 +216,7 @@ class LoginServer {
       new Promise((resolve) => setTimeout(resolve, 500))
     ]);
 
-    this._effects.log("Successfully logged in.");
+    this._effects.logger.log("Successfully logged in.");
     await this.stop();
     this._effects.exitSuccess();
   }
@@ -243,32 +249,6 @@ function waitForEnter(): Promise<void> {
     }
     process.stdin.on("data", onData);
   });
-}
-
-function getObservableUiHost(): URL {
-  const urlText = process.env["OBSERVABLEHQ_HOST"] ?? "https://observablehq.com";
-  try {
-    return new URL(urlText);
-  } catch (error) {
-    console.error(`Invalid OBSERVABLEHQ_HOST environment variable: ${error}`);
-    process.exit(1);
-  }
-}
-
-export function getObservableApiHost(): URL {
-  const urlText = process.env["OBSERVABLEHQ_API_HOST"];
-  if (urlText) {
-    try {
-      return new URL(urlText);
-    } catch (error) {
-      console.error(`Invalid OBSERVABLEHQ_HOST environment variable: ${error}`);
-      process.exit(1);
-    }
-  }
-
-  const uiHost = getObservableUiHost();
-  uiHost.hostname = "api." + uiHost.hostname;
-  return uiHost;
 }
 
 function formatUser(user) {

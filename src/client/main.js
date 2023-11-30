@@ -1,6 +1,7 @@
 import {makeDatabaseClient} from "./database.js";
+import {inspect, inspectError} from "./inspect.js";
 import {makeLibrary} from "./library.js";
-import {Inspector, Runtime} from "./runtime.js";
+import {Runtime} from "./runtime.js";
 
 const library = makeLibrary();
 const {Generators} = library;
@@ -36,24 +37,23 @@ export function define(cell) {
   const root = document.querySelector(`#cell-${id}`);
   let reset = null;
   const clear = () => ((root.innerHTML = ""), (reset = null));
-  const inspector = () => new Inspector(root.appendChild(document.createElement("SPAN")));
   const display = inline
     ? (v) => {
         reset?.();
-        if (v instanceof Node || typeof v === "string" || !v?.[Symbol.iterator]) root.append(v);
+        if (isNode(v) || typeof v === "string" || !v?.[Symbol.iterator]) root.append(v);
         else root.append(...v);
         return v;
       }
     : (v) => {
         reset?.();
-        inspector().fulfilled(v);
+        root.append(isNode(v) ? v : inspect(v));
         return v;
       };
   const v = main.variable(
     {
       pending: () => (reset = clear),
       fulfilled: () => reset?.(),
-      rejected: (error) => (reset?.(), inspector().rejected(error))
+      rejected: (error) => (reset?.(), root.append(inspectError(error)))
     },
     {
       shadow: {
@@ -67,4 +67,9 @@ export function define(cell) {
   for (const o of outputs) variables.push(main.define(o, [`cell ${id}`], (exports) => exports[o]));
   for (const f of files) attachedFiles.set(f.name, {url: f.path, mimeType: f.mimeType});
   for (const d of databases) databaseTokens.set(d.name, d);
+}
+
+// Note: Element.prototype is instanceof Node, but cannot be inserted!
+function isNode(value) {
+  return value instanceof Node && value instanceof value.constructor;
 }

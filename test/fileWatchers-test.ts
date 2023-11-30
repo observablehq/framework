@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import {utimesSync} from "node:fs";
+import {renameSync, unlinkSync, utimesSync, writeFileSync} from "node:fs";
 import {FileWatchers} from "../src/fileWatchers.js";
 
 describe("FileWatchers.of(root, path, names, callback)", () => {
@@ -164,12 +164,74 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
       watcher.close();
     }
   });
+  it("handles a file being renamed", async () => {
+    let names: Set<string>;
+    const watch = (name: string) => names.add(name);
+    try {
+      writeFileSync("test/input/build/files/temp.csv", "hello", "utf-8");
+      const watcher = await FileWatchers.of(root, "files.md", ["temp.csv"], watch);
+      try {
+        // First rename the file, while writing a new file to the same place.
+        names = new Set<string>();
+        await pause();
+        renameSync("test/input/build/files/temp.csv", "test/input/build/files/temp2.csv");
+        writeFileSync("test/input/build/files/temp.csv", "hello 2", "utf-8");
+        await pause(150); // avoid debounce
+        assert.deepStrictEqual(names, new Set(["temp.csv"]));
+
+        // Then test that writing to the original location watches the new file.
+        names = new Set<string>();
+        await pause();
+        writeFileSync("test/input/build/files/temp.csv", "hello 3", "utf-8");
+        await pause();
+        assert.deepStrictEqual(names, new Set(["temp.csv"]));
+      } finally {
+        watcher.close();
+      }
+    } finally {
+      cleanupSync("test/input/build/files/temp.csv");
+      cleanupSync("test/input/build/files/temp2.csv");
+    }
+  });
+  it("handles a file being renamed and removed", async () => {
+    let names: Set<string>;
+    const watch = (name: string) => names.add(name);
+    try {
+      writeFileSync("test/input/build/files/temp.csv", "hello", "utf-8");
+      const watcher = await FileWatchers.of(root, "files.md", ["file-top.csv", "temp.csv"], watch);
+      try {
+        // First delete the temp file. We don’t care if this is reported as a change or not.
+        names = new Set<string>();
+        await pause();
+        unlinkSync("test/input/build/files/temp.csv");
+        await pause(150);
+
+        // Then touch a different file to make sure the watcher is still alive.
+        names = new Set<string>();
+        touch("test/input/build/files/file-top.csv");
+        await pause();
+        assert.deepStrictEqual(names, new Set(["file-top.csv"]));
+      } finally {
+        watcher.close();
+      }
+    } finally {
+      cleanupSync("test/input/build/files/temp.csv");
+    }
+  });
 });
 
-async function pause(): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 10));
+async function pause(delay = 10): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, delay));
 }
 
 function touch(path: string, date = new Date()): void {
   utimesSync(path, date, date);
+}
+
+function cleanupSync(path: string): void {
+  try {
+    unlinkSync(path);
+  } catch {
+    // ignore
+  }
 }
