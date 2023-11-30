@@ -54,33 +54,24 @@ export const page: Template = ({path, data, preloads, module, main, title, base,
   return `<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<head>
 ${title}${base}<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="${root}_observablehq/style.css">${
     data?.template ? `\n<link rel="stylesheet" type="text/css" href="${root}_observablehq/${data.template}.css">` : ""
-  }
-${preloads}
-${module}
-</head>
-<body>
-${pages.length > 0 ? renderSidebar(projectTitle, pages, path) : ""}
-${headers.length > 0 ? renderToc(headers, toc.label) : ""}
-<div id="observablehq-center">
+  }${preloads}
+${module}${pages.length > 0 ? renderSidebar(projectTitle, pages, path) : ""}
+${headers.length > 0 ? renderToc(headers, toc.label) : ""}<div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
-${main}
-</main>
-<footer id="observablehq-footer">
-${renderPager(path, options)}
+${main}</main>
+<footer id="observablehq-footer">${renderPager(path, options)}
 <div>© ${new Date().getUTCFullYear()} Observable, Inc.</div>
 </footer>
 </div>
-</body>
 `;
 };
 
 function renderSidebar(title = "Home", pages: (Page | Section)[], path: string): Html {
-  return html`<input id="observablehq-sidebar-toggle" type="checkbox">
+  return html`\n<input id="observablehq-sidebar-toggle" type="checkbox">
 <nav id="observablehq-sidebar">
   <ol>
     <li class="observablehq-link${path === "/index" ? " observablehq-link-active" : ""}"><a href="${relativeUrl(

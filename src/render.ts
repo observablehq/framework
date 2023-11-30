@@ -71,12 +71,11 @@ function render(
         html`<script type="module">
 
 ${html.unsafe(
-  `import {${preview ? "open, " : ""}define} from ${JSON.stringify(
-    relativeUrl(path, "/_observablehq/client.js")
-  )};\n\n${preview ? `open({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""}
+  `import {${preview ? "open, " : ""}define} from ${JSON.stringify(relativeUrl(path, "/_observablehq/client.js"))};\n${
+    preview ? `open({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
+  }
 ${parseResult.cells.map(resolver).map(renderDefineCell).join("")}`
 )}
-
 </script>`
       )
     },
