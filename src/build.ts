@@ -30,7 +30,7 @@ export interface BuildEffects {
   /**
    * @param outputPath The path of this file relative to the outputRoot. For
    * example, in a local build this should be relative to the dist directory.
-   * */
+   */
   copyFile(sourcePath: string, outputPath: string): Promise<void>;
 
   /**
