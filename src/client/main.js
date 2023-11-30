@@ -58,7 +58,7 @@ export function define(cell) {
   );
   v.define(outputs.length ? `cell ${id}` : null, inputs, body);
   variables.push(v);
-  for (const o of outputs) variables.push(main.define(o, [`cell ${id}`], (exports) => exports[o]));
+  for (const o of outputs) variables.push(main.variable(true).define(o, [`cell ${id}`], (exports) => exports[o]));
   for (const f of files) attachedFiles.set(f.name, {url: f.path, mimeType: f.mimeType});
   for (const d of databases) databaseTokens.set(d.name, d);
 }
