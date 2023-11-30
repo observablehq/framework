@@ -37,10 +37,10 @@ export function findFetches(body: Node, path: string) {
   return fetches;
 }
 
-export function maybeExtractFetch(node: CallExpression, sourcePath: string) {
+export function maybeExtractFetch(node: CallExpression, sourcePath: string): Feature[] {
   return isLocalFetch(node, [], sourcePath)
     ? [{type: "FileAttachment", name: getStringLiteralValue(node.arguments[0])}]
-    : []
+    : [];
 }
 
 export function isLocalFetch(node: CallExpression, references: Identifier[], sourcePath: string): boolean {
