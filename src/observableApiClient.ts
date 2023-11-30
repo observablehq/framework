@@ -1,8 +1,7 @@
 import fs from "node:fs/promises";
 import packageJson from "../package.json";
 import {HttpError} from "./error.js";
-
-export type Logger = {log: (...args: any[]) => void; error: (...args: any[]) => void};
+import type {Logger} from "./logger.js";
 
 export interface GetCurrentUserResponse {
   id: string;
@@ -12,6 +11,7 @@ export interface GetCurrentUserResponse {
   has_workspace: boolean;
   workspaces: WorkspaceResponse[];
 }
+
 export interface WorkspaceResponse {
   id: string;
   login: string;
@@ -113,12 +113,15 @@ export class ObservableApiClient {
   }
 
   async postDeployFile(deployId: string, filePath: string, relativePath: string): Promise<void> {
-    this._logger.log(`Uploading ${filePath}`);
+    const buffer = await fs.readFile(filePath);
+    return await this.postDeployFileContents(deployId, buffer, relativePath);
+  }
 
+  async postDeployFileContents(deployId: string, contents: Buffer | string, relativePath: string): Promise<void> {
+    if (typeof contents === "string") contents = Buffer.from(contents);
     const url = new URL(`/cli/deploy/${deployId}/file`, this._apiHost);
     const body = new FormData();
-    const buffer = await fs.readFile(filePath);
-    const blob = new Blob([buffer]);
+    const blob = new Blob([contents]);
     body.append("file", blob);
     body.append("client_name", relativePath);
     const response = await fetch(url, {

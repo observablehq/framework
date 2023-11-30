@@ -10,6 +10,7 @@ import {createImportResolver, findExports, findImports, rewriteImports} from "./
 import {findReferences} from "./javascript/references.js";
 import {syntaxError} from "./javascript/syntaxError.js";
 import {Sourcemap} from "./sourcemap.js";
+import {red} from "./tty.js";
 
 export interface DatabaseReference {
   name: string;
@@ -98,7 +99,7 @@ ${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.ma
     }
     // TODO: Consider showing a code snippet along with the error. Also, consider
     // whether we want to show the file name here.
-    if (verbose) console.error(`${error.name}: ${message}`);
+    if (verbose) console.error(red(`${error.name}: ${message}`));
     return {
       id: `${id}`,
       body: `() => { throw new SyntaxError(${JSON.stringify(error.message)}); }`

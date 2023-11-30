@@ -13,10 +13,10 @@ import {
   validApiKey
 } from "./mocks/observableApi.js";
 
-class MockEffects implements DeployEffects {
+class MockDeployEffects implements DeployEffects {
   public logger = new MockLogger();
-  public inputStream = new Readable();
-  public outputStream: NodeJS.WritableStream;
+  public input = new Readable();
+  public output: NodeJS.WritableStream;
   public _observableApiKey: string | null = null;
   public _deployConfig: DeployConfig | null = null;
   public _projectSlug = "my-project-slug";
@@ -28,20 +28,20 @@ class MockEffects implements DeployEffects {
     this._observableApiKey = apiKey;
     this._deployConfig = deployConfig;
     const that = this;
-    this.outputStream = new Writable({
+    this.output = new Writable({
       write(data, _enc, callback) {
         const dataString = data.toString();
         if (dataString == "New project name: ") {
-          that.inputStream.push(`${that._projectSlug}\n`);
-          // Having to null/reinit inputStream seems wrong.
+          that.input.push(`${that._projectSlug}\n`);
+          // Having to null/reinit input seems wrong.
           // TODO: find the correct way to submit to readline but keep the same
-          // inputStream across multiple readline interactions.
-          that.inputStream.push(null);
-          that.inputStream = new Readable();
+          // input stream across multiple readline interactions.
+          that.input.push(null);
+          that.input = new Readable();
         } else if (dataString.includes("Choice: ")) {
-          that.inputStream.push("1\n");
-          that.inputStream.push(null);
-          that.inputStream = new Readable();
+          that.input.push("1\n");
+          that.input.push(null);
+          that.input = new Readable();
         }
         callback();
       }
@@ -52,8 +52,7 @@ class MockEffects implements DeployEffects {
     return this._observableApiKey;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async getDeployConfig(sourceRoot: string) {
+  async getDeployConfig() {
     return this._deployConfig;
   }
 
@@ -61,6 +60,8 @@ class MockEffects implements DeployEffects {
     this._deployConfig = config;
   }
 }
+
+const TEST_SOURCE_ROOT = "test/example-dist";
 
 describe("deploy", () => {
   it("makes expected API calls for a new project", async () => {
@@ -70,15 +71,15 @@ describe("deploy", () => {
       .handleGetUser()
       .handlePostProject({projectId})
       .handlePostDeploy({projectId, deployId})
-      .handlePostDeployFile({deployId})
+      .handlePostDeployFile({deployId, repeat: 3})
       .handlePostDeployUploaded({deployId})
       .start();
-    const effects = new MockEffects();
 
-    await deploy({sourceRoot: "docs", deployRoot: "test/example-dist"}, effects);
+    const effects = new MockDeployEffects();
+    await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
 
     apiMock.close();
-    const deployConfig = await effects.getDeployConfig("docs");
+    const deployConfig = await effects.getDeployConfig();
     assert.equal(deployConfig?.project?.id, projectId);
     assert.equal(deployConfig?.project?.slug, effects._projectSlug);
   });
@@ -89,21 +90,21 @@ describe("deploy", () => {
     const deployId = "deploy456";
     const apiMock = new ObservableApiMock()
       .handlePostDeploy({projectId, deployId})
-      .handlePostDeployFile({deployId})
+      .handlePostDeployFile({deployId, repeat: 3})
       .handlePostDeployUploaded({deployId})
       .start();
-    const effects = new MockEffects({deployConfig});
 
-    await deploy({sourceRoot: "docs", deployRoot: "test/example-dist"}, effects);
+    const effects = new MockDeployEffects({deployConfig});
+    await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
 
     apiMock.close();
   });
 
   it("shows message for missing API key", async () => {
     const apiMock = new ObservableApiMock().start();
-    const effects = new MockEffects({apiKey: null});
+    const effects = new MockDeployEffects({apiKey: null});
 
-    await deploy({sourceRoot: "docs", deployRoot: "test/example-dist"}, effects);
+    await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
 
     apiMock.close();
     effects.logger.assertExactLogs([/^You need to be authenticated/]);
@@ -116,24 +117,24 @@ describe("deploy", () => {
       .handleGetUser({user: userWithTwoWorkspaces})
       .handlePostProject({projectId})
       .handlePostDeploy({projectId, deployId})
-      .handlePostDeployFile({deployId})
+      .handlePostDeployFile({deployId, repeat: 3})
       .handlePostDeployUploaded({deployId})
       .start();
-    const effects = new MockEffects({apiKey: validApiKey});
+    const effects = new MockDeployEffects();
 
-    await deploy({sourceRoot: "docs", deployRoot: "test/example-dist"}, effects);
+    await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
 
     apiMock.close();
-    const deployConfig = await effects.getDeployConfig("docs");
+    const deployConfig = await effects.getDeployConfig();
     assert.equal(deployConfig?.project?.id, projectId);
     assert.equal(deployConfig?.project?.slug, effects._projectSlug);
   });
 
   it("logs an error during project creation when user has no workspaces", async () => {
     const apiMock = new ObservableApiMock().handleGetUser({user: userWithZeroWorkspaces}).start();
-    const effects = new MockEffects();
+    const effects = new MockDeployEffects();
 
-    await deploy({sourceRoot: "docs", deployRoot: "test/example-dist"}, effects);
+    await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
 
     apiMock.close();
     effects.logger.assertExactErrors([/^Current user doesn't have any Observable workspaces/]);
@@ -141,10 +142,10 @@ describe("deploy", () => {
 
   it("throws an error with an invalid API key", async () => {
     const apiMock = new ObservableApiMock().handleGetUser({status: 401}).start();
-    const effects = new MockEffects({apiKey: invalidApiKey});
+    const effects = new MockDeployEffects({apiKey: invalidApiKey});
 
     try {
-      await deploy({sourceRoot: "docs", deployRoot: "test/example-dist"}, effects);
+      await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
       assert.fail("Should have thrown");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -156,10 +157,10 @@ describe("deploy", () => {
 
   it("throws an error if project creation fails", async () => {
     const apiMock = new ObservableApiMock().handleGetUser().handlePostProject({status: 500}).start();
-    const effects = new MockEffects();
+    const effects = new MockDeployEffects();
 
     try {
-      await deploy({sourceRoot: "docs", deployRoot: "test/example-dist"}, effects);
+      await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -177,10 +178,10 @@ describe("deploy", () => {
       .handlePostProject({projectId})
       .handlePostDeploy({projectId, deployId, status: 500})
       .start();
-    const effects = new MockEffects();
+    const effects = new MockDeployEffects();
 
     try {
-      await deploy({sourceRoot: "docs", deployRoot: "test/example-dist"}, effects);
+      await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -199,10 +200,10 @@ describe("deploy", () => {
       .handlePostDeploy({projectId, deployId})
       .handlePostDeployFile({deployId, status: 500})
       .start();
-    const effects = new MockEffects();
+    const effects = new MockDeployEffects();
 
     try {
-      await deploy({sourceRoot: "docs", deployRoot: "test/example-dist"}, effects);
+      await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -219,14 +220,13 @@ describe("deploy", () => {
       .handleGetUser()
       .handlePostProject({projectId})
       .handlePostDeploy({projectId, deployId})
-      .handlePostDeployFile({deployId})
+      .handlePostDeployFile({deployId, repeat: 3})
       .handlePostDeployUploaded({deployId, status: 500})
       .start();
-    const effects = new MockEffects();
+    const effects = new MockDeployEffects();
 
-    // console.log(apiMock.pendingInterceptors());
     try {
-      await deploy({sourceRoot: "docs", deployRoot: "test/example-dist"}, effects);
+      await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
       fail("Should have thrown an error");
     } catch (error) {
       console.log(error);
