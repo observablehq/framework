@@ -27,7 +27,7 @@ export type ApiKey =
   | {source: "test"; key: string};
 
 export async function getObservableApiKey(logger: Logger = console): Promise<ApiKey> {
-  const envVar = "OBSERVABLEHQ_AUTH";
+  const envVar = "OBSERVABLEHQ_TOKEN";
   if (process.env[envVar]) {
     return {source: "env", envVar, key: process.env[envVar]};
   }

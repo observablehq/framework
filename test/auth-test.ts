@@ -44,7 +44,7 @@ describe("login command", () => {
 });
 
 describe("whoami command", () => {
-  it("works when there is no API key", async () => {
+  it("errors when there is no API key", async () => {
     const effects = new MockEffects({apiKey: null});
     try {
       await whoami(effects);
