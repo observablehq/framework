@@ -82,7 +82,8 @@ export async function deploy({sourceRoot}: DeployOptions, effects: DeployEffects
   // Build the project
   await build({
     sourceRoot,
-    output: new DeployOutput(apiClient, logger, deployId)
+    output: new DeployOutput(apiClient, logger, deployId),
+    addIntegrationListener: {origin: getObservableUiHost().toString().replace(/\/$/, "")}
   });
 
   // Mark the deploy as uploaded.

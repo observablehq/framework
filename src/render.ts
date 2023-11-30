@@ -17,6 +17,7 @@ export interface RenderOptions extends Config {
   root: string;
   path: string;
   resolver: (cell: CellPiece) => CellPiece;
+  addIntegrationListener?: null | {origin: string};
 }
 
 export async function renderPreview(source: string, options: RenderOptions): Promise<Render> {
@@ -50,7 +51,7 @@ type RenderInternalOptions =
   | {preview: true}; // preview
 
 function render(parseResult: ParseResult, options: RenderOptions & RenderInternalOptions): string {
-  const {root, path, pages, title, preview, resolver} = options;
+  const {root, path, pages, title, preview, resolver, addIntegrationListener} = options;
   const toc = mergeToc(parseResult.data?.toc, options.toc);
   const headers = toc.show ? findHeaders(parseResult) : [];
   return String(html`<!DOCTYPE html>
@@ -69,13 +70,17 @@ ${
     path,
     createImportResolver(root, "_import")
   )}
-<script type="module">${html.unsafe(`
-
-import {${preview ? "open, " : ""}define} from ${JSON.stringify(relativeUrl(path, "/_observablehq/client.js"))};
-
-${
-  preview ? `open({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
-}${parseResult.cells.map(resolver).map(renderDefineCell).join("")}`)}
+<script type="module">
+${html.unsafe(
+  [
+    `import {${preview ? "open, " : ""}define} from ${JSON.stringify(relativeUrl(path, "/_observablehq/client.js"))};`,
+    addIntegrationListener && `import ${JSON.stringify(relativeUrl(path, "/_observablehq/integration.js"))};`,
+    preview && `open({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n`,
+    parseResult.cells.map(resolver).map(renderDefineCell).join("")
+  ]
+    .filter(Boolean)
+    .join("\n")
+)}
 </script>
 ${pages.length > 0 ? renderSidebar(title, pages, path) : ""}
 ${headers.length > 0 ? renderToc(headers, toc.label) : ""}<div id="observablehq-center">

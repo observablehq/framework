@@ -10,7 +10,7 @@ import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {renderServerless} from "./render.js";
 import {makeCLIResolver} from "./resolver.js";
-import {getClientPath, rollupClient} from "./rollup.js";
+import {getClientPath, getIntegrationPath, rollupClient, rollupIntegration} from "./rollup.js";
 import {resolvePath} from "./url.js";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
@@ -21,6 +21,7 @@ export interface BuildOptions {
   output?: BuildOutput | null;
   verbose?: boolean;
   addPublic?: boolean;
+  addIntegrationListener?: null | {origin: string};
 }
 
 export interface BuildOutput {
@@ -39,7 +40,8 @@ export async function build({
   outputRoot,
   verbose = true,
   output = outputRoot === undefined ? null : new DefaultOutput(outputRoot, {verbose}),
-  addPublic = true
+  addPublic = true,
+  addIntegrationListener = null
 }: BuildOptions): Promise<void> {
   if (!output)
     throw new Error("Either `output` must be specified, or `outputRoot` specified and `output` left as default.");
@@ -61,21 +63,26 @@ export async function build({
       root: sourceRoot,
       path,
       resolver,
+      addIntegrationListener,
       ...config
     });
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
     files.push(...render.files.map(resolveFile));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
-    output.writeFile(outputPath, render.html, `render ${sourcePath}`);
+    await output.writeFile(outputPath, render.html, `render ${sourcePath}`);
   }
 
   if (addPublic) {
     // Generate the client bundle.
     const clientPath = getClientPath();
-    const code = await rollupClient(clientPath, {minify: true});
-    const outputPath = join("_observablehq", "client.js");
-    if (verbose) console.log("bundle", clientPath, "→", outputPath);
-    await output.writeFile(outputPath, code, "bundle");
+    const clientcode = await rollupClient(clientPath, {minify: true});
+    await output.writeFile(join("_observablehq", "client.js"), clientcode, `bundle ${clientPath}`);
+    // integration with observablehq.com
+    if (addIntegrationListener) {
+      const integrationPath = getIntegrationPath();
+      const integrationCode = await rollupIntegration(integrationPath, addIntegrationListener.origin, {minify: true});
+      await output.writeFile(join("_observablehq", "integration.js"), integrationCode, `bundle ${integrationPath}`);
+    }
     // Copy over the public directory.
     const publicRoot = relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), "..", "public"));
     for await (const publicFile of visitFiles(publicRoot)) {
