@@ -209,6 +209,10 @@ export class PreviewServer {
       socket.close();
     }
   };
+
+  get server(): PreviewServer["_server"] {
+    return this._server;
+  }
 }
 
 // Like send, but for in-memory dynamic content.
