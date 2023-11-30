@@ -28,83 +28,48 @@ describe("preview server", () => {
     if (testServer) testServer.close();
   });
 
-  it("should start a server", (done) => {
-    chai
-      .request(testServerUrl)
-      .get("/")
-      .end(function (err, res) {
-        expect(res.text);
-        expect(res).to.have.status(200);
-        done();
-      });
+  it("should start a server", async () => {
+    const res = await chai.request(testServerUrl).get("/");
+
+    expect(res).to.have.status(200);
+    assert.ok(res.text);
   });
 
-  it.skip("redirects /index to /", (done) => {
-    chai
-      .request(testServerUrl)
-      .get("/index")
-      .redirects(0)
-      .end(function (err, res) {
-        expect(res).to.redirectTo(/^\/$/);
-        expect(res).to.have.status(302);
-        done();
-      });
+  it.skip("redirects /index to /", async () => {
+    const res = await chai.request(testServerUrl).get("/index").redirects(0);
+    expect(res).to.redirectTo(/^\/$/);
+    expect(res).to.have.status(302);
   });
 
-  it("serves nested pages", (done) => {
-    chai
-      .request(testServerUrl)
-      .get("/code/code")
-      .end(function (err, res) {
-        assert.equal(res.statusCode, 200);
-        expect(res.text).to.have.string("This text is not visible by default.");
-        done();
-      });
+  it("serves nested pages", async () => {
+    const res = await chai.request(testServerUrl).get("/code/code");
+    expect(res).to.have.status(200);
+    expect(res.text).to.have.string("This text is not visible by default.");
   });
 
   // TODO - tests for /_observablehq and data loader requests
 
-  it("serves local imports", (done) => {
-    chai
-      .request(testServerUrl)
-      .get("/_import/format.js")
-      .end(function (err, res) {
-        assert.equal(res.statusCode, 200);
-        expect(res.text).to.have.string("function formatTitle(title)");
-        done();
-      });
+  it("serves local imports", async () => {
+    const res = await chai.request(testServerUrl).get("/_import/format.js");
+    expect(res).to.have.status(200);
+    expect(res.text).to.have.string("function formatTitle(title)");
   });
 
-  it("handles missing imports", (done) => {
-    chai
-      .request(testServerUrl)
-      .get("/_import/idontexist.js")
-      .end(function (err, res) {
-        assert.equal(res.statusCode, 404);
-        expect(res.text).to.have.string("404 page");
-        done();
-      });
+  it("handles missing imports", async () => {
+    const res = await chai.request(testServerUrl).get("/_import/idontexist.js");
+    expect(res).to.have.status(404);
+    expect(res.text).to.have.string("404 page");
   });
 
-  it("serves local files", (done) => {
-    chai
-      .request(testServerUrl)
-      .get("/_file/file.csv")
-      .end(function (err, res) {
-        assert.equal(res.statusCode, 200);
-        assert.ok(res.text);
-        done();
-      });
+  it("serves local files", async () => {
+    const res = await chai.request(testServerUrl).get("/_file/file.csv");
+    expect(res).to.have.status(200);
+    assert.ok(res.text);
   });
 
-  it("handles missing files", (done) => {
-    chai
-      .request(testServerUrl)
-      .get("/_file/idontexist.csv")
-      .end(function (err, res) {
-        assert.equal(res.statusCode, 404);
-        expect(res.text).to.have.string("404 page");
-        done();
-      });
+  it("handles missing files", async () => {
+    const res = await chai.request(testServerUrl).get("/_file/idontexist.csv");
+    expect(res).to.have.status(404);
+    expect(res.text).to.have.string("404 page");
   });
 });
