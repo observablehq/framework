@@ -3,7 +3,7 @@ import {existsSync, readdirSync, statSync} from "node:fs";
 import {open, readFile} from "node:fs/promises";
 import {join, normalize, relative} from "node:path";
 import {difference} from "d3-array";
-import type {BuildOutput} from "../src/build.js";
+import type {BuildEffects} from "../src/build.js";
 import {build} from "../src/build.js";
 
 describe("build", async () => {
@@ -25,10 +25,10 @@ describe("build", async () => {
         await generateSnapshots({sourceRoot: path, outputRoot: expectedDir, addPublic});
         return;
       }
-      const output = new TestOutput(addPublic);
-      await build({sourceRoot: path, output, verbose: false, addPublic});
+      const effects = new TestEffects(addPublic);
+      await build({sourceRoot: path, addPublic}, effects);
 
-      const actualFiles = output.fileNames;
+      const actualFiles = effects.fileNames;
       const expectedFiles = new Set(findFiles(expectedDir));
       const missingFiles = difference(expectedFiles, actualFiles);
       const unexpectedFiles = difference(actualFiles, expectedFiles);
@@ -36,7 +36,7 @@ describe("build", async () => {
       if (unexpectedFiles.size > 0) assert.fail(`Unexpected output files: ${Array.from(unexpectedFiles).join(", ")}`);
 
       for (const path of expectedFiles) {
-        const actual = output.files[path];
+        const actual = effects.files[path];
         const expected = await readFile(join(expectedDir, path));
         assert.ok(actual.compare(expected) === 0, `${path} must match snapshot`);
       }
@@ -46,7 +46,7 @@ describe("build", async () => {
 
 async function generateSnapshots({sourceRoot, outputRoot, addPublic}) {
   console.warn(`! generating ${outputRoot}`);
-  await build({sourceRoot, outputRoot, verbose: false, addPublic});
+  await build({sourceRoot, outputRoot, addPublic});
 
   // In the addPublic case, we don’t want to test the contents of the public
   // files because they change often; replace them with empty files so we
@@ -81,9 +81,11 @@ function isPublicPath(path: string): boolean {
   return path.startsWith("_observablehq");
 }
 
-class TestOutput implements BuildOutput {
+class TestEffects implements BuildEffects {
   files: Record<string, Buffer> = {};
   fileNames: Set<string> = new Set();
+  logger = {log() {}, warn() {}, error() {}};
+  output = {write() {}};
 
   constructor(readonly addPublic: boolean) {}
 
