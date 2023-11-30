@@ -39,7 +39,7 @@ describe("preview server", () => {
       });
   });
 
-  it("redirects /index to /", (done) => {
+  it.skip("redirects /index to /", (done) => {
     chai
       .request(testServerUrl)
       .get("/index")

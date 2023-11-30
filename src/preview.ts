@@ -74,137 +74,113 @@ export class PreviewServer {
     return new PreviewServer({server, ...options}, await makeCLIResolver());
   }
 
-  _handleObservableModuleRequest = async (req, res, pathname) => {
-    if (pathname === "/_observablehq/runtime.js") {
-      send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
-    } else if (pathname === "/_observablehq/client.js") {
-      end(req, res, await rollupClient(getClientPath("./src/client/preview.js")), "text/javascript");
-    } else {
-      send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
-    }
-  };
-
-  _handleImportRequest = async (req, res, pathname) => {
-    const file = pathname.slice("/_import".length);
-    let js: string;
-    try {
-      js = await readFile(join(this.root, file), "utf-8");
-    } catch (error) {
-      if (!isEnoent(error)) throw error;
-      throw new HttpError("Not found", 404);
-    }
-    end(req, res, rewriteModule(js, file, createImportResolver(this.root)), "text/javascript");
-  };
-
-  _handleFileRequest = async (req, res, pathname) => {
-    const path = pathname.slice("/_file".length);
-    const filepath = join(this.root, path);
-    try {
-      await access(filepath, constants.R_OK);
-      send(req, pathname.slice("/_file".length), {root: this.root}).pipe(res);
-      return;
-    } catch (error) {
-      if (!isEnoent(error)) throw error;
-    }
-
-    // Look for a data loader for this file.
-    const loader = Loader.find(this.root, path);
-    if (loader) {
-      try {
-        send(req, await loader.load(), {root: this.root}).pipe(res);
-        return;
-      } catch (error) {
-        if (!isEnoent(error)) throw error;
-      }
-    }
-    throw new HttpError("Not found", 404);
-  };
-
-  _handleStaticPageRequest = async (req, res, pathname, url) => {
-    if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
-    let path = join(this.root, pathname);
-
-    // If this path is for /index, redirect to the parent directory for a
-    // tidy path. (This must be done before implicitly adding /index below!)
-    // Respect precedence of dir/index.md over dir.md in choosing between
-    // dir/ and dir!
-    if (basename(path, ".html") === "index") {
-      try {
-        await stat(join(dirname(path), "index.md"));
-        const redirectPath = dirname(pathname);
-        res.writeHead(302, {Location: redirectPath + redirectPath === "/" ? "" : "/" + url.search});
-        res.end();
-        return;
-      } catch (error) {
-        if (!isEnoent(error)) throw error;
-        res.writeHead(302, {Location: dirname(pathname) + url.search});
-        res.end();
-        return;
-      }
-    }
-
-    // If this path resolves to a directory, then add an implicit /index to
-    // the end of the path, assuming that the corresponding index.md exists.
-    try {
-      if ((await stat(path)).isDirectory() && (await stat(join(path, "index.md"))).isFile()) {
-        if (!pathname.endsWith("/")) {
-          res.writeHead(302, {Location: pathname + "/" + url.search});
-          res.end();
-          return;
-        }
-        pathname = join(pathname, "index");
-        path = join(path, "index");
-      }
-    } catch (error) {
-      if (!isEnoent(error)) throw error; // internal error
-    }
-
-    // If this path ends with .html, then redirect to drop the .html
-    if (extname(path) === ".html") {
-      try {
-        const markdownPath = join(dirname(path), basename(path, ".html")) + ".md";
-        (await stat(markdownPath)).isFile();
-        res.writeHead(302, {Location: join(dirname(pathname), basename(pathname, ".html")) + url.search});
-        res.end();
-        return;
-      } catch (error) {
-        if (!isEnoent(error)) throw error; // internal error
-        throw new HttpError("Not found", 404);
-      }
-    }
-
-    // Otherwise, serve the corresponding Markdown file, if it exists.
-    // Anything else should 404; static files should be matched above.
-    try {
-      const config = await readConfig(this.root);
-      const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {
-        root: this.root,
-        path: pathname,
-        resolver: this._resolver,
-        ...config
-      });
-      end(req, res, html, "text/html");
-    } catch (error) {
-      if (!isEnoent(error)) throw error; // internal error
-      throw new HttpError("Not found", 404);
-    }
-  };
-
   _handleRequest: RequestListener = async (req, res) => {
     console.log(faint(req.method!), req.url);
     try {
       const url = new URL(req.url!, "http://localhost");
-      const {pathname} = url;
-      if (pathname.startsWith("/_observablehq/")) {
-        await this._handleObservableModuleRequest(req, res, pathname);
+      let {pathname} = url;
+      if (pathname === "/_observablehq/runtime.js") {
+        send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
+      } else if (pathname === "/_observablehq/client.js") {
+        end(req, res, await rollupClient(getClientPath("./src/client/preview.js")), "text/javascript");
+      } else if (pathname.startsWith("/_observablehq/")) {
+        send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
-        await this._handleImportRequest(req, res, pathname);
+        const file = pathname.slice("/_import".length);
+        let js: string;
+        try {
+          js = await readFile(join(this.root, file), "utf-8");
+        } catch (error) {
+          if (!isEnoent(error)) throw error;
+          throw new HttpError("Not found", 404);
+        }
+        end(req, res, rewriteModule(js, file, createImportResolver(this.root)), "text/javascript");
       } else if (pathname.startsWith("/_file/")) {
-        await this._handleFileRequest(req, res, pathname);
+        const path = pathname.slice("/_file".length);
+        const filepath = join(this.root, path);
+        try {
+          await access(filepath, constants.R_OK);
+          send(req, pathname.slice("/_file".length), {root: this.root}).pipe(res);
+          return;
+        } catch (error) {
+          if (!isEnoent(error)) throw error;
+        }
+
+        // Look for a data loader for this file.
+        const loader = Loader.find(this.root, path);
+        if (loader) {
+          try {
+            send(req, await loader.load(), {root: this.root}).pipe(res);
+            return;
+          } catch (error) {
+            if (!isEnoent(error)) throw error;
+          }
+        }
+        throw new HttpError("Not found", 404);
       } else {
-        await this._handleStaticPageRequest(req, res, pathname, url);
+        if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
+        let path = join(this.root, pathname);
+
+        // If this path is for /index, redirect to the parent directory for a
+        // tidy path. (This must be done before implicitly adding /index below!)
+        // Respect precedence of dir/index.md over dir.md in choosing between
+        // dir/ and dir!
+        if (basename(path, ".html") === "index") {
+          try {
+            await stat(join(dirname(path), "index.md"));
+            res.writeHead(302, {Location: dirname(pathname) + "/" + url.search});
+            res.end();
+            return;
+          } catch (error) {
+            if (!isEnoent(error)) throw error;
+            res.writeHead(302, {Location: dirname(pathname) + url.search});
+            res.end();
+            return;
+          }
+        }
+
+        // If this path resolves to a directory, then add an implicit /index to
+        // the end of the path, assuming that the corresponding index.md exists.
+        try {
+          if ((await stat(path)).isDirectory() && (await stat(join(path, "index.md"))).isFile()) {
+            if (!pathname.endsWith("/")) {
+              res.writeHead(302, {Location: pathname + "/" + url.search});
+              res.end();
+              return;
+            }
+            pathname = join(pathname, "index");
+            path = join(path, "index");
+          }
+        } catch (error) {
+          if (!isEnoent(error)) throw error; // internal error
+        }
+
+        // If this path ends with .html, then redirect to drop the .html. TODO:
+        // Check for the existence of the .md file first.
+        if (extname(path) === ".html") {
+          res.writeHead(302, {Location: join(dirname(pathname), basename(pathname, ".html")) + url.search});
+          res.end();
+          return;
+        }
+
+        // Otherwise, serve the corresponding Markdown file, if it exists.
+        // Anything else should 404; static files should be matched above.
+        try {
+          const config = await readConfig(this.root);
+          const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {
+            root: this.root,
+            path: pathname,
+            resolver: this._resolver,
+            ...config
+          });
+          end(req, res, html, "text/html");
+        } catch (error) {
+          if (!isEnoent(error)) throw error; // internal error
+          throw new HttpError("Not found", 404);
+        }
       }
     } catch (error) {
+      console.error(error);
       res.statusCode = isHttpError(error) ? error.statusCode : 500;
       if (req.method === "GET" && res.statusCode === 404) {
         try {
