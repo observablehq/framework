@@ -159,12 +159,18 @@ export class PreviewServer {
       if (!isEnoent(error)) throw error; // internal error
     }
 
-    // If this path ends with .html, then redirect to drop the .html. TODO:
-    // Check for the existence of the .md file first.
+    // If this path ends with .html, then redirect to drop the .html
     if (extname(path) === ".html") {
-      res.writeHead(302, {Location: join(dirname(pathname), basename(pathname, ".html")) + url.search});
-      res.end();
-      return;
+      try {
+        const markdownPath = join(dirname(path), basename(path, ".html")) + ".md";
+        (await stat(markdownPath)).isFile();
+        res.writeHead(302, {Location: join(dirname(pathname), basename(pathname, ".html")) + url.search});
+        res.end();
+        return;
+      } catch (error) {
+        if (!isEnoent(error)) throw error; // internal error
+        throw new HttpError("Not found", 404);
+      }
     }
 
     // Otherwise, serve the corresponding Markdown file, if it exists.
@@ -189,15 +195,14 @@ export class PreviewServer {
     try {
       const url = new URL(req.url!, "http://localhost");
       const {pathname} = url;
-      console.log({pathname});
       if (pathname.startsWith("/_observablehq/")) {
-        this._handleObservableDepRequest(req, res, pathname);
+        await this._handleObservableDepRequest(req, res, pathname);
       } else if (pathname.startsWith("/_import/")) {
-        this._handleImportRequest(req, res, pathname);
+        await this._handleImportRequest(req, res, pathname);
       } else if (pathname.startsWith("/_file/")) {
-        this._handleFileRequest(req, res, pathname);
+        await this._handleFileRequest(req, res, pathname);
       } else {
-        this._handleStaticPageRequest(req, res, pathname, url);
+        await this._handleStaticPageRequest(req, res, pathname, url);
       }
     } catch (error) {
       console.error(error);
