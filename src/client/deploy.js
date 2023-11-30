@@ -10,13 +10,10 @@ function messaged(event) {
   event.stopImmediatePropagation();
   const message = event.data;
   if (message.type === "load_script") {
-    import(message.url)
-      .then(() => {
-        postMessage({type: "load_script_complete", url: message.url});
-      })
-      .catch((error) => {
-        postMessage({type: "load_script_error", url: message.url, error: error.message});
-      });
+    import(message.url).then(
+      () => postMessage({type: "load_script_complete", url: message.url}),
+      (error) => postMessage({type: "load_script_error", url: message.url, error: error.message})
+    );
   }
 }
 
@@ -24,6 +21,6 @@ addEventListener("message", messaged);
 
 postMessage({type: "hello"});
 
-export function postMessage(message) {
+function postMessage(message) {
   parent.postMessage(message, origin);
 }
