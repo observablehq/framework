@@ -11,13 +11,13 @@ import {faint, green, red, yellow} from "./tty.js";
 const runningCommands = new Map<string, Promise<string>>();
 
 const languages = {
-  ".js": "node",
-  ".ts": "tsx",
-  ".py": "python3",
-  ".r": "Rscript",
-  ".R": "Rscript",
-  ".sh": "sh",
-  ".exe": null
+  ".js": ["node", "--no-warnings=ExperimentalWarning"],
+  ".ts": ["tsx"],
+  ".py": ["python3"],
+  ".r": ["Rscript"],
+  ".R": ["Rscript"],
+  ".sh": ["sh"],
+  ".exe": []
 };
 
 export interface LoadOptions {
@@ -98,7 +98,7 @@ export abstract class Loader {
   }
 
   private static findExact(sourceRoot: string, targetPath: string): Loader | undefined {
-    for (const ext in languages) {
+    for (const [ext, [command, ...args]] of Object.entries(languages)) {
       if (!existsSync(join(sourceRoot, targetPath + ext))) continue;
       if (extname(targetPath) === "") {
         console.warn(`invalid data loader path: ${targetPath + ext}`);
@@ -106,8 +106,8 @@ export abstract class Loader {
       }
       const path = join(sourceRoot, targetPath + ext);
       return new CommandLoader({
-        command: languages[ext] ?? path,
-        args: languages[ext] == null ? [] : [path],
+        command: command ?? path,
+        args: command == null ? args : [...args, path],
         path,
         sourceRoot,
         targetPath
