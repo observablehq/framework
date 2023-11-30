@@ -88,7 +88,7 @@ export async function deploy({config}: DeployOptions, effects = defaultEffects):
   const deployId = await apiClient.postDeploy({projectId, message});
 
   // Build the project
-  await build({config}, new DeployBuildEffects(apiClient, deployId, effects));
+  await build({config, clientEntry: "./src/client/deploy.js"}, new DeployBuildEffects(apiClient, deployId, effects));
 
   // Mark the deploy as uploaded.
   const deployInfo = await apiClient.postDeployUploaded(deployId);

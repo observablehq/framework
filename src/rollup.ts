@@ -1,3 +1,4 @@
+/* eslint-disable import/order */
 import {existsSync} from "node:fs";
 import {dirname, join, relative} from "node:path";
 import {cwd} from "node:process";
@@ -7,8 +8,10 @@ import {simple} from "acorn-walk";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
+import replace from "@rollup/plugin-replace";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
 import {resolveNpmImport} from "./javascript/imports.js";
+import {getObservableUiHost} from "./observableApiClient.js";
 import {Sourcemap} from "./sourcemap.js";
 import {relativeUrl} from "./url.js";
 
@@ -19,7 +22,8 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
     plugins: [
       importResolve(clientPath),
       esbuild({target: "es2022", exclude: [], minify}), // don’t exclude node_modules
-      importMetaResolve()
+      importMetaResolve(),
+      platformMetadata()
     ]
   });
   try {
@@ -105,6 +109,15 @@ function importMetaResolve(): Plugin {
       return {code: String(output)};
     }
   };
+}
+
+function platformMetadata() {
+  return (replace as any)({
+    preventAssignment: true,
+    values: {
+      "process.env.OBSERVABLEHQ_ORIGIN": JSON.stringify(String(getObservableUiHost()).replace(/\/$/, ""))
+    }
+  });
 }
 
 export function getClientPath(entry: string): string {
