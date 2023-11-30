@@ -74,7 +74,7 @@ export class PreviewServer {
     return new PreviewServer({server, ...options}, await makeCLIResolver());
   }
 
-  _handleObservableDepRequest = async (req, res, pathname) => {
+  _handleObservableModuleRequest = async (req, res, pathname) => {
     if (pathname === "/_observablehq/runtime.js") {
       send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
     } else if (pathname === "/_observablehq/client.js") {
@@ -131,7 +131,8 @@ export class PreviewServer {
     if (basename(path, ".html") === "index") {
       try {
         await stat(join(dirname(path), "index.md"));
-        res.writeHead(302, {Location: dirname(pathname) + "/" + url.search});
+        const redirectPath = dirname(pathname);
+        res.writeHead(302, {Location: redirectPath + redirectPath === "/" ? "" : "/" + url.search});
         res.end();
         return;
       } catch (error) {
@@ -195,7 +196,7 @@ export class PreviewServer {
       const url = new URL(req.url!, "http://localhost");
       const {pathname} = url;
       if (pathname.startsWith("/_observablehq/")) {
-        await this._handleObservableDepRequest(req, res, pathname);
+        await this._handleObservableModuleRequest(req, res, pathname);
       } else if (pathname.startsWith("/_import/")) {
         await this._handleImportRequest(req, res, pathname);
       } else if (pathname.startsWith("/_file/")) {
@@ -204,7 +205,6 @@ export class PreviewServer {
         await this._handleStaticPageRequest(req, res, pathname, url);
       }
     } catch (error) {
-      console.error(error);
       res.statusCode = isHttpError(error) ? error.statusCode : 500;
       if (req.method === "GET" && res.statusCode === 404) {
         try {
@@ -233,6 +233,10 @@ export class PreviewServer {
       socket.close();
     }
   };
+
+  get server(): PreviewServer["_server"] {
+    return this._server;
+  }
 }
 
 // Like send, but for in-memory dynamic content.
