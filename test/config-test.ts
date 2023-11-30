@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import {normalizeConfig as config, mergeToc, readConfig} from "../src/config.js";
+import {page} from "../src/page.js";
 
 const root = "test/input/build/config";
 
@@ -11,6 +12,7 @@ describe("readConfig(root)", () => {
         {path: "/one", name: "One<Two"},
         {path: "/sub/two", name: "Two"}
       ],
+      template: page,
       title: undefined,
       toc: {label: "On this page", show: true},
       pager: true
@@ -19,6 +21,7 @@ describe("readConfig(root)", () => {
   it("returns the default config if no config file is found", async () => {
     assert.deepStrictEqual(await readConfig("test/input/build/simple"), {
       pages: [{name: "Build test case", path: "/simple"}],
+      template: page,
       title: undefined,
       toc: {label: "Contents", show: true},
       pager: true
