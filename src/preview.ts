@@ -209,6 +209,10 @@ export class PreviewServer {
       socket.close();
     }
   };
+
+  get server(): PreviewServer["_server"] {
+    return this._server;
+  }
 }
 
 // Like send, but for in-memory dynamic content.
@@ -278,7 +282,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: st
           socket.terminate();
           return;
         }
-        setTimeout(() => watcher("change"), 150); // delay to avoid a possibly-empty file
+        setTimeout(() => watcher("change"), 100); // delay to avoid a possibly-empty file
         break;
       }
       case "change": {

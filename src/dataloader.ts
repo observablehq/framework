@@ -6,7 +6,8 @@ import {createGunzip} from "node:zlib";
 import JSZip from "jszip";
 import {extract} from "tar-stream";
 import {maybeStat, prepareOutput} from "./files.js";
-import {faint, green, red, yellow} from "./tty.js";
+import type {Logger, Writer} from "./logger.js";
+import {cyan, faint, green, red, yellow} from "./tty.js";
 
 const runningCommands = new Map<string, Promise<string>>();
 
@@ -20,9 +21,15 @@ const languages = {
   ".exe": null
 };
 
-export interface LoadOptions {
-  verbose?: boolean;
+export interface LoadEffects {
+  logger: Logger;
+  output: Writer;
 }
+
+const defaultEffects: LoadEffects = {
+  logger: console,
+  output: process.stdout
+};
 
 export interface LoaderOptions {
   path: string;
@@ -120,8 +127,7 @@ export abstract class Loader {
    * to the source root; this is within the .observablehq/cache folder within
    * the source root.
    */
-  async load(options: LoadOptions = {}): Promise<string> {
-    const {verbose = true} = options;
+  async load(effects = defaultEffects): Promise<string> {
     const key = join(this.sourceRoot, this.targetPath);
     let command = runningCommands.get(key);
     if (!command) {
@@ -130,14 +136,14 @@ export abstract class Loader {
         const cachePath = join(this.sourceRoot, outputPath);
         const loaderStat = await maybeStat(this.path);
         const cacheStat = await maybeStat(cachePath);
-        if (!cacheStat) verbose && process.stdout.write(faint("[missing] "));
-        else if (cacheStat.mtimeMs < loaderStat!.mtimeMs) verbose && process.stdout.write(faint("[stale] "));
-        else return verbose && process.stdout.write(faint("[fresh] ")), outputPath;
+        if (!cacheStat) effects.output.write(faint("[missing] "));
+        else if (cacheStat.mtimeMs < loaderStat!.mtimeMs) effects.output.write(faint("[stale] "));
+        else return effects.output.write(faint("[fresh] ")), outputPath;
         const tempPath = join(this.sourceRoot, ".observablehq", "cache", `${this.targetPath}.${process.pid}`);
         await prepareOutput(tempPath);
         const tempFd = await open(tempPath, "w");
         try {
-          await this.exec(tempFd.createWriteStream({highWaterMark: 1024 * 1024}), options);
+          await this.exec(tempFd.createWriteStream({highWaterMark: 1024 * 1024}), effects);
           await mkdir(dirname(cachePath), {recursive: true});
           await rename(tempPath, cachePath);
         } catch (error) {
@@ -151,24 +157,24 @@ export abstract class Loader {
       command.finally(() => runningCommands.delete(this.path)).catch(() => {});
       runningCommands.set(this.path, command);
     }
-    if (verbose) {
-      process.stdout.write(`load ${this.path} → `);
-      const start = performance.now();
-      command.then(
-        (path) => {
-          console.log(
-            `${green("success")} ${formatSize(statSync(join(this.sourceRoot, path)).size)} in ${formatElapsed(start)}`
-          );
-        },
-        (error) => {
-          console.log(`${red("error")} after ${formatElapsed(start)}: ${error.message}`);
-        }
-      );
-    }
+    effects.output.write(`${cyan("load")} ${this.path} ${faint("→")} `);
+    const start = performance.now();
+    command.then(
+      (path) => {
+        effects.logger.log(
+          `${green("success")} ${cyan(formatSize(statSync(join(this.sourceRoot, path)).size))} ${faint(
+            `in ${formatElapsed(start)}`
+          )}`
+        );
+      },
+      (error) => {
+        effects.logger.log(`${red("error")} ${faint(`in ${formatElapsed(start)}:`)} ${red(error.message)}`);
+      }
+    );
     return command;
   }
 
-  abstract exec(output: WriteStream, options?: LoadOptions): Promise<void>;
+  abstract exec(output: WriteStream, effects?: LoadEffects): Promise<void>;
 }
 
 interface CommandLoaderOptions extends LoaderOptions {
@@ -225,8 +231,8 @@ class ZipExtractor extends Loader {
     this.inflatePath = inflatePath;
   }
 
-  async exec(output: WriteStream, options: LoadOptions = {}): Promise<void> {
-    const archivePath = join(this.sourceRoot, await this.preload(options));
+  async exec(output: WriteStream, effects?: LoadEffects): Promise<void> {
+    const archivePath = join(this.sourceRoot, await this.preload(effects));
     const file = (await JSZip.loadAsync(await readFile(archivePath))).file(this.inflatePath);
     if (!file) throw Object.assign(new Error("file not found"), {code: "ENOENT"});
     const pipe = file.nodeStream().pipe(output);
@@ -252,8 +258,8 @@ class TarExtractor extends Loader {
     this.gunzip = gunzip;
   }
 
-  async exec(output: WriteStream, options: LoadOptions = {}): Promise<void> {
-    const archivePath = join(this.sourceRoot, await this.preload(options));
+  async exec(output: WriteStream, effects?: LoadEffects): Promise<void> {
+    const archivePath = join(this.sourceRoot, await this.preload(effects));
     const tar = extract();
     const input = createReadStream(archivePath);
     (this.gunzip ? input.pipe(createGunzip()) : input).pipe(tar);
@@ -283,13 +289,13 @@ const extractors = [
   [".tgz", TarGzExtractor]
 ] as const;
 
-function formatSize(size) {
+function formatSize(size: number): string {
   if (!size) return yellow("empty output");
   const e = Math.floor(Math.log(size) / Math.log(1024));
-  return `output ${+(size / 1024 ** e).toFixed(2)} ${["bytes", "KiB", "MiB", "GiB", "TiB"][e]}`;
+  return `${+(size / 1024 ** e).toFixed(2)} ${["bytes", "KiB", "MiB", "GiB", "TiB"][e]}`;
 }
 
-function formatElapsed(start) {
+function formatElapsed(start: number): string {
   const elapsed = performance.now() - start;
   return `${Math.floor(elapsed)}ms`;
 }

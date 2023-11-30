@@ -68,14 +68,20 @@ export class ObservableApiMock {
     return this;
   }
 
-  handlePostDeployFile({deployId, status = 204}: {deployId?: string; status?: number} = {}): ObservableApiMock {
+  handlePostDeployFile({
+    deployId,
+    status = 204,
+    repeat = 1
+  }: {deployId?: string; status?: number; repeat?: number} = {}): ObservableApiMock {
     const response = status == 204 ? "" : emptyErrorBody;
     const headers = authorizationHeader(status != 401);
-    this._handlers.push((pool) =>
-      pool
-        .intercept({path: `/cli/deploy/${deployId}/file`, method: "POST", headers: headersMatcher(headers)})
-        .reply(status, response)
-    );
+    this._handlers.push((pool) => {
+      for (let i = 0; i < repeat; i++) {
+        pool
+          .intercept({path: `/cli/deploy/${deployId}/file`, method: "POST", headers: headersMatcher(headers)})
+          .reply(status, response);
+      }
+    });
     return this;
   }
 

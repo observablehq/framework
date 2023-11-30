@@ -1,7 +1,7 @@
 {
   "name": "@observablehq/cli",
   "license": "UNLICENSED",
-  "version": "0.0.45",
+  "version": "0.0.46",
   "type": "module",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
@@ -77,6 +77,8 @@
     "@typescript-eslint/eslint-plugin": "^6.7.3",
     "@typescript-eslint/parser": "^6.7.3",
     "c8": "^8.0.1",
+    "chai": "^4.3.10",
+    "chai-http": "^4.4.0",
     "d3-array": "^3.2.4",
     "eslint": "^8.50.0",
     "eslint-config-prettier": "^9.0.0",

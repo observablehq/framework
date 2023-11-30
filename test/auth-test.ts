@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import {type CommandEffects, commandRequiresAuthenticationMessage, login, whoami} from "../src/auth.js";
-import type {Logger} from "../src/observableApiClient.js";
+import type {Logger} from "../src/logger.js";
 import {MockLogger} from "./mocks/logger.js";
 import {ObservableApiMock} from "./mocks/observableApi.js";
 
@@ -48,7 +48,7 @@ describe("whoami command", () => {
     const effects = new MockEffects({apiKey: null});
     try {
       await whoami(effects);
-      assert.ok(false, "error expected");
+      assert.fail("error expected");
     } catch (err) {
       if (!(err instanceof Error)) throw err;
       assert.equal(err.message, "no key available in this test");
