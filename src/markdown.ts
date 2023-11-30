@@ -422,19 +422,8 @@ function toParseCells(pieces: RenderPiece[]): CellPiece[] {
 }
 
 export async function parseMarkdown(source: string, root: string, sourcePath: string): Promise<ParseResult> {
-  let parts;
-  try {
-    parts = matter(source);
-  } catch (error) {
-    // If the front-matter is invalid, flush gray-matter’s (private) cache,
-    // ensuring an error is also thrown the next time we evaluate it.
-    // https://github.com/jonschlinkert/gray-matter/issues/166
-    // https://github.com/jonschlinkert/gray-matter/blob/ce67a86dba419381db0dd01cc84e2d30a1d1e6a5/index.js#L225
-    // eslint-disable-next-line
-    // @ts-ignore
-    matter.clearCache!();
-    throw new Error(`invalid front matter in ${sourcePath}`);
-  }
+  const parts = matter(source, {}); // Using empty options to avoid caching.
+
   // TODO: We need to know what line in the source the markdown starts on and pass that
   // as startLine in the parse context below.
   const md = MarkdownIt({html: true});
