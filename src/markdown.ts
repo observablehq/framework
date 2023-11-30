@@ -422,7 +422,7 @@ function toParseCells(pieces: RenderPiece[]): CellPiece[] {
 }
 
 export async function parseMarkdown(source: string, root: string, sourcePath: string): Promise<ParseResult> {
-  const parts = matter(source, {}); // Using empty options to avoid caching.
+  const parts = matter(source, {});
 
   // TODO: We need to know what line in the source the markdown starts on and pass that
   // as startLine in the parse context below.
