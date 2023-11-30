@@ -82,7 +82,7 @@ export class PreviewServer {
       if (pathname === "/_observablehq/runtime.js") {
         send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
       } else if (pathname === "/_observablehq/client.js") {
-        end(req, res, await rollupClient(getClientPath("./src/client/preview.js")), "text/javascript");
+        end(req, res, await rollupClient(getClientPath("preview.js")), "text/javascript");
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {

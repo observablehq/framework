@@ -77,7 +77,7 @@ export async function deploy({sourceRoot}: DeployOptions, effects = defaultEffec
   logger.log(`Created new deploy id ${deployId}`);
 
   // Build the project
-  await build({sourceRoot}, new DeployBuildEffects(apiClient, deployId, effects));
+  await build({sourceRoot, clientEntry: "deploy.js"}, new DeployBuildEffects(apiClient, deployId, effects));
 
   // Mark the deploy as uploaded.
   await apiClient.postDeployUploaded(deployId);

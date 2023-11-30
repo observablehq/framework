@@ -19,6 +19,7 @@ const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.j
 
 export interface BuildOptions {
   sourceRoot: string;
+  clientEntry?: string;
   outputRoot?: string;
   addPublic?: boolean;
 }
@@ -41,7 +42,7 @@ export interface BuildEffects {
 }
 
 export async function build(
-  {sourceRoot: root, outputRoot, addPublic = true}: BuildOptions,
+  {sourceRoot: root, clientEntry = "index.js", outputRoot, addPublic = true}: BuildOptions,
   effects: BuildEffects = new DefaultEffects(outputRoot)
 ): Promise<void> {
   // Make sure all files are readable before starting to write output files.
@@ -68,7 +69,7 @@ export async function build(
 
   if (addPublic) {
     // Generate the client bundle.
-    const clientPath = getClientPath();
+    const clientPath = getClientPath(clientEntry);
     const outputPath = join("_observablehq", "client.js");
     effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
     const code = await rollupClient(clientPath, {minify: true});
