@@ -123,14 +123,18 @@ interface Header {
   href: string;
 }
 
+const tocSelector = ["h1:not(:first-of-type)", "h2:not(h1 + h2)"];
+
 function findHeaders(parseResult: ParseResult): Header[] {
-  return Array.from(parseHTML(parseResult.html).document.querySelectorAll("h2"))
+  return Array.from(parseHTML(parseResult.html).document.querySelectorAll(tocSelector.join(", ")))
     .map((node) => ({label: node.textContent, href: node.firstElementChild?.getAttribute("href")}))
     .filter((d): d is Header => !!d.label && !!d.href);
 }
 
 function renderToc(headers: Header[], label = "Contents"): Html {
-  return html`<aside id="observablehq-toc">
+  return html`<aside id="observablehq-toc" data-selector="${tocSelector
+    .map((selector) => `#observablehq-main ${selector}`)
+    .join(", ")}">
 <nav>
 <div>${label}</div>
 <ol>${headers.map(
