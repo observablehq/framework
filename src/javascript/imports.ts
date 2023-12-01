@@ -6,6 +6,7 @@ import type {
   CallExpression,
   ExportAllDeclaration,
   ExportNamedDeclaration,
+  Identifier,
   ImportDeclaration,
   ImportExpression,
   Node,
@@ -19,6 +20,8 @@ import {Sourcemap} from "../sourcemap.js";
 import {relativeUrl, resolvePath} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
 import {findFetches, maybeExtractFetch, rewriteIfLocalFetch} from "./fetches.js";
+import {defaultGlobals} from "./globals.js";
+import {findReferences} from "./references.js";
 
 export interface ImportsAndFetches {
   imports: ImportReference[];
@@ -51,6 +54,7 @@ export function findExports(body: Node): (ExportAllDeclaration | ExportNamedDecl
  */
 
 export function findImports(body: Node, root: string, path: string): ImportsAndFetches {
+  const references: Identifier[] = findReferences(body, defaultGlobals);
   const imports: ImportReference[] = [];
   const fetches: Feature[] = [];
   const paths: string[] = [];
@@ -73,7 +77,7 @@ export function findImports(body: Node, root: string, path: string): ImportsAndF
   }
 
   function findFetch(node) {
-    fetches.push(...maybeExtractFetch(node, path));
+    fetches.push(...maybeExtractFetch(node, references, path));
   }
 
   // Recursively process any imported local ES modules.
@@ -106,6 +110,8 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFetc
     try {
       const input = readFileSync(join(root, path), "utf-8");
       const program = Parser.parse(input, parseOptions) as Program;
+      const references: Identifier[] = findReferences(program, defaultGlobals);
+
       simple(
         program,
         {
@@ -117,7 +123,7 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFetc
         undefined,
         path
       );
-      fetches.push(...findFetches(program, path));
+      fetches.push(...findFetches(program, references, path));
     } catch (error) {
       if (!isEnoent(error) && !(error instanceof SyntaxError)) throw error;
     }
@@ -142,6 +148,7 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFetc
 /** Rewrites import specifiers in the specified ES module source. */
 export function rewriteModule(input: string, sourcePath: string, resolver: ImportResolver): string {
   const body = Parser.parse(input, parseOptions) as Program;
+  const references: Identifier[] = findReferences(body, defaultGlobals);
   const output = new Sourcemap(input);
 
   simple(body, {
@@ -150,7 +157,7 @@ export function rewriteModule(input: string, sourcePath: string, resolver: Impor
     ExportAllDeclaration: rewriteImport,
     ExportNamedDeclaration: rewriteImport,
     CallExpression(node: CallExpression) {
-      rewriteIfLocalFetch(node, output, body, sourcePath);
+      rewriteIfLocalFetch(node, output, references, sourcePath);
     }
   });
 

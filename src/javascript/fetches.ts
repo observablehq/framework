@@ -1,4 +1,4 @@
-import type {CallExpression, Identifier, Node, Program} from "acorn";
+import type {CallExpression, Identifier, Node} from "acorn";
 import {simple} from "acorn-walk";
 import {type Feature, type JavaScriptNode} from "../javascript.js";
 import {type Sourcemap} from "../sourcemap.js";
@@ -9,7 +9,7 @@ import {isLocalImport} from "./imports.js";
 export function rewriteFetches(output: Sourcemap, rootNode: JavaScriptNode, sourcePath: string): void {
   simple(rootNode.body, {
     CallExpression(node) {
-      rewriteIfLocalFetch(node, output, rootNode, sourcePath);
+      rewriteIfLocalFetch(node, output, rootNode.references, sourcePath);
     }
   });
 }
@@ -17,10 +17,10 @@ export function rewriteFetches(output: Sourcemap, rootNode: JavaScriptNode, sour
 export function rewriteIfLocalFetch(
   node: CallExpression,
   output: Sourcemap,
-  rootNode: JavaScriptNode | Program,
+  references: Identifier[],
   sourcePath: string
 ) {
-  if (isLocalFetch(node, "references" in rootNode ? rootNode.references : [], sourcePath)) {
+  if (isLocalFetch(node, references, sourcePath)) {
     const arg = node.arguments[0];
     const value = getStringLiteralValue(arg);
     const path = resolvePath("_file", sourcePath, value);
@@ -28,7 +28,7 @@ export function rewriteIfLocalFetch(
   }
 }
 
-export function findFetches(body: Node, path: string) {
+export function findFetches(body: Node, references: Identifier[], path: string) {
   const fetches: Feature[] = [];
 
   simple(body, {CallExpression: findFetch}, undefined, path);
@@ -36,19 +36,19 @@ export function findFetches(body: Node, path: string) {
   // Promote fetches with static literals to file attachment references.
 
   function findFetch(node: CallExpression, sourcePath: string) {
-    fetches.push(...maybeExtractFetch(node, sourcePath));
+    fetches.push(...maybeExtractFetch(node, references, sourcePath));
   }
 
   return fetches;
 }
 
-export function maybeExtractFetch(node: CallExpression, sourcePath: string): Feature[] {
-  return isLocalFetch(node, [], sourcePath)
+export function maybeExtractFetch(node: CallExpression, references: Identifier[], sourcePath: string): Feature[] {
+  return isLocalFetch(node, references, sourcePath)
     ? [{type: "FileAttachment", name: getStringLiteralValue(node.arguments[0])}]
     : [];
 }
 
-export function isLocalFetch(node: CallExpression, references: Identifier[], sourcePath: string): boolean {
+function isLocalFetch(node: CallExpression, references: Identifier[], sourcePath: string): boolean {
   const {
     callee,
     arguments: [arg]
