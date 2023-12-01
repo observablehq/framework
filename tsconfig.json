@@ -4,7 +4,7 @@
   "_version": "18.1.0",
   "compilerOptions": {
     "noImplicitAny": false,
-    "lib": ["es2023"],
+    "lib": ["es2023", "DOM.Iterable"],
     "module": "node16",
     "target": "es2022",
     "strict": true,
