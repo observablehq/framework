@@ -128,7 +128,7 @@ export class PreviewServer {
         if (basename(path, ".html") === "index") {
           try {
             await stat(join(dirname(path), "index.md"));
-            res.writeHead(302, {Location: dirname(pathname) + "/" + url.search});
+            res.writeHead(302, {Location: join(dirname(pathname), "/") + url.search});
             res.end();
             return;
           } catch (error) {
