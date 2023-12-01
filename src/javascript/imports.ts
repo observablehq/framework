@@ -115,7 +115,7 @@ export function parseLocalImports(root: string, paths: string[]): ImportReferenc
 
 /** Rewrites import specifiers in the specified ES module source. */
 export function rewriteModule(input: string, sourcePath: string, resolver: ImportResolver): string {
-  const body = Parser.parse(input, parseOptions) as any;
+  const body = Parser.parse(input, parseOptions);
   const output = new Sourcemap(input);
 
   simple(body, {

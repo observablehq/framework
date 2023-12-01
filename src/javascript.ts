@@ -1,4 +1,5 @@
-import {type Identifier, type Node, type Options, Parser, tokTypes} from "acorn";
+import {Parser, tokTypes} from "acorn";
+import type {Expression, Identifier, Node, Options, Program} from "acorn";
 import {fileReference} from "./files.js";
 import {findAssignments} from "./javascript/assignments.js";
 import {findAwaits} from "./javascript/awaits.js";
@@ -131,12 +132,12 @@ function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
   if (expression?.type === "ClassExpression" && expression.id) expression = null; // treat named class as program
   if (expression?.type === "FunctionExpression" && expression.id) expression = null; // treat named function as program
   if (!expression && inline) throw new SyntaxError("invalid expression");
-  const body = expression ?? (Parser.parse(input, parseOptions) as any);
+  const body = expression ?? Parser.parse(input, parseOptions);
   const exports = findExports(body);
   if (exports.length) throw syntaxError("Unexpected token 'export'", exports[0], input); // disallow exports
   const references = findReferences(body, globals);
   findAssignments(body, references, globals, input);
-  const declarations = expression ? null : findDeclarations(body, globals, input);
+  const declarations = expression ? null : findDeclarations(body as Program, globals, input);
   const imports = findImports(body, root, sourcePath);
   const features = findFeatures(body, root, sourcePath, references, input);
   return {
@@ -152,11 +153,11 @@ function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
 
 // Parses a single expression; like parseExpressionAt, but returns null if
 // additional input follows the expression.
-function maybeParseExpression(input, options) {
+function maybeParseExpression(input: string, options: Options): Expression | null {
   const parser = new (Parser as any)(options, input, 0); // private constructor
   parser.nextToken();
   try {
-    const node = (parser as any).parseExpression();
+    const node = parser.parseExpression();
     return parser.type === tokTypes.eof ? node : null;
   } catch {
     return null;
