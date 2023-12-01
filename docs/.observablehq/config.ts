@@ -7,6 +7,7 @@ export default {
     {name: "Data loaders", path: "/loaders"},
     {
       name: "JavaScript",
+      open: false,
       pages: [
         {name: "Reactivity", path: "/javascript/reactivity"},
         {name: "Display", path: "/javascript/display"},
@@ -21,6 +22,7 @@ export default {
     },
     {
       name: "Features",
+      open: false,
       pages: [
         {name: "HTML", path: "/html"},
         {name: "DOT", path: "/dot"},
