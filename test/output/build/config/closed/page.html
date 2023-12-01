@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Two</title>
+<title>A page…</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="../_observablehq/style.css">
@@ -21,11 +21,11 @@ import {define} from "../_observablehq/client.js";
   <ol>
     <li class="observablehq-link"><a href="../">Index</a></li>
     <li class="observablehq-link"><a href="../one">One&lt;Two</a></li>
-    <li class="observablehq-link observablehq-link-active"><a href="./two">Two</a></li></ol>
-    <details>
+    <li class="observablehq-link"><a href="../sub/two">Two</a></li></ol>
+    <details open>
       <summary>Closed subsection</summary>
       <ol>
-    <li class="observablehq-link"><a href="../closed/page">Closed page</a></li>
+    <li class="observablehq-link observablehq-link-active"><a href="./page">Closed page</a></li>
       </ol>
     </details>
   </ol>
@@ -38,10 +38,11 @@ import {define} from "../_observablehq/client.js";
 }</script>
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
-<h1 id="two" tabindex="-1"><a class="observablehq-header-anchor" href="#two">Two</a></h1>
+<h1 id="a-page%E2%80%A6" tabindex="-1"><a class="observablehq-header-anchor" href="#a-page%E2%80%A6">A page…</a></h1>
+<p>in a closed subsection.</p>
 </main>
 <footer id="observablehq-footer">
-<nav><a rel="prev" href="../one"><span>One&lt;Two</span></a><a rel="next" href="../closed/page"><span>Closed page</span></a></nav>
+<nav><a rel="prev" href="../sub/two"><span>Two</span></a></nav>
 <div>© 2023 Observable, Inc.</div>
 </footer>
 </div>

@@ -9,7 +9,8 @@ describe("readConfig(root)", () => {
       pages: [
         {path: "/index", name: "Index"},
         {path: "/one", name: "One<Two"},
-        {path: "/sub/two", name: "Two"}
+        {name: "Two", path: "/sub/two"},
+        {name: "Closed subsection", open: false, pages: [{name: "Closed page", path: "/closed/page"}]}
       ],
       title: undefined,
       toc: {label: "On this page", show: true},
@@ -41,6 +42,7 @@ describe("normalizeConfig(spec, root)", () => {
       {name: "One", path: "/one"},
       {name: "H1: Section", path: "/toc-override"},
       {name: "H1: Section", path: "/toc"},
+      {name: "A page…", path: "/closed/page"},
       {name: "Two", path: "/sub/two"}
     ]);
   });

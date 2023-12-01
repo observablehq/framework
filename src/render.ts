@@ -99,7 +99,7 @@ function renderSidebar(title = "Home", pages: (Page | Section)[], path: string):
   <ol>${pages.map((p, i) =>
     "pages" in p
       ? html`${i > 0 && "path" in pages[i - 1] ? html`</ol>` : ""}
-    <details${p.open ? " open" : ""}>
+    <details${p.open || p.pages.some((page) => page.path === path) ? " open" : ""}>
       <summary>${p.name}</summary>
       <ol>${p.pages.map((p) => renderListItem(p, path))}
       </ol>
