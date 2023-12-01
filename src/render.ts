@@ -125,7 +125,6 @@ function renderSidebar(title = "Home", pages: (Page | Section)[], path: string):
       break;
   }
 }
-
 }</script>`;
 }
 
