@@ -58,8 +58,12 @@ describe("data loaders optionally use a stale cache", () => {
     // set the loader mtime to Dec. 1st, 2023.
     const time = Date.UTC(2023, 11, 1) / 1000;
     await utimes(loader.path, atime, time);
-    // remove the cache which might have been set by another test.
-    await unlink("test/.observablehq/cache/dataloaders/data1.txt");
+    // remove the cache set by another test (unless we it.only this test).
+    try {
+      await unlink("test/.observablehq/cache/dataloaders/data1.txt");
+    } catch {
+      // ignore;
+    }
     // populate the cache (missing)
     await loader.load(outputEffects);
     // run again (fresh)
