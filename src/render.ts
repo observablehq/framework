@@ -115,6 +115,17 @@ function renderSidebar(title = "Home", pages: (Page | Section)[], path: string):
   const initialState = localStorage.getItem("observablehq-sidebar");
   if (initialState) toggle.checked = initialState === "true";
   else toggle.indeterminate = true;
+  for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
+  switch (localStorage.getItem(\`observablehq-sidebar-\${summary.textContent}\`)) {
+    case "true":
+      summary.parentElement.setAttribute("open", "open");
+      break;
+    case "false":
+      summary.parentElement.removeAttribute("open");
+      break;
+  }
+}
+
 }</script>`;
 }
 

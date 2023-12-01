@@ -25,14 +25,4 @@ function toggleDetails(event) {
   localStorage.setItem(`observablehq-sidebar-${event.target.textContent}`, String(!event.target.parentElement.open));
 }
 
-for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
-  summary.onmousedown = toggleDetails;
-  switch (localStorage.getItem(`observablehq-sidebar-${summary.textContent}`)) {
-    case "true":
-      summary.parentElement.setAttribute("open", "open");
-      break;
-    case "false":
-      summary.parentElement.removeAttribute("open");
-      break;
-  }
-}
+for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) summary.onmousedown = toggleDetails;
