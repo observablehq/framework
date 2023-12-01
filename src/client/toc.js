@@ -2,9 +2,7 @@ const toc = document.querySelector("#observablehq-toc");
 if (toc) {
   const highlight = toc.appendChild(document.createElement("div"));
   highlight.classList.add("observablehq-secondary-link-highlight");
-  const headings = Array.from(
-    document.querySelectorAll("#observablehq-main h1:not(:first-of-type), #observablehq-main h2:not(h1 + h2)")
-  ).reverse();
+  const headings = Array.from(document.querySelectorAll(toc.dataset.selector)).reverse();
   const links = toc.querySelectorAll(".observablehq-secondary-link");
   const relink = () => {
     for (const link of links) {
