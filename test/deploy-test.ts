@@ -229,7 +229,6 @@ describe("deploy", () => {
       await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
       fail("Should have thrown an error");
     } catch (error) {
-      console.log(error);
       assert.ok(isHttpError(error));
       assert.equal(error.statusCode, 500);
     }
