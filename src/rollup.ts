@@ -17,7 +17,7 @@ export async function rollupClient(clientPath = getClientPath(), {minify = false
             : null;
         }
       },
-      (esbuild as any)({minify})
+      esbuild({minify})
     ]
   });
   try {
