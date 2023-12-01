@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>A title</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
+<link rel="stylesheet" type="text/css" href="./_observablehq/style.css">
+<link rel="modulepreload" href="./_observablehq/runtime.js">
+<script type="module">
+
+import {define} from "./_observablehq/client.js";
+
+
+</script>
+<input id="observablehq-sidebar-toggle" type="checkbox">
+<label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
+<nav id="observablehq-sidebar">
+  <ol>
+    <li class="observablehq-link observablehq-link-active"><a href="./">Home</a></li>
+  </ol>
+  <ol>
+    <li class="observablehq-link observablehq-link-active"><a href="./">A title</a></li>
+  </ol>
+</nav>
+<script>{
+  const toggle = document.querySelector("#observablehq-sidebar-toggle");
+  const initialState = localStorage.getItem("observablehq-sidebar");
+  if (initialState) toggle.checked = initialState === "true";
+  else toggle.indeterminate = true;
+}</script>
+<aside id="observablehq-toc">
+<nav>
+<div>Contents</div>
+<ol>
+<li class="observablehq-secondary-link"><a href="#first-section">First section</a></li>
+<li class="observablehq-secondary-link"><a href="#second-section">Second section</a></li>
+<li class="observablehq-secondary-link"><a href="#an-intermediate-h1">An intermediate H1</a></li>
+<li class="observablehq-secondary-link"><a href="#third-section">Third section</a></li>
+</ol>
+</nav>
+</aside>
+<div id="observablehq-center">
+<main id="observablehq-main" class="observablehq">
+<h1 id="a-title" tabindex="-1"><a class="observablehq-header-anchor" href="#a-title">A title</a></h1>
+<h2 id="a-subtitle" tabindex="-1"><a class="observablehq-header-anchor" href="#a-subtitle">A subtitle</a></h2>
+<p>The subtitle is not part of the TOC.</p>
+<h2 id="first-section" tabindex="-1"><a class="observablehq-header-anchor" href="#first-section">First section</a></h2>
+<p>The first section is part of the TOC.</p>
+<h2 id="second-section" tabindex="-1"><a class="observablehq-header-anchor" href="#second-section">Second section</a></h2>
+<p>The second section is also part of the TOC.</p>
+<h1 id="an-intermediate-h1" tabindex="-1"><a class="observablehq-header-anchor" href="#an-intermediate-h1">An intermediate H1</a></h1>
+<h2 id="with-its-own-subtitle" tabindex="-1"><a class="observablehq-header-anchor" href="#with-its-own-subtitle">With its own subtitle</a></h2>
+<p>Not part of the TOC either.</p>
+<h2 id="third-section" tabindex="-1"><a class="observablehq-header-anchor" href="#third-section">Third section</a></h2>
+<p>The third section is part of the TOC.</p>
+</main>
+<footer id="observablehq-footer">
+<div>© 2023 Observable, Inc.</div>
+</footer>
+</div>

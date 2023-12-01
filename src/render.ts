@@ -124,7 +124,7 @@ interface Header {
 }
 
 function findHeaders(parseResult: ParseResult): Header[] {
-  return Array.from(parseHTML(parseResult.html).document.querySelectorAll("h2"))
+  return Array.from(parseHTML(parseResult.html).document.querySelectorAll("h1:not(:first-of-type), h2:not(h1 + h2)"))
     .map((node) => ({label: node.textContent, href: node.firstElementChild?.getAttribute("href")}))
     .filter((d): d is Header => !!d.label && !!d.href);
 }
