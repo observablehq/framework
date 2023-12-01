@@ -39,16 +39,21 @@ export function findFetches(body: Node, path: string) {
   // Promote fetches with static literals to file attachment references.
 
   function findFetch(node: CallExpression, sourcePath: string) {
-    fetches.push(...maybeExtractFetch(node, references, sourcePath));
+    maybeAddFetch(fetches, node, references, sourcePath);
   }
 
   return fetches;
 }
 
-export function maybeExtractFetch(node: CallExpression, references: Identifier[], sourcePath: string): Feature[] {
-  return isLocalFetch(node, references, sourcePath)
-    ? [{type: "FileAttachment", name: getStringLiteralValue(node.arguments[0])}]
-    : [];
+export function maybeAddFetch(
+  features: Feature[],
+  node: CallExpression,
+  references: Identifier[],
+  sourcePath: string
+): void {
+  if (isLocalFetch(node, references, sourcePath)) {
+    features.push({type: "FileAttachment", name: getStringLiteralValue(node.arguments[0])});
+  }
 }
 
 function isLocalFetch(node: CallExpression, references: Identifier[], sourcePath: string): boolean {

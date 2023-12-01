@@ -19,7 +19,7 @@ import {parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
 import {relativeUrl, resolvePath} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
-import {findFetches, maybeExtractFetch, rewriteIfLocalFetch} from "./fetches.js";
+import {findFetches, maybeAddFetch, rewriteIfLocalFetch} from "./fetches.js";
 import {defaultGlobals} from "./globals.js";
 import {findReferences} from "./references.js";
 
@@ -77,7 +77,7 @@ export function findImports(body: Node, root: string, path: string): ImportsAndF
   }
 
   function findFetch(node) {
-    fetches.push(...maybeExtractFetch(node, references, path));
+    maybeAddFetch(fetches, node, references, path);
   }
 
   // Recursively process any imported local ES modules.
