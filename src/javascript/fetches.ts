@@ -56,7 +56,6 @@ function isLocalFetch(node: CallExpression, references: Identifier[], sourcePath
     callee,
     arguments: [arg]
   } = node;
-
   return (
     callee.type === "Identifier" &&
     callee.name === "fetch" &&
