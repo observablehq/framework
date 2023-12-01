@@ -45,7 +45,6 @@
   },
   "dependencies": {
     "@observablehq/runtime": "^5.9.4",
-    "@rollup/plugin-terser": "^0.4.4",
     "acorn": "^8.11.2",
     "acorn-walk": "^8.3.0",
     "fast-array-diff": "^1.1.0",
@@ -60,6 +59,7 @@
     "mime": "^3.0.0",
     "open": "^9.1.0",
     "rollup": "^4.6.0",
+    "rollup-plugin-esbuild": "^6.1.0",
     "send": "^0.18.0",
     "tar-stream": "^3.1.6",
     "tsx": "^3.13.0",
