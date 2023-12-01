@@ -62,13 +62,7 @@ ${
         .filter((title): title is string => !!title)
         .join(" | ")}</title>\n`
     : ""
-}<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
-<link rel="stylesheet" type="text/css" href="${relativeUrl(path, "/_observablehq/style.css")}">${renderImportPreloads(
-    parseResult,
-    path,
-    createImportResolver(root, "_import")
-  )}
+}${renderLinks(parseResult, path, createImportResolver(root, "_import"))}
 <script type="module">${html.unsafe(`
 
 import {${preview ? "open, " : ""}define} from ${JSON.stringify(relativeUrl(path, "/_observablehq/client.js"))};
@@ -156,25 +150,43 @@ function prettyPath(path: string): string {
   return path.replace(/\/index$/, "/") || "/";
 }
 
-function renderImportPreloads(parseResult: ParseResult, path: string, resolver: ImportResolver): Html {
-  const specifiers = new Set<string>(["npm:@observablehq/runtime"]);
+function renderLinks(parseResult: ParseResult, path: string, resolver: ImportResolver): Html {
+  const stylesheets = new Set<string>([relativeUrl(path, "/_observablehq/style.css"), "https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"]); // prettier-ignore
+  const specifiers = new Set<string>(["npm:@observablehq/runtime", "npm:@observablehq/stdlib"]);
   for (const {name} of parseResult.imports) specifiers.add(name);
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
   if (inputs.has("d3") || inputs.has("Plot")) specifiers.add("npm:d3");
   if (inputs.has("Plot")) specifiers.add("npm:@observablehq/plot");
   if (inputs.has("htl") || inputs.has("html") || inputs.has("svg") || inputs.has("Inputs")) specifiers.add("npm:htl");
   if (inputs.has("Inputs")) specifiers.add("npm:@observablehq/inputs");
-  if (inputs.has("dot")) specifiers.add("npm:@viz-js/viz");
-  if (inputs.has("mermaid")) specifiers.add("npm:mermaid").add("npm:d3");
-  if (inputs.has("tex")) specifiers.add("npm:katex");
+  if (inputs.has("dot")) specifiers.add("npm:@observablehq/dot").add("npm:@viz-js/viz");
+  if (inputs.has("_")) specifiers.add("npm:lodash");
+  if (inputs.has("aq")) specifiers.add("npm:arquero");
+  if (inputs.has("Arrow")) specifiers.add("npm:apache-arrow");
+  if (inputs.has("L")) specifiers.add("npm:leaflet");
+  if (inputs.has("mermaid")) specifiers.add("npm:@observablehq/mermaid").add("npm:mermaid").add("npm:d3");
+  if (inputs.has("SQLite")) specifiers.add("npm:sql.js");
+  if (inputs.has("tex")) specifiers.add("npm:@observablehq/tex").add("npm:katex");
+  if (inputs.has("topojson")) specifiers.add("npm:topojson-client");
+  if (specifiers.has("npm:katex")) stylesheets.add("https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css");
+  if (specifiers.has("npm:@observablehq/inputs")) stylesheets.add("https://cdn.jsdelivr.net/gh/observablehq/inputs/src/style.css"); // prettier-ignore
+  if (specifiers.has("npm:leaflet")) stylesheets.add("https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.css");
   const preloads = new Set<string>();
-  for (const specifier of specifiers) {
-    preloads.add(resolver(path, specifier));
-  }
-  if (parseResult.cells.some((cell) => cell.databases?.length)) {
-    preloads.add(relativeUrl(path, "/_observablehq/database.js"));
-  }
-  return html`${Array.from(preloads, (href) => html`\n<link rel="modulepreload" href="${href}">`)}`;
+  for (const specifier of specifiers) preloads.add(resolver(path, specifier));
+  if (parseResult.cells.some((cell) => cell.databases?.length)) preloads.add(relativeUrl(path, "/_observablehq/database.js")); // prettier-ignore
+  return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
+    Array.from(stylesheets).sort().map(renderStylesheet) // <link rel=stylesheet>
+  }${
+    Array.from(preloads).sort().map(renderModulePreload) // <link rel=modulepreload>
+  }`;
+}
+
+function renderStylesheet(href: string): Html {
+  return html`\n<link rel="stylesheet" type="text/css" href="${href}"${/^\w+:/.test(href) ? " crossorigin" : ""}>`;
+}
+
+function renderModulePreload(href: string): Html {
+  return html`\n<link rel="modulepreload" href="${href}">`;
 }
 
 function renderFooter(path: string, options: Pick<Config, "pages" | "pager" | "title">): Html {
