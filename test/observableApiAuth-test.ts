@@ -1,5 +1,6 @@
 import assert from "node:assert";
-import {type CommandEffects, login, whoami} from "../src/auth.js";
+import type {Logger} from "../src/logger.js";
+import {type CommandEffects, commandRequiresAuthenticationMessage, login, whoami} from "../src/observableApiAuth.js";
 import {MockLogger} from "./mocks/logger.js";
 import {ObservableApiMock} from "./mocks/observableApi.js";
 
@@ -43,10 +44,16 @@ describe("login command", () => {
 });
 
 describe("whoami command", () => {
-  it("works when there is no API key", async () => {
+  it("errors when there is no API key", async () => {
     const effects = new MockEffects({apiKey: null});
-    await whoami(effects);
-    effects.logger.assertExactLogs([/^You need to be authenticated/]);
+    try {
+      await whoami(effects);
+      assert.fail("error expected");
+    } catch (err) {
+      if (!(err instanceof Error)) throw err;
+      assert.equal(err.message, "no key available in this test");
+      effects.logger.assertExactLogs([/^You need to be authenticated/]);
+    }
   });
 
   it("works when there is an API key that is invalid", async () => {
@@ -94,8 +101,12 @@ class MockEffects implements CommandEffects {
     this._observableApiKey = apiKey;
   }
 
-  getObservableApiKey() {
-    return Promise.resolve(this._observableApiKey);
+  getObservableApiKey(logger: Logger) {
+    if (!this._observableApiKey) {
+      logger.log(commandRequiresAuthenticationMessage);
+      throw new Error("no key available in this test");
+    }
+    return Promise.resolve({source: "test" as const, key: this._observableApiKey});
   }
   isatty() {
     return true;

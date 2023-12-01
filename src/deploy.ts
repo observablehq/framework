@@ -1,18 +1,22 @@
 import readline from "node:readline/promises";
-import {commandRequiresAuthenticationMessage} from "./auth.js";
 import type {BuildEffects} from "./build.js";
 import {build} from "./build.js";
 import type {Logger, Writer} from "./logger.js";
 import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
-import type {DeployConfig} from "./observableApiConfig.js";
-import {getDeployConfig, getObservableApiKey, setDeployConfig} from "./observableApiConfig.js";
+import {
+  type ApiKey,
+  type DeployConfig,
+  getDeployConfig,
+  getObservableApiKey,
+  setDeployConfig
+} from "./observableApiConfig.js";
 
 export interface DeployOptions {
   sourceRoot: string;
 }
 
 export interface DeployEffects {
-  getObservableApiKey: () => Promise<string | null>;
+  getObservableApiKey: (logger: Logger) => Promise<ApiKey>;
   getDeployConfig: (sourceRoot: string) => Promise<DeployConfig | null>;
   setDeployConfig: (sourceRoot: string, config: DeployConfig) => Promise<void>;
   logger: Logger;
@@ -31,13 +35,12 @@ const defaultEffects: DeployEffects = {
 
 /** Deploy a project to ObservableHQ */
 export async function deploy({sourceRoot}: DeployOptions, effects = defaultEffects): Promise<void> {
-  const apiKey = await effects.getObservableApiKey();
   const {logger} = effects;
-  if (!apiKey) {
-    logger.log(commandRequiresAuthenticationMessage);
-    return;
-  }
-  const apiClient = new ObservableApiClient({apiKey, logger});
+  const apiKey = await effects.getObservableApiKey(logger);
+  const apiClient = new ObservableApiClient({
+    apiKey,
+    logger
+  });
 
   // Find the existing project or create a new one.
   const deployConfig = await effects.getDeployConfig(sourceRoot);
