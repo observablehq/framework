@@ -17,13 +17,22 @@ if (toggle) {
   });
 }
 
-// Prevent double-clicking the summary toggle from selecting text.
-function preventDoubleClick(event) {
+function toggleDetails(event) {
+  // Prevent double-clicking the summary toggle from selecting text.
   if (event.detail > 1) {
     event.preventDefault();
   }
+  localStorage.setItem(`observablehq-sidebar-${event.target.textContent}`, String(!event.target.parentElement.open));
 }
 
 for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
-  summary.onmousedown = preventDoubleClick;
+  summary.onmousedown = toggleDetails;
+  switch (localStorage.getItem(`observablehq-sidebar-${summary.textContent}`)) {
+    case "true":
+      summary.parentElement.setAttribute("open", "open");
+      break;
+    case "false":
+      summary.parentElement.removeAttribute("open");
+      break;
+  }
 }
