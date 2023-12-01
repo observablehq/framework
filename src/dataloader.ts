@@ -35,6 +35,7 @@ export interface LoaderOptions {
   path: string;
   sourceRoot: string;
   targetPath: string;
+  useStale: boolean;
 }
 
 export abstract class Loader {
@@ -57,10 +58,16 @@ export abstract class Loader {
    */
   readonly targetPath: string;
 
-  constructor({path, sourceRoot, targetPath}: LoaderOptions) {
+  /**
+   * Should the loader use a stale cache. true when building.
+   */
+  readonly useStale?: boolean;
+
+  constructor({path, sourceRoot, targetPath, useStale}: LoaderOptions) {
     this.path = path;
     this.sourceRoot = sourceRoot;
     this.targetPath = targetPath;
+    this.useStale = useStale;
   }
 
   /**
@@ -70,8 +77,8 @@ export abstract class Loader {
    * abort if we find a matching folder or reach the source root; for example,
    * if docs/data exists, we won’t look for a docs/data.zip.
    */
-  static find(sourceRoot: string, targetPath: string): Loader | undefined {
-    const exact = this.findExact(sourceRoot, targetPath);
+  static find(sourceRoot: string, targetPath: string, {useStale = false} = {}): Loader | undefined {
+    const exact = this.findExact(sourceRoot, targetPath, {useStale});
     if (exact) return exact;
     let dir = dirname(targetPath);
     for (let parent: string; true; dir = parent) {
@@ -88,23 +95,25 @@ export abstract class Loader {
           inflatePath: targetPath.slice(archive.length - ext.length + 1),
           path: join(sourceRoot, archive),
           sourceRoot,
-          targetPath
+          targetPath,
+          useStale
         });
       }
-      const archiveLoader = this.findExact(sourceRoot, archive);
+      const archiveLoader = this.findExact(sourceRoot, archive, {useStale});
       if (archiveLoader) {
         return new Extractor({
           preload: async (options) => archiveLoader.load(options),
           inflatePath: targetPath.slice(archive.length - ext.length + 1),
           path: archiveLoader.path,
           sourceRoot,
-          targetPath
+          targetPath,
+          useStale
         });
       }
     }
   }
 
-  private static findExact(sourceRoot: string, targetPath: string): Loader | undefined {
+  private static findExact(sourceRoot: string, targetPath: string, {useStale}): Loader | undefined {
     for (const [ext, [command, ...args]] of Object.entries(languages)) {
       if (!existsSync(join(sourceRoot, targetPath + ext))) continue;
       if (extname(targetPath) === "") {
@@ -117,7 +126,8 @@ export abstract class Loader {
         args: command == null ? args : [...args, path],
         path,
         sourceRoot,
-        targetPath
+        targetPath,
+        useStale
       });
     }
   }
@@ -127,6 +137,7 @@ export abstract class Loader {
    * to the source root; this is within the .observablehq/cache folder within
    * the source root.
    */
+
   async load(effects = defaultEffects): Promise<string> {
     const key = join(this.sourceRoot, this.targetPath);
     let command = runningCommands.get(key);
@@ -137,8 +148,10 @@ export abstract class Loader {
         const loaderStat = await maybeStat(this.path);
         const cacheStat = await maybeStat(cachePath);
         if (!cacheStat) effects.output.write(faint("[missing] "));
-        else if (cacheStat.mtimeMs < loaderStat!.mtimeMs) effects.output.write(faint("[stale] "));
-        else return effects.output.write(faint("[fresh] ")), outputPath;
+        else if (cacheStat.mtimeMs < loaderStat!.mtimeMs) {
+          if (this.useStale) return effects.output.write(faint("[using stale] ")), outputPath;
+          else effects.output.write(faint("[stale] "));
+        } else return effects.output.write(faint("[fresh] ")), outputPath;
         const tempPath = join(this.sourceRoot, ".observablehq", "cache", `${this.targetPath}.${process.pid}`);
         await prepareOutput(tempPath);
         const tempFd = await open(tempPath, "w");
