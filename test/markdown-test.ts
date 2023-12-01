@@ -113,6 +113,47 @@ describe("normalizePieceHtml adds local file attachments", () => {
     ]);
   });
 
+  it("img[srcset] handles local paths", () => {
+    const htmlStr = html`
+    <img
+      srcset="small.jpg 480w, large.jpg 800w"
+      sizes="(max-width: 600px) 480px,
+            800px"
+      src="./large.jpg"
+      alt="Image for testing"
+    />
+  `;
+    const expected = html`
+    <img srcset="./_file/small.jpg 480w, ./_file/large.jpg 800w" sizes="(max-width: 600px) 480px,
+            800px" src="./_file/large.jpg" alt="Image for testing">
+  `;
+    const context = mockContext();
+    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
+
+    assert.equal(actual, expected);
+    assert.deepStrictEqual(
+      context.files,
+      [
+        {
+          mimeType: "image/jpeg",
+          name: "./large.jpg",
+          path: "./_file/large.jpg"
+        },
+        {
+          mimeType: "image/jpeg",
+          name: "small.jpg",
+          path: "./_file/small.jpg"
+        },
+        {
+          mimeType: "image/jpeg",
+          name: "large.jpg",
+          path: "./_file/large.jpg"
+        }
+      ],
+      "./large.jpg and large.jpg have different names"
+    );
+  });
+
   it("video[src]", () => {
     const htmlStr = html`<video src="observable.mov" controls>
       Your browser doesn't support HTML video.

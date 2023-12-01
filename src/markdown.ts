@@ -338,7 +338,7 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
   const {document} = parseHTML(html);
 
   // Extracting references to files (such as from linked stylesheets).
-  const filePaths = new Set<FileReference["path"]>();
+  const files = new Set<string>();
   for (const {query, src} of SUPPORTED_PROPERTIES) {
     for (const element of document.querySelectorAll(query)) {
       if (src === "srcset") {
@@ -353,8 +353,8 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
               const path = getLocalPath(sourcePath, source);
               if (path) {
                 const file = fileReference(source, sourcePath);
-                if (!filePaths.has(file.path)) {
-                  filePaths.add(file.path);
+                if (!files.has(`${file.path}+${file.name}`)) {
+                  files.add(`${file.path}+${file.name}`);
                   context.files.push(file);
                 }
                 return `${file.path} ${parts.slice(1).join(" ")}`.trim();
@@ -368,8 +368,8 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
         const path = getLocalPath(sourcePath, source!);
         if (path) {
           const file = fileReference(source!, sourcePath);
-          if (!filePaths.has(file.path)) {
-            filePaths.add(file.path);
+          if (!files.has(`${file.path}+${file.name}`)) {
+            files.add(`${file.path}+${file.name}`);
             context.files.push(file);
           }
           element.setAttribute(src, file.path);
