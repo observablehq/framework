@@ -11,7 +11,7 @@ const testServerOptions: PreviewOptions = {
   root: testHostRoot,
   hostname: testHostName,
   port: testPort,
-  verbose: true
+  verbose: false
 };
 
 const testServerUrl = `http://${testHostName}:${testPort}`;
@@ -30,7 +30,6 @@ describe("preview server", () => {
 
   it("should start a server", async () => {
     const res = await chai.request(testServerUrl).get("/");
-
     expect(res).to.have.status(200);
     assert.ok(res.text);
   });

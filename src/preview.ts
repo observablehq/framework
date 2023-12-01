@@ -38,10 +38,15 @@ export class PreviewServer {
   private readonly _server: ReturnType<typeof createServer>;
   private readonly _socketServer: WebSocketServer;
   private readonly _resolver: CellResolver;
+  private readonly _verbose: boolean;
   readonly root: string;
 
-  private constructor({server, root}: {server: Server; root: string}, resolver: CellResolver) {
+  private constructor(
+    {server, root, verbose}: {server: Server; root: string; verbose: boolean},
+    resolver: CellResolver
+  ) {
     this.root = root;
+    this._verbose = verbose;
     this._server = server;
     this._server.on("request", this._handleRequest);
     this._socketServer = new WebSocketServer({server: this._server});
@@ -71,11 +76,11 @@ export class PreviewServer {
       console.log(`${faint("↳")} ${underline(`http://${hostname}:${port}/`)}`);
       console.log("");
     }
-    return new PreviewServer({server, ...options}, await makeCLIResolver());
+    return new PreviewServer({server, verbose, ...options}, await makeCLIResolver());
   }
 
   _handleRequest: RequestListener = async (req, res) => {
-    console.log(faint(req.method!), req.url);
+    if (this._verbose) console.log(faint(req.method!), req.url);
     try {
       const url = new URL(req.url!, "http://localhost");
       let {pathname} = url;
@@ -92,7 +97,7 @@ export class PreviewServer {
           js = await readFile(join(this.root, file), "utf-8");
         } catch (error) {
           if (!isEnoent(error)) throw error;
-          throw new HttpError("Not found", 404);
+          throw new HttpError(`Not found: ${pathname}`, 404);
         }
         end(req, res, rewriteModule(js, file, createImportResolver(this.root)), "text/javascript");
       } else if (pathname.startsWith("/_file/")) {
@@ -116,7 +121,7 @@ export class PreviewServer {
             if (!isEnoent(error)) throw error;
           }
         }
-        throw new HttpError("Not found", 404);
+        throw new HttpError(`Not found: ${pathname}`, 404);
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
         let path = join(this.root, pathname);
@@ -180,8 +185,12 @@ export class PreviewServer {
         }
       }
     } catch (error) {
-      console.error(error);
-      res.statusCode = isHttpError(error) ? error.statusCode : 500;
+      if (isHttpError(error)) {
+        res.statusCode = error.statusCode;
+      } else {
+        res.statusCode = 500;
+        console.error(error);
+      }
       if (req.method === "GET" && res.statusCode === 404) {
         try {
           const config = await readConfig(this.root);
