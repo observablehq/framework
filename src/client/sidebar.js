@@ -22,7 +22,7 @@ function toggleDetails(event) {
   if (event.detail > 1) {
     event.preventDefault();
   }
-  localStorage.setItem(`observablehq-sidebar-${event.target.textContent}`, String(!event.target.parentElement.open));
+  localStorage.setItem(`observablehq-sidebar-${this.textContent}`, String(!this.parentElement.open));
 }
 
 for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) summary.onmousedown = toggleDetails;
