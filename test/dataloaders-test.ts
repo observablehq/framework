@@ -71,7 +71,7 @@ describe("data loaders optionally use a stale cache", () => {
     // touch the loader
     await utimes(loader.path, atime, Date.now() + 100);
     // run it with useStale=true (using stale)
-    const loader2 = Loader.find("test", "dataloaders/data1.txt", true)!;
+    const loader2 = Loader.find("test", "dataloaders/data1.txt", {useStale: true})!;
     await loader2.load(outputEffects);
     // run it with useStale=false (stale)
     await loader.load(outputEffects);

@@ -77,8 +77,8 @@ export abstract class Loader {
    * abort if we find a matching folder or reach the source root; for example,
    * if docs/data exists, we won’t look for a docs/data.zip.
    */
-  static find(sourceRoot: string, targetPath: string, useStale = false): Loader | undefined {
-    const exact = this.findExact(sourceRoot, targetPath, useStale);
+  static find(sourceRoot: string, targetPath: string, {useStale = false} = {}): Loader | undefined {
+    const exact = this.findExact(sourceRoot, targetPath, {useStale});
     if (exact) return exact;
     let dir = dirname(targetPath);
     for (let parent: string; true; dir = parent) {
@@ -99,7 +99,7 @@ export abstract class Loader {
           useStale
         });
       }
-      const archiveLoader = this.findExact(sourceRoot, archive, useStale);
+      const archiveLoader = this.findExact(sourceRoot, archive, {useStale});
       if (archiveLoader) {
         return new Extractor({
           preload: async (options) => archiveLoader.load(options),
@@ -113,7 +113,7 @@ export abstract class Loader {
     }
   }
 
-  private static findExact(sourceRoot: string, targetPath: string, useStale: boolean): Loader | undefined {
+  private static findExact(sourceRoot: string, targetPath: string, {useStale}): Loader | undefined {
     for (const [ext, [command, ...args]] of Object.entries(languages)) {
       if (!existsSync(join(sourceRoot, targetPath + ext))) continue;
       if (extname(targetPath) === "") {
