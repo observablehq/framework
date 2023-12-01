@@ -136,8 +136,7 @@ export class PreviewServer {
     if (basename(path, ".html") === "index") {
       try {
         await stat(join(dirname(path), "index.md"));
-        const redirectPath = dirname(pathname);
-        res.writeHead(302, {Location: redirectPath + redirectPath === "/" ? "" : "/" + url.search});
+        res.writeHead(302, {Location: join(dirname(pathname), "/") + url.search});
         res.end();
         return;
       } catch (error) {
@@ -164,18 +163,11 @@ export class PreviewServer {
       if (!isEnoent(error)) throw error; // internal error
     }
 
-    // If this path ends with .html, then redirect to drop the .html
+    // If this path ends with .html, then redirect to drop the .html.
     if (extname(path) === ".html") {
-      try {
-        const markdownPath = join(dirname(path), basename(path, ".html")) + ".md";
-        (await stat(markdownPath)).isFile();
-        res.writeHead(302, {Location: join(dirname(pathname), basename(pathname, ".html")) + url.search});
-        res.end();
-        return;
-      } catch (error) {
-        if (!isEnoent(error)) throw error; // internal error
-        throw new HttpError("Not found", 404);
-      }
+      res.writeHead(302, {Location: join(dirname(pathname), basename(pathname, ".html")) + url.search});
+      res.end();
+      return;
     }
 
     // Otherwise, serve the corresponding Markdown file, if it exists.
@@ -185,7 +177,6 @@ export class PreviewServer {
       const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {
         root: this.root,
         path: pathname,
-        resolver: this._resolver,
         ...config
       });
       end(req, res, html, "text/html");
@@ -199,7 +190,7 @@ export class PreviewServer {
     if (this._verbose) console.log(faint(req.method!), req.url);
     try {
       const url = new URL(req.url!, "http://localhost");
-      let {pathname} = url;
+      const {pathname} = url;
       if (pathname.startsWith("/_observablehq/")) {
         await this.#_handleObservableModuleRequest(req, res, pathname);
       } else if (pathname.startsWith("/_import/")) {
@@ -207,65 +198,7 @@ export class PreviewServer {
       } else if (pathname.startsWith("/_file/")) {
         await this.#_handleFileRequest(req, res, pathname);
       } else {
-        if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
-        let path = join(this.root, pathname);
-
-        // If this path is for /index, redirect to the parent directory for a
-        // tidy path. (This must be done before implicitly adding /index below!)
-        // Respect precedence of dir/index.md over dir.md in choosing between
-        // dir/ and dir!
-        if (basename(path, ".html") === "index") {
-          try {
-            await stat(join(dirname(path), "index.md"));
-            res.writeHead(302, {Location: join(dirname(pathname), "/") + url.search});
-            res.end();
-            return;
-          } catch (error) {
-            if (!isEnoent(error)) throw error;
-            res.writeHead(302, {Location: dirname(pathname) + url.search});
-            res.end();
-            return;
-          }
-        }
-
-        // If this path resolves to a directory, then add an implicit /index to
-        // the end of the path, assuming that the corresponding index.md exists.
-        try {
-          if ((await stat(path)).isDirectory() && (await stat(join(path, "index.md"))).isFile()) {
-            if (!pathname.endsWith("/")) {
-              res.writeHead(302, {Location: pathname + "/" + url.search});
-              res.end();
-              return;
-            }
-            pathname = join(pathname, "index");
-            path = join(path, "index");
-          }
-        } catch (error) {
-          if (!isEnoent(error)) throw error; // internal error
-        }
-
-        // If this path ends with .html, then redirect to drop the .html. TODO:
-        // Check for the existence of the .md file first.
-        if (extname(path) === ".html") {
-          res.writeHead(302, {Location: join(dirname(pathname), basename(pathname, ".html")) + url.search});
-          res.end();
-          return;
-        }
-
-        // Otherwise, serve the corresponding Markdown file, if it exists.
-        // Anything else should 404; static files should be matched above.
-        try {
-          const config = await readConfig(this.root);
-          const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {
-            root: this.root,
-            path: pathname,
-            ...config
-          });
-          end(req, res, html, "text/html");
-        } catch (error) {
-          if (!isEnoent(error)) throw error; // internal error
-          throw new HttpError("Not found", 404);
-        }
+        await this.#_handleStaticPageRequest(req, res, pathname, url);
       }
     } catch (error) {
       if (isHttpError(error)) {
@@ -303,6 +236,10 @@ export class PreviewServer {
 
   get server(): PreviewServer["_server"] {
     return this._server;
+  }
+
+  get socketServer(): PreviewServer["_socketServer"] {
+    return this._socketServer;
   }
 }
 
