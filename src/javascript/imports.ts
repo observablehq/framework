@@ -110,7 +110,6 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFetc
     try {
       const input = readFileSync(join(root, path), "utf-8");
       const program = Parser.parse(input, parseOptions) as Program;
-      const references: Identifier[] = findReferences(program, defaultGlobals);
 
       simple(
         program,
@@ -123,7 +122,7 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFetc
         undefined,
         path
       );
-      fetches.push(...findFetches(program, references, path));
+      fetches.push(...findFetches(program, path));
     } catch (error) {
       if (!isEnoent(error) && !(error instanceof SyntaxError)) throw error;
     }

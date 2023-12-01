@@ -4,7 +4,9 @@ import {type Feature, type JavaScriptNode} from "../javascript.js";
 import {type Sourcemap} from "../sourcemap.js";
 import {relativeUrl, resolvePath} from "../url.js";
 import {getStringLiteralValue, isStringLiteral} from "./features.js";
+import {defaultGlobals} from "./globals.js";
 import {isLocalImport} from "./imports.js";
+import {findReferences} from "./references.js";
 
 export function rewriteFetches(output: Sourcemap, rootNode: JavaScriptNode, sourcePath: string): void {
   simple(rootNode.body, {
@@ -28,7 +30,8 @@ export function rewriteIfLocalFetch(
   }
 }
 
-export function findFetches(body: Node, references: Identifier[], path: string) {
+export function findFetches(body: Node, path: string) {
+  const references: Identifier[] = findReferences(body, defaultGlobals);
   const fetches: Feature[] = [];
 
   simple(body, {CallExpression: findFetch}, undefined, path);
