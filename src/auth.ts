@@ -6,7 +6,7 @@ import os from "node:os";
 import {isatty} from "node:tty";
 import open from "open";
 import {HttpError, isHttpError} from "./error.js";
-import type {Logger} from "./observableApiClient.js";
+import type {Logger} from "./logger.js";
 import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
 import {getObservableApiKey, setObservableApiKey} from "./observableApiConfig.js";
 
@@ -28,9 +28,7 @@ export interface CommandEffects {
 }
 
 const defaultEffects: CommandEffects = {
-  openUrlInBrowser: async (target) => {
-    await open(target);
-  },
+  openUrlInBrowser: async (target) => void (await open(target)),
   logger: console,
   isatty,
   waitForEnter,
