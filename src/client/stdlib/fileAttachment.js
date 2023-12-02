@@ -81,10 +81,10 @@ class AbstractFile {
   async html() {
     return this.xml("text/html");
   }
-  // async xlsx() {
-  //   const [ExcelJS, buffer] = await Promise.all([requireDefault(exceljs.resolve()), this.arrayBuffer()]);
-  //   return new Workbook(await new ExcelJS.Workbook().xlsx.load(buffer));
-  // }
+  async xlsx() {
+    const [{Workbook}, buffer] = await Promise.all([import("observablehq:stdlib/xslx"), this.arrayBuffer()]);
+    return Workbook.load(buffer);
+  }
 }
 
 const FileAttachmentImpl = class FileAttachment extends AbstractFile {
