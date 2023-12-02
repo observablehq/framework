@@ -15,8 +15,7 @@ export function addImplicitSpecifiers(specifiers: Set<string>, inputs: Set<strin
   if (inputs.has("Arrow")) specifiers.add("npm:apache-arrow");
   if (inputs.has("L")) specifiers.add("npm:leaflet");
   if (inputs.has("mermaid")) specifiers.add("npm:@observablehq/mermaid").add("npm:mermaid").add("npm:d3");
-  if (inputs.has("SQLite") || inputs.has("SQLiteDatabaseClient")) specifiers.add("npm:sql.js");
-  if (inputs.has("SQLiteDatabaseClient")) specifiers.add("npm:@observablehq/sqlite");
+  if (inputs.has("SQLite") || inputs.has("SQLiteDatabaseClient")) specifiers.add("npm:@observablehq/sqlite");
   if (inputs.has("tex")) specifiers.add("npm:@observablehq/tex").add("npm:katex");
   if (inputs.has("topojson")) specifiers.add("npm:topojson-client");
   return specifiers;

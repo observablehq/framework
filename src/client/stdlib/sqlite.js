@@ -1,4 +1,12 @@
-import SQLite from "observablehq:stdlib/sql";
+// https://github.com/sql-js/sql.js/issues/284
+const SQLite = await (async () => {
+  const exports = {};
+  const response = await fetch("https://cdn.jsdelivr.net/npm/sql.js/dist/sql-wasm.js");
+  new Function("exports", await response.text())(exports);
+  return exports.Module({locateFile: (name) => `https://cdn.jsdelivr.net/npm/sql.js/dist/${name}`});
+})();
+
+export default SQLite;
 
 export class SQLiteDatabaseClient {
   constructor(db) {

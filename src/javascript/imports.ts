@@ -221,19 +221,17 @@ export function createImportResolver(root: string, base: "." | "_import" = "."):
       : specifier === "npm:@observablehq/stdlib"
       ? resolveBuiltin(base, path, "stdlib.js")
       : specifier === "npm:@observablehq/dot"
-      ? resolveBuiltin(base, path, "stdlib/dot.js")
+      ? resolveBuiltin(base, path, "stdlib/dot.js") // TODO publish to npm
       : specifier === "npm:@observablehq/duckdb"
-      ? resolveBuiltin(base, path, "stdlib/duckdb.js")
+      ? resolveBuiltin(base, path, "stdlib/duckdb.js") // TODO publish to npm
       : specifier === "npm:@observablehq/mermaid"
-      ? resolveBuiltin(base, path, "stdlib/mermaid.js")
+      ? resolveBuiltin(base, path, "stdlib/mermaid.js") // TODO publish to npm
       : specifier === "npm:@observablehq/tex"
-      ? resolveBuiltin(base, path, "stdlib/tex.js")
-      : specifier === "npm:sql.js"
-      ? resolveBuiltin(base, path, "stdlib/sql.js")
+      ? resolveBuiltin(base, path, "stdlib/tex.js") // TODO publish to npm
       : specifier === "npm:@observablehq/sqlite"
-      ? resolveBuiltin(base, path, "stdlib/sqlite.js")
+      ? resolveBuiltin(base, path, "stdlib/sqlite.js") // TODO publish to npm
       : specifier === "npm:@observablehq/xslx"
-      ? resolveBuiltin(base, path, "stdlib/xslx.js")
+      ? resolveBuiltin(base, path, "stdlib/xslx.js") // TODO publish to npm
       : specifier.startsWith("npm:")
       ? `https://cdn.jsdelivr.net/npm/${specifier.slice("npm:".length)}/+esm`
       : specifier;
