@@ -1,3 +1,4 @@
+import {join} from "node:path";
 import type {CallExpression, Identifier, Node} from "acorn";
 import {simple} from "acorn-walk";
 import {type Feature, type JavaScriptNode} from "../javascript.js";
@@ -20,13 +21,16 @@ export function rewriteIfLocalFetch(
   node: CallExpression,
   output: Sourcemap,
   references: Identifier[],
-  sourcePath: string
+  sourcePath: string,
+  meta = false
 ) {
   if (isLocalFetch(node, references, sourcePath)) {
     const arg = node.arguments[0];
     const value = getStringLiteralValue(arg);
     const path = resolvePath("_file", sourcePath, value);
-    output.replaceLeft(arg.start, arg.end, JSON.stringify(relativeUrl(sourcePath, path)));
+    let result = JSON.stringify(relativeUrl(meta ? join("_import", sourcePath) : sourcePath, path));
+    if (meta) result = `import.meta.resolve(${result})`;
+    output.replaceLeft(arg.start, arg.end, result);
   }
 }
 
