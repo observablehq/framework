@@ -6,20 +6,20 @@
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="./_observablehq/style.css">
 <link rel="modulepreload" href="./_observablehq/runtime.js">
-<link rel="modulepreload" href="./_import/top.js?sha=109f0715a36c8f0295e4465bf6d69cc7a1a9384ce96ab07473761a96dd972eea">
-<link rel="modulepreload" href="./_import/foo/foo.js?sha=7a93b271ec78dd07db6d9265e7b82eacc1a1bb6682cd665f0f86ea2c0fbc7350">
+<link rel="modulepreload" href="./_import/top.js?sha=b8624239dee696ef885eb778f2e949ea1072ef47180f602502b2d4ad5aa10abf">
+<link rel="modulepreload" href="./_import/foo/foo.js?sha=ed706415f035efdd17afdfeeb09a5ff51231b2a43553a47ae89a6bf03039b1ee">
 <script type="module">
 
 import {define} from "./_observablehq/client.js";
 
-define({id: "0a9d0f55", inputs: ["display","topJsonData"], outputs: ["fooCsvData","fooJsonData","topCsvData","topjsondata"], files: [{"name":"./top-data.json","mimeType":"application/json","path":"./_file/top-data.json"},{"name":"./top-data.csv","mimeType":"text/csv","path":"./_file/top-data.csv"},{"name":"./foo-data.json","mimeType":"application/json","path":"./_file/foo-data.json"},{"name":"./foo-data.csv","mimeType":"text/csv","path":"./_file/foo-data.csv"}], body: async (display,topJsonData) => {
-const {fooCsvData, fooJsonData, topCsvData, topjsondata} = await import("./_import/top.js?sha=109f0715a36c8f0295e4465bf6d69cc7a1a9384ce96ab07473761a96dd972eea");
+define({id: "cb908c08", inputs: ["display"], outputs: ["fooCsvData","fooJsonData","topCsvData","topJsonData"], files: [{"name":"./top-data.json","mimeType":"application/json","path":"./_file/top-data.json"},{"name":"./top-data.csv","mimeType":"text/csv","path":"./_file/top-data.csv"},{"name":"./foo-data.json","mimeType":"application/json","path":"./_file/foo-data.json"},{"name":"./foo-data.csv","mimeType":"text/csv","path":"./_file/foo-data.csv"}], body: async (display) => {
+const {fooCsvData, fooJsonData, topCsvData, topJsonData} = await import("./_import/top.js?sha=b8624239dee696ef885eb778f2e949ea1072ef47180f602502b2d4ad5aa10abf");
 
 display(fooJsonData);
 display(fooCsvData);
 display(topJsonData);
 display(topCsvData);
-return {fooCsvData,fooJsonData,topCsvData,topjsondata};
+return {fooCsvData,fooJsonData,topCsvData,topJsonData};
 }});
 
 </script>
@@ -43,7 +43,7 @@ return {fooCsvData,fooJsonData,topCsvData,topjsondata};
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 <h1 id="top" tabindex="-1"><a class="observablehq-header-anchor" href="#top">Top</a></h1>
-<div id="cell-0a9d0f55" class="observablehq observablehq--block"></div>
+<div id="cell-cb908c08" class="observablehq observablehq--block"></div>
 </main>
 <footer id="observablehq-footer">
 <nav><a rel="prev" href="./foo"><span>Top</span></a></nav>
