@@ -160,6 +160,8 @@ function renderLinks(parseResult: ParseResult, path: string, resolver: ImportRes
   if (inputs.has("htl") || inputs.has("html") || inputs.has("svg") || inputs.has("Inputs")) specifiers.add("npm:htl");
   if (inputs.has("Inputs")) specifiers.add("npm:@observablehq/inputs");
   if (inputs.has("dot")) specifiers.add("npm:@observablehq/dot").add("npm:@viz-js/viz");
+  if (inputs.has("duckdb")) specifiers.add("npm:@duckdb/duckdb-wasm");
+  if (inputs.has("DuckDBClient")) specifiers.add("npm:@observablehq/duckdb").add("npm:@duckdb/duckdb-wasm");
   if (inputs.has("_")) specifiers.add("npm:lodash");
   if (inputs.has("aq")) specifiers.add("npm:arquero");
   if (inputs.has("Arrow")) specifiers.add("npm:apache-arrow");
