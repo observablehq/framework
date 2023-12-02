@@ -1,10 +1,14 @@
-import {that} from "./that.js";
-
-export function observe(initialize) {
-  let stale = false;
-  let value;
+export async function* observe(initialize) {
   let resolve;
-  const dispose = initialize(change);
+  let value;
+  let stale = false;
+
+  const dispose = initialize((x) => {
+    value = x;
+    if (resolve) resolve(x), (resolve = null);
+    else stale = true;
+    return x;
+  });
 
   if (dispose != null && typeof dispose !== "function") {
     throw new Error(
@@ -14,20 +18,13 @@ export function observe(initialize) {
     );
   }
 
-  function change(x) {
-    if (resolve) resolve(x), (resolve = null);
-    else stale = true;
-    return (value = x);
+  try {
+    while (true) {
+      yield stale ? ((stale = false), value) : new Promise((_) => (resolve = _));
+    }
+  } finally {
+    if (dispose != null) {
+      dispose();
+    }
   }
-
-  function next() {
-    return {done: false, value: stale ? ((stale = false), Promise.resolve(value)) : new Promise((_) => (resolve = _))};
-  }
-
-  return {
-    [Symbol.iterator]: that,
-    throw: () => ({done: true}),
-    return: () => (dispose != null && dispose(), {done: true}),
-    next
-  };
 }

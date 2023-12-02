@@ -1,40 +1,36 @@
 import {observe} from "./observe.js";
 
-export function input(input) {
-  return observe(function (change) {
-    var event = eventof(input),
-      value = valueof(input);
-    function inputted() {
-      change(valueof(input));
-    }
-    input.addEventListener(event, inputted);
+export function input(element) {
+  return observe((change) => {
+    const event = eventof(element);
+    let value = valueof(element);
+    const inputted = () => change(valueof(element));
+    element.addEventListener(event, inputted);
     if (value !== undefined) change(value);
-    return function () {
-      input.removeEventListener(event, inputted);
-    };
+    return () => element.removeEventListener(event, inputted);
   });
 }
 
-function valueof(input) {
-  switch (input.type) {
+function valueof(element) {
+  switch (element.type) {
     case "range":
     case "number":
-      return input.valueAsNumber;
+      return element.valueAsNumber;
     case "date":
-      return input.valueAsDate;
+      return element.valueAsDate;
     case "checkbox":
-      return input.checked;
+      return element.checked;
     case "file":
-      return input.multiple ? input.files : input.files[0];
+      return element.multiple ? element.files : element.files[0];
     case "select-multiple":
-      return Array.from(input.selectedOptions, (o) => o.value);
+      return Array.from(element.selectedOptions, (o) => o.value);
     default:
-      return input.value;
+      return element.value;
   }
 }
 
-function eventof(input) {
-  switch (input.type) {
+function eventof(element) {
+  switch (element.type) {
     case "button":
     case "submit":
     case "checkbox":

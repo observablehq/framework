@@ -1,9 +1,12 @@
-import {that} from "./that.js";
-
-export function queue(initialize) {
+export async function* queue(initialize) {
   let resolve;
-  const queue = [];
-  const dispose = initialize(push);
+  const values = [];
+
+  const dispose = initialize((x) => {
+    values.push(x);
+    if (resolve) resolve(values.shift()), (resolve = null);
+    return x;
+  });
 
   if (dispose != null && typeof dispose !== "function") {
     throw new Error(
@@ -13,20 +16,13 @@ export function queue(initialize) {
     );
   }
 
-  function push(x) {
-    queue.push(x);
-    if (resolve) resolve(queue.shift()), (resolve = null);
-    return x;
+  try {
+    while (true) {
+      yield values.length ? values.shift() : new Promise((_) => (resolve = _));
+    }
+  } finally {
+    if (dispose != null) {
+      dispose();
+    }
   }
-
-  function next() {
-    return {done: false, value: queue.length ? Promise.resolve(queue.shift()) : new Promise((_) => (resolve = _))};
-  }
-
-  return {
-    [Symbol.iterator]: that,
-    throw: () => ({done: true}),
-    return: () => (dispose != null && dispose(), {done: true}),
-    next
-  };
 }
