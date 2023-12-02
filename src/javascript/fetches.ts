@@ -29,18 +29,17 @@ export function rewriteIfLocalFetch(
     const value = getStringLiteralValue(arg);
     const path = resolvePath("_file", sourcePath, value);
     let result = JSON.stringify(relativeUrl(meta ? join("_import", sourcePath) : sourcePath, path));
-    if (meta) result = `import.meta.resolve(${result})`;
+    if (meta) result = `new URL(${result}, import.meta.url)`; // more support than import.meta.resolve
     output.replaceLeft(arg.start, arg.end, result);
   }
 }
 
+// Promote fetches with static literals to file attachment references.
 export function findFetches(body: Node, path: string) {
   const references: Identifier[] = findReferences(body, defaultGlobals);
   const fetches: Feature[] = [];
 
   simple(body, {CallExpression: findFetch}, undefined, path);
-
-  // Promote fetches with static literals to file attachment references.
 
   function findFetch(node: CallExpression, sourcePath: string) {
     maybeAddFetch(fetches, node, references, sourcePath);
