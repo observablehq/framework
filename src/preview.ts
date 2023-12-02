@@ -6,6 +6,7 @@ import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
+import {difference} from "d3-array";
 import send from "send";
 import {type WebSocket, WebSocketServer} from "ws";
 import {version} from "../package.json";
@@ -14,6 +15,7 @@ import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
+import {getImplicitSpecifiers, getImplicitStylesheets} from "./libraries.js";
 import {diffMarkdown, readMarkdown} from "./markdown.js";
 import type {ParseResult, ReadMarkdownResult} from "./markdown.js";
 import {renderPreview} from "./render.js";
@@ -246,10 +248,17 @@ function getWatchPaths(parseResult: ParseResult): string[] {
   return paths;
 }
 
+function getStylesheets({cells}: ParseResult): Set<string> {
+  const inputs = new Set<string>();
+  for (const cell of cells) cell.inputs?.forEach(inputs.add, inputs);
+  return getImplicitStylesheets(getImplicitSpecifiers(inputs));
+}
+
 function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: string}) {
   const {root} = options;
   let path: string | null = null;
   let current: ReadMarkdownResult | null = null;
+  let stylesheets: Set<string> | null = null;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
   console.log(faint("socket open"), req.url);
@@ -285,6 +294,10 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: st
       case "change": {
         const updated = await readMarkdown(path, root);
         if (current.parse.hash === updated.parse.hash) break;
+        const updatedStylesheets = getStylesheets(updated.parse);
+        for (const href of difference(stylesheets, updatedStylesheets)) send({type: "remove-stylesheet", href});
+        for (const href of difference(updatedStylesheets, stylesheets)) send({type: "add-stylesheet", href});
+        stylesheets = updatedStylesheets;
         const diff = diffMarkdown(current, updated);
         send({type: "update", diff, previousHash: current.parse.hash, updatedHash: updated.parse.hash});
         current = updated;
@@ -303,6 +316,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: st
     path += ".md";
     current = await readMarkdown(path, root);
     if (current.parse.hash !== initialHash) return void send({type: "reload"});
+    stylesheets = getStylesheets(current.parse);
     attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(current.parse), refreshAttachment);
     markdownWatcher = watch(join(root, path), watcher);
   }

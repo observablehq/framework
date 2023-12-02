@@ -1,3 +1,7 @@
+export function getImplicitSpecifiers(inputs: Set<string>): Set<string> {
+  return addImplicitSpecifiers(new Set(), inputs);
+}
+
 export function addImplicitSpecifiers(specifiers: Set<string>, inputs: Set<string>): typeof specifiers {
   if (inputs.has("d3") || inputs.has("Plot")) specifiers.add("npm:d3");
   if (inputs.has("Plot")) specifiers.add("npm:@observablehq/plot");
