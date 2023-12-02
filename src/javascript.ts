@@ -3,7 +3,7 @@ import type {Expression, Identifier, Node, Options, Program} from "acorn";
 import {fileReference} from "./files.js";
 import {findAssignments} from "./javascript/assignments.js";
 import {findAwaits} from "./javascript/awaits.js";
-import {resolveDatabase} from "./javascript/databases.js";
+import {resolveDatabases} from "./javascript/databases.js";
 import {findDeclarations} from "./javascript/declarations.js";
 import {findFeatures} from "./javascript/features.js";
 import {rewriteFetches} from "./javascript/fetches.js";
@@ -81,7 +81,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
       ...(inputs.length ? {inputs} : null),
       ...(options.inline ? {inline: true} : null),
       ...(node.declarations?.length ? {outputs: node.declarations.map(({name}) => name)} : null),
-      ...(databases.length ? {databases: databases.map((d) => resolveDatabase(d))} : null),
+      ...(databases.length ? {databases: resolveDatabases(databases)} : null),
       ...(files.length ? {files} : null),
       body: `${node.async ? "async " : ""}(${inputs}) => {
 ${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.map(({name}) => name)}};` : ""}

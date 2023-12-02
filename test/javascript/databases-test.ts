@@ -1,22 +1,25 @@
 import assert from "node:assert";
 import {createHmac} from "node:crypto";
-import {type ResolvedDatabaseReference, resolveDatabase} from "../../src/javascript/databases.js";
+import {type ResolvedDatabaseReference, resolveDatabase, resolveDatabases} from "../../src/javascript/databases.js";
 import type {DatabaseReference} from "../../src/javascript.js";
 
+const exp = Date.UTC(2020, 0, 1);
+
+const snow2 = {
+  name: "snow2",
+  type: "snowflake",
+  host: "localhost",
+  port: "2899",
+  ssl: "disabled",
+  origin: "http://127.0.0.1:3000",
+  secret: "0249f7ba6fff3856cb9868d115dbcd6b2ef51f1e9a55fdc6f7484013b7c191c5"
+};
+
+const env = {
+  OBSERVABLEHQ_DB_SECRET_snow2: Buffer.from(JSON.stringify(snow2), "utf-8").toString("base64")
+};
+
 describe("resolveDatabase", () => {
-  const exp = Date.UTC(2020, 0, 1);
-  const snow2 = {
-    name: "snow2",
-    type: "snowflake",
-    host: "localhost",
-    port: "2899",
-    ssl: "disabled",
-    origin: "http://127.0.0.1:3000",
-    secret: "0249f7ba6fff3856cb9868d115dbcd6b2ef51f1e9a55fdc6f7484013b7c191c5"
-  };
-  const env = {
-    OBSERVABLEHQ_DB_SECRET_snow2: Buffer.from(JSON.stringify(snow2), "utf-8").toString("base64")
-  };
   it("returns a resolved database reference", async () => {
     const input: DatabaseReference = {name: "snow2"};
     const output = resolveDatabase(input, {env, exp});
@@ -37,9 +40,18 @@ describe("resolveDatabase", () => {
     resolveDatabase(input, {env});
     assert.deepStrictEqual(input, {name: "snow2"});
   });
-  it("returns an unresolved database reference when it can’t be resolved", async () => {
+  it("returns undefined when it can’t be resolved", async () => {
     const input = {name: "notthere"};
-    assert.strictEqual(resolveDatabase(input), input);
+    assert.strictEqual(resolveDatabase(input), undefined);
     assert.deepStrictEqual(input, {name: "notthere"});
+  });
+});
+
+describe("resolveDatabases", () => {
+  it("returns only resolved database references", async () => {
+    const notthere: DatabaseReference = {name: "notthere"};
+    const snow2: DatabaseReference = {name: "snow2"};
+    const output = resolveDatabases([notthere, snow2], {env, exp});
+    assert.deepStrictEqual<ResolvedDatabaseReference[]>(output, [resolveDatabase(snow2, {env, exp})!]);
   });
 });

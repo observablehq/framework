@@ -35,16 +35,21 @@ function encodeToken(payload: {name: string; exp: number}, secret: string): stri
   return `${Buffer.from(data).toString("base64")}.${Buffer.from(hmac).toString("base64")}`;
 }
 
+export function resolveDatabases(
+  databases: DatabaseReference[],
+  {exp = Date.now() + DATABASE_TOKEN_DURATION, env = process.env} = {}
+): ResolvedDatabaseReference[] {
+  const options = {exp, env};
+  return databases.map((d) => resolveDatabase(d, options)).filter((d): d is ResolvedDatabaseReference => !!d);
+}
+
 export function resolveDatabase(
   database: DatabaseReference,
   {exp = Date.now() + DATABASE_TOKEN_DURATION, env = process.env} = {}
-): DatabaseReference | ResolvedDatabaseReference {
+): ResolvedDatabaseReference | undefined {
   const {name} = database;
   const config = getDatabaseProxyConfig(env, name);
-  if (!config) {
-    console.warn(`Unable to resolve database: ${name}`);
-    return database;
-  }
+  if (!config) return void console.warn(`Unable to resolve database: ${name}`);
   const url = new URL("http://localhost");
   url.protocol = config.ssl !== "disabled" ? "https:" : "http:";
   url.host = config.host;
