@@ -19,7 +19,6 @@ async function remote_fetch(file) {
   return response;
 }
 
-// TODO typed: "auto"
 async function dsv(file, delimiter, {array = false, typed = false} = {}) {
   const [text, d3] = await Promise.all([file.text(), import("npm:d3-dsv")]);
   const parse = delimiter === "\t" ? (array ? d3.tsvParseRows : d3.tsvParse) : array ? d3.csvParseRows : d3.csvParse;
@@ -64,7 +63,6 @@ class AbstractFile {
     });
   }
   async arrow() {
-    // TODO {version}?
     const [Arrow, response] = await Promise.all([import("npm:apache-arrow"), remote_fetch(this)]);
     return Arrow.tableFromIPC(response);
   }
