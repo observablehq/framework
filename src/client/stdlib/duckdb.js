@@ -1,5 +1,4 @@
 import * as duckdb from "npm:@duckdb/duckdb-wasm";
-import {FileAttachment} from "observablehq:stdlib";
 
 // Adapted from https://observablehq.com/@cmudig/duckdb-client
 // Copyright 2021 CMU Data Interaction Group
@@ -142,7 +141,7 @@ export default class DuckDBClient {
     await db.open(config);
     await Promise.all(
       Object.entries(sources).map(async ([name, source]) => {
-        if (source instanceof FileAttachment) {
+        if (isFileAttachment(source)) {
           // bare file
           await insertFile(db, name, source);
         } else if (isArrowTable(source)) {
@@ -306,6 +305,16 @@ function getDuckDBType(type) {
       if (/^DECIMAL\(/.test(type)) return "integer";
       return "other";
   }
+}
+
+// Returns true if the given value is an Observable FileAttachment.
+function isFileAttachment(value) {
+  return (
+    value &&
+    typeof value.name === "string" &&
+    typeof value.url === "function" &&
+    typeof value.arrayBuffer === "function"
+  );
 }
 
 // Arquero tables have a `toArrowBuffer` function
