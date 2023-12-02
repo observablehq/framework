@@ -68,9 +68,9 @@ class AbstractFile {
     const [Arrow, response] = await Promise.all([import("npm:apache-arrow"), remote_fetch(this)]);
     return Arrow.tableFromIPC(response);
   }
-  // async sqlite() {
-  //   return SQLiteDatabaseClient.open(remote_fetch(this));
-  // }
+  async sqlite() {
+    return import("observablehq:stdlib/sqlite").then((sqlite) => sqlite.SQLiteDatabaseClient.open(remote_fetch(this)));
+  }
   async zip() {
     const [{default: JSZip}, buffer] = await Promise.all([import("npm:jszip"), this.arrayBuffer()]);
     return new ZipArchive(await JSZip.loadAsync(buffer));

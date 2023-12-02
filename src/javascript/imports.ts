@@ -229,6 +229,8 @@ export function createImportResolver(root: string, base: "." | "_import" = "."):
       : specifier === "npm:@observablehq/tex"
       ? resolveBuiltin(base, path, "stdlib/tex.js")
       : specifier === "npm:sql.js"
+      ? resolveBuiltin(base, path, "stdlib/sql.js")
+      : specifier === "npm:@observablehq/sqlite"
       ? resolveBuiltin(base, path, "stdlib/sqlite.js")
       : specifier.startsWith("npm:")
       ? `https://cdn.jsdelivr.net/npm/${specifier.slice("npm:".length)}/+esm`

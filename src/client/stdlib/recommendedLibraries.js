@@ -12,6 +12,7 @@ export const Inputs = () => import("npm:@observablehq/inputs");
 export const L = () => import("npm:leaflet");
 export const mermaid = () => import("observablehq:stdlib/mermaid").then((mermaid) => mermaid.default);
 export const Plot = () => import("npm:@observablehq/plot");
-export const SQLite = () => import("observablehq:stdlib/sqlite").then((sqlite) => sqlite.default);
+export const SQLite = () => import("observablehq:stdlib/sql").then((sql) => sql.default);
+export const SQLiteDatabaseClient = () => import("observablehq:stdlib/sqlite").then((sqlite) => sqlite.SQLiteDatabaseClient); // prettier-ignore
 export const tex = () => import("observablehq:stdlib/tex").then((tex) => tex.default);
 export const topojson = () => import("npm:topojson-client");

@@ -167,7 +167,8 @@ function renderLinks(parseResult: ParseResult, path: string, resolver: ImportRes
   if (inputs.has("Arrow")) specifiers.add("npm:apache-arrow");
   if (inputs.has("L")) specifiers.add("npm:leaflet");
   if (inputs.has("mermaid")) specifiers.add("npm:@observablehq/mermaid").add("npm:mermaid").add("npm:d3");
-  if (inputs.has("SQLite")) specifiers.add("npm:sql.js");
+  if (inputs.has("SQLite") || inputs.has("SQLiteDatabaseClient")) specifiers.add("npm:sql.js");
+  if (inputs.has("SQLiteDatabaseClient")) specifiers.add("npm:@observablehq/sqlite");
   if (inputs.has("tex")) specifiers.add("npm:@observablehq/tex").add("npm:katex");
   if (inputs.has("topojson")) specifiers.add("npm:topojson-client");
   if (specifiers.has("npm:katex")) stylesheets.add("https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css");
