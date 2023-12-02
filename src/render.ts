@@ -3,7 +3,8 @@ import {type Config, type Page, type Section, mergeToc} from "./config.js";
 import {type Html, html} from "./html.js";
 import {type ImportResolver, createImportResolver} from "./javascript/imports.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
-import {type CellPiece, type ParseResult, parseMarkdown} from "./markdown.js";
+import {addImplicitSpecifiers, addImplicitStylesheets} from "./libraries.js";
+import {type ParseResult, parseMarkdown} from "./markdown.js";
 import {type PageLink, findLink} from "./pager.js";
 import {relativeUrl} from "./url.js";
 
@@ -16,7 +17,6 @@ export interface Render {
 export interface RenderOptions extends Config {
   root: string;
   path: string;
-  resolver: (cell: CellPiece) => CellPiece;
 }
 
 export async function renderPreview(source: string, options: RenderOptions): Promise<Render> {
@@ -50,7 +50,7 @@ type RenderInternalOptions =
   | {preview: true}; // preview
 
 function render(parseResult: ParseResult, options: RenderOptions & RenderInternalOptions): string {
-  const {root, path, pages, title, preview, resolver} = options;
+  const {root, path, pages, title, preview} = options;
   const toc = mergeToc(parseResult.data?.toc, options.toc);
   const headers = toc.show ? findHeaders(parseResult) : [];
   return String(html`<!DOCTYPE html>
@@ -69,7 +69,7 @@ import {${preview ? "open, " : ""}define} from ${JSON.stringify(relativeUrl(path
 
 ${
   preview ? `open({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
-}${parseResult.cells.map(resolver).map(renderDefineCell).join("")}`)}
+}${parseResult.cells.map(renderDefineCell).join("")}`)}
 </script>
 ${pages.length > 0 ? renderSidebar(title, pages, path) : ""}
 ${headers.length > 0 ? renderToc(headers, toc.label) : ""}<div id="observablehq-center">
@@ -155,25 +155,8 @@ function renderLinks(parseResult: ParseResult, path: string, resolver: ImportRes
   const specifiers = new Set<string>(["npm:@observablehq/runtime", "npm:@observablehq/stdlib"]);
   for (const {name} of parseResult.imports) specifiers.add(name);
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
-  if (inputs.has("d3") || inputs.has("Plot")) specifiers.add("npm:d3");
-  if (inputs.has("Plot")) specifiers.add("npm:@observablehq/plot");
-  if (inputs.has("htl") || inputs.has("html") || inputs.has("svg") || inputs.has("Inputs")) specifiers.add("npm:htl");
-  if (inputs.has("Inputs")) specifiers.add("npm:@observablehq/inputs");
-  if (inputs.has("dot")) specifiers.add("npm:@observablehq/dot").add("npm:@viz-js/viz");
-  if (inputs.has("duckdb")) specifiers.add("npm:@duckdb/duckdb-wasm");
-  if (inputs.has("DuckDBClient")) specifiers.add("npm:@observablehq/duckdb").add("npm:@duckdb/duckdb-wasm");
-  if (inputs.has("_")) specifiers.add("npm:lodash");
-  if (inputs.has("aq")) specifiers.add("npm:arquero");
-  if (inputs.has("Arrow")) specifiers.add("npm:apache-arrow");
-  if (inputs.has("L")) specifiers.add("npm:leaflet");
-  if (inputs.has("mermaid")) specifiers.add("npm:@observablehq/mermaid").add("npm:mermaid").add("npm:d3");
-  if (inputs.has("SQLite") || inputs.has("SQLiteDatabaseClient")) specifiers.add("npm:sql.js");
-  if (inputs.has("SQLiteDatabaseClient")) specifiers.add("npm:@observablehq/sqlite");
-  if (inputs.has("tex")) specifiers.add("npm:@observablehq/tex").add("npm:katex");
-  if (inputs.has("topojson")) specifiers.add("npm:topojson-client");
-  if (specifiers.has("npm:katex")) stylesheets.add("https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css");
-  if (specifiers.has("npm:@observablehq/inputs")) stylesheets.add("https://cdn.jsdelivr.net/gh/observablehq/inputs/src/style.css"); // prettier-ignore
-  if (specifiers.has("npm:leaflet")) stylesheets.add("https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.css");
+  addImplicitSpecifiers(specifiers, inputs);
+  addImplicitStylesheets(stylesheets, specifiers);
   const preloads = new Set<string>();
   for (const specifier of specifiers) preloads.add(resolver(path, specifier));
   if (parseResult.cells.some((cell) => cell.databases?.length)) preloads.add(relativeUrl(path, "/_observablehq/database.js")); // prettier-ignore

@@ -10,7 +10,6 @@ import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
 import {renderServerless} from "./render.js";
-import {makeCLIResolver} from "./resolver.js";
 import {getClientPath, rollupClient} from "./rollup.js";
 import {faint} from "./tty.js";
 import {resolvePath} from "./url.js";
@@ -53,13 +52,12 @@ export async function build(
   const config = await readConfig(root);
   const files: string[] = [];
   const imports: string[] = [];
-  const resolver = await makeCLIResolver();
   for await (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
     effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
-    const render = await renderServerless(await readFile(sourcePath, "utf-8"), {root, path, resolver, ...config});
+    const render = await renderServerless(await readFile(sourcePath, "utf-8"), {root, path, ...config});
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
     files.push(...render.files.map(resolveFile));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));

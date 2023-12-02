@@ -17,7 +17,6 @@ import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {diffMarkdown, readMarkdown} from "./markdown.js";
 import type {ParseResult, ReadMarkdownResult} from "./markdown.js";
 import {renderPreview} from "./render.js";
-import {type CellResolver, makeCLIResolver} from "./resolver.js";
 import {getClientPath, rollupClient} from "./rollup.js";
 import {bold, faint, green, underline} from "./tty.js";
 
@@ -37,21 +36,16 @@ export async function preview(options: PreviewOptions): Promise<PreviewServer> {
 export class PreviewServer {
   private readonly _server: ReturnType<typeof createServer>;
   private readonly _socketServer: WebSocketServer;
-  private readonly _resolver: CellResolver;
   private readonly _verbose: boolean;
   readonly root: string;
 
-  private constructor(
-    {server, root, verbose}: {server: Server; root: string; verbose: boolean},
-    resolver: CellResolver
-  ) {
+  private constructor({server, root, verbose}: {server: Server; root: string; verbose: boolean}) {
     this.root = root;
     this._verbose = verbose;
     this._server = server;
     this._server.on("request", this._handleRequest);
     this._socketServer = new WebSocketServer({server: this._server});
     this._socketServer.on("connection", this._handleConnection);
-    this._resolver = resolver;
   }
 
   static async start({verbose = true, hostname, port, ...options}: PreviewOptions) {
@@ -76,7 +70,7 @@ export class PreviewServer {
       console.log(`${faint("↳")} ${underline(`http://${hostname}:${port}/`)}`);
       console.log("");
     }
-    return new PreviewServer({server, verbose, ...options}, await makeCLIResolver());
+    return new PreviewServer({server, verbose, ...options});
   }
 
   _handleRequest: RequestListener = async (req, res) => {
@@ -179,7 +173,6 @@ export class PreviewServer {
           const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {
             root: this.root,
             path: pathname,
-            resolver: this._resolver,
             ...config
           });
           end(req, res, html, "text/html");
@@ -201,7 +194,6 @@ export class PreviewServer {
           const {html} = await renderPreview(await readFile(join(this.root, "404.md"), "utf-8"), {
             root: this.root,
             path: "/404",
-            resolver: this._resolver,
             ...config
           });
           end(req, res, html, "text/html");
@@ -217,7 +209,7 @@ export class PreviewServer {
 
   _handleConnection = (socket: WebSocket, req: IncomingMessage) => {
     if (req.url === "/_observablehq") {
-      handleWatch(socket, req, {root: this.root, resolver: this._resolver});
+      handleWatch(socket, req, {root: this.root});
     } else {
       socket.close();
     }
@@ -246,14 +238,6 @@ function end(req: IncomingMessage, res: ServerResponse, content: string, type: s
   }
 }
 
-function resolveDiffs(diff: ReturnType<typeof diffMarkdown>, resolver: CellResolver): ReturnType<typeof diffMarkdown> {
-  return diff.map((item) =>
-    item.type === "add"
-      ? {...item, items: item.items.map((addItem) => (addItem.type === "cell" ? resolver(addItem) : addItem))}
-      : item
-  );
-}
-
 function getWatchPaths(parseResult: ParseResult): string[] {
   const paths: string[] = [];
   const {files, imports} = parseResult;
@@ -262,8 +246,8 @@ function getWatchPaths(parseResult: ParseResult): string[] {
   return paths;
 }
 
-function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: string; resolver: CellResolver}) {
-  const {root, resolver} = options;
+function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: string}) {
+  const {root} = options;
   let path: string | null = null;
   let current: ReadMarkdownResult | null = null;
   let markdownWatcher: FSWatcher | null = null;
@@ -301,7 +285,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: st
       case "change": {
         const updated = await readMarkdown(path, root);
         if (current.parse.hash === updated.parse.hash) break;
-        const diff = resolveDiffs(diffMarkdown(current, updated), resolver);
+        const diff = diffMarkdown(current, updated);
         send({type: "update", diff, previousHash: current.parse.hash, updatedHash: updated.parse.hash});
         current = updated;
         attachmentWatcher?.close();
