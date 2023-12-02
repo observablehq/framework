@@ -5,7 +5,7 @@ import {type ImportReference} from "../../src/javascript.js";
 
 describe("parseLocalImports(root, paths)", () => {
   it("finds all local imports in one file", () => {
-    assert.deepStrictEqual(parseLocalImports("test/input/build/imports", ["foo/foo.js"]).sort(compareImport), [
+    assert.deepStrictEqual(parseLocalImports("test/input/build/imports", ["foo/foo.js"]).imports.sort(compareImport), [
       {name: "npm:d3", type: "global"},
       {name: "bar/bar.js", type: "local"},
       {name: "bar/baz.js", type: "local"},
@@ -15,7 +15,9 @@ describe("parseLocalImports(root, paths)", () => {
   });
   it("finds all local imports in multiple files", () => {
     assert.deepStrictEqual(
-      parseLocalImports("test/input/imports", ["transitive-static-import.js", "dynamic-import.js"]).sort(compareImport),
+      parseLocalImports("test/input/imports", ["transitive-static-import.js", "dynamic-import.js"]).imports.sort(
+        compareImport
+      ),
       [
         {name: "bar.js", type: "local"},
         {name: "dynamic-import.js", type: "local"},
@@ -26,7 +28,7 @@ describe("parseLocalImports(root, paths)", () => {
   });
   it("ignores missing files", () => {
     assert.deepStrictEqual(
-      parseLocalImports("test/input/imports", ["static-import.js", "does-not-exist.js"]).sort(compareImport),
+      parseLocalImports("test/input/imports", ["static-import.js", "does-not-exist.js"]).imports.sort(compareImport),
       [
         {name: "bar.js", type: "local"},
         {name: "does-not-exist.js", type: "local"},
