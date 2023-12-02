@@ -8,7 +8,7 @@ import open from "open";
 import {HttpError, isHttpError} from "./error.js";
 import type {Logger} from "./logger.js";
 import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
-import {getObservableApiKey, setObservableApiKey} from "./observableApiConfig.js";
+import {type ApiKey, getObservableApiKey, setObservableApiKey} from "./observableApiConfig.js";
 
 const OBSERVABLEHQ_UI_HOST = getObservableUiHost();
 
@@ -22,7 +22,7 @@ export interface CommandEffects {
   logger: Logger;
   isatty: (fd: number) => boolean;
   waitForEnter: () => Promise<void>;
-  getObservableApiKey: () => Promise<string | null>;
+  getObservableApiKey: (logger: Logger) => Promise<ApiKey>;
   setObservableApiKey: (id: string, key: string) => Promise<void>;
   exitSuccess: () => void;
 }
@@ -67,33 +67,36 @@ export async function login(effects = defaultEffects) {
 }
 
 export async function whoami(effects = defaultEffects) {
-  const apiKey = await effects.getObservableApiKey();
   const {logger} = effects;
-  if (apiKey) {
-    const apiClient = new ObservableApiClient({
-      apiKey,
-      logger
-    });
+  const apiKey = await effects.getObservableApiKey(logger);
+  const apiClient = new ObservableApiClient({
+    apiKey,
+    logger
+  });
 
-    try {
-      const user = await apiClient.getCurrentUser();
-      logger.log();
-      logger.log(`You are logged into ${OBSERVABLEHQ_UI_HOST.hostname} as ${formatUser(user)}.`);
-      logger.log();
-      logger.log("You have access to the following workspaces:");
-      for (const workspace of user.workspaces) {
-        logger.log(` * ${formatUser(workspace)}`);
-      }
-      logger.log();
-    } catch (error) {
-      if (isHttpError(error) && error.statusCode == 401) {
+  try {
+    const user = await apiClient.getCurrentUser();
+    logger.log();
+    logger.log(`You are logged into ${OBSERVABLEHQ_UI_HOST.hostname} as ${formatUser(user)}.`);
+    logger.log();
+    logger.log("You have access to the following workspaces:");
+    for (const workspace of user.workspaces) {
+      logger.log(` * ${formatUser(workspace)}`);
+    }
+    logger.log();
+  } catch (error) {
+    console.log(error);
+    if (isHttpError(error) && error.statusCode == 401) {
+      if (apiKey.source === "env") {
+        logger.log(`Your API key is invalid. Check the value of the ${apiKey.envVar} environment variable.`);
+      } else if (apiKey.source === "file") {
         logger.log("Your API key is invalid. Run `observable login` to log in again.");
       } else {
-        throw error;
+        logger.log("Your API key is invalid.");
       }
+    } else {
+      throw error;
     }
-  } else {
-    logger.log(commandRequiresAuthenticationMessage);
   }
 }
 

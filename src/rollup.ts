@@ -1,8 +1,8 @@
 import {dirname, join, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
-import terser from "@rollup/plugin-terser";
 import {type OutputChunk, rollup} from "rollup";
+import esbuild from "rollup-plugin-esbuild";
 
 export async function rollupClient(clientPath = getClientPath(), {minify = false} = {}): Promise<string> {
   const bundle = await rollup({
@@ -16,11 +16,12 @@ export async function rollupClient(clientPath = getClientPath(), {minify = false
             ? {id: `https://cdn.jsdelivr.net/npm/${specifier.slice("npm:".length)}/+esm`}
             : null;
         }
-      }
+      },
+      esbuild({minify})
     ]
   });
   try {
-    const output = await bundle.generate({format: "es", plugins: minify ? [(terser as any)()] : []});
+    const output = await bundle.generate({format: "es"});
     return output.output.find((o): o is OutputChunk => o.type === "chunk")!.code; // XXX
   } finally {
     await bundle.close();
