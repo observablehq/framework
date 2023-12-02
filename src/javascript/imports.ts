@@ -145,10 +145,11 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFetc
 }
 
 /** Rewrites import specifiers in the specified ES module source. */
-export function rewriteModule(input: string, sourcePath: string, resolver: ImportResolver): string {
+export async function rewriteModule(input: string, sourcePath: string, resolver: ImportResolver): Promise<string> {
   const body = Parser.parse(input, parseOptions) as Program;
   const references: Identifier[] = findReferences(body, defaultGlobals);
   const output = new Sourcemap(input);
+  const imports: (ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration)[] = [];
 
   simple(body, {
     ImportDeclaration: rewriteImport,
@@ -161,11 +162,15 @@ export function rewriteModule(input: string, sourcePath: string, resolver: Impor
   });
 
   function rewriteImport(node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration) {
+    imports.push(node);
+  }
+
+  for (const node of imports) {
     if (isStringLiteral(node.source)) {
       output.replaceLeft(
         node.source.start,
         node.source.end,
-        JSON.stringify(resolver(sourcePath, getStringLiteralValue(node.source)))
+        JSON.stringify(await resolver(sourcePath, getStringLiteralValue(node.source)))
       );
     }
   }
@@ -173,47 +178,71 @@ export function rewriteModule(input: string, sourcePath: string, resolver: Impor
   return String(output);
 }
 
+export function findImportDeclarations(cell: JavaScriptNode): ImportDeclaration[] {
+  const declarations: ImportDeclaration[] = [];
+
+  simple(cell.body, {
+    ImportDeclaration(node) {
+      if (isStringLiteral(node.source)) {
+        declarations.push(node);
+      }
+    }
+  });
+
+  return declarations;
+}
+
 /**
  * Rewrites import specifiers in the specified JavaScript fenced code block or
  * inline expression. TODO parallelize multiple static imports.
  */
-export function rewriteImports(
+export async function rewriteImports(
   output: Sourcemap,
   cell: JavaScriptNode,
   sourcePath: string,
   resolver: ImportResolver
-): void {
+): Promise<void> {
+  const expressions: ImportExpression[] = [];
+  const declarations: ImportDeclaration[] = [];
+
   simple(cell.body, {
     ImportExpression(node) {
       if (isStringLiteral(node.source)) {
-        output.replaceLeft(
-          node.source.start,
-          node.source.end,
-          JSON.stringify(resolver(sourcePath, getStringLiteralValue(node.source)))
-        );
+        expressions.push(node);
       }
     },
     ImportDeclaration(node) {
       if (isStringLiteral(node.source)) {
-        cell.async = true;
-        output.replaceLeft(
-          node.start,
-          node.end,
-          `const ${
-            node.specifiers.some(isNotNamespaceSpecifier)
-              ? `{${node.specifiers.filter(isNotNamespaceSpecifier).map(rewriteImportSpecifier).join(", ")}}`
-              : node.specifiers.find(isNamespaceSpecifier)?.local.name ?? "{}"
-          } = await import(${JSON.stringify(resolver(sourcePath, getStringLiteralValue(node.source)))});`
-        );
+        declarations.push(node);
       }
     }
   });
+
+  for (const node of expressions) {
+    output.replaceLeft(
+      node.source.start,
+      node.source.end,
+      JSON.stringify(await resolver(sourcePath, getStringLiteralValue(node.source)))
+    );
+  }
+
+  for (const node of declarations) {
+    output.replaceLeft(
+      node.start,
+      node.end,
+      `const ${
+        node.specifiers.some(isNotNamespaceSpecifier)
+          ? `{${node.specifiers.filter(isNotNamespaceSpecifier).map(rewriteImportSpecifier).join(", ")}}`
+          : node.specifiers.find(isNamespaceSpecifier)?.local.name ?? "{}"
+      } = await import(${JSON.stringify(await resolver(sourcePath, getStringLiteralValue(node.source)))});`
+    );
+  }
 }
 
-export type ImportResolver = (path: string, specifier: string) => string;
+export type ImportResolver = (path: string, specifier: string) => Promise<string>;
 
 export function createImportResolver(root: string, base: "." | "_import" = "."): ImportResolver {
-  return (path, specifier) => {
+  return async (path, specifier) => {
     return isLocalImport(specifier, path)
       ? relativeUrl(path, resolvePath(base, path, resolveImportHash(root, path, specifier)))
       : specifier === "npm:@observablehq/runtime"
@@ -233,9 +262,27 @@ export function createImportResolver(root: string, base: "." | "_import" = "."):
       : specifier === "npm:@observablehq/xslx"
       ? resolveBuiltin(base, path, "stdlib/xslx.js") // TODO publish to npm
       : specifier.startsWith("npm:")
-      ? `https://cdn.jsdelivr.net/npm/${specifier.slice("npm:".length)}/+esm`
+      ? await resolveNpmImport(specifier.slice("npm:".length))
       : specifier;
   };
+}
+
+// Like import, don’t fetch the same package more than once to ensure
+// consistency; restart the server if you want to clear the cache.
+const npmCache = new Map<string, Promise<string>>();
+
+export async function resolveNpmImport(specifier: string): Promise<string> {
+  let promise = npmCache.get(specifier);
+  if (promise) return promise;
+  promise = (async () => {
+    const response = await fetch(`https://data.jsdelivr.com/v1/packages/npm/${specifier}/resolved`);
+    if (!response.ok) throw new Error(`unable to resolve npm specifier: ${specifier}`);
+    const body = await response.json();
+    return `https://cdn.jsdelivr.net/npm/${specifier}@${body.version}/+esm`;
+  })();
+  promise.catch(() => npmCache.delete(specifier)); // try again on error
+  npmCache.set(specifier, promise);
+  return promise;
 }
 
 function resolveBuiltin(base: "." | "_import", path: string, specifier: string): string {

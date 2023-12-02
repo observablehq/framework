@@ -105,32 +105,33 @@
   "cells": [
     {
       "type": "cell",
+      "body": "() => {\nconst fail1 = fetch(\"../NOENT.md\").then(d => d.text())\nreturn {fail1};\n}",
       "id": "7f64da9c",
       "outputs": [
         "fail1"
-      ],
-      "body": "() => {\nconst fail1 = fetch(\"../NOENT.md\").then(d => d.text())\nreturn {fail1};\n}"
+      ]
     },
     {
       "type": "cell",
-      "id": "02cc5429",
-      "body": "() => { throw new SyntaxError(\"non-local file path: \\\"../NOENT.md\\\" (1:14)\"); }"
+      "body": "() => { throw new SyntaxError(\"non-local file path: \\\"../NOENT.md\\\" (1:14)\"); }",
+      "id": "02cc5429"
     },
     {
       "type": "cell",
+      "body": "() => {\nconst fail3 = fetch(\"../README.md\").then(d => d.text())\nreturn {fail3};\n}",
       "id": "506a5b26",
       "outputs": [
         "fail3"
-      ],
-      "body": "() => {\nconst fail3 = fetch(\"../README.md\").then(d => d.text())\nreturn {fail3};\n}"
+      ]
     },
     {
       "type": "cell",
-      "id": "4078d1e8",
-      "body": "() => { throw new SyntaxError(\"non-local file path: \\\"../README.md\\\" (1:14)\"); }"
+      "body": "() => { throw new SyntaxError(\"non-local file path: \\\"../README.md\\\" (1:14)\"); }",
+      "id": "4078d1e8"
     },
     {
       "type": "cell",
+      "body": "() => {\nconst fail5 = fetch(\"./_file/NOENT.md\").then(d => d.text())\nreturn {fail5};\n}",
       "id": "4043aea7",
       "outputs": [
         "fail5"
@@ -141,11 +142,11 @@
           "mimeType": "text/markdown",
           "path": "./_file/NOENT.md"
         }
-      ],
-      "body": "() => {\nconst fail5 = fetch(\"./_file/NOENT.md\").then(d => d.text())\nreturn {fail5};\n}"
+      ]
     },
     {
       "type": "cell",
+      "body": "(FileAttachment) => {\nconst fail6 = FileAttachment(\"./NOENT.md\").text()\nreturn {fail6};\n}",
       "id": "96f2427a",
       "inputs": [
         "FileAttachment"
@@ -159,11 +160,11 @@
           "mimeType": "text/markdown",
           "path": "./_file/NOENT.md"
         }
-      ],
-      "body": "(FileAttachment) => {\nconst fail6 = FileAttachment(\"./NOENT.md\").text()\nreturn {fail6};\n}"
+      ]
     },
     {
       "type": "cell",
+      "body": "() => {\nconst ok1 = fetch(\"./_file/tex-expression.md\").then(d => d.text())\nreturn {ok1};\n}",
       "id": "57d7a0f9",
       "outputs": [
         "ok1"
@@ -174,11 +175,11 @@
           "mimeType": "text/markdown",
           "path": "./_file/tex-expression.md"
         }
-      ],
-      "body": "() => {\nconst ok1 = fetch(\"./_file/tex-expression.md\").then(d => d.text())\nreturn {ok1};\n}"
+      ]
     },
     {
       "type": "cell",
+      "body": "(FileAttachment) => {\nconst ok2 = FileAttachment(\"./tex-expression.md\").text()\nreturn {ok2};\n}",
       "id": "207b0b42",
       "inputs": [
         "FileAttachment"
@@ -192,8 +193,7 @@
           "mimeType": "text/markdown",
           "path": "./_file/tex-expression.md"
         }
-      ],
-      "body": "(FileAttachment) => {\nconst ok2 = FileAttachment(\"./tex-expression.md\").text()\nreturn {ok2};\n}"
+      ]
     }
   ],
   "hash": "132a5ddbcdd3d87f4004b0b3da9030258070daa3813051b8919e7737d42989b9"

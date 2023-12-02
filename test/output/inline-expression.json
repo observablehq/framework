@@ -16,12 +16,12 @@
   "cells": [
     {
       "type": "cell",
+      "body": "(display) => {\ndisplay((\n1 + 2\n))\n}",
       "id": "6212702c",
       "inputs": [
         "display"
       ],
-      "inline": true,
-      "body": "(display) => {\ndisplay((\n1 + 2\n))\n}"
+      "inline": true
     }
   ],
   "hash": "609842fc8b06be8d6b1ca6ce90c67c4384f6078adc49b9f887065560eababf65"

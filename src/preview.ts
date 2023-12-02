@@ -99,7 +99,7 @@ export class PreviewServer {
           if (!isEnoent(error)) throw error;
           throw new HttpError(`Not found: ${pathname}`, 404);
         }
-        end(req, res, rewriteModule(js, file, createImportResolver(this.root)), "text/javascript");
+        end(req, res, await rewriteModule(js, file, createImportResolver(this.root)), "text/javascript");
       } else if (pathname.startsWith("/_file/")) {
         const path = pathname.slice("/_file".length);
         const filepath = join(this.root, path);

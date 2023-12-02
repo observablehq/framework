@@ -4,6 +4,7 @@ import {fileURLToPath} from "node:url";
 import type {AstNode, OutputChunk, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
+import {resolveNpmImport} from "./javascript/imports.js";
 import {relativeUrl} from "./url.js";
 
 export async function rollupClient(clientPath = getClientPath(), {minify = false} = {}): Promise<string> {
@@ -27,13 +28,13 @@ export async function rollupClient(clientPath = getClientPath(), {minify = false
   }
 }
 
-function resolveImport(source: string, specifier: string | AstNode): ResolveIdResult {
+async function resolveImport(source: string, specifier: string | AstNode): Promise<ResolveIdResult> {
   return typeof specifier !== "string"
     ? null
     : specifier.startsWith("observablehq:")
     ? {id: relativeUrl(source, `./src/client/${specifier.slice("observablehq:".length)}.js`), external: true}
     : specifier.startsWith("npm:")
-    ? {id: `https://cdn.jsdelivr.net/npm/${specifier.slice("npm:".length)}/+esm`}
+    ? {id: await resolveNpmImport(specifier.slice("npm:".length))}
     : null;
 }
 

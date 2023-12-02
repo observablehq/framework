@@ -30,14 +30,13 @@ function runTests({
     (only ? it.only : skip ? it.skip : it)(path, async () => {
       const outfile = resolve(outputRoot, `${basename(outname, ".js")}.js`);
       const diffile = resolve(outputRoot, `${basename(outname, ".js")}-changed.js`);
-      const actual = renderDefineCell(
-        transpileJavaScript(await readFile(path, "utf8"), {
-          id: "0",
-          root: inputRoot,
-          sourcePath: name,
-          verbose: false
-        })
-      );
+      const {body, ...transpile} = transpileJavaScript(await readFile(path, "utf8"), {
+        id: "0",
+        root: inputRoot,
+        sourcePath: name,
+        verbose: false
+      });
+      const actual = renderDefineCell({body: await body, ...transpile});
       let expected;
 
       try {
@@ -81,14 +80,14 @@ describe("transpileJavaScript(input, options)", () => {
     outputRoot: "test/output/imports",
     filter: (name) => name.endsWith("-import.js")
   });
-  it("trims leading and trailing newlines", () => {
+  it("trims leading and trailing newlines", async () => {
     const {body} = transpileJavaScript("\ntest\n", {
       id: "0",
       root: "test/input",
       sourcePath: "index.js",
       verbose: false
     });
-    assert.strictEqual(body, "(test,display) => {\ndisplay((\ntest\n))\n}");
+    assert.strictEqual(await body, "(test,display) => {\ndisplay((\ntest\n))\n}");
   });
   it("rethrows unexpected errors", () => {
     const expected = new Error();
@@ -110,7 +109,7 @@ describe("transpileJavaScript(input, options)", () => {
       expected
     );
   });
-  it("respects the sourceLine option", () => {
+  it("respects the sourceLine option", async () => {
     const {body} = transpileJavaScript("foo,", {
       id: "0",
       root: "test/input",
@@ -119,6 +118,6 @@ describe("transpileJavaScript(input, options)", () => {
       inline: true,
       verbose: false
     });
-    assert.strictEqual(body, '() => { throw new SyntaxError("invalid expression"); }');
+    assert.strictEqual(await body, '() => { throw new SyntaxError("invalid expression"); }');
   });
 });
