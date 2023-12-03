@@ -82,7 +82,9 @@ if (location.pathname.endsWith("/")) {
   }
 <script type="module">${html.unsafe(`
 
-import {${preview ? "open, " : ""}define} from ${JSON.stringify(relativeUrl(path, "/_observablehq/client.js"))};
+import ${preview || parseResult.cells.length > 0 ? `{${preview ? "open, " : ""}define} from ` : ""}${JSON.stringify(
+    relativeUrl(path, "/_observablehq/client.js")
+  )};
 ${
   preview ? `\nopen({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
 }${parseResult.cells
