@@ -27,6 +27,6 @@ function persistOpen() {
 }
 
 for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
-  summary.addEventListener("mousedown", preventDoubleClick);
-  summary.parentElement.addEventListener("toggle", persistOpen);
+  summary.onmousedown = preventDoubleClick;
+  summary.parentElement.ontoggle = persistOpen;
 }
