@@ -17,9 +17,16 @@ if (toggle) {
   });
 }
 
-function toggleDetails(event) {
-  if (event.detail > 1) event.preventDefault(); // Prevent double-clicking the summary toggle from selecting text.
-  sessionStorage.setItem(`observablehq-sidebar:${this.textContent}`, String(!this.parentElement.open));
+// Prevent double-clicking the summary toggle from selecting text.
+function preventDoubleClick(event) {
+  if (event.detail > 1) event.preventDefault();
 }
 
-for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) summary.onmousedown = toggleDetails;
+function persistOpen() {
+  sessionStorage.setItem(`observablehq-sidebar:${this.firstElementChild.textContent}`, String(this.open));
+}
+
+for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
+  summary.addEventListener("mousedown", preventDoubleClick);
+  summary.parentElement.addEventListener("toggle", persistOpen);
+}
