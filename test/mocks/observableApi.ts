@@ -3,7 +3,9 @@ import {getObservableApiHost} from "../../src/observableApiClient.js";
 
 export const validApiKey = "MOCK-VALID-KEY";
 export const invalidApiKey = "MOCK-INVALID-KEY";
+
 const emptyErrorBody = JSON.stringify({errors: []});
+
 export class ObservableApiMock {
   private _agent: MockAgent | null = null;
   private _handlers: ((pool: Interceptable) => void)[] = [];

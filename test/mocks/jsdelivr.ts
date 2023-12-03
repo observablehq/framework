@@ -1,0 +1,37 @@
+import {type Dispatcher, MockAgent, getGlobalDispatcher, setGlobalDispatcher} from "undici";
+
+const packages: [name: string, version: string][] = [
+  ["@duckdb/duckdb-wasm", "1.28.0"],
+  ["@observablehq/inputs", "0.10.6"],
+  ["@observablehq/plot", "0.6.11"],
+  ["@viz-js/viz", "3.2.3"],
+  ["apache-arrow", "14.0.1"],
+  ["arquero", "5.3.0"],
+  ["canvas-confetti", "1.9.2"],
+  ["d3-dsv", "3.0.1"],
+  ["d3", "7.8.5"],
+  ["htl", "0.3.1"],
+  ["katex", "0.16.9"],
+  ["leaflet", "1.9.4"],
+  ["lodash", "4.17.21"],
+  ["topojson-client", "3.1.0"]
+];
+
+export function mockJsDelivr() {
+  let globalDispatcher: Dispatcher;
+
+  before(async () => {
+    globalDispatcher = getGlobalDispatcher();
+    const agent = new MockAgent();
+    agent.disableNetConnect();
+    const client = agent.get("https://data.jsdelivr.com");
+    for (const [name, version] of packages) {
+      client.intercept({path: `/v1/packages/npm/${name}/resolved`, method: "GET"}).reply(200, {version});
+    }
+    setGlobalDispatcher(agent);
+  });
+
+  after(async () => {
+    setGlobalDispatcher(globalDispatcher!);
+  });
+}

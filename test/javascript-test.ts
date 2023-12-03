@@ -5,6 +5,7 @@ import {basename, join, resolve} from "node:path";
 import {isEnoent} from "../src/error.js";
 import {transpileJavaScript} from "../src/javascript.js";
 import {renderDefineCell} from "../src/render.js";
+import {mockJsDelivr} from "./mocks/jsdelivr.js";
 
 function isJsFile(inputRoot: string, fileName: string) {
   if (!fileName.endsWith(".js")) return false;
@@ -71,15 +72,19 @@ function runTests({
 }
 
 describe("transpileJavaScript(input, options)", () => {
+  mockJsDelivr();
+
   runTests({
     inputRoot: "test/input",
     outputRoot: "test/output"
   });
+
   runTests({
     inputRoot: "test/input/imports",
     outputRoot: "test/output/imports",
     filter: (name) => name.endsWith("-import.js")
   });
+
   it("trims leading and trailing newlines", async () => {
     const {body} = transpileJavaScript("\ntest\n", {
       id: "0",

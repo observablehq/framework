@@ -5,8 +5,11 @@ import {join, normalize, relative} from "node:path";
 import {difference} from "d3-array";
 import type {BuildEffects} from "../src/build.js";
 import {build} from "../src/build.js";
+import {mockJsDelivr} from "./mocks/jsdelivr.js";
 
 describe("build", async () => {
+  mockJsDelivr();
+
   // Each sub-directory of test/input/build is a test case.
   const inputRoot = "test/input/build";
   const outputRoot = "test/output/build";
