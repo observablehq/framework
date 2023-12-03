@@ -1,31 +1,31 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>H1: Section</title>
+<title>A page…</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" type="text/css" href="./_observablehq/style.css">
+<link rel="stylesheet" type="text/css" href="../_observablehq/style.css">
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
-<link rel="modulepreload" href="./_observablehq/runtime.js">
-<link rel="modulepreload" href="./_observablehq/stdlib.js">
+<link rel="modulepreload" href="../_observablehq/runtime.js">
+<link rel="modulepreload" href="../_observablehq/stdlib.js">
 <script type="module">
 
-import "./_observablehq/client.js";
+import "../_observablehq/client.js";
 
 </script>
 <input id="observablehq-sidebar-toggle" type="checkbox">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
   <ol>
-    <li class="observablehq-link"><a href="./">Home</a></li>
+    <li class="observablehq-link"><a href="../">Home</a></li>
   </ol>
   <ol>
-    <li class="observablehq-link"><a href="./">Index</a></li>
-    <li class="observablehq-link"><a href="./one">One&lt;Two</a></li>
-    <li class="observablehq-link"><a href="./sub/two">Two</a></li></ol>
-    <details>
+    <li class="observablehq-link"><a href="../">Index</a></li>
+    <li class="observablehq-link"><a href="../one">One&lt;Two</a></li>
+    <li class="observablehq-link"><a href="../sub/two">Two</a></li></ol>
+    <details open class="observablehq-section-active">
       <summary>Closed subsection</summary>
       <ol>
-    <li class="observablehq-link"><a href="./closed/page">Closed page</a></li>
+    <li class="observablehq-link observablehq-link-active"><a href="./page">Closed page</a></li>
       </ol>
     </details>
   </ol>
@@ -43,24 +43,13 @@ import "./_observablehq/client.js";
     }
   }
 }</script>
-<aside id="observablehq-toc" data-selector="#observablehq-main h1:not(:first-of-type), #observablehq-main h2:not(h1 + h2)">
-<nav>
-<div>dollar&amp;pound</div>
-<ol>
-<li class="observablehq-secondary-link"><a href="#h2%3A-section-2">H2: Section 2</a></li>
-</ol>
-</nav>
-</aside>
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
-<h1 id="h1%3A-section" tabindex="-1"><a class="observablehq-header-anchor" href="#h1%3A-section">H1: Section</a></h1>
-<h2 id="h2%3A-section-1" tabindex="-1"><a class="observablehq-header-anchor" href="#h2%3A-section-1">H2: Section 1</a></h2>
-<p>Some text here</p>
-<h2 id="h2%3A-section-2" tabindex="-1"><a class="observablehq-header-anchor" href="#h2%3A-section-2">H2: Section 2</a></h2>
-<p>Some text here again</p>
-<h3 id="h3%3A-section-1" tabindex="-1"><a class="observablehq-header-anchor" href="#h3%3A-section-1">H3: Section 1</a></h3>
+<h1 id="a-page%E2%80%A6" tabindex="-1"><a class="observablehq-header-anchor" href="#a-page%E2%80%A6">A page…</a></h1>
+<p>in a closed subsection.</p>
 </main>
 <footer id="observablehq-footer">
+<nav><a rel="prev" href="../sub/two"><span>Two</span></a></nav>
 <div>© 2023 Observable, Inc.</div>
 </footer>
 </div>
