@@ -68,17 +68,33 @@ ${
     parseResult,
     path,
     createImportResolver(root, "_import")
-  )}
+  )}${
+    path === "/404"
+      ? html.unsafe(`\n<script type="module">
+
+if (location.pathname.endsWith("/")) {
+  const alt = \`$\{location.pathname.slice(0, -1)}.html\`;
+  fetch(alt, {method: "HEAD"}).then((response) => response.ok && location.replace(alt + location.search + location.hash));
+}
+
+</script>`)
+      : ""
+  }
 <script type="module">${html.unsafe(`
 
-import {${preview ? "open, " : ""}define} from ${JSON.stringify(relativeUrl(path, "/_observablehq/client.js"))};
-
+import ${preview || parseResult.cells.length > 0 ? `{${preview ? "open, " : ""}define} from ` : ""}${JSON.stringify(
+    relativeUrl(path, "/_observablehq/client.js")
+  )};
 ${
-  preview ? `open({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
-}${parseResult.cells.map(resolver).map(renderDefineCell).join("")}`)}
-</script>
-${pages.length > 0 ? renderSidebar(title, pages, path) : ""}
-${headers.length > 0 ? renderToc(headers, toc.label) : ""}<div id="observablehq-center">
+  preview ? `\nopen({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
+}${parseResult.cells
+    .map(resolver)
+    .map((cell) => `\n${renderDefineCell(cell)}`)
+    .join("")}`)}
+</script>${pages.length > 0 ? html`\n${renderSidebar(title, pages, path)}` : ""}${
+    headers.length > 0 ? html`\n${renderToc(headers, toc.label)}` : ""
+  }
+<div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 ${html.unsafe(parseResult.html)}</main>
 ${renderFooter(path, options)}
@@ -142,8 +158,7 @@ function renderToc(headers: Header[], label = "Contents"): Html {
   )}
 </ol>
 </nav>
-</aside>
-`;
+</aside>`;
 }
 
 function renderListItem(p: Page, path: string): Html {

@@ -14,6 +14,7 @@ define({id: "115586ff", inputs: ["FileAttachment"], outputs: ["result"], files: 
 let result = FileAttachment("data.txt").text();
 return {result};
 }});
+
 define({id: "815178e4", inputs: ["display","result"], body: (display,result) => {
 display(result);
 }});
