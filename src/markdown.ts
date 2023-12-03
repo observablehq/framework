@@ -433,16 +433,14 @@ export async function parseMarkdown(source: string, root: string, sourcePath: st
   const context: ParseContext = {files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
   const tokens = md.parse(parts.content, context);
   const html = md.renderer.render(tokens, md.options, context); // Note: mutates context.pieces, context.files!
-  const pieces = toParsePieces(context.pieces);
-  const cells = await toParseCells(context.pieces);
   return {
     html,
     data: isEmpty(parts.data) ? null : parts.data,
     title: parts.data?.title ?? findTitle(tokens) ?? null,
     files: context.files,
     imports: context.imports,
-    pieces,
-    cells,
+    pieces: toParsePieces(context.pieces),
+    cells: await toParseCells(context.pieces),
     hash: await computeMarkdownHash(source, root, sourcePath, context.imports)
   };
 }
