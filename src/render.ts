@@ -115,7 +115,7 @@ function renderSidebar(title = "Home", pages: (Page | Section)[], path: string):
   <ol>${pages.map((p, i) =>
     "pages" in p
       ? html`${i > 0 && "path" in pages[i - 1] ? html`</ol>` : ""}
-    <details${p.open ? " open" : ""}>
+    <details${p.open || p.pages.some((p) => p.path === path) ? html` open class="observablehq-section-active"` : ""}>
       <summary>${p.name}</summary>
       <ol>${p.pages.map((p) => renderListItem(p, path))}
       </ol>
@@ -131,6 +131,13 @@ function renderSidebar(title = "Home", pages: (Page | Section)[], path: string):
   const initialState = localStorage.getItem("observablehq-sidebar");
   if (initialState) toggle.checked = initialState === "true";
   else toggle.indeterminate = true;
+  for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
+    const details = summary.parentElement;
+    switch (sessionStorage.getItem(\`observablehq-sidebar:\${summary.textContent}\`)) {
+      case "true": details.open = true; break;
+      case "false": if (!details.classList.contains("observablehq-section-active")) details.open = false; break;
+    }
+  }
 }</script>`;
 }
 

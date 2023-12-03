@@ -17,13 +17,9 @@ if (toggle) {
   });
 }
 
-// Prevent double-clicking the summary toggle from selecting text.
-function preventDoubleClick(event) {
-  if (event.detail > 1) {
-    event.preventDefault();
-  }
+function toggleDetails(event) {
+  if (event.detail > 1) event.preventDefault(); // Prevent double-clicking the summary toggle from selecting text.
+  sessionStorage.setItem(`observablehq-sidebar:${this.textContent}`, String(!this.parentElement.open));
 }
 
-for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
-  summary.onmousedown = preventDoubleClick;
-}
+for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) summary.onmousedown = toggleDetails;
