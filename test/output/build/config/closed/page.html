@@ -21,7 +21,7 @@ import "../_observablehq/client.js";
     <li class="observablehq-link"><a href="../">Index</a></li>
     <li class="observablehq-link"><a href="../one">One&lt;Two</a></li>
     <li class="observablehq-link"><a href="../sub/two">Two</a></li></ol>
-    <details open>
+    <details open class="observablehq-section-active">
       <summary>Closed subsection</summary>
       <ol>
     <li class="observablehq-link observablehq-link-active"><a href="./page">Closed page</a></li>
@@ -35,13 +35,10 @@ import "../_observablehq/client.js";
   if (initialState) toggle.checked = initialState === "true";
   else toggle.indeterminate = true;
   for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
+    const details = summary.parentElement;
     switch (sessionStorage.getItem(`observablehq-sidebar:${summary.textContent}`)) {
-      case "true":
-        summary.parentElement.open = true;
-        break;
-      case "false":
-        summary.parentElement.open = false;
-        break;
+      case "true": details.open = true; break;
+      case "false": if (!details.classList.contains("observablehq-section-active")) details.open = false; break;
     }
   }
 }</script>
