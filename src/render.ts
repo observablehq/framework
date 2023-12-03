@@ -156,7 +156,7 @@ async function renderLinks(parseResult: ParseResult, path: string, resolver: Imp
   for (const {name} of parseResult.imports) specifiers.add(name);
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
   addImplicitSpecifiers(specifiers, inputs);
-  addImplicitStylesheets(stylesheets, specifiers);
+  await addImplicitStylesheets(stylesheets, specifiers);
   const preloads = new Set<string>();
   for (const specifier of specifiers) preloads.add(await resolver(path, specifier));
   if (parseResult.cells.some((cell) => cell.databases?.length)) preloads.add(relativeUrl(path, "/_observablehq/database.js")); // prettier-ignore

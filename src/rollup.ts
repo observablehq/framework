@@ -1,24 +1,21 @@
 import {dirname, join, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
-import type {AstNode, OutputChunk, ResolveIdResult} from "rollup";
+import {type CallExpression} from "acorn";
+import {simple} from "acorn-walk";
+import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
+import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
 import {resolveNpmImport} from "./javascript/imports.js";
+import {Sourcemap} from "./sourcemap.js";
 import {relativeUrl} from "./url.js";
 
 export async function rollupClient(clientPath = getClientPath(), {minify = false} = {}): Promise<string> {
   const bundle = await rollup({
     input: clientPath,
     external: [/^https:/],
-    plugins: [
-      {
-        name: "resolve-import",
-        resolveId: (specifier) => resolveImport(clientPath, specifier),
-        resolveDynamicImport: (specifier) => resolveImport(clientPath, specifier)
-      },
-      esbuild({target: "es2022", minify})
-    ]
+    plugins: [importResolve(clientPath), esbuild({target: "es2022", minify}), importMetaResolve()]
   });
   try {
     const output = await bundle.generate({format: "es"});
@@ -26,6 +23,14 @@ export async function rollupClient(clientPath = getClientPath(), {minify = false
   } finally {
     await bundle.close();
   }
+}
+
+function importResolve(clientPath: string): Plugin {
+  return {
+    name: "resolve-import",
+    resolveId: (specifier) => resolveImport(clientPath, specifier),
+    resolveDynamicImport: (specifier) => resolveImport(clientPath, specifier)
+  };
 }
 
 async function resolveImport(source: string, specifier: string | AstNode): Promise<ResolveIdResult> {
@@ -36,6 +41,44 @@ async function resolveImport(source: string, specifier: string | AstNode): Promi
     : specifier.startsWith("npm:")
     ? {id: await resolveNpmImport(specifier.slice("npm:".length))}
     : null;
+}
+
+function importMetaResolve(): Plugin {
+  return {
+    name: "resolve-import-meta-resolve",
+    async transform(code) {
+      const program = this.parse(code);
+      const resolves: CallExpression[] = [];
+
+      simple(program, {
+        CallExpression(node) {
+          if (
+            node.callee.type === "MemberExpression" &&
+            node.callee.object.type === "MetaProperty" &&
+            node.callee.property.type === "Identifier" &&
+            node.callee.property.name === "resolve" &&
+            node.arguments.length === 1 &&
+            isStringLiteral(node.arguments[0])
+          ) {
+            resolves.push(node);
+          }
+        }
+      });
+
+      if (!resolves.length) return null;
+
+      const output = new Sourcemap(code);
+      for (const node of resolves) {
+        const specifier = getStringLiteralValue(node.arguments[0]);
+        if (specifier.startsWith("npm:")) {
+          const resolution = await resolveNpmImport(specifier.slice("npm:".length));
+          output.replaceLeft(node.start, node.end, JSON.stringify(resolution));
+        }
+      }
+
+      return {code: String(output)};
+    }
+  };
 }
 
 export function getClientPath(entry = "./src/client/index.js"): string {

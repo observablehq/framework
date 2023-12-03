@@ -248,7 +248,7 @@ function getWatchPaths(parseResult: ParseResult): string[] {
   return paths;
 }
 
-function getStylesheets({cells}: ParseResult): Set<string> {
+async function getStylesheets({cells}: ParseResult): Promise<Set<string>> {
   const inputs = new Set<string>();
   for (const cell of cells) cell.inputs?.forEach(inputs.add, inputs);
   return getImplicitStylesheets(getImplicitSpecifiers(inputs));
@@ -294,7 +294,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: st
       case "change": {
         const updated = await readMarkdown(path, root);
         if (current.parse.hash === updated.parse.hash) break;
-        const updatedStylesheets = getStylesheets(updated.parse);
+        const updatedStylesheets = await getStylesheets(updated.parse);
         for (const href of difference(stylesheets, updatedStylesheets)) send({type: "remove-stylesheet", href});
         for (const href of difference(updatedStylesheets, stylesheets)) send({type: "add-stylesheet", href});
         stylesheets = updatedStylesheets;
@@ -316,7 +316,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: st
     path += ".md";
     current = await readMarkdown(path, root);
     if (current.parse.hash !== initialHash) return void send({type: "reload"});
-    stylesheets = getStylesheets(current.parse);
+    stylesheets = await getStylesheets(current.parse);
     attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(current.parse), refreshAttachment);
     markdownWatcher = watch(join(root, path), watcher);
   }

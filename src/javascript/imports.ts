@@ -271,18 +271,42 @@ export function createImportResolver(root: string, base: "." | "_import" = "."):
 // consistency; restart the server if you want to clear the cache.
 const npmCache = new Map<string, Promise<string>>();
 
-export async function resolveNpmImport(specifier: string): Promise<string> {
+function parseNpmSpecifier(specifier: string): {name: string; range?: string; path?: string} {
+  const parts = specifier.split("/");
+  const namerange = specifier.startsWith("@") ? [parts.shift()!, parts.shift()!].join("/") : parts.shift()!;
+  const ranged = namerange.indexOf("@", 1);
+  return {
+    name: ranged > 0 ? namerange.slice(0, ranged) : namerange,
+    range: ranged > 0 ? namerange.slice(ranged + 1) : undefined,
+    path: parts.length > 0 ? parts.join("/") : undefined
+  };
+}
+
+function formatNpmSpecifier({name, range, path}: {name: string; range?: string; path?: string}): string {
+  return `${name}${range ? `@${range}` : ""}${path ? `/${path}` : ""}`;
+}
+
+async function resolveNpmVersion(specifier: string): Promise<string> {
+  const {name, range} = parseNpmSpecifier(specifier); // ignore path
+  specifier = formatNpmSpecifier({name, range});
   let promise = npmCache.get(specifier);
   if (promise) return promise;
   promise = (async () => {
-    const response = await fetch(`https://data.jsdelivr.com/v1/packages/npm/${specifier}/resolved`);
-    if (!response.ok) throw new Error(`unable to resolve npm specifier: ${specifier}`);
+    const search = range ? `?specifier=${range}` : "";
+    const response = await fetch(`https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`);
+    if (!response.ok) throw new Error(`unable to resolve npm specifier: ${name}`);
     const body = await response.json();
-    return `https://cdn.jsdelivr.net/npm/${specifier}@${body.version}/+esm`;
+    return body.version;
   })();
   promise.catch(() => npmCache.delete(specifier)); // try again on error
   npmCache.set(specifier, promise);
   return promise;
+}
+
+export async function resolveNpmImport(specifier: string): Promise<string> {
+  const {name, path = "+esm"} = parseNpmSpecifier(specifier);
+  const version = await resolveNpmVersion(specifier);
+  return `https://cdn.jsdelivr.net/npm/${name}@${version}/${path}`;
 }
 
 function resolveBuiltin(base: "." | "_import", path: string, specifier: string): string {

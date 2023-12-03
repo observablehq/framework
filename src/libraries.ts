@@ -1,3 +1,5 @@
+import {resolveNpmImport} from "./javascript/imports.js";
+
 export function getImplicitSpecifiers(inputs: Set<string>): Set<string> {
   return addImplicitSpecifiers(new Set(), inputs);
 }
@@ -21,13 +23,13 @@ export function addImplicitSpecifiers(specifiers: Set<string>, inputs: Set<strin
   return specifiers;
 }
 
-export function getImplicitStylesheets(specifiers: Set<string>): Set<string> {
+export async function getImplicitStylesheets(specifiers: Set<string>): Promise<Set<string>> {
   return addImplicitStylesheets(new Set(), specifiers);
 }
 
-export function addImplicitStylesheets(stylesheets: Set<string>, specifiers: Set<string>): typeof stylesheets {
-  if (specifiers.has("npm:katex")) stylesheets.add("https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css");
+export async function addImplicitStylesheets(stylesheets: Set<string>, specifiers: Set<string>): Promise<Set<string>> {
   if (specifiers.has("npm:@observablehq/inputs")) stylesheets.add("https://cdn.jsdelivr.net/gh/observablehq/inputs/src/style.css"); // prettier-ignore
-  if (specifiers.has("npm:leaflet")) stylesheets.add("https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.css");
+  if (specifiers.has("npm:katex")) stylesheets.add(await resolveNpmImport("katex/dist/katex.min.css"));
+  if (specifiers.has("npm:leaflet")) stylesheets.add(await resolveNpmImport("leaflet/dist/leaflet.css"));
   return stylesheets;
 }
