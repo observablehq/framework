@@ -1,7 +1,7 @@
 import mer from "npm:mermaid";
 
 let nextId = 0;
-const theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "neutral";
+const theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "neutral";
 mer.initialize({startOnLoad: false, securityLevel: "loose", theme});
 
 export default async function mermaid() {
