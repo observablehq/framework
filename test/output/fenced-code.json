@@ -22,11 +22,11 @@
   "cells": [
     {
       "type": "cell",
-      "body": "() => {\nfunction add(a, b) {\n  return a + b;\n}\nreturn {add};\n}",
       "id": "fe9e095e",
       "outputs": [
         "add"
-      ]
+      ],
+      "body": "() => {\nfunction add(a, b) {\n  return a + b;\n}\nreturn {add};\n}"
     }
   ],
   "hash": "4e0bcba1bcafa669c63b983fd96dcecbfda779ccb93c5b82e26396bfc85e93b6"

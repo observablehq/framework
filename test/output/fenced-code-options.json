@@ -46,35 +46,35 @@
   "cells": [
     {
       "type": "cell",
-      "body": "() => {\nfunction add(a, b) {\n  return a + b;\n}\nreturn {add};\n}",
       "id": "fe9e095e",
       "outputs": [
         "add"
-      ]
+      ],
+      "body": "() => {\nfunction add(a, b) {\n  return a + b;\n}\nreturn {add};\n}"
     },
     {
       "type": "cell",
-      "body": "() => {\nfunction bareJs() {\n  return 1;\n}\nreturn {bareJs};\n}",
       "id": "4bf815ab",
       "outputs": [
         "bareJs"
-      ]
+      ],
+      "body": "() => {\nfunction bareJs() {\n  return 1;\n}\nreturn {bareJs};\n}"
     },
     {
       "type": "cell",
-      "body": "() => {\nfunction langOutside() {\n  return 1;\n}\nreturn {langOutside};\n}",
       "id": "d41a5631",
       "outputs": [
         "langOutside"
-      ]
+      ],
+      "body": "() => {\nfunction langOutside() {\n  return 1;\n}\nreturn {langOutside};\n}"
     },
     {
       "type": "cell",
-      "body": "() => {\nfunction langAndAttributes() {\n  return 1;\n}\nreturn {langAndAttributes};\n}",
       "id": "2f4eff36",
       "outputs": [
         "langAndAttributes"
-      ]
+      ],
+      "body": "() => {\nfunction langAndAttributes() {\n  return 1;\n}\nreturn {langAndAttributes};\n}"
     }
   ],
   "hash": "4a504e4c5acc0bb9280318a79d7bc86cc13388975e4dcb6a8cf9eb619fecb1cb"

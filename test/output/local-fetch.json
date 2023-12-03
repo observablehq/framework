@@ -28,7 +28,6 @@
   "cells": [
     {
       "type": "cell",
-      "body": "(display) => {\ndisplay((\nfetch(\"./_file/local-fetch.md\")\n))\n}",
       "id": "06e1c6cd",
       "inputs": [
         "display"
@@ -39,7 +38,8 @@
           "mimeType": "text/markdown",
           "path": "./_file/local-fetch.md"
         }
-      ]
+      ],
+      "body": "(display) => {\ndisplay((\nfetch(\"./_file/local-fetch.md\")\n))\n}"
     }
   ],
   "hash": "286e04e0631c0f114d8c371c9aeda8bfd7eadacd31a72b9134ceabb1588c8371"
