@@ -8,6 +8,7 @@ export default {
     {name: "HTML", path: "/html"},
     {
       name: "JavaScript",
+      open: false,
       pages: [
         {name: "Reactivity", path: "/javascript/reactivity"},
         {name: "Display", path: "/javascript/display"},
@@ -21,6 +22,7 @@ export default {
     },
     {
       name: "Libraries",
+      open: false,
       pages: [
         {name: "Arquero", path: "/lib/arquero"},
         {name: "Apache Arrow", path: "/lib/arrow"},
