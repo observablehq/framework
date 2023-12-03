@@ -64,12 +64,12 @@ await FileAttachment("dynamic-tar-gz/does-not-exist.txt").text()
   if (initialState) toggle.checked = initialState === "true";
   else toggle.indeterminate = true;
   for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
-    switch (localStorage.getItem(`observablehq-sidebar-${summary.textContent}`)) {
+    switch (sessionStorage.getItem(`observablehq-sidebar:${summary.textContent}`)) {
       case "true":
-        summary.parentElement.setAttribute("open", "open");
+        summary.parentElement.open = true;
         break;
       case "false":
-        summary.parentElement.removeAttribute("open");
+        summary.parentElement.open = false;
         break;
     }
   }

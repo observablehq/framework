@@ -36,6 +36,16 @@ return {fooJsonData,fooCsvData};
   const initialState = localStorage.getItem("observablehq-sidebar");
   if (initialState) toggle.checked = initialState === "true";
   else toggle.indeterminate = true;
+  for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
+    switch (sessionStorage.getItem(`observablehq-sidebar:${summary.textContent}`)) {
+      case "true":
+        summary.parentElement.open = true;
+        break;
+      case "false":
+        summary.parentElement.open = false;
+        break;
+    }
+  }
 }</script>
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
