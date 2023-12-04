@@ -338,7 +338,7 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
   // Extracting references to files (such as from linked stylesheets).
   const filePaths = new Set<FileReference["path"]>();
   for (const {query, src} of SUPPORTED_PROPERTIES) {
-    for (const element of document.querySelectorAll(query) as any as Iterable<Element>) {
+    for (const element of document.querySelectorAll(query)) {
       if (src === "srcset") {
         const srcset = element.getAttribute(src);
         const paths =
@@ -379,15 +379,13 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
   // Syntax highlighting for <code> elements. The code could contain an inline
   // expression within, or other HTML, but we only highlight text nodes that are
   // direct children of code elements.
-  for (const code of document.querySelectorAll("code[class*='language-']") as any as Iterable<Element>) {
-    const language = [...(code.classList as any).keys()]
-      .find((c) => c.startsWith("language-"))
-      ?.slice("language-".length);
+  for (const code of document.querySelectorAll("code[class*='language-']")) {
+    const language = [...code.classList].find((c) => c.startsWith("language-"))?.slice("language-".length);
     if (!language || !hljs.getLanguage(language)) continue;
     if (code.parentElement?.tagName === "PRE") code.parentElement.setAttribute("data-language", language);
     let html = "";
     code.normalize(); // coalesce adjacent text nodes
-    for (const child of [...(code.childNodes as any as Iterable<Node>)]) {
+    for (const child of code.childNodes) {
       html += child.nodeType === TEXT_NODE ? hljs.highlight(child.textContent!, {language}).value : String(child);
     }
     code.innerHTML = html;
@@ -422,7 +420,8 @@ function toParseCells(pieces: RenderPiece[]): CellPiece[] {
 }
 
 export async function parseMarkdown(source: string, root: string, sourcePath: string): Promise<ParseResult> {
-  const parts = matter(source);
+  const parts = matter(source, {});
+
   // TODO: We need to know what line in the source the markdown starts on and pass that
   // as startLine in the parse context below.
   const md = MarkdownIt({html: true});

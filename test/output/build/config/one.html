@@ -8,8 +8,7 @@
 <link rel="modulepreload" href="./_observablehq/runtime.js">
 <script type="module">
 
-import {define} from "./_observablehq/client.js";
-
+import "./_observablehq/client.js";
 
 </script>
 <input id="observablehq-sidebar-toggle" type="checkbox">
@@ -21,7 +20,13 @@ import {define} from "./_observablehq/client.js";
   <ol>
     <li class="observablehq-link"><a href="./">Index</a></li>
     <li class="observablehq-link observablehq-link-active"><a href="./one">One&lt;Two</a></li>
-    <li class="observablehq-link"><a href="./sub/two">Two</a></li>
+    <li class="observablehq-link"><a href="./sub/two">Two</a></li></ol>
+    <details>
+      <summary>Closed subsection</summary>
+      <ol>
+    <li class="observablehq-link"><a href="./closed/page">Closed page</a></li>
+      </ol>
+    </details>
   </ol>
 </nav>
 <script>{
@@ -29,6 +34,13 @@ import {define} from "./_observablehq/client.js";
   const initialState = localStorage.getItem("observablehq-sidebar");
   if (initialState) toggle.checked = initialState === "true";
   else toggle.indeterminate = true;
+  for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
+    const details = summary.parentElement;
+    switch (sessionStorage.getItem(`observablehq-sidebar:${summary.textContent}`)) {
+      case "true": details.open = true; break;
+      case "false": if (!details.classList.contains("observablehq-section-active")) details.open = false; break;
+    }
+  }
 }</script>
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">

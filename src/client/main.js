@@ -11,9 +11,8 @@ const runtime = new Runtime(library);
 export const main = runtime.module();
 
 const attachedFiles = new Map();
-function resolveFile(name) {
-  return attachedFiles.get(name);
-}
+const resolveFile = (name) => attachedFiles.get(name);
+main.builtin("FileAttachment", runtime.fileAttachments(resolveFile));
 
 const databaseTokens = new Map();
 async function resolveDatabaseToken(name) {
@@ -21,11 +20,6 @@ async function resolveDatabaseToken(name) {
   if (!token) throw new Error(`Database configuration for ${name} not found`);
   return token;
 }
-
-// https://github.com/observablehq/cli/issues/190
-const FileAttachment = runtime.fileAttachments(resolveFile);
-FileAttachment.prototype.url = async function() { return String(new URL(await this._url, location)); }; // prettier-ignore
-main.builtin("FileAttachment", FileAttachment);
 
 export const cellsById = new Map(); // TODO hide
 
@@ -64,7 +58,7 @@ export function define(cell) {
   );
   v.define(outputs.length ? `cell ${id}` : null, inputs, body);
   variables.push(v);
-  for (const o of outputs) variables.push(main.define(o, [`cell ${id}`], (exports) => exports[o]));
+  for (const o of outputs) variables.push(main.variable(true).define(o, [`cell ${id}`], (exports) => exports[o]));
   for (const f of files) attachedFiles.set(f.name, {url: f.path, mimeType: f.mimeType});
   for (const d of databases) databaseTokens.set(d.name, d);
 }

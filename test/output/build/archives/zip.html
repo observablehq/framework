@@ -15,21 +15,25 @@ display((
 await FileAttachment("static/file.txt").text()
 ))
 }});
+
 define({id: "bab54217", inputs: ["FileAttachment","display"], files: [{"name":"static/not-found.txt","mimeType":"text/plain","path":"./_file/static/not-found.txt"}], body: async (FileAttachment,display) => {
 display((
 await FileAttachment("static/not-found.txt").text()
 ))
 }});
+
 define({id: "11eec300", inputs: ["FileAttachment","display"], files: [{"name":"dynamic/file.txt","mimeType":"text/plain","path":"./_file/dynamic/file.txt"}], body: async (FileAttachment,display) => {
 display((
 await FileAttachment("dynamic/file.txt").text()
 ))
 }});
+
 define({id: "ee2310f3", inputs: ["FileAttachment","display"], files: [{"name":"dynamic/not-found.txt","mimeType":"text/plain","path":"./_file/dynamic/not-found.txt"}], body: async (FileAttachment,display) => {
 display((
 await FileAttachment("dynamic/not-found.txt").text()
 ))
 }});
+
 define({id: "f9a513d8", body: () => {
 // await FileAttachment("dynamic.zip")
 }});
@@ -51,6 +55,13 @@ define({id: "f9a513d8", body: () => {
   const initialState = localStorage.getItem("observablehq-sidebar");
   if (initialState) toggle.checked = initialState === "true";
   else toggle.indeterminate = true;
+  for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
+    const details = summary.parentElement;
+    switch (sessionStorage.getItem(`observablehq-sidebar:${summary.textContent}`)) {
+      case "true": details.open = true; break;
+      case "false": if (!details.classList.contains("observablehq-section-active")) details.open = false; break;
+    }
+  }
 }</script>
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">

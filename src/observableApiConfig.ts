@@ -2,6 +2,8 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {isEnoent} from "./error.js";
+import type {Logger} from "./logger.js";
+import {commandRequiresAuthenticationMessage} from "./observableApiAuth.js";
 
 const userConfigName = ".observablehq";
 interface UserConfig {
@@ -19,9 +21,22 @@ export interface DeployConfig {
   };
 }
 
-export async function getObservableApiKey(): Promise<string | null> {
-  const {config} = await loadUserConfig();
-  return config.auth?.key ?? null;
+export type ApiKey =
+  | {source: "file"; filePath: string; key: string}
+  | {source: "env"; envVar: string; key: string}
+  | {source: "test"; key: string};
+
+export async function getObservableApiKey(logger: Logger = console): Promise<ApiKey> {
+  const envVar = "OBSERVABLEHQ_TOKEN";
+  if (process.env[envVar]) {
+    return {source: "env", envVar, key: process.env[envVar]};
+  }
+  const {config, configPath} = await loadUserConfig();
+  if (config.auth?.key) {
+    return {source: "file", filePath: configPath, key: config.auth.key};
+  }
+  logger.log(commandRequiresAuthenticationMessage);
+  process.exit(1);
 }
 
 export async function setObservableApiKey(id: string, key: string): Promise<void> {

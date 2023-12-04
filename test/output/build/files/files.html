@@ -14,16 +14,19 @@ display((
 fetch("./_file/file-top.csv")
 ))
 }});
+
 define({id: "03b99abc", inputs: ["display"], files: [{"name":"./subsection/file-sub.csv","mimeType":"text/csv","path":"./_file/subsection/file-sub.csv"}], body: (display) => {
 display((
 fetch("./_file/subsection/file-sub.csv")
 ))
 }});
+
 define({id: "10037545", inputs: ["FileAttachment","display"], files: [{"name":"file-top.csv","mimeType":"text/csv","path":"./_file/file-top.csv"}], body: (FileAttachment,display) => {
 display((
 FileAttachment("file-top.csv")
 ))
 }});
+
 define({id: "453a8147", inputs: ["FileAttachment","display"], files: [{"name":"subsection/file-sub.csv","mimeType":"text/csv","path":"./_file/subsection/file-sub.csv"}], body: (FileAttachment,display) => {
 display((
 FileAttachment("subsection/file-sub.csv")
@@ -47,6 +50,13 @@ FileAttachment("subsection/file-sub.csv")
   const initialState = localStorage.getItem("observablehq-sidebar");
   if (initialState) toggle.checked = initialState === "true";
   else toggle.indeterminate = true;
+  for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
+    const details = summary.parentElement;
+    switch (sessionStorage.getItem(`observablehq-sidebar:${summary.textContent}`)) {
+      case "true": details.open = true; break;
+      case "false": if (!details.classList.contains("observablehq-section-active")) details.open = false; break;
+    }
+  }
 }</script>
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">

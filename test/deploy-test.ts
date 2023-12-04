@@ -3,6 +3,8 @@ import {Readable, Writable} from "node:stream";
 import type {DeployEffects} from "../src/deploy.js";
 import {deploy} from "../src/deploy.js";
 import {isHttpError} from "../src/error.js";
+import type {Logger} from "../src/logger.js";
+import {commandRequiresAuthenticationMessage} from "../src/observableApiAuth.js";
 import type {DeployConfig} from "../src/observableApiConfig.js";
 import {MockLogger} from "./mocks/logger.js";
 import {
@@ -48,8 +50,12 @@ class MockDeployEffects implements DeployEffects {
     });
   }
 
-  async getObservableApiKey() {
-    return this._observableApiKey;
+  async getObservableApiKey(logger: Logger) {
+    if (!this._observableApiKey) {
+      logger.log(commandRequiresAuthenticationMessage);
+      throw new Error("no key available in this test");
+    }
+    return {source: "test" as const, key: this._observableApiKey};
   }
 
   async getDeployConfig() {
@@ -104,10 +110,16 @@ describe("deploy", () => {
     const apiMock = new ObservableApiMock().start();
     const effects = new MockDeployEffects({apiKey: null});
 
-    await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+    try {
+      await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+      assert.fail("expected error");
+    } catch (err) {
+      if (!(err instanceof Error)) throw err;
+      assert.equal(err.message, "no key available in this test");
+      effects.logger.assertExactLogs([/^You need to be authenticated/]);
+    }
 
     apiMock.close();
-    effects.logger.assertExactLogs([/^You need to be authenticated/]);
   });
 
   it("handles multiple user workspaces", async () => {
@@ -229,7 +241,6 @@ describe("deploy", () => {
       await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
       fail("Should have thrown an error");
     } catch (error) {
-      console.log(error);
       assert.ok(isHttpError(error));
       assert.equal(error.statusCode, 500);
     }
