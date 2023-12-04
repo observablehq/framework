@@ -24,11 +24,11 @@ describe("parseLocalFetches(root, paths)", () => {
   });
 });
 
-function testFetch(target: string, sourcePath: string, {meta = false} = {}): string {
+function testFetch(target: string, sourcePath: string, resolveMeta = false): string {
   const input = `fetch(${JSON.stringify(target)})`;
   const node = Parser.parseExpressionAt(input, 0, {ecmaVersion: 13}) as CallExpression;
   const output = new Sourcemap(input);
-  rewriteIfLocalFetch(node, output, [], sourcePath, {meta});
+  rewriteIfLocalFetch(node, output, [], sourcePath, {resolveMeta});
   return String(output);
 }
 
@@ -40,18 +40,18 @@ describe("rewriteIfLocalFetch(node, output, references, sourcePath, options)", (
     assert.strictEqual(testFetch("../test.txt", "sub/test.js"), 'fetch("../_file/test.txt")');
   });
   it("rewrites relative fetches with meta", () => {
-    assert.strictEqual(testFetch("./test.txt", "test.js", {meta: true}), 'fetch(new URL("../_file/test.txt", import.meta.url))'); // prettier-ignore
-    assert.strictEqual(testFetch("./sub/test.txt", "test.js", {meta: true}), 'fetch(new URL("../_file/sub/test.txt", import.meta.url))'); // prettier-ignore
-    assert.strictEqual(testFetch("./test.txt", "sub/test.js", {meta: true}), 'fetch(new URL("../../_file/sub/test.txt", import.meta.url))'); // prettier-ignore
-    assert.strictEqual(testFetch("../test.txt", "sub/test.js", {meta: true}), 'fetch(new URL("../../_file/test.txt", import.meta.url))'); // prettier-ignore
+    assert.strictEqual(testFetch("./test.txt", "test.js", true), 'fetch(new URL("../_file/test.txt", import.meta.url))'); // prettier-ignore
+    assert.strictEqual(testFetch("./sub/test.txt", "test.js", true), 'fetch(new URL("../_file/sub/test.txt", import.meta.url))'); // prettier-ignore
+    assert.strictEqual(testFetch("./test.txt", "sub/test.js", true), 'fetch(new URL("../../_file/sub/test.txt", import.meta.url))'); // prettier-ignore
+    assert.strictEqual(testFetch("../test.txt", "sub/test.js", true), 'fetch(new URL("../../_file/test.txt", import.meta.url))'); // prettier-ignore
   });
   it("ignores fetches that don’t start with ./, ../, or /", () => {
     assert.strictEqual(testFetch("test.txt", "test.js"), 'fetch("test.txt")');
     assert.strictEqual(testFetch("sub/test.txt", "test.js"), 'fetch("sub/test.txt")');
     assert.strictEqual(testFetch("test.txt", "sub/test.js"), 'fetch("test.txt")');
-    assert.strictEqual(testFetch("test.txt", "test.js", {meta: true}), 'fetch("test.txt")');
-    assert.strictEqual(testFetch("sub/test.txt", "test.js", {meta: true}), 'fetch("sub/test.txt")');
-    assert.strictEqual(testFetch("test.txt", "sub/test.js", {meta: true}), 'fetch("test.txt")');
+    assert.strictEqual(testFetch("test.txt", "test.js", true), 'fetch("test.txt")');
+    assert.strictEqual(testFetch("sub/test.txt", "test.js", true), 'fetch("sub/test.txt")');
+    assert.strictEqual(testFetch("test.txt", "sub/test.js", true), 'fetch("test.txt")');
   });
   it("rewrites absolute fetches without meta", () => {
     assert.strictEqual(testFetch("/test.txt", "test.js"), 'fetch("./_file/test.txt")');
@@ -59,9 +59,9 @@ describe("rewriteIfLocalFetch(node, output, references, sourcePath, options)", (
     assert.strictEqual(testFetch("/test.txt", "sub/test.js"), 'fetch("../_file/test.txt")');
   });
   it("rewrites absolute fetches with meta", () => {
-    assert.strictEqual(testFetch("/test.txt", "test.js", {meta: true}), 'fetch(new URL("../_file/test.txt", import.meta.url))'); // prettier-ignore
-    assert.strictEqual(testFetch("/sub/test.txt", "test.js", {meta: true}), 'fetch(new URL("../_file/sub/test.txt", import.meta.url))'); // prettier-ignore
-    assert.strictEqual(testFetch("/test.txt", "sub/test.js", {meta: true}), 'fetch(new URL("../../_file/test.txt", import.meta.url))'); // prettier-ignore
+    assert.strictEqual(testFetch("/test.txt", "test.js", true), 'fetch(new URL("../_file/test.txt", import.meta.url))'); // prettier-ignore
+    assert.strictEqual(testFetch("/sub/test.txt", "test.js", true), 'fetch(new URL("../_file/sub/test.txt", import.meta.url))'); // prettier-ignore
+    assert.strictEqual(testFetch("/test.txt", "sub/test.js", true), 'fetch(new URL("../../_file/test.txt", import.meta.url))'); // prettier-ignore
   });
   it("does not ignore fetch if not masked by a reference", () => {
     const input = '((fetch) => fetch("./test.txt"))(eval)';
@@ -119,8 +119,8 @@ describe("rewriteIfLocalFetch(node, output, references, sourcePath, options)", (
   it("ignores URL fetches", () => {
     assert.strictEqual(testFetch("https://example.com", "test.js"), 'fetch("https://example.com")');
     assert.strictEqual(testFetch("https://example.com", "sub/test.js"), 'fetch("https://example.com")');
-    assert.strictEqual(testFetch("https://example.com", "test.js", {meta: true}), 'fetch("https://example.com")');
-    assert.strictEqual(testFetch("https://example.com", "sub/test.js", {meta: true}), 'fetch("https://example.com")');
+    assert.strictEqual(testFetch("https://example.com", "test.js", true), 'fetch("https://example.com")');
+    assert.strictEqual(testFetch("https://example.com", "sub/test.js", true), 'fetch("https://example.com")');
   });
   it("ignores non-local path fetches", () => {
     assert.strictEqual(testFetch("../test.txt", "test.js"), 'fetch("../test.txt")');

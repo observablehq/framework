@@ -22,14 +22,14 @@ export function rewriteIfLocalFetch(
   output: Sourcemap,
   references: Identifier[],
   sourcePath: string,
-  {meta = false} = {} // if true, use import.meta to resolve; assumes _import
+  {resolveMeta = false} = {} // if true, use import.meta to resolve at runtime; assumes _import
 ) {
   if (isLocalFetch(node, references, sourcePath)) {
     const arg = node.arguments[0];
     const value = getStringLiteralValue(arg);
     const path = resolvePath("_file", sourcePath, value);
-    let result = JSON.stringify(relativeUrl(join(meta ? "_import" : ".", sourcePath), path));
-    if (meta) result = `new URL(${result}, import.meta.url)`; // more support than import.meta.resolve
+    let result = JSON.stringify(relativeUrl(join(resolveMeta ? "_import" : ".", sourcePath), path));
+    if (resolveMeta) result = `new URL(${result}, import.meta.url)`; // more support than import.meta.resolve
     output.replaceLeft(arg.start, arg.end, result);
   }
 }
