@@ -7,7 +7,7 @@ export function registerDatabase(name, token) {
 
 export function DatabaseClient(name) {
   if (new.target !== undefined) throw new TypeError("DatabaseClient is not a constructor");
-  const token = databases.get((name += ""));
+  const token = databases.get((name = `${name}`));
   if (!token) throw new Error(`Database not found: ${name}`);
   return new DatabaseClientImpl(name, token);
 }

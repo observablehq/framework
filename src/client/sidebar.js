@@ -23,7 +23,7 @@ function preventDoubleClick(event) {
 }
 
 function persistOpen() {
-  sessionStorage.setItem(`observablehq-sidebar:${this.firstElementChild.textContent}`, String(this.open));
+  sessionStorage.setItem(`observablehq-sidebar:${this.firstElementChild.textContent}`, this.open);
 }
 
 for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
