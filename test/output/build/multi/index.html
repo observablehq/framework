@@ -50,6 +50,9 @@ return {f2};
       case "false": if (!details.classList.contains("observablehq-section-active")) details.open = false; break;
     }
   }
+  window.onbeforeunload = () => sessionStorage.setItem("observablehq-sidebar-scrolly", document.querySelector("#observablehq-sidebar").scrollTop);
+  const scrolly = +sessionStorage.getItem("observablehq-sidebar-scrolly");
+  if (scrolly) document.querySelector("#observablehq-sidebar").scrollTop = scrolly;
 }</script>
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
