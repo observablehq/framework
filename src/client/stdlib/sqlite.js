@@ -1,9 +1,9 @@
 // https://github.com/sql-js/sql.js/issues/284
 const SQLite = await (async () => {
   const exports = {};
-  const response = await fetch("https://cdn.jsdelivr.net/npm/sql.js/dist/sql-wasm.js");
+  const response = await fetch(import.meta.resolve("npm:sql.js/dist/sql-wasm.js"));
   new Function("exports", await response.text())(exports);
-  return exports.Module({locateFile: (name) => `https://cdn.jsdelivr.net/npm/sql.js/dist/${name}`});
+  return exports.Module({locateFile: (name) => import.meta.resolve("npm:sql.js/dist/") + name});
 })();
 
 export default SQLite;

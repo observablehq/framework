@@ -2,6 +2,7 @@ import chai, {assert, expect} from "chai";
 import chaiHttp from "chai-http";
 import {preview} from "../../src/preview.js";
 import type {PreviewOptions, PreviewServer} from "../../src/preview.js";
+import {mockJsDelivr} from "../mocks/jsdelivr.js";
 
 const testHostRoot = "test/preview/dashboard";
 const testHostName = process.env.TEST_HOSTNAME ?? "127.0.0.1";
@@ -19,6 +20,8 @@ chai.use(chaiHttp);
 
 describe("preview server", () => {
   let testServer: PreviewServer["_server"];
+
+  mockJsDelivr();
 
   before(async () => {
     testServer = (await preview(testServerOptions)).server;

@@ -8,7 +8,8 @@ import {findDeclarations} from "./javascript/declarations.js";
 import {findFeatures} from "./javascript/features.js";
 import {rewriteFetches} from "./javascript/fetches.js";
 import {defaultGlobals} from "./javascript/globals.js";
-import {createImportResolver, findExports, findImports, rewriteImports} from "./javascript/imports.js";
+import {findExports, findImportDeclarations, findImports} from "./javascript/imports.js";
+import {createImportResolver, rewriteImports} from "./javascript/imports.js";
 import {findReferences} from "./javascript/references.js";
 import {syntaxError} from "./javascript/syntaxError.js";
 import {Sourcemap} from "./sourcemap.js";
@@ -35,15 +36,22 @@ export interface Feature {
   name: string;
 }
 
-export interface Transpile {
+export interface BaseTranspile {
   id: string;
   inputs?: string[];
   outputs?: string[];
   inline?: boolean;
-  body: string;
   databases?: DatabaseReference[];
   files?: FileReference[];
   imports?: ImportReference[];
+}
+
+export interface PendingTranspile extends BaseTranspile {
+  body: () => Promise<string>;
+}
+
+export interface Transpile extends BaseTranspile {
+  body: string;
 }
 
 export interface ParseOptions {
@@ -56,7 +64,7 @@ export interface ParseOptions {
   verbose?: boolean;
 }
 
-export function transpileJavaScript(input: string, options: ParseOptions): Transpile {
+export function transpileJavaScript(input: string, options: ParseOptions): PendingTranspile {
   const {id, root, sourcePath, verbose = true} = options;
   try {
     const node = parseJavaScript(input, options);
@@ -67,15 +75,9 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
       .filter((f) => f.type === "FileAttachment")
       .map(({name}) => fileReference(name, sourcePath));
     const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
-    const output = new Sourcemap(input);
-    trim(output, input);
-    if (node.expression && !inputs.includes("display") && !inputs.includes("view")) {
-      output.insertLeft(0, "display((\n");
-      output.insertRight(input.length, "\n))");
-      inputs.push("display");
-    }
-    rewriteImports(output, node, sourcePath, createImportResolver(root, "_import"));
-    rewriteFetches(output, node, sourcePath);
+    const implicitDisplay = node.expression && !inputs.includes("display") && !inputs.includes("view");
+    if (implicitDisplay) inputs.push("display");
+    if (findImportDeclarations(node).length > 0) node.async = true;
     return {
       id,
       ...(inputs.length ? {inputs} : null),
@@ -83,28 +85,42 @@ export function transpileJavaScript(input: string, options: ParseOptions): Trans
       ...(node.declarations?.length ? {outputs: node.declarations.map(({name}) => name)} : null),
       ...(databases.length ? {databases: resolveDatabases(databases)} : null),
       ...(files.length ? {files} : null),
-      body: `${node.async ? "async " : ""}(${inputs}) => {
+      body: async () => {
+        const output = new Sourcemap(input);
+        trim(output, input);
+        if (implicitDisplay) {
+          output.insertLeft(0, "display((\n");
+          output.insertRight(input.length, "\n))");
+        }
+        await rewriteImports(output, node, sourcePath, createImportResolver(root, "_import"));
+        rewriteFetches(output, node, sourcePath);
+        const result = `${node.async ? "async " : ""}(${inputs}) => {
 ${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.map(({name}) => name)}};` : ""}
-}`,
+}`;
+        return result;
+      },
       ...(node.imports.length ? {imports: node.imports} : null)
     };
   } catch (error) {
     if (!(error instanceof SyntaxError)) throw error;
-    let message = error.message;
-    const match = /^(.+)\s\((\d+):(\d+)\)$/.exec(message);
-    if (match) {
-      const line = +match[2] + (options?.sourceLine ?? 0);
-      const column = +match[3] + 1;
-      message = `${match[1]} at line ${line}, column ${column}`;
-    } else if (options?.sourceLine) {
-      message = `${message} at line ${options.sourceLine + 1}`;
-    }
+    const message = error.message;
     // TODO: Consider showing a code snippet along with the error. Also, consider
     // whether we want to show the file name here.
-    if (verbose) console.error(red(`${error.name}: ${message}`));
+    if (verbose) {
+      let warning = error.message;
+      const match = /^(.+)\s\((\d+):(\d+)\)$/.exec(message);
+      if (match) {
+        const line = +match[2] + (options?.sourceLine ?? 0);
+        const column = +match[3] + 1;
+        warning = `${match[1]} at line ${line}, column ${column}`;
+      } else if (options?.sourceLine) {
+        warning = `${message} at line ${options.sourceLine + 1}`;
+      }
+      console.error(red(`${error.name}: ${warning}`));
+    }
     return {
       id: `${id}`,
-      body: `() => { throw new SyntaxError(${JSON.stringify(error.message)}); }`
+      body: async () => `() => { throw new SyntaxError(${JSON.stringify(message)}); }`
     };
   }
 }

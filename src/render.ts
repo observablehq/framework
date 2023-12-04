@@ -2,7 +2,7 @@ import {parseHTML} from "linkedom";
 import {type Config, type Page, type Section, mergeToc} from "./config.js";
 import {type Html, html} from "./html.js";
 import {type ImportResolver, createImportResolver} from "./javascript/imports.js";
-import {type FileReference, type ImportReference} from "./javascript.js";
+import type {FileReference, ImportReference, Transpile} from "./javascript.js";
 import {addImplicitSpecifiers, addImplicitStylesheets} from "./libraries.js";
 import {type ParseResult, parseMarkdown} from "./markdown.js";
 import {type PageLink, findLink} from "./pager.js";
@@ -22,7 +22,7 @@ export interface RenderOptions extends Config {
 export async function renderPreview(source: string, options: RenderOptions): Promise<Render> {
   const parseResult = await parseMarkdown(source, options.root, options.path);
   return {
-    html: render(parseResult, {...options, preview: true}),
+    html: await render(parseResult, {...options, preview: true}),
     files: parseResult.files,
     imports: parseResult.imports
   };
@@ -31,13 +31,13 @@ export async function renderPreview(source: string, options: RenderOptions): Pro
 export async function renderServerless(source: string, options: RenderOptions): Promise<Render> {
   const parseResult = await parseMarkdown(source, options.root, options.path);
   return {
-    html: render(parseResult, options),
+    html: await render(parseResult, options),
     files: parseResult.files,
     imports: parseResult.imports
   };
 }
 
-export function renderDefineCell(cell): string {
+export function renderDefineCell(cell: Transpile): string {
   const {id, inline, inputs, outputs, files, body, databases} = cell;
   return `define({${Object.entries({id, inline, inputs, outputs, files, databases})
     .filter((arg) => arg[1] !== undefined)
@@ -49,7 +49,7 @@ type RenderInternalOptions =
   | {preview?: false} // serverless
   | {preview: true}; // preview
 
-function render(parseResult: ParseResult, options: RenderOptions & RenderInternalOptions): string {
+async function render(parseResult: ParseResult, options: RenderOptions & RenderInternalOptions): Promise<string> {
   const {root, path, pages, title, preview} = options;
   const toc = mergeToc(parseResult.data?.toc, options.toc);
   const headers = toc.show ? findHeaders(parseResult) : [];
@@ -62,7 +62,7 @@ ${
         .filter((title): title is string => !!title)
         .join(" | ")}</title>\n`
     : ""
-}${renderLinks(parseResult, path, createImportResolver(root, "_import"))}${
+}${await renderLinks(parseResult, path, createImportResolver(root, "_import"))}${
     path === "/404"
       ? html.unsafe(`\n<script type="module">
 
@@ -172,15 +172,15 @@ function prettyPath(path: string): string {
   return path.replace(/\/index$/, "/") || "/";
 }
 
-function renderLinks(parseResult: ParseResult, path: string, resolver: ImportResolver): Html {
+async function renderLinks(parseResult: ParseResult, path: string, resolver: ImportResolver): Promise<Html> {
   const stylesheets = new Set<string>([relativeUrl(path, "/_observablehq/style.css"), "https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"]); // prettier-ignore
   const specifiers = new Set<string>(["npm:@observablehq/runtime", "npm:@observablehq/stdlib"]);
   for (const {name} of parseResult.imports) specifiers.add(name);
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
   addImplicitSpecifiers(specifiers, inputs);
-  addImplicitStylesheets(stylesheets, specifiers);
+  await addImplicitStylesheets(stylesheets, specifiers);
   const preloads = new Set<string>();
-  for (const specifier of specifiers) preloads.add(resolver(path, specifier));
+  for (const specifier of specifiers) preloads.add(await resolver(path, specifier));
   if (parseResult.cells.some((cell) => cell.databases?.length)) preloads.add(relativeUrl(path, "/_observablehq/database.js")); // prettier-ignore
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
     Array.from(stylesheets).sort().map(renderStylesheet) // <link rel=stylesheet>
