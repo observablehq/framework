@@ -1,3 +1,4 @@
+import {join} from "node:path";
 import type {CallExpression, Identifier, Node} from "acorn";
 import {simple} from "acorn-walk";
 import {type Feature, type JavaScriptNode} from "../javascript.js";
@@ -20,23 +21,25 @@ export function rewriteIfLocalFetch(
   node: CallExpression,
   output: Sourcemap,
   references: Identifier[],
-  sourcePath: string
+  sourcePath: string,
+  {resolveMeta = false} = {} // if true, use import.meta to resolve at runtime; assumes _import
 ) {
   if (isLocalFetch(node, references, sourcePath)) {
     const arg = node.arguments[0];
     const value = getStringLiteralValue(arg);
     const path = resolvePath("_file", sourcePath, value);
-    output.replaceLeft(arg.start, arg.end, JSON.stringify(relativeUrl(sourcePath, path)));
+    let result = JSON.stringify(relativeUrl(join(resolveMeta ? "_import" : ".", sourcePath), path));
+    if (resolveMeta) result = `new URL(${result}, import.meta.url)`; // more support than import.meta.resolve
+    output.replaceLeft(arg.start, arg.end, result);
   }
 }
 
+// Promote fetches with static literals to file attachment references.
 export function findFetches(body: Node, path: string) {
   const references: Identifier[] = findReferences(body, defaultGlobals);
   const fetches: Feature[] = [];
 
   simple(body, {CallExpression: findFetch}, undefined, path);
-
-  // Promote fetches with static literals to file attachment references.
 
   function findFetch(node: CallExpression, sourcePath: string) {
     maybeAddFetch(fetches, node, references, sourcePath);

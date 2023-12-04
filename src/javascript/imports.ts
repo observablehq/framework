@@ -156,7 +156,7 @@ export function rewriteModule(input: string, sourcePath: string, resolver: Impor
     ExportAllDeclaration: rewriteImport,
     ExportNamedDeclaration: rewriteImport,
     CallExpression(node: CallExpression) {
-      rewriteIfLocalFetch(node, output, references, sourcePath);
+      rewriteIfLocalFetch(node, output, references, sourcePath, {resolveMeta: true});
     }
   });
 
