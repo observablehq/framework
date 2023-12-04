@@ -10,10 +10,14 @@ const packages: [name: string, version: string][] = [
   ["canvas-confetti", "1.9.2"],
   ["d3-dsv", "3.0.1"],
   ["d3", "7.8.5"],
+  ["exceljs", "4.4.0"],
   ["htl", "0.3.1"],
+  ["jszip", "3.10.1"],
   ["katex", "0.16.9"],
   ["leaflet", "1.9.4"],
   ["lodash", "4.17.21"],
+  ["mermaid", "10.6.1"],
+  ["sql.js", "1.9.0"],
   ["topojson-client", "3.1.0"]
 ];
 

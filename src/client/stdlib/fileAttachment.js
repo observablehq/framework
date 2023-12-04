@@ -7,7 +7,7 @@ export function registerFile(name, file) {
 
 export function FileAttachment(name) {
   if (new.target !== undefined) throw new TypeError("FileAttachment is not a constructor");
-  const file = files.get((name += ""));
+  const file = files.get((name = `${name}`));
   if (!file) throw new Error(`File not found: ${name}`);
   const {url, mimeType} = file;
   return new FileAttachmentImpl(url, name, mimeType);
@@ -103,7 +103,7 @@ class ZipArchive {
     this.filenames = Object.keys(archive.files).filter((name) => !archive.files[name].dir);
   }
   file(path) {
-    const object = this._.file((path += ""));
+    const object = this._.file((path = `${path}`));
     if (!object || object.dir) throw new Error(`file not found: ${path}`);
     return new ZipArchiveEntry(object);
   }

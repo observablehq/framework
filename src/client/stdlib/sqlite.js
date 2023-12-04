@@ -126,7 +126,7 @@ function sqliteType(type) {
 function load(source) {
   return typeof source === "string"
     ? fetch(source).then(load)
-    : source instanceof Response || source instanceof Blob
+    : source && typeof source.arrayBuffer === "function" // Response, Blob, FileAttachment
     ? source.arrayBuffer().then(load)
     : source instanceof ArrayBuffer
     ? new Uint8Array(source)

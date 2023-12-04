@@ -17,7 +17,7 @@ export class Workbook {
   }
   sheet(name, options) {
     const sname =
-      typeof name === "number" ? this.sheetNames[name] : this.sheetNames.includes((name += "")) ? name : null;
+      typeof name === "number" ? this.sheetNames[name] : this.sheetNames.includes((name = `${name}`)) ? name : null;
     if (sname == null) throw new Error(`Sheet not found: ${name}`);
     const sheet = this._.getWorksheet(sname);
     return extract(sheet, options);
@@ -76,7 +76,7 @@ function richText(value) {
 }
 
 function parseRange(specifier = ":", {columnCount, rowCount}) {
-  specifier += "";
+  specifier = `${specifier}`;
   if (!specifier.match(/^[A-Z]*\d*:[A-Z]*\d*$/)) throw new Error("Malformed range specifier");
   const [[c0 = 0, r0 = 0], [c1 = columnCount - 1, r1 = rowCount - 1]] = specifier.split(":").map(fromCellReference);
   return [
