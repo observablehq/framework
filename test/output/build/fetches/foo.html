@@ -6,13 +6,13 @@
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
 <link rel="stylesheet" type="text/css" href="./_observablehq/style.css">
 <link rel="modulepreload" href="./_observablehq/runtime.js">
-<link rel="modulepreload" href="./_import/foo/foo.js?sha=7a93b271ec78dd07db6d9265e7b82eacc1a1bb6682cd665f0f86ea2c0fbc7350">
+<link rel="modulepreload" href="./_import/foo/foo.js?sha=ed706415f035efdd17afdfeeb09a5ff51231b2a43553a47ae89a6bf03039b1ee">
 <script type="module">
 
 import {define} from "./_observablehq/client.js";
 
 define({id: "47a695da", inputs: ["display"], outputs: ["fooJsonData","fooCsvData"], files: [{"name":"./foo-data.json","mimeType":"application/json","path":"./_file/foo-data.json"},{"name":"./foo-data.csv","mimeType":"text/csv","path":"./_file/foo-data.csv"}], body: async (display) => {
-const {fooJsonData, fooCsvData} = await import("./_import/foo/foo.js?sha=7a93b271ec78dd07db6d9265e7b82eacc1a1bb6682cd665f0f86ea2c0fbc7350");
+const {fooJsonData, fooCsvData} = await import("./_import/foo/foo.js?sha=ed706415f035efdd17afdfeeb09a5ff51231b2a43553a47ae89a6bf03039b1ee");
 
 display(fooJsonData);
 display(fooCsvData);
