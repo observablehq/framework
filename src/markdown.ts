@@ -118,11 +118,6 @@ function maybeStaticTeX(content, {displayMode = false} = {}) {
 }
 
 function maybeStaticDot(content) {
-  // We try SSR first. katex.renderToString errors when the expression contains
-  // some ${interpolation}, so this guarantees that interpolations will be
-  // handled in the browser. By way of consequence, TeX errors stemming from
-  // static text (e.g., ParseError on tex`\left{x}`) are handled in the browser,
-  // and don't stop the build process.
   try {
     // TODO: unique insertion of the TeX stylesheet?
     return {html: dot(content)};
