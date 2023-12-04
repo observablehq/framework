@@ -3,7 +3,8 @@ import {type Config, type Page, type Section, mergeToc} from "./config.js";
 import {type Html, html} from "./html.js";
 import {type ImportResolver, createImportResolver} from "./javascript/imports.js";
 import {type FileReference, type ImportReference} from "./javascript.js";
-import {type CellPiece, type ParseResult, parseMarkdown} from "./markdown.js";
+import {addImplicitSpecifiers, addImplicitStylesheets} from "./libraries.js";
+import {type ParseResult, parseMarkdown} from "./markdown.js";
 import {type PageLink, findLink} from "./pager.js";
 import {relativeUrl} from "./url.js";
 
@@ -16,7 +17,6 @@ export interface Render {
 export interface RenderOptions extends Config {
   root: string;
   path: string;
-  resolver: (cell: CellPiece) => CellPiece;
 }
 
 export async function renderPreview(source: string, options: RenderOptions): Promise<Render> {
@@ -50,7 +50,7 @@ type RenderInternalOptions =
   | {preview: true}; // preview
 
 function render(parseResult: ParseResult, options: RenderOptions & RenderInternalOptions): string {
-  const {root, path, pages, title, preview, resolver} = options;
+  const {root, path, pages, title, preview} = options;
   const toc = mergeToc(parseResult.data?.toc, options.toc);
   const headers = toc.show ? findHeaders(parseResult) : [];
   return String(html`<!DOCTYPE html>
@@ -62,13 +62,7 @@ ${
         .filter((title): title is string => !!title)
         .join(" | ")}</title>\n`
     : ""
-}<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap">
-<link rel="stylesheet" type="text/css" href="${relativeUrl(path, "/_observablehq/style.css")}">${renderImportPreloads(
-    parseResult,
-    path,
-    createImportResolver(root, "_import")
-  )}${
+}${renderLinks(parseResult, path, createImportResolver(root, "_import"))}${
     path === "/404"
       ? html.unsafe(`\n<script type="module">
 
@@ -87,10 +81,7 @@ import ${preview || parseResult.cells.length > 0 ? `{${preview ? "open, " : ""}d
   )};
 ${
   preview ? `\nopen({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
-}${parseResult.cells
-    .map(resolver)
-    .map((cell) => `\n${renderDefineCell(cell)}`)
-    .join("")}`)}
+}${parseResult.cells.map((cell) => `\n${renderDefineCell(cell)}`).join("")}`)}
 </script>${pages.length > 0 ? html`\n${renderSidebar(title, pages, path)}` : ""}${
     headers.length > 0 ? html`\n${renderToc(headers, toc.label)}` : ""
   }
@@ -181,25 +172,29 @@ function prettyPath(path: string): string {
   return path.replace(/\/index$/, "/") || "/";
 }
 
-function renderImportPreloads(parseResult: ParseResult, path: string, resolver: ImportResolver): Html {
-  const specifiers = new Set<string>(["npm:@observablehq/runtime"]);
+function renderLinks(parseResult: ParseResult, path: string, resolver: ImportResolver): Html {
+  const stylesheets = new Set<string>([relativeUrl(path, "/_observablehq/style.css"), "https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"]); // prettier-ignore
+  const specifiers = new Set<string>(["npm:@observablehq/runtime", "npm:@observablehq/stdlib"]);
   for (const {name} of parseResult.imports) specifiers.add(name);
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
-  if (inputs.has("d3") || inputs.has("Plot")) specifiers.add("npm:d3");
-  if (inputs.has("Plot")) specifiers.add("npm:@observablehq/plot");
-  if (inputs.has("htl") || inputs.has("html") || inputs.has("svg") || inputs.has("Inputs")) specifiers.add("npm:htl");
-  if (inputs.has("Inputs")) specifiers.add("npm:@observablehq/inputs");
-  if (inputs.has("dot")) specifiers.add("npm:@viz-js/viz");
-  if (inputs.has("mermaid")) specifiers.add("npm:mermaid").add("npm:d3");
-  if (inputs.has("tex")) specifiers.add("npm:katex");
+  addImplicitSpecifiers(specifiers, inputs);
+  addImplicitStylesheets(stylesheets, specifiers);
   const preloads = new Set<string>();
-  for (const specifier of specifiers) {
-    preloads.add(resolver(path, specifier));
-  }
-  if (parseResult.cells.some((cell) => cell.databases?.length)) {
-    preloads.add(relativeUrl(path, "/_observablehq/database.js"));
-  }
-  return html`${Array.from(preloads, (href) => html`\n<link rel="modulepreload" href="${href}">`)}`;
+  for (const specifier of specifiers) preloads.add(resolver(path, specifier));
+  if (parseResult.cells.some((cell) => cell.databases?.length)) preloads.add(relativeUrl(path, "/_observablehq/database.js")); // prettier-ignore
+  return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
+    Array.from(stylesheets).sort().map(renderStylesheet) // <link rel=stylesheet>
+  }${
+    Array.from(preloads).sort().map(renderModulePreload) // <link rel=modulepreload>
+  }`;
+}
+
+function renderStylesheet(href: string): Html {
+  return html`\n<link rel="stylesheet" type="text/css" href="${href}"${/^\w+:/.test(href) ? " crossorigin" : ""}>`;
+}
+
+function renderModulePreload(href: string): Html {
+  return html`\n<link rel="modulepreload" href="${href}">`;
 }
 
 function renderFooter(path: string, options: Pick<Config, "pages" | "pager" | "title">): Html {

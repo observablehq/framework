@@ -332,6 +332,7 @@ const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcs
   {query: "video[src]", src: "src"},
   {query: "video source[src]", src: "src"}
 ]);
+
 export function normalizePieceHtml(html: string, sourcePath: string, context: ParseContext): string {
   const {document} = parseHTML(html);
 
@@ -419,11 +420,10 @@ function toParseCells(pieces: RenderPiece[]): CellPiece[] {
   return cellPieces;
 }
 
+// TODO We need to know what line in the source the markdown starts on and pass
+// that as startLine in the parse context below.
 export async function parseMarkdown(source: string, root: string, sourcePath: string): Promise<ParseResult> {
   const parts = matter(source, {});
-
-  // TODO: We need to know what line in the source the markdown starts on and pass that
-  // as startLine in the parse context below.
   const md = MarkdownIt({html: true});
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
@@ -497,12 +497,13 @@ function diffReducer(patch: PatchItem<ParsePiece>) {
   if (patch.type === "remove") {
     return {
       ...patch,
+      type: "remove",
       items: patch.items.map((item) => ({
         type: item.type,
         id: item.id,
         ...("cellIds" in item ? {cellIds: item.cellIds} : null)
       }))
-    };
+    } as const;
   }
   return patch;
 }

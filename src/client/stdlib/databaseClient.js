@@ -1,11 +1,18 @@
-export function makeDatabaseClient(resolveToken) {
-  return function DatabaseClient(name) {
-    if (new.target !== undefined) throw new TypeError("DatabaseClient is not a constructor");
-    return resolveToken((name += "")).then((token) => new DatabaseClientImpl(name, token));
-  };
+const databases = new Map();
+
+export function registerDatabase(name, token) {
+  if (token == null) databases.delete(name);
+  else databases.set(name, token);
 }
 
-class DatabaseClientImpl {
+export function DatabaseClient(name) {
+  if (new.target !== undefined) throw new TypeError("DatabaseClient is not a constructor");
+  const token = databases.get((name = `${name}`));
+  if (!token) throw new Error(`Database not found: ${name}`);
+  return new DatabaseClientImpl(name, token);
+}
+
+const DatabaseClientImpl = class DatabaseClient {
   #token;
 
   constructor(name, token) {
@@ -64,7 +71,9 @@ class DatabaseClientImpl {
   async sql() {
     return this.query(...this.queryTag.apply(this, arguments));
   }
-}
+};
+
+DatabaseClient.prototype = DatabaseClientImpl.prototype; // instanceof
 
 function coerceBuffer(d) {
   return Uint8Array.from(d.data).buffer;

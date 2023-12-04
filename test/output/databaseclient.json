@@ -23,11 +23,7 @@
       "outputs": [
         "db"
       ],
-      "databases": [
-        {
-          "name": "dwh-local-proxy"
-        }
-      ],
+      "databases": [],
       "body": "(DatabaseClient) => {\nconst db = DatabaseClient(\"dwh-local-proxy\");\nreturn {db};\n}"
     }
   ],

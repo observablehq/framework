@@ -19,12 +19,13 @@ export function open({hash, eval: compile} = {}) {
         location.reload();
         break;
       }
-      case "refresh":
+      case "refresh": {
         message.cellIds.forEach((id) => {
           const cell = cellsById.get(id);
           if (cell) define(cell.cell);
         });
         break;
+      }
       case "update": {
         const root = document.querySelector("main");
         if (message.previousHash !== hash) {
@@ -90,6 +91,19 @@ export function open({hash, eval: compile} = {}) {
           }
         }
         enableCopyButtons();
+        break;
+      }
+      case "add-stylesheet": {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.type = "text/css";
+        link.crossOrigin = "";
+        link.href = message.href;
+        document.head.appendChild(link);
+        break;
+      }
+      case "remove-stylesheet": {
+        document.head.querySelector(`link[href="${message.href}"]`)?.remove();
         break;
       }
     }

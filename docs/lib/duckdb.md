@@ -1,6 +1,10 @@
 # DuckDB
 
-Observable Markdown has built-in support for DuckDB via [duckdb-wasm](https://github.com/duckdb/duckdb-wasm). It’s easiest to use in conjunction with [`FileAttachment`](./files). Declare a database with `DuckDBClient`, passing in a set of named tables:
+Observable Markdown has built-in support for DuckDB via [duckdb-wasm](https://github.com/duckdb/duckdb-wasm). It’s easiest to use in conjunction with [`FileAttachment`](../javascript/files). Declare a database with `DuckDBClient`, passing in a set of named tables:
+
+```js echo
+duckdb
+```
 
 ```js echo
 const db = DuckDBClient.of({gaia: FileAttachment("gaia-sample.parquet")});

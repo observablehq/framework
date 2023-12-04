@@ -212,16 +212,34 @@ export function rewriteImports(
 
 export type ImportResolver = (path: string, specifier: string) => string;
 
-export function createImportResolver(root: string, base = "."): ImportResolver {
+export function createImportResolver(root: string, base: "." | "_import" = "."): ImportResolver {
   return (path, specifier) => {
     return isLocalImport(specifier, path)
       ? relativeUrl(path, resolvePath(base, path, resolveImportHash(root, path, specifier)))
       : specifier === "npm:@observablehq/runtime"
-      ? relativeUrl(path, "_observablehq/runtime.js")
+      ? resolveBuiltin(base, path, "runtime.js")
+      : specifier === "npm:@observablehq/stdlib"
+      ? resolveBuiltin(base, path, "stdlib.js")
+      : specifier === "npm:@observablehq/dot"
+      ? resolveBuiltin(base, path, "stdlib/dot.js") // TODO publish to npm
+      : specifier === "npm:@observablehq/duckdb"
+      ? resolveBuiltin(base, path, "stdlib/duckdb.js") // TODO publish to npm
+      : specifier === "npm:@observablehq/mermaid"
+      ? resolveBuiltin(base, path, "stdlib/mermaid.js") // TODO publish to npm
+      : specifier === "npm:@observablehq/tex"
+      ? resolveBuiltin(base, path, "stdlib/tex.js") // TODO publish to npm
+      : specifier === "npm:@observablehq/sqlite"
+      ? resolveBuiltin(base, path, "stdlib/sqlite.js") // TODO publish to npm
+      : specifier === "npm:@observablehq/xslx"
+      ? resolveBuiltin(base, path, "stdlib/xslx.js") // TODO publish to npm
       : specifier.startsWith("npm:")
       ? `https://cdn.jsdelivr.net/npm/${specifier.slice("npm:".length)}/+esm`
       : specifier;
   };
+}
+
+function resolveBuiltin(base: "." | "_import", path: string, specifier: string): string {
+  return relativeUrl(join(base === "." ? "_import" : ".", path), join("_observablehq", specifier));
 }
 
 /**
