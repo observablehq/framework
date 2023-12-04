@@ -6,7 +6,7 @@ import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
 import {relativeUrl} from "./url.js";
 
-export async function rollupClient(clientPath = getClientPath(), {minify = false} = {}): Promise<string> {
+export async function rollupClient(clientPath: string, {minify = false} = {}): Promise<string> {
   const bundle = await rollup({
     input: clientPath,
     external: [/^https:/],
@@ -37,6 +37,6 @@ function resolveImport(source: string, specifier: string | AstNode): ResolveIdRe
     : null;
 }
 
-export function getClientPath(entry = "./src/client/index.js"): string {
+export function getClientPath(entry: string): string {
   return relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), "..", entry));
 }

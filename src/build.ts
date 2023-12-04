@@ -16,6 +16,18 @@ import {resolvePath} from "./url.js";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
 
+// TODO Remove library helpers (e.g., duckdb) when they are published to npm.
+const CLIENT_BUNDLES: [entry: string, name: string][] = [
+  ["./src/client/index.js", "client.js"],
+  ["./src/client/stdlib.js", "stdlib.js"],
+  ["./src/client/stdlib/dot.js", "stdlib/dot.js"],
+  ["./src/client/stdlib/duckdb.js", "stdlib/duckdb.js"],
+  ["./src/client/stdlib/mermaid.js", "stdlib/mermaid.js"],
+  ["./src/client/stdlib/sqlite.js", "stdlib/sqlite.js"],
+  ["./src/client/stdlib/tex.js", "stdlib/tex.js"],
+  ["./src/client/stdlib/xslx.js", "stdlib/xslx.js"]
+];
+
 export interface BuildOptions {
   sourceRoot: string;
   outputRoot?: string;
@@ -65,12 +77,14 @@ export async function build(
   }
 
   if (addPublic) {
-    // Generate the client bundle.
-    const clientPath = getClientPath();
-    const outputPath = join("_observablehq", "client.js");
-    effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
-    const code = await rollupClient(clientPath, {minify: true});
-    await effects.writeFile(outputPath, code);
+    // Generate the client bundles.
+    for (const [entry, name] of CLIENT_BUNDLES) {
+      const clientPath = getClientPath(entry);
+      const outputPath = join("_observablehq", name);
+      effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
+      const code = await rollupClient(clientPath, {minify: true});
+      await effects.writeFile(outputPath, code);
+    }
     // Copy over the public directory.
     const publicRoot = relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), "..", "public"));
     for await (const publicFile of visitFiles(publicRoot)) {
