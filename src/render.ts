@@ -138,6 +138,9 @@ function renderSidebar(title = "Home", pages: (Page | Section)[], path: string):
       case "false": if (!details.classList.contains("observablehq-section-active")) details.open = false; break;
     }
   }
+  addEventListener("beforeunload", () => sessionStorage.setItem("observablehq-sidebar-scrolly", document.querySelector("#observablehq-sidebar").scrollTop));
+  const scrolly = +sessionStorage.getItem("observablehq-sidebar-scrolly");
+  if (scrolly) document.querySelector("#observablehq-sidebar").scrollTop = scrolly;
 }</script>`;
 }
 
