@@ -412,7 +412,7 @@ async function toParseCells(pieces: RenderPiece[]): Promise<CellPiece[]> {
   const cellPieces: CellPiece[] = [];
   for (const piece of pieces) {
     for (const {body, ...rest} of piece.code) {
-      cellPieces.push({type: "cell", ...rest, body: await body});
+      cellPieces.push({type: "cell", ...rest, body: await body()});
     }
   }
   return cellPieces;

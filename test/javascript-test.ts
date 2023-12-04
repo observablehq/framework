@@ -37,7 +37,7 @@ function runTests({
         sourcePath: name,
         verbose: false
       });
-      const actual = renderDefineCell({body: await body, ...transpile});
+      const actual = renderDefineCell({body: await body(), ...transpile});
       let expected;
 
       try {
@@ -92,7 +92,7 @@ describe("transpileJavaScript(input, options)", () => {
       sourcePath: "index.js",
       verbose: false
     });
-    assert.strictEqual(await body, "(test,display) => {\ndisplay((\ntest\n))\n}");
+    assert.strictEqual(await body(), "(test,display) => {\ndisplay((\ntest\n))\n}");
   });
   it("rethrows unexpected errors", () => {
     const expected = new Error();
@@ -123,6 +123,6 @@ describe("transpileJavaScript(input, options)", () => {
       inline: true,
       verbose: false
     });
-    assert.strictEqual(await body, '() => { throw new SyntaxError("invalid expression"); }');
+    assert.strictEqual(await body(), '() => { throw new SyntaxError("invalid expression"); }');
   });
 });

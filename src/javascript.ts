@@ -47,7 +47,7 @@ export interface BaseTranspile {
 }
 
 export interface PendingTranspile extends BaseTranspile {
-  body: Promise<string>;
+  body: () => Promise<string>;
 }
 
 export interface Transpile extends BaseTranspile {
@@ -85,7 +85,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
       ...(node.declarations?.length ? {outputs: node.declarations.map(({name}) => name)} : null),
       ...(databases.length ? {databases: resolveDatabases(databases)} : null),
       ...(files.length ? {files} : null),
-      body: (async () => {
+      body: async () => {
         const output = new Sourcemap(input);
         trim(output, input);
         if (implicitDisplay) {
@@ -98,26 +98,29 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
 ${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.map(({name}) => name)}};` : ""}
 }`;
         return result;
-      })(),
+      },
       ...(node.imports.length ? {imports: node.imports} : null)
     };
   } catch (error) {
     if (!(error instanceof SyntaxError)) throw error;
-    let message = error.message;
-    const match = /^(.+)\s\((\d+):(\d+)\)$/.exec(message);
-    if (match) {
-      const line = +match[2] + (options?.sourceLine ?? 0);
-      const column = +match[3] + 1;
-      message = `${match[1]} at line ${line}, column ${column}`;
-    } else if (options?.sourceLine) {
-      message = `${message} at line ${options.sourceLine + 1}`;
-    }
+    const message = error.message;
     // TODO: Consider showing a code snippet along with the error. Also, consider
     // whether we want to show the file name here.
-    if (verbose) console.error(red(`${error.name}: ${message}`));
+    if (verbose) {
+      let warning = error.message;
+      const match = /^(.+)\s\((\d+):(\d+)\)$/.exec(message);
+      if (match) {
+        const line = +match[2] + (options?.sourceLine ?? 0);
+        const column = +match[3] + 1;
+        warning = `${match[1]} at line ${line}, column ${column}`;
+      } else if (options?.sourceLine) {
+        warning = `${message} at line ${options.sourceLine + 1}`;
+      }
+      console.error(red(`${error.name}: ${warning}`));
+    }
     return {
       id: `${id}`,
-      body: Promise.resolve(`() => { throw new SyntaxError(${JSON.stringify(error.message)}); }`)
+      body: async () => `() => { throw new SyntaxError(${JSON.stringify(message)}); }`
     };
   }
 }
