@@ -27,7 +27,7 @@
     "deploy": "./bin/observable.ts deploy",
     "test": "yarn test:mocha && yarn test:tsc && yarn test:lint",
     "test:coverage": "c8 yarn test:mocha",
-    "test:mocha": "rm -rf test/.observablehq/cache test/input/build/*/.observablehq/cache && tsx --no-warnings=ExperimentalWarning ./node_modules/.bin/mocha 'test/**/*-test.*'",
+    "test:mocha": "rm -rf test/.observablehq/cache test/input/build/*/.observablehq/cache && tsx --no-warnings=ExperimentalWarning ./node_modules/.bin/mocha --exit 'test/**/*-test.*'",
     "test:lint": "eslint src test",
     "test:tsc": "tsc --noEmit",
     "observable": "tsx ./bin/observable.ts"
