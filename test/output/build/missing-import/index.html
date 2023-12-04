@@ -41,6 +41,9 @@ import("./_import/does-not-exist.js?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4
       case "false": if (!details.classList.contains("observablehq-section-active")) details.open = false; break;
     }
   }
+  addEventListener("beforeunload", () => sessionStorage.setItem("observablehq-sidebar-scrolly", document.querySelector("#observablehq-sidebar").scrollTop));
+  const scrolly = +sessionStorage.getItem("observablehq-sidebar-scrolly");
+  if (scrolly) document.querySelector("#observablehq-sidebar").scrollTop = scrolly;
 }</script>
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
