@@ -119,7 +119,6 @@ function maybeStaticTeX(content, {displayMode = false} = {}) {
 
 function maybeStaticDot(content) {
   try {
-    // TODO: unique insertion of the TeX stylesheet?
     return {html: dot(content)};
   } catch {
     return {source: transpileTag(content, "dot", true)};
