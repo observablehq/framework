@@ -157,7 +157,7 @@ export async function rewriteModule(input: string, sourcePath: string, resolver:
     ExportAllDeclaration: rewriteImport,
     ExportNamedDeclaration: rewriteImport,
     CallExpression(node: CallExpression) {
-      rewriteIfLocalFetch(node, output, references, sourcePath);
+      rewriteIfLocalFetch(node, output, references, sourcePath, {resolveMeta: true});
     }
   });
 
