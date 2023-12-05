@@ -24,7 +24,7 @@ const dt = table({
 });
 ```
 
-As we see, arquero is column-oriented: each column is an array of values of a given type (here, numbers representing hours of sunshine per month).
+As we see, Arquero is column-oriented: each column is an array of values of a given type (here, numbers representing hours of sunshine per month).
 
 But a table is also iterable and as such, its contents can be displayed with [Inputs.table](/lib/inputs#table).
 
@@ -32,7 +32,7 @@ But a table is also iterable and as such, its contents can be displayed with [In
 Inputs.table(dt, {width: 370})
 ```
 
-An arquero table can be used as a data source to make happy charts with [Observable Plot](/lib/plot):
+An Arquero table can be used as a data source to make happy charts with [Observable Plot](/lib/plot):
 
 ```js echo
 Plot.plot({
@@ -91,4 +91,4 @@ dt.fold(all(), { as: ['city', 'sun'] })
   .objects()
 ```
 
-For more, see [arquero’s official documentation](https://uwdata.github.io/arquero/).
+For more, see [Arquero’s official documentation](https://uwdata.github.io/arquero/).
