@@ -1,13 +1,13 @@
 import {Runtime} from "observablehq:runtime";
 import {registerDatabase, registerFile} from "observablehq:stdlib";
-import {DatabaseClient, FileAttachment, Generators, Mutable, now, width} from "observablehq:stdlib";
+import {DatabaseClient, FileAttachment, Generators, Mutable} from "observablehq:stdlib";
 import {inspect, inspectError} from "./inspect.js";
 import * as recommendedLibraries from "./stdlib/recommendedLibraries.js";
 import * as sampleDatasets from "./stdlib/sampleDatasets.js";
 
 const library = {
-  now,
-  width,
+  now: () => Generators.now(),
+  width: () => Generators.width(document.querySelector("main")),
   DatabaseClient: () => DatabaseClient,
   FileAttachment: () => FileAttachment,
   Generators: () => Generators,
