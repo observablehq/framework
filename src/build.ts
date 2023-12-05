@@ -56,9 +56,13 @@ export async function build(
   effects: BuildEffects = new FileBuildEffects(outputRoot!)
 ): Promise<void> {
   // Make sure all files are readable before starting to write output files.
+  let pageCount = 0;
   for await (const sourceFile of visitMarkdownFiles(root)) {
     await access(join(root, sourceFile), constants.R_OK);
+    pageCount++;
   }
+  if (!pageCount) throw new Error(`No pages found in ${root}`);
+  effects.logger.log(`${faint("found")} ${pageCount} ${faint("pages in ")}${root}`);
 
   // Render .md files, building a list of file attachments as we go.
   const config = await readConfig(root);
