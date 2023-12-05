@@ -309,12 +309,7 @@ export async function resolveNpmImport(specifier: string): Promise<string> {
   return `https://cdn.jsdelivr.net/npm/${name}@${version}/${path}`;
 }
 
-interface ModulePreload {
-  integrity: string;
-  imports: Set<string>;
-}
-
-const preloadCache = new Map<string, Promise<ModulePreload | undefined>>();
+const preloadCache = new Map<string, Promise<Set<string> | undefined>>();
 
 /**
  * Fetches the module at the specified URL and returns a promise to any
@@ -323,7 +318,7 @@ const preloadCache = new Map<string, Promise<ModulePreload | undefined>>();
  * are considered, and the fetched module must be have immutable public caching;
  * dynamic imports may not be used and hence are not preloaded.
  */
-async function fetchModulePreload(href: string): Promise<ModulePreload | undefined> {
+async function fetchModulePreloads(href: string): Promise<Set<string> | undefined> {
   let promise = preloadCache.get(href);
   if (promise) return promise;
   promise = (async () => {
@@ -351,7 +346,8 @@ async function fetchModulePreload(href: string): Promise<ModulePreload | undefin
         }
       }
     }
-    return {integrity: `sha384-${createHash("sha384").update(body).digest("base64")}`, imports};
+    integrityCache.set(href, `sha384-${createHash("sha384").update(body).digest("base64")}`);
+    return imports;
   })();
   promise.catch(() => preloadCache.delete(href)); // try again on error
   preloadCache.set(href, promise);
@@ -380,10 +376,9 @@ export async function resolveModulePreloads(hrefs: Set<string>): Promise<void> {
     if (visited.has(href)) return;
     visited.add(href);
     const promise = (async () => {
-      const preload = await fetchModulePreload(href);
-      if (!preload) return;
-      integrityCache.set(href, preload.integrity);
-      for (const i of preload.imports) {
+      const imports = await fetchModulePreloads(href);
+      if (!imports) return;
+      for (const i of imports) {
         hrefs.add(i);
         enqueue(i);
       }
