@@ -1,3 +1,4 @@
-export {fooCsvData, fooJsonData} from "./foo/foo.js?sha=ed706415f035efdd17afdfeeb09a5ff51231b2a43553a47ae89a6bf03039b1ee";
-export const topJsonData = await fetch(new URL("../_file/top-data.json", import.meta.url)).then(d => d.json());
-export const topCsvData = await fetch(new URL("../_file/top-data.csv", import.meta.url)).then(d => d.text());
+import {FileAttachment} from "../_observablehq/stdlib.js";
+export {fooCsvData, fooJsonData} from "./foo/foo.js?sha=ddc538dfc10d83a59458d5893c89191ef3b2c9b1c02ef6da055423f37388ecf4";
+export const topJsonData = await FileAttachment("../top-data.json", import.meta.url).json();
+export const topCsvData = await FileAttachment("../top-data.csv", import.meta.url).text();

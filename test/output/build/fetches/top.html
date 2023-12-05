@@ -7,8 +7,8 @@
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
 <link rel="stylesheet" type="text/css" href="./_observablehq/style.css">
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
-<link rel="modulepreload" href="./_import/foo/foo.js?sha=ed706415f035efdd17afdfeeb09a5ff51231b2a43553a47ae89a6bf03039b1ee">
-<link rel="modulepreload" href="./_import/top.js?sha=b8624239dee696ef885eb778f2e949ea1072ef47180f602502b2d4ad5aa10abf">
+<link rel="modulepreload" href="./_import/foo/foo.js?sha=ddc538dfc10d83a59458d5893c89191ef3b2c9b1c02ef6da055423f37388ecf4">
+<link rel="modulepreload" href="./_import/top.js?sha=a713c9f9e5b3c1e456a16cd100388f7eacfe48ee5fcaf7772f405abe53541cd0">
 <link rel="modulepreload" href="./_observablehq/client.js">
 <link rel="modulepreload" href="./_observablehq/runtime.js">
 <link rel="modulepreload" href="./_observablehq/stdlib.js">
@@ -16,8 +16,8 @@
 
 import {define} from "./_observablehq/client.js";
 
-define({id: "cb908c08", inputs: ["display"], outputs: ["fooCsvData","fooJsonData","topCsvData","topJsonData"], files: [{"name":"./top-data.json","mimeType":"application/json","path":"./_file/top-data.json"},{"name":"./top-data.csv","mimeType":"text/csv","path":"./_file/top-data.csv"},{"name":"./foo-data.json","mimeType":"application/json","path":"./_file/foo-data.json"},{"name":"./foo-data.csv","mimeType":"text/csv","path":"./_file/foo-data.csv"}], body: async (display) => {
-const {fooCsvData, fooJsonData, topCsvData, topJsonData} = await import("./_import/top.js?sha=b8624239dee696ef885eb778f2e949ea1072ef47180f602502b2d4ad5aa10abf");
+define({id: "cb908c08", inputs: ["display"], outputs: ["fooCsvData","fooJsonData","topCsvData","topJsonData"], files: [{"name":"./top-data.json","mimeType":"application/json","path":"./_file/top-data.json"},{"name":"./top-data.csv","mimeType":"text/csv","path":"./_file/top-data.csv"},{"name":"./foo/foo-data.json","mimeType":"application/json","path":"./_file/foo/foo-data.json"},{"name":"./foo/foo-data.csv","mimeType":"text/csv","path":"./_file/foo/foo-data.csv"}], body: async (display) => {
+const {fooCsvData, fooJsonData, topCsvData, topJsonData} = await import("./_import/top.js?sha=a713c9f9e5b3c1e456a16cd100388f7eacfe48ee5fcaf7772f405abe53541cd0");
 
 display(fooJsonData);
 display(fooCsvData);

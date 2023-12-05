@@ -1,16 +1,18 @@
 const files = new Map();
 
 export function registerFile(name, file) {
-  if (file == null) files.delete(name);
-  else files.set(name, file);
+  const url = String(new URL(name, location.href));
+  if (file == null) files.delete(url);
+  else files.set(url, file);
 }
 
-export function FileAttachment(name) {
+export function FileAttachment(name, base = location.href) {
   if (new.target !== undefined) throw new TypeError("FileAttachment is not a constructor");
-  const file = files.get((name = `${name}`));
+  const url = String(new URL(name, base));
+  const file = files.get(url);
   if (!file) throw new Error(`File not found: ${name}`);
-  const {url, mimeType} = file;
-  return new FileAttachmentImpl(url, name, mimeType);
+  const {path, mimeType} = file;
+  return new FileAttachmentImpl(path, name.split("/").pop(), mimeType);
 }
 
 async function remote_fetch(file) {
@@ -85,7 +87,7 @@ class AbstractFile {
   }
 }
 
-const FileAttachmentImpl = class FileAttachment extends AbstractFile {
+class FileAttachmentImpl extends AbstractFile {
   constructor(url, name, mimeType) {
     super(name, mimeType);
     Object.defineProperty(this, "_url", {value: url});
@@ -93,8 +95,9 @@ const FileAttachmentImpl = class FileAttachment extends AbstractFile {
   async url() {
     return (await this._url) + "";
   }
-};
+}
 
+Object.defineProperty(FileAttachmentImpl, "name", {value: "FileAttachment"}); // prevent mangling
 FileAttachment.prototype = FileAttachmentImpl.prototype; // instanceof
 
 class ZipArchive {

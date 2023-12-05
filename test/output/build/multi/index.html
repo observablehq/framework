@@ -14,7 +14,7 @@
 
 import {define} from "./_observablehq/client.js";
 
-define({id: "1bcb5df5", inputs: ["FileAttachment"], outputs: ["f1"], files: [{"name":"file1.csv","mimeType":"text/csv","path":"./_file/file1.csv"}], body: (FileAttachment) => {
+define({id: "1bcb5df5", inputs: ["FileAttachment"], outputs: ["f1"], files: [{"name":"./file1.csv","mimeType":"text/csv","path":"./_file/file1.csv"}], body: (FileAttachment) => {
 const f1 = FileAttachment("file1.csv").csv();
 return {f1};
 }});
@@ -25,8 +25,8 @@ Input.table(f1)
 ))
 }});
 
-define({id: "aaa5c01d", outputs: ["f2"], files: [{"name":"./file2.csv","mimeType":"text/csv","path":"./_file/file2.csv"}], body: () => {
-const f2 = fetch("./_file/file2.csv");
+define({id: "494b10bd", inputs: ["FileAttachment"], outputs: ["f2"], files: [{"name":"./file2.csv","mimeType":"text/csv","path":"./_file/file2.csv"}], body: (FileAttachment) => {
+const f2 = FileAttachment("./file2.csv");
 return {f2};
 }});
 
@@ -48,7 +48,7 @@ return {f2};
 <h1 id="multi-test" tabindex="-1"><a class="observablehq-header-anchor" href="#multi-test">Multi test</a></h1>
 <div id="cell-1bcb5df5" class="observablehq observablehq--block"></div>
 <div id="cell-db071921" class="observablehq observablehq--block"></div>
-<div id="cell-aaa5c01d" class="observablehq observablehq--block"></div>
+<div id="cell-494b10bd" class="observablehq observablehq--block"></div>
 </main>
 <footer id="observablehq-footer">
 <nav><a rel="next" href="./subsection/"><span>Sub-Section</span></a></nav>

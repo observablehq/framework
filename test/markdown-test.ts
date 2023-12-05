@@ -102,12 +102,12 @@ describe("normalizePieceHtml adds local file attachments", () => {
     assert.deepEqual(context.files, [
       {
         mimeType: "image/jpeg",
-        name: "large.jpg",
+        name: "./large.jpg",
         path: "./_file/large.jpg"
       },
       {
         mimeType: "image/jpeg",
-        name: "small.jpg",
+        name: "./small.jpg",
         path: "./_file/small.jpg"
       }
     ]);
@@ -127,7 +127,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
     assert.deepEqual(context.files, [
       {
         mimeType: "video/quicktime",
-        name: "observable.mov",
+        name: "./observable.mov",
         path: "./_file/observable.mov"
       }
     ]);
@@ -153,12 +153,12 @@ describe("normalizePieceHtml adds local file attachments", () => {
     assert.deepEqual(context.files, [
       {
         mimeType: "video/mp4",
-        name: "observable.mp4",
+        name: "./observable.mp4",
         path: "./_file/observable.mp4"
       },
       {
         mimeType: "video/quicktime",
-        name: "observable.mov",
+        name: "./observable.mov",
         path: "./_file/observable.mov"
       }
     ]);
@@ -182,12 +182,12 @@ describe("normalizePieceHtml adds local file attachments", () => {
     assert.deepEqual(context.files, [
       {
         mimeType: "image/png",
-        name: "observable-logo-narrow.png",
+        name: "./observable-logo-narrow.png",
         path: "./_file/observable-logo-narrow.png"
       },
       {
         mimeType: "image/png",
-        name: "observable-logo-wide.png",
+        name: "./observable-logo-wide.png",
         path: "./_file/observable-logo-wide.png"
       }
     ]);
@@ -226,7 +226,7 @@ describe("normalizePieceHtml only adds local files", () => {
     assert.deepEqual(context.files, [
       {
         mimeType: "image/jpeg",
-        name: "small.jpg",
+        name: "./small.jpg",
         path: "./_file/small.jpg"
       }
     ]);
@@ -252,7 +252,7 @@ describe("normalizePieceHtml only adds local files", () => {
     assert.deepEqual(context.files, [
       {
         mimeType: "video/quicktime",
-        name: "observable.mov",
+        name: "./observable.mov",
         path: "./_file/observable.mov"
       }
     ]);

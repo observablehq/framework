@@ -57,7 +57,7 @@ export function define(cell) {
   v.define(outputs.length ? `cell ${id}` : null, inputs, body);
   variables.push(v);
   for (const o of outputs) variables.push(main.variable(true).define(o, [`cell ${id}`], (exports) => exports[o]));
-  for (const f of files) registerFile(f.name, {url: f.path, mimeType: f.mimeType});
+  for (const f of files) registerFile(f.name, f);
   for (const d of databases) registerDatabase(d.name, d);
 }
 

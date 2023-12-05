@@ -1,2 +1,3 @@
-export const fooJsonData = await fetch("./foo-data.json").then(d => d.json());
-export const fooCsvData = await fetch("./foo-data.csv").then(d => d.text());
+import {FileAttachment} from "npm:@observablehq/stdlib";
+export const fooJsonData = await FileAttachment("foo-data.json").json();
+export const fooCsvData = await FileAttachment("foo-data.csv").text();

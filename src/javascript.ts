@@ -6,8 +6,6 @@ import {findAwaits} from "./javascript/awaits.js";
 import {resolveDatabases} from "./javascript/databases.js";
 import {findDeclarations} from "./javascript/declarations.js";
 import {findFeatures} from "./javascript/features.js";
-import {rewriteFetches} from "./javascript/fetches.js";
-import {defaultGlobals} from "./javascript/globals.js";
 import {findExports, findImportDeclarations, findImports} from "./javascript/imports.js";
 import {createImportResolver, rewriteImports} from "./javascript/imports.js";
 import {findReferences} from "./javascript/references.js";
@@ -20,9 +18,11 @@ export interface DatabaseReference {
 }
 
 export interface FileReference {
+  /** The relative path from the source root to the file. */
   name: string;
+  /** The MIME type, if known; derived from the file extension. */
   mimeType: string | null;
-  /** The relative path from the document to the file in _file */
+  /** The relative path from the page to the file in _file. */
   path: string;
 }
 
@@ -93,7 +93,6 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
           output.insertRight(input.length, "\n))");
         }
         await rewriteImports(output, node, sourcePath, createImportResolver(root, "_import"));
-        rewriteFetches(output, node, sourcePath);
         const result = `${node.async ? "async " : ""}(${inputs}) => {
 ${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.map(({name}) => name)}};` : ""}
 }`;
@@ -143,7 +142,7 @@ export interface JavaScriptNode {
 }
 
 function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
-  const {globals = defaultGlobals, inline = false, root, sourcePath} = options;
+  const {inline = false, root, sourcePath} = options;
   // First attempt to parse as an expression; if this fails, parse as a program.
   let expression = maybeParseExpression(input, parseOptions);
   if (expression?.type === "ClassExpression" && expression.id) expression = null; // treat named class as program
@@ -152,16 +151,16 @@ function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
   const body = expression ?? Parser.parse(input, parseOptions);
   const exports = findExports(body);
   if (exports.length) throw syntaxError("Unexpected token 'export'", exports[0], input); // disallow exports
-  const references = findReferences(body, globals);
-  findAssignments(body, references, globals, input);
-  const declarations = expression ? null : findDeclarations(body as Program, globals, input);
-  const {imports, fetches} = findImports(body, root, sourcePath);
-  const features = findFeatures(body, root, sourcePath, references, input);
+  const references = findReferences(body);
+  findAssignments(body, references, input);
+  const declarations = expression ? null : findDeclarations(body as Program, input);
+  const {imports, features: importedFeatures} = findImports(body, root, sourcePath);
+  const features = findFeatures(body, sourcePath, references, input);
   return {
     body,
     declarations,
     references,
-    features: [...features, ...fetches],
+    features: [...features, ...importedFeatures],
     imports,
     expression: !!expression,
     async: findAwaits(body).length > 0
