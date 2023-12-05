@@ -1,7 +1,8 @@
 import {parseHTML} from "linkedom";
 import {type Config, type Page, type Section, mergeToc} from "./config.js";
 import {type Html, html} from "./html.js";
-import {type ImportResolver, createImportResolver} from "./javascript/imports.js";
+import type {ImportResolver} from "./javascript/imports.js";
+import {createImportResolver, resolveModuleIntegrity, resolveModulePreloads} from "./javascript/imports.js";
 import type {FileReference, ImportReference, Transpile} from "./javascript.js";
 import {addImplicitSpecifiers, addImplicitStylesheets} from "./libraries.js";
 import {type ParseResult, parseMarkdown} from "./markdown.js";
@@ -167,10 +168,12 @@ async function renderLinks(parseResult: ParseResult, path: string, resolver: Imp
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
   addImplicitSpecifiers(specifiers, inputs);
   await addImplicitStylesheets(stylesheets, specifiers);
-  const preloads = new Set<string>();
+  const preloads = new Set<string>([relativeUrl(path, "/_observablehq/client.js")]);
   for (const specifier of specifiers) preloads.add(await resolver(path, specifier));
-  if (parseResult.cells.some((cell) => cell.databases?.length)) preloads.add(relativeUrl(path, "/_observablehq/database.js")); // prettier-ignore
+  await resolveModulePreloads(preloads);
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
+    Array.from(stylesheets).sort().map(renderStylesheetPreload) // <link rel=preload as=style>
+  }${
     Array.from(stylesheets).sort().map(renderStylesheet) // <link rel=stylesheet>
   }${
     Array.from(preloads).sort().map(renderModulePreload) // <link rel=modulepreload>
@@ -181,8 +184,13 @@ function renderStylesheet(href: string): Html {
   return html`\n<link rel="stylesheet" type="text/css" href="${href}"${/^\w+:/.test(href) ? " crossorigin" : ""}>`;
 }
 
+function renderStylesheetPreload(href: string): Html {
+  return html`\n<link rel="preload" as="style" href="${href}"${/^\w+:/.test(href) ? " crossorigin" : ""}>`;
+}
+
 function renderModulePreload(href: string): Html {
-  return html`\n<link rel="modulepreload" href="${href}">`;
+  const integrity: string | undefined = resolveModuleIntegrity(href);
+  return html`\n<link rel="modulepreload" href="${href}"${integrity ? html` integrity="${integrity}"` : ""}>`;
 }
 
 function renderFooter(path: string, options: Pick<Config, "pages" | "pager" | "title">): Html {
