@@ -137,7 +137,6 @@ export abstract class Loader {
    * to the source root; this is within the .observablehq/cache folder within
    * the source root.
    */
-
   async load(effects = defaultEffects): Promise<string> {
     const key = join(this.sourceRoot, this.targetPath);
     let command = runningCommands.get(key);
