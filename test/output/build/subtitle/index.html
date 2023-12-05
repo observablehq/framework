@@ -22,8 +22,7 @@ import "./_observablehq/client.js";
     <li class="observablehq-link observablehq-link-active"><a href="./">A title</a></li>
   </ol>
 </nav>
-<script>{const e=document.querySelector("#observablehq-sidebar"),o=document.querySelector("#observablehq-sidebar-toggle"),r=localStorage.getItem("observablehq-sidebar");r?o.checked=r==="true":o.indeterminate=!0;for(const t of document.querySelectorAll("#observablehq-sidebar summary")){const s=t.parentElement;switch(sessionStorage.getItem(`observablehq-sidebar:${t.textContent}`)){case"true":s.open=!0;break;case"false":s.classList.contains("observablehq-section-active")||(s.open=!1);break}}addEventListener("beforeunload",()=>sessionStorage.setItem("observablehq-sidebar-scrolly",`${e.scrollTop}`));const l=sessionStorage.getItem("observablehq-sidebar-scrolly");l!=null&&(e.style.cssText="overflow: hidden;",e.scrollTop=+l,e.style.cssText="");
-}</script>
+<script>{/* redacted init script */}</script>
 <aside id="observablehq-toc" data-selector="#observablehq-main h1:not(:first-of-type), #observablehq-main h2:not(h1 + h2)">
 <nav>
 <div>Contents</div>

@@ -32,7 +32,7 @@ describe("build", async () => {
 
       await rm(actualDir, {recursive: true, force: true});
       if (generate) console.warn(`! generating ${expectedDir}`);
-      await build({sourceRoot: path, addPublic}, new FileBuildEffects(outputDir, silentEffects));
+      await build({sourceRoot: path, addPublic}, new TestEffects(outputDir));
 
       // In the addPublic case, we don’t want to test the contents of the public
       // files because they change often; replace them with empty files so we
@@ -79,5 +79,17 @@ function* findFiles(root: string): Iterable<string> {
     } else {
       yield relative(root, path);
     }
+  }
+}
+
+class TestEffects extends FileBuildEffects {
+  constructor(outputRoot: string) {
+    super(outputRoot, silentEffects);
+  }
+  async writeFile(outputPath: string, contents: string | Buffer): Promise<void> {
+    if (typeof contents === "string" && outputPath.endsWith(".html")) {
+      contents = contents.replace(/^(<script>\{).*(\}<\/script>)$/m, "$1/* redacted init script */$2");
+    }
+    return super.writeFile(outputPath, contents);
   }
 }

@@ -118,7 +118,9 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
   )}
   </ol>
 </nav>
-<script>{${html.unsafe(await rollupClient(getClientPath("./src/client/sidebar-init.ts"), {minify: true}))}}</script>`;
+<script>{${html.unsafe(
+    (await rollupClient(getClientPath("./src/client/sidebar-init.ts"), {minify: true})).trim()
+  )}}</script>`;
 }
 
 interface Header {
