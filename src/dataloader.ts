@@ -301,7 +301,7 @@ const extractors = [
   [".tgz", TarGzExtractor]
 ] as const;
 
-function formatSize(size: number): string {
+export function formatSize(size: number): string {
   if (!size) return yellow("empty output");
   const e = Math.floor(Math.log(size) / Math.log(1024));
   return `${+(size / 1024 ** e).toFixed(2)} ${["bytes", "KiB", "MiB", "GiB", "TiB"][e]}`;

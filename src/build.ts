@@ -1,17 +1,18 @@
 import {existsSync} from "node:fs";
-import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
-import {basename, dirname, join, relative} from "node:path";
+import {access, constants, copyFile, readFile, stat, writeFile} from "node:fs/promises";
+import {basename, dirname, extname, join, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
+import {max, rollups, sum} from "d3-array";
 import {readConfig} from "./config.js";
-import {Loader} from "./dataloader.js";
+import {Loader, formatSize} from "./dataloader.js";
 import {isEnoent} from "./error.js";
 import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
 import {renderServerless} from "./render.js";
 import {getClientPath, rollupClient} from "./rollup.js";
-import {faint} from "./tty.js";
+import {bold, faint, green} from "./tty.js";
 import {resolvePath} from "./url.js";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
@@ -37,6 +38,7 @@ export interface BuildOptions {
 export interface BuildEffects {
   logger: Logger;
   output: Writer;
+  sizes: Map<string, number>;
 
   /**
    * @param outputPath The path of this file relative to the outputRoot. For
@@ -138,12 +140,37 @@ export async function build(
       await effects.copyFile(sourcePath, outputPath);
     }
   }
+
+  // Log statistics
+  effects.logger.log(faint("······files:    #         size          max"));
+  for (const [extension, {count, m, size}] of rollups(
+    effects.sizes,
+    (v) => ({
+      count: v.length,
+      size: sum(v, ([, size]) => size),
+      m: max(v, ([, size]) => size)
+    }),
+    ([file]) => extname(file)
+  ).sort(([exta, a], [extb, b]) => (exta === ".html" ? 1 : extb === ".html" ? -1 : b.size - a.size))) {
+    effects.logger.log(
+      `${extension.padStart(11, " ").slice(-11)}: ${String(count).padStart(4, " ")} ${formatSize(size).padStart(
+        12,
+        " "
+      )} ${formatSize(m).padStart(12, " ")}`
+    );
+  }
+  effects.logger.log(
+    `${faint("      total:")} ${bold(String(effects.sizes.size).padStart(4, " "))} ${green(
+      formatSize(sum(effects.sizes, ([, size]) => size)).padStart(12, " ")
+    )}`
+  );
 }
 
 export class FileBuildEffects implements BuildEffects {
   private readonly outputRoot: string;
   readonly logger: Logger;
   readonly output: Writer;
+  readonly sizes: Map<string, number>;
   constructor(
     outputRoot: string,
     {logger = console, output = process.stdout}: {logger?: Logger; output?: Writer} = {}
@@ -152,17 +179,20 @@ export class FileBuildEffects implements BuildEffects {
     this.logger = logger;
     this.output = output;
     this.outputRoot = outputRoot;
+    this.sizes = new Map();
   }
   async copyFile(sourcePath: string, outputPath: string): Promise<void> {
     const destination = join(this.outputRoot, outputPath);
     this.logger.log(destination);
     await prepareOutput(destination);
     await copyFile(sourcePath, destination);
+    this.sizes.set(destination, (await stat(destination)).size);
   }
   async writeFile(outputPath: string, contents: string | Buffer): Promise<void> {
     const destination = join(this.outputRoot, outputPath);
     this.logger.log(destination);
     await prepareOutput(destination);
     await writeFile(destination, contents);
+    this.sizes.set(destination, (await stat(destination)).size);
   }
 }
