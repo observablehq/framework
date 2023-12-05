@@ -135,7 +135,7 @@ describe("preview server", () => {
 
     it("watch .md file", async () => {
       messages = [];
-      await setTimeout(500);
+      await setTimeout(500); // avoid sending a "reload" message
       await writeFile(`${testRoot}/index.md`, pageContent + "\n\n<div>Hello</div>");
       await setTimeout(1000);
       expect(messages).to.have.length(1);
