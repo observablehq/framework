@@ -309,26 +309,34 @@ export async function resolveNpmImport(specifier: string): Promise<string> {
   return `https://cdn.jsdelivr.net/npm/${name}@${version}/${path}`;
 }
 
-const importsCache = new Map<string, Promise<Set<string>>>();
+interface ModulePreload {
+  integrity: string;
+  imports: Set<string>;
+}
+
+const preloadCache = new Map<string, Promise<ModulePreload | undefined>>();
 
 /**
- * Fetches the module at the specified URL, parses it, and returns a promise to
- * any transitive modules it imports (on the same host; only path-based imports
- * are considered). Only static imports are considered; dynamic imports may not
- * be used and hence are not preloaded.
+ * Fetches the module at the specified URL and returns a promise to any
+ * transitive modules it imports (on the same host; only path-based imports are
+ * considered), as well as its subresource integrity hash. Only static imports
+ * are considered, and the fetched module must be have immutable public caching;
+ * dynamic imports may not be used and hence are not preloaded.
  */
-async function fetchModuleImports(href: string): Promise<Set<string>> {
-  let promise = importsCache.get(href);
+async function fetchModulePreload(href: string): Promise<ModulePreload | undefined> {
+  let promise = preloadCache.get(href);
   if (promise) return promise;
   promise = (async () => {
-    const {body} = await cachedFetch(href);
+    const {headers, body} = await cachedFetch(href);
+    const cache = headers.get("cache-control")?.split(/\s*,\s*/);
+    if (!cache?.some((c) => c === "immutable") || !cache?.some((c) => c === "public")) return;
     const imports = new Set<string>();
     let program: Program;
     try {
       program = Parser.parse(body, parseOptions);
     } catch (error) {
       if (!isEnoent(error) && !(error instanceof SyntaxError)) throw error;
-      return imports;
+      return;
     }
     simple(program, {
       ImportDeclaration: findImport,
@@ -343,10 +351,10 @@ async function fetchModuleImports(href: string): Promise<Set<string>> {
         }
       }
     }
-    return imports;
+    return {integrity: `sha384-${createHash("sha384").update(body).digest("base64")}`, imports};
   })();
-  promise.catch(() => importsCache.delete(href)); // try again on error
-  importsCache.set(href, promise);
+  promise.catch(() => preloadCache.delete(href)); // try again on error
+  preloadCache.set(href, promise);
   return promise;
 }
 
@@ -372,8 +380,10 @@ export async function resolveModulePreloads(hrefs: Set<string>): Promise<void> {
     if (visited.has(href)) return;
     visited.add(href);
     const promise = (async () => {
-      integrityCache.set(href, await fetchModuleIntegrity(href));
-      for (const i of await fetchModuleImports(href)) {
+      const preload = await fetchModulePreload(href);
+      if (!preload) return;
+      integrityCache.set(href, preload.integrity);
+      for (const i of preload.imports) {
         hrefs.add(i);
         enqueue(i);
       }
@@ -386,11 +396,6 @@ export async function resolveModulePreloads(hrefs: Set<string>): Promise<void> {
   }
 
   if (queue.size) return new Promise<void>((y) => (resolve = y));
-}
-
-async function fetchModuleIntegrity(href: string): Promise<string> {
-  const {body} = await cachedFetch(href);
-  return `sha384-${createHash("sha384").update(body).digest("base64")}`;
 }
 
 /**

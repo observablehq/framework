@@ -38,7 +38,7 @@ export function mockJsDelivr() {
     for (const [name, version] of packages) {
       cdnClient
         .intercept({path: `/npm/${name}@${version}/+esm`, method: "GET"})
-        .reply(200, "", {headers: {"content-type": "text/javascript; charset=utf-8"}});
+        .reply(200, "", {headers: {"cache-control": "public, immutable", "content-type": "text/javascript; charset=utf-8"}}); // prettier-ignore
     }
     setGlobalDispatcher(agent);
   });
