@@ -53,7 +53,7 @@ export interface BuildEffects {
 
 export async function build(
   {sourceRoot: root, outputRoot, addPublic = true}: BuildOptions,
-  effects: BuildEffects = new DefaultEffects(outputRoot)
+  effects: BuildEffects = new FileBuildEffects(outputRoot!)
 ): Promise<void> {
   // Make sure all files are readable before starting to write output files.
   for await (const sourceFile of visitMarkdownFiles(root)) {
@@ -140,14 +140,17 @@ export async function build(
   }
 }
 
-class DefaultEffects implements BuildEffects {
+export class FileBuildEffects implements BuildEffects {
   private readonly outputRoot: string;
   readonly logger: Logger;
   readonly output: Writer;
-  constructor(outputRoot?: string) {
+  constructor(
+    outputRoot: string,
+    {logger = console, output = process.stdout}: {logger?: Logger; output?: Writer} = {}
+  ) {
     if (!outputRoot) throw new Error("missing outputRoot");
-    this.logger = console;
-    this.output = process.stdout;
+    this.logger = logger;
+    this.output = output;
     this.outputRoot = outputRoot;
   }
   async copyFile(sourcePath: string, outputPath: string): Promise<void> {
