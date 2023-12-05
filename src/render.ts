@@ -180,11 +180,12 @@ async function renderLinks(parseResult: ParseResult, path: string, resolver: Imp
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
   addImplicitSpecifiers(specifiers, inputs);
   await addImplicitStylesheets(stylesheets, specifiers);
-  const preloads = new Set<string>();
+  const preloads = new Set<string>([relativeUrl(path, "/_observablehq/client.js")]);
   for (const specifier of specifiers) preloads.add(await resolver(path, specifier));
-  if (parseResult.cells.some((cell) => cell.databases?.length)) preloads.add(relativeUrl(path, "/_observablehq/database.js")); // prettier-ignore
   await resolveModulePreloads(preloads);
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
+    Array.from(stylesheets).sort().map(renderStylesheetPreload) // <link rel=preload as=style>
+  }${
     Array.from(stylesheets).sort().map(renderStylesheet) // <link rel=stylesheet>
   }${
     Array.from(preloads).sort().map(renderModulePreload) // <link rel=modulepreload>
@@ -193,6 +194,10 @@ async function renderLinks(parseResult: ParseResult, path: string, resolver: Imp
 
 function renderStylesheet(href: string): Html {
   return html`\n<link rel="stylesheet" type="text/css" href="${href}"${/^\w+:/.test(href) ? " crossorigin" : ""}>`;
+}
+
+function renderStylesheetPreload(href: string): Html {
+  return html`\n<link rel="preload" as="style" href="${href}"${/^\w+:/.test(href) ? " crossorigin" : ""}>`;
 }
 
 function renderModulePreload(href: string): Html {
