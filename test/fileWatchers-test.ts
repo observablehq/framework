@@ -9,7 +9,7 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
     const [watcher, watches] = await useWatcher(root, "files.md", ["file-top.csv"]);
     try {
       touch("test/input/build/files/file-top.csv");
-      assert.deepStrictEqual(await watches(), new Set(["file-top.csv"]));
+      assert.deepStrictEqual(await watches(), ["file-top.csv"]);
     } finally {
       watcher.close();
     }
@@ -19,7 +19,7 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
     try {
       touch("test/input/build/files/file-top.csv");
       touch("test/input/build/files/subsection/file-sub.csv");
-      assert.deepStrictEqual(await watches(), new Set(["file-top.csv", "subsection/file-sub.csv"]));
+      assert.deepStrictEqual(await watches(), ["file-top.csv", "subsection/file-sub.csv"]);
     } finally {
       watcher.close();
     }
@@ -28,7 +28,7 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
     const [watcher, watches] = await useWatcher("test/input/build/simple", "simple.md", ["data.txt"]);
     try {
       touch("test/input/build/simple/data.txt.sh");
-      assert.deepStrictEqual(await watches(), new Set(["data.txt"]));
+      assert.deepStrictEqual(await watches(), ["data.txt"]);
     } finally {
       watcher.close();
     }
@@ -37,7 +37,7 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
     const [watcher, watches] = await useWatcher("test/input/build/archives", "zip.md", ["static/file.txt"]);
     try {
       touch("test/input/build/archives/static.zip");
-      assert.deepStrictEqual(await watches(), new Set(["static/file.txt"]));
+      assert.deepStrictEqual(await watches(), ["static/file.txt"]);
     } finally {
       watcher.close();
     }
@@ -46,7 +46,7 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
     const [watcher, watches] = await useWatcher("test/input/build/archives", "zip.md", ["dynamic/file.txt"]);
     try {
       touch("test/input/build/archives/dynamic.zip.sh");
-      assert.deepStrictEqual(await watches(), new Set(["dynamic/file.txt"]));
+      assert.deepStrictEqual(await watches(), ["dynamic/file.txt"]);
     } finally {
       watcher.close();
     }
@@ -55,7 +55,7 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
     const [watcher, watches] = await useWatcher(root, "files.md", ["file-top.csv", "file-top.csv"]);
     try {
       touch("test/input/build/files/file-top.csv");
-      assert.deepStrictEqual(await watches(), new Set(["file-top.csv"]));
+      assert.deepStrictEqual(await watches(), ["file-top.csv"]);
     } finally {
       watcher.close();
     }
@@ -64,7 +64,7 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
     const [watcher, watches] = await useWatcher(root, "files.md", ["file-top.csv", "./file-top.csv"]);
     try {
       touch("test/input/build/files/file-top.csv");
-      assert.deepStrictEqual(await watches(), new Set(["file-top.csv", "./file-top.csv"]));
+      assert.deepStrictEqual(await watches(), ["./file-top.csv", "file-top.csv"]);
     } finally {
       watcher.close();
     }
@@ -73,7 +73,7 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
     const [watcher, watches] = await useWatcher(root, "subsection/subfiles.md", ["./file-sub.csv", "../file-top.csv"]);
     try {
       touch("test/input/build/files/file-top.csv");
-      assert.deepStrictEqual(await watches(), new Set(["../file-top.csv"]));
+      assert.deepStrictEqual(await watches(), ["../file-top.csv"]);
     } finally {
       watcher.close();
     }
@@ -82,7 +82,7 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
     const [watcher, watches] = await useWatcher(root, "subsection/subfiles.md", ["/file-top.csv"]);
     try {
       touch("test/input/build/files/file-top.csv");
-      assert.deepStrictEqual(await watches(), new Set(["/file-top.csv"]));
+      assert.deepStrictEqual(await watches(), ["/file-top.csv"]);
     } finally {
       watcher.close();
     }
@@ -91,7 +91,7 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
     const [watcher, watches] = await useWatcher(root, "files.md", ["does-not-exist.csv", "file-top.csv"]);
     try {
       touch("test/input/build/files/file-top.csv");
-      assert.deepStrictEqual(await watches(), new Set(["file-top.csv"]));
+      assert.deepStrictEqual(await watches(), ["file-top.csv"]);
     } finally {
       watcher.close();
     }
@@ -102,7 +102,7 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
     const [watcher, watches] = await useWatcher(root, "files.md", ["file-top.csv"]);
     try {
       touch("test/input/build/files/file-top.csv", then);
-      assert.deepStrictEqual(await watches(10), new Set());
+      assert.deepStrictEqual(await watches(10), []);
     } finally {
       watcher.close();
     }
@@ -112,7 +112,7 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
     const [watcher, watches] = await useWatcher("test/input", "comment.md", ["empty.js"]);
     try {
       touch("test/input/empty.js", then);
-      assert.deepStrictEqual(await watches(10), new Set());
+      assert.deepStrictEqual(await watches(10), []);
     } finally {
       watcher.close();
     }
@@ -125,11 +125,11 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
         // First rename the file, while writing a new file to the same place.
         renameSync("test/input/build/files/temp.csv", "test/input/build/files/temp2.csv");
         writeFileSync("test/input/build/files/temp.csv", "hello 2", "utf-8");
-        assert.deepStrictEqual(await watches(), new Set(["temp.csv"]));
+        assert.deepStrictEqual(await watches(), ["temp.csv"]);
 
         // Then test that writing to the original location watches the new file.
         writeFileSync("test/input/build/files/temp.csv", "hello 3", "utf-8");
-        assert.deepStrictEqual(await watches(), new Set(["temp.csv"]));
+        assert.deepStrictEqual(await watches(), ["temp.csv"]);
       } finally {
         watcher.close();
       }
@@ -163,14 +163,14 @@ async function useWatcher(
   root: string,
   path: string,
   names: string[]
-): Promise<[watcher: FileWatchers, wait: (delay?: number) => Promise<Set<string>>]> {
+): Promise<[watcher: FileWatchers, wait: (delay?: number) => Promise<string[]>]> {
   let watches = new Set<string>();
-  let resume: ((value: Set<string>) => void) | null = null;
+  let resume: ((value: string[]) => void) | null = null;
   const wait = (delay?: number) => {
     if (resume) throw new Error("already waiting");
-    const promise = new Promise<Set<string>>((y) => (resume = y));
+    const promise = new Promise<string[]>((y) => (resume = y));
     if (delay == null) return promise;
-    const timeout = new Promise<Set<string>>((y) => setTimeout(() => y(watches), delay));
+    const timeout = new Promise<string[]>((y) => setTimeout(() => y([...watches].sort()), delay));
     return Promise.race([promise, timeout]);
   };
   const watch = (name: string) => {
@@ -178,7 +178,7 @@ async function useWatcher(
     const r = resume;
     if (r == null) return;
     resume = null;
-    setTimeout(() => (r(watches), (watches = new Set<string>())), 10);
+    setTimeout(() => (r([...watches].sort()), (watches = new Set<string>())), 10);
   };
   const watcher = await FileWatchers.of(root, path, names, watch);
   await pause();
