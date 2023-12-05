@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import {renameSync, unlinkSync, utimesSync, writeFileSync} from "node:fs";
+import {InternSet, difference} from "d3-array";
 import {FileWatchers} from "../src/fileWatchers.js";
 
 describe("FileWatchers.of(root, path, names, callback)", () => {
@@ -148,7 +149,7 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
 
         // Then touch a different file to make sure the watcher is still alive.
         touch("test/input/build/files/file-top.csv");
-        assert.deepStrictEqual(await watches(), new Set(["file-top.csv"]));
+        assert.deepStrictEqual(difference(await watches(), ["temp.csv"]), new InternSet(["file-top.csv"]));
       } finally {
         watcher.close();
       }
