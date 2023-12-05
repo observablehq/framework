@@ -7,6 +7,7 @@ import type {FileReference, ImportReference, Transpile} from "./javascript.js";
 import {addImplicitSpecifiers, addImplicitStylesheets} from "./libraries.js";
 import {type ParseResult, parseMarkdown} from "./markdown.js";
 import {type PageLink, findLink} from "./pager.js";
+import {getClientPath, rollupClient} from "./rollup.js";
 import {relativeUrl} from "./url.js";
 
 export interface Render {
@@ -83,7 +84,7 @@ import ${preview || parseResult.cells.length > 0 ? `{${preview ? "open, " : ""}d
 ${
   preview ? `\nopen({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
 }${parseResult.cells.map((cell) => `\n${renderDefineCell(cell)}`).join("")}`)}
-</script>${pages.length > 0 ? html`\n${renderSidebar(title, pages, path)}` : ""}${
+</script>${pages.length > 0 ? html`\n${await renderSidebar(title, pages, path)}` : ""}${
     headers.length > 0 ? html`\n${renderToc(headers, toc.label)}` : ""
   }
 <div id="observablehq-center">
@@ -94,7 +95,7 @@ ${renderFooter(path, options)}
 `);
 }
 
-function renderSidebar(title = "Home", pages: (Page | Section)[], path: string): Html {
+async function renderSidebar(title = "Home", pages: (Page | Section)[], path: string): Promise<Html> {
   return html`<input id="observablehq-sidebar-toggle" type="checkbox">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
@@ -118,22 +119,9 @@ function renderSidebar(title = "Home", pages: (Page | Section)[], path: string):
   )}
   </ol>
 </nav>
-<script>{
-  const toggle = document.querySelector("#observablehq-sidebar-toggle");
-  const initialState = localStorage.getItem("observablehq-sidebar");
-  if (initialState) toggle.checked = initialState === "true";
-  else toggle.indeterminate = true;
-  for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
-    const details = summary.parentElement;
-    switch (sessionStorage.getItem(\`observablehq-sidebar:\${summary.textContent}\`)) {
-      case "true": details.open = true; break;
-      case "false": if (!details.classList.contains("observablehq-section-active")) details.open = false; break;
-    }
-  }
-  addEventListener("beforeunload", () => sessionStorage.setItem("observablehq-sidebar-scrolly", document.querySelector("#observablehq-sidebar").scrollTop));
-  const scrolly = +sessionStorage.getItem("observablehq-sidebar-scrolly");
-  if (scrolly) document.querySelector("#observablehq-sidebar").scrollTop = scrolly;
-}</script>`;
+<script>{${html.unsafe(
+    (await rollupClient(getClientPath("./src/client/sidebar-init.ts"), {minify: true})).trim()
+  )}}</script>`;
 }
 
 interface Header {

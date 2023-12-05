@@ -32,22 +32,7 @@ import("./_import/does-not-exist.js?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4
     <li class="observablehq-link observablehq-link-active"><a href="./">Build test case</a></li>
   </ol>
 </nav>
-<script>{
-  const toggle = document.querySelector("#observablehq-sidebar-toggle");
-  const initialState = localStorage.getItem("observablehq-sidebar");
-  if (initialState) toggle.checked = initialState === "true";
-  else toggle.indeterminate = true;
-  for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
-    const details = summary.parentElement;
-    switch (sessionStorage.getItem(`observablehq-sidebar:${summary.textContent}`)) {
-      case "true": details.open = true; break;
-      case "false": if (!details.classList.contains("observablehq-section-active")) details.open = false; break;
-    }
-  }
-  addEventListener("beforeunload", () => sessionStorage.setItem("observablehq-sidebar-scrolly", document.querySelector("#observablehq-sidebar").scrollTop));
-  const scrolly = +sessionStorage.getItem("observablehq-sidebar-scrolly");
-  if (scrolly) document.querySelector("#observablehq-sidebar").scrollTop = scrolly;
-}</script>
+<script>{/* redacted init script */}</script>
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 <h1 id="build-test-case" tabindex="-1"><a class="observablehq-header-anchor" href="#build-test-case">Build test case</a></h1>
