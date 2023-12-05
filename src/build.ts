@@ -62,7 +62,7 @@ export async function build(
     pageCount++;
   }
   if (!pageCount) throw new Error(`No pages found in ${root}`);
-  effects.logger.log(`${faint("found")} ${pageCount} ${faint("pages in ")}${root}`);
+  effects.logger.log(`${faint("found")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
 
   // Render .md files, building a list of file attachments as we go.
   const config = await readConfig(root);
