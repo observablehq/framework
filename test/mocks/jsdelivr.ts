@@ -28,9 +28,17 @@ export function mockJsDelivr() {
     globalDispatcher = getGlobalDispatcher();
     const agent = new MockAgent();
     agent.disableNetConnect();
-    const client = agent.get("https://data.jsdelivr.com");
+    const dataClient = agent.get("https://data.jsdelivr.com");
     for (const [name, version] of packages) {
-      client.intercept({path: `/v1/packages/npm/${name}/resolved`, method: "GET"}).reply(200, {version});
+      dataClient
+        .intercept({path: `/v1/packages/npm/${name}/resolved`, method: "GET"})
+        .reply(200, {version}, {headers: {"content-type": "application/json; charset=utf-8"}});
+    }
+    const cdnClient = agent.get("https://cdn.jsdelivr.net");
+    for (const [name, version] of packages) {
+      cdnClient
+        .intercept({path: `/npm/${name}@${version}/+esm`, method: "GET"})
+        .reply(200, "", {headers: {"content-type": "text/javascript; charset=utf-8"}});
     }
     setGlobalDispatcher(agent);
   });

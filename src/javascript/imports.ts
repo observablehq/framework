@@ -2,16 +2,8 @@ import {createHash} from "node:crypto";
 import {readFileSync} from "node:fs";
 import {join} from "node:path";
 import {Parser} from "acorn";
-import type {
-  CallExpression,
-  ExportAllDeclaration,
-  ExportNamedDeclaration,
-  Identifier,
-  ImportDeclaration,
-  ImportExpression,
-  Node,
-  Program
-} from "acorn";
+import type {CallExpression, Identifier, Node, Program} from "acorn";
+import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {isEnoent} from "../error.js";
 import {type Feature, type ImportReference, type JavaScriptNode} from "../javascript.js";
@@ -23,6 +15,9 @@ import {findFetches, maybeAddFetch, rewriteIfLocalFetch} from "./fetches.js";
 import {defaultGlobals} from "./globals.js";
 import {findReferences} from "./references.js";
 
+type ImportNode = ImportDeclaration | ImportExpression;
+type ExportNode = ExportAllDeclaration | ExportNamedDeclaration;
+
 export interface ImportsAndFetches {
   imports: ImportReference[];
   fetches: Feature[];
@@ -32,15 +27,15 @@ export interface ImportsAndFetches {
  * Finds all export declarations in the specified node. (This is used to
  * disallow exports within JavaScript code blocks.)
  */
-export function findExports(body: Node): (ExportAllDeclaration | ExportNamedDeclaration)[] {
-  const exports: (ExportAllDeclaration | ExportNamedDeclaration)[] = [];
+export function findExports(body: Node): ExportNode[] {
+  const exports: ExportNode[] = [];
 
   simple(body, {
     ExportAllDeclaration: findExport,
     ExportNamedDeclaration: findExport
   });
 
-  function findExport(node: ExportAllDeclaration | ExportNamedDeclaration) {
+  function findExport(node: ExportNode) {
     exports.push(node);
   }
 
@@ -65,7 +60,7 @@ export function findImports(body: Node, root: string, path: string): ImportsAndF
     CallExpression: findFetch
   });
 
-  function findImport(node) {
+  function findImport(node: ImportNode) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
       if (isLocalImport(value, path)) {
@@ -105,11 +100,12 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFetc
   const imports: ImportReference[] = [];
   const fetches: Feature[] = [];
   const set = new Set(paths);
+
   for (const path of set) {
     imports.push({type: "local", name: path});
     try {
       const input = readFileSync(join(root, path), "utf-8");
-      const program = Parser.parse(input, parseOptions) as Program;
+      const program = Parser.parse(input, parseOptions);
 
       simple(
         program,
@@ -127,10 +123,8 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFetc
       if (!isEnoent(error) && !(error instanceof SyntaxError)) throw error;
     }
   }
-  function findImport(
-    node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration,
-    path: string
-  ) {
+
+  function findImport(node: ImportNode | ExportNode, path: string) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
       if (isLocalImport(value, path)) {
@@ -141,15 +135,16 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFetc
       }
     }
   }
+
   return {imports, fetches};
 }
 
 /** Rewrites import specifiers in the specified ES module source. */
 export async function rewriteModule(input: string, sourcePath: string, resolver: ImportResolver): Promise<string> {
-  const body = Parser.parse(input, parseOptions) as Program;
+  const body = Parser.parse(input, parseOptions);
   const references: Identifier[] = findReferences(body, defaultGlobals);
   const output = new Sourcemap(input);
-  const imports: (ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration)[] = [];
+  const imports: (ImportNode | ExportNode)[] = [];
 
   simple(body, {
     ImportDeclaration: rewriteImport,
@@ -161,7 +156,7 @@ export async function rewriteModule(input: string, sourcePath: string, resolver:
     }
   });
 
-  function rewriteImport(node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration) {
+  function rewriteImport(node: ImportNode | ExportNode) {
     imports.push(node);
   }
 
@@ -267,10 +262,6 @@ export function createImportResolver(root: string, base: "." | "_import" = "."):
   };
 }
 
-// Like import, don’t fetch the same package more than once to ensure
-// consistency; restart the server if you want to clear the cache.
-const npmCache = new Map<string, Promise<string>>();
-
 function parseNpmSpecifier(specifier: string): {name: string; range?: string; path?: string} {
   const parts = specifier.split("/");
   const namerange = specifier.startsWith("@") ? [parts.shift()!, parts.shift()!].join("/") : parts.shift()!;
@@ -286,27 +277,128 @@ function formatNpmSpecifier({name, range, path}: {name: string; range?: string; 
   return `${name}${range ? `@${range}` : ""}${path ? `/${path}` : ""}`;
 }
 
+// Like import, don’t fetch the same package more than once to ensure
+// consistency; restart the server if you want to clear the cache.
+const fetchCache = new Map<string, Promise<{headers: Headers; body: any}>>();
+
+async function cachedFetch(href: string): Promise<{headers: Headers; body: any}> {
+  let promise = fetchCache.get(href);
+  if (promise) return promise;
+  promise = (async () => {
+    const response = await fetch(href);
+    if (!response.ok) throw new Error(`unable to fetch: ${href}`);
+    const json = /^application\/json(;|$)/.test(response.headers.get("content-type")!);
+    const body = await (json ? response.json() : response.text());
+    return {headers: response.headers, body};
+  })();
+  promise.catch(() => fetchCache.delete(href)); // try again on error
+  fetchCache.set(href, promise);
+  return promise;
+}
+
 async function resolveNpmVersion(specifier: string): Promise<string> {
   const {name, range} = parseNpmSpecifier(specifier); // ignore path
   specifier = formatNpmSpecifier({name, range});
-  let promise = npmCache.get(specifier);
-  if (promise) return promise;
-  promise = (async () => {
-    const search = range ? `?specifier=${range}` : "";
-    const response = await fetch(`https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`);
-    if (!response.ok) throw new Error(`unable to resolve npm specifier: ${name}`);
-    const body = await response.json();
-    return body.version;
-  })();
-  promise.catch(() => npmCache.delete(specifier)); // try again on error
-  npmCache.set(specifier, promise);
-  return promise;
+  const search = range ? `?specifier=${range}` : "";
+  return (await cachedFetch(`https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`)).body.version;
 }
 
 export async function resolveNpmImport(specifier: string): Promise<string> {
   const {name, path = "+esm"} = parseNpmSpecifier(specifier);
   const version = await resolveNpmVersion(specifier);
   return `https://cdn.jsdelivr.net/npm/${name}@${version}/${path}`;
+}
+
+const importsCache = new Map<string, Promise<Set<string>>>();
+
+/**
+ * Fetches the module at the specified URL, parses it, and returns a promise to
+ * any transitive modules it imports (on the same host; only path-based imports
+ * are considered). Only static imports are considered; dynamic imports may not
+ * be used and hence are not preloaded.
+ */
+async function fetchModuleImports(href: string): Promise<Set<string>> {
+  let promise = importsCache.get(href);
+  if (promise) return promise;
+  promise = (async () => {
+    const {body} = await cachedFetch(href);
+    const imports = new Set<string>();
+    let program: Program;
+    try {
+      program = Parser.parse(body, parseOptions);
+    } catch (error) {
+      if (!isEnoent(error) && !(error instanceof SyntaxError)) throw error;
+      return imports;
+    }
+    simple(program, {
+      ImportDeclaration: findImport,
+      ExportAllDeclaration: findImport,
+      ExportNamedDeclaration: findImport
+    });
+    function findImport(node: ImportNode | ExportNode) {
+      if (isStringLiteral(node.source)) {
+        const value = getStringLiteralValue(node.source);
+        if (["./", "../", "/"].some((prefix) => value.startsWith(prefix))) {
+          imports.add(String(new URL(value, href)));
+        }
+      }
+    }
+    return imports;
+  })();
+  promise.catch(() => importsCache.delete(href)); // try again on error
+  importsCache.set(href, promise);
+  return promise;
+}
+
+const integrityCache = new Map<string, string>();
+
+/**
+ * Given a set of resolved module specifiers (URLs) to preload, fetches any
+ * externally-hosted modules to compute the transitively-imported modules; also
+ * precomputes the subresource integrity hash for each fetched module.
+ */
+export async function resolveModulePreloads(hrefs: Set<string>): Promise<void> {
+  let resolve: () => void;
+  const visited = new Set<string>();
+  const queue = new Set<Promise<void>>();
+
+  for (const href of hrefs) {
+    if (href.startsWith("https:")) {
+      enqueue(href);
+    }
+  }
+
+  function enqueue(href: string) {
+    if (visited.has(href)) return;
+    visited.add(href);
+    const promise = (async () => {
+      integrityCache.set(href, await fetchModuleIntegrity(href));
+      for (const i of await fetchModuleImports(href)) {
+        hrefs.add(i);
+        enqueue(i);
+      }
+    })();
+    promise.finally(() => {
+      queue.delete(promise);
+      queue.size || resolve();
+    });
+    queue.add(promise);
+  }
+
+  if (queue.size) return new Promise<void>((y) => (resolve = y));
+}
+
+async function fetchModuleIntegrity(href: string): Promise<string> {
+  const {body} = await cachedFetch(href);
+  return `sha384-${createHash("sha384").update(body).digest("base64")}`;
+}
+
+/**
+ * Given a specifier (URL) that was previously resolved by
+ * resolveModulePreloads, returns the computed subresource integrity hash.
+ */
+export function resolveModuleIntegrity(href: string): string | undefined {
+  return integrityCache.get(href);
 }
 
 function resolveBuiltin(base: "." | "_import", path: string, specifier: string): string {
