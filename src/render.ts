@@ -108,7 +108,9 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
   <ol>${pages.map((p, i) =>
     "pages" in p
       ? html`${i > 0 && "path" in pages[i - 1] ? html`</ol>` : ""}
-    <details${p.open || p.pages.some((p) => p.path === path) ? html` open class="observablehq-section-active"` : ""}>
+    <details${
+      p.pages.some((p) => p.path === path) ? html` open class="observablehq-section-active"` : p.open ? " open" : ""
+    }>
       <summary>${p.name}</summary>
       <ol>${p.pages.map((p) => renderListItem(p, path))}
       </ol>
