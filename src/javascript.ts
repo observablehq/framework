@@ -18,11 +18,11 @@ export interface DatabaseReference {
 }
 
 export interface FileReference {
-  /** The relative path from the source root to the file. */
+  /** The relative path from the page to the original file (e.g., "./test.txt"). */
   name: string;
   /** The MIME type, if known; derived from the file extension. */
   mimeType: string | null;
-  /** The relative path from the page to the file in _file. */
+  /** The relative path from the page to the file in _file (e.g., "../_file/sub/test.txt"). */
   path: string;
 }
 
