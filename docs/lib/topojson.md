@@ -1,5 +1,5 @@
 # TopoJSON
 
 ```js echo
-topojson
+import * as topojson from "npm:topojson-client";
 ```

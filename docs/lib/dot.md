@@ -2,6 +2,10 @@
 
 [DOT](https://graphviz.org/doc/info/lang.html) is a language for expressing node-link diagrams using [Graphviz](https://graphviz.org). Observable Markdown’s implementation is powered by [Viz.js](https://github.com/mdaines/viz-js).
 
+```js echo
+import dot from "npm:@observablehq/dot";
+```
+
 To use DOT, write a `dot` fenced code block:
 
 ````md

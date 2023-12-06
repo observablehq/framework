@@ -2,6 +2,10 @@
 
 [Mermaid](https://mermaid.js.org/) is a language for expressing node-link diagrams, flowcharts, sequence diagrams, and many other types of visualizations. (See also [DOT](./dot).)
 
+```js echo
+import mermaid from "npm:@observablehq/mermaid";
+```
+
 To use Mermaid, write a `mermaid` fenced code block:
 
 ````md

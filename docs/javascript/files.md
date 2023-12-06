@@ -40,6 +40,8 @@ const gistemp = FileAttachment("gistemp.csv").csv().then((D) => D.map(coerceRow)
 
 TK An explanation of why coercing types as early as possible is important.
 
+TK Mention [data loaders](../loaders) and archives.
+
 ## Supported formats
 
 The following type-specific methods are supported:
@@ -94,3 +96,5 @@ TK Describe `file.name` and `file.mimeType`.
 ```js echo
 file
 ```
+
+TK Mention the sample datasets that are available by default in Markdown.

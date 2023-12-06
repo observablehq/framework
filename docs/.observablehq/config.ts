@@ -8,16 +8,14 @@ export default {
     {name: "HTML", path: "/html"},
     {
       name: "JavaScript",
-      open: false,
       pages: [
         {name: "Reactivity", path: "/javascript/reactivity"},
         {name: "Display", path: "/javascript/display"},
+        {name: "Imports", path: "/javascript/imports"},
         {name: "Files", path: "/javascript/files"},
         {name: "Promises", path: "/javascript/promises"},
         {name: "Generators", path: "/javascript/generators"},
         {name: "Mutables", path: "/javascript/mutables"},
-        {name: "Imports", path: "/javascript/imports"},
-        {name: "Inputs", path: "/javascript/inputs"},
       ]
     },
     {
@@ -30,7 +28,6 @@ export default {
         {name: "DOT (Graphviz)", path: "/lib/dot"},
         {name: "DuckDB", path: "/lib/duckdb"},
         {name: "Hypertext Literal", path: "/lib/htl"},
-        {name: "JSZip", path: "/lib/jszip"},
         {name: "Leaflet", path: "/lib/leaflet"},
         {name: "Lodash", path: "/lib/lodash"},
         {name: "Mermaid", path: "/lib/mermaid"},
