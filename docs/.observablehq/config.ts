@@ -30,7 +30,6 @@ export default {
         {name: "DOT (Graphviz)", path: "/lib/dot"},
         {name: "DuckDB", path: "/lib/duckdb"},
         {name: "Hypertext Literal", path: "/lib/htl"},
-        {name: "JSZip", path: "/lib/jszip"},
         {name: "Leaflet", path: "/lib/leaflet"},
         {name: "Lodash", path: "/lib/lodash"},
         {name: "Mermaid", path: "/lib/mermaid"},

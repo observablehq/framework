@@ -6,7 +6,7 @@ Why generate data at build time? Conventional dashboards are often slow or unrel
 
 Data loaders can be written in any programming language. They can even invoke binary executables such as ffmpeg or DuckDB! For convenience, the Observable CLI has built-in support for common languages: JavaScript, TypeScript, Python, and R.
 
-For example, say you want to map recent earthquakes. Create a JavaScript data loader, `earthquakes.csv.js`, which queries the [USGS API](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php) and outputs CSV to stdout.
+For example, to map recent earthquakes, you can create a JavaScript data loader `earthquakes.csv.js` that queries the [USGS API](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php) and outputs CSV to stdout.
 
 ```js run=false echo
 process.stdout.write("magnitude,longitude,latitude\n");
@@ -17,7 +17,7 @@ for (const feature of collection.features) {
 }
 ```
 
-To access your data from Markdown, add a [JavaScript fenced code block](./javascript) and load `earthquakes.csv` as a [file](./javascript/files).
+To access your data from Markdown, add a [JavaScript fenced code block](./javascript) and load `earthquakes.csv` as a [`FileAttachment`](./javascript/files).
 
 ```js echo
 const quakes = FileAttachment("earthquakes.csv").csv({typed: true});
@@ -25,7 +25,7 @@ const quakes = FileAttachment("earthquakes.csv").csv({typed: true});
 
 And that’s it! The CLI automatically runs the data loader. (More details below.)
 
-Now we can display the earthquakes in a map:
+Now we can display the earthquakes in a map using [Observable Plot](./lib/plot):
 
 ```js
 const world = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@1/world/110m.json").then((response) => response.json());
@@ -49,25 +49,80 @@ Plot.plot({
 
 Here are some more details on data loaders.
 
+## Archives
+
+Data loaders can generate multi-file archives, either using the [ZIP](<https://en.wikipedia.org/wiki/ZIP_(file_format)>) or [tar](<https://en.wikipedia.org/wiki/Tar_(computing)>) format; individual files can then be pulled from archives using `FileAttachment`. This allows a data loader to output multiple related files from the same source data in one go.
+
+For example, here is a TypeScript data loader `earthquakes.zip.ts` that uses [JSZip](https://stuk.github.io/jszip/) to generate a ZIP archive of two files, `metadata.json` and `earthquakes.csv`:
+
+```js run=false
+import {csvFormat} from "d3-dsv";
+import JSZip from "jszip";
+
+// Load data from USGS.
+const response = await fetch("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson");
+if (!response.ok) throw new Error(`fetch failed: ${response.status}`);
+const {metadata, features} = await response.json();
+
+// Process data into the desired format, retaining only the desired columns.
+const earthquakes = features.map(({properties, geometry: {coordinates}}) => ({
+  lon: +coordinates[0].toFixed(2),
+  lat: +coordinates[1].toFixed(2),
+  magnitude: +properties.mag.toFixed(2)
+}));
+
+// Output a ZIP file to stdout.
+const zip = new JSZip();
+zip.file("metadata.json", JSON.stringify(metadata, null, 2));
+zip.file("earthquakes.csv", csvFormat(earthquakes));
+zip.generateNodeStream().pipe(process.stdout);
+```
+
+Note how the last part serializes the `metadata` and `earthquakes` objects to a readable format corresponding to the file extension (`.json` and `.csv`).
+
+To load data in the browser, use [`FileAttachment`](../javascript/files):
+
+```js run=false
+const metadata = FileAttachment("earthquakes/metadata.json").json();
+const earthquakes = FileAttachment("earthquakes/earthquakes.csv").csv({typed: true});
+```
+
+The ZIP file itself can be also referenced as a whole — for example if the names of the files are not known in advance — with [`FileAttachment.zip`](../javascript/files#zip):
+
+```js echo
+const zip = FileAttachment("earthquakes.zip").zip();
+const metadata = zip.then((zip) => zip.file("metadata.json").json());
+```
+
+The following archive extensions are supported:
+
+- `.zip` - for the [ZIP](<https://en.wikipedia.org/wiki/ZIP_(file_format)>) archive format
+- `.tar` - for [tarballs](<https://en.wikipedia.org/wiki/Tar_(computing)>)
+- `.tar.gz` and `.tgz` - for [compressed tarballs](https://en.wikipedia.org/wiki/Gzip)
+
+In addition to archives generated dynamically by data loaders, you can use `FileAttachment` to pull files from static archives.
+
+Like with any other file, these files from generated archives are live in preview (they will refresh automatically if the corresponding data loader script is edited), and are added to the build if and only if referenced by `FileAttachment`.
+
 ## Routing
 
-Data loaders live in `docs` alongside your other source files. When a file is referenced from JavaScript, either via [`FileAttachment`](./javascript/files) or [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API), if the file does not exist, the CLI will look for a file of the same name with a double extension to see if there is a corresponding data loader. The following second extensions are checked, in order, with the corresponding language and interpreter:
+Data loaders live in the source root (typically `docs`) alongside your other source files. When a file is referenced from JavaScript via [`FileAttachment`](./javascript/files), if the file does not exist, the CLI will look for a file of the same name with a double extension to see if there is a corresponding data loader. The following second extensions are checked, in order, with the corresponding language and interpreter:
 
-* `.js` - JavaScript (`node`)
-* `.ts` - TypeScript (`tsx`)
-* `.py` - Python (`python3`)
-* `.R` - R (`Rscript`)
-* `.sh` - shell script (`sh`)
-* `.exe` - arbitrary executable
+- `.js` - JavaScript (`node`)
+- `.ts` - TypeScript (`tsx`)
+- `.py` - Python (`python3`)
+- `.R` - R (`Rscript`)
+- `.sh` - shell script (`sh`)
+- `.exe` - arbitrary executable
 
 For example, for the file `earthquakes.csv`, the following data loaders are considered:
 
-* `earthquakes.csv.js`
-* `earthquakes.csv.ts`
-* `earthquakes.csv.py`
-* `earthquakes.csv.R`
-* `earthquakes.csv.sh`
-* `earthquakes.csv.exe`
+- `earthquakes.csv.js`
+- `earthquakes.csv.ts`
+- `earthquakes.csv.py`
+- `earthquakes.csv.R`
+- `earthquakes.csv.sh`
+- `earthquakes.csv.exe`
 
 If you use `.py` or `.R`, the corresponding interpreter (`python3` or `Rscript`, respectively) must be installed and available on your `$PATH`. Any additional modules, packages, libraries, _etc._, must also be installed before you can use them.
 
@@ -77,7 +132,7 @@ Whereas `.js`, `.ts`, `.py`, `.R`, and `.sh` data loaders are run via interprete
 chmod +x docs/earthquakes.csv.exe
 ```
 
-While a `.exe` data loader may be any binary executable (_e.g.,_ compiled from C), it is often convenient to specify another interpreter using a [shebang](https://en.wikipedia.org/wiki/Shebang_(Unix)). For example, to write a data loader in Julia:
+While a `.exe` data loader may be any binary executable (_e.g.,_ compiled from C), it is often convenient to specify another interpreter using a [shebang](<https://en.wikipedia.org/wiki/Shebang_(Unix)>). For example, to write a data loader in Julia:
 
 ```julia
 #!/usr/bin/env julia
@@ -89,7 +144,7 @@ If multiple requests are made concurrently for the same data loader, the data lo
 
 ## Output
 
-Data loaders must output to [stdout](https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)). The first extension (such as `.csv`) is not considered by the CLI; the data loader is solely responsible for producing the expected output (such as CSV). If you wish to log additional information from within a data loader, be sure to log to stderr, say by using [`console.warn`](https://developer.mozilla.org/en-US/docs/Web/API/console/warn); otherwise the logs will be included in the output file and sent to the client.
+Data loaders must output to [stdout](<https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)>). The first extension (such as `.csv`) is not considered by the CLI; the data loader is solely responsible for producing the expected output (such as CSV). If you wish to log additional information from within a data loader, be sure to log to stderr, say by using [`console.warn`](https://developer.mozilla.org/en-US/docs/Web/API/console/warn); otherwise the logs will be included in the output file and sent to the client.
 
 ## Caching
 
@@ -124,23 +179,3 @@ RuntimeError: Unable to load file: earthquakes.csv
 ```
 
 When any data loader fails, the entire build fails.
-
-## Archives
-
-A file can be pulled from an archive when referenced with the name `{archive}/{file}`. For instance, calling:
-
-```js run=false
-const quakes = FileAttachment("earthquakes/202309.csv").csv({typed: true});
-```
-
-extracts the `202309.csv` file from the `earthquakes.zip` archive.
-
-The following extensions are supported:
-
-* `.zip` - for the [zip](https://en.wikipedia.org/wiki/ZIP_%28file_format%29) archive format
-* `.tar` - for [tarballs](https://en.wikipedia.org/wiki/Tar_%28computing%29)
-* `.tar.gz` and `.tgz` - for [compressed tarballs](https://en.wikipedia.org/wiki/Gzip)
-
-The archive can be a static file or the output of a dynamic data loader such as `earthquakes.zip.R`. This allows you to run a single data analysis script to generate several outputs in one go, then collect them on your page as individual file attachments. (See [JSZip](./lib/jszip) for a complete example.)
-
-Like with any other file, these file attachments are live in preview, and are added to the build if and only if referenced directly.
