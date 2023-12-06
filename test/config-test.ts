@@ -25,8 +25,8 @@ describe("readConfig(undefined, root)", () => {
       output: "dist",
       pages: [{name: "Build test case", path: "/simple"}],
       title: undefined,
-      toc: {label: "Contents", show: true},
-      pager: true
+      toc: {label: "Contents", show: false},
+      pager: false
     });
   });
 });
@@ -74,7 +74,7 @@ describe("normalizeConfig(spec, root)", () => {
     assert.deepStrictEqual((await config({pages: [], toc: {label: null}}, root)).toc, {label: "null", show: true});
   });
   it("populates default toc", async () => {
-    assert.deepStrictEqual((await config({pages: []}, root)).toc, {label: "Contents", show: true});
+    assert.deepStrictEqual((await config({pages: []}, root)).toc, {label: "Contents", show: false});
   });
   it("promotes boolean toc to toc.show", async () => {
     assert.deepStrictEqual((await config({pages: [], toc: true}, root)).toc, {label: "Contents", show: true});
@@ -87,7 +87,7 @@ describe("normalizeConfig(spec, root)", () => {
     assert.strictEqual((await config({pages: [], pager: "0"}, root)).pager, true);
   });
   it("populates default pager", async () => {
-    assert.strictEqual((await config({pages: []}, root)).pager, true);
+    assert.strictEqual((await config({pages: []}, root)).pager, false);
   });
 });
 

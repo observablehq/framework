@@ -1,5 +1,7 @@
 export default {
   title: "Observable CLI",
+  toc: true,
+  pager: true,
   pages: [
     {name: "Getting started", path: "/getting-started"},
     {name: "Routing", path: "/routing"},

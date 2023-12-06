@@ -1,4 +1,5 @@
 export default {
+  pager: true,
   pages: [
     {path: "/index", name: "Index"},
     {path: "/one", name: "One<Two"},

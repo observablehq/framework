@@ -62,7 +62,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   let {root = defaultRoot, output = "dist"} = spec;
   root = String(root);
   output = String(output);
-  let {title, pages = await readPages(root), pager = true, toc = true} = spec;
+  let {title, pages = await readPages(root), pager = false, toc = false} = spec;
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
   pager = Boolean(pager);
@@ -91,7 +91,7 @@ function normalizePage(spec: any): Page {
 
 function normalizeToc(spec: any): TableOfContents {
   if (typeof spec === "boolean") spec = {show: spec};
-  let {label = "Contents", show = true} = spec;
+  let {label = "Contents", show = true} = spec; // show defaults true if toc: {}
   label = String(label);
   show = Boolean(show);
   return {label, show};
