@@ -40,6 +40,8 @@ const gistemp = FileAttachment("gistemp.csv").csv().then((D) => D.map(coerceRow)
 
 TK An explanation of why coercing types as early as possible is important.
 
+TK Mention [data loaders](../loaders) and archives.
+
 ## Supported formats
 
 The following type-specific methods are supported:

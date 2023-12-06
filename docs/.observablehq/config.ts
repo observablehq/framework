@@ -8,16 +8,15 @@ export default {
     {name: "HTML", path: "/html"},
     {
       name: "JavaScript",
-      open: false,
       pages: [
         {name: "Reactivity", path: "/javascript/reactivity"},
         {name: "Display", path: "/javascript/display"},
+        {name: "Inputs", path: "/javascript/inputs"},
+        {name: "Imports", path: "/javascript/imports"},
         {name: "Files", path: "/javascript/files"},
         {name: "Promises", path: "/javascript/promises"},
         {name: "Generators", path: "/javascript/generators"},
         {name: "Mutables", path: "/javascript/mutables"},
-        {name: "Imports", path: "/javascript/imports"},
-        {name: "Inputs", path: "/javascript/inputs"},
       ]
     },
     {

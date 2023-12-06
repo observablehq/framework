@@ -1,10 +1,12 @@
 # DuckDB
 
-Observable Markdown has built-in support for DuckDB via [duckdb-wasm](https://github.com/duckdb/duckdb-wasm). It’s easiest to use in conjunction with [`FileAttachment`](../javascript/files). Declare a database with `DuckDBClient`, passing in a set of named tables:
+Observable Markdown has built-in support for DuckDB via [duckdb-wasm](https://github.com/duckdb/duckdb-wasm).  `DuckDBClient` is available by default in Markdown, but you can explicitly import it like so:
 
 ```js echo
-duckdb
+import {DuckDBClient} from "npm:@observablehq/duckdb";
 ```
+
+To get a DuckDB database, passing a set of named tables to `DuckDBClient.of`. Each table can be expressed as a [`FileAttachment`](../javascript/files), [Arquero table](./arquero), [Arrow table](./arrow), an array of objects, or a promise to the same:
 
 ```js echo
 const db = DuckDBClient.of({gaia: FileAttachment("gaia-sample.parquet")});
@@ -45,7 +47,18 @@ Plot.plot({
 })
 ```
 
-There’s also `db.query`:
+For externally-hosted data, you can create an empty `DuckDBClient` and load a table from a SQL query, say using [`read_parquet`](https://duckdb.org/docs/guides/import/parquet_import) or [`read_csv`](https://duckdb.org/docs/guides/import/csv_import).
+
+```js run=false
+const db = await DuckDBClient.of();
+
+await db.sql`CREATE TABLE addresses
+  AS SELECT *
+  FROM read_parquet('https://static.data.gouv.fr/resources/bureaux-de-vote-et-adresses-de-leurs-electeurs/20230626-135723/table-adresses-reu.parquet')
+  LIMIT 100`;
+```
+
+As an alternative to `db.sql`, there’s also `db.query`:
 
 ```js echo
 await db.query("SELECT * FROM gaia LIMIT 10")
