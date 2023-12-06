@@ -1,53 +1,46 @@
 # JSZip
 
-[JSZip](https://stuk.github.io/jszip/) is a JavaScript library for creating, reading and editing .zip archives.
+[JSZip](https://stuk.github.io/jszip/) is a JavaScript library for creating, reading and editing [ZIP archives](<https://en.wikipedia.org/wiki/ZIP_(file_format)>). JSZip is particularly useful in the context of [data loaders](../loaders) to create multiple files from a single data source as an [archive](../loaders#archives).
 
-JSZip is particularly useful in the context of Observable Markdown data loaders, when you want to create an [archive](../loaders#archives) with multiple files from a single data source.
+For example, here is a TypeScript data loader `earthquakes.zip.ts`:
 
-For example, let’s create a data loader `quakes.zip.ts` with the following code in TypeScript, in four parts:
-
-1. Import libraries
-```
+```js run=false
 import {csvFormat} from "d3-dsv";
 import JSZip from "jszip";
-```
 
-2. Load data
-```
-const API_URL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson";
-const data = await fetch(API_URL).then((resp) => resp.json());
-```
+// Load data from USGS.
+const response = await fetch("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson");
+if (!response.ok) throw new Error(`fetch failed: ${response.status}`);
+const {metadata, features} = await response.json();
 
-3. Process data
-```
-const metadata = data.metadata;
-const earthquakes = data.features.map(({properties, geometry: {coordinates}}) => ({
+// Process data into the desired format, retaining only the desired columns.
+const earthquakes = features.map(({properties, geometry: {coordinates}}) => ({
   lon: +coordinates[0].toFixed(2),
   lat: +coordinates[1].toFixed(2),
   magnitude: +properties.mag.toFixed(2)
 }));
-```
 
-4. Output the files in the zip format
-```
+// Output a ZIP file to stdout.
 const zip = new JSZip();
 zip.file("metadata.json", JSON.stringify(metadata, null, 2));
 zip.file("earthquakes.csv", csvFormat(earthquakes));
 zip.generateNodeStream().pipe(process.stdout);
 ```
 
-Note how the last part serializes the _metadata_ and _earthquakes_ objects to a readable format corresponding to the extension of the corresponding file name.
+Note how the last part serializes the `metadata` and `earthquakes` objects to a readable format corresponding to the file extension (`.json` and `.csv`).
 
-You can then proceed to reference these files as attachments in a Markdown page:
+To load data in the browser, use [`FileAttachment`](../javascript/files):
 
-```
-const metadata = FileAttachment("quakes/metadata.json").json();
-const earthquakes = FileAttachment("quakes/earthquakes.csv").csv({typed: true});
-```
-
-The zip file itself can be referenced as a whole (for example if the names of the files are not known in advance). It can then be read with [FileAttachment.zip](https://observablehq.com/documentation/data/files/file-attachments#zip-files), which uses JSZip under the hood:
-```
-const zip = FileAttachment("quakes.zip").zip();
+```js run=false
+const metadata = FileAttachment("earthquakes/metadata.json").json();
+const earthquakes = FileAttachment("earthquakes/earthquakes.csv").csv({typed: true});
 ```
 
-For more, see the [official documentation](https://stuk.github.io/jszip/).
+The ZIP file itself can be also referenced as a whole — for example if the names of the files are not known in advance — with [`FileAttachment.zip`](../javascript/files#zip):
+
+```js echo
+const zip = FileAttachment("earthquakes.zip").zip();
+const metadata = zip.then((zip) => zip.file("metadata.json").json());
+```
+
+`FileAttachment.zip` uses JSZip under the hood.

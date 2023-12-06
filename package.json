@@ -81,6 +81,7 @@
     "chai": "^4.3.10",
     "chai-http": "^4.4.0",
     "d3-array": "^3.2.4",
+    "d3-dsv": "^3.0.1",
     "eslint": "^8.50.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-import": "^2.29.0",
