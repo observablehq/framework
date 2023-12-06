@@ -141,6 +141,6 @@ The following extensions are supported:
 * `.tar` - for [tarballs](https://en.wikipedia.org/wiki/Tar_%28computing%29)
 * `.tar.gz` and `.tgz` - for [compressed tarballs](https://en.wikipedia.org/wiki/Gzip)
 
-The archive can be a static file or the output of a dynamic data loader such as `earthquakes.zip.R`. This allows you to run a single data analysis script to generate several outputs in one go, then collect them on your page as individual file attachments.
+The archive can be a static file or the output of a dynamic data loader such as `earthquakes.zip.R`. This allows you to run a single data analysis script to generate several outputs in one go, then collect them on your page as individual file attachments. (See [JSZip](./lib/jszip) for a complete example.)
 
 Like with any other file, these file attachments are live in preview, and are added to the build if and only if referenced directly.
