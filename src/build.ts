@@ -56,7 +56,7 @@ export async function build(
   effects: BuildEffects = new FileBuildEffects(config.output)
 ): Promise<void> {
   const {root} = config;
-
+  
   // Make sure all files are readable before starting to write output files.
   let pageCount = 0;
   for await (const sourceFile of visitMarkdownFiles(root)) {
@@ -95,6 +95,15 @@ export async function build(
     for await (const publicFile of visitFiles(publicRoot)) {
       const sourcePath = join(publicRoot, publicFile);
       const outputPath = join("_observablehq", publicFile);
+      effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
+      await effects.copyFile(sourcePath, outputPath);
+    }
+
+    // Copy over additional assets for styling
+    const assetRoot = relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), ".", "assets"));
+    for await (const assetFile of visitFiles(assetRoot)) {
+      const sourcePath = join(assetRoot, assetFile);
+      const outputPath = join("_observablehq", "assets", assetFile);
       effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
       await effects.copyFile(sourcePath, outputPath);
     }

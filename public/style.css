@@ -1,13 +1,14 @@
 :root {
   --theme-background: rgb(255, 255, 255);
-  --theme-background-alt: color-mix(in srgb, var(--theme-background) 95%, black);
-  --theme-foreground: rgb(27, 30, 35);
+  --theme-background-alt: rgb(255, 255, 255);
+  --theme-foreground: #1C1C1C;
+  --theme-foreground-highlight: #001B440D;
   --theme-foreground-alt: color-mix(in srgb, var(--theme-foreground) 90%, var(--theme-background));
   --theme-foreground-muted: color-mix(in srgb, var(--theme-foreground) 70%, var(--theme-background));
   --theme-foreground-faint: color-mix(in srgb, var(--theme-foreground) 50%, var(--theme-background));
   --theme-foreground-fainter: color-mix(in srgb, var(--theme-foreground) 30%, var(--theme-background));
-  --theme-foreground-faintest: color-mix(in srgb, var(--theme-foreground) 10%, var(--theme-background));
-  --theme-foreground-focus: #3182bd;
+  --theme-foreground-faintest: #E2E2E2;
+  --theme-foreground-focus: #3B5FC0;
   --monospace: Menlo, Consolas, monospace;
   --monospace-font: 14px/1.5 var(--monospace);
   --serif: "Source Serif Pro", "Iowan Old Style", "Apple Garamond", "Palatino Linotype", "Times New Roman", "Droid Serif", Times, serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
@@ -26,6 +27,8 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --theme-foreground: rgb(223, 223, 214);
+    --theme-foreground-highlight: rgba(218, 228, 255, 0.10);
+    --theme-foreground-faintest: color-mix(in srgb, var(--theme-foreground) 10%, var(--theme-background));
     --theme-background: rgb(31, 31, 31);
     --theme-background-alt: color-mix(in srgb, var(--theme-background) 70%, black);
     --theme-foreground-focus: #20bbfc;
@@ -119,11 +122,11 @@ body {
 
 #observablehq-sidebar {
   position: fixed;
-  background: var(--black-white, #fff);
-  border-right: 1px solid var(--black-light-gray, #E2E2E2);
-  color: var(--black-dark-gray);
+  background: var(--theme-background-alt);
+  border-right: 1px solid var(--theme-foreground-faintest);
+  color: var(--theme-foreground-muted);
   font: 14px var(--sans-serif);
-  font-weight: 500;
+  font-weight: 400;
   width: 272px;
   z-index: 2;
   top: 0;
@@ -133,14 +136,6 @@ body {
   overflow-y: auto;
 }
 
-/* TODO - dark mode */
-@media (prefers-color-scheme: dark) {
-  #observablehq-sidebar {
-    background: var(--theme-background);
-    color: var(--theme-foreground-faint);
-  }
-}
-
 #observablehq-sidebar ol,
 #observablehq-toc ol {
   list-style: none;
@@ -148,28 +143,51 @@ body {
   padding: 0;
 }
 
-#observablehq-sidebar > ol,
-#observablehq-sidebar > details {
-  position: relative;
-  border-top: solid 1px var(--black-light-gray);
+#observablehq-sidebar > ol:first-child {
+  border-top: none;
+  font-weight: 700;
+  margin: 0;
+  color: var(--theme-foreground);
 }
 
 #observablehq-sidebar ol {
   padding: 8px 8px 8px 4px;
 }
 
-#observablehq-sidebar > ol:first-child {
-  border-top: none;
-  font-weight: 700;
-  padding: 0;
-  margin: 0;
-  color: var(--theme-foreground);
+#observablehq-sidebar > ol,
+#observablehq-sidebar > details {
+  position: relative;
 }
 
+#observablehq-sidebar > details {
+  border-top: solid 1px var(--theme-foreground-faintest);
+}
+
+#observablehq-sidebar > details:last-of-type {
+  border-bottom: solid 1px var(--theme-foreground-faintest);
+}
+
+#observablehq-sidebar details[open] summary:after {
+  transform: rotate(180deg);
+}
+
+#observablehq-sidebar details .observablehq-link a {
+  display: block;
+  padding: 8px 8px 8px 16px;
+}
+
+
 #observablehq-sidebar summary {
-  font-weight: 700;
+  display: block;
+  font-weight: 400;
   color: var(--theme-foreground);
   cursor: pointer;
+  padding: 8px 8px 8px 16px;
+  margin: 8px 0;
+}
+
+#observablehq-sidebar details[open] summary {
+  margin-bottom: 0;
 }
 
 #observablehq-sidebar summary::-webkit-details-marker,
@@ -188,32 +206,33 @@ body {
   transform-origin: 50% 50%;
 }
 
+/* TODO - change hover behavior */
 #observablehq-sidebar summary:hover::after {
   color: var(--theme-foreground);
 }
 
-#observablehq-sidebar details[open] summary:after {
-  transform: rotate(180deg);
+
+.observablehq-link a {
+  display: block;
+  padding: 8px 8px 8px 12px;
+  cursor: pointer;
 }
 
 #observablehq-sidebar-toggle {
   position: fixed;
-  top: 0;
-  left: 0;
-  height: 100%;
+  top: calc(1rem + 8px + 8px);
+  left: calc(272px - 2rem - 4px);
+  height: auto;
   width: 1rem;
   appearance: none;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-items: center;
   margin: 0;
   padding: 2px;
   cursor: pointer;
   z-index: 3;
   background: none;
-  color: var(--theme-foreground-muted);
-  font-weight: 700;
-  font-size: 20px;
 }
 
 #observablehq-sidebar-toggle::before {
@@ -224,15 +243,24 @@ body {
   content: url(assets/close-sidebar-toggle.svg);
 }
 
-#observablehq-sidebar summary,
-.observablehq-link a {
-  display: block;
-  padding: 8px 8px 8px 12px;;
+#observablehq-sidebar-toggle:not(:checked):not(:indeterminate) {
+  top: 0;
+  left: 0;
+  height: 100%;
+
+}
+
+@media (max-width: calc(640px + 4rem + 272px + 2rem)) {
+  #observablehq-sidebar-toggle:indeterminate {
+    top: 0;
+    left: 0;
+    height: 100%;
+  }
 }
 
 
 .observablehq-link a[href]:hover {
-  color: var(--blue-blue);
+  color: var(--theme-foreground-focus);
 }
 
 #observablehq-toc {
@@ -271,7 +299,7 @@ body {
 }
 
 .observablehq-link-active {
-  background: #001B440D
+  background: var(--theme-foreground-highlight)
 }
 
 .observablehq-link-active,
@@ -284,7 +312,7 @@ body {
   content: "";
   position: absolute;
   width: 4px;
-  background: var(--blue-blue);
+  background: var(--theme-foreground-focus);
 }
 
 .observablehq-link-active::before {
@@ -303,7 +331,7 @@ body {
 a[href],
 .observablehq-link-active a[href],
 .observablehq-secondary-link-active a[href] {
-  color: var(--blue-blue);
+  color: var(--theme-foreground-focus);
 }
 
 #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar {

@@ -23,6 +23,7 @@ import {getClientPath, rollupClient} from "./rollup.js";
 import {bold, faint, green, underline} from "./tty.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
+const assetsRoot = join(dirname(fileURLToPath(import.meta.url)), ".", "assets");
 
 export interface PreviewOptions {
   config: Config;
@@ -90,6 +91,8 @@ export class PreviewServer {
         end(req, res, await rollupClient(getClientPath("./src/client/" + pathname.slice("/_observablehq/".length))), "text/javascript"); // prettier-ignore
       } else if (pathname === "/_observablehq/client.js") {
         end(req, res, await rollupClient(getClientPath("./src/client/preview.js")), "text/javascript");
+      } else if (pathname.startsWith("/_observablehq/assets/")) {
+        send(req, pathname.slice("/_observablehq/assets/".length), {root: assetsRoot}).pipe(res);
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
