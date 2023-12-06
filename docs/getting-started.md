@@ -91,7 +91,7 @@ You can use `npx http-server dist` to preview your built site.
 
 ## Configuration
 
-A `config.js` (or `config.ts`) file residing under the `docs/.observablehq/` directory allows you to configure certain aspects of the project. The following optional configuration options are supported:
+A `observablehq.config.js` (or `observablehq.config.ts`) file residing under the source root (`docs`) allows you to configure certain aspects of the project. The following optional configuration options are supported:
 
 - **title** - the project’s title
 - **pages** - the website hierarchy
