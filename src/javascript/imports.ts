@@ -411,7 +411,7 @@ async function fetchModulePreloads(href: string): Promise<Set<string> | undefine
         if (isPathImport(value)) imports.add(String(new URL(value, href)));
       }
     }
-    integrityCache.set(href, `sha384-${createHash("sha384").update(body).digest("base64")}`);
+    // TODO integrityCache.set(href, `sha384-${createHash("sha384").update(body).digest("base64")}`);
     return imports;
   })();
   promise.catch(() => preloadCache.delete(href)); // try again on error

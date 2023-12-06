@@ -15,7 +15,11 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
   const bundle = await rollup({
     input: clientPath,
     external: [/^https:/],
-    plugins: [importResolve(clientPath), esbuild({target: "es2022", minify}), importMetaResolve()]
+    plugins: [
+      importResolve(clientPath),
+      esbuild({target: "es2022", exclude: [], minify}), // don’t exclude node_modules
+      importMetaResolve()
+    ]
   });
   try {
     const output = await bundle.generate({format: "es"});
@@ -37,7 +41,7 @@ async function resolveImport(source: string, specifier: string | AstNode): Promi
   return typeof specifier !== "string"
     ? null
     : specifier.startsWith("observablehq:")
-    ? {id: relativeUrl(source, `./src/client/${specifier.slice("observablehq:".length)}.js`), external: true}
+    ? {id: relativeUrl(source, getClientPath(`./src/client/${specifier.slice("observablehq:".length)}.js`)), external: true} // prettier-ignore
     : specifier.startsWith("npm:")
     ? {id: await resolveNpmImport(specifier.slice("npm:".length))}
     : null;
