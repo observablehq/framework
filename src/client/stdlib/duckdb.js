@@ -42,7 +42,7 @@ const bundle = await duckdb.selectBundle({
 
 const logger = new duckdb.ConsoleLogger();
 
-export default class DuckDBClient {
+export class DuckDBClient {
   constructor(db) {
     Object.defineProperties(this, {
       _db: {value: db}
@@ -141,6 +141,7 @@ export default class DuckDBClient {
     await db.open(config);
     await Promise.all(
       Object.entries(sources).map(async ([name, source]) => {
+        source = await source;
         if (isFileAttachment(source)) {
           // bare file
           await insertFile(db, name, source);
