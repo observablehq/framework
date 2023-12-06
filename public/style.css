@@ -13,6 +13,14 @@
   --serif: "Source Serif Pro", "Iowan Old Style", "Apple Garamond", "Palatino Linotype", "Times New Roman", "Droid Serif", Times, serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   --sans-serif: -apple-system, BlinkMacSystemFont, "avenir next", avenir, helvetica, "helvetica neue", ubuntu, roboto, noto, "segoe ui", arial, sans-serif;
   color-scheme: light dark;
+
+  /* Observablehq theme colors */
+  --black-dark-gray: #454545;
+  --black-light-gray: #E2E2E2;
+  --black-mid-gray: #6E6E6E;
+  --black-near-black: #1C1C1C;
+  --black-white: #FFFFFF;
+  --blue-blue: #3B5FC0;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -78,9 +86,6 @@ body {
   font-size: 14px;
 }
 
-#observablehq-footer nav a:hover span {
-  text-decoration: underline;
-}
 
 #observablehq-footer nav a:hover {
   border-color: var(--theme-foreground-focus);
@@ -114,17 +119,26 @@ body {
 
 #observablehq-sidebar {
   position: fixed;
-  background: var(--theme-background-alt);
-  color: var(--theme-foreground-muted);
+  background: var(--black-white, #fff);
+  border-right: 1px solid var(--black-light-gray, #E2E2E2);
+  color: var(--black-dark-gray);
   font: 14px var(--sans-serif);
   font-weight: 500;
-  width: 240px;
+  width: 272px;
   z-index: 2;
   top: 0;
   bottom: 0;
-  left: calc(-240px - 2rem);
-  padding: 1rem;
+  left: calc(-272px - 2rem);
+  padding: 1rem 0;
   overflow-y: auto;
+}
+
+/* TODO - dark mode */
+@media (prefers-color-scheme: dark) {
+  #observablehq-sidebar {
+    background: var(--theme-background);
+    color: var(--theme-foreground-faint);
+  }
 }
 
 #observablehq-sidebar ol,
@@ -137,18 +151,11 @@ body {
 #observablehq-sidebar > ol,
 #observablehq-sidebar > details {
   position: relative;
-  padding: 0.5rem 0 0;
-  margin: 0.5rem 0;
+  border-top: solid 1px var(--black-light-gray);
 }
 
 #observablehq-sidebar ol {
-  padding-bottom: 1rem;
-}
-
-#observablehq-sidebar > ol,
-#observablehq-sidebar > details {
-  position: relative;
-  border-top: solid 1px var(--theme-foreground-faintest);
+  padding: 8px 8px 8px 4px;
 }
 
 #observablehq-sidebar > ol:first-child {
@@ -162,6 +169,7 @@ body {
 #observablehq-sidebar summary {
   font-weight: 700;
   color: var(--theme-foreground);
+  cursor: pointer;
 }
 
 #observablehq-sidebar summary::-webkit-details-marker,
@@ -175,10 +183,9 @@ body {
   margin-top: -0.25rem;
   font-weight: 700;
   font-size: 20px;
-  content: "⟩";
+  content: url(assets/down-caret.svg);
   transition: transform 250ms ease;
   transform-origin: 50% 50%;
-  color: var(--theme-foreground-muted);
 }
 
 #observablehq-sidebar summary:hover::after {
@@ -186,7 +193,7 @@ body {
 }
 
 #observablehq-sidebar details[open] summary:after {
-  transform: rotate(90deg);
+  transform: rotate(180deg);
 }
 
 #observablehq-sidebar-toggle {
@@ -210,26 +217,22 @@ body {
 }
 
 #observablehq-sidebar-toggle::before {
-  content: "⟩";
+  content: url(assets/open-sidebar-toggle.svg);
 }
 
 #observablehq-sidebar-toggle:checked::before {
-  content: "⟨";
+  content: url(assets/close-sidebar-toggle.svg);
 }
 
 #observablehq-sidebar summary,
 .observablehq-link a {
   display: block;
-  padding: 0.5rem 1rem;
+  padding: 8px 8px 8px 12px;;
 }
 
-#observablehq-sidebar summary:hover,
-.observablehq-link a:hover {
-  background: var(--theme-background);
-}
 
-.observablehq-link a:hover {
-  color: var(--theme-foreground-focus);
+.observablehq-link a[href]:hover {
+  color: var(--blue-blue);
 }
 
 #observablehq-toc {
@@ -267,6 +270,10 @@ body {
   color: inherit;
 }
 
+.observablehq-link-active {
+  background: #001B440D
+}
+
 .observablehq-link-active,
 .observablehq-secondary-link-active {
   position: relative;
@@ -276,14 +283,14 @@ body {
 .observablehq-secondary-link-highlight {
   content: "";
   position: absolute;
-  width: 3px;
-  background: var(--theme-foreground-focus);
+  width: 4px;
+  background: var(--blue-blue);
 }
 
 .observablehq-link-active::before {
   top: 0;
   bottom: 0;
-  left: -1rem;
+  left: -4px;
 }
 
 .observablehq-secondary-link-highlight {
@@ -296,7 +303,7 @@ body {
 a[href],
 .observablehq-link-active a[href],
 .observablehq-secondary-link-active a[href] {
-  color: var(--theme-foreground-focus);
+  color: var(--blue-blue);
 }
 
 #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar {
@@ -328,12 +335,12 @@ a[href],
   }
 }
 
-@media (min-width: calc(640px + 4rem + 240px + 2rem)) {
+@media (min-width: calc(640px + 4rem + 272px + 2rem)) {
   #observablehq-sidebar {
     transition: none;
   }
   #observablehq-sidebar-toggle:indeterminate::before {
-    content: "⟨";
+    content: url(assets/close-sidebar-toggle.svg);
   }
   #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar-backdrop {
     display: none;
@@ -345,7 +352,7 @@ a[href],
   }
   #observablehq-sidebar-toggle:checked ~ #observablehq-center,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center {
-    padding-left: calc(240px + 3rem);
+    padding-left: calc(272px + 3rem);
     padding-right: 1rem;
   }
   pre {
@@ -365,14 +372,14 @@ a[href],
   }
 }
 
-@media (min-width: calc(640px + 4rem + 240px + 2rem)) {
+@media (min-width: calc(640px + 4rem + 272px + 2rem)) {
   #observablehq-sidebar-toggle:checked ~ #observablehq-toc,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc {
     display: none;
   }
 }
 
-@media (min-width: calc(640px + 4rem + 240px + 2rem + 160px + 2rem)) {
+@media (min-width: calc(640px + 4rem + 272px + 2rem + 160px + 2rem)) {
   #observablehq-sidebar-toggle:checked ~ #observablehq-toc,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc,
   #observablehq-toc {
@@ -389,9 +396,9 @@ a[href],
   #observablehq-sidebar-toggle:not(:checked):not(:hover)::before {
     content: "";
   }
-  @media (min-width: calc(640px + 4rem + 240px + 2rem)) {
+  @media (min-width: calc(640px + 4rem + 272px + 2rem)) {
     #observablehq-sidebar-toggle:indeterminate:not(:checked):not(:hover)::before {
-      content: "⟨";
+      content: url(assets/close-sidebar-toggle.svg);
     }
   }
 }
@@ -464,9 +471,6 @@ a[href] {
   text-decoration: none;
 }
 
-a[href]:hover {
-  text-decoration: underline;
-}
 
 h1 code,
 h2 code,
