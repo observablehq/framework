@@ -2,7 +2,7 @@ import {createHash} from "node:crypto";
 import {readFileSync} from "node:fs";
 import {join} from "node:path";
 import {Parser} from "acorn";
-import type {CallExpression, Identifier, Node, Program} from "acorn";
+import type {Identifier, Node, Program} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {isEnoent} from "../error.js";
@@ -10,17 +10,16 @@ import {type Feature, type ImportReference, type JavaScriptNode} from "../javasc
 import {parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
 import {relativeUrl, resolvePath} from "../url.js";
-import {getStringLiteralValue, isStringLiteral} from "./features.js";
-import {findFetches, maybeAddFetch, rewriteIfLocalFetch} from "./fetches.js";
+import {getFeature, getStringLiteralValue, isStringLiteral} from "./features.js";
 import {defaultGlobals} from "./globals.js";
 import {findReferences} from "./references.js";
 
 type ImportNode = ImportDeclaration | ImportExpression;
 type ExportNode = ExportAllDeclaration | ExportNamedDeclaration;
 
-export interface ImportsAndFetches {
+export interface ImportsAndFeatures {
   imports: ImportReference[];
-  fetches: Feature[];
+  features: Feature[];
 }
 
 /**
@@ -47,17 +46,14 @@ export function findExports(body: Node): ExportNode[] {
  * Recursively processes any imported local ES modules. The returned transitive
  * import paths are relative to the given source path.
  */
-
-export function findImports(body: Node, root: string, path: string): ImportsAndFetches {
-  const references: Identifier[] = findReferences(body, defaultGlobals);
+export function findImports(body: Node, root: string, path: string): ImportsAndFeatures {
   const imports: ImportReference[] = [];
-  const fetches: Feature[] = [];
+  const features: Feature[] = [];
   const paths: string[] = [];
 
   simple(body, {
     ImportDeclaration: findImport,
-    ImportExpression: findImport,
-    CallExpression: findFetch
+    ImportExpression: findImport
   });
 
   function findImport(node: ImportNode) {
@@ -71,14 +67,10 @@ export function findImports(body: Node, root: string, path: string): ImportsAndF
     }
   }
 
-  function findFetch(node) {
-    maybeAddFetch(fetches, node, references, path);
-  }
-
   // Recursively process any imported local ES modules.
-  const features = parseLocalImports(root, paths);
-  imports.push(...features.imports);
-  fetches.push(...features.fetches);
+  const transitive = parseLocalImports(root, paths);
+  imports.push(...transitive.imports);
+  features.push(...transitive.features);
 
   // Make all local paths relative to the source path.
   for (const i of imports) {
@@ -87,7 +79,7 @@ export function findImports(body: Node, root: string, path: string): ImportsAndF
     }
   }
 
-  return {imports, fetches};
+  return {imports, features};
 }
 
 /**
@@ -96,19 +88,19 @@ export function findImports(body: Node, root: string, path: string): ImportsAndF
  * appends to imports. The paths here are always relative to the root (unlike
  * findImports above!).
  */
-export function parseLocalImports(root: string, paths: string[]): ImportsAndFetches {
+export function parseLocalImports(root: string, paths: string[]): ImportsAndFeatures {
   const imports: ImportReference[] = [];
-  const fetches: Feature[] = [];
+  const features: Feature[] = [];
   const set = new Set(paths);
 
   for (const path of set) {
     imports.push({type: "local", name: path});
     try {
       const input = readFileSync(join(root, path), "utf-8");
-      const program = Parser.parse(input, parseOptions);
+      const body = Parser.parse(input, parseOptions);
 
       simple(
-        program,
+        body,
         {
           ImportDeclaration: findImport,
           ImportExpression: findImport,
@@ -118,7 +110,8 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFetc
         undefined,
         path
       );
-      fetches.push(...findFetches(program, path));
+
+      features.push(...findImportFeatures(body, path, input));
     } catch (error) {
       if (!isEnoent(error) && !(error instanceof SyntaxError)) throw error;
     }
@@ -136,13 +129,79 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFetc
     }
   }
 
-  return {imports, fetches};
+  return {imports, features};
 }
 
-/** Rewrites import specifiers in the specified ES module source. */
-export async function rewriteModule(input: string, sourcePath: string, resolver: ImportResolver): Promise<string> {
+/**
+ * Returns a map from Identifier to the feature type, such as FileAttachment.
+ * Note that this may be different than the identifier.name because of aliasing.
+ */
+export function getFeatureReferenceMap(node: Node): Map<Identifier, Feature["type"]> {
+  const declarations = new Set<{name: string}>();
+  const alias = new Map<string, Feature["type"]>();
+  let globals: Set<string> | undefined;
+
+  // Find the declared local names of the imported symbol. Only named imports
+  // are supported. TODO Support namespace imports?
+  simple(node, {
+    ImportDeclaration(node) {
+      if (node.source.value === "npm:@observablehq/stdlib") {
+        for (const specifier of node.specifiers) {
+          if (
+            specifier.type === "ImportSpecifier" &&
+            specifier.imported.type === "Identifier" &&
+            (specifier.imported.name === "FileAttachment" ||
+              specifier.imported.name === "Secret" ||
+              specifier.imported.name === "DatabaseClient")
+          ) {
+            declarations.add(specifier.local);
+            alias.set(specifier.local.name, specifier.imported.name);
+          }
+        }
+      }
+    }
+  });
+
+  // If the import is masking a global, don’t treat it as a global (since we’ll
+  // ignore the import declaration below).
+  for (const name of alias.keys()) {
+    if (defaultGlobals.has(name)) {
+      if (globals === undefined) globals = new Set(defaultGlobals);
+      globals.delete(name);
+    }
+  }
+
+  function filterDeclaration(node: {name: string}): boolean {
+    return !declarations.has(node); // treat the imported declaration as unbound
+  }
+
+  const references = findReferences(node, {globals, filterDeclaration});
+  const map = new Map<Identifier, Feature["type"]>();
+  for (const r of references) {
+    const type = alias.get(r.name);
+    if (type) map.set(r, type);
+  }
+  return map;
+}
+
+export function findImportFeatures(node: Node, path: string, input: string): Feature[] {
+  const featureMap = getFeatureReferenceMap(node);
+  const features: Feature[] = [];
+
+  simple(node, {
+    CallExpression(node) {
+      const type = featureMap.get(node.callee as Identifier);
+      if (type) features.push(getFeature(type, node, path, input));
+    }
+  });
+
+  return features;
+}
+
+/** Rewrites import specifiers and FileAttachment calls in the specified ES module source. */
+export async function rewriteModule(input: string, path: string, resolver: ImportResolver): Promise<string> {
   const body = Parser.parse(input, parseOptions);
-  const references: Identifier[] = findReferences(body, defaultGlobals);
+  const featureMap = getFeatureReferenceMap(body);
   const output = new Sourcemap(input);
   const imports: (ImportNode | ExportNode)[] = [];
 
@@ -151,8 +210,16 @@ export async function rewriteModule(input: string, sourcePath: string, resolver:
     ImportExpression: rewriteImport,
     ExportAllDeclaration: rewriteImport,
     ExportNamedDeclaration: rewriteImport,
-    CallExpression(node: CallExpression) {
-      rewriteIfLocalFetch(node, output, references, sourcePath, {resolveMeta: true});
+    CallExpression(node) {
+      const type = featureMap.get(node.callee as Identifier);
+      if (type) {
+        const feature = getFeature(type, node, path, input); // validate syntax
+        if (feature.type === "FileAttachment") {
+          const arg = node.arguments[0];
+          const result = JSON.stringify(relativeUrl(join("_import", path), feature.name));
+          output.replaceLeft(arg.start, arg.end, `${result}, import.meta.url`);
+        }
+      }
     }
   });
 
@@ -165,7 +232,7 @@ export async function rewriteModule(input: string, sourcePath: string, resolver:
       output.replaceLeft(
         node.source.start,
         node.source.end,
-        JSON.stringify(await resolver(sourcePath, getStringLiteralValue(node.source)))
+        JSON.stringify(await resolver(path, getStringLiteralValue(node.source)))
       );
     }
   }
@@ -341,9 +408,7 @@ async function fetchModulePreloads(href: string): Promise<Set<string> | undefine
     function findImport(node: ImportNode | ExportNode) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
-        if (["./", "../", "/"].some((prefix) => value.startsWith(prefix))) {
-          imports.add(String(new URL(value, href)));
-        }
+        if (isPathImport(value)) imports.add(String(new URL(value, href)));
       }
     }
     // TODO integrityCache.set(href, `sha384-${createHash("sha384").update(body).digest("base64")}`);
@@ -426,9 +491,9 @@ function getModuleHash(root: string, path: string): string {
     if (!isEnoent(error)) throw error;
   }
   // TODO can’t simply concatenate here; we need a delimiter
-  const {imports, fetches} = parseLocalImports(root, [path]);
-  for (const i of [...imports, ...fetches]) {
-    if (i.type === "local") {
+  const {imports, features} = parseLocalImports(root, [path]);
+  for (const i of [...imports, ...features]) {
+    if (i.type === "local" || i.type === "FileAttachment") {
       try {
         hash.update(readFileSync(join(root, i.name), "utf-8"));
       } catch (error) {
@@ -448,10 +513,12 @@ function rewriteImportSpecifier(node) {
     : `${node.imported.name}: ${node.local.name}`;
 }
 
+export function isPathImport(specifier: string): boolean {
+  return ["./", "../", "/"].some((prefix) => specifier.startsWith(prefix));
+}
+
 export function isLocalImport(specifier: string, path: string): boolean {
-  return (
-    ["./", "../", "/"].some((prefix) => specifier.startsWith(prefix)) && !resolvePath(path, specifier).startsWith("../")
-  );
+  return isPathImport(specifier) && !resolvePath(path, specifier).startsWith("../");
 }
 
 function isNamespaceSpecifier(node) {

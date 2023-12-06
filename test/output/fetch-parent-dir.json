@@ -8,16 +8,6 @@
       "path": "./_file/NOENT.md"
     },
     {
-      "name": "./NOENT.md",
-      "mimeType": "text/markdown",
-      "path": "./_file/NOENT.md"
-    },
-    {
-      "name": "./tex-expression.md",
-      "mimeType": "text/markdown",
-      "path": "./_file/tex-expression.md"
-    },
-    {
       "name": "./tex-expression.md",
       "mimeType": "text/markdown",
       "path": "./_file/tex-expression.md"
@@ -41,117 +31,54 @@
       "type": "html",
       "id": "",
       "cellIds": [
-        "7f64da9c"
+        "17636ecf"
       ],
-      "html": "<div id=\"cell-7f64da9c\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<div id=\"cell-17636ecf\" class=\"observablehq observablehq--block\"></div>\n"
     },
     {
       "type": "html",
       "id": "",
       "cellIds": [
-        "02cc5429"
+        "78e756b8"
       ],
-      "html": "<div id=\"cell-02cc5429\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<div id=\"cell-78e756b8\" class=\"observablehq observablehq--block\"></div>\n"
     },
     {
       "type": "html",
       "id": "",
       "cellIds": [
-        "506a5b26"
+        "c68a5211"
       ],
-      "html": "<div id=\"cell-506a5b26\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<div id=\"cell-c68a5211\" class=\"observablehq observablehq--block\"></div>\n"
     },
     {
       "type": "html",
       "id": "",
       "cellIds": [
-        "4078d1e8"
+        "d306f60f"
       ],
-      "html": "<div id=\"cell-4078d1e8\" class=\"observablehq observablehq--block\"></div>\n"
-    },
-    {
-      "type": "html",
-      "id": "",
-      "cellIds": [
-        "4043aea7"
-      ],
-      "html": "<div id=\"cell-4043aea7\" class=\"observablehq observablehq--block\"></div>\n"
-    },
-    {
-      "type": "html",
-      "id": "",
-      "cellIds": [
-        "96f2427a"
-      ],
-      "html": "<div id=\"cell-96f2427a\" class=\"observablehq observablehq--block\"></div>\n"
-    },
-    {
-      "type": "html",
-      "id": "",
-      "cellIds": [
-        "57d7a0f9"
-      ],
-      "html": "<div id=\"cell-57d7a0f9\" class=\"observablehq observablehq--block\"></div>\n"
-    },
-    {
-      "type": "html",
-      "id": "",
-      "cellIds": [
-        "207b0b42"
-      ],
-      "html": "<div id=\"cell-207b0b42\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<div id=\"cell-d306f60f\" class=\"observablehq observablehq--block\"></div>\n"
     }
   ],
   "cells": [
     {
       "type": "cell",
-      "id": "7f64da9c",
-      "outputs": [
-        "fail1"
-      ],
-      "body": "() => {\nconst fail1 = fetch(\"../NOENT.md\").then(d => d.text())\nreturn {fail1};\n}"
+      "id": "17636ecf",
+      "body": "() => { throw new SyntaxError(\"non-local file path: ../NOENT.md (1:14)\"); }"
     },
     {
       "type": "cell",
-      "id": "02cc5429",
-      "body": "() => { throw new SyntaxError(\"non-local file path: \\\"../NOENT.md\\\" (1:14)\"); }"
+      "id": "78e756b8",
+      "body": "() => { throw new SyntaxError(\"non-local file path: ../README.md (1:14)\"); }"
     },
     {
       "type": "cell",
-      "id": "506a5b26",
-      "outputs": [
-        "fail3"
-      ],
-      "body": "() => {\nconst fail3 = fetch(\"../README.md\").then(d => d.text())\nreturn {fail3};\n}"
-    },
-    {
-      "type": "cell",
-      "id": "4078d1e8",
-      "body": "() => { throw new SyntaxError(\"non-local file path: \\\"../README.md\\\" (1:14)\"); }"
-    },
-    {
-      "type": "cell",
-      "id": "4043aea7",
-      "outputs": [
-        "fail5"
-      ],
-      "files": [
-        {
-          "name": "./NOENT.md",
-          "mimeType": "text/markdown",
-          "path": "./_file/NOENT.md"
-        }
-      ],
-      "body": "() => {\nconst fail5 = fetch(\"./_file/NOENT.md\").then(d => d.text())\nreturn {fail5};\n}"
-    },
-    {
-      "type": "cell",
-      "id": "96f2427a",
+      "id": "c68a5211",
       "inputs": [
         "FileAttachment"
       ],
       "outputs": [
-        "fail6"
+        "fail3"
       ],
       "files": [
         {
@@ -160,11 +87,14 @@
           "path": "./_file/NOENT.md"
         }
       ],
-      "body": "(FileAttachment) => {\nconst fail6 = FileAttachment(\"./NOENT.md\").text()\nreturn {fail6};\n}"
+      "body": "(FileAttachment) => {\nconst fail3 = FileAttachment(\"./NOENT.md\").text()\nreturn {fail3};\n}"
     },
     {
       "type": "cell",
-      "id": "57d7a0f9",
+      "id": "d306f60f",
+      "inputs": [
+        "FileAttachment"
+      ],
       "outputs": [
         "ok1"
       ],
@@ -175,26 +105,8 @@
           "path": "./_file/tex-expression.md"
         }
       ],
-      "body": "() => {\nconst ok1 = fetch(\"./_file/tex-expression.md\").then(d => d.text())\nreturn {ok1};\n}"
-    },
-    {
-      "type": "cell",
-      "id": "207b0b42",
-      "inputs": [
-        "FileAttachment"
-      ],
-      "outputs": [
-        "ok2"
-      ],
-      "files": [
-        {
-          "name": "./tex-expression.md",
-          "mimeType": "text/markdown",
-          "path": "./_file/tex-expression.md"
-        }
-      ],
-      "body": "(FileAttachment) => {\nconst ok2 = FileAttachment(\"./tex-expression.md\").text()\nreturn {ok2};\n}"
+      "body": "(FileAttachment) => {\nconst ok1 = FileAttachment(\"./tex-expression.md\").text()\nreturn {ok1};\n}"
     }
   ],
-  "hash": "132a5ddbcdd3d87f4004b0b3da9030258070daa3813051b8919e7737d42989b9"
+  "hash": "9586c3074a1d67626e336df05b96596ddf363cf2a1ea764ad7193e970e392dd3"
 }

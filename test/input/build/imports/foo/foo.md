@@ -7,5 +7,5 @@ import {top} from "/top.js";
 
 display(bar);
 display(top);
-fetch("/top.js");
+FileAttachment("/top.js");
 ```

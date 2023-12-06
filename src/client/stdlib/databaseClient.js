@@ -12,7 +12,7 @@ export function DatabaseClient(name) {
   return new DatabaseClientImpl(name, token);
 }
 
-const DatabaseClientImpl = class DatabaseClient {
+class DatabaseClientImpl {
   #token;
 
   constructor(name, token) {
@@ -71,8 +71,9 @@ const DatabaseClientImpl = class DatabaseClient {
   async sql() {
     return this.query(...this.queryTag.apply(this, arguments));
   }
-};
+}
 
+Object.defineProperty(DatabaseClientImpl, "name", {value: "DatabaseClient"}); // prevent mangling
 DatabaseClient.prototype = DatabaseClientImpl.prototype; // instanceof
 
 function coerceBuffer(d) {

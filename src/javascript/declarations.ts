@@ -1,11 +1,12 @@
 import type {Identifier, Pattern, Program} from "acorn";
+import {defaultGlobals} from "./globals.js";
 import {syntaxError} from "./syntaxError.js";
 
-export function findDeclarations(node: Program, globals: Set<string>, input: string): Identifier[] {
+export function findDeclarations(node: Program, input: string): Identifier[] {
   const declarations: Identifier[] = [];
 
   function declareLocal(node: Identifier) {
-    if (globals.has(node.name) || node.name === "arguments") {
+    if (defaultGlobals.has(node.name) || node.name === "arguments") {
       throw syntaxError(`Global '${node.name}' cannot be redefined`, node, input);
     }
     declarations.push(node);

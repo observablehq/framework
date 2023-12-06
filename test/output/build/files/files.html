@@ -13,25 +13,13 @@
 
 import {define} from "./_observablehq/client.js";
 
-define({id: "a7808707", inputs: ["display"], files: [{"name":"./file-top.csv","mimeType":"text/csv","path":"./_file/file-top.csv"}], body: (display) => {
-display((
-fetch("./_file/file-top.csv")
-))
-}});
-
-define({id: "03b99abc", inputs: ["display"], files: [{"name":"./subsection/file-sub.csv","mimeType":"text/csv","path":"./_file/subsection/file-sub.csv"}], body: (display) => {
-display((
-fetch("./_file/subsection/file-sub.csv")
-))
-}});
-
-define({id: "10037545", inputs: ["FileAttachment","display"], files: [{"name":"file-top.csv","mimeType":"text/csv","path":"./_file/file-top.csv"}], body: (FileAttachment,display) => {
+define({id: "10037545", inputs: ["FileAttachment","display"], files: [{"name":"./file-top.csv","mimeType":"text/csv","path":"./_file/file-top.csv"}], body: (FileAttachment,display) => {
 display((
 FileAttachment("file-top.csv")
 ))
 }});
 
-define({id: "453a8147", inputs: ["FileAttachment","display"], files: [{"name":"subsection/file-sub.csv","mimeType":"text/csv","path":"./_file/subsection/file-sub.csv"}], body: (FileAttachment,display) => {
+define({id: "453a8147", inputs: ["FileAttachment","display"], files: [{"name":"./subsection/file-sub.csv","mimeType":"text/csv","path":"./_file/subsection/file-sub.csv"}], body: (FileAttachment,display) => {
 display((
 FileAttachment("subsection/file-sub.csv")
 ))
@@ -59,9 +47,7 @@ FileAttachment("subsection/file-sub.csv")
 <span><link rel="stylesheet" href="./_file/custom-styles.css">
 <link rel="stylesheet" href="./_file/subsection/additional-styles.css">
 <link rel="stylesheet" href="https://example.com/style.css">
-</span><div id="cell-a7808707" class="observablehq observablehq--block"></div>
-<div id="cell-03b99abc" class="observablehq observablehq--block"></div>
-<div id="cell-10037545" class="observablehq observablehq--block"></div>
+</span><div id="cell-10037545" class="observablehq observablehq--block"></div>
 <div id="cell-453a8147" class="observablehq observablehq--block"></div>
 </main>
 <footer id="observablehq-footer">
