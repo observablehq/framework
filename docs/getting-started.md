@@ -18,13 +18,13 @@ After answering a few questions, this will create a new project folder containin
 .
 ├─ docs
 │  ├─ .observablehq
-│  │  ├─ cache
-│  │  └─ config.ts
+│  │  └─ cache
 │  ├─ components
 │  │  └─ dotmap.js
 │  ├─ data
 │  │  └─ earthquakes.csv.ts
-│  └─ index.md
+│  ├─ index.md
+│  └─ observablehq.config.ts
 ├─ .gitignore
 ├─ README.md
 ├─ package-lock.json
@@ -41,7 +41,7 @@ This is your “source root” — where all your source files live. (This doesn
 
 This is where you data loader cache will live. You don’t typically have to worry about this, but you can `rm -rf docs/.observablehq/cache` if you want to clean the cache to force data loaders to re-run.
 
-#### `docs/.observablehq/config.ts`
+#### `docs/observablehq.config.ts`
 
 This is where you configure project-level settings, such as the pages and sections in the sidebar navigation, and the project’s title. The config file can be written in either TypeScript (`.ts`) or JavaScript (`.js`). See [below](#configuration) for details.
 

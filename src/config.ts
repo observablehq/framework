@@ -29,7 +29,7 @@ export interface Config {
 export async function readConfig(root: string): Promise<Config> {
   for (const ext of [".js", ".ts"]) {
     try {
-      const configPath = join(process.cwd(), root, ".observablehq", "config" + ext);
+      const configPath = join(process.cwd(), root, "observablehq.config" + ext);
       const configStat = await stat(configPath);
       // By using the modification time of the config, we ensure that we pick up
       // any changes to the config on reload. TODO It would be better to either
