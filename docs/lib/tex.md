@@ -2,6 +2,10 @@
 
 ${tex`\TeX`} is a language for typesetting mathematical formulae. Observable Markdown’s implementation is powered by ${tex`\KaTeX`}.
 
+```js echo
+import tex from "npm:@observablehq/tex";
+```
+
 There are two ways to use TeX. The first is a `tex` fenced code block:
 
 ````md

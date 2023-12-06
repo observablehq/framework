@@ -1,5 +1,9 @@
 # Observable Inputs
 
+```js echo
+import * as Inputs from "npm:@observablehq/inputs";
+```
+
 These basic inputs will get you started.
 
 * [Button](#button) - do something when a button is clicked

@@ -1,5 +1,5 @@
 # Apache Arrow
 
 ```js echo
-Arrow
+import * as Arrow from "npm:apache-arrow";
 ```

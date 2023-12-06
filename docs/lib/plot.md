@@ -1,5 +1,9 @@
 # Observable Plot
 
 ```js echo
-Plot
+import * as Plot from "npm:@observablehq/plot";
+```
+
+```js echo
+Plot.frame().plot()
 ```

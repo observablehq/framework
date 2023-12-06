@@ -1,13 +1,13 @@
 # Hypertext Literal
 
 ```js echo
-htl
+import {html} from "npm:htl";
 ```
 
 ```js echo
-html
+import {svg} from "npm:htl";
 ```
 
 ```js echo
-svg
+import * as htl from "npm:htl";
 ```
