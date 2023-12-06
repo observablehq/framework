@@ -54,7 +54,6 @@ type RenderInternalOptions =
 async function render(parseResult: ParseResult, options: RenderOptions & RenderInternalOptions): Promise<string> {
   const {root, path, pages, title, preview} = options;
   const toc = mergeToc(parseResult.data?.toc, options.toc);
-  const headers = toc.show ? findHeaders(parseResult) : [];
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="/">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -85,7 +84,7 @@ ${
   preview ? `\nopen({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
 }${parseResult.cells.map((cell) => `\n${renderDefineCell(cell)}`).join("")}`)}
 </script>${pages.length > 0 ? html`\n${await renderSidebar(title, pages, path)}` : ""}${
-    headers.length > 0 ? html`\n${renderToc(headers, toc.label)}` : ""
+    toc.show ? html`\n${renderToc(findHeaders(parseResult), toc.label)}` : ""
   }
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
@@ -139,16 +138,20 @@ function findHeaders(parseResult: ParseResult): Header[] {
     .filter((d): d is Header => !!d.label && !!d.href);
 }
 
-function renderToc(headers: Header[], label = "Contents"): Html {
+function renderToc(headers: Header[], label: string): Html {
   return html`<aside id="observablehq-toc" data-selector="${tocSelector
     .map((selector) => `#observablehq-main ${selector}`)
     .join(", ")}">
-<nav>
+<nav>${
+    headers.length > 0
+      ? html`
 <div>${label}</div>
 <ol>${headers.map(
-    ({label, href}) => html`\n<li class="observablehq-secondary-link"><a href="${href}">${label}</a></li>`
-  )}
-</ol>
+          ({label, href}) => html`\n<li class="observablehq-secondary-link"><a href="${href}">${label}</a></li>`
+        )}
+</ol>`
+      : ""
+  }
 </nav>
 </aside>`;
 }
