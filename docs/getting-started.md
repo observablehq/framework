@@ -47,11 +47,11 @@ This is where you configure project-level settings, such as the pages and sectio
 
 #### `docs/components`
 
-Put shared [JavaScript modules](./javascript/imports) here. This helps you pull code out of Markdown files and into JavaScript, making it easier to reuse code across pages, write tests and run linters, and even share code with vanilla web applications.
+You can put shared [JavaScript modules](./javascript/imports) anywhere in your source root, but we recommend putting them here. This helps you pull code out of Markdown files and into JavaScript, making it easier to reuse code across pages, write tests and run linters, and even share code with vanilla web applications.
 
 #### `docs/data`
 
-Put [data loaders](./loaders) here.
+You can put [data loaders](./loaders) anywhere in your source root, but we recommend putting them here.
 
 #### `docs/index.md`
 
