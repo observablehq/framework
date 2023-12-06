@@ -166,8 +166,8 @@ export abstract class Loader {
         }
         return outputPath;
       })();
-      command.finally(() => runningCommands.delete(this.path)).catch(() => {});
-      runningCommands.set(this.path, command);
+      command.finally(() => runningCommands.delete(key)).catch(() => {});
+      runningCommands.set(key, command);
     }
     effects.output.write(`${cyan("load")} ${this.path} ${faint("→")} `);
     const start = performance.now();
