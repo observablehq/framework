@@ -78,7 +78,7 @@ You rolled ${Math.floor(Math.random() * 20) + 1}.
 
 You rolled ${Math.floor(Math.random() * 20) + 1}. (Reload the page to re-roll.)
 
-And here’s an [button input](./javascript/inputs) that counts clicks:
+And here’s an [button input](./lib/inputs) that counts clicks:
 
 ```js echo
 const clicks = view(Inputs.button("Click me"));

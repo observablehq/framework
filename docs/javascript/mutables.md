@@ -1,6 +1,14 @@
 # JavaScript: Mutables
 
-Normally, only the code block that declares a top-level variable can define it or assign to it. (This constraint may helpfully encourage you to decouple code.) You can however use the `Mutable` function to declare a mutable generator, allowing other code to mutate the generator’s value. This approach is akin to React’s `useState` hook. For example:
+Normally, only the code block that declares a [top-level variable](./reactivity) can define it or assign to it. You can however use the `Mutable` function to declare a mutable generator, allowing other code to mutate the generator’s value.
+
+`Mutable` is available by default in Markdown but you can import it explicitly like so:
+
+```js echo
+import {Mutable} from "npm:@observablehq/stdlib";
+```
+
+Then to use it:
 
 ```js echo
 const count = Mutable(0);
@@ -26,5 +34,7 @@ Inputs.button([["Increment", increment], ["Reset", reset]])
 </style>
 
 Count is: ${htl.html`<span class="flash">${count}</span>`}.
+
+This approach is akin to React’s `useState` hook.
 
 Within the defining code block, `count` is a generator and `count.value` can be read and written to as desired; in other code, `count` is the generator’s current value. Other code that references `count` will re-run automatically whenever `count.value` is reassigned — so be careful you don’t cause an infinite loop!

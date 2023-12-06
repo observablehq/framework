@@ -28,4 +28,6 @@ and the imported value of `foo` is: ${foo}.
 
 This allows you to move code out of Markdown and into vanilla JavaScript files that can be shared by multiple pages — or even another application. And you can write tests for your code.
 
+TK Describe the recommended libraries that are available by default in Markdown.
+
 TK Why we don’t support `require`.

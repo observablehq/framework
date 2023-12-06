@@ -103,10 +103,24 @@ Inputs.button("Click me", {value: 0, reduce: (i) => displayThere(++i)})
 
 Previously-displayed values will be cleared when the associated code block or inline expression is re-run.
 
+You can use the built-in [`view` function](#view(input)) and an HTML input element to create a reactive input. For example, here is a simple HTML slider:
+
+```js echo
+const gain = view(html`<input type=range step=0.1 min=0 max=11 value=5>`);
+```
+
+Now you can reference the input’s value (here `gain`) anywhere. The code will run whenever the input changes; no event listeners required!
+
+```md
+The current gain is ${gain}!
+```
+
+The current gain is ${gain}!
+
 ## display(*value*)
 
 If `value` is a DOM node, adds it to the DOM. Otherwise, converts the given `value` to a suitable DOM node and displays that instead. Returns the given `value`.
 
-## view(*input*)
+## view(*element*)
 
-See [JavaScript: Inputs](./inputs).
+The `view` function displays the given input *element* and then returns its corresponding [generator](./generators) via `Generators.input`. Use this to display an input element while also exposing the input’s value as a [reactive variable](./reactivity).

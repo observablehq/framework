@@ -96,3 +96,5 @@ TK Describe `file.name` and `file.mimeType`.
 ```js echo
 file
 ```
+
+TK Mention the sample datasets that are available by default in Markdown.
