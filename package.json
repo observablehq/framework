@@ -87,7 +87,7 @@
     "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-prettier": "^5.0.0",
     "mocha": "^10.2.0",
-    "prettier": "^3.0.3",
+    "prettier": "^3.0.3 <3.1",
     "typescript": "^5.2.2",
     "undici": "^5.27.2"
   },
