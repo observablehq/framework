@@ -10,7 +10,7 @@ import {difference} from "d3-array";
 import send from "send";
 import {type WebSocket, WebSocketServer} from "ws";
 import {version} from "../package.json";
-import {readConfig} from "./config.js";
+import {type Config} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {FileWatchers} from "./fileWatchers.js";
@@ -25,7 +25,7 @@ import {bold, faint, green, underline} from "./tty.js";
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
 export interface PreviewOptions {
-  root: string;
+  config: Config;
   hostname: string;
   port?: number;
   verbose?: boolean;
@@ -36,13 +36,13 @@ export async function preview(options: PreviewOptions): Promise<PreviewServer> {
 }
 
 export class PreviewServer {
+  private readonly _config: Config;
   private readonly _server: ReturnType<typeof createServer>;
   private readonly _socketServer: WebSocketServer;
   private readonly _verbose: boolean;
-  readonly root: string;
 
-  private constructor({server, root, verbose}: {server: Server; root: string; verbose: boolean}) {
-    this.root = root;
+  private constructor({config, server, verbose}: {config: Config; server: Server; verbose: boolean}) {
+    this._config = config;
     this._verbose = verbose;
     this._server = server;
     this._server.on("request", this._handleRequest);
@@ -76,6 +76,8 @@ export class PreviewServer {
   }
 
   _handleRequest: RequestListener = async (req, res) => {
+    const config = this._config;
+    const root = config.root;
     if (this._verbose) console.log(faint(req.method!), req.url);
     try {
       const url = new URL(req.url!, "http://localhost");
@@ -94,28 +96,28 @@ export class PreviewServer {
         const file = pathname.slice("/_import".length);
         let js: string;
         try {
-          js = await readFile(join(this.root, file), "utf-8");
+          js = await readFile(join(root, file), "utf-8");
         } catch (error) {
           if (!isEnoent(error)) throw error;
           throw new HttpError(`Not found: ${pathname}`, 404);
         }
-        end(req, res, await rewriteModule(js, file, createImportResolver(this.root)), "text/javascript");
+        end(req, res, await rewriteModule(js, file, createImportResolver(root)), "text/javascript");
       } else if (pathname.startsWith("/_file/")) {
         const path = pathname.slice("/_file".length);
-        const filepath = join(this.root, path);
+        const filepath = join(root, path);
         try {
           await access(filepath, constants.R_OK);
-          send(req, pathname.slice("/_file".length), {root: this.root}).pipe(res);
+          send(req, pathname.slice("/_file".length), {root}).pipe(res);
           return;
         } catch (error) {
           if (!isEnoent(error)) throw error;
         }
 
         // Look for a data loader for this file.
-        const loader = Loader.find(this.root, path);
+        const loader = Loader.find(root, path);
         if (loader) {
           try {
-            send(req, await loader.load(), {root: this.root}).pipe(res);
+            send(req, await loader.load(), {root}).pipe(res);
             return;
           } catch (error) {
             if (!isEnoent(error)) throw error;
@@ -124,7 +126,7 @@ export class PreviewServer {
         throw new HttpError(`Not found: ${pathname}`, 404);
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
-        let path = join(this.root, pathname);
+        let path = join(root, pathname);
 
         // If this path is for /index, redirect to the parent directory for a
         // tidy path. (This must be done before implicitly adding /index below!)
@@ -171,12 +173,7 @@ export class PreviewServer {
         // Otherwise, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
         try {
-          const config = await readConfig(this.root);
-          const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {
-            root: this.root,
-            path: pathname,
-            ...config
-          });
+          const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {path: pathname, ...config});
           end(req, res, html, "text/html");
         } catch (error) {
           if (!isEnoent(error)) throw error; // internal error
@@ -192,9 +189,7 @@ export class PreviewServer {
       }
       if (req.method === "GET" && res.statusCode === 404) {
         try {
-          const config = await readConfig(this.root);
-          const {html} = await renderPreview(await readFile(join(this.root, "404.md"), "utf-8"), {
-            root: this.root,
+          const {html} = await renderPreview(await readFile(join(root, "404.md"), "utf-8"), {
             path: "/404",
             ...config
           });
@@ -209,9 +204,9 @@ export class PreviewServer {
     }
   };
 
-  _handleConnection = (socket: WebSocket, req: IncomingMessage) => {
+  _handleConnection = async (socket: WebSocket, req: IncomingMessage) => {
     if (req.url === "/_observablehq") {
-      handleWatch(socket, req, {root: this.root});
+      handleWatch(socket, req, {root: this._config.root});
     } else {
       socket.close();
     }

@@ -4,6 +4,7 @@ import {open, readFile, rm} from "node:fs/promises";
 import {join, normalize, relative} from "node:path";
 import {difference} from "d3-array";
 import {FileBuildEffects, build} from "../src/build.js";
+import {readConfig} from "../src/config.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
 
 const silentEffects = {
@@ -32,7 +33,8 @@ describe("build", async () => {
 
       await rm(actualDir, {recursive: true, force: true});
       if (generate) console.warn(`! generating ${expectedDir}`);
-      await build({sourceRoot: path, addPublic}, new TestEffects(outputDir));
+      const config = Object.assign(await readConfig(undefined, path), {output: outputDir});
+      await build({config, addPublic}, new TestEffects(outputDir));
 
       // In the addPublic case, we don’t want to test the contents of the public
       // files because they change often; replace them with empty files so we

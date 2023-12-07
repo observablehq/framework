@@ -1,15 +1,14 @@
 #!/usr/bin/env tsx
 
-import {normalize} from "node:path";
 import {type ParseArgsConfig, parseArgs} from "node:util";
+import {readConfig} from "../src/config.js";
 
 const command = process.argv.splice(2, 1)[0];
 
-const ROOT_OPTION = {
-  root: {
+const CONFIG_OPTION = {
+  config: {
     type: "string",
-    short: "r",
-    default: "docs"
+    short: "c"
   }
 } as const;
 
@@ -21,45 +20,28 @@ switch (command) {
   }
   case "build": {
     const {
-      values: {root, output}
+      values: {config}
     } = helpArgs(command, {
-      options: {
-        ...ROOT_OPTION,
-        output: {
-          type: "string",
-          short: "o",
-          default: "dist"
-        }
-      }
+      options: {...CONFIG_OPTION}
     });
-    await import("../src/build.js").then((build) =>
-      build.build({
-        sourceRoot: normalize(root!).replace(/\/$/, ""),
-        outputRoot: normalize(output!).replace(/\/$/, "")
-      })
-    );
+    await import("../src/build.js").then(async (build) => build.build({config: await readConfig(config)}));
     break;
   }
   case "deploy": {
     const {
-      values: {root}
+      values: {config}
     } = helpArgs(command, {
-      options: {...ROOT_OPTION}
+      options: {...CONFIG_OPTION}
     });
-    const sourceRoot = normalize(root!).replace(/\/$/, "");
-    await import("../src/deploy.js").then((deploy) => deploy.deploy({sourceRoot}));
+    await import("../src/deploy.js").then(async (deploy) => deploy.deploy({config: await readConfig(config)}));
     break;
   }
   case "preview": {
     const {
-      values: {root, hostname, port}
+      values: {config, hostname, port}
     } = helpArgs(command, {
       options: {
-        root: {
-          type: "string",
-          short: "r",
-          default: "docs"
-        },
+        ...CONFIG_OPTION,
         hostname: {
           type: "string",
           short: "h",
@@ -72,9 +54,9 @@ switch (command) {
         }
       }
     });
-    await import("../src/preview.js").then((preview) =>
+    await import("../src/preview.js").then(async (preview) =>
       preview.preview({
-        root: normalize(root!).replace(/\/$/, ""),
+        config: await readConfig(config),
         hostname: hostname!,
         port: port === undefined ? undefined : +port
       })

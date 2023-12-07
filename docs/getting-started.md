@@ -18,8 +18,7 @@ After answering a few questions, this will create a new project folder containin
 .
 ├─ docs
 │  ├─ .observablehq
-│  │  ├─ cache
-│  │  └─ config.ts
+│  │  └─ cache
 │  ├─ components
 │  │  └─ dotmap.js
 │  ├─ data
@@ -27,6 +26,7 @@ After answering a few questions, this will create a new project folder containin
 │  └─ index.md
 ├─ .gitignore
 ├─ README.md
+├─ observablehq.config.ts
 ├─ package-lock.json
 └─ package.json
 ```
@@ -41,10 +41,6 @@ This is your “source root” — where all your source files live. (This doesn
 
 This is where you data loader cache will live. You don’t typically have to worry about this, but you can `rm -rf docs/.observablehq/cache` if you want to clean the cache to force data loaders to re-run.
 
-#### `docs/.observablehq/config.ts`
-
-This is where you configure project-level settings, such as the pages and sections in the sidebar navigation, and the project’s title. The config file can be written in either TypeScript (`.ts`) or JavaScript (`.js`). See [below](#configuration) for details.
-
 #### `docs/components`
 
 You can put shared [JavaScript modules](./javascript/imports) anywhere in your source root, but we recommend putting them here. This helps you pull code out of Markdown files and into JavaScript, making it easier to reuse code across pages, write tests and run linters, and even share code with vanilla web applications.
@@ -56,6 +52,10 @@ You can put [data loaders](./loaders) anywhere in your source root, but we recom
 #### `docs/index.md`
 
 This is the home page for your site. You can have as many additional pages as you’d like, but you should always have a home page, too.
+
+#### `observablehq.config.ts`
+
+This is where you configure project-level settings, such as the pages and sections in the sidebar navigation, and the project’s title. The config file can be written in either TypeScript (`.ts`) or JavaScript (`.js`). See [below](#configuration) for details.
 
 ### Installing into an existing project
 
@@ -91,7 +91,7 @@ You can use `npx http-server dist` to preview your built site.
 
 ## Configuration
 
-A `config.js` (or `config.ts`) file residing under the `docs/.observablehq/` directory allows you to configure certain aspects of the project. The following optional configuration options are supported:
+A `observablehq.config.js` (or `observablehq.config.ts`) file allows you to configure certain aspects of the project. The following optional configuration options are supported:
 
 - **title** - the project’s title
 - **pages** - the website hierarchy

@@ -1,18 +1,14 @@
 import readline from "node:readline/promises";
 import type {BuildEffects} from "./build.js";
 import {build} from "./build.js";
+import type {Config} from "./config.js";
 import type {Logger, Writer} from "./logger.js";
 import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
-import {
-  type ApiKey,
-  type DeployConfig,
-  getDeployConfig,
-  getObservableApiKey,
-  setDeployConfig
-} from "./observableApiConfig.js";
+import type {ApiKey, DeployConfig} from "./observableApiConfig.js";
+import {getDeployConfig, getObservableApiKey, setDeployConfig} from "./observableApiConfig.js";
 
 export interface DeployOptions {
-  sourceRoot: string;
+  config: Config;
 }
 
 export interface DeployEffects {
@@ -34,15 +30,14 @@ const defaultEffects: DeployEffects = {
 };
 
 /** Deploy a project to ObservableHQ */
-export async function deploy({sourceRoot}: DeployOptions, effects = defaultEffects): Promise<void> {
+// eslint-disable-next-line no-empty-pattern
+export async function deploy({config}: DeployOptions, effects = defaultEffects): Promise<void> {
   const {logger} = effects;
   const apiKey = await effects.getObservableApiKey(logger);
-  const apiClient = new ObservableApiClient({
-    apiKey,
-    logger
-  });
+  const apiClient = new ObservableApiClient({apiKey, logger});
 
   // Find the existing project or create a new one.
+  const sourceRoot = config.root;
   const deployConfig = await effects.getDeployConfig(sourceRoot);
   let projectId = deployConfig?.project?.id;
   if (projectId) {
@@ -80,7 +75,7 @@ export async function deploy({sourceRoot}: DeployOptions, effects = defaultEffec
   logger.log(`Created new deploy id ${deployId}`);
 
   // Build the project
-  await build({sourceRoot}, new DeployBuildEffects(apiClient, deployId, effects));
+  await build({config}, new DeployBuildEffects(apiClient, deployId, effects));
 
   // Mark the deploy as uploaded.
   await apiClient.postDeployUploaded(deployId);
