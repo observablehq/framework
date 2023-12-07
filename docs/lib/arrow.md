@@ -15,14 +15,33 @@ const date = d3.utcDay.range(new Date("2023-01-01"), new Date("2024-01-02"));
 const random = d3.randomNormal.source(d3.randomLcg(42))(); // seeded random
 const value = d3.cumsum(date, random);
 const table = Arrow.tableFromArrays({date, value});
-display([...table]);
 ```
 
+Now we can visualize it with [Observable Plot](./plot):
+
 ```js echo
-display(Plot.plot({
+Plot.plot({
   marks: [
     Plot.ruleY([0]),
     Plot.lineY(table, {x: "date", y: "value"})
   ]
-}));
+})
+```
+
+We can also inspect the Arrow table object directly:
+
+```js echo
+table
+```
+
+Though, it’s at little easier to see as an array of objects:
+
+```js echo
+[...table]
+```
+
+Or using [Inputs.table](./inputs#table):
+
+```js echo
+Inputs.table(table)
 ```
