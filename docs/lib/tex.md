@@ -52,3 +52,5 @@ c = \pm\sqrt{a^2 + b^2}
     \f\hat\xi\,e^{2 \pi i \xi x}
     \,d\xi
 ```
+
+For more, see [the documentation website](https://katex.org/), in particular the [list of supported functions](https://katex.org/docs/supported).
