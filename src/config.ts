@@ -20,29 +20,29 @@ export interface TableOfContents {
 }
 
 export interface Config {
-  root: string;
-  output: string;
+  root: string; // defaults to docs
+  output: string; // defaults to dist
   title?: string;
   pages: (Page | Section)[]; // TODO rename to sidebar?
   pager: boolean; // defaults to true
   toc: TableOfContents;
 }
 
-export async function readConfig(configPath?: string, configRoot?: string): Promise<Config> {
-  if (configPath === undefined) return readDefaultConfig(configRoot);
-  const importPath = join(configRoot ? join(process.cwd(), configRoot) : process.cwd(), configPath);
-  return normalizeConfig((await import(importPath)).default, configRoot);
+export async function readConfig(configPath?: string, root?: string): Promise<Config> {
+  if (configPath === undefined) return readDefaultConfig(root);
+  const importPath = join(process.cwd(), root ?? ".", configPath);
+  return normalizeConfig((await import(importPath)).default, root);
 }
 
-export async function readDefaultConfig(configRoot?: string): Promise<Config> {
+export async function readDefaultConfig(root?: string): Promise<Config> {
   for (const ext of [".js", ".ts"]) {
     try {
-      return await readConfig("observablehq.config" + ext, configRoot);
+      return await readConfig("observablehq.config" + ext, root);
     } catch (error) {
       continue;
     }
   }
-  return normalizeConfig(undefined, configRoot);
+  return normalizeConfig(undefined, root);
 }
 
 async function readPages(root: string): Promise<Page[]> {
@@ -58,8 +58,8 @@ async function readPages(root: string): Promise<Page[]> {
   return pages;
 }
 
-export async function normalizeConfig(spec: any = {}, configRoot?: string): Promise<Config> {
-  let {root = configRoot ?? "docs", output = "dist"} = spec;
+export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Promise<Config> {
+  let {root = defaultRoot, output = "dist"} = spec;
   root = String(root);
   output = String(output);
   let {title, pages = await readPages(root), pager = true, toc = true} = spec;
