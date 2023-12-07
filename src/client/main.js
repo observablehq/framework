@@ -1,25 +1,23 @@
-import {makeDatabaseClient} from "./database.js";
+import {Runtime} from "observablehq:runtime";
+import {registerDatabase, registerFile} from "observablehq:stdlib";
+import {DatabaseClient, FileAttachment, Generators, Mutable} from "observablehq:stdlib";
 import {inspect, inspectError} from "./inspect.js";
-import {makeLibrary} from "./library.js";
-import {Runtime} from "./runtime.js";
+import * as recommendedLibraries from "./stdlib/recommendedLibraries.js";
+import * as sampleDatasets from "./stdlib/sampleDatasets.js";
 
-const library = makeLibrary();
-const {Generators} = library;
-library.DatabaseClient = () => makeDatabaseClient(resolveDatabaseToken);
+const library = {
+  now: () => Generators.now(),
+  width: () => Generators.width(document.querySelector("main")),
+  DatabaseClient: () => DatabaseClient,
+  FileAttachment: () => FileAttachment,
+  Generators: () => Generators,
+  Mutable: () => Mutable,
+  ...recommendedLibraries,
+  ...sampleDatasets
+};
 
 const runtime = new Runtime(library);
 export const main = runtime.module();
-
-const attachedFiles = new Map();
-const resolveFile = (name) => attachedFiles.get(name);
-main.builtin("FileAttachment", runtime.fileAttachments(resolveFile));
-
-const databaseTokens = new Map();
-async function resolveDatabaseToken(name) {
-  const token = databaseTokens.get(name);
-  if (!token) throw new Error(`Database configuration for ${name} not found`);
-  return token;
-}
 
 export const cellsById = new Map(); // TODO hide
 
@@ -59,8 +57,8 @@ export function define(cell) {
   v.define(outputs.length ? `cell ${id}` : null, inputs, body);
   variables.push(v);
   for (const o of outputs) variables.push(main.variable(true).define(o, [`cell ${id}`], (exports) => exports[o]));
-  for (const f of files) attachedFiles.set(f.name, {url: f.path, mimeType: f.mimeType});
-  for (const d of databases) databaseTokens.set(d.name, d);
+  for (const f of files) registerFile(f.name, f);
+  for (const d of databases) registerDatabase(d.name, d);
 }
 
 // Note: Element.prototype is instanceof Node, but cannot be inserted!

@@ -137,7 +137,6 @@ export abstract class Loader {
    * to the source root; this is within the .observablehq/cache folder within
    * the source root.
    */
-
   async load(effects = defaultEffects): Promise<string> {
     const key = join(this.sourceRoot, this.targetPath);
     let command = runningCommands.get(key);
@@ -174,8 +173,8 @@ export abstract class Loader {
         }
         return outputPath;
       })();
-      command.finally(() => runningCommands.delete(this.path)).catch(() => {});
-      runningCommands.set(this.path, command);
+      command.finally(() => runningCommands.delete(key)).catch(() => {});
+      runningCommands.set(key, command);
     }
     effects.output.write(`${cyan("load")} ${this.path} ${faint("→")} `);
     const start = performance.now();

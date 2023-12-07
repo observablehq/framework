@@ -1,4 +1,4 @@
-import {Inspector} from "./runtime.js";
+import {Inspector} from "observablehq:runtime";
 
 export function inspect(value) {
   const inspector = new Inspector(document.createElement("div"));

@@ -20,16 +20,17 @@
       "type": "html",
       "id": "",
       "cellIds": [
-        "06e1c6cd"
+        "9c4f4e4f"
       ],
-      "html": "<div id=\"cell-06e1c6cd\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<div id=\"cell-9c4f4e4f\" class=\"observablehq observablehq--block\"></div>\n"
     }
   ],
   "cells": [
     {
       "type": "cell",
-      "id": "06e1c6cd",
+      "id": "9c4f4e4f",
       "inputs": [
+        "FileAttachment",
         "display"
       ],
       "files": [
@@ -39,8 +40,8 @@
           "path": "./_file/local-fetch.md"
         }
       ],
-      "body": "(display) => {\ndisplay((\nfetch(\"./_file/local-fetch.md\")\n))\n}"
+      "body": "(FileAttachment,display) => {\ndisplay((\nFileAttachment(\"./local-fetch.md\")\n))\n}"
     }
   ],
-  "hash": "286e04e0631c0f114d8c371c9aeda8bfd7eadacd31a72b9134ceabb1588c8371"
+  "hash": "3f31c6717790dfd2fb68fb8bf9c11b4fcb44a2014ab382c1a8bbbf711a99857e"
 }

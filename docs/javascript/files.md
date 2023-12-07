@@ -2,7 +2,13 @@
 
 TK Should this be called “working with data”?
 
-You can load files the built-in `FileAttachment` function or the standard [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch) API. We recommend `FileAttachment` because it supports many common data formats, including CSV, TSV, JSON, Apache Arrow, and SQLite. For example, here’s how to load a CSV file:
+You can load files the built-in `FileAttachment` function. This is available by default in Markdown, but you can import it like so:
+
+```js echo
+import {FileAttachment} from "npm:@observablehq/stdlib";
+```
+
+`FileAttachment` supports many common data formats, including CSV, TSV, JSON, Apache Arrow, and SQLite. For example, here’s how to load a CSV file:
 
 ```js echo
 const gistemp = FileAttachment("gistemp.csv").csv({typed: true});
@@ -34,22 +40,7 @@ const gistemp = FileAttachment("gistemp.csv").csv().then((D) => D.map(coerceRow)
 
 TK An explanation of why coercing types as early as possible is important.
 
-## Fetch
-
-Here’s `fetch` for comparison.
-
-```js run=false
-import {autoType, csvParse} from "npm:d3-dsv";
-
-const gistemp = fetch("./gistemp.csv").then(async (response) => {
-  if (!response.ok) throw new Error(`fetch error: ${response.status}`);
-  return csvParse(await response.text(), autoType);
-});
-```
-
-Use `fetch` if you prefer to stick to the web standards, you don’t mind writing a little extra code. 🥴 Also, you’ll need to use `fetch` to load files from imported ES modules; `FileAttachment` only works within Markdown.
-
-**Caution:** If you use `fetch` for a local file, the path *must* start with `./`, `../`, or `/`. This allows us to distinguish between local files and absolute URLs. But that’s a little silly, right? Because unlike `import`, you can’t `fetch` a bare module specifier, so we could be more generous and detect URLs using `/^\w+:/` instead.
+TK Mention [data loaders](../loaders) and archives.
 
 ## Supported formats
 
@@ -105,3 +96,5 @@ TK Describe `file.name` and `file.mimeType`.
 ```js echo
 file
 ```
+
+TK Mention the sample datasets that are available by default in Markdown.

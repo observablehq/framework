@@ -15,7 +15,8 @@ import {isEnoent} from "./error.js";
 import {fileReference, getLocalPath} from "./files.js";
 import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
-import {type FileReference, type ImportReference, type Transpile, transpileJavaScript} from "./javascript.js";
+import type {FileReference, ImportReference, PendingTranspile, Transpile} from "./javascript.js";
+import {transpileJavaScript} from "./javascript.js";
 import {transpileTag} from "./tag.js";
 import {resolvePath} from "./url.js";
 
@@ -50,7 +51,7 @@ export interface ParseResult {
 
 interface RenderPiece {
   html: string;
-  code: Transpile[];
+  code: PendingTranspile[];
 }
 
 interface ParseContext {
@@ -332,6 +333,7 @@ const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcs
   {query: "video[src]", src: "src"},
   {query: "video source[src]", src: "src"}
 ]);
+
 export function normalizePieceHtml(html: string, sourcePath: string, context: ParseContext): string {
   const {document} = parseHTML(html);
 
@@ -381,8 +383,9 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
   // direct children of code elements.
   for (const code of document.querySelectorAll("code[class*='language-']")) {
     const language = [...code.classList].find((c) => c.startsWith("language-"))?.slice("language-".length);
-    if (!language || !hljs.getLanguage(language)) continue;
+    if (!language) continue;
     if (code.parentElement?.tagName === "PRE") code.parentElement.setAttribute("data-language", language);
+    if (!hljs.getLanguage(language)) continue;
     let html = "";
     code.normalize(); // coalesce adjacent text nodes
     for (const child of code.childNodes) {
@@ -406,24 +409,20 @@ function toParsePieces(pieces: RenderPiece[]): HtmlPiece[] {
   }));
 }
 
-function toParseCells(pieces: RenderPiece[]): CellPiece[] {
+async function toParseCells(pieces: RenderPiece[]): Promise<CellPiece[]> {
   const cellPieces: CellPiece[] = [];
-  pieces.forEach((piece) =>
-    piece.code.forEach((code) =>
-      cellPieces.push({
-        type: "cell",
-        ...code
-      })
-    )
-  );
+  for (const piece of pieces) {
+    for (const {body, ...rest} of piece.code) {
+      cellPieces.push({type: "cell", ...rest, body: await body()});
+    }
+  }
   return cellPieces;
 }
 
+// TODO We need to know what line in the source the markdown starts on and pass
+// that as startLine in the parse context below.
 export async function parseMarkdown(source: string, root: string, sourcePath: string): Promise<ParseResult> {
   const parts = matter(source, {});
-
-  // TODO: We need to know what line in the source the markdown starts on and pass that
-  // as startLine in the parse context below.
   const md = MarkdownIt({html: true});
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
@@ -442,7 +441,7 @@ export async function parseMarkdown(source: string, root: string, sourcePath: st
     files: context.files,
     imports: context.imports,
     pieces: toParsePieces(context.pieces),
-    cells: toParseCells(context.pieces),
+    cells: await toParseCells(context.pieces),
     hash: await computeMarkdownHash(source, root, sourcePath, context.imports)
   };
 }
@@ -497,12 +496,13 @@ function diffReducer(patch: PatchItem<ParsePiece>) {
   if (patch.type === "remove") {
     return {
       ...patch,
+      type: "remove",
       items: patch.items.map((item) => ({
         type: item.type,
         id: item.id,
         ...("cellIds" in item ? {cellIds: item.cellIds} : null)
       }))
-    };
+    } as const;
   }
   return patch;
 }

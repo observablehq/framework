@@ -6,6 +6,7 @@ import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
+import {difference} from "d3-array";
 import send from "send";
 import {type WebSocket, WebSocketServer} from "ws";
 import {version} from "../package.json";
@@ -14,10 +15,10 @@ import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
+import {getImplicitSpecifiers, getImplicitStylesheets} from "./libraries.js";
 import {diffMarkdown, readMarkdown} from "./markdown.js";
 import type {ParseResult, ReadMarkdownResult} from "./markdown.js";
 import {renderPreview} from "./render.js";
-import {type CellResolver, makeCLIResolver} from "./resolver.js";
 import {getClientPath, rollupClient} from "./rollup.js";
 import {bold, faint, green, underline} from "./tty.js";
 
@@ -37,21 +38,16 @@ export async function preview(options: PreviewOptions): Promise<PreviewServer> {
 export class PreviewServer {
   private readonly _server: ReturnType<typeof createServer>;
   private readonly _socketServer: WebSocketServer;
-  private readonly _resolver: CellResolver;
   private readonly _verbose: boolean;
   readonly root: string;
 
-  private constructor(
-    {server, root, verbose}: {server: Server; root: string; verbose: boolean},
-    resolver: CellResolver
-  ) {
+  private constructor({server, root, verbose}: {server: Server; root: string; verbose: boolean}) {
     this.root = root;
     this._verbose = verbose;
     this._server = server;
     this._server.on("request", this._handleRequest);
     this._socketServer = new WebSocketServer({server: this._server});
     this._socketServer.on("connection", this._handleConnection);
-    this._resolver = resolver;
   }
 
   static async start({verbose = true, hostname, port, ...options}: PreviewOptions) {
@@ -76,7 +72,7 @@ export class PreviewServer {
       console.log(`${faint("↳")} ${underline(`http://${hostname}:${port}/`)}`);
       console.log("");
     }
-    return new PreviewServer({server, verbose, ...options}, await makeCLIResolver());
+    return new PreviewServer({server, verbose, ...options});
   }
 
   _handleRequest: RequestListener = async (req, res) => {
@@ -86,6 +82,10 @@ export class PreviewServer {
       let {pathname} = url;
       if (pathname === "/_observablehq/runtime.js") {
         send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
+      } else if (pathname.startsWith("/_observablehq/stdlib.js")) {
+        end(req, res, await rollupClient(getClientPath("./src/client/stdlib.js")), "text/javascript");
+      } else if (pathname.startsWith("/_observablehq/stdlib/")) {
+        end(req, res, await rollupClient(getClientPath("./src/client/" + pathname.slice("/_observablehq/".length))), "text/javascript"); // prettier-ignore
       } else if (pathname === "/_observablehq/client.js") {
         end(req, res, await rollupClient(getClientPath("./src/client/preview.js")), "text/javascript");
       } else if (pathname.startsWith("/_observablehq/")) {
@@ -99,7 +99,7 @@ export class PreviewServer {
           if (!isEnoent(error)) throw error;
           throw new HttpError(`Not found: ${pathname}`, 404);
         }
-        end(req, res, rewriteModule(js, file, createImportResolver(this.root)), "text/javascript");
+        end(req, res, await rewriteModule(js, file, createImportResolver(this.root)), "text/javascript");
       } else if (pathname.startsWith("/_file/")) {
         const path = pathname.slice("/_file".length);
         const filepath = join(this.root, path);
@@ -175,7 +175,6 @@ export class PreviewServer {
           const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {
             root: this.root,
             path: pathname,
-            resolver: this._resolver,
             ...config
           });
           end(req, res, html, "text/html");
@@ -197,7 +196,6 @@ export class PreviewServer {
           const {html} = await renderPreview(await readFile(join(this.root, "404.md"), "utf-8"), {
             root: this.root,
             path: "/404",
-            resolver: this._resolver,
             ...config
           });
           end(req, res, html, "text/html");
@@ -213,7 +211,7 @@ export class PreviewServer {
 
   _handleConnection = (socket: WebSocket, req: IncomingMessage) => {
     if (req.url === "/_observablehq") {
-      handleWatch(socket, req, {root: this.root, resolver: this._resolver});
+      handleWatch(socket, req, {root: this.root});
     } else {
       socket.close();
     }
@@ -242,14 +240,6 @@ function end(req: IncomingMessage, res: ServerResponse, content: string, type: s
   }
 }
 
-function resolveDiffs(diff: ReturnType<typeof diffMarkdown>, resolver: CellResolver): ReturnType<typeof diffMarkdown> {
-  return diff.map((item) =>
-    item.type === "add"
-      ? {...item, items: item.items.map((addItem) => (addItem.type === "cell" ? resolver(addItem) : addItem))}
-      : item
-  );
-}
-
 function getWatchPaths(parseResult: ParseResult): string[] {
   const paths: string[] = [];
   const {files, imports} = parseResult;
@@ -258,10 +248,17 @@ function getWatchPaths(parseResult: ParseResult): string[] {
   return paths;
 }
 
-function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: string; resolver: CellResolver}) {
-  const {root, resolver} = options;
+async function getStylesheets({cells}: ParseResult): Promise<Set<string>> {
+  const inputs = new Set<string>();
+  for (const cell of cells) cell.inputs?.forEach(inputs.add, inputs);
+  return getImplicitStylesheets(getImplicitSpecifiers(inputs));
+}
+
+function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: string}) {
+  const {root} = options;
   let path: string | null = null;
   let current: ReadMarkdownResult | null = null;
+  let stylesheets: Set<string> | null = null;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
   console.log(faint("socket open"), req.url);
@@ -297,7 +294,11 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: st
       case "change": {
         const updated = await readMarkdown(path, root);
         if (current.parse.hash === updated.parse.hash) break;
-        const diff = resolveDiffs(diffMarkdown(current, updated), resolver);
+        const updatedStylesheets = await getStylesheets(updated.parse);
+        for (const href of difference(stylesheets, updatedStylesheets)) send({type: "remove-stylesheet", href});
+        for (const href of difference(updatedStylesheets, stylesheets)) send({type: "add-stylesheet", href});
+        stylesheets = updatedStylesheets;
+        const diff = diffMarkdown(current, updated);
         send({type: "update", diff, previousHash: current.parse.hash, updatedHash: updated.parse.hash});
         current = updated;
         attachmentWatcher?.close();
@@ -315,6 +316,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: st
     path += ".md";
     current = await readMarkdown(path, root);
     if (current.parse.hash !== initialHash) return void send({type: "reload"});
+    stylesheets = await getStylesheets(current.parse);
     attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(current.parse), refreshAttachment);
     markdownWatcher = watch(join(root, path), watcher);
   }

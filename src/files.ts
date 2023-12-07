@@ -17,9 +17,9 @@ export function getLocalPath(sourcePath: string, name: string): string | null {
 
 export function fileReference(name: string, sourcePath: string): FileReference {
   return {
-    name,
+    name: relativeUrl(sourcePath, name),
     mimeType: mime.getType(name),
-    path: relativeUrl(sourcePath, resolvePath("_file", sourcePath, name))
+    path: relativeUrl(sourcePath, join("_file", name))
   };
 }
 

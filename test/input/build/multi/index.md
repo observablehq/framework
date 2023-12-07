@@ -9,6 +9,6 @@ Input.table(f1)
 ```
 
 ```js
-const f2 = fetch("./file2.csv");
+const f2 = FileAttachment("./file2.csv");
 ```
 

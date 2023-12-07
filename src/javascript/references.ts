@@ -15,14 +15,15 @@ import type {
   Program
 } from "acorn";
 import {ancestor} from "acorn-walk";
+import {defaultGlobals} from "./globals.js";
 
 // Based on https://github.com/ForbesLindesay/acorn-globals
-// Copyright (c) 2014 Forbes Lindesay
+// Portions copyright 2014 Forbes Lindesay.
 // https://github.com/ForbesLindesay/acorn-globals/blob/master/LICENSE
 
-type Func = FunctionExpression | FunctionDeclaration | ArrowFunctionExpression | AnonymousFunctionDeclaration;
+type FunctionNode = FunctionExpression | FunctionDeclaration | ArrowFunctionExpression | AnonymousFunctionDeclaration;
 
-function isScope(node: Node): node is Func | Program {
+function isScope(node: Node): node is FunctionNode | Program {
   return (
     node.type === "FunctionExpression" ||
     node.type === "FunctionDeclaration" ||
@@ -32,7 +33,7 @@ function isScope(node: Node): node is Func | Program {
 }
 
 // prettier-ignore
-function isBlockScope(node: Node): node is Func | Program | BlockStatement | ForInStatement | ForOfStatement | ForStatement {
+function isBlockScope(node: Node): node is FunctionNode | Program | BlockStatement | ForInStatement | ForOfStatement | ForStatement {
   return (
     node.type === "BlockStatement" ||
     node.type === "SwitchStatement" ||
@@ -43,9 +44,17 @@ function isBlockScope(node: Node): node is Func | Program | BlockStatement | For
   );
 }
 
-export function findReferences(node: Node, globals: Set<string>): Identifier[] {
+export function findReferences(
+  node: Node,
+  {
+    globals = defaultGlobals,
+    filterDeclaration = () => true
+  }: {
+    globals?: Set<string>;
+    filterDeclaration?: (identifier: {name: string}) => any;
+  } = {}
+): Identifier[] {
   const locals = new Map<Node, Set<string>>();
-  const globalSet = new Set<string>(globals);
   const references: Identifier[] = [];
 
   function hasLocal(node: Node, name: string): boolean {
@@ -54,6 +63,7 @@ export function findReferences(node: Node, globals: Set<string>): Identifier[] {
   }
 
   function declareLocal(node: Node, id: {name: string}): void {
+    if (!filterDeclaration(id)) return;
     const l = locals.get(node);
     if (l) l.add(id.name);
     else locals.set(node, new Set([id.name]));
@@ -63,7 +73,7 @@ export function findReferences(node: Node, globals: Set<string>): Identifier[] {
     if (node.id) declareLocal(node, node.id);
   }
 
-  function declareFunction(node: Func) {
+  function declareFunction(node: FunctionNode) {
     node.params.forEach((param) => declarePattern(param, node));
     if (node.id) declareLocal(node, node.id);
     if (node.type !== "ArrowFunctionExpression") declareLocal(node, {name: "arguments"});
@@ -139,7 +149,7 @@ export function findReferences(node: Node, globals: Set<string>): Identifier[] {
         return;
       }
     }
-    if (!globalSet.has(name)) {
+    if (!globals.has(name)) {
       references.push(node);
     }
   }

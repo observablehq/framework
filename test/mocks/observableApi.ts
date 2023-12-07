@@ -3,7 +3,9 @@ import {getObservableApiHost} from "../../src/observableApiClient.js";
 
 export const validApiKey = "MOCK-VALID-KEY";
 export const invalidApiKey = "MOCK-INVALID-KEY";
+
 const emptyErrorBody = JSON.stringify({errors: []});
+
 export class ObservableApiMock {
   private _agent: MockAgent | null = null;
   private _handlers: ((pool: Interceptable) => void)[] = [];
@@ -76,11 +78,10 @@ export class ObservableApiMock {
     const response = status == 204 ? "" : emptyErrorBody;
     const headers = authorizationHeader(status != 401);
     this._handlers.push((pool) => {
-      for (let i = 0; i < repeat; i++) {
-        pool
-          .intercept({path: `/cli/deploy/${deployId}/file`, method: "POST", headers: headersMatcher(headers)})
-          .reply(status, response);
-      }
+      pool
+        .intercept({path: `/cli/deploy/${deployId}/file`, method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response)
+        .times(repeat);
     });
     return this;
   }

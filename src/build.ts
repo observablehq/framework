@@ -10,12 +10,23 @@ import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
 import {renderServerless} from "./render.js";
-import {makeCLIResolver} from "./resolver.js";
 import {getClientPath, rollupClient} from "./rollup.js";
 import {faint} from "./tty.js";
 import {resolvePath} from "./url.js";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
+
+// TODO Remove library helpers (e.g., duckdb) when they are published to npm.
+const CLIENT_BUNDLES: [entry: string, name: string][] = [
+  ["./src/client/index.js", "client.js"],
+  ["./src/client/stdlib.js", "stdlib.js"],
+  ["./src/client/stdlib/dot.js", "stdlib/dot.js"],
+  ["./src/client/stdlib/duckdb.js", "stdlib/duckdb.js"],
+  ["./src/client/stdlib/mermaid.js", "stdlib/mermaid.js"],
+  ["./src/client/stdlib/sqlite.js", "stdlib/sqlite.js"],
+  ["./src/client/stdlib/tex.js", "stdlib/tex.js"],
+  ["./src/client/stdlib/xslx.js", "stdlib/xslx.js"]
+];
 
 export interface BuildOptions {
   sourceRoot: string;
@@ -42,24 +53,27 @@ export interface BuildEffects {
 
 export async function build(
   {sourceRoot: root, outputRoot, addPublic = true}: BuildOptions,
-  effects: BuildEffects = new DefaultEffects(outputRoot)
+  effects: BuildEffects = new FileBuildEffects(outputRoot!)
 ): Promise<void> {
   // Make sure all files are readable before starting to write output files.
+  let pageCount = 0;
   for await (const sourceFile of visitMarkdownFiles(root)) {
     await access(join(root, sourceFile), constants.R_OK);
+    pageCount++;
   }
+  if (!pageCount) throw new Error(`No pages found in ${root}`);
+  effects.logger.log(`${faint("found")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
 
   // Render .md files, building a list of file attachments as we go.
   const config = await readConfig(root);
   const files: string[] = [];
   const imports: string[] = [];
-  const resolver = await makeCLIResolver();
   for await (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
     effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
-    const render = await renderServerless(await readFile(sourcePath, "utf-8"), {root, path, resolver, ...config});
+    const render = await renderServerless(await readFile(sourcePath, "utf-8"), {root, path, ...config});
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
     files.push(...render.files.map(resolveFile));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
@@ -67,12 +81,14 @@ export async function build(
   }
 
   if (addPublic) {
-    // Generate the client bundle.
-    const clientPath = getClientPath();
-    const outputPath = join("_observablehq", "client.js");
-    effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
-    const code = await rollupClient(clientPath, {minify: true});
-    await effects.writeFile(outputPath, code);
+    // Generate the client bundles.
+    for (const [entry, name] of CLIENT_BUNDLES) {
+      const clientPath = getClientPath(entry);
+      const outputPath = join("_observablehq", name);
+      effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
+      const code = await rollupClient(clientPath, {minify: true});
+      await effects.writeFile(outputPath, code);
+    }
     // Copy over the public directory.
     const publicRoot = relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), "..", "public"));
     for await (const publicFile of visitFiles(publicRoot)) {
@@ -114,7 +130,7 @@ export async function build(
       continue;
     }
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-    const contents = rewriteModule(await readFile(sourcePath, "utf-8"), file, importResolver);
+    const contents = await rewriteModule(await readFile(sourcePath, "utf-8"), file, importResolver);
     await effects.writeFile(outputPath, contents);
   }
 
@@ -128,14 +144,17 @@ export async function build(
   }
 }
 
-class DefaultEffects implements BuildEffects {
+export class FileBuildEffects implements BuildEffects {
   private readonly outputRoot: string;
   readonly logger: Logger;
   readonly output: Writer;
-  constructor(outputRoot?: string) {
+  constructor(
+    outputRoot: string,
+    {logger = console, output = process.stdout}: {logger?: Logger; output?: Writer} = {}
+  ) {
     if (!outputRoot) throw new Error("missing outputRoot");
-    this.logger = console;
-    this.output = process.stdout;
+    this.logger = logger;
+    this.output = output;
     this.outputRoot = outputRoot;
   }
   async copyFile(sourcePath: string, outputPath: string): Promise<void> {

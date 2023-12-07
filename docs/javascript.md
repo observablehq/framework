@@ -1,8 +1,8 @@
 # JavaScript
 
-[Observable Markdown](./markdown) supports JavaScript for interactive charts and other dynamic content. This client-side JavaScript runs in the browser on load, and re-runs automatically — and incrementally — when [reactive variables](./javascript/reactivity) change or when you edit pages during development. (You can also run JavaScript, or any programming language, during build to generate data snapshots using [data loaders](./loaders).)
+[Observable Markdown](./markdown) supports JavaScript for interactive charts and other dynamic content. This client-side JavaScript runs in the browser on load, and re-runs automatically — and incrementally — when [reactive variables](./javascript/reactivity) change or when you edit pages during development.
 
-JavaScript in Markdown can be expressed either as [fenced code blocks](#fenced-code-blocks) or [inline expressions](#inline-expressions).
+JavaScript in Markdown can be expressed either as [fenced code blocks](#fenced-code-blocks) or [inline expressions](#inline-expressions). You can also write JavaScript modules alongside Markdown files and [import them](./javascript/imports) into Markdown. (And you can run JavaScript, TypeScript, Python, or any other programming language during build to generate data using [data loaders](./loaders).)
 
 ### Fenced code blocks
 
@@ -78,7 +78,7 @@ You rolled ${Math.floor(Math.random() * 20) + 1}.
 
 You rolled ${Math.floor(Math.random() * 20) + 1}. (Reload the page to re-roll.)
 
-And here’s an [button input](./javascript/inputs) that counts clicks:
+And here’s an [button input](./lib/inputs) that counts clicks:
 
 ```js echo
 const clicks = view(Inputs.button("Click me"));
