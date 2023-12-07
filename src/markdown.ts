@@ -383,8 +383,9 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
   // direct children of code elements.
   for (const code of document.querySelectorAll("code[class*='language-']")) {
     const language = [...code.classList].find((c) => c.startsWith("language-"))?.slice("language-".length);
-    if (!language || !hljs.getLanguage(language)) continue;
+    if (!language) continue;
     if (code.parentElement?.tagName === "PRE") code.parentElement.setAttribute("data-language", language);
+    if (!hljs.getLanguage(language)) continue;
     let html = "";
     code.normalize(); // coalesce adjacent text nodes
     for (const child of code.childNodes) {
