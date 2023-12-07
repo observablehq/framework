@@ -7,11 +7,10 @@
   This text is not visible by default.
 </details>
 
-
 # Graphviz
 
 ```dot echo
-  strict graph { 
+  strict graph {
     a -- b
     a -- b
     b -- a [color=blue]
@@ -23,4 +22,3 @@
 ```tex
 E = mc^2
 ```
-

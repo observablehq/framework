@@ -1,17 +1,12 @@
 {
-  "$schema": "https://json.schemastore.org/tsconfig",
-  "display": "Node LTS",
-  "_version": "18.1.0",
   "compilerOptions": {
     "noImplicitAny": false,
-    "lib": ["es2023", "DOM.Iterable"],
-    "module": "node16",
-    "target": "es2022",
+    "lib": ["ES2023", "DOM.Iterable"],
+    "module": "Node16",
+    "target": "ES2022",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node16",
     "resolveJsonModule": true
   }
 }
