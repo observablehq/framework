@@ -1,5 +1,5 @@
 import {type Dispatcher, type Interceptable, MockAgent, getGlobalDispatcher, setGlobalDispatcher} from "undici";
-import {getObservableApiHost} from "../../src/observableApiClient.js";
+import {getObservableApiHost, getObservableUiHost} from "../../src/observableApiClient.js";
 
 export const validApiKey = "MOCK-VALID-KEY";
 export const invalidApiKey = "MOCK-INVALID-KEY";
@@ -47,7 +47,10 @@ export class ObservableApiMock {
   }
 
   handlePostProject({projectId, status = 200}: {projectId?: string; status?: number} = {}): ObservableApiMock {
-    const response = status == 200 ? JSON.stringify({id: projectId}) : emptyErrorBody;
+    const response =
+      status == 200
+        ? JSON.stringify({id: projectId, slug: "test-project", title: "Test Project", owner: {}, creator: {}})
+        : emptyErrorBody;
     const headers = authorizationHeader(status != 401);
     this._handlers.push((pool) =>
       pool.intercept({path: "/cli/project", method: "POST", headers: headersMatcher(headers)}).reply(status, response)
@@ -86,8 +89,12 @@ export class ObservableApiMock {
     return this;
   }
 
-  handlePostDeployUploaded({deployId, status = 204}: {deployId?: string; status?: number} = {}): ObservableApiMock {
-    const response = status == 204 ? JSON.stringify({id: deployId, status: "uploaded"}) : emptyErrorBody;
+  handlePostDeployUploaded({deployId, status = 200}: {deployId?: string; status?: number} = {}): ObservableApiMock {
+    const response =
+      status == 200
+        ? JSON.stringify({id: deployId, status: "uploaded", url: `${getObservableUiHost()}/@mock-user-ws/test-project`})
+        : emptyErrorBody;
+    console.log("handlePostDeployUploaded", {response});
     const headers = authorizationHeader(status != 401);
     this._handlers.push((pool) =>
       pool
