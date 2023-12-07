@@ -1,6 +1,7 @@
 # Index
 
 ```js
-import formatTitle from "./format.js"
-display(formatTitle('index'));
+import formatTitle from "./format.js";
+
+display(formatTitle("index"));
 ```
