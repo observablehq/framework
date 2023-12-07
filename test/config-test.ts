@@ -3,9 +3,11 @@ import {normalizeConfig as config, mergeToc, readConfig} from "../src/config.js"
 
 const root = "test/input/build/config";
 
-describe("readConfig(root)", () => {
+describe("readConfig(undefined, root)", () => {
   it("imports the config file at the specified root", async () => {
-    assert.deepStrictEqual(await readConfig("test/input/build/config"), {
+    assert.deepStrictEqual(await readConfig(undefined, "test/input/build/config"), {
+      root: "test/input/build/config",
+      output: "dist",
       pages: [
         {path: "/index", name: "Index"},
         {path: "/one", name: "One<Two"},
@@ -18,7 +20,9 @@ describe("readConfig(root)", () => {
     });
   });
   it("returns the default config if no config file is found", async () => {
-    assert.deepStrictEqual(await readConfig("test/input/build/simple"), {
+    assert.deepStrictEqual(await readConfig(undefined, "test/input/build/simple"), {
+      root: "test/input/build/simple",
+      output: "dist",
       pages: [{name: "Build test case", path: "/simple"}],
       title: undefined,
       toc: {label: "Contents", show: true},

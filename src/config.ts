@@ -1,4 +1,4 @@
-import {readFile, stat} from "node:fs/promises";
+import {readFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path";
 import {visitFiles} from "./files.js";
 import {parseMarkdown} from "./markdown.js";
@@ -20,27 +20,29 @@ export interface TableOfContents {
 }
 
 export interface Config {
+  root: string; // defaults to docs
+  output: string; // defaults to dist
   title?: string;
   pages: (Page | Section)[]; // TODO rename to sidebar?
   pager: boolean; // defaults to true
   toc: TableOfContents;
 }
 
-export async function readConfig(root: string): Promise<Config> {
+export async function readConfig(configPath?: string, root?: string): Promise<Config> {
+  if (configPath === undefined) return readDefaultConfig(root);
+  const importPath = join(process.cwd(), root ?? ".", configPath);
+  return normalizeConfig((await import(importPath)).default, root);
+}
+
+export async function readDefaultConfig(root?: string): Promise<Config> {
   for (const ext of [".js", ".ts"]) {
     try {
-      const configPath = join(process.cwd(), root, ".observablehq", "config" + ext);
-      const configStat = await stat(configPath);
-      // By using the modification time of the config, we ensure that we pick up
-      // any changes to the config on reload. TODO It would be better to either
-      // restart the preview server when the config changes, or for the preview
-      // server to watch the config file and hot-reload it automatically.
-      return normalizeConfig((await import(`${configPath}?${configStat.mtimeMs}`)).default, root);
-    } catch {
+      return await readConfig("observablehq.config" + ext, root);
+    } catch (error) {
       continue;
     }
   }
-  return normalizeConfig({}, root);
+  return normalizeConfig(undefined, root);
 }
 
 async function readPages(root: string): Promise<Page[]> {
@@ -56,13 +58,16 @@ async function readPages(root: string): Promise<Page[]> {
   return pages;
 }
 
-export async function normalizeConfig(spec: any, root: string): Promise<Config> {
+export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Promise<Config> {
+  let {root = defaultRoot, output = "dist"} = spec;
+  root = String(root);
+  output = String(output);
   let {title, pages = await readPages(root), pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
   pager = Boolean(pager);
   toc = normalizeToc(toc);
-  return {title, pages, pager, toc};
+  return {root, output, title, pages, pager, toc};
 }
 
 function normalizePageOrSection(spec: any): Page | Section {
