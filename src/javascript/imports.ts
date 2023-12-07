@@ -371,7 +371,6 @@ async function resolveNpmVersion(specifier: string): Promise<string> {
 }
 
 export async function resolveNpmImport(specifier: string): Promise<string> {
-  // return specifier; // TODO FIXME
   const {name, path = "+esm"} = parseNpmSpecifier(specifier);
   const version = await resolveNpmVersion(specifier);
   return `https://cdn.jsdelivr.net/npm/${name}@${version}/${path}`;
