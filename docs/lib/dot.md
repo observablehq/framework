@@ -41,11 +41,12 @@ digraph G {
   subgraph cluster_0 {
     a0 -> a1 -> a2 -> a3
     label = "process #1"
+    color = lightblue
   }
   subgraph cluster_1 {
     b0 -> b1 -> b2 -> b3
     label = "process #2"
-    color = blue
+    color = orange
   }
   start -> a0
   start -> b0
