@@ -59,7 +59,7 @@ async function readPages(root: string): Promise<Page[]> {
 }
 
 export async function normalizeConfig(spec: any = {}, configRoot?: string): Promise<Config> {
-  let {root = configRoot ?? join(process.cwd(), "docs"), output = "dist"} = spec;
+  let {root = configRoot ?? "docs", output = "dist"} = spec;
   root = String(root);
   output = String(output);
   let {title, pages = await readPages(root), pager = true, toc = true} = spec;
