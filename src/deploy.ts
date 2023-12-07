@@ -30,7 +30,6 @@ const defaultEffects: DeployEffects = {
 };
 
 /** Deploy a project to ObservableHQ */
-// eslint-disable-next-line no-empty-pattern
 export async function deploy({config}: DeployOptions, effects = defaultEffects): Promise<void> {
   const {logger} = effects;
   const apiKey = await effects.getObservableApiKey(logger);
