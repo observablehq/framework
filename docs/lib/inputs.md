@@ -1,8 +1,8 @@
 # Observable Inputs
 
-Observable Inputs are lightweight interface components—buttons, sliders, dropdowns, tables, and the like—to help you explore data and build interactive displays.
+[Observable Inputs](https://github.com/observablehq/inputs) provides lightweight interface components — buttons, sliders, dropdowns, tables, and the like — to help you explore data and build interactive displays.
 
-This library is available by default as `Inputs` in Markdown, but you can import it explicitly like so:
+Observable Inputs is available by default as `Inputs` in Markdown, but you can import it explicitly like so:
 
 ```js echo
 import * as Inputs from "npm:@observablehq/inputs";
