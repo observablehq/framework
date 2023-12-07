@@ -71,14 +71,11 @@ export class ObservableApiClient {
         const body = await response.text();
         try {
           const data = JSON.parse(body);
-          console.log("error body", data);
           if (Array.isArray(data.errors) && data.errors.some((d) => d.code === "VERSION_MISMATCH")) {
             console.log(red("The version of the Observable CLI you are using is not compatible with the server."));
             console.log(faint(`Expected ${data.errors[0].meta.expected}, but using ${data.errors[0].meta.actual}`));
           }
         } catch (err) {
-          console.log("error body", body);
-          console.log(err);
           // just fall through
         }
       }
@@ -104,6 +101,7 @@ export class ObservableApiClient {
     workspaceId: string;
   }): Promise<PostProjectResponse> {
     return await this._fetch<PostProjectResponse>(new URL("/cli/project", this._apiHost), {
+      method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({title, slug, workspace: workspaceId})
     });

@@ -41,7 +41,9 @@ export class ObservableApiMock {
     const response = status == 200 ? JSON.stringify(user) : emptyErrorBody;
     const headers = authorizationHeader(status != 401);
     this._handlers.push((pool) =>
-      pool.intercept({path: "/cli/user", headers: headersMatcher(headers)}).reply(status, response)
+      pool
+        .intercept({path: "/cli/user", headers: headersMatcher(headers)})
+        .reply(status, response, {headers: {"content-type": "application/json"}})
     );
     return this;
   }
@@ -53,7 +55,9 @@ export class ObservableApiMock {
         : emptyErrorBody;
     const headers = authorizationHeader(status != 401);
     this._handlers.push((pool) =>
-      pool.intercept({path: "/cli/project", method: "POST", headers: headersMatcher(headers)}).reply(status, response)
+      pool
+        .intercept({path: "/cli/project", method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response, {headers: {"content-type": "application/json"}})
     );
     return this;
   }
@@ -68,7 +72,7 @@ export class ObservableApiMock {
     this._handlers.push((pool) =>
       pool
         .intercept({path: `/cli/project/${projectId}/deploy`, method: "POST", headers: headersMatcher(headers)})
-        .reply(status, response)
+        .reply(status, response, {headers: {"content-type": "application/json"}})
     );
     return this;
   }
@@ -99,7 +103,7 @@ export class ObservableApiMock {
     this._handlers.push((pool) =>
       pool
         .intercept({path: `/cli/deploy/${deployId}/uploaded`, method: "POST", headers: headersMatcher(headers)})
-        .reply(status, response)
+        .reply(status, response, {headers: {"content-type": "application/json"}})
     );
     return this;
   }
