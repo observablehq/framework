@@ -1,6 +1,6 @@
 # Arquero
 
-[Arquero](https://uwdata.github.io/arquero/) is a JavaScript library for “query processing and transformation of array-backed data tables.” Arquero (currently version ${aq.version}) is available by default as `aq` in Markdown, but you can import it explicitly like so:
+[Arquero](https://uwdata.github.io/arquero/) is a JavaScript library for “query processing and transformation of array-backed data tables.” Arquero is available by default as `aq` in Markdown, but you can import it explicitly like so:
 
 ```js echo
 import * as aq from "npm:arquero";
