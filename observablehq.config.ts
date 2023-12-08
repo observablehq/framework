@@ -31,6 +31,7 @@ export default {
         {name: "Leaflet", path: "/lib/leaflet"},
         {name: "Lodash", path: "/lib/lodash"},
         {name: "Mermaid", path: "/lib/mermaid"},
+        {name: "Observable Generators", path: "/lib/generators"},
         {name: "Observable Inputs", path: "/lib/inputs"},
         {name: "Observable Plot", path: "/lib/plot"},
         {name: "SQLite", path: "/lib/sqlite"},
