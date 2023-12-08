@@ -875,25 +875,10 @@ a[href].observablehq-header-anchor {
   border-bottom: solid 1px var(--theme-foreground-fainter) !important;
 }
 
+.plot-d6a7b5 {
+  --plot-background: var(--theme-background);
+}
+
 p svg.plot-d6a7b5 {
   display: inline-block;
-}
-
-svg.plot-d6a7b5,
-svg.plot-d6a7b5-ramp {
-  background: none;
-}
-
-svg.plot-d6a7b5 [aria-label="tip"][fill="white"],
-svg.plot-d6a7b5 [aria-label="tip"] [fill="white"] {
-  fill: var(--theme-background);
-}
-
-svg.plot-d6a7b5 marker[stroke="white"],
-svg.plot-d6a7b5 [aria-label^="crosshair"][stroke="white"] {
-  stroke: var(--theme-background);
-}
-
-svg.plot-d6a7b5 marker[fill="white"] {
-  fill: var(--theme-background);
 }
