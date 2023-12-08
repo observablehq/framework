@@ -1,5 +1,21 @@
-import {type Dispatcher, type Interceptable, MockAgent, getGlobalDispatcher, setGlobalDispatcher} from "undici";
+import type {MockAgent} from "undici";
+import {type Interceptable} from "undici";
 import {getObservableApiHost} from "../../src/observableApiClient.js";
+import type {BaseFixtures, TestFixture} from "./composeTest.js";
+
+export function withObservableApiMock<FIn extends BaseFixtures & {undiciAgent?: MockAgent}>(): TestFixture<
+  FIn,
+  FIn & {observableApiMock: ObservableApiMock}
+> {
+  return (testFunction) => {
+    return async (args) => {
+      if (!args.undiciAgent) throw new Error("withObservableApiMock requires withUndiciAgent");
+      const observableApiMock = new ObservableApiMock(args.undiciAgent);
+      await testFunction({...args, observableApiMock});
+      observableApiMock.assertNoPendingIntercepts();
+    };
+  };
+}
 
 export const validApiKey = "MOCK-VALID-KEY";
 export const invalidApiKey = "MOCK-INVALID-KEY";
@@ -7,34 +23,23 @@ export const invalidApiKey = "MOCK-INVALID-KEY";
 const emptyErrorBody = JSON.stringify({errors: []});
 
 export class ObservableApiMock {
-  private _agent: MockAgent | null = null;
   private _handlers: ((pool: Interceptable) => void)[] = [];
-  private _originalDispatcher: Dispatcher | null = null;
+  private _origin = getObservableApiHost().toString().replace(/\/$/, "");
 
-  public start(): ObservableApiMock {
-    this._agent = new MockAgent();
-    this._agent.disableNetConnect();
-    const origin = getObservableApiHost().toString().replace(/\/$/, "");
-    const mockPool = this._agent.get(origin);
+  constructor(private _agent: MockAgent) {}
+
+  public done() {
+    const mockPool = this._agent.get(this._origin);
     for (const handler of this._handlers) handler(mockPool);
-    this._originalDispatcher = getGlobalDispatcher();
-    setGlobalDispatcher(this._agent);
-    return this;
   }
 
-  public close() {
-    if (!this._agent) throw new Error("ObservableApiMock not started");
-    this._agent.assertNoPendingInterceptors();
-    this._agent.close();
-    this._agent = null;
-    if (this._originalDispatcher) {
-      setGlobalDispatcher(this._originalDispatcher);
-      this._originalDispatcher = null;
+  public assertNoPendingIntercepts() {
+    for (const intercept of this._agent.pendingInterceptors()) {
+      if (intercept.origin === this._origin) {
+        console.log(`Expected all intercepts for ${this._origin} to be handled`);
+        this._agent.assertNoPendingInterceptors();
+      }
     }
-  }
-
-  public pendingInterceptors() {
-    return this._agent?.pendingInterceptors();
   }
 
   handleGetUser({user = userWithOneWorkspace, status = 200}: {user?: any; status?: number} = {}): ObservableApiMock {

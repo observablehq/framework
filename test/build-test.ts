@@ -5,7 +5,9 @@ import {join, normalize, relative} from "node:path";
 import {difference} from "d3-array";
 import {FileBuildEffects, build} from "../src/build.js";
 import {readConfig} from "../src/config.js";
-import {mockJsDelivr} from "./mocks/jsdelivr.js";
+import {composeTest} from "./mocks/composeTest.js";
+import {withJsDelivrMock} from "./mocks/jsdelivr.js";
+import {withUndiciAgent} from "./mocks/undiciAgent.js";
 
 const silentEffects = {
   logger: {log() {}, warn() {}, error() {}},
@@ -13,8 +15,6 @@ const silentEffects = {
 };
 
 describe("build", async () => {
-  mockJsDelivr();
-
   // Each sub-directory of test/input/build is a test case.
   const inputRoot = "test/input/build";
   const outputRoot = "test/output/build";
@@ -24,45 +24,50 @@ describe("build", async () => {
     const only = name.startsWith("only.");
     const skip = name.startsWith("skip.");
     const outname = only || skip ? name.slice(5) : name;
-    (only ? it.only : skip ? it.skip : it)(`${inputRoot}/${name}`, async () => {
-      const actualDir = join(outputRoot, `${outname}-changed`);
-      const expectedDir = join(outputRoot, outname);
-      const generate = !existsSync(expectedDir) && process.env.CI !== "true";
-      const outputDir = generate ? expectedDir : actualDir;
-      const addPublic = name.endsWith("-public");
+    (only ? composeTest.only : skip ? composeTest.skip : composeTest)(
+      `${inputRoot}/${name}`,
+      withUndiciAgent(),
+      withJsDelivrMock(),
+      async () => {
+        const actualDir = join(outputRoot, `${outname}-changed`);
+        const expectedDir = join(outputRoot, outname);
+        const generate = !existsSync(expectedDir) && process.env.CI !== "true";
+        const outputDir = generate ? expectedDir : actualDir;
+        const addPublic = name.endsWith("-public");
 
-      await rm(actualDir, {recursive: true, force: true});
-      if (generate) console.warn(`! generating ${expectedDir}`);
-      const config = Object.assign(await readConfig(undefined, path), {output: outputDir});
-      await build({config, addPublic}, new TestEffects(outputDir));
+        await rm(actualDir, {recursive: true, force: true});
+        if (generate) console.warn(`! generating ${expectedDir}`);
+        const config = Object.assign(await readConfig(undefined, path), {output: outputDir});
+        await build({config, addPublic}, new TestEffects(outputDir));
 
-      // In the addPublic case, we don’t want to test the contents of the public
-      // files because they change often; replace them with empty files so we
-      // can at least check that the expected files exist.
-      if (addPublic) {
-        const publicDir = join(outputDir, "_observablehq");
-        for (const file of findFiles(publicDir)) {
-          await (await open(join(publicDir, file), "w")).close();
+        // In the addPublic case, we don’t want to test the contents of the public
+        // files because they change often; replace them with empty files so we
+        // can at least check that the expected files exist.
+        if (addPublic) {
+          const publicDir = join(outputDir, "_observablehq");
+          for (const file of findFiles(publicDir)) {
+            await (await open(join(publicDir, file), "w")).close();
+          }
         }
+
+        if (generate) return;
+
+        const actualFiles = new Set(findFiles(actualDir));
+        const expectedFiles = new Set(findFiles(expectedDir));
+        const missingFiles = difference(expectedFiles, actualFiles);
+        const unexpectedFiles = difference(actualFiles, expectedFiles);
+        if (missingFiles.size > 0) assert.fail(`Missing output files: ${Array.from(missingFiles).join(", ")}`);
+        if (unexpectedFiles.size > 0) assert.fail(`Unexpected output files: ${Array.from(unexpectedFiles).join(", ")}`);
+
+        for (const path of expectedFiles) {
+          const actual = await readFile(join(actualDir, path), "utf8");
+          const expected = await readFile(join(expectedDir, path), "utf8");
+          assert.ok(actual === expected, `${path} must match snapshot`);
+        }
+
+        await rm(actualDir, {recursive: true, force: true});
       }
-
-      if (generate) return;
-
-      const actualFiles = new Set(findFiles(actualDir));
-      const expectedFiles = new Set(findFiles(expectedDir));
-      const missingFiles = difference(expectedFiles, actualFiles);
-      const unexpectedFiles = difference(actualFiles, expectedFiles);
-      if (missingFiles.size > 0) assert.fail(`Missing output files: ${Array.from(missingFiles).join(", ")}`);
-      if (unexpectedFiles.size > 0) assert.fail(`Unexpected output files: ${Array.from(unexpectedFiles).join(", ")}`);
-
-      for (const path of expectedFiles) {
-        const actual = await readFile(join(actualDir, path), "utf8");
-        const expected = await readFile(join(expectedDir, path), "utf8");
-        assert.ok(actual === expected, `${path} must match snapshot`);
-      }
-
-      await rm(actualDir, {recursive: true, force: true});
-    });
+    );
   }
 });
 

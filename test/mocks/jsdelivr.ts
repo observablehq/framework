@@ -1,4 +1,5 @@
-import {type Dispatcher, MockAgent, getGlobalDispatcher, setGlobalDispatcher} from "undici";
+import type {MockAgent} from "undici";
+import type {BaseFixtures, TestFixture} from "./composeTest.js";
 
 const packages: [name: string, version: string][] = [
   ["@duckdb/duckdb-wasm", "1.28.0"],
@@ -21,29 +22,24 @@ const packages: [name: string, version: string][] = [
   ["topojson-client", "3.1.0"]
 ];
 
-export function mockJsDelivr() {
-  let globalDispatcher: Dispatcher;
+export function withJsDelivrMock<FIn extends BaseFixtures & {undiciAgent?: MockAgent}>(): TestFixture<FIn, FIn> {
+  return (testFunction) => {
+    return async (args) => {
+      if (!args.undiciAgent) throw new Error("withObservableApiMock requires withUndiciAgent");
+      const dataClient = args.undiciAgent.get("https://data.jsdelivr.com");
+      for (const [name, version] of packages) {
+        dataClient
+          .intercept({path: `/v1/packages/npm/${name}/resolved`, method: "GET"})
+          .reply(200, {version}, {headers: {"content-type": "application/json; charset=utf-8"}});
+      }
+      const cdnClient = args.undiciAgent.get("https://cdn.jsdelivr.net");
+      for (const [name, version] of packages) {
+        cdnClient
+          .intercept({path: `/npm/${name}@${version}/+esm`, method: "GET"})
+          .reply(200, "", {headers: {"cache-control": "public, immutable", "content-type": "text/javascript; charset=utf-8"}}); // prettier-ignore
+      }
 
-  before(async () => {
-    globalDispatcher = getGlobalDispatcher();
-    const agent = new MockAgent();
-    agent.disableNetConnect();
-    const dataClient = agent.get("https://data.jsdelivr.com");
-    for (const [name, version] of packages) {
-      dataClient
-        .intercept({path: `/v1/packages/npm/${name}/resolved`, method: "GET"})
-        .reply(200, {version}, {headers: {"content-type": "application/json; charset=utf-8"}});
-    }
-    const cdnClient = agent.get("https://cdn.jsdelivr.net");
-    for (const [name, version] of packages) {
-      cdnClient
-        .intercept({path: `/npm/${name}@${version}/+esm`, method: "GET"})
-        .reply(200, "", {headers: {"cache-control": "public, immutable", "content-type": "text/javascript; charset=utf-8"}}); // prettier-ignore
-    }
-    setGlobalDispatcher(agent);
-  });
-
-  after(async () => {
-    setGlobalDispatcher(globalDispatcher!);
-  });
+      await testFunction({...args});
+    };
+  };
 }

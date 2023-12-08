@@ -1,8 +1,11 @@
 import assert from "node:assert";
 import type {Logger} from "../src/logger.js";
 import {type CommandEffects, commandRequiresAuthenticationMessage, login, whoami} from "../src/observableApiAuth.js";
+import {} from "../src/observableApiAuth.js";
+import {composeTest} from "./mocks/composeTest.js";
 import {MockLogger} from "./mocks/logger.js";
-import {ObservableApiMock} from "./mocks/observableApi.js";
+import {withObservableApiMock} from "./mocks/observableApi.js";
+import {withUndiciAgent} from "./mocks/undiciAgent.js";
 
 describe("login command", () => {
   it("works", async () => {
@@ -56,25 +59,33 @@ describe("whoami command", () => {
     }
   });
 
-  it("works when there is an API key that is invalid", async () => {
-    const mock = new ObservableApiMock().handleGetUser({status: 401}).start();
-    const effects = new MockEffects({apiKey: "MOCK-INVALID-KEY"});
-    await whoami(effects);
-    effects.logger.assertExactLogs([/^Your API key is invalid/]);
-    mock.close();
-  });
+  composeTest(
+    "works when there is an API key that is invalid",
+    withUndiciAgent(),
+    withObservableApiMock(),
+    async ({observableApiMock}) => {
+      observableApiMock.handleGetUser({status: 401}).done();
+      const effects = new MockEffects({apiKey: "MOCK-INVALID-KEY"});
+      await whoami(effects);
+      effects.logger.assertExactLogs([/^Your API key is invalid/]);
+    }
+  );
 
-  it("works when there is a valid API key", async () => {
-    const mock = new ObservableApiMock().handleGetUser().start();
-    const effects = new MockEffects({apiKey: "MOCK-VALID-KEY"});
-    await whoami(effects);
-    effects.logger.assertExactLogs([
-      /^You are logged into.*as Mock User/,
-      /^You have access to the following workspaces/,
-      /Mock User's Workspace/
-    ]);
-    mock.close();
-  });
+  composeTest(
+    "works when there is a valid API key",
+    withUndiciAgent(),
+    withObservableApiMock(),
+    async ({observableApiMock}) => {
+      observableApiMock.handleGetUser().done();
+      const effects = new MockEffects({apiKey: "MOCK-VALID-KEY"});
+      await whoami(effects);
+      effects.logger.assertExactLogs([
+        /^You are logged into.*as Mock User/,
+        /^You have access to the following workspaces/,
+        /Mock User's Workspace/
+      ]);
+    }
+  );
 });
 
 class Deferred<T = unknown> {
