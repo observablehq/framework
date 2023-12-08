@@ -1,14 +1,12 @@
 # Observable Inputs
 
-[Observable Inputs](https://github.com/observablehq/inputs) provides lightweight interface components — buttons, sliders, dropdowns, tables, and the like — to help you explore data and build interactive displays.
-
-Observable Inputs is available by default as `Inputs` in Markdown, but you can import it explicitly like so:
+[Observable Inputs](https://github.com/observablehq/inputs) provides “lightweight interface components — buttons, sliders, dropdowns, tables, and the like — to help you explore data and build interactive displays.” Observable Inputs is available by default as `Inputs` in Markdown, but you can import it explicitly like so:
 
 ```js echo
 import * as Inputs from "npm:@observablehq/inputs";
 ```
 
-or just import the inputs you use:
+Or, just import the specific inputs you want:
 
 ```js echo
 import {Button, Color} from "npm:@observablehq/inputs";
@@ -230,4 +228,4 @@ rows // click a checkbox in the leftmost column
 
 ---
 
-* [Form](https://observablehq.com/@observablehq/input-form?collection=@observablehq/inputs) - combine multiple inputs for a compact display
+TK [Form](https://observablehq.com/@observablehq/input-form?collection=@observablehq/inputs) - combine multiple inputs for a compact display

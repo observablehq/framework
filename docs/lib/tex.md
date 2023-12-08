@@ -1,6 +1,6 @@
 # TeX
 
-${tex`\TeX`} is a language for typesetting mathematical formulae. Observable Markdown’s implementation is powered by ${tex`\KaTeX`}.
+${tex`\TeX`} is a language for typesetting mathematical formulae. Observable provides a TeX tagged template literal implementation powered by ${tex`\KaTeX`}. It is available by default as `tex` in Markdown, but you can also import it like so:
 
 ```js echo
 import tex from "npm:@observablehq/tex";

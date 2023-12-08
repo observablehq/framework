@@ -49,7 +49,7 @@ hr {
 
 ## Code as business intelligence
 
-If your business wants to win, you need best-in-class dashboards and analysis to outsmart your competitors — you need the expressiveness of code. Leverage the full power of modern browsers, and use our popular open-source libraries [D3.js](https://d3js.org) and [Observable Plot](https://observablehq.com/plot/), to create powerful interactive data visualizations and apps.
+If your business wants to win, you need best-in-class dashboards and analysis to outsmart your competitors — you need the expressiveness of code. Leverage the full power of modern browsers, and use our popular open-source libraries [D3.js](./lib/d3) and [Observable Plot](./lib/plot), to create powerful interactive data visualizations and apps.
 
 But you want to move fast, too. We get it. Unlike general-purpose web frameworks and site builders, the Observable CLI is optimized for business intelligence. Pages are simply [Markdown](./markdown) with [reactive JavaScript](./javascript) code blocks for charts and inputs. Our batteries-included approach with beautiful components makes it easy to get started. And you can develop custom components when you need them.
 

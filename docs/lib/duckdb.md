@@ -1,18 +1,24 @@
 # DuckDB
 
-Observable Markdown has built-in support for DuckDB via [duckdb-wasm](https://github.com/duckdb/duckdb-wasm).  `DuckDBClient` is available by default in Markdown, but you can explicitly import it like so:
+DuckDB is “an in-process SQL OLAP Database Management System. [DuckDB-Wasm](https://github.com/duckdb/duckdb-wasm) brings DuckDB to every browser thanks to WebAssembly.” DuckDB-Wasm is available by default as `duckdb` in Markdown, but you can explicitly import it as:
+
+```js echo
+import * as duckdb from "npm:@duckdb/duckdb-wasm";
+```
+
+For convenience, we provide a [`DatabaseClient`](https://observablehq.com/@observablehq/database-client-specification) implementation on top of DuckDB-Wasm, `DuckDBClient`. This is also available by default in Markdown, but you can explicitly import it like so:
 
 ```js echo
 import {DuckDBClient} from "npm:@observablehq/duckdb";
 ```
 
-To get a DuckDB database, passing a set of named tables to `DuckDBClient.of`. Each table can be expressed as a [`FileAttachment`](../javascript/files), [Arquero table](./arquero), [Arrow table](./arrow), an array of objects, or a promise to the same:
+To get a DuckDB client, pass zero or more named tables to `DuckDBClient.of`. Each table can be expressed as a [`FileAttachment`](../javascript/files), [Arquero table](./arquero), [Arrow table](./arrow), an array of objects, or a promise to the same. For example, below we load a sample of 250,000 stars from the [Gaia Star Catalog](https://observablehq.com/@cmudig/peeking-into-the-gaia-star-catalog) as a [Apache Parquet](https://parquet.apache.org/) file:
 
 ```js echo
 const db = DuckDBClient.of({gaia: FileAttachment("gaia-sample.parquet")});
 ```
 
-You can run a query using `db.sql`:
+Now we can run a query using `db.sql` to bin the stars by [right ascension](https://en.wikipedia.org/wiki/Right_ascension) (`ra`) and [declination](https://en.wikipedia.org/wiki/Declination) (`dec`):
 
 ```js echo
 const bins = db.sql`SELECT
@@ -26,7 +32,7 @@ GROUP BY
   2`
 ```
 
-Now let’s make a chart with [Plot’s raster mark](https://observablehq.com/plot/marks/raster).
+These bins can quickly be turned into a heatmap with [Plot’s raster mark](https://observablehq.com/plot/marks/raster), showing the milky way.
 
 ```js echo
 Plot.plot({

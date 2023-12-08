@@ -1,8 +1,6 @@
 # Apache Arrow
 
-[Apache Arrow](https://arrow.apache.org/) defines a language-independent columnar memory format for flat and hierarchical data, organized for efficient analytic operations. You will probably not consume it directly, but it is used by [Arquero](arquero), [DuckDB](duckdb), and other libraries to handle data efficiently.
-
-Apache Arrow is available by default as `Arrow` in Markdown, but you can import it explicitly like so:
+[Apache Arrow](https://arrow.apache.org/) “defines a language-independent columnar memory format for flat and hierarchical data, organized for efficient analytic operations.” You will probably not consume it directly, but it is used by [Arquero](arquero), [DuckDB](duckdb), and other libraries to handle data efficiently. Apache Arrow is available by default as `Arrow` in Markdown, but you can import it explicitly like so:
 
 ```js echo
 import * as Arrow from "npm:apache-arrow";

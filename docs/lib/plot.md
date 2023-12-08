@@ -1,28 +1,32 @@
 # Observable Plot
 
-[Observable Plot](https://observablehq.com/plot/) is a JavaScript library for exploratory data visualization, made by the same team as [D3](d3). Plot is available by default as `Plot` in Markdown, but you can import it explicitly like so:
+[Observable Plot](https://observablehq.com/plot/) is a “JavaScript library for visualizing tabular data, focused on accelerating exploratory data analysis. It has a concise, memorable, yet expressive interface, featuring scales and layered marks.” It’s the sister library to our other visualization library, [D3.js](d3). Observable Plot is available by default as `Plot` in Markdown, but you can import it explicitly like so:
 
 ```js echo
 import * as Plot from "npm:@observablehq/plot";
 ```
 
-To display a chart in Observable Markdown, simply call `Plot.plot` in a JavaScript expression code block:
+To display a chart in Markdown, call `Plot.plot` in a JavaScript expression code block:
 
 ````md
 ```js
-Plot.plot({
-  marks: [
-    Plot.barY(alphabet, {x: "letter", y: "frequency"})
-  ]
-})
+Plot.rectY(alphabet, {x: "letter", y: "frequency"}).plot()
 ```
 ````
 
-For example, here’s a Voronoi chart:
+This produces:
+
+```js
+Plot.rectY(alphabet, {x: "letter", y: "frequency"}).plot()
+```
+
+As another example, here’s a pretty (but meaningless) Voronoi chart:
 
 ```js echo
 const random = d3.randomLcg(42);
-const chart = Plot.voronoi(Array.from({length: 100}, () => [random(), random()])).plot({nice: true}); 
+const x = Array.from({length: 500}, random);
+const y = Array.from({length: 500}, random);
+const chart = Plot.voronoi(x, {x, y, fill: x}).plot({nice: true});
 
 display(chart);
 ```
