@@ -63,11 +63,11 @@ Inputs.table(tracks)
 As an alternative to `db.sql`, you can call `db.query`.
 
 ```js run=false
-await db.query(`SELECT * FROM tracks WHERE Name LIKE $1`, [`%${name}%`])
+db.query(`SELECT * FROM tracks WHERE Name LIKE $1`, [`%${name}%`])
 ```
 
 There’s also `db.queryRow` for just getting a single row.
 
 ```js echo
-await db.queryRow(`SELECT sqlite_version()`)
+db.queryRow(`SELECT sqlite_version()`)
 ```

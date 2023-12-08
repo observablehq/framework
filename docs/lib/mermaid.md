@@ -9,7 +9,7 @@ import mermaid from "npm:@observablehq/mermaid";
 To use in a JavaScript code block:
 
 ```js echo
-await mermaid`graph TD;
+mermaid`graph TD;
     A-->B;
     A-->C;
     B-->D;

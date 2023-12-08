@@ -67,13 +67,13 @@ await db.sql`CREATE TABLE addresses
 As an alternative to `db.sql`, there’s also `db.query`:
 
 ```js echo
-await db.query("SELECT * FROM gaia LIMIT 10")
+db.query("SELECT * FROM gaia LIMIT 10")
 ```
 
 And `db.queryRow`:
 
 ```js echo
-await db.queryRow("SELECT count() AS count FROM gaia")
+db.queryRow("SELECT count() AS count FROM gaia")
 ```
 
 See the [DatabaseClient Specification](https://observablehq.com/@observablehq/database-client-specification) for more details.
