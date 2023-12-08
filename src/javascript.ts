@@ -76,7 +76,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
       .map(({name}) => fileReference(name, sourcePath));
     const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
     const implicitDisplay = node.expression && !inputs.includes("display") && !inputs.includes("view");
-    if (implicitDisplay) inputs.push("display");
+    if (implicitDisplay) inputs.push("display"), (node.async = true);
     if (findImportDeclarations(node).length > 0) node.async = true;
     return {
       id,
@@ -89,7 +89,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
         const output = new Sourcemap(input);
         trim(output, input);
         if (implicitDisplay) {
-          output.insertLeft(0, "display((\n");
+          output.insertLeft(0, "display(await(\n");
           output.insertRight(input.length, "\n))");
         }
         await rewriteImports(output, node, sourcePath, createImportResolver(root, "_import"));
