@@ -14,7 +14,7 @@
 <script type="module">
 
 if (location.pathname.endsWith("/")) {
-  const alt = `${location.pathname.slice(0, -1)}.html`;
+  const alt = location.pathname.slice(0, -1);
   fetch(alt, {method: "HEAD"}).then((response) => response.ok && location.replace(alt + location.search + location.hash));
 }
 

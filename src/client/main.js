@@ -43,6 +43,7 @@ export function define(cell) {
       };
   const v = main.variable(
     {
+      _node: root, // for visibility promise
       pending: () => (reset = clear),
       fulfilled: () => reset?.(),
       rejected: (error) => (reset?.(), root.append(inspectError(error)))
