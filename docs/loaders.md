@@ -2,28 +2,36 @@
 
 **Data loaders** generate files — typically static snapshots of data — at build time. For example, a data loader might query a database and output a CSV file, or server-side render a chart and output a PNG image.
 
-Why generate data at build time? Conventional dashboards are often slow or unreliable because database queries are executed for each viewer on load. Data loaders, in contrast, encourage you to prepare static data snapshots at build time. This results in dashboards that load _instantly_ and without giving viewers more access than necessary.
+Why generate data at build time? Conventional dashboards are often slow or even unreliable because database queries are executed for each viewer on load. By preparing static data snapshots ahead of time during build, dashboards load instantly with no external dependency on your database. You can also optimize data snapshots for what your dashboard needs, further improving performance and offering more control over what information is shared with viewers.
 
-Data loaders can be written in any programming language. They can even invoke binary executables such as ffmpeg or DuckDB! For convenience, the Observable CLI has built-in support for common languages: JavaScript, TypeScript, Python, and R.
+Data loaders can be written in any programming language. They can even invoke binary executables such as ffmpeg or DuckDB! For convenience, the Observable CLI has built-in support for common languages: JavaScript, TypeScript, Python, and R. Naturally you can use any third-party library or SDK for these languages, too.
 
-For example, to map recent earthquakes, you can create a JavaScript data loader `quakes.csv.js` that queries the [USGS API](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php) and outputs CSV to stdout.
+Let’s take a look at a simple data loader written in JavaScript. It [fetches](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) a GeoJSON feature collection of recent earthquakes from the [USGS API](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php). The data loader then uses [d3-dsv](https://d3js.org/d3-dsv) to output CSV to standard output with three columns representing the _magnitude_, _longitude_, and _latitude_ of each earthquake.
 
 ```js run=false echo
-process.stdout.write("magnitude,longitude,latitude\n");
+import {csvFormat} from "d3-dsv";
+
+// Fetch GeoJSON from the USGS.
 const response = await fetch("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson");
+if (!response.ok) throw new Error(`fetch failed: ${response.status}`);
 const collection = await response.json();
-for (const feature of collection.features) {
-  process.stdout.write(`${feature.properties.mag},${feature.geometry.coordinates.join(",")}\n`);
-}
+
+// Convert to an array of objects.
+const features = collection.features.map((f) => ({
+  magnitude: f.properties.mag,
+  longitude: f.geometry.coordinates[0],
+  latitude: f.geometry.coordinates[1]
+}));
+
+// Output CSV.
+process.stdout.write(csvFormat(features));
 ```
 
-To access your data from Markdown, add a [JavaScript fenced code block](./javascript) and load `quakes.csv` as a [`FileAttachment`](./javascript/files).
+The Observable CLI uses [file-based routing](./routing); by naming the data loader `quakes.csv.js`, we can then access its output in client-side JavaScript as a [`FileAttachment`](./javascript/files) named `quakes.csv`.
 
 ```js echo
 const quakes = FileAttachment("quakes.csv").csv({typed: true});
 ```
-
-And that’s it! The CLI automatically runs the data loader. (More details below.)
 
 Now we can display the earthquakes in a map using [Observable Plot](./lib/plot):
 
@@ -47,44 +55,46 @@ Plot.plot({
 })
 ```
 
+During preview, the CLI automatically runs the data loader the first time its output is needed and [caches](#caching) the result; if you edit the data loader, the CLI will automatically run it again and push the new result to the client.
+
 Here are some more details on data loaders.
 
 ## Archives
 
 Data loaders can generate multi-file archives, either using the [ZIP](<https://en.wikipedia.org/wiki/ZIP_(file_format)>) or [tar](<https://en.wikipedia.org/wiki/Tar_(computing)>) format; individual files can then be pulled from archives using `FileAttachment`. This allows a data loader to output multiple related files from the same source data in one go.
 
-For example, here is a TypeScript data loader `quakes.zip.ts` that uses [JSZip](https://stuk.github.io/jszip/) to generate a ZIP archive of two files, `metadata.json` and `earthquakes.csv`:
+For example, here is a TypeScript data loader `quakes.zip.ts` that uses [JSZip](https://stuk.github.io/jszip/) to generate a ZIP archive of two files, `metadata.json` and `features.csv`:
 
 ```js run=false
 import {csvFormat} from "d3-dsv";
 import JSZip from "jszip";
 
-// Load data from USGS.
+// Fetch GeoJSON from the USGS.
 const response = await fetch("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson");
 if (!response.ok) throw new Error(`fetch failed: ${response.status}`);
-const {metadata, features} = await response.json();
+const collection = await response.json();
 
-// Process data into the desired format, retaining only the desired columns.
-const earthquakes = features.map(({properties, geometry: {coordinates}}) => ({
-  lon: +coordinates[0].toFixed(2),
-  lat: +coordinates[1].toFixed(2),
-  magnitude: +properties.mag.toFixed(2)
+// Convert to an array of objects.
+const features = collection.features.map((f) => ({
+  magnitude: f.properties.mag,
+  longitude: f.geometry.coordinates[0],
+  latitude: f.geometry.coordinates[1]
 }));
 
-// Output a ZIP file to stdout.
+// Output a ZIP archive to stdout.
 const zip = new JSZip();
-zip.file("metadata.json", JSON.stringify(metadata, null, 2));
-zip.file("earthquakes.csv", csvFormat(earthquakes));
+zip.file("metadata.json", JSON.stringify(collection.metadata, null, 2));
+zip.file("features.csv", csvFormat(features));
 zip.generateNodeStream().pipe(process.stdout);
 ```
 
-Note how the last part serializes the `metadata` and `earthquakes` objects to a readable format corresponding to the file extension (`.json` and `.csv`).
+Note how the last part serializes the `metadata` and `features` objects to a readable format corresponding to the file extension (`.json` and `.csv`).
 
 To load data in the browser, use `FileAttachment`:
 
 ```js run=false
 const metadata = FileAttachment("quakes/metadata.json").json();
-const earthquakes = FileAttachment("quakes/earthquakes.csv").csv({typed: true});
+const features = FileAttachment("quakes/features.csv").csv({typed: true});
 ```
 
 The ZIP file itself can be also referenced as a whole — for example if the names of the files are not known in advance — with [`FileAttachment.zip`](../javascript/files#zip):
@@ -142,7 +152,7 @@ If multiple requests are made concurrently for the same data loader, the data lo
 
 ## Output
 
-Data loaders must output to [stdout](<https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)>). The first extension (such as `.csv`) does not affect the generated snapshot; the data loader is solely responsible for producing the expected output (such as CSV). If you wish to log additional information from within a data loader, be sure to log to stderr, say by using [`console.warn`](https://developer.mozilla.org/en-US/docs/Web/API/console/warn); otherwise the logs will be included in the output file and sent to the client.
+Data loaders must output to [standard output](<https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)>). The first extension (such as `.csv`) does not affect the generated snapshot; the data loader is solely responsible for producing the expected output (such as CSV). If you wish to log additional information from within a data loader, be sure to log to stderr, say by using [`console.warn`](https://developer.mozilla.org/en-US/docs/Web/API/console/warn); otherwise the logs will be included in the output file and sent to the client.
 
 ## Caching
 
