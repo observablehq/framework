@@ -4,10 +4,13 @@ The Observable CLI is a Node.js application and is published to npm as [`@observ
 
 ## Installing
 
-We recommend starting with a project template.
+We recommend starting with our [default project template](https://github.com/observablehq/create) using either npm or Yarn:
 
 ```sh
 npm init @observablehq
+```
+```sh
+yarn create @observablehq
 ```
 
 After answering a few questions, this will create a new project folder containing several files like so:
