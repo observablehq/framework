@@ -4,7 +4,7 @@ The Observable CLI supports JavaScript in Markdown for charts, inputs, and other
 
 JavaScript in Markdown can be expressed either as [fenced code blocks](#fenced-code-blocks) or [inline expressions](#inline-expressions). You can also write JavaScript modules alongside Markdown files and [import them](./javascript/imports) into Markdown. (And you can run JavaScript, TypeScript, Python, or any other programming language during build to generate data using [data loaders](./loaders).)
 
-### Fenced code blocks
+## Fenced code blocks
 
 JavaScript fenced code blocks (<code>```js</code>) are typically used to [display content](./javascript/display) such as charts and inputs. They can also be used for logic by declaring top-level variables, say to load data or declare helper functions.
 
@@ -68,7 +68,7 @@ A program block doesn’t display anything by default, but you can call the buil
 
 (A technical note: the parser first attempts to parse the input as an expression; if that fails, it parses it as a program. So, code such as `{foo: 1}` is interpreted as an object literal rather than a block with a labeled statement.)
 
-### Inline expressions
+## Inline expressions
 
 Inline JavaScript expressions (<code>$\{…}</code>) interpolate values into Markdown. They are typically used to display numbers such as metrics, or to arrange visual elements such as charts into rich HTML layouts.
 

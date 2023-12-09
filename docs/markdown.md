@@ -1,8 +1,21 @@
 # Markdown
 
-See [GitHub’s guide to Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) for an introduction.
+Markdown in the Observable CLI follows the [CommonMark spec](https://spec.commonmark.org/)* and is powered by [markdown-it](https://github.com/markdown-it/markdown-it). If you don’t already know Markdown, please see [GitHub’s guide to Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) for an introduction.
+
+Markdown in the Observable CLI also offers [live JavaScript](./javascript) as either [fenced code blocks](./javascript#fenced-code-blocks) (<code>```js</code>) or [inline expressions](./javascript#inline-expressions) (<code>$\{…}</code>), allows [HTML in Markdown](#html), and allows [YAML front matter](#yaml-front-matter) for page-level configuration.
+
+*The Observable CLI currently deviates from CommonMark in how blank lines are handled in HTML; see below. This is a limitation of our parser needed for incremental update during preview. We’d like to remove this deviation in the future.
 
 Here are a few examples of Markdown content to get you started.
+
+## YAML front matter
+
+```yaml
+---
+title: My favorite page
+toc: false
+---
+```
 
 ## Headings
 
@@ -29,24 +42,44 @@ this is `monospaced` text
 ## Tables
 
 ```md
-| one | two | three |
-|---|---|---|
-| 1 | 2 | 3 |
+Column 1   | Column 2     | Column 3
+---------- | ------------ | ----------
+Cell 1-1   | Cell 2-1     | Cell 3-1
+Cell 1-2   | Cell 2-2     | Cell 3-2
+```
+
+```md
+Align left | Align center | Align right
+:--------- | :----------: | ----------:
+Cell 1-1   |   Cell 2-1   |    Cell 3-1
+Cell 1-2   |   Cell 2-2   |    Cell 3-2
 ```
 
 ## Lists
 
 ```md
-- one
-- two
-- three
+- red
+- green
+- blue
+  - light blue
+  - dark blue
+```
+
+```md
+1. first
+1. second
+1. third
+   1. third first
+   1. third second
 ```
 
 ## Links
 
 ```md
+<https://example.com>
 [relative link](./dashboard)
 [external link](https://example.com)
+[external link](<https://en.wikipedia.org/wiki/Tar_(computing)>)
 ```
 
 ## Images
