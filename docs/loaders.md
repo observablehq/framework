@@ -6,7 +6,7 @@ Why generate data at build time? Conventional dashboards are often slow or unrel
 
 Data loaders can be written in any programming language. They can even invoke binary executables such as ffmpeg or DuckDB! For convenience, the Observable CLI has built-in support for common languages: JavaScript, TypeScript, Python, and R.
 
-For example, to map recent earthquakes, you can create a JavaScript data loader `earthquakes.csv.js` that queries the [USGS API](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php) and outputs CSV to stdout.
+For example, to map recent earthquakes, you can create a JavaScript data loader `quakes.csv.js` that queries the [USGS API](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php) and outputs CSV to stdout.
 
 ```js run=false echo
 process.stdout.write("magnitude,longitude,latitude\n");
@@ -17,10 +17,10 @@ for (const feature of collection.features) {
 }
 ```
 
-To access your data from Markdown, add a [JavaScript fenced code block](./javascript) and load `earthquakes.csv` as a [`FileAttachment`](./javascript/files).
+To access your data from Markdown, add a [JavaScript fenced code block](./javascript) and load `quakes.csv` as a [`FileAttachment`](./javascript/files).
 
 ```js echo
-const quakes = FileAttachment("earthquakes.csv").csv({typed: true});
+const quakes = FileAttachment("quakes.csv").csv({typed: true});
 ```
 
 And that’s it! The CLI automatically runs the data loader. (More details below.)
@@ -53,7 +53,7 @@ Here are some more details on data loaders.
 
 Data loaders can generate multi-file archives, either using the [ZIP](<https://en.wikipedia.org/wiki/ZIP_(file_format)>) or [tar](<https://en.wikipedia.org/wiki/Tar_(computing)>) format; individual files can then be pulled from archives using `FileAttachment`. This allows a data loader to output multiple related files from the same source data in one go.
 
-For example, here is a TypeScript data loader `earthquakes.zip.ts` that uses [JSZip](https://stuk.github.io/jszip/) to generate a ZIP archive of two files, `metadata.json` and `earthquakes.csv`:
+For example, here is a TypeScript data loader `quakes.zip.ts` that uses [JSZip](https://stuk.github.io/jszip/) to generate a ZIP archive of two files, `metadata.json` and `earthquakes.csv`:
 
 ```js run=false
 import {csvFormat} from "d3-dsv";
@@ -83,14 +83,14 @@ Note how the last part serializes the `metadata` and `earthquakes` objects to a 
 To load data in the browser, use [`FileAttachment`](../javascript/files):
 
 ```js run=false
-const metadata = FileAttachment("earthquakes/metadata.json").json();
-const earthquakes = FileAttachment("earthquakes/earthquakes.csv").csv({typed: true});
+const metadata = FileAttachment("quakes/metadata.json").json();
+const earthquakes = FileAttachment("quakes/earthquakes.csv").csv({typed: true});
 ```
 
 The ZIP file itself can be also referenced as a whole — for example if the names of the files are not known in advance — with [`FileAttachment.zip`](../javascript/files#zip):
 
 ```js echo
-const zip = FileAttachment("earthquakes.zip").zip();
+const zip = FileAttachment("quakes.zip").zip();
 const metadata = zip.then((zip) => zip.file("metadata.json").json());
 ```
 
@@ -115,21 +115,21 @@ Data loaders live in the source root (typically `docs`) alongside your other sou
 - `.sh` - shell script (`sh`)
 - `.exe` - arbitrary executable
 
-For example, for the file `earthquakes.csv`, the following data loaders are considered:
+For example, for the file `quakes.csv`, the following data loaders are considered:
 
-- `earthquakes.csv.js`
-- `earthquakes.csv.ts`
-- `earthquakes.csv.py`
-- `earthquakes.csv.R`
-- `earthquakes.csv.sh`
-- `earthquakes.csv.exe`
+- `quakes.csv.js`
+- `quakes.csv.ts`
+- `quakes.csv.py`
+- `quakes.csv.R`
+- `quakes.csv.sh`
+- `quakes.csv.exe`
 
 If you use `.py` or `.R`, the corresponding interpreter (`python3` or `Rscript`, respectively) must be installed and available on your `$PATH`. Any additional modules, packages, libraries, _etc._, must also be installed before you can use them.
 
 Whereas `.js`, `.ts`, `.py`, `.R`, and `.sh` data loaders are run via interpreters, `.exe` data loaders are run directly and must have the executable bit set. This is typically done via [`chmod`](https://en.wikipedia.org/wiki/Chmod). For example:
 
 ```sh
-chmod +x docs/earthquakes.csv.exe
+chmod +x docs/quakes.csv.exe
 ```
 
 While a `.exe` data loader may be any binary executable (_e.g.,_ compiled from C), it is often convenient to specify another interpreter using a [shebang](<https://en.wikipedia.org/wiki/Shebang_(Unix)>). For example, to write a data loader in Julia:
@@ -175,7 +175,7 @@ When a data loader fails, it _must_ return a non-zero [exit code](https://en.wik
 During preview, data loader errors will be shown in the preview server log, and a 500 HTTP status code will be returned to the client that attempted to load the corresponding file. This typically results in an error such as:
 
 ```
-RuntimeError: Unable to load file: earthquakes.csv
+RuntimeError: Unable to load file: quakes.csv
 ```
 
 When any data loader fails, the entire build fails.

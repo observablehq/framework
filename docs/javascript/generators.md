@@ -2,6 +2,8 @@
 
 Values that change over time, such as interactive inputs and animation parameters, can represented as [async generators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator). When a top-level generator is declared, code in other blocks sees the generator’s latest yielded value and runs whenever the generator yields a new value.
 
+TK Talk about how this is different than just using a `requestAnimationFrame` loop because you can write your animation more declaratively, and then maybe you can have a scrubber that controls the animation instead of being driven by time.
+
 For example, here is a generator that increments once a second:
 
 ```js echo

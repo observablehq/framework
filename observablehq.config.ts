@@ -2,6 +2,8 @@ export default {
   title: "Observable CLI",
   pages: [
     {name: "Getting started", path: "/getting-started"},
+    {name: "Routing", path: "/routing"},
+    {name: "Configuration", path: "/config"},
     {name: "JavaScript", path: "/javascript"},
     {name: "Data loaders", path: "/loaders"},
     {name: "Markdown", path: "/markdown"},
