@@ -142,7 +142,7 @@ If multiple requests are made concurrently for the same data loader, the data lo
 
 ## Output
 
-Data loaders must output to [stdout](<https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)>). The first extension (such as `.csv`) does not affect the generated data snapshot; the data loader is solely responsible for producing the expected output (such as CSV). If you wish to log additional information from within a data loader, be sure to log to stderr, say by using [`console.warn`](https://developer.mozilla.org/en-US/docs/Web/API/console/warn); otherwise the logs will be included in the output file and sent to the client.
+Data loaders must output to [stdout](<https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)>). The first extension (such as `.csv`) does not affect the generated snapshot; the data loader is solely responsible for producing the expected output (such as CSV). If you wish to log additional information from within a data loader, be sure to log to stderr, say by using [`console.warn`](https://developer.mozilla.org/en-US/docs/Web/API/console/warn); otherwise the logs will be included in the output file and sent to the client.
 
 ## Caching
 
