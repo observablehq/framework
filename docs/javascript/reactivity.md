@@ -1,7 +1,5 @@
 # JavaScript: Reactivity
 
-> _Techincal note: Whereas Observable notebooks use a nonstandard dialect of JavaScript, the Observable CLI uses strictly vanilla JavaScript syntax. In the future, we plan on adopting vanilla syntax for Observable notebooks as well._
-
 The Observable CLI uses the open-source [Observable Runtime](https://github.com/observablehq/runtime) to run JavaScript in Markdown reactively: in topological order as determined by [top-level variable](#top-level-variables) references, as in a spreadsheet. For example, here we reference variables `x` and `y` even though they are defined in a code block below:
 
 ```js echo
