@@ -1,6 +1,6 @@
 # Hypertext Literal
 
-Observable’s [Hypertext Literal](https://github.com/observablehq/htl) is a “tagged template literal for HTML which interpolates values _based on context_, allowing automatic escaping and the interpolation of non-serializable values, such as event listeners, style objects, and other DOM nodes.”
+[Hypertext Literal](https://github.com/observablehq/htl) is a “tagged template literal for HTML which interpolates values _based on context_, allowing automatic escaping and the interpolation of non-serializable values, such as event listeners, style objects, and other DOM nodes.”
 
 Hypertext Literal is available by default as `htl` in Markdown, together with its methods `html` and `svg`. You can import it explicitly like so:
 

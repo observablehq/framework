@@ -107,7 +107,7 @@ The resulting output root is:
 │  ├─ _import
 │  │  └─ chart.js
 │  ├─ _observablehq
-│  │  └─ # additional assets for serving the site
+│  │  └─ ... # additional assets for serving the site
 │  └─ index.html
 └─ ...
 ```
@@ -136,7 +136,7 @@ Any files referenced by `FileAttachment` will automatically be copied to the `_f
 │  ├─ _file
 │  │  └─ quakes.csv
 │  ├─ _observablehq
-│  │  └─ # additional assets for serving the site
+│  │  └─ ... # additional assets for serving the site
 │  └─ index.html
 └─ ...
 ```
@@ -173,7 +173,7 @@ This will produce the following output root:
 │  ├─ _file
 │  │  └─ quakes.json
 │  ├─ _observablehq
-│  │  └─ # additional assets for serving the site
+│  │  └─ ... # additional assets for serving the site
 │  └─ index.html
 └─ ...
 ```
@@ -207,7 +207,7 @@ Becomes this output:
 │  │  └─ quakes
 │  │     └─ 2021.csv
 │  ├─ _observablehq
-│  │  └─ # additional assets for serving the site
+│  │  └─ ... # additional assets for serving the site
 │  └─ index.html
 └─ ...
 ```

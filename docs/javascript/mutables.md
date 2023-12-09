@@ -33,7 +33,11 @@ Inputs.button([["Increment", increment], ["Reset", reset]])
 }
 </style>
 
-Count is: ${htl.html`<span class="flash">${count}</span>`}.
+Count is: ${html`<span class="flash">${count}</span>`}.
+
+```md
+Count is: ${html`<span class="flash">${count}</span>`}.
+```
 
 This approach is akin to React’s `useState` hook.
 
