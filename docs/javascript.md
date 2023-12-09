@@ -45,7 +45,7 @@ document.createTextNode("Hello, world!")
 While you can use the [standard DOM API](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model) directly to create content, you’ll typically use a helper library such as the `html` and `svg` tagged template literals provided by [Hypertext Literal](./lib/htl), [Observable Plot](./lib/plot)’s `Plot.plot` method, or [D3](./lib/d3) to create DOM elements for display.
 
 ```js echo
-html`Hello <i>world</i>!`
+html`1 + 2 &equals; <b>${1 + 2}</b>`
 ```
 
 ```js echo
