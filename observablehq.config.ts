@@ -7,7 +7,6 @@ export default {
     {name: "JavaScript", path: "/javascript"},
     {name: "Data loaders", path: "/loaders"},
     {name: "Markdown", path: "/markdown"},
-    {name: "HTML", path: "/html"},
     {
       name: "JavaScript",
       pages: [

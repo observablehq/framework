@@ -1,6 +1,6 @@
 # JavaScript
 
-The Observable CLI supports JavaScript in Markdown for interactive charts and other dynamic content. This client-side JavaScript runs in the browser on load, and re-runs automatically — and incrementally — when [reactive variables](./javascript/reactivity) change or when you edit pages during development.
+The Observable CLI supports JavaScript in Markdown for charts, inputs, and other dynamic, animated, interactive, and graphical content. This client-side JavaScript runs in the browser on load, and re-runs automatically when [reactive variables](./javascript/reactivity) change or when you edit pages during preview.
 
 JavaScript in Markdown can be expressed either as [fenced code blocks](#fenced-code-blocks) or [inline expressions](#inline-expressions). You can also write JavaScript modules alongside Markdown files and [import them](./javascript/imports) into Markdown. (And you can run JavaScript, TypeScript, Python, or any other programming language during build to generate data using [data loaders](./loaders).)
 

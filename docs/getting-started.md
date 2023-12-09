@@ -60,7 +60,7 @@ This is the home page for your site. You can have as many additional pages as yo
 This is your [project configuration](./config) file, such as the pages and sections in the sidebar navigation, and the project’s title. The config file can be written in either TypeScript (`.ts`) or JavaScript (`.js`).
 ### Installing into an existing project
 
-You can also install the CLI as a dependency on an existing project if you don’t want to create a new project from a template as above. You can even install the CLI globally so that the `observable` command is available across projects.
+You can also install the CLI as a dependency on an existing project if you don’t want to create a new project from a template as above.
 
 ```sh
 npm install @observablehq/cli
@@ -70,22 +70,42 @@ npm install @observablehq/cli
 yarn add @observablehq/cli
 ```
 
-**Caveat:** this requires you to add the GitHub Package Registry to your `.npmrc` because we haven’t yet published the `@observablehq/cli` package publicly to npm.
+You can also install the CLI globally so that the `observable` command is available across projects, but we don’t recommend this approach. By installing the CLI into each project, everyone you work with will use the same version of the CLI.
 
 ## Preview
+
+After you’ve initialized your project, use the `preview` command to develop your app. In preview mode, the Observable CLI generates HTML pages on-demand as you preview your site in the browser. As you edit files, changes will be instantly pushed to the browser.
+
+To start the preview server:
 
 ```sh
 observable preview
 ```
 
-Visit <http://localhost:3000>.
+Then visit <http://localhost:3000> to develop.
+
+By default, the preview server is only visible to you on your local machine using the loopback address `127.0.0.1`. You can open access to remote connections using <nobr>`--host 0.0.0.0`</nobr>. Additionally, the preview server runs on port 3000 by default; you can change the port using the <nobr>`--port`</nobr> flag.
 
 ## Build
+
+When you’re ready to deploy your project, use the `build` command to generate the output root (`dist`). You can then copy the `dist` folder to your static site server.
+
+To generate your static site:
 
 ```sh
 observable build
 ```
 
-Creates `dist`.
+You can then use `npx http-server dist` to preview your built site.
 
-You can use `npx http-server dist` to preview your built site.
+## Deploy
+
+If you’d like to host your project on the [Observable platform](https://observablehq.com) and share it securely with your team, use the `deploy` command.
+
+To deploy your project to Observable:
+
+```sh
+observable deploy
+```
+
+Then visit <https://observablehq.com> to see your project.

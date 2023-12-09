@@ -10,7 +10,7 @@ The Observable CLI uses file-based routing. This means each page in your project
 └─ ...
 ```
 
-When the site is built, the output root (`dist`) will contain two corresponding static HTML pages (`hello.html` and `index.html`), along with some additional assets needed for the site to work:
+When the site is built, the output root (`dist`) will contain two corresponding static HTML pages (`hello.html` and `index.html`), along with a few additional assets needed for the site to work.
 
 ```ini
 .
@@ -22,16 +22,16 @@ When the site is built, the output root (`dist`) will contain two corresponding 
 └─ ...
 ```
 
-When you serve your site, routes map to files this way:
+For this site, routes map to files as:
 
 ```
 /      → dist/index.html → docs/index.md
 /hello → dist/hello.html → docs/hello.md
 ```
 
-Your project should always have a top-level `index.md`; this is the root page of your project, and it’s what people visit by default.
+This assumes “clean URLs” as supported by most static site servers; `/hello` can also be accessed as `/hello.html`, and `/` can be accessed as `/index` and `/index.html`. (Some static site servers automatically redirect to clean URLs, but we recommend being consistent when linking to your site.)
 
-The above examples assume “clean URLs” as supported by most static site servers: `/hello` can also be accessed as `/hello.html`, and `/` can be accessed as `/index` and `/index.html`. (Some static site servers automatically redirect to clean URLs, but try to be consistent when linking to your site.)
+Projects should always have a top-level `index.md`; this is the root page of your project, and it’s what people visit by default.
 
 ## Folders
 
@@ -48,7 +48,7 @@ Pages can live in folders. For example:
 └─ ...
 ```
 
-With this setup, routes are served this way:
+With this setup, routes are served as:
 
 ```
 /                → dist/index.html           → docs/index.md
@@ -70,7 +70,7 @@ As a variant of the above structure, you can move the `missions/index.md` up to 
 └─ ...
 ```
 
-With this setup, the following routes are served:
+Now routes are served as:
 
 ```
 /                → dist/index.html           → docs/index.md
@@ -81,7 +81,7 @@ With this setup, the following routes are served:
 
 ## Imports
 
-If you use a static [`import`](./javascript/imports) (or a dynamic import with a static string literal as the specifier) to import a local JavaScript file, the imported module will be copied to the output root (`dist`) during build, too.
+If you use a static [`import`](./javascript/imports) (or a dynamic import with a static string literal as the module specifier) to import a local JavaScript file, the imported module will be copied to the output root (`dist`) during build, too.
 
 For example, if you have the following source root:
 
@@ -93,7 +93,7 @@ For example, if you have the following source root:
 └─ ...
 ```
 
-And `index.md` says:
+And `index.md` includes a JavaScript code block that says:
 
 ```js run=false
 import {Chart} from "./chart.js";
@@ -112,13 +112,13 @@ The resulting output root is:
 └─ ...
 ```
 
-The import declaration is automatically rewritten during build to point to `./_import/chart.js` instead of `./chart.js`.
+The import declaration is automatically rewritten during build to point to `./_import/chart.js` instead of `./chart.js`. (In the future [#260](https://github.com/observablehq/cli/issues/260), the Observable CLI will add a content hash to the imported module name for cache-breaking.)
 
-You can use a leading slash to denote paths relative to the source root, such as `/chart.js` instead of `./chart.js`. This allows you to use the same path to import a module from any page, even in nested folders. The Observable CLI always generates relative links so that the generated site can be served under a base path.
+Use a leading slash to denote paths relative to the source root, such as `/chart.js` instead of `./chart.js`. This allows you to use the same path to import a module from anywhere, even in nested folders. The Observable CLI always generates relative links so that the generated site can be served under a base path.
 
 ## Files
 
-If you use [`FileAttachment`](./javascript/files), attached files live in the source root (`docs`) alongside your Markdown pages. For example, say `index.md` has `FileAttachment("quakes.csv")`:
+If you use [`FileAttachment`](./javascript/files), attached files live in the source root (`docs`) alongside your Markdown pages. For example, say `index.md` has some JavaScript code that references `FileAttachment("quakes.csv")`:
 
 ```ini
 .
@@ -141,9 +141,9 @@ Any files referenced by `FileAttachment` will automatically be copied to the `_f
 └─ ...
 ```
 
-The `FileAttachment` reference in `index.md` will be automatically rewritten during build so that it loads `_file/quakes.csv` instead of `quakes.csv`. Only the files you reference statically are copied to the output root (`dist`), so nothing extra or unused is included in the built site.
+`FileAttachment` references are automatically rewritten during build; for example, a reference to `quakes.csv` might be replaced with `_file/quakes.csv`. (In the future [#260](https://github.com/observablehq/cli/issues/260), the Observable CLI will add a content hash to the attached file name for cache-breaking.) Only the files you reference statically are copied to the output root (`dist`), so nothing extra or unused is included in the built site.
 
-[Imported modules](#imports) can use `FileAttachment`, too. In this case, the path to the file is _relative to the importing module_ in the same fashion as `import`; this is accomplished using [`import.meta.url`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta).
+[Imported modules](#imports) can use `FileAttachment`, too. In this case, the path to the file is _relative to the importing module_ in the same fashion as `import`; this is accomplished by resolving relative paths at runtime with [`import.meta.url`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta).
 
 Some additional assets are automatically promoted to file attachments and copied to `_file`. For example, if you have a `<link rel="stylesheet" href="style.css">` declared statically in a Markdown page, the `style.css` file will be copied to `_file`, too. The HTML elements eligible for file attachments are `audio`, `img`, `link`, `picture`, and `video`.
 
@@ -177,6 +177,8 @@ This will produce the following output root:
 │  └─ index.html
 └─ ...
 ```
+
+See the [data loaders documentation](./loaders#routing) for additional information.
 
 ## Archives
 

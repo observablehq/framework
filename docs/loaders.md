@@ -1,8 +1,8 @@
 # Data loaders
 
-**Data loaders** generate files — typically static snapshots of data — at build time. For example, a data loader might query a database and output a CSV or Parquet file, or server-side render a chart and output a PNG image.
+**Data loaders** generate files — typically static snapshots of data — at build time. For example, a data loader might query a database and output a CSV file, or server-side render a chart and output a PNG image.
 
-Why generate data at build time? Conventional dashboards are often slow or unreliable because database queries are executed for each viewer on load. This conventional approach may also allow viewers to run arbitrary queries, increasing security risk by giving viewers more access than necessary. Data loaders, in contrast, encourage you to prepare static data snapshots at build time. This results in dashboards that load _instantly_ and without giving viewers more access than necessary.
+Why generate data at build time? Conventional dashboards are often slow or unreliable because database queries are executed for each viewer on load. Data loaders, in contrast, encourage you to prepare static data snapshots at build time. This results in dashboards that load _instantly_ and without giving viewers more access than necessary.
 
 Data loaders can be written in any programming language. They can even invoke binary executables such as ffmpeg or DuckDB! For convenience, the Observable CLI has built-in support for common languages: JavaScript, TypeScript, Python, and R.
 
@@ -80,7 +80,7 @@ zip.generateNodeStream().pipe(process.stdout);
 
 Note how the last part serializes the `metadata` and `earthquakes` objects to a readable format corresponding to the file extension (`.json` and `.csv`).
 
-To load data in the browser, use [`FileAttachment`](../javascript/files):
+To load data in the browser, use `FileAttachment`:
 
 ```js run=false
 const metadata = FileAttachment("quakes/metadata.json").json();
@@ -100,13 +100,11 @@ The following archive extensions are supported:
 - `.tar` - for [tarballs](<https://en.wikipedia.org/wiki/Tar_(computing)>)
 - `.tar.gz` and `.tgz` - for [compressed tarballs](https://en.wikipedia.org/wiki/Gzip)
 
-In addition to archives generated dynamically by data loaders, you can use `FileAttachment` to pull files from static archives.
-
 Like with any other file, these files from generated archives are live in preview (they will refresh automatically if the corresponding data loader script is edited), and are added to the build if and only if referenced by `FileAttachment`.
 
 ## Routing
 
-Data loaders live in the source root (typically `docs`) alongside your other source files. When a file is referenced from JavaScript via [`FileAttachment`](./javascript/files), if the file does not exist, the CLI will look for a file of the same name with a double extension to see if there is a corresponding data loader. The following second extensions are checked, in order, with the corresponding language and interpreter:
+Data loaders live in the source root (typically `docs`) alongside your other source files. When a file is referenced from JavaScript via `FileAttachment`, if the file does not exist, the CLI will look for a file of the same name with a double extension to see if there is a corresponding data loader. The following second extensions are checked, in order, with the corresponding language and interpreter:
 
 - `.js` - JavaScript (`node`)
 - `.ts` - TypeScript (`tsx`)
@@ -144,7 +142,7 @@ If multiple requests are made concurrently for the same data loader, the data lo
 
 ## Output
 
-Data loaders must output to [stdout](<https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)>). The first extension (such as `.csv`) is not considered by the CLI; the data loader is solely responsible for producing the expected output (such as CSV). If you wish to log additional information from within a data loader, be sure to log to stderr, say by using [`console.warn`](https://developer.mozilla.org/en-US/docs/Web/API/console/warn); otherwise the logs will be included in the output file and sent to the client.
+Data loaders must output to [stdout](<https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)>). The first extension (such as `.csv`) does not affect the generated data snapshot; the data loader is solely responsible for producing the expected output (such as CSV). If you wish to log additional information from within a data loader, be sure to log to stderr, say by using [`console.warn`](https://developer.mozilla.org/en-US/docs/Web/API/console/warn); otherwise the logs will be included in the output file and sent to the client.
 
 ## Caching
 
@@ -160,7 +158,7 @@ rm -rf docs/.observablehq/cache
 
 ## Building
 
-A data loader is run during build if and only if its corresponding output file is referenced in at least one page. The CLI does _not_ scour the source directory (typically `docs`) for data loaders.
+A data loader is run during build if and only if its corresponding output file is referenced in at least one page. The CLI does not scour the source root (`docs`) for data loaders.
 
 The data loader cache is respected during build. This allows you to bypass some or all data loaders during build, if the previously built data is still fresh. To force the CLI to use the data loader cache, ensure that the modification times of the cache are greater than those of the data loaders, say by using `touch` on all files in the cache.
 
