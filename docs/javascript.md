@@ -90,7 +90,7 @@ You clicked ${clicks.toLocaleString("en-US")} times.
 
 You clicked ${clicks.toLocaleString("en-US")} times.
 
-As with code blocks, if an inline expression evaluates to a DOM node, it will be displayed. For example, you can interpolate a sparkline ${Plot.plot({axis: null, margin: 0, width: 80, height: 17, x: {type: "band", round: false}, marks: [Plot.barY(aapl.slice(-15), {x: "Date", y1: 150, y2: "Close", fill: "steelblue"})]})} or even a reactive input ${Inputs.bind(htl.html`<input type=range style="width: 120px;">`, numberInput)} ${number} into prose.
+As with code blocks, if an inline expression evaluates to a DOM node, it will be displayed. For example, you can interpolate a sparkline ${Plot.plot({axis: null, margin: 0, width: 80, height: 17, x: {type: "band", round: false}, marks: [Plot.barY(aapl.slice(-15), {x: "Date", y1: 150, y2: "Close", fill: "steelblue"})]})} or even a reactive input ${Inputs.bind(html`<input type=range style="width: 120px;">`, numberInput)} ${number} into prose.
 
 ```js
 const numberInput = Inputs.input(0);
