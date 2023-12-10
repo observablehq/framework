@@ -1,4 +1,4 @@
-import {type Dispatcher, MockAgent, getGlobalDispatcher, setGlobalDispatcher} from "undici";
+import {currentAgent, mockAgent} from "./undici.js";
 
 const packages: [name: string, version: string][] = [
   ["@duckdb/duckdb-wasm", "1.28.0"],
@@ -22,12 +22,10 @@ const packages: [name: string, version: string][] = [
 ];
 
 export function mockJsDelivr() {
-  let globalDispatcher: Dispatcher;
-
+  mockAgent();
   before(async () => {
-    globalDispatcher = getGlobalDispatcher();
-    const agent = new MockAgent();
-    agent.disableNetConnect();
+    const agent = currentAgent;
+    if (!agent) throw new Error("mockAgent not initialized");
     const dataClient = agent.get("https://data.jsdelivr.com");
     for (const [name, version] of packages) {
       dataClient
@@ -40,10 +38,5 @@ export function mockJsDelivr() {
         .intercept({path: `/npm/${name}@${version}/+esm`, method: "GET"})
         .reply(200, "", {headers: {"cache-control": "public, immutable", "content-type": "text/javascript; charset=utf-8"}}); // prettier-ignore
     }
-    setGlobalDispatcher(agent);
-  });
-
-  after(async () => {
-    setGlobalDispatcher(globalDispatcher!);
   });
 }
