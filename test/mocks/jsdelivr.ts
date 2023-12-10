@@ -1,4 +1,4 @@
-import {currentAgent, mockAgent} from "./undici.js";
+import {getCurrentAgent, mockAgent} from "./undici.js";
 
 const packages: [name: string, version: string][] = [
   ["@duckdb/duckdb-wasm", "1.28.0"],
@@ -24,8 +24,7 @@ const packages: [name: string, version: string][] = [
 export function mockJsDelivr() {
   mockAgent();
   before(async () => {
-    const agent = currentAgent;
-    if (!agent) throw new Error("mockAgent not initialized");
+    const agent = getCurrentAgent();
     const dataClient = agent.get("https://data.jsdelivr.com");
     for (const [name, version] of packages) {
       dataClient

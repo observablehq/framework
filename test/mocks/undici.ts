@@ -1,6 +1,6 @@
 import {type Dispatcher, MockAgent, getGlobalDispatcher, setGlobalDispatcher} from "undici";
 
-export let currentAgent: MockAgent | null = null;
+let currentAgent: MockAgent | null = null;
 
 export function mockAgent() {
   let globalDispatcher: Dispatcher;
@@ -19,4 +19,10 @@ export function mockAgent() {
     currentAgent = null;
     setGlobalDispatcher(globalDispatcher!);
   });
+}
+
+export function getCurrentAgent(): MockAgent {
+  const agent = currentAgent;
+  if (!agent) throw new Error("mockAgent not initialized");
+  return agent;
 }
