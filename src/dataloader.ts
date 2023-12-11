@@ -156,7 +156,7 @@ export abstract class Loader {
         const errorStat = await maybeStat(errorPath);
         if (errorStat) {
           if (errorStat.mtimeMs > loaderStat!.mtimeMs && errorStat.mtimeMs > -1000 + Date.now())
-            throw new Error("loader error");
+            throw new Error("loader skipped due to recent error");
           else unlink(errorPath).catch(() => {});
         }
         await prepareOutput(tempPath);
