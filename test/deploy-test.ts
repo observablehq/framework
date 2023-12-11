@@ -28,7 +28,7 @@ const EXTRA_FILES: string[] = [
   "_observablehq/style.css",
   "_observablehq/assets/close-sidebar-toggle.svg",
   "_observablehq/assets/open-sidebar-toggle.svg",
-  "_observablehq/assets/down-caret.svg",
+  "_observablehq/assets/down-caret.svg"
 ];
 
 class MockDeployEffects implements DeployEffects {

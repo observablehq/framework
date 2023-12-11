@@ -56,7 +56,7 @@ export async function build(
   effects: BuildEffects = new FileBuildEffects(config.output)
 ): Promise<void> {
   const {root} = config;
-  
+
   // Make sure all files are readable before starting to write output files.
   let pageCount = 0;
   for await (const sourceFile of visitMarkdownFiles(root)) {
