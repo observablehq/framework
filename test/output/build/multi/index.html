@@ -19,8 +19,8 @@ const f1 = FileAttachment("file1.csv").csv();
 return {f1};
 }});
 
-define({id: "db071921", inputs: ["Input","f1","display"], body: (Input,f1,display) => {
-display((
+define({id: "db071921", inputs: ["Input","f1","display"], body: async (Input,f1,display) => {
+display(await(
 Input.table(f1)
 ))
 }});

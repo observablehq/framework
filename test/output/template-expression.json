@@ -21,7 +21,7 @@
         "display"
       ],
       "inline": true,
-      "body": "(display) => {\ndisplay((\n`}'\"`\n))\n}"
+      "body": "async (display) => {\ndisplay(await(\n`}'\"`\n))\n}"
     }
   ],
   "hash": "1ddca31d89d4e4b1032194e35e1c51395937c029915a4b170ea6c106f89bcd40"

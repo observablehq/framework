@@ -40,7 +40,7 @@
           "path": "./_file/local-fetch.md"
         }
       ],
-      "body": "(FileAttachment,display) => {\ndisplay((\nFileAttachment(\"./local-fetch.md\")\n))\n}"
+      "body": "async (FileAttachment,display) => {\ndisplay(await(\nFileAttachment(\"./local-fetch.md\")\n))\n}"
     }
   ],
   "hash": "3f31c6717790dfd2fb68fb8bf9c11b4fcb44a2014ab382c1a8bbbf711a99857e"
