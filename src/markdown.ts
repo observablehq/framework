@@ -17,7 +17,7 @@ import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
 import type {FileReference, ImportReference, PendingTranspile, Transpile} from "./javascript.js";
 import {transpileJavaScript} from "./javascript.js";
-import {transpileTag} from "./tag.js";
+import {transpileTag, transpileTypeScript} from "./tag.js";
 import {resolvePath} from "./url.js";
 
 export interface ReadMarkdownResult {
@@ -91,6 +91,8 @@ function isFalse(attribute: string | undefined): boolean {
 function getLiveSource(content: string, tag: string): string | undefined {
   return tag === "js"
     ? content
+    : tag === "ts"
+    ? transpileTypeScript(content)
     : tag === "tex"
     ? transpileTag(content, "tex.block", true)
     : tag === "dot"
@@ -267,7 +269,7 @@ function makePlaceholderRenderer(root: string, sourcePath: string): RenderRule {
   return (tokens, idx, options, context: ParseContext) => {
     const id = uniqueCodeId(context, tokens[idx].content);
     const token = tokens[idx];
-    const transpile = transpileJavaScript(token.content, {
+    const transpile = transpileJavaScript(transpileTypeScript(token.content), {
       id,
       root,
       sourcePath,

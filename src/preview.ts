@@ -93,7 +93,7 @@ export class PreviewServer {
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
-        const file = pathname.slice("/_import".length);
+        const file = pathname.slice("/_import".length).replace(/\.ts\.js$/, ".ts");
         let js: string;
         try {
           js = await readFile(join(root, file), "utf-8");

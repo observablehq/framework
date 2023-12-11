@@ -124,7 +124,7 @@ export async function build(
   const importResolver = createImportResolver(root);
   for (const file of imports) {
     const sourcePath = join(root, file);
-    const outputPath = join("_import", file);
+    const outputPath = join("_import", file.replace(/\.ts$/, ".ts.js"));
     if (!existsSync(sourcePath)) {
       effects.logger.error("missing referenced file", sourcePath);
       continue;

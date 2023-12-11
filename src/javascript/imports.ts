@@ -9,6 +9,7 @@ import {isEnoent} from "../error.js";
 import {type Feature, type ImportReference, type JavaScriptNode} from "../javascript.js";
 import {parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
+import {transpileTypeScript} from "../tag.js";
 import {relativeUrl, resolvePath} from "../url.js";
 import {getFeature, getStringLiteralValue, isStringLiteral} from "./features.js";
 import {defaultGlobals} from "./globals.js";
@@ -200,6 +201,7 @@ export function findImportFeatures(node: Node, path: string, input: string): Fea
 
 /** Rewrites import specifiers and FileAttachment calls in the specified ES module source. */
 export async function rewriteModule(input: string, path: string, resolver: ImportResolver): Promise<string> {
+  input = transpileTypeScript(input);
   const body = Parser.parse(input, parseOptions);
   const featureMap = getFeatureReferenceMap(body);
   const output = new Sourcemap(input);
@@ -306,7 +308,7 @@ export type ImportResolver = (path: string, specifier: string) => Promise<string
 export function createImportResolver(root: string, base: "." | "_import" = "."): ImportResolver {
   return async (path, specifier) => {
     return isLocalImport(specifier, path)
-      ? relativeUrl(path, resolvePath(base, path, resolveImportHash(root, path, specifier)))
+      ? relativeUrl(path, resolvePath(base, path, resolveImportHash(root, path, specifier.replace(/\.ts$/, ".ts.js"))))
       : specifier === "npm:@observablehq/runtime"
       ? resolveBuiltin(base, path, "runtime.js")
       : specifier === "npm:@observablehq/stdlib"

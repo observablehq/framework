@@ -1,6 +1,7 @@
 import type {Options, TemplateElement, TemplateLiteral} from "acorn";
 // @ts-expect-error TokContext is private
 import {Parser, TokContext, tokTypes as tt} from "acorn";
+import {transformSync} from "esbuild";
 import {Sourcemap} from "./sourcemap.js";
 
 const CODE_DOLLAR = 36;
@@ -17,6 +18,18 @@ export function transpileTag(input: string, tag = "", raw = false): string {
   return String(source);
 }
 
+export function transpileTypeScript(input) {
+  try {
+    const js = transformSync(input, {
+      loader: "ts",
+      tsconfigRaw: '{"compilerOptions": {"verbatimModuleSyntax": true}}'
+    }).code;
+    // preserve the absence of a trailing semi-colon, to display
+    return input.trim().at(-1) !== ";" ? js.replace(/;[\s\n]*$/, "") : js;
+  } catch {
+    return input;
+  }
+}
 class TemplateParser extends (Parser as any) {
   constructor(options: Options, input: string, startPos?: number) {
     super(options, input, startPos);

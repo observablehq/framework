@@ -120,7 +120,7 @@ describe("rewriteModule(input, path, resolver)", () => {
   it("ignores FileAttachment if masked by a reference", async () => {
     const input = 'import {FileAttachment} from "npm:@observablehq/stdlib";\n((FileAttachment) => FileAttachment("./test.txt"))(eval)'; // prettier-ignore
     const output = (await rewriteModule(input, "test.js", async (path, specifier) => specifier)).split("\n").pop()!;
-    assert.strictEqual(output, '((FileAttachment) => FileAttachment("./test.txt"))(eval)');
+    assert.strictEqual(output, '((FileAttachment2) => FileAttachment2("./test.txt"))(eval)');
   });
   it("ignores FileAttachment if not imported", async () => {
     const input = 'import {Generators} from "npm:@observablehq/stdlib";\nFileAttachment("./test.txt")';
