@@ -1,9 +1,10 @@
 import {createHash} from "node:crypto";
 import {readFileSync} from "node:fs";
 import {join} from "node:path";
-import {Parser} from "acorn";
+import {Parser as AParser} from "acorn";
 import type {Identifier, Node, Program} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression} from "acorn";
+import {importAttributes} from "acorn-import-attributes";
 import {simple} from "acorn-walk";
 import {isEnoent} from "../error.js";
 import {type Feature, type ImportReference, type JavaScriptNode} from "../javascript.js";
@@ -21,6 +22,8 @@ export interface ImportsAndFeatures {
   imports: ImportReference[];
   features: Feature[];
 }
+
+const Parser = AParser.extend(importAttributes);
 
 /**
  * Finds all export declarations in the specified node. (This is used to

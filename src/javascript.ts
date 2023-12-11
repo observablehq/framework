@@ -1,5 +1,6 @@
-import {Parser, tokTypes} from "acorn";
+import {Parser as AParser, tokTypes} from "acorn";
 import type {Expression, Identifier, Node, Options, Program} from "acorn";
+import {importAttributes} from "acorn-import-attributes";
 import {fileReference} from "./files.js";
 import {findAssignments} from "./javascript/assignments.js";
 import {findAwaits} from "./javascript/awaits.js";
@@ -140,6 +141,8 @@ export interface JavaScriptNode {
   expression: boolean; // is this an expression or a program cell?
   async: boolean; // does this use top-level await?
 }
+
+const Parser = AParser.extend(importAttributes);
 
 function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
   const {inline = false, root, sourcePath} = options;
