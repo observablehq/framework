@@ -1,3 +1,4 @@
+import {existsSync} from "node:fs";
 import {dirname, join, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
@@ -86,5 +87,10 @@ function importMetaResolve(): Plugin {
 }
 
 export function getClientPath(entry: string): string {
-  return relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), "..", entry));
+  const path = relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), "..", entry));
+  if (path.endsWith(".js") && !existsSync(path)) {
+    const tspath = path.slice(0, -".js".length) + ".ts";
+    if (existsSync(tspath)) return tspath;
+  }
+  return path;
 }

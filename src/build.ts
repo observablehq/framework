@@ -20,6 +20,7 @@ const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.j
 const CLIENT_BUNDLES: [entry: string, name: string][] = [
   ["./src/client/index.js", "client.js"],
   ["./src/client/stdlib.js", "stdlib.js"],
+  ["./src/client/stdlib/dash.js", "stdlib/dash.js"],
   ["./src/client/stdlib/dot.js", "stdlib/dot.js"],
   ["./src/client/stdlib/duckdb.js", "stdlib/duckdb.js"],
   ["./src/client/stdlib/mermaid.js", "stdlib/mermaid.js"],
