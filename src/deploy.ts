@@ -4,7 +4,13 @@ import {build} from "./build.js";
 import type {Config} from "./config.js";
 import type {Logger, Writer} from "./logger.js";
 import {ObservableApiClient} from "./observableApiClient.js";
-import {type ApiKey, type DeployConfig, getDeployConfig, getObservableApiKey, setDeployConfig} from "./observableApiConfig.js";
+import {
+  type ApiKey,
+  type DeployConfig,
+  getDeployConfig,
+  getObservableApiKey,
+  setDeployConfig
+} from "./observableApiConfig.js";
 import {blue} from "./tty.js";
 
 export interface DeployOptions {
