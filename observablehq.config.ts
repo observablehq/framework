@@ -37,7 +37,8 @@ export default {
         {name: "Observable Plot", path: "/lib/plot"},
         {name: "SQLite", path: "/lib/sqlite"},
         {name: "TeX", path: "/lib/tex"},
-        {name: "TopoJSON", path: "/lib/topojson"}
+        {name: "TopoJSON", path: "/lib/topojson"},
+        {name: "Sample datasets", path: "/lib/datasets"},
       ]
     },
     {name: "Contributing", path: "/contributing"}
