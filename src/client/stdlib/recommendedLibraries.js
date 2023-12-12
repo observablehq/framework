@@ -2,6 +2,7 @@ export const _ = () => import("npm:lodash").then((lodash) => lodash.default);
 export const aq = () => import("npm:arquero");
 export const Arrow = () => import("npm:apache-arrow");
 export const d3 = () => import("npm:d3");
+export const Dash = () => import("observablehq:stdlib/dash");
 export const dot = () => import("observablehq:stdlib/dot").then((dot) => dot.default);
 export const duckdb = () => import("npm:@duckdb/duckdb-wasm");
 export const DuckDBClient = () => import("observablehq:stdlib/duckdb").then((duckdb) => duckdb.DuckDBClient);
