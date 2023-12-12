@@ -3,7 +3,7 @@ import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises
 import {basename, dirname, join, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
-import {readConfig} from "./config.js";
+import {type Config} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {isEnoent} from "./error.js";
 import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
@@ -29,8 +29,7 @@ const CLIENT_BUNDLES: [entry: string, name: string][] = [
 ];
 
 export interface BuildOptions {
-  sourceRoot: string;
-  outputRoot?: string;
+  config: Config;
   addPublic?: boolean;
 }
 
@@ -52,9 +51,11 @@ export interface BuildEffects {
 }
 
 export async function build(
-  {sourceRoot: root, outputRoot, addPublic = true}: BuildOptions,
-  effects: BuildEffects = new FileBuildEffects(outputRoot!)
+  {config, addPublic = true}: BuildOptions,
+  effects: BuildEffects = new FileBuildEffects(config.output)
 ): Promise<void> {
+  const {root} = config;
+
   // Make sure all files are readable before starting to write output files.
   let pageCount = 0;
   for await (const sourceFile of visitMarkdownFiles(root)) {
@@ -65,7 +66,6 @@ export async function build(
   effects.logger.log(`${faint("found")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
 
   // Render .md files, building a list of file attachments as we go.
-  const config = await readConfig(root);
   const files: string[] = [];
   const imports: string[] = [];
   for await (const sourceFile of visitMarkdownFiles(root)) {
@@ -73,7 +73,7 @@ export async function build(
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
     effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
-    const render = await renderServerless(await readFile(sourcePath, "utf-8"), {root, path, ...config});
+    const render = await renderServerless(await readFile(sourcePath, "utf-8"), {path, ...config});
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
     files.push(...render.files.map(resolveFile));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));

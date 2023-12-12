@@ -12,6 +12,7 @@
   --monospace-font: 14px/1.5 var(--monospace);
   --serif: "Source Serif Pro", "Iowan Old Style", "Apple Garamond", "Palatino Linotype", "Times New Roman", "Droid Serif", Times, serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   --sans-serif: -apple-system, BlinkMacSystemFont, "avenir next", avenir, helvetica, "helvetica neue", ubuntu, roboto, noto, "segoe ui", arial, sans-serif;
+  color-scheme: light dark;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -44,6 +45,8 @@ body {
 
 #observablehq-main {
   min-height: calc(100vh - 17rem);
+  position: relative;
+  z-index: 0;
 }
 
 #observablehq-footer {
@@ -403,7 +406,7 @@ a[href],
   border-radius: 4px;
   padding: 0 8px;
   margin: 4px;
-  height: 30px;
+  height: 29px;
   cursor: pointer;
   z-index: 1;
   display: flex;
@@ -652,7 +655,7 @@ a[href].observablehq-header-anchor {
 }
 
 .observablehq--block:empty {
-  display: none;
+  margin: 0;
 }
 
 .observablehq--block {
@@ -875,25 +878,10 @@ a[href].observablehq-header-anchor {
   border-bottom: solid 1px var(--theme-foreground-fainter) !important;
 }
 
+svg.plot-d6a7b5 {
+  --plot-background: var(--theme-background);
+}
+
 p svg.plot-d6a7b5 {
   display: inline-block;
-}
-
-svg.plot-d6a7b5,
-svg.plot-d6a7b5-ramp {
-  background: none;
-}
-
-svg.plot-d6a7b5 [aria-label="tip"][fill="white"],
-svg.plot-d6a7b5 [aria-label="tip"] [fill="white"] {
-  fill: var(--theme-background);
-}
-
-svg.plot-d6a7b5 marker[stroke="white"],
-svg.plot-d6a7b5 [aria-label^="crosshair"][stroke="white"] {
-  stroke: var(--theme-background);
-}
-
-svg.plot-d6a7b5 marker[fill="white"] {
-  fill: var(--theme-background);
 }

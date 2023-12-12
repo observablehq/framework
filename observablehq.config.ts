@@ -2,10 +2,11 @@ export default {
   title: "Observable CLI",
   pages: [
     {name: "Getting started", path: "/getting-started"},
+    {name: "Routing", path: "/routing"},
+    {name: "Configuration", path: "/config"},
+    {name: "Markdown", path: "/markdown"},
     {name: "JavaScript", path: "/javascript"},
     {name: "Data loaders", path: "/loaders"},
-    {name: "Markdown", path: "/markdown"},
-    {name: "HTML", path: "/html"},
     {
       name: "JavaScript",
       pages: [
@@ -31,6 +32,7 @@ export default {
         {name: "Leaflet", path: "/lib/leaflet"},
         {name: "Lodash", path: "/lib/lodash"},
         {name: "Mermaid", path: "/lib/mermaid"},
+        {name: "Observable Generators", path: "/lib/generators"},
         {name: "Observable Inputs", path: "/lib/inputs"},
         {name: "Observable Plot", path: "/lib/plot"},
         {name: "SQLite", path: "/lib/sqlite"},

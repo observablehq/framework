@@ -152,6 +152,13 @@ export abstract class Loader {
           else effects.output.write(faint("[stale] "));
         } else return effects.output.write(faint("[fresh] ")), outputPath;
         const tempPath = join(this.sourceRoot, ".observablehq", "cache", `${this.targetPath}.${process.pid}`);
+        const errorPath = tempPath + ".err";
+        const errorStat = await maybeStat(errorPath);
+        if (errorStat) {
+          if (errorStat.mtimeMs > loaderStat!.mtimeMs && errorStat.mtimeMs > -1000 + Date.now())
+            throw new Error("loader skipped due to recent error");
+          else await unlink(errorPath).catch(() => {});
+        }
         await prepareOutput(tempPath);
         const tempFd = await open(tempPath, "w");
         try {
@@ -159,7 +166,7 @@ export abstract class Loader {
           await mkdir(dirname(cachePath), {recursive: true});
           await rename(tempPath, cachePath);
         } catch (error) {
-          await unlink(tempPath);
+          await rename(tempPath, errorPath);
           throw error;
         } finally {
           await tempFd.close();
@@ -223,7 +230,7 @@ class CommandLoader extends Loader {
       subprocess.on("close", resolve);
     });
     if (code !== 0) {
-      throw new Error(`exited with code ${code}`);
+      throw new Error(`loader exited with code ${code}`);
     }
   }
 }

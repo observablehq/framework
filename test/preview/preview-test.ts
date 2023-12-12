@@ -1,5 +1,6 @@
 import chai, {assert, expect} from "chai";
 import chaiHttp from "chai-http";
+import {normalizeConfig} from "../../src/config.js";
 import {preview} from "../../src/preview.js";
 import type {PreviewOptions, PreviewServer} from "../../src/preview.js";
 import {mockJsDelivr} from "../mocks/jsdelivr.js";
@@ -9,7 +10,7 @@ const testHostName = process.env.TEST_HOSTNAME ?? "127.0.0.1";
 const testPort = +(process.env.TEST_PORT ?? 8080);
 
 const testServerOptions: PreviewOptions = {
-  root: testHostRoot,
+  config: await normalizeConfig({root: testHostRoot}),
   hostname: testHostName,
   port: testPort,
   verbose: false

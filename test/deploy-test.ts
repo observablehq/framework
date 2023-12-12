@@ -1,5 +1,6 @@
 import assert, {fail} from "node:assert";
 import {Readable, Writable} from "node:stream";
+import {normalizeConfig} from "../src/config.js";
 import type {DeployEffects} from "../src/deploy.js";
 import {deploy} from "../src/deploy.js";
 import {isHttpError} from "../src/error.js";
@@ -91,7 +92,9 @@ class MockDeployEffects implements DeployEffects {
 // This test should have exactly one index.md in it, and nothing else; that one
 // page is why we +1 to the number of extra files.
 const TEST_SOURCE_ROOT = "test/input/build/simple-public";
+const TEST_CONFIG = await normalizeConfig({root: TEST_SOURCE_ROOT});
 
+// TODO These tests need mockJsDelivr, too!
 describe("deploy", () => {
   it("makes expected API calls for a new project", async () => {
     const projectId = "project123";
@@ -105,7 +108,7 @@ describe("deploy", () => {
       .start();
 
     const effects = new MockDeployEffects();
-    await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+    await deploy({config: TEST_CONFIG}, effects);
 
     apiMock.close();
     const deployConfig = await effects.getDeployConfig();
@@ -124,7 +127,7 @@ describe("deploy", () => {
       .start();
 
     const effects = new MockDeployEffects({deployConfig});
-    await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+    await deploy({config: TEST_CONFIG}, effects);
 
     apiMock.close();
   });
@@ -134,7 +137,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects({apiKey: null});
 
     try {
-      await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+      await deploy({config: TEST_CONFIG}, effects);
       assert.fail("expected error");
     } catch (err) {
       if (!(err instanceof Error)) throw err;
@@ -157,7 +160,7 @@ describe("deploy", () => {
       .start();
     const effects = new MockDeployEffects();
 
-    await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+    await deploy({config: TEST_CONFIG}, effects);
 
     apiMock.close();
     const deployConfig = await effects.getDeployConfig();
@@ -169,7 +172,7 @@ describe("deploy", () => {
     const apiMock = new ObservableApiMock().handleGetUser({user: userWithZeroWorkspaces}).start();
     const effects = new MockDeployEffects();
 
-    await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+    await deploy({config: TEST_CONFIG}, effects);
 
     apiMock.close();
     effects.logger.assertExactErrors([/^Current user doesn't have any Observable workspaces/]);
@@ -180,7 +183,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects({apiKey: invalidApiKey});
 
     try {
-      await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+      await deploy({config: TEST_CONFIG}, effects);
       assert.fail("Should have thrown");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -195,7 +198,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects();
 
     try {
-      await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+      await deploy({config: TEST_CONFIG}, effects);
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -216,7 +219,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects();
 
     try {
-      await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+      await deploy({config: TEST_CONFIG}, effects);
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -238,7 +241,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects();
 
     try {
-      await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+      await deploy({config: TEST_CONFIG}, effects);
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -261,7 +264,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects();
 
     try {
-      await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+      await deploy({config: TEST_CONFIG}, effects);
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));

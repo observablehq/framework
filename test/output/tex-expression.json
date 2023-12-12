@@ -30,7 +30,7 @@
         "display"
       ],
       "inline": true,
-      "body": "(tex,display) => {\ndisplay((\ntex`\\KaTeX`\n))\n}"
+      "body": "async (tex,display) => {\ndisplay(await(\ntex`\\KaTeX`\n))\n}"
     },
     {
       "type": "cell",
@@ -40,7 +40,7 @@
         "display"
       ],
       "inline": true,
-      "body": "(tex,display) => {\ndisplay((\ntex`E = mc^2`\n))\n}"
+      "body": "async (tex,display) => {\ndisplay(await(\ntex`E = mc^2`\n))\n}"
     }
   ],
   "hash": "04b17ab609176283b368bd541e20011a106f2f8d08defb3c655e9ebf3ccbc5e8"

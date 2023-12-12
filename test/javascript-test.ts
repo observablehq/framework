@@ -92,7 +92,7 @@ describe("transpileJavaScript(input, options)", () => {
       sourcePath: "index.js",
       verbose: false
     });
-    assert.strictEqual(await body(), "(test,display) => {\ndisplay((\ntest\n))\n}");
+    assert.strictEqual(await body(), "async (test,display) => {\ndisplay(await(\ntest\n))\n}");
   });
   it("rethrows unexpected errors", () => {
     const expected = new Error();
