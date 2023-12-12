@@ -68,6 +68,10 @@ class AbstractFile {
     const [Arrow, response] = await Promise.all([import("npm:apache-arrow"), remote_fetch(this)]);
     return Arrow.tableFromIPC(response);
   }
+  async parquet() {
+    const [Arrow, Parquet, buffer] = await Promise.all([import("npm:apache-arrow"), import("npm:parquet-wasm/esm/arrow1.js").then(async (Parquet) => (await Parquet.default(), Parquet)), this.arrayBuffer()]); // prettier-ignore
+    return Arrow.tableFromIPC(Parquet.readParquet(new Uint8Array(buffer)).intoIPCStream());
+  }
   async sqlite() {
     return import("observablehq:stdlib/sqlite").then((sqlite) => sqlite.SQLiteDatabaseClient.open(remote_fetch(this)));
   }
