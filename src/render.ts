@@ -6,7 +6,7 @@ import {createImportResolver, resolveModuleIntegrity, resolveModulePreloads} fro
 import type {FileReference, ImportReference, Transpile} from "./javascript.js";
 import {addImplicitSpecifiers, addImplicitStylesheets} from "./libraries.js";
 import {type ParseResult, parseMarkdown} from "./markdown.js";
-import {type PageLink, findLink} from "./pager.js";
+import {type PageLink, findLink, normalizePath} from "./pager.js";
 import {getClientPath, rollupClient} from "./rollup.js";
 import {relativeUrl} from "./url.js";
 
@@ -99,16 +99,19 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
   <ol>
-    <li class="observablehq-link${path === "/index" ? " observablehq-link-active" : ""}"><a href="${relativeUrl(
-      path,
-      "/"
-    )}">${title}</a></li>
+    <li class="observablehq-link${
+      normalizePath({path}) === "/index" ? " observablehq-link-active" : ""
+    }"><a href="${relativeUrl(path, "/")}">${title}</a></li>
   </ol>
   <ol>${pages.map((p, i) =>
     "pages" in p
       ? html`${i > 0 && "path" in pages[i - 1] ? html`</ol>` : ""}
     <details${
-      p.pages.some((p) => p.path === path) ? html` open class="observablehq-section-active"` : p.open ? " open" : ""
+      p.pages.some((p) => normalizePath(p) === path)
+        ? html` open class="observablehq-section-active"`
+        : p.open
+        ? " open"
+        : ""
     }>
       <summary>${p.name}</summary>
       <ol>${p.pages.map((p) => renderListItem(p, path))}
@@ -158,7 +161,7 @@ function renderToc(headers: Header[], label: string): Html {
 
 function renderListItem(p: Page, path: string): Html {
   return html`\n    <li class="observablehq-link${
-    p.path === path ? " observablehq-link-active" : ""
+    normalizePath(p) === path ? " observablehq-link-active" : ""
   }"><a href="${relativeUrl(path, prettyPath(p.path))}">${p.name}</a></li>`;
 }
 
