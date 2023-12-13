@@ -15,13 +15,16 @@
   --sans-serif: -apple-system, BlinkMacSystemFont, "avenir next", avenir, helvetica, "helvetica neue", ubuntu, roboto, noto, "segoe ui", arial, sans-serif;
   color-scheme: light dark;
 
-  /* Observablehq theme colors */
   --black-dark-gray: #454545;
   --black-light-gray: #E2E2E2;
   --black-mid-gray: #6E6E6E;
   --black-near-black: #1C1C1C;
   --black-white: #FFFFFF;
   --blue-blue: #3B5FC0;
+
+  --down-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M5 7L8.125 9.5L11.25 7' stroke='%23454545' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E");
+  --sidebar-toggle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m10.5,11 2.5-3-2.5-3 M6,8h7' fill='none' stroke='%23929292' stroke-width='2'/%3E%3Crect x='2' y='2' fill='%23929292' height='12' rx='.5' width='2'/%3E%3C/svg%3E");
+  --sidebar-toggle-close: translate(0,-5px) rotate(180deg);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -199,9 +202,7 @@ body {
   position: absolute;
   right: 1rem;
   margin-top: -0.25rem;
-  font-weight: 700;
-  font-size: 20px;
-  content: url(assets/down-caret.svg);
+  content: var(--down-caret);
   transition: transform 250ms ease;
   transform-origin: 50% 50%;
 }
@@ -220,33 +221,32 @@ body {
 
 #observablehq-sidebar-toggle {
   position: fixed;
-  top: calc(1rem + 8px + 8px);
-  left: calc(272px - 2rem - 4px);
-  height: auto;
-  width: 1rem;
+  top: calc(1rem + 7px);
+  left: 235px;
+  height: 33px;
+  width: 29px;
   appearance: none;
   display: flex;
-  align-items: center;
-  justify-items: center;
   margin: 0;
-  padding: 2px;
+  padding: 4px;
   cursor: pointer;
   z-index: 3;
   background: none;
 }
 
 #observablehq-sidebar-toggle::before {
-  content: url(assets/open-sidebar-toggle.svg);
+  content: var(--sidebar-toggle);
 }
 
 #observablehq-sidebar-toggle:checked::before {
-  content: url(assets/close-sidebar-toggle.svg);
+  transform: var(--sidebar-toggle-close);
 }
 
 #observablehq-sidebar-toggle:not(:checked):not(:indeterminate) {
   top: 0;
   left: 0;
   height: 100%;
+  align-items: center;
 }
 
 @media (max-width: calc(640px + 4rem + 272px + 2rem)) {
@@ -257,6 +257,8 @@ body {
     top: 0;
     left: 0;
     height: 100%;
+    display: flex;
+    align-items: center;
   }
 }
 
@@ -370,7 +372,7 @@ a[href],
     transition: none;
   }
   #observablehq-sidebar-toggle:indeterminate::before {
-    content: url(assets/close-sidebar-toggle.svg);
+    transform: var(--sidebar-toggle-close);
   }
   #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar-backdrop {
     display: none;
@@ -428,7 +430,8 @@ a[href],
   }
   @media (min-width: calc(640px + 4rem + 272px + 2rem)) {
     #observablehq-sidebar-toggle:indeterminate:not(:checked):not(:hover)::before {
-      content: url(assets/close-sidebar-toggle.svg);
+      content: var(--sidebar-toggle);
+      transform: var(--sidebar-toggle-close);
     }
   }
 }

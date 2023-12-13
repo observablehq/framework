@@ -95,7 +95,7 @@ ${renderFooter(path, options)}
 }
 
 async function renderSidebar(title = "Home", pages: (Page | Section)[], path: string): Promise<Html> {
-  return html`<input id="observablehq-sidebar-toggle" type="checkbox">
+  return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
   <ol>

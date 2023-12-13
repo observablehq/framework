@@ -25,10 +25,7 @@ const EXTRA_FILES: string[] = [
   "_observablehq/stdlib/sqlite.js",
   "_observablehq/stdlib/tex.js",
   "_observablehq/stdlib/xslx.js",
-  "_observablehq/style.css",
-  "_observablehq/assets/close-sidebar-toggle.svg",
-  "_observablehq/assets/open-sidebar-toggle.svg",
-  "_observablehq/assets/down-caret.svg"
+  "_observablehq/style.css"
 ];
 
 class MockDeployEffects implements DeployEffects {

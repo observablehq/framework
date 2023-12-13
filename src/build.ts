@@ -98,15 +98,6 @@ export async function build(
       effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
       await effects.copyFile(sourcePath, outputPath);
     }
-
-    // Copy over additional assets for styling
-    const assetRoot = relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), ".", "assets"));
-    for await (const assetFile of visitFiles(assetRoot)) {
-      const sourcePath = join(assetRoot, assetFile);
-      const outputPath = join("_observablehq", "assets", assetFile);
-      effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-      await effects.copyFile(sourcePath, outputPath);
-    }
   }
 
   // Copy over the referenced files.
