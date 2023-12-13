@@ -27,6 +27,7 @@ export function define(cell) {
   cellsById.get(id)?.variables.forEach((v) => v.delete());
   cellsById.set(id, {cell, variables});
   const root = document.querySelector(`#cell-${id}`);
+  if (!root) return;
   let reset = null;
   const clear = () => ((root.innerHTML = ""), (reset = null));
   const display = inline
