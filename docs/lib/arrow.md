@@ -43,3 +43,18 @@ Or using [Inputs.table](./inputs#table):
 ```js echo
 Inputs.table(table)
 ```
+
+More commonly you might use an Apache Parquet file. We use [parquet-wasm](https://kylebarron.dev/parquet-wasm/).
+
+```js echo
+const schools = FileAttachment("schools.parquet").parquet();
+```
+
+```js echo
+Plot.plot({
+  projection: "albers-usa",
+  marks: [
+    Plot.dot(schools, {x: "LONGITUD", y: "LATITUDE"})
+  ]
+})
+```

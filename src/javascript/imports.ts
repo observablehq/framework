@@ -314,6 +314,8 @@ export function createImportResolver(root: string, base: "." | "_import" = "."):
       ? resolveBuiltin(base, path, "runtime.js")
       : specifier === "npm:@observablehq/stdlib"
       ? resolveBuiltin(base, path, "stdlib.js")
+      : specifier === "npm:@observablehq/dash"
+      ? resolveBuiltin(base, path, "stdlib/dash.js") // TODO publish to npm
       : specifier === "npm:@observablehq/dot"
       ? resolveBuiltin(base, path, "stdlib/dot.js") // TODO publish to npm
       : specifier === "npm:@observablehq/duckdb"

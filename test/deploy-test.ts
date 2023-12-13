@@ -18,6 +18,7 @@ const EXTRA_FILES: string[] = [
   "_observablehq/client.js",
   "_observablehq/runtime.js",
   "_observablehq/stdlib.js",
+  "_observablehq/stdlib/dash.js",
   "_observablehq/stdlib/dot.js",
   "_observablehq/stdlib/duckdb.js",
   "_observablehq/stdlib/mermaid.js",
@@ -31,25 +32,35 @@ class MockDeployEffects implements DeployEffects {
   public logger = new MockLogger();
   public input = new Readable();
   public output: NodeJS.WritableStream;
-  public _observableApiKey: string | null = null;
-  public _deployConfig: DeployConfig | null = null;
-  public _projectSlug = "my-project-slug";
+  public observableApiKey: string | null = null;
+  public deployConfig: DeployConfig | null = null;
+  public projectTitle = "My Project";
+  public projectSlug = "my-project";
+  public deployMessage = "fix some bugs";
 
   constructor({
     apiKey = validApiKey,
     deployConfig = null
   }: {apiKey?: string | null; deployConfig?: DeployConfig | null} = {}) {
-    this._observableApiKey = apiKey;
-    this._deployConfig = deployConfig;
+    this.observableApiKey = apiKey;
+    this.deployConfig = deployConfig;
     const that = this;
     this.output = new Writable({
       write(data, _enc, callback) {
         const dataString = data.toString();
-        if (dataString == "New project name: ") {
-          that.input.push(`${that._projectSlug}\n`);
+        if (dataString == "New project title: ") {
+          that.input.push(`${that.projectTitle}\n`);
           // Having to null/reinit input seems wrong.
           // TODO: find the correct way to submit to readline but keep the same
           // input stream across multiple readline interactions.
+          that.input.push(null);
+          that.input = new Readable();
+        } else if (dataString.match(/^New project slug \[.*\]: $/)) {
+          that.input.push(`${that.projectSlug}\n`);
+          that.input.push(null);
+          that.input = new Readable();
+        } else if (dataString == "Deploy message: ") {
+          that.input.push(`${that.deployMessage}\n`);
           that.input.push(null);
           that.input = new Readable();
         } else if (dataString.includes("Choice: ")) {
@@ -63,19 +74,19 @@ class MockDeployEffects implements DeployEffects {
   }
 
   async getObservableApiKey(logger: Logger) {
-    if (!this._observableApiKey) {
+    if (!this.observableApiKey) {
       logger.log(commandRequiresAuthenticationMessage);
       throw new Error("no key available in this test");
     }
-    return {source: "test" as const, key: this._observableApiKey};
+    return {source: "test" as const, key: this.observableApiKey};
   }
 
   async getDeployConfig() {
-    return this._deployConfig;
+    return this.deployConfig;
   }
 
   async setDeployConfig(sourceRoot: string, config: DeployConfig) {
-    this._deployConfig = config;
+    this.deployConfig = config;
   }
 }
 
@@ -103,7 +114,7 @@ describe("deploy", () => {
     apiMock.close();
     const deployConfig = await effects.getDeployConfig();
     assert.equal(deployConfig?.project?.id, projectId);
-    assert.equal(deployConfig?.project?.slug, effects._projectSlug);
+    assert.equal(deployConfig?.project?.slug, effects.projectSlug);
   });
 
   it("makes expected API calls for an existing project", async () => {
@@ -155,7 +166,7 @@ describe("deploy", () => {
     apiMock.close();
     const deployConfig = await effects.getDeployConfig();
     assert.equal(deployConfig?.project?.id, projectId);
-    assert.equal(deployConfig?.project?.slug, effects._projectSlug);
+    assert.equal(deployConfig?.project?.slug, effects.projectSlug);
   });
 
   it("logs an error during project creation when user has no workspaces", async () => {
