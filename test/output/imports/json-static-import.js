@@ -1,1 +1,1 @@
-define({id: "0", body: () => { throw new SyntaxError("Unexpected token (1:31)"); }});
+define({id: "0", body: () => { …TBD… }});
