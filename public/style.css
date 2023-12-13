@@ -247,10 +247,12 @@ body {
   top: 0;
   left: 0;
   height: 100%;
-
 }
 
 @media (max-width: calc(640px + 4rem + 272px + 2rem)) {
+  #observablehq-sidebar-toggle {
+    transition: left 300ms ease;
+  }
   #observablehq-sidebar-toggle:indeterminate {
     top: 0;
     left: 0;
@@ -340,7 +342,7 @@ a[href],
 }
 
 #observablehq-sidebar {
-  transition: left 150ms ease;
+  transition: left 300ms ease;
 }
 
 #observablehq-sidebar-backdrop {
