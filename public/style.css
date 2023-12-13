@@ -222,16 +222,14 @@ body {
 
 #observablehq-sidebar-toggle {
   position: fixed;
-  top: calc(1rem + 8px + 8px);
-  left: calc(272px - 2rem - 4px);
-  height: auto;
-  width: 1rem;
+  top: calc(1rem + 7px);
+  left: 235px;
+  height: 33px;
+  width: 29px;
   appearance: none;
   display: flex;
-  align-items: center;
-  justify-items: center;
   margin: 0;
-  padding: 2px;
+  padding: 4px;
   cursor: pointer;
   z-index: 3;
   background: none;
@@ -242,7 +240,6 @@ body {
 }
 
 #observablehq-sidebar-toggle:checked::before {
-  content: var(--sidebar-toggle);
   transform: var(--sidebar-toggle-close);
 }
 
@@ -250,6 +247,7 @@ body {
   top: 0;
   left: 0;
   height: 100%;
+  align-items: center;
 }
 
 @media (max-width: calc(640px + 4rem + 272px + 2rem)) {
@@ -373,7 +371,6 @@ a[href],
     transition: none;
   }
   #observablehq-sidebar-toggle:indeterminate::before {
-    content: var(--sidebar-toggle);
     transform: var(--sidebar-toggle-close);
   }
   #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar-backdrop {
