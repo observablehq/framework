@@ -1,6 +1,11 @@
 # JavaScript: Files
 
-TK Should this be called “working with data”?
+Observable Markdown works with all sorts of data, that might be queried live from databases, retrieved from Web APIs, hosted locally as static files, or dynamically generated with scripts that run at build time.
+
+Dashboards and reports need to present data as quickly, accurately, and completely as possible to their readers. For speed, but also for compliance reasons, you’ll want to minimize the data that is sent to the browser. If your charts only display a sum total of transactions per hour, you shouldn’t need to download
+the details of _every_ transaction. If your chart reads data off of an API, you might not want to expose your app’s credentials (like the API key), and prefer to host a static snapshot of the data made at build time. Other applications will need to process data, maybe through a data analysis pipeline written in R or python, before shipping the results to the reader.
+
+All these scenarios are covered ni Observable Markdown by the concept of **files** (or file attachments)
 
 You can load files the built-in `FileAttachment` function. This is available by default in Markdown, but you can import it like so:
 
