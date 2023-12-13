@@ -22,6 +22,7 @@
   --black-white: #FFFFFF;
   --blue-blue: #3B5FC0;
 
+  --down-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M5 7L8.125 9.5L11.25 7' stroke='%23454545' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E");
   --sidebar-toggle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m10.5,11 2.5-3-2.5-3 M6,8h7' fill='none' stroke='%23929292' stroke-width='2'/%3E%3Crect x='2' y='2' fill='%23929292' height='12' rx='.5' width='2'/%3E%3C/svg%3E");
   --sidebar-toggle-close: translate(0,-5px) rotate(180deg);
 }
@@ -201,9 +202,7 @@ body {
   position: absolute;
   right: 1rem;
   margin-top: -0.25rem;
-  font-weight: 700;
-  font-size: 20px;
-  content: url(assets/down-caret.svg);
+  content: var(--down-caret);
   transition: transform 250ms ease;
   transform-origin: 50% 50%;
 }
