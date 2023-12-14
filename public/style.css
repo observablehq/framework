@@ -2,7 +2,7 @@
   --theme-background: rgb(255, 255, 255);
   --theme-background-alt: rgb(255, 255, 255);
   --theme-foreground: #1c1c1c;
-  --theme-foreground-highlight: #001b440d;
+  --theme-foreground-highlight: rgb(242,244,246);
   --theme-foreground-alt: color-mix(in srgb, var(--theme-foreground) 90%, var(--theme-background));
   --theme-foreground-muted: color-mix(in srgb, var(--theme-foreground) 70%, var(--theme-background));
   --theme-foreground-faint: color-mix(in srgb, var(--theme-foreground) 50%, var(--theme-background));
