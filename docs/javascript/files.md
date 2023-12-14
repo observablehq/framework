@@ -1,19 +1,22 @@
 # JavaScript: Files
 
-Observable Markdown works with all sorts of data, that might be queried live from databases, retrieved from Web APIs, hosted locally as static files, or dynamically generated with scripts that run at build time.
+Dashboards and reports need to present data as quickly, accurately, and completely as possible to their readers. This is supported in Observable Markdown through **file attachments**.
 
-Dashboards and reports need to present data as quickly, accurately, and completely as possible to their readers. For speed, but also for compliance reasons, you’ll want to minimize the data that is sent to the browser. If your charts only display a sum total of transactions per hour, you shouldn’t need to download
-the details of _every_ transaction. If your chart reads data off of an API, you might not want to expose your app’s credentials (like the API key), and prefer to host a static snapshot of the data made at build time. Other applications will need to process data, maybe through a data analysis pipeline written in R or python, before shipping the results to the reader.
+File attachments can be static files added to the docs folder, like a CSV file that contains your data. They can also be generated on-the-fly by a [data loader](../loaders).
 
-All these scenarios are covered ni Observable Markdown by the concept of **files** (or file attachments)
+For speed, you’ll want to minimize the data that is sent to the browser, by doing aggregations and selections at build time. For a chart that only displays a sum total of transactions per hour, for example, the page shouldn’t need to download the details of _every_ transaction. Shipping a static snapshot of the data, captured at build time, ensures that every reader sees the same data.
 
-You can load files the built-in `FileAttachment` function. This is available by default in Markdown, but you can import it like so:
+This approach also helps you comply with security and privacy requirements, since the built site only includes the referenced file attachments, the contents that ships to your web server can easily be listed and audited. Any proprietary information, such as API keys for web services or database connection credentials —and more generally, any information not meant to be displayed— stay secure.
+
+## Reading file attachments
+
+You can load files from a page with the built-in `FileAttachment` function. This is available by default in Markdown, but you can import it like so:
 
 ```js echo
 import {FileAttachment} from "npm:@observablehq/stdlib";
 ```
 
-`FileAttachment` supports many common data formats, including CSV, TSV, JSON, Apache Arrow, and SQLite. For example, here’s how to load a CSV file:
+`FileAttachment` supports many common data formats, including CSV, TSV, JSON, Apache Arrow and Apache Parquet, and SQLite. For example, here’s how to load a CSV file:
 
 ```js echo
 const gistemp = FileAttachment("gistemp.csv").csv({typed: true});
@@ -31,9 +34,17 @@ For CSV and TSV files, you can also access the columns:
 gistemp.columns
 ```
 
-**Caution:** ⚠️ Using `{typed: true}` or [d3.autoType](https://d3js.org/d3-dsv#autoType) for CSV and TSV files is dangerous because it requires that the file must be compatible; for example, dates must be represented as ISO 8601 strings such as `YYYY-MM-DD`. If the file is not compatible, `{typed: true}` may produce unexpected results. You should inspect the returned data and if needed use `{typed: false}` (the default) and coerce the types yourself. You can also use `{typed: "auto"}` and hope for the best. 🤷
+A usual pitfall with CSV (and TSV) files is that they are not typed: numbers and dates are represented in the same way as strings, and there is no way to automatically determine the correct type. For example, if you are working on a choropleth map which assigns a color to each US state based on its [FIPS code](https://transition.fcc.gov/oet/info/maps/census/fips/fips.txt), Alabama will be encoded as "01" and Michigan as "26" — these should be treated as strings. Dates might be represented as ISO 8601 strings such as `YYYY-MM-DD`, or through some other format.
 
-TK An example of coerce types yourself.
+The FileAttachment csv (and tsv) methods support the **typed** option, which can be one of:
+
+- false - keep everything as strings (default)
+- true - apply a value-based heuristic
+- *auto* - apply a column-based heuristic
+
+If the file is compatible with true or *auto*, then fine! If the file is not compatible, the typing may produce unexpected or invalid results. You should inspect the returned data and if needed use `{typed: false}` (the default) and coerce the types yourself.
+
+The following example shows how to type the Date and Anomaly columns of the gistemp.csv file:
 
 ```js run=false
 import {utcParse} from "npm:d3-time-format";
@@ -43,9 +54,40 @@ const coerceRow = (d) => ({Date: parseDate(d.Date), Anomaly: Number(d.Anomaly)})
 const gistemp = FileAttachment("gistemp.csv").csv().then((D) => D.map(coerceRow));
 ```
 
-TK An explanation of why coercing types as early as possible is important.
+With this explicit function, any Date value that does not match the expected format will be cast as an `Invalid Date`, and any Anomaly value that is not a number (maybe the file says "N/A" in those places) will be cast as `NaN`.
 
-TK Mention [data loaders](../loaders) and archives.
+Coercing types as early as possible is important as it makes data exploration easier (for example [Plot](../lib/plot) uses the types to determine the applicable scales and color schemes), and less susceptible to unexpected errors—such as when a "N/A" field breaks the determination of a median value.
+
+## Images
+
+All types of images can be added, in any of the formats suppoerted by the browser: PNG, JPEG, gif, WebP, TIFF, SVG, etc. The simplest way to display an image is to use the image method:
+
+```js echo
+FileAttachment("../us-counties-four-colors.png").image({width: 640})
+```
+
+If you need to work with the image contents in JavaScript, you can either write it to a canvas element and read the bytes with [context.getImageData](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/getImageData). Or, you can load the image as an array buffer, and process its format yourself. For example, to read the [EXIF](https://en.wikipedia.org/wiki/Exif) metadata with [ExifReader](https://github.com/mattiasw/ExifReader):
+
+```js echo
+import ExifReader from "npm:exifreader";
+const buffer = await FileAttachment("../us-counties-four-colors.png").arrayBuffer();
+const exif = await ExifReader.load(buffer);
+display(exif);
+```
+
+## Audio and video
+
+For audio or video contents, you will need to use the file.url() method, and build a player element with the source URL it returns (as a Promise). For example:
+
+```js
+FileAttachment("../plot-cli.mp4").url().then((src) => html`<video ${{
+  src,
+  autoplay: "autoplay",
+  muted: "muted",
+  controls: "controls",
+  style: "max-width: 640px"
+}}>`)
+```
 
 ## Supported formats
 
@@ -69,6 +111,8 @@ The following type-specific methods are supported:
 Each method returns a promise to the file’s contents (or URL).
 
 TK Describe what `file.zip()` returns.
+
+The 
 
 ## Static analysis
 
@@ -102,4 +146,3 @@ TK Describe `file.name` and `file.mimeType`.
 file
 ```
 
-TK Mention the sample datasets that are available by default in Markdown.
