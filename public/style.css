@@ -116,7 +116,6 @@ body {
 #observablehq-sidebar {
   position: fixed;
   background: var(--theme-background-alt);
-  border-right: solid 1px var(--theme-foreground-faintest);
   color: var(--theme-foreground-muted);
   font: 14px var(--sans-serif);
   font-weight: 500;
@@ -192,7 +191,7 @@ body {
   top: 0;
   left: 0;
   height: 100%;
-  width: 1rem;
+  width: 2rem;
   appearance: none;
   display: flex;
   align-items: center;
@@ -329,7 +328,7 @@ a[href],
   }
 }
 
-@media (min-width: calc(640px + 4rem + 272px)) {
+@media (min-width: calc(640px + 6rem + 272px)) {
   #observablehq-sidebar {
     transition: none;
   }
@@ -343,37 +342,32 @@ a[href],
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-sidebar {
     left: 0;
     box-shadow: none;
+    border-right: solid 1px var(--theme-foreground-faintest);
   }
   #observablehq-sidebar-toggle:checked ~ #observablehq-center,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center {
     padding-left: calc(272px + 1rem);
     padding-right: 1rem;
   }
-  pre {
-    border-radius: 4px;
-  }
 }
 
-@media (min-width: calc(640px + 4rem + 192px)) {
+@media (min-width: calc(640px + 6rem + 192px)) {
   #observablehq-toc ~ #observablehq-center {
     padding-right: calc(192px + 1rem);
-  }
-  #observablehq-toc ~ #observablehq-center pre {
-    border-radius: 4px;
   }
   #observablehq-toc {
     display: block;
   }
 }
 
-@media (min-width: calc(640px + 4rem + 272px)) {
+@media (min-width: calc(640px + 6rem + 272px)) {
   #observablehq-sidebar-toggle:checked ~ #observablehq-toc,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc {
     display: none;
   }
 }
 
-@media (min-width: calc(640px + 4rem + 272px + 192px)) {
+@media (min-width: calc(640px + 6rem + 272px + 192px)) {
   #observablehq-sidebar-toggle:checked ~ #observablehq-toc,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc,
   #observablehq-toc {
@@ -390,7 +384,7 @@ a[href],
   #observablehq-sidebar-toggle:not(:checked):not(:hover)::before {
     content: "";
   }
-  @media (min-width: calc(640px + 4rem + 272px)) {
+  @media (min-width: calc(640px + 6rem + 272px)) {
     #observablehq-sidebar-toggle:indeterminate:not(:checked):not(:hover)::before {
       content: "⟨";
     }
@@ -529,6 +523,7 @@ hr {
 pre {
   position: relative;
   background-color: var(--theme-background-alt);
+  border-radius: 4px;
   margin: 1rem -1rem;
   max-width: 960px;
   min-height: 1.5em;
