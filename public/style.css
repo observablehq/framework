@@ -191,31 +191,39 @@ body {
 }
 
 #observablehq-sidebar-toggle {
+  appearance: none;
+}
+
+#observablehq-sidebar-open {
   position: fixed;
   top: 0;
   left: 0;
-  height: 100%;
+  bottom: 0;
   width: 2rem;
-  appearance: none;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: e-resize;
   margin: 0;
-  padding: 2px;
-  cursor: pointer;
-  z-index: 3;
-  background: none;
   color: var(--theme-foreground-muted);
-  font-weight: 700;
-  font-size: 20px;
+  z-index: 1;
 }
 
-#observablehq-sidebar-toggle::before {
-  content: "⟩";
+#observablehq-sidebar-close {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--theme-foreground-muted);
+  top: 1rem;
+  right: 0;
+  width: 2rem;
+  height: 2.2rem; /* 1rem padding + line-height: normal */
+  cursor: w-resize;
 }
 
-#observablehq-sidebar-toggle:checked::before {
-  content: "⟨";
+#observablehq-sidebar-close:hover {
+  color: inherit;
 }
 
 #observablehq-sidebar summary,
@@ -336,9 +344,6 @@ a[href],
   #observablehq-sidebar {
     transition: none;
   }
-  #observablehq-sidebar-toggle:indeterminate::before {
-    content: "⟨";
-  }
   #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar-backdrop {
     display: none;
   }
@@ -385,13 +390,11 @@ a[href],
 }
 
 @media (hover: hover) {
-  #observablehq-sidebar-toggle:not(:checked):not(:hover)::before {
-    content: "";
+  #observablehq-sidebar-open {
+    transition: color 150ms ease;
   }
-  @media (min-width: calc(640px + 6rem + 272px)) {
-    #observablehq-sidebar-toggle:indeterminate:not(:checked):not(:hover)::before {
-      content: "⟨";
-    }
+  #observablehq-sidebar-open:not(:hover) {
+    color: transparent;
   }
 }
 
