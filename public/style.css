@@ -125,7 +125,7 @@ body {
   bottom: 0;
   left: -272px;
   box-sizing: border-box;
-  padding: 1rem 0.5rem;
+  padding: 0 0.5rem 1rem 0.5rem;
   overflow-y: auto;
 }
 
@@ -145,13 +145,17 @@ body {
 }
 
 #observablehq-sidebar > ol:first-child {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--theme-background-alt);
   font-size: 16px;
   font-weight: 700;
+  padding-top: 1rem;
   margin: 0;
   color: var(--theme-foreground);
 }
 
-#observablehq-sidebar > ol:first-child,
 #observablehq-sidebar > ol:last-child {
   border-bottom: none;
 }
