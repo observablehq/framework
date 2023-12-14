@@ -9,6 +9,7 @@
   --theme-foreground-fainter: color-mix(in srgb, var(--theme-foreground) 30%, var(--theme-background));
   --theme-foreground-faintest: color-mix(in srgb, var(--theme-foreground) 10%, var(--theme-background));
   --theme-foreground-focus: var(--observablehq-blue);
+  --theme-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M5 7L8.125 9.5L11.25 7' stroke='rgb(27, 30, 35)' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E");
   --monospace: Menlo, Consolas, monospace;
   --monospace-font: 14px/1.5 var(--monospace);
   --serif: "Source Serif Pro", "Iowan Old Style", "Apple Garamond", "Palatino Linotype", "Times New Roman", "Droid Serif", Times, serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
@@ -22,6 +23,7 @@
     --theme-background: rgb(31, 31, 31);
     --theme-background-alt: color-mix(in srgb, var(--theme-background) 70%, black);
     --theme-foreground-focus: oklch(from var(--observablehq-blue) calc(l + 20) calc(c + 0.1) h);
+    --theme-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M5 7L8.125 9.5L11.25 7' stroke='rgb(223, 223, 214)' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E");
   }
 }
 
@@ -172,12 +174,12 @@ body {
 
 #observablehq-sidebar summary::after {
   position: absolute;
-  right: 1rem;
-  margin-top: -0.25rem;
-  font-weight: 700;
-  font-size: 20px;
-  content: "⟩";
+  right: 0.5rem;
+  width: 1rem;
+  height: 1rem;
+  content: var(--theme-caret);
   transition: transform 250ms ease;
+  transform: rotate(-90deg);
   transform-origin: 50% 50%;
   color: var(--theme-foreground-muted);
 }
@@ -187,7 +189,7 @@ body {
 }
 
 #observablehq-sidebar details[open] summary:after {
-  transform: rotate(90deg);
+  transform: rotate(0deg);
 }
 
 #observablehq-sidebar-toggle {
