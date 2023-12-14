@@ -1,13 +1,14 @@
 :root {
+  --observablehq-blue: #3b5fc0;
   --theme-background: rgb(255, 255, 255);
-  --theme-background-alt: color-mix(in srgb, var(--theme-background) 95%, black);
+  --theme-background-alt: color-mix(in srgb, var(--theme-background) 97%, black);
   --theme-foreground: rgb(27, 30, 35);
   --theme-foreground-alt: color-mix(in srgb, var(--theme-foreground) 90%, var(--theme-background));
   --theme-foreground-muted: color-mix(in srgb, var(--theme-foreground) 70%, var(--theme-background));
   --theme-foreground-faint: color-mix(in srgb, var(--theme-foreground) 50%, var(--theme-background));
   --theme-foreground-fainter: color-mix(in srgb, var(--theme-foreground) 30%, var(--theme-background));
   --theme-foreground-faintest: color-mix(in srgb, var(--theme-foreground) 10%, var(--theme-background));
-  --theme-foreground-focus: #3182bd;
+  --theme-foreground-focus: var(--observablehq-blue);
   --monospace: Menlo, Consolas, monospace;
   --monospace-font: 14px/1.5 var(--monospace);
   --serif: "Source Serif Pro", "Iowan Old Style", "Apple Garamond", "Palatino Linotype", "Times New Roman", "Droid Serif", Times, serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
@@ -20,7 +21,7 @@
     --theme-foreground: rgb(223, 223, 214);
     --theme-background: rgb(31, 31, 31);
     --theme-background-alt: color-mix(in srgb, var(--theme-background) 70%, black);
-    --theme-foreground-focus: #20bbfc;
+    --theme-foreground-focus: oklch(from var(--observablehq-blue) calc(l + 20) calc(c + 0.1) h);
   }
 }
 
