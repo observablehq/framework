@@ -191,6 +191,7 @@ body {
 }
 
 #observablehq-sidebar-toggle {
+  position: fixed;
   appearance: none;
 }
 
