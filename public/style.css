@@ -116,6 +116,7 @@ body {
 #observablehq-sidebar {
   position: fixed;
   background: var(--theme-background-alt);
+  border-right: solid 1px var(--theme-foreground-faintest);
   color: var(--theme-foreground-muted);
   font: 14px var(--sans-serif);
   font-weight: 500;
@@ -139,26 +140,21 @@ body {
 #observablehq-sidebar > ol,
 #observablehq-sidebar > details {
   position: relative;
-  padding: 0.5rem 0 0;
+  padding-bottom: 0.5rem;
   margin: 0.5rem 0;
-}
-
-#observablehq-sidebar ol {
-  padding-bottom: 1rem;
-}
-
-#observablehq-sidebar > ol,
-#observablehq-sidebar > details {
-  position: relative;
-  border-top: solid 1px var(--theme-foreground-faintest);
+  border-bottom: solid 1px var(--theme-foreground-faintest);
 }
 
 #observablehq-sidebar > ol:first-child {
-  border-top: none;
+  font-size: 16px;
   font-weight: 700;
-  padding: 0;
   margin: 0;
   color: var(--theme-foreground);
+}
+
+#observablehq-sidebar > ol:first-child,
+#observablehq-sidebar > ol:last-child {
+  border-bottom: none;
 }
 
 #observablehq-sidebar summary {
