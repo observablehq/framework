@@ -98,7 +98,6 @@ export class ObservableApiMock {
       status == 200
         ? JSON.stringify({id: deployId, status: "uploaded", url: `${getObservableUiHost()}/@mock-user-ws/test-project`})
         : emptyErrorBody;
-    console.log("handlePostDeployUploaded", {response});
     const headers = authorizationHeader(status != 401);
     this._handlers.push((pool) =>
       pool
