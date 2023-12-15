@@ -82,7 +82,6 @@ export async function whoami(effects = defaultEffects) {
     }
     logger.log();
   } catch (error) {
-    console.log(error);
     if (isHttpError(error) && error.statusCode == 401) {
       if (apiKey.source === "env") {
         logger.log(`Your API key is invalid. Check the value of the ${apiKey.envVar} environment variable.`);

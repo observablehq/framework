@@ -1,8 +1,8 @@
 const sidebar = document.querySelector<HTMLElement>("#observablehq-sidebar")!;
 const toggle = document.querySelector<HTMLInputElement>("#observablehq-sidebar-toggle")!;
 
-// Restore the sidebar state from localStorage, or set it to indeterminate.
-const initialState = localStorage.getItem("observablehq-sidebar");
+// Restore the sidebar state from sessionStorage, or set it to indeterminate.
+const initialState = sessionStorage.getItem("observablehq-sidebar");
 if (initialState) toggle.checked = initialState === "true";
 else toggle.indeterminate = true;
 
