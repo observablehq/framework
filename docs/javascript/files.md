@@ -58,15 +58,63 @@ With this explicit function, any Date value that does not match the expected for
 
 Coercing types as early as possible is important as it makes data exploration easier (for example [Plot](../lib/plot) uses the types to determine the applicable scales and color schemes), and less susceptible to unexpected errors—such as when a "N/A" field breaks the determination of a median value.
 
+The `file.csv()` and `file.tsv()` methods assume that the first line of the file is a header indicating the (distinct) name of each column. Each subsequent line is considered as a row and converted to an object with the column names as keys. If your file does not have such a header line, pass the `array: true` option like so:
+
+```js echo
+FileAttachment("gistemp.csv", {array: true})
+```
+
+Each row is then converted to an array of values.
+
+## JSON
+
+The [JSON]() format is a common way to serialize non-tabular data, for example to represent graph such as networks and hierarchies, or **multivariate??? data** (for example when a data point belongs to several categories). The `file.json()` method returns a Promise to a JavaScript object:
+
+```js echo
+FileAttachment("../lib/miserables.json").json()
+```
+
+## Tables
+
+The following formats encode databases or database tables:
+
+- arrow - the Apache Arrow format, optimized for inter-process communications
+- parquet - the Apache Parquet format, optimized for storage and transfer
+- xlsx - the ubiquitous spreadsheet format used by Microsoft Excel
+
+Files in these formats bear the corresponding extension, and are consumed by the FileAttachment method of the same name.
+
+For instance, to load a .parquet file into memory:
+
+**TBC**
+
+The parquet format is 
+
+Similarly, to load a .arrow file into memory:
+
+TBD
+
+The Arrow format has several versions; specify the version like so (supported version are 9 and 11 **TBC**, defaults to **TBC**):
+
+- `arrow({version})`
+- `parquet()`
+
+The xlsx format allows you to load a spreadsheet’s _values_ (not the formulae) into arrays of objects. It works in two stages: first, you load the spreadsheet, and determine the list of sheet names. Then you can read the contents of a given sheet.
+
+**TBD** range.
+
+
 ## Images
 
-All types of images can be added, in any of the formats suppoerted by the browser: PNG, JPEG, gif, WebP, TIFF, SVG, etc. The simplest way to display an image is to use the image method:
+All types of images can be added, in any of the formats that the browser supports: PNG, JPEG, gif, WebP, TIFF, SVG, etc. The simplest way to display an image is to use the `file.image()` method:
 
 ```js echo
 FileAttachment("../us-counties-four-colors.png").image({width: 640})
 ```
 
-If you need to work with the image contents in JavaScript, you can either write it to a canvas element and read the bytes with [context.getImageData](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/getImageData). Or, you can load the image as an array buffer, and process its format yourself. For example, to read the [EXIF](https://en.wikipedia.org/wiki/Exif) metadata with [ExifReader](https://github.com/mattiasw/ExifReader):
+The options, if any, are assigned directly as properties of the [Image](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/Image) element; for example, you can set an image’s *width* and *height*, or a *style* attribute.
+
+If you need to work with the image pixels or raw contents, you can either write it to a canvas element then read the bytes with [context.getImageData](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/getImageData). Or, you can load the image as an array buffer, and process its raw format directly. For example, to read the [EXIF](https://en.wikipedia.org/wiki/Exif) metadata with [ExifReader](https://github.com/mattiasw/ExifReader):
 
 ```js echo
 import ExifReader from "npm:exifreader";
@@ -77,7 +125,7 @@ display(exif);
 
 ## Audio and video
 
-For audio or video contents, you will need to use the file.url() method, and build a player element with the source URL it returns (as a Promise). For example:
+For audio or video contents, you will need to use the `file.url()` method, and build a player element with the source URL it returns (as a Promise). For example:
 
 ```js
 FileAttachment("../plot-cli.mp4").url().then((src) => html`<video ${{
@@ -88,6 +136,30 @@ FileAttachment("../plot-cli.mp4").url().then((src) => html`<video ${{
   style: "max-width: 640px"
 }}>`)
 ```
+
+## Binary
+
+You might want to work with binary data, such as a shapefile. In these cases, the typical method is to use an [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer).
+
+```js echo run=false
+import shapefile from "nom:shapefile@0.6"
+const collection = shapefile.read(await FileAttachment("example.shp").arrayBuffer())
+```
+
+You can also get a [ReadableStream](https://streams.spec.whatwg.org/#rs) if you want to read a file incrementally:
+
+```js echo run=false
+function* chunk() {
+  const stream = await FileAttachment("example.shp").stream();
+  const reader = stream.getReader();
+  let done, value;
+  while (({done, value} = await reader.read()), !done) {
+    yield value;
+}
+
+for (const value of chunk) { … do something with the value … }
+```
+
 
 ## Supported formats
 
