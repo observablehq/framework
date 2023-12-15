@@ -22,7 +22,7 @@ The `FileAttachment` function returns a `file` object that shows the file’s na
 FileAttachment("gistemp.csv")
 ```
 
-Note: we use a [standard mapping](https://www.npmjs.com/package/mime) of file extensions to types. However, the actual MIME type that will be served is ultimately decided by your web server.
+We use a [standard mapping](https://www.npmjs.com/package/mime) of file extensions to types. However, the actual MIME type that will be served is ultimately decided by your web server.
 
 The resulting `file` supports many common data formats, with type-specific methods:
 
@@ -42,7 +42,7 @@ The resulting `file` supports many common data formats, with type-specific metho
 - `xml(mimeType)` - for [XML](#xml) documents
 - `zip()` - for [ZIP](#zip-archives) archives
 
-Note: though the names of the methods are similar to the extension, it is not a 1-1 mapping. The method you choose depends on the actual type of the file’s contents, and on what you want to do with it. For example, it is legal to read a .txt file with the `file.csv()` method, if the file contains comma-separated values.
+Though the names of the methods are similar to the extension, it is not a 1-1 mapping. The method you choose depends on the actual type of the file’s contents, and on what you want to do with it. For example, it is legal to read a .txt file with the `file.csv()` method, if the file contains comma-separated values.
 
 Each method returns a promise to the file’s contents (or URL).
 
