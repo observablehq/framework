@@ -278,8 +278,8 @@ body {
   padding: 0.25rem 0;
 }
 
-.observablehq-link a[href],
-.observablehq-secondary-link a[href] {
+.observablehq-link:not(.observablehq-link-active) a[href]:not(:hover),
+.observablehq-secondary-link:not(.observablehq-secondary-link-active) a[href]:not(:hover) {
   color: inherit;
 }
 
@@ -309,9 +309,7 @@ body {
   transition: top 150ms ease, height 150ms ease;
 }
 
-a[href],
-.observablehq-link-active a[href],
-.observablehq-secondary-link-active a[href] {
+a[href] {
   color: var(--theme-foreground-focus);
 }
 
