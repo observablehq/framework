@@ -130,9 +130,9 @@ See [D3](../lib/d3) for a complete example.
 The following formats encode databases or tables:
 
 - [parquet](#parquet)
-- [arrow](#arrow) - the [Apache Arrow](https://arrow.apache.org/) format, optimized for inter-process communications
-- [xlsx](#xlsx) - the ubiquitous [spreadsheet format](https://en.wikipedia.org/wiki/Office_Open_XML)
-- [sqlite](#sqlite) - the [SQLite](https://www.sqlite.org/fileformat.html) database format
+- [arrow](#arrow)
+- [xlsx](#xlsx)
+- [sqlite](#sqlite)
 
 Files in these formats usually bear the corresponding extension; they can be consumed by the FileAttachment method of the same name.
 
