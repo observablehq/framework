@@ -170,7 +170,21 @@ Though you will rarely have to consume this format directly, it is sometimes sav
 The Arrow format supports different versions (namely: 4, 9 and 11), which you can specify like so:
 
 ```js echo
-FileAttachment("file.arrow").arrow({version: 9})
+const flights = await FileAttachment("../data/flights-200k.arrow").arrow({version: 9});
+display(flights);
+```
+
+The file above contains 231,083 flight records, which we can explore with [Observable Plot](../lib/plot):
+
+```js echo
+Plot.plot({
+  height: 120,
+  marginLeft: 60,
+  marks: [
+    Plot.ruleY([0]),
+    Plot.rectY(flights, Plot.binX({y: "count"}, {x: "delay", interval: 5, fill: "steelblue"}))
+  ]
+})
 ```
 
 The [Arrow](../lib/arrow) page shows how to use the arrow format to work with data frames.
