@@ -221,31 +221,33 @@ Use `file.sqlite()` to load a [SQLite](https://www.sqlite.org/fileformat.html) d
 All types of images can be added, in any of the formats supported by your browser: PNG, JPEG, gif, WebP, TIFF, SVG, etc. The simplest way to display an image is to use the `file.image()` method:
 
 ```js echo
-FileAttachment("../us-counties-four-colors.png").image({width: 640})
+FileAttachment("../data/horse.jpeg").image({width: 640, alt: "Horse"})
 ```
 
-The options, if any, are assigned directly as properties of the [Image](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/Image) element; for example, you can set an image’s *width* and *height*, or a *style* attribute.
+The options, if any, are assigned directly as properties of the [Image](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/Image) element; for example, you can set an image’s *width* and *height*, a *style* attribute, or the *alt* attribute like above.
 
 When you need to work with the image pixels or raw contents, you will either write the image to a canvas element, then read the bytes with [context.getImageData](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/getImageData). Or, you can load the image into an array buffer, and process its raw format directly. For example, to read the [EXIF](https://en.wikipedia.org/wiki/Exif) metadata of a picture with [ExifReader](https://github.com/mattiasw/ExifReader):
 
 ```js echo
 import ExifReader from "npm:exifreader";
-const buffer = await FileAttachment("../us-counties-four-colors.png").arrayBuffer();
+const buffer = await FileAttachment("../data/horse.jpeg").arrayBuffer();
 const exif = await ExifReader.load(buffer);
 display(exif);
 ```
+
+(Image from [Eadweard Muybridge](https://www.loc.gov/search/?fa=contributor:muybridge,+eadweard)’s studies of animal locomotion.)
 
 ## Audio, video
 
 For audio or video contents, you will use the `file.url()` method to build a player element with the source URL it returns (as a Promise). For example:
 
 ```js echo
-FileAttachment("../plot-cli.mp4").url().then((src) => html`<video ${{
+FileAttachment("../data/horse.mp4").url().then((src) => html`<video ${{
   src,
   autoplay: "autoplay",
   muted: "muted",
-  controls: "controls",
-  style: "max-width: 640px"
+  loop: "loop",
+  controls: "controls"
 }}>`)
 ```
 
@@ -262,17 +264,40 @@ The `file.html()` method reads an [HTML](https://developer.mozilla.org/en-US/doc
 The `file.zip()` method returns a Promise to a `ZipArchive` object, with a .filenames property listing the paths of the files contained within the .zip [archive](<https://en.wikipedia.org/wiki/ZIP_(file_format)>):
 
 ```js echo
-const dogZip = await FileAttachment("../data/Dog_Photos.zip").zip();
-display(dogZip);
+const muybridge = await FileAttachment("../data/muybridge.zip").zip();
+display(muybridge);
 ```
 
 To pull out a single file from the archive, use the _`archive`_`.file()` method. It returns a new FileAttachment, which you can then use just like any other file:
 
 ```js echo
-dogZip.file("n02102177_1257.jpg").image()
+muybridge.file("deer.jpeg").image({width: 640, alt: "A deer"})
 ```
 
-This method uses [JSZip](https://stuk.github.io/jszip/). Note that if you want to pull out a file from a zip archive at build time, you might prefer to do so with a [data loader](../loaders#archives) instead. There is a trade-off: in the former case, the reader’s browser will download both the zip archive and the JSZip library, and let you walk through the list of files in a possibly interactive way; in the latter case, it will only download the extracted file, but its contents have to be known [statically](#static-analysis) at build time.
+Or inline:
+
+<div style="display: flex; max-width: 640px; flex-wrap: wrap;">
+${muybridge.file("horse.jpeg").image({width: 210})}
+${muybridge.file("deer.jpeg").image({width: 210})}
+${muybridge.file("ox.jpeg").image({width: 210})}
+</div>
+
+```md
+<div style="display: flex; max-width: 640px; flex-wrap: wrap;">
+  ${muybridge.file("horse.jpeg").image({width: 210})}
+  ${muybridge.file("deer.jpeg").image({width: 210})}
+  ${muybridge.file("ox.jpeg").image({width: 210})}
+</div>
+```
+
+To extract resources from a zip archive, we use [JSZip](https://stuk.github.io/jszip/). Note that if you want to pull out a file from an archive at build time, you might prefer to do so with a [data loader](../loaders#archives) instead. There is a trade-off: in the former case, the reader’s browser will download both the zip archive and the JSZip library, and let you walk through the list of files in a possibly interactive way; in the latter case, it will only download the extracted file, but its contents have to be known [statically](#static-analysis) at build time.
+
+If you want to create a download link for the archive itself, use `file.url()`:
+
+```js echo
+FileAttachment("../data/muybridge.zip").url()
+  .then((href) => html`<a ${{href}} download><button>download zip`)
+```
 
 ## Binary
 
