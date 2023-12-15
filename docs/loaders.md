@@ -110,7 +110,7 @@ The following archive extensions are supported:
 - `.tar` - for [tarballs](<https://en.wikipedia.org/wiki/Tar_(computing)>)
 - `.tar.gz` and `.tgz` - for [compressed tarballs](https://en.wikipedia.org/wiki/Gzip)
 
-Like with any other file, these files from generated archives are live in preview (they will refresh automatically if the corresponding data loader script is edited), and are added to the build if and only if referenced by `FileAttachment` (See [Files: ZIP](javascript/files#zip-archives)).
+Like with any other file, these files from generated archives are live in preview (they will refresh automatically if the corresponding data loader script is edited), and are added to the build if and only if referenced by `FileAttachment` (see [Files: ZIP](javascript/files#zip-archives)).
 
 ## Routing
 
