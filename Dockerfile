@@ -4,10 +4,10 @@
 # If you need more help, visit the Dockerfile reference guide at
 # https://docs.docker.com/engine/reference/builder/
 
-ARG NODE_VERSION=18.18.2
+ARG NODE_VERSION=20.10.0
 FROM node:${NODE_VERSION}-alpine
 
-RUN apk add python3 zip
+RUN apk add --no-cache python3 zip
 
 WORKDIR /app
 
