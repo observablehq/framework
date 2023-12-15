@@ -159,7 +159,8 @@ body {
   color: var(--theme-foreground);
 }
 
-#observablehq-sidebar > ol:last-child {
+#observablehq-sidebar > ol:last-child,
+#observablehq-sidebar > details:last-child {
   border-bottom: none;
 }
 
