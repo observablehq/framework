@@ -22,18 +22,18 @@ The `FileAttachment` function returns a `file` object that shows the file’s na
 FileAttachment("gistemp.csv")
 ```
 
-Note: we use a [standard mapping](https://www.npmjs.com/package/mime) of file extensions to types. However, the actual MIME type is ultimately decided by your web server.
+Note: we use a [standard mapping](https://www.npmjs.com/package/mime) of file extensions to types. However, the actual MIME type that will be served is ultimately decided by your web server.
 
 The resulting `file` supports many common data formats, with type-specific methods:
 
 - `arrayBuffer()` - for [binary](#binary) data
-- `arrow({version})` - for [Arrow](#apache-arrow) files
+- `arrow({version})` - for [Arrow](#arrow) files
 - `blob()` - for [binary](#binary) data
 - `csv({array, typed})` - for [CSV](#csv-tsv) files
 - `html()` - for [HTML](#html) pages
 - `image(props)` - for [images](#images)
 - `json()` - for [JSON](#json) files
-- `parquet()` - for [Parquet](#apache-parquet) files 
+- `parquet()` - for [Parquet](#parquet) files 
 - `sqlite()` - for [SQLite](#sqlite) databases
 - `stream()` - for [binary](#binary) data
 - `text()` - for [text](#text)
@@ -71,15 +71,19 @@ The value of `gistemp` above is a [Promise](./promises) to an array of objects. 
 gistemp
 ```
 
-For CSV and tab-separated values (TSV) files, you can also access the columns:
+The column names are listed in the `columns` property:
 
 ```js echo
 gistemp.columns
 ```
 
-Our implementation of CSV and TSV is based on [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180). A usual pitfall with these formats is that they are not typed: numbers and dates are represented in the same way as strings, and there is no way to automatically determine the correct type. For example, if you are working on a choropleth map which assigns a color to each US state based on its [FIPS code](https://transition.fcc.gov/oet/info/maps/census/fips/fips.txt), Alabama will be encoded as "01" and Michigan as "26" — these should be treated as strings. Dates might be represented as ISO 8601 strings such as `YYYY-MM-DD`, or through some other format.
+Our implementation is based on [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180).
 
-The `file.csv()` and `file.tsv()` methods support the **typed** option, which can be one of:
+### Typing CSV
+
+A usual pitfall with these formats is that they are not typed: numbers and dates are represented in the same way as strings, and there is no way to automatically determine the correct type. For example, if you are working on a choropleth map which assigns a color to each US state based on its [FIPS code](https://transition.fcc.gov/oet/info/maps/census/fips/fips.txt), Alabama will be encoded as "01" and Michigan as "26" — and these should be treated as strings when looking up the values in your dataset. Dates might be represented as ISO 8601 strings such as `YYYY-MM-DD`, or through some other format.
+
+The `file.csv()` and `file.tsv()` methods support the `typed` option, which can be one of:
 
 - false - keep everything as strings (default)
 - true - apply a value-based heuristic
@@ -111,7 +115,9 @@ Each row is then converted to an array of values.
 
 ## JSON
 
-The [JSON](https://en.wikipedia.org/wiki/JSON) format is a common way to serialize non-tabular data such as networks and hierarchies, or data with multivalued fields (_e.g._, tags). The `file.json()` method returns a Promise to a JavaScript object:
+A common way to serialize non-tabular data such as networks and hierarchies, or data with multivalued fields (_e.g._, tags), is to use [JSON](https://en.wikipedia.org/wiki/JSON), the JavaScript Object Notation—for example with [JSON.stringify](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify).
+
+The `file.json()` method reads a .json file and returns a Promise to a JavaScript object:
 
 ```js echo
 FileAttachment("../data/miserables.json").json()
@@ -123,39 +129,43 @@ See [D3](../lib/d3) for a complete example.
 
 The following formats encode databases or tables:
 
-- parquet - the [Apache Parquet](https://parquet.apache.org/) format, optimized for storage and transfer
-- arrow - the [Apache Arrow](https://arrow.apache.org/) format, optimized for inter-process communications
-- xlsx - the ubiquitous [spreadsheet format](https://en.wikipedia.org/wiki/Office_Open_XML)
-- sqlite - the [SQLite](https://www.sqlite.org/fileformat.html) database format
+- [parquet](#parquet)
+- [arrow](#arrow) - the [Apache Arrow](https://arrow.apache.org/) format, optimized for inter-process communications
+- [xlsx](#xlsx) - the ubiquitous [spreadsheet format](https://en.wikipedia.org/wiki/Office_Open_XML)
+- [sqlite](#sqlite) - the [SQLite](https://www.sqlite.org/fileformat.html) database format
 
-Files in these formats bear the corresponding extension, and are consumed by the FileAttachment method of the same name.
+Files in these formats usually bear the corresponding extension; they can be consumed by the FileAttachment method of the same name.
 
-### Apache Parquet
+### Parquet
 
-For instance, to load a Parquet file into memory:
+The [Apache Parquet](https://parquet.apache.org/) format is optimized for storage and transfer. To load a Parquet file into memory, such as this data frame of the right ascension and declination of a sample of 250,000 stars from the [Gaia Star Catalog](https://observablehq.com/@cmudig/peeking-into-the-gaia-star-catalog):
 
 ```js echo
-const schools = FileAttachment("../data/schools.parquet").parquet();
+const gaia = FileAttachment("../data/gaia-sample.parquet").parquet();
 ```
+
+We can then [plot](../lib/plot) these stars (binned by intervals of 5°), and reveal the milky way.
 
 ```js echo
 Plot.plot({
-  projection: "albers-usa",
+  aspectRatio: 1,
+  color: {type: "log", scheme: "blues"}, 
   marks: [
-    Plot.dot(schools, {x: "LONGITUD", y: "LATITUDE"})
+    Plot.frame({fill: "#fff"}),
+    Plot.rect(gaia, Plot.bin({fill: "count"}, {x: "ra", y: "dec", interval: 5, inset: 0}))
   ]
 })
 ```
 
-To load Parquet files with FileAttachment, as described above, we use [parquet-wasm](https://kylebarron.dev/parquet-wasm/).
+This method uses [parquet-wasm](https://kylebarron.dev/parquet-wasm/).
 
-Another common way to consume Parquet files is to run SQL queries on them with the [DuckDB](../lib/duckdb) database engine. The parquet format is optimized for this use case: the data being compressed and organized by column, DuckDB does not have to load all the data if the query only necessitates an index and a column. This can give a huge performance boost when working with large data files in interactive pages.
+Another common way to consume Parquet files is to run SQL queries on them with the [DuckDB](../lib/duckdb) database engine (see that page for a different take on the milky way!). The parquet format is optimized for this use case: the data being compressed and organized by column, DuckDB does not have to load all the data if the query only necessitates an index and a column. This can give a huge performance boost when working with large data files in interactive pages.
 
-### Apache Arrow
+### Arrow
 
-[Apache Arrow](https://arrow.apache.org/) is the pendant of the Parquet format once the data is loaded into memory. It is used by [Arquero](../lib/arquero), [DuckDB](../lib/duckdb), and other libraries, to handle data efficiently.
+[Arrow](https://arrow.apache.org/) is the pendant of the Parquet format once the data is loaded into memory. It is used by [Arquero](../lib/arquero), [DuckDB](../lib/duckdb), and other libraries, to handle data efficiently.
 
-Though you will rarely consume this format directly, it is sometimes saved to disk as .arrow files, which you can load with `file.arrow()`.
+Though you will rarely have to consume this format directly, it is sometimes saved to disk as .arrow files, which you can load with `file.arrow()`.
 
 The Arrow format supports different versions (namely: 4, 9 and 11), which you can specify like so:
 
@@ -163,7 +173,7 @@ The Arrow format supports different versions (namely: 4, 9 and 11), which you ca
 FileAttachment("file.arrow").arrow({version: 9})
 ```
 
-The [Arrow](../lib/arrow) page shows how to use the arrow format to work with data-frames.
+The [Arrow](../lib/arrow) page shows how to use the arrow format to work with data frames.
 
 ### XLSX
 
