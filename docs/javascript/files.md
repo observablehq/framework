@@ -6,7 +6,7 @@ File attachments can be static files added to the docs folder, like a CSV file t
 
 For speed, you’ll want to minimize the data that is sent to the browser, by doing aggregations and selections at build time. For a chart that only displays a sum total of transactions per hour, for example, the page shouldn’t need to download the details of _every_ transaction. Shipping a static snapshot of the data, captured at build time, ensures that every reader sees the same data.
 
-This approach also helps you comply with security and privacy requirements, since the built site only includes the referenced file attachments, the contents that ships to your web server can easily be listed and audited. Any proprietary information, such as API keys for web services or database connection credentials —and more generally, any information not meant to be displayed— stay secure.
+This approach also helps you comply with security and privacy requirements: since the built site only includes the referenced file attachments, the contents exported to your web server can easily be listed and audited. Any proprietary information, such as API keys for web services or database connection credentials —and more generally, any information not meant to be displayed— stay secure.
 
 ## Reading files
 
@@ -30,7 +30,7 @@ The resulting `file` supports many common data formats, with type-specific metho
 - `arrow({version})` - for [Arrow](#apache-arrow) files
 - `blob()` - for [binary](#binary) data
 - `csv({array, typed})` - for [CSV](#csv-tsv) files
-- `html()`
+- `html()` - for [HTML](#html) pages
 - `image(props)` - for [images](#images)
 - `json()` - for [JSON](#json) files
 - `parquet()` - for [Parquet](#apache-parquet) files 
@@ -39,8 +39,8 @@ The resulting `file` supports many common data formats, with type-specific metho
 - `text()` - for [text](#text)
 - `tsv({array, typed})` - for [TSV](#csv-tsv) files
 - `xlsx()` - for [spreadsheets](#xlsx)
-- `xml(mimeType)`
-- `zip()`
+- `xml(mimeType)` - for [XML](#xml) documents
+- `zip()` - for [ZIP](#zip-archives) archives
 
 Note: though the names of the methods are similar to the extension, it is not a 1-1 mapping. The method you choose depends on the actual type of the file’s contents, and on what you want to do with it. For example, it is legal to read a .txt file with the `file.csv()` method, if the file contains comma-separated values.
 
@@ -249,6 +249,31 @@ FileAttachment("../plot-cli.mp4").url().then((src) => html`<video ${{
 }}>`)
 ```
 
+## XML
+
+The `file.xml(mimeType)` method read a [XML]() file and returns a Promise to a [XMLDocument](https://developer.mozilla.org/en-US/docs/Web/API/XMLDocument) containing the contents of the file. It takes a single argument with the file’s MIME-type, which defaults to `"application/xml"`.
+
+## HTML
+
+The `file.html()` method reads an [HTML](https://developer.mozilla.org/en-US/docs/Web/HTML) file and returns a Document which you can [traverse](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Traversing_an_HTML_table_with_JavaScript_and_DOM_Interfaces) with the standard methods, or manipulate with [D3](../lib/d3). `file.html()` is equivalent to `file.xml("text/html")`.
+
+## Zip archives
+
+The `file.zip()` method returns a Promise to a `ZipArchive` object, with a .filenames property listing the paths of the files contained within the .zip [archive](<https://en.wikipedia.org/wiki/ZIP_(file_format)>):
+
+```js
+const dogZip = await FileAttachment("../data/Dog_Photos.zip").zip();
+display(dogZip);
+```
+
+To pull out a single file from the archive, use the _`archive`_`.file()` method. It returns a new FileAttachment, which you can then use just like any other file:
+
+```js echo
+dogZip.file("n02102177_1257.jpg").image()
+```
+
+This method uses [JSZip](https://stuk.github.io/jszip/). Note that if you want to pull out a file from a zip archive at build time, you might prefer to do so with a [data loader](../loaders#archives) instead. There is a trade-off: in the former case, the reader’s browser will download both the zip archive and the JSZip library, and let you walk through the list of files in a possibly interactive way; in the latter case, it will only download the extracted file, but its contents have to be known [statically](#static-analysis) at build time.
+
 ## Binary
 
 You might want to work with binary data, such as a [shapefile](https://github.com/mbostock/shapefile). In these cases, a typical method is to use an [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer).
@@ -293,16 +318,3 @@ const frames = [
 ```
 
 Note that just declaring a `FileAttachment` does not load the file. Hence above, none of the files in `frames` are loaded until requested, for example by saying `frames[0].image()`.
-
-You can also work directly with `FileAttachment` instances:
-
-```js echo
-const file = FileAttachment("gistemp.csv");
-```
-
-TK Describe `file.name` and `file.mimeType`.
-
-```js echo
-file
-```
-
