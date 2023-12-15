@@ -239,7 +239,7 @@ display(exif);
 
 For audio or video contents, you will use the `file.url()` method to build a player element with the source URL it returns (as a Promise). For example:
 
-```js
+```js echo
 FileAttachment("../plot-cli.mp4").url().then((src) => html`<video ${{
   src,
   autoplay: "autoplay",
@@ -261,7 +261,7 @@ The `file.html()` method reads an [HTML](https://developer.mozilla.org/en-US/doc
 
 The `file.zip()` method returns a Promise to a `ZipArchive` object, with a .filenames property listing the paths of the files contained within the .zip [archive](<https://en.wikipedia.org/wiki/ZIP_(file_format)>):
 
-```js
+```js echo
 const dogZip = await FileAttachment("../data/Dog_Photos.zip").zip();
 display(dogZip);
 ```
