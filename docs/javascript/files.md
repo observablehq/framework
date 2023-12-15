@@ -4,9 +4,9 @@ Dashboards and reports need to present data as quickly, accurately, and complete
 
 File attachments can be static files added to the docs folder, like a CSV file that contains your data. They can also be generated on-the-fly by a [data loader](../loaders).
 
-For speed, you’ll want to minimize the data that is sent to the browser, by doing aggregations and selections at build time. For a chart that only displays a sum total of transactions per hour, for example, the page shouldn’t need to download the details of _every_ transaction. Shipping a static snapshot of the data, captured at build time, ensures that every reader sees the same data.
+For speed, you’ll want to minimize the data that is sent to the browser, for example by doing aggregations and selections at build time. For a chart that only displays a sum total of transactions per hour, for example, a dashboard shouldn’t need to download the details of _every_ transaction. Shipping a static snapshot of the data, captured at build time, also ensures that every reader sees the same data.
 
-This approach also helps you comply with security and privacy requirements: since the built site only includes the referenced file attachments, the contents exported to your web server can easily be listed and audited. Any proprietary information, such as API keys for web services or database connection credentials —and more generally, any information not meant to be displayed— stay secure.
+On top of the performance benefits, this approach makes it easier to comply with security and privacy requirements. Since the built site only includes files that are [referenced](#static-analysis) in at least one the pages, the contents exported to your web server can be listed and audited much more easily than by going through a complex code base. This design helps you ensure that any proprietary information —such as API keys for web services or database connection credentials, and, more generally, any information not meant to be displayed— stays secure.
 
 ## Reading files
 
