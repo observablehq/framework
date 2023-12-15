@@ -96,6 +96,12 @@ ${renderFooter(path, options)}
 
 async function renderSidebar(title = "Home", pages: (Page | Section)[], path: string): Promise<Html> {
   return html`<input id="observablehq-sidebar-toggle" type="checkbox">
+<label id="observablehq-sidebar-open" for="observablehq-sidebar-toggle" title="Open sidebar">
+  <svg width="16" height="16" viewBox="0 0 16 16">
+    <path d="m10.5,11 2.5-3-2.5-3 M6,8h7" fill="none" stroke="currentColor" stroke-width="2"/>
+    <rect x="2" y="2" fill="currentColor" height="12" rx="0.5" width="2"/>
+  </svg>
+</label>
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
   <ol>
@@ -103,6 +109,14 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
       path,
       "/"
     )}">${title}</a></li>
+    <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle" title="Close sidebar">
+      <svg width="16" height="16" viewBox="0 0 16 16">
+        <g transform="rotate(180 8,8)">
+          <path d="m10.5,11 2.5-3-2.5-3 M6,8h7" fill="none" stroke="currentColor" stroke-width="2"/>
+          <rect x="2" y="2" fill="currentColor" height="12" rx="0.5" width="2"/>
+        </g>
+      </svg>
+    </label>
   </ol>
   <ol>${pages.map((p, i) =>
     "pages" in p
