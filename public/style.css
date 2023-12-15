@@ -22,7 +22,7 @@
     --theme-foreground: rgb(223, 223, 214);
     --theme-background: rgb(31, 31, 31);
     --theme-background-alt: color-mix(in srgb, var(--theme-background) 70%, black);
-    --theme-foreground-focus: oklch(from var(--observablehq-blue) calc(l + 20) calc(c + 0.1) h);
+    --theme-foreground-focus: oklch(0.712564 0.257662 265.758); /* oklch(from var(--observablehq-blue) calc(l + 20) calc(c + 0.1) h) */
   }
 }
 
