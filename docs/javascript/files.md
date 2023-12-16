@@ -67,7 +67,7 @@ The `FileAttachment` class supports a variety of methods for loading file conten
 | `file.text`        | [`string`][9]                               | -
 | `file.tsv`         | [`Array`][4] (of objects or arrays)         | [D3](../lib/csv)
 | `file.xlsx`        | [`Workbook`](../lib/xlsx)                   | [ExcelJS](../lib/xlsx)
-| `file.xml`         | [`XMLDocument`][10]                         | -
+| `file.xml`         | [`Document`][5]                             | -
 | `file.zip`         | [`ZipArchive`](../lib/zip)                  | [JSZip](../lib/zip)
 | `file.url`         | [`string`][9]                               | -
 
@@ -80,7 +80,6 @@ The `FileAttachment` class supports a variety of methods for loading file conten
 [7]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object
 [8]: https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream
 [9]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
-[10]: https://developer.mozilla.org/en-US/docs/Web/API/XMLDocument
 
 While the contents often dictate the appropriate method — for example, an Apache Arrow file is almost always read with `file.arrow` — when multiple methods are valid, chose based on your needs. For example, you can load a CSV file using `file.text` to implement parsing yourself instead of using D3.
 
@@ -122,72 +121,65 @@ A common gotcha with JSON is that it has no built-in date type; dates are theref
 
 ### Media
 
-To load an image, use `file.image`:
+To display an image, you can use a static image in [Markdown](../markdown) such as `<img src="horse.jpg">` or `![horse](horse.jpg)`. Likewise, you can use a `video` or `audio` element. Per [file-based routing](../routing#files), static references to these files are automatically detected and therefore these files will be included in the built output.
 
-```js echo
-FileAttachment("horse.jpg").image()
-```
-
-Of course, if you just want to display the image, you can use a static image in HTML or Markdown.
-
-![horse](./horse.jpg)
-
-<img src="./horse.jpg">
+<video src="horse.mp4" autoplay muted loop controls>
 
 ```md
-![horse](./horse.jpg)
+<video src="horse.mp4" autoplay muted loop controls>
 ```
 
-<!-- All types of images can be added, in any of the formats supported by your browser: PNG, JPEG, gif, WebP, TIFF, SVG, etc. The simplest way t -->
+If you want to manipulate an image in JavaScript, use `file.image`. For example, below we load an image and invert the RGB channel values.
 
-The options, if any, are assigned directly as properties of the [Image](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/Image) element; for example, you can set an image’s _width_ and _height_, a _style_ attribute, or the _alt_ attribute like above.
-
-When you need to work with the image pixels or raw contents, you will either write the image to a canvas element, then read the bytes with [context.getImageData](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/getImageData).
-
-For audio or video contents, you will use the `file.url()` method to build a player element with the source URL it returns (as a promise). For example:
+<canvas id="horse-canvas" width="640" height="512" style="max-width: 100%;">
 
 ```js echo
-html`<video ${{
-  src: await FileAttachment("horse.mp4").url(),
-  autoplay: true,
-  muted: true,
-  loop: true,
-  controls: true
-}}>`
+const canvas = document.querySelector("#horse-canvas");
+const context = canvas.getContext("2d");
+const horse = await FileAttachment("horse.jpg").image();
+context.drawImage(horse, 0, 0, canvas.width, canvas.height);
+const data = context.getImageData(0, 0, canvas.width, canvas.height);
+for (let j = 0, k = 0; j < canvas.height; ++j) {
+  for (let i = 0; i < canvas.width; ++i, k += 4) {
+    data.data[k + 0] = 255 - data.data[k + 0];
+    data.data[k + 1] = 255 - data.data[k + 1];
+    data.data[k + 2] = 255 - data.data[k + 2];
+  }
+}
+context.putImageData(data, 0, 0);
 ```
+
+(The images above are from [Eadweard Muybridge](https://www.loc.gov/search/?fa=contributor:muybridge,+eadweard)’s studies of animal locomotion.)
 
 ### Markup
 
-The `file.xml(mimeType)` method read a [XML]() file and returns a promise to a [XMLDocument](https://developer.mozilla.org/en-US/docs/Web/API/XMLDocument) containing the contents of the file. It takes a single argument with the file’s MIME-type, which defaults to `"application/xml"`.
-
-The `file.html()` method reads an [HTML](https://developer.mozilla.org/en-US/docs/Web/HTML) file and returns a Document which you can [traverse](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Traversing_an_HTML_table_with_JavaScript_and_DOM_Interfaces) with the standard methods, or manipulate with [D3](../lib/d3). `file.html()` is equivalent to `file.xml("text/html")`.
+The `file.xml` method reads an XML file and returns a promise to a [`Document`](https://developer.mozilla.org/en-US/docs/Web/API/Document); it takes a single argument with the file’s MIME-type, which defaults to `"application/xml"`. The `file.html` method similarly reads an [HTML](https://developer.mozilla.org/en-US/docs/Web/HTML) file; it is equivalent to `file.xml("text/html")`.
 
 ## Binary formats
 
-You can also get a [ReadableStream](https://streams.spec.whatwg.org/#rs) if you want to read a file incrementally:
-
-```js echo run=false
-function* chunk() {
-  const stream = await FileAttachment("example.shp").stream();
-  const reader = stream.getReader();
-  let done, value;
-  while (({done, value} = await reader.read()), !done) {
-    yield value;
-  }
-
-for (const value of chunk) { … do something with the value … }
-```
-
-Likewise, call `file.blob()` to get a [Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob).
-
-Or, you can load the image into an array buffer, and process its raw format directly. For example, to read the [EXIF](https://en.wikipedia.org/wiki/Exif) metadata of a picture with [ExifReader](https://github.com/mattiasw/ExifReader):
+Load binary data using `file.blob` to get a [`Blob`][3], or `file.arrayBuffer` to get an [`ArrayBuffer`][1]. For example, to read [Exif](https://en.wikipedia.org/wiki/Exif) image metadata with [ExifReader](https://github.com/mattiasw/ExifReader):
 
 ```js echo
 import ExifReader from "npm:exifreader";
+
+const buffer = await FileAttachment("horse.jpg").arrayBuffer();
+const tags = ExifReader.load(buffer);
+
+display(tags);
 ```
+
+To read a file incrementally, get a [`ReadableStream`][8] with `file.stream`. For example, to count the number of bytes in a file:
 
 ```js echo
-FileAttachment("horse.jpg").arrayBuffer().then(ExifReader.load)
-```
+const stream = await FileAttachment("horse.jpg").stream();
+const reader = stream.getReader();
+let total = 0;
 
-(Image from [Eadweard Muybridge](https://www.loc.gov/search/?fa=contributor:muybridge,+eadweard)’s studies of animal locomotion.)
+while (true) {
+  const {done, value} = await reader.read();
+  if (done) break;
+  total += value.length;
+}
+
+display(total);
+```
