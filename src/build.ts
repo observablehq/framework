@@ -26,7 +26,7 @@ const CLIENT_BUNDLES: [entry: string, name: string][] = [
   ["./src/client/stdlib/mermaid.js", "stdlib/mermaid.js"],
   ["./src/client/stdlib/sqlite.js", "stdlib/sqlite.js"],
   ["./src/client/stdlib/tex.js", "stdlib/tex.js"],
-  ["./src/client/stdlib/xslx.js", "stdlib/xslx.js"]
+  ["./src/client/stdlib/xlsx.js", "stdlib/xlsx.js"]
 ];
 
 export interface BuildOptions {

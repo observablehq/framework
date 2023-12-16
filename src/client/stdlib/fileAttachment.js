@@ -88,7 +88,7 @@ class AbstractFile {
     return this.xml("text/html");
   }
   async xlsx() {
-    const [{Workbook}, buffer] = await Promise.all([import("observablehq:stdlib/xslx"), this.arrayBuffer()]);
+    const [{Workbook}, buffer] = await Promise.all([import("observablehq:stdlib/xlsx"), this.arrayBuffer()]);
     return Workbook.load(buffer);
   }
 }
