@@ -15,7 +15,7 @@ import {DuckDBClient} from "npm:@observablehq/duckdb";
 To get a DuckDB client, pass zero or more named tables to `DuckDBClient.of`. Each table can be expressed as a [`FileAttachment`](../javascript/files), [Arquero table](./arquero), [Arrow table](./arrow), an array of objects, or a promise to the same. For example, below we load a sample of 250,000 stars from the [Gaia Star Catalog](https://observablehq.com/@cmudig/peeking-into-the-gaia-star-catalog) as a [Apache Parquet](https://parquet.apache.org/) file:
 
 ```js echo
-const db = DuckDBClient.of({gaia: FileAttachment("../data/gaia-sample.parquet")});
+const db = DuckDBClient.of({gaia: FileAttachment("gaia-sample.parquet")});
 ```
 
 Now we can run a query using `db.sql` to bin the stars by [right ascension](https://en.wikipedia.org/wiki/Right_ascension) (`ra`) and [declination](https://en.wikipedia.org/wiki/Declination) (`dec`):

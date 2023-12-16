@@ -64,7 +64,7 @@ Plot.plot({
 The [Apache Parquet](https://parquet.apache.org/) format is optimized for storage and transfer. To load a Parquet file into memory, such as this data frame of the right ascension and declination of a sample of 250,000 stars from the [Gaia Star Catalog](https://observablehq.com/@cmudig/peeking-into-the-gaia-star-catalog):
 
 ```js echo
-const gaia = FileAttachment("../data/gaia-sample.parquet").parquet();
+const gaia = FileAttachment("gaia-sample.parquet").parquet();
 ```
 
 We can then [plot](../lib/plot) these stars (binned by intervals of 5°), and reveal the milky way.
@@ -88,26 +88,27 @@ Another common way to consume Parquet files is to run SQL queries on them with t
 
 [Arrow](https://arrow.apache.org/) is the pendant of the Parquet format once the data is loaded into memory. It is used by [Arquero](../lib/arquero), [DuckDB](../lib/duckdb), and other libraries, to handle data efficiently.
 
-Though you will rarely have to consume this format directly, it is sometimes saved to disk as .arrow files, which you can load with `file.arrow()`.
-
-The Arrow format supports different versions (namely: 4, 9 and 11), which you can specify like so:
+Though you will rarely have to consume this format directly, it is sometimes saved to disk as `.arrow` files, which you can load with `file.arrow()`.
 
 ```js echo
-const flights = await FileAttachment("../data/flights-200k.arrow").arrow({version: 9});
-display(flights);
+const flights = FileAttachment("flights-200k.arrow").arrow();
 ```
 
-The file above contains 231,083 flight records, which we can explore with [Observable Plot](../lib/plot):
+```js echo
+flights
+```
+
+The file above contains ${flights.numRows.toLocaleString("en-US")} flight records. We can visualize the distribution of flight delays with [Observable Plot](./lib/plot):
 
 ```js echo
 Plot.plot({
-  height: 120,
-  marginLeft: 60,
+  y: {
+    transform: (d) => d / 1000,
+    label: "Flights (thousands)"
+  },
   marks: [
-    Plot.ruleY([0]),
-    Plot.rectY(flights, Plot.binX({y: "count"}, {x: "delay", interval: 5, fill: "steelblue"}))
+    Plot.rectY(flights, Plot.binX({y: "count"}, {x: "delay", interval: 5, fill: "var(--observablehq-blue)"})),
+    Plot.ruleY([0])
   ]
 })
 ```
-
-The [Arrow](../lib/arrow) page shows how to use the arrow format to work with data frames.

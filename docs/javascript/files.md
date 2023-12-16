@@ -64,7 +64,7 @@ The following file formats have built-in support with `FileAttachment`:
 | `file.stream`      | ReadableStream                             | -
 | `file.text`        | string                                     | -
 | `file.tsv`         | Array (or objects or arrays)               | [D3](../lib/csv)
-| `file.xlsx`        | Workbook                                   | [ExcelJS](../lib/xslx)
+| `file.xlsx`        | Workbook                                   | [ExcelJS](../lib/xlsx)
 | `file.xml`         | XMLDocument                                | -
 | `file.zip`         | ZipArchive                                 | [JSZip](../lib/zip)
 | `file.url`         | string                                     | -
