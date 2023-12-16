@@ -38,8 +38,10 @@ class AbstractFile {
   async arrayBuffer() {
     return (await remote_fetch(this)).arrayBuffer();
   }
-  async text() {
-    return (await remote_fetch(this)).text();
+  async text(encoding) {
+    return encoding === undefined
+      ? (await remote_fetch(this)).text()
+      : new TextDecoder(encoding).decode(await this.arrayBuffer());
   }
   async json() {
     return (await remote_fetch(this)).json();
