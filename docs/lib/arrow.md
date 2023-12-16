@@ -58,3 +58,56 @@ Plot.plot({
   ]
 })
 ```
+
+### Parquet
+
+The [Apache Parquet](https://parquet.apache.org/) format is optimized for storage and transfer. To load a Parquet file into memory, such as this data frame of the right ascension and declination of a sample of 250,000 stars from the [Gaia Star Catalog](https://observablehq.com/@cmudig/peeking-into-the-gaia-star-catalog):
+
+```js echo
+const gaia = FileAttachment("../data/gaia-sample.parquet").parquet();
+```
+
+We can then [plot](../lib/plot) these stars (binned by intervals of 5°), and reveal the milky way.
+
+```js echo
+Plot.plot({
+  aspectRatio: 1,
+  color: {type: "log", scheme: "blues"},
+  marks: [
+    Plot.frame({fill: "#fff"}),
+    Plot.rect(gaia, Plot.bin({fill: "count"}, {x: "ra", y: "dec", interval: 5, inset: 0}))
+  ]
+})
+```
+
+This method uses [parquet-wasm](https://kylebarron.dev/parquet-wasm/).
+
+Another common way to consume Parquet files is to run SQL queries on them with the [DuckDB](../lib/duckdb) database engine (see that page for a different take on the milky way!). The parquet format is optimized for this use case: the data being compressed and organized by column, DuckDB does not have to load all the data if the query only necessitates an index and a column. This can give a huge performance boost when working with large data files in interactive pages.
+
+### Arrow
+
+[Arrow](https://arrow.apache.org/) is the pendant of the Parquet format once the data is loaded into memory. It is used by [Arquero](../lib/arquero), [DuckDB](../lib/duckdb), and other libraries, to handle data efficiently.
+
+Though you will rarely have to consume this format directly, it is sometimes saved to disk as .arrow files, which you can load with `file.arrow()`.
+
+The Arrow format supports different versions (namely: 4, 9 and 11), which you can specify like so:
+
+```js echo
+const flights = await FileAttachment("../data/flights-200k.arrow").arrow({version: 9});
+display(flights);
+```
+
+The file above contains 231,083 flight records, which we can explore with [Observable Plot](../lib/plot):
+
+```js echo
+Plot.plot({
+  height: 120,
+  marginLeft: 60,
+  marks: [
+    Plot.ruleY([0]),
+    Plot.rectY(flights, Plot.binX({y: "count"}, {x: "delay", interval: 5, fill: "steelblue"}))
+  ]
+})
+```
+
+The [Arrow](../lib/arrow) page shows how to use the arrow format to work with data frames.
