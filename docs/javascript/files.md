@@ -28,9 +28,9 @@ volcano
 
 ### Static analysis
 
-The `FileAttachment` function can _only_ be passed a static string literal; constructing a dynamic path such as `FileAttachment("my" + "file.csv")` is invalid syntax. Static analysis is used to invoke [data loaders](../loaders) at build time, and ensures that only referenced files are included in the generated output during build.
+The `FileAttachment` function can _only_ be passed a static string literal; constructing a dynamic path such as `FileAttachment("my" + "file.csv")` is invalid syntax. Static analysis is used to invoke [data loaders](../loaders) at build time, and ensures that only referenced files are included in the generated output during build. In the future [#260](https://github.com/observablehq/cli/issues/260), it will also allow content hashes for cache breaking during deploy.
 
-If you have multiple files, you need to enumerate them explicitly like so:
+If you have multiple files, you can enumerate them explicitly like so:
 
 ```js run=false
 const frames = [
@@ -52,36 +52,54 @@ None of the files in `frames` above are loaded until a [content method](#support
 
 The `FileAttachment` class supports a variety of methods for loading file contents:
 
-| method             | return type                                 | supporting library
-| -                  | -                                           | -
-| `file.arrayBuffer` | [`ArrayBuffer`][1]                          | -
-| `file.arrow`       | [`Table`][2]                                | [Apache Arrow](../lib/arrow)
-| `file.blob`        | [`Blob`][3]                                 | -
-| `file.csv`         | [`Array`][4] (of objects or arrays)         | [D3](../lib/csv)
-| `file.html`        | [`Document`][5]                             | -
-| `file.image`       | [`HTMLImageElement`][6]                     | -
-| `file.json`        | [`Array`][4], [`Object`][7], or other value | -
-| `file.parquet`     | [`Table`][2]                                | [Apache Arrow, parquet-wasm](../lib/arrow)
-| `file.sqlite`      | [`SQLiteDatabaseClient`](../lib/sqlite)     | [SQLite](../lib/sqlite)
-| `file.stream`      | [`ReadableStream`][8]                       | -
-| `file.text`        | [`string`][9]                               | -
-| `file.tsv`         | [`Array`][4] (of objects or arrays)         | [D3](../lib/csv)
-| `file.xlsx`        | [`Workbook`](../lib/xlsx)                   | [ExcelJS](../lib/xlsx)
-| `file.xml`         | [`Document`][5]                             | -
-| `file.zip`         | [`ZipArchive`](../lib/zip)                  | [JSZip](../lib/zip)
-| `file.url`         | [`string`][9]                               | -
+| method                       | return type                                     | supporting library
+| -                            | -                                               | -
+| [`file.arrayBuffer`][binary] | [`ArrayBuffer`][array-buffer]                   | -
+| [`file.arrow`][arrow]        | [`Table`][arrow-table]                          | [Apache Arrow][arrow]
+| [`file.blob`][binary]        | [`Blob`][blob]                                  | -
+| [`file.csv`][csv]            | [`Array`][array] (of objects or arrays)         | [D3][csv]
+| [`file.html`][markup]        | [`Document`][document]                          | -
+| [`file.image`][media]        | [`HTMLImageElement`][image]                     | -
+| [`file.json`][json]          | [`Array`][array], [`Object`][object], _etc._    | -
+| [`file.parquet`][arrow]      | [`Table`][arrow-table]                          | [Apache Arrow, parquet-wasm][arrow]
+| [`file.sqlite`][sqlite]      | [`SQLiteDatabaseClient`][sqlite]                | [SQLite][sqlite]
+| [`file.stream`][binary]      | [`ReadableStream`][stream]                      | -
+| [`file.text`][text]          | [`string`][string]                              | -
+| [`file.tsv`][csv]            | [`Array`][array] (of objects or arrays)         | [D3][csv]
+| [`file.xlsx`][xlsx]          | [`Workbook`][xlsx]                              | [ExcelJS][xlsx]
+| [`file.xml`][markup]         | [`Document`][document]                          | -
+| [`file.zip`][zip]            | [`ZipArchive`][zip]                             | [JSZip][zip]
 
-[1]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
-[2]: https://arrow.apache.org/docs/js/classes/Arrow_dom.Table.html
-[3]: https://developer.mozilla.org/en-US/docs/Web/API/Blob
-[4]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array
-[5]: https://developer.mozilla.org/en-US/docs/Web/API/Document
-[6]: https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement
-[7]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object
-[8]: https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream
-[9]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
+[array-buffer]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
+[arrow-table]: https://arrow.apache.org/docs/js/classes/Arrow_dom.Table.html
+[blob]: https://developer.mozilla.org/en-US/docs/Web/API/Blob
+[array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array
+[document]: https://developer.mozilla.org/en-US/docs/Web/API/Document
+[image]: https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement
+[object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object
+[stream]: https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream
+[string]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
+[binary]: #binary-formats
+[basic]: #basic-formats
+[arrow]: ../lib/arrow
+[csv]: ../lib/csv
+[markup]: #markup
+[media]: #media
+[json]: #json
+[sqlite]: ../lib/sqlite
+[text]: #text
+[xlsx]: ../lib/xlsx
+[zip]: ../lib/zip
 
 While the contents often dictate the appropriate method — for example, an Apache Arrow file is almost always read with `file.arrow` — when multiple methods are valid, chose based on your needs. For example, you can load a CSV file using `file.text` to implement parsing yourself instead of using D3.
+
+In addition to the above, you can get the resolved relative path to the file using `file.url`. This returns a [promise](./promises) to a string:
+
+```js echo
+FileAttachment("volcano.json").url()
+```
+
+See [file-based routing](../routing#files) for additional details.
 
 ## Basic formats
 
@@ -157,7 +175,7 @@ The `file.xml` method reads an XML file and returns a promise to a [`Document`](
 
 ## Binary formats
 
-Load binary data using `file.blob` to get a [`Blob`][3], or `file.arrayBuffer` to get an [`ArrayBuffer`][1]. For example, to read [Exif](https://en.wikipedia.org/wiki/Exif) image metadata with [ExifReader](https://github.com/mattiasw/ExifReader):
+Load binary data using `file.blob` to get a [`Blob`][blob], or `file.arrayBuffer` to get an [`ArrayBuffer`][array-buffer]. For example, to read [Exif](https://en.wikipedia.org/wiki/Exif) image metadata with [ExifReader](https://github.com/mattiasw/ExifReader):
 
 ```js echo
 import ExifReader from "npm:exifreader";
@@ -168,7 +186,7 @@ const tags = ExifReader.load(buffer);
 display(tags);
 ```
 
-To read a file incrementally, get a [`ReadableStream`][8] with `file.stream`. For example, to count the number of bytes in a file:
+To read a file incrementally, get a [`ReadableStream`][stream] with `file.stream`. For example, to count the number of bytes in a file:
 
 ```js echo
 const stream = await FileAttachment("horse.jpg").stream();
