@@ -1,6 +1,6 @@
 # ZIP
 
-To load a [ZIP archive](<https://en.wikipedia.org/wiki/ZIP_(file_format)>), use a [`FileAttachment`](../javascript/files).
+To load a [ZIP archive](<https://en.wikipedia.org/wiki/ZIP_(file_format)>), use [`FileAttachment`](../javascript/files).
 
 ```js echo
 const muybridge = FileAttachment("muybridge.zip").zip();

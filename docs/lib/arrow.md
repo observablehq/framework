@@ -2,7 +2,7 @@
 
 [Apache Arrow](https://arrow.apache.org/) “defines a language-independent columnar memory format for flat and hierarchical data, organized for efficient analytic operations.” You will probably not consume it directly, but it is used by [Arquero](arquero), [DuckDB](duckdb), and other libraries to handle data efficiently.
 
-To load an [Arrow IPC file](https://arrow.apache.org/docs/format/Columnar.html#format-ipc), use a [`FileAttachment`](../javascript/files).
+To load an [Arrow IPC file](https://arrow.apache.org/docs/format/Columnar.html#format-ipc), use [`FileAttachment`](../javascript/files).
 
 ```js echo
 const flights = FileAttachment("flights-200k.arrow").arrow();
@@ -69,7 +69,7 @@ Plot.plot({
 
 ## Apache Parquet
 
-The [Apache Parquet](https://parquet.apache.org/) format is optimized for storage and transfer. To load a Parquet file — such as this sample of 250,000 stars from the [Gaia Star Catalog](https://observablehq.com/@cmudig/peeking-into-the-gaia-star-catalog) — use a [`FileAttachment`](../javascript/files). This is implemented using Kyle Barron’s [parquet-wasm](https://kylebarron.dev/parquet-wasm/) library.
+The [Apache Parquet](https://parquet.apache.org/) format is optimized for storage and transfer. To load a Parquet file — such as this sample of 250,000 stars from the [Gaia Star Catalog](https://observablehq.com/@cmudig/peeking-into-the-gaia-star-catalog) — use [`FileAttachment`](../javascript/files). This is implemented using Kyle Barron’s [parquet-wasm](https://kylebarron.dev/parquet-wasm/) library.
 
 ```js echo
 const gaia = FileAttachment("gaia-sample.parquet").parquet();
