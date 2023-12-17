@@ -245,6 +245,12 @@ body {
   color: var(--theme-foreground-focus);
 }
 
+#observablehq-sidebar summary:focus,
+.observablehq-link a:focus {
+  position: relative;
+  z-index: 4;
+}
+
 #observablehq-toc {
   display: none;
   position: fixed;
@@ -489,7 +495,8 @@ a[href] {
   text-decoration: none;
 }
 
-a[href]:hover {
+a[href]:hover,
+a[href]:focus {
   text-decoration: underline;
 }
 
