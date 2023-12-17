@@ -1,6 +1,6 @@
 # XLSX
 
-The [`FileAttachment`](../javascript/files) class supports reading the Microsoft Excel Open XML Format Spreadsheet file format using the `file.xlsx` method. This is implemented using the MIT-licensed [ExcelJS](https://github.com/exceljs/exceljs) library.
+[`FileAttachment`](../javascript/files) supports the [Microsoft Excel Open XML format](https://en.wikipedia.org/wiki/Office_Open_XML) via the `file.xlsx` method. This is implemented using the MIT-licensed [ExcelJS](https://github.com/exceljs/exceljs) library.
 
 ```js echo
 const workbook = FileAttachment("laser-report.xlsx").xlsx();
@@ -12,7 +12,13 @@ This returns a [promise](../javascript/promises) to a `Workbook` instance.
 workbook
 ```
 
-To load a sheet, call `workbook.sheet`. You can optionally pass in a range indicating which part of the sheet to materialize, and whether to treat the first row of the given range as the header row. (If the header option is false, the default, the return object properties will reflect the column letters.)
+The workbook’s sheet names are exposed as `workbook.sheetNames`.
+
+```js echo
+workbook.sheetNames
+```
+
+To load a sheet, call `workbook.sheet`, passing in a sheet name. You can also pass a **range** option to indicate which part of the sheet to materialize, such as `A:J` for columns A through J (inclusive) or `B4:K123` for column B, row 4 through column K, row 123. The **headers** option indicates whether to treat the first row of the given range as column names. If the **headers** option is false, the default, the returned object properties will reflect the column letters.
 
 ```js echo
 const reports = workbook.sheet("Laser Report 2020", {range: "A:J", headers: true});
@@ -23,6 +29,8 @@ This returns an array of objects.
 ```js echo
 reports
 ```
+
+Each object represents a row, and each object property represents a cell value. Values may be represented as numbers, strings, booleans, Date objects, or [other values](https://github.com/exceljs/exceljs/blob/master/README.md#value-types). Row numbers are also exposed as a non-enumerable `#` property to assist with recognition and range specification.
 
 We can display these objects using [Inputs.table](./inputs#table):
 
@@ -48,8 +56,10 @@ Plot.plot({
 })
 ```
 
-The objects’ values represent the cell values. Values are coerced to their corresponding JavaScript types: numbers, strings, Date objects (dates are interpreted in UTC).
+Some additional details on values: dates are interpreted as UTC; formula results are included, but formula definitions ignored and formula errors are represented as `NaN`; hyperlinks are returned as strings, with a space between URL and text if they differ; empty rows are kept, but empty cells are skipped (row objects will lack properties for missing values).
 
-Formula results are included, but formula definitions ignored. Formula errors are coerced to `NaN`.
+If you’d prefer to use [ExcelJS](https://github.com/exceljs/exceljs) directly, you can import it like so:
 
-Hyperlinks are returned as strings, with a space between URL and text if they differ. Empty cells are skipped: objects will not include fields or values for them, but empty rows are kept. Row numbers from the source sheet are included as a non-enumerable `"#"` property to assist with recognition and range specification.
+```js echo
+import Excel from "npm:exceljs";
+```

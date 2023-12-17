@@ -50,7 +50,7 @@ None of the files in `frames` above are loaded until a [content method](#support
 
 ## Supported formats
 
-The `FileAttachment` class supports a variety of methods for loading file contents:
+`FileAttachment` supports a variety of methods for loading file contents:
 
 | method                       | return type                                     | supporting library
 | -                            | -                                               | -
