@@ -39,6 +39,4 @@ Count is: ${html`<span class="flash">${count}</span>`}.
 Count is: ${html`<span class="flash">${count}</span>`}.
 ```
 
-This approach is akin to React’s `useState` hook.
-
 Within the defining code block, `count` is a generator and `count.value` can be read and written to as desired; in other code, `count` is the generator’s current value. Other code that references `count` will re-run automatically whenever `count.value` is reassigned — so be careful you don’t cause an infinite loop!
