@@ -91,7 +91,7 @@ None of the files in `frames` above are loaded until a [content method](#support
 [xlsx]: ../lib/xlsx
 [zip]: ../lib/zip
 
-The contents often dictate the appropriate method — for example, an Apache Arrow file is almost always read with `file.arrow`. However, when multiple methods are valid, choose based on your needs. For example, you can load a CSV file using `file.text` to implement parsing yourself instead of using D3.
+The contents often dictate the appropriate method — for example, an Apache Arrow file is almost always read with `file.arrow`. When multiple methods are valid, choose based on your needs. For example, you can load a CSV file using `file.text` to implement parsing yourself instead of using D3.
 
 In addition to the above, you can get the resolved relative path to the file using `file.url`. This returns a [promise](./promises) to a string:
 
