@@ -12,7 +12,7 @@ We also provide `SQLiteDatabaseClient`, a [`DatabaseClient`](https://observableh
 import {SQLiteDatabaseClient} from "npm:@observablehq/sqlite";
 ```
 
-The easiest way to construct a SQLite database client is to declare a [`FileAttachment`](../javascript/files) and then call `file.sqlite()` to load a SQLite file. This returns a promise. (Here we rely on [implicit await](../javascript/promises).)
+The easiest way to construct a SQLite database client is to declare a [`FileAttachment`](../javascript/files) and then call `file.sqlite` to load a SQLite file. This returns a promise. (Here we rely on [implicit await](../javascript/promises).)
 
 ```js echo
 const db = FileAttachment("chinook.db").sqlite();
