@@ -12,7 +12,7 @@ We also provide `SQLiteDatabaseClient`, a [`DatabaseClient`](https://observableh
 import {SQLiteDatabaseClient} from "npm:@observablehq/sqlite";
 ```
 
-The easiest way to construct a SQLite database client is to declare a [`FileAttachment`](../javascript/files) and then call `file.sqlite()` to load a SQLite file. This returns a promise. (Here we rely on [implicit await](../javascript/promises).)
+The easiest way to construct a SQLite database client is to declare a [`FileAttachment`](../javascript/files) and then call `file.sqlite` to load a SQLite file. This returns a promise. (Here we rely on [implicit await](../javascript/promises).)
 
 ```js echo
 const db = FileAttachment("chinook.db").sqlite();
@@ -71,7 +71,3 @@ There’s also `db.queryRow` for just getting a single row.
 ```js echo
 db.queryRow(`SELECT sqlite_version()`)
 ```
-
-## FileAttachment.sqlite
-
-Use `file.sqlite()` to load a [SQLite](https://www.sqlite.org/fileformat.html) database (version 3 and later). This method returns a promise to a [SQLiteDatabaseClient](../lib/sqlite) instance.

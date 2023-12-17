@@ -50,7 +50,7 @@ Plot.plot({
 
 ## Microsoft Excel (XLSX)
 
-The `file.xlsx()` method uses [ExcelJS](https://github.com/exceljs/exceljs) to load a spreadsheet’s _values_ (not the formulae) into arrays of objects. It works in two stages: in the first stage, you load the spreadsheet, which returns a Workbook object, allowing you to determine the list of sheet names as its _workbook_.sheetNames property.
+The `file.xlsx` method uses [ExcelJS](https://github.com/exceljs/exceljs) to load a spreadsheet’s _values_ (not the formulae) into arrays of objects. It works in two stages: in the first stage, you load the spreadsheet, which returns a Workbook object, allowing you to determine the list of sheet names as its _workbook_.sheetNames property.
 
 ```js echo
 const workbook2 = FileAttachment("laser-report.xlsx").xlsx();
