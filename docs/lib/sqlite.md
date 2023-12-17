@@ -40,7 +40,7 @@ const customers = db.sql`SELECT * FROM customers`;
 display(await customers);
 ```
 
-A call to `db.sql` returns a promise to an array of objects; each object represents a row returned from the query. For better readability, you can display query results using [Inputs.table](./inputs#table).
+A call to `db.sql` returns a promise to an array of objects; each object represents a row returned from the query. For better readability, you can display query results using [`Inputs.table`](./inputs#table).
 
 ```js echo
 Inputs.table(customers)

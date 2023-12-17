@@ -20,7 +20,7 @@ This table records ${flights.numRows.toLocaleString("en-US")} flights. It’s ea
 [...flights]
 ```
 
-Or using [Inputs.table](./inputs#table):
+Or using [`Inputs.table`](./inputs#table):
 
 ```js echo
 Inputs.table(flights)

@@ -32,13 +32,13 @@ reports
 
 Each object represents a row, and each object property represents a cell value. Values may be represented as numbers, strings, booleans, Date objects, or [other values](https://github.com/exceljs/exceljs/blob/master/README.md#value-types). Row numbers are also exposed as a non-enumerable `#` property to assist with recognition and range specification.
 
-We can display these objects using [Inputs.table](./inputs#table):
+We can display these objects using [`Inputs.table`](./inputs#table):
 
 ```js echo
 Inputs.table(reports)
 ```
 
-Or as a scatterplot using [Plot.dot](https://observablehq.com/plot/marks/dot):
+Or as a scatterplot using [`Plot.dot`](https://observablehq.com/plot/marks/dot):
 
 ```js echo
 Plot.plot({
