@@ -325,6 +325,8 @@ export function createImportResolver(root: string, base: "." | "_import" = "."):
       ? resolveBuiltin(base, path, "stdlib/sqlite.js") // TODO publish to npm
       : specifier === "npm:@observablehq/xlsx"
       ? resolveBuiltin(base, path, "stdlib/xlsx.js") // TODO publish to npm
+      : specifier === "npm:@observablehq/zip"
+      ? resolveBuiltin(base, path, "stdlib/zip.js") // TODO publish to npm
       : specifier.startsWith("npm:")
       ? await resolveNpmImport(specifier.slice("npm:".length))
       : specifier;

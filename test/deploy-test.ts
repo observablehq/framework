@@ -25,6 +25,7 @@ const EXTRA_FILES: string[] = [
   "_observablehq/stdlib/sqlite.js",
   "_observablehq/stdlib/tex.js",
   "_observablehq/stdlib/xlsx.js",
+  "_observablehq/stdlib/zip.js",
   "_observablehq/style.css"
 ];
 
