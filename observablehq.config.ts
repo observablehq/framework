@@ -3,10 +3,10 @@ export default {
   pages: [
     {name: "Getting started", path: "/getting-started"},
     {name: "Routing", path: "/routing"},
-    {name: "Configuration", path: "/config"},
     {name: "Markdown", path: "/markdown"},
     {name: "JavaScript", path: "/javascript"},
     {name: "Data loaders", path: "/loaders"},
+    {name: "Configuration", path: "/config"},
     {
       name: "JavaScript",
       pages: [

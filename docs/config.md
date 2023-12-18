@@ -1,6 +1,6 @@
 # Configuration
 
-A `observablehq.config.js` (or `observablehq.config.ts`) file located in the project root allows configuration of your project. For example, a site might use a config file to set the project’s title and control the order of pages shown in the sidebar:
+A `observablehq.config.js` (or `observablehq.config.ts`) file located in the project root allows configuration of your project. For example, a site might use a config file to set the project’s title and the sidebar contents:
 
 ```js run=false
 export default {

@@ -1,14 +1,12 @@
 # Markdown
 
-Markdown in the Observable CLI follows the [CommonMark spec](https://spec.commonmark.org/)* and is powered by [markdown-it](https://github.com/markdown-it/markdown-it). If you don’t already know Markdown, please see [GitHub’s guide to Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) for an introduction.
+Markdown in the Observable CLI follows the [CommonMark spec](https://spec.commonmark.org/) and is powered by [markdown-it](https://github.com/markdown-it/markdown-it).  We also feature [live JavaScript](./javascript) as either [fenced code blocks](./javascript#fenced-code-blocks) (<code>```js</code>) or [inline expressions](./javascript#inline-expressions) (<code>$\{…}</code>), and [HTML in Markdown](#html), and [front matter](#front-matter) for page-level configuration. If you don’t already know Markdown, please see [GitHub’s guide to Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) for an introduction.
 
-Markdown in the Observable CLI also offers [live JavaScript](./javascript) as either [fenced code blocks](./javascript#fenced-code-blocks) (<code>```js</code>) or [inline expressions](./javascript#inline-expressions) (<code>$\{…}</code>), allows [HTML in Markdown](#html), and allows [YAML front matter](#yaml-front-matter) for page-level configuration.
-
-*The Observable CLI currently deviates from CommonMark in how blank lines are handled in HTML; see below. This is a limitation of our parser needed for incremental update during preview. We’d like to remove this deviation in the future.
+_Note: The Observable CLI currently deviates from CommonMark in how blank lines are handled in HTML; see below. This is a limitation of our parser needed for incremental update during preview._
 
 Here are a few examples of Markdown content to get you started.
 
-## YAML front matter
+## Front matter
 
 ```yaml
 ---
