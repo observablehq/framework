@@ -87,7 +87,9 @@ ${
     toc.show ? html`\n${renderToc(findHeaders(parseResult), toc.label)}` : ""
   }
 <div id="observablehq-center">
+<a id="observablehq-skip" href="#observablehq-skip-main" tabindex="1">Skip to main content</a>
 <main id="observablehq-main" class="observablehq">
+<a id="observablehq-skip-main" href="#observablehq-skip">Skip to navigation</a>
 ${html.unsafe(parseResult.html)}</main>
 ${renderFooter(path, options)}
 </div>

@@ -918,3 +918,39 @@ a[href].observablehq-header-anchor {
 p .plot-d6a7b5 {
   display: inline-block;
 }
+
+#observablehq-skip, #observablehq-skip-main {
+  position: fixed;
+  top: 6px;
+  left: -9999px;
+  z-index: 999;
+  font: 14px var(--sans-serif);
+  font-weight: bold;
+  background-color: var(--theme-background-alt);
+  color: var(--theme-foreground-focus);
+  text-decoration: none;
+  padding: 0.5em;
+}
+
+#observablehq-skip::after {
+  padding-left: 1em;
+  content: "▷";
+}
+
+#observablehq-skip-main::before {
+  padding-right: 1em;
+  content: "◀︎"; /* ◁ */
+}
+
+#observablehq-skip:focus {
+  left: 6px;
+}
+
+#observablehq-skip-main:focus {
+  left: initial;
+  right: 6px;
+}
+
+#observablehq-skip, #observablehq-skip-main {
+  scroll-margin-top: 2em;
+}
