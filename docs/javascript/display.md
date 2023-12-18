@@ -101,7 +101,7 @@ Inputs.button("Click me", {value: 0, reduce: (i) => displayThere(++i)})
 
 Previously-displayed values will be cleared when the associated code block or inline expression is re-run.
 
-The built-in [`view` function](#view(element)) is closely related to `display`. It displays the given element and then returns an [async generator](../lib/generators#generators.input(element)) that yields the input’s value. This makes it easy to both display an input element and expose its current value reactively to the rest of the page. For example, here is a simple HTML slider:
+The built-in [`view` function](#view(element)) is closely related to `display`. It displays the given element and then returns an [async generator](../lib/generators#input(element)) that yields the input’s value. This makes it easy to both display an input element and expose its current value reactively to the rest of the page. For example, here is a simple HTML slider:
 
 ```js echo
 const gain = view(html`<input type=range step=0.1 min=0 max=11 value=5>`);
@@ -121,4 +121,4 @@ If `value` is a DOM node, adds it to the DOM. Otherwise, converts the given `val
 
 ## view(*element*)
 
-The `view` function displays the given input *element* and then returns its corresponding [generator](./generators) via [`Generators.input`](../lib/generators#generators.input(element)). Use this to display an input element while also exposing the input’s value as a [reactive variable](./reactivity).
+The `view` function displays the given input *element* and then returns its corresponding [generator](./generators) via [`Generators.input`](../lib/generators#input(element)). Use this to display an input element while also exposing the input’s value as a [reactive variable](./reactivity).

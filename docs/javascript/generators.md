@@ -37,7 +37,7 @@ The value of i is: ${i}.
 The value of i is: ${i}.
 ```
 
-As another example, you can use the built-in [`Generators.observe`](<../lib/generators#generators.observe(change)>) to represent the current pointer coordinates:
+As another example, you can use the built-in [`Generators.observe`](<../lib/generators#observe(change)>) to represent the current pointer coordinates:
 
 ```js echo
 const pointer = Generators.observe((change) => {
@@ -71,7 +71,7 @@ const message = Generators.observe((change) => {
 message.x // the most recently reported transaction
 ```
 
-And here’s an HTML input element using [`Generators.input`](<../lib/generators#generators.input(element)>):
+And here’s an HTML input element using [`Generators.input`](<../lib/generators#input(element)>):
 
 ```js echo
 const nameInput = display(document.createElement("input"));

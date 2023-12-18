@@ -58,7 +58,7 @@ invalidation.then(() => cancelAnimationFrame(frame));
 
 ## Visibility
 
-The `visibility()` function returns a promise that resolves when the code block’s display root is visible. This allows you to defer animation or computation until the content scrolls into view. If you missed the animation, try reloading the page and then scrolling down.
+The `visibility` function returns a promise that resolves when the code block’s display root is visible. This allows you to defer animation or computation until the content scrolls into view. If you missed the animation, try reloading the page and then scrolling down.
 
 <canvas id="canvas2" width="640" height="30" style="max-width: 100%; height: 30px;">
 
