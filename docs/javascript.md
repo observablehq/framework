@@ -52,7 +52,13 @@ html`1 + 2 &equals; <b>${1 + 2}</b>`
 Plot.lineY(aapl, {x: "Date", y: "Close"}).plot({y: {grid: true}})
 ```
 
-Fenced code blocks automatically re-run when referenced [reactive variables](./javascript/reactivity) change (or when you edit the page during preview). The block below references the built-in variable `now` representing the current time in milliseconds; because `now` is reactive, this block runs sixty times a second and each each new span it returns replaces the one previously displayed.
+Fenced code blocks automatically re-run when referenced [reactive variables](./javascript/reactivity) change (or when you edit the page during preview). The chart above depends on the *aapl* data defined in the block below:
+
+```js echo
+const aapl = FileAttachment("aapl.csv").csv({typed: true});
+```
+
+The block below references the built-in variable `now` representing the current time in milliseconds; because `now` is reactive, this block runs sixty times a second and each each new span it returns replaces the one previously displayed.
 
 ```js echo
 html`<span style=${{color: `hsl(${(now / 10) % 360} 100% 50%)`}}>Rainbow text!</span>`

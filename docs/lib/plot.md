@@ -20,6 +20,12 @@ This produces:
 Plot.rectY(alphabet, {x: "letter", y: "frequency"}).plot()
 ```
 
+where the data has been loaded from a [csv file](csv) like so:
+
+```js echo
+const alphabet = FileAttachment("alphabet.csv").csv({typed: true});
+```
+
 As another example, here’s a pretty (but meaningless) Voronoi chart:
 
 ```js echo
