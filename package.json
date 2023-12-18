@@ -1,7 +1,7 @@
 {
   "name": "@observablehq/cli",
   "license": "UNLICENSED",
-  "version": "0.0.46",
+  "version": "0.0.50",
   "type": "module",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
@@ -25,10 +25,11 @@
     "dev": "tsx watch ./bin/observable.ts preview",
     "build": "rm -rf dist && ./bin/observable.ts build",
     "deploy": "./bin/observable.ts deploy",
-    "test": "yarn test:mocha && yarn test:tsc && yarn test:lint",
+    "test": "yarn test:mocha && yarn test:tsc && yarn test:lint && yarn test:prettier",
     "test:coverage": "c8 yarn test:mocha",
     "test:mocha": "rm -rf test/.observablehq/cache test/input/build/*/.observablehq/cache && tsx --no-warnings=ExperimentalWarning ./node_modules/.bin/mocha --exit 'test/**/*-test.*'",
     "test:lint": "eslint src test",
+    "test:prettier": "prettier --check src test",
     "test:tsc": "tsc --noEmit",
     "observable": "tsx ./bin/observable.ts"
   },
@@ -63,7 +64,7 @@
     "rollup-plugin-esbuild": "^6.1.0",
     "send": "^0.18.0",
     "tar-stream": "^3.1.6",
-    "tsx": "^3.13.0",
+    "tsx": "^4.6.2",
     "ws": "^8.14.2"
   },
   "devDependencies": {
@@ -81,12 +82,13 @@
     "chai": "^4.3.10",
     "chai-http": "^4.4.0",
     "d3-array": "^3.2.4",
+    "d3-dsv": "^3.0.1",
     "eslint": "^8.50.0",
-    "eslint-config-prettier": "^9.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
     "eslint-plugin-import": "^2.29.0",
-    "eslint-plugin-prettier": "^5.0.0",
     "mocha": "^10.2.0",
-    "prettier": "^3.0.3",
+    "prettier": "^3.0.3 <3.1",
     "typescript": "^5.2.2",
     "undici": "^5.27.2"
   },

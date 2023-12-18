@@ -3,32 +3,35 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Multi test</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="./_observablehq/style.css">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
 <link rel="stylesheet" type="text/css" href="./_observablehq/style.css">
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
+<link rel="modulepreload" href="./_observablehq/client.js">
 <link rel="modulepreload" href="./_observablehq/runtime.js">
 <link rel="modulepreload" href="./_observablehq/stdlib.js">
 <script type="module">
 
 import {define} from "./_observablehq/client.js";
 
-define({id: "1bcb5df5", inputs: ["FileAttachment"], outputs: ["f1"], files: [{"name":"file1.csv","mimeType":"text/csv","path":"./_file/file1.csv"}], body: (FileAttachment) => {
+define({id: "1bcb5df5", inputs: ["FileAttachment"], outputs: ["f1"], files: [{"name":"./file1.csv","mimeType":"text/csv","path":"./_file/file1.csv"}], body: (FileAttachment) => {
 const f1 = FileAttachment("file1.csv").csv();
 return {f1};
 }});
 
-define({id: "db071921", inputs: ["Input","f1","display"], body: (Input,f1,display) => {
-display((
+define({id: "db071921", inputs: ["Input","f1","display"], body: async (Input,f1,display) => {
+display(await(
 Input.table(f1)
 ))
 }});
 
-define({id: "aaa5c01d", outputs: ["f2"], files: [{"name":"./file2.csv","mimeType":"text/csv","path":"./_file/file2.csv"}], body: () => {
-const f2 = fetch("./_file/file2.csv");
+define({id: "494b10bd", inputs: ["FileAttachment"], outputs: ["f2"], files: [{"name":"./file2.csv","mimeType":"text/csv","path":"./_file/file2.csv"}], body: (FileAttachment) => {
+const f2 = FileAttachment("./file2.csv");
 return {f2};
 }});
 
 </script>
-<input id="observablehq-sidebar-toggle" type="checkbox">
+<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
   <ol>
@@ -39,28 +42,17 @@ return {f2};
     <li class="observablehq-link observablehq-link-active"><a href="./">Multi test</a></li>
   </ol>
 </nav>
-<script>{
-  const toggle = document.querySelector("#observablehq-sidebar-toggle");
-  const initialState = localStorage.getItem("observablehq-sidebar");
-  if (initialState) toggle.checked = initialState === "true";
-  else toggle.indeterminate = true;
-  for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
-    const details = summary.parentElement;
-    switch (sessionStorage.getItem(`observablehq-sidebar:${summary.textContent}`)) {
-      case "true": details.open = true; break;
-      case "false": if (!details.classList.contains("observablehq-section-active")) details.open = false; break;
-    }
-  }
-  addEventListener("beforeunload", () => sessionStorage.setItem("observablehq-sidebar-scrolly", document.querySelector("#observablehq-sidebar").scrollTop));
-  const scrolly = +sessionStorage.getItem("observablehq-sidebar-scrolly");
-  if (scrolly) document.querySelector("#observablehq-sidebar").scrollTop = scrolly;
-}</script>
+<script>{/* redacted init script */}</script>
+<aside id="observablehq-toc" data-selector="#observablehq-main h1:not(:first-of-type), #observablehq-main h2:not(h1 + h2)">
+<nav>
+</nav>
+</aside>
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 <h1 id="multi-test" tabindex="-1"><a class="observablehq-header-anchor" href="#multi-test">Multi test</a></h1>
 <div id="cell-1bcb5df5" class="observablehq observablehq--block"></div>
 <div id="cell-db071921" class="observablehq observablehq--block"></div>
-<div id="cell-aaa5c01d" class="observablehq observablehq--block"></div>
+<div id="cell-494b10bd" class="observablehq observablehq--block"></div>
 </main>
 <footer id="observablehq-footer">
 <nav><a rel="next" href="./subsection/"><span>Sub-Section</span></a></nav>

@@ -21,7 +21,7 @@
         "mermaid",
         "display"
       ],
-      "body": "async (mermaid,display) => {\ndisplay((\nawait mermaid`graph TD;\n    A-->B;\n    A-->C;\n    B-->D;\n    C-->D;\n`\n))\n}"
+      "body": "async (mermaid,display) => {\ndisplay(await(\nawait mermaid`graph TD;\n    A-->B;\n    A-->C;\n    B-->D;\n    C-->D;\n`\n))\n}"
     }
   ],
   "hash": "6d9b9a614504f0decca01c59af8f6bae96982a675312166fedc028078dedf093"

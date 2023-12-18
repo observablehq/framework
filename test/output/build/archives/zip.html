@@ -3,34 +3,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Zip</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="./_observablehq/style.css">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
 <link rel="stylesheet" type="text/css" href="./_observablehq/style.css">
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
+<link rel="modulepreload" href="./_observablehq/client.js">
 <link rel="modulepreload" href="./_observablehq/runtime.js">
 <link rel="modulepreload" href="./_observablehq/stdlib.js">
 <script type="module">
 
 import {define} from "./_observablehq/client.js";
 
-define({id: "d3b9d0ee", inputs: ["FileAttachment","display"], files: [{"name":"static/file.txt","mimeType":"text/plain","path":"./_file/static/file.txt"}], body: async (FileAttachment,display) => {
-display((
+define({id: "d3b9d0ee", inputs: ["FileAttachment","display"], files: [{"name":"./static/file.txt","mimeType":"text/plain","path":"./_file/static/file.txt"}], body: async (FileAttachment,display) => {
+display(await(
 await FileAttachment("static/file.txt").text()
 ))
 }});
 
-define({id: "bab54217", inputs: ["FileAttachment","display"], files: [{"name":"static/not-found.txt","mimeType":"text/plain","path":"./_file/static/not-found.txt"}], body: async (FileAttachment,display) => {
-display((
+define({id: "bab54217", inputs: ["FileAttachment","display"], files: [{"name":"./static/not-found.txt","mimeType":"text/plain","path":"./_file/static/not-found.txt"}], body: async (FileAttachment,display) => {
+display(await(
 await FileAttachment("static/not-found.txt").text()
 ))
 }});
 
-define({id: "11eec300", inputs: ["FileAttachment","display"], files: [{"name":"dynamic/file.txt","mimeType":"text/plain","path":"./_file/dynamic/file.txt"}], body: async (FileAttachment,display) => {
-display((
+define({id: "11eec300", inputs: ["FileAttachment","display"], files: [{"name":"./dynamic/file.txt","mimeType":"text/plain","path":"./_file/dynamic/file.txt"}], body: async (FileAttachment,display) => {
+display(await(
 await FileAttachment("dynamic/file.txt").text()
 ))
 }});
 
-define({id: "ee2310f3", inputs: ["FileAttachment","display"], files: [{"name":"dynamic/not-found.txt","mimeType":"text/plain","path":"./_file/dynamic/not-found.txt"}], body: async (FileAttachment,display) => {
-display((
+define({id: "ee2310f3", inputs: ["FileAttachment","display"], files: [{"name":"./dynamic/not-found.txt","mimeType":"text/plain","path":"./_file/dynamic/not-found.txt"}], body: async (FileAttachment,display) => {
+display(await(
 await FileAttachment("dynamic/not-found.txt").text()
 ))
 }});
@@ -40,7 +43,7 @@ define({id: "f9a513d8", body: () => {
 }});
 
 </script>
-<input id="observablehq-sidebar-toggle" type="checkbox">
+<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
   <ol>
@@ -51,22 +54,11 @@ define({id: "f9a513d8", body: () => {
     <li class="observablehq-link observablehq-link-active"><a href="./zip">Zip</a></li>
   </ol>
 </nav>
-<script>{
-  const toggle = document.querySelector("#observablehq-sidebar-toggle");
-  const initialState = localStorage.getItem("observablehq-sidebar");
-  if (initialState) toggle.checked = initialState === "true";
-  else toggle.indeterminate = true;
-  for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
-    const details = summary.parentElement;
-    switch (sessionStorage.getItem(`observablehq-sidebar:${summary.textContent}`)) {
-      case "true": details.open = true; break;
-      case "false": if (!details.classList.contains("observablehq-section-active")) details.open = false; break;
-    }
-  }
-  addEventListener("beforeunload", () => sessionStorage.setItem("observablehq-sidebar-scrolly", document.querySelector("#observablehq-sidebar").scrollTop));
-  const scrolly = +sessionStorage.getItem("observablehq-sidebar-scrolly");
-  if (scrolly) document.querySelector("#observablehq-sidebar").scrollTop = scrolly;
-}</script>
+<script>{/* redacted init script */}</script>
+<aside id="observablehq-toc" data-selector="#observablehq-main h1:not(:first-of-type), #observablehq-main h2:not(h1 + h2)">
+<nav>
+</nav>
+</aside>
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 <h1 id="zip" tabindex="-1"><a class="observablehq-header-anchor" href="#zip">Zip</a></h1>

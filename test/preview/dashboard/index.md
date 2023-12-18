@@ -1,10 +1,7 @@
 # Index
 
 ```js
-import formatTitle from "./format.js"
-display(formatTitle('index'));
-```
+import formatTitle from "./format.js";
 
-```js
-const file = FileAttachment("file.csv");
+display(formatTitle("index"));
 ```

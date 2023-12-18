@@ -49,7 +49,7 @@ export async function login(effects = defaultEffects) {
     port: server.port,
     name,
     scopes: ["projects:deploy", "projects:create"],
-    version: "2023-11-06"
+    version: "2023-12-06"
   };
   url.searchParams.set("request", Buffer.from(JSON.stringify(request)).toString("base64"));
 
@@ -69,10 +69,7 @@ export async function login(effects = defaultEffects) {
 export async function whoami(effects = defaultEffects) {
   const {logger} = effects;
   const apiKey = await effects.getObservableApiKey(logger);
-  const apiClient = new ObservableApiClient({
-    apiKey,
-    logger
-  });
+  const apiClient = new ObservableApiClient({apiKey});
 
   try {
     const user = await apiClient.getCurrentUser();
@@ -85,7 +82,6 @@ export async function whoami(effects = defaultEffects) {
     }
     logger.log();
   } catch (error) {
-    console.log(error);
     if (isHttpError(error) && error.statusCode == 401) {
       if (apiKey.source === "env") {
         logger.log(`Your API key is invalid. Check the value of the ${apiKey.envVar} environment variable.`);

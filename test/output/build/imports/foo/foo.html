@@ -3,12 +3,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Foo</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="../_observablehq/style.css">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
 <link rel="stylesheet" type="text/css" href="../_observablehq/style.css">
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
 <link rel="modulepreload" href="../_import/bar/bar.js?sha=2e71da6918681d51fd9e7ed79b03aed514771c2e1583af42783665aff3f5ef5e">
 <link rel="modulepreload" href="../_import/bar/baz.js?sha=e48bbd08d9d69efb7c743b54db47ff7efb1f6bf5f59648c861d5cb8fa0096ce6">
 <link rel="modulepreload" href="../_import/foo/foo.js?sha=056eae1b54d6d0e3046f38c8e7b3af2796b70e6505afb47427357e415005d997">
 <link rel="modulepreload" href="../_import/top.js?sha=43e37c2a4fe9ca94e62d0d8acd5dbd8bdd5f0ec845503964f465979c4c82c2a3">
+<link rel="modulepreload" href="../_observablehq/client.js">
 <link rel="modulepreload" href="../_observablehq/runtime.js">
 <link rel="modulepreload" href="../_observablehq/stdlib.js">
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/d3@7.8.5/+esm">
@@ -16,19 +19,19 @@
 
 import {define} from "../_observablehq/client.js";
 
-define({id: "9c60abc0", inputs: ["display"], outputs: ["d3","bar","top"], files: [{"name":"/top.js","mimeType":"application/javascript","path":"../_file/top.js"}], body: async (display) => {
+define({id: "261e010e", inputs: ["display","FileAttachment"], outputs: ["d3","bar","top"], files: [{"name":"../top.js","mimeType":"application/javascript","path":"../_file/top.js"}], body: async (display,FileAttachment) => {
 const d3 = await import("https://cdn.jsdelivr.net/npm/d3@7.8.5/+esm");
 const {bar} = await import("../_import/bar/bar.js?sha=2e71da6918681d51fd9e7ed79b03aed514771c2e1583af42783665aff3f5ef5e");
 const {top} = await import("../_import/top.js?sha=43e37c2a4fe9ca94e62d0d8acd5dbd8bdd5f0ec845503964f465979c4c82c2a3");
 
 display(bar);
 display(top);
-fetch("../_file/top.js");
+FileAttachment("/top.js");
 return {d3,bar,top};
 }});
 
 </script>
-<input id="observablehq-sidebar-toggle" type="checkbox">
+<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
   <ol>
@@ -38,26 +41,15 @@ return {d3,bar,top};
     <li class="observablehq-link observablehq-link-active"><a href="./foo">Foo</a></li>
   </ol>
 </nav>
-<script>{
-  const toggle = document.querySelector("#observablehq-sidebar-toggle");
-  const initialState = localStorage.getItem("observablehq-sidebar");
-  if (initialState) toggle.checked = initialState === "true";
-  else toggle.indeterminate = true;
-  for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
-    const details = summary.parentElement;
-    switch (sessionStorage.getItem(`observablehq-sidebar:${summary.textContent}`)) {
-      case "true": details.open = true; break;
-      case "false": if (!details.classList.contains("observablehq-section-active")) details.open = false; break;
-    }
-  }
-  addEventListener("beforeunload", () => sessionStorage.setItem("observablehq-sidebar-scrolly", document.querySelector("#observablehq-sidebar").scrollTop));
-  const scrolly = +sessionStorage.getItem("observablehq-sidebar-scrolly");
-  if (scrolly) document.querySelector("#observablehq-sidebar").scrollTop = scrolly;
-}</script>
+<script>{/* redacted init script */}</script>
+<aside id="observablehq-toc" data-selector="#observablehq-main h1:not(:first-of-type), #observablehq-main h2:not(h1 + h2)">
+<nav>
+</nav>
+</aside>
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 <h1 id="foo" tabindex="-1"><a class="observablehq-header-anchor" href="#foo">Foo</a></h1>
-<div id="cell-9c60abc0" class="observablehq observablehq--block"></div>
+<div id="cell-261e010e" class="observablehq observablehq--block"></div>
 </main>
 <footer id="observablehq-footer">
 <nav><a rel="prev" href="../"><span>Home</span></a></nav>

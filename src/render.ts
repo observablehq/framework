@@ -1,11 +1,13 @@
 import {parseHTML} from "linkedom";
 import {type Config, type Page, type Section, mergeToc} from "./config.js";
 import {type Html, html} from "./html.js";
-import {type ImportResolver, createImportResolver} from "./javascript/imports.js";
+import type {ImportResolver} from "./javascript/imports.js";
+import {createImportResolver, resolveModuleIntegrity, resolveModulePreloads} from "./javascript/imports.js";
 import type {FileReference, ImportReference, Transpile} from "./javascript.js";
 import {addImplicitSpecifiers, addImplicitStylesheets} from "./libraries.js";
 import {type ParseResult, parseMarkdown} from "./markdown.js";
 import {type PageLink, findLink} from "./pager.js";
+import {getClientPath, rollupClient} from "./rollup.js";
 import {relativeUrl} from "./url.js";
 
 export interface Render {
@@ -52,7 +54,6 @@ type RenderInternalOptions =
 async function render(parseResult: ParseResult, options: RenderOptions & RenderInternalOptions): Promise<string> {
   const {root, path, pages, title, preview} = options;
   const toc = mergeToc(parseResult.data?.toc, options.toc);
-  const headers = toc.show ? findHeaders(parseResult) : [];
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="/">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -67,7 +68,7 @@ ${
       ? html.unsafe(`\n<script type="module">
 
 if (location.pathname.endsWith("/")) {
-  const alt = \`$\{location.pathname.slice(0, -1)}.html\`;
+  const alt = location.pathname.slice(0, -1);
   fetch(alt, {method: "HEAD"}).then((response) => response.ok && location.replace(alt + location.search + location.hash));
 }
 
@@ -82,8 +83,8 @@ import ${preview || parseResult.cells.length > 0 ? `{${preview ? "open, " : ""}d
 ${
   preview ? `\nopen({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
 }${parseResult.cells.map((cell) => `\n${renderDefineCell(cell)}`).join("")}`)}
-</script>${pages.length > 0 ? html`\n${renderSidebar(title, pages, path)}` : ""}${
-    headers.length > 0 ? html`\n${renderToc(headers, toc.label)}` : ""
+</script>${pages.length > 0 ? html`\n${await renderSidebar(title, pages, path)}` : ""}${
+    toc.show ? html`\n${renderToc(findHeaders(parseResult), toc.label)}` : ""
   }
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
@@ -93,8 +94,8 @@ ${renderFooter(path, options)}
 `);
 }
 
-function renderSidebar(title = "Home", pages: (Page | Section)[], path: string): Html {
-  return html`<input id="observablehq-sidebar-toggle" type="checkbox">
+async function renderSidebar(title = "Home", pages: (Page | Section)[], path: string): Promise<Html> {
+  return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
   <ol>
@@ -106,7 +107,9 @@ function renderSidebar(title = "Home", pages: (Page | Section)[], path: string):
   <ol>${pages.map((p, i) =>
     "pages" in p
       ? html`${i > 0 && "path" in pages[i - 1] ? html`</ol>` : ""}
-    <details${p.open || p.pages.some((p) => p.path === path) ? html` open class="observablehq-section-active"` : ""}>
+    <details${
+      p.pages.some((p) => p.path === path) ? html` open class="observablehq-section-active"` : p.open ? " open" : ""
+    }>
       <summary>${p.name}</summary>
       <ol>${p.pages.map((p) => renderListItem(p, path))}
       </ol>
@@ -117,22 +120,9 @@ function renderSidebar(title = "Home", pages: (Page | Section)[], path: string):
   )}
   </ol>
 </nav>
-<script>{
-  const toggle = document.querySelector("#observablehq-sidebar-toggle");
-  const initialState = localStorage.getItem("observablehq-sidebar");
-  if (initialState) toggle.checked = initialState === "true";
-  else toggle.indeterminate = true;
-  for (const summary of document.querySelectorAll("#observablehq-sidebar summary")) {
-    const details = summary.parentElement;
-    switch (sessionStorage.getItem(\`observablehq-sidebar:\${summary.textContent}\`)) {
-      case "true": details.open = true; break;
-      case "false": if (!details.classList.contains("observablehq-section-active")) details.open = false; break;
-    }
-  }
-  addEventListener("beforeunload", () => sessionStorage.setItem("observablehq-sidebar-scrolly", document.querySelector("#observablehq-sidebar").scrollTop));
-  const scrolly = +sessionStorage.getItem("observablehq-sidebar-scrolly");
-  if (scrolly) document.querySelector("#observablehq-sidebar").scrollTop = scrolly;
-}</script>`;
+<script>{${html.unsafe(
+    (await rollupClient(getClientPath("./src/client/sidebar-init.ts"), {minify: true})).trim()
+  )}}</script>`;
 }
 
 interface Header {
@@ -148,16 +138,20 @@ function findHeaders(parseResult: ParseResult): Header[] {
     .filter((d): d is Header => !!d.label && !!d.href);
 }
 
-function renderToc(headers: Header[], label = "Contents"): Html {
+function renderToc(headers: Header[], label: string): Html {
   return html`<aside id="observablehq-toc" data-selector="${tocSelector
     .map((selector) => `#observablehq-main ${selector}`)
     .join(", ")}">
-<nav>
+<nav>${
+    headers.length > 0
+      ? html`
 <div>${label}</div>
 <ol>${headers.map(
-    ({label, href}) => html`\n<li class="observablehq-secondary-link"><a href="${href}">${label}</a></li>`
-  )}
-</ol>
+          ({label, href}) => html`\n<li class="observablehq-secondary-link"><a href="${href}">${label}</a></li>`
+        )}
+</ol>`
+      : ""
+  }
 </nav>
 </aside>`;
 }
@@ -179,10 +173,12 @@ async function renderLinks(parseResult: ParseResult, path: string, resolver: Imp
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
   addImplicitSpecifiers(specifiers, inputs);
   await addImplicitStylesheets(stylesheets, specifiers);
-  const preloads = new Set<string>();
+  const preloads = new Set<string>([relativeUrl(path, "/_observablehq/client.js")]);
   for (const specifier of specifiers) preloads.add(await resolver(path, specifier));
-  if (parseResult.cells.some((cell) => cell.databases?.length)) preloads.add(relativeUrl(path, "/_observablehq/database.js")); // prettier-ignore
+  await resolveModulePreloads(preloads);
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
+    Array.from(stylesheets).sort().map(renderStylesheetPreload) // <link rel=preload as=style>
+  }${
     Array.from(stylesheets).sort().map(renderStylesheet) // <link rel=stylesheet>
   }${
     Array.from(preloads).sort().map(renderModulePreload) // <link rel=modulepreload>
@@ -193,8 +189,13 @@ function renderStylesheet(href: string): Html {
   return html`\n<link rel="stylesheet" type="text/css" href="${href}"${/^\w+:/.test(href) ? " crossorigin" : ""}>`;
 }
 
+function renderStylesheetPreload(href: string): Html {
+  return html`\n<link rel="preload" as="style" href="${href}"${/^\w+:/.test(href) ? " crossorigin" : ""}>`;
+}
+
 function renderModulePreload(href: string): Html {
-  return html`\n<link rel="modulepreload" href="${href}">`;
+  const integrity: string | undefined = resolveModuleIntegrity(href);
+  return html`\n<link rel="modulepreload" href="${href}"${integrity ? html` integrity="${integrity}"` : ""}>`;
 }
 
 function renderFooter(path: string, options: Pick<Config, "pages" | "pager" | "title">): Html {

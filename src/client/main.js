@@ -1,13 +1,13 @@
 import {Runtime} from "observablehq:runtime";
 import {registerDatabase, registerFile} from "observablehq:stdlib";
-import {DatabaseClient, FileAttachment, Generators, Mutable, now, width} from "observablehq:stdlib";
+import {DatabaseClient, FileAttachment, Generators, Mutable} from "observablehq:stdlib";
 import {inspect, inspectError} from "./inspect.js";
 import * as recommendedLibraries from "./stdlib/recommendedLibraries.js";
 import * as sampleDatasets from "./stdlib/sampleDatasets.js";
 
 const library = {
-  now,
-  width,
+  now: () => Generators.now(),
+  width: () => Generators.width(document.querySelector("main")),
   DatabaseClient: () => DatabaseClient,
   FileAttachment: () => FileAttachment,
   Generators: () => Generators,
@@ -43,6 +43,7 @@ export function define(cell) {
       };
   const v = main.variable(
     {
+      _node: root, // for visibility promise
       pending: () => (reset = clear),
       fulfilled: () => reset?.(),
       rejected: (error) => (reset?.(), root.append(inspectError(error)))
@@ -57,7 +58,7 @@ export function define(cell) {
   v.define(outputs.length ? `cell ${id}` : null, inputs, body);
   variables.push(v);
   for (const o of outputs) variables.push(main.variable(true).define(o, [`cell ${id}`], (exports) => exports[o]));
-  for (const f of files) registerFile(f.name, {url: f.path, mimeType: f.mimeType});
+  for (const f of files) registerFile(f.name, f);
   for (const d of databases) registerDatabase(d.name, d);
 }
 

@@ -1,5 +1,5 @@
 define({id: "0", inputs: ["display"], outputs: ["data"], files: [{"name":"./fetch-local-data.json","mimeType":"application/json","path":"./_file/fetch-local-data.json"}], body: async (display) => {
-const {data} = await import("./_import/baz.js?sha=d0d8f0ff6026e6ea38567ddddbed743ad590d44a3e3bb881490a53127609cfc2");
+const {data} = await import("./_import/baz.js?sha=065e1149636e2894e471ad52d5be266d0b2ff7bbd7d982832d09f7b367ff8480");
 
 display(data);
 return {data};

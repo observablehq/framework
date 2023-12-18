@@ -3,15 +3,20 @@
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:import/recommended",
-    "plugin:prettier/recommended"
+    "plugin:import/typescript",
+    "prettier"
   ],
+  "settings": {
+    "import/parsers": {
+      "@typescript-eslint/parser": [".ts"]
+    },
+    "import/resolver": {
+      "typescript": true,
+      "node": true
+    }
+  },
   "plugins": ["@typescript-eslint", "import"],
   "parser": "@typescript-eslint/parser",
-  "parserOptions": {
-    "ecmaVersion": 2020,
-    "project": "./tsconfig.json",
-    "sourceType": "module"
-  },
   "env": {
     "es2020": true,
     "node": true
@@ -27,7 +32,6 @@
     "import/no-duplicates": "off",
     "import/no-import-module-exports": "warn",
     "import/no-relative-packages": "warn",
-    "import/no-unresolved": "off",
     "import/no-unused-modules": "error",
     "import/order": [
       "warn",
@@ -44,19 +48,8 @@
     "no-sparse-arrays": 0,
     "no-unexpected-multiline": 0,
     "object-shorthand": ["warn", "always"],
-    "prettier/prettier": ["warn", {"embeddedLanguageFormatting": "off"}],
     "sort-imports": ["warn", {"ignoreDeclarationSort": true}],
     "quotes": ["warn", "double", {"avoidEscape": true}]
   },
-  "overrides": [
-    {
-      "files": ["public/**"],
-      "env": {
-        "es2020": true,
-        "node": false,
-        "browser": true
-      }
-    }
-  ],
   "root": true
 }

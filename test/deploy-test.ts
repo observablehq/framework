@@ -1,5 +1,6 @@
 import assert, {fail} from "node:assert";
 import {Readable, Writable} from "node:stream";
+import {normalizeConfig} from "../src/config.js";
 import type {DeployEffects} from "../src/deploy.js";
 import {deploy} from "../src/deploy.js";
 import {isHttpError} from "../src/error.js";
@@ -17,12 +18,14 @@ const EXTRA_FILES: string[] = [
   "_observablehq/client.js",
   "_observablehq/runtime.js",
   "_observablehq/stdlib.js",
+  "_observablehq/stdlib/dash.js",
   "_observablehq/stdlib/dot.js",
   "_observablehq/stdlib/duckdb.js",
   "_observablehq/stdlib/mermaid.js",
   "_observablehq/stdlib/sqlite.js",
   "_observablehq/stdlib/tex.js",
-  "_observablehq/stdlib/xslx.js",
+  "_observablehq/stdlib/xlsx.js",
+  "_observablehq/stdlib/zip.js",
   "_observablehq/style.css"
 ];
 
@@ -30,25 +33,35 @@ class MockDeployEffects implements DeployEffects {
   public logger = new MockLogger();
   public input = new Readable();
   public output: NodeJS.WritableStream;
-  public _observableApiKey: string | null = null;
-  public _deployConfig: DeployConfig | null = null;
-  public _projectSlug = "my-project-slug";
+  public observableApiKey: string | null = null;
+  public deployConfig: DeployConfig | null = null;
+  public projectTitle = "My Project";
+  public projectSlug = "my-project";
+  public deployMessage = "fix some bugs";
 
   constructor({
     apiKey = validApiKey,
     deployConfig = null
   }: {apiKey?: string | null; deployConfig?: DeployConfig | null} = {}) {
-    this._observableApiKey = apiKey;
-    this._deployConfig = deployConfig;
+    this.observableApiKey = apiKey;
+    this.deployConfig = deployConfig;
     const that = this;
     this.output = new Writable({
       write(data, _enc, callback) {
         const dataString = data.toString();
-        if (dataString == "New project name: ") {
-          that.input.push(`${that._projectSlug}\n`);
+        if (dataString == "New project title: ") {
+          that.input.push(`${that.projectTitle}\n`);
           // Having to null/reinit input seems wrong.
           // TODO: find the correct way to submit to readline but keep the same
           // input stream across multiple readline interactions.
+          that.input.push(null);
+          that.input = new Readable();
+        } else if (dataString.match(/^New project slug \[.*\]: $/)) {
+          that.input.push(`${that.projectSlug}\n`);
+          that.input.push(null);
+          that.input = new Readable();
+        } else if (dataString == "Deploy message: ") {
+          that.input.push(`${that.deployMessage}\n`);
           that.input.push(null);
           that.input = new Readable();
         } else if (dataString.includes("Choice: ")) {
@@ -62,26 +75,28 @@ class MockDeployEffects implements DeployEffects {
   }
 
   async getObservableApiKey(logger: Logger) {
-    if (!this._observableApiKey) {
+    if (!this.observableApiKey) {
       logger.log(commandRequiresAuthenticationMessage);
       throw new Error("no key available in this test");
     }
-    return {source: "test" as const, key: this._observableApiKey};
+    return {source: "test" as const, key: this.observableApiKey};
   }
 
   async getDeployConfig() {
-    return this._deployConfig;
+    return this.deployConfig;
   }
 
   async setDeployConfig(sourceRoot: string, config: DeployConfig) {
-    this._deployConfig = config;
+    this.deployConfig = config;
   }
 }
 
 // This test should have exactly one index.md in it, and nothing else; that one
 // page is why we +1 to the number of extra files.
 const TEST_SOURCE_ROOT = "test/input/build/simple-public";
+const TEST_CONFIG = await normalizeConfig({root: TEST_SOURCE_ROOT});
 
+// TODO These tests need mockJsDelivr, too!
 describe("deploy", () => {
   it("makes expected API calls for a new project", async () => {
     const projectId = "project123";
@@ -95,12 +110,12 @@ describe("deploy", () => {
       .start();
 
     const effects = new MockDeployEffects();
-    await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+    await deploy({config: TEST_CONFIG}, effects);
 
     apiMock.close();
     const deployConfig = await effects.getDeployConfig();
     assert.equal(deployConfig?.project?.id, projectId);
-    assert.equal(deployConfig?.project?.slug, effects._projectSlug);
+    assert.equal(deployConfig?.project?.slug, effects.projectSlug);
   });
 
   it("makes expected API calls for an existing project", async () => {
@@ -114,7 +129,7 @@ describe("deploy", () => {
       .start();
 
     const effects = new MockDeployEffects({deployConfig});
-    await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+    await deploy({config: TEST_CONFIG}, effects);
 
     apiMock.close();
   });
@@ -124,7 +139,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects({apiKey: null});
 
     try {
-      await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+      await deploy({config: TEST_CONFIG}, effects);
       assert.fail("expected error");
     } catch (err) {
       if (!(err instanceof Error)) throw err;
@@ -147,19 +162,19 @@ describe("deploy", () => {
       .start();
     const effects = new MockDeployEffects();
 
-    await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+    await deploy({config: TEST_CONFIG}, effects);
 
     apiMock.close();
     const deployConfig = await effects.getDeployConfig();
     assert.equal(deployConfig?.project?.id, projectId);
-    assert.equal(deployConfig?.project?.slug, effects._projectSlug);
+    assert.equal(deployConfig?.project?.slug, effects.projectSlug);
   });
 
   it("logs an error during project creation when user has no workspaces", async () => {
     const apiMock = new ObservableApiMock().handleGetUser({user: userWithZeroWorkspaces}).start();
     const effects = new MockDeployEffects();
 
-    await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+    await deploy({config: TEST_CONFIG}, effects);
 
     apiMock.close();
     effects.logger.assertExactErrors([/^Current user doesn't have any Observable workspaces/]);
@@ -170,7 +185,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects({apiKey: invalidApiKey});
 
     try {
-      await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+      await deploy({config: TEST_CONFIG}, effects);
       assert.fail("Should have thrown");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -185,7 +200,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects();
 
     try {
-      await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+      await deploy({config: TEST_CONFIG}, effects);
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -206,7 +221,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects();
 
     try {
-      await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+      await deploy({config: TEST_CONFIG}, effects);
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -228,7 +243,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects();
 
     try {
-      await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+      await deploy({config: TEST_CONFIG}, effects);
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -251,7 +266,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects();
 
     try {
-      await deploy({sourceRoot: TEST_SOURCE_ROOT}, effects);
+      await deploy({config: TEST_CONFIG}, effects);
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));

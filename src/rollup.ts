@@ -1,3 +1,4 @@
+import {existsSync} from "node:fs";
 import {dirname, join, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
@@ -15,7 +16,11 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
   const bundle = await rollup({
     input: clientPath,
     external: [/^https:/],
-    plugins: [importResolve(clientPath), esbuild({target: "es2022", minify}), importMetaResolve()]
+    plugins: [
+      importResolve(clientPath),
+      esbuild({target: "es2022", exclude: [], minify}), // don’t exclude node_modules
+      importMetaResolve()
+    ]
   });
   try {
     const output = await bundle.generate({format: "es"});
@@ -33,11 +38,32 @@ function importResolve(clientPath: string): Plugin {
   };
 }
 
+// TODO Consolidate with createImportResolver.
 async function resolveImport(source: string, specifier: string | AstNode): Promise<ResolveIdResult> {
   return typeof specifier !== "string"
     ? null
     : specifier.startsWith("observablehq:")
-    ? {id: relativeUrl(source, `./src/client/${specifier.slice("observablehq:".length)}.js`), external: true}
+    ? {id: relativeUrl(source, getClientPath(`./src/client/${specifier.slice("observablehq:".length)}.js`)), external: true} // prettier-ignore
+    : specifier === "npm:@observablehq/runtime"
+    ? {id: relativeUrl(source, getClientPath("./src/client/runtime.js")), external: true}
+    : specifier === "npm:@observablehq/stdlib"
+    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib.js")), external: true}
+    : specifier === "npm:@observablehq/dash"
+    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/dash.js")), external: true} // TODO publish to npm
+    : specifier === "npm:@observablehq/dot"
+    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/dot.js")), external: true} // TODO publish to npm
+    : specifier === "npm:@observablehq/duckdb"
+    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/duckdb.js")), external: true} // TODO publish to npm
+    : specifier === "npm:@observablehq/mermaid"
+    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/mermaid.js")), external: true} // TODO publish to npm
+    : specifier === "npm:@observablehq/tex"
+    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/tex.js")), external: true} // TODO publish to npm
+    : specifier === "npm:@observablehq/sqlite"
+    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/sqlite.js")), external: true} // TODO publish to npm
+    : specifier === "npm:@observablehq/xlsx"
+    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/xlsx.js")), external: true} // TODO publish to npm
+    : specifier === "npm:@observablehq/zip"
+    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/zip.js")), external: true} // TODO publish to npm
     : specifier.startsWith("npm:")
     ? {id: await resolveNpmImport(specifier.slice("npm:".length))}
     : null;
@@ -82,5 +108,10 @@ function importMetaResolve(): Plugin {
 }
 
 export function getClientPath(entry: string): string {
-  return relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), "..", entry));
+  const path = relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), "..", entry));
+  if (path.endsWith(".js") && !existsSync(path)) {
+    const tspath = path.slice(0, -".js".length) + ".ts";
+    if (existsSync(tspath)) return tspath;
+  }
+  return path;
 }

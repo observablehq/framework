@@ -6,8 +6,8 @@ if (toggle) {
     if (indeterminate) (toggle.checked = !matches), (indeterminate = false);
     else if (toggle.checked === matches) indeterminate = true;
     toggle.indeterminate = indeterminate;
-    if (indeterminate) localStorage.removeItem("observablehq-sidebar");
-    else localStorage.setItem("observablehq-sidebar", toggle.checked);
+    if (indeterminate) sessionStorage.removeItem("observablehq-sidebar");
+    else sessionStorage.setItem("observablehq-sidebar", toggle.checked);
   };
   addEventListener("keypress", (event) => {
     if (event.key === "b" && event.metaKey && !event.ctrlKey) {

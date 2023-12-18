@@ -3,17 +3,18 @@ import {setTimeout} from "timers/promises";
 import chai, {assert, expect} from "chai";
 import chaiHttp from "chai-http";
 import {WebSocket} from "ws";
+import {normalizeConfig} from "../../src/config.js";
 import type {ParseResult} from "../../src/markdown.js";
 import {parseMarkdown} from "../../src/markdown.js";
-import {preview as previewServer} from "../../src/preview.js";
+import {preview} from "../../src/preview.js";
 import type {PreviewOptions, PreviewServer} from "../../src/preview.js";
 
-const testRoot = "test/preview/dashboard";
+const testHostRoot = "test/preview/dashboard";
 const testHostName = process.env.TEST_HOSTNAME ?? "127.0.0.1";
 const testPort = +(process.env.TEST_PORT ?? 8080);
 
 const testServerOptions: PreviewOptions = {
-  root: testRoot,
+  config: await normalizeConfig({root: testHostRoot}),
   hostname: testHostName,
   port: testPort,
   verbose: false
@@ -27,7 +28,7 @@ describe("preview server", () => {
   let testServer: PreviewServer["_server"];
 
   before(async () => {
-    testServer = (await previewServer(testServerOptions)).server;
+    testServer = (await preview(testServerOptions)).server;
   });
 
   after(() => {
@@ -103,8 +104,8 @@ describe("preview server", () => {
     let messages: string[] = [];
 
     before(async () => {
-      pageContent = await readFile(`${testRoot}/index.md`, "utf-8");
-      fileContent = await readFile(`${testRoot}/file.csv`, "utf-8");
+      pageContent = await readFile(`${testHostRoot}/index.md`, "utf-8");
+      fileContent = await readFile(`${testHostRoot}/file.csv`, "utf-8");
       parsedContent = await parseMarkdown(pageContent, "test/preview/dashboard", "index.md");
       testWebSocket = new WebSocket(Object.assign(new URL("/_observablehq", testServerUrl), {protocol: "ws"}));
 
@@ -129,14 +130,14 @@ describe("preview server", () => {
       testWebSocket?.close();
       testServer?.close();
       // reset file contents
-      await writeFile(`${testRoot}/index.md`, pageContent);
-      await writeFile(`${testRoot}/file.csv`, fileContent);
+      await writeFile(`${testHostRoot}/index.md`, pageContent);
+      await writeFile(`${testHostRoot}/file.csv`, fileContent);
     });
 
     it("watch .md file", async () => {
       messages = [];
       await setTimeout(500); // avoid sending a "reload" message
-      await writeFile(`${testRoot}/index.md`, pageContent + "\n\n<div>Hello</div>");
+      await writeFile(`${testHostRoot}/index.md`, pageContent + "\n\n<div>Hello</div>");
       await setTimeout(1000);
       expect(messages).to.have.length(1);
       expect(messages[0]["type"]).to.equal("update");
@@ -144,7 +145,7 @@ describe("preview server", () => {
 
     it("watch file attachment", async () => {
       messages = [];
-      writeFile(`${testRoot}/file.csv`, fileContent + "\n1880-02-01,-0.21");
+      writeFile(`${testHostRoot}/file.csv`, fileContent + "\n1880-02-01,-0.21");
       await setTimeout(1000);
       expect(messages).to.have.length(1);
       expect(messages[0]["type"]).to.equal("refresh");

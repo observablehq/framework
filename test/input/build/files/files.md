@@ -3,14 +3,6 @@
 <link rel="stylesheet" href="https://example.com/style.css">
 
 ```js
-fetch("./file-top.csv")
-```
-
-```js
-fetch("./subsection/file-sub.csv")
-```
-
-```js
 FileAttachment("file-top.csv")
 ```
 

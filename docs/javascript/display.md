@@ -1,6 +1,6 @@
 # JavaScript: Display
 
-The reason we write client-side JavaScript is to display stuff! So how does that work?
+The Observable CLI encourages client-side JavaScript to render dynamic and interactive content, including charts and inputs. For example, below we say “hello world” with [Observable Plot](../lib/plot).
 
 ```js echo
 Plot.plot({
@@ -11,7 +11,7 @@ Plot.plot({
 })
 ```
 
-The call to `Plot.plot` above is a JavaScript expression. This expression returns an SVG element. When a JavaScript fenced code block contains an expression (but not a program — more on that in a sec), the resulting value is displayed by implicitly wrapping the expression with a `display` call. The above is thus equivalent to:
+The code block above contains a JavaScript expression, a call to `Plot.plot`, that returns an SVG element. When a [JavaScript fenced code block](../javascript) contains an expression, the resulting value is displayed by implicitly wrapping the expression with a [`display`](#display(value)) call. The above is thus equivalent to:
 
 ```js echo
 display(
@@ -24,21 +24,21 @@ display(
 );
 ```
 
-The `display` function automatically displays the specified value wherever the code chunk is on the page. If you use the `echo` directive to echo the code, as above, the evaluated value is shown _above_ the code (not below).
+The `display` function displays the specified value wherever the code block is on the page. If you use the `echo` directive to echo the code, as above, the value is displayed _above_ the code (not below).
 
-When `value` is not a DOM node, display will automatically create a suitable corresponding DOM node to display.
+When the value is not a DOM node, display will automatically create a suitable corresponding DOM node to display using the [Observable Inspector](https://github.com/observablehq/inspector).
 
 ```js echo
 1 + 2
 ```
 
-It _won’t_ display if you have a semicolon. So, watch out for Prettier.
+Implicit display only applies to expression code blocks, not program code blocks: the value won’t implicit display if you add a semicolon. So, watch out for Prettier!
 
 ```js echo
 1 + 2;
 ```
 
-It also won’t display if you reference the `display` function explicitly (_i.e._, we wouldn’t want to show `2` twice below).
+Implicit display also doesn’t apply if you reference the `display` function explicitly (_i.e._, we wouldn’t want to show `2` twice below).
 
 ```js echo
 display(1), display(2)
@@ -60,9 +60,7 @@ ${display(1), display(2)}
 
 As shown above, you can manually display elements or inspect values by calling the built-in `display` function.
 
-When the passed value is not a DOM node, the behavior of `display` displays on whether it is called within a fenced code block or an inline expression.
-
-In fenced code blocks, display will use the [Observable Inspector](https://github.com/observablehq/inspector).
+When the passed value is not a DOM node, the behavior of `display` displays on whether it is called within a fenced code block or an inline expression. In fenced code blocks, display will use the inspector.
 
 ```js echo
 [1, 2, 3]
@@ -89,7 +87,7 @@ The `display` function returns the passed-in value, which can be useful for debu
 const x = display(Math.random());
 ```
 
-The `display` function is scoped to each code chunk. But you can capture a code chunk’s `display` function by assigning it to a [top-level variable](./reactivity):
+The `display` function is scoped to each code block, meaning that the `display` function is a closure bound to where it will display on the page. But you can capture a code block’s `display` function by assigning it to a [top-level variable](./reactivity):
 
 ```js echo
 const displayThere = display;
@@ -103,10 +101,24 @@ Inputs.button("Click me", {value: 0, reduce: (i) => displayThere(++i)})
 
 Previously-displayed values will be cleared when the associated code block or inline expression is re-run.
 
+The built-in [`view` function](#view(element)) is closely related to `display`. It displays the given element and then returns an [async generator](../lib/generators#input(element)) that yields the input’s value. This makes it easy to both display an input element and expose its current value reactively to the rest of the page. For example, here is a simple HTML slider:
+
+```js echo
+const gain = view(html`<input type=range step=0.1 min=0 max=11 value=5>`);
+```
+
+Now you can reference the input’s value (here `gain`) anywhere. The code will run whenever the input changes; no event listeners required!
+
+```md
+The current gain is ${gain}!
+```
+
+The current gain is ${gain}!
+
 ## display(*value*)
 
 If `value` is a DOM node, adds it to the DOM. Otherwise, converts the given `value` to a suitable DOM node and displays that instead. Returns the given `value`.
 
-## view(*input*)
+## view(*element*)
 
-See [JavaScript: Inputs](./inputs).
+The `view` function displays the given input *element* and then returns its corresponding [generator](./generators) via [`Generators.input`](../lib/generators#input(element)). Use this to display an input element while also exposing the input’s value as a [reactive variable](./reactivity).

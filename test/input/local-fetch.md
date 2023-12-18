@@ -1,5 +1,5 @@
 # Local fetch
 
 ```js
-fetch("./local-fetch.md")
+FileAttachment("./local-fetch.md")
 ```

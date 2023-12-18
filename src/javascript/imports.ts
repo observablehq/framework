@@ -2,45 +2,39 @@ import {createHash} from "node:crypto";
 import {readFileSync} from "node:fs";
 import {join} from "node:path";
 import {Parser} from "acorn";
-import type {
-  CallExpression,
-  ExportAllDeclaration,
-  ExportNamedDeclaration,
-  Identifier,
-  ImportDeclaration,
-  ImportExpression,
-  Node,
-  Program
-} from "acorn";
+import type {Identifier, Node, Program} from "acorn";
+import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {isEnoent} from "../error.js";
 import {type Feature, type ImportReference, type JavaScriptNode} from "../javascript.js";
 import {parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
 import {relativeUrl, resolvePath} from "../url.js";
-import {getStringLiteralValue, isStringLiteral} from "./features.js";
-import {findFetches, maybeAddFetch, rewriteIfLocalFetch} from "./fetches.js";
+import {getFeature, getStringLiteralValue, isStringLiteral} from "./features.js";
 import {defaultGlobals} from "./globals.js";
 import {findReferences} from "./references.js";
 
-export interface ImportsAndFetches {
+type ImportNode = ImportDeclaration | ImportExpression;
+type ExportNode = ExportAllDeclaration | ExportNamedDeclaration;
+
+export interface ImportsAndFeatures {
   imports: ImportReference[];
-  fetches: Feature[];
+  features: Feature[];
 }
 
 /**
  * Finds all export declarations in the specified node. (This is used to
  * disallow exports within JavaScript code blocks.)
  */
-export function findExports(body: Node): (ExportAllDeclaration | ExportNamedDeclaration)[] {
-  const exports: (ExportAllDeclaration | ExportNamedDeclaration)[] = [];
+export function findExports(body: Node): ExportNode[] {
+  const exports: ExportNode[] = [];
 
   simple(body, {
     ExportAllDeclaration: findExport,
     ExportNamedDeclaration: findExport
   });
 
-  function findExport(node: ExportAllDeclaration | ExportNamedDeclaration) {
+  function findExport(node: ExportNode) {
     exports.push(node);
   }
 
@@ -52,20 +46,17 @@ export function findExports(body: Node): (ExportAllDeclaration | ExportNamedDecl
  * Recursively processes any imported local ES modules. The returned transitive
  * import paths are relative to the given source path.
  */
-
-export function findImports(body: Node, root: string, path: string): ImportsAndFetches {
-  const references: Identifier[] = findReferences(body, defaultGlobals);
+export function findImports(body: Node, root: string, path: string): ImportsAndFeatures {
   const imports: ImportReference[] = [];
-  const fetches: Feature[] = [];
+  const features: Feature[] = [];
   const paths: string[] = [];
 
   simple(body, {
     ImportDeclaration: findImport,
-    ImportExpression: findImport,
-    CallExpression: findFetch
+    ImportExpression: findImport
   });
 
-  function findImport(node) {
+  function findImport(node: ImportNode) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
       if (isLocalImport(value, path)) {
@@ -76,14 +67,10 @@ export function findImports(body: Node, root: string, path: string): ImportsAndF
     }
   }
 
-  function findFetch(node) {
-    maybeAddFetch(fetches, node, references, path);
-  }
-
   // Recursively process any imported local ES modules.
-  const features = parseLocalImports(root, paths);
-  imports.push(...features.imports);
-  fetches.push(...features.fetches);
+  const transitive = parseLocalImports(root, paths);
+  imports.push(...transitive.imports);
+  features.push(...transitive.features);
 
   // Make all local paths relative to the source path.
   for (const i of imports) {
@@ -92,7 +79,7 @@ export function findImports(body: Node, root: string, path: string): ImportsAndF
     }
   }
 
-  return {imports, fetches};
+  return {imports, features};
 }
 
 /**
@@ -101,18 +88,19 @@ export function findImports(body: Node, root: string, path: string): ImportsAndF
  * appends to imports. The paths here are always relative to the root (unlike
  * findImports above!).
  */
-export function parseLocalImports(root: string, paths: string[]): ImportsAndFetches {
+export function parseLocalImports(root: string, paths: string[]): ImportsAndFeatures {
   const imports: ImportReference[] = [];
-  const fetches: Feature[] = [];
+  const features: Feature[] = [];
   const set = new Set(paths);
+
   for (const path of set) {
     imports.push({type: "local", name: path});
     try {
       const input = readFileSync(join(root, path), "utf-8");
-      const program = Parser.parse(input, parseOptions) as Program;
+      const body = Parser.parse(input, parseOptions);
 
       simple(
-        program,
+        body,
         {
           ImportDeclaration: findImport,
           ImportExpression: findImport,
@@ -122,15 +110,14 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFetc
         undefined,
         path
       );
-      fetches.push(...findFetches(program, path));
+
+      features.push(...findImportFeatures(body, path, input));
     } catch (error) {
       if (!isEnoent(error) && !(error instanceof SyntaxError)) throw error;
     }
   }
-  function findImport(
-    node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration,
-    path: string
-  ) {
+
+  function findImport(node: ImportNode | ExportNode, path: string) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
       if (isLocalImport(value, path)) {
@@ -141,27 +128,102 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFetc
       }
     }
   }
-  return {imports, fetches};
+
+  return {imports, features};
 }
 
-/** Rewrites import specifiers in the specified ES module source. */
-export async function rewriteModule(input: string, sourcePath: string, resolver: ImportResolver): Promise<string> {
-  const body = Parser.parse(input, parseOptions) as Program;
-  const references: Identifier[] = findReferences(body, defaultGlobals);
+/**
+ * Returns a map from Identifier to the feature type, such as FileAttachment.
+ * Note that this may be different than the identifier.name because of aliasing.
+ */
+export function getFeatureReferenceMap(node: Node): Map<Identifier, Feature["type"]> {
+  const declarations = new Set<{name: string}>();
+  const alias = new Map<string, Feature["type"]>();
+  let globals: Set<string> | undefined;
+
+  // Find the declared local names of the imported symbol. Only named imports
+  // are supported. TODO Support namespace imports?
+  simple(node, {
+    ImportDeclaration(node) {
+      if (node.source.value === "npm:@observablehq/stdlib") {
+        for (const specifier of node.specifiers) {
+          if (
+            specifier.type === "ImportSpecifier" &&
+            specifier.imported.type === "Identifier" &&
+            (specifier.imported.name === "FileAttachment" ||
+              specifier.imported.name === "Secret" ||
+              specifier.imported.name === "DatabaseClient")
+          ) {
+            declarations.add(specifier.local);
+            alias.set(specifier.local.name, specifier.imported.name);
+          }
+        }
+      }
+    }
+  });
+
+  // If the import is masking a global, don’t treat it as a global (since we’ll
+  // ignore the import declaration below).
+  for (const name of alias.keys()) {
+    if (defaultGlobals.has(name)) {
+      if (globals === undefined) globals = new Set(defaultGlobals);
+      globals.delete(name);
+    }
+  }
+
+  function filterDeclaration(node: {name: string}): boolean {
+    return !declarations.has(node); // treat the imported declaration as unbound
+  }
+
+  const references = findReferences(node, {globals, filterDeclaration});
+  const map = new Map<Identifier, Feature["type"]>();
+  for (const r of references) {
+    const type = alias.get(r.name);
+    if (type) map.set(r, type);
+  }
+  return map;
+}
+
+export function findImportFeatures(node: Node, path: string, input: string): Feature[] {
+  const featureMap = getFeatureReferenceMap(node);
+  const features: Feature[] = [];
+
+  simple(node, {
+    CallExpression(node) {
+      const type = featureMap.get(node.callee as Identifier);
+      if (type) features.push(getFeature(type, node, path, input));
+    }
+  });
+
+  return features;
+}
+
+/** Rewrites import specifiers and FileAttachment calls in the specified ES module source. */
+export async function rewriteModule(input: string, path: string, resolver: ImportResolver): Promise<string> {
+  const body = Parser.parse(input, parseOptions);
+  const featureMap = getFeatureReferenceMap(body);
   const output = new Sourcemap(input);
-  const imports: (ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration)[] = [];
+  const imports: (ImportNode | ExportNode)[] = [];
 
   simple(body, {
     ImportDeclaration: rewriteImport,
     ImportExpression: rewriteImport,
     ExportAllDeclaration: rewriteImport,
     ExportNamedDeclaration: rewriteImport,
-    CallExpression(node: CallExpression) {
-      rewriteIfLocalFetch(node, output, references, sourcePath, {resolveMeta: true});
+    CallExpression(node) {
+      const type = featureMap.get(node.callee as Identifier);
+      if (type) {
+        const feature = getFeature(type, node, path, input); // validate syntax
+        if (feature.type === "FileAttachment") {
+          const arg = node.arguments[0];
+          const result = JSON.stringify(relativeUrl(join("_import", path), feature.name));
+          output.replaceLeft(arg.start, arg.end, `${result}, import.meta.url`);
+        }
+      }
     }
   });
 
-  function rewriteImport(node: ImportDeclaration | ImportExpression | ExportAllDeclaration | ExportNamedDeclaration) {
+  function rewriteImport(node: ImportNode | ExportNode) {
     imports.push(node);
   }
 
@@ -170,7 +232,7 @@ export async function rewriteModule(input: string, sourcePath: string, resolver:
       output.replaceLeft(
         node.source.start,
         node.source.end,
-        JSON.stringify(await resolver(sourcePath, getStringLiteralValue(node.source)))
+        JSON.stringify(await resolver(path, getStringLiteralValue(node.source)))
       );
     }
   }
@@ -249,6 +311,8 @@ export function createImportResolver(root: string, base: "." | "_import" = "."):
       ? resolveBuiltin(base, path, "runtime.js")
       : specifier === "npm:@observablehq/stdlib"
       ? resolveBuiltin(base, path, "stdlib.js")
+      : specifier === "npm:@observablehq/dash"
+      ? resolveBuiltin(base, path, "stdlib/dash.js") // TODO publish to npm
       : specifier === "npm:@observablehq/dot"
       ? resolveBuiltin(base, path, "stdlib/dot.js") // TODO publish to npm
       : specifier === "npm:@observablehq/duckdb"
@@ -259,17 +323,15 @@ export function createImportResolver(root: string, base: "." | "_import" = "."):
       ? resolveBuiltin(base, path, "stdlib/tex.js") // TODO publish to npm
       : specifier === "npm:@observablehq/sqlite"
       ? resolveBuiltin(base, path, "stdlib/sqlite.js") // TODO publish to npm
-      : specifier === "npm:@observablehq/xslx"
-      ? resolveBuiltin(base, path, "stdlib/xslx.js") // TODO publish to npm
+      : specifier === "npm:@observablehq/xlsx"
+      ? resolveBuiltin(base, path, "stdlib/xlsx.js") // TODO publish to npm
+      : specifier === "npm:@observablehq/zip"
+      ? resolveBuiltin(base, path, "stdlib/zip.js") // TODO publish to npm
       : specifier.startsWith("npm:")
       ? await resolveNpmImport(specifier.slice("npm:".length))
       : specifier;
   };
 }
-
-// Like import, don’t fetch the same package more than once to ensure
-// consistency; restart the server if you want to clear the cache.
-const npmCache = new Map<string, Promise<string>>();
 
 function parseNpmSpecifier(specifier: string): {name: string; range?: string; path?: string} {
   const parts = specifier.split("/");
@@ -286,27 +348,126 @@ function formatNpmSpecifier({name, range, path}: {name: string; range?: string; 
   return `${name}${range ? `@${range}` : ""}${path ? `/${path}` : ""}`;
 }
 
+// Like import, don’t fetch the same package more than once to ensure
+// consistency; restart the server if you want to clear the cache.
+const fetchCache = new Map<string, Promise<{headers: Headers; body: any}>>();
+
+async function cachedFetch(href: string): Promise<{headers: Headers; body: any}> {
+  let promise = fetchCache.get(href);
+  if (promise) return promise;
+  promise = (async () => {
+    const response = await fetch(href);
+    if (!response.ok) throw new Error(`unable to fetch: ${href}`);
+    const json = /^application\/json(;|$)/.test(response.headers.get("content-type")!);
+    const body = await (json ? response.json() : response.text());
+    return {headers: response.headers, body};
+  })();
+  promise.catch(() => fetchCache.delete(href)); // try again on error
+  fetchCache.set(href, promise);
+  return promise;
+}
+
 async function resolveNpmVersion(specifier: string): Promise<string> {
   const {name, range} = parseNpmSpecifier(specifier); // ignore path
   specifier = formatNpmSpecifier({name, range});
-  let promise = npmCache.get(specifier);
-  if (promise) return promise;
-  promise = (async () => {
-    const search = range ? `?specifier=${range}` : "";
-    const response = await fetch(`https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`);
-    if (!response.ok) throw new Error(`unable to resolve npm specifier: ${name}`);
-    const body = await response.json();
-    return body.version;
-  })();
-  promise.catch(() => npmCache.delete(specifier)); // try again on error
-  npmCache.set(specifier, promise);
-  return promise;
+  const search = range ? `?specifier=${range}` : "";
+  return (await cachedFetch(`https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`)).body.version;
 }
 
 export async function resolveNpmImport(specifier: string): Promise<string> {
   const {name, path = "+esm"} = parseNpmSpecifier(specifier);
   const version = await resolveNpmVersion(specifier);
   return `https://cdn.jsdelivr.net/npm/${name}@${version}/${path}`;
+}
+
+const preloadCache = new Map<string, Promise<Set<string> | undefined>>();
+
+/**
+ * Fetches the module at the specified URL and returns a promise to any
+ * transitive modules it imports (on the same host; only path-based imports are
+ * considered), as well as its subresource integrity hash. Only static imports
+ * are considered, and the fetched module must be have immutable public caching;
+ * dynamic imports may not be used and hence are not preloaded.
+ */
+async function fetchModulePreloads(href: string): Promise<Set<string> | undefined> {
+  let promise = preloadCache.get(href);
+  if (promise) return promise;
+  promise = (async () => {
+    const {headers, body} = await cachedFetch(href);
+    const cache = headers.get("cache-control")?.split(/\s*,\s*/);
+    if (!cache?.some((c) => c === "immutable") || !cache?.some((c) => c === "public")) return;
+    const imports = new Set<string>();
+    let program: Program;
+    try {
+      program = Parser.parse(body, parseOptions);
+    } catch (error) {
+      if (!isEnoent(error) && !(error instanceof SyntaxError)) throw error;
+      return;
+    }
+    simple(program, {
+      ImportDeclaration: findImport,
+      ExportAllDeclaration: findImport,
+      ExportNamedDeclaration: findImport
+    });
+    function findImport(node: ImportNode | ExportNode) {
+      if (isStringLiteral(node.source)) {
+        const value = getStringLiteralValue(node.source);
+        if (isPathImport(value)) imports.add(String(new URL(value, href)));
+      }
+    }
+    // TODO integrityCache.set(href, `sha384-${createHash("sha384").update(body).digest("base64")}`);
+    return imports;
+  })();
+  promise.catch(() => preloadCache.delete(href)); // try again on error
+  preloadCache.set(href, promise);
+  return promise;
+}
+
+const integrityCache = new Map<string, string>();
+
+/**
+ * Given a set of resolved module specifiers (URLs) to preload, fetches any
+ * externally-hosted modules to compute the transitively-imported modules; also
+ * precomputes the subresource integrity hash for each fetched module.
+ */
+export async function resolveModulePreloads(hrefs: Set<string>): Promise<void> {
+  let resolve: () => void;
+  const visited = new Set<string>();
+  const queue = new Set<Promise<void>>();
+
+  for (const href of hrefs) {
+    if (href.startsWith("https:")) {
+      enqueue(href);
+    }
+  }
+
+  function enqueue(href: string) {
+    if (visited.has(href)) return;
+    visited.add(href);
+    const promise = (async () => {
+      const imports = await fetchModulePreloads(href);
+      if (!imports) return;
+      for (const i of imports) {
+        hrefs.add(i);
+        enqueue(i);
+      }
+    })();
+    promise.finally(() => {
+      queue.delete(promise);
+      queue.size || resolve();
+    });
+    queue.add(promise);
+  }
+
+  if (queue.size) return new Promise<void>((y) => (resolve = y));
+}
+
+/**
+ * Given a specifier (URL) that was previously resolved by
+ * resolveModulePreloads, returns the computed subresource integrity hash.
+ */
+export function resolveModuleIntegrity(href: string): string | undefined {
+  return integrityCache.get(href);
 }
 
 function resolveBuiltin(base: "." | "_import", path: string, specifier: string): string {
@@ -334,9 +495,9 @@ function getModuleHash(root: string, path: string): string {
     if (!isEnoent(error)) throw error;
   }
   // TODO can’t simply concatenate here; we need a delimiter
-  const {imports, fetches} = parseLocalImports(root, [path]);
-  for (const i of [...imports, ...fetches]) {
-    if (i.type === "local") {
+  const {imports, features} = parseLocalImports(root, [path]);
+  for (const i of [...imports, ...features]) {
+    if (i.type === "local" || i.type === "FileAttachment") {
       try {
         hash.update(readFileSync(join(root, i.name), "utf-8"));
       } catch (error) {
@@ -356,10 +517,12 @@ function rewriteImportSpecifier(node) {
     : `${node.imported.name}: ${node.local.name}`;
 }
 
+export function isPathImport(specifier: string): boolean {
+  return ["./", "../", "/"].some((prefix) => specifier.startsWith(prefix));
+}
+
 export function isLocalImport(specifier: string, path: string): boolean {
-  return (
-    ["./", "../", "/"].some((prefix) => specifier.startsWith(prefix)) && !resolvePath(path, specifier).startsWith("../")
-  );
+  return isPathImport(specifier) && !resolvePath(path, specifier).startsWith("../");
 }
 
 function isNamespaceSpecifier(node) {

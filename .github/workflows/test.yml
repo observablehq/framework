@@ -8,19 +8,23 @@ on:
 
 jobs:
   test:
+    strategy:
+      matrix:
+        version: [20, 21]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
-          cache: 'yarn'
+          node-version: ${{ matrix.version }}
+          cache: yarn
       - run: yarn --frozen-lockfile
       - run: yarn c8 --check-coverage -x src/**/*.d.ts -x src/preview.ts -x src/observableApiConfig.ts -x src/client --lines 80 --per-file yarn test:mocha
       - run: yarn test:tsc
       - run: |
           echo ::add-matcher::.github/eslint.json
           yarn run eslint src test --format=compact
+      - run: yarn test:prettier
       - uses: actions/upload-artifact@v3
         if: failure()
         with:

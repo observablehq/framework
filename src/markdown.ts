@@ -324,6 +324,7 @@ function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string):
 }
 
 const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcset"}[] = Object.freeze([
+  {query: "a[href][download]", src: "href"},
   {query: "audio[src]", src: "src"},
   {query: "audio source[src]", src: "src"},
   {query: "img[src]", src: "src"},
@@ -339,41 +340,34 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
 
   // Extracting references to files (such as from linked stylesheets).
   const filePaths = new Set<FileReference["path"]>();
+  const resolvePath = (source: string): FileReference | undefined => {
+    const path = getLocalPath(sourcePath, source);
+    if (!path) return;
+    const file = fileReference(path, sourcePath);
+    if (!filePaths.has(file.path)) {
+      filePaths.add(file.path);
+      context.files.push(file);
+    }
+    return file;
+  };
   for (const {query, src} of SUPPORTED_PROPERTIES) {
     for (const element of document.querySelectorAll(query)) {
       if (src === "srcset") {
-        const srcset = element.getAttribute(src);
-        const paths =
-          srcset &&
-          srcset
-            .split(",")
-            .map((p) => {
-              const parts = p.trim().split(/\s+/);
-              const source = parts[0];
-              const path = getLocalPath(sourcePath, source);
-              if (path) {
-                const file = fileReference(source, sourcePath);
-                if (!filePaths.has(file.path)) {
-                  filePaths.add(file.path);
-                  context.files.push(file);
-                }
-                return `${file.path} ${parts.slice(1).join(" ")}`.trim();
-              }
-              return parts.join(" ");
-            })
-            .filter((p) => !!p);
+        const srcset = element.getAttribute(src)!;
+        const paths = srcset
+          .split(",")
+          .map((p) => {
+            const parts = p.trim().split(/\s+/);
+            const source = parts[0];
+            const file = resolvePath(source);
+            return file ? `${file.path} ${parts.slice(1).join(" ")}`.trim() : parts.join(" ");
+          })
+          .filter((p) => !!p);
         if (paths && paths.length > 0) element.setAttribute(src, paths.join(", "));
       } else {
-        const source = element.getAttribute(src);
-        const path = getLocalPath(sourcePath, source!);
-        if (path) {
-          const file = fileReference(source!, sourcePath);
-          if (!filePaths.has(file.path)) {
-            filePaths.add(file.path);
-            context.files.push(file);
-          }
-          element.setAttribute(src, file.path);
-        }
+        const source = element.getAttribute(src)!;
+        const file = resolvePath(source);
+        if (file) element.setAttribute(src, file.path);
       }
     }
   }
@@ -383,8 +377,9 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
   // direct children of code elements.
   for (const code of document.querySelectorAll("code[class*='language-']")) {
     const language = [...code.classList].find((c) => c.startsWith("language-"))?.slice("language-".length);
-    if (!language || !hljs.getLanguage(language)) continue;
+    if (!language) continue;
     if (code.parentElement?.tagName === "PRE") code.parentElement.setAttribute("data-language", language);
+    if (!hljs.getLanguage(language)) continue;
     let html = "";
     code.normalize(); // coalesce adjacent text nodes
     for (const child of code.childNodes) {

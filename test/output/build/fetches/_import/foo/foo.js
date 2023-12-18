@@ -1,2 +1,3 @@
-export const fooJsonData = await fetch(new URL("../../_file/foo/foo-data.json", import.meta.url)).then(d => d.json());
-export const fooCsvData = await fetch(new URL("../../_file/foo/foo-data.csv", import.meta.url)).then(d => d.text());
+import {FileAttachment} from "../../_observablehq/stdlib.js";
+export const fooJsonData = await FileAttachment("../../foo/foo-data.json", import.meta.url).json();
+export const fooCsvData = await FileAttachment("../../foo/foo-data.csv", import.meta.url).text();
