@@ -340,17 +340,17 @@
     isoformat "^0.2.0"
 
 "@observablehq/runtime@^5.9.4":
-  version "5.9.5"
-  resolved "https://registry.yarnpkg.com/@observablehq/runtime/-/runtime-5.9.5.tgz#96032d2e0fb8d3c0cb35fbc84229e21b710e70d8"
-  integrity sha512-cVjqjhwiDBsX9TokNCsg/+H+74JvneX58ExF8mUAtNVkBN7+eaiqYP450xaObruSwEbdm3+IuJe/gTrcET98dg==
+  version "5.9.7"
+  resolved "https://registry.yarnpkg.com/@observablehq/runtime/-/runtime-5.9.7.tgz#b2434434c4d963a841a75c453f8b568e97f61b34"
+  integrity sha512-HJ6XSqUe0ZZJPmG32vNN4eaEmxFpUUYMjA/RomIe1+pK9bNMz59TqL3RLYwBGJW2NWFWhTdA8O+v6Ckd+58+kw==
   dependencies:
     "@observablehq/inspector" "^5.0.0"
     "@observablehq/stdlib" "^5.0.0"
 
 "@observablehq/stdlib@^5.0.0":
-  version "5.8.4"
-  resolved "https://registry.yarnpkg.com/@observablehq/stdlib/-/stdlib-5.8.4.tgz#31db8c79559cb707347656f87975a030d6dbc687"
-  integrity sha512-AcYclKQPLv9JJTinZ9kbEYYMGM+hGf2qpZ6nr41FjbZdF6+sxFdFNnW3l9reZ+xJ8iOpp0UHa4MvN08v5FtcRQ==
+  version "5.8.6"
+  resolved "https://registry.yarnpkg.com/@observablehq/stdlib/-/stdlib-5.8.6.tgz#225af7f986628accf162f7926f5b72b573dc8db2"
+  integrity sha512-kJZ2B0IVAatZM8IDILZITCRJJiuYlwJwI6Gc/Mmt+aIMSYLxSQMmnf52Kmh+IufPvWCgkN1IY/1+Z10kH/xIsA==
   dependencies:
     d3-array "^3.2.0"
     d3-dsv "^3.0.1"
