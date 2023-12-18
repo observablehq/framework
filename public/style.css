@@ -947,6 +947,8 @@ p .plot-d6a7b5 {
 }
 
 #observablehq-skip-main:focus {
+  position: absolute;
+  top: -25px;
   left: initial;
   right: 6px;
 }
