@@ -3,7 +3,6 @@ import {registerDatabase, registerFile} from "observablehq:stdlib";
 import {DatabaseClient, FileAttachment, Generators, Mutable} from "observablehq:stdlib";
 import {inspect, inspectError} from "./inspect.js";
 import * as recommendedLibraries from "./stdlib/recommendedLibraries.js";
-import * as sampleDatasets from "./stdlib/sampleDatasets.js";
 
 const library = {
   now: () => Generators.now(),
@@ -12,8 +11,7 @@ const library = {
   FileAttachment: () => FileAttachment,
   Generators: () => Generators,
   Mutable: () => Mutable,
-  ...recommendedLibraries,
-  ...sampleDatasets
+  ...recommendedLibraries
 };
 
 const runtime = new Runtime(library);
