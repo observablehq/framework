@@ -215,6 +215,10 @@ export class PreviewServer {
   get server(): PreviewServer["_server"] {
     return this._server;
   }
+
+  get socketServer(): PreviewServer["_socketServer"] {
+    return this._socketServer;
+  }
 }
 
 // Like send, but for in-memory dynamic content.
@@ -249,7 +253,7 @@ async function getStylesheets({cells}: ParseResult): Promise<Set<string>> {
   return getImplicitStylesheets(getImplicitSpecifiers(inputs));
 }
 
-function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: string, verbose: boolean}) {
+function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: string; verbose: boolean}) {
   const {root, verbose} = options;
   let path: string | null = null;
   let current: ReadMarkdownResult | null = null;

@@ -26,12 +26,16 @@ const testServerUrl = `http://${testHostName}:${testPort}`;
 
 describe("preview server", function () {
   let testServer: PreviewServer["_server"];
+  let socketServer: PreviewServer["_socketServer"];
 
   before(async () => {
-    testServer = (await preview(testServerOptions)).server;
+    const previewServer = await preview(testServerOptions);
+    testServer = previewServer.server;
+    socketServer = previewServer.socketServer;
   });
 
   after(() => {
+    socketServer?.close();
     testServer?.close();
   });
 
@@ -111,6 +115,7 @@ describe("preview server", function () {
     before(async () => {
       const pageContent = await readFile(`${testHostRoot}/index.md`, "utf-8");
       const parsedContent = await parseMarkdown(pageContent, "test/preview/dashboard", "index.md");
+
       testWebSocket = new WebSocket(Object.assign(new URL("/_observablehq", testServerUrl), {protocol: "ws"}));
 
       testWebSocket.onopen = () => {
@@ -125,16 +130,12 @@ describe("preview server", function () {
       testWebSocket.onerror = (error) => {
         console.error("websocket error", error);
       };
-
-      testWebSocket.onclose = () => {
-        console.info("websocket close");
-      };
     });
 
     after(async () => {
       messages = [];
+      await setTimeout(1000);
       testWebSocket?.close();
-      testServer?.close();
     });
 
     function updateFile(path: string, content: string) {
