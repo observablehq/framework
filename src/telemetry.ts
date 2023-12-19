@@ -4,7 +4,7 @@ import {join} from "node:path";
 import os from "os";
 
 type TelemetryIds = {
-  deviceId: string;
+  deviceId: ReturnType<typeof randomUUID>;
   projectId: string;
   sessionId: ReturnType<typeof randomUUID>;
 };
@@ -24,15 +24,14 @@ type TelemetryData = {
 };
 
 export class Telemetry {
-  private debug: boolean;
+  private debug = !!process.env.OBSERVABLE_TELEMETRY_DEBUG;
   private root: string;
   private readonly pending = new Set<Promise<any>>();
-  private _config: Record<string, string> | undefined;
+  private _config: Record<string, ReturnType<typeof randomUUID>> | undefined;
   private _ids: Promise<TelemetryIds> | undefined;
   private _environment: Promise<TelemetryEnvironment> | undefined;
 
   constructor(root: string) {
-    this.debug = !!process.env.OBSERVABLE_TELEMETRY_DEBUG;
     this.root = root;
   }
 
@@ -54,7 +53,7 @@ export class Telemetry {
     return Promise.all(this.pending);
   }
 
-  private async getPersistentId(name: string): Promise<string> {
+  private async getPersistentId(name: string): Promise<ReturnType<typeof randomUUID>> {
     const file = join(process.cwd(), this.root, ".observablehq", "telemetry.json");
     if (!this._config) {
       try {
