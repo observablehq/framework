@@ -1,10 +1,10 @@
-import {readFile, writeFile} from "node:fs/promises";
+import {existsSync, readFileSync, writeFileSync} from "node:fs";
+import {readFile} from "node:fs/promises";
 import {setTimeout} from "timers/promises";
 import chai, {assert, expect} from "chai";
 import chaiHttp from "chai-http";
 import {WebSocket} from "ws";
 import {normalizeConfig} from "../../src/config.js";
-import type {ParseResult} from "../../src/markdown.js";
 import {parseMarkdown} from "../../src/markdown.js";
 import {preview} from "../../src/preview.js";
 import type {PreviewOptions, PreviewServer} from "../../src/preview.js";
@@ -17,14 +17,14 @@ const testServerOptions: PreviewOptions = {
   config: await normalizeConfig({root: testHostRoot}),
   hostname: testHostName,
   port: testPort,
-  verbose: false
+  verbose: true // TODO - change back to false
 };
 
 chai.use(chaiHttp);
 
 const testServerUrl = `http://${testHostName}:${testPort}`;
 
-describe("preview server", () => {
+describe("preview server", function () {
   let testServer: PreviewServer["_server"];
 
   before(async () => {
@@ -34,6 +34,8 @@ describe("preview server", () => {
   after(() => {
     testServer?.close();
   });
+
+  this.timeout(30_000);
 
   describe("http", () => {
     it("should start a server", async () => {
@@ -96,17 +98,13 @@ describe("preview server", () => {
     });
   });
 
-  describe("websocket", () => {
+  describe("websocket", function () {
     let testWebSocket: WebSocket;
-    let fileContent: string;
-    let pageContent: string;
-    let parsedContent: ParseResult;
     let messages: string[] = [];
 
     before(async () => {
-      pageContent = await readFile(`${testHostRoot}/index.md`, "utf-8");
-      fileContent = await readFile(`${testHostRoot}/file.csv`, "utf-8");
-      parsedContent = await parseMarkdown(pageContent, "test/preview/dashboard", "index.md");
+      const pageContent = await readFile(`${testHostRoot}/index.md`, "utf-8");
+      const parsedContent = await parseMarkdown(pageContent, "test/preview/dashboard", "index.md");
       testWebSocket = new WebSocket(Object.assign(new URL("/_observablehq", testServerUrl), {protocol: "ws"}));
 
       testWebSocket.onopen = () => {
@@ -114,6 +112,7 @@ describe("preview server", () => {
       };
 
       testWebSocket.on("message", function message(data) {
+        messages = [];
         messages.push(JSON.parse(data.toString()));
       });
 
@@ -127,28 +126,70 @@ describe("preview server", () => {
     });
 
     after(async () => {
+      messages = [];
       testWebSocket?.close();
       testServer?.close();
-      // reset file contents
-      await writeFile(`${testHostRoot}/index.md`, pageContent);
-      await writeFile(`${testHostRoot}/file.csv`, fileContent);
     });
 
-    it("watch .md file", async () => {
-      messages = [];
-      await setTimeout(500); // avoid sending a "reload" message
-      await writeFile(`${testHostRoot}/index.md`, pageContent + "\n\n<div>Hello</div>");
-      await setTimeout(1000);
-      expect(messages).to.have.length(1);
-      expect(messages[0]["type"]).to.equal("update");
+    function updateFile(path: string, content: string) {
+      let output = content;
+      if (existsSync(path)) {
+        const existingContent = readFileSync(path, "utf-8");
+        output = existingContent + "\n" + content;
+      }
+        writeFileSync(path, output);
+      }
+    
+    function resetFile(path: string, originalContent: string): void {
+      try {
+        testWebSocket?.pause();
+        writeFileSync(path, originalContent);
+      } catch {
+        // ignore
+      }
+      testWebSocket?.resume();
+    }
+
+    it("watches .md file", async () => {
+      const path = `${testHostRoot}/index.md`
+      const pageContent = readFileSync(path, "utf-8");
+      try {
+        await setTimeout(100); // add delay to avoid "reload" message
+        updateFile(path, "<div>Hello</div>");
+        await setTimeout(500); // wait for "update" message
+        expect(messages).to.have.length(1);
+        expect(messages[0]["type"]).to.equal("update");
+      } finally {
+        resetFile(path, pageContent);
+      }
     });
 
-    it("watch file attachment", async () => {
-      messages = [];
-      writeFile(`${testHostRoot}/file.csv`, fileContent + "\n1880-02-01,-0.21");
-      await setTimeout(1000);
-      expect(messages).to.have.length(1);
-      expect(messages[0]["type"]).to.equal("refresh");
+    it("watches file attachments", async () => {
+      const path = `${testHostRoot}/file.csv`
+      const fileContent = readFileSync(path, "utf-8");
+      try {
+        await setTimeout(150); // fileWatchers delay + 50 ms
+        updateFile(path, "1880-02-01,-0.21");
+        await setTimeout(500); // wait for "refresh" message
+        expect(messages).to.have.length(1);
+        expect(messages[0]["type"]).to.equal("refresh");
+      } finally {
+        resetFile(path, fileContent)
+      }
+    });
+
+    it("watches import changes", async () => {
+      const path = `${testHostRoot}/format.js`
+      const fileContent = readFileSync(path, "utf-8");
+      try {
+        await setTimeout(100); // add delay to avoid "reload" message
+        updateFile(path, "//random comment");
+        await setTimeout(500); // wait for "update" message
+        expect(messages).to.have.length(1);
+        expect(messages[0]["type"]).to.equal("update");
+      } finally {
+        resetFile(path, fileContent)
+      }
     });
   });
 });

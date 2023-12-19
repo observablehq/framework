@@ -206,7 +206,7 @@ export class PreviewServer {
 
   _handleConnection = async (socket: WebSocket, req: IncomingMessage) => {
     if (req.url === "/_observablehq") {
-      handleWatch(socket, req, {root: this._config.root});
+      handleWatch(socket, req, {root: this._config.root, verbose: this._verbose});
     } else {
       socket.close();
     }
@@ -249,14 +249,14 @@ async function getStylesheets({cells}: ParseResult): Promise<Set<string>> {
   return getImplicitStylesheets(getImplicitSpecifiers(inputs));
 }
 
-function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: string}) {
-  const {root} = options;
+function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: string, verbose: boolean}) {
+  const {root, verbose} = options;
   let path: string | null = null;
   let current: ReadMarkdownResult | null = null;
   let stylesheets: Set<string> | null = null;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
-  console.log(faint("socket open"), req.url);
+  if (verbose) console.log(faint("socket open"), req.url);
 
   function refreshAttachment(name: string) {
     const {cells} = current!.parse;
@@ -279,7 +279,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: st
           markdownWatcher = watch(join(root, path), watcher);
         } catch (error) {
           if (!isEnoent(error)) throw error;
-          console.error(`file no longer exists: ${path}`);
+          if (verbose) console.error(`file no longer exists: ${path}`);
           socket.terminate();
           return;
         }
@@ -319,7 +319,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: st
   socket.on("message", async (data) => {
     try {
       const message = JSON.parse(String(data));
-      console.log(faint("↑"), message);
+      if (verbose) console.log(faint("↑"), message);
       switch (message.type) {
         case "hello": {
           await hello(message);
@@ -327,7 +327,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: st
         }
       }
     } catch (error) {
-      console.error("Protocol error", error);
+      if (verbose) console.error("Protocol error", error);
       socket.terminate();
     }
   });
@@ -349,7 +349,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: st
   });
 
   function send(message) {
-    console.log(faint("↓"), message);
+    if (verbose) console.log(faint("↓"), message);
     socket.send(JSON.stringify(message));
   }
 }
