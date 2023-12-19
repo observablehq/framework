@@ -17,7 +17,7 @@ const testServerOptions: PreviewOptions = {
   config: await normalizeConfig({root: testHostRoot}),
   hostname: testHostName,
   port: testPort,
-  verbose: true // TODO - change back to false
+  verbose: false
 };
 
 chai.use(chaiHttp);
@@ -79,6 +79,12 @@ describe("preview server", function () {
       expect(res.text).to.have.string("function formatTitle(title)");
     });
 
+    it("serves a dataloader", async () => {
+      const res = await chai.request(testServerUrl).get("/_file/file.json");
+      expect(res).to.have.status(200);
+      expect(res.text).to.have.string('{"a":1,"b":2}');
+    });
+
     it("handles missing imports", async () => {
       const res = await chai.request(testServerUrl).get("/_import/idontexist.js");
       expect(res).to.have.status(404);
@@ -137,9 +143,9 @@ describe("preview server", function () {
         const existingContent = readFileSync(path, "utf-8");
         output = existingContent + "\n" + content;
       }
-        writeFileSync(path, output);
-      }
-    
+      writeFileSync(path, output);
+    }
+
     function resetFile(path: string, originalContent: string): void {
       try {
         testWebSocket?.pause();
@@ -151,7 +157,7 @@ describe("preview server", function () {
     }
 
     it("watches .md file", async () => {
-      const path = `${testHostRoot}/index.md`
+      const path = `${testHostRoot}/index.md`;
       const pageContent = readFileSync(path, "utf-8");
       try {
         await setTimeout(100); // add delay to avoid "reload" message
@@ -165,7 +171,7 @@ describe("preview server", function () {
     });
 
     it("watches file attachments", async () => {
-      const path = `${testHostRoot}/file.csv`
+      const path = `${testHostRoot}/file.csv`;
       const fileContent = readFileSync(path, "utf-8");
       try {
         await setTimeout(150); // fileWatchers delay + 50 ms
@@ -174,12 +180,12 @@ describe("preview server", function () {
         expect(messages).to.have.length(1);
         expect(messages[0]["type"]).to.equal("refresh");
       } finally {
-        resetFile(path, fileContent)
+        resetFile(path, fileContent);
       }
     });
 
     it("watches import changes", async () => {
-      const path = `${testHostRoot}/format.js`
+      const path = `${testHostRoot}/format.js`;
       const fileContent = readFileSync(path, "utf-8");
       try {
         await setTimeout(100); // add delay to avoid "reload" message
@@ -188,7 +194,7 @@ describe("preview server", function () {
         expect(messages).to.have.length(1);
         expect(messages[0]["type"]).to.equal("update");
       } finally {
-        resetFile(path, fileContent)
+        resetFile(path, fileContent);
       }
     });
   });
