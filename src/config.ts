@@ -3,6 +3,7 @@ import {basename, dirname, extname, join} from "node:path";
 import {visitFiles} from "./files.js";
 import {parseMarkdown} from "./markdown.js";
 import {resolvePath} from "./url.js";
+import {Telemetry} from "./telemetry.js";
 
 export interface Page {
   name: string;
@@ -34,6 +35,7 @@ export interface Config {
   toc: TableOfContents;
   style: null | Style; // defaults to {theme: ["auto"]}
   deploy: null | {workspace: string; project: string};
+  telemetry: Telemetry;
 }
 
 export async function readConfig(configPath?: string, root?: string): Promise<Config> {
@@ -82,7 +84,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   footer = String(footer);
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace), project: String(deploy.project)} : null;
-  return {root, output, title, pages, pager, footer, toc, style, deploy};
+  return {root, output, title, pages, pager, footer, toc, style, deploy, telemetry: new Telemetry(root)};
 }
 
 function normalizeTheme(spec: any): string[] {

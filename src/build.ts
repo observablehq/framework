@@ -60,7 +60,8 @@ export async function build(
   {config, addPublic = true, clientEntry = "./src/client/index.js"}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output)
 ): Promise<void> {
-  const {root} = config;
+  const {root, telemetry} = config;
+  telemetry.record({event: "build", step: "start"});
 
   // Make sure all files are readable before starting to write output files.
   let pageCount = 0;
@@ -162,6 +163,7 @@ export async function build(
       await effects.copyFile(sourcePath, outputPath);
     }
   }
+  telemetry.record({event: "build", step: "finish"});
 }
 
 export class FileBuildEffects implements BuildEffects {

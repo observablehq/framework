@@ -53,6 +53,7 @@ export class PreviewServer {
   }
 
   static async start({verbose = true, hostname, port, ...options}: PreviewOptions) {
+    options.config.telemetry.record({event: "preview", step: "start"});
     const server = createServer();
     if (port === undefined) {
       for (port = 3000; true; ++port) {
