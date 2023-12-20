@@ -63,7 +63,7 @@ describe("preview server", function () {
     it("serves Observable runtime.js", async () => {
       const res = await chai.request(testServerUrl).get("/_observablehq/runtime.js");
       expect(res).to.have.status(200);
-      expect(res.body.toString()).to.have.string("@observablehq/runtime v5.9.5 Copyright 2023 Observable, Inc.");
+      expect(res.body.toString()).to.have.string("@observablehq/runtime v5.9.7 Copyright 2023 Observable, Inc.");
     });
 
     it("serves Observable stdlib.js", async () => {
