@@ -4,10 +4,11 @@ import {readFile, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import os from "os";
 
+type uuid = ReturnType<typeof randomUUID>;
 type TelemetryIds = {
-  device: ReturnType<typeof randomUUID>;
+  device: uuid;
   project: string;
-  session: ReturnType<typeof randomUUID>;
+  session: uuid;
 };
 type TelemetryEnvironment = {
   version: string;
@@ -28,7 +29,7 @@ export class Telemetry {
   private disabled = !!process.env.OBSERVABLE_TELEMETRY_DISABLE;
   private debug = !!process.env.OBSERVABLE_TELEMETRY_DEBUG;
   private readonly pending = new Set<Promise<any>>();
-  private _config: Record<string, ReturnType<typeof randomUUID>> | undefined;
+  private _config: Record<string, uuid> | undefined;
   private _ids: Promise<TelemetryIds> | undefined;
   private _environment: Promise<TelemetryEnvironment> | undefined;
 
@@ -51,7 +52,7 @@ export class Telemetry {
     return Promise.all(this.pending);
   }
 
-  private async getPersistentId(name: string): Promise<ReturnType<typeof randomUUID>> {
+  private async getPersistentId(name: string): Promise<uuid> {
     const file = join(os.homedir(), ".observablehq");
     if (!this._config) {
       try {
@@ -89,21 +90,23 @@ export class Telemetry {
   }
 
   private get environment() {
-    return (this._environment ??= import("../package.json").then(({version}: any) => {
-      const cpus = os.cpus() || [];
-      return {
-        version,
-        systemPlatform: os.platform(),
-        systemRelease: os.release(),
-        systemArchitecture: os.arch(),
-        cpuCount: cpus.length,
-        cpuModel: cpus.length ? cpus[0].model : null,
-        cpuSpeed: cpus.length ? cpus[0].speed : null,
-        memoryInMb: Math.trunc(os.totalmem() / Math.pow(1024, 2))
-        // todo: ci
-        // todo: docker
-      };
-    }));
+    return (this._environment ??= Promise.all([import("../package.json"), import("ci-info"), import("is-docker")]).then(
+      ([{default: pkg}, ci, {default: isDocker}]) => {
+        const cpus = os.cpus() || [];
+        return {
+          version: pkg.version,
+          systemPlatform: os.platform(),
+          systemRelease: os.release(),
+          systemArchitecture: os.arch(),
+          cpuCount: cpus.length,
+          cpuModel: cpus.length ? cpus[0].model : null,
+          cpuSpeed: cpus.length ? cpus[0].speed : null,
+          memoryInMb: Math.trunc(os.totalmem() / Math.pow(1024, 2)),
+          ci: ci.name || ci.isCI,
+          docker: isDocker()
+        };
+      }
+    ));
   }
 
   private async send(data: {
