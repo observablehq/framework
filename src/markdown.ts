@@ -119,7 +119,7 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
       count++;
     }
     // Tokens should always be rendered as a single block element.
-    if (count > 1) result = "<div>" + result + "</div>";
+    if (count > 1) result = `<div>${result}</div>`;
     return result;
   };
 }
