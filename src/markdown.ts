@@ -110,13 +110,17 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
     let count = 0;
     const source = isFalse(attributes.run) ? undefined : getLiveSource(token.content, tag);
     if (source != null) {
-      result += `<div id="cell-${transform(token, context)}" class="observablehq observablehq--block"></div>\n`;
-      count++;
+      if (tag === "js" && (attributes.server === "" || attributes.server?.toLowerCase() === "true")) {
+        result += `<div>${eval(source)}</div>`;
+      } else {
+        result += `<div id="cell-${transform(token, context)}" class="observablehq observablehq--block"></div>\n`;
+      }
+      ++count;
     }
     // TODO we could hide non-live code here with echo=false?
     if (source == null || (attributes.echo != null && !isFalse(attributes.echo))) {
       result += baseRenderer(tokens, idx, options, context, self);
-      count++;
+      ++count;
     }
     // Tokens should always be rendered as a single block element.
     if (count > 1) result = `<div>${result}</div>`;
