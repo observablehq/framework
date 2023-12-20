@@ -119,6 +119,10 @@ The current gain is ${gain}!
 
 If `value` is a DOM node, adds it to the DOM. Otherwise, converts the given `value` to a suitable DOM node and displays that instead. Returns the given `value`.
 
+## display.root
+
+The DOM element into which [`display`](#displayvalue) will append.
+
 ## view(*element*)
 
 The `view` function displays the given input *element* and then returns its corresponding [generator](./generators) via [`Generators.input`](../lib/generators#input(element)). Use this to display an input element while also exposing the input’s value as a [reactive variable](./reactivity).

@@ -38,9 +38,10 @@ export function define(cell) {
       }
     : (v) => {
         reset?.();
-        root.append(isNode(v) ? v : inspect(v));
+        root.append(isNode(v) && root !== v ? v : inspect(v));
         return v;
       };
+  display.root = root;
   const v = main.variable(
     {
       _node: root, // for visibility promise
