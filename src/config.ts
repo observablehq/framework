@@ -84,7 +84,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   footer = String(footer);
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace), project: String(deploy.project)} : null;
-  return {root, output, title, pages, pager, footer, toc, style, deploy, telemetry: new Telemetry(root)};
+  return {root, output, title, pages, pager, footer, toc, style, deploy, telemetry: new Telemetry()};
 }
 
 function normalizeTheme(spec: any): string[] {

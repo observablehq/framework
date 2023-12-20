@@ -1,12 +1,13 @@
-import {randomUUID} from "node:crypto";
+import {exec} from "node:child_process";
+import {createHash, randomUUID} from "node:crypto";
 import {readFile, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import os from "os";
 
 type TelemetryIds = {
-  deviceId: ReturnType<typeof randomUUID>;
-  projectId: string;
-  sessionId: ReturnType<typeof randomUUID>;
+  device: ReturnType<typeof randomUUID>;
+  project: string;
+  session: ReturnType<typeof randomUUID>;
 };
 type TelemetryEnvironment = {
   version: string;
@@ -24,18 +25,15 @@ type TelemetryData = {
 };
 
 export class Telemetry {
+  private disabled = !!process.env.OBSERVABLE_TELEMETRY_DISABLE;
   private debug = !!process.env.OBSERVABLE_TELEMETRY_DEBUG;
-  private root: string;
   private readonly pending = new Set<Promise<any>>();
   private _config: Record<string, ReturnType<typeof randomUUID>> | undefined;
   private _ids: Promise<TelemetryIds> | undefined;
   private _environment: Promise<TelemetryEnvironment> | undefined;
 
-  constructor(root: string) {
-    this.root = root;
-  }
-
   async record(data: TelemetryData) {
+    if (this.disabled) return;
     const task = this.send({
       ids: await this.ids,
       environment: await this.environment,
@@ -54,7 +52,7 @@ export class Telemetry {
   }
 
   private async getPersistentId(name: string): Promise<ReturnType<typeof randomUUID>> {
-    const file = join(process.cwd(), this.root, ".observablehq", "telemetry.json");
+    const file = join(os.homedir(), ".observablehq");
     if (!this._config) {
       try {
         this._config = JSON.parse(await readFile(file, "utf8"));
@@ -65,17 +63,29 @@ export class Telemetry {
     }
     if (!this._config[name]) {
       this._config[name] = randomUUID();
-      await writeFile(file, JSON.stringify(this._config));
+      await writeFile(file, JSON.stringify(this._config, null, 2));
     }
     return this._config[name];
   }
 
+  private async getProjectId() {
+    const remote: string | null = await new Promise((resolve) => {
+      exec("git config --local --get remote.origin.url", (error, stdout) => resolve(error ? null : stdout.trim()));
+    });
+    const hash = createHash("sha256");
+    hash.update(await this.getPersistentId("cli_telemetry_salt"));
+    hash.update(remote || process.env.REPOSITORY_URL || process.cwd());
+    return hash.digest("base64");
+  }
+
   private get ids() {
-    return (this._ids ??= this.getPersistentId("device").then((deviceId) => ({
-      deviceId,
-      projectId: randomUUID(), // todo: hash git url or cwd name + salt
-      sessionId: randomUUID()
-    })));
+    return (this._ids ??= Promise.all([this.getPersistentId("cli_telemetry_device"), this.getProjectId()]).then(
+      ([device, project]) => ({
+        device,
+        project,
+        session: randomUUID()
+      })
+    ));
   }
 
   private get environment() {
