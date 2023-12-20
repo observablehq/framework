@@ -17,7 +17,7 @@ import {resolvePath} from "./url.js";
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
 
 // TODO Remove library helpers (e.g., duckdb) when they are published to npm.
-function clientBundles(clientPath: string):[entry: string, name: string][] {
+function clientBundles(clientPath: string): [entry: string, name: string][] {
   return [
     [clientPath, "client.js"],
     ["./src/client/stdlib.js", "stdlib.js"],
@@ -34,7 +34,7 @@ function clientBundles(clientPath: string):[entry: string, name: string][] {
 
 export interface BuildOptions {
   config: Config;
-  clientEntry?: string
+  clientEntry?: string;
   addPublic?: boolean;
 }
 
