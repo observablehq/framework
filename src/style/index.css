@@ -1,0 +1,7 @@
+@import url("./theme-light.css");
+@import url("./theme-dark.css") (prefers-color-scheme: dark);
+@import url("./global.css");
+@import url("./layout.css");
+@import url("./inspector.css");
+@import url("./inputs.css");
+@import url("./plot.css");

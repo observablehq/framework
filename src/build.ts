@@ -1,16 +1,14 @@
 import {existsSync} from "node:fs";
 import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
-import {basename, dirname, join, relative} from "node:path";
-import {cwd} from "node:process";
-import {fileURLToPath} from "node:url";
+import {basename, dirname, join} from "node:path";
 import {type Config} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {isEnoent} from "./error.js";
-import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
+import {prepareOutput, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
 import {renderServerless} from "./render.js";
-import {getClientPath, rollupClient} from "./rollup.js";
+import {bundleStyles, getClientPath, rollupClient} from "./rollup.js";
 import {faint} from "./tty.js";
 import {resolvePath} from "./url.js";
 
@@ -91,13 +89,13 @@ export async function build(
       const code = await rollupClient(clientPath, {minify: true});
       await effects.writeFile(outputPath, code);
     }
-    // Copy over the public directory.
-    const publicRoot = relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), "..", "public"));
-    for await (const publicFile of visitFiles(publicRoot)) {
-      const sourcePath = join(publicRoot, publicFile);
-      const outputPath = join("_observablehq", publicFile);
-      effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-      await effects.copyFile(sourcePath, outputPath);
+    // Generate the style bundles.
+    for (const [entry, name] of [["./src/style/index.css", "style.css"]]) {
+      const clientPath = getClientPath(entry);
+      const outputPath = join("_observablehq", name);
+      effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
+      const code = await bundleStyles(clientPath);
+      await effects.writeFile(outputPath, code);
     }
   }
 

@@ -4,6 +4,7 @@ import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {type CallExpression} from "acorn";
 import {simple} from "acorn-walk";
+import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
@@ -11,6 +12,11 @@ import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
 import {resolveNpmImport} from "./javascript/imports.js";
 import {Sourcemap} from "./sourcemap.js";
 import {relativeUrl} from "./url.js";
+
+export async function bundleStyles(clientPath: string): Promise<string> {
+  const result = await build({bundle: true, entryPoints: [clientPath], write: false});
+  return result.outputFiles[0].text;
+}
 
 export async function rollupClient(clientPath: string, {minify = false} = {}): Promise<string> {
   const bundle = await rollup({

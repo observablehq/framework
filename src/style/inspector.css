@@ -1,0 +1,165 @@
+.observablehq--block:empty {
+  margin: 0;
+}
+
+.observablehq--block {
+  margin: 1rem 0;
+}
+
+.observablehq--block .observablehq,
+.observablehq--block .observablehq--inspect {
+  display: block;
+}
+
+.observablehq--collapsed,
+.observablehq--expanded.observablehq--inspect a {
+  cursor: pointer;
+}
+
+.observablehq--caret {
+  margin-right: 4px;
+  vertical-align: baseline;
+}
+
+.observablehq--field {
+  text-indent: -1rem;
+  margin-left: 1rem;
+}
+
+.observablehq--inspect {
+  font: var(--monospace-font);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.observablehq--inspect.observablehq--import {
+  white-space: normal;
+}
+
+.observablehq--inspect::-webkit-scrollbar {
+  display: none;
+}
+
+.observablehq--error .observablehq--inspect {
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+.observablehq--string-expand {
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-size: 80%;
+  background: var(--theme-background-alt);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.observablehq--keyword,
+.hljs-doctag,
+.hljs-keyword,
+.hljs-meta .hljs-keyword,
+.hljs-template-tag,
+.hljs-template-variable,
+.hljs-type,
+.hljs-variable.language_ {
+  color: var(--syntax-keyword);
+}
+
+.observablehq--symbol,
+.hljs-title,
+.hljs-title.class_,
+.hljs-title.class_.inherited__,
+.hljs-title.function_ {
+  color: var(--syntax-entity);
+}
+
+.observablehq--index,
+.observablehq--key,
+.hljs-attr,
+.hljs-attribute,
+.hljs-meta,
+.hljs-operator,
+.hljs-variable,
+.hljs-selector-attr,
+.hljs-selector-class,
+.hljs-selector-id {
+  color: var(--syntax-constant);
+}
+
+.observablehq--regexp,
+.observablehq--string,
+.hljs-regexp,
+.hljs-string,
+.hljs-meta .hljs-string {
+  color: var(--syntax-string);
+}
+
+.observablehq--null,
+.observablehq--undefined,
+.hljs-built_in,
+.hljs-literal,
+.hljs-symbol {
+  color: var(--syntax-variable);
+}
+
+.observablehq--prototype-key,
+.observablehq--empty,
+.hljs-comment,
+.hljs-formula {
+  color: var(--syntax-comment);
+}
+
+.observablehq--bigint,
+.observablehq--boolean,
+.observablehq--date,
+.observablehq--forbidden,
+.observablehq--number,
+.hljs-name,
+.hljs-number,
+.hljs-quote,
+.hljs-selector-tag,
+.hljs-selector-pseudo {
+  color: var(--syntax-entity-tag);
+}
+
+.hljs-subst {
+  color: var(--syntax-storage-modifier-import);
+}
+
+.hljs-section {
+  color: var(--syntax-markup-heading);
+  font-weight: bold;
+}
+
+.hljs-bullet {
+  color: var(--syntax-markup-list);
+}
+
+.hljs-emphasis {
+  color: var(--syntax-markup-italic);
+  font-style: italic;
+}
+
+.hljs-strong {
+  color: var(--syntax-markup-bold);
+  font-weight: bold;
+}
+
+.hljs-addition {
+  color: var(--syntax-markup-inserted);
+  background-color: var(--syntax-markup-inserted-background);
+}
+
+.hljs-deletion {
+  color: var(--syntax-markup-deleted);
+  background-color: var(--syntax-markup-deleted-background);
+}
+
+.observablehq--empty {
+  font-style: oblique;
+}
+
+.observablehq--error {
+  color: var(--syntax-keyword);
+}
