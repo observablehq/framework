@@ -42,7 +42,6 @@ describe("normalizeConfig(spec, root)", () => {
   });
   it("populates default pages", async () => {
     assert.deepStrictEqual((await config({}, root)).pages, [
-      {name: "Index", path: "/index"},
       {name: "One", path: "/one"},
       {name: "H1: Section", path: "/toc-override"},
       {name: "H1: Section", path: "/toc"},
