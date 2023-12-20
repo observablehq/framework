@@ -46,7 +46,6 @@
   },
   "dependencies": {
     "@observablehq/runtime": "^5.9.4",
-    "@rollup/plugin-replace": "^5.0.5",
     "acorn": "^8.11.2",
     "acorn-walk": "^8.3.0",
     "esbuild": "^0.19.8",

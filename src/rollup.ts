@@ -8,7 +8,6 @@ import {simple} from "acorn-walk";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
-import replace from "@rollup/plugin-replace";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
 import {resolveNpmImport} from "./javascript/imports.js";
 import {getObservableUiHost} from "./observableApiClient.js";
@@ -21,9 +20,15 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
     external: [/^https:/],
     plugins: [
       importResolve(clientPath),
-      esbuild({target: "es2022", exclude: [], minify}), // don’t exclude node_modules
-      importMetaResolve(),
-      platformMetadata()
+      esbuild({
+        target: "es2022",
+        exclude: [], // don’t exclude node_modules
+        minify,
+        define: {
+          "process.env.OBSERVABLEHQ_ORIGIN": JSON.stringify(String(getObservableUiHost()).replace(/\/$/, ""))
+        }
+      }),
+      importMetaResolve()
     ]
   });
   try {
@@ -109,15 +114,6 @@ function importMetaResolve(): Plugin {
       return {code: String(output)};
     }
   };
-}
-
-function platformMetadata() {
-  return (replace as any)({
-    preventAssignment: true,
-    values: {
-      "process.env.OBSERVABLEHQ_ORIGIN": JSON.stringify(String(getObservableUiHost()).replace(/\/$/, ""))
-    }
-  });
 }
 
 export function getClientPath(entry: string): string {
