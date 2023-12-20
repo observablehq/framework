@@ -6,7 +6,7 @@ import equal from "fast-deep-equal";
 import matter from "gray-matter";
 import hljs from "highlight.js";
 import {parseHTML} from "linkedom";
-import MarkdownIt from "markdown-it";
+import MarkdownIt, {type Token} from "markdown-it";
 import {type RuleCore} from "markdown-it/lib/parser_core.js";
 import {type RuleInline} from "markdown-it/lib/parser_inline.js";
 import {type RenderRule, type default as Renderer} from "markdown-it/lib/renderer.js";
@@ -15,7 +15,7 @@ import {isEnoent} from "./error.js";
 import {fileReference, getLocalPath} from "./files.js";
 import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
-import type {FileReference, ImportReference, PendingTranspile, Transpile} from "./javascript.js";
+import type {FileReference, ImportReference, ParseOptions, PendingTranspile, Transpile} from "./javascript.js";
 import {transpileJavaScript} from "./javascript.js";
 import {transpileTag} from "./tag.js";
 import {resolvePath} from "./url.js";
@@ -101,6 +101,7 @@ function getLiveSource(content: string, tag: string): string | undefined {
 }
 
 function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: string): RenderRule {
+  const transform = makeJavaScriptTransformer(root, sourcePath);
   return (tokens, idx, options, context: ParseContext, self) => {
     const token = tokens[idx];
     const {tag, attributes} = parseInfo(token.info);
@@ -109,18 +110,7 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
     let count = 0;
     const source = isFalse(attributes.run) ? undefined : getLiveSource(token.content, tag);
     if (source != null) {
-      const id = uniqueCodeId(context, token.content);
-      const sourceLine = context.startLine + context.currentLine;
-      const transpile = transpileJavaScript(source, {
-        id,
-        root,
-        sourcePath,
-        sourceLine
-      });
-      extendPiece(context, {code: [transpile]});
-      if (transpile.files) context.files.push(...transpile.files);
-      if (transpile.imports) context.imports.push(...transpile.imports);
-      result += `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`;
+      result += `<div id="cell-${transform(token, context)}" class="observablehq observablehq--block"></div>\n`;
       count++;
     }
     // TODO we could hide non-live code here with echo=false?
@@ -263,21 +253,22 @@ const transformPlaceholderCore: RuleCore = (state) => {
   state.tokens = output;
 };
 
-function makePlaceholderRenderer(root: string, sourcePath: string): RenderRule {
-  return (tokens, idx, options, context: ParseContext) => {
-    const id = uniqueCodeId(context, tokens[idx].content);
-    const token = tokens[idx];
-    const transpile = transpileJavaScript(token.content, {
-      id,
-      root,
-      sourcePath,
-      inline: true,
-      sourceLine: context.startLine + context.currentLine
-    });
+function makeJavaScriptTransformer(root: string, sourcePath: string, options: Partial<ParseOptions> = {}) {
+  return (token: Token, context: ParseContext): string => {
+    const id = uniqueCodeId(context, token.content);
+    const sourceLine = context.startLine + context.currentLine;
+    const transpile = transpileJavaScript(token.content, {id, root, sourcePath, sourceLine, ...options});
     extendPiece(context, {code: [transpile]});
     if (transpile.files) context.files.push(...transpile.files);
     if (transpile.imports) context.imports.push(...transpile.imports);
-    return `<span id="cell-${id}"></span>`;
+    return id;
+  };
+}
+
+function makePlaceholderRenderer(root: string, sourcePath: string): RenderRule {
+  const transform = makeJavaScriptTransformer(root, sourcePath, {inline: true});
+  return (tokens, idx, options, context: ParseContext) => {
+    return `<span id="cell-${transform(tokens[idx], context)}"></span>`;
   };
 }
 
