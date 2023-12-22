@@ -5,7 +5,6 @@ const parent = window.parent; // capture to prevent reassignment
 
 function messaged(event) {
   if (!event.isTrusted || event.origin !== origin || event.source !== parent) return;
-  event.stopImmediatePropagation();
   const message = event.data;
   if (message.type === "hello") {
     postMessage({type: "hello"});
