@@ -234,16 +234,22 @@ export async function rewriteImports(
     );
   }
 
+  const specifiers: string[] = [];
+  const imports: string[] = [];
   for (const node of declarations) {
-    output.replaceLeft(
-      node.start,
-      node.end,
-      `const ${
-        node.specifiers.some(isNotNamespaceSpecifier)
-          ? `{${node.specifiers.filter(isNotNamespaceSpecifier).map(rewriteImportSpecifier).join(", ")}}`
-          : node.specifiers.find(isNamespaceSpecifier)?.local.name ?? "{}"
-      } = await import(${JSON.stringify(await resolver(sourcePath, getStringLiteralValue(node.source)))});`
+    output.delete(node.start, node.end + +(output.input[node.end] === "\n"));
+    specifiers.push(
+      node.specifiers.some(isNotNamespaceSpecifier)
+        ? `{${node.specifiers.filter(isNotNamespaceSpecifier).map(rewriteImportSpecifier).join(", ")}}`
+        : node.specifiers.find(isNamespaceSpecifier)?.local.name ?? "{}"
     );
+    imports.push(`import(${JSON.stringify(await resolver(sourcePath, getStringLiteralValue(node.source)))})`);
+  }
+
+  if (declarations.length > 1) {
+    output.insertLeft(0, `const [${specifiers.join(", ")}] = await Promise.all([${imports.join(", ")}]);\n`);
+  } else if (declarations.length === 1) {
+    output.insertLeft(0, `const ${specifiers[0]} = await ${imports[0]};\n`);
   }
 }
 
