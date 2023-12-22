@@ -1,3 +1,4 @@
+/* eslint-disable import/order */
 import {existsSync} from "node:fs";
 import {dirname, join, relative} from "node:path";
 import {cwd} from "node:process";
@@ -9,6 +10,7 @@ import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
 import {resolveNpmImport} from "./javascript/imports.js";
+import {getObservableUiHost} from "./observableApiClient.js";
 import {Sourcemap} from "./sourcemap.js";
 import {relativeUrl} from "./url.js";
 
@@ -18,7 +20,14 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
     external: [/^https:/],
     plugins: [
       importResolve(clientPath),
-      esbuild({target: "es2022", exclude: [], minify}), // don’t exclude node_modules
+      esbuild({
+        target: "es2022",
+        exclude: [], // don’t exclude node_modules
+        minify,
+        define: {
+          "process.env.OBSERVABLEHQ_ORIGIN": JSON.stringify(String(getObservableUiHost()).replace(/\/$/, ""))
+        }
+      }),
       importMetaResolve()
     ]
   });

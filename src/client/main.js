@@ -46,7 +46,7 @@ export function define(cell) {
       _node: root, // for visibility promise
       pending: () => (reset = clear),
       fulfilled: () => reset?.(),
-      rejected: (error) => (reset?.(), root.append(inspectError(error)))
+      rejected: (error) => (reset?.(), console.error(error), root.append(inspectError(error)))
     },
     {
       shadow: {
