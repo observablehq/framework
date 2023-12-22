@@ -2,6 +2,7 @@ import {readFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path";
 import {visitFiles} from "./files.js";
 import {parseMarkdown} from "./markdown.js";
+import {getClientPath} from "./rollup.js";
 
 export interface Page {
   name: string;
@@ -26,6 +27,7 @@ export interface Config {
   pages: (Page | Section)[]; // TODO rename to sidebar?
   pager: boolean; // defaults to true
   toc: TableOfContents;
+  style: string; // defaults to default stylesheet
 }
 
 export async function readConfig(configPath?: string, root?: string): Promise<Config> {
@@ -59,15 +61,16 @@ async function readPages(root: string): Promise<Page[]> {
 }
 
 export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Promise<Config> {
-  let {root = defaultRoot, output = "dist"} = spec;
+  let {root = defaultRoot, output = "dist", style = getClientPath("./src/style/index.css")} = spec;
   root = String(root);
   output = String(output);
+  style = String(style);
   let {title, pages = await readPages(root), pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
   pager = Boolean(pager);
   toc = normalizeToc(toc);
-  return {root, output, title, pages, pager, toc};
+  return {root, output, title, pages, pager, toc, style};
 }
 
 function normalizePageOrSection(spec: any): Page | Section {
