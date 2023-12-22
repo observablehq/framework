@@ -15,17 +15,19 @@ import {getObservableUiHost} from "./observableApiClient.js";
 import {Sourcemap} from "./sourcemap.js";
 import {relativeUrl} from "./url.js";
 
+const STYLE_MODULES = {
+  "observablehq:default.css": getClientPath("./src/style/default.css"),
+  "observablehq:theme-auto.css": getClientPath("./src/style/theme-auto.css"),
+  "observablehq:theme-dark.css": getClientPath("./src/style/theme-dark.css"),
+  "observablehq:theme-light.css": getClientPath("./src/style/theme-light.css")
+};
+
 export async function bundleStyles(clientPath: string): Promise<string> {
   const result = await build({
     bundle: true,
     entryPoints: [clientPath],
     write: false,
-    alias: {
-      "observablehq:default.css": getClientPath("./src/style/default.css"),
-      "observablehq:theme-auto.css": getClientPath("./src/style/theme-auto.css"),
-      "observablehq:theme-dark.css": getClientPath("./src/style/theme-dark.css"),
-      "observablehq:theme-light.css": getClientPath("./src/style/theme-light.css")
-    }
+    alias: STYLE_MODULES
   });
   return result.outputFiles[0].text;
 }
