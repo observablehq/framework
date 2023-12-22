@@ -321,9 +321,13 @@ async function resolveNpmVersion(specifier: string): Promise<string> {
 }
 
 export async function resolveNpmImport(specifier: string): Promise<string> {
-  const {name, path = "+esm"} = parseNpmSpecifier(specifier);
-  const version = await resolveNpmVersion(specifier);
-  return `https://cdn.jsdelivr.net/npm/${name}@${version}/${path}`;
+  const {name, range, path = "+esm"} = parseNpmSpecifier(specifier);
+  try {
+    const version = await resolveNpmVersion(specifier);
+    return `https://cdn.jsdelivr.net/npm/${name}@${version}/${path}`;
+  } catch {
+    return `https://cdn.jsdelivr.net/npm/${name}${range ? `@${range}` : ""}/${path}`;
+  }
 }
 
 const preloadCache = new Map<string, Promise<Set<string> | undefined>>();
@@ -339,7 +343,13 @@ async function fetchModulePreloads(href: string): Promise<Set<string> | undefine
   let promise = preloadCache.get(href);
   if (promise) return promise;
   promise = (async () => {
-    const {headers, body} = await cachedFetch(href);
+    let response: {headers: any; body: any};
+    try {
+      response = await cachedFetch(href);
+    } catch {
+      return;
+    }
+    const {headers, body} = response;
     const cache = headers.get("cache-control")?.split(/\s*,\s*/);
     if (!cache?.some((c) => c === "immutable") || !cache?.some((c) => c === "public")) return;
     const imports = new Set<string>();

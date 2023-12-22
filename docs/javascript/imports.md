@@ -23,7 +23,7 @@ export const foo = 42;
 Then you can say
 
 ```js echo
-import {foo} from "./foo.js"
+import {foo} from "./foo.js";
 ```
 
 and the imported value of `foo` is: ${foo}.
