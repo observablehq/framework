@@ -23,3 +23,13 @@ function langAndAttributes() {
   return 1;
 }
 ```
+
+```js echo=false run=false
+function langAndAttributes() {
+  return 1;
+}
+```
+
+```py echo=false
+1 + 2
+```
