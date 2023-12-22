@@ -14,9 +14,7 @@
     "bin/**/*.js",
     "bin/**/*.ts",
     "src/**/*.js",
-    "src/**/*.ts",
-    "public/**/*.css",
-    "public/**/*.js"
+    "src/**/*.ts"
   ],
   "bin": {
     "observable": "bin/observable.ts"

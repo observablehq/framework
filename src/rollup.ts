@@ -5,6 +5,7 @@ import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {type CallExpression} from "acorn";
 import {simple} from "acorn-walk";
+import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
@@ -13,6 +14,23 @@ import {resolveNpmImport} from "./javascript/imports.js";
 import {getObservableUiHost} from "./observableApiClient.js";
 import {Sourcemap} from "./sourcemap.js";
 import {relativeUrl} from "./url.js";
+
+const STYLE_MODULES = {
+  "observablehq:default.css": getClientPath("./src/style/default.css"),
+  "observablehq:theme-auto.css": getClientPath("./src/style/theme-auto.css"),
+  "observablehq:theme-dark.css": getClientPath("./src/style/theme-dark.css"),
+  "observablehq:theme-light.css": getClientPath("./src/style/theme-light.css")
+};
+
+export async function bundleStyles(clientPath: string): Promise<string> {
+  const result = await build({
+    bundle: true,
+    entryPoints: [clientPath],
+    write: false,
+    alias: STYLE_MODULES
+  });
+  return result.outputFiles[0].text;
+}
 
 export async function rollupClient(clientPath: string, {minify = false} = {}): Promise<string> {
   const bundle = await rollup({
