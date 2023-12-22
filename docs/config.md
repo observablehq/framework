@@ -27,6 +27,17 @@ The path to the source root; defaults to `docs`.
 
 The path to the output root; defaults to `dist`.
 
+## style
+
+The path to the project’s stylesheet. This is typically set to `docs/style.css` to override or augment the default stylesheet, or to apply a theme. For example, to use the *light* theme:
+
+```css
+@import url("observablehq:theme-light.css");
+@import url("observablehq:default.css");
+```
+
+The current built-in themes are: *auto* (default), *light*, and *dark*.
+
 ## title
 
 The project’s title. If specified, this text is used for the link to the home page in the sidebar, and to complement the titles of the webpages. For instance, a page titled “Sales” in a project titled “ACME, Inc.” will display “Sales | ACME, Inc.” in the browser’s title bar. If not specified, the home page link will appear as “Home” in the sidebar, and page titles will be shown as-is.

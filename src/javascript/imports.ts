@@ -234,16 +234,22 @@ export async function rewriteImports(
     );
   }
 
+  const specifiers: string[] = [];
+  const imports: string[] = [];
   for (const node of declarations) {
-    output.replaceLeft(
-      node.start,
-      node.end,
-      `const ${
-        node.specifiers.some(isNotNamespaceSpecifier)
-          ? `{${node.specifiers.filter(isNotNamespaceSpecifier).map(rewriteImportSpecifier).join(", ")}}`
-          : node.specifiers.find(isNamespaceSpecifier)?.local.name ?? "{}"
-      } = await import(${JSON.stringify(await resolver(sourcePath, getStringLiteralValue(node.source)))});`
+    output.delete(node.start, node.end + +(output.input[node.end] === "\n"));
+    specifiers.push(
+      node.specifiers.some(isNotNamespaceSpecifier)
+        ? `{${node.specifiers.filter(isNotNamespaceSpecifier).map(rewriteImportSpecifier).join(", ")}}`
+        : node.specifiers.find(isNamespaceSpecifier)?.local.name ?? "{}"
     );
+    imports.push(`import(${JSON.stringify(await resolver(sourcePath, getStringLiteralValue(node.source)))})`);
+  }
+
+  if (declarations.length > 1) {
+    output.insertLeft(0, `const [${specifiers.join(", ")}] = await Promise.all([${imports.join(", ")}]);\n`);
+  } else if (declarations.length === 1) {
+    output.insertLeft(0, `const ${specifiers[0]} = await ${imports[0]};\n`);
   }
 }
 
@@ -317,13 +323,19 @@ async function resolveNpmVersion(specifier: string): Promise<string> {
   const {name, range} = parseNpmSpecifier(specifier); // ignore path
   specifier = formatNpmSpecifier({name, range});
   const search = range ? `?specifier=${range}` : "";
-  return (await cachedFetch(`https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`)).body.version;
+  const {version} = (await cachedFetch(`https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`)).body;
+  if (!version) throw new Error(`unable to resolve version: ${specifier}`);
+  return version;
 }
 
 export async function resolveNpmImport(specifier: string): Promise<string> {
-  const {name, path = "+esm"} = parseNpmSpecifier(specifier);
-  const version = await resolveNpmVersion(specifier);
-  return `https://cdn.jsdelivr.net/npm/${name}@${version}/${path}`;
+  const {name, range, path = "+esm"} = parseNpmSpecifier(specifier);
+  try {
+    const version = await resolveNpmVersion(specifier);
+    return `https://cdn.jsdelivr.net/npm/${name}@${version}/${path}`;
+  } catch {
+    return `https://cdn.jsdelivr.net/npm/${name}${range ? `@${range}` : ""}/${path}`;
+  }
 }
 
 const preloadCache = new Map<string, Promise<Set<string> | undefined>>();
@@ -339,7 +351,13 @@ async function fetchModulePreloads(href: string): Promise<Set<string> | undefine
   let promise = preloadCache.get(href);
   if (promise) return promise;
   promise = (async () => {
-    const {headers, body} = await cachedFetch(href);
+    let response: {headers: any; body: any};
+    try {
+      response = await cachedFetch(href);
+    } catch {
+      return;
+    }
+    const {headers, body} = response;
     const cache = headers.get("cache-control")?.split(/\s*,\s*/);
     if (!cache?.some((c) => c === "immutable") || !cache?.some((c) => c === "public")) return;
     const imports = new Set<string>();
