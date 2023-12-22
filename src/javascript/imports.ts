@@ -10,9 +10,7 @@ import {type Feature, type ImportReference, type JavaScriptNode} from "../javasc
 import {parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
 import {relativeUrl, resolvePath} from "../url.js";
-import {getFeature, getStringLiteralValue, isStringLiteral} from "./features.js";
-import {defaultGlobals} from "./globals.js";
-import {findReferences} from "./references.js";
+import {getFeature, getFeatureReferenceMap, getStringLiteralValue, isStringLiteral} from "./features.js";
 
 type ImportNode = ImportDeclaration | ImportExpression;
 type ExportNode = ExportAllDeclaration | ExportNamedDeclaration;
@@ -130,58 +128,6 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFeat
   }
 
   return {imports, features};
-}
-
-/**
- * Returns a map from Identifier to the feature type, such as FileAttachment.
- * Note that this may be different than the identifier.name because of aliasing.
- */
-export function getFeatureReferenceMap(node: Node): Map<Identifier, Feature["type"]> {
-  const declarations = new Set<{name: string}>();
-  const alias = new Map<string, Feature["type"]>();
-  let globals: Set<string> | undefined;
-
-  // Find the declared local names of the imported symbol. Only named imports
-  // are supported. TODO Support namespace imports?
-  simple(node, {
-    ImportDeclaration(node) {
-      if (node.source.value === "npm:@observablehq/stdlib") {
-        for (const specifier of node.specifiers) {
-          if (
-            specifier.type === "ImportSpecifier" &&
-            specifier.imported.type === "Identifier" &&
-            (specifier.imported.name === "FileAttachment" ||
-              specifier.imported.name === "Secret" ||
-              specifier.imported.name === "DatabaseClient")
-          ) {
-            declarations.add(specifier.local);
-            alias.set(specifier.local.name, specifier.imported.name);
-          }
-        }
-      }
-    }
-  });
-
-  // If the import is masking a global, don’t treat it as a global (since we’ll
-  // ignore the import declaration below).
-  for (const name of alias.keys()) {
-    if (defaultGlobals.has(name)) {
-      if (globals === undefined) globals = new Set(defaultGlobals);
-      globals.delete(name);
-    }
-  }
-
-  function filterDeclaration(node: {name: string}): boolean {
-    return !declarations.has(node); // treat the imported declaration as unbound
-  }
-
-  const references = findReferences(node, {globals, filterDeclaration});
-  const map = new Map<Identifier, Feature["type"]>();
-  for (const r of references) {
-    const type = alias.get(r.name);
-    if (type) map.set(r, type);
-  }
-  return map;
 }
 
 export function findImportFeatures(node: Node, path: string, input: string): Feature[] {
