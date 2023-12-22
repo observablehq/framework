@@ -317,7 +317,9 @@ async function resolveNpmVersion(specifier: string): Promise<string> {
   const {name, range} = parseNpmSpecifier(specifier); // ignore path
   specifier = formatNpmSpecifier({name, range});
   const search = range ? `?specifier=${range}` : "";
-  return (await cachedFetch(`https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`)).body.version;
+  const {version} = (await cachedFetch(`https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`)).body;
+  if (!version) throw new Error(`unable to resolve version: ${specifier}`);
+  return version;
 }
 
 export async function resolveNpmImport(specifier: string): Promise<string> {
