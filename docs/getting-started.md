@@ -24,7 +24,8 @@ After answering a few questions, this will create a new project folder containin
 │  │  └─ dotmap.js
 │  ├─ data
 │  │  └─ quakes.csv.ts
-│  └─ index.md
+│  ├─ index.md
+│  └─ style.css
 ├─ .gitignore
 ├─ README.md
 ├─ observablehq.config.ts
@@ -57,6 +58,10 @@ You can put [data loaders](./loaders) anywhere in your source root, but we recom
 #### `docs/index.md`
 
 This is the home page for your site. You can have as many additional pages as you’d like, but you should always have a home page, too.
+
+#### `docs/style.css`
+
+This stylesheet controls the appearance of your project. You can choose from one of the built-in themes or design your own.
 
 #### `observablehq.config.ts`
 
