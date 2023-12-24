@@ -10,7 +10,7 @@ import {findExports, findImportDeclarations, findImports} from "./javascript/imp
 import {createImportResolver, rewriteImports} from "./javascript/imports.js";
 import {findReferences} from "./javascript/references.js";
 import {syntaxError} from "./javascript/syntaxError.js";
-import {Sourcemap, trim} from "./sourcemap.js";
+import {Sourcemap} from "./sourcemap.js";
 import {red} from "./tty.js";
 
 export interface DatabaseReference {
@@ -87,7 +87,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
       ...(files.length ? {files} : null),
       body: async () => {
         const output = new Sourcemap(input);
-        trim(output);
+        output.trim();
         if (implicitDisplay) {
           output.insertLeft(0, "display(await(\n");
           output.insertRight(input.length, "\n))");
