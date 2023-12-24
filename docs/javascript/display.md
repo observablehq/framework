@@ -66,7 +66,7 @@ JavaScript expression fenced code blocks are implicitly wrapped with a call to [
 1 + 2 // implicit display
 ```
 
-Implicit display only applies to expression code blocks, not program code blocks: the value won’t implicitly display if you add a semicolon. So, watch out for Prettier!
+Implicit display only applies to expression code blocks, not program code blocks: the value won’t implicitly display if you add a semicolon. (Watch out for [Prettier](https://prettier.io/)!)
 
 ```js echo
 1 + 2; // no implicit display

@@ -1,4 +1,5 @@
 :root {
+  --observablehq-blue: #3b5fc0;
   --monospace: Menlo, Consolas, monospace;
   --monospace-font: 14px/1.5 var(--monospace);
   --serif: "Source Serif Pro", "Iowan Old Style", "Apple Garamond", "Palatino Linotype", "Times New Roman",
@@ -123,7 +124,6 @@ hr {
 }
 
 pre {
-  position: relative;
   background-color: var(--theme-background-alt);
   border-radius: 4px;
   margin: 1rem -1rem;
@@ -131,21 +131,6 @@ pre {
   min-height: 1.5em;
   padding: 0.5rem 1rem;
   overflow-x: auto;
-}
-
-pre::after {
-  position: absolute;
-  right: 0;
-  top: 0;
-  font: 12px var(--sans-serif);
-  color: var(--theme-foreground-muted);
-  background: var(--theme-background-alt);
-  background: linear-gradient(to right, transparent, var(--theme-background-alt) 50%);
-  padding: 0.5rem 0.5rem 0.5rem 1rem;
-}
-
-pre[data-language]::after {
-  content: attr(data-language);
 }
 
 input:not([type]),
@@ -169,7 +154,7 @@ button {
 button,
 input,
 textarea {
-  accent-color: #3b5fc0;
+  accent-color: var(--observablehq-blue);
 }
 
 table {
