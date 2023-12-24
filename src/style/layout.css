@@ -400,6 +400,33 @@
   }
 }
 
+.observablehq-pre-container {
+  position: relative;
+  margin: 1rem -1rem;
+  max-width: calc(960px + 2rem);
+}
+
+.observablehq-pre-container::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 21px;
+  font: 12px var(--sans-serif);
+  color: var(--theme-foreground-muted);
+  background: linear-gradient(to right, transparent, var(--theme-background-alt) 40%);
+  padding: 0.5rem 0.5rem 0.5rem 1.5rem;
+}
+
+.observablehq-pre-container[data-language]::after {
+  content: attr(data-language);
+}
+
+.observablehq-pre-container pre {
+  padding-right: 4rem;
+  margin: 0;
+  max-width: none;
+}
+
 .observablehq-pre-copy {
   position: absolute;
   top: 0;
@@ -417,18 +444,18 @@
   align-items: center;
 }
 
-pre[data-copy] .observablehq-pre-copy,
-pre:hover .observablehq-pre-copy,
-pre .observablehq-pre-copy:focus {
+.observablehq-pre-container[data-copy] .observablehq-pre-copy,
+.observablehq-pre-container:hover .observablehq-pre-copy,
+.observablehq-pre-container .observablehq-pre-copy:focus {
   background: var(--theme-background-alt);
   color: var(--theme-foreground-faint);
 }
 
-pre .observablehq-pre-copy:hover {
+.observablehq-pre-container .observablehq-pre-copy:hover {
   color: var(--theme-foreground-muted);
 }
 
-pre .observablehq-pre-copy:active {
+.observablehq-pre-container .observablehq-pre-copy:active {
   color: var(--theme-foreground);
   background: var(--theme-foreground-faintest);
 }

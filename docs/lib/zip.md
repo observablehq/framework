@@ -34,7 +34,7 @@ For images and other media, you can simply use static HTML.
 
 <img src="muybridge/deer.jpeg" width="320" alt="A deer">
 
-```html
+```html run=false
 <img src="muybridge/deer.jpeg" width="320" alt="A deer">
 ```
 
@@ -60,7 +60,7 @@ To let the user download a ZIP archive, use the `download` attribute on a link.
   <button>download zip</button>
 </a>
 
-```html
+```html run=false
 <a href="muybridge.zip" download>
   <button>download zip</button>
 </a>
