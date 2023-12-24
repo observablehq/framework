@@ -442,16 +442,16 @@
 
 .observablehq-pre-container[data-copy] .observablehq-pre-copy,
 .observablehq-pre-container:hover .observablehq-pre-copy,
-.observablehq-pre-copy:focus {
+.observablehq-pre-container .observablehq-pre-copy:focus {
   background: var(--theme-background-alt);
   color: var(--theme-foreground-faint);
 }
 
-.observablehq-pre-copy:hover {
+.observablehq-pre-container .observablehq-pre-copy:hover {
   color: var(--theme-foreground-muted);
 }
 
-.observablehq-pre-copy:active {
+.observablehq-pre-container .observablehq-pre-copy:active {
   color: var(--theme-foreground);
   background: var(--theme-foreground-faintest);
 }
