@@ -1,7 +1,7 @@
 import type {Options, TemplateElement, TemplateLiteral} from "acorn";
 // @ts-expect-error TokContext is private
 import {Parser, TokContext, tokTypes as tt} from "acorn";
-import {Sourcemap} from "./sourcemap.js";
+import {Sourcemap, trim} from "./sourcemap.js";
 
 const CODE_DOLLAR = 36;
 const CODE_BACKSLASH = 92;
@@ -10,11 +10,12 @@ const CODE_BRACEL = 123;
 
 export function transpileTag(input: string, tag = "", raw = false): string {
   const template = TemplateParser.parse(input, {ecmaVersion: 13, sourceType: "module"}) as unknown as TemplateLiteral;
-  const source = new Sourcemap(input);
-  escapeTemplateElements(source, template, raw);
-  source.insertLeft(template.start, tag + "`");
-  source.insertRight(template.end, "`");
-  return String(source);
+  const output = new Sourcemap(input);
+  trim(output);
+  escapeTemplateElements(output, template, raw);
+  output.insertLeft(template.start, tag + "`");
+  output.insertRight(template.end, "`");
+  return String(output);
 }
 
 class TemplateParser extends (Parser as any) {

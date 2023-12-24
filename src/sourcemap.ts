@@ -114,3 +114,9 @@ function positionSubtract(b: Position, a: Position): Position {
 function positionAdd(p: Position, l: Position): Position {
   return l.line === 0 ? {line: p.line, column: p.column + l.column} : {line: p.line + l.line, column: l.column};
 }
+
+export function trim(output: Sourcemap): void {
+  const input = output.input;
+  if (input.startsWith("\n")) output.delete(0, 1); // TODO better trim
+  if (input.endsWith("\n")) output.delete(input.length - 1, input.length); // TODO better trim
+}
