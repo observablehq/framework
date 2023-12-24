@@ -402,13 +402,14 @@
 
 .observablehq-pre-container {
   position: relative;
-  margin: 1rem 0;
+  margin: 1rem -1rem;
+  max-width: calc(960px + 2rem);
 }
 
 .observablehq-pre-container::after {
   position: absolute;
   top: 0;
-  right: -1rem;
+  right: 0;
   height: 21px;
   font: 12px var(--sans-serif);
   color: var(--theme-foreground-muted);
@@ -422,13 +423,14 @@
 
 .observablehq-pre-container pre {
   padding-right: 4rem;
-  margin: 0 -1rem;
+  margin: 0;
+  max-width: none;
 }
 
 .observablehq-pre-copy {
   position: absolute;
   top: 0;
-  right: -1rem;
+  right: 0;
   background: none;
   color: transparent;
   border: none;
