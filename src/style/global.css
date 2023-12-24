@@ -131,6 +131,7 @@ pre {
   min-height: 1.5em;
   padding: 0.5rem 1rem;
   overflow-x: auto;
+  box-sizing: border-box;
 }
 
 input:not([type]),

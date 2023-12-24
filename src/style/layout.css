@@ -402,6 +402,7 @@
 
 .observablehq-pre-container {
   position: relative;
+  margin: 1rem 0;
 }
 
 .observablehq-pre-container::after {
@@ -421,6 +422,7 @@
 
 .observablehq-pre-container pre {
   padding-right: 4rem;
+  margin: 0 -1rem;
 }
 
 .observablehq-pre-copy {
