@@ -317,6 +317,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
+  #observablehq-sidebar:focus-within,
   #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar {
     box-shadow: 0 0 8px 4px rgba(0, 0, 0, 0.5);
   }
