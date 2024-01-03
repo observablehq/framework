@@ -41,18 +41,16 @@ switch (command) {
   }
   case "preview": {
     const {
-      values: {config, root, hostname, port}
+      values: {config, root, host, port}
     } = helpArgs(command, {
       options: {
         ...CONFIG_OPTION,
-        hostname: {
+        host: {
           type: "string",
-          short: "h",
           default: process.env.HOSTNAME ?? "127.0.0.1"
         },
         port: {
           type: "string",
-          short: "p",
           default: process.env.PORT
         }
       }
@@ -60,7 +58,7 @@ switch (command) {
     await import("../src/preview.js").then(async (preview) =>
       preview.preview({
         config: await readConfig(config, root),
-        hostname: hostname!,
+        hostname: host!,
         port: port === undefined ? undefined : +port
       })
     );
