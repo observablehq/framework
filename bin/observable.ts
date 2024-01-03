@@ -3,7 +3,7 @@
 import {type ParseArgsConfig, parseArgs} from "node:util";
 import {readConfig} from "../src/config.js";
 
-const command = process.argv.splice(2, 1)[0];
+const args = process.argv.slice(2);
 
 const CONFIG_OPTION = {
   root: {
@@ -15,9 +15,64 @@ const CONFIG_OPTION = {
   }
 } as const;
 
+// Convert --version or -v as first argument into version.
+if (args[0] === "--version" || args[0] === "-v") args[0] = "version";
+
+// Parse the initial options loosely.
+const {values, positionals, tokens} = parseArgs({
+  options: {
+    help: {
+      type: "boolean",
+      short: "h"
+    }
+  },
+  strict: false,
+  tokens: true,
+  args
+});
+
+let command: string | undefined;
+
+// Extract the command.
+if (positionals.length > 0) {
+  const t = tokens.find((t) => t.kind === "positional")!;
+  args.splice(t.index - 2, 1);
+  command = positionals[0];
+
+  // Convert help <command> into <command> --help.
+  if (command === "help" && positionals.length > 1) {
+    const p = tokens.find((p) => p.kind === "positional" && p !== t)!;
+    args.splice(p.index - 2, 1, "--help");
+    command = positionals[1];
+  }
+}
+
+// Convert --help or -h (with no command) into help.
+else if (values.help) {
+  const t = tokens.find((t) => t.kind === "option" && t.name === "help")!;
+  args.splice(t.index - 2, 1);
+  command = "help";
+}
+
 switch (command) {
-  case "-v":
-  case "--version": {
+  case undefined:
+  case "help": {
+    helpArgs(command, {allowPositionals: true});
+    console.log(
+      `usage: observable <command>
+  preview      start the preview server
+  build        generate a static site
+  login        sign-in to Observable
+  deploy       deploy a project to Observable
+  whoami       check authentication status
+  help         print usage information
+  version      print the version`
+    );
+    if (command === undefined) process.exit(1);
+    break;
+  }
+  case "version": {
+    helpArgs(command, {});
     await import("../package.json").then(({version}: any) => console.log(version));
     break;
   }
@@ -64,37 +119,42 @@ switch (command) {
     );
     break;
   }
-  case "login":
+  case "login": {
+    helpArgs(command, {});
     await import("../src/observableApiAuth.js").then((auth) => auth.login());
     break;
-  case "whoami":
+  }
+  case "whoami": {
+    helpArgs(command, {});
     await import("../src/observableApiAuth.js").then((auth) => auth.whoami());
     break;
-  default:
-    console.error("Usage: observable <command>");
-    console.error("   build\tgenerate a static site");
-    console.error("   deploy\tdeploy a project");
-    console.error("   preview\trun the live preview server");
-    console.error("   login\tmanage authentication with the Observable Cloud");
-    console.error("   whoami\tcheck authentication status");
-    console.error(" --version\tprint the version");
+  }
+  default: {
+    console.error(`observable: unknown command '${command}'. See 'observable help'.`);
     process.exit(1);
     break;
+  }
 }
 
 // A wrapper for parseArgs that adds --help functionality with automatic usage.
 // TODO It’d be nicer nice if we could change the return type to denote
 // arguments with default values, and to enforce required arguments, if any.
-function helpArgs<T extends ParseArgsConfig>(command: string, config: T): ReturnType<typeof parseArgs<T>> {
-  const result = parseArgs<T>({...config, options: {...config.options, help: {type: "boolean"}}});
-  const {help} = result.values as any;
-  if (help) {
-    console.error(
-      `Usage: observable ${command}${Object.entries(config.options ?? {})
+function helpArgs<T extends ParseArgsConfig>(command: string | undefined, config: T): ReturnType<typeof parseArgs<T>> {
+  let result: ReturnType<typeof parseArgs<T>>;
+  try {
+    result = parseArgs<T>({...config, options: {...config.options, help: {type: "boolean", short: "h"}}, args});
+  } catch (error: any) {
+    if (!error.code?.startsWith("ERR_PARSE_ARGS_")) throw error;
+    console.error(`observable: ${error.message}. See 'observable help${command ? ` ${command}` : ""}'.`);
+    process.exit(1);
+  }
+  if ((result.values as any).help) {
+    console.log(
+      `Usage: observable ${command}${config.allowPositionals ? " <command>" : ""}${Object.entries(config.options ?? {})
         .map(([name, {default: def}]) => ` [--${name}${def === undefined ? "" : `=${def}`}]`)
         .join("")}`
     );
-    process.exit(1);
+    process.exit(0);
   }
   return result;
 }
