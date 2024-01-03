@@ -81,13 +81,13 @@ switch (command) {
 
 function usage(code: number): void {
   (code ? console.error : console.log)(
-    `Usage: observable <command>
+    `Usage: observable <command> (--help)
    build        generate a static site
    deploy       deploy a project
    preview      run the live preview server
    login        manage authentication with the Observable Cloud
    whoami       check authentication status
-   help         this help
+   help         this usage information
  --version	print the version`
   );
   process.exit(code);
