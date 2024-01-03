@@ -69,6 +69,7 @@ switch (command) {
   case "whoami":
     await import("../src/observableApiAuth.js").then((auth) => auth.whoami());
     break;
+  case "help":
   default:
     console.error("Usage: observable <command>");
     console.error("   build\tgenerate a static site");
