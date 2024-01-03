@@ -72,6 +72,8 @@ switch (command) {
     await import("../src/observableApiAuth.js").then((auth) => auth.whoami());
     break;
   case "help":
+  case "--help":
+  case "-h":
     usage(0);
     break;
   default:
