@@ -21,7 +21,7 @@ export function findLink(path: string, options: Pick<Config, "pages" | "title"> 
     for (const page of walk(pages, title)) {
       const path = normalizePath(page.path);
       if (links.has(path)) {
-        console.warn(`This pager does not implement duplicate pages; skipping ${page.path}.`);
+        console.warn(`ignoring duplicate page: ${page.path}`);
       } else {
         if (prev) {
           links.set(path, {prev, next: undefined});

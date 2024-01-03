@@ -1,6 +1,6 @@
 # Configuration
 
-A `observablehq.config.js` (or `observablehq.config.ts`) file located in the project root allows configuration of your project. For example, a site might use a config file to set the project’s title and control the order of pages shown in the sidebar:
+A `observablehq.config.js` (or `observablehq.config.ts`) file located in the project root allows configuration of your project. For example, a site might use a config file to set the project’s title and the sidebar contents:
 
 ```js run=false
 export default {
@@ -26,6 +26,17 @@ The path to the source root; defaults to `docs`.
 ## output
 
 The path to the output root; defaults to `dist`.
+
+## style
+
+The path to the project’s stylesheet. This is typically set to `docs/style.css` to override or augment the default stylesheet, or to apply a theme. For example, to use the *light* theme:
+
+```css
+@import url("observablehq:theme-light.css");
+@import url("observablehq:default.css");
+```
+
+The current built-in themes are: *auto* (default), *light*, and *dark*.
 
 ## title
 

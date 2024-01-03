@@ -1,35 +1,38 @@
 import {existsSync} from "node:fs";
 import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
-import {basename, dirname, join, relative} from "node:path";
-import {cwd} from "node:process";
-import {fileURLToPath} from "node:url";
+import {basename, dirname, join} from "node:path";
 import {type Config} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {isEnoent} from "./error.js";
-import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
+import {prepareOutput, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
 import {renderServerless} from "./render.js";
-import {getClientPath, rollupClient} from "./rollup.js";
+import {bundleStyles, getClientPath, rollupClient} from "./rollup.js";
 import {faint} from "./tty.js";
 import {resolvePath} from "./url.js";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
 
 // TODO Remove library helpers (e.g., duckdb) when they are published to npm.
-const CLIENT_BUNDLES: [entry: string, name: string][] = [
-  ["./src/client/index.js", "client.js"],
-  ["./src/client/stdlib.js", "stdlib.js"],
-  ["./src/client/stdlib/dot.js", "stdlib/dot.js"],
-  ["./src/client/stdlib/duckdb.js", "stdlib/duckdb.js"],
-  ["./src/client/stdlib/mermaid.js", "stdlib/mermaid.js"],
-  ["./src/client/stdlib/sqlite.js", "stdlib/sqlite.js"],
-  ["./src/client/stdlib/tex.js", "stdlib/tex.js"],
-  ["./src/client/stdlib/xslx.js", "stdlib/xslx.js"]
-];
+function clientBundles(clientPath: string): [entry: string, name: string][] {
+  return [
+    [clientPath, "client.js"],
+    ["./src/client/stdlib.js", "stdlib.js"],
+    ["./src/client/stdlib/dash.js", "stdlib/dash.js"],
+    ["./src/client/stdlib/dot.js", "stdlib/dot.js"],
+    ["./src/client/stdlib/duckdb.js", "stdlib/duckdb.js"],
+    ["./src/client/stdlib/mermaid.js", "stdlib/mermaid.js"],
+    ["./src/client/stdlib/sqlite.js", "stdlib/sqlite.js"],
+    ["./src/client/stdlib/tex.js", "stdlib/tex.js"],
+    ["./src/client/stdlib/xlsx.js", "stdlib/xlsx.js"],
+    ["./src/client/stdlib/zip.js", "stdlib/zip.js"]
+  ];
+}
 
 export interface BuildOptions {
   config: Config;
+  clientEntry?: string;
   addPublic?: boolean;
 }
 
@@ -51,7 +54,7 @@ export interface BuildEffects {
 }
 
 export async function build(
-  {config, addPublic = true}: BuildOptions,
+  {config, addPublic = true, clientEntry = "./src/client/index.js"}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output)
 ): Promise<void> {
   const {root} = config;
@@ -82,20 +85,20 @@ export async function build(
 
   if (addPublic) {
     // Generate the client bundles.
-    for (const [entry, name] of CLIENT_BUNDLES) {
+    for (const [entry, name] of clientBundles(clientEntry)) {
       const clientPath = getClientPath(entry);
       const outputPath = join("_observablehq", name);
       effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
       const code = await rollupClient(clientPath, {minify: true});
       await effects.writeFile(outputPath, code);
     }
-    // Copy over the public directory.
-    const publicRoot = relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), "..", "public"));
-    for await (const publicFile of visitFiles(publicRoot)) {
-      const sourcePath = join(publicRoot, publicFile);
-      const outputPath = join("_observablehq", publicFile);
-      effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-      await effects.copyFile(sourcePath, outputPath);
+    // Generate the style bundles.
+    for (const [entry, name] of [[config.style, "style.css"]]) {
+      const clientPath = getClientPath(entry);
+      const outputPath = join("_observablehq", name);
+      effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
+      const code = await bundleStyles(clientPath);
+      await effects.writeFile(outputPath, code);
     }
   }
 

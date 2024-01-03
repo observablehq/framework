@@ -60,7 +60,7 @@ export async function setDeployConfig(sourceRoot: string, newConfig: DeployConfi
   const deployConfigPath = path.join(process.cwd(), sourceRoot, ".observablehq", "deploy.json");
   const oldConfig = (await getDeployConfig(sourceRoot)) || {};
   const merged = {...oldConfig, ...newConfig};
-  await fs.writeFile(deployConfigPath, JSON.stringify(merged, null, 2));
+  await fs.writeFile(deployConfigPath, JSON.stringify(merged, null, 2) + "\n");
 }
 
 async function loadUserConfig(): Promise<{configPath: string; config: UserConfig}> {

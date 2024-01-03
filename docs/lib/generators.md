@@ -6,7 +6,7 @@ The Observable standard library includes several generator utilities. These are 
 import {Generators} from "npm:@observablehq/stdlib";
 ```
 
-## Generators.input(*element*)
+## input(*element*)
 
 Returns an async generator that yields whenever the given *element* emits an *input* event, with the given *element*’s current value. (It’s a bit fancier than that because we special-case a few element types.) The built-in [`view` function](<../javascript/display#view(element)>) uses this.
 
@@ -19,7 +19,7 @@ const name = Generators.input(nameInput);
 name
 ```
 
-## Generators.observe(*change*)
+## observe(*change*)
 
 Returns an async generator that yields whenever the callback function *change* is called, with the value passed.
 
@@ -35,7 +35,7 @@ const hash = Generators.observe((change) => {
 hash
 ```
 
-## Generators.queue(*change*)
+## queue(*change*)
 
 Returns an async generator that yields whenever the callback function *change* is called, with the value passed. This is identical to Generators.observe, except that if *change* is called multiple times before the consumer has a chance to process the yielded result, values will not be dropped; use this if you require that the consumer not miss a yielded value.
 
@@ -51,7 +51,7 @@ const hash = Generators.queue((change) => {
 hash
 ```
 
-## Generators.now()
+## now()
 
 Returns a generator that repeatedly yields `Date.now()`, forever. This generator is available by default as `now` in Markdown.
 
@@ -63,7 +63,7 @@ const now = Generators.now();
 now
 ```
 
-## Generators.width(*element*)
+## width(*element*)
 
 Returns an async generator that yields the width of the given target *element*. Using a [ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver), the generator will yield whenever the width of the *element* changes. This generator for the `main` element is available by default as `width` in Markdown.
 

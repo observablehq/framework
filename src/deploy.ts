@@ -3,9 +3,15 @@ import type {BuildEffects} from "./build.js";
 import {build} from "./build.js";
 import type {Config} from "./config.js";
 import type {Logger, Writer} from "./logger.js";
-import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
-import type {ApiKey, DeployConfig} from "./observableApiConfig.js";
-import {getDeployConfig, getObservableApiKey, setDeployConfig} from "./observableApiConfig.js";
+import {ObservableApiClient} from "./observableApiClient.js";
+import {
+  type ApiKey,
+  type DeployConfig,
+  getDeployConfig,
+  getObservableApiKey,
+  setDeployConfig
+} from "./observableApiConfig.js";
+import {blue} from "./tty.js";
 
 export interface DeployOptions {
   config: Config;
@@ -33,7 +39,7 @@ const defaultEffects: DeployEffects = {
 export async function deploy({config}: DeployOptions, effects = defaultEffects): Promise<void> {
   const {logger} = effects;
   const apiKey = await effects.getObservableApiKey(logger);
-  const apiClient = new ObservableApiClient({apiKey, logger});
+  const apiClient = new ObservableApiClient({apiKey});
 
   // Find the existing project or create a new one.
   const sourceRoot = config.root;
@@ -44,7 +50,16 @@ export async function deploy({config}: DeployOptions, effects = defaultEffects):
   } else {
     logger.log("Creating a new project");
     const currentUserResponse = await apiClient.getCurrentUser();
-    const slug = await promptUserForInput(effects.input, effects.output, "New project name: ");
+
+    const title = await promptUserForInput(effects.input, effects.output, "New project title: ");
+    const defaultSlug = slugify(title);
+    const slug = await promptUserForInput(
+      effects.input,
+      effects.output,
+      `New project slug [${defaultSlug}]: `,
+      defaultSlug
+    );
+
     let workspaceId: string | null = null;
     if (currentUserResponse.workspaces.length == 0) {
       logger.error("Current user doesn't have any Observable workspaces!");
@@ -62,35 +77,37 @@ export async function deploy({config}: DeployOptions, effects = defaultEffects):
       workspaceId = currentUserResponse.workspaces[index].id;
     }
 
-    projectId = await apiClient.postProject(slug, workspaceId);
+    const project = await apiClient.postProject({slug, title, workspaceId});
+    projectId = project.id;
     await effects.setDeployConfig(sourceRoot, {project: {id: projectId, slug, workspace: workspaceId}});
-    logger.log(`Created new project id ${projectId}`);
+    logger.log(`Created new project ${project.owner.login}/${project.slug}`);
   }
 
-  logger.log(`Deploying project id ${projectId}`);
-
   // Create the new deploy.
-  const deployId = await apiClient.postDeploy(projectId);
-  logger.log(`Created new deploy id ${deployId}`);
+  const message = await promptUserForInput(effects.input, effects.output, "Deploy message: ");
+  const deployId = await apiClient.postDeploy({projectId, message});
 
   // Build the project
-  await build({config}, new DeployBuildEffects(apiClient, deployId, effects));
+  await build({config, clientEntry: "./src/client/deploy.js"}, new DeployBuildEffects(apiClient, deployId, effects));
 
   // Mark the deploy as uploaded.
-  await apiClient.postDeployUploaded(deployId);
-  logger.log(`Deployed project now visible at ${getObservableUiHost()}/p/${projectId}`);
+  const deployInfo = await apiClient.postDeployUploaded(deployId);
+  logger.log(`Deployed project now visible at ${blue(deployInfo.url)}`);
 }
 
 async function promptUserForInput(
   input: NodeJS.ReadableStream,
   output: NodeJS.WritableStream,
-  question: string
+  question: string,
+  defaultValue?: string
 ): Promise<string> {
   const rl = readline.createInterface({input, output});
   try {
     let value: string | null = null;
-    do value = await rl.question(question);
-    while (!value);
+    do {
+      value = await rl.question(question);
+      if (!value && defaultValue) value = defaultValue;
+    } while (!value);
     return value;
   } finally {
     rl.close();
@@ -140,4 +157,13 @@ class DeployBuildEffects implements BuildEffects {
     this.logger.log(outputPath);
     await this.apiClient.postDeployFileContents(this.deployId, content, outputPath);
   }
+}
+
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .replace("'", "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .replace(/-{2,}/g, "-");
 }

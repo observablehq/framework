@@ -1,0 +1,31 @@
+:root {
+  --theme-foreground: rgb(27, 30, 35);
+  --theme-background: rgb(255, 255, 255);
+  --theme-background-alt: color-mix(in srgb, var(--theme-background) 97%, black);
+  --theme-foreground-alt: color-mix(in srgb, var(--theme-foreground) 90%, var(--theme-background));
+  --theme-foreground-muted: color-mix(in srgb, var(--theme-foreground) 70%, var(--theme-background));
+  --theme-foreground-faint: color-mix(in srgb, var(--theme-foreground) 50%, var(--theme-background));
+  --theme-foreground-fainter: color-mix(in srgb, var(--theme-foreground) 30%, var(--theme-background));
+  --theme-foreground-faintest: color-mix(in srgb, var(--theme-foreground) 10%, var(--theme-background));
+  --theme-foreground-focus: #3b5fc0;
+  color-scheme: light;
+}
+
+:root {
+  --syntax-keyword: #d73a49;
+  --syntax-entity: #6f42c1;
+  --syntax-constant: #005cc5;
+  --syntax-string: #032f62;
+  --syntax-variable: #e36209;
+  --syntax-comment: var(--theme-foreground-muted);
+  --syntax-entity-tag: #22863a;
+  --syntax-storage-modifier-import: #24292e;
+  --syntax-markup-heading: #005cc5;
+  --syntax-markup-list: #735c0f;
+  --syntax-markup-italic: #24292e;
+  --syntax-markup-bold: #24292e;
+  --syntax-markup-inserted: #22863a;
+  --syntax-markup-inserted-background: #f0fff4;
+  --syntax-markup-deleted: #b31d28;
+  --syntax-markup-deleted-background: #ffeef0;
+}

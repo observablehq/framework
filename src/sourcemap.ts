@@ -45,7 +45,7 @@ export class Sourcemap {
   insertRight(index: number, value: string): void {
     this.replaceRight(index, index, value);
   }
-  delete(start: number, end: number) {
+  delete(start: number, end: number): void {
     this.replaceRight(start, end, "");
   }
   replaceLeft(start: number, end: number, value: string): void {
@@ -78,6 +78,11 @@ export class Sourcemap {
     }
     const l = positionSubtract(position, co);
     return positionAdd(ci, l);
+  }
+  trim(): void {
+    const input = this.input;
+    if (input.startsWith("\n")) this.delete(0, 1); // TODO better trim
+    if (input.endsWith("\n")) this.delete(input.length - 1, input.length); // TODO better trim
   }
   toString(): string {
     let output = "";

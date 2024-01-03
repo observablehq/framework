@@ -1,0 +1,239 @@
+:root {
+  --observablehq-blue: #3b5fc0;
+  --monospace: Menlo, Consolas, monospace;
+  --monospace-font: 14px/1.5 var(--monospace);
+  --serif: "Source Serif Pro", "Iowan Old Style", "Apple Garamond", "Palatino Linotype", "Times New Roman",
+    "Droid Serif", Times, serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --sans-serif: -apple-system, BlinkMacSystemFont, "avenir next", avenir, helvetica, "helvetica neue", ubuntu, roboto,
+    noto, "segoe ui", arial, sans-serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--theme-background);
+  color: var(--theme-foreground);
+}
+
+body {
+  font: 17px/1.5 var(--serif);
+  margin: 0;
+}
+
+a[href] {
+  color: var(--theme-foreground-focus);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--theme-foreground-alt);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-top: 0;
+  margin-bottom: 0.25rem;
+  scroll-margin-top: 1rem;
+}
+
+h2 + p,
+h3 + p,
+h4 + p,
+h2 + table,
+h3 + table,
+h4 + table {
+  margin-top: 0;
+}
+
+h1 + h2 {
+  color: var(--theme-foreground);
+  font-size: 20px;
+  font-style: italic;
+  font-weight: normal;
+  margin-bottom: 1rem; /* see h2 ~ p */
+}
+
+a[href] {
+  text-decoration: none;
+}
+
+a[href]:hover,
+a[href]:focus {
+  text-decoration: underline;
+}
+
+h1 code,
+h2 code,
+h3 code,
+h4 code,
+h5 code,
+h6 code {
+  font-size: 90%;
+}
+
+pre,
+code,
+tt {
+  font-family: var(--monospace);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+img {
+  max-width: calc(100vw - 28px);
+}
+
+p,
+table,
+figure,
+figcaption,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.katex-display {
+  max-width: 640px;
+}
+
+blockquote,
+ol,
+ul {
+  max-width: 600px;
+}
+
+blockquote {
+  margin: 1rem 1.5rem;
+}
+
+ul ol {
+  padding-left: 28px;
+}
+
+hr {
+  height: 1px;
+  margin: 1rem 0;
+  padding: 1rem 0;
+  border: none;
+  background: no-repeat center/100% 1px
+    linear-gradient(to right, var(--theme-foreground-faintest), var(--theme-foreground-faintest));
+}
+
+pre {
+  background-color: var(--theme-background-alt);
+  border-radius: 4px;
+  margin: 1rem -1rem;
+  max-width: 960px;
+  min-height: 1.5em;
+  padding: 0.5rem 1rem;
+  overflow-x: auto;
+  box-sizing: border-box;
+}
+
+input:not([type]),
+input[type="email"],
+input[type="number"],
+input[type="password"],
+input[type="range"],
+input[type="search"],
+input[type="tel"],
+input[type="text"],
+input[type="url"] {
+  width: 240px;
+}
+
+input,
+canvas,
+button {
+  vertical-align: middle;
+}
+
+button,
+input,
+textarea {
+  accent-color: var(--observablehq-blue);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font: 13px/1.2 var(--sans-serif);
+}
+
+table pre,
+table code,
+table tt {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+th > pre:only-child,
+td > pre:only-child {
+  margin: 0;
+  padding: 0;
+}
+
+th {
+  color: var(--theme-foreground);
+  text-align: left;
+  vertical-align: bottom;
+}
+
+td {
+  color: var(--theme-foreground-alt);
+  vertical-align: top;
+}
+
+th,
+td {
+  padding: 3px 6.5px 3px 0;
+}
+
+th:last-child,
+td:last-child {
+  padding-right: 0;
+}
+
+tr:not(:last-child) {
+  border-bottom: solid 1px var(--theme-foreground-faintest);
+}
+
+thead tr {
+  border-bottom: solid 1px var(--theme-foreground-fainter);
+}
+
+figure,
+table {
+  margin: 1rem 0;
+}
+
+figure img {
+  max-width: 100%;
+}
+
+figure > h2,
+figure > h3 {
+  font-family: var(--sans-serif);
+}
+
+figure > h2 {
+  font-size: 20px;
+}
+
+figure > h3 {
+  font-size: 16px;
+  font-weight: normal;
+}
+
+figcaption {
+  font: small var(--sans-serif);
+  color: var(--theme-foreground-muted);
+}
+
+a[href].observablehq-header-anchor {
+  color: inherit;
+}
