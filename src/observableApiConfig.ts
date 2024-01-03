@@ -14,11 +14,7 @@ interface UserConfig {
 }
 
 export interface DeployConfig {
-  project?: {
-    id?: string;
-    slug?: string;
-    workspace?: string;
-  };
+  projectId: null | string;
 }
 
 export type ApiKey =
@@ -53,7 +49,10 @@ export async function getDeployConfig(sourceRoot: string): Promise<DeployConfig 
   } catch (error) {
     content = "{}";
   }
-  return JSON.parse(content);
+  // normalize
+  let {projectId} = JSON.parse(content);
+  if (typeof projectId !== "string") projectId = null;
+  return {projectId};
 }
 
 export async function setDeployConfig(sourceRoot: string, newConfig: DeployConfig): Promise<void> {

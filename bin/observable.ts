@@ -2,6 +2,8 @@
 
 import {type ParseArgsConfig, parseArgs} from "node:util";
 import {readConfig} from "../src/config.js";
+import {CliError} from "../src/error.js";
+import {red} from "../src/tty.js";
 
 const command = process.argv.splice(2, 1)[0];
 
@@ -12,73 +14,81 @@ const CONFIG_OPTION = {
   }
 } as const;
 
-switch (command) {
-  case "-v":
-  case "--version": {
-    await import("../package.json").then(({version}: any) => console.log(version));
-    break;
-  }
-  case "build": {
-    const {
-      values: {config}
-    } = helpArgs(command, {
-      options: {...CONFIG_OPTION}
-    });
-    await import("../src/build.js").then(async (build) => build.build({config: await readConfig(config)}));
-    break;
-  }
-  case "deploy": {
-    const {
-      values: {config}
-    } = helpArgs(command, {
-      options: {...CONFIG_OPTION}
-    });
-    await import("../src/deploy.js").then(async (deploy) => deploy.deploy({config: await readConfig(config)}));
-    break;
-  }
-  case "preview": {
-    const {
-      values: {config, hostname, port}
-    } = helpArgs(command, {
-      options: {
-        ...CONFIG_OPTION,
-        hostname: {
-          type: "string",
-          short: "h",
-          default: process.env.HOSTNAME ?? "127.0.0.1"
-        },
-        port: {
-          type: "string",
-          short: "p",
-          default: process.env.PORT
+try {
+  switch (command) {
+    case "-v":
+    case "--version": {
+      await import("../package.json").then(({version}: any) => console.log(version));
+      break;
+    }
+    case "build": {
+      const {
+        values: {config}
+      } = helpArgs(command, {
+        options: {...CONFIG_OPTION}
+      });
+      await import("../src/build.js").then(async (build) => build.build({config: await readConfig(config)}));
+      break;
+    }
+    case "deploy": {
+      const {
+        values: {config}
+      } = helpArgs(command, {
+        options: {...CONFIG_OPTION}
+      });
+      await import("../src/deploy.js").then(async (deploy) => deploy.deploy({config: await readConfig(config)}));
+      break;
+    }
+    case "preview": {
+      const {
+        values: {config, hostname, port}
+      } = helpArgs(command, {
+        options: {
+          ...CONFIG_OPTION,
+          hostname: {
+            type: "string",
+            short: "h",
+            default: process.env.HOSTNAME ?? "127.0.0.1"
+          },
+          port: {
+            type: "string",
+            short: "p",
+            default: process.env.PORT
+          }
         }
-      }
-    });
-    await import("../src/preview.js").then(async (preview) =>
-      preview.preview({
-        config: await readConfig(config),
-        hostname: hostname!,
-        port: port === undefined ? undefined : +port
-      })
-    );
-    break;
+      });
+      await import("../src/preview.js").then(async (preview) =>
+        preview.preview({
+          config: await readConfig(config),
+          hostname: hostname!,
+          port: port === undefined ? undefined : +port
+        })
+      );
+      break;
+    }
+    case "login":
+      await import("../src/observableApiAuth.js").then((auth) => auth.login());
+      break;
+    case "whoami":
+      await import("../src/observableApiAuth.js").then((auth) => auth.whoami());
+      break;
+    default:
+      console.error("Usage: observable <command>");
+      console.error("   build\tgenerate a static site");
+      console.error("   deploy\tdeploy a project");
+      console.error("   preview\trun the live preview server");
+      console.error("   login\tmanage authentication with the Observable Cloud");
+      console.error("   whoami\tcheck authentication status");
+      console.error(" --version\tprint the version");
+      process.exit(1);
+      break;
   }
-  case "login":
-    await import("../src/observableApiAuth.js").then((auth) => auth.login());
-    break;
-  case "whoami":
-    await import("../src/observableApiAuth.js").then((auth) => auth.whoami());
-    break;
-  default:
-    console.error("Usage: observable <command>");
-    console.error("   build\tgenerate a static site");
-    console.error("   deploy\tdeploy a project");
-    console.error("   preview\trun the live preview server");
-    console.error("   login\tmanage authentication with the Observable Cloud");
-    console.error("   whoami\tcheck authentication status");
-    console.error(" --version\tprint the version");
-    process.exit(1);
-    break;
+} catch (error) {
+  if (error instanceof CliError) {
+    if (error.print) console.error(red(error.message));
+    process.exit(error.exitCode);
+  }
+  throw error;
 }
 
 // A wrapper for parseArgs that adds --help functionality with automatic usage.

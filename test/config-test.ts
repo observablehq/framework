@@ -17,7 +17,11 @@ describe("readConfig(undefined, root)", () => {
       ],
       title: undefined,
       toc: {label: "On this page", show: true},
-      pager: true
+      pager: true,
+      deploy: {
+        workspace: "acme",
+        project: "bi"
+      }
     });
   });
   it("returns the default config if no config file is found", async () => {
@@ -28,7 +32,8 @@ describe("readConfig(undefined, root)", () => {
       pages: [{name: "Build test case", path: "/simple"}],
       title: undefined,
       toc: {label: "Contents", show: true},
-      pager: true
+      pager: true,
+      deploy: null
     });
   });
 });
@@ -89,6 +94,23 @@ describe("normalizeConfig(spec, root)", () => {
   });
   it("populates default pager", async () => {
     assert.strictEqual((await config({pages: []}, root)).pager, true);
+  });
+  describe("deploy", () => {
+    it("considers deploy optional", async () => {
+      assert.strictEqual((await config({pages: []}, root)).deploy, null);
+    });
+    it("coerces workspace", async () => {
+      assert.strictEqual(
+        (await config({pages: [], deploy: {workspace: 538, project: "bi"}}, root)).deploy?.workspace,
+        "538"
+      );
+    });
+    it("coerces project", async () => {
+      assert.strictEqual(
+        (await config({pages: [], deploy: {workspace: "adams", project: 42}}, root)).deploy?.project,
+        "42"
+      );
+    });
   });
 });
 

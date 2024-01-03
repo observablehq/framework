@@ -22,6 +22,12 @@ export interface WorkspaceResponse {
   role: string;
 }
 
+export interface GetProjectResponse {
+  id: string;
+  slug: string;
+  servingRoot: string;
+}
+
 export function getObservableUiHost(): URL {
   const urlText = process.env["OBSERVABLEHQ_HOST"] ?? "https://observablehq.com";
   try {
@@ -63,7 +69,14 @@ export class ObservableApiClient {
   }
 
   private async _fetch<T = unknown>(url: URL, options: RequestInit): Promise<T> {
-    const response = await fetch(url, {...options, headers: {...this._apiHeaders, ...options.headers}});
+    let response;
+    try {
+      response = await fetch(url, {...options, headers: {...this._apiHeaders, ...options.headers}});
+    } catch (error) {
+      // Check for undici failures and print them in a way that shows more details. Helpful in tests.
+      if (error instanceof Error && error.message === "fetch failed") console.error(error);
+      throw error;
+    }
 
     if (!response.ok) {
       // check for version mismatch
@@ -89,6 +102,17 @@ export class ObservableApiClient {
 
   async getCurrentUser(): Promise<GetCurrentUserResponse> {
     return await this._fetch<GetCurrentUserResponse>(new URL("/cli/user", this._apiHost), {method: "GET"});
+  }
+
+  async getProject({
+    workspaceLogin,
+    projectSlug
+  }: {
+    workspaceLogin: string;
+    projectSlug: string;
+  }): Promise<GetProjectResponse> {
+    const url = new URL(`/cli/project/@${workspaceLogin}/${projectSlug}`, this._apiHost);
+    return await this._fetch<GetProjectResponse>(url, {method: "GET"});
   }
 
   async postProject({
