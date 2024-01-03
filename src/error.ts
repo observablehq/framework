@@ -42,8 +42,9 @@ export class CliError extends Error {
     {message, exitCode = 1, print = true}: {message?: RegExp | string; exitCode?: number; print?: boolean} = {}
   ): asserts error is CliError {
     assert.ok(error instanceof CliError, `Expected error to be a CliError, but got ${error}`);
-    if (typeof message === "string") assert.equal(error.message, message);
-    if (message instanceof RegExp) {
+    if (typeof message === "string") {
+      assert.equal(error.message, message);
+    } else if (message instanceof RegExp) {
       assert.ok(message.test(error.message), `Expected error message to match regexp /${message.toString()}/`);
     }
     assert.equal(error.exitCode, exitCode, `Expected exit code to be ${exitCode}, but got ${error.exitCode}`);

@@ -154,7 +154,6 @@ describe("deploy", () => {
       await deploy({config: TEST_CONFIG}, effects);
       assert.fail("Should have thrown");
     } catch (error) {
-      console.log(error);
       assert.ok(isHttpError(error));
       assert.equal(error.statusCode, 401);
     }

@@ -47,7 +47,6 @@ export async function deploy({config}: DeployOptions, effects = defaultEffects):
 
   // Check configuration
   if (!config.deploy) {
-    logger.error();
     throw new CliError(
       "You haven't configured a project to deploy to. Please set deploy.workspace and deploy.project in your configuration."
     );
