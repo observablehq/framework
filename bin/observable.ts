@@ -70,16 +70,25 @@ switch (command) {
     await import("../src/observableApiAuth.js").then((auth) => auth.whoami());
     break;
   case "help":
-  default:
-    console.error("Usage: observable <command>");
-    console.error("   build\tgenerate a static site");
-    console.error("   deploy\tdeploy a project");
-    console.error("   preview\trun the live preview server");
-    console.error("   login\tmanage authentication with the Observable Cloud");
-    console.error("   whoami\tcheck authentication status");
-    console.error(" --version\tprint the version");
-    process.exit(1);
+    usage(0);
     break;
+  default:
+    usage(1);
+    break;
+}
+
+function usage(code: number): void {
+  (code ? console.error : console.log)(
+    `Usage: observable <command>
+   build        generate a static site
+   deploy       deploy a project
+   preview      run the live preview server
+   login        manage authentication with the Observable Cloud
+   whoami       check authentication status
+   help         this help
+ --version	print the version`
+  );
+  process.exit(code);
 }
 
 // A wrapper for parseArgs that adds --help functionality with automatic usage.
