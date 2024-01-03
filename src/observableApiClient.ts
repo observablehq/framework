@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import packageJson from "../package.json";
-import {HttpError} from "./error.js";
+import {CliError, HttpError} from "./error.js";
 import type {ApiKey} from "./observableApiConfig.js";
 import {faint, red} from "./tty.js";
 
@@ -28,28 +28,26 @@ export interface GetProjectResponse {
   servingRoot: string;
 }
 
-export function getObservableUiHost(): URL {
-  const urlText = process.env["OBSERVABLEHQ_HOST"] ?? "https://observablehq.com";
+export function getObservableUiHost(env = process.env): URL {
+  const urlText = env["OBSERVABLEHQ_HOST"] ?? "https://observablehq.com";
   try {
     return new URL(urlText);
   } catch (error) {
-    console.error(`Invalid OBSERVABLEHQ_HOST environment variable: ${error}`);
-    process.exit(1);
+    throw new CliError(`Invalid OBSERVABLEHQ_HOST environment variable: ${error}`, {cause: error});
   }
 }
 
-export function getObservableApiHost(): URL {
-  const urlText = process.env["OBSERVABLEHQ_API_HOST"];
+export function getObservableApiHost(env = process.env): URL {
+  const urlText = env["OBSERVABLEHQ_API_HOST"];
   if (urlText) {
     try {
       return new URL(urlText);
     } catch (error) {
-      console.error(`Invalid OBSERVABLEHQ_API_HOST environment variable: ${error}`);
-      process.exit(1);
+      throw new CliError(`Invalid OBSERVABLEHQ_API_HOST environment variable: ${error}`, {cause: error});
     }
   }
 
-  const uiHost = getObservableUiHost();
+  const uiHost = getObservableUiHost(env);
   uiHost.hostname = "api." + uiHost.hostname;
   return uiHost;
 }

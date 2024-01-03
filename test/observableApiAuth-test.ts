@@ -41,6 +41,16 @@ describe("login command", () => {
       }
     }
   });
+
+  it("gives a manual link when not on a tty", async () => {
+    const effects = new MockEffects({isTty: false});
+    const server = await login(effects);
+    if (server.isRunning) {
+      await server.stop();
+      assert.ok(!server.isRunning, "server should have shut down automatically");
+    }
+    effects.logger.assertExactLogs([/^Open this link in your browser/, /^\s*https:/]);
+  });
 });
 
 describe("whoami command", () => {
@@ -95,10 +105,12 @@ class MockEffects implements CommandEffects {
   public openBrowserDeferred = new Deferred<string>();
   public setApiKeyDeferred = new Deferred<{id: string; apiKey: string}>();
   public exitDeferred = new Deferred<void>();
+  public isTty: boolean;
   public _observableApiKey: string | null = null;
 
-  constructor({apiKey = null}: {apiKey?: string | null} = {}) {
+  constructor({apiKey = null, isTty = true}: {apiKey?: string | null; isTty?: boolean} = {}) {
     this._observableApiKey = apiKey;
+    this.isTty = isTty;
   }
 
   getObservableApiKey(logger: Logger) {
@@ -107,9 +119,6 @@ class MockEffects implements CommandEffects {
       throw new Error("no key available in this test");
     }
     return Promise.resolve({source: "test" as const, key: this._observableApiKey});
-  }
-  isatty() {
-    return true;
   }
   openUrlInBrowser(url: string) {
     this.openBrowserDeferred.resolve(url);
