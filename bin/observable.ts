@@ -6,6 +6,9 @@ import {readConfig} from "../src/config.js";
 const command = process.argv.splice(2, 1)[0];
 
 const CONFIG_OPTION = {
+  root: {
+    type: "string"
+  },
   config: {
     type: "string",
     short: "c"
@@ -20,25 +23,25 @@ switch (command) {
   }
   case "build": {
     const {
-      values: {config}
+      values: {config, root}
     } = helpArgs(command, {
       options: {...CONFIG_OPTION}
     });
-    await import("../src/build.js").then(async (build) => build.build({config: await readConfig(config)}));
+    await import("../src/build.js").then(async (build) => build.build({config: await readConfig(config, root)}));
     break;
   }
   case "deploy": {
     const {
-      values: {config}
+      values: {config, root}
     } = helpArgs(command, {
       options: {...CONFIG_OPTION}
     });
-    await import("../src/deploy.js").then(async (deploy) => deploy.deploy({config: await readConfig(config)}));
+    await import("../src/deploy.js").then(async (deploy) => deploy.deploy({config: await readConfig(config, root)}));
     break;
   }
   case "preview": {
     const {
-      values: {config, host, port}
+      values: {config, root, host, port}
     } = helpArgs(command, {
       options: {
         ...CONFIG_OPTION,
@@ -54,7 +57,7 @@ switch (command) {
     });
     await import("../src/preview.js").then(async (preview) =>
       preview.preview({
-        config: await readConfig(config),
+        config: await readConfig(config, root),
         hostname: host!,
         port: port === undefined ? undefined : +port
       })
