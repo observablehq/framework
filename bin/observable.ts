@@ -64,9 +64,11 @@ switch (command) {
     break;
   }
   case "login":
+    helpArgs(command, {});
     await import("../src/observableApiAuth.js").then((auth) => auth.login());
     break;
   case "whoami":
+    helpArgs(command, {});
     await import("../src/observableApiAuth.js").then((auth) => auth.whoami());
     break;
   case "help":
@@ -98,12 +100,12 @@ function helpArgs<T extends ParseArgsConfig>(command: string, config: T): Return
   const result = parseArgs<T>({...config, options: {...config.options, help: {type: "boolean"}}});
   const {help} = result.values as any;
   if (help) {
-    console.error(
+    console.log(
       `Usage: observable ${command}${Object.entries(config.options ?? {})
         .map(([name, {default: def}]) => ` [--${name}${def === undefined ? "" : `=${def}`}]`)
         .join("")}`
     );
-    process.exit(1);
+    process.exit(0);
   }
   return result;
 }
