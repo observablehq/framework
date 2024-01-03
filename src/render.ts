@@ -100,14 +100,14 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
 <nav id="observablehq-sidebar">
   <ol>
     <li class="observablehq-link${
-      normalizePath({path}) === "/index" ? " observablehq-link-active" : ""
+      normalizePath(path) === "/index" ? " observablehq-link-active" : ""
     }"><a href="${relativeUrl(path, "/")}">${title}</a></li>
   </ol>
   <ol>${pages.map((p, i) =>
     "pages" in p
       ? html`${i > 0 && "path" in pages[i - 1] ? html`</ol>` : ""}
     <details${
-      p.pages.some((p) => normalizePath(p) === path)
+      p.pages.some((p) => normalizePath(p.path) === path)
         ? html` open class="observablehq-section-active"`
         : p.open
         ? " open"
@@ -161,7 +161,7 @@ function renderToc(headers: Header[], label: string): Html {
 
 function renderListItem(p: Page, path: string): Html {
   return html`\n    <li class="observablehq-link${
-    normalizePath(p) === path ? " observablehq-link-active" : ""
+    normalizePath(p.path) === path ? " observablehq-link-active" : ""
   }"><a href="${relativeUrl(path, prettyPath(p.path))}">${p.name}</a></li>`;
 }
 

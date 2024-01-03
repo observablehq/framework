@@ -8,7 +8,7 @@ export type PageLink =
 // Pager links in the footer are computed once for a given navigation.
 const linkCache = new WeakMap<Config["pages"], Map<string, PageLink>>();
 
-export function normalizePath({path}) {
+export function normalizePath(path: string): string {
   return path.replace(/[?#].*$/, "");
 }
 
@@ -19,13 +19,13 @@ export function findLink(path: string, options: Pick<Config, "pages" | "title"> 
     links = new Map<string, PageLink>();
     let prev: Page | undefined;
     for (const page of walk(pages, title)) {
-      const path = normalizePath(page);
+      const path = normalizePath(page.path);
       if (links.has(path)) {
         console.warn(`This pager does not implement duplicate pages; skipping ${page.path}.`);
       } else {
         if (prev) {
           links.set(path, {prev, next: undefined});
-          links.get(normalizePath(prev))!.next = page;
+          links.get(normalizePath(prev.path))!.next = page;
         } else {
           links.set(path, {prev: undefined, next: undefined as unknown as Page}); // next set lazily
         }
