@@ -278,14 +278,14 @@
     height 150ms ease;
 }
 
-#observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within)::before{
+#observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within)::before {
   transform: scaleX(-1);
 }
 #observablehq-sidebar-toggle:checked::before {
   transform: scaleX(-1);
 }
 
-#observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within){
+#observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within) {
   cursor: w-resize;
   top: 1rem;
   left: calc(272px - 2.7rem);
@@ -335,13 +335,13 @@
   #observablehq-sidebar-toggle {
     transition: none;
   }
-  #observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within)::before{
+  #observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within)::before {
     transform: scaleX(-1);
   }
   #observablehq-sidebar-toggle:indeterminate::before {
     transform: scaleX(-1);
   }
-  #observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within){
+  #observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within) {
     cursor: w-resize;
     top: 1rem;
     left: calc(272px - 2.7rem);
