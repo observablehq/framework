@@ -39,9 +39,13 @@ export async function getObservableApiKey(logger: Logger = console): Promise<Api
   process.exit(1);
 }
 
-export async function setObservableApiKey(id: string, key: string): Promise<void> {
+export async function setObservableApiKey(info: null | {id: string; key: string}): Promise<void> {
   const {config, configPath} = await loadUserConfig();
-  config.auth = {id, key};
+  if (info) {
+    config.auth = info;
+  } else {
+    delete config.auth;
+  }
   await writeUserConfig({config, configPath});
 }
 

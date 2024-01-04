@@ -1,6 +1,12 @@
 import assert from "node:assert";
 import type {Logger} from "../src/logger.js";
-import {type CommandEffects, commandRequiresAuthenticationMessage, login, whoami} from "../src/observableApiAuth.js";
+import {
+  type CommandEffects,
+  commandRequiresAuthenticationMessage,
+  login,
+  logout,
+  whoami
+} from "../src/observableApiAuth.js";
 import {MockLogger} from "./mocks/logger.js";
 import {ObservableApiMock} from "./mocks/observableApi.js";
 
@@ -29,7 +35,7 @@ describe("login command", () => {
       });
       assert.equal(sendApiKeyResponse.status, 201);
       // The CLI then writes the API key to the config file
-      assert.deepEqual(await effects.setApiKeyDeferred.promise, {id: "MOCK-ID", apiKey: "MOCK-KEY"});
+      assert.deepEqual(await effects.setApiKeyDeferred.promise, {id: "MOCK-ID", key: "MOCK-KEY"});
       effects.logger.assertExactLogs([/^Press Enter to open/, /^Successfully logged in/]);
       await effects.exitDeferred.promise;
     } finally {
@@ -40,6 +46,16 @@ describe("login command", () => {
         assert.ok(!server.isRunning, "server should have shut down automatically");
       }
     }
+  });
+});
+
+describe("logout command", () => {
+  it("removes the API key from the config", async () => {
+    const effects = new MockEffects({apiKey: "original-key"});
+    await logout(effects);
+    assert.equal(effects.observableApiKey, null);
+    assert.equal(await effects.setApiKeyDeferred.promise, undefined);
+    effects.logger.assertExactLogs([]);
   });
 });
 
@@ -95,18 +111,22 @@ class MockEffects implements CommandEffects {
   public openBrowserDeferred = new Deferred<string>();
   public setApiKeyDeferred = new Deferred<{id: string; apiKey: string}>();
   public exitDeferred = new Deferred<void>();
-  public _observableApiKey: string | null = null;
+  public observableApiKey: string | null = null;
 
   constructor({apiKey = null}: {apiKey?: string | null} = {}) {
-    this._observableApiKey = apiKey;
+    this.observableApiKey = apiKey;
   }
 
-  getObservableApiKey(logger: Logger) {
-    if (!this._observableApiKey) {
+  async getObservableApiKey(logger: Logger) {
+    if (!this.observableApiKey) {
       logger.log(commandRequiresAuthenticationMessage);
       throw new Error("no key available in this test");
     }
-    return Promise.resolve({source: "test" as const, key: this._observableApiKey});
+    return {source: "test" as const, key: this.observableApiKey};
+  }
+  async setObservableApiKey(info) {
+    this.setApiKeyDeferred.resolve(info);
+    this.observableApiKey = info?.key;
   }
   isatty() {
     return true;
@@ -116,11 +136,6 @@ class MockEffects implements CommandEffects {
     return Promise.resolve(undefined);
   }
   waitForEnter() {
-    return Promise.resolve(undefined);
-  }
-  setObservableApiKey(id: string, apiKey: string) {
-    this.setApiKeyDeferred.resolve({id, apiKey});
-    this._observableApiKey = apiKey;
     return Promise.resolve(undefined);
   }
   exitSuccess() {
