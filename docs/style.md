@@ -1,6 +1,6 @@
 # Styles
 
-The default stylesheet is defined as:
+The default stylesheet (`docs/style.css`) is defined as:
 
 ```css
 @import url("observablehq:scheme-auto.css");
@@ -17,7 +17,7 @@ The first line imports the built-in `scheme-auto.css` stylesheet, which toggles 
 
 The second line imports the built-in `default.css` which contains rules that govern the colors, the page layout, style how values are [displayed](javascript/display), etc.
 
-While you can replace or remove any of these files in your own stylesheet, it is often simpler to either start from scratch (import your own designs directly and ignore the built-ins), or use the built-in and augment them marginally with additional rules and variables.
+While you can remove any of these files in your own stylesheet and ignore the built-ins, it is often simpler to use the built-in and augment them marginally with additional rules and variables.
 
 ## Variables
 
