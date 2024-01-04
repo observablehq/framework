@@ -9,6 +9,7 @@ describe("readConfig(undefined, root)", () => {
       root: "test/input/build/config",
       output: "dist",
       style: "src/style/index.css",
+      themes: {},
       pages: [
         {path: "/index", name: "Index"},
         {path: "/one", name: "One<Two"},
@@ -25,6 +26,7 @@ describe("readConfig(undefined, root)", () => {
       root: "test/input/build/simple",
       output: "dist",
       style: "src/style/index.css",
+      themes: {},
       pages: [{name: "Build test case", path: "/simple"}],
       title: undefined,
       toc: {label: "Contents", show: true},

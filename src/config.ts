@@ -20,6 +20,11 @@ export interface TableOfContents {
   show: boolean; // defaults to true
 }
 
+export interface Theme {
+  name: string;
+  style?: string;
+}
+
 export interface Config {
   root: string; // defaults to docs
   output: string; // defaults to dist
@@ -28,6 +33,7 @@ export interface Config {
   pager: boolean; // defaults to true
   toc: TableOfContents;
   style: string; // defaults to default stylesheet
+  themes: {[key: string]: Theme};
 }
 
 export async function readConfig(configPath?: string, root?: string): Promise<Config> {
@@ -62,6 +68,7 @@ async function readPages(root: string): Promise<Page[]> {
 
 export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Promise<Config> {
   let {root = defaultRoot, output = "dist", style = getClientPath("./src/style/index.css")} = spec;
+  const {themes = {}} = spec;
   root = String(root);
   output = String(output);
   style = String(style);
@@ -70,7 +77,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   pages = Array.from(pages, normalizePageOrSection);
   pager = Boolean(pager);
   toc = normalizeToc(toc);
-  return {root, output, title, pages, pager, toc, style};
+  return {root, output, title, pages, pager, toc, style, themes};
 }
 
 function normalizePageOrSection(spec: any): Page | Section {

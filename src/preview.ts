@@ -20,7 +20,7 @@ import {diffMarkdown, readMarkdown} from "./markdown.js";
 import type {ParseResult, ReadMarkdownResult} from "./markdown.js";
 import {renderPreview} from "./render.js";
 import {bundleStyles, getClientPath, rollupClient} from "./rollup.js";
-import {bold, faint, green, underline} from "./tty.js";
+import {bold, faint, green, red, underline} from "./tty.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
@@ -90,8 +90,14 @@ export class PreviewServer {
         end(req, res, await rollupClient(getClientPath("./src/client/" + pathname.slice("/_observablehq/".length))), "text/javascript"); // prettier-ignore
       } else if (pathname === "/_observablehq/client.js") {
         end(req, res, await rollupClient(getClientPath("./src/client/preview.js")), "text/javascript");
-      } else if (pathname === "/_observablehq/style.css") {
-        end(req, res, await bundleStyles(config.style), "text/css");
+      } else if (pathname.match(/\/_observablehq\/(\w+)\.css$/)) {
+        const theme = pathname.slice("/_observablehq/".length, -".css".length);
+        const style = theme === "style" ? config.style : config.themes[theme]?.style;
+        if (!style) {
+          console.log(`${bold(red(`unknown theme ${theme}`))}. Themes must be defined in the configuration file`);
+          throw new HttpError(`Not found: ${pathname}`, 404);
+        }
+        end(req, res, await bundleStyles(style), "text/css");
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {

@@ -57,7 +57,7 @@ export async function build(
   {config, addPublic = true, clientEntry = "./src/client/index.js"}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output)
 ): Promise<void> {
-  const {root} = config;
+  const {root, themes} = config;
 
   // Make sure all files are readable before starting to write output files.
   let pageCount = 0;
@@ -71,6 +71,7 @@ export async function build(
   // Render .md files, building a list of file attachments as we go.
   const files: string[] = [];
   const imports: string[] = [];
+  const styles: Map<string, string | undefined> = new Map([["style", config.style]]);
   for await (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
@@ -80,6 +81,7 @@ export async function build(
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
     files.push(...render.files.map(resolveFile));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
+    if (render.theme && !styles.has(render.theme)) styles.set(render.theme, themes[render.theme]?.style);
     await effects.writeFile(outputPath, render.html);
   }
 
@@ -93,9 +95,10 @@ export async function build(
       await effects.writeFile(outputPath, code);
     }
     // Generate the style bundles.
-    for (const [entry, name] of [[config.style, "style.css"]]) {
+    for (const [theme, entry] of styles) {
+      if (entry === undefined || entry.match(/^\w+:/)) continue;
       const clientPath = getClientPath(entry);
-      const outputPath = join("_observablehq", name);
+      const outputPath = join("_observablehq", `${theme}.css`);
       effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
       const code = await bundleStyles(clientPath);
       await effects.writeFile(outputPath, code);

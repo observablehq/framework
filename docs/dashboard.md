@@ -1,3 +1,5 @@
-<link rel="stylesheet" type="text/css" href="dashboard.css">
+---
+theme: dashboard
+---
 
 # Dashboard theme test

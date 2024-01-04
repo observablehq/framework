@@ -1,6 +1,9 @@
 export default {
   title: "Observable CLI",
   style: "docs/style.css",
+  themes: {
+    dashboard: {style: "docs/dashboard.css"}
+  },
   pages: [
     {name: "Getting started", path: "/getting-started"},
     {name: "Routing", path: "/routing"},

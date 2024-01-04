@@ -1,0 +1,11 @@
+@media (prefers-color-scheme: light) {
+  :root {
+    --theme-background: color-mix(in srgb, var(--theme-background-alt) 97%, black);
+    --theme-background-alt: rgb(255, 255, 255);
+  }
+}
+
+#observablehq-main,
+#observablehq-footer {
+  max-width: initial;
+}
