@@ -1,5 +1,5 @@
 import readline from "node:readline/promises";
-import {isatty} from "tty";
+import {isatty} from "node:tty";
 import type {BuildEffects} from "./build.js";
 import {build} from "./build.js";
 import type {Config} from "./config.js";
