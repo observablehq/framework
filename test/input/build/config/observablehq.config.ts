@@ -1,4 +1,5 @@
 export default {
+  themes: {test: "test.css"},
   pages: [
     {path: "/index", name: "Index"},
     {path: "/one", name: "One<Two"},

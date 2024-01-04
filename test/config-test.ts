@@ -9,7 +9,7 @@ describe("readConfig(undefined, root)", () => {
       root: "test/input/build/config",
       output: "dist",
       style: "src/style/index.css",
-      themes: {},
+      themes: {test: "test.css"},
       pages: [
         {path: "/index", name: "Index"},
         {path: "/one", name: "One<Two"},
@@ -47,6 +47,7 @@ describe("normalizeConfig(spec, root)", () => {
   it("populates default pages", async () => {
     assert.deepStrictEqual((await config({}, root)).pages, [
       {name: "One", path: "/one"},
+      {name: "Theme test", path: "/themed"},
       {name: "H1: Section", path: "/toc-override"},
       {name: "H1: Section", path: "/toc"},
       {name: "A page…", path: "/closed/page"},
