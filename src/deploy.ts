@@ -1,7 +1,9 @@
 import readline from "node:readline/promises";
+import {isatty} from "node:tty";
 import type {BuildEffects} from "./build.js";
 import {build} from "./build.js";
 import type {Config} from "./config.js";
+import {CliError} from "./error.js";
 import type {Logger, Writer} from "./logger.js";
 import {ObservableApiClient} from "./observableApiClient.js";
 import {
@@ -21,6 +23,7 @@ export interface DeployEffects {
   getObservableApiKey: (logger: Logger) => Promise<ApiKey>;
   getDeployConfig: (sourceRoot: string) => Promise<DeployConfig | null>;
   setDeployConfig: (sourceRoot: string, config: DeployConfig) => Promise<void>;
+  isTty: boolean;
   logger: Logger;
   input: NodeJS.ReadableStream;
   output: NodeJS.WritableStream;
@@ -30,6 +33,7 @@ const defaultEffects: DeployEffects = {
   getObservableApiKey,
   getDeployConfig,
   setDeployConfig,
+  isTty: isatty(process.stdin.fd),
   logger: console,
   input: process.stdin,
   output: process.stdout
@@ -41,56 +45,48 @@ export async function deploy({config}: DeployOptions, effects = defaultEffects):
   const apiKey = await effects.getObservableApiKey(logger);
   const apiClient = new ObservableApiClient({apiKey});
 
-  // Find the existing project or create a new one.
-  const sourceRoot = config.root;
-  const deployConfig = await effects.getDeployConfig(sourceRoot);
-  let projectId = deployConfig?.project?.id;
-  if (projectId) {
-    logger.log(`Found existing project ${projectId}`);
-  } else {
-    logger.log("Creating a new project");
-    const currentUserResponse = await apiClient.getCurrentUser();
-
-    const title = await promptUserForInput(effects.input, effects.output, "New project title: ");
-    const defaultSlug = slugify(title);
-    const slug = await promptUserForInput(
-      effects.input,
-      effects.output,
-      `New project slug [${defaultSlug}]: `,
-      defaultSlug
+  // Check configuration
+  if (!config.deploy) {
+    throw new CliError(
+      "You haven't configured a project to deploy to. Please set deploy.workspace and deploy.project in your configuration."
     );
-
-    let workspaceId: string | null = null;
-    if (currentUserResponse.workspaces.length == 0) {
-      logger.error("Current user doesn't have any Observable workspaces!");
-      return;
-    } else if (currentUserResponse.workspaces.length == 1) {
-      workspaceId = currentUserResponse.workspaces[0].id;
-    } else {
-      const workspaceNames = currentUserResponse.workspaces.map((x) => x.name);
-      const index = await promptUserForChoiceIndex(
-        effects.input,
-        effects.output,
-        "Available Workspaces",
-        workspaceNames
-      );
-      workspaceId = currentUserResponse.workspaces[index].id;
-    }
-
-    const project = await apiClient.postProject({slug, title, workspaceId});
-    projectId = project.id;
-    await effects.setDeployConfig(sourceRoot, {project: {id: projectId, slug, workspace: workspaceId}});
-    logger.log(`Created new project ${project.owner.login}/${project.slug}`);
   }
 
-  // Create the new deploy.
+  // Check last deployed state. If it's not the same project, ask the user if
+  // they want to continue anyways. In non-interactive mode just cancel.
+  const projectInfo = await apiClient.getProject({
+    workspaceLogin: config.deploy.workspace,
+    projectSlug: config.deploy.project
+  });
+  const deployConfig = await effects.getDeployConfig(config.root);
+  const previousProjectId = deployConfig?.projectId;
+  if (previousProjectId && previousProjectId !== projectInfo.id) {
+    logger.log(
+      `The project @${config.deploy.workspace}/${config.deploy.project} does not match the expected project in ${config.root}/.observablehq/deploy.json`
+    );
+    if (effects.isTty) {
+      const choice = await promptUserForInput(
+        effects.input,
+        effects.output,
+        "Do you want to update the expected project and deploy anyways? [y/N]"
+      );
+      if (choice.trim().toLowerCase().charAt(0) !== "y") {
+        throw new CliError("User cancelled deploy.", {print: false, exitCode: 2});
+      }
+    } else {
+      throw new CliError("Cancelling deploy due to misconfiguration.");
+    }
+  }
+  await effects.setDeployConfig(config.root, {projectId: projectInfo.id});
+
+  // Create the new deploy on the server
   const message = await promptUserForInput(effects.input, effects.output, "Deploy message: ");
-  const deployId = await apiClient.postDeploy({projectId, message});
+  const deployId = await apiClient.postDeploy({projectId: projectInfo.id, message});
 
   // Build the project
   await build({config, clientEntry: "./src/client/deploy.js"}, new DeployBuildEffects(apiClient, deployId, effects));
 
-  // Mark the deploy as uploaded.
+  // Mark the deploy as uploaded
   const deployInfo = await apiClient.postDeployUploaded(deployId);
   logger.log(`Deployed project now visible at ${blue(deployInfo.url)}`);
 }
@@ -109,30 +105,6 @@ async function promptUserForInput(
       if (!value && defaultValue) value = defaultValue;
     } while (!value);
     return value;
-  } finally {
-    rl.close();
-  }
-}
-
-async function promptUserForChoiceIndex(
-  input: NodeJS.ReadableStream,
-  output: NodeJS.WritableStream,
-  title: string,
-  choices: string[]
-): Promise<number> {
-  const validChoices: string[] = [];
-  const promptLines: string[] = ["", title, "=".repeat(title.length)];
-  for (let i = 0; i < choices.length; i++) {
-    validChoices.push(`${i + 1}`);
-    promptLines.push(`${i + 1}. ${choices[i]}`);
-  }
-  const question = promptLines.join("\n") + "\nChoice: ";
-  const rl = readline.createInterface({input, output});
-  try {
-    let value: string | null = null;
-    do value = await rl.question(question);
-    while (!validChoices.includes(value));
-    return parseInt(value) - 1; // zero-indexed
   } finally {
     rl.close();
   }
@@ -157,13 +129,4 @@ class DeployBuildEffects implements BuildEffects {
     this.logger.log(outputPath);
     await this.apiClient.postDeployFileContents(this.deployId, content, outputPath);
   }
-}
-
-function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .replace("'", "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .replace(/-{2,}/g, "-");
 }

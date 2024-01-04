@@ -11,5 +11,9 @@ export default {
   ],
   toc: {
     label: "On this page"
+  },
+  deploy: {
+    workspace: "acme",
+    project: "bi"
   }
 };
