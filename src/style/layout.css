@@ -278,12 +278,19 @@
     height 150ms ease;
 }
 
-#observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within)::before,
+#observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within)::before{
+  transform: scaleX(-1);
+}
 #observablehq-sidebar-toggle:checked::before {
   transform: scaleX(-1);
 }
 
-#observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within),
+#observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within){
+  cursor: w-resize;
+  top: 1rem;
+  left: calc(272px - 2.7rem);
+  height: 2.2rem; /* 1rem padding + line-height: normal */
+}
 #observablehq-sidebar-toggle:checked {
   cursor: w-resize;
   top: 1rem;
@@ -328,11 +335,18 @@
   #observablehq-sidebar-toggle {
     transition: none;
   }
-  #observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within)::before,
+  #observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within)::before{
+    transform: scaleX(-1);
+  }
   #observablehq-sidebar-toggle:indeterminate::before {
     transform: scaleX(-1);
   }
-  #observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within),
+  #observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within){
+    cursor: w-resize;
+    top: 1rem;
+    left: calc(272px - 2.7rem);
+    height: 2.2rem;
+  }
   #observablehq-sidebar-toggle:indeterminate {
     cursor: w-resize;
     top: 1rem;
