@@ -4,7 +4,7 @@ const origin = process.env.OBSERVABLEHQ_ORIGIN;
 const parent = window.parent; // capture to prevent reassignment
 
 let listener = null;
-let queuedMessages = [];
+let queuedMessages = null;
 
 async function messaged(event) {
   if (!event.isTrusted || event.origin !== origin || event.source !== parent) return;
@@ -16,6 +16,7 @@ async function messaged(event) {
   } else if (message.type === "load_script") {
     try {
       if (listener) throw new Error("a script is already loaded");
+      queuedMessages = [];
       const module = await import(message.url);
       if (module.listener) {
         listener = module.listener;
@@ -28,12 +29,9 @@ async function messaged(event) {
     }
   } else if (listener) {
     listener(message);
-  } else {
-    if (queuedMessages) {
-      queuedMessages.push(message);
-    } else {
-      console.errror("Bug: tried to enqueue a message after the queue was cleared");
-    }
+  } else if (queuedMessages) {
+    queuedMessages.push(message);
+  }
   }
 }
 
