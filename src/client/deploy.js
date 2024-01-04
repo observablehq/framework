@@ -32,7 +32,6 @@ async function messaged(event) {
   } else if (queuedMessages) {
     queuedMessages.push(message);
   }
-  }
 }
 
 let fingerprint = `c-${Math.random().toString(36).slice(2, 8).padStart(6, "0")}`;
