@@ -3,17 +3,34 @@ export * from "./index.js";
 const origin = process.env.OBSERVABLEHQ_ORIGIN;
 const parent = window.parent; // capture to prevent reassignment
 
-function messaged(event) {
+let listener = null;
+let queuedMessages = null;
+
+async function messaged(event) {
   if (!event.isTrusted || event.origin !== origin || event.source !== parent) return;
   event.stopImmediatePropagation();
   const message = event.data;
+
   if (message.type === "hello") {
     postMessage({type: "hello"});
   } else if (message.type === "load_script") {
-    import(message.url).then(
-      () => postMessage({type: "load_script_complete", url: message.url, re: message.id}),
-      (error) => postMessage({type: "load_script_error", url: message.url, error: error.message, re: message.id})
-    );
+    try {
+      if (listener) throw new Error("a script is already loaded");
+      queuedMessages = [];
+      const module = await import(message.url);
+      if (module.listener) {
+        listener = module.listener;
+        queuedMessages.forEach((m) => Promise.resolve(m).then(listener));
+        queuedMessages = null;
+      }
+      postMessage({type: "load_script_complete", url: message.url, re: message.id});
+    } catch (error) {
+      postMessage({type: "load_script_error", url: message.url, error: error.message, re: message.id});
+    }
+  } else if (listener) {
+    listener(message);
+  } else if (queuedMessages) {
+    queuedMessages.push(message);
   }
 }
 

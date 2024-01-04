@@ -93,8 +93,7 @@ export async function build(
       await effects.writeFile(outputPath, code);
     }
     // Generate the style bundles.
-    for (const [entry, name] of [[config.style, "style.css"]]) {
-      const clientPath = getClientPath(entry);
+    for (const [clientPath, name] of [[config.style, "style.css"]]) {
       const outputPath = join("_observablehq", name);
       effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
       const code = await bundleStyles(clientPath);
