@@ -47,6 +47,16 @@ describe("login command", () => {
       }
     }
   });
+
+  it("gives a manual link when not on a tty", async () => {
+    const effects = new MockEffects({isTty: false});
+    const server = await login(effects);
+    if (server.isRunning) {
+      await server.stop();
+      assert.ok(!server.isRunning, "server should have shut down automatically");
+    }
+    effects.logger.assertExactLogs([/^Open this link in your browser/, /^\s*https:/]);
+  });
 });
 
 describe("logout command", () => {
@@ -111,10 +121,12 @@ class MockEffects implements CommandEffects {
   public openBrowserDeferred = new Deferred<string>();
   public setApiKeyDeferred = new Deferred<{id: string; apiKey: string}>();
   public exitDeferred = new Deferred<void>();
+  public isTty: boolean;
   public observableApiKey: string | null = null;
 
-  constructor({apiKey = null}: {apiKey?: string | null} = {}) {
+  constructor({apiKey = null, isTty = true}: {apiKey?: string | null; isTty?: boolean} = {}) {
     this.observableApiKey = apiKey;
+    this.isTty = isTty;
   }
 
   async getObservableApiKey(logger: Logger) {
@@ -127,9 +139,6 @@ class MockEffects implements CommandEffects {
   async setObservableApiKey(info) {
     this.setApiKeyDeferred.resolve(info);
     this.observableApiKey = info?.key;
-  }
-  isatty() {
-    return true;
   }
   openUrlInBrowser(url: string) {
     this.openBrowserDeferred.resolve(url);

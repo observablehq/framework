@@ -20,7 +20,7 @@ export const commandRequiresAuthenticationMessage = `You need to be authenticate
 export interface CommandEffects {
   openUrlInBrowser: (url: string) => Promise<void>;
   logger: Logger;
-  isatty: (fd: number) => boolean;
+  isTty: boolean;
   waitForEnter: () => Promise<void>;
   getObservableApiKey: (logger: Logger) => Promise<ApiKey>;
   setObservableApiKey: (info: {id: string; key: string} | null) => Promise<void>;
@@ -30,7 +30,7 @@ export interface CommandEffects {
 const defaultEffects: CommandEffects = {
   openUrlInBrowser: async (target) => void (await open(target)),
   logger: console,
-  isatty,
+  isTty: isatty(process.stdin.fd),
   waitForEnter,
   getObservableApiKey,
   setObservableApiKey,
@@ -54,7 +54,7 @@ export async function login(effects = defaultEffects) {
   url.searchParams.set("request", Buffer.from(JSON.stringify(request)).toString("base64"));
 
   const {logger} = effects;
-  if (effects.isatty(process.stdin.fd)) {
+  if (effects.isTty) {
     logger.log(`Press Enter to open ${url.hostname} in your browser...`);
     await effects.waitForEnter();
     await effects.openUrlInBrowser(url.toString());

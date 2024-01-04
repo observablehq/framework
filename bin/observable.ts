@@ -2,6 +2,8 @@
 
 import {type ParseArgsConfig, parseArgs} from "node:util";
 import {readConfig} from "../src/config.js";
+import {CliError} from "../src/error.js";
+import {red} from "../src/tty.js";
 
 const args = process.argv.slice(2);
 
@@ -54,12 +56,13 @@ else if (values.help) {
   command = "help";
 }
 
-switch (command) {
-  case undefined:
-  case "help": {
-    helpArgs(command, {allowPositionals: true});
-    console.log(
-      `usage: observable <command>
+try {
+  switch (command) {
+    case undefined:
+    case "help": {
+      helpArgs(command, {allowPositionals: true});
+      console.log(
+        `usage: observable <command>
   preview      start the preview server
   build        generate a static site
   login        sign-in to Observable
@@ -68,78 +71,85 @@ switch (command) {
   whoami       check authentication status
   help         print usage information
   version      print the version`
-    );
-    if (command === undefined) process.exit(1);
-    break;
-  }
-  case "version": {
-    helpArgs(command, {});
-    await import("../package.json").then(({version}: any) => console.log(version));
-    break;
-  }
-  case "build": {
-    const {
-      values: {config, root}
-    } = helpArgs(command, {
-      options: {...CONFIG_OPTION}
-    });
-    await import("../src/build.js").then(async (build) => build.build({config: await readConfig(config, root)}));
-    break;
-  }
-  case "deploy": {
-    const {
-      values: {config, root}
-    } = helpArgs(command, {
-      options: {...CONFIG_OPTION}
-    });
-    await import("../src/deploy.js").then(async (deploy) => deploy.deploy({config: await readConfig(config, root)}));
-    break;
-  }
-  case "preview": {
-    const {
-      values: {config, root, host, port}
-    } = helpArgs(command, {
-      options: {
-        ...CONFIG_OPTION,
-        host: {
-          type: "string",
-          default: process.env.HOSTNAME ?? "127.0.0.1"
-        },
-        port: {
-          type: "string",
-          default: process.env.PORT
+      );
+      if (command === undefined) process.exit(1);
+      break;
+    }
+    case "version": {
+      helpArgs(command, {});
+      await import("../package.json").then(({version}: any) => console.log(version));
+      break;
+    }
+    case "build": {
+      const {
+        values: {config, root}
+      } = helpArgs(command, {
+        options: {...CONFIG_OPTION}
+      });
+      await import("../src/build.js").then(async (build) => build.build({config: await readConfig(config, root)}));
+      break;
+    }
+    case "deploy": {
+      const {
+        values: {config, root}
+      } = helpArgs(command, {
+        options: {...CONFIG_OPTION}
+      });
+      await import("../src/deploy.js").then(async (deploy) => deploy.deploy({config: await readConfig(config, root)}));
+      break;
+    }
+    case "preview": {
+      const {
+        values: {config, root, host, port}
+      } = helpArgs(command, {
+        options: {
+          ...CONFIG_OPTION,
+          host: {
+            type: "string",
+            default: process.env.HOSTNAME ?? "127.0.0.1"
+          },
+          port: {
+            type: "string",
+            default: process.env.PORT
+          }
         }
-      }
-    });
-    await import("../src/preview.js").then(async (preview) =>
-      preview.preview({
-        config: await readConfig(config, root),
-        hostname: host!,
-        port: port === undefined ? undefined : +port
-      })
-    );
-    break;
+      });
+      await import("../src/preview.js").then(async (preview) =>
+        preview.preview({
+          config: await readConfig(config, root),
+          hostname: host!,
+          port: port === undefined ? undefined : +port
+        })
+      );
+      break;
+    }
+    case "login": {
+      helpArgs(command, {});
+      await import("../src/observableApiAuth.js").then((auth) => auth.login());
+      break;
+    }
+    case "logout": {
+      helpArgs(command, {});
+      await import("../src/observableApiAuth.js").then((auth) => auth.logout());
+      break;
+    }
+    case "whoami": {
+      helpArgs(command, {});
+      await import("../src/observableApiAuth.js").then((auth) => auth.whoami());
+      break;
+    }
+    default: {
+      console.error(`observable: unknown command '${command}'. See 'observable help'.`);
+      process.exit(1);
+      break;
+    }
   }
-  case "login": {
-    helpArgs(command, {});
-    await import("../src/observableApiAuth.js").then((auth) => auth.login());
-    break;
+} catch (error) {
+  if (error instanceof CliError) {
+    if (error.print) console.error(red(error.message));
+    process.exit(error.exitCode);
   }
-  case "logout": {
-    helpArgs(command, {});
-    await import("../src/observableApiAuth.js").then((auth) => auth.logout());
-    break;
-  }
-  case "whoami": {
-    helpArgs(command, {});
-    await import("../src/observableApiAuth.js").then((auth) => auth.whoami());
-    break;
-  }
-  default: {
-    console.error(`observable: unknown command '${command}'. See 'observable help'.`);
-    process.exit(1);
-    break;
-  }
+  throw error;
 }
 
 // A wrapper for parseArgs that adds --help functionality with automatic usage.
