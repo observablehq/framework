@@ -1,32 +1,23 @@
 # Styles
 
-
 The default stylesheet is defined as:
 
 ```css
-@import url("observablehq:mode-auto.css");
+@import url("observablehq:scheme-auto.css");
 @import url("observablehq:default.css");
 ```
 
-The first line imports the built-in `mode-auto.css` stylesheet, which toggles the colors based on the user’s system preference of light mode vs. dark mode. To always use the light mode, change the first line to:
+The first line imports the built-in `scheme-auto.css` stylesheet, which toggles the colors based on the user’s system preference of light vs. dark color schemes (a.k.a., “dark mode”). To only use the light scheme, edit `docs/style.css` and change the first line to:
 
 ```css
-@import url("observablehq:mode-light.css");
+@import url("observablehq:scheme-light.css");
 ```
 
-(and conversely `mode-dark.css` to force dark mode).
+(conversely change it to `scheme-dark.css` to always use dark mode).
 
-The second line imports the built-in `default.css` which in turn imports thematic stylesheets:
+The second line imports the built-in `default.css` which contains rules that govern the colors, the page layout, style how values are [displayed](javascript/display), etc.
 
-```css
-@import url("./global.css");
-@import url("./layout.css");
-@import url("./inspector.css");
-@import url("./inputs.css");
-@import url("./plot.css");
-```
-
-While you can replace or remove any or all of these files in your own stylesheet, it is often simpler to either start from scratch (import your own design directly and ignore the built-ins), or to use the built-in and augment them marginally with additional rules and variables.
+While you can replace or remove any of these files in your own stylesheet, it is often simpler to either start from scratch (import your own designs directly and ignore the built-ins), or use the built-in and augment them marginally with additional rules and variables.
 
 ## Variables
 
@@ -34,4 +25,20 @@ TK list available variables.
 
 ## Themes
 
-TK.
+The configuration can define themes (modifications or replacements of the default style.css), that a page can then use by specifying the desired theme in its front-matter:
+
+```yaml
+---
+theme: special
+---
+```
+
+A theme is defined in the configuration as the value of the themes object, with the theme name as key. The value is an object that specifies the stylesheet:
+
+```json
+themes: {
+  special: {style: "docs/special.css"}
+}
+```
+
+You can define as many themes as you want. As soon as one page in the project calls a given theme, the corresponding stylesheet will be built (and optimized with [rollup](https://rollupjs.org/)) as `_observable/{theme}.css`.

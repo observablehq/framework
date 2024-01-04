@@ -29,7 +29,7 @@ The path to the output root; defaults to `dist`.
 
 ## style
 
-The path to the project’s stylesheet. This is typically set to `docs/style.css` to override or augment the default stylesheet, say to define the project’s colors. See the [styles](styles) page for more details.
+The path to the project’s stylesheet. This is typically set to `docs/style.css` to override or augment the default stylesheet, say to define the project’s colors. See the [style](style) page for more details.
 
 ## themes
 
@@ -45,11 +45,11 @@ Themes can be referenced in any page by specifying the theme option in the [fron
 
 ```yaml
 ---
-theme: special
+theme: solarized
 ---
 ```
 
-See the [styles](styles#themes) page for more details.
+See the [style](style#themes) page for more details.
 
 ## title
 
@@ -74,7 +74,6 @@ export interface Section {
   open?: boolean;
 }
 ```
-
 
 If a section’s **open** option is not set, it defaults to true.
 

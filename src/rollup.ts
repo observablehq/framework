@@ -17,9 +17,9 @@ import {relativeUrl} from "./url.js";
 
 const STYLE_MODULES = {
   "observablehq:default.css": getClientPath("./src/style/default.css"),
-  "observablehq:theme-auto.css": getClientPath("./src/style/theme-auto.css"),
-  "observablehq:theme-dark.css": getClientPath("./src/style/theme-dark.css"),
-  "observablehq:theme-light.css": getClientPath("./src/style/theme-light.css"),
+  "observablehq:scheme-auto.css": getClientPath("./src/style/scheme-auto.css"),
+  "observablehq:scheme-dark.css": getClientPath("./src/style/scheme-dark.css"),
+  "observablehq:scheme-light.css": getClientPath("./src/style/scheme-light.css"),
   "observablehq:dashboard.css": getClientPath("./src/style/dashboard.css")
 };
 

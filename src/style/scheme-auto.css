@@ -1,0 +1,2 @@
+@import url("./scheme-light.css");
+@import url("./scheme-dark.css") (prefers-color-scheme: dark);
