@@ -12,6 +12,7 @@ Here are a few examples of Markdown content to get you started.
 ---
 title: My favorite page
 toc: false
+theme: custom
 ---
 ```
 

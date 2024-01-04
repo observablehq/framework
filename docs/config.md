@@ -29,14 +29,27 @@ The path to the output root; defaults to `dist`.
 
 ## style
 
-The path to the project’s stylesheet. This is typically set to `docs/style.css` to override or augment the default stylesheet, or to apply a theme. For example, to use the *light* theme:
+The path to the project’s stylesheet. This is typically set to `docs/style.css` to override or augment the default stylesheet, say to define the project’s colors. See the [styles](styles) page for more details.
 
-```css
-@import url("observablehq:theme-light.css");
-@import url("observablehq:default.css");
+## themes
+
+An object indicating the style option associated with theme names. For example, to reference a new *solarized* theme, create a `docs/solarized.css` stylesheet and set:
+
+```json
+themes: {
+  solarized: { style: "docs/solarized.css" }
+}
 ```
 
-The current built-in themes are: *auto* (default), *light*, and *dark*.
+Themes can be referenced in any page by specifying the theme option in the [front-matter](markdown#front-matter):
+
+```yaml
+---
+theme: special
+---
+```
+
+See the [styles](styles#themes) page for more details.
 
 ## title
 
