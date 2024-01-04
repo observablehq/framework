@@ -20,7 +20,7 @@ async function messaged(event) {
       const module = await import(message.url);
       if (module.listener) {
         listener = module.listener;
-        queuedMessages.forEach((m) => listener(m));
+        queuedMessages.forEach((m) => Promise.resolve(m).then(listener));
         queuedMessages = null;
       }
       postMessage({type: "load_script_complete", url: message.url, re: message.id});
