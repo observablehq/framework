@@ -124,6 +124,66 @@ describe("deploy", () => {
     effects.close();
   });
 
+  it("makes expected API calls when a project doesn't exist yet", async () => {
+    const projectId = "project123";
+    const deployConfig = {projectId};
+    const deployId = "deploy456";
+    const config = await normalizeConfig({
+      root: TEST_SOURCE_ROOT,
+      title: "Acme BI",
+      deploy: {workspace: "mock-user-ws", project: "bi"}
+    });
+    const apiMock = new ObservableApiMock()
+      .handleGetProject({
+        workspaceLogin: config.deploy!.workspace,
+        projectSlug: config.deploy!.project,
+        projectId,
+        status: 404
+      })
+      .handleGetUser()
+      .handlePostProject({projectId})
+      .handlePostDeploy({projectId, deployId})
+      .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
+      .handlePostDeployUploaded({deployId})
+      .start();
+
+    const effects = new MockDeployEffects({deployConfig}).addIoResponse(/^Deploy message: /, "fix some bugs");
+    await deploy({config}, effects);
+
+    apiMock.close();
+    effects.close();
+  });
+
+  it("throws an error if project doesn't exist and config has no title", async () => {
+    const projectId = "project123";
+    const deployConfig = {projectId};
+    const config = await normalizeConfig({
+      root: TEST_SOURCE_ROOT,
+      // no title!
+      deploy: {workspace: "mock-user-ws", project: "bi"}
+    });
+    const apiMock = new ObservableApiMock()
+      .handleGetProject({
+        workspaceLogin: config.deploy!.workspace,
+        projectSlug: config.deploy!.project,
+        projectId,
+        status: 404
+      })
+      .start();
+
+    const effects = new MockDeployEffects({deployConfig});
+
+    try {
+      await deploy({config}, effects);
+      assert.fail("expected error");
+    } catch (err) {
+      CliError.assert(err, {message: /You haven't configured a project title/});
+    }
+
+    apiMock.close();
+    effects.close();
+  });
+
   it("shows message for missing API key", async () => {
     const apiMock = new ObservableApiMock().start();
     const effects = new MockDeployEffects({apiKey: null});
