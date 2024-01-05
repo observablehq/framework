@@ -8,12 +8,14 @@ import {addImplicitSpecifiers, addImplicitStylesheets} from "./libraries.js";
 import {type ParseResult, parseMarkdown} from "./markdown.js";
 import {type PageLink, findLink, normalizePath} from "./pager.js";
 import {getClientPath, rollupClient} from "./rollup.js";
+import {styleUrl} from "./theme.js";
 import {relativeUrl} from "./url.js";
 
 export interface Render {
   html: string;
   files: FileReference[];
   imports: ImportReference[];
+  theme?: string;
 }
 
 export interface RenderOptions extends Config {
@@ -23,20 +25,16 @@ export interface RenderOptions extends Config {
 
 export async function renderPreview(source: string, options: RenderOptions): Promise<Render> {
   const parseResult = await parseMarkdown(source, options.root, options.path);
-  return {
-    html: await render(parseResult, {...options, preview: true}),
-    files: parseResult.files,
-    imports: parseResult.imports
-  };
+  const {files, imports} = parseResult;
+  const html = await render(parseResult, {...options, preview: true});
+  return {html, files, imports};
 }
 
 export async function renderServerless(source: string, options: RenderOptions): Promise<Render> {
   const parseResult = await parseMarkdown(source, options.root, options.path);
-  return {
-    html: await render(parseResult, options),
-    files: parseResult.files,
-    imports: parseResult.imports
-  };
+  const {files, imports, theme} = parseResult;
+  const html = await render(parseResult, options);
+  return {html, files, imports, theme};
 }
 
 export function renderDefineCell(cell: Transpile): string {
@@ -63,7 +61,7 @@ ${
         .filter((title): title is string => !!title)
         .join(" | ")}</title>\n`
     : ""
-}${await renderLinks(parseResult, path, createImportResolver(root, "_import"))}${
+}${await renderLinks(parseResult, path, createImportResolver(root, "_import"), options.preview)}${
     path === "/404"
       ? html.unsafe(`\n<script type="module">
 
@@ -169,8 +167,16 @@ function prettyPath(path: string): string {
   return path.replace(/\/index$/, "/") || "/";
 }
 
-async function renderLinks(parseResult: ParseResult, path: string, resolver: ImportResolver): Promise<Html> {
-  const stylesheets = new Set<string>([relativeUrl(path, "/_observablehq/style.css"), "https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"]); // prettier-ignore
+async function renderLinks(
+  parseResult: ParseResult,
+  path: string,
+  resolver: ImportResolver,
+  preview?: boolean
+): Promise<Html> {
+  const stylesheets = new Set<string>([
+    styleUrl(path, parseResult.theme, preview),
+    "https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"
+  ]); // prettier-ignore
   const specifiers = new Set<string>(["npm:@observablehq/runtime", "npm:@observablehq/stdlib"]);
   for (const {name} of parseResult.imports) specifiers.add(name);
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));

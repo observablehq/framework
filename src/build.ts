@@ -9,6 +9,7 @@ import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
 import {renderServerless} from "./render.js";
 import {bundleStyles, getClientPath, rollupClient} from "./rollup.js";
+import {styleHash} from "./theme.js";
 import {faint} from "./tty.js";
 import {resolvePath} from "./url.js";
 
@@ -71,6 +72,7 @@ export async function build(
   // Render .md files, building a list of file attachments as we go.
   const files: string[] = [];
   const imports: string[] = [];
+  const styles = new Set<string | null>([null]);
   for await (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
@@ -80,6 +82,7 @@ export async function build(
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
     files.push(...render.files.map(resolveFile));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
+    if (render.theme) styles.add(render.theme);
     await effects.writeFile(outputPath, render.html);
   }
 
@@ -92,11 +95,13 @@ export async function build(
       const code = await rollupClient(clientPath, {minify: true});
       await effects.writeFile(outputPath, code);
     }
-    // Generate the style bundle.
-    const outputPath = join("_observablehq", "style.css");
-    effects.output.write(`${faint("bundle")} config.style ${faint("→")} `);
-    const code = await bundleStyles(config);
-    await effects.writeFile(outputPath, code);
+    // Generate the page style bundles.
+    for (const theme of styles) {
+      const outputPath = join("_observablehq", `${theme === null ? "style" : `style-${styleHash(theme)}`}.css`);
+      effects.output.write(`${faint("bundle")} config.style ${faint("→")} `);
+      const code = await bundleStyles(theme === null ? config : {...config, theme: theme.split(",")});
+      await effects.writeFile(outputPath, code);
+    }
   }
 
   // Copy over the referenced files.

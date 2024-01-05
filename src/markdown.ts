@@ -18,6 +18,7 @@ import {parseInfo} from "./info.js";
 import type {FileReference, ImportReference, PendingTranspile, Transpile} from "./javascript.js";
 import {transpileJavaScript} from "./javascript.js";
 import {transpileTag} from "./tag.js";
+import {normalizeTheme} from "./theme.js";
 import {resolvePath} from "./url.js";
 
 export interface ReadMarkdownResult {
@@ -47,6 +48,7 @@ export interface ParseResult {
   pieces: HtmlPiece[];
   cells: CellPiece[];
   hash: string;
+  theme?: string;
 }
 
 interface RenderPiece {
@@ -439,7 +441,8 @@ export async function parseMarkdown(source: string, root: string, sourcePath: st
     imports: context.imports,
     pieces: toParsePieces(context.pieces),
     cells: await toParseCells(context.pieces),
-    hash: await computeMarkdownHash(source, root, sourcePath, context.imports)
+    hash: await computeMarkdownHash(source, root, sourcePath, context.imports),
+    theme: normalizeTheme(parts.data.theme)
   };
 }
 

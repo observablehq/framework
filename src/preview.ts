@@ -20,6 +20,7 @@ import {diffMarkdown, readMarkdown} from "./markdown.js";
 import type {ParseResult, ReadMarkdownResult} from "./markdown.js";
 import {renderPreview} from "./render.js";
 import {bundleStyles, getClientPath, rollupClient} from "./rollup.js";
+import {styleHash} from "./theme.js";
 import {bold, faint, green, underline} from "./tty.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
@@ -93,7 +94,12 @@ export class PreviewServer {
       } else if (pathname === "/_observablehq/style.css") {
         end(req, res, await bundleStyles(config), "text/css");
       } else if (pathname.startsWith("/_observablehq/")) {
-        send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
+        const style = pathname.slice("/_observablehq/".length).match(/^style-([0-9a-f]+)\.css$/);
+        if (style) {
+          const theme = decodeURIComponent(url.search.slice(1));
+          if (styleHash(theme) !== style[1]) throw new Error(`unexpected style signature ${style[1]}`);
+          end(req, res, await bundleStyles({...config, theme: theme.split(",")}), "text/css");
+        } else send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
         const file = pathname.slice("/_import".length);
         let js: string;
