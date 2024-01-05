@@ -23,21 +23,13 @@ const STYLE_MODULES = {
   "observablehq:theme-light.css": getClientPath("./src/style/theme-light.css")
 };
 
-export async function bundleStyles({style, theme}: Config): Promise<string> {
+export async function bundleStyles({style, theme, root}: Config): Promise<string> {
+  const [alias, contents] = style ? [null, ""] : styleAliasMap(theme, root);
   const result = await build({
     bundle: true,
-    ...(style
-      ? {entryPoints: [style]}
-      : {
-          stdin: {
-            contents: `${theme
-              .map((t) => `@import url(${JSON.stringify(`observablehq:theme-${t}.css`)});\n`)
-              .join("")}@import url("observablehq:default.css");\n`,
-            loader: "css"
-          }
-        }),
+    ...(style ? {entryPoints: [style]} : {stdin: {contents, loader: "css"}}),
     write: false,
-    alias: STYLE_MODULES
+    alias: {...STYLE_MODULES, ...alias}
   });
   return result.outputFiles[0].text;
 }
@@ -151,4 +143,21 @@ export function getClientPath(entry: string): string {
     if (existsSync(tspath)) return tspath;
   }
   return path;
+}
+
+function styleAliasMap(theme: string[], root: string): [{[key: string]: string}, string] {
+  const alias = {};
+  const modules: string[] = [];
+  for (const t of [...theme, "default"]) {
+    const local = join(root, `${t}.css`);
+    if (!existsSync(`./docs/${t}.css`)) {
+      const p = `observablehq:${t === "default" ? t : `theme-${t}`}.css`;
+      if (!(p in STYLE_MODULES)) throw new Error(`unsupported theme ${t}`);
+      modules.push(p);
+    } else {
+      alias[t] = local;
+      modules.push(t);
+    }
+  }
+  return [alias, modules.map((d) => `@import url(${JSON.stringify(d)});\n`).join("")];
 }
