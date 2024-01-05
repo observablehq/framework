@@ -9,6 +9,7 @@ import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
+import type {Config} from "./config.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
 import {resolveNpmImport} from "./javascript/imports.js";
 import {getObservableUiHost} from "./observableApiClient.js";
@@ -22,10 +23,19 @@ const STYLE_MODULES = {
   "observablehq:theme-light.css": getClientPath("./src/style/theme-light.css")
 };
 
-export async function bundleStyles(clientPath: string): Promise<string> {
+export async function bundleStyles({style, theme}: Config): Promise<string> {
   const result = await build({
     bundle: true,
-    entryPoints: [clientPath],
+    ...(style
+      ? {entryPoints: [style]}
+      : {
+          stdin: {
+            contents: `${theme
+              .map((t) => `@import url(${JSON.stringify(`observablehq:theme-${t}.css`)});\n`)
+              .join("")}@import url("observablehq:default.css");\n`,
+            loader: "css"
+          }
+        }),
     write: false,
     alias: STYLE_MODULES
   });

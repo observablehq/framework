@@ -91,7 +91,7 @@ export class PreviewServer {
       } else if (pathname === "/_observablehq/client.js") {
         end(req, res, await rollupClient(getClientPath("./src/client/preview.js")), "text/javascript");
       } else if (pathname === "/_observablehq/style.css") {
-        end(req, res, await bundleStyles(config.style), "text/css");
+        end(req, res, await bundleStyles(config), "text/css");
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {

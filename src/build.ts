@@ -92,13 +92,11 @@ export async function build(
       const code = await rollupClient(clientPath, {minify: true});
       await effects.writeFile(outputPath, code);
     }
-    // Generate the style bundles.
-    for (const [clientPath, name] of [[config.style, "style.css"]]) {
-      const outputPath = join("_observablehq", name);
-      effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
-      const code = await bundleStyles(clientPath);
-      await effects.writeFile(outputPath, code);
-    }
+    // Generate the style bundle.
+    const outputPath = join("_observablehq", "style.css");
+    effects.output.write(`${faint("bundle")} config.style ${faint("→")} `);
+    const code = await bundleStyles(config);
+    await effects.writeFile(outputPath, code);
   }
 
   // Copy over the referenced files.

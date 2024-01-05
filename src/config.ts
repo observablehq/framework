@@ -2,7 +2,6 @@ import {readFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path";
 import {visitFiles} from "./files.js";
 import {parseMarkdown} from "./markdown.js";
-import {getClientPath} from "./rollup.js";
 
 export interface Page {
   name: string;
@@ -27,7 +26,8 @@ export interface Config {
   pages: (Page | Section)[]; // TODO rename to sidebar?
   pager: boolean; // defaults to true
   toc: TableOfContents;
-  style: string; // defaults to default stylesheet
+  style?: string; // for custom styles; defaults to undefined
+  theme: string[]; // defaults to ["auto"]; no effect if style is defined
   deploy: null | {workspace: string; project: string};
 }
 
@@ -62,17 +62,18 @@ async function readPages(root: string): Promise<Page[]> {
 }
 
 export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Promise<Config> {
-  let {root = defaultRoot, output = "dist", style = getClientPath("./src/style/index.css"), deploy} = spec;
+  let {root = defaultRoot, output = "dist", style, theme = "auto", deploy} = spec;
   root = String(root);
   output = String(output);
-  style = String(style);
+  if (style !== undefined) style = String(style);
+  theme = typeof theme === "string" ? [theme] : Array.from(theme, String);
   let {title, pages = await readPages(root), pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
   pager = Boolean(pager);
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace), project: String(deploy.project)} : null;
-  return {root, output, title, pages, pager, toc, style, deploy};
+  return {root, output, title, pages, pager, toc, style, theme, deploy};
 }
 
 function normalizePageOrSection(spec: any): Page | Section {
