@@ -23,7 +23,7 @@ export interface CommandEffects {
   isTty: boolean;
   waitForEnter: () => Promise<void>;
   getObservableApiKey: (logger: Logger) => Promise<ApiKey>;
-  setObservableApiKey: (id: string, key: string) => Promise<void>;
+  setObservableApiKey: (info: {id: string; key: string} | null) => Promise<void>;
   exitSuccess: () => void;
 }
 
@@ -64,6 +64,10 @@ export async function login(effects = defaultEffects) {
   }
   return server; // for testing
   // execution continues in the server's request handler
+}
+
+export async function logout(effects = defaultEffects) {
+  await effects.setObservableApiKey(null);
 }
 
 export async function whoami(effects = defaultEffects) {
@@ -203,7 +207,7 @@ class LoginServer {
       throw new HttpError("Invalid nonce", 400);
     }
 
-    await this._effects.setObservableApiKey(body.id, body.key);
+    await this._effects.setObservableApiKey({id: body.id, key: body.key});
 
     res.statusCode = 201;
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");

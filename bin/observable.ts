@@ -66,6 +66,7 @@ try {
   preview      start the preview server
   build        generate a static site
   login        sign-in to Observable
+  logout       sign-out of Observable
   deploy       deploy a project to Observable
   whoami       check authentication status
   help         print usage information
@@ -125,6 +126,11 @@ try {
     case "login": {
       helpArgs(command, {});
       await import("../src/observableApiAuth.js").then((auth) => auth.login());
+      break;
+    }
+    case "logout": {
+      helpArgs(command, {});
+      await import("../src/observableApiAuth.js").then((auth) => auth.logout());
       break;
     }
     case "whoami": {

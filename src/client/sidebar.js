@@ -10,7 +10,7 @@ if (toggle) {
     else sessionStorage.setItem("observablehq-sidebar", toggle.checked);
   };
   addEventListener("keypress", (event) => {
-    if (event.key === "b" && event.metaKey && !event.ctrlKey) {
+    if (event.code === "KeyB" && (event.metaKey || event.altKey) && event.target === document.body && !event.ctrlKey) {
       toggle.click();
       event.preventDefault();
     }
