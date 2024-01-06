@@ -90,24 +90,33 @@ export async function deploy({config}: DeployOptions, effects = defaultEffects):
       }
     }
   } else {
-    // Project doesn't exist, so create it.
-    if (!config.title) {
-      throw new CliError("You haven't configured a project title. Please set title in your configuration.");
+    // Project doesn't exist, so ask the user if they want to create it.
+    // In non-interactive mode just cancel.
+    if (effects.isTty) {
+      const choice = await promptUserForInput(effects.input, effects.output, "No project exists. Create it now? [y/N]");
+      if (choice.trim().toLowerCase().charAt(0) !== "y") {
+        throw new CliError("User cancelled deploy.", {print: false, exitCode: 2});
+      }
+      if (!config.title) {
+        throw new CliError("You haven't configured a project title. Please set title in your configuration.");
+      }
+      const currentUserResponse = await apiClient.getCurrentUser();
+      const workspace = currentUserResponse.workspaces.find((w) => w.login === config.deploy?.workspace);
+      if (!workspace) {
+        const availableWorkspaces = currentUserResponse.workspaces.map((w) => w.login).join(", ");
+        throw new CliError(
+          `Workspace ${config.deploy?.workspace} not found. Available workspaces: ${availableWorkspaces}.`
+        );
+      }
+      const project = await apiClient.postProject({
+        slug: config.deploy.project,
+        title: config.title,
+        workspaceId: workspace.id
+      });
+      projectId = project.id;
+    } else {
+      throw new CliError("Cancelling deploy due to non-existent project.");
     }
-    const currentUserResponse = await apiClient.getCurrentUser();
-    const workspace = currentUserResponse.workspaces.find((w) => w.login === config.deploy?.workspace);
-    if (!workspace) {
-      const availableWorkspaces = currentUserResponse.workspaces.map((w) => w.login).join(", ");
-      throw new CliError(
-        `Workspace ${config.deploy?.workspace} not found. Available workspaces: ${availableWorkspaces}.`
-      );
-    }
-    const project = await apiClient.postProject({
-      slug: config.deploy.project,
-      title: config.title,
-      workspaceId: workspace.id
-    });
-    projectId = project.id;
   }
 
   await effects.setDeployConfig(config.root, {projectId});
