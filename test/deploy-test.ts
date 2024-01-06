@@ -98,7 +98,11 @@ class MockDeployEffects implements DeployEffects {
 // This test should have exactly one index.md in it, and nothing else; that one
 // page is why we +1 to the number of extra files.
 const TEST_SOURCE_ROOT = "test/input/build/simple-public";
-const TEST_CONFIG = await normalizeConfig({root: TEST_SOURCE_ROOT, deploy: {workspace: "acme", project: "bi"}});
+const TEST_CONFIG = await normalizeConfig({
+  root: TEST_SOURCE_ROOT,
+  title: "Mock BI",
+  deploy: {workspace: "mock-user-ws", project: "bi"}
+});
 
 // TODO These tests need mockJsDelivr, too!
 describe("deploy", () => {
@@ -128,15 +132,10 @@ describe("deploy", () => {
     const projectId = "project123";
     const deployConfig = {projectId};
     const deployId = "deploy456";
-    const config = await normalizeConfig({
-      root: TEST_SOURCE_ROOT,
-      title: "Acme BI",
-      deploy: {workspace: "mock-user-ws", project: "bi"}
-    });
     const apiMock = new ObservableApiMock()
       .handleGetProject({
-        workspaceLogin: config.deploy!.workspace,
-        projectSlug: config.deploy!.project,
+        workspaceLogin: TEST_CONFIG.deploy!.workspace,
+        projectSlug: TEST_CONFIG.deploy!.project,
         projectId,
         status: 404
       })
@@ -151,7 +150,7 @@ describe("deploy", () => {
       .addIoResponse(/No project exists. Create it now/, "y")
       .addIoResponse(/^Deploy message: /, "fix some bugs");
 
-    await deploy({config}, effects);
+    await deploy({config: TEST_CONFIG}, effects);
 
     apiMock.close();
     effects.close();
@@ -160,15 +159,10 @@ describe("deploy", () => {
   it("makes expected API calls for non-existent project, user chooses not to create", async () => {
     const projectId = "project123";
     const deployConfig = {projectId};
-    const config = await normalizeConfig({
-      root: TEST_SOURCE_ROOT,
-      title: "Acme BI",
-      deploy: {workspace: "mock-user-ws", project: "bi"}
-    });
     const apiMock = new ObservableApiMock()
       .handleGetProject({
-        workspaceLogin: config.deploy!.workspace,
-        projectSlug: config.deploy!.project,
+        workspaceLogin: TEST_CONFIG.deploy!.workspace,
+        projectSlug: TEST_CONFIG.deploy!.project,
         projectId,
         status: 404
       })
@@ -180,7 +174,7 @@ describe("deploy", () => {
     );
 
     try {
-      await deploy({config}, effects);
+      await deploy({config: TEST_CONFIG}, effects);
       assert.fail("expected error");
     } catch (error) {
       CliError.assert(error, {message: "User cancelled deploy.", print: false, exitCode: 2});
@@ -193,15 +187,10 @@ describe("deploy", () => {
   it("makes expected API calls for non-existent project, non-interactive", async () => {
     const projectId = "project123";
     const deployConfig = {projectId};
-    const config = await normalizeConfig({
-      root: TEST_SOURCE_ROOT,
-      title: "Acme BI",
-      deploy: {workspace: "mock-user-ws", project: "bi"}
-    });
     const apiMock = new ObservableApiMock()
       .handleGetProject({
-        workspaceLogin: config.deploy!.workspace,
-        projectSlug: config.deploy!.project,
+        workspaceLogin: TEST_CONFIG.deploy!.workspace,
+        projectSlug: TEST_CONFIG.deploy!.project,
         projectId,
         status: 404
       })
@@ -210,7 +199,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects({deployConfig, isTty: false});
 
     try {
-      await deploy({config}, effects);
+      await deploy({config: TEST_CONFIG}, effects);
       assert.fail("expected error");
     } catch (error) {
       CliError.assert(error, {message: "Cancelling deploy due to non-existent project."});
