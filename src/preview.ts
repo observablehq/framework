@@ -98,19 +98,23 @@ export class PreviewServer {
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
-        const file = pathname.slice("/_import".length);
-        if (pathname.endsWith(".css")) {
-          end(req, res, await bundleStyles({path: join(root, file)}), "text/css");
-        } else if (pathname.endsWith(".js")) {
-          let js: string;
-          try {
-            js = await readFile(join(root, file), "utf-8");
-          } catch (error) {
-            if (!isEnoent(error)) throw error;
-            throw new HttpError(`Not found: ${pathname}`, 404);
+        const path = pathname.slice("/_import".length);
+        const filepath = join(root, path);
+        try {
+          if (pathname.endsWith(".css")) {
+            await access(filepath, constants.R_OK);
+            end(req, res, await bundleStyles({path: filepath}), "text/css");
+            return;
+          } else if (pathname.endsWith(".js")) {
+            const input = await readFile(filepath, "utf-8");
+            const output = await rewriteModule(input, path, createImportResolver(root));
+            end(req, res, output, "text/javascript");
+            return;
           }
-          end(req, res, await rewriteModule(js, file, createImportResolver(root)), "text/javascript");
+        } catch (error) {
+          if (!isEnoent(error)) throw error;
         }
+        throw new HttpError(`Not found: ${pathname}`, 404);
       } else if (pathname.startsWith("/_file/")) {
         const path = pathname.slice("/_file".length);
         const filepath = join(root, path);
