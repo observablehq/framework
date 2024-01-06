@@ -19,6 +19,10 @@ export interface TableOfContents {
   show: boolean; // defaults to true
 }
 
+export type Style =
+  | {path: string} // custom stylesheet
+  | {theme: string[]}; // zero or more named theme
+
 export interface Config {
   root: string; // defaults to docs
   output: string; // defaults to dist
@@ -26,8 +30,7 @@ export interface Config {
   pages: (Page | Section)[]; // TODO rename to sidebar?
   pager: boolean; // defaults to true
   toc: TableOfContents;
-  style?: string; // for custom styles; defaults to undefined
-  theme: string[]; // defaults to ["auto"]; no effect if style is defined
+  style: null | Style; // defaults to {theme: ["auto"]}
   deploy: null | {workspace: string; project: string};
 }
 
@@ -65,15 +68,20 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   let {root = defaultRoot, output = "dist", style, theme = "auto", deploy} = spec;
   root = String(root);
   output = String(output);
-  if (style !== undefined) style = String(style);
-  theme = typeof theme === "string" ? [theme] : Array.from(theme, String);
+  if (style === null) style = null;
+  else if (style !== undefined) style = {path: String(style)};
+  else style = {theme: (theme = normalizeTheme(theme))};
   let {title, pages = await readPages(root), pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
   pager = Boolean(pager);
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace), project: String(deploy.project)} : null;
-  return {root, output, title, pages, pager, toc, style, theme, deploy};
+  return {root, output, title, pages, pager, toc, style, deploy};
+}
+
+function normalizeTheme(spec: any): string[] {
+  return typeof spec === "string" ? [spec] : spec === null ? [] : Array.from(spec, String);
 }
 
 function normalizePageOrSection(spec: any): Page | Section {
@@ -108,4 +116,14 @@ export function mergeToc(spec: any, toc: TableOfContents): TableOfContents {
   label = String(label);
   show = Boolean(show);
   return {label, show};
+}
+
+export function mergeStyle(style: any, theme: any, defaultStyle: null | Style): null | Style {
+  return style === undefined && theme === undefined
+    ? defaultStyle
+    : style === null
+    ? null // disable
+    : style !== undefined
+    ? {path: String(style)} // TODO resolve path?
+    : {theme: normalizeTheme(theme)};
 }

@@ -82,6 +82,7 @@ export class PreviewServer {
     try {
       const url = new URL(req.url!, "http://localhost");
       let {pathname} = url;
+      let match: RegExpExecArray | null;
       if (pathname === "/_observablehq/runtime.js") {
         send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
       } else if (pathname.startsWith("/_observablehq/stdlib.js")) {
@@ -90,20 +91,26 @@ export class PreviewServer {
         end(req, res, await rollupClient(getClientPath("./src/client/" + pathname.slice("/_observablehq/".length))), "text/javascript"); // prettier-ignore
       } else if (pathname === "/_observablehq/client.js") {
         end(req, res, await rollupClient(getClientPath("./src/client/preview.js")), "text/javascript");
-      } else if (pathname === "/_observablehq/style.css") {
-        end(req, res, await bundleStyles(config), "text/css");
+      } else if (pathname.startsWith("/_observablehq/default.css")) {
+        end(req, res, await bundleStyles({path: getClientPath("./src/style/default.css")}), "text/css");
+      } else if ((match = /^\/_observablehq\/theme-(?<theme>\w+(,\w+)*)?\.css$/.exec(pathname))) {
+        end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
         const file = pathname.slice("/_import".length);
-        let js: string;
-        try {
-          js = await readFile(join(root, file), "utf-8");
-        } catch (error) {
-          if (!isEnoent(error)) throw error;
-          throw new HttpError(`Not found: ${pathname}`, 404);
+        if (pathname.endsWith(".css")) {
+          end(req, res, await bundleStyles({path: join(root, file)}), "text/css");
+        } else if (pathname.endsWith(".js")) {
+          let js: string;
+          try {
+            js = await readFile(join(root, file), "utf-8");
+          } catch (error) {
+            if (!isEnoent(error)) throw error;
+            throw new HttpError(`Not found: ${pathname}`, 404);
+          }
+          end(req, res, await rewriteModule(js, file, createImportResolver(root)), "text/javascript");
         }
-        end(req, res, await rewriteModule(js, file, createImportResolver(root)), "text/javascript");
       } else if (pathname.startsWith("/_file/")) {
         const path = pathname.slice("/_file".length);
         const filepath = join(root, path);

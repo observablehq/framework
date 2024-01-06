@@ -1,5 +1,7 @@
+import {join} from "node:path";
 import {parseHTML} from "linkedom";
-import {type Config, type Page, type Section, mergeToc} from "./config.js";
+import type {Config, Page, Section, Style} from "./config.js";
+import {mergeStyle, mergeToc} from "./config.js";
 import {type Html, html} from "./html.js";
 import type {ImportResolver} from "./javascript/imports.js";
 import {createImportResolver, resolveModuleIntegrity, resolveModulePreloads} from "./javascript/imports.js";
@@ -54,6 +56,7 @@ type RenderInternalOptions =
 async function render(parseResult: ParseResult, options: RenderOptions & RenderInternalOptions): Promise<string> {
   const {root, path, pages, title, preview} = options;
   const toc = mergeToc(parseResult.data?.toc, options.toc);
+  const style = mergeStyle(parseResult.data?.style, parseResult.data?.theme, options.style);
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="/">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -63,7 +66,7 @@ ${
         .filter((title): title is string => !!title)
         .join(" | ")}</title>\n`
     : ""
-}${await renderLinks(parseResult, path, createImportResolver(root, "_import"))}${
+}${await renderLinks(parseResult, style, path, createImportResolver(root, "_import"))}${
     path === "/404"
       ? html.unsafe(`\n<script type="module">
 
@@ -169,8 +172,14 @@ function prettyPath(path: string): string {
   return path.replace(/\/index$/, "/") || "/";
 }
 
-async function renderLinks(parseResult: ParseResult, path: string, resolver: ImportResolver): Promise<Html> {
-  const stylesheets = new Set<string>([relativeUrl(path, "/_observablehq/style.css"), "https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"]); // prettier-ignore
+async function renderLinks(
+  parseResult: ParseResult,
+  style: null | Style,
+  path: string,
+  resolver: ImportResolver
+): Promise<Html> {
+  const stylesheets = new Set<string>(["https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"]); // prettier-ignore
+  if (style) stylesheets.add(relativeUrl(path, "path" in style ? `/_import/${join(path, style.path)}`: `/_observablehq/theme-${style.theme.join(",")}.css`)); // prettier-ignore
   const specifiers = new Set<string>(["npm:@observablehq/runtime", "npm:@observablehq/stdlib"]);
   for (const {name} of parseResult.imports) specifiers.add(name);
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
