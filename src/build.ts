@@ -1,7 +1,8 @@
 import {existsSync} from "node:fs";
 import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
 import {basename, dirname, join} from "node:path";
-import {type Config} from "./config.js";
+import type {Config, Style} from "./config.js";
+import {mergeStyle} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {isEnoent} from "./error.js";
 import {prepareOutput, visitMarkdownFiles} from "./files.js";
@@ -71,6 +72,7 @@ export async function build(
   // Render .md files, building a list of file attachments as we go.
   const files: string[] = [];
   const imports: string[] = [];
+  const styles: Style[] = [];
   for await (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
@@ -81,10 +83,15 @@ export async function build(
     files.push(...render.files.map(resolveFile));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
     await effects.writeFile(outputPath, render.html);
+    const style = mergeStyle(render.data?.style, render.data?.theme, config.style);
+    if (style) {
+      if ("path" in style) style.path = resolvePath(sourceFile, style.path);
+      if (!styles.some((s) => styleEquals(s, style))) styles.push(style);
+    }
   }
 
+  // Generate the client bundles.
   if (addPublic) {
-    // Generate the client bundles.
     for (const [entry, name] of clientBundles(clientEntry)) {
       const clientPath = getClientPath(entry);
       const outputPath = join("_observablehq", name);
@@ -92,11 +99,20 @@ export async function build(
       const code = await rollupClient(clientPath, {minify: true});
       await effects.writeFile(outputPath, code);
     }
-    // Generate the style bundle.
-    const outputPath = join("_observablehq", "style.css");
-    effects.output.write(`${faint("bundle")} config.style ${faint("→")} `);
-    const code = await bundleStyles(config);
-    await effects.writeFile(outputPath, code);
+    for (const style of styles) {
+      if ("path" in style) {
+        const outputPath = join("_import", style.path);
+        const sourcePath = join(root, style.path);
+        effects.output.write(`${faint("bundle")} ${sourcePath} ${faint("→")} `);
+        const code = await bundleStyles({path: sourcePath});
+        await effects.writeFile(outputPath, code);
+      } else {
+        const outputPath = join("_observablehq", `theme-${style.theme}.css`);
+        effects.output.write(`${faint("bundle")} theme-${style.theme}.css ${faint("→")} `);
+        const code = await bundleStyles({theme: style.theme});
+        await effects.writeFile(outputPath, code);
+      }
+    }
   }
 
   // Copy over the referenced files.
@@ -169,4 +185,12 @@ export class FileBuildEffects implements BuildEffects {
     await prepareOutput(destination);
     await writeFile(destination, contents);
   }
+}
+
+function styleEquals(a: Style, b: Style): boolean {
+  return "path" in a && "path" in b
+    ? a.path === b.path
+    : "theme" in a && "theme" in b
+    ? a.theme.join() === b.theme.join()
+    : false;
 }

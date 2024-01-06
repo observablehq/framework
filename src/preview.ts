@@ -10,7 +10,8 @@ import {difference} from "d3-array";
 import send from "send";
 import {type WebSocket, WebSocketServer} from "ws";
 import {version} from "../package.json";
-import {type Config} from "./config.js";
+import type {Config} from "./config.js";
+import {mergeStyle} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {FileWatchers} from "./fileWatchers.js";
@@ -21,6 +22,7 @@ import type {ParseResult, ReadMarkdownResult} from "./markdown.js";
 import {renderPreview} from "./render.js";
 import {bundleStyles, getClientPath, rollupClient} from "./rollup.js";
 import {bold, faint, green, underline} from "./tty.js";
+import {relativeUrl, resolvePath} from "./url.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
@@ -91,8 +93,6 @@ export class PreviewServer {
         end(req, res, await rollupClient(getClientPath("./src/client/" + pathname.slice("/_observablehq/".length))), "text/javascript"); // prettier-ignore
       } else if (pathname === "/_observablehq/client.js") {
         end(req, res, await rollupClient(getClientPath("./src/client/preview.js")), "text/javascript");
-      } else if (pathname.startsWith("/_observablehq/default.css")) {
-        end(req, res, await bundleStyles({path: getClientPath("./src/style/default.css")}), "text/css");
       } else if ((match = /^\/_observablehq\/theme-(?<theme>\w+(,\w+)*)?\.css$/.exec(pathname))) {
         end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
       } else if (pathname.startsWith("/_observablehq/")) {
@@ -215,7 +215,7 @@ export class PreviewServer {
 
   _handleConnection = async (socket: WebSocket, req: IncomingMessage) => {
     if (req.url === "/_observablehq") {
-      handleWatch(socket, req, {root: this._config.root});
+      handleWatch(socket, req, this._config);
     } else {
       socket.close();
     }
@@ -252,20 +252,31 @@ function getWatchPaths(parseResult: ParseResult): string[] {
   return paths;
 }
 
-async function getStylesheets({cells}: ParseResult): Promise<Set<string>> {
-  const inputs = new Set<string>();
-  for (const cell of cells) cell.inputs?.forEach(inputs.add, inputs);
-  return getImplicitStylesheets(getImplicitSpecifiers(inputs));
+export function getPreviewStylesheet(path: string, data: ParseResult["data"], style: Config["style"]): string | null {
+  style = mergeStyle(data?.style, data?.theme, style);
+  return !style
+    ? null
+    : "path" in style
+    ? relativeUrl(path, `/_import/${resolvePath(path, style.path)}`)
+    : relativeUrl(path, `/_observablehq/theme-${style.theme.join(",")}.css`);
 }
 
-function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: string}) {
-  const {root} = options;
+function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defaultStyle}: Config) {
   let path: string | null = null;
   let current: ReadMarkdownResult | null = null;
   let stylesheets: Set<string> | null = null;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
   console.log(faint("socket open"), req.url);
+
+  async function getStylesheets({cells, data}: ParseResult): Promise<Set<string>> {
+    const inputs = new Set<string>();
+    for (const cell of cells) cell.inputs?.forEach(inputs.add, inputs);
+    const stylesheets = await getImplicitStylesheets(getImplicitSpecifiers(inputs));
+    const style = getPreviewStylesheet(path!, data, defaultStyle);
+    if (style) stylesheets.add(style);
+    return stylesheets;
+  }
 
   function refreshAttachment(name: string) {
     const {cells} = current!.parse;
