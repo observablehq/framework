@@ -27,16 +27,76 @@ The path to the source root; defaults to `docs`.
 
 The path to the output root; defaults to `dist`.
 
+## theme
+
+A theme is a convenient bundle of CSS declarations that define how the project will look like.
+
+The current built-in themes are:
+* *auto* - default, chooses *light* or *dark* depending on the user’s system settings
+* *light* - light mode
+* *dark* - dark mode
+* *dashboard* - adds a grid system and full-width pages.
+
+You can combine themes like so:
+
+```js
+theme: ["auto", "dashboard"]
+```
+
+The theme property is also configurable for a single page by indicating it in the front-matter:
+
+```yaml
+---
+theme: [auto, dashboard]
+---
+```
+
 ## style
 
-The path to the project’s stylesheet. This is typically set to `docs/style.css` to override or augment the default stylesheet, or to apply a theme. For example, to use the *light* theme:
+The path to the project’s stylesheet. This is typically set to `style.css` to override or augment the default stylesheet. For example, to create a stylesheet that builds up on the *light* theme, create a `custom-style.css` file in your `docs` folder, and set the **style** configuration option to `"custom-style.css"`:
 
 ```css
 @import url("observablehq:theme-light.css");
 @import url("observablehq:default.css");
+#observablehq-main { border: 1px solid red;}
 ```
 
-The current built-in themes are: *auto* (default), *light*, and *dark*.
+The theme property is also configurable for a single page by indicating it in the front-matter:
+
+```yaml
+---
+style: "docs/custom-style.css"
+---
+```
+
+Setting the style property takes precedence over any specified theme.
+
+## style variables
+
+The colors in built-in themes are modifiable with CSS variables. The following variables are supported:
+
+* --theme-foreground - foreground color, _e.g._ black
+* --theme-background - background color, _e.g._ white
+* --theme-background-alt - alternative background color, _e.g._ light gray
+* --theme-foreground-alt - alternative foreground color, used for titles and section titles, _e.g._ brown
+* --theme-foreground-muted - muted foreground color, _e.g._ dark gray
+* --theme-foreground-faint - faint foreground color, _e.g._ middle gray
+* --theme-foreground-fainter - fainter foreground color, _e.g._ light gray
+* --theme-foreground-faintest - fainter foreground color, _e.g._ almost white
+* --theme-foreground-focus - focus color, _e.g._ blue
+* color-scheme - ?
+
+For example to have a default style with custom colors, create a docs/project-style.css file with the following contents, and set the style property to "docs/project-style.css":
+
+```css
+@import url("observablehq:theme-light.css");
+@import url("observablehq:default.css");
+:root {
+  --theme-foreground-alt: green; 
+}
+```
+
+If you build on the *auto* theme, make sure that the color is chosen according to the browser’s preferred-color-scheme.
 
 ## title
 
@@ -61,7 +121,6 @@ export interface Section {
   open?: boolean;
 }
 ```
-
 
 If a section’s **open** option is not set, it defaults to true.
 
