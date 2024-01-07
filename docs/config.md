@@ -61,11 +61,11 @@ The path to the project’s stylesheet. This is typically set to `style.css` to 
 #observablehq-main { border: 1px solid red;}
 ```
 
-The theme property is also configurable for a single page by indicating it in the front-matter:
+The theme property is also configurable for a single page by indicating its relative path in the front-matter:
 
 ```yaml
 ---
-style: "docs/custom-style.css"
+style: custom-style.css
 ---
 ```
 
