@@ -93,7 +93,7 @@ export class PreviewServer {
         end(req, res, await rollupClient(getClientPath("./src/client/" + pathname.slice("/_observablehq/".length))), "text/javascript"); // prettier-ignore
       } else if (pathname === "/_observablehq/client.js") {
         end(req, res, await rollupClient(getClientPath("./src/client/preview.js")), "text/javascript");
-      } else if ((match = /^\/_observablehq\/theme-(?<theme>\w+(,\w+)*)?\.css$/.exec(pathname))) {
+      } else if ((match = /^\/_observablehq\/theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(pathname))) {
         end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
