@@ -7,7 +7,7 @@
   display: grid;
   gap: 1rem;
   grid-auto-rows: 1fr;
-  font: 14px/1.2 var(--sans-serif);
+  font: 14px var(--sans-serif);
 }
 
 .grid > * {
