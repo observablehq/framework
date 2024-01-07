@@ -19,7 +19,8 @@ const STYLE_MODULES = {
   "observablehq:default.css": getClientPath("./src/style/default.css"),
   "observablehq:theme-auto.css": getClientPath("./src/style/theme-auto.css"),
   "observablehq:theme-dark.css": getClientPath("./src/style/theme-dark.css"),
-  "observablehq:theme-light.css": getClientPath("./src/style/theme-light.css")
+  "observablehq:theme-light.css": getClientPath("./src/style/theme-light.css"),
+  "observablehq:theme-wide.css": getClientPath("./src/style/theme-wide.css")
 };
 
 export async function bundleStyles({path, theme}: {path?: string; theme?: string[]}): Promise<string> {
@@ -29,9 +30,9 @@ export async function bundleStyles({path, theme}: {path?: string; theme?: string
       ? {entryPoints: [path]}
       : {
           stdin: {
-            contents: `${theme!
+            contents: `@import url("observablehq:default.css");\n${theme!
               .map((t) => `@import url(${JSON.stringify(`observablehq:theme-${t}.css`)});\n`)
-              .join("")}@import url("observablehq:default.css");\n`,
+              .join("")}`,
             loader: "css"
           }
         }),
