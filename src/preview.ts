@@ -22,7 +22,7 @@ import type {ParseResult, ReadMarkdownResult} from "./markdown.js";
 import {renderPreview} from "./render.js";
 import {bundleStyles, getClientPath, rollupClient} from "./rollup.js";
 import {bold, faint, green, underline} from "./tty.js";
-import {relativeUrl, resolvePath} from "./url.js";
+import {relativeUrl} from "./url.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
@@ -257,11 +257,11 @@ function getWatchPaths(parseResult: ParseResult): string[] {
 }
 
 export function getPreviewStylesheet(path: string, data: ParseResult["data"], style: Config["style"]): string | null {
-  style = mergeStyle(data?.style, data?.theme, style);
+  style = mergeStyle(path, data?.style, data?.theme, style);
   return !style
     ? null
     : "path" in style
-    ? relativeUrl(path, `/_import/${resolvePath(path, style.path)}`)
+    ? relativeUrl(path, `/_import/${style.path}`)
     : relativeUrl(path, `/_observablehq/theme-${style.theme.join(",")}.css`);
 }
 

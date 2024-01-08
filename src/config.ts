@@ -2,6 +2,7 @@ import {readFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path";
 import {visitFiles} from "./files.js";
 import {parseMarkdown} from "./markdown.js";
+import {resolvePath} from "./url.js";
 
 export interface Page {
   name: string;
@@ -118,12 +119,12 @@ export function mergeToc(spec: any, toc: TableOfContents): TableOfContents {
   return {label, show};
 }
 
-export function mergeStyle(style: any, theme: any, defaultStyle: null | Style): null | Style {
+export function mergeStyle(path: string, style: any, theme: any, defaultStyle: null | Style): null | Style {
   return style === undefined && theme === undefined
     ? defaultStyle
     : style === null
     ? null // disable
     : style !== undefined
-    ? {path: String(style)} // TODO resolve path?
+    ? {path: resolvePath(path, style)}
     : {theme: normalizeTheme(theme)};
 }

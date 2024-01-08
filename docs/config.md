@@ -57,7 +57,7 @@ theme: [auto-alt, wide]
 
 The path to a custom stylesheet. This option takes precedence over [themes](#theme) (if any), providing more control by allowing you to remove or alter the default stylesheet and define a custom theme.
 
-The custom stylesheet should typically import the `"observablehq:default.css"` to build on the default styles. You can also import any of the built-in themes. For example, to create a stylesheet that builds up on the *light* theme, create a `custom-style.css` file in the `docs` folder, then set the **style** option to `"docs/custom-style.css"`:
+The custom stylesheet should typically import the `"observablehq:default.css"` to build on the default styles. You can also import any of the built-in themes. For example, to create a stylesheet that builds up on the *light* theme, create a `custom-style.css` file in the `docs` folder, then set the **style** option to `"custom-style.css"`:
 
 ```css
 @import url("observablehq:theme-light.css");

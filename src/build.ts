@@ -83,7 +83,7 @@ export async function build(
     files.push(...render.files.map(resolveFile));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
     await effects.writeFile(outputPath, render.html);
-    const style = mergeStyle(render.data?.style, render.data?.theme, config.style);
+    const style = mergeStyle(path, render.data?.style, render.data?.theme, config.style);
     if (style) {
       if ("path" in style) style.path = resolvePath(sourceFile, style.path);
       if (!styles.some((s) => styleEquals(s, style))) styles.push(style);
