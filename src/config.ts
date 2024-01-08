@@ -69,7 +69,7 @@ async function readPages(root: string): Promise<Page[]> {
 const DEFAULT_FOOTER = 'Built with <a href="https://observablehq.com/" target=_blank>Observable</a>';
 
 export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Promise<Config> {
-  let {root = defaultRoot, output = "dist", style, theme = "auto", deploy} = spec;
+  let {root = defaultRoot, output = "dist", style, theme = "auto", deploy, footer = DEFAULT_FOOTER} = spec;
   root = String(root);
   output = String(output);
   if (style === null) style = null;
@@ -79,7 +79,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
   pager = Boolean(pager);
-  const {footer = DEFAULT_FOOTER} = spec;
+  footer = String(footer);
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace), project: String(deploy.project)} : null;
   return {root, output, title, pages, pager, footer, toc, style, deploy};

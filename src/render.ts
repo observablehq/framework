@@ -215,9 +215,13 @@ function renderModulePreload(href: string): Html {
 
 function renderFooter(path: string, options: Pick<Config, "pages" | "pager" | "title" | "footer">): Html {
   const link = options.pager ? findLink(path, options) : null;
-  return html`<footer id="observablehq-footer">${link ? renderPager(path, link) : ""}
-<div>${html.unsafe(options.footer)}</div>
-</footer>`;
+  const footer = options.footer;
+  return link || footer
+    ? html`<footer id="observablehq-footer">${link ? renderPager(path, link) : ""}${
+        footer ? html`\n<div>${html.unsafe(options.footer)}</div>` : ""
+      }
+</footer>`
+    : html``;
 }
 
 function renderPager(path: string, {prev, next}: PageLink): Html {
