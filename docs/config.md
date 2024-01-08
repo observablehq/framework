@@ -45,7 +45,7 @@ You can combine themes like so:
 theme: ["auto-alt", "wide"]
 ```
 
-A theme can be also configured for individual pages via the [front matter](./markdown.md#front-matter):
+A theme can be configured for individual pages via the [front matter](./markdown.md#front-matter):
 
 ```yaml
 ---
@@ -55,7 +55,7 @@ theme: [auto-alt, wide]
 
 ## style
 
-The path to a custom stylesheet. This option takes precedence over [themes](#theme) (if any), providing more control by allowing you to remove or alter the default stylesheet and define a custom theme.
+The path to a custom stylesheet, relative to the source root. This option takes precedence over [themes](#theme) (if any), providing more control by allowing you to remove or alter the default stylesheet and define a custom theme.
 
 The custom stylesheet should typically import the `"observablehq:default.css"` to build on the default styles. You can also import any of the built-in themes. For example, to create a stylesheet that builds up on the *light* theme, create a `custom-style.css` file in the `docs` folder, then set the **style** option to `"custom-style.css"`:
 
@@ -82,7 +82,7 @@ The default styles are implemented using CSS custom properties. These properties
 - `--theme-foreground-faintest` - fainter foreground color, _e.g._ almost white
 - `--theme-foreground-focus` - focus color, _e.g._ blue
 
-The style property is also configurable for a single page by indicating its relative path in the front-matter:
+A custom stylesheet can be configured for individual pages via the [front matter](./markdown.md#front-matter):
 
 ```yaml
 ---
@@ -90,7 +90,7 @@ style: custom-style.css
 ---
 ```
 
-In this case, the path to the stylesheet is resolved relative to the page’s Markdown file rather than the config file.
+In this case, the path to the stylesheet is resolved relative to the page’s Markdown file rather than the source root.
 
 ## title
 
