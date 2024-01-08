@@ -18,6 +18,7 @@ describe("readConfig(undefined, root)", () => {
       title: undefined,
       toc: {label: "On this page", show: true},
       pager: true,
+      footer: 'Built with <a href="https://observablehq.com/" target=_blank>Observable</a>',
       deploy: {
         workspace: "acme",
         project: "bi"
@@ -33,6 +34,7 @@ describe("readConfig(undefined, root)", () => {
       title: undefined,
       toc: {label: "Contents", show: true},
       pager: true,
+      footer: 'Built with <a href="https://observablehq.com/" target=_blank>Observable</a>',
       deploy: null
     });
   });

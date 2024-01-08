@@ -30,6 +30,7 @@ export interface Config {
   title?: string;
   pages: (Page | Section)[]; // TODO rename to sidebar?
   pager: boolean; // defaults to true
+  footer: string;
   toc: TableOfContents;
   style: null | Style; // defaults to {theme: ["auto"]}
   deploy: null | {workspace: string; project: string};
@@ -65,8 +66,10 @@ async function readPages(root: string): Promise<Page[]> {
   return pages;
 }
 
+const DEFAULT_FOOTER = 'Built with <a href="https://observablehq.com/" target=_blank>Observable</a>';
+
 export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Promise<Config> {
-  let {root = defaultRoot, output = "dist", style, theme = "auto", deploy} = spec;
+  let {root = defaultRoot, output = "dist", style, theme = "auto", deploy, footer = DEFAULT_FOOTER} = spec;
   root = String(root);
   output = String(output);
   if (style === null) style = null;
@@ -76,9 +79,10 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
   pager = Boolean(pager);
+  footer = String(footer);
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace), project: String(deploy.project)} : null;
-  return {root, output, title, pages, pager, toc, style, deploy};
+  return {root, output, title, pages, pager, footer, toc, style, deploy};
 }
 
 function normalizeTheme(spec: any): string[] {
