@@ -29,39 +29,60 @@ The path to the output root; defaults to `dist`.
 
 ## theme
 
-A theme is a convenient bundle of CSS declarations that define how the project will look like.
+The theme names, if any; defaults to `auto`. Themes affect the visual appearance of pages by specifying colors and fonts, and possibly by augmenting default styles. The theme option is a convenient shorthand alternative to specifying a [custom stylesheet](#style).
 
 The current built-in themes are:
-* *auto* - default, chooses *light* or *dark* depending on the user’s system settings
-* *light* - light mode
-* *dark* - dark mode
-* *dashboard* - adds a grid system and full-width pages.
+
+- *auto* (default) - *light* or *dark* depending on the user’s preferred color scheme
+- *auto-alt* - *light-alt* or *dark* depending on the user’s preferred color scheme
+- *light* - light mode
+- *dark* - dark mode
+- *wide* - allows the main column to go full width; to be used with one of the above
 
 You can combine themes like so:
 
 ```js
-theme: ["auto", "dashboard"]
+theme: ["auto-alt", "wide"]
 ```
 
-The theme property is also configurable for a single page by indicating it in the front-matter:
+A theme can be also configured for individual pages via the [front matter](./markdown.md#front-matter):
 
 ```yaml
 ---
-theme: [auto, dashboard]
+theme: [auto-alt, wide]
 ---
 ```
 
 ## style
 
-The path to the project’s stylesheet. This is typically set to `style.css` to override or augment the default stylesheet. For example, to create a stylesheet that builds up on the *light* theme, create a `custom-style.css` file in your `docs` folder, and set the **style** configuration option to `"custom-style.css"`:
+The path to a custom stylesheet. This option takes precedence over [themes](#theme) (if any), providing more control by allowing you to remove or alter the default stylesheet and define a custom theme.
+
+The custom stylesheet should typically import the `"observablehq:default.css"` to build on the default styles. You can also import any of the built-in themes. For example, to create a stylesheet that builds up on the *light* theme, create a `custom-style.css` file in the `docs` folder, then set the **style** option to `"docs/custom-style.css"`:
 
 ```css
 @import url("observablehq:theme-light.css");
 @import url("observablehq:default.css");
-#observablehq-main { border: 1px solid red;}
+
+:root {
+  --theme-foreground-focus: green;
+}
 ```
 
-The theme property is also configurable for a single page by indicating its relative path in the front-matter:
+If you build on the *auto* or *auto-alt* themes, make sure that colors are chosen according to the user’s [preferred color scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme).
+
+The default styles are implemented using CSS custom properties. These properties are designed to be defined by themes or custom stylesheets. The following custom properties are supported:
+
+- `--theme-foreground` - foreground color, _e.g._ black
+- `--theme-background` - background color, _e.g._ white
+- `--theme-background-alt` - alternative background color, _e.g._ light gray
+- `--theme-foreground-alt` - alternative foreground color, used for titles and section titles, _e.g._ brown
+- `--theme-foreground-muted` - muted foreground color, _e.g._ dark gray
+- `--theme-foreground-faint` - faint foreground color, _e.g._ middle gray
+- `--theme-foreground-fainter` - fainter foreground color, _e.g._ light gray
+- `--theme-foreground-faintest` - fainter foreground color, _e.g._ almost white
+- `--theme-foreground-focus` - focus color, _e.g._ blue
+
+The style property is also configurable for a single page by indicating its relative path in the front-matter:
 
 ```yaml
 ---
@@ -69,34 +90,7 @@ style: custom-style.css
 ---
 ```
 
-Setting the style property takes precedence over any specified theme.
-
-## style variables
-
-The colors in built-in themes are modifiable with CSS variables. The following variables are supported:
-
-* --theme-foreground - foreground color, _e.g._ black
-* --theme-background - background color, _e.g._ white
-* --theme-background-alt - alternative background color, _e.g._ light gray
-* --theme-foreground-alt - alternative foreground color, used for titles and section titles, _e.g._ brown
-* --theme-foreground-muted - muted foreground color, _e.g._ dark gray
-* --theme-foreground-faint - faint foreground color, _e.g._ middle gray
-* --theme-foreground-fainter - fainter foreground color, _e.g._ light gray
-* --theme-foreground-faintest - fainter foreground color, _e.g._ almost white
-* --theme-foreground-focus - focus color, _e.g._ blue
-* color-scheme - ?
-
-For example to have a default style with custom colors, create a docs/project-style.css file with the following contents, and set the style property to "docs/project-style.css":
-
-```css
-@import url("observablehq:theme-light.css");
-@import url("observablehq:default.css");
-:root {
-  --theme-foreground-alt: green; 
-}
-```
-
-If you build on the *auto* theme, make sure that the color is chosen according to the browser’s preferred-color-scheme.
+In this case, the path to the stylesheet is resolved relative to the page’s Markdown file rather than the config file.
 
 ## title
 
