@@ -38,13 +38,13 @@ let command: string | undefined;
 // Extract the command.
 if (positionals.length > 0) {
   const t = tokens.find((t) => t.kind === "positional")!;
-  args.splice(t.index - 2, 1);
+  args.splice(t.index, 1);
   command = positionals[0];
 
   // Convert help <command> into <command> --help.
   if (command === "help" && positionals.length > 1) {
     const p = tokens.find((p) => p.kind === "positional" && p !== t)!;
-    args.splice(p.index - 2, 1, "--help");
+    args.splice(p.index, 1, "--help");
     command = positionals[1];
   }
 }
@@ -52,7 +52,7 @@ if (positionals.length > 0) {
 // Convert --help or -h (with no command) into help.
 else if (values.help) {
   const t = tokens.find((t) => t.kind === "option" && t.name === "help")!;
-  args.splice(t.index - 2, 1);
+  args.splice(t.index, 1);
   command = "help";
 }
 

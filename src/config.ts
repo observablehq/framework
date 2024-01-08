@@ -2,7 +2,7 @@ import {readFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path";
 import {visitFiles} from "./files.js";
 import {parseMarkdown} from "./markdown.js";
-import {getClientPath} from "./rollup.js";
+import {resolvePath} from "./url.js";
 
 export interface Page {
   name: string;
@@ -20,6 +20,10 @@ export interface TableOfContents {
   show: boolean; // defaults to true
 }
 
+export type Style =
+  | {path: string} // custom stylesheet
+  | {theme: string[]}; // zero or more named theme
+
 export interface Config {
   root: string; // defaults to docs
   output: string; // defaults to dist
@@ -27,7 +31,7 @@ export interface Config {
   pages: (Page | Section)[]; // TODO rename to sidebar?
   pager: boolean; // defaults to true
   toc: TableOfContents;
-  style: string; // defaults to default stylesheet
+  style: null | Style; // defaults to {theme: ["auto"]}
   deploy: null | {workspace: string; project: string};
 }
 
@@ -62,10 +66,12 @@ async function readPages(root: string): Promise<Page[]> {
 }
 
 export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Promise<Config> {
-  let {root = defaultRoot, output = "dist", style = getClientPath("./src/style/index.css"), deploy} = spec;
+  let {root = defaultRoot, output = "dist", style, theme = "auto", deploy} = spec;
   root = String(root);
   output = String(output);
-  style = String(style);
+  if (style === null) style = null;
+  else if (style !== undefined) style = {path: String(style)};
+  else style = {theme: (theme = normalizeTheme(theme))};
   let {title, pages = await readPages(root), pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
@@ -73,6 +79,10 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace), project: String(deploy.project)} : null;
   return {root, output, title, pages, pager, toc, style, deploy};
+}
+
+function normalizeTheme(spec: any): string[] {
+  return typeof spec === "string" ? [spec] : spec === null ? [] : Array.from(spec, String);
 }
 
 function normalizePageOrSection(spec: any): Page | Section {
@@ -107,4 +117,14 @@ export function mergeToc(spec: any, toc: TableOfContents): TableOfContents {
   label = String(label);
   show = Boolean(show);
   return {label, show};
+}
+
+export function mergeStyle(path: string, style: any, theme: any, defaultStyle: null | Style): null | Style {
+  return style === undefined && theme === undefined
+    ? defaultStyle
+    : style === null
+    ? null // disable
+    : style !== undefined
+    ? {path: resolvePath(path, style)}
+    : {theme: normalizeTheme(theme)};
 }

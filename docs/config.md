@@ -27,16 +27,70 @@ The path to the source root; defaults to `docs`.
 
 The path to the output root; defaults to `dist`.
 
-## style
+## theme
 
-The path to the project’s stylesheet. This is typically set to `docs/style.css` to override or augment the default stylesheet, or to apply a theme. For example, to use the *light* theme:
+The theme names, if any; defaults to `auto`. Themes affect the visual appearance of pages by specifying colors and fonts, and possibly by augmenting default styles. The theme option is a convenient shorthand alternative to specifying a [custom stylesheet](#style).
 
-```css
-@import url("observablehq:theme-light.css");
-@import url("observablehq:default.css");
+The current built-in themes are:
+
+- *auto* (default) - *light* or *dark* depending on the user’s preferred color scheme
+- *auto-alt* - *light-alt* or *dark* depending on the user’s preferred color scheme
+- *light* - light mode
+- *dark* - dark mode
+- *wide* - allows the main column to go full width; to be used with one of the above
+
+You can combine themes like so:
+
+```js
+theme: ["auto-alt", "wide"]
 ```
 
-The current built-in themes are: *auto* (default), *light*, and *dark*.
+A theme can be configured for individual pages via the [front matter](./markdown.md#front-matter):
+
+```yaml
+---
+theme: [auto-alt, wide]
+---
+```
+
+## style
+
+The path to a custom stylesheet, relative to the source root. This option takes precedence over [themes](#theme) (if any), providing more control by allowing you to remove or alter the default stylesheet and define a custom theme.
+
+The custom stylesheet should typically import the `"observablehq:default.css"` to build on the default styles. You can also import any of the built-in themes. For example, to create a stylesheet that builds up on the *light* theme, create a `custom-style.css` file in the `docs` folder, then set the **style** option to `"custom-style.css"`:
+
+```css
+@import url("observablehq:default.css");
+@import url("observablehq:theme-light.css");
+
+:root {
+  --theme-foreground-focus: green;
+}
+```
+
+If you build on the *auto* or *auto-alt* themes, make sure that colors are chosen according to the user’s [preferred color scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme).
+
+The default styles are implemented using CSS custom properties. These properties are designed to be defined by themes or custom stylesheets. The following custom properties are supported:
+
+- `--theme-foreground` - foreground color, _e.g._ black
+- `--theme-background` - background color, _e.g._ white
+- `--theme-background-alt` - alternative background color, _e.g._ light gray
+- `--theme-foreground-alt` - alternative foreground color, used for titles and section titles, _e.g._ brown
+- `--theme-foreground-muted` - muted foreground color, _e.g._ dark gray
+- `--theme-foreground-faint` - faint foreground color, _e.g._ middle gray
+- `--theme-foreground-fainter` - fainter foreground color, _e.g._ light gray
+- `--theme-foreground-faintest` - fainter foreground color, _e.g._ almost white
+- `--theme-foreground-focus` - focus color, _e.g._ blue
+
+A custom stylesheet can be configured for individual pages via the [front matter](./markdown.md#front-matter):
+
+```yaml
+---
+style: custom-style.css
+---
+```
+
+In this case, the path to the stylesheet is resolved relative to the page’s Markdown file rather than the source root.
 
 ## title
 
@@ -61,7 +115,6 @@ export interface Section {
   open?: boolean;
 }
 ```
-
 
 If a section’s **open** option is not set, it defaults to true.
 
