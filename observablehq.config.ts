@@ -45,5 +45,6 @@ export default {
       ]
     },
     {name: "Contributing", path: "/contributing"}
-  ]
+  ],
+  footer: `© ${new Date().getUTCFullYear()} Observable, Inc.`
 };
