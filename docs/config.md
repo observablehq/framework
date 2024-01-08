@@ -60,8 +60,8 @@ The path to a custom stylesheet. This option takes precedence over [themes](#the
 The custom stylesheet should typically import the `"observablehq:default.css"` to build on the default styles. You can also import any of the built-in themes. For example, to create a stylesheet that builds up on the *light* theme, create a `custom-style.css` file in the `docs` folder, then set the **style** option to `"custom-style.css"`:
 
 ```css
-@import url("observablehq:theme-light.css");
 @import url("observablehq:default.css");
+@import url("observablehq:theme-light.css");
 
 :root {
   --theme-foreground-focus: green;
