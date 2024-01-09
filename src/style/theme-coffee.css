@@ -1,0 +1,14 @@
+@import url("./syntax-dark.css");
+
+:root {
+  --theme-foreground: #dcd2ca;
+  --theme-background: #140f0c;
+  --theme-background-alt: color-mix(in srgb, var(--theme-foreground) 4%, var(--theme-background));
+  --theme-foreground-alt: color-mix(in srgb, var(--theme-foreground) 90%, var(--theme-background));
+  --theme-foreground-muted: color-mix(in srgb, var(--theme-foreground) 60%, var(--theme-background));
+  --theme-foreground-faint: color-mix(in srgb, var(--theme-foreground) 50%, var(--theme-background));
+  --theme-foreground-fainter: color-mix(in srgb, var(--theme-foreground) 30%, var(--theme-background));
+  --theme-foreground-faintest: color-mix(in srgb, var(--theme-foreground) 14%, var(--theme-background));
+  --theme-foreground-focus: #ffc4a3;
+  color-scheme: dark;
+}

@@ -1,5 +1,6 @@
 export default {
   title: "Observable CLI",
+  theme: "ocean-floor",
   pages: [
     {name: "Getting started", path: "/getting-started"},
     {name: "Routing", path: "/routing"},
@@ -7,6 +8,7 @@ export default {
     {name: "JavaScript", path: "/javascript"},
     {name: "Data loaders", path: "/loaders"},
     {name: "Configuration", path: "/config"},
+    {name: "Themes", path: "/themes"},
     {
       name: "JavaScript",
       pages: [

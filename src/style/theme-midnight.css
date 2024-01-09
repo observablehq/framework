@@ -1,8 +1,8 @@
 @import url("./syntax-dark.css");
 
 :root {
-  --theme-foreground: #dfdfd6;
-  --theme-background: #1f1f1f;
+  --theme-foreground: #ebebeb;
+  --theme-background: #0d0d0d;
   --theme-background-alt: color-mix(in oklch, var(--theme-foreground) 4%, var(--theme-background));
   --theme-foreground-alt: color-mix(in oklch, var(--theme-foreground) 90%, var(--theme-background));
   --theme-foreground-muted: color-mix(in oklch, var(--theme-foreground) 60%, var(--theme-background));
