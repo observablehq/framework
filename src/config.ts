@@ -46,7 +46,8 @@ export async function readDefaultConfig(root?: string): Promise<Config> {
   for (const ext of [".js", ".ts"]) {
     try {
       return await readConfig("observablehq.config" + ext, root);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.code !== "ERR_MODULE_NOT_FOUND") throw error;
       continue;
     }
   }
