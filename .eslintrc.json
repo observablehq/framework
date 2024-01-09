@@ -22,6 +22,7 @@
     "node": true
   },
   "rules": {
+    "@typescript-eslint/ban-ts-comment": ["error", {"ts-ignore": "allow-with-description"}],
     "@typescript-eslint/consistent-type-imports": ["warn", {"prefer": "type-imports"}],
     "@typescript-eslint/no-empty-function": 0,
     "@typescript-eslint/no-explicit-any": 0,
