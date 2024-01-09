@@ -11,7 +11,7 @@ import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
-import {resolveNpmImport} from "./javascript/imports.js";
+import {isPathImport, resolveNpmImport} from "./javascript/imports.js";
 import {getObservableUiHost} from "./observableApiClient.js";
 import {Sourcemap} from "./sourcemap.js";
 import {relativeUrl} from "./url.js";
@@ -51,7 +51,7 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
     input: clientPath,
     external: [/^https:/],
     plugins: [
-      nodeResolve(),
+      nodeResolve({resolveOnly: ["@observablehq/inputs"]}),
       importResolve(clientPath),
       esbuild({
         target: "es2022",
@@ -110,6 +110,8 @@ async function resolveImport(source: string, specifier: string | AstNode): Promi
     ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/zip.js")), external: true} // TODO publish to npm
     : specifier.startsWith("npm:")
     ? {id: await resolveNpmImport(specifier.slice("npm:".length))}
+    : source !== specifier && !isPathImport(specifier) && specifier !== "@observablehq/inputs"
+    ? {id: await resolveNpmImport(specifier), external: true}
     : null;
 }
 

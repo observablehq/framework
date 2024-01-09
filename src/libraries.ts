@@ -8,7 +8,7 @@ export function addImplicitSpecifiers(specifiers: Set<string>, inputs: Set<strin
   if (inputs.has("d3")) specifiers.add("npm:d3");
   if (inputs.has("Plot")) specifiers.add("npm:d3").add("npm:@observablehq/plot");
   if (inputs.has("htl") || inputs.has("html") || inputs.has("svg")) specifiers.add("npm:htl");
-  if (inputs.has("Inputs")) specifiers.add("npm:htl").add("npm:@observablehq/inputs");
+  if (inputs.has("Inputs")) specifiers.add("npm:htl").add("npm:isoformat").add("npm:@observablehq/inputs");
   if (inputs.has("dot")) specifiers.add("npm:@observablehq/dot").add("npm:@viz-js/viz");
   if (inputs.has("duckdb")) specifiers.add("npm:@duckdb/duckdb-wasm");
   if (inputs.has("DuckDBClient")) specifiers.add("npm:@observablehq/duckdb").add("npm:@duckdb/duckdb-wasm");
