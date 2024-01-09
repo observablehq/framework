@@ -6,6 +6,7 @@ export default {
     {name: "Markdown", path: "/markdown"},
     {name: "JavaScript", path: "/javascript"},
     {name: "Data loaders", path: "/loaders"},
+    {name: "Components", path: "/components"},
     {name: "Configuration", path: "/config"},
     {
       name: "JavaScript",
@@ -17,6 +18,51 @@ export default {
         {name: "Promises", path: "/javascript/promises"},
         {name: "Generators", path: "/javascript/generators"},
         {name: "Mutables", path: "/javascript/mutables"},
+      ]
+    },
+    {
+      name: "Inputs",
+      open: false,
+      pages: [
+        {name: "Button", path: "/inputs/button"},
+        {name: "Checkbox", path: "/inputs/checkbox"},
+        {name: "Color", path: "/inputs/color"},
+        {name: "Date/Datetime", path: "/inputs/date"},
+        {name: "File", path: "/inputs/file"},
+        {name: "Form", path: "/inputs/form"},
+        {name: "Radio", path: "/inputs/radio"},
+        {name: "Range", path: "/inputs/range"},
+        {name: "Search", path: "/inputs/search"},
+        {name: "Select", path: "/inputs/select"},
+        {name: "Table", path: "/inputs/table"},
+        {name: "Text", path: "/inputs/text"},
+        {name: "Textarea", path: "/inputs/textarea"},
+        {name: "Toggle", path: "/inputs/toggle"}
+      ]
+    },
+    {
+      name: "Charts",
+      open: false,
+      pages: [
+        {name: "Lines", path: "/charts/line"},
+        {name: "Bars", path: "/charts/bar"},
+        {name: "Points", path: "/charts/point"},
+        {name: "Area", path: "/charts/area"},
+        {name: "Cell", path: "/charts/cell"},
+        {name: "Tick", path: "/charts/tick"},
+        {name: "Arrow", path: "/charts/arrow"},
+        {name: "Hexbin", path: "/charts/hexbin"},
+        {name: "Facets", path: "/charts/facets"}
+      ]
+    },
+    {
+      name: "Layout",
+      open: false,
+      pages: [
+        {name: "Big number", path: "/layout/bignumber"},
+        {name: "Resize", path: "/layout/resize"},
+        {name: "Card", path: "/layout/card"},
+        {name: "Grid", path: "/layout/grid"}
       ]
     },
     {
