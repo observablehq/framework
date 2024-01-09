@@ -1,4 +1,4 @@
-# Form
+# Form input
 
 The Form input combines a number of inputs into a single compound input. It’s intended for a more compact display of closely-related inputs, say for a color’s red, green, and blue channels.
 
@@ -7,7 +7,7 @@ const rgb = view(Inputs.form([
   Inputs.range([0, 255], {step: 1, label: "r"}),
   Inputs.range([0, 255], {step: 1, label: "g"}),
   Inputs.range([0, 255], {step: 1, label: "b"})
-]))
+]));
 ```
 
 ```js echo
@@ -21,7 +21,7 @@ const rgb2 = view(Inputs.form({
   r: Inputs.range([0, 255], {step: 1, label: "r"}),
   g: Inputs.range([0, 255], {step: 1, label: "g"}),
   b: Inputs.range([0, 255], {step: 1, label: "b"})
-}))
+}));
 ```
 
 ```js echo

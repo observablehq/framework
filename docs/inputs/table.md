@@ -1,4 +1,4 @@
-# Table
+# Table input
 
 [TODO] check if removing Hello, Inputs okay.
 
@@ -7,7 +7,7 @@ A Table displays tabular data. It’s fast: rows are rendered lazily on scroll. 
 By default, all columns are visible. Only the first dozen rows are initially visible, but you can scroll to see more. Column headers are fixed for readability.
 
 ```js echo
-const penguins = FileAttachment("penguins.csv").csv({typed: true})
+const penguins = FileAttachment("penguins.csv").csv({typed: true});
 ```
 
 ```js echo
@@ -60,7 +60,7 @@ a row to select it, and click the checkbox in the header row to clear the
 selection. You can shift-click to select a range of rows.
 
 ```js echo
-const selection = view(Inputs.table(penguins, {required: false}))
+const selection = view(Inputs.table(penguins, {required: false}));
 ```
 
 ```js echo
@@ -199,14 +199,3 @@ Inputs.table(penguins, {
 ```
 
 Thanks to [Ilyá Belsky](https://observablehq.com/@oluckyman) and [Brett Cooper](https://observablehq.com/@hellonearthis) for suggestions.
-
-
-
-
-
-
-
-
-
-
-

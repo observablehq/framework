@@ -1,11 +1,11 @@
-# Range
+# Range input
 
 A Range input specifies a number between the given *min* and *max* (inclusive). This number can be adjusted roughly by sliding, or precisely by typing. A range input is also known as a slider.
 
 By default, a Range chooses a floating point number between 0 and 1 with full precision, which is often more precision than desired.
 
 ```js echo
-const x = view(Inputs.range())
+const x = view(Inputs.range());
 ```
 
 ```js echo
@@ -17,7 +17,7 @@ The current value of *x* is ${x.toLocaleString("en")}.
 The *step* option is strongly encouraged to set the desired precision (the interval between adjacent values). For integers, use *step* = 1. The up and down buttons in the number input will only work if a *step* is specified. To change the extent, pass [*min*, *max*] as the first argument.
 
 ```js echo
-const y = view(Inputs.range([0, 255], {step: 1}))
+const y = view(Inputs.range([0, 255], {step: 1}));
 ```
 
 The *min*, *max* and *step* options affect only the slider behavior, the number input’s buttons, and whether the browser shows a warning if a typed number is invalid; they do not constrain the typed number.
@@ -25,7 +25,7 @@ The *min*, *max* and *step* options affect only the slider behavior, the number 
 The *value* option sets the initial value, which defaults to the middle of the range: (*min* + *max*) / 2.
 
 ```js echo
-const z = view(Inputs.range([0, 255], {step: 1, value: 0}))
+const z = view(Inputs.range([0, 255], {step: 1, value: 0}));
 ```
 
 ```js echo
@@ -35,7 +35,7 @@ z
 To describe the meaning of the input, supply a *label*. A *placeholder* string may also be specified; it will only be visible when the number input is empty.
 
 ```js echo
-const gain = view(Inputs.range([0, 11], {label: "Gain", step: 0.1, placeholder: "0–11"}))
+const gain = view(Inputs.range([0, 11], {label: "Gain", step: 0.1, placeholder: "0–11"}));
 ```
 
 ```js echo
@@ -45,19 +45,19 @@ gain
 For more control over typography, the *label* may be an HTML element.
 
 ```js echo
-const n = view(Inputs.range([1, 10], {label: html`Top <i>n</i>`, step: 1}))
+const n = view(Inputs.range([1, 10], {label: html`Top <i>n</i>`, step: 1}));
 ```
 
 You can even use a ${tex`\TeX`} label, if you’re into that sort of thing.
 
 ```js echo
-const psir = view(Inputs.range([0, 1], {label: tex`\psi(\textbf{r})`}))
+const psir = view(Inputs.range([0, 1], {label: tex`\psi(\textbf{r})`}));
 ```
 
 For an unbounded range, or simply to suppress the range input, you can use Inputs.number instead of Inputs.range. If you don’t specify an initial value, it defaults to undefined which causes referencing cells to wait for valid input.
 
 ```js echo
-const m = view(Inputs.number([0, Infinity], {step: 1, label: "Favorite integer", placeholder: ""}))
+const m = view(Inputs.number([0, Infinity], {step: 1, label: "Favorite integer", placeholder: ""}));
 ```
 
 ```js echo
@@ -77,7 +77,7 @@ Inputs.range([0, 1], {transform: Math.sqrt})
 The *format* option allows you to specify a function that is called to format the displayed number. Note that the returned string must be a [valid floating-point number](https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#valid-floating-point-number) according to the HTML specification; no commas allowed!
 
 ```js echo
-const f = view(Inputs.range([0, 1], {format: x => x.toFixed(2)}))
+const f = view(Inputs.range([0, 1], {format: x => x.toFixed(2)}));
 ```
 
 ```js echo
@@ -87,16 +87,9 @@ f
 To prevent a Range’s value from being changed, use the *disabled* option.
 
 ```js echo
-const d = view(Inputs.range([0, 1], {disabled: true}))
+const d = view(Inputs.range([0, 1], {disabled: true}));
 ```
 
 ```js echo
 d
 ```
-
-
-
-
-
-
-

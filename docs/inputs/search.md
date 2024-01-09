@@ -1,4 +1,4 @@
-# Search
+# Search input
 
 [TODO] check on Hello, Inputs removed below. 
 
@@ -7,11 +7,11 @@ The Search input allows freeform, full-text search of a tabular dataset (or a si
 By default, the query is split into terms separated by spaces; each term is then prefix-matched against the property values (the fields) of each row in the data. Try searching for “gen” below to find Gentoo penguins.
 
 ```js echo
-const penguins = FileAttachment("penguins.csv").csv({typed: true})
+const penguins = FileAttachment("penguins.csv").csv({typed: true});
 ```
 
 ```js echo
-const search = view(Inputs.search(penguins))
+const search = view(Inputs.search(penguins));
 ```
 
 ```js echo

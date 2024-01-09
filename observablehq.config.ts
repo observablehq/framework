@@ -21,6 +21,33 @@ export default {
       ]
     },
     {
+      name: "Layout",
+      open: false,
+      pages: [
+        {name: "Annotation", path: "/layout/annotation"},
+        {name: "Big number", path: "/layout/bignumber"},
+        {name: "Card", path: "/layout/card"},
+        {name: "Grid", path: "/layout/grid"},
+        {name: "Resize", path: "/layout/resize"},
+        {name: "Tables", path: "/layout/tables"}
+      ]
+    },
+    {
+      name: "Charts",
+      open: false,
+      pages: [
+        {name: "Area", path: "/charts/area"},
+        {name: "Arrow", path: "/charts/arrow"},
+        {name: "Bar", path: "/charts/bar"},
+        {name: "Cell", path: "/charts/cell"},
+        {name: "Dot", path: "/charts/dot"},
+        {name: "Facets", path: "/charts/facets"},
+        {name: "Hexbin", path: "/charts/hexbin"},
+        {name: "Line", path: "/charts/line"},
+        {name: "Tick", path: "/charts/tick"},
+      ]
+    },
+    {
       name: "Inputs",
       open: false,
       pages: [
@@ -38,33 +65,6 @@ export default {
         {name: "Text", path: "/inputs/text"},
         {name: "Textarea", path: "/inputs/textarea"},
         {name: "Toggle", path: "/inputs/toggle"}
-      ]
-    },
-    {
-      name: "Charts",
-      open: false,
-      pages: [
-        {name: "Area", path: "/charts/area"},
-        {name: "Arrow", path: "/charts/arrow"},
-        {name: "Bar", path: "/charts/bar"},
-        {name: "Cell", path: "/charts/cell"},
-        {name: "Facets", path: "/charts/facets"},
-        {name: "Hexbin", path: "/charts/hexbin"},
-        {name: "Line", path: "/charts/line"},
-        {name: "Point", path: "/charts/point"},
-        {name: "Tick", path: "/charts/tick"},
-      ]
-    },
-    {
-      name: "Layout",
-      open: false,
-      pages: [
-        {name: "Annotation", path: "/layout/annotation"},
-        {name: "Big number", path: "/layout/bignumber"},
-        {name: "Card", path: "/layout/card"},
-        {name: "Grid", path: "/layout/grid"},
-        {name: "Resize", path: "/layout/resize"},
-        {name: "Tables", path: "/layout/tables"}
       ]
     },
     {
