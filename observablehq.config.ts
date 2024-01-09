@@ -62,7 +62,8 @@ export default {
         {name: "Big number", path: "/layout/bignumber"},
         {name: "Resize", path: "/layout/resize"},
         {name: "Card", path: "/layout/card"},
-        {name: "Grid", path: "/layout/grid"}
+        {name: "Grid", path: "/layout/grid"},
+        {name: "Tables", path: "/layout/tables"}
       ]
     },
     {
