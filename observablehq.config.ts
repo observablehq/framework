@@ -44,25 +44,26 @@ export default {
       name: "Charts",
       open: false,
       pages: [
-        {name: "Lines", path: "/charts/line"},
-        {name: "Bars", path: "/charts/bar"},
-        {name: "Points", path: "/charts/point"},
         {name: "Area", path: "/charts/area"},
-        {name: "Cell", path: "/charts/cell"},
-        {name: "Tick", path: "/charts/tick"},
         {name: "Arrow", path: "/charts/arrow"},
+        {name: "Bar", path: "/charts/bar"},
+        {name: "Cell", path: "/charts/cell"},
+        {name: "Facets", path: "/charts/facets"},
         {name: "Hexbin", path: "/charts/hexbin"},
-        {name: "Facets", path: "/charts/facets"}
+        {name: "Line", path: "/charts/line"},
+        {name: "Point", path: "/charts/point"},
+        {name: "Tick", path: "/charts/tick"},
       ]
     },
     {
       name: "Layout",
       open: false,
       pages: [
+        {name: "Annotation", path: "/layout/annotation"},
         {name: "Big number", path: "/layout/bignumber"},
-        {name: "Resize", path: "/layout/resize"},
         {name: "Card", path: "/layout/card"},
         {name: "Grid", path: "/layout/grid"},
+        {name: "Resize", path: "/layout/resize"},
         {name: "Tables", path: "/layout/tables"}
       ]
     },
