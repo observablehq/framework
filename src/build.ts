@@ -54,6 +54,11 @@ export interface BuildEffects {
   writeFile(outputPath: string, contents: Buffer | string): Promise<void>;
 }
 
+function hoistCssImports(style) {
+  const hoisted = style.match(/^((?:@import .*?;\n)*)/)?.[0] ?? "";
+  return {hoisted, code: style.slice(hoisted.length)};
+}
+
 export async function build(
   {config, addPublic = true, clientEntry = "./src/client/index.js"}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output)
@@ -72,7 +77,9 @@ export async function build(
   // Render .md files, building a list of file attachments as we go.
   const files: string[] = [];
   const imports: string[] = [];
-  const styles: Style[] = [];
+
+  // TODO InternSet?
+  const styles: {style: Style; path: string; code: string}[] = [];
   for await (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
@@ -82,12 +89,20 @@ export async function build(
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
     files.push(...render.files.map(resolveFile));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
-    await effects.writeFile(outputPath, render.html);
     const style = mergeStyle(path, render.data?.style, render.data?.theme, config.style);
     if (style) {
       if ("path" in style) style.path = resolvePath(sourceFile, style.path);
-      if (!styles.some((s) => styleEquals(s, style))) styles.push(style);
+      if (!styles.some((s) => styleEquals(s.style, style))) {
+        styles.push({
+          style,
+          path: "path" in style ? style.path : `theme-${style.theme}.css`,
+          ...hoistCssImports(
+            await bundleStyles("path" in style ? {path: join(root, style.path)} : {theme: style.theme})
+          )
+        });
+      }
     }
+    await effects.writeFile(outputPath, render.html);
   }
 
   // Generate the client bundles.
@@ -99,18 +114,13 @@ export async function build(
       const code = await rollupClient(clientPath, {minify: true});
       await effects.writeFile(outputPath, code);
     }
-    for (const style of styles) {
+    for (const {style, code, path} of styles) {
       if ("path" in style) {
-        const outputPath = join("_import", style.path);
-        const sourcePath = join(root, style.path);
-        effects.output.write(`${faint("bundle")} ${sourcePath} ${faint("→")} `);
-        const code = await bundleStyles({path: sourcePath});
-        await effects.writeFile(outputPath, code);
+        effects.output.write(`${faint("bundle")} ${join(root, path)} ${faint("→")} `);
+        await effects.writeFile(join("_import", path), code);
       } else {
-        const outputPath = join("_observablehq", `theme-${style.theme}.css`);
-        effects.output.write(`${faint("bundle")} theme-${style.theme}.css ${faint("→")} `);
-        const code = await bundleStyles({theme: style.theme});
-        await effects.writeFile(outputPath, code);
+        effects.output.write(`${faint("bundle")} ${path} ${faint("→")} `);
+        await effects.writeFile(join("_observablehq", path), code);
       }
     }
   }

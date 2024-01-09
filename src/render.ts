@@ -9,7 +9,7 @@ import {addImplicitSpecifiers, addImplicitStylesheets} from "./libraries.js";
 import {type ParseResult, parseMarkdown} from "./markdown.js";
 import {type PageLink, findLink, normalizePath} from "./pager.js";
 import {getPreviewStylesheet} from "./preview.js";
-import {getClientPath, rollupClient} from "./rollup.js";
+import {getClientPath, hoistStyleImport, rollupClient} from "./rollup.js";
 import {relativeUrl} from "./url.js";
 
 export interface Render {
@@ -180,7 +180,7 @@ async function renderLinks(
   path: string,
   resolver: ImportResolver
 ): Promise<Html> {
-  const stylesheets = new Set<string>(["https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"]); // prettier-ignore
+  const stylesheets = new Set<string>();
   const style = getPreviewStylesheet(path, parseResult.data, options.style);
   if (style) stylesheets.add(style);
   const specifiers = new Set<string>(["npm:@observablehq/runtime", "npm:@observablehq/stdlib"]);
@@ -191,7 +191,11 @@ async function renderLinks(
   const preloads = new Set<string>([relativeUrl(path, "/_observablehq/client.js")]);
   for (const specifier of specifiers) preloads.add(await resolver(path, specifier));
   await resolveModulePreloads(preloads);
-  return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
+  // <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  // "https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"
+  return html`
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  ${
     Array.from(stylesheets).sort().map(renderStylesheetPreload) // <link rel=preload as=style>
   }${
     Array.from(stylesheets).sort().map(renderStylesheet) // <link rel=stylesheet>
