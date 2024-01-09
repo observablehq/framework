@@ -1,4 +1,4 @@
-## Arrow chart
+# Arrow chart
 
 Copy the code snippet below, paste into a JavaScript code block, then substitute your own data to create arrow charts using the [arrow mark](https://observablehq.com/plot/marks/arrow) from [Observable Plot](https://observablehq.com/plot/). 
 
