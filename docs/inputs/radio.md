@@ -1,6 +1,6 @@
 # Radio
 
-The Radio input allows the user to choose one of a given set of values. (See [Checkbox](./checkbox) for multiple-choice.) A Radio is recommended over a [Select](./select) when the number of values to choose from is small — say, seven or fewer — because all choices will be visible up-front, improving usability.
+A Radio allows the user to choose one of a given set of values. (See [Checkbox](./checkbox) for multiple-choice.) A Radio is recommended over a [Select](./select) when the number of values to choose from is small — say, seven or fewer — because all choices will be visible up-front, improving usability.
 
 ```js echo
 const color = view(Inputs.radio(["red", "green", "blue"], {label: "color"}))

@@ -1,6 +1,6 @@
 # Text
 
-The Text input allows freeform single-line text input. (For multiple lines, see [Textarea](./textarea)).
+The Text input allows freeform single-line text entry. (For multiple lines, see [Textarea](./textarea)).
 
 In its most basic form, a Text is a blank box whose value is the empty string. The Text’s value changes as the user types into the box.
 
