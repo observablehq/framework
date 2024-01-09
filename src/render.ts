@@ -192,12 +192,24 @@ async function renderLinks(
   for (const specifier of specifiers) preloads.add(await resolver(path, specifier));
   await resolveModulePreloads(preloads);
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
-    Array.from(stylesheets).sort().map(renderStylesheetPreload) // <link rel=preload as=style>
+    Array.from(stylesheets)
+      .sort()
+      .map((href) => resolveStylesheet(path, href))
+      .map(renderStylesheetPreload) // <link rel=preload as=style>
   }${
-    Array.from(stylesheets).sort().map(renderStylesheet) // <link rel=stylesheet>
+    Array.from(stylesheets)
+      .sort()
+      .map((href) => resolveStylesheet(path, href))
+      .map(renderStylesheet) // <link rel=stylesheet>
   }${
     Array.from(preloads).sort().map(renderModulePreload) // <link rel=modulepreload>
   }`;
+}
+
+function resolveStylesheet(path: string, href: string): string {
+  return href.startsWith("observablehq:")
+    ? relativeUrl(path, `/_observablehq/${href.slice("observablehq:".length)}`)
+    : href;
 }
 
 function renderStylesheet(href: string): Html {

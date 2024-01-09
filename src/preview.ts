@@ -90,7 +90,14 @@ export class PreviewServer {
       } else if (pathname.startsWith("/_observablehq/stdlib.js")) {
         end(req, res, await rollupClient(getClientPath("./src/client/stdlib.js")), "text/javascript");
       } else if (pathname.startsWith("/_observablehq/stdlib/")) {
-        end(req, res, await rollupClient(getClientPath("./src/client/" + pathname.slice("/_observablehq/".length))), "text/javascript"); // prettier-ignore
+        const path = getClientPath("./src/client/" + pathname.slice("/_observablehq/".length));
+        if (pathname.endsWith(".js")) {
+          end(req, res, await rollupClient(path), "text/javascript");
+        } else if (pathname.endsWith(".css")) {
+          end(req, res, await bundleStyles({path}), "text/css");
+        } else {
+          throw new HttpError(`Not found: ${pathname}`, 404);
+        }
       } else if (pathname === "/_observablehq/client.js") {
         end(req, res, await rollupClient(getClientPath("./src/client/preview.js")), "text/javascript");
       } else if ((match = /^\/_observablehq\/theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(pathname))) {

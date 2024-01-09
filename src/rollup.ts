@@ -9,8 +9,9 @@ import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
+import {nodeResolve} from "@rollup/plugin-node-resolve";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
-import {resolveNpmImport} from "./javascript/imports.js";
+import {isPathImport, resolveNpmImport} from "./javascript/imports.js";
 import {getObservableUiHost} from "./observableApiClient.js";
 import {Sourcemap} from "./sourcemap.js";
 import {relativeUrl} from "./url.js";
@@ -25,6 +26,10 @@ const STYLE_MODULES = {
   "observablehq:theme-light-alt.css": getClientPath("./src/style/theme-light-alt.css"),
   "observablehq:theme-wide.css": getClientPath("./src/style/theme-wide.css")
 };
+
+function rewriteInputsNamespace(code: string) {
+  return code.replace(/\b__ns__\b/g, "inputs-3a86ea");
+}
 
 export async function bundleStyles({path, theme}: {path?: string; theme?: string[]}): Promise<string> {
   const result = await build({
@@ -42,7 +47,8 @@ export async function bundleStyles({path, theme}: {path?: string; theme?: string
     write: false,
     alias: STYLE_MODULES
   });
-  return result.outputFiles[0].text;
+  const text = result.outputFiles[0].text;
+  return rewriteInputsNamespace(text); // TODO only for inputs
 }
 
 export async function rollupClient(clientPath: string, {minify = false} = {}): Promise<string> {
@@ -50,6 +56,7 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
     input: clientPath,
     external: [/^https:/],
     plugins: [
+      nodeResolve({resolveOnly: ["@observablehq/inputs"]}),
       importResolve(clientPath),
       esbuild({
         target: "es2022",
@@ -64,7 +71,8 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
   });
   try {
     const output = await bundle.generate({format: "es"});
-    return output.output.find((o): o is OutputChunk => o.type === "chunk")!.code; // XXX
+    const code = output.output.find((o): o is OutputChunk => o.type === "chunk")!.code; // TODO don’t assume one chunk?
+    return rewriteInputsNamespace(code); // TODO only for inputs
   } finally {
     await bundle.close();
   }
@@ -94,6 +102,8 @@ async function resolveImport(source: string, specifier: string | AstNode): Promi
     ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/dot.js")), external: true} // TODO publish to npm
     : specifier === "npm:@observablehq/duckdb"
     ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/duckdb.js")), external: true} // TODO publish to npm
+    : specifier === "npm:@observablehq/inputs"
+    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/inputs.js")), external: true} // TODO publish to npm
     : specifier === "npm:@observablehq/mermaid"
     ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/mermaid.js")), external: true} // TODO publish to npm
     : specifier === "npm:@observablehq/tex"
@@ -106,6 +116,8 @@ async function resolveImport(source: string, specifier: string | AstNode): Promi
     ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/zip.js")), external: true} // TODO publish to npm
     : specifier.startsWith("npm:")
     ? {id: await resolveNpmImport(specifier.slice("npm:".length))}
+    : source !== specifier && !isPathImport(specifier) && specifier !== "@observablehq/inputs"
+    ? {id: await resolveNpmImport(specifier), external: true}
     : null;
 }
 
