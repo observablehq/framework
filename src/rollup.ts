@@ -42,7 +42,14 @@ export async function bundleStyles({path, theme}: {path?: string; theme?: string
     write: false,
     alias: STYLE_MODULES
   });
+  console.warn(result.outputFiles[0].text.slice(0, 100));
   return result.outputFiles[0].text;
+}
+
+export async function hoistStyleImport(cf): Promise<string[]> {
+  const styles = Array.from((await bundleStyles(cf)).matchAll(/^@import .*/), ([match]) => match);
+  console.warn({styles});
+  return styles;
 }
 
 export async function rollupClient(clientPath: string, {minify = false} = {}): Promise<string> {
