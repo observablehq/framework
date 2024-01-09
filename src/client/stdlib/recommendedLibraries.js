@@ -1,3 +1,5 @@
+import {AbstractFile} from "observablehq:stdlib";
+
 export const _ = () => import("npm:lodash").then((lodash) => lodash.default);
 export const aq = () => import("npm:arquero");
 export const Arrow = () => import("npm:apache-arrow");
@@ -9,7 +11,7 @@ export const DuckDBClient = () => import("observablehq:stdlib/duckdb").then((duc
 export const htl = () => import("npm:htl");
 export const html = () => import("npm:htl").then((htl) => htl.html);
 export const svg = () => import("npm:htl").then((htl) => htl.svg);
-export const Inputs = () => import("npm:@observablehq/inputs");
+export const Inputs = () => import("npm:@observablehq/inputs").then((i) => ({...i, file: i.fileOf(AbstractFile)}));
 export const L = () => import("npm:leaflet");
 export const mermaid = () => import("observablehq:stdlib/mermaid").then((mermaid) => mermaid.default);
 export const Plot = () => import("npm:@observablehq/plot");
