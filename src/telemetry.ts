@@ -28,6 +28,7 @@ type TelemetryData = {
 export class Telemetry {
   private disabled = !!process.env.OBSERVABLE_TELEMETRY_DISABLE;
   private debug = !!process.env.OBSERVABLE_TELEMETRY_DEBUG;
+  private origin = process.env.OBSERVABLE_TELEMETRY_ORIGIN || "https://events.observablehq.com";
   private readonly pending = new Set<Promise<any>>();
   private _config: Record<string, uuid> | undefined;
   private _ids: Promise<TelemetryIds> | undefined;
@@ -115,11 +116,12 @@ export class Telemetry {
     now: number;
     data: TelemetryData;
   }): Promise<void> {
+    // todo banner
     if (this.debug) {
-      console.log("[telemetry]", data);
+      console.error("[telemetry]", data);
       return;
     }
-    await fetch("https://telemetry.observablehq.com/cli", {
+    await fetch(`${this.origin}/cli`, {
       method: "POST",
       body: JSON.stringify(data),
       headers: {"content-type": "application/json"}
