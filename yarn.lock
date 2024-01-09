@@ -2303,6 +2303,13 @@ is-wsl@^2.2.0:
   dependencies:
     is-docker "^2.0.0"
 
+is-wsl@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/is-wsl/-/is-wsl-3.1.0.tgz#e1c657e39c10090afcbedec61720f6b924c3cbd2"
+  integrity sha512-UcVfVfaK4Sc4m7X3dUSoHoozQGBEFeDC+zVo06t98xe8CzHSZZBekNXH+tu0NalHolcJ/QAGqS46Hef7QXBIMw==
+  dependencies:
+    is-inside-container "^1.0.0"
+
 isarray@^2.0.5:
   version "2.0.5"
   resolved "https://registry.yarnpkg.com/isarray/-/isarray-2.0.5.tgz#8af1e4c1221244cc62459faf38940d4e644a5723"

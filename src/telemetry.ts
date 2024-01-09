@@ -97,23 +97,27 @@ export class Telemetry {
   }
 
   private get environment() {
-    return (this._environment ??= Promise.all([import("../package.json"), import("ci-info"), import("is-docker")]).then(
-      ([{default: pkg}, ci, {default: isDocker}]) => {
-        const cpus = os.cpus() || [];
-        return {
-          version: pkg.version,
-          systemPlatform: os.platform(),
-          systemRelease: os.release(),
-          systemArchitecture: os.arch(),
-          cpuCount: cpus.length,
-          cpuModel: cpus.length ? cpus[0].model : null,
-          cpuSpeed: cpus.length ? cpus[0].speed : null,
-          memoryInMb: Math.trunc(os.totalmem() / Math.pow(1024, 2)),
-          ci: ci.name || ci.isCI,
-          docker: isDocker()
-        };
-      }
-    ));
+    return (this._environment ??= Promise.all([
+      import("../package.json"),
+      import("ci-info"),
+      import("is-docker"),
+      import("is-wsl")
+    ]).then(([{default: pkg}, ci, {default: isDocker}, {default: isWSL}]) => {
+      const cpus = os.cpus() || [];
+      return {
+        version: pkg.version,
+        systemPlatform: os.platform(),
+        systemRelease: os.release(),
+        systemArchitecture: os.arch(),
+        cpuCount: cpus.length,
+        cpuModel: cpus.length ? cpus[0].model : null,
+        cpuSpeed: cpus.length ? cpus[0].speed : null,
+        memoryInMb: Math.trunc(os.totalmem() / Math.pow(1024, 2)),
+        isCI: ci.name || ci.isCI,
+        isDocker: isDocker(),
+        isWSL
+      };
+    }));
   }
 
   private async send(data: {
