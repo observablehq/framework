@@ -9,6 +9,7 @@ import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
+import {nodeResolve} from "@rollup/plugin-node-resolve";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
 import {resolveNpmImport} from "./javascript/imports.js";
 import {getObservableUiHost} from "./observableApiClient.js";
@@ -50,6 +51,7 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
     input: clientPath,
     external: [/^https:/],
     plugins: [
+      nodeResolve(),
       importResolve(clientPath),
       esbuild({
         target: "es2022",
@@ -94,6 +96,8 @@ async function resolveImport(source: string, specifier: string | AstNode): Promi
     ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/dot.js")), external: true} // TODO publish to npm
     : specifier === "npm:@observablehq/duckdb"
     ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/duckdb.js")), external: true} // TODO publish to npm
+    : specifier === "npm:@observablehq/inputs"
+    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/inputs.js")), external: true} // TODO publish to npm
     : specifier === "npm:@observablehq/mermaid"
     ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/mermaid.js")), external: true} // TODO publish to npm
     : specifier === "npm:@observablehq/tex"
