@@ -99,12 +99,15 @@ Like other basic inputs, buttons can have an optional label, which can also be e
 const confirm = view(Inputs.button("OK", {label: "Continue?"}));
 ```
 
-```js echo
+You can change the rendered text in Markdown based on whether a button is clicked. Try clicking the `OK` button with the  `Continue?` label.
+```md echo run=false
 confirm ? "Confirmed!" : "Awaiting confirmation..."
 ```
+
+${confirm ? "Confirmed!" : "Awaiting confirmation..."}
 
 You can also use a button to copy something to the clipboard.
 
 ```js echo
-Inputs.button("copy to clipboard", {value: null, reduce: () => navigator.clipboard.writeText(time)})
+Inputs.button("Copy to clipboard", {value: null, reduce: () => navigator.clipboard.writeText(time)})
 ```
