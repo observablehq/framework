@@ -2,8 +2,8 @@ import {readFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path";
 import {visitFiles} from "./files.js";
 import {parseMarkdown} from "./markdown.js";
-import {resolvePath} from "./url.js";
 import {Telemetry} from "./telemetry.js";
+import {resolvePath} from "./url.js";
 
 export interface Page {
   name: string;

@@ -41,7 +41,7 @@ const defaultEffects: DeployEffects = {
 
 /** Deploy a project to ObservableHQ */
 export async function deploy({config}: DeployOptions, effects = defaultEffects): Promise<void> {
-  const {root: sourceRoot, telemetry} = config;
+  const {telemetry} = config;
   telemetry.record({event: "deploy", step: "start"});
   const {logger} = effects;
   const apiKey = await effects.getObservableApiKey(logger);
