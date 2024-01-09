@@ -28,7 +28,7 @@ export async function getImplicitStylesheets(specifiers: Set<string>): Promise<S
 }
 
 export async function addImplicitStylesheets(stylesheets: Set<string>, specifiers: Set<string>): Promise<Set<string>> {
-  if (specifiers.has("npm:@observablehq/inputs")) stylesheets.add("https://cdn.jsdelivr.net/gh/observablehq/inputs/src/style.css"); // prettier-ignore
+  if (specifiers.has("npm:@observablehq/inputs")) stylesheets.add("observablehq:stdlib/inputs.css");
   if (specifiers.has("npm:katex")) stylesheets.add(await resolveNpmImport("katex/dist/katex.min.css"));
   if (specifiers.has("npm:leaflet")) stylesheets.add(await resolveNpmImport("leaflet/dist/leaflet.css"));
   return stylesheets;

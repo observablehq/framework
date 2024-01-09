@@ -27,6 +27,10 @@ const STYLE_MODULES = {
   "observablehq:theme-wide.css": getClientPath("./src/style/theme-wide.css")
 };
 
+function rewriteInputsNamespace(code: string) {
+  return code.replace(/\b__ns__\b/g, "inputs-3a86ea");
+}
+
 export async function bundleStyles({path, theme}: {path?: string; theme?: string[]}): Promise<string> {
   const result = await build({
     bundle: true,
@@ -43,7 +47,8 @@ export async function bundleStyles({path, theme}: {path?: string; theme?: string
     write: false,
     alias: STYLE_MODULES
   });
-  return result.outputFiles[0].text;
+  const text = result.outputFiles[0].text;
+  return rewriteInputsNamespace(text); // TODO only for inputs
 }
 
 export async function rollupClient(clientPath: string, {minify = false} = {}): Promise<string> {
@@ -66,7 +71,8 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
   });
   try {
     const output = await bundle.generate({format: "es"});
-    return output.output.find((o): o is OutputChunk => o.type === "chunk")!.code; // XXX
+    const code = output.output.find((o): o is OutputChunk => o.type === "chunk")!.code; // TODO don’t assume one chunk?
+    return rewriteInputsNamespace(code); // TODO only for inputs
   } finally {
     await bundle.close();
   }
