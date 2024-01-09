@@ -20,6 +20,11 @@ type TelemetryEnvironment = {
   cpuSpeed: number | null;
   memoryInMb: number;
 };
+type TelemetryTime = {
+  now: number;
+  timeOrigin: number;
+  timeZoneOffset: number;
+};
 type TelemetryData = {
   event: "build" | "deploy" | "preview";
   step: "start" | "finish";
@@ -29,6 +34,7 @@ export class Telemetry {
   private disabled = !!process.env.OBSERVABLE_TELEMETRY_DISABLE;
   private debug = !!process.env.OBSERVABLE_TELEMETRY_DEBUG;
   private origin = process.env.OBSERVABLE_TELEMETRY_ORIGIN || "https://events.observablehq.com";
+  private timeZoneOffset = new Date().getTimezoneOffset();
   private readonly pending = new Set<Promise<any>>();
   private _config: Record<string, uuid> | undefined;
   private _ids: Promise<TelemetryIds> | undefined;
@@ -39,7 +45,7 @@ export class Telemetry {
     const task = this.send({
       ids: await this.ids,
       environment: await this.environment,
-      now: performance.now(),
+      time: {now: performance.now(), timeOrigin: performance.timeOrigin, timeZoneOffset: this.timeZoneOffset},
       data
     })
       .catch(() => {})
@@ -113,7 +119,7 @@ export class Telemetry {
   private async send(data: {
     ids: TelemetryIds;
     environment: TelemetryEnvironment;
-    now: number;
+    time: TelemetryTime;
     data: TelemetryData;
   }): Promise<void> {
     // todo banner
