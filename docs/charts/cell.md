@@ -1,6 +1,6 @@
 # Cell chart
 
-Copy the code snippet below, paste into a JavaScript code block, then substitute your own data to create a heatmap using the [cell mark](https://observablehq.com/plot/marks/cell) from [Observable Plot](https://observablehq.com/plot/). 
+Copy the code snippet below, paste into a JavaScript code block, then substitute your own data to create a cell chart using the [cell mark](https://observablehq.com/plot/marks/cell) from [Observable Plot](https://observablehq.com/plot/). 
 
 ```js echo
 Plot.plot({
