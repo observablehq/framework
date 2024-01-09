@@ -21,6 +21,7 @@ const EXTRA_FILES: string[] = [
   "_observablehq/stdlib/dash.js",
   "_observablehq/stdlib/dot.js",
   "_observablehq/stdlib/duckdb.js",
+  "_observablehq/stdlib/inputs.js",
   "_observablehq/stdlib/mermaid.js",
   "_observablehq/stdlib/sqlite.js",
   "_observablehq/stdlib/tex.js",
