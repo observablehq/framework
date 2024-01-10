@@ -15,6 +15,7 @@ describe("telemetry", () => {
   afterEach(() => {
     setGlobalDispatcher(globalDispatcher);
     delete process.env.OBSERVABLE_TELEMETRY_DISABLE;
+    delete process.env.OBSERVABLE_TELEMETRY_DEBUG;
     delete process.env.OBSERVABLE_TELEMETRY_ORIGIN;
   });
 
@@ -27,6 +28,14 @@ describe("telemetry", () => {
 
   it("can be disabled", async () => {
     process.env.OBSERVABLE_TELEMETRY_DISABLE = "1";
+    const telemetry = new Telemetry();
+    telemetry.record({event: "build", step: "start"});
+    await telemetry.flush();
+    assert.equal(agent.pendingInterceptors().length, 1);
+  });
+
+  it("can be disabled via debug", async () => {
+    process.env.OBSERVABLE_TELEMETRY_DEBUG = "1";
     const telemetry = new Telemetry();
     telemetry.record({event: "build", step: "start"});
     await telemetry.flush();
