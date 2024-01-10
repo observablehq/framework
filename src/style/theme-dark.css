@@ -10,5 +10,8 @@
   --theme-foreground-fainter: color-mix(in srgb, var(--theme-foreground) 30%, var(--theme-background));
   --theme-foreground-faintest: color-mix(in srgb, var(--theme-foreground) 10%, var(--theme-background));
   --theme-foreground-focus: oklch(0.712564 0.257662 265.758);
+  --theme-color-positive: #3ca951; /* green */
+  --theme-color-negative: #ff725c; /* red */
+  --theme-color-neutral: #efb118; /* orange/yellow */
   color-scheme: dark;
 }
