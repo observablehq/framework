@@ -3,7 +3,7 @@ import {isatty} from "node:tty";
 import type {BuildEffects} from "./build.js";
 import {build} from "./build.js";
 import type {Config} from "./config.js";
-import {CliError} from "./error.js";
+import {CliError, isHttpError} from "./error.js";
 import type {Logger, Writer} from "./logger.js";
 import {ObservableApiClient} from "./observableApiClient.js";
 import {
@@ -54,36 +54,78 @@ export async function deploy({config}: DeployOptions, effects = defaultEffects):
     );
   }
 
-  // Check last deployed state. If it's not the same project, ask the user if
-  // they want to continue anyways. In non-interactive mode just cancel.
-  const projectInfo = await apiClient.getProject({
-    workspaceLogin: config.deploy.workspace,
-    projectSlug: config.deploy.project
-  });
-  const deployConfig = await effects.getDeployConfig(config.root);
-  const previousProjectId = deployConfig?.projectId;
-  if (previousProjectId && previousProjectId !== projectInfo.id) {
-    logger.log(
-      `The project @${config.deploy.workspace}/${config.deploy.project} does not match the expected project in ${config.root}/.observablehq/deploy.json`
-    );
-    if (effects.isTty) {
-      const choice = await promptUserForInput(
-        effects.input,
-        effects.output,
-        "Do you want to update the expected project and deploy anyways? [y/N]"
+  let projectId: string | null = null;
+  try {
+    const projectInfo = await apiClient.getProject({
+      workspaceLogin: config.deploy.workspace,
+      projectSlug: config.deploy.project
+    });
+    projectId = projectInfo.id;
+  } catch (error) {
+    if (isHttpError(error) && error.statusCode === 404) {
+      // Project doesn't exist yet, so ignore the error.
+    } else {
+      throw error;
+    }
+  }
+
+  if (projectId) {
+    // Check last deployed state. If it's not the same project, ask the user if
+    // they want to continue anyways. In non-interactive mode just cancel.
+    const deployConfig = await effects.getDeployConfig(config.root);
+    const previousProjectId = deployConfig?.projectId;
+    if (previousProjectId && previousProjectId !== projectId) {
+      logger.log(
+        `The project @${config.deploy.workspace}/${config.deploy.project} does not match the expected project in ${config.root}/.observablehq/deploy.json`
       );
+      if (effects.isTty) {
+        const choice = await promptUserForInput(
+          effects.input,
+          effects.output,
+          "Do you want to update the expected project and deploy anyways? [y/N]"
+        );
+        if (choice.trim().toLowerCase().charAt(0) !== "y") {
+          throw new CliError("User cancelled deploy.", {print: false, exitCode: 2});
+        }
+      } else {
+        throw new CliError("Cancelling deploy due to misconfiguration.");
+      }
+    }
+  } else {
+    // Project doesn't exist, so ask the user if they want to create it.
+    // In non-interactive mode just cancel.
+    if (effects.isTty) {
+      const choice = await promptUserForInput(effects.input, effects.output, "No project exists. Create it now? [y/N]");
       if (choice.trim().toLowerCase().charAt(0) !== "y") {
         throw new CliError("User cancelled deploy.", {print: false, exitCode: 2});
       }
+      if (!config.title) {
+        throw new CliError("You haven't configured a project title. Please set title in your configuration.");
+      }
+      const currentUserResponse = await apiClient.getCurrentUser();
+      const workspace = currentUserResponse.workspaces.find((w) => w.login === config.deploy?.workspace);
+      if (!workspace) {
+        const availableWorkspaces = currentUserResponse.workspaces.map((w) => w.login).join(", ");
+        throw new CliError(
+          `Workspace ${config.deploy?.workspace} not found. Available workspaces: ${availableWorkspaces}.`
+        );
+      }
+      const project = await apiClient.postProject({
+        slug: config.deploy.project,
+        title: config.title,
+        workspaceId: workspace.id
+      });
+      projectId = project.id;
     } else {
-      throw new CliError("Cancelling deploy due to misconfiguration.");
+      throw new CliError("Cancelling deploy due to non-existent project.");
     }
   }
-  await effects.setDeployConfig(config.root, {projectId: projectInfo.id});
+
+  await effects.setDeployConfig(config.root, {projectId});
 
   // Create the new deploy on the server
   const message = await promptUserForInput(effects.input, effects.output, "Deploy message: ");
-  const deployId = await apiClient.postDeploy({projectId: projectInfo.id, message});
+  const deployId = await apiClient.postDeploy({projectId, message});
 
   // Build the project
   await build({config, clientEntry: "./src/client/deploy.js"}, new DeployBuildEffects(apiClient, deployId, effects));

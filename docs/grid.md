@@ -1,6 +1,6 @@
 ---
 toc: false
-theme: [auto-alt, wide]
+theme: [light-alt, dark-alt, wide]
 ---
 
 ```js
