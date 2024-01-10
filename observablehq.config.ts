@@ -1,5 +1,10 @@
 export default {
   title: "Observable CLI",
+  // If deploying your project to ObservableHQ, you'll need a deploy property. E.g.,
+  // deploy: {
+  //   workspace: "my-observablehq-workspace",
+  //   project: "my-project-slug"
+  // },
   pages: [
     {name: "Getting started", path: "/getting-started"},
     {name: "Routing", path: "/routing"},
