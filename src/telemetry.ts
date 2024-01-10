@@ -3,6 +3,7 @@ import {createHash, randomUUID} from "node:crypto";
 import {readFile, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import os from "os";
+import {cyan, magenta} from "./tty.js";
 
 type uuid = ReturnType<typeof randomUUID>;
 type TelemetryIds = {
@@ -36,7 +37,7 @@ export class Telemetry {
   private origin = process.env.OBSERVABLE_TELEMETRY_ORIGIN || "https://events.observablehq.com";
   private timeZoneOffset = new Date().getTimezoneOffset();
   private readonly pending = new Set<Promise<any>>();
-  private _config: Record<string, uuid> | undefined;
+  private _config: Record<string, uuid | string> | undefined;
   private _ids: Promise<TelemetryIds> | undefined;
   private _environment: Promise<TelemetryEnvironment> | undefined;
 
@@ -60,7 +61,9 @@ export class Telemetry {
     return Promise.all(this.pending);
   }
 
-  private async getPersistentId(name: string): Promise<uuid> {
+  private async getPersistentId(name: string): Promise<uuid>;
+  private async getPersistentId(name: string, generator?: () => string): Promise<string>;
+  private async getPersistentId(name, generator?: () => string) {
     const file = join(os.homedir(), ".observablehq");
     if (!this._config) {
       try {
@@ -71,7 +74,7 @@ export class Telemetry {
       this._config ??= {};
     }
     if (!this._config[name]) {
-      this._config[name] = randomUUID();
+      this._config[name] = (generator ?? randomUUID)();
       await writeFile(file, JSON.stringify(this._config, null, 2));
     }
     return this._config[name];
@@ -121,13 +124,25 @@ export class Telemetry {
     }));
   }
 
+  private async needsBanner() {
+    let called;
+    await this.getPersistentId("cli_telemetry_banner", () => (called = String(Date.now())));
+    return !!called;
+  }
+
   private async send(data: {
     ids: TelemetryIds;
     environment: TelemetryEnvironment;
     time: TelemetryTime;
     data: TelemetryData;
   }): Promise<void> {
-    // todo banner
+    if (await this.needsBanner()) {
+      console.error(
+        `${magenta("Attention")}: Observable CLI collect anonymous telemetry data.\nSee ${cyan(
+          "https://observablehq.com/cli-telemetry"
+        )} for details and how to opt-out.`
+      );
+    }
     if (this.debug) {
       console.error("[telemetry]", data);
       return;
