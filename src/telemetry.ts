@@ -42,16 +42,17 @@ export class Telemetry {
 
   async record(data: TelemetryData) {
     if (this.disabled) return;
-    const task = this.send({
-      ids: await this.ids,
-      environment: await this.environment,
-      time: {now: performance.now(), timeOrigin: performance.timeOrigin, timeZoneOffset: this.timeZoneOffset},
-      data
-    })
-      .catch(() => {})
-      .finally(() => {
-        this.pending.delete(task);
-      });
+    const task = (async () =>
+      this.send({
+        ids: await this.ids,
+        environment: await this.environment,
+        time: {now: performance.now(), timeOrigin: performance.timeOrigin, timeZoneOffset: this.timeZoneOffset},
+        data
+      })
+        .catch(() => {})
+        .finally(() => {
+          this.pending.delete(task);
+        }))();
     this.pending.add(task);
   }
 
