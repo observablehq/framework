@@ -1,6 +1,8 @@
 import assert from "assert";
+import {randomUUID} from "crypto";
 import {MockAgent, getGlobalDispatcher, setGlobalDispatcher} from "undici";
 import {Telemetry} from "../src/telemetry.js";
+import {MockLogger} from "./mocks/logger.js";
 
 describe("telemetry", () => {
   const globalDispatcher = getGlobalDispatcher();
@@ -14,40 +16,53 @@ describe("telemetry", () => {
   });
   afterEach(() => {
     setGlobalDispatcher(globalDispatcher);
-    delete process.env.OBSERVABLE_TELEMETRY_DISABLE;
-    delete process.env.OBSERVABLE_TELEMETRY_DEBUG;
-    delete process.env.OBSERVABLE_TELEMETRY_ORIGIN;
   });
+
+  const noopEffects = {env: {}, logger: console, getPersistentId: async () => randomUUID()};
 
   it("sends data", async () => {
     const telemetry = new Telemetry();
-    telemetry.record({event: "build", step: "start"});
+    telemetry.record({event: "build", step: "start", test: true});
     await telemetry.flush();
     agent.assertNoPendingInterceptors();
   });
 
+  it("shows a banner", async () => {
+    const logger = new MockLogger();
+    const telemetry = new Telemetry({
+      ...noopEffects,
+      logger,
+      getPersistentId: async (name, generator = randomUUID) => generator()
+    });
+    telemetry.record({event: "build", step: "start", test: true});
+    await telemetry.flush();
+    logger.assertExactErrors([/Attention.*telemetry.*https:\/\/observablehq.com/s]);
+  });
+
   it("can be disabled", async () => {
-    process.env.OBSERVABLE_TELEMETRY_DISABLE = "1";
-    const telemetry = new Telemetry();
-    telemetry.record({event: "build", step: "start"});
+    const telemetry = new Telemetry({...noopEffects, env: {OBSERVABLE_TELEMETRY_DISABLE: "1"}});
+    telemetry.record({event: "build", step: "start", test: true});
     await telemetry.flush();
     assert.equal(agent.pendingInterceptors().length, 1);
   });
 
-  it("can be disabled via debug", async () => {
-    process.env.OBSERVABLE_TELEMETRY_DEBUG = "1";
-    const telemetry = new Telemetry();
-    telemetry.record({event: "build", step: "start"});
+  it("debug prints data and disables", async () => {
+    const logger = new MockLogger();
+    const telemetry = new Telemetry({...noopEffects, env: {OBSERVABLE_TELEMETRY_DEBUG: "1"}, logger});
+    telemetry.record({event: "build", step: "start", test: true});
     await telemetry.flush();
+    assert.equal(logger.errorLines.length, 1);
+    assert.equal(logger.errorLines[0][0], "[telemetry]");
     assert.equal(agent.pendingInterceptors().length, 1);
   });
 
   it("silent on error", async () => {
-    process.env.OBSERVABLE_TELEMETRY_ORIGIN = "https://localhost";
+    const logger = new MockLogger();
     agent.get("https://localhost").intercept({path: "/cli", method: "POST"}).replyWithError(new Error("silent"));
-    const telemetry = new Telemetry();
-    telemetry.record({event: "build", step: "start"});
+    const telemetry = new Telemetry({...noopEffects, env: {OBSERVABLE_TELEMETRY_ORIGIN: "https://localhost"}, logger});
+    telemetry.record({event: "build", step: "start", test: true});
     await telemetry.flush();
+    assert.equal(logger.errorLines.length, 0);
     assert.equal(agent.pendingInterceptors().length, 1);
   });
 });

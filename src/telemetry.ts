@@ -3,6 +3,7 @@ import {createHash, randomUUID} from "node:crypto";
 import {readFile, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import os from "os";
+import type {Logger} from "./logger.js";
 import {cyan, magenta} from "./tty.js";
 
 type uuid = ReturnType<typeof randomUUID>;
@@ -29,17 +30,56 @@ type TelemetryTime = {
 type TelemetryData = {
   event: "build" | "deploy" | "preview";
   step: "start" | "finish";
+  [key: string]: unknown;
+};
+
+let _config: Record<string, uuid> | undefined;
+async function getPersistentId(name: string, generator = randomUUID) {
+  const file = join(os.homedir(), ".observablehq");
+  if (!_config) {
+    try {
+      _config = JSON.parse(await readFile(file, "utf8"));
+    } catch (e) {
+      // fall through
+    }
+    _config ??= {};
+  }
+  if (!_config[name]) {
+    _config[name] = generator();
+    await writeFile(file, JSON.stringify(_config, null, 2));
+  }
+  return _config[name];
+}
+
+type TelemetryEffects = {
+  env: NodeJS.ProcessEnv;
+  logger: Logger;
+  getPersistentId: typeof getPersistentId;
+};
+const defaultEffects: TelemetryEffects = {
+  env: process.env,
+  logger: console,
+  getPersistentId
 };
 
 export class Telemetry {
-  private disabled = !!process.env.OBSERVABLE_TELEMETRY_DISABLE;
-  private debug = !!process.env.OBSERVABLE_TELEMETRY_DEBUG;
-  private origin = process.env.OBSERVABLE_TELEMETRY_ORIGIN || "https://events.observablehq.com";
+  private disabled: boolean;
+  private debug: boolean;
+  private origin: string;
+  private logger: Logger;
+  private getPersistentId: typeof getPersistentId;
   private timeZoneOffset = new Date().getTimezoneOffset();
   private readonly pending = new Set<Promise<any>>();
-  private _config: Record<string, uuid | string> | undefined;
   private _ids: Promise<TelemetryIds> | undefined;
   private _environment: Promise<TelemetryEnvironment> | undefined;
+
+  constructor(effects = defaultEffects) {
+    this.disabled = !!effects.env.OBSERVABLE_TELEMETRY_DISABLE;
+    this.debug = !!effects.env.OBSERVABLE_TELEMETRY_DEBUG;
+    this.origin = effects.env.OBSERVABLE_TELEMETRY_ORIGIN || "https://events.observablehq.com";
+    this.logger = effects.logger;
+    this.getPersistentId = effects.getPersistentId;
+  }
 
   async record(data: TelemetryData) {
     if (this.disabled) return;
@@ -59,25 +99,6 @@ export class Telemetry {
 
   flush() {
     return Promise.all(this.pending);
-  }
-
-  private async getPersistentId(name: string): Promise<uuid>;
-  private async getPersistentId(name: string, generator?: () => string): Promise<string>;
-  private async getPersistentId(name, generator?: () => string) {
-    const file = join(os.homedir(), ".observablehq");
-    if (!this._config) {
-      try {
-        this._config = JSON.parse(await readFile(file, "utf8"));
-      } catch (e) {
-        // fall through
-      }
-      this._config ??= {};
-    }
-    if (!this._config[name]) {
-      this._config[name] = (generator ?? randomUUID)();
-      await writeFile(file, JSON.stringify(this._config, null, 2));
-    }
-    return this._config[name];
   }
 
   private async getProjectId() {
@@ -126,7 +147,7 @@ export class Telemetry {
 
   private async needsBanner() {
     let called;
-    await this.getPersistentId("cli_telemetry_banner", () => (called = String(Date.now())));
+    await this.getPersistentId("cli_telemetry_banner", () => (called = randomUUID()));
     return !!called;
   }
 
@@ -137,14 +158,14 @@ export class Telemetry {
     data: TelemetryData;
   }): Promise<void> {
     if (await this.needsBanner()) {
-      console.error(
+      this.logger.error(
         `${magenta("Attention")}: Observable CLI collect anonymous telemetry data.\nSee ${cyan(
           "https://observablehq.com/cli-telemetry"
         )} for details and how to opt-out.`
       );
     }
     if (this.debug) {
-      console.error("[telemetry]", data);
+      this.logger.error("[telemetry]", data);
       return;
     }
     await fetch(`${this.origin}/cli`, {
