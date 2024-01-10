@@ -16,34 +16,56 @@ import {getObservableUiHost} from "./observableApiClient.js";
 import {Sourcemap} from "./sourcemap.js";
 import {relativeUrl} from "./url.js";
 
+interface Theme {
+  name: string;
+  path: string;
+  light?: boolean;
+  dark?: boolean;
+}
+
+const THEMES: Theme[] = [
+  {name: "dark", path: getClientPath("./src/style/theme-dark.css"), dark: true},
+  {name: "dark-alt", path: getClientPath("./src/style/theme-dark-alt.css"), dark: true},
+  {name: "light", path: getClientPath("./src/style/theme-light.css"), light: true},
+  {name: "light-alt", path: getClientPath("./src/style/theme-light-alt.css"), light: true},
+  {name: "wide", path: getClientPath("./src/style/theme-wide.css")}
+];
+
 const STYLE_MODULES = {
   "observablehq:default.css": getClientPath("./src/style/default.css"),
-  "observablehq:theme-auto.css": getClientPath("./src/style/theme-auto.css"),
-  "observablehq:theme-auto-alt.css": getClientPath("./src/style/theme-auto-alt.css"),
-  "observablehq:theme-dark.css": getClientPath("./src/style/theme-dark.css"),
-  "observablehq:theme-dark-alt.css": getClientPath("./src/style/theme-dark-alt.css"),
-  "observablehq:theme-light.css": getClientPath("./src/style/theme-light.css"),
-  "observablehq:theme-light-alt.css": getClientPath("./src/style/theme-light-alt.css"),
-  "observablehq:theme-wide.css": getClientPath("./src/style/theme-wide.css")
+  ...Object.fromEntries(THEMES.map(({name, path}) => [`observablehq:theme-${name}.css`, path]))
 };
 
 function rewriteInputsNamespace(code: string) {
   return code.replace(/\b__ns__\b/g, "inputs-3a86ea");
 }
 
+function renderTheme(names: string[]): string {
+  const lines = ['@import url("observablehq:default.css");'];
+  let hasLight = false;
+  let hasDark = false;
+  for (const name of names) {
+    const theme = THEMES.find((t) => t.name === name);
+    if (!theme) throw new Error(`invalid theme: ${theme}`);
+    lines.push(
+      `@import url(${JSON.stringify(`observablehq:theme-${theme.name}.css`)})${
+        theme.dark && !theme.light && hasLight // a dark-only theme preceded by a light theme
+          ? " (prefers-color-scheme: dark)"
+          : theme.light && !theme.dark && hasDark // a light-only theme preceded by a dark theme
+          ? " (prefers-color-scheme: light)"
+          : ""
+      };`
+    );
+    if (theme.light) hasLight = true;
+    if (theme.dark) hasDark = true;
+  }
+  return lines.join("\n");
+}
+
 export async function bundleStyles({path, theme}: {path?: string; theme?: string[]}): Promise<string> {
   const result = await build({
     bundle: true,
-    ...(path
-      ? {entryPoints: [path]}
-      : {
-          stdin: {
-            contents: `@import url("observablehq:default.css");\n${theme!
-              .map((t) => `@import url(${JSON.stringify(`observablehq:theme-${t}.css`)});\n`)
-              .join("")}`,
-            loader: "css"
-          }
-        }),
+    ...(path ? {entryPoints: [path]} : {stdin: {contents: renderTheme(theme!), loader: "css"}}),
     write: false,
     alias: STYLE_MODULES
   });

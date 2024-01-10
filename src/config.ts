@@ -32,7 +32,7 @@ export interface Config {
   pager: boolean; // defaults to true
   footer: string;
   toc: TableOfContents;
-  style: null | Style; // defaults to {theme: ["auto"]}
+  style: null | Style; // defaults to {theme: ["light", "dark"]}
   deploy: null | {workspace: string; project: string};
 }
 
@@ -70,7 +70,7 @@ async function readPages(root: string): Promise<Page[]> {
 const DEFAULT_FOOTER = 'Built with <a href="https://observablehq.com/" target=_blank>Observable</a>';
 
 export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Promise<Config> {
-  let {root = defaultRoot, output = "dist", style, theme = "auto", deploy, footer = DEFAULT_FOOTER} = spec;
+  let {root = defaultRoot, output = "dist", style, theme = ["light", "dark"], deploy, footer = DEFAULT_FOOTER} = spec;
   root = String(root);
   output = String(output);
   if (style === null) style = null;
