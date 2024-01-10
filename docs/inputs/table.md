@@ -1,6 +1,6 @@
 # Table input
 
-[TODO] check if removing Hello, Inputs okay.
+<!-- [TODO] check if removing Hello, Inputs okay. -->
 
 A Table displays tabular data. It’s fast: rows are rendered lazily on scroll. It sorts: click a header to sort, and click again to reverse. And it selects: click a checkbox on any row, and the selected rows are exported as a view value. (And for searching, see the [Search input](./search).) 
 
@@ -51,7 +51,7 @@ dataset, for example. Undefined values go to the end.
 Inputs.table(penguins, {sort: "body_mass_g", reverse: true})
 ```
 
-[TODO] these use view() instead of viewof operator. Is update below correct? Just changes "using the viewof operator" to "using the view function" (and do we need to update intro to views in docs?)
+<!-- [TODO] these use view() instead of viewof operator. Is update below correct? Just changes "using the viewof operator" to "using the view function" (and do we need to update intro to views in docs?) -->
 
 Tables are [view-compatible](https://observablehq.com/@observablehq/views): using the
 view function, you can use a table to select rows and refer to them from other
@@ -171,7 +171,7 @@ array of references to the actual objects in your data.
 
 For example, to preselect the first two items, you could write:
 
-[TODO] eval: false option for JS code below?
+<!-- [TODO] eval: false option for JS code below? -->
 
 ```js echo
 // { value: penguins.slice(0, 2)}
