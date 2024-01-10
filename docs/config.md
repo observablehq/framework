@@ -29,29 +29,29 @@ The path to the output root; defaults to `dist`.
 
 ## theme
 
-The theme names, if any; defaults to `auto`. Themes affect the visual appearance of pages by specifying colors and fonts, or by augmenting default styles. The theme option is a convenient shorthand alternative to specifying a [custom stylesheet](#style).
+The theme names, if any; defaults to `[light, dark]`. Themes affect the visual appearance of pages by specifying colors and fonts, or by augmenting default styles. The theme option is a convenient shorthand alternative to specifying a [custom stylesheet](#style).
 
 The current built-in themes are:
 
-- `auto` (default) - `light` or `dark` depending on [user preference](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
-- `auto-alt` - `light-alt` or `dark` depending on [user preference](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
-- `light` - a white background with dark text
+- `light` (default) - a white background with dark text
 - `light-alt` - a light gray background with dark text
-- `dark` - a dark gray background with light text
+- `dark` (default) - a dark gray background with light text
 - `dark-alt` - a very dark gray background with light text
 - `wide` - a full-width main column
 
 You can combine themes like so:
 
 ```js run=false
-theme: ["auto-alt", "wide"]
+theme: ["light-alt", "dark-alt", "wide"]
 ```
+
+When combining a light and dark theme, the dark theme will be applied depending on [user preference](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme).
 
 A theme can be applied to an individual page via the [front matter](./markdown.md#front-matter):
 
 ```yaml
 ---
-theme: [auto-alt, wide]
+theme: [light-alt, dark-alt, wide]
 ---
 ```
 
@@ -69,8 +69,6 @@ The custom stylesheet should typically import `observablehq:default.css` to buil
   --theme-foreground-focus: green;
 }
 ```
-
-If you build on the `auto` or `auto-alt` themes, note that these themes’ colors are chosen according to the user’s [preferred color scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme).
 
 The default styles are implemented using CSS custom properties. These properties are designed to be defined by themes or custom stylesheets. The following custom properties are supported:
 
