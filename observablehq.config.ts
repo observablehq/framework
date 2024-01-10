@@ -1,6 +1,5 @@
 export default {
   title: "Observable CLI",
-  style: "docs/style.css",
   pages: [
     {name: "Getting started", path: "/getting-started"},
     {name: "Routing", path: "/routing"},
@@ -46,5 +45,6 @@ export default {
       ]
     },
     {name: "Contributing", path: "/contributing"}
-  ]
+  ],
+  footer: `© ${new Date().getUTCFullYear()} Observable, Inc.`
 };
