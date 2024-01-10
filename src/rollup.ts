@@ -42,22 +42,22 @@ function rewriteInputsNamespace(code: string) {
 
 function renderTheme(names: string[]): string {
   const lines = ['@import url("observablehq:default.css");'];
-  const themes: Theme[] = [];
   let hasLight = false;
   let hasDark = false;
   for (const name of names) {
     const theme = THEMES.find((t) => t.name === name);
     if (!theme) throw new Error(`invalid theme: ${theme}`);
-    if (theme.light) hasLight = true;
-    if (theme.dark) hasDark = true;
-    themes.push(theme);
-  }
-  for (const theme of themes) {
     lines.push(
       `@import url(${JSON.stringify(`observablehq:theme-${theme.name}.css`)})${
-        hasLight && hasDark && !theme.light && theme.dark ? " (prefers-color-scheme: dark)" : ""
+        theme.dark && !theme.light && hasLight // a dark-only theme preceded by a light theme
+          ? " (prefers-color-scheme: dark)"
+          : theme.light && !theme.dark && hasDark // a light-only theme preceded by a dark theme
+          ? " (prefers-color-scheme: light)"
+          : ""
       };`
     );
+    if (theme.light) hasLight = true;
+    if (theme.dark) hasDark = true;
   }
   return lines.join("\n");
 }
