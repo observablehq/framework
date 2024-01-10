@@ -7,7 +7,9 @@ export function BigNumber(
     href,
     target = "_blank",
     title,
+    subtitle,
     format = ",.2~f",
+    columnGap = "10px",
     secondary,
     secondaryFormat = format,
     secondaryColor = secondary == null
@@ -19,13 +21,14 @@ export function BigNumber(
       : "var(--theme-color-neutral)",
     secondaryArrow = secondary == null ? "" : secondary > 0 ? "↗︎" : secondary < 0 ? "↘︎" : "→",
     secondaryTitle,
-    styles = {display: "flex", flexDirection: "column", fontFamily: "var(--sans-serif)"},
     children
   }: {
     href?: string;
     target?: string;
     title?: string;
+    subtitle?: string;
     format?: string | ((x: any) => string);
+    columnGap?: string;
     secondary?: number;
     secondaryFormat?: string | ((x: any) => string);
     secondaryColor?: string;
@@ -37,19 +40,20 @@ export function BigNumber(
 ) {
   if (typeof format !== "function") format = typeof number === "string" ? String : d3.format(format);
   if (typeof secondaryFormat !== "function") secondaryFormat = d3.format(secondaryFormat);
-  const div = html`<div style="${styles}">
-    <div style="text-transform: uppercase; font-size: 12px;">${title}</div>
-    <div style="display: flex; flex-wrap: wrap; column-gap: 10px; align-items: baseline;">
-      <div style="font-size: 32px; font-weight: bold; line-height: 1;">${(format as (x: any) => string)(number)}</div>
+  const div = html`<figure class="bignumber">
+    ${title != null ? html`<h2>${title}` : ""}
+    ${subtitle != null ? html`<h3>${subtitle}` : ""}
+    <dl style="display: flex; flex-wrap: wrap; align-items: baseline; column-gap: ${columnGap};">
+      <dt>${(format as (x: any) => string)(number)}</dt>
       ${
         secondary == null
           ? null
-          : html`<div style="font-size: 14px; color: ${secondaryColor};" ${{title: secondaryTitle}}>${(
+          : html`<dd style="color: ${secondaryColor};" ${{title: secondaryTitle}}>${(
               secondaryFormat as (x: any) => string
-            )(secondary)} ${secondaryArrow}</div>`
+            )(secondary)} ${secondaryArrow}`
       }
-    </div>
+    </dl>
     ${children}
-  </div>`;
+  </figure>`;
   return href == null ? div : html`<a href=${href} target=${target} style="color: inherit;">${div}</a>`;
 }
