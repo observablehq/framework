@@ -44,7 +44,9 @@
     ]
   },
   "dependencies": {
+    "@observablehq/inputs": "^0.10.6",
     "@observablehq/runtime": "^5.9.4",
+    "@rollup/plugin-node-resolve": "^15.2.3",
     "acorn": "^8.11.2",
     "acorn-walk": "^8.3.0",
     "esbuild": "^0.19.8",
