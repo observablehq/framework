@@ -18,10 +18,10 @@ describe("telemetry", () => {
     setGlobalDispatcher(globalDispatcher);
   });
 
-  const noopEffects = {env: {}, logger: console, getPersistentId: async () => randomUUID()};
+  const noopEffects = {env: {}, logger: new MockLogger(), getPersistentId: async () => randomUUID()};
 
   it("sends data", async () => {
-    const telemetry = new Telemetry();
+    const telemetry = new Telemetry(noopEffects);
     telemetry.record({event: "build", step: "start", test: true});
     await telemetry.flush();
     agent.assertNoPendingInterceptors();
