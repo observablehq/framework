@@ -74,7 +74,7 @@ export async function deploy({config}: DeployOptions, effects = defaultEffects):
     const previousProjectId = deployConfig?.projectId;
     if (previousProjectId && previousProjectId !== projectId) {
       logger.log(
-        `This project was already deployed to a project different from @${config.deploy.workspace}/${config.deploy.project}.`
+        `This project was already deployed to a workspace/slug different from @${config.deploy.workspace}/${config.deploy.project}.`
       );
       if (effects.isTty) {
         const choice = await promptUserForInput(
