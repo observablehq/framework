@@ -1,20 +1,56 @@
 # Vega-Lite
 
-```js echo
-vl
+[Vega-Lite](https://vega.github.io/vega-lite/) is a “high-level grammar of interactive graphics” with “concise, declarative syntax to create an expressive range of visualizations for data analysis and presentation.” It is an alternative to [Observable Plot](./plot). Vega-Lite is available by default in Markdown as `vl`, but you can import it explicitly as:
+
+```js run=false
+import * as vega from "npm:vega";
+import * as vegaLite from "npm:vega-lite";
+import * as vegaLiteApi from "npm:vega-lite-api";
+
+const vl = vegaLiteApi.register(vega, vegaLite);
 ```
+
+You can use the [Vega-Lite JavaScript API](https://vega.github.io/vega-lite-api/) to construct a chart:
 
 ```js echo
 vl.markBar()
-  .data([
-    { a: "A", b: 28 }, { a: "B", b: 55 }, { a: "C", b: 43 },
-    { a: "D", b: 91 }, { a: "E", b: 81 }, { a: "F", b: 53 },
-    { a: "G", b: 19 }, { a: "H", b: 87 }, { a: "I", b: 52 },
-  ])
-  .encode(
-    vl.x().fieldQ("b"),
-    vl.y().fieldN("a"),
-    vl.tooltip([vl.fieldQ("b"), vl.fieldN("a")])
-  )
+  .data(alphabet)
+  .encode(vl.x().fieldQ("frequency"), vl.y().fieldN("letter"))
+  .width(640)
   .render()
 ```
+
+Or you can use a [Vega-Lite JSON view specification](https://vega.github.io/vega-lite/docs/spec.html):
+
+```js echo
+vl.render({
+  spec: {
+    "width": 640,
+    "height": 400,
+    "data": {
+      "url": await FileAttachment("gistemp.csv").url()
+    },
+    "mark": "point",
+    "encoding": {
+      "x": {
+        "type": "temporal",
+        "field": "Date"
+      },
+      "y": {
+        "type": "quantitative",
+        "field": "Anomaly"
+      },
+      "color": {
+        "type": "quantitative",
+        "field": "Anomaly",
+        "scale": {
+          "range": "diverging",
+          "reverse": true
+        }
+      }
+    }
+  }
+})
+```
+
+Note that you should use [`FileAttachment`](../javascript/files) to reference local files; this ensures that referenced files will be included on [build](../getting-started#build).
