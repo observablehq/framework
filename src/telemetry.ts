@@ -6,14 +6,16 @@ import os from "os";
 import {CliError} from "./error.js";
 import type {Logger} from "./logger.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
-import {cyan, magenta} from "./tty.js";
+import {magenta, underline} from "./tty.js";
 
 type uuid = ReturnType<typeof randomUUID>;
+
 type TelemetryIds = {
   session: uuid | null; // random, held in memory for the duration of the process
   device: uuid | null; // persists to ~/.observablehq
   project: string | null; // one-way hash of private salt + repository URL or cwd
 };
+
 type TelemetryEnvironment = {
   version: string; // cli version from package.json
   systemPlatform: string; // linux, darwin, win32, ...
@@ -27,11 +29,13 @@ type TelemetryEnvironment = {
   isDocker: boolean; // inside Docker heuristic
   isWSL: boolean; // inside WSL heuristic
 };
+
 type TelemetryTime = {
   now: number; // performance.now
   timeOrigin: number; // performance.timeOrigin
   timeZoneOffset: number; // minutes from UTC
 };
+
 type TelemetryData = {
   event: "build" | "deploy" | "preview";
   step: "start" | "finish";
@@ -39,6 +43,7 @@ type TelemetryData = {
 };
 
 let _config: Promise<Record<string, uuid>> | undefined;
+
 async function getPersistentId(name: string, generator = randomUUID) {
   const file = join(os.homedir(), ".observablehq");
   if (!_config) {
@@ -51,7 +56,7 @@ async function getPersistentId(name: string, generator = randomUUID) {
     config[name] = generator();
     try {
       await writeFile(file, JSON.stringify(config, null, 2));
-    } catch (error) {
+    } catch {
       // Be ok if we can't persist ids, but treat them as missing.
       return null;
     }
@@ -64,6 +69,7 @@ type TelemetryEffects = {
   logger: Logger;
   getPersistentId: typeof getPersistentId;
 };
+
 const defaultEffects: TelemetryEffects = {
   env: process.env,
   logger: console,
@@ -94,14 +100,16 @@ export class Telemetry {
   private readonly pending = new Set<Promise<any>>();
   private _ids: Promise<TelemetryIds> | undefined;
   private _environment: Promise<TelemetryEnvironment> | undefined;
-
   private static instance = new Telemetry();
+
   static init(effects = defaultEffects) {
     Telemetry.instance = new Telemetry(effects);
   }
+
   static record(data: TelemetryData) {
     return Telemetry.instance.record(data);
   }
+
   static flush() {
     return Telemetry.instance.flush();
   }
@@ -195,8 +203,8 @@ export class Telemetry {
     if (await this.needsBanner()) {
       this.logger.error(
         `${magenta(
-          "Attention"
-        )}: Observable CLI collects anonymous telemetry data to help us improve the product.\nSee ${cyan(
+          "Attention:"
+        )} Observable CLI collects anonymous telemetry data to help us improve the product.\nSee ${underline(
           "https://cli.observablehq.com/telemetry"
         )} for details and how to opt-out.`
       );

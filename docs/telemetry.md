@@ -1,19 +1,20 @@
 # Telemetry
 
-The Observable CLI collects anonymous usage data to help us improve the product. This data is sent to Observable and is not shared with third parties.
+The Observable CLI collects anonymous usage data to help us improve the product. This data is sent to Observable and is not shared with third parties. Telemetry data is covered by [Observable’s privacy policy](https://observablehq.com/privacy-policy).
 
-You can opt out of telemetry by setting the `OBSERVABLE_TELEMETRY_DISABLE` environment variable to `true`.
+You can [opt-out of telemetry](#disabling-telemetry) by setting the `OBSERVABLE_TELEMETRY_DISABLE` environment variable to `true`.
 
-## What data is collected?
+## What is collected?
 
-No personal identifying information (such as your observablehq.com user name) is ever collected. For reference, the following data is sent:
+The following data is collected:
 
-```typescript
+```ts
 type TelemetryIds = {
   session: uuid; // random, held in memory for the duration of the process
   device: uuid; // persists to ~/.observablehq
   project: string; // one-way hash of private salt + repository URL or cwd
 };
+
 type TelemetryEnvironment = {
   version: string; // cli version from package.json
   systemPlatform: string; // linux, darwin, win32, ...
@@ -27,11 +28,13 @@ type TelemetryEnvironment = {
   isDocker: boolean; // inside Docker heuristic
   isWSL: boolean; // inside WSL heuristic
 };
+
 type TelemetryTime = {
   now: number; // performance.now
   timeOrigin: number; // performance.timeOrigin
   timeZoneOffset: number; // minutes from UTC
 };
+
 type TelemetryData = {
   event: "build" | "deploy" | "preview";
   step: "start" | "finish";
@@ -39,12 +42,18 @@ type TelemetryData = {
 };
 ```
 
-If you wish to inspect this data, you can set the `OBSERVABLE_TELEMETRY_DEBUG` environment variable to `true`. This will print the telemetry data to stderr instead of sending it to Observable.
+To inspect telemetry data, set the `OBSERVABLE_TELEMETRY_DEBUG` environment variable to `true`. This will print the telemetry data to stderr instead of sending it to Observable. See [`telemetry.ts`](https://github.com/observablehq/cli/blob/main/src/telemetry.ts) for source code.
 
-## Disabling data collection
+## What is not collected?
 
-Setting either of the environment variables below to `true` will disable telemetry.
+We never collect identifying or sensitive information, such as environment variables, file names or paths, or file contents. Telemetry data is not correlated with your Observable account or workspace.
 
-`OBSERVABLE_TELEMETRY_DISABLE=true` disables telemetry collection entirely.
+## Disabling telemetry
 
-`OBSERVABLE_TELEMETRY_DEBUG=true` prints telemetry data to stderr instead of sending it to Observable.
+Setting the `OBSERVABLE_TELEMETRY_DISABLE` environment variable to `true` disables telemetry collection entirely. For example:
+
+```sh
+OBSERVABLE_TELEMETRY_DISABLE=true yarn build
+```
+
+Setting the `OBSERVABLE_TELEMETRY_DEBUG` environment variable to `true` also disables telemetry collection, instead printing telemetry data to stderr. Use this to inspect what telemetry data would be collected.
