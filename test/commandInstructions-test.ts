@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import {commandInstruction} from "../src/strings.js";
+import {commandInstruction} from "../src/commandInstruction.js";
 import {bold, magenta} from "../src/tty.js";
 
 describe("commandInstructions", () => {

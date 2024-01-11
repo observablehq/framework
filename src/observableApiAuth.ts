@@ -5,11 +5,11 @@ import type {Socket} from "node:net";
 import os from "node:os";
 import {isatty} from "node:tty";
 import open from "open";
+import {commandInstruction} from "./commandInstruction.js";
 import {HttpError, isHttpError} from "./error.js";
 import type {Logger} from "./logger.js";
 import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
 import {type ApiKey, getObservableApiKey, setObservableApiKey} from "./observableApiConfig.js";
-import {commandInstruction} from "./strings.js";
 
 const OBSERVABLEHQ_UI_HOST = getObservableUiHost();
 
