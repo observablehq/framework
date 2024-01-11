@@ -53,4 +53,4 @@ vl.render({
 })
 ```
 
-Note that you should use [`FileAttachment`](../javascript/files) to reference local files; this ensures that referenced files will be included on [build](../getting-started#build).
+Note: when loading data from a file as above, use [`FileAttachment`](../javascript/files) so that referenced files are included on [build](../getting-started#build).
