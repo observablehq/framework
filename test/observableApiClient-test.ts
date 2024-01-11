@@ -15,7 +15,7 @@ describe("getObservableUiOrigin", () => {
       getObservableUiOrigin({OBSERVABLE_ORIGIN: "bad url"});
       assert.fail("expected error");
     } catch (error) {
-      CliError.assert(error, {message: /^Invalid OBSERVABLE_ORIGIN environment variable: /});
+      CliError.assert(error, {message: /^Invalid OBSERVABLE_ORIGIN: /});
     }
   });
 });
@@ -33,7 +33,7 @@ describe("getObservableApiOrigin", () => {
       getObservableApiOrigin({OBSERVABLE_API_ORIGIN: "bad url"});
       assert.fail("expected error");
     } catch (error) {
-      CliError.assert(error, {message: /^Invalid OBSERVABLE_API_ORIGIN environment variable: /});
+      CliError.assert(error, {message: /^Invalid OBSERVABLE_API_ORIGIN: /});
     }
   });
 
