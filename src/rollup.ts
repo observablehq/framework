@@ -12,7 +12,7 @@ import esbuild from "rollup-plugin-esbuild";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
 import {isPathImport, resolveNpmImport} from "./javascript/imports.js";
-import {getObservableUiHost} from "./observableApiClient.js";
+import {getObservableUiOrigin} from "./observableApiClient.js";
 import {Sourcemap} from "./sourcemap.js";
 import {relativeUrl} from "./url.js";
 
@@ -85,7 +85,7 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
         exclude: [], // don’t exclude node_modules
         minify,
         define: {
-          "process.env.OBSERVABLEHQ_ORIGIN": JSON.stringify(String(getObservableUiHost()).replace(/\/$/, ""))
+          "process.env.OBSERVABLE_ORIGIN": JSON.stringify(String(getObservableUiOrigin()).replace(/\/$/, ""))
         }
       }),
       importMetaResolve()
