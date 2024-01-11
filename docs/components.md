@@ -50,7 +50,7 @@ The “big number” component [`Dash.number`](./layout/bignumber) adds a nicely
 
 <!-- TODO may need update if library or function name changes -->
 
-The [`Dash.resizer](./layout/resize) component automatically recomputes a DOM element (often, a chart) when the dimensions of its parent container change.
+The [`Dash.resizer`](./layout/resize) component automatically recomputes a DOM element (often, a chart) when the dimensions of its parent container change.
 
 <!-- TODO add Dash.resizer example when merged -->
 
@@ -77,64 +77,6 @@ Plot.plot({
 If the chart type you want to add is not included as a snippet here, don’t sweat - a great number of examples (in both [Observable Plot](https://observablehq.com/@observablehq/plot-gallery) and [D3](https://observablehq.com/@d3/gallery)) are available to explore and reuse.
 
 **Can I use other data visualization libraries?** Absolutely. Use any other visualization library you like by [importing from npm](./javascript/imports).
-
-For example, to use [vega-lite](https://vega.github.io/vega-lite/):
-
-```js echo
-import * as Vega from "npm:vega";
-import * as VegaLite from "npm:vega-lite";
-
-function vl(spec) {
-  const div = document.createElement("div");
-  const view = div.value = new Vega.View(Vega.parse(VegaLite.compile(spec).spec));
-  return view.initialize(div).runAsync().then(() => div);
-};
-```
-
-```js echo
-vl({
-  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-  "data": {values: weather},
-  "title": "Daily Max Temperatures (C) in Seattle, WA",
-  "config": {
-      "view": {
-          "strokeWidth": 0,
-          "step": 13
-      },
-      "axis": {
-          "domain": false
-      }
-  },
-  "mark": "rect",
-  "encoding": {
-      "x": {
-          "field": "date",
-          "timeUnit": "date",
-          "type": "ordinal",
-          "title": "Day",
-          "axis": {
-              "labelAngle": 0,
-              "format": "%e"
-          }
-      },
-      "y": {
-          "field": "date",
-          "timeUnit": "month",
-          "type": "ordinal",
-          "title": "Month"
-      },
-      "color": {
-          "field": "temp_max",
-          "aggregate": "max",
-          "type": "quantitative",
-          "legend": {
-              "title": null
-          }
-      }
-  }
-}
-)
-```
 
 ## Observable Inputs
 
