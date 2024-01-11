@@ -13,6 +13,7 @@ import {
   getObservableApiKey,
   setDeployConfig
 } from "./observableApiConfig.js";
+import {Telemetry} from "./telemetry.js";
 import {blue} from "./tty.js";
 
 export interface DeployOptions {
@@ -41,8 +42,7 @@ const defaultEffects: DeployEffects = {
 
 /** Deploy a project to ObservableHQ */
 export async function deploy({config}: DeployOptions, effects = defaultEffects): Promise<void> {
-  const {telemetry} = config;
-  telemetry.record({event: "deploy", step: "start"});
+  Telemetry.record({event: "deploy", step: "start"});
   const {logger} = effects;
   const apiKey = await effects.getObservableApiKey(logger);
   const apiClient = new ObservableApiClient({apiKey});
@@ -133,7 +133,7 @@ export async function deploy({config}: DeployOptions, effects = defaultEffects):
   // Mark the deploy as uploaded
   const deployInfo = await apiClient.postDeployUploaded(deployId);
   logger.log(`Deployed project now visible at ${blue(deployInfo.url)}`);
-  telemetry.record({event: "deploy", step: "finish"});
+  Telemetry.record({event: "deploy", step: "finish"});
 }
 
 async function promptUserForInput(

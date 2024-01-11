@@ -10,6 +10,7 @@ import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
 import {renderServerless} from "./render.js";
 import {bundleStyles, getClientPath, rollupClient} from "./rollup.js";
+import {Telemetry} from "./telemetry.js";
 import {faint} from "./tty.js";
 import {resolvePath} from "./url.js";
 
@@ -60,8 +61,8 @@ export async function build(
   {config, addPublic = true, clientEntry = "./src/client/index.js"}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output)
 ): Promise<void> {
-  const {root, telemetry} = config;
-  telemetry.record({event: "build", step: "start"});
+  const {root} = config;
+  Telemetry.record({event: "build", step: "start"});
 
   // Make sure all files are readable before starting to write output files.
   let pageCount = 0;
@@ -163,7 +164,7 @@ export async function build(
       await effects.copyFile(sourcePath, outputPath);
     }
   }
-  telemetry.record({event: "build", step: "finish"});
+  Telemetry.record({event: "build", step: "finish"});
 }
 
 export class FileBuildEffects implements BuildEffects {

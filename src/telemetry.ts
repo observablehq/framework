@@ -92,6 +92,17 @@ export class Telemetry {
   private _ids: Promise<TelemetryIds> | undefined;
   private _environment: Promise<TelemetryEnvironment> | undefined;
 
+  private static instance = new Telemetry();
+  static init(effects = defaultEffects) {
+    Telemetry.instance = new Telemetry(effects);
+  }
+  static record(data: TelemetryData) {
+    return Telemetry.instance.record(data);
+  }
+  static flush() {
+    return Telemetry.instance.flush();
+  }
+
   constructor(effects = defaultEffects) {
     this.disabled = !!effects.env.OBSERVABLE_TELEMETRY_DISABLE;
     this.debug = !!effects.env.OBSERVABLE_TELEMETRY_DEBUG;

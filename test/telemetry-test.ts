@@ -21,9 +21,9 @@ describe("telemetry", () => {
   const noopEffects = {env: {}, logger: new MockLogger(), getPersistentId: async () => randomUUID()};
 
   it("sends data", async () => {
-    const telemetry = new Telemetry(noopEffects);
-    telemetry.record({event: "build", step: "start", test: true});
-    await telemetry.flush();
+    Telemetry.init(noopEffects);
+    Telemetry.record({event: "build", step: "start", test: true});
+    await Telemetry.flush();
     agent.assertNoPendingInterceptors();
   });
 
