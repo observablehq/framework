@@ -107,6 +107,9 @@ describe("normalizeConfig(spec, root)", () => {
         "538"
       );
     });
+    it("strips leading @ from workspace", async () => {
+      assert.strictEqual((await config({pages: [], deploy: {workspace: "@acme"}}, root)).deploy?.workspace, "acme");
+    });
     it("coerces project", async () => {
       assert.strictEqual(
         (await config({pages: [], deploy: {workspace: "adams", project: 42}}, root)).deploy?.project,

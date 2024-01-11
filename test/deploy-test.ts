@@ -279,6 +279,44 @@ describe("deploy", () => {
     effects.close();
   });
 
+  it("throws an error if workspace is invalid", async () => {
+    const config = await normalizeConfig({
+      root: TEST_SOURCE_ROOT,
+      deploy: {workspace: "ACME Inc.", project: "bi"}
+    });
+    const apiMock = new ObservableApiMock().start();
+    const effects = new MockDeployEffects({isTty: true});
+
+    try {
+      await deploy({config}, effects);
+      assert.fail("expected error");
+    } catch (err) {
+      CliError.assert(err, {message: /"ACME Inc.".*isn't valid.*"acme-inc"/});
+    }
+
+    apiMock.close();
+    effects.close();
+  });
+
+  it("throws an error if project is invalid", async () => {
+    const config = await normalizeConfig({
+      root: TEST_SOURCE_ROOT,
+      deploy: {workspace: "acme", project: "Business Intelligence"}
+    });
+    const apiMock = new ObservableApiMock().start();
+    const effects = new MockDeployEffects({isTty: true});
+
+    try {
+      await deploy({config}, effects);
+      assert.fail("expected error");
+    } catch (err) {
+      CliError.assert(err, {message: /"Business Intelligence".*isn't valid.*"business-intelligence"/});
+    }
+
+    apiMock.close();
+    effects.close();
+  });
+
   it("shows message for missing API key", async () => {
     const apiMock = new ObservableApiMock().start();
     const effects = new MockDeployEffects({apiKey: null});

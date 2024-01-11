@@ -53,6 +53,21 @@ export async function deploy({config}: DeployOptions, effects = defaultEffects):
       "You haven't configured a project to deploy to. Please set deploy.workspace and deploy.project in your configuration."
     );
   }
+  const roughSlugRe = /^[a-z0-9_-]+$/;
+  if (!config.deploy.workspace.match(roughSlugRe)) {
+    throw new CliError(
+      `Your configuration specifies the workspace "${
+        config.deploy.workspace
+      }", but that isn't valid. Did you mean "${slugify(config.deploy.workspace)}"?`
+    );
+  }
+  if (!config.deploy.project.match(roughSlugRe)) {
+    throw new CliError(
+      `Your configuration specifies the project "${
+        config.deploy.project
+      }", but that isn't valid. Did you mean "${slugify(config.deploy.project)}"?`
+    );
+  }
 
   let projectId: string | null = null;
   try {
@@ -174,4 +189,13 @@ class DeployBuildEffects implements BuildEffects {
     this.logger.log(outputPath);
     await this.apiClient.postDeployFileContents(this.deployId, content, outputPath);
   }
+}
+
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .replace("'", "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .replace(/-{2,}/g, "-");
 }
