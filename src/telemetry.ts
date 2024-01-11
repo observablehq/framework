@@ -10,9 +10,9 @@ import {cyan, magenta} from "./tty.js";
 
 type uuid = ReturnType<typeof randomUUID>;
 type TelemetryIds = {
-  device: uuid; // persists to ~/.observablehq
-  project: string; // one-way hash of private salt + repository URL or cwd
-  session: uuid; // random, held in memory for the duration of the process
+  session: uuid | null; // random, held in memory for the duration of the process
+  device: uuid | null; // persists to ~/.observablehq
+  project: string | null; // one-way hash of private salt + repository URL or cwd
 };
 type TelemetryEnvironment = {
   version: string; // cli version from package.json
@@ -54,7 +54,8 @@ async function getPersistentId(name: string, generator = randomUUID) {
     try {
       await writeFile(file, JSON.stringify(_config, null, 2));
     } catch (error) {
-      // silently be ok that we can't persist values between runs
+      // Be ok if we can't persist ids, but treat them as missing.
+      return null;
     }
   }
   return _config[name];
@@ -136,11 +137,13 @@ export class Telemetry {
   }
 
   private async getProjectId() {
+    const salt = await this.getPersistentId("cli_telemetry_salt");
+    if (!salt) return null;
     const remote: string | null = await new Promise((resolve) => {
       exec("git config --local --get remote.origin.url", (error, stdout) => resolve(error ? null : stdout.trim()));
     });
     const hash = createHash("sha256");
-    hash.update(await this.getPersistentId("cli_telemetry_salt"));
+    hash.update(salt);
     hash.update(remote || process.env.REPOSITORY_URL || process.cwd());
     return hash.digest("base64");
   }
@@ -148,9 +151,9 @@ export class Telemetry {
   private get ids() {
     return (this._ids ??= Promise.all([this.getPersistentId("cli_telemetry_device"), this.getProjectId()]).then(
       ([device, project]) => ({
+        session: randomUUID(),
         device,
-        project,
-        session: randomUUID()
+        project
       })
     ));
   }

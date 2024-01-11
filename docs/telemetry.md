@@ -6,13 +6,13 @@ You can opt out of telemetry by setting the `OBSERVABLE_TELEMETRY_DISABLE` envir
 
 ## What data is collected?
 
-Identifying information such as your observablehq.com user name is never collected. The following data is sent to https://events.observablehq.com/cli:
+No personal identifying information (such as your observablehq.com user name) is ever collected. For reference, the following data is sent:
 
 ```typescript
 type TelemetryIds = {
+  session: uuid; // random, held in memory for the duration of the process
   device: uuid; // persists to ~/.observablehq
   project: string; // one-way hash of private salt + repository URL or cwd
-  session: uuid; // random, held in memory for the duration of the process
 };
 type TelemetryEnvironment = {
   version: string; // cli version from package.json
