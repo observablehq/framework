@@ -82,7 +82,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   pager = Boolean(pager);
   footer = String(footer);
   toc = normalizeToc(toc);
-  deploy = deploy ? {workspace: String(deploy.workspace), project: String(deploy.project)} : null;
+  deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
   return {root, output, title, pages, pager, footer, toc, style, deploy};
 }
 
