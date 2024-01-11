@@ -7,14 +7,6 @@
   display: grid;
   gap: 1rem;
   grid-auto-rows: 1fr;
-  font: 14px var(--sans-serif);
-}
-
-.grid > * {
-  background: var(--theme-background-alt);
-  border: solid 1px var(--theme-foreground-faintest);
-  border-radius: 0.75rem;
-  padding: 1rem;
 }
 
 .grid svg {
@@ -23,6 +15,14 @@
 
 .grid figure {
   margin: 0;
+}
+
+.grid > * > p:first-child {
+  margin-top: 0;
+}
+
+.grid > * > p:last-child {
+  margin-bottom: 0;
 }
 
 @container (min-width: 640px) {

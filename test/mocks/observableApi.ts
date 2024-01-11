@@ -69,6 +69,29 @@ export class ObservableApiMock {
     return this;
   }
 
+  handlePostProject({
+    projectId,
+    status = 200
+  }: {
+    projectId?: string;
+    title?: string;
+    slug?: string;
+    workspaceId?: string;
+    status?: number;
+  } = {}): ObservableApiMock {
+    const response =
+      status == 200
+        ? JSON.stringify({id: projectId, slug: "test-project", title: "Test Project", owner: {}, creator: {}})
+        : emptyErrorBody;
+    const headers = authorizationHeader(status != 401);
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: "/cli/project", method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response, {headers: {"content-type": "application/json"}})
+    );
+    return this;
+  }
+
   handlePostDeploy({
     projectId,
     deployId,

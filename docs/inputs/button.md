@@ -2,27 +2,39 @@
 
 A Button emits an *input* event when you click it. Buttons may be used to trigger the evaluation of cells, say to restart an animation.
 
-For example, below is an animation (using [yield](../javascript/generators)) that progressively hides a bar. The <code>progress</code> cell references <code>replay</code>, so it will run automatically whenever the replay button is clicked. If you click the button while the animation is still running, the animation will be interrupted and restart from the beginning.
+For example, below is an animation (using [yield](../javascript/generators)) that progressively hides a bar.
+
+```js echo
+import * as Inputs from "npm:@observablehq/inputs";
+```
+
+```js echo
+const width = 360;
+const height = 20;
+const style = "max-width: 100%; border: solid 1px black;";
+```
+
+```html
+<canvas id="canvas" width="${width}" height="${height}" style="${style}">
+```
 
 ```js echo
 const replay = view(Inputs.button("Replay"));
+const canvas = document.querySelector("#canvas");
+const context = canvas.getContext("2d");
 ```
 
-[TODO]: unbreak this code block for progress bar
+ The code block below references <code>replay</code>, so it will run automatically whenever the replay button is clicked. If you click the button while the animation is still running, the animation will be interrupted and restart from the beginning.
 
 ```js echo
-// const progress = {
-//   replay;
-//   const width = 360;
-//   const height = 20;
-//   const context = DOM.context2d(width, height);
-//   context.canvas.style.border = "solid 1px black";
-//   for (let i = width; i >= 0; --i) {
-//     context.clearRect(0, 0, width, height);
-//     context.fillRect(0, 0, i, height);
-//     yield context.canvas;
-//   }
-// }
+replay;
+const progress = (function* () {
+  for (let i = width; i >= 0; --i) {
+    context.clearRect(0, 0, width, height);
+    context.fillRect(0, 0, i, height);
+    yield context.canvas;
+  }
+})();
 ```
 
 You can also use buttons to count clicks. While the value of a button is often not needed, it defaults to zero and is incremented each time the button is clicked.
@@ -87,15 +99,15 @@ Like other basic inputs, buttons can have an optional label, which can also be e
 const confirm = view(Inputs.button("OK", {label: "Continue?"}));
 ```
 
-[TODO] unbreak JavaScript code below to output markdown text
-
-```js echo
-// confirm ? md`Confirmed!` : md`Awaiting confirmation…`
+You can change the rendered text in Markdown based on whether a button is clicked. Try clicking the `OK` button with the  `Continue?` label.
+```md echo run=false
 confirm ? "Confirmed!" : "Awaiting confirmation..."
 ```
+
+${confirm ? "Confirmed!" : "Awaiting confirmation..."}
 
 You can also use a button to copy something to the clipboard.
 
 ```js echo
-Inputs.button("copy to clipboard", {value: null, reduce: () => navigator.clipboard.writeText(time)})
+Inputs.button("Copy to clipboard", {value: null, reduce: () => navigator.clipboard.writeText(time)})
 ```
