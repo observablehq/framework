@@ -10,24 +10,27 @@ import {cyan, magenta} from "./tty.js";
 
 type uuid = ReturnType<typeof randomUUID>;
 type TelemetryIds = {
-  device: uuid;
-  project: string;
-  session: uuid;
+  device: uuid; // persists to ~/.observablehq
+  project: string; // one-way hash of private salt + repository URL or cwd
+  session: uuid; // random, held in memory for the duration of the process
 };
 type TelemetryEnvironment = {
-  version: string;
-  systemPlatform: string;
-  systemRelease: string;
-  systemArchitecture: string;
-  cpuCount: number;
-  cpuModel: string | null;
-  cpuSpeed: number | null;
-  memoryInMb: number;
+  version: string; // cli version from package.json
+  systemPlatform: string; // linux, darwin, win32, ...
+  systemRelease: string; // 20.04, 11.2.3, ...
+  systemArchitecture: string; // x64, arm64, ...
+  cpuCount: number; // number of cpu cores
+  cpuModel: string | null; // cpu model name
+  cpuSpeed: number | null; // cpu speed in MHz
+  memoryInMb: number; // truncated to mb
+  isCI: string | boolean; // inside CI heuristic, name or false
+  isDocker: boolean; // inside Docker heuristic
+  isWSL: boolean; // inside WSL heuristic
 };
 type TelemetryTime = {
-  now: number;
-  timeOrigin: number;
-  timeZoneOffset: number;
+  now: number; // performance.now
+  timeOrigin: number; // performance.timeOrigin
+  timeZoneOffset: number; // minutes from UTC
 };
 type TelemetryData = {
   event: "build" | "deploy" | "preview";
