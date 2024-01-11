@@ -38,27 +38,25 @@ type TelemetryData = {
   [key: string]: unknown;
 };
 
-let _config: Record<string, uuid> | undefined;
+let _config: Promise<Record<string, uuid>> | undefined;
 async function getPersistentId(name: string, generator = randomUUID) {
   const file = join(os.homedir(), ".observablehq");
   if (!_config) {
-    try {
-      _config = JSON.parse(await readFile(file, "utf8"));
-    } catch (e) {
-      // fall through
-    }
-    _config ??= {};
+    _config = readFile(file, "utf8")
+      .then(JSON.parse)
+      .catch(() => ({}));
   }
-  if (!_config[name]) {
-    _config[name] = generator();
+  const config = await _config;
+  if (!config[name]) {
+    config[name] = generator();
     try {
-      await writeFile(file, JSON.stringify(_config, null, 2));
+      await writeFile(file, JSON.stringify(config, null, 2));
     } catch (error) {
       // Be ok if we can't persist ids, but treat them as missing.
       return null;
     }
   }
-  return _config[name];
+  return config[name];
 }
 
 type TelemetryEffects = {
