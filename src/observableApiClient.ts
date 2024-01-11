@@ -25,7 +25,7 @@ export interface WorkspaceResponse {
 export interface GetProjectResponse {
   id: string;
   slug: string;
-  servingRoot: string;
+  servingRoot: string | null;
 }
 
 export function getObservableUiOrigin(env = process.env): URL {
