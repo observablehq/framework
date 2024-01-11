@@ -6,9 +6,9 @@ A `observablehq.config.js` (or `observablehq.config.ts`) file located in the pro
 export default {
   title: "My awesome project",
   pages: [
-    {name: "Getting awesome", path: "/getting-awesome"},
-    {name: "Being awesome", path: "/being-awesome"},
-    {name: "Staying awesome", path: "/staying-awesome"}
+    {name: "Getting ever more awesome", path: "/getting-awesome"},
+    {name: "Being totally awesome", path: "/being-awesome"},
+    {name: "Staying as awesome as ever", path: "/staying-awesome"}
   ]
 };
 ```
