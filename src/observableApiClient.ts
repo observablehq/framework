@@ -33,7 +33,7 @@ export function getObservableUiOrigin(env = process.env): URL {
   try {
     return new URL(urlText);
   } catch (error) {
-    throw new CliError(`Invalid OBSERVABLE_ORIGIN environment variable: ${error}`, {cause: error});
+    throw new CliError(`Invalid OBSERVABLE_ORIGIN: ${urlText}`, {cause: error});
   }
 }
 
@@ -43,7 +43,7 @@ export function getObservableApiOrigin(env = process.env): URL {
     try {
       return new URL(urlText);
     } catch (error) {
-      throw new CliError(`Invalid OBSERVABLE_API_ORIGIN environment variable: ${error}`, {cause: error});
+      throw new CliError(`Invalid OBSERVABLE_API_ORIGIN: ${urlText}`, {cause: error});
     }
   }
 

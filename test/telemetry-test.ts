@@ -58,8 +58,8 @@ describe("telemetry", () => {
 
   it("silent on error", async () => {
     const logger = new MockLogger();
-    agent.get("https://localhost").intercept({path: "/cli", method: "POST"}).replyWithError(new Error("silent"));
-    const telemetry = new Telemetry({...noopEffects, env: {OBSERVABLE_TELEMETRY_ORIGIN: "https://localhost"}, logger});
+    agent.get("https://invalid.").intercept({path: "/cli", method: "POST"}).replyWithError(new Error("silent"));
+    const telemetry = new Telemetry({...noopEffects, env: {OBSERVABLE_TELEMETRY_ORIGIN: "https://invalid."}, logger});
     telemetry.record({event: "build", step: "start", test: true});
     await telemetry.flush();
     assert.equal(logger.errorLines.length, 0);

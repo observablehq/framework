@@ -3,7 +3,9 @@ import {createHash, randomUUID} from "node:crypto";
 import {readFile, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import os from "os";
+import {CliError} from "./error.js";
 import type {Logger} from "./logger.js";
+import {getObservableUiOrigin} from "./observableApiClient.js";
 import {cyan, magenta} from "./tty.js";
 
 type uuid = ReturnType<typeof randomUUID>;
@@ -62,10 +64,24 @@ const defaultEffects: TelemetryEffects = {
   getPersistentId
 };
 
+function getOrigin(env: NodeJS.ProcessEnv): URL {
+  const urlText = env["OBSERVABLE_TELEMETRY_ORIGIN"];
+  if (urlText) {
+    try {
+      return new URL(urlText);
+    } catch (error) {
+      throw new CliError(`Invalid OBSERVABLE_TELEMETRY_ORIGIN: ${urlText}`, {cause: error});
+    }
+  }
+  const origin = getObservableUiOrigin(env);
+  origin.hostname = "events." + origin.hostname;
+  return origin;
+}
+
 export class Telemetry {
   private disabled: boolean;
   private debug: boolean;
-  private origin: string;
+  private endpoint: URL;
   private logger: Logger;
   private getPersistentId: typeof getPersistentId;
   private timeZoneOffset = new Date().getTimezoneOffset();
@@ -76,7 +92,7 @@ export class Telemetry {
   constructor(effects = defaultEffects) {
     this.disabled = !!effects.env.OBSERVABLE_TELEMETRY_DISABLE;
     this.debug = !!effects.env.OBSERVABLE_TELEMETRY_DEBUG;
-    this.origin = effects.env.OBSERVABLE_TELEMETRY_ORIGIN || "https://events.observablehq.com";
+    this.endpoint = new URL("/cli", getOrigin(effects.env));
     this.logger = effects.logger;
     this.getPersistentId = effects.getPersistentId;
   }
@@ -146,7 +162,7 @@ export class Telemetry {
   }
 
   private async needsBanner() {
-    let called;
+    let called: uuid | undefined;
     await this.getPersistentId("cli_telemetry_banner", () => (called = randomUUID()));
     return !!called;
   }
@@ -168,7 +184,7 @@ export class Telemetry {
       this.logger.error("[telemetry]", data);
       return;
     }
-    await fetch(`${this.origin}/cli`, {
+    await fetch(this.endpoint, {
       method: "POST",
       body: JSON.stringify(data),
       headers: {"content-type": "application/json"}
