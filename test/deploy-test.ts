@@ -421,12 +421,10 @@ describe("deploy", () => {
         .handlePostDeployUploaded({deployId})
         .start();
       const effects = new MockDeployEffects({deployConfig: {projectId: "oldProjectId"}, isTty: true})
-        .addIoResponse(/Do you want to update the expected project/, "y")
+        .addIoResponse(/Do you want to deploy to/, "y")
         .addIoResponse(/^Deploy message: /, "deploying to re-created project");
       await deploy({config: TEST_CONFIG}, effects);
-      effects.logger.assertExactLogs([
-        /^This project was already deployed.*different.*@[\w\d-]+\/[\w\d]+.*$/
-      ]);
+      effects.logger.assertExactLogs([/^This project was already deployed/]);
       apiMock.close();
       effects.close();
     });
@@ -441,7 +439,7 @@ describe("deploy", () => {
         })
         .start();
       const effects = new MockDeployEffects({deployConfig: {projectId: "oldProjectId"}, isTty: true}).addIoResponse(
-        /Do you want to update the expected project/,
+        /Do you want to deploy to/,
         "n"
       );
       try {
@@ -450,9 +448,7 @@ describe("deploy", () => {
       } catch (error) {
         CliError.assert(error, {message: "User cancelled deploy.", print: false, exitCode: 2});
       }
-      effects.logger.assertExactLogs([
-        /^This project was already deployed.*different.*@[\w\d-]+\/[\w\d]+.*$/
-      ]);
+      effects.logger.assertExactLogs([/^This project was already deployed/]);
       apiMock.close();
       effects.close();
     });
@@ -473,9 +469,7 @@ describe("deploy", () => {
       } catch (error) {
         CliError.assert(error, {message: "Cancelling deploy due to misconfiguration."});
       }
-      effects.logger.assertExactLogs([
-        /^This project was already deployed.*different.*@[\w\d-]+\/[\w\d]+.*$/
-      ]);
+      effects.logger.assertExactLogs([/^This project was already deployed/]);
       apiMock.close();
     });
   });
