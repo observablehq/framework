@@ -10,6 +10,7 @@ import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
 import {renderServerless} from "./render.js";
 import {bundleStyles, getClientPath, rollupClient} from "./rollup.js";
+import {Telemetry} from "./telemetry.js";
 import {faint} from "./tty.js";
 import {resolvePath} from "./url.js";
 
@@ -28,6 +29,7 @@ function clientBundles(clientPath: string): [entry: string, name: string][] {
     ["./src/client/stdlib/mermaid.js", "stdlib/mermaid.js"],
     ["./src/client/stdlib/sqlite.js", "stdlib/sqlite.js"],
     ["./src/client/stdlib/tex.js", "stdlib/tex.js"],
+    ["./src/client/stdlib/vega-lite.js", "stdlib/vega-lite.js"],
     ["./src/client/stdlib/xlsx.js", "stdlib/xlsx.js"],
     ["./src/client/stdlib/zip.js", "stdlib/zip.js"]
   ];
@@ -61,6 +63,7 @@ export async function build(
   effects: BuildEffects = new FileBuildEffects(config.output)
 ): Promise<void> {
   const {root} = config;
+  Telemetry.record({event: "build", step: "start"});
 
   // Make sure all files are readable before starting to write output files.
   let pageCount = 0;
@@ -162,6 +165,7 @@ export async function build(
       await effects.copyFile(sourcePath, outputPath);
     }
   }
+  Telemetry.record({event: "build", step: "finish"});
 }
 
 export class FileBuildEffects implements BuildEffects {

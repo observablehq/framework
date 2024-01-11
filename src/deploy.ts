@@ -13,6 +13,7 @@ import {
   getObservableApiKey,
   setDeployConfig
 } from "./observableApiConfig.js";
+import {Telemetry} from "./telemetry.js";
 import {blue} from "./tty.js";
 
 export interface DeployOptions {
@@ -41,6 +42,7 @@ const defaultEffects: DeployEffects = {
 
 /** Deploy a project to ObservableHQ */
 export async function deploy({config}: DeployOptions, effects = defaultEffects): Promise<void> {
+  Telemetry.record({event: "deploy", step: "start"});
   const {logger} = effects;
   const apiKey = await effects.getObservableApiKey(logger);
   const apiClient = new ObservableApiClient({apiKey});
@@ -49,6 +51,21 @@ export async function deploy({config}: DeployOptions, effects = defaultEffects):
   if (!config.deploy) {
     throw new CliError(
       "You haven't configured a project to deploy to. Please set deploy.workspace and deploy.project in your configuration."
+    );
+  }
+  const roughSlugRe = /^[a-z0-9_-]+$/;
+  if (!config.deploy.workspace.match(roughSlugRe)) {
+    throw new CliError(
+      `Your configuration specifies the workspace "${
+        config.deploy.workspace
+      }", but that isn't valid. Did you mean "${slugify(config.deploy.workspace)}"?`
+    );
+  }
+  if (!config.deploy.project.match(roughSlugRe)) {
+    throw new CliError(
+      `Your configuration specifies the project "${
+        config.deploy.project
+      }", but that isn't valid. Did you mean "${slugify(config.deploy.project)}"?`
     );
   }
 
@@ -131,6 +148,7 @@ export async function deploy({config}: DeployOptions, effects = defaultEffects):
   // Mark the deploy as uploaded
   const deployInfo = await apiClient.postDeployUploaded(deployId);
   logger.log(`Deployed project now visible at ${blue(deployInfo.url)}`);
+  Telemetry.record({event: "deploy", step: "finish"});
 }
 
 async function promptUserForInput(
@@ -171,4 +189,13 @@ class DeployBuildEffects implements BuildEffects {
     this.logger.log(outputPath);
     await this.apiClient.postDeployFileContents(this.deployId, content, outputPath);
   }
+}
+
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .replace("'", "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .replace(/-{2,}/g, "-");
 }

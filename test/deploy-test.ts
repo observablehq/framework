@@ -26,6 +26,7 @@ const EXTRA_FILES: string[] = [
   "_observablehq/stdlib/mermaid.js",
   "_observablehq/stdlib/sqlite.js",
   "_observablehq/stdlib/tex.js",
+  "_observablehq/stdlib/vega-lite.js",
   "_observablehq/stdlib/xlsx.js",
   "_observablehq/stdlib/zip.js",
   "_observablehq/style.css"
@@ -272,6 +273,44 @@ describe("deploy", () => {
       assert.fail("expected error");
     } catch (err) {
       CliError.assert(err, {message: /Workspace super-ws-123 not found/});
+    }
+
+    apiMock.close();
+    effects.close();
+  });
+
+  it("throws an error if workspace is invalid", async () => {
+    const config = await normalizeConfig({
+      root: TEST_SOURCE_ROOT,
+      deploy: {workspace: "ACME Inc.", project: "bi"}
+    });
+    const apiMock = new ObservableApiMock().start();
+    const effects = new MockDeployEffects({isTty: true});
+
+    try {
+      await deploy({config}, effects);
+      assert.fail("expected error");
+    } catch (err) {
+      CliError.assert(err, {message: /"ACME Inc.".*isn't valid.*"acme-inc"/});
+    }
+
+    apiMock.close();
+    effects.close();
+  });
+
+  it("throws an error if project is invalid", async () => {
+    const config = await normalizeConfig({
+      root: TEST_SOURCE_ROOT,
+      deploy: {workspace: "acme", project: "Business Intelligence"}
+    });
+    const apiMock = new ObservableApiMock().start();
+    const effects = new MockDeployEffects({isTty: true});
+
+    try {
+      await deploy({config}, effects);
+      assert.fail("expected error");
+    } catch (err) {
+      CliError.assert(err, {message: /"Business Intelligence".*isn't valid.*"business-intelligence"/});
     }
 
     apiMock.close();
