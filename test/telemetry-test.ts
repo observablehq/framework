@@ -36,7 +36,7 @@ describe("telemetry", () => {
     });
     telemetry.record({event: "build", step: "start", test: true});
     await telemetry.flush();
-    logger.assertExactErrors([/Attention.*telemetry.*https:\/\/observablehq.com/s]);
+    logger.assertExactErrors([/Attention.*telemetry.*https:\/\/cli.observablehq.com/s]);
   });
 
   it("can be disabled", async () => {

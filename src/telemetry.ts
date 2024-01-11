@@ -189,8 +189,10 @@ export class Telemetry {
   }): Promise<void> {
     if (await this.needsBanner()) {
       this.logger.error(
-        `${magenta("Attention")}: Observable CLI collect anonymous telemetry data.\nSee ${cyan(
-          "https://observablehq.com/cli-telemetry"
+        `${magenta(
+          "Attention"
+        )}: Observable CLI collects anonymous telemetry data to help us improve the product.\nSee ${cyan(
+          "https://cli.observablehq.com/telemetry"
         )} for details and how to opt-out.`
       );
     }
