@@ -4,9 +4,13 @@
   --theme-color-neutral: #efb118;
 }
 
-figure.bignumber dl {margin-top: 0; }
+figure.bignumber dl {
+  margin-top: 0;
+}
 figure.bignumber dt {
-  font-size: 32px; font-weight: bold; line-height: 1;
+  font-size: 32px;
+  font-weight: bold;
+  line-height: 1;
 }
 figure.bignumber dd {
   font-size: 14px;
