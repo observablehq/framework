@@ -10,9 +10,9 @@ The following data is collected:
 
 ```ts
 type TelemetryIds = {
+  session: uuid; // random, held in memory for the duration of the process
   device: uuid; // persists to ~/.observablehq
   project: string; // one-way hash of private salt + repository URL or cwd
-  session: uuid; // random, held in memory for the duration of the process
 };
 
 type TelemetryEnvironment = {
