@@ -80,7 +80,7 @@ export async function deploy({config}: DeployOptions, effects = defaultEffects):
         const choice = await promptUserForInput(
           effects.input,
           effects.output,
-          "Do you want to deploy to @${config.deploy.workspace}/${config.deploy.project} anyways? [y/N]"
+          "Do you want to deploy to @${config.deploy.workspace}/${config.deploy.project} anyway? [y/N]"
         );
         if (choice.trim().toLowerCase().charAt(0) !== "y") {
           throw new CliError("User cancelled deploy.", {print: false, exitCode: 2});
