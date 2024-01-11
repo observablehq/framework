@@ -51,7 +51,11 @@ async function getPersistentId(name: string, generator = randomUUID) {
   }
   if (!_config[name]) {
     _config[name] = generator();
-    await writeFile(file, JSON.stringify(_config, null, 2));
+    try {
+      await writeFile(file, JSON.stringify(_config, null, 2));
+    } catch (error) {
+      // silently be ok that we can't persist values between runs
+    }
   }
   return _config[name];
 }
