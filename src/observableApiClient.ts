@@ -29,21 +29,21 @@ export interface GetProjectResponse {
 }
 
 export function getObservableUiHost(env = process.env): URL {
-  const urlText = env["OBSERVABLEHQ_HOST"] ?? "https://observablehq.com";
+  const urlText = env["OBSERVABLE_HOST"] ?? "https://observablehq.com";
   try {
     return new URL(urlText);
   } catch (error) {
-    throw new CliError(`Invalid OBSERVABLEHQ_HOST environment variable: ${error}`, {cause: error});
+    throw new CliError(`Invalid OBSERVABLE_HOST environment variable: ${error}`, {cause: error});
   }
 }
 
 export function getObservableApiHost(env = process.env): URL {
-  const urlText = env["OBSERVABLEHQ_API_HOST"];
+  const urlText = env["OBSERVABLE_API_HOST"];
   if (urlText) {
     try {
       return new URL(urlText);
     } catch (error) {
-      throw new CliError(`Invalid OBSERVABLEHQ_API_HOST environment variable: ${error}`, {cause: error});
+      throw new CliError(`Invalid OBSERVABLE_API_HOST environment variable: ${error}`, {cause: error});
     }
   }
 
