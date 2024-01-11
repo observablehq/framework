@@ -20,6 +20,7 @@ export function addImplicitSpecifiers(specifiers: Set<string>, inputs: Set<strin
   if (inputs.has("SQLite") || inputs.has("SQLiteDatabaseClient")) specifiers.add("npm:@observablehq/sqlite");
   if (inputs.has("tex")) specifiers.add("npm:@observablehq/tex").add("npm:katex");
   if (inputs.has("topojson")) specifiers.add("npm:topojson-client");
+  if (inputs.has("vl")) specifiers.add("npm:vega").add("npm:vega-lite").add("npm:vega-lite-api");
   return specifiers;
 }
 
