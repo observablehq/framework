@@ -23,6 +23,8 @@ function clientBundles(clientPath: string): [entry: string, name: string][] {
     ["./src/client/stdlib/dash.js", "stdlib/dash.js"],
     ["./src/client/stdlib/dot.js", "stdlib/dot.js"],
     ["./src/client/stdlib/duckdb.js", "stdlib/duckdb.js"],
+    ["./src/client/stdlib/inputs.css", "stdlib/inputs.css"],
+    ["./src/client/stdlib/inputs.js", "stdlib/inputs.js"],
     ["./src/client/stdlib/mermaid.js", "stdlib/mermaid.js"],
     ["./src/client/stdlib/sqlite.js", "stdlib/sqlite.js"],
     ["./src/client/stdlib/tex.js", "stdlib/tex.js"],
@@ -96,7 +98,9 @@ export async function build(
       const clientPath = getClientPath(entry);
       const outputPath = join("_observablehq", name);
       effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
-      const code = await rollupClient(clientPath, {minify: true});
+      const code = await (entry.endsWith(".css")
+        ? bundleStyles({path: clientPath})
+        : rollupClient(clientPath, {minify: true}));
       await effects.writeFile(outputPath, code);
     }
     for (const style of styles) {

@@ -16,7 +16,7 @@ const snow2 = {
 };
 
 const env = {
-  OBSERVABLEHQ_DB_SECRET_snow2: Buffer.from(JSON.stringify(snow2), "utf-8").toString("base64")
+  OBSERVABLE_DB_SECRET_snow2: Buffer.from(JSON.stringify(snow2), "utf-8").toString("base64")
 };
 
 describe("resolveDatabase", () => {

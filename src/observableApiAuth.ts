@@ -10,7 +10,7 @@ import type {Logger} from "./logger.js";
 import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
 import {type ApiKey, getObservableApiKey, setObservableApiKey} from "./observableApiConfig.js";
 
-const OBSERVABLEHQ_UI_HOST = getObservableUiHost();
+const OBSERVABLE_UI_HOST = getObservableUiHost();
 
 export const commandRequiresAuthenticationMessage = `You need to be authenticated to ${
   getObservableUiHost().hostname
@@ -42,7 +42,7 @@ export async function login(effects = defaultEffects) {
   const server = new LoginServer({nonce, effects});
   await server.start();
 
-  const url = new URL("/settings/api-keys/generate", OBSERVABLEHQ_UI_HOST);
+  const url = new URL("/settings/api-keys/generate", OBSERVABLE_UI_HOST);
   const name = `Observable CLI on ${os.hostname()}`;
   const request = {
     nonce,
@@ -78,7 +78,7 @@ export async function whoami(effects = defaultEffects) {
   try {
     const user = await apiClient.getCurrentUser();
     logger.log();
-    logger.log(`You are logged into ${OBSERVABLEHQ_UI_HOST.hostname} as ${formatUser(user)}.`);
+    logger.log(`You are logged into ${OBSERVABLE_UI_HOST.hostname} as ${formatUser(user)}.`);
     logger.log();
     logger.log("You have access to the following workspaces:");
     for (const workspace of user.workspaces) {
@@ -234,9 +234,9 @@ class LoginServer {
       return false;
     }
     return (
-      parsedOrigin.protocol === OBSERVABLEHQ_UI_HOST.protocol &&
-      parsedOrigin.host === OBSERVABLEHQ_UI_HOST.host &&
-      parsedOrigin.port === OBSERVABLEHQ_UI_HOST.port
+      parsedOrigin.protocol === OBSERVABLE_UI_HOST.protocol &&
+      parsedOrigin.host === OBSERVABLE_UI_HOST.host &&
+      parsedOrigin.port === OBSERVABLE_UI_HOST.port
     );
   }
 }

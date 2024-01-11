@@ -21,7 +21,7 @@ interface DatabaseConfig {
 }
 
 function getDatabaseProxyConfig(env: typeof process.env, name: string): DatabaseConfig | undefined {
-  const property = `OBSERVABLEHQ_DB_SECRET_${name}`;
+  const property = `OBSERVABLE_DB_SECRET_${name}`;
   const secret = env[property];
   if (!secret) return;
   const config = JSON.parse(Buffer.from(secret, "base64").toString("utf-8")) as DatabaseConfig;

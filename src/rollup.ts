@@ -9,40 +9,68 @@ import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
+import {nodeResolve} from "@rollup/plugin-node-resolve";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
-import {resolveNpmImport} from "./javascript/imports.js";
+import {isPathImport, resolveNpmImport} from "./javascript/imports.js";
 import {getObservableUiHost} from "./observableApiClient.js";
 import {Sourcemap} from "./sourcemap.js";
 import {relativeUrl} from "./url.js";
 
+interface Theme {
+  name: string;
+  path: string;
+  light?: boolean;
+  dark?: boolean;
+}
+
+const THEMES: Theme[] = [
+  {name: "dark", path: getClientPath("./src/style/theme-dark.css"), dark: true},
+  {name: "dark-alt", path: getClientPath("./src/style/theme-dark-alt.css"), dark: true},
+  {name: "light", path: getClientPath("./src/style/theme-light.css"), light: true},
+  {name: "light-alt", path: getClientPath("./src/style/theme-light-alt.css"), light: true},
+  {name: "wide", path: getClientPath("./src/style/theme-wide.css")}
+];
+
 const STYLE_MODULES = {
   "observablehq:default.css": getClientPath("./src/style/default.css"),
-  "observablehq:theme-auto.css": getClientPath("./src/style/theme-auto.css"),
-  "observablehq:theme-auto-alt.css": getClientPath("./src/style/theme-auto-alt.css"),
-  "observablehq:theme-dark.css": getClientPath("./src/style/theme-dark.css"),
-  "observablehq:theme-dark-alt.css": getClientPath("./src/style/theme-dark-alt.css"),
-  "observablehq:theme-light.css": getClientPath("./src/style/theme-light.css"),
-  "observablehq:theme-light-alt.css": getClientPath("./src/style/theme-light-alt.css"),
-  "observablehq:theme-wide.css": getClientPath("./src/style/theme-wide.css")
+  ...Object.fromEntries(THEMES.map(({name, path}) => [`observablehq:theme-${name}.css`, path]))
 };
+
+function rewriteInputsNamespace(code: string) {
+  return code.replace(/\b__ns__\b/g, "inputs-3a86ea");
+}
+
+function renderTheme(names: string[]): string {
+  const lines = ['@import url("observablehq:default.css");'];
+  let hasLight = false;
+  let hasDark = false;
+  for (const name of names) {
+    const theme = THEMES.find((t) => t.name === name);
+    if (!theme) throw new Error(`invalid theme: ${theme}`);
+    lines.push(
+      `@import url(${JSON.stringify(`observablehq:theme-${theme.name}.css`)})${
+        theme.dark && !theme.light && hasLight // a dark-only theme preceded by a light theme
+          ? " (prefers-color-scheme: dark)"
+          : theme.light && !theme.dark && hasDark // a light-only theme preceded by a dark theme
+          ? " (prefers-color-scheme: light)"
+          : ""
+      };`
+    );
+    if (theme.light) hasLight = true;
+    if (theme.dark) hasDark = true;
+  }
+  return lines.join("\n");
+}
 
 export async function bundleStyles({path, theme}: {path?: string; theme?: string[]}): Promise<string> {
   const result = await build({
     bundle: true,
-    ...(path
-      ? {entryPoints: [path]}
-      : {
-          stdin: {
-            contents: `@import url("observablehq:default.css");\n${theme!
-              .map((t) => `@import url(${JSON.stringify(`observablehq:theme-${t}.css`)});\n`)
-              .join("")}`,
-            loader: "css"
-          }
-        }),
+    ...(path ? {entryPoints: [path]} : {stdin: {contents: renderTheme(theme!), loader: "css"}}),
     write: false,
     alias: STYLE_MODULES
   });
-  return result.outputFiles[0].text;
+  const text = result.outputFiles[0].text;
+  return rewriteInputsNamespace(text); // TODO only for inputs
 }
 
 export async function rollupClient(clientPath: string, {minify = false} = {}): Promise<string> {
@@ -50,13 +78,14 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
     input: clientPath,
     external: [/^https:/],
     plugins: [
+      nodeResolve({resolveOnly: ["@observablehq/inputs"]}),
       importResolve(clientPath),
       esbuild({
         target: "es2022",
         exclude: [], // don’t exclude node_modules
         minify,
         define: {
-          "process.env.OBSERVABLEHQ_ORIGIN": JSON.stringify(String(getObservableUiHost()).replace(/\/$/, ""))
+          "process.env.OBSERVABLE_ORIGIN": JSON.stringify(String(getObservableUiHost()).replace(/\/$/, ""))
         }
       }),
       importMetaResolve()
@@ -64,7 +93,8 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
   });
   try {
     const output = await bundle.generate({format: "es"});
-    return output.output.find((o): o is OutputChunk => o.type === "chunk")!.code; // XXX
+    const code = output.output.find((o): o is OutputChunk => o.type === "chunk")!.code; // TODO don’t assume one chunk?
+    return rewriteInputsNamespace(code); // TODO only for inputs
   } finally {
     await bundle.close();
   }
@@ -94,6 +124,8 @@ async function resolveImport(source: string, specifier: string | AstNode): Promi
     ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/dot.js")), external: true} // TODO publish to npm
     : specifier === "npm:@observablehq/duckdb"
     ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/duckdb.js")), external: true} // TODO publish to npm
+    : specifier === "npm:@observablehq/inputs"
+    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/inputs.js")), external: true} // TODO publish to npm
     : specifier === "npm:@observablehq/mermaid"
     ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/mermaid.js")), external: true} // TODO publish to npm
     : specifier === "npm:@observablehq/tex"
@@ -106,6 +138,8 @@ async function resolveImport(source: string, specifier: string | AstNode): Promi
     ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/zip.js")), external: true} // TODO publish to npm
     : specifier.startsWith("npm:")
     ? {id: await resolveNpmImport(specifier.slice("npm:".length))}
+    : source !== specifier && !isPathImport(specifier) && specifier !== "@observablehq/inputs"
+    ? {id: await resolveNpmImport(specifier), external: true}
     : null;
 }
 

@@ -4,15 +4,15 @@ import {getObservableApiHost, getObservableUiHost} from "../src/observableApiCli
 
 describe("getObservableUiHost", () => {
   it("works", () => {
-    assert.deepEqual(getObservableUiHost({OBSERVABLEHQ_HOST: "https://example.com"}), new URL("https://example.com"));
+    assert.deepEqual(getObservableUiHost({OBSERVABLE_HOST: "https://example.com"}), new URL("https://example.com"));
   });
 
   it("throws an appropriate error for malformed URLs", () => {
     try {
-      getObservableUiHost({OBSERVABLEHQ_HOST: "bad url"});
+      getObservableUiHost({OBSERVABLE_HOST: "bad url"});
       assert.fail("expected error");
     } catch (error) {
-      CliError.assert(error, {message: /^Invalid OBSERVABLEHQ_HOST environment variable: /});
+      CliError.assert(error, {message: /^Invalid OBSERVABLE_HOST environment variable: /});
     }
   });
 });
@@ -20,33 +20,33 @@ describe("getObservableUiHost", () => {
 describe("getObservableApiHost", () => {
   it("works", () => {
     assert.deepEqual(
-      getObservableApiHost({OBSERVABLEHQ_API_HOST: "https://example.com"}),
+      getObservableApiHost({OBSERVABLE_API_HOST: "https://example.com"}),
       new URL("https://example.com")
     );
   });
 
   it("throws an appropriate error for malformed URLs", () => {
     try {
-      getObservableApiHost({OBSERVABLEHQ_API_HOST: "bad url"});
+      getObservableApiHost({OBSERVABLE_API_HOST: "bad url"});
       assert.fail("expected error");
     } catch (error) {
-      CliError.assert(error, {message: /^Invalid OBSERVABLEHQ_API_HOST environment variable: /});
+      CliError.assert(error, {message: /^Invalid OBSERVABLE_API_HOST environment variable: /});
     }
   });
 
-  it("prefers OBSERVABLEHQ_API_HOST", () => {
+  it("prefers OBSERVABLE_API_HOST", () => {
     assert.deepEqual(
       getObservableApiHost({
-        OBSERVABLEHQ_API_HOST: "https://example.com/api",
-        OBSERVABLEHQ_HOST: "https://example.com/ui"
+        OBSERVABLE_API_HOST: "https://example.com/api",
+        OBSERVABLE_HOST: "https://example.com/ui"
       }),
       new URL("https://example.com/api")
     );
   });
 
-  it("falls back to OBSERVABLEHQ_HOST", () => {
+  it("falls back to OBSERVABLE_HOST", () => {
     assert.deepEqual(
-      getObservableApiHost({OBSERVABLEHQ_API_HOST: "https://example.com/api"}),
+      getObservableApiHost({OBSERVABLE_API_HOST: "https://example.com/api"}),
       new URL("https://example.com/ui")
     );
   });
