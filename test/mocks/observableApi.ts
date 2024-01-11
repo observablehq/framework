@@ -1,5 +1,5 @@
 import {type Dispatcher, type Interceptable, MockAgent, getGlobalDispatcher, setGlobalDispatcher} from "undici";
-import {getObservableApiHost, getObservableUiHost} from "../../src/observableApiClient.js";
+import {getObservableApiOrigin, getObservableUiOrigin} from "../../src/observableApiClient.js";
 
 export const validApiKey = "MOCK-VALID-KEY";
 export const invalidApiKey = "MOCK-INVALID-KEY";
@@ -14,7 +14,7 @@ export class ObservableApiMock {
   public start(): ObservableApiMock {
     this._agent = new MockAgent();
     this._agent.disableNetConnect();
-    const origin = getObservableApiHost().toString().replace(/\/$/, "");
+    const origin = getObservableApiOrigin().toString().replace(/\/$/, "");
     const mockPool = this._agent.get(origin);
     for (const handler of this._handlers) handler(mockPool);
     this._originalDispatcher = getGlobalDispatcher();
@@ -69,6 +69,29 @@ export class ObservableApiMock {
     return this;
   }
 
+  handlePostProject({
+    projectId,
+    status = 200
+  }: {
+    projectId?: string;
+    title?: string;
+    slug?: string;
+    workspaceId?: string;
+    status?: number;
+  } = {}): ObservableApiMock {
+    const response =
+      status == 200
+        ? JSON.stringify({id: projectId, slug: "test-project", title: "Test Project", owner: {}, creator: {}})
+        : emptyErrorBody;
+    const headers = authorizationHeader(status != 401);
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: "/cli/project", method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response, {headers: {"content-type": "application/json"}})
+    );
+    return this;
+  }
+
   handlePostDeploy({
     projectId,
     deployId,
@@ -103,7 +126,11 @@ export class ObservableApiMock {
   handlePostDeployUploaded({deployId, status = 200}: {deployId?: string; status?: number} = {}): ObservableApiMock {
     const response =
       status == 200
-        ? JSON.stringify({id: deployId, status: "uploaded", url: `${getObservableUiHost()}/@mock-user-ws/test-project`})
+        ? JSON.stringify({
+            id: deployId,
+            status: "uploaded",
+            url: `${getObservableUiOrigin()}/@mock-user-ws/test-project`
+          })
         : emptyErrorBody;
     const headers = authorizationHeader(status != 401);
     this._handlers.push((pool) =>

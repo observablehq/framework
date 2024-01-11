@@ -1,6 +1,6 @@
 export * from "./index.js";
 
-const origin = process.env.OBSERVABLEHQ_ORIGIN;
+const origin = process.env.OBSERVABLE_ORIGIN;
 const parent = window.parent; // capture to prevent reassignment
 
 let listener = null;

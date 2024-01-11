@@ -8,7 +8,7 @@ describe("readConfig(undefined, root)", () => {
     assert.deepStrictEqual(await readConfig(undefined, "test/input/build/config"), {
       root: "test/input/build/config",
       output: "dist",
-      style: {theme: ["auto"]},
+      style: {theme: ["light", "dark"]},
       pages: [
         {path: "/index", name: "Index"},
         {path: "/one", name: "One<Two"},
@@ -29,7 +29,7 @@ describe("readConfig(undefined, root)", () => {
     assert.deepStrictEqual(await readConfig(undefined, "test/input/build/simple"), {
       root: "test/input/build/simple",
       output: "dist",
-      style: {theme: ["auto"]},
+      style: {theme: ["light", "dark"]},
       pages: [{name: "Build test case", path: "/simple"}],
       title: undefined,
       toc: {label: "Contents", show: true},
@@ -106,6 +106,9 @@ describe("normalizeConfig(spec, root)", () => {
         (await config({pages: [], deploy: {workspace: 538, project: "bi"}}, root)).deploy?.workspace,
         "538"
       );
+    });
+    it("strips leading @ from workspace", async () => {
+      assert.strictEqual((await config({pages: [], deploy: {workspace: "@acme"}}, root)).deploy?.workspace, "acme");
     });
     it("coerces project", async () => {
       assert.strictEqual(
