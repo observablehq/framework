@@ -74,13 +74,13 @@ export async function deploy({config}: DeployOptions, effects = defaultEffects):
     const previousProjectId = deployConfig?.projectId;
     if (previousProjectId && previousProjectId !== projectId) {
       logger.log(
-        `The project @${config.deploy.workspace}/${config.deploy.project} does not match the expected project in ${config.root}/.observablehq/deploy.json`
+        `This project was already deployed to a project different from @${config.deploy.workspace}/${config.deploy.project}.`
       );
       if (effects.isTty) {
         const choice = await promptUserForInput(
           effects.input,
           effects.output,
-          "Do you want to update the expected project and deploy anyways? [y/N]"
+          "Do you want to deploy to @${config.deploy.workspace}/${config.deploy.project} anyways? [y/N]"
         );
         if (choice.trim().toLowerCase().charAt(0) !== "y") {
           throw new CliError("User cancelled deploy.", {print: false, exitCode: 2});
