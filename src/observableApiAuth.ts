@@ -5,6 +5,7 @@ import type {Socket} from "node:net";
 import os from "node:os";
 import {isatty} from "node:tty";
 import open from "open";
+import {commandInstruction} from "./commandInstruction.js";
 import {HttpError, isHttpError} from "./error.js";
 import type {Logger} from "./logger.js";
 import {ObservableApiClient, getObservableUiOrigin} from "./observableApiClient.js";
@@ -14,7 +15,7 @@ const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
 
 export const commandRequiresAuthenticationMessage = `You need to be authenticated to ${
   getObservableUiOrigin().hostname
-} to run this command. Please run \`observable login\`.`;
+} to run this command. Please run ${commandInstruction("login")}.`;
 
 /** Actions this command needs to take wrt its environment that may need mocked out. */
 export interface CommandEffects {
@@ -90,7 +91,7 @@ export async function whoami(effects = defaultEffects) {
       if (apiKey.source === "env") {
         logger.log(`Your API key is invalid. Check the value of the ${apiKey.envVar} environment variable.`);
       } else if (apiKey.source === "file") {
-        logger.log("Your API key is invalid. Run `observable login` to log in again.");
+        logger.log(`Your API key is invalid. Run ${commandInstruction("login")} to log in again.`);
       } else {
         logger.log("Your API key is invalid.");
       }
