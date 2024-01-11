@@ -85,7 +85,7 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
         exclude: [], // don’t exclude node_modules
         minify,
         define: {
-          "process.env.OBSERVABLEHQ_ORIGIN": JSON.stringify(String(getObservableUiHost()).replace(/\/$/, ""))
+          "process.env.OBSERVABLE_ORIGIN": JSON.stringify(String(getObservableUiHost()).replace(/\/$/, ""))
         }
       }),
       importMetaResolve()
