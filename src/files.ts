@@ -1,6 +1,8 @@
-import {type Stats} from "node:fs";
+import {type Stats, existsSync} from "node:fs";
 import {mkdir, readdir, stat} from "node:fs/promises";
 import {dirname, extname, join, normalize, relative} from "node:path";
+import {cwd} from "node:process";
+import {fileURLToPath} from "node:url";
 import mime from "mime";
 import {isEnoent} from "./error.js";
 import type {FileReference} from "./javascript.js";
@@ -12,6 +14,15 @@ export function getLocalPath(sourcePath: string, name: string): string | null {
   if (name.startsWith("#")) return null; // anchor tag
   const path = resolvePath(sourcePath, name);
   if (path.startsWith("../")) return null; // goes above root
+  return path;
+}
+
+export function getClientPath(entry: string): string {
+  const path = relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), "..", entry));
+  if (path.endsWith(".js") && !existsSync(path)) {
+    const tspath = path.slice(0, -".js".length) + ".ts";
+    if (existsSync(tspath)) return tspath;
+  }
   return path;
 }
 
