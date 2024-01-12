@@ -25,39 +25,39 @@ export interface WorkspaceResponse {
 export interface GetProjectResponse {
   id: string;
   slug: string;
-  servingRoot: string;
+  servingRoot: string | null;
 }
 
-export function getObservableUiHost(env = process.env): URL {
-  const urlText = env["OBSERVABLE_HOST"] ?? "https://observablehq.com";
+export function getObservableUiOrigin(env = process.env): URL {
+  const urlText = env["OBSERVABLE_ORIGIN"] ?? "https://observablehq.com";
   try {
     return new URL(urlText);
   } catch (error) {
-    throw new CliError(`Invalid OBSERVABLE_HOST environment variable: ${error}`, {cause: error});
+    throw new CliError(`Invalid OBSERVABLE_ORIGIN: ${urlText}`, {cause: error});
   }
 }
 
-export function getObservableApiHost(env = process.env): URL {
-  const urlText = env["OBSERVABLE_API_HOST"];
+export function getObservableApiOrigin(env = process.env): URL {
+  const urlText = env["OBSERVABLE_API_ORIGIN"];
   if (urlText) {
     try {
       return new URL(urlText);
     } catch (error) {
-      throw new CliError(`Invalid OBSERVABLE_API_HOST environment variable: ${error}`, {cause: error});
+      throw new CliError(`Invalid OBSERVABLE_API_ORIGIN: ${urlText}`, {cause: error});
     }
   }
 
-  const uiHost = getObservableUiHost(env);
-  uiHost.hostname = "api." + uiHost.hostname;
-  return uiHost;
+  const uiOrigin = getObservableUiOrigin(env);
+  uiOrigin.hostname = "api." + uiOrigin.hostname;
+  return uiOrigin;
 }
 
 export class ObservableApiClient {
   private _apiHeaders: Record<string, string>;
-  private _apiHost: URL;
+  private _apiOrigin: URL;
 
-  constructor({apiKey, apiHost = getObservableApiHost()}: {apiHost?: URL; apiKey: ApiKey}) {
-    this._apiHost = apiHost;
+  constructor({apiKey, apiOrigin = getObservableApiOrigin()}: {apiOrigin?: URL; apiKey: ApiKey}) {
+    this._apiOrigin = apiOrigin;
     this._apiHeaders = {
       Accept: "application/json",
       Authorization: `apikey ${apiKey.key}`,
@@ -99,7 +99,7 @@ export class ObservableApiClient {
   }
 
   async getCurrentUser(): Promise<GetCurrentUserResponse> {
-    return await this._fetch<GetCurrentUserResponse>(new URL("/cli/user", this._apiHost), {method: "GET"});
+    return await this._fetch<GetCurrentUserResponse>(new URL("/cli/user", this._apiOrigin), {method: "GET"});
   }
 
   async getProject({
@@ -109,7 +109,7 @@ export class ObservableApiClient {
     workspaceLogin: string;
     projectSlug: string;
   }): Promise<GetProjectResponse> {
-    const url = new URL(`/cli/project/@${workspaceLogin}/${projectSlug}`, this._apiHost);
+    const url = new URL(`/cli/project/@${workspaceLogin}/${projectSlug}`, this._apiOrigin);
     return await this._fetch<GetProjectResponse>(url, {method: "GET"});
   }
 
@@ -122,7 +122,7 @@ export class ObservableApiClient {
     slug: string;
     workspaceId: string;
   }): Promise<PostProjectResponse> {
-    return await this._fetch<PostProjectResponse>(new URL("/cli/project", this._apiHost), {
+    return await this._fetch<PostProjectResponse>(new URL("/cli/project", this._apiOrigin), {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({title, slug, workspace: workspaceId})
@@ -130,7 +130,7 @@ export class ObservableApiClient {
   }
 
   async postDeploy({projectId, message}: {projectId: string; message: string}): Promise<string> {
-    const data = await this._fetch<{id: string}>(new URL(`/cli/project/${projectId}/deploy`, this._apiHost), {
+    const data = await this._fetch<{id: string}>(new URL(`/cli/project/${projectId}/deploy`, this._apiOrigin), {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({message})
@@ -145,7 +145,7 @@ export class ObservableApiClient {
 
   async postDeployFileContents(deployId: string, contents: Buffer | string, relativePath: string): Promise<void> {
     if (typeof contents === "string") contents = Buffer.from(contents);
-    const url = new URL(`/cli/deploy/${deployId}/file`, this._apiHost);
+    const url = new URL(`/cli/deploy/${deployId}/file`, this._apiOrigin);
     const body = new FormData();
     const blob = new Blob([contents]);
     body.append("file", blob);
@@ -154,7 +154,7 @@ export class ObservableApiClient {
   }
 
   async postDeployUploaded(deployId: string): Promise<DeployInfo> {
-    return await this._fetch<DeployInfo>(new URL(`/cli/deploy/${deployId}/uploaded`, this._apiHost), {
+    return await this._fetch<DeployInfo>(new URL(`/cli/deploy/${deployId}/uploaded`, this._apiOrigin), {
       method: "POST",
       headers: {"content-type": "application/json"},
       body: "{}"
