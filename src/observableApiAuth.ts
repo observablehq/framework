@@ -5,16 +5,17 @@ import type {Socket} from "node:net";
 import os from "node:os";
 import {isatty} from "node:tty";
 import open from "open";
+import {commandInstruction} from "./commandInstruction.js";
 import {HttpError, isHttpError} from "./error.js";
 import type {Logger} from "./logger.js";
-import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
+import {ObservableApiClient, getObservableUiOrigin} from "./observableApiClient.js";
 import {type ApiKey, getObservableApiKey, setObservableApiKey} from "./observableApiConfig.js";
 
-const OBSERVABLEHQ_UI_HOST = getObservableUiHost();
+const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
 
 export const commandRequiresAuthenticationMessage = `You need to be authenticated to ${
-  getObservableUiHost().hostname
-} to run this command. Please run \`observable login\`.`;
+  getObservableUiOrigin().hostname
+} to run this command. Please run ${commandInstruction("login")}.`;
 
 /** Actions this command needs to take wrt its environment that may need mocked out. */
 export interface CommandEffects {
@@ -42,7 +43,7 @@ export async function login(effects = defaultEffects) {
   const server = new LoginServer({nonce, effects});
   await server.start();
 
-  const url = new URL("/settings/api-keys/generate", OBSERVABLEHQ_UI_HOST);
+  const url = new URL("/settings/api-keys/generate", OBSERVABLE_UI_ORIGIN);
   const name = `Observable CLI on ${os.hostname()}`;
   const request = {
     nonce,
@@ -78,7 +79,7 @@ export async function whoami(effects = defaultEffects) {
   try {
     const user = await apiClient.getCurrentUser();
     logger.log();
-    logger.log(`You are logged into ${OBSERVABLEHQ_UI_HOST.hostname} as ${formatUser(user)}.`);
+    logger.log(`You are logged into ${OBSERVABLE_UI_ORIGIN.hostname} as ${formatUser(user)}.`);
     logger.log();
     logger.log("You have access to the following workspaces:");
     for (const workspace of user.workspaces) {
@@ -90,7 +91,7 @@ export async function whoami(effects = defaultEffects) {
       if (apiKey.source === "env") {
         logger.log(`Your API key is invalid. Check the value of the ${apiKey.envVar} environment variable.`);
       } else if (apiKey.source === "file") {
-        logger.log("Your API key is invalid. Run `observable login` to log in again.");
+        logger.log(`Your API key is invalid. Run ${commandInstruction("login")} to log in again.`);
       } else {
         logger.log("Your API key is invalid.");
       }
@@ -234,9 +235,9 @@ class LoginServer {
       return false;
     }
     return (
-      parsedOrigin.protocol === OBSERVABLEHQ_UI_HOST.protocol &&
-      parsedOrigin.host === OBSERVABLEHQ_UI_HOST.host &&
-      parsedOrigin.port === OBSERVABLEHQ_UI_HOST.port
+      parsedOrigin.protocol === OBSERVABLE_UI_ORIGIN.protocol &&
+      parsedOrigin.host === OBSERVABLE_UI_ORIGIN.host &&
+      parsedOrigin.port === OBSERVABLE_UI_ORIGIN.port
     );
   }
 }

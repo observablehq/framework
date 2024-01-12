@@ -23,7 +23,7 @@ export type ApiKey =
   | {source: "test"; key: string};
 
 export async function getObservableApiKey(logger: Logger = console): Promise<ApiKey> {
-  const envVar = "OBSERVABLEHQ_TOKEN";
+  const envVar = "OBSERVABLE_TOKEN";
   if (process.env[envVar]) {
     return {source: "env", envVar, key: process.env[envVar]};
   }
@@ -60,9 +60,11 @@ export async function getDeployConfig(sourceRoot: string): Promise<DeployConfig 
 }
 
 export async function setDeployConfig(sourceRoot: string, newConfig: DeployConfig): Promise<void> {
-  const deployConfigPath = path.join(process.cwd(), sourceRoot, ".observablehq", "deploy.json");
+  const dir = path.join(process.cwd(), sourceRoot, ".observablehq");
+  const deployConfigPath = path.join(dir, "deploy.json");
   const oldConfig = (await getDeployConfig(sourceRoot)) || {};
   const merged = {...oldConfig, ...newConfig};
+  await fs.mkdir(dir, {recursive: true});
   await fs.writeFile(deployConfigPath, JSON.stringify(merged, null, 2) + "\n");
 }
 

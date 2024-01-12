@@ -4,12 +4,13 @@ import {basename, dirname, join} from "node:path";
 import type {Config, Style} from "./config.js";
 import {mergeStyle} from "./config.js";
 import {Loader} from "./dataloader.js";
-import {isEnoent} from "./error.js";
+import {CliError, isEnoent} from "./error.js";
 import {prepareOutput, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
 import {renderServerless} from "./render.js";
 import {bundleStyles, getClientPath, rollupClient} from "./rollup.js";
+import {Telemetry} from "./telemetry.js";
 import {faint} from "./tty.js";
 import {resolvePath} from "./url.js";
 
@@ -28,6 +29,7 @@ function clientBundles(clientPath: string): [entry: string, name: string][] {
     ["./src/client/stdlib/mermaid.js", "stdlib/mermaid.js"],
     ["./src/client/stdlib/sqlite.js", "stdlib/sqlite.js"],
     ["./src/client/stdlib/tex.js", "stdlib/tex.js"],
+    ["./src/client/stdlib/vega-lite.js", "stdlib/vega-lite.js"],
     ["./src/client/stdlib/xlsx.js", "stdlib/xlsx.js"],
     ["./src/client/stdlib/zip.js", "stdlib/zip.js"]
   ];
@@ -61,6 +63,7 @@ export async function build(
   effects: BuildEffects = new FileBuildEffects(config.output)
 ): Promise<void> {
   const {root} = config;
+  Telemetry.record({event: "build", step: "start"});
 
   // Make sure all files are readable before starting to write output files.
   let pageCount = 0;
@@ -68,7 +71,7 @@ export async function build(
     await access(join(root, sourceFile), constants.R_OK);
     pageCount++;
   }
-  if (!pageCount) throw new Error(`No pages found in ${root}`);
+  if (!pageCount) throw new CliError(`Nothing to build: no page files found in your ${root} directory.`);
   effects.logger.log(`${faint("found")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
 
   // Render .md files, building a list of file attachments as we go.
@@ -162,6 +165,7 @@ export async function build(
       await effects.copyFile(sourcePath, outputPath);
     }
   }
+  Telemetry.record({event: "build", step: "finish"});
 }
 
 export class FileBuildEffects implements BuildEffects {
