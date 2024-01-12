@@ -101,10 +101,10 @@ export class Telemetry {
   private readonly pending = new Set<Promise<any>>();
   private _ids: Promise<TelemetryIds> | undefined;
   private _environment: Promise<TelemetryEnvironment> | undefined;
-  private static instance = new Telemetry();
 
-  static init(effects = defaultEffects) {
-    Telemetry.instance = new Telemetry(effects);
+  static _instance: Telemetry | undefined;
+  static get instance() {
+    return (this._instance ??= new Telemetry());
   }
 
   static record(data: TelemetryData) {
