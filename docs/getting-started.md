@@ -1,6 +1,6 @@
 # Getting started
 
-The Observable CLI is a Node.js application and is published to npm as [`@observablehq/cli`](https://www.npmjs.com/package/@observablehq/cli). As the name suggests, the CLI lives on the command line; the instructions below are intended to run in your [terminal](https://support.apple.com/guide/terminal/open-or-quit-terminal-apd5265185d-f365-44cb-8b09-71a064a42125/mac).
+The Observable CLI is a Node.js application and is published to npm as [`@observablehq/cli`](https://www.npmjs.com/package/@observablehq/cli). As the name suggests, the CLI lives on the command line; the instructions below are intended to run in your [terminal](https://support.apple.com/guide/terminal/open-or-quit-terminal-apd5265185d-f365-44cb-8b09-71a064a42125/mac). You’ll need to install [Node.js 20 or later](https://nodejs.org/) before you can install the CLI.
 
 ## Installing
 
@@ -60,6 +60,20 @@ This is the home page for your site. You can have as many additional pages as yo
 #### `observablehq.config.ts`
 
 This is the [project configuration](./config) file, such as the pages and sections in the sidebar navigation, and the project’s title. The config file can be written in either TypeScript (`.ts`) or JavaScript (`.js`).
+
+### Installing into an existing project
+
+You can also install the CLI as a dependency on an existing project if you don’t want to create a new project from a template as above.
+
+```sh
+npm install https://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@github.com/observablehq/cli
+```
+
+```sh
+yarn add https://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@github.com/observablehq/cli
+```
+
+You can also install the CLI globally so that the `observable` command is available across projects, but we don’t recommend this approach. By installing the CLI into each project, everyone you work with will use the same version of the CLI.
 
 ## Preview
 
