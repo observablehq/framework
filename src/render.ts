@@ -207,7 +207,7 @@ async function renderLinks(
   }`;
 }
 
-function resolveStylesheet(path: string, href: string): string {
+export function resolveStylesheet(path: string, href: string): string {
   return href.startsWith("observablehq:")
     ? relativeUrl(path, `/_observablehq/${href.slice("observablehq:".length)}`)
     : href;

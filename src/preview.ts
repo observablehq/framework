@@ -20,7 +20,7 @@ import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {getImplicitSpecifiers, getImplicitStylesheets} from "./libraries.js";
 import {diffMarkdown, readMarkdown} from "./markdown.js";
 import type {ParseResult, ReadMarkdownResult} from "./markdown.js";
-import {renderPreview} from "./render.js";
+import {renderPreview, resolveStylesheet} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, underline} from "./tty.js";
@@ -289,7 +289,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
     const stylesheets = await getImplicitStylesheets(getImplicitSpecifiers(inputs));
     const style = getPreviewStylesheet(path!, data, defaultStyle);
     if (style) stylesheets.add(style);
-    return stylesheets;
+    return new Set(Array.from(stylesheets, (href) => resolveStylesheet(path!, href)));
   }
 
   function refreshAttachment(name: string) {
