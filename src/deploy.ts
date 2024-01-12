@@ -91,13 +91,13 @@ export async function deploy({config}: DeployOptions, effects = defaultEffects):
     const previousProjectId = deployConfig?.projectId;
     if (previousProjectId && previousProjectId !== projectId) {
       logger.log(
-        `This project was already deployed to a workspace/slug different from @${config.deploy.workspace}/${config.deploy.project}.`
+        `This project was last deployed to a workspace/slug different from @${config.deploy.workspace}/${config.deploy.project}.`
       );
       if (effects.isTty) {
         const choice = await promptUserForInput(
           effects.input,
           effects.output,
-          "Do you want to deploy to @${config.deploy.workspace}/${config.deploy.project} anyway? [y/N]"
+          `Do you want to deploy to @${config.deploy.workspace}/${config.deploy.project} anyway? [y/N]`
         );
         if (choice.trim().toLowerCase().charAt(0) !== "y") {
           throw new CliError("User cancelled deploy.", {print: false, exitCode: 2});
