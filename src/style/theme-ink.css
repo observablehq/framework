@@ -1,14 +1,7 @@
-@import url("./syntax-dark.css");
+@import url("./abstract-dark.css");
 
 :root {
   --theme-foreground: #ebebeb;
-  --theme-background: #212121;
-  --theme-background-alt: color-mix(in oklch, var(--theme-foreground) 4%, var(--theme-background));
-  --theme-foreground-alt: color-mix(in oklch, var(--theme-foreground) 90%, var(--theme-background));
-  --theme-foreground-muted: color-mix(in oklch, var(--theme-foreground) 60%, var(--theme-background));
-  --theme-foreground-faint: color-mix(in oklch, var(--theme-foreground) 50%, var(--theme-background));
-  --theme-foreground-fainter: color-mix(in oklch, var(--theme-foreground) 30%, var(--theme-background));
-  --theme-foreground-faintest: color-mix(in oklch, var(--theme-foreground) 14%, var(--theme-background));
   --theme-foreground-focus: oklch(0.712564 0.257662 265.758);
-  color-scheme: dark;
+  --theme-background-b: #212121;
 }

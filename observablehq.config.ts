@@ -1,6 +1,5 @@
 export default {
   title: "Observable CLI",
-  theme: "ocean-floor",
   pages: [
     {name: "Getting started", path: "/getting-started"},
     {name: "Routing", path: "/routing"},
