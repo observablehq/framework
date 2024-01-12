@@ -4,7 +4,7 @@ import {basename, dirname, join} from "node:path";
 import type {Config, Style} from "./config.js";
 import {mergeStyle} from "./config.js";
 import {Loader} from "./dataloader.js";
-import {isEnoent} from "./error.js";
+import {CliError, isEnoent} from "./error.js";
 import {prepareOutput, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
@@ -71,7 +71,7 @@ export async function build(
     await access(join(root, sourceFile), constants.R_OK);
     pageCount++;
   }
-  if (!pageCount) throw new Error(`No pages found in ${root}`);
+  if (!pageCount) throw new CliError(`Nothing to build: no page files found in your ${root} directory.`);
   effects.logger.log(`${faint("found")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
 
   // Render .md files, building a list of file attachments as we go.
