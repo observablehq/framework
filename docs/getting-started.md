@@ -62,7 +62,7 @@ This is the home page for your site. You can have as many additional pages as yo
 
 #### `observablehq.config.ts`
 
-This is your [project configuration](./config) file, such as the pages and sections in the sidebar navigation, and the project’s title. The config file can be written in either TypeScript (`.ts`) or JavaScript (`.js`).
+This is the [project configuration](./config) file, such as the pages and sections in the sidebar navigation, and the project’s title. The config file can be written in either TypeScript (`.ts`) or JavaScript (`.js`).
 
 ### Installing into an existing project
 
