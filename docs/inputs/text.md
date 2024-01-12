@@ -48,7 +48,7 @@ The HTML5 *pattern*, *spellcheck*, *minlength*, and *maxlength* options are also
 const email = view(Inputs.text({type: "email", label: "Email", placeholder: "Enter your email"}));
 ```
 
-[TODO] fix below (had viewof operator before email.checkValidity(), not sure how to update)
+<!-- [TODO] fix below (had viewof operator before email.checkValidity(), not sure how to update) -->
 
 ```js echo
 //[email, email.checkValidity()]

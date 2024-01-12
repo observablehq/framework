@@ -79,7 +79,7 @@ const size2 = view(Inputs.checkbox(
 size2
 ```
 
-[TODO] check if okay, removed link to Hello, Inputs.
+<!--[TODO] check if okay, removed link to Hello, Inputs. -->
 
 Passing a Map to Checkbox is especially useful in conjunction with [d3.group](https://observablehq.com/@d3/d3-group). For example, given a tabular dataset of Olympic athletes, we can use d3.group to group them by gold medal count, and then Checkbox to select the athletes for the chosen count. Note that the value of the Checkbox will be an array of arrays, since d3.group returns a Map from key to array; use [*array*.flat](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flat) to merge these arrays if desired.
 

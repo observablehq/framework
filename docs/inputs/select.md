@@ -90,9 +90,9 @@ const size2 = view(Inputs.select(new Map([["Short", 8], ["Tall", 12], ["Grande",
 size2
 ```
 
-[TODO] check if removing Hello, Inputs okay.
+<!-- [TODO] check if removing Hello, Inputs okay. -->
 
-[TODO] check if pointing to d3-group notebook is best.
+<!-- [TODO] check if pointing to d3-group notebook is best. -->
 
 Passing a Map to Select is especially useful in conjunction with [d3.group](https://observablehq.com/@d3/d3-group). For example, given a tabular dataset of Olympic athletes, we can use d3.group to group them by sport, and then Select to select the athletes for the chosen sport.
 

@@ -18,7 +18,7 @@ const fill = view(Inputs.color({label: "Fill", value: d3.color("steelblue").form
 
 If you specify the *datalist* option as an array of hexadecimal color strings, the color picker will show this set of colors for convenient picking. (The user will still be allowed to pick another color, however; if you want to limit the choice to a specific set, then a radio or select input may be more appropriate.)
 
-[TODO] update to the new Observable color palette?
+<!-- [TODO] update to the new Observable color palette? -->
 
 ```js echo
 const stroke = view(Inputs.color({label: "Stroke", datalist: d3.schemeTableau10}));

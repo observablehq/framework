@@ -87,9 +87,9 @@ const size2 = view(Inputs.radio(
 size2
 ```
 
-[TODO] check okay to remove ref to Hello, Inputs below
+<!-- [TODO] check okay to remove ref to Hello, Inputs below -->
 
-[TODO] check if linking to d3-group notebook below is best
+<!-- [TODO] check if linking to d3-group notebook below is best -->
 
 Passing a Map to Radio is especially useful in conjunction with [d3.group](https://observablehq.com/@d3/d3-group). For example, given a tabular dataset of Olympic athletes, we can use d3.group to group them by gold medal 🥇 count, and then Radio to select the athletes for the chosen count. 
 

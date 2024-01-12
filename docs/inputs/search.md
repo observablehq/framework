@@ -1,6 +1,8 @@
 # Search input
 
-[TODO] check on Hello, Inputs removed below. 
+[Examples ›](https://observablehq.com/@observablehq/input-search) [API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#search)
+
+<!-- [TODO] check on Hello, Inputs removed below. -->
 
 The Search input allows freeform, full-text search of a tabular dataset (or a single column of values) using a simple query parser. It is often paired with a [Table input](./table). 
 
@@ -11,7 +13,12 @@ const penguins = FileAttachment("penguins.csv").csv({typed: true});
 ```
 
 ```js echo
-const search = view(Inputs.search(penguins));
+const searchInput = Inputs.search(penguins);
+const search = Generators.input(searchInput);
+```
+
+```js echo
+searchInput
 ```
 
 ```js echo
@@ -23,13 +30,29 @@ Or, as a table:
 ```js echo
 Inputs.table(search)
 ```
-[TODO] fix below to interactively search on click
 
-If you search for multiple terms, such as ${htl.html`<a style="cursor: pointer; border-bottom: dotted 1px;" onclick=${() => { viewof search.query = "gen bis"; viewof search.dispatchEvent(new CustomEvent("input")); }}>“gen bis”`} (for Gentoos on the Biscoe Islands) or ${htl.html`<a style="cursor: pointer; border-bottom: dotted 1px;" onclick=${() => { viewof search.query = "gen fem"; viewof search.dispatchEvent(new CustomEvent("input")); }}>“gen fem”`} (for female Gentoos), every term must match: there’s an implicit logical AND.
 
-[TODO] where should Observable Inputs general point now? Add an "Inputs overview" page? 
+```js
+import {html} from "npm:htl";
+```
 
-[TODO] view vs. viewof reference material? Currently points here: https://observablehq.com/@observablehq/views
+```js echo
+function genBisSearch() {
+  searchInput.query = "gen bis";
+  searchInput.dispatchEvent(new CustomEvent("input"));
+}
+
+function genFemSearch() {
+  searchInput.query = "gen fem";
+  searchInput.dispatchEvent(new CustomEvent("input"));
+}
+```
+
+If you search for multiple terms, such as ${html`<a style="cursor: pointer; border-bottom: dotted 1px;" onclick=${genBisSearch}>“gen bis”`} (for Gentoos on the Biscoe Islands) or ${html`<a style="cursor: pointer; border-bottom: dotted 1px;" onclick=${genFemSearch}>“gen fem”`} (for female Gentoos), every term must match: there’s an implicit logical AND.
+
+<!-- [TODO] where should Observable Inputs general point now? Add an "Inputs overview" page? -->
+
+<!-- [TODO] view vs. viewof reference material? Currently points here: https://observablehq.com/@observablehq/views -->
 
 The Search input is designed to work with other [Observable inputs](TODO) and especially [tables](./table). You can also refer to the current search results from any cell using a [view](https://observablehq.com/@observablehq/views). For example, to compute the median body mass of the matching penguins:
 
