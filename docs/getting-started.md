@@ -21,8 +21,6 @@ After answering a few questions, this will create a new project folder containin
 │   ├─ .observablehq
 │   │  └─ cache
 │   ├── components
-│   │   ├── bigNumber.js
-│   │   └── resize.js
 │   ├── data
 │   │   └── launchHistory.json
 │   ├── example-dashboard.md
