@@ -1,47 +1,20 @@
-/* eslint-disable import/order */
 import {existsSync} from "node:fs";
 import {dirname, join, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
+import {nodeResolve} from "@rollup/plugin-node-resolve";
 import {type CallExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
-import {nodeResolve} from "@rollup/plugin-node-resolve";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
 import {isPathImport, resolveNpmImport} from "./javascript/imports.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
 import {Sourcemap} from "./sourcemap.js";
+import {THEMES, renderTheme} from "./theme.js";
 import {relativeUrl} from "./url.js";
-
-interface Theme {
-  name: string;
-  path: string;
-  light?: boolean;
-  dark?: boolean;
-}
-
-const THEMES: Theme[] = [
-  {name: "air", path: getClientPath("./src/style/theme-air.css"), light: true},
-  {name: "alt", path: getClientPath("./src/style/theme-alt.css")},
-  {name: "coffee", path: getClientPath("./src/style/theme-coffee.css"), dark: true},
-  {name: "cotton", path: getClientPath("./src/style/theme-cotton.css"), light: true},
-  {name: "dark", path: getClientPath("./src/style/theme-near-midnight.css"), dark: true}, // TODO alias
-  {name: "deep-space", path: getClientPath("./src/style/theme-deep-space.css"), dark: true},
-  {name: "glacier", path: getClientPath("./src/style/theme-glacier.css"), light: true},
-  {name: "ink", path: getClientPath("./src/style/theme-ink.css"), dark: true},
-  {name: "light", path: getClientPath("./src/style/theme-air.css"), light: true}, // TODO alias
-  {name: "midnight", path: getClientPath("./src/style/theme-midnight.css"), dark: true},
-  {name: "near-midnight", path: getClientPath("./src/style/theme-near-midnight.css"), dark: true},
-  {name: "ocean-floor", path: getClientPath("./src/style/theme-ocean-floor.css"), dark: true},
-  {name: "parchment", path: getClientPath("./src/style/theme-parchment.css"), light: true},
-  {name: "slate", path: getClientPath("./src/style/theme-slate.css"), dark: true},
-  {name: "stark", path: getClientPath("./src/style/theme-stark.css"), dark: true},
-  {name: "sun-faded", path: getClientPath("./src/style/theme-sun-faded.css"), dark: true},
-  {name: "wide", path: getClientPath("./src/style/theme-wide.css")}
-];
 
 const STYLE_MODULES = {
   "observablehq:default.css": getClientPath("./src/style/default.css"),
@@ -50,28 +23,6 @@ const STYLE_MODULES = {
 
 function rewriteInputsNamespace(code: string) {
   return code.replace(/\b__ns__\b/g, "inputs-3a86ea");
-}
-
-function renderTheme(names: string[]): string {
-  const lines = ['@import url("observablehq:default.css");'];
-  let hasLight = false;
-  let hasDark = false;
-  for (const name of names) {
-    const theme = THEMES.find((t) => t.name === name);
-    if (!theme) throw new Error(`invalid theme: ${theme}`);
-    lines.push(
-      `@import url(${JSON.stringify(`observablehq:theme-${theme.name}.css`)})${
-        theme.dark && !theme.light && hasLight // a dark-only theme preceded by a light theme
-          ? " (prefers-color-scheme: dark)"
-          : theme.light && !theme.dark && hasDark // a light-only theme preceded by a dark theme
-          ? " (prefers-color-scheme: light)"
-          : ""
-      };`
-    );
-    if (theme.light) hasLight = true;
-    if (theme.dark) hasDark = true;
-  }
-  return lines.join("\n");
 }
 
 export async function bundleStyles({path, theme}: {path?: string; theme?: string[]}): Promise<string> {

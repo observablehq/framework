@@ -1,5 +1,5 @@
 ---
-theme: [air, near-midnight]
+theme: [coffee, default]
 ---
 
 # Themes
