@@ -74,7 +74,7 @@ Here, we create a subset of columns to simplify outputs:
 const columns = olympians.columns.slice(1, -1); // hide the id and info column to simplify
 ```
 
-Now let’s wire up our data to a Search box. Type whatever you want into the box and search will find matching rows in the data which we can then pipe to a Table below.
+Now let’s wire up our data to a search input. Type whatever you want into the box and search will find matching rows in the data which we can then use in a table below.
 
 A few examples to try: **[mal]** will match *sex* = male, but also names that start with “mal”, such as Anna Malova; **[1986]** will match anyone born in 1986 (and a few other results); **[USA gym]** will match USA’s gymnastics team. Each space-separated term in your query is prefix-matched against all columns in the data.
 
