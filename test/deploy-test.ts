@@ -463,7 +463,7 @@ describe("deploy", () => {
         .addIoResponse(/Do you want to deploy to/, "y")
         .addIoResponse(/^Deploy message: /, "deploying to re-created project");
       await deploy({config: TEST_CONFIG}, effects);
-      effects.logger.assertExactLogs([/^This project was already deployed/]);
+      effects.logger.assertExactLogs([/^This project was last deployed/]);
       apiMock.close();
       effects.close();
     });
@@ -487,7 +487,7 @@ describe("deploy", () => {
       } catch (error) {
         CliError.assert(error, {message: "User cancelled deploy.", print: false, exitCode: 2});
       }
-      effects.logger.assertExactLogs([/^This project was already deployed/]);
+      effects.logger.assertExactLogs([/^This project was last deployed/]);
       apiMock.close();
       effects.close();
     });
@@ -508,7 +508,7 @@ describe("deploy", () => {
       } catch (error) {
         CliError.assert(error, {message: "Cancelling deploy due to misconfiguration."});
       }
-      effects.logger.assertExactLogs([/^This project was already deployed/]);
+      effects.logger.assertExactLogs([/^This project was last deployed/]);
       apiMock.close();
     });
   });

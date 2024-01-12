@@ -1,35 +1,17 @@
-/* eslint-disable import/order */
-import {existsSync} from "node:fs";
-import {dirname, join, relative} from "node:path";
-import {cwd} from "node:process";
-import {fileURLToPath} from "node:url";
+import {nodeResolve} from "@rollup/plugin-node-resolve";
 import {type CallExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
-import {nodeResolve} from "@rollup/plugin-node-resolve";
+import {getClientPath} from "./files.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
 import {isPathImport, resolveNpmImport} from "./javascript/imports.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
 import {Sourcemap} from "./sourcemap.js";
+import {THEMES, renderTheme} from "./theme.js";
 import {relativeUrl} from "./url.js";
-
-interface Theme {
-  name: string;
-  path: string;
-  light?: boolean;
-  dark?: boolean;
-}
-
-const THEMES: Theme[] = [
-  {name: "dark", path: getClientPath("./src/style/theme-dark.css"), dark: true},
-  {name: "dark-alt", path: getClientPath("./src/style/theme-dark-alt.css"), dark: true},
-  {name: "light", path: getClientPath("./src/style/theme-light.css"), light: true},
-  {name: "light-alt", path: getClientPath("./src/style/theme-light-alt.css"), light: true},
-  {name: "wide", path: getClientPath("./src/style/theme-wide.css")}
-];
 
 const STYLE_MODULES = {
   "observablehq:default.css": getClientPath("./src/style/default.css"),
@@ -38,28 +20,6 @@ const STYLE_MODULES = {
 
 function rewriteInputsNamespace(code: string) {
   return code.replace(/\b__ns__\b/g, "inputs-3a86ea");
-}
-
-function renderTheme(names: string[]): string {
-  const lines = ['@import url("observablehq:default.css");'];
-  let hasLight = false;
-  let hasDark = false;
-  for (const name of names) {
-    const theme = THEMES.find((t) => t.name === name);
-    if (!theme) throw new Error(`invalid theme: ${theme}`);
-    lines.push(
-      `@import url(${JSON.stringify(`observablehq:theme-${theme.name}.css`)})${
-        theme.dark && !theme.light && hasLight // a dark-only theme preceded by a light theme
-          ? " (prefers-color-scheme: dark)"
-          : theme.light && !theme.dark && hasDark // a light-only theme preceded by a dark theme
-          ? " (prefers-color-scheme: light)"
-          : ""
-      };`
-    );
-    if (theme.light) hasLight = true;
-    if (theme.dark) hasDark = true;
-  }
-  return lines.join("\n");
 }
 
 export async function bundleStyles({path, theme}: {path?: string; theme?: string[]}): Promise<string> {
@@ -192,13 +152,4 @@ function importMetaResolve(): Plugin {
       return {code: String(output)};
     }
   };
-}
-
-export function getClientPath(entry: string): string {
-  const path = relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), "..", entry));
-  if (path.endsWith(".js") && !existsSync(path)) {
-    const tspath = path.slice(0, -".js".length) + ".ts";
-    if (existsSync(tspath)) return tspath;
-  }
-  return path;
 }
