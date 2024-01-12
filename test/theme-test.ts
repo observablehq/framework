@@ -3,7 +3,7 @@ import {renderTheme, resolveTheme} from "../src/theme.js";
 
 describe("resolveTheme", () => {
   it("resolves the empty theme", () => {
-    assert.deepStrictEqual(resolveTheme([]), ["air", "near-midnight"]);
+    assert.deepStrictEqual(resolveTheme([]), []);
   });
   it("resolves the default theme", () => {
     assert.deepStrictEqual(resolveTheme(["default"]), ["air", "near-midnight"]);

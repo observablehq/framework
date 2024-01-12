@@ -47,6 +47,7 @@ export function findTheme(name: string): Theme | undefined {
 }
 
 export function resolveTheme(names: string[]): string[] {
+  if (!names.length) return []; // preserve explicitly empty theme
   const themes: Theme[] = [];
   const hasLight = names.some((name) => name === "light" || findTheme(name)?.light);
   const hasDark = names.some((name) => name === "dark" || findTheme(name)?.dark);
