@@ -1,5 +1,5 @@
 ---
-theme: cotton
+theme: [air, near-midnight]
 ---
 
 # Themes
