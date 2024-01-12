@@ -16,6 +16,7 @@ export default {
         {name: "Imports", path: "/javascript/imports"},
         {name: "Files", path: "/javascript/files"},
         {name: "Promises", path: "/javascript/promises"},
+        {name: "Inputs", path: "/javascript/inputs"},
         {name: "Generators", path: "/javascript/generators"},
         {name: "Mutables", path: "/javascript/mutables"},
       ]
