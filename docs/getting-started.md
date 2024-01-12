@@ -18,11 +18,12 @@ After answering a few questions, this will create a new project folder containin
 ```
 .
 ├── docs
-│   ├─ .observablehq
-│   │  └─ cache
+│   ├── .observablehq
+│   │   └── cache
 │   ├── components
 │   ├── data
-│   │   └── launchHistory.json
+│   │   ├── launchHistory.csv.js
+│   │   └── spaceHistory.json
 │   ├── example-dashboard.md
 │   ├── example-report.md
 │   └── index.md
@@ -79,7 +80,7 @@ You can also install the CLI globally so that the `observable` command is availa
 
 ## Preview
 
-After you’ve initialized your project, use the `preview` command to develop your app. In preview mode, the Observable CLI generates HTML pages on-demand as you preview your site in the browser. As you edit files, changes will be instantly pushed to the browser.
+After you’ve initialized your project, you can start developing locally. In preview mode, the Observable CLI generates HTML pages on-demand as you preview your site in the browser. As you edit files, changes will be instantly pushed to the browser.
 
 To start the preview server:
 
