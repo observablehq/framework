@@ -34,19 +34,14 @@ export function renderTheme(names: string[]): string {
   const hasLight = names.some((name) => name === "light" || findTheme(name)?.light);
   const hasDark = names.some((name) => name === "dark" || findTheme(name)?.dark);
   const hasDefault = names.some((name) => name === "default");
-  const hasDashboard = names.some((name) => name === "dashboard");
-  const hasAnyLight = hasLight || hasDefault || (!hasDark && hasDashboard);
-  const hasAnyDark = hasDark || hasDefault || (!hasLight && hasDashboard);
+  const hasAnyLight = hasLight || hasDefault || !hasDark;
+  const hasAnyDark = hasDark || hasDefault || !hasLight;
+  if (!hasLight && !hasDark && !hasDefault) names = [...names, "default"];
   for (let i = 0; i < names.length; ++i) {
     let name = names[i];
     switch (name) {
       case "dashboard": {
-        names = [
-          ...(!hasLight && !hasDark && !hasDefault ? ["light", "dark"] : []),
-          "alt",
-          "wide",
-          ...names.slice(i + 1)
-        ];
+        names = ["alt", "wide", ...names.slice(i + 1)];
         i = -1;
         continue;
       }
