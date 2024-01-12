@@ -2,7 +2,7 @@
 theme: [alt, wide, air]
 ---
 
-# Themes
+# Theme test
 
 <div class="grid grid-cols-2">
   <div class="card">
