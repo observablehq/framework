@@ -80,7 +80,7 @@ You can also install the CLI globally so that the `observable` command is availa
 
 ## Preview
 
-After you’ve initialized your project, you can start developing locally. In preview mode, the Observable CLI generates HTML pages on-demand as you preview your site in the browser. As you edit files, changes will be instantly pushed to the browser.
+After you’ve initialized your project, you can start developing locally. In preview mode, the Observable CLI generates HTML pages on-demand as you view a local version of your site in the browser. As you edit files, changes will be instantly reflected in the browser.
 
 To start the preview server:
 
