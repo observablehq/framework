@@ -87,7 +87,7 @@ After you’ve initialized your project, use the `preview` command to develop yo
 To start the preview server:
 
 ```sh
-yarn preview
+yarn dev
 ```
 
 Then visit <http://localhost:3000> to develop.
