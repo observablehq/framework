@@ -1,7 +1,3 @@
-import {existsSync} from "node:fs";
-import {dirname, join, relative} from "node:path";
-import {cwd} from "node:process";
-import {fileURLToPath} from "node:url";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
 import {type CallExpression} from "acorn";
 import {simple} from "acorn-walk";
@@ -9,6 +5,7 @@ import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
+import {getClientPath} from "./files.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
 import {isPathImport, resolveNpmImport} from "./javascript/imports.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
@@ -155,13 +152,4 @@ function importMetaResolve(): Plugin {
       return {code: String(output)};
     }
   };
-}
-
-export function getClientPath(entry: string): string {
-  const path = relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), "..", entry));
-  if (path.endsWith(".js") && !existsSync(path)) {
-    const tspath = path.slice(0, -".js".length) + ".ts";
-    if (existsSync(tspath)) return tspath;
-  }
-  return path;
 }

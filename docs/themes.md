@@ -1,5 +1,5 @@
 ---
-theme: [coffee, default]
+theme: [alt, wide, air]
 ---
 
 # Themes

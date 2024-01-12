@@ -2,6 +2,7 @@ import {readFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path";
 import {visitFiles} from "./files.js";
 import {parseMarkdown} from "./markdown.js";
+import {resolveTheme} from "./theme.js";
 import {resolvePath} from "./url.js";
 
 export interface Page {
@@ -87,7 +88,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
 }
 
 function normalizeTheme(spec: any): string[] {
-  return typeof spec === "string" ? [spec] : spec === null ? [] : Array.from(spec, String);
+  return resolveTheme(typeof spec === "string" ? [spec] : spec === null ? [] : Array.from(spec, String));
 }
 
 function normalizePageOrSection(spec: any): Page | Section {
