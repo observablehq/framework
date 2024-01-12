@@ -33,7 +33,7 @@ and the imported value of `foo` is: ${foo}.
 
 <!-- TK Describe dynamic import and static string literal specifiers.
 -->
-## Preloading
+<!-- ## Preloading -->
 
 <!-- TK Mention that we ~~pin the library version at build time and~~ preload transitive dependencies to improve performance ~~and security~~, and in the future we plan on automatically downloading and bundling the libraries [#20](https://github.com/observablehq/cli/issues/20) into your built project to improve security and stability.
 -->
@@ -66,6 +66,6 @@ Click on any of the imported symbols below to learn more.
 <pre><code class="language-js">import <a href="../lib/lodash">_</a> from "npm:lodash";</code></pre>
 <pre><code class="language-js">import * as <a href="../lib/topojson">topojson</a> from "npm:topojson-client";</code></pre>
 
-## Require
+<!-- ## Require -->
 
 <!-- TK Why we don’t support `require`. -->
