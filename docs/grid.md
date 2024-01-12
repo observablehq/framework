@@ -1,6 +1,6 @@
 ---
 toc: false
-theme: [light-alt, dark-alt, wide]
+theme: dashboard
 ---
 
 ```js

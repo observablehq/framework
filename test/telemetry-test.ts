@@ -56,6 +56,21 @@ describe("telemetry", () => {
     assert.equal(agent.pendingInterceptors().length, 1);
   });
 
+  it("eliminates IDs if they can't be persisted", async () => {
+    const logger = new MockLogger();
+    const telemetry = new Telemetry({
+      ...noopEffects,
+      env: {OBSERVABLE_TELEMETRY_DEBUG: "1"},
+      logger,
+      getPersistentId: () => Promise.resolve(null)
+    });
+    telemetry.record({event: "build", step: "start", test: true});
+    await telemetry.flush();
+    assert.notEqual(logger.errorLines[0][1].ids.session, null);
+    assert.equal(logger.errorLines[0][1].ids.device, null);
+    assert.equal(logger.errorLines[0][1].ids.project, null);
+  });
+
   it("silent on error", async () => {
     const logger = new MockLogger();
     agent.get("https://invalid.").intercept({path: "/cli", method: "POST"}).replyWithError(new Error("silent"));

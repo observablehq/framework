@@ -1,6 +1,0 @@
-@import url("./theme-dark.css");
-
-:root {
-  --theme-background-alt: rgb(31, 31, 31);
-  --theme-background: color-mix(in srgb, var(--theme-background-alt) 70%, black);
-}

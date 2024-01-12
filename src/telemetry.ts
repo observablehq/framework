@@ -6,14 +6,16 @@ import os from "os";
 import {CliError} from "./error.js";
 import type {Logger} from "./logger.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
-import {cyan, magenta} from "./tty.js";
+import {magenta, underline} from "./tty.js";
 
 type uuid = ReturnType<typeof randomUUID>;
+
 type TelemetryIds = {
-  device: uuid; // persists to ~/.observablehq
-  project: string; // one-way hash of private salt + repository URL or cwd
-  session: uuid; // random, held in memory for the duration of the process
+  session: uuid | null; // random, held in memory for the duration of the process
+  device: uuid | null; // persists to ~/.observablehq
+  project: string | null; // one-way hash of private salt + repository URL or cwd
 };
+
 type TelemetryEnvironment = {
   version: string; // cli version from package.json
   systemPlatform: string; // linux, darwin, win32, ...
@@ -27,33 +29,39 @@ type TelemetryEnvironment = {
   isDocker: boolean; // inside Docker heuristic
   isWSL: boolean; // inside WSL heuristic
 };
+
 type TelemetryTime = {
   now: number; // performance.now
   timeOrigin: number; // performance.timeOrigin
   timeZoneOffset: number; // minutes from UTC
 };
+
 type TelemetryData = {
   event: "build" | "deploy" | "preview";
   step: "start" | "finish";
   [key: string]: unknown;
 };
 
-let _config: Record<string, uuid> | undefined;
+let _config: Promise<Record<string, uuid>> | undefined;
+
 async function getPersistentId(name: string, generator = randomUUID) {
   const file = join(os.homedir(), ".observablehq");
   if (!_config) {
+    _config = readFile(file, "utf8")
+      .then(JSON.parse)
+      .catch(() => ({}));
+  }
+  const config = await _config;
+  if (!config[name]) {
+    config[name] = generator();
     try {
-      _config = JSON.parse(await readFile(file, "utf8"));
-    } catch (e) {
-      // fall through
+      await writeFile(file, JSON.stringify(config, null, 2));
+    } catch {
+      // Be ok if we can't persist ids, but treat them as missing.
+      return null;
     }
-    _config ??= {};
   }
-  if (!_config[name]) {
-    _config[name] = generator();
-    await writeFile(file, JSON.stringify(_config, null, 2));
-  }
-  return _config[name];
+  return config[name];
 }
 
 type TelemetryEffects = {
@@ -61,6 +69,7 @@ type TelemetryEffects = {
   logger: Logger;
   getPersistentId: typeof getPersistentId;
 };
+
 const defaultEffects: TelemetryEffects = {
   env: process.env,
   logger: console,
@@ -91,14 +100,16 @@ export class Telemetry {
   private readonly pending = new Set<Promise<any>>();
   private _ids: Promise<TelemetryIds> | undefined;
   private _environment: Promise<TelemetryEnvironment> | undefined;
-
   private static instance = new Telemetry();
+
   static init(effects = defaultEffects) {
     Telemetry.instance = new Telemetry(effects);
   }
+
   static record(data: TelemetryData) {
     return Telemetry.instance.record(data);
   }
+
   static flush() {
     return Telemetry.instance.flush();
   }
@@ -132,11 +143,13 @@ export class Telemetry {
   }
 
   private async getProjectId() {
+    const salt = await this.getPersistentId("cli_telemetry_salt");
+    if (!salt) return null;
     const remote: string | null = await new Promise((resolve) => {
       exec("git config --local --get remote.origin.url", (error, stdout) => resolve(error ? null : stdout.trim()));
     });
     const hash = createHash("sha256");
-    hash.update(await this.getPersistentId("cli_telemetry_salt"));
+    hash.update(salt);
     hash.update(remote || process.env.REPOSITORY_URL || process.cwd());
     return hash.digest("base64");
   }
@@ -144,9 +157,9 @@ export class Telemetry {
   private get ids() {
     return (this._ids ??= Promise.all([this.getPersistentId("cli_telemetry_device"), this.getProjectId()]).then(
       ([device, project]) => ({
+        session: randomUUID(),
         device,
-        project,
-        session: randomUUID()
+        project
       })
     ));
   }
@@ -190,8 +203,8 @@ export class Telemetry {
     if (await this.needsBanner()) {
       this.logger.error(
         `${magenta(
-          "Attention"
-        )}: Observable CLI collects anonymous telemetry data to help us improve the product.\nSee ${cyan(
+          "Attention:"
+        )} Observable CLI collects anonymous telemetry data to help us improve the product.\nSee ${underline(
           "https://cli.observablehq.com/telemetry"
         )} for details and how to opt-out.`
       );
