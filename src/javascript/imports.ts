@@ -325,6 +325,7 @@ async function resolveNpmVersion(specifier: string): Promise<string> {
   const {name, range} = parseNpmSpecifier(specifier); // ignore path
   specifier = formatNpmSpecifier({name, range});
   const search = range ? `?specifier=${range}` : "";
+  if (name === "@duckdb/duckdb-wasm" && !range) return "1.28.0"; // https://github.com/duckdb/duckdb-wasm/issues/1561
   const {version} = (await cachedFetch(`https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`)).body;
   if (!version) throw new Error(`unable to resolve version: ${specifier}`);
   return version;
