@@ -12,7 +12,7 @@ import esbuild from "rollup-plugin-esbuild";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
 import {isPathImport, resolveNpmImport} from "./javascript/imports.js";
-import {getObservableUiHost} from "./observableApiClient.js";
+import {getObservableUiOrigin} from "./observableApiClient.js";
 import {Sourcemap} from "./sourcemap.js";
 import {relativeUrl} from "./url.js";
 
@@ -85,7 +85,7 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
         exclude: [], // don’t exclude node_modules
         minify,
         define: {
-          "process.env.OBSERVABLE_ORIGIN": JSON.stringify(String(getObservableUiHost()).replace(/\/$/, ""))
+          "process.env.OBSERVABLE_ORIGIN": JSON.stringify(String(getObservableUiOrigin()).replace(/\/$/, ""))
         }
       }),
       importMetaResolve()
@@ -93,11 +93,24 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
   });
   try {
     const output = await bundle.generate({format: "es"});
-    const code = output.output.find((o): o is OutputChunk => o.type === "chunk")!.code; // TODO don’t assume one chunk?
-    return rewriteInputsNamespace(code); // TODO only for inputs
+    let code = output.output.find((o): o is OutputChunk => o.type === "chunk")!.code; // TODO don’t assume one chunk?
+    code = rewriteTypeScriptImports(code);
+    code = rewriteInputsNamespace(code); // TODO only for inputs
+    return code;
   } finally {
     await bundle.close();
   }
+}
+
+// For reasons not entirely clear (to me), when we resolve a relative import to
+// a TypeScript file, such as resolving observablehq:stdlib/dash to
+// ./src/client/stdlib/dash.js, Rollup (or rollup-plugin-esbuild?) notices that
+// there is a dash.ts and rewrites the import to dash.ts. But the imported file
+// at runtime won’t be TypeScript and will only exist at dash.js, so here we
+// rewrite the import back to what it was supposed to be. This is a dirty hack
+// but it gets the job done. 🤷 https://github.com/observablehq/cli/issues/478
+function rewriteTypeScriptImports(code: string): string {
+  return code.replace(/(?<=\bimport\('[\w./]+)\.ts(?='\))/g, ".js");
 }
 
 function importResolve(clientPath: string): Plugin {

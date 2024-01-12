@@ -26,6 +26,7 @@ const EXTRA_FILES: string[] = [
   "_observablehq/stdlib/mermaid.js",
   "_observablehq/stdlib/sqlite.js",
   "_observablehq/stdlib/tex.js",
+  "_observablehq/stdlib/vega-lite.js",
   "_observablehq/stdlib/xlsx.js",
   "_observablehq/stdlib/zip.js",
   "_observablehq/style.css"
@@ -278,6 +279,44 @@ describe("deploy", () => {
     effects.close();
   });
 
+  it("throws an error if workspace is invalid", async () => {
+    const config = await normalizeConfig({
+      root: TEST_SOURCE_ROOT,
+      deploy: {workspace: "ACME Inc.", project: "bi"}
+    });
+    const apiMock = new ObservableApiMock().start();
+    const effects = new MockDeployEffects({isTty: true});
+
+    try {
+      await deploy({config}, effects);
+      assert.fail("expected error");
+    } catch (err) {
+      CliError.assert(err, {message: /"ACME Inc.".*isn't valid.*"acme-inc"/});
+    }
+
+    apiMock.close();
+    effects.close();
+  });
+
+  it("throws an error if project is invalid", async () => {
+    const config = await normalizeConfig({
+      root: TEST_SOURCE_ROOT,
+      deploy: {workspace: "acme", project: "Business Intelligence"}
+    });
+    const apiMock = new ObservableApiMock().start();
+    const effects = new MockDeployEffects({isTty: true});
+
+    try {
+      await deploy({config}, effects);
+      assert.fail("expected error");
+    } catch (err) {
+      CliError.assert(err, {message: /"Business Intelligence".*isn't valid.*"business-intelligence"/});
+    }
+
+    apiMock.close();
+    effects.close();
+  });
+
   it("shows message for missing API key", async () => {
     const apiMock = new ObservableApiMock().start();
     const effects = new MockDeployEffects({apiKey: null});
@@ -421,12 +460,10 @@ describe("deploy", () => {
         .handlePostDeployUploaded({deployId})
         .start();
       const effects = new MockDeployEffects({deployConfig: {projectId: "oldProjectId"}, isTty: true})
-        .addIoResponse(/Do you want to update the expected project/, "y")
+        .addIoResponse(/Do you want to deploy to/, "y")
         .addIoResponse(/^Deploy message: /, "deploying to re-created project");
       await deploy({config: TEST_CONFIG}, effects);
-      effects.logger.assertExactLogs([
-        /^The project @[\w\d-]+\/[\w\d]+ does not match the expected project in .*deploy.json$/
-      ]);
+      effects.logger.assertExactLogs([/^This project was already deployed/]);
       apiMock.close();
       effects.close();
     });
@@ -441,7 +478,7 @@ describe("deploy", () => {
         })
         .start();
       const effects = new MockDeployEffects({deployConfig: {projectId: "oldProjectId"}, isTty: true}).addIoResponse(
-        /Do you want to update the expected project/,
+        /Do you want to deploy to/,
         "n"
       );
       try {
@@ -450,9 +487,7 @@ describe("deploy", () => {
       } catch (error) {
         CliError.assert(error, {message: "User cancelled deploy.", print: false, exitCode: 2});
       }
-      effects.logger.assertExactLogs([
-        /^The project @[\w\d-]+\/[\w\d]+ does not match the expected project in .*deploy.json$/
-      ]);
+      effects.logger.assertExactLogs([/^This project was already deployed/]);
       apiMock.close();
       effects.close();
     });
@@ -473,9 +508,7 @@ describe("deploy", () => {
       } catch (error) {
         CliError.assert(error, {message: "Cancelling deploy due to misconfiguration."});
       }
-      effects.logger.assertExactLogs([
-        /^The project @[\w\d-]+\/[\w\d]+ does not match the expected project in .*deploy.json$/
-      ]);
+      effects.logger.assertExactLogs([/^This project was already deployed/]);
       apiMock.close();
     });
   });
