@@ -38,7 +38,7 @@ After answering a few questions, this will create a new project folder containin
 
 #### `docs`
 
-This is your “source root” — where your source files live. This doesn’t have to be named `docs`, but that’s the default; you can change it using the **root** [config option](./config). Pages go here. Each page is a Markdown file. The Observable CLI uses [file-based routing](./routing), which means that the name of the file controls where the page is served. You can create as many pages as you like. Use folders to organize your pages.
+This is the “source root” — where your source files live. It doesn’t have to be named `docs`, but that’s the default; you can change it using the **root** [config option](./config). Pages go here. Each page is a Markdown file. The Observable CLI uses [file-based routing](./routing), which means that the name of the file controls where the page is served. You can create as many pages as you like. Use folders to organize your pages.
 
 #### `docs/.observablehq/cache`
 
