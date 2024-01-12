@@ -87,7 +87,7 @@ After you’ve initialized your project, use the `preview` command to develop yo
 To start the preview server:
 
 ```sh
-observable preview
+yarn preview
 ```
 
 Then visit <http://localhost:3000> to develop.
@@ -101,7 +101,7 @@ When you’re ready to deploy your project, use the `build` command to generate 
 To generate your static site:
 
 ```sh
-observable build
+yarn build
 ```
 
 You can then use `npx http-server dist` to preview your built site.
@@ -113,7 +113,7 @@ If you’d like to host your project on the [Observable platform](https://observ
 To deploy your project to Observable:
 
 ```sh
-observable deploy
+yarn deploy
 ```
 
-Then visit <https://observablehq.com> to see your project.
+Once done, the command will print the URL where you can find your project. It will follow the pattern, `https://observablehq.com/@<workspace>/<project-slug>`.
