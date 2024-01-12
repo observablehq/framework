@@ -20,9 +20,9 @@ My favorite baseball team is the ${team}!
 
 ## view(*element*)
 
-The `view` function displays the given DOM *element* then returns its corresponding value [generator](./generators.md) via [`Generators.input`](../lib/generators#input(element)). Use `view` to display an input while also exposing the input’s value as a [reactive variable](./reactivity). You can reference the input’s value anywhere, and the code will run whenever the input changes; no event listeners required. 
+The `view` function displays the given DOM *element* then returns its corresponding value [generator](./generators.md) via [`Generators.input`](../lib/generators#input(element)). Use `view` to display an input while also exposing the input’s value as a [reactive variable](./reactivity). You can reference the input’s value anywhere, and the code will run whenever the input changes.
 
-The `view` function is not limited to use with Observable Inputs. For example, here is a simple HTML slider:
+The `view` function is not limited to Observable Inputs. For example, here is a simple range slider created with [html](../lib/htl):
 
 ```js echo
 const topn = view(html`<input type=range step=1 min=1 max=15 value=10>`);
@@ -48,9 +48,9 @@ Inputs are generally declared as follows:
 const value = view(Inputs.inputName(...));
 ```
 
-where *value* is the named input value, and *inputName* is the component name (like `radio`, `button`, or `checkbox`). See the full list of [available inputs](../lib/inputs) with live examples, or visit our [Observable Inputs API reference](https://github.com/observablehq/inputs/blob/main/README.md) for more detail and specific input options.
+where *value* is the named input value, and *inputName* is the input name (like `radio`, `button`, or `checkbox`). See the full list of [available inputs](../lib/inputs) with live examples, or visit our [Observable Inputs API reference](https://github.com/observablehq/inputs/blob/main/README.md) for more detail and specific input options.
 
-Options differ between inputs. For example, the Checkbox component accepts options to disable all or certain values, sort displayed values, and only display repeated values *once* (among others):
+Options differ between inputs. For example, the Checkbox input accepts options to disable all or certain values, sort displayed values, and only display repeated values *once* (among others):
 
 ```js echo
 const checkout = view(Inputs.checkbox(["B","A","Z","Z","F","D","G","G","G","Q"], {disabled: ["F", "Q"], sort: true, unique: true, value: "B", label: "Choose categories:"}));
@@ -100,7 +100,7 @@ const selectedAthletes = display(athletes.filter(d => d.sport === sport));
 Inputs.table(selectedAthletes, {columns})
 ```
 
-To visualize a column of data as a histogram, pipe the output of the Select to [Observable Plot](/@observablehq/plot).
+To visualize a column of data as a histogram, use the value of the select input with [Observable Plot](/@observablehq/plot).
 
 ```js echo
 Plot.plot({
@@ -114,7 +114,7 @@ Plot.plot({
 })
 ```
 
-You can also pass grouped data to Select as a Map from key to array of values, say using d3.group. The value of the Select component in this mode is the data in the selected group. Note that *unique* is no longer required, and that *sort* works here, too, sorting the keys of the map returned by d3.group.
+You can also pass grouped data to Select as a [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) from key to array of values, say using [d3.group](https://d3js.org/d3-array/group). The value of the Select component in this mode is the data in the selected group. Note that *unique* is no longer required, and that *sort* works here, too, sorting the keys of the map returned by d3.group.
 
 ```js echo
 const groups = display(d3.group(athletes, d => d.sport));
