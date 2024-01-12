@@ -89,7 +89,7 @@ To start the preview server:
 yarn dev
 ```
 
-Then visit <http://localhost:3000> to develop.
+Then visit <http://127.0.0.1:3000> to preview.
 
 By default, the preview server is only visible to you on your local machine using the loopback address `127.0.0.1`. You can open access to remote connections using <nobr>`--host 0.0.0.0`</nobr>. Additionally, the preview server runs on port 3000 by default; you can change the port using the <nobr>`--port`</nobr> flag.
 
