@@ -230,4 +230,5 @@ rows // click a checkbox in the leftmost column
 
 ---
 
-TK [Form](https://observablehq.com/@observablehq/input-form?collection=@observablehq/inputs) - combine multiple inputs for a compact display
+<!-- TK [Form](https://observablehq.com/@observablehq/input-form?collection=@observablehq/inputs) - combine multiple inputs for a compact display
+-->
