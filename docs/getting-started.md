@@ -55,7 +55,7 @@ You can put shared [JavaScript modules](./javascript/imports) anywhere in your s
 
 #### `docs/data`
 
-You can put [data loaders](./loaders) anywhere in your source root, but we recommend putting them here.
+You can put [data loaders](./loaders) or static files anywhere in your source root, but we recommend putting them here.
 
 #### `docs/index.md`
 
