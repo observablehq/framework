@@ -91,6 +91,7 @@ function getOrigin(env: NodeJS.ProcessEnv): URL {
 }
 
 export class Telemetry {
+  private env: NodeJS.ProcessEnv;
   private disabled: boolean;
   private debug: boolean;
   private endpoint: URL;
@@ -115,6 +116,7 @@ export class Telemetry {
   }
 
   constructor(effects = defaultEffects) {
+    this.env = effects.env;
     this.disabled = !!effects.env.OBSERVABLE_TELEMETRY_DISABLE;
     this.debug = !!effects.env.OBSERVABLE_TELEMETRY_DEBUG;
     this.endpoint = new URL("/cli", getOrigin(effects.env));
@@ -150,7 +152,7 @@ export class Telemetry {
     });
     const hash = createHash("sha256");
     hash.update(salt);
-    hash.update(remote || process.env.REPOSITORY_URL || process.cwd());
+    hash.update(remote || this.env.REPOSITORY_URL || process.cwd());
     return hash.digest("base64");
   }
 
@@ -188,10 +190,17 @@ export class Telemetry {
     }));
   }
 
-  private async needsBanner() {
+  private async showBannerIfNeeded() {
     let called: uuid | undefined;
     await this.getPersistentId("cli_telemetry_banner", () => (called = randomUUID()));
-    return !!called;
+    if (called) {
+      this.logger.error(
+        `
+${magenta("Attention:")} Observable CLI collects anonymous telemetry to help us improve the
+           product. See ${underline("https://cli.observablehq.com/telemetry")} for details.
+           Set \`OBSERVABLE_TELEMETRY_DISABLE=true\` to disable.`
+      );
+    }
   }
 
   private async send(data: {
@@ -200,15 +209,7 @@ export class Telemetry {
     time: TelemetryTime;
     data: TelemetryData;
   }): Promise<void> {
-    if (await this.needsBanner()) {
-      this.logger.error(
-        `${magenta(
-          "Attention:"
-        )} Observable CLI collects anonymous telemetry data to help us improve the product.\nSee ${underline(
-          "https://cli.observablehq.com/telemetry"
-        )} for details and how to opt-out.`
-      );
-    }
+    await this.showBannerIfNeeded();
     if (this.debug) {
       this.logger.error("[telemetry]", data);
       return;
