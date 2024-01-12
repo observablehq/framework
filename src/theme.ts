@@ -65,7 +65,7 @@ export function renderTheme(names: string[]): string {
       }
     }
     const theme = findTheme(name);
-    if (!theme) throw new Error(`invalid theme: ${theme}`);
+    if (!theme) throw new Error(`invalid theme: ${name}`);
     lines.push(
       `@import url(${JSON.stringify(`observablehq:theme-${theme.name}.css`)})${
         theme.dark && !theme.light && hasAnyLight // a dark-only theme paired with a light theme
