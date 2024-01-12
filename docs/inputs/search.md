@@ -1,5 +1,7 @@
 # Search input
 
+[Examples ›](https://observablehq.com/@observablehq/input-search) [API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#search)
+
 <!-- [TODO] check on Hello, Inputs removed below. -->
 
 The Search input allows freeform, full-text search of a tabular dataset (or a single column of values) using a simple query parser. It is often paired with a [Table input](./table). 
