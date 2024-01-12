@@ -116,4 +116,4 @@ To deploy your project to Observable:
 yarn deploy
 ```
 
-Once done, the command will print the URL where you can find your project. It will follow the pattern, `https://observablehq.com/@<workspace>/<project-slug>`.
+Once done, the command will print the URL where you can view your project on the Observable Cloud. It will follow the pattern, `https://observablehq.com/@<workspace>/<project-slug>`.
