@@ -4,7 +4,27 @@ The Observable CLI is a Node.js application and is published to npm as [`@observ
 
 ## Installing
 
-You have been provided with instructions on how to install the project template creation tool.  Once installed, create projects with the following command:
+Check if you have ["classic" yarn](https://classic.yarnpkg.com/) 1.x installed.
+
+```sh
+yarn --version
+```
+
+If yarn is not installed, or some later version of yarn is installed, install yarn 1.x, typically:
+
+```sh
+npm install --global yarn
+```
+
+See the [classic yarn installation instructions](https://classic.yarnpkg.com/docs/install) for details.
+
+Install the Observable CLI Create tool:
+
+```sh
+yarn global add https://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@github.com/observablehq/create
+```
+
+Once installed, create projects with the following command:
 
 ```sh
 $(yarn global bin)/observablehq-create
