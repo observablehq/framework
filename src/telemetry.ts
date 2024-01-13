@@ -121,10 +121,11 @@ export class Telemetry {
   private handleSignal = async (signal: NodeJS.Signals) => {
     // Give ourselves 1s to flush and record a signal event.
     const {process} = this.effects;
-    const deadline = setTimeout(() => process.exit(), 1000);
+    const code = 128 + ({SIGHUP: 1, SIGINT: 2, SIGTERM: 15}[signal] ?? 0);
+    const deadline = setTimeout(() => process.exit(code), 1000);
     await this.record({event: "signal", signal});
     clearTimeout(deadline);
-    process.exit();
+    process.exit(code);
   };
 
   private async getPersistentId(name: string, generator = randomUUID) {
