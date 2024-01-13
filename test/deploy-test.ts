@@ -2,7 +2,7 @@ import assert, {fail} from "node:assert";
 import {Readable, Writable} from "node:stream";
 import {normalizeConfig} from "../src/config.js";
 import type {DeployEffects} from "../src/deploy.js";
-import {deploy} from "../src/deploy.js";
+import {deploy, promptConfirm} from "../src/deploy.js";
 import {CliError, isHttpError} from "../src/error.js";
 import type {Logger} from "../src/logger.js";
 import {commandRequiresAuthenticationMessage} from "../src/observableApiAuth.js";
@@ -32,6 +32,14 @@ const EXTRA_FILES: string[] = [
   "_observablehq/style.css"
 ];
 
+interface MockDeployEffectsOptions {
+  apiKey?: string | null;
+  deployConfig?: DeployConfig | null;
+  isTty?: boolean;
+  outputColumns?: number;
+  debug?: boolean;
+}
+
 class MockDeployEffects implements DeployEffects {
   public logger = new MockLogger();
   public input = new Readable();
@@ -41,20 +49,27 @@ class MockDeployEffects implements DeployEffects {
   public projectTitle = "My Project";
   public projectSlug = "my-project";
   public isTty: boolean;
+  public outputColumns: number;
   private ioResponses: {prompt: RegExp; response: string}[] = [];
+  private debug: boolean;
 
   constructor({
     apiKey = validApiKey,
     deployConfig = null,
-    isTty = true
-  }: {apiKey?: string | null; deployConfig?: DeployConfig | null; isTty?: boolean} = {}) {
+    isTty = true,
+    outputColumns = 80,
+    debug = false
+  }: MockDeployEffectsOptions = {}) {
     this.observableApiKey = apiKey;
     this.deployConfig = deployConfig;
     this.isTty = isTty;
+    this.outputColumns = outputColumns;
+    this.debug = debug;
 
     this.output = new Writable({
       write: (data, _enc, callback) => {
         const dataString = data.toString();
+        let matched = false;
         for (const [index, {prompt, response}] of this.ioResponses.entries()) {
           if (dataString.match(prompt)) {
             // Having to null/reinit input seems wrong.
@@ -64,9 +79,11 @@ class MockDeployEffects implements DeployEffects {
             this.input.push(null);
             this.input = new Readable();
             this.ioResponses.splice(index, 1);
+            matched = true;
             break;
           }
         }
+        if (!matched && debug) console.debug("Unmatched output:", dataString);
         callback();
       }
     });
@@ -150,7 +167,7 @@ describe("deploy", () => {
       .start();
 
     const effects = new MockDeployEffects({deployConfig, isTty: true})
-      .addIoResponse(/No project exists. Create it now/, "y")
+      .addIoResponse(/Do you want to create it now\?/, "y")
       .addIoResponse(/^Deploy message: /, "fix some bugs");
 
     await deploy({config: TEST_CONFIG}, effects);
@@ -172,7 +189,7 @@ describe("deploy", () => {
       .start();
 
     const effects = new MockDeployEffects({deployConfig, isTty: true}).addIoResponse(
-      /No project exists. Create it now/,
+      /Do you want to create it now\?/,
       "n"
     );
 
@@ -180,7 +197,7 @@ describe("deploy", () => {
       await deploy({config: TEST_CONFIG}, effects);
       assert.fail("expected error");
     } catch (error) {
-      CliError.assert(error, {message: "User cancelled deploy.", print: false, exitCode: 2});
+      CliError.assert(error, {message: "User cancelled deploy.", print: false, exitCode: 0});
     }
 
     apiMock.close();
@@ -228,11 +245,7 @@ describe("deploy", () => {
         status: 404
       })
       .start();
-
-    const effects = new MockDeployEffects({deployConfig, isTty: true}).addIoResponse(
-      /No project exists. Create it now/,
-      "y"
-    );
+    const effects = new MockDeployEffects({deployConfig, isTty: true});
 
     try {
       await deploy({config}, effects);
@@ -264,7 +277,7 @@ describe("deploy", () => {
       .start();
 
     const effects = new MockDeployEffects({deployConfig, isTty: true}).addIoResponse(
-      /No project exists. Create it now/,
+      /Do you want to create it now\?/,
       "y"
     );
 
@@ -365,12 +378,16 @@ describe("deploy", () => {
       })
       .handlePostDeploy({projectId, deployId, status: 500})
       .start();
-    const effects = new MockDeployEffects().addIoResponse(/^Deploy message: /, "fix some bugs");
+    const effects = new MockDeployEffects({deployConfig: {projectId}}).addIoResponse(
+      /Deploy message: /,
+      "fix some bugs"
+    );
 
     try {
       await deploy({config: TEST_CONFIG}, effects);
       fail("Should have thrown an error");
     } catch (error) {
+      console.log(error);
       assert.ok(isHttpError(error));
       assert.equal(error.statusCode, 500);
     }
@@ -391,7 +408,10 @@ describe("deploy", () => {
       .handlePostDeploy({projectId, deployId})
       .handlePostDeployFile({deployId, status: 500})
       .start();
-    const effects = new MockDeployEffects().addIoResponse(/^Deploy message: /, "fix some bugs");
+    const effects = new MockDeployEffects({deployConfig: {projectId}}).addIoResponse(
+      /Deploy message: /,
+      "fix some bugs"
+    );
 
     try {
       await deploy({config: TEST_CONFIG}, effects);
@@ -418,7 +438,10 @@ describe("deploy", () => {
       .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
       .handlePostDeployUploaded({deployId, status: 500})
       .start();
-    const effects = new MockDeployEffects().addIoResponse(/^Deploy message: /, "fix some bugs");
+    const effects = new MockDeployEffects({deployConfig: {projectId}}).addIoResponse(
+      /^Deploy message: /,
+      "fix some bugs"
+    );
 
     try {
       await deploy({config: TEST_CONFIG}, effects);
@@ -447,8 +470,8 @@ describe("deploy", () => {
 
   describe("when deploy state doesn't match", () => {
     it("interactive, when the user chooses to update", async () => {
-      const newProjectId = "newId";
-      const deployId = "deploy";
+      const newProjectId = "newProjectId";
+      const deployId = "deployId";
       const apiMock = new ObservableApiMock()
         .handleGetProject({
           workspaceLogin: TEST_CONFIG.deploy!.workspace,
@@ -460,10 +483,10 @@ describe("deploy", () => {
         .handlePostDeployUploaded({deployId})
         .start();
       const effects = new MockDeployEffects({deployConfig: {projectId: "oldProjectId"}, isTty: true})
-        .addIoResponse(/Do you want to deploy to/, "y")
+        .addIoResponse(/Do you want to deploy anyway\?/, "y")
         .addIoResponse(/^Deploy message: /, "deploying to re-created project");
       await deploy({config: TEST_CONFIG}, effects);
-      effects.logger.assertExactLogs([/^This project was last deployed/]);
+      effects.logger.assertAtLeastLogs([/This project was last deployed/]);
       apiMock.close();
       effects.close();
     });
@@ -478,16 +501,16 @@ describe("deploy", () => {
         })
         .start();
       const effects = new MockDeployEffects({deployConfig: {projectId: "oldProjectId"}, isTty: true}).addIoResponse(
-        /Do you want to deploy to/,
+        /Do you want to deploy anyway\?/,
         "n"
       );
       try {
         await deploy({config: TEST_CONFIG}, effects);
         assert.fail("expected error");
       } catch (error) {
-        CliError.assert(error, {message: "User cancelled deploy.", print: false, exitCode: 2});
+        CliError.assert(error, {message: "User cancelled deploy", print: false, exitCode: 0});
       }
-      effects.logger.assertExactLogs([/^This project was last deployed/]);
+      effects.logger.assertExactLogs([/This project was last deployed/]);
       apiMock.close();
       effects.close();
     });
@@ -501,15 +524,34 @@ describe("deploy", () => {
           projectId: newProjectId
         })
         .start();
-      const effects = new MockDeployEffects({deployConfig: {projectId: "oldProjectId"}, isTty: false});
+      const effects = new MockDeployEffects({deployConfig: {projectId: "oldProjectId"}, isTty: false, debug: true});
       try {
         await deploy({config: TEST_CONFIG}, effects);
         assert.fail("expected error");
       } catch (error) {
         CliError.assert(error, {message: "Cancelling deploy due to misconfiguration."});
       }
-      effects.logger.assertExactLogs([/^This project was last deployed/]);
+      effects.logger.assertExactLogs([/This project was last deployed/]);
       apiMock.close();
     });
+  });
+});
+
+describe("promptConfirm", () => {
+  it("should return true when the user answers y", async () => {
+    const effects = new MockDeployEffects({isTty: true}).addIoResponse(/continue/, "y");
+    assert.equal(await promptConfirm(effects, "continue?", {default: false}), true);
+    effects.close();
+  });
+  it("should return false when the user answers n", async () => {
+    const effects = new MockDeployEffects({isTty: true}).addIoResponse(/continue/, "n");
+    assert.equal(await promptConfirm(effects, "continue?", {default: true}), false);
+    effects.close();
+  });
+  it("should return the default when the user preses enter", async () => {
+    const effects = new MockDeployEffects({isTty: true}).addIoResponse(/continue/, "").addIoResponse(/continue/, "");
+    assert.equal(await promptConfirm(effects, "continue?", {default: true}), true);
+    assert.equal(await promptConfirm(effects, "continue?", {default: false}), false);
+    effects.close();
   });
 });
