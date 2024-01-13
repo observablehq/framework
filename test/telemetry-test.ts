@@ -1,5 +1,5 @@
 import assert from "assert";
-import {randomUUID} from "crypto";
+import type {readFile} from "fs/promises";
 import {MockAgent, getGlobalDispatcher, setGlobalDispatcher} from "undici";
 import {Telemetry} from "../src/telemetry.js";
 import {MockLogger} from "./mocks/logger.js";
@@ -18,7 +18,12 @@ describe("telemetry", () => {
     setGlobalDispatcher(globalDispatcher);
   });
 
-  const noopEffects = {env: {}, logger: new MockLogger(), getPersistentId: async () => randomUUID()};
+  const noopEffects = {
+    env: {},
+    logger: new MockLogger(),
+    readFile: (async () => JSON.stringify({cli_telemetry_banner: 1})) as unknown as typeof readFile,
+    writeFile: async () => {}
+  };
 
   it("sends data", async () => {
     Telemetry._instance = new Telemetry(noopEffects);
@@ -30,9 +35,10 @@ describe("telemetry", () => {
   it("shows a banner", async () => {
     const logger = new MockLogger();
     const telemetry = new Telemetry({
+      ...noopEffects,
       env: {npm_config_user_agent: "yarn/1.22.10 npm/? node/v14.15.4 darwin x64"},
       logger,
-      getPersistentId: async (name, generator = randomUUID) => generator()
+      readFile: () => Promise.reject()
     });
     telemetry.record({event: "build", step: "start", test: true});
     await telemetry.flush();
@@ -62,7 +68,7 @@ describe("telemetry", () => {
       ...noopEffects,
       env: {OBSERVABLE_TELEMETRY_DEBUG: "1"},
       logger,
-      getPersistentId: () => Promise.resolve(null)
+      writeFile: () => Promise.reject()
     });
     telemetry.record({event: "build", step: "start", test: true});
     await telemetry.flush();
@@ -71,7 +77,7 @@ describe("telemetry", () => {
     assert.equal(logger.errorLines[0][1].ids.project, null);
   });
 
-  it("silent on error", async () => {
+  it("stays silent on fetch errors", async () => {
     const logger = new MockLogger();
     agent.get("https://invalid.").intercept({path: "/cli", method: "POST"}).replyWithError(new Error("silent"));
     const telemetry = new Telemetry({...noopEffects, env: {OBSERVABLE_TELEMETRY_ORIGIN: "https://invalid."}, logger});
@@ -79,5 +85,14 @@ describe("telemetry", () => {
     await telemetry.flush();
     assert.equal(logger.errorLines.length, 0);
     assert.equal(agent.pendingInterceptors().length, 1);
+  });
+
+  it("throws when origin is explicitly misconfigured", async () => {
+    assert.throws(() => {
+      new Telemetry({
+        ...noopEffects,
+        env: {OBSERVABLE_TELEMETRY_ORIGIN: "☃️"}
+      });
+    }, /OBSERVABLE_TELEMETRY_ORIGIN: ☃️/);
   });
 });

@@ -42,38 +42,18 @@ type TelemetryData = {
   [key: string]: unknown;
 };
 
-let _config: Promise<Record<string, uuid>> | undefined;
-
-async function getPersistentId(name: string, generator = randomUUID) {
-  const file = join(os.homedir(), ".observablehq");
-  if (!_config) {
-    _config = readFile(file, "utf8")
-      .then(JSON.parse)
-      .catch(() => ({}));
-  }
-  const config = await _config;
-  if (!config[name]) {
-    config[name] = generator();
-    try {
-      await writeFile(file, JSON.stringify(config, null, 2));
-    } catch {
-      // Be ok if we can't persist ids, but treat them as missing.
-      return null;
-    }
-  }
-  return config[name];
-}
-
 type TelemetryEffects = {
   env: NodeJS.ProcessEnv;
   logger: Logger;
-  getPersistentId: typeof getPersistentId;
+  readFile: typeof readFile;
+  writeFile: typeof writeFile;
 };
 
 const defaultEffects: TelemetryEffects = {
   env: process.env,
   logger: console,
-  getPersistentId
+  readFile,
+  writeFile
 };
 
 function getOrigin(env: NodeJS.ProcessEnv): URL {
@@ -91,14 +71,13 @@ function getOrigin(env: NodeJS.ProcessEnv): URL {
 }
 
 export class Telemetry {
-  private env: NodeJS.ProcessEnv;
+  private effects: TelemetryEffects;
   private disabled: boolean;
   private debug: boolean;
   private endpoint: URL;
-  private logger: Logger;
-  private getPersistentId: typeof getPersistentId;
   private timeZoneOffset = new Date().getTimezoneOffset();
   private readonly pending = new Set<Promise<any>>();
+  private _config: Promise<Record<string, uuid>> | undefined;
   private _ids: Promise<TelemetryIds> | undefined;
   private _environment: Promise<TelemetryEnvironment> | undefined;
 
@@ -116,12 +95,10 @@ export class Telemetry {
   }
 
   constructor(effects = defaultEffects) {
-    this.env = effects.env;
+    this.effects = effects;
     this.disabled = !!effects.env.OBSERVABLE_TELEMETRY_DISABLE;
     this.debug = !!effects.env.OBSERVABLE_TELEMETRY_DEBUG;
     this.endpoint = new URL("/cli", getOrigin(effects.env));
-    this.logger = effects.logger;
-    this.getPersistentId = effects.getPersistentId;
   }
 
   async record(data: TelemetryData) {
@@ -144,6 +121,27 @@ export class Telemetry {
     return Promise.all(this.pending);
   }
 
+  private async getPersistentId(name: string, generator = randomUUID) {
+    const {readFile, writeFile} = this.effects;
+    const file = join(os.homedir(), ".observablehq");
+    if (!this._config) {
+      this._config = readFile(file, "utf8")
+        .then(JSON.parse)
+        .catch(() => ({}));
+    }
+    const config = await this._config;
+    if (!config[name]) {
+      config[name] = generator();
+      try {
+        await writeFile(file, JSON.stringify(config, null, 2));
+      } catch {
+        // Be ok if we can't persist ids, but treat them as missing.
+        return null;
+      }
+    }
+    return config[name];
+  }
+
   private async getProjectId() {
     const salt = await this.getPersistentId("cli_telemetry_salt");
     if (!salt) return null;
@@ -152,7 +150,7 @@ export class Telemetry {
     });
     const hash = createHash("sha256");
     hash.update(salt);
-    hash.update(remote || this.env.REPOSITORY_URL || process.cwd());
+    hash.update(remote || this.effects.env.REPOSITORY_URL || process.cwd());
     return hash.digest("base64");
   }
 
@@ -194,7 +192,7 @@ export class Telemetry {
     let called: uuid | undefined;
     await this.getPersistentId("cli_telemetry_banner", () => (called = randomUUID()));
     if (called) {
-      this.logger.error(
+      this.effects.logger.error(
         `
 ${magenta("Attention:")} Observable CLI collects anonymous telemetry to help us improve the
            product. See ${underline("https://cli.observablehq.com/telemetry")} for details.
@@ -211,7 +209,7 @@ ${magenta("Attention:")} Observable CLI collects anonymous telemetry to help us 
   }): Promise<void> {
     await this.showBannerIfNeeded();
     if (this.debug) {
-      this.logger.error("[telemetry]", data);
+      this.effects.logger.error("[telemetry]", data);
       return;
     }
     await fetch(this.endpoint, {
