@@ -17,6 +17,7 @@ type TelemetryIds = {
 
 type TelemetryEnvironment = {
   version: string; // cli version from package.json
+  node: string; // node.js version
   systemPlatform: string; // linux, darwin, win32, ...
   systemRelease: string; // 20.04, 11.2.3, ...
   systemArchitecture: string; // x64, arm64, ...
@@ -36,8 +37,8 @@ type TelemetryTime = {
 };
 
 type TelemetryData = {
-  event: "build" | "deploy" | "preview";
-  step: "start" | "finish";
+  event: "build" | "deploy" | "preview" | "signal";
+  step?: "start" | "finish";
   [key: string]: unknown;
 };
 ```
