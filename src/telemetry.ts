@@ -194,8 +194,8 @@ export class Telemetry {
     if (called) {
       this.effects.logger.error(
         `
-${magenta("Attention:")} Observable CLI collects anonymous telemetry to help us improve the
-           product. See ${underline("https://cli.observablehq.com/telemetry")} for details.
+${magenta("Attention:")} The Observable CLI collects anonymous telemetry to help us improve
+           the product. See ${underline("https://cli.observablehq.com/telemetry")} for details.
            Set \`OBSERVABLE_TELEMETRY_DISABLE=true\` to disable.`
       );
     }
