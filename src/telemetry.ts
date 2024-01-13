@@ -37,8 +37,8 @@ type TelemetryTime = {
 };
 
 type TelemetryData = {
-  event: "build" | "deploy" | "preview";
-  step: "start" | "finish";
+  event: "build" | "deploy" | "preview" | "signal";
+  step?: "start" | "finish";
   [key: string]: unknown;
 };
 
@@ -47,13 +47,15 @@ type TelemetryEffects = {
   logger: Logger;
   readFile: typeof readFile;
   writeFile: typeof writeFile;
+  process: NodeJS.Process;
 };
 
 const defaultEffects: TelemetryEffects = {
   env: process.env,
   logger: console,
   readFile,
-  writeFile
+  writeFile,
+  process
 };
 
 function getOrigin(env: NodeJS.ProcessEnv): URL {
@@ -81,7 +83,7 @@ export class Telemetry {
   private _ids: Promise<TelemetryIds> | undefined;
   private _environment: Promise<TelemetryEnvironment> | undefined;
 
-  static _instance: Telemetry | undefined;
+  static _instance: Telemetry;
   static get instance() {
     return (this._instance ??= new Telemetry());
   }
@@ -90,15 +92,14 @@ export class Telemetry {
     return Telemetry.instance.record(data);
   }
 
-  static flush() {
-    return Telemetry.instance.flush();
-  }
-
   constructor(effects = defaultEffects) {
     this.effects = effects;
     this.disabled = !!effects.env.OBSERVABLE_TELEMETRY_DISABLE;
     this.debug = !!effects.env.OBSERVABLE_TELEMETRY_DEBUG;
     this.endpoint = new URL("/cli", getOrigin(effects.env));
+    effects.process.on("SIGHUP", this.handleSignal);
+    effects.process.on("SIGINT", this.handleSignal);
+    effects.process.on("SIGTERM", this.handleSignal);
   }
 
   async record(data: TelemetryData) {
@@ -115,11 +116,17 @@ export class Telemetry {
           this.pending.delete(task);
         }))();
     this.pending.add(task);
-  }
-
-  flush() {
     return Promise.all(this.pending);
   }
+
+  private handleSignal = async (signal: NodeJS.Signals) => {
+    // Give ourselves 1s to flush and record a signal event.
+    const {process} = this.effects;
+    const deadline = setTimeout(() => process.exit(), 1000);
+    await this.record({event: "signal", signal});
+    clearTimeout(deadline);
+    process.exit();
+  };
 
   private async getPersistentId(name: string, generator = randomUUID) {
     const {readFile, writeFile} = this.effects;

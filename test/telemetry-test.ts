@@ -6,7 +6,7 @@ import {MockLogger} from "./mocks/logger.js";
 
 describe("telemetry", () => {
   const globalDispatcher = getGlobalDispatcher();
-  let agent;
+  let agent: MockAgent;
 
   beforeEach(() => {
     agent = new MockAgent();
@@ -22,13 +22,13 @@ describe("telemetry", () => {
     env: {},
     logger: new MockLogger(),
     readFile: (async () => JSON.stringify({cli_telemetry_banner: 1})) as unknown as typeof readFile,
-    writeFile: async () => {}
+    writeFile: async () => {},
+    process
   };
 
   it("sends data", async () => {
     Telemetry._instance = new Telemetry(noopEffects);
-    Telemetry.record({event: "build", step: "start", test: true});
-    await Telemetry.flush();
+    await Telemetry.record({event: "build", step: "start", test: true});
     agent.assertNoPendingInterceptors();
   });
 
@@ -40,23 +40,20 @@ describe("telemetry", () => {
       logger,
       readFile: () => Promise.reject()
     });
-    telemetry.record({event: "build", step: "start", test: true});
-    await telemetry.flush();
+    await telemetry.record({event: "build", step: "start", test: true});
     logger.assertExactErrors([/Attention.*cli.observablehq.com.*OBSERVABLE_TELEMETRY_DISABLE=true/s]);
   });
 
   it("can be disabled", async () => {
     const telemetry = new Telemetry({...noopEffects, env: {OBSERVABLE_TELEMETRY_DISABLE: "1"}});
-    telemetry.record({event: "build", step: "start", test: true});
-    await telemetry.flush();
+    await telemetry.record({event: "build", step: "start", test: true});
     assert.equal(agent.pendingInterceptors().length, 1);
   });
 
   it("debug prints data and disables", async () => {
     const logger = new MockLogger();
     const telemetry = new Telemetry({...noopEffects, env: {OBSERVABLE_TELEMETRY_DEBUG: "1"}, logger});
-    telemetry.record({event: "build", step: "start", test: true});
-    await telemetry.flush();
+    await telemetry.record({event: "build", step: "start", test: true});
     assert.equal(logger.errorLines.length, 1);
     assert.equal(logger.errorLines[0][0], "[telemetry]");
     assert.equal(agent.pendingInterceptors().length, 1);
@@ -70,8 +67,7 @@ describe("telemetry", () => {
       logger,
       writeFile: () => Promise.reject()
     });
-    telemetry.record({event: "build", step: "start", test: true});
-    await telemetry.flush();
+    await telemetry.record({event: "build", step: "start", test: true});
     assert.notEqual(logger.errorLines[0][1].ids.session, null);
     assert.equal(logger.errorLines[0][1].ids.device, null);
     assert.equal(logger.errorLines[0][1].ids.project, null);
@@ -81,8 +77,7 @@ describe("telemetry", () => {
     const logger = new MockLogger();
     agent.get("https://invalid.").intercept({path: "/cli", method: "POST"}).replyWithError(new Error("silent"));
     const telemetry = new Telemetry({...noopEffects, env: {OBSERVABLE_TELEMETRY_ORIGIN: "https://invalid."}, logger});
-    telemetry.record({event: "build", step: "start", test: true});
-    await telemetry.flush();
+    await telemetry.record({event: "build", step: "start", test: true});
     assert.equal(logger.errorLines.length, 0);
     assert.equal(agent.pendingInterceptors().length, 1);
   });
@@ -94,5 +89,33 @@ describe("telemetry", () => {
         env: {OBSERVABLE_TELEMETRY_ORIGIN: "☃️"}
       });
     }, /OBSERVABLE_TELEMETRY_ORIGIN: ☃️/);
+  });
+
+  it("saves a signal record on exit", async () => {
+    const logger = new MockLogger();
+    const listeners = {};
+    let exit: (value: unknown) => void;
+    const exited = new Promise((resolve) => (exit = resolve));
+    const processMock = {
+      ...process,
+      on(event, listener) {
+        listeners[event] = listener;
+        return this;
+      },
+      exit(code?: number) {
+        exit(code);
+        throw new Error("exit");
+      }
+    };
+    new Telemetry({
+      ...noopEffects,
+      env: {OBSERVABLE_TELEMETRY_DEBUG: "1"},
+      logger,
+      process: processMock
+    });
+    listeners["SIGINT"]("SIGINT");
+    await exited;
+    assert.equal(logger.errorLines.length, 1);
+    assert.deepEqual(logger.errorLines[0][1].data, {event: "signal", signal: "SIGINT"});
   });
 });
