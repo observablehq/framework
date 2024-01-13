@@ -97,9 +97,9 @@ export class Telemetry {
     this.disabled = !!process.env.OBSERVABLE_TELEMETRY_DISABLE;
     this.debug = !!process.env.OBSERVABLE_TELEMETRY_DEBUG;
     this.endpoint = new URL("/cli", getOrigin(process.env));
-    process.on("SIGHUP", this.handleSignal);
-    process.on("SIGINT", this.handleSignal);
-    process.on("SIGTERM", this.handleSignal);
+    process.on("SIGHUP", this.handleSignal(1));
+    process.on("SIGINT", this.handleSignal(2));
+    process.on("SIGTERM", this.handleSignal(15));
   }
 
   async record(data: TelemetryData) {
@@ -119,15 +119,17 @@ export class Telemetry {
     return Promise.all(this.pending);
   }
 
-  private handleSignal = async (signal: NodeJS.Signals) => {
-    // Give ourselves 1s to flush and record a signal event.
-    const {process} = this.effects;
-    const code = 128 + ({SIGHUP: 1, SIGINT: 2, SIGTERM: 15}[signal] ?? 0);
-    const deadline = setTimeout(() => process.exit(code), 1000);
-    await this.record({event: "signal", signal});
-    clearTimeout(deadline);
-    process.exit(code);
-  };
+  private handleSignal(value: number) {
+    const code = 128 + value;
+    return async (signal: NodeJS.Signals) => {
+      const {process} = this.effects;
+      // Give ourselves 1s to record a signal event and flush.
+      const deadline = setTimeout(() => process.exit(code), 1000);
+      await this.record({event: "signal", signal});
+      clearTimeout(deadline);
+      process.exit(code);
+    };
+  }
 
   private async getPersistentId(name: string, generator = randomUUID) {
     const {readFile, writeFile} = this.effects;

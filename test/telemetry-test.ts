@@ -121,7 +121,7 @@ describe("telemetry", () => {
       })
     });
     listeners["SIGINT"]("SIGINT");
-    await exited;
+    assert.equal(await exited, 130);
     assert.equal(logger.errorLines.length, 1);
     assert.deepEqual(logger.errorLines[0][1].data, {event: "signal", signal: "SIGINT"});
   });
