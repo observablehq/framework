@@ -18,6 +18,7 @@ type TelemetryIds = {
 
 type TelemetryEnvironment = {
   version: string; // cli version from package.json
+  node: string; // node.js version
   systemPlatform: string; // linux, darwin, win32, ...
   systemRelease: string; // 20.04, 11.2.3, ...
   systemArchitecture: string; // x64, arm64, ...
@@ -181,6 +182,7 @@ export class Telemetry {
       const cpus = os.cpus() || [];
       return {
         version: pkg.version,
+        node: process.versions.node,
         systemPlatform: os.platform(),
         systemRelease: os.release(),
         systemArchitecture: os.arch(),
