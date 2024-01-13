@@ -13,17 +13,30 @@ jobs:
       deployments: write
       id-token: write
       packages: read
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'yarn'
+          cache-dependency-path: '**/yarn.lock'
       - run: yarn --frozen-lockfile
       - run: yarn build
+      - run: yarn --frozen-lockfile && yarn build
+        working-directory: examples/google-analytics
+        env:
+          GA_PROPERTY_ID: ${{ secrets.GA_PROPERTY_ID }}
+          GA_CLIENT_EMAIL: ${{ secrets.GA_CLIENT_EMAIL }}
+          GA_PRIVATE_KEY: ${{ secrets.GA_PRIVATE_KEY }}
+      - run: yarn --frozen-lockfile && yarn build
+        working-directory: examples/hello-world
+      - run: yarn --frozen-lockfile && yarn build
+        working-directory: examples/pmms
+      - run: yarn --frozen-lockfile && yarn build
+        working-directory: examples/plot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: mkdir dist/examples && for i in examples/*; do [ -d $i/dist ] && mv -v $i/dist dist/examples/$(basename $i); done
       - uses: cloudflare/pages-action@1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}

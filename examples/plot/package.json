@@ -1,0 +1,20 @@
+{
+  "type": "module",
+  "scripts": {
+    "dev": "observable preview",
+    "build": "rm -rf dist && observable build"
+  },
+  "dependencies": {
+    "@observablehq/cli": "link:../..",
+    "d3-fetch": "^3.0.1",
+    "d3-time": "^3.1.0",
+    "d3-time-format": "^4.1.0",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": "^18 <18.19.0 || >=20"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6"
+  }
+}
