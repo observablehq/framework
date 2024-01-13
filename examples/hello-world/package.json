@@ -1,0 +1,13 @@
+{
+  "type": "module",
+  "scripts": {
+    "dev": "observable preview",
+    "build": "rm -rf dist && observable build"
+  },
+  "dependencies": {
+    "@observablehq/cli": "link:../.."
+  },
+  "engines": {
+    "node": "^18 <18.19.0 || >=20"
+  }
+}
