@@ -4,54 +4,61 @@ The Observable CLI is a Node.js application and is published to npm as [`@observ
 
 ## Installing
 
-Check if you have ["classic" yarn](https://classic.yarnpkg.com/) 1.x installed.
+We recommend starting with our default project template <!-- https://github.com/observablehq/create --> which currently requires <!-- either npm or --> Yarn 1.x. If you already have Yarn installed, you can check the version like so:
 
 ```sh
 yarn --version
 ```
 
-If yarn is not installed, or some later version of yarn is installed, install yarn 1.x, typically:
+Otherwise, or if some later version of Yarn is installed, you can install Yarn via npm:
 
 ```sh
 npm install --global yarn
 ```
 
-See the [classic yarn installation instructions](https://classic.yarnpkg.com/docs/install) for details.
+See the [Yarn 1.x installation instructions](https://classic.yarnpkg.com/docs/install) for details.
 
-Install the Observable CLI Create tool:
+Once Yarn is installed, you can install `observablehq-create`, the project template. This package won’t be made publicly available until the Observable CLI is released, so the command below uses an access token to download it from our private repo. Please do not share this token with anyone outside the Early Access program.
 
 ```sh
 yarn global add https://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@github.com/observablehq/create
 ```
 
-Once installed, create projects with the following command:
+Once installed, create a new project with the following command:
+
+```sh
+observablehq-create
+```
+
+If Yarn doesn’t install onto your `$PATH`, instead try:
 
 ```sh
 $(yarn global bin)/observablehq-create
 ```
 
-After answering a few questions, this command will create a new project folder in the current working directory containing a file structure like:
+After answering a few questions, this command will create a new project folder in the current working directory.
+
+## Project structure
+
+A typical project might look like this:
 
 ```
 .
-├── docs
-│   ├── .observablehq
-│   │   └── cache
-│   ├── components
-│   ├── data
-│   │   ├── launchHistory.csv.js
-│   │   └── spaceHistory.json
-│   ├── example-dashboard.md
-│   ├── example-report.md
-│   └── index.md
-├── .gitignore
-├── README.md
-├── observablehq.config.ts
-├── package.json
-└── yarn.lock
+├─ docs
+│  ├─ .observablehq
+│  │  └─ cache
+│  ├─ components
+│  │  └─ dotmap.js
+│  ├─ data
+│  │  └─ quakes.csv.ts
+│  ├─ quakes.md
+│  └─ index.md
+├─ .gitignore
+├─ README.md
+├─ observablehq.config.ts
+├─ yarn.lock
+└─ package.json
 ```
-
-### Project structure
 
 #### `docs`
 
@@ -80,20 +87,6 @@ This is the home page for your site. You can have as many additional pages as yo
 #### `observablehq.config.ts`
 
 This is the [project configuration](./config) file, such as the pages and sections in the sidebar navigation, and the project’s title. The config file can be written in either TypeScript (`.ts`) or JavaScript (`.js`).
-
-### Installing into an existing project
-
-You can also install the CLI as a dependency on an existing project if you don’t want to create a new project from a template as above.
-
-```sh
-npm install https://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@github.com/observablehq/cli
-```
-
-```sh
-yarn add https://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@github.com/observablehq/cli
-```
-
-You can also install the CLI globally so that the `observable` command is available across projects, but we don’t recommend this approach. By installing the CLI into each project, everyone you work with will use the same version of the CLI.
 
 ## Preview
 
@@ -132,3 +125,25 @@ yarn deploy
 ```
 
 Once done, the command will print the URL where you can view your project on the Observable Cloud. It will follow the pattern, `https://observablehq.com/@<workspace>/<project-slug>`.
+
+## Advanced usage
+
+Here are a few more tips.
+
+### Deploying via GitHub Actions
+
+You can schedule the Observable CLI to build and deploy your project automatically on commit, or on a schedule. We’ll share example source code soon, but please reach out and ask if you have questions on how to setup continuous deployment.
+
+### Installing into an existing project
+
+You can install the CLI as a dependency on an existing project if you don’t want to create a new project using our default template as described above.
+
+```sh
+npm install https://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@github.com/observablehq/cli
+```
+
+```sh
+yarn add https://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@github.com/observablehq/cli
+```
+
+You can also install the CLI globally so that the `observable` command is available across projects, but we don’t recommend this approach. By installing the CLI into each project, everyone you work with will use the same version of the CLI.
