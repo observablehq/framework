@@ -27,7 +27,7 @@ jobs:
       - run: yarn --frozen-lockfile && yarn build
         working-directory: examples/google-analytics
         env:
-          GA_PROPERTY_ID: ${{ env.GA_PROPERTY_ID }}
+          GA_PROPERTY_ID: ${{ vars.GA_PROPERTY_ID }}
           GA_CLIENT_EMAIL: ${{ secrets.GA_CLIENT_EMAIL }}
           GA_PRIVATE_KEY: ${{ secrets.GA_PRIVATE_KEY }}
       - run: yarn --frozen-lockfile && yarn build
