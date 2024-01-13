@@ -2,7 +2,8 @@
   "type": "module",
   "scripts": {
     "dev": "observable preview",
-    "build": "rm -rf dist && observable build"
+    "build": "rm -rf dist && observable build",
+    "postinstall": "ln -sf ../../../../bin/observable.ts node_modules/.bin/observable"
   },
   "dependencies": {
     "@google-analytics/data": "^4.3.0",

@@ -19,7 +19,9 @@ jobs:
         with:
           node-version: 20
           cache: 'yarn'
-          cache-dependency-path: '**/yarn.lock'
+          cache-dependency-path: |
+            yarn.lock
+            'examples/*/yarn.lock'
       - run: yarn --frozen-lockfile
       - run: yarn build
       - run: yarn --frozen-lockfile && yarn build
