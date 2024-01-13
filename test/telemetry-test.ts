@@ -30,13 +30,13 @@ describe("telemetry", () => {
   it("shows a banner", async () => {
     const logger = new MockLogger();
     const telemetry = new Telemetry({
-      ...noopEffects,
+      env: {npm_config_user_agent: "yarn/1.22.10 npm/? node/v14.15.4 darwin x64"},
       logger,
       getPersistentId: async (name, generator = randomUUID) => generator()
     });
     telemetry.record({event: "build", step: "start", test: true});
     await telemetry.flush();
-    logger.assertExactErrors([/Attention.*telemetry.*https:\/\/cli.observablehq.com/s]);
+    logger.assertExactErrors([/Attention.*cli.observablehq.com.*OBSERVABLE_TELEMETRY_DISABLE=true/s]);
   });
 
   it("can be disabled", async () => {

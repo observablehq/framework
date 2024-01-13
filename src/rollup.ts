@@ -70,7 +70,7 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
 // rewrite the import back to what it was supposed to be. This is a dirty hack
 // but it gets the job done. 🤷 https://github.com/observablehq/cli/issues/478
 function rewriteTypeScriptImports(code: string): string {
-  return code.replace(/(?<=\bimport\('[\w./]+)\.ts(?='\))/g, ".js");
+  return code.replace(/(?<=\bimport\(([`'"])[\w./]+)\.ts(?=\1\))/g, ".js");
 }
 
 function importResolve(clientPath: string): Plugin {
