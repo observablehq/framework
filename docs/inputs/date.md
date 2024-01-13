@@ -1,6 +1,8 @@
 # Date input
 
-The Date input specifies a date.
+[API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#date)
+
+The date input specifies a date.
 
 ```js echo
 const date = view(Inputs.date());
@@ -77,3 +79,22 @@ const readonly = view(Inputs.date({label: "Readonly date", value: "2021-01-01", 
 ```js echo
 readonly
 ```
+
+## Options
+
+**Inputs.date(*options*)**
+
+The available date input options are:
+
+* *label* - a label; either a string or an HTML element.
+* *value* - the initial value, as a JavaScript Date or formatted as an ISO string (yyyy-mm-dd); defaults to null.
+* *min* - [minimum value](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/min) attribute.
+* *max* - [maximum value](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/max) attribute.
+* *required* - if true, the input must be a valid date.
+* *validate* - a function to check whether the text input is valid.
+* *width* - the width of the input (not including the label).
+* *submit* - whether to require explicit submission before updating; defaults to false.
+* *readonly* - whether input is readonly; defaults to false.
+* *disabled* - whether input is disabled; defaults to false.
+
+The value of the input is a Date instance at UTC midnight of the specified date, or null if no (valid) value has been specified. Note that the displayed date format is [based on the browser’s locale](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/date).

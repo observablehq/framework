@@ -1,6 +1,8 @@
 # Form input
 
-The Form input combines a number of inputs into a single compound input. It’s intended for a more compact display of closely-related inputs, say for a color’s red, green, and blue channels.
+[API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#inputsforminputs-options)
+
+The form input combines a number of inputs into a single compound input. It’s intended for a more compact display of closely-related inputs, say for a color’s red, green, and blue channels.
 
 ```js echo
 const rgb = view(Inputs.form([
@@ -27,3 +29,13 @@ const rgb2 = view(Inputs.form({
 ```js echo
 rgb2
 ```
+
+## Options
+
+**Inputs.form(*inputs*, *options*)**
+
+The available form input options are:
+
+* *template* - a function that takes the given *inputs* and returns an HTML element to display.
+
+If the *template* object is not specified, the given inputs are wrapped in a DIV.
