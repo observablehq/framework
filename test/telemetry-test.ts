@@ -18,12 +18,13 @@ describe("telemetry", () => {
     setGlobalDispatcher(globalDispatcher);
   });
 
+  const processMock = (mock: any) => Object.assign(Object.create(process), mock);
+
   const noopEffects = {
-    env: {},
     logger: new MockLogger(),
     readFile: (async () => JSON.stringify({cli_telemetry_banner: 1})) as unknown as typeof readFile,
     writeFile: async () => {},
-    process
+    process: processMock({env: {}})
   };
 
   it("sends data", async () => {
@@ -36,8 +37,8 @@ describe("telemetry", () => {
     const logger = new MockLogger();
     const telemetry = new Telemetry({
       ...noopEffects,
-      env: {npm_config_user_agent: "yarn/1.22.10 npm/? node/v14.15.4 darwin x64"},
       logger,
+      process: processMock({env: {npm_config_user_agent: "yarn/1.22.10 npm/? node/v14.15.4 darwin x64"}}),
       readFile: () => Promise.reject()
     });
     await telemetry.record({event: "build", step: "start", test: true});
@@ -45,14 +46,18 @@ describe("telemetry", () => {
   });
 
   it("can be disabled", async () => {
-    const telemetry = new Telemetry({...noopEffects, env: {OBSERVABLE_TELEMETRY_DISABLE: "1"}});
+    const telemetry = new Telemetry({...noopEffects, process: processMock({env: {OBSERVABLE_TELEMETRY_DISABLE: "1"}})});
     await telemetry.record({event: "build", step: "start", test: true});
     assert.equal(agent.pendingInterceptors().length, 1);
   });
 
   it("debug prints data and disables", async () => {
     const logger = new MockLogger();
-    const telemetry = new Telemetry({...noopEffects, env: {OBSERVABLE_TELEMETRY_DEBUG: "1"}, logger});
+    const telemetry = new Telemetry({
+      ...noopEffects,
+      logger,
+      process: processMock({env: {OBSERVABLE_TELEMETRY_DEBUG: "1"}})
+    });
     await telemetry.record({event: "build", step: "start", test: true});
     assert.equal(logger.errorLines.length, 1);
     assert.equal(logger.errorLines[0][0], "[telemetry]");
@@ -63,8 +68,8 @@ describe("telemetry", () => {
     const logger = new MockLogger();
     const telemetry = new Telemetry({
       ...noopEffects,
-      env: {OBSERVABLE_TELEMETRY_DEBUG: "1"},
       logger,
+      process: processMock({env: {OBSERVABLE_TELEMETRY_DEBUG: "1"}}),
       writeFile: () => Promise.reject()
     });
     await telemetry.record({event: "build", step: "start", test: true});
@@ -76,7 +81,11 @@ describe("telemetry", () => {
   it("stays silent on fetch errors", async () => {
     const logger = new MockLogger();
     agent.get("https://invalid.").intercept({path: "/cli", method: "POST"}).replyWithError(new Error("silent"));
-    const telemetry = new Telemetry({...noopEffects, env: {OBSERVABLE_TELEMETRY_ORIGIN: "https://invalid."}, logger});
+    const telemetry = new Telemetry({
+      ...noopEffects,
+      logger,
+      process: processMock({env: {OBSERVABLE_TELEMETRY_ORIGIN: "https://invalid."}})
+    });
     await telemetry.record({event: "build", step: "start", test: true});
     assert.equal(logger.errorLines.length, 0);
     assert.equal(agent.pendingInterceptors().length, 1);
@@ -86,7 +95,7 @@ describe("telemetry", () => {
     assert.throws(() => {
       new Telemetry({
         ...noopEffects,
-        env: {OBSERVABLE_TELEMETRY_ORIGIN: "☃️"}
+        process: processMock({env: {OBSERVABLE_TELEMETRY_ORIGIN: "☃️"}})
       });
     }, /OBSERVABLE_TELEMETRY_ORIGIN: ☃️/);
   });
@@ -96,22 +105,20 @@ describe("telemetry", () => {
     const listeners = {};
     let exit: (value: unknown) => void;
     const exited = new Promise((resolve) => (exit = resolve));
-    const processMock = {
-      ...process,
-      on(event, listener) {
-        listeners[event] = listener;
-        return this;
-      },
-      exit(code?: number) {
-        exit(code);
-        throw new Error("exit");
-      }
-    };
     new Telemetry({
       ...noopEffects,
-      env: {OBSERVABLE_TELEMETRY_DEBUG: "1"},
       logger,
-      process: processMock
+      process: processMock({
+        env: {OBSERVABLE_TELEMETRY_DEBUG: "1"},
+        on(event, listener) {
+          listeners[event] = listener;
+          return this;
+        },
+        exit(code?: number) {
+          exit(code);
+          throw new Error("exit");
+        }
+      })
     });
     listeners["SIGINT"]("SIGINT");
     await exited;

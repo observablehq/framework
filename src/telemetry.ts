@@ -43,19 +43,17 @@ type TelemetryData = {
 };
 
 type TelemetryEffects = {
-  env: NodeJS.ProcessEnv;
   logger: Logger;
+  process: NodeJS.Process;
   readFile: typeof readFile;
   writeFile: typeof writeFile;
-  process: NodeJS.Process;
 };
 
 const defaultEffects: TelemetryEffects = {
-  env: process.env,
   logger: console,
+  process,
   readFile,
-  writeFile,
-  process
+  writeFile
 };
 
 function getOrigin(env: NodeJS.ProcessEnv): URL {
@@ -94,12 +92,13 @@ export class Telemetry {
 
   constructor(effects = defaultEffects) {
     this.effects = effects;
-    this.disabled = !!effects.env.OBSERVABLE_TELEMETRY_DISABLE;
-    this.debug = !!effects.env.OBSERVABLE_TELEMETRY_DEBUG;
-    this.endpoint = new URL("/cli", getOrigin(effects.env));
-    effects.process.on("SIGHUP", this.handleSignal);
-    effects.process.on("SIGINT", this.handleSignal);
-    effects.process.on("SIGTERM", this.handleSignal);
+    const {process} = effects;
+    this.disabled = !!process.env.OBSERVABLE_TELEMETRY_DISABLE;
+    this.debug = !!process.env.OBSERVABLE_TELEMETRY_DEBUG;
+    this.endpoint = new URL("/cli", getOrigin(process.env));
+    process.on("SIGHUP", this.handleSignal);
+    process.on("SIGINT", this.handleSignal);
+    process.on("SIGTERM", this.handleSignal);
   }
 
   async record(data: TelemetryData) {
@@ -157,7 +156,7 @@ export class Telemetry {
     });
     const hash = createHash("sha256");
     hash.update(salt);
-    hash.update(remote || this.effects.env.REPOSITORY_URL || process.cwd());
+    hash.update(remote || this.effects.process.env.REPOSITORY_URL || process.cwd());
     return hash.digest("base64");
   }
 
