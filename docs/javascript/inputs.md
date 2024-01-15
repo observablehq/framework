@@ -2,19 +2,19 @@
 
 ## Overview
 
-Inputs are HTML elements that accept data from a user. In a data app, inputs might prompt a viewer to:
+Inputs are user-interface elements that accept data from a user. In a data app, inputs might prompt a viewer to:
 
 - Select a URL from a dropdown list so they can explore site traffic for a specific page
 - Interactively subset a table of users by typing in a domain name
 - Choose a date range to explore software downloads over a time period of interest
 
-Inputs can be displayed using [displays](https://cli.observablehq.com/javascript/display), which insert a passed DOM element directly into the page where a user can see and interact with it. For example, the radio input below prompts a user to select one from a series of values:
+Inputs can be displayed using [displays](./display.md), which insert a passed DOM element directly into the page where a user can see and interact with it. For example, the radio input below prompts a user to select one from a series of values:
 
 ```js echo
 const team = view(Inputs.radio(["Metropolis Meteors", "Rockford Peaches", "Bears"], {label: "Favorite team:", value: "Metropolis Meteors"}));
 ```
 
-The input value (e.g. the outcome of a user action or entry, like making a selection in the radio input above) is represented as an async [generator](https://cli.observablehq.com/javascript/generators) which, when declared as a [top-level reactive variable](https://cli.observablehq.com/javascript/reactivity#top-level-variables), can be accessed anywhere in the page to display dynamic content. For example, below we reference `team` in an inline expression to update a statement. Select different teams in the radio input above to update the text.
+The input value (e.g. the outcome of a user action or entry, like making a selection in the radio input above) is represented as an async [generator](./gen) which, when declared as a [top-level reactive variable](./reactivity.md#top-level-variables), can be accessed anywhere in the page to display dynamic content. For example, below we reference `team` in an inline expression to update a statement. Select different teams in the radio input above to update the text.
 
 ```md
 My favorite baseball team is the ${team}!
@@ -46,7 +46,7 @@ Plot.plot({
 
 ## Observable Inputs
 
-The Observable Inputs library implements commonly used inputs — buttons, sliders, dropdowns, tables, and the like — as functions. Each input function returns an HTML element that emits *input* events for compatibility with [view](#viewelement) and [Generators.input](https://cli.observablehq.com/lib/generators#input(element)). 
+The [Observable Inputs](../lib/inputs) library implements commonly used inputs — buttons, sliders, dropdowns, tables, and the like — as functions. Each input function returns an HTML element that emits *input* events for compatibility with [view](#viewelement) and [Generators.input](../lib/generators#inputelement). 
 
 ### Usage
 
