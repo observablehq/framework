@@ -6,7 +6,7 @@ Inputs are user-interface elements that accept data from a user. In a data app, 
 - Interactively subset a table of users by typing in a domain name
 - Choose a date range to explore software downloads over a period of interest
 
-Inputs can be displayed using [displays](./display.md), which insert a passed DOM element directly into the page where a user can see and interact with it. The [`view()`](#viewelement) function is special type of display (often used with inputs) that additionally makes the input value available for use elsewhere. 
+Inputs can be displayed with the [`view`](#viewelement) function, which is a special type of [display](display) function that additionally returns the input’s value generator, which can then be assigned to a variable for use elsewhere. 
 
 For example, the radio input below prompts a user to select one from a series of values:
 
@@ -14,7 +14,7 @@ For example, the radio input below prompts a user to select one from a series of
 const team = view(Inputs.radio(["Metropolis Meteors", "Rockford Peaches", "Bears"], {label: "Favorite team:", value: "Metropolis Meteors"}));
 ```
 
-The input value — the outcome of a user action or entry, like making a selection in the radio input above or typing a query in a search input — is represented as an async [generator](./gen) which, when declared as a [top-level reactive variable](./reactivity.md#top-level-variables), can be accessed anywhere in the page to display dynamic content. For example, below we reference `team` in an inline expression to update a statement. Select different teams in the radio input above to update the text.
+The `team` variable in this example now reactively updates when the user interacts with the radio input, triggering a new evaluation of the dependent code. Select different teams in the radio input above to update the text.
 
 ```md
 My favorite baseball team is the ${team}!
