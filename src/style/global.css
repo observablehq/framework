@@ -1,11 +1,14 @@
 :root {
-  --observablehq-blue: #3b5fc0;
   --monospace: Menlo, Consolas, monospace;
   --monospace-font: 14px/1.5 var(--monospace);
   --serif: "Source Serif Pro", "Iowan Old Style", "Apple Garamond", "Palatino Linotype", "Times New Roman",
-    "Droid Serif", Times, serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  "Droid Serif", Times, serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   --sans-serif: -apple-system, BlinkMacSystemFont, "avenir next", avenir, helvetica, "helvetica neue", ubuntu, roboto,
-    noto, "segoe ui", arial, sans-serif;
+  noto, "segoe ui", arial, sans-serif;
+  --theme-red: #ff725c;
+  --theme-yellow: #efb118;
+  --theme-green: #3ca951;
+  --theme-blue: #3b5fc0;
 }
 
 html {
@@ -155,7 +158,7 @@ button {
 button,
 input,
 textarea {
-  accent-color: var(--observablehq-blue);
+  accent-color: var(--theme-blue);
 }
 
 table {
@@ -236,4 +239,37 @@ figcaption {
 
 a[href].observablehq-header-anchor {
   color: inherit;
+}
+
+:root {
+  --font-big: 700 32px/1 var(--sans-serif);
+  --font-small: 14px var(--sans-serif);
+}
+
+.big {
+  font: var(--font-big);
+}
+
+.small {
+  font: var(--font-small);
+}
+
+.red {
+  color: var(--theme-red);
+}
+
+.yellow {
+  color: var(--theme-yellow);
+}
+
+.green {
+  color: var(--theme-green);
+}
+
+.blue {
+  color: var(--theme-blue);
+}
+
+.muted {
+  color: var(--theme-foreground-muted);
 }
