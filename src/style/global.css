@@ -5,10 +5,10 @@
     "Droid Serif", Times, serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   --sans-serif: -apple-system, BlinkMacSystemFont, "avenir next", avenir, helvetica, "helvetica neue", ubuntu, roboto,
     noto, "segoe ui", arial, sans-serif;
+  --theme-blue: #4269d0;
+  --theme-green: #3ca951;
   --theme-red: #ff725c;
   --theme-yellow: #efb118;
-  --theme-green: #3ca951;
-  --theme-blue: #3b5fc0;
 }
 
 html {
