@@ -1,7 +1,5 @@
 # Inputs
 
-## Overview
-
 Inputs are user-interface elements that accept data from a user. In a data app, inputs might prompt a viewer to:
 
 - Select a URL from a dropdown list so they can explore site traffic for a specific page
@@ -46,7 +44,7 @@ Plot.plot({
 
 ## Observable Inputs
 
-The [Observable Inputs](../lib/inputs) library implements commonly used inputs — buttons, sliders, dropdowns, tables, and the like — as functions. Each input function returns an HTML element that emits *input* events for compatibility with [view](#viewelement) and [Generators.input](../lib/generators#inputelement). 
+The [Observable Inputs](../lib/inputs) library implements commonly used inputs — buttons, sliders, dropdowns, tables, and the like — as functions. Each input function returns an HTML element that emits *input* events for compatibility with [`view`](#viewelement) and [Generators.input](../lib/generators#inputelement). 
 
 ### Usage
 
