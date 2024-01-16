@@ -229,7 +229,7 @@ export class PreviewServer {
 
   _handleConnection = async (socket: WebSocket, req: IncomingMessage) => {
     if (req.url === "/_observablehq") {
-      handleWatch(socket, req,  this._verbose, this._config);
+      handleWatch(socket, req, this._verbose, this._config);
     } else {
       socket.close();
     }
@@ -279,7 +279,12 @@ export function getPreviewStylesheet(path: string, data: ParseResult["data"], st
     : relativeUrl(path, `/_observablehq/theme-${style.theme.join(",")}.css`);
 }
 
-function handleWatch(socket: WebSocket, req: IncomingMessage, verbose: boolean = true, {root, style: defaultStyle}: Config) {
+function handleWatch(
+  socket: WebSocket,
+  req: IncomingMessage,
+  verbose: boolean = true,
+  {root, style: defaultStyle}: Config
+) {
   let path: string | null = null;
   let current: ReadMarkdownResult | null = null;
   let stylesheets: Set<string> | null = null;
