@@ -46,7 +46,7 @@ To inspect telemetry data, set the `OBSERVABLE_TELEMETRY_DEBUG` environment vari
 
 ## What is not collected?
 
-We never collect identifying or sensitive information, such as environment variables, file names or paths, or file contents. Telemetry data is not correlated with your Observable account or workspace.
+We never collect identifying or sensitive information, such as environment variables, file names or paths, or file contents.
 
 ## Disabling telemetry
 
