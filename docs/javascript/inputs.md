@@ -2,17 +2,19 @@
 
 Inputs are user-interface elements that accept data from a user. In a data app, inputs might prompt a viewer to:
 
-- Select a URL from a dropdown list so they can explore site traffic for a specific page
+- Select a URL from a dropdown list to view site traffic for a specific page
 - Interactively subset a table of users by typing in a domain name
-- Choose a date range to explore software downloads over a time period of interest
+- Choose a date range to explore software downloads over a period of interest
 
-Inputs can be displayed using [displays](./display.md), which insert a passed DOM element directly into the page where a user can see and interact with it. For example, the radio input below prompts a user to select one from a series of values:
+Inputs can be displayed using [displays](./display.md), which insert a passed DOM element directly into the page where a user can see and interact with it. The [`view()`](#viewelement) function is special type of display (often used with inputs) that additionally makes the input value available for use elsewhere. 
+
+For example, the radio input below prompts a user to select one from a series of values:
 
 ```js echo
 const team = view(Inputs.radio(["Metropolis Meteors", "Rockford Peaches", "Bears"], {label: "Favorite team:", value: "Metropolis Meteors"}));
 ```
 
-The input value (e.g. the outcome of a user action or entry, like making a selection in the radio input above) is represented as an async [generator](./gen) which, when declared as a [top-level reactive variable](./reactivity.md#top-level-variables), can be accessed anywhere in the page to display dynamic content. For example, below we reference `team` in an inline expression to update a statement. Select different teams in the radio input above to update the text.
+The input value — the outcome of a user action or entry, like making a selection in the radio input above or typing a query in a search input — is represented as an async [generator](./gen) which, when declared as a [top-level reactive variable](./reactivity.md#top-level-variables), can be accessed anywhere in the page to display dynamic content. For example, below we reference `team` in an inline expression to update a statement. Select different teams in the radio input above to update the text.
 
 ```md
 My favorite baseball team is the ${team}!
@@ -22,7 +24,7 @@ My favorite baseball team is the ${team}!
 
 ## view(*element*)
 
-The `view` function used above serves two purposes: it displays the given DOM *element* then returns its corresponding value [generator](./generators.md), using [`Generators.input`](../lib/generators#input(element)) under the hood. Use `view` to display an input while also exposing the input’s value as a [reactive variable](./reactivity). You can reference the input’s value anywhere, and the code will run whenever the input changes.
+The `view` function used above does two things: (1) it displays the given DOM *element*, then (2) returns its corresponding value [generator](./generators.md), using [`Generators.input`](../lib/generators#input(element)) under the hood. Use `view` to display an input while also exposing the input’s value as a [reactive variable](./reactivity). You can reference the input’s value anywhere, and the code will run whenever the input changes.
 
 The `view` function is not limited to Observable Inputs. For example, here is a simple range slider created with [html](../lib/htl):
 

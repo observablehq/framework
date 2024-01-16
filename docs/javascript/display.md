@@ -110,16 +110,4 @@ Inputs.button("Click me", {value: 0, reduce: (i) => displayThere(++i)})
 
 ## view(*element*)
 
-The `view` function displays the given DOM *element* (typically an input) and then returns its corresponding value [generator](./generators) via [`Generators.input`](../lib/generators#input(element)). Use this to display an input while also exposing the input’s value as a [reactive variable](./reactivity). For example, here is a simple HTML slider:
-
-```js echo
-const gain = view(html`<input type=range step=0.1 min=0 max=11 value=5>`);
-```
-
-Now you can reference the input’s value (here `gain`) anywhere. The code will run whenever the input changes; no event listeners required!
-
-```md
-The current gain is ${gain}!
-```
-
-The current gain is ${gain}!
+The [`view` function](./inputs#viewelement) is a special type of display function that inserts the given DOM *element* (typically an input), then returns its corresponding value [generator](./generators) via [`Generators.input`](../lib/generators#input(element)).
