@@ -1,7 +1,8 @@
 # Search
 
 ```js
-import MiniSearch from  "./minisearch.js";
+import MiniSearch from  "npm:minisearch";
+
 const index = {
   _index: undefined,
   _loading: undefined,
