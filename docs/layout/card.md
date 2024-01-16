@@ -1,13 +1,16 @@
-## Cards
+# Cards
 
 The `card` class add polished styling to page content, including a background and border color determined by the current theme, rounded corners, and a styled title and subtitle. 
+
+
+## Content
 
 Cards can contain whatever content you like. 
 
 ```html echo
 <div class="grid grid-cols-2"">
-  <div class=card style="background-color: red">
-    <img style="display: block; max-width: 100%;" src="../javascript/horse.jpg">
+  <div class=card>
+    <img src="../javascript/horse.jpg">
     </div>
   <div class=card>${
     Plot.plot({
@@ -20,6 +23,8 @@ Cards can contain whatever content you like.
   </div>
 </div>
 ```
+
+## Title and subtitle
 
 Card titles and subtitles (added with H2 and H3 headers, respectively), match the title styling in [ Observable Plot](https://observablehq.com/plot/features/plots#other-options) as shown below. 
 
