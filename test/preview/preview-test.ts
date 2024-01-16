@@ -71,8 +71,8 @@ describe("preview server", function () {
       expect(res).to.have.status(200);
     });
 
-    it("serves dependencies from the public directory", async () => {
-      const res = await chai.request(testServerUrl).get("/_observablehq/style.css");
+    it("serves stylesheets", async () => {
+      const res = await chai.request(testServerUrl).get("/_observablehq/theme-parchment,coffee.css");
       expect(res).to.have.status(200);
       expect(res.text).to.have.string("font-family");
     });
