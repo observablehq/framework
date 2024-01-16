@@ -14,7 +14,7 @@ import {
   setDeployConfig
 } from "./observableApiConfig.js";
 import {Telemetry} from "./telemetry.js";
-import {blue, bold, hangingIndentLog, magenta, red} from "./tty.js";
+import {blue, bold, hangingIndentLog, magenta, yellow} from "./tty.js";
 
 export interface DeployOptions {
   config: Config;
@@ -110,7 +110,7 @@ export async function deploy({config}: DeployOptions, effects = defaultEffects):
     } else if (!previousProjectId) {
       const {indent} = hangingIndentLog(
         effects,
-        red("Warning:"),
+        yellow("Warning:"),
         `There is an existing project on Observable Cloud named ${bold(
           `@${config.deploy.workspace}/${config.deploy.project}`
         )} that is not associated with this repository. If you continue, you'll overwrite the existing content of the project.`
