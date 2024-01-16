@@ -194,8 +194,10 @@ Choose a local file. [Examples ›](https://observablehq.com/@observablehq/input
 const file = view(Inputs.file({label: "CSV file", accept: ".csv", required: true}));
 ```
 
-```js
-data = file.csv({typed: true})
+Once a file has been selected, you can read its contents like so:
+
+```js echo
+const data = display(await file.csv({typed: true}));
 ```
 
 ---
@@ -228,4 +230,5 @@ rows // click a checkbox in the leftmost column
 
 ---
 
-TK [Form](https://observablehq.com/@observablehq/input-form?collection=@observablehq/inputs) - combine multiple inputs for a compact display
+<!-- TK [Form](https://observablehq.com/@observablehq/input-form?collection=@observablehq/inputs) - combine multiple inputs for a compact display
+-->

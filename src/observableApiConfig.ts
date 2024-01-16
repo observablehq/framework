@@ -14,11 +14,7 @@ interface UserConfig {
 }
 
 export interface DeployConfig {
-  project?: {
-    id?: string;
-    slug?: string;
-    workspace?: string;
-  };
+  projectId: null | string;
 }
 
 export type ApiKey =
@@ -27,7 +23,7 @@ export type ApiKey =
   | {source: "test"; key: string};
 
 export async function getObservableApiKey(logger: Logger = console): Promise<ApiKey> {
-  const envVar = "OBSERVABLEHQ_TOKEN";
+  const envVar = "OBSERVABLE_TOKEN";
   if (process.env[envVar]) {
     return {source: "env", envVar, key: process.env[envVar]};
   }
@@ -39,9 +35,13 @@ export async function getObservableApiKey(logger: Logger = console): Promise<Api
   process.exit(1);
 }
 
-export async function setObservableApiKey(id: string, key: string): Promise<void> {
+export async function setObservableApiKey(info: null | {id: string; key: string}): Promise<void> {
   const {config, configPath} = await loadUserConfig();
-  config.auth = {id, key};
+  if (info) {
+    config.auth = info;
+  } else {
+    delete config.auth;
+  }
   await writeUserConfig({config, configPath});
 }
 
@@ -53,14 +53,19 @@ export async function getDeployConfig(sourceRoot: string): Promise<DeployConfig 
   } catch (error) {
     content = "{}";
   }
-  return JSON.parse(content);
+  // normalize
+  let {projectId} = JSON.parse(content);
+  if (typeof projectId !== "string") projectId = null;
+  return {projectId};
 }
 
 export async function setDeployConfig(sourceRoot: string, newConfig: DeployConfig): Promise<void> {
-  const deployConfigPath = path.join(process.cwd(), sourceRoot, ".observablehq", "deploy.json");
+  const dir = path.join(process.cwd(), sourceRoot, ".observablehq");
+  const deployConfigPath = path.join(dir, "deploy.json");
   const oldConfig = (await getDeployConfig(sourceRoot)) || {};
   const merged = {...oldConfig, ...newConfig};
-  await fs.writeFile(deployConfigPath, JSON.stringify(merged, null, 2));
+  await fs.mkdir(dir, {recursive: true});
+  await fs.writeFile(deployConfigPath, JSON.stringify(merged, null, 2) + "\n");
 }
 
 async function loadUserConfig(): Promise<{configPath: string; config: UserConfig}> {

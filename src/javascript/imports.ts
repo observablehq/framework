@@ -10,9 +10,7 @@ import {type Feature, type ImportReference, type JavaScriptNode} from "../javasc
 import {parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
 import {relativeUrl, resolvePath} from "../url.js";
-import {getFeature, getStringLiteralValue, isStringLiteral} from "./features.js";
-import {defaultGlobals} from "./globals.js";
-import {findReferences} from "./references.js";
+import {getFeature, getFeatureReferenceMap, getStringLiteralValue, isStringLiteral} from "./features.js";
 
 type ImportNode = ImportDeclaration | ImportExpression;
 type ExportNode = ExportAllDeclaration | ExportNamedDeclaration;
@@ -132,58 +130,6 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFeat
   return {imports, features};
 }
 
-/**
- * Returns a map from Identifier to the feature type, such as FileAttachment.
- * Note that this may be different than the identifier.name because of aliasing.
- */
-export function getFeatureReferenceMap(node: Node): Map<Identifier, Feature["type"]> {
-  const declarations = new Set<{name: string}>();
-  const alias = new Map<string, Feature["type"]>();
-  let globals: Set<string> | undefined;
-
-  // Find the declared local names of the imported symbol. Only named imports
-  // are supported. TODO Support namespace imports?
-  simple(node, {
-    ImportDeclaration(node) {
-      if (node.source.value === "npm:@observablehq/stdlib") {
-        for (const specifier of node.specifiers) {
-          if (
-            specifier.type === "ImportSpecifier" &&
-            specifier.imported.type === "Identifier" &&
-            (specifier.imported.name === "FileAttachment" ||
-              specifier.imported.name === "Secret" ||
-              specifier.imported.name === "DatabaseClient")
-          ) {
-            declarations.add(specifier.local);
-            alias.set(specifier.local.name, specifier.imported.name);
-          }
-        }
-      }
-    }
-  });
-
-  // If the import is masking a global, don’t treat it as a global (since we’ll
-  // ignore the import declaration below).
-  for (const name of alias.keys()) {
-    if (defaultGlobals.has(name)) {
-      if (globals === undefined) globals = new Set(defaultGlobals);
-      globals.delete(name);
-    }
-  }
-
-  function filterDeclaration(node: {name: string}): boolean {
-    return !declarations.has(node); // treat the imported declaration as unbound
-  }
-
-  const references = findReferences(node, {globals, filterDeclaration});
-  const map = new Map<Identifier, Feature["type"]>();
-  for (const r of references) {
-    const type = alias.get(r.name);
-    if (type) map.set(r, type);
-  }
-  return map;
-}
-
 export function findImportFeatures(node: Node, path: string, input: string): Feature[] {
   const featureMap = getFeatureReferenceMap(node);
   const features: Feature[] = [];
@@ -288,16 +234,22 @@ export async function rewriteImports(
     );
   }
 
+  const specifiers: string[] = [];
+  const imports: string[] = [];
   for (const node of declarations) {
-    output.replaceLeft(
-      node.start,
-      node.end,
-      `const ${
-        node.specifiers.some(isNotNamespaceSpecifier)
-          ? `{${node.specifiers.filter(isNotNamespaceSpecifier).map(rewriteImportSpecifier).join(", ")}}`
-          : node.specifiers.find(isNamespaceSpecifier)?.local.name ?? "{}"
-      } = await import(${JSON.stringify(await resolver(sourcePath, getStringLiteralValue(node.source)))});`
+    output.delete(node.start, node.end + +(output.input[node.end] === "\n"));
+    specifiers.push(
+      node.specifiers.some(isNotNamespaceSpecifier)
+        ? `{${node.specifiers.filter(isNotNamespaceSpecifier).map(rewriteImportSpecifier).join(", ")}}`
+        : node.specifiers.find(isNamespaceSpecifier)?.local.name ?? "{}"
     );
+    imports.push(`import(${JSON.stringify(await resolver(sourcePath, getStringLiteralValue(node.source)))})`);
+  }
+
+  if (declarations.length > 1) {
+    output.insertLeft(0, `const [${specifiers.join(", ")}] = await Promise.all([${imports.join(", ")}]);\n`);
+  } else if (declarations.length === 1) {
+    output.insertLeft(0, `const ${specifiers[0]} = await ${imports[0]};\n`);
   }
 }
 
@@ -311,18 +263,24 @@ export function createImportResolver(root: string, base: "." | "_import" = "."):
       ? resolveBuiltin(base, path, "runtime.js")
       : specifier === "npm:@observablehq/stdlib"
       ? resolveBuiltin(base, path, "stdlib.js")
+      : specifier === "npm:@observablehq/dash"
+      ? resolveBuiltin(base, path, "stdlib/dash.js") // TODO publish to npm
       : specifier === "npm:@observablehq/dot"
       ? resolveBuiltin(base, path, "stdlib/dot.js") // TODO publish to npm
       : specifier === "npm:@observablehq/duckdb"
       ? resolveBuiltin(base, path, "stdlib/duckdb.js") // TODO publish to npm
+      : specifier === "npm:@observablehq/inputs"
+      ? resolveBuiltin(base, path, "stdlib/inputs.js") // TODO publish to npm
       : specifier === "npm:@observablehq/mermaid"
       ? resolveBuiltin(base, path, "stdlib/mermaid.js") // TODO publish to npm
       : specifier === "npm:@observablehq/tex"
       ? resolveBuiltin(base, path, "stdlib/tex.js") // TODO publish to npm
       : specifier === "npm:@observablehq/sqlite"
       ? resolveBuiltin(base, path, "stdlib/sqlite.js") // TODO publish to npm
-      : specifier === "npm:@observablehq/xslx"
-      ? resolveBuiltin(base, path, "stdlib/xslx.js") // TODO publish to npm
+      : specifier === "npm:@observablehq/xlsx"
+      ? resolveBuiltin(base, path, "stdlib/xlsx.js") // TODO publish to npm
+      : specifier === "npm:@observablehq/zip"
+      ? resolveBuiltin(base, path, "stdlib/zip.js") // TODO publish to npm
       : specifier.startsWith("npm:")
       ? await resolveNpmImport(specifier.slice("npm:".length))
       : specifier;
@@ -367,13 +325,20 @@ async function resolveNpmVersion(specifier: string): Promise<string> {
   const {name, range} = parseNpmSpecifier(specifier); // ignore path
   specifier = formatNpmSpecifier({name, range});
   const search = range ? `?specifier=${range}` : "";
-  return (await cachedFetch(`https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`)).body.version;
+  if (name === "@duckdb/duckdb-wasm" && !range) return "1.28.0"; // https://github.com/duckdb/duckdb-wasm/issues/1561
+  const {version} = (await cachedFetch(`https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`)).body;
+  if (!version) throw new Error(`unable to resolve version: ${specifier}`);
+  return version;
 }
 
 export async function resolveNpmImport(specifier: string): Promise<string> {
-  const {name, path = "+esm"} = parseNpmSpecifier(specifier);
-  const version = await resolveNpmVersion(specifier);
-  return `https://cdn.jsdelivr.net/npm/${name}@${version}/${path}`;
+  const {name, range, path = "+esm"} = parseNpmSpecifier(specifier);
+  try {
+    const version = await resolveNpmVersion(specifier);
+    return `https://cdn.jsdelivr.net/npm/${name}@${version}/${path}`;
+  } catch {
+    return `https://cdn.jsdelivr.net/npm/${name}${range ? `@${range}` : ""}/${path}`;
+  }
 }
 
 const preloadCache = new Map<string, Promise<Set<string> | undefined>>();
@@ -389,7 +354,13 @@ async function fetchModulePreloads(href: string): Promise<Set<string> | undefine
   let promise = preloadCache.get(href);
   if (promise) return promise;
   promise = (async () => {
-    const {headers, body} = await cachedFetch(href);
+    let response: {headers: any; body: any};
+    try {
+      response = await cachedFetch(href);
+    } catch {
+      return;
+    }
+    const {headers, body} = response;
     const cache = headers.get("cache-control")?.split(/\s*,\s*/);
     if (!cache?.some((c) => c === "immutable") || !cache?.some((c) => c === "public")) return;
     const imports = new Set<string>();

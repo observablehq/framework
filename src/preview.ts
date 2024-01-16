@@ -10,17 +10,21 @@ import {difference} from "d3-array";
 import send from "send";
 import {type WebSocket, WebSocketServer} from "ws";
 import {version} from "../package.json";
-import {type Config} from "./config.js";
+import type {Config} from "./config.js";
+import {mergeStyle} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
+import {getClientPath} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {getImplicitSpecifiers, getImplicitStylesheets} from "./libraries.js";
 import {diffMarkdown, readMarkdown} from "./markdown.js";
 import type {ParseResult, ReadMarkdownResult} from "./markdown.js";
-import {renderPreview} from "./render.js";
-import {getClientPath, rollupClient} from "./rollup.js";
+import {renderPreview, resolveStylesheet} from "./render.js";
+import {bundleStyles, rollupClient} from "./rollup.js";
+import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, underline} from "./tty.js";
+import {relativeUrl} from "./url.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
@@ -51,6 +55,7 @@ export class PreviewServer {
   }
 
   static async start({verbose = true, hostname, port, ...options}: PreviewOptions) {
+    Telemetry.record({event: "preview", step: "start"});
     const server = createServer();
     if (port === undefined) {
       for (port = 3000; true; ++port) {
@@ -82,26 +87,44 @@ export class PreviewServer {
     try {
       const url = new URL(req.url!, "http://localhost");
       let {pathname} = url;
+      let match: RegExpExecArray | null;
       if (pathname === "/_observablehq/runtime.js") {
         send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
       } else if (pathname.startsWith("/_observablehq/stdlib.js")) {
         end(req, res, await rollupClient(getClientPath("./src/client/stdlib.js")), "text/javascript");
       } else if (pathname.startsWith("/_observablehq/stdlib/")) {
-        end(req, res, await rollupClient(getClientPath("./src/client/" + pathname.slice("/_observablehq/".length))), "text/javascript"); // prettier-ignore
+        const path = getClientPath("./src/client/" + pathname.slice("/_observablehq/".length));
+        if (pathname.endsWith(".js")) {
+          end(req, res, await rollupClient(path), "text/javascript");
+        } else if (pathname.endsWith(".css")) {
+          end(req, res, await bundleStyles({path}), "text/css");
+        } else {
+          throw new HttpError(`Not found: ${pathname}`, 404);
+        }
       } else if (pathname === "/_observablehq/client.js") {
         end(req, res, await rollupClient(getClientPath("./src/client/preview.js")), "text/javascript");
+      } else if ((match = /^\/_observablehq\/theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(pathname))) {
+        end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
-        const file = pathname.slice("/_import".length);
-        let js: string;
+        const path = pathname.slice("/_import".length);
+        const filepath = join(root, path);
         try {
-          js = await readFile(join(root, file), "utf-8");
+          if (pathname.endsWith(".css")) {
+            await access(filepath, constants.R_OK);
+            end(req, res, await bundleStyles({path: filepath}), "text/css");
+            return;
+          } else if (pathname.endsWith(".js")) {
+            const input = await readFile(filepath, "utf-8");
+            const output = await rewriteModule(input, path, createImportResolver(root));
+            end(req, res, output, "text/javascript");
+            return;
+          }
         } catch (error) {
           if (!isEnoent(error)) throw error;
-          throw new HttpError(`Not found: ${pathname}`, 404);
         }
-        end(req, res, await rewriteModule(js, file, createImportResolver(root)), "text/javascript");
+        throw new HttpError(`Not found: ${pathname}`, 404);
       } else if (pathname.startsWith("/_file/")) {
         const path = pathname.slice("/_file".length);
         const filepath = join(root, path);
@@ -206,7 +229,7 @@ export class PreviewServer {
 
   _handleConnection = async (socket: WebSocket, req: IncomingMessage) => {
     if (req.url === "/_observablehq") {
-      handleWatch(socket, req, {root: this._config.root});
+      handleWatch(socket, req, this._config);
     } else {
       socket.close();
     }
@@ -243,20 +266,31 @@ function getWatchPaths(parseResult: ParseResult): string[] {
   return paths;
 }
 
-async function getStylesheets({cells}: ParseResult): Promise<Set<string>> {
-  const inputs = new Set<string>();
-  for (const cell of cells) cell.inputs?.forEach(inputs.add, inputs);
-  return getImplicitStylesheets(getImplicitSpecifiers(inputs));
+export function getPreviewStylesheet(path: string, data: ParseResult["data"], style: Config["style"]): string | null {
+  style = mergeStyle(path, data?.style, data?.theme, style);
+  return !style
+    ? null
+    : "path" in style
+    ? relativeUrl(path, `/_import/${style.path}`)
+    : relativeUrl(path, `/_observablehq/theme-${style.theme.join(",")}.css`);
 }
 
-function handleWatch(socket: WebSocket, req: IncomingMessage, options: {root: string}) {
-  const {root} = options;
+function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defaultStyle}: Config) {
   let path: string | null = null;
   let current: ReadMarkdownResult | null = null;
   let stylesheets: Set<string> | null = null;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
   console.log(faint("socket open"), req.url);
+
+  async function getStylesheets({cells, data}: ParseResult): Promise<Set<string>> {
+    const inputs = new Set<string>();
+    for (const cell of cells) cell.inputs?.forEach(inputs.add, inputs);
+    const stylesheets = await getImplicitStylesheets(getImplicitSpecifiers(inputs));
+    const style = getPreviewStylesheet(path!, data, defaultStyle);
+    if (style) stylesheets.add(style);
+    return new Set(Array.from(stylesheets, (href) => resolveStylesheet(path!, href)));
+  }
 
   function refreshAttachment(name: string) {
     const {cells} = current!.parse;

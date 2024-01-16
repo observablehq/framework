@@ -24,7 +24,7 @@ Inputs.button([["Increment", increment], ["Reset", reset]])
 
 <style type="text/css">
 @keyframes flash {
-  from { background-color: var(--theme-foreground-focus); }
+  from { background-color: var(--theme-blue); }
   to { background-color: none; }
 }
 .flash {
@@ -38,7 +38,5 @@ Count is: ${html`<span class="flash">${count}</span>`}.
 ```md
 Count is: ${html`<span class="flash">${count}</span>`}.
 ```
-
-This approach is akin to React’s `useState` hook.
 
 Within the defining code block, `count` is a generator and `count.value` can be read and written to as desired; in other code, `count` is the generator’s current value. Other code that references `count` will re-run automatically whenever `count.value` is reassigned — so be careful you don’t cause an infinite loop!

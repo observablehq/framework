@@ -1,35 +1,43 @@
 import {existsSync} from "node:fs";
 import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
-import {basename, dirname, join, relative} from "node:path";
-import {cwd} from "node:process";
-import {fileURLToPath} from "node:url";
-import {type Config} from "./config.js";
+import {basename, dirname, join} from "node:path";
+import type {Config, Style} from "./config.js";
+import {mergeStyle} from "./config.js";
 import {Loader} from "./dataloader.js";
-import {isEnoent} from "./error.js";
-import {prepareOutput, visitFiles, visitMarkdownFiles} from "./files.js";
+import {CliError, isEnoent} from "./error.js";
+import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
 import {renderServerless} from "./render.js";
-import {getClientPath, rollupClient} from "./rollup.js";
+import {bundleStyles, rollupClient} from "./rollup.js";
+import {Telemetry} from "./telemetry.js";
 import {faint} from "./tty.js";
 import {resolvePath} from "./url.js";
 
 const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
 
 // TODO Remove library helpers (e.g., duckdb) when they are published to npm.
-const CLIENT_BUNDLES: [entry: string, name: string][] = [
-  ["./src/client/index.js", "client.js"],
-  ["./src/client/stdlib.js", "stdlib.js"],
-  ["./src/client/stdlib/dot.js", "stdlib/dot.js"],
-  ["./src/client/stdlib/duckdb.js", "stdlib/duckdb.js"],
-  ["./src/client/stdlib/mermaid.js", "stdlib/mermaid.js"],
-  ["./src/client/stdlib/sqlite.js", "stdlib/sqlite.js"],
-  ["./src/client/stdlib/tex.js", "stdlib/tex.js"],
-  ["./src/client/stdlib/xslx.js", "stdlib/xslx.js"]
-];
+function clientBundles(clientPath: string): [entry: string, name: string][] {
+  return [
+    [clientPath, "client.js"],
+    ["./src/client/stdlib.js", "stdlib.js"],
+    ["./src/client/stdlib/dash.js", "stdlib/dash.js"],
+    ["./src/client/stdlib/dot.js", "stdlib/dot.js"],
+    ["./src/client/stdlib/duckdb.js", "stdlib/duckdb.js"],
+    ["./src/client/stdlib/inputs.css", "stdlib/inputs.css"],
+    ["./src/client/stdlib/inputs.js", "stdlib/inputs.js"],
+    ["./src/client/stdlib/mermaid.js", "stdlib/mermaid.js"],
+    ["./src/client/stdlib/sqlite.js", "stdlib/sqlite.js"],
+    ["./src/client/stdlib/tex.js", "stdlib/tex.js"],
+    ["./src/client/stdlib/vega-lite.js", "stdlib/vega-lite.js"],
+    ["./src/client/stdlib/xlsx.js", "stdlib/xlsx.js"],
+    ["./src/client/stdlib/zip.js", "stdlib/zip.js"]
+  ];
+}
 
 export interface BuildOptions {
   config: Config;
+  clientEntry?: string;
   addPublic?: boolean;
 }
 
@@ -51,10 +59,11 @@ export interface BuildEffects {
 }
 
 export async function build(
-  {config, addPublic = true}: BuildOptions,
+  {config, addPublic = true, clientEntry = "./src/client/index.js"}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output)
 ): Promise<void> {
   const {root} = config;
+  Telemetry.record({event: "build", step: "start"});
 
   // Make sure all files are readable before starting to write output files.
   let pageCount = 0;
@@ -62,12 +71,13 @@ export async function build(
     await access(join(root, sourceFile), constants.R_OK);
     pageCount++;
   }
-  if (!pageCount) throw new Error(`No pages found in ${root}`);
+  if (!pageCount) throw new CliError(`Nothing to build: no page files found in your ${root} directory.`);
   effects.logger.log(`${faint("found")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
 
   // Render .md files, building a list of file attachments as we go.
   const files: string[] = [];
   const imports: string[] = [];
+  const styles: Style[] = [];
   for await (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
@@ -78,24 +88,37 @@ export async function build(
     files.push(...render.files.map(resolveFile));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
     await effects.writeFile(outputPath, render.html);
+    const style = mergeStyle(path, render.data?.style, render.data?.theme, config.style);
+    if (style) {
+      if ("path" in style) style.path = resolvePath(sourceFile, style.path);
+      if (!styles.some((s) => styleEquals(s, style))) styles.push(style);
+    }
   }
 
+  // Generate the client bundles.
   if (addPublic) {
-    // Generate the client bundles.
-    for (const [entry, name] of CLIENT_BUNDLES) {
+    for (const [entry, name] of clientBundles(clientEntry)) {
       const clientPath = getClientPath(entry);
       const outputPath = join("_observablehq", name);
       effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
-      const code = await rollupClient(clientPath, {minify: true});
+      const code = await (entry.endsWith(".css")
+        ? bundleStyles({path: clientPath})
+        : rollupClient(clientPath, {minify: true}));
       await effects.writeFile(outputPath, code);
     }
-    // Copy over the public directory.
-    const publicRoot = relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), "..", "public"));
-    for await (const publicFile of visitFiles(publicRoot)) {
-      const sourcePath = join(publicRoot, publicFile);
-      const outputPath = join("_observablehq", publicFile);
-      effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-      await effects.copyFile(sourcePath, outputPath);
+    for (const style of styles) {
+      if ("path" in style) {
+        const outputPath = join("_import", style.path);
+        const sourcePath = join(root, style.path);
+        effects.output.write(`${faint("bundle")} ${sourcePath} ${faint("→")} `);
+        const code = await bundleStyles({path: sourcePath});
+        await effects.writeFile(outputPath, code);
+      } else {
+        const outputPath = join("_observablehq", `theme-${style.theme}.css`);
+        effects.output.write(`${faint("bundle")} theme-${style.theme}.css ${faint("→")} `);
+        const code = await bundleStyles({theme: style.theme});
+        await effects.writeFile(outputPath, code);
+      }
     }
   }
 
@@ -142,6 +165,7 @@ export async function build(
       await effects.copyFile(sourcePath, outputPath);
     }
   }
+  Telemetry.record({event: "build", step: "finish", pageCount});
 }
 
 export class FileBuildEffects implements BuildEffects {
@@ -169,4 +193,12 @@ export class FileBuildEffects implements BuildEffects {
     await prepareOutput(destination);
     await writeFile(destination, contents);
   }
+}
+
+function styleEquals(a: Style, b: Style): boolean {
+  return "path" in a && "path" in b
+    ? a.path === b.path
+    : "theme" in a && "theme" in b
+    ? a.theme.join() === b.theme.join()
+    : false;
 }

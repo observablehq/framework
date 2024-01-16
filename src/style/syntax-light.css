@@ -1,0 +1,18 @@
+:root {
+  --syntax-keyword: #d73a49;
+  --syntax-entity: #6f42c1;
+  --syntax-constant: #005cc5;
+  --syntax-string: #032f62;
+  --syntax-variable: #e36209;
+  --syntax-comment: var(--theme-foreground-muted);
+  --syntax-entity-tag: #22863a;
+  --syntax-storage-modifier-import: #24292e;
+  --syntax-markup-heading: #005cc5;
+  --syntax-markup-list: #735c0f;
+  --syntax-markup-italic: #24292e;
+  --syntax-markup-bold: #24292e;
+  --syntax-markup-inserted: #22863a;
+  --syntax-markup-inserted-background: #f0fff4;
+  --syntax-markup-deleted: #b31d28;
+  --syntax-markup-deleted-background: #ffeef0;
+}

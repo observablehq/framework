@@ -2,7 +2,8 @@ import assert from "node:assert";
 import type {Node, Program} from "acorn";
 import {Parser} from "acorn";
 import {ascending} from "d3-array";
-import {getFeatureReferenceMap, parseLocalImports, rewriteModule} from "../../src/javascript/imports.js";
+import {getFeatureReferenceMap} from "../../src/javascript/features.js";
+import {parseLocalImports, rewriteModule} from "../../src/javascript/imports.js";
 import type {Feature, ImportReference} from "../../src/javascript.js";
 
 describe("parseLocalImports(root, paths)", () => {

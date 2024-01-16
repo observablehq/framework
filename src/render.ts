@@ -1,19 +1,23 @@
 import {parseHTML} from "linkedom";
-import {type Config, type Page, type Section, mergeToc} from "./config.js";
+import type {Config, Page, Section} from "./config.js";
+import {mergeToc} from "./config.js";
+import {getClientPath} from "./files.js";
 import {type Html, html} from "./html.js";
 import type {ImportResolver} from "./javascript/imports.js";
 import {createImportResolver, resolveModuleIntegrity, resolveModulePreloads} from "./javascript/imports.js";
 import type {FileReference, ImportReference, Transpile} from "./javascript.js";
 import {addImplicitSpecifiers, addImplicitStylesheets} from "./libraries.js";
 import {type ParseResult, parseMarkdown} from "./markdown.js";
-import {type PageLink, findLink} from "./pager.js";
-import {getClientPath, rollupClient} from "./rollup.js";
+import {type PageLink, findLink, normalizePath} from "./pager.js";
+import {getPreviewStylesheet} from "./preview.js";
+import {rollupClient} from "./rollup.js";
 import {relativeUrl} from "./url.js";
 
 export interface Render {
   html: string;
   files: FileReference[];
   imports: ImportReference[];
+  data: ParseResult["data"];
 }
 
 export interface RenderOptions extends Config {
@@ -26,7 +30,8 @@ export async function renderPreview(source: string, options: RenderOptions): Pro
   return {
     html: await render(parseResult, {...options, preview: true}),
     files: parseResult.files,
-    imports: parseResult.imports
+    imports: parseResult.imports,
+    data: parseResult.data
   };
 }
 
@@ -35,7 +40,8 @@ export async function renderServerless(source: string, options: RenderOptions): 
   return {
     html: await render(parseResult, options),
     files: parseResult.files,
-    imports: parseResult.imports
+    imports: parseResult.imports,
+    data: parseResult.data
   };
 }
 
@@ -63,7 +69,7 @@ ${
         .filter((title): title is string => !!title)
         .join(" | ")}</title>\n`
     : ""
-}${await renderLinks(parseResult, path, createImportResolver(root, "_import"))}${
+}${await renderLinks(parseResult, options, path, createImportResolver(root, "_import"))}${
     path === "/404"
       ? html.unsafe(`\n<script type="module">
 
@@ -95,20 +101,23 @@ ${renderFooter(path, options)}
 }
 
 async function renderSidebar(title = "Home", pages: (Page | Section)[], path: string): Promise<Html> {
-  return html`<input id="observablehq-sidebar-toggle" type="checkbox">
+  return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
   <ol>
-    <li class="observablehq-link${path === "/index" ? " observablehq-link-active" : ""}"><a href="${relativeUrl(
-      path,
-      "/"
-    )}">${title}</a></li>
+    <li class="observablehq-link${
+      normalizePath(path) === "/index" ? " observablehq-link-active" : ""
+    }"><a href="${relativeUrl(path, "/")}">${title}</a></li>
   </ol>
   <ol>${pages.map((p, i) =>
     "pages" in p
       ? html`${i > 0 && "path" in pages[i - 1] ? html`</ol>` : ""}
     <details${
-      p.pages.some((p) => p.path === path) ? html` open class="observablehq-section-active"` : p.open ? " open" : ""
+      p.pages.some((p) => normalizePath(p.path) === path)
+        ? html` open class="observablehq-section-active"`
+        : p.open
+        ? " open"
+        : ""
     }>
       <summary>${p.name}</summary>
       <ol>${p.pages.map((p) => renderListItem(p, path))}
@@ -158,7 +167,7 @@ function renderToc(headers: Header[], label: string): Html {
 
 function renderListItem(p: Page, path: string): Html {
   return html`\n    <li class="observablehq-link${
-    p.path === path ? " observablehq-link-active" : ""
+    normalizePath(p.path) === path ? " observablehq-link-active" : ""
   }"><a href="${relativeUrl(path, prettyPath(p.path))}">${p.name}</a></li>`;
 }
 
@@ -166,8 +175,15 @@ function prettyPath(path: string): string {
   return path.replace(/\/index$/, "/") || "/";
 }
 
-async function renderLinks(parseResult: ParseResult, path: string, resolver: ImportResolver): Promise<Html> {
-  const stylesheets = new Set<string>([relativeUrl(path, "/_observablehq/style.css"), "https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"]); // prettier-ignore
+async function renderLinks(
+  parseResult: ParseResult,
+  options: Pick<Config, "style">,
+  path: string,
+  resolver: ImportResolver
+): Promise<Html> {
+  const stylesheets = new Set<string>(["https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"]); // prettier-ignore
+  const style = getPreviewStylesheet(path, parseResult.data, options.style);
+  if (style) stylesheets.add(style);
   const specifiers = new Set<string>(["npm:@observablehq/runtime", "npm:@observablehq/stdlib"]);
   for (const {name} of parseResult.imports) specifiers.add(name);
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
@@ -177,12 +193,24 @@ async function renderLinks(parseResult: ParseResult, path: string, resolver: Imp
   for (const specifier of specifiers) preloads.add(await resolver(path, specifier));
   await resolveModulePreloads(preloads);
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
-    Array.from(stylesheets).sort().map(renderStylesheetPreload) // <link rel=preload as=style>
+    Array.from(stylesheets)
+      .sort()
+      .map((href) => resolveStylesheet(path, href))
+      .map(renderStylesheetPreload) // <link rel=preload as=style>
   }${
-    Array.from(stylesheets).sort().map(renderStylesheet) // <link rel=stylesheet>
+    Array.from(stylesheets)
+      .sort()
+      .map((href) => resolveStylesheet(path, href))
+      .map(renderStylesheet) // <link rel=stylesheet>
   }${
     Array.from(preloads).sort().map(renderModulePreload) // <link rel=modulepreload>
   }`;
+}
+
+export function resolveStylesheet(path: string, href: string): string {
+  return href.startsWith("observablehq:")
+    ? relativeUrl(path, `/_observablehq/${href.slice("observablehq:".length)}`)
+    : href;
 }
 
 function renderStylesheet(href: string): Html {
@@ -198,11 +226,15 @@ function renderModulePreload(href: string): Html {
   return html`\n<link rel="modulepreload" href="${href}"${integrity ? html` integrity="${integrity}"` : ""}>`;
 }
 
-function renderFooter(path: string, options: Pick<Config, "pages" | "pager" | "title">): Html {
+function renderFooter(path: string, options: Pick<Config, "pages" | "pager" | "title" | "footer">): Html {
   const link = options.pager ? findLink(path, options) : null;
-  return html`<footer id="observablehq-footer">${link ? renderPager(path, link) : ""}
-<div>© ${new Date().getUTCFullYear()} Observable, Inc.</div>
-</footer>`;
+  const footer = options.footer;
+  return link || footer
+    ? html`<footer id="observablehq-footer">${link ? renderPager(path, link) : ""}${
+        footer ? html`\n<div>${html.unsafe(options.footer)}</div>` : ""
+      }
+</footer>`
+    : html``;
 }
 
 function renderPager(path: string, {prev, next}: PageLink): Html {

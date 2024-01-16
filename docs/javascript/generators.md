@@ -2,7 +2,8 @@
 
 Values that change over time, such as interactive inputs and animation parameters, can represented as [async generators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator). When a top-level generator is declared, code in other blocks sees the generator’s latest yielded value and runs whenever the generator yields a new value.
 
-TK Talk about how this is different than just using a `requestAnimationFrame` loop because you can write your animation more declaratively, and then maybe you can have a scrubber that controls the animation instead of being driven by time.
+<!-- TK Talk about how this is different than just using a `requestAnimationFrame` loop because you can write your animation more declaratively, and then maybe you can have a scrubber that controls the animation instead of being driven by time.
+-->
 
 For example, here is a generator that increments once a second:
 
@@ -37,7 +38,7 @@ The value of i is: ${i}.
 The value of i is: ${i}.
 ```
 
-As another example, you can use the built-in [`Generators.observe`](<../lib/generators#generators.observe(change)>) to represent the current pointer coordinates:
+As another example, you can use the built-in [`Generators.observe`](<../lib/generators#observe(change)>) to represent the current pointer coordinates:
 
 ```js echo
 const pointer = Generators.observe((change) => {
@@ -71,7 +72,7 @@ const message = Generators.observe((change) => {
 message.x // the most recently reported transaction
 ```
 
-And here’s an HTML input element using [`Generators.input`](<../lib/generators#generators.input(element)>):
+And here’s an HTML input element using [`Generators.input`](<../lib/generators#input(element)>):
 
 ```js echo
 const nameInput = display(document.createElement("input"));

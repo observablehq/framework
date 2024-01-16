@@ -16,7 +16,7 @@ const dt = aq.table({
 });
 ```
 
-Arquero is column-oriented: each column is an array of values of a given type. Here, numbers representing hours of sunshine per month. But an Arquero table is also iterable and as such, its contents can be displayed with [Inputs.table](/lib/inputs#table).
+Arquero is column-oriented: each column is an array of values of a given type. Here, numbers representing hours of sunshine per month. But an Arquero table is also iterable and as such, its contents can be displayed with [`Inputs.table`](/lib/inputs#table).
 
 ```js echo
 Inputs.table(dt, {maxWidth: 640})

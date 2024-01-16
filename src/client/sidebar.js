@@ -2,15 +2,15 @@ const toggle = document.querySelector("#observablehq-sidebar-toggle");
 if (toggle) {
   let indeterminate = toggle.indeterminate;
   toggle.onclick = () => {
-    const matches = matchMedia("(min-width: calc(640px + 17px * 4 + 240px + 17px * 2))").matches;
+    const matches = matchMedia("(min-width: calc(640px + 6rem + 272px))").matches;
     if (indeterminate) (toggle.checked = !matches), (indeterminate = false);
     else if (toggle.checked === matches) indeterminate = true;
     toggle.indeterminate = indeterminate;
-    if (indeterminate) localStorage.removeItem("observablehq-sidebar");
-    else localStorage.setItem("observablehq-sidebar", toggle.checked);
+    if (indeterminate) sessionStorage.removeItem("observablehq-sidebar");
+    else sessionStorage.setItem("observablehq-sidebar", toggle.checked);
   };
   addEventListener("keypress", (event) => {
-    if (event.key === "b" && event.metaKey && !event.ctrlKey) {
+    if (event.code === "KeyB" && (event.metaKey || event.altKey) && event.target === document.body && !event.ctrlKey) {
       toggle.click();
       event.preventDefault();
     }

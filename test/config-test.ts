@@ -8,6 +8,7 @@ describe("readConfig(undefined, root)", () => {
     assert.deepStrictEqual(await readConfig(undefined, "test/input/build/config"), {
       root: "test/input/build/config",
       output: "dist",
+      style: {theme: ["air", "near-midnight"]},
       pages: [
         {path: "/index", name: "Index"},
         {path: "/one", name: "One<Two"},
@@ -16,17 +17,25 @@ describe("readConfig(undefined, root)", () => {
       ],
       title: undefined,
       toc: {label: "On this page", show: true},
-      pager: true
+      pager: true,
+      footer: 'Built with <a href="https://observablehq.com/" target=_blank>Observable</a>',
+      deploy: {
+        workspace: "acme",
+        project: "bi"
+      }
     });
   });
   it("returns the default config if no config file is found", async () => {
     assert.deepStrictEqual(await readConfig(undefined, "test/input/build/simple"), {
       root: "test/input/build/simple",
       output: "dist",
+      style: {theme: ["air", "near-midnight"]},
       pages: [{name: "Build test case", path: "/simple"}],
       title: undefined,
       toc: {label: "Contents", show: true},
-      pager: true
+      pager: true,
+      footer: 'Built with <a href="https://observablehq.com/" target=_blank>Observable</a>',
+      deploy: null
     });
   });
 });
@@ -42,7 +51,6 @@ describe("normalizeConfig(spec, root)", () => {
   });
   it("populates default pages", async () => {
     assert.deepStrictEqual((await config({}, root)).pages, [
-      {name: "Index", path: "/index"},
       {name: "One", path: "/one"},
       {name: "H1: Section", path: "/toc-override"},
       {name: "H1: Section", path: "/toc"},
@@ -88,6 +96,26 @@ describe("normalizeConfig(spec, root)", () => {
   });
   it("populates default pager", async () => {
     assert.strictEqual((await config({pages: []}, root)).pager, true);
+  });
+  describe("deploy", () => {
+    it("considers deploy optional", async () => {
+      assert.strictEqual((await config({pages: []}, root)).deploy, null);
+    });
+    it("coerces workspace", async () => {
+      assert.strictEqual(
+        (await config({pages: [], deploy: {workspace: 538, project: "bi"}}, root)).deploy?.workspace,
+        "538"
+      );
+    });
+    it("strips leading @ from workspace", async () => {
+      assert.strictEqual((await config({pages: [], deploy: {workspace: "@acme"}}, root)).deploy?.workspace, "acme");
+    });
+    it("coerces project", async () => {
+      assert.strictEqual(
+        (await config({pages: [], deploy: {workspace: "adams", project: 42}}, root)).deploy?.project,
+        "42"
+      );
+    });
   });
 });
 

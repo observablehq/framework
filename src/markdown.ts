@@ -93,6 +93,10 @@ function getLiveSource(content: string, tag: string): string | undefined {
     ? content
     : tag === "tex"
     ? transpileTag(content, "tex.block", true)
+    : tag === "html"
+    ? transpileTag(content, "html", true)
+    : tag === "svg"
+    ? transpileTag(content, "svg", true)
     : tag === "dot"
     ? transpileTag(content, "dot", false)
     : tag === "mermaid"
@@ -123,8 +127,7 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
       result += `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`;
       count++;
     }
-    // TODO we could hide non-live code here with echo=false?
-    if (source == null || (attributes.echo != null && !isFalse(attributes.echo))) {
+    if (attributes.echo == null ? source == null : !isFalse(attributes.echo)) {
       result += baseRenderer(tokens, idx, options, context, self);
       count++;
     }
@@ -324,6 +327,7 @@ function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string):
 }
 
 const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcset"}[] = Object.freeze([
+  {query: "a[href][download]", src: "href"},
   {query: "audio[src]", src: "src"},
   {query: "audio source[src]", src: "src"},
   {query: "img[src]", src: "src"},
@@ -339,41 +343,34 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
 
   // Extracting references to files (such as from linked stylesheets).
   const filePaths = new Set<FileReference["path"]>();
+  const resolvePath = (source: string): FileReference | undefined => {
+    const path = getLocalPath(sourcePath, source);
+    if (!path) return;
+    const file = fileReference(path, sourcePath);
+    if (!filePaths.has(file.path)) {
+      filePaths.add(file.path);
+      context.files.push(file);
+    }
+    return file;
+  };
   for (const {query, src} of SUPPORTED_PROPERTIES) {
     for (const element of document.querySelectorAll(query)) {
       if (src === "srcset") {
-        const srcset = element.getAttribute(src);
-        const paths =
-          srcset &&
-          srcset
-            .split(",")
-            .map((p) => {
-              const parts = p.trim().split(/\s+/);
-              const source = parts[0];
-              const path = getLocalPath(sourcePath, source);
-              if (path) {
-                const file = fileReference(source, sourcePath);
-                if (!filePaths.has(file.path)) {
-                  filePaths.add(file.path);
-                  context.files.push(file);
-                }
-                return `${file.path} ${parts.slice(1).join(" ")}`.trim();
-              }
-              return parts.join(" ");
-            })
-            .filter((p) => !!p);
+        const srcset = element.getAttribute(src)!;
+        const paths = srcset
+          .split(",")
+          .map((p) => {
+            const parts = p.trim().split(/\s+/);
+            const source = parts[0];
+            const file = resolvePath(source);
+            return file ? `${file.path} ${parts.slice(1).join(" ")}`.trim() : parts.join(" ");
+          })
+          .filter((p) => !!p);
         if (paths && paths.length > 0) element.setAttribute(src, paths.join(", "));
       } else {
-        const source = element.getAttribute(src);
-        const path = getLocalPath(sourcePath, source!);
-        if (path) {
-          const file = fileReference(source!, sourcePath);
-          if (!filePaths.has(file.path)) {
-            filePaths.add(file.path);
-            context.files.push(file);
-          }
-          element.setAttribute(src, file.path);
-        }
+        const source = element.getAttribute(src)!;
+        const file = resolvePath(source);
+        if (file) element.setAttribute(src, file.path);
       }
     }
   }

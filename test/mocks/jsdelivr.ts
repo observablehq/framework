@@ -17,6 +17,7 @@ const packages: [name: string, version: string][] = [
   ["leaflet", "1.9.4"],
   ["lodash", "4.17.21"],
   ["mermaid", "10.6.1"],
+  ["parquet-wasm", "0.6.0-beta.1"],
   ["sql.js", "1.9.0"],
   ["topojson-client", "3.1.0"]
 ];

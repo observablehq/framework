@@ -6,7 +6,19 @@ Why generate data at build time? Conventional dashboards are often slow or even 
 
 Data loaders can be written in any programming language. They can even invoke binary executables such as ffmpeg or DuckDB! For convenience, the Observable CLI has built-in support for common languages: JavaScript, TypeScript, Python, and R. Naturally you can use any third-party library or SDK for these languages, too.
 
-Let’s take a look at a simple data loader written in JavaScript. It [fetches](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) a GeoJSON feature collection of recent earthquakes from the [USGS API](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php). The data loader then uses [d3-dsv](https://d3js.org/d3-dsv) to output CSV to standard output with three columns representing the _magnitude_, _longitude_, and _latitude_ of each earthquake.
+A data loader can be as simple as a shell script that invokes [curl](https://curl.se/) to fetch recent earthquakes from the [USGS](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php):
+
+```sh
+curl https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson
+```
+
+The Observable CLI uses [file-based routing](./routing), so assuming this shell script is named `quakes.json.sh`, a `quakes.json` file is then generated at build time. You can access this file from the client using [`FileAttachment`](./javascript/files):
+
+```js echo
+FileAttachment("quakes.json").json()
+```
+
+A data loader can transform data to perfectly suit the needs of a dashboard. The JavaScript data loader below uses [D3](./lib/d3) to output [CSV](./lib/csv) with three columns representing the _magnitude_, _longitude_, and _latitude_ of each earthquake.
 
 ```js run=false echo
 import {csvFormat} from "d3-dsv";
@@ -27,13 +39,13 @@ const features = collection.features.map((f) => ({
 process.stdout.write(csvFormat(features));
 ```
 
-The Observable CLI uses [file-based routing](./routing); by naming the data loader `quakes.csv.js`, we can then access its output in client-side JavaScript as a [`FileAttachment`](./javascript/files) named `quakes.csv`.
+Assuming the loader above is named `quakes.csv.js`, you can access its output from the client as `quakes.csv`:
 
 ```js echo
 const quakes = FileAttachment("quakes.csv").csv({typed: true});
 ```
 
-Now we can display the earthquakes in a map using [Observable Plot](./lib/plot):
+Now you can display the earthquakes in a map using [Observable Plot](./lib/plot):
 
 ```js
 const world = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@1/world/110m.json").then((response) => response.json());
@@ -110,7 +122,7 @@ The following archive extensions are supported:
 - `.tar` - for [tarballs](<https://en.wikipedia.org/wiki/Tar_(computing)>)
 - `.tar.gz` and `.tgz` - for [compressed tarballs](https://en.wikipedia.org/wiki/Gzip)
 
-Like with any other file, these files from generated archives are live in preview (they will refresh automatically if the corresponding data loader script is edited), and are added to the build if and only if referenced by `FileAttachment`.
+Like with any other file, these files from generated archives are live in preview (they will refresh automatically if the corresponding data loader script is edited), and are added to the build if and only if referenced by `FileAttachment` (see [Files: ZIP](./javascript/files#zip-archives)).
 
 ## Routing
 
