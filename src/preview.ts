@@ -279,7 +279,7 @@ export function getPreviewStylesheet(path: string, data: ParseResult["data"], st
     : relativeUrl(path, `/_observablehq/theme-${style.theme.join(",")}.css`);
 }
 
-function handleWatch(socket: WebSocket, req: IncomingMessage, verbose: boolean = false, {root, style: defaultStyle}: Config) {
+function handleWatch(socket: WebSocket, req: IncomingMessage, verbose: boolean = true, {root, style: defaultStyle}: Config) {
   let path: string | null = null;
   let current: ReadMarkdownResult | null = null;
   let stylesheets: Set<string> | null = null;
