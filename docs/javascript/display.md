@@ -110,4 +110,4 @@ Inputs.button("Click me", {value: 0, reduce: (i) => displayThere(++i)})
 
 ## view(*element*)
 
-The [`view` function](./inputs#viewelement) is a special type of display function that inserts the given DOM *element* (typically an input), then returns its corresponding value [generator](./generators) via [`Generators.input`](../lib/generators#input(element)).
+The [`view` function](./inputs#viewelement) is a special type of display function that inserts the given DOM *element* (typically an input), then returns its corresponding value [generator](./generators) via [`Generators.input`](../lib/generators#input(element)). When the user interacts with the input, this triggers the [reactive evaluation](reactivity) of all the JavaScript code that reference this value.
