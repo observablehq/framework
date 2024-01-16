@@ -29,20 +29,23 @@ describe("telemetry", () => {
 
   it("sends data", async () => {
     Telemetry._instance = new Telemetry(noopEffects);
-    await Telemetry.record({event: "build", step: "start", test: true});
+    Telemetry.record({event: "build", step: "start", test: true});
+    await Telemetry.instance.pending;
     agent.assertNoPendingInterceptors();
   });
 
   it("shows a banner", async () => {
     const logger = new MockLogger();
     const telemetry = new Telemetry({...noopEffects, logger, readFile: () => Promise.reject()});
-    await telemetry.record({event: "build", step: "start", test: true});
+    telemetry.record({event: "build", step: "start", test: true});
+    await telemetry.pending;
     logger.assertExactErrors([/Attention.*cli.observablehq.com.*OBSERVABLE_TELEMETRY_DISABLE=true/s]);
   });
 
   it("can be disabled", async () => {
     const telemetry = new Telemetry({...noopEffects, process: processMock({env: {OBSERVABLE_TELEMETRY_DISABLE: "1"}})});
-    await telemetry.record({event: "build", step: "start", test: true});
+    telemetry.record({event: "build", step: "start", test: true});
+    await telemetry.pending;
     assert.equal(agent.pendingInterceptors().length, 1);
   });
 
@@ -53,7 +56,8 @@ describe("telemetry", () => {
       logger,
       process: processMock({env: {OBSERVABLE_TELEMETRY_DEBUG: "1"}})
     });
-    await telemetry.record({event: "build", step: "start", test: true});
+    telemetry.record({event: "build", step: "start", test: true});
+    await telemetry.pending;
     assert.equal(logger.errorLines.length, 1);
     assert.equal(logger.errorLines[0][0], "[telemetry]");
     assert.equal(agent.pendingInterceptors().length, 1);
@@ -67,7 +71,8 @@ describe("telemetry", () => {
       process: processMock({env: {OBSERVABLE_TELEMETRY_DEBUG: "1"}}),
       writeFile: () => Promise.reject()
     });
-    await telemetry.record({event: "build", step: "start", test: true});
+    telemetry.record({event: "build", step: "start", test: true});
+    await telemetry.pending;
     assert.notEqual(logger.errorLines[0][1].ids.session, null);
     assert.equal(logger.errorLines[0][1].ids.device, null);
     assert.equal(logger.errorLines[0][1].ids.project, null);
@@ -81,7 +86,8 @@ describe("telemetry", () => {
       logger,
       process: processMock({env: {OBSERVABLE_TELEMETRY_ORIGIN: "https://invalid."}})
     });
-    await telemetry.record({event: "build", step: "start", test: true});
+    telemetry.record({event: "build", step: "start", test: true});
+    await telemetry.pending;
     assert.equal(logger.errorLines.length, 0);
     assert.equal(agent.pendingInterceptors().length, 1);
   });

@@ -77,7 +77,7 @@ export class Telemetry {
   private debug: boolean;
   private endpoint: URL;
   private timeZoneOffset = new Date().getTimezoneOffset();
-  private readonly pending = new Set<Promise<any>>();
+  private readonly _pending = new Set<Promise<any>>();
   private _config: Promise<Record<string, uuid>> | undefined;
   private _ids: Promise<TelemetryIds> | undefined;
   private _environment: Promise<TelemetryEnvironment> | undefined;
@@ -102,7 +102,7 @@ export class Telemetry {
     process.on("SIGTERM", this.handleSignal(15));
   }
 
-  async record(data: TelemetryData) {
+  record(data: TelemetryData) {
     if (this.disabled) return;
     const task = (async () =>
       this.send({
@@ -113,10 +113,13 @@ export class Telemetry {
       })
         .catch(() => {})
         .finally(() => {
-          this.pending.delete(task);
+          this._pending.delete(task);
         }))();
-    this.pending.add(task);
-    return Promise.all(this.pending);
+    this._pending.add(task);
+  }
+
+  get pending() {
+    return Promise.all(this._pending);
   }
 
   private handleSignal(value: number) {
@@ -125,7 +128,8 @@ export class Telemetry {
       const {process} = this.effects;
       // Give ourselves 1s to record a signal event and flush.
       const deadline = setTimeout(() => process.exit(code), 1000);
-      await this.record({event: "signal", signal});
+      this.record({event: "signal", signal});
+      await this.pending;
       clearTimeout(deadline);
       process.exit(code);
     };
