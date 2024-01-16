@@ -5,32 +5,33 @@ import type {Socket} from "node:net";
 import os from "node:os";
 import {isatty} from "node:tty";
 import open from "open";
+import {commandInstruction} from "./commandInstruction.js";
 import {HttpError, isHttpError} from "./error.js";
 import type {Logger} from "./logger.js";
-import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
+import {ObservableApiClient, getObservableUiOrigin} from "./observableApiClient.js";
 import {type ApiKey, getObservableApiKey, setObservableApiKey} from "./observableApiConfig.js";
 
-const OBSERVABLEHQ_UI_HOST = getObservableUiHost();
+const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
 
 export const commandRequiresAuthenticationMessage = `You need to be authenticated to ${
-  getObservableUiHost().hostname
-} to run this command. Please run \`observable login\`.`;
+  getObservableUiOrigin().hostname
+} to run this command. Please run ${commandInstruction("login")}.`;
 
 /** Actions this command needs to take wrt its environment that may need mocked out. */
 export interface CommandEffects {
   openUrlInBrowser: (url: string) => Promise<void>;
   logger: Logger;
-  isatty: (fd: number) => boolean;
+  isTty: boolean;
   waitForEnter: () => Promise<void>;
   getObservableApiKey: (logger: Logger) => Promise<ApiKey>;
-  setObservableApiKey: (id: string, key: string) => Promise<void>;
+  setObservableApiKey: (info: {id: string; key: string} | null) => Promise<void>;
   exitSuccess: () => void;
 }
 
 const defaultEffects: CommandEffects = {
   openUrlInBrowser: async (target) => void (await open(target)),
   logger: console,
-  isatty,
+  isTty: isatty(process.stdin.fd),
   waitForEnter,
   getObservableApiKey,
   setObservableApiKey,
@@ -42,7 +43,7 @@ export async function login(effects = defaultEffects) {
   const server = new LoginServer({nonce, effects});
   await server.start();
 
-  const url = new URL("/settings/api-keys/generate", OBSERVABLEHQ_UI_HOST);
+  const url = new URL("/settings/api-keys/generate", OBSERVABLE_UI_ORIGIN);
   const name = `Observable CLI on ${os.hostname()}`;
   const request = {
     nonce,
@@ -54,7 +55,7 @@ export async function login(effects = defaultEffects) {
   url.searchParams.set("request", Buffer.from(JSON.stringify(request)).toString("base64"));
 
   const {logger} = effects;
-  if (effects.isatty(process.stdin.fd)) {
+  if (effects.isTty) {
     logger.log(`Press Enter to open ${url.hostname} in your browser...`);
     await effects.waitForEnter();
     await effects.openUrlInBrowser(url.toString());
@@ -66,6 +67,10 @@ export async function login(effects = defaultEffects) {
   // execution continues in the server's request handler
 }
 
+export async function logout(effects = defaultEffects) {
+  await effects.setObservableApiKey(null);
+}
+
 export async function whoami(effects = defaultEffects) {
   const {logger} = effects;
   const apiKey = await effects.getObservableApiKey(logger);
@@ -74,7 +79,7 @@ export async function whoami(effects = defaultEffects) {
   try {
     const user = await apiClient.getCurrentUser();
     logger.log();
-    logger.log(`You are logged into ${OBSERVABLEHQ_UI_HOST.hostname} as ${formatUser(user)}.`);
+    logger.log(`You are logged into ${OBSERVABLE_UI_ORIGIN.hostname} as ${formatUser(user)}.`);
     logger.log();
     logger.log("You have access to the following workspaces:");
     for (const workspace of user.workspaces) {
@@ -86,7 +91,7 @@ export async function whoami(effects = defaultEffects) {
       if (apiKey.source === "env") {
         logger.log(`Your API key is invalid. Check the value of the ${apiKey.envVar} environment variable.`);
       } else if (apiKey.source === "file") {
-        logger.log("Your API key is invalid. Run `observable login` to log in again.");
+        logger.log(`Your API key is invalid. Run ${commandInstruction("login")} to log in again.`);
       } else {
         logger.log("Your API key is invalid.");
       }
@@ -203,7 +208,7 @@ class LoginServer {
       throw new HttpError("Invalid nonce", 400);
     }
 
-    await this._effects.setObservableApiKey(body.id, body.key);
+    await this._effects.setObservableApiKey({id: body.id, key: body.key});
 
     res.statusCode = 201;
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -230,9 +235,9 @@ class LoginServer {
       return false;
     }
     return (
-      parsedOrigin.protocol === OBSERVABLEHQ_UI_HOST.protocol &&
-      parsedOrigin.host === OBSERVABLEHQ_UI_HOST.host &&
-      parsedOrigin.port === OBSERVABLEHQ_UI_HOST.port
+      parsedOrigin.protocol === OBSERVABLE_UI_ORIGIN.protocol &&
+      parsedOrigin.host === OBSERVABLE_UI_ORIGIN.host &&
+      parsedOrigin.port === OBSERVABLE_UI_ORIGIN.port
     );
   }
 }

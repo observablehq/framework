@@ -52,23 +52,23 @@ None of the files in `frames` above are loaded until a [content method](#support
 
 `FileAttachment` supports a variety of methods for loading file contents:
 
-| method                       | return type                                     | supporting library
-| -                            | -                                               | -
-| [`file.arrayBuffer`][binary] | [`ArrayBuffer`][array-buffer]                   | -
-| [`file.arrow`][arrow]        | [`Table`][arrow-table]                          | [Apache Arrow][arrow]
-| [`file.blob`][binary]        | [`Blob`][blob]                                  | -
-| [`file.csv`][csv]            | [`Array`][array] (of objects or arrays)         | [D3][csv]
-| [`file.html`][markup]        | [`Document`][document]                          | -
-| [`file.image`][media]        | [`HTMLImageElement`][image]                     | -
-| [`file.json`][json]          | [`Array`][array], [`Object`][object], _etc._    | -
-| [`file.parquet`][arrow]      | [`Table`][arrow-table]                          | [Apache Arrow, parquet-wasm][arrow]
-| [`file.sqlite`][sqlite]      | [`SQLiteDatabaseClient`][sqlite]                | [SQLite][sqlite]
-| [`file.stream`][binary]      | [`ReadableStream`][stream]                      | -
-| [`file.text`][text]          | [`string`][string]                              | -
-| [`file.tsv`][csv]            | [`Array`][array] (of objects or arrays)         | [D3][csv]
-| [`file.xlsx`][xlsx]          | [`Workbook`][xlsx]                              | [ExcelJS][xlsx]
-| [`file.xml`][markup]         | [`Document`][document]                          | -
-| [`file.zip`][zip]            | [`ZipArchive`][zip]                             | [JSZip][zip]
+| method                       | return type
+| -                            | -
+| [`file.arrayBuffer`][binary] | [`ArrayBuffer`][array-buffer]
+| [`file.arrow`][arrow]        | [`Table`][arrow-table]
+| [`file.blob`][binary]        | [`Blob`][blob]
+| [`file.csv`][csv]            | [`Array`][array]
+| [`file.html`][markup]        | [`Document`][document]
+| [`file.image`][media]        | [`HTMLImageElement`][image]
+| [`file.json`][json]          | [`Array`][array], [`Object`][object], _etc._
+| [`file.parquet`][arrow]      | [`Table`][arrow-table]
+| [`file.sqlite`][sqlite]      | [`SQLiteDatabaseClient`][sqlite]
+| [`file.stream`][binary]      | [`ReadableStream`][stream]
+| [`file.text`][text]          | [`string`][string]
+| [`file.tsv`][csv]            | [`Array`][array]
+| [`file.xlsx`][xlsx]          | [`Workbook`][xlsx]
+| [`file.xml`][markup]         | [`Document`][document]
+| [`file.zip`][zip]            | [`ZipArchive`][zip]
 
 [array-buffer]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
 [arrow-table]: https://arrow.apache.org/docs/js/classes/Arrow_dom.Table.html

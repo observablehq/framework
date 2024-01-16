@@ -1,7 +1,9 @@
 import readline from "node:readline/promises";
+import {isatty} from "node:tty";
 import type {BuildEffects} from "./build.js";
 import {build} from "./build.js";
 import type {Config} from "./config.js";
+import {CliError, isHttpError} from "./error.js";
 import type {Logger, Writer} from "./logger.js";
 import {ObservableApiClient} from "./observableApiClient.js";
 import {
@@ -11,6 +13,7 @@ import {
   getObservableApiKey,
   setDeployConfig
 } from "./observableApiConfig.js";
+import {Telemetry} from "./telemetry.js";
 import {blue} from "./tty.js";
 
 export interface DeployOptions {
@@ -21,6 +24,7 @@ export interface DeployEffects {
   getObservableApiKey: (logger: Logger) => Promise<ApiKey>;
   getDeployConfig: (sourceRoot: string) => Promise<DeployConfig | null>;
   setDeployConfig: (sourceRoot: string, config: DeployConfig) => Promise<void>;
+  isTty: boolean;
   logger: Logger;
   input: NodeJS.ReadableStream;
   output: NodeJS.WritableStream;
@@ -30,6 +34,7 @@ const defaultEffects: DeployEffects = {
   getObservableApiKey,
   getDeployConfig,
   setDeployConfig,
+  isTty: isatty(process.stdin.fd),
   logger: console,
   input: process.stdin,
   output: process.stdout
@@ -37,62 +42,113 @@ const defaultEffects: DeployEffects = {
 
 /** Deploy a project to ObservableHQ */
 export async function deploy({config}: DeployOptions, effects = defaultEffects): Promise<void> {
+  Telemetry.record({event: "deploy", step: "start"});
   const {logger} = effects;
   const apiKey = await effects.getObservableApiKey(logger);
   const apiClient = new ObservableApiClient({apiKey});
 
-  // Find the existing project or create a new one.
-  const sourceRoot = config.root;
-  const deployConfig = await effects.getDeployConfig(sourceRoot);
-  let projectId = deployConfig?.project?.id;
-  if (projectId) {
-    logger.log(`Found existing project ${projectId}`);
-  } else {
-    logger.log("Creating a new project");
-    const currentUserResponse = await apiClient.getCurrentUser();
-
-    const title = await promptUserForInput(effects.input, effects.output, "New project title: ");
-    const defaultSlug = slugify(title);
-    const slug = await promptUserForInput(
-      effects.input,
-      effects.output,
-      `New project slug [${defaultSlug}]: `,
-      defaultSlug
+  // Check configuration
+  if (!config.deploy) {
+    throw new CliError(
+      "You haven't configured a project to deploy to. Please set deploy.workspace and deploy.project in your configuration."
     );
-
-    let workspaceId: string | null = null;
-    if (currentUserResponse.workspaces.length == 0) {
-      logger.error("Current user doesn't have any Observable workspaces!");
-      return;
-    } else if (currentUserResponse.workspaces.length == 1) {
-      workspaceId = currentUserResponse.workspaces[0].id;
-    } else {
-      const workspaceNames = currentUserResponse.workspaces.map((x) => x.name);
-      const index = await promptUserForChoiceIndex(
-        effects.input,
-        effects.output,
-        "Available Workspaces",
-        workspaceNames
-      );
-      workspaceId = currentUserResponse.workspaces[index].id;
-    }
-
-    const project = await apiClient.postProject({slug, title, workspaceId});
-    projectId = project.id;
-    await effects.setDeployConfig(sourceRoot, {project: {id: projectId, slug, workspace: workspaceId}});
-    logger.log(`Created new project ${project.owner.login}/${project.slug}`);
+  }
+  const roughSlugRe = /^[a-z0-9_-]+$/;
+  if (!config.deploy.workspace.match(roughSlugRe)) {
+    throw new CliError(
+      `Your configuration specifies the workspace "${
+        config.deploy.workspace
+      }", but that isn't valid. Did you mean "${slugify(config.deploy.workspace)}"?`
+    );
+  }
+  if (!config.deploy.project.match(roughSlugRe)) {
+    throw new CliError(
+      `Your configuration specifies the project "${
+        config.deploy.project
+      }", but that isn't valid. Did you mean "${slugify(config.deploy.project)}"?`
+    );
   }
 
-  // Create the new deploy.
+  let projectId: string | null = null;
+  try {
+    const projectInfo = await apiClient.getProject({
+      workspaceLogin: config.deploy.workspace,
+      projectSlug: config.deploy.project
+    });
+    projectId = projectInfo.id;
+  } catch (error) {
+    if (isHttpError(error) && error.statusCode === 404) {
+      // Project doesn't exist yet, so ignore the error.
+    } else {
+      throw error;
+    }
+  }
+
+  if (projectId) {
+    // Check last deployed state. If it's not the same project, ask the user if
+    // they want to continue anyways. In non-interactive mode just cancel.
+    const deployConfig = await effects.getDeployConfig(config.root);
+    const previousProjectId = deployConfig?.projectId;
+    if (previousProjectId && previousProjectId !== projectId) {
+      logger.log(
+        `This project was last deployed to a workspace/slug different from @${config.deploy.workspace}/${config.deploy.project}.`
+      );
+      if (effects.isTty) {
+        const choice = await promptUserForInput(
+          effects.input,
+          effects.output,
+          `Do you want to deploy to @${config.deploy.workspace}/${config.deploy.project} anyway? [y/N]`
+        );
+        if (choice.trim().toLowerCase().charAt(0) !== "y") {
+          throw new CliError("User cancelled deploy.", {print: false, exitCode: 2});
+        }
+      } else {
+        throw new CliError("Cancelling deploy due to misconfiguration.");
+      }
+    }
+  } else {
+    // Project doesn't exist, so ask the user if they want to create it.
+    // In non-interactive mode just cancel.
+    if (effects.isTty) {
+      const choice = await promptUserForInput(effects.input, effects.output, "No project exists. Create it now? [y/N]");
+      if (choice.trim().toLowerCase().charAt(0) !== "y") {
+        throw new CliError("User cancelled deploy.", {print: false, exitCode: 2});
+      }
+      if (!config.title) {
+        throw new CliError("You haven't configured a project title. Please set title in your configuration.");
+      }
+      const currentUserResponse = await apiClient.getCurrentUser();
+      const workspace = currentUserResponse.workspaces.find((w) => w.login === config.deploy?.workspace);
+      if (!workspace) {
+        const availableWorkspaces = currentUserResponse.workspaces.map((w) => w.login).join(", ");
+        throw new CliError(
+          `Workspace ${config.deploy?.workspace} not found. Available workspaces: ${availableWorkspaces}.`
+        );
+      }
+      const project = await apiClient.postProject({
+        slug: config.deploy.project,
+        title: config.title,
+        workspaceId: workspace.id
+      });
+      projectId = project.id;
+    } else {
+      throw new CliError("Cancelling deploy due to non-existent project.");
+    }
+  }
+
+  await effects.setDeployConfig(config.root, {projectId});
+
+  // Create the new deploy on the server
   const message = await promptUserForInput(effects.input, effects.output, "Deploy message: ");
   const deployId = await apiClient.postDeploy({projectId, message});
 
   // Build the project
-  await build({config}, new DeployBuildEffects(apiClient, deployId, effects));
+  await build({config, clientEntry: "./src/client/deploy.js"}, new DeployBuildEffects(apiClient, deployId, effects));
 
-  // Mark the deploy as uploaded.
+  // Mark the deploy as uploaded
   const deployInfo = await apiClient.postDeployUploaded(deployId);
   logger.log(`Deployed project now visible at ${blue(deployInfo.url)}`);
+  Telemetry.record({event: "deploy", step: "finish"});
 }
 
 async function promptUserForInput(
@@ -109,30 +165,6 @@ async function promptUserForInput(
       if (!value && defaultValue) value = defaultValue;
     } while (!value);
     return value;
-  } finally {
-    rl.close();
-  }
-}
-
-async function promptUserForChoiceIndex(
-  input: NodeJS.ReadableStream,
-  output: NodeJS.WritableStream,
-  title: string,
-  choices: string[]
-): Promise<number> {
-  const validChoices: string[] = [];
-  const promptLines: string[] = ["", title, "=".repeat(title.length)];
-  for (let i = 0; i < choices.length; i++) {
-    validChoices.push(`${i + 1}`);
-    promptLines.push(`${i + 1}. ${choices[i]}`);
-  }
-  const question = promptLines.join("\n") + "\nChoice: ";
-  const rl = readline.createInterface({input, output});
-  try {
-    let value: string | null = null;
-    do value = await rl.question(question);
-    while (!validChoices.includes(value));
-    return parseInt(value) - 1; // zero-indexed
   } finally {
     rl.close();
   }

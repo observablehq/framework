@@ -87,7 +87,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
       ...(files.length ? {files} : null),
       body: async () => {
         const output = new Sourcemap(input);
-        trim(output, input);
+        output.trim();
         if (implicitDisplay) {
           output.insertLeft(0, "display(await(\n");
           output.insertRight(input.length, "\n))");
@@ -122,11 +122,6 @@ ${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.ma
       body: async () => `() => { throw new SyntaxError(${JSON.stringify(message)}); }`
     };
   }
-}
-
-function trim(output: Sourcemap, input: string): void {
-  if (input.startsWith("\n")) output.delete(0, 1); // TODO better trim
-  if (input.endsWith("\n")) output.delete(input.length - 1, input.length); // TODO better trim
 }
 
 export const parseOptions: Options = {ecmaVersion: 13, sourceType: "module"};

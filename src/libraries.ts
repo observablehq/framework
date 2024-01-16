@@ -8,7 +8,7 @@ export function addImplicitSpecifiers(specifiers: Set<string>, inputs: Set<strin
   if (inputs.has("d3")) specifiers.add("npm:d3");
   if (inputs.has("Plot")) specifiers.add("npm:d3").add("npm:@observablehq/plot");
   if (inputs.has("htl") || inputs.has("html") || inputs.has("svg")) specifiers.add("npm:htl");
-  if (inputs.has("Inputs")) specifiers.add("npm:htl").add("npm:@observablehq/inputs");
+  if (inputs.has("Inputs")) specifiers.add("npm:htl").add("npm:isoformat").add("npm:@observablehq/inputs");
   if (inputs.has("dot")) specifiers.add("npm:@observablehq/dot").add("npm:@viz-js/viz");
   if (inputs.has("duckdb")) specifiers.add("npm:@duckdb/duckdb-wasm");
   if (inputs.has("DuckDBClient")) specifiers.add("npm:@observablehq/duckdb").add("npm:@duckdb/duckdb-wasm");
@@ -20,6 +20,7 @@ export function addImplicitSpecifiers(specifiers: Set<string>, inputs: Set<strin
   if (inputs.has("SQLite") || inputs.has("SQLiteDatabaseClient")) specifiers.add("npm:@observablehq/sqlite");
   if (inputs.has("tex")) specifiers.add("npm:@observablehq/tex").add("npm:katex");
   if (inputs.has("topojson")) specifiers.add("npm:topojson-client");
+  if (inputs.has("vl")) specifiers.add("npm:vega").add("npm:vega-lite").add("npm:vega-lite-api");
   return specifiers;
 }
 
@@ -28,7 +29,7 @@ export async function getImplicitStylesheets(specifiers: Set<string>): Promise<S
 }
 
 export async function addImplicitStylesheets(stylesheets: Set<string>, specifiers: Set<string>): Promise<Set<string>> {
-  if (specifiers.has("npm:@observablehq/inputs")) stylesheets.add("https://cdn.jsdelivr.net/gh/observablehq/inputs/src/style.css"); // prettier-ignore
+  if (specifiers.has("npm:@observablehq/inputs")) stylesheets.add("observablehq:stdlib/inputs.css");
   if (specifiers.has("npm:katex")) stylesheets.add(await resolveNpmImport("katex/dist/katex.min.css"));
   if (specifiers.has("npm:leaflet")) stylesheets.add(await resolveNpmImport("leaflet/dist/leaflet.css"));
   return stylesheets;

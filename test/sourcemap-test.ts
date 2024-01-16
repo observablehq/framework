@@ -91,4 +91,10 @@ describe("new Sourcemap(source)", () => {
       column: 1
     });
   });
+  it("trim", () => {
+    const original = "\nhello;\n";
+    const sm = new Sourcemap(original);
+    sm.trim();
+    assert.strictEqual(sm.toString(), "hello;");
+  });
 });

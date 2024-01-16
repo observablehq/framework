@@ -10,11 +10,12 @@ const CODE_BRACEL = 123;
 
 export function transpileTag(input: string, tag = "", raw = false): string {
   const template = TemplateParser.parse(input, {ecmaVersion: 13, sourceType: "module"}) as unknown as TemplateLiteral;
-  const source = new Sourcemap(input);
-  escapeTemplateElements(source, template, raw);
-  source.insertLeft(template.start, tag + "`");
-  source.insertRight(template.end, "`");
-  return String(source);
+  const output = new Sourcemap(input);
+  output.trim();
+  escapeTemplateElements(output, template, raw);
+  output.insertLeft(template.start, tag + "`");
+  output.insertRight(template.end, "`");
+  return String(output);
 }
 
 class TemplateParser extends (Parser as any) {

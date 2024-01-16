@@ -1,6 +1,6 @@
 # JavaScript: Imports
 
-TK Describe how you can import any library from npm without having to install it into `node_modules`. This is for convenience, and it’s why we use the `npm:` protocol for imports. (In the future we might also support bare module specifiers for packages that are installed into `node_modules`.)
+<!-- TK Describe how you can import any library from npm without having to install it into `node_modules`. This is for convenience, and it’s why we use the `npm:` protocol for imports. (In the future we might also support bare module specifiers for packages that are installed into `node_modules`.) -->
 
 You can import a library from npm like so:
 
@@ -23,18 +23,20 @@ export const foo = 42;
 Then you can say
 
 ```js echo
-import {foo} from "./foo.js"
+import {foo} from "./foo.js";
 ```
 
 and the imported value of `foo` is: ${foo}.
 
-TK Also mention that local imports are useful for organizing your code and creating components and helpers that can be shared by multiple pages — or even another application. And you can write tests for your code. And that local ES modules are strictly vanilla JavaScript; there’s no reactive runtime within ES modules.
+<!-- TK Also mention that local imports are useful for organizing your code and creating components and helpers that can be shared by multiple pages — or even another application. And you can write tests for your code. And that local ES modules are strictly vanilla JavaScript; there’s no reactive runtime within ES modules.
+-->
 
-TK Describe dynamic import and static string literal specifiers.
+<!-- TK Describe dynamic import and static string literal specifiers.
+-->
+<!-- ## Preloading -->
 
-## Preloading
-
-TK Mention that we ~~pin the library version at build time and~~ preload transitive dependencies to improve performance ~~and security~~, and in the future we plan on automatically downloading and bundling the libraries [#20](https://github.com/observablehq/cli/issues/20) into your built project to improve security and stability.
+<!-- TK Mention that we ~~pin the library version at build time and~~ preload transitive dependencies to improve performance ~~and security~~, and in the future we plan on automatically downloading and bundling the libraries [#20](https://github.com/observablehq/cli/issues/20) into your built project to improve security and stability.
+-->
 
 ## Implicit imports
 
@@ -64,6 +66,6 @@ Click on any of the imported symbols below to learn more.
 <pre><code class="language-js">import <a href="../lib/lodash">_</a> from "npm:lodash";</code></pre>
 <pre><code class="language-js">import * as <a href="../lib/topojson">topojson</a> from "npm:topojson-client";</code></pre>
 
-## Require
+<!-- ## Require -->
 
-TK Why we don’t support `require`.
+<!-- TK Why we don’t support `require`. -->

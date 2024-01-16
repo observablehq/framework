@@ -41,6 +41,18 @@
         "2f4eff36"
       ],
       "html": "<div id=\"cell-2f4eff36\" class=\"observablehq observablehq--block\"></div>\n"
+    },
+    {
+      "type": "html",
+      "id": "",
+      "cellIds": [],
+      "html": "<span></span>"
+    },
+    {
+      "type": "html",
+      "id": "",
+      "cellIds": [],
+      "html": "<span></span>"
     }
   ],
   "cells": [
@@ -77,5 +89,5 @@
       "body": "() => {\nfunction langAndAttributes() {\n  return 1;\n}\nreturn {langAndAttributes};\n}"
     }
   ],
-  "hash": "4a504e4c5acc0bb9280318a79d7bc86cc13388975e4dcb6a8cf9eb619fecb1cb"
+  "hash": "39951f0e499abb1c6d0c2f82a72d223bba4683e1e7f0114d2e319c0ea160051d"
 }

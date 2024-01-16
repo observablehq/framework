@@ -41,9 +41,11 @@ export default {
         {name: "SQLite", path: "/lib/sqlite"},
         {name: "TeX", path: "/lib/tex"},
         {name: "TopoJSON", path: "/lib/topojson"},
+        {name: "Vega-Lite", path: "/lib/vega-lite"},
         {name: "ZIP", path: "/lib/zip"},
       ]
     },
     {name: "Contributing", path: "/contributing"}
-  ]
+  ],
+  footer: `© ${new Date().getUTCFullYear()} Observable, Inc.`
 };

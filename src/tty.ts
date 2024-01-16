@@ -9,6 +9,8 @@ export const blue = color(34, 39);
 export const magenta = color(35, 39);
 export const cyan = color(36, 39);
 
-function color(code: number, reset: number): (text: string) => string {
+export type TtyColor = (text: string) => string;
+
+function color(code: number, reset: number): TtyColor {
   return process.stdout.isTTY ? (text: string) => `\x1b[${code}m${text}\x1b[${reset}m` : String;
 }

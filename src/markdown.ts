@@ -93,6 +93,10 @@ function getLiveSource(content: string, tag: string): string | undefined {
     ? content
     : tag === "tex"
     ? transpileTag(content, "tex.block", true)
+    : tag === "html"
+    ? transpileTag(content, "html", true)
+    : tag === "svg"
+    ? transpileTag(content, "svg", true)
     : tag === "dot"
     ? transpileTag(content, "dot", false)
     : tag === "mermaid"
@@ -123,8 +127,7 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
       result += `<div id="cell-${id}" class="observablehq observablehq--block"></div>\n`;
       count++;
     }
-    // TODO we could hide non-live code here with echo=false?
-    if (source == null || (attributes.echo != null && !isFalse(attributes.echo))) {
+    if (attributes.echo == null ? source == null : !isFalse(attributes.echo)) {
       result += baseRenderer(tokens, idx, options, context, self);
       count++;
     }
