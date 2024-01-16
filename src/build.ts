@@ -165,7 +165,7 @@ export async function build(
       await effects.copyFile(sourcePath, outputPath);
     }
   }
-  Telemetry.record({event: "build", step: "finish"});
+  Telemetry.record({event: "build", step: "finish", pageCount});
 }
 
 export class FileBuildEffects implements BuildEffects {
