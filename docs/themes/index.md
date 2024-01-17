@@ -35,6 +35,7 @@ function themeThumbnail(themePath) {
   <div class="grid-colspan-1 thumbnail">
     <iframe
       class="iframe"
+      scrolling="no"
       src="${themePath}">
     </iframe>
   </div>`
