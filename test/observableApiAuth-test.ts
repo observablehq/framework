@@ -1,18 +1,13 @@
 import assert from "node:assert";
-import type {Logger} from "../src/logger.js";
-import {
-  type CommandEffects,
-  commandRequiresAuthenticationMessage,
-  login,
-  logout,
-  whoami
-} from "../src/observableApiAuth.js";
+import {commandRequiresAuthenticationMessage} from "../src/commandInstruction.js";
+import {type AuthEffects, login, logout, whoami} from "../src/observableApiAuth.js";
 import {MockLogger} from "./mocks/logger.js";
 import {getCurentObservableApi, mockObservableApi} from "./mocks/observableApi.js";
+import {MockConfigEffects} from "./observableApiConfig-test.js";
 
 describe("login command", () => {
   it("works", async () => {
-    const effects = new MockEffects();
+    const effects = new MockAuthEffects();
     // start the login process
     const loginPromise = login(effects);
     try {
@@ -49,7 +44,7 @@ describe("login command", () => {
   });
 
   it("gives a manual link when not on a tty", async () => {
-    const effects = new MockEffects({isTty: false});
+    const effects = new MockAuthEffects({isTty: false});
     const server = await login(effects);
     if (server.isRunning) {
       await server.stop();
@@ -61,7 +56,7 @@ describe("login command", () => {
 
 describe("logout command", () => {
   it("removes the API key from the config", async () => {
-    const effects = new MockEffects({apiKey: "original-key"});
+    const effects = new MockAuthEffects({apiKey: "original-key"});
     await logout(effects);
     assert.equal(effects.observableApiKey, null);
     assert.equal(await effects.setApiKeyDeferred.promise, undefined);
@@ -73,7 +68,7 @@ describe("whoami command", () => {
   mockObservableApi();
 
   it("errors when there is no API key", async () => {
-    const effects = new MockEffects({apiKey: null});
+    const effects = new MockAuthEffects({apiKey: null});
     try {
       await whoami(effects);
       assert.fail("error expected");
@@ -86,14 +81,14 @@ describe("whoami command", () => {
 
   it("works when there is an API key that is invalid", async () => {
     getCurentObservableApi().handleGetUser({status: 401}).start();
-    const effects = new MockEffects({apiKey: "MOCK-INVALID-KEY"});
+    const effects = new MockAuthEffects({apiKey: "MOCK-INVALID-KEY"});
     await whoami(effects);
     effects.logger.assertExactLogs([/^Your API key is invalid/]);
   });
 
   it("works when there is a valid API key", async () => {
     getCurentObservableApi().handleGetUser().start();
-    const effects = new MockEffects({apiKey: "MOCK-VALID-KEY"});
+    const effects = new MockAuthEffects({apiKey: "MOCK-VALID-KEY"});
     await whoami(effects);
     effects.logger.assertExactLogs([
       /^You are logged into.*as Mock User/,
@@ -116,7 +111,7 @@ class Deferred<T = unknown> {
   }
 }
 
-class MockEffects implements CommandEffects {
+class MockAuthEffects extends MockConfigEffects implements AuthEffects {
   public logger = new MockLogger();
   public openBrowserDeferred = new Deferred<string>();
   public setApiKeyDeferred = new Deferred<{id: string; apiKey: string}>();
@@ -125,13 +120,15 @@ class MockEffects implements CommandEffects {
   public observableApiKey: string | null = null;
 
   constructor({apiKey = null, isTty = true}: {apiKey?: string | null; isTty?: boolean} = {}) {
+    super();
     this.observableApiKey = apiKey;
     this.isTty = isTty;
   }
 
-  async getObservableApiKey(logger: Logger) {
+  async getObservableApiKey(effects: AuthEffects = this) {
+    if (effects !== this) throw new Error("don't pass unrelated effects to mock effects methods");
     if (!this.observableApiKey) {
-      logger.log(commandRequiresAuthenticationMessage);
+      effects.logger.log(commandRequiresAuthenticationMessage);
       throw new Error("no key available in this test");
     }
     return {source: "test" as const, key: this.observableApiKey};

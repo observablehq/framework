@@ -1,8 +1,8 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import {commandRequiresAuthenticationMessage} from "./commandInstruction.js";
 import {CliError, isEnoent} from "./error.js";
-import {commandRequiresAuthenticationMessage} from "./observableApiAuth.js";
 
 export interface ConfigEffects {
   readFile: (path: string, encoding: "utf8") => Promise<string>;
@@ -13,7 +13,7 @@ export interface ConfigEffects {
   homedir: typeof os.homedir;
 }
 
-const defaultEffects: ConfigEffects = {
+export const defaultEffects: ConfigEffects = {
   readFile: (path, encoding) => fs.readFile(path, encoding),
   writeFile: fs.writeFile,
   mkdir: async (path, options) => {

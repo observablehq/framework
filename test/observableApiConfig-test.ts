@@ -21,7 +21,7 @@ describe("loadUserConfig", () => {
   });
 });
 
-class MockConfigEffects implements ConfigEffects {
+export class MockConfigEffects implements ConfigEffects {
   public env = {};
 
   public _files: Map<string, string> = new Map();
