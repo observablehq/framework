@@ -51,17 +51,17 @@ const burndown = issues
 </div>
 <div class="card">
   <h2>GitHub stars</h2>
-  ${html`<span class="big">${d3.format(",")(stars.length)}`}
-  ${html`<span class="green">${d3.format("+")(d3.sum(stars, (d) => d.starred_at >= lastWeek))} ↗︎`}
+  <span class="big">${d3.format(",")(stars.length)}</span>
+  <span class="green">${d3.format("+")(d3.sum(stars, (d) => d.starred_at >= lastWeek))} ↗︎</span>
 </div>
 <div class="card">
   <h2>Daily npm downloads</h2>
-  ${html`<span class="big">${d3.format(",")(downloads[0].value)}`}
+  <span class="big">${d3.format(",")(downloads[0].value)}</span>
   ${((trend) => html`<span class=${trend > 0 ? "green" : trend < 0 ? "red" : "muted"}>${d3.format("+.1%")(trend)} ${trend > 0 ? "↗︎" : trend < 0 ? "↘︎" :""}`)(downloads[7].value ? (downloads[0].value - downloads[7].value) / downloads[7].value : undefined)}
 </div>
 <div class="card">
   <h2>Total npm downloads</h2>
-  ${html`<span class="big">${d3.format(",")(d3.sum(downloads, (d) => d.value))}`}
+  <span class="big">${d3.format(",")(d3.sum(downloads, (d) => d.value))}
 </div>
 
 <div class="card grid grid-cols-1" style="grid-auto-rows: calc(260px + 2rem);">
