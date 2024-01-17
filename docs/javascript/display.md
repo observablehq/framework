@@ -92,6 +92,30 @@ ${display(1), display(2)}
 ${display(1), display(2)}
 ```
 
+## Responsive display
+
+In Markdown, the built-in `width` reactive variable represents the current width of the main element. This can be a handy thing to pass, say, as the **width** option to [Observable Plot](../lib/plot).
+
+```html echo
+The current width is ${width}.
+```
+
+```js
+import {resize} from "npm:@observablehq/stdlib";
+```
+
+For more control, or in a grid where you want to respond to either width or height changing, use the built-in `resize` helper. This takes a render function which is called whenever the width or height changes; the element returned by the render function is inserted into the DOM.
+
+```html echo
+<div class="grid grid-cols-4">
+  <div class="card">
+    ${resize((width) => html`This card is ${width}px wide.`)}
+  </div>
+</div>
+```
+
+See also [`Generators.width`](../lib/generators#width(element)).
+
 ## display(*value*)
 
 If `value` is a DOM node, adds it to the page. Otherwise, converts the given `value` to a suitable DOM node and displays that instead. Returns the given `value`.

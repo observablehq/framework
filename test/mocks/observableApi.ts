@@ -1,35 +1,58 @@
-import {type Dispatcher, type Interceptable, MockAgent, getGlobalDispatcher, setGlobalDispatcher} from "undici";
+import type {MockAgent} from "undici";
+import {type Interceptable} from "undici";
 import {getObservableApiOrigin, getObservableUiOrigin} from "../../src/observableApiClient.js";
+import {getCurrentAgent, mockAgent} from "./undici.js";
 
 export const validApiKey = "MOCK-VALID-KEY";
 export const invalidApiKey = "MOCK-INVALID-KEY";
 
 const emptyErrorBody = JSON.stringify({errors: []});
 
-export class ObservableApiMock {
+let apiMock;
+
+export function mockObservableApi() {
+  mockAgent();
+
+  beforeEach(() => {
+    apiMock = new ObservableApiMock();
+    const agent = getCurrentAgent();
+    agent.get(getOrigin());
+  });
+
+  afterEach(() => {
+    apiMock.after();
+  });
+}
+
+export function getCurentObservableApi() {
+  if (!apiMock) throw new Error("mockObservableApi not initialized");
+  return apiMock;
+}
+
+function getOrigin() {
+  return getObservableApiOrigin().toString().replace(/\/$/, "");
+}
+
+class ObservableApiMock {
   private _agent: MockAgent | null = null;
   private _handlers: ((pool: Interceptable) => void)[] = [];
-  private _originalDispatcher: Dispatcher | null = null;
 
   public start(): ObservableApiMock {
-    this._agent = new MockAgent();
-    this._agent.disableNetConnect();
-    const origin = getObservableApiOrigin().toString().replace(/\/$/, "");
-    const mockPool = this._agent.get(origin);
+    this._agent = getCurrentAgent();
+    const mockPool = this._agent.get(getOrigin());
     for (const handler of this._handlers) handler(mockPool);
-    this._originalDispatcher = getGlobalDispatcher();
-    setGlobalDispatcher(this._agent);
     return this;
   }
 
-  public close() {
-    if (!this._agent) throw new Error("ObservableApiMock not started");
-    this._agent.assertNoPendingInterceptors();
-    this._agent.close();
-    this._agent = null;
-    if (this._originalDispatcher) {
-      setGlobalDispatcher(this._originalDispatcher);
-      this._originalDispatcher = null;
+  public after() {
+    const agent = getCurrentAgent();
+    for (const intercept of agent.pendingInterceptors()) {
+      if (intercept.origin === getOrigin()) {
+        console.log(`Expected All intercepts for ${getOrigin()} to be handled`);
+        // This will include other interceptors that are not related to the
+        // Observable API, but it has a nice output.
+        agent.assertNoPendingInterceptors();
+      }
     }
   }
 
