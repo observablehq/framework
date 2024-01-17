@@ -1,16 +1,20 @@
 # Inputs
 
-Observable Inputs are lightweight interface components — buttons, sliders, dropdowns, tables, and the like — that help you explore data and build interactive displays. 
+Inputs are user-interface elements that accept data from a user. In a data app, inputs might prompt a viewer to:
 
-For example, here is a radio input that prompts a user to select one from a series of values:
+- Select a URL from a dropdown list to view site traffic for a specific page
+- Interactively subset a table of users by typing in a domain name
+- Choose a date range to explore software downloads over a period of interest
+
+Inputs can be displayed with the [`view`](#viewelement) function, which is a special type of [display](display) function that additionally returns the input’s value generator, which can then be assigned to a variable for use elsewhere. 
+
+For example, the radio input below prompts a user to select one from a series of values:
 
 ```js echo
 const team = view(Inputs.radio(["Metropolis Meteors", "Rockford Peaches", "Bears"], {label: "Favorite team:", value: "Metropolis Meteors"}));
 ```
 
-Thanks to the [`view()` function](#viewelement), the input value can be referenced anywhere on a page to update displays (charts, tables, text, and more) based on user selections or entries. 
-
-Below we reference `team` in an inline expression to update a statement. Select different teams in the radio input above to update the text.
+The `team` variable in this example now reactively updates when the user interacts with the radio input, triggering a new evaluation of the dependent code. Select different teams in the radio input above to update the text.
 
 ```md
 My favorite baseball team is the ${team}!
@@ -20,7 +24,7 @@ My favorite baseball team is the ${team}!
 
 ## view(*element*)
 
-The `view` function displays the given DOM *element* then returns its corresponding value [generator](./generators.md) via [`Generators.input`](../lib/generators#input(element)). Use `view` to display an input while also exposing the input’s value as a [reactive variable](./reactivity). You can reference the input’s value anywhere, and the code will run whenever the input changes.
+The `view` function used above does two things: (1) it displays the given DOM *element*, then (2) returns its corresponding value [generator](./generators.md), using [`Generators.input`](../lib/generators#input(element)) under the hood. Use `view` to display an input while also exposing the input’s value as a [reactive variable](./reactivity). You can reference the input’s value anywhere, and the code will run whenever the input changes.
 
 The `view` function is not limited to Observable Inputs. For example, here is a simple range slider created with [html](../lib/htl):
 
@@ -40,7 +44,11 @@ Plot.plot({
 })
 ```
 
-## Usage
+## Observable Inputs
+
+The [Observable Inputs](../lib/inputs) library implements commonly used inputs — buttons, sliders, dropdowns, tables, and the like — as functions. Each input function returns an HTML element that emits *input* events for compatibility with [`view`](#viewelement) and [Generators.input](../lib/generators#inputelement). 
+
+### Usage
 
 Inputs are generally declared as follows: 
 
@@ -60,7 +68,7 @@ const checkout = view(Inputs.checkbox(["B","A","Z","Z","F","D","G","G","G","Q"],
 checkout
 ```
 
-## Analysis with Observable Inputs
+### Analysis with Observable Inputs
 
 To demonstrate Observable Inputs for data analysis, we’ll use the `olympians` sample dataset containing records on athletes that participated in the 2016 Rio olympics (from [Matt Riggott](https://flother.is/2017/olympic-games-data/)).
 
@@ -143,6 +151,6 @@ const weight = view(Inputs.range(d3.extent(olympians, d => d.weight), {step: 1, 
 Inputs.table(olympians.filter(d => d.weight < weight * 1.1 && weight * 0.9 < d.weight), {sort: "weight", columns})
 ```
 
-## License
+### License
 
 Observable Inputs are released under the [ISC license](https://github.com/observablehq/inputs/blob/main/LICENSE) and depend only on [Hypertext Literal](https://observablehq.com/@observablehq/htl), our tagged template literal for safely generating dynamic HTML. If you are interested in contributing or wish to report an issue, please see [our repository](https://github.com/observablehq/inputs). For recent changes, please see our [release notes](https://github.com/observablehq/inputs/releases).

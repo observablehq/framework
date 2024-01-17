@@ -92,6 +92,30 @@ ${display(1), display(2)}
 ${display(1), display(2)}
 ```
 
+## Responsive display
+
+In Markdown, the built-in `width` reactive variable represents the current width of the main element. This can be a handy thing to pass, say, as the **width** option to [Observable Plot](../lib/plot).
+
+```html echo
+The current width is ${width}.
+```
+
+```js
+import {resize} from "npm:@observablehq/stdlib";
+```
+
+For more control, or in a grid where you want to respond to either width or height changing, use the built-in `resize` helper. This takes a render function which is called whenever the width or height changes; the element returned by the render function is inserted into the DOM.
+
+```html echo
+<div class="grid grid-cols-4">
+  <div class="card">
+    ${resize((width) => html`This card is ${width}px wide.`)}
+  </div>
+</div>
+```
+
+See also [`Generators.width`](../lib/generators#width(element)).
+
 ## display(*value*)
 
 If `value` is a DOM node, adds it to the page. Otherwise, converts the given `value` to a suitable DOM node and displays that instead. Returns the given `value`.
@@ -110,16 +134,4 @@ Inputs.button("Click me", {value: 0, reduce: (i) => displayThere(++i)})
 
 ## view(*element*)
 
-The `view` function displays the given DOM *element* (typically an input) and then returns its corresponding value [generator](./generators) via [`Generators.input`](../lib/generators#input(element)). Use this to display an input while also exposing the input’s value as a [reactive variable](./reactivity). For example, here is a simple HTML slider:
-
-```js echo
-const gain = view(html`<input type=range step=0.1 min=0 max=11 value=5>`);
-```
-
-Now you can reference the input’s value (here `gain`) anywhere. The code will run whenever the input changes; no event listeners required!
-
-```md
-The current gain is ${gain}!
-```
-
-The current gain is ${gain}!
+The [`view` function](./inputs#viewelement) is a special type of display function that inserts the given DOM *element* (typically an input), then returns its corresponding value [generator](./generators) via [`Generators.input`](../lib/generators#input(element)). When the user interacts with the input, this triggers the [reactive evaluation](reactivity) of all the JavaScript code that reference this value.

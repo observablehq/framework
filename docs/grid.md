@@ -4,10 +4,6 @@ theme: dashboard
 ---
 
 ```js
-import {resize} from "npm:@observablehq/dash";
-```
-
-```js
 function AppleStockChart({width}) {
   return Plot.plot({
     title: "Apple stock price",
