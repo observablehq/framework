@@ -63,12 +63,12 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
 }
 
 // For reasons not entirely clear (to me), when we resolve a relative import to
-// a TypeScript file, such as resolving observablehq:stdlib/dash to
-// ./src/client/stdlib/dash.js, Rollup (or rollup-plugin-esbuild?) notices that
-// there is a dash.ts and rewrites the import to dash.ts. But the imported file
-// at runtime won’t be TypeScript and will only exist at dash.js, so here we
-// rewrite the import back to what it was supposed to be. This is a dirty hack
-// but it gets the job done. 🤷 https://github.com/observablehq/cli/issues/478
+// a TypeScript file, such as resolving observablehq:stdlib/foo to
+// ./src/client/stdlib/foo.js, Rollup (or rollup-plugin-esbuild?) notices that
+// there is a foo.ts and rewrites the import to foo.ts. But the imported file at
+// runtime won’t be TypeScript and will only exist at foo.js, so here we rewrite
+// the import back to what it was supposed to be. This is a dirty hack but it
+// gets the job done. 🤷 https://github.com/observablehq/cli/issues/478
 function rewriteTypeScriptImports(code: string): string {
   return code.replace(/(?<=\bimport\(([`'"])[\w./]+)\.ts(?=\1\))/g, ".js");
 }
@@ -91,8 +91,6 @@ async function resolveImport(source: string, specifier: string | AstNode): Promi
     ? {id: relativeUrl(source, getClientPath("./src/client/runtime.js")), external: true}
     : specifier === "npm:@observablehq/stdlib"
     ? {id: relativeUrl(source, getClientPath("./src/client/stdlib.js")), external: true}
-    : specifier === "npm:@observablehq/dash"
-    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/dash.js")), external: true} // TODO publish to npm
     : specifier === "npm:@observablehq/dot"
     ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/dot.js")), external: true} // TODO publish to npm
     : specifier === "npm:@observablehq/duckdb"
