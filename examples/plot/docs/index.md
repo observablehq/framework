@@ -126,7 +126,7 @@ const burndown = issues
   </div>
   <div class="card">
     <h2>Open PRs</h2>
-    <a class="big" href="https://github.com/observablehq/plot/pulls?q=is%3Apr+is%3Aopen+draft%3Afalse"><span style="color: var(--theme-foreground)">${d3.format(",")(d3.sum(issues, (d) => d.pull_request && d.state === "open" && !d.draft))}</span></a>
+    <a class="big" href="https://github.com/observablehq/plot/pulls?q=is%3Apr+is%3Aopen+draft%3Afalse" style="color: inherit;">${d3.format(",")(d3.sum(issues, (d) => d.pull_request && d.state === "open" && !d.draft))}</a>
   </div>
 </div>
 
