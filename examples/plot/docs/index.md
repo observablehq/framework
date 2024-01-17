@@ -45,8 +45,8 @@ const burndown = issues
   <div class="card">
   <h2>Current release</h2>
   <span class="big">${versions.at(-1).version}</span>
-  <a href="https://github.com/observablehq/plot/releases" class="muted">
-    ${((days) => days === 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`)(d3.utcDay.count(versions.at(-1).date, Date.now()))}`}
+  <a href="https://github.com/observablehq/plot/releases">
+      ${((days) => days === 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`)(d3.utcDay.count(versions.at(-1).date, Date.now()))}
   </a>
 </div>
 <div class="card">
