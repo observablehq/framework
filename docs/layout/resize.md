@@ -1,6 +1,6 @@
 # Layout: Resize
 
-The **`resize()`** is a helper function which provides a way to set the size of a chart, or other content, to fit into a container on your page.  To use it, import `resize()`:
+**`resize()`** is a helper function that provides a way to set the size of a chart, or other content, to fit into a container on your page.  To use it, import **`resize()`**:
 
 ```js echo
 import {resize} from "npm:@observablehq/dash";
@@ -19,4 +19,4 @@ html`<div class="grid grid-cols-4" style="grid-auto-rows: 200px;">
 </div>`
 ```
 
-**`resize()`** takes a function, that you provide, which returns content, like a chart.  When the page is rendered **`resize()`** calls your render function with the **width** and, optionally the **height**, of its parent container.  If the page changes size, **`resize()`** calls your function again with the new **width** and **height** values, and re-renders the content to fit in the newly resized page.
+**`resize()`** takes a function that renders content, like a chart.  When the page is rendered **`resize()`** calls the render function with the **width** and, optionally the **height**, of its parent container.  If the page changes size, **`resize()`** calls your function again with the new **width** and **height** values that re-renders the content to fit in the newly resized page.
