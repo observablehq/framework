@@ -1,5 +1,6 @@
-<link rel="preload" as="style" href="styles/dashboard.css">
-<link rel="stylesheet" type="text/css" href="styles/dashboard.css">
+---
+theme: dashboard
+---
 
 ```js
 // Data
@@ -286,31 +287,31 @@ function worldMap(data, {width, height, title, caption}) {
 _Summary of metrics from the [Google Analytics Data API](https://developers.google.com/analytics/devguides/reporting/data/v1/quickstart-client-libraries), pulled on ${date(d3.max(summary, d => d.date))}_
 
 <div class="grid grid-cols-4" style="grid-auto-rows: 165px;">
-  <div class="grid-colspan-1 grid-rowspan-1 bigNumber">
-    ${Dash.resize((width) => BigNumber(`${summary[summary.length-1].active28d.toLocaleString("en-US")}`, {title: "Rolling 28-day Active users", plot: areaChart(summary, {width, metric: 'active28d'}), trend: getCompareValue(summary, 'active28d'), trendFormat: bigNumber}))}
+  <div class="card grid-colspan-1 grid-rowspan-1 bigNumber">
+    ${resize((width) => BigNumber(`${summary[summary.length-1].active28d.toLocaleString("en-US")}`, {title: "Rolling 28-day Active users", plot: areaChart(summary, {width, metric: 'active28d'}), trend: getCompareValue(summary, 'active28d'), trendFormat: bigNumber}))}
   </div>
-    <div class="grid-colspan-1 grid-rowspan-1 bigNumber">
-    ${Dash.resize((width) => BigNumber(`${bigPercent(summary[summary.length-1].engagementRate)}`, {title: "Engagement Rate", plot: lineChart(summary, {width, metric: 'engagementRate'}), trend: getCompareValue(summary, 'engagementRate'), trendFormat: percent}))}
+    <div class="card grid-colspan-1 grid-rowspan-1 bigNumber">
+    ${resize((width) => BigNumber(`${bigPercent(summary[summary.length-1].engagementRate)}`, {title: "Engagement Rate", plot: lineChart(summary, {width, metric: 'engagementRate'}), trend: getCompareValue(summary, 'engagementRate'), trendFormat: percent}))}
   </div>
-  <div class="grid-colspan-1 grid-rowspan-1 bigNumber">
-    ${Dash.resize((width) => BigNumber(`${bigPercent(summary[summary.length-1].wauPerMau)}`, {title: "WAU to MAU ratio", plot: lineChart(summary, {width, metric: 'wauPerMau'}), trend: getCompareValue(summary, 'wauPerMau'), trendFormat: percent}))}
+  <div class="card grid-colspan-1 grid-rowspan-1 bigNumber">
+    ${resize((width) => BigNumber(`${bigPercent(summary[summary.length-1].wauPerMau)}`, {title: "WAU to MAU ratio", plot: lineChart(summary, {width, metric: 'wauPerMau'}), trend: getCompareValue(summary, 'wauPerMau'), trendFormat: percent}))}
   </div>
-    <div class="grid-colspan-1 grid-rowspan-1 bigNumber">
-    ${Dash.resize((width) => BigNumber(`${summary[summary.length-1].engagedSessions.toLocaleString("en-US")}`, {title: "Engaged Sessions", plot: areaChart(summary, {width, metric: 'engagedSessions'}), trend: getCompareValue(summary, 'engagedSessions'), trendFormat: bigNumber}))}
+    <div class="card grid-colspan-1 grid-rowspan-1 bigNumber">
+    ${resize((width) => BigNumber(`${summary[summary.length-1].engagedSessions.toLocaleString("en-US")}`, {title: "Engaged Sessions", plot: areaChart(summary, {width, metric: 'engagedSessions'}), trend: getCompareValue(summary, 'engagedSessions'), trendFormat: bigNumber}))}
   </div>
 </div>
 
 <div class="grid grid-cols-2" style="grid-auto-rows: 140px;">
-  <div class="grid-colspan-1 grid-rowspan-4">
-    ${Dash.resize((width, height) => horizonChart(channels, {width, height, metric:'active28d', title: 'Active users by channel', caption: 'Rolling 28-day active users', format: 's', z: 'channelGroup', color, order: color.domain.slice(1)}))}
+  <div class="card grid-colspan-1 grid-rowspan-4">
+    ${resize((width, height) => horizonChart(channels, {width, height, metric:'active28d', title: 'Active users by channel', caption: 'Rolling 28-day active users', format: 's', z: 'channelGroup', color, order: color.domain.slice(1)}))}
   </div>
-  <div class="grid-colspan-1 grid-rowspan-3">
-    ${Dash.resize((width, height) => worldMap(countryData, {width, height, title: "Active users by country", caption: 'Current rolling 28-day active users by country', lookup: countryLookup}))}
+  <div class="card grid-colspan-1 grid-rowspan-3">
+    ${resize((width, height) => worldMap(countryData, {width, height, title: "Active users by country", caption: 'Current rolling 28-day active users by country', lookup: countryLookup}))}
   </div>
-  <div class="grid-colspan-1 grid-rowspan-3">
-    ${Dash.resize((width, height) => marrimekoChart(filteredChannelBreakdown, {width, height, metric:'active28d', title: 'New vs. returning users by channel', caption: 'Rolling 28-day active users by channel and split by new vs. returning', format: '%', yDim: 'channelGroup', xDim: 'type', color}))}
+  <div class="card grid-colspan-1 grid-rowspan-3">
+    ${resize((width, height) => marrimekoChart(filteredChannelBreakdown, {width, height, metric:'active28d', title: 'New vs. returning users by channel', caption: 'Rolling 28-day active users by channel and split by new vs. returning', format: '%', yDim: 'channelGroup', xDim: 'type', color}))}
   </div>
-  <div class="grid-colspan-1 grid-rowspan-2">
-    ${Dash.resize((width, height) => Punchcard(hourly, {width, height, label: "active users"}))}
+  <div class="card grid-colspan-1 grid-rowspan-2">
+    ${resize((width, height) => Punchcard(hourly, {width, height, label: "active users"}))}
   </div>
 </div>
