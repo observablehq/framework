@@ -1,8 +1,8 @@
 ---
-theme: [deep-space]
+theme: [midnight]
 ---
 
-# deep-space
+# midnight
 This is a preview of how this [theme](./config#theme) will look when used on a project page.
 
 <div class="grid grid-cols-2">

@@ -1,8 +1,8 @@
 ---
-theme: [deep-space]
+theme: [sun-faded]
 ---
 
-# deep-space
+# sun-faded
 This is a preview of how this [theme](./config#theme) will look when used on a project page.
 
 <div class="grid grid-cols-2">
