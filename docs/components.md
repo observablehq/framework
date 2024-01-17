@@ -70,17 +70,19 @@ The [`card`](./layout/card) CSS class has default styles that help create a card
 
 The [`resize`](./javascript/display#responsive-display) function automatically recomputes a DOM element (often, a chart) when the dimensions of its parent container change. 
 
+Resize exists in the Observable standard library, or can be imported explicitly:
+
 ```js
 import {resize} from "npm:@observablehq/stdlib";
 ```
 
 <div>
-    ${resize((width, height) => Plot.barY([9, 4, 8, 1, 11, 3, 4, 2, 7, 5]).plot({width, height}))}
+    ${resize((width) => Plot.barY([9, 4, 8, 1, 11, 3, 4, 2, 7, 5]).plot({width}))}
   </div>
 
 ```html run=false
 <div>
-    ${resize((width, height) => Plot.barY([9, 4, 8, 1, 11, 3, 4, 2, 7, 5]).plot({width, height}))}
+    ${resize((width) => Plot.barY([9, 4, 8, 1, 11, 3, 4, 2, 7, 5]).plot({width}))}
   </div>
 ```
 
