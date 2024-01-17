@@ -106,6 +106,10 @@ const burndown = issues
 )}
 </div>
 
+<style>
+  .big {margin-right: 0.5rem;}
+</style>
+
 <div class="grid grid-cols-4" style="grid-auto-rows: 86px;">
   <div class=card>
     <h2>Open issues</h2>
@@ -121,7 +125,7 @@ const burndown = issues
   </div>
   <div class=card>
     <h2>Open PRs</h2>
-    <a class=big href="https://github.com/observablehq/plot/pulls?q=is%3Apr+is%3Aopen+draft%3Afalse"><span class=muted>${d3.format(",")(d3.sum(issues, (d) => d.pull_request && d.state === "open" && !d.draft))}</span></a>
+    <a class=big href="https://github.com/observablehq/plot/pulls?q=is%3Apr+is%3Aopen+draft%3Afalse"><span style="color: var(--theme-foreground)">${d3.format(",")(d3.sum(issues, (d) => d.pull_request && d.state === "open" && !d.draft))}</span></a>
   </div>
 </div>
 
