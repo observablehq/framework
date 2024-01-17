@@ -1,9 +1,28 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import {isEnoent} from "./error.js";
-import type {Logger} from "./logger.js";
+import {CliError, isEnoent} from "./error.js";
 import {commandRequiresAuthenticationMessage} from "./observableApiAuth.js";
+
+export interface ConfigEffects {
+  readFile: (path: string, encoding: "utf8") => Promise<string>;
+  writeFile: (path: string, contents: string) => Promise<void>;
+  env: typeof process.env;
+  cwd: typeof process.cwd;
+  mkdir: (path: string, options?: {recursive?: boolean}) => Promise<void>;
+  homedir: typeof os.homedir;
+}
+
+const defaultEffects: ConfigEffects = {
+  readFile: (path, encoding) => fs.readFile(path, encoding),
+  writeFile: fs.writeFile,
+  mkdir: async (path, options) => {
+    await fs.mkdir(path, options);
+  },
+  env: process.env,
+  cwd: process.cwd,
+  homedir: os.homedir
+};
 
 const userConfigName = ".observablehq";
 interface UserConfig {
@@ -22,17 +41,16 @@ export type ApiKey =
   | {source: "env"; envVar: string; key: string}
   | {source: "test"; key: string};
 
-export async function getObservableApiKey(logger: Logger = console): Promise<ApiKey> {
+export async function getObservableApiKey(effects: ConfigEffects = defaultEffects): Promise<ApiKey> {
   const envVar = "OBSERVABLE_TOKEN";
-  if (process.env[envVar]) {
-    return {source: "env", envVar, key: process.env[envVar]};
+  if (effects.env[envVar]) {
+    return {source: "env", envVar, key: effects.env[envVar]};
   }
   const {config, configPath} = await loadUserConfig();
   if (config.auth?.key) {
     return {source: "file", filePath: configPath, key: config.auth.key};
   }
-  logger.log(commandRequiresAuthenticationMessage);
-  process.exit(1);
+  throw new CliError(commandRequiresAuthenticationMessage);
 }
 
 export async function setObservableApiKey(info: null | {id: string; key: string}): Promise<void> {
@@ -45,11 +63,14 @@ export async function setObservableApiKey(info: null | {id: string; key: string}
   await writeUserConfig({config, configPath});
 }
 
-export async function getDeployConfig(sourceRoot: string): Promise<DeployConfig | null> {
-  const deployConfigPath = path.join(process.cwd(), sourceRoot, ".observablehq", "deploy.json");
+export async function getDeployConfig(
+  sourceRoot: string,
+  effects: ConfigEffects = defaultEffects
+): Promise<DeployConfig | null> {
+  const deployConfigPath = path.join(effects.cwd(), sourceRoot, ".observablehq", "deploy.json");
   let content: string | null = null;
   try {
-    content = await fs.readFile(deployConfigPath, "utf8");
+    content = await effects.readFile(deployConfigPath, "utf8");
   } catch (error) {
     content = "{}";
   }
@@ -59,41 +80,58 @@ export async function getDeployConfig(sourceRoot: string): Promise<DeployConfig 
   return {projectId};
 }
 
-export async function setDeployConfig(sourceRoot: string, newConfig: DeployConfig): Promise<void> {
-  const dir = path.join(process.cwd(), sourceRoot, ".observablehq");
+export async function setDeployConfig(
+  sourceRoot: string,
+  newConfig: DeployConfig,
+  effects: ConfigEffects = defaultEffects
+): Promise<void> {
+  const dir = path.join(effects.cwd(), sourceRoot, ".observablehq");
   const deployConfigPath = path.join(dir, "deploy.json");
   const oldConfig = (await getDeployConfig(sourceRoot)) || {};
   const merged = {...oldConfig, ...newConfig};
-  await fs.mkdir(dir, {recursive: true});
-  await fs.writeFile(deployConfigPath, JSON.stringify(merged, null, 2) + "\n");
+  await effects.mkdir(dir, {recursive: true});
+  await effects.writeFile(deployConfigPath, JSON.stringify(merged, null, 2) + "\n");
 }
 
-async function loadUserConfig(): Promise<{configPath: string; config: UserConfig}> {
-  let cursor = path.resolve(process.cwd());
-  while (true) {
-    const configPath = path.join(cursor, userConfigName);
-    let content: string | null = null;
-    try {
-      content = await fs.readFile(configPath, "utf8");
-    } catch (error) {
-      if (!isEnoent(error)) throw error;
+export async function loadUserConfig(
+  effects: ConfigEffects = defaultEffects
+): Promise<{configPath: string; config: UserConfig}> {
+  const homeConfigPath = path.join(effects.homedir(), userConfigName);
+
+  function* pathsToTry(): Generator<string> {
+    let cursor = path.resolve(effects.cwd());
+    while (true) {
+      yield path.join(cursor, userConfigName);
       const nextCursor = path.dirname(cursor);
       if (nextCursor === cursor) break;
       cursor = nextCursor;
+    }
+    yield homeConfigPath;
+  }
+
+  for (const configPath of pathsToTry()) {
+    let content: string | null = null;
+    try {
+      content = await effects.readFile(configPath, "utf8");
+    } catch (error) {
+      if (!isEnoent(error)) throw error;
     }
 
     if (content !== null) {
       try {
         return {config: JSON.parse(content), configPath};
-      } catch (err) {
-        console.error(`Problem parsing config file at ${configPath}: ${err}`);
+      } catch (error) {
+        throw new CliError(`Problem parsing config file at ${configPath}: ${error}`, {cause: error});
       }
     }
   }
 
-  return {config: {}, configPath: path.join(os.homedir(), userConfigName)};
+  return {config: {}, configPath: homeConfigPath};
 }
 
-async function writeUserConfig({configPath, config}: {configPath: string; config: UserConfig}): Promise<void> {
-  await fs.writeFile(configPath, JSON.stringify(config, null, 2));
+async function writeUserConfig(
+  {configPath, config}: {configPath: string; config: UserConfig},
+  effects: ConfigEffects = defaultEffects
+): Promise<void> {
+  await effects.writeFile(configPath, JSON.stringify(config, null, 2));
 }
