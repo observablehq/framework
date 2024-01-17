@@ -3,7 +3,6 @@ theme: dashboard
 ---
 
 ```js
-// Data
 const summary = FileAttachment("data/google-analytics-summary.csv").csv({typed: true});
 const hourly = FileAttachment("data/google-analytics-time-of-day.csv").csv({typed: true});
 const channels = FileAttachment("data/google-analytics-channels.csv").csv({typed: true});
@@ -15,7 +14,6 @@ const world = FileAttachment("data/countries-110m.json").json();
 ```js
 // Imports
 import {svg} from "npm:htl";
-import {BigNumber} from "./components/bigNumber.js";
 import {Marimekko} from "./components/marimekko.js";
 ```
 
@@ -59,7 +57,7 @@ function getCompareValue(data, metric) {
 function lineChart(data, {width, height, metric}) {
   return Plot.plot({
     width,
-    height: 97,
+    height: 94,
     axis: null,
     insetTop: 10,
     insetLeft: -15,
@@ -78,11 +76,11 @@ function lineChart(data, {width, height, metric}) {
 function areaChart(data, {width, height, metric}) {
   return Plot.plot({
     width,
-    height: 97,
+    height: 94,
     axis: null,
     insetTop: 10,
     insetLeft: -15,
-    insetRight: -16.5,
+    insetRight: -17,
     marks: [
       Plot.ruleY([0]),
       Plot.areaY(data, {
@@ -276,42 +274,48 @@ function worldMap(data, {width, height, title, caption}) {
 }
 ```
 
-<style>
-.bigNumber {
-  overflow: hidden
-}
-</style>
-
 # Google analytics
 
 _Summary of metrics from the [Google Analytics Data API](https://developers.google.com/analytics/devguides/reporting/data/v1/quickstart-client-libraries), pulled on ${date(d3.max(summary, d => d.date))}_
 
 <div class="grid grid-cols-4" style="grid-auto-rows: 165px;">
-  <div class="card grid-colspan-1 grid-rowspan-1 bigNumber">
-    ${resize((width) => BigNumber(`${summary[summary.length-1].active28d.toLocaleString("en-US")}`, {title: "Rolling 28-day Active users", plot: areaChart(summary, {width, metric: 'active28d'}), trend: getCompareValue(summary, 'active28d'), trendFormat: bigNumber}))}
+  <div class="card">
+    <h2>Rolling 28-day Active users</h2>
+    <span class="big">${summary[summary.length-1].active28d.toLocaleString("en-US")}</span>
+    <span class="small">${((v) => html`<span class="${v > 0 ? "green" : v < 0 ? "red" : ""}">${bigNumber(v)} ${v > 0 ? "↗︎" : v < 0 ? "↘︎" : ""}`)(getCompareValue(summary, 'active28d'))}</span>
+    ${resize((width) => areaChart(summary, {width, metric: 'active28d'}))}
   </div>
-    <div class="card grid-colspan-1 grid-rowspan-1 bigNumber">
-    ${resize((width) => BigNumber(`${bigPercent(summary[summary.length-1].engagementRate)}`, {title: "Engagement Rate", plot: lineChart(summary, {width, metric: 'engagementRate'}), trend: getCompareValue(summary, 'engagementRate'), trendFormat: percent}))}
+  <div class="card">
+    <h2>Engagement Rate</h2>
+    <span class="big">${bigPercent(summary[summary.length-1].engagementRate)}</span>
+    <span class="small">${((v) => html`<span class="${v > 0 ? "green" : v < 0 ? "red" : ""}">${percent(v)} ${v > 0 ? "↗︎" : v < 0 ? "↘︎" : ""}`)(getCompareValue(summary, 'engagementRate'))}</span>
+    ${resize((width) => lineChart(summary, {width, metric: 'engagementRate'}))}
   </div>
-  <div class="card grid-colspan-1 grid-rowspan-1 bigNumber">
-    ${resize((width) => BigNumber(`${bigPercent(summary[summary.length-1].wauPerMau)}`, {title: "WAU to MAU ratio", plot: lineChart(summary, {width, metric: 'wauPerMau'}), trend: getCompareValue(summary, 'wauPerMau'), trendFormat: percent}))}
+  <div class="card">
+    <h2>WAU to MAU ratio</h2>
+    <span class="big">${bigPercent(summary[summary.length-1].wauPerMau)}</span>
+    <span class="small">${((v) => html`<span class="${v > 0 ? "green" : v < 0 ? "red" : ""}">${percent(v)} ${v > 0 ? "↗︎" : v < 0 ? "↘︎" : ""}`)(getCompareValue(summary, 'wauPerMau'))}</span>
+    ${resize((width) => lineChart(summary, {width, metric: 'wauPerMau'}))}
   </div>
-    <div class="card grid-colspan-1 grid-rowspan-1 bigNumber">
-    ${resize((width) => BigNumber(`${summary[summary.length-1].engagedSessions.toLocaleString("en-US")}`, {title: "Engaged Sessions", plot: areaChart(summary, {width, metric: 'engagedSessions'}), trend: getCompareValue(summary, 'engagedSessions'), trendFormat: bigNumber}))}
+  <div class="card">
+    <h2>Engaged Sessions</h2>
+    <span class="big">${summary[summary.length-1].engagedSessions.toLocaleString("en-US")}</span>
+    <span class="small">${((v) => html`<span class="${v > 0 ? "green" : v < 0 ? "red" : ""}">${bigNumber(v)} ${v > 0 ? "↗︎" : v < 0 ? "↘︎" : ""}`)(getCompareValue(summary, 'engagedSessions'))}</span>
+    ${resize((width) => areaChart(summary, {width, metric: 'engagedSessions'}))}
   </div>
 </div>
 
 <div class="grid grid-cols-2" style="grid-auto-rows: 140px;">
-  <div class="card grid-colspan-1 grid-rowspan-4">
+  <div class="card grid-rowspan-4">
     ${resize((width, height) => horizonChart(channels, {width, height, metric:'active28d', title: 'Active users by channel', caption: 'Rolling 28-day active users', format: 's', z: 'channelGroup', color, order: color.domain.slice(1)}))}
   </div>
-  <div class="card grid-colspan-1 grid-rowspan-3">
+  <div class="card grid-rowspan-2">
     ${resize((width, height) => worldMap(countryData, {width, height, title: "Active users by country", caption: 'Current rolling 28-day active users by country', lookup: countryLookup}))}
   </div>
-  <div class="card grid-colspan-1 grid-rowspan-3">
-    ${resize((width, height) => marrimekoChart(filteredChannelBreakdown, {width, height, metric:'active28d', title: 'New vs. returning users by channel', caption: 'Rolling 28-day active users by channel and split by new vs. returning', format: '%', yDim: 'channelGroup', xDim: 'type', color}))}
+  <div class="card grid-rowspan-4">
+    ${resize((width, height) => marrimekoChart(filteredChannelBreakdown, {width, height: height - 12, metric:'active28d', title: 'New vs. returning users by channel', caption: 'Rolling 28-day active users by channel and split by new vs. returning', format: '%', yDim: 'channelGroup', xDim: 'type', color}))}
   </div>
-  <div class="card grid-colspan-1 grid-rowspan-2">
+  <div class="card grid-rowspan-2">
     ${resize((width, height) => Punchcard(hourly, {width, height, label: "active users"}))}
   </div>
 </div>
