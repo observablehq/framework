@@ -16,6 +16,7 @@ export default {
         {name: "Imports", path: "/javascript/imports"},
         {name: "Files", path: "/javascript/files"},
         {name: "Promises", path: "/javascript/promises"},
+        {name: "Inputs", path: "/javascript/inputs"},
         {name: "Generators", path: "/javascript/generators"},
         {name: "Mutables", path: "/javascript/mutables"},
       ]
@@ -89,6 +90,7 @@ export default {
         {name: "SQLite", path: "/lib/sqlite"},
         {name: "TeX", path: "/lib/tex"},
         {name: "TopoJSON", path: "/lib/topojson"},
+        {name: "Vega-Lite", path: "/lib/vega-lite"},
         {name: "ZIP", path: "/lib/zip"},
       ]
     },

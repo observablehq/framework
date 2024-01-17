@@ -1,14 +1,10 @@
 # Table input
 
-[TODO] check if removing Hello, Inputs okay.
+[API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#table)
 
-A Table displays tabular data. It’s fast: rows are rendered lazily on scroll. It sorts: click a header to sort, and click again to reverse. And it selects: click a checkbox on any row, and the selected rows are exported as a view value. (And for searching, see the [Search input](./search).) 
+The table input displays tabular data. It’s fast: rows are rendered lazily on scroll. It sorts: click a header to sort, and click again to reverse. And it selects: click a checkbox on any row, and the selected rows are exported as a view value. (And for searching, see the [search input](./search).) 
 
 By default, all columns are visible. Only the first dozen rows are initially visible, but you can scroll to see more. Column headers are fixed for readability.
-
-```js echo
-const penguins = FileAttachment("penguins.csv").csv({typed: true});
-```
 
 ```js echo
 Inputs.table(penguins)
@@ -51,9 +47,7 @@ dataset, for example. Undefined values go to the end.
 Inputs.table(penguins, {sort: "body_mass_g", reverse: true})
 ```
 
-[TODO] these use view() instead of viewof operator. Is update below correct? Just changes "using the viewof operator" to "using the view function" (and do we need to update intro to views in docs?)
-
-Tables are [view-compatible](https://observablehq.com/@observablehq/views): using the
+Tables are [view-compatible](../javascript/inputs#viewelement): using the
 view function, you can use a table to select rows and refer to them from other
 cells, say to chart a subset of the data. Click the checkbox on the left edge of
 a row to select it, and click the checkbox in the header row to clear the
@@ -71,15 +65,15 @@ The _required_ option determines the selection when no items are selected from
 the table. If it is true (default), the selection contains the full dataset.
 Otherwise, the selection is empty.
 
-The table component assumes that all values in a given column are the same type,
+The table input assumes that all values in a given column are the same type,
 and chooses a suitable formatter based on the first non-null value in each
 column.
 
 - Numbers are formatted using
   [_number_.toLocaleString](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/toLocaleString);
 - Dates are formatted in [ISO8601](https://en.wikipedia.org/wiki/ISO_8601);
-- undefined and NaN values are empty;
-- everything else is displayed as-is.
+- Undefined and NaN values are empty;
+- Everything else is displayed as-is.
 
 To override the default formatting, pass _format_ options for the desired
 columns.
@@ -124,7 +118,7 @@ function sparkbar(max) {
 ```
 
 There’s a similar _width_ option if you want to give certain columns specific
-widths. The table component defaults to a fixed _layout_ if there are twelve or
+widths. The table input defaults to a fixed _layout_ if there are twelve or
 fewer columns; this improves performance and avoids reflow when scrolling.
 
 You can switch _layout_ to auto if you prefer sizing columns based on content.
@@ -171,24 +165,22 @@ array of references to the actual objects in your data.
 
 For example, to preselect the first two items, you could write:
 
-[TODO] eval: false option for JS code below?
-
-```js echo
-// { value: penguins.slice(0, 2)}
+```js echo run=false
+{ value: penguins.slice(0, 2)}
 ```
 
 or, if you just want to preselect the rows 1, 3, 7 and 9:
 
-```js echo
-// { value: penguins.filter((_,i)=>  [1, 3, 7, 9].includes(i))}
+```js echo run=false
+{ value: penguins.filter((_,i)=>  [1, 3, 7, 9].includes(i))}
 ```
 
 The _multiple_ option allows multiple rows to be selected (defaults to true).
 When false, only one row can be selected. To set the initial value in that case,
 just reference the preselected object:
 
-```js echo
-// { multiple: false, value: penguins[4] }
+```js echo run=false
+{ multiple: false, value: penguins[4] }
 ```
 
 ```js echo
@@ -199,3 +191,27 @@ Inputs.table(penguins, {
 ```
 
 Thanks to [Ilyá Belsky](https://observablehq.com/@oluckyman) and [Brett Cooper](https://observablehq.com/@hellonearthis) for suggestions.
+
+## Options
+
+**Inputs.table(*data*, *options*)**
+
+The available table input options are:
+
+* *columns* - the columns (property names) to show; defaults to *data*.columns.
+* *value* - a subset of *data* to use as the initial selection (checked rows), or a *data* item if *multiple* is false.
+* *rows* - the maximum number of rows to show; defaults to 11.5.
+* *sort* - the column to sort by; defaults to null (input order).
+* *reverse* - whether to reverse the initial sort (descending instead of ascending).
+* *format* - an object of column name to format function.
+* *align* - an object of column name to “left”, “right”, or “center”.
+* *header* - an object of column name to corresponding header; either a string or HTML element.
+* *width* - the table width, or an object of column name to width.
+* *maxWidth* - the maximum table width, if any.
+* *height* - the fixed table height, if any.
+* *maxHeight* - the maximum table height, if any; defaults to (*rows* + 1) * 22 - 1.
+* *layout* - the [table layout](https://developer.mozilla.org/en-US/docs/Web/CSS/table-layout); defaults to fixed for ≤12 columns.
+* *required* - if true, the table’s value is all *data* if no selection; defaults to true.
+* *multiple* - if true, allow multiple rows to be selected; defaults to true.
+
+If *width* is “auto”, the table width will be based on the table contents; note that this may cause the table to resize as rows are lazily rendered.

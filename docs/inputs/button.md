@@ -1,6 +1,8 @@
 # Button input
 
-A Button emits an *input* event when you click it. Buttons may be used to trigger the evaluation of cells, say to restart an animation.
+[API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#button)
+
+The button input emits an *input* event when you click it. Buttons may be used to trigger the evaluation of cells, say to restart an animation.
 
 For example, below is an animation (using [yield](../javascript/generators)) that progressively hides a bar.
 
@@ -81,13 +83,13 @@ const counter = view(Inputs.button([
 counter
 ```
 
-The first argument to Button is the contents of the button. It’s not required, but it’s strongly encouraged.
+The first argument to `Inputs.button()` is the contents of the button. It’s not required, but it’s strongly encouraged.
 
 ```js echo
 const x = view(Inputs.button());
 ```
 
-The contents of the Button can be an HTML element if desired, say for control over typography.
+The contents of the button input can be an HTML element if desired, say for control over typography.
 
 ```js echo
 const y = view(Inputs.button(html`<i>Fancy</i>`));
@@ -100,6 +102,7 @@ const confirm = view(Inputs.button("OK", {label: "Continue?"}));
 ```
 
 You can change the rendered text in Markdown based on whether a button is clicked. Try clicking the `OK` button with the  `Continue?` label.
+
 ```md echo run=false
 confirm ? "Confirmed!" : "Awaiting confirmation..."
 ```
@@ -111,3 +114,16 @@ You can also use a button to copy something to the clipboard.
 ```js echo
 Inputs.button("Copy to clipboard", {value: null, reduce: () => navigator.clipboard.writeText(time)})
 ```
+
+## Options
+
+**Inputs.button(*content*, *options*)**
+
+The available button input options are:
+
+* *label* - a label; either a string or an HTML element.
+* *required* - if true, the initial value defaults to undefined.
+* *value* - the initial value; defaults to 0 or null if *required* is false.
+* *reduce* - a function to update the value on click; by default returns *value* + 1.
+* *width* - the width of the input (not including the label).
+* *disabled* - whether input is disabled; defaults to false.

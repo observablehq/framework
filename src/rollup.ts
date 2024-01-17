@@ -1,35 +1,17 @@
-/* eslint-disable import/order */
-import {existsSync} from "node:fs";
-import {dirname, join, relative} from "node:path";
-import {cwd} from "node:process";
-import {fileURLToPath} from "node:url";
+import {nodeResolve} from "@rollup/plugin-node-resolve";
 import {type CallExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
-import {nodeResolve} from "@rollup/plugin-node-resolve";
+import {getClientPath} from "./files.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
 import {isPathImport, resolveNpmImport} from "./javascript/imports.js";
-import {getObservableUiHost} from "./observableApiClient.js";
+import {getObservableUiOrigin} from "./observableApiClient.js";
 import {Sourcemap} from "./sourcemap.js";
+import {THEMES, renderTheme} from "./theme.js";
 import {relativeUrl} from "./url.js";
-
-interface Theme {
-  name: string;
-  path: string;
-  light?: boolean;
-  dark?: boolean;
-}
-
-const THEMES: Theme[] = [
-  {name: "dark", path: getClientPath("./src/style/theme-dark.css"), dark: true},
-  {name: "dark-alt", path: getClientPath("./src/style/theme-dark-alt.css"), dark: true},
-  {name: "light", path: getClientPath("./src/style/theme-light.css"), light: true},
-  {name: "light-alt", path: getClientPath("./src/style/theme-light-alt.css"), light: true},
-  {name: "wide", path: getClientPath("./src/style/theme-wide.css")}
-];
 
 const STYLE_MODULES = {
   "observablehq:default.css": getClientPath("./src/style/default.css"),
@@ -38,28 +20,6 @@ const STYLE_MODULES = {
 
 function rewriteInputsNamespace(code: string) {
   return code.replace(/\b__ns__\b/g, "inputs-3a86ea");
-}
-
-function renderTheme(names: string[]): string {
-  const lines = ['@import url("observablehq:default.css");'];
-  let hasLight = false;
-  let hasDark = false;
-  for (const name of names) {
-    const theme = THEMES.find((t) => t.name === name);
-    if (!theme) throw new Error(`invalid theme: ${theme}`);
-    lines.push(
-      `@import url(${JSON.stringify(`observablehq:theme-${theme.name}.css`)})${
-        theme.dark && !theme.light && hasLight // a dark-only theme preceded by a light theme
-          ? " (prefers-color-scheme: dark)"
-          : theme.light && !theme.dark && hasDark // a light-only theme preceded by a dark theme
-          ? " (prefers-color-scheme: light)"
-          : ""
-      };`
-    );
-    if (theme.light) hasLight = true;
-    if (theme.dark) hasDark = true;
-  }
-  return lines.join("\n");
 }
 
 export async function bundleStyles({path, theme}: {path?: string; theme?: string[]}): Promise<string> {
@@ -85,7 +45,7 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
         exclude: [], // don’t exclude node_modules
         minify,
         define: {
-          "process.env.OBSERVABLE_ORIGIN": JSON.stringify(String(getObservableUiHost()).replace(/\/$/, ""))
+          "process.env.OBSERVABLE_ORIGIN": JSON.stringify(String(getObservableUiOrigin()).replace(/\/$/, ""))
         }
       }),
       importMetaResolve()
@@ -93,11 +53,24 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
   });
   try {
     const output = await bundle.generate({format: "es"});
-    const code = output.output.find((o): o is OutputChunk => o.type === "chunk")!.code; // TODO don’t assume one chunk?
-    return rewriteInputsNamespace(code); // TODO only for inputs
+    let code = output.output.find((o): o is OutputChunk => o.type === "chunk")!.code; // TODO don’t assume one chunk?
+    code = rewriteTypeScriptImports(code);
+    code = rewriteInputsNamespace(code); // TODO only for inputs
+    return code;
   } finally {
     await bundle.close();
   }
+}
+
+// For reasons not entirely clear (to me), when we resolve a relative import to
+// a TypeScript file, such as resolving observablehq:stdlib/foo to
+// ./src/client/stdlib/foo.js, Rollup (or rollup-plugin-esbuild?) notices that
+// there is a foo.ts and rewrites the import to foo.ts. But the imported file at
+// runtime won’t be TypeScript and will only exist at foo.js, so here we rewrite
+// the import back to what it was supposed to be. This is a dirty hack but it
+// gets the job done. 🤷 https://github.com/observablehq/cli/issues/478
+function rewriteTypeScriptImports(code: string): string {
+  return code.replace(/(?<=\bimport\(([`'"])[\w./]+)\.ts(?=\1\))/g, ".js");
 }
 
 function importResolve(clientPath: string): Plugin {
@@ -118,8 +91,6 @@ async function resolveImport(source: string, specifier: string | AstNode): Promi
     ? {id: relativeUrl(source, getClientPath("./src/client/runtime.js")), external: true}
     : specifier === "npm:@observablehq/stdlib"
     ? {id: relativeUrl(source, getClientPath("./src/client/stdlib.js")), external: true}
-    : specifier === "npm:@observablehq/dash"
-    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/dash.js")), external: true} // TODO publish to npm
     : specifier === "npm:@observablehq/dot"
     ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/dot.js")), external: true} // TODO publish to npm
     : specifier === "npm:@observablehq/duckdb"
@@ -179,13 +150,4 @@ function importMetaResolve(): Plugin {
       return {code: String(output)};
     }
   };
-}
-
-export function getClientPath(entry: string): string {
-  const path = relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), "..", entry));
-  if (path.endsWith(".js") && !existsSync(path)) {
-    const tspath = path.slice(0, -".js".length) + ".ts";
-    if (existsSync(tspath)) return tspath;
-  }
-  return path;
 }

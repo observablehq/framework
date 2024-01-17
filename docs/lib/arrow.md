@@ -35,7 +35,7 @@ Plot.plot({
     label: "Flights (thousands)"
   },
   marks: [
-    Plot.rectY(flights, Plot.binX({y: "count"}, {x: "delay", interval: 5, fill: "var(--observablehq-blue)"})),
+    Plot.rectY(flights, Plot.binX({y: "count"}, {x: "delay", interval: 5, fill: "var(--theme-blue)"})),
     Plot.ruleY([0])
   ]
 })

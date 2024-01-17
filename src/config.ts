@@ -2,6 +2,7 @@ import {readFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path";
 import {visitFiles} from "./files.js";
 import {parseMarkdown} from "./markdown.js";
+import {resolveTheme} from "./theme.js";
 import {resolvePath} from "./url.js";
 
 export interface Page {
@@ -70,7 +71,7 @@ async function readPages(root: string): Promise<Page[]> {
 const DEFAULT_FOOTER = 'Built with <a href="https://observablehq.com/" target=_blank>Observable</a>';
 
 export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Promise<Config> {
-  let {root = defaultRoot, output = "dist", style, theme = ["light", "dark"], deploy, footer = DEFAULT_FOOTER} = spec;
+  let {root = defaultRoot, output = "dist", style, theme = "default", deploy, footer = DEFAULT_FOOTER} = spec;
   root = String(root);
   output = String(output);
   if (style === null) style = null;
@@ -82,12 +83,12 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   pager = Boolean(pager);
   footer = String(footer);
   toc = normalizeToc(toc);
-  deploy = deploy ? {workspace: String(deploy.workspace), project: String(deploy.project)} : null;
+  deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
   return {root, output, title, pages, pager, footer, toc, style, deploy};
 }
 
 function normalizeTheme(spec: any): string[] {
-  return typeof spec === "string" ? [spec] : spec === null ? [] : Array.from(spec, String);
+  return resolveTheme(typeof spec === "string" ? [spec] : spec === null ? [] : Array.from(spec, String));
 }
 
 function normalizePageOrSection(spec: any): Page | Section {

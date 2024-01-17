@@ -6,17 +6,9 @@
 import * as Plot from "npm:@observablehq/plot";
 ```
 
-To display a chart in Markdown, call `Plot.plot` in a JavaScript expression code block:
+To display a chart, call `Plot.plot` or `mark.plot` like so:
 
-````md
-```js
-Plot.rectY(alphabet, {x: "letter", y: "frequency"}).plot()
-```
-````
-
-This produces:
-
-```js
+```js echo
 Plot.rectY(alphabet, {x: "letter", y: "frequency"}).plot()
 ```
 
@@ -31,9 +23,9 @@ const chart = Plot.voronoi(x, {x, y, fill: x}).plot({nice: true});
 display(chart);
 ```
 
-Or, to include a ${Plot.lineY([1, 2, 0, 4, 0, 3, 1, 5, 7, 2, 3]).plot({axis: null, width: 80, height: 18})} sparkline in your text — or bars ${Plot.barY([1, 2, 4, 3, 1, 5], {fill: Plot.identity}).plot({axis: null, width: 80, height: 18})} — just call:
+To include a ${Plot.lineY([1, 2, 0, 4, 0, 3, 1, 5, 7, 2, 3]).plot({axis: null, width: 80, height: 18})} sparkline in your text — or dots ${Plot.dotX("abcdef", {r: 5, fill: Plot.identity}).plot({axis: null, width: 80, height: 12})} — say:
 
 ```md
 … include a ${Plot.lineY([1, 2, 0, 4, 0, 3, 1, 5, 7, 2, 3]).plot({axis: null, width: 80, height: 18})} sparkline…
-… bars ${Plot.lineY([1, 2, 4, 3, 1, 5], {fill: Plot.identity}).plot({axis: null, width: 80, height: 18})} — just…
+… dots ${Plot.dotX("abcdef", {r: 5, fill: Plot.identity}).plot({axis: null, width: 80, height: 12})} — say…
 ```

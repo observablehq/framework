@@ -1,8 +1,10 @@
 # Text input
 
-The Text input allows freeform single-line text entry. (For multiple lines, see [Textarea](./textarea)).
+[API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#text)
 
-In its most basic form, a Text is a blank box whose value is the empty string. The Text’s value changes as the user types into the box.
+The text input allows freeform single-line text entry. (For multiple lines, see the [text area](./textarea)) input.
+
+In its most basic form, a text input is a blank box whose value is the empty string. The text’s value changes as the user types into the box.
 
 ```js echo
 const text = view(Inputs.text());
@@ -28,10 +30,6 @@ The *label* may be either a text string or an HTML element, if more control over
 const signature = view(Inputs.text({label: html`<b>Fancy</b>`, placeholder: "What’s your fancy?"}));
 ```
 
-```js echo
-signature
-```
-
 For specific classes of text, such as email addresses and telephone numbers, you can supply one of the [HTML5 input types](https://developer.mozilla.org/en-US/docs/Learn/Forms/HTML5_input_types), such as email, tel (for a telephone number), or url, as the *type* option. Or, use a convenience method: Inputs.email, Inputs.password, Inputs.tel, or Inputs.url.
 
 ```js echo
@@ -48,13 +46,15 @@ The HTML5 *pattern*, *spellcheck*, *minlength*, and *maxlength* options are also
 const email = view(Inputs.text({type: "email", label: "Email", placeholder: "Enter your email"}));
 ```
 
-[TODO] fix below (had viewof operator before email.checkValidity(), not sure how to update)
+<!-- [TODO] fix below (had viewof operator before email.checkValidity(), not sure how to update)
 
 ```js echo
-//[email, email.checkValidity()]
+[email,email.checkValidity()]
 ```
 
-If the input will trigger some expensive calculation, such as fetching from a remote server, the *submit* option can be used to defer the Text from reporting the new value until the user clicks the Submit button or hits Enter. The value of *submit* can also be the desired contents of the submit button (a string or HTML).
+-->
+
+If the input will trigger some expensive calculation, such as fetching from a remote server, the *submit* option can be used to defer the text input from reporting the new value until the user clicks the Submit button or hits Enter. The value of *submit* can also be the desired contents of the submit button (a string or HTML).
 
 ```js echo
 const query = view(Inputs.text({label: "Query", placeholder: "Search", submit: true}));
@@ -82,7 +82,7 @@ const state = view(Inputs.text({
 state
 ```
 
-To prevent a Text’s value from being changed, use the *disabled* option.
+To prevent a text input’s value from being changed, use the *disabled* option.
 
 ```js echo
 const fixed = view(Inputs.text({label: "Fixed value", value: "Can’t edit me!", disabled: true}));
@@ -91,3 +91,31 @@ const fixed = view(Inputs.text({label: "Fixed value", value: "Can’t edit me!",
 ```js echo
 fixed
 ```
+
+## Options
+
+**Inputs.text(*options*)**
+
+The available text input options are:
+
+* *label* - a label; either a string or an HTML element.
+* *type* - the [input type](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#input_types), such as “password” or “email”; defaults to “text”.
+* *value* - the initial value; defaults to the empty string.
+* *placeholder* - the [placeholder](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/placeholder) attribute.
+* *spellcheck* - whether to activate the browser’s spell-checker.
+* *autocomplete* - the [autocomplete](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/autocomplete) attribute, as text or boolean (true for on, false for off).
+* *autocapitalize* - the [autocapitalize](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/autocapitalize) attribute, as text or boolean (true for on, false for off).
+* *pattern* - the [pattern](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/pattern) attribute.
+* *minlength* - [minimum length](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/minlength) attribute.
+* *maxlength* - [maximum length](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/maxlength) attribute.
+* *min* - [minimum value](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/min) attribute; formatted appropriately, *e.g.* yyyy-mm-dd for the date type.
+* *max* - [maximum value](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/max) attribute.
+* *required* - if true, the input must be non-empty; defaults to *minlength* > 0.
+* *validate* - a function to check whether the text input is valid.
+* *width* - the width of the input (not including the label).
+* *submit* - whether to require explicit submission before updating; defaults to false.
+* *datalist* - an iterable of suggested values.
+* *readonly* - whether input is readonly; defaults to false.
+* *disabled* - whether input is disabled; defaults to false.
+
+If *validate* is not defined, [*text*.checkValidity](https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#dom-cva-checkvalidity) is used. While the input is not considered valid, changes to the input will not be reported.

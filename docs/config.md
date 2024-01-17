@@ -29,20 +29,43 @@ The path to the output root; defaults to `dist`.
 
 ## theme
 
-The theme names, if any; defaults to `[light, dark]`. Themes affect the visual appearance of pages by specifying colors and fonts, or by augmenting default styles. The theme option is a convenient shorthand alternative to specifying a [custom stylesheet](#style).
+The theme names, if any; defaults to `default`. [Themes](./themes) affect the visual appearance of pages by specifying colors and fonts, or by augmenting default styles. The theme option is a convenient shorthand alternative to specifying a [custom stylesheet](#style).
 
-The current built-in themes are:
+The built-in light-mode color themes are:
 
-- `light` (default) - a white background with dark text
-- `light-alt` - a light gray background with dark text
-- `dark` (default) - a dark gray background with light text
-- `dark-alt` - a very dark gray background with light text
-- `wide` - a full-width main column
+- `air` (default)
+- `cotton`
+- `glacier`
+- `parchment`
+
+The built-in dark-mode color themes are:
+
+- `coffee`
+- `deep-space`
+- `ink`
+- `midnight`
+- `near-midnight` (default)
+- `ocean-floor`
+- `slate`
+- `stark`
+- `sun-faded`
+
+In addition, some themes are intended to compose with the above color themes:
+
+- `alt` - swap the page and card background colors
+- `wide` - make the main column full-width
+
+There are also special aliases:
+
+- `default` - either `light` or `dark` depending on user preference
+- `dashboard` - `[light, dark]` if needed, plus `alt` and `wide`
+- `light` - an alias for `air`
+- `dark` - an alias for `near-midnight`
 
 You can combine themes like so:
 
 ```js run=false
-theme: ["light-alt", "dark-alt", "wide"]
+theme: ["glacier", "slate"]
 ```
 
 When combining a light and dark theme, the dark theme will be applied depending on [user preference](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme).
@@ -51,7 +74,7 @@ A theme can be applied to an individual page via the [front matter](./markdown.m
 
 ```yaml
 ---
-theme: [light-alt, dark-alt, wide]
+theme: [glacier, slate]
 ---
 ```
 
@@ -59,11 +82,11 @@ theme: [light-alt, dark-alt, wide]
 
 The path to a custom stylesheet, relative to the source root. This option takes precedence over the [theme option](#theme) (if any), providing more control by allowing you to remove or alter the default stylesheet and define a custom theme.
 
-The custom stylesheet should typically import `observablehq:default.css` to build on the default styles. You can also import any of the built-in themes. For example, to create a stylesheet that builds up on the `light` theme, create a `custom-style.css` file in the `docs` folder, then set the style option to `custom-style.css`:
+The custom stylesheet should typically import `observablehq:default.css` to build on the default styles. You can also import any of the built-in themes. For example, to create a stylesheet that builds up on the `air` theme, create a `custom-style.css` file in the `docs` folder, then set the style option to `custom-style.css`:
 
 ```css
 @import url("observablehq:default.css");
-@import url("observablehq:theme-light.css");
+@import url("observablehq:theme-air.css");
 
 :root {
   --theme-foreground-focus: green;
@@ -153,4 +176,27 @@ The table of contents configuration can also be set in the page’s YAML front m
 ---
 toc: false
 ---
+```
+
+## deploy
+
+Configuration for deploying your project to Observable Cloud.
+
+Specifies the target Observable **workspace** (without @ symbol) and the unique **project** URL (or "slug", similar to setting the URL for an Observable notebook).
+
+The following TypeScript interface describes this option:
+
+```ts run=false
+export interface Deploy {
+  workspace: string;
+  project: string;
+}
+```
+
+E.g.,
+```ts run=false
+deploy: {
+  workspace: "my-observablehq-workspace",
+  project: "my-project-slug"
+},
 ```

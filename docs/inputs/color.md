@@ -1,6 +1,8 @@
 # Color input
 
-The Color input specifies an RGB color as a hexadecimal string `#rrggbb`. The initial value defaults to black (`#000000`) and can be specified with the *value* option.
+[API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#color)
+
+The color input specifies an RGB color as a hexadecimal string `#rrggbb`. The initial value defaults to black (`#000000`) and can be specified with the *value* option.
 
 ```js echo
 const color = view(Inputs.color({label: "Favorite color", value: "#4682b4"}));
@@ -18,7 +20,7 @@ const fill = view(Inputs.color({label: "Fill", value: d3.color("steelblue").form
 
 If you specify the *datalist* option as an array of hexadecimal color strings, the color picker will show this set of colors for convenient picking. (The user will still be allowed to pick another color, however; if you want to limit the choice to a specific set, then a radio or select input may be more appropriate.)
 
-[TODO] update to the new Observable color palette?
+<!-- [TODO] update to the new Observable10 color palette? -->
 
 ```js echo
 const stroke = view(Inputs.color({label: "Stroke", datalist: d3.schemeTableau10}));
@@ -37,3 +39,9 @@ const disabled = view(Inputs.color({label: "Disabled", value: "#f28e2c", disable
 ```js echo
 disabled
 ```
+
+## Options
+
+**Inputs.color(*options*)**
+
+Like [Inputs.text](./text), but where *type* is color. The color value is represented as an RGB hexadecimal string such as #ff00ff. This type of input does not support the following options: *placeholder*, *pattern*, *spellcheck*, *autocomplete*, *autocapitalize*, *min*, *max*, *minlength*, *maxlength*.

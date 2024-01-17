@@ -1,6 +1,7 @@
 import {parseHTML} from "linkedom";
 import type {Config, Page, Section} from "./config.js";
 import {mergeToc} from "./config.js";
+import {getClientPath} from "./files.js";
 import {type Html, html} from "./html.js";
 import type {ImportResolver} from "./javascript/imports.js";
 import {createImportResolver, resolveModuleIntegrity, resolveModulePreloads} from "./javascript/imports.js";
@@ -9,7 +10,7 @@ import {addImplicitSpecifiers, addImplicitStylesheets} from "./libraries.js";
 import {type ParseResult, parseMarkdown} from "./markdown.js";
 import {type PageLink, findLink, normalizePath} from "./pager.js";
 import {getPreviewStylesheet} from "./preview.js";
-import {getClientPath, rollupClient} from "./rollup.js";
+import {rollupClient} from "./rollup.js";
 import {relativeUrl} from "./url.js";
 
 export interface Render {
@@ -206,7 +207,7 @@ async function renderLinks(
   }`;
 }
 
-function resolveStylesheet(path: string, href: string): string {
+export function resolveStylesheet(path: string, href: string): string {
   return href.startsWith("observablehq:")
     ? relativeUrl(path, `/_observablehq/${href.slice("observablehq:".length)}`)
     : href;

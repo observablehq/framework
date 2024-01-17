@@ -1,8 +1,10 @@
 # Range input
 
-A Range input specifies a number between the given *min* and *max* (inclusive). This number can be adjusted roughly by sliding, or precisely by typing. A range input is also known as a slider.
+[API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#range)
 
-By default, a Range chooses a floating point number between 0 and 1 with full precision, which is often more precision than desired.
+The range input specifies a number between the given *min* and *max* (inclusive). This number can be adjusted roughly by sliding, or precisely by typing. A range input is also known as a slider.
+
+By default, a range chooses a floating point number between 0 and 1 with full precision, which is often more precision than desired.
 
 ```js echo
 const x = view(Inputs.range());
@@ -84,7 +86,7 @@ const f = view(Inputs.range([0, 1], {format: x => x.toFixed(2)}));
 f
 ```
 
-To prevent a Range’s value from being changed, use the *disabled* option.
+To prevent a range’s value from being changed, use the *disabled* option.
 
 ```js echo
 const d = view(Inputs.range([0, 1], {disabled: true}));
@@ -93,3 +95,28 @@ const d = view(Inputs.range([0, 1], {disabled: true}));
 ```js echo
 d
 ```
+
+## Options
+
+**Inputs.range(*extent*, *options*)**
+
+The available range input options are:
+
+* *label* - a label; either a string or an HTML element.
+* *step* - the step (precision); the interval between adjacent values.
+* *format* - a format function; defaults to [formatTrim](https://github.com/observablehq/inputs?tab=readme-ov-file#formatTrim).
+* *placeholder* - a placeholder string for when the input is empty.
+* *transform* - an optional non-linear transform.
+* *invert* - the inverse transform.
+* *validate* - a function to check whether the number input is valid.
+* *value* - the initial value; defaults to (*min* + *max*) / 2.
+* *width* - the width of the input (not including the label).
+* *disabled* - whether input is disabled; defaults to false.
+
+The given *value* is clamped to the given extent, and rounded if *step* is defined. However, note that the *min*, *max* and *step* options affect only the slider behavior, the number input’s buttons, and whether the browser shows a warning if a typed number is invalid; they do not constrain the typed number.
+
+If *validate* is not defined, [*number*.checkValidity](https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#dom-cva-checkvalidity) is used. While the input is not considered valid, changes to the input will not be reported.
+
+The *format* function should return a string value that is compatible with native number parsing. Hence, the default [formatTrim](https://github.com/observablehq/inputs?tab=readme-ov-file#formatTrim) is recommended.
+
+If a *transform* function is specified, an inverse transform function *invert* is strongly recommended. If *invert* is not provided, the Range will fallback to Newton’s method, but this may be slow or inaccurate. Passing Math.sqrt, Math.log, or Math.exp as a *transform* will automatically supply the corresponding *invert*. If *min* is greater than *max*, *i.e.* if the extent is inverted, then *transform* and *invert* will default to `value => -value`.

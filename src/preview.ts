@@ -14,13 +14,15 @@ import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
+import {getClientPath} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {getImplicitSpecifiers, getImplicitStylesheets} from "./libraries.js";
 import {diffMarkdown, readMarkdown} from "./markdown.js";
 import type {ParseResult, ReadMarkdownResult} from "./markdown.js";
-import {renderPreview} from "./render.js";
-import {bundleStyles, getClientPath, rollupClient} from "./rollup.js";
+import {renderPreview, resolveStylesheet} from "./render.js";
+import {bundleStyles, rollupClient} from "./rollup.js";
+import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, underline} from "./tty.js";
 import {relativeUrl} from "./url.js";
 
@@ -53,6 +55,7 @@ export class PreviewServer {
   }
 
   static async start({verbose = true, hostname, port, ...options}: PreviewOptions) {
+    Telemetry.record({event: "preview", step: "start"});
     const server = createServer();
     if (port === undefined) {
       for (port = 3000; true; ++port) {
@@ -286,7 +289,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
     const stylesheets = await getImplicitStylesheets(getImplicitSpecifiers(inputs));
     const style = getPreviewStylesheet(path!, data, defaultStyle);
     if (style) stylesheets.add(style);
-    return stylesheets;
+    return new Set(Array.from(stylesheets, (href) => resolveStylesheet(path!, href)));
   }
 
   function refreshAttachment(name: string) {

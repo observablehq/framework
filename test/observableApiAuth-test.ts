@@ -8,7 +8,7 @@ import {
   whoami
 } from "../src/observableApiAuth.js";
 import {MockLogger} from "./mocks/logger.js";
-import {ObservableApiMock} from "./mocks/observableApi.js";
+import {getCurentObservableApi, mockObservableApi} from "./mocks/observableApi.js";
 
 describe("login command", () => {
   it("works", async () => {
@@ -70,6 +70,8 @@ describe("logout command", () => {
 });
 
 describe("whoami command", () => {
+  mockObservableApi();
+
   it("errors when there is no API key", async () => {
     const effects = new MockEffects({apiKey: null});
     try {
@@ -83,15 +85,14 @@ describe("whoami command", () => {
   });
 
   it("works when there is an API key that is invalid", async () => {
-    const mock = new ObservableApiMock().handleGetUser({status: 401}).start();
+    getCurentObservableApi().handleGetUser({status: 401}).start();
     const effects = new MockEffects({apiKey: "MOCK-INVALID-KEY"});
     await whoami(effects);
     effects.logger.assertExactLogs([/^Your API key is invalid/]);
-    mock.close();
   });
 
   it("works when there is a valid API key", async () => {
-    const mock = new ObservableApiMock().handleGetUser().start();
+    getCurentObservableApi().handleGetUser().start();
     const effects = new MockEffects({apiKey: "MOCK-VALID-KEY"});
     await whoami(effects);
     effects.logger.assertExactLogs([
@@ -99,7 +100,6 @@ describe("whoami command", () => {
       /^You have access to the following workspaces/,
       /Mock User's Workspace/
     ]);
-    mock.close();
   });
 });
 
