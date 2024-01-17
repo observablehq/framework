@@ -1,51 +1,79 @@
 # Components
 
-Components are reusable pieces of code (functions, themes, snippets, etc.) that make it quicker and easier for you to update page layout and appearance, and add common page content.
+You don’t have to start from scratch: components are reusable pieces of code (functions, themes, snippets, etc.) that make it quicker to update page layout and appearance, and add common page content.
 
-The Observable CLI offers three flavors of components: [Layout helpers](#layout-helpers), [Observable Plot snippets](#observable-plot-snippets), and [Observable Inputs](#observable-inputs).
+The Observable CLI offers three flavors of components: [layout helpers](#layout-helpers), [Observable Plot snippets](#observable-plot-snippets), and [Observable Inputs](#observable-inputs).
 
 ## Layout helpers
 
-Layout helpers let you quickly update page layout and appearance and add several specialty elements commonly used in dashboards (like big number boxes). The following are currently available in the CLI: themes, cards, Dash.number, and Dash.resizer.
+A collection of elements useful for adding and formatting page content: themes, cards, and the `resize` function.
 
 ### Themes
 
-A number of [pre-built light and dark themes](./config) are currently available, along with a `wide` theme. Make global theme updates in the [`observablehq.config.js` (or `observablehq.config.ts`) file](./config) located in the project root:
+Observable Markdown offers a few [built-in themes](./config#theme) that you can compose to create, say, wide pages with an alternative dark color theme:
 
 ```js run=false
-theme: ["dark-alt", "light"]
+theme: ["dark-alt", "wide"]
 ```
 
-Or, update the theme for a single page in the .md frontmatter: 
+The code above, when included in the [config file](./config), specifies the default theme for the project. In addition, you can specify the theme for a single page in its [front matter](markdown#front-matter):
 
 ```yaml
 ---
-theme: ["dark-alt"]
+theme: ["dark-alt", "wide"]
 ---
 ```
 
-For custom themes, see the [style option](./config/#style) to instead use custom stylesheet.  
+You are not limited to the built-in themes. For complete control over the design of your project, see the [style option](./config/#style) instead.
 
-### Cards
+### Card
 
-The [`card`](./layout/card) class decouples card styling (like container borders, background color, and padding) from the grid layout. This gives developers control over what appears within a styled card, and what exists within a grid layout but *without* card styling (for example, explanatory text alongside a chart).  
+The [`card`](./layout/card) CSS class has default styles that help create a card: container borders, background color, padding and optional titles and subtitles. 
+
+<div class="card">
+  <h2>A card title</h2>
+  <h3>A card subtitle</h3>
+  ${
+    Plot.plot({
+      marks: [
+        Plot.dot(penguins, {x: "body_mass_g", y: "flipper_length_mm"})
+      ]
+    })
+  }
+</div>
+
+```html run=false
+<div grid "grid-col-2">
+<div class="card">
+  <h2>A card title</h2>
+  <h3>A card subtitle</h3>
+  ${
+    Plot.plot({
+      marks: [
+        Plot.dot(penguins, {x: "body_mass_g", y: "flipper_length_mm"})
+      ]
+    })
+  }
+</div>
+```
+
 
 ### Resize
 
-The [`resize`]() function in the Observable standard library automatically resize a DOM element (often, a chart) to fit dimensions of the parent container.
+The [`resize`](./layout/resize) function automatically recomputes a DOM element (often, a chart) when the dimensions of its parent container change. 
 
 ## Observable Plot snippets
 
-[Observable Plot](https://observablehq.com/plot/) is a free, open source JavaScript library for concise and expressive data visualization, built and maintained by Observable. Observable Plot is included in the Observable standard library, so is available for use out-of-the-box when working in the CLI. 
+[Observable Plot](https://observablehq.com/plot/) is a free, open source JavaScript library for concise and expressive data visualization, built by Observable.
 
-For convenience, copyable Observable Plot code is included for common chart types including area charts ([stacked](./charts/area#stacked-area-chart) and [band area](./charts/area#band-area-chart)), bar charts ([sorted](./charts/bar#sorted-bar-chart), [temporal](./charts/bar#temporal-bar-chart), and [weighted](./charts/bar#weighted-top-10-bar-chart)), line charts ([single-series](./charts/line#basic-line-chart), [multi-series](./charts/line#multi-series-line-chart) and [moving average](./charts/line#moving-average-line-chart)), [scatterplots](./charts/dot#scatterplot), and more. 
+Several examples of Observable Plot code are included in this documentation, covering some common chart types including area charts ([stacked](./charts/area#stacked-area-chart) and [band area](./charts/area#band-area-chart)), bar charts ([sorted](./charts/bar#sorted-bar-chart), [temporal](./charts/bar#temporal-bar-chart), and [weighted](./charts/bar#weighted-top-10-bar-chart)), line charts ([single-series](./charts/line#basic-line-chart), [multi-series](./charts/line#multi-series-line-chart) and [moving average](./charts/line#moving-average-line-chart)), [scatterplots](./charts/dot#scatterplot), and more. See [Observable Plot’s gallery](https://observablehq.com/@observablehq/plot-gallery) for even more examples.
 
-Each snippet uses a built-in dataset. The snippet below creates a heatmap (with Observable Plot’s [cell mark](https://observablehq.com/plot/marks/cell)) of daily temperatures using the *weather* data: 
+All our examples use common datasets that are loaded when referenced by name, such as the `weather` dataset in the code snippet below.
 
 ```js echo
 Plot.plot({
   marks: [
-    Plot.cell(weather.slice(-365), {
+    Plot.cell(weather, {
       x: d => d.date.getUTCDate(),
       y: d => d.date.getUTCMonth(),
       fill: "temp_max"
@@ -56,16 +84,16 @@ Plot.plot({
 
 If the chart type you want to add is not included as a snippet here, don’t sweat - a great number of examples (in both [Observable Plot](https://observablehq.com/@observablehq/plot-gallery) and [D3](https://observablehq.com/@d3/gallery)) are available to explore and reuse.
 
-**Can I use other data visualization libraries?** Absolutely. Use other visualization libraries already in Observable’s standard library (like [D3](./lib/d3), [DOT](./lib/dot), or [mermaid](./lib/mermaid)), or [import any other library from npm](./javascript/imports).
+**Can I use other data visualization libraries?** Absolutely. Use any other visualization library you like by [importing from npm](./javascript/imports).
 
 ## Observable Inputs
 
-The [Observable Inputs](./lib/inputs) library provides a suite of lightweight interface components — buttons, sliders, dropdowns, checkboxes, and the like — that viewers can update to explore interactive displays (for example, selecting only a few of many categories to show in a bar chart). Inputs are available for use out-of-the-box as part of the Observable standard library. 
+The [Observable Inputs](./lib/inputs) library provides a suite of lightweight interface components — buttons, sliders, dropdowns, checkboxes, and the like — that viewers can update to explore interactive displays (for example, selecting only a few of many categories to show in a bar chart).
 
-The [radio input](./inputs/radio) prompts a user to select a penguin species: 
+The [radio input](./inputs/radio) prompts a user to select a penguin species:
 
 ```js echo
 const pickSpecies = view(Inputs.radio(["Adelie", "Chinstrap", "Gentoo"], {value: "Gentoo", label: "Penguin species:"}))
 ```
 
-Input values can then be accessed elsewhere in the page to create interactive charts, tables or text with [inline expressions](./javascript#inline-expressions). For example, the currently selected species is ${pickSpecies}!
+The value of `pickSpecies` (<tt>="${pickSpecies}"</tt>) can then be accessed elsewhere in the page, as a parameter in other computations, and to create interactive charts, tables or text with [inline expressions](./javascript#inline-expressions).
