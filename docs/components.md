@@ -1,6 +1,6 @@
 # Components
 
-Components are reusable pieces of code (functions, themes, snippets, etc.) that make it quicker and easier for you to update page layout and appearance, and add common page content (like charts, inputs, and big numbers).
+Components are reusable pieces of code (functions, themes, snippets, etc.) that make it quicker and easier for you to update page layout and appearance, and add common page content.
 
 The Observable CLI offers three flavors of components: [Layout helpers](#layout-helpers), [Observable Plot snippets](#observable-plot-snippets), and [Observable Inputs](#observable-inputs).
 
@@ -9,9 +9,8 @@ The Observable CLI offers three flavors of components: [Layout helpers](#layout-
 Layout helpers let you quickly update page layout and appearance and add several specialty elements commonly used in dashboards (like big number boxes). The following are currently available in the CLI: themes, cards, Dash.number, and Dash.resizer.
 
 ### Themes
-<!-- TODO may need to update theme names based on changes, e.g. ocean-floor-->
 
-Five [pre-built themes](./layout/themes.md) are currently available: `dark`, `dark-alt`, `light`, `light-alt`, and `wide`. Make global theme updates in the [`observablehq.config.js` (or `observablehq.config.ts`) file](./config) located in the project root:
+A number of [pre-built light and dark themes](./config) are currently available, along with a `wide` theme. Make global theme updates in the [`observablehq.config.js` (or `observablehq.config.ts`) file](./config) located in the project root:
 
 ```js run=false
 theme: ["dark-alt", "light"]
@@ -31,19 +30,9 @@ For custom themes, see the [style option](./config/#style) to instead use custom
 
 The [`card`](./layout/card) class decouples card styling (like container borders, background color, and padding) from the grid layout. This gives developers control over what appears within a styled card, and what exists within a grid layout but *without* card styling (for example, explanatory text alongside a chart).  
 
-### Dash.number 
-<!-- TODO may need update if library or function name changes -->
+### Resize
 
-[`Dash.number`](./layout/bignumber) adds a nicely formatted big number box with titles, primary and secondary values, and trend arrow.
-
-<!-- TODO add Dash.number example when merged -->
-
-### Dash.resizer
-<!-- TODO may need update if library or function name changes -->
-
-[`Dash.resizer](./layout/resize) automatically resize a DOM element (often, a chart) to fit dimensions of the parent container.
-
-<!-- TODO add Dash.resizer example when merged -->
+The [`resize`]() function in the Observable standard library automatically resize a DOM element (often, a chart) to fit dimensions of the parent container.
 
 ## Observable Plot snippets
 
@@ -80,11 +69,3 @@ const pickSpecies = view(Inputs.radio(["Adelie", "Chinstrap", "Gentoo"], {value:
 ```
 
 Input values can then be accessed elsewhere in the page to create interactive charts, tables or text with [inline expressions](./javascript#inline-expressions). For example, the currently selected species is ${pickSpecies}!
-
-
-
-
-
-
-
-
