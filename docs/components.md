@@ -6,11 +6,11 @@ The Observable CLI offers three flavors of components: [layout helpers](#layout-
 
 ## Layout helpers
 
-A collection of elements useful for adding and formatting page content: themes, cards, and the `resize` function.
+A collection of elements useful for formatting page content: themes, cards, and the `resize` function.
 
 ### Themes
 
-Observable Markdown offers a few [built-in themes](./config#theme) that you can compose to create, say, wide pages with an alternative dark color theme:
+Observable Markdown offers a number of [built-in themes](./config#theme) that you can compose to create, say, wide pages with an alternative dark color theme:
 
 ```js run=false
 theme: ["dark-alt", "wide"]
@@ -30,37 +30,59 @@ You are not limited to the built-in themes. For complete control over the design
 
 The [`card`](./layout/card) CSS class has default styles that help create a card: container borders, background color, padding and optional titles and subtitles. 
 
-<div class="card">
-  <h2>A card title</h2>
-  <h3>A card subtitle</h3>
-  ${
+<div class="grid grid-cols-2">
+  <div class="card">
+    <h2>A card title</h2>
+    <h3>A card subtitle</h3>
+    ${
     Plot.plot({
       marks: [
         Plot.dot(penguins, {x: "body_mass_g", y: "flipper_length_mm"})
       ]
     })
-  }
+    }
+    </div>
+  <div class="card">
+    <p>Tortor condimentum lacinia quis vel eros. Arcu risus quis varius quam quisque id. Magnis dis parturient montes nascetur ridiculus mus mauris. Porttitor leo a diam sollicitudin. Odio facilisis mauris sit amet massa vitae tortor. Nibh venenatis cras sed felis eget velit aliquet sagittis. Ullamcorper sit amet risus nullam eget felis eget nunc. In egestas erat imperdiet sed euismod nisi porta lorem mollis. A erat nam at lectus urna duis convallis. Id eu nisl nunc mi ipsum faucibus vitae. Purus ut faucibus pulvinar elementum integer enim neque volutpat ac.</p>
+    </div>
 </div>
 
 ```html run=false
-<div grid "grid-col-2">
-<div class="card">
-  <h2>A card title</h2>
-  <h3>A card subtitle</h3>
-  ${
+<div class="grid grid-cols-2">
+  <div class="card">
+    <h2>A card title</h2>
+    <h3>A card subtitle</h3>
+    ${
     Plot.plot({
       marks: [
         Plot.dot(penguins, {x: "body_mass_g", y: "flipper_length_mm"})
       ]
     })
-  }
+    }
+    </div>
+  <div class="card">
+    <p>Tortor condimentum lacinia quis vel eros. Arcu risus quis varius quam quisque id. Magnis dis parturient montes nascetur ridiculus mus mauris. Porttitor leo a diam sollicitudin. Odio facilisis mauris sit amet massa vitae tortor. Nibh venenatis cras sed felis eget velit aliquet sagittis. Ullamcorper sit amet risus nullam eget felis eget nunc. In egestas erat imperdiet sed euismod nisi porta lorem mollis. A erat nam at lectus urna duis convallis. Id eu nisl nunc mi ipsum faucibus vitae. Purus ut faucibus pulvinar elementum integer enim neque volutpat ac.</p>
+    </div>
 </div>
 ```
 
-
 ### Resize
 
-The [`resize`](./layout/resize) function automatically recomputes a DOM element (often, a chart) when the dimensions of its parent container change. 
+The [`resize`](./javascript/display#responsive-display) function automatically recomputes a DOM element (often, a chart) when the dimensions of its parent container change. 
+
+```js
+import {resize} from "npm:@observablehq/stdlib";
+```
+
+<div>
+    ${resize((width, height) => Plot.barY([9, 4, 8, 1, 11, 3, 4, 2, 7, 5]).plot({width, height}))}
+  </div>
+
+```html run=false
+<div>
+    ${resize((width, height) => Plot.barY([9, 4, 8, 1, 11, 3, 4, 2, 7, 5]).plot({width, height}))}
+  </div>
+```
 
 ## Observable Plot snippets
 
