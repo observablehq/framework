@@ -57,11 +57,11 @@ const burndown = issues
 </div>
 
 <div class="card grid grid-cols-1" style="grid-auto-rows: calc(260px + 2rem);">
-  ${Dash.resize((width, height) => DailyPlot(downloads, {width, height, title: "Daily npm downloads", label: "downloads", domain: [0, 6000], versions}))}
+  ${resize((width, height) => DailyPlot(downloads, {width, height, title: "Daily npm downloads", label: "downloads", domain: [0, 6000], versions}))}
 </div>
 
 <div class="card grid grid-cols-1">
-  ${Dash.resize((width) => Plot.plot({
+  ${resize((width) => Plot.plot({
     width,
     caption: "Downloads per version (last 7 days)",
     x: {label: null, tickFormat: "s", round: true, axis: "top"},
@@ -106,8 +106,8 @@ const burndown = issues
   <div class=card>${BigNumber(issues.filter((d) => d.pull_request && d.state === "open" && !d.draft).length, {title: "Open PRs", href: "https://github.com/observablehq/plot/pulls?q=is%3Apr+is%3Aopen+draft%3Afalse"})}</div>
 </div>
 
-<div class="card grid grid-cols-2" style="grid-auto-rows: 276px;">
-  ${Dash.resize((width, height) => Plot.plot({
+<div class="grid grid-cols-2" style="grid-auto-rows: 276px;">
+  <div class="card">${resize((width, height) => Plot.plot({
     width,
     height,
     marginLeft: 0,
@@ -127,8 +127,8 @@ const burndown = issues
       }),
       Plot.ruleY([0])
     ]
-  }))}
-  <div style="padding: 0;">${
+  }))}</div>
+  <div class="card" style="padding: 0;">${
     Inputs.table(
       issues
         .filter((d) => d.state === "open" && d.reactions.total_count > 5)
@@ -136,7 +136,7 @@ const burndown = issues
         .map((d) => ({
           "title": {title: d.title, number: d.number},
           "reactions": d.reactions.total_count,
-          "days old": d3.utcDay.count(d.created_at, today)
+          "days old": d3.utcDay.count(d.open, today)
         })),
       {
         format: {
