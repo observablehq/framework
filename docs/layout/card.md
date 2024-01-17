@@ -2,24 +2,22 @@
 
 The `card` class adds polished styling to page content including a background and border color determined by the page theme, default padding, and an optional title and subtitle that match title styling for other components. 
 
+```js
+import {resize} from "npm:@observablehq/stdlib";
+```
+
 <div class="card">
   <h2>This is a card</h2>
   <h3>Cards add polished formatting to page content.</h3>
-  ${
-    resize((width, height) => Plot.plot({
-      width,
+  ${resize((width, height) => Plot.plot({
+      width, 
       height,
       marks: [
         Plot.cell(weather, {x: d => d.date.getUTCDate(), y: d => d.date.getUTCMonth(),fill: "temp_max"})
       ]
-    })
-    )
+    }))
   }
 </div>
-
-```js
-import {resize} from "npm:@observablehq/stdlib";
-```
 
 ```html run=false
 <div class="card">
