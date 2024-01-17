@@ -21,7 +21,6 @@ function clientBundles(clientPath: string): [entry: string, name: string][] {
   return [
     [clientPath, "client.js"],
     ["./src/client/stdlib.js", "stdlib.js"],
-    ["./src/client/stdlib/dash.js", "stdlib/dash.js"],
     ["./src/client/stdlib/dot.js", "stdlib/dot.js"],
     ["./src/client/stdlib/duckdb.js", "stdlib/duckdb.js"],
     ["./src/client/stdlib/inputs.css", "stdlib/inputs.css"],

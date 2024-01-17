@@ -32,4 +32,4 @@ Key performance indicators are displayed as “big numbers” with, in some case
 
 The charts are drawn — quite obviously ☺️ — with Observable Plot. The code for the downloads chart is isolated in the [`components/dailyPlot.js`](./docs/components/dailyPlot.js) file. The code for the burndown chart is adapted from Tom MacWright’s [GitHub Burndown chart](https://observablehq.com/@tmcw/github-burndown).
 
-The size of the charts automatically adapts to their container’s dimensions with the built-in [`Dash.resize`](https://cli.observablehq.com/lib/dash) helper — part of a collection of helpers currently under development.
+The size of the charts automatically adapts to their container’s dimensions with the built-in `resize` helper — part of a collection of helpers currently under development.
