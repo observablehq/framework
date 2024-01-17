@@ -42,26 +42,26 @@ const burndown = issues
 ```
 
 <div class="grid grid-cols-4" style="grid-auto-rows: 86px;">
-  <div class=card>
+  <div class="card">
   <h2>Current release</h2>
   <span class="big">${versions.at(-1).version}</span>
   <a href="https://github.com/observablehq/plot/releases" class="muted">
     ${((days) => days === 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`)(d3.utcDay.count(versions.at(-1).date, Date.now()))}`}
   </a>
 </div>
-<div class=card>
+<div class="card">
   <h2>GitHub stars</h2>
-  ${html`<span class=big>${d3.format(",")(stars.length)}`}
-  ${html`<span class=green>${d3.format("+")(d3.sum(stars, (d) => d.starred_at >= lastWeek))} ↗︎`}
+  ${html`<span class="big">${d3.format(",")(stars.length)}`}
+  ${html`<span class="green">${d3.format("+")(d3.sum(stars, (d) => d.starred_at >= lastWeek))} ↗︎`}
 </div>
-<div class=card>
+<div class="card">
   <h2>Daily npm downloads</h2>
-  ${html`<span class=big>${d3.format(",")(downloads[0].value)}`}
+  ${html`<span class="big">${d3.format(",")(downloads[0].value)}`}
   ${((trend) => html`<span class=${trend > 0 ? "green" : trend < 0 ? "red" : "muted"}>${d3.format("+.1%")(trend)} ${trend > 0 ? "↗︎" : trend < 0 ? "↘︎" :""}`)(downloads[7].value ? (downloads[0].value - downloads[7].value) / downloads[7].value : undefined)}
 </div>
-<div class=card>
+<div class="card">
   <h2>Total npm downloads</h2>
-  ${html`<span class=big>${d3.format(",")(d3.sum(downloads, (d) => d.value))}`}
+  ${html`<span class="big">${d3.format(",")(d3.sum(downloads, (d) => d.value))}`}
 </div>
 
 <div class="card grid grid-cols-1" style="grid-auto-rows: calc(260px + 2rem);">
@@ -112,21 +112,21 @@ const burndown = issues
 </style>
 
 <div class="grid grid-cols-4" style="grid-auto-rows: 86px;">
-  <div class=card>
+  <div class="card">
     <h2>Open issues</h2>
-    <span class=big>${d3.format(",")(d3.sum(issues, (d) => !d.pull_request && d.state === "open"))}</span>
+    <span class="big">${d3.format(",")(d3.sum(issues, (d) => !d.pull_request && d.state === "open"))}</span>
   </div>
-  <div class=card>
+  <div class="card">
     <h2>Opened issues, 28d</h2>
-    <span class=big>${d3.format(",")(d3.sum(issues, (d) => !d.pull_request && d.open >= lastMonth))}</span>
+    <span class="big">${d3.format(",")(d3.sum(issues, (d) => !d.pull_request && d.open >= lastMonth))}</span>
   </div>
-  <div class=card>
+  <div class="card">
     <h2>Closed issues, 28d</h2>
-    <span class=big>${d3.format(",")(d3.sum(issues, (d) => !d.pull_request && d.close >= lastMonth))}</span>
+    <span class="big">${d3.format(",")(d3.sum(issues, (d) => !d.pull_request && d.close >= lastMonth))}</span>
   </div>
-  <div class=card>
+  <div class="card">
     <h2>Open PRs</h2>
-    <a class=big href="https://github.com/observablehq/plot/pulls?q=is%3Apr+is%3Aopen+draft%3Afalse"><span style="color: var(--theme-foreground)">${d3.format(",")(d3.sum(issues, (d) => d.pull_request && d.state === "open" && !d.draft))}</span></a>
+    <a class="big" href="https://github.com/observablehq/plot/pulls?q=is%3Apr+is%3Aopen+draft%3Afalse"><span style="color: var(--theme-foreground)">${d3.format(",")(d3.sum(issues, (d) => d.pull_request && d.state === "open" && !d.draft))}</span></a>
   </div>
 </div>
 
