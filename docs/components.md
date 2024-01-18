@@ -10,6 +10,7 @@ A collection of elements useful for formatting page content: themes, cards, and 
 
 ### Themes
 
+<!-- TODO update link to themes gallery page once added-->
 Observable Markdown offers a number of [built-in themes](./config#theme) that you can compose to create, say, wide pages with an alternative dark color theme:
 
 ```js run=false
@@ -26,6 +27,26 @@ theme: ["dark-alt", "wide"]
 
 You are not limited to the built-in themes. For complete control over the design of your project, see the [style option](./config/#style) instead.
 
+### Grid
+
+The included [`grid`](./layout/grid) CSS classes make it easier to control how page content is arranged. 
+
+<div class="grid grid-cols-2">
+  <div class="card"><h1>A</h1>1 × 1</div>
+  <div class="card grid-rowspan-2"><h1>B</h1> 1 × 2</div>
+  <div class="card"><h1>C</h1>1 × 1</div>
+  <div class="card grid-colspan-2"><h1>D</h1>1 × 2</div>
+</div>
+
+```html run=false
+<div class="grid grid-cols-2">
+  <div class="card"><h1>A</h1>1 × 1</div>
+  <div class="card grid-rowspan-2"><h1>B</h1> 1 × 2</div>
+  <div class="card"><h1>C</h1>1 × 1</div>
+  <div class="card grid-colspan-2"><h1>D</h1>1 × 2</div>
+</div>
+```
+
 ### Card
 
 The [`card`](./layout/card) CSS class has default styles that help create a card: container borders, background color, padding and optional titles and subtitles. 
@@ -35,13 +56,13 @@ The [`card`](./layout/card) CSS class has default styles that help create a card
     <h2>A card title</h2>
     <h3>A card subtitle</h3>
     ${
-    Plot.plot({
-      marks: [
-        Plot.dot(penguins, {x: "body_mass_g", y: "flipper_length_mm"})
-      ]
-    })
+      Plot.plot({
+        marks: [
+          Plot.dot(penguins, {x: "body_mass_g", y: "flipper_length_mm"})
+        ]
+      })
     }
-    </div>
+  </div>
   <div class="card">
     <p>Tortor condimentum lacinia quis vel eros. Arcu risus quis varius quam quisque id. Magnis dis parturient montes nascetur ridiculus mus mauris. Porttitor leo a diam sollicitudin. Odio facilisis mauris sit amet massa vitae tortor. Nibh venenatis cras sed felis eget velit aliquet sagittis. Ullamcorper sit amet risus nullam eget felis eget nunc. In egestas erat imperdiet sed euismod nisi porta lorem mollis. A erat nam at lectus urna duis convallis. Id eu nisl nunc mi ipsum faucibus vitae. Purus ut faucibus pulvinar elementum integer enim neque volutpat ac.</p>
     </div>
@@ -53,13 +74,13 @@ The [`card`](./layout/card) CSS class has default styles that help create a card
     <h2>A card title</h2>
     <h3>A card subtitle</h3>
     ${
-    Plot.plot({
-      marks: [
-        Plot.dot(penguins, {x: "body_mass_g", y: "flipper_length_mm"})
-      ]
-    })
+      Plot.plot({
+        marks: [
+          Plot.dot(penguins, {x: "body_mass_g", y: "flipper_length_mm"})
+        ]
+      })
     }
-    </div>
+  </div>
   <div class="card">
     <p>Tortor condimentum lacinia quis vel eros. Arcu risus quis varius quam quisque id. Magnis dis parturient montes nascetur ridiculus mus mauris. Porttitor leo a diam sollicitudin. Odio facilisis mauris sit amet massa vitae tortor. Nibh venenatis cras sed felis eget velit aliquet sagittis. Ullamcorper sit amet risus nullam eget felis eget nunc. In egestas erat imperdiet sed euismod nisi porta lorem mollis. A erat nam at lectus urna duis convallis. Id eu nisl nunc mi ipsum faucibus vitae. Purus ut faucibus pulvinar elementum integer enim neque volutpat ac.</p>
     </div>
@@ -68,6 +89,7 @@ The [`card`](./layout/card) CSS class has default styles that help create a card
 
 ### Resize
 
+<!-- TODO update link to layout/grid?-->
 The [`resize`](./javascript/display#responsive-display) function automatically recomputes a DOM element (often, a chart) when the dimensions of its parent container change. 
 
 Resize exists in the Observable standard library, or can be imported explicitly:
@@ -78,12 +100,12 @@ import {resize} from "npm:@observablehq/stdlib";
 
 <div>
     ${resize((width) => Plot.barY([9, 4, 8, 1, 11, 3, 4, 2, 7, 5]).plot({width}))}
-  </div>
+</div>
 
 ```html run=false
 <div>
     ${resize((width) => Plot.barY([9, 4, 8, 1, 11, 3, 4, 2, 7, 5]).plot({width}))}
-  </div>
+</div>
 ```
 
 ## Observable Plot snippets
