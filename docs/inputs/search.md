@@ -42,7 +42,7 @@ If you search for multiple terms, such as ${html`<a style="cursor: pointer; bord
 
 If you search for multiple terms, such as “gen bis” (for Gentoos on the Biscoe Islands) or “gen fem” (for female Gentoos), every term must match: there’s an implicit logical AND.
 
-The search input is designed to work with other [inputs](../javascript/inputs) and especially [tables](./table). You can also refer to the current search results from any cell using a [view](../javascript/inputs#viewelement). For example, to compute the median body mass of the matching penguins:
+The search input is designed to work with other [inputs](../javascript/inputs) and especially [tables](./table). You can also refer to the current search results from any cell using a [view](../javascript/inputs#view(element)). For example, to compute the median body mass of the matching penguins:
 
 ```js echo
 d3.median(search, d => d.body_mass_g)

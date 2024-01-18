@@ -13,10 +13,10 @@ export default {
       pages: [
         {name: "Reactivity", path: "/javascript/reactivity"},
         {name: "Display", path: "/javascript/display"},
+        {name: "Inputs", path: "/javascript/inputs"},
         {name: "Imports", path: "/javascript/imports"},
         {name: "Files", path: "/javascript/files"},
         {name: "Promises", path: "/javascript/promises"},
-        {name: "Inputs", path: "/javascript/inputs"},
         {name: "Generators", path: "/javascript/generators"},
         {name: "Mutables", path: "/javascript/mutables"},
       ]
@@ -25,12 +25,9 @@ export default {
       name: "Layout",
       open: false,
       pages: [
-        {name: "Annotation", path: "/layout/annotation"},
-        {name: "Big number", path: "/layout/bignumber"},
-        {name: "Card", path: "/layout/card"},
         {name: "Grid", path: "/layout/grid"},
-        {name: "Resize", path: "/layout/resize"},
-        {name: "Tables", path: "/layout/tables"}
+        {name: "Card", path: "/layout/card"},
+        {name: "Resize", path: "/layout/resize"}
       ]
     },
     {
@@ -43,9 +40,9 @@ export default {
         {name: "Cell", path: "/charts/cell"},
         {name: "Dot", path: "/charts/dot"},
         {name: "Facets", path: "/charts/facets"},
+        {name: "Grouping data", path: "/charts/grouping-data"},
         {name: "Line", path: "/charts/line"},
-        {name: "Tick", path: "/charts/tick"},
-        {name: "Grouping data", path: "/charts/grouping-data"}
+        {name: "Tick", path: "/charts/tick"}
       ]
     },
     {

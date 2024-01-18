@@ -104,7 +104,7 @@ The available range input options are:
 
 * *label* - a label; either a string or an HTML element.
 * *step* - the step (precision); the interval between adjacent values.
-* *format* - a format function; defaults to [formatTrim](https://github.com/observablehq/inputs?tab=readme-ov-file#formatTrim).
+* *format* - a format function; defaults to [formatTrim](https://github.com/observablehq/inputs?tab=readme-ov-file#inputsformattrimnumber).
 * *placeholder* - a placeholder string for when the input is empty.
 * *transform* - an optional non-linear transform.
 * *invert* - the inverse transform.
@@ -117,6 +117,6 @@ The given *value* is clamped to the given extent, and rounded if *step* is defin
 
 If *validate* is not defined, [*number*.checkValidity](https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#dom-cva-checkvalidity) is used. While the input is not considered valid, changes to the input will not be reported.
 
-The *format* function should return a string value that is compatible with native number parsing. Hence, the default [formatTrim](https://github.com/observablehq/inputs?tab=readme-ov-file#formatTrim) is recommended.
+The *format* function should return a string value that is compatible with native number parsing. Hence, the default [formatTrim](https://github.com/observablehq/inputs?tab=readme-ov-file#inputsformattrimnumber) is recommended.
 
 If a *transform* function is specified, an inverse transform function *invert* is strongly recommended. If *invert* is not provided, the Range will fallback to Newton’s method, but this may be slow or inaccurate. Passing Math.sqrt, Math.log, or Math.exp as a *transform* will automatically supply the corresponding *invert*. If *min* is greater than *max*, *i.e.* if the extent is inverted, then *transform* and *invert* will default to `value => -value`.

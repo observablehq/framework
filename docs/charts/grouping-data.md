@@ -1,6 +1,6 @@
 # Grouping data
 
-[Observable Plot](https://observablehq.com/plot/) provides a number of [transforms](https://observablehq.com/plot/transforms/) that help you perform common data transformations. The [group](https://observablehq.com/plot/transforms/group) and [bin](https://observablehq.com/plot/transforms/bin) transforms (for categorical and quantitative dimensions, respectively) group data into discrete bins. A reducer (_e.g._ sum, count, or mean) can then be applied to visualize summary values by bin. 
+[Observable Plot](https://observablehq.com/plot/) provides a number of [transforms](https://observablehq.com/plot/features/transforms) that help you perform common data transformations. The [group](https://observablehq.com/plot/transforms/group) and [bin](https://observablehq.com/plot/transforms/bin) transforms (for categorical and quantitative dimensions, respectively) group data into discrete bins. A reducer (_e.g._ sum, count, or mean) can then be applied to visualize summary values by bin. 
 
 ## Hexbin chart 
 

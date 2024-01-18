@@ -111,7 +111,7 @@ The available checkbox input options are:
 * *sort* - true, “ascending”, “descending”, or a comparator function to sort keys; defaults to false.
 * *unique* - true to only show unique keys; defaults to false.
 * *locale* - the current locale; defaults to English.
-* *format* - a format function; defaults to [formatLocaleAuto](https://github.com/observablehq/inputs?tab=readme-ov-file#formatLocaleAuto) composed with *keyof*.
+* *format* - a format function; defaults to [formatLocaleAuto](https://github.com/observablehq/inputs/blob/main/README.md#inputsformatlocaleautolocale) composed with *keyof*.
 * *keyof* - a function to return the key for the given element in *data*.
 * *valueof* - a function to return the value of the given element in *data*.
 * *value* - the initial value, an array; defaults to an empty array (no selection).

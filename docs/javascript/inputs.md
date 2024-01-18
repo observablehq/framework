@@ -1,4 +1,4 @@
-# Inputs
+# JavaScript: Inputs
 
 Inputs are user-interface elements that accept data from a user. In a data app, inputs might prompt a viewer to:
 
@@ -6,7 +6,7 @@ Inputs are user-interface elements that accept data from a user. In a data app, 
 - Interactively subset a table of users by typing in a domain name
 - Choose a date range to explore software downloads over a period of interest
 
-Inputs can be displayed with the [`view`](#viewelement) function, which is a special type of [display](display) function that additionally returns the input’s value generator, which can then be assigned to a variable for use elsewhere. 
+Inputs can be displayed with the [`view`](#view(element)) function, which is a special type of [display](display) function that additionally returns the input’s value generator, which can then be assigned to a variable for use elsewhere. 
 
 For example, the radio input below prompts a user to select one from a series of values:
 
@@ -24,7 +24,7 @@ My favorite baseball team is the ${team}!
 
 ## view(*element*)
 
-The `view` function used above does two things: (1) it displays the given DOM *element*, then (2) returns its corresponding value [generator](./generators.md), using [`Generators.input`](../lib/generators#input(element)) under the hood. Use `view` to display an input while also exposing the input’s value as a [reactive variable](./reactivity). You can reference the input’s value anywhere, and the code will run whenever the input changes.
+The `view` function used above does two things: (1) it displays the given DOM *element*, then (2) returns its corresponding value [generator](./generators), using [`Generators.input`](../lib/generators#input(element)) under the hood. Use `view` to display an input while also exposing the input’s value as a [reactive variable](./reactivity). You can reference the input’s value anywhere, and the code will run whenever the input changes.
 
 The `view` function is not limited to Observable Inputs. For example, here is a simple range slider created with [html](../lib/htl):
 
@@ -46,7 +46,7 @@ Plot.plot({
 
 ## Observable Inputs
 
-The [Observable Inputs](../lib/inputs) library implements commonly used inputs — buttons, sliders, dropdowns, tables, and the like — as functions. Each input function returns an HTML element that emits *input* events for compatibility with [`view`](#viewelement) and [Generators.input](../lib/generators#inputelement). 
+The [Observable Inputs](../lib/inputs) library implements commonly used inputs — buttons, sliders, dropdowns, tables, and the like — as functions. Each input function returns an HTML element that emits *input* events for compatibility with [`view`](#view(element)) and [Generators.input](../lib/generators#input(element)). 
 
 ### Usage
 
@@ -113,7 +113,7 @@ const selectedAthletes = display(olympians.filter(d => d.sport === sport));
 Inputs.table(selectedAthletes, {columns})
 ```
 
-To visualize a column of data as a histogram, use the value of the select input with [Observable Plot](/@observablehq/plot).
+To visualize a column of data as a histogram, use the value of the select input with [Observable Plot](https://observablehq.com/plot/).
 
 ```js echo
 Plot.plot({
@@ -153,4 +153,4 @@ Inputs.table(olympians.filter(d => d.weight < weight * 1.1 && weight * 0.9 < d.w
 
 ### License
 
-Observable Inputs are released under the [ISC license](https://github.com/observablehq/inputs/blob/main/LICENSE) and depend only on [Hypertext Literal](https://observablehq.com/@observablehq/htl), our tagged template literal for safely generating dynamic HTML. If you are interested in contributing or wish to report an issue, please see [our repository](https://github.com/observablehq/inputs). For recent changes, please see our [release notes](https://github.com/observablehq/inputs/releases).
+Observable Inputs are released under the [ISC license](https://github.com/observablehq/inputs/blob/main/LICENSE) and depend only on [Hypertext Literal](../lib/htl), our tagged template literal for safely generating dynamic HTML. If you are interested in contributing or wish to report an issue, please see [our repository](https://github.com/observablehq/inputs). For recent changes, please see our [release notes](https://github.com/observablehq/inputs/releases).

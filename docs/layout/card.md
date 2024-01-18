@@ -1,4 +1,4 @@
-# Cards
+# Layout: card
 
 The `card` class adds polished styling to page content including a background and border color determined by the page theme, default padding, and an optional title and subtitle that match title styling for other components. 
 

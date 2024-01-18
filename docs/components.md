@@ -6,11 +6,11 @@ The Observable CLI offers three flavors of components: [layout helpers](#layout-
 
 ## Layout helpers
 
-A collection of elements useful for formatting page content: themes, cards, and the `resize` function.
+A collection of elements useful for formatting page content: themes, `card` and `grid` CSS classes, and the `resize` function.
 
 ### Themes
 
-<!-- TODO update link to themes gallery page once added-->
+<!-- TODO update link to themes gallery layout/themes.md page once added-->
 Observable Markdown offers a number of [built-in themes](./config#theme) that you can compose to create, say, wide pages with an alternative dark color theme:
 
 ```js run=false
@@ -89,8 +89,7 @@ The [`card`](./layout/card) CSS class has default styles that help create a card
 
 ### Resize
 
-<!-- TODO update link to layout/grid?-->
-The [`resize`](./javascript/display#responsive-display) function automatically recomputes a DOM element (often, a chart) when the dimensions of its parent container change. 
+The [`resize`](./layout/resize) function automatically recomputes a DOM element (often, a chart) when the dimensions of its parent container change. 
 
 Resize exists in the Observable standard library, or can be imported explicitly:
 
@@ -114,7 +113,7 @@ import {resize} from "npm:@observablehq/stdlib";
 
 Several examples of Observable Plot code are included in this documentation, covering some common chart types including area charts ([stacked](./charts/area#stacked-area-chart) and [band area](./charts/area#band-area-chart)), bar charts ([sorted](./charts/bar#sorted-bar-chart), [temporal](./charts/bar#temporal-bar-chart), and [weighted](./charts/bar#weighted-top-10-bar-chart)), line charts ([single-series](./charts/line#basic-line-chart), [multi-series](./charts/line#multi-series-line-chart) and [moving average](./charts/line#moving-average-line-chart)), [scatterplots](./charts/dot#scatterplot), and more. See [Observable Plot’s gallery](https://observablehq.com/@observablehq/plot-gallery) for even more examples.
 
-All our examples use common datasets that are loaded when referenced by name, such as the `weather` dataset in the code snippet below.
+All examples use common datasets that are loaded when referenced by name, such as the `weather` dataset in the code snippet below.
 
 ```js echo
 Plot.plot({
