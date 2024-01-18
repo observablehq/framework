@@ -31,20 +31,27 @@ Class            | Description
 
 ## Example Two Column Grid
 
-```js echo
-html`<div class="grid grid-cols-2">
+<div class="grid grid-cols-2">
   <div class="card"><h1>A</h1>1 × 1</div>
   <div class="card grid-rowspan-2"><h1>B</h1> 1 × 2</div>
   <div class="card"><h1>C</h1>1 × 1</div>
   <div class="card grid-colspan-2"><h1>D</h1>1 × 2</div>
   <div class="card grid-colspan-2 grid-rowspan-2"><h1>E</h1>2 × 2</div>
-</div>`
+</div>
+
+```html run=false
+<div class="grid grid-cols-2">
+  <div class="card"><h1>A</h1>1 × 1</div>
+  <div class="card grid-rowspan-2"><h1>B</h1> 1 × 2</div>
+  <div class="card"><h1>C</h1>1 × 1</div>
+  <div class="card grid-colspan-2"><h1>D</h1>1 × 2</div>
+  <div class="card grid-colspan-2 grid-rowspan-2"><h1>E</h1>2 × 2</div>
+</div>
 ```
 
 ## Example Four Column Grid
 
-```js echo
-html`<div class="grid grid-cols-4">
+<div class="grid grid-cols-4">
   <div class="card"><h1>A</h1>1 × 1</div>
   <div class="card"><h1>B</h1>1 × 1</div>
   <div class="card"><h1>C</h1>1 × 1</div>
@@ -53,15 +60,26 @@ html`<div class="grid grid-cols-4">
   <div class="card grid-rowspan-2"><h1>F</h1>1 × 2</div>
   <div class="card grid-colspan-2"><h1>G</h1>2 × 1</div>
   <div class="card grid-colspan-2"><h1>H</h1>2 × 1</div>
-</div>`
+</div>
+
+```html run=false
+<div class="grid grid-cols-4">
+  <div class="card"><h1>A</h1>1 × 1</div>
+  <div class="card"><h1>B</h1>1 × 1</div>
+  <div class="card"><h1>C</h1>1 × 1</div>
+  <div class="card"><h1>D</h1>1 × 1</div>
+  <div class="card grid-colspan-3 grid-rowspan-2"><h1>E</h1>3 × 2</div>
+  <div class="card grid-rowspan-2"><h1>F</h1>1 × 2</div>
+  <div class="card grid-colspan-2"><h1>G</h1>2 × 1</div>
+  <div class="card grid-colspan-2"><h1>H</h1>2 × 1</div>
+</div>
 ```
 
 ## Example Three Column Grid with Customizations
 
 Note that the minimum row height is set to 150px, and cell **D** does not use the `card` class.
 
-```js echo
-html`<div
+<div
   class="grid grid-cols-3"
   style="grid-auto-rows: minmax(150px, auto); color: red;"
 >
@@ -71,5 +89,18 @@ html`<div
   <div class="grid-rowspan-2"><h1>D</h1>1 × 2</div>
   <div class="card grid-colspan-2"><h1>E</h1>2 × 1</div>
   <div class="card grid-colspan-2"><h1>F</h1>2 × 1</div>
-</div>`
+</div>
+
+```html run=false
+<div
+  class="grid grid-cols-3"
+  style="grid-auto-rows: minmax(150px, auto); color: red;"
+>
+  <div class="card"><h1>A</h1>1 × 1</div>
+  <div class="card"><h1>B</h1>1 × 1</div>
+  <div class="card"><h1>C</h1>1 × 1</div>
+  <div class="grid-rowspan-2"><h1>D</h1>1 × 2</div>
+  <div class="card grid-colspan-2"><h1>E</h1>2 × 1</div>
+  <div class="card grid-colspan-2"><h1>F</h1>2 × 1</div>
+</div>
 ```
