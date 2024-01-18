@@ -29,7 +29,7 @@ Class            | Description
 `grid-rowspan-4` | specify that a grid cell spans four rows
 
 
-## Example Two Column Grid
+## Two column grid
 
 <div class="grid grid-cols-2">
   <div class="card"><h1>A</h1>1 × 1</div>
