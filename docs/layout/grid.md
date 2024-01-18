@@ -5,7 +5,7 @@ theme: dashboard
 
 # Layout:Grid
 
-The CLI provides a set of grid CSS classes to help layout page content. These grids pair well with the [Dashboard](./themes#dashboard) theme and the [Card](./card) class. This page uses both.
+The CLI provides a set of grid CSS classes to help layout page content. These grids pair well with the [dashboard](./themes#dashboard) theme and the [card](./card) class. This page uses both.
 
 To see these examples change dynamically, adjust the page width or collapse the sidebar on the left.
 
