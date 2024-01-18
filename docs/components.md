@@ -14,14 +14,14 @@ A collection of elements useful for formatting page content: themes, `card` and 
 Observable Markdown offers a number of [built-in themes](./config#theme) that you can compose to create, say, wide pages with an alternative dark color theme:
 
 ```js run=false
-theme: ["dark-alt", "wide"]
+theme: ["dark", "alt", "wide"]
 ```
 
 The code above, when included in the [config file](./config), specifies the default theme for the project. In addition, you can specify the theme for a single page in its [front matter](markdown#front-matter):
 
 ```yaml
 ---
-theme: ["dark-alt", "wide"]
+theme: [dark, alt, wide]
 ---
 ```
 
