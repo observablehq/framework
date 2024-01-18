@@ -49,7 +49,7 @@ Class            | Description
 </div>
 ```
 
-## Example Four Column Grid
+## Four column grid
 
 <div class="grid grid-cols-4">
   <div class="card"><h1>A</h1>1 × 1</div>
