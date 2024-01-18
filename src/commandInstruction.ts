@@ -1,3 +1,4 @@
+import {getObservableUiOrigin} from "./observableApiClient.js";
 import type {TtyColor} from "./tty.js";
 import {bold, magenta} from "./tty.js";
 
@@ -21,3 +22,7 @@ export function commandInstruction(
 
   return color(`${prefix} ${command}`);
 }
+
+export const commandRequiresAuthenticationMessage = `You need to be authenticated to ${
+  getObservableUiOrigin().hostname
+} to run this command. Please run ${commandInstruction("login")}.`;
