@@ -6,9 +6,11 @@ import type {Config} from "./config.js";
 import {CliError, isHttpError} from "./error.js";
 import type {Logger, Writer} from "./logger.js";
 import {ObservableApiClient} from "./observableApiClient.js";
+import type {ConfigEffects} from "./observableApiConfig.js";
 import {
   type ApiKey,
   type DeployConfig,
+  defaultEffects as defaultConfigEffects,
   getDeployConfig,
   getObservableApiKey,
   setDeployConfig
@@ -20,8 +22,8 @@ export interface DeployOptions {
   config: Config;
 }
 
-export interface DeployEffects {
-  getObservableApiKey: (logger: Logger) => Promise<ApiKey>;
+export interface DeployEffects extends ConfigEffects {
+  getObservableApiKey: (effects?: DeployEffects) => Promise<ApiKey>;
   getDeployConfig: (sourceRoot: string) => Promise<DeployConfig | null>;
   setDeployConfig: (sourceRoot: string, config: DeployConfig) => Promise<void>;
   isTty: boolean;
@@ -32,6 +34,7 @@ export interface DeployEffects {
 }
 
 const defaultEffects: DeployEffects = {
+  ...defaultConfigEffects,
   getObservableApiKey,
   getDeployConfig,
   setDeployConfig,
@@ -46,7 +49,7 @@ const defaultEffects: DeployEffects = {
 export async function deploy({config}: DeployOptions, effects = defaultEffects): Promise<void> {
   Telemetry.record({event: "deploy", step: "start"});
   const {logger} = effects;
-  const apiKey = await effects.getObservableApiKey(logger);
+  const apiKey = await effects.getObservableApiKey(effects);
   const apiClient = new ObservableApiClient({apiKey});
 
   // Check configuration
