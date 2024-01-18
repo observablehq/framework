@@ -19,31 +19,48 @@ export class MockLogger implements Logger {
   }
 
   assertExactLogs(expected: RegExp[], {skipBlanks = true} = {}) {
-    this.assertLogLines(expected, this.logLines, {skipBlanks});
+    this.assertLines(expected, this.logLines, {skipBlanks, exact: true});
   }
 
   assertExactErrors(expected: RegExp[], {skipBlanks = true} = {}) {
-    this.assertLogLines(expected, this.errorLines, {skipBlanks});
+    this.assertLines(expected, this.errorLines, {skipBlanks, exact: true});
   }
 
-  assertLogLines(expected: RegExp[], logLines: any[][], {skipBlanks = true} = {}) {
+  assertAtLeastLogs(expected: RegExp[]) {
+    this.assertLines(expected, this.logLines, {skipBlanks: true, exact: false});
+  }
+
+  private assertLines(expected: RegExp[], logLines: any[][], {skipBlanks, exact}) {
     const filteredLogs = logLines.filter((logArgs) => {
       if (skipBlanks) return logArgs.length > 0;
       return true;
     });
 
-    assert.ok(
-      filteredLogs.length >= expected.length,
-      `Expecting at least ${expected.length} log lines, but only found ${filteredLogs.length}`
-    );
+    if (exact) {
+      assert.ok(
+        filteredLogs.length === expected.length,
+        `Expecting exactly ${expected.length} log lines, but found ${filteredLogs.length}`
+      );
+    } else {
+      assert.ok(
+        filteredLogs.length >= expected.length,
+        `Expecting at least ${expected.length} log lines, but only found ${filteredLogs.length}`
+      );
+    }
 
     for (let i = 0; i < expected.length; i++) {
-      const logArgs = filteredLogs[i];
-      assert.equal(logArgs.length, 1, "Only know how to assert log lines with a single argument");
-      assert.ok(
-        logArgs[0].match(expected[i]),
-        `Expected log line ${i} to match ${expected[i]}, but got ${JSON.stringify(logArgs[0])}`
-      );
+      if (exact) {
+        const logArgs = filteredLogs[i].join(" ");
+        assert.ok(
+          logArgs.match(expected[i]),
+          `Expected log line ${i} to match ${expected[i]}, but got ${JSON.stringify(logArgs[0])}`
+        );
+      } else {
+        assert.ok(
+          filteredLogs.some((logArgs) => logArgs.join(" ").match(expected[i])),
+          `No log lines found matching ${expected[i]}`
+        );
+      }
     }
   }
 }
