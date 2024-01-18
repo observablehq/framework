@@ -3,7 +3,7 @@ toc: false
 theme: dashboard
 ---
 
-# Layout:Grid
+# Layout: grid
 
 The CLI provides a set of grid CSS classes to help layout page content. These grids pair well with the [dashboard](./themes#dashboard) theme and the [card](./card) class. This page uses both.
 
