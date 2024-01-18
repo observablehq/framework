@@ -2,7 +2,7 @@
 
  [Observable Plot](https://observablehq.com/plot/) provides a number of [transforms](https://observablehq.com/plot/transforms/) that help you perform common data transformations. The [group](https://observablehq.com/plot/transforms/group) and [bin](https://observablehq.com/plot/transforms/bin) transforms (for categorical and quantitative data, respectively) group data into discrete bins. A reducer (e.g. sum, count, or mean) can then be applied to visualize summary values by bin. 
 
- The snippets on this page demonstrate the group and bin transform, combined with a reducer (e.g. sum, count, or mean), to visualize summary values in a hexbin chart and histogram. 
+ The snippets on this page demonstrate hexbin and bin transforms, each combined with a reducer (e.g. sum, count, or mean), to visualize summary values in a hexbin chart and histogram. 
 
 ## Hexbin chart 
 
@@ -10,11 +10,9 @@ Copy the code snippet below, paste into a JavaScript code block, then substitute
 
 ```js echo
 Plot.plot({
-  color: {
-    scheme: "ylgnbu"
-  },
+  color: {scheme: "ylgnbu"},
   marks: [
-    Plot.hexagon(olympians, Plot.hexbin({fill: "sum"}, {x: "weight", y: "height"}))
+    Plot.dot(olympians, Plot.hexbin({fill: "sum"}, {x: "weight", y: "height"}))
   ]
 })
 ```
