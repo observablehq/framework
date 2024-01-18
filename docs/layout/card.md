@@ -2,23 +2,15 @@
 
 The `card` class adds polished styling to page content including a background and border color determined by the page theme, default padding, and an optional title and subtitle that match title styling for other components. 
 
-```js echo
-import {resize} from "npm:@observablehq/stdlib";
-```
-
-<div>
-  ${resize((width, height) => Plot.barY([9, 4, 8, 1, 11, 3, 4, 2, 7, 5]).plot({width, height}))}
-  </div>
-
 <div class="card">
   <h2>This is a card</h2>
   <h3>Cards add polished formatting to page content.</h3>
   ${
-    Plot.plot({
-      marks: [
-        Plot.cell(weather, {x: d => d.date.getUTCDate(), y: d => d.date.getUTCMonth(),fill: "temp_max"})
-      ]
-    })
+  Plot.plot({
+    marks: [
+      Plot.cell(weather, {x: d => d.date.getUTCDate(), y: d => d.date.getUTCMonth(),fill: "temp_max"})
+    ]
+  })
   }
 </div>
 
@@ -27,11 +19,11 @@ import {resize} from "npm:@observablehq/stdlib";
   <h2>This is a card</h2>
   <h3>Cards add polished formatting to page content.</h3>
   ${
-    Plot.plot({
-      marks: [
-        Plot.cell(weather, {x: d => d.date.getUTCDate(), y: d => d.date.getUTCMonth(),fill: "temp_max"})
-      ]
-    })
+  Plot.plot({
+    marks: [
+      Plot.cell(weather, {x: d => d.date.getUTCDate(), y: d => d.date.getUTCMonth(),fill: "temp_max"})
+    ]
+  })
   }
 </div>
 ```
@@ -50,14 +42,14 @@ Cards can contain whatever content you like, including text, images, charts, tab
     <img src="../javascript/horse.jpg" width=100%>
     </div>
   <div class="card">
-  ${
+    ${
     Plot.plot({
       marks: [
         Plot.rectY(olympians, Plot.binX({y: "count"}, {x: "weight"})),
         Plot.ruleY([0])
       ]
     })
-  }
+    }
     </div>
   <div class="card">
     ${pickIndustry}
@@ -87,7 +79,7 @@ const industryInput = view(pickIndustry)
         Plot.rectY(olympians, Plot.binX({y: "count"}, {x: "weight"})),
         Plot.ruleY([0])
       ]
-    })
+    }))
     }
    </div>
   <div class="card">
@@ -97,11 +89,9 @@ const industryInput = view(pickIndustry)
 </div>
 ```
 
-<!--TODO check on Dash.number naming & status, to include here?-->
+## Title and subtitle
 
-## Titles
-
-Card titles and subtitles are added with h2 and h3 headers, respectively, and match the title styling in [ Observable Plot](https://observablehq.com/plot/features/plots#other-options):
+Card titles and subtitles are added with h2 and h3 headers, respectively, and match the title styling in [Observable Plot](https://observablehq.com/plot/features/plots#other-options):
 
 <div class="grid grid-cols-2"">
   <div class="card">
@@ -133,13 +123,14 @@ Card titles and subtitles are added with h2 and h3 headers, respectively, and ma
     </div>
   <div class="card">
     ${
-    Plot.plot({
+    resize((width) => Plot.plot({
+      width,
       title: "A chart title added in Observable Plot",
       subtitle: "A chart subtitle added in Observable Plot",
       marks: [
         Plot.areaY(industries, {x: "date", y: "unemployed", fill: "industry"}),
       ]
-    })
+    }))
     }
   </div>
 </div>
