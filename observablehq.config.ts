@@ -27,7 +27,8 @@ export default {
       pages: [
         {name: "Grid", path: "/layout/grid"},
         {name: "Card", path: "/layout/card"},
-        {name: "Resize", path: "/layout/resize"}
+        {name: "Resize", path: "/layout/resize"},
+        {name: "Themes", path: "/layout/themes"},
       ]
     },
     {
