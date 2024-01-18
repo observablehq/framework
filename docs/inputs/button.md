@@ -49,7 +49,7 @@ const clicks = view(Inputs.button("Click me"));
 clicks
 ```
 
-Interpolate input values into markdown using [inline expressions](../javascript#inline-expressions):
+Interpolate input values into Markdown using [inline expressions](../javascript#inline-expressions):
 
 You have clicked ${clicks} times. 
 
