@@ -75,7 +75,7 @@ Class            | Description
 </div>
 ```
 
-## Example Three Column Grid with Customizations
+## Three column grid with customizations
 
 Note that the minimum row height is set to 150px, and cell **D** does not use the `card` class.
 
