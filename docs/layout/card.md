@@ -39,7 +39,7 @@ Cards can contain whatever content you like, including text, images, charts, tab
     <p>Et malesuada fames ac turpis. Integer vitae justo eget magna fermentum iaculis eu non diam. Aliquet risus feugiat in ante metus dictum at. Consectetur purus ut faucibus pulvinar.</p>
   </div>
   <div class="card">
-    <img src="../javascript/horse.jpg" width=100%>
+    <img src="../javascript/horse.jpg" width="100%">
   </div>
   <div class="card">
     ${
@@ -70,7 +70,7 @@ const industryInput = view(pickIndustry)
     <p>Et malesuada fames ac turpis. Integer vitae justo eget magna fermentum iaculis eu non diam. Aliquet risus feugiat in ante metus dictum at. Consectetur purus ut faucibus pulvinar.</p>
     </div>
   <div class="card">
-    <img src="../javascript/horse.jpg" width=100%>
+    <img src="../javascript/horse.jpg" width="100%">
     </div>
   <div class="card">
     ${
