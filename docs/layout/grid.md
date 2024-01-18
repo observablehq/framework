@@ -9,8 +9,6 @@ The CLI provides a set of grid CSS classes to help layout page content. These gr
 
 To see these examples change dynamically, adjust the page width or collapse the sidebar on the left.
 
-As with any CSS provided by the CLI, you can mix in standard CSS to customize pages.
-
 ## Classes
 
 The following CSS classes are provided for grid layouts:
