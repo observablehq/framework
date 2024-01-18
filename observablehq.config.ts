@@ -43,9 +43,9 @@ export default {
         {name: "Cell", path: "/charts/cell"},
         {name: "Dot", path: "/charts/dot"},
         {name: "Facets", path: "/charts/facets"},
-        {name: "Hexbin", path: "/charts/hexbin"},
         {name: "Line", path: "/charts/line"},
         {name: "Tick", path: "/charts/tick"},
+        {name: "Grouping data", path: "/charts/grouping-data"}
       ]
     },
     {
