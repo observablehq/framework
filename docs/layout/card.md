@@ -53,7 +53,7 @@ Cards can contain whatever content you like, including text, images, charts, tab
   </div>
   <div class="card">
     ${pickIndustry}
-    ${Inputs.table(industries.filter(d => d.industry == industryInput))}
+    ${Inputs.table(industries.filter(d => d.industry === industryInput))}
   </div>
 </div>
 
@@ -84,7 +84,7 @@ const industryInput = view(pickIndustry)
   </div>
   <div class="card">
     ${pickIndustry}
-    ${Inputs.table(industries.filter(d => d.industry == industryInput))}
+    ${Inputs.table(industries.filter(d => d.industry === industryInput))}
   </div>
 </div>
 ```
@@ -151,7 +151,7 @@ Page content does not have to be within a card. Below, explanatory text is added
     }
   </div>
   <div>
-    <p>Body mass (g) and flipper length (mm) for 344 individual penguins (${penguins.filter(d => d.species == "Adelie").length} Adélie, ${penguins.filter(d => d.species == "Chinstrap").length} Chinstrap, and ${penguins.filter(d => d.species == "Gentoo").length} Gentoo) recorded on Dream, Biscoe, or Torgersen islands near Palmer Archipelago, Antarctica from 2007 — 2009. Data source: <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0090081">K. B. Gorman et al. 2014.</a> </p>
+    <p>Body mass (g) and flipper length (mm) for ${penguins.length} individual penguins (${penguins.filter(d => d.species === "Adelie").length} Adélie, ${penguins.filter(d => d.species === "Chinstrap").length} Chinstrap, and ${penguins.filter(d => d.species === "Gentoo").length} Gentoo) recorded on Dream, Biscoe, or Torgersen islands near Palmer Archipelago, Antarctica from 2007 — 2009. Data: <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0090081">K. B. Gorman et al. 2014.</a> </p>
   </div>
 </div>
 
@@ -168,7 +168,7 @@ Page content does not have to be within a card. Below, explanatory text is added
     }
   </div>
   <div>
-    <p>Body mass (g) and flipper length (mm) for 344 individual penguins (${penguins.filter(d => d.species == "Adelie").length} Adélie, ${penguins.filter(d => d.species == "Chinstrap").length} Chinstrap, and ${penguins.filter(d => d.species == "Gentoo").length} Gentoo) recorded on Dream, Biscoe, or Torgersen islands near Palmer Archipelago, Antarctica from 2007 — 2009. Data source: <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0090081">K. B. Gorman et al. 2014.</a> </p>
+    <p>Body mass (g) and flipper length (mm) for ${penguins.length} individual penguins (${penguins.filter(d => d.species === "Adelie").length} Adélie, ${penguins.filter(d => d.species === "Chinstrap").length} Chinstrap, and ${penguins.filter(d => d.species === "Gentoo").length} Gentoo) recorded on Dream, Biscoe, or Torgersen islands near Palmer Archipelago, Antarctica from 2007 — 2009. Data: <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0090081">K. B. Gorman et al. 2014.</a> </p>
   </div>
 </div>
 ```
