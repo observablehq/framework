@@ -33,7 +33,7 @@ The included [`grid`](./layout/grid) CSS classes make it easier to control how p
 
 <div class="grid grid-cols-2">
   <div class="card"><h1>A</h1>1 × 1</div>
-  <div class="card grid-rowspan-2"><h1>B</h1> 1 × 2</div>
+  <div class="card grid-rowspan-2"><h1>B</h1>1 × 2</div>
   <div class="card"><h1>C</h1>1 × 1</div>
   <div class="card grid-colspan-2"><h1>D</h1>1 × 2</div>
 </div>
@@ -83,7 +83,7 @@ The [`card`](./layout/card) CSS class has default styles that help create a card
   </div>
   <div class="card">
     <p>Tortor condimentum lacinia quis vel eros. Arcu risus quis varius quam quisque id. Magnis dis parturient montes nascetur ridiculus mus mauris. Porttitor leo a diam sollicitudin. Odio facilisis mauris sit amet massa vitae tortor. Nibh venenatis cras sed felis eget velit aliquet sagittis. Ullamcorper sit amet risus nullam eget felis eget nunc. In egestas erat imperdiet sed euismod nisi porta lorem mollis. A erat nam at lectus urna duis convallis. Id eu nisl nunc mi ipsum faucibus vitae. Purus ut faucibus pulvinar elementum integer enim neque volutpat ac.</p>
-    </div>
+  </div>
 </div>
 ```
 
