@@ -91,11 +91,19 @@ try {
     }
     case "deploy": {
       const {
-        values: {config, root}
+        values: {config, root, message}
       } = helpArgs(command, {
-        options: {...CONFIG_OPTION}
+        options: {
+          ...CONFIG_OPTION,
+          message: {
+            type: "string",
+            short: "m"
+          }
+        }
       });
-      await import("../src/deploy.js").then(async (deploy) => deploy.deploy({config: await readConfig(config, root)}));
+      await import("../src/deploy.js").then(async (deploy) =>
+        deploy.deploy({config: await readConfig(config, root), message})
+      );
       break;
     }
     case "preview": {
