@@ -93,7 +93,7 @@ The [`resize`](./layout/resize) function automatically recomputes a DOM element 
 
 Resize exists in the Observable standard library, or can be imported explicitly:
 
-```js
+```js echo
 import {resize} from "npm:@observablehq/stdlib";
 ```
 
