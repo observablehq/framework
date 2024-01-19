@@ -34,6 +34,10 @@ function section(type) {
     }
   }
 
+  h2 + div, h3 + div {
+    margin-bottom: 1rem;
+  }
+
   .thumbnail {
     position: relative;
     width: 100%;
@@ -75,12 +79,10 @@ theme: [glacier, slate]
 ## Light
 
 <div>${section("light")}</div>
-<br/>
 
 ## Dark
 
 <div>${section("dark")}</div>
-<br/>
 
 ## Composition
 Composition themes are combined with other themes.
@@ -102,7 +104,6 @@ Composition themes are combined with other themes.
     </iframe>
   </div>
 </div>
-<br/>
 
 ### default vs alt
 <div>
