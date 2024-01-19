@@ -20,28 +20,43 @@ function section(type) {
 ```
 
 <style>
+  :root {
+    --scale: 0.8;
+    --composition-scale: 0.375;
+    --width: 640px;
+  }
+
+  @media (max-width: 640px) {
+    :root {
+      --scale: 0.375;
+      --composition-scale: calc((0.375 / 0.8) * 0.375);
+      --width: 300px;
+    }
+  }
+
   .thumbnail {
     position: relative;
     width: 100%;
-    max-width: 640px;
+    max-width: var(--width);
     aspect-ratio: 16/9;
     overflow: hidden;
   }
 
   .thumbnail iframe.wide, .thumbnail iframe.default {
-    transform: scale(0.3);
-    min-width: calc((640 / 0.3) * 1px);;
+    transform: scale(var(--composition-scale));
+    min-width: calc(var(--width) / var(--composition-scale));;
     width: 100%;
   }
 
   .thumbnail iframe {
     position: absolute;
-    transform: scale(0.64);
+    transform: scale(var(--scale));
     transform-origin: top left;
-    min-width: calc((640 / 0.64) * 1px);
+    min-width: calc(var(--width) / var(--scale));
+    max-height: calc((var(--width) / var(--scale)) * 1.5);
     width: 100%;
-    aspect-ratio: 16/9;
     border: transparent 1px;
+    aspect-ratio: 16/9;
     pointer-events: none;
   }
 </style>
