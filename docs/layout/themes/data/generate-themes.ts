@@ -1,6 +1,6 @@
 // this script generates a .md file for each theme
 import {writeFileSync } from "node:fs";
-import { themes } from "./constants.ts";
+import {themes} from "./constants.ts";
 
 function fileContent(themeType, theme) {
   return `---
