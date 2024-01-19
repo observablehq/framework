@@ -6,17 +6,63 @@ export default {
     {name: "Markdown", path: "/markdown"},
     {name: "JavaScript", path: "/javascript"},
     {name: "Data loaders", path: "/loaders"},
+    {name: "Components", path: "/components"},
     {name: "Configuration", path: "/config"},
     {
       name: "JavaScript",
       pages: [
         {name: "Reactivity", path: "/javascript/reactivity"},
         {name: "Display", path: "/javascript/display"},
+        {name: "Inputs", path: "/javascript/inputs"},
         {name: "Imports", path: "/javascript/imports"},
         {name: "Files", path: "/javascript/files"},
         {name: "Promises", path: "/javascript/promises"},
         {name: "Generators", path: "/javascript/generators"},
         {name: "Mutables", path: "/javascript/mutables"}
+      ]
+    },
+    {
+      name: "Layout",
+      open: false,
+      pages: [
+        {name: "Grid", path: "/layout/grid"},
+        {name: "Card", path: "/layout/card"},
+        {name: "Resize", path: "/layout/resize"}
+      ]
+    },
+    {
+      name: "Charts",
+      open: false,
+      pages: [
+        {name: "Area", path: "/charts/area"},
+        {name: "Arrow", path: "/charts/arrow"},
+        {name: "Bar", path: "/charts/bar"},
+        {name: "Cell", path: "/charts/cell"},
+        {name: "Dot", path: "/charts/dot"},
+        {name: "Facets", path: "/charts/facets"},
+        {name: "Grouping data", path: "/charts/grouping-data"},
+        {name: "Line", path: "/charts/line"},
+        {name: "Tick", path: "/charts/tick"}
+      ]
+    },
+    {
+      name: "Inputs",
+      open: false,
+      pages: [
+        {name: "Button", path: "/inputs/button"},
+        {name: "Checkbox", path: "/inputs/checkbox"},
+        {name: "Color", path: "/inputs/color"},
+        {name: "Date/Datetime", path: "/inputs/date"},
+        {name: "File", path: "/inputs/file"},
+        {name: "Form", path: "/inputs/form"},
+        {name: "Radio", path: "/inputs/radio"},
+        {name: "Range", path: "/inputs/range"},
+        {name: "Search", path: "/inputs/search"},
+        {name: "Select", path: "/inputs/select"},
+        {name: "Table", path: "/inputs/table"},
+        {name: "Text", path: "/inputs/text"},
+        {name: "Textarea", path: "/inputs/textarea"},
+        {name: "Toggle", path: "/inputs/toggle"}
       ]
     },
     {
