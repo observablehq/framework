@@ -1,0 +1,90 @@
+---
+toc: false
+theme: dashboard
+---
+
+# Rocket launches 🚀
+
+<!-- import components and tools -->
+
+```js
+import {BigNumber} from "./components/bigNumber.js";
+```
+
+<!-- load and transform the data -->
+
+```js
+const launchHistory = await FileAttachment("data/launchHistory.csv") // data loader
+  .csv({typed: true})
+const countLaunchesByStateId = id => launchHistory.filter(d => d.stateId === id).length;
+```
+
+<!-- embed BigNumber into cards -->
+
+<div class="grid grid-cols-4">
+  <div class="card">
+    <h2>United States</h2>
+    ${BigNumber(countLaunchesByStateId("US"), {title: "Launches"})}
+  </div>
+  <div class="card">
+    <h2>Soviet Union</h2>
+    ${BigNumber(countLaunchesByStateId("SU"), {title: "Launches"})}
+  </div>
+  <div class="card">
+    <h2>Russia</h2>
+    ${BigNumber(countLaunchesByStateId("RU"), {title: "Launches"})}
+  </div>
+  <div class="card">
+    <h2>China</h2>
+    ${BigNumber(countLaunchesByStateId("CN"), {title: "Launches"})}
+  </div>
+</div>
+
+<!-- plot of launch history -->
+
+<div class="card grid grid-cols-8">
+  ${resize((width) => Plot.plot({
+    width,
+    title: "Launches Over the Years",
+    height: 300,
+    x: { label: null, interval: "year" },
+    y: { grid: true, label: "Launches" },
+    color: { legend: true, label: "State" },
+    marks: [
+      Plot.barY(
+        launchHistory,
+        Plot.groupX(
+          { y: "count" },
+          { x: d => new Date(d.date), fill: "state", tip: {format: {x: false}} }
+        )
+      ),
+      Plot.ruleY([0])
+    ]
+  }))}
+</div>
+
+<!-- plot of launch vehicles -->
+
+<div class="card grid grid-cols-8">
+  ${resize((width) => Plot.plot({
+    width,
+    title: "Popular Launch Vehicles",
+    marginLeft: 65,
+    height: 300,
+    x: { grid: true, label: "Launches" },
+    y: { label: "Vehicle Family" },
+    color: { legend: true, label: "State" },
+    marks: [
+      Plot.barX(
+        launchHistory,
+        Plot.groupY(
+          { x: "count" },
+          { y: "family",  fill: "state", tip: true, sort: { y: "x", reverse: true }}
+        )
+      ),
+      Plot.ruleX([0])
+    ]
+  }))}
+</div>
+
+Data from J. McDowell: [General Catalog of Artificial Space Objects](https://planet4589.org/space/gcat).
