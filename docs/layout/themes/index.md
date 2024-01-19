@@ -19,12 +19,6 @@ function section(type) {
 }
 ```
 
-
-```js
-const compositionThemes = themes.filter(({type: themeType}) => themeType === "composition");
-const wideTheme = compositionThemes.find(({path}) => path.includes("wide"));
-const altTheme = compositionThemes.find(({path}) => path.includes("alt"));
-```
 <!-- preload for faster page load-->
 ${themes.map(({path}) => html`<link rel="preload" href="${path}" as="document"/>`)}
 
