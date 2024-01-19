@@ -19,12 +19,12 @@
     "templates/**/*.tmpl"
   ],
   "bin": {
-    "observable": "bin/observable.ts"
+    "observable": "bin/observable-init.js"
   },
   "scripts": {
     "dev": "tsx watch ./bin/observable.ts preview",
-    "build": "rm -rf dist && ./bin/observable.ts build",
-    "deploy": "./bin/observable.ts deploy",
+    "build": "rm -rf dist && tsx ./bin/observable.ts build",
+    "deploy": "tsx ./bin/observable.ts deploy",
     "test": "yarn test:mocha && yarn test:tsc && yarn test:lint && yarn test:prettier",
     "test:coverage": "c8 yarn test:mocha",
     "test:mocha": "rm -rf test/.observablehq/cache test/input/build/*/.observablehq/cache && OBSERVABLE_TELEMETRY_DISABLE=1 tsx --no-warnings=ExperimentalWarning ./node_modules/.bin/mocha 'test/**/*-test.*'",
