@@ -15,7 +15,8 @@
     "bin/**/*.ts",
     "src/**/*.js",
     "src/**/*.ts",
-    "src/**/*.css"
+    "src/**/*.css",
+    "templates/**/*.tmpl"
   ],
   "bin": {
     "observable": "bin/observable.ts"
