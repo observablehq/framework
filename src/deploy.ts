@@ -164,7 +164,7 @@ export async function deploy({config, message}: DeployOptions, effects = default
   await effects.setDeployConfig(config.root, {projectId});
 
   // Create the new deploy on the server
-  if (!message) message = await promptUserForInput(effects.input, effects.output, "Deploy message: ");
+  if (message === undefined) message = await promptUserForInput(effects.input, effects.output, "Deploy message: ");
   const deployId = await apiClient.postDeploy({projectId, message});
 
   // Build the project
