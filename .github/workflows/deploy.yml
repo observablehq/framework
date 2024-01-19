@@ -50,4 +50,4 @@ jobs:
       - name: Deploy to Observable Cloud
         run: yarn deploy -m "$(git log -1 --pretty=%s)"
         env:
-          OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_TOKEN }}
+          OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_API_TOKEN }}
