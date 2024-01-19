@@ -6,7 +6,7 @@ import os from "os";
 import {CliError} from "./error.js";
 import type {Logger} from "./logger.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
-import {magenta, underline} from "./tty.js";
+import {magenta, underline, wrapLog} from "./tty.js";
 
 type uuid = ReturnType<typeof randomUUID>;
 
@@ -207,11 +207,12 @@ export class Telemetry {
     let called: uuid | undefined;
     await this.getPersistentId("cli_telemetry_banner", () => (called = randomUUID()));
     if (called) {
-      this.effects.logger.error(
-        `
-${magenta("Attention:")} The Observable CLI collects anonymous telemetry to help us improve
-           the product. See ${underline("https://cli.observablehq.com/telemetry")} for details.
-           Set \`OBSERVABLE_TELEMETRY_DISABLE=true\` to disable.`
+      wrapLog(
+        `${magenta("Attention:")} The Observable CLI collects telemetry to help us improve the product. See ${underline(
+          "https://cli.observablehq.com/telemetry"
+        )} for details. Set \`OBSERVABLE_TELEMETRY_DISABLE=true\` to disable.`,
+        this.effects,
+        "warn"
       );
     }
   }
@@ -224,7 +225,7 @@ ${magenta("Attention:")} The Observable CLI collects anonymous telemetry to help
   }): Promise<void> {
     await this.showBannerIfNeeded();
     if (this.debug) {
-      this.effects.logger.error("[telemetry]", data);
+      this.effects.logger.warn("[telemetry]", data);
       return;
     }
     await fetch(this.endpoint, {

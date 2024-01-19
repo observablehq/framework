@@ -1,13 +1,9 @@
 import {getObservableUiOrigin} from "./observableApiClient.js";
-import type {TtyColor} from "./tty.js";
 import {bold, magenta} from "./tty.js";
 
 export function commandInstruction(
   command: string,
-  {
-    color = (s) => magenta(bold(s)),
-    env = process.env
-  }: {color?: TtyColor | null; env?: Record<string, string | undefined>} = {}
+  {color = (s) => magenta(bold(s)), env = process.env}: {color?: typeof bold | null; env?: typeof process.env} = {}
 ): string {
   if (!color) color = (s) => s;
 

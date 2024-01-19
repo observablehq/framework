@@ -1,4 +1,4 @@
-import type {Logger} from "./logger.js";
+import type {LogLevel, Logger} from "./logger.js";
 
 export const bold = color(1, 22);
 export const faint = color(2, 22);
@@ -11,36 +11,48 @@ export const blue = color(34, 39);
 export const magenta = color(35, 39);
 export const cyan = color(36, 39);
 
-export type TtyColor = (text: string) => string;
-
-function color(code: number, reset: number): TtyColor {
-  return process.stdout.isTTY ? (text: string) => `\x1b[${code}m${text}\x1b[${reset}m` : String;
+function color(code: number, reset: number) {
+  return (text: string) => `\x1b[${code}m${text}\x1b[${reset}m`;
 }
-
-export interface TtyEffects {
-  isTty: boolean;
-  logger: Logger;
-  outputColumns: number;
-}
-
-function stripColor(s: string): string {
+export function stripColor(s: string): string {
   // eslint-disable-next-line no-control-regex
   return s.replace(/\x1b\[[0-9;]*m/g, "");
 }
 
-export function hangingIndentLog(
-  effects: TtyEffects,
-  prefix: string,
-  message: string
-): {output: string; indent: string} {
-  let output;
-  let indent;
-  if (effects.isTty) {
-    const prefixLength = stripColor(prefix).length + 1;
-    const lineBudget = effects.outputColumns - prefixLength;
+type TtyWriteStream = Pick<typeof process.stdout, "isTTY" | "columns">;
+interface TtyEffects {
+  process?: {stdout: TtyWriteStream; stderr: TtyWriteStream};
+  logger: Logger;
+}
+const defaultEffects: TtyEffects = {
+  logger: console
+};
+
+function writeStream(level: LogLevel, effects: TtyEffects) {
+  switch (level) {
+    case "log":
+      return (effects.process ?? process).stdout;
+    case "warn":
+    case "error":
+      return (effects.process ?? process).stderr;
+  }
+}
+
+export function log(message: string, effects = defaultEffects, level: LogLevel = "log") {
+  if (writeStream(level, effects).isTTY) {
+    effects.logger[level](message);
+  } else {
+    effects.logger[level](stripColor(message));
+  }
+}
+
+export function wrapLog(message: string, effects = defaultEffects, level: LogLevel = "log") {
+  const stream = writeStream(level, effects);
+  if (stream.isTTY) {
+    const prefixLength = 2;
+    const lineBudget = stream.columns - prefixLength;
     const tokens = message.split(" ");
     const lines: string[][] = [[]];
-    indent = " ".repeat(prefixLength);
     let lastLineLength = 0;
     for (const token of tokens) {
       const tokenLength = stripColor(token).length;
@@ -51,12 +63,8 @@ export function hangingIndentLog(
       }
       lines.at(-1)?.push(token);
     }
-    output = prefix + " ";
-    output += lines.map((line) => line.join(" ")).join("\n" + indent);
+    effects.logger[level](lines.map((line) => line.join(" ")).join(`\n${faint("↳")} `));
   } else {
-    output = `${prefix} ${message}`;
-    indent = "";
+    effects.logger[level](stripColor(message));
   }
-  effects.logger.log(output);
-  return {output, indent};
 }

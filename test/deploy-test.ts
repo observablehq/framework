@@ -35,7 +35,6 @@ interface MockDeployEffectsOptions {
   apiKey?: string | null;
   deployConfig?: DeployConfig | null;
   isTty?: boolean;
-  outputColumns?: number;
   debug?: boolean;
 }
 
@@ -48,22 +47,14 @@ class MockDeployEffects extends MockConfigEffects implements DeployEffects {
   public projectTitle = "My Project";
   public projectSlug = "my-project";
   public isTty: boolean;
-  public outputColumns: number;
   private ioResponses: {prompt: RegExp; response: string}[] = [];
   private debug: boolean;
 
-  constructor({
-    apiKey = validApiKey,
-    deployConfig = null,
-    isTty = true,
-    outputColumns = 80,
-    debug = false
-  }: MockDeployEffectsOptions = {}) {
+  constructor({apiKey = validApiKey, deployConfig = null, isTty = true, debug = false}: MockDeployEffectsOptions = {}) {
     super();
     this.observableApiKey = apiKey;
     this.deployConfig = deployConfig;
     this.isTty = isTty;
-    this.outputColumns = outputColumns;
     this.debug = debug;
 
     this.output = new Writable({

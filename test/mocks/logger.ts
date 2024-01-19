@@ -22,6 +22,10 @@ export class MockLogger implements Logger {
     this.assertLines(expected, this.logLines, {skipBlanks, exact: true});
   }
 
+  assertExactWarns(expected: RegExp[], {skipBlanks = true} = {}) {
+    this.assertLines(expected, this.warnLines, {skipBlanks, exact: true});
+  }
+
   assertExactErrors(expected: RegExp[], {skipBlanks = true} = {}) {
     this.assertLines(expected, this.errorLines, {skipBlanks, exact: true});
   }

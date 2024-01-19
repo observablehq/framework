@@ -16,7 +16,7 @@ import {
   setDeployConfig
 } from "./observableApiConfig.js";
 import {Telemetry} from "./telemetry.js";
-import {blue, bold, hangingIndentLog, magenta, yellow} from "./tty.js";
+import {blue, bold, magenta, wrapLog, yellow} from "./tty.js";
 
 export interface DeployOptions {
   config: Config;
@@ -31,7 +31,6 @@ export interface DeployEffects extends ConfigEffects {
   logger: Logger;
   input: NodeJS.ReadableStream;
   output: NodeJS.WritableStream;
-  outputColumns: number;
 }
 
 const defaultEffects: DeployEffects = {
@@ -42,8 +41,7 @@ const defaultEffects: DeployEffects = {
   isTty: isatty(process.stdin.fd),
   logger: console,
   input: process.stdin,
-  output: process.stdout,
-  outputColumns: process.stdout.columns ?? 80
+  output: process.stdout
 };
 
 /** Deploy a project to ObservableHQ */
@@ -96,15 +94,14 @@ export async function deploy({config, message}: DeployOptions, effects = default
     // they want to continue anyways. In non-interactive mode just cancel.
     const previousProjectId = deployConfig?.projectId;
     if (previousProjectId && previousProjectId !== projectId) {
-      const {indent} = hangingIndentLog(
-        effects,
-        magenta("Attention:"),
-        `This project was last deployed to a different project on Observable Cloud from ${bold(
+      wrapLog(
+        `${magenta("Attention:")} This project was last deployed to a different project on Observable Cloud from ${bold(
           `@${config.deploy.workspace}/${config.deploy.project}`
-        )}.`
+        )}.`,
+        effects
       );
       if (effects.isTty) {
-        const choice = await promptConfirm(effects, `${indent}Do you want to deploy anyway?`, {default: false});
+        const choice = await promptConfirm(effects, "Do you want to deploy anyway?", {default: false});
         if (!choice) {
           throw new CliError("User cancelled deploy", {print: false, exitCode: 0});
         }
@@ -112,15 +109,14 @@ export async function deploy({config, message}: DeployOptions, effects = default
         throw new CliError("Cancelling deploy due to misconfiguration.");
       }
     } else if (!previousProjectId) {
-      const {indent} = hangingIndentLog(
-        effects,
-        yellow("Warning:"),
-        `There is an existing project on Observable Cloud named ${bold(
+      wrapLog(
+        `${yellow("Warning:")} There is an existing project on Observable Cloud named ${bold(
           `@${config.deploy.workspace}/${config.deploy.project}`
-        )} that is not associated with this repository. If you continue, you'll overwrite the existing content of the project.`
+        )} that is not associated with this repository. If you continue, you'll overwrite the existing content of the project.`,
+        effects
       );
 
-      if (!(await promptConfirm(effects, `${indent}Do you want to continue?`, {default: false}))) {
+      if (!(await promptConfirm(effects, "Do you want to continue?", {default: false}))) {
         if (effects.isTty) {
           throw new CliError("Running non-interactively, cancelling deploy", {print: true, exitCode: 1});
         } else {
@@ -130,18 +126,17 @@ export async function deploy({config, message}: DeployOptions, effects = default
     }
   } else {
     // Project doesn't exist, so ask the user if they want to create it.
-    const {indent} = hangingIndentLog(
-      effects,
-      magenta("Attention:"),
-      `There is no project on the Observable Cloud named ${bold(
+    wrapLog(
+      `${magenta("Attention:")} There is no project on the Observable Cloud named ${bold(
         `@${config.deploy.workspace}/${config.deploy.project}`
-      )}`
+      )}`,
+      effects
     );
     if (effects.isTty) {
       if (!config.title) {
         throw new CliError("You haven't configured a project title. Please set title in your configuration.");
       }
-      if (!(await promptConfirm(effects, `${indent}Do you want to create it now?`, {default: false}))) {
+      if (!(await promptConfirm(effects, "Do you want to create it now?", {default: false}))) {
         throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
       }
     } else {

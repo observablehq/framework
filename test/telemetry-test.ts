@@ -39,7 +39,7 @@ describe("telemetry", () => {
     const telemetry = new Telemetry({...noopEffects, logger, readFile: () => Promise.reject()});
     telemetry.record({event: "build", step: "start", test: true});
     await telemetry.pending;
-    logger.assertExactErrors([/Attention.*cli.observablehq.com.*OBSERVABLE_TELEMETRY_DISABLE=true/s]);
+    logger.assertExactWarns([/Attention.*cli.observablehq.com.*OBSERVABLE_TELEMETRY_DISABLE=true/s]);
   });
 
   it("can be disabled", async () => {
@@ -58,8 +58,8 @@ describe("telemetry", () => {
     });
     telemetry.record({event: "build", step: "start", test: true});
     await telemetry.pending;
-    assert.equal(logger.errorLines.length, 1);
-    assert.equal(logger.errorLines[0][0], "[telemetry]");
+    assert.equal(logger.warnLines.length, 1);
+    assert.equal(logger.warnLines[0][0], "[telemetry]");
     assert.equal(agent.pendingInterceptors().length, 1);
   });
 
@@ -73,9 +73,9 @@ describe("telemetry", () => {
     });
     telemetry.record({event: "build", step: "start", test: true});
     await telemetry.pending;
-    assert.notEqual(logger.errorLines[0][1].ids.session, null);
-    assert.equal(logger.errorLines[0][1].ids.device, null);
-    assert.equal(logger.errorLines[0][1].ids.project, null);
+    assert.notEqual(logger.warnLines[0][1].ids.session, null);
+    assert.equal(logger.warnLines[0][1].ids.device, null);
+    assert.equal(logger.warnLines[0][1].ids.project, null);
   });
 
   it("stays silent on fetch errors", async () => {
@@ -88,7 +88,7 @@ describe("telemetry", () => {
     });
     telemetry.record({event: "build", step: "start", test: true});
     await telemetry.pending;
-    assert.equal(logger.errorLines.length, 0);
+    assert.equal(logger.warnLines.length, 0);
     assert.equal(agent.pendingInterceptors().length, 1);
   });
 
@@ -123,7 +123,7 @@ describe("telemetry", () => {
     });
     listeners["SIGINT"]("SIGINT");
     assert.equal(await exited, 130);
-    assert.equal(logger.errorLines.length, 1);
-    assert.deepEqual(logger.errorLines[0][1].data, {event: "signal", signal: "SIGINT"});
+    assert.equal(logger.warnLines.length, 1);
+    assert.deepEqual(logger.warnLines[0][1].data, {event: "signal", signal: "SIGINT"});
   });
 });
