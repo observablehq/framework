@@ -1,5 +1,3 @@
-#!/usr/bin/env -S node --import=tsx/esm
-
 import {type ParseArgsConfig, parseArgs} from "node:util";
 import {readConfig} from "../src/config.js";
 import {CliError} from "../src/error.js";
