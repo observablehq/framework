@@ -19,9 +19,6 @@ function section(type) {
 }
 ```
 
-<!-- preload for faster page load-->
-${themes.map(({path}) => html`<link rel="preload" href="${path}" as="document"/>`)}
-
 <style>
   .thumbnail {
     position: relative;
