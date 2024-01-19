@@ -124,6 +124,7 @@ const TEST_CONFIG = await normalizeConfig({
   title: "Mock BI",
   deploy: {workspace: "mock-user-ws", project: "bi"}
 });
+const TEST_OPTIONS = {config: TEST_CONFIG, message: undefined};
 
 // TODO These tests need mockJsDelivr, too!
 describe("deploy", () => {
@@ -145,7 +146,30 @@ describe("deploy", () => {
       .start();
 
     const effects = new MockDeployEffects({deployConfig}).addIoResponse(/^Deploy message: /, "fix some bugs");
-    await deploy({config: TEST_CONFIG}, effects);
+    await deploy(TEST_OPTIONS, effects);
+
+    effects.close();
+  });
+
+  it("does not prompt for a message when one is supplied on the command line", async () => {
+    const projectId = "project123";
+    const deployConfig = {projectId};
+    const deployId = "deploy456";
+    const message = "this is test deploy";
+    getCurentObservableApi()
+      .handleGetProject({
+        workspaceLogin: TEST_CONFIG.deploy!.workspace,
+        projectSlug: TEST_CONFIG.deploy!.project,
+        projectId
+      })
+      .handlePostDeploy({projectId, deployId})
+      .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
+      .handlePostDeployUploaded({deployId})
+      .start();
+
+    // no io response for message
+    const effects = new MockDeployEffects({deployConfig});
+    await deploy({...TEST_OPTIONS, message}, effects);
 
     effects.close();
   });
@@ -172,7 +196,7 @@ describe("deploy", () => {
       .addIoResponse(/Do you want to create it now\?/, "y")
       .addIoResponse(/^Deploy message: /, "fix some bugs");
 
-    await deploy({config: TEST_CONFIG}, effects);
+    await deploy(TEST_OPTIONS, effects);
 
     effects.close();
   });
@@ -195,7 +219,7 @@ describe("deploy", () => {
     );
 
     try {
-      await deploy({config: TEST_CONFIG}, effects);
+      await deploy(TEST_OPTIONS, effects);
       assert.fail("expected error");
     } catch (error) {
       CliError.assert(error, {message: "User cancelled deploy.", print: false, exitCode: 0});
@@ -219,7 +243,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects({deployConfig, isTty: false});
 
     try {
-      await deploy({config: TEST_CONFIG}, effects);
+      await deploy(TEST_OPTIONS, effects);
       assert.fail("expected error");
     } catch (error) {
       CliError.assert(error, {message: "Cancelling deploy due to non-existent project."});
@@ -247,7 +271,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects({deployConfig, isTty: true});
 
     try {
-      await deploy({config}, effects);
+      await deploy({...TEST_OPTIONS, config}, effects);
       assert.fail("expected error");
     } catch (err) {
       CliError.assert(err, {message: /You haven't configured a project title/});
@@ -280,7 +304,7 @@ describe("deploy", () => {
     );
 
     try {
-      await deploy({config}, effects);
+      await deploy({...TEST_OPTIONS, config}, effects);
       assert.fail("expected error");
     } catch (err) {
       CliError.assert(err, {message: /Workspace super-ws-123 not found/});
@@ -297,7 +321,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects({isTty: true});
 
     try {
-      await deploy({config}, effects);
+      await deploy({...TEST_OPTIONS, config}, effects);
       assert.fail("expected error");
     } catch (err) {
       CliError.assert(err, {message: /"ACME Inc.".*isn't valid.*"acme-inc"/});
@@ -314,7 +338,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects({isTty: true});
 
     try {
-      await deploy({config}, effects);
+      await deploy({...TEST_OPTIONS, config}, effects);
       assert.fail("expected error");
     } catch (err) {
       CliError.assert(err, {message: /"Business Intelligence".*isn't valid.*"business-intelligence"/});
@@ -327,7 +351,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects({apiKey: null});
 
     try {
-      await deploy({config: TEST_CONFIG}, effects);
+      await deploy(TEST_OPTIONS, effects);
       assert.fail("expected error");
     } catch (err) {
       if (!(err instanceof Error)) throw err;
@@ -347,7 +371,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects({apiKey: invalidApiKey});
 
     try {
-      await deploy({config: TEST_CONFIG}, effects);
+      await deploy(TEST_OPTIONS, effects);
       assert.fail("Should have thrown");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -372,7 +396,7 @@ describe("deploy", () => {
     );
 
     try {
-      await deploy({config: TEST_CONFIG}, effects);
+      await deploy(TEST_OPTIONS, effects);
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -400,7 +424,7 @@ describe("deploy", () => {
     );
 
     try {
-      await deploy({config: TEST_CONFIG}, effects);
+      await deploy(TEST_OPTIONS, effects);
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -429,7 +453,7 @@ describe("deploy", () => {
     );
 
     try {
-      await deploy({config: TEST_CONFIG}, effects);
+      await deploy(TEST_OPTIONS, effects);
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -443,7 +467,7 @@ describe("deploy", () => {
     const config = {...TEST_CONFIG, deploy: null};
     const effects = new MockDeployEffects();
     try {
-      await deploy({config}, effects);
+      await deploy({...TEST_OPTIONS, config}, effects);
       assert.fail("expected error");
     } catch (err) {
       CliError.assert(err, {message: /You haven't configured a project to deploy to/});
@@ -467,7 +491,7 @@ describe("deploy", () => {
       const effects = new MockDeployEffects({deployConfig: {projectId: "oldProjectId"}, isTty: true})
         .addIoResponse(/Do you want to deploy anyway\?/, "y")
         .addIoResponse(/^Deploy message: /, "deploying to re-created project");
-      await deploy({config: TEST_CONFIG}, effects);
+      await deploy(TEST_OPTIONS, effects);
       effects.logger.assertAtLeastLogs([/This project was last deployed/]);
       effects.close();
     });
@@ -486,7 +510,7 @@ describe("deploy", () => {
         "n"
       );
       try {
-        await deploy({config: TEST_CONFIG}, effects);
+        await deploy(TEST_OPTIONS, effects);
         assert.fail("expected error");
       } catch (error) {
         CliError.assert(error, {message: "User cancelled deploy", print: false, exitCode: 0});
@@ -506,7 +530,7 @@ describe("deploy", () => {
         .start();
       const effects = new MockDeployEffects({deployConfig: {projectId: "oldProjectId"}, isTty: false, debug: true});
       try {
-        await deploy({config: TEST_CONFIG}, effects);
+        await deploy(TEST_OPTIONS, effects);
         assert.fail("expected error");
       } catch (error) {
         CliError.assert(error, {message: "Cancelling deploy due to misconfiguration."});
