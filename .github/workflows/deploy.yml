@@ -46,3 +46,8 @@ jobs:
           projectName: cli
           directory: dist
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+      # TODO: This doesn't include the examples. How can we fix that?
+      - name: Deploy to Observable Cloud
+        run: yarn deploy -m "$(git log -1 --pretty=%s)"
+        env:
+          OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_API_TOKEN }}

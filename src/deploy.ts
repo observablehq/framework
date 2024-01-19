@@ -20,6 +20,7 @@ import {blue, bold, hangingIndentLog, magenta, yellow} from "./tty.js";
 
 export interface DeployOptions {
   config: Config;
+  message: string | undefined;
 }
 
 export interface DeployEffects extends ConfigEffects {
@@ -46,7 +47,7 @@ const defaultEffects: DeployEffects = {
 };
 
 /** Deploy a project to ObservableHQ */
-export async function deploy({config}: DeployOptions, effects = defaultEffects): Promise<void> {
+export async function deploy({config, message}: DeployOptions, effects = defaultEffects): Promise<void> {
   Telemetry.record({event: "deploy", step: "start"});
   const {logger} = effects;
   const apiKey = await effects.getObservableApiKey(effects);
@@ -166,7 +167,7 @@ export async function deploy({config}: DeployOptions, effects = defaultEffects):
   await effects.setDeployConfig(config.root, {projectId});
 
   // Create the new deploy on the server
-  const message = await promptUserForInput(effects.input, effects.output, "Deploy message: ");
+  if (message === undefined) message = await promptUserForInput(effects.input, effects.output, "Deploy message: ");
   const deployId = await apiClient.postDeploy({projectId, message});
 
   // Build the project

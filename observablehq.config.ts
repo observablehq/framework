@@ -18,7 +18,7 @@ export default {
         {name: "Files", path: "/javascript/files"},
         {name: "Promises", path: "/javascript/promises"},
         {name: "Generators", path: "/javascript/generators"},
-        {name: "Mutables", path: "/javascript/mutables"},
+        {name: "Mutables", path: "/javascript/mutables"}
       ]
     },
     {
@@ -89,10 +89,14 @@ export default {
         {name: "TeX", path: "/lib/tex"},
         {name: "TopoJSON", path: "/lib/topojson"},
         {name: "Vega-Lite", path: "/lib/vega-lite"},
-        {name: "ZIP", path: "/lib/zip"},
+        {name: "ZIP", path: "/lib/zip"}
       ]
     },
     {name: "Contributing", path: "/contributing"}
   ],
-  footer: `© ${new Date().getUTCFullYear()} Observable, Inc.`
+  footer: `© ${new Date().getUTCFullYear()} Observable, Inc.`,
+  deploy: {
+    workspace: "@observablehq",
+    project: "cli"
+  }
 };
