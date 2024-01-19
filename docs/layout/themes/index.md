@@ -59,17 +59,16 @@ You can set themes for a project in the project configuration or in the page fro
 theme: [glacier, slate]
 ---
 ```
-</br>
 
 ## Light
 
 <div>${section("light")}</div>
-</br>
+<br/>
 
 ## Dark
 
 <div>${section("dark")}</div>
-</br>
+<br/>
 
 ## Composition
 Composition themes are combined with other themes.
@@ -91,8 +90,7 @@ Composition themes are combined with other themes.
     </iframe>
   </div>
 </div>
-
-</br>
+<br/>
 
 ### default vs alt
 <div>
