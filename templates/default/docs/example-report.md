@@ -1,7 +1,3 @@
----
-toc: true
----
-
 # A brief history of space exploration
 
 This report is a brief overview of the history and current state of rocket launches and space exploration.
@@ -12,7 +8,7 @@ The history of rocket launches dates back to ancient China, where gunpowder-fill
 
 Fast-forward to the 20th century during the Cold War era, the United States and the Soviet Union embarked on a space race, a competition to innovate and explore beyond Earth.
 
-This led to the launch of the first artificial satellite, Sputnik 1, and the manned moon landing by Apollo 11. As technology advanced, rocket launches became synonymous with space exploration and satellite deployment.
+This led to the launch of the first artificial satellite, Sputnik 1, and the crewed moon landing by Apollo 11. As technology advanced, rocket launches became synonymous with space exploration and satellite deployment.
 
 ## The Space Shuttle era
 
