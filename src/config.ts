@@ -82,7 +82,8 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
     theme = "default",
     deploy,
     footer = `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on ${currentDate.toLocaleDateString(
-      "en-US"
+      "en-US",
+      {month: "short", day: "numeric", year: "numeric"}
     )}.`
   } = spec;
   root = String(root);
