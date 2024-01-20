@@ -56,6 +56,11 @@ export async function create({output = ""}: {output?: string}, effects: CreateEf
     } satisfies PromptObject<"projectTitle">
   ]);
 
+  if (results.projectName === undefined || results.projectTitle === undefined) {
+    console.log("Create aborted");
+    process.exit(1);
+  }
+
   const root = join(projectDir, results.projectName);
   const pkgInfo = pkgFromUserAgent(process.env["npm_config_user_agent"]);
   const pkgManager = pkgInfo ? pkgInfo.name : "yarn";
@@ -113,8 +118,7 @@ function validateProjectTitle(projectTitle: string): string | boolean {
 function toTitleCase(str: string): string {
   return str
     .toLowerCase()
-    .replace(/_/g, " ")
-    .split(/\s+/)
+    .split(/[\s_-]+/)
     .map((word) => word[0].toUpperCase() + word.slice(1))
     .join(" ");
 }
