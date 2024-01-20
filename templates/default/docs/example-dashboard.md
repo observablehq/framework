@@ -85,4 +85,4 @@ function launches(id) {
   }))}
 </div>
 
-Data from J. McDowell: [General Catalog of Artificial Space Objects](https://planet4589.org/space/gcat).
+Data: Jonathan C. McDowell, [General Catalog of Artificial Space Objects](https://planet4589.org/space/gcat)
