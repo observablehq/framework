@@ -12,7 +12,7 @@ describe("create", async () => {
       new Set(effects.outputs.keys()),
       new Set([
         "template-test/.gitignore",
-        "template-test/docs/components/bigNumber.js",
+        "template-test/docs/components/timeline.js",
         "template-test/docs/data/launchHistory.csv.js",
         "template-test/docs/data/spaceHistory.json",
         "template-test/docs/example-dashboard.md",
