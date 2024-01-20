@@ -68,10 +68,23 @@ async function readPages(root: string): Promise<Page[]> {
   return pages;
 }
 
-const DEFAULT_FOOTER = 'Built with <a href="https://observablehq.com/" target=_blank>Observable</a>';
+let currentDate = new Date();
+
+export function setCurrentDate(date = new Date()): void {
+  currentDate = date;
+}
 
 export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Promise<Config> {
-  let {root = defaultRoot, output = "dist", style, theme = "default", deploy, footer = DEFAULT_FOOTER} = spec;
+  let {
+    root = defaultRoot,
+    output = "dist",
+    style,
+    theme = "default",
+    deploy,
+    footer = `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on ${currentDate.toLocaleDateString(
+      "en-US"
+    )}.`
+  } = spec;
   root = String(root);
   output = String(output);
   if (style === null) style = null;

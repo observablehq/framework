@@ -4,7 +4,7 @@ import {open, readFile, rm} from "node:fs/promises";
 import {join, normalize, relative} from "node:path";
 import {difference} from "d3-array";
 import {FileBuildEffects, build} from "../src/build.js";
-import {readConfig} from "../src/config.js";
+import {readConfig, setCurrentDate} from "../src/config.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
 
 const silentEffects = {
@@ -13,6 +13,7 @@ const silentEffects = {
 };
 
 describe("build", async () => {
+  setCurrentDate(new Date("2024-01-11"));
   mockJsDelivr();
 
   // Each sub-directory of test/input/build is a test case.
