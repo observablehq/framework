@@ -117,9 +117,8 @@ function validateProjectTitle(projectTitle: string): string | boolean {
 
 function toTitleCase(str: string): string {
   return str
-    .toLowerCase()
     .split(/[\s_-]+/)
-    .map((word) => word[0].toUpperCase() + word.slice(1))
+    .map(([c, ...rest]) => c.toUpperCase() + rest.join(""))
     .join(" ");
 }
 
