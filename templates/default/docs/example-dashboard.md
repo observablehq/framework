@@ -5,38 +5,36 @@ theme: dashboard
 
 # Rocket launches 🚀
 
-<!-- import components and tools -->
-
-```js
-import {BigNumber} from "./components/bigNumber.js";
-```
-
 <!-- load and transform the data -->
 
 ```js
-const launchHistory = await FileAttachment("data/launchHistory.csv") // data loader
-  .csv({typed: true})
-const countLaunchesByStateId = id => launchHistory.filter(d => d.stateId === id).length;
+const launchHistory = await FileAttachment("data/launchHistory.csv")
+  .csv({typed: true});
+
+const format = d3.format(",");
+function launches(id) {
+  return format(launchHistory.filter((d) => d.stateId === id).length);
+}
 ```
 
-<!-- embed BigNumber into cards -->
+<!-- cards with big numbers -->
 
 <div class="grid grid-cols-4">
   <div class="card">
     <h2>United States</h2>
-    ${BigNumber(countLaunchesByStateId("US"), {title: "Launches"})}
+    <span class="big">${launches("US")}</span>
   </div>
   <div class="card">
     <h2>Soviet Union</h2>
-    ${BigNumber(countLaunchesByStateId("SU"), {title: "Launches"})}
+    <span class="big">${launches("SU")}</span>
   </div>
   <div class="card">
     <h2>Russia</h2>
-    ${BigNumber(countLaunchesByStateId("RU"), {title: "Launches"})}
+    <span class="big">${launches("RU")}</span>
   </div>
   <div class="card">
     <h2>China</h2>
-    ${BigNumber(countLaunchesByStateId("CN"), {title: "Launches"})}
+    <span class="big">${launches("CN")}</span>
   </div>
 </div>
 
@@ -45,17 +43,17 @@ const countLaunchesByStateId = id => launchHistory.filter(d => d.stateId === id)
 <div class="card grid grid-cols-8">
   ${resize((width) => Plot.plot({
     width,
-    title: "Launches Over the Years",
+    title: "Launches over the years",
     height: 300,
-    x: { label: null, interval: "year" },
-    y: { grid: true, label: "Launches" },
-    color: { legend: true, label: "State" },
+    x: {label: null, interval: "year"},
+    y: {grid: true, label: "Launches"},
+    color: {legend: true, label: "State"},
     marks: [
       Plot.barY(
         launchHistory,
         Plot.groupX(
-          { y: "count" },
-          { x: d => new Date(d.date), fill: "state", tip: {format: {x: false}} }
+          {y: "count"},
+          {x: d => new Date(d.date), fill: "state", tip: {format: {x: false}}}
         )
       ),
       Plot.ruleY([0])
@@ -87,4 +85,4 @@ const countLaunchesByStateId = id => launchHistory.filter(d => d.stateId === id)
   }))}
 </div>
 
-Data from J. McDowell: [General Catalog of Artificial Space Objects](https://planet4589.org/space/gcat).
+Data: Jonathan C. McDowell, [General Catalog of Artificial Space Objects](https://planet4589.org/space/gcat)

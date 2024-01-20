@@ -143,6 +143,7 @@ async function recursiveCopyTemplate(
       await recursiveCopyTemplate(inputRoot, outputRoot, context, join(stepPath, entry), effects);
     }
   } else {
+    if (templatePath.endsWith(".DS_Store")) return;
     if (templatePath.endsWith(".tmpl")) {
       outputPath = outputPath.replace(/\.tmpl$/, "");
       let contents = await readFile(templatePath, "utf8");
