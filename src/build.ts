@@ -1,6 +1,7 @@
 import {existsSync} from "node:fs";
 import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
 import {basename, dirname, join} from "node:path";
+import {fileURLToPath} from "node:url";
 import type {Config, Style} from "./config.js";
 import {mergeStyle} from "./config.js";
 import {Loader} from "./dataloader.js";
@@ -14,7 +15,12 @@ import {Telemetry} from "./telemetry.js";
 import {faint} from "./tty.js";
 import {resolvePath} from "./url.js";
 
-const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
+const EXTRA_FILES = new Map([
+  [
+    join(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "../../dist/runtime.js"),
+    "_observablehq/runtime.js"
+  ]
+]);
 
 // TODO Remove library helpers (e.g., duckdb) when they are published to npm.
 function clientBundles(clientPath: string): [entry: string, name: string][] {
@@ -156,8 +162,7 @@ export async function build(
     await effects.writeFile(outputPath, contents);
   }
 
-  // Copy over required distribution files from node_modules.
-  // TODO: Note that this requires that the build command be run relative to the node_modules directory.
+  // Copy over required distribution files.
   if (addPublic) {
     for (const [sourcePath, outputPath] of EXTRA_FILES) {
       effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
