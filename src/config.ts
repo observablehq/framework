@@ -1,6 +1,7 @@
 import {readFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path";
 import {visitFiles} from "./files.js";
+import {formatIsoDate, formatLocaleDate} from "./format.js";
 import {parseMarkdown} from "./markdown.js";
 import {resolveTheme} from "./theme.js";
 import {resolvePath} from "./url.js";
@@ -81,10 +82,9 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
     style,
     theme = "default",
     deploy,
-    footer = `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on ${currentDate.toLocaleDateString(
-      "en-US",
-      {month: "short", day: "numeric", year: "numeric"}
-    )}.`
+    footer = `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="${formatIsoDate(
+      currentDate
+    )}">${formatLocaleDate(currentDate)}</a>.`
   } = spec;
   root = String(root);
   output = String(output);
