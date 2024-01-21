@@ -151,7 +151,7 @@ Whether to show the previous & next footer links; defaults to true.
 
 ## footer
 
-An HTML fragment to add to the footer. Defaults to `Built with Observable`.
+An HTML fragment to add to the footer. Defaults to “Built with Observable on [today’s date].”
 
 ## toc
 
