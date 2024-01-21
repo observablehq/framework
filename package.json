@@ -16,7 +16,7 @@
     "src/**/*.js",
     "src/**/*.ts",
     "src/**/*.css",
-    "templates/**/*.tmpl"
+    "templates"
   ],
   "bin": {
     "observable": "bin/observable-init.js"
@@ -100,6 +100,6 @@
     "undici": "^5.27.2"
   },
   "engines": {
-    "node": "^18 <18.19.0 || >=20"
+    "node": ">=20.6"
   }
 }
