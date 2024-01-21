@@ -9,26 +9,29 @@ import {commandInstruction} from "./commandInstruction.js";
 import {HttpError, isHttpError} from "./error.js";
 import type {Logger} from "./logger.js";
 import {ObservableApiClient, getObservableUiOrigin} from "./observableApiClient.js";
-import {type ApiKey, getObservableApiKey, setObservableApiKey} from "./observableApiConfig.js";
+import type {ConfigEffects} from "./observableApiConfig.js";
+import {
+  type ApiKey,
+  defaultEffects as defaultConfigEffects,
+  getObservableApiKey,
+  setObservableApiKey
+} from "./observableApiConfig.js";
 
 const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
 
-export const commandRequiresAuthenticationMessage = `You need to be authenticated to ${
-  getObservableUiOrigin().hostname
-} to run this command. Please run ${commandInstruction("login")}.`;
-
 /** Actions this command needs to take wrt its environment that may need mocked out. */
-export interface CommandEffects {
+export interface AuthEffects extends ConfigEffects {
   openUrlInBrowser: (url: string) => Promise<void>;
   logger: Logger;
   isTty: boolean;
   waitForEnter: () => Promise<void>;
-  getObservableApiKey: (logger: Logger) => Promise<ApiKey>;
+  getObservableApiKey: (effects: AuthEffects) => Promise<ApiKey>;
   setObservableApiKey: (info: {id: string; key: string} | null) => Promise<void>;
   exitSuccess: () => void;
 }
 
-const defaultEffects: CommandEffects = {
+const defaultEffects: AuthEffects = {
+  ...defaultConfigEffects,
   openUrlInBrowser: async (target) => void (await open(target)),
   logger: console,
   isTty: isatty(process.stdin.fd),
@@ -73,7 +76,7 @@ export async function logout(effects = defaultEffects) {
 
 export async function whoami(effects = defaultEffects) {
   const {logger} = effects;
-  const apiKey = await effects.getObservableApiKey(logger);
+  const apiKey = await effects.getObservableApiKey(effects);
   const apiClient = new ObservableApiClient({apiKey});
 
   try {
@@ -104,11 +107,11 @@ export async function whoami(effects = defaultEffects) {
 class LoginServer {
   private _server: ReturnType<typeof createServer>;
   private _nonce: string;
-  private _effects: CommandEffects;
+  private _effects: AuthEffects;
   isRunning: boolean;
   private _sockets: Set<Socket>;
 
-  constructor({nonce, effects}: {nonce: string; effects: CommandEffects}) {
+  constructor({nonce, effects}: {nonce: string; effects: AuthEffects}) {
     this._nonce = nonce;
     this._effects = effects;
     this._server = createServer();

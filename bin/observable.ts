@@ -1,5 +1,3 @@
-#!/usr/bin/env tsx
-
 import {type ParseArgsConfig, parseArgs} from "node:util";
 import {readConfig} from "../src/config.js";
 import {CliError} from "../src/error.js";
@@ -63,6 +61,7 @@ try {
       helpArgs(command, {allowPositionals: true});
       console.log(
         `usage: observable <command>
+  create       create a new project from a template
   preview      start the preview server
   build        generate a static site
   login        sign-in to Observable
@@ -89,13 +88,29 @@ try {
       await import("../src/build.js").then(async (build) => build.build({config: await readConfig(config, root)}));
       break;
     }
+    case "create": {
+      const {
+        positionals: [output]
+      } = helpArgs(command, {allowPositionals: true});
+      // TODO error if more than one positional
+      await import("../src/create.js").then(async (create) => create.create({output}));
+      break;
+    }
     case "deploy": {
       const {
-        values: {config, root}
+        values: {config, root, message}
       } = helpArgs(command, {
-        options: {...CONFIG_OPTION}
+        options: {
+          ...CONFIG_OPTION,
+          message: {
+            type: "string",
+            short: "m"
+          }
+        }
       });
-      await import("../src/deploy.js").then(async (deploy) => deploy.deploy({config: await readConfig(config, root)}));
+      await import("../src/deploy.js").then(async (deploy) =>
+        deploy.deploy({config: await readConfig(config, root), message})
+      );
       break;
     }
     case "preview": {
@@ -166,7 +181,9 @@ function helpArgs<T extends ParseArgsConfig>(command: string | undefined, config
   }
   if ((result.values as any).help) {
     console.log(
-      `Usage: observable ${command}${config.allowPositionals ? " <command>" : ""}${Object.entries(config.options ?? {})
+      `Usage: observable ${command}${
+        command === undefined || command === "help" ? " <command>" : command === "create" ? " <output-dir>" : ""
+      }${Object.entries(config.options ?? {})
         .map(([name, {default: def}]) => ` [--${name}${def === undefined ? "" : `=${def}`}]`)
         .join("")}`
     );

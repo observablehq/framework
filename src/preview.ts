@@ -14,13 +14,14 @@ import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
+import {getClientPath} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {getImplicitSpecifiers, getImplicitStylesheets} from "./libraries.js";
 import {diffMarkdown, readMarkdown} from "./markdown.js";
 import type {ParseResult, ReadMarkdownResult} from "./markdown.js";
-import {renderPreview} from "./render.js";
-import {bundleStyles, getClientPath, rollupClient} from "./rollup.js";
+import {renderPreview, resolveStylesheet} from "./render.js";
+import {bundleStyles, rollupClient} from "./rollup.js";
 import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, underline} from "./tty.js";
 import {relativeUrl} from "./url.js";
@@ -88,7 +89,8 @@ export class PreviewServer {
       let {pathname} = url;
       let match: RegExpExecArray | null;
       if (pathname === "/_observablehq/runtime.js") {
-        send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
+        const root = join(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "../../");
+        send(req, "/dist/runtime.js", {root}).pipe(res);
       } else if (pathname.startsWith("/_observablehq/stdlib.js")) {
         end(req, res, await rollupClient(getClientPath("./src/client/stdlib.js")), "text/javascript");
       } else if (pathname.startsWith("/_observablehq/stdlib/")) {
@@ -288,7 +290,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
     const stylesheets = await getImplicitStylesheets(getImplicitSpecifiers(inputs));
     const style = getPreviewStylesheet(path!, data, defaultStyle);
     if (style) stylesheets.add(style);
-    return stylesheets;
+    return new Set(Array.from(stylesheets, (href) => resolveStylesheet(path!, href)));
   }
 
   function refreshAttachment(name: string) {

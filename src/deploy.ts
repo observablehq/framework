@@ -6,45 +6,51 @@ import type {Config} from "./config.js";
 import {CliError, isHttpError} from "./error.js";
 import type {Logger, Writer} from "./logger.js";
 import {ObservableApiClient} from "./observableApiClient.js";
+import type {ConfigEffects} from "./observableApiConfig.js";
 import {
   type ApiKey,
   type DeployConfig,
+  defaultEffects as defaultConfigEffects,
   getDeployConfig,
   getObservableApiKey,
   setDeployConfig
 } from "./observableApiConfig.js";
 import {Telemetry} from "./telemetry.js";
-import {blue} from "./tty.js";
+import {blue, bold, hangingIndentLog, magenta, yellow} from "./tty.js";
 
 export interface DeployOptions {
   config: Config;
+  message: string | undefined;
 }
 
-export interface DeployEffects {
-  getObservableApiKey: (logger: Logger) => Promise<ApiKey>;
+export interface DeployEffects extends ConfigEffects {
+  getObservableApiKey: (effects?: DeployEffects) => Promise<ApiKey>;
   getDeployConfig: (sourceRoot: string) => Promise<DeployConfig | null>;
   setDeployConfig: (sourceRoot: string, config: DeployConfig) => Promise<void>;
   isTty: boolean;
   logger: Logger;
   input: NodeJS.ReadableStream;
   output: NodeJS.WritableStream;
+  outputColumns: number;
 }
 
 const defaultEffects: DeployEffects = {
+  ...defaultConfigEffects,
   getObservableApiKey,
   getDeployConfig,
   setDeployConfig,
   isTty: isatty(process.stdin.fd),
   logger: console,
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
+  outputColumns: process.stdout.columns ?? 80
 };
 
 /** Deploy a project to ObservableHQ */
-export async function deploy({config}: DeployOptions, effects = defaultEffects): Promise<void> {
+export async function deploy({config, message}: DeployOptions, effects = defaultEffects): Promise<void> {
   Telemetry.record({event: "deploy", step: "start"});
   const {logger} = effects;
-  const apiKey = await effects.getObservableApiKey(logger);
+  const apiKey = await effects.getObservableApiKey(effects);
   const apiClient = new ObservableApiClient({apiKey});
 
   // Check configuration
@@ -84,62 +90,84 @@ export async function deploy({config}: DeployOptions, effects = defaultEffects):
     }
   }
 
+  const deployConfig = await effects.getDeployConfig(config.root);
   if (projectId) {
     // Check last deployed state. If it's not the same project, ask the user if
     // they want to continue anyways. In non-interactive mode just cancel.
-    const deployConfig = await effects.getDeployConfig(config.root);
     const previousProjectId = deployConfig?.projectId;
     if (previousProjectId && previousProjectId !== projectId) {
-      logger.log(
-        `The project @${config.deploy.workspace}/${config.deploy.project} does not match the expected project in ${config.root}/.observablehq/deploy.json`
+      const {indent} = hangingIndentLog(
+        effects,
+        magenta("Attention:"),
+        `This project was last deployed to a different project on Observable Cloud from ${bold(
+          `@${config.deploy.workspace}/${config.deploy.project}`
+        )}.`
       );
       if (effects.isTty) {
-        const choice = await promptUserForInput(
-          effects.input,
-          effects.output,
-          "Do you want to update the expected project and deploy anyways? [y/N]"
-        );
-        if (choice.trim().toLowerCase().charAt(0) !== "y") {
-          throw new CliError("User cancelled deploy.", {print: false, exitCode: 2});
+        const choice = await promptConfirm(effects, `${indent}Do you want to deploy anyway?`, {default: false});
+        if (!choice) {
+          throw new CliError("User cancelled deploy", {print: false, exitCode: 0});
         }
       } else {
         throw new CliError("Cancelling deploy due to misconfiguration.");
       }
+    } else if (!previousProjectId) {
+      const {indent} = hangingIndentLog(
+        effects,
+        yellow("Warning:"),
+        `There is an existing project on Observable Cloud named ${bold(
+          `@${config.deploy.workspace}/${config.deploy.project}`
+        )} that is not associated with this repository. If you continue, you'll overwrite the existing content of the project.`
+      );
+
+      if (!(await promptConfirm(effects, `${indent}Do you want to continue?`, {default: false}))) {
+        if (effects.isTty) {
+          throw new CliError("Running non-interactively, cancelling deploy", {print: true, exitCode: 1});
+        } else {
+          throw new CliError("User cancelled deploy", {print: true, exitCode: 0});
+        }
+      }
     }
   } else {
     // Project doesn't exist, so ask the user if they want to create it.
-    // In non-interactive mode just cancel.
+    const {indent} = hangingIndentLog(
+      effects,
+      magenta("Attention:"),
+      `There is no project on the Observable Cloud named ${bold(
+        `@${config.deploy.workspace}/${config.deploy.project}`
+      )}`
+    );
     if (effects.isTty) {
-      const choice = await promptUserForInput(effects.input, effects.output, "No project exists. Create it now? [y/N]");
-      if (choice.trim().toLowerCase().charAt(0) !== "y") {
-        throw new CliError("User cancelled deploy.", {print: false, exitCode: 2});
-      }
       if (!config.title) {
         throw new CliError("You haven't configured a project title. Please set title in your configuration.");
       }
-      const currentUserResponse = await apiClient.getCurrentUser();
-      const workspace = currentUserResponse.workspaces.find((w) => w.login === config.deploy?.workspace);
-      if (!workspace) {
-        const availableWorkspaces = currentUserResponse.workspaces.map((w) => w.login).join(", ");
-        throw new CliError(
-          `Workspace ${config.deploy?.workspace} not found. Available workspaces: ${availableWorkspaces}.`
-        );
+      if (!(await promptConfirm(effects, `${indent}Do you want to create it now?`, {default: false}))) {
+        throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
       }
-      const project = await apiClient.postProject({
-        slug: config.deploy.project,
-        title: config.title,
-        workspaceId: workspace.id
-      });
-      projectId = project.id;
     } else {
       throw new CliError("Cancelling deploy due to non-existent project.");
     }
+
+    const currentUserResponse = await apiClient.getCurrentUser();
+    const workspace = currentUserResponse.workspaces.find((w) => w.login === config.deploy?.workspace);
+    if (!workspace) {
+      const availableWorkspaces = currentUserResponse.workspaces.map((w) => w.login).join(", ");
+      throw new CliError(
+        `Workspace ${config.deploy?.workspace} not found. Available workspaces: ${availableWorkspaces}.`
+      );
+    }
+    const project = await apiClient.postProject({
+      slug: config.deploy.project,
+      title: config.title,
+      workspaceId: workspace.id
+    });
+    projectId = project.id;
   }
 
   await effects.setDeployConfig(config.root, {projectId});
 
   // Create the new deploy on the server
-  const message = await promptUserForInput(effects.input, effects.output, "Deploy message: ");
+  if (message === undefined) message = await promptUserForInput(effects.input, effects.output, "Deploy message: ");
   const deployId = await apiClient.postDeploy({projectId, message});
 
   // Build the project
@@ -165,6 +193,27 @@ async function promptUserForInput(
       if (!value && defaultValue) value = defaultValue;
     } while (!value);
     return value;
+  } finally {
+    rl.close();
+  }
+}
+
+export async function promptConfirm(
+  {input, output}: DeployEffects,
+  question: string,
+  opts: {default: boolean}
+): Promise<boolean> {
+  const rl = readline.createInterface({input, output});
+  const choices = opts.default ? "[Y/n]" : "[y/N]";
+  try {
+    let value: string | null = null;
+    while (true) {
+      value = (await rl.question(`${question} ${choices} `)).toLowerCase();
+      if (value === "") return opts.default;
+      if (value.startsWith("y")) return true;
+      if (value.startsWith("n")) return false;
+      rl.write('Please answer "y" or "n".\n');
+    }
   } finally {
     rl.close();
   }

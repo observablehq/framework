@@ -1,11 +1,7 @@
 ---
 toc: false
-theme: [light-alt, dark-alt, wide]
+theme: dashboard
 ---
-
-```js
-import {resize} from "npm:@observablehq/dash";
-```
 
 ```js
 function AppleStockChart({width}) {

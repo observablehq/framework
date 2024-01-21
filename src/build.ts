@@ -1,27 +1,32 @@
 import {existsSync} from "node:fs";
 import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
 import {basename, dirname, join} from "node:path";
+import {fileURLToPath} from "node:url";
 import type {Config, Style} from "./config.js";
 import {mergeStyle} from "./config.js";
 import {Loader} from "./dataloader.js";
-import {isEnoent} from "./error.js";
-import {prepareOutput, visitMarkdownFiles} from "./files.js";
+import {CliError, isEnoent} from "./error.js";
+import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
 import {renderServerless} from "./render.js";
-import {bundleStyles, getClientPath, rollupClient} from "./rollup.js";
+import {bundleStyles, rollupClient} from "./rollup.js";
 import {Telemetry} from "./telemetry.js";
 import {faint} from "./tty.js";
 import {resolvePath} from "./url.js";
 
-const EXTRA_FILES = new Map([["node_modules/@observablehq/runtime/dist/runtime.js", "_observablehq/runtime.js"]]);
+const EXTRA_FILES = new Map([
+  [
+    join(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "../../dist/runtime.js"),
+    "_observablehq/runtime.js"
+  ]
+]);
 
 // TODO Remove library helpers (e.g., duckdb) when they are published to npm.
 function clientBundles(clientPath: string): [entry: string, name: string][] {
   return [
     [clientPath, "client.js"],
     ["./src/client/stdlib.js", "stdlib.js"],
-    ["./src/client/stdlib/dash.js", "stdlib/dash.js"],
     ["./src/client/stdlib/dot.js", "stdlib/dot.js"],
     ["./src/client/stdlib/duckdb.js", "stdlib/duckdb.js"],
     ["./src/client/stdlib/inputs.css", "stdlib/inputs.css"],
@@ -71,7 +76,7 @@ export async function build(
     await access(join(root, sourceFile), constants.R_OK);
     pageCount++;
   }
-  if (!pageCount) throw new Error(`No pages found in ${root}`);
+  if (!pageCount) throw new CliError(`Nothing to build: no page files found in your ${root} directory.`);
   effects.logger.log(`${faint("found")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
 
   // Render .md files, building a list of file attachments as we go.
@@ -157,15 +162,14 @@ export async function build(
     await effects.writeFile(outputPath, contents);
   }
 
-  // Copy over required distribution files from node_modules.
-  // TODO: Note that this requires that the build command be run relative to the node_modules directory.
+  // Copy over required distribution files.
   if (addPublic) {
     for (const [sourcePath, outputPath] of EXTRA_FILES) {
       effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
       await effects.copyFile(sourcePath, outputPath);
     }
   }
-  Telemetry.record({event: "build", step: "finish"});
+  Telemetry.record({event: "build", step: "finish", pageCount});
 }
 
 export class FileBuildEffects implements BuildEffects {

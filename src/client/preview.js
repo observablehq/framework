@@ -4,7 +4,11 @@ import {enableCopyButtons} from "./pre.js";
 export * from "./index.js";
 
 export function open({hash, eval: compile} = {}) {
-  const socket = new WebSocket(Object.assign(new URL("/_observablehq", location.href), {protocol: "ws"}));
+  const socket = new WebSocket(
+    Object.assign(new URL("/_observablehq", location.href), {
+      protocol: location.protocol === "https:" ? "wss" : "ws"
+    })
+  );
 
   socket.onopen = () => {
     console.info("socket open");

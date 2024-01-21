@@ -15,18 +15,19 @@
     "bin/**/*.ts",
     "src/**/*.js",
     "src/**/*.ts",
-    "src/**/*.css"
+    "src/**/*.css",
+    "templates"
   ],
   "bin": {
-    "observable": "bin/observable.ts"
+    "observable": "bin/observable-init.js"
   },
   "scripts": {
     "dev": "tsx watch ./bin/observable.ts preview",
-    "build": "rm -rf dist && ./bin/observable.ts build",
-    "deploy": "./bin/observable.ts deploy",
+    "build": "rm -rf dist && tsx ./bin/observable.ts build",
+    "deploy": "tsx ./bin/observable.ts deploy",
     "test": "yarn test:mocha && yarn test:tsc && yarn test:lint && yarn test:prettier",
     "test:coverage": "c8 yarn test:mocha",
-    "test:mocha": "rm -rf test/.observablehq/cache test/input/build/*/.observablehq/cache && OBSERVABLE_TELEMETRY_DISABLE=1 tsx --no-warnings=ExperimentalWarning ./node_modules/.bin/mocha 'test/**/*-test.*'",
+    "test:mocha": "rm -rf test/.observablehq/cache test/input/build/*/.observablehq/cache && OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles tsx --no-warnings=ExperimentalWarning ./node_modules/.bin/mocha 'test/**/*-test.*'",
     "test:lint": "eslint src test",
     "test:prettier": "prettier --check src test",
     "test:tsc": "tsc --noEmit",
@@ -64,6 +65,7 @@
     "markdown-it-anchor": "^8.6.7",
     "mime": "^3.0.0",
     "open": "^9.1.0",
+    "prompts": "^2.4.2",
     "rollup": "^4.6.0",
     "rollup-plugin-esbuild": "^6.1.0",
     "send": "^0.18.0",
@@ -77,6 +79,7 @@
     "@types/mime": "^3.0.2",
     "@types/mocha": "^10.0.2",
     "@types/node": "^20.7.1",
+    "@types/prompts": "^2.4.9",
     "@types/send": "^0.17.2",
     "@types/tar-stream": "^3.1.3",
     "@types/ws": "^8.5.6",
@@ -97,6 +100,6 @@
     "undici": "^5.27.2"
   },
   "engines": {
-    "node": "^18 <18.19.0 || >=20"
+    "node": ">=20.6"
   }
 }

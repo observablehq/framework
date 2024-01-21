@@ -18,6 +18,7 @@ type TelemetryIds = {
 
 type TelemetryEnvironment = {
   version: string; // cli version from package.json
+  node: string; // node.js version
   systemPlatform: string; // linux, darwin, win32, ...
   systemRelease: string; // 20.04, 11.2.3, ...
   systemArchitecture: string; // x64, arm64, ...
@@ -37,43 +38,23 @@ type TelemetryTime = {
 };
 
 type TelemetryData = {
-  event: "build" | "deploy" | "preview";
-  step: "start" | "finish";
+  event: "build" | "deploy" | "preview" | "signal";
+  step?: "start" | "finish";
   [key: string]: unknown;
 };
 
-let _config: Promise<Record<string, uuid>> | undefined;
-
-async function getPersistentId(name: string, generator = randomUUID) {
-  const file = join(os.homedir(), ".observablehq");
-  if (!_config) {
-    _config = readFile(file, "utf8")
-      .then(JSON.parse)
-      .catch(() => ({}));
-  }
-  const config = await _config;
-  if (!config[name]) {
-    config[name] = generator();
-    try {
-      await writeFile(file, JSON.stringify(config, null, 2));
-    } catch {
-      // Be ok if we can't persist ids, but treat them as missing.
-      return null;
-    }
-  }
-  return config[name];
-}
-
 type TelemetryEffects = {
-  env: NodeJS.ProcessEnv;
   logger: Logger;
-  getPersistentId: typeof getPersistentId;
+  process: NodeJS.Process;
+  readFile: typeof readFile;
+  writeFile: typeof writeFile;
 };
 
 const defaultEffects: TelemetryEffects = {
-  env: process.env,
   logger: console,
-  getPersistentId
+  process,
+  readFile,
+  writeFile
 };
 
 function getOrigin(env: NodeJS.ProcessEnv): URL {
@@ -91,38 +72,37 @@ function getOrigin(env: NodeJS.ProcessEnv): URL {
 }
 
 export class Telemetry {
+  private effects: TelemetryEffects;
   private disabled: boolean;
   private debug: boolean;
   private endpoint: URL;
-  private logger: Logger;
-  private getPersistentId: typeof getPersistentId;
   private timeZoneOffset = new Date().getTimezoneOffset();
-  private readonly pending = new Set<Promise<any>>();
+  private readonly _pending = new Set<Promise<any>>();
+  private _config: Promise<Record<string, uuid>> | undefined;
   private _ids: Promise<TelemetryIds> | undefined;
   private _environment: Promise<TelemetryEnvironment> | undefined;
-  private static instance = new Telemetry();
 
-  static init(effects = defaultEffects) {
-    Telemetry.instance = new Telemetry(effects);
+  static _instance: Telemetry;
+  static get instance() {
+    return (this._instance ??= new Telemetry());
   }
 
   static record(data: TelemetryData) {
     return Telemetry.instance.record(data);
   }
 
-  static flush() {
-    return Telemetry.instance.flush();
-  }
-
   constructor(effects = defaultEffects) {
-    this.disabled = !!effects.env.OBSERVABLE_TELEMETRY_DISABLE;
-    this.debug = !!effects.env.OBSERVABLE_TELEMETRY_DEBUG;
-    this.endpoint = new URL("/cli", getOrigin(effects.env));
-    this.logger = effects.logger;
-    this.getPersistentId = effects.getPersistentId;
+    this.effects = effects;
+    const {process} = effects;
+    this.disabled = !!process.env.OBSERVABLE_TELEMETRY_DISABLE;
+    this.debug = !!process.env.OBSERVABLE_TELEMETRY_DEBUG;
+    this.endpoint = new URL("/cli", getOrigin(process.env));
+    process.on("SIGHUP", this.handleSignal(1));
+    process.on("SIGINT", this.handleSignal(2));
+    process.on("SIGTERM", this.handleSignal(15));
   }
 
-  async record(data: TelemetryData) {
+  record(data: TelemetryData) {
     if (this.disabled) return;
     const task = (async () =>
       this.send({
@@ -133,13 +113,47 @@ export class Telemetry {
       })
         .catch(() => {})
         .finally(() => {
-          this.pending.delete(task);
+          this._pending.delete(task);
         }))();
-    this.pending.add(task);
+    this._pending.add(task);
   }
 
-  flush() {
-    return Promise.all(this.pending);
+  get pending() {
+    return Promise.all(this._pending);
+  }
+
+  private handleSignal(value: number) {
+    const code = 128 + value;
+    return async (signal: NodeJS.Signals) => {
+      const {process} = this.effects;
+      // Give ourselves 1s to record a signal event and flush.
+      const deadline = setTimeout(() => process.exit(code), 1000);
+      this.record({event: "signal", signal});
+      await this.pending;
+      clearTimeout(deadline);
+      process.exit(code);
+    };
+  }
+
+  private async getPersistentId(name: string, generator = randomUUID) {
+    const {readFile, writeFile} = this.effects;
+    const file = join(os.homedir(), ".observablehq");
+    if (!this._config) {
+      this._config = readFile(file, "utf8")
+        .then(JSON.parse)
+        .catch(() => ({}));
+    }
+    const config = await this._config;
+    if (!config[name]) {
+      config[name] = generator();
+      try {
+        await writeFile(file, JSON.stringify(config, null, 2));
+      } catch {
+        // Be ok if we can't persist ids, but treat them as missing.
+        return null;
+      }
+    }
+    return config[name];
   }
 
   private async getProjectId() {
@@ -150,7 +164,7 @@ export class Telemetry {
     });
     const hash = createHash("sha256");
     hash.update(salt);
-    hash.update(remote || process.env.REPOSITORY_URL || process.cwd());
+    hash.update(remote || this.effects.process.env.REPOSITORY_URL || process.cwd());
     return hash.digest("base64");
   }
 
@@ -174,6 +188,7 @@ export class Telemetry {
       const cpus = os.cpus() || [];
       return {
         version: pkg.version,
+        node: process.versions.node,
         systemPlatform: os.platform(),
         systemRelease: os.release(),
         systemArchitecture: os.arch(),
@@ -188,10 +203,17 @@ export class Telemetry {
     }));
   }
 
-  private async needsBanner() {
+  private async showBannerIfNeeded() {
     let called: uuid | undefined;
     await this.getPersistentId("cli_telemetry_banner", () => (called = randomUUID()));
-    return !!called;
+    if (called) {
+      this.effects.logger.error(
+        `
+${magenta("Attention:")} The Observable CLI collects anonymous telemetry to help us improve
+           the product. See ${underline("https://cli.observablehq.com/telemetry")} for details.
+           Set \`OBSERVABLE_TELEMETRY_DISABLE=true\` to disable.`
+      );
+    }
   }
 
   private async send(data: {
@@ -200,17 +222,9 @@ export class Telemetry {
     time: TelemetryTime;
     data: TelemetryData;
   }): Promise<void> {
-    if (await this.needsBanner()) {
-      this.logger.error(
-        `${magenta(
-          "Attention:"
-        )} Observable CLI collects anonymous telemetry data to help us improve the product.\nSee ${underline(
-          "https://cli.observablehq.com/telemetry"
-        )} for details and how to opt-out.`
-      );
-    }
+    await this.showBannerIfNeeded();
     if (this.debug) {
-      this.logger.error("[telemetry]", data);
+      this.effects.logger.error("[telemetry]", data);
       return;
     }
     await fetch(this.endpoint, {

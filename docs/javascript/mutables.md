@@ -24,7 +24,7 @@ Inputs.button([["Increment", increment], ["Reset", reset]])
 
 <style type="text/css">
 @keyframes flash {
-  from { background-color: var(--observablehq-blue); }
+  from { background-color: var(--theme-blue); }
   to { background-color: none; }
 }
 .flash {
