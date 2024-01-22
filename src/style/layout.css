@@ -75,7 +75,7 @@
 }
 
 #observablehq-center {
-  margin: 2rem 2rem;
+  margin: 1rem 2rem;
 }
 
 #observablehq-sidebar {
@@ -164,18 +164,16 @@
 #observablehq-sidebar-toggle {
   position: fixed;
   appearance: none;
-  top: 1rem;
-  left: 1rem;
-  width: 2.2rem;
-  height: 2.2rem; /* 1rem padding + line-height: normal */
+  top: 0;
+  left: 0;
+  width: 2rem;
+  height: 100%;
+  padding-top: 1.6rem;
   display: flex;
-  align-items: center;
+  align-items: start;
   justify-content: center;
   cursor: e-resize;
   margin: 0;
-  background: var(--theme-background-alt);
-  border: solid 1px var(--theme-foreground-faintest);
-  border-radius: 4px;
   color: var(--theme-foreground-muted);
   transition: left 150ms ease;
   z-index: 3;
@@ -289,8 +287,9 @@
   cursor: w-resize;
   top: 1rem;
   left: calc(272px - 2.7rem);
-  border: none;
-  background: none;
+  height: 2.2rem; /* 1rem padding + line-height: normal */
+  padding-top: 0;
+  align-items: center;
 }
 
 #observablehq-sidebar {
@@ -339,9 +338,10 @@
   #observablehq-sidebar-toggle:indeterminate {
     cursor: w-resize;
     top: 1rem;
-    left: calc(272px - 1px - 2.7rem);
-    border: none;
-    background: none;
+    left: calc(272px - 2.7rem);
+    height: 2.2rem;
+    padding-top: 0;
+    align-items: center;
   }
   #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar-backdrop {
     display: none;
