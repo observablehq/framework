@@ -66,6 +66,7 @@ export async function create({output = ""}: {output?: string}, effects: CreateEf
   const context = {
     projectDir,
     ...results,
+    projectTitleString: JSON.stringify(results.projectTitle),
     devInstructions: devDirections.map((l) => `$ ${l}`).join("\n")
   };
 
