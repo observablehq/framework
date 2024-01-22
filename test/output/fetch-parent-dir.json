@@ -33,7 +33,7 @@
       "cellIds": [
         "17636ecf"
       ],
-      "html": "<div id=\"cell-17636ecf\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<div id=\"cell-17636ecf\" class=\"observablehq observablehq--block observablehq--loading\"></div>\n"
     },
     {
       "type": "html",
@@ -41,7 +41,7 @@
       "cellIds": [
         "78e756b8"
       ],
-      "html": "<div id=\"cell-78e756b8\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<div id=\"cell-78e756b8\" class=\"observablehq observablehq--block observablehq--loading\"></div>\n"
     },
     {
       "type": "html",
@@ -49,7 +49,7 @@
       "cellIds": [
         "c68a5211"
       ],
-      "html": "<div id=\"cell-c68a5211\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<div id=\"cell-c68a5211\" class=\"observablehq observablehq--block observablehq--loading\"></div>\n"
     },
     {
       "type": "html",
@@ -57,7 +57,7 @@
       "cellIds": [
         "d306f60f"
       ],
-      "html": "<div id=\"cell-d306f60f\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<div id=\"cell-d306f60f\" class=\"observablehq observablehq--block observablehq--loading\"></div>\n"
     }
   ],
   "cells": [
