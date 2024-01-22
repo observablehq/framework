@@ -10,7 +10,7 @@
       "cellIds": [
         "6212702c"
       ],
-      "html": "<p>$<span id=\"cell-6212702c\"></span></p>\n"
+      "html": "<p>$<span id=\"cell-6212702c\" class=\"observablehq--loading\"></span></p>\n"
     }
   ],
   "cells": [

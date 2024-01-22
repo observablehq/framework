@@ -280,7 +280,7 @@ function makePlaceholderRenderer(root: string, sourcePath: string): RenderRule {
     extendPiece(context, {code: [transpile]});
     if (transpile.files) context.files.push(...transpile.files);
     if (transpile.imports) context.imports.push(...transpile.imports);
-    return `<span id="cell-${id}"></span>`;
+    return `<span id="cell-${id}" class="observablehq--loading"></span>`;
   };
 }
 

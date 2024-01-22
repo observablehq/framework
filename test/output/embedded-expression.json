@@ -16,7 +16,7 @@
       "cellIds": [
         "6212702c"
       ],
-      "html": "<p>One plus two is <span id=\"cell-6212702c\"></span>.</p>\n"
+      "html": "<p>One plus two is <span id=\"cell-6212702c\" class=\"observablehq--loading\"></span>.</p>\n"
     }
   ],
   "cells": [
