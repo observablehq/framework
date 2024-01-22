@@ -43,25 +43,26 @@ const burndown = issues
 
 <div class="grid grid-cols-4" style="grid-auto-rows: 86px;">
   <div class="card">
-  <h2>Current release</h2>
-  <span class="big">${versions.at(-1).version}</span>
-  <a href="https://github.com/observablehq/plot/releases" style="color: inherit;">
-      ${((days) => days === 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`)(d3.utcDay.count(versions.at(-1).date, Date.now()))}
-  </a>
-</div>
-<div class="card">
-  <h2>GitHub stars</h2>
-  <span class="big">${d3.format(",")(stars.length)}</span>
-  <span class="green">${d3.format("+")(d3.sum(stars, (d) => d.starred_at >= lastWeek))} ↗︎</span>
-</div>
-<div class="card">
-  <h2>Daily npm downloads</h2>
-  <span class="big">${d3.format(",")(downloads[0].value)}</span>
-  ${((trend) => html`<span class="${trend > 0 ? "green" : trend < 0 ? "red" : "muted"}">${d3.format("+.1%")(trend)} ${trend > 0 ? "↗︎" : trend < 0 ? "↘︎" :""}`)(downloads[7].value ? (downloads[0].value - downloads[7].value) / downloads[7].value : undefined)}
-</div>
-<div class="card">
-  <h2>Total npm downloads</h2>
-  <span class="big">${d3.format(",")(d3.sum(downloads, (d) => d.value))}
+    <h2>Current release</h2>
+    <span class="big">${versions.at(-1).version}</span>
+    <a href="https://github.com/observablehq/plot/releases" style="color: inherit;">
+        ${((days) => days === 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`)(d3.  utcDay.count(versions.at(-1).date, Date.now()))}
+    </a>
+  </div>
+  <div class="card">
+    <h2>GitHub stars</h2>
+    <span class="big">${d3.format(",")(stars.length)}</span>
+    <span class="green">${d3.format("+")(d3.sum(stars, (d) => d.starred_at >= lastWeek))} ↗︎</  span>
+  </div>
+  <div class="card">
+    <h2>Daily npm downloads</h2>
+    <span class="big">${d3.format(",")(downloads[0].value)}</span>
+    ${((trend) => html`<span class="${trend > 0 ? "green" : trend < 0 ? "red" : "muted"}">${d3.  format("+.1%")(trend)} ${trend > 0 ? "↗︎" : trend < 0 ? "↘︎" :""}`)(downloads[7].value ?   (downloads[0].value - downloads[7].value) / downloads[7].value : undefined)}
+  </div>
+  <div class="card">
+    <h2>Total npm downloads</h2>
+    <span class="big">${d3.format(",")(d3.sum(downloads, (d) => d.value))}
+  </div>
 </div>
 
 <div class="card grid grid-cols-1" style="grid-auto-rows: calc(260px + 2rem);">
