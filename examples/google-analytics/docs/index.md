@@ -273,7 +273,7 @@ function worldMap(data, {width, height, title, caption}) {
 
 ```js
 function trend(value, format) {
-  return html`<span class="${value > 0 ? "green" : value < 0 ? "red" : "muted"}">${d3.format(format)(value)}`;
+  return html`<span class="${value > 0 ? "green" : value < 0 ? "red" : "muted"}">${d3.format(format)(value)} ${value > 0 ? "↗︎" : value < 0 ? "↘︎" : ""}`;
 }
 ```
 
@@ -291,13 +291,13 @@ _Summary of metrics from the [Google Analytics Data API](https://developers.goog
   <div class="card grid-colspan-1 grid-rowspan-1">
     <h2>Engagement Rate</h2>
     <span class="big">${d3.format(".0%")(summary[summary.length-1].engagementRate)}</span>
-    ${trend(getCompareValue(summary, 'engagementRate'), ".2%")}
+    ${trend(getCompareValue(summary, 'engagementRate'), "+.2%")}
     ${resize((width) => lineChart(summary, {width, metric: 'engagementRate'}))}
   </div>
   <div class="card grid-colspan-1 grid-rowspan-1">
     <h2>WAU to MAU ratio</h2>
     <span class="big">${d3.format(".0%")(summary[summary.length-1].wauPerMau)}</span>
-    ${trend(getCompareValue(summary, 'wauPerMau'), ".2%")}
+    ${trend(getCompareValue(summary, 'wauPerMau'), "+.2%")}
     ${resize((width) => lineChart(summary, {width, metric: 'wauPerMau'}))}
   </div>
   <div class="card grid-colspan-1 grid-rowspan-1">
