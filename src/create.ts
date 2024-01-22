@@ -90,11 +90,11 @@ export async function create({output = ""}: {output?: string}, effects: CreateEf
 }
 
 function validateProjectName(projectDir: string, projectName: string): string | boolean {
-  if (projectName.length === 0) {
-    return "Project name must be at least 1 character long.";
-  }
   if (!existsSync(normalize(projectDir))) {
     return "The parent directory of the project does not exist.";
+  }
+  if (projectName.length === 0) {
+    return "Project name must be at least 1 character long.";
   }
   if (existsSync(join(projectDir, projectName))) {
     return "Project already exists.";
