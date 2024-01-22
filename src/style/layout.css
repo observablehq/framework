@@ -110,7 +110,7 @@
   border-bottom: solid 1px var(--theme-foreground-faintest);
 }
 
-#observablehq-sidebar > ol:first-child {
+#observablehq-sidebar > ol:first-of-type {
   position: sticky;
   top: 0;
   z-index: 1;
@@ -167,20 +167,32 @@
   background: none;
   top: 0;
   left: 0;
+  bottom: 0;
   width: 2rem;
-  height: 100%;
-  padding-top: 1.6rem;
   display: flex;
-  align-items: start;
+  align-items: center;
   justify-content: center;
   cursor: e-resize;
   margin: 0;
   color: var(--theme-foreground-muted);
-  transition: left 150ms ease;
-  z-index: 3;
+  z-index: 1;
 }
 
-#observablehq-sidebar-toggle::before {
+#observablehq-sidebar-close {
+  position: fixed;
+  top: 1rem;
+  left: calc(272px - 2.7rem);
+  width: 2rem;
+  height: 2.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: w-resize;
+  z-index: 2;
+}
+
+#observablehq-sidebar-toggle::before,
+#observablehq-sidebar-close::before {
   content: "";
   width: 1rem;
   height: 1rem;
@@ -189,8 +201,8 @@
   mask: var(--theme-toggle);
 }
 
-#observablehq-sidebar-close:hover {
-  color: inherit;
+#observablehq-sidebar-close::before {
+  transform: scaleX(-1);
 }
 
 #observablehq-sidebar summary,
@@ -280,19 +292,6 @@
     height 150ms ease;
 }
 
-#observablehq-sidebar-toggle:checked::before {
-  transform: scaleX(-1);
-}
-
-#observablehq-sidebar-toggle:checked {
-  cursor: w-resize;
-  top: 1rem;
-  left: calc(272px - 2.7rem);
-  height: 2.2rem; /* 1rem padding + line-height: normal */
-  padding-top: 0;
-  align-items: center;
-}
-
 #observablehq-sidebar {
   transition:
     visibility 150ms 0ms,
@@ -329,20 +328,8 @@
 }
 
 @media (min-width: calc(640px + 6rem + 272px)) {
-  #observablehq-sidebar,
-  #observablehq-sidebar-toggle {
+  #observablehq-sidebar {
     transition: none;
-  }
-  #observablehq-sidebar-toggle:indeterminate::before {
-    transform: scaleX(-1);
-  }
-  #observablehq-sidebar-toggle:indeterminate {
-    cursor: w-resize;
-    top: 1rem;
-    left: calc(272px - 2.7rem);
-    height: 2.2rem;
-    padding-top: 0;
-    align-items: center;
   }
   #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar-backdrop {
     display: none;
@@ -387,14 +374,6 @@
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc ~ #observablehq-center,
   #observablehq-toc ~ #observablehq-center {
     padding-right: calc(192px + 1rem);
-  }
-}
-
-@media (hover: hover) {
-  @media (min-width: calc(640px + 6rem + 272px)) {
-    #observablehq-sidebar-toggle:indeterminate:not(:checked, :hover) {
-      color: var(--theme-foreground-muted);
-    }
   }
 }
 
