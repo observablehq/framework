@@ -27,7 +27,7 @@
     "deploy": "tsx ./bin/observable.ts deploy",
     "test": "yarn test:mocha && yarn test:tsc && yarn test:lint && yarn test:prettier",
     "test:coverage": "c8 yarn test:mocha",
-    "test:mocha": "rm -rf test/.observablehq/cache test/input/build/*/.observablehq/cache && OBSERVABLE_TELEMETRY_DISABLE=1 tsx --no-warnings=ExperimentalWarning ./node_modules/.bin/mocha 'test/**/*-test.*'",
+    "test:mocha": "rm -rf test/.observablehq/cache test/input/build/*/.observablehq/cache && OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles tsx --no-warnings=ExperimentalWarning ./node_modules/.bin/mocha 'test/**/*-test.*'",
     "test:lint": "eslint src test",
     "test:prettier": "prettier --check src test",
     "test:tsc": "tsc --noEmit",
@@ -100,6 +100,6 @@
     "undici": "^5.27.2"
   },
   "engines": {
-    "node": "^18 <18.19.0 || >=20"
+    "node": ">=20.6"
   }
 }
