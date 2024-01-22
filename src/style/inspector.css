@@ -1,4 +1,4 @@
-.observablehq--block:empty {
+.observablehq--block:not(.observablehq--loading):empty {
   margin: 0;
 }
 
