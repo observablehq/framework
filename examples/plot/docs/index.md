@@ -20,6 +20,9 @@ const stars = FileAttachment("data/plot-github-stars.csv").csv({typed: true});
 const lastMonth = d3.utcDay.offset(today, -28);
 const lastWeek = d3.utcDay.offset(today, -7);
 const x = {domain: [start, today]};
+function trend(value, format) {
+  return html`<span class="${value > 0 ? "green" : value < 0 ? "red" : "muted"}">${d3.format(format)(value)} ${value > 0 ? "↗︎" : value < 0 ? "↘︎" : ""}`;
+}
 ```
 
 ```js
@@ -57,7 +60,9 @@ const burndown = issues
   <div class="card">
     <h2>Daily npm downloads</h2>
     <span class="big">${d3.format(",")(downloads[0].value)}</span>
-    ${((trend) => html`<span class="${trend > 0 ? "green" : trend < 0 ? "red" : "muted"}">${d3.  format("+.1%")(trend)} ${trend > 0 ? "↗︎" : trend < 0 ? "↘︎" :""}`)(downloads[7].value ?   (downloads[0].value - downloads[7].value) / downloads[7].value : undefined)}
+    ${trend(downloads[7].value
+      ? (downloads[0].value - downloads[7].value) / downloads[7].value
+      : undefined, d3.format("+.1%"))}
   </div>
   <div class="card">
     <h2>Total npm downloads</h2>
