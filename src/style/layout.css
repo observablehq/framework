@@ -110,7 +110,7 @@
   border-bottom: solid 1px var(--theme-foreground-faintest);
 }
 
-#observablehq-sidebar > ol:first-child {
+#observablehq-sidebar > ol:first-of-type {
   position: sticky;
   top: 0;
   z-index: 1;
@@ -180,15 +180,15 @@
 
 #observablehq-sidebar-close {
   position: absolute;
-  top: 0.5rem;
+  top: 1rem;
   left: calc(272px - 2.7rem);
   width: 2rem;
-  height: 2rem;
+  height: 2.2rem;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: w-resize;
-  z-index: 1;
+  z-index: 2;
 }
 
 #observablehq-sidebar-toggle::before,
