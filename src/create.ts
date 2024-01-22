@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import {existsSync} from "node:fs";
 import {copyFile, mkdir, readFile, readdir, stat, writeFile} from "node:fs/promises";
 import {join, normalize, parse, resolve} from "node:path";
