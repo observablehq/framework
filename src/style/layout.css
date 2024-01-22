@@ -164,6 +164,7 @@
 #observablehq-sidebar-toggle {
   position: fixed;
   appearance: none;
+  background: none;
   top: 0;
   left: 0;
   width: 2rem;
