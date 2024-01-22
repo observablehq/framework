@@ -1,9 +1,10 @@
 import assert from "node:assert";
-import {normalizeConfig as config, mergeToc, readConfig} from "../src/config.js";
+import {normalizeConfig as config, mergeToc, readConfig, setCurrentDate} from "../src/config.js";
 
 const root = "test/input/build/config";
 
 describe("readConfig(undefined, root)", () => {
+  before(() => setCurrentDate(new Date("2024-01-11T01:02:03")));
   it("imports the config file at the specified root", async () => {
     assert.deepStrictEqual(await readConfig(undefined, "test/input/build/config"), {
       root: "test/input/build/config",
@@ -18,7 +19,8 @@ describe("readConfig(undefined, root)", () => {
       title: undefined,
       toc: {label: "On this page", show: true},
       pager: true,
-      footer: 'Built with <a href="https://observablehq.com/" target=_blank>Observable</a>',
+      footer:
+        'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-11T01:02:03">Jan 11, 2024</a>.',
       deploy: {
         workspace: "acme",
         project: "bi"
@@ -34,7 +36,8 @@ describe("readConfig(undefined, root)", () => {
       title: undefined,
       toc: {label: "Contents", show: true},
       pager: true,
-      footer: 'Built with <a href="https://observablehq.com/" target=_blank>Observable</a>',
+      footer:
+        'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-11T01:02:03">Jan 11, 2024</a>.',
       deploy: null
     });
   });
