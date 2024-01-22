@@ -110,6 +110,19 @@ export function open({hash, eval: compile} = {}) {
         document.head.querySelector(`link[href="${message.href}"]`)?.remove();
         break;
       }
+      case "update-stylesheet": {
+        let href = message.href;
+        try {
+          href = new URL(message.href).pathname;
+        } catch (error) {
+          // relative paths are ok
+        }
+        const link = document.querySelector("#observablehq-main").querySelector(`link[href^="${href}"]`);
+        if (link && link.href) {
+          link.setAttribute("href", href.replace(/\?.*|$/, `?updated=${Date.now()}`));
+        }
+        break;
+      }
     }
   };
 
