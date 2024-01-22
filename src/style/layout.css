@@ -179,7 +179,7 @@
 }
 
 #observablehq-sidebar-close {
-  position: absolute;
+  position: fixed;
   top: 1rem;
   left: calc(272px - 2.7rem);
   width: 2rem;
