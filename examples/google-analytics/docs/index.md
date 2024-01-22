@@ -3,7 +3,6 @@ theme: dashboard
 ---
 
 ```js
-// Data
 const summary = FileAttachment("data/google-analytics-summary.csv").csv({typed: true});
 const hourly = FileAttachment("data/google-analytics-time-of-day.csv").csv({typed: true});
 const channels = FileAttachment("data/google-analytics-channels.csv").csv({typed: true});
@@ -15,15 +14,11 @@ const world = FileAttachment("data/countries-110m.json").json();
 ```js
 // Imports
 import {svg} from "npm:htl";
-import {BigNumber} from "./components/bigNumber.js";
 import {Marimekko} from "./components/marimekko.js";
 ```
 
 ```js
 // Helpers
-const bigPercent = d3.format(".0%");
-const percent = d3.format(".2%");
-const bigNumber = d3.format(".3s");
 const date = d3.utcFormat("%m/%d/%Y");
 const color = Plot.scale({
   color: {
@@ -276,28 +271,40 @@ function worldMap(data, {width, height, title, caption}) {
 }
 ```
 
-<style>
-.bigNumber {
-  overflow: hidden
+```js
+function trend(value, format) {
+  return html`<span class="${value > 0 ? "green" : value < 0 ? "red" : "muted"}">${d3.format(format)(value)}`;
 }
-</style>
+```
 
 # Google analytics
 
 _Summary of metrics from the [Google Analytics Data API](https://developers.google.com/analytics/devguides/reporting/data/v1/quickstart-client-libraries), pulled on ${date(d3.max(summary, d => d.date))}_
 
-<div class="grid grid-cols-4" style="grid-auto-rows: 165px;">
-  <div class="card grid-colspan-1 grid-rowspan-1 bigNumber">
-    ${resize((width) => BigNumber(`${summary[summary.length-1].active28d.toLocaleString("en-US")}`, {title: "Rolling 28-day Active users", plot: areaChart(summary, {width, metric: 'active28d'}), trend: getCompareValue(summary, 'active28d'), trendFormat: bigNumber}))}
+<div class="grid grid-cols-4" style="grid-auto-rows: 168px;">
+  <div class="card grid-colspan-1 grid-rowspan-1">
+    <h2>Rolling 28-day Active users</h2>
+    <span class="big">${summary[summary.length-1].active28d.toLocaleString("en-US")}</span>
+    ${trend(getCompareValue(summary, 'active28d'), "+,")}
+    ${resize((width) => areaChart(summary, {width, metric: 'active28d'}))}
   </div>
-    <div class="card grid-colspan-1 grid-rowspan-1 bigNumber">
-    ${resize((width) => BigNumber(`${bigPercent(summary[summary.length-1].engagementRate)}`, {title: "Engagement Rate", plot: lineChart(summary, {width, metric: 'engagementRate'}), trend: getCompareValue(summary, 'engagementRate'), trendFormat: percent}))}
+  <div class="card grid-colspan-1 grid-rowspan-1">
+    <h2>Engagement Rate</h2>
+    <span class="big">${d3.format(".0%")(summary[summary.length-1].engagementRate)}</span>
+    ${trend(getCompareValue(summary, 'engagementRate'), ".2%")}
+    ${resize((width) => lineChart(summary, {width, metric: 'engagementRate'}))}
   </div>
-  <div class="card grid-colspan-1 grid-rowspan-1 bigNumber">
-    ${resize((width) => BigNumber(`${bigPercent(summary[summary.length-1].wauPerMau)}`, {title: "WAU to MAU ratio", plot: lineChart(summary, {width, metric: 'wauPerMau'}), trend: getCompareValue(summary, 'wauPerMau'), trendFormat: percent}))}
+  <div class="card grid-colspan-1 grid-rowspan-1">
+    <h2>WAU to MAU ratio</h2>
+    <span class="big">${d3.format(".0%")(summary[summary.length-1].wauPerMau)}</span>
+    ${trend(getCompareValue(summary, 'wauPerMau'), ".2%")}
+    ${resize((width) => lineChart(summary, {width, metric: 'wauPerMau'}))}
   </div>
-    <div class="card grid-colspan-1 grid-rowspan-1 bigNumber">
-    ${resize((width) => BigNumber(`${summary[summary.length-1].engagedSessions.toLocaleString("en-US")}`, {title: "Engaged Sessions", plot: areaChart(summary, {width, metric: 'engagedSessions'}), trend: getCompareValue(summary, 'engagedSessions'), trendFormat: bigNumber}))}
+  <div class="card grid-colspan-1 grid-rowspan-1">
+    <h2>Engaged Sessions</h2>
+    <span class="big">${d3.format(",")(summary[summary.length-1].engagedSessions.toLocaleString("en-US"))}</span>
+    ${trend(getCompareValue(summary, 'engagedSessions'), "+,")}
+    ${resize((width) => areaChart(summary, {width, metric: 'engagedSessions'}))}
   </div>
 </div>
 
