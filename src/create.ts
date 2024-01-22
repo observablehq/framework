@@ -58,7 +58,7 @@ export async function create({output = ""}: {output?: string}, effects: CreateEf
 
   if (results.projectName === undefined || results.projectTitle === undefined) {
     console.log("Create process aborted");
-    process.exit(1);
+    process.exit(0);
   }
 
   const root = join(projectDir, results.projectName);
