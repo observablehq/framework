@@ -49,7 +49,7 @@ const burndown = issues
   <div class="card">
   <h2>Current release</h2>
   <span class="big">${versions.at(-1).version}</span>
-  <a href="https://github.com/observablehq/plot/releases" class="gap">
+  <a href="https://github.com/observablehq/plot/releases" class="gap" style="color: inherit;">
       ${((days) => days === 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`)(d3.utcDay.count(versions.at(-1).date, Date.now()))}
   </a>
 </div>
@@ -114,7 +114,7 @@ const burndown = issues
 <div class="grid grid-cols-4" style="grid-auto-rows: 86px;">
   <div class="card">
     <h2>Open issues</h2>
-    <span class="big">${d3.format(",")(d3.sum(issues, (d) => !d.pull_request && d.state === "open"))}</span>
+    <a href="https://github.com/observablehq/plot/issues" class="big" style="color: inherit;">${d3.format(",")(d3.sum(issues, (d) => !d.pull_request && d.state === "open"))}</a>
   </div>
   <div class="card">
     <h2>Opened issues, 28d</h2>
