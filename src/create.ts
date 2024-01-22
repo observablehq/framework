@@ -109,7 +109,7 @@ function validateProjectTitle(projectTitle: string): string | boolean {
     return "Project title must be at least 1 character long.";
   }
   // eslint-disable-next-line no-control-regex
-  if (/[\x00-\x1F]/.test(projectTitle)) {
+  if (/[\u0000-\u001F\u007F-\u009F]/.test(projectTitle)) {
     return "Project title may not contain control characters.";
   }
   return true;
