@@ -83,6 +83,7 @@
   background: var(--theme-background-alt);
   color: var(--theme-foreground-muted);
   font: 14px var(--sans-serif);
+  visibility: hidden;
   font-weight: 500;
   width: 272px;
   z-index: 2;
@@ -163,16 +164,17 @@
 #observablehq-sidebar-toggle {
   position: fixed;
   appearance: none;
+  background: none;
   top: 0;
   left: 0;
-  height: 100%;
   width: 2rem;
+  height: 100%;
+  padding-top: 1.6rem;
   display: flex;
-  align-items: center;
+  align-items: start;
   justify-content: center;
   cursor: e-resize;
   margin: 0;
-  background: none;
   color: var(--theme-foreground-muted);
   transition: left 150ms ease;
   z-index: 3;
@@ -278,27 +280,32 @@
     height 150ms ease;
 }
 
-#observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within)::before,
 #observablehq-sidebar-toggle:checked::before {
   transform: scaleX(-1);
 }
 
-#observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within),
 #observablehq-sidebar-toggle:checked {
   cursor: w-resize;
   top: 1rem;
   left: calc(272px - 2.7rem);
   height: 2.2rem; /* 1rem padding + line-height: normal */
-}
-
-#observablehq-sidebar:focus-within,
-#observablehq-sidebar-toggle:checked ~ #observablehq-sidebar {
-  left: 0;
-  box-shadow: 0 0 8px 4px rgba(0, 0, 0, 0.1);
+  padding-top: 0;
+  align-items: center;
 }
 
 #observablehq-sidebar {
-  transition: left 150ms ease;
+  transition:
+    visibility 150ms 0ms,
+    left 150ms 0ms ease;
+}
+
+#observablehq-sidebar-toggle:checked ~ #observablehq-sidebar {
+  left: 0;
+  visibility: initial;
+  box-shadow: 0 0 8px 4px rgba(0, 0, 0, 0.1);
+  transition:
+    visibility 0ms 0ms,
+    left 150ms 0ms ease;
 }
 
 #observablehq-sidebar-backdrop {
@@ -311,13 +318,11 @@
   z-index: 2;
 }
 
-#observablehq-sidebar-backdrop:has(~ #observablehq-sidebar:focus-within),
 #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar-backdrop {
   display: initial;
 }
 
 @media (prefers-color-scheme: dark) {
-  #observablehq-sidebar:focus-within,
   #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar {
     box-shadow: 0 0 8px 4px rgba(0, 0, 0, 0.5);
   }
@@ -328,29 +333,27 @@
   #observablehq-sidebar-toggle {
     transition: none;
   }
-  #observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within)::before,
   #observablehq-sidebar-toggle:indeterminate::before {
     transform: scaleX(-1);
   }
-  #observablehq-sidebar-toggle:has(~ #observablehq-sidebar:focus-within),
   #observablehq-sidebar-toggle:indeterminate {
     cursor: w-resize;
     top: 1rem;
     left: calc(272px - 2.7rem);
     height: 2.2rem;
+    padding-top: 0;
+    align-items: center;
   }
-  #observablehq-sidebar-backdrop:has(~ #observablehq-sidebar:focus-within),
   #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar-backdrop {
     display: none;
   }
-  #observablehq-sidebar:focus-within,
   #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-sidebar {
     left: 0;
+    visibility: initial;
     box-shadow: none;
     border-right: solid 1px var(--theme-foreground-faintest);
   }
-  #observablehq-sidebar:focus-within ~ #observablehq-center,
   #observablehq-sidebar-toggle:checked ~ #observablehq-center,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center {
     padding-left: calc(272px + 1rem);
@@ -368,7 +371,6 @@
 }
 
 @media (min-width: calc(640px + 6rem + 272px)) {
-  #observablehq-sidebar:focus-within ~ #observablehq-toc,
   #observablehq-sidebar-toggle:checked ~ #observablehq-toc,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc {
     display: none;
@@ -376,13 +378,11 @@
 }
 
 @media (min-width: calc(640px + 6rem + 272px + 192px)) {
-  #observablehq-sidebar:focus-within ~ #observablehq-toc,
   #observablehq-sidebar-toggle:checked ~ #observablehq-toc,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc,
   #observablehq-toc {
     display: block;
   }
-  #observablehq-sidebar:focus-within ~ #observablehq-toc ~ #observablehq-center,
   #observablehq-sidebar-toggle:checked ~ #observablehq-toc ~ #observablehq-center,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc ~ #observablehq-center,
   #observablehq-toc ~ #observablehq-center {
@@ -391,11 +391,8 @@
 }
 
 @media (hover: hover) {
-  #observablehq-sidebar-toggle:not(:checked, :hover, :has(~ #observablehq-sidebar:focus-within)) {
-    color: transparent;
-  }
   @media (min-width: calc(640px + 6rem + 272px)) {
-    #observablehq-sidebar-toggle:indeterminate:not(:checked, :hover, :has(~ #observablehq-sidebar:focus-within)) {
+    #observablehq-sidebar-toggle:indeterminate:not(:checked, :hover) {
       color: var(--theme-foreground-muted);
     }
   }

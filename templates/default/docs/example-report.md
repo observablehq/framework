@@ -1,10 +1,6 @@
----
-toc: true
----
+# A brief history of space exploration
 
-# A brief history of rocket launches 🚀
-
-This report is a brief overview of the history and current state of rocket launches and general space exploration.
+This report is a brief overview of the history and current state of rocket launches and space exploration.
 
 ## Background
 
@@ -12,41 +8,20 @@ The history of rocket launches dates back to ancient China, where gunpowder-fill
 
 Fast-forward to the 20th century during the Cold War era, the United States and the Soviet Union embarked on a space race, a competition to innovate and explore beyond Earth.
 
-This led to the launch of the first artificial satellite, Sputnik 1, and the manned moon landing by Apollo 11. As technology advanced, rocket launches became synonymous with space exploration and satellite deployment.
+This led to the launch of the first artificial satellite, Sputnik 1, and the crewed moon landing by Apollo 11. As technology advanced, rocket launches became synonymous with space exploration and satellite deployment.
 
 ## The Space Shuttle era
 
-The late 20th century witnessed a significant milestone in rocket launches.
-
 ```js
-const events = await FileAttachment("./data/spaceHistory.json").json(); // static file
+const events = FileAttachment("./data/spaceHistory.json").json();
 ```
 
 ```js
-const timeline = Plot.plot({
-  insetTop: 30,
-  insetBottom: 10,
-  insetRight: 10,
-  height: 250,
-  x: {
-    domain: d3.extent(events, d => d["year"]),
-    label: "Year",
-    nice: true
-  },
-  y: { axis: null },
-  marks: [
-    Plot.axisX({
-      tickFormat: d3.format(".0f"),
-    }),
-    Plot.ruleX(events, { x: "year", y: "y", stroke: "#eee", strokeWidth: 2 }),
-    Plot.ruleY([0], {stroke: "#eee"}),
-    Plot.dot(events, {x: "year" , y: "y", fill: "currentColor", r: 5}),
-    Plot.text(
-      events,
-      {x: "year", y: "y", text: "name", dy: -20, lineWidth: 10, fontSize: 12}),
-  ]
-});
-display(timeline);
+import {timeline} from "./components/timeline.js";
+```
+
+```js
+display(timeline(events));
 ```
 
 ### Sputnik 1 (1957)

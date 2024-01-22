@@ -89,7 +89,8 @@ export class PreviewServer {
       let {pathname} = url;
       let match: RegExpExecArray | null;
       if (pathname === "/_observablehq/runtime.js") {
-        send(req, "/@observablehq/runtime/dist/runtime.js", {root: "./node_modules"}).pipe(res);
+        const root = join(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "../../");
+        send(req, "/dist/runtime.js", {root}).pipe(res);
       } else if (pathname.startsWith("/_observablehq/stdlib.js")) {
         end(req, res, await rollupClient(getClientPath("./src/client/stdlib.js")), "text/javascript");
       } else if (pathname.startsWith("/_observablehq/stdlib/")) {
