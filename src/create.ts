@@ -57,7 +57,7 @@ export async function create({output = ""}: {output?: string}, effects: CreateEf
   ]);
 
   if (results.projectName === undefined || results.projectTitle === undefined) {
-    console.log("Create aborted");
+    console.log("Create process aborted");
     process.exit(1);
   }
 
@@ -73,6 +73,7 @@ export async function create({output = ""}: {output?: string}, effects: CreateEf
   const context = {
     projectDir,
     ...results,
+    projectTitle: JSON.stringify(results.projectTitle).slice(1, -1),
     devInstructions: devDirections.map((l) => `$ ${l}`).join("\n")
   };
 
