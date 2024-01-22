@@ -125,7 +125,7 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
       if (transpile.files) context.files.push(...transpile.files);
       if (transpile.imports) context.imports.push(...transpile.imports);
       result += `<div id="cell-${id}" class="observablehq observablehq--block${
-        transpile.expression ? "  observablehq--loading" : ""
+        transpile.expression ? " observablehq--loading" : ""
       }"></div>\n`;
       count++;
     }
