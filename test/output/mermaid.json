@@ -17,6 +17,7 @@
     {
       "type": "cell",
       "id": "1ffa6d4f",
+      "expression": true,
       "inputs": [
         "mermaid",
         "display"

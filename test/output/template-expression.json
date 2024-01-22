@@ -17,6 +17,7 @@
     {
       "type": "cell",
       "id": "12fd0aea",
+      "expression": true,
       "inputs": [
         "display"
       ],

@@ -29,6 +29,7 @@
     {
       "type": "cell",
       "id": "9c4f4e4f",
+      "expression": true,
       "inputs": [
         "FileAttachment",
         "display"

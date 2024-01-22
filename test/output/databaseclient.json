@@ -10,13 +10,14 @@
       "cellIds": [
         "1e6b99bd"
       ],
-      "html": "<div id=\"cell-1e6b99bd\" class=\"observablehq observablehq--block observablehq--loading\"></div>\n"
+      "html": "<div id=\"cell-1e6b99bd\" class=\"observablehq observablehq--block\"></div>\n"
     }
   ],
   "cells": [
     {
       "type": "cell",
       "id": "1e6b99bd",
+      "expression": false,
       "inputs": [
         "DatabaseClient"
       ],

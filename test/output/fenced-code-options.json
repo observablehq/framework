@@ -16,7 +16,7 @@
       "cellIds": [
         "fe9e095e"
       ],
-      "html": "<div><div id=\"cell-fe9e095e\" class=\"observablehq observablehq--block observablehq--loading\"></div>\n<pre data-language=\"js\"><code class=\"language-js\"><span class=\"hljs-keyword\">function</span> <span class=\"hljs-title function_\">add</span>(<span class=\"hljs-params\">a, b</span>) {\n  <span class=\"hljs-keyword\">return</span> a + b;\n}\n</code></pre>\n</div>"
+      "html": "<div><div id=\"cell-fe9e095e\" class=\"observablehq observablehq--block\"></div>\n<pre data-language=\"js\"><code class=\"language-js\"><span class=\"hljs-keyword\">function</span> <span class=\"hljs-title function_\">add</span>(<span class=\"hljs-params\">a, b</span>) {\n  <span class=\"hljs-keyword\">return</span> a + b;\n}\n</code></pre>\n</div>"
     },
     {
       "type": "html",
@@ -24,7 +24,7 @@
       "cellIds": [
         "4bf815ab"
       ],
-      "html": "<div id=\"cell-4bf815ab\" class=\"observablehq observablehq--block observablehq--loading\"></div>\n"
+      "html": "<div id=\"cell-4bf815ab\" class=\"observablehq observablehq--block\"></div>\n"
     },
     {
       "type": "html",
@@ -32,7 +32,7 @@
       "cellIds": [
         "d41a5631"
       ],
-      "html": "<div><div id=\"cell-d41a5631\" class=\"observablehq observablehq--block observablehq--loading\"></div>\n<pre data-language=\"js\"><code class=\"language-js\"><span class=\"hljs-keyword\">function</span> <span class=\"hljs-title function_\">langOutside</span>(<span class=\"hljs-params\"></span>) {\n  <span class=\"hljs-keyword\">return</span> <span class=\"hljs-number\">1</span>;\n}\n</code></pre>\n</div>"
+      "html": "<div><div id=\"cell-d41a5631\" class=\"observablehq observablehq--block\"></div>\n<pre data-language=\"js\"><code class=\"language-js\"><span class=\"hljs-keyword\">function</span> <span class=\"hljs-title function_\">langOutside</span>(<span class=\"hljs-params\"></span>) {\n  <span class=\"hljs-keyword\">return</span> <span class=\"hljs-number\">1</span>;\n}\n</code></pre>\n</div>"
     },
     {
       "type": "html",
@@ -40,7 +40,7 @@
       "cellIds": [
         "2f4eff36"
       ],
-      "html": "<div id=\"cell-2f4eff36\" class=\"observablehq observablehq--block observablehq--loading\"></div>\n"
+      "html": "<div id=\"cell-2f4eff36\" class=\"observablehq observablehq--block\"></div>\n"
     },
     {
       "type": "html",
@@ -59,6 +59,7 @@
     {
       "type": "cell",
       "id": "fe9e095e",
+      "expression": false,
       "outputs": [
         "add"
       ],
@@ -67,6 +68,7 @@
     {
       "type": "cell",
       "id": "4bf815ab",
+      "expression": false,
       "outputs": [
         "bareJs"
       ],
@@ -75,6 +77,7 @@
     {
       "type": "cell",
       "id": "d41a5631",
+      "expression": false,
       "outputs": [
         "langOutside"
       ],
@@ -83,6 +86,7 @@
     {
       "type": "cell",
       "id": "2f4eff36",
+      "expression": false,
       "outputs": [
         "langAndAttributes"
       ],

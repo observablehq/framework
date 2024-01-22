@@ -25,6 +25,7 @@
     {
       "type": "cell",
       "id": "16447e3a",
+      "expression": true,
       "inputs": [
         "tex",
         "display"
@@ -35,6 +36,7 @@
     {
       "type": "cell",
       "id": "828eccc1",
+      "expression": true,
       "inputs": [
         "tex",
         "display"
