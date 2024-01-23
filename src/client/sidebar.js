@@ -20,6 +20,18 @@ if (toggle) {
       event.preventDefault();
     }
   });
+  const title = `Toggle sidebar ${
+    /Mac|iPhone/.test(navigator.platform)
+      ? /Firefox/.test(navigator.userAgent)
+        ? "⌥" // option symbol for mac firefox
+        : "⌘" // command symbol for mac other
+      : "Alt-" // for other os or browser
+  }B`;
+  for (const label of document.querySelectorAll(
+    "#observablehq-sidebar-toggle, label[for='observablehq-sidebar-toggle']"
+  )) {
+    label.title = title;
+  }
 }
 
 // Prevent double-clicking the summary toggle from selecting text.
