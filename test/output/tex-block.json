@@ -10,13 +10,14 @@
       "cellIds": [
         "5ceee90d"
       ],
-      "html": "<div id=\"cell-5ceee90d\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<div id=\"cell-5ceee90d\" class=\"observablehq observablehq--block observablehq--loading\"></div>\n"
     }
   ],
   "cells": [
     {
       "type": "cell",
       "id": "5ceee90d",
+      "expression": true,
       "inputs": [
         "tex",
         "display"

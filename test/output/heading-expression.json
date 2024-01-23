@@ -10,13 +10,14 @@
       "cellIds": [
         "6212702c"
       ],
-      "html": "<h1 tabindex=\"-1\"><a class=\"observablehq-header-anchor\" href=\"#\"><span id=\"cell-6212702c\"></span></a></h1>\n"
+      "html": "<h1 tabindex=\"-1\"><a class=\"observablehq-header-anchor\" href=\"#\"><span id=\"cell-6212702c\" class=\"observablehq--loading\"></span></a></h1>\n"
     }
   ],
   "cells": [
     {
       "type": "cell",
       "id": "6212702c",
+      "expression": true,
       "inputs": [
         "display"
       ],

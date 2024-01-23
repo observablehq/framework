@@ -29,7 +29,7 @@ export function define(cell) {
   cellsById.set(id, {cell, variables});
   const root = document.querySelector(`#cell-${id}`);
   let reset = null;
-  const clear = () => ((root.innerHTML = ""), (reset = null));
+  const clear = () => ((root.innerHTML = ""), root.classList.remove("observablehq--loading"), (reset = null));
   const display = inline
     ? (v) => {
         reset?.();
