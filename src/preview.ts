@@ -278,7 +278,7 @@ export function getPreviewStylesheet(path: string, data: ParseResult["data"], st
 }
 
 function getReferencedStyleSheet(html: string, fileReferencePath?: string) {
-  const selector = `link[rel="stylesheet"]${fileReferencePath !== undefined ? `[href="${fileReferencePath}"]`: ""}`;
+  const selector = `link[rel="stylesheet"]${fileReferencePath !== undefined ? `[href="${fileReferencePath}"]` : ""}`;
   return parseHTML(html).document.querySelectorAll(selector);
 }
 
@@ -301,7 +301,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
       referencedStyleSheets.forEach((r) => {
         const href = r.getAttribute("href");
         if (href) stylesheets.add(href);
-      })
+      });
     }
     return new Set(Array.from(stylesheets, (href) => resolveStylesheet(path!, href)));
   }
