@@ -81,6 +81,17 @@ if (location.pathname.endsWith("/")) {
 </script>`)
       : ""
   }
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+
+tailwind.config = {
+  corePlugins: {
+    preflight: false
+  }
+};
+
+</script>
+
 <script type="module">${html.unsafe(`
 
 import ${preview || parseResult.cells.length > 0 ? `{${preview ? "open, " : ""}define} from ` : ""}${JSON.stringify(
