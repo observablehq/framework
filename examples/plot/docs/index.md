@@ -49,7 +49,7 @@ const burndown = issues
     <h2>Current release</h2>
     <span class="big">${versions.at(-1).version}</span>
     <a href="https://github.com/observablehq/plot/releases" style="color: inherit;">
-        ${((days) => days === 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`)(d3.  utcDay.count(versions.at(-1).date, Date.now()))}
+      ${((days) => days === 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`)(d3.  utcDay.count(versions.at(-1).date, new Date()))}
     </a>
   </div>
   <div class="card">
