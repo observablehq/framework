@@ -1,6 +1,6 @@
 # JavaScript: Reactivity
 
-The Observable CLI uses the open-source [Observable Runtime](https://github.com/observablehq/runtime) to run JavaScript in Markdown reactively: in topological order as determined by [top-level variable](#top-level-variables) references, as in a spreadsheet. For example, here we reference variables `x` and `y` even though they are defined in a code block below:
+Observable Framework uses the open-source [Observable Runtime](https://github.com/observablehq/runtime) to run JavaScript in Markdown reactively: in topological order as determined by [top-level variable](#top-level-variables) references, as in a spreadsheet. For example, here we reference variables `x` and `y` even though they are defined in a code block below:
 
 ```js echo
 x + y

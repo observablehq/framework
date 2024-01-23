@@ -1,6 +1,6 @@
 # Routing
 
-The Observable CLI uses file-based routing. This means each page in your project has a corresponding [Markdown](./markdown) file of the same name. In addition to pages, you can have [importable](./javascript/imports) JavaScript modules, [data loaders](./loaders) for generating data snapshots, and [static assets](./javascript/files) such as images and files.
+Observable Framework uses file-based routing. This means each page in your project has a corresponding [Markdown](./markdown) file of the same name. In addition to pages, you can have [importable](./javascript/imports) JavaScript modules, [data loaders](./loaders) for generating data snapshots, and [static assets](./javascript/files) such as images and files.
 
 A typical project looks like this:
 
@@ -24,7 +24,7 @@ A typical project looks like this:
 
 #### `docs`
 
-This is the “source root” — where your source files live. It doesn’t have to be named `docs`, but that’s the default; you can change it using the **root** [config option](./config). Pages go here. Each page is a Markdown file. The Observable CLI uses [file-based routing](./routing), which means that the name of the file controls where the page is served. You can create as many pages as you like. Use folders to organize your pages.
+This is the “source root” — where your source files live. It doesn’t have to be named `docs`, but that’s the default; you can change it using the **root** [config option](./config). Pages go here. Each page is a Markdown file. Observable Framework uses [file-based routing](./routing), which means that the name of the file controls where the page is served. You can create as many pages as you like. Use folders to organize your pages.
 
 #### `docs/.observablehq/cache`
 
@@ -164,9 +164,9 @@ The resulting output root is:
 └─ ...
 ```
 
-The import declaration is automatically rewritten during build to point to `./_import/chart.js` instead of `./chart.js`. (In the future [#260](https://github.com/observablehq/cli/issues/260), the Observable CLI will add a content hash to the imported module name for cache-breaking.)
+The import declaration is automatically rewritten during build to point to `./_import/chart.js` instead of `./chart.js`. (In the future [#260](https://github.com/observablehq/cli/issues/260), Observable Framework will add a content hash to the imported module name for cache-breaking.)
 
-Use a leading slash to denote paths relative to the source root, such as `/chart.js` instead of `./chart.js`. This allows you to use the same path to import a module from anywhere, even in nested folders. The Observable CLI always generates relative links so that the generated site can be served under a base path.
+Use a leading slash to denote paths relative to the source root, such as `/chart.js` instead of `./chart.js`. This allows you to use the same path to import a module from anywhere, even in nested folders. Observable Framework always generates relative links so that the generated site can be served under a base path.
 
 ## Files
 
@@ -193,7 +193,7 @@ Any files referenced by `FileAttachment` will automatically be copied to the `_f
 └─ ...
 ```
 
-`FileAttachment` references are automatically rewritten during build; for example, a reference to `quakes.csv` might be replaced with `_file/quakes.csv`. (In the future [#260](https://github.com/observablehq/cli/issues/260), the Observable CLI will add a content hash to the attached file name for cache-breaking.) Only the files you reference statically are copied to the output root (`dist`), so nothing extra or unused is included in the built site.
+`FileAttachment` references are automatically rewritten during build; for example, a reference to `quakes.csv` might be replaced with `_file/quakes.csv`. (In the future [#260](https://github.com/observablehq/cli/issues/260), Observable Framework will add a content hash to the attached file name for cache-breaking.) Only the files you reference statically are copied to the output root (`dist`), so nothing extra or unused is included in the built site.
 
 [Imported modules](#imports) can use `FileAttachment`, too. In this case, the path to the file is _relative to the importing module_ in the same fashion as `import`; this is accomplished by resolving relative paths at runtime with [`import.meta.url`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta).
 
@@ -240,7 +240,7 @@ File attachments can be also be pulled from archives. The following archive exte
 - `.tar` - for [tarballs](<https://en.wikipedia.org/wiki/Tar_(computing)>)
 - `.tar.gz` and `.tgz` - for [compressed tarballs](https://en.wikipedia.org/wiki/Gzip)
 
-For example, say you have a `quakes.zip` archive that includes yearly files for observed earthquakes. If you reference `FileAttachment("quakes/2021.csv")` in code, the Observable CLI will pull the `2021.csv` from `quakes.zip`. So this source root:
+For example, say you have a `quakes.zip` archive that includes yearly files for observed earthquakes. If you reference `FileAttachment("quakes/2021.csv")` in code, Observable Framework will pull the `2021.csv` from `quakes.zip`. So this source root:
 
 ```ini
 .

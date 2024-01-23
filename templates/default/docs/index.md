@@ -1,3 +1,3 @@
-# My Project
+# Untitled project
 
-See the [Observable CLI documentation](https://cli.observablehq.com/).
+See the [Observable Framework documentation](https://cli.observablehq.com/).

@@ -1,6 +1,6 @@
 # Telemetry
 
-The Observable CLI collects anonymous usage data to help us improve the product. This data is sent to Observable and is not shared with third parties. Telemetry data is covered by [Observable’s privacy policy](https://observablehq.com/privacy-policy).
+Observable Framework collects anonymous usage data to help us improve the product. This data is sent to Observable and is not shared with third parties. Telemetry data is covered by [Observable’s privacy policy](https://observablehq.com/privacy-policy).
 
 You can [opt-out of telemetry](#disabling-telemetry) by setting the `OBSERVABLE_TELEMETRY_DISABLE` environment variable to `true`.
 

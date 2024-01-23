@@ -1,6 +1,6 @@
 # Contributing
 
-If you’d like to contribute to the Observable CLI, here’s how. First clone the [git repo](https://github.com/observablehq/cli) and run [Yarn (1.x)](https://classic.yarnpkg.com/lang/en/docs/install/) to install dependencies:
+If you’d like to contribute to Observable Framework, here’s how. First clone the [git repo](https://github.com/observablehq/cli) and run [Yarn (1.x)](https://classic.yarnpkg.com/lang/en/docs/install/) to install dependencies:
 
 ```sh
 git clone git@github.com:observablehq/cli.git
@@ -30,7 +30,7 @@ This creates the `dist` folder. View the site using your preferred web server, s
 http-server dist
 ```
 
-This documentation site is built on GitHub using the Observable CLI; see the [deploy workflow](https://github.com/observablehq/cli/blob/main/.github/workflows/deploy.yml). Please open a pull request if you’d like to contribute to the documentation or to CLI features. Contributors are expected to follow our [code of conduct](https://github.com/observablehq/.github/blob/master/CODE_OF_CONDUCT.md). 🙏
+This documentation site is built on GitHub using Observable Framework; see the [deploy workflow](https://github.com/observablehq/cli/blob/main/.github/workflows/deploy.yml). Please open a pull request if you’d like to contribute. Contributors are expected to follow our [code of conduct](https://github.com/observablehq/.github/blob/master/CODE_OF_CONDUCT.md). 🙏
 
 A test coverage report can be generated with [c8](https://github.com/bcoe/c8), in text and lcov formats, to help you identify which lines of code are not (yet!) covered by tests. Just run:
 
@@ -42,7 +42,7 @@ yarn test:coverage
 
 <div class="note">These instructions are intended for Observable staff.</div>
 
-To release a new version of the CLI, first update the [package.json](https://github.com/observablehq/cli/blob/main/package.json) file by following the standard process for committing code changes:
+To release a new version, first update the [package.json](https://github.com/observablehq/cli/blob/main/package.json) file by following the standard process for committing code changes:
 
 1. Create a new branch.
 2. Edit the `version` field in the [package.json](https://github.com/observablehq/cli/blob/main/package.json) file as desired.

@@ -1,5 +1,5 @@
 export default {
-  title: "Observable CLI",
+  title: "Observable Framework",
   pages: [
     {name: "Getting started", path: "/getting-started"},
     {name: "Routing", path: "/routing"},
@@ -98,6 +98,6 @@ export default {
   footer: `© ${new Date().getUTCFullYear()} Observable, Inc.`,
   deploy: {
     workspace: "@observablehq",
-    project: "cli"
+    project: "cli" // TODO framework
   }
 };
