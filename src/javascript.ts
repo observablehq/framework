@@ -38,6 +38,7 @@ export interface Feature {
 
 export interface BaseTranspile {
   id: string;
+  expression: boolean;
   inputs?: string[];
   outputs?: string[];
   inline?: boolean;
@@ -80,6 +81,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
     if (findImportDeclarations(node).length > 0) node.async = true;
     return {
       id,
+      expression: node.expression,
       ...(inputs.length ? {inputs} : null),
       ...(options.inline ? {inline: true} : null),
       ...(node.declarations?.length ? {outputs: node.declarations.map(({name}) => name)} : null),
@@ -118,7 +120,8 @@ ${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.ma
       console.error(red(`${error.name}: ${warning}`));
     }
     return {
-      id: `${id}`,
+      id,
+      expression: true,
       body: async () => `() => { throw new SyntaxError(${JSON.stringify(message)}); }`
     };
   }

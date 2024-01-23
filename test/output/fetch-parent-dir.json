@@ -33,7 +33,7 @@
       "cellIds": [
         "17636ecf"
       ],
-      "html": "<div id=\"cell-17636ecf\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<div id=\"cell-17636ecf\" class=\"observablehq observablehq--block observablehq--loading\"></div>\n"
     },
     {
       "type": "html",
@@ -41,7 +41,7 @@
       "cellIds": [
         "78e756b8"
       ],
-      "html": "<div id=\"cell-78e756b8\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<div id=\"cell-78e756b8\" class=\"observablehq observablehq--block observablehq--loading\"></div>\n"
     },
     {
       "type": "html",
@@ -64,16 +64,19 @@
     {
       "type": "cell",
       "id": "17636ecf",
+      "expression": true,
       "body": "() => { throw new SyntaxError(\"non-local file path: ../NOENT.md (1:14)\"); }"
     },
     {
       "type": "cell",
       "id": "78e756b8",
+      "expression": true,
       "body": "() => { throw new SyntaxError(\"non-local file path: ../README.md (1:14)\"); }"
     },
     {
       "type": "cell",
       "id": "c68a5211",
+      "expression": false,
       "inputs": [
         "FileAttachment"
       ],
@@ -92,6 +95,7 @@
     {
       "type": "cell",
       "id": "d306f60f",
+      "expression": false,
       "inputs": [
         "FileAttachment"
       ],

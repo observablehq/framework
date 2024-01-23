@@ -22,13 +22,14 @@
       "cellIds": [
         "9c4f4e4f"
       ],
-      "html": "<div id=\"cell-9c4f4e4f\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<div id=\"cell-9c4f4e4f\" class=\"observablehq observablehq--block observablehq--loading\"></div>\n"
     }
   ],
   "cells": [
     {
       "type": "cell",
       "id": "9c4f4e4f",
+      "expression": true,
       "inputs": [
         "FileAttachment",
         "display"
