@@ -17,12 +17,12 @@ export function findFeatures(node: Node, path: string, references: Identifier[],
       let type = featureMap.get(callee);
       // If this feature wasn’t explicitly imported into this cell, then ignore
       // function calls that are not references to the feature. For example, if
-      // there’s a local variable called Secret, that will mask the built-in
-      // Secret and won’t be considered a feature.
+      // there’s a local variable called FileAttachment, that will mask the
+      // built-in FileAttachment and won’t be considered a feature.
       if (!type) {
         if (!references.includes(callee)) return;
         const name = callee.name;
-        if (name !== "Secret" && name !== "FileAttachment" && name !== "DatabaseClient") return;
+        if (name !== "FileAttachment") return;
         type = name;
       }
       features.push(getFeature(type, node, path, input));
@@ -50,9 +50,7 @@ export function getFeatureReferenceMap(node: Node): Map<Identifier, Feature["typ
           if (
             specifier.type === "ImportSpecifier" &&
             specifier.imported.type === "Identifier" &&
-            (specifier.imported.name === "FileAttachment" ||
-              specifier.imported.name === "Secret" ||
-              specifier.imported.name === "DatabaseClient")
+            specifier.imported.name === "FileAttachment"
           ) {
             declarations.add(specifier.local);
             alias.set(specifier.local.name, specifier.imported.name);
