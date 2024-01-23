@@ -66,7 +66,7 @@ const burndown = issues
   </div>
   <div class="card">
     <h2>Total npm downloads</h2>
-    <span class="big">${d3.format(",")(d3.sum(downloads, (d) => d.value))}
+    <span class="big">${d3.format(",")(d3.sum(downloads, (d) => d.value))}</span>
   </div>
 </div>
 
