@@ -34,7 +34,7 @@ function section(type) {
     }
   }
 
-  h2 + div, h3 + div {
+  h2 + div, h3 + div, h3 + p + div {
     margin-bottom: 1rem;
   }
 
@@ -87,25 +87,28 @@ theme: [glacier, slate]
 ## Composition
 Composition themes are combined with other themes.
 
-### default vs wide
+### default vs alt
+The alt theme, when composed with a color theme, swaps the page and card background colors.
+
 <div>
   <div class="thumbnail">
     <iframe
-      class="default"
       scrolling="no"
       src="showcase/default">
     </iframe>
   </div>
   <div class="thumbnail">
     <iframe
-      class="wide"
       scrolling="no"
-      src="showcase/wide">
+      src="showcase/alt">
     </iframe>
   </div>
 </div>
 
-### default vs alt
+
+### default vs wide
+The wide theme, when composed with a color theme, sets the main column to be full-width.
+
 <div>
   <div class="thumbnail">
     <iframe
@@ -114,11 +117,11 @@ Composition themes are combined with other themes.
       src="showcase/default">
     </iframe>
   </div>
-  <div class="thumbnail">
+  <div class="thumbnail" style="margin-top: 8px">
     <iframe
       class="wide"
       scrolling="no"
-      src="showcase/alt">
+      src="showcase/wide">
     </iframe>
   </div>
 </div>
