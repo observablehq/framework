@@ -294,7 +294,7 @@ _Summary of metrics from the [Google Analytics Data API](https://developers.goog
   <div class="card">
     <h2>WAU to MAU ratio</h2>
     <span class="big">${bigPercent(summary[summary.length-1].wauPerMau)}</span>
-    <span class="small">${((v) => html`<span class="${v > 0 ? "green" : v < 0 ? "red" : ""}">${percent(v)} ${v > 0 ? "↗︎" : v < 0 ? "↘︎" : ""}`)(getCompareValue(summary, 'wauPerMau'))}</span>
+    <span class="small">${((v) => html`<span class="${v > 0 ? "green" : v < 0 ? "red" : ""}">${percent(v)} ${v > 0 ? "↗︎" : v < 0 ? "↘︎" : ""}`)(getCompareValue(summary, "wauPerMau"))}</span>
     ${resize((width) => lineChart(summary, {width, metric: 'wauPerMau'}))}
   </div>
   <div class="card">
