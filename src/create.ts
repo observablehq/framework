@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import {existsSync} from "node:fs";
 import {copyFile, mkdir, readFile, readdir, stat, writeFile} from "node:fs/promises";
 import {join, normalize, parse, resolve} from "node:path";
@@ -56,6 +54,11 @@ export async function create({output = ""}: {output?: string}, effects: CreateEf
     } satisfies PromptObject<"projectTitle">
   ]);
 
+  if (results.projectName === undefined || results.projectTitle === undefined) {
+    console.log("Create process aborted");
+    process.exit(0);
+  }
+
   const root = join(projectDir, results.projectName);
   const pkgInfo = pkgFromUserAgent(process.env["npm_config_user_agent"]);
   const pkgManager = pkgInfo ? pkgInfo.name : "yarn";
@@ -68,6 +71,7 @@ export async function create({output = ""}: {output?: string}, effects: CreateEf
   const context = {
     projectDir,
     ...results,
+    projectTitleString: JSON.stringify(results.projectTitle),
     devInstructions: devDirections.map((l) => `$ ${l}`).join("\n")
   };
 
@@ -87,11 +91,11 @@ function validateProjectName(projectDir: string, projectName: string): string | 
   if (!existsSync(normalize(projectDir))) {
     return "The parent directory of the project does not exist.";
   }
-  if (existsSync(join(projectDir, projectName))) {
-    return "Project already exists.";
-  }
   if (projectName.length === 0) {
     return "Project name must be at least 1 character long.";
+  }
+  if (existsSync(join(projectDir, projectName))) {
+    return "Project already exists.";
   }
   if (!/^([^0-9\W][\w-]*)$/.test(projectName)) {
     return "Project name must contain only alphanumerics, dash or underscore with no leading digits.";
@@ -104,7 +108,7 @@ function validateProjectTitle(projectTitle: string): string | boolean {
     return "Project title must be at least 1 character long.";
   }
   // eslint-disable-next-line no-control-regex
-  if (/[\x00-\x1F]/.test(projectTitle)) {
+  if (/[\u0000-\u001F\u007F-\u009F]/.test(projectTitle)) {
     return "Project title may not contain control characters.";
   }
   return true;
@@ -112,10 +116,8 @@ function validateProjectTitle(projectTitle: string): string | boolean {
 
 function toTitleCase(str: string): string {
   return str
-    .toLowerCase()
-    .replace(/_/g, " ")
-    .split(/\s+/)
-    .map((word) => word[0].toUpperCase() + word.slice(1))
+    .split(/[\s_-]+/)
+    .map(([c, ...rest]) => c.toUpperCase() + rest.join(""))
     .join(" ");
 }
 

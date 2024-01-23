@@ -104,6 +104,7 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
   return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
+  <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
   <ol>
     <li class="observablehq-link${
       normalizePath(path) === "/index" ? " observablehq-link-active" : ""
