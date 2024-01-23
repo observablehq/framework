@@ -17,6 +17,7 @@
     {
       "type": "cell",
       "id": "1e6b99bd",
+      "expression": false,
       "inputs": [
         "DatabaseClient"
       ],

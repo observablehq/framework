@@ -10,13 +10,14 @@
       "cellIds": [
         "56e8b37a"
       ],
-      "html": "<p><span id=\"cell-56e8b37a\"></span></p>\n"
+      "html": "<p><span id=\"cell-56e8b37a\" class=\"observablehq--loading\"></span></p>\n"
     }
   ],
   "cells": [
     {
       "type": "cell",
       "id": "56e8b37a",
+      "expression": true,
       "inputs": [
         "display"
       ],

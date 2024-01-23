@@ -23,6 +23,7 @@
     {
       "type": "cell",
       "id": "fe9e095e",
+      "expression": false,
       "outputs": [
         "add"
       ],
