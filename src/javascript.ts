@@ -3,7 +3,6 @@ import type {Expression, Identifier, Node, Options, Program} from "acorn";
 import {fileReference} from "./files.js";
 import {findAssignments} from "./javascript/assignments.js";
 import {findAwaits} from "./javascript/awaits.js";
-import {resolveDatabases} from "./javascript/databases.js";
 import {findDeclarations} from "./javascript/declarations.js";
 import {findFeatures} from "./javascript/features.js";
 import {findExports, findImportDeclarations, findImports} from "./javascript/imports.js";
@@ -12,10 +11,6 @@ import {findReferences} from "./javascript/references.js";
 import {syntaxError} from "./javascript/syntaxError.js";
 import {Sourcemap} from "./sourcemap.js";
 import {red} from "./tty.js";
-
-export interface DatabaseReference {
-  name: string;
-}
 
 export interface FileReference {
   /** The relative path from the page to the original file (e.g., "./test.txt"). */
@@ -32,7 +27,7 @@ export interface ImportReference {
 }
 
 export interface Feature {
-  type: "FileAttachment" | "DatabaseClient" | "Secret";
+  type: "FileAttachment";
   name: string;
 }
 
@@ -42,7 +37,6 @@ export interface BaseTranspile {
   inputs?: string[];
   outputs?: string[];
   inline?: boolean;
-  databases?: DatabaseReference[];
   files?: FileReference[];
   imports?: ImportReference[];
 }
@@ -69,9 +63,6 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
   const {id, root, sourcePath, verbose = true} = options;
   try {
     const node = parseJavaScript(input, options);
-    const databases = node.features
-      .filter((f) => f.type === "DatabaseClient")
-      .map((f): DatabaseReference => ({name: f.name}));
     const files = node.features
       .filter((f) => f.type === "FileAttachment")
       .map(({name}) => fileReference(name, sourcePath));
@@ -85,7 +76,6 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
       ...(inputs.length ? {inputs} : null),
       ...(options.inline ? {inline: true} : null),
       ...(node.declarations?.length ? {outputs: node.declarations.map(({name}) => name)} : null),
-      ...(databases.length ? {databases: resolveDatabases(databases)} : null),
       ...(files.length ? {files} : null),
       body: async () => {
         const output = new Sourcemap(input);

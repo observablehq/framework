@@ -62,7 +62,6 @@ export function open({hash, eval: compile} = {}) {
                       inline: item.inline,
                       inputs: item.inputs,
                       outputs: item.outputs,
-                      databases: item.databases,
                       files: item.files,
                       body: compile(item.body)
                     });
