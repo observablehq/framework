@@ -300,7 +300,7 @@ _Summary of metrics from the [Google Analytics Data API](https://developers.goog
   <div class="card">
     <h2>Engaged Sessions</h2>
     <span class="big">${summary[summary.length-1].engagedSessions.toLocaleString("en-US")}</span>
-    <span class="small">${((v) => html`<span class="${v > 0 ? "green" : v < 0 ? "red" : ""}">${bigNumber(v)} ${v > 0 ? "↗︎" : v < 0 ? "↘︎" : ""}`)(getCompareValue(summary, 'engagedSessions'))}</span>
+    <span class="small">${((v) => html`<span class="${v > 0 ? "green" : v < 0 ? "red" : ""}">${bigNumber(v)} ${v > 0 ? "↗︎" : v < 0 ? "↘︎" : ""}`)(getCompareValue(summary, "engagedSessions"))}</span>
     ${resize((width) => areaChart(summary, {width, metric: 'engagedSessions'}))}
   </div>
 </div>
