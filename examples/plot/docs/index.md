@@ -55,7 +55,7 @@ const burndown = issues
   <div class="card">
     <h2>GitHub stars</h2>
     <span class="big">${d3.format(",")(stars.length)}</span>
-    <span class="green">${d3.format("+")(d3.sum(stars, (d) => d.starred_at >= lastWeek))} ↗︎</  span>
+    <span class="green">${d3.format("+")(d3.sum(stars, (d) => d.starred_at >= lastWeek))} ↗︎</span>
   </div>
   <div class="card">
     <h2>Daily npm downloads</h2>
