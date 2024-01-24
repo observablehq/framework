@@ -1,0 +1,18 @@
+{
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "observable preview --port 3001",
+    "build": "rm -rf dist && observable build",
+    "data": "mkdir -p docs/cache && data/build.sh"
+  },
+  "dependencies": {
+    "@observablehq/cli": "https://github.com/observablehq/cli"
+  },
+  "devDependencies": {
+    "@types/snowflake-sdk": "^1.6.14"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
