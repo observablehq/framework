@@ -227,37 +227,9 @@
   resolved "https://registry.yarnpkg.com/@esbuild/win32-x64/-/win32-x64-0.19.12.tgz#c57c8afbb4054a3ab8317591a0b7320360b444ae"
   integrity sha512-T1QyPSDCyMXaO3pzBkF96E8xMkiRYbUEZADd29SyPGabqxMViNoii+NcK7eWJAEoU6RZyEm5lVSIjTmcdoB9HA==
 
-"@observablehq/cli@https://github.com/observablehq/cli":
-  version "0.0.50"
-  resolved "https://github.com/observablehq/cli#636db46f64347c6a4529c6b3c196708121af2916"
-  dependencies:
-    "@observablehq/inputs" "^0.10.6"
-    "@observablehq/runtime" "^5.9.4"
-    "@rollup/plugin-node-resolve" "^15.2.3"
-    acorn "^8.11.2"
-    acorn-walk "^8.3.0"
-    ci-info "^4.0.0"
-    esbuild "^0.19.8"
-    fast-array-diff "^1.1.0"
-    fast-deep-equal "^3.1.3"
-    gray-matter "^4.0.3"
-    he "^1.2.0"
-    highlight.js "^11.8.0"
-    is-docker "^3.0.0"
-    is-wsl "^3.1.0"
-    jszip "^3.10.1"
-    linkedom "^0.15.6"
-    markdown-it "^13.0.2"
-    markdown-it-anchor "^8.6.7"
-    mime "^3.0.0"
-    open "^9.1.0"
-    prompts "^2.4.2"
-    rollup "^4.6.0"
-    rollup-plugin-esbuild "^6.1.0"
-    send "^0.18.0"
-    tar-stream "^3.1.6"
-    tsx "~4.2.1"
-    ws "^8.14.2"
+"@observablehq/cli@link:../..":
+  version "0.0.0"
+  uid ""
 
 "@observablehq/inputs@^0.10.6":
   version "0.10.6"
@@ -382,25 +354,10 @@
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-1.0.5.tgz#a6ce3e556e00fd9895dd872dd172ad0d4bd687f4"
   integrity sha512-/kYRxGDLWzHOB7q+wtSUQlFrtcdUccpfy+X+9iMBpHK8QLLhx2wIPYuS5DYtR9Wa/YlZAbIovy7qVdB1Aq6Lyw==
 
-"@types/node@*":
-  version "20.11.6"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.11.6.tgz#6adf4241460e28be53836529c033a41985f85b6e"
-  integrity sha512-+EOokTnksGVgip2PbYbr3xnR7kZigh4LbybAfBAw5BpnQ+FqBYUsvCEjYd70IXKlbohQ64mzEYmMtlWUY8q//Q==
-  dependencies:
-    undici-types "~5.26.4"
-
 "@types/resolve@1.20.2":
   version "1.20.2"
   resolved "https://registry.yarnpkg.com/@types/resolve/-/resolve-1.20.2.tgz#97d26e00cd4a0423b4af620abecf3e6f442b7975"
   integrity sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==
-
-"@types/snowflake-sdk@^1.6.14":
-  version "1.6.20"
-  resolved "https://registry.yarnpkg.com/@types/snowflake-sdk/-/snowflake-sdk-1.6.20.tgz#4ec0ca93ffb31595ece777fb0231fba5103ab98c"
-  integrity sha512-Dr7oIXrWthlk9wVWpZgpm49BT8cFFXz43u7SkJKyiZK3WHiHQo4b+m2/p3WIpkYzZCcOZZ/t1B09XMd7+u1Wjw==
-  dependencies:
-    "@types/node" "*"
-    generic-pool "^3.9.0"
 
 acorn-walk@^8.3.0:
   version "8.3.2"
@@ -779,11 +736,6 @@ function-bind@^1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/function-bind/-/function-bind-1.1.2.tgz#2c02d864d97f3ea6c8830c464cbd11ab6eab7a1c"
   integrity sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==
-
-generic-pool@^3.9.0:
-  version "3.9.0"
-  resolved "https://registry.yarnpkg.com/generic-pool/-/generic-pool-3.9.0.tgz#36f4a678e963f4fdb8707eab050823abc4e8f5e4"
-  integrity sha512-hymDOu5B53XvN4QT9dBmZxPX4CWhBPPLguTZ9MMFeFa/Kg0xWVfylOVNlJji/E7yTZWFd/q9GO5TxDLq156D7g==
 
 get-stream@^6.0.0, get-stream@^6.0.1:
   version "6.0.1"
@@ -1418,11 +1370,6 @@ uhyphen@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/uhyphen/-/uhyphen-0.2.0.tgz#8fdf0623314486e020a3c00ee5cc7a12fe722b81"
   integrity sha512-qz3o9CHXmJJPGBdqzab7qAYuW8kQGKNEuoHFYrBwV6hWIMcpAmxDLXojcHfFr9US1Pe6zUswEIJIbLI610fuqA==
-
-undici-types@~5.26.4:
-  version "5.26.5"
-  resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-5.26.5.tgz#bcd539893d00b56e964fd2657a4866b221a65617"
-  integrity sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==
 
 untildify@^4.0.0:
   version "4.0.0"

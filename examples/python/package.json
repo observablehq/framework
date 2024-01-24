@@ -1,15 +1,14 @@
 {
   "type": "module",
-  "private": true,
   "scripts": {
-    "dev": "observable preview --port 3001",
+    "dev": "observable preview",
     "build": "rm -rf dist && observable build",
-    "data": "mkdir -p docs/cache && data/build.sh"
+    "postinstall": "ln -sf ../../../../bin/observable-init.js node_modules/.bin/observable"
   },
   "dependencies": {
-    "@observablehq/cli": "https://github.com/observablehq/cli"
+    "@observablehq/cli": "link:../.."
   },
   "engines": {
-    "node": ">=18"
+    "node": "^18 <18.19.0 || >=20"
   }
 }
