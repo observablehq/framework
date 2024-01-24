@@ -31,6 +31,7 @@ export interface Config {
   output: string; // defaults to dist
   title?: string;
   pages: (Page | Section)[]; // TODO rename to sidebar?
+  blocks: boolean; // defaults to false
   pager: boolean; // defaults to true
   footer: string;
   toc: TableOfContents;
@@ -91,14 +92,15 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   if (style === null) style = null;
   else if (style !== undefined) style = {path: String(style)};
   else style = {theme: (theme = normalizeTheme(theme))};
-  let {title, pages = await readPages(root), pager = true, toc = true} = spec;
+  let {title, pages = await readPages(root), pager = true, toc = true, blocks = false} = spec;
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
   pager = Boolean(pager);
+  blocks = Boolean(blocks);
   footer = String(footer);
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
-  return {root, output, title, pages, pager, footer, toc, style, deploy};
+  return {root, output, title, pages, blocks, pager, footer, toc, style, deploy};
 }
 
 function normalizeTheme(spec: any): string[] {
