@@ -276,7 +276,7 @@ export function getPreviewStylesheet(path: string, data: ParseResult["data"], st
     : relativeUrl(path, `/_observablehq/theme-${style.theme.join(",")}.css`);
 }
 
-function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defaultStyle, blocks: boolean}: Config) {
+function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defaultStyle, blocks}: Config) {
   let path: string | null = null;
   let current: ReadMarkdownResult | null = null;
   let stylesheets: Set<string> | null = null;
