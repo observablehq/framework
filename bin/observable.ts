@@ -1,6 +1,7 @@
 import {type ParseArgsConfig, parseArgs} from "node:util";
 import {readConfig} from "../src/config.js";
 import {CliError} from "../src/error.js";
+import {enableNpmVersionResolution, enableRemoteModulePreload} from "../src/javascript/imports.js";
 import {red} from "../src/tty.js";
 
 const args = process.argv.slice(2);
@@ -129,6 +130,8 @@ try {
           }
         }
       });
+      enableNpmVersionResolution(false);
+      enableRemoteModulePreload(false);
       await import("../src/preview.js").then(async (preview) =>
         preview.preview({
           config: await readConfig(config, root),
