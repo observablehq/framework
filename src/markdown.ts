@@ -17,6 +17,7 @@ import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
 import type {FileReference, ImportReference, PendingTranspile, Transpile} from "./javascript.js";
 import {transpileJavaScript} from "./javascript.js";
+import {resolveStylesheet} from "./render.js";
 import {transpileTag} from "./tag.js";
 import {resolvePath} from "./url.js";
 
@@ -334,7 +335,6 @@ const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcs
   {query: "audio source[src]", src: "src"},
   {query: "img[src]", src: "src"},
   {query: "img[srcset]", src: "srcset"},
-  {query: "link[href]", src: "href"},
   {query: "picture source[srcset]", src: "srcset"},
   {query: "video[src]", src: "src"},
   {query: "video source[src]", src: "src"}
@@ -343,9 +343,9 @@ const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcs
 export function normalizePieceHtml(html: string, sourcePath: string, context: ParseContext): string {
   const {document} = parseHTML(html);
 
-  // Extracting references to files (such as from linked stylesheets).
   const filePaths = new Set<FileReference["path"]>();
-  const resolvePath = (source: string): FileReference | undefined => {
+
+  function resolveFile(source: string): FileReference | undefined {
     const path = getLocalPath(sourcePath, source);
     if (!path) return;
     const file = fileReference(path, sourcePath);
@@ -354,7 +354,14 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
       context.files.push(file);
     }
     return file;
-  };
+  }
+
+  function resolveStylePath(href: string): string {
+    const file = resolveFile(href);
+    return file ? file.path : resolveStylesheet(sourcePath, href);
+  }
+
+  // Extract static references to files, such as images.
   for (const {query, src} of SUPPORTED_PROPERTIES) {
     for (const element of document.querySelectorAll(query)) {
       if (src === "srcset") {
@@ -364,17 +371,41 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
           .map((p) => {
             const parts = p.trim().split(/\s+/);
             const source = parts[0];
-            const file = resolvePath(source);
+            const file = resolveFile(source);
             return file ? `${file.path} ${parts.slice(1).join(" ")}`.trim() : parts.join(" ");
           })
           .filter((p) => !!p);
         if (paths && paths.length > 0) element.setAttribute(src, paths.join(", "));
       } else {
         const source = element.getAttribute(src)!;
-        const file = resolvePath(source);
+        const file = resolveFile(source);
         if (file) element.setAttribute(src, file.path);
       }
     }
+  }
+
+  // Resolve any linked stylesheets, e.g. observablehq:theme-light.css. TODO Parse transitive imports.
+  for (const link of document.querySelectorAll<HTMLLinkElement>("link[rel=stylesheet][href]")) {
+    link.href = resolveStylePath(link.href);
+  }
+
+  // Resolve any style @import rules. TODO Parse transitive imports.
+  for (const style of document.querySelectorAll<HTMLStyleElement>("style")) {
+    if (!style.sheet) continue;
+    let changed = false;
+    for (let i = 0; i < style.sheet.cssRules.length; ++i) {
+      const rule = style.sheet.cssRules[i];
+      if (rule.type !== 3) continue;
+      const importRule = rule as CSSImportRule;
+      const href = importRule.href;
+      const newHref = resolveStylePath(href);
+      if (newHref === href) continue;
+      const mediaText = importRule.media.mediaText;
+      style.sheet.deleteRule(i);
+      style.sheet.insertRule(`@import url("${newHref}")${mediaText ? ` ${mediaText}` : ""};`, i);
+      changed = true;
+    }
+    if (changed) style.textContent = String(style.sheet); // propagate cssom to linkedom
   }
 
   // Syntax highlighting for <code> elements. The code could contain an inline
