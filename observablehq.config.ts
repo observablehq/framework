@@ -10,6 +10,7 @@ export default {
     {name: "Configuration", path: "/config"},
     {
       name: "JavaScript",
+      open: false,
       pages: [
         {name: "Reactivity", path: "/javascript/reactivity"},
         {name: "Display", path: "/javascript/display"},
