@@ -276,7 +276,7 @@ export function getPreviewStylesheet(path: string, data: ParseResult["data"], st
     : relativeUrl(path, `/_observablehq/theme-${style.theme.join(",")}.css`);
 }
 
-function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defaultStyle, blocks}: Config) {
+function handleWatch(socket: WebSocket, req: IncomingMessage, {root, blocks, style: defaultStyle}: Config) {
   let path: string | null = null;
   let current: ReadMarkdownResult | null = null;
   let stylesheets: Set<string> | null = null;
@@ -344,7 +344,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
     path += ".md";
-    current = await readMarkdown(path, root, false);
+    current = await readMarkdown(path, root, blocks);
     if (current.parse.hash !== initialHash) return void send({type: "reload"});
     stylesheets = await getStylesheets(current.parse);
     attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(current.parse), refreshAttachment);
