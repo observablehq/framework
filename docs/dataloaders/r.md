@@ -30,11 +30,12 @@ penguin_clusters <- penguins |>
 writeLines(format_csv(penguin_clusters), stdout())
 ```
 
-Access the output of the data loader (here, `penguin-kmeans.csv`) from the client using [`FileAttachment`](../javascript/files):
+Access the output of the data loader from the client using [`FileAttachment`](../javascript/files):
 
 ```js run=false
 const penguinKmeans = FileAttachment("penguin-kmeans.csv").csv({typed: true});
 ```
+`penguin-kmeans.csv` [routes](../loaders#routing) to the `penguin-kmeans.csv.R` data loader and reads its standard output stream.
 
 ## ZIP
 
