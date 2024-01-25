@@ -30,10 +30,22 @@ penguin_clusters <- penguins |>
 writeLines(format_csv(penguin_clusters), stdout())
 ```
 
-Access the output of the data loader (here, `penguin-kmeans.csv`) from the client using [`FileAttachment`](../javascript/files):
+Access the output of the data loader (here, `penguin-kmeans.csv`) from the client using [`FileAttachment`](../javascript/files). If your .md and data loader are both in the project root:
 
 ```js run=false
 const penguinKmeans = FileAttachment("penguin-kmeans.csv").csv({typed: true});
+```
+
+```js echo=false run=false
+// For local testing only
+// Note: Since page is in a subdirectory (dataloaders), path to loader output is ../penguin-kmeans.csv
+// Example visible to readers (above) follows recommendation that pages (.md) & loaders both in /docs
+const penguinKmeans = FileAttachment("../penguin-kmeans.csv").csv({typed: true});
+```
+
+```js run=false
+// For local testing only
+penguinKmeans
 ```
 
 ## ZIP
