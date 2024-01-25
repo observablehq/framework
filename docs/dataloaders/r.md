@@ -17,7 +17,7 @@ library(dplyr)
 library(tidyr)
 
 # Data access, wrangling and analysis
-penguins <- read_csv("penguins.csv") |> 
+penguins <- read_csv("docs/data/penguins.csv") |> 
   drop_na(culmen_depth_mm, culmen_length_mm)
 
 penguin_kmeans <- penguins |> 
@@ -52,10 +52,10 @@ library(dplyr)
 library(broom)
 
 # Data access, wrangling and analysis
-penguins <- read_csv("penguins.csv") |> 
-    drop_na(body_mass_g, species, sex, flipper_length_mm, bill_depth_mm)
+penguins <- read_csv("docs/data/penguins.csv") |> 
+    drop_na(body_mass_g, species, sex, flipper_length_mm, culmen_depth_mm)
 
-penguins_mlr <- lm(body_mass_g ~ species + sex + flipper_length_mm + bill_depth_mm, data = penguins)
+penguins_mlr <- lm(body_mass_g ~ species + sex + flipper_length_mm + culmen_depth_mm, data = penguins)
 
 mlr_est <- tidy(penguins_mlr)
 
