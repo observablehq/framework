@@ -22,6 +22,13 @@ export default {
       ]
     },
     {
+      name: "Data loaders",
+      open: false,
+      pages: [
+        {name: "R", path: "/dataloaders/r"}
+      ]
+    },
+    {
       name: "Layout",
       open: false,
       pages: [
