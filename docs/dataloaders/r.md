@@ -1,12 +1,10 @@
 # R data loaders
 
-The Observable CLI has built-in support for R. In an R [data loader](../loaders), you can access, wrangle and analyze data in an R script, then write outputs (like CSV files or ZIP archives) to [standard output](../loaders#output). 
-
-To use R data loaders in a project, [Rscript](https://www.r-project.org/) must be installed and available on your `$PATH`, and any required libraries must be installed.
+The Observable CLI supports [data loaders](../loaders) written in R, by passing them to the [Rscript](https://www.r-project.org/) command. The latter must be available on your `$PATH`. Any library used by your scripts must also be installed.
 
 ## CSV
 
-The data loader below (`penguin-kmeans.csv.R`) reads in the penguins data from a local file, performs k-means clustering based on culmen (bill) length and depth, then outputs a single CSV with penguin cluster assignments.
+The data loader below (`penguin-kmeans.csv.R`) reads in the penguins data from a local file, performs [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering) based on culmen (bill) length and depth, then outputs a single CSV with penguin cluster assignments.
 
 Copy and paste the code below into your own R data loader (with extension .csv.R in your project source root, typically `docs`), then update with your own data and R code to get started.
 
@@ -76,7 +74,7 @@ system("zip - -r .")
 The `system` function invokes the system command `"zip - -r ."`, where:
 - `zip` is the command for zipping files
 - `-` means the archive is output to standard output (required for data loaders)
-- `-r`, the recursive option, means all files in `tmpdir()` are added to the zip archive
+- `-r`, the recursive option, means all files are added to the zip archive
 - `.` compresses the current working directory
 
 Load the output of the data loader (here, `penguin-mlr.zip`) from the client using [`FileAttachment`](../javascript/files): 
