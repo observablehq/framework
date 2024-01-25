@@ -46,8 +46,8 @@ export async function renderServerless(source: string, options: RenderOptions): 
 }
 
 export function renderDefineCell(cell: Transpile): string {
-  const {id, inline, inputs, outputs, files, body, databases} = cell;
-  return `define({${Object.entries({id, inline, inputs, outputs, files, databases})
+  const {id, inline, inputs, outputs, files, body} = cell;
+  return `define({${Object.entries({id, inline, inputs, outputs, files})
     .filter((arg) => arg[1] !== undefined)
     .map((arg) => `${arg[0]}: ${JSON.stringify(arg[1])}`)
     .join(", ")}, body: ${body}});\n`;
@@ -105,6 +105,7 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
   <ol>
+    <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
     <li class="observablehq-link${
       normalizePath(path) === "/index" ? " observablehq-link-active" : ""
     }"><a href="${relativeUrl(path, "/")}">${title}</a></li>

@@ -10,13 +10,14 @@
       "cellIds": [
         "1ffa6d4f"
       ],
-      "html": "<div id=\"cell-1ffa6d4f\" class=\"observablehq observablehq--block\"></div>\n"
+      "html": "<div id=\"cell-1ffa6d4f\" class=\"observablehq observablehq--block observablehq--loading\"></div>\n"
     }
   ],
   "cells": [
     {
       "type": "cell",
       "id": "1ffa6d4f",
+      "expression": true,
       "inputs": [
         "mermaid",
         "display"
