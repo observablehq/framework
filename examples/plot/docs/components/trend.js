@@ -25,7 +25,7 @@ export function trend(
 ) /*: Node */ {
   if (typeof format === "string") format = d3.format(format);
   if (typeof format !== "function") throw new Error(`unsupported format ${format}`);
-  return html`<span class="${value > 0 ? positive : value < 0 ? negative : base}">${format(value)}${
+  return html`<span class="small ${value > 0 ? positive : value < 0 ? negative : base}">${format(value)}${
     value > 0 ? positiveSuffix : value < 0 ? negativeSuffix : baseSuffix
   }`;
 }
