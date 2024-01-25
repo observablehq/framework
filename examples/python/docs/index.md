@@ -21,7 +21,8 @@ const predictions = FileAttachment("data/predictions.csv").csv({typed: true});
             stroke: "species",
             symbol: "speciecs_predicted"
           }),
-          Plot.dot(predictions.filter(d => d.species !== d.speciecs_predicted), {
+          Plot.dot(predictions, {
+            filter: (d) => d.species !== d.speciecs_predicted,
             x: "culmen_length_mm",
             y: "culmen_depth_mm",
             r: 8,
