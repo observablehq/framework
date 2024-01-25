@@ -30,23 +30,26 @@ penguin_clusters <- penguins |>
 writeLines(format_csv(penguin_clusters), stdout())
 ```
 
-Access the output of the data loader (here, `penguin-kmeans.csv`) from the client using [`FileAttachment`](../javascript/files). If your .md and data loader are both in the project root:
+Access the output of the data loader (here, `penguin-kmeans.csv`) from the client using [`FileAttachment`](../javascript/files). If your .md and data loader are both in the project root, that is:
 
 ```js run=false
 const penguinKmeans = FileAttachment("penguin-kmeans.csv").csv({typed: true});
 ```
 
+<!-- For local testing of penguin-kmeans.csv.R only 
+Note: Since page is in a subdirectory (dataloaders), path to loader output is ../penguin-kmeans.csv
+Example visible to readers (above) follows recommendation that pages (.md) & loaders both in /docs
+-->
+
 ```js echo=false run=false
-// For local testing only
-// Note: Since page is in a subdirectory (dataloaders), path to loader output is ../penguin-kmeans.csv
-// Example visible to readers (above) follows recommendation that pages (.md) & loaders both in /docs
 const penguinKmeans = FileAttachment("../penguin-kmeans.csv").csv({typed: true});
 ```
 
-```js run=false
-// For local testing only
+```js echo=false run=false
 penguinKmeans
 ```
+
+<!-- End local testing of penguin-kmeans.csv.R -->
 
 ## ZIP
 
@@ -89,7 +92,7 @@ The `system` function invokes the system command `"zip - -r ."`, where:
 - `-r`, the recursive option, means all files are added to the zip archive
 - `.` compresses the current working directory
 
-Load the output of the data loader (here, `penguin-mlr.zip`) from the client using [`FileAttachment`](../javascript/files): 
+Load the output of the data loader (here, `penguin-mlr.zip`) from the client using [`FileAttachment`](../javascript/files). If your .md and data loader are both in the project root, that is:
 
 ```js run=false
 const modelZip = FileAttachment("penguin-mlr.zip").zip();
@@ -98,5 +101,24 @@ const modelZip = FileAttachment("penguin-mlr.zip").zip();
 You can then access individual files from the ZIP archive:
 
 ```js run=false
-const modelEstimates = modelZip.file("estimates.csv").csv({typed: true})
+const modelEstimates = modelZip.file("estimates.csv").csv({typed: true});
 ```
+
+<!-- For local testing of penguin-mlr.zip.R only 
+Note: Since page is in a subdirectory (dataloaders), path to loader output is ../penguin-mlr.zip
+Example visible to readers (above) follows recommendation that pages (.md) & loaders both in /docs
+-->
+
+```js echo=false run=false
+const modelZip = FileAttachment("../penguin-mlr.zip").zip();
+```
+
+```js echo=false run=false
+const modelEstimates = modelZip.file("estimates.csv").csv({typed: true});
+```
+
+```js echo=false run=false
+modelEstimates
+```
+
+<!-- End local testing of penguin-mlr.zip.R -->
