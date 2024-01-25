@@ -35,6 +35,7 @@ Access the output of the data loader (here, `penguin-kmeans.csv`) from the clien
 ```js run=false
 const penguinKmeans = FileAttachment("penguin-kmeans.csv").csv({typed: true});
 ```
+`penguin-kmeans.csv` [routes](../loaders#routing) to the `penguin-kmeans.csv.R` data loader and reads its standard output stream.
 
 <!-- For local testing of penguin-kmeans.csv.R only 
 Note: Since page is in a subdirectory (dataloaders), path to loader output is ../penguin-kmeans.csv
