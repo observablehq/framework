@@ -37,16 +37,13 @@ const penguinKmeans = FileAttachment("penguin-kmeans.csv").csv({typed: true});
 ```
 `penguin-kmeans.csv` [routes](../loaders#routing) to the `penguin-kmeans.csv.R` data loader and reads its standard output stream.
 
-<!-- For local testing of penguin-kmeans.csv.R only 
-Note: Since page is in a subdirectory (dataloaders), path to loader output is ../penguin-kmeans.csv
-Example visible to readers (above) follows recommendation that pages (.md) & loaders both in /docs
--->
+<!-- For local testing of penguin-kmeans.csv.R only -->
 
-```js echo=false run=false
-const penguinKmeans = FileAttachment("../penguin-kmeans.csv").csv({typed: true});
+```js run=false echo=false
+const penguinKmeans = FileAttachment("penguin-kmeans.csv").csv({typed: true});
 ```
 
-```js echo=false run=false
+```js run=false echo=false
 penguinKmeans
 ```
 
@@ -105,20 +102,17 @@ You can then access individual files from the ZIP archive:
 const modelEstimates = modelZip.file("estimates.csv").csv({typed: true});
 ```
 
-<!-- For local testing of penguin-mlr.zip.R only 
-Note: Since page is in a subdirectory (dataloaders), path to loader output is ../penguin-mlr.zip
-Example visible to readers (above) follows recommendation that pages (.md) & loaders both in /docs
--->
+<!-- For local testing of penguin-mlr.zip.R only -->
 
-```js echo=false run=false
-const modelZip = FileAttachment("../penguin-mlr.zip").zip();
+```js run=false echo=false
+const modelZip = FileAttachment("penguin-mlr.zip").zip();
 ```
 
-```js echo=false run=false
+```js run=false echo=false
 const modelEstimates = modelZip.file("estimates.csv").csv({typed: true});
 ```
 
-```js echo=false run=false
+```js run=false echo=false
 modelEstimates
 ```
 
