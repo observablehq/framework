@@ -12,7 +12,7 @@ const silentEffects = {
   output: {write() {}}
 };
 
-describe.only("build", async () => {
+describe("build", async () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   mockJsDelivr();
 
@@ -35,11 +35,6 @@ describe.only("build", async () => {
       await rm(actualDir, {recursive: true, force: true});
       if (generate) console.warn(`! generating ${expectedDir}`);
       const config = Object.assign(await readConfig(undefined, path), {output: outputDir});
-      if (name === "blocks") {
-        console.log({ name });
-        console.log({ path });
-        console.log({ config });
-      }
       await build({config, addPublic}, new TestEffects(outputDir));
 
       // In the addPublic case, we don’t want to test the contents of the public
