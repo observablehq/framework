@@ -88,7 +88,7 @@ function isFalse(attribute: string | undefined): boolean {
   return attribute?.toLowerCase() === "false";
 }
 
-function isShow(attribute: string | undefined): boolean {
+function isShow(attribute: string | undefined | null): boolean {
   return attribute?.toLowerCase?.() === "show";
 }
 
