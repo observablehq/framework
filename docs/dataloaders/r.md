@@ -6,11 +6,11 @@ To use R data loaders in a project, [Rscript](https://www.r-project.org/) must b
 
 ## CSV
 
-The data loader below (`penguin-kmeans.csv.R`) reads in the penguins data from a local file, performs k-means clustering, then outputs a single CSV with penguin cluster assignments based on culmen (bill) length and depth.
+The data loader below (`penguin-kmeans.csv.R`) reads in the penguins data from a local file, performs k-means clustering based on culmen (bill) length and depth, then outputs a single CSV with penguin cluster assignments.
 
 Copy and paste the code below into your own R data loader (with extension .csv.R in your project source root, typically `docs`), then update with your own data and R code to get started.
 
-```R
+```r
 # Attach libraries (must be installed)
 library(readr)
 library(dplyr)
@@ -44,7 +44,7 @@ The data loader below (`penguin-mlr.zip.R`) reads in the penguins data from a lo
 
 Copy and paste the code below into your own R data loader (with extension .zip.R in your project source root, typically `docs`), then update with your own data and R code to get started.
 
-```R
+```r
 # Attach required packages (must be installed)
 library(readr)
 library(tidyr)
@@ -79,13 +79,13 @@ The `system` function invokes the system command `"zip - -r ."`, where:
 - `-r`, the recursive option, means all files in `tmpdir()` are added to the zip archive
 - `.` compresses the current working directory
 
-Load the output of the data loader (here, `penguin-mlr.zip`) from the client using `FileAttachment`: 
+Load the output of the data loader (here, `penguin-mlr.zip`) from the client using [`FileAttachment`](../javascript/files): 
 
 ```js run=false
 const modelZip = FileAttachment("penguin-mlr.zip").zip();
 ```
 
-Then access individual files from the ZIP archive as follows:
+You can then access individual files from the ZIP archive:
 
 ```js run=false
 const modelEstimates = modelZip.file("estimates.csv").csv({typed: true})
