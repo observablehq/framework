@@ -54,11 +54,11 @@ hr {
 <div class="grid grid-cols-3" style="margin: 4rem 0;">
   <div class="muted card">
     <h2>JavaScript-in-Markdown</h2>
-    <p>Boring Markdown… imbued with reactive superpowers! Sprinkle charts and inputs into reports and dashboards with ease.</p>
+    <p>Boring Markdown, now imbued with reactive superpowers. Sprinkle charts and inputs into pages with ease.</p>
   </div>
   <div class="muted card">
     <h2>Data loaders</h2>
-    <p>Take snapshots of data during build for instant dashboards. Write data loaders in any language, with any library.</p>
+    <p>Take snapshots of data during build for instant pages. Write data loaders in any language, with any library.</p>
   </div>
   <div class="muted card">
     <h2>Beautiful by default</h2>
@@ -73,7 +73,7 @@ hr {
     <p>A great standard library for dashboards, plus recommended libraries and sample datasets conveniently built-in.</p>
   </div>
   <div class="muted card">
-    <h2>Imports</h2>
+    <h2>Instant imports</h2>
     <p>Import from npm without having to install first. Share code across pages and projects. Transitive preloads for <i>speed</i>.</p>
   </div>
 </div>
