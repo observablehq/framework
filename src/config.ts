@@ -96,7 +96,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
   pager = Boolean(pager);
-  blocks = (blocks !== null) ? String(blocks) : null;
+  blocks = blocks !== null ? String(blocks) : null;
   footer = String(footer);
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;

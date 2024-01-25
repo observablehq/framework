@@ -108,7 +108,12 @@ function getLiveSource(content: string, tag: string): string | undefined {
     : undefined;
 }
 
-function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: string, showBlocks: boolean): RenderRule {
+function makeFenceRenderer(
+  root: string,
+  baseRenderer: RenderRule,
+  sourcePath: string,
+  showBlocks: boolean
+): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
     const token = tokens[idx];
     const {tag, attributes} = parseInfo(token.info);
@@ -425,7 +430,12 @@ async function toParseCells(pieces: RenderPiece[]): Promise<CellPiece[]> {
 
 // TODO We need to know what line in the source the markdown starts on and pass
 // that as startLine in the parse context below.
-export async function parseMarkdown(source: string, root: string, sourcePath: string, blocks: null | string): Promise<ParseResult> {
+export async function parseMarkdown(
+  source: string,
+  root: string,
+  sourcePath: string,
+  blocks: null | string
+): Promise<ParseResult> {
   const parts = matter(source, {});
   const md = MarkdownIt({html: true});
   const showBlocks = parts.data?.blocks == null ? isShow(blocks) : isShow(parts.data?.blocks);
