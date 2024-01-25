@@ -6,6 +6,7 @@ theme: dashboard
 # Plot
 
 ```js
+import {trend} from "./components/trend.js";
 import {DailyPlot, today, start} from "./components/dailyPlot.js";
 ```
 
@@ -20,9 +21,6 @@ const stars = FileAttachment("data/plot-github-stars.csv").csv({typed: true});
 const lastMonth = d3.utcDay.offset(today, -28);
 const lastWeek = d3.utcDay.offset(today, -7);
 const x = {domain: [start, today]};
-function trend(value, format) {
-  return html`<span class="${value > 0 ? "green" : value < 0 ? "red" : "muted"}">${d3.format(format)(value)} ${value > 0 ? "↗︎" : value < 0 ? "↘︎" : ""}`;
-}
 ```
 
 ```js
@@ -54,19 +52,19 @@ const burndown = issues
   </div>
   <div class="card">
     <h2>GitHub stars</h2>
-    <span class="big">${d3.format(",")(stars.length)}</span>
-    <span class="green">${d3.format("+")(d3.sum(stars, (d) => d.starred_at >= lastWeek))} ↗︎</span>
+    <span class="big">${stars.length.toLocaleString("en-US")}</span>
+    ${trend(d3.sum(stars, (d) => d.starred_at >= lastWeek))}</span>
   </div>
   <div class="card">
     <h2>Daily npm downloads</h2>
-    <span class="big">${d3.format(",")(downloads[0].value)}</span>
+    <span class="big">${downloads[0].value.toLocaleString("en-US")}</span>
     ${trend(downloads[7].value
       ? (downloads[0].value - downloads[7].value) / downloads[7].value
-      : undefined, d3.format("+.1%"))}
+      : undefined, {format: "+.1%"})}
   </div>
   <div class="card">
     <h2>Total npm downloads</h2>
-    <span class="big">${d3.format(",")(d3.sum(downloads, (d) => d.value))}</span>
+    <span class="big">${d3.sum(downloads, (d) => d.value).toLocaleString("en-US")}</span>
   </div>
 </div>
 
@@ -116,19 +114,19 @@ const burndown = issues
 <div class="grid grid-cols-4" style="grid-auto-rows: 86px;">
   <div class="card">
     <h2>Open issues</h2>
-    <a href="https://github.com/observablehq/plot/issues" class="big" style="color: inherit;">${d3.format(",")(d3.sum(issues, (d) => !d.pull_request && d.state === "open"))}</a>
+    <a href="https://github.com/observablehq/plot/issues" class="big" style="color: inherit;">${d3.sum(issues, (d) => !d.pull_request && d.state === "open").toLocaleString("en-US")}</a>
   </div>
   <div class="card">
     <h2>Opened issues, 28d</h2>
-    <span class="big">${d3.format(",")(d3.sum(issues, (d) => !d.pull_request && d.open >= lastMonth))}</span>
+    <span class="big">${d3.sum(issues, (d) => !d.pull_request && d.open >= lastMonth).toLocaleString("en-US")}</span>
   </div>
   <div class="card">
     <h2>Closed issues, 28d</h2>
-    <span class="big">${d3.format(",")(d3.sum(issues, (d) => !d.pull_request && d.close >= lastMonth))}</span>
+    <span class="big">${d3.sum(issues, (d) => !d.pull_request && d.close >= lastMonth).toLocaleString("en-US")}</span>
   </div>
   <div class="card">
     <h2>Open PRs</h2>
-    <a class="big" href="https://github.com/observablehq/plot/pulls?q=is%3Apr+is%3Aopen+draft%3Afalse" style="color: inherit;">${d3.format(",")(d3.sum(issues, (d) => d.pull_request && d.state === "open" && !d.draft))}</a>
+    <a class="big" href="https://github.com/observablehq/plot/pulls?q=is%3Apr+is%3Aopen+draft%3Afalse" style="color: inherit;">${d3.sum(issues, (d) => d.pull_request && d.state === "open" && !d.draft).toLocaleString("en-US")}</a>
   </div>
 </div>
 

@@ -12,15 +12,13 @@ const world = FileAttachment("data/countries-110m.json").json();
 ```
 
 ```js
-// Imports
 import {svg} from "npm:htl";
 import {Marimekko} from "./components/marimekko.js";
+import {trend} from "./components/trend.js";
 ```
 
 ```js
-// Helpers
 const bigPercent = d3.format(".0%");
-const percent = d3.format(".2%");
 const bigNumber = d3.format(".3s");
 const date = d3.utcFormat("%m/%d/%Y");
 const color = Plot.scale({
@@ -53,7 +51,6 @@ function getCompareValue(data, metric) {
 ```
 
 ```js
-// Charts
 function lineChart(data, {width, height, metric}) {
   return Plot.plot({
     width,
@@ -282,25 +279,25 @@ _Summary of metrics from the [Google Analytics Data API](https://developers.goog
   <div class="card">
     <h2>Rolling 28-day Active users</h2>
     <span class="big">${summary[summary.length-1].active28d.toLocaleString("en-US")}</span>
-    <span class="small">${((v) => html`<span class="${v > 0 ? "green" : v < 0 ? "red" : ""}">${bigNumber(v)} ${v > 0 ? "↗︎" : v < 0 ? "↘︎" : ""}`)(getCompareValue(summary, 'active28d'))}</span>
+    ${trend(getCompareValue(summary, 'active28d'))}
     ${resize((width) => areaChart(summary, {width, metric: 'active28d'}))}
   </div>
   <div class="card">
     <h2>Engagement Rate</h2>
     <span class="big">${bigPercent(summary[summary.length-1].engagementRate)}</span>
-    <span class="small">${((v) => html`<span class="${v > 0 ? "green" : v < 0 ? "red" : ""}">${percent(v)} ${v > 0 ? "↗︎" : v < 0 ? "↘︎" : ""}`)(getCompareValue(summary, "engagementRate"))}</span>
+    ${trend(getCompareValue(summary, "engagementRate"), {format: "+.2%"})}
     ${resize((width) => lineChart(summary, {width, metric: "engagementRate"}))}
   </div>
   <div class="card">
     <h2>WAU to MAU ratio</h2>
     <span class="big">${bigPercent(summary[summary.length-1].wauPerMau)}</span>
-    <span class="small">${((v) => html`<span class="${v > 0 ? "green" : v < 0 ? "red" : ""}">${percent(v)} ${v > 0 ? "↗︎" : v < 0 ? "↘︎" : ""}`)(getCompareValue(summary, "wauPerMau"))}</span>
+    ${trend(getCompareValue(summary, "wauPerMau"), {format: "+.2%"})}
     ${resize((width) => lineChart(summary, {width, metric: 'wauPerMau'}))}
   </div>
   <div class="card">
     <h2>Engaged Sessions</h2>
     <span class="big">${summary[summary.length-1].engagedSessions.toLocaleString("en-US")}</span>
-    <span class="small">${((v) => html`<span class="${v > 0 ? "green" : v < 0 ? "red" : ""}">${bigNumber(v)} ${v > 0 ? "↗︎" : v < 0 ? "↘︎" : ""}`)(getCompareValue(summary, "engagedSessions"))}</span>
+    ${trend(getCompareValue(summary, 'engagedSessions'))}
     ${resize((width) => areaChart(summary, {width, metric: 'engagedSessions'}))}
   </div>
 </div>
