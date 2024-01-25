@@ -10,7 +10,7 @@ const testHostName = process.env.TEST_HOSTNAME ?? "127.0.0.1";
 const testPort = +(process.env.TEST_PORT ?? 8080);
 
 const testServerOptions: PreviewOptions = {
-  config: await normalizeConfig({root: testHostRoot}),
+  config: await normalizeConfig({root: testHostRoot, blocks: "show"}),
   hostname: testHostName,
   port: testPort,
   verbose: false
