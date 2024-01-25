@@ -24,12 +24,12 @@ const predictions = FileAttachment("data/predictions.csv").csv({typed: true});
             x: "culmen_length_mm",
             y: "culmen_depth_mm",
             stroke: "species",
-            symbol: "speciecs_predicted",
+            symbol: "species_predicted",
             r: 3,
             tip: {channels: {"mass": "body_mass_g"}}
           }),
           Plot.dot(predictions, {
-            filter: (d) => d.species !== d.speciecs_predicted,
+            filter: (d) => d.species !== d.species_predicted,
             x: "culmen_length_mm",
             y: "culmen_depth_mm",
             r: 7,
@@ -74,11 +74,11 @@ The logistic regression failed to classify ${misclassified.length} individuals. 
             x: "culmen_length_mm",
             y: "culmen_depth_mm",
             stroke: "species",
-            symbol: "speciecs_predicted",
+            symbol: "species_predicted",
             r: 3
           }),
           Plot.dot(predictions, {
-            filter: (d) => d.species !== d.speciecs_predicted,
+            filter: (d) => d.species !== d.species_predicted,
             x: "culmen_length_mm",
             y: "culmen_depth_mm",
             r: 7,

@@ -15,7 +15,7 @@ logreg.fit(X, Y)
 
 results = df.copy();
 # Add predicted values
-results['speciecs_predicted'] = logreg.predict(X)
+results['species_predicted'] = logreg.predict(X)
 
 # Write to CSV
 results.to_csv(sys.stdout)
