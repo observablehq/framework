@@ -11,7 +11,7 @@ const predictions = FileAttachment("data/predictions.csv").csv({typed: true});
         width,
         height: height - 60,
         title : "Predicting penguins species with logistic regression",
-        caption: "Incorrect predictions highlighted with white diamonds. Actual species encoded with color and predicted species encoded with symbols.",
+        caption: "Incorrect predictions highlighted with diamonds. Actual species encoded with color and predicted species encoded with symbols.",
         x: {label: "Culmen length (mm) →"},
         y: {label: "↑ Culmen depth (mm)"},
         marks: [
