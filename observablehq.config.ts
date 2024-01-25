@@ -22,6 +22,12 @@ export default {
       ]
     },
     {
+      name: "Data loaders",
+      pages: [
+        {name: "Python", path: "/dataloaders/python"},
+      ]
+    },
+    {
       name: "Layout",
       open: false,
       pages: [
