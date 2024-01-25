@@ -2,16 +2,14 @@
 
 Welcome! This tutorial will guide your first steps with Observable Framework. If you follow this tutorial to the end, you’ll have a live dashboard ready to share. 🚀
 
-Before we begin, let’s review the development workflow, end-to-end. Observable Framework is a **local development server**, a **static site generator**, and a **command-line interface** to Observable, all rolled into one!
+Before we begin, let’s review the development workflow, end-to-end. Framework is a **local development server**, a **static site generator**, and a **command-line interface** to Observable, all rolled into one!
 
 ```js
 const digraph = dot`digraph {
   rankdir=LR
 
-  install -> create -> edit -> preview -> build -> deploy -> view
+  create -> edit -> preview -> build -> deploy -> view
   preview -> edit
-  install
-  view
 
   subgraph cluster_develop {
     label = "develop"
@@ -29,38 +27,22 @@ const digraph = dot`digraph {
 }`;
 ```
 
-<figure style="max-width: none;">
+<figure style="max-width: 960px;">
   ${digraph}
   <figcaption>An overview of the development workflow.</figcaption>
 </figure>
 
-You’ll first need to setup your local development environment by [**installing**](#1.-install) Observable Framework and [**creating**](#2.-create) a new project.
+You’ll first [**create**](#2.-create) a new project, setting up your local development environment.
 
-Next you’ll [**develop**](#3.-develop)! This is an iterative process where you save changes to Markdown and other source files in your preferred editor, and then observe the result in a local preview running in your browser.
+Next you’ll [**develop**](#3.-develop). This is an iterative process where you save changes to Markdown and other source files in your preferred editor, and then preview the result running locally in your browser.
 
 When you’re ready to share with your team (or the world), it’s time to [**publish**](#4.-publish). You can either build a static site for self-hosting or hosting on a third-party such as GitHub or Netlify, or you can deploy directly to Observable.
 
 Lastly, you can invite people to [**view**](#5.-view) your project!
 
-## 1. Install
+<div class="tip">Observable Framework is a <a href="https://nodejs.org/">Node.js</a> application. You must have <a href="https://nodejs.org/en/download">Node.js 20.6 or later</a> installed before you can install Framework.</div>
 
-Observable Framework is a Node.js application published to npm as [`@observablehq/cli`](https://www.npmjs.com/package/@observablehq/cli). The instructions below are intended to run in your [terminal](https://support.apple.com/guide/terminal/open-or-quit-terminal-apd5265185d-f365-44cb-8b09-71a064a42125/mac). You’ll need to install [Node.js 20.6 or later](https://nodejs.org/) before you can install Framework.
-
-We recommend starting with our default project template<!-- https://github.com/observablehq/create -->. This currently requires <!-- either npm or --> Yarn 1.x. If you already have Yarn installed, you can check the version like so:
-
-```sh
-yarn --version
-```
-
-If needed, you can install Yarn via npm:
-
-```sh
-npm install --global yarn
-```
-
-See the [Yarn 1.x installation instructions](https://classic.yarnpkg.com/docs/install) for details.
-
-## 2. Create
+## 1. Create
 
 Next, run [`@observablehq/create`](https://www.npmjs.com/package/@observablehq/create) to create a new project using our default template.
 
@@ -91,6 +73,11 @@ cd hello-world
 ```sh
 yarn
 ```
+
+<div class="tip">
+  If you plan on developing this example project further, you may also want to create a git repository in your new project folder:
+  <pre><code class="language-sh">git init</code></pre>
+</div>
 
 ## 3. Develop
 
