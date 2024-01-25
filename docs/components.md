@@ -141,4 +141,4 @@ The [radio input](./inputs/radio) prompts a user to select a penguin species:
 const pickSpecies = view(Inputs.radio(["Adelie", "Chinstrap", "Gentoo"], {value: "Gentoo", label: "Penguin species:"}))
 ```
 
-The value of `pickSpecies` (<tt>="${pickSpecies}"</tt>) can then be accessed elsewhere in the page, as a parameter in other computations, and to create interactive charts, tables or text with [inline expressions](./javascript#inline-expressions).
+The value of `pickSpecies` (<code>="${pickSpecies}"</code>) can then be accessed elsewhere in the page, as a parameter in other computations, and to create interactive charts, tables or text with [inline expressions](./javascript#inline-expressions).

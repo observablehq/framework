@@ -110,7 +110,7 @@ Click on any of the imported symbols below to learn more.
 
 ## Require
 
-If you’re familiar with Observable notebooks, you may have noticed that we don’t mention `require` above. This is intentional: we strongly recommend that you avoid `require` as the underlying Asynchronous Module Definition (AMD) convention has been made obsolete by standard imports in JavaScript, and `require` tends to implemented unreliably by libraries.
+If you’re familiar with Observable notebooks, you may have noticed that we don’t mention `require` above. This is intentional: we strongly recommend that you avoid `require` as the underlying Asynchronous Module Definition (AMD) convention has been made obsolete by standard imports in JavaScript, and `require` tends to be implemented unreliably by libraries.
 
 If you *really* need `require`, you can import it:
 
