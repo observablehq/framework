@@ -34,5 +34,5 @@ const predictions = FileAttachment("data/predictions.csv").csv({typed: true});
   </div>
 </div>
 <div class="card">
-  ${display(Inputs.table(predictions))}
+  ${Inputs.table(predictions)}
 </div>
