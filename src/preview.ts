@@ -127,7 +127,7 @@ export class PreviewServer {
         }
         throw new HttpError(`Not found: ${pathname}`, 404);
       } else if (pathname.startsWith("/_file/")) {
-        const path = pathname.slice("/_file".length);
+        const path = decodeURIComponent(pathname.slice("/_file".length));
         const filepath = join(root, path);
         try {
           await access(filepath, constants.R_OK);

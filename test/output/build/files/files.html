@@ -25,6 +25,12 @@ FileAttachment("subsection/file-sub.csv")
 ))
 }});
 
+define({id: "444c421e", inputs: ["FileAttachment","display"], files: [{"name":"./observable logo.png","mimeType":"image/png","path":"./_file/observable logo.png"}], body: async (FileAttachment,display) => {
+display(await(
+FileAttachment("observable logo.png")
+))
+}});
+
 </script>
 <input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
@@ -50,6 +56,8 @@ FileAttachment("subsection/file-sub.csv")
 <link rel="stylesheet" href="https://example.com/style.css">
 </span><div id="cell-10037545" class="observablehq observablehq--block observablehq--loading"></div>
 <div id="cell-453a8147" class="observablehq observablehq--block observablehq--loading"></div>
+<div id="cell-444c421e" class="observablehq observablehq--block observablehq--loading"></div>
+<p><img src="./_file/observable logo small.png" alt=""></p>
 </main>
 <footer id="observablehq-footer">
 <nav><a rel="prev" href="./"><span>Home</span></a><a rel="next" href="./subsection/subfiles"><span>Untitled</span></a></nav>
