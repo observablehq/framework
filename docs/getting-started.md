@@ -2,13 +2,13 @@
 
 Welcome! This tutorial will guide your first steps with Observable Framework. If you follow this tutorial to the end, you’ll have a live dashboard ready to share. 🚀
 
-Before we begin, let’s review the development workflow, end-to-end. There are quite a few pieces to take in: Observable Framework is a local development server, a static site generator, and a command-line interface to Observable, all rolled into one!
+Before we begin, let’s review the development workflow, end-to-end. Observable Framework is a **local development server**, a **static site generator**, and a **command-line interface** to Observable, all rolled into one!
 
 ```js
 const digraph = dot`digraph {
   rankdir=LR
 
-  install -> edit -> preview -> build -> deploy -> view
+  install -> create -> edit -> preview -> build -> deploy -> view
   preview -> edit
   install
   view
@@ -29,30 +29,30 @@ const digraph = dot`digraph {
 }`;
 ```
 
-<figure>
+<figure style="max-width: none;">
   ${digraph}
   <figcaption>An overview of the development workflow.</figcaption>
 </figure>
 
-Your first step will be to setup your local development environment and [**install**](#1.-install) Observable Framework. You’ll typically install Framework within your project, though you can also install it globally if you prefer.
+You’ll first need to setup your local development environment by [**installing**](#1.-install) Observable Framework and [**creating**](#2.-create) a new project.
 
-Next you’ll [**develop**](#2.-develop)! This is an iterative process where you save changes to Markdown pages and other source files in your preferred text editor, and then immediately observe the result in a localhost preview running in your browser. The preview server watches project files and streams updates to the browser, re-running code (even data loaders and file attachments!) automatically.
+Next you’ll [**develop**](#3.-develop)! This is an iterative process where you save changes to Markdown and other source files in your preferred editor, and then observe the result in a local preview running in your browser.
 
-When you’re ready to share your project with your team (or the world), it’s time to [**publish**](#3.-publish). You can either build a static site for self-hosting or hosting on a third-party such as GitHub or Netlify, or you can deploy directly to Observable.
+When you’re ready to share with your team (or the world), it’s time to [**publish**](#4.-publish). You can either build a static site for self-hosting or hosting on a third-party such as GitHub or Netlify, or you can deploy directly to Observable.
 
-Lastly, share a link to your published project to invite people to [**view**](#4.-view) it!
+Lastly, you can invite people to [**view**](#5.-view) your project!
 
 ## 1. Install
 
-Observable Framework is a Node.js application<!-- and is published to npm as [`@observablehq/cli`](https://www.npmjs.com/package/@observablehq/cli)-->. Framework is a command-line interface (CLI); the instructions below are intended to run in your [terminal](https://support.apple.com/guide/terminal/open-or-quit-terminal-apd5265185d-f365-44cb-8b09-71a064a42125/mac). You’ll need to install [Node.js 20.6 or later](https://nodejs.org/) before you can install Framework.
+Observable Framework is a Node.js application published to npm as [`@observablehq/cli`](https://www.npmjs.com/package/@observablehq/cli). The instructions below are intended to run in your [terminal](https://support.apple.com/guide/terminal/open-or-quit-terminal-apd5265185d-f365-44cb-8b09-71a064a42125/mac). You’ll need to install [Node.js 20.6 or later](https://nodejs.org/) before you can install Framework.
 
-We recommend starting with our default project template <!-- https://github.com/observablehq/create --> which currently requires <!-- either npm or --> Yarn 1.x. If you already have Yarn installed, you can check the version like so:
+We recommend starting with our default project template<!-- https://github.com/observablehq/create -->. This currently requires <!-- either npm or --> Yarn 1.x. If you already have Yarn installed, you can check the version like so:
 
 ```sh
 yarn --version
 ```
 
-Otherwise, or if some other version of Yarn is installed, you can install Yarn via npm:
+If needed, you can install Yarn via npm:
 
 ```sh
 npm install --global yarn
@@ -60,81 +60,39 @@ npm install --global yarn
 
 See the [Yarn 1.x installation instructions](https://classic.yarnpkg.com/docs/install) for details.
 
-Once Yarn is installed, you can install `observablehq-create`, our project template. This package won’t be made publicly available until Observable Framework is released, so the command below uses an access token to download it from our private repo. Please do not share this token with anyone outside the Early Access program.
+## 2. Create
+
+Next, run [`@observablehq/create`](https://www.npmjs.com/package/@observablehq/create) to create a new project using our default template.
 
 ```sh
-yarn global add https://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@github.com/observablehq/create
+npm init @observablehq
 ```
 
-Once installed, create a new project with the following command:
+This will ask you several questions.
 
-```sh
-observablehq-create
+First, you’ll be asked…
+
+<pre>
+? <b>Project folder name:</b> › hello-world
+</pre>
+
+```ini
+? Project title (visible on the pages): › Hello, world!
 ```
 
-If Yarn doesn’t install onto your `$PATH`, instead try:
-
-```sh
-$(yarn global bin)/observablehq-create
-```
+We’ll use the name `hello-world` for our project.
 
 After answering a few questions, this command will create a new project folder in the current working directory.
 
-<<<<<<< HEAD
-## 2. Develop
-=======
-## Project structure
-
-A typical project looks like this:
-
-```
-.
-├─ docs
-│  ├─ .observablehq
-│  │  └─ cache
-│  ├─ components
-│  │  └─ dotmap.js
-│  ├─ data
-│  │  └─ quakes.csv.ts
-│  ├─ quakes.md
-│  └─ index.md
-├─ .gitignore
-├─ README.md
-├─ observablehq.config.ts
-├─ yarn.lock
-└─ package.json
+```sh
+cd hello-world
 ```
 
-#### `docs`
+```sh
+yarn
+```
 
-This is the “source root” — where your source files live. It doesn’t have to be named `docs`, but that’s the default; you can change it using the **root** [config option](./config). Pages go here. Each page is a Markdown file. Observable Framework uses [file-based routing](./routing), which means that the name of the file controls where the page is served. You can create as many pages as you like. Use folders to organize your pages.
-
-#### `docs/.observablehq/cache`
-
-This is where the [data loader](./loaders) cache lives. You don’t typically have to worry about this since it’s autogenerated when the first data loader is referenced. You can `rm -rf docs/.observablehq/cache` to clean the cache and force data loaders to re-run.
-
-#### `docs/.observablehq/deploy.json`
-
-This file is autogenerated. If you deploy your project to the Observable platform, we’ll save some information here to make it easier to redeploy next time.
-
-#### `docs/components`
-
-You can put shared [JavaScript modules](./javascript/imports) anywhere in your source root, but we recommend putting them here. This helps you pull code out of Markdown files and into JavaScript, making it easier to reuse code across pages, write tests and run linters, and even share code with vanilla web applications.
-
-#### `docs/data`
-
-You can put [data loaders](./loaders) or static files anywhere in your source root, but we recommend putting them here.
-
-#### `docs/index.md`
-
-This is the home page for your site. You can have as many additional pages as you’d like, but you should always have a home page, too.
-
-#### `observablehq.config.ts`
-
-This is the [project configuration](./config) file, such as the pages and sections in the sidebar navigation, and the project’s title. The config file can be written in either TypeScript (`.ts`) or JavaScript (`.js`).
-
-## Preview
->>>>>>> 98fe119 (framework)
+## 3. Develop
 
 After you’ve initialized your project, you can start developing locally. In preview mode, Observable Framework generates HTML pages on-demand as you view a local version of your site in the browser. As you edit files, changes will be instantly reflected in the browser.
 
@@ -148,7 +106,7 @@ Then visit <http://127.0.0.1:3000> to preview.
 
 By default, the preview server is only visible to you on your local machine using the loopback address `127.0.0.1`. You can open access to remote connections using <nobr>`--host 0.0.0.0`</nobr>. The preview server runs on port 3000 by default (or the next available port if the former is already in use); you can specify the port with the <nobr>`--port`</nobr> flag.
 
-## 3. Publish
+## 4. Publish
 
 When you’re ready to deploy your project, use the `build` command to generate the output root (`dist`). You can then copy the `dist` folder to your static site server.
 
@@ -174,7 +132,7 @@ Once done, the command will print the URL where you can view your project on the
 https://observablehq.com/@<workspace>/<project-slug>
 ```
 
-## 4. View
+## 5. View
 
 Invite users, share a link…
 
