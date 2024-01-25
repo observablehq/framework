@@ -1,5 +1,5 @@
-import * as d3 from "npm:d3";
 import * as Plot from "npm:@observablehq/plot";
+import * as d3 from "npm:d3";
 
 export const today = d3.utcDay(d3.utcHour.offset(d3.utcHour(), -10));
 export const start = d3.utcYear.offset(today, -2);
@@ -16,7 +16,7 @@ export function DailyPlot(data, {title, label = title, domain, width, height = 2
     y: {
       grid: true,
       domain,
-      label: label
+      label
     },
     marks: [
       Plot.axisY({

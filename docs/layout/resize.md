@@ -57,4 +57,4 @@ html`<div class="grid grid-cols-2" style="grid-auto-rows: 300px;">
 </div>
 ```
 
-Note: If you are using `resize` with both `width` and `height` and see nothing rendered, it may be because your parent container does not have its own height specified.
+<div class="tip">If you are using <code>resize</code> with both <code>width</code> and <code>height</code> and see nothing rendered, it may be because your parent container does not have its own height specified.</div>
