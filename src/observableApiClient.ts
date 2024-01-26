@@ -56,14 +56,14 @@ export class ObservableApiClient {
   private _apiHeaders: Record<string, string>;
   private _apiOrigin: URL;
 
-  constructor({apiKey, apiOrigin = getObservableApiOrigin()}: {apiOrigin?: URL; apiKey: ApiKey}) {
+  constructor({apiKey, apiOrigin = getObservableApiOrigin()}: {apiOrigin?: URL; apiKey?: ApiKey} = {}) {
     this._apiOrigin = apiOrigin;
     this._apiHeaders = {
       Accept: "application/json",
-      Authorization: `apikey ${apiKey.key}`,
       "User-Agent": `Observable CLI ${packageJson.version}`,
       "X-Observable-Api-Version": "2023-12-06"
     };
+    if (apiKey) this._apiHeaders["Authorization"] = `apikey ${apiKey.key}`;
   }
 
   private async _fetch<T = unknown>(url: URL, options: RequestInit): Promise<T> {
@@ -160,6 +160,22 @@ export class ObservableApiClient {
       body: "{}"
     });
   }
+
+  async postAuthRequest(scopes: string[]): Promise<PostAuthRequestResponse> {
+    return await this._fetch<PostAuthRequestResponse>(new URL("/cli/auth/request", this._apiOrigin), {
+      method: "POST",
+      headers: {"content-type": "application/json"},
+      body: JSON.stringify({scopes})
+    });
+  }
+
+  async postAuthRequestPoll(id: string): Promise<PostAuthRequestPollResponse> {
+    return await this._fetch<PostAuthRequestPollResponse>(new URL("/cli/auth/request/poll", this._apiOrigin), {
+      method: "POST",
+      headers: {"content-type": "application/json"},
+      body: JSON.stringify({id})
+    });
+  }
 }
 
 export interface PostProjectResponse {
@@ -174,4 +190,17 @@ export interface DeployInfo {
   id: string;
   status: string;
   url: string;
+}
+
+export interface PostAuthRequestResponse {
+  id: string;
+  confirmationCode: string;
+}
+
+export interface PostAuthRequestPollResponse {
+  status: string;
+  apiKey: null | {
+    id: string;
+    key: string;
+  };
 }

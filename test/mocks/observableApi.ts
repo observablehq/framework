@@ -1,5 +1,6 @@
 import type {MockAgent} from "undici";
 import {type Interceptable} from "undici";
+import type {PostAuthRequestPollResponse, PostAuthRequestResponse} from "../../src/observableApiClient.js";
 import {getObservableApiOrigin, getObservableUiOrigin} from "../../src/observableApiClient.js";
 import {getCurrentAgent, mockAgent} from "./undici.js";
 
@@ -24,7 +25,7 @@ export function mockObservableApi() {
   });
 }
 
-export function getCurentObservableApi() {
+export function getCurentObservableApi(): ObservableApiMock {
   if (!apiMock) throw new Error("mockObservableApi not initialized");
   return apiMock;
 }
@@ -160,6 +161,38 @@ class ObservableApiMock {
       pool
         .intercept({path: `/cli/deploy/${deployId}/uploaded`, method: "POST", headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
+    );
+    return this;
+  }
+
+  handlePostAuthRequest(confirmationCode = "FAKEPASS"): ObservableApiMock {
+    const response: PostAuthRequestResponse = {
+      confirmationCode,
+      id: "authRequestId"
+    };
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: "/cli/auth/request", method: "POST"})
+        .reply(200, JSON.stringify(response), {headers: {"content-type": "application/json"}})
+    );
+    return this;
+  }
+
+  handlePostAuthRequestPoll(
+    status: "pending" | "accepted" | "expired" | "consumed",
+    apiKey?: PostAuthRequestPollResponse["apiKey"]
+  ): ObservableApiMock {
+    const response: PostAuthRequestPollResponse = {
+      status,
+      apiKey: status === "accepted" ? apiKey ?? {id: "apiKey1234", key: validApiKey} : null
+    };
+    this._handlers.push((pool) =>
+      pool
+        .intercept({
+          path: "/cli/auth/request/poll",
+          method: "POST"
+        })
+        .reply(200, JSON.stringify(response), {headers: {"content-type": "application/json"}})
     );
     return this;
   }
