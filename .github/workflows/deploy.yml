@@ -38,6 +38,8 @@ jobs:
         working-directory: examples/plot
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: yarn --frozen-lockfile && yarn build
+        working-directory: examples/python
       - run: mkdir dist/examples && for i in examples/*; do [ -d $i/dist ] && mv -v $i/dist dist/examples/$(basename $i); done
       - uses: cloudflare/pages-action@1
         with:
