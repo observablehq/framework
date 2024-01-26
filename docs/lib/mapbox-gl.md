@@ -27,25 +27,25 @@ if (token) {
     bearing: -20
   });
 } else {
-  display(html`<figure>
-    ${await FileAttachment("mapbox-gl-eiffel.png").image({style: "margin-bottom: -3px;"})}
+  display(html`<figure style="max-width: 696px;">
+    ${await FileAttachment("mapbox-gl-eiffel.png").image({style: "width: 696px; height: 400px; margin-bottom: -8px;"})}
     <figcaption>Static image; add your own access token for a dynamic experience.</figcaption>
     </figure>
   `);
 }
 ```
 
-```js run=false
-const container = display(html`<div style="width: 696px; height: 400px;">`);
+<pre><code class="language-js">const accessToken = ${token ? JSON.stringify(token) : "`${API_ACCESS_TOKEN}`"};
+const container = display(html`&lt;div style="width: 696px; height: 400px;">`);
 const map = new mapboxgl.Map({
   container,
-  accessToken: `${token}`,
+  accessToken,
   center: [2.2932, 48.86069], // starting position [longitude, latitude]
   zoom: 15.1,
   pitch: 62,
   bearing: -20
-});
-```
+});</code>
+</pre>
 
 You will need to create a [Mapbox account](https://account.mapbox.com/) and obtain an API access token for your project. Paste it below to see in action:
 
