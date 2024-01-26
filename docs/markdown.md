@@ -2,7 +2,7 @@
 
 Markdown in the Observable CLI follows the [CommonMark spec](https://spec.commonmark.org/) and is powered by [markdown-it](https://github.com/markdown-it/markdown-it).  We also feature [live JavaScript](./javascript) as either [fenced code blocks](./javascript#fenced-code-blocks) (<code>```js</code>) or [inline expressions](./javascript#inline-expressions) (<code>$\{…}</code>), and [HTML in Markdown](#html), and [front matter](#front-matter) for page-level configuration. If you don’t already know Markdown, please see [GitHub’s guide to Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) for an introduction.
 
-_Note: The Observable CLI currently deviates from CommonMark in how blank lines are handled in HTML; see below. This is a limitation of our parser needed for incremental update during preview._
+<div class="note">The Observable CLI currently deviates from CommonMark in how blank lines are handled in HTML; see below. This is a limitation of our parser needed for incremental update during preview.</div>
 
 Here are a few examples of Markdown content to get you started.
 
@@ -23,7 +23,7 @@ toc: false
 ### A third-level heading
 ```
 
-Note: a second-level heading (`##`) immediately following a first-level heading (`#`) is styled specially as a subtitle.
+<div class="note">A second-level heading (<code>##</code>) immediately following a first-level heading (<code>#</code>) is styled specially as a subtitle.</div>
 
 ## Styling
 
