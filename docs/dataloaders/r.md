@@ -49,6 +49,10 @@ penguinKmeans
 
 <!-- End local testing of penguin-kmeans.csv.R -->
 
+## JSON
+
+The data loader below (``)
+
 ## ZIP
 
 The data loader below (`penguin-mlr.zip.R`) reads in the penguins data from a local file, performs multiple linear regression, then outputs multiple files (with model estimates and predictions) as a ZIP archive. 
