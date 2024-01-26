@@ -39,11 +39,11 @@ const penguinKmeans = FileAttachment("penguin-kmeans.csv").csv({typed: true});
 
 <!-- For local testing of penguin-kmeans.csv.R only -->
 
-```js echo=false run=false
+```js echo=true run=true
 const penguinKmeans = FileAttachment("penguin-kmeans.csv").csv({typed: true});
 ```
 
-```js echo=false run=false
+```js echo=true run=true
 penguinKmeans
 ```
 
@@ -53,7 +53,7 @@ penguinKmeans
 
 The data loader below (`salmon.json.R`) scrapes adult daily salmon data at Bonneville Dam (2010 - 2022) from tables on the [Columbia River DART](https://www.cbr.washington.edu/dart) site, then returns the output as a JSON file. 
 
-Copy and paste the code below into your own R data loader (with extension .csv.R in your project source root, typically `docs`), then update with your own data and R code to get started.
+Copy and paste the code below into your own R data loader (with extension .json.R in your project source root, typically `docs`), then update with your own data and R code to get started.
 
 ```r
 # Attach libraries (must be installed)
@@ -82,7 +82,7 @@ dart_data <- map_dfr(url, get_data)
 dart_data[,4:13] <- lapply(dart_data[,4:13], as.numeric)
 
 
-# Create JSON from the data frame, and write to standard output
+# Create JSON from data frame, and write to standard output
 cat(toJSON(dart_data, pretty = TRUE))
 ```
 
