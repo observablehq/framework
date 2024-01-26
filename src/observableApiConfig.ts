@@ -39,7 +39,8 @@ export interface DeployConfig {
 export type ApiKey =
   | {source: "file"; filePath: string; key: string}
   | {source: "env"; envVar: string; key: string}
-  | {source: "test"; key: string};
+  | {source: "test"; key: string}
+  | {source: "login"; key: string};
 
 export async function getObservableApiKey(effects: ConfigEffects = defaultEffects): Promise<ApiKey> {
   const envVar = "OBSERVABLE_TOKEN";

@@ -65,6 +65,20 @@ export async function login(effects: AuthEffects = defaultEffects) {
 
   if (!apiKey) throw new CliError("No API key returned from server.");
   await effects.setObservableApiKey(apiKey);
+
+  apiClient.setApiKey({source: "login", key: apiKey.key});
+  const user = await apiClient.getCurrentUser();
+  effects.logger.log(`You are logged into ${OBSERVABLE_UI_ORIGIN.hostname} as ${formatUser(user)}.`);
+  if (user.workspaces.length === 0) {
+    effects.logger.log(`${yellow("Warning:")} You don't have any workspaces to deploy to.`);
+    effects.logger.log();
+  } else if (user.workspaces.length > 1) {
+    effects.logger.log("You have access to the following workspaces:");
+    effects.logger.log(user.workspaces.map((workspace) => ` * ${formatUser(workspace)}`).join("\n"));
+    effects.logger.log();
+  }
+
+  effects.logger.log("🎉 Happy visualizing!");
 }
 
 export async function logout(effects = defaultEffects) {

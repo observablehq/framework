@@ -63,7 +63,11 @@ export class ObservableApiClient {
       "User-Agent": `Observable CLI ${packageJson.version}`,
       "X-Observable-Api-Version": "2023-12-06"
     };
-    if (apiKey) this._apiHeaders["Authorization"] = `apikey ${apiKey.key}`;
+    if (apiKey) this.setApiKey(apiKey);
+  }
+
+  public setApiKey(apiKey: ApiKey): void {
+    this._apiHeaders["Authorization"] = `apikey ${apiKey.key}`;
   }
 
   private async _fetch<T = unknown>(url: URL, options: RequestInit): Promise<T> {
