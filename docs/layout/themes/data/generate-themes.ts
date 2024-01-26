@@ -14,28 +14,28 @@ toc: false
 
 
 \`\`\`js
-// stdlib dataset
-const industriesSubset = industries.filter(d => ["Transportation and Utilities", "Mining and Extraction", "Finance", "Agriculture", "Information"].includes(d.industry));
-
+const subset = new Set(["Transportation and Utilities", "Mining and Extraction", "Finance", "Agriculture", "Information"]);
+const industriesSubset = industries.filter(d => subset.has(d.industry));
 const barData = [
-  {"Category":"Alpha","Value":9.8},
-  {"Category":"Beta","Value":7.8},
-  {"Category":"Gamma","Value":6.3},
-  {"Category":"Delta","Value":5},
-  {"Category":"Epsilon","Value":4},
-  {"Category":"Zeta","Value":3.2},
+  {Category: "Alpha", Value: 9.8},
+  {Category: "Beta", Value: 7.8},
+  {Category: "Gamma", Value: 6.3},
+  {Category: "Delta", Value: 5},
+  {Category: "Epsilon", Value: 4},
+  {Category: "Zeta", Value: 3.2},
 ];
 \`\`\`
 
 # ${theme}
-This is a preview of how this [theme](./config#theme) will look when used on a project page.
+
+This is a preview of the ${theme} [theme](./config#theme).
 
 <div class="grid grid-cols-2">
   <div class="card">
     \${
       Plot.plot({
         title: 'Line graph title',
-        subtitle: 'Subtitle text goes here',
+        subtitle: 'Subtitle goes here',
         y: {grid: true, label: "Y", ticks: 4, tickFormat: "s"},
         x: {label: "X", ticks: 5},
         height: 200,
@@ -50,7 +50,7 @@ This is a preview of how this [theme](./config#theme) will look when used on a p
     \${
       Plot.plot({
         title: 'Bar graph title',
-        subtitle: 'Subtitle text goes here',
+        subtitle: 'Subtitle',
         marginLeft: 75,
         height: 200,
         width: 400,

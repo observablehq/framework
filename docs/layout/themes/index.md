@@ -73,11 +73,12 @@ function section(type) {
   }
 </style>
 
-
 # Themes
+
 This gallery provides a visual overview of the themes described in the [Configuration](../../config) section — where you can also read more about customizing the appearance of your projects with custom stylesheets.
 
 You can set themes for a project in the project configuration or in the page front matter like so:
+
 ```yaml
 ---
 theme: [glacier, slate]
@@ -104,12 +105,6 @@ The `alt` theme swaps the page and card background colors.
   <div class="thumbnail">
     <iframe
       scrolling="no"
-      src="showcase/original">
-    </iframe>
-  </div>
-  <div class="thumbnail">
-    <iframe
-      scrolling="no"
       src="showcase/alt">
     </iframe>
   </div>
@@ -118,18 +113,23 @@ The `alt` theme swaps the page and card background colors.
 The `wide` theme sets the width of the main column to the full width of the page.
 
 <div>
-  <div class="thumbnail">
-    <iframe
-      class="default"
-      scrolling="no"
-      src="showcase/original">
-    </iframe>
-  </div>
   <div class="thumbnail" style="margin-top: 8px">
     <iframe
       class="wide"
       scrolling="no"
       src="showcase/wide">
+    </iframe>
+  </div>
+</div>
+
+The `dashboard` theme composes the default light and dark themes (`air` and `near-midnight`) together with `alt` and `wide`.
+
+<div>
+  <div class="thumbnail">
+    <iframe
+      class="wide"
+      scrolling="no"
+      src="showcase/dashboard">
     </iframe>
   </div>
 </div>
