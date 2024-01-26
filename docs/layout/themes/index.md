@@ -75,7 +75,7 @@ function section(type) {
 
 # Themes
 
-This gallery provides a visual overview of the themes described in the [Configuration](../../config) section — where you can also read more about customizing the appearance of your projects with custom stylesheets.
+This gallery provides a visual overview of the themes described in the [Configuration](../../config#theme) section — where you can also read more about customizing the appearance of your projects with custom stylesheets.
 
 You can set themes for a project in the project configuration or in the page front matter like so:
 
