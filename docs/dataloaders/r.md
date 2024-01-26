@@ -39,11 +39,11 @@ const penguinKmeans = FileAttachment("penguin-kmeans.csv").csv({typed: true});
 
 <!-- For local testing of penguin-kmeans.csv.R only -->
 
-```js echo=true run=true
+```js echo=false run=false
 const penguinKmeans = FileAttachment("penguin-kmeans.csv").csv({typed: true});
 ```
 
-```js echo=true run=true
+```js echo=false run=false
 penguinKmeans
 ```
 
