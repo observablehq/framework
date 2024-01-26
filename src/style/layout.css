@@ -330,7 +330,7 @@
 
 @media (min-width: calc(640px + 6rem + 272px)) {
   #observablehq-sidebar {
-    transition: none;
+    transition: none !important;
   }
   #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar-backdrop {
     display: none;

@@ -25,10 +25,11 @@ export default {
       name: "Layout",
       open: false,
       pages: [
-        {name: "Grid", path: "/layout/grid"},
         {name: "Card", path: "/layout/card"},
+        {name: "Grid", path: "/layout/grid"},
+        {name: "Note", path: "/layout/note"},
         {name: "Resize", path: "/layout/resize"},
-        {name: "Themes", path: "/layout/themes"},
+        {name: "Themes", path: "/layout/themes"}
       ]
     },
     {

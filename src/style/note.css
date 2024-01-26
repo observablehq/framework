@@ -1,0 +1,55 @@
+.note,
+.tip,
+.warning,
+.caution {
+  border-left: solid 1px var(--theme-foreground-fainter);
+  padding: 0 2rem;
+  margin: 1rem 0;
+  box-sizing: border-box;
+  max-width: 640px;
+}
+
+.note::before,
+.tip::before,
+.warning::before,
+.caution::before {
+  content: "Note";
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  color: var(--theme-foreground-muted);
+}
+
+.tip {
+  border-left-color: var(--theme-green);
+}
+
+.tip::before {
+  content: "Tip";
+  color: var(--theme-green);
+}
+
+.warning {
+  border-left-color: var(--theme-yellow);
+}
+
+.warning::before {
+  content: "Warning";
+  color: var(--theme-yellow);
+}
+
+.caution {
+  border-left-color: var(--theme-red);
+}
+
+.caution::before {
+  content: "Caution";
+  color: var(--theme-red);
+}
+
+.note[label]::before,
+.tip[label]::before,
+.warning[label]::before,
+.caution[label]::before {
+  content: attr(label);
+}
