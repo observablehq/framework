@@ -28,7 +28,8 @@ export default {
         {name: "Card", path: "/layout/card"},
         {name: "Grid", path: "/layout/grid"},
         {name: "Note", path: "/layout/note"},
-        {name: "Resize", path: "/layout/resize"}
+        {name: "Resize", path: "/layout/resize"},
+        {name: "Themes", path: "/layout/themes"}
       ]
     },
     {
