@@ -4,7 +4,7 @@ const themes = await FileAttachment("./data/themes.json").json();
 
 ```js
 function themeThumbnail(themePath, classes = []) {
-  return html.fragment`
+  return html`
   <div class="thumbnail">
     <iframe
       scrolling="no"
