@@ -1,5 +1,5 @@
 // this script generates a .md file for each theme
-import {writeFileSync} from "node:fs";
+import {mkdirSync, writeFileSync} from "node:fs";
 import {themes} from "./constants.ts";
 
 function fileContent(themeType, theme) {
@@ -7,6 +7,11 @@ function fileContent(themeType, theme) {
 theme: [${themeType === "composition" ? `air, ${theme}` : `${theme}`}]
 toc: false
 ---
+
+<style>
+#observablehq-sidebar-toggle {display: none;}
+</style>
+
 
 \`\`\`js
 // stdlib dataset
@@ -56,12 +61,13 @@ This is a preview of how this [theme](./config#theme) will look when used on a p
       })
     }
   </div>
-</div>`
+</div>`;
 }
 
+mkdirSync("./docs/layout/themes/showcase", {recursive: true});
+
 for (const themeType of Object.keys(themes)) {
-  for (const theme of themes[themeType])
-  {
+  for (const theme of themes[themeType]) {
     try {
       writeFileSync(`./docs/layout/themes/showcase/${theme}.md`, fileContent(themeType, theme));
     } catch (err) {
