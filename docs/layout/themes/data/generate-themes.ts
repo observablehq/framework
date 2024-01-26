@@ -4,7 +4,7 @@ import {themes} from "./constants.ts";
 
 function fileContent(themeType, theme) {
   return `---
-theme: [${themeType === "composition" ? `air, ${theme}` : `${theme}`}]
+theme: ${theme}
 toc: false
 ---
 
