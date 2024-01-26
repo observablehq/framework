@@ -86,7 +86,7 @@ export class PreviewServer {
     if (this._verbose) console.log(faint(req.method!), req.url);
     try {
       const url = new URL(req.url!, "http://localhost");
-      let {pathname} = url;
+      let pathname = decodeURIComponent(url.pathname);
       let match: RegExpExecArray | null;
       if (pathname === "/_observablehq/runtime.js") {
         const root = join(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "../../");
@@ -127,7 +127,7 @@ export class PreviewServer {
         }
         throw new HttpError(`Not found: ${pathname}`, 404);
       } else if (pathname.startsWith("/_file/")) {
-        const path = decodeURIComponent(pathname.slice("/_file".length));
+        const path = pathname.slice("/_file".length);
         const filepath = join(root, path);
         try {
           await access(filepath, constants.R_OK);

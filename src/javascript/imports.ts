@@ -69,7 +69,7 @@ export function findImports(body: Node, root: string, path: string): ImportsAndF
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
       if (isLocalImport(value, path)) {
-        paths.push(resolvePath(path, value));
+        paths.push(resolvePath(path, decodeURIComponent(value)));
       } else {
         imports.push({name: value, type: "global"});
       }
