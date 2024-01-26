@@ -16,4 +16,4 @@ penguin_clusters <- penguins |>
   mutate(cluster = penguin_kmeans$cluster)
 
 # Convert data frame to delimited string, then write to standard output
-writeLines(format_csv(penguin_clusters), stdout())
+cat(format_csv(penguin_clusters))

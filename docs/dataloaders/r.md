@@ -26,8 +26,8 @@ penguin_kmeans <- penguins |>
 penguin_clusters <- penguins |> 
   mutate(cluster = penguin_kmeans$cluster)
 
-# Convert data frame to delimited string, then write to standard output
-writeLines(format_csv(penguin_clusters), stdout())
+# Format data frame as CSV, then write to standard output
+cat(format_csv(penguin_clusters))
 ```
 
 Access the output of the data loader (here, `penguin-kmeans.csv`) from the client using [`FileAttachment`](../javascript/files). If your .md and data loader are both in the project root, that is:
@@ -39,11 +39,11 @@ const penguinKmeans = FileAttachment("penguin-kmeans.csv").csv({typed: true});
 
 <!-- For local testing of penguin-kmeans.csv.R only -->
 
-```js run=false echo=false
+```js echo=false run=false
 const penguinKmeans = FileAttachment("penguin-kmeans.csv").csv({typed: true});
 ```
 
-```js run=false echo=false
+```js echo=false run=false
 penguinKmeans
 ```
 
@@ -51,7 +51,61 @@ penguinKmeans
 
 ## JSON
 
-The data loader below (``)
+The data loader below (`salmon.json.R`) scrapes adult daily salmon data at Bonneville Dam (2010 - 2022) from tables on the [Columbia River DART](https://www.cbr.washington.edu/dart) site, then returns the output as a JSON file. 
+
+Copy and paste the code below into your own R data loader (with extension .csv.R in your project source root, typically `docs`), then update with your own data and R code to get started.
+
+```r
+# Attach libraries (must be installed)
+library(rvest)
+library(jsonlite)
+
+# Data access, wrangling and analysis
+years <- seq(from = 2010, to = 2022, by = 1)
+url <- vector(length = length(years))
+query_urls <- for (i in seq_along(years)) {
+  url[i] <- paste0("http://www.cbr.washington.edu/dart/cs/php/rpt/adult_daily.php?sc=1&outputFormat=html&year=", 
+                       years[i], "&proj=BON&span=no&startdate=1%2F1&enddate=12%2F31&run=&syear=", 
+                       years[i], 
+                       "&eyear=", 
+                       years[i])
+  }
+
+get_data <- function(url) {
+    url %>% 
+    read_html() %>% 
+    html_table() %>% 
+    flatten_df()
+}
+
+dart_data <- map_dfr(url, get_data)
+dart_data[,4:13] <- lapply(dart_data[,4:13], as.numeric)
+
+
+# Create JSON from the data frame, and write to standard output
+cat(toJSON(dart_data, pretty = TRUE))
+```
+
+Access the output of the data loader (here, `salmon.json`) from the client using [`FileAttachment`](../javascript/files). If your .md and data loader are both in the project root, that is:
+
+```js run=false
+const salmon = FileAttachment("salmon.json").json();
+```
+
+`salmon.json` [routes](../loaders#routing) to the `salmon.json.R` data loader and reads its standard output stream.
+
+<!-- For local testing of salmon.json.R only -->
+
+```js echo=false run=false
+const salmon = FileAttachment("salmon.json").json();
+```
+
+```js echo=false run=false
+salmon
+```
+
+<!-- End local testing of salmon.json.R -->
+
 
 ## ZIP
 
