@@ -5,7 +5,7 @@ import {build} from "./build.js";
 import type {Config} from "./config.js";
 import {CliError, isHttpError} from "./error.js";
 import type {Logger, Writer} from "./logger.js";
-import {ObservableApiClient} from "./observableApiClient.js";
+import {ObservableApiClient, type PostEditProjectRequest} from "./observableApiClient.js";
 import type {ConfigEffects} from "./observableApiConfig.js";
 import {
   type ApiKey,
@@ -76,12 +76,17 @@ export async function deploy({config, message}: DeployOptions, effects = default
   }
 
   let projectId: string | null = null;
+  let projectUpdates: Partial<PostEditProjectRequest> = {};
   try {
     const projectInfo = await apiClient.getProject({
       workspaceLogin: config.deploy.workspace,
       projectSlug: config.deploy.project
     });
     projectId = projectInfo.id;
+    projectUpdates = {
+      ...(config.title !== projectInfo.title ? {title: config.title} : undefined),
+      ...(config.deploy.project !== projectInfo.slug ? {slug: projectInfo.slug, title: projectInfo.title} : undefined)
+    };
   } catch (error) {
     if (isHttpError(error) && error.statusCode === 404) {
       // Project doesn't exist yet, so ignore the error.
@@ -111,7 +116,11 @@ export async function deploy({config, message}: DeployOptions, effects = default
       } else {
         throw new CliError("Cancelling deploy due to misconfiguration.");
       }
-    } else if (!previousProjectId) {
+    }
+    else if (previousProjectId && previousProjectId === projectId) {
+      if (Object.entries(projectUpdates).length > 0) await apiClient.updateProject(projectId, projectUpdates);
+    }
+    else if (!previousProjectId) {
       const {indent} = hangingIndentLog(
         effects,
         yellow("Warning:"),
