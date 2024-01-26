@@ -31,6 +31,7 @@ export interface Config {
   output: string; // defaults to dist
   title?: string;
   pages: (Page | Section)[]; // TODO rename to sidebar?
+  blocks: null | string; // defaults to null
   pager: boolean; // defaults to true
   footer: string;
   toc: TableOfContents;
@@ -60,7 +61,7 @@ async function readPages(root: string): Promise<Page[]> {
   const pages: Page[] = [];
   for await (const file of visitFiles(root)) {
     if (file === "index.md" || file === "404.md" || extname(file) !== ".md") continue;
-    const parsed = await parseMarkdown(await readFile(join(root, file), "utf-8"), root, file);
+    const parsed = await parseMarkdown(await readFile(join(root, file), "utf-8"), root, file, null);
     const name = basename(file, ".md");
     const page = {path: join("/", dirname(file), name), name: parsed.title ?? "Untitled"};
     if (name === "index") pages.unshift(page);
@@ -91,14 +92,15 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   if (style === null) style = null;
   else if (style !== undefined) style = {path: String(style)};
   else style = {theme: (theme = normalizeTheme(theme))};
-  let {title, pages = await readPages(root), pager = true, toc = true} = spec;
+  let {title, pages = await readPages(root), pager = true, toc = true, blocks = null} = spec;
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
   pager = Boolean(pager);
+  blocks = blocks !== null ? String(blocks) : null;
   footer = String(footer);
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
-  return {root, output, title, pages, pager, footer, toc, style, deploy};
+  return {root, output, title, pages, blocks, pager, footer, toc, style, deploy};
 }
 
 function normalizeTheme(spec: any): string[] {

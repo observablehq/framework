@@ -21,6 +21,7 @@ describe("readConfig(undefined, root)", () => {
       pager: true,
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-11T01:02:03">Jan 11, 2024</a>.',
+      blocks: null,
       deploy: {
         workspace: "acme",
         project: "bi"
@@ -38,6 +39,7 @@ describe("readConfig(undefined, root)", () => {
       pager: true,
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-11T01:02:03">Jan 11, 2024</a>.',
+      blocks: null,
       deploy: null
     });
   });
