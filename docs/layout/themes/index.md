@@ -97,7 +97,7 @@ Specify both a light and a dark theme to allow your project to detect if a user 
 
 ## Variants
 
-The following themes compose with the color themes.
+The following themes are composed with color themes.
 
 The `alt` theme swaps the page and card background colors.
 
