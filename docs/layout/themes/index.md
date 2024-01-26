@@ -73,38 +73,35 @@ function section(type) {
   }
 </style>
 
-
 # Themes
+
 This gallery provides a visual overview of the themes described in the [Configuration](../../config) section — where you can also read more about customizing the appearance of your projects with custom stylesheets.
 
 You can set themes for a project in the project configuration or in the page front matter like so:
+
 ```yaml
 ---
 theme: [glacier, slate]
 ---
 ```
 
-## Light
+Specify both a light and a dark theme to allow your project to detect if a user has requested light or dark color themes.
+
+## Light themes
 
 <div>${section("light")}</div>
 
-## Dark
+## Dark themes
 
 <div>${section("dark")}</div>
 
-## Composition
-Composition themes are combined with other themes.
+## Variants
 
-### Original theme vs alt
-The `alt` theme, when composed with a color theme (`default` in this example), swaps the page and card background colors.
+The following themes are composed with color themes.
+
+The `alt` theme swaps the page and card background colors.
 
 <div>
-  <div class="thumbnail">
-    <iframe
-      scrolling="no"
-      src="showcase/original">
-    </iframe>
-  </div>
   <div class="thumbnail">
     <iframe
       scrolling="no"
@@ -113,23 +110,26 @@ The `alt` theme, when composed with a color theme (`default` in this example), s
   </div>
 </div>
 
-
-### Standard width vs wide
-The `wide` theme sets the main column to be full-width.
+The `wide` theme sets the width of the main column to the full width of the page.
 
 <div>
-  <div class="thumbnail">
-    <iframe
-      class="default"
-      scrolling="no"
-      src="showcase/original">
-    </iframe>
-  </div>
   <div class="thumbnail" style="margin-top: 8px">
     <iframe
       class="wide"
       scrolling="no"
       src="showcase/wide">
+    </iframe>
+  </div>
+</div>
+
+The `dashboard` theme composes the default light and dark themes (`air` and `near-midnight`) together with `alt` and `wide`.
+
+<div>
+  <div class="thumbnail">
+    <iframe
+      class="wide"
+      scrolling="no"
+      src="showcase/dashboard">
     </iframe>
   </div>
 </div>
