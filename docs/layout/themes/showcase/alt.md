@@ -1,5 +1,5 @@
 ---
-theme: [air, alt]
+theme: [alt]
 toc: false
 ---
 

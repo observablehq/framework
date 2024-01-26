@@ -26,11 +26,19 @@ function section(type) {
     --width: 640px;
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: calc(2rem + 640px + 2rem)) {
     :root {
-      --scale: 0.375;
-      --composition-scale: calc((0.375 / 0.8) * 0.375);
-      --width: 300px;
+      --scale: calc(0.8 * 0.75);
+      --composition-scale: calc(var(--scale) * (0.375 / 0.8));
+      --width: calc((2rem + 640px + 2rem) * 0.75);
+    }
+  }
+
+  @media (max-width: calc(2rem + 530px + 2rem)) {
+    :root {
+      --scale: calc(0.8 * 0.5);
+      --composition-scale: calc(var(--scale) * (0.375 / 0.8));
+      --width: calc((2rem + 530px + 2rem) * 0.5);
     }
   }
 
@@ -87,14 +95,14 @@ theme: [glacier, slate]
 ## Composition
 Composition themes are combined with other themes.
 
-### default vs alt
-The alt theme, when composed with a color theme, swaps the page and card background colors.
+### Original theme vs alt
+The `alt` theme, when composed with a color theme (`default` in this example), swaps the page and card background colors.
 
 <div>
   <div class="thumbnail">
     <iframe
       scrolling="no"
-      src="showcase/default">
+      src="showcase/original">
     </iframe>
   </div>
   <div class="thumbnail">
@@ -106,15 +114,15 @@ The alt theme, when composed with a color theme, swaps the page and card backgro
 </div>
 
 
-### default vs wide
-The wide theme, when composed with a color theme, sets the main column to be full-width.
+### Standard width vs wide
+The `wide` theme sets the main column to be full-width.
 
 <div>
   <div class="thumbnail">
     <iframe
       class="default"
       scrolling="no"
-      src="showcase/default">
+      src="showcase/original">
     </iframe>
   </div>
   <div class="thumbnail" style="margin-top: 8px">

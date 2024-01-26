@@ -1,5 +1,5 @@
 ---
-theme: [air, wide]
+theme: [wide]
 toc: false
 ---
 
