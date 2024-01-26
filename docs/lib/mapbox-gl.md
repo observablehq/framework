@@ -8,7 +8,7 @@ import mapboxgl from "npm:mapbox-gl";
 
 When this library is invoked on a page, Observable Markdown automatically imports the required styles.
 
-To use in a JavaScript code block, create and display a container div with the appropriate dimensions, then call the Map method:
+To use in a JavaScript code block, create a container div with the appropriate dimensions, then call the Map method:
 
 ```js
 if (token) {
@@ -35,16 +35,17 @@ if (token) {
 }
 ```
 
+<pre><code class="language-html">&lt;div id="map" style="width: 696px; height: 400px;">&lt;/div></code></pre>
 <pre><code class="language-js">const accessToken = ${token ? JSON.stringify(token) : "`${API_ACCESS_TOKEN}`"};
-const container = display(html`&lt;div style="width: 696px; height: 400px;">`);
 const map = new mapboxgl.Map({
-  container,
   accessToken,
+  container: "map",
   center: [2.2932, 48.86069], // starting position [longitude, latitude]
   zoom: 15.1,
   pitch: 62,
   bearing: -20
-});</code>
+});
+invalidation.then(() => map.remove());</code>
 </pre>
 
 You will need to create a [Mapbox account](https://account.mapbox.com/) and obtain an API access token for your project. Paste it below to see in action:
