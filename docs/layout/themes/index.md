@@ -84,19 +84,21 @@ theme: [glacier, slate]
 ---
 ```
 
-## Light
+Specify both a light and a dark theme to allow your project to detect if a user has requested light or dark color themes.
+
+## Light themes
 
 <div>${section("light")}</div>
 
-## Dark
+## Dark themes
 
 <div>${section("dark")}</div>
 
-## Composition
-Composition themes are combined with other themes.
+## Variants
 
-### Original theme vs alt
-The `alt` theme, when composed with a color theme (`default` in this example), swaps the page and card background colors.
+The following themes compose with the color themes.
+
+The `alt` theme swaps the page and card background colors.
 
 <div>
   <div class="thumbnail">
@@ -113,9 +115,7 @@ The `alt` theme, when composed with a color theme (`default` in this example), s
   </div>
 </div>
 
-
-### Standard width vs wide
-The `wide` theme sets the main column to be full-width.
+The `wide` theme sets the width of the main column to the full width of the page.
 
 <div>
   <div class="thumbnail">
