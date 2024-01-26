@@ -2,7 +2,7 @@
 import {mkdirSync, writeFileSync} from "node:fs";
 import {themes} from "./constants.ts";
 
-function fileContent(themeType, theme) {
+function fileContent(theme) {
   return `---
 theme: ${theme}
 toc: false
@@ -69,7 +69,7 @@ mkdirSync("./docs/layout/themes/showcase", {recursive: true});
 for (const themeType of Object.keys(themes)) {
   for (const theme of themes[themeType]) {
     try {
-      writeFileSync(`./docs/layout/themes/showcase/${theme}.md`, fileContent(themeType, theme));
+      writeFileSync(`./docs/layout/themes/showcase/${theme}.md`, fileContent(theme));
     } catch (err) {
       console.log(err);
     }
