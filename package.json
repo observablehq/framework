@@ -24,7 +24,7 @@
   "scripts": {
     "dev": "yarn rebuild-themes && tsx watch ./bin/observable.ts preview",
     "build": "yarn rebuild-themes && rm -rf dist && tsx ./bin/observable.ts build",
-    "deploy": "tsx ./bin/observable.ts deploy",
+    "deploy": "yarn rebuild-themes && tsx ./bin/observable.ts deploy",
     "rebuild-themes": "tsx docs/layout/themes/data/generate-themes.ts",
     "test": "yarn test:mocha && yarn test:tsc && yarn test:lint && yarn test:prettier",
     "test:coverage": "c8 yarn test:mocha",
