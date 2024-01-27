@@ -22,9 +22,9 @@
     "observable": "bin/observable-init.js"
   },
   "scripts": {
-    "dev": "yarn rebuild-themes && tsx watch ./bin/observable.ts preview",
-    "build": "yarn rebuild-themes && rm -rf dist && tsx ./bin/observable.ts build",
-    "deploy": "yarn rebuild-themes && tsx ./bin/observable.ts deploy",
+    "dev": "yarn rebuild-themes && tsx watch --no-warnings=ExperimentalWarning ./bin/observable.ts preview",
+    "build": "yarn rebuild-themes && rm -rf dist && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts build",
+    "deploy": "yarn rebuild-themes && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts deploy",
     "rebuild-themes": "tsx docs/layout/themes/data/generate-themes.ts",
     "test": "yarn test:mocha && yarn test:tsc && yarn test:lint && yarn test:prettier",
     "test:coverage": "c8 yarn test:mocha",
@@ -32,7 +32,7 @@
     "test:lint": "eslint src test",
     "test:prettier": "prettier --check src test",
     "test:tsc": "tsc --noEmit",
-    "observable": "tsx ./bin/observable.ts"
+    "observable": "tsx --no-warnings=ExperimentalWarning ./bin/observable.ts"
   },
   "c8": {
     "all": true,
