@@ -59,37 +59,6 @@ for (const card of document.querySelectorAll(".card")) {
 
 Themes affect the visual appearance of pages by specifying colors and fonts, or by augmenting default styles. Observable Framework includes several built-in themes, but you can also design your own themes by specifying a [custom stylesheet](./config#style).
 
-The built-in [light-mode color themes](#light-mode) are:
-
-- \`air\` (default)
-- \`cotton\`
-- \`glacier\`
-- \`parchment\`
-
-The built-in [dark-mode color themes](#dark-mode) are:
-
-- \`coffee\`
-- \`deep-space\`
-- \`ink\`
-- \`midnight\`
-- \`near-midnight\` (default)
-- \`ocean-floor\`
-- \`slate\`
-- \`stark\`
-- \`sun-faded\`
-
-In addition, [theme modifiers](#modifiers) are intended to compose with the above color themes:
-
-- \`alt\` - swap the page and card background colors
-- \`wide\` - make the main column full-width
-
-There are also special aliases:
-
-- \`default\` - either \`light\` or \`dark\` depending on user preference
-- \`dashboard\` - \`[light, dark]\` if needed, plus \`alt\` and \`wide\`
-- \`light\` - an alias for \`air\`
-- \`dark\` - an alias for \`near-midnight\`
-
 A project’s theme is set via the [\`theme\` config option](./config#theme). For example, for \`cotton\`:
 
 \`\`\`js run=false
@@ -104,13 +73,32 @@ theme: [glacier, slate]
 ---
 \`\`\`
 
-Here is a visual overview of the available themes.
+Here is an overview of the available themes.
 
 ## Light mode
+
+The built-in light-mode color themes are:
+
+- \`air\` (default)
+- \`cotton\`
+- \`glacier\`
+- \`parchment\`
 
 <div class="grid grid-cols-2">${renderThemeSection(themes.light)}</div>
 
 ## Dark mode
+
+The built-in dark-mode color themes are:
+
+- \`coffee\`
+- \`deep-space\`
+- \`ink\`
+- \`midnight\`
+- \`near-midnight\` (default)
+- \`ocean-floor\`
+- \`slate\`
+- \`stark\`
+- \`sun-faded\`
 
 <div class="grid grid-cols-2">${renderThemeSection(themes.dark)}</div>
 
@@ -124,7 +112,10 @@ When both a light and a dark mode theme are specified, the dark mode theme will 
 
 ## Modifiers
 
-Some themes are designed to be composed with other themes.
+Theme modifiers are intended to compose with the above color themes. They are:
+
+- \`alt\` - swap the page and card background colors
+- \`wide\` - make the main column full-width
 
 The \`alt\` theme swaps the page and card background colors. This brings [cards](./layout/card) to the foreground and is recommended for dashboards.
 
@@ -138,13 +129,16 @@ The \`wide\` theme removes the maximum width constraint of the main column, whic
 
 ## Aliases
 
-The \`light\` theme is an alias for \`air\`.
+In addition to themes and theme modifiers, there are special aliases:
 
-The \`dark\` theme is an alias for \`near-midnight\`.
+- \`default\` - either \`light\` or \`dark\` depending on user preference
+- \`dashboard\` - \`[light, dark]\` if needed, plus \`alt\` and \`wide\`
+- \`light\` - an alias for \`air\`
+- \`dark\` - an alias for \`near-midnight\`
 
-The \`default\` theme is an alias for applying the default light or dark theme, or both. On its own, \`default\` is equivalent to \`[light, dark]\` (or \`[air, near-midnight]\`). The \`default\` theme is applied by default if you don’t specify any color theme. You can also use \`default\` to combine a specific light or dark theme with the default theme of the opposing mode; for example \`[cotton, default]\` is equivalent to \`[cotton, dark]\`, and \`[coffee, default]\` is equivalent to \`[coffee, light]\`.
+On its own, \`default\` is equivalent to \`[light, dark]\` (or \`[air, near-midnight]\`). The \`default\` theme is applied by default if you don’t specify any color theme. You can also use \`default\` to combine a specific light or dark theme with the default theme of the opposing mode; for example \`[cotton, default]\` is equivalent to \`[cotton, dark]\`, and \`[coffee, default]\` is equivalent to \`[coffee, light]\`.
 
-The \`dashboard\` theme composes the default light and dark themes (\`air\` and \`near-midnight\`) with the \`alt\` and \`wide\` modifiers.
+The \`dashboard\` theme composes the default light and dark themes (\`air\` and \`near-midnight\`) with the \`alt\` and \`wide\` modifiers. On its own, \`dashboard\` is equivalent to \`[light, dark, alt, wide]\`.
 
 <div class="grid grid-cols-1" style="--thumbnail-width: 1600; --thumbnail-height: 720; max-width: 640px;">${renderThemeThumbnail(
     "dashboard"
