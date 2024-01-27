@@ -33,11 +33,11 @@ function renderIndex(): string {
 }
 
 .thumbnail iframe {
-  transform: scale(0.5);
+  transform: scale(var(--scale));
   transform-origin: top left;
   pointer-events: none;
-  width: 200%;
-  height: 200%;
+  width: calc(100% / var(--scale));
+  height: calc(100% / var(--scale));
   border: none;
 }
 
@@ -49,7 +49,7 @@ function renderIndex(): string {
 
 @container (min-width: 720px) and (max-width: 960px) {
   .thumbnail {
-    aspect-ratio: 960 / 460;
+    aspect-ratio: 960 / 470;
   }
 }
 
@@ -71,11 +71,11 @@ Specify both a light and a dark theme to allow your project to detect if a user 
 
 ## Light
 
-<div class="grid grid-cols-2">${renderThemeSection(themes.light)}</div>
+<div class="grid grid-cols-2" style="--scale: 0.5;">${renderThemeSection(themes.light)}</div>
 
 ## Dark
 
-<div class="grid grid-cols-2">${renderThemeSection(themes.dark)}</div>
+<div class="grid grid-cols-2" style="--scale: 0.5;">${renderThemeSection(themes.dark)}</div>
 
 ## Variants
 
@@ -83,15 +83,15 @@ The following themes are composed with color themes.
 
 The \`alt\` theme swaps the page and card background colors.
 
-<div class="grid grid-cols-1" style="max-width: 960px;">${renderThemeThumbnail("alt")}</div>
+<div class="grid grid-cols-1" style="--scale: 0.5; max-width: 960px;">${renderThemeThumbnail("alt")}</div>
 
 The \`wide\` theme sets the width of the main column to the full width of the page.
 
-<div class="grid grid-cols-1" style="max-width: 960px;">${renderThemeThumbnail("wide")}</div>
+<div class="grid grid-cols-1" style="--scale: 0.5; max-width: 960px;">${renderThemeThumbnail("wide")}</div>
 
 The \`dashboard\` theme composes the default light and dark themes (\`air\` and \`near-midnight\`) together with \`alt\` and \`wide\`.
 
-<div class="grid grid-cols-1" style="max-width: 960px;">${renderThemeThumbnail("dashboard")}</div>
+<div class="grid grid-cols-1" style="--scale: 0.5; max-width: 960px;">${renderThemeThumbnail("dashboard")}</div>
 `;
 }
 
