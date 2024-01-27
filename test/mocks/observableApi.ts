@@ -25,7 +25,7 @@ export function mockObservableApi() {
   });
 }
 
-export function getCurentObservableApi(): ObservableApiMock {
+export function getCurrentObservableApi(): ObservableApiMock {
   if (!apiMock) throw new Error("mockObservableApi not initialized");
   return apiMock;
 }
@@ -61,7 +61,10 @@ class ObservableApiMock {
     return this._agent?.pendingInterceptors();
   }
 
-  handleGetUser({user = userWithOneWorkspace, status = 200}: {user?: any; status?: number} = {}): ObservableApiMock {
+  handleGetCurrentUser({
+    user = userWithOneWorkspace,
+    status = 200
+  }: {user?: any; status?: number} = {}): ObservableApiMock {
     const response = status == 200 ? JSON.stringify(user) : emptyErrorBody;
     const headers = authorizationHeader(status != 401);
     this._handlers.push((pool) =>

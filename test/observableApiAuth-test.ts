@@ -3,7 +3,7 @@ import {commandRequiresAuthenticationMessage} from "../src/commandInstruction.js
 import {CliError} from "../src/error.js";
 import {type AuthEffects, login, logout, whoami} from "../src/observableApiAuth.js";
 import {MockLogger} from "./mocks/logger.js";
-import {getCurentObservableApi, mockObservableApi} from "./mocks/observableApi.js";
+import {getCurrentObservableApi, mockObservableApi, validApiKey} from "./mocks/observableApi.js";
 import {MockConfigEffects} from "./observableApiConfig-test.js";
 
 describe("login command", () => {
@@ -12,33 +12,35 @@ describe("login command", () => {
   it("works", async () => {
     const effects = new MockAuthEffects();
     assert.equal(effects.observableApiKey, null);
-    getCurentObservableApi()
+    getCurrentObservableApi()
       .handlePostAuthRequest("FAKEPASS")
-      .handlePostAuthRequestPoll("accepted", {id: "MOCK-ID", key: "MOCK-KEY"})
+      .handlePostAuthRequestPoll("accepted", {id: "MOCK-ID", key: validApiKey})
+      .handleGetCurrentUser()
       .start();
 
     await login(effects);
-    assert.deepEqual(await effects.setApiKeyDeferred.promise, {id: "MOCK-ID", key: "MOCK-KEY"});
-    assert.equal(effects.observableApiKey, "MOCK-KEY");
+    assert.deepEqual(await effects.setApiKeyDeferred.promise, {id: "MOCK-ID", key: validApiKey});
+    assert.equal(effects.observableApiKey, validApiKey);
     effects.logger.assertAtLeastLogs([/.*copy your confirmation code.*FAKEPASS.*\/settings\/api-keys\/confirm.*/ms]);
   });
 
   it("polls until the key is accepted", async () => {
     // This test involves waiting a second for two poll cycles. Maybe we should mock time, or make the interval configurable?
     const effects = new MockAuthEffects();
-    getCurentObservableApi()
+    getCurrentObservableApi()
       .handlePostAuthRequest("FAKEPASS")
       .handlePostAuthRequestPoll("pending")
-      .handlePostAuthRequestPoll("accepted", {id: "MOCK-ID", key: "MOCK-KEY"})
+      .handlePostAuthRequestPoll("accepted", {id: "MOCK-ID", key: validApiKey})
+      .handleGetCurrentUser()
       .start();
 
     await login(effects);
-    assert.equal(effects.observableApiKey, "MOCK-KEY");
+    assert.equal(effects.observableApiKey, validApiKey);
   }).timeout(3000);
 
   it("handles expired requests", async () => {
     const effects = new MockAuthEffects();
-    getCurentObservableApi().handlePostAuthRequest("FAKEPASS").handlePostAuthRequestPoll("expired").start();
+    getCurrentObservableApi().handlePostAuthRequest("FAKEPASS").handlePostAuthRequestPoll("expired").start();
 
     try {
       await login(effects);
@@ -51,7 +53,7 @@ describe("login command", () => {
 
   it("handles consumed requests", async () => {
     const effects = new MockAuthEffects();
-    getCurentObservableApi().handlePostAuthRequest("FAKEPASS").handlePostAuthRequestPoll("consumed").start();
+    getCurrentObservableApi().handlePostAuthRequest("FAKEPASS").handlePostAuthRequestPoll("consumed").start();
 
     try {
       await login(effects);
@@ -89,14 +91,14 @@ describe("whoami command", () => {
   });
 
   it("works when there is an API key that is invalid", async () => {
-    getCurentObservableApi().handleGetUser({status: 401}).start();
+    getCurrentObservableApi().handleGetCurrentUser({status: 401}).start();
     const effects = new MockAuthEffects({apiKey: "MOCK-INVALID-KEY"});
     await whoami(effects);
     effects.logger.assertExactLogs([/^Your API key is invalid/]);
   });
 
   it("works when there is a valid API key", async () => {
-    getCurentObservableApi().handleGetUser().start();
+    getCurrentObservableApi().handleGetCurrentUser().start();
     const effects = new MockAuthEffects({apiKey: "MOCK-VALID-KEY"});
     await whoami(effects);
     effects.logger.assertExactLogs([

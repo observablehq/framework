@@ -7,7 +7,7 @@ import {deploy, promptConfirm} from "../src/deploy.js";
 import {CliError, isHttpError} from "../src/error.js";
 import type {DeployConfig} from "../src/observableApiConfig.js";
 import {MockLogger} from "./mocks/logger.js";
-import {getCurentObservableApi, mockObservableApi} from "./mocks/observableApi.js";
+import {getCurrentObservableApi, mockObservableApi} from "./mocks/observableApi.js";
 import {invalidApiKey, validApiKey} from "./mocks/observableApi.js";
 import {MockConfigEffects} from "./observableApiConfig-test.js";
 
@@ -134,7 +134,7 @@ describe("deploy", () => {
     const projectId = "project123";
     const deployConfig = {projectId};
     const deployId = "deploy456";
-    getCurentObservableApi()
+    getCurrentObservableApi()
       .handleGetProject({
         workspaceLogin: TEST_CONFIG.deploy!.workspace,
         projectSlug: TEST_CONFIG.deploy!.project,
@@ -156,7 +156,7 @@ describe("deploy", () => {
     const deployConfig = {projectId};
     const deployId = "deploy456";
     const message = "this is test deploy";
-    getCurentObservableApi()
+    getCurrentObservableApi()
       .handleGetProject({
         workspaceLogin: TEST_CONFIG.deploy!.workspace,
         projectSlug: TEST_CONFIG.deploy!.project,
@@ -178,14 +178,14 @@ describe("deploy", () => {
     const projectId = "project123";
     const deployConfig = {projectId};
     const deployId = "deploy456";
-    getCurentObservableApi()
+    getCurrentObservableApi()
       .handleGetProject({
         workspaceLogin: TEST_CONFIG.deploy!.workspace,
         projectSlug: TEST_CONFIG.deploy!.project,
         projectId,
         status: 404
       })
-      .handleGetUser()
+      .handleGetCurrentUser()
       .handlePostProject({projectId})
       .handlePostDeploy({projectId, deployId})
       .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
@@ -204,7 +204,7 @@ describe("deploy", () => {
   it("makes expected API calls for non-existent project, user chooses not to create", async () => {
     const projectId = "project123";
     const deployConfig = {projectId};
-    getCurentObservableApi()
+    getCurrentObservableApi()
       .handleGetProject({
         workspaceLogin: TEST_CONFIG.deploy!.workspace,
         projectSlug: TEST_CONFIG.deploy!.project,
@@ -231,7 +231,7 @@ describe("deploy", () => {
   it("makes expected API calls for non-existent project, non-interactive", async () => {
     const projectId = "project123";
     const deployConfig = {projectId};
-    getCurentObservableApi()
+    getCurrentObservableApi()
       .handleGetProject({
         workspaceLogin: TEST_CONFIG.deploy!.workspace,
         projectSlug: TEST_CONFIG.deploy!.project,
@@ -260,7 +260,7 @@ describe("deploy", () => {
       // no title!
       deploy: {workspace: "mock-user-ws", project: "bi"}
     });
-    getCurentObservableApi()
+    getCurrentObservableApi()
       .handleGetProject({
         workspaceLogin: config.deploy!.workspace,
         projectSlug: config.deploy!.project,
@@ -288,14 +288,14 @@ describe("deploy", () => {
       title: "Some title",
       deploy: {workspace: "super-ws-123", project: "bi"}
     });
-    getCurentObservableApi()
+    getCurrentObservableApi()
       .handleGetProject({
         workspaceLogin: config.deploy!.workspace,
         projectSlug: config.deploy!.project,
         projectId,
         status: 404
       })
-      .handleGetUser()
+      .handleGetCurrentUser()
       .start();
 
     const effects = new MockDeployEffects({deployConfig, isTty: true}).addIoResponse(
@@ -361,7 +361,7 @@ describe("deploy", () => {
   });
 
   it("throws an error with an invalid API key", async () => {
-    getCurentObservableApi()
+    getCurrentObservableApi()
       .handleGetProject({
         workspaceLogin: TEST_CONFIG.deploy!.workspace,
         projectSlug: TEST_CONFIG.deploy!.project,
@@ -382,7 +382,7 @@ describe("deploy", () => {
   it("throws an error if deploy creation fails", async () => {
     const projectId = "project123";
     const deployId = "deploy456";
-    getCurentObservableApi()
+    getCurrentObservableApi()
       .handleGetProject({
         workspaceLogin: TEST_CONFIG.deploy!.workspace,
         projectSlug: TEST_CONFIG.deploy!.project,
@@ -409,7 +409,7 @@ describe("deploy", () => {
   it("throws an error if file upload fails", async () => {
     const projectId = "project123";
     const deployId = "deploy456";
-    getCurentObservableApi()
+    getCurrentObservableApi()
       .handleGetProject({
         workspaceLogin: TEST_CONFIG.deploy!.workspace,
         projectSlug: TEST_CONFIG.deploy!.project,
@@ -437,7 +437,7 @@ describe("deploy", () => {
   it("throws an error if deploy uploaded fails", async () => {
     const projectId = "project123";
     const deployId = "deploy456";
-    getCurentObservableApi()
+    getCurrentObservableApi()
       .handleGetProject({
         workspaceLogin: TEST_CONFIG.deploy!.workspace,
         projectSlug: TEST_CONFIG.deploy!.project,
@@ -478,7 +478,7 @@ describe("deploy", () => {
     it("interactive, when the user chooses to update", async () => {
       const newProjectId = "newProjectId";
       const deployId = "deployId";
-      getCurentObservableApi()
+      getCurrentObservableApi()
         .handleGetProject({
           workspaceLogin: TEST_CONFIG.deploy!.workspace,
           projectSlug: TEST_CONFIG.deploy!.project,
@@ -498,7 +498,7 @@ describe("deploy", () => {
 
     it("interactive, when the user chooses not to update", async () => {
       const newProjectId = "newId";
-      getCurentObservableApi()
+      getCurrentObservableApi()
         .handleGetProject({
           workspaceLogin: TEST_CONFIG.deploy!.workspace,
           projectSlug: TEST_CONFIG.deploy!.project,
@@ -521,7 +521,7 @@ describe("deploy", () => {
 
     it("non-interactive", async () => {
       const newProjectId = "newId";
-      getCurentObservableApi()
+      getCurrentObservableApi()
         .handleGetProject({
           workspaceLogin: TEST_CONFIG.deploy!.workspace,
           projectSlug: TEST_CONFIG.deploy!.project,
