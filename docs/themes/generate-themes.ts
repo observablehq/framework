@@ -4,9 +4,7 @@ import he from "he";
 
 const themes = {
   light: ["air", "cotton", "glacier", "parchment"],
-  dark: ["coffee", "deep-space", "ink", "midnight", "near-midnight", "ocean-floor", "slate", "stark", "sun-faded"],
-  composition: ["alt", "wide"],
-  alias: ["default", "dashboard", "light", "dark"]
+  dark: ["coffee", "deep-space", "ink", "midnight", "near-midnight", "ocean-floor", "slate", "stark", "sun-faded"]
 } as const;
 
 function renderThemeThumbnail(theme: string, attributes: Record<string, string> = {}): string {
@@ -26,34 +24,37 @@ function renderIndex(): string {
 
 <style>
 
+:root {
+  --thumbnail-width: 920;
+  --thumbnail-height: 450;
+}
+
 .thumbnail {
   padding: 0;
-  aspect-ratio: 960 / 320;
+  aspect-ratio: var(--thumbnail-width) / var(--thumbnail-height);
   overflow: hidden;
 }
 
 .thumbnail iframe {
-  transform: scale(var(--scale));
+  transform: scale(calc(var(--container-width) / var(--thumbnail-width)));
   transform-origin: top left;
   pointer-events: none;
-  width: calc(100% / var(--scale));
-  height: calc(100% / var(--scale));
+  width: calc(var(--thumbnail-width) * 1px);
+  height: calc(var(--thumbnail-height) * 1px);
   border: none;
 }
 
-@container (min-width: 640px) and (max-width: 720px) {
-  .thumbnail {
-    aspect-ratio: 960 / 640;
-  }
-}
-
-@container (min-width: 720px) and (max-width: 960px) {
-  .thumbnail {
-    aspect-ratio: 960 / 470;
-  }
-}
-
 </style>
+
+\`\`\`js
+for (const card of document.querySelectorAll(".card")) {
+  const observer = new ResizeObserver(([entry]) => {
+    card.style.setProperty("--container-width", entry.contentRect.width);
+  });
+  observer.observe(card);
+  invalidation?.then(() => observer.disconnect());
+}
+\`\`\`
 
 TODO Describe what a theme is, not what this page is, probably moving over the description from the configuration page.
 
@@ -69,29 +70,49 @@ theme: [glacier, slate]
 
 Specify both a light and a dark theme to allow your project to detect if a user has requested light or dark color themes.
 
-## Light
+## Light mode
 
-<div class="grid grid-cols-2" style="--scale: 0.5;">${renderThemeSection(themes.light)}</div>
+<div class="grid grid-cols-2">${renderThemeSection(themes.light)}</div>
 
-## Dark
+## Dark mode
 
-<div class="grid grid-cols-2" style="--scale: 0.5;">${renderThemeSection(themes.dark)}</div>
+<div class="grid grid-cols-2">${renderThemeSection(themes.dark)}</div>
 
-## Variants
+## Automatic mode
 
-The following themes are composed with color themes.
+When both a light and a dark mode theme are specified, the dark mode theme will apply only if the user prefers dark color schemes. This is implemented using the [\`prefers-color-scheme\` media feature](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme) and typically depends on operating system settings.
+
+<div class="tip">On macOS, you can create a menubar <a href="https://support.apple.com/guide/shortcuts-mac/intro-to-shortcuts-apdf22b0444c/mac" target="_blank">shortcut</a> to quickly toggle between light and dark mode. This is useful for testing your app in both modes.</div>
+
+<div class="tip">If you’d prefer to design for only one mode, then set the theme explicitly to <code>light</code> or <code>dark</code>.</div>
+
+## Aliases
+
+The \`light\` theme is an alias for \`air\`.
+
+The \`dark\` theme is an alias for \`near-midnight\`.
+
+The \`default\` theme is an alias for \`[air, near-midnight]\`.
+
+## Modifiers
+
+Some themes are designed to be composed with other themes.
 
 The \`alt\` theme swaps the page and card background colors.
 
-<div class="grid grid-cols-1" style="--scale: 0.5; max-width: 960px;">${renderThemeThumbnail("alt")}</div>
+<div class="grid grid-cols-2">${renderThemeSection(["light-alt", "light", "dark-alt", "dark"])}</div>
 
 The \`wide\` theme sets the width of the main column to the full width of the page.
 
-<div class="grid grid-cols-1" style="--scale: 0.5; max-width: 960px;">${renderThemeThumbnail("wide")}</div>
+<div class="grid grid-cols-1" style="--thumbnail-width: 1600; --thumbnail-height: 720; max-width: 640px;">${renderThemeThumbnail(
+    "wide"
+  )}</div>
 
 The \`dashboard\` theme composes the default light and dark themes (\`air\` and \`near-midnight\`) together with \`alt\` and \`wide\`.
 
-<div class="grid grid-cols-1" style="--scale: 0.5; max-width: 960px;">${renderThemeThumbnail("dashboard")}</div>
+<div class="grid grid-cols-1" style="--thumbnail-width: 1600; --thumbnail-height: 720; max-width: 640px;">${renderThemeThumbnail(
+    "dashboard"
+  )}</div>
 `;
 }
 
@@ -125,37 +146,37 @@ This is a preview of the \`${theme}\` [theme](../config#theme).
 
 <div class="grid grid-cols-2">
   <div class="card">
-    \${
+    \${resize((width) =>
       Plot.plot({
         title: 'Line graph title',
         subtitle: 'Subtitle goes here',
         x: {label: "X", ticks: 5},
         y: {grid: true, label: "Y", ticks: 4, tickFormat: "s"},
         style: "width: 100%;",
-        height: 240,
-        width: 460,
+        height: 200,
+        width,
         marks: [
           Plot.ruleY([0]),
           Plot.lineY(industriesSubset, {x: "date", y: "unemployed", stroke: "industry", tip: true})
         ]
-      })
+      }))
     }
   </div>
   <div class="card">
-    \${
+    \${resize((width) =>
       Plot.plot({
         title: 'Bar graph title',
         subtitle: 'Subtitle',
         marginLeft: 75,
         style: "width: 100%;",
-        height: 240,
-        width: 460,
+        height: 200,
+        width,
         x: {domain: [0, 10]},
         marks: [
           Plot.rectX(barData, {x: "Value", y: "Category", fill: "Category"}),
           Plot.ruleX([0])
         ]
-      })
+      }))
     }
   </div>
 </div>`;
@@ -163,8 +184,14 @@ This is a preview of the \`${theme}\` [theme](../config#theme).
 
 await writeFile("./docs/themes.md", renderIndex());
 
-for (const type in themes) {
-  for (const theme of themes[type]) {
-    await writeFile(`./docs/themes/${theme}.md`, renderTheme(theme));
-  }
+for (const theme of themes.light) {
+  await writeFile(`./docs/themes/${theme}.md`, renderTheme(theme));
 }
+for (const theme of themes.dark) {
+  await writeFile(`./docs/themes/${theme}.md`, renderTheme(theme));
+}
+
+await writeFile("./docs/themes/light.md", renderTheme("light"));
+await writeFile("./docs/themes/dark.md", renderTheme("dark"));
+await writeFile("./docs/themes/light-alt.md", renderTheme("[light, alt]"));
+await writeFile("./docs/themes/dark-alt.md", renderTheme("[dark, alt]"));
