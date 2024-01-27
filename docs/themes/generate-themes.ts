@@ -236,3 +236,5 @@ await generateFile("./docs/themes/light.md", renderTheme("light"));
 await generateFile("./docs/themes/light-alt.md", renderTheme("[light, alt]"));
 await generateFile("./docs/themes/dark.md", renderTheme("dark"));
 await generateFile("./docs/themes/dark-alt.md", renderTheme("[dark, alt]"));
+await generateFile("./docs/themes/wide.md", renderTheme("wide"));
+await generateFile("./docs/themes/dashboard.md", renderTheme("dashboard"));
