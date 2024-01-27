@@ -29,7 +29,7 @@ The path to the output root; defaults to `dist`.
 
 ## theme
 
-The theme names, if any; defaults to `default`. Themes affect the visual appearance of pages by specifying colors and fonts, or by augmenting default styles. The theme option is a convenient shorthand alternative to specifying a [custom stylesheet](#style).
+The theme names, if any; defaults to `default`. [Themes](./themes) affect the visual appearance of pages by specifying colors and fonts, or by augmenting default styles. The theme option is a convenient shorthand alternative to specifying a [custom stylesheet](#style).
 
 The built-in light-mode color themes are:
 
@@ -78,7 +78,7 @@ theme: [glacier, slate]
 ---
 ```
 
-Refer to [Layout > Themes](./layout/themes) for a visual showcase of each theme.
+For more, see [Themes](./themes).}}
 
 ## style
 
