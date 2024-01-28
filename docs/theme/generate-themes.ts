@@ -60,7 +60,7 @@ for (const card of document.querySelectorAll(".card")) {
 }
 \`\`\`
 
-Themes affect the visual appearance of pages by specifying colors and fonts, or by augmenting default styles. Observable Framework includes several built-in themes, but you can also design your own themes by specifying a [custom stylesheet](./config#style).
+Themes affect the visual appearance of pages by specifying colors and fonts, or by augmenting default styles. The Observable CLI includes several built-in themes, but you can also design your own themes by specifying a [custom stylesheet](./config#style).
 
 The theme is typically set via the [\`theme\` config option](./config#theme), such as:
 
