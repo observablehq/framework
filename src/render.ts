@@ -140,7 +140,7 @@ interface Header {
   href: string;
 }
 
-const tocSelector = ["h1:not(:first-of-type)", "h2:not(h1 + h2)"];
+const tocSelector = ["h1:not(:first-of-type)", "h2:not(h1 + h2):has(a.observablehq-header-anchor)"];
 
 function findHeaders(parseResult: ParseResult): Header[] {
   return Array.from(parseHTML(parseResult.html).document.querySelectorAll(tocSelector.join(", ")))

@@ -29,54 +29,41 @@ The path to the output root; defaults to `dist`.
 
 ## theme
 
-The theme names, if any; defaults to `default`. [Themes](./themes) affect the visual appearance of pages by specifying colors and fonts, or by augmenting default styles. The theme option is a convenient shorthand alternative to specifying a [custom stylesheet](#style).
+The theme name or names, if any; defaults to `default`. [Themes](./themes) affect visual appearance by specifying colors and fonts, or by augmenting default styles. The theme option is a shorthand alternative to specifying a [custom stylesheet](#style).
 
-The built-in light-mode color themes are:
-
-- `air` (default)
-- `cotton`
-- `glacier`
-- `parchment`
-
-The built-in dark-mode color themes are:
-
-- `coffee`
-- `deep-space`
-- `ink`
-- `midnight`
-- `near-midnight` (default)
-- `ocean-floor`
-- `slate`
-- `stark`
-- `sun-faded`
-
-In addition, some themes are intended to compose with the above color themes:
-
-- `alt` - swap the page and card background colors
-- `wide` - make the main column full-width
-
-There are also special aliases:
-
-- `default` - either `light` or `dark` depending on user preference
-- `dashboard` - `[light, dark]` if needed, plus `alt` and `wide`
-- `light` - an alias for `air`
-- `dark` - an alias for `near-midnight`
-
-You can combine themes like so:
+To force light mode:
 
 ```js run=false
-theme: ["glacier", "slate"]
+theme: "light"
 ```
 
-When combining a light and dark theme, the dark theme will be applied depending on [user preference](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme).
+To force dark mode:
 
-A theme can be applied to an individual page via the [front matter](./markdown.md#front-matter):
+```js run=false
+theme: "dark"
+```
+
+For dashboards, to compose the default light and dark themes with `alt` and `wide`:
+
+```js run=false
+theme: "dashboard"
+```
+
+Or more explicitly:
+
+```js run=false
+theme: ["air", "near-midnight", "alt", "wide"]
+```
+
+You can also apply a theme to an individual page via the [front matter](./markdown#front-matter):
 
 ```yaml
 ---
 theme: [glacier, slate]
 ---
 ```
+
+See the [list of available themes](./themes) for more.
 
 ## style
 
@@ -105,7 +92,7 @@ The default styles are implemented using CSS custom properties. These properties
 - `--theme-foreground-faintest` - faintest border color, _e.g._ almost white
 - `--theme-foreground-focus` - emphasis foreground color, _e.g._ blue
 
-A custom stylesheet can be applied to an individual page via the [front matter](./markdown.md#front-matter):
+A custom stylesheet can be applied to an individual page via the [front matter](./markdown#front-matter):
 
 ```yaml
 ---

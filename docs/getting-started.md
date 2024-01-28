@@ -136,11 +136,11 @@ You can schedule builds and deploy your project automatically on commit, or on a
 You can install Observable Framework as a dependency on an existing project if you don’t want to create a new project using our default template as described above.
 
 ```sh
-npm install https://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@github.com/observablehq/cli
+npm install https://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@github.com/observablehq/cli
 ```
 
 ```sh
-yarn add https://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@github.com/observablehq/cli
+yarn add https://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@github.com/observablehq/cli
 ```
 
 You can also install Observable Framework globally so that the `observable` command is available across projects, but we don’t recommend this approach. By installing Observable Framework into each project, everyone you work with will use the same version.

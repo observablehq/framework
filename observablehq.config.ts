@@ -7,6 +7,7 @@ export default {
     {name: "JavaScript", path: "/javascript"},
     {name: "Data loaders", path: "/loaders"},
     {name: "Components", path: "/components"},
+    {name: "Themes", path: "/themes"},
     {name: "Configuration", path: "/config"},
     {
       name: "JavaScript",
