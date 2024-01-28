@@ -1,6 +1,6 @@
 import {type Stats, existsSync} from "node:fs";
 import {mkdir, readdir, stat} from "node:fs/promises";
-import {basename, dirname, extname, join, normalize, relative} from "node:path";
+import {dirname, extname, join, normalize, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import mime from "mime";
@@ -36,7 +36,7 @@ export function fileReference(name: string, sourcePath: string): FileReference {
 
 export async function* visitMarkdownFiles(root: string): AsyncGenerator<string> {
   for await (const file of visitFiles(root)) {
-    if (extname(file) !== ".md" || basename(file).startsWith("_")) continue;
+    if (extname(file) !== ".md") continue;
     yield file;
   }
 }

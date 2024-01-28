@@ -32,7 +32,6 @@ describe("maybeStat(path)", () => {
 describe("visitFiles(root)", () => {
   it("visits all files in a directory, return the relative path from the root", async () => {
     assert.deepStrictEqual(await collect(visitFiles("test/input/build/files")), [
-      "_ignore.md",
       "custom-styles.css",
       "file-top.csv",
       "files.md",
@@ -47,7 +46,7 @@ describe("visitFiles(root)", () => {
 });
 
 describe("visitMarkdownFiles(root)", () => {
-  it("visits all Markdown files in a directory, ignoring those with leading underscores", async () => {
+  it("visits all Markdown files in a directory, return the relative path from the root", async () => {
     assert.deepStrictEqual(await collect(visitMarkdownFiles("test/input/build/files")), [
       "files.md",
       "subsection/subfiles.md"
