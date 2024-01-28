@@ -273,7 +273,7 @@ export function getPreviewStylesheet(path: string, data: ParseResult["data"], st
     : relativeUrl(path, `/_observablehq/theme-${style.theme.join(",")}.css`);
 }
 
-function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defaultStyle, header}: Config) {
+function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defaultStyle}: Config) {
   let path: string | null = null;
   let current: ParseResult | null = null;
   let stylesheets: Set<string> | null = null;
@@ -319,7 +319,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
         break;
       }
       case "change": {
-        const updated = await parseMarkdown(join(root, path), {root, path, header});
+        const updated = await parseMarkdown(join(root, path), {root, path});
         if (current.hash === updated.hash) break;
         const updatedStylesheets = await getStylesheets(updated);
         for (const href of difference(stylesheets, updatedStylesheets)) send({type: "remove-stylesheet", href});
@@ -341,7 +341,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
     path += ".md";
-    current = await parseMarkdown(join(root, path), {root, path, header});
+    current = await parseMarkdown(join(root, path), {root, path});
     if (current.hash !== initialHash) return void send({type: "reload"});
     stylesheets = await getStylesheets(current);
     attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(current), refreshAttachment);

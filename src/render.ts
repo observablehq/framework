@@ -92,10 +92,9 @@ ${
 </script>${pages.length > 0 ? html`\n${await renderSidebar(title, pages, path)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(parseResult), toc.label)}` : ""
   }
-<div id="observablehq-center">
+<div id="observablehq-center">${renderHeader(options, parseResult.data)}
 <main id="observablehq-main" class="observablehq">
-${html.unsafe(parseResult.html)}</main>
-${renderFooter(path, options)}
+${html.unsafe(parseResult.html)}</main>${renderFooter(path, options, parseResult.data)}
 </div>
 `);
 }
@@ -227,15 +226,25 @@ function renderModulePreload(href: string): Html {
   return html`\n<link rel="modulepreload" href="${href}"${integrity ? html` integrity="${integrity}"` : ""}>`;
 }
 
-function renderFooter(path: string, options: Pick<Config, "pages" | "pager" | "title" | "footer">): Html {
+function renderHeader({header}: Pick<Config, "header">, data: ParseResult["data"]): Html | null {
+  if (data?.header !== undefined) header = data?.header;
+  return header ? html`\n<header id="observablehq-header">${html.unsafe(header)}</header>` : null;
+}
+
+function renderFooter(
+  path: string,
+  options: Pick<Config, "pages" | "pager" | "title" | "footer">,
+  data: ParseResult["data"]
+): Html | null {
+  let footer = options.footer;
+  if (data?.footer !== undefined) footer = data?.footer;
   const link = options.pager ? findLink(path, options) : null;
-  const footer = options.footer;
   return link || footer
-    ? html`<footer id="observablehq-footer">${link ? renderPager(path, link) : ""}${
-        footer ? html`\n<div>${html.unsafe(options.footer)}</div>` : ""
+    ? html`\n<footer id="observablehq-footer">${link ? renderPager(path, link) : ""}${
+        footer ? html`\n<div>${html.unsafe(footer)}</div>` : ""
       }
 </footer>`
-    : html``;
+    : null;
 }
 
 function renderPager(path: string, {prev, next}: PageLink): Html {

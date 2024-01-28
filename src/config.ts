@@ -1,4 +1,3 @@
-import {existsSync} from "node:fs";
 import {basename, dirname, join} from "node:path";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
@@ -29,11 +28,11 @@ export type Style =
 export interface Config {
   root: string; // defaults to docs
   output: string; // defaults to dist
-  header: string | null; // defaults to _header.md, if it exists, otherwise null
   title?: string;
   pages: (Page | Section)[]; // TODO rename to sidebar?
   pager: boolean; // defaults to true
-  footer: string;
+  header: string; // defaults to empty string
+  footer: string; // defaults to “Built with Observable on [date].”
   toc: TableOfContents;
   style: null | Style; // defaults to {theme: ["light", "dark"]}
   deploy: null | {workspace: string; project: string};
@@ -61,7 +60,7 @@ async function readPages(root: string): Promise<Page[]> {
   const pages: Page[] = [];
   for await (const file of visitMarkdownFiles(root)) {
     if (file === "index.md" || file === "404.md") continue;
-    const parsed = await parseMarkdown(join(root, file), {root, path: file, header: null});
+    const parsed = await parseMarkdown(join(root, file), {root, path: file});
     const name = basename(file, ".md");
     const page = {path: join("/", dirname(file), name), name: parsed.title ?? "Untitled"};
     if (name === "index") pages.unshift(page);
@@ -83,6 +82,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
     style,
     theme = "default",
     deploy,
+    header = "",
     footer = `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="${formatIsoDate(
       currentDate
     )}">${formatLocaleDate(currentDate)}</a>.`
@@ -92,16 +92,15 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   if (style === null) style = null;
   else if (style !== undefined) style = {path: String(style)};
   else style = {theme: (theme = normalizeTheme(theme))};
-  let {header = existsSync(join(root, "_header.md")) ? "_header.md" : null} = spec;
-  if (header !== null) header = String(header);
   let {title, pages = await readPages(root), pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
   pager = Boolean(pager);
+  header = String(header);
   footer = String(footer);
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
-  return {root, output, header, title, pages, pager, footer, toc, style, deploy};
+  return {root, output, title, pages, pager, header, footer, toc, style, deploy};
 }
 
 function normalizeTheme(spec: any): string[] {

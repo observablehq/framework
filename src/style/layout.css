@@ -4,6 +4,7 @@
 }
 
 #observablehq-main,
+#observablehq-header,
 #observablehq-footer {
   margin: 1rem auto;
   max-width: 1152px;
@@ -221,12 +222,6 @@
 
 .observablehq-link a:hover {
   color: var(--theme-foreground-focus);
-}
-
-#observablehq-sidebar summary:focus,
-.observablehq-link a:focus {
-  position: relative;
-  z-index: 4;
 }
 
 #observablehq-toc {

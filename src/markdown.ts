@@ -1,6 +1,5 @@
 import {createHash} from "node:crypto";
 import {readFile} from "node:fs/promises";
-import {join} from "node:path";
 import {type Patch, type PatchItem, getPatch} from "fast-array-diff";
 import equal from "fast-deep-equal";
 import matter from "gray-matter";
@@ -416,14 +415,11 @@ async function toParseCells(pieces: RenderPiece[]): Promise<CellPiece[]> {
 export interface ParseOptions {
   root: string;
   path: string;
-  header: string | null;
 }
 
-export async function parseMarkdown(sourcePath: string, {root, path, header}: ParseOptions): Promise<ParseResult> {
+export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptions): Promise<ParseResult> {
   const source = await readFile(sourcePath, "utf-8");
   const parts = matter(source, {});
-  if (parts.data?.header !== undefined) header = parts.data.header ? resolvePath(path, parts.data.header) : null;
-  if (header) parts.content = (await readFile(join(root, header), "utf-8")) + "\n" + parts.content;
   const md = MarkdownIt({html: true});
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
