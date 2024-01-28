@@ -178,13 +178,13 @@ const barData = [
     resize((width) => Plot.plot({
       title: "Construction unemployment reaches record high",
       subtitle: "And it’s not just seasonal variation",
-      y: {grid: true},
+      y: {grid: true, transform: (d) => d * 1000},
       color: {range: ["var(--theme-foreground-fainter)", "var(--theme-foreground-focus)"]},
       height: 320,
       width,
       marks: [
         Plot.ruleY([0]),
-        Plot.axisY({label: "Unemployed (thousands)", tickFormat: (d) => (d / 1000).toFixed(1)}),
+        Plot.axisY({label: "Unemployed (millions)", tickFormat: (d) => (d / 1e6).toFixed(1)}),
         Plot.lineY(industries, {x: "date", y: "unemployed", z: "industry", stroke: "var(--theme-foreground-fainter)", strokeWidth: 1}),
         Plot.lineY(industries, {x: "date", y: "unemployed", filter: (d) => d.industry === industry, stroke: "var(--theme-foreground-focus)", tip: true})
       ]
