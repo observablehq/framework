@@ -94,7 +94,7 @@ ${themes.dark.map((theme) => `- \`${theme}\`${theme === dark ? " (default)" : ""
 
 <div class="grid grid-cols-2">${renderThemeSection(themes.dark)}</div>
 
-## Automatic mode
+## Auto mode
 
 When both a light and a dark mode theme are specified, theme styles are applied selectively based on the user’s preferred color scheme. This is implemented via [\`prefers-color-scheme\`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme) and typically relies on the user’s operating system settings.
 
