@@ -9,8 +9,8 @@ const themes = {
 } as const;
 
 function renderThemeThumbnail(theme: string, attributes: Record<string, string> = {}): string {
-  return `<a href="./themes/${theme}" target="_blank" class="card thumbnail">
-  <iframe scrolling="no" src="./themes/${theme}"${Object.entries(attributes)
+  return `<a href="./theme/${theme}" target="_blank" class="card thumbnail">
+  <iframe scrolling="no" src="./theme/${theme}"${Object.entries(attributes)
     .map(([name, value]) => `${name}="${he.escape(value)}"`)
     .join(" ")}></iframe>
 </a>`;
@@ -123,7 +123,7 @@ The \`alt\` theme swaps the page and card background colors. This brings [cards]
 
 The \`wide\` theme removes the maximum width constraint of the main column, which is normally 1152 pixels, allowing it to span the full width of the page. This is recommended for dashboards and is typically combined with the \`alt\` theme modifier and \`toc: false\` to disable the table of contents.
 
-<div class="grid grid-cols-1" style="--thumbnail-width: 1600; --thumbnail-height: 720; max-width: 640px;">${renderThemeThumbnail(
+<div class="grid grid-cols-1" style="--thumbnail-width: 1600; --thumbnail-height: 800; max-width: 640px;">${renderThemeThumbnail(
     "wide"
   )}</div>
 
@@ -140,7 +140,7 @@ On its own, \`default\` is equivalent to \`[light, dark]\` (or \`[air, near-midn
 
 The \`dashboard\` theme composes the default light and dark themes (\`air\` and \`near-midnight\`) with the \`alt\` and \`wide\` modifiers. On its own, \`dashboard\` is equivalent to \`[light, dark, alt, wide]\`.
 
-<div class="grid grid-cols-1" style="--thumbnail-width: 1600; --thumbnail-height: 720; max-width: 640px;">${renderThemeThumbnail(
+<div class="grid grid-cols-1" style="--thumbnail-width: 1600; --thumbnail-height: 800; max-width: 640px;">${renderThemeThumbnail(
     "dashboard"
   )}</div>
 `;
@@ -171,45 +171,54 @@ const barData = [
 \`\`\`
 
 # Theme: ${theme}
-
-This is a preview of the \`${theme}\` [theme](../config#theme).
+## A preview of the \`${theme}\` [theme](../themes)
 
 <div class="grid grid-cols-2">
-  <div class="card">
-    \${resize((width) =>
-      Plot.plot({
-        title: 'Line graph title',
-        subtitle: 'Subtitle goes here',
-        x: {label: "X", ticks: 5},
-        y: {grid: true, label: "Y", ticks: 4, tickFormat: "s"},
-        style: "width: 100%;",
-        height: 200,
-        width,
-        marks: [
-          Plot.ruleY([0]),
-          Plot.lineY(industriesSubset, {x: "date", y: "unemployed", stroke: "industry", tip: true})
-        ]
-      }))
-    }
-  </div>
-  <div class="card">
-    \${resize((width) =>
-      Plot.plot({
-        title: 'Bar graph title',
-        subtitle: 'Subtitle',
-        marginLeft: 75,
-        style: "width: 100%;",
-        height: 200,
-        width,
-        x: {domain: [0, 10]},
-        marks: [
-          Plot.rectX(barData, {x: "Value", y: "Category", fill: "Category"}),
-          Plot.ruleX([0])
-        ]
-      }))
-    }
-  </div>
-</div>`;
+  <div class="card">\${
+    resize((width) => Plot.plot({
+      title: "Construction unemployment reaches record high",
+      subtitle: "And it’s not just seasonal variation",
+      y: {grid: true},
+      color: {range: ["var(--theme-foreground-fainter)", "var(--theme-foreground-focus)"]},
+      height: 320,
+      width,
+      marks: [
+        Plot.ruleY([0]),
+        Plot.axisY({label: "Unemployed (thousands)", tickFormat: (d) => (d / 1000).toFixed(1)}),
+        Plot.lineY(industries, {x: "date", y: "unemployed", z: "industry", stroke: "var(--theme-foreground-fainter)", strokeWidth: 1}),
+        Plot.lineY(industries, {x: "date", y: "unemployed", filter: (d) => d.industry === industry, stroke: "var(--theme-foreground-focus)", tip: true})
+      ]
+    }))
+  }</div>
+  <div class="card">\${
+    resize((width) => Plot.plot({
+      title: "Vowels are some of the most frequent letters in English",
+      x: {grid: true, percent: true},
+      marginTop: 0,
+      color: {domain: "AEIOUY", unknown: "var(--theme-foreground-fainter)", legend: true},
+      height: 300,
+      width,
+      marks: [
+        Plot.rectX(alphabet, {x: "frequency", y: "letter", fill: (d) => /[aeiouy]/i.test(d.letter) ? d.letter : "other", sort: {y: "-x"}, tip: {format: {x: true, y: true}}}),
+        Plot.ruleX([0])
+      ]
+    }))
+  }</div>
+</div>
+
+\`\`\`js
+const industry = view(Inputs.select(industries.map((d) => d.industry), {unique: true, sort: true, label: "Industry", value: "Construction"}));
+\`\`\`
+
+Call me Ishmael. Some years ago — never mind how long precisely — having little or no money in my purse, and nothing particular to interest me on shore, I thought I would sail about a little and see the watery part of the world. It is a way I have of driving off the spleen and regulating the circulation.
+
+\`\`\`js
+Inputs.table(penguins)
+\`\`\`
+
+Whenever I find myself growing grim about the mouth; whenever it is a damp, drizzly November in my soul; whenever I find myself involuntarily pausing before coffin warehouses, and bringing up the rear of every funeral I meet; and especially whenever my hypos get such an upper hand of me, that it requires a strong moral principle to prevent me from deliberately stepping into the street, and methodically knocking people’s hats off — then, I account it high time to get to sea as soon as I can. This is my substitute for pistol and ball. With a philosophical flourish Cato throws himself upon his sword; I quietly take to the ship.
+
+There is nothing surprising in this. If they but knew it, almost all men in their degree, some time or other, cherish very nearly the same feelings towards the ocean with me.`;
 }
 
 async function generateFile(path: string, contents: string): Promise<void> {
@@ -220,15 +229,15 @@ async function generateFile(path: string, contents: string): Promise<void> {
 await generateFile("./docs/themes.md", renderIndex());
 
 for (const theme of themes.light) {
-  await generateFile(`./docs/themes/${theme}.md`, renderTheme(theme));
+  await generateFile(`./docs/theme/${theme}.md`, renderTheme(theme));
 }
 for (const theme of themes.dark) {
-  await generateFile(`./docs/themes/${theme}.md`, renderTheme(theme));
+  await generateFile(`./docs/theme/${theme}.md`, renderTheme(theme));
 }
 
-await generateFile("./docs/themes/light.md", renderTheme("light"));
-await generateFile("./docs/themes/light-alt.md", renderTheme("[light, alt]"));
-await generateFile("./docs/themes/dark.md", renderTheme("dark"));
-await generateFile("./docs/themes/dark-alt.md", renderTheme("[dark, alt]"));
-await generateFile("./docs/themes/wide.md", renderTheme("wide"));
-await generateFile("./docs/themes/dashboard.md", renderTheme("dashboard"));
+await generateFile("./docs/theme/light.md", renderTheme("light"));
+await generateFile("./docs/theme/light-alt.md", renderTheme("[light, alt]"));
+await generateFile("./docs/theme/dark.md", renderTheme("dark"));
+await generateFile("./docs/theme/dark-alt.md", renderTheme("[dark, alt]"));
+await generateFile("./docs/theme/wide.md", renderTheme("wide"));
+await generateFile("./docs/theme/dashboard.md", renderTheme("dashboard"));

@@ -22,10 +22,10 @@
     "observable": "bin/observable-init.js"
   },
   "scripts": {
-    "dev": "rm -f docs/themes.md docs/themes/*.md && (tsx watch docs/themes/generate-themes.ts & tsx watch --no-warnings=ExperimentalWarning ./bin/observable.ts preview)",
+    "dev": "rm -f docs/themes.md docs/theme/*.md && (tsx watch docs/theme/generate-themes.ts & tsx watch --no-warnings=ExperimentalWarning ./bin/observable.ts preview)",
     "build": "yarn rebuild-themes && rm -rf dist && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts build",
     "deploy": "yarn rebuild-themes && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts deploy",
-    "rebuild-themes": "rm -f docs/themes.md docs/themes/*.md && tsx docs/themes/generate-themes.ts",
+    "rebuild-themes": "rm -f docs/themes.md docs/theme/*.md && tsx docs/theme/generate-themes.ts",
     "test": "yarn test:mocha && yarn test:tsc && yarn test:lint && yarn test:prettier",
     "test:coverage": "c8 yarn test:mocha",
     "test:mocha": "rm -rf test/.observablehq/cache test/input/build/*/.observablehq/cache && OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles tsx --no-warnings=ExperimentalWarning ./node_modules/.bin/mocha 'test/**/*-test.*'",

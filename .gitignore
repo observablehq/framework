@@ -2,7 +2,7 @@
 **/.observablehq/cache/
 coverage/
 docs/themes.md
-docs/themes/*.md
+docs/theme/*.md
 dist/
 node_modules/
 test/output/*-changed.*
