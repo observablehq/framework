@@ -3,6 +3,9 @@ import {writeFile} from "node:fs/promises";
 import he from "he";
 import {faint} from "../../src/tty.js";
 
+const light = "air";
+const dark = "near-midnight";
+
 const themes = {
   light: ["air", "cotton", "glacier", "parchment"],
   dark: ["coffee", "deep-space", "ink", "midnight", "near-midnight", "ocean-floor", "slate", "stark", "sun-faded"]
@@ -79,10 +82,7 @@ Here is an overview of the available themes.
 
 The built-in light-mode color themes are:
 
-- \`air\` (default)
-- \`cotton\`
-- \`glacier\`
-- \`parchment\`
+${themes.light.map((theme) => `- \`${theme}\`${theme === light ? " (default)" : ""}`).join("\n")}
 
 <div class="grid grid-cols-2">${renderThemeSection(themes.light)}</div>
 
@@ -90,15 +90,7 @@ The built-in light-mode color themes are:
 
 The built-in dark-mode color themes are:
 
-- \`coffee\`
-- \`deep-space\`
-- \`ink\`
-- \`midnight\`
-- \`near-midnight\` (default)
-- \`ocean-floor\`
-- \`slate\`
-- \`stark\`
-- \`sun-faded\`
+${themes.dark.map((theme) => `- \`${theme}\`${theme === dark ? " (default)" : ""}`).join("\n")}
 
 <div class="grid grid-cols-2">${renderThemeSection(themes.dark)}</div>
 
@@ -127,7 +119,7 @@ The \`wide\` theme removes the maximum width constraint of the main column, whic
     "wide"
   )}</div>
 
-The \`dashboard\` [theme alias](#aliases) composes the default light and dark themes (\`air\` and \`near-midnight\`) with the \`alt\` and \`wide\` modifiers. On its own, \`dashboard\` is equivalent to \`[light, dark, alt, wide]\`.
+The \`dashboard\` [theme alias](#aliases) composes the default light and dark themes (\`${light}\` and \`${dark}\`) with the \`alt\` and \`wide\` modifiers. On its own, \`dashboard\` is equivalent to \`[light, dark, alt, wide]\`.
 
 <div class="grid grid-cols-1" style="--thumbnail-width: 1600; --thumbnail-height: 800; max-width: 640px;">${renderThemeThumbnail(
     "dashboard"
@@ -139,10 +131,10 @@ In addition to themes and theme modifiers, there are special aliases:
 
 - \`default\` - either \`light\` or \`dark\` depending on user preference
 - \`dashboard\` - \`[light, dark]\` if needed, plus \`alt\` and \`wide\`
-- \`light\` - an alias for \`air\`
-- \`dark\` - an alias for \`near-midnight\`
+- \`light\` - an alias for \`${light}\`
+- \`dark\` - an alias for \`${dark}\`
 
-On its own, \`default\` is equivalent to \`[light, dark]\` (or \`[air, near-midnight]\`). The \`default\` theme is applied by default if you don’t specify any color theme. You can also use \`default\` to combine a specific light or dark theme with the default theme of the opposing mode; for example \`[cotton, default]\` is equivalent to \`[cotton, dark]\`, and \`[coffee, default]\` is equivalent to \`[coffee, light]\`.`;
+On its own, \`default\` is equivalent to \`[light, dark]\` (or \`[${light}, ${dark}]\`). The \`default\` theme is applied by default if you don’t specify any color theme. You can also use \`default\` to combine a specific light or dark theme with the default theme of the opposing mode; for example \`[cotton, default]\` is equivalent to \`[cotton, dark]\`, and \`[coffee, default]\` is equivalent to \`[coffee, light]\`.`;
 }
 
 function renderTheme(theme: string): string {
