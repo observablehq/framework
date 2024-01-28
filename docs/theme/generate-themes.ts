@@ -141,6 +141,7 @@ function renderTheme(theme: string): string {
   return `---
 theme: ${theme}
 toc: false
+header: false
 ---
 
 <style>

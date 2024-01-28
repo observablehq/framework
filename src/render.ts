@@ -25,8 +25,8 @@ export interface RenderOptions extends Config {
   path: string;
 }
 
-export async function renderPreview(source: string, options: RenderOptions): Promise<Render> {
-  const parseResult = await parseMarkdown(source, options.root, options.path);
+export async function renderPreview(sourcePath: string, options: RenderOptions): Promise<Render> {
+  const parseResult = await parseMarkdown(sourcePath, options);
   return {
     html: await render(parseResult, {...options, preview: true}),
     files: parseResult.files,
@@ -35,8 +35,8 @@ export async function renderPreview(source: string, options: RenderOptions): Pro
   };
 }
 
-export async function renderServerless(source: string, options: RenderOptions): Promise<Render> {
-  const parseResult = await parseMarkdown(source, options.root, options.path);
+export async function renderServerless(sourcePath: string, options: RenderOptions): Promise<Render> {
+  const parseResult = await parseMarkdown(sourcePath, options);
   return {
     html: await render(parseResult, options),
     files: parseResult.files,
