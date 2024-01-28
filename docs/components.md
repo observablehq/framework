@@ -10,8 +10,7 @@ A collection of elements useful for formatting page content: themes, `card` and 
 
 ### Themes
 
-<!-- TODO update link to themes gallery layout/themes.md page once added-->
-Observable Markdown offers a number of [built-in themes](./config#theme) that you can compose to create, say, wide pages with an alternative dark color theme:
+Observable Markdown offers a number of [built-in themes](./themes) that you can compose to create, say, wide pages with an alternative dark color theme:
 
 ```js run=false
 theme: ["dark", "alt", "wide"]
@@ -29,7 +28,7 @@ You are not limited to the built-in themes. For complete control over the design
 
 ### Grid
 
-The included [`grid`](./layout/grid) CSS classes make it easier to control how page content is arranged. 
+The included [`grid`](./layout/grid) CSS classes make it easier to control how page content is arranged.
 
 <div class="grid grid-cols-2">
   <div class="card"><h1>A</h1>1 × 1</div>
@@ -49,7 +48,7 @@ The included [`grid`](./layout/grid) CSS classes make it easier to control how p
 
 ### Card
 
-The [`card`](./layout/card) CSS class has default styles that help create a card: container borders, background color, padding and optional titles and subtitles. 
+The [`card`](./layout/card) CSS class has default styles that help create a card: container borders, background color, padding and optional titles and subtitles.
 
 <div class="grid grid-cols-2">
   <div class="card">
@@ -89,7 +88,7 @@ The [`card`](./layout/card) CSS class has default styles that help create a card
 
 ### Resize
 
-The [`resize`](./layout/resize) function automatically recomputes a DOM element (often, a chart) when the dimensions of its parent container change. 
+The [`resize`](./layout/resize) function automatically recomputes a DOM element (often, a chart) when the dimensions of its parent container change.
 
 Resize exists in the Observable standard library, or can be imported explicitly:
 
