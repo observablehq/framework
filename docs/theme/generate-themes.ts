@@ -104,11 +104,11 @@ The built-in dark-mode color themes are:
 
 ## Automatic mode
 
-When both a light and a dark mode theme are specified, the dark mode theme will apply only if the user prefers a dark color scheme. This is implemented via [\`prefers-color-scheme\`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme) and typically relies on the user’s operating system settings.
+When both a light and a dark mode theme are specified, theme styles are applied selectively based on the user’s preferred color scheme. This is implemented via [\`prefers-color-scheme\`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme) and typically relies on the user’s operating system settings.
 
-<div class="tip">On macOS, you can create a menubar <a href="https://support.apple.com/guide/shortcuts-mac/intro-to-shortcuts-apdf22b0444c/mac" target="_blank">shortcut</a> to quickly toggle between light and dark mode. This is useful for testing your app in both modes.</div>
+<div class="tip">On macOS, you can create a menubar <a href="https://support.apple.com/guide/shortcuts-mac/intro-to-shortcuts-apdf22b0444c/mac" target="_blank">shortcut</a> to quickly toggle between light and dark mode. This is useful for testing.</div>
 
-<div class="tip">Designing charts that work well in both light and dark mode can be challenging. If you’d prefer to design for only one mode, then set the theme explicitly to <code>light</code> or <code>dark</code>.</div>
+<div class="tip">Designing charts that work well in both light and dark mode can be challenging. If you’d prefer to design for only one mode, set the theme explicitly to <code>light</code> or <code>dark</code>.</div>
 
 ## Modifiers
 
@@ -127,6 +127,12 @@ The \`wide\` theme removes the maximum width constraint of the main column, whic
     "wide"
   )}</div>
 
+The \`dashboard\` [theme alias](#aliases) composes the default light and dark themes (\`air\` and \`near-midnight\`) with the \`alt\` and \`wide\` modifiers. On its own, \`dashboard\` is equivalent to \`[light, dark, alt, wide]\`.
+
+<div class="grid grid-cols-1" style="--thumbnail-width: 1600; --thumbnail-height: 800; max-width: 640px;">${renderThemeThumbnail(
+    "dashboard"
+  )}</div>
+
 ## Aliases
 
 In addition to themes and theme modifiers, there are special aliases:
@@ -136,14 +142,7 @@ In addition to themes and theme modifiers, there are special aliases:
 - \`light\` - an alias for \`air\`
 - \`dark\` - an alias for \`near-midnight\`
 
-On its own, \`default\` is equivalent to \`[light, dark]\` (or \`[air, near-midnight]\`). The \`default\` theme is applied by default if you don’t specify any color theme. You can also use \`default\` to combine a specific light or dark theme with the default theme of the opposing mode; for example \`[cotton, default]\` is equivalent to \`[cotton, dark]\`, and \`[coffee, default]\` is equivalent to \`[coffee, light]\`.
-
-The \`dashboard\` theme composes the default light and dark themes (\`air\` and \`near-midnight\`) with the \`alt\` and \`wide\` modifiers. On its own, \`dashboard\` is equivalent to \`[light, dark, alt, wide]\`.
-
-<div class="grid grid-cols-1" style="--thumbnail-width: 1600; --thumbnail-height: 800; max-width: 640px;">${renderThemeThumbnail(
-    "dashboard"
-  )}</div>
-`;
+On its own, \`default\` is equivalent to \`[light, dark]\` (or \`[air, near-midnight]\`). The \`default\` theme is applied by default if you don’t specify any color theme. You can also use \`default\` to combine a specific light or dark theme with the default theme of the opposing mode; for example \`[cotton, default]\` is equivalent to \`[cotton, dark]\`, and \`[coffee, default]\` is equivalent to \`[coffee, light]\`.`;
 }
 
 function renderTheme(theme: string): string {
