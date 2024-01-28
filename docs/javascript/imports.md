@@ -8,7 +8,7 @@ import confetti from "npm:canvas-confetti";
 
 <div class="tip">Thanks to <a href="./reactivity">reactivity</a>, imports can live in a JavaScript block anywhere on the page. But by convention, imports are commonly placed at the top of source files for readability.</div>
 
-Once imported, you can use the library anywhere on the page.
+You can use an imported library anywhere on the page.
 
 ```js echo
 Inputs.button("Throw confetti!", {reduce: () => confetti()})
