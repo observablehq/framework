@@ -1,14 +1,14 @@
 # JavaScript: Imports
 
-<!-- TK Describe how you can import any library from npm without having to install it into `node_modules`. This is for convenience, and it’s why we use the `npm:` protocol for imports. (In the future we might also support bare module specifiers for packages that are installed into `node_modules`.) -->
-
-You can import a library using a standard `import` statement, like so:
+You can load a library using an `import` statement. For example:
 
 ```js echo
 import confetti from "npm:canvas-confetti";
 ```
 
-Now you can reference the imported `confetti` anywhere on the page.
+<div class="tip">Thanks to <a href="./reactivity">reactivity</a>, imports can live in a JavaScript block anywhere on the page. But by convention, imports are commonly placed at the top of source files for readability.</div>
+
+You can use an imported library anywhere on the page.
 
 ```js echo
 Inputs.button("Throw confetti!", {reduce: () => confetti()})
@@ -16,9 +16,9 @@ Inputs.button("Throw confetti!", {reduce: () => confetti()})
 
 ## npm imports
 
-An `npm:` specifier, as shown above, denotes that the imported library will be loaded from npm via a CDN rather than from `node_modules`. You don’t have to install imported libraries beforehand — just import, and the cloud shall provide. (This convention is also [used by Deno](https://docs.deno.com/runtime/manual/node/npm_specifiers).)
+An `npm:` specifier, as shown above, denotes that the imported library will be loaded from npm rather than from `node_modules`. You don’t have to install imported libraries beforehand — just import, and the cloud shall provide. (This convention is also [used by Deno](https://docs.deno.com/runtime/manual/node/npm_specifiers).)
 
-Under the hood, `npm:` imports are powered by [jsDelivr’s esm.run](https://www.jsdelivr.com/esm). The import above is thus equivalent to:
+Under the hood, `npm:` imports are powered by [jsDelivr’s esm.run CDN](https://www.jsdelivr.com/esm). The import above is thus equivalent to:
 
 ```js run=false
 import confetti from "https://cdn.jsdelivr.net/npm/canvas-confetti/+esm";
@@ -60,7 +60,7 @@ and the imported value of `foo` is: ${foo}.
 
 Observable Framework automatically watches imported local modules during preview, so any changes to these files will instantly update in the browser via hot module replacement.
 
-<div class="note">Unlike <a href="../javascript">JavaScript-in-Markdown</a>, there’s no reactivity within a JavaScript module. However, you can write <a href="./generators">generator functions</a> to define <a href="./reactivity">reactive variables</a>. And you can import the Observable standard library into local modules, so you can references <a href="./files">files</a>.</div>
+<div class="note">While there is <a href="./reactivity">reactivity</a> across <a href="../javascript">JavaScript code blocks</a> in Markdown, there’s no reactivity within a JavaScript module. However, you can write <a href="./promises">async functions</a> and <a href="./generators">generator functions</a> to define reactive variables. And you can import the Observable standard library into local modules, so you can references <a href="./files">files</a> and use other standard library features.</div>
 
 ## Module preloads
 
@@ -70,7 +70,7 @@ During build, Observable Framework will resolve the current exact version of the
 import confetti from "https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/+esm";
 ```
 
-This automatically locks the version of imported libraries so you don’t have to worry about new releases breaking your built site in the future. At the same time, you’ll conveniently get the latest version of libraries during local development and the next time you build.
+Version resolution locks the version of imported libraries so you don’t have to worry about new releases breaking your built site in the future. At the same time, you’ll conveniently get the latest version of libraries during local development and the next time you build.
 
 In addition to resolving versions of directly-imported modules, Observable Framework recursively resolves dependencies, too! All transitively imported modules are automatically preloaded, greatly improving page load speed because the browser requests all imported modules in parallel.
 
@@ -110,9 +110,9 @@ Click on any of the imported symbols below to learn more.
 
 ## Require
 
-If you’re familiar with Observable notebooks, you may have noticed that we don’t mention `require` above. This is intentional: we strongly recommend that you avoid `require` as the underlying Asynchronous Module Definition (AMD) convention has been made obsolete by standard imports in JavaScript, and `require` tends to be implemented unreliably by libraries.
+If you’re familiar with Observable notebooks, you may have noticed that we don’t mention `require` above. We recommend that you avoid `require` as the underlying Asynchronous Module Definition (AMD) convention has been made obsolete by standard imports in JavaScript, and AMD tends to be implemented inconsistently by libraries.
 
-If you *really* need `require`, you can import it:
+If you really need `require`, you can import it from [d3-require](https://github.com/d3/d3-require):
 
 ```js run=false
 import {require} from "npm:d3-require";
@@ -124,4 +124,4 @@ Then you can call `require` like so:
 const d3 = require("d3@5");
 ```
 
-<div class="tip">We recommend that you use <code>import</code> instead of <code>require</code>: it’s the modern standard, more reliable, and a lot faster.</div>
+<div class="tip">We recommend that you use <code>import</code> instead of <code>require</code>: it’s the modern standard, more reliable, more forward-looking, and faster.</div>
