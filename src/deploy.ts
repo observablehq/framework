@@ -5,7 +5,7 @@ import {build} from "./build.js";
 import type {Config} from "./config.js";
 import {CliError, isHttpError} from "./error.js";
 import type {Logger, Writer} from "./logger.js";
-import { ObservableApiClient, type PostEditProjectRequest} from "./observableApiClient.js";
+import {ObservableApiClient, type PostEditProjectRequest} from "./observableApiClient.js";
 import type {ConfigEffects} from "./observableApiConfig.js";
 import {
   type ApiKey,
@@ -116,7 +116,7 @@ export async function deploy({config, message}: DeployOptions, effects = default
         throw new CliError("Cancelling deploy due to misconfiguration.");
       }
     } else if (previousProjectId && previousProjectId === projectId && typeof projectUpdates?.title === "string") {
-       await apiClient.editProject(projectId, projectUpdates as PostEditProjectRequest);
+      await apiClient.editProject(projectId, projectUpdates as PostEditProjectRequest);
     } else if (!previousProjectId) {
       const {indent} = hangingIndentLog(
         effects,

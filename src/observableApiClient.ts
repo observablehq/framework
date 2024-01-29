@@ -169,7 +169,6 @@ export class ObservableApiClient {
       body: "{}"
     });
   }
-
 }
 
 export interface PostEditProjectRequest {

@@ -155,7 +155,7 @@ describe("deploy", () => {
     const projectId = "project123";
     const deployConfig = {projectId};
     const deployId = "deploy456";
-    const oldTitle =  `${TEST_CONFIG.title!} old`;
+    const oldTitle = `${TEST_CONFIG.title!} old`;
     getCurentObservableApi()
       .handleGetProject({
         workspaceLogin: TEST_CONFIG.deploy!.workspace,
