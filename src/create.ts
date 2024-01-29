@@ -61,7 +61,7 @@ export async function create({output = ""}: {output?: string}, effects: CreateEf
         }),
       initGit: () =>
         confirm({
-          message: "Initialize git repository?",
+          message: "Initialize git repository?"
         })
     },
     {
@@ -77,7 +77,6 @@ export async function create({output = ""}: {output?: string}, effects: CreateEf
   console.log({results});
   process.exit(0);
   const root = join(projectDir, results.projectName);
-
 
   const templateDir = resolve(fileURLToPath(import.meta.url), "../../templates/default");
 
