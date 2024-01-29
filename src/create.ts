@@ -37,7 +37,6 @@ export async function create({output = ""}: {output?: string}, effects: CreateEf
   }
 
   intro("@observablehq/create");
-
   const results = await group(
     {
       projectName: () =>
@@ -54,7 +53,7 @@ export async function create({output = ""}: {output?: string}, effects: CreateEf
       pkgManager: () =>
         select({
           message: "Choose Package Manager",
-          options: [{value: "yarn"}, {value: "npm"}]
+          options: pkgManagerOptions()
         }),
       installDependencies: () =>
         confirm({
@@ -62,7 +61,7 @@ export async function create({output = ""}: {output?: string}, effects: CreateEf
         }),
       initGit: () =>
         confirm({
-          message: "Initialize git repository?"
+          message: "Initialize git repository?",
         })
     },
     {
@@ -73,13 +72,12 @@ export async function create({output = ""}: {output?: string}, effects: CreateEf
     }
   );
 
-  console.log({results});
   outro("Success");
-  process.exit(0);
 
-  const root = join(projectDir, projectName);
-  const pkgInfo = pkgFromUserAgent(process.env["npm_config_user_agent"]);
-  const pkgManager = pkgInfo ? pkgInfo.name : "yarn";
+  console.log({results});
+  process.exit(0);
+  const root = join(projectDir, results.projectName);
+
 
   const templateDir = resolve(fileURLToPath(import.meta.url), "../../templates/default");
 
@@ -153,6 +151,12 @@ async function recursiveCopyTemplate(
       await effects.copyFile(templatePath, outputPath);
     }
   }
+}
+
+function pkgManagerOptions() {
+  const options = [{value: "yarn"}, {value: "npm"}];
+  const pkgInfo = pkgFromUserAgent(process.env["npm_config_user_agent"]);
+  return pkgInfo.name === "npm" ? options.reverse() : options;
 }
 
 function pkgFromUserAgent(userAgent: string | undefined): null | {
