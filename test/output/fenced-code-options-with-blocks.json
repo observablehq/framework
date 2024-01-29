@@ -26,7 +26,7 @@
       "cellIds": [
         "4bf815ab"
       ],
-      "html": "<div><div id=\"cell-4bf815ab\" class=\"observablehq observablehq--block\"></div>\n<pre data-language=\"js\"><code class=\"language-js\"><span class=\"hljs-keyword\">function</span> <span class=\"hljs-title function_\">bareJs</span>(<span class=\"hljs-params\"></span>) {\n  <span class=\"hljs-keyword\">return</span> <span class=\"hljs-number\">1</span>;\n}\n</code></pre>\n</div>"
+      "html": "<div id=\"cell-4bf815ab\" class=\"observablehq observablehq--block\"></div>\n"
     },
     {
       "type": "html",

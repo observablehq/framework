@@ -1,5 +1,6 @@
 export default {
   title: "Observable CLI",
+  echo: false,
   pages: [
     {name: "Getting started", path: "/getting-started"},
     {name: "Routing", path: "/routing"},

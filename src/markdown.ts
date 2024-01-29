@@ -88,10 +88,6 @@ function isFalse(attribute: string | undefined): boolean {
   return attribute?.toLowerCase() === "false";
 }
 
-function isShow(attribute: string | undefined | null): boolean {
-  return attribute?.toLowerCase?.() === "show";
-}
-
 function getLiveSource(content: string, tag: string): string | undefined {
   return tag === "js"
     ? content
@@ -108,12 +104,8 @@ function getLiveSource(content: string, tag: string): string | undefined {
     : undefined;
 }
 
-function makeFenceRenderer(
-  root: string,
-  baseRenderer: RenderRule,
-  sourcePath: string,
-  showBlocks: boolean
-): RenderRule {
+function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: string, echo: boolean): RenderRule {
+  console.log({makeFenceRendererEcho: echo});
   return (tokens, idx, options, context: ParseContext, self) => {
     const token = tokens[idx];
     const {tag, attributes} = parseInfo(token.info);
@@ -139,7 +131,7 @@ function makeFenceRenderer(
       count++;
     }
     // Conditionally render fanced block source.
-    if (attributes.echo == null ? showBlocks || source == null : !isFalse(attributes.echo)) {
+    if (attributes.echo == null ? echo || source == null : !isFalse(attributes.echo)) {
       result += baseRenderer(tokens, idx, options, context, self);
       count++;
     }
@@ -428,22 +420,31 @@ async function toParseCells(pieces: RenderPiece[]): Promise<CellPiece[]> {
   return cellPieces;
 }
 
+// Combine project and page level echo configuration
+function isEcho(project: null | string, page: undefined | boolean): boolean {
+  return page == null ? project != null && !isFalse(project) : page;
+}
+
 // TODO We need to know what line in the source the markdown starts on and pass
 // that as startLine in the parse context below.
 export async function parseMarkdown(
   source: string,
   root: string,
   sourcePath: string,
-  blocks: null | string
+  echo: null | string
 ): Promise<ParseResult> {
   const parts = matter(source, {});
   const md = MarkdownIt({html: true});
-  const showBlocks = parts.data?.blocks == null ? isShow(blocks) : isShow(parts.data?.blocks);
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
   md.renderer.rules.placeholder = makePlaceholderRenderer(root, sourcePath);
-  md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!, sourcePath, showBlocks);
+  md.renderer.rules.fence = makeFenceRenderer(
+    root,
+    md.renderer.rules.fence!,
+    sourcePath,
+    isEcho(echo, parts.data?.echo)
+  );
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
   md.renderer.render = renderIntoPieces(md.renderer, root, sourcePath);
   const context: ParseContext = {files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
@@ -554,8 +555,8 @@ export function diffMarkdown({parse: prevParse}: ReadMarkdownResult, {parse: nex
     .map(diffReducer);
 }
 
-export async function readMarkdown(path: string, root: string, blocks: null | string): Promise<ReadMarkdownResult> {
+export async function readMarkdown(path: string, root: string, echo: null | string): Promise<ReadMarkdownResult> {
   const contents = await readFile(join(root, path), "utf-8");
-  const parse = await parseMarkdown(contents, root, path, blocks);
+  const parse = await parseMarkdown(contents, root, path, echo);
   return {contents, parse};
 }

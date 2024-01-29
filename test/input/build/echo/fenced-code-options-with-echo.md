@@ -1,5 +1,5 @@
 ---
-blocks: show
+echo: true
 ---
 
 # Fenced code options
