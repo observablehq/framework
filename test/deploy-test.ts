@@ -169,7 +169,7 @@ describe("deploy", () => {
       .handlePostDeployUploaded({deployId})
       .start();
 
-    const effects = new MockDeployEffects({deployConfig}).addIoResponse(/^Deploy message: /, "fix some bugs");
+    const effects = new MockDeployEffects({deployConfig}).addIoResponse(/^Deploy message: /, "change project title");
     await deploy(TEST_OPTIONS, effects);
 
     effects.close();
