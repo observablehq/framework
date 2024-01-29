@@ -80,7 +80,7 @@ export default {
         {name: "Hypertext Literal", path: "/lib/htl"},
         {name: "Leaflet", path: "/lib/leaflet"},
         {name: "Lodash", path: "/lib/lodash"},
-        {name: "Mapbox-gl", path: "/lib/mapbox-gl"},
+        {name: "Mapbox GL JS", path: "/lib/mapbox-gl"},
         {name: "Mermaid", path: "/lib/mermaid"},
         {name: "Microsoft Excel", path: "/lib/xlsx"},
         {name: "Observable Generators", path: "/lib/generators"},
