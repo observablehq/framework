@@ -2,7 +2,7 @@ import {existsSync} from "node:fs";
 import {copyFile, mkdir, readFile, readdir, stat, writeFile} from "node:fs/promises";
 import {join, normalize, parse, resolve} from "node:path";
 import {fileURLToPath} from "node:url";
-import {type PromptObject, default as prompts} from "prompts";
+import {cancel, confirm, group, intro, outro, select, text} from '@clack/prompts';
 
 export interface CreateEffects {
   log(output: string): void;
@@ -28,7 +28,6 @@ const defaultEffects: CreateEffects = {
 
 export async function create({output = ""}: {output?: string}, effects: CreateEffects = defaultEffects): Promise<void> {
   const {dir: projectDir, name: projectNameArg} = parse(output);
-
   if (projectNameArg !== "") {
     const result = validateProjectName(projectDir, projectNameArg);
     if (result !== true) {
@@ -37,29 +36,44 @@ export async function create({output = ""}: {output?: string}, effects: CreateEf
     }
   }
 
-  const results = await prompts<"projectName" | "projectTitle">([
-    {
-      type: "text",
-      name: "projectName",
-      message: "Project folder name:",
-      initial: projectNameArg,
-      validate: (name) => validateProjectName(projectDir, name)
-    } satisfies PromptObject<"projectName">,
-    {
-      type: "text",
-      name: "projectTitle",
-      message: "Project title (visible on the pages):",
-      initial: toTitleCase,
-      validate: validateProjectTitle
-    } satisfies PromptObject<"projectTitle">
-  ]);
+  intro("@observablehq/create");
 
-  if (results.projectName === undefined || results.projectTitle === undefined) {
-    console.log("Create process aborted");
-    process.exit(0);
-  }
+  const results = await group({
+    projectName: () => text({
+      message: 'Project folder name',
+      placeholder: 'name',
+      initialValue: '',
+      validate: name => validateProjectName(projectDir, name)
+    }),
+    includeSamples: () => confirm({
+      message: 'Include sample files?',
+    }),
+    pkgManager: () => select({
+      message: 'Choose Package Manager',
+      options: [
+        { value: 'yarn' },
+        { value: 'npm' },
+      ],
+    }),
+    installDependencies: () => confirm({
+      message: 'Install dependencies?',
+    }),
+    initGit: () => confirm({
+      message: 'Initialize git repository?',
+    })
+  },
+  {
+    onCancel: () => {
+      cancel('create cancelled');
+      process.exit(0);
+    },
+  });
 
-  const root = join(projectDir, results.projectName);
+  console.log({ results });
+  outro("Success");
+  process.exit(0);
+
+  const root = join(projectDir, projectName);
   const pkgInfo = pkgFromUserAgent(process.env["npm_config_user_agent"]);
   const pkgManager = pkgInfo ? pkgInfo.name : "yarn";
 
@@ -70,8 +84,7 @@ export async function create({output = ""}: {output?: string}, effects: CreateEf
 
   const context = {
     projectDir,
-    ...results,
-    projectTitleString: JSON.stringify(results.projectTitle),
+    projectName,
     devInstructions: devDirections.map((l) => `$ ${l}`).join("\n")
   };
 
@@ -100,25 +113,6 @@ function validateProjectName(projectDir: string, projectName: string): string | 
   if (!/^([^0-9\W][\w-]*)$/.test(projectName)) {
     return "Project name must contain only alphanumerics, dash or underscore with no leading digits.";
   }
-  return true;
-}
-
-function validateProjectTitle(projectTitle: string): string | boolean {
-  if (projectTitle.length === 0) {
-    return "Project title must be at least 1 character long.";
-  }
-  // eslint-disable-next-line no-control-regex
-  if (/[\u0000-\u001F\u007F-\u009F]/.test(projectTitle)) {
-    return "Project title may not contain control characters.";
-  }
-  return true;
-}
-
-function toTitleCase(str: string): string {
-  return str
-    .split(/[\s_-]+/)
-    .map(([c, ...rest]) => c.toUpperCase() + rest.join(""))
-    .join(" ");
 }
 
 async function recursiveCopyTemplate(
