@@ -11,7 +11,7 @@
 }
 
 #observablehq-main {
-  min-height: calc(100vh - 17rem);
+  min-height: calc(100vh - 20rem);
   position: relative;
   z-index: 0;
 }
