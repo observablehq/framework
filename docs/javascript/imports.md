@@ -60,7 +60,7 @@ and the imported value of `foo` is: ${foo}.
 
 Observable Framework automatically watches imported local modules during preview, so any changes to these files will instantly update in the browser via hot module replacement.
 
-<div class="note">While there is <a href="./reactivity">reactivity</a> across <a href="../javascript">JavaScript code blocks</a> in Markdown, there’s no reactivity within a JavaScript module. However, you can write <a href="./promises">async functions</a> and <a href="./generators">generator functions</a> to define reactive variables. And you can import the Observable standard library into local modules, so you can references <a href="./files">files</a> and use other standard library features.</div>
+<div class="note">While there is <a href="./reactivity">reactivity</a> across <a href="../javascript">JavaScript code blocks</a> in Markdown, there’s no reactivity within a JavaScript module. However, you can write <a href="./promises">async functions</a> and <a href="./generators">generator functions</a> to define reactive variables. And you can import the Observable standard library into local modules, so you can reference <a href="./files">files</a> and use other standard library features.</div>
 
 ## Module preloads
 

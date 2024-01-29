@@ -1,6 +1,5 @@
-import {readFile} from "node:fs/promises";
-import {basename, dirname, extname, join} from "node:path";
-import {visitFiles} from "./files.js";
+import {basename, dirname, join} from "node:path";
+import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import {parseMarkdown} from "./markdown.js";
 import {resolveTheme} from "./theme.js";
@@ -32,7 +31,8 @@ export interface Config {
   title?: string;
   pages: (Page | Section)[]; // TODO rename to sidebar?
   pager: boolean; // defaults to true
-  footer: string;
+  header: string; // defaults to empty string
+  footer: string; // defaults to “Built with Observable on [date].”
   toc: TableOfContents;
   style: null | Style; // defaults to {theme: ["light", "dark"]}
   deploy: null | {workspace: string; project: string};
@@ -58,9 +58,9 @@ export async function readDefaultConfig(root?: string): Promise<Config> {
 
 async function readPages(root: string): Promise<Page[]> {
   const pages: Page[] = [];
-  for await (const file of visitFiles(root)) {
-    if (file === "index.md" || file === "404.md" || extname(file) !== ".md") continue;
-    const parsed = await parseMarkdown(await readFile(join(root, file), "utf-8"), root, file);
+  for await (const file of visitMarkdownFiles(root)) {
+    if (file === "index.md" || file === "404.md") continue;
+    const parsed = await parseMarkdown(join(root, file), {root, path: file});
     const name = basename(file, ".md");
     const page = {path: join("/", dirname(file), name), name: parsed.title ?? "Untitled"};
     if (name === "index") pages.unshift(page);
@@ -82,6 +82,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
     style,
     theme = "default",
     deploy,
+    header = "",
     footer = `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="${formatIsoDate(
       currentDate
     )}">${formatLocaleDate(currentDate)}</a>.`
@@ -95,10 +96,11 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
   pager = Boolean(pager);
+  header = String(header);
   footer = String(footer);
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
-  return {root, output, title, pages, pager, footer, toc, style, deploy};
+  return {root, output, title, pages, pager, header, footer, toc, style, deploy};
 }
 
 function normalizeTheme(spec: any): string[] {
