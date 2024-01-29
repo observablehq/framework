@@ -29,8 +29,6 @@ export interface GetProjectResponse {
   title: string;
 }
 
-export const UPDATABLE_FIELDS = ["title", "slug", "servingRoot"] as const;
-
 export function getObservableUiOrigin(env = process.env): URL {
   const urlText = env["OBSERVABLE_ORIGIN"] ?? "https://observablehq.com";
   try {
@@ -132,7 +130,7 @@ export class ObservableApiClient {
     });
   }
 
-  async updateProject(projectId: string, updates: PostEditProjectRequest): Promise<PostEditProjectResponse> {
+  async editProject(projectId: string, updates: PostEditProjectRequest): Promise<PostEditProjectResponse> {
     return await this._fetch<PostEditProjectResponse>(new URL(`/cli/project/${projectId}/edit`, this._apiOrigin), {
       method: "POST",
       headers: {"content-type": "application/json"},
@@ -175,8 +173,7 @@ export class ObservableApiClient {
 }
 
 export interface PostEditProjectRequest {
-  slug?: string;
-  title?: string;
+  title: string;
 }
 
 export interface PostEditProjectResponse {

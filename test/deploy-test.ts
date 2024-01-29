@@ -151,6 +151,30 @@ describe("deploy", () => {
     effects.close();
   });
 
+  it("updates title for exsting project if it doesn't match", async () => {
+    const projectId = "project123";
+    const deployConfig = {projectId};
+    const deployId = "deploy456";
+    const oldTitle =  `${TEST_CONFIG.title!} old`;
+    getCurentObservableApi()
+      .handleGetProject({
+        workspaceLogin: TEST_CONFIG.deploy!.workspace,
+        projectSlug: TEST_CONFIG.deploy!.project,
+        projectId,
+        title: oldTitle
+      })
+      .handleUpdateProject({projectId, title: TEST_CONFIG.title!})
+      .handlePostDeploy({projectId, deployId})
+      .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
+      .handlePostDeployUploaded({deployId})
+      .start();
+
+    const effects = new MockDeployEffects({deployConfig}).addIoResponse(/^Deploy message: /, "fix some bugs");
+    await deploy(TEST_OPTIONS, effects);
+
+    effects.close();
+  });
+
   it("does not prompt for a message when one is supplied on the command line", async () => {
     const projectId = "project123";
     const deployConfig = {projectId};
