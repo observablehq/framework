@@ -43,7 +43,7 @@ jobs:
           pip install -r requirements.txt
           yarn --frozen-lockfile && yarn build
         working-directory: examples/python
-      - run: mkdir dist/examples && for i in examples/*; do [ -d $i/dist ] && mv -v $i/dist dist/examples/$(basename $i); done
+      - run: mkdir dist/examples && for i in examples/*; do if [ -d $i/dist ]; then mv -v $i/dist dist/examples/$(basename $i); fi; done
       - uses: cloudflare/pages-action@1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}

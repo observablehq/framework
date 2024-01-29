@@ -47,7 +47,7 @@ const predictions = FileAttachment("data/predictions.csv").csv({typed: true});
 ## Analysis
 
 ```js
-const misclassified = predictions.filter((d) => d.species !== d.speciecs_predicted);
+const misclassified = predictions.filter((d) => d.species !== d.species_predicted);
 ```
 
 The logistic regression failed to classify ${misclassified.length} individuals. Let’s check what was amiss, with this faceted chart:
