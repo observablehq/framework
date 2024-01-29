@@ -40,7 +40,9 @@ yarn test:coverage
 
 ## Releasing
 
-(Note: This documentation is for Observable maintainers.) To release a new version of the CLI, first update the [package.json](https://github.com/observablehq/cli/blob/main/package.json) file by following the standard process for committing code changes:
+<div class="note">These instructions are intended for Observable staff.</div>
+
+To release a new version of the CLI, first update the [package.json](https://github.com/observablehq/cli/blob/main/package.json) file by following the standard process for committing code changes:
 
 1. Create a new branch.
 2. Edit the `version` field in the [package.json](https://github.com/observablehq/cli/blob/main/package.json) file as desired.

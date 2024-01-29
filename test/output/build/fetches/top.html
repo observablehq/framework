@@ -30,8 +30,8 @@ return {fooCsvData,fooJsonData,topCsvData,topJsonData};
 <input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
-  <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
   <ol>
+    <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
     <li class="observablehq-link"><a href="./">Home</a></li>
   </ol>
   <ol>
@@ -40,7 +40,7 @@ return {fooCsvData,fooJsonData,topCsvData,topJsonData};
   </ol>
 </nav>
 <script>{/* redacted init script */}</script>
-<aside id="observablehq-toc" data-selector="#observablehq-main h1:not(:first-of-type), #observablehq-main h2:not(h1 + h2)">
+<aside id="observablehq-toc" data-selector="#observablehq-main h1:not(:first-of-type), #observablehq-main h2:not(h1 + h2):has(a.observablehq-header-anchor)">
 <nav>
 </nav>
 </aside>

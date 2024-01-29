@@ -19,8 +19,8 @@ import {fileReference, getClientPath} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {getImplicitSpecifiers, getImplicitStylesheets} from "./libraries.js";
-import {diffMarkdown, readMarkdown} from "./markdown.js";
-import type {ParseResult, ReadMarkdownResult} from "./markdown.js";
+import {diffMarkdown, parseMarkdown} from "./markdown.js";
+import type {ParseResult} from "./markdown.js";
 import {renderPreview, resolveStylesheet} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {Telemetry} from "./telemetry.js";
@@ -198,7 +198,7 @@ export class PreviewServer {
         // Otherwise, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
         try {
-          const {html} = await renderPreview(await readFile(path + ".md", "utf-8"), {path: pathname, ...config});
+          const {html} = await renderPreview(path + ".md", {path: pathname, ...config});
           end(req, res, html, "text/html");
         } catch (error) {
           if (!isEnoent(error)) throw error; // internal error
@@ -214,10 +214,7 @@ export class PreviewServer {
       }
       if (req.method === "GET" && res.statusCode === 404) {
         try {
-          const {html} = await renderPreview(await readFile(join(root, "404.md"), "utf-8"), {
-            path: "/404",
-            ...config
-          });
+          const {html} = await renderPreview(join(root, "404.md"), {path: "/404", ...config});
           end(req, res, html, "text/html");
           return;
         } catch {
@@ -284,7 +281,7 @@ function getReferencedStyleSheet(html: string, fileReferencePath?: string) {
 
 function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defaultStyle}: Config) {
   let path: string | null = null;
-  let current: ReadMarkdownResult | null = null;
+  let current: ParseResult | null = null;
   let stylesheets: Set<string> | null = null;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
@@ -307,10 +304,9 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
   }
 
   function refreshAttachment(name: string) {
-    const {cells, html} = current!.parse;
+    const {cells, html} = current!;
     const fileReferencePath = fileReference(name, path!).path;
     const hasReferencedStyleSheet = getReferencedStyleSheet(html, fileReferencePath).length > 0;
-
     if (cells.some((cell) => cell.imports?.some((i) => i.name === name)) || hasReferencedStyleSheet) {
       watcher("change", hasReferencedStyleSheet ? fileReferencePath : undefined); // trigger re-compilation of JavaScript to get new import hashes
     } else {
@@ -339,17 +335,17 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
       }
       case "change": {
         if (href && href.endsWith(".css")) send({type: "update-stylesheet", href});
-        const updated = await readMarkdown(path, root);
-        if (current.parse.hash === updated.parse.hash) break;
-        const updatedStylesheets = await getStylesheets(updated.parse);
+        const updated = await parseMarkdown(join(root, path), {root, path});
+        if (current.hash === updated.hash) break;
+        const updatedStylesheets = await getStylesheets(updated);
         for (const href of difference(stylesheets, updatedStylesheets)) send({type: "remove-stylesheet", href});
         for (const href of difference(updatedStylesheets, stylesheets)) send({type: "add-stylesheet", href});
         stylesheets = updatedStylesheets;
         const diff = diffMarkdown(current, updated);
-        send({type: "update", diff, previousHash: current.parse.hash, updatedHash: updated.parse.hash});
+        send({type: "update", diff, previousHash: current.hash, updatedHash: updated.hash});
         current = updated;
         attachmentWatcher?.close();
-        attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(updated.parse), refreshAttachment);
+        attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(updated), refreshAttachment);
         break;
       }
     }
@@ -361,10 +357,10 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
     path += ".md";
-    current = await readMarkdown(path, root);
-    if (current.parse.hash !== initialHash) return void send({type: "reload"});
-    stylesheets = await getStylesheets(current.parse);
-    attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(current.parse), refreshAttachment);
+    current = await parseMarkdown(join(root, path), {root, path});
+    if (current.hash !== initialHash) return void send({type: "reload"});
+    stylesheets = await getStylesheets(current);
+    attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(current), refreshAttachment);
     markdownWatcher = watch(join(root, path), (event) => watcher(event));
   }
 

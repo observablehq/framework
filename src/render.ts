@@ -25,8 +25,8 @@ export interface RenderOptions extends Config {
   path: string;
 }
 
-export async function renderPreview(source: string, options: RenderOptions): Promise<Render> {
-  const parseResult = await parseMarkdown(source, options.root, options.path);
+export async function renderPreview(sourcePath: string, options: RenderOptions): Promise<Render> {
+  const parseResult = await parseMarkdown(sourcePath, options);
   return {
     html: await render(parseResult, {...options, preview: true}),
     files: parseResult.files,
@@ -35,8 +35,8 @@ export async function renderPreview(source: string, options: RenderOptions): Pro
   };
 }
 
-export async function renderServerless(source: string, options: RenderOptions): Promise<Render> {
-  const parseResult = await parseMarkdown(source, options.root, options.path);
+export async function renderServerless(sourcePath: string, options: RenderOptions): Promise<Render> {
+  const parseResult = await parseMarkdown(sourcePath, options);
   return {
     html: await render(parseResult, options),
     files: parseResult.files,
@@ -46,8 +46,8 @@ export async function renderServerless(source: string, options: RenderOptions): 
 }
 
 export function renderDefineCell(cell: Transpile): string {
-  const {id, inline, inputs, outputs, files, body, databases} = cell;
-  return `define({${Object.entries({id, inline, inputs, outputs, files, databases})
+  const {id, inline, inputs, outputs, files, body} = cell;
+  return `define({${Object.entries({id, inline, inputs, outputs, files})
     .filter((arg) => arg[1] !== undefined)
     .map((arg) => `${arg[0]}: ${JSON.stringify(arg[1])}`)
     .join(", ")}, body: ${body}});\n`;
@@ -92,10 +92,9 @@ ${
 </script>${pages.length > 0 ? html`\n${await renderSidebar(title, pages, path)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(parseResult), toc.label)}` : ""
   }
-<div id="observablehq-center">
+<div id="observablehq-center">${renderHeader(options, parseResult.data)}
 <main id="observablehq-main" class="observablehq">
-${html.unsafe(parseResult.html)}</main>
-${renderFooter(path, options)}
+${html.unsafe(parseResult.html)}</main>${renderFooter(path, options, parseResult.data)}
 </div>
 `);
 }
@@ -104,8 +103,8 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
   return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
-  <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
   <ol>
+    <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
     <li class="observablehq-link${
       normalizePath(path) === "/index" ? " observablehq-link-active" : ""
     }"><a href="${relativeUrl(path, "/")}">${title}</a></li>
@@ -140,7 +139,7 @@ interface Header {
   href: string;
 }
 
-const tocSelector = ["h1:not(:first-of-type)", "h2:not(h1 + h2)"];
+const tocSelector = ["h1:not(:first-of-type)", "h2:not(h1 + h2):has(a.observablehq-header-anchor)"];
 
 function findHeaders(parseResult: ParseResult): Header[] {
   return Array.from(parseHTML(parseResult.html).document.querySelectorAll(tocSelector.join(", ")))
@@ -227,15 +226,25 @@ function renderModulePreload(href: string): Html {
   return html`\n<link rel="modulepreload" href="${href}"${integrity ? html` integrity="${integrity}"` : ""}>`;
 }
 
-function renderFooter(path: string, options: Pick<Config, "pages" | "pager" | "title" | "footer">): Html {
+function renderHeader({header}: Pick<Config, "header">, data: ParseResult["data"]): Html | null {
+  if (data?.header !== undefined) header = data?.header;
+  return header ? html`\n<header id="observablehq-header">${html.unsafe(header)}</header>` : null;
+}
+
+function renderFooter(
+  path: string,
+  options: Pick<Config, "pages" | "pager" | "title" | "footer">,
+  data: ParseResult["data"]
+): Html | null {
+  let footer = options.footer;
+  if (data?.footer !== undefined) footer = data?.footer;
   const link = options.pager ? findLink(path, options) : null;
-  const footer = options.footer;
   return link || footer
-    ? html`<footer id="observablehq-footer">${link ? renderPager(path, link) : ""}${
-        footer ? html`\n<div>${html.unsafe(options.footer)}</div>` : ""
+    ? html`\n<footer id="observablehq-footer">${link ? renderPager(path, link) : ""}${
+        footer ? html`\n<div>${html.unsafe(footer)}</div>` : ""
       }
 </footer>`
-    : html``;
+    : null;
 }
 
 function renderPager(path: string, {prev, next}: PageLink): Html {
