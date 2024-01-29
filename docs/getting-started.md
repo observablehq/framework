@@ -1,3 +1,16 @@
+<style type="text/css">
+
+.focus {
+  color: var(--theme-foreground-focus);
+}
+
+.invert {
+  background-color: var(--theme-foreground-alt);
+  color: var(--theme-background);
+}
+
+</style>
+
 # Getting started
 
 Welcome! This tutorial will guide your first steps with Observable Framework. (We’ll refer to it as “Framework” for short.) If you follow this tutorial to the end, you’ll have a live dashboard ready to share. 🚀
@@ -58,25 +71,7 @@ yarn create @observablehq
 
 This runs `observable create`, our helper script for creating new projects. You will be asked several questions, starting with where to create the new project.
 
-<style type="text/css">
-
-.focus {
-  color: var(--theme-foreground-focus);
-}
-
-.focus-invert {
-  background-color: var(--theme-foreground-focus);
-  color: var(--theme-background);
-}
-
-.invert {
-  background-color: var(--theme-foreground-alt);
-  color: var(--theme-background);
-}
-
-</style>
-
-<pre><span class="muted">┌</span>  <span class="focus-invert"> observable create </span>
+<pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="focus">◆</span>  Where to create your project?
 <span class="focus">│</span>  <span class="muted"><span class="invert">.</span>/demo-project</span>
@@ -84,7 +79,7 @@ This runs `observable create`, our helper script for creating new projects. You 
 
 We’ll use the name `./hello-framework` for our project folder.
 
-<pre><span class="muted">┌</span>  <span class="focus-invert"> observable create </span>
+<pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Where to create your project?
 <span class="muted">│</span>  <span class="muted">./hello-framework</span>
@@ -96,7 +91,7 @@ We’ll use the name `./hello-framework` for our project folder.
 
 …
 
-<pre><span class="muted">┌</span>  <span class="focus-invert"> observable create </span>
+<pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Where to create your project?
 <span class="muted">│</span>  <span class="muted">./hello-framework</span>
@@ -114,7 +109,7 @@ If you choose a package manager here, we’ll automatically install dependencies
 
 …
 
-<pre><span class="muted">┌</span>  <span class="focus-invert"> observable create </span>
+<pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Where to create your project?
 <span class="muted">│</span>  <span class="muted">./hello-framework</span>
@@ -131,7 +126,7 @@ If you choose a package manager here, we’ll automatically install dependencies
 
 …
 
-<pre><span class="muted">┌</span>  <span class="focus-invert"> observable create </span>
+<pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Where to create your project?
 <span class="muted">│</span>  <span class="muted">./hello-framework</span>
