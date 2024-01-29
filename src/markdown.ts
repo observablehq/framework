@@ -105,7 +105,6 @@ function getLiveSource(content: string, tag: string): string | undefined {
 }
 
 function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: string, echo: boolean): RenderRule {
-  console.log({makeFenceRendererEcho: echo});
   return (tokens, idx, options, context: ParseContext, self) => {
     const token = tokens[idx];
     const {tag, attributes} = parseInfo(token.info);
