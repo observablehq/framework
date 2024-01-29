@@ -1,7 +1,7 @@
 import {exec} from "node:child_process";
 import {existsSync} from "node:fs";
 import {copyFile, mkdir, readFile, readdir, stat, writeFile} from "node:fs/promises";
-import {dirname, join, normalize, resolve} from "node:path";
+import {basename, dirname, join, normalize, resolve} from "node:path";
 import {setTimeout as sleep} from "node:timers/promises";
 import {fileURLToPath} from "node:url";
 import {promisify} from "node:util";
@@ -70,34 +70,41 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
         confirm({
           message: "Initialize git repository?"
         }),
-      installing: async ({results}) => {
+      installing: async ({results: {rootPath, includeSampleFiles, packageManager, initializeGit}}) => {
         const s = spinner();
         s.start("Copying template files");
-        // TODO use the “empty” template if results.includeSampleFiles is false
-        const templateDir = resolve(fileURLToPath(import.meta.url), "..", "..", "templates", "default");
+        const template = includeSampleFiles ? "default" : "empty";
+        const templateDir = resolve(fileURLToPath(import.meta.url), "..", "..", "templates", template);
+        const title = basename(rootPath!);
+        const runCommand = packageManager === "yarn" ? "yarn" : `${packageManager ?? "npm"} run`;
+        const installCommand = packageManager === "yarn" ? "yarn" : `${packageManager ?? "npm"} install`;
         await sleep(1000);
-        await recursiveCopyTemplate(templateDir, results.rootPath!, {}, effects);
-        if (results.packageManager) {
-          s.message(`Installing dependencies via ${results.packageManager}`);
+        await recursiveCopyTemplate(
+          templateDir,
+          rootPath!,
+          {
+            runCommand,
+            installCommand,
+            rootPath: rootPath!,
+            projectTitle: title,
+            projectTitleString: JSON.stringify(title)
+          },
+          effects
+        );
+        if (packageManager) {
+          s.message(`Installing dependencies via ${packageManager}`);
           await sleep(1000);
-          await promisify(exec)(results.packageManager, {cwd: results.rootPath});
+          await promisify(exec)(packageManager, {cwd: rootPath});
         }
-        if (results.initializeGit) {
+        if (initializeGit) {
           s.message("Initializing git repository");
           await sleep(1000);
-          await promisify(exec)("git init", {cwd: results.rootPath});
-          await promisify(exec)("git add -A", {cwd: results.rootPath});
+          await promisify(exec)("git init", {cwd: rootPath});
+          await promisify(exec)("git add -A", {cwd: rootPath});
         }
         s.stop("Installed!");
-        note(
-          [
-            `cd ${results.rootPath}`,
-            results.packageManager === "yarn" ? "yarn dev" : `${results.packageManager ?? "npm"} run dev`
-          ]
-            .map((line) => pc.reset(pc.cyan(line)))
-            .join("\n"),
-          "Next steps…"
-        );
+        const instructions = [`cd ${rootPath}`, `${runCommand} dev`];
+        note(instructions.map((line) => pc.reset(pc.cyan(line))).join("\n"), "Next steps…");
         outro("Problems? https://cli.observablehq.com/getting-started");
         process.exit(0);
       }
@@ -150,11 +157,11 @@ async function recursiveCopyTemplate(
     if (templatePath.endsWith(".tmpl")) {
       outputPath = outputPath.replace(/\.tmpl$/, "");
       let contents = await readFile(templatePath, "utf8");
-      // contents = contents.replaceAll(/\{\{\s*(\w+)\s*\}\}/g, (_, key) => {
-      //   const val = context[key];
-      //   if (val) return val;
-      //   throw new Error(`no template variable ${key}`);
-      // });
+      contents = contents.replaceAll(/\{\{\s*(\w+)\s*\}\}/g, (_, key) => {
+        const val = context[key];
+        if (val) return val;
+        throw new Error(`no template variable ${key}`);
+      });
       await effects.writeFile(outputPath, contents);
     } else {
       await effects.copyFile(templatePath, outputPath);
