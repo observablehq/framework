@@ -92,3 +92,12 @@ const eiaPoints = await FileAttachment("data/eia-system-points.json").json().the
    }
   </div>
 </div>
+
+
+```js
+const baTest = FileAttachment("data/ba-interchange.csv").csv({typed: true});
+```
+
+```js
+baTest
+```
