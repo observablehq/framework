@@ -1,6 +1,5 @@
 import {createHash} from "node:crypto";
 import {readFile} from "node:fs/promises";
-import {join} from "node:path";
 import {type Patch, type PatchItem, getPatch} from "fast-array-diff";
 import equal from "fast-deep-equal";
 import matter from "gray-matter";
@@ -19,11 +18,6 @@ import type {FileReference, ImportReference, PendingTranspile, Transpile} from "
 import {transpileJavaScript} from "./javascript.js";
 import {transpileTag} from "./tag.js";
 import {resolvePath} from "./url.js";
-
-export interface ReadMarkdownResult {
-  contents: string;
-  parse: ParseResult;
-}
 
 export interface HtmlPiece {
   type: "html";
@@ -418,18 +412,22 @@ async function toParseCells(pieces: RenderPiece[]): Promise<CellPiece[]> {
   return cellPieces;
 }
 
-// TODO We need to know what line in the source the markdown starts on and pass
-// that as startLine in the parse context below.
-export async function parseMarkdown(source: string, root: string, sourcePath: string): Promise<ParseResult> {
+export interface ParseOptions {
+  root: string;
+  path: string;
+}
+
+export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptions): Promise<ParseResult> {
+  const source = await readFile(sourcePath, "utf-8");
   const parts = matter(source, {});
   const md = MarkdownIt({html: true});
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
-  md.renderer.rules.placeholder = makePlaceholderRenderer(root, sourcePath);
-  md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!, sourcePath);
+  md.renderer.rules.placeholder = makePlaceholderRenderer(root, path);
+  md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!, path);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
-  md.renderer.render = renderIntoPieces(md.renderer, root, sourcePath);
+  md.renderer.render = renderIntoPieces(md.renderer, root, path);
   const context: ParseContext = {files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
   const tokens = md.parse(parts.content, context);
   const html = md.renderer.render(tokens, md.options, context); // Note: mutates context.pieces, context.files!
@@ -441,7 +439,7 @@ export async function parseMarkdown(source: string, root: string, sourcePath: st
     imports: context.imports,
     pieces: toParsePieces(context.pieces),
     cells: await toParseCells(context.pieces),
-    hash: await computeMarkdownHash(source, root, sourcePath, context.imports)
+    hash: await computeMarkdownHash(source, root, path, context.imports)
   };
 }
 
@@ -532,14 +530,8 @@ function getCellsPatch(prevCells: CellPiece[], nextCells: CellPiece[]): Patch<Pa
     );
 }
 
-export function diffMarkdown({parse: prevParse}: ReadMarkdownResult, {parse: nextParse}: ReadMarkdownResult) {
-  return getPatch<ParsePiece>(prevParse.pieces, nextParse.pieces, equal)
-    .concat(getCellsPatch(prevParse.cells, nextParse.cells))
+export function diffMarkdown(oldParse: ParseResult, newParse: ParseResult) {
+  return getPatch<ParsePiece>(oldParse.pieces, newParse.pieces, equal)
+    .concat(getCellsPatch(oldParse.cells, newParse.cells))
     .map(diffReducer);
-}
-
-export async function readMarkdown(path: string, root: string): Promise<ReadMarkdownResult> {
-  const contents = await readFile(join(root, path), "utf-8");
-  const parse = await parseMarkdown(contents, root, path);
-  return {contents, parse};
 }
