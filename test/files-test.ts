@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import {stat} from "node:fs/promises";
-import {maybeStat, prepareOutput, visitFiles} from "../src/files.js";
+import {maybeStat, prepareOutput, visitFiles, visitMarkdownFiles} from "../src/files.js";
 
 describe("prepareOutput(path)", () => {
   it("does nothing if passed the current directory", async () => {
@@ -44,6 +44,15 @@ describe("visitFiles(root)", () => {
   });
   it("handles circular symlinks, visiting files only once", async () => {
     assert.deepStrictEqual(await collect(visitFiles("test/input/circular-files")), ["a/a.txt", "b/b.txt"]);
+  });
+});
+
+describe("visitMarkdownFiles(root)", () => {
+  it("visits all Markdown files in a directory, return the relative path from the root", async () => {
+    assert.deepStrictEqual(await collect(visitMarkdownFiles("test/input/build/files")), [
+      "files.md",
+      "subsection/subfiles.md"
+    ]);
   });
 });
 

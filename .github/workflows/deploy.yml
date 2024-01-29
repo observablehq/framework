@@ -38,7 +38,7 @@ jobs:
         working-directory: examples/plot
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: mkdir dist/examples && for i in examples/*; do [ -d $i/dist ] && mv -v $i/dist dist/examples/$(basename $i); done
+      - run: mkdir dist/examples && for i in examples/*; do if [ -d $i/dist ]; then mv -v $i/dist dist/examples/$(basename $i); fi; done
       - uses: cloudflare/pages-action@1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
