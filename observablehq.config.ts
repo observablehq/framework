@@ -109,25 +109,9 @@ export default {
     <a target="_blank" href="https://github.com/observablehq/cli/releases">${version}</a>
     <a target="_blank" href="https://github.com/observablehq/cli">GitHub</a>
   </span>
-</div>
-<style type="text/css">
-
-#observablehq-header a[target="_blank"]:not(:hover, :focus) {
-  color: inherit;
-}
-
-#observablehq-header a[target="_blank"]:not(:hover, :focus)::after {
-  color: var(--theme-foreground-muted);
-}
-
-#observablehq-header a[target="_blank"]::after {
-  content: "↗︎";
-  margin-left: 0.25rem;
-  display: inline-block;
-}
-
-</style>`,
+</div>`,
   footer: `© ${new Date().getUTCFullYear()} Observable, Inc.`,
+  style: "style.css",
   deploy: {
     workspace: "@observablehq",
     project: "cli" // TODO framework
