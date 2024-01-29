@@ -67,6 +67,7 @@
     "markdown-it-anchor": "^8.6.7",
     "mime": "^3.0.0",
     "open": "^9.1.0",
+    "picocolors": "^1.0.0",
     "rollup": "^4.6.0",
     "rollup-plugin-esbuild": "^6.1.0",
     "send": "^0.18.0",
