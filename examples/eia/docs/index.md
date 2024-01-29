@@ -93,11 +93,32 @@ const eiaPoints = await FileAttachment("data/eia-system-points.json").json().the
   </div>
 </div>
 
+Accessing data: 
 
 ```js
-const baTest = FileAttachment("data/ba-interchange.csv").csv({typed: true});
+const baInterchange = FileAttachment("data/eia-data/ba-interchange.csv").csv({typed: true});
+
+const baHourly = FileAttachment("data/eia-data/ba-hourly.csv").csv({typed: true});
+```
+
+INTERCHANGE
+
+```js
+baInterchange
+```
+
+BA HOURLY
+
+```js
+baHourly
 ```
 
 ```js
-baTest
+// Map longitudes to BA abbreviations
+const pointsMapLon = new Map(eiaPoints.map(d => [d.id, d.lon]));
+
+// Map latitudes to BA abbreviations
+const pointsMapLat = new Map(eiaPoints.map(d => [d.id, d.lat]));
+
+const baInterchangeSp = baInterchange.map(d => ({...d, lat1: pointsMapLat.get(d["fromba"]), lon1: pointsMapLon.get(d["fromba"]), lat2: pointsMapLat.get(d["toba"]), lon2: pointsMapLon.get(d["toba"])}));
 ```
