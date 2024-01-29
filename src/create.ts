@@ -2,7 +2,7 @@ import {existsSync} from "node:fs";
 import {copyFile, mkdir, readFile, readdir, stat, writeFile} from "node:fs/promises";
 import {join, normalize, parse, resolve} from "node:path";
 import {fileURLToPath} from "node:url";
-import {cancel, confirm, group, intro, outro, select, text} from '@clack/prompts';
+import {cancel, confirm, group, intro, outro, select, text} from "@clack/prompts";
 
 export interface CreateEffects {
   log(output: string): void;
@@ -38,38 +38,42 @@ export async function create({output = ""}: {output?: string}, effects: CreateEf
 
   intro("@observablehq/create");
 
-  const results = await group({
-    projectName: () => text({
-      message: 'Project folder name',
-      placeholder: 'name',
-      initialValue: '',
-      validate: name => validateProjectName(projectDir, name)
-    }),
-    includeSamples: () => confirm({
-      message: 'Include sample files?',
-    }),
-    pkgManager: () => select({
-      message: 'Choose Package Manager',
-      options: [
-        { value: 'yarn' },
-        { value: 'npm' },
-      ],
-    }),
-    installDependencies: () => confirm({
-      message: 'Install dependencies?',
-    }),
-    initGit: () => confirm({
-      message: 'Initialize git repository?',
-    })
-  },
-  {
-    onCancel: () => {
-      cancel('create cancelled');
-      process.exit(0);
+  const results = await group(
+    {
+      projectName: () =>
+        text({
+          message: "Project folder name",
+          placeholder: "name",
+          initialValue: "",
+          validate: (name) => validateProjectName(projectDir, name)
+        }),
+      includeSamples: () =>
+        confirm({
+          message: "Include sample files?"
+        }),
+      pkgManager: () =>
+        select({
+          message: "Choose Package Manager",
+          options: [{value: "yarn"}, {value: "npm"}]
+        }),
+      installDependencies: () =>
+        confirm({
+          message: "Install dependencies?"
+        }),
+      initGit: () =>
+        confirm({
+          message: "Initialize git repository?"
+        })
     },
-  });
+    {
+      onCancel: () => {
+        cancel("create cancelled");
+        process.exit(0);
+      }
+    }
+  );
 
-  console.log({ results });
+  console.log({results});
   outro("Success");
   process.exit(0);
 
