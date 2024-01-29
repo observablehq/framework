@@ -1,0 +1,19 @@
+{
+    "type": "module",
+    "scripts": {
+      "dev": "observable preview",
+      "build": "rm -rf dist && observable build",
+      "postinstall": "ln -sf ../../../../bin/observable-init.js node_modules/.bin/observable"
+    },
+    "dependencies": {
+      "@observablehq/cli": "link:../..",
+      "d3": "^7.8.5",
+      "d3-array": "^3.2.4",
+      "d3-dsv": "^3.0.1",
+      "d3-time": "^3.1.0",
+      "d3-time-format": "^4.1.0"
+    },
+    "engines": {
+      "node": ">=20.6"
+    }
+  }
