@@ -2,16 +2,28 @@
 theme: [cotton, sun-faded]
 ---
 
+```js
+import {trend} from "./components/trend.js";
+```
+
 # US electric grid: hourly demand and interchange
 
-This example dashboard reenvisions parts of the US Energy Information Administration's [Hourly Electric Grid Monitor]((https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48)). Visit [About the EIA-930 data](https://www.eia.gov/electricity/gridmonitor/about) to learn more about data collection and quality, the US electric grid, and balancing authorities responsible for electricity interchange.
+This page reenvisions parts of the US Energy Information Administration's [Hourly Electric Grid Monitor]((https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48)). Visit [About the EIA-930 data](https://www.eia.gov/electricity/gridmonitor/about) to learn more about data collection and quality, the US electric grid, and balancing authorities responsible for nationwide electricity interchange.
 
 ```js
 // International electricity interchange data:
 const countryInterchangeSeries = await FileAttachment("data/country-interchange.csv").csv({typed: true});
 
 // US overall demand, generation, forecast
-const usOverview = FileAttachment("data/us-demand.csv").csv({typed: true});
+const usOverview = await FileAttachment("data/us-demand.csv").csv({typed: true});
+
+const usDemand = usOverview.filter(d => d.name == "Demand").sort(function(a,b){
+  return new Date(b.date) - new Date(a.date);
+})[0];
+```
+
+```js
+usDemand
 ```
 
 ```js
@@ -50,11 +62,27 @@ const genOnlyBA = eiaBARef.filter(d => d["Generation Only BA"] == "Yes").map(d =
 ```
 
 ```js
-const baHourlyDemand = baHourly.filter(d => d.type == "D").map(d => ({ba: d["respondent-name"], period: d.period, value: d.value})); // Only use demand ("D");
+const baHourlyDemand = baHourly.filter(d => d.type == "D").map(d => ({ba: d["respondent-name"], baAbb: d["respondent"], period: d.period, value: d.value})); // Only use demand ("D");
 ```
 
 ```js
 const baHourlyLatest = d3.rollup(baHourlyDemand, d => d[0].value, d => d["ba"]);
+```
+
+```js
+// TODO
+// Includes regions and totals
+// Should only include BAs
+// Use includes to exclude things like Lower 48, Midwest, etc.
+const top5LatestDemand = Array.from(baHourlyLatest, ([name, value]) => ({ name, value })).sort(((a, b) => b.value - a.value)).slice(0, 5);
+```
+
+```js
+const baLatestHourlyDemandLower48 = baHourlyDemand.filter(d => d.ba == "United States Lower 48");
+```
+
+```js
+baLatestHourlyDemandLower48
 ```
 
 ```js
@@ -104,7 +132,6 @@ const recentHour = timeParse(baHourly.filter(d => d.type == "D")[0].period);
     ${
       // Change in hourly demand Plot
 Plot.plot({
-  caption: `Add helpful information about the map`, 
   color: {domain: [-15, 15], range: ["#4269d0","#4269d0", "white", "#ff725c","#ff725c"], type: "diverging", pivot: 0, legend: true, label: "Change in demand (%) from previous hour" },
   projection: "albers",
   style: "overflow: visible",
@@ -171,12 +198,16 @@ Plot.plot({
     }
   </div>
   <div class="card grid-colspan-1 grid-rowspan-1">
-    <p>Tortor condimentum lacinia quis vel eros. Arcu risus quis varius quam quisque id. Magnis dis parturient montes nascetur ridiculus mus mauris. Porttitor leo a diam sollicitudin. Odio facilisis mauris sit amet massa vitae tortor. Nibh venenatis cras sed felis eget velit aliquet sagittis. Ullamcorper sit amet risus nullam eget felis eget nunc. In egestas erat imperdiet sed euismod nisi porta lorem mollis. A erat nam at lectus urna duis convallis. Id eu nisl nunc mi ipsum faucibus vitae. Purus ut faucibus pulvinar elementum integer enim neque volutpat ac.</p>
+    <h2>Latest total US electricity demand</h2>
+    <h3>${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleDateString() }</h3>
+    <h3>Includes lower 48 states only</h3>
+    <span class="big">${d3.format(",")(baLatestHourlyDemandLower48[0].value)} MWh</span>
   </div>
-    <div class="card grid-colspan-1 grid-rowspan-1">
-    <p>Tortor condimentum lacinia quis vel eros. Arcu risus quis varius quam quisque id. Magnis dis parturient montes nascetur ridiculus mus mauris. Porttitor leo a diam sollicitudin. Odio facilisis mauris sit amet massa vitae tortor. Nibh venenatis cras sed felis eget velit aliquet sagittis. Ullamcorper sit amet risus nullam eget felis eget nunc. In egestas erat imperdiet sed euismod nisi porta lorem mollis. A erat nam at lectus urna duis convallis. Id eu nisl nunc mi ipsum faucibus vitae. Purus ut faucibus pulvinar elementum integer enim neque volutpat ac.</p>
+    <div class="grid-colspan-1 grid-rowspan-1">
+    <p>Tortor condimentum lacinia quis vel eros. Arcu risus quis varius quam quisque id. Magnis dis parturient montes nascetur ridiculus mus mauris. Porttitor leo a diam sollicitudin. Odio facilisis mauris sit amet massa vitae tortor. Nibh venenatis cras sed felis eget velit aliquet sagittis. Ullamcorper sit amet risus nullam eget felis eget nunc.</p>
   </div>
-   <div class="card grid-colspan-3 grid-rowspan-1">
+
+<div class="card grid-colspan-3 grid-rowspan-1">
   <h2>US generation, demand, and demand forecast</h2>
   <h3>Add subtitle with units</3>
    ${
@@ -214,3 +245,7 @@ Plot.plot({
 </div>
 
 Credit: Some code for EIA data access and wrangling is reused from notebooks by Ian Johnson. Thank you Ian!
+
+```js
+baHourlyDemand
+```
