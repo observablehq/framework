@@ -357,14 +357,14 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
           .split(",")
           .map((p) => {
             const parts = p.trim().split(/\s+/);
-            const source = parts[0];
+            const source = decodeURIComponent(parts[0]);
             const file = resolvePath(source);
             return file ? `${file.path} ${parts.slice(1).join(" ")}`.trim() : parts.join(" ");
           })
           .filter((p) => !!p);
         if (paths && paths.length > 0) element.setAttribute(src, paths.join(", "));
       } else {
-        const source = element.getAttribute(src)!;
+        const source = decodeURIComponent(element.getAttribute(src)!);
         const file = resolvePath(source);
         if (file) element.setAttribute(src, file.path);
       }

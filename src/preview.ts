@@ -86,7 +86,7 @@ export class PreviewServer {
     if (this._verbose) console.log(faint(req.method!), req.url);
     try {
       const url = new URL(req.url!, "http://localhost");
-      let {pathname} = url;
+      let pathname = decodeURIComponent(url.pathname);
       let match: RegExpExecArray | null;
       if (pathname === "/_observablehq/runtime.js") {
         const root = join(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "../../");

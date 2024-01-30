@@ -1,6 +1,5 @@
 ---
 toc: false
-theme: dashboard
 ---
 
 # Classification prediction
@@ -9,14 +8,17 @@ theme: dashboard
 const predictions = FileAttachment("data/predictions.csv").csv({typed: true});
 ```
 
-<div class="grid grid-cols-1" style="grid-auto-rows: 420px;">
+<div class="grid grid-cols-1" style="grid-auto-rows: 560px;">
   <div class="card">
     ${resize((width, height) => Plot.plot({
         grid: true,
         width,
-        height: height - 60,
+        height: height - 95,
         title : "Predicting penguins species with logistic regression",
         caption: "Incorrect predictions highlighted with diamonds. Actual species encoded with color and predicted species encoded with symbols.",
+        color: {
+          legend: true,
+        },
         x: {label: "Culmen length (mm)"},
         y: {label: "Culmen depth (mm)"},
         marks: [

@@ -46,6 +46,7 @@
     ]
   },
   "dependencies": {
+    "@clack/prompts": "^0.7.0",
     "@observablehq/inputs": "^0.10.6",
     "@observablehq/runtime": "^5.9.4",
     "@rollup/plugin-node-resolve": "^15.2.3",
@@ -66,7 +67,6 @@
     "markdown-it-anchor": "^8.6.7",
     "mime": "^3.0.0",
     "open": "^9.1.0",
-    "prompts": "^2.4.2",
     "rollup": "^4.6.0",
     "rollup-plugin-esbuild": "^6.1.0",
     "send": "^0.18.0",

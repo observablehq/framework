@@ -24,20 +24,30 @@ jobs:
             'examples/*/yarn.lock'
       - run: yarn --frozen-lockfile
       - run: yarn build
-      - run: yarn --frozen-lockfile && yarn build
+      - name: Build example "google-analytics"
+        run: yarn --frozen-lockfile && yarn build
         working-directory: examples/google-analytics
         env:
           GA_PROPERTY_ID: ${{ vars.GA_PROPERTY_ID }}
           GA_CLIENT_EMAIL: ${{ secrets.GA_CLIENT_EMAIL }}
           GA_PRIVATE_KEY: ${{ secrets.GA_PRIVATE_KEY }}
-      - run: yarn --frozen-lockfile && yarn build
+      - name: Build example "hello-world"
+        run: yarn --frozen-lockfile && yarn build
         working-directory: examples/hello-world
-      - run: yarn --frozen-lockfile && yarn build
-        working-directory: examples/pmms
-      - run: yarn --frozen-lockfile && yarn build
+      - name: Build example "plot"
+        run: yarn --frozen-lockfile && yarn build
         working-directory: examples/plot
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build example "pmms"
+        run: yarn --frozen-lockfile && yarn build
+        working-directory: examples/pmms
+      - name: Build example "python"
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          yarn --frozen-lockfile && yarn build
+        working-directory: examples/python
       - run: mkdir dist/examples && for i in examples/*; do if [ -d $i/dist ]; then mv -v $i/dist dist/examples/$(basename $i); fi; done
       - uses: cloudflare/pages-action@1
         with:
