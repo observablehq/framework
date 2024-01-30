@@ -1,1 +1,5 @@
-../default/.gitignore
+.DS_Store
+dist/
+docs/.observablehq/cache/
+node_modules/
+yarn-error.log
