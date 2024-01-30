@@ -130,7 +130,7 @@ export class ObservableApiClient {
     });
   }
 
-  async editProject(projectId: string, updates: PostEditProjectRequest): Promise<PostEditProjectResponse> {
+  async postEditProject(projectId: string, updates: PostEditProjectRequest): Promise<PostEditProjectResponse> {
     return await this._fetch<PostEditProjectResponse>(new URL(`/cli/project/${projectId}/edit`, this._apiOrigin), {
       method: "POST",
       headers: {"content-type": "application/json"},
