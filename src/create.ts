@@ -5,10 +5,13 @@ import {basename, dirname, join, normalize, resolve} from "node:path";
 import {setTimeout as sleep} from "node:timers/promises";
 import {fileURLToPath} from "node:url";
 import {promisify} from "node:util";
-import {cancel, confirm, group, intro, note, outro, select, spinner, text} from "@clack/prompts";
+import * as clack from "@clack/prompts";
+import type {ClackEffects} from "./clack.js";
 import {cyan, inverse, reset, underline} from "./tty.js";
 
 export interface CreateEffects {
+  clack: ClackEffects;
+  sleep: (delay?: number) => Promise<void>;
   log(output: string): void;
   mkdir(outputPath: string, options?: {recursive?: boolean}): Promise<void>;
   copyFile(sourcePath: string, outputPath: string): Promise<void>;
@@ -16,6 +19,8 @@ export interface CreateEffects {
 }
 
 const defaultEffects: CreateEffects = {
+  clack,
+  sleep,
   log(output: string): void {
     console.log(output);
   },
@@ -37,18 +42,19 @@ const defaultEffects: CreateEffects = {
 // priority is supporting the interactive case, not the automated one.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function create(options = {}, effects: CreateEffects = defaultEffects): Promise<void> {
-  intro(inverse(" observable create "));
-  await group(
+  const {clack} = effects;
+  clack.intro(inverse(" observable create "));
+  await clack.group(
     {
       rootPath: () =>
-        text({
+        clack.text({
           message: "Where to create your project?",
           placeholder: "./hello-framework",
           defaultValue: "./hello-framework",
           validate: validateRootPath
         }),
       includeSampleFiles: () =>
-        select({
+        clack.select({
           message: "Include sample files to help you get started?",
           options: [
             {value: true, label: "Yes, include sample files", hint: "recommended"},
@@ -57,7 +63,7 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
           initialValue: true
         }),
       packageManager: () =>
-        select({
+        clack.select({
           message: "Install dependencies?",
           options: [
             {value: "npm", label: "Yes, via npm", hint: "recommended"},
@@ -67,18 +73,18 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
           initialValue: inferPackageManager()
         }),
       initializeGit: () =>
-        confirm({
+        clack.confirm({
           message: "Initialize git repository?"
         }),
       installing: async ({results: {rootPath, includeSampleFiles, packageManager, initializeGit}}) => {
-        const s = spinner();
+        const s = clack.spinner();
         s.start("Copying template files");
         const template = includeSampleFiles ? "default" : "empty";
         const templateDir = resolve(fileURLToPath(import.meta.url), "..", "..", "templates", template);
         const title = basename(rootPath!);
         const runCommand = packageManager === "yarn" ? "yarn" : `${packageManager ?? "npm"} run`;
         const installCommand = packageManager === "yarn" ? "yarn" : `${packageManager ?? "npm"} install`;
-        await sleep(1000);
+        await effects.sleep(1000);
         await recursiveCopyTemplate(
           templateDir,
           rootPath!,
@@ -93,25 +99,24 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
         );
         if (packageManager) {
           s.message(`Installing dependencies via ${packageManager}`);
-          await sleep(1000);
+          await effects.sleep(1000);
           await promisify(exec)(packageManager, {cwd: rootPath});
         }
         if (initializeGit) {
           s.message("Initializing git repository");
-          await sleep(1000);
+          await effects.sleep(1000);
           await promisify(exec)("git init", {cwd: rootPath});
           await promisify(exec)("git add -A", {cwd: rootPath});
         }
         s.stop("Installed!");
         const instructions = [`cd ${rootPath}`, `${runCommand} dev`];
-        note(instructions.map((line) => reset(cyan(line))).join("\n"), "Next steps…");
-        outro(`Problems? ${underline("https://cli.observablehq.com/getting-started")}`);
-        process.exit(0);
+        clack.note(instructions.map((line) => reset(cyan(line))).join("\n"), "Next steps…");
+        clack.outro(`Problems? ${underline("https://cli.observablehq.com/getting-started")}`);
       }
     },
     {
       onCancel: () => {
-        cancel("create cancelled");
+        clack.cancel("create cancelled");
         process.exit(0);
       }
     }
