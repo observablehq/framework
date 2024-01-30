@@ -8,7 +8,7 @@ toc: false
 const predictions = FileAttachment("data/predictions.csv").csv({typed: true});
 ```
 
-<div class="grid grid-cols-1" style="grid-auto-rows: 420px;">
+<div class="grid grid-cols-1" style="grid-auto-rows: 560px;">
   <div class="card">
     ${resize((width, height) => Plot.plot({
         grid: true,
@@ -58,13 +58,10 @@ The logistic regression failed to classify ${misclassified.length} individuals. 
   <div class="card">
     ${resize((width, height) => Plot.plot({
         width,
-        height: height - 30,
+        height,
         inset: 4,
         grid: true,
         marginRight: 60,
-        color: {
-          legend: true,
-        },
         x: {label: "Culmen length (mm)"},
         y: {label: "Culmen depth (mm)"},
         facet: {
