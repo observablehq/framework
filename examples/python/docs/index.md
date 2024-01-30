@@ -1,6 +1,5 @@
 ---
 toc: false
-theme: dashboard
 ---
 
 # Classification prediction
@@ -14,9 +13,12 @@ const predictions = FileAttachment("data/predictions.csv").csv({typed: true});
     ${resize((width, height) => Plot.plot({
         grid: true,
         width,
-        height: height - 60,
+        height: height - 95,
         title : "Predicting penguins species with logistic regression",
         caption: "Incorrect predictions highlighted with diamonds. Actual species encoded with color and predicted species encoded with symbols.",
+        color: {
+          legend: true,
+        },
         x: {label: "Culmen length (mm)"},
         y: {label: "Culmen depth (mm)"},
         marks: [
@@ -56,10 +58,13 @@ The logistic regression failed to classify ${misclassified.length} individuals. 
   <div class="card">
     ${resize((width, height) => Plot.plot({
         width,
-        height,
+        height: height - 30,
         inset: 4,
         grid: true,
         marginRight: 60,
+        color: {
+          legend: true,
+        },
         x: {label: "Culmen length (mm)"},
         y: {label: "Culmen depth (mm)"},
         facet: {
