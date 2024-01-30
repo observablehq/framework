@@ -1,6 +1,6 @@
 # Mapbox GL JS
 
-[Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/guides/) is a library for building web maps and web applications with Mapbox's modern mapping technology. Mapbox GL JS is available by default as `mapboxgl` in Markdown, but you can import it explicitly like so:
+[Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/guides/) is a library for building web maps and web applications with Mapbox’s modern mapping technology. Mapbox GL JS is available by default as `mapboxgl` in Markdown, but you can import it explicitly like so:
 
 ```js echo
 import mapboxgl from "npm:mapbox-gl";
