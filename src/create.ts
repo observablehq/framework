@@ -6,7 +6,7 @@ import {setTimeout as sleep} from "node:timers/promises";
 import {fileURLToPath} from "node:url";
 import {promisify} from "node:util";
 import {cancel, confirm, group, intro, note, outro, select, spinner, text} from "@clack/prompts";
-import pc from "picocolors";
+import {cyan, inverse, reset, underline} from "./tty.js";
 
 export interface CreateEffects {
   log(output: string): void;
@@ -37,7 +37,7 @@ const defaultEffects: CreateEffects = {
 // priority is supporting the interactive case, not the automated one.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function create(options = {}, effects: CreateEffects = defaultEffects): Promise<void> {
-  intro(pc.inverse(" observable create "));
+  intro(inverse(" observable create "));
   await group(
     {
       rootPath: () =>
@@ -104,8 +104,8 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
         }
         s.stop("Installed!");
         const instructions = [`cd ${rootPath}`, `${runCommand} dev`];
-        note(instructions.map((line) => pc.reset(pc.cyan(line))).join("\n"), "Next steps…");
-        outro("Problems? https://cli.observablehq.com/getting-started");
+        note(instructions.map((line) => reset(cyan(line))).join("\n"), "Next steps…");
+        outro(`Problems? ${underline("https://cli.observablehq.com/getting-started")}`);
         process.exit(0);
       }
     },
