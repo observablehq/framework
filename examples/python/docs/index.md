@@ -42,7 +42,8 @@ const predictions = FileAttachment("data/predictions.csv").csv({typed: true});
       }))}
   </div>
 </div>
-<div class="card" style="margin-bottom: 2rem;">
+
+<div class="card" style="margin: 1rem 0 2rem 0; padding: 0;">
   ${Inputs.table(predictions)}
 </div>
 
