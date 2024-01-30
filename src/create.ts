@@ -1,6 +1,6 @@
 import {exec} from "node:child_process";
-import {existsSync} from "node:fs";
-import {copyFile, mkdir, readFile, readdir, stat, writeFile} from "node:fs/promises";
+import {accessSync, existsSync, readdirSync, statSync} from "node:fs";
+import {constants, copyFile, mkdir, readFile, readdir, stat, writeFile} from "node:fs/promises";
 import {basename, dirname, join, normalize, resolve} from "node:path";
 import {setTimeout as sleep} from "node:timers/promises";
 import {fileURLToPath} from "node:url";
@@ -126,16 +126,25 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
 function validateRootPath(rootPath: string): string | void {
   if (rootPath === "") return; // accept default value
   rootPath = normalize(rootPath);
-  if (!["/", "../", "./"].some((prefix) => rootPath.startsWith(prefix))) rootPath = join(".", rootPath);
-  if (rootPath.length === 0) {
-    return "Project name must be at least 1 character long.";
+  if (!canWriteRecursive(rootPath)) return "Path is not writable.";
+  if (!existsSync(rootPath)) return;
+  if (!statSync(rootPath).isDirectory()) return "File already exists.";
+  if (readdirSync(rootPath).length !== 0) return "Directory is not empty.";
+}
+
+function canWriteRecursive(rootPath: string): boolean {
+  while (true) {
+    const dir = dirname(rootPath);
+    try {
+      accessSync(dir, constants.W_OK);
+      return true;
+    } catch {
+      // try parent
+    }
+    if (dir === rootPath) break;
+    rootPath = dir;
   }
-  if (!existsSync(dirname(rootPath))) {
-    return "Parent directory does not exist.";
-  }
-  if (existsSync(rootPath)) {
-    return "Directory already exists.";
-  }
+  return false;
 }
 
 async function recursiveCopyTemplate(
