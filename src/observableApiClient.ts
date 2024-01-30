@@ -172,7 +172,7 @@ export class ObservableApiClient {
 }
 
 export interface PostEditProjectRequest {
-  title: string;
+  title?: string;
 }
 
 export interface PostEditProjectResponse {
