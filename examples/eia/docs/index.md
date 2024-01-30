@@ -1,5 +1,5 @@
 ---
-theme: cotton
+theme: [cotton, sun-faded]
 ---
 
 # US energy grid
@@ -37,7 +37,6 @@ const statemesh = topojson.mesh(us, us.objects.states, (a, b) => a !== b);
 const eiaPoints = await FileAttachment("data/eia-system-points.json").json().then(d => d[0].data);
 ```
 
-<!-- Testing cards -->
 
 <div class="grid grid-cols-3">
   <div class="card grid-colspan-2 grid-rowspan-2">
@@ -54,15 +53,15 @@ Plot.plot({
   style: "overflow: visible",
   r: { domain: d3.extent(eiaPoints, (d) => d.radius), range: [5, 30] },
   marks: [
-    Plot.geo(nation, {stroke: "black", fill: "#909090", opacity: 0.1}),
-    Plot.geo(statemesh, {stroke: "#767676", opacity: 0.2}),
+    Plot.geo(nation, {stroke: "#6D6D6D", fill: "#6D6D6D", opacity: 0.5}),
+    Plot.geo(statemesh, {stroke: "#6D6D6D", opacity: 0.4}),
     //Plot.arrow(eiaConnectionsFull, {x1: "lon1", x2: "lon2", y1: "lat1", y2: "lat2", stroke: "gray", strokeWidth: 0.7, headLength: 0}),
     Plot.dot(eiaPoints, { 
       x: "lon",
       y: "lat",
       r: "radius",
       stroke: "gray",
-      strokeWidth: 0.5,
+      strokeWidth: 1,
       filter: (d) => isNaN(baHourlyChange.get(d.name)),
       fill: "#ededed"
     }),
@@ -73,14 +72,14 @@ Plot.plot({
       r: "radius",
       fill: "#efb118",
       stroke: "gray",
-      strokeWidth: 0.5
+      strokeWidth: 1
     }),
     Plot.dot(eiaPoints, {
       x: "lon",
       y: "lat",
       r: "radius",
       stroke: "gray",
-      strokeWidth: 0.5,
+      strokeWidth: 1,
       filter: (d) => !isNaN(baHourlyChange.get(d.name)),
       fill: (d) => baHourlyChange.get(d.name)
     }),
@@ -155,7 +154,6 @@ Plot.plot({
   </div>
 </div>
 
-Accessing data: 
 
 ```js
 const baInterchange = FileAttachment("data/eia-data/ba-interchange.csv").csv({typed: true});
@@ -185,30 +183,6 @@ const baHourlyLatest = d3.rollup(baHourlyDemand, d => d[0].value, d => d["ba"]);
 
 ```js
 const baHourlyChange = d3.rollup(baHourlyDemand, d => ((d[0].value - d[1].value) / d[1].value) * 100, d => d["ba"] );
-```
-
-INTERCHANGE
-
-```js
-baInterchange
-```
-
-BA HOURLY
-
-```js
-baHourly
-```
-
-BA HOURLY LATEST
-
-```js
-baHourlyLatest
-```
-
-BA HOURLY CHANGE
-
-```js
-baHourlyChange
 ```
 
 ```js
