@@ -9,3 +9,8 @@ display(bar);
 display(top);
 FileAttachment("/top.js");
 ```
+
+```js
+import {foobar} from "./foo%20bar.js";
+display(foobar);
+```
