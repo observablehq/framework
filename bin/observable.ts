@@ -90,11 +90,8 @@ try {
       break;
     }
     case "create": {
-      const {
-        positionals: [output]
-      } = helpArgs(command, {allowPositionals: true});
-      // TODO error if more than one positional
-      await import("../src/create.js").then(async (create) => create.create({output}));
+      helpArgs(command, {});
+      await import("../src/create.js").then(async (create) => create.create());
       break;
     }
     case "deploy": {
@@ -184,9 +181,9 @@ function helpArgs<T extends ParseArgsConfig>(command: string | undefined, config
   }
   if ((result.values as any).help) {
     console.log(
-      `Usage: observable ${command}${
-        command === undefined || command === "help" ? " <command>" : command === "create" ? " <output-dir>" : ""
-      }${Object.entries(config.options ?? {})
+      `Usage: observable ${command}${command === undefined || command === "help" ? " <command>" : ""}${Object.entries(
+        config.options ?? {}
+      )
         .map(([name, {default: def}]) => ` [--${name}${def === undefined ? "" : `=${def}`}]`)
         .join("")}`
     );

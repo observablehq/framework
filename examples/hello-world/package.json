@@ -9,6 +9,6 @@
     "@observablehq/cli": "link:../.."
   },
   "engines": {
-    "node": "^18 <18.19.0 || >=20"
+    "node": ">=20.6"
   }
 }
