@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>A page</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="style" href="./_observablehq/theme-air,near-midnight.css">
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
@@ -11,25 +12,7 @@
 <link rel="modulepreload" href="./_observablehq/stdlib.js">
 <script type="module">
 
-import {define} from "./_observablehq/client.js";
-
-define({id: "10037545", inputs: ["FileAttachment","display"], files: [{"name":"./file-top.csv","mimeType":"text/csv","path":"./_file/file-top.csv"}], body: async (FileAttachment,display) => {
-display(await(
-FileAttachment("file-top.csv")
-))
-}});
-
-define({id: "453a8147", inputs: ["FileAttachment","display"], files: [{"name":"./subsection/file-sub.csv","mimeType":"text/csv","path":"./_file/subsection/file-sub.csv"}], body: async (FileAttachment,display) => {
-display(await(
-FileAttachment("subsection/file-sub.csv")
-))
-}});
-
-define({id: "444c421e", inputs: ["FileAttachment","display"], files: [{"name":"./observable logo.png","mimeType":"image/png","path":"./_file/observable logo.png"}], body: async (FileAttachment,display) => {
-display(await(
-FileAttachment("observable logo.png")
-))
-}});
+import "./_observablehq/client.js";
 
 </script>
 <input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
@@ -40,8 +23,7 @@ FileAttachment("observable logo.png")
     <li class="observablehq-link"><a href="./">Home</a></li>
   </ol>
   <ol>
-    <li class="observablehq-link observablehq-link-active"><a href="./files">Untitled</a></li>
-    <li class="observablehq-link"><a href="./subsection/subfiles">Untitled</a></li>
+    <li class="observablehq-link observablehq-link-active"><a href="./a space">A page</a></li>
   </ol>
 </nav>
 <script>{/* redacted init script */}</script>
@@ -51,16 +33,11 @@ FileAttachment("observable logo.png")
 </aside>
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
-<span><link rel="stylesheet" href="./_file/custom-styles.css">
-<link rel="stylesheet" href="./_file/subsection/additional-styles.css">
-<link rel="stylesheet" href="https://example.com/style.css">
-</span><div id="cell-10037545" class="observablehq observablehq--block observablehq--loading"></div>
-<div id="cell-453a8147" class="observablehq observablehq--block observablehq--loading"></div>
-<div id="cell-444c421e" class="observablehq observablehq--block observablehq--loading"></div>
-<p><img src="./_file/observable logo small.png" alt=""></p>
+<h1 id="a-page" tabindex="-1"><a class="observablehq-header-anchor" href="#a-page">A page</a></h1>
+<p>I am a page with a space.</p>
 </main>
 <footer id="observablehq-footer">
-<nav><a rel="prev" href="./"><span>Home</span></a><a rel="next" href="./subsection/subfiles"><span>Untitled</span></a></nav>
+<nav><a rel="prev" href="./"><span>Home</span></a></nav>
 <div>Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.</div>
 </footer>
 </div>
