@@ -109,7 +109,11 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
           await promisify(exec)("git add -A", {cwd: rootPath});
         }
         s.stop("Installed!");
-        const instructions = [`cd ${rootPath}`, `${runCommand} dev`];
+        const instructions = [
+          `cd ${rootPath}`,
+          ...(packageManager === null ? [installCommand] : []),
+          `${runCommand} dev`
+        ];
         clack.note(instructions.map((line) => reset(cyan(line))).join("\n"), "Next steps…");
         clack.outro(`Problems? ${underline("https://cli.observablehq.com/getting-started")}`);
       }
