@@ -9,6 +9,7 @@ describe("create", async () => {
     const effects = new TestCreateEffects();
     effects.clack.inputs.push(
       "./template-test", // Where to create your project?
+      "Template Test", // What to title your project?
       true, // Include sample files to help you get started?
       null, // Install dependencies?
       false // Initialize git repository?
@@ -34,6 +35,7 @@ describe("create", async () => {
     const effects = new TestCreateEffects();
     effects.clack.inputs.push(
       "./template-test", // Where to create your project?
+      "Template Test", // What to title your project?
       false, // Include sample files to help you get started?
       null, // Install dependencies?
       false // Initialize git repository?
