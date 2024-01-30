@@ -1,10 +1,7 @@
 ---
-theme: [cotton, sun-faded]
+theme: [cotton, ink, wide]
+toc: false
 ---
-
-```js
-import {trend} from "./components/trend.js";
-```
 
 # US electric grid: hourly demand and interchange
 
@@ -16,14 +13,6 @@ const countryInterchangeSeries = await FileAttachment("data/country-interchange.
 
 // US overall demand, generation, forecast
 const usOverview = await FileAttachment("data/us-demand.csv").csv({typed: true});
-
-const usDemand = usOverview.filter(d => d.name == "Demand").sort(function(a,b){
-  return new Date(b.date) - new Date(a.date);
-})[0];
-```
-
-```js
-usDemand
 ```
 
 ```js
@@ -44,8 +33,10 @@ const eiaPoints = await FileAttachment("data/eia-system-points.json").json().the
 ```
 
 ```js
+// Interchange amounts between BAs
 const baInterchange = FileAttachment("data/eia-data/ba-interchange.csv").csv({typed: true});
 
+// Hourly demand for each BA
 const baHourly = FileAttachment("data/eia-data/ba-hourly.csv").csv({typed: true});
 
 // Data on BA connections:
@@ -58,31 +49,29 @@ const eiaBARef = await FileAttachment("data/eia-bia-reference.csv").csv({typed: 
 ```
 
 ```js 
+// Generating only BAs
 const genOnlyBA = eiaBARef.filter(d => d["Generation Only BA"] == "Yes").map(d => d["BA Code"]);
 ```
 
 ```js
+// Hourly demand for BAs, demand only & cleaned
 const baHourlyDemand = baHourly.filter(d => d.type == "D").map(d => ({ba: d["respondent-name"], baAbb: d["respondent"], period: d.period, value: d.value})); // Only use demand ("D");
 ```
 
 ```js
+// Most recent hour for each BA
 const baHourlyLatest = d3.rollup(baHourlyDemand, d => d[0].value, d => d["ba"]);
 ```
 
 ```js
-// TODO
-// Includes regions and totals
-// Should only include BAs
-// Use includes to exclude things like Lower 48, Midwest, etc.
-const top5LatestDemand = Array.from(baHourlyLatest, ([name, value]) => ({ name, value })).sort(((a, b) => b.value - a.value)).slice(0, 5);
+// Top 10 BAs by demand, latest hour
+// Excludes aggregate values (e.g. US Lower 48)
+const top5LatestDemand = Array.from(baHourlyLatest, ([name, value]) => ({ name, value })).filter(d => !["United States Lower 48", "Midwest", "Mid-Atlantic", "Northwest", "Central", "New England", "Southwest", "Southeast", "California", "Florida", "Texas", "Carolinas", "Tennessee", "New York"].includes(d.name)).sort(((a, b) => b.value - a.value)).slice(0, 10);
 ```
 
 ```js
+// US most recent total (lower 48) for big number
 const baLatestHourlyDemandLower48 = baHourlyDemand.filter(d => d.ba == "United States Lower 48");
-```
-
-```js
-baLatestHourlyDemandLower48
 ```
 
 ```js
@@ -198,16 +187,26 @@ Plot.plot({
     }
   </div>
   <div class="card grid-colspan-1 grid-rowspan-1">
-    <h2>Latest total US electricity demand</h2>
+    <h2>Total US electricity demand</h2>
     <h3>${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleDateString() }</h3>
     <h3>Includes lower 48 states only</h3>
     <span class="big">${d3.format(",")(baLatestHourlyDemandLower48[0].value)} MWh</span>
   </div>
-    <div class="grid-colspan-1 grid-rowspan-1">
-    <p>Tortor condimentum lacinia quis vel eros. Arcu risus quis varius quam quisque id. Magnis dis parturient montes nascetur ridiculus mus mauris. Porttitor leo a diam sollicitudin. Odio facilisis mauris sit amet massa vitae tortor. Nibh venenatis cras sed felis eget velit aliquet sagittis. Ullamcorper sit amet risus nullam eget felis eget nunc.</p>
-  </div>
-
-<div class="card grid-colspan-3 grid-rowspan-1">
+  <div class="card grid-colspan-1 grid-rowspan-1">
+  <h2>Top 10 balancing authorities by demand</h2>
+  <h3>${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleDateString() }</h3>
+    ${
+        resize((width) => Plot.plot({
+            marginLeft: 250,
+            marks: [
+                Plot.barX(top5LatestDemand, {y: "name", x: "value", sort: {y: "x", reverse: true, limit: 10}})
+            ]
+        }))
+    }
+</div>
+  
+  
+  <div class="card grid-colspan-3 grid-rowspan-1">
   <h2>US generation, demand, and demand forecast</h2>
   <h3>Add subtitle with units</3>
    ${
@@ -223,11 +222,12 @@ Plot.plot({
 })
    }
   </div>
-  <div class="card grid-colspan-3 grid-rowspan-1">
+
+<div class="card">
   <h2>Country interchange</h2>
   <h3>Add subtitle with units</3>
-   ${Plot.plot({
-    width: 900,
+   ${resize((width) => Plot.plot({
+    width,
     color: { legend: true },
     grid: true,
     marginLeft: 70,
@@ -239,9 +239,8 @@ Plot.plot({
         ),
         Plot.ruleY([0])
     ]
-})
+}))
    }
-  </div>
 </div>
 
 Credit: Some code for EIA data access and wrangling is reused from notebooks by Ian Johnson. Thank you Ian!
