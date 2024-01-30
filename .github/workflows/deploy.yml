@@ -22,10 +22,8 @@ jobs:
           cache-dependency-path: |
             yarn.lock
             'examples/*/yarn.lock'
-      - name: Install CLI
-        run: yarn --frozen-lockfile
-      - name: Build documentation
-        run: yarn build
+      - run: yarn --frozen-lockfile
+      - run: yarn build
       - name: Build example "google-analytics"
         run: yarn --frozen-lockfile && yarn build
         working-directory: examples/google-analytics
