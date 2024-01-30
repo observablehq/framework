@@ -53,6 +53,12 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
           defaultValue: "./hello-framework",
           validate: validateRootPath
         }),
+      projectTitle: ({results: {rootPath}}) =>
+        clack.text({
+          message: "What to title your project?",
+          placeholder: inferTitle(rootPath!),
+          defaultValue: inferTitle(rootPath!)
+        }),
       includeSampleFiles: () =>
         clack.select({
           message: "Include sample files to help you get started?",
@@ -76,12 +82,11 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
         clack.confirm({
           message: "Initialize git repository?"
         }),
-      installing: async ({results: {rootPath, includeSampleFiles, packageManager, initializeGit}}) => {
+      installing: async ({results: {rootPath, projectTitle, includeSampleFiles, packageManager, initializeGit}}) => {
         const s = clack.spinner();
         s.start("Copying template files");
         const template = includeSampleFiles ? "default" : "empty";
         const templateDir = resolve(fileURLToPath(import.meta.url), "..", "..", "templates", template);
-        const title = basename(rootPath!);
         const runCommand = packageManager === "yarn" ? "yarn" : `${packageManager ?? "npm"} run`;
         const installCommand = packageManager === "yarn" ? "yarn" : `${packageManager ?? "npm"} install`;
         await effects.sleep(1000);
@@ -92,8 +97,8 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
             runCommand,
             installCommand,
             rootPath: rootPath!,
-            projectTitle: title,
-            projectTitleString: JSON.stringify(title)
+            projectTitle: projectTitle as string,
+            projectTitleString: JSON.stringify(projectTitle as string)
           },
           effects
         );
@@ -130,6 +135,13 @@ function validateRootPath(rootPath: string): string | void {
   if (!existsSync(rootPath)) return;
   if (!statSync(rootPath).isDirectory()) return "File already exists.";
   if (readdirSync(rootPath).length !== 0) return "Directory is not empty.";
+}
+
+function inferTitle(rootPath: string): string {
+  return basename(rootPath!)
+    .split(/[-_\s]/)
+    .map(([c, ...rest]) => c.toUpperCase() + rest.join(""))
+    .join(" ");
 }
 
 function canWriteRecursive(rootPath: string): boolean {
