@@ -26,6 +26,7 @@ export interface GetProjectResponse {
   id: string;
   slug: string;
   servingRoot: string | null;
+  title: string;
 }
 
 export function getObservableUiOrigin(env = process.env): URL {
@@ -129,6 +130,14 @@ export class ObservableApiClient {
     });
   }
 
+  async postEditProject(projectId: string, updates: PostEditProjectRequest): Promise<PostEditProjectResponse> {
+    return await this._fetch<PostEditProjectResponse>(new URL(`/cli/project/${projectId}/edit`, this._apiOrigin), {
+      method: "POST",
+      headers: {"content-type": "application/json"},
+      body: JSON.stringify({...updates})
+    });
+  }
+
   async postDeploy({projectId, message}: {projectId: string; message: string}): Promise<string> {
     const data = await this._fetch<{id: string}>(new URL(`/cli/project/${projectId}/deploy`, this._apiOrigin), {
       method: "POST",
@@ -160,6 +169,16 @@ export class ObservableApiClient {
       body: "{}"
     });
   }
+}
+
+export interface PostEditProjectRequest {
+  title?: string;
+}
+
+export interface PostEditProjectResponse {
+  id: string;
+  slug: string;
+  title: string;
 }
 
 export interface PostProjectResponse {

@@ -48,7 +48,7 @@ class ObservableApiMock {
     const agent = getCurrentAgent();
     for (const intercept of agent.pendingInterceptors()) {
       if (intercept.origin === getOrigin()) {
-        console.log(`Expected All intercepts for ${getOrigin()} to be handled`);
+        console.log(`Expected all intercepts for ${getOrigin()} to be handled`);
         // This will include other interceptors that are not related to the
         // Observable API, but it has a nice output.
         agent.assertNoPendingInterceptors();
@@ -75,14 +75,16 @@ class ObservableApiMock {
     workspaceLogin,
     projectSlug,
     projectId = "project123",
+    title = "Mock BI",
     status = 200
   }: {
     workspaceLogin: string;
     projectSlug: string;
     projectId?: string;
+    title?: string;
     status?: number;
   }): ObservableApiMock {
-    const response = status === 200 ? JSON.stringify({id: projectId, slug: projectSlug}) : emptyErrorBody;
+    const response = status === 200 ? JSON.stringify({id: projectId, slug: projectSlug, title}) : emptyErrorBody;
     const headers = authorizationHeader(status != 401);
     this._handlers.push((pool) =>
       pool
@@ -110,6 +112,25 @@ class ObservableApiMock {
     this._handlers.push((pool) =>
       pool
         .intercept({path: "/cli/project", method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response, {headers: {"content-type": "application/json"}})
+    );
+    return this;
+  }
+
+  handleUpdateProject({
+    projectId = "project123",
+    title,
+    status = 200
+  }: {
+    projectId?: string;
+    title?: string;
+    status?: number;
+  } = {}): ObservableApiMock {
+    const response = status == 200 ? JSON.stringify({title, slug: "bi"}) : emptyErrorBody;
+    const headers = authorizationHeader(status != 401);
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: `/cli/project/${projectId}/edit`, method: "POST", headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
     );
     return this;
