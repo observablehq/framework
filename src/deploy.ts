@@ -5,7 +5,7 @@ import {build} from "./build.js";
 import type {Config} from "./config.js";
 import {CliError, isHttpError} from "./error.js";
 import type {Logger, Writer} from "./logger.js";
-import {ObservableApiClient} from "./observableApiClient.js";
+import {ObservableApiClient, type PostEditProjectRequest} from "./observableApiClient.js";
 import type {ConfigEffects} from "./observableApiConfig.js";
 import {
   type ApiKey,
@@ -76,12 +76,16 @@ export async function deploy({config, message}: DeployOptions, effects = default
   }
 
   let projectId: string | null = null;
+  let projectUpdates: PostEditProjectRequest = {};
   try {
     const projectInfo = await apiClient.getProject({
       workspaceLogin: config.deploy.workspace,
       projectSlug: config.deploy.project
     });
     projectId = projectInfo.id;
+    projectUpdates = {
+      ...(config.title !== projectInfo.title ? {title: config.title} : undefined)
+    };
   } catch (error) {
     if (isHttpError(error) && error.statusCode === 404) {
       // Project doesn't exist yet, so ignore the error.
@@ -91,10 +95,10 @@ export async function deploy({config, message}: DeployOptions, effects = default
   }
 
   const deployConfig = await effects.getDeployConfig(config.root);
+  const previousProjectId = deployConfig?.projectId;
   if (projectId) {
     // Check last deployed state. If it's not the same project, ask the user if
     // they want to continue anyways. In non-interactive mode just cancel.
-    const previousProjectId = deployConfig?.projectId;
     if (previousProjectId && previousProjectId !== projectId) {
       const {indent} = hangingIndentLog(
         effects,
@@ -175,6 +179,10 @@ export async function deploy({config, message}: DeployOptions, effects = default
 
   // Mark the deploy as uploaded
   const deployInfo = await apiClient.postDeployUploaded(deployId);
+  // Update project title if necessary
+  if (previousProjectId && previousProjectId === projectId && typeof projectUpdates?.title === "string") {
+    await apiClient.postEditProject(projectId, projectUpdates as PostEditProjectRequest);
+  }
   logger.log(`Deployed project now visible at ${blue(deployInfo.url)}`);
   Telemetry.record({event: "deploy", step: "finish"});
 }
