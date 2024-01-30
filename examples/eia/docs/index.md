@@ -1,3 +1,7 @@
+---
+theme: cotton
+---
+
 # US energy grid
 
 Data source: Energy Information Administration
@@ -40,14 +44,72 @@ const eiaPoints = await FileAttachment("data/eia-system-points.json").json().the
     <h2>Electricity demand by balancing authority</h2>
     <h3>Add subtitle with time and units</h3>
     ${
-      Plot.plot({
-        projection: "albers",
-        marks: [
-            Plot.geo(nation),
-            Plot.geo(statemesh),
-            Plot.dot(eiaPoints, {x: "lon", y: "lat"})
-        ]
+      // Change in hourly demand Plot
+Plot.plot({
+  color: {domain: [-15, 15], range: ["#4269d0","#4269d0", "white", "#ff725c","#ff725c"], type: "diverging", pivot: 0, legend: true, label: "Change in demand (%) from previous hour" },
+  projection: "albers",
+  height: 500,
+  width: 900,
+  insetTop: 40,
+  style: "overflow: visible",
+  r: { domain: d3.extent(eiaPoints, (d) => d.radius), range: [5, 30] },
+  marks: [
+    Plot.geo(nation, {stroke: "black", fill: "#909090", opacity: 0.1}),
+    Plot.geo(statemesh, {stroke: "#767676", opacity: 0.2}),
+    //Plot.arrow(eiaConnectionsFull, {x1: "lon1", x2: "lon2", y1: "lat1", y2: "lat2", stroke: "gray", strokeWidth: 0.7, headLength: 0}),
+    Plot.dot(eiaPoints, { 
+      x: "lon",
+      y: "lat",
+      r: "radius",
+      stroke: "gray",
+      strokeWidth: 0.5,
+      filter: (d) => isNaN(baHourlyChange.get(d.name)),
+      fill: "#ededed"
+    }),
+    Plot.dot(eiaPoints, {
+      filter: d => genOnlyBA.includes(d.id),
+      x: "lon",
+      y: "lat",
+      r: "radius",
+      fill: "#efb118",
+      stroke: "gray",
+      strokeWidth: 0.5
+    }),
+    Plot.dot(eiaPoints, {
+      x: "lon",
+      y: "lat",
+      r: "radius",
+      stroke: "gray",
+      strokeWidth: 0.5,
+      filter: (d) => !isNaN(baHourlyChange.get(d.name)),
+      fill: (d) => baHourlyChange.get(d.name)
+    }),
+    Plot.text(eiaPoints, {
+      x: "lon",
+      y: "lat",
+      text: (d) => (d.radius > 10000 ? d.id : null),
+      fontWeight: 800,
+      fill: "black"
+    }),
+    Plot.tip(
+      eiaPoints,
+      Plot.pointer({
+        x: "lon",
+        y: "lat",
+        title: (d) =>
+          `${d.name} (${d.id})\nChange from previous hour: ${
+            isNaN(baHourlyChange.get(d.name))
+              ? "Unavailable"
+              : baHourlyChange.get(d.name).toFixed(1) + "%"
+          }\nLatest hourly demand: ${
+            isNaN(baHourlyLatest.get(d.name))
+              ? "Unavailable"
+              : d3.format(",")(baHourlyLatest.get(d.name))+"MWh"
+          }`,
       })
+    )
+  ]
+})
     }
   </div>
   <div class="card grid-colspan-1 grid-rowspan-1">
@@ -99,6 +161,30 @@ Accessing data:
 const baInterchange = FileAttachment("data/eia-data/ba-interchange.csv").csv({typed: true});
 
 const baHourly = FileAttachment("data/eia-data/ba-hourly.csv").csv({typed: true});
+
+// Data on BA connections:
+// From static file in docs
+const eiaConnectionsRef = await FileAttachment("data/eia-connections-reference.csv").csv({typed: true});
+
+//Data on BA status (generating or not)
+// From static file in docs
+const eiaBARef = await FileAttachment("data/eia-bia-reference.csv").csv({typed: true});
+```
+
+```js 
+const genOnlyBA = eiaBARef.filter(d => d["Generation Only BA"] == "Yes").map(d => d["BA Code"]);
+```
+
+```js
+const baHourlyDemand = baHourly.filter(d => d.type == "D").map(d => ({ba: d["respondent-name"], period: d.period, value: d.value})); // Only use demand ("D");
+```
+
+```js
+const baHourlyLatest = d3.rollup(baHourlyDemand, d => d[0].value, d => d["ba"]);
+```
+
+```js
+const baHourlyChange = d3.rollup(baHourlyDemand, d => ((d[0].value - d[1].value) / d[1].value) * 100, d => d["ba"] );
 ```
 
 INTERCHANGE
@@ -113,6 +199,18 @@ BA HOURLY
 baHourly
 ```
 
+BA HOURLY LATEST
+
+```js
+baHourlyLatest
+```
+
+BA HOURLY CHANGE
+
+```js
+baHourlyChange
+```
+
 ```js
 // Map longitudes to BA abbreviations
 const pointsMapLon = new Map(eiaPoints.map(d => [d.id, d.lon]));
@@ -120,5 +218,6 @@ const pointsMapLon = new Map(eiaPoints.map(d => [d.id, d.lon]));
 // Map latitudes to BA abbreviations
 const pointsMapLat = new Map(eiaPoints.map(d => [d.id, d.lat]));
 
+// BA interchange spatial endpoints
 const baInterchangeSp = baInterchange.map(d => ({...d, lat1: pointsMapLat.get(d["fromba"]), lon1: pointsMapLon.get(d["fromba"]), lat2: pointsMapLat.get(d["toba"]), lon2: pointsMapLon.get(d["toba"])}));
 ```
