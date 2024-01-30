@@ -19,7 +19,3 @@
 #observablehq-main {
   min-height: calc(100vh - 23.8rem);
 }
-
-#observablehq-sidebar.observablehq-search-results>ol, #observablehq-sidebar.observablehq-search-results>details {
-  display: none;
-}

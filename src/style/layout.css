@@ -432,3 +432,7 @@
   color: var(--theme-foreground);
   background: var(--theme-foreground-faintest);
 }
+
+#observablehq-sidebar.observablehq-search-results>ol, #observablehq-sidebar.observablehq-search-results>details {
+  display: none;
+}
