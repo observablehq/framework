@@ -138,7 +138,7 @@ Whether to show the previous & next footer links; defaults to true.
 
 ## header
 
-An HTML fragment to add to the header. Defaults to empty string.
+An HTML fragment to add to the header. Defaults to the empty string.
 
 ## footer
 
