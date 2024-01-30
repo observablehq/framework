@@ -13,9 +13,15 @@
 
 # Getting started
 
-Welcome! This tutorial will guide your first steps with Observable Framework. (We’ll refer to it as “Framework” for short.) If you follow this tutorial to the end, you’ll have a live dashboard ready to share. 🚀
+Welcome! This tutorial will guide your first steps with Observable Framework. (We call it “Framework” for short.) Framework is a new way of building data apps that combines the power of JavaScript for interactive graphics on the front-end with any language you want on the back-end for data preparation and analysis.
 
-Before we begin, let’s review the development workflow, end-to-end. Framework is a **local development server**, a **static site generator**, and a **command-line interface** to Observable, all rolled into one!
+In this tutorial, you’ll create a live dashboard of your local weather. 🌦️ But before we begin, let’s first review the end-to-end development workflow. Framework is three things in one:
+
+- a **local development server** that you use to preview your project locally during development, with instant updates as you save changes,
+- a **static site generator** that compiles your Markdown, JavaScript, and other sources and static assets — alongside data snapshots generated dynamically by loaders — into a static site that you can host anywhere, and
+- a **command-line interface** to Observable so that you can quickly and securely share your site with your team (or the world, or whoever).
+
+We’ll touch on each of these parts in this tutorial.
 
 ```js
 const digraph = dot`digraph {
@@ -45,56 +51,81 @@ const digraph = dot`digraph {
   <figcaption>An overview of the development workflow.</figcaption>
 </figure>
 
-You’ll first [**create**](#2.-create) a new project, setting up your local development environment.
+You’ll first setup your local development environment by [**creating**](#2.-create) a new project.
 
-Next you’ll [**develop**](#3.-develop). This is an iterative process where you save changes to Markdown and other source files in your preferred editor, and then preview the result running locally in your browser.
+Next you’ll [**develop**](#3.-develop). This is an iterative process where you save changes to source files in your editor, and then preview the result running locally in your browser.
 
-When you’re ready to share with your team (or the world), it’s time to [**publish**](#4.-publish). You can either build a static site for self-hosting or hosting on a third-party such as GitHub or Netlify, or you can deploy directly to Observable.
+When you’re ready to share your work, it’s time to [**publish**](#4.-publish). You can either build a static site for self-hosting or you can deploy directly to Observable.
 
 Lastly, you can invite people to [**view**](#5.-view) your project!
 
+Of course, you can continue to develop your project after you publish, and then republish to make these changes live. And you can setup continuous deployment so that your site re-builds whenever you push a commit or on a fixed schedule. We’ll cover these [next steps](#next-steps) briefly below.
+
+Here we go… 🚀
+
 ## 1. Create
 
-<div class="tip">Observable Framework is a <a href="https://nodejs.org/">Node.js</a> application. You must have <a href="https://nodejs.org/en/download">Node.js 20.6 or later</a> installed before you can install Framework.</div>
+Observable Framework includes a helper script, `observable create`, for creating new projects. After a few quick prompts — where to create the project, your preferred package manager, *etc.* — it will create a fresh project from a template.
 
-To create a new project, you can use `npm`:
+<div class="tip">Observable Framework is a <a href="https://nodejs.org/">Node.js</a> application. You must have <a href="https://nodejs.org/en/download">Node.js 20.6 or later</a> installed before you can install Framework. Observable Framework is a command-line interface (CLI) and runs in the terminal.</div>
+
+To create a new project with `npm`, run:
 
 ```sh
 npm init @observablehq
 ```
 
-Or if you prefer `yarn`:
+Or to create a new project with `yarn`, run:
 
 ```sh
 yarn create @observablehq
 ```
 
-This runs `observable create`, our helper script for creating new projects. You will be asked several questions, starting with where to create the new project.
+You can run the above command anywhere, but maybe `cd` to your `~/Development` directory first (or wherever you do local development).
+
+First you’ll need to specify where to create the new project. For this tutorial, we want to create a folder called `local-weather` within the current directory, so enter `./local-weather` at the prompt. (This path is equivalent to `local-weather`; we’re just showing that you can use `../` or `/` or `~/` to create a project anywhere.)
 
 <pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="focus">◆</span>  Where to create your project?
-<span class="focus">│</span>  <span class="muted"><span class="invert">.</span>/demo-project</span>
+<span class="focus">│</span>  ./local-weather<span class="invert">&nbsp;</span>
 <span class="focus">└</span></pre>
 
-We’ll use the name `./hello-framework` for our project folder.
+Next you’ll need to enter a project title. The title appears in the sidebar as well as on pages. (A memorable name will make your project easier to find in your browser history, for one.) You can just hit Enter here to accept the default title derived from the directory you entered in the previous step.
 
 <pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Where to create your project?
-<span class="muted">│</span>  <span class="muted">./hello-framework</span>
+<span class="muted">│</span>  <span class="muted">./local-weather</span>
+<span class="muted">│</span>
+<span class="focus">◆</span>  What to title your project?
+<span class="focus">│</span>  <span class="muted"><span class="invert">L</span>ocal Weather</span>
+<span class="focus">└</span></pre>
+
+Next, you can decide whether to include sample files in your new project. These sample files will demonstrate a few tricks, and are handy for learning by tinkering, since you can just edit the code and see what happens. But if you’d prefer a more minimal starter project, you can chose to omit them. We recommend you include them (again, learning), but they’re not needed for this tutorial.
+
+<pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
+<span class="muted">│</span>
+<span class="green">◇</span>  Where to create your project?
+<span class="muted">│</span>  <span class="muted">./local-weather</span>
+<span class="muted">│</span>
+<span class="green">◇</span>  What to title your project?
+<span class="muted">│</span>  <span class="muted">Local Weather</span>
 <span class="muted">│</span>
 <span class="focus">◆</span>  Include sample files to help you get started?
 <span class="focus">│</span>  <span class="green">●</span> Yes, include sample files <span class="muted">(recommended)</span>
 <span class="focus">│</span>  <span class="muted">○ No, create an empty project</span>
 <span class="focus">└</span></pre>
 
-…
+If you use `npm` or `yarn` as your preferred package manager, you should now declare your allegiance. If you’re not sure, chose `npm`. If you prefer a different package manager (say `pnpm`), choose `No`, and then you can install dependencies yourself after the project is created.
 
 <pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Where to create your project?
-<span class="muted">│</span>  <span class="muted">./hello-framework</span>
+<span class="muted">│</span>  <span class="muted">./local-weather</span>
+<span class="muted">│</span>
+<span class="green">◇</span>  What to title your project?
+<span class="muted">│</span>  <span class="muted">Local Weather</span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Include sample files to help you get started?
 <span class="muted">│</span>  <span class="muted">Yes, include sample files</span>
@@ -105,14 +136,15 @@ We’ll use the name `./hello-framework` for our project folder.
 <span class="focus">│</span>  <span class="muted">○ No</span>
 <span class="focus">└</span></pre>
 
-If you choose a package manager here, we’ll automatically install dependencies when the project is created. If you want to use something besides `npm` or `yarn`, we’ll leave it to you.
-
-…
+If you’re going to develop this dashboard further, you’ll likely want source control to track changes and collaborate. Answer `Yes` to initialize a git repository for your no project. This is optional, and you can always do it later by running `git init`.
 
 <pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Where to create your project?
-<span class="muted">│</span>  <span class="muted">./hello-framework</span>
+<span class="muted">│</span>  <span class="muted">./local-weather</span>
+<span class="muted">│</span>
+<span class="green">◇</span>  What to title your project?
+<span class="muted">│</span>  <span class="muted">Local Weather</span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Include sample files to help you get started?
 <span class="muted">│</span>  <span class="muted">Yes, include sample files</span>
@@ -124,12 +156,15 @@ If you choose a package manager here, we’ll automatically install dependencies
 <span class="focus">│</span>  <span class="green">●</span> Yes <span class="muted">/ ○ No</span>
 <span class="focus">└</span></pre>
 
-…
+And that’s it! After copying some files and installing some dependencies, your new project will be ready to go! 🎉
 
 <pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Where to create your project?
-<span class="muted">│</span>  <span class="muted">./hello-framework</span>
+<span class="muted">│</span>  <span class="muted">./local-weather</span>
+<span class="muted">│</span>
+<span class="green">◇</span>  What to title your project?
+<span class="muted">│</span>  <span class="muted">Local Weather</span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Include sample files to help you get started?
 <span class="muted">│</span>  <span class="muted">Yes, include sample files</span>
@@ -140,30 +175,34 @@ If you choose a package manager here, we’ll automatically install dependencies
 <span class="green">◇</span>  Initialize a git repository?
 <span class="muted">│</span>  <span class="muted">Yes</span>
 <span class="muted">│</span>
-<span class="green">◇</span>  Installed!
+<span class="green">◇</span>  Installed! 🎉
 <span class="muted">│</span>
 <span class="green">◇</span>  Next steps…
 <span class="muted">│</span>
-<span class="muted">│</span>  <span class="focus">cd ./hello-framework</span>
+<span class="muted">│</span>  <span class="focus">cd ./local-weather</span>
 <span class="muted">│</span>  <span class="focus">yarn dev</span>
 <span class="muted">│</span>
-<span class="muted">└</span>  Problems? <u>https://framework.observablehq.com/getting-started</u></pre>
+<span class="muted">└</span>  Problems? <u>https://cli.observablehq.com/getting-started</u></pre>
 
-After answering a few questions, this command will create a new project folder in the current working directory.
-
-```sh
-cd hello-world
-```
-
-```sh
-yarn
-```
+<div class="tip">If you have any issues creating a new project, please visit the <a href="https://talk.observablehq.com">Observable Forum</a> or our <a href="https://github.com/observablehq/cli/discussions">GitHub discussions</a> to ask for help.</div>
 
 ## 3. Develop
 
-After you’ve initialized your project, you can start developing locally. In preview mode, Framework generates HTML pages on-demand as you view a local version of your site in the browser. As you edit files, changes will be instantly reflected in the browser.
+If you haven’t already, `cd` into your new project folder.
 
-To start the preview server:
+```sh
+cd local-weather
+```
+
+In preview mode, Framework generates HTML pages on-demand as you view a local version of your site in the browser. As you edit files, changes will be instantly reflected in the browser.
+
+To start the preview server using `npm`:
+
+```sh
+npm run dev
+```
+
+Or to start the preview server using `yarn`:
 
 ```sh
 yarn dev
@@ -210,11 +249,11 @@ You can schedule builds and deploy your project automatically on commit, or on a
 You can install Framework as a dependency on an existing project if you don’t want to create a new project using our default template as described above.
 
 ```sh
-npm install @observablehq/framework
+npm install @observablehq/cli
 ```
 
 ```sh
-yarn add @observablehq/framework
+yarn add @observablehq/cli
 ```
 
 You can also install Framework globally so that the `observable` command is available across projects, but we don’t recommend this approach. By installing Framework into each project, everyone you work with will use the same version.
