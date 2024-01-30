@@ -21,10 +21,16 @@ const baHourlyUrl = `https://api.eia.gov/v2/electricity/rto/region-data/data/?ap
 
 const baHourly = await json(baHourlyUrl);
 
+// Country interchange
+//const countryInterchangeUrl = `https://api.eia.gov/v2/electricity/rto/interchange/data/?api_key=${EIA_KEY}&frequency=hourly&data[0]=value&start=${start.toISOString().substring(0, 10)}T00&end=${end.toISOString().substring(0, 10)}T00&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=5000`
+
+//const countryInterchange = await json(countryInterchangeUrl);
+
 // Zip
 const zip = new JSZip();
 
 zip.file("ba-interchange.csv", csvFormat(baInterchange.response.data));
 zip.file("ba-hourly.csv", csvFormat(baHourly.response.data));
+//zip.file("country-interchange.csv", csvFormat(countryInterchange.response.data))
 
 zip.generateNodeStream().pipe(process.stdout);
