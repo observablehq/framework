@@ -79,8 +79,10 @@ class TestClackEffects implements ClackEffects {
     }
     return results;
   };
-  async text() {
-    return this.inputs.shift();
+  async text({validate}: clack.TextOptions) {
+    const result = this.inputs.shift();
+    if (validate) validate(result);
+    return result;
   }
   async select() {
     return this.inputs.shift();
