@@ -415,7 +415,6 @@ Replace the `display(forecast)` code block with the following code:
 ```js run=false
 Plot.plot({
   title: "Hourly temperature forecast",
-  width,
   x: {type: "utc", ticks: "day"},
   y: {grid: true, inset: 10, label: "Degrees (F)"},
   color: {scheme: "burd", domain: [40, 60], pivot: 50},
@@ -438,8 +437,6 @@ Now you’ll see…
   <img loading="lazy" src="./getting-started/hello-plot.png" class="crop">
   <figcaption>Using <code>Plot</code> to make a chart.</figcaption>
 </figure>
-
-It’s responsive using `width`.
 
 Extract into a function, promote `data` to an argument and `width` to an option…
 
