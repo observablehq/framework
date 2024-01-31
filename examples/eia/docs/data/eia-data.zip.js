@@ -26,11 +26,16 @@ const baHourly = await json(baHourlyUrl);
 
 //const countryInterchange = await json(countryInterchangeUrl);
 
+// By fuel type
+const fuelTypeUrl = `https://api.eia.gov/v2/electricity/rto/fuel-type-data/data/?api_key=${EIA_KEY}&frequency=hourly&data[0]=value&start=${start.toISOString().substring(0, 10)}T00&end=${end.toISOString().substring(0, 10)}T00&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=5000`;
+
+const fuelType = await json(fuelTypeUrl);
+
 // Zip
 const zip = new JSZip();
 
 zip.file("ba-interchange.csv", csvFormat(baInterchange.response.data));
 zip.file("ba-hourly.csv", csvFormat(baHourly.response.data));
-//zip.file("country-interchange.csv", csvFormat(countryInterchange.response.data))
+zip.file("fuel-type.csv", csvFormat(fuelType.response.data));
 
 zip.generateNodeStream().pipe(process.stdout);

@@ -2,14 +2,17 @@
 theme: [cotton, ink]
 ---
 
-# US electric grid
+# US electric grid hourly data
 
 ```js
 // International electricity interchange data:
-const countryInterchangeSeries = await FileAttachment("data/country-interchange.csv").csv({typed: true});
+const countryInterchangeSeries = FileAttachment("data/country-interchange.csv").csv({typed: true});
 
 // US overall demand, generation, forecast
-const usOverview = await FileAttachment("data/us-demand.csv").csv({typed: true});
+const usOverview = FileAttachment("data/us-demand.csv").csv({typed: true});
+
+// Energy by fuel type: 
+const fuelType = FileAttachment("data/eia-data/fuel-type.csv").csv({typed: true});
 ```
 
 ```js
@@ -56,14 +59,22 @@ const baHourlyDemand = baHourly.filter(d => d.type == "D").map(d => ({ba: d["res
 ```
 
 ```js
+// Cleaned up baHourly for table
+const baHourlyClean = baHourly.map(d => ({Date: d.period, 'Balancing authority': d["respondent-name"], Abbreviation: d.respondent, Metric: d["type-name"], Value: d.value, Units: d["value-units"]}))
+```
+
+```js
 // Most recent hour for each BA
 const baHourlyLatest = d3.rollup(baHourlyDemand, d => d[0].value, d => d["ba"]);
 ```
 
 ```js
 // Top 5 BAs by demand, latest hour
-// Excludes aggregate values (e.g. US Lower 48)
-const top5LatestDemand = Array.from(baHourlyLatest, ([name, value]) => ({ name, value })).filter(d => !["United States Lower 48", "Midwest", "Mid-Atlantic", "Northwest", "Central", "New England", "Southwest", "Southeast", "California", "Florida", "Texas", "Carolinas", "Tennessee", "New York"].includes(d.name)).sort(((a, b) => b.value - a.value)).slice(0, 10);
+// Excludes regions
+
+const regions = ["California", "Carolinas", "Central", "Florida", "Mid-Atlantic", "Midwest", "New England", "New York", "Northwest", "Southeast", "Southwest", "Tennessee", "Texas", "United States Lower 48"]
+
+const top5LatestDemand = Array.from(baHourlyLatest, ([name, value]) => ({ name, value })).filter(d => !regions.includes(d.name)).sort(((a, b) => b.value - a.value)).slice(0, 5);
 ```
 
 ```js
@@ -72,6 +83,7 @@ const baLatestHourlyDemandLower48 = baHourlyDemand.filter(d => d.ba == "United S
 ```
 
 ```js
+// Percent change for most recent 2 hours of data by BA
 const baHourlyChange = d3.rollup(baHourlyDemand, d => ((d[0].value - d[1].value) / d[1].value) * 100, d => d["ba"] );
 ```
 
@@ -118,15 +130,17 @@ const recentHour = timeParse(baHourly.filter(d => d.type == "D")[0].period);
     ${resize((width, height) => Plot.plot({
         width,
         height: height - 120,
-        caption: "Data: US Energy Information Administration",
+        caption: "Data: US Energy Information Administration. Locations are representative.",
         color: {domain: [-15, 15], range: ["#4269d0","#4269d0", "white", "#ff725c","#ff725c"], type: "diverging", pivot: 0, legend: true, label: "Change in demand (%) from previous hour" },
         projection: "albers",
         style: "overflow: visible",
         r: { domain: d3.extent(eiaPoints, (d) => d.radius), range: [5, 30] },
         marks: [
             Plot.geo(nation, {stroke: "white", fill: "#6D6D6D", opacity: 0.3}),Plot.geo(statemesh, {stroke: "#6D6D6D", opacity: 0.3}),
-            //Plot.dot(["Generating BA only", "Missing data"], {y: Plot.identity, r: 5, fill: ["#efb118", "#6d6d6d"], frameAnchor: "left"}),
-            //Plot.text(["Generating BA only", "Missing data"], {y: Plot.identity, dx: 10, frameAnchor: "left"}),
+            Plot.dot([1], {y: Plot.identity, r: 5, fill: "#efb118", stroke: "gray", strokeWidth: 1, frameAnchor: "left", dy: -27, dx: 280}),
+            Plot.dot([1], {y: Plot.identity, r: 5, fill: "#6d6d6d", stroke: "gray", strokeWidth: 1, frameAnchor: "left", dy: -27, dx: 380}),
+            Plot.text(["Generating only"], {y: Plot.identity, dx: 290, dy: -25, frameAnchor: "left"}),
+            Plot.text(["Unavailable"], {y: Plot.identity, dx: 390, dy: -25, frameAnchor: "left"}),
             Plot.arrow(eiaConnRefSpatial, {x1: "lon1", x2: "lon2", y1: "lat1", y2: "lat2", stroke: "gray", strokeWidth: 0.7, headLength: 0}),
             Plot.dot(eiaPoints, { 
                 x: "lon",
@@ -182,14 +196,24 @@ const recentHour = timeParse(baHourly.filter(d => d.type == "D")[0].period);
 }))
     }
   </div>
-    <div class="card grid-colspan-1 grid-rowspan-1">
-    <h2>Total US electricity demand</h2>
-    <h3>${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleDateString() }</h3>
-    <span class="big">${d3.format(",")(baLatestHourlyDemandLower48[0].value)} MWh</span>
-  </div>
-<div class="card grid-colspan-1 grid-rowspan-1">
-    <h2>Placeholder</h2>
-  </div>
+  <div class="card grid-colspan-2 grid-rowspan-1">
+  <h2>Top balancing authorities by demand, latest hour (MWh)</h2>
+  <h3>${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleDateString() }</h3>
+  ${
+        resize((width, height) => Plot.plot({
+            marginTop: 0,
+            marginLeft: 250,
+            height: height - 20,
+            width,
+            color: {range: ["white", "#ff725c"]},
+            y: {label: null},
+            x: {label: null, grid: true},
+            marks: [
+                Plot.barX(top5LatestDemand, {y: "name", x: "value", fill: "value", sort: {y: "x", reverse: true, limit: 10}})
+            ]
+        }))
+    }
+    </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
 <h2>US electricity generation, demand, and demand forecast (MWh)</h2>
    ${resize((width, height) => Plot.plot({
@@ -197,11 +221,11 @@ const recentHour = timeParse(baHourly.filter(d => d.type == "D")[0].period);
     marginTop:0,
     height: height - 50,
     y: {label: null},
+    color: {legend: true},
+    grid: true,
     marks: [
         Plot.line(usDemandGenForecast, {x: "date", y: "value", stroke: "name", strokeWidth: 2, tip: true})
-        ],
-  color: {legend: true},
-  grid: true
+        ]
 }))
    }
   </div>
@@ -224,31 +248,21 @@ const recentHour = timeParse(baHourly.filter(d => d.type == "D")[0].period);
 }))
    }
 </div>
-  <div class="card grid-colspan-2 grid-rowspan-2">
-  <h2>Top 10 balancing authorities by demand (MWh)</h2>
-  <h3>${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleDateString() }</h3>
-  ${
-        resize((width, height) => Plot.plot({
-            height: height - 50,
-            width,
-            color: {range: ["white", "#ff725c"]},
-            y: {label: null},
-            x: {label: null, grid: true},
-            marginLeft: 250,
-            marks: [
-                Plot.barX(top5LatestDemand, {y: "name", x: "value", fill: "value", sort: {y: "x", reverse: true, limit: 10}})
-            ]
-        }))
-    }
-    </div>
-  <div class="card grid-colspan-1 grid-rowspan-1">
-    <h2>Placeholder</h2>
-  </div>
-  <div class="card grid-colspan-1 grid-rowspan-1">
-    <h2>Placeholder</h2>
-  </div>
+<div class="card grid-colspan-4 grid-rowspan-3">
+  ${view(Inputs.table(baHourlyClean))}
+</div>
 
+<!-- Unused US total bign number
+      <div class="card grid-colspan-1 grid-rowspan-1">
+    <h2>Total US electricity demand</h2>
+    <h3>${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleDateString() }</h3>
+    <span class="big">${d3.format(",")(baLatestHourlyDemandLower48[0].value)} MWh</span>
+  </div>
+<div class="card grid-colspan-1 grid-rowspan-1">
+    <h2>Placeholder</h2>
+  </div>
+-->
 
 This page reenvisions parts of the US Energy Information Administration's [Hourly Electric Grid Monitor]((https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48)). Visit [About the EIA-930 data](https://www.eia.gov/electricity/gridmonitor/about) to learn more about data collection and quality, the US electric grid, and balancing authorities responsible for nationwide electricity interchange. 
 
-Some code for EIA data access and wrangling is reused from notebooks by Ian Johnson. Thank you Ian!
+Some code for EIA data access and wrangling is reused from Observable notebooks  by Ian Johnson. Thank you Ian!
