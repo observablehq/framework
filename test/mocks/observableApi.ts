@@ -1,7 +1,12 @@
 import type {MockAgent} from "undici";
 import {type Interceptable} from "undici";
 import type {PostAuthRequestPollResponse, PostAuthRequestResponse} from "../../src/observableApiClient.js";
-import {getObservableApiOrigin, getObservableUiOrigin} from "../../src/observableApiClient.js";
+import {
+  type GetProjectResponse,
+  type PaginatedList,
+  getObservableApiOrigin,
+  getObservableUiOrigin
+} from "../../src/observableApiClient.js";
 import {getCurrentAgent, mockAgent} from "./undici.js";
 
 export const validApiKey = "MOCK-VALID-KEY";
@@ -9,7 +14,7 @@ export const invalidApiKey = "MOCK-INVALID-KEY";
 
 const emptyErrorBody = JSON.stringify({errors: []});
 
-let apiMock;
+let apiMock: ObservableApiMock;
 
 export function mockObservableApi() {
   mockAgent();
@@ -49,7 +54,7 @@ class ObservableApiMock {
     const agent = getCurrentAgent();
     for (const intercept of agent.pendingInterceptors()) {
       if (intercept.origin === getOrigin()) {
-        console.log(`Expected All intercepts for ${getOrigin()} to be handled`);
+        console.log(`Expected all intercepts for ${getOrigin()} to be handled`);
         // This will include other interceptors that are not related to the
         // Observable API, but it has a nice output.
         agent.assertNoPendingInterceptors();
@@ -79,14 +84,25 @@ class ObservableApiMock {
     workspaceLogin,
     projectSlug,
     projectId = "project123",
+    title = "Mock BI",
     status = 200
   }: {
     workspaceLogin: string;
     projectSlug: string;
     projectId?: string;
+    title?: string;
     status?: number;
   }): ObservableApiMock {
-    const response = status === 200 ? JSON.stringify({id: projectId, slug: projectSlug}) : emptyErrorBody;
+    const response =
+      status === 200
+        ? JSON.stringify({
+            id: projectId,
+            slug: projectSlug,
+            title,
+            creator: {id: "user-id", login: "user-login"},
+            owner: {id: "workspace-id", login: "workspace-login"}
+          } satisfies GetProjectResponse)
+        : emptyErrorBody;
     const headers = authorizationHeader(status != 401);
     this._handlers.push((pool) =>
       pool
@@ -97,7 +113,9 @@ class ObservableApiMock {
   }
 
   handlePostProject({
-    projectId,
+    projectId = "project123",
+    workspaceId = workspaces[0].id,
+    slug = "mock-project",
     status = 200
   }: {
     projectId?: string;
@@ -106,14 +124,69 @@ class ObservableApiMock {
     workspaceId?: string;
     status?: number;
   } = {}): ObservableApiMock {
+    const owner = workspaces.find((w) => w.id === workspaceId);
+    const creator = userWithOneWorkspace;
+    if (!owner || !creator) throw new Error("Invalid owner/creator");
     const response =
       status == 200
-        ? JSON.stringify({id: projectId, slug: "test-project", title: "Test Project", owner: {}, creator: {}})
+        ? JSON.stringify({
+            id: projectId,
+            slug,
+            title: "Mock Project",
+            owner,
+            creator
+          } satisfies GetProjectResponse)
         : emptyErrorBody;
     const headers = authorizationHeader(status != 401);
     this._handlers.push((pool) =>
       pool
         .intercept({path: "/cli/project", method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response, {headers: {"content-type": "application/json"}})
+    );
+    return this;
+  }
+
+  handleUpdateProject({
+    projectId = "project123",
+    title,
+    status = 200
+  }: {
+    projectId?: string;
+    title?: string;
+    status?: number;
+  } = {}): ObservableApiMock {
+    const response = status == 200 ? JSON.stringify({title, slug: "bi"}) : emptyErrorBody;
+    const headers = authorizationHeader(status != 401);
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: `/cli/project/${projectId}/edit`, method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response, {headers: {"content-type": "application/json"}})
+    );
+    return this;
+  }
+
+  handleGetWorkspaceProjects({
+    workspaceLogin,
+    projects,
+    status = 200
+  }: {
+    workspaceLogin: string;
+    projects: {slug: string; id: string; title?: string}[];
+    status?: number;
+  }): ObservableApiMock {
+    const owner = workspaces.find((w) => w.login === workspaceLogin);
+    const creator = userWithOneWorkspace;
+    if (!owner || !creator) throw new Error("Invalid owner/creator");
+    const response =
+      status === 200
+        ? JSON.stringify({
+            results: projects.map((p) => ({...p, creator, owner, title: p.title ?? "Mock Title"}))
+          } satisfies PaginatedList<GetProjectResponse>)
+        : emptyErrorBody;
+    const headers = authorizationHeader(status != 401);
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: `/cli/workspace/@${workspaceLogin}/projects`, headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
     );
     return this;
@@ -228,23 +301,25 @@ const userBase = {
   has_workspace: false
 };
 
-const workspace1 = {
-  id: "0000000000000001",
-  login: "mock-user-ws",
-  name: "Mock User's Workspace",
-  tier: "pro",
-  type: "team",
-  role: "owner"
-};
+const workspaces = [
+  {
+    id: "0000000000000001",
+    login: "mock-user-ws",
+    name: "Mock User's Workspace",
+    tier: "pro",
+    type: "team",
+    role: "owner"
+  },
 
-const workspace2 = {
-  id: "0000000000000002",
-  login: "mock-user-ws-2",
-  name: "Mock User's Second Workspace",
-  tier: "pro",
-  type: "team",
-  role: "owner"
-};
+  {
+    id: "0000000000000002",
+    login: "mock-user-ws-2",
+    name: "Mock User's Second Workspace",
+    tier: "pro",
+    type: "team",
+    role: "owner"
+  }
+];
 
 export const userWithZeroWorkspaces = {
   ...userBase,
@@ -253,10 +328,10 @@ export const userWithZeroWorkspaces = {
 
 export const userWithOneWorkspace = {
   ...userBase,
-  workspaces: [workspace1]
+  workspaces: workspaces.slice(0, 1)
 };
 
 export const userWithTwoWorkspaces = {
   ...userBase,
-  workspaces: [workspace1, workspace2]
+  workspaces: workspaces.slice(0, 2)
 };

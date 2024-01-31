@@ -16,6 +16,7 @@ export function addImplicitSpecifiers(specifiers: Set<string>, inputs: Set<strin
   if (inputs.has("aq")) specifiers.add("npm:arquero");
   if (inputs.has("Arrow")) specifiers.add("npm:apache-arrow");
   if (inputs.has("L")) specifiers.add("npm:leaflet");
+  if (inputs.has("mapboxgl")) specifiers.add("npm:mapbox-gl");
   if (inputs.has("mermaid")) specifiers.add("npm:@observablehq/mermaid").add("npm:mermaid").add("npm:d3");
   if (inputs.has("SQLite") || inputs.has("SQLiteDatabaseClient")) specifiers.add("npm:@observablehq/sqlite");
   if (inputs.has("tex")) specifiers.add("npm:@observablehq/tex").add("npm:katex");
@@ -32,5 +33,6 @@ export async function addImplicitStylesheets(stylesheets: Set<string>, specifier
   if (specifiers.has("npm:@observablehq/inputs")) stylesheets.add("observablehq:stdlib/inputs.css");
   if (specifiers.has("npm:katex")) stylesheets.add(await resolveNpmImport("katex/dist/katex.min.css"));
   if (specifiers.has("npm:leaflet")) stylesheets.add(await resolveNpmImport("leaflet/dist/leaflet.css"));
+  if (specifiers.has("npm:mapbox-gl")) stylesheets.add(await resolveNpmImport("mapbox-gl/dist/mapbox-gl.css"));
   return stylesheets;
 }

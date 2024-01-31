@@ -33,7 +33,9 @@ interface UserConfig {
 }
 
 export interface DeployConfig {
-  projectId: null | string;
+  projectId: string | null;
+  projectSlug: string | null;
+  workspaceLogin: string | null;
 }
 
 export type ApiKey =
@@ -67,18 +69,24 @@ export async function setObservableApiKey(info: null | {id: string; key: string}
 export async function getDeployConfig(
   sourceRoot: string,
   effects: ConfigEffects = defaultEffects
-): Promise<DeployConfig | null> {
+): Promise<DeployConfig> {
   const deployConfigPath = path.join(effects.cwd(), sourceRoot, ".observablehq", "deploy.json");
-  let content: string | null = null;
+  let config: object | null = null;
   try {
-    content = await effects.readFile(deployConfigPath, "utf8");
+    const content = await effects.readFile(deployConfigPath, "utf8");
+    config = JSON.parse(content);
   } catch (error) {
-    content = "{}";
+    if (!isEnoent(error)) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new CliError(`Could not read config file at ${deployConfigPath}: ${message}`, {cause: error});
+    }
   }
   // normalize
-  let {projectId} = JSON.parse(content);
+  let {projectId, projectSlug, workspaceLogin} = config ?? ({} as any);
   if (typeof projectId !== "string") projectId = null;
-  return {projectId};
+  if (typeof projectSlug !== "string") projectSlug = null;
+  if (typeof workspaceLogin !== "string") workspaceLogin = null;
+  return {projectId, projectSlug, workspaceLogin};
 }
 
 export async function setDeployConfig(

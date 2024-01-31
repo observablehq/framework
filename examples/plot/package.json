@@ -13,7 +13,7 @@
     "dotenv": "^16.3.1"
   },
   "engines": {
-    "node": "^18 <18.19.0 || >=20"
+    "node": ">=20.6"
   },
   "devDependencies": {
     "@types/node": "^20.10.6"

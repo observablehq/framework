@@ -9,6 +9,6 @@
     "observable": "observable"
   },
   "dependencies": {
-    "@observablehq/cli": "https://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@github.com/observablehq/cli#main"
+    "@observablehq/cli": "https://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@github.com/observablehq/cli#main"
   }
 }

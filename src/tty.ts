@@ -1,10 +1,12 @@
 import {isatty} from "node:tty";
 import type {Logger} from "./logger.js";
 
+export const reset = color(0, 0);
 export const bold = color(1, 22);
 export const faint = color(2, 22);
 export const italic = color(3, 23);
 export const underline = color(4, 24);
+export const inverse = color(7, 27);
 export const red = color(31, 39);
 export const green = color(32, 39);
 export const yellow = color(33, 39);

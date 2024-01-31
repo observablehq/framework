@@ -115,6 +115,6 @@ export async function whoami(effects = defaultEffects) {
   }
 }
 
-function formatUser(user: {name?: string; login: string}): string {
+export function formatUser(user: {name?: string; login: string}): string {
   return user.name ? `${user.name} (@${user.login})` : `@${user.login}`;
 }

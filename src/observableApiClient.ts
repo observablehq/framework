@@ -4,30 +4,6 @@ import {CliError, HttpError} from "./error.js";
 import type {ApiKey} from "./observableApiConfig.js";
 import {faint, red} from "./tty.js";
 
-export interface GetCurrentUserResponse {
-  id: string;
-  login: string;
-  name: string;
-  tier: string;
-  has_workspace: boolean;
-  workspaces: WorkspaceResponse[];
-}
-
-export interface WorkspaceResponse {
-  id: string;
-  login: string;
-  name: string;
-  tier: string;
-  type: string;
-  role: string;
-}
-
-export interface GetProjectResponse {
-  id: string;
-  slug: string;
-  servingRoot: string | null;
-}
-
 export function getObservableUiOrigin(env = process.env): URL {
   const urlText = env["OBSERVABLE_ORIGIN"] ?? "https://observablehq.com";
   try {
@@ -133,6 +109,23 @@ export class ObservableApiClient {
     });
   }
 
+  async postEditProject(projectId: string, updates: PostEditProjectRequest): Promise<PostEditProjectResponse> {
+    return await this._fetch<PostEditProjectResponse>(new URL(`/cli/project/${projectId}/edit`, this._apiOrigin), {
+      method: "POST",
+      headers: {"content-type": "application/json"},
+      body: JSON.stringify({...updates})
+    });
+  }
+
+  async getWorkspaceProjects(workspaceLogin: string): Promise<GetProjectResponse[]> {
+    const pages = await this._fetch<PaginatedList<GetProjectResponse>>(
+      new URL(`/cli/workspace/@${workspaceLogin}/projects`, this._apiOrigin),
+      {method: "GET"}
+    );
+    // todo: handle pagination?
+    return pages.results;
+  }
+
   async postDeploy({projectId, message}: {projectId: string; message: string}): Promise<string> {
     const data = await this._fetch<{id: string}>(new URL(`/cli/project/${projectId}/deploy`, this._apiOrigin), {
       method: "POST",
@@ -182,12 +175,44 @@ export class ObservableApiClient {
   }
 }
 
-export interface PostProjectResponse {
+export interface PostEditProjectRequest {
+  title?: string;
+}
+
+export interface PostEditProjectResponse {
   id: string;
   slug: string;
   title: string;
-  owner: {login: string};
-  creator: {login: string};
+}
+
+export interface GetCurrentUserResponse {
+  id: string;
+  login: string;
+  name: string;
+  tier: string;
+  has_workspace: boolean;
+  workspaces: WorkspaceResponse[];
+}
+
+export interface WorkspaceResponse {
+  id: string;
+  login: string;
+  name: string;
+  tier: string;
+  type: string;
+  role: string;
+}
+
+export type PostProjectResponse = GetProjectResponse;
+
+export interface GetProjectResponse {
+  id: string;
+  slug: string;
+  title: string;
+  owner: {id: string; login: string};
+  creator: {id: string; login: string};
+  // Available fields that we don't use
+  // servingRoot: string | null;
 }
 
 export interface DeployInfo {
@@ -207,4 +232,13 @@ export interface PostAuthRequestPollResponse {
     id: string;
     key: string;
   };
+}
+
+export interface PaginatedList<T> {
+  results: T[];
+  // Available fields that we don't use
+  // page: number;
+  // per_page: number;
+  // total: number;
+  // truncated: boolean;
 }
