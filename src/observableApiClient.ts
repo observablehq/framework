@@ -191,6 +191,7 @@ export interface GetProjectResponse {
   title: string;
   owner: {id: string; login: string};
   creator: {id: string; login: string};
+  // Available fields that we don't use
   // servingRoot: string | null;
 }
 
@@ -201,9 +202,10 @@ export interface DeployInfo {
 }
 
 export interface PaginatedList<T> {
+  results: T[];
+  // Available fields that we don't use
   // page: number;
   // per_page: number;
   // total: number;
   // truncated: boolean;
-  results: T[];
 }

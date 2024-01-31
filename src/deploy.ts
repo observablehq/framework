@@ -327,7 +327,7 @@ async function promptDeployTarget(
       throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
     }
     title = titleChoice;
-    effects.clack.log.info("You should add this to your observable.config.ts file");
+    effects.clack.log.info("You should add this to your observable.config.ts file.");
   }
 
   const projectSlugChoice = await effects.clack.text({
