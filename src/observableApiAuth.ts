@@ -258,6 +258,6 @@ function waitForEnter(): Promise<void> {
   });
 }
 
-function formatUser(user) {
+export function formatUser(user) {
   return user.name ? `${user.name} (@${user.login})` : `@${user.login}`;
 }

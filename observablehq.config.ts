@@ -112,9 +112,5 @@ export default {
   </span>
 </div>`,
   footer: `© ${new Date().getUTCFullYear()} Observable, Inc.`,
-  style: "style.css",
-  deploy: {
-    workspace: "@observablehq",
-    project: "cli" // TODO framework
-  }
+  style: "style.css"
 };

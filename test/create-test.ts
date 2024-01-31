@@ -1,8 +1,7 @@
 import assert from "node:assert";
 import {readFile} from "node:fs/promises";
-import type * as clack from "@clack/prompts";
-import type {ClackEffects} from "../src/clack.js";
 import {type CreateEffects, create} from "../src/create.js";
+import {TestClackEffects} from "./mocks/clack.js";
 
 describe("create", async () => {
   it("instantiates the default template", async () => {
@@ -65,38 +64,5 @@ class TestCreateEffects implements CreateEffects {
   }
   async writeFile(outputPath: string, contents: string): Promise<void> {
     this.outputs.set(outputPath, contents);
-  }
-}
-
-class TestClackEffects implements ClackEffects {
-  inputs: any[] = [];
-  intro() {}
-  outro() {}
-  note() {}
-  cancel() {}
-  group: any = async (steps: clack.PromptGroup<any>) => {
-    const results = {};
-    for (const key in steps) {
-      results[key] = await steps[key]({results});
-    }
-    return results;
-  };
-  async text({validate}: clack.TextOptions) {
-    const result = this.inputs.shift();
-    if (validate) validate(result);
-    return result;
-  }
-  async select() {
-    return this.inputs.shift();
-  }
-  async confirm() {
-    return this.inputs.shift();
-  }
-  spinner() {
-    return {
-      start() {},
-      stop() {},
-      message() {}
-    };
   }
 }
