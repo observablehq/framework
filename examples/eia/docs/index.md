@@ -1,11 +1,10 @@
 ---
-theme: [cotton, ink, wide]
-toc: false
+theme: [cotton, ink]
 ---
 
-# US electric grid: hourly demand and interchange
+# US electric grid
 
-This page reenvisions parts of the US Energy Information Administration's [Hourly Electric Grid Monitor]((https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48)). Visit [About the EIA-930 data](https://www.eia.gov/electricity/gridmonitor/about) to learn more about data collection and quality, the US electric grid, and balancing authorities responsible for nationwide electricity interchange.
+## Data from the US Energy Information Administration
 
 ```js
 // International electricity interchange data:
@@ -64,7 +63,7 @@ const baHourlyLatest = d3.rollup(baHourlyDemand, d => d[0].value, d => d["ba"]);
 ```
 
 ```js
-// Top 10 BAs by demand, latest hour
+// Top 5 BAs by demand, latest hour
 // Excludes aggregate values (e.g. US Lower 48)
 const top5LatestDemand = Array.from(baHourlyLatest, ([name, value]) => ({ name, value })).filter(d => !["United States Lower 48", "Midwest", "Mid-Atlantic", "Northwest", "Central", "New England", "Southwest", "Southeast", "California", "Florida", "Texas", "Carolinas", "Tennessee", "New York"].includes(d.name)).sort(((a, b) => b.value - a.value)).slice(0, 10);
 ```
@@ -113,60 +112,58 @@ const recentHour = timeParse(baHourly.filter(d => d.type == "D")[0].period);
 ```
 
 
-<div class="grid grid-cols-3">
-  <div class="card grid-colspan-2 grid-rowspan-2">
+<div class="grid grid-cols-4" style="grid-auto-rows: 180px;">
+  <div class="card grid-colspan-2 grid-rowspan-3">
     <h2>Change in demand by balancing authority</h2>
     <h3>Percent change in electricity demand from previous hour</h3>
     <h3>Most recent hourly data: ${recentHour.toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${recentHour.toLocaleDateString()}</h3>
-    ${
-      // Change in hourly demand Plot
-Plot.plot({
-  color: {domain: [-15, 15], range: ["#4269d0","#4269d0", "white", "#ff725c","#ff725c"], type: "diverging", pivot: 0, legend: true, label: "Change in demand (%) from previous hour" },
-  projection: "albers",
-  style: "overflow: visible",
-  r: { domain: d3.extent(eiaPoints, (d) => d.radius), range: [5, 30] },
-  marks: [
-    Plot.geo(nation, {stroke: "#6D6D6D", fill: "#6D6D6D", opacity: 0.3}),
-    Plot.geo(statemesh, {stroke: "#6D6D6D", opacity: 0.3}),
-    //Plot.dot(["Generating BA only", "Missing data"], {y: Plot.identity, r: 5, fill: ["#efb118", "#6d6d6d"], frameAnchor: "left"}),
-    //Plot.text(["Generating BA only", "Missing data"], {y: Plot.identity, frameAnchor: "left", dx: 10}),
-    Plot.arrow(eiaConnRefSpatial, {x1: "lon1", x2: "lon2", y1: "lat1", y2: "lat2", stroke: "gray", strokeWidth: 0.7, headLength: 0}),
-    Plot.dot(eiaPoints, { 
-      x: "lon",
-      y: "lat",
-      r: "radius",
-      stroke: "gray",
-      strokeWidth: 1,
-      filter: (d) => isNaN(baHourlyChange.get(d.name)),
-      fill: "#6D6D6D"
-    }),
-    Plot.dot(eiaPoints, {
-      filter: d => genOnlyBA.includes(d.id),
-      x: "lon",
-      y: "lat",
-      r: "radius",
-      fill: "#efb118",
-      stroke: "gray",
-      strokeWidth: 1
-    }),
-    Plot.dot(eiaPoints, {
-      x: "lon",
-      y: "lat",
-      r: "radius",
-      stroke: "gray",
-      strokeWidth: 1,
-      filter: (d) => !isNaN(baHourlyChange.get(d.name)),
-      fill: (d) => baHourlyChange.get(d.name)
-    }),
-    Plot.text(eiaPoints, {
-      x: "lon",
-      y: "lat",
-      text: (d) => (d.radius > 10000 ? d.id : null),
-      fontWeight: 800,
-      fill: "black"
-    }),
-    Plot.tip(
-      eiaPoints,
+    ${resize((width, height) => Plot.plot({
+        width,
+        height: height - 120,
+        color: {domain: [-15, 15], range: ["#4269d0","#4269d0", "white", "#ff725c","#ff725c"], type: "diverging", pivot: 0, legend: true, label: "Change in demand (%) from previous hour" },
+        projection: "albers",
+        style: "overflow: visible",
+        r: { domain: d3.extent(eiaPoints, (d) => d.radius), range: [5, 30] },
+        marks: [
+            Plot.geo(nation, {stroke: "white", fill: "#6D6D6D", opacity: 0.3}),Plot.geo(statemesh, {stroke: "#6D6D6D", opacity: 0.3}),
+            //Plot.dot(["Generating BA only", "Missing data"], {y: Plot.identity, r: 5, fill: ["#efb118", "#6d6d6d"], frameAnchor: "left"}),
+            //Plot.text(["Generating BA only", "Missing data"], {y: Plot.identity, frameAnchor: "left", dx: 10}),
+            Plot.arrow(eiaConnRefSpatial, {x1: "lon1", x2: "lon2", y1: "lat1", y2: "lat2", stroke: "gray", strokeWidth: 0.7, headLength: 0}),
+            Plot.dot(eiaPoints, { 
+                x: "lon",
+                y: "lat",
+                r: "radius",
+                stroke: "gray",
+                strokeWidth: 1,
+                filter: (d) => isNaN(baHourlyChange.get(d.name)),
+                fill: "#6D6D6D"
+            }),
+            Plot.dot(eiaPoints, {
+                filter: d => genOnlyBA.includes(d.id),
+                x: "lon",
+                y: "lat",
+                r: "radius",
+                fill: "#efb118",
+                stroke: "gray",
+                strokeWidth: 1
+            }),
+            Plot.dot(eiaPoints, {
+                x: "lon",
+                y: "lat",
+                r: "radius",
+                stroke: "gray",
+                strokeWidth: 1,
+                filter: (d) => !isNaN(baHourlyChange.get(d.name)),
+                fill: (d) => baHourlyChange.get(d.name)
+            }),
+            Plot.text(eiaPoints, {
+                x: "lon",
+                y: "lat",
+                text: (d) => (d.radius > 10000 ? d.id : null),
+                fontWeight: 800,
+                fill: "black"
+            }),
+            Plot.tip(eiaPoints,
       Plot.pointer({
         x: "lon",
         y: "lat",
@@ -183,68 +180,76 @@ Plot.plot({
       })
     )
   ]
-})
+}))
     }
   </div>
-  <div class="card grid-colspan-1 grid-rowspan-1">
+    <div class="card grid-colspan-1 grid-rowspan-1">
     <h2>Total US electricity demand</h2>
     <h3>${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleDateString() }</h3>
-    <h3>Includes lower 48 states only</h3>
     <span class="big">${d3.format(",")(baLatestHourlyDemandLower48[0].value)} MWh</span>
   </div>
-  <div class="card grid-colspan-1 grid-rowspan-1">
-  <h2>Top 10 balancing authorities by demand</h2>
-  <h3>${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleDateString() }</h3>
-    ${
-        resize((width) => Plot.plot({
-            marginLeft: 250,
-            marks: [
-                Plot.barX(top5LatestDemand, {y: "name", x: "value", sort: {y: "x", reverse: true, limit: 10}})
-            ]
-        }))
-    }
-</div>
-  
-  
-  <div class="card grid-colspan-3 grid-rowspan-1">
-  <h2>US generation, demand, and demand forecast</h2>
-  <h3>Add subtitle with units</3>
-   ${
-    Plot.plot({
-  marks: [
-    Plot.line(usDemandGenForecast, {x: "date", y: "value", stroke: "name"})
-  ],
-  marginLeft: 70,
+<div class="card grid-colspan-1 grid-rowspan-1">
+    <h2>Placeholder</h2>
+  </div>
+  <div class="card grid-colspan-2 grid-rowspan-1">
+<h2>US electricity generation, demand, and demand forecast (MWh)</h2>
+   ${resize((width, height) => Plot.plot({
+    width, 
+    marginTop:0,
+    height: height - 50,
+    y: {label: null},
+    marks: [
+        Plot.line(usDemandGenForecast, {x: "date", y: "value", stroke: "name", strokeWidth: 2, tip: true})
+        ],
   color: {legend: true},
-  height: 200, 
-  width: 900,
   grid: true
-})
+}))
    }
   </div>
-
-<div class="card">
-  <h2>Country interchange</h2>
-  <h3>Add subtitle with units</3>
-   ${resize((width) => Plot.plot({
+  <div class="card grid-colspan-2 grid-rowspan-1">
+  <h2>Neighboring country interchange (MWh)</h2>
+   ${resize((width, height) => Plot.plot({
     width,
+    marginTop: 0,
+    height: height - 50,
     color: { legend: true },
     grid: true,
-    marginLeft: 70,
-    height: 150,
+    y: {label: null},
     marks: [
         Plot.areaY(
             countryInterchangeSeries,
-            { x: "date", y: "value", curve: "step", fill: "id"}
+            { x: "date", y: "value", curve: "step", fill: "id", tip: true}
         ),
         Plot.ruleY([0])
     ]
 }))
    }
 </div>
+  <div class="card grid-colspan-2 grid-rowspan-2">
+  <h2>Top 10 balancing authorities by demand (MWh)</h2>
+  <h3>${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleDateString() }</h3>
+  ${
+        resize((width, height) => Plot.plot({
+            height: height - 50,
+            width,
+            color: {range: ["white", "#ff725c"]},
+            y: {label: null},
+            x: {label: null, grid: true},
+            marginLeft: 250,
+            marks: [
+                Plot.barX(top5LatestDemand, {y: "name", x: "value", fill: "value", sort: {y: "x", reverse: true, limit: 10}})
+            ]
+        }))
+    }
+    </div>
+  <div class="card grid-colspan-1 grid-rowspan-1">
+    <h2>Placeholder</h2>
+  </div>
+  <div class="card grid-colspan-1 grid-rowspan-1">
+    <h2>Placeholder</h2>
+  </div>
 
-Credit: Some code for EIA data access and wrangling is reused from notebooks by Ian Johnson. Thank you Ian!
 
-```js
-baHourlyDemand
-```
+This page reenvisions parts of the US Energy Information Administration's [Hourly Electric Grid Monitor]((https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48)). Visit [About the EIA-930 data](https://www.eia.gov/electricity/gridmonitor/about) to learn more about data collection and quality, the US electric grid, and balancing authorities responsible for nationwide electricity interchange. 
+
+Some code for EIA data access and wrangling is reused from notebooks by Ian Johnson. Thank you Ian!
