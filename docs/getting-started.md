@@ -338,10 +338,12 @@ const [longitude, latitude] = location;
 
 To personalize this code snippet to your current location, edit the <code>longitude</code> and <code>latitude</code> values above, or click the **Locate me** button above.
 
+<div class="caution">NWS does not provide forecasts for points outside the United States, so if you specify such a location the API will return an error and the data loader will fail.</div>
+
 Your data loader should look like this:
 
 <figure>
-  <img loading="lazy" src="./getting-started/hello-loader.png" class="crop">
+  <a href="./getting-started/hello-loader.png"><img loading="lazy" src="./getting-started/hello-loader.png" class="crop"></a>
   <figcaption>A JavaScript data loader for fetching a local forecast from weather.gov.</figcaption>
 </figure>
 
@@ -387,6 +389,8 @@ This declares a variable `forecast` that you can then reference from other code.
 display(forecast);
 ```
 
+TODO Introduce the `display` function, point out that it wasn’t needed before because `1 + 2` is an expression.
+
 You’ll see something like:
 
 <figure>
@@ -410,6 +414,8 @@ const forecast = FileAttachment("./data/forecast.json").json();
 
 Now let’s add a chart using Observable Plot which is available as `Plot`.
 
+TODO Talk about implicit imports.
+
 Replace the `display(forecast)` code block with the following code:
 
 ```js run=false
@@ -430,6 +436,8 @@ Plot.plot({
   ]
 })
 ```
+
+TODO Talk about `display`’s behavior when passed a DOM element.
 
 Now you’ll see…
 
@@ -462,6 +470,10 @@ function temperaturePlot(data, {width}) {
 }
 ```
 
+TODO Talk about the benefits of moving into a function (importing so you can use it across pages, share it with another app, write unit tests).
+
+### Layout
+
 Move it into a grid, use `resize` instead of `width`…
 
 ```html run=false
@@ -469,6 +481,8 @@ Move it into a grid, use `resize` instead of `width`…
   <div class="card">${resize((width) => temperaturePlot(forecast, {width}))}</div>
 </div>
 ```
+
+TODO Talk about the `grid` and `card` classes.
 
 Apply the dashboard theme…
 
