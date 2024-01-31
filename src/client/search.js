@@ -3,6 +3,8 @@ import MiniSearch from "npm:minisearch";
 
 const input = document.querySelector("input.observablehq-search");
 if (input != null) {
+  // TODO: this is gross
+  const base = document.querySelector(".observablehq-link a").getAttribute("href"); // e.g., "./" or "../"
   let value;
   const r = document.createElement("div");
   r.setAttribute("id", "observablehq-search-results");
@@ -13,7 +15,7 @@ if (input != null) {
     _load() {
       return (
         this._loading ??
-        (this._loading = fetch("/_file/data/minisearch.json")
+        (this._loading = fetch(`${base}_file/data/minisearch.json`)
           .then((resp) => resp.json())
           .then((json) => MiniSearch.loadJS(json, json.options)))
       );
@@ -34,7 +36,7 @@ if (input != null) {
     }
     input.parentElement.classList.add("observablehq-search-results");
     const results = await index.search(value, {boost: {title: 4}, fuzzy: 0.2, prefix: true});
-    r.innerHTML = results.length === 0 ? "<summary>no results</summary>" : `<details open><summary>${results.length} result${results.length===1 ? "":"s"}</summary><ol>${ results.map(({id, title, score}) => `<li class="observablehq-link"><a href="/${id}">${title}</a></li>`).join("")}</ol></details>`;
+    r.innerHTML = results.length === 0 ? "<summary>no results</summary>" : `<details open><summary>${results.length} result${results.length===1 ? "":"s"}</summary><ol>${ results.map(({id, title, score}) => `<li class="observablehq-link"><a href="${base}${id}">${title}</a></li>`).join("")}</ol></details>`;
   };
   input.addEventListener("focus", index._load);
   input.addEventListener("input", search);

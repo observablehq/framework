@@ -18,8 +18,7 @@ for await (const file of visitMarkdownFiles(root)) {
 
   // TODO h1, front-matter…
   const title = text.match(/^# (.*)/)?.[1] ?? basename(file, ".md");
-
-  index.add({id: file.slice(0, -3), title, text});
+  index.add({id: file === "index.md" ? "" : "" + file.slice(0, -3), title, text});
 }
 
 // One way of passing the options to the client; better than nothing, but note
