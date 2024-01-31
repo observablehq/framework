@@ -83,7 +83,7 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
         const templateDir = resolve(fileURLToPath(import.meta.url), "..", "..", "templates", template);
         const title = basename(rootPath!);
         const runCommand = packageManager === "yarn" ? "yarn" : `${packageManager ?? "npm"} run`;
-        const installCommand = packageManager === "yarn" ? "yarn" : `${packageManager ?? "npm"} install`;
+        const installCommand = `${packageManager ?? "npm"} install`;
         await effects.sleep(1000);
         await recursiveCopyTemplate(
           templateDir,
@@ -100,7 +100,7 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
         if (packageManager) {
           s.message(`Installing dependencies via ${packageManager}`);
           await effects.sleep(1000);
-          await promisify(exec)(packageManager, {cwd: rootPath});
+          await promisify(exec)(installCommand, {cwd: rootPath});
         }
         if (initializeGit) {
           s.message("Initializing git repository");
