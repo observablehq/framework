@@ -323,13 +323,12 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
       case "change": {
         const updated = await parseMarkdown(join(root, path), {root, path});
         // delay to avoid a possibly-empty file
-        console.log("change", {force, empty: updated.html === ""});
         if (!force && updated.html === "") {
           if (!emptyTimeout) {
             emptyTimeout = setTimeout(() => {
               emptyTimeout = null;
               watcher("change", true);
-            }, 1000);
+            }, 150);
           }
           break;
         } else if (emptyTimeout) {
