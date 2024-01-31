@@ -32,7 +32,7 @@ figcaption code {
 
 # Getting started
 
-Welcome! This tutorial will guide your first steps with Observable Framework by way of a hands-on exercise creating a live dashboard of local weather. 🌦️
+Welcome! This tutorial will guide your first steps with Observable Framework by way of a hands-on exercise creating a dashboard of local weather. 🌦️
 
 But first, what is Observable Framework — or “Framework” for short? Framework is… well… an <a href="https://github.com/observablehq/cli">open-source</a> *framework* for building data apps that combines the power of JavaScript for interactive graphics on the front-end with any language you want for data preparation and analysis on the back-end.
 
@@ -353,6 +353,12 @@ node docs/data/forecast.json.js
 
 If this barfs a bunch of JSON in the terminal, it’s working as intended. 😅 Normally you don’t run data loaders by hand — Framework runs them automatically — but data loaders are “just programs” so you can run them manually if you want.
 
+<div class="tip">If you’d like an additional challenge and would rather write your data loader in another language, such as Python or R, take a peek at the <a href="#next-steps">next steps</a> below before continuing.</div>
+
+### File attachments
+
+How do we access the output of a data loader in the client? The same way that we’d access any static file. But we don’t use `fetch`, we use `FileAttachment`, because Framework needs to know statically which files are referenced so they can be included in the published site on build.
+
 Framework uses [file-based routing](./routing) not just for pages but for data loaders as well. The data loader <code>forecast.json.js</code> generates the file <code>forecast.json</code>. That is:
 
 ```
@@ -399,6 +405,8 @@ forecast
 ```js
 const forecast = FileAttachment("./data/forecast.json").json();
 ```
+
+### Plots
 
 Now let’s add a chart using Observable Plot which is available as `Plot`.
 
@@ -508,6 +516,26 @@ Invite users, share a link…
 ## Next steps
 
 Here are a few more tips.
+
+### Write a data loader in Python, R, or other language
+
+We coded exclusively in JavaScript for this tutorial, but you can write data loaders in any language — not just JavaScript. Here’s a <code>forecast.json.py</code> you could use in place of the JavaScript data loader [above](#data-loader):
+
+```py run=false
+import json
+import requests
+import sys
+
+longitude = -122.47
+latitude = 37.80
+
+station = requests.get(f"https://api.weather.gov/points/{latitude},{longitude}").json()
+forecast = requests.get(station["properties"]["forecastHourly"]).json()
+
+json.dump(forecast, sys.stdout)
+```
+
+To write the data loader in R, name it <code>forecast.json.R</code>. Or as shell script, <code>forecast.json.sh</code>. You get the idea. See [Data loaders: Routing](./loaders#routing) for more details. The beauty of this approach is that you can leverage the strengths (and libraries) of multiple languages, and you still get instant updates in the browser when you save changes to data loaders.
 
 ### Deploying via GitHub Actions
 
