@@ -4,8 +4,6 @@ theme: [cotton, ink]
 
 # US electric grid
 
-## Data from the US Energy Information Administration
-
 ```js
 // International electricity interchange data:
 const countryInterchangeSeries = await FileAttachment("data/country-interchange.csv").csv({typed: true});
@@ -120,6 +118,7 @@ const recentHour = timeParse(baHourly.filter(d => d.type == "D")[0].period);
     ${resize((width, height) => Plot.plot({
         width,
         height: height - 120,
+        caption: "Data: US Energy Information Administration",
         color: {domain: [-15, 15], range: ["#4269d0","#4269d0", "white", "#ff725c","#ff725c"], type: "diverging", pivot: 0, legend: true, label: "Change in demand (%) from previous hour" },
         projection: "albers",
         style: "overflow: visible",
@@ -127,7 +126,7 @@ const recentHour = timeParse(baHourly.filter(d => d.type == "D")[0].period);
         marks: [
             Plot.geo(nation, {stroke: "white", fill: "#6D6D6D", opacity: 0.3}),Plot.geo(statemesh, {stroke: "#6D6D6D", opacity: 0.3}),
             //Plot.dot(["Generating BA only", "Missing data"], {y: Plot.identity, r: 5, fill: ["#efb118", "#6d6d6d"], frameAnchor: "left"}),
-            //Plot.text(["Generating BA only", "Missing data"], {y: Plot.identity, frameAnchor: "left", dx: 10}),
+            //Plot.text(["Generating BA only", "Missing data"], {y: Plot.identity, dx: 10, frameAnchor: "left"}),
             Plot.arrow(eiaConnRefSpatial, {x1: "lon1", x2: "lon2", y1: "lat1", y2: "lat2", stroke: "gray", strokeWidth: 0.7, headLength: 0}),
             Plot.dot(eiaPoints, { 
                 x: "lon",
