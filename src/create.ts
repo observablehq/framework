@@ -6,6 +6,7 @@ import {setTimeout as sleep} from "node:timers/promises";
 import {fileURLToPath} from "node:url";
 import {promisify} from "node:util";
 import * as clack from "@clack/prompts";
+import untildify from "untildify";
 import type {ClackEffects} from "./clack.js";
 import {cyan, inverse, reset, underline} from "./tty.js";
 
@@ -83,6 +84,7 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
           message: "Initialize git repository?"
         }),
       installing: async ({results: {rootPath, projectTitle, includeSampleFiles, packageManager, initializeGit}}) => {
+        rootPath = untildify(rootPath!);
         const s = clack.spinner();
         s.start("Copying template files");
         const template = includeSampleFiles ? "default" : "empty";
