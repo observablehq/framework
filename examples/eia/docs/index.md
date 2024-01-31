@@ -59,8 +59,8 @@ const baHourlyDemand = baHourly.filter(d => d.type == "D").map(d => ({ba: d["res
 ```
 
 ```js
-// Cleaned up baHourly for table
-const baHourlyClean = baHourly.map(d => ({Date: d.period, 'Balancing authority': d["respondent-name"], Abbreviation: d.respondent, Metric: d["type-name"], Value: d.value, Units: d["value-units"]}))
+// Cleaned up baHourly for table, excludes regions (only shows BAs)
+const baHourlyClean = baHourly.map(d => ({Date: d.period, 'Balancing authority': d["respondent-name"], Abbreviation: d.respondent, Metric: d["type-name"], Value: d.value, Units: d["value-units"]})).filter(d => !regions.includes(d["Balancing authority"]))
 ```
 
 ```js
