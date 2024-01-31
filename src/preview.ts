@@ -279,6 +279,8 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
   let stylesheets: Set<string> | null = null;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
+  let emptyTimeout: ReturnType<typeof setTimeout> | null = null;
+
   console.log(faint("socket open"), req.url);
 
   async function getStylesheets({cells, data}: ParseResult): Promise<Set<string>> {
@@ -302,24 +304,38 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
     }
   }
 
-  async function watcher(event: WatchEventType) {
+  async function watcher(event: WatchEventType, force = false) {
     if (!path || !current) throw new Error("not initialized");
     switch (event) {
       case "rename": {
         markdownWatcher?.close();
         try {
-          markdownWatcher = watch(join(root, path), watcher);
+          markdownWatcher = watch(join(root, path), (event) => watcher(event));
         } catch (error) {
           if (!isEnoent(error)) throw error;
           console.error(`file no longer exists: ${path}`);
           socket.terminate();
           return;
         }
-        setTimeout(() => watcher("change"), 100); // delay to avoid a possibly-empty file
+        watcher("change");
         break;
       }
       case "change": {
         const updated = await parseMarkdown(join(root, path), {root, path});
+        // delay to avoid a possibly-empty file
+        console.log("change", {force, empty: updated.html === ""});
+        if (!force && updated.html === "") {
+          if (!emptyTimeout) {
+            emptyTimeout = setTimeout(() => {
+              emptyTimeout = null;
+              watcher("change", true);
+            }, 1000);
+          }
+          break;
+        } else if (emptyTimeout) {
+          clearTimeout(emptyTimeout);
+          emptyTimeout = null;
+        }
         if (current.hash === updated.hash) break;
         const updatedStylesheets = await getStylesheets(updated);
         for (const href of difference(stylesheets, updatedStylesheets)) send({type: "remove-stylesheet", href});
@@ -345,7 +361,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
     if (current.hash !== initialHash) return void send({type: "reload"});
     stylesheets = await getStylesheets(current);
     attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(current), refreshAttachment);
-    markdownWatcher = watch(join(root, path), watcher);
+    markdownWatcher = watch(join(root, path), (event) => watcher(event));
   }
 
   socket.on("message", async (data) => {
