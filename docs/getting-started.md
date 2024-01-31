@@ -20,13 +20,21 @@
   object-position: 0 100%;
 }
 
+.wbr::before {
+  content: "\200b";
+}
+
+figcaption code {
+  font-size: 90%; /* TODO move to global.css */
+}
+
 </style>
 
 # Getting started
 
 Welcome! This tutorial will guide your first steps with Observable Framework by way of a hands-on exercise creating a live dashboard of local weather. 🌦️
 
-But first, what is Observable Framework — or “Framework” for short? Framework is… well… an open-source *framework* for building data apps that combines the power of JavaScript for interactive graphics on the front-end with any language you want for data preparation and analysis on the back-end.
+But first, what is Observable Framework — or “Framework” for short? Framework is… well… an <a href="https://github.com/observablehq/cli">open-source</a> *framework* for building data apps that combines the power of JavaScript for interactive graphics on the front-end with any language you want for data preparation and analysis on the back-end.
 
 Framework is three things in one:
 
@@ -61,14 +69,14 @@ const digraph = dot`digraph {
 
 <figure style="max-width: 960px;">
   ${digraph}
-  <figcaption>An overview of the development workflow.</figcaption>
+  <figcaption>An overview of developing with Framework.</figcaption>
 </figure>
 
-First you’ll setup your local development environment by [**creating**](#2.-create) a project. &para;&nbsp;Next you’ll [**develop**](#3.-develop); this is an iterative process where you save changes to source files in your editor while previewing the result in your browser. &para;&nbsp;When you’re ready to share, it’s time to [**publish**](#4.-publish); you can either build a static site for self-hosting or deploy directly to Observable. &para;&nbsp;Lastly, you can invite people to [**view**](#5.-view) your project!
+First you’ll setup your local development environment by [**creating**](#1.-create) a project. &para;&nbsp;Next you’ll [**develop**](#2.-develop): an iterative process where you save changes to source files in your editor while previewing the result in your browser. &para;&nbsp;When you’re ready to share, it’s time to [**publish**](#3.-publish): you can either build a static site for self-hosting or deploy directly to Observable. &para;&nbsp;Lastly, you can invite people to [**view**](#4.-view) your project!
 
-These are just first steps. Naturally, you can continue to develop your project after you publish, and republish to make these changes live. If you like, you can setup continuous deployment to build your site automatically on commit or on schedule. We’ll cover these [next steps](#next-steps) briefly below.
+These are just first steps. Naturally, you can continue to develop projects after you publish, and republish projects to make changes live or update data. If you like, you can setup continuous deployment to build your site automatically on commit or on schedule. We’ll cover these [next steps](#next-steps) briefly below.
 
-And _awaaay_ we go… 🚀
+And _awaAay_ we go… 🚀
 
 ## 1. Create
 
@@ -93,7 +101,7 @@ yarn create @observablehq
 
 You can run the above command anywhere, but you may want to `cd` to your `~/Development` directory first (or wherever you do local development).
 
-For the first prompt, you’ll specify where to create your new project. Enter `./hello-framework` to create a directory named `hello-framework` within the current directory. Or just hit Enter, is this is conveniently the default. (The `./` is implied, so this is equivalent to `hello-framework`. You can create a project in a different directory by entering a path that starts with `../` or `~/` or `/`.)
+For the first prompt, you’ll specify where to create your new project. Enter `./hello-framework` to create a directory named `hello-framework` within the current directory. Or just hit Enter, as this is conveniently the default. (The `./` is implied, so `./hello-framework` is equivalent to `hello-framework`. You can create a project in a different directory by entering a path that starts with `../` or `~/` or `/`.)
 
 <pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
@@ -101,7 +109,7 @@ For the first prompt, you’ll specify where to create your new project. Enter `
 <span class="focus">│</span>  ./hello-framework<span class="invert">&nbsp;</span>
 <span class="focus">└</span></pre>
 
-Next you’ll enter the project’s title. This title appears in the sidebar as well as on all pages. (A memorable title will make your project easier to find in your browser history, for one.) You can hit Enter here to accept the default title derived from the directory you entered in the previous step.
+Next you’ll enter the project’s title. A project’s title appears in the sidebar as well as on all pages. (A memorable title will make your project easier to find in your browser history, for one.) You can hit Enter here to accept the default title derived from the directory you entered in the previous step.
 
 <pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
@@ -112,7 +120,7 @@ Next you’ll enter the project’s title. This title appears in the sidebar as 
 <span class="focus">│</span>  <span class="muted"><span class="invert">H</span>ello Framework</span>
 <span class="focus">└</span></pre>
 
-Next, decide whether to include sample files in your new project. These sample files demonstrate common techniques and are handy for learning — you can edit the code and see what happens. But if you’d prefer a more minimal starter project, with less to delete later, you can chose to omit them now. We recommend you include them now (again, learning), but they’re not needed for this tutorial.
+Next, decide whether you want sample files in your new project. These files demonstrate common techniques and are handy for learning — you can edit the code and see what happens. But if you’d prefer a more minimal starter project, with less to delete later, you can omit them now. We recommend you include them (again, _learning_), but they’re not needed for this tutorial.
 
 <pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
@@ -127,7 +135,7 @@ Next, decide whether to include sample files in your new project. These sample f
 <span class="focus">│</span>  <span class="muted">○ No, create an empty project</span>
 <span class="focus">└</span></pre>
 
-If you use `npm` or `yarn` as your preferred package manager, declare your allegiance next. By default, the package manager you used above will be selected, so you can just hit Enter here. If you prefer a different package manager (say `pnpm`), choose `No`; you can install dependencies yourself after the project is created.
+If you use `npm` or `yarn` as your preferred package manager, declare your allegiance now. The package manager you used to launch `observable create` will be selected by default, so you can just hit Enter again to continue. If you prefer a different package manager (say `pnpm`), choose `No`; you can install dependencies yourself after the project is created.
 
 <pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
@@ -194,7 +202,7 @@ And that’s it! After some downloading, copying, and installing, your new proje
 <span class="muted">│</span>
 <span class="muted">└</span>  Problems? <u>https://cli.observablehq.com/getting-started</u></pre>
 
-## 3. Develop
+## 2. Develop
 
 Next, `cd` into your new project folder.
 
@@ -202,9 +210,9 @@ Next, `cd` into your new project folder.
 cd hello-framework
 ```
 
-During development, you’ll use Framework’s built-in local development server to preview a local version of your site in the browser. In preview mode, Framework generates pages on-demand; as you edit files in your editor, changes will be instantly reflected in the browser.
+Framework’s local development server lets you preview your site in the browser as you make rapid changes. The preview server generates pages on-the-fly: as you edit files in your editor, changes are instantly streamed to your browser.
 
-<div class="tip">You must be connected to the internet to import libraries from npm — but otherwise you can do local development offline, if you like. In the future, we intend to support self-hosting imported libraries; please upvote <a href="https://github.com/observablehq/cli/issues/20">#20</a> and <a href="https://github.com/observablehq/cli/issues/360">#360</a> if you are interested in this feature.</div>
+<div class="tip">You can work offline with the preview server, but you must be connected to the internet to <a href="./javascript/imports">import libraries</a> from npm. In the future, we intend to support self-hosting imported libraries; please upvote <a href="https://github.com/observablehq/cli/issues/20">#20</a> and <a href="https://github.com/observablehq/cli/issues/360">#360</a> if you are interested in this feature.</div>
 
 To start the preview server using `npm`:
 
@@ -225,26 +233,28 @@ You should see something like this:
 
 <div class="tip">
   <p>If port 3000 is in use, the preview server will choose the next available port, so your actual port may vary. To specify port 4321 (and similarly for any other port), use <nobr><code>--port 4321</code></nobr>.</p>
-  <p>Also, for security, the preview server is by default only accessible on your local machine using the <a href="https://en.wikipedia.org/wiki/Localhost">loopback address</a> 127.0.0.1. To allow remote connections, use <nobr><code>--host 0.0.0.0</code></nobr>.</p>
+  <p>For security, the preview server is by default only accessible on your local machine using the <a href="https://en.wikipedia.org/wiki/Localhost">loopback address</a> 127.0.0.1. To allow remote connections, use <nobr><code>--host 0.0.0.0</code></nobr>.</p>
 </div>
 
 Now visit <http://127.0.0.1:3000> in your browser, which should look like:
 
 <figure>
   <img loading="lazy" src="./getting-started/hello-framework.png" style="aspect-ratio: 3248 / 2112;">
-  <figcaption>The default home page (<code style="font-size: 90%;">docs/index.md</code>) after creating a new project.</figcaption>
+  <figcaption>The default home page (<code>docs/index.md</code>) after creating a new project.</figcaption>
 </figure>
 
 ### Test live preview
 
-Let’s check that live preview is working. Open <code>docs/index.md</code> in your preferred text editor — below we show Visual Studio Code — and position your browser window so that you can see your editor and browser side-by-side. If you then replace the text “Hello, Observable Framework” with “Hi, Mom!” and save, you should see:
+Live preview means that as you save changes, your in-browser preview updates instantly. Live preview applies to Markdown pages, imported JavaScript modules (so-called *hot module replacement*), data loaders, and file attachments. This feature is implemented by the preview server watching files and pushing changes to the browser over a socket.
+
+To experience live preview, first open <code>docs/index.md</code> in your preferred text editor — below we show Visual Studio Code — and position your browser window so that you can see your editor and browser side-by-side. If you then replace the text “Hello, Observable Framework” with “Hi, Mom!” and save, you should see:
 
 <figure>
   <img loading="lazy" src="./getting-started/hi-mom.png" class="crop">
   <figcaption>No seriously — hi, Mom! Thanks for supporting me all these years.</figcaption>
 </figure>
 
-<div class="tip">Try reloading if you don’t see an update after saving. Changes are streamed over a socket to the preview server, and this socket may disconnect if you’re idle for a while. Please upvote <a href="https://github.com/observablehq/cli/issues/50">#50</a> if you run into this issue.</div>
+<div class="tip">Try reloading if you don’t see an update after saving. The live preview socket may disconnect if you’re idle. Please upvote <a href="https://github.com/observablehq/cli/issues/50">#50</a> if you run into this issue.</div>
 
 ### Create a new page
 
@@ -260,9 +270,7 @@ Now let’s create a new page for our weather dashboard. Create a new file `docs
 
 <div class="tip">Hover any code block to show a copy button. Clicking the copy button will copy the contents of the code block to your clipboard.</div>
 
-To see the new page in the sidebar, we first have to restart the preview server. In your terminal, enter Control-C (⌃C) to kill the preview server. Then press the up arrow key (↑) to re-run the command to start the preview server (either `npm run dev` or `yarn dev`). Lastly, reload your browser.
-
-<div class="note">The preview server doesn’t (yet) automatically update the sidebar when you add, remove, or rename a page; you must restart the server manually for the sidebar to update, and after you edit the project config file.</div>
+To see the new page in the sidebar, you must restart the preview server. In the terminal, use Control-C (⌃C) to kill the preview server. Then use up arrow (↑) to re-run the command to start the preview server (`npm run dev` or `yarn dev`). Lastly, reload your browser.
 
 That’s a bit of rigamarole, but you won’t have to do it very often. 😓 If you click on the **Weather report** link in the sidebar, it’ll take you to <http://127.0.0.1:3000/weather>, where you should see:
 
@@ -271,34 +279,29 @@ That’s a bit of rigamarole, but you won’t have to do it very often. 😓 If 
   <figcaption>The humble beginnings of a local weather dashboard.</figcaption>
 </figure>
 
-<div class="tip">If you don’t see the sidebar, you can show it by either: making the window wider, hitting Command-B (⌘B, or Ctrl-B ⌃C on Firefox and non-macOS), or clicking the little right-pointing arrow on the left side of the screen.</div>
+<div class="tip">If you don’t see the sidebar, you can show it by making the window wider, using Command-B (⌘B) or Option-B (⌥B) on Firefox and non-macOS, or clicking the little right-pointing arrow ↦ on the left edge of the window.</div>
 
-As you can see from the code <code class="language-js">1 + 2</code> being rendered as <code class="language-js">3</code>, JavaScript fenced code blocks (<code>```js</code>) are *live* — the code runs in the browser. Feel free to tinker with this code, say to replace the <code class="language-js">2</code> with <code class="language-js">Math.random()</code>. In a bit, we’ll use this feature to render a chart. We can also use it to debug as we develop, say to inspect data.
+As evinced by the code <code class="language-js">1 + 2</code> rendered as <code class="language-js">3</code>, JavaScript fenced code blocks (<code>```js</code>) are *live* — the code runs in the browser. Feel free to tinker, say to replace the <code class="language-js">2</code> with <code class="language-js">Math.random()</code>. In a bit, we’ll write code to render a chart. We can also use code to debug as we develop, say to inspect data.
 
 ### Data loader
 
-Next, let’s load some data.
+Next, let’s load some data. The [National Weather Service (NWS)](https://www.weather.gov/documentation/services-web-api) provides an excellent and free API for local weather data within the United States. We’ll use the `/points/{latitude},{longitude}` endpoint to get metadata for the closest grid point to the given location, and then we’ll fetch the corresponding hourly forecast.
 
-[National Weather Service (NWS) API](https://www.weather.gov/documentation/services-web-api)
-
-First find a weather station near a given longitude and latitude. Using San Francisco by default.
+Create a new file <code>docs/data/forecast.json.js</code> and paste in the following snippet:
 
 <pre><code class="language-js">const longitude = ${html`<span class="hljs-number">${longitude.toFixed(2)}</span>`};
 const latitude = ${html`<span class="hljs-number">${latitude.toFixed(2)}</span>`};
 
 async function json(url) {
   const response = await fetch(url);
-  if (!response.ok) throw new Error(`fetch failed: $\{response.status}`);
+  if (!response.ok) throw new Error(`fetch failed: &dollar;{response.status}`);
   return await response.json();
 }
 
-const station = await json(`https://api.weather.gov/points/$\{latitude},$\{longitude}`);
-const forecast = await json(station.properties.forecast);
-const forecastHourly = await json(station.properties.forecastHourly);
+const station = await json(`https://api.weather.gov/points/&dollar;{latitude},&dollar;{longitude}`);
+const forecast = await json(station.properties.forecastHourly);
 
-process.stdout.write(JSON.stringify({station, forecast, forecastHourly}, null, 2));</pre>
-
-If you want to personalize this code snippet, you can edit the <code>longitude</code> and <code>latitude</code> values to change the location. If you don’t know your longitude and latitude off the top of your head (and why not??), click the <b>Locate me!</b> button below to update the snippet automatically. (Note: clicking the button may prompt you to allow this page access to your location. Your location won’t be recorded — and feel free to look at <a href="https://github.com/observablehq/cli/blob/main/docs/getting-started.md?plain=1">the source code of this page</a> to verify.)
+process.stdout.write(JSON.stringify(forecast));</pre>
 
 ```js
 const location = view(Locator([-122.47, 37.8]));
@@ -333,21 +336,152 @@ function Locator(initialValue) {
 const [longitude, latitude] = location;
 ```
 
-Now what do we get… let’s inspect.
+To personalize this code snippet to your current location, edit the <code>longitude</code> and <code>latitude</code> values above, or click the **Locate me** button above.
 
-```js echo
-FileAttachment("./data/forecast.json").json()
+Your data loader should look like this:
+
+<figure>
+  <img loading="lazy" src="./getting-started/hello-loader.png" class="crop">
+  <figcaption>A JavaScript data loader for fetching a local forecast from weather.gov.</figcaption>
+</figure>
+
+If you like, you can run your data loader manually in the terminal:
+
+```sh
+node docs/data/forecast.json.js
 ```
 
-Give it a name…
+If this barfs a bunch of JSON in the terminal, it’s working as intended. 😅 Normally you don’t run data loaders by hand — Framework runs them automatically — but data loaders are “just programs” so you can run them manually if you want.
+
+Framework uses [file-based routing](./routing) not just for pages but for data loaders as well. The data loader <code>forecast.json.js</code> generates the file <code>forecast.json</code>. That is:
+
+```
+docs/data/forecast.json.js → docs/data/forecast.json
+```
+
+So to load this (generated) file from <code>docs<span class="wbr">/</span>weather.md</code> we can use the relative path <code>./data<span class="wbr">/</span>forecast.json</code>:
+
+```
+docs/weather.md + ./data/forecast.json = docs/data/forecast.json
+```
+
+We need to use <code>FileAttachment</code>.
+
+Framework uses static analysis so it knows to run the data loader during build.
+
+Back in `weather.md`, replace the contents of the JavaScript code block (the parts within the triple backticks <code>```</code>) with the following code snippet:
 
 ```js run=false
 const forecast = FileAttachment("./data/forecast.json").json();
 ```
 
-TODO Add a chart to your weather.md.
+This declares a variable `forecast` that you can then reference from other code. For example, you can add another code block that displays the `forecast` data.
 
-## 4. Publish
+```js run=false
+display(forecast);
+```
+
+You’ll see something like:
+
+<figure>
+  <img loading="lazy" src="./getting-started/hello-data.png" class="crop">
+  <figcaption>Using <code>FileAttachment</code> to load data.</figcaption>
+</figure>
+
+Here’s the object so you can explore it here:
+
+```js
+forecast
+```
+
+(This documentation site is built with Framework!)
+
+```js
+const forecast = FileAttachment("./data/forecast.json").json();
+```
+
+Now let’s add a chart using Observable Plot which is available as `Plot`.
+
+Replace the `display(forecast)` code block with the following code:
+
+```js run=false
+Plot.plot({
+  title: "Hourly temperature forecast",
+  width,
+  x: {type: "utc", ticks: "day"},
+  y: {grid: true, inset: 10, label: "Degrees (F)"},
+  color: {scheme: "burd", domain: [40, 60], pivot: 50},
+  marks: [
+    Plot.lineY(forecast.properties.periods
+        .flatMap((d) => ["startTime", "endTime"]
+        .map((t) => ({time: d[t], ...d}))), {
+      x: "time",
+      y: "temperature",
+      stroke: "temperature",
+      z: null
+    })
+  ]
+})
+```
+
+Now you’ll see…
+
+<figure>
+  <img loading="lazy" src="./getting-started/hello-plot.png" class="crop">
+  <figcaption>Using <code>Plot</code> to make a chart.</figcaption>
+</figure>
+
+It’s responsive using `width`.
+
+Extract into a function, promote `data` to an argument and `width` to an option…
+
+```js run=false
+function temperaturePlot(data, {width}) {
+  return Plot.plot({
+    title: "Hourly temperature forecast",
+    width,
+    x: {type: "utc", ticks: "day"},
+    y: {grid: true, inset: 10, label: "Degrees (F)"},
+    color: {scheme: "burd", domain: [40, 60], pivot: 50},
+    marks: [
+      Plot.lineY(forecast.properties.periods
+          .flatMap((d) => ["startTime", "endTime"]
+          .map((t) => ({time: d[t], ...d}))), {
+        x: "time",
+        y: "temperature",
+        stroke: "temperature",
+        z: null
+      })
+    ]
+  });
+}
+```
+
+Move it into a grid, use `resize` instead of `width`…
+
+```html run=false
+<div class="grid grid-cols-1">
+  <div class="card">${resize((width) => temperaturePlot(forecast, {width}))}</div>
+</div>
+```
+
+Apply the dashboard theme…
+
+```yaml run=false
+---
+theme: dashboard
+toc: false
+---
+```
+
+<figure>
+  <img loading="lazy" src="./getting-started/hello-grid.png" class="crop">
+  <figcaption>Adopting a grid layout and the <code>dashboard</code> theme.</figcaption>
+</figure>
+
+Okay that’s a pretty lame dashboard but it’s something.
+
+## 3. Publish
 
 When you’re ready to deploy your project, use the `build` command to generate the output root (`dist`). You can then copy the `dist` folder to your static site server.
 
@@ -365,9 +499,9 @@ If you’d like to host your project on [Observable](https://observablehq.com) a
 yarn deploy
 ```
 
-Once done, the command will print the URL where you can view your project on the Observable Cloud. Something like: https://observablehq.com/@{workspace}/{slug}.
+Once done, the command will print the URL where you can view your project. Something like: https://{workspace}.observablehq.cloud/{slug}.
 
-## 5. View
+## 4. View
 
 Invite users, share a link…
 
@@ -377,7 +511,7 @@ Here are a few more tips.
 
 ### Deploying via GitHub Actions
 
-You can schedule builds and deploy your project automatically on commit, or on a schedule. We’ll share example source code soon, but please reach out and ask if you have questions on how to setup continuous deployment.
+You can schedule builds and deploy your project automatically on commit, or on a schedule. See <a href="https://github.com/observablehq/cli/blob/main/.github/workflows/deploy.yml">this documentation site’s deploy.yml</a> for an example (that’s a little more complicated than you probably need). Please reach out and ask if you have questions on how to setup continuous deployment.
 
 ### Installing into an existing project
 
