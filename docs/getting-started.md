@@ -101,7 +101,7 @@ You can run the above command anywhere, but you may want to `cd` to your `~/Deve
 
 The first prompt asks where to create your new project. Enter `./hello-framework` to create a directory named `hello-framework` within the current directory. Or just hit Enter, as this is conveniently the default. (The `./` is implied, so `./hello-framework` is equivalent to `hello-framework`. You can create a project in a different directory by entering a path that starts with `../` or `~/` or `/`.)
 
-<pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
+<pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="focus">◆</span>  Where to create your project?
 <span class="focus">│</span>  ./hello-framework<span class="invert">&nbsp;</span>
@@ -109,7 +109,7 @@ The first prompt asks where to create your new project. Enter `./hello-framework
 
 Next you’ll enter the project’s title. A project’s title appears in the sidebar as well as on all pages. You can hit Enter here to accept the default title derived from the directory name.
 
-<pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
+<pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Where to create your project?
 <span class="muted">│</span>  <span class="muted">./hello-framework</span>
@@ -120,7 +120,7 @@ Next you’ll enter the project’s title. A project’s title appears in the si
 
 Next, decide whether you want sample files in your new project. These files demonstrate common techniques and are handy for learning — you can edit the code and see what happens. But if you’d prefer a more minimal starter project with less to delete later, you can omit them. They’re not needed for this tutorial.
 
-<pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
+<pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Where to create your project?
 <span class="muted">│</span>  <span class="muted">./hello-framework</span>
@@ -135,7 +135,7 @@ Next, decide whether you want sample files in your new project. These files demo
 
 If you use `npm` or `yarn` as your preferred package manager, declare your allegiance now. The package manager you used to launch `observable create` will be selected by default, so you can just hit Enter again to continue. If you prefer a different package manager (say `pnpm`), choose `No`; you can always install dependencies after the project is created.
 
-<pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
+<pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Where to create your project?
 <span class="muted">│</span>  <span class="muted">./hello-framework</span>
@@ -154,7 +154,7 @@ If you use `npm` or `yarn` as your preferred package manager, declare your alleg
 
 If you’ll continue developing your project after you finish this tutorial and want source control, answer `Yes` to initialize a git repository. Or say `No` — you can always do it later by running `git init`.
 
-<pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
+<pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Where to create your project?
 <span class="muted">│</span>  <span class="muted">./hello-framework</span>
@@ -174,7 +174,7 @@ If you’ll continue developing your project after you finish this tutorial and 
 
 And that’s it! After some downloading, copying, and installing, your new project is ready to go. 🎉
 
-<pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
+<pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Where to create your project?
 <span class="muted">│</span>  <span class="muted">./hello-framework</span>
@@ -220,7 +220,7 @@ Or if you prefer `yarn`:
 
 You should see something like this:
 
-<pre><b class="green">Observable Framework</b>     v1.0.0
+<pre data-copy="none"><b class="green">Observable Framework</b>     v1.0.0
 ↳ <u><a href="http://127.0.0.1:3000/" style="color: inherit;">http://127.0.0.1:3000/</a></u></pre>
 
 <div class="tip">

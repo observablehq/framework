@@ -377,7 +377,7 @@
 .observablehq-pre-container {
   position: relative;
   margin: 1rem -1rem;
-  max-width: calc(960px + 2rem);
+  max-width: 960px;
 }
 
 .observablehq-pre-container::after {
