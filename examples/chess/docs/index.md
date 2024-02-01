@@ -81,3 +81,5 @@ ${resize(( width) => Plot.plot({
   ]
 }))}
 </div>
+
+_Data from the [International Chess Federation](https://ratings.fide.com/)._
