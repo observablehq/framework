@@ -53,7 +53,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: cli
+          projectName: framework-pages
           directory: dist
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
       # TODO: This doesn't include the examples. How can we fix that?
