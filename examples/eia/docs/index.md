@@ -2,7 +2,7 @@
 theme: [cotton, ink]
 ---
 
-# US electric grid hourly data
+# U.S. electricity grid
 
 ```js
 // International electricity interchange data:
@@ -53,14 +53,19 @@ const eiaBARef = await FileAttachment("data/eia-bia-reference.csv").csv({typed: 
 const genOnlyBA = eiaBARef.filter(d => d["Generation Only BA"] == "Yes").map(d => d["BA Code"]);
 ```
 
+<!-- TODO update to exclude regions -->
+
 ```js
 // Hourly demand for BAs, demand only & cleaned
-const baHourlyDemand = baHourly.filter(d => d.type == "D").map(d => ({ba: d["respondent-name"], baAbb: d["respondent"], period: d.period, value: d.value})); // Only use demand ("D");
+// TODO: Update to exclude regions!!! Otherwise these show up over the BAs
+const baHourlyDemand = baHourly.filter(d => d.type == "D").map(d => ({ba: d["respondent-name"], baAbb: d["respondent"], period: d.period, 'type-name': d["type-name"], value: d.value})); // Only use demand ("D");
 ```
 
 ```js
 // Cleaned up baHourly for table, excludes regions (only shows BAs)
-const baHourlyClean = baHourly.map(d => ({Date: d.period, 'Balancing authority': d["respondent-name"], Abbreviation: d.respondent, Metric: d["type-name"], Value: d.value, Units: d["value-units"]})).filter(d => !regions.includes(d["Balancing authority"]))
+const baHourlyClean = baHourly.filter(d => !regions.includes(d["respondent-name"])).map(d => ({Date: timeParse(d.period).toLocaleString('en-us',{timeZoneName:'short'}), 'Balancing authority': d["respondent-name"], Abbreviation: d.respondent, Type: d['type-name'], 'Value (GWh)': d.value / 1000}))
+
+//.filter(d => !regions.includes(d["Balancing authority"]))
 ```
 
 ```js
@@ -188,7 +193,7 @@ const recentHour = timeParse(baHourly.filter(d => d.type == "D")[0].period);
           }\nLatest hourly demand: ${
             isNaN(baHourlyLatest.get(d.name))
               ? "Unavailable"
-              : d3.format(",")(baHourlyLatest.get(d.name))+"MWh"
+              : (baHourlyLatest.get(d.name) / 1000).toFixed(2)+" GWh"
           }`,
       })
     )
@@ -197,7 +202,7 @@ const recentHour = timeParse(baHourly.filter(d => d.type == "D")[0].period);
     }
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
-  <h2>Top balancing authorities by demand, latest hour (MWh)</h2>
+  <h2>Top balancing authorities by demand, latest hour (GWh)</h2>
   <h3>${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleDateString() }</h3>
   ${
         resize((width, height) => Plot.plot({
@@ -205,51 +210,56 @@ const recentHour = timeParse(baHourly.filter(d => d.type == "D")[0].period);
             marginLeft: 250,
             height: height - 20,
             width,
-            color: {range: ["white", "#ff725c"]},
             y: {label: null},
             x: {label: null, grid: true},
             marks: [
-                Plot.barX(top5LatestDemand, {y: "name", x: "value", fill: "value", sort: {y: "x", reverse: true, limit: 10}})
+                Plot.barX(top5LatestDemand, {y: "name", x: d => d.value / 1000, fill: "gray", sort: {y: "x", reverse: true, limit: 10}}),
+                Plot.ruleX([0])
             ]
         }))
     }
     </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
-<h2>US electricity generation, demand, and demand forecast (MWh)</h2>
+<h2>US electricity generation, demand, and demand forecast (GWh)</h2>
    ${resize((width, height) => Plot.plot({
     width, 
     marginTop:0,
     height: height - 50,
     y: {label: null},
-    color: {legend: true},
+    x: {type: "time"},
+    color: {legend: true, domain: ["Day-ahead demand forecast", "Demand", "Net generation"],
+    range: ["#97bbf5", "#4269d0", "#efb118"]},
     grid: true,
     marks: [
-        Plot.line(usDemandGenForecast, {x: "date", y: "value", stroke: "name", strokeWidth: 2, tip: true})
+        Plot.line(usDemandGenForecast, {x: "date", y: d => d.value / 1000, stroke: "name", strokeWidth: 2, tip: true})
         ]
 }))
    }
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
-  <h2>Neighboring country interchange (MWh)</h2>
+  <h2>Neighboring country interchange (GWh)</h2>
    ${resize((width, height) => Plot.plot({
     width,
     marginTop: 0,
     height: height - 50,
-    color: { legend: true },
+    color: { legend: true, range: ["#B6B5B1", "gray"]},
     grid: true,
     y: {label: null},
+    x: {type: "time", domain: d3.extent(usDemandGenForecast.map(d => d.date))},
     marks: [
         Plot.areaY(
             countryInterchangeSeries,
-            { x: "date", y: "value", curve: "step", fill: "id", tip: true}
+            { x: "date", y: d => d.value / 1000, curve: "step", fill: "id", tip: true}
         ),
         Plot.ruleY([0])
     ]
 }))
    }
 </div>
-<div class="card grid-colspan-4 grid-rowspan-3">
-  ${view(Inputs.table(baHourlyClean))}
+</div>
+
+<div class="card" style="padding: 0">
+ ${Inputs.table(baHourlyClean, {rows: 16})}
 </div>
 
 <!-- Unused US total bign number
