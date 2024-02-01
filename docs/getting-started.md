@@ -34,7 +34,7 @@ figcaption code {
 
 Welcome! This tutorial will guide your first steps with Observable Framework by way of a hands-on exercise creating a dashboard of local weather. 🌦️
 
-Observable Framework — or “Framework” for short — is an <a href="https://github.com/observablehq/cli">open-source</a> system for building data apps, dashboards, and reports that combines the power of JavaScript for interactive graphics on the front-end with any language you want for data preparation and analysis on the back-end.
+Observable Framework — or “Framework” for short — is an <a href="https://github.com/observablehq/cli">open-source</a> system for building data apps, dashboards, and reports that combines the power of JavaScript on the front-end for interactive graphics with any language you want on the back-end for data preparation and analysis.
 
 Framework is three things in one:
 
@@ -87,19 +87,15 @@ Framework includes a helper script (`observable create`) for creating new projec
 
 To create a new project with `npm`, run:
 
-```sh
-npm init @observablehq
-```
+<pre data-copy>npm init @observablehq</pre>
 
 If you prefer `yarn`, run:
 
-```sh
-yarn create @observablehq
-```
+<pre data-copy>yarn create @observablehq</pre>
 
 <div class="warning" label="Note to early access participants">The commands above will not work until Framework is published to npm and made publicly available. Until then, you’ll need to install <a href="https://classic.yarnpkg.com/en/docs/install">Yarn 1.x</a> and run this instead:
-<pre><code class="language-sh">yarn global add https://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@github.com/observablehq/cli</code></pre>
-<pre><code class="language-sh">$(yarn global bin)/observable create</code></pre></div>
+<pre data-copy><code class="language-sh">yarn global add https://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@github.com/observablehq/cli</code></pre>
+<pre data-copy><code class="language-sh">$(yarn global bin)/observable create</code></pre></div>
 
 You can run the above command anywhere, but you may want to `cd` to your `~/Development` directory first (or wherever you do local development).
 
@@ -208,9 +204,7 @@ And that’s it! After some downloading, copying, and installing, your new proje
 
 Next, `cd` into your new project folder.
 
-```sh
-cd hello-framework
-```
+<pre data-copy>cd hello-framework</pre>
 
 Framework’s local development server lets you preview your site in the browser as you make rapid changes. The preview server generates pages on-the-fly: as you edit files in your editor, changes are instantly streamed to your browser.
 
@@ -218,15 +212,11 @@ Framework’s local development server lets you preview your site in the browser
 
 To start the preview server using `npm`:
 
-```sh
-npm run dev
-```
+<pre data-copy>npm run dev</pre>
 
 Or if you prefer `yarn`:
 
-```sh
-yarn dev
-```
+<pre data-copy>yarn dev</pre>
 
 You should see something like this:
 
@@ -351,9 +341,7 @@ Your data loader should look like this:
 
 If you like, you can run your data loader manually in the terminal:
 
-```sh
-node docs/data/forecast.json.js
-```
+<pre data-copy>node docs/data/forecast.json.js</pre>
 
 If this barfs a bunch of JSON in the terminal, it’s working as intended. 😅 Normally you don’t run data loaders by hand — Framework runs them automatically, as needed — but data loaders are “just” programs so you can run them manually if you want. Conversely, any executable or shell script that runs on your machine and outputs something to stdout can be a data loader!
 
@@ -439,6 +427,9 @@ You should now see:
   <figcaption>Using <code>Plot</code> to make a chart.</figcaption>
 </figure>
 
+<div class="tip">Try editing <code>forecast.json.js</code> to change the <code>longitude</code> and <code>latitude</code> to a different location! After you save, Framework will run the data loader again and push the new data to the client to update the chart. For example, to see the current forecast at the White House:<pre><code class="language-js">const longitude = -77.04;
+const latitude = 38.90;</code></pre></div>
+
 As before, the code block contains an expression (a call to `Plot.plot`) and hence `display` is called implicitly. And since this expression evaluates to a DOM element (a `<figure>` containing an `<svg>`), `display` inserts the element directly into the page. We didn’t have to touch the DOM API!
 
 ### Components
@@ -477,11 +468,11 @@ temperaturePlot(forecast)
 
 ### Layout
 
-Let’s put some finishing touches on the page and wrap up this tutorial.
+Let’s put some finishing touches on and wrap up this tutorial.
 
-While this rudimentary dashboard only has a single chart on it, most dashboards will have lots of charts, tables, figures, values, and other elements in view. To assist in laying out dashboards, Framework includes simple `grid` and `card` CSS classes with 1, 2, 3, or 4 columns. (You can write more elaborate customs styles if you need them, or load your preferred CSS framework.)
+While this nascent dashboard only has a single chart on it, most dashboards will have many charts, tables, values, and other elements. To assist layout, Framework includes simple `grid` and `card` CSS classes with 1, 2, 3, or 4 columns. (You can write more elaborate custom styles if needed, or load your preferred CSS framework.)
 
-Here’s a simple two-column grid with three cards:
+For example, here’s a two-column grid with three cards:
 
 ```html echo
 <div class="grid grid-cols-2">
@@ -491,17 +482,17 @@ Here’s a simple two-column grid with three cards:
 </div>
 ```
 
-<div class="note">Framework’s grid is responsive: on narrow windows, the two-column grid will automatically collapse to a one-column grid.</div>
+<div class="note">Framework’s grid is responsive: on narrow windows, the two-column grid will automatically collapse to a one-column grid. Cells in a grid have the same height by default (using <code>grid-auto-rows</code>), so consider separate <code>&lt;div class="grid"&gt;</code> containers if you want to vary row height.</div>
 
-With charts in a grid, you typically want to render a chart responsively based on the width (and sometimes height) of the containing card. Framework’s `resize` helper takes a render function that returns a DOM element, and automatically re-renders whenever the container dimensions change. It looks like this:
+When placing charts in a grid, you typically want to render responsively based on the width (and sometimes height) of the containing cell. Framework’s `resize` helper takes a render function returning a DOM element and re-renders whenever the container resizes. It looks like this:
 
 ```html echo
 <div class="grid grid-cols-1">
-  <div class="card">${resize((width) => temperaturePlot(forecast, {}))}</div>
+  <div class="card">${resize((width) => temperaturePlot(forecast, {width}))}</div>
 </div>
 ```
 
-Lastly, we can apply the `dashboard` [theme](./themes) and disable the table of contents (`toc`) using [YAML front matter](./markdown). The `dashboard` theme allows the main column to span the full width of the window; without it, the main column is limited to 1152px to improve readability, as when writing a report or documentation.
+Lastly, let’s apply the `dashboard` [theme](./themes) and disable the table of contents (`toc`) using [YAML front matter](./markdown). The `dashboard` theme allows the main column to span the full width of the window; without it, the main column width is limited to 1152px as appropriate for documentation or a report.
 
 ```yaml run=false
 ---
@@ -515,33 +506,37 @@ toc: false
   <figcaption>Adopting a grid layout and the <code>dashboard</code> theme.</figcaption>
 </figure>
 
-Okay that’s a pretty lame dashboard… but it’s something.
+_Ta-da!_ 🎉 Perhaps not the most exciting dashboard yet, but it has potential! Try exploring other data in the NWS forecast and adding more charts. For example, you could visualize precipitation probability.
 
 ## 3. Publish
 
-When you’re ready to share your project securely with your team, you can deploy it to [Observable](https://observablehq.com) using the `deploy` command:
+When you’re ready to share your project — whether privately with specific people you want to invite, or publicly with the world — you can quickly deploy it to [Observable](https://observablehq.com) using the `deploy` command:
 
-```sh
-yarn deploy
-```
+<pre data-copy>npm run deploy</pre>
 
-TODO Does `yarn deploy` walk you through sign-up and authentication yet? Do we want to describe those steps here?
+Or with Yarn:
 
-Once done, the command will print the URL where you can view your project. Something like: https://{workspace}.observablehq.cloud/{slug}.
+<pre data-copy>yarn deploy</pre>
 
-TODO Describe inviting users to your workspace to see the project.
+<div class="note">If you don’t have an Observable account yet, the first time you deploy you’ll be prompted to sign-up and create an account. It’s free for individuals and small teams, and we offer paid tiers for larger teams.</div>
+
+When the deploy finishes, Framework will show your project’s URL on observablehq.cloud. And from there you can invite people to see your private project, or make your project private so anyone can see it.
 
 ### Self hosting
 
-If you want to host your project somewhere else, or self-host, use the `build` command to generate the output root (`dist`). You can then copy the `dist` folder to your static site server.
+Of course, you don’t have to deploy to Observable — Framework projects are simply static sites, so you can host them anywhere. For example, if you’re visualizing sensitive or proprietary data, you can self-host projects and keep your data and analysis entirely within your own network.
 
-To generate your static site:
+To build your static site, run:
 
-```sh
-yarn build
-```
+<pre data-copy>npm run deploy</pre>
 
-You can then use `npx http-server dist` to preview your built site.
+Or with Yarn:
+
+<pre data-copy>yarn build</pre>
+
+This generates the `dist` directory; you can then copy this directory to your static site server or preferred hosting service. To preview your built site locally, you can use a local static HTTP server such as [http-server](https://github.com/http-party/http-server):
+
+<pre data-copy>npx http-server dist</pre>
 
 ## Next steps
 
@@ -565,22 +560,12 @@ forecast = requests.get(station["properties"]["forecastHourly"]).json()
 json.dump(forecast, sys.stdout)
 ```
 
-To write the data loader in R, name it <code>forecast.json.R</code>. Or as shell script, <code>forecast.json.sh</code>. You get the idea. See [Data loaders: Routing](./loaders#routing) for more details. The beauty of this approach is that you can leverage the strengths (and libraries) of multiple languages, and you still get instant updates in the browser when you save changes to data loaders.
+To write the data loader in R, name it <code>forecast.json.R</code>. Or as shell script, <code>forecast.json.sh</code>. You get the idea. See [Data loaders: Routing](./loaders#routing) for more. The beauty of this approach is that you can leverage the strengths (and libraries) of multiple languages, and still get instant updates in the browser as you develop.
 
 ### Deploying via GitHub Actions
 
-You can schedule builds and deploy your project automatically on commit, or on a schedule. See <a href="https://github.com/observablehq/cli/blob/main/.github/workflows/deploy.yml">this documentation site’s deploy.yml</a> for an example (that’s a little more complicated than you probably need). Please reach out and ask if you have questions on how to setup continuous deployment.
+You can schedule builds and deploy your project automatically on commit, or on a schedule. See <a href="https://github.com/observablehq/cli/blob/main/.github/workflows/deploy.yml">this documentation site’s deploy.yml</a> for an example.
 
-### Installing into an existing project
+### Ask for help, or share your feedback
 
-You can install Framework as a dependency on an existing project if you don’t want to create a new project using our default template as described above.
-
-```sh
-npm install @observablehq/cli
-```
-
-```sh
-yarn add @observablehq/cli
-```
-
-You can also install Framework globally so that the `observable` command is available across projects, but we don’t recommend this approach. By installing Framework into each project, everyone you work with will use the same version.
+Please reach out if you have questions or thoughts! You can post on the <a href="https://talk.observablehq.com/">Observable forum</a>, start a <a href="https://github.com/observablehq/cli/discussions">GitHub discussion</a>, or file a <a href="https://github.com/observablehq/cli/issues">GitHub issue</a>. And if you like Framework, please give us a star ⭐️ on <a href="https://github.com/observablehq/cli">GitHub</a> — we appreciate your support. 🙏

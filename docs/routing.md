@@ -1,6 +1,6 @@
 # Routing
 
-Observable Framework uses file-based routing. This means each page in your project has a corresponding [Markdown](./markdown) file of the same name. In addition to pages, you can have [importable](./javascript/imports) JavaScript modules, [data loaders](./loaders) for generating data snapshots, and [static assets](./javascript/files) such as images and files.
+Observable Framework uses file-based routing: each page in your project has a corresponding [Markdown](./markdown) file (`.md`) of the same name. In addition to pages, you can have [importable](./javascript/imports) JavaScript modules (`.js`), [data loaders](./loaders) for generating data snapshots (_e.g._, `.csv.py`), and [static assets](./javascript/files) such as images and files (_e.g._, `.png`).
 
 A typical project looks like this:
 
