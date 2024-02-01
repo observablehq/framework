@@ -528,7 +528,7 @@ Of course, you don’t have to deploy to Observable — Framework projects are s
 
 To build your static site, run:
 
-<pre data-copy>npm run deploy</pre>
+<pre data-copy>npm run build</pre>
 
 Or with Yarn:
 
