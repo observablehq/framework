@@ -1,48 +1,26 @@
 # Search
 
-```js
-import MiniSearch from  "npm:minisearch";
+Search is an experimental feature that works in two stages: on the server, an index of the contents gets built with the site. On the client, when the user focuses and starts typing in the search input, the index is retrieved and the matching pages are shown in the sidebar.
 
-const index = {
-  _index: undefined,
-  _loading: undefined,
-  _load() {
-    return this._loading ?? (this._loading = FileAttachment("data/minisearch.json").json()
-      .then((json) => MiniSearch.loadJS(json, json.options)));
-  },
-  async search(terms, options) {
-    if (!terms) return [];
-    if (!this._index) this._index = await this._load();
-    return this._index.search(terms, options);
-  }
-}
+To enable search on your project, add a **search**: true option to your site’s [configuration](config).
+
+Indexation and retrieval are using [MiniSearch](https://lucaong.github.io/minisearch/), a JavaScript library that enables full-text search with many useful features (like prefix search, fuzzy search, ranking, boosting of fields).
+
+The pages are indexed when you start the preview server, and also as you build, or deploy, your project. As a consequence, it does not track live changes to the pages when you edit the project.
+
+By default, all the pages found in the docs/ folder are indexed; you can however opt-out a page from the index by specifying an index: false property in its front-matter:
+
+```yaml
+---
+title: This page won’t be indexed
+index: false
+---
 ```
 
-```js
-const input = document.createElement("input");
-input.setAttribute("type", "search");
-input.setAttribute("placeholder", "search");
-input.setAttribute("required", true);
-const search = view(input);
-```
+Search is case-insensitive. The indexing script tries to avoid common pitfalls by ignoring HTML tags and non-word characters (such as punctuation, backticks, etc.) found in the pages’ markdown. It also ignores long words or words that contain more than 6 digits (such as API keys, for example).
 
-```js
-const div = document.createElement("ul");
-div.className = "search";
-const results = await index.search(search, {boost: {title: 4}, fuzzy: 0.2, prefix: true});
-for (const result of results) {
-  const r = document.createElement("li");
-  r.innerHTML = `<a href="${result.id}">${result.title}</a> ${100*result.score|0}`
-  div.appendChild(r);
-}
+The selected pages are sorted by descending relevance (with a score computed by MiniSearch); dots represent that relevance, with filled dots indicating exact matches and hollow dots representing fuzzy matches (or a combination of both when there are multiple terms in the query).
 
-// display(index.autoSuggest(search))
-// display(results);
-display(div);
-```
+The index is served as a FileAttachment called `minisearch.json`; if you want to index a completely different set of documents, you can use MiniSearch to build a different index with a [data loader](loaders). Make sure that each document has a title, and an id that represents its URL relative to the project root. For instance, this page’s id is `search`.
 
-<style>
-ul.search li {
-  font-size: 0.75em;
-}
-</style>
+_As an experimental feature, this is poised to change as we get more varied use cases, as well as feedback and suggestions._
