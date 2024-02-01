@@ -1,6 +1,7 @@
+import * as clack from "@clack/prompts";
+import type {ClackEffects} from "./clack.js";
 import {commandInstruction} from "./commandInstruction.js";
 import {CliError, isHttpError} from "./error.js";
-import type {Logger} from "./logger.js";
 import type {PostAuthRequestPollResponse} from "./observableApiClient.js";
 import {ObservableApiClient, getObservableUiOrigin} from "./observableApiClient.js";
 import type {ConfigEffects} from "./observableApiConfig.js";
@@ -11,13 +12,24 @@ import {
   setObservableApiKey
 } from "./observableApiConfig.js";
 import type {TtyEffects} from "./tty.js";
-import {bold, defaultEffects as defaultTtyEffects, hangingIndentLog, link, magenta, yellow} from "./tty.js";
+import {
+  bold,
+  cyan,
+  defaultEffects as defaultTtyEffects,
+  green,
+  hangingIndentLog,
+  inverse,
+  link,
+  magenta,
+  reset,
+  yellow
+} from "./tty.js";
 
 const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
 
 /** Actions this command needs to take wrt its environment that may need mocked out. */
 export interface AuthEffects extends ConfigEffects, TtyEffects {
-  logger: Logger;
+  clack: ClackEffects;
   getObservableApiKey: (effects: AuthEffects) => Promise<ApiKey>;
   setObservableApiKey: (info: {id: string; key: string} | null) => Promise<void>;
   exitSuccess: () => void;
@@ -26,23 +38,26 @@ export interface AuthEffects extends ConfigEffects, TtyEffects {
 const defaultEffects: AuthEffects = {
   ...defaultConfigEffects,
   ...defaultTtyEffects,
-  logger: console,
+  clack,
   getObservableApiKey,
   setObservableApiKey,
   exitSuccess: () => process.exit(0)
 };
 
 export async function login(effects: AuthEffects = defaultEffects) {
+  effects.clack.intro(green(inverse(" observable login ")));
+
   const apiClient = new ObservableApiClient();
   const requestInfo = await apiClient.postAuthRequest(["projects:deploy", "projects:create"]);
-  const confirmUrl = new URL("/settings/api-keys/confirm", OBSERVABLE_UI_ORIGIN);
+  const confirmUrl = new URL("/auth-device", OBSERVABLE_UI_ORIGIN);
+  confirmUrl.searchParams.set("code", requestInfo.confirmationCode);
 
-  hangingIndentLog(
-    effects,
-    magenta("Attention:"),
-    `First copy your confirmation code: ${bold(yellow((await requestInfo).confirmationCode))}\n` +
+  effects.clack.log.step(
+    `First copy your confirmation code: ${bold(yellow(requestInfo.confirmationCode))}\n` +
       `and then open ${link(confirmUrl)} in your browser.`
   );
+  const spinner = effects.clack.spinner();
+  spinner.start("Waiting for confirmation...");
 
   let apiKey: PostAuthRequestPollResponse["apiKey"] | null = null;
   while (apiKey === null) {
@@ -68,17 +83,22 @@ export async function login(effects: AuthEffects = defaultEffects) {
 
   apiClient.setApiKey({source: "login", key: apiKey.key});
   const user = await apiClient.getCurrentUser();
-  effects.logger.log(`You are logged into ${OBSERVABLE_UI_ORIGIN.hostname} as ${formatUser(user)}.`);
+  spinner.stop(`You are logged into ${OBSERVABLE_UI_ORIGIN.hostname} as ${formatUser(user)}.`);
   if (user.workspaces.length === 0) {
-    effects.logger.log(`${yellow("Warning:")} You don't have any workspaces to deploy to.`);
-    effects.logger.log();
+    effects.clack.log.warn(`${yellow("Warning:")} You don't have any workspaces to deploy to.`);
   } else if (user.workspaces.length > 1) {
-    effects.logger.log("You have access to the following workspaces:");
-    effects.logger.log(user.workspaces.map((workspace) => ` * ${formatUser(workspace)}`).join("\n"));
-    effects.logger.log();
+    clack.note(
+      [
+        "You have access to the following workspaces:",
+        "",
+        ...user.workspaces.map((workspace) => ` * ${formatUser(workspace)}`)
+      ].join("\n")
+    );
+    effects.clack.log.info("You have access to the following workspaces:");
+    effects.clack.log.message();
   }
 
-  effects.logger.log("🎉 Happy visualizing!");
+  effects.clack.outro("🎉 Happy visualizing!");
 }
 
 export async function logout(effects = defaultEffects) {
