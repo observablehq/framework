@@ -18,4 +18,4 @@ The Google Analytics [API Quickstart](https://developers.google.com/analytics/de
 
 ## Charts
 
-The dashboard displays a variety of charts, made with Observable Plot. With the key numbers at the top, a line chart or an area chart. Activity by country is represented by a choropleth map. Active users use a horizon chart, faceted by channel. The “new vs. returning” chart is a Marimekko. Finally, the activity by day and hour is a punchcard chart. The code for each of these charts is available in [docs/index.md](https://github.com/observablehq/cli-examples/blob/main/examples/google-analytics/docs/index.md).
+The dashboard displays a variety of charts, made with Observable Plot. With the key numbers at the top, a line chart or an area chart. Activity by country is represented by a choropleth map. Active users use a horizon chart, faceted by channel. The “new vs. returning” chart is a Marimekko. Finally, the activity by day and hour is a punchcard chart. The code for each of these charts is available in [docs/index.md](https://github.com/observablehq/framework-examples/blob/main/examples/google-analytics/docs/index.md).

@@ -1,4 +1,4 @@
 # Observable Framework
 
-- [Documentation](https://cli.observablehq.com/)
-- [Issues](https://github.com/observablehq/cli/issues)
+- [Documentation](https://observablehq.com/framework/)
+- [Issues](https://github.com/observablehq/framework/issues)

@@ -38,7 +38,7 @@ figcaption code {
 
 Welcome! This tutorial will guide your first steps with Observable Framework by way of a hands-on exercise creating a dashboard of local weather. 🌦️
 
-Observable Framework — or “Framework” for short — is an <a href="https://github.com/observablehq/cli">open-source</a> system for building data apps, dashboards, and reports that combines the power of JavaScript on the front-end for interactive graphics with any language you want on the back-end for data preparation and analysis.
+Observable Framework — or “Framework” for short — is an <a href="https://github.com/observablehq/framework">open-source</a> system for building data apps, dashboards, and reports that combines the power of JavaScript on the front-end for interactive graphics with any language you want on the back-end for data preparation and analysis.
 
 Framework is three things in one:
 
@@ -86,7 +86,7 @@ Framework includes a helper script (`observable create`) for creating new projec
 
 <div class="tip">
   <p>Framework is a <a href="https://nodejs.org/">Node.js</a> application published to npm. You must have <a href="https://nodejs.org/en/download">Node.js 20.6 or later</a> installed before you can install Framework. Framework is a command-line interface (CLI) and runs in the terminal.</p>
-  <p>If you run into difficulty following this tutorial, we’re happy to help! Please visit the <a href="https://talk.observablehq.com">Observable forum</a> or our <a href="https://github.com/observablehq/cli/discussions">GitHub discussions</a>.</p>
+  <p>If you run into difficulty following this tutorial, we’re happy to help! Please visit the <a href="https://talk.observablehq.com">Observable forum</a> or our <a href="https://github.com/observablehq/framework/discussions">GitHub discussions</a>.</p>
 </div>
 
 To create a new project with npm, run:
@@ -98,7 +98,7 @@ If you prefer Yarn, run:
 <pre data-copy>yarn create @observablehq</pre>
 
 <div class="warning" label="Note to early access participants">The commands above will not work until Framework is published to npm and made publicly available. Until then, you’ll need to install <a href="https://classic.yarnpkg.com/en/docs/install">Yarn 1.x</a> and run this instead:
-<pre data-copy><code class="language-sh">yarn global add https://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@github.com/observablehq/cli</code></pre>
+<pre data-copy><code class="language-sh">yarn global add https://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@github.com/observablehq/framework</code></pre>
 <pre data-copy><code class="language-sh">$(yarn global bin)/observable create</code></pre></div>
 
 You can run the above command anywhere, but you may want to `cd` to your `~/Development` directory first (or wherever you do local development).
@@ -202,7 +202,7 @@ And that’s it! After some downloading, copying, and installing, your new proje
 <span class="muted">│</span>  <span class="focus">cd ./hello-framework</span>
 <span class="muted">│</span>  <span class="focus">yarn dev</span>
 <span class="muted">│</span>
-<span class="muted">└</span>  Problems? <u>https://cli.observablehq.com/getting-started</u></pre>
+<span class="muted">└</span>  Problems? <u>https://framework.observablehq.com/getting-started</u></pre>
 
 ## 2. Develop
 
@@ -212,7 +212,7 @@ Next, `cd` into your new project folder.
 
 Framework’s local development server lets you preview your site in the browser as you make rapid changes. The preview server generates pages on-the-fly: as you edit files in your editor, changes are instantly streamed to your browser.
 
-<div class="tip">You can work offline with the preview server, but you must be connected to the internet to <a href="./javascript/imports">import libraries</a> from npm. In the future, we intend to support self-hosting imported libraries; please upvote <a href="https://github.com/observablehq/cli/issues/20">#20</a> and <a href="https://github.com/observablehq/cli/issues/360">#360</a> if you are interested in this feature.</div>
+<div class="tip">You can work offline with the preview server, but you must be connected to the internet to <a href="./javascript/imports">import libraries</a> from npm. In the future, we intend to support self-hosting imported libraries; please upvote <a href="https://github.com/observablehq/framework/issues/20">#20</a> and <a href="https://github.com/observablehq/framework/issues/360">#360</a> if you are interested in this feature.</div>
 
 To start the preview server using npm:
 
@@ -250,7 +250,7 @@ To experience live preview, open <code>docs/index.md</code> in your preferred te
   <figcaption>No seriously — hi, Mom! Thanks for supporting me all these years.</figcaption>
 </figure>
 
-<div class="tip">If you don’t see an update after saving, try reloading. The preview socket may disconnect if you’re idle. Please upvote <a href="https://github.com/observablehq/cli/issues/50">#50</a> if you run into this issue.</div>
+<div class="tip">If you don’t see an update after saving, try reloading. The preview socket may disconnect if you’re idle. Please upvote <a href="https://github.com/observablehq/framework/issues/50">#50</a> if you run into this issue.</div>
 
 ### Create a new page
 
@@ -264,7 +264,7 @@ Now let’s add a page for our weather dashboard. Create a new file `docs/weathe
 ```
 ````
 
-To see the new page in the sidebar, you must restart the preview server. In the terminal, use Control-C (⌃C) to kill the preview server. Then use up arrow (↑) to re-run the command to start the preview server (`npm run dev` or `yarn dev`). Lastly, reload your browser. A bit of rigamarole, but you won’t have to do it often… 😓 Upvote <a href="https://github.com/observablehq/cli/issues/645">#645</a> and <a href="https://github.com/observablehq/cli/issues/646">#646</a> if you’d like this to be better.
+To see the new page in the sidebar, you must restart the preview server. In the terminal, use Control-C (⌃C) to kill the preview server. Then use up arrow (↑) to re-run the command to start the preview server (`npm run dev` or `yarn dev`). Lastly, reload your browser. A bit of rigamarole, but you won’t have to do it often… 😓 Upvote <a href="https://github.com/observablehq/framework/issues/645">#645</a> and <a href="https://github.com/observablehq/framework/issues/646">#646</a> if you’d like this to be better.
 
 If you click on the **Weather report** link in the sidebar, it’ll take you to <http://127.0.0.1:3000/weather>, where you should see:
 
@@ -568,8 +568,8 @@ To write the data loader in R, name it <code>forecast.json.R</code>. Or as shell
 
 ### Deploying via GitHub Actions
 
-You can schedule builds and deploy your project automatically on commit, or on a schedule. See <a href="https://github.com/observablehq/cli/blob/main/.github/workflows/deploy.yml">this documentation site’s deploy.yml</a> for an example.
+You can schedule builds and deploy your project automatically on commit, or on a schedule. See <a href="https://github.com/observablehq/framework/blob/main/.github/workflows/deploy.yml">this documentation site’s deploy.yml</a> for an example.
 
 ### Ask for help, or share your feedback
 
-Please reach out if you have questions or thoughts! You can post on the <a href="https://talk.observablehq.com/">Observable forum</a>, start a <a href="https://github.com/observablehq/cli/discussions">GitHub discussion</a>, or file a <a href="https://github.com/observablehq/cli/issues">GitHub issue</a>. And if you like Framework, please give us a star ⭐️ on <a href="https://github.com/observablehq/cli">GitHub</a> — we appreciate your support. 🙏
+Please reach out if you have questions or thoughts! You can post on the <a href="https://talk.observablehq.com/">Observable forum</a>, start a <a href="https://github.com/observablehq/framework/discussions">GitHub discussion</a>, or file a <a href="https://github.com/observablehq/framework/issues">GitHub issue</a>. And if you like Framework, please give us a star ⭐️ on <a href="https://github.com/observablehq/framework">GitHub</a> — we appreciate your support. 🙏

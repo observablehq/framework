@@ -68,7 +68,7 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
 // there is a foo.ts and rewrites the import to foo.ts. But the imported file at
 // runtime won’t be TypeScript and will only exist at foo.js, so here we rewrite
 // the import back to what it was supposed to be. This is a dirty hack but it
-// gets the job done. 🤷 https://github.com/observablehq/cli/issues/478
+// gets the job done. 🤷 https://github.com/observablehq/framework/issues/478
 function rewriteTypeScriptImports(code: string): string {
   return code.replace(/(?<=\bimport\(([`'"])[\w./]+)\.ts(?=\1\))/g, ".js");
 }

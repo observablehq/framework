@@ -107,8 +107,8 @@ export default {
     Observable Framework
   </label>
   <span style="display: flex; gap: 0.5rem; align-items: center; font-size: 14px;">
-    <a target="_blank" href="https://github.com/observablehq/cli/releases">${version}</a>
-    <a target="_blank" href="https://github.com/observablehq/cli">GitHub</a>
+    <a target="_blank" href="https://github.com/observablehq/framework/releases">${version}</a>
+    <a target="_blank" href="https://github.com/observablehq/framework">GitHub</a>
   </span>
 </div>`,
   footer: `© ${new Date().getUTCFullYear()} Observable, Inc.`,

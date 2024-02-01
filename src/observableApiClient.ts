@@ -37,7 +37,7 @@ export class ObservableApiClient {
     this._apiHeaders = {
       Accept: "application/json",
       Authorization: `apikey ${apiKey.key}`,
-      "User-Agent": `Observable CLI ${packageJson.version}`,
+      "User-Agent": `Observable Framework ${packageJson.version}`,
       "X-Observable-Api-Version": "2023-12-06"
     };
   }

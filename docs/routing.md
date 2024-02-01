@@ -164,7 +164,7 @@ The resulting output root is:
 └─ ...
 ```
 
-The import declaration is automatically rewritten during build to point to `./_import/chart.js` instead of `./chart.js`. (In the future [#260](https://github.com/observablehq/cli/issues/260), Observable Framework will add a content hash to the imported module name for cache-breaking.)
+The import declaration is automatically rewritten during build to point to `./_import/chart.js` instead of `./chart.js`. (In the future [#260](https://github.com/observablehq/framework/issues/260), Observable Framework will add a content hash to the imported module name for cache-breaking.)
 
 Use a leading slash to denote paths relative to the source root, such as `/chart.js` instead of `./chart.js`. This allows you to use the same path to import a module from anywhere, even in nested folders. Observable Framework always generates relative links so that the generated site can be served under a base path.
 
@@ -193,7 +193,7 @@ Any files referenced by `FileAttachment` will automatically be copied to the `_f
 └─ ...
 ```
 
-`FileAttachment` references are automatically rewritten during build; for example, a reference to `quakes.csv` might be replaced with `_file/quakes.csv`. (In the future [#260](https://github.com/observablehq/cli/issues/260), Observable Framework will add a content hash to the attached file name for cache-breaking.) Only the files you reference statically are copied to the output root (`dist`), so nothing extra or unused is included in the built site.
+`FileAttachment` references are automatically rewritten during build; for example, a reference to `quakes.csv` might be replaced with `_file/quakes.csv`. (In the future [#260](https://github.com/observablehq/framework/issues/260), Observable Framework will add a content hash to the attached file name for cache-breaking.) Only the files you reference statically are copied to the output root (`dist`), so nothing extra or unused is included in the built site.
 
 [Imported modules](#imports) can use `FileAttachment`, too. In this case, the path to the file is _relative to the importing module_ in the same fashion as `import`; this is accomplished by resolving relative paths at runtime with [`import.meta.url`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta).
 
