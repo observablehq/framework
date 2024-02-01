@@ -1,6 +1,6 @@
 # A Year of Chess Rankings
 
-Show here are the rankings from last 12 months of top 10 womens chess players.
+Rankings from last 12 months of top 10 womens chess players.
 
 ```js
 const topPlayers = await FileAttachment("data/top-ranked-players.json").json();
