@@ -1,10 +1,24 @@
-// TODO import only when needed (input on focus)
+// TODO import only when needed
 import MiniSearch from "npm:minisearch";
 
-const input = document.querySelector("input.observablehq-search");
-if (input != null) {
+const nav = document.querySelector("#observablehq-sidebar");
+if (nav != null) {
   // TODO: this is gross
   const base = document.querySelector(".observablehq-link a").getAttribute("href"); // e.g., "./" or "../"
+
+  const input = document.createElement("input");
+  input.setAttribute("class", "observablehq-search");
+  input.setAttribute("type", "search");
+  input.setAttribute(
+    "placeholder",
+    `Search pages… ${
+      /Mac|iPhone/.test(navigator.platform)
+        ? "⌘" // command symbol for mac
+        : "Alt-" // for other os
+    }K`
+  );
+  nav.insertBefore(input, nav.firstChild);
+
   let value;
   const r = document.createElement("div");
   r.setAttribute("id", "observablehq-search-results");
@@ -35,8 +49,38 @@ if (input != null) {
       return;
     }
     input.parentElement.classList.add("observablehq-search-results");
-    const results = await index.search(value, {boost: {title: 4}, fuzzy: 0.2, prefix: true});
-    r.innerHTML = results.length === 0 ? "<summary>no results</summary>" : `<details open><summary>${results.length} result${results.length===1 ? "":"s"}</summary><ol>${ results.map(({id, title, score}) => `<li class="observablehq-link"><a href="${base}${id}">${title}</a></li>`).join("")}</ol></details>`;
+    const results = await index.search(value, {boost: {title: 4}, fuzzy: 0.15, prefix: true});
+    r.innerHTML =
+      results.length === 0
+        ? "<summary>no results</summary>"
+        : `<details open><summary>${results.length} page${results.length === 1 ? "" : "s"}</summary>
+      <ol>${results
+        .map(({id, title, score}) => {
+          score = Math.min(6, Math.round(1 + 0.6 * score));
+          return `<li class="observablehq-link" data-reference="${id}">
+        <a href="${base}${id}">${title}
+          <small
+            title="score: ${score}; fuzzy matches"
+            style="position: absolute; right: 15px; font-size: 0.4rem; margin-top: 0.5em;" data-score="${score}">${"○".repeat(
+              score
+            )}</small>
+          </a></li>`;
+        })
+        .join("")}
+      </ol>
+    </details>`;
+
+    const exact_results = await index.search(value, {boost: {title: 1}, fuzzy: 0, prefix: false});
+    for (const e of exact_results) {
+      const p = r.querySelector(`[data-reference='${e.id}'] small`);
+      const s = +p.getAttribute("data-score");
+      const k = Math.round((e.terms.length / value.split(/\W+/).length) * s);
+      p.innerHTML = `${"○".repeat(s - k)}${"●".repeat(k)}`;
+      p.setAttribute(
+        "title",
+        `score: ${p.getAttribute("data-score")}; ${k === s ? "exact matches" : "incomplete matches"}`
+      );
+    }
   };
   input.addEventListener("focus", index._load);
   input.addEventListener("input", search);
