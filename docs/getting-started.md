@@ -72,7 +72,7 @@ const digraph = dot`digraph {
   <figcaption>An overview of developing with Framework.</figcaption>
 </figure>
 
-First you’ll setup your local development environment by [**creating**](#1.-create) a project. &para;&nbsp;Next you’ll [**develop**](#2.-develop): an iterative process where you save changes to source files in your editor while previewing the result in your browser. &para;&nbsp;When you’re ready to share, it’s time to [**publish**](#3.-publish): you can either build a static site for self-hosting or deploy directly to Observable. &para;&nbsp;Lastly, you can invite people to [**view**](#4.-view) your project!
+First you’ll setup your local development environment by [**creating**](#1.-create) a project. &para;&nbsp;Next you’ll [**develop**](#2.-develop): an iterative process where you save changes to source files in your editor while previewing the result in your browser. &para;&nbsp;When you’re ready to share, it’s time to [**publish**](#3.-publish): you can either build a static site for self-hosting or deploy directly to Observable. &para;&nbsp;Lastly, you can invite people to view your project!
 
 These are just first steps. You can continue to develop projects after publishing, and republish as needed. You can also setup continuous deployment to publish your site automatically on commit or on schedule. We’ll cover these [next steps](#next-steps) briefly below.
 
@@ -393,7 +393,7 @@ forecast
 This is a GeoJSON `Feature` object of a `Polygon` geometry representing the grid square. The `properties` object within contains the hourly forecast data. You can display it on a map with <a href="./lib/leaflet">Leaflet</a>, if you like.
 
 <figure>
-  <div id="map" style="height: 400px; margin: 1rem 0;"></div>
+  <div id="map" style="height: 400px; margin: 1rem 0; border-radius: 8px;"></div>
   <figcaption>This grid point covers the south end of the Golden Gate Bridge.</figcaption>
 </figure>
 
@@ -411,79 +411,97 @@ const forecast = FileAttachment("./data/forecast.json").json();
 
 ### Plots
 
-Now let’s add a chart using Observable Plot which is available as `Plot`.
-
-TODO Talk about implicit imports.
-
-Replace the `display(forecast)` code block with the following code:
+Now let’s add a chart using <a href="./lib/plot">Observable Plot</a>. Framework includes a variety of <a href="./javascript/imports#implicit-imports">recommended libraries</a> by default, including `Plot`, and you can always <a href="./javascript/imports">import more</a> from npm. Replace the `display(forecast)` code block with the following code:
 
 ```js run=false
 Plot.plot({
   title: "Hourly temperature forecast",
-  x: {type: "utc", ticks: "day"},
+  x: {type: "utc", ticks: "day", label: null},
   y: {grid: true, inset: 10, label: "Degrees (F)"},
-  color: {scheme: "burd", domain: [40, 60], pivot: 50},
   marks: [
-    Plot.lineY(forecast.properties.periods
-        .flatMap((d) => ["startTime", "endTime"]
-        .map((t) => ({time: d[t], ...d}))), {
-      x: "time",
+    Plot.lineY(forecast.properties.periods, {
+      x: "startTime",
       y: "temperature",
+      z: null, // varying color, not series
       stroke: "temperature",
-      z: null
+      curve: "step-after"
     })
   ]
 })
 ```
 
-TODO Talk about `display`’s behavior when passed a DOM element.
+<div class="note">Because this is JSON data, <code>startTime</code> is a <code>string</code> rather than a <code>Date</code>. Setting the <code>type</code> of the <code>x</code> scale to <code>utc</code> tells Plot to interpret these values as temporal rather than ordinal.</div>
 
-Now you’ll see…
+You should now see:
 
 <figure>
   <img loading="lazy" src="./getting-started/hello-plot.png" class="crop">
   <figcaption>Using <code>Plot</code> to make a chart.</figcaption>
 </figure>
 
-Extract into a function, promote `data` to an argument and `width` to an option…
+As before, the code block contains an expression (a call to `Plot.plot`) and hence `display` is called implicitly. And since this expression evaluates to a DOM element (a `<figure>` containing an `<svg>`), `display` inserts the element directly into the page. We didn’t have to touch the DOM API!
 
-```js run=false
-function temperaturePlot(data, {width}) {
+### Components
+
+As pages grow, complex inline JavaScript may become unwieldy and repetitive. Tidy code by moving it into functions. In Framework, a function that returns a DOM element is called a *component*.
+
+To turn the chart above into a component, wrap it in a function and promote the `data` to a required argument. Accept any named options (such as `width`) as an optional second argument with destructuring.
+
+```js echo
+function temperaturePlot(data, {width} = {}) {
   return Plot.plot({
     title: "Hourly temperature forecast",
     width,
-    x: {type: "utc", ticks: "day"},
+    x: {type: "utc", ticks: "day", label: null},
     y: {grid: true, inset: 10, label: "Degrees (F)"},
-    color: {scheme: "burd", domain: [40, 60], pivot: 50},
     marks: [
-      Plot.lineY(forecast.properties.periods
-          .flatMap((d) => ["startTime", "endTime"]
-          .map((t) => ({time: d[t], ...d}))), {
-        x: "time",
+      Plot.lineY(data.properties.periods, {
+        x: "startTime",
         y: "temperature",
+        z: null, // varying color, not series
         stroke: "temperature",
-        z: null
+        curve: "step-after"
       })
     ]
   });
 }
 ```
 
-TODO Talk about the benefits of moving into a function (importing so you can use it across pages, share it with another app, write unit tests).
+Now you can call `temperaturePlot` to display the forecast anywhere on the page:
+
+```js run=false
+temperaturePlot(forecast)
+```
+
+<div class="tip">JavaScript can be extracted into standalone modules (<code>.js</code> files) that you can <a href="./javascript/imports">import</a> into Markdown. This lets you share code across pages, write unit tests for components, and more.</div>
 
 ### Layout
 
-Move it into a grid, use `resize` instead of `width`…
+Let’s put some finishing touches on the page and wrap up this tutorial.
 
-```html run=false
-<div class="grid grid-cols-1">
-  <div class="card">${resize((width) => temperaturePlot(forecast, {width}))}</div>
+While this rudimentary dashboard only has a single chart on it, most dashboards will have lots of charts, tables, figures, values, and other elements in view. To assist in laying out dashboards, Framework includes simple `grid` and `card` CSS classes with 1, 2, 3, or 4 columns. (You can write more elaborate customs styles if you need them, or load your preferred CSS framework.)
+
+Here’s a simple two-column grid with three cards:
+
+```html echo
+<div class="grid grid-cols-2">
+  <div class="card grid-colspan-2">one–two</div>
+  <div class="card">three</div>
+  <div class="card">four</div>
 </div>
 ```
 
-TODO Talk about the `grid` and `card` classes.
+<div class="note">Framework’s grid is responsive: on narrow windows, the two-column grid will automatically collapse to a one-column grid.</div>
 
-Apply the dashboard theme…
+With charts in a grid, you typically want to render a chart responsively based on the width (and sometimes height) of the containing card. Framework’s `resize` helper takes a render function that returns a DOM element, and automatically re-renders whenever the container dimensions change. It looks like this:
+
+```html echo
+<div class="grid grid-cols-1">
+  <div class="card">${resize((width) => temperaturePlot(forecast, {}))}</div>
+</div>
+```
+
+Lastly, we can apply the `dashboard` [theme](./themes) and disable the table of contents (`toc`) using [YAML front matter](./markdown). The `dashboard` theme allows the main column to span the full width of the window; without it, the main column is limited to 1152px to improve readability, as when writing a report or documentation.
 
 ```yaml run=false
 ---
@@ -497,11 +515,25 @@ toc: false
   <figcaption>Adopting a grid layout and the <code>dashboard</code> theme.</figcaption>
 </figure>
 
-Okay that’s a pretty lame dashboard but it’s something.
+Okay that’s a pretty lame dashboard… but it’s something.
 
 ## 3. Publish
 
-When you’re ready to deploy your project, use the `build` command to generate the output root (`dist`). You can then copy the `dist` folder to your static site server.
+When you’re ready to share your project securely with your team, you can deploy it to [Observable](https://observablehq.com) using the `deploy` command:
+
+```sh
+yarn deploy
+```
+
+TODO Does `yarn deploy` walk you through sign-up and authentication yet? Do we want to describe those steps here?
+
+Once done, the command will print the URL where you can view your project. Something like: https://{workspace}.observablehq.cloud/{slug}.
+
+TODO Describe inviting users to your workspace to see the project.
+
+### Self hosting
+
+If you want to host your project somewhere else, or self-host, use the `build` command to generate the output root (`dist`). You can then copy the `dist` folder to your static site server.
 
 To generate your static site:
 
@@ -510,18 +542,6 @@ yarn build
 ```
 
 You can then use `npx http-server dist` to preview your built site.
-
-If you’d like to host your project on [Observable](https://observablehq.com) and share it securely with your team, use the `deploy` command:
-
-```sh
-yarn deploy
-```
-
-Once done, the command will print the URL where you can view your project. Something like: https://{workspace}.observablehq.cloud/{slug}.
-
-## 4. View
-
-Invite users, share a link…
 
 ## Next steps
 
