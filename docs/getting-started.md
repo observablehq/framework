@@ -85,11 +85,11 @@ Framework includes a helper script (`observable create`) for creating new projec
   <p>If you run into difficulty following this tutorial, we’re happy to help! Please visit the <a href="https://talk.observablehq.com">Observable forum</a> or our <a href="https://github.com/observablehq/cli/discussions">GitHub discussions</a>.</p>
 </div>
 
-To create a new project with `npm`, run:
+To create a new project with npm, run:
 
 <pre data-copy>npm init @observablehq</pre>
 
-If you prefer `yarn`, run:
+If you prefer Yarn, run:
 
 <pre data-copy>yarn create @observablehq</pre>
 
@@ -133,7 +133,7 @@ Next, decide whether you want sample files in your new project. These files demo
 <span class="focus">│</span>  <span class="muted">○ No, create an empty project</span>
 <span class="focus">└</span></pre>
 
-If you use `npm` or `yarn` as your preferred package manager, declare your allegiance now. The package manager you used to launch `observable create` will be selected by default, so you can just hit Enter again to continue. If you prefer a different package manager (say `pnpm`), choose `No`; you can always install dependencies after the project is created.
+If you use npm or Yarn as your preferred package manager, declare your allegiance now. The package manager you used to launch `observable create` will be selected by default, so you can just hit Enter again to continue. If you prefer a different package manager (say pnpm), choose `No`; you can always install dependencies after the project is created.
 
 <pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
@@ -210,11 +210,11 @@ Framework’s local development server lets you preview your site in the browser
 
 <div class="tip">You can work offline with the preview server, but you must be connected to the internet to <a href="./javascript/imports">import libraries</a> from npm. In the future, we intend to support self-hosting imported libraries; please upvote <a href="https://github.com/observablehq/cli/issues/20">#20</a> and <a href="https://github.com/observablehq/cli/issues/360">#360</a> if you are interested in this feature.</div>
 
-To start the preview server using `npm`:
+To start the preview server using npm:
 
 <pre data-copy>npm run dev</pre>
 
-Or if you prefer `yarn`:
+Or with Yarn:
 
 <pre data-copy>yarn dev</pre>
 
