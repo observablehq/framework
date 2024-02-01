@@ -36,6 +36,7 @@ export interface Config {
   toc: TableOfContents;
   style: null | Style; // defaults to {theme: ["light", "dark"]}
   deploy: null | {workspace: string; project: string};
+  search: boolean; // default to false
 }
 
 export async function readConfig(configPath?: string, root?: string): Promise<Config> {
@@ -81,6 +82,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
     output = "dist",
     style,
     theme = "default",
+    search,
     deploy,
     header = "",
     footer = `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="${formatIsoDate(
@@ -100,7 +102,8 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   footer = String(footer);
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
-  return {root, output, title, pages, pager, header, footer, toc, style, deploy};
+  search = Boolean(search);
+  return {root, output, title, pages, pager, header, footer, toc, style, deploy, search};
 }
 
 function normalizeTheme(spec: any): string[] {

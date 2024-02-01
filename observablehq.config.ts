@@ -111,5 +111,6 @@ export default {
   </span>
 </div>`,
   footer: `© ${new Date().getUTCFullYear()} Observable, Inc.`,
-  style: "style.css"
+  style: "style.css",
+  search: true
 };

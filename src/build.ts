@@ -97,6 +97,9 @@ export async function build(
     if (style && !styles.some((s) => styleEquals(s, style))) styles.push(style);
   }
 
+  // Add the search index
+  if (config.search) files.push("minisearch.json");
+
   // Generate the client bundles.
   if (addPublic) {
     for (const [entry, name] of clientBundles(clientEntry)) {

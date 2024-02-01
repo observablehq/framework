@@ -29,7 +29,7 @@ if (nav != null) {
     _load() {
       return (
         this._loading ??
-        (this._loading = fetch(`${base}_file/data/minisearch.json`)
+        (this._loading = fetch(`${base}_file/minisearch.json`)
           .then((resp) => resp.json())
           .then((json) => MiniSearch.loadJS(json, json.options)))
       );
