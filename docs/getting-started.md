@@ -97,8 +97,9 @@ If you prefer `yarn`, run:
 yarn create @observablehq
 ```
 
-<div class="warning" label="Note to early access participants">The commands above will not work until Framework is published to npm and made publicly available. Until then, run this instead:
-<pre><code class="language-sh">npx https://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@github.com/observablehq/create</code></pre></div>
+<div class="warning" label="Note to early access participants">The commands above will not work until Framework is published to npm and made publicly available. Until then, you’ll need to install <a href="https://classic.yarnpkg.com/en/docs/install">Yarn 1.x</a> and run this instead:
+<pre><code class="language-sh">yarn global add https://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@github.com/observablehq/cli</code></pre>
+<pre><code class="language-sh">$(yarn global bin)/observable create</code></pre></div>
 
 You can run the above command anywhere, but you may want to `cd` to your `~/Development` directory first (or wherever you do local development).
 
@@ -121,7 +122,7 @@ Next you’ll enter the project’s title. A project’s title appears in the si
 <span class="focus">│</span>  <span class="muted"><span class="invert">H</span>ello Framework</span>
 <span class="focus">└</span></pre>
 
-Next, decide whether you want sample files in your new project. These files demonstrate common techniques and are handy for learning — you can edit the code and see what happens. But if you’d prefer a more minimal starter project, with less to delete later, you can omit them now. We recommend you include them (again, _learning_), but they’re not needed for this tutorial.
+Next, decide whether you want sample files in your new project. These files demonstrate common techniques and are handy for learning — you can edit the code and see what happens. But if you’d prefer a more minimal starter project with less to delete later, you can omit them. They’re not needed for this tutorial.
 
 <pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
@@ -155,7 +156,7 @@ If you use `npm` or `yarn` as your preferred package manager, declare your alleg
 <span class="focus">│</span>  <span class="muted">○ No</span>
 <span class="focus">└</span></pre>
 
-If you’ll continue developing after you finish this tutorial, you’ll likely want source control to track changes; answer `Yes` to initialize a git repository. Or say `No` — you can always do it later by running `git init`.
+If you’ll continue developing your project after you finish this tutorial and want source control, answer `Yes` to initialize a git repository. Or say `No` — you can always do it later by running `git init`.
 
 <pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
@@ -221,7 +222,7 @@ To start the preview server using `npm`:
 npm run dev
 ```
 
-Or to start the preview server using `yarn`:
+Or if you prefer `yarn`:
 
 ```sh
 yarn dev
@@ -230,7 +231,7 @@ yarn dev
 You should see something like this:
 
 <pre><b class="green">Observable Framework</b>     v1.0.0
-↳ <u>http://127.0.0.1:3000/</u></pre>
+↳ <u><a href="http://127.0.0.1:3000/" style="color: inherit;">http://127.0.0.1:3000/</a></u></pre>
 
 <div class="tip">
   <p>If port 3000 is in use, the preview server will choose the next available port, so your actual port may vary. To specify port 4321 (and similarly for any other port), use <nobr><code>--port 4321</code></nobr>.</p>
@@ -248,18 +249,18 @@ Now visit <http://127.0.0.1:3000> in your browser, which should look like:
 
 Live preview means that as you save changes, your in-browser preview updates instantly. Live preview applies to Markdown pages, imported JavaScript modules (so-called *hot module replacement*), data loaders, and file attachments. This feature is implemented by the preview server watching files and pushing changes to the browser over a socket.
 
-To experience live preview, first open <code>docs/index.md</code> in your preferred text editor — below we show Visual Studio Code — and position your browser window so that you can see your editor and browser side-by-side. If you then replace the text “Hello, Observable Framework” with “Hi, Mom!” and save, you should see:
+To experience live preview, open <code>docs/index.md</code> in your preferred text editor — below we show Visual Studio Code — and position your browser window so that you can see your editor and browser side-by-side. If you then replace the text “Hello, Observable Framework” with “Hi, Mom!” and save, you should see:
 
 <figure>
   <img loading="lazy" src="./getting-started/hi-mom.png" class="crop">
   <figcaption>No seriously — hi, Mom! Thanks for supporting me all these years.</figcaption>
 </figure>
 
-<div class="tip">Try reloading if you don’t see an update after saving. The live preview socket may disconnect if you’re idle. Please upvote <a href="https://github.com/observablehq/cli/issues/50">#50</a> if you run into this issue.</div>
+<div class="tip">If you don’t see an update after saving, try reloading. The preview socket may disconnect if you’re idle. Please upvote <a href="https://github.com/observablehq/cli/issues/50">#50</a> if you run into this issue.</div>
 
 ### Create a new page
 
-Now let’s create a new page for our weather dashboard. Create a new file `docs/weather.md` and paste in the following snippet:
+Now let’s add a page for our weather dashboard. Create a new file `docs/weather.md` and paste in the following snippet:
 
 ````md run=false
 # Weather report
@@ -269,24 +270,22 @@ Now let’s create a new page for our weather dashboard. Create a new file `docs
 ```
 ````
 
-<div class="tip">Hover any code block to show a copy button. Clicking the copy button will copy the contents of the code block to your clipboard.</div>
+To see the new page in the sidebar, you must restart the preview server. In the terminal, use Control-C (⌃C) to kill the preview server. Then use up arrow (↑) to re-run the command to start the preview server (`npm run dev` or `yarn dev`). Lastly, reload your browser. A bit of rigamarole, but you won’t have to do it often… 😓
 
-To see the new page in the sidebar, you must restart the preview server. In the terminal, use Control-C (⌃C) to kill the preview server. Then use up arrow (↑) to re-run the command to start the preview server (`npm run dev` or `yarn dev`). Lastly, reload your browser.
-
-That’s a bit of rigamarole, but you won’t have to do it very often. 😓 If you click on the **Weather report** link in the sidebar, it’ll take you to <http://127.0.0.1:3000/weather>, where you should see:
+If you click on the **Weather report** link in the sidebar, it’ll take you to <http://127.0.0.1:3000/weather>, where you should see:
 
 <figure>
   <img loading="lazy" src="./getting-started/hello-weather.png" class="crop">
   <figcaption>The humble beginnings of a local weather dashboard.</figcaption>
 </figure>
 
-<div class="tip">If you don’t see the sidebar, you can show it by making the window wider, or using Command-B (⌘B) or Option-B (⌥B) on Firefox and non-macOS, or clicking the right-pointing arrow ↦ on the left edge of the window.</div>
+<div class="tip">The sidebar is hidden by default in narrow windows. If you don’t see the sidebar, you can show it by making the window wider, or using Command-B (⌘B) or Option-B (⌥B) on Firefox and non-macOS, or clicking the right-pointing arrow ↦ on the left edge of the window.</div>
 
-As evidenced by the code <code class="language-js">1 + 2</code> rendered as <code class="language-js">3</code>, JavaScript fenced code blocks (<code>```js</code>) are *live*. The code runs in the browser, and re-runs as soon as you modify it and save the file. Feel free to tinker, say to replace the <code class="language-js">2</code> with <code class="language-js">Math.random()</code>. In a bit, we’ll write code to render a chart. We can also use code to debug as we develop, say to inspect data.
+As evidenced by the code <code class="language-js">1 + 2</code> rendered as <code class="language-js">3</code>, JavaScript fenced code blocks (<code>```js</code>) are *live*: the code runs in the browser. Try replacing <code class="language-js">2</code> with <code class="language-js">Math.random()</code>, and the code will re-run automatically on save. In a bit, we’ll write code to render a chart. We can also use code to debug as we develop, say to inspect data.
 
 ### Data loader
 
-Next, let’s load some data. The [National Weather Service (NWS)](https://www.weather.gov/documentation/services-web-api) provides an excellent and free API for local weather data within the United States. We’ll use the `/points/{latitude},{longitude}` endpoint to get metadata for the closest grid point to the given location, and then we’ll fetch the corresponding hourly forecast.
+Next, let’s load some data. The [National Weather Service (NWS)](https://www.weather.gov/documentation/services-web-api) provides an excellent and free API for local weather data within the United States. We’ll use the `/points/{latitude},{longitude}` endpoint to get metadata for the closest grid point to the given location, and then fetch the corresponding hourly forecast.
 
 Create a new file <code>docs/data/forecast.json.js</code> and paste in the following snippet:
 
@@ -341,10 +340,12 @@ To personalize this code snippet to your current location, edit the <code>longit
 
 <div class="caution">NWS does not provide forecasts for points outside the United States, so if you specify such a location the API will return an error and the data loader will fail.</div>
 
+<div class="tip">If you would rather write your data loader in Python, R, or some other language, take a peek at the <a href="#next-steps">next steps</a> below before continuing.</div>
+
 Your data loader should look like this:
 
 <figure>
-  <a href="./getting-started/hello-loader.png"><img loading="lazy" src="./getting-started/hello-loader.png" class="crop"></a>
+  <img loading="lazy" src="./getting-started/hello-loader.png" class="crop">
   <figcaption>A JavaScript data loader for fetching a local forecast from weather.gov.</figcaption>
 </figure>
 
@@ -354,58 +355,55 @@ If you like, you can run your data loader manually in the terminal:
 node docs/data/forecast.json.js
 ```
 
-If this barfs a bunch of JSON in the terminal, it’s working as intended. 😅 Normally you don’t run data loaders by hand — Framework runs them automatically — but data loaders are “just programs” so you can run them manually if you want. (Conversely, any program that runs on your machine and outputs something can be used as a data loader!)
-
-<div class="tip">If you’d like an additional challenge and would rather write your data loader in another language, such as Python or R, take a peek at the <a href="#next-steps">next steps</a> below before continuing.</div>
+If this barfs a bunch of JSON in the terminal, it’s working as intended. 😅 Normally you don’t run data loaders by hand — Framework runs them automatically, as needed — but data loaders are “just” programs so you can run them manually if you want. Conversely, any executable or shell script that runs on your machine and outputs something to stdout can be a data loader!
 
 ### File attachments
 
-How do we access the output of a data loader in the client? The same way that we’d access any static file. But we don’t use `fetch`, we use `FileAttachment`, because Framework needs to know statically which files are referenced so they can be included in the published site on build.
+Framework uses [file-based routing](./routing) not just for pages but for data loaders as well: the data loader <code>forecast.json.js</code> serves the file <code>forecast.json</code>. To load this file from <code>docs<span class="wbr">/</span>weather.md</code> we use the relative path <code>./data<span class="wbr">/</span>forecast.json</code>. In effect, data loaders are simply a naming convention for generating “static” files — a big advantage of which is that you can edit a data loader and the changes immediately propagate to the live preview without needing a reload.
 
-Framework uses [file-based routing](./routing) not just for pages but for data loaders as well. The data loader <code>forecast.json.js</code> generates the file <code>forecast.json</code>. That is:
-
-```
-docs/data/forecast.json.js → docs/data/forecast.json
-```
-
-So to load this (generated) file from <code>docs<span class="wbr">/</span>weather.md</code> we can use the relative path <code>./data<span class="wbr">/</span>forecast.json</code>:
-
-```
-docs/weather.md + ./data/forecast.json = docs/data/forecast.json
-```
-
-We need to use <code>FileAttachment</code>.
-
-Framework uses static analysis so it knows to run the data loader during build.
-
-Back in `weather.md`, replace the contents of the JavaScript code block (the parts within the triple backticks <code>```</code>) with the following code snippet:
+To load a file in JavaScript, use the built-in [`FileAttachment`](./javascript/files). In `weather.md`, replace the contents of the JavaScript code block (the parts inside the triple backticks <code>```</code>) with the following code:
 
 ```js run=false
 const forecast = FileAttachment("./data/forecast.json").json();
 ```
 
-This declares a variable `forecast` that you can then reference from other code. For example, you can add another code block that displays the `forecast` data.
+<div class="note"><code>FileAttachment</code> is a special function that can only be passed a static string literal as an argument. This restriction enables static analysis, allowing Framework to determine which data loaders to run on build and improving security by only including referenced files in the published site.</div>
+
+You can now reference the variable `forecast` from other code. For example, you can add another code block that displays the `forecast` data.
 
 ```js run=false
 display(forecast);
 ```
 
-TODO Introduce the `display` function, point out that it wasn’t needed before because `1 + 2` is an expression.
-
-You’ll see something like:
+This looks like:
 
 <figure>
   <img loading="lazy" src="./getting-started/hello-data.png" class="crop">
   <figcaption>Using <code>FileAttachment</code> to load data.</figcaption>
 </figure>
 
-Here’s the object so you can explore it here:
+The built-in [`display`](./javascript/display) function displays the specified value, a bit like `console.log` in the browser’s console. As you may have noticed above with <code class="language-js">1 + 2</code>, `display` is called implicitly when a code block contains an expression.
+
+For convenience, here’s a copy of the data so you can explore it here:
 
 ```js
 forecast
 ```
 
-(This documentation site is built with Framework!)
+This is a GeoJSON `Feature` object of a `Polygon` geometry representing the grid square. The `properties` object within contains the hourly forecast data. You can display it on a map with <a href="./lib/leaflet">Leaflet</a>, if you like.
+
+<figure>
+  <div id="map" style="height: 400px; margin: 1rem 0;"></div>
+  <figcaption>This grid point covers the south end of the Golden Gate Bridge.</figcaption>
+</figure>
+
+```js
+const map = L.map(document.querySelector("#map"));
+const tile = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+const geo = L.geoJSON().addData(forecast).addTo(map);
+map.fitBounds(geo.getBounds(), {padding: [50, 50]});
+invalidation.then(() => map.remove());
+```
 
 ```js
 const forecast = FileAttachment("./data/forecast.json").json();

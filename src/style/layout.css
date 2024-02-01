@@ -133,6 +133,7 @@
 #observablehq-sidebar summary {
   font-weight: 700;
   color: var(--theme-foreground);
+  cursor: default;
 }
 
 #observablehq-sidebar summary::-webkit-details-marker,
