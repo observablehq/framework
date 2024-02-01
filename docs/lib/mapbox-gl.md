@@ -27,7 +27,7 @@ invalidation.then(() => map.remove());
 ```
 
 ```js
-const ACCESS_TOKEN = "pk.eyJ1IjoiZmlsIiwiYSI6ImNscnV0ZWMzdzA2c2wybm14NGdhbDBqeXkifQ.he-qZ179Xez4BkAMk6vRfA";
+const ACCESS_TOKEN = "pk.eyJ1Ijoib2JzZXJ2YWJsZWhxLWVuZy1hZG1pbiIsImEiOiJjbHMxaTBwdDkwYnRsMmpxeG12M2kzdWFvIn0.Ga6eIWP2YNQrEW4FzHRcTQ";
 ```
 
 <div class="tip">You will need to create a <a href="https://account.mapbox.com/">Mapbox account</a> and obtain an API access token for your project. Replace <code>ACCESS_TOKEN</code> with your token above.</div>

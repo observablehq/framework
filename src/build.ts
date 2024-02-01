@@ -129,7 +129,7 @@ export async function build(
     let sourcePath = join(root, file);
     const outputPath = join("_file", file);
     if (!existsSync(sourcePath)) {
-      const loader = Loader.find(root, file, {useStale: true});
+      const loader = Loader.find(root, join("/", file), {useStale: true});
       if (!loader) {
         effects.logger.error("missing referenced file", sourcePath);
         continue;
