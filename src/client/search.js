@@ -98,6 +98,7 @@ if (nav != null) {
     if (event.code === "KeyK" && event.metaKey && !event.altKey && !event.ctrlKey) {
       toggle.checked = true;
       input.focus();
+      input.select();
       event.preventDefault();
     }
   });
