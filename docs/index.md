@@ -27,17 +27,13 @@ toc: false
 }
 
 .hero h2 {
-  margin: 0;
+  margin: 0 0 3rem;
   max-width: 34em;
   font-size: 20px;
   font-style: initial;
   font-weight: 500;
   line-height: 1.5;
   color: var(--theme-foreground-muted);
-}
-
-.hero .observablehq-pre-container {
-  margin-top: 4rem;
 }
 
 @media (min-width: 640px) {
