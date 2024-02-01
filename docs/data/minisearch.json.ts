@@ -15,7 +15,8 @@ const index = new MiniSearch(options);
 for await (const file of visitMarkdownFiles(root)) {
   if (file === "404.md" || file.startsWith("theme/")) continue;
   console.warn(`Indexing ${file}`);
-  const text = await readFile(join(root, file), "utf-8");
+  const text = (await readFile(join(root, file), "utf-8"))
+    .replaceAll(/<[^>]+>/g, " ");
 
   // TODO h1, front-matter…
   const title = text.match(/^# (.*)/)?.[1] ?? basename(file, ".md");
