@@ -24,7 +24,7 @@ Under the hood, `npm:` imports are powered by [jsDelivr’s esm.run CDN](https:/
 import confetti from "https://cdn.jsdelivr.net/npm/canvas-confetti/+esm";
 ```
 
-<div class="note">We plan on supporting importing from <code>node_modules</code> using bare module specifiers (<i>e.g.</i>, <code>import confetti from "canvas-confetti"</code>). If you’d like this feature, please upvote <a href="https://github.com/observablehq/cli/issues/360">#360</a>.</div>
+<div class="note">We plan on supporting importing from <code>node_modules</code> using bare module specifiers (<i>e.g.</i>, <code>import confetti from "canvas-confetti"</code>). If you’d like this feature, please upvote <a href="https://github.com/observablehq/framework/issues/360">#360</a>.</div>
 
 To load a specific version of a library, add a semver range:
 
@@ -78,7 +78,7 @@ In addition to resolving versions of directly-imported modules, Observable Frame
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/+esm">
 ```
 
-<div class="note">We’d also like to download imported modules from the CDN during build, making the built site entirely self-contained; see <a href="https://github.com/observablehq/cli/issues/20">#20</a>. This would further enable subresource integrity hashes; see <a href="https://github.com/observablehq/cli/issues/306">#306</a>.</div>
+<div class="note">We’d also like to download imported modules from the CDN during build, making the built site entirely self-contained; see <a href="https://github.com/observablehq/framework/issues/20">#20</a>. This would further enable subresource integrity hashes; see <a href="https://github.com/observablehq/framework/issues/306">#306</a>.</div>
 
 ## Implicit imports
 

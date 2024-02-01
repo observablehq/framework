@@ -16,7 +16,7 @@ type TelemetryIds = {
 };
 
 type TelemetryEnvironment = {
-  version: string; // cli version from package.json
+  version: string; // version from package.json
   node: string; // node.js version
   systemPlatform: string; // linux, darwin, win32, ...
   systemRelease: string; // 20.04, 11.2.3, ...
@@ -43,7 +43,7 @@ type TelemetryData = {
 };
 ```
 
-To inspect telemetry data, set the `OBSERVABLE_TELEMETRY_DEBUG` environment variable to `true`. This will print the telemetry data to stderr instead of sending it to Observable. See [`telemetry.ts`](https://github.com/observablehq/cli/blob/main/src/telemetry.ts) for source code.
+To inspect telemetry data, set the `OBSERVABLE_TELEMETRY_DEBUG` environment variable to `true`. This will print the telemetry data to stderr instead of sending it to Observable. See [`telemetry.ts`](https://github.com/observablehq/framework/blob/main/src/telemetry.ts) for source code.
 
 ## What is not collected?
 

@@ -6,7 +6,7 @@
     "postinstall": "ln -sf ../../../../bin/observable-init.js node_modules/.bin/observable"
   },
   "dependencies": {
-    "@observablehq/cli": "link:../.."
+    "@observablehq/framework": "link:../.."
   },
   "engines": {
     "node": ">=20.6"
