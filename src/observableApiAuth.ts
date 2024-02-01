@@ -83,8 +83,6 @@ export async function login(effects: AuthEffects = defaultEffects) {
         ...user.workspaces.map((workspace) => ` * ${formatUser(workspace)}`)
       ].join("\n")
     );
-    effects.clack.log.info("You have access to the following workspaces:");
-    effects.clack.log.message();
   }
 
   effects.clack.outro("🎉 Happy visualizing!");
