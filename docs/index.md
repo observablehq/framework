@@ -2,29 +2,58 @@
 toc: false
 ---
 
-<div style="display: flex; flex-direction: column; align-items: center; font-family: var(--sans-serif); margin: 4rem 0; text-wrap: balance; text-align: center;">
-  <span style="font-weight: 900; font-size: var(--hero-font-size); line-height: 1; padding: 2rem 0; background: linear-gradient(30deg, var(--theme-foreground-focus), currentColor); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">The best dashboards are built with code</span>
-  <span style="font-weight: 500; max-width: 34em; font-size: 20px; color: var(--theme-foreground-muted);">Create fast, beautiful data apps, dashboards, and reports from the command line. Write Markdown, JavaScript, SQL, Python, R… and any language you like. Free and open-source.</span>
-</div>
-
-<div style="display: flex; flex-direction: column; align-items: center; font-family: var(--sans-serif); margin: 4rem 0 8rem; text-wrap: balance; text-align: center;">
-  <pre style="width: 22rem; text-align: initial;" data-copy><code class="language-sh">npm init @observablehq</code></pre>
-  <a href="./getting-started">Get started →</a>
-</div>
-
 <style>
 
-:root {
-  --hero-font-size: 14vw;
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--sans-serif);
+  margin: 4rem 0 8rem;
+  text-wrap: balance;
+  text-align: center;
+}
+
+.hero h1 {
+  margin: 2rem 0;
+  max-width: none;
+  font-size: 14vw;
+  font-weight: 900;
+  line-height: 1;
+  background: linear-gradient(30deg, var(--theme-foreground-focus), currentColor);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero h2 {
+  margin: 0;
+  max-width: 34em;
+  font-size: 20px;
+  font-style: initial;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--theme-foreground-muted);
+}
+
+.hero .observablehq-pre-container {
+  margin-top: 4rem;
 }
 
 @media (min-width: 640px) {
-  :root {
-    --hero-font-size: 90px;
+  .hero h1 {
+    font-size: 90px;
   }
 }
 
 </style>
+
+<div class="hero">
+  <h1>The best dashboards are built with code</h1>
+  <h2>Create fast, beautiful data apps, dashboards, and reports from the command line. Write Markdown, JavaScript, SQL, Python, R… and any language you like. Free and open-source.</h2>
+  <pre data-copy>npm init @observablehq</pre>
+  <a href="./getting-started">Get started →</a>
+</div>
 
 **Observable Framework** is an [open-source](https://github.com/observablehq/cli) static site generator for data apps, dashboards, reports, and more. Framework includes a preview server for local development, and a command-line interface for automating builds & deploys.
 
