@@ -202,7 +202,7 @@ And that’s it! After some downloading, copying, and installing, your new proje
 <span class="muted">│</span>  <span class="focus">cd ./hello-framework</span>
 <span class="muted">│</span>  <span class="focus">yarn dev</span>
 <span class="muted">│</span>
-<span class="muted">└</span>  Problems? <u>https://framework.observablehq.com/getting-started</u></pre>
+<span class="muted">└</span>  Problems? <u>https://observablehq.com/framework/getting-started</u></pre>
 
 ## 2. Develop
 
