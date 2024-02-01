@@ -19,8 +19,9 @@ for await (const file of visitMarkdownFiles(root)) {
     .replaceAll(/<[^>]+>/g, " ");
 
   // TODO h1, front-matter…
-  index.add({id: file === "index.md" ? "" : "" + file.slice(0, -3), title, text});
   const title = text.match(/^title: (.*)/m)?.[1] ?? text.match(/^# (.*)/)?.[1] ?? basename(file, ".md");
+  const id = file === "index.md" ? "" : "" + file.slice(0, -3);
+  index.add({id, title, text: text.replaceAll(/\W+/g, " ")});
 }
 
 // One way of passing the options to the client; better than nothing, but note
