@@ -8,6 +8,7 @@ const root = "./docs/"; // TODO proper root
 const options = {
   fields: ["title", "text"], // fields to index for full-text search
   storeFields: ["title"],
+  processTerm: (term) => term.match(/\d/g)?.length > 6 ? null : term.slice(0, 25).toLowerCase() // fields to return with search results
 };
 const index = new MiniSearch(options);
 
