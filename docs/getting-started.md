@@ -264,7 +264,7 @@ Now let’s add a page for our weather dashboard. Create a new file `docs/weathe
 ```
 ````
 
-To see the new page in the sidebar, you must restart the preview server. In the terminal, use Control-C (⌃C) to kill the preview server. Then use up arrow (↑) to re-run the command to start the preview server (`npm run dev` or `yarn dev`). Lastly, reload your browser. A bit of rigamarole, but you won’t have to do it often… 😓
+To see the new page in the sidebar, you must restart the preview server. In the terminal, use Control-C (⌃C) to kill the preview server. Then use up arrow (↑) to re-run the command to start the preview server (`npm run dev` or `yarn dev`). Lastly, reload your browser. A bit of rigamarole, but you won’t have to do it often… 😓 Upvote <a href="https://github.com/observablehq/cli/issues/645">#645</a> and <a href="https://github.com/observablehq/cli/issues/646">#646</a> if you’d like this to be better.
 
 If you click on the **Weather report** link in the sidebar, it’ll take you to <http://127.0.0.1:3000/weather>, where you should see:
 
