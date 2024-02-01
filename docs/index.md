@@ -52,7 +52,7 @@ toc: false
   <h1>The best dashboards are built with code</h1>
   <h2>Create fast, beautiful data apps, dashboards, and reports from the command line. Write Markdown, JavaScript, SQL, Python, R… and any language you like. Free and open-source.</h2>
   <pre data-copy>npm init @observablehq</pre>
-  <a href="./getting-started">Get started →</a>
+  <a href="./getting-started">Get started<span style="display: inline-block; margin-left: 0.25rem;">→</span></a>
 </div>
 
 **Observable Framework** is an [open-source](https://github.com/observablehq/cli) static site generator for data apps, dashboards, reports, and more. Framework includes a preview server for local development, and a command-line interface for automating builds & deploys.
