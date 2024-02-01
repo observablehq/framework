@@ -91,7 +91,7 @@ To create a new project with `npm`, run:
 npm init @observablehq
 ```
 
-Or to create a new project with `yarn`, run:
+If you prefer `yarn`, run:
 
 ```sh
 yarn create @observablehq
@@ -102,7 +102,7 @@ yarn create @observablehq
 
 You can run the above command anywhere, but you may want to `cd` to your `~/Development` directory first (or wherever you do local development).
 
-For the first prompt, you’ll specify where to create your new project. Enter `./hello-framework` to create a directory named `hello-framework` within the current directory. Or just hit Enter, as this is conveniently the default. (The `./` is implied, so `./hello-framework` is equivalent to `hello-framework`. You can create a project in a different directory by entering a path that starts with `../` or `~/` or `/`.)
+The first prompt asks where to create your new project. Enter `./hello-framework` to create a directory named `hello-framework` within the current directory. Or just hit Enter, as this is conveniently the default. (The `./` is implied, so `./hello-framework` is equivalent to `hello-framework`. You can create a project in a different directory by entering a path that starts with `../` or `~/` or `/`.)
 
 <pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
@@ -110,7 +110,7 @@ For the first prompt, you’ll specify where to create your new project. Enter `
 <span class="focus">│</span>  ./hello-framework<span class="invert">&nbsp;</span>
 <span class="focus">└</span></pre>
 
-Next you’ll enter the project’s title. A project’s title appears in the sidebar as well as on all pages. (A memorable title will make your project easier to find in your browser history, for one.) You can hit Enter here to accept the default title derived from the directory you entered in the previous step.
+Next you’ll enter the project’s title. A project’s title appears in the sidebar as well as on all pages. You can hit Enter here to accept the default title derived from the directory name.
 
 <pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
@@ -136,7 +136,7 @@ Next, decide whether you want sample files in your new project. These files demo
 <span class="focus">│</span>  <span class="muted">○ No, create an empty project</span>
 <span class="focus">└</span></pre>
 
-If you use `npm` or `yarn` as your preferred package manager, declare your allegiance now. The package manager you used to launch `observable create` will be selected by default, so you can just hit Enter again to continue. If you prefer a different package manager (say `pnpm`), choose `No`; you can install dependencies yourself after the project is created.
+If you use `npm` or `yarn` as your preferred package manager, declare your allegiance now. The package manager you used to launch `observable create` will be selected by default, so you can just hit Enter again to continue. If you prefer a different package manager (say `pnpm`), choose `No`; you can always install dependencies after the project is created.
 
 <pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
@@ -175,7 +175,7 @@ If you’ll continue developing after you finish this tutorial, you’ll likely 
 <span class="focus">│</span>  <span class="green">●</span> Yes <span class="muted">/ ○ No</span>
 <span class="focus">└</span></pre>
 
-And that’s it! After some downloading, copying, and installing, your new project will be ready to go. 🎉
+And that’s it! After some downloading, copying, and installing, your new project is ready to go. 🎉
 
 <pre><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
@@ -280,9 +280,9 @@ That’s a bit of rigamarole, but you won’t have to do it very often. 😓 If 
   <figcaption>The humble beginnings of a local weather dashboard.</figcaption>
 </figure>
 
-<div class="tip">If you don’t see the sidebar, you can show it by making the window wider, using Command-B (⌘B) or Option-B (⌥B) on Firefox and non-macOS, or clicking the little right-pointing arrow ↦ on the left edge of the window.</div>
+<div class="tip">If you don’t see the sidebar, you can show it by making the window wider, or using Command-B (⌘B) or Option-B (⌥B) on Firefox and non-macOS, or clicking the right-pointing arrow ↦ on the left edge of the window.</div>
 
-As evinced by the code <code class="language-js">1 + 2</code> rendered as <code class="language-js">3</code>, JavaScript fenced code blocks (<code>```js</code>) are *live* — the code runs in the browser. Feel free to tinker, say to replace the <code class="language-js">2</code> with <code class="language-js">Math.random()</code>. In a bit, we’ll write code to render a chart. We can also use code to debug as we develop, say to inspect data.
+As evidenced by the code <code class="language-js">1 + 2</code> rendered as <code class="language-js">3</code>, JavaScript fenced code blocks (<code>```js</code>) are *live*. The code runs in the browser, and re-runs as soon as you modify it and save the file. Feel free to tinker, say to replace the <code class="language-js">2</code> with <code class="language-js">Math.random()</code>. In a bit, we’ll write code to render a chart. We can also use code to debug as we develop, say to inspect data.
 
 ### Data loader
 
@@ -354,7 +354,7 @@ If you like, you can run your data loader manually in the terminal:
 node docs/data/forecast.json.js
 ```
 
-If this barfs a bunch of JSON in the terminal, it’s working as intended. 😅 Normally you don’t run data loaders by hand — Framework runs them automatically — but data loaders are “just programs” so you can run them manually if you want.
+If this barfs a bunch of JSON in the terminal, it’s working as intended. 😅 Normally you don’t run data loaders by hand — Framework runs them automatically — but data loaders are “just programs” so you can run them manually if you want. (Conversely, any program that runs on your machine and outputs something can be used as a data loader!)
 
 <div class="tip">If you’d like an additional challenge and would rather write your data loader in another language, such as Python or R, take a peek at the <a href="#next-steps">next steps</a> below before continuing.</div>
 
