@@ -51,14 +51,10 @@ if (input != null) {
 
   const toggle = document.querySelector("#observablehq-sidebar-toggle");
   addEventListener("keydown", (event) => {
-    if (
-      event.code === "KeyK" &&
-      (event.metaKey || event.altKey) &&
-      !event.ctrlKey &&
-      (event.target === document.body || event.target === toggle || event.target?.closest("#observablehq-sidebar"))
-    ) {
-      input.focus();
+    if (event.code === "KeyK" && event.metaKey && !event.altKey && !event.ctrlKey) {
       toggle.checked = true;
+      input.focus();
+      event.preventDefault();
     }
   });
 }
