@@ -12,18 +12,7 @@ import {
   setObservableApiKey
 } from "./observableApiConfig.js";
 import type {TtyEffects} from "./tty.js";
-import {
-  bold,
-  cyan,
-  defaultEffects as defaultTtyEffects,
-  green,
-  hangingIndentLog,
-  inverse,
-  link,
-  magenta,
-  reset,
-  yellow
-} from "./tty.js";
+import {bold, defaultEffects as defaultTtyEffects, green, inverse, link, yellow} from "./tty.js";
 
 const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
 

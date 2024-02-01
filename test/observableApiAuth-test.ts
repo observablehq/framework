@@ -2,6 +2,7 @@ import assert from "node:assert";
 import {commandRequiresAuthenticationMessage} from "../src/commandInstruction.js";
 import {CliError} from "../src/error.js";
 import {type AuthEffects, login, logout, whoami} from "../src/observableApiAuth.js";
+import {TestClackEffects} from "./mocks/clack.js";
 import {MockLogger} from "./mocks/logger.js";
 import {getCurrentObservableApi, mockObservableApi, validApiKey} from "./mocks/observableApi.js";
 import {MockConfigEffects} from "./observableApiConfig-test.js";
@@ -21,7 +22,9 @@ describe("login command", () => {
     await login(effects);
     assert.deepEqual(await effects.setApiKeyDeferred.promise, {id: "MOCK-ID", key: validApiKey});
     assert.equal(effects.observableApiKey, validApiKey);
-    effects.logger.assertAtLeastLogs([/.*copy your confirmation code.*FAKEPASS.*\/settings\/api-keys\/confirm.*/ms]);
+    effects.clack.log.assertLogged({
+      message: /.*copy your confirmation code.*FAKEPASS.*\/auth-device.*/ms
+    });
   });
 
   it("polls until the key is accepted", async () => {
@@ -130,6 +133,7 @@ class MockAuthEffects extends MockConfigEffects implements AuthEffects {
   public isTty: boolean;
   public observableApiKey: string | null = null;
   public outputColumns: number = 80;
+  public clack = new TestClackEffects();
 
   constructor({apiKey = null, isTty = true}: {apiKey?: string | null; isTty?: boolean} = {}) {
     super();
