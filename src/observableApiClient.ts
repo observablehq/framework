@@ -59,7 +59,7 @@ export class ObservableApiClient {
         try {
           const data = JSON.parse(body);
           if (Array.isArray(data.errors) && data.errors.some((d) => d.code === "VERSION_MISMATCH")) {
-            console.log(red("The version of the Observable CLI you are using is not compatible with the server."));
+            console.log(red("The version of Observable Framework you are using is not compatible with the server."));
             console.log(faint(`Expected ${data.errors[0].meta.expected}, but using ${data.errors[0].meta.actual}`));
           }
         } catch (err) {

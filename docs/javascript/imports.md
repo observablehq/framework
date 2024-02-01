@@ -58,13 +58,13 @@ import {foo} from "./foo.js";
 
 and the imported value of `foo` is: ${foo}.
 
-The preview server automatically watches imported local modules, so any changes to these files will instantly update in the browser via hot module replacement.
+Observable Framework automatically watches imported local modules during preview, so any changes to these files will instantly update in the browser via hot module replacement.
 
 <div class="note">While there is <a href="./reactivity">reactivity</a> across <a href="../javascript">JavaScript code blocks</a> in Markdown, there’s no reactivity within a JavaScript module. However, you can write <a href="./promises">async functions</a> and <a href="./generators">generator functions</a> to define reactive variables. And you can import the Observable standard library into local modules, so you can reference <a href="./files">files</a> and use other standard library features.</div>
 
 ## Module preloads
 
-During build, Observable will resolve the current exact version of the imported library from npm. Importing `npm:canvas-confetti` is thus equivalent to:
+During build, Observable Framework will resolve the current exact version of the imported library from npm. Importing `npm:canvas-confetti` is thus equivalent to:
 
 ```js run=false
 import confetti from "https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/+esm";
@@ -72,7 +72,7 @@ import confetti from "https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/+esm";
 
 Version resolution locks the version of imported libraries so you don’t have to worry about new releases breaking your built site in the future. At the same time, you’ll conveniently get the latest version of libraries during local development and the next time you build.
 
-In addition to resolving versions of directly-imported modules, Observable recursively resolves dependencies, too! All transitively imported modules are automatically preloaded, greatly improving page load speed because the browser requests all imported modules in parallel.
+In addition to resolving versions of directly-imported modules, Observable Framework recursively resolves dependencies, too! All transitively imported modules are automatically preloaded, greatly improving page load speed because the browser requests all imported modules in parallel.
 
 ```html run=false
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/+esm">
@@ -82,7 +82,7 @@ In addition to resolving versions of directly-imported modules, Observable recur
 
 ## Implicit imports
 
-For convenience, Observable provides recommended libraries by default in Markdown. These implicit imports are only evaluated if you reference the corresponding symbol and hence don’t add overhead if you don’t use them; for example, D3 won’t be loaded unless you have an unbound reference to `d3`.
+For convenience, Observable Framework provides recommended libraries by default in Markdown. These implicit imports are only evaluated if you reference the corresponding symbol and hence don’t add overhead if you don’t use them; for example, D3 won’t be loaded unless you have an unbound reference to `d3`.
 
 Click on any of the imported symbols below to learn more.
 
@@ -111,7 +111,7 @@ Click on any of the imported symbols below to learn more.
 
 ## Require
 
-If you’re familiar with Observable notebooks, you may be familiar with `require`. We strongly recommend that you avoid `require` as the underlying Asynchronous Module Definition (AMD) convention has been made obsolete by standard imports in JavaScript, and AMD tends to be implemented inconsistently by libraries.
+If you’re familiar with Observable notebooks, you may have noticed that we don’t mention `require` above. We recommend that you avoid `require` as the underlying Asynchronous Module Definition (AMD) convention has been made obsolete by standard imports in JavaScript, and AMD tends to be implemented inconsistently by libraries.
 
 If you really need `require`, you can import it from [d3-require](https://github.com/d3/d3-require):
 
