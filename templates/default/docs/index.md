@@ -75,7 +75,7 @@ Here are some ideas of things you could try…
     Import a <a href="https://cli.observablehq.com/javascript/imports">recommended library</a> from npm, such as <a href="https://cli.observablehq.com/lib/leaflet">Leaflet</a>, <a href="https://cli.observablehq.com/lib/dot">GraphViz</a>, <a href="https://cli.observablehq.com/lib/tex">TeX</a>, or <a href="https://cli.observablehq.com/lib/duckdb">DuckDB</a>.
   </div>
   <div class="card">
-    Ask for help, or share your work or ideas, on the <a href="https://talk.observablehq.com/">Observable Forum</a>.
+    Ask for help, or share your work or ideas, on the <a href="https://talk.observablehq.com/">Observable forum</a>.
   </div>
   <div class="card">
     Visit <a href="https://github.com/observablehq/cli">Framework on GitHub</a> and give us a star. Or file an issue if you’ve found a bug!
