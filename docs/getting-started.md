@@ -231,7 +231,7 @@ You should see something like this:
 Now visit <http://127.0.0.1:3000> in your browser, which should look like:
 
 <figure>
-  <img loading="lazy" src="./getting-started/hello-framework.png" style="aspect-ratio: 3248 / 2112;">
+  <img loading="lazy" src="./getting-started/hello-framework.webp" style="aspect-ratio: 3248 / 2112;">
   <figcaption>The default home page (<code>docs/index.md</code>) after creating a new project.</figcaption>
 </figure>
 
@@ -242,7 +242,7 @@ Live preview means that as you save changes, your in-browser preview updates ins
 To experience live preview, open <code>docs/index.md</code> in your preferred text editor — below we show Visual Studio Code — and position your browser window so that you can see your editor and browser side-by-side. If you then replace the text “Hello, Observable Framework” with “Hi, Mom!” and save, you should see:
 
 <figure>
-  <img loading="lazy" src="./getting-started/hi-mom.png" class="crop">
+  <img loading="lazy" src="./getting-started/hi-mom.webp" class="crop">
   <figcaption>No seriously — hi, Mom! Thanks for supporting me all these years.</figcaption>
 </figure>
 
@@ -265,7 +265,7 @@ To see the new page in the sidebar, you must restart the preview server. In the 
 If you click on the **Weather report** link in the sidebar, it’ll take you to <http://127.0.0.1:3000/weather>, where you should see:
 
 <figure>
-  <img loading="lazy" src="./getting-started/hello-weather.png" class="crop">
+  <img loading="lazy" src="./getting-started/hello-weather.webp" class="crop">
   <figcaption>The humble beginnings of a local weather dashboard.</figcaption>
 </figure>
 
@@ -335,7 +335,7 @@ To personalize this code snippet to your current location, edit the <code>longit
 Your data loader should look like this:
 
 <figure>
-  <img loading="lazy" src="./getting-started/hello-loader.png" class="crop">
+  <img loading="lazy" src="./getting-started/hello-loader.webp" class="crop">
   <figcaption>A JavaScript data loader for fetching a local forecast from weather.gov.</figcaption>
 </figure>
 
@@ -366,7 +366,7 @@ display(forecast);
 This looks like:
 
 <figure>
-  <img loading="lazy" src="./getting-started/hello-data.png" class="crop">
+  <img loading="lazy" src="./getting-started/hello-data.webp" class="crop">
   <figcaption>Using <code>FileAttachment</code> to load data.</figcaption>
 </figure>
 
@@ -423,7 +423,7 @@ Plot.plot({
 You should now see:
 
 <figure>
-  <img loading="lazy" src="./getting-started/hello-plot.png" class="crop">
+  <img loading="lazy" src="./getting-started/hello-plot.webp" class="crop">
   <figcaption>Using <code>Plot</code> to make a chart.</figcaption>
 </figure>
 
@@ -502,7 +502,7 @@ toc: false
 ```
 
 <figure>
-  <img loading="lazy" src="./getting-started/hello-grid.png" class="crop">
+  <img loading="lazy" src="./getting-started/hello-grid.webp" class="crop">
   <figcaption>Adopting a grid layout and the <code>dashboard</code> theme.</figcaption>
 </figure>
 
