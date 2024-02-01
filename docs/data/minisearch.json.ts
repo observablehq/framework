@@ -7,7 +7,7 @@ const root = "./docs/"; // TODO proper root
 
 const options = {
   fields: ["title", "text"], // fields to index for full-text search
-  storeFields: ["title", "category"] // fields to return with search results
+  storeFields: ["title"],
 };
 const index = new MiniSearch(options);
 
