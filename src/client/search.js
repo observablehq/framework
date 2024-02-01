@@ -48,4 +48,17 @@ if (input != null) {
     input.value = prevSearch;
     input.dispatchEvent(new Event("input", {bubbles: true}));
   }
+
+  const toggle = document.querySelector("#observablehq-sidebar-toggle");
+  addEventListener("keydown", (event) => {
+    if (
+      event.code === "KeyK" &&
+      (event.metaKey || event.altKey) &&
+      !event.ctrlKey &&
+      (event.target === document.body || event.target === toggle || event.target?.closest("#observablehq-sidebar"))
+    ) {
+      input.focus();
+      toggle.checked = true;
+    }
+  });
 }
