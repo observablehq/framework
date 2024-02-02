@@ -4,7 +4,7 @@ copyButton.innerHTML = '<button title="Copy code" class="observablehq-pre-copy">
 enableCopyButtons();
 
 export function enableCopyButtons() {
-  for (const pre of document.querySelectorAll("pre")) {
+  for (const pre of document.querySelectorAll("pre:not([data-copy=none])")) {
     const parent = pre.parentNode;
     if (parent.classList.contains("observablehq-pre-container")) continue;
     const div = parent.insertBefore(document.createElement("div"), pre);

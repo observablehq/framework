@@ -1,5 +1,5 @@
 {
-  "name": "@observablehq/cli",
+  "name": "@observablehq/framework",
   "license": "UNLICENSED",
   "version": "0.0.50",
   "type": "module",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/observablehq/cli.git"
+    "url": "https://github.com/observablehq/framework.git"
   },
   "files": [
     "bin/**/*.js",
@@ -72,6 +72,7 @@
     "send": "^0.18.0",
     "tar-stream": "^3.1.6",
     "tsx": "~4.2.1",
+    "untildify": "^5.0.0",
     "ws": "^8.14.2"
   },
   "devDependencies": {

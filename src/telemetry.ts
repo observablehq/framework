@@ -17,7 +17,7 @@ type TelemetryIds = {
 };
 
 type TelemetryEnvironment = {
-  version: string; // cli version from package.json
+  version: string; // version from package.json
   node: string; // node.js version
   systemPlatform: string; // linux, darwin, win32, ...
   systemRelease: string; // 20.04, 11.2.3, ...
@@ -209,8 +209,8 @@ export class Telemetry {
     if (called) {
       this.effects.logger.error(
         `
-${magenta("Attention:")} The Observable CLI collects anonymous telemetry to help us improve
-           the product. See ${link("https://cli.observablehq.com/telemetry")} for details.
+${magenta("Attention:")} Observable Framework collects anonymous telemetry to help us improve
+           the product. See ${link("https://observablehq.com/framework/telemetry")} for details.
            Set \`OBSERVABLE_TELEMETRY_DISABLE=true\` to disable.`
       );
     }

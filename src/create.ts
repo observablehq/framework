@@ -6,6 +6,7 @@ import {setTimeout as sleep} from "node:timers/promises";
 import {fileURLToPath} from "node:url";
 import {promisify} from "node:util";
 import * as clack from "@clack/prompts";
+import untildify from "untildify";
 import type {ClackEffects} from "./clack.js";
 import {cyan, inverse, reset, underline} from "./tty.js";
 
@@ -53,6 +54,12 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
           defaultValue: "./hello-framework",
           validate: validateRootPath
         }),
+      projectTitle: ({results: {rootPath}}) =>
+        clack.text({
+          message: "What to title your project?",
+          placeholder: inferTitle(rootPath!),
+          defaultValue: inferTitle(rootPath!)
+        }),
       includeSampleFiles: () =>
         clack.select({
           message: "Include sample files to help you get started?",
@@ -76,14 +83,14 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
         clack.confirm({
           message: "Initialize git repository?"
         }),
-      installing: async ({results: {rootPath, includeSampleFiles, packageManager, initializeGit}}) => {
+      installing: async ({results: {rootPath, projectTitle, includeSampleFiles, packageManager, initializeGit}}) => {
+        rootPath = untildify(rootPath!);
         const s = clack.spinner();
         s.start("Copying template files");
         const template = includeSampleFiles ? "default" : "empty";
         const templateDir = resolve(fileURLToPath(import.meta.url), "..", "..", "templates", template);
-        const title = basename(rootPath!);
         const runCommand = packageManager === "yarn" ? "yarn" : `${packageManager ?? "npm"} run`;
-        const installCommand = packageManager === "yarn" ? "yarn" : `${packageManager ?? "npm"} install`;
+        const installCommand = `${packageManager ?? "npm"} install`;
         await effects.sleep(1000);
         await recursiveCopyTemplate(
           templateDir,
@@ -92,15 +99,15 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
             runCommand,
             installCommand,
             rootPath: rootPath!,
-            projectTitle: title,
-            projectTitleString: JSON.stringify(title)
+            projectTitle: projectTitle as string,
+            projectTitleString: JSON.stringify(projectTitle as string)
           },
           effects
         );
         if (packageManager) {
           s.message(`Installing dependencies via ${packageManager}`);
           await effects.sleep(1000);
-          await promisify(exec)(packageManager, {cwd: rootPath});
+          await promisify(exec)(installCommand, {cwd: rootPath});
         }
         if (initializeGit) {
           s.message("Initializing git repository");
@@ -108,10 +115,10 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
           await promisify(exec)("git init", {cwd: rootPath});
           await promisify(exec)("git add -A", {cwd: rootPath});
         }
-        s.stop("Installed!");
+        s.stop("Installed! 🎉");
         const instructions = [`cd ${rootPath}`, ...(packageManager ? [] : [installCommand]), `${runCommand} dev`];
         clack.note(instructions.map((line) => reset(cyan(line))).join("\n"), "Next steps…");
-        clack.outro(`Problems? ${underline("https://cli.observablehq.com/getting-started")}`);
+        clack.outro(`Problems? ${underline("https://observablehq.com/framework/getting-started")}`);
       }
     },
     {
@@ -130,6 +137,13 @@ function validateRootPath(rootPath: string): string | void {
   if (!existsSync(rootPath)) return;
   if (!statSync(rootPath).isDirectory()) return "File already exists.";
   if (readdirSync(rootPath).length !== 0) return "Directory is not empty.";
+}
+
+function inferTitle(rootPath: string): string {
+  return basename(rootPath!)
+    .split(/[-_\s]/)
+    .map(([c, ...rest]) => c.toUpperCase() + rest.join(""))
+    .join(" ");
 }
 
 function canWriteRecursive(rootPath: string): boolean {

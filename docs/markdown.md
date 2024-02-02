@@ -1,8 +1,8 @@
 # Markdown
 
-Markdown in the Observable CLI follows the [CommonMark spec](https://spec.commonmark.org/) and is powered by [markdown-it](https://github.com/markdown-it/markdown-it).  We also feature [live JavaScript](./javascript) as either [fenced code blocks](./javascript#fenced-code-blocks) (<code>```js</code>) or [inline expressions](./javascript#inline-expressions) (<code>$\{…}</code>), and [HTML in Markdown](#html), and [front matter](#front-matter) for page-level configuration. If you don’t already know Markdown, please see [GitHub’s guide to Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) for an introduction.
+Markdown in Observable Framework follows the [CommonMark spec](https://spec.commonmark.org/) and is powered by [markdown-it](https://github.com/markdown-it/markdown-it).  We also feature [live JavaScript](./javascript) as either [fenced code blocks](./javascript#fenced-code-blocks) (<code>```js</code>) or [inline expressions](./javascript#inline-expressions) (<code>$\{…}</code>), and [HTML in Markdown](#html), and [front matter](#front-matter) for page-level configuration. If you don’t already know Markdown, please see [GitHub’s guide to Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) for an introduction.
 
-<div class="note">The Observable CLI currently deviates from CommonMark in how blank lines are handled in HTML; see below. This is a limitation of our parser needed for incremental update during preview.</div>
+<div class="note">Observable Framework currently deviates from CommonMark in how blank lines are handled in HTML; see below. This is a limitation of our parser needed for incremental update during preview.</div>
 
 Here are a few examples of Markdown content to get you started.
 
