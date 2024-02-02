@@ -42,8 +42,8 @@ export async function login(effects: AuthEffects = defaultEffects) {
   confirmUrl.searchParams.set("code", requestInfo.confirmationCode);
 
   effects.clack.log.step(
-    `First copy your confirmation code: ${bold(yellow(requestInfo.confirmationCode))}\n` +
-      `and then open ${link(confirmUrl)} in your browser.`
+    `Your confirmation code is ${bold(yellow(requestInfo.confirmationCode))}\n` +
+      `Open ${link(confirmUrl)}\nin your browser, and confirm the code matches.`
   );
   const spinner = effects.clack.spinner();
   spinner.start("Waiting for confirmation...");
@@ -58,10 +58,13 @@ export async function login(effects: AuthEffects = defaultEffects) {
         apiKey = requestPoll.apiKey;
         break;
       case "expired":
-        throw new CliError("That confirmation code expired. Please try again.");
+        spinner.stop("Failed to confirm code.", 2);
+        throw new CliError("That confirmation code expired.");
       case "consumed":
-        throw new CliError("That confirmation code has already been used. Please try again.");
+        spinner.stop("Failed to confirm code.", 2);
+        throw new CliError("That confirmation code has already been used.");
       default:
+        spinner.stop("Failed to confirm code.", 2);
         throw new CliError(`Received an unknown polling status ${requestPoll.status}.`);
     }
     await new Promise((resolve) => setTimeout(resolve, 1000));
