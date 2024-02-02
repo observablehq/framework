@@ -7,7 +7,7 @@ if (container != null) {
   const input = container.querySelector("input");
   input.setAttribute(
     "placeholder",
-    `${input.getAttribute("placeholder")}${/Mac|iPhone/.test(navigator.platform) ? "⌘" : "Alt-"}K`
+    `${input.getAttribute("placeholder")} ${/Mac|iPhone/.test(navigator.platform) ? "⌘" : "Alt-"}K`
   );
   const r = document.createElement("div");
   r.setAttribute("class", "observablehq-search-results");
