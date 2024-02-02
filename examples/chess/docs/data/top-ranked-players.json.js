@@ -16,7 +16,7 @@ function monthlyZipUrl(date) {
 }
 
 function isActivePlayer(player) {
-  return !["i", "wi"].includes(player.flags);
+  return player.flags !== "i" && player.flags !== "wi";
 }
 
 async function fetchAndFilterTopPlayers() {
