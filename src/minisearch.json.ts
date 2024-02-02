@@ -1,5 +1,6 @@
 import {readFile} from "fs/promises";
 import {basename, join} from "path";
+import matter from "gray-matter";
 import MiniSearch from "minisearch";
 import {visitMarkdownFiles} from "../src/files.js"; // TODO proper load
 
@@ -17,19 +18,22 @@ for await (const file of visitMarkdownFiles(root)) {
     console.warn(`Skipping ${file}`);
     continue;
   }
-  const text = (await readFile(join(root, file), "utf-8")).replaceAll(/<[^>]+>/g, " ");
-
-  // TODO front-matter; otherwise we have a false positive in search.md
-  if (file !== "search.md" && text.match(/^index: false/m)) {
+  const source = (await readFile(join(root, file), "utf-8")).replaceAll(/<[^>]+>/g, " ");
+  let frontmatter;
+  try {
+    frontmatter = matter(source, {}).data;
+  } catch {
+    // ignore front-matter parsing error
+  }
+  if (frontmatter?.index === false) {
     console.warn(`Skipping ${file}`);
     continue;
   }
 
-  // TODO h1, front-matter…
-  const title = text.match(/^title: (.*)/m)?.[1] ?? text.match(/^# (.*)/)?.[1] ?? basename(file, ".md");
   const id = file === "index.md" ? "" : "" + file.slice(0, -3);
+  const title = frontmatter?.title ?? source.match(/^# (.*)/)?.[1] ?? source.match(/<h1[>]*>(.*?)<\/h1>/i)?.[1] ?? basename(file, ".md");
   console.warn(`Indexing ${id}: ${title}`);
-  index.add({id, title, text: text.replaceAll(/\W+/g, " ")});
+  index.add({id, title, text: source.replaceAll(/\W+/g, " ")});
 }
 
 // One way of passing the options to the client; better than nothing, but note
