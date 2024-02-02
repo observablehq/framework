@@ -45,14 +45,16 @@ const defaultEffects: CreateEffects = {
 export async function create(options = {}, effects: CreateEffects = defaultEffects): Promise<void> {
   const {clack} = effects;
   clack.intro(inverse(" observable create "));
+  const defaultRootPath = "./hello-framework";
+  const defaultRootPathError = validateRootPath(defaultRootPath);
   await clack.group(
     {
       rootPath: () =>
         clack.text({
           message: "Where to create your project?",
-          placeholder: "./hello-framework",
-          defaultValue: "./hello-framework",
-          validate: validateRootPath
+          placeholder: defaultRootPath,
+          defaultValue: defaultRootPathError ? undefined : defaultRootPath,
+          validate: (input) => validateRootPath(input, defaultRootPathError)
         }),
       projectTitle: ({results: {rootPath}}) =>
         clack.text({
@@ -130,12 +132,13 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
   );
 }
 
-function validateRootPath(rootPath: string): string | void {
-  if (rootPath === "") return; // accept default value
+function validateRootPath(rootPath: string, defaultError?: string): string | undefined {
+  if (rootPath === "") return defaultError; // accept default value
   rootPath = normalize(rootPath);
   if (!canWriteRecursive(rootPath)) return "Path is not writable.";
   if (!existsSync(rootPath)) return;
   if (!statSync(rootPath).isDirectory()) return "File already exists.";
+  if (!canWrite(rootPath)) return "Directory is not writable.";
   if (readdirSync(rootPath).length !== 0) return "Directory is not empty.";
 }
 
@@ -146,17 +149,21 @@ function inferTitle(rootPath: string): string {
     .join(" ");
 }
 
-function canWriteRecursive(rootPath: string): boolean {
+function canWrite(path: string): boolean {
+  try {
+    accessSync(path, constants.W_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function canWriteRecursive(path: string): boolean {
   while (true) {
-    const dir = dirname(rootPath);
-    try {
-      accessSync(dir, constants.W_OK);
-      return true;
-    } catch {
-      // try parent
-    }
-    if (dir === rootPath) break;
-    rootPath = dir;
+    const dir = dirname(path);
+    if (canWrite(dir)) return true;
+    if (dir === path) break;
+    path = dir;
   }
   return false;
 }
