@@ -31,7 +31,11 @@ for await (const file of visitMarkdownFiles(root)) {
   }
 
   const id = file === "index.md" ? "" : "" + file.slice(0, -3);
-  const title = frontmatter?.title ?? source.match(/^# (.*)/)?.[1] ?? source.match(/<h1[>]*>(.*?)<\/h1>/i)?.[1] ?? basename(file, ".md");
+  const title =
+    frontmatter?.title ??
+    source.match(/^# (.*)/)?.[1] ??
+    source.match(/<h1[>]*>(.*?)<\/h1>/i)?.[1] ??
+    basename(file, ".md");
   console.warn(`Indexing ${id}: ${title}`);
   index.add({id, title, text: source.replaceAll(/\W+/g, " ")});
 }

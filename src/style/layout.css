@@ -434,7 +434,8 @@
   background: var(--theme-foreground-faintest);
 }
 
-#observablehq-sidebar.observablehq-search-results>ol, #observablehq-sidebar.observablehq-search-results>details {
+#observablehq-sidebar.observablehq-search-results > ol,
+#observablehq-sidebar.observablehq-search-results > details {
   display: none;
 }
 
@@ -442,7 +443,7 @@
   min-height: 1.5em;
 }
 
-#observablehq-search>input {
+#observablehq-search > input {
   width: 100%;
   margin: 0.5em 0 0 0;
   padding: 2px;
