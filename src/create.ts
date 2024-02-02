@@ -134,7 +134,6 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
 
 function validateRootPath(rootPath: string, defaultError?: string): string | undefined {
   if (rootPath === "") return defaultError; // accept default value
-  if (!rootPath) return "Path is empty.";
   rootPath = normalize(rootPath);
   if (!canWriteRecursive(rootPath)) return "Path is not writable.";
   if (!existsSync(rootPath)) return;
