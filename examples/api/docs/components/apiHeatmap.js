@@ -158,7 +158,6 @@ export function ApiHistogram(heatmap, {color, width, title, label, y1, y2, yMetr
               x: (d, i) => Math.exp((Math.floor(i / dx) / dy) * (Math.log(y2) - Math.log(y1)) + Math.log(y1)),
               y: Plot.identity,
               stroke: (_,i) => route.get(i),
-              strokeOpacity: (_,i) => route.get(i) === routeFilter ? 1 : .25,
               strokeWidth: width / dy + 0.5,
               tip: {format: {stroke: true, x: (d) => Math.round(d).toLocaleString("en-US")}}
             }
