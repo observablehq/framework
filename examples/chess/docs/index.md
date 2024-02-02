@@ -2,6 +2,7 @@
 toc: false
 theme: dashboard
 ---
+
 # A Year of Chess Rankings
 
 Rankings of the top ${TOP_N_COUNT} players of _standard_ chess in the last ${MONTHS_OF_DATA} months.
@@ -20,7 +21,7 @@ function bumpMarks(data, { r = 3, curve = "bump-x", ...options }, [firstMonth, l
   options = Plot.stackY2(options);
   options.y.label = "rank";
   return Plot.marks(
-    Plot.line(data, { ...options, stroke: options.z, curve, fill: null, mixBlendMode}),
+    Plot.lineY(data, Plot.binX({x: "first", y: "first", filter: null}, { ...options, stroke: options.z, curve, fill: null, mixBlendMode, interval: "month"})),
     Plot.text(data, { ...options, text: options.y, fill: "black" }),
     Plot.text(
       data.filter(d => d.month === lastMonth),
