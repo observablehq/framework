@@ -3,8 +3,7 @@ import MiniSearch from "npm:minisearch";
 
 const container = document.querySelector("#observablehq-search");
 if (container != null) {
-  // TODO: this is gross
-  const base = document.querySelector(".observablehq-link a").getAttribute("href"); // e.g., "./" or "../"
+  const base = container.getAttribute("data-root");
   const input = container.querySelector("input");
   input.setAttribute(
     "placeholder",
