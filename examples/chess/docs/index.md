@@ -93,7 +93,7 @@ function bumpChart(data, width) {
         fill: "white",
         tip: true,
         channels: {rating: "rating"},
-        title: (d) => `name: ${d.name}\ntitle: ${titleMap[d.title] ?? ""}\nborn: ${d.born}/nrating: ${d.rating}`,
+        title: (d) => `name: ${d.name}\ntitle: ${titleMap[d.title] ?? ""}\nborn: ${d.born}\nrating: ${d.rating}\nmonth: ${d3.utcFormat("%b %y")(new Date(d.month))}`,
         href: ({ id }) => `https://ratings.fide.com/profile/${id}`,
         target: "_blank"
       }, [months.at(0), months.at(-1)])
