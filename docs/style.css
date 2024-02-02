@@ -2,7 +2,7 @@
 @import url("observablehq:theme-air.css") (prefers-color-scheme: light);
 @import url("observablehq:theme-near-midnight.css") (prefers-color-scheme: dark);
 
-#observablehq-header a[target="_blank"]:not(:hover, :focus) {
+#observablehq-header a[href] {
   color: inherit;
 }
 
@@ -18,4 +18,10 @@
 
 #observablehq-main {
   min-height: calc(100vh - 23.8rem);
+}
+
+@container not (min-width: 640px) {
+  .hide-if-small {
+    display: none;
+  }
 }
