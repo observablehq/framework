@@ -3,5 +3,6 @@ export default {
   pages: [
     {name: "Dashboard", path: "/"},
     {name: "Report", path: "/report"},
-  ]
+  ],
+  pager: false
 };
