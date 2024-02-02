@@ -5,7 +5,7 @@ theme: dashboard
 
 # A Year of Chess Rankings
 
-Rankings of the top ${TOP_N_COUNT} players of _standard_ chess in the last ${MONTHS_OF_DATA} months. Data from the [International Chess Federation](https://ratings.fide.com/).
+Rankings of the top ${TOP_N_COUNT} players of _standard_ chess in the last ${MONTHS_OF_DATA} months. Data: [International Chess Federation](https://ratings.fide.com/)
 
 ```js
 const { womens, mens, MONTHS_OF_DATA, TOP_N_COUNT } = await FileAttachment("data/top-ranked-players.json").json();
