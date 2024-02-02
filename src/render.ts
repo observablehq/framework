@@ -58,7 +58,7 @@ type RenderInternalOptions =
   | {preview: true}; // preview
 
 async function render(parseResult: ParseResult, options: RenderOptions & RenderInternalOptions): Promise<string> {
-  const {root, path, pages, title, preview} = options;
+  const {root, path, pages, title, search, preview} = options;
   const toc = mergeToc(parseResult.data?.toc, options.toc);
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="/">` : ""}
@@ -89,7 +89,7 @@ import ${preview || parseResult.cells.length > 0 ? `{${preview ? "open, " : ""}d
 ${
   preview ? `\nopen({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
 }${parseResult.cells.map((cell) => `\n${renderDefineCell(cell)}`).join("")}`)}
-</script>${pages.length > 0 ? html`\n${await renderSidebar(title, pages, path)}` : ""}${
+</script>${pages.length > 0 ? html`\n${await renderSidebar(title, pages, path, search)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(parseResult), toc.label)}` : ""
   }
 <div id="observablehq-center">${renderHeader(options, parseResult.data)}
@@ -99,11 +99,11 @@ ${html.unsafe(parseResult.html)}</main>${renderFooter(path, options, parseResult
 `);
 }
 
-async function renderSidebar(title = "Home", pages: (Page | Section)[], path: string): Promise<Html> {
+async function renderSidebar(title = "Home", pages: (Page | Section)[], path: string, search: boolean): Promise<Html> {
   return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
-  <ol>
+  ${search ? html`<div id="observablehq-search"><input type="search" /></div>` : ""}<ol>
     <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
     <li class="observablehq-link${
       normalizePath(path) === "/index" ? " observablehq-link-active" : ""

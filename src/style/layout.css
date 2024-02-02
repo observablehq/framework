@@ -438,8 +438,12 @@
   display: none;
 }
 
-.observablehq-search[type=search] {
+#observablehq-search {
+  min-height: 1.5em;
+}
+
+#observablehq-search>input {
   width: 100%;
-  margin: 1em 0 0 0;
+  margin: 0.5em 0 0 0;
   padding: 2px;
 }

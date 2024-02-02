@@ -1,28 +1,22 @@
 // TODO import only when needed
 import MiniSearch from "npm:minisearch";
 
-const nav = document.querySelector("#observablehq-sidebar");
-if (nav != null) {
+const container = document.querySelector("#observablehq-search");
+if (container != null) {
   // TODO: this is gross
   const base = document.querySelector(".observablehq-link a").getAttribute("href"); // e.g., "./" or "../"
-
-  const input = document.createElement("input");
-  input.setAttribute("class", "observablehq-search");
-  input.setAttribute("type", "search");
-  input.setAttribute(
-    "placeholder",
-    `Search pages… ${
+  container.innerHTML = `<input type="search"
+    placeholder="Search pages… ${
       /Mac|iPhone/.test(navigator.platform)
         ? "⌘" // command symbol for mac
         : "Alt-" // for other os
-    }K`
-  );
-  nav.insertBefore(input, nav.firstChild);
-
+    }K"
+  >
+  <div id="observablehq-search-results"></div>
+  `;
   let value;
-  const r = document.createElement("div");
-  r.setAttribute("id", "observablehq-search-results");
-  input.parentElement.appendChild(r);
+  const input = container.querySelector("input");
+  const r = container.querySelector("div");
   const index = {
     _index: undefined,
     _loading: undefined,
