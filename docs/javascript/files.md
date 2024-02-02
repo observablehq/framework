@@ -28,7 +28,7 @@ volcano
 
 ### Static analysis
 
-The `FileAttachment` function can _only_ be passed a static string literal; constructing a dynamic path such as `FileAttachment("my" + "file.csv")` is invalid syntax. Static analysis is used to invoke [data loaders](../loaders) at build time, and ensures that only referenced files are included in the generated output during build. In the future [#260](https://github.com/observablehq/cli/issues/260), it will also allow content hashes for cache breaking during deploy.
+The `FileAttachment` function can _only_ be passed a static string literal; constructing a dynamic path such as `FileAttachment("my" + "file.csv")` is invalid syntax. Static analysis is used to invoke [data loaders](../loaders) at build time, and ensures that only referenced files are included in the generated output during build. In the future [#260](https://github.com/observablehq/framework/issues/260), it will also allow content hashes for cache breaking during deploy.
 
 If you have multiple files, you can enumerate them explicitly like so:
 
