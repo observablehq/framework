@@ -87,10 +87,7 @@ if (container != null) {
   const toggle = document.querySelector("#observablehq-sidebar-toggle");
   addEventListener("keydown", (event) => {
     if (event.code === "KeyK" && event.metaKey && !event.altKey && !event.ctrlKey) {
-      if (!toggle.checked) {
-        toggle.checked = false;
-        toggle.click();
-      }
+      if (input.getBoundingClientRect().x < 0) toggle.click();
       input.focus();
       input.select();
       event.preventDefault();
