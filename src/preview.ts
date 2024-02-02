@@ -73,7 +73,7 @@ export class PreviewServer {
       await new Promise<void>((resolve) => server.listen(port, hostname, resolve));
     }
     if (verbose) {
-      console.log(`${green(bold("Observable Framework"))}\t${faint(`v${version}`)}`);
+      console.log(`${green(bold("Observable Framework"))} ${faint(`v${version}`)}`);
       console.log(`${faint("↳")} ${underline(`http://${hostname}:${port}/`)}`);
       console.log("");
     }
