@@ -136,13 +136,17 @@ The pages list should _not_ include the root page, `index.md`. Also, we don’t 
 
 Whether to show the previous & next footer links; defaults to true.
 
+## head
+
+An HTML fragment to add to the head. Defaults to the empty string.
+
 ## header
 
 An HTML fragment to add to the header. Defaults to the empty string.
 
 ## footer
 
-An HTML fragment to add to the footer. Defaults to “Built with Observable on [today’s date].”
+An HTML fragment to add to the footer. Defaults to “Built with Observable.”
 
 ## toc
 

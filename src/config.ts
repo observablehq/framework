@@ -31,6 +31,7 @@ export interface Config {
   title?: string;
   pages: (Page | Section)[]; // TODO rename to sidebar?
   pager: boolean; // defaults to true
+  head: string; // defaults to empty string
   header: string; // defaults to empty string
   footer: string; // defaults to “Built with Observable on [date].”
   toc: TableOfContents;
@@ -82,6 +83,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
     style,
     theme = "default",
     deploy,
+    head = "",
     header = "",
     footer = `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="${formatIsoDate(
       currentDate
@@ -96,11 +98,12 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
   pager = Boolean(pager);
+  head = String(head);
   header = String(header);
   footer = String(footer);
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
-  return {root, output, title, pages, pager, header, footer, toc, style, deploy};
+  return {root, output, title, pages, pager, head, header, footer, toc, style, deploy};
 }
 
 function normalizeTheme(spec: any): string[] {
