@@ -47,7 +47,7 @@ export async function login(effects = defaultEffects) {
   await server.start();
 
   const url = new URL("/settings/api-keys/generate", OBSERVABLE_UI_ORIGIN);
-  const name = `Observable CLI on ${os.hostname()}`;
+  const name = `Observable Framework on ${os.hostname()}`;
   const request = {
     nonce,
     port: server.port,

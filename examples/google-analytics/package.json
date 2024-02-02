@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "@google-analytics/data": "^4.3.0",
-    "@observablehq/cli": "link:../..",
+    "@observablehq/framework": "link:../..",
     "dotenv": "^16.3.1"
   },
   "engines": {
