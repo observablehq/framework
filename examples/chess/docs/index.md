@@ -13,7 +13,12 @@ const titleMap = {
   "GM": "Grand Master",
   "WGM": "Womens Grand Master"
 };
-const mixBlendMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? "lighten" : "darken";
+const darkScheme = Generators.observe((change) => {
+  const mm = window.matchMedia?.('(prefers-color-scheme: dark)');
+  if (!mm) return change("lighten");
+  change(mm.matches);
+  mm.addEventListener("change", () => change(mm.matches));
+});
 ```
 
 ```js
@@ -21,7 +26,14 @@ function bumpMarks(data, { r = 3, curve = "bump-x", ...options }, [firstMonth, l
   options = Plot.stackY2(options);
   options.y.label = "rank";
   return Plot.marks(
-    Plot.lineY(data, Plot.binX({x: "first", y: "first", filter: null}, { ...options, stroke: options.z, curve, fill: null, mixBlendMode, interval: "month"})),
+    Plot.lineY(data, Plot.binX({x: "first", y: "first", filter: null}, {
+      ...options,
+      stroke: options.z,
+      curve,
+      fill: null,
+      mixBlendMode: darkScheme ? "lighten" : "darken",
+      interval: "month"
+    })),
     Plot.text(data, { ...options, text: options.y, fill: "black" }),
     Plot.text(
       data.filter(d => d.month === lastMonth),
