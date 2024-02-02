@@ -5,18 +5,16 @@ const container = document.querySelector("#observablehq-search");
 if (container != null) {
   // TODO: this is gross
   const base = document.querySelector(".observablehq-link a").getAttribute("href"); // e.g., "./" or "../"
-  container.innerHTML = `<input type="search"
-    placeholder="Search pages… ${
-      /Mac|iPhone/.test(navigator.platform)
-        ? "⌘" // command symbol for mac
-        : "Alt-" // for other os
-    }K"
-  >
-  <div id="observablehq-search-results"></div>
-  `;
-  let value;
   const input = container.querySelector("input");
-  const r = container.querySelector("div");
+  input.setAttribute(
+    "placeholder",
+    `${input.getAttribute("placeholder")}${/Mac|iPhone/.test(navigator.platform) ? "⌘" : "Alt-"}K`
+  );
+  const r = document.createElement("div");
+  r.setAttribute("class", "observablehq-search-results");
+  container.appendChild(r);
+
+  let value;
   const index = {
     _index: undefined,
     _loading: undefined,
