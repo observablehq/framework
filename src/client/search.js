@@ -44,7 +44,9 @@ if (container != null) {
     r.innerHTML =
       results.length === 0
         ? "<summary>no results</summary>"
-        : `<details open><summary>${results.length} page${results.length === 1 ? "" : "s"}</summary>
+        : `<details ${
+            sessionStorage.getItem("observablehq-sidebar:___search_results") !== "false" ? "open" : ""
+          }><summary>${results.length} page${results.length === 1 ? "" : "s"}</summary>
       <ol>${results
         .map(({id, title, score}) => {
           score = Math.min(6, Math.round(1 + 0.6 * score));
@@ -61,6 +63,10 @@ if (container != null) {
       </ol>
     </details>`;
 
+    r.querySelector("details").ontoggle = function () {
+      sessionStorage.setItem("observablehq-sidebar:___search_results", this.open);
+    };
+
     const exact_results = await index.search(value, {boost: {title: 1}, fuzzy: 0, prefix: false});
     for (const e of exact_results) {
       const p = r.querySelector(`[data-reference='${e.id}'] small`);
@@ -76,8 +82,6 @@ if (container != null) {
   input.addEventListener("focus", index._load);
   input.addEventListener("input", search);
 
-  // restore previous search?
-  // TODO: this jumps a little
   const prevSearch = sessionStorage.getItem("observablehq-search");
   if (prevSearch?.length) {
     input.value = prevSearch;
