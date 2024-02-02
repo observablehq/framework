@@ -17,15 +17,15 @@ function monthlyZipUrl(date) {
 
 async function fetchAndFilterTopPlayers() {
   const today = utcMonth();
-  const rankingsByMonth = await Promise.all(
-    utcMonth
-      .range(utcMonth.offset(today, -11), utcMonth.offset(today, 1))
-      .map((month) =>
-        fetchFideData(monthlyZipUrl(month)).then((rows) =>
-          rows.sort((a, b) => b.rating - a.rating).map((d) => ({...d, month}))
-        )
+  const rankingsByMonth = [];
+
+  for (const month of utcMonth.range(utcMonth.offset(today, -11), utcMonth.offset(today, 1))) {
+    rankingsByMonth.push(
+      await fetchFideData(monthlyZipUrl(month)).then((rows) =>
+        rows.sort((a, b) => b.rating - a.rating).map((d) => ({...d, month}))
       )
-  );
+    );
+  }
 
   // top active women
   const womens = rankingsByMonth
