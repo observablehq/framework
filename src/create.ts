@@ -138,6 +138,7 @@ function validateRootPath(rootPath: string, defaultError?: string): string | und
   if (!canWriteRecursive(rootPath)) return "Path is not writable.";
   if (!existsSync(rootPath)) return;
   if (!statSync(rootPath).isDirectory()) return "File already exists.";
+  if (!canWrite(rootPath)) return "Directory is not writable.";
   if (readdirSync(rootPath).length !== 0) return "Directory is not empty.";
 }
 
@@ -148,17 +149,21 @@ function inferTitle(rootPath: string): string {
     .join(" ");
 }
 
-function canWriteRecursive(rootPath: string): boolean {
+function canWrite(path: string): boolean {
+  try {
+    accessSync(path, constants.W_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function canWriteRecursive(path: string): boolean {
   while (true) {
-    const dir = dirname(rootPath);
-    try {
-      accessSync(dir, constants.W_OK);
-      return true;
-    } catch {
-      // try parent
-    }
-    if (dir === rootPath) break;
-    rootPath = dir;
+    const dir = dirname(path);
+    if (canWrite(dir)) return true;
+    if (dir === path) break;
+    path = dir;
   }
   return false;
 }
