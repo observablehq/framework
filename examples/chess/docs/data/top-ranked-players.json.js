@@ -1,5 +1,5 @@
-import { range } from "d3-array";
 import AdmZip from "adm-zip";
+import {range} from "d3-array";
 import request from "request";
 
 const TOP_N_COUNT = 10;
@@ -7,36 +7,33 @@ const MONTHS_OF_DATA = 12;
 
 async function fetchAndFilterTopPlayers() {
   const today = new Date();
-  const ulrs = range(MONTHS_OF_DATA).map(i => {
+  const ulrs = range(MONTHS_OF_DATA).map((i) => {
     const date = new Date(today.getFullYear(), today.getMonth() - i);
     const year = date.getFullYear().toString().slice(-2);
     const monthId = date.toLocaleString("en-US", {month: "short"}).toLowerCase();
     return {
       month: new Date(date.getFullYear(), date.getMonth(), 1),
       url: `http://ratings.fide.com/download/standard_${monthId}${year}frl.zip`
-     }
+    };
   });
 
-  const rankingsByMonth = await Promise
-    .all(ulrs.map(({ url, month }) => fetchFideData(url)
-    .then(rows => rows
-      .sort((a, b) => b.rating - a.rating)
-      .map(d => ({...d, month }))
-    )));
+  const rankingsByMonth = await Promise.all(
+    ulrs.map(({url, month}) =>
+      fetchFideData(url).then((rows) => rows.sort((a, b) => b.rating - a.rating).map((d) => ({...d, month})))
+    )
+  );
 
   // top active women
-  const womens = rankingsByMonth.map(rankings => rankings
-    .filter(d => d.sex === "F" && d.flags !== "wi")
-    .slice(0, TOP_N_COUNT)
-  ).flat();
+  const womens = rankingsByMonth
+    .map((rankings) => rankings.filter((d) => d.sex === "F" && d.flags !== "wi").slice(0, TOP_N_COUNT))
+    .flat();
 
   // top active men
-  const mens = rankingsByMonth.map(rankings => rankings
-    .filter(d => d.sex === "M" && d.flags !== "i")
-    .slice(0, TOP_N_COUNT)
-  ).flat();
+  const mens = rankingsByMonth
+    .map((rankings) => rankings.filter((d) => d.sex === "M" && d.flags !== "i").slice(0, TOP_N_COUNT))
+    .flat();
 
-  return { womens, mens, MONTHS_OF_DATA, TOP_N_COUNT };
+  return {womens, mens, MONTHS_OF_DATA, TOP_N_COUNT};
 }
 
 async function fetchFideData(url) {
