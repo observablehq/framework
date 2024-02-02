@@ -10,7 +10,7 @@ async function fetchAndFilterTopPlayers() {
   const ulrs = range(MONTHS_OF_DATA).map(i => {
     const date = new Date(today.getFullYear(), today.getMonth() - i);
     const year = date.getFullYear().toString().slice(-2);
-    const monthId = date.toLocaleString('default', {month: 'short'}).toLowerCase();
+    const monthId = date.toLocaleString("en-US", {month: "short"}).toLowerCase();
     return {
       month: new Date(date.getFullYear(), date.getMonth(), 1),
       url: `http://ratings.fide.com/download/standard_${monthId}${year}frl.zip`
