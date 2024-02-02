@@ -45,14 +45,16 @@ const defaultEffects: CreateEffects = {
 export async function create(options = {}, effects: CreateEffects = defaultEffects): Promise<void> {
   const {clack} = effects;
   clack.intro(inverse(" observable create "));
+  const defaultDefaultRootPath = "./hello-framework";
+  const [defaultRootPath, defaultRootPathError] = getDefaultRootPath(defaultDefaultRootPath);
   await clack.group(
     {
       rootPath: () =>
         clack.text({
           message: "Where to create your project?",
-          placeholder: "./hello-framework",
-          defaultValue: "./hello-framework",
-          validate: validateRootPath
+          placeholder: defaultRootPath ?? defaultDefaultRootPath,
+          defaultValue: defaultRootPath,
+          validate: (input) => validateRootPath(input, defaultRootPathError)
         }),
       projectTitle: ({results: {rootPath}}) =>
         clack.text({
@@ -130,8 +132,14 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
   );
 }
 
-function validateRootPath(rootPath: string): string | void {
-  if (rootPath === "") return; // accept default value
+function getDefaultRootPath(path: string): [string, undefined] | [undefined, string] {
+  const error = validateRootPath(path);
+  return error ? [undefined, error] : [path, undefined];
+}
+
+function validateRootPath(rootPath: string, defaultError?: string): string | void {
+  if (rootPath === "") return defaultError; // accept default value
+  if (!rootPath) return "Path is empty.";
   rootPath = normalize(rootPath);
   if (!canWriteRecursive(rootPath)) return "Path is not writable.";
   if (!existsSync(rootPath)) return;
