@@ -24,6 +24,9 @@ jobs:
             'examples/*/yarn.lock'
       - run: yarn --frozen-lockfile
       - run: yarn build
+      - name: Build example "chess"
+        run: yarn --frozen-lockfile && yarn build
+        working-directory: examples/chess
       - name: Build example "google-analytics"
         run: yarn --frozen-lockfile && yarn build
         working-directory: examples/google-analytics
