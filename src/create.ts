@@ -45,15 +45,15 @@ const defaultEffects: CreateEffects = {
 export async function create(options = {}, effects: CreateEffects = defaultEffects): Promise<void> {
   const {clack} = effects;
   clack.intro(inverse(" observable create "));
-  const defaultDefaultRootPath = "./hello-framework";
-  const [defaultRootPath, defaultRootPathError] = getDefaultRootPath(defaultDefaultRootPath);
+  const defaultRootPath = "./hello-framework";
+  const defaultRootPathError = validateRootPath(defaultRootPath);
   await clack.group(
     {
       rootPath: () =>
         clack.text({
           message: "Where to create your project?",
-          placeholder: defaultRootPath ?? defaultDefaultRootPath,
-          defaultValue: defaultRootPath,
+          placeholder: defaultRootPath,
+          defaultValue: defaultRootPathError ? undefined : defaultRootPath,
           validate: (input) => validateRootPath(input, defaultRootPathError)
         }),
       projectTitle: ({results: {rootPath}}) =>
@@ -132,12 +132,7 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
   );
 }
 
-function getDefaultRootPath(path: string): [string, undefined] | [undefined, string] {
-  const error = validateRootPath(path);
-  return error ? [undefined, error] : [path, undefined];
-}
-
-function validateRootPath(rootPath: string, defaultError?: string): string | void {
+function validateRootPath(rootPath: string, defaultError?: string): string | undefined {
   if (rootPath === "") return defaultError; // accept default value
   if (!rootPath) return "Path is empty.";
   rootPath = normalize(rootPath);
