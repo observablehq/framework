@@ -18,7 +18,7 @@
 }
 
 #observablehq-header a[target="_blank"]::after {
-  content: "↗︎";
+  content: "\2197";
 }
 
 #observablehq-header a[target="_blank"]:not(:hover, :focus)::after {
