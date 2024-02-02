@@ -6,14 +6,23 @@
   color: inherit;
 }
 
-#observablehq-header a[target="_blank"]:not(:hover, :focus)::after {
-  color: var(--theme-foreground-muted);
+#observablehq-header a[target="_blank"] {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  text-decoration: none;
+}
+
+#observablehq-header a[target="_blank"]:hover span {
+  text-decoration: underline;
 }
 
 #observablehq-header a[target="_blank"]::after {
   content: "↗︎";
-  margin-left: 0.25rem;
-  display: inline-block;
+}
+
+#observablehq-header a[target="_blank"]:not(:hover, :focus)::after {
+  color: var(--theme-foreground-muted);
 }
 
 #observablehq-main {

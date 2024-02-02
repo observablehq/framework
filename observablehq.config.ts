@@ -110,8 +110,8 @@ export default {
       <span class="hide-if-small">Observable</span> Framework
     </a>
     <span style="display: flex; align-items: baseline; gap: 0.5rem; font-size: 14px;">
-      <a target="_blank" href="https://github.com/observablehq/framework/releases">${version}</a>
-      <a target="_blank" href="https://github.com/observablehq/framework">GitHub</a>
+      <a target="_blank" href="https://github.com/observablehq/framework/releases"><span>${version}</span></a>
+      <a target="_blank" href="https://github.com/observablehq/framework"><span>GitHub</span></a>
     </span>
   </div>
 </div>`,
