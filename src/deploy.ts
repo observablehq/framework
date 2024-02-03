@@ -167,12 +167,11 @@ export async function deploy({config, message}: DeployOptions, effects = default
           active: "Yes, overwrite",
           inactive: "No, cancel"
         });
-        if (effects.clack.isCancel(choice)) {
-          throw new CliError("User cancelled deploy", {print: false, exitCode: 0});
-        }
         if (!choice) {
           effects.clack.outro(yellow("Deploy cancelled."));
-          process.exit(0);
+        }
+        if (effects.clack.isCancel(choice) || !choice) {
+          throw new CliError("User cancelled deploy", {print: false, exitCode: 0});
         }
       } else {
         throw new CliError("Cancelling deploy due to misconfiguration.");
@@ -189,12 +188,11 @@ export async function deploy({config, message}: DeployOptions, effects = default
           active: "Yes, overwrite",
           inactive: "No, cancel"
         });
-        if (effects.clack.isCancel(choice)) {
-          throw new CliError("User cancelled deploy", {print: false, exitCode: 0});
-        }
         if (!choice) {
           effects.clack.outro(yellow("Deploy cancelled."));
-          process.exit(0);
+        }
+        if (effects.clack.isCancel(choice) || !choice) {
+          throw new CliError("User cancelled deploy", {print: false, exitCode: 0});
         }
       } else {
         throw new CliError("Running non-interactively, cancelling due to conflictg");
@@ -339,12 +337,11 @@ async function promptDeployTarget(
       active: "Yes, continue",
       inactive: "No, cancel"
     });
-    if (effects.clack.isCancel(confirmChoice)) {
-      throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
-    }
     if (!confirmChoice) {
       effects.clack.outro(yellow("Deploy cancelled."));
-      process.exit(0);
+    }
+    if (effects.clack.isCancel(confirmChoice) || !confirmChoice) {
+      throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
     }
   }
 

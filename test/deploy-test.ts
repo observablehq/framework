@@ -357,7 +357,7 @@ describe("deploy", () => {
       await deploy(TEST_OPTIONS, effects);
       assert.fail("Should have thrown");
     } catch (error) {
-      CliError.assert(error, {message: /You need to be logged in/});
+      CliError.assert(error, {message: /You must be logged in/});
     }
   });
 
@@ -460,8 +460,7 @@ describe("deploy", () => {
       // .addIoResponse(/^Deploy message: /, "deploying to re-created project");
       effects.clack.inputs.push(true, "recreate project");
       await deploy(TEST_OPTIONS, effects);
-      console.log(effects.clack.log.logged);
-      effects.clack.log.assertLogged({message: /project was last deployed to a different/});
+      effects.clack.log.assertLogged({message: /`projectId` in your deploy.json does not match/});
       effects.close();
     });
 
@@ -482,7 +481,7 @@ describe("deploy", () => {
       } catch (error) {
         CliError.assert(error, {message: "User cancelled deploy", print: false, exitCode: 0});
       }
-      effects.clack.log.assertLogged({message: /project was last deployed to a different/});
+      effects.clack.log.assertLogged({message: /`projectId` in your deploy.json does not match/});
       effects.close();
     });
 
@@ -502,7 +501,7 @@ describe("deploy", () => {
       } catch (error) {
         CliError.assert(error, {message: "Cancelling deploy due to misconfiguration."});
       }
-      effects.clack.log.assertLogged({message: /project was last deployed to a different/});
+      effects.clack.log.assertLogged({message: /`projectId` in your deploy.json does not match/});
     });
   });
 });
