@@ -97,6 +97,13 @@ export async function build(
     if (style && !styles.some((s) => styleEquals(s, style))) styles.push(style);
   }
 
+  // Add imported local scripts.
+  for (const script of config.scripts) {
+    if (!/^\w+:/.test(script.src)) {
+      imports.push(script.src);
+    }
+  }
+
   // Generate the client bundles.
   if (addPublic) {
     for (const [entry, name] of clientBundles(clientEntry)) {

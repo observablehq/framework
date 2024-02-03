@@ -19,6 +19,7 @@ describe("readConfig(undefined, root)", () => {
       title: undefined,
       toc: {label: "On this page", show: true},
       pager: true,
+      scripts: [],
       head: "",
       header: "",
       footer:
@@ -38,6 +39,7 @@ describe("readConfig(undefined, root)", () => {
       title: undefined,
       toc: {label: "Contents", show: true},
       pager: true,
+      scripts: [],
       head: "",
       header: "",
       footer:
