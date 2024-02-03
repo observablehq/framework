@@ -540,7 +540,7 @@ If this is your first time deploying to Observable, you’ll be prompted to crea
 <span class="blue">└</span>
 </pre>
 
-<div class="note">If you have multiple workspaces on Observable, you’ll be prompted to chose a workspace before creating a project. And if you’ve previously deployed projects to your chosen workspace, you can chose to deploy to an existing project, overwriting its existing contents.</div>
+<div class="note">If you have multiple workspaces on Observable, you’ll be prompted to chose a workspace before creating a project. And if you’ve previously deployed projects to your chosen workspace, you can chose to deploy to an existing project, overwriting its contents.</div>
 
 When creating a new project, you need to specify a <i>slug</i> which — together with your workspace username — determines the URL of your project. The slug is a short identifier consisting of lowercase letters, numbers, and hyphens. By default, Framework will suggest a slug based on your project’s title.
 
