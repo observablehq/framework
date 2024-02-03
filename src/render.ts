@@ -69,7 +69,7 @@ ${
         .filter((title): title is string => !!title)
         .join(" | ")}</title>\n`
     : ""
-}${await renderLinks(parseResult, options, path, createImportResolver(root, "_import"))}${
+}${await renderHead(parseResult, options, path, createImportResolver(root, "_import"))}${
     path === "/404"
       ? html.unsafe(`\n<script type="module">
 
@@ -175,12 +175,13 @@ function prettyPath(path: string): string {
   return path.replace(/\/index$/, "/") || "/";
 }
 
-async function renderLinks(
+async function renderHead(
   parseResult: ParseResult,
-  options: Pick<Config, "style">,
+  options: Pick<Config, "style" | "head">,
   path: string,
   resolver: ImportResolver
 ): Promise<Html> {
+  const head = parseResult.data?.head !== undefined ? parseResult.data.head : options.head;
   const stylesheets = new Set<string>(["https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"]); // prettier-ignore
   const style = getPreviewStylesheet(path, parseResult.data, options.style);
   if (style) stylesheets.add(style);
@@ -204,7 +205,7 @@ async function renderLinks(
       .map(renderStylesheet) // <link rel=stylesheet>
   }${
     Array.from(preloads).sort().map(renderModulePreload) // <link rel=modulepreload>
-  }`;
+  }${head ? html`\n${html.unsafe(head)}` : null}`;
 }
 
 export function resolveStylesheet(path: string, href: string): string {
@@ -228,7 +229,7 @@ function renderModulePreload(href: string): Html {
 
 function renderHeader({header}: Pick<Config, "header">, data: ParseResult["data"]): Html | null {
   if (data?.header !== undefined) header = data?.header;
-  return header ? html`\n<header id="observablehq-header">${html.unsafe(header)}</header>` : null;
+  return header ? html`\n<header id="observablehq-header">\n${html.unsafe(header)}\n</header>` : null;
 }
 
 function renderFooter(
