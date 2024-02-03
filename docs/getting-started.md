@@ -585,7 +585,7 @@ Lastly, you can enter an optional deploy message. Deploy messages are shown on O
 
 <div class="tip">Deploy messages can be set using <code>yarn deploy <nobr>--message</nobr></code>. This is especially useful for continuous deployment from a git repository: the message can include the SHA, author, and message of the latest commit.</div>
 
-When deploy completes, Framework will show your project’s URL on observablehq.cloud. From from there you can invite people to your private workspace to see your project, or make your project public so anyone can see it.
+When deploy completes, Framework will show your project’s URL on observablehq.cloud. From there you can invite people to your private workspace to see your project, or make your project public so anyone can see it.
 
 ### Self hosting
 
