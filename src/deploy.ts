@@ -21,7 +21,7 @@ import {
   setDeployConfig
 } from "./observableApiConfig.js";
 import {Telemetry} from "./telemetry.js";
-import {blue, bold, underline} from "./tty.js";
+import {blue, bold, green, inverse, underline} from "./tty.js";
 
 export const CREATE_NEW_PROJECT_SYMBOL: symbol = Symbol();
 
@@ -62,7 +62,8 @@ type DeployTargetInfo =
 /** Deploy a project to ObservableHQ */
 export async function deploy({config, message}: DeployOptions, effects = defaultEffects): Promise<void> {
   Telemetry.record({event: "deploy", step: "start"});
-  const {logger} = effects;
+  effects.clack.intro(inverse(green("deploy")));
+
   const apiKey = await effects.getObservableApiKey(effects);
   const apiClient = new ObservableApiClient({apiKey});
   const deployConfig = await effects.getDeployConfig(config.root);
@@ -208,7 +209,7 @@ export async function deploy({config, message}: DeployOptions, effects = default
   if (previousProjectId && previousProjectId === deployTarget.project.id && typeof projectUpdates?.title === "string") {
     await apiClient.postEditProject(deployTarget.project.id, projectUpdates as PostEditProjectRequest);
   }
-  logger.log(`Deployed project now visible at ${blue(deployInfo.url)}`);
+  effects.clack.outro(`Deployed project now visible at ${blue(deployInfo.url)}`);
   Telemetry.record({event: "deploy", step: "finish"});
 }
 

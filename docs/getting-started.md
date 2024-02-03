@@ -524,7 +524,76 @@ Or with Yarn:
 
 <div class="note">If you don’t have an Observable account yet, the first time you deploy you’ll be prompted to sign-up and create an account. It’s free for individuals and small teams, and we offer paid tiers for larger teams.</div>
 
-When the deploy finishes, Framework will show your project’s URL on observablehq.cloud. And from there you can invite people to see your private project, or make your project private so anyone can see it.
+Since this project hasn't been deployed before, you'll have to answer a few questions. First, the workspace you'll be deploying to. If you only have one workspace, this question will be skipped.
+
+<pre data-copy="none">
+<span class="muted">┌</span>  <span class="invert">deploy</span>
+<span class="muted">│</span>
+<span class="blue">●</span>  You don't have a deploy target configured. Let's set that up.
+<span class="muted">│</span>
+<span class="blue">◆</span>  What workspace do you want to deploy to?
+<span class="blue">│</span>  <span class="green">●</span> ACME Inc. (@acme)
+<span class="blue">│</span>  <span class="blue">○ Road Runner GmbH (@roadrunners)</span>
+<span class="blue">└</span>
+</pre>
+
+Next, you'll be prompted to either create a new project on Observable Cloud, or choose an existing project to deploy to. For now, go ahead and choose to create a new project.
+
+<pre data-copy="none">
+<span class="muted">┌</span>  <span class="invert">deploy</span>
+<span class="muted">│</span>
+<span class="blue">●</span>  You don't have a deploy target configured. Let's set that up.
+<span class="muted">│</span>
+<span class="green">◇</span>  What workspace do you want to deploy to?
+<span class="muted">│   Observable (@observablehq)</span>
+<span class="muted">│</span>
+<span class="blue">◆</span>  What project do you want to deploy to?
+<span class="blue">│</span>  <span class="green">●</span> Create a new project
+<span class="blue">│</span>  <span class="muted">○ Wile E. statistics</span>
+<span class="blue">│</span>  <span class="muted">○ Boulder logistics</span>
+<span class="blue">└</span>
+</pre>
+
+In order to create a URL to access your project at, Observable Cloud will need a <i>slug</i> for your project. This is short identifier consisting of lower case letters, numbers, and hyphens. Framework will suggest a default based on the title you have your project during creation; feel free to change it if you like.
+
+<pre data-copy="none">
+<span class="muted">┌</span>  <span class="invert">deploy</span>
+<span class="muted">│</span>
+<span class="blue">●</span>  You don't have a deploy target configured. Let's set that up.
+<span class="muted">│</span>
+<span class="green">◇</span>  What workspace do you want to deploy to?
+<span class="muted">│   Observable (@observablehq)</span>
+<span class="muted">│</span>
+<span class="green">◇</span>  What project do you want to deploy to?
+<span class="muted">│   Create a new project</span>
+<span class="muted">│</span>
+<span class="blue">◆</span>  What do you want to use as your project slug?
+<span class="blue">│</span>   hello-framework<span class="invert"> </span>
+<span class="blue">└</span>
+</pre>
+
+The last question is a deploy message, describing what this deploy contains. This will show up in the history of the project on the Cloud. If you're not sure, you can say something like "Framework tutorial".
+
+<pre data-copy="none">
+<span class="muted">┌</span>  <span class="invert">deploy</span>
+<span class="muted">│</span>
+<span class="blue">●</span>  You don't have a deploy target configured. Let's set that up.
+<span class="muted">│</span>
+<span class="green">◇</span>  What workspace do you want to deploy to?
+<span class="muted">│   Observable (@observablehq)</span>
+<span class="muted">│</span>
+<span class="green">◇</span>  What project do you want to deploy to?
+<span class="muted">│   Create a new project</span>
+<span class="muted">│</span>
+<span class="blue">◇</span>  What do you want to use as your project slug?
+<span class="muted">│   hello-framework</span>
+<span class="muted">│</span>
+<span class="blue">◆</span>  What changed in this deploy?
+<span class="blue">│</span>   Framework tutorial<span class="invert"> </span>
+<span class="blue">└</span>
+</pre>
+
+Now Framework will upload your project. When the deploy finishes, Framework will show your project’s URL on observablehq.cloud. From from there you can invite people to see your private project, or make your project public so anyone can see it.
 
 ### Self hosting
 
