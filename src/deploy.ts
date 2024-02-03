@@ -62,7 +62,7 @@ type DeployTargetInfo =
 /** Deploy a project to ObservableHQ */
 export async function deploy({config, message}: DeployOptions, effects = defaultEffects): Promise<void> {
   Telemetry.record({event: "deploy", step: "start"});
-  effects.clack.intro(inverse(green("deploy")));
+  effects.clack.intro(inverse(" observable deploy "));
 
   const apiKey = await effects.getObservableApiKey(effects);
   const apiClient = new ObservableApiClient({apiKey});
@@ -174,7 +174,7 @@ export async function deploy({config, message}: DeployOptions, effects = default
       effects.clack.log.warn(
         `There is an existing project on Observable Cloud named ${bold(
           `@${deployTarget.workspace}/${deployTarget.project.slug}`
-        )} that is not associated with this repository. If you continue, you'll overwrite the existing content of the project.`
+        )} that is not associated with this repository. If you continue, you’ll overwrite the existing content of the project.`
       );
       if (effects.isTty) {
         const choice = await effects.clack.confirm({message: "Do you want to deploy anyway?"});
@@ -250,7 +250,7 @@ async function promptDeployTarget(
 ): Promise<DeployTargetInfo> {
   if (!effects.isTty) throw new CliError("No deploy target configured, and running non-interactively.");
 
-  effects.clack.log.info("You don't have a deploy target configured. Let's set that up.");
+  effects.clack.log.info("You don’t have a deploy target configured. Let’s set that up.");
 
   let workspaces;
   try {
@@ -258,14 +258,14 @@ async function promptDeployTarget(
   } catch (error) {
     if (isHttpError(error) && error.statusCode === 401) {
       throw new CliError(
-        `You need to be logged in to deploy to Observable. Run ${commandInstruction("login")} to log in.`
+        `You need to be signed-in to deploy to Observable. Run ${commandInstruction("login")} to log in.`
       );
     }
     throw error;
   }
   if (workspaces.length === 0) {
     effects.clack.log.error(
-      `You don't have any workspaces to deploy to. Go to ${underline(
+      `You don’t have any workspaces to deploy to. Go to ${underline(
         "https://observablehq.com/team/new"
       )} to create one.`
     );
@@ -318,7 +318,7 @@ async function promptDeployTarget(
 
   let title = config.title;
   if (title === undefined) {
-    effects.clack.log.warn("You haven't configured a title for your project.");
+    effects.clack.log.warn("You haven’t configured a title for your project.");
     const titleChoice = await effects.clack.text({
       message: "What title do you want to use on the Platform?",
       placeholder: "This can be any text.",
