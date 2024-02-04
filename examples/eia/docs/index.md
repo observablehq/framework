@@ -21,7 +21,7 @@ const usDemandGenForecast = usOverview.filter(d => d.name != "Total interchange"
 ```
 
 ```js
-// Spatial data
+// Spatial data (country, states, BA locations)
 
 // US states
 const us = await FileAttachment("data/us-counties-10m.json").json();
@@ -64,8 +64,6 @@ const baHourlyDemand = baHourly.filter(d => d.type == "D").map(d => ({ba: d["res
 ```js
 // Cleaned up baHourly for table, excludes regions (only shows BAs)
 const baHourlyClean = baHourly.filter(d => !regions.includes(d["respondent-name"])).map(d => ({Date: timeParse(d.period).toLocaleString('en-us',{timeZoneName:'short'}), 'Balancing authority': d["respondent-name"], Abbreviation: d.respondent, Type: d['type-name'], 'Value (GWh)': d.value / 1000}))
-
-//.filter(d => !regions.includes(d["Balancing authority"]))
 ```
 
 ```js
@@ -77,7 +75,7 @@ const baHourlyLatest = d3.rollup(baHourlyDemand, d => d[0].value, d => d["ba"]);
 // Top 5 BAs by demand, latest hour
 // Excludes regions
 
-const regions = ["California", "Carolinas", "Central", "Florida", "Mid-Atlantic", "Midwest", "New England", "New York", "Northwest", "Southeast", "Southwest", "Tennessee", "Texas", "United States Lower 48"]
+const regions = ["California", "Carolinas", "Central", "Florida", "Mid-Atlantic", "Midwest", "New England", "New York", "Northwest", "Southeast", "Southwest", "Tennessee", "Texas", "United States Lower 48"];
 
 const top5LatestDemand = Array.from(baHourlyLatest, ([name, value]) => ({ name, value })).filter(d => !regions.includes(d.name)).sort(((a, b) => b.value - a.value)).slice(0, 5);
 ```
