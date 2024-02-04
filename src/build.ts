@@ -97,6 +97,13 @@ export async function build(
     if (style && !styles.some((s) => styleEquals(s, style))) styles.push(style);
   }
 
+  // Add imported local scripts.
+  for (const script of config.scripts) {
+    if (!/^\w+:/.test(script.src)) {
+      imports.push(script.src);
+    }
+  }
+
   // Generate the client bundles.
   if (addPublic) {
     for (const [entry, name] of clientBundles(clientEntry)) {
@@ -129,7 +136,7 @@ export async function build(
     let sourcePath = join(root, file);
     const outputPath = join("_file", file);
     if (!existsSync(sourcePath)) {
-      const loader = Loader.find(root, file, {useStale: true});
+      const loader = Loader.find(root, join("/", file), {useStale: true});
       if (!loader) {
         effects.logger.error("missing referenced file", sourcePath);
         continue;

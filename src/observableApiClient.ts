@@ -4,31 +4,6 @@ import {CliError, HttpError} from "./error.js";
 import type {ApiKey} from "./observableApiConfig.js";
 import {faint, red} from "./tty.js";
 
-export interface GetCurrentUserResponse {
-  id: string;
-  login: string;
-  name: string;
-  tier: string;
-  has_workspace: boolean;
-  workspaces: WorkspaceResponse[];
-}
-
-export interface WorkspaceResponse {
-  id: string;
-  login: string;
-  name: string;
-  tier: string;
-  type: string;
-  role: string;
-}
-
-export interface GetProjectResponse {
-  id: string;
-  slug: string;
-  servingRoot: string | null;
-  title: string;
-}
-
 export function getObservableUiOrigin(env = process.env): URL {
   const urlText = env["OBSERVABLE_ORIGIN"] ?? "https://observablehq.com";
   try {
@@ -62,7 +37,7 @@ export class ObservableApiClient {
     this._apiHeaders = {
       Accept: "application/json",
       Authorization: `apikey ${apiKey.key}`,
-      "User-Agent": `Observable CLI ${packageJson.version}`,
+      "User-Agent": `Observable Framework ${packageJson.version}`,
       "X-Observable-Api-Version": "2023-12-06"
     };
   }
@@ -84,7 +59,7 @@ export class ObservableApiClient {
         try {
           const data = JSON.parse(body);
           if (Array.isArray(data.errors) && data.errors.some((d) => d.code === "VERSION_MISMATCH")) {
-            console.log(red("The version of the Observable CLI you are using is not compatible with the server."));
+            console.log(red("The version of Observable Framework you are using is not compatible with the server."));
             console.log(faint(`Expected ${data.errors[0].meta.expected}, but using ${data.errors[0].meta.actual}`));
           }
         } catch (err) {
@@ -138,6 +113,15 @@ export class ObservableApiClient {
     });
   }
 
+  async getWorkspaceProjects(workspaceLogin: string): Promise<GetProjectResponse[]> {
+    const pages = await this._fetch<PaginatedList<GetProjectResponse>>(
+      new URL(`/cli/workspace/@${workspaceLogin}/projects`, this._apiOrigin),
+      {method: "GET"}
+    );
+    // todo: handle pagination?
+    return pages.results;
+  }
+
   async postDeploy({projectId, message}: {projectId: string; message: string}): Promise<string> {
     const data = await this._fetch<{id: string}>(new URL(`/cli/project/${projectId}/deploy`, this._apiOrigin), {
       method: "POST",
@@ -181,16 +165,47 @@ export interface PostEditProjectResponse {
   title: string;
 }
 
-export interface PostProjectResponse {
+export interface GetCurrentUserResponse {
+  id: string;
+  login: string;
+  name: string;
+  tier: string;
+  has_workspace: boolean;
+  workspaces: WorkspaceResponse[];
+}
+
+export interface WorkspaceResponse {
+  id: string;
+  login: string;
+  name: string;
+  tier: string;
+  type: string;
+  role: string;
+}
+
+export type PostProjectResponse = GetProjectResponse;
+
+export interface GetProjectResponse {
   id: string;
   slug: string;
   title: string;
-  owner: {login: string};
-  creator: {login: string};
+  owner: {id: string; login: string};
+  creator: {id: string; login: string};
+  // Available fields that we don't use
+  // servingRoot: string | null;
 }
 
 export interface DeployInfo {
   id: string;
   status: string;
   url: string;
+}
+
+export interface PaginatedList<T> {
+  results: T[];
+  // Available fields that we don't use
+  // page: number;
+  // per_page: number;
+  // total: number;
+  // truncated: boolean;
 }

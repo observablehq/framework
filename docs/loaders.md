@@ -4,7 +4,7 @@
 
 Why generate data at build time? Conventional dashboards are often slow or even unreliable because database queries are executed for each viewer on load. By preparing static data snapshots ahead of time during build, dashboards load instantly with no external dependency on your database. You can also optimize data snapshots for what your dashboard needs, further improving performance and offering more control over what information is shared with viewers.
 
-Data loaders can be written in any programming language. They can even invoke binary executables such as ffmpeg or DuckDB! For convenience, the Observable CLI has built-in support for common languages: JavaScript, TypeScript, Python, and R. Naturally you can use any third-party library or SDK for these languages, too.
+Data loaders can be written in any programming language. They can even invoke binary executables such as ffmpeg or DuckDB! For convenience, Observable Framework has built-in support for common languages: JavaScript, TypeScript, Python, and R. Naturally you can use any third-party library or SDK for these languages, too.
 
 A data loader can be as simple as a shell script that invokes [curl](https://curl.se/) to fetch recent earthquakes from the [USGS](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php):
 
@@ -12,7 +12,7 @@ A data loader can be as simple as a shell script that invokes [curl](https://cur
 curl https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson
 ```
 
-The Observable CLI uses [file-based routing](./routing), so assuming this shell script is named `quakes.json.sh`, a `quakes.json` file is then generated at build time. You can access this file from the client using [`FileAttachment`](./javascript/files):
+Observable Framework uses [file-based routing](./routing), so assuming this shell script is named `quakes.json.sh`, a `quakes.json` file is then generated at build time. You can access this file from the client using [`FileAttachment`](./javascript/files):
 
 ```js echo
 FileAttachment("quakes.json").json()
@@ -67,7 +67,7 @@ Plot.plot({
 })
 ```
 
-During preview, the CLI automatically runs the data loader the first time its output is needed and [caches](#caching) the result; if you edit the data loader, the CLI will automatically run it again and push the new result to the client.
+During preview, the preview server automatically runs the data loader the first time its output is needed and [caches](#caching) the result; if you edit the data loader, the preview server will automatically run it again and push the new result to the client.
 
 Here are some more details on data loaders.
 
@@ -126,12 +126,13 @@ Like with any other file, these files from generated archives are live in previe
 
 ## Routing
 
-Data loaders live in the source root (typically `docs`) alongside your other source files. When a file is referenced from JavaScript via `FileAttachment`, if the file does not exist, the CLI will look for a file of the same name with a double extension to see if there is a corresponding data loader. The following second extensions are checked, in order, with the corresponding language and interpreter:
+Data loaders live in the source root (typically `docs`) alongside your other source files. When a file is referenced from JavaScript via `FileAttachment`, if the file does not exist, Observable Framework will look for a file of the same name with a double extension to see if there is a corresponding data loader. The following second extensions are checked, in order, with the corresponding language and interpreter:
 
 - `.js` - JavaScript (`node`)
 - `.ts` - TypeScript (`tsx`)
 - `.py` - Python (`python3`)
 - `.R` - R (`Rscript`)
+- `.rs` - Rust (`rust-script`)
 - `.sh` - shell script (`sh`)
 - `.exe` - arbitrary executable
 
@@ -141,12 +142,13 @@ For example, for the file `quakes.csv`, the following data loaders are considere
 - `quakes.csv.ts`
 - `quakes.csv.py`
 - `quakes.csv.R`
+- `quakes.csv.rs`
 - `quakes.csv.sh`
 - `quakes.csv.exe`
 
-If you use `.py` or `.R`, the corresponding interpreter (`python3` or `Rscript`, respectively) must be installed and available on your `$PATH`. Any additional modules, packages, libraries, _etc._, must also be installed before you can use them.
+If you use `.py`, `.R`, or `.rs`, the corresponding interpreter (`python3`, `Rscript`, or `rust-script`, respectively) must be installed and available on your `$PATH`. Any additional modules, packages, libraries, _etc._, must also be installed before you can use them.
 
-Whereas `.js`, `.ts`, `.py`, `.R`, and `.sh` data loaders are run via interpreters, `.exe` data loaders are run directly and must have the executable bit set. This is typically done via [`chmod`](https://en.wikipedia.org/wiki/Chmod). For example:
+Whereas `.js`, `.ts`, `.py`, `.R`, `.rs`, and `.sh` data loaders are run via interpreters, `.exe` data loaders are run directly and must have the executable bit set. This is typically done via [`chmod`](https://en.wikipedia.org/wiki/Chmod). For example:
 
 ```sh
 chmod +x docs/quakes.csv.exe
@@ -170,7 +172,7 @@ Data loaders must output to [standard output](<https://en.wikipedia.org/wiki/Sta
 
 When a data loader runs successfully, its output is saved to the cache within the source root, typically `docs/.observablehq/cache`.
 
-The Observable CLI considers the cache “fresh” if the modification time of the cached output is newer than the modification time of the corresponding data loader. So, if you edit a data loader (or update its modification time with `touch`), the cache is invalidated. When previewing a page that uses the data loader, the preview server will detect that the data loader was edited and automatically run it, pushing the new data down to the client and re-evaluating any referencing code — no reload required!
+Observable Framework considers the cache “fresh” if the modification time of the cached output is newer than the modification time of the corresponding data loader. So, if you edit a data loader (or update its modification time with `touch`), the cache is invalidated. When previewing a page that uses the data loader, the preview server will detect that the data loader was edited and automatically run it, pushing the new data down to the client and re-evaluating any referencing code — no reload required!
 
 To purge the data loader cache, delete the cache. For example:
 
@@ -180,9 +182,9 @@ rm -rf docs/.observablehq/cache
 
 ## Building
 
-A data loader is run during build if and only if its corresponding output file is referenced in at least one page. The CLI does not scour the source root (`docs`) for data loaders.
+A data loader is run during build if and only if its corresponding output file is referenced in at least one page. Observable Framework does not scour the source root (`docs`) for data loaders.
 
-The data loader cache is respected during build. This allows you to bypass some or all data loaders during build, if the previously built data is still fresh. To force the CLI to use the data loader cache, ensure that the modification times of the cache are greater than those of the data loaders, say by using `touch` on all files in the cache.
+The data loader cache is respected during build. This allows you to bypass some or all data loaders during build, if the previously built data is still fresh. To force Observable Framework to use the data loader cache, ensure that the modification times of the cache are greater than those of the data loaders, say by using `touch` on all files in the cache.
 
 ```sh
 find docs/.observablehq/cache -type f -exec touch {} +
@@ -190,7 +192,7 @@ find docs/.observablehq/cache -type f -exec touch {} +
 
 ## Errors
 
-When a data loader fails, it _must_ return a non-zero [exit code](https://en.wikipedia.org/wiki/Exit_status). If a data loader produces a zero exit code, the CLI will assume that it was successful and will cache and serve the output to the client. Empty output is not by itself considered an error; however, a warning is displayed in the preview server and build logs.
+When a data loader fails, it _must_ return a non-zero [exit code](https://en.wikipedia.org/wiki/Exit_status). If a data loader produces a zero exit code, Observable Framework will assume that it was successful and will cache and serve the output to the client. Empty output is not by itself considered an error; however, a warning is displayed in the preview server and build logs.
 
 During preview, data loader errors will be shown in the preview server log, and a 500 HTTP status code will be returned to the client that attempted to load the corresponding file. This typically results in an error such as:
 
