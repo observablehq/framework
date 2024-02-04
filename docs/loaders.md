@@ -133,6 +133,7 @@ Data loaders live in the source root (typically `docs`) alongside your other sou
 - `.py` - Python (`python3`)
 - `.R` - R (`Rscript`)
 - `.rs` - Rust (`rust-script`)
+- `.go` - Go (`go run`)
 - `.sh` - shell script (`sh`)
 - `.exe` - arbitrary executable
 
@@ -146,9 +147,9 @@ For example, for the file `quakes.csv`, the following data loaders are considere
 - `quakes.csv.sh`
 - `quakes.csv.exe`
 
-If you use `.py`, `.R`, or `.rs`, the corresponding interpreter (`python3`, `Rscript`, or `rust-script`, respectively) must be installed and available on your `$PATH`. Any additional modules, packages, libraries, _etc._, must also be installed before you can use them.
+If you use `.py`, `.R`, `.rs`, or `.go`, the corresponding interpreter (`python3`, `Rscript`, `rust-script`, or `go run`, respectively) must be installed and available on your `$PATH`. Any additional modules, packages, libraries, _etc._, must also be installed before you can use them.
 
-Whereas `.js`, `.ts`, `.py`, `.R`, `.rs`, and `.sh` data loaders are run via interpreters, `.exe` data loaders are run directly and must have the executable bit set. This is typically done via [`chmod`](https://en.wikipedia.org/wiki/Chmod). For example:
+Whereas `.js`, `.ts`, `.py`, `.R`, `.rs`, `.go`, and `.sh` data loaders are run via interpreters, `.exe` data loaders are run directly and must have the executable bit set. This is typically done via [`chmod`](https://en.wikipedia.org/wiki/Chmod). For example:
 
 ```sh
 chmod +x docs/quakes.csv.exe
