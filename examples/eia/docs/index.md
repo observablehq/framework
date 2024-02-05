@@ -19,10 +19,6 @@ const subregionDemand = FileAttachment("data/eia-data/subregion-hourly.csv").csv
 ```
 
 ```js
-subregionDemand
-```
-
-```js
 // US total demand, generation and forecast excluding total (sum):
 const usDemandGenForecast = usOverview.filter(d => d.name != "Total interchange");
 ```
@@ -44,7 +40,7 @@ const eiaPoints = await FileAttachment("data/eia-system-points.json").json().the
 const baInterchange = FileAttachment("data/eia-data/ba-interchange.csv").csv({typed: true});
 
 // Hourly demand for each BA
-const baHourly = FileAttachment("data/eia-data/ba-hourly.csv").csv({typed: true});
+const baHourly = await FileAttachment("data/eia-data/ba-hourly.csv").csv({typed: true});
 
 // Data on BA connections:
 // From static file in docs
@@ -94,7 +90,9 @@ const baLatestHourlyDemandLower48 = baHourlyDemand.filter(d => d.ba == "United S
 
 ```js
 // Percent change for most recent 2 hours of data by BA
-const baHourlyChange = d3.rollup(baHourlyDemand, d => ((d[0].value - d[1].value) / d[1].value) * 100, d => d["ba"] );
+const baHourlyChange = d3.rollup(baHourlyDemand, d => ((d[hoursAgo].value - d[hoursAgo + 1].value) / d[hoursAgo].value) * 100, d => d["ba"] );
+//display({ baHourlyDemand })
+display({ baHourlyChange })
 ```
 
 ```js
@@ -116,8 +114,11 @@ map((d) => ({
 ```
 
 ```js
-// Make time parser
+// Date/time format/parse
 const timeParse = d3.utcParse("%Y-%m-%dT%H");
+const dateFormat = date => date.toLocaleDateString();
+const timeFormat = date => date.toLocaleTimeString('en-us',{timeZoneName:'short'});
+const dateTimeFormat = date => `${timeFormat(date)} on ${dateFormat(date)}`;
 ```
 
 ```js
@@ -126,6 +127,7 @@ const recentHour = timeParse(baHourly.filter(d => d.type == "D")[0].period);
 ```
 
 ```js
+// Establish colors
 const color = Plot.scale({
   color: {
     type: "linear",
@@ -137,11 +139,24 @@ const colorGenerating = "#efb118";
 const colorUnavailable = "gray";
 ```
 
+```js
+// Configure hours ago input
+const hours = [...new Set(baHourlyDemand.map(d => d.period))].map(timeParse);
+display({ hours });
+const [startHour, endHour] = d3.extent(hours);
+const hoursBackOfData = Math.ceil(Math.abs(endHour - startHour) / (1000 * 60 * 60)) - 1;
+const hoursAgoInput = Inputs.range([hoursBackOfData, 0], { label: "Hours ago", step: 1, value: 0 });
+const hoursAgo = view(hoursAgoInput);
+```
+hi!
+
 <div class="grid grid-cols-4" style="grid-auto-rows: 180px;">
   <div class="card grid-colspan-2 grid-rowspan-3">
+    <div>${hoursAgoInput}</div>
     <h2>Change in demand by balancing authority</h2>
     <h3>Percent change in electricity demand from previous hour</h3>
-    <h3>Most recent hourly data: ${recentHour.toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${recentHour.toLocaleDateString()}</h3>
+    <h3>Most recent hourly data: ${dateTimeFormat(hours[hoursAgo])}</h3>
+    <h3></h3>
   ${resize((width, height) => html`<div>${
 Plot.plot({
   width: Math.min(width - 30, 400),
@@ -269,7 +284,7 @@ Plot.plot({
 )}</div>
   <div class="card grid-colspan-2 grid-rowspan-1">
   <h2>Top balancing authorities by demand, latest hour (GWh)</h2>
-  <h3>${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleDateString() }</h3>
+  <h3>${dateTimeFormat(timeParse(baLatestHourlyDemandLower48[0].period))}</h3>
   ${
         resize((width, height) => Plot.plot({
             marginTop: 0,
@@ -331,7 +346,7 @@ Plot.plot({
 <!-- Unused US total bign number
       <div class="card grid-colspan-1 grid-rowspan-1">
     <h2>Total US electricity demand</h2>
-    <h3>${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleDateString() }</h3>
+    <h3>${dateTimeFormat(timeParse(baLatestHourlyDemandLower48[0].period))}</h3>
     <span class="big">${d3.format(",")(baLatestHourlyDemandLower48[0].value)} MWh</span>
   </div>
 <div class="card grid-colspan-1 grid-rowspan-1">
