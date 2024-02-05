@@ -174,64 +174,34 @@ const hoursAgoInput = Inputs.range([hoursBackOfData, 0], { label: "Hours ago", s
 const hoursAgo = view(hoursAgoInput);
 ```
 
-hi!
-
 <div class="grid grid-cols-4" style="grid-auto-rows: 180px;">
   <div class="card grid-colspan-2 grid-rowspan-3">
     <div>${hoursAgoInput}</div>
     <h2>Change in demand by balancing authority</h2>
     <h3>Percent change in electricity demand from previous hour</h3>
     <h3>Most recent hourly data: ${dateTimeFormat(hours[hoursAgo])}</h3>
-    <h3></h3>
     ${resize((width) => html`<div>${renderLegend(width)}${renderMap(width)}</div>`)}
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
-  <h2>Top balancing authorities by demand, latest hour (GWh)</h2>
-  <h3>${dateTimeFormat(timeParse(baLatestHourlyDemandLower48[0].period))}</h3>
-  ${
-        resize((width, height) => Plot.plot({
-            marginTop: 0,
-            marginLeft: 250,
-            height: height - 20,
-            width,
-            y: {label: null},
-            x: {label: null, grid: true},
-            marks: [
-                Plot.barX(top5LatestDemand, {y: "name", x: d => d.value / 1000, fill: "gray", sort: {y: "x", reverse: true, limit: 10}}),
-                Plot.ruleX([0])
-            ]
-        }))
-    }
-    </div>
-  <div class="card grid-colspan-2 grid-rowspan-1">
-<h2>US electricity generation, demand, and demand forecast (GWh)</h2>
-   ${resize((width, height) => Plot.plot({
-    width, 
-    marginTop:0,
-    height: height - 50,
-    y: {label: null},
-    x: {type: "time"},
-    color: {legend: true, domain: ["Day-ahead demand forecast", "Demand", "Net generation"],
-    range: ["#97bbf5", "#4269d0", "#efb118"]},
-    grid: true,
-    marks: [
-        Plot.line(usDemandGenForecast, {x: "date", y: d => d.value / 1000, stroke: "name", strokeWidth: 2, tip: true})
-        ]
-}))
-   }
+    <h2>Top balancing authorities by demand, latest hour (GWh)</h2>
+    <h3>${dateTimeFormat(timeParse(baLatestHourlyDemandLower48[0].period))}</h3>
+    ${resize((width, height) => renderTop5(width, height))}
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
-  <h2>Neighboring country interchange (GWh)</h2>
-   ${resize((width, height) => renderLegend(width, height))
-   }
-</div>
+    <h2>US electricity generation, demand, and demand forecast (GWh)</h2>
+    ${resize((width, height) => usGenDemandForecast(width, height))}
+  </div>
+  <div class="card grid-colspan-2 grid-rowspan-1">
+    <h2>Neighboring country interchange (GWh)</h2>
+    ${resize((width, height) => countryInterchangeChart(width, height))}
+  </div>
 </div>
 
 <div class="card" style="padding: 0">
  ${Inputs.table(baHourlyClean, {rows: 16})}
 </div>
 
-<!-- Unused US total bign number
+<!-- Unused US total big number
       <div class="card grid-colspan-1 grid-rowspan-1">
     <h2>Total US electricity demand</h2>
     <h3>${dateTimeFormat(timeParse(baLatestHourlyDemandLower48[0].period))}</h3>
@@ -375,6 +345,56 @@ function renderMap(width) {
         })
       )
     ]
-  })
+  });
+}
+
+function renderTop5(width, height) {
+  return Plot.plot({
+            marginTop: 0,
+            marginLeft: 250,
+            height: height - 20,
+            width,
+            y: {label: null},
+            x: {label: null, grid: true},
+            marks: [
+                Plot.barX(top5LatestDemand, {y: "name", x: d => d.value / 1000, fill: "gray", sort: {y: "x", reverse: true, limit: 10}}),
+                Plot.ruleX([0])
+            ]
+        });
+}
+
+function usGenDemandForecast(width, height) {
+  return Plot.plot({
+    width, 
+    marginTop:0,
+    height: height - 50,
+    y: {label: null},
+    x: {type: "time"},
+    color: {legend: true, domain: ["Day-ahead demand forecast", "Demand", "Net generation"],
+    range: ["#97bbf5", "#4269d0", "#efb118"]},
+    grid: true,
+    marks: [
+        Plot.line(usDemandGenForecast, {x: "date", y: d => d.value / 1000, stroke: "name", strokeWidth: 2, tip: true})
+        ]
+});
+}
+
+function countryInterchangeChart(width, height) {
+  return Plot.plot({
+    width,
+    marginTop: 0,
+    height: height - 50,
+    color: { legend: true, range: ["#B6B5B1", "gray"]},
+    grid: true,
+    y: {label: null},
+    x: {type: "time", domain: d3.extent(usDemandGenForecast.map(d => d.date))},
+    marks: [
+        Plot.areaY(
+            countryInterchangeSeries,
+            { x: "date", y: d => d.value / 1000, curve: "step", fill: "id", tip: true}
+        ),
+        Plot.ruleY([0])
+    ]
+});
 }
 ```
