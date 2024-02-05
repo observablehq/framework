@@ -13,6 +13,13 @@ const usOverview = FileAttachment("data/us-demand.csv").csv({typed: true});
 
 // Energy by fuel type: 
 const fuelType = FileAttachment("data/eia-data/fuel-type.csv").csv({typed: true});
+
+// Subregion hourly demand: 
+const subregionDemand = FileAttachment("data/eia-data/subregion-hourly.csv").csv({typed: true});
+```
+
+```js
+subregionDemand
 ```
 
 ```js
