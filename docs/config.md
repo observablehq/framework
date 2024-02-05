@@ -172,26 +172,3 @@ The table of contents configuration can also be set in the page’s YAML front m
 toc: false
 ---
 ```
-
-## deploy
-
-Configuration for deploying your project to Observable Cloud.
-
-Specifies the target Observable **workspace** (without @ symbol) and the unique **project** URL (or "slug", similar to setting the URL for an Observable notebook).
-
-The following TypeScript interface describes this option:
-
-```ts run=false
-export interface Deploy {
-  workspace: string;
-  project: string;
-}
-```
-
-E.g.,
-```ts run=false
-deploy: {
-  workspace: "my-observablehq-workspace",
-  project: "my-project-slug"
-},
-```
