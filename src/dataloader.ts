@@ -82,19 +82,6 @@ export abstract class Loader {
   static find(sourceRoot: string, targetPath: string, {useStale = false} = {}): Loader | undefined {
     const exact = this.findExact(sourceRoot, targetPath, {useStale});
     if (exact) return exact;
-
-    // Special route for the search indexer. TODO: generalize?
-    if (targetPath === "/minisearch.json") {
-      return new CommandLoader({
-        command: "tsx",
-        args: ["src/minisearch.json.ts", sourceRoot],
-        path: "./src/minisearch.json.ts",
-        sourceRoot,
-        targetPath,
-        useStale
-      });
-    }
-
     let dir = dirname(targetPath);
     for (let parent: string; true; dir = parent) {
       parent = dirname(dir);

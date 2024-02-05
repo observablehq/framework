@@ -9,6 +9,7 @@ import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
+import {searchIndex} from "./minisearch.json.js";
 import {renderServerless} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {Telemetry} from "./telemetry.js";
@@ -26,7 +27,6 @@ const EXTRA_FILES = new Map([
 function clientBundles(clientPath: string): [entry: string, name: string][] {
   return [
     [clientPath, "client.js"],
-    ["./src/client/search.js", "search.js"],
     ["./src/client/stdlib.js", "stdlib.js"],
     ["./src/client/stdlib/dot.js", "stdlib/dot.js"],
     ["./src/client/stdlib/duckdb.js", "stdlib/duckdb.js"],
@@ -98,9 +98,6 @@ export async function build(
     if (style && !styles.some((s) => styleEquals(s, style))) styles.push(style);
   }
 
-  // Add the search index
-  if (config.search) files.push("minisearch.json");
-
   // Add imported local scripts.
   for (const script of config.scripts) {
     if (!/^\w+:/.test(script.src)) {
@@ -110,12 +107,22 @@ export async function build(
 
   // Generate the client bundles.
   if (addPublic) {
-    for (const [entry, name] of clientBundles(clientEntry)) {
+    for (const [entry, name] of [
+      ...clientBundles(clientEntry),
+      ...(config.search
+        ? [
+            ["./src/client/search.js", "search.js"],
+            ["./src/minisearch.json.ts", "minisearch.json"]
+          ]
+        : [])
+    ]) {
       const clientPath = getClientPath(entry);
       const outputPath = join("_observablehq", name);
       effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
       const code = await (entry.endsWith(".css")
         ? bundleStyles({path: clientPath})
+        : name === "minisearch.json"
+        ? searchIndex(config, effects)
         : rollupClient(clientPath, {minify: true}));
       await effects.writeFile(outputPath, code);
     }

@@ -6,9 +6,14 @@ const base = container.getAttribute("data-root");
 const input = container.querySelector("input");
 const r = document.querySelector("#observablehq-search-results");
 let value;
-const index = await fetch(`${base}_file/minisearch.json`)
+const index = await fetch(`${base}_observablehq/minisearch.json`)
   .then((resp) => resp.json())
-  .then((json) => MiniSearch.loadJS(json, json.options));
+  .then((json) =>
+    MiniSearch.loadJS(json, {
+      ...json.options,
+      processTerm: (term) => term.slice(0, 15).toLowerCase() // see src/minisearch.json.ts
+    })
+  );
 input.addEventListener("input", (event) => {
   if (value === event.target.value) return;
   value = event.target.value;

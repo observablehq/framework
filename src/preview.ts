@@ -20,6 +20,7 @@ import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {getImplicitSpecifiers, getImplicitStylesheets} from "./libraries.js";
 import {diffMarkdown, parseMarkdown} from "./markdown.js";
 import type {ParseResult} from "./markdown.js";
+import {searchIndex} from "./minisearch.json.js";
 import {renderPreview, resolveStylesheet} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {Telemetry} from "./telemetry.js";
@@ -106,6 +107,8 @@ export class PreviewServer {
         end(req, res, await rollupClient(getClientPath("./src/client/preview.js")), "text/javascript");
       } else if (pathname === "/_observablehq/search.js") {
         end(req, res, await rollupClient(getClientPath("./src/client/search.js")), "text/javascript");
+      } else if (pathname === "/_observablehq/minisearch.json") {
+        end(req, res, await searchIndex(config), "application/json");
       } else if ((match = /^\/_observablehq\/theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(pathname))) {
         end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
       } else if (pathname.startsWith("/_observablehq/")) {
