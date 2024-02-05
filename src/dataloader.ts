@@ -17,6 +17,8 @@ const languages = {
   ".py": ["python3"],
   ".r": ["Rscript"],
   ".R": ["Rscript"],
+  ".rs": ["rust-script"],
+  ".go": ["go", "run"],
   ".sh": ["sh"],
   ".exe": []
 };

@@ -169,7 +169,7 @@
   background: none;
   top: 0;
   left: 0;
-  bottom: 0;
+  height: 100%;
   width: 2rem;
   display: flex;
   align-items: center;

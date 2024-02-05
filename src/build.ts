@@ -101,6 +101,13 @@ export async function build(
   // Add the search index
   if (config.search) files.push("minisearch.json");
 
+  // Add imported local scripts.
+  for (const script of config.scripts) {
+    if (!/^\w+:/.test(script.src)) {
+      imports.push(script.src);
+    }
+  }
+
   // Generate the client bundles.
   if (addPublic) {
     for (const [entry, name] of clientBundles(clientEntry)) {
