@@ -34,7 +34,7 @@ const defaultEffects: AuthEffects = {
 };
 
 export async function login(effects: AuthEffects = defaultEffects) {
-  effects.clack.intro(green(inverse(" observable login ")));
+  effects.clack.intro(inverse(" observable login "));
 
   const apiClient = new ObservableApiClient();
   const requestInfo = await apiClient.postAuthRequest(["projects:deploy", "projects:create"]);
