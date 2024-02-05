@@ -365,7 +365,7 @@ function renderTop5(width, height) {
 
 function usGenDemandForecast(width, height) {
   return Plot.plot({
-    width, 
+    width,
     marginTop:0,
     height: height - 50,
     y: {label: null},
