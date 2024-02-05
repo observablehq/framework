@@ -4,7 +4,7 @@ index: true
 
 # Search
 
-Search is an experimental feature that works in two stages: on the server, an index of the contents gets built with the site. On the client, when the user focuses and starts typing in the search input, the index is retrieved and the matching pages are shown in the sidebar.
+Search works in two stages: on the server, an index of the contents gets built with the site. On the client, when the user focuses and starts typing in the search input, the index is retrieved and the matching pages are shown in the sidebar.
 
 To enable search on your project, add a **search**: true option to your site’s [configuration](config).
 
