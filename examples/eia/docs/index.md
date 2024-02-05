@@ -151,7 +151,6 @@ const treemapData = subregionDemand.map(d => ({...d, region: baRegionMap.get(d.p
 treemapData
 ```
 
-
 ```js
 // Establish colors
 const color = Plot.scale({
@@ -174,6 +173,7 @@ const hoursBackOfData = Math.ceil(Math.abs(endHour - startHour) / (1000 * 60 * 6
 const hoursAgoInput = Inputs.range([hoursBackOfData, 0], { label: "Hours ago", step: 1, value: 0 });
 const hoursAgo = view(hoursAgoInput);
 ```
+
 hi!
 
 <div class="grid grid-cols-4" style="grid-auto-rows: 180px;">
@@ -245,7 +245,6 @@ hi!
 This page reenvisions parts of the US Energy Information Administration's [Hourly Electric Grid Monitor](<(https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48)>). Visit [About the EIA-930 data](https://www.eia.gov/electricity/gridmonitor/about) to learn more about data collection and quality, the US electric grid, and balancing authorities responsible for nationwide electricity interchange.
 
 Some code for EIA data access and wrangling is reused from Observable notebooks by Ian Johnson. Thank you Ian!
-
 
 ```js
 // Map legend
