@@ -40,7 +40,7 @@ const eiaPoints = await FileAttachment("data/eia-system-points.json").json().the
 const baInterchange = FileAttachment("data/eia-data/ba-interchange.csv").csv({typed: true});
 
 // Hourly demand for each BA
-const baHourly = FileAttachment("data/eia-data/ba-hourly.csv").csv({typed: true});
+const baHourly = await FileAttachment("data/eia-data/ba-hourly.csv").csv({typed: true});
 
 // Data on BA connections:
 // From static file in docs
@@ -90,7 +90,9 @@ const baLatestHourlyDemandLower48 = baHourlyDemand.filter(d => d.ba == "United S
 
 ```js
 // Percent change for most recent 2 hours of data by BA
-const baHourlyChange = d3.rollup(baHourlyDemand, d => ((d[0].value - d[1].value) / d[1].value) * 100, d => d["ba"] );
+const baHourlyChange = d3.rollup(baHourlyDemand, d => ((d[hoursAgo].value - d[hoursAgo + 1].value) / d[hoursAgo].value) * 100, d => d["ba"] );
+//display({ baHourlyDemand })
+display({ baHourlyChange })
 ```
 
 ```js
@@ -112,8 +114,11 @@ map((d) => ({
 ```
 
 ```js
-// Make time parser
+// Date/time format/parse
 const timeParse = d3.utcParse("%Y-%m-%dT%H");
+const dateFormat = date => date.toLocaleDateString();
+const timeFormat = date => date.toLocaleTimeString('en-us',{timeZoneName:'short'});
+const dateTimeFormat = date => `${timeFormat(date)} on ${dateFormat(date)}`;
 ```
 
 ```js
@@ -148,6 +153,7 @@ treemapData
 
 
 ```js
+// Establish colors
 const color = Plot.scale({
   color: {
     type: "linear",
@@ -159,12 +165,92 @@ const colorGenerating = "#efb118";
 const colorUnavailable = "gray";
 ```
 
+```js
+// Configure hours ago input
+const hours = [...new Set(baHourlyDemand.map(d => d.period))].map(timeParse);
+display({ hours });
+const [startHour, endHour] = d3.extent(hours);
+const hoursBackOfData = Math.ceil(Math.abs(endHour - startHour) / (1000 * 60 * 60)) - 1;
+const hoursAgoInput = Inputs.range([hoursBackOfData, 0], { label: "Hours ago", step: 1, value: 0 });
+const hoursAgo = view(hoursAgoInput);
+```
+hi!
+
 <div class="grid grid-cols-4" style="grid-auto-rows: 180px;">
   <div class="card grid-colspan-2 grid-rowspan-3">
+    <div>${hoursAgoInput}</div>
     <h2>Change in demand by balancing authority</h2>
     <h3>Percent change in electricity demand from previous hour</h3>
-    <h3>Most recent hourly data: ${recentHour.toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${recentHour.toLocaleDateString()}</h3>
-  ${resize((width, height) => html`<div>${
+    <h3>Most recent hourly data: ${dateTimeFormat(hours[hoursAgo])}</h3>
+    <h3></h3>
+    ${resize((width) => html`<div>${renderLegend(width)}${renderMap(width)}</div>`)}
+  </div>
+
+  <div class="card grid-colspan-2 grid-rowspan-1">
+  <h2>Top balancing authorities by demand, latest hour (GWh)</h2>
+  <h3>${dateTimeFormat(timeParse(baLatestHourlyDemandLower48[0].period))}</h3>
+  ${
+        resize((width, height) => Plot.plot({
+            marginTop: 0,
+            marginLeft: 250,
+            height: height - 20,
+            width,
+            y: {label: null},
+            x: {label: null, grid: true},
+            marks: [
+                Plot.barX(top5LatestDemand, {y: "name", x: d => d.value / 1000, fill: "gray", sort: {y: "x", reverse: true, limit: 10}}),
+                Plot.ruleX([0])
+            ]
+        }))
+    }
+    </div>
+  <div class="card grid-colspan-2 grid-rowspan-1">
+<h2>US electricity generation, demand, and demand forecast (GWh)</h2>
+   ${resize((width, height) => Plot.plot({
+    width, 
+    marginTop:0,
+    height: height - 50,
+    y: {label: null},
+    x: {type: "time"},
+    color: {legend: true, domain: ["Day-ahead demand forecast", "Demand", "Net generation"],
+    range: ["#97bbf5", "#4269d0", "#efb118"]},
+    grid: true,
+    marks: [
+        Plot.line(usDemandGenForecast, {x: "date", y: d => d.value / 1000, stroke: "name", strokeWidth: 2, tip: true})
+        ]
+}))
+   }
+  </div>
+  <div class="card grid-colspan-2 grid-rowspan-1">
+  <h2>Neighboring country interchange (GWh)</h2>
+   ${resize((width, height) => renderLegend(width, height))
+   }
+</div>
+</div>
+
+<div class="card" style="padding: 0">
+ ${Inputs.table(baHourlyClean, {rows: 16})}
+</div>
+
+<!-- Unused US total bign number
+      <div class="card grid-colspan-1 grid-rowspan-1">
+    <h2>Total US electricity demand</h2>
+    <h3>${dateTimeFormat(timeParse(baLatestHourlyDemandLower48[0].period))}</h3>
+    <span class="big">${d3.format(",")(baLatestHourlyDemandLower48[0].value)} MWh</span>
+  </div>
+<div class="card grid-colspan-1 grid-rowspan-1">
+    <h2>Placeholder</h2>
+  </div>
+-->
+
+This page reenvisions parts of the US Energy Information Administration's [Hourly Electric Grid Monitor](<(https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48)>). Visit [About the EIA-930 data](https://www.eia.gov/electricity/gridmonitor/about) to learn more about data collection and quality, the US electric grid, and balancing authorities responsible for nationwide electricity interchange.
+
+Some code for EIA data access and wrangling is reused from Observable notebooks by Ian Johnson. Thank you Ian!
+
+
+```js
+// Map legend
+function renderLegend() {
 Plot.plot({
   width: Math.min(width - 30, 400),
   height: 42,
@@ -191,8 +277,12 @@ Plot.plot({
       textAnchor: "start"
     })
   ]
-})}${
-Plot.plot({
+});
+}
+
+// Map
+function renderMap(width) {
+  return Plot.plot({
     width: Math.min(width, 620),
     height: Math.min(width, 620) * 0.7,
     caption:
@@ -287,80 +377,6 @@ Plot.plot({
         })
       )
     ]
-  })}</div>`
-)}</div>
-  <div class="card grid-colspan-2 grid-rowspan-1">
-  <h2>Top balancing authorities by demand, latest hour (GWh)</h2>
-  <h3>${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleDateString() }</h3>
-  ${
-        resize((width, height) => Plot.plot({
-            marginTop: 0,
-            marginLeft: 250,
-            height: height - 20,
-            width,
-            y: {label: null},
-            x: {label: null, grid: true},
-            marks: [
-                Plot.barX(top5LatestDemand, {y: "name", x: d => d.value / 1000, fill: "gray", sort: {y: "x", reverse: true, limit: 10}}),
-                Plot.ruleX([0])
-            ]
-        }))
-    }
-    </div>
-  <div class="card grid-colspan-2 grid-rowspan-1">
-<h2>US electricity generation, demand, and demand forecast (GWh)</h2>
-   ${resize((width, height) => Plot.plot({
-    width, 
-    marginTop:0,
-    height: height - 50,
-    y: {label: null},
-    x: {type: "time"},
-    color: {legend: true, domain: ["Day-ahead demand forecast", "Demand", "Net generation"],
-    range: ["#97bbf5", "#4269d0", "#efb118"]},
-    grid: true,
-    marks: [
-        Plot.line(usDemandGenForecast, {x: "date", y: d => d.value / 1000, stroke: "name", strokeWidth: 2, tip: true})
-        ]
-}))
-   }
-  </div>
-  <div class="card grid-colspan-2 grid-rowspan-1">
-  <h2>Neighboring country interchange (GWh)</h2>
-   ${resize((width, height) => Plot.plot({
-    width,
-    marginTop: 0,
-    height: height - 50,
-    color: { legend: true, range: ["#B6B5B1", "gray"]},
-    grid: true,
-    y: {label: null},
-    x: {type: "time", domain: d3.extent(usDemandGenForecast.map(d => d.date))},
-    marks: [
-        Plot.areaY(
-            countryInterchangeSeries,
-            { x: "date", y: d => d.value / 1000, curve: "step", fill: "id", tip: true}
-        ),
-        Plot.ruleY([0])
-    ]
-}))
-   }
-</div>
-</div>
-
-<div class="card" style="padding: 0">
- ${Inputs.table(baHourlyClean, {rows: 16})}
-</div>
-
-<!-- Unused US total bign number
-      <div class="card grid-colspan-1 grid-rowspan-1">
-    <h2>Total US electricity demand</h2>
-    <h3>${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleDateString() }</h3>
-    <span class="big">${d3.format(",")(baLatestHourlyDemandLower48[0].value)} MWh</span>
-  </div>
-<div class="card grid-colspan-1 grid-rowspan-1">
-    <h2>Placeholder</h2>
-  </div>
--->
-
-This page reenvisions parts of the US Energy Information Administration's [Hourly Electric Grid Monitor](<(https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48)>). Visit [About the EIA-930 data](https://www.eia.gov/electricity/gridmonitor/about) to learn more about data collection and quality, the US electric grid, and balancing authorities responsible for nationwide electricity interchange.
-
-Some code for EIA data access and wrangling is reused from Observable notebooks by Ian Johnson. Thank you Ian!
+  })
+}
+```
