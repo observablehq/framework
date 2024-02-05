@@ -19,10 +19,6 @@ const subregionDemand = FileAttachment("data/eia-data/subregion-hourly.csv").csv
 ```
 
 ```js
-subregionDemand
-```
-
-```js
 // US total demand, generation and forecast excluding total (sum):
 const usDemandGenForecast = usOverview.filter(d => d.name != "Total interchange");
 ```
@@ -121,9 +117,35 @@ const timeParse = d3.utcParse("%Y-%m-%dT%H");
 ```
 
 ```js
-// Get the most recent hour of data
+// Get the most recent hour (time) of data
 const recentHour = timeParse(baHourly.filter(d => d.type == "D")[0].period);
 ```
+
+```js
+// treemap data (sub-ba, ba, region, country)
+subregionDemand
+```
+
+```js
+eiaBARef
+```
+
+```js
+const baRegionMap = new Map(eiaBARef.map(d => [d['BA Code'], d['Region/Country Name']]));
+```
+
+```js
+baRegionMap
+```
+
+```js
+const treemapData = subregionDemand.map(d => ({...d, region: baRegionMap.get(d.parent), valueGwh: d.value / 1000})).filter(d => d.subba == "PGAE")
+```
+
+```js
+treemapData
+```
+
 
 ```js
 const color = Plot.scale({
