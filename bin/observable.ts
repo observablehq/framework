@@ -1,4 +1,5 @@
 import {type ParseArgsConfig, parseArgs} from "node:util";
+import * as clack from "@clack/prompts";
 import {readConfig} from "../src/config.js";
 import {CliError} from "../src/error.js";
 import {enableNpmVersionResolution, enableRemoteModulePreload} from "../src/javascript/imports.js";
@@ -54,6 +55,8 @@ else if (values.help) {
   args.splice(t.index, 1);
   command = "help";
 }
+
+const CLACKIFIED_COMMANDS = ["login"];
 
 try {
   switch (command) {
@@ -161,7 +164,13 @@ try {
   }
 } catch (error) {
   if (error instanceof CliError) {
-    if (error.print) console.error(red(error.message));
+    if (error.print) {
+      if (command && CLACKIFIED_COMMANDS.includes(command)) {
+        clack.outro(red(`Error: ${error.message}`));
+      } else {
+        console.error(red(error.message));
+      }
+    }
     process.exit(error.exitCode);
   }
   throw error;
