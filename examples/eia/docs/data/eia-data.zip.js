@@ -10,28 +10,29 @@ const {EIA_KEY} = process.env;
 // Start and end dates
 const end = timeDay.offset(timeHour(new Date()), 1);
 const start = timeHour(utcDay.offset(end, -7));
+const dataLength = 5000;
 
 // BA Interchange
-const baInterchangeUrl = `https://api.eia.gov/v2/electricity/rto/interchange-data/data/?api_key=${EIA_KEY}&frequency=hourly&data[0]=value&start=${start.toISOString().substring(0, 10)}T00&end=${end.toISOString().substring(0, 10)}T00&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=5000`;
+const baInterchangeUrl = `https://api.eia.gov/v2/electricity/rto/interchange-data/data/?api_key=${EIA_KEY}&frequency=hourly&data[0]=value&start=${start.toISOString().substring(0, 10)}T00&end=${end.toISOString().substring(0, 10)}T00&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=${dataLength}`;
 
 const baInterchange = await json(baInterchangeUrl);
 
 // BA Hourly Demand
-const baHourlyUrl = `https://api.eia.gov/v2/electricity/rto/region-data/data/?api_key=${EIA_KEY}&frequency=hourly&data[0]=value&start=${start.toISOString().substring(0, 10)}T00&end=${end.toISOString().substring(0, 10)}T00&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=5000`;
+const baHourlyUrl = `https://api.eia.gov/v2/electricity/rto/region-data/data/?api_key=${EIA_KEY}&frequency=hourly&data[0]=value&start=${start.toISOString().substring(0, 10)}T00&end=${end.toISOString().substring(0, 10)}T00&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=${dataLength}`;
 
 const baHourly = await json(baHourlyUrl);
 
 // Sub-BA Hourly Demand
-const subregionHourlyUrl = `https://api.eia.gov/v2/electricity/rto/region-sub-ba-data/data/?api_key=${EIA_KEY}&frequency=hourly&data[0]=value&start=${start.toISOString().substring(0, 10)}T00&end=${end.toISOString().substring(0, 10)}T00&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=5000`;
+const subregionHourlyUrl = `https://api.eia.gov/v2/electricity/rto/region-sub-ba-data/data/?api_key=${EIA_KEY}&frequency=hourly&data[0]=value&start=${start.toISOString().substring(0, 10)}T00&end=${end.toISOString().substring(0, 10)}T00&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=${dataLength}`;
 const subregionHourly = await json(subregionHourlyUrl);
 
 // Country interchange
-//const countryInterchangeUrl = `https://api.eia.gov/v2/electricity/rto/interchange/data/?api_key=${EIA_KEY}&frequency=hourly&data[0]=value&start=${start.toISOString().substring(0, 10)}T00&end=${end.toISOString().substring(0, 10)}T00&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=5000`
+//const countryInterchangeUrl = `https://api.eia.gov/v2/electricity/rto/interchange/data/?api_key=${EIA_KEY}&frequency=hourly&data[0]=value&start=${start.toISOString().substring(0, 10)}T00&end=${end.toISOString().substring(0, 10)}T00&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=${dataLength}`
 
 //const countryInterchange = await json(countryInterchangeUrl);;
 
 // By fuel type
-const fuelTypeUrl = `https://api.eia.gov/v2/electricity/rto/fuel-type-data/data/?api_key=${EIA_KEY}&frequency=hourly&data[0]=value&start=${start.toISOString().substring(0, 10)}T00&end=${end.toISOString().substring(0, 10)}T00&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=5000`;
+const fuelTypeUrl = `https://api.eia.gov/v2/electricity/rto/fuel-type-data/data/?api_key=${EIA_KEY}&frequency=hourly&data[0]=value&start=${start.toISOString().substring(0, 10)}T00&end=${end.toISOString().substring(0, 10)}T00&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=${dataLength}`;
 
 const fuelType = await json(fuelTypeUrl);
 
