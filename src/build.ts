@@ -26,6 +26,7 @@ const EXTRA_FILES = new Map([
 function clientBundles(clientPath: string): [entry: string, name: string][] {
   return [
     [clientPath, "client.js"],
+    ["./src/client/search.js", "search.js"],
     ["./src/client/stdlib.js", "stdlib.js"],
     ["./src/client/stdlib/dot.js", "stdlib/dot.js"],
     ["./src/client/stdlib/duckdb.js", "stdlib/duckdb.js"],

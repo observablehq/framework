@@ -104,6 +104,8 @@ export class PreviewServer {
         }
       } else if (pathname === "/_observablehq/client.js") {
         end(req, res, await rollupClient(getClientPath("./src/client/preview.js")), "text/javascript");
+      } else if (pathname === "/_observablehq/search.js") {
+        end(req, res, await rollupClient(getClientPath("./src/client/search.js")), "text/javascript");
       } else if ((match = /^\/_observablehq\/theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(pathname))) {
         end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
       } else if (pathname.startsWith("/_observablehq/")) {

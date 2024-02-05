@@ -1,52 +1,45 @@
 // TODO import only when needed
-import MiniSearch from "npm:minisearch";
+import MiniSearch from "minisearch";
 
 const container = document.querySelector("#observablehq-search");
-if (container != null) {
-  const base = container.getAttribute("data-root");
-  const input = container.querySelector("input");
-  input.setAttribute(
-    "placeholder",
-    `${input.getAttribute("placeholder")} ${/Mac|iPhone/.test(navigator.platform) ? "⌘" : "Alt-"}K`
-  );
-  const r = document.createElement("div");
-  r.setAttribute("class", "observablehq-search-results");
-  container.appendChild(r);
+const base = container.getAttribute("data-root");
+const input = container.querySelector("input");
+const r = document.querySelector("#observablehq-search-results");
 
-  let value;
-  const index = {
-    _index: undefined,
-    _loading: undefined,
-    _load() {
-      return (
-        this._loading ??
-        (this._loading = fetch(`${base}_file/minisearch.json`)
-          .then((resp) => resp.json())
-          .then((json) => MiniSearch.loadJS(json, json.options)))
-      );
-    },
-    async search(terms, options) {
-      if (!terms) return [];
-      if (!this._index) this._index = await this._load();
-      return this._index.search(terms, options);
-    }
-  };
-  const search = async (event) => {
-    if (value === event.target.value) return;
-    sessionStorage.setItem("observablehq-search", (value = event.target.value));
-    if (!value.length) {
-      input.parentElement.classList.remove("observablehq-search-results");
-      r.innerHTML = "";
-      return;
-    }
-    input.parentElement.classList.add("observablehq-search-results");
-    const results = await index.search(value, {boost: {title: 4}, fuzzy: 0.15, prefix: true});
-    r.innerHTML =
-      results.length === 0
-        ? "<summary>no results</summary>"
-        : `<details ${
-            sessionStorage.getItem("observablehq-sidebar:___search_results") !== "false" ? "open" : ""
-          }><summary>${results.length} page${results.length === 1 ? "" : "s"}</summary>
+let value;
+const index = {
+  _index: undefined,
+  _loading: undefined,
+  _load() {
+    return (
+      this._loading ??
+      (this._loading = fetch(`${base}_file/minisearch.json`)
+        .then((resp) => resp.json())
+        .then((json) => MiniSearch.loadJS(json, json.options)))
+    );
+  },
+  async search(terms, options) {
+    if (!terms) return [];
+    if (!this._index) this._index = await this._load();
+    return this._index.search(terms, options);
+  }
+};
+const search = async (event) => {
+  if (value === event.target.value) return;
+  sessionStorage.setItem("observablehq-search-query", (value = event.target.value));
+  sessionStorage.setItem("observablehq-sidebar:___search_results", "");
+  if (!value.length) {
+    input.parentElement.classList.remove("observablehq-search-results");
+    r.innerHTML = "";
+    sessionStorage.setItem("observablehq-search-results", "");
+    return;
+  }
+  input.parentElement.classList.add("observablehq-search-results");
+  const results = await index.search(value, {boost: {title: 4}, fuzzy: 0.15, prefix: true});
+  r.innerHTML =
+    results.length === 0
+      ? "<summary>no results</summary>"
+      : `<details open><summary>${results.length} page${results.length === 1 ? "" : "s"}</summary>
       <ol>${results
         .map(({id, title, score}) => {
           score = Math.min(6, Math.round(1 + 0.6 * score));
@@ -63,38 +56,21 @@ if (container != null) {
       </ol>
     </details>`;
 
-    r.querySelector("details").ontoggle = function () {
-      sessionStorage.setItem("observablehq-sidebar:___search_results", this.open);
-    };
-
-    const exact_results = await index.search(value, {boost: {title: 1}, fuzzy: 0, prefix: false});
-    for (const e of exact_results) {
-      const p = r.querySelector(`[data-reference='${e.id}'] small`);
-      const s = +p.getAttribute("data-score");
-      const k = Math.round((e.terms.length / value.split(/\W+/).length) * s);
-      p.innerHTML = `${"○".repeat(s - k)}${"●".repeat(k)}`;
-      p.setAttribute(
-        "title",
-        `score: ${p.getAttribute("data-score")}; ${k === s ? "exact matches" : "incomplete matches"}`
-      );
-    }
-  };
-  input.addEventListener("focus", index._load);
-  input.addEventListener("input", search);
-
-  const prevSearch = sessionStorage.getItem("observablehq-search");
-  if (prevSearch?.length) {
-    input.value = prevSearch;
-    input.dispatchEvent(new Event("input", {bubbles: true}));
+  const exact_results = await index.search(value, {boost: {title: 1}, fuzzy: 0, prefix: false});
+  for (const e of exact_results) {
+    const p = r.querySelector(`[data-reference='${e.id}'] small`);
+    const s = +p.getAttribute("data-score");
+    const k = Math.round((e.terms.length / value.split(/\W+/).length) * s);
+    p.innerHTML = `${"○".repeat(s - k)}${"●".repeat(k)}`;
+    p.setAttribute(
+      "title",
+      `score: ${p.getAttribute("data-score")}; ${k === s ? "exact matches" : "incomplete matches"}`
+    );
   }
+  sessionStorage.setItem("observablehq-search-results", r.innerHTML);
+};
+input.addEventListener("focus", index._load);
+input.addEventListener("input", search);
 
-  const toggle = document.querySelector("#observablehq-sidebar-toggle");
-  addEventListener("keydown", (event) => {
-    if (event.code === "KeyK" && event.metaKey && !event.altKey && !event.ctrlKey) {
-      if (input.getBoundingClientRect().x < 0) toggle.click();
-      input.focus();
-      input.select();
-      event.preventDefault();
-    }
-  });
-}
+const d = r.querySelector("details");
+d.ontoggle = () => sessionStorage.setItem("observablehq-sidebar:___search_results", String(d.open));
