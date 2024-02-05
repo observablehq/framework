@@ -48,19 +48,21 @@ input.addEventListener("input", (event) => {
         .join("")}
       </ol>
     </details>`;
-  const d = r.querySelector("details");
-  d.ontoggle = () => sessionStorage.setItem("observablehq-sidebar:___search_results", String(d.open));
   sessionStorage.setItem("observablehq-search-results", r.innerHTML);
 
-  const exact_results = index.search(value, {boost: {title: 1}, fuzzy: 0, prefix: false});
-  for (const e of exact_results) {
-    const p = r.querySelector(`[data-reference='${e.id}'] small`);
-    const s = +p.getAttribute("data-score");
-    const k = Math.round((e.terms.length / value.split(/\W+/).length) * s);
-    p.innerHTML = `${"○".repeat(s - k)}${"●".repeat(k)}`;
-    p.setAttribute(
-      "title",
-      `score: ${p.getAttribute("data-score")}; ${k === s ? "exact matches" : "incomplete matches"}`
-    );
+  if (results.length) {
+    const d = r.querySelector("details");
+    d.ontoggle = () => sessionStorage.setItem("observablehq-sidebar:___search_results", String(d.open));
+    const exact_results = index.search(value, {boost: {title: 1}, fuzzy: 0, prefix: false});
+    for (const e of exact_results) {
+      const p = r.querySelector(`[data-reference='${e.id}'] small`);
+      const s = +p.getAttribute("data-score");
+      const k = Math.round((e.terms.length / value.split(/\W+/).length) * s);
+      p.innerHTML = `${"○".repeat(s - k)}${"●".repeat(k)}`;
+      p.setAttribute(
+        "title",
+        `score: ${p.getAttribute("data-score")}; ${k === s ? "exact matches" : "incomplete matches"}`
+      );
+    }
   }
 });

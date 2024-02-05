@@ -31,10 +31,11 @@ export async function searchIndex(config: Config, effects?: BuildEffects): Promi
   }
 
   for await (const file of visitMarkdownFiles(root)) {
-    const source = (await readFile(join(root, file), "utf-8")).replaceAll(/<[^>]+>/g, " ");
+    let content = (await readFile(join(root, file), "utf-8")).replaceAll(/<[^>]+>/g, " ");
     let frontmatter;
     try {
-      frontmatter = matter(source, {}).data;
+      ({content, data: frontmatter} = matter(content, {}));
+      content = content.replace(/^[\r\n]+/, "");
     } catch {
       // ignore front-matter parsing error
     }
@@ -51,11 +52,11 @@ export async function searchIndex(config: Config, effects?: BuildEffects): Promi
     const id = file === "index.md" ? "" : "" + file.slice(0, -3);
     const title =
       frontmatter?.title ??
-      source.match(/^# (.*)/)?.[1] ??
-      source.match(/<h1[>]*>(.*?)<\/h1>/i)?.[1] ??
+      content.match(/^# (.*)/)?.[1] ??
+      content.match(/<h1[>]*>(.*?)<\/h1>/i)?.[1] ??
       basename(file, ".md");
     log(`${faint("index")} ${id}: ${title}`);
-    index.add({id, title, text: source.replaceAll(/\W+/g, " ")});
+    index.add({id, title, text: content.replaceAll(/\W+/g, " ")});
   }
 
   // One way of passing the options to the client; better than nothing, but note
