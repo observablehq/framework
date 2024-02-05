@@ -185,7 +185,6 @@ hi!
     <h3></h3>
     ${resize((width) => html`<div>${renderLegend(width)}${renderMap(width)}</div>`)}
   </div>
-
   <div class="card grid-colspan-2 grid-rowspan-1">
   <h2>Top balancing authorities by demand, latest hour (GWh)</h2>
   <h3>${dateTimeFormat(timeParse(baLatestHourlyDemandLower48[0].period))}</h3>
