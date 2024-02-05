@@ -111,7 +111,7 @@
   border-bottom: solid 1px var(--theme-foreground-faintest);
 }
 
-#observablehq-sidebar > ol:nth-of-type(1) {
+#observablehq-sidebar > ol:first-of-type {
   position: sticky;
   top: 0;
   z-index: 1;
