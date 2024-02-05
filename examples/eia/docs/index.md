@@ -350,17 +350,17 @@ function renderMap(width) {
 
 function renderTop5(width, height) {
   return Plot.plot({
-            marginTop: 0,
-            marginLeft: 250,
-            height: height - 20,
-            width,
-            y: {label: null},
-            x: {label: null, grid: true},
-            marks: [
-                Plot.barX(top5LatestDemand, {y: "name", x: d => d.value / 1000, fill: "gray", sort: {y: "x", reverse: true, limit: 10}}),
-                Plot.ruleX([0])
-            ]
-        });
+    marginTop: 0,
+    marginLeft: 250,
+    height: height - 20,
+    width,
+    y: {label: null},
+    x: {label: null, grid: true},
+    marks: [
+      Plot.barX(top5LatestDemand, {y: "name", x: d => d.value / 1000, fill: "gray", sort: {y: "x", reverse: true, limit: 10}}),
+      Plot.ruleX([0])
+    ]
+  });
 }
 
 function usGenDemandForecast(width, height) {
@@ -374,8 +374,8 @@ function usGenDemandForecast(width, height) {
     range: ["#97bbf5", "#4269d0", "#efb118"]},
     grid: true,
     marks: [
-        Plot.line(usDemandGenForecast, {x: "date", y: d => d.value / 1000, stroke: "name", strokeWidth: 2, tip: true})
-        ]
+      Plot.line(usDemandGenForecast, {x: "date", y: d => d.value / 1000, stroke: "name", strokeWidth: 2, tip: true})
+    ]
 });
 }
 
@@ -389,12 +389,9 @@ function countryInterchangeChart(width, height) {
     y: {label: null},
     x: {type: "time", domain: d3.extent(usDemandGenForecast.map(d => d.date))},
     marks: [
-        Plot.areaY(
-            countryInterchangeSeries,
-            { x: "date", y: d => d.value / 1000, curve: "step", fill: "id", tip: true}
-        ),
-        Plot.ruleY([0])
+      Plot.areaY(countryInterchangeSeries, {x: "date", y: d => d.value / 1000, curve: "step", fill: "id", tip: true}),
+      Plot.ruleY([0])
     ]
-});
+  });
 }
 ```
