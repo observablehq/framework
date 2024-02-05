@@ -91,8 +91,6 @@ const baLatestHourlyDemandLower48 = baHourlyDemand.filter(d => d.ba == "United S
 ```js
 // Percent change for most recent 2 hours of data by BA
 const baHourlyChange = d3.rollup(baHourlyDemand, d => ((d[hoursAgo].value - d[hoursAgo + 1].value) / d[hoursAgo].value) * 100, d => d["ba"] );
-//display({ baHourlyDemand })
-display({ baHourlyChange })
 ```
 
 ```js
@@ -167,7 +165,6 @@ const colorUnavailable = "gray";
 ```js
 // Configure hours ago input
 const hours = [...new Set(baHourlyDemand.map(d => d.period))].map(timeParse);
-display({ hours });
 const [startHour, endHour] = d3.extent(hours);
 const hoursBackOfData = Math.ceil(Math.abs(endHour - startHour) / (1000 * 60 * 60)) - 1;
 const hoursAgoInput = Inputs.range([hoursBackOfData, 0], { label: "Hours ago", step: 1, value: 0 });
@@ -175,15 +172,18 @@ const hoursAgo = view(hoursAgoInput);
 ```
 
 <div class="grid grid-cols-4" style="grid-auto-rows: 180px;">
-  <div class="card grid-colspan-2 grid-rowspan-3">
-    <div>${hoursAgoInput}</div>
+  <div class="card grid-colspan-2 grid-rowspan-3" style="position: relative;">
     <h2>Change in demand by balancing authority</h2>
     <h3>Percent change in electricity demand from previous hour</h3>
     <h3>Most recent hourly data: ${dateTimeFormat(hours[hoursAgo])}</h3>
     <div>
       ${resize(renderLegend)}
       ${resize(renderMap)}
+      <div style="padding-top: 1em;">${hoursAgoInput}</div>
     </div>
+    <footer id="observablehq-footer" style="position: absolute; bottom: 0em;">
+      Data: US Energy Information Administration. Locations are representative.
+    </footer>
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
     <h2>Top balancing authorities by demand, latest hour (GWh)</h2>
@@ -201,7 +201,7 @@ const hoursAgo = view(hoursAgoInput);
 </div>
 
 <div class="card" style="padding: 0">
- ${Inputs.table(baHourlyClean, {rows: 16})}
+  ${Inputs.table(baHourlyClean, {rows: 16})}
 </div>
 
 <!-- Unused US total big number
@@ -223,8 +223,9 @@ Some code for EIA data access and wrangling is reused from Observable notebooks 
 // Map legend
 function renderLegend(width) {
   return Plot.plot({
+    marginTop: 15,
     width: Math.min(width - 30, 400),
-    height: 42,
+    height: 60,
     y: { axis: null },
     marks: [
       Plot.raster({
@@ -255,9 +256,7 @@ function renderLegend(width) {
 function renderMap(width) {
   return Plot.plot({
     width: Math.min(width, 620),
-    height: Math.min(width, 620) * 0.7,
-    caption:
-      "Data: US Energy Information Administration. Locations are representative.",
+    height: Math.min(width, 620) * 0.6,
     color: {
       ...color,
       transform: (d) => d / 100,
