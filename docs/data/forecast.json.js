@@ -1,8 +1,8 @@
 const longitude = -122.47;
-const latitude = 37.80;
+const latitude = 37.8;
 
 async function json(url) {
-  const response = await fetch(url);
+  const response = await fetch(url, {headers: {"User-Agent": "(observablehq.com, support@observablehq.com)"}});
   if (!response.ok) throw new Error(`fetch failed: ${response.status}`);
   return await response.json();
 }
