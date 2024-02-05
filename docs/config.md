@@ -173,6 +173,10 @@ toc: false
 ---
 ```
 
+## search
+
+Enable [search](search) on the project.
+
 ## deploy
 
 Configuration for deploying your project to Observable Cloud.
