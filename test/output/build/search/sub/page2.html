@@ -18,7 +18,10 @@ import "../_observablehq/client.js";
 <input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
-  <div id="observablehq-search" data-root="../"><input type="search" placeholder="Search pages…" /></div><ol>
+  <div id="observablehq-search" data-root="../"><input type="search" />
+        </div>
+        <div id="observablehq-search-results"></div>
+        <script>{const s=document.querySelector("#observablehq-search"),t=s.querySelector("input");t.setAttribute("placeholder",`Search pages\u2026 ${/Mac|iPhone/.test(navigator.platform)?"\u2318":"Alt-"}K`),t.value=sessionStorage.getItem("observablehq-search-query")??"";const o=sessionStorage.getItem("observablehq-search-results");o&&(document.querySelector("#observablehq-search-results").innerHTML=o,s.parentElement?.classList.add("observablehq-search-results"));const a=document.querySelector("#observablehq-search")?.getAttribute("data-root");for(const e of document.querySelectorAll("#observablehq-search-results a"))e.setAttribute("href",`${a}${e.parentElement?.getAttribute("data-reference")}`);const n=document.querySelector("#observablehq-search-results details");n&&sessionStorage.getItem("observablehq-sidebar:___search_results")==="false"&&n.removeAttribute("open");function r(){t.removeEventListener("focus",r),t.removeEventListener("keydown",r);const e=document.createElement("script");e.setAttribute("type","module"),e.setAttribute("src",`${a}_observablehq/search.js`),s.appendChild(e)}t.addEventListener("focus",r),t.addEventListener("keydown",r);const c=document.querySelector("#observablehq-sidebar-toggle");addEventListener("keydown",e=>{e.code==="KeyK"&&e.metaKey&&!e.altKey&&!e.ctrlKey&&(t.getBoundingClientRect().x<0&&c.click(),t.focus(),t.select(),e.preventDefault())});}</script><ol>
     <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
     <li class="observablehq-link"><a href="../">Home</a></li>
   </ol>
