@@ -1,7 +1,6 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import {commandRequiresAuthenticationMessage} from "./commandInstruction.js";
 import {CliError, isEnoent} from "./error.js";
 
 export interface ConfigEffects {
@@ -44,7 +43,7 @@ export type ApiKey =
   | {source: "test"; key: string}
   | {source: "login"; key: string};
 
-export async function getObservableApiKey(effects: ConfigEffects = defaultEffects): Promise<ApiKey> {
+export async function getObservableApiKey(effects: ConfigEffects = defaultEffects): Promise<ApiKey | null> {
   const envVar = "OBSERVABLE_TOKEN";
   if (effects.env[envVar]) {
     return {source: "env", envVar, key: effects.env[envVar]};
@@ -53,7 +52,7 @@ export async function getObservableApiKey(effects: ConfigEffects = defaultEffect
   if (config.auth?.key) {
     return {source: "file", filePath: configPath, key: config.auth.key};
   }
-  throw new CliError(commandRequiresAuthenticationMessage);
+  return null;
 }
 
 export async function setObservableApiKey(info: null | {id: string; key: string}): Promise<void> {
