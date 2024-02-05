@@ -3,8 +3,11 @@ const container = document.querySelector("#observablehq-search")!;
 const input = container.querySelector("input")! as HTMLInputElement;
 input.setAttribute("placeholder", `Search pages… ${/Mac|iPhone/.test(navigator.platform) ? "⌘" : "Alt-"}K`);
 input.value = sessionStorage.getItem("observablehq-search-query") ?? "";
-document.querySelector("#observablehq-search-results")!.innerHTML =
-  sessionStorage.getItem("observablehq-search-results") ?? "";
+const prevResults = sessionStorage.getItem("observablehq-search-results");
+if (prevResults) {
+  document.querySelector("#observablehq-search-results")!.innerHTML = prevResults;
+  container.parentElement?.classList.add("observablehq-search-results");
+}
 
 // fix links relative to the base
 const base = document.querySelector("#observablehq-search")?.getAttribute("data-root");

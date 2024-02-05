@@ -5,37 +5,23 @@ const container = document.querySelector("#observablehq-search");
 const base = container.getAttribute("data-root");
 const input = container.querySelector("input");
 const r = document.querySelector("#observablehq-search-results");
-
 let value;
-const index = {
-  _index: undefined,
-  _loading: undefined,
-  _load() {
-    return (
-      this._loading ??
-      (this._loading = fetch(`${base}_file/minisearch.json`)
-        .then((resp) => resp.json())
-        .then((json) => MiniSearch.loadJS(json, json.options)))
-    );
-  },
-  async search(terms, options) {
-    if (!terms) return [];
-    if (!this._index) this._index = await this._load();
-    return this._index.search(terms, options);
-  }
-};
-const search = async (event) => {
+const index = await fetch(`${base}_file/minisearch.json`)
+  .then((resp) => resp.json())
+  .then((json) => MiniSearch.loadJS(json, json.options));
+input.addEventListener("input", (event) => {
   if (value === event.target.value) return;
-  sessionStorage.setItem("observablehq-search-query", (value = event.target.value));
+  value = event.target.value;
+  sessionStorage.setItem("observablehq-search-query", value);
   sessionStorage.setItem("observablehq-sidebar:___search_results", "");
   if (!value.length) {
-    input.parentElement.classList.remove("observablehq-search-results");
+    container.parentElement.classList.remove("observablehq-search-results");
     r.innerHTML = "";
     sessionStorage.setItem("observablehq-search-results", "");
     return;
   }
-  input.parentElement.classList.add("observablehq-search-results");
-  const results = await index.search(value, {boost: {title: 4}, fuzzy: 0.15, prefix: true});
+  container.parentElement.classList.add("observablehq-search-results");
+  const results = index.search(value, {boost: {title: 4}, fuzzy: 0.15, prefix: true});
   r.innerHTML =
     results.length === 0
       ? "<summary>no results</summary>"
@@ -55,8 +41,11 @@ const search = async (event) => {
         .join("")}
       </ol>
     </details>`;
+  const d = r.querySelector("details");
+  d.ontoggle = () => sessionStorage.setItem("observablehq-sidebar:___search_results", String(d.open));
+  sessionStorage.setItem("observablehq-search-results", r.innerHTML);
 
-  const exact_results = await index.search(value, {boost: {title: 1}, fuzzy: 0, prefix: false});
+  const exact_results = index.search(value, {boost: {title: 1}, fuzzy: 0, prefix: false});
   for (const e of exact_results) {
     const p = r.querySelector(`[data-reference='${e.id}'] small`);
     const s = +p.getAttribute("data-score");
@@ -67,10 +56,4 @@ const search = async (event) => {
       `score: ${p.getAttribute("data-score")}; ${k === s ? "exact matches" : "incomplete matches"}`
     );
   }
-  sessionStorage.setItem("observablehq-search-results", r.innerHTML);
-};
-input.addEventListener("focus", index._load);
-input.addEventListener("input", search);
-
-const d = r.querySelector("details");
-d.ontoggle = () => sessionStorage.setItem("observablehq-sidebar:___search_results", String(d.open));
+});
