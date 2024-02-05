@@ -23,7 +23,7 @@ describe("login command", () => {
     assert.deepEqual(await effects.setApiKeyDeferred.promise, {id: "MOCK-ID", key: validApiKey});
     assert.equal(effects.observableApiKey, validApiKey);
     effects.clack.log.assertLogged({
-      message: /.*copy your confirmation code.*FAKEPASS.*\/auth-device.*/ms
+      message: /.*Your confirmation code.*FAKEPASS.*\/auth-device.*/ms
     });
   });
 
@@ -49,7 +49,7 @@ describe("login command", () => {
       await login(effects);
       assert.fail("expected failure");
     } catch (error) {
-      CliError.assert(error, {message: "That confirmation code expired. Please try again."});
+      CliError.assert(error, {message: "That confirmation code expired."});
     }
     assert.equal(effects.observableApiKey, null);
   });
@@ -62,7 +62,7 @@ describe("login command", () => {
       await login(effects);
       assert.fail("expected failure");
     } catch (error) {
-      CliError.assert(error, {message: "That confirmation code has already been used. Please try again."});
+      CliError.assert(error, {message: "That confirmation code has already been used."});
     }
     assert.equal(effects.observableApiKey, null);
   });

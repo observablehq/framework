@@ -2,20 +2,35 @@
 @import url("observablehq:theme-air.css") (prefers-color-scheme: light);
 @import url("observablehq:theme-near-midnight.css") (prefers-color-scheme: dark);
 
-#observablehq-header a[target="_blank"]:not(:hover, :focus) {
+#observablehq-header a[href] {
   color: inherit;
+}
+
+#observablehq-header a[target="_blank"] {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  text-decoration: none;
+}
+
+#observablehq-header a[target="_blank"]:hover span {
+  text-decoration: underline;
+}
+
+#observablehq-header a[target="_blank"]::after {
+  content: "\2197";
 }
 
 #observablehq-header a[target="_blank"]:not(:hover, :focus)::after {
   color: var(--theme-foreground-muted);
 }
 
-#observablehq-header a[target="_blank"]::after {
-  content: "↗︎";
-  margin-left: 0.25rem;
-  display: inline-block;
-}
-
 #observablehq-main {
   min-height: calc(100vh - 23.8rem);
+}
+
+@container not (min-width: 640px) {
+  .hide-if-small {
+    display: none;
+  }
 }

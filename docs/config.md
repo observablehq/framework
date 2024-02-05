@@ -136,13 +136,17 @@ The pages list should _not_ include the root page, `index.md`. Also, we don’t 
 
 Whether to show the previous & next footer links; defaults to true.
 
+## head
+
+An HTML fragment to add to the head. Defaults to the empty string.
+
 ## header
 
 An HTML fragment to add to the header. Defaults to the empty string.
 
 ## footer
 
-An HTML fragment to add to the footer. Defaults to “Built with Observable on [today’s date].”
+An HTML fragment to add to the footer. Defaults to “Built with Observable.”
 
 ## toc
 
@@ -167,27 +171,4 @@ The table of contents configuration can also be set in the page’s YAML front m
 ---
 toc: false
 ---
-```
-
-## deploy
-
-Configuration for deploying your project to Observable Cloud.
-
-Specifies the target Observable **workspace** (without @ symbol) and the unique **project** URL (or "slug", similar to setting the URL for an Observable notebook).
-
-The following TypeScript interface describes this option:
-
-```ts run=false
-export interface Deploy {
-  workspace: string;
-  project: string;
-}
-```
-
-E.g.,
-```ts run=false
-deploy: {
-  workspace: "my-observablehq-workspace",
-  project: "my-project-slug"
-},
 ```

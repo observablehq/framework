@@ -202,7 +202,7 @@ And that’s it! After some downloading, copying, and installing, your new proje
 <span class="muted">│</span>  <span class="focus">cd ./hello-framework</span>
 <span class="muted">│</span>  <span class="focus">yarn dev</span>
 <span class="muted">│</span>
-<span class="muted">└</span>  Problems? <u>https://framework.observablehq.com/getting-started</u></pre>
+<span class="muted">└</span>  Problems? <u><a href="https://observablehq.com/framework/getting-started" style="color: inherit;">https://observablehq.com/framework/getting-started</a></u></pre>
 
 ## 2. Develop
 
@@ -224,7 +224,7 @@ Or with Yarn:
 
 You should see something like this:
 
-<pre data-copy="none"><b class="green">Observable Framework</b>     v1.0.0
+<pre data-copy="none"><b class="green">Observable Framework</b> v1.0.0
 ↳ <u><a href="http://127.0.0.1:3000/" style="color: inherit;">http://127.0.0.1:3000/</a></u></pre>
 
 <div class="tip">
@@ -522,15 +522,76 @@ Or with Yarn:
 
 <pre data-copy>yarn deploy</pre>
 
-<div class="note">If you don’t have an Observable account yet, the first time you deploy you’ll be prompted to sign-up and create an account. It’s free for individuals and small teams, and we offer paid tiers for larger teams.</div>
+<div class="note">If you don’t have an Observable account yet, the first time you deploy you’ll be prompted to create one. Observable is free for individuals and small teams, and we offer paid tiers for larger teams.</div>
 
-When the deploy finishes, Framework will show your project’s URL on observablehq.cloud. And from there you can invite people to see your private project, or make your project private so anyone can see it.
+If this is your first time deploying to Observable, you’ll be prompted to create a new project. This determines where you project lives on Observable.
+
+<div class="tip">Your deploy configuration is saved to <code>docs<span class="wbr">/</span>.observablehq<span class="wbr">/</span>deploy.json</code>. When collaborating on a project, you should commit this file to git so your collaborators don’t have to separately configure deploy.</div>
+
+<pre data-copy="none">
+<span class="muted">┌</span>  <span class="invert"> observable deploy </span>
+<span class="muted">│</span>
+<span class="blue">●</span>  To configure deploy, we need to ask you a few questions.
+<span class="muted">│</span>
+<span class="green">◇</span>  Deploying to the <b>ACME Inc. (@acme)</b> workspace.
+<span class="muted">│</span>
+<span class="blue">◆</span>  No projects found. Do you want to create a new project?
+<span class="blue">│</span>  <span class="green">●</span> Yes, continue / <span class="muted">○ No, cancel</span>
+<span class="blue">└</span>
+</pre>
+
+<div class="note">If you have multiple workspaces on Observable, you’ll be prompted to chose a workspace before creating a project. And if you’ve previously deployed projects to your chosen workspace, you can chose to deploy to an existing project, overwriting its contents.</div>
+
+When creating a new project, you need to specify a <i>slug</i> which — together with your workspace username — determines the URL of your project. The slug is a short identifier consisting of lowercase letters, numbers, and hyphens. By default, Framework will suggest a slug based on your project’s title.
+
+<pre data-copy="none">
+<span class="muted">┌</span>  <span class="invert"> observable deploy </span>
+<span class="muted">│</span>
+<span class="blue">●</span>  To configure deploy, we need to ask you a few questions.
+<span class="muted">│</span>
+<span class="green">◇</span>  Which Observable workspace do you want to use?
+<span class="muted">│  ACME Inc. (@acme)</span>
+<span class="muted">│</span>
+<span class="green">◇</span>  Which project do you want to use?
+<span class="muted">│  Create a new project</span>
+<span class="muted">│</span>
+<span class="blue">◆</span>  What slug do you want to use?
+<span class="blue">│</span>  <span class="muted"><span class="invert">h</span>ello-framework</span>
+<span class="blue">└</span>
+</pre>
+
+<div class="tip">You can change the slug later, and Observable will automatically redirect to the latest URL.</div>
+
+Lastly, you can enter an optional deploy message. Deploy messages are shown on Observable and help you keep track of deploy history. For now, you can just leave this blank by hitting Enter.
+
+<pre data-copy="none">
+<span class="muted">┌</span>  <span class="invert"> observable deploy </span>
+<span class="muted">│</span>
+<span class="blue">●</span>  To configure deploy, we need to ask you a few questions.
+<span class="muted">│</span>
+<span class="green">◇</span>  Which Observable workspace do you want to use?
+<span class="muted">│  ACME Inc. (@acme)</span>
+<span class="muted">│</span>
+<span class="green">◇</span>  Which project do you want to use?
+<span class="muted">│  Create a new project</span>
+<span class="muted">│</span>
+<span class="green">◇</span>  What slug do you want to use?
+<span class="muted">│  hello-framework</span>
+<span class="muted">│</span>
+<span class="blue">◆</span>  What changed in this deploy?
+<span class="blue">│</span>  <span class="muted"><span class="invert">E</span>nter a deploy message (optional)</span>
+<span class="blue">└</span>
+</pre>
+
+<div class="tip">Deploy messages can be set using <code>yarn deploy <nobr>--message</nobr></code>. This is especially useful for continuous deployment from a git repository: the message can include the SHA, author, and message of the latest commit.</div>
+
+When deploy completes, Framework will show your project’s URL on observablehq.cloud. From there you can invite people to your private workspace to see your project, or make your project public so anyone can see it.
 
 ### Self hosting
 
-Of course, you don’t have to deploy to Observable — Framework projects are simply static sites, so you can host them anywhere. For example, if you’re visualizing sensitive or proprietary data, you can self-host projects and keep your data and analysis entirely within your own network.
+Of course, you don’t have to deploy to Observable — Framework projects are simply static sites, so you can host them anywhere!
 
-To build your static site, run:
+To build your static site with npm, run:
 
 <pre data-copy>npm run build</pre>
 
@@ -538,7 +599,7 @@ Or with Yarn:
 
 <pre data-copy>yarn build</pre>
 
-This generates the `dist` directory; you can then copy this directory to your static site server or preferred hosting service. To preview your built site locally, you can use a local static HTTP server such as [http-server](https://github.com/http-party/http-server):
+The <code>build</code> command generates the `dist` directory; you can then copy this directory to your static site server or preferred hosting service. To preview your built site locally, you can use a local static HTTP server such as [http-server](https://github.com/http-party/http-server):
 
 <pre data-copy>npx http-server dist</pre>
 
