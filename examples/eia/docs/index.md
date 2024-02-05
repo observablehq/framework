@@ -179,7 +179,7 @@ const hoursAgo = view(hoursAgoInput);
     <div>
       ${resize(renderLegend)}
       ${resize(renderMap)}
-      <div style="padding-top: 1em;">${hoursAgoInput}</div>
+      <div style="padding-left: 2em;">${hoursAgoInput}</div>
     </div>
     <footer id="observablehq-footer" style="position: absolute; bottom: 0em;">
       Data: US Energy Information Administration. Locations are representative.
