@@ -180,12 +180,15 @@ const hoursAgo = view(hoursAgoInput);
     <h2>Change in demand by balancing authority</h2>
     <h3>Percent change in electricity demand from previous hour</h3>
     <h3>Most recent hourly data: ${dateTimeFormat(hours[hoursAgo])}</h3>
-    ${resize((width) => html`<div>${renderLegend(width)}${renderMap(width)}</div>`)}
+    <div>
+      ${resize(renderLegend)}
+      ${resize(renderMap)}
+    </div>
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
     <h2>Top balancing authorities by demand, latest hour (GWh)</h2>
     <h3>${dateTimeFormat(timeParse(baLatestHourlyDemandLower48[0].period))}</h3>
-    ${resize((width, height) => renderTop5(width, height))}
+    ${resize(renderTop5)}
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
     <h2>US electricity generation, demand, and demand forecast (GWh)</h2>
@@ -193,7 +196,7 @@ const hoursAgo = view(hoursAgoInput);
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
     <h2>Neighboring country interchange (GWh)</h2>
-    ${resize((width, height) => countryInterchangeChart(width, height))}
+    ${resize(countryInterchangeChart)}
   </div>
 </div>
 
@@ -218,34 +221,34 @@ Some code for EIA data access and wrangling is reused from Observable notebooks 
 
 ```js
 // Map legend
-function renderLegend() {
-Plot.plot({
-  width: Math.min(width - 30, 400),
-  height: 42,
-  y: { axis: null },
-  marks: [
-    Plot.raster({
-      y1: 0,
-      y2: 1,
-      x1: -.19,
-      x2: .19,
-      fill: (x, y) => color.apply(x)
-    }),
-    Plot.ruleX([-.15, 0, .15], { insetBottom: -5 }),
-    Plot.axisX([-.15, 0, .15], { tickFormat: d3.format("+.0%"), tickSize: 0 }),
-    Plot.dot(["Generating only", "Unavailable"], {
-      x: [.23, .40],
-      r: 5,
-      dx: -8,
-      fill: [colorGenerating, colorUnavailable],
-      stroke: "grey"
-    }),
-    Plot.text(["Generating only", "Unavailable"], {
-      x: [.23, .40],
-      textAnchor: "start"
-    })
-  ]
-});
+function renderLegend(width) {
+  return Plot.plot({
+    width: Math.min(width - 30, 400),
+    height: 42,
+    y: { axis: null },
+    marks: [
+      Plot.raster({
+        y1: 0,
+        y2: 1,
+        x1: -.19,
+        x2: .19,
+        fill: (x, y) => color.apply(x)
+      }),
+      Plot.ruleX([-.15, 0, .15], { insetBottom: -5 }),
+      Plot.axisX([-.15, 0, .15], { tickFormat: d3.format("+.0%"), tickSize: 0 }),
+      Plot.dot(["Generating only", "Unavailable"], {
+        x: [.23, .40],
+        r: 5,
+        dx: -8,
+        fill: [colorGenerating, colorUnavailable],
+        stroke: "grey"
+      }),
+      Plot.text(["Generating only", "Unavailable"], {
+        x: [.23, .40],
+        textAnchor: "start"
+      })
+    ]
+  });
 }
 
 // Map
