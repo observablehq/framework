@@ -43,6 +43,7 @@ describe("build", async () => {
       if (addPublic) {
         const publicDir = join(outputDir, "_observablehq");
         for (const file of findFiles(publicDir)) {
+          if (file.endsWith("minisearch.json")) continue;
           await (await open(join(publicDir, file), "w")).close();
         }
       }
