@@ -21,11 +21,13 @@ input.addEventListener("input", (event) => {
     return;
   }
   container.parentElement.classList.add("observablehq-search-results");
-  const results = index.search(value, {boost: {title: 4}, fuzzy: 0.15, prefix: true});
+  const results = index.search(value, {boost: {title: 4}, fuzzy: 0.15, prefix: true}).slice(0, 11);
   r.innerHTML =
     results.length === 0
       ? "<summary>no results</summary>"
-      : `<details open><summary>${results.length} page${results.length === 1 ? "" : "s"}</summary>
+      : `<details open><summary>${results.length === 11 ? "&gt; 10" : results.length} page${
+          results.length === 1 ? "" : "s"
+        }</summary>
       <ol>${results
         .map(({id, title, score}) => {
           score = Math.min(6, Math.round(1 + 0.6 * score));
