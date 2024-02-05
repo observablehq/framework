@@ -11,10 +11,10 @@ const countryInterchangeSeries = FileAttachment("data/country-interchange.csv").
 // US overall demand, generation, forecast
 const usOverview = FileAttachment("data/us-demand.csv").csv({typed: true});
 
-// Energy by fuel type: 
+// Energy by fuel type:
 const fuelType = FileAttachment("data/eia-data/fuel-type.csv").csv({typed: true});
 
-// Subregion hourly demand: 
+// Subregion hourly demand:
 const subregionDemand = FileAttachment("data/eia-data/subregion-hourly.csv").csv({typed: true});
 ```
 
@@ -55,7 +55,7 @@ const eiaConnRef = await FileAttachment("data/eia-connections-reference.csv").cs
 const eiaBARef = await FileAttachment("data/eia-bia-reference.csv").csv({typed: true});
 ```
 
-```js 
+```js
 // Generating only BAs
 const genOnlyBA = eiaBARef.filter(d => d["Generation Only BA"] == "Yes").map(d => d["BA Code"]);
 ```
@@ -98,27 +98,21 @@ const baHourlyChange = d3.rollup(baHourlyDemand, d => ((d[0].value - d[1].value)
 ```
 
 ```js
-// Map longitudes to BA abbreviations
-const pointsMapLon = new Map(eiaPoints.map(d => [d.id, d.lon]));
-
-// Map latitudes to BA abbreviations
-const pointsMapLat = new Map(eiaPoints.map(d => [d.id, d.lat]));
+// Map BA abbreviations to locations
+const locations = new Map(eiaPoints.map(d => [d.id, [d.lon, d.lat]]));
 
 // BA interchange spatial endpoints
-const baInterchangeSp = baInterchange.map(d => ({...d, lat1: pointsMapLat.get(d["fromba"]), lon1: pointsMapLon.get(d["fromba"]), lat2: pointsMapLat.get(d["toba"]), lon2: pointsMapLon.get(d["toba"])}));
+const baInterchangeSp = baInterchange.map(d => ({...d, location1: locations.get(d["fromba"]), location2: locations.get(d["toba"])}));
 ```
 
 ```js
 // Gets lat/lon endpoints between balancing authorities
 const eiaConnRefSpatial = eiaConnRef.filter(d => d["Active Connection"] == "Yes").
-map(
-    d => ({connection: d["BA Code"]+"-"+d["Directly Interconnected BA Code"],
-    lat1: pointsMapLat.get(d["BA Code"]), 
-    lon1: pointsMapLon.get(d["BA Code"]), 
-    lat2: pointsMapLat.get(d["Directly Interconnected BA Code"]), 
-    lon2: pointsMapLon.get(d["Directly Interconnected BA Code"])
-    })
-    )
+map((d) => ({
+  connection: `${d["BA Code"]}-${d["Directly Interconnected BA Code"]}`,
+  location1: locations.get(d["BA Code"]),
+  location2: locations.get(d["Directly Interconnected BA Code"])
+}));
 ```
 
 ```js
@@ -131,81 +125,148 @@ const timeParse = d3.utcParse("%Y-%m-%dT%H");
 const recentHour = timeParse(baHourly.filter(d => d.type == "D")[0].period);
 ```
 
+```js
+const color = Plot.scale({
+  color: {
+    type: "linear",
+    domain: [-1, -.1501, -.15, 0, .15, .1501, 1],
+    range: ["darkblue", "darkblue", "steelblue", "white", "orange", "darkorange", "darkorange"]
+  }
+});
+const colorGenerating = "#efb118";
+const colorUnavailable = "gray";
+```
 
 <div class="grid grid-cols-4" style="grid-auto-rows: 180px;">
   <div class="card grid-colspan-2 grid-rowspan-3">
     <h2>Change in demand by balancing authority</h2>
     <h3>Percent change in electricity demand from previous hour</h3>
     <h3>Most recent hourly data: ${recentHour.toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${recentHour.toLocaleDateString()}</h3>
-    ${resize((width, height) => Plot.plot({
-        width,
-        height: height - 120,
-        caption: "Data: US Energy Information Administration. Locations are representative.",
-        color: {domain: [-15, 15], range: ["#4269d0","#4269d0", "white", "#ff725c","#ff725c"], type: "diverging", pivot: 0, legend: true, label: "Change in demand (%) from previous hour" },
-        projection: "albers",
-        style: "overflow: visible",
-        r: { domain: d3.extent(eiaPoints, (d) => d.radius), range: [5, 30] },
-        marks: [
-            Plot.geo(nation, {stroke: "white", fill: "#6D6D6D", opacity: 0.3}),Plot.geo(statemesh, {stroke: "#6D6D6D", opacity: 0.3}),
-            Plot.dot([1], {y: Plot.identity, r: 5, fill: "#efb118", stroke: "gray", strokeWidth: 1, frameAnchor: "left", dy: -27, dx: 280}),
-            Plot.dot([1], {y: Plot.identity, r: 5, fill: "#6d6d6d", stroke: "gray", strokeWidth: 1, frameAnchor: "left", dy: -27, dx: 380}),
-            Plot.text(["Generating only"], {y: Plot.identity, dx: 290, dy: -25, frameAnchor: "left"}),
-            Plot.text(["Unavailable"], {y: Plot.identity, dx: 390, dy: -25, frameAnchor: "left"}),
-            Plot.arrow(eiaConnRefSpatial, {x1: "lon1", x2: "lon2", y1: "lat1", y2: "lat2", stroke: "gray", strokeWidth: 0.7, headLength: 0}),
-            Plot.dot(eiaPoints, { 
-                x: "lon",
-                y: "lat",
-                r: "radius",
-                stroke: "gray",
-                strokeWidth: 1,
-                filter: (d) => isNaN(baHourlyChange.get(d.name)),
-                fill: "#6D6D6D"
-            }),
-            Plot.dot(eiaPoints, {
-                filter: d => genOnlyBA.includes(d.id),
-                x: "lon",
-                y: "lat",
-                r: "radius",
-                fill: "#efb118",
-                stroke: "gray",
-                strokeWidth: 1
-            }),
-            Plot.dot(eiaPoints, {
-                x: "lon",
-                y: "lat",
-                r: "radius",
-                stroke: "gray",
-                strokeWidth: 1,
-                filter: (d) => !isNaN(baHourlyChange.get(d.name)),
-                fill: (d) => baHourlyChange.get(d.name)
-            }),
-            Plot.text(eiaPoints, {
-                x: "lon",
-                y: "lat",
-                text: (d) => (d.radius > 10000 ? d.id : null),
-                fontWeight: 800,
-                fill: "black"
-            }),
-            Plot.tip(eiaPoints,
-      Plot.pointer({
+  ${resize((width, height) => html`<div>${
+Plot.plot({
+  width: Math.min(width - 30, 400),
+  height: 42,
+  y: { axis: null },
+  marks: [
+    Plot.raster({
+      y1: 0,
+      y2: 1,
+      x1: -.19,
+      x2: .19,
+      fill: (x, y) => color.apply(x)
+    }),
+    Plot.ruleX([-.15, 0, .15], { insetBottom: -5 }),
+    Plot.axisX([-.15, 0, .15], { tickFormat: d3.format("+.0%"), tickSize: 0 }),
+    Plot.dot(["Generating only", "Unavailable"], {
+      x: [.23, .40],
+      r: 5,
+      dx: -8,
+      fill: [colorGenerating, colorUnavailable],
+      stroke: "grey"
+    }),
+    Plot.text(["Generating only", "Unavailable"], {
+      x: [.23, .40],
+      textAnchor: "start"
+    })
+  ]
+})}${
+Plot.plot({
+    width: Math.min(width, 620),
+    height: Math.min(width, 620) * 0.7,
+    caption:
+      "Data: US Energy Information Administration. Locations are representative.",
+    color: {
+      ...color,
+      transform: (d) => d / 100,
+      label: "Change in demand (%) from previous hour"
+    },
+    projection: {
+      type: "albers",
+      insetTop: 15,
+    },
+    r: {
+      domain: d3.extent(eiaPoints, (d) => d.radius),
+      range: [4, 30]
+    },
+    marks: [
+      Plot.geo(nation, { fill: "currentColor", fillOpacity: 0.1,  stroke: "var(--theme-background-alt)" }),
+      Plot.geo(statemesh, { stroke: "var(--theme-background-alt)", strokeWidth: 0.8}),
+      Plot.arrow(eiaConnRefSpatial, {
+        filter: (d) => d.location1[0] > d.location2[0],
+        x1: (d) => d.location1[0],
+        y1: (d) => d.location1[1],
+        x2: (d) => d.location2[0],
+        y2: (d) => d.location2[1],
+        stroke: "currentColor",
+        strokeWidth: 0.5,
+        opacity: 0.7,
+        bend: 7,
+        headLength: 0
+      }),
+      Plot.dot(eiaPoints, {
         x: "lon",
         y: "lat",
-        title: (d) =>
-          `${d.name} (${d.id})\nChange from previous hour: ${
-            isNaN(baHourlyChange.get(d.name))
-              ? "Unavailable"
-              : baHourlyChange.get(d.name).toFixed(1) + "%"
-          }\nLatest hourly demand: ${
-            isNaN(baHourlyLatest.get(d.name))
-              ? "Unavailable"
-              : (baHourlyLatest.get(d.name) / 1000).toFixed(2)+" GWh"
-          }`,
-      })
-    )
-  ]
-}))
-    }
-  </div>
+        r: "radius",
+        stroke: "gray",
+        strokeWidth: 1,
+        filter: (d) => isNaN(baHourlyChange.get(d.name)) && !(d.region_id === "MEX" || d.region_id === "CAN"),
+        fill: "#6D6D6D"
+      }),
+      Plot.dot(eiaPoints, {
+        x: "lon",
+        y: "lat",
+        r: 4,
+        symbol: "square",
+        stroke: "gray",
+        strokeWidth: 1,
+        filter: (d) => d.region_id === "MEX" || d.region_id === "CAN",
+        fill: "#6D6D6D"
+      }),
+      Plot.dot(eiaPoints, {
+        filter: (d) => genOnlyBA.includes(d.id),
+        x: "lon",
+        y: "lat",
+        r: "radius",
+        fill: colorGenerating,
+        stroke: "gray",
+        strokeWidth: 1
+      }),
+      Plot.dot(eiaPoints, {
+        x: "lon",
+        y: "lat",
+        r: "radius",
+        stroke: colorUnavailable,
+        strokeWidth: 1,
+        filter: (d) => !isNaN(baHourlyChange.get(d.name)),
+        fill: (d) => baHourlyChange.get(d.name)
+      }),
+      Plot.text(eiaPoints, {
+        x: "lon",
+        y: "lat",
+        text: (d) => (d.radius > 10000 ? d.id : null),
+        fontWeight: 800,
+        fill: "black"
+      }),
+      Plot.tip(
+        eiaPoints,
+        Plot.pointer({
+          x: "lon",
+          y: "lat",
+          title: (d) =>
+            `${d.name} (${d.id})\nChange from previous hour: ${
+              isNaN(baHourlyChange.get(d.name))
+                ? "Unavailable"
+                : baHourlyChange.get(d.name).toFixed(1) + "%"
+            }\nLatest hourly demand: ${
+              isNaN(baHourlyLatest.get(d.name))
+                ? "Unavailable"
+                : (baHourlyLatest.get(d.name) / 1000).toFixed(2) + " GWh"
+            }`
+        })
+      )
+    ]
+  })}</div>`
+)}</div>
   <div class="card grid-colspan-2 grid-rowspan-1">
   <h2>Top balancing authorities by demand, latest hour (GWh)</h2>
   <h3>${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleTimeString('en-us',{timeZoneName:'short'})} on ${timeParse(baLatestHourlyDemandLower48[0].period).toLocaleDateString() }</h3>
@@ -278,6 +339,6 @@ const recentHour = timeParse(baHourly.filter(d => d.type == "D")[0].period);
   </div>
 -->
 
-This page reenvisions parts of the US Energy Information Administration's [Hourly Electric Grid Monitor]((https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48)). Visit [About the EIA-930 data](https://www.eia.gov/electricity/gridmonitor/about) to learn more about data collection and quality, the US electric grid, and balancing authorities responsible for nationwide electricity interchange. 
+This page reenvisions parts of the US Energy Information Administration's [Hourly Electric Grid Monitor](<(https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48)>). Visit [About the EIA-930 data](https://www.eia.gov/electricity/gridmonitor/about) to learn more about data collection and quality, the US electric grid, and balancing authorities responsible for nationwide electricity interchange.
 
-Some code for EIA data access and wrangling is reused from Observable notebooks  by Ian Johnson. Thank you Ian!
+Some code for EIA data access and wrangling is reused from Observable notebooks by Ian Johnson. Thank you Ian!
