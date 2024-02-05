@@ -1,5 +1,5 @@
-import {readFile} from "fs/promises";
-import {basename, join} from "path";
+import {readFile} from "node:fs/promises";
+import {basename, join} from "node:path";
 import matter from "gray-matter";
 import MiniSearch from "minisearch";
 import {visitMarkdownFiles} from "../src/files.js"; // TODO proper load
