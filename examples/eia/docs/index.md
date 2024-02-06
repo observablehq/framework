@@ -351,11 +351,14 @@ function usGenDemandForecast(width, height) {
     height: height - 50,
     y: {label: null},
     x: {type: "time"},
-    color: {legend: true, domain: ["Day-ahead demand forecast", "Demand", "Net generation"],
-    range: ["#97bbf5", "#4269d0", "#efb118"]},
+    color: {
+      legend: true, 
+      domain: ["Day-ahead demand forecast", "Demand", "Net generation"],
+      range: ["#6cc5b0", "#ff8ab7", "#a463f2"]
+    },
     grid: true,
     marks: [
-      Plot.line(usDemandGenForecast, {x: "date", y: d => d.value / 1000, stroke: "name", strokeWidth: 2, tip: true})
+      Plot.line(usDemandGenForecast, {x: "date", y: d => d.value / 1000, stroke: "name", strokeWidth: 1.2, tip: true})
     ]
 });
 }
