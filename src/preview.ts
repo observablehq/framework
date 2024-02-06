@@ -7,7 +7,6 @@ import type {IncomingMessage, RequestListener, Server, ServerResponse} from "nod
 import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
 import {difference} from "d3-array";
-import open from "open";
 import send from "send";
 import {type WebSocket, WebSocketServer} from "ws";
 import {version} from "../package.json";
@@ -21,6 +20,7 @@ import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {getImplicitSpecifiers, getImplicitStylesheets} from "./libraries.js";
 import {diffMarkdown, parseMarkdown} from "./markdown.js";
 import type {ParseResult} from "./markdown.js";
+import {openBrowser} from "./openBrowser.js";
 import {renderPreview, resolveStylesheet} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {Telemetry} from "./telemetry.js";
@@ -79,7 +79,7 @@ export class PreviewServer {
       console.log(`${faint("↳")} ${link(url)}`);
       console.log("");
     }
-    open(url);
+    openBrowser(url);
     return new PreviewServer({server, verbose, ...options});
   }
 
