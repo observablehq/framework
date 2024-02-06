@@ -1,8 +1,22 @@
 ---
+toc: false
 theme: [air, near-midnight, wide]
 ---
 
 # U.S. electricity grid
+
+```js
+import {
+  countryInterchangeChart,
+  top5BalancingAuthoritiesChart,
+  usGenDemandForecastChart
+} from "./components/charts.js";
+
+import {
+  balancingAuthoritiesLegend,
+  balancingAuthoritiesMap,
+} from "./components/map.js";
+```
 
 ```js
 // International electricity interchange data:
@@ -171,8 +185,17 @@ const relativeDay = () => currentHour.getDate() === startHour.getDate() ? "Today
           <div style="padding-left: 0.5em;">now</div>
         </div>
       </div>
-      ${resize(renderMap)}
-      ${resize(renderLegend)}
+      ${resize((width) => balancingAuthoritiesMap({
+        baHourlyChange,
+        baHourlyLatest,
+        eiaConnRefSpatial,
+        eiaPoints,
+        genOnlyBA,
+        nation,
+        statemesh,
+        width
+      }))}
+      ${resize((width) => balancingAuthoritiesLegend(width))}
     </div>
     <footer id="observablehq-footer" style="position: absolute; bottom: 0em;">
       Balancing authority location and size are representative.
@@ -181,15 +204,15 @@ const relativeDay = () => currentHour.getDate() === startHour.getDate() ? "Today
   <div class="card grid-colspan-2 grid-rowspan-1">
     <h2>Top balancing authorities by demand, latest hour (GWh)</h2>
     <h3>${dateTimeFormat(timeParse(baLatestHourlyDemandLower48[0].period))}</h3>
-    ${resize(renderTop5)}
+    ${resize((width, height) => top5BalancingAuthoritiesChart(width, height, top5LatestDemand))}
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
     <h2>US electricity generation, demand, and demand forecast (GWh)</h2>
-    ${resize((width, height) => usGenDemandForecast(width, height))}
+    ${resize((width, height) => usGenDemandForecastChart(width, height, usDemandGenForecast))}
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
     <h2>Neighboring country interchange (GWh)</h2>
-    ${resize(countryInterchangeChart)}
+    ${resize((width, height) => countryInterchangeChart(width, height, usDemandGenForecast, countryInterchangeSeries))}
   </div>
 </div>
 
@@ -241,157 +264,6 @@ function renderLegend(width) {
         x: [.23, .40],
         textAnchor: "start"
       })
-    ]
-  });
-}
-
-// The map.
-function renderMap(width) {
-  return Plot.plot({
-    width: Math.min(width, 620),
-    height: Math.min(width, 620) * 0.6,
-    color: {
-      ...color,
-      transform: (d) => d / 100,
-      label: "Change in demand (%) from previous hour"
-    },
-    projection: {
-      type: "albers",
-      insetTop: 15,
-    },
-    r: {
-      domain: d3.extent(eiaPoints, (d) => d.radius),
-      range: [4, 30]
-    },
-    marks: [
-      Plot.geo(nation, { fill: "currentColor", fillOpacity: 0.1,  stroke: "var(--theme-background-alt)" }),
-      Plot.geo(statemesh, { stroke: "var(--theme-background-alt)", strokeWidth: 0.8}),
-      Plot.arrow(eiaConnRefSpatial, {
-        filter: (d) => d.location1[0] > d.location2[0],
-        x1: (d) => d.location1[0],
-        y1: (d) => d.location1[1],
-        x2: (d) => d.location2[0],
-        y2: (d) => d.location2[1],
-        stroke: "currentColor",
-        strokeWidth: 0.5,
-        opacity: 0.7,
-        bend: 7,
-        headLength: 0
-      }),
-      Plot.dot(eiaPoints, {
-        x: "lon",
-        y: "lat",
-        r: "radius",
-        stroke: "gray",
-        strokeWidth: 1,
-        filter: (d) => isNaN(baHourlyChange.get(d.name)) && !(d.region_id === "MEX" || d.region_id === "CAN"),
-        fill: "#6D6D6D"
-      }),
-      Plot.dot(eiaPoints, {
-        x: "lon",
-        y: "lat",
-        r: 4,
-        symbol: "square",
-        stroke: "gray",
-        strokeWidth: 1,
-        filter: (d) => d.region_id === "MEX" || d.region_id === "CAN",
-        fill: "#6D6D6D"
-      }),
-      Plot.dot(eiaPoints, {
-        filter: (d) => genOnlyBA.includes(d.id),
-        x: "lon",
-        y: "lat",
-        r: "radius",
-        fill: colorGenerating,
-        stroke: "gray",
-        strokeWidth: 1
-      }),
-      Plot.dot(eiaPoints, {
-        x: "lon",
-        y: "lat",
-        r: "radius",
-        stroke: colorUnavailable,
-        strokeWidth: 1,
-        filter: (d) => !isNaN(baHourlyChange.get(d.name)),
-        fill: (d) => baHourlyChange.get(d.name)
-      }),
-      Plot.text(eiaPoints, {
-        x: "lon",
-        y: "lat",
-        text: (d) => (d.radius > 10000 ? d.id : null),
-        fontWeight: 800,
-        fill: "black"
-      }),
-      Plot.tip(
-        eiaPoints,
-        Plot.pointer({
-          x: "lon",
-          y: "lat",
-          title: (d) => d.region_id === "MEX" || d.region_id === "CAN" ? d.name :
-            `${d.name} (${d.id})\nChange from previous hour: ${
-              isNaN(baHourlyChange.get(d.name))
-                ? "Unavailable"
-                : baHourlyChange.get(d.name).toFixed(1) + "%"
-            }\nLatest hourly demand: ${
-              isNaN(baHourlyLatest.get(d.name))
-                ? "Unavailable"
-                : (baHourlyLatest.get(d.name) / 1000).toFixed(2) + " GWh"
-            }`
-        })
-      )
-    ]
-  });
-}
-
-// Top 5 balancing authorities chart
-function renderTop5(width, height) {
-  return Plot.plot({
-    marginTop: 0,
-    marginLeft: 250,
-    height: height - 20,
-    width,
-    y: {label: null},
-    x: {label: null, grid: true},
-    marks: [
-      Plot.barX(top5LatestDemand, {y: "name", x: d => d.value / 1000, fill: "gray", sort: {y: "x", reverse: true, limit: 10}}),
-      Plot.ruleX([0])
-    ]
-  });
-}
-
-// US electricity demand, generation and forecasting chart
-function usGenDemandForecast(width, height) {
-  return Plot.plot({
-    width,
-    marginTop:0,
-    height: height - 50,
-    y: {label: null},
-    x: {type: "time"},
-    color: {
-      legend: true, 
-      domain: ["Day-ahead demand forecast", "Demand", "Net generation"],
-      range: ["#6cc5b0", "#ff8ab7", "#a463f2"]
-    },
-    grid: true,
-    marks: [
-      Plot.line(usDemandGenForecast, {x: "date", y: d => d.value / 1000, stroke: "name", strokeWidth: 1.2, tip: true})
-    ]
-});
-}
-
-// Canada & Mexico interchange area chart
-function countryInterchangeChart(width, height) {
-  return Plot.plot({
-    width,
-    marginTop: 0,
-    height: height - 50,
-    color: { legend: true, range: ["#B6B5B1", "gray"]},
-    grid: true,
-    y: {label: null},
-    x: {type: "time", domain: d3.extent(usDemandGenForecast.map(d => d.date))},
-    marks: [
-      Plot.areaY(countryInterchangeSeries, {x: "date", y: d => d.value / 1000, curve: "step", fill: "id", tip: true}),
-      Plot.ruleY([0])
     ]
   });
 }
