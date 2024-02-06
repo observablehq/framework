@@ -10,6 +10,7 @@ export const html = () => import("npm:htl").then((htl) => htl.html);
 export const svg = () => import("npm:htl").then((htl) => htl.svg);
 export const Inputs = () => import("npm:@observablehq/inputs");
 export const L = () => import("npm:leaflet");
+export const mapboxgl = () => import("npm:mapbox-gl").then((module) => module.default);
 export const mermaid = () => import("observablehq:stdlib/mermaid").then((mermaid) => mermaid.default);
 export const Plot = () => import("npm:@observablehq/plot");
 export const SQLite = () => import("observablehq:stdlib/sqlite").then((sqlite) => sqlite.default);

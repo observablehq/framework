@@ -1,6 +1,6 @@
 {
-  "name": "@observablehq/cli",
-  "license": "UNLICENSED",
+  "name": "@observablehq/framework",
+  "license": "ISC",
   "version": "0.0.50",
   "type": "module",
   "publishConfig": {
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/observablehq/cli.git"
+    "url": "https://github.com/observablehq/framework.git"
   },
   "files": [
     "bin/**/*.js",
@@ -22,17 +22,17 @@
     "observable": "bin/observable-init.js"
   },
   "scripts": {
-    "dev": "yarn rebuild-themes && tsx watch ./bin/observable.ts preview",
-    "build": "yarn rebuild-themes && rm -rf dist && tsx ./bin/observable.ts build",
-    "deploy": "tsx ./bin/observable.ts deploy",
-    "rebuild-themes": "tsx docs/layout/themes/data/generate-themes.ts",
+    "dev": "rm -f docs/themes.md docs/theme/*.md && (tsx watch docs/theme/generate-themes.ts & tsx watch --no-warnings=ExperimentalWarning ./bin/observable.ts preview)",
+    "build": "yarn rebuild-themes && rm -rf dist && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts build",
+    "deploy": "yarn rebuild-themes && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts deploy",
+    "rebuild-themes": "rm -f docs/themes.md docs/theme/*.md && tsx docs/theme/generate-themes.ts",
     "test": "yarn test:mocha && yarn test:tsc && yarn test:lint && yarn test:prettier",
     "test:coverage": "c8 yarn test:mocha",
     "test:mocha": "rm -rf test/.observablehq/cache test/input/build/*/.observablehq/cache && OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles tsx --no-warnings=ExperimentalWarning ./node_modules/.bin/mocha 'test/**/*-test.*'",
     "test:lint": "eslint src test",
     "test:prettier": "prettier --check src test",
     "test:tsc": "tsc --noEmit",
-    "observable": "tsx ./bin/observable.ts"
+    "observable": "tsx --no-warnings=ExperimentalWarning ./bin/observable.ts"
   },
   "c8": {
     "all": true,
@@ -46,6 +46,7 @@
     ]
   },
   "dependencies": {
+    "@clack/prompts": "^0.7.0",
     "@observablehq/inputs": "^0.10.6",
     "@observablehq/runtime": "^5.9.4",
     "@rollup/plugin-node-resolve": "^15.2.3",
@@ -66,12 +67,12 @@
     "markdown-it-anchor": "^8.6.7",
     "mime": "^3.0.0",
     "open": "^9.1.0",
-    "prompts": "^2.4.2",
     "rollup": "^4.6.0",
     "rollup-plugin-esbuild": "^6.1.0",
     "send": "^0.18.0",
     "tar-stream": "^3.1.6",
     "tsx": "~4.2.1",
+    "untildify": "^5.0.0",
     "ws": "^8.14.2"
   },
   "devDependencies": {

@@ -77,12 +77,15 @@ h6 code {
   font-size: 90%;
 }
 
+pre {
+  line-height: 1.5;
+}
+
 pre,
 code,
 tt {
   font-family: var(--monospace);
   font-size: 14px;
-  line-height: 1.5;
 }
 
 img {

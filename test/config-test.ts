@@ -19,6 +19,9 @@ describe("readConfig(undefined, root)", () => {
       title: undefined,
       toc: {label: "On this page", show: true},
       pager: true,
+      scripts: [],
+      head: "",
+      header: "",
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-11T01:02:03">Jan 11, 2024</a>.',
       deploy: {
@@ -36,6 +39,9 @@ describe("readConfig(undefined, root)", () => {
       title: undefined,
       toc: {label: "Contents", show: true},
       pager: true,
+      scripts: [],
+      head: "",
+      header: "",
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-11T01:02:03">Jan 11, 2024</a>.',
       deploy: null

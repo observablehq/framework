@@ -35,6 +35,18 @@ describe("hangingIndentLog", () => {
     assert.equal(indent.length, 0);
     assert.deepEqual(output, `Ishmael: ${text}`);
   });
+
+  it("handles internal newlines", () => {
+    const effects = noopEffects;
+    const {output} = hangingIndentLog(effects, "newline", "hello\nworld");
+    assert.deepEqual(output, "newline hello\n        world");
+  });
+
+  it("handles words longer than the terminal width", () => {
+    const effects = {...noopEffects, outputColumns: 30};
+    const {output} = hangingIndentLog(effects, "long", "always 012345689012345689012345689012345689 make progress");
+    assert.deepEqual(output, "long always\n     012345689012345689012345689012345689\n     make progress");
+  });
 });
 
 const noopEffects: TtyEffects = {

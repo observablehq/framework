@@ -9,3 +9,11 @@ FileAttachment("file-top.csv")
 ```js
 FileAttachment("subsection/file-sub.csv")
 ```
+
+```js
+FileAttachment("observable logo.png")
+```
+
+![](observable%20logo%20small.png)
+
+
