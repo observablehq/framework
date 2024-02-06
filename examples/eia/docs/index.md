@@ -1,5 +1,5 @@
 ---
-theme: [cotton, ink]
+theme: [air, near-midnight, wide]
 ---
 
 # U.S. electricity grid
@@ -27,9 +27,9 @@ const usDemandGenForecast = usOverview.filter(d => d.name != "Total interchange"
 // Spatial data (country, states, BA locations)
 
 // US states
-const us = await FileAttachment("data/us-counties-10m.json").json();
-const nation = topojson.feature(us, us.objects.nation);
-const statemesh = topojson.mesh(us, us.objects.states, (a, b) => a !== b);
+const us = await FileAttachment("data/us-states.json").json();
+const nation = us.features.find(({id}) => id === "nation");
+const statemesh = us.features.find(({id}) => id === "statemesh");
 
 // Balancing authority representative locations
 const eiaPoints = await FileAttachment("data/eia-system-points.json").json().then(d => d[0].data);
@@ -55,8 +55,6 @@ const eiaBARef = await FileAttachment("data/eia-bia-reference.csv").csv({typed: 
 // Generating only BAs
 const genOnlyBA = eiaBARef.filter(d => d["Generation Only BA"] == "Yes").map(d => d["BA Code"]);
 ```
-
-<!-- TODO update to exclude regions -->
 
 ```js
 // Hourly demand for BAs, demand only & cleaned
@@ -125,28 +123,7 @@ const recentHour = timeParse(baHourly.filter(d => d.type == "D")[0].period);
 ```
 
 ```js
-// treemap data (sub-ba, ba, region, country)
-subregionDemand
-```
-
-```js
-eiaBARef
-```
-
-```js
 const baRegionMap = new Map(eiaBARef.map(d => [d['BA Code'], d['Region/Country Name']]));
-```
-
-```js
-baRegionMap
-```
-
-```js
-const treemapData = subregionDemand.map(d => ({...d, region: baRegionMap.get(d.parent), valueGwh: d.value / 1000})).filter(d => d.subba == "PGAE")
-```
-
-```js
-treemapData
 ```
 
 ```js
@@ -158,7 +135,7 @@ const color = Plot.scale({
     range: ["darkblue", "darkblue", "steelblue", "white", "orange", "darkorange", "darkorange"]
   }
 });
-const colorGenerating = "#efb118";
+const colorGenerating = "#88DCAD";
 const colorUnavailable = "gray";
 ```
 
@@ -175,14 +152,14 @@ const hoursAgo = view(hoursAgoInput);
   <div class="card grid-colspan-2 grid-rowspan-3" style="position: relative;">
     <h2>Change in demand by balancing authority</h2>
     <h3>Percent change in electricity demand from previous hour</h3>
-    <h3>Most recent hourly data: ${dateTimeFormat(hours[hoursAgo])}</h3>
+    <h3>Time: ${dateTimeFormat(hours[hoursAgo])}</h3>
     <div>
       ${resize(renderLegend)}
       ${resize(renderMap)}
       <div style="padding-left: 2em;">${hoursAgoInput}</div>
     </div>
     <footer id="observablehq-footer" style="position: absolute; bottom: 0em;">
-      Data: US Energy Information Administration. Locations are representative.
+      Balancing authority location and size are representative.
     </footer>
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
@@ -252,7 +229,7 @@ function renderLegend(width) {
   });
 }
 
-// Map
+// The map.
 function renderMap(width) {
   return Plot.plot({
     width: Math.min(width, 620),
@@ -334,7 +311,7 @@ function renderMap(width) {
         Plot.pointer({
           x: "lon",
           y: "lat",
-          title: (d) =>
+          title: (d) => d.region_id === "MEX" || d.region_id === "CAN" ? d.name :
             `${d.name} (${d.id})\nChange from previous hour: ${
               isNaN(baHourlyChange.get(d.name))
                 ? "Unavailable"
@@ -350,6 +327,7 @@ function renderMap(width) {
   });
 }
 
+// Top 5 balancing authorities chart
 function renderTop5(width, height) {
   return Plot.plot({
     marginTop: 0,
@@ -365,6 +343,7 @@ function renderTop5(width, height) {
   });
 }
 
+// US electricity demand, generation and forecasting chart
 function usGenDemandForecast(width, height) {
   return Plot.plot({
     width,
@@ -381,6 +360,7 @@ function usGenDemandForecast(width, height) {
 });
 }
 
+// Canada & Mexico interchange area chart
 function countryInterchangeChart(width, height) {
   return Plot.plot({
     width,
