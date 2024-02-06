@@ -142,19 +142,6 @@ const baRegionMap = new Map(eiaBARef.map(d => [d['BA Code'], d['Region/Country N
 ```
 
 ```js
-// Establish colors
-const color = Plot.scale({
-  color: {
-    type: "linear",
-    domain: [-1, -.1501, -.15, 0, .15, .1501, 1],
-    range: ["darkblue", "darkblue", "steelblue", "white", "orange", "darkorange", "darkorange"]
-  }
-});
-const colorGenerating = "#88DCAD";
-const colorUnavailable = "gray";
-```
-
-```js
 // Configure hours ago input
 const MS_IN_AN_HOUR = 1000 * 60 * 60;
 const hours = [...new Set(baHourlyDemand.map(d => d.period))].map(timeParse);
@@ -234,37 +221,3 @@ const relativeDay = () => currentHour.getDate() === startHour.getDate() ? "Today
 This page reenvisions parts of the US Energy Information Administration's [Hourly Electric Grid Monitor](<(https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48)>). Visit [About the EIA-930 data](https://www.eia.gov/electricity/gridmonitor/about) to learn more about data collection and quality, the US electric grid, and balancing authorities responsible for nationwide electricity interchange.
 
 Some code for EIA data access and wrangling is reused from Observable notebooks by Ian Johnson. Thank you Ian!
-
-```js
-// Map legend
-function renderLegend(width) {
-  return Plot.plot({
-    marginTop: 15,
-    width: Math.min(width - 30, 400),
-    height: 60,
-    y: { axis: null },
-    marks: [
-      Plot.raster({
-        y1: 0,
-        y2: 1,
-        x1: -.19,
-        x2: .19,
-        fill: (x, y) => color.apply(x)
-      }),
-      Plot.ruleX([-.15, 0, .15], { insetBottom: -5 }),
-      Plot.axisX([-.15, 0, .15], { tickFormat: d3.format("+.0%"), tickSize: 0 }),
-      Plot.dot(["Generating only", "Unavailable"], {
-        x: [.23, .40],
-        r: 5,
-        dx: -8,
-        fill: [colorGenerating, colorUnavailable],
-        stroke: "grey"
-      }),
-      Plot.text(["Generating only", "Unavailable"], {
-        x: [.23, .40],
-        textAnchor: "start"
-      })
-    ]
-  });
-}
-```
