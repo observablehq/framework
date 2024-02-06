@@ -355,7 +355,7 @@ describe("deploy", () => {
     }
   });
 
-  it("Prompts the user to log when they get a 401 response from the server", async () => {
+  it("Prompts the user to log in when they get a 401 response from the server", async () => {
     getCurrentObservableApi().handleGetCurrentUser({status: 401}).start();
     const effects = new MockDeployEffects({apiKey: invalidApiKey});
 
