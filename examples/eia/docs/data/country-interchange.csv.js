@@ -7,6 +7,7 @@ const end = timeDay.offset(timeHour(new Date()), 1)
 const start = timeHour(utcDay.offset(end, -7))
 const convertDate = timeFormat("%m%d%Y %H:%M:%S") // Convert dates into the format the EIA web API expects
 
+// Electricity exported (in GWh) from the lower 48 US states to Canada and Mexico
 const countryInterchangeUrl = `https://www.eia.gov/electricity/930-api/interchange/series_data?type[0]=TI&start=${convertDate(start)}&end=${convertDate(end)}&frequency=hourly&from_respondent[0]=US48&timezone=Eastern&limit=10000&offset=0`
 
 const tidySeries = (response, id, name) => {
@@ -21,10 +22,8 @@ const tidySeries = (response, id, name) => {
       return {
         id: s[id],
         name: s[name],
-        date: datetimeFormat(d) ? datetimeFormat(d) : dateFormat(d),
-        value: s.VALUES.DATA[i],
-        reported: s.VALUES.DATA_REPORTED[i],
-        imputed: s.VALUES.DATA_IMPUTED[i]
+        date: datetimeFormat(d) ?? dateFormat(d),
+        value: s.VALUES.DATA[i]
       }
     })
   })
