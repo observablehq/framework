@@ -7,6 +7,7 @@ import type {IncomingMessage, RequestListener, Server, ServerResponse} from "nod
 import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
 import {difference} from "d3-array";
+import open from "open";
 import send from "send";
 import {type WebSocket, WebSocketServer} from "ws";
 import {version} from "../package.json";
@@ -72,11 +73,13 @@ export class PreviewServer {
     } else {
       await new Promise<void>((resolve) => server.listen(port, hostname, resolve));
     }
+    const url = `http://${hostname}:${port}/`;
     if (verbose) {
       console.log(`${green(bold("Observable Framework"))} ${faint(`v${version}`)}`);
-      console.log(`${faint("↳")} ${link(`http://${hostname}:${port}/`)}`);
+      console.log(`${faint("↳")} ${link(url)}`);
       console.log("");
     }
+    open(url);
     return new PreviewServer({server, verbose, ...options});
   }
 
