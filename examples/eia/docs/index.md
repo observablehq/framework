@@ -27,9 +27,9 @@ const usDemandGenForecast = usOverview.filter(d => d.name != "Total interchange"
 // Spatial data (country, states, BA locations)
 
 // US states
-const us = await FileAttachment("data/us-counties-10m.json").json();
-const nation = topojson.feature(us, us.objects.nation);
-const statemesh = topojson.mesh(us, us.objects.states, (a, b) => a !== b);
+const us = await FileAttachment("data/us-states.json").json();
+const nation = us.features.find(({id}) => id === "nation");
+const statemesh = us.features.find(({id}) => id === "statemesh");
 
 // Balancing authority representative locations
 const eiaPoints = await FileAttachment("data/eia-system-points.json").json().then(d => d[0].data);
