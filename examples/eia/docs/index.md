@@ -115,6 +115,7 @@ const timeParse = d3.utcParse("%Y-%m-%dT%H");
 const dateFormat = date => date.toLocaleDateString();
 const timeFormat = date => date.toLocaleTimeString('en-us',{timeZoneName:'short'});
 const dateTimeFormat = date => `${timeFormat(date)} on ${dateFormat(date)}`;
+const hourFormat = d3.timeFormat("%H %p");
 ```
 
 ```js
@@ -141,22 +142,37 @@ const colorUnavailable = "gray";
 
 ```js
 // Configure hours ago input
+const MS_IN_AN_HOUR = 1000 * 60 * 60;
 const hours = [...new Set(baHourlyDemand.map(d => d.period))].map(timeParse);
 const [startHour, endHour] = d3.extent(hours);
-const hoursBackOfData = Math.ceil(Math.abs(endHour - startHour) / (1000 * 60 * 60)) - 1;
-const hoursAgoInput = Inputs.range([hoursBackOfData, 0], { label: "Hours ago", step: 1, value: 0 });
+const hoursBackOfData = Math.ceil(Math.abs(endHour - startHour) / (MS_IN_AN_HOUR)) - 1;
+const hoursAgoInput = Inputs.range([hoursBackOfData, 0], { step: 1, value: 0, width: 150 });
 const hoursAgo = view(hoursAgoInput);
 ```
 
-<div class="grid grid-cols-4" style="grid-auto-rows: 180px;">
+```js
+// Establish current hour and relative day
+const currentHour = new Date(startHour.getTime() - hoursAgo * MS_IN_AN_HOUR);
+const relativeDay = () => currentHour.getDate() === startHour.getDate() ? "Today" : "Yesterday";
+```
+
+<div class="grid grid-cols-4" style="grid-auto-rows: 190px;">
   <div class="card grid-colspan-2 grid-rowspan-3" style="position: relative;">
     <h2>Change in demand by balancing authority</h2>
     <h3>Percent change in electricity demand from previous hour</h3>
-    <h3>Time: ${dateTimeFormat(hours[hoursAgo])}</h3>
     <div>
-      ${resize(renderLegend)}
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <h1>${hourFormat(currentHour)}</h1>
+        <div>${relativeDay()}</div>
+        <div style="display: flex; align-items: center;">
+          <style>input[type="number"] { display: none; }</style>
+          <div>-${hoursBackOfData} hrs</div>
+          ${hoursAgoInput}
+          <div style="padding-left: 0.5em;">now</div>
+        </div>
+      </div>
       ${resize(renderMap)}
-      <div style="padding-left: 2em;">${hoursAgoInput}</div>
+      ${resize(renderLegend)}
     </div>
     <footer id="observablehq-footer" style="position: absolute; bottom: 0em;">
       Balancing authority location and size are representative.
