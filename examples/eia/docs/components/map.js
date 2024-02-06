@@ -1,5 +1,5 @@
-import { extent } from "npm:d3-array";
-import { format } from "npm:d3-format";
+import {extent} from "npm:d3-array";
+import {format} from "npm:d3-format";
 import * as Plot from "npm:@observablehq/plot";
 
 // Colors and scale
@@ -8,7 +8,7 @@ const colorUnavailable = "gray";
 const color = Plot.scale({
   color: {
     type: "linear",
-    domain: [-1, -.1501, -.15, 0, .15, .1501, 1],
+    domain: [-1, -0.1501, -0.15, 0, 0.15, 0.1501, 1],
     range: ["darkblue", "darkblue", "steelblue", "white", "orange", "darkorange", "darkorange"]
   }
 });
@@ -34,15 +34,15 @@ export function balancingAuthoritiesMap({
     },
     projection: {
       type: "albers",
-      insetTop: 15,
+      insetTop: 15
     },
     r: {
       domain: extent(eiaPoints, (d) => d.radius),
       range: [4, 30]
     },
     marks: [
-      Plot.geo(nation, { fill: "currentColor", fillOpacity: 0.1,  stroke: "var(--theme-background-alt)" }),
-      Plot.geo(statemesh, { stroke: "var(--theme-background-alt)", strokeWidth: 0.8}),
+      Plot.geo(nation, {fill: "currentColor", fillOpacity: 0.1, stroke: "var(--theme-background-alt)"}),
+      Plot.geo(statemesh, {stroke: "var(--theme-background-alt)", strokeWidth: 0.8}),
       Plot.arrow(eiaConnRefSpatial, {
         filter: (d) => d.location1[0] > d.location2[0],
         x1: (d) => d.location1[0],
@@ -104,16 +104,16 @@ export function balancingAuthoritiesMap({
         Plot.pointer({
           x: "lon",
           y: "lat",
-          title: (d) => d.region_id === "MEX" || d.region_id === "CAN" ? d.name :
-            `${d.name} (${d.id})\nChange from previous hour: ${
-              isNaN(baHourlyChange.get(d.name))
-                ? "Unavailable"
-                : baHourlyChange.get(d.name).toFixed(1) + "%"
-            }\nLatest hourly demand: ${
-              isNaN(baHourlyLatest.get(d.name))
-                ? "Unavailable"
-                : (baHourlyLatest.get(d.name) / 1000).toFixed(2) + " GWh"
-            }`
+          title: (d) =>
+            d.region_id === "MEX" || d.region_id === "CAN"
+              ? d.name
+              : `${d.name} (${d.id})\nChange from previous hour: ${
+                  isNaN(baHourlyChange.get(d.name)) ? "Unavailable" : baHourlyChange.get(d.name).toFixed(1) + "%"
+                }\nLatest hourly demand: ${
+                  isNaN(baHourlyLatest.get(d.name))
+                    ? "Unavailable"
+                    : (baHourlyLatest.get(d.name) / 1000).toFixed(2) + " GWh"
+                }`
         })
       )
     ]
@@ -126,26 +126,26 @@ export function balancingAuthoritiesLegend(width) {
     marginTop: 15,
     width: Math.min(width - 30, 400),
     height: 60,
-    y: { axis: null },
+    y: {axis: null},
     marks: [
       Plot.raster({
         y1: 0,
         y2: 1,
-        x1: -.19,
-        x2: .19,
+        x1: -0.19,
+        x2: 0.19,
         fill: (x, y) => color.apply(x)
       }),
-      Plot.ruleX([-.15, 0, .15], { insetBottom: -5 }),
-      Plot.axisX([-.15, 0, .15], { tickFormat: format("+.0%"), tickSize: 0 }),
+      Plot.ruleX([-0.15, 0, 0.15], {insetBottom: -5}),
+      Plot.axisX([-0.15, 0, 0.15], {tickFormat: format("+.0%"), tickSize: 0}),
       Plot.dot(["Generating only", "Unavailable"], {
-        x: [.23, .40],
+        x: [0.23, 0.4],
         r: 5,
         dx: -8,
         fill: [colorGenerating, colorUnavailable],
         stroke: "grey"
       }),
       Plot.text(["Generating only", "Unavailable"], {
-        x: [.23, .40],
+        x: [0.23, 0.4],
         textAnchor: "start"
       })
     ]
