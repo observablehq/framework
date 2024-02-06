@@ -90,7 +90,7 @@ const baLatestHourlyDemandLower48 = baHourlyDemand.filter(d => d.ba == "United S
 
 ```js
 // Percent change for most recent 2 hours of data by BA
-const baHourlyChange = d3.rollup(baHourlyDemand, d => ((d[hoursAgo].value - d[hoursAgo + 1].value) / d[hoursAgo].value) * 100, d => d["ba"] );
+const baHourlyChange = d3.rollup(baHourlyDemand, d => ((d[hoursAgo]?.value - d[hoursAgo + 1]?.value) / d[hoursAgo]?.value) * 100, d => d["ba"] );
 ```
 
 ```js
