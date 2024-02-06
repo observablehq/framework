@@ -1,6 +1,6 @@
 {
   "name": "@observablehq/framework",
-  "license": "UNLICENSED",
+  "license": "ISC",
   "version": "0.0.50",
   "type": "module",
   "publishConfig": {
