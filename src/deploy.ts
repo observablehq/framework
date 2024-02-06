@@ -101,7 +101,7 @@ export async function deploy({config, message}: DeployOptions, effects = default
   if (!currentUser) {
     const message =
       authError === "unauthenticated" || authError === null
-        ? "You must be logged in to the Observable Cloud to deploy. Do you want to do that now?"
+        ? "You must be logged in to Observable Cloud to deploy. Do you want to do that now?"
         : "Your authentication is invalid. Do you want to log in to Observable Cloud again?";
     const choice = await effects.clack.confirm({
       message,
