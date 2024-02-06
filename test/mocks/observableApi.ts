@@ -248,7 +248,15 @@ class ObservableApiMock {
     };
     this._handlers.push((pool) =>
       pool
-        .intercept({path: "/cli/auth/request", method: "POST"})
+        .intercept({
+          path: "/cli/auth/request",
+          method: "POST",
+          body: (body) => {
+            const data = JSON.parse(body);
+            return Array.isArray(data.scopes) && typeof data.deviceDescription === "string";
+          },
+          headers: headersMatcher({"User-Agent": /.+/})
+        })
         .reply(200, JSON.stringify(response), {headers: {"content-type": "application/json"}})
     );
     return this;
@@ -282,12 +290,13 @@ function authorizationHeader(valid: boolean) {
  *
  * If `expected` contains an "undefined" value, then it asserts that the header
  * is not present in the actual headers. */
-function headersMatcher(expected: Record<string, string>): (headers: Record<string, string>) => boolean {
+function headersMatcher(expected: Record<string, string | RegExp>): (headers: Record<string, string>) => boolean {
   const lowercaseExpected = Object.fromEntries(Object.entries(expected).map(([key, val]) => [key.toLowerCase(), val]));
   return (actual) => {
     const lowercaseActual = Object.fromEntries(Object.entries(actual).map(([key, val]) => [key.toLowerCase(), val]));
     for (const [key, expected] of Object.entries(lowercaseExpected)) {
-      if (lowercaseActual[key] !== expected) return false;
+      if (typeof expected === "string" && lowercaseActual[key] !== expected) return false;
+      if (expected instanceof RegExp && !lowercaseActual[key].match(expected)) return false;
     }
     return true;
   };

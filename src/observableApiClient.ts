@@ -158,11 +158,11 @@ export class ObservableApiClient {
     });
   }
 
-  async postAuthRequest(scopes: string[]): Promise<PostAuthRequestResponse> {
+  async postAuthRequest(options: {scopes: string[]; deviceDescription: string}): Promise<PostAuthRequestResponse> {
     return await this._fetch<PostAuthRequestResponse>(new URL("/cli/auth/request", this._apiOrigin), {
       method: "POST",
       headers: {"content-type": "application/json"},
-      body: JSON.stringify({scopes})
+      body: JSON.stringify(options)
     });
   }
 
