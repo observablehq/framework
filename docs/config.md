@@ -108,7 +108,16 @@ The project’s title. If specified, this text is used for the link to the home 
 
 ## sidebar
 
-Whether to show the sidebar. Defaults to true if **pages** is not empty.
+Whether to create and show the sidebar. One of:
+
+- **true** — create a sidebar
+- **false** — do not create a sidebar
+- **auto** — default, create a sidebar if **pages** is not empty.
+- **hidden** — create a hidden sidebar
+
+By default, the sidebar is hidden on smaller screens and displayed on larger screens. However, the user can choose to display or hide it with a button and shortcut key (meta-B), and this choice is respected during the [page session](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage).
+
+If the option is set to _hidden,_ the sidebar always starts up hidden, requiring a user action to display it.
 
 ## pages
 
@@ -122,6 +131,7 @@ export interface Page {
   path: string;
 }
 ```
+
 ```ts run=false
 export interface Section {
   name: string;

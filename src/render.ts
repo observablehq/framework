@@ -59,7 +59,7 @@ type RenderInternalOptions =
 
 async function render(parseResult: ParseResult, options: RenderOptions & RenderInternalOptions): Promise<string> {
   const {root, path, pages, title, preview} = options;
-  const sidebar = parseResult.data?.sidebar !== undefined ? Boolean(parseResult.data.sidebar) : options.sidebar;
+  const sidebar = maybeSidebar(parseResult.data?.sidebar ?? options.sidebar, pages);
   const toc = mergeToc(parseResult.data?.toc, options.toc);
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="/">` : ""}
@@ -90,7 +90,7 @@ import ${preview || parseResult.cells.length > 0 ? `{${preview ? "open, " : ""}d
 ${
   preview ? `\nopen({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
 }${parseResult.cells.map((cell) => `\n${renderDefineCell(cell)}`).join("")}`)}
-</script>${sidebar ? html`\n${await renderSidebar(title, pages, path)}` : ""}${
+</script>${sidebar ? html`\n${await renderSidebar(title, pages, path, sidebar)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(parseResult), toc.label)}` : ""
   }
 <div id="observablehq-center">${renderHeader(options, parseResult.data)}
@@ -100,8 +100,15 @@ ${html.unsafe(parseResult.html)}</main>${renderFooter(path, options, parseResult
 `);
 }
 
-async function renderSidebar(title = "Home", pages: (Page | Section)[], path: string): Promise<Html> {
-  return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
+async function renderSidebar(
+  title = "Home",
+  pages: (Page | Section)[],
+  path: string,
+  sidebar: true | "hidden"
+): Promise<Html> {
+  return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar"${
+    sidebar === "hidden" ? " data-hidden=1" : ""
+  }>
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
   <ol>
@@ -262,4 +269,16 @@ function renderPager(path: string, {prev, next}: PageLink): Html {
 
 function renderRel(path: string, page: Page, rel: "prev" | "next"): Html {
   return html`<a rel="${rel}" href="${relativeUrl(path, prettyPath(page.path))}"><span>${page.name}</span></a>`;
+}
+
+// Validates the specified required string against the allowed list of keywords.
+function keyword(input: any, name: string, allowed: string[]): string {
+  const i = `${input}`.toLowerCase();
+  if (!allowed.includes(i)) throw new Error(`invalid ${name}: ${input}`);
+  return i;
+}
+
+function maybeSidebar(sidebar: string | boolean, pages): "hidden" | boolean {
+  if (sidebar === "auto") sidebar = pages.length > 0;
+  return typeof sidebar === "boolean" ? sidebar : (keyword(sidebar, "sidebar", ["hidden"]) as "hidden");
 }

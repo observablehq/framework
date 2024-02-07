@@ -35,7 +35,7 @@ export interface Config {
   root: string; // defaults to docs
   output: string; // defaults to dist
   title?: string;
-  sidebar: boolean; // defaults to true if pages isn’t empty
+  sidebar: "auto" | "hidden" | boolean; // auto defaults to true if pages isn’t empty
   pages: (Page | Section)[];
   pager: boolean; // defaults to true
   scripts: Script[]; // defaults to empty array
@@ -88,7 +88,6 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   let {
     root = defaultRoot,
     output = "dist",
-    sidebar,
     style,
     theme = "default",
     deploy,
@@ -107,7 +106,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   let {title, pages = await readPages(root), pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
-  sidebar = sidebar === undefined ? pages.length > 0 : Boolean(sidebar);
+  const {sidebar = "auto"} = spec;
   pager = Boolean(pager);
   scripts = Array.from(scripts, normalizeScript);
   head = String(head);

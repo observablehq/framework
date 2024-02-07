@@ -7,6 +7,7 @@ const toggle = document.querySelector<HTMLInputElement>("#observablehq-sidebar-t
 // Restore the sidebar state from sessionStorage, or set it to indeterminate.
 const initialState = sessionStorage.getItem("observablehq-sidebar");
 if (initialState) toggle.checked = initialState === "true";
+else if (toggle.getAttribute("data-hidden")) toggle.checked = false;
 else toggle.indeterminate = true;
 
 // Restore the sidebar section state from sessionStorage, but don’t close any
