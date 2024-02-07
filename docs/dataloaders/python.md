@@ -49,8 +49,70 @@ predictions
 
 <!-- End local testing of penguin-logistic.csv.py -->
 
-## Arrow
+## PNG
+
+The data loader below (`birth-statistics.png.py`) accesses [birth data for Lake County, Illinois](https://data-lakecountyil.opendata.arcgis.com/datasets/lakecountyil::birth-statistics/explore) from a local geoJSON file. A simple choropleth of birth rates is created using `matplotlib`, then output as a PNG file.
+
+Copy and paste the code below into your own Python data loader (with extension .png.py in your project source root, typically `docs`), then update with your own data and Python code to get started.
+
+```python
+# Import libraries (must be installed)
+import geopandas as gpd 
+import matplotlib.pyplot as plt 
+import io
+import sys
+
+# Read in data
+birth_statistics = gpd.read_file('docs/dataloaders/birth_statistics.geojson')
+
+# Create a basic choropleth map
+birth_statistics.plot(column='Birth_Rate', legend=True)
+plt.axis('off')
+
+# Save plot to a virtual file, then write binary PNG data to stdout
+img_buffer = io.BytesIO()
+plt.savefig(img_buffer, format='png')
+img_buffer.seek(0)
+
+sys.stdout.buffer.write(img_buffer.getvalue())
+```
+
+Access the output of the data loader (here, `birth-statistics.png`) from the client using [`FileAttachment`](../javascript/files). If your .md and data loader are both in the project root, that is:
+
+```js run=false
+const birthRateMap = FileAttachment("birth-statistics.png").image();
+```
+`birth-statistics.png` [routes](../loaders#routing) to the `birth-statistics.png.py` data loader and reads its standard output stream.
+
+<!-- Start local testing of birth-statistics.png.py -->
+
+```js echo=false run=false
+const birthrateMap = FileAttachment('birth-statistics.png').image()
+```
+
+```js echo=false run=false
+birthrateMap
+```
+
+<!-- End local testing of birth-statistics.png.py-->
 
 
+## Zip
 
-## tar
+The data loader below `earthquakes.zip.py` accesses data on [earthquakes from the USGS](https://www.usgs.gov/programs/earthquake-hazards/earthquakes), then combines metadata (as JSON) and selected earthquake magnitude and location (as a CSV) in a zip archive. 
+
+Copy and paste the code below into your own Python data loader (with extension .zip.py in your project source root, typically `docs`), then update with your own data and Python code to get started.
+
+<!-- TODO: this data loader is currently not working...
+
+
+```js
+const test = FileAttachment("earthquakes/quakes.csv").csv({typed: true})
+```
+
+```js
+test
+```
+
+-->
+
