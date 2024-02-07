@@ -218,8 +218,10 @@ const relativeDay = () => currentHour.getDate() === endHour.getDate() ? "Today" 
   </div>
 </div>
 
-<div class="card" style="padding: 0">
-  ${Inputs.table(baHourlyClean, {rows: 16})}
+<div class="card" style="padding: 0;">
+  <div style="border-radius: 12px; overflow: hidden;">
+    ${Inputs.table(baHourlyClean, {rows: 16})}
+  </div>
 </div>
 
 This page reenvisions parts of the US Energy Information Administration's [Hourly Electric Grid Monitor](<(https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48)>). Visit [About the EIA-930 data](https://www.eia.gov/electricity/gridmonitor/about) to learn more about data collection and quality, the US electric grid, and balancing authorities responsible for nationwide electricity interchange.
