@@ -25,7 +25,7 @@ const countryInterchangeSeries = FileAttachment("data/country-interchange.csv").
 // US overall demand, generation, forecast
 const usOverview = FileAttachment("data/us-demand.csv").csv({typed: true});
 
-// Energy by fuel type:
+// Energy by fuel type
 const fuelType = FileAttachment("data/eia-data/fuel-type.csv").csv({typed: true});
 
 // Subregion hourly demand:
@@ -129,19 +129,7 @@ map((d) => ({
 ```js
 // Date/time format/parse
 const timeParse = d3.utcParse("%Y-%m-%dT%H");
-const dateFormat = date => date.toLocaleDateString();
-const timeFormat = date => date.toLocaleTimeString('en-us',{timeZoneName:'short'});
-const dateTimeFormat = date => `${timeFormat(date)} on ${dateFormat(date)}`;
 const hourFormat = d3.timeFormat("%I %p");
-```
-
-```js
-// Get the most recent hour (time) of data
-const recentHour = timeParse(baHourly.filter(d => d.type == "D")[0].period);
-```
-
-```js
-const baRegionMap = new Map(eiaBARef.map(d => [d['BA Code'], d['Region/Country Name']]));
 ```
 
 ```js
