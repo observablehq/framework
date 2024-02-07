@@ -6,7 +6,7 @@
       "name": "./local-fetch.md",
       "mimeType": "text/markdown",
       "path": "./_file/local-fetch.md",
-      "lastModified": 1701883559359
+      "lastModified": 1729072800000
     }
   ],
   "imports": [],
@@ -40,7 +40,7 @@
           "name": "./local-fetch.md",
           "mimeType": "text/markdown",
           "path": "./_file/local-fetch.md",
-          "lastModified": 1701883559359
+          "lastModified": 1729072800000
         }
       ],
       "body": "async (FileAttachment,display) => {\ndisplay(await(\nFileAttachment(\"./local-fetch.md\")\n))\n}"
