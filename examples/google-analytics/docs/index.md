@@ -1,5 +1,6 @@
 ---
 theme: dashboard
+toc: false
 ---
 
 ```js
@@ -30,7 +31,7 @@ const bands = 5;
 const opacityScale = d3.scaleLinear().domain([0, bands]).range([0.15, 0.85]);
 
 const filteredChannelBreakdown = channelBreakdown
-  .filter((d) => color.domain.includes(d.channelGroup) && d.type != "Unknown" && d.channelGroup !== 'Unassigned')
+  .filter((d) => color.domain.includes(d.channelGroup) && d.type != "Unknown")
   .sort((a, b) => color.domain.indexOf(b.channelGroup) - color.domain.indexOf(a.channelGroup));
 
 const countryLookup = d3.rollup(
@@ -273,7 +274,7 @@ function worldMap(data, {width, height, title, caption}) {
 
 # Google analytics
 
-_Summary of metrics from the [Google Analytics Data API](https://developers.google.com/analytics/devguides/reporting/data/v1/quickstart-client-libraries), pulled on ${date(d3.max(summary, d => d.date))}_
+_Summary of metrics from the [Google Analytics Data API](https://developers.google.com/analytics/devguides/reporting/data/v1/quickstart-client-libraries), a sample of data pulled on ${date(d3.max(summary, d => d.date))}_
 
 <div class="grid grid-cols-4" style="grid-auto-rows: 165px;">
   <div class="card">
