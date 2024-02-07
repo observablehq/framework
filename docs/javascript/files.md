@@ -6,7 +6,7 @@ Load files — whether static or generated dynamically by a [data loader](../loa
 import {FileAttachment} from "npm:@observablehq/stdlib";
 ```
 
-The `FileAttachment` function takes a path and returns a file handle. This handle exposes the file’s name and [MIME type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types).
+The `FileAttachment` function takes a path and returns a file handle. This handle exposes the file’s name, [MIME type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types), and last modification date as the number of milliseconds since UNIX epoch.
 
 ```js echo
 FileAttachment("volcano.json")
