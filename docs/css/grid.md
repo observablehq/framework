@@ -1,9 +1,4 @@
----
-toc: false
-theme: dashboard
----
-
-# Layout: grid
+# CSS: Grid
 
 Observable Framework provides a set of grid CSS classes to help layout page content. These grids pair well with the [dashboard theme](../themes) and the [card](./card) class. This page uses both.
 
@@ -25,7 +20,6 @@ Class            | Description
 `grid-rowspan-2` | specify that a grid cell spans two rows
 `grid-rowspan-3` | specify that a grid cell spans three rows
 `grid-rowspan-4` | specify that a grid cell spans four rows
-
 
 ## Two column grid
 
@@ -100,5 +94,27 @@ Note that the minimum row height is set to 150px, and cell **D** does not use th
   <div class="grid-rowspan-2"><h1>D</h1>1 × 2</div>
   <div class="card grid-colspan-2"><h1>E</h1>2 × 1</div>
   <div class="card grid-colspan-2"><h1>F</h1>2 × 1</div>
+</div>
+```
+
+## Content without cards
+
+Page content does not have to be within a card. Below, explanatory text is added to the right of a card.
+
+```html echo
+<div class="grid grid-cols-2"">
+  <div class="card">
+    ${
+      Plot.plot({
+        color: {legend: true},
+        marks: [
+          Plot.dot(penguins, {x: "body_mass_g", y: "flipper_length_mm", fill: "species", tip: true})
+        ]
+      })
+    }
+  </div>
+  <div>
+    <p>Body mass (g) and flipper length (mm) for ${penguins.length} individual penguins (${penguins.filter(d => d.species === "Adelie").length} Adélie, ${penguins.filter(d => d.species === "Chinstrap").length} Chinstrap, and ${penguins.filter(d => d.species === "Gentoo").length} Gentoo) recorded on Dream, Biscoe, or Torgersen islands near Palmer Archipelago, Antarctica from 2007 — 2009. Data: <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0090081">K. B. Gorman et al. 2014.</a> </p>
+  </div>
 </div>
 ```

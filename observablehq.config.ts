@@ -8,7 +8,6 @@ export default {
     {name: "Markdown", path: "/markdown"},
     {name: "JavaScript", path: "/javascript"},
     {name: "Data loaders", path: "/loaders"},
-    {name: "Components", path: "/components"},
     {name: "Themes", path: "/themes"},
     {name: "Configuration", path: "/config"},
     {
@@ -26,13 +25,12 @@ export default {
       ]
     },
     {
-      name: "Layout",
+      name: "CSS",
       open: false,
       pages: [
-        {name: "Card", path: "/layout/card"},
-        {name: "Grid", path: "/layout/grid"},
-        {name: "Note", path: "/layout/note"},
-        {name: "Resize", path: "/layout/resize"}
+        {name: "Card", path: "/css/card"},
+        {name: "Grid", path: "/css/grid"},
+        {name: "Note", path: "/css/note"}
       ]
     },
     {
