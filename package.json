@@ -28,7 +28,7 @@
     "rebuild-themes": "rm -f docs/themes.md docs/theme/*.md && tsx docs/theme/generate-themes.ts",
     "test": "yarn test:mocha && yarn test:tsc && yarn test:lint && yarn test:prettier",
     "test:coverage": "c8 yarn test:mocha",
-    "test:mocha": "rm -rf test/.observablehq/cache test/input/build/*/.observablehq/cache && OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles tsx --no-warnings=ExperimentalWarning ./node_modules/.bin/mocha 'test/**/*-test.*'",
+    "test:mocha": "rm -rf test/.observablehq/cache test/input/build/*/.observablehq/cache && TZ=UTC find test/input/build -type f -exec touch -t 202410161000 {} + && OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles tsx --no-warnings=ExperimentalWarning ./node_modules/.bin/mocha 'test/**/*-test.*'",
     "test:lint": "eslint src test",
     "test:prettier": "prettier --check src test",
     "test:tsc": "tsc --noEmit",

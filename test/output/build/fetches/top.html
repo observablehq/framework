@@ -16,7 +16,7 @@
 
 import {define} from "./_observablehq/client.js";
 
-define({id: "cb908c08", inputs: ["display"], outputs: ["fooCsvData","fooJsonData","topCsvData","topJsonData"], files: [{"name":"./top-data.json","mimeType":"application/json","path":"./_file/top-data.json","lastModified":1701478100807},{"name":"./top-data.csv","mimeType":"text/csv","path":"./_file/top-data.csv","lastModified":1701478100807},{"name":"./foo/foo-data.json","mimeType":"application/json","path":"./_file/foo/foo-data.json","lastModified":1701478100806},{"name":"./foo/foo-data.csv","mimeType":"text/csv","path":"./_file/foo/foo-data.csv","lastModified":1701478100806}], body: async (display) => {
+define({id: "cb908c08", inputs: ["display"], outputs: ["fooCsvData","fooJsonData","topCsvData","topJsonData"], files: [{"name":"./top-data.json","mimeType":"application/json","path":"./_file/top-data.json","lastModified":1729072800000},{"name":"./top-data.csv","mimeType":"text/csv","path":"./_file/top-data.csv","lastModified":1729072800000},{"name":"./foo/foo-data.json","mimeType":"application/json","path":"./_file/foo/foo-data.json","lastModified":1729072800000},{"name":"./foo/foo-data.csv","mimeType":"text/csv","path":"./_file/foo/foo-data.csv","lastModified":1729072800000}], body: async (display) => {
 const {fooCsvData, fooJsonData, topCsvData, topJsonData} = await import("./_import/top.js?sha=a713c9f9e5b3c1e456a16cd100388f7eacfe48ee5fcaf7772f405abe53541cd0");
 
 display(fooJsonData);
