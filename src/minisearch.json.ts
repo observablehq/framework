@@ -1,10 +1,9 @@
-import {readFile} from "node:fs/promises";
-import {basename, join} from "node:path";
-import matter from "gray-matter";
+import {join} from "node:path";
 import MiniSearch from "minisearch";
 import {visitMarkdownFiles} from "../src/files.js";
 import type {BuildEffects} from "./build.js";
 import type {Config} from "./config.js";
+import {parseMarkdown} from "./markdown.js";
 import {faint} from "./tty.js";
 
 // Avoid reindexing too often in preview.
@@ -31,32 +30,26 @@ export async function searchIndex(config: Config, effects?: BuildEffects): Promi
   }
 
   for await (const file of visitMarkdownFiles(root)) {
-    let content = (await readFile(join(root, file), "utf-8")).replaceAll(/<[^>]+>/g, " ");
-    let frontmatter;
-    try {
-      ({content, data: frontmatter} = matter(content, {}));
-      content = content.replace(/^[\r\n]+/, "");
-    } catch {
-      // ignore front-matter parsing error
-    }
+    const {html, title, data} = await parseMarkdown(join(root, file), {root, path: file});
 
     // Skip page opted out of indexing, and non-pages unless opted-in.
     // We only log the first case.
     if (pagePaths.has(`/${file.slice(0, -3)}`)) {
-      if (frontmatter?.index === false) {
+      if (data?.index === false) {
         log(`${faint("skip")} ${file}`);
         continue;
       }
-    } else if (frontmatter?.index !== true) continue;
+    } else if (data?.index !== true) continue;
 
     const id = file === "index.md" ? "" : "" + file.slice(0, -3);
-    const title =
-      frontmatter?.title ??
-      content.match(/^# (.*)/)?.[1] ??
-      content.match(/<h1[>]*>(.*?)<\/h1>/i)?.[1] ??
-      basename(file, ".md");
+    const text = html
+      .replaceAll(/[\n\r]/g, " ")
+      .replaceAll(/<style\b.*<\/style\b[^>]*>/gi, " ")
+      .replaceAll(/<[^>]+>/g, " ")
+      .replaceAll(/\W+/g, " ");
+
     log(`${faint("index")} ${id}: ${title}`);
-    index.add({id, title, text: content.replaceAll(/\W+/g, " ")});
+    index.add({id, title, text});
   }
 
   // One way of passing the options to the client; better than nothing, but note
