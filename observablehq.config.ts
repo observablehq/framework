@@ -29,6 +29,7 @@ export default {
       open: false,
       pages: [
         {name: "Card", path: "/css/card"},
+        {name: "Color", path: "/css/color"},
         {name: "Grid", path: "/css/grid"},
         {name: "Note", path: "/css/note"}
       ]
