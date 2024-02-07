@@ -2,8 +2,9 @@ import assert, {fail} from "node:assert";
 import {Readable, Writable} from "node:stream";
 import {commandRequiresAuthenticationMessage} from "../src/commandInstruction.js";
 import {normalizeConfig} from "../src/config.js";
-import {type DeployEffects, deploy, promptDeployTarget, DeployOptions} from "../src/deploy.js";
+import {type DeployEffects, type DeployOptions, deploy, promptDeployTarget} from "../src/deploy.js";
 import {CliError, isHttpError} from "../src/error.js";
+import {ObservableApiClient} from "../src/observableApiClient.js";
 import type {DeployConfig} from "../src/observableApiConfig.js";
 import {TestClackEffects} from "./mocks/clack.js";
 import {MockLogger} from "./mocks/logger.js";
@@ -16,7 +17,6 @@ import {
   validApiKey
 } from "./mocks/observableApi.js";
 import {MockConfigEffects} from "./observableApiConfig-test.js";
-import {ObservableApiClient} from "../src/observableApiClient.js";
 
 // These files are implicitly generated. This may change over time, so they’re
 // enumerated here for clarity. TODO We should enforce that these files are
