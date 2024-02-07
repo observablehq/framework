@@ -1,56 +1,70 @@
 import assert from "node:assert";
 import {commandRequiresAuthenticationMessage} from "../src/commandInstruction.js";
+import {CliError} from "../src/error.js";
 import {type AuthEffects, login, logout, whoami} from "../src/observableApiAuth.js";
+import {TestClackEffects} from "./mocks/clack.js";
 import {MockLogger} from "./mocks/logger.js";
-import {getCurentObservableApi, mockObservableApi} from "./mocks/observableApi.js";
+import {getCurrentObservableApi, mockObservableApi, validApiKey} from "./mocks/observableApi.js";
 import {MockConfigEffects} from "./observableApiConfig-test.js";
 
 describe("login command", () => {
+  mockObservableApi();
+
   it("works", async () => {
     const effects = new MockAuthEffects();
-    // start the login process
-    const loginPromise = login(effects);
-    try {
-      // it should open a browser window
-      const url = await effects.openBrowserDeferred.promise;
-      await loginPromise;
-      const generateRequest = decodeGenerateRequest(url);
+    assert.equal(effects.observableApiKey, null);
+    getCurrentObservableApi()
+      .handlePostAuthRequest("FAKEPASS")
+      .handlePostAuthRequestPoll("accepted", {id: "MOCK-ID", key: validApiKey})
+      .handleGetCurrentUser()
+      .start();
 
-      // The user interacts with the opened page, and eventually it sends a request back to the CLI
-      const sendApiKeyResponse = await fetch(`http://localhost:${generateRequest.port}/api-key`, {
-        method: "POST",
-        headers: {
-          origin: "https://observablehq.com"
-        },
-        body: JSON.stringify({
-          nonce: generateRequest.nonce,
-          id: "MOCK-ID",
-          key: "MOCK-KEY"
-        })
-      });
-      assert.equal(sendApiKeyResponse.status, 201);
-      // The CLI then writes the API key to the config file
-      assert.deepEqual(await effects.setApiKeyDeferred.promise, {id: "MOCK-ID", key: "MOCK-KEY"});
-      effects.logger.assertExactLogs([/^Press Enter to open/, /^Successfully logged in/]);
-      await effects.exitDeferred.promise;
-    } finally {
-      // this prevents the tests from hanging in case the test fails
-      const server = await loginPromise;
-      if (server.isRunning) {
-        await server.stop();
-        assert.ok(!server.isRunning, "server should have shut down automatically");
-      }
-    }
+    await login(effects);
+    assert.deepEqual(await effects.setApiKeyDeferred.promise, {id: "MOCK-ID", key: validApiKey});
+    assert.equal(effects.observableApiKey, validApiKey);
+    effects.clack.log.assertLogged({
+      message: /.*Your confirmation code.*FAKEPASS.*\/auth-device.*/ms
+    });
   });
 
-  it("gives a manual link when not on a tty", async () => {
-    const effects = new MockAuthEffects({isTty: false});
-    const server = await login(effects);
-    if (server.isRunning) {
-      await server.stop();
-      assert.ok(!server.isRunning, "server should have shut down automatically");
+  it("polls until the key is accepted", async () => {
+    // This test involves waiting a second for two poll cycles. Maybe we should mock time, or make the interval configurable?
+    const effects = new MockAuthEffects();
+    getCurrentObservableApi()
+      .handlePostAuthRequest("FAKEPASS")
+      .handlePostAuthRequestPoll("pending")
+      .handlePostAuthRequestPoll("accepted", {id: "MOCK-ID", key: validApiKey})
+      .handleGetCurrentUser()
+      .start();
+
+    await login(effects);
+    assert.equal(effects.observableApiKey, validApiKey);
+  }).timeout(3000);
+
+  it("handles expired requests", async () => {
+    const effects = new MockAuthEffects();
+    getCurrentObservableApi().handlePostAuthRequest("FAKEPASS").handlePostAuthRequestPoll("expired").start();
+
+    try {
+      await login(effects);
+      assert.fail("expected failure");
+    } catch (error) {
+      CliError.assert(error, {message: "That confirmation code expired."});
     }
-    effects.logger.assertExactLogs([/^Open this link in your browser/, /^\s*https:/]);
+    assert.equal(effects.observableApiKey, null);
+  });
+
+  it("handles consumed requests", async () => {
+    const effects = new MockAuthEffects();
+    getCurrentObservableApi().handlePostAuthRequest("FAKEPASS").handlePostAuthRequestPoll("consumed").start();
+
+    try {
+      await login(effects);
+      assert.fail("expected failure");
+    } catch (error) {
+      CliError.assert(error, {message: "That confirmation code has already been used."});
+    }
+    assert.equal(effects.observableApiKey, null);
   });
 });
 
@@ -80,14 +94,14 @@ describe("whoami command", () => {
   });
 
   it("works when there is an API key that is invalid", async () => {
-    getCurentObservableApi().handleGetUser({status: 401}).start();
+    getCurrentObservableApi().handleGetCurrentUser({status: 401}).start();
     const effects = new MockAuthEffects({apiKey: "MOCK-INVALID-KEY"});
     await whoami(effects);
     effects.logger.assertExactLogs([/^Your API key is invalid/]);
   });
 
   it("works when there is a valid API key", async () => {
-    getCurentObservableApi().handleGetUser().start();
+    getCurrentObservableApi().handleGetCurrentUser().start();
     const effects = new MockAuthEffects({apiKey: "MOCK-VALID-KEY"});
     await whoami(effects);
     effects.logger.assertExactLogs([
@@ -118,6 +132,8 @@ class MockAuthEffects extends MockConfigEffects implements AuthEffects {
   public exitDeferred = new Deferred<void>();
   public isTty: boolean;
   public observableApiKey: string | null = null;
+  public outputColumns: number = 80;
+  public clack = new TestClackEffects();
 
   constructor({apiKey = null, isTty = true}: {apiKey?: string | null; isTty?: boolean} = {}) {
     super();
@@ -147,12 +163,4 @@ class MockAuthEffects extends MockConfigEffects implements AuthEffects {
   exitSuccess() {
     this.exitDeferred.resolve(undefined);
   }
-}
-
-function decodeGenerateRequest(urlString: string): {nonce: string; port: number} {
-  const url = new URL(urlString);
-  const encodedRequest = url.searchParams.get("request");
-  if (!encodedRequest) throw new Error("missing request parameter");
-  const buf = Buffer.from(encodedRequest, "base64");
-  return JSON.parse(new TextDecoder().decode(buf));
 }

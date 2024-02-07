@@ -1,13 +1,17 @@
 import type * as clack from "@clack/prompts";
 
+type Clack = typeof clack;
+
 export interface ClackEffects {
-  text: (typeof clack)["text"];
-  intro: (typeof clack)["intro"];
-  select: (typeof clack)["select"];
-  confirm: (typeof clack)["confirm"];
-  spinner: (typeof clack)["spinner"];
-  note: (typeof clack)["note"];
-  outro: (typeof clack)["outro"];
-  cancel: (typeof clack)["cancel"];
+  text: Clack["text"];
+  intro: Clack["intro"];
+  select: Clack["select"];
+  confirm: Clack["confirm"];
+  spinner: Clack["spinner"];
+  note: Clack["note"];
+  outro: Clack["outro"];
+  cancel: Clack["cancel"];
   group<T>(prompts: clack.PromptGroup<T>, options?: clack.PromptGroupOptions<T>): Promise<unknown>;
+  log: Clack["log"];
+  isCancel: Clack["isCancel"];
 }

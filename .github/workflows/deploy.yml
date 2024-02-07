@@ -24,6 +24,9 @@ jobs:
             'examples/*/yarn.lock'
       - run: yarn --frozen-lockfile
       - run: yarn build
+      - name: Build example "chess"
+        run: yarn --frozen-lockfile && yarn build
+        working-directory: examples/chess
       - name: Build example "google-analytics"
         run: yarn --frozen-lockfile && yarn build
         working-directory: examples/google-analytics
@@ -53,11 +56,12 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: cli
+          projectName: framework-pages
           directory: dist
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
       # TODO: This doesn't include the examples. How can we fix that?
-      - name: Deploy to Observable Cloud
-        run: yarn deploy -m "$(git log -1 --pretty=%s)"
-        env:
-          OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_API_TOKEN }}
+      # TODO: Re-enable deploy to Observable
+      # - name: Deploy to Observable
+      #   run: yarn deploy -m "$(git log -1 --pretty=%s)"
+      #   env:
+      #     OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_API_TOKEN }}

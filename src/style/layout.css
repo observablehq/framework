@@ -133,6 +133,7 @@
 #observablehq-sidebar summary {
   font-weight: 700;
   color: var(--theme-foreground);
+  cursor: default;
 }
 
 #observablehq-sidebar summary::-webkit-details-marker,
@@ -168,7 +169,7 @@
   background: none;
   top: 0;
   left: 0;
-  bottom: 0;
+  height: 100%;
   width: 2rem;
   display: flex;
   align-items: center;
@@ -376,7 +377,7 @@
 .observablehq-pre-container {
   position: relative;
   margin: 1rem -1rem;
-  max-width: calc(960px + 2rem);
+  max-width: 960px;
 }
 
 .observablehq-pre-container::after {

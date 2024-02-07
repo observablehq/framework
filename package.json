@@ -1,14 +1,14 @@
 {
-  "name": "@observablehq/cli",
-  "license": "UNLICENSED",
-  "version": "0.0.50",
+  "name": "@observablehq/framework",
+  "license": "ISC",
+  "version": "1.0.0-rc.5",
   "type": "module",
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/observablehq/cli.git"
+    "url": "https://github.com/observablehq/framework.git"
   },
   "files": [
     "bin/**/*.js",
@@ -72,6 +72,7 @@
     "send": "^0.18.0",
     "tar-stream": "^3.1.6",
     "tsx": "~4.2.1",
+    "untildify": "^5.0.0",
     "ws": "^8.14.2"
   },
   "devDependencies": {

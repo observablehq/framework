@@ -23,7 +23,7 @@ import type {ParseResult} from "./markdown.js";
 import {renderPreview, resolveStylesheet} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {Telemetry} from "./telemetry.js";
-import {bold, faint, green, underline} from "./tty.js";
+import {bold, faint, green, link} from "./tty.js";
 import {relativeUrl} from "./url.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
@@ -73,8 +73,8 @@ export class PreviewServer {
       await new Promise<void>((resolve) => server.listen(port, hostname, resolve));
     }
     if (verbose) {
-      console.log(`${green(bold("Observable CLI"))}\t${faint(`v${version}`)}`);
-      console.log(`${faint("↳")} ${underline(`http://${hostname}:${port}/`)}`);
+      console.log(`${green(bold("Observable Framework"))} ${faint(`v${version}`)}`);
+      console.log(`${faint("↳")} ${link(`http://${hostname}:${port}/`)}`);
       console.log("");
     }
     return new PreviewServer({server, verbose, ...options});
@@ -279,6 +279,8 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
   let stylesheets: Set<string> | null = null;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
+  let emptyTimeout: ReturnType<typeof setTimeout> | null = null;
+
   console.log(faint("socket open"), req.url);
 
   async function getStylesheets({cells, data}: ParseResult): Promise<Set<string>> {
@@ -302,24 +304,37 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
     }
   }
 
-  async function watcher(event: WatchEventType) {
+  async function watcher(event: WatchEventType, force = false) {
     if (!path || !current) throw new Error("not initialized");
     switch (event) {
       case "rename": {
         markdownWatcher?.close();
         try {
-          markdownWatcher = watch(join(root, path), watcher);
+          markdownWatcher = watch(join(root, path), (event) => watcher(event));
         } catch (error) {
           if (!isEnoent(error)) throw error;
           console.error(`file no longer exists: ${path}`);
           socket.terminate();
           return;
         }
-        setTimeout(() => watcher("change"), 100); // delay to avoid a possibly-empty file
+        watcher("change");
         break;
       }
       case "change": {
         const updated = await parseMarkdown(join(root, path), {root, path});
+        // delay to avoid a possibly-empty file
+        if (!force && updated.html === "") {
+          if (!emptyTimeout) {
+            emptyTimeout = setTimeout(() => {
+              emptyTimeout = null;
+              watcher("change", true);
+            }, 150);
+          }
+          break;
+        } else if (emptyTimeout) {
+          clearTimeout(emptyTimeout);
+          emptyTimeout = null;
+        }
         if (current.hash === updated.hash) break;
         const updatedStylesheets = await getStylesheets(updated);
         for (const href of difference(stylesheets, updatedStylesheets)) send({type: "remove-stylesheet", href});
@@ -345,7 +360,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
     if (current.hash !== initialHash) return void send({type: "reload"});
     stylesheets = await getStylesheets(current);
     attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(current), refreshAttachment);
-    markdownWatcher = watch(join(root, path), watcher);
+    markdownWatcher = watch(join(root, path), (event) => watcher(event));
   }
 
   socket.on("message", async (data) => {
