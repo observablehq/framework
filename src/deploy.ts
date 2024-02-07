@@ -8,7 +8,7 @@ import type {Config} from "./config.js";
 import {CliError, isHttpError} from "./error.js";
 import type {Logger, Writer} from "./logger.js";
 import {formatUser} from "./observableApiAuth.js";
-import type {GetProjectResponse, WorkspaceResponse} from "./observableApiClient.js";
+import type {GetDeployResponse, GetProjectResponse, WorkspaceResponse} from "./observableApiClient.js";
 import {ObservableApiClient, type PostEditProjectRequest} from "./observableApiClient.js";
 import type {ConfigEffects} from "./observableApiConfig.js";
 import {
@@ -21,7 +21,11 @@ import {
 } from "./observableApiConfig.js";
 import {Telemetry} from "./telemetry.js";
 import type {TtyEffects} from "./tty.js";
-import {blue, bold, defaultEffects as defaultTtyEffects, inverse, underline, yellow} from "./tty.js";
+import {bold, defaultEffects as defaultTtyEffects, inverse, link, underline, yellow} from "./tty.js";
+import {slugify} from "./slugify.js";
+
+const DEPLOY_POLL_MAX_MS = 1000 * 60 * 5;
+const DEPLOY_POLL_INTERVAL_MS = 1000 * 5;
 
 export interface DeployOptions {
   config: Config;
@@ -218,12 +222,43 @@ export async function deploy({config, message}: DeployOptions, effects = default
   await build({config, clientEntry: "./src/client/deploy.js"}, new DeployBuildEffects(apiClient, deployId, effects));
 
   // Mark the deploy as uploaded
-  const deployInfo = await apiClient.postDeployUploaded(deployId);
+  await apiClient.postDeployUploaded(deployId);
+
+  // Poll for processing completion
+  const spinner = effects.clack.spinner();
+  spinner.start("Server processing deploy");
+  const pollExpiration = Date.now() + DEPLOY_POLL_MAX_MS;
+  let deployInfo: null | GetDeployResponse = null;
+  let done = false;
+  while (!done) {
+    if (Date.now() > pollExpiration) {
+      spinner.stop("Deploy timed out");
+      throw new CliError(`Deploy failed to process on server: status = ${deployInfo?.status}`);
+    }
+    deployInfo = await apiClient.getDeploy(deployId);
+    switch (deployInfo.status) {
+      case "pending":
+        continue;
+      case "uploaded":
+        spinner.stop("Deploy complete");
+        done = true;
+        break;
+      case "error":
+        spinner.stop("Deploy failed");
+        throw new CliError("Deploy failed to process on server");
+      default:
+        throw new CliError(`Unknown deploy status: ${deployInfo.status}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, DEPLOY_POLL_INTERVAL_MS));
+  }
+  spinner.stop();
+  if (!deployInfo) throw new CliError("Deploy failed to process on server");
+
   // Update project title if necessary
   if (previousProjectId && previousProjectId === deployTarget.project.id && typeof projectUpdates?.title === "string") {
     await apiClient.postEditProject(deployTarget.project.id, projectUpdates as PostEditProjectRequest);
   }
-  effects.clack.outro(`Deployed project now visible at ${blue(deployInfo.url)}`);
+  effects.clack.outro(`Deployed project now visible at ${link(deployInfo.url)}`);
   Telemetry.record({event: "deploy", step: "finish"});
 }
 
@@ -248,16 +283,8 @@ class DeployBuildEffects implements BuildEffects {
   }
 }
 
-function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .replace("'", "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .replace(/-{2,}/g, "-");
-}
-
-async function promptDeployTarget(
+// export for testing
+export async function promptDeployTarget(
   effects: DeployEffects,
   api: ObservableApiClient,
   config: Config
