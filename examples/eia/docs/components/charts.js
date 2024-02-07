@@ -1,23 +1,22 @@
-import {extent} from "npm:d3-array";
 import * as Plot from "npm:@observablehq/plot";
+import {extent} from "npm:d3-array";
 
 // Top 5 balancing authorities chart
 export function top5BalancingAuthoritiesChart(width, height, top5Demand) {
   return Plot.plot({
     marginTop: 0,
     marginLeft: 250,
-    height: height - 20,
+    height: height - 24,
     width,
-    y: {label: null},
-    x: {label: null, grid: true},
+    y: {label: null, tickSize: 0},
+    x: {label: null, grid: true, tickSize: 0, tickPadding: 2},
     marks: [
       Plot.barX(top5Demand, {
         y: "name",
         x: (d) => d.value / 1000,
-        fill: "gray",
+        fill: "#9498a0",
         sort: {y: "x", reverse: true, limit: 10}
-      }),
-      Plot.ruleX([0])
+      })
     ]
   });
 }
@@ -29,7 +28,7 @@ export function usGenDemandForecastChart(width, height, usDemandGenForecast, cur
     marginTop: 0,
     height: height - 50,
     y: {label: null},
-    x: {type: "time"},
+    x: {type: "time", tickSize: 0, tickPadding: 3},
     color: {
       legend: true,
       domain: ["Day-ahead demand forecast", "Demand", "Net generation"],
@@ -49,13 +48,13 @@ export function countryInterchangeChart(width, height, usDemandGenForecast, coun
     width,
     marginTop: 0,
     height: height - 50,
-    color: {legend: true, range: ["#B6B5B1", "gray"]},
+    color: { legend: true, range: ["#B6B5B1", "#848890"]},
     grid: true,
-    y: {label: null},
-    x: {type: "time", domain: extent(usDemandGenForecast.map((d) => d.date))},
+    y: {label: "GWh exported", labelOffset: 0, tickSize: 0},
+    x: {type: "time", domain: extent(usDemandGenForecast.map(d => d.date)), tickSize: 0, tickPadding: 3},
     marks: [
-      Plot.areaY(countryInterchangeSeries, {x: "date", y: (d) => d.value / 1000, curve: "step", fill: "id", tip: true}),
-      Plot.ruleY([0])
+      Plot.areaY(countryInterchangeSeries, {x: "date", y: d => d.value / 1000, curve: "step", fill: "name", tip: true}),
+      Plot.ruleY([0], {strokeOpacity: 0.3})
     ]
   });
 }
