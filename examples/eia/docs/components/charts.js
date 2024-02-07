@@ -23,7 +23,7 @@ export function top5BalancingAuthoritiesChart(width, height, top5Demand) {
 }
 
 // US electricity demand, generation and forecasting chart
-export function usGenDemandForecastChart(width, height, usDemandGenForecast) {
+export function usGenDemandForecastChart(width, height, usDemandGenForecast, currentHour) {
   return Plot.plot({
     width,
     marginTop: 0,
@@ -37,6 +37,7 @@ export function usGenDemandForecastChart(width, height, usDemandGenForecast) {
     },
     grid: true,
     marks: [
+      Plot.ruleX([currentHour]),
       Plot.line(usDemandGenForecast, {x: "date", y: (d) => d.value / 1000, stroke: "name", strokeWidth: 1.2, tip: true})
     ]
   });

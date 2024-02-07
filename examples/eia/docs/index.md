@@ -198,7 +198,7 @@ const relativeDay = () => currentHour.getDate() === startHour.getDate() ? "Today
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
     <h2>US electricity generation, demand, and demand forecast (GWh)</h2>
-    ${resize((width, height) => usGenDemandForecastChart(width, height, usDemandGenForecast))}
+    ${resize((width, height) => usGenDemandForecastChart(width, height, usDemandGenForecast, currentHour))}
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
     <h2>Neighboring country interchange (GWh)</h2>
