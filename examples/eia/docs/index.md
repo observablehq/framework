@@ -19,7 +19,11 @@ import {
 ```
 
 ```js
-// International electricity interchange data:
+//
+// Load data snapshots
+//
+
+// International electricity interchange
 const countryInterchangeSeries = FileAttachment("data/country-interchange.csv").csv({typed: true});
 
 // US overall demand, generation, forecast
@@ -28,17 +32,28 @@ const usOverview = FileAttachment("data/us-demand.csv").csv({typed: true});
 // Energy by fuel type
 const fuelType = FileAttachment("data/eia-data/fuel-type.csv").csv({typed: true});
 
-// Subregion hourly demand:
+// Subregion hourly demand
 const subregionDemand = FileAttachment("data/eia-data/subregion-hourly.csv").csv({typed: true});
+
+// Interchange amounts between Balancing Authorities (BA)
+const baInterchange = FileAttachment("data/eia-data/ba-interchange.csv").csv({typed: true});
+
+// Hourly demand for each BA
+const baHourly = await FileAttachment("data/eia-data/ba-hourly.csv").csv({typed: true});
+
+// BA connections
+const eiaConnRef = await FileAttachment("data/eia-connections-reference.csv").csv({typed: true});
+
+// BA status (generating or not)
+const eiaBARef = await FileAttachment("data/eia-bia-reference.csv").csv({typed: true});
+
+const regions = ["California", "Carolinas", "Central", "Florida", "Mid-Atlantic", "Midwest", "New England", "New York", "Northwest", "Southeast", "Southwest", "Tennessee", "Texas", "United States Lower 48"];
 ```
 
 ```js
-// US total demand, generation and forecast excluding total (sum):
-const usDemandGenForecast = usOverview.filter(d => d.name != "Total interchange");
-```
-
-```js
+//
 // Spatial data (country, states, BA locations)
+//
 
 // US states
 const us = await FileAttachment("data/us-states.json").json();
@@ -50,19 +65,8 @@ const eiaPoints = await FileAttachment("data/eia-system-points.json").json().the
 ```
 
 ```js
-// Interchange amounts between BAs
-const baInterchange = FileAttachment("data/eia-data/ba-interchange.csv").csv({typed: true});
-
-// Hourly demand for each BA
-const baHourly = await FileAttachment("data/eia-data/ba-hourly.csv").csv({typed: true});
-
-// Data on BA connections:
-// From static file in docs
-const eiaConnRef = await FileAttachment("data/eia-connections-reference.csv").csv({typed: true});
-
-//Data on BA status (generating or not)
-// From static file in docs
-const eiaBARef = await FileAttachment("data/eia-bia-reference.csv").csv({typed: true});
+// US total demand, generation and forecast excluding total (sum)
+const usDemandGenForecast = usOverview.filter(d => d.name != "Total interchange");
 ```
 
 ```js
@@ -73,12 +77,22 @@ const genOnlyBA = eiaBARef.filter(d => d["Generation Only BA"] == "Yes").map(d =
 ```js
 // Hourly demand for BAs, demand only & cleaned
 // TODO: Update to exclude regions!!! Otherwise these show up over the BAs
-const baHourlyDemand = baHourly.filter(d => d.type == "D").map(d => ({ba: d["respondent-name"], baAbb: d["respondent"], period: d.period, 'type-name': d["type-name"], value: d.value})); // Only use demand ("D");
+const baHourlyDemand = baHourly
+  .filter(d => d.type == "D")  // Only use demand ("D")
+  .map(d => ({ba: d["respondent-name"], baAbb: d["respondent"], period: d.period, 'type-name': d["type-name"], value: d.value})); 
 ```
 
 ```js
 // Cleaned up baHourly for table, excludes regions (only shows BAs)
-const baHourlyClean = baHourly.filter(d => !regions.includes(d["respondent-name"])).map(d => ({Date: timeParse(d.period).toLocaleString('en-us',{timeZoneName:'short'}), 'Balancing authority': d["respondent-name"], Abbreviation: d.respondent, Type: d['type-name'], 'Value (GWh)': d.value / 1000}))
+const baHourlyClean = baHourly
+  .filter(d => !regions.includes(d["respondent-name"]))
+  .map(d => ({
+    Date: timeParse(d.period).toLocaleString('en-us',{timeZoneName:'short'}), 
+    'Balancing authority': d["respondent-name"], 
+    Abbreviation: d.respondent, 
+    Type: d['type-name'], 
+    'Value (GWh)': d.value / 1000
+  }));
 ```
 
 ```js
@@ -89,13 +103,10 @@ const baHourlyCurrent = d3.rollup(baHourlyDemand, d => d[hoursAgo]?.value, d => 
 
 ```js
 // Top 5 BAs by demand, latest hour
-// Excludes regions
-
-const regions = ["California", "Carolinas", "Central", "Florida", "Mid-Atlantic", "Midwest", "New England", "New York", "Northwest", "Southeast", "Southwest", "Tennessee", "Texas", "United States Lower 48"];
-
-//display(baHourlyCurrent);
-
-const top5LatestDemand = Array.from(baHourlyCurrent, ([name, value]) => ({ name, value })).filter(d => !regions.includes(d.name)).sort(((a, b) => b.value - a.value)).slice(0, 5);
+const top5LatestDemand = Array
+  .from(baHourlyCurrent, ([name, value]) => ({ name, value }))
+  .filter(d => !regions.includes(d.name))  // Exclude regions
+  .sort(((a, b) => b.value - a.value)).slice(0, 5);
 ```
 
 ```js
@@ -119,7 +130,7 @@ const baInterchangeSp = baInterchange.map(d => ({...d, location1: locations.get(
 ```js
 // Gets lat/lon endpoints between balancing authorities
 const eiaConnRefSpatial = eiaConnRef.filter(d => d["Active Connection"] == "Yes").
-map((d) => ({
+map(d => ({
   connection: `${d["BA Code"]}-${d["Directly Interconnected BA Code"]}`,
   location1: locations.get(d["BA Code"]),
   location2: locations.get(d["Directly Interconnected BA Code"])
@@ -130,9 +141,7 @@ map((d) => ({
 // Date/time format/parse
 const timeParse = d3.utcParse("%Y-%m-%dT%H");
 const hourFormat = d3.timeFormat("%I %p");
-```
 
-```js
 // Configure hours ago input
 const MS_IN_AN_HOUR = 1000 * 60 * 60;
 const hours = [...new Set(baHourlyDemand.map(d => d.period))].map(timeParse);
@@ -140,9 +149,7 @@ const [startHour, endHour] = d3.extent(hours);
 const hoursBackOfData = Math.ceil(Math.abs(endHour - startHour) / (MS_IN_AN_HOUR)) - 1;
 const hoursAgoInput = Inputs.range([hoursBackOfData, 0], { step: 1, value: 0, width: 150 });
 const hoursAgo = view(hoursAgoInput);
-```
 
-```js
 // Establish current hour and relative day
 const currentHour = new Date(startHour.getTime() - hoursAgo * MS_IN_AN_HOUR);
 const relativeDay = () => currentHour.getDate() === startHour.getDate() ? "Today" : "Yesterday";
