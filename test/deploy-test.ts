@@ -549,7 +549,7 @@ describe("promptDeployTarget", () => {
     effects.clack.inputs = [
       workspace, // which workspace do you want to use?
       true, //
-      projectSlug // what slug do you want to us
+      projectSlug // what slug do you want to use
     ];
     const api = new ObservableApiClient({apiKey: {key: validApiKey, source: "test"}});
     getCurrentObservableApi()
