@@ -15,7 +15,9 @@ export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDema
         y: "name",
         x: (d) => d.value / 1000,
         fill: "#9498a0",
-        sort: {y: "x", reverse: true, limit: 10}
+        sort: {y: "x", reverse: true, limit: 10},
+        tip: true,
+        title: ({ name, value }) => `name: ${name}\ndemand: ${value / 1000} GWh`
       })
     ]
   });
