@@ -31,7 +31,10 @@ export function fileReference(name: string, root: string, sourcePath: string): F
     name: relativeUrl(sourcePath, name),
     mimeType: mime.getType(name),
     path: relativeUrl(sourcePath, join("_file", name)),
-    lastModified: maybeLastModified(join(root, resolvePath(sourcePath, "/" + name)))
+    lastModified:
+      maybeLastModified(join(root, resolvePath(sourcePath, "/" + name))) ??
+      maybeLastModified(join(root, ".observablehq", "cache", resolvePath(sourcePath, "/" + name))) ??
+      +globalThis.currentDate
   };
 }
 

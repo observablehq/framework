@@ -77,10 +77,10 @@ async function readPages(root: string): Promise<Page[]> {
   return pages;
 }
 
-let currentDate = new Date();
+globalThis.currentDate = new Date();
 
 export function setCurrentDate(date = new Date()): void {
-  currentDate = date;
+  globalThis.currentDate = date;
 }
 
 export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Promise<Config> {
@@ -94,8 +94,8 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
     head = "",
     header = "",
     footer = `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="${formatIsoDate(
-      currentDate
-    )}">${formatLocaleDate(currentDate)}</a>.`
+      globalThis.currentDate
+    )}">${formatLocaleDate(globalThis.currentDate)}</a>.`
   } = spec;
   root = String(root);
   output = String(output);

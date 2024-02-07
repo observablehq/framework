@@ -78,7 +78,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
         mimeType: "image/png",
         name: "./test.png",
         path: "./_file/test.png",
-        lastModified: undefined
+        lastModified: 1704963723000
       }
     ]);
   });
@@ -106,13 +106,13 @@ describe("normalizePieceHtml adds local file attachments", () => {
         mimeType: "image/jpeg",
         name: "./large.jpg",
         path: "./_file/large.jpg",
-        lastModified: undefined
+        lastModified: 1704963723000
       },
       {
         mimeType: "image/jpeg",
         name: "./small.jpg",
         path: "./_file/small.jpg",
-        lastModified: undefined
+        lastModified: 1704963723000
       }
     ]);
   });
@@ -133,7 +133,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
         mimeType: "video/quicktime",
         name: "./observable.mov",
         path: "./_file/observable.mov",
-        lastModified: undefined
+        lastModified: 1704963723000
       }
     ]);
   });
@@ -160,13 +160,13 @@ describe("normalizePieceHtml adds local file attachments", () => {
         mimeType: "video/mp4",
         name: "./observable.mp4",
         path: "./_file/observable.mp4",
-        lastModified: undefined
+        lastModified: 1704963723000
       },
       {
         mimeType: "video/quicktime",
         name: "./observable.mov",
         path: "./_file/observable.mov",
-        lastModified: undefined
+        lastModified: 1704963723000
       }
     ]);
   });
@@ -191,13 +191,13 @@ describe("normalizePieceHtml adds local file attachments", () => {
         mimeType: "image/png",
         name: "./observable-logo-narrow.png",
         path: "./_file/observable-logo-narrow.png",
-        lastModified: undefined
+        lastModified: 1704963723000
       },
       {
         mimeType: "image/png",
         name: "./observable-logo-wide.png",
         path: "./_file/observable-logo-wide.png",
-        lastModified: undefined
+        lastModified: 1704963723000
       }
     ]);
   });
@@ -238,7 +238,7 @@ describe("normalizePieceHtml only adds local files", () => {
         mimeType: "image/jpeg",
         name: "./small.jpg",
         path: "./_file/small.jpg",
-        lastModified: undefined
+        lastModified: 1704963723000
       }
     ]);
   });
@@ -265,7 +265,7 @@ describe("normalizePieceHtml only adds local files", () => {
         mimeType: "video/quicktime",
         name: "./observable.mov",
         path: "./_file/observable.mov",
-        lastModified: undefined
+        lastModified: 1704963723000
       }
     ]);
   });

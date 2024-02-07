@@ -13,13 +13,13 @@
 
 import {define} from "../_observablehq/client.js";
 
-define({id: "ef9a31ef", inputs: ["FileAttachment","display"], files: [{"name":"../file-top.csv","mimeType":"text/csv","path":"../_file/file-top.csv"}], body: async (FileAttachment,display) => {
+define({id: "ef9a31ef", inputs: ["FileAttachment","display"], files: [{"name":"../file-top.csv","mimeType":"text/csv","path":"../_file/file-top.csv","lastModified":1729072800000}], body: async (FileAttachment,display) => {
 display(await(
 FileAttachment("../file-top.csv")
 ))
 }});
 
-define({id: "834ecf9f", inputs: ["FileAttachment","display"], files: [{"name":"./file-sub.csv","mimeType":"text/csv","path":"../_file/subsection/file-sub.csv"}], body: async (FileAttachment,display) => {
+define({id: "834ecf9f", inputs: ["FileAttachment","display"], files: [{"name":"./file-sub.csv","mimeType":"text/csv","path":"../_file/subsection/file-sub.csv","lastModified":1729072800000}], body: async (FileAttachment,display) => {
 display(await(
 FileAttachment("file-sub.csv")
 ))
