@@ -36,7 +36,7 @@ export function usGenDemandForecastChart(width, height, usDemandGenForecast, cur
     },
     grid: true,
     marks: [
-      Plot.ruleX([currentHour]),
+      Plot.ruleX([currentHour], {strokeOpacity: 0.5}),
       Plot.line(usDemandGenForecast, {x: "date", y: (d) => d.value / 1000, stroke: "name", strokeWidth: 1.2, tip: true})
     ]
   });
@@ -53,7 +53,7 @@ export function countryInterchangeChart(width, height, usDemandGenForecast, coun
     y: {label: "GWh exported", labelOffset: 0, tickSize: 0},
     x: {type: "time", domain: extent(usDemandGenForecast.map(d => d.date)), tickSize: 0, tickPadding: 3},
     marks: [
-      Plot.ruleX([currentHour]),
+      Plot.ruleX([currentHour], {strokeOpacity: 0.5}),
       Plot.areaY(countryInterchangeSeries, {x: "date", y: d => d.value / 1000, curve: "step", fill: "name", tip: true}),
       Plot.ruleY([0], {strokeOpacity: 0.3})
     ]

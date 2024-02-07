@@ -149,7 +149,9 @@ const [startHour, endHour] = d3.extent(hours);
 const hoursBackOfData = Math.ceil(Math.abs(endHour - startHour) / (MS_IN_AN_HOUR)) - 1;
 const hoursAgoInput = Inputs.range([hoursBackOfData, 0], { step: 1, value: 0, width: 150 });
 const hoursAgo = view(hoursAgoInput);
+```
 
+```js
 // Establish current hour and relative day
 const currentHour = new Date(startHour.getTime() - hoursAgo * MS_IN_AN_HOUR);
 const relativeDay = () => currentHour.getDate() === startHour.getDate() ? "Today" : "Yesterday";
