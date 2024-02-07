@@ -11,10 +11,9 @@
 
 .crop {
   border-radius: 8px;
-  border: solid 1px #333;
   margin: 1rem;
   max-width: calc(100% - 2rem);
-  box-shadow: 0 6px 12px 6px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 0.75px rgba(128, 128, 128, 0.2), 0 6px 12px 6px rgba(0, 0, 0, 0.4);
   aspect-ratio: 3024 / 1888;
   object-fit: cover;
   object-position: 0 100%;
@@ -231,7 +230,10 @@ You should see something like this:
 Now visit <http://127.0.0.1:3000> in your browser, which should look like:
 
 <figure class="wide">
-  <img loading="lazy" src="./getting-started/hello-framework.webp" style="aspect-ratio: 3248 / 2112;">
+  <picture>
+    <source srcset="./getting-started/hello-framework-dark.webp" media="(prefers-color-scheme: dark)">
+    <img loading="lazy" src="./getting-started/hello-framework.webp" style="aspect-ratio: 3248 / 2112;">
+  </picture>
   <figcaption>The default home page (<code>docs/index.md</code>) after creating a new project.</figcaption>
 </figure>
 
@@ -242,7 +244,10 @@ Live preview means that as you save changes, your in-browser preview updates ins
 To experience live preview, open <code>docs/index.md</code> in your preferred text editor — below we show Visual Studio Code — and position your browser window so that you can see your editor and browser side-by-side. If you then replace the text “Hello, Observable Framework” with “Hi, Mom!” and save, you should see:
 
 <figure class="wide">
-  <img loading="lazy" src="./getting-started/hi-mom.webp" class="crop">
+  <picture>
+    <source srcset="./getting-started/hi-mom-dark.webp" media="(prefers-color-scheme: dark)">
+    <img loading="lazy" src="./getting-started/hi-mom.webp" class="crop">
+  </picture>
   <figcaption>No seriously — hi, Mom! Thanks for supporting me all these years.</figcaption>
 </figure>
 
@@ -265,7 +270,10 @@ To see the new page in the sidebar, you must restart the preview server. In the 
 If you click on the **Weather report** link in the sidebar, it’ll take you to <http://127.0.0.1:3000/weather>, where you should see:
 
 <figure class="wide">
-  <img loading="lazy" src="./getting-started/hello-weather.webp" class="crop">
+  <picture>
+    <source srcset="./getting-started/hello-weather-dark.webp" media="(prefers-color-scheme: dark)">
+    <img loading="lazy" src="./getting-started/hello-weather.webp" class="crop">
+  </picture>
   <figcaption>The humble beginnings of a local weather dashboard.</figcaption>
 </figure>
 
@@ -366,7 +374,10 @@ display(forecast);
 This looks like:
 
 <figure class="wide">
-  <img loading="lazy" src="./getting-started/hello-data.webp" class="crop">
+  <picture>
+    <source srcset="./getting-started/hello-data-dark.webp" media="(prefers-color-scheme: dark)">
+    <img loading="lazy" src="./getting-started/hello-data.webp" class="crop">
+  </picture>
   <figcaption>Using <code>FileAttachment</code> to load data.</figcaption>
 </figure>
 
@@ -423,7 +434,10 @@ Plot.plot({
 You should now see:
 
 <figure class="wide">
-  <img loading="lazy" src="./getting-started/hello-plot.webp" class="crop">
+  <picture>
+    <source srcset="./getting-started/hello-plot-dark.webp" media="(prefers-color-scheme: dark)">
+    <img loading="lazy" src="./getting-started/hello-plot.webp" class="crop">
+  </picture>
   <figcaption>Using <code>Plot</code> to make a chart.</figcaption>
 </figure>
 
@@ -502,7 +516,10 @@ toc: false
 ```
 
 <figure class="wide">
-  <img loading="lazy" src="./getting-started/hello-grid.webp" class="crop">
+  <picture>
+    <source srcset="./getting-started/hello-grid-dark.webp" media="(prefers-color-scheme: dark)">
+    <img loading="lazy" src="./getting-started/hello-grid.webp" class="crop">
+  </picture>
   <figcaption>Adopting a grid layout and the <code>dashboard</code> theme.</figcaption>
 </figure>
 
