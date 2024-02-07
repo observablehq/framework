@@ -45,7 +45,7 @@ const defaultEffects: CreateEffects = {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function create(options = {}, effects: CreateEffects = defaultEffects): Promise<void> {
   const {clack} = effects;
-  clack.intro(`${inverse(" observable create ")} ${faint(version)}`);
+  clack.intro(`${inverse(" observable create ")} ${faint(`v${version}`)}`);
   const defaultRootPath = "./hello-framework";
   const defaultRootPathError = validateRootPath(defaultRootPath);
   await clack.group(
