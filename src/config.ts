@@ -35,7 +35,8 @@ export interface Config {
   root: string; // defaults to docs
   output: string; // defaults to dist
   title?: string;
-  pages: (Page | Section)[]; // TODO rename to sidebar?
+  sidebar: boolean; // defaults to true if pages isn’t empty
+  pages: (Page | Section)[];
   pager: boolean; // defaults to true
   scripts: Script[]; // defaults to empty array
   head: string; // defaults to empty string
@@ -87,6 +88,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   let {
     root = defaultRoot,
     output = "dist",
+    sidebar,
     style,
     theme = "default",
     deploy,
@@ -105,6 +107,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   let {title, pages = await readPages(root), pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
+  sidebar = sidebar === undefined ? pages.length > 0 : Boolean(sidebar);
   pager = Boolean(pager);
   scripts = Array.from(scripts, normalizeScript);
   head = String(head);
@@ -112,7 +115,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   footer = String(footer);
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
-  return {root, output, title, pages, pager, scripts, head, header, footer, toc, style, deploy};
+  return {root, output, title, sidebar, pages, pager, scripts, head, header, footer, toc, style, deploy};
 }
 
 function normalizeTheme(spec: any): string[] {
