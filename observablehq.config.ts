@@ -35,21 +35,6 @@ export default {
       ]
     },
     {
-      name: "Charts",
-      open: false,
-      pages: [
-        {name: "Area", path: "/charts/area"},
-        {name: "Arrow", path: "/charts/arrow"},
-        {name: "Bar", path: "/charts/bar"},
-        {name: "Cell", path: "/charts/cell"},
-        {name: "Dot", path: "/charts/dot"},
-        {name: "Facets", path: "/charts/facets"},
-        {name: "Grouping data", path: "/charts/grouping-data"},
-        {name: "Line", path: "/charts/line"},
-        {name: "Tick", path: "/charts/tick"}
-      ]
-    },
-    {
       name: "Inputs",
       open: false,
       pages: [
