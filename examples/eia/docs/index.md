@@ -151,10 +151,26 @@ const hoursAgoInput = Inputs.range([hoursBackOfData, 0], { step: 1, value: 0, wi
 const hoursAgo = view(hoursAgoInput);
 ```
 
+```js echo
+hours
+```
+
+```js echo
+startHour
+```
+
+```js echo
+endHour
+```
+
+```js echo
+currentHour
+```
+
 ```js
 // Establish current hour and relative day
-const currentHour = new Date(startHour.getTime() - hoursAgo * MS_IN_AN_HOUR);
-const relativeDay = () => currentHour.getDate() === startHour.getDate() ? "Today" : "Yesterday";
+const currentHour = new Date(endHour.getTime() - hoursAgo * MS_IN_AN_HOUR);
+const relativeDay = () => currentHour.getDate() === endHour.getDate() ? "Today" : "Yesterday";
 ```
 
 <div class="grid grid-cols-4" style="grid-auto-rows: 190px;">
@@ -163,7 +179,7 @@ const relativeDay = () => currentHour.getDate() === startHour.getDate() ? "Today
     <h3>Percent change in electricity demand from previous hour</h3>
     <div>
       <div style="display: flex; flex-direction: column; align-items: center;">
-        <h1 style="margin-bottom: 0; margin-top: 8px;">${hourFormat(currentHour)}</h1>
+        <h1 style="margin-bottom: 0; margin-top: 8px;">${hourFormat(currentHour)}</h1> 
         <div>${relativeDay()}</div>
         <div style="display: flex; align-items: center;">
           <style>input[type="number"] { display: none; }</style>
