@@ -325,6 +325,12 @@ async function promptDeployTarget(
     });
     if (clack.isCancel(chosenProject)) {
       throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
+    } else if (chosenProject === null && workspace.tier === "starter_2024") {
+      effects.clack.log.error(
+        `The Starter tier can only deploy one project. Upgrade to unlimited projects at ${underline(`https://observablehq.com/team/@${workspace.login}/settings`)}.`
+      );
+      effects.clack.outro(yellow("Deploy cancelled."));
+      throw new CliError("Deploy cancelled.", {print: false, exitCode: 0});
     } else if (chosenProject !== null) {
       return {create: false, workspace, project: existingProjects.find((p) => p.slug === chosenProject)!};
     }
