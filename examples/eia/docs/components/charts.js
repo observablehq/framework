@@ -2,14 +2,14 @@ import * as Plot from "npm:@observablehq/plot";
 import {extent} from "npm:d3-array";
 
 // Top 5 balancing authorities chart
-export function top5BalancingAuthoritiesChart(width, height, top5Demand) {
+export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDemand) {
   return Plot.plot({
     marginTop: 8,
     marginLeft: 250,
     height: height - 4,
     width,
     y: {label: null, tickSize: 0},
-    x: {label: null, grid: true, tickSize: 0, tickPadding: 2},
+    x: {label: null, grid: true, tickSize: 0, tickPadding: 2, domain: [0, maxDemand / 1000], nice: true},
     marks: [
       Plot.barX(top5Demand, {
         y: "name",

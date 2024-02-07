@@ -98,15 +98,20 @@ const baHourlyClean = baHourly
 ```js
 // Most recent hour for each BA
 const baHourlyLatest = d3.rollup(baHourlyDemand, d => d[0].value, d => d["ba"]);
-const baHourlyCurrent = d3.rollup(baHourlyDemand, d => d[hoursAgo]?.value, d => d["ba"]);
+const baHourlyAll = d3.range(0, hoursBackOfData + 1).map(hour => d3.rollup(baHourlyDemand, d => d[hour]?.value, d => d["ba"]));
+const baHourlyCurrent = baHourlyAll[hoursAgo];
 ```
 
 ```js
-// Top 5 BAs by demand, latest hour
-const top5LatestDemand = Array
-  .from(baHourlyCurrent, ([name, value]) => ({ name, value }))
-  .filter(d => !regions.includes(d.name))  // Exclude regions
-  .sort(((a, b) => b.value - a.value)).slice(0, 5);
+// Top 5 BAs by demand
+function computeTopDemand(baHourly) {
+  return Array
+    .from(baHourly, ([name, value]) => ({ name, value }))
+    .filter(d => !regions.includes(d.name))  // Exclude regions
+    .sort(((a, b) => b.value - a.value)).slice(0, 5);
+}
+const top5LatestDemand = computeTopDemand(baHourlyCurrent);
+const maxDemand = d3.max(baHourlyAll.map(demand => computeTopDemand(demand)[0].value));
 ```
 
 ```js
@@ -190,7 +195,7 @@ const relativeDay = () => currentHour.getDate() === endHour.getDate() ? "Today" 
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
     <h2>Top 5 balancing authorities by demand at ${hourFormat(currentHour)} ${relativeDay().toLowerCase()} (GWh)</h2>
-    ${resize((width, height) => top5BalancingAuthoritiesChart(width, height, top5LatestDemand))}
+    ${resize((width, height) => top5BalancingAuthoritiesChart(width, height, top5LatestDemand, maxDemand))}
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
     <h2>US electricity generation, demand, and demand forecast (GWh)</h2>
