@@ -2,13 +2,21 @@ import assert, {fail} from "node:assert";
 import {Readable, Writable} from "node:stream";
 import {commandRequiresAuthenticationMessage} from "../src/commandInstruction.js";
 import {normalizeConfig} from "../src/config.js";
-import {type DeployEffects, deploy} from "../src/deploy.js";
+import {type DeployEffects, deploy, promptDeployTarget, DeployOptions} from "../src/deploy.js";
 import {CliError, isHttpError} from "../src/error.js";
 import type {DeployConfig} from "../src/observableApiConfig.js";
 import {TestClackEffects} from "./mocks/clack.js";
 import {MockLogger} from "./mocks/logger.js";
-import {getCurrentObservableApi, invalidApiKey, mockObservableApi, validApiKey} from "./mocks/observableApi.js";
+import {
+  getCurrentObservableApi,
+  invalidApiKey,
+  mockObservableApi,
+  userWithTwoWorkspaces,
+  userWithZeroWorkspaces,
+  validApiKey
+} from "./mocks/observableApi.js";
 import {MockConfigEffects} from "./observableApiConfig-test.js";
+import {ObservableApiClient} from "../src/observableApiClient.js";
 
 // These files are implicitly generated. This may change over time, so they’re
 // enumerated here for clarity. TODO We should enforce that these files are
@@ -124,7 +132,7 @@ const TEST_CONFIG = await normalizeConfig({
   root: TEST_SOURCE_ROOT,
   title: "Mock BI"
 });
-const TEST_OPTIONS = {config: TEST_CONFIG, message: undefined};
+const TEST_OPTIONS: DeployOptions = {config: TEST_CONFIG, message: undefined, deployPollInterval: 0};
 const DEPLOY_CONFIG: DeployConfig & {projectId: string; projectSlug: string; workspaceLogin: string} = {
   projectId: "project123",
   projectSlug: "bi",
@@ -142,6 +150,7 @@ describe("deploy", () => {
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
       .handlePostDeployUploaded({deployId})
+      .handleGetDeploy({deployId, deployStatus: "uploaded"})
       .start();
 
     const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG});
@@ -163,6 +172,7 @@ describe("deploy", () => {
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
       .handlePostDeployUploaded({deployId})
+      .handleGetDeploy({deployId})
       .start();
 
     const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG});
@@ -181,6 +191,7 @@ describe("deploy", () => {
       .handlePostDeploy({projectId: deployConfig.projectId, deployId})
       .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
       .handlePostDeployUploaded({deployId})
+      .handleGetDeploy({deployId})
       .start();
 
     // no io response for message
@@ -203,6 +214,7 @@ describe("deploy", () => {
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
       .handlePostDeployUploaded({deployId})
+      .handleGetDeploy({deployId})
       .start();
 
     const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, isTty: true});
@@ -452,6 +464,7 @@ describe("deploy", () => {
         .handlePostDeploy({projectId: newProjectId, deployId})
         .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
         .handlePostDeployUploaded({deployId})
+        .handleGetDeploy({deployId})
         .start();
       const effects = new MockDeployEffects({deployConfig: oldDeployConfig, isTty: true});
       // .addIoResponse(/Do you want to deploy anyway\?/, "y")
@@ -500,6 +513,55 @@ describe("deploy", () => {
         CliError.assert(error, {message: "Cancelling deploy due to misconfiguration."});
       }
       effects.clack.log.assertLogged({message: /`projectId` in your deploy.json does not match/});
+    });
+  });
+});
+
+describe("promptDeployTarget", () => {
+  mockObservableApi();
+
+  it("throws when not on a tty", async () => {
+    const effects = new MockDeployEffects({isTty: false});
+    const api = new ObservableApiClient({apiKey: {key: validApiKey, source: "test"}});
+    try {
+      await promptDeployTarget(effects, api, TEST_CONFIG);
+    } catch (error) {
+      CliError.assert(error, {message: "Deploy not configured."});
+    }
+  });
+
+  it("throws an error when the user has no workspaces", async () => {
+    const effects = new MockDeployEffects();
+    const api = new ObservableApiClient({apiKey: {key: validApiKey, source: "test"}});
+    getCurrentObservableApi().handleGetCurrentUser({user: userWithZeroWorkspaces}).start();
+    try {
+      await promptDeployTarget(effects, api, TEST_CONFIG);
+    } catch (error) {
+      effects.clack.log.assertLogged({message: /You don’t have any Observable workspaces/});
+      CliError.assert(error, {message: "No Observable workspace found.", print: false});
+    }
+  });
+
+  it("handles a user with multiple workspaces", async () => {
+    const effects = new MockDeployEffects();
+    const workspace = userWithTwoWorkspaces.workspaces[1];
+    const projectSlug = "new-project";
+    effects.clack.inputs = [
+      workspace, // which workspace do you want to use?
+      true, //
+      projectSlug // what slug do you want to us
+    ];
+    const api = new ObservableApiClient({apiKey: {key: validApiKey, source: "test"}});
+    getCurrentObservableApi()
+      .handleGetCurrentUser({user: userWithTwoWorkspaces})
+      .handleGetWorkspaceProjects({workspaceLogin: workspace.login, projects: []})
+      .start();
+    const result = await promptDeployTarget(effects, api, TEST_CONFIG);
+    assert.deepEqual(result, {
+      create: true,
+      projectSlug,
+      title: "Mock BI",
+      workspace
     });
   });
 });

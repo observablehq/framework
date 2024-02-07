@@ -19,10 +19,10 @@ import {
   getObservableApiKey,
   setDeployConfig
 } from "./observableApiConfig.js";
+import {slugify} from "./slugify.js";
 import {Telemetry} from "./telemetry.js";
 import type {TtyEffects} from "./tty.js";
 import {bold, defaultEffects as defaultTtyEffects, inverse, link, underline, yellow} from "./tty.js";
-import {slugify} from "./slugify.js";
 
 const DEPLOY_POLL_MAX_MS = 1000 * 60 * 5;
 const DEPLOY_POLL_INTERVAL_MS = 1000 * 5;
@@ -30,6 +30,7 @@ const DEPLOY_POLL_INTERVAL_MS = 1000 * 5;
 export interface DeployOptions {
   config: Config;
   message: string | undefined;
+  deployPollInterval?: number;
 }
 
 export interface DeployEffects extends ConfigEffects, TtyEffects {
@@ -59,7 +60,10 @@ type DeployTargetInfo =
   | {create: false; workspace: {id: string; login: string}; project: GetProjectResponse};
 
 /** Deploy a project to ObservableHQ */
-export async function deploy({config, message}: DeployOptions, effects = defaultEffects): Promise<void> {
+export async function deploy(
+  {config, message, deployPollInterval = DEPLOY_POLL_INTERVAL_MS}: DeployOptions,
+  effects = defaultEffects
+): Promise<void> {
   Telemetry.record({event: "deploy", step: "start"});
   effects.clack.intro(inverse(" observable deploy "));
 
@@ -249,7 +253,7 @@ export async function deploy({config, message}: DeployOptions, effects = default
       default:
         throw new CliError(`Unknown deploy status: ${deployInfo.status}`);
     }
-    await new Promise((resolve) => setTimeout(resolve, DEPLOY_POLL_INTERVAL_MS));
+    await new Promise((resolve) => setTimeout(resolve, deployPollInterval));
   }
   spinner.stop();
   if (!deployInfo) throw new CliError("Deploy failed to process on server");
@@ -315,12 +319,12 @@ export async function promptDeployTarget(
     workspace = workspaces[0];
     effects.clack.log.step(`Deploying to the ${bold(formatUser(workspace))} workspace.`);
   } else {
-    const chosenWorkspace = await clack.select<{value: WorkspaceResponse; label: string}[], WorkspaceResponse>({
+    const chosenWorkspace = await effects.clack.select<{value: WorkspaceResponse; label: string}[], WorkspaceResponse>({
       message: "Which Observable workspace do you want to use?",
       options: workspaces.map((w) => ({value: w, label: formatUser(w)})).sort((a, b) => a.label.localeCompare(b.label)),
       initialValue: workspaces[0] // the oldest workspace, maybe?
     });
-    if (clack.isCancel(chosenWorkspace)) {
+    if (effects.clack.isCancel(chosenWorkspace)) {
       throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
     }
     workspace = chosenWorkspace;
@@ -350,7 +354,7 @@ export async function promptDeployTarget(
           .sort((a, b) => a.label.localeCompare(b.label))
       ]
     });
-    if (clack.isCancel(chosenProject)) {
+    if (effects.clack.isCancel(chosenProject)) {
       throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
     } else if (chosenProject !== null) {
       return {create: false, workspace, project: existingProjects.find((p) => p.slug === chosenProject)!};
@@ -377,7 +381,7 @@ export async function promptDeployTarget(
       placeholder: "Enter a project title",
       validate: (title) => (title ? undefined : "A title is required.")
     });
-    if (clack.isCancel(titleChoice)) {
+    if (effects.clack.isCancel(titleChoice)) {
       throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
     }
     title = titleChoice;
@@ -395,7 +399,7 @@ export async function promptDeployTarget(
         ? undefined
         : "Slugs must be lowercase and contain only letters, numbers, and hyphens."
   });
-  if (clack.isCancel(projectSlugChoice)) {
+  if (effects.clack.isCancel(projectSlugChoice)) {
     throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
   }
   projectSlug = projectSlugChoice;
