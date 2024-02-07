@@ -103,32 +103,84 @@ The data loader below `earthquakes.zip.py` accesses data on [earthquakes from th
 
 Copy and paste the code below into your own Python data loader (with extension .zip.py in your project source root, typically `docs`), then update with your own data and Python code to get started.
 
-```js
-const test3 = FileAttachment("test1/csv-test.csv").csv({typed: true})
+```python
+# Import libraries (must be installed)
+import requests
+import pandas as pd
+import json
+import zipfile
+import io
+import sys
+
+# Access earthquake data as JSON from URL:
+url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson"
+response = requests.get(url)
+geojson_data = response.json()
+
+# Get quakes metadata in JSON format:
+earthquake_metadata = geojson_data['metadata']
+earthquake_meta_json = json.dumps(earthquake_metadata)
+
+# Create a pandas data frame with only earthquake magnitude, longitude, and latitude:
+earthquakes = []
+
+for i in geojson_data['features']:
+    mag = i['properties']['mag']
+    longitude = i['geometry']['coordinates'][0]
+    latitude = i['geometry']['coordinates'][1]
+    earthquakes.append({"mag": mag, "longitude": longitude, "latitude": latitude})
+
+earthquakes_df = pd.DataFrame(earthquakes)
+
+# Create a buffer
+zip_buffer = io.BytesIO()
+
+# Write JSON string to the zip file
+with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+    zip_file.writestr('quakes_metadata.json', earthquake_meta_json)
+
+# Write DataFrame to a CSV file in the zip file
+with zipfile.ZipFile(zip_buffer, 'a') as zip_file:
+    df_csv_string = earthquakes_df.to_csv(index=False)
+    zip_file.writestr('quakes.csv', df_csv_string)
+
+# Write the zip file to standard output
+sys.stdout.buffer.write(zip_buffer.getvalue())
 ```
 
-```js
-test3
+Access the output of the data loader (here, `quakes_metadata.json` and `quakes.csv`) from the client using [`FileAttachment`](../javascript/files). If your .md and data loader are both in the project root, that is:
+
+```js run=false
+const quakeMetadata = FileAttachment("earthquakes/quakes_metadata.json").json()
 ```
 
-```js
-const test4 = FileAttachment("test1/json-test.json").json()
+```js run=false
+const quakeData = FileAttachment("earthquakes/quakes.csv").csv({typed: true})
 ```
 
-```js
-test4
+You can alternatively access the zip archive as a whole: 
+
+```js run=false
+const quakeZip = FileAttachment("earthquakes.zip").zip()
 ```
 
-<!-- TODO: this data loader is currently not working...
 
+<!-- For local earthquakes.zip.py testing only -->
 
-```js
-const test = FileAttachment("earthquakes/quakes.csv").csv({typed: true})
+```js echo=false run=false
+const quakeMetadata = FileAttachment("earthquakes/quakes_metadata.json").json()
 ```
 
-```js
-test
+```js echo=false run=false
+quakeMetadata
 ```
 
--->
+```js echo=false run=false
+const quakeData = FileAttachment("earthquakes/quakes.csv").csv({typed: true})
+```
 
+```js echo=false run=false
+quakeData
+```
+
+<!-- End local testing of earthquakes.zip.py -->

@@ -1,4 +1,4 @@
-# Import libraries
+# Import libraries (must be installed)
 import requests
 import pandas as pd
 import json
@@ -11,7 +11,7 @@ url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson
 response = requests.get(url)
 geojson_data = response.json()
 
-# Get the metadata in JSON format:
+# Get quakes metadata in JSON format:
 earthquake_metadata = geojson_data['metadata']
 earthquake_meta_json = json.dumps(earthquake_metadata)
 
@@ -26,20 +26,17 @@ for i in geojson_data['features']:
 
 earthquakes_df = pd.DataFrame(earthquakes)
 
-# Write the files to a zip archive
-zip_bytes_io = io.BytesIO()
+# Create a buffer
+zip_buffer = io.BytesIO()
 
-# Create the zip archive
-with zipfile.ZipFile(zip_bytes_io, mode="w") as zipf:
-    
-    # Add JSON file to zip archive
-    zipf.writestr("metadata.json", earthquake_meta_json)
+# Write JSON string to the zip file
+with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+    zip_file.writestr('quakes_metadata.json', earthquake_meta_json)
 
-    # Add DataFrame as a CSV file to zip archive
-    csv_bytes_io = io.StringIO()
-    earthquakes_df.to_csv(csv_bytes_io, index=False)
-    zipf.writestr("quakes.csv", csv_bytes_io.getvalue())
+# Write DataFrame to a CSV file in the zip file
+with zipfile.ZipFile(zip_buffer, 'a') as zip_file:
+    df_csv_string = earthquakes_df.to_csv(index=False)
+    zip_file.writestr('quakes.csv', df_csv_string)
 
-# Zip archive to stdout
-zip_bytes_io.seek(0)
-sys.stdout.write(zip_bytes_io.getvalue())
+# Write the zip file to standard output
+sys.stdout.buffer.write(zip_buffer.getvalue())
