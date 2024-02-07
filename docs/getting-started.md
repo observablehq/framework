@@ -192,10 +192,12 @@ And that’s it! After some downloading, copying, and installing, your new proje
 <span class="muted">│</span>
 <span class="green">◇</span>  Installed! 🎉
 <span class="muted">│</span>
-<span class="green">◇</span>  Next steps…
-<span class="muted">│</span>
-<span class="muted">│</span>  <span class="focus">cd ./hello-framework</span>
-<span class="muted">│</span>  <span class="focus">yarn dev</span>
+<span class="green">◇</span>  Next steps… <span class="muted">──────────╮</span>
+<span class="muted">│</span>                        <span class="muted">│</span>
+<span class="muted">│</span>  <span class="focus">cd ./hello-framework</span>  <span class="muted">│</span>
+<span class="muted">│</span>  <span class="focus">yarn dev</span>              <span class="muted">│</span>
+<span class="muted">│</span>                        <span class="muted">│</span>
+<span class="muted">├────────────────────────╯</span>
 <span class="muted">│</span>
 <span class="muted">└</span>  Problems? <u><a href="https://observablehq.com/framework/getting-started" style="color: inherit;">https://observablehq.com/framework/getting-started</a></u></pre>
 
