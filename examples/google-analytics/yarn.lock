@@ -252,7 +252,7 @@
     protobufjs "^7.2.4"
     yargs "^17.7.2"
 
-"@observablehq/cli@link:../..":
+"@observablehq/framework@link:../..":
   version "0.0.0"
   uid ""
 

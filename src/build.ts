@@ -88,15 +88,19 @@ export async function build(
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
     effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
-    const render = await renderServerless(await readFile(sourcePath, "utf-8"), {path, ...config});
+    const render = await renderServerless(sourcePath, {path, ...config});
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
     files.push(...render.files.map(resolveFile));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
     await effects.writeFile(outputPath, render.html);
     const style = mergeStyle(path, render.data?.style, render.data?.theme, config.style);
-    if (style) {
-      if ("path" in style) style.path = resolvePath(sourceFile, style.path);
-      if (!styles.some((s) => styleEquals(s, style))) styles.push(style);
+    if (style && !styles.some((s) => styleEquals(s, style))) styles.push(style);
+  }
+
+  // Add imported local scripts.
+  for (const script of config.scripts) {
+    if (!/^\w+:/.test(script.src)) {
+      imports.push(script.src);
     }
   }
 
@@ -132,7 +136,7 @@ export async function build(
     let sourcePath = join(root, file);
     const outputPath = join("_file", file);
     if (!existsSync(sourcePath)) {
-      const loader = Loader.find(root, file, {useStale: true});
+      const loader = Loader.find(root, join("/", file), {useStale: true});
       if (!loader) {
         effects.logger.error("missing referenced file", sourcePath);
         continue;

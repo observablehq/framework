@@ -1,4 +1,5 @@
 import {type ParseArgsConfig, parseArgs} from "node:util";
+import * as clack from "@clack/prompts";
 import {readConfig} from "../src/config.js";
 import {CliError} from "../src/error.js";
 import {enableNpmVersionResolution, enableRemoteModulePreload} from "../src/javascript/imports.js";
@@ -55,6 +56,8 @@ else if (values.help) {
   command = "help";
 }
 
+const CLACKIFIED_COMMANDS = ["login"];
+
 try {
   switch (command) {
     case undefined:
@@ -90,11 +93,8 @@ try {
       break;
     }
     case "create": {
-      const {
-        positionals: [output]
-      } = helpArgs(command, {allowPositionals: true});
-      // TODO error if more than one positional
-      await import("../src/create.js").then(async (create) => create.create({output}));
+      helpArgs(command, {});
+      await import("../src/create.js").then(async (create) => create.create());
       break;
     }
     case "deploy": {
@@ -164,7 +164,13 @@ try {
   }
 } catch (error) {
   if (error instanceof CliError) {
-    if (error.print) console.error(red(error.message));
+    if (error.print) {
+      if (command && CLACKIFIED_COMMANDS.includes(command)) {
+        clack.outro(red(`Error: ${error.message}`));
+      } else {
+        console.error(red(error.message));
+      }
+    }
     process.exit(error.exitCode);
   }
   throw error;
@@ -184,9 +190,9 @@ function helpArgs<T extends ParseArgsConfig>(command: string | undefined, config
   }
   if ((result.values as any).help) {
     console.log(
-      `Usage: observable ${command}${
-        command === undefined || command === "help" ? " <command>" : command === "create" ? " <output-dir>" : ""
-      }${Object.entries(config.options ?? {})
+      `Usage: observable ${command}${command === undefined || command === "help" ? " <command>" : ""}${Object.entries(
+        config.options ?? {}
+      )
         .map(([name, {default: def}]) => ` [--${name}${def === undefined ? "" : `=${def}`}]`)
         .join("")}`
     );

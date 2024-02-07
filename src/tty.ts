@@ -1,9 +1,12 @@
+import {isatty} from "node:tty";
 import type {Logger} from "./logger.js";
 
+export const reset = color(0, 0);
 export const bold = color(1, 22);
 export const faint = color(2, 22);
 export const italic = color(3, 23);
 export const underline = color(4, 24);
+export const inverse = color(7, 27);
 export const red = color(31, 39);
 export const green = color(32, 39);
 export const yellow = color(33, 39);
@@ -22,6 +25,12 @@ export interface TtyEffects {
   logger: Logger;
   outputColumns: number;
 }
+
+export const defaultEffects: TtyEffects = {
+  isTty: isatty(process.stdin.fd),
+  logger: console,
+  outputColumns: process.stdout.columns ?? 80
+};
 
 function stripColor(s: string): string {
   // eslint-disable-next-line no-control-regex
@@ -42,7 +51,15 @@ export function hangingIndentLog(
     const lines: string[][] = [[]];
     indent = " ".repeat(prefixLength);
     let lastLineLength = 0;
-    for (const token of tokens) {
+    while (tokens.length) {
+      let token = tokens.shift()!;
+      let newline = false;
+      if (token.includes("\n")) {
+        let rest;
+        [token, rest] = token.split("\n", 2);
+        tokens.unshift(rest);
+        newline = true;
+      }
       const tokenLength = stripColor(token).length;
       lastLineLength += tokenLength + 1;
       if (lastLineLength > lineBudget) {
@@ -50,6 +67,10 @@ export function hangingIndentLog(
         lastLineLength = tokenLength;
       }
       lines.at(-1)?.push(token);
+      if (newline) {
+        lines.push([]);
+        lastLineLength = tokenLength;
+      }
     }
     output = prefix + " ";
     output += lines.map((line) => line.join(" ")).join("\n" + indent);
@@ -59,4 +80,9 @@ export function hangingIndentLog(
   }
   effects.logger.log(output);
   return {output, indent};
+}
+
+export function link(url: URL | string): string {
+  if (url instanceof URL) url = url.href;
+  return underline(url);
 }

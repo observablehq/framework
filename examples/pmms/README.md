@@ -1,6 +1,6 @@
 # Mortage tracker
 
-This is an example Observable CLI project. It uses a data loader to track the mortage rates published by Freddie Mac — Federal Home Loan Mortgage Corporation — every week since 1971.
+This is an example Observable Framework project. It uses a data loader to track the mortage rates published by Freddie Mac — Federal Home Loan Mortgage Corporation — every week since 1971.
 
 ## Data loader
 

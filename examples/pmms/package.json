@@ -6,11 +6,11 @@
     "postinstall": "ln -sf ../../../../bin/observable-init.js node_modules/.bin/observable"
   },
   "dependencies": {
-    "@observablehq/cli": "link:../..",
+    "@observablehq/framework": "link:../..",
     "d3-fetch": "^3.0.1",
     "d3-time-format": "^4.1.0"
   },
   "engines": {
-    "node": "^18 <18.19.0 || >=20"
+    "node": ">=20.6"
   }
 }

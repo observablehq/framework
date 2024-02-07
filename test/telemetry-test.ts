@@ -39,7 +39,7 @@ describe("telemetry", () => {
     const telemetry = new Telemetry({...noopEffects, logger, readFile: () => Promise.reject()});
     telemetry.record({event: "build", step: "start", test: true});
     await telemetry.pending;
-    logger.assertExactErrors([/Attention.*cli.observablehq.com.*OBSERVABLE_TELEMETRY_DISABLE=true/s]);
+    logger.assertExactErrors([/Attention.*observablehq.com.*OBSERVABLE_TELEMETRY_DISABLE=true/s]);
   });
 
   it("can be disabled", async () => {

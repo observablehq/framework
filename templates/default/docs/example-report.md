@@ -1,3 +1,7 @@
+---
+title: Example report
+---
+
 # A brief history of space exploration
 
 This report is a brief overview of the history and current state of rocket launches and space exploration.

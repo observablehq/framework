@@ -1,6 +1,5 @@
-import {readFile} from "node:fs/promises";
-import {basename, dirname, extname, join} from "node:path";
-import {visitFiles} from "./files.js";
+import {basename, dirname, join} from "node:path";
+import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import {parseMarkdown} from "./markdown.js";
 import {resolveTheme} from "./theme.js";
@@ -26,13 +25,22 @@ export type Style =
   | {path: string} // custom stylesheet
   | {theme: string[]}; // zero or more named theme
 
+export interface Script {
+  src: string;
+  async: boolean;
+  type: string | null;
+}
+
 export interface Config {
   root: string; // defaults to docs
   output: string; // defaults to dist
   title?: string;
   pages: (Page | Section)[]; // TODO rename to sidebar?
   pager: boolean; // defaults to true
-  footer: string;
+  scripts: Script[]; // defaults to empty array
+  head: string; // defaults to empty string
+  header: string; // defaults to empty string
+  footer: string; // defaults to “Built with Observable on [date].”
   toc: TableOfContents;
   style: null | Style; // defaults to {theme: ["light", "dark"]}
   deploy: null | {workspace: string; project: string};
@@ -58,9 +66,9 @@ export async function readDefaultConfig(root?: string): Promise<Config> {
 
 async function readPages(root: string): Promise<Page[]> {
   const pages: Page[] = [];
-  for await (const file of visitFiles(root)) {
-    if (file === "index.md" || file === "404.md" || extname(file) !== ".md") continue;
-    const parsed = await parseMarkdown(await readFile(join(root, file), "utf-8"), root, file);
+  for await (const file of visitMarkdownFiles(root)) {
+    if (file === "index.md" || file === "404.md") continue;
+    const parsed = await parseMarkdown(join(root, file), {root, path: file});
     const name = basename(file, ".md");
     const page = {path: join("/", dirname(file), name), name: parsed.title ?? "Untitled"};
     if (name === "index") pages.unshift(page);
@@ -82,6 +90,9 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
     style,
     theme = "default",
     deploy,
+    scripts = [],
+    head = "",
+    header = "",
     footer = `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="${formatIsoDate(
       currentDate
     )}">${formatLocaleDate(currentDate)}</a>.`
@@ -95,14 +106,26 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
   pager = Boolean(pager);
+  scripts = Array.from(scripts, normalizeScript);
+  head = String(head);
+  header = String(header);
   footer = String(footer);
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
-  return {root, output, title, pages, pager, footer, toc, style, deploy};
+  return {root, output, title, pages, pager, scripts, head, header, footer, toc, style, deploy};
 }
 
 function normalizeTheme(spec: any): string[] {
   return resolveTheme(typeof spec === "string" ? [spec] : spec === null ? [] : Array.from(spec, String));
+}
+
+function normalizeScript(spec: any): Script {
+  if (typeof spec === "string") spec = {src: spec};
+  let {src, async = false, type} = spec;
+  src = String(src);
+  async = Boolean(async);
+  type = type == null ? null : String(type);
+  return {src, async, type};
 }
 
 function normalizePageOrSection(spec: any): Page | Section {
