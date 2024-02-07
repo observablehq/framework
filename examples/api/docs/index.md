@@ -28,7 +28,7 @@ const routesByBytes = summary.filter(d => d.type === 'bytes');
 
 # API logs
 
-This dashboard provides an overview of API requests to observablehq.com. These charts visualize ${d3.format('.2s')(total)} API requests over a seven day period. For an in-depth walkthrough of the views in this dashboard, take a look at the [API report](/report).
+This dashboard provides an overview of API requests to observablehq.com. These charts visualize  a sample of API requests (${d3.format('.2s')(total)} to be exact) over a seven day period. For an in-depth walkthrough of the views in this dashboard, take a look at the [API report](/report).
 
 <div class="grid grid-cols-1" style="grid-auto-rows: 611px;">
   <div class="card">${resize((width) => ApiHeatmap(heatmaps, {color, width, title: "Response latency heatmap", label: "Duration (ms)", y1: 0.5, y2: 10_000, yMetric: 'duration_count', fillMetric: 'duration_route'}))}</div>

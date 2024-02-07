@@ -17,7 +17,7 @@ const marginLeft = margin;
 
 export function ApiHeatmap(
   table,
-  {color, width, height = 550, y1, y2, title, label, yMetric, fillMetric, routeFilter}
+  {color, width, height = 550, y1, y2, title, label, yMetric, fillMetric, routeFilter, type}
 ) {
   const canvasCache = new WeakMap();
   const count = table.getChild(yMetric);
@@ -68,7 +68,11 @@ export function ApiHeatmap(
           } else {
             context.globalAlpha = Math.min(1, count.get(k) / 25);
           }
-          context.fillStyle = color.apply(route.get(k));
+          if(type === 'frequency') {
+            context.fillStyle = d3.interpolateTurbo(count.get(k) / 80);
+          } else {
+            context.fillStyle = color.apply(route.get(k));
+          }
           context.fillRect(i, dy - j - 1, 1, 1);
         }
       }

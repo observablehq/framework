@@ -4,7 +4,7 @@ export function ApiBars(routes, {color, title, label, transform = (d) => d, form
   return Plot.plot({
     width,
     marginLeft: 10,
-    x: {grid: true, insetRight: 110, transform, label},
+    x: {grid: true, insetRight: 80, transform, label},
     y: {axis: null, round: false},
     color,
     title,
