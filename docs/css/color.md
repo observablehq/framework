@@ -14,47 +14,47 @@ The following custom properties are defined by the current [theme](../themes):
     <tr>
       <td><code>--theme-foreground</code></td>
       <td><div style="background-color: var(--theme-foreground); width: 2rem; height: 1rem;"></div></td>
-      <td>page foreground color, _e.g._ black</td>
+      <td>page foreground color</td>
     </tr>
     <tr>
       <td><code>--theme-background</code></td>
       <td><div style="background-color: var(--theme-background); width: 2rem; height: 1rem;"></div></td>
-      <td>page background color, _e.g._ white</td>
+      <td>page background color</td>
     </tr>
     <tr>
       <td><code>--theme-background-alt</code></td>
       <td><div style="background-color: var(--theme-background-alt); width: 2rem; height: 1rem;"></div></td>
-      <td>block background color, _e.g._ light gray</td>
+      <td>block background color</td>
     </tr>
     <tr>
       <td><code>--theme-foreground-alt</code></td>
       <td><div style="background-color: var(--theme-foreground-alt); width: 2rem; height: 1rem;"></div></td>
-      <td>heading foreground color, _e.g._ brown</td>
+      <td>heading foreground color</td>
     </tr>
     <tr>
       <td><code>--theme-foreground-muted</code></td>
       <td><div style="background-color: var(--theme-foreground-muted); width: 2rem; height: 1rem;"></div></td>
-      <td>secondary text foreground color, _e.g._ dark gray</td>
+      <td>secondary text foreground color</td>
     </tr>
     <tr>
       <td><code>--theme-foreground-faint</code></td>
       <td><div style="background-color: var(--theme-foreground-faint); width: 2rem; height: 1rem;"></div></td>
-      <td>faint border color, _e.g._ middle gray</td>
+      <td>faint border color</td>
     </tr>
     <tr>
       <td><code>--theme-foreground-fainter</code></td>
       <td><div style="background-color: var(--theme-foreground-fainter); width: 2rem; height: 1rem;"></div></td>
-      <td>fainter border color, _e.g._ light gray</td>
+      <td>fainter border color</td>
     </tr>
     <tr>
       <td><code>--theme-foreground-faintest</code></td>
       <td><div style="background-color: var(--theme-foreground-faintest); width: 2rem; height: 1rem;"></div></td>
-      <td>faintest border color, _e.g._ almost white</td>
+      <td>faintest border color</td>
     </tr>
     <tr>
       <td><code>--theme-foreground-focus</code></td>
       <td><div style="background-color: var(--theme-foreground-focus); width: 2rem; height: 1rem;"></div></td>
-      <td>emphasis foreground color, _e.g._ blue</td>
+      <td>emphasis foreground color</td>
     </tr>
   </tbody>
 </table>
