@@ -417,30 +417,41 @@ export interface ParseOptions {
   path: string;
 }
 
+const mdmap = new Map();
+
 export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptions): Promise<ParseResult> {
   const source = await readFile(sourcePath, "utf-8");
-  const parts = matter(source, {});
-  const md = MarkdownIt({html: true});
-  md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
-  md.inline.ruler.push("placeholder", transformPlaceholderInline);
-  md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
-  md.renderer.rules.placeholder = makePlaceholderRenderer(root, path);
-  md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!, path);
-  md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
-  md.renderer.render = renderIntoPieces(md.renderer, root, path);
-  const context: ParseContext = {files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
-  const tokens = md.parse(parts.content, context);
-  const html = md.renderer.render(tokens, md.options, context); // Note: mutates context.pieces, context.files!
-  return {
-    html,
-    data: isEmpty(parts.data) ? null : parts.data,
-    title: parts.data?.title ?? findTitle(tokens) ?? null,
-    files: context.files,
-    imports: context.imports,
-    pieces: toParsePieces(context.pieces),
-    cells: await toParseCells(context.pieces),
-    hash: await computeMarkdownHash(source, root, path, context.imports)
-  };
+  const code = computeHash(source);
+  const shortCode = code.slice(0, 4); // cap the memory footprint.
+
+  if (!mdmap.has(shortCode) || mdmap.get(shortCode).code !== code) {
+    const parts = matter(source, {});
+    const md = MarkdownIt({html: true});
+    md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
+    md.inline.ruler.push("placeholder", transformPlaceholderInline);
+    md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
+    md.renderer.rules.placeholder = makePlaceholderRenderer(root, path);
+    md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!, path);
+    md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
+    md.renderer.render = renderIntoPieces(md.renderer, root, path);
+    const context: ParseContext = {files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
+    const tokens = md.parse(parts.content, context);
+    const html = md.renderer.render(tokens, md.options, context); // Note: mutates context.pieces, context.files!
+    mdmap.set(shortCode, {
+      code,
+      value: {
+        html,
+        data: isEmpty(parts.data) ? null : parts.data,
+        title: parts.data?.title ?? findTitle(tokens) ?? null,
+        files: context.files,
+        imports: context.imports,
+        pieces: toParsePieces(context.pieces),
+        cells: await toParseCells(context.pieces),
+        hash: await computeMarkdownHash(source, root, path, context.imports)
+      }
+    });
+  }
+  return mdmap.get(shortCode).value;
 }
 
 async function computeMarkdownHash(
