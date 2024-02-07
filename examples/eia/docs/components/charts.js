@@ -23,7 +23,7 @@ export function top5BalancingAuthoritiesChart(width, height, top5Demand) {
 
 // US electricity demand, generation and forecasting chart
 export function usGenDemandForecastChart(width, height, usDemandGenForecast, currentHour) {
-    return Plot.plot({
+  return Plot.plot({
     width,
     marginTop: 0,
     height: height - 50,
@@ -48,13 +48,19 @@ export function countryInterchangeChart(width, height, usDemandGenForecast, coun
     width,
     marginTop: 0,
     height: height - 50,
-    color: { legend: true, range: ["#B6B5B1", "#848890"]},
+    color: {legend: true, range: ["#B6B5B1", "#848890"]},
     grid: true,
     y: {label: "GWh exported", labelOffset: 0, tickSize: 0},
-    x: {type: "time", domain: extent(usDemandGenForecast.map(d => d.date)), tickSize: 0, tickPadding: 3},
+    x: {type: "time", domain: extent(usDemandGenForecast.map((d) => d.date)), tickSize: 0, tickPadding: 3},
     marks: [
       Plot.ruleX([currentHour], {strokeOpacity: 0.5}),
-      Plot.areaY(countryInterchangeSeries, {x: "date", y: d => d.value / 1000, curve: "step", fill: "name", tip: true}),
+      Plot.areaY(countryInterchangeSeries, {
+        x: "date",
+        y: (d) => d.value / 1000,
+        curve: "step",
+        fill: "name",
+        tip: true
+      }),
       Plot.ruleY([0], {strokeOpacity: 0.3})
     ]
   });
