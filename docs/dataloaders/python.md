@@ -103,6 +103,22 @@ The data loader below `earthquakes.zip.py` accesses data on [earthquakes from th
 
 Copy and paste the code below into your own Python data loader (with extension .zip.py in your project source root, typically `docs`), then update with your own data and Python code to get started.
 
+```js
+const test3 = FileAttachment("test1/csv-test.csv").csv({typed: true})
+```
+
+```js
+test3
+```
+
+```js
+const test4 = FileAttachment("test1/json-test.json").json()
+```
+
+```js
+test4
+```
+
 <!-- TODO: this data loader is currently not working...
 
 
