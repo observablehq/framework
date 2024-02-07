@@ -9,7 +9,7 @@
     "observable": "observable"
   },
   "dependencies": {
-    "@observablehq/framework": "https://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@github.com/observablehq/framework#main",
+    "@observablehq/framework": "*",
     "d3-dsv": "^3.0.1",
     "d3-time-format": "^4.1.0"
   }

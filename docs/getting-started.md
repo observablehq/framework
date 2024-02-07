@@ -97,10 +97,6 @@ If you prefer Yarn, run:
 
 <pre data-copy>yarn create @observablehq</pre>
 
-<div class="warning" label="Note to early access participants">The commands above will not work until Framework is published to npm and made publicly available. Until then, you’ll need to install <a href="https://classic.yarnpkg.com/en/docs/install">Yarn 1.x</a> and run this instead:
-<pre data-copy><code class="language-sh">yarn global add https://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@github.com/observablehq/framework</code></pre>
-<pre data-copy><code class="language-sh">$(yarn global bin)/observable create</code></pre></div>
-
 You can run the above command anywhere, but you may want to `cd` to your `~/Development` directory first (or wherever you do local development).
 
 The first prompt asks where to create your new project. Enter `./hello-framework` to create a directory named `hello-framework` within the current directory. Or just hit Enter, as this is conveniently the default. (The `./` is implied, so `./hello-framework` is equivalent to `hello-framework`. You can create a project in a different directory by entering a path that starts with `../` or `~/` or `/`.)
