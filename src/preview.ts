@@ -23,7 +23,7 @@ import type {ParseResult} from "./markdown.js";
 import {renderPreview, resolveStylesheet} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {Telemetry} from "./telemetry.js";
-import {bold, faint, green, underline} from "./tty.js";
+import {bold, faint, green, link} from "./tty.js";
 import {relativeUrl} from "./url.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
@@ -74,7 +74,7 @@ export class PreviewServer {
     }
     if (verbose) {
       console.log(`${green(bold("Observable Framework"))} ${faint(`v${version}`)}`);
-      console.log(`${faint("↳")} ${underline(`http://${hostname}:${port}/`)}`);
+      console.log(`${faint("↳")} ${link(`http://${hostname}:${port}/`)}`);
       console.log("");
     }
     return new PreviewServer({server, verbose, ...options});

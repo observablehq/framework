@@ -6,7 +6,7 @@ import os from "os";
 import {CliError} from "./error.js";
 import type {Logger} from "./logger.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
-import {magenta, underline} from "./tty.js";
+import {link, magenta} from "./tty.js";
 
 type uuid = ReturnType<typeof randomUUID>;
 
@@ -210,7 +210,7 @@ export class Telemetry {
       this.effects.logger.error(
         `
 ${magenta("Attention:")} Observable Framework collects anonymous telemetry to help us improve
-           the product. See ${underline("https://observablehq.com/framework/telemetry")} for details.
+           the product. See ${link("https://observablehq.com/framework/telemetry")} for details.
            Set \`OBSERVABLE_TELEMETRY_DISABLE=true\` to disable.`
       );
     }

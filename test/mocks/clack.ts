@@ -75,9 +75,12 @@ class TestClackLogs implements ClackLogs {
         if (level && log.level !== level) return false;
         if (message instanceof RegExp) return message.test(log.message!);
         return log.message === message;
-        return true;
       }),
-      `Expected to find a log line ${level ? `with level ${level} ` : ""} message ${message}`
+      `Expected to find a log line ${
+        level ? `with level ${level} ` : ""
+      }message ${message}\n\n        Actual logs:\n          * ${this.logged
+        .map((d) => d.message)
+        .join("\n          * ")}`
     );
   }
 }

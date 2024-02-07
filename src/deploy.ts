@@ -1,5 +1,4 @@
 import {join} from "node:path";
-import {isatty} from "node:tty";
 import * as clack from "@clack/prompts";
 import type {BuildEffects} from "./build.js";
 import {build} from "./build.js";
@@ -21,36 +20,34 @@ import {
   setDeployConfig
 } from "./observableApiConfig.js";
 import {Telemetry} from "./telemetry.js";
-import {blue, bold, inverse, underline, yellow} from "./tty.js";
+import type {TtyEffects} from "./tty.js";
+import {blue, bold, defaultEffects as defaultTtyEffects, inverse, underline, yellow} from "./tty.js";
 
 export interface DeployOptions {
   config: Config;
   message: string | undefined;
 }
 
-export interface DeployEffects extends ConfigEffects {
+export interface DeployEffects extends ConfigEffects, TtyEffects {
   getObservableApiKey: (effects?: DeployEffects) => Promise<ApiKey>;
   getDeployConfig: (sourceRoot: string) => Promise<DeployConfig>;
   setDeployConfig: (sourceRoot: string, config: DeployConfig) => Promise<void>;
   clack: ClackEffects;
-  isTty: boolean;
   logger: Logger;
   input: NodeJS.ReadableStream;
   output: NodeJS.WritableStream;
-  outputColumns: number;
 }
 
 const defaultEffects: DeployEffects = {
   ...defaultConfigEffects,
+  ...defaultTtyEffects,
   getObservableApiKey,
   getDeployConfig,
   setDeployConfig,
   clack,
-  isTty: isatty(process.stdin.fd),
   logger: console,
   input: process.stdin,
-  output: process.stdout,
-  outputColumns: process.stdout.columns ?? 80
+  output: process.stdout
 };
 
 type DeployTargetInfo =
