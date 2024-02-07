@@ -483,8 +483,6 @@ describe("deploy", () => {
         .handlePostDeployUploaded({deployId})
         .start();
       const effects = new MockDeployEffects({deployConfig: oldDeployConfig, isTty: true});
-      // .addIoResponse(/Do you want to deploy anyway\?/, "y")
-      // .addIoResponse(/^Deploy message: /, "deploying to re-created project");
       effects.clack.inputs.push(true, "recreate project");
       await deploy(TEST_OPTIONS, effects);
       effects.clack.log.assertLogged({message: /`projectId` in your deploy.json does not match/});
@@ -513,7 +511,7 @@ describe("deploy", () => {
       effects.close();
     });
 
-    it("non-interactive", async () => {
+    it("when non-interactive", async () => {
       const newProjectId = "newId";
       const oldDeployConfig = {...DEPLOY_CONFIG, projectId: "oldProjectId"};
       getCurrentObservableApi()
@@ -531,6 +529,28 @@ describe("deploy", () => {
         CliError.assert(error, {message: "Cancelling deploy due to misconfiguration."});
       }
       effects.clack.log.assertLogged({message: /`projectId` in your deploy.json does not match/});
+    });
+
+    it("missing project id and existing server project", async () => {
+      const newProjectId = "newProjectId";
+      const deployConfig: DeployConfig = {...DEPLOY_CONFIG};
+      delete deployConfig.projectId;
+      getCurrentObservableApi()
+        .handleGetCurrentUser()
+        .handleGetProject({
+          ...DEPLOY_CONFIG,
+          projectId: newProjectId
+        })
+        .start();
+      const effects = new MockDeployEffects({deployConfig, isTty: true});
+      effects.clack.inputs.push(false);
+      try {
+        await deploy(TEST_OPTIONS, effects);
+      } catch (error) {
+        CliError.assert(error, {message: "User cancelled deploy", print: false, exitCode: 0});
+      }
+      effects.clack.log.assertLogged({message: /`projectId` in your deploy.json is missing.*will overwrite/});
+      effects.close();
     });
   });
 

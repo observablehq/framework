@@ -32,7 +32,7 @@ interface UserConfig {
 }
 
 export interface DeployConfig {
-  projectId: string | null;
+  projectId?: string | null;
   projectSlug: string | null;
   workspaceLogin: string | null;
 }
