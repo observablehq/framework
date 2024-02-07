@@ -15,7 +15,7 @@
 
 import {define} from "./_observablehq/client.js";
 
-define({id: "47a695da", inputs: ["display"], outputs: ["fooJsonData","fooCsvData"], files: [{"name":"./foo/foo-data.json","mimeType":"application/json","path":"./_file/foo/foo-data.json"},{"name":"./foo/foo-data.csv","mimeType":"text/csv","path":"./_file/foo/foo-data.csv"}], body: async (display) => {
+define({id: "47a695da", inputs: ["display"], outputs: ["fooJsonData","fooCsvData"], files: [{"name":"./foo/foo-data.json","mimeType":"application/json","path":"./_file/foo/foo-data.json","lastModified":1701478100806},{"name":"./foo/foo-data.csv","mimeType":"text/csv","path":"./_file/foo/foo-data.csv","lastModified":1701478100806}], body: async (display) => {
 const {fooJsonData, fooCsvData} = await import("./_import/foo/foo.js?sha=ddc538dfc10d83a59458d5893c89191ef3b2c9b1c02ef6da055423f37388ecf4");
 
 display(fooJsonData);

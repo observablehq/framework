@@ -31,7 +31,7 @@ export class AbstractFile {
   constructor(name, mimeType, lastModified) {
     Object.defineProperty(this, "name", {value: name, enumerable: true});
     if (mimeType !== undefined) Object.defineProperty(this, "mimeType", {value: String(mimeType), enumerable: true});
-    if (lastModified !== undefined) Object.defineProperty(this, "lastModified", {value: Number(lastModified), enumerable: true});
+    if (lastModified !== undefined) Object.defineProperty(this, "lastModified", {value: Number(lastModified), enumerable: true}); // prettier-ignore
   }
   async blob() {
     return (await remote_fetch(this)).blob();

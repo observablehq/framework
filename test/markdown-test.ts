@@ -63,20 +63,22 @@ describe("parseMarkdown(input)", () => {
 });
 
 describe("normalizePieceHtml adds local file attachments", () => {
+  const root = ".";
   const sourcePath = "/attachments.md";
 
   it("img[src]", () => {
     const htmlStr = html`<img src="./test.png">`;
     const expected = html`<img src="./_file/test.png">`;
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
       {
         mimeType: "image/png",
         name: "./test.png",
-        path: "./_file/test.png"
+        path: "./_file/test.png",
+        lastModified: undefined
       }
     ]);
   });
@@ -96,19 +98,21 @@ describe("normalizePieceHtml adds local file attachments", () => {
                 800px" src="./_file/large.jpg" alt="Image for testing">
       `;
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
       {
         mimeType: "image/jpeg",
         name: "./large.jpg",
-        path: "./_file/large.jpg"
+        path: "./_file/large.jpg",
+        lastModified: undefined
       },
       {
         mimeType: "image/jpeg",
         name: "./small.jpg",
-        path: "./_file/small.jpg"
+        path: "./_file/small.jpg",
+        lastModified: undefined
       }
     ]);
   });
@@ -121,14 +125,15 @@ describe("normalizePieceHtml adds local file attachments", () => {
       Your browser doesn't support HTML video.
       </video>`;
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
       {
         mimeType: "video/quicktime",
         name: "./observable.mov",
-        path: "./_file/observable.mov"
+        path: "./_file/observable.mov",
+        lastModified: undefined
       }
     ]);
   });
@@ -147,19 +152,21 @@ describe("normalizePieceHtml adds local file attachments", () => {
       </video>`;
 
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
       {
         mimeType: "video/mp4",
         name: "./observable.mp4",
-        path: "./_file/observable.mp4"
+        path: "./_file/observable.mp4",
+        lastModified: undefined
       },
       {
         mimeType: "video/quicktime",
         name: "./observable.mov",
-        path: "./_file/observable.mov"
+        path: "./_file/observable.mov",
+        lastModified: undefined
       }
     ]);
   });
@@ -176,32 +183,35 @@ describe("normalizePieceHtml adds local file attachments", () => {
     </picture>`;
 
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
       {
         mimeType: "image/png",
         name: "./observable-logo-narrow.png",
-        path: "./_file/observable-logo-narrow.png"
+        path: "./_file/observable-logo-narrow.png",
+        lastModified: undefined
       },
       {
         mimeType: "image/png",
         name: "./observable-logo-wide.png",
-        path: "./_file/observable-logo-wide.png"
+        path: "./_file/observable-logo-wide.png",
+        lastModified: undefined
       }
     ]);
   });
 });
 
 describe("normalizePieceHtml only adds local files", () => {
+  const root = ".";
   const sourcePath = "/attachments.md";
 
   it("img[src] only adds local files", () => {
     const htmlStr = html`<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/American_Shorthair.jpg/900px-American_Shorthair.jpg">`;
     const expected = html`<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/American_Shorthair.jpg/900px-American_Shorthair.jpg">`;
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, []);
@@ -220,14 +230,15 @@ describe("normalizePieceHtml only adds local files", () => {
         <img srcset="./_file/small.jpg 480w, https://upload.wikimedia.org/900px-American_Shorthair.jpg 900w" sizes="(max-width: 600px) 480px, 900px" src="https://upload.wikimedia.org/900px-American_Shorthair.jpg" alt="Cat image for testing">
       `;
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
       {
         mimeType: "image/jpeg",
         name: "./small.jpg",
-        path: "./_file/small.jpg"
+        path: "./_file/small.jpg",
+        lastModified: undefined
       }
     ]);
   });
@@ -246,14 +257,15 @@ describe("normalizePieceHtml only adds local files", () => {
       </video>`;
 
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
       {
         mimeType: "video/quicktime",
         name: "./observable.mov",
-        path: "./_file/observable.mov"
+        path: "./_file/observable.mov",
+        lastModified: undefined
       }
     ]);
   });

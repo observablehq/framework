@@ -31,7 +31,7 @@ export function fileReference(name: string, root: string, sourcePath: string): F
     name: relativeUrl(sourcePath, name),
     mimeType: mime.getType(name),
     path: relativeUrl(sourcePath, join("_file", name)),
-    lastModified: Math.floor(maybeStatSync(join(root, resolvePath(sourcePath, name)))?.mtimeMs)
+    lastModified: maybeLastModified(join(root, resolvePath(sourcePath, name)))
   };
 }
 
@@ -59,10 +59,9 @@ export async function* visitFiles(root: string): AsyncGenerator<string> {
   }
 }
 
-// Like fs.stat, but returns undefined instead of throwing ENOENT if not found.
-export function maybeStatSync(path: string): Stats | undefined {
+export function maybeLastModified(path: string): number | undefined {
   try {
-    return statSync(path);
+    return Math.floor(statSync(path).mtimeMs);
   } catch (error) {
     if (!isEnoent(error)) throw error;
   }
