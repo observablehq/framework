@@ -151,22 +151,6 @@ const hoursAgoInput = Inputs.range([hoursBackOfData, 0], { step: 1, value: 0, wi
 const hoursAgo = view(hoursAgoInput);
 ```
 
-```js echo
-hours
-```
-
-```js echo
-startHour
-```
-
-```js echo
-endHour
-```
-
-```js echo
-currentHour
-```
-
 ```js
 // Establish current hour and relative day
 const currentHour = new Date(endHour.getTime() - hoursAgo * MS_IN_AN_HOUR);
