@@ -19,6 +19,8 @@ export interface FileReference {
   mimeType: string | null;
   /** The relative path from the page to the file in _file (e.g., "../_file/sub/test.txt"). */
   path: string;
+  /** The last-modified time, if the file is found. */
+  lastModified: number | undefined;
 }
 
 export interface ImportReference {
@@ -65,7 +67,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
     const node = parseJavaScript(input, options);
     const files = node.features
       .filter((f) => f.type === "FileAttachment")
-      .map(({name}) => fileReference(name, sourcePath));
+      .map(({name}) => fileReference(name, root, sourcePath));
     const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
     const implicitDisplay = node.expression && !inputs.includes("display") && !inputs.includes("view");
     if (implicitDisplay) inputs.push("display"), (node.async = true);

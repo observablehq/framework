@@ -316,7 +316,7 @@ function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string):
     }
     let result = "";
     for (const piece of context.pieces) {
-      result += piece.html = normalizePieceHtml(piece.html, sourcePath, context);
+      result += piece.html = normalizePieceHtml(piece.html, root, sourcePath, context);
     }
     return result;
   };
@@ -334,7 +334,7 @@ const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcs
   {query: "video source[src]", src: "src"}
 ]);
 
-export function normalizePieceHtml(html: string, sourcePath: string, context: ParseContext): string {
+function normalizePieceHtml(html: string, root: string, sourcePath: string, context: ParseContext): string {
   const {document} = parseHTML(html);
 
   // Extracting references to files (such as from linked stylesheets).
@@ -342,7 +342,7 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
   const resolvePath = (source: string): FileReference | undefined => {
     const path = getLocalPath(sourcePath, source);
     if (!path) return;
-    const file = fileReference(path, sourcePath);
+    const file = fileReference(path, root, sourcePath);
     if (!filePaths.has(file.path)) {
       filePaths.add(file.path);
       context.files.push(file);

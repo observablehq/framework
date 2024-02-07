@@ -1,4 +1,4 @@
-import {type Stats, existsSync} from "node:fs";
+import {type Stats, existsSync, statSync} from "node:fs";
 import {mkdir, readdir, stat} from "node:fs/promises";
 import {dirname, extname, join, normalize, relative} from "node:path";
 import {cwd} from "node:process";
@@ -26,11 +26,12 @@ export function getClientPath(entry: string): string {
   return path;
 }
 
-export function fileReference(name: string, sourcePath: string): FileReference {
+export function fileReference(name: string, root: string, sourcePath: string): FileReference {
   return {
     name: relativeUrl(sourcePath, name),
     mimeType: mime.getType(name),
-    path: relativeUrl(sourcePath, join("_file", name))
+    path: relativeUrl(sourcePath, join("_file", name)),
+    lastModified: Math.floor(maybeStatSync(join(root, resolvePath(sourcePath, name)))?.mtimeMs)
   };
 }
 
@@ -55,6 +56,15 @@ export async function* visitFiles(root: string): AsyncGenerator<string> {
     } else {
       yield relative(root, path);
     }
+  }
+}
+
+// Like fs.stat, but returns undefined instead of throwing ENOENT if not found.
+export function maybeStatSync(path: string): Stats | undefined {
+  try {
+    return statSync(path);
+  } catch (error) {
+    if (!isEnoent(error)) throw error;
   }
 }
 

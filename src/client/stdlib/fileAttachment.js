@@ -11,8 +11,8 @@ export function FileAttachment(name, base = location.href) {
   const url = String(new URL(name, base));
   const file = files.get(url);
   if (!file) throw new Error(`File not found: ${name}`);
-  const {path, mimeType} = file;
-  return new FileAttachmentImpl(path, name.split("/").pop(), mimeType);
+  const {path, mimeType, lastModified} = file;
+  return new FileAttachmentImpl(path, name.split("/").pop(), mimeType, lastModified);
 }
 
 async function remote_fetch(file) {
@@ -28,9 +28,10 @@ async function dsv(file, delimiter, {array = false, typed = false} = {}) {
 }
 
 export class AbstractFile {
-  constructor(name, mimeType) {
+  constructor(name, mimeType, lastModified) {
     Object.defineProperty(this, "name", {value: name, enumerable: true});
-    if (mimeType !== undefined) Object.defineProperty(this, "mimeType", {value: mimeType + "", enumerable: true});
+    if (mimeType !== undefined) Object.defineProperty(this, "mimeType", {value: String(mimeType), enumerable: true});
+    if (lastModified !== undefined) Object.defineProperty(this, "lastModified", {value: Number(lastModified), enumerable: true});
   }
   async blob() {
     return (await remote_fetch(this)).blob();
@@ -95,8 +96,8 @@ export class AbstractFile {
 }
 
 class FileAttachmentImpl extends AbstractFile {
-  constructor(url, name, mimeType) {
-    super(name, mimeType);
+  constructor(url, name, mimeType, lastModified) {
+    super(name, mimeType, lastModified);
     Object.defineProperty(this, "_url", {value: url});
   }
   async url() {
