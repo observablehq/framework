@@ -12,7 +12,7 @@ import {
   setObservableApiKey
 } from "./observableApiConfig.js";
 import type {TtyEffects} from "./tty.js";
-import {bold, defaultEffects as defaultTtyEffects, green, inverse, link, yellow} from "./tty.js";
+import {bold, defaultEffects as defaultTtyEffects, inverse, link, yellow} from "./tty.js";
 
 const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
 
@@ -34,7 +34,7 @@ export const defaultEffects: AuthEffects = {
 };
 
 export async function login(effects: AuthEffects = defaultEffects) {
-  effects.clack.intro(green(inverse(" observable login ")));
+  effects.clack.intro(inverse(" observable login "));
 
   const {currentUser} = await loginInner(effects);
 

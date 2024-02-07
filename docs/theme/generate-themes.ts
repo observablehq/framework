@@ -13,7 +13,7 @@ const themes = {
 
 function renderThemeThumbnail(theme: string, attributes: Record<string, string> = {}): string {
   return `<a href="./theme/${theme}" target="_blank" class="card thumbnail">
-  <iframe scrolling="no" src="./theme/${theme}"${Object.entries(attributes)
+  <iframe loading="lazy" scrolling="no" src="./theme/${theme}"${Object.entries(attributes)
     .map(([name, value]) => `${name}="${he.escape(value)}"`)
     .join(" ")}></iframe>
 </a>`;

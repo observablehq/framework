@@ -1,10 +1,10 @@
 {
   "name": "@observablehq/framework",
-  "license": "UNLICENSED",
-  "version": "0.0.50",
+  "license": "ISC",
+  "version": "1.0.0-rc.5",
   "type": "module",
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public"
   },
   "repository": {
     "type": "git",
