@@ -189,7 +189,7 @@ const relativeDay = () => currentHour.getDate() === startHour.getDate() ? "Today
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
     <h2>Neighboring country interchange (GWh)</h2>
-    ${resize((width, height) => countryInterchangeChart(width, height, usDemandGenForecast, countryInterchangeSeries))}
+    ${resize((width, height) => countryInterchangeChart(width, height, usDemandGenForecast, countryInterchangeSeries, currentHour))}
   </div>
 </div>
 
