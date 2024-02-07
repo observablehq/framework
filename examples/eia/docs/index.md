@@ -193,7 +193,6 @@ const relativeDay = () => currentHour.getDate() === startHour.getDate() ? "Today
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
     <h2>Top 5 balancing authorities by demand at ${hourFormat(currentHour)} ${relativeDay().toLowerCase()} (GWh)</h2>
-    <h3>${dateTimeFormat(timeParse(baLatestHourlyDemandLower48[0].period))}</h3>
     ${resize((width, height) => top5BalancingAuthoritiesChart(width, height, top5LatestDemand))}
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
