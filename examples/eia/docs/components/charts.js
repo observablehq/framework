@@ -2,7 +2,7 @@ import {extent} from "npm:d3-array";
 import * as Plot from "npm:@observablehq/plot";
 
 // Top 5 balancing authorities chart
-export function top5BalancingAuthoritiesChart(width, height, top5LatestDemand) {
+export function top5BalancingAuthoritiesChart(width, height, top5Demand) {
   return Plot.plot({
     marginTop: 0,
     marginLeft: 250,
@@ -11,7 +11,7 @@ export function top5BalancingAuthoritiesChart(width, height, top5LatestDemand) {
     y: {label: null},
     x: {label: null, grid: true},
     marks: [
-      Plot.barX(top5LatestDemand, {
+      Plot.barX(top5Demand, {
         y: "name",
         x: (d) => d.value / 1000,
         fill: "gray",

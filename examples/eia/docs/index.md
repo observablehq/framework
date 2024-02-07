@@ -84,6 +84,7 @@ const baHourlyClean = baHourly.filter(d => !regions.includes(d["respondent-name"
 ```js
 // Most recent hour for each BA
 const baHourlyLatest = d3.rollup(baHourlyDemand, d => d[0].value, d => d["ba"]);
+const baHourlyCurrent = d3.rollup(baHourlyDemand, d => d[hoursAgo]?.value, d => d["ba"]);
 ```
 
 ```js
@@ -92,7 +93,9 @@ const baHourlyLatest = d3.rollup(baHourlyDemand, d => d[0].value, d => d["ba"]);
 
 const regions = ["California", "Carolinas", "Central", "Florida", "Mid-Atlantic", "Midwest", "New England", "New York", "Northwest", "Southeast", "Southwest", "Tennessee", "Texas", "United States Lower 48"];
 
-const top5LatestDemand = Array.from(baHourlyLatest, ([name, value]) => ({ name, value })).filter(d => !regions.includes(d.name)).sort(((a, b) => b.value - a.value)).slice(0, 5);
+//display(baHourlyCurrent);
+
+const top5LatestDemand = Array.from(baHourlyCurrent, ([name, value]) => ({ name, value })).filter(d => !regions.includes(d.name)).sort(((a, b) => b.value - a.value)).slice(0, 5);
 ```
 
 ```js
@@ -129,7 +132,7 @@ const timeParse = d3.utcParse("%Y-%m-%dT%H");
 const dateFormat = date => date.toLocaleDateString();
 const timeFormat = date => date.toLocaleTimeString('en-us',{timeZoneName:'short'});
 const dateTimeFormat = date => `${timeFormat(date)} on ${dateFormat(date)}`;
-const hourFormat = d3.timeFormat("%H %p");
+const hourFormat = d3.timeFormat("%I %p");
 ```
 
 ```js
@@ -189,7 +192,7 @@ const relativeDay = () => currentHour.getDate() === startHour.getDate() ? "Today
     </footer>
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
-    <h2>Top balancing authorities by demand, latest hour (GWh)</h2>
+    <h2>Top 5 balancing authorities by demand at ${hourFormat(currentHour)} ${relativeDay().toLowerCase()} (GWh)</h2>
     <h3>${dateTimeFormat(timeParse(baLatestHourlyDemandLower48[0].period))}</h3>
     ${resize((width, height) => top5BalancingAuthoritiesChart(width, height, top5LatestDemand))}
   </div>
@@ -206,17 +209,6 @@ const relativeDay = () => currentHour.getDate() === startHour.getDate() ? "Today
 <div class="card" style="padding: 0">
   ${Inputs.table(baHourlyClean, {rows: 16})}
 </div>
-
-<!-- Unused US total big number
-      <div class="card grid-colspan-1 grid-rowspan-1">
-    <h2>Total US electricity demand</h2>
-    <h3>${dateTimeFormat(timeParse(baLatestHourlyDemandLower48[0].period))}</h3>
-    <span class="big">${d3.format(",")(baLatestHourlyDemandLower48[0].value)} MWh</span>
-  </div>
-<div class="card grid-colspan-1 grid-rowspan-1">
-    <h2>Placeholder</h2>
-  </div>
--->
 
 This page reenvisions parts of the US Energy Information Administration's [Hourly Electric Grid Monitor](<(https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48)>). Visit [About the EIA-930 data](https://www.eia.gov/electricity/gridmonitor/about) to learn more about data collection and quality, the US electric grid, and balancing authorities responsible for nationwide electricity interchange.
 
