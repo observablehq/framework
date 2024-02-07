@@ -242,7 +242,7 @@ export async function deploy(
     deployInfo = await apiClient.getDeploy(deployId);
     switch (deployInfo.status) {
       case "pending":
-        continue;
+        break;
       case "uploaded":
         spinner.stop("Deploy complete");
         done = true;
