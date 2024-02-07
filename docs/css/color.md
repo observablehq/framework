@@ -59,7 +59,7 @@ The following custom properties are defined by the current [theme](../themes):
   </tbody>
 </table>
 
-You can use this properties anywhere you like. For example, to style a line chart to match the focus color:
+You can use these properties anywhere you like. For example, to style a line chart to match the focus color:
 
 ```js echo
 Plot.lineY(aapl, {x: "Date", y: "Close", stroke: "var(--theme-foreground-focus)"}).plot()
