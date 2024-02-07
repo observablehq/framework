@@ -31,7 +31,7 @@ const bands = 5;
 const opacityScale = d3.scaleLinear().domain([0, bands]).range([0.15, 0.85]);
 
 const filteredChannelBreakdown = channelBreakdown
-  .filter((d) => color.domain.includes(d.channelGroup) && d.type != "Unknown")
+  .filter((d) => color.domain.includes(d.channelGroup) && d.type != "Unknown" && d.channelGroup !== 'Unassigned')
   .sort((a, b) => color.domain.indexOf(b.channelGroup) - color.domain.indexOf(a.channelGroup));
 
 const countryLookup = d3.rollup(
