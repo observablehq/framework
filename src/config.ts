@@ -1,3 +1,4 @@
+import {stat} from "node:fs/promises";
 import {basename, dirname, join} from "node:path";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
@@ -48,8 +49,11 @@ export interface Config {
 
 export async function readConfig(configPath?: string, root?: string): Promise<Config> {
   if (configPath === undefined) return readDefaultConfig(root);
+  // By using the modification time of the config, we ensure that we pick up any
+  // changes to the config on reload.
   const importPath = join(process.cwd(), root ?? ".", configPath);
-  return normalizeConfig((await import(importPath)).default, root);
+  const importStat = await stat(importPath);
+  return normalizeConfig((await import(`${importPath}?${importStat.mtimeMs}`)).default, root);
 }
 
 export async function readDefaultConfig(root?: string): Promise<Config> {
@@ -57,7 +61,7 @@ export async function readDefaultConfig(root?: string): Promise<Config> {
     try {
       return await readConfig("observablehq.config" + ext, root);
     } catch (error: any) {
-      if (error.code !== "ERR_MODULE_NOT_FOUND") throw error;
+      if (error.code !== "ERR_MODULE_NOT_FOUND" && error.code !== "ENOENT") throw error;
       continue;
     }
   }

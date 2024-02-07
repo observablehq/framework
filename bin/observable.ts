@@ -134,7 +134,8 @@ try {
       enableRemoteModulePreload(false);
       await import("../src/preview.js").then(async (preview) =>
         preview.preview({
-          config: await readConfig(config, root),
+          config,
+          root,
           hostname: host!,
           port: port === undefined ? undefined : +port
         })

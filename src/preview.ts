@@ -11,7 +11,7 @@ import send from "send";
 import {type WebSocket, WebSocketServer} from "ws";
 import {version} from "../package.json";
 import type {Config} from "./config.js";
-import {mergeStyle} from "./config.js";
+import {mergeStyle, readConfig} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
@@ -29,7 +29,8 @@ import {relativeUrl} from "./url.js";
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
 export interface PreviewOptions {
-  config: Config;
+  config?: string;
+  root?: string;
   hostname: string;
   port?: number;
   verbose?: boolean;
@@ -40,13 +41,25 @@ export async function preview(options: PreviewOptions): Promise<PreviewServer> {
 }
 
 export class PreviewServer {
-  private readonly _config: Config;
+  private readonly _config: string | undefined;
+  private readonly _root: string | undefined;
   private readonly _server: ReturnType<typeof createServer>;
   private readonly _socketServer: WebSocketServer;
   private readonly _verbose: boolean;
 
-  private constructor({config, server, verbose}: {config: Config; server: Server; verbose: boolean}) {
+  private constructor({
+    config,
+    root,
+    server,
+    verbose
+  }: {
+    config?: string;
+    root?: string;
+    server: Server;
+    verbose: boolean;
+  }) {
     this._config = config;
+    this._root = root;
     this._verbose = verbose;
     this._server = server;
     this._server.on("request", this._handleRequest);
@@ -80,8 +93,12 @@ export class PreviewServer {
     return new PreviewServer({server, verbose, ...options});
   }
 
+  async _readConfig() {
+    return readConfig(this._config, this._root);
+  }
+
   _handleRequest: RequestListener = async (req, res) => {
-    const config = this._config;
+    const config = await this._readConfig();
     const root = config.root;
     if (this._verbose) console.log(faint(req.method!), req.url);
     try {
@@ -227,7 +244,7 @@ export class PreviewServer {
 
   _handleConnection = async (socket: WebSocket, req: IncomingMessage) => {
     if (req.url === "/_observablehq") {
-      handleWatch(socket, req, this._config);
+      handleWatch(socket, req, await this._readConfig());
     } else {
       socket.close();
     }
