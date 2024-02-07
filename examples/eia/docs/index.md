@@ -127,7 +127,7 @@ map(d => ({
 ```js
 // Date/time format/parse
 const timeParse = d3.utcParse("%Y-%m-%dT%H");
-const hourFormat = d3.timeFormat("%I %p");
+const hourFormat = d3.timeFormat("%-I %p");
 
 // Configure hours ago input
 const MS_IN_AN_HOUR = 1000 * 60 * 60;
