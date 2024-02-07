@@ -6,7 +6,7 @@ The `card` class is used to group and delineate content. The `card` classes appl
 <div class="card" style="max-width: 640px;">
   <h2>It gets hotter during summer</h2>
   <h3>And months have 28–31 days</h3>
-  ${Plot.cell(weather, {x: (d) => d.date.getUTCDate(), y: (d) => d.date.getUTCMonth(), fill: "temp_max", tip: true, inset: 0.5}).plot({marginTop: 0, height: 240, padding: 0})}
+  ${Plot.cell(weather.slice(-365), {x: (d) => d.date.getUTCDate(), y: (d) => d.date.getUTCMonth(), fill: "temp_max", tip: true, inset: 0.5}).plot({marginTop: 0, height: 240, padding: 0})}
 </div>
 ```
 
