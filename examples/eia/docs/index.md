@@ -29,16 +29,6 @@ const countryInterchangeSeries = FileAttachment("data/country-interchange.csv").
 // US overall demand, generation, forecast
 const usOverview = FileAttachment("data/us-demand.csv").csv({typed: true});
 
-// Energy by fuel type
-const fuelType = FileAttachment("data/eia-data/fuel-type.csv").csv({typed: true});
-
-// Subregion hourly demand
-const subregionDemand = FileAttachment("data/eia-data/subregion-hourly.csv").csv({typed: true});
-
-// Interchange amounts between Balancing Authorities (BA)
-const baInterchange = FileAttachment("data/eia-data/ba-interchange.csv").csv({typed: true});
-
-// Hourly demand for each BA
 const baHourly = await FileAttachment("data/eia-data/ba-hourly.csv").csv({typed: true});
 
 // BA connections
@@ -79,7 +69,7 @@ const genOnlyBA = eiaBARef.filter(d => d["Generation Only BA"] == "Yes").map(d =
 // TODO: Update to exclude regions!!! Otherwise these show up over the BAs
 const baHourlyDemand = baHourly
   .filter(d => d.type == "D")  // Only use demand ("D")
-  .map(d => ({ba: d["respondent-name"], baAbb: d["respondent"], period: d.period, 'type-name': d["type-name"], value: d.value})); 
+  .map(d => ({ba: d["respondent-name"], baAbb: d["respondent"], period: d.period, 'type-name': d["type-name"], value: d.value}));
 ```
 
 ```js
@@ -87,19 +77,19 @@ const baHourlyDemand = baHourly
 const baHourlyClean = baHourly
   .filter(d => !regions.includes(d["respondent-name"]))
   .map(d => ({
-    Date: timeParse(d.period).toLocaleString('en-us',{timeZoneName:'short'}), 
-    'Balancing authority': d["respondent-name"], 
-    Abbreviation: d.respondent, 
-    Type: d['type-name'], 
+    Date: timeParse(d.period).toLocaleString('en-us',{timeZoneName:'short'}),
+    'Balancing authority': d["respondent-name"],
+    Abbreviation: d.respondent,
+    Type: d['type-name'],
     'Value (GWh)': d.value / 1000
   }));
 ```
 
 ```js
 // Most recent hour for each BA
-const baHourlyLatest = d3.rollup(baHourlyDemand, d => d[0].value, d => d["ba"]);
 const baHourlyAll = d3.range(0, hoursBackOfData + 1).map(hour => d3.rollup(baHourlyDemand, d => d[hour]?.value, d => d["ba"]));
 const baHourlyCurrent = baHourlyAll[hoursAgo];
+const baHourlyLatest = baHourlyAll[0];
 ```
 
 ```js
@@ -115,11 +105,6 @@ const maxDemand = d3.max(baHourlyAll.map(demand => computeTopDemand(demand)[0].v
 ```
 
 ```js
-// US most recent total (lower 48) for big number
-const baLatestHourlyDemandLower48 = baHourlyDemand.filter(d => d.ba == "United States Lower 48");
-```
-
-```js
 // Percent change for most recent 2 hours of data by BA
 const baHourlyChange = d3.rollup(baHourlyDemand, d => ((d[hoursAgo]?.value - d[hoursAgo + 1]?.value) / d[hoursAgo]?.value) * 100, d => d["ba"] );
 ```
@@ -127,9 +112,6 @@ const baHourlyChange = d3.rollup(baHourlyDemand, d => ((d[hoursAgo]?.value - d[h
 ```js
 // Map BA abbreviations to locations
 const locations = new Map(eiaPoints.map(d => [d.id, [d.lon, d.lat]]));
-
-// BA interchange spatial endpoints
-const baInterchangeSp = baInterchange.map(d => ({...d, location1: locations.get(d["fromba"]), location2: locations.get(d["toba"])}));
 ```
 
 ```js
