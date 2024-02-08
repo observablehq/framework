@@ -60,7 +60,8 @@ input.addEventListener("input", (event) => {
   sessionStorage.setItem("observablehq-search-results", r.innerHTML);
 });
 
-addEventListener("keydown", ({code, target}) => {
+addEventListener("keydown", (event) => {
+  const {code, target} = event;
   if (target === input) {
     if (code === "ArrowDown" || code === "ArrowUp" || code === "Enter" || (code === "Escape" && input.value === "")) {
       const current = document.querySelector(`#observablehq-search-results li.${c}`);
