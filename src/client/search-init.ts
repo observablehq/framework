@@ -13,7 +13,10 @@ if (prevResults) {
       if (li.getAttribute("data-reference") === f) li.classList.add("observablehq-link-active");
       else li.classList.remove("observablehq-link-active");
     }
-    if (f) setTimeout(() => input.focus(), 10);
+    if (f) {
+      sessionStorage.removeItem("observablehq-search-focus");
+      setTimeout(() => input.focus(), 10);
+    }
   }
   container.parentElement?.classList.add("observablehq-search-results");
 }
