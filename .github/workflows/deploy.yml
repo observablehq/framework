@@ -34,6 +34,11 @@ jobs:
           GA_PROPERTY_ID: ${{ vars.GA_PROPERTY_ID }}
           GA_CLIENT_EMAIL: ${{ secrets.GA_CLIENT_EMAIL }}
           GA_PRIVATE_KEY: ${{ secrets.GA_PRIVATE_KEY }}
+      - name: Build example "eia"
+        run: yarn --frozen-lockfile && yarn build
+        working-directory: examples/eia
+        env:
+          EIA_KEY: ${{ secrets.EIA_KEY }}
       - name: Build example "hello-world"
         run: yarn --frozen-lockfile && yarn build
         working-directory: examples/hello-world
