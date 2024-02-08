@@ -10,7 +10,7 @@ const color = Plot.scale({
   color: {
     type: "linear",
     domain: [-1, -0.1501, -0.15, 0, 0.15, 0.1501, 1],
-    range: ["darkblue", "darkblue", "steelblue", "white", "orange", "darkorange", "darkorange"]
+    range: ["#145a95", "#145a95", "steelblue", "white", "orange", "darkorange", "darkorange"]
   }
 });
 
