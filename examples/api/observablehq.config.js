@@ -1,8 +1,8 @@
 export default {
-  title: "API logs analysis",
+  title: "API logs",
   pages: [
-    {name: "Dashboard", path: "/"},
-    {name: "Report", path: "/report"},
+    {name: "Report", path: "/"},
+    {name: "Dashboard", path: "/dashboard"},
   ],
   pager: false
 };

@@ -17,12 +17,11 @@ const marginLeft = margin;
 
 export function ApiHeatmap(
   table,
-  {color, width, height = 550, y1, y2, title, label, yMetric, fillMetric, routeFilter, type}
+  {color, width, height = 550, y1, y2, title, label, yMetric, fillMetric, routeFilter, type = "route"}
 ) {
   const canvasCache = new WeakMap();
   const count = table.getChild(yMetric);
   const route = table.getChild(fillMetric);
-
   const plot = Plot.plot({
     title,
     width,
@@ -33,7 +32,7 @@ export function ApiHeatmap(
     marginLeft,
     x: {type: "utc", domain: [x1, x2]},
     y: {type: "log", domain: [y1, y2], label},
-    color: {label: "route"},
+    color: {label: type},
     marks: [
       Plot.frame(),
       Plot.tip({length: 1}, {fill: [""], x: [x1], y: [y1], format: {x: null, y: null}, render: renderTip})
@@ -103,8 +102,13 @@ export function ApiHeatmap(
       const j = Math.floor(k / dx);
       values.x[0] = ((i + 0.5) / dx) * (width - marginLeft - marginRight) + marginLeft;
       values.y[0] = ((dy - 0.5 - j) / dy) * (height - marginTop - marginBottom) + marginTop;
-      values.fill[0] = color.apply(route.get(k));
-      values.channels.fill.value[0] = route.get(k);
+      if(type === 'frequency') {
+        values.fill[0] = d3.interpolateTurbo(count.get(k) / 80);
+        values.channels.fill.value[0] = count.get(k);
+      } else {
+        values.fill[0] = color.apply(route.get(k));
+        values.channels.fill.value[0] = route.get(k);
+      }
       const r = next([0], scales, values, dimensions, context);
       g.replaceWith(r);
       g = r;
@@ -141,7 +145,7 @@ export function ApiHeatmap(
   return plot;
 }
 
-export function ApiHistogram(heatmap, {color, width, title, label, y1, y2, yMetric, fillMetric, routeFilter}) {
+export function ApiHistogram(heatmap, {color, width, title, label, y1, y2, yMetric, fillMetric}) {
   const route = heatmap.getChild(fillMetric);
   return Plot.plot({
     title,
