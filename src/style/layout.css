@@ -441,31 +441,20 @@
 }
 
 #observablehq-search {
-  display: flex;
+  position: relative;
+  padding: 0.5rem 0 0;
 }
 
-#observablehq-search > input {
-  width: calc(100% - 1rem);
-  margin: 4px 0 0 0;
-  padding: 4px 4px 4px 1.7em;
-  border: 1px solid var(--theme-foreground-fainter);
-  border-radius: 7px;
-  outline: none;
-}
-
-#observablehq-search :focus::-webkit-input-placeholder {
-  opacity: 0;
-}
-
-#observablehq-search :focus::-moz-placeholder {
-  opacity: 0;
+#observablehq-search input {
+  padding: 4px 4px 4px 2em;
+  width: 100%;
 }
 
 #observablehq-search::before {
-  position: relative;
-  left: 1.4em;
-  top: 0.55em;
-  display: inline-block;
+  position: absolute;
+  left: 6px;
+  top: 0.8rem;
+  display: flex;
   content: "";
   width: 1rem;
   height: 1rem;
