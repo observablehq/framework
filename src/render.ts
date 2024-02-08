@@ -108,8 +108,7 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
     <li class="observablehq-link${
       normalizePath(path) === "/index" ? " observablehq-link-active" : ""
     }"><a href="${relativeUrl(path, "/")}">${title}</a></li>
-  </ol>
-  ${
+  </ol>${
     search
       ? html`<div id="observablehq-search" data-root="${relativeUrl(path, "/")}"><input type="search" />
         </div>
