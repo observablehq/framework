@@ -26,7 +26,7 @@ export function isSystemError(error: unknown): error is NodeJS.ErrnoException {
 }
 
 export function isHttpError(error: unknown): error is HttpError {
-  return error instanceof HttpError;
+  return error instanceof Error && "statusCode" in error;
 }
 
 export function isApiError(error: unknown): error is HttpError & {details: {errors: {code: string}[]}} {
