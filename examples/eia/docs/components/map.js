@@ -1,6 +1,6 @@
+import * as Plot from "npm:@observablehq/plot";
 import {extent} from "npm:d3-array";
 import {format} from "npm:d3-format";
-import * as Plot from "npm:@observablehq/plot";
 import {html} from "npm:htl";
 
 // Colors and scale
