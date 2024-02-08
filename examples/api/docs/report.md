@@ -47,4 +47,4 @@ Note, we apply a log scale to our y axis to allow inspection of various endpoint
   <div class="card">${resize((width) => ApiHeatmap(heatmaps, {color, width, title: "Response latency heatmap", label: "Duration (ms)", y1: 0.5, y2: 10_000, yMetric: 'duration_count', fillMetric: 'duration_route', type: 'frequency'}))}</div>
 </div>
 
-The sheer volume of requests that happened on midday January 27th become much more apparent with the new color encoding. By visualizing more granular datapoints rather than aggregate trends, we're able to get more insights from our data, allowing more actionable reponses.
+The sheer volume of requests that happened on midday January 27th becomes much more apparent with the new color encoding. By visualizing more granular datapoints rather than aggregate trends, we’re able to get more insights from our data, allowing more actionable responses.
