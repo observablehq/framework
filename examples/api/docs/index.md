@@ -39,7 +39,7 @@ Analyzing API logs can be helpful for finding under-performing endpoints and web
   <div class="card">${resize((width) => ApiHeatmap(heatmaps, {color, width, title: "Response latency heatmap", label: "Duration (ms)", y1: 0.5, y2: 10_000, yMetric: 'duration_count', fillMetric: 'duration_route'}))}</div>
 </div>
 
-What do we notice? There are clear intervals of activity for certain endpoints, such as ${endpointLegend(`document/{id}@{version}`)} `document/{id}@{version}`, the endpoint used to request a specific verson of an Observable notebook, and ${endpointLegend(`documents/{at}`)} `documents/{at}`, which returns all the notebooks for a given user.
+What do we see? There are clear intervals of activity for certain endpoints, such as ${endpointLegend(`document/{id}@{version}`)} `document/{id}@{version}`, the endpoint used to request a specific verson of an Observable notebook, and ${endpointLegend(`documents/{at}`)} `documents/{at}`, which returns all the notebooks for a given user.
 
 Here is the same data visualized as a bar chart counting the number of requests by each endpoint.
 
@@ -69,4 +69,4 @@ ${routeDropdown}
 
 There are many ways we could optimize this endpoint, perhaps by blocking the specific IP addresses that are abusing our terms of service, but we were only able to see these trends by visualizing our data in this granular way.
 
-Take a look at our [API logs dashboard](/dashboard) to see how we interally visualization these datasets into actionable insights.
+Take a look at our [API logs dashboard](/dashboard) to see how the Observable team turns these datasets into actionable insights.
