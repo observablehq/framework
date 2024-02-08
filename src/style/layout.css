@@ -1,6 +1,7 @@
 :root {
   --theme-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M5 7L8.125 9.5L11.25 7' stroke='black' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E");
   --theme-toggle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m10.5,11 2.5-3-2.5-3 M6,8h7' fill='none' stroke='black' stroke-width='2'/%3E%3Crect x='2' y='2' fill='currentColor' height='12' rx='0.5' width='2'/%3E%3C/svg%3E");
+  --theme-magnifier: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath stroke='currentColor' stroke-width='2' fill='none' d='%0AM15,15L10.5,10.5%0Aa3,3 0 1,0 -6 -6%0Aa3,3 0 1,0 6 6%0A'%3E%3C/path%3E%3C/svg%3E");
 }
 
 #observablehq-main,
@@ -111,7 +112,7 @@
   border-bottom: solid 1px var(--theme-foreground-faintest);
 }
 
-#observablehq-sidebar > ol:first-of-type {
+#observablehq-sidebar > ol:first-child {
   position: sticky;
   top: 0;
   z-index: 1;
@@ -434,17 +435,42 @@
   background: var(--theme-foreground-faintest);
 }
 
-#observablehq-sidebar.observablehq-search-results > ol,
+#observablehq-sidebar.observablehq-search-results > ol:not(:first-child),
 #observablehq-sidebar.observablehq-search-results > details {
   display: none;
 }
 
 #observablehq-search {
-  min-height: 1.5em;
+  display: flex;
 }
 
 #observablehq-search > input {
-  width: 100%;
-  margin: 0.5em 0 0 0;
-  padding: 2px;
+  width: calc(100% - 1rem);
+  margin: 4px 0 0 0;
+  padding: 4px 22px 4px 1.7em;;
+  border: 1px solid var(--theme-foreground-fainter);
+  border-radius: 7px;
+  outline: none;
+}
+
+#observablehq-search :focus::-webkit-input-placeholder {
+  opacity: 0;
+}
+
+#observablehq-search :focus::-moz-placeholder {
+  opacity: 0;
+}
+
+#observablehq-search::before {
+  position: relative;
+  left: 1.4em;
+  top: 0.55em;
+  display: inline-block;
+  content: "";
+  width: 1rem;
+  height: 1rem;
+  background: currentColor;
+  -webkit-mask: var(--theme-magnifier);
+  mask: var(--theme-magnifier);
+  pointer-events: none;
 }

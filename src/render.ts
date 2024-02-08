@@ -103,6 +103,12 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
   return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
+  <ol>
+    <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
+    <li class="observablehq-link${
+      normalizePath(path) === "/index" ? " observablehq-link-active" : ""
+    }"><a href="${relativeUrl(path, "/")}">${title}</a></li>
+  </ol>
   ${
     search
       ? html`<div id="observablehq-search" data-root="${relativeUrl(path, "/")}"><input type="search" />
@@ -112,12 +118,7 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
           (await rollupClient(getClientPath("./src/client/search-init.ts"), {minify: true})).trim()
         )}}</script>`
       : ""
-  }<ol>
-    <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
-    <li class="observablehq-link${
-      normalizePath(path) === "/index" ? " observablehq-link-active" : ""
-    }"><a href="${relativeUrl(path, "/")}">${title}</a></li>
-  </ol>
+  }
   <ol>${pages.map((p, i) =>
     "pages" in p
       ? html`${i > 0 && "path" in pages[i - 1] ? html`</ol>` : ""}
