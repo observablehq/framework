@@ -60,23 +60,24 @@ input.addEventListener("input", (event) => {
   sessionStorage.setItem("observablehq-search-results", r.innerHTML);
 });
 
-addEventListener("keydown", (event) => {
-  if (event.target === input) {
-    const action = event.code === "ArrowDown" ? 1 : event.code === "ArrowUp" ? -1 : event.code === "Enter" ? 2 : 0;
-    if (action) {
+addEventListener("keydown", ({code, target}) => {
+  if (target === input) {
+    if (code === "ArrowDown" || code === "ArrowUp" || code === "Enter" || (code === "Escape" && input.value === "")) {
       const current = document.querySelector(`#observablehq-search-results li.${c}`);
-      if (action === 2) {
+      if (code === "Escape") {
+        input.blur();
+      } else if (code === "Enter") {
         if (current) {
           sessionStorage.setItem("observablehq-search-focus", current.getAttribute("data-reference"));
           current.querySelector("a")?.click();
         }
       } else {
-        if (action === -1) {
+        if (code === "ArrowUp") {
           if (current) {
             current.classList.remove(c);
             current.previousElementSibling?.classList.add(c);
           } else document.querySelector("#observablehq-search-results li:last-child")?.classList.add(c);
-        } else if (action === 1) {
+        } else if (code === "ArrowDown") {
           if (current) {
             current.classList.remove(c);
             current.nextElementSibling?.classList.add(c);
