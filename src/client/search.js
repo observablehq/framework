@@ -28,7 +28,7 @@ input.addEventListener("input", (event) => {
   r.innerHTML =
     results.length === 0
       ? "<div>no results</div>"
-      : `<div>${results.length === 11 ? "&gt; 10" : results.length} page${results.length === 1 ? "" : "s"}</div>
+      : `<div>${results.length === 11 ? "10+" : results.length} result${results.length === 1 ? "" : "s"}</div>
       <ol>${results
         .map(({id, title, score}, i) => {
           score = Math.min(6, Math.round(1 + 0.6 * score));
