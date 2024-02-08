@@ -1,11 +1,18 @@
 import assert from "node:assert";
 
+interface HttpErrorOptions extends ErrorOptions {
+  details?: unknown;
+}
+
 export class HttpError extends Error {
   public readonly statusCode: number;
+  public readonly details?: unknown;
 
-  constructor(message: string, statusCode: number, options?: ErrorOptions) {
-    super(message, options);
+  constructor(message: string, statusCode: number, options?: HttpErrorOptions) {
+    const {details, ...errorOptions} = options ?? {};
+    super(message, errorOptions);
     this.statusCode = statusCode;
+    this.details = details;
     Error.captureStackTrace(this, HttpError);
   }
 }
@@ -19,7 +26,18 @@ export function isSystemError(error: unknown): error is NodeJS.ErrnoException {
 }
 
 export function isHttpError(error: unknown): error is HttpError {
-  return error instanceof Error && "statusCode" in error;
+  return error instanceof HttpError;
+}
+
+export function isApiError(error: unknown): error is HttpError & {details: {errors: {code: string}[]}} {
+  return (
+    isHttpError(error) &&
+    !!error.details &&
+    typeof error.details === "object" &&
+    "errors" in error.details &&
+    Array.isArray(error.details.errors) &&
+    error.details.errors.every((e) => typeof e === "object" && "code" in e)
+  );
 }
 
 /** Throw this to indicate the CLI should exit with a non-zero exit code. */
