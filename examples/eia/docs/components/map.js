@@ -57,22 +57,22 @@ export function balancingAuthoritiesMap({
         headLength: 0
       }),
       Plot.dot(eiaPoints, {
+        filter: (d) => isNaN(baHourlyChange.get(d.name)) && !(d.region_id === "MEX" || d.region_id === "CAN"),
         x: "lon",
         y: "lat",
         r: "radius",
         stroke: "gray",
         strokeWidth: 1,
-        filter: (d) => isNaN(baHourlyChange.get(d.name)) && !(d.region_id === "MEX" || d.region_id === "CAN"),
         fill: "#6D6D6D"
       }),
       Plot.dot(eiaPoints, {
+        filter: (d) => d.region_id === "MEX" || d.region_id === "CAN",
         x: "lon",
         y: "lat",
         r: 4,
         symbol: "square",
         stroke: "gray",
         strokeWidth: 1,
-        filter: (d) => d.region_id === "MEX" || d.region_id === "CAN",
         fill: "#6D6D6D"
       }),
       Plot.dot(eiaPoints, {
@@ -85,12 +85,12 @@ export function balancingAuthoritiesMap({
         strokeWidth: 1
       }),
       Plot.dot(eiaPoints, {
+        filter: (d) => !isNaN(baHourlyChange.get(d.name)),
         x: "lon",
         y: "lat",
         r: "radius",
         stroke: colorUnavailable,
         strokeWidth: 1,
-        filter: (d) => !isNaN(baHourlyChange.get(d.name)),
         fill: (d) => baHourlyChange.get(d.name)
       }),
       Plot.text(eiaPoints, {
@@ -107,7 +107,7 @@ export function balancingAuthoritiesMap({
           y: "lat",
           title: (d) =>
             d.region_id === "MEX" || d.region_id === "CAN"
-              ? d.name
+              ? `${d.name} (${d.region_id})\nNo demand data.`
               : `${d.name} (${d.id})\nChange from previous hour: ${
                   isNaN(baHourlyChange.get(d.name)) ? "Unavailable" : baHourlyChange.get(d.name).toFixed(1) + "%"
                 }\nLatest hourly demand: ${
