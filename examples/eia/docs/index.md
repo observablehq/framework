@@ -77,7 +77,11 @@ const baHourlyDemand = baHourly
 const baHourlyClean = baHourly
   .filter(d => !regions.includes(d["respondent-name"]))
   .map(d => ({
-    Date: timeParse(d.period).toLocaleString('en-us',{timeZoneName:'short'}),
+    Date: timeParse(d.period).toLocaleString("en-us", {
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit"
+    }),
     'Balancing authority': d["respondent-name"],
     Abbreviation: d.respondent,
     Type: d['type-name'],
