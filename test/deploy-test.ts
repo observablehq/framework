@@ -7,7 +7,15 @@ import {CliError, isHttpError} from "../src/error.js";
 import type {DeployConfig} from "../src/observableApiConfig.js";
 import {TestClackEffects} from "./mocks/clack.js";
 import {MockLogger} from "./mocks/logger.js";
-import {getCurrentObservableApi, invalidApiKey, mockObservableApi, validApiKey} from "./mocks/observableApi.js";
+import {
+  getCurrentObservableApi,
+  invalidApiKey,
+  mockObservableApi,
+  userWithOneWorkspace,
+  userWithTwoWorkspaces,
+  userWithZeroWorkspaces,
+  validApiKey
+} from "./mocks/observableApi.js";
 import {MockConfigEffects} from "./observableApiConfig-test.js";
 
 // These files are implicitly generated. This may change over time, so they’re
@@ -296,7 +304,6 @@ describe("deploy", () => {
   });
 
   it("throws an error if workspace is invalid", async () => {
-    // getCurrentObservableApi().start();
     const config = await normalizeConfig({root: TEST_SOURCE_ROOT});
     const deployConfig = {
       ...DEPLOY_CONFIG,
@@ -436,6 +443,52 @@ describe("deploy", () => {
       assert.fail("expected error");
     } catch (err) {
       assert.ok(err instanceof Error && err.message.match(/out of inputs for.*Do you want to create a new project/));
+    }
+  });
+
+  it("gives nice errors when a starter tier workspace tries to deploy a second project", async () => {
+    const workspace = userWithOneWorkspace.workspaces[0];
+    getCurrentObservableApi()
+      .handleGetCurrentUser({user: userWithOneWorkspace})
+      .handleGetWorkspaceProjects({workspaceLogin: workspace.login, projects: [{id: "project123", slug: "bi"}]})
+      .addHandler((pool) => {
+        pool.intercept({path: "/cli/project", method: "POST"}).reply(403, {errors: [{code: "TOO_MANY_PROJECTS"}]});
+      })
+      .start();
+    const effects = new MockDeployEffects();
+    effects.clack.inputs.push(null); // which project do you want to use?
+    effects.clack.inputs.push("test-project"); // which slug do you want to use?
+
+    try {
+      await deploy(TEST_OPTIONS, effects);
+      assert.fail("expected error");
+    } catch (err) {
+      CliError.assert(err, {message: "Error during deploy", print: false});
+    }
+    effects.clack.log.assertLogged({message: /Starter tier can only deploy one project/, level: "error"});
+  });
+
+  it("gives a nice error when there are no workspaces to deploy to", async () => {
+    getCurrentObservableApi().handleGetCurrentUser({user: userWithZeroWorkspaces}).start();
+    const effects = new MockDeployEffects();
+    try {
+      await deploy(TEST_OPTIONS, effects);
+      assert.fail("expected error");
+    } catch (err) {
+      CliError.assert(err, {message: "No Observable workspace found.", print: false});
+    }
+    effects.clack.log.assertLogged({level: "error", message: /You don’t have any Observable workspaces/});
+  });
+
+  it("allows choosing between two workspaces when creating", async () => {
+    getCurrentObservableApi().handleGetCurrentUser({user: userWithTwoWorkspaces}).start();
+    const effects = new MockDeployEffects();
+    try {
+      await deploy(TEST_OPTIONS, effects);
+      assert.fail("expected error");
+    } catch (err) {
+      assert.ok(err instanceof Error);
+      assert.match(err.message, /out of inputs for select.*Which Observable workspace do you want to use/);
     }
   });
 

@@ -304,7 +304,7 @@ async function promptDeployTarget(
     workspace = workspaces[0];
     effects.clack.log.step(`Deploying to the ${bold(formatUser(workspace))} workspace.`);
   } else {
-    const chosenWorkspace = await clack.select<{value: WorkspaceResponse; label: string}[], WorkspaceResponse>({
+    const chosenWorkspace = await effects.clack.select<{value: WorkspaceResponse; label: string}[], WorkspaceResponse>({
       message: "Which Observable workspace do you want to use?",
       options: workspaces.map((w) => ({value: w, label: formatUser(w)})).sort((a, b) => a.label.localeCompare(b.label)),
       initialValue: workspaces[0] // the oldest workspace, maybe?
