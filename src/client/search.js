@@ -27,7 +27,7 @@ input.addEventListener("input", (event) => {
   const results = index.search(value, {boost: {title: 4}, fuzzy: 0.15, prefix: true}).slice(0, 11);
   r.innerHTML =
     results.length === 0
-      ? "<div>no results<//div"
+      ? "<div>no results</div>"
       : `<div>${results.length === 11 ? "&gt; 10" : results.length} page${results.length === 1 ? "" : "s"}</div>
       <ol>${results
         .map(({id, title, score}, i) => {
