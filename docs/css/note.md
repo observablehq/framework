@@ -1,6 +1,6 @@
-# Layout: Note
+# CSS: Note
 
-The `note`, `tip`, `warning`, and `caution` classes can be used to insert labeled notes into prose. These are intended to emphasize important information that could otherwise be overlooked.
+The `note`, `tip`, `warning`, and `caution` classes can be used to insert labeled notes (also known as callouts) into prose. These are intended to emphasize important information that could otherwise be overlooked.
 
 <div class="note">This is a note.</div>
 

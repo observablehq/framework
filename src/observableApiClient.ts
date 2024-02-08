@@ -132,6 +132,10 @@ export class ObservableApiClient {
     return pages.results;
   }
 
+  async getDeploy(deployId: string): Promise<GetDeployResponse> {
+    return await this._fetch<GetDeployResponse>(new URL(`/cli/deploy/${deployId}`, this._apiOrigin), {method: "GET"});
+  }
+
   async postDeploy({projectId, message}: {projectId: string; message: string}): Promise<string> {
     const data = await this._fetch<{id: string}>(new URL(`/cli/project/${projectId}/deploy`, this._apiOrigin), {
       method: "POST",
@@ -247,4 +251,10 @@ export interface PaginatedList<T> {
   // per_page: number;
   // total: number;
   // truncated: boolean;
+}
+
+export interface GetDeployResponse {
+  id: string;
+  status: string;
+  url: string;
 }

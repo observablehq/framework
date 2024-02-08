@@ -246,6 +246,25 @@ class ObservableApiMock {
     return this;
   }
 
+  handleGetDeploy({
+    deployId,
+    deployStatus = "uploaded",
+    status = 200
+  }: {
+    deployId: string;
+    deployStatus?: string;
+    status?: number;
+  }): ObservableApiMock {
+    const response = status === 200 ? JSON.stringify({id: deployId, status: deployStatus}) : emptyErrorBody;
+    const headers = authorizationHeader(status !== 401);
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: `/cli/deploy/${deployId}`, headers: headersMatcher(headers)})
+        .reply(status, response, {headers: {"content-type": "application/json"}})
+    );
+    return this;
+  }
+
   handlePostAuthRequest(confirmationCode = "FAKEPASS"): ObservableApiMock {
     const response: PostAuthRequestResponse = {
       confirmationCode,
