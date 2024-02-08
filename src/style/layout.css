@@ -447,7 +447,7 @@
 #observablehq-search > input {
   width: calc(100% - 1rem);
   margin: 4px 0 0 0;
-  padding: 4px 22px 4px 1.7em;;
+  padding: 4px 4px 4px 1.7em;;
   border: 1px solid var(--theme-foreground-fainter);
   border-radius: 7px;
   outline: none;
@@ -473,4 +473,23 @@
   -webkit-mask: var(--theme-magnifier);
   mask: var(--theme-magnifier);
   pointer-events: none;
+}
+
+#observablehq-search-results small {
+  position: absolute;
+  right: 2em;
+  font-size: 0.4rem;
+  margin-top: 0.5em;
+}
+
+#observablehq-search-results .observablehq-link-active small {
+  right: 1em;
+}
+
+#observablehq-search-results div {
+  text-align: right;
+  font-size: small;
+  padding-left: 1.5em;
+  margin-bottom: 0.5em;
+  font-style: italic;
 }

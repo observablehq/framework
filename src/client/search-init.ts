@@ -5,7 +5,16 @@ input.setAttribute("placeholder", `Search pages… ${/Mac|iPhone/.test(navigator
 input.value = sessionStorage.getItem("observablehq-search-query") ?? "";
 const prevResults = sessionStorage.getItem("observablehq-search-results");
 if (prevResults) {
-  document.querySelector("#observablehq-search-results")!.innerHTML = prevResults;
+  const r = document.querySelector("#observablehq-search-results");
+  if (r) {
+    r.innerHTML = prevResults;
+    const f = sessionStorage.getItem("observablehq-search-focus");
+    for (const li of r.querySelectorAll("li")) {
+      if (li.getAttribute("data-reference") === f) li.classList.add("observablehq-link-active");
+      else li.classList.remove("observablehq-link-active");
+    }
+    if (f) setTimeout(() => input.focus(), 10);
+  }
   container.parentElement?.classList.add("observablehq-search-results");
 }
 
@@ -14,11 +23,6 @@ const base = document.querySelector("#observablehq-search")?.getAttribute("data-
 for (const link of document.querySelectorAll("#observablehq-search-results a")) {
   link.setAttribute("href", `${base}${link.parentElement?.getAttribute("data-reference")}`);
 }
-
-// retain open/close status
-const details = document.querySelector("#observablehq-search-results details");
-if (details && sessionStorage.getItem("observablehq-sidebar:___search_results") === "false")
-  details.removeAttribute("open");
 
 // load search.js on demand
 function load() {

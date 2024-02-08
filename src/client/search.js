@@ -5,6 +5,7 @@ const container = document.querySelector("#observablehq-search");
 const base = container.getAttribute("data-root");
 const input = container.querySelector("input");
 const r = document.querySelector("#observablehq-search-results");
+const c = "observablehq-link-active";
 let value;
 const index = await fetch(`${base}_observablehq/minisearch.json`)
   .then((resp) => resp.json())
@@ -14,11 +15,11 @@ const index = await fetch(`${base}_observablehq/minisearch.json`)
       processTerm: (term) => term.slice(0, 15).toLowerCase() // see src/minisearch.json.ts
     })
   );
+input.onblur = () => setTimeout(() => sessionStorage.removeItem("observablehq-search-focus"), 100);
 input.addEventListener("input", (event) => {
   if (value === event.target.value) return;
   value = event.target.value;
   sessionStorage.setItem("observablehq-search-query", value);
-  sessionStorage.setItem("observablehq-sidebar:___search_results", "");
   if (!value.length) {
     container.parentElement.classList.remove("observablehq-search-results");
     r.innerHTML = "";
@@ -29,33 +30,25 @@ input.addEventListener("input", (event) => {
   const results = index.search(value, {boost: {title: 4}, fuzzy: 0.15, prefix: true}).slice(0, 11);
   r.innerHTML =
     results.length === 0
-      ? "<summary>no results</summary>"
-      : `<details open><summary>${results.length === 11 ? "&gt; 10" : results.length} page${
-          results.length === 1 ? "" : "s"
-        }</summary>
+      ? "<div>no results<//div"
+      : `<div>${results.length === 11 ? "&gt; 10" : results.length} page${results.length === 1 ? "" : "s"}</div>
       <ol>${results
-        .map(({id, title, score}) => {
+        .map(({id, title, score}, i) => {
           score = Math.min(6, Math.round(1 + 0.6 * score));
-          return `<li class="observablehq-link" data-reference="${id}">
+          return `<li class="observablehq-link${i === 0 ? ` ${c}` : ""}" data-reference="${id}">
         <a href="${base}${id}">${title}
-          <small
-            title="score: ${score}; fuzzy matches"
-            style="position: absolute; right: 15px; font-size: 0.4rem; margin-top: 0.5em;" data-score="${score}">${"○".repeat(
-              score
-            )}</small>
+          <small title="score: ${score}; fuzzy matches" data-score="${score}">${"○".repeat(score)}</small>
           </a></li>`;
         })
         .join("")}
-      </ol>
-    </details>`;
+      </ol>`;
   sessionStorage.setItem("observablehq-search-results", r.innerHTML);
 
   if (results.length) {
-    const d = r.querySelector("details");
-    d.ontoggle = () => sessionStorage.setItem("observablehq-sidebar:___search_results", String(d.open));
     const exact_results = index.search(value, {boost: {title: 1}, fuzzy: 0, prefix: false});
     for (const e of exact_results) {
       const p = r.querySelector(`[data-reference='${e.id}'] small`);
+      if (p === null) continue;
       const s = +p.getAttribute("data-score");
       const k = Math.round((e.terms.length / value.split(/\W+/).length) * s);
       p.innerHTML = `${"○".repeat(s - k)}${"●".repeat(k)}`;
@@ -63,6 +56,34 @@ input.addEventListener("input", (event) => {
         "title",
         `score: ${p.getAttribute("data-score")}; ${k === s ? "exact matches" : "incomplete matches"}`
       );
+    }
+  }
+});
+
+addEventListener("keydown", (event) => {
+  if (event.target === input) {
+    const action = event.code === "ArrowDown" ? 1 : event.code === "ArrowUp" ? -1 : event.code === "Enter" ? 2 : 0;
+    if (action) {
+      const current = document.querySelector(`#observablehq-search-results li.${c}`);
+      if (action === 2) {
+        if (current) {
+          sessionStorage.setItem("observablehq-search-focus", current.getAttribute("data-reference"));
+          current.querySelector("a")?.click();
+        }
+      } else {
+        if (action === -1) {
+          if (current) {
+            current.classList.remove(c);
+            current.previousElementSibling?.classList.add(c);
+          } else document.querySelector("#observablehq-search-results li:last-child")?.classList.add(c);
+        } else if (action === 1) {
+          if (current) {
+            current.classList.remove(c);
+            current.nextElementSibling?.classList.add(c);
+          } else document.querySelector("#observablehq-search-results li:first-child")?.classList.add(c);
+        }
+      }
+      event.preventDefault();
     }
   }
 });
