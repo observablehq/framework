@@ -144,6 +144,17 @@ const currentHour = new Date(endHour.getTime() - hoursAgo * MS_IN_AN_HOUR);
 const relativeDay = () => currentHour.getDate() === endHour.getDate() ? "Today" : "Yesterday";
 ```
 
+<style>
+
+.card-footer {
+  position: absolute;
+  bottom: 5px;
+  font: 12px var(--sans-serif);
+  color: var(--theme-foreground-faint);
+}
+
+</style>
+
 <div class="grid grid-cols-4" style="grid-auto-rows: 190px;">
   <div class="card grid-colspan-2 grid-rowspan-3" style="position: relative;">
     <h2>Change in demand by balancing authority</h2>
@@ -171,8 +182,8 @@ const relativeDay = () => currentHour.getDate() === endHour.getDate() ? "Today" 
       }))}
       ${resize((width) => balancingAuthoritiesLegend(width))}
     </div>
-    <footer id="observablehq-footer" style="position: absolute; bottom: 0em;">
-      Balancing authority location and size are representative.
+    <footer class="card-footer">
+      Balancing authority location and size are representative. All dates shown in your browser’s local time.
     </footer>
   </div>
   <div class="card grid-colspan-2 grid-rowspan-1">
