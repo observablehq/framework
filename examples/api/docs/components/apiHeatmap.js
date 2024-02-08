@@ -63,11 +63,11 @@ export function ApiHeatmap(
           const k = j * dx + i;
           if (!count.get(k)) continue;
           if (routeFilter) {
-            context.globalAlpha = Math.min(1, count.get(k) / (routeFilter === route.get(k) ? 10 : 125));
+            context.globalAlpha = routeFilter === route.get(k) ? Math.min(1, count.get(k) / 15) : 0;
           } else {
             context.globalAlpha = Math.min(1, count.get(k) / 25);
           }
-          if(type === 'frequency') {
+          if (type === "frequency") {
             context.fillStyle = d3.interpolateTurbo(count.get(k) / 80);
           } else {
             context.fillStyle = color.apply(route.get(k));
@@ -102,7 +102,7 @@ export function ApiHeatmap(
       const j = Math.floor(k / dx);
       values.x[0] = ((i + 0.5) / dx) * (width - marginLeft - marginRight) + marginLeft;
       values.y[0] = ((dy - 0.5 - j) / dy) * (height - marginTop - marginBottom) + marginTop;
-      if(type === 'frequency') {
+      if (type === "frequency") {
         values.fill[0] = d3.interpolateTurbo(count.get(k) / 80);
         values.channels.fill.value[0] = count.get(k);
       } else {
@@ -165,7 +165,7 @@ export function ApiHistogram(heatmap, {color, width, title, label, y1, y2, yMetr
               filter: (d, i) => i >= dx && d,
               x: (d, i) => Math.exp((Math.floor(i / dx) / dy) * (Math.log(y2) - Math.log(y1)) + Math.log(y1)),
               y: Plot.identity,
-              stroke: (_,i) => route.get(i),
+              stroke: (_, i) => route.get(i),
               strokeWidth: width / dy + 0.5,
               tip: {format: {stroke: true, x: (d) => Math.round(d).toLocaleString("en-US")}}
             }
