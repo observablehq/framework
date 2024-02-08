@@ -195,6 +195,4 @@ const relativeDay = () => currentHour.getDate() === endHour.getDate() ? "Today" 
   </div>
 </div>
 
-This page reenvisions parts of the US Energy Information Administration's [Hourly Electric Grid Monitor](<(https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48)>). Visit [About the EIA-930 data](https://www.eia.gov/electricity/gridmonitor/about) to learn more about data collection and quality, the US electric grid, and balancing authorities responsible for nationwide electricity interchange.
-
-Some code for EIA data access and wrangling is reused from Observable notebooks by Ian Johnson. Thank you Ian!
+<div class="note" style="font-size: 12px;">This page reenvisions parts of the US Energy Information Administration's <a href="https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48">Hourly Electric Grid Monitor</a>. Visit <a href="https://www.eia.gov/electricity/gridmonitor/about">About the EIA-930 data</a> to learn more about data collection and quality, the US electric grid, and balancing authorities responsible for nationwide electricity interchange. Special thanks to: <a href="https://observablehq.com/@enjalot">Ian Johnson</a>.
