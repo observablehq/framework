@@ -54,8 +54,8 @@ To release a new version, first update the [package.json](https://github.com/obs
 Once the above is done, you can publish the release via GitHub:
 
 1. Go to [**Draft a new release**](https://github.com/observablehq/framework/releases/new).
-2. Under **Choose a tag**, enter the new version with a `v` *e.g.* `v0.0.5`.
-3. Click **Create new tag: v0.0.5**.
+2. Under **Choose a tag**, enter the new version with a `v` *e.g.* `v1.2.3`.
+3. Click **Create new tag: v1.2.3**.
 4. Leave the **Target** as `main`.
 5. Click **Publish release**.
 
