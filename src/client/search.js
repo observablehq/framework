@@ -42,7 +42,6 @@ input.addEventListener("input", (event) => {
         })
         .join("")}
       </ol>`;
-  sessionStorage.setItem("observablehq-search-results", r.innerHTML);
 
   if (results.length) {
     const exact_results = index.search(value, {boost: {title: 1}, fuzzy: 0, prefix: false});
@@ -58,6 +57,7 @@ input.addEventListener("input", (event) => {
       );
     }
   }
+  sessionStorage.setItem("observablehq-search-results", r.innerHTML);
 });
 
 addEventListener("keydown", (event) => {
