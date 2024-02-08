@@ -15,15 +15,12 @@ const index = await fetch(`${base}_observablehq/minisearch.json`)
       processTerm: (term) => term.slice(0, 15).toLowerCase() // see src/minisearch.json.ts
     })
   );
-input.onblur = () => setTimeout(() => sessionStorage.removeItem("observablehq-search-focus"), 100);
 input.addEventListener("input", (event) => {
   if (value === event.target.value) return;
   value = event.target.value;
-  sessionStorage.setItem("observablehq-search-query", value);
   if (!value.length) {
     container.parentElement.classList.remove("observablehq-search-results");
     r.innerHTML = "";
-    sessionStorage.setItem("observablehq-search-results", "");
     return;
   }
   container.parentElement.classList.add("observablehq-search-results");
@@ -57,7 +54,6 @@ input.addEventListener("input", (event) => {
       );
     }
   }
-  sessionStorage.setItem("observablehq-search-results", r.innerHTML);
 });
 
 addEventListener("keydown", (event) => {
@@ -68,10 +64,7 @@ addEventListener("keydown", (event) => {
       if (code === "Escape") {
         input.blur();
       } else if (code === "Enter") {
-        if (current) {
-          sessionStorage.setItem("observablehq-search-focus", current.getAttribute("data-reference"));
-          current.querySelector("a")?.click();
-        }
+        if (current) current.querySelector("a")?.click();
       } else {
         if (code === "ArrowUp") {
           if (current) {
