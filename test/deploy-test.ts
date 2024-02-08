@@ -240,7 +240,7 @@ describe("deploy", () => {
       await deploy(TEST_OPTIONS, effects);
       assert.fail("expected error");
     } catch (error) {
-      CliError.assert(error, {message: "User cancelled deploy.", print: false, exitCode: 0});
+      CliError.assert(error, {message: "User canceled deploy.", print: false, exitCode: 0});
     }
 
     effects.close();
@@ -536,7 +536,7 @@ describe("deploy", () => {
         await deploy(TEST_OPTIONS, effects);
         assert.fail("expected error");
       } catch (error) {
-        CliError.assert(error, {message: "User cancelled deploy", print: false, exitCode: 0});
+        CliError.assert(error, {message: "User canceled deploy", print: false, exitCode: 0});
       }
       effects.clack.log.assertLogged({message: /`projectId` in your deploy.json does not match/});
       effects.close();

@@ -170,7 +170,7 @@ export async function deploy(
           wrapAnsi(`Could not create project: ${error instanceof Error ? error.message : error}`, effects.outputColumns)
         );
       }
-      effects.clack.outro(yellow("Deploy cancelled"));
+      effects.clack.outro(yellow("Deploy canceled"));
       throw new CliError("Error during deploy", {cause: error, print: false});
     }
   } else {
@@ -189,10 +189,10 @@ export async function deploy(
           inactive: "No, cancel"
         });
         if (!choice) {
-          effects.clack.outro(yellow("Deploy cancelled."));
+          effects.clack.outro(yellow("Deploy canceled."));
         }
         if (effects.clack.isCancel(choice) || !choice) {
-          throw new CliError("User cancelled deploy", {print: false, exitCode: 0});
+          throw new CliError("User canceled deploy", {print: false, exitCode: 0});
         }
       } else {
         throw new CliError("Cancelling deploy due to misconfiguration.");
@@ -210,10 +210,10 @@ export async function deploy(
           inactive: "No, cancel"
         });
         if (!choice) {
-          effects.clack.outro(yellow("Deploy cancelled."));
+          effects.clack.outro(yellow("Deploy canceled."));
         }
         if (effects.clack.isCancel(choice) || !choice) {
-          throw new CliError("User cancelled deploy", {print: false, exitCode: 0});
+          throw new CliError("User canceled deploy", {print: false, exitCode: 0});
         }
       } else {
         throw new CliError("Running non-interactively, cancelling due to conflictg");
@@ -233,7 +233,7 @@ export async function deploy(
       message: "What changed in this deploy?",
       placeholder: "Enter a deploy message (optional)"
     });
-    if (effects.clack.isCancel(input)) throw new CliError("User cancelled deploy", {print: false, exitCode: 0});
+    if (effects.clack.isCancel(input)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
     message = input;
   }
   const deployId = await apiClient.postDeploy({projectId: deployTarget.project.id, message});
@@ -341,7 +341,7 @@ export async function promptDeployTarget(
       initialValue: workspaces[0] // the oldest workspace, maybe?
     });
     if (effects.clack.isCancel(chosenWorkspace)) {
-      throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
+      throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
     }
     workspace = chosenWorkspace;
   }
@@ -371,7 +371,7 @@ export async function promptDeployTarget(
       ]
     });
     if (effects.clack.isCancel(chosenProject)) {
-      throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
+      throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
     } else if (chosenProject !== null) {
       return {create: false, workspace, project: existingProjects.find((p) => p.slug === chosenProject)!};
     }
@@ -382,10 +382,10 @@ export async function promptDeployTarget(
       inactive: "No, cancel"
     });
     if (!confirmChoice) {
-      effects.clack.outro(yellow("Deploy cancelled."));
+      effects.clack.outro(yellow("Deploy canceled."));
     }
     if (effects.clack.isCancel(confirmChoice) || !confirmChoice) {
-      throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
+      throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
     }
   }
 
@@ -398,7 +398,7 @@ export async function promptDeployTarget(
       validate: (title) => (title ? undefined : "A title is required.")
     });
     if (effects.clack.isCancel(titleChoice)) {
-      throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
+      throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
     }
     title = titleChoice;
     effects.clack.log.info("You should add this title to your observablehq.config.ts file.");
@@ -416,7 +416,7 @@ export async function promptDeployTarget(
         : "Slugs must be lowercase and contain only letters, numbers, and hyphens."
   });
   if (effects.clack.isCancel(projectSlugChoice)) {
-    throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
+    throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
   }
   projectSlug = projectSlugChoice;
 
