@@ -447,7 +447,7 @@
 #observablehq-search > input {
   width: calc(100% - 1rem);
   margin: 4px 0 0 0;
-  padding: 4px 4px 4px 1.7em;;
+  padding: 4px 4px 4px 1.7em;
   border: 1px solid var(--theme-foreground-fainter);
   border-radius: 7px;
   outline: none;
