@@ -3,7 +3,13 @@
   border: solid 1px var(--theme-foreground-faintest);
   border-radius: 0.75rem;
   padding: 1rem;
+  margin: 1rem 0;
   font: 14px var(--sans-serif);
+}
+
+.grid > .card,
+.card figure {
+  margin: 0;
 }
 
 .card h2,
