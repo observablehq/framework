@@ -64,8 +64,9 @@ export async function deploy(
   {config, message, deployPollInterval = DEPLOY_POLL_INTERVAL_MS}: DeployOptions,
   effects = defaultEffects
 ): Promise<void> {
+  const {clack} = effects;
   Telemetry.record({event: "deploy", step: "start"});
-  effects.clack.intro(inverse(" observable deploy "));
+  clack.intro(inverse(" observable deploy "));
 
   const apiKey = await effects.getObservableApiKey(effects);
   const apiClient = new ObservableApiClient({apiKey});
@@ -87,22 +88,22 @@ export async function deploy(
   const legacyConfig = config as unknown as {deploy: null | {project: string; workspace: string}};
   if (legacyConfig.deploy && deployConfig.projectId) {
     if (!deployConfig.projectSlug || !deployConfig.workspaceLogin) {
-      effects.clack.log.info(
+      clack.log.info(
         "Migrating deploy config. You should delete the `deploy` field from your observablehq.config.ts file."
       );
       deployConfig.projectSlug = legacyConfig.deploy.project;
       deployConfig.workspaceLogin = legacyConfig.deploy.workspace.replace(/^@/, "");
       effects.setDeployConfig(config.root, deployConfig);
     } else {
-      effects.clack.log.info(
+      clack.log.info(
         "You still have legacy config information in the `deploy` field of your observablehq.config.ts file. You should delete that section."
       );
     }
   }
 
   if (deployConfig.projectId && (!deployConfig.projectSlug || !deployConfig.workspaceLogin)) {
-    const spinner = effects.clack.spinner();
-    effects.clack.log.warn("The `projectSlug` or `workspaceLogin` is missing from your deploy.json.");
+    const spinner = clack.spinner();
+    clack.log.warn("The `projectSlug` or `workspaceLogin` is missing from your deploy.json.");
     spinner.start(`Searching for project ${deployConfig.projectId}`);
     const {workspaces} = await apiClient.getCurrentUser();
     let found = false;
@@ -163,40 +164,40 @@ export async function deploy(
     targetDescription = `${deployTarget.project.title} (@${deployTarget.workspace.login}/${deployTarget.project.slug})`;
     const previousProjectId = deployConfig.projectId;
     if (previousProjectId && previousProjectId !== deployTarget.project.id) {
-      effects.clack.log.warn(
+      clack.log.warn(
         `The \`projectId\` in your deploy.json does not match. Continuing will overwrite ${bold(targetDescription)}.`
       );
       if (effects.isTty) {
-        const choice = await effects.clack.confirm({
+        const choice = await clack.confirm({
           message: "Do you want to continue deploying?",
           active: "Yes, overwrite",
           inactive: "No, cancel"
         });
         if (!choice) {
-          effects.clack.outro(yellow("Deploy cancelled."));
+          clack.outro(yellow("Deploy cancelled."));
         }
-        if (effects.clack.isCancel(choice) || !choice) {
+        if (clack.isCancel(choice) || !choice) {
           throw new CliError("User cancelled deploy", {print: false, exitCode: 0});
         }
       } else {
         throw new CliError("Cancelling deploy due to misconfiguration.");
       }
     } else if (previousProjectId) {
-      effects.clack.log.info(`Deploying to ${bold(targetDescription)}.`);
+      clack.log.info(`Deploying to ${bold(targetDescription)}.`);
     } else {
-      effects.clack.log.warn(
+      clack.log.warn(
         `The \`projectId\` in your deploy.json is missing. Continuing will overwrite ${bold(targetDescription)}.`
       );
       if (effects.isTty) {
-        const choice = await effects.clack.confirm({
+        const choice = await clack.confirm({
           message: "Do you want to continue deploying?",
           active: "Yes, overwrite",
           inactive: "No, cancel"
         });
         if (!choice) {
-          effects.clack.outro(yellow("Deploy cancelled."));
+          clack.outro(yellow("Deploy cancelled."));
         }
-        if (effects.clack.isCancel(choice) || !choice) {
+        if (clack.isCancel(choice) || !choice) {
           throw new CliError("User cancelled deploy", {print: false, exitCode: 0});
         }
       } else {
@@ -213,11 +214,11 @@ export async function deploy(
 
   // Create the new deploy on the server
   if (message === undefined) {
-    const input = await effects.clack.text({
+    const input = await clack.text({
       message: "What changed in this deploy?",
       placeholder: "Enter a deploy message (optional)"
     });
-    if (effects.clack.isCancel(input)) throw new CliError("User cancelled deploy", {print: false, exitCode: 0});
+    if (clack.isCancel(input)) throw new CliError("User cancelled deploy", {print: false, exitCode: 0});
     message = input;
   }
   const deployId = await apiClient.postDeploy({projectId: deployTarget.project.id, message});
@@ -229,12 +230,11 @@ export async function deploy(
   await apiClient.postDeployUploaded(deployId);
 
   // Poll for processing completion
-  const spinner = effects.clack.spinner();
+  const spinner = clack.spinner();
   spinner.start("Server processing deploy");
   const pollExpiration = Date.now() + DEPLOY_POLL_MAX_MS;
   let deployInfo: null | GetDeployResponse = null;
-  let done = false;
-  while (!done) {
+  pollLoop: while (true) {
     if (Date.now() > pollExpiration) {
       spinner.stop("Deploy timed out");
       throw new CliError(`Deploy failed to process on server: status = ${deployInfo?.status}`);
@@ -245,24 +245,23 @@ export async function deploy(
         break;
       case "uploaded":
         spinner.stop("Deploy complete");
-        done = true;
-        break;
+        break pollLoop;
       case "error":
         spinner.stop("Deploy failed");
         throw new CliError("Deploy failed to process on server");
       default:
+        spinner.stop("Unknown status");
         throw new CliError(`Unknown deploy status: ${deployInfo.status}`);
     }
     await new Promise((resolve) => setTimeout(resolve, deployPollInterval));
   }
-  spinner.stop();
   if (!deployInfo) throw new CliError("Deploy failed to process on server");
 
   // Update project title if necessary
   if (previousProjectId && previousProjectId === deployTarget.project.id && typeof projectUpdates?.title === "string") {
     await apiClient.postEditProject(deployTarget.project.id, projectUpdates as PostEditProjectRequest);
   }
-  effects.clack.outro(`Deployed project now visible at ${link(deployInfo.url)}`);
+  clack.outro(`Deployed project now visible at ${link(deployInfo.url)}`);
   Telemetry.record({event: "deploy", step: "finish"});
 }
 
@@ -294,8 +293,9 @@ export async function promptDeployTarget(
   config: Config
 ): Promise<DeployTargetInfo> {
   if (!effects.isTty) throw new CliError("Deploy not configured.");
+  const {clack} = effects;
 
-  effects.clack.log.info("To configure deploy, we need to ask you a few questions.");
+  clack.log.info("To configure deploy, we need to ask you a few questions.");
 
   let workspaces;
   try {
@@ -309,7 +309,7 @@ export async function promptDeployTarget(
     throw error;
   }
   if (workspaces.length === 0) {
-    effects.clack.log.error(
+    clack.log.error(
       `You don’t have any Observable workspaces. Go to ${underline("https://observablehq.com/team/new")} to create one.`
     );
     throw new CliError("No Observable workspace found.", {print: false, exitCode: 1});
@@ -317,14 +317,14 @@ export async function promptDeployTarget(
   let workspace: WorkspaceResponse;
   if (workspaces.length === 1) {
     workspace = workspaces[0];
-    effects.clack.log.step(`Deploying to the ${bold(formatUser(workspace))} workspace.`);
+    clack.log.step(`Deploying to the ${bold(formatUser(workspace))} workspace.`);
   } else {
-    const chosenWorkspace = await effects.clack.select<{value: WorkspaceResponse; label: string}[], WorkspaceResponse>({
+    const chosenWorkspace = await clack.select<{value: WorkspaceResponse; label: string}[], WorkspaceResponse>({
       message: "Which Observable workspace do you want to use?",
       options: workspaces.map((w) => ({value: w, label: formatUser(w)})).sort((a, b) => a.label.localeCompare(b.label)),
       initialValue: workspaces[0] // the oldest workspace, maybe?
     });
-    if (effects.clack.isCancel(chosenWorkspace)) {
+    if (clack.isCancel(chosenWorkspace)) {
       throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
     }
     workspace = chosenWorkspace;
@@ -342,7 +342,7 @@ export async function promptDeployTarget(
   }
 
   if (existingProjects.length > 0) {
-    const chosenProject = await effects.clack.select<{value: string | null; label: string}[], string | null>({
+    const chosenProject = await clack.select<{value: string | null; label: string}[], string | null>({
       message: "Which project do you want to use?",
       options: [
         {value: null, label: "Create a new project"},
@@ -354,43 +354,43 @@ export async function promptDeployTarget(
           .sort((a, b) => a.label.localeCompare(b.label))
       ]
     });
-    if (effects.clack.isCancel(chosenProject)) {
+    if (clack.isCancel(chosenProject)) {
       throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
     } else if (chosenProject !== null) {
       return {create: false, workspace, project: existingProjects.find((p) => p.slug === chosenProject)!};
     }
   } else {
-    const confirmChoice = await effects.clack.confirm({
+    const confirmChoice = await clack.confirm({
       message: "No projects found. Do you want to create a new project?",
       active: "Yes, continue",
       inactive: "No, cancel"
     });
     if (!confirmChoice) {
-      effects.clack.outro(yellow("Deploy cancelled."));
+      clack.outro(yellow("Deploy cancelled."));
     }
-    if (effects.clack.isCancel(confirmChoice) || !confirmChoice) {
+    if (clack.isCancel(confirmChoice) || !confirmChoice) {
       throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
     }
   }
 
   let title = config.title;
   if (title === undefined) {
-    effects.clack.log.warn("You haven’t configured a title for your project.");
-    const titleChoice = await effects.clack.text({
+    clack.log.warn("You haven’t configured a title for your project.");
+    const titleChoice = await clack.text({
       message: "What title do you want to use?",
       placeholder: "Enter a project title",
       validate: (title) => (title ? undefined : "A title is required.")
     });
-    if (effects.clack.isCancel(titleChoice)) {
+    if (clack.isCancel(titleChoice)) {
       throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
     }
     title = titleChoice;
-    effects.clack.log.info("You should add this title to your observablehq.config.ts file.");
+    clack.log.info("You should add this title to your observablehq.config.ts file.");
   }
 
   // TODO This should refer to the URL of the project, not the slug.
   const defaultProjectSlug = config.title ? slugify(config.title) : "";
-  const projectSlugChoice = await effects.clack.text({
+  const projectSlugChoice = await clack.text({
     message: "What slug do you want to use?",
     placeholder: defaultProjectSlug,
     defaultValue: defaultProjectSlug,
@@ -399,7 +399,7 @@ export async function promptDeployTarget(
         ? undefined
         : "Slugs must be lowercase and contain only letters, numbers, and hyphens."
   });
-  if (effects.clack.isCancel(projectSlugChoice)) {
+  if (clack.isCancel(projectSlugChoice)) {
     throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
   }
   projectSlug = projectSlugChoice;

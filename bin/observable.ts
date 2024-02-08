@@ -56,7 +56,7 @@ else if (values.help) {
   command = "help";
 }
 
-const CLACKIFIED_COMMANDS = ["login"];
+const CLACKIFIED_COMMANDS = ["login", "deploy"];
 
 try {
   switch (command) {
