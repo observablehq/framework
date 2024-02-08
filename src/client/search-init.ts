@@ -42,7 +42,10 @@ input.addEventListener("keydown", load);
 // Focus on meta-K
 const toggle = document.querySelector("#observablehq-sidebar-toggle")! as HTMLInputElement;
 addEventListener("keydown", (event) => {
-  if (event.code === "KeyK" && event.metaKey && !event.altKey && !event.ctrlKey) {
+  if (
+    (event.code === "KeyK" && event.metaKey && !event.altKey && !event.ctrlKey) ||
+    (event.key === "/" && !event.metaKey && !event.altKey && !event.ctrlKey && event.target === document.body)
+  ) {
     if (input.getBoundingClientRect().x < 0) toggle.click();
     input.focus();
     input.select();
