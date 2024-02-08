@@ -26,18 +26,25 @@ import {
 // International electricity interchange
 const countryInterchangeSeries = FileAttachment("data/country-interchange.csv").csv({typed: true});
 
+```
+
+```js
 // US overall demand, generation, forecast
 const usOverview = FileAttachment("data/us-demand.csv").csv({typed: true});
+```
 
-const baHourly = await FileAttachment("data/eia-data/ba-hourly.csv").csv({typed: true});
+```js
+const baHourlyDemand = await FileAttachment("data/eia-ba-hourly.csv").csv({typed: true});
+```
 
+```js
 // BA connections
 const eiaConnRef = await FileAttachment("data/eia-connections-reference.csv").csv({typed: true});
+```
 
+```js
 // BA status (generating or not)
 const eiaBARef = await FileAttachment("data/eia-bia-reference.csv").csv({typed: true});
-
-const regions = ["California", "Carolinas", "Central", "Florida", "Mid-Atlantic", "Midwest", "New England", "New York", "Northwest", "Southeast", "Southwest", "Tennessee", "Texas", "United States Lower 48"];
 ```
 
 ```js
@@ -49,7 +56,9 @@ const regions = ["California", "Carolinas", "Central", "Florida", "Mid-Atlantic"
 const us = await FileAttachment("data/us-states.json").json();
 const nation = us.features.find(({id}) => id === "nation");
 const statemesh = us.features.find(({id}) => id === "statemesh");
+```
 
+```js
 // Balancing authority representative locations
 const eiaPoints = await FileAttachment("data/eia-system-points.json").json().then(d => d[0].data);
 ```
@@ -65,26 +74,16 @@ const genOnlyBA = eiaBARef.filter(d => d["Generation Only BA"] == "Yes").map(d =
 ```
 
 ```js
-// Hourly demand for BAs, demand only & cleaned
-// TODO: Update to exclude regions!!! Otherwise these show up over the BAs
-const baHourlyDemand = baHourly
-  .filter(d => d.type == "D")  // Only use demand ("D")
-  .map(d => ({ba: d["respondent-name"], baAbb: d["respondent"], period: d.period, 'type-name': d["type-name"], value: d.value}));
-```
-
-```js
-// Cleaned up baHourly for table, excludes regions (only shows BAs)
-const baHourlyClean = baHourly
-  .filter(d => !regions.includes(d["respondent-name"]))
+const baHourlyClean = baHourlyDemand
   .map(d => ({
     Date: timeParse(d.period).toLocaleString("en-us", {
       month: "short",
       day: "2-digit",
       hour: "2-digit"
     }),
-    'Balancing authority': d["respondent-name"],
-    Abbreviation: d.respondent,
-    Type: d['type-name'],
+    'Balancing authority': d.ba,
+    Abbreviation: d.baAbb,
+    Type: "Demand",
     'Value (GWh)': d.value / 1000
   }));
 ```
@@ -101,7 +100,6 @@ const baHourlyLatest = baHourlyAll[0];
 function computeTopDemand(baHourly) {
   return Array
     .from(baHourly, ([name, value]) => ({ name, value }))
-    .filter(d => !regions.includes(d.name))  // Exclude regions
     .sort(((a, b) => b.value - a.value)).slice(0, 5);
 }
 const top5LatestDemand = computeTopDemand(baHourlyCurrent);
@@ -210,4 +208,4 @@ const relativeDay = () => currentHour.getDate() === endHour.getDate() ? "Today" 
   </div>
 </div>
 
-<div class="note" style="font-size: 12px;">This page reenvisions parts of the US Energy Information Administration's <a href="https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48">Hourly Electric Grid Monitor</a>. Visit <a href="https://www.eia.gov/electricity/gridmonitor/about">About the EIA-930 data</a> to learn more about data collection and quality, the US electric grid, and balancing authorities responsible for nationwide electricity interchange. Special thanks to: <a href="https://observablehq.com/@enjalot">Ian Johnson</a>.
+<div class="note" style="font-size: 12px;">This page reenvisions parts of the US Energy Information Administration's <a href="https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48">Hourly Electric Grid Monitor</a>. Visit <a href="https://www.eia.gov/electricity/gridmonitor/about">About the EIA-930 data</a> to learn more about data collection and quality, the US electric grid, and balancing authorities responsible for nationwide electricity interchange.</p>
