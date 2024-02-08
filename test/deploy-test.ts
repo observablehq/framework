@@ -12,6 +12,7 @@ import {
   getCurrentObservableApi,
   invalidApiKey,
   mockObservableApi,
+  userWithOneWorkspace,
   userWithTwoWorkspaces,
   userWithZeroWorkspaces,
   validApiKey
@@ -239,7 +240,7 @@ describe("deploy", () => {
       await deploy(TEST_OPTIONS, effects);
       assert.fail("expected error");
     } catch (error) {
-      CliError.assert(error, {message: "User cancelled deploy.", print: false, exitCode: 0});
+      CliError.assert(error, {message: "User canceled deploy.", print: false, exitCode: 0});
     }
 
     effects.close();
@@ -308,7 +309,6 @@ describe("deploy", () => {
   });
 
   it("throws an error if workspace is invalid", async () => {
-    // getCurrentObservableApi().start();
     const config = await normalizeConfig({root: TEST_SOURCE_ROOT});
     const deployConfig = {
       ...DEPLOY_CONFIG,
@@ -451,6 +451,52 @@ describe("deploy", () => {
     }
   });
 
+  it("gives nice errors when a starter tier workspace tries to deploy a second project", async () => {
+    const workspace = userWithOneWorkspace.workspaces[0];
+    getCurrentObservableApi()
+      .handleGetCurrentUser({user: userWithOneWorkspace})
+      .handleGetWorkspaceProjects({workspaceLogin: workspace.login, projects: [{id: "project123", slug: "bi"}]})
+      .addHandler((pool) => {
+        pool.intercept({path: "/cli/project", method: "POST"}).reply(403, {errors: [{code: "TOO_MANY_PROJECTS"}]});
+      })
+      .start();
+    const effects = new MockDeployEffects();
+    effects.clack.inputs.push(null); // which project do you want to use?
+    effects.clack.inputs.push("test-project"); // which slug do you want to use?
+
+    try {
+      await deploy(TEST_OPTIONS, effects);
+      assert.fail("expected error");
+    } catch (err) {
+      CliError.assert(err, {message: "Error during deploy", print: false});
+    }
+    effects.clack.log.assertLogged({message: /Starter tier can only deploy one project/, level: "error"});
+  });
+
+  it("gives a nice error when there are no workspaces to deploy to", async () => {
+    getCurrentObservableApi().handleGetCurrentUser({user: userWithZeroWorkspaces}).start();
+    const effects = new MockDeployEffects();
+    try {
+      await deploy(TEST_OPTIONS, effects);
+      assert.fail("expected error");
+    } catch (err) {
+      CliError.assert(err, {message: "No Observable workspace found.", print: false});
+    }
+    effects.clack.log.assertLogged({level: "error", message: /You don’t have any Observable workspaces/});
+  });
+
+  it("allows choosing between two workspaces when creating", async () => {
+    getCurrentObservableApi().handleGetCurrentUser({user: userWithTwoWorkspaces}).start();
+    const effects = new MockDeployEffects();
+    try {
+      await deploy(TEST_OPTIONS, effects);
+      assert.fail("expected error");
+    } catch (err) {
+      assert.ok(err instanceof Error);
+      assert.match(err.message, /out of inputs for select.*Which Observable workspace do you want to use/);
+    }
+  });
+
   describe("when deploy state doesn't match", () => {
     it("interactive, when the user chooses to update", async () => {
       const newProjectId = "newProjectId";
@@ -490,7 +536,7 @@ describe("deploy", () => {
         await deploy(TEST_OPTIONS, effects);
         assert.fail("expected error");
       } catch (error) {
-        CliError.assert(error, {message: "User cancelled deploy", print: false, exitCode: 0});
+        CliError.assert(error, {message: "User canceled deploy", print: false, exitCode: 0});
       }
       effects.clack.log.assertLogged({message: /`projectId` in your deploy.json does not match/});
       effects.close();
