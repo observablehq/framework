@@ -149,7 +149,7 @@ const relativeDay = () => currentHour.getDate() === endHour.getDate() ? "Today" 
     <h2>Change in demand by balancing authority</h2>
     <h3>Percent change in electricity demand from previous hour</h3>
     <div>
-      <div style="display: flex; flex-direction: column; align-items: center;">
+      <div style="display: flex; flex-direction: column; align-items: center; max-width: 620px;">
         <h1 style="margin-bottom: 0; margin-top: 8px;">${hourFormat(currentHour)}</h1>
         <div>${relativeDay()}</div>
         <div style="display: flex; align-items: center;">

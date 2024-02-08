@@ -25,7 +25,7 @@ export function balancingAuthoritiesMap({
   statemesh,
   width
 }) {
-  return html`<div style="display: flex; justify-content: center">${Plot.plot({
+  return Plot.plot({
     width: Math.min(width, 620),
     height: Math.min(width, 620) * 0.6,
     color: {
@@ -118,7 +118,7 @@ export function balancingAuthoritiesMap({
         })
       )
     ]
-  })}</div>`;
+  });
 }
 
 // Map legend
