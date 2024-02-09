@@ -52,7 +52,8 @@ export class ObservableApiClient {
       response = await fetch(url, {...options, headers: {...this._apiHeaders, ...options.headers}});
     } catch (error) {
       // Check for undici failures and print them in a way that shows more details. Helpful in tests.
-      if (error instanceof Error && error.message === "fetch failed") console.error(error);
+      const isInTest = typeof global.it === "function";
+      if (isInTest && error instanceof Error && error.message === "fetch failed") console.error(error);
       throw error;
     }
 

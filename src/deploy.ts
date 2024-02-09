@@ -1,13 +1,12 @@
 import {join} from "node:path";
 import * as clack from "@clack/prompts";
 import wrapAnsi from "wrap-ansi";
-import type {BuildEffects} from "./build.js";
-import {build} from "./build.js";
 import type {ClackEffects} from "./clack.js";
 import {commandRequiresAuthenticationMessage} from "./commandInstruction.js";
 import type {Config} from "./config.js";
 import {CliError, isApiError, isHttpError} from "./error.js";
-import type {Logger, Writer} from "./logger.js";
+import {visitFiles} from "./files.js";
+import type {Logger} from "./logger.js";
 import {type AuthEffects, defaultEffects as defaultAuthEffects, formatUser, loginInner} from "./observableApiAuth.js";
 import {ObservableApiClient} from "./observableApiClient.js";
 import {
@@ -27,7 +26,7 @@ import {
 import {slugify} from "./slugify.js";
 import {Telemetry} from "./telemetry.js";
 import type {TtyEffects} from "./tty.js";
-import {bold, defaultEffects as defaultTtyEffects, inverse, link, underline, yellow} from "./tty.js";
+import {bold, defaultEffects as defaultTtyEffects, inverse, link, red, underline, yellow} from "./tty.js";
 
 const DEPLOY_POLL_MAX_MS = 1000 * 60 * 5;
 const DEPLOY_POLL_INTERVAL_MS = 1000 * 5;
@@ -273,6 +272,7 @@ export async function deploy(
     message = input;
   }
 
+  // Build the project
   let deployId;
   try {
     deployId = await apiClient.postDeploy({projectId: deployTarget.project.id, message});
@@ -292,37 +292,77 @@ export async function deploy(
     throw error;
   }
 
-  // Build the project
-  await build({config, clientEntry: "./src/client/deploy.js"}, new DeployBuildEffects(apiClient, deployId, effects));
+  // await build({config, clientEntry: "./src/client/deploy.js"}, new DeployBuildEffects(apiClient, deployId, effects));
+  const deployFiles: string[] = [];
+  try {
+    for await (const file of visitFiles(config.output)) {
+      deployFiles.push(file);
+    }
+  } catch (error) {
+    throw new CliError(`Error reading output directory: ${error instanceof Error ? error.message : error}`, {
+      cause: error
+    });
+  }
+  if (!deployFiles.length) throw new CliError("No files found in output directory.");
+
+  const uploadSpinner = clack.spinner();
+  uploadSpinner.start("Uploading files");
+  const queue = [...deployFiles];
+  const promises: Promise<void>[] = [];
+  const MAX_CONCURRENT = 4;
+  let pending = 0;
+  let done = 0;
+
+  try {
+    while (queue.length > 0) {
+      if (pending >= MAX_CONCURRENT) await Promise.race(promises.slice(-MAX_CONCURRENT));
+      pending++;
+      const deployFile = queue.pop();
+      if (!deployFile) throw new Error("unexpected end of queue");
+      promises.push(
+        apiClient.postDeployFile(deployId, join(config.output, deployFile), deployFile).then(() => {
+          pending--;
+          done++;
+          uploadSpinner.message(`${done}/${deployFiles.length} ${deployFile}`.slice(0, effects.outputColumns - 4));
+        })
+      );
+    }
+    await Promise.all(promises);
+    uploadSpinner.stop(`${deployFiles.length} files uploaded`);
+  } catch (error) {
+    uploadSpinner.stop(red("Error uploading files"));
+    throw error;
+  }
 
   // Mark the deploy as uploaded
   await apiClient.postDeployUploaded(deployId);
 
   // Poll for processing completion
-  const spinner = clack.spinner();
-  spinner.start("Server processing deploy");
+  const serverProcessingSpinner = clack.spinner();
+  serverProcessingSpinner.start("Server processing deploy");
   const pollExpiration = Date.now() + DEPLOY_POLL_MAX_MS;
   let deployInfo: null | GetDeployResponse = null;
   pollLoop: while (true) {
+    await new Promise((resolve) => setTimeout(resolve, deployPollInterval));
     if (Date.now() > pollExpiration) {
-      spinner.stop("Deploy timed out");
+      serverProcessingSpinner.stop("Deploy timed out");
       throw new CliError(`Deploy failed to process on server: status = ${deployInfo?.status}`);
     }
     deployInfo = await apiClient.getDeploy(deployId);
     switch (deployInfo.status) {
       case "pending":
+      case "created":
         break;
       case "uploaded":
-        spinner.stop("Deploy complete");
+        serverProcessingSpinner.stop("Deploy complete");
         break pollLoop;
       case "error":
-        spinner.stop("Deploy failed");
+        serverProcessingSpinner.stop("Deploy failed");
         throw new CliError("Deploy failed to process on server");
       default:
-        spinner.stop("Unknown status");
+        serverProcessingSpinner.stop("Unknown status");
         throw new CliError(`Unknown deploy status: ${deployInfo.status}`);
     }
-    await new Promise((resolve) => setTimeout(resolve, deployPollInterval));
   }
   if (!deployInfo) throw new CliError("Deploy failed to process on server");
 
@@ -332,36 +372,6 @@ export async function deploy(
   }
   clack.outro(`Deployed project now visible at ${link(deployInfo.url)}`);
   Telemetry.record({event: "deploy", step: "finish"});
-}
-
-class DeployBuildEffects implements BuildEffects {
-  readonly logger: Logger;
-  readonly output: Writer;
-  constructor(
-    private readonly apiClient: ObservableApiClient,
-    private readonly deployId: string,
-    effects: DeployEffects
-  ) {
-    this.logger = effects.logger;
-    this.output = effects.output;
-  }
-  async copyFile(sourcePath: string, outputPath: string) {
-    this.logger.log(outputPath);
-    try {
-      await this.apiClient.postDeployFile(this.deployId, sourcePath, outputPath);
-    } catch (error) {
-      // 413 is "Payload Too Large", however sometimes Cloudflare returns a
-      // custom Cloudflare error, 520. Sometimes we also see 502. Handle them all
-      if (isHttpError(error) && (error.statusCode === 413 || error.statusCode === 503 || error.statusCode === 520)) {
-        throw new CliError(`File too large to deploy: ${sourcePath}. Maximum file size is 50MB.`, {cause: error});
-      }
-      throw error;
-    }
-  }
-  async writeFile(outputPath: string, content: Buffer | string) {
-    this.logger.log(outputPath);
-    await this.apiClient.postDeployFileContents(this.deployId, content, outputPath);
-  }
 }
 
 // export for testing
