@@ -10,6 +10,8 @@ display(x);
 
 If you pass `display` a DOM element or node, it will be inserted directly into the page. Use this technique to render dynamic displays of data, such as charts and tables.
 
+<!-- TODO This is an obscure, pedagogical technique and not the best initial demonstration of display. -->
+
 ```js echo
 const span = document.createElement("span");
 span.appendChild(document.createTextNode("Your lucky number is "));
@@ -104,17 +106,32 @@ The current width is ${width}.
 import {resize} from "npm:@observablehq/stdlib";
 ```
 
-For more control, or in a grid where you want to respond to either width or height changing, use the built-in `resize` helper. This takes a render function which is called whenever the width or height changes; the element returned by the render function is inserted into the DOM.
+(Internally, `width` is implemented by [`Generators.width`](../lib/generators#width(element)).)
+
+For more control, or in a [grid](../css/grid) where you want to respond to either width or height changing, use the built-in `resize` helper. This takes a render function which is called whenever the width or height [changes](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver), and the element returned by the render function is inserted into the DOM.
 
 ```html echo
 <div class="grid grid-cols-4">
   <div class="card">
-    ${resize((width) => html`This card is ${width}px wide.`)}
+    ${resize((width) => `This card is ${width}px wide.`)}
   </div>
 </div>
 ```
 
-See also [`Generators.width`](../lib/generators#width(element)).
+If your container defines a height, such as `240px` in the example below, then you can use both the `width` and `height` arguments to the render function:
+
+```html echo
+<div class="grid grid-cols-2" style="grid-auto-rows: 240px;">
+  <div class="card" style="padding: 0;">
+    ${resize((width, height) => Plot.barY([9, 4, 8, 1, 11, 3, 4, 2, 7, 5]).plot({width, height}))}
+  </div>
+  <div class="card" style="padding: 0;">
+    ${resize((width, height) => Plot.barY([3, 4, 2, 7, 5, 9, 4, 8, 1, 11]).plot({width, height}))}
+  </div>
+</div>
+```
+
+<div class="tip">If you are using <code>resize</code> with both <code>width</code> and <code>height</code> and see nothing rendered, it may be because your parent container does not have its own height specified. When both arguments are used, the rendered element is implicitly <code>position: absolute</code> to avoid affecting the size of its parent and causing a feedback loop.</div>
 
 ## display(*value*)
 

@@ -1,5 +1,6 @@
 import type {MockAgent} from "undici";
 import {type Interceptable} from "undici";
+import PendingInterceptorsFormatter from "undici/lib/mock/pending-interceptors-formatter.js";
 import type {PostAuthRequestPollResponse, PostAuthRequestResponse} from "../../src/observableApiClient.js";
 import {
   type GetProjectResponse,
@@ -55,9 +56,9 @@ class ObservableApiMock {
     for (const intercept of agent.pendingInterceptors()) {
       if (intercept.origin === getOrigin()) {
         console.log(`Expected all intercepts for ${getOrigin()} to be handled`);
-        // This will include other interceptors that are not related to the
-        // Observable API, but it has a nice output.
-        agent.assertNoPendingInterceptors();
+        agent.assertNoPendingInterceptors({
+          pendingInterceptorsFormatter: new FilteringPendingInterceptorFormatter(getOrigin())
+        });
       }
     }
   }
@@ -66,13 +67,18 @@ class ObservableApiMock {
     return this._agent?.pendingInterceptors();
   }
 
+  addHandler(handler: (pool: Interceptable) => void): ObservableApiMock {
+    this._handlers.push(handler);
+    return this;
+  }
+
   handleGetCurrentUser({
     user = userWithOneWorkspace,
     status = 200
   }: {user?: any; status?: number} = {}): ObservableApiMock {
     const response = status == 200 ? JSON.stringify(user) : emptyErrorBody;
-    const headers = authorizationHeader(status != 401);
-    this._handlers.push((pool) =>
+    const headers = status === 401 ? {} : authorizationHeader(status !== 403);
+    this.addHandler((pool) =>
       pool
         .intercept({path: "/cli/user", headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
@@ -103,8 +109,8 @@ class ObservableApiMock {
             owner: {id: "workspace-id", login: "workspace-login"}
           } satisfies GetProjectResponse)
         : emptyErrorBody;
-    const headers = authorizationHeader(status != 401);
-    this._handlers.push((pool) =>
+    const headers = authorizationHeader(status !== 401 && status !== 403);
+    this.addHandler((pool) =>
       pool
         .intercept({path: `/cli/project/@${workspaceLogin}/${projectSlug}`, headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
@@ -137,8 +143,8 @@ class ObservableApiMock {
             creator
           } satisfies GetProjectResponse)
         : emptyErrorBody;
-    const headers = authorizationHeader(status != 401);
-    this._handlers.push((pool) =>
+    const headers = authorizationHeader(status !== 403);
+    this.addHandler((pool) =>
       pool
         .intercept({path: "/cli/project", method: "POST", headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
@@ -156,8 +162,8 @@ class ObservableApiMock {
     status?: number;
   } = {}): ObservableApiMock {
     const response = status == 200 ? JSON.stringify({title, slug: "bi"}) : emptyErrorBody;
-    const headers = authorizationHeader(status != 401);
-    this._handlers.push((pool) =>
+    const headers = authorizationHeader(status !== 403);
+    this.addHandler((pool) =>
       pool
         .intercept({path: `/cli/project/${projectId}/edit`, method: "POST", headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
@@ -183,8 +189,8 @@ class ObservableApiMock {
             results: projects.map((p) => ({...p, creator, owner, title: p.title ?? "Mock Title"}))
           } satisfies PaginatedList<GetProjectResponse>)
         : emptyErrorBody;
-    const headers = authorizationHeader(status != 401);
-    this._handlers.push((pool) =>
+    const headers = authorizationHeader(status !== 403);
+    this.addHandler((pool) =>
       pool
         .intercept({path: `/cli/workspace/@${workspaceLogin}/projects`, headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
@@ -198,8 +204,8 @@ class ObservableApiMock {
     status = 200
   }: {projectId?: string; deployId?: string; status?: number} = {}): ObservableApiMock {
     const response = status == 200 ? JSON.stringify({id: deployId}) : emptyErrorBody;
-    const headers = authorizationHeader(status != 401);
-    this._handlers.push((pool) =>
+    const headers = authorizationHeader(status !== 403);
+    this.addHandler((pool) =>
       pool
         .intercept({path: `/cli/project/${projectId}/deploy`, method: "POST", headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
@@ -213,8 +219,8 @@ class ObservableApiMock {
     repeat = 1
   }: {deployId?: string; status?: number; repeat?: number} = {}): ObservableApiMock {
     const response = status == 204 ? "" : emptyErrorBody;
-    const headers = authorizationHeader(status != 401);
-    this._handlers.push((pool) => {
+    const headers = authorizationHeader(status !== 403);
+    this.addHandler((pool) => {
       pool
         .intercept({path: `/cli/deploy/${deployId}/file`, method: "POST", headers: headersMatcher(headers)})
         .reply(status, response)
@@ -232,10 +238,29 @@ class ObservableApiMock {
             url: `${getObservableUiOrigin()}/@mock-user-ws/test-project`
           })
         : emptyErrorBody;
-    const headers = authorizationHeader(status != 401);
-    this._handlers.push((pool) =>
+    const headers = authorizationHeader(status !== 403);
+    this.addHandler((pool) =>
       pool
         .intercept({path: `/cli/deploy/${deployId}/uploaded`, method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response, {headers: {"content-type": "application/json"}})
+    );
+    return this;
+  }
+
+  handleGetDeploy({
+    deployId,
+    deployStatus = "uploaded",
+    status = 200
+  }: {
+    deployId: string;
+    deployStatus?: string;
+    status?: number;
+  }): ObservableApiMock {
+    const response = status === 200 ? JSON.stringify({id: deployId, status: deployStatus}) : emptyErrorBody;
+    const headers = authorizationHeader(status !== 401);
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: `/cli/deploy/${deployId}`, headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
     );
     return this;
@@ -246,7 +271,7 @@ class ObservableApiMock {
       confirmationCode,
       id: "authRequestId"
     };
-    this._handlers.push((pool) =>
+    this.addHandler((pool) =>
       pool
         .intercept({
           path: "/cli/auth/request",
@@ -270,7 +295,7 @@ class ObservableApiMock {
       status,
       apiKey: status === "accepted" ? apiKey ?? {id: "apiKey1234", key: validApiKey} : null
     };
-    this._handlers.push((pool) =>
+    this.addHandler((pool) =>
       pool
         .intercept({
           path: "/cli/auth/request/poll",
@@ -344,3 +369,13 @@ export const userWithTwoWorkspaces = {
   ...userBase,
   workspaces: workspaces.slice(0, 2)
 };
+
+class FilteringPendingInterceptorFormatter extends PendingInterceptorsFormatter {
+  constructor(private readonly _origin: string) {
+    super();
+  }
+
+  format(interceptors: readonly {origin: string}[]) {
+    return super.format(interceptors.filter((i) => i.origin === this._origin));
+  }
+}

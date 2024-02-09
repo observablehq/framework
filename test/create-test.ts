@@ -19,8 +19,8 @@ describe("create", async () => {
       new Set([
         "template-test/.gitignore",
         "template-test/docs/components/timeline.js",
-        "template-test/docs/data/launchHistory.csv.js",
-        "template-test/docs/data/spaceHistory.json",
+        "template-test/docs/data/launches.csv.js",
+        "template-test/docs/data/events.json",
         "template-test/docs/example-dashboard.md",
         "template-test/docs/example-report.md",
         "template-test/docs/index.md",
