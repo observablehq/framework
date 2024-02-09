@@ -2,7 +2,7 @@
 toc: false
 ---
 
-# Classification prediction
+# Penguin classification
 
 ```js
 const predictions = FileAttachment("data/predictions.csv").csv({typed: true});
