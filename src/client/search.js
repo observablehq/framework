@@ -59,13 +59,15 @@ input.addEventListener("input", (event) => {
 addEventListener("keydown", (event) => {
   const {code, target} = event;
   if (target === input) {
-    if (code === "ArrowDown" || code === "ArrowUp" || code === "Enter" || (code === "Escape" && input.value === "")) {
+    if (code === "Escape" && input.value === "") {
+      input.blur();
+      return;
+    }
+    if (code === "ArrowDown" || code === "ArrowUp" || code === "Enter") {
       const results = document.querySelector("#observablehq-search-results ol");
       const current = results.querySelector(`.${c}`);
       if (!current) return;
-      if (code === "Escape") {
-        input.blur();
-      } else if (code === "Enter") {
+      if (code === "Enter") {
         current.querySelector("a")?.click();
       } else {
         if (code === "ArrowUp") {
