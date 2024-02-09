@@ -15,11 +15,25 @@ const marginRight = margin;
 const marginBottom = margin;
 const marginLeft = margin;
 
+const canvasCache = new WeakSet();
+
 export function ApiHeatmap(
   table,
-  {color, width, height = 550, y1, y2, title, label, yMetric, fillMetric, routeFilter, type = "route"}
+  {
+    canvas = document.createElement("canvas"),
+    color,
+    width,
+    height = 550,
+    y1,
+    y2,
+    title,
+    label,
+    yMetric,
+    fillMetric,
+    routeFilter,
+    type = "route"
+  }
 ) {
-  const canvasCache = new WeakMap();
   const count = table.getChild(yMetric);
   const route = table.getChild(fillMetric);
   const plot = Plot.plot({
@@ -43,9 +57,8 @@ export function ApiHeatmap(
   const div = document.createElement("div");
   div.style = "position: relative;";
 
-  let canvas = canvasCache.get(table);
-  if (!canvas) {
-    canvasCache.set(table, (canvas = document.createElement("canvas")));
+  if (!canvasCache.has(canvas)) {
+    canvasCache.add(canvas);
     canvas.width = dx;
     canvas.height = dy;
     canvas.style = `
