@@ -129,10 +129,10 @@ export async function deploy(
       inactive: "No, cancel deploy"
     });
     if (!choice) {
-      effects.clack.outro(yellow("Deploy cancelled."));
+      effects.clack.outro(yellow("Deploy canceled."));
     }
     if (effects.clack.isCancel(choice) || !choice)
-      throw new CliError("User cancelled deploy", {print: false, exitCode: 0});
+      throw new CliError("User canceled deploy", {print: false, exitCode: 0});
 
     ({currentUser, apiKey} = await loginInner(effects));
     apiClient.setApiKey(apiKey);

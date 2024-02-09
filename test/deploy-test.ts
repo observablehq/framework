@@ -3,7 +3,7 @@ import {Readable, Writable} from "node:stream";
 import {normalizeConfig} from "../src/config.js";
 import {type DeployEffects, type DeployOptions, deploy, promptDeployTarget} from "../src/deploy.js";
 import {CliError, isHttpError} from "../src/error.js";
-import {GetCurrentUserResponse, ObservableApiClient} from "../src/observableApiClient.js";
+import {type GetCurrentUserResponse, ObservableApiClient} from "../src/observableApiClient.js";
 import type {DeployConfig} from "../src/observableApiConfig.js";
 import {TestClackEffects} from "./mocks/clack.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
@@ -601,7 +601,7 @@ describe("deploy", () => {
       try {
         await deploy(TEST_OPTIONS, effects);
       } catch (error) {
-        CliError.assert(error, {message: "User cancelled deploy", print: false, exitCode: 0});
+        CliError.assert(error, {message: "User canceled deploy", print: false, exitCode: 0});
       }
       effects.clack.log.assertLogged({message: /`projectId` in your deploy.json is missing.*will overwrite/});
       effects.close();
@@ -618,6 +618,7 @@ describe("deploy", () => {
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
       .handlePostDeployUploaded({deployId})
+      .handleGetDeploy({deployId})
       .start();
 
     const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, apiKey: null});
