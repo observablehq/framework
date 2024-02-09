@@ -107,7 +107,7 @@ async function renderSidebar(
   sidebar: true | "hidden"
 ): Promise<Html> {
   return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar"${
-    sidebar === "hidden" ? " data-hidden=1" : ""
+    sidebar === "hidden" ? " data-hidden" : ""
   }>
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
