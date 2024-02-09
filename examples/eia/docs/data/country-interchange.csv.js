@@ -11,10 +11,7 @@ const convertDate = timeFormat("%m%d%Y %H:%M:%S") // Convert dates into the form
 const countryInterchangeUrl = `https://www.eia.gov/electricity/930-api/interchange/series_data?type[0]=TI&start=${convertDate(start)}&end=${convertDate(end)}&frequency=hourly&from_respondent[0]=US48&timezone=Eastern&limit=10000&offset=0`
 
 const tidySeries = (response, id, name) => {
-  // The response is an array with one element, which has a data property which is a list of series
   let series = response[0].data
-  // Flatten the series into one big array to turn our region data into a tidy series suitable for Plot
-  // TODO: It would be better to check for hourly vs daily more efficiently.
   let datetimeFormat = utcParse("%m/%d/%Y %H:%M:%S")
   let dateFormat = utcParse("%m/%d/%Y")
   return series.flatMap(s => {
