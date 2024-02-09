@@ -91,17 +91,12 @@ export async function deploy(
   const legacyConfig = config as unknown as {deploy: null | {project: string; workspace: string}};
   if (legacyConfig.deploy && deployConfig.projectId) {
     if (!deployConfig.projectSlug || !deployConfig.workspaceLogin) {
-      effects.clack.log.info(
-        "Migrating deploy config. You should delete the `deploy` field from your observablehq.config.ts file."
-      );
+      effects.clack.log.info("Copying deploy information from the config file to deploy.json.");
       deployConfig.projectSlug = legacyConfig.deploy.project;
       deployConfig.workspaceLogin = legacyConfig.deploy.workspace.replace(/^@/, "");
       effects.setDeployConfig(config.root, deployConfig);
-    } else {
-      effects.clack.log.info(
-        "You still have legacy config information in the `deploy` field of your observablehq.config.ts file. You should delete that section."
-      );
     }
+    effects.clack.log.info("The `deploy` section of your config file is obsolete and can be deleted.");
   }
 
   let currentUser: GetCurrentUserResponse | null = null;
