@@ -1,3 +1,4 @@
+import os from "node:os";
 import * as clack from "@clack/prompts";
 import type {ClackEffects} from "./clack.js";
 import {commandInstruction, commandRequiresAuthenticationMessage} from "./commandInstruction.js";
@@ -55,7 +56,10 @@ export async function login(effects: AuthEffects = defaultEffects) {
 
 export async function loginInner(effects: AuthEffects): Promise<{currentUser: GetCurrentUserResponse; apiKey: ApiKey}> {
   const apiClient = new ObservableApiClient();
-  const requestInfo = await apiClient.postAuthRequest(["projects:deploy", "projects:create"]);
+  const requestInfo = await apiClient.postAuthRequest({
+    scopes: ["projects:deploy", "projects:create"],
+    deviceDescription: os.hostname()
+  });
   const confirmUrl = new URL("/auth-device", OBSERVABLE_UI_ORIGIN);
   confirmUrl.searchParams.set("code", requestInfo.confirmationCode);
 
