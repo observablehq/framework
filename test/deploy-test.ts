@@ -1,21 +1,23 @@
 import assert, {fail} from "node:assert";
 import {Readable, Writable} from "node:stream";
-import {commandRequiresAuthenticationMessage} from "../src/commandInstruction.js";
 import {normalizeConfig} from "../src/config.js";
 import {type DeployEffects, type DeployOptions, deploy, promptDeployTarget} from "../src/deploy.js";
 import {CliError, isHttpError} from "../src/error.js";
-import {ObservableApiClient} from "../src/observableApiClient.js";
+import {type GetCurrentUserResponse, ObservableApiClient} from "../src/observableApiClient.js";
 import type {DeployConfig} from "../src/observableApiConfig.js";
 import {TestClackEffects} from "./mocks/clack.js";
+import {mockJsDelivr} from "./mocks/jsdelivr.js";
 import {MockLogger} from "./mocks/logger.js";
 import {
   getCurrentObservableApi,
   invalidApiKey,
   mockObservableApi,
+  userWithOneWorkspace,
   userWithTwoWorkspaces,
   userWithZeroWorkspaces,
   validApiKey
 } from "./mocks/observableApi.js";
+import {MockAuthEffects} from "./observableApiAuth-test.js";
 import {MockConfigEffects} from "./observableApiConfig-test.js";
 
 // These files are implicitly generated. This may change over time, so they’re
@@ -46,7 +48,7 @@ interface MockDeployEffectsOptions {
   debug?: boolean;
 }
 
-class MockDeployEffects extends MockConfigEffects implements DeployEffects {
+class MockDeployEffects extends MockAuthEffects implements DeployEffects {
   public logger = new MockLogger();
   public input = new Readable();
   public output: NodeJS.WritableStream;
@@ -60,6 +62,8 @@ class MockDeployEffects extends MockConfigEffects implements DeployEffects {
 
   private ioResponses: {prompt: RegExp; response: string}[] = [];
   private debug: boolean;
+  private configEffects: MockConfigEffects;
+  private authEffects: MockAuthEffects;
 
   constructor({
     apiKey = validApiKey,
@@ -69,6 +73,9 @@ class MockDeployEffects extends MockConfigEffects implements DeployEffects {
     debug = false
   }: MockDeployEffectsOptions = {}) {
     super();
+    this.authEffects = new MockAuthEffects();
+    this.configEffects = new MockConfigEffects();
+
     this.observableApiKey = apiKey;
     this.deployConfig = deployConfig;
     this.isTty = isTty;
@@ -96,15 +103,6 @@ class MockDeployEffects extends MockConfigEffects implements DeployEffects {
         callback();
       }
     });
-  }
-
-  async getObservableApiKey(effects: DeployEffects = this) {
-    if (effects !== this) throw new Error("don't pass unrelated effects to mock effects methods");
-    if (!this.observableApiKey) {
-      effects?.logger.log(commandRequiresAuthenticationMessage);
-      throw new Error("no key available in this test");
-    }
-    return {source: "test" as const, key: this.observableApiKey};
   }
 
   async getDeployConfig(): Promise<DeployConfig> {
@@ -139,13 +137,14 @@ const DEPLOY_CONFIG: DeployConfig & {projectId: string; projectSlug: string; wor
   workspaceLogin: "mock-user-ws"
 };
 
-// TODO These tests need mockJsDelivr, too!
 describe("deploy", () => {
   mockObservableApi();
+  mockJsDelivr();
 
   it("makes expected API calls for an existing project", async () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
+      .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
@@ -160,10 +159,11 @@ describe("deploy", () => {
     effects.close();
   });
 
-  it("updates title for exsting project if it doesn't match", async () => {
+  it("updates title for existing project if it doesn't match", async () => {
     const deployId = "deploy456";
     const oldTitle = `${TEST_CONFIG.title!} old`;
     getCurrentObservableApi()
+      .handleGetCurrentUser()
       .handleGetProject({
         ...DEPLOY_CONFIG,
         title: oldTitle
@@ -187,6 +187,7 @@ describe("deploy", () => {
     const deployId = "deploy456";
     const message = "this is test deploy";
     getCurrentObservableApi()
+      .handleGetCurrentUser()
       .handleGetProject(deployConfig)
       .handlePostDeploy({projectId: deployConfig.projectId, deployId})
       .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
@@ -204,12 +205,12 @@ describe("deploy", () => {
   it("makes expected API calls for non-existent project, user chooses to create", async () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
+      .handleGetCurrentUser()
       .handleGetProject({...DEPLOY_CONFIG, status: 404})
       .handleGetWorkspaceProjects({
         workspaceLogin: DEPLOY_CONFIG.workspaceLogin,
         projects: [{id: DEPLOY_CONFIG.projectId, slug: DEPLOY_CONFIG.projectSlug}]
       })
-      .handleGetCurrentUser()
       .handlePostProject({projectId: DEPLOY_CONFIG.projectId})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
@@ -239,7 +240,7 @@ describe("deploy", () => {
       await deploy(TEST_OPTIONS, effects);
       assert.fail("expected error");
     } catch (error) {
-      CliError.assert(error, {message: "User cancelled deploy.", print: false, exitCode: 0});
+      CliError.assert(error, {message: "User canceled deploy.", print: false, exitCode: 0});
     }
 
     effects.close();
@@ -247,6 +248,7 @@ describe("deploy", () => {
 
   it("makes expected API calls for configured, non-existent project; non-interactive", async () => {
     getCurrentObservableApi()
+      .handleGetCurrentUser()
       .handleGetProject({...DEPLOY_CONFIG, status: 404})
       .start();
     const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, isTty: false});
@@ -290,8 +292,7 @@ describe("deploy", () => {
       title: "Some title"
     });
     getCurrentObservableApi()
-      .handleGetCurrentUser()
-      .handleGetWorkspaceProjects({workspaceLogin: DEPLOY_CONFIG.workspaceLogin, projects: [], status: 404})
+      .handleGetCurrentUser({user: userWithZeroWorkspaces})
       .handleGetProject({...DEPLOY_CONFIG, status: 404})
       .start();
 
@@ -301,14 +302,17 @@ describe("deploy", () => {
       await deploy({...TEST_OPTIONS, config}, effects);
       assert.fail("expected error");
     } catch (err) {
-      CliError.assert(err, {message: /Workspace mock-user-ws not found/});
+      CliError.assert(err, {message: /No Observable workspace found/, print: false});
     }
+    effects.clack.log.assertLogged({
+      message: /You don’t have any Observable workspaces.*https:\/\/observablehq.com/,
+      level: "error"
+    });
 
     effects.close();
   });
 
   it("throws an error if workspace is invalid", async () => {
-    // getCurrentObservableApi().start();
     const config = await normalizeConfig({root: TEST_SOURCE_ROOT});
     const deployConfig = {
       ...DEPLOY_CONFIG,
@@ -352,14 +356,13 @@ describe("deploy", () => {
     try {
       await deploy(TEST_OPTIONS, effects);
       assert.fail("expected error");
-    } catch (err) {
-      if (!(err instanceof Error)) throw err;
-      assert.equal(err.message, "no key available in this test");
-      effects.logger.assertExactLogs([/^You need to be authenticated/]);
+    } catch (error) {
+      assert.ok(error instanceof Error, `error should be an Error (got ${typeof error})`);
+      assert.match(error.message, /^out of inputs for select: You must be logged in/);
     }
   });
 
-  it("throws an error with an invalid API key", async () => {
+  it("Prompts the user to log in when they get a 401 response from the server", async () => {
     getCurrentObservableApi().handleGetCurrentUser({status: 401}).start();
     const effects = new MockDeployEffects({apiKey: invalidApiKey});
 
@@ -367,13 +370,28 @@ describe("deploy", () => {
       await deploy(TEST_OPTIONS, effects);
       assert.fail("Should have thrown");
     } catch (error) {
-      CliError.assert(error, {message: /You must be logged in/});
+      assert.ok(error instanceof Error, `error should be an Error (got ${typeof error})`);
+      assert.match(error.message, /^out of inputs for select: You must be logged in/);
+    }
+  });
+
+  it("Prompts the user to log in when they get a 403 response from the server", async () => {
+    getCurrentObservableApi().handleGetCurrentUser({status: 403}).start();
+    const effects = new MockDeployEffects({apiKey: invalidApiKey});
+
+    try {
+      await deploy(TEST_OPTIONS, effects);
+      assert.fail("Should have thrown");
+    } catch (error) {
+      assert.ok(error instanceof Error, `error should be an Error (got ${typeof error})`);
+      assert.match(error.message, /^out of inputs for select: Your authentication is invalid/);
     }
   });
 
   it("throws an error if deploy creation fails", async () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
+      .handleGetCurrentUser()
       .handleGetProject({
         ...DEPLOY_CONFIG
       })
@@ -386,7 +404,10 @@ describe("deploy", () => {
       await deploy(TEST_OPTIONS, effects);
       fail("Should have thrown an error");
     } catch (error) {
-      assert.ok(isHttpError(error));
+      assert.ok(
+        isHttpError(error),
+        `expected HttpError, got ${error instanceof Error ? `${error.message}\n${error?.stack}` : error}`
+      );
       assert.equal(error.statusCode, 500);
     }
 
@@ -396,6 +417,7 @@ describe("deploy", () => {
   it("throws an error if file upload fails", async () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
+      .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .handlePostDeployFile({deployId, status: 500})
@@ -417,6 +439,7 @@ describe("deploy", () => {
   it("throws an error if deploy uploaded fails", async () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
+      .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
@@ -451,12 +474,59 @@ describe("deploy", () => {
     }
   });
 
+  it("gives nice errors when a starter tier workspace tries to deploy a second project", async () => {
+    const workspace = userWithOneWorkspace.workspaces[0];
+    getCurrentObservableApi()
+      .handleGetCurrentUser({user: userWithOneWorkspace})
+      .handleGetWorkspaceProjects({workspaceLogin: workspace.login, projects: [{id: "project123", slug: "bi"}]})
+      .addHandler((pool) => {
+        pool.intercept({path: "/cli/project", method: "POST"}).reply(403, {errors: [{code: "TOO_MANY_PROJECTS"}]});
+      })
+      .start();
+    const effects = new MockDeployEffects();
+    effects.clack.inputs.push(null); // which project do you want to use?
+    effects.clack.inputs.push("test-project"); // which slug do you want to use?
+
+    try {
+      await deploy(TEST_OPTIONS, effects);
+      assert.fail("expected error");
+    } catch (err) {
+      CliError.assert(err, {message: "Error during deploy", print: false});
+    }
+    effects.clack.log.assertLogged({message: /Starter tier can only deploy one project/, level: "error"});
+  });
+
+  it("gives a nice error when there are no workspaces to deploy to", async () => {
+    getCurrentObservableApi().handleGetCurrentUser({user: userWithZeroWorkspaces}).start();
+    const effects = new MockDeployEffects();
+    try {
+      await deploy(TEST_OPTIONS, effects);
+      assert.fail("expected error");
+    } catch (err) {
+      CliError.assert(err, {message: "No Observable workspace found.", print: false});
+    }
+    effects.clack.log.assertLogged({level: "error", message: /You don’t have any Observable workspaces/});
+  });
+
+  it("allows choosing between two workspaces when creating", async () => {
+    getCurrentObservableApi().handleGetCurrentUser({user: userWithTwoWorkspaces}).start();
+    const effects = new MockDeployEffects();
+    try {
+      await deploy(TEST_OPTIONS, effects);
+      assert.fail("expected error");
+    } catch (err) {
+      assert.ok(err instanceof Error);
+      assert.match(err.message, /out of inputs for select.*Which Observable workspace do you want to use/);
+    }
+  });
+
   describe("when deploy state doesn't match", () => {
     it("interactive, when the user chooses to update", async () => {
       const newProjectId = "newProjectId";
       const oldDeployConfig = {...DEPLOY_CONFIG, projectId: "oldProjectId"};
       const deployId = "deployId";
       getCurrentObservableApi()
+        .handleGetCurrentUser()
         .handleGetProject({
           ...DEPLOY_CONFIG,
           projectId: newProjectId
@@ -467,8 +537,6 @@ describe("deploy", () => {
         .handleGetDeploy({deployId})
         .start();
       const effects = new MockDeployEffects({deployConfig: oldDeployConfig, isTty: true});
-      // .addIoResponse(/Do you want to deploy anyway\?/, "y")
-      // .addIoResponse(/^Deploy message: /, "deploying to re-created project");
       effects.clack.inputs.push(true, "recreate project");
       await deploy(TEST_OPTIONS, effects);
       effects.clack.log.assertLogged({message: /`projectId` in your deploy.json does not match/});
@@ -479,6 +547,7 @@ describe("deploy", () => {
       const newProjectId = "newId";
       const oldDeployConfig = {...DEPLOY_CONFIG, projectId: "oldProjectId"};
       getCurrentObservableApi()
+        .handleGetCurrentUser()
         .handleGetProject({
           ...DEPLOY_CONFIG,
           projectId: newProjectId
@@ -490,16 +559,17 @@ describe("deploy", () => {
         await deploy(TEST_OPTIONS, effects);
         assert.fail("expected error");
       } catch (error) {
-        CliError.assert(error, {message: "User cancelled deploy", print: false, exitCode: 0});
+        CliError.assert(error, {message: "User canceled deploy", print: false, exitCode: 0});
       }
       effects.clack.log.assertLogged({message: /`projectId` in your deploy.json does not match/});
       effects.close();
     });
 
-    it("non-interactive", async () => {
+    it("when non-interactive", async () => {
       const newProjectId = "newId";
       const oldDeployConfig = {...DEPLOY_CONFIG, projectId: "oldProjectId"};
       getCurrentObservableApi()
+        .handleGetCurrentUser()
         .handleGetProject({
           ...DEPLOY_CONFIG,
           projectId: newProjectId
@@ -514,6 +584,51 @@ describe("deploy", () => {
       }
       effects.clack.log.assertLogged({message: /`projectId` in your deploy.json does not match/});
     });
+
+    it("missing project id and existing server project", async () => {
+      const newProjectId = "newProjectId";
+      const deployConfig: DeployConfig = {...DEPLOY_CONFIG};
+      delete deployConfig.projectId;
+      getCurrentObservableApi()
+        .handleGetCurrentUser()
+        .handleGetProject({
+          ...DEPLOY_CONFIG,
+          projectId: newProjectId
+        })
+        .start();
+      const effects = new MockDeployEffects({deployConfig, isTty: true});
+      effects.clack.inputs.push(false);
+      try {
+        await deploy(TEST_OPTIONS, effects);
+      } catch (error) {
+        CliError.assert(error, {message: "User canceled deploy", print: false, exitCode: 0});
+      }
+      effects.clack.log.assertLogged({message: /`projectId` in your deploy.json is missing.*will overwrite/});
+      effects.close();
+    });
+  });
+
+  it("can log in and deploy", async () => {
+    const deployId = "deploy456";
+    getCurrentObservableApi()
+      .handlePostAuthRequest()
+      .handlePostAuthRequestPoll("accepted")
+      .handleGetCurrentUser()
+      .handleGetProject(DEPLOY_CONFIG)
+      .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
+      .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
+      .handlePostDeployUploaded({deployId})
+      .handleGetDeploy({deployId})
+      .start();
+
+    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, apiKey: null});
+    effects.clack.inputs = [
+      true, // do you want to log in?
+      "fix some bugs" // deploy message
+    ];
+    await deploy(TEST_OPTIONS, effects);
+
+    effects.close();
   });
 });
 
@@ -524,7 +639,7 @@ describe("promptDeployTarget", () => {
     const effects = new MockDeployEffects({isTty: false});
     const api = new ObservableApiClient({apiKey: {key: validApiKey, source: "test"}});
     try {
-      await promptDeployTarget(effects, api, TEST_CONFIG);
+      await promptDeployTarget(effects, api, TEST_CONFIG, {} as GetCurrentUserResponse);
     } catch (error) {
       CliError.assert(error, {message: "Deploy not configured."});
     }
@@ -533,9 +648,8 @@ describe("promptDeployTarget", () => {
   it("throws an error when the user has no workspaces", async () => {
     const effects = new MockDeployEffects();
     const api = new ObservableApiClient({apiKey: {key: validApiKey, source: "test"}});
-    getCurrentObservableApi().handleGetCurrentUser({user: userWithZeroWorkspaces}).start();
     try {
-      await promptDeployTarget(effects, api, TEST_CONFIG);
+      await promptDeployTarget(effects, api, TEST_CONFIG, userWithZeroWorkspaces);
     } catch (error) {
       effects.clack.log.assertLogged({message: /You don’t have any Observable workspaces/});
       CliError.assert(error, {message: "No Observable workspace found.", print: false});
@@ -552,11 +666,8 @@ describe("promptDeployTarget", () => {
       projectSlug // what slug do you want to use
     ];
     const api = new ObservableApiClient({apiKey: {key: validApiKey, source: "test"}});
-    getCurrentObservableApi()
-      .handleGetCurrentUser({user: userWithTwoWorkspaces})
-      .handleGetWorkspaceProjects({workspaceLogin: workspace.login, projects: []})
-      .start();
-    const result = await promptDeployTarget(effects, api, TEST_CONFIG);
+    getCurrentObservableApi().handleGetWorkspaceProjects({workspaceLogin: workspace.login, projects: []}).start();
+    const result = await promptDeployTarget(effects, api, TEST_CONFIG, userWithTwoWorkspaces);
     assert.deepEqual(result, {
       create: true,
       projectSlug,
