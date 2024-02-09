@@ -4,20 +4,24 @@ import wrapAnsi from "wrap-ansi";
 import type {BuildEffects} from "./build.js";
 import {build} from "./build.js";
 import type {ClackEffects} from "./clack.js";
-import {commandInstruction} from "./commandInstruction.js";
+import {commandRequiresAuthenticationMessage} from "./commandInstruction.js";
 import type {Config} from "./config.js";
 import {CliError, isApiError, isHttpError} from "./error.js";
 import type {Logger, Writer} from "./logger.js";
-import {formatUser} from "./observableApiAuth.js";
-import type {GetDeployResponse, GetProjectResponse, WorkspaceResponse} from "./observableApiClient.js";
-import {ObservableApiClient, type PostEditProjectRequest} from "./observableApiClient.js";
-import type {ConfigEffects} from "./observableApiConfig.js";
+import {type AuthEffects, defaultEffects as defaultAuthEffects, formatUser, loginInner} from "./observableApiAuth.js";
+import {ObservableApiClient} from "./observableApiClient.js";
 import {
-  type ApiKey,
+  type GetCurrentUserResponse,
+  type GetDeployResponse,
+  type GetProjectResponse,
+  type PostEditProjectRequest,
+  type WorkspaceResponse
+} from "./observableApiClient.js";
+import {
+  type ConfigEffects,
   type DeployConfig,
   defaultEffects as defaultConfigEffects,
   getDeployConfig,
-  getObservableApiKey,
   setDeployConfig
 } from "./observableApiConfig.js";
 import {slugify} from "./slugify.js";
@@ -34,8 +38,7 @@ export interface DeployOptions {
   deployPollInterval?: number;
 }
 
-export interface DeployEffects extends ConfigEffects, TtyEffects {
-  getObservableApiKey: (effects?: DeployEffects) => Promise<ApiKey>;
+export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
   getDeployConfig: (sourceRoot: string) => Promise<DeployConfig>;
   setDeployConfig: (sourceRoot: string, config: DeployConfig) => Promise<void>;
   clack: ClackEffects;
@@ -47,7 +50,7 @@ export interface DeployEffects extends ConfigEffects, TtyEffects {
 const defaultEffects: DeployEffects = {
   ...defaultConfigEffects,
   ...defaultTtyEffects,
-  getObservableApiKey,
+  ...defaultAuthEffects,
   getDeployConfig,
   setDeployConfig,
   clack,
@@ -68,8 +71,8 @@ export async function deploy(
   Telemetry.record({event: "deploy", step: "start"});
   effects.clack.intro(inverse(" observable deploy "));
 
-  const apiKey = await effects.getObservableApiKey(effects);
-  const apiClient = new ObservableApiClient({apiKey});
+  let apiKey = await effects.getObservableApiKey(effects);
+  const apiClient = new ObservableApiClient(apiKey ? {apiKey} : {});
   const deployConfig = await effects.getDeployConfig(config.root);
 
   if (deployConfig.workspaceLogin && !deployConfig.workspaceLogin.match(/^@?[a-z0-9-]+$/)) {
@@ -101,13 +104,47 @@ export async function deploy(
     }
   }
 
+  let currentUser: GetCurrentUserResponse | null = null;
+  let authError: null | "unauthenticated" | "forbidden" = null;
+  try {
+    if (apiKey) currentUser = await apiClient.getCurrentUser();
+  } catch (error) {
+    if (isHttpError(error)) {
+      if (error.statusCode === 401) authError = "unauthenticated";
+      else if (error.statusCode === 403) authError = "forbidden";
+      else throw error;
+    } else {
+      throw error;
+    }
+  }
+
+  if (!currentUser) {
+    const message =
+      authError === "unauthenticated" || authError === null
+        ? "You must be logged in to Observable Cloud to deploy. Do you want to do that now?"
+        : "Your authentication is invalid. Do you want to log in to Observable Cloud again?";
+    const choice = await effects.clack.confirm({
+      message,
+      active: "Yes, log in",
+      inactive: "No, cancel deploy"
+    });
+    if (!choice) {
+      effects.clack.outro(yellow("Deploy canceled."));
+    }
+    if (effects.clack.isCancel(choice) || !choice)
+      throw new CliError("User canceled deploy", {print: false, exitCode: 0});
+
+    ({currentUser, apiKey} = await loginInner(effects));
+    apiClient.setApiKey(apiKey);
+  }
+  if (!currentUser) throw new CliError(commandRequiresAuthenticationMessage);
+
   if (deployConfig.projectId && (!deployConfig.projectSlug || !deployConfig.workspaceLogin)) {
     const spinner = effects.clack.spinner();
     effects.clack.log.warn("The `projectSlug` or `workspaceLogin` is missing from your deploy.json.");
     spinner.start(`Searching for project ${deployConfig.projectId}`);
-    const {workspaces} = await apiClient.getCurrentUser();
     let found = false;
-    for (const workspace of workspaces) {
+    for (const workspace of currentUser.workspaces) {
       const projects = await apiClient.getWorkspaceProjects(workspace.login);
       const project = projects.find((p) => p.id === deployConfig.projectId);
       if (project) {
@@ -142,7 +179,7 @@ export async function deploy(
     }
   }
 
-  deployTarget ??= await promptDeployTarget(effects, apiClient, config);
+  deployTarget ??= await promptDeployTarget(effects, apiClient, config, currentUser);
 
   const previousProjectId = deployConfig?.projectId;
   let targetDescription: string;
@@ -307,38 +344,30 @@ class DeployBuildEffects implements BuildEffects {
 export async function promptDeployTarget(
   effects: DeployEffects,
   api: ObservableApiClient,
-  config: Config
+  config: Config,
+  currentUser: GetCurrentUserResponse
 ): Promise<DeployTargetInfo> {
   if (!effects.isTty) throw new CliError("Deploy not configured.");
 
   effects.clack.log.info("To configure deploy, we need to ask you a few questions.");
 
-  let workspaces;
-  try {
-    ({workspaces} = await api.getCurrentUser());
-  } catch (error) {
-    if (isHttpError(error) && error.statusCode === 401) {
-      throw new CliError(
-        `You must be logged in to deploy to Observable. Run ${commandInstruction("login")} to log in.`
-      );
-    }
-    throw error;
-  }
-  if (workspaces.length === 0) {
+  if (currentUser.workspaces.length === 0) {
     effects.clack.log.error(
       `You don’t have any Observable workspaces. Go to ${underline("https://observablehq.com/team/new")} to create one.`
     );
     throw new CliError("No Observable workspace found.", {print: false, exitCode: 1});
   }
   let workspace: WorkspaceResponse;
-  if (workspaces.length === 1) {
-    workspace = workspaces[0];
+  if (currentUser.workspaces.length === 1) {
+    workspace = currentUser.workspaces[0];
     effects.clack.log.step(`Deploying to the ${bold(formatUser(workspace))} workspace.`);
   } else {
     const chosenWorkspace = await effects.clack.select<{value: WorkspaceResponse; label: string}[], WorkspaceResponse>({
       message: "Which Observable workspace do you want to use?",
-      options: workspaces.map((w) => ({value: w, label: formatUser(w)})).sort((a, b) => a.label.localeCompare(b.label)),
-      initialValue: workspaces[0] // the oldest workspace, maybe?
+      options: currentUser.workspaces
+        .map((w) => ({value: w, label: formatUser(w)}))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+      initialValue: currentUser.workspaces[0] // the oldest workspace, maybe?
     });
     if (effects.clack.isCancel(chosenWorkspace)) {
       throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
