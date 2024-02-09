@@ -34,6 +34,11 @@ jobs:
           GA_PROPERTY_ID: ${{ vars.GA_PROPERTY_ID }}
           GA_CLIENT_EMAIL: ${{ secrets.GA_CLIENT_EMAIL }}
           GA_PRIVATE_KEY: ${{ secrets.GA_PRIVATE_KEY }}
+      - name: Build example "eia"
+        run: yarn --frozen-lockfile && yarn build
+        working-directory: examples/eia
+        env:
+          EIA_KEY: ${{ secrets.EIA_KEY }}
       - name: Build example "hello-world"
         run: yarn --frozen-lockfile && yarn build
         working-directory: examples/hello-world
@@ -60,7 +65,8 @@ jobs:
           directory: dist
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
       # TODO: This doesn't include the examples. How can we fix that?
-      - name: Deploy to Observable Cloud
-        run: yarn deploy -m "$(git log -1 --pretty=%s)"
-        env:
-          OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_API_TOKEN }}
+      # TODO: Re-enable deploy to Observable
+      # - name: Deploy to Observable
+      #   run: yarn deploy -m "$(git log -1 --pretty=%s)"
+      #   env:
+      #     OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_API_TOKEN }}

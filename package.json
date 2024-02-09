@@ -1,10 +1,10 @@
 {
   "name": "@observablehq/framework",
   "license": "ISC",
-  "version": "0.0.50",
+  "version": "1.0.0-rc.6",
   "type": "module",
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public"
   },
   "repository": {
     "type": "git",
@@ -73,6 +73,7 @@
     "tar-stream": "^3.1.6",
     "tsx": "~4.2.1",
     "untildify": "^5.0.0",
+    "wrap-ansi": "^9.0.0",
     "ws": "^8.14.2"
   },
   "devDependencies": {

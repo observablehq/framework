@@ -87,9 +87,7 @@ describe("whoami command", () => {
       await whoami(effects);
       assert.fail("error expected");
     } catch (err) {
-      if (!(err instanceof Error)) throw err;
-      assert.equal(err.message, "no key available in this test");
-      effects.logger.assertExactLogs([/^You need to be authenticated/]);
+      CliError.assert(err, {message: commandRequiresAuthenticationMessage});
     }
   });
 
@@ -125,7 +123,7 @@ class Deferred<T = unknown> {
   }
 }
 
-class MockAuthEffects extends MockConfigEffects implements AuthEffects {
+export class MockAuthEffects extends MockConfigEffects implements AuthEffects {
   public logger = new MockLogger();
   public openBrowserDeferred = new Deferred<string>();
   public setApiKeyDeferred = new Deferred<{id: string; apiKey: string}>();
@@ -143,10 +141,7 @@ class MockAuthEffects extends MockConfigEffects implements AuthEffects {
 
   async getObservableApiKey(effects: AuthEffects = this) {
     if (effects !== this) throw new Error("don't pass unrelated effects to mock effects methods");
-    if (!this.observableApiKey) {
-      effects.logger.log(commandRequiresAuthenticationMessage);
-      throw new Error("no key available in this test");
-    }
+    if (!this.observableApiKey) return null;
     return {source: "test" as const, key: this.observableApiKey};
   }
   async setObservableApiKey(info) {
