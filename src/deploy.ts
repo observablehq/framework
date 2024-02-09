@@ -1,24 +1,41 @@
 import {join} from "node:path";
 import * as clack from "@clack/prompts";
+import wrapAnsi from "wrap-ansi";
 import type {BuildEffects} from "./build.js";
 import {build} from "./build.js";
 import type {ClackEffects} from "./clack.js";
 import {commandRequiresAuthenticationMessage} from "./commandInstruction.js";
 import type {Config} from "./config.js";
-import {CliError, isHttpError} from "./error.js";
+import {CliError, isApiError, isHttpError} from "./error.js";
 import type {Logger, Writer} from "./logger.js";
 import {type AuthEffects, defaultEffects as defaultAuthEffects, formatUser, loginInner} from "./observableApiAuth.js";
-import type {GetCurrentUserResponse, GetProjectResponse, WorkspaceResponse} from "./observableApiClient.js";
-import {ObservableApiClient, type PostEditProjectRequest} from "./observableApiClient.js";
-import type {ConfigEffects, DeployConfig} from "./observableApiConfig.js";
-import {defaultEffects as defaultConfigEffects, getDeployConfig, setDeployConfig} from "./observableApiConfig.js";
+import {ObservableApiClient} from "./observableApiClient.js";
+import {
+  type GetCurrentUserResponse,
+  type GetDeployResponse,
+  type GetProjectResponse,
+  type PostEditProjectRequest,
+  type WorkspaceResponse
+} from "./observableApiClient.js";
+import {
+  type ConfigEffects,
+  type DeployConfig,
+  defaultEffects as defaultConfigEffects,
+  getDeployConfig,
+  setDeployConfig
+} from "./observableApiConfig.js";
+import {slugify} from "./slugify.js";
 import {Telemetry} from "./telemetry.js";
 import type {TtyEffects} from "./tty.js";
-import {blue, bold, defaultEffects as defaultTtyEffects, inverse, underline, yellow} from "./tty.js";
+import {bold, defaultEffects as defaultTtyEffects, inverse, link, underline, yellow} from "./tty.js";
+
+const DEPLOY_POLL_MAX_MS = 1000 * 60 * 5;
+const DEPLOY_POLL_INTERVAL_MS = 1000 * 5;
 
 export interface DeployOptions {
   config: Config;
   message: string | undefined;
+  deployPollInterval?: number;
 }
 
 export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
@@ -47,7 +64,10 @@ type DeployTargetInfo =
   | {create: false; workspace: {id: string; login: string}; project: GetProjectResponse};
 
 /** Deploy a project to ObservableHQ */
-export async function deploy({config, message}: DeployOptions, effects = defaultEffects): Promise<void> {
+export async function deploy(
+  {config, message, deployPollInterval = DEPLOY_POLL_INTERVAL_MS}: DeployOptions,
+  effects = defaultEffects
+): Promise<void> {
   Telemetry.record({event: "deploy", step: "start"});
   effects.clack.intro(inverse(" observable deploy "));
 
@@ -173,7 +193,22 @@ export async function deploy({config, message}: DeployOptions, effects = default
       });
       deployTarget = {create: false, workspace: deployTarget.workspace, project};
     } catch (error) {
-      throw new CliError(`Could not create project: ${error instanceof Error ? error.message : error}`, {cause: error});
+      if (isApiError(error) && error.details.errors.some((e) => e.code === "TOO_MANY_PROJECTS")) {
+        effects.clack.log.error(
+          wrapAnsi(
+            `The Starter tier can only deploy one project. Upgrade to unlimited projects at ${link(
+              `https://observablehq.com/team/@${deployTarget.workspace.login}/settings`
+            )}`,
+            effects.outputColumns - 4
+          )
+        );
+      } else {
+        effects.clack.log.error(
+          wrapAnsi(`Could not create project: ${error instanceof Error ? error.message : error}`, effects.outputColumns)
+        );
+      }
+      effects.clack.outro(yellow("Deploy canceled"));
+      throw new CliError("Error during deploy", {cause: error, print: false});
     }
   } else {
     // Check last deployed state. If it's not the same project, ask the user if
@@ -191,10 +226,10 @@ export async function deploy({config, message}: DeployOptions, effects = default
           inactive: "No, cancel"
         });
         if (!choice) {
-          effects.clack.outro(yellow("Deploy cancelled."));
+          effects.clack.outro(yellow("Deploy canceled."));
         }
         if (effects.clack.isCancel(choice) || !choice) {
-          throw new CliError("User cancelled deploy", {print: false, exitCode: 0});
+          throw new CliError("User canceled deploy", {print: false, exitCode: 0});
         }
       } else {
         throw new CliError("Cancelling deploy due to misconfiguration.");
@@ -212,10 +247,10 @@ export async function deploy({config, message}: DeployOptions, effects = default
           inactive: "No, cancel"
         });
         if (!choice) {
-          effects.clack.outro(yellow("Deploy cancelled."));
+          effects.clack.outro(yellow("Deploy canceled."));
         }
         if (effects.clack.isCancel(choice) || !choice) {
-          throw new CliError("User cancelled deploy", {print: false, exitCode: 0});
+          throw new CliError("User canceled deploy", {print: false, exitCode: 0});
         }
       } else {
         throw new CliError("Running non-interactively, cancelling due to conflictg");
@@ -235,7 +270,7 @@ export async function deploy({config, message}: DeployOptions, effects = default
       message: "What changed in this deploy?",
       placeholder: "Enter a deploy message (optional)"
     });
-    if (effects.clack.isCancel(input)) throw new CliError("User cancelled deploy", {print: false, exitCode: 0});
+    if (effects.clack.isCancel(input)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
     message = input;
   }
   const deployId = await apiClient.postDeploy({projectId: deployTarget.project.id, message});
@@ -244,12 +279,43 @@ export async function deploy({config, message}: DeployOptions, effects = default
   await build({config, clientEntry: "./src/client/deploy.js"}, new DeployBuildEffects(apiClient, deployId, effects));
 
   // Mark the deploy as uploaded
-  const deployInfo = await apiClient.postDeployUploaded(deployId);
+  await apiClient.postDeployUploaded(deployId);
+
+  // Poll for processing completion
+  const spinner = effects.clack.spinner();
+  spinner.start("Server processing deploy");
+  const pollExpiration = Date.now() + DEPLOY_POLL_MAX_MS;
+  let deployInfo: null | GetDeployResponse = null;
+  let done = false;
+  while (!done) {
+    if (Date.now() > pollExpiration) {
+      spinner.stop("Deploy timed out");
+      throw new CliError(`Deploy failed to process on server: status = ${deployInfo?.status}`);
+    }
+    deployInfo = await apiClient.getDeploy(deployId);
+    switch (deployInfo.status) {
+      case "pending":
+        break;
+      case "uploaded":
+        spinner.stop("Deploy complete");
+        done = true;
+        break;
+      case "error":
+        spinner.stop("Deploy failed");
+        throw new CliError("Deploy failed to process on server");
+      default:
+        throw new CliError(`Unknown deploy status: ${deployInfo.status}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, deployPollInterval));
+  }
+  spinner.stop();
+  if (!deployInfo) throw new CliError("Deploy failed to process on server");
+
   // Update project title if necessary
   if (previousProjectId && previousProjectId === deployTarget.project.id && typeof projectUpdates?.title === "string") {
     await apiClient.postEditProject(deployTarget.project.id, projectUpdates as PostEditProjectRequest);
   }
-  effects.clack.outro(`Deployed project now visible at ${blue(deployInfo.url)}`);
+  effects.clack.outro(`Deployed project now visible at ${link(deployInfo.url)}`);
   Telemetry.record({event: "deploy", step: "finish"});
 }
 
@@ -274,16 +340,8 @@ class DeployBuildEffects implements BuildEffects {
   }
 }
 
-function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .replace("'", "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .replace(/-{2,}/g, "-");
-}
-
-async function promptDeployTarget(
+// export for testing
+export async function promptDeployTarget(
   effects: DeployEffects,
   api: ObservableApiClient,
   config: Config,
@@ -304,15 +362,15 @@ async function promptDeployTarget(
     workspace = currentUser.workspaces[0];
     effects.clack.log.step(`Deploying to the ${bold(formatUser(workspace))} workspace.`);
   } else {
-    const chosenWorkspace = await clack.select<{value: WorkspaceResponse; label: string}[], WorkspaceResponse>({
+    const chosenWorkspace = await effects.clack.select<{value: WorkspaceResponse; label: string}[], WorkspaceResponse>({
       message: "Which Observable workspace do you want to use?",
       options: currentUser.workspaces
         .map((w) => ({value: w, label: formatUser(w)}))
         .sort((a, b) => a.label.localeCompare(b.label)),
       initialValue: currentUser.workspaces[0] // the oldest workspace, maybe?
     });
-    if (clack.isCancel(chosenWorkspace)) {
-      throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
+    if (effects.clack.isCancel(chosenWorkspace)) {
+      throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
     }
     workspace = chosenWorkspace;
   }
@@ -341,8 +399,8 @@ async function promptDeployTarget(
           .sort((a, b) => a.label.localeCompare(b.label))
       ]
     });
-    if (clack.isCancel(chosenProject)) {
-      throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
+    if (effects.clack.isCancel(chosenProject)) {
+      throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
     } else if (chosenProject !== null) {
       return {create: false, workspace, project: existingProjects.find((p) => p.slug === chosenProject)!};
     }
@@ -353,10 +411,10 @@ async function promptDeployTarget(
       inactive: "No, cancel"
     });
     if (!confirmChoice) {
-      effects.clack.outro(yellow("Deploy cancelled."));
+      effects.clack.outro(yellow("Deploy canceled."));
     }
     if (effects.clack.isCancel(confirmChoice) || !confirmChoice) {
-      throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
+      throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
     }
   }
 
@@ -368,8 +426,8 @@ async function promptDeployTarget(
       placeholder: "Enter a project title",
       validate: (title) => (title ? undefined : "A title is required.")
     });
-    if (clack.isCancel(titleChoice)) {
-      throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
+    if (effects.clack.isCancel(titleChoice)) {
+      throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
     }
     title = titleChoice;
     effects.clack.log.info("You should add this title to your observablehq.config.ts file.");
@@ -386,8 +444,8 @@ async function promptDeployTarget(
         ? undefined
         : "Slugs must be lowercase and contain only letters, numbers, and hyphens."
   });
-  if (clack.isCancel(projectSlugChoice)) {
-    throw new CliError("User cancelled deploy.", {print: false, exitCode: 0});
+  if (effects.clack.isCancel(projectSlugChoice)) {
+    throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
   }
   projectSlug = projectSlugChoice;
 

@@ -109,7 +109,7 @@ Theme modifiers are intended to compose with the above color themes. They are:
 - \`alt\` - swap the page and card background colors
 - \`wide\` - make the main column full-width
 
-The \`alt\` theme swaps the page and card background colors. This brings [cards](./layout/card) to the foreground and is recommended for dashboards.
+The \`alt\` theme swaps the page and card background colors. This brings [cards](./css/card) to the foreground and is recommended for dashboards.
 
 <div class="grid grid-cols-2">${renderThemeSection(["light-alt", "light", "dark-alt", "dark"])}</div>
 

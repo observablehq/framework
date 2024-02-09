@@ -67,13 +67,18 @@ class ObservableApiMock {
     return this._agent?.pendingInterceptors();
   }
 
+  addHandler(handler: (pool: Interceptable) => void): ObservableApiMock {
+    this._handlers.push(handler);
+    return this;
+  }
+
   handleGetCurrentUser({
     user = userWithOneWorkspace,
     status = 200
   }: {user?: any; status?: number} = {}): ObservableApiMock {
     const response = status == 200 ? JSON.stringify(user) : emptyErrorBody;
     const headers = status === 401 ? {} : authorizationHeader(status !== 403);
-    this._handlers.push((pool) =>
+    this.addHandler((pool) =>
       pool
         .intercept({path: "/cli/user", headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
@@ -105,7 +110,7 @@ class ObservableApiMock {
           } satisfies GetProjectResponse)
         : emptyErrorBody;
     const headers = authorizationHeader(status !== 401 && status !== 403);
-    this._handlers.push((pool) =>
+    this.addHandler((pool) =>
       pool
         .intercept({path: `/cli/project/@${workspaceLogin}/${projectSlug}`, headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
@@ -139,7 +144,7 @@ class ObservableApiMock {
           } satisfies GetProjectResponse)
         : emptyErrorBody;
     const headers = authorizationHeader(status !== 403);
-    this._handlers.push((pool) =>
+    this.addHandler((pool) =>
       pool
         .intercept({path: "/cli/project", method: "POST", headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
@@ -158,7 +163,7 @@ class ObservableApiMock {
   } = {}): ObservableApiMock {
     const response = status == 200 ? JSON.stringify({title, slug: "bi"}) : emptyErrorBody;
     const headers = authorizationHeader(status !== 403);
-    this._handlers.push((pool) =>
+    this.addHandler((pool) =>
       pool
         .intercept({path: `/cli/project/${projectId}/edit`, method: "POST", headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
@@ -185,7 +190,7 @@ class ObservableApiMock {
           } satisfies PaginatedList<GetProjectResponse>)
         : emptyErrorBody;
     const headers = authorizationHeader(status !== 403);
-    this._handlers.push((pool) =>
+    this.addHandler((pool) =>
       pool
         .intercept({path: `/cli/workspace/@${workspaceLogin}/projects`, headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
@@ -200,7 +205,7 @@ class ObservableApiMock {
   }: {projectId?: string; deployId?: string; status?: number} = {}): ObservableApiMock {
     const response = status == 200 ? JSON.stringify({id: deployId}) : emptyErrorBody;
     const headers = authorizationHeader(status !== 403);
-    this._handlers.push((pool) =>
+    this.addHandler((pool) =>
       pool
         .intercept({path: `/cli/project/${projectId}/deploy`, method: "POST", headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
@@ -215,7 +220,7 @@ class ObservableApiMock {
   }: {deployId?: string; status?: number; repeat?: number} = {}): ObservableApiMock {
     const response = status == 204 ? "" : emptyErrorBody;
     const headers = authorizationHeader(status !== 403);
-    this._handlers.push((pool) => {
+    this.addHandler((pool) => {
       pool
         .intercept({path: `/cli/deploy/${deployId}/file`, method: "POST", headers: headersMatcher(headers)})
         .reply(status, response)
@@ -234,9 +239,28 @@ class ObservableApiMock {
           })
         : emptyErrorBody;
     const headers = authorizationHeader(status !== 403);
-    this._handlers.push((pool) =>
+    this.addHandler((pool) =>
       pool
         .intercept({path: `/cli/deploy/${deployId}/uploaded`, method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response, {headers: {"content-type": "application/json"}})
+    );
+    return this;
+  }
+
+  handleGetDeploy({
+    deployId,
+    deployStatus = "uploaded",
+    status = 200
+  }: {
+    deployId: string;
+    deployStatus?: string;
+    status?: number;
+  }): ObservableApiMock {
+    const response = status === 200 ? JSON.stringify({id: deployId, status: deployStatus}) : emptyErrorBody;
+    const headers = authorizationHeader(status !== 401);
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: `/cli/deploy/${deployId}`, headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
     );
     return this;
@@ -247,7 +271,7 @@ class ObservableApiMock {
       confirmationCode,
       id: "authRequestId"
     };
-    this._handlers.push((pool) =>
+    this.addHandler((pool) =>
       pool
         .intercept({path: "/cli/auth/request", method: "POST"})
         .reply(200, JSON.stringify(response), {headers: {"content-type": "application/json"}})
@@ -263,7 +287,7 @@ class ObservableApiMock {
       status,
       apiKey: status === "accepted" ? apiKey ?? {id: "apiKey1234", key: validApiKey} : null
     };
-    this._handlers.push((pool) =>
+    this.addHandler((pool) =>
       pool
         .intercept({
           path: "/cli/auth/request/poll",
