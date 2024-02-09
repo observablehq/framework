@@ -211,9 +211,10 @@
 
 #observablehq-sidebar summary,
 .observablehq-link a {
-  display: block;
+  display: flex;
   padding: 0.5rem 1rem 0.5rem 1.5rem;
   margin-left: -0.5rem;
+  align-items: center;
 }
 
 #observablehq-sidebar summary:hover,
@@ -467,18 +468,16 @@
 #observablehq-search-results small {
   position: absolute;
   right: 2em;
-  font-size: 0.4rem;
-  margin-top: 0.5em;
+  font-size: 7px;
 }
 
 #observablehq-search-results .observablehq-link-active small {
-  right: 0.75em;
+  right: 0.85em;
 }
 
 #observablehq-search-results div {
-  text-align: right;
-  font-size: small;
-  padding-left: 1.5em;
-  margin-bottom: 0.5em;
   font-style: italic;
+  text-align: right;
+  font-size: 10px;
+  margin: 0.5em;
 }
