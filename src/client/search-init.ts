@@ -21,14 +21,15 @@ function load() {
 input.addEventListener("focus", load);
 input.addEventListener("keydown", load);
 
-// Focus on meta-K
+// focus on meta-K and /
 const toggle = document.querySelector("#observablehq-sidebar-toggle")! as HTMLInputElement;
 addEventListener("keydown", (event) => {
   if (
     (event.code === "KeyK" && event.metaKey && !event.altKey && !event.ctrlKey) ||
     (event.key === "/" && !event.metaKey && !event.altKey && !event.ctrlKey && event.target === document.body)
   ) {
-    if (input.getBoundingClientRect().x < 0) toggle.click();
+    toggle.classList.add("observablehq-sidebar-on");
+    input.onblur = () => toggle.classList.remove("observablehq-sidebar-on");
     input.focus();
     input.select();
     event.preventDefault();
