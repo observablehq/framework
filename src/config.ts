@@ -88,6 +88,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   let {
     root = defaultRoot,
     output = "dist",
+    sidebar = "auto",
     style,
     theme = "default",
     deploy,
@@ -96,8 +97,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
     header = "",
     footer = `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="${formatIsoDate(
       currentDate
-    )}">${formatLocaleDate(currentDate)}</a>.`,
-    sidebar = "auto"
+    )}">${formatLocaleDate(currentDate)}</a>.`
   } = spec;
   root = String(root);
   output = String(output);
