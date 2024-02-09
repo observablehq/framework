@@ -117,11 +117,11 @@ function bumpChart(data, width) {
 
 <div class="grid">
   <div class="card">
-    <h1>Womens</h1>
+    <h1>Women’s</h1>
     ${resize((width) => bumpChart(womens, width))}
   </div>
   <div class="card">
-    <h1>Mens</h1>
+    <h1>Men’s</h1>
     ${resize((width) => bumpChart(mens, width))}
   </div>
 </div>
