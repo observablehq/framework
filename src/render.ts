@@ -1,6 +1,6 @@
 import {parseHTML} from "linkedom";
 import type {Config, Page, Script, Section} from "./config.js";
-import {mergeToc} from "./config.js";
+import {mergeToc, normalizeSidebar} from "./config.js";
 import {getClientPath} from "./files.js";
 import {type Html, html} from "./html.js";
 import type {ImportResolver} from "./javascript/imports.js";
@@ -59,7 +59,9 @@ type RenderInternalOptions =
 
 async function render(parseResult: ParseResult, options: RenderOptions & RenderInternalOptions): Promise<string> {
   const {root, path, pages, title, preview} = options;
-  const sidebar = maybeSidebar(parseResult.data?.sidebar ?? options.sidebar, pages);
+  const sidebaroption =
+    parseResult.data?.sidebar === undefined ? options.sidebar : normalizeSidebar(parseResult.data.sidebar);
+  const sidebar = sidebaroption === "auto" ? pages.length > 0 : sidebaroption;
   const toc = mergeToc(parseResult.data?.toc, options.toc);
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="/">` : ""}
@@ -269,16 +271,4 @@ function renderPager(path: string, {prev, next}: PageLink): Html {
 
 function renderRel(path: string, page: Page, rel: "prev" | "next"): Html {
   return html`<a rel="${rel}" href="${relativeUrl(path, prettyPath(page.path))}"><span>${page.name}</span></a>`;
-}
-
-// Validates the specified required string against the allowed list of keywords.
-function keyword(input: any, name: string, allowed: string[]): string {
-  const i = `${input}`.toLowerCase();
-  if (!allowed.includes(i)) throw new Error(`invalid ${name}: ${input}`);
-  return i;
-}
-
-function maybeSidebar(sidebar: string | boolean, pages): "hidden" | boolean {
-  if (sidebar === "auto") sidebar = pages.length > 0;
-  return typeof sidebar === "boolean" ? sidebar : (keyword(sidebar, "sidebar", ["hidden"]) as "hidden");
 }

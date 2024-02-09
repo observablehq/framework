@@ -96,7 +96,8 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
     header = "",
     footer = `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="${formatIsoDate(
       currentDate
-    )}">${formatLocaleDate(currentDate)}</a>.`
+    )}">${formatLocaleDate(currentDate)}</a>.`,
+    sidebar = "auto"
   } = spec;
   root = String(root);
   output = String(output);
@@ -106,7 +107,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   let {title, pages = await readPages(root), pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
-  const {sidebar = "auto"} = spec;
+  sidebar = normalizeSidebar(sidebar);
   pager = Boolean(pager);
   scripts = Array.from(scripts, normalizeScript);
   head = String(head);
@@ -172,4 +173,17 @@ export function mergeStyle(path: string, style: any, theme: any, defaultStyle: n
     : style !== undefined
     ? {path: resolvePath(path, style)}
     : {theme: normalizeTheme(theme)};
+}
+
+// Validates the specified required string against the allowed list of keywords.
+function keyword<T extends Lowercase<string>>(input: any, name: string, allowed: T[]): T {
+  const i = `${input}`.toLowerCase() as T;
+  if (!allowed.includes(i)) throw new Error(`invalid ${name}: ${input}`);
+  return i;
+}
+
+export function normalizeSidebar(sidebar: Config["sidebar"]): Config["sidebar"] {
+  return typeof sidebar === "string"
+    ? keyword<Config["sidebar"] & string>(sidebar, "sidebar option", ["auto", "hidden"])
+    : Boolean(sidebar);
 }
