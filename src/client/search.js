@@ -60,25 +60,22 @@ addEventListener("keydown", (event) => {
   const {code, target} = event;
   if (target === input) {
     if (code === "ArrowDown" || code === "ArrowUp" || code === "Enter" || (code === "Escape" && input.value === "")) {
-      const current = document.querySelector(`#observablehq-search-results li.${c}`);
+      const results = document.querySelector("#observablehq-search-results ol");
+      const current = results.querySelector(`.${c}`);
+      if (!current) return;
       if (code === "Escape") {
         input.blur();
       } else if (code === "Enter") {
-        if (current) current.querySelector("a")?.click();
+        current.querySelector("a")?.click();
       } else {
         if (code === "ArrowUp") {
-          if (current) {
-            current.classList.remove(c);
-            current.previousElementSibling?.classList.add(c);
-          } else document.querySelector("#observablehq-search-results li:last-child")?.classList.add(c);
+          current.classList.remove(c);
+          (current.previousElementSibling ?? results.querySelector("li:last-child"))?.classList.add(c);
         } else if (code === "ArrowDown") {
-          if (current) {
-            current.classList.remove(c);
-            current.nextElementSibling?.classList.add(c);
-          } else document.querySelector("#observablehq-search-results li:first-child")?.classList.add(c);
+          current.classList.remove(c);
+          (current.nextElementSibling ?? results.querySelector("li:first-child")).classList.add(c);
         }
       }
-      event.preventDefault();
     }
   }
 });
