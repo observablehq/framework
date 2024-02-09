@@ -4,8 +4,8 @@ import * as Plot from "npm:@observablehq/plot";
 import * as d3 from "npm:d3";
 
 const dt = 1000 * 60 * 5; // 5 minute intervals
-const x2 = 1706486400000; // end date
-const x1 = 1705881600000; // start date
+const x2 = 1706832000000; // end date
+const x1 = 1706227200000; // start date
 const dx = Math.floor((x2 - x1) / dt); // number of columns
 const dy = 500; // number of rows
 
