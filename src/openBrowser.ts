@@ -10,12 +10,10 @@
 
 import {exec} from "node:child_process";
 import type {ExecOptions} from "node:child_process";
-import {join} from "node:path";
 import spawn from "cross-spawn";
 import open from "open";
 import colors from "picocolors";
 
-const VITE_PACKAGE_DIR = ".";
 /**
  * Reads the BROWSER environment variable and decides what to do with it.
  */
@@ -79,11 +77,7 @@ async function startBrowserProcess(browser: string | undefined, browserArgs: str
           : supportedChromiumBrowsers.find((b) => ps.includes(b));
       if (openedBrowser) {
         // Try our best to reuse existing tab with AppleScript
-        console.log("before async", url, openedBrowser);
-        console.warn(`osascript openChrome.applescript "${encodeURI(url)}" "${openedBrowser}"`);
-        await execAsync(`osascript openChrome.applescript "${encodeURI(url)}" "${openedBrowser}"`, {
-          cwd: "./bin"
-        });
+        await execAsync(`osascript ./bin/openChrome.applescript "${encodeURI(url)}" "${openedBrowser}"`);
         return true;
       }
     } catch (err) {

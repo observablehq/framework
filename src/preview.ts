@@ -79,7 +79,22 @@ export class PreviewServer {
       console.log(`${faint("↳")} ${link(url)}`);
       console.log("");
     }
-    openBrowser(url);
+
+    // If the preview server has just been started, try to open the page in a
+    // browser. This relies on the TS environment variable being set by the dev
+    // script. Does not open for test or when TS is old (e.g. we've just
+    // restarted due to tsx watch).
+    if (process.env.TS && +new Date() - 1000 * +process.env.TS < 2000) openBrowser(url, true, null);
+
+    // Open browser if the user hits 'o'
+    process.stdin.setRawMode(true);
+    process.stdin
+      .on("data", (input: string) => {
+        // if (input === "\x03") process.exit(128); // ctrl-c ???
+        if (input === "o") openBrowser(url, true, null);
+      })
+      .setEncoding("ascii");
+
     return new PreviewServer({server, verbose, ...options});
   }
 
