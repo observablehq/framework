@@ -17,15 +17,15 @@ This led to the launch of the first artificial satellite, Sputnik 1, and the cre
 ## The Space Shuttle era
 
 ```js
-const events = FileAttachment("./data/spaceHistory.json").json();
-```
-
-```js
 import {timeline} from "./components/timeline.js";
 ```
 
 ```js
-display(timeline(events));
+const events = FileAttachment("./data/events.json").json();
+```
+
+```js
+timeline(events, {height: 300})
 ```
 
 ### Sputnik 1 (1957)
@@ -48,7 +48,7 @@ The first orbital space shuttle mission, STS-1, launched the Space Shuttle Colum
 
 The Hubble Space Telescope has provided unparalleled images and data, revolutionizing our understanding of the universe and contributing to countless astronomical discoveries.
 
-### International Space Station (ISS) Construction (1998—2011)
+### International Space Station (ISS) construction (1998—2011)
 
 The ISS, a collaborative effort involving multiple space agencies, began construction with the launch of its first module, Zarya, in 1998. Over the following years, various modules were added, making the ISS a symbol of international cooperation in space exploration.
 
