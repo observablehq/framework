@@ -13,6 +13,12 @@ const summary = FileAttachment("data/summary.csv").csv();
 ```
 
 ```js
+const latencyByRouteCanvas = document.createElement("canvas");
+const latencyCanvas = document.createElement("canvas");
+const latencyFilterCanvas = document.createElement("canvas");
+```
+
+```js
 const total = d3.sum(heatmaps.getChild("duration_count"))
 const color = Plot.scale({
   color: {
@@ -38,7 +44,7 @@ const endpointLegend = (endpoint) => Plot.rect([endpoint], { x1: 0, y1: 0, x2: 1
 API logs can be helpful for finding under-performing routes and web scrapers, but looking at this data in aggregate often hides interesting trends. This visualization shows a heatmap of ${d3.format('.2s')(total)} API requests for [observablehq.com](https://observablehq.com/) from a sampled 7-day period. Each cell is colored by the most common route at a point in time and duration. Hover over a pixel to read the name of the route.
 
 <div class="grid grid-cols-1" style="grid-auto-rows: 611px;">
-  <div class="card">${resize((width) => ApiHeatmap(heatmaps, {color, width, title: "Response latency heatmap", label: "Duration (ms)", y1: 0.5, y2: 10_000, yMetric: 'duration_count', fillMetric: 'duration_route'}))}</div>
+  <div class="card">${resize((width) => ApiHeatmap(heatmaps, {canvas: latencyByRouteCanvas, color, width, title: "Response latency heatmap", label: "Duration (ms)", y1: 0.5, y2: 10_000, yMetric: 'duration_count', fillMetric: 'duration_route'}))}</div>
 </div>
 
 What do we see? There are clear intervals of activity for certain routes, such as ${endpointLegend(`document/{id}@{version}`)}&nbsp;`document/{id}@{version}`, the route used to request a version of an Observable notebook, and ${endpointLegend(`documents/{at}`)}&nbsp;`documents/{at}`, which returns all the notebooks for a given user.
@@ -55,7 +61,7 @@ If we want to identify general periodicity in our data, we can change our catego
 
 <div class="grid grid-cols-1" style="grid-auto-rows: 651px;">
   <div class="card">
-    <div>${resize((width) => ApiHeatmap(heatmaps, {color, width, title: "Response latency heatmap", label: "Duration (ms)", y1: 0.5, y2: 10_000, yMetric: 'duration_count', fillMetric: 'duration_route', type: 'frequency'}))}</div>
+    <div>${resize((width) => ApiHeatmap(heatmaps, {canvas: latencyCanvas, color, width, title: "Response latency heatmap", label: "Duration (ms)", y1: 0.5, y2: 10_000, yMetric: 'duration_count', fillMetric: 'duration_route', type: 'frequency'}))}</div>
     <div style="float: right">${Plot.legend({color: {domain: d3.extent(count, d => d / 2), nice: true }})}</div>
 </div>
 
@@ -65,7 +71,7 @@ ${routeDropdown}
 
 <div class="grid grid-cols-1" style="grid-auto-rows: 651px;">
   <div class="card">
-    <div>${resize((width) => ApiHeatmap(heatmaps, {color, width, title: "Response latency heatmap", label: "Duration (ms)", y1: 0.5, y2: 10_000, yMetric: 'duration_count', fillMetric: 'duration_route', type: 'frequency', routeFilter}))}</div>
+    <div>${resize((width) => ApiHeatmap(heatmaps, {canvas: latencyFilterCanvas, color, width, title: "Response latency heatmap", label: "Duration (ms)", y1: 0.5, y2: 10_000, yMetric: 'duration_count', fillMetric: 'duration_route', type: 'frequency', routeFilter}))}</div>
     <div style="float: right">${Plot.legend({color: {domain: d3.extent(count, d => d / 2), nice: true }})}</div>
 </div>
 
