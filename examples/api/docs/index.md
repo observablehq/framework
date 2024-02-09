@@ -29,27 +29,29 @@ const routeDropdown = Inputs.select(distinctRoutes, {label: 'Select a route', va
 const routeFilter = view(routeDropdown);
 const endpointLegend = (endpoint) => Plot.rect([endpoint], { x1: 0, y1: 0, x2: 10, y2: 10, fill: d => d }).plot({
   width: 10, height: 10, margin: 0, axis: null, color: color, x: { range: [0, 10] }, y: { range: [0, 10] }});
+
+
 ```
 
-# Analyzing API logs
+# API logs
 
-Analyzing API logs can be helpful for finding under-performing endpoints and web scrapers, but looking at this data in aggregate often hides interesting trends. This visualization shows a heatmap of ${d3.format('.2s')(total)} API requests for [observablehq.com](https://observablehq.com/) from a sampled 7-day period. Each cell is colored by the most common endpoint at the point in time and duration. Hover over a pixel to read the name of the endpoint.
+API logs can be helpful for finding under-performing routes and web scrapers, but looking at this data in aggregate often hides interesting trends. This visualization shows a heatmap of ${d3.format('.2s')(total)} API requests for [observablehq.com](https://observablehq.com/) from a sampled 7-day period. Each cell is colored by the most common route at a point in time and duration. Hover over a pixel to read the name of the route.
 
 <div class="grid grid-cols-1" style="grid-auto-rows: 611px;">
   <div class="card">${resize((width) => ApiHeatmap(heatmaps, {color, width, title: "Response latency heatmap", label: "Duration (ms)", y1: 0.5, y2: 10_000, yMetric: 'duration_count', fillMetric: 'duration_route'}))}</div>
 </div>
 
-What do we see? There are clear intervals of activity for certain endpoints, such as ${endpointLegend(`document/{id}@{version}`)} `document/{id}@{version}`, the endpoint used to request a specific verson of an Observable notebook, and ${endpointLegend(`documents/{at}`)} `documents/{at}`, which returns all the notebooks for a given user.
+What do we see? There are clear intervals of activity for certain routes, such as ${endpointLegend(`document/{id}@{version}`)}&nbsp;`document/{id}@{version}`, the route used to request a version of an Observable notebook, and ${endpointLegend(`documents/{at}`)}&nbsp;`documents/{at}`, which returns all the notebooks for a given user.
 
-Here is the same data visualized as a bar chart counting the number of requests by each endpoint.
+Here is the same data visualized as a bar chart counting the number of requests by route.
 
 <div class="grid" style="grid-auto-rows: 532px;">
   <div class="card">${resize((width) => ApiBars(routesByCount, {color, width, transform: (d) => d / 1000, label: "Total requests (thousands)", title: "Top API routes by count", x: "count", y: "route"}))}</div>
 </div>
 
-With the bar chart, we lose a lot of the details available in the heatmap. The ${endpointLegend(`document/{id}@{version}`)} `document/{id}@{version}` endpoint is a less common in aggregate than ${endpointLegend(`d/{id}.js`)} `d/{id}.js`, but it likely one that we would want to investigate further.
+With the bar chart, we lose a lot of the details available in the heatmap. The ${endpointLegend(`document/{id}@{version}`)}&nbsp;`document/{id}@{version}` route is a less common in aggregate than ${endpointLegend(`d/{id}.js`)}&nbsp;`d/{id}.js`, but it likely one that we would want to investigate further.
 
-If we want to identify general periodicity in our data, we can change our categorical color scale based on the endpoint name to a sequential scale encoding the frequency of requests at in a given point.
+If we want to identify general periodicity in our data, we can change our categorical color scale based on the route name to a sequential scale encoding the frequency of requests at in a given point.
 
 <div class="grid grid-cols-1" style="grid-auto-rows: 651px;">
   <div class="card">
@@ -57,7 +59,7 @@ If we want to identify general periodicity in our data, we can change our catego
     <div style="float: right">${Plot.legend({color: {domain: d3.extent(count, d => d / 2), nice: true }})}</div>
 </div>
 
-The sheer volume of requests that happened on midday January 27th becomes much more apparent with the new color encoding. From what we saw in the earlier heatmap, this trend is likely caused by the ${endpointLegend(`document/{id}@{version}`)} `document/{id}@{version}` endpoint. We can also filter our data in our heatmap to see if that theory is correct.
+The sheer volume of requests that happened on midday January 27th becomes much more apparent with the new color encoding. From what we saw in the earlier heatmap, this trend is likely caused by the ${endpointLegend(`document/{id}@{version}`)}&nbsp;`document/{id}@{version}` route. We can also filter our data in our heatmap to see if that theory is correct.
 
 ${routeDropdown}
 
@@ -67,6 +69,20 @@ ${routeDropdown}
     <div style="float: right">${Plot.legend({color: {domain: d3.extent(count, d => d / 2), nice: true }})}</div>
 </div>
 
-There are many ways we could optimize this endpoint, perhaps by blocking the specific IP addresses that are abusing our terms of service, but we were only able to see these trends by visualizing our data in this granular way.
+We looked into whether there were specific IP addresses causing the increase of ${endpointLegend(`document/{id}@{version}`)}&nbsp;`document/{id}@{version}`, and found it was an educational institution scraping public notebooks for a content analysis. Towards the end of each month, they do a longer scrape of more pages, causing the spike in requests on January 27th.
 
-Take a look at our [API logs dashboard](/dashboard) to see how the Observable team turns these datasets into actionable insights.
+
+<div class="grid grid-cols-1" style="grid-auto-rows: 611px;">
+  <div class="card">${resize((width) => ApiHeatmap(heatmaps, {color, width, title: "Response size heatmap", label: "Bytes", y1: 400, y2: 160_000, yMetric: 'bytes_count', fillMetric: 'bytes_route'}))}</div>
+</div>
+
+
+<div class="card grid grid-cols-1" style="grid-auto-rows: 461px;">
+  ${resize((width) => ApiHistogram(heatmaps, {color, width, title: "Response latency histogram", label: "duration (ms)", y1: 0.5, y2: 10_000, yMetric: 'duration_count', fillMetric: 'duration_route', routeFilter: 'user'}))}
+</div>
+
+<div class="grid grid-cols-3" style="grid-auto-rows: 532px;">
+  <div class="card">${resize((width) => ApiBars(routesByCount, {color, width, transform: (d) => d / 1000, label: "Total requests (thousands)", title: "Top API routes by count", x: "count", y: "route"}))}</div>
+  <div class="card">${resize((width) => ApiBars(routesByDuration, {color, width, transform: (d) => d / (1000 * 60), label: "Total time (minutes)", title: "Top API routes by duration", x: "count", y: "route"}))}</div>
+  <div class="card">${resize((width) => ApiBars(routesByBytes, {color, width, transform: (d) => d / (1000 * 1000), label: "Total size (MB)", title: "Top API routes by volume", x: "count", y: "route"}))}</div>
+</div>
