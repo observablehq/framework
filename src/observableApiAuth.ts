@@ -1,8 +1,9 @@
+import os from "node:os";
 import * as clack from "@clack/prompts";
 import type {ClackEffects} from "./clack.js";
-import {commandInstruction} from "./commandInstruction.js";
+import {commandInstruction, commandRequiresAuthenticationMessage} from "./commandInstruction.js";
 import {CliError, isHttpError} from "./error.js";
-import type {PostAuthRequestPollResponse} from "./observableApiClient.js";
+import type {GetCurrentUserResponse, PostAuthRequestPollResponse} from "./observableApiClient.js";
 import {ObservableApiClient, getObservableUiOrigin} from "./observableApiClient.js";
 import type {ConfigEffects} from "./observableApiConfig.js";
 import {
@@ -19,12 +20,12 @@ const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
 /** Actions this command needs to take wrt its environment that may need mocked out. */
 export interface AuthEffects extends ConfigEffects, TtyEffects {
   clack: ClackEffects;
-  getObservableApiKey: (effects: AuthEffects) => Promise<ApiKey>;
+  getObservableApiKey: (effects: AuthEffects) => Promise<ApiKey | null>;
   setObservableApiKey: (info: {id: string; key: string} | null) => Promise<void>;
   exitSuccess: () => void;
 }
 
-const defaultEffects: AuthEffects = {
+export const defaultEffects: AuthEffects = {
   ...defaultConfigEffects,
   ...defaultTtyEffects,
   clack,
@@ -36,8 +37,29 @@ const defaultEffects: AuthEffects = {
 export async function login(effects: AuthEffects = defaultEffects) {
   effects.clack.intro(inverse(" observable login "));
 
+  const {currentUser} = await loginInner(effects);
+
+  if (currentUser.workspaces.length === 0) {
+    effects.clack.log.warn(`${yellow("Warning:")} You don't have any workspaces to deploy to.`);
+  } else if (currentUser.workspaces.length > 1) {
+    clack.note(
+      [
+        "You have access to the following workspaces:",
+        "",
+        ...currentUser.workspaces.map((workspace) => ` * ${formatUser(workspace)}`)
+      ].join("\n")
+    );
+  }
+
+  effects.clack.outro();
+}
+
+export async function loginInner(effects: AuthEffects): Promise<{currentUser: GetCurrentUserResponse; apiKey: ApiKey}> {
   const apiClient = new ObservableApiClient();
-  const requestInfo = await apiClient.postAuthRequest(["projects:deploy", "projects:create"]);
+  const requestInfo = await apiClient.postAuthRequest({
+    scopes: ["projects:deploy", "projects:create"],
+    deviceDescription: os.hostname()
+  });
   const confirmUrl = new URL("/auth-device", OBSERVABLE_UI_ORIGIN);
   confirmUrl.searchParams.set("code", requestInfo.confirmationCode);
 
@@ -74,21 +96,9 @@ export async function login(effects: AuthEffects = defaultEffects) {
   await effects.setObservableApiKey(apiKey);
 
   apiClient.setApiKey({source: "login", key: apiKey.key});
-  const user = await apiClient.getCurrentUser();
-  spinner.stop(`You are logged into ${OBSERVABLE_UI_ORIGIN.hostname} as ${formatUser(user)}.`);
-  if (user.workspaces.length === 0) {
-    effects.clack.log.warn(`${yellow("Warning:")} You don't have any workspaces to deploy to.`);
-  } else if (user.workspaces.length > 1) {
-    clack.note(
-      [
-        "You have access to the following workspaces:",
-        "",
-        ...user.workspaces.map((workspace) => ` * ${formatUser(workspace)}`)
-      ].join("\n")
-    );
-  }
-
-  effects.clack.outro("🎉 Happy visualizing!");
+  const currentUser = await apiClient.getCurrentUser();
+  spinner.stop(`You are logged into ${OBSERVABLE_UI_ORIGIN.hostname} as ${formatUser(currentUser)}.`);
+  return {currentUser, apiKey: {...apiKey, source: "login"}};
 }
 
 export async function logout(effects = defaultEffects) {
@@ -98,6 +108,7 @@ export async function logout(effects = defaultEffects) {
 export async function whoami(effects = defaultEffects) {
   const {logger} = effects;
   const apiKey = await effects.getObservableApiKey(effects);
+  if (!apiKey) throw new CliError(commandRequiresAuthenticationMessage);
   const apiClient = new ObservableApiClient({apiKey});
 
   try {

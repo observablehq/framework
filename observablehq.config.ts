@@ -8,7 +8,6 @@ export default {
     {name: "Markdown", path: "/markdown"},
     {name: "JavaScript", path: "/javascript"},
     {name: "Data loaders", path: "/loaders"},
-    {name: "Components", path: "/components"},
     {name: "Themes", path: "/themes"},
     {name: "Configuration", path: "/config"},
     {
@@ -26,28 +25,13 @@ export default {
       ]
     },
     {
-      name: "Layout",
+      name: "CSS",
       open: false,
       pages: [
-        {name: "Card", path: "/layout/card"},
-        {name: "Grid", path: "/layout/grid"},
-        {name: "Note", path: "/layout/note"},
-        {name: "Resize", path: "/layout/resize"}
-      ]
-    },
-    {
-      name: "Charts",
-      open: false,
-      pages: [
-        {name: "Area", path: "/charts/area"},
-        {name: "Arrow", path: "/charts/arrow"},
-        {name: "Bar", path: "/charts/bar"},
-        {name: "Cell", path: "/charts/cell"},
-        {name: "Dot", path: "/charts/dot"},
-        {name: "Facets", path: "/charts/facets"},
-        {name: "Grouping data", path: "/charts/grouping-data"},
-        {name: "Line", path: "/charts/line"},
-        {name: "Tick", path: "/charts/tick"}
+        {name: "Card", path: "/css/card"},
+        {name: "Color", path: "/css/color"},
+        {name: "Grid", path: "/css/grid"},
+        {name: "Note", path: "/css/note"}
       ]
     },
     {
@@ -99,6 +83,7 @@ export default {
     },
     {name: "Contributing", path: "/contributing"}
   ],
+  base: "/framework",
   scripts: [{type: "module", async: true, src: "analytics.js"}],
   head: `<link rel="apple-touch-icon" href="https://static.observablehq.com/favicon-512.0667824687f99c942a02e06e2db1a060911da0bf3606671676a255b1cf97b4fe.png">
 <link rel="icon" type="image/png" href="https://static.observablehq.com/favicon-512.0667824687f99c942a02e06e2db1a060911da0bf3606671676a255b1cf97b4fe.png" sizes="512x512">

@@ -152,6 +152,10 @@ An HTML fragment to add to the header. Defaults to the empty string.
 
 An HTML fragment to add to the footer. Defaults to “Built with Observable.”
 
+## base
+
+The base path when serving the site. Currently this only affects the custom 404 page, if any.
+
 ## toc
 
 The table of contents configuration.

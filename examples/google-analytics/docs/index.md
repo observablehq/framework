@@ -1,5 +1,6 @@
 ---
 theme: dashboard
+toc: false
 ---
 
 ```js
@@ -273,7 +274,7 @@ function worldMap(data, {width, height, title, caption}) {
 
 # Google analytics
 
-_Summary of metrics from the [Google Analytics Data API](https://developers.google.com/analytics/devguides/reporting/data/v1/quickstart-client-libraries), pulled on ${date(d3.max(summary, d => d.date))}_
+_Summary of metrics from the [Google Analytics Data API](https://developers.google.com/analytics/devguides/reporting/data/v1/quickstart-client-libraries), a sample of data pulled on ${date(d3.max(summary, d => d.date))}_
 
 <div class="grid grid-cols-4" style="grid-auto-rows: 165px;">
   <div class="card">

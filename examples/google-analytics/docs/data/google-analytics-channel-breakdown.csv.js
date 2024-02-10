@@ -16,7 +16,7 @@ const [response] = await analyticsDataClient.runReport({
   dateRanges: [{startDate: "2023-04-01", endDate: "2023-12-31"}],
   dimensions: [{name: "firstUserDefaultChannelGroup"}, {name: "newVsReturning"}],
   metrics: [{name: "active28DayUsers"}],
-  orderBys: [{dimension: {dimensionName: "firstUserDefaultChannelGroup"}}],
+  orderBys: [{dimension: {dimensionName: "firstUserDefaultChannelGroup"}},{dimension: {dimensionName: "newVsReturning"}}],
   dimensionFilter: {
     filter: {
       fieldName: "fullPageUrl",
