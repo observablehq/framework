@@ -15,9 +15,9 @@ const index = await fetch(`${base}_observablehq/minisearch.json`)
       processTerm: (term) => term.slice(0, 15).toLowerCase() // see src/minisearch.json.ts
     })
   );
-input.addEventListener("input", (event) => {
-  if (value === event.target.value) return;
-  value = event.target.value;
+input.addEventListener("input", () => {
+  if (value === input.value) return;
+  value = input.value;
   if (!value.length) {
     container.parentElement.classList.remove("observablehq-search-results");
     r.innerHTML = "";
@@ -55,6 +55,7 @@ input.addEventListener("input", (event) => {
     }
   }
 });
+input.dispatchEvent(new Event("input"));
 
 addEventListener("keydown", (event) => {
   const {code, target} = event;
