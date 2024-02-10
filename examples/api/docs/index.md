@@ -165,4 +165,4 @@ const latencyDocumentsAtCanvas = document.createElement("canvas");
 
 This route is also slower than it should be, mostly due to complicated permissions logic. But the temporal pattern is interesting: at midnight UTC, latency noticeably increases for an hour or two. We believe this is an internal scheduled batch job causing resource contention. We want to optimize this route, too.
 
-Web log analysis has been fruitful for the Observable team to prioritize optimization and block undesirable traffic. Using these granular heatmaps, we’ve been able to identify opportunities for improvement that would otherwise go unnoticed.
+Web log analysis has been fruitful for the Observable team to prioritize optimization and manage traffic. Using these granular heatmaps, we’ve identified numerous opportunities for improvement that would otherwise go unnoticed.
