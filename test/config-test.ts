@@ -9,6 +9,7 @@ describe("readConfig(undefined, root)", () => {
     assert.deepStrictEqual(await readConfig(undefined, "test/input/build/config"), {
       root: "test/input/build/config",
       output: "dist",
+      base: "/",
       style: {theme: ["air", "near-midnight"]},
       pages: [
         {path: "/index", name: "Index"},
@@ -34,6 +35,7 @@ describe("readConfig(undefined, root)", () => {
     assert.deepStrictEqual(await readConfig(undefined, "test/input/build/simple"), {
       root: "test/input/build/simple",
       output: "dist",
+      base: "/",
       style: {theme: ["air", "near-midnight"]},
       pages: [{name: "Build test case", path: "/simple"}],
       title: undefined,
