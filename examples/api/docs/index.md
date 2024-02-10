@@ -34,9 +34,7 @@ const latencyByRouteCanvas = document.createElement("canvas");
 
 The plot above shows a sample of ${d3.sum(latencyHeatmap.getChild("count")).toLocaleString("en-US")} requests to Observable servers over a 7-day period. Color encodes the associated route. Hover to see the route.
 
-<div class="note small">
-  Since the image is discrete, this scatterplot is effectively a heatmap: each pixel corresponds to a 5-minute time interval and some narrow latency band, while color encodes the most-frequent route within the pixel. There are many routes, so categorical colors are recycled; yet much like political maps, color reveals boundaries.
-</div>
+<div class="small note">Since the image is discrete, this scatterplot is effectively a heatmap: each pixel corresponds to a 5-minute time interval and some narrow latency band, while color encodes the most-frequent route within the pixel. There are many routes, so categorical colors are recycled; yet much like political maps, color reveals boundaries.</div>
 
 The detail in this plot is astonishing: it shows the varying performance of different routes, and intriguing temporal patterns. We’ll tease apart these patterns in a bit. First let’s better understand what we’re looking at.
 
@@ -52,7 +50,7 @@ const histogramCanvas = document.createElement("canvas");
   ${resize((width) => ApiHistogram(latencyHistogram.getChild("duration"), latencyHistogram.getChild("count"), latencyHistogram.getChild("route"), {canvas: histogramCanvas, color: routeColor, width, label: "Duration (ms)", y1: 0.5, y2: 10_000}))}
 </div>
 
-<div class="note small">The artifacts on the left side of the histogram (as well as on the bottom of the heatmap above) are due to the millisecond precision of latency values. Latencies are uniformly jittered by ±0.5ms to smooth (or smear) the data.</div>
+<div class="small note">The artifacts on the left side of the histogram (as well as on the bottom of the heatmap above) are due to the millisecond precision of latency values. Latencies are uniformly jittered by ±0.5ms to smooth (or smear) the data.</div>
 
 Analyzing web logs lets us focus on optimizing routes that are both slow and popular, such as ${routeSwatch("/documents/@{login}")} and ${routeSwatch("/avatar/{hash}")}. We can confirm this by aggregating routes by total count and duration.
 
@@ -126,7 +124,7 @@ const latencyDocumentsPublicCanvas = document.createElement("canvas");
   ${resize((width) => ApiHeatmap(latencyDocumentsPublicHeatmap.getChild("count"), null, {y1: 0.5, y2: 10_000, canvas: latencyDocumentsPublicCanvas, color: Object.assign(Plot.scale({color: {domain: [0, 50]}}), {label: "frequency"}), width, label: "Duration (ms)"}))}
 </div>
 
-<div class="note">We support visualization research. If you’re interested in studying public notebooks, please reach out and let us help you write a polite scraper.</div>
+<div class="small note">We support visualization research. If you’re interested in studying public notebooks, please reach out and let us help you write a polite scraper.</div>
 
 Above, we color by frequency instead of route. This better reveals the density of requests, though we cannot differentiate routes and therefore infer as much about behavior. Notice the spike in the early morning hours of January 31 — a bot scanning for vulnerabilities.
 
