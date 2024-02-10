@@ -28,32 +28,19 @@ input.addEventListener("input", () => {
   r.innerHTML =
     results.length === 0
       ? "<div>no results</div>"
-      : `<div>${results.length === 11 ? "10+" : results.length} result${results.length === 1 ? "" : "s"}</div>
-      <ol>${results
-        .map(({id, title, score}, i) => {
-          score = Math.min(6, Math.round(1 + 0.6 * score));
-          return `<li class="observablehq-link${i === 0 ? ` ${c}` : ""}" data-reference="${id}">
-        <a href="${base}${id}"><span>${title}</span>
-          <small title="score: ${score}; fuzzy matches" data-score="${score}">${"○".repeat(score)}</small>
-          </a></li>`;
-        })
-        .join("")}
+      : `<div>${results.length === 11 ? "10+" : results.length} result${
+          results.length === 1 ? "" : "s"
+        }</div><ol>${results
+          .map(({id, title, score}, i) => {
+            score = Math.min(6, Math.round(1 + 0.6 * score));
+            return `<li class="observablehq-link${
+              i === 0 ? ` ${c}` : ""
+            }" data-reference="${id}"><a href="${base}${id}"><span>${title}</span><small>${"●".repeat(
+              score
+            )}</small></a></li>`;
+          })
+          .join("")}
       </ol>`;
-
-  if (results.length) {
-    const exact_results = index.search(value, {boost: {title: 1}, fuzzy: 0, prefix: false});
-    for (const e of exact_results) {
-      const p = r.querySelector(`[data-reference='${e.id}'] small`);
-      if (p === null) continue;
-      const s = +p.getAttribute("data-score");
-      const k = Math.round((e.terms.length / value.split(/\W+/).length) * s);
-      p.innerHTML = `${"○".repeat(s - k)}${"●".repeat(k)}`;
-      p.setAttribute(
-        "title",
-        `score: ${p.getAttribute("data-score")}; ${k === s ? "exact matches" : "incomplete matches"}`
-      );
-    }
-  }
 });
 input.dispatchEvent(new Event("input"));
 
