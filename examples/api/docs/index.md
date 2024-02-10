@@ -32,15 +32,15 @@ const latencyByRouteCanvas = document.createElement("canvas");
   ${resize((width) => ApiHeatmap(latencyHeatmap.getChild("count"), latencyHeatmap.getChild("route"), {y1: 0.5, y2: 10_000, canvas: latencyByRouteCanvas, color: routeColor, width, label: "Duration (ms)"}))}
 </div>
 
-The plot above shows a sample of ${d3.sum(latencyHeatmap.getChild("count")).toLocaleString("en-US")} requests to Observable servers over a 7-day period. Each dot is colored by the associated route. Hover to see the route.
+The plot above shows a sample of ${d3.sum(latencyHeatmap.getChild("count")).toLocaleString("en-US")} requests to Observable servers over a 7-day period. Color encodes the associated route. Hover to see the route.
 
 <div class="note small">
   Since the image is discrete, this scatterplot is effectively a heatmap: each pixel corresponds to a 5-minute time interval and some narrow latency band, while color encodes the most-frequent route within the pixel. There are many routes, so categorical colors are recycled; yet much like political maps, color reveals boundaries.
 </div>
 
-The detail in this plot is astonishing: we get a sense of the varying performance of different routes, and see intriguing temporal patterns in requests. We’ll tease apart these patterns in a bit. First let’s better understand what we’re looking at.
+The detail in this plot is astonishing: it shows the varying performance of different routes, and intriguing temporal patterns. We’ll tease apart these patterns in a bit. First let’s better understand what we’re looking at.
 
-If we collapse *x*→ (time), we get a more traditional view of latency: a stacked histogram colored by route. This view focuses on server performance: for example ${routeSwatch("/documents/@{login}")} requests tend to be slow (~1 second), and ${routeSwatch("/avatar/{hash}")} tends to vary widely. Performance is contextualized by showing how much traffic routes receive in aggregate: for example the popular ${routeSwatch("/d/{id}.js")} and ${routeSwatch("/@{login}/{slug}.js")} routes power [notebook imports](https://observablehq.com/@observablehq/import), so we want them to be fast (and they are).
+Collapsing *x*→ (time) gives a more traditional view of latency: a stacked histogram colored by route. This view focuses on performance. Notice ${routeSwatch("/documents/@{login}")} tends to be slow (~1 second), and ${routeSwatch("/avatar/{hash}")} tends to vary widely. Performance is contextualized by showing how much traffic routes receive in aggregate: area is proportional to request volume. The popular ${routeSwatch("/d/{id}.js")} and ${routeSwatch("/@{login}/{slug}.js")} routes power [notebook imports](https://observablehq.com/@observablehq/import), so we want them to be fast (and they are).
 
 ```js
 const latencyHistogram = FileAttachment("data/latency-histogram.arrow").arrow();
@@ -52,9 +52,9 @@ const histogramCanvas = document.createElement("canvas");
   ${resize((width) => ApiHistogram(latencyHistogram.getChild("duration"), latencyHistogram.getChild("count"), latencyHistogram.getChild("route"), {canvas: histogramCanvas, color: routeColor, width, label: "Duration (ms)", y1: 0.5, y2: 10_000}))}
 </div>
 
-<div class="note small">The artifacts on the left side of the histogram (as well as on the bottom of the heatmap above) are due to the millisecond precision of latency values. Latencies are randomly jittered by ±0.5ms to smooth (or smear) the data.</div>
+<div class="note small">The artifacts on the left side of the histogram (as well as on the bottom of the heatmap above) are due to the millisecond precision of latency values. Latencies are uniformly jittered by ±0.5ms to smooth (or smear) the data.</div>
 
-This histogram guides our optimization efforts to focus on routes that are both slow and popular, such as ${routeSwatch("/documents/@{login}")} and ${routeSwatch("/avatar/{hash}")}. We can confirm this by aggregating routes by total count and duration.
+Analyzing web logs lets us focus on optimizing routes that are both slow and popular, such as ${routeSwatch("/documents/@{login}")} and ${routeSwatch("/avatar/{hash}")}. We can confirm this by aggregating routes by total count and duration.
 
 ```js
 const topRoutesCount = visibility().then(() => FileAttachment("data/top-routes-count.arrow").arrow());
@@ -96,9 +96,9 @@ const topRoutesDuration = visibility().then(() => FileAttachment("data/top-route
   </div>
 </div>
 
-But let’s get back to those _temporal_ patterns. These are much more interesting because they don’t just show the performance of our servers — they show how clients “in the wild” behave.
+But back to those _temporal_ patterns. These are fascinating because they don’t just show server performance — they show how clients behave “in the wild.”
 
-We can use a dense time-series scatterplot to visualize the distribution of any quantitative property of requests over time. Below we show the response size in bytes (again on log scale) along *y*↑. Response sizes are also important for performance, especially if latency measurements only consider the time it takes the server to respond, and not the time it takes for the data to arrive at the client.
+We can use a dense scatterplot to visualize any quantitative request metric. Below we show response size in bytes along *y*↑. Response sizes are also important for performance, especially if latency measurements only consider the time it takes the server to send the response and not user-perceived latency across the network.
 
 ```js
 const sizeHeatmap = visibility().then(() => FileAttachment("data/size-heatmap.arrow").arrow());
@@ -110,11 +110,11 @@ const sizeByRouteCanvas = document.createElement("canvas");
   ${resize((width) => ApiHeatmap(sizeHeatmap.getChild("count"), sizeHeatmap.getChild("route"), {y1: 400, y2: 160_000, canvas: sizeByRouteCanvas, color: routeColor, width, label: "Size (bytes)"}))}
 </div>
 
-This view is also useful for teasing out not just individual routes, but individual paths, visible as horizontal streaks. The ${routeSwatch("/document/@{login}/{slug}")} line at 15,846 bytes represents the [D3 gallery](https://observablehq.com/@d3/gallery), one of the most popular pages on Observable. And the ${routeSwatch("/@{login}/{slug}.js")} line at 12,193 bytes represents [Jeremy’s Inputs](https://observablehq.com/@jashkenas/inputs), a popular import (though superseded by our official [Observable Inputs](https://observablehq.com/framework/lib/inputs)).
+The response size heatmap also highlights individual paths, visible as horizontal striations. The ${routeSwatch("/document/@{login}/{slug}")} line at 15,846 bytes represents the [D3 gallery](https://observablehq.com/@d3/gallery), one of the most popular pages on Observable. And the ${routeSwatch("/@{login}/{slug}.js")} line at 12,193 bytes represents [Jeremy’s Inputs](https://observablehq.com/@jashkenas/inputs), a popular import (though superseded by our official [Observable Inputs](https://observablehq.com/framework/lib/inputs)). This heatmap previously revealed a bug where we were loading 200+ notebooks to serve a gallery of only 4–9 notebooks; by fixing the bug, we reduced the total number of >50KB responses by more than half!
 
-The daily pattern for ${routeSwatch("/document/{id}@{version}")} is also highly visible in this heatmap and on the latency heatmap. What’s going on there?
+The daily pattern for ${routeSwatch("/document/{id}@{version}")} sticks out in this heatmap and on the latency heatmap. What’s going on there? By inspecting logs, we believe this represents an academic research project scraping public notebooks for content analysis. The scraper starts by fetching ${routeSwatch("/documents/public")} ([recent notebooks](https://observablehq.com/recent)) and then repeatedly requests ${routeSwatch("/document/{id}@{version}")} to fetch notebook contents. Once a month, they do a deeper scrape.
 
-By manually inspecting the logs, we believe this represents a University research project that scrapes public notebooks on Observable daily. The scraper starts by fetching ${routeSwatch("/documents/public")} (the public feeds) and then for each notebook, repeatedly requests ${routeSwatch("/document/{id}@{version}")} to get notebook contents. By filtering to these two routes, we can see the behavior of this scraper more clearly.
+By filtering on route, we can see the periodic behavior of the scraper more clearly.
 
 ```js
 const latencyDocumentsPublicHeatmap = visibility().then(() => FileAttachment("data/latency-heatmap-documents-public.arrow").arrow());
@@ -126,13 +126,9 @@ const latencyDocumentsPublicCanvas = document.createElement("canvas");
   ${resize((width) => ApiHeatmap(latencyDocumentsPublicHeatmap.getChild("count"), null, {y1: 0.5, y2: 10_000, canvas: latencyDocumentsPublicCanvas, color: Object.assign(Plot.scale({color: {domain: [0, 50]}}), {label: "frequency"}), width, label: "Duration (ms)"}))}
 </div>
 
-We investigated the associated IP addresses with these requests, and determined an educational institution scraping public notebooks, presumably for research (content analysis) or for archival purposes. At the end of each month, they do a longer scrape of more pages. While we generally support visualization research, we may get in touch with this project to ensure the automated traffic doesn’t impact performance for other Observable users.
+<div class="note">We support visualization research. If you’re interested in studying public notebooks, please reach out and let us help you write a polite scraper.</div>
 
-Again the daily research scraper   is highly visible.
-
-The horizontal striations represent specific paths.
-
-What if we don’t color by route? Now we color by frequency, and we can more easily see the density of requests. Still useful for getting a sense of overall traffic, but far less informative than coloring by route, since we can’t tease apart patterns in the data. This is a more traditional heatmap.
+Above, we color by frequency instead of route. This better reveals the density of requests, though we cannot differentiate routes and therefore infer as much about behavior. Notice the spike in the early morning hours of January 31 — a bot scanning for vulnerabilities.
 
 ```js
 const latencyCanvas = document.createElement("canvas");
@@ -143,9 +139,7 @@ const latencyCanvas = document.createElement("canvas");
   ${resize((width) => ApiHeatmap(latencyHeatmap.getChild("count"), null, {y1: 0.5, y2: 10_000, canvas: latencyCanvas, color: Object.assign(Plot.scale({color: {domain: [0, 100]}}), {label: "frequency"}), width, label: "Duration (ms)"}))}
 </div>
 
-But coloring by frequency works well when filtering by route.
-
-What if we just look at ${routeSwatch("/avatar/{hash}")}?
+Let’s look at a couple more routes of interest. The ${routeSwatch("/avatar/{hash}")} route is responsible for serving avatars (profile images). Avatars are used throughout Observable and this is one of the most popular routes.
 
 ```js
 const latencyAvatarHeatmap = visibility().then(() => FileAttachment("data/latency-heatmap-avatar.arrow").arrow());
@@ -157,9 +151,9 @@ const latencyAvatarCanvas = document.createElement("canvas");
   ${resize((width) => ApiHeatmap(latencyAvatarHeatmap.getChild("count"), null, {y1: 0.5, y2: 10_000, canvas: latencyAvatarCanvas, color: Object.assign(Plot.scale({color: {domain: [0, 100]}}), {label: "frequency"}), width, label: "Duration (ms)"}))}
 </div>
 
-Avatars are _slow_. They have to fetch an image for S3 and rescale it based on the requested size. Talking to S3 is slow, and images can be large and are comparatively expensive to resize. Furthermore, avatars are often requested in bulk — for example, visiting an activity feed might need to show a hundred avatars or more. The vertical requests likely represent a single user spawning many simultaneous requests. There is clearly major room for improvement here (even though we already have extensive CDN caching).
+Unfortunately, avatars are _slow_. Serving an avatar requires fetching an image for S3 and rescaling to the requested size. S3 is slow, and images are often large and expensive to resize. Furthermore, avatars are often requested in bulk — for example, an activity feed might show hundreds of avatars! The vertical streaks here represent individual clients spawning many simultaneous requests. We have room for improvement here.
 
-What if we just look at ${routeSwatch("/documents/@{login}")}? This route lists notebooks for an individual user, such as when you go to your home page, or visit someone’s profile.
+The ${routeSwatch("/documents/@{login}")} route is also interesting. It lists the notebooks in the given workspace, such as when you go to your home page, or visit someone’s profile.
 
 ```js
 const latencyDocumentsAtHeatmap = visibility().then(() => FileAttachment("data/latency-heatmap-documents-at.arrow").arrow());
@@ -171,6 +165,6 @@ const latencyDocumentsAtCanvas = document.createElement("canvas");
   ${resize((width) => ApiHeatmap(latencyDocumentsAtHeatmap.getChild("count"), null, {y1: 0.5, y2: 10_000, canvas: latencyDocumentsAtCanvas, color: Object.assign(Plot.scale({color: {domain: [0, 100]}}), {label: "frequency"}), width, label: "Duration (ms)"}))}
 </div>
 
-This route is also slower than it should be, mostly due to complicated permissions. But the temporal pattern is interesting: at midnight UTC, latency noticeably increases for an hour or two. This is likely a scheduled batch job causing resource contention.
+This route is also slower than it should be, mostly due to complicated permissions logic. But the temporal pattern is interesting: at midnight UTC, latency noticeably increases for an hour or two. We believe this is an internal scheduled batch job causing resource contention. We want to optimize this route, too.
 
-Web log analysis has been fruitful for the Observable team to prioritize optimization and block undesirable traffic. With the heatmap visualization, we identified a route called 1,000+ times a day — not enough to be considered a “top” route — but that still accounted for >50% of all requests over 50KB! We were erroneously loading 200 notebooks when we only needed 9. Through granular views, we’re able to identify opportunities for improvement that would otherwise go unnoticed.
+Web log analysis has been fruitful for the Observable team to prioritize optimization and block undesirable traffic. Using these granular heatmaps, we’ve been able to identify opportunities for improvement that would otherwise go unnoticed.
