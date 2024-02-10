@@ -458,7 +458,7 @@
   height: 28px;
 }
 #observablehq-search input::placeholder {
-    color: var(--theme-foreground-faint);
+  color: var(--theme-foreground-faint);
 }
 
 #observablehq-search::before {
