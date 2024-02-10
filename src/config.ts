@@ -120,7 +120,8 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
 
 function normalizeBase(base: any): string {
   base = String(base);
-  if (!base.startsWith("/")) throw new Error(`invalid base: ${base}`);
+  if (!base.startsWith("/")) throw new Error(`base must start with slash: ${base}`);
+  if (!base.endsWith("/")) base += "/";
   return base;
 }
 
