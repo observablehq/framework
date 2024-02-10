@@ -482,6 +482,13 @@
   content: "";
 }
 
+#observablehq-search-results a span {
+  max-width: 184px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 #observablehq-search-results small {
   position: absolute;
   right: 2em;

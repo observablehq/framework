@@ -33,7 +33,7 @@ input.addEventListener("input", (event) => {
         .map(({id, title, score}, i) => {
           score = Math.min(6, Math.round(1 + 0.6 * score));
           return `<li class="observablehq-link${i === 0 ? ` ${c}` : ""}" data-reference="${id}">
-        <a href="${base}${id}">${title}
+        <a href="${base}${id}"><span>${title}</span>
           <small title="score: ${score}; fuzzy matches" data-score="${score}">${"○".repeat(score)}</small>
           </a></li>`;
         })
