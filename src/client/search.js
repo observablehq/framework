@@ -65,7 +65,7 @@ addEventListener("keydown", (event) => {
     }
     if (code === "ArrowDown" || code === "ArrowUp" || code === "Enter") {
       const results = document.querySelector("#observablehq-search-results ol");
-      const current = results.querySelector(`.${c}`);
+      const current = results?.querySelector(`.${c}`);
       if (!current) return;
       if (code === "Enter") {
         current.querySelector("a")?.click();
