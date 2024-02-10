@@ -25,7 +25,7 @@ jobs:
       - run: yarn --frozen-lockfile
       - run: yarn build
       - name: Build example "api"
-        run: yarn --frozen-lockfile && yarn build
+        run: yarn --frozen-lockfile && yarn build && sed -i. 's,<base href="/">,<base href="/framework/">,' dist/404.html
         working-directory: examples/api
       - name: Build example "chess"
         run: yarn --frozen-lockfile && yarn build
@@ -59,7 +59,7 @@ jobs:
         working-directory: examples/plot
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: mkdir dist/examples && for i in examples/*; do if [ -d $i/dist ]; then mv -v $i/dist dist/examples/$(basename $i); fi; done
+      - run: mkdir dist/examples && for i in examples/*; do if [ -d $i/dist ]; then mv -v $i/dist dist/examples/$(basename $i) && sed -i. 's,<base href="/">,<base href="/framework/examples/$(basename $i)/">,' dist/examples/$(basename $i)/404.html; fi; done
       - uses: cloudflare/pages-action@1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
