@@ -1,13 +1,11 @@
-/* eslint-disable */
-
 import * as Plot from "npm:@observablehq/plot";
 import * as d3 from "npm:d3";
 
-const dt = 1000 * 60 * 5; // 5 minute intervals
-const x2 = 1706832000000; // end date
-const x1 = 1706227200000; // start date
-const dx = Math.floor((x2 - x1) / dt); // number of columns
-const dy = 500; // number of rows
+export const dt = 1000 * 60 * 5; // 5 minute intervals
+export const x2 = 1706832000000; // end date
+export const x1 = 1706227200000; // start date
+export const dx = Math.floor((x2 - x1) / dt); // number of columns
+export const dy = 500; // number of rows
 
 const margin = 30;
 const marginTop = 20;
@@ -18,26 +16,22 @@ const marginLeft = margin;
 const canvasCache = new WeakSet();
 
 export function ApiHeatmap(
-  table,
+  count,
+  category,
   {
     canvas = document.createElement("canvas"),
+    opacity = Plot.scale({opacity: {domain: [0, 25], clamp: true}}),
     color,
     width,
     height = 550,
     y1,
     y2,
-    title,
     label,
-    yMetric,
-    fillMetric,
-    routeFilter,
-    type = "route"
   }
 ) {
-  const count = table.getChild(yMetric);
-  const route = table.getChild(fillMetric);
+
   const plot = Plot.plot({
-    title,
+    figure: true,
     width,
     height,
     marginTop,
@@ -46,7 +40,7 @@ export function ApiHeatmap(
     marginLeft,
     x: {type: "utc", domain: [x1, x2]},
     y: {type: "log", domain: [y1, y2], label},
-    color: {label: type},
+    color: {label: color.label},
     marks: [
       Plot.frame(),
       Plot.tip({length: 1}, {fill: [""], x: [x1], y: [y1], format: {x: null, y: null}, render: renderTip})
@@ -70,26 +64,22 @@ export function ApiHeatmap(
       height: calc(100% - ${marginTop + marginBottom}px);
     `;
 
-    function tick(i1, i2) {
+    const tick = (i1, i2) => {
       for (let i = i1; i < i2; ++i) {
         for (let j = 0; j < dy; ++j) {
           const k = j * dx + i;
           if (!count.get(k)) continue;
-          if (routeFilter) {
-            context.globalAlpha = routeFilter === route.get(k) ? Math.min(1, count.get(k) / 15) : 0;
+          if (category) {
+            context.globalAlpha = opacity.apply(count.get(k));
+            context.fillStyle = color.apply(category.get(k));
           } else {
-            context.globalAlpha = Math.min(1, count.get(k) / 25);
-          }
-          if (type === "frequency") {
-            context.fillStyle = d3.interpolateTurbo(count.get(k) / 80);
-          } else {
-            context.fillStyle = color.apply(route.get(k));
+            context.fillStyle = color.apply(count.get(k));
           }
           context.fillRect(i, dy - j - 1, 1, 1);
         }
       }
       if (i2 < dx) requestAnimationFrame(() => tick(i2, i2 + (i2 - i1)));
-    }
+    };
 
     const context = canvas.getContext("2d");
     context.fillRect(0, 0, dx, dy);
@@ -115,12 +105,12 @@ export function ApiHeatmap(
       const j = Math.floor(k / dx);
       values.x[0] = ((i + 0.5) / dx) * (width - marginLeft - marginRight) + marginLeft;
       values.y[0] = ((dy - 0.5 - j) / dy) * (height - marginTop - marginBottom) + marginTop;
-      if (type === "frequency") {
-        values.fill[0] = d3.interpolateTurbo(count.get(k) / 80);
-        values.channels.fill.value[0] = count.get(k);
+      if (category) {
+        values.fill[0] = color.apply(category.get(k));
+        values.channels.fill.value[0] = category.get(k);
       } else {
-        values.fill[0] = color.apply(route.get(k));
-        values.channels.fill.value[0] = route.get(k);
+        values.fill[0] = color.apply(count.get(k));
+        values.channels.fill.value[0] = count.get(k);
       }
       const r = next([0], scales, values, dimensions, context);
       g.replaceWith(r);
@@ -156,36 +146,4 @@ export function ApiHeatmap(
   }
 
   return plot;
-}
-
-export function ApiHistogram(heatmap, {color, width, title, label, y1, y2, yMetric, fillMetric}) {
-  const route = heatmap.getChild(fillMetric);
-  return Plot.plot({
-    title,
-    width,
-    marginBottom: 20,
-    color: {...color, label: "route"},
-    x: {type: "log", domain: [y1, y2 - 1], label},
-    y: {axis: null, label: "requests"},
-    marks: [
-      Plot.ruleX(
-        heatmap.getChild(yMetric),
-        Plot.stackY(
-          {order: "-sum"},
-          Plot.groupX(
-            {y: "sum"},
-            {
-              filter: (d, i) => i >= dx && d,
-              x: (d, i) => Math.exp((Math.floor(i / dx) / dy) * (Math.log(y2) - Math.log(y1)) + Math.log(y1)),
-              y: Plot.identity,
-              stroke: (_, i) => route.get(i),
-              strokeWidth: width / dy + 0.5,
-              tip: {format: {stroke: true, x: (d) => Math.round(d).toLocaleString("en-US")}}
-            }
-          )
-        )
-      ),
-      Plot.ruleY([0])
-    ]
-  });
 }

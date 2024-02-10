@@ -1,93 +1,172 @@
 ---
-toc: true
+toc: false
 ---
 
 ```js
-import {ApiBars} from "./components/apiBars.js";
-import {ApiHeatmap, ApiHistogram} from "./components/apiHeatmap.js";
+import {ApiHeatmap} from "./components/apiHeatmap.js";
+import {ApiHistogram} from "./components/apiHistogram.js";
 ```
 
 ```js
-const heatmaps = FileAttachment("data/api-heatmaps.arrow").arrow();
-const summary = FileAttachment("data/summary.csv").csv();
+const latencyHeatmap = FileAttachment("data/latency-heatmap.arrow").arrow();
 ```
+
+```js
+const topRoutesPixel = d3.sort(d3.rollups(latencyHeatmap.getChild("route"), (D) => D.length, (d) => d).filter(([d]) => d), ([, d]) => -d).map(([route, count]) => ({route, count}));
+const routeColor = Object.assign(Plot.scale({color: {domain: topRoutesPixel.map((d) => d.route)}}), {label: "route"});
+const routeSwatch = (route) => html`<span style="white-space: nowrap;"><svg width=10 height=10 fill=${routeColor.apply(route)}><rect width=10 height=10></rect></svg> <span class="small">${route}</span></span>`;
+```
+
+# Analyzing web logs
+
+Web logs capture traffic metadata, such as the request time, how long the server took to respond, response size in bytes, route, and so on. Analyzing web logs sheds light on both server performance and client behavior. Yet summary statistics (_e.g._, 95th-percentile latency) often hide interesting patterns! This is because performance varies wildly based on the nature of the request, and unusual clients such as bots can easily hide in a sea of “natural” traffic.
+
+What if — instead of summarizing — we plotted _every_ request as a dot with time along *x*→ and latency (on a log scale) along *y*↑?
 
 ```js
 const latencyByRouteCanvas = document.createElement("canvas");
-const latencyCanvas = document.createElement("canvas");
-const bytesCanvas = document.createElement("canvas");
-const topRoutes = summary.filter(d => d.type === 'count').slice(0, 20).map(d => d.route).sort(d3.ascending);
-const canvasByRoute = d3.rollup(topRoutes, () => document.createElement("canvas"), d => d);
 ```
+
+<div class="card">
+  <h2>Response latency, color by route</h2>
+  ${resize((width) => ApiHeatmap(latencyHeatmap.getChild("count"), latencyHeatmap.getChild("route"), {y1: 0.5, y2: 10_000, canvas: latencyByRouteCanvas, color: routeColor, width, label: "Duration (ms)"}))}
+</div>
+
+The plot above shows a sample of ${d3.sum(latencyHeatmap.getChild("count")).toLocaleString("en-US")} requests to Observable servers over a 7-day period. Each dot is colored by the associated route. Hover to see the route.
+
+<div class="note small">
+  Since the image is discrete, this scatterplot is effectively a heatmap: each pixel corresponds to a 5-minute time interval and some narrow latency band, while color encodes the most-frequent route within the pixel. There are many routes, so categorical colors are recycled; yet much like political maps, color reveals boundaries.
+</div>
+
+The detail in this plot is astonishing: we get a sense of the varying performance of different routes, and see intriguing temporal patterns in requests. We’ll tease apart these patterns in a bit. First let’s better understand what we’re looking at.
+
+If we collapse *x*→ (time), we get a more traditional view of latency: a stacked histogram colored by route. This view focuses on server performance: for example, ${routeSwatch("/documents/@{login}")} requests tend to be slow (~1 second), and ${routeSwatch("/avatar/{hash}")} latencies tend to vary widely. But it also puts this performance in context by showing how much traffic routes receive in aggregate: the popular ${routeSwatch("/d/{id}.js")} and ${routeSwatch("/@{login}/{slug}.js")} routes power [notebook imports](https://observablehq.com/@observablehq/import).
 
 ```js
-const total = d3.sum(heatmaps.getChild("duration_count"))
-const color = Plot.scale({
-  color: {
-    domain: d3.groupSort(heatmaps.getChild("duration_route"), (V) => -V.length, (d) => d).filter((d) => d) // prettier-ignore
-  }
-});
-
-const routesByCount = summary.filter(d => d.type === 'count').slice(0, 20);
-const routesByDuration = summary.filter(d => d.type === 'duration').slice(0, 20);
-const routesByBytes = summary.filter(d => d.type === 'bytes').slice(0, 20);
-const count = heatmaps.getChild('duration_count');
-const routeDropdown = Inputs.select(topRoutes, {label: 'Select a route', value: 'document/{id}@{version}'});
-const routeFilter = view(routeDropdown);
-const endpointLegend = (endpoint) => Plot.rect([endpoint], { x1: 0, y1: 0, x2: 10, y2: 10, fill: d => d }).plot({
-  width: 10, height: 10, margin: 0, axis: null, color: color, x: { range: [0, 10] }, y: { range: [0, 10] }});
-const nowrap = node => html`<span style="white-space: nowrap;">${node}`;;
+const latencyHistogram = FileAttachment("data/latency-histogram.arrow").arrow();
+const histogramCanvas = document.createElement("canvas");
 ```
 
-
-# API logs
-
-API logs can be helpful for finding under-performing routes and web scrapers, but looking at this data in aggregate often hides interesting trends. This visualization shows a heatmap of ${d3.format('.2s')(total)} API requests for [observablehq.com](https://observablehq.com/) from a sampled 7-day period. Each cell is colored by the most common route at a point in time and duration. Hover over a pixel to read the name of the route.
-
-<div class="grid grid-cols-1" style="grid-auto-rows: 611px;">
-  <div class="card">${resize((width) => ApiHeatmap(heatmaps, {canvas: latencyByRouteCanvas, color, width, title: "Response latency heatmap", label: "Duration (ms)", y1: 0.5, y2: 10_000, yMetric: 'duration_count', fillMetric: 'duration_route'}))}</div>
+<div class="card">
+  <h2>Response latency histogram</h2>
+  ${resize((width) => ApiHistogram(latencyHistogram.getChild("duration"), latencyHistogram.getChild("count"), latencyHistogram.getChild("route"), {canvas: histogramCanvas, color: routeColor, width, label: "Duration (ms)", y1: 0.5, y2: 10_000}))}
 </div>
 
-What do we see? There are clear intervals of activity for certain routes, such as ${nowrap(html`${endpointLegend('document/{id}@{version}')} <code>document/{id}@{version}</code>`)}, the route used to request a version of an Observable notebook, and ${nowrap(html`${endpointLegend('documents/{at}')} <code>documents/{at}</code>`)}, which returns all the notebooks for a given user.
+<div class="note small">The artifacts on the left side of the histogram (as well as on the bottom of the heatmap above) are due to the millisecond precision of latency values. Latencies are randomly jittered by ±0.5ms to smooth (or smear) the data.</div>
 
-Here is the same data visualized as a bar chart counting the number of requests by route.
+The histogram suggests where we should focus our optimization efforts by focusing on routes that are both slow and popular, such as ${routeSwatch("/documents/@{login}")} and ${routeSwatch("/avatar/{hash}")}. We can confirm this by aggregating routes by total count and duration, though these bar charts give a more reductive summary.
 
-<div class="grid" style="grid-auto-rows: 532px;">
-  <div class="card">${resize((width) => ApiBars(routesByCount, {color, width, transform: (d) => d / 1000, label: "Total requests (thousands)", title: "Top API routes by count", x: "count", y: "route"}))}</div>
-</div>
+```js
+const topRoutesCount = visibility().then(() => FileAttachment("data/top-routes-count.arrow").arrow());
+const topRoutesDuration = visibility().then(() => FileAttachment("data/top-routes-duration.arrow").arrow());
+```
 
-With the bar chart, we lose a lot of the details available in the heatmap. The ${nowrap(html`${endpointLegend('document/{id}@{version}')} <code>document/{id}@{version}</code>`)} route is a less common in aggregate than ${nowrap(html`${endpointLegend('d/{id}.js')} <code>d/{id}.js</code>`)}, but it likely one that we would want to investigate further.
-
-A histogram of latencies reveals similar insights to the bar chart view, but with more depth. We can understand the cardinality of each route as well as its distribution in latency. Those routes with a long tail of latencies may be candidates for optimization.
-
-<div class="card grid grid-cols-1" style="grid-auto-rows: 461px;">
-  ${resize((width) => ApiHistogram(heatmaps, {color, width, title: "Response latency histogram", label: "duration (ms)", y1: 0.5, y2: 10_000, yMetric: 'duration_count', fillMetric: 'duration_route'}))}
-</div>
-
-If we want to identify general periodicity in our data, we can change our categorical color scale based on the route name to a sequential scale encoding the frequency of requests at in a given point.
-
-<div class="grid grid-cols-1" style="grid-auto-rows: 651px;">
+<div class="grid grid-cols-2">
   <div class="card">
-    <div>${resize((width) => ApiHeatmap(heatmaps, {canvas: latencyCanvas, color, width, title: "Response latency heatmap", label: "Duration (ms)", y1: 0.5, y2: 10_000, yMetric: 'duration_count', fillMetric: 'duration_route', type: 'frequency'}))}</div>
-    <div style="float: right">${Plot.legend({color: {domain: d3.extent(count, d => d / 2), nice: true }})}</div>
-</div>
-
-The sheer volume of requests that happened on midday January 31st becomes much more apparent with the new color encoding. From what we saw in the earlier heatmap, this trend is likely caused by the ${nowrap(html`${endpointLegend('document/{id}@{version}')} <code>document/{id}@{version}</code>`)} route. We can also filter our data in our heatmap to see if that theory is correct.
-
-${routeDropdown}
-
-<div class="grid grid-cols-1" style="grid-auto-rows: 651px;">
+    <h2>Top routes by total count</h2>
+    ${resize((width) => Plot.plot({
+      width,
+      marginLeft: 10,
+      x: {axis: "top", labelAnchor: "left", grid: true, insetRight: 90, transform: (d) => d / 1000, label: "Requests (thousands)"},
+      y: {axis: null, round: false},
+      color: routeColor,
+      marks: [
+        Plot.rectX(topRoutesCount, {x: "count", y: "route", fill: "route", sort: {y: "-x", limit: 10}}),
+        Plot.ruleX([0]),
+        Plot.text(topRoutesCount, {x: "count", y: "route", dx: -6, text: (d) => d.count / 1000, fill: "var(--theme-background)", frameAnchor: "right"}),
+        Plot.text(topRoutesCount, {x: "count", y: "route", dx: 6, text: "route", frameAnchor: "left"})
+      ]
+    }))}
+  </div>
   <div class="card">
-    <div>${resize((width) => ApiHeatmap(heatmaps, {canvas: canvasByRoute.get(routeFilter), color, width, title: "Response latency heatmap", label: "Duration (ms)", y1: 0.5, y2: 10_000, yMetric: 'duration_count', fillMetric: 'duration_route', type: 'frequency', routeFilter}))}</div>
-    <div style="float: right">${Plot.legend({color: {domain: d3.extent(count, d => d / 2), nice: true }})}</div>
+    <h2>Top routes by total duration</h2>
+    ${resize((width) => Plot.plot({
+      width,
+      marginLeft: 10,
+      x: {axis: "top", labelAnchor: "left", grid: true, insetRight: 90, transform: (d) => d / (1000 * 60 * 60), label: "Duration (hours)"},
+      y: {axis: null, round: false},
+      color: routeColor,
+      marks: [
+        Plot.rectX(topRoutesDuration, {x: "duration", y: "route", fill: "route", sort: {y: "-x", limit: 10}}),
+        Plot.ruleX([0]),
+        Plot.text(topRoutesDuration, {x: "duration", y: "route", dx: -6, text: (d) => d.duration / (1000 * 60 * 60), fill: "var(--theme-background)", frameAnchor: "right"}),
+        Plot.text(topRoutesDuration, {x: "duration", y: "route", dx: 6, text: "route", frameAnchor: "left"})
+      ]
+    }))}
+  </div>
 </div>
 
-We looked into whether there were specific IP addresses causing the increase of ${nowrap(html`${endpointLegend('document/{id}@{version}')} <code>document/{id}@{version}</code>`)} and found it was an educational institution scraping public notebooks for a content analysis. At the end of each month, they do a longer scrape of more pages, causing the spike in requests on January 31st.
+But let’s get back to those _temporal_ patterns. These are much more interesting because they don’t just show the performance of our servers — they show how clients “in the wild” make requests.
 
-The heatmap visualization form works well for a variety of metrics, such as bytes written. Our educational instititution scraper appears again with this variation.
+We can use the same technique to look at response _size_.
 
-<div class="grid grid-cols-1" style="grid-auto-rows: 611px;">
-  <div class="card">${resize((width) => ApiHeatmap(heatmaps, {canvas: bytesCanvas, color, width, title: "Response size heatmap", label: "Bytes", y1: 400, y2: 160_000, yMetric: 'bytes_count', fillMetric: 'bytes_route'}))}</div>
+```js
+const sizeHeatmap = visibility().then(() => FileAttachment("data/size-heatmap.arrow").arrow());
+const sizeByRouteCanvas = document.createElement("canvas");
+```
+
+<div class="card">
+  <h2>Response size, color by route</h2>
+  ${resize((width) => ApiHeatmap(sizeHeatmap.getChild("count"), sizeHeatmap.getChild("route"), {y1: 400, y2: 160_000, canvas: sizeByRouteCanvas, color: routeColor, width, label: "Size (bytes)"}))}
 </div>
 
-This API analysis has been fruitful for the Observable team to identify routes for optimization. With the heatmap visualization, we identified an endpoint that was being called ~1,000 times a day, not enough to be noticed in a bar chart, but accounted for >50% of all requests over 50kb. The route was erronously returning 200 notebooks when we only needed 9. Through granular views, we're able to identify outliers that would otherwise continue unnoticed.
+Again the daily research scraper for ${routeSwatch("/document/{id}@{version}")}  is highly visible.
+
+The horizontal striations represent specific paths. The ${routeSwatch("/document/@{login}/{slug}")} line at 15,846 bytes represents the [D3 gallery](https://observablehq.com/@d3/gallery), one of the most popular pages on Observable. The ${routeSwatch("/@{login}/{slug}.js")} line at 12,193 bytes represents [Jeremy’s Inputs](https://observablehq.com/@jashkenas/inputs), a popular collection of importable input components (though now we recommend you use the official [Observable Inputs](https://observablehq.com/framework/lib/inputs) instead).
+
+What if we don’t color by route? Now we color by frequency, and we can more easily see the density of requests. Still useful for getting a sense of overall traffic, but far less informative than coloring by route, since we can’t tease apart patterns in the data. This is a more traditional heatmap.
+
+```js
+const latencyCanvas = document.createElement("canvas");
+```
+
+<div class="card">
+  <h2>Response latency, color by frequency</h2>
+  ${resize((width) => ApiHeatmap(latencyHeatmap.getChild("count"), null, {y1: 0.5, y2: 10_000, canvas: latencyCanvas, color: Object.assign(Plot.scale({color: {domain: [0, 100]}}), {label: "frequency"}), width, label: "Duration (ms)"}))}
+</div>
+
+But coloring by frequency works well when filtering by route.
+
+What if we just look at ${routeSwatch("/avatar/{hash}")}?
+
+```js
+const latencyAvatarHeatmap = visibility().then(() => FileAttachment("data/latency-heatmap-avatar.arrow").arrow());
+const latencyAvatarCanvas = document.createElement("canvas");
+```
+
+<div class="card">
+  <h2>Response latency of /avatar/{hash}</h2>
+  ${resize((width) => ApiHeatmap(latencyAvatarHeatmap.getChild("count"), null, {y1: 0.5, y2: 10_000, canvas: latencyAvatarCanvas, color: Object.assign(Plot.scale({color: {domain: [0, 100]}}), {label: "frequency"}), width, label: "Duration (ms)"}))}
+</div>
+
+Avatars are _slow_. They have to fetch an image for S3 and rescale it based on the requested size. Talking to S3 is slow, and images can be large and are comparatively expensive to resize. Furthermore, avatars are often requested in bulk — for example, visiting an activity feed might need to show a hundred avatars or more. The vertical requests likely represent a single user spawning many simultaneous requests. There is clearly major room for improvement here (even though we already have extensive CDN caching).
+
+Let’s try something else. What if we just look at ${routeSwatch("/documents/public")} (upper band) and ${routeSwatch("/document/{id}@{version}")} (lower band)? This has a strong daily pattern — with extra activity before the first of the month. What is going on here?
+
+```js
+const latencyDocumentsPublicHeatmap = visibility().then(() => FileAttachment("data/latency-heatmap-documents-public.arrow").arrow());
+const latencyDocumentsPublicCanvas = document.createElement("canvas");
+```
+
+<div class="card">
+  <h2>Response latency of /documents/{public} and /document/{id}@{version}</h2>
+  ${resize((width) => ApiHeatmap(latencyDocumentsPublicHeatmap.getChild("count"), null, {y1: 0.5, y2: 10_000, canvas: latencyDocumentsPublicCanvas, color: Object.assign(Plot.scale({color: {domain: [0, 100]}}), {label: "frequency"}), width, label: "Duration (ms)"}))}
+</div>
+
+We investigated the associated IP addresses with these requests, and determined an educational institution scraping public notebooks, presumably for research (content analysis) or for archival purposes. At the end of each month, they do a longer scrape of more pages. While we generally support visualization research, we may get in touch with this project to ensure the automated traffic doesn’t impact performance for other Observable users.
+
+What if we just look at ${routeSwatch("/documents/@{login}")}? This route lists notebooks for an individual user, such as when you go to your home page, or visit someone’s profile.
+
+```js
+const latencyDocumentsAtHeatmap = visibility().then(() => FileAttachment("data/latency-heatmap-documents-at.arrow").arrow());
+const latencyDocumentsAtCanvas = document.createElement("canvas");
+```
+
+<div class="card">
+  <h2>Response latency of /documents/@{login}</h2>
+  ${resize((width) => ApiHeatmap(latencyDocumentsAtHeatmap.getChild("count"), null, {y1: 0.5, y2: 10_000, canvas: latencyDocumentsAtCanvas, color: Object.assign(Plot.scale({color: {domain: [0, 100]}}), {label: "frequency"}), width, label: "Duration (ms)"}))}
+</div>
+
+This route is also slower than it should be, mostly due to complicated permissions. But the temporal pattern is interesting: at midnight UTC, latency noticeably increases for an hour or two. This is likely a scheduled batch job causing resource contention.
+
+Web log analysis has been fruitful for the Observable team to prioritize optimization and block undesirable traffic. With the heatmap visualization, we identified a route called 1,000+ times a day — not enough to be considered a “top” route — but that still accounted for >50% of all requests over 50KB! We were erroneously loading 200 notebooks when we only needed 9. Through granular views, we’re able to identify opportunities for improvement that would otherwise go unnoticed.
