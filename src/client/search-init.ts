@@ -1,7 +1,8 @@
 const container = document.querySelector("#observablehq-search")!;
 
 const input = container.querySelector("input")! as HTMLInputElement;
-input.setAttribute("placeholder", `Search pages… ${/Mac|iPhone/.test(navigator.platform) ? "⌘" : "Alt-"}K`);
+input.setAttribute("placeholder", "Search");
+container.setAttribute("data-shortcut", `${/Mac|iPhone/.test(navigator.platform) ? "⌘" : "Alt-"}K`);
 
 // fix links relative to the base
 const base = document.querySelector("#observablehq-search")?.getAttribute("data-root");
