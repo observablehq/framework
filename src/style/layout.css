@@ -478,7 +478,8 @@
   pointer-events: none;
 }
 
-#observablehq-search:hover::after, #observablehq-search:focus-within::after {
+#observablehq-search:hover::after,
+#observablehq-search:focus-within::after {
   content: "";
 }
 
