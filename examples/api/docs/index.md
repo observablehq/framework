@@ -43,7 +43,7 @@ const histogramCanvas = document.createElement("canvas");
   ${resize((width) => ApiHistogram(latencyHistogram.getChild("duration"), latencyHistogram.getChild("count"), latencyHistogram.getChild("route"), {canvas: histogramCanvas, color: routeColor, width, label: "Duration (ms)", y1: 0.5, y2: 10_000}))}
 </div>
 
-<div class="small note">The artifacts on the left side of the histogram (as well as on the bottom of the heatmap above) are due to the millisecond precision of latency values. Latencies are uniformly jittered by ±0.5ms to smooth (or smear) the data.</div>
+<div class="small note">The artifacts on the left of the histogram (as well as on the bottom of the heatmap above) are due to the millisecond precision of latency values. Latencies are uniformly jittered by ±0.5ms to smooth (or smear) the data.</div>
 
 Analyzing web logs lets us focus on optimizing routes that are both slow and popular, such as ${routeSwatch("/documents/@{login}")} and ${routeSwatch("/avatar/{hash}")}. We can confirm this by aggregating routes by total count and duration.
 
