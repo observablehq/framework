@@ -70,8 +70,8 @@ scaling <- min(
 # Note: factoextra uses 0.7 * scaling
 var_loadings_scaled <- var_loadings |>
     mutate(
-        PC1_scale = 1.2 * scaling * PC1,
-        PC2_scale = 1.2 * scaling * PC2
+        PC1_scale = 0.7 * scaling * PC1,
+        PC2_scale = 0.7 * scaling * PC2
     )
 
 # Add to zip archive, write to stdout

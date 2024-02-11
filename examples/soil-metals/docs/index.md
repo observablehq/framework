@@ -1,4 +1,5 @@
-# Soil metals
+# Soil metals analysis
+## In mining regions across Moquegua, Peru
 
 ```js
 
@@ -12,31 +13,29 @@ const obsScores = FileAttachment("data/soil-metals/obs-scores.csv").csv({typed: 
 ```
 
 ```js
-display({soilMetals, varLoadings, varExplained, obsScores})
-```
-
-```js
-const pickMetal = view(Inputs.radio(varLoadings.map(d => d.metal), {label: "Pick metal:", value: "aluminum"}))
+const pickMetal = Inputs.radio(varLoadings.map(d => d.metal), {label: "Pick metal:", value: "aluminum"});
 const metal = Generators.input(pickMetal);
 ```
 
 
 ```js
-Plot.plot({
-  width: 500,
+function boxPlot(width, height) {
+return Plot.plot({
+  width, 
+  height: height - 100,
   marginLeft: 100,
-  x: { grid: true },
+  x: { grid: true, label: "Soil concentration (mg/kg)"},
   y: { grid: true, label: "District", tickSize: 0 },
   marks: [
     Plot.boxX(soilMetals, {
-      x: pickMetal,
+      x: metal,
       y: "district",
       fill: "gray",
       opacity: 0.3,
       stroke: null
     }),
     Plot.dot(soilMetals, {
-      x: pickMetal,
+      x: metal,
       y: "district",
       fill: "darkgray",
       opacity: 0.7
@@ -46,16 +45,17 @@ Plot.plot({
       Plot.groupY(
         { x: "median" },
         {
-          x: pickMetal,
+          x: metal,
           y: "district",
-          stroke: "black",
-          strokeWidth: 2,
+          stroke: "#ff725c",
+          strokeWidth: 4,
           sort: { y: "x", reverse: true }
         }
       )
     )
   ]
-})
+});
+}
 ```
 
 ```js
@@ -77,20 +77,23 @@ const inputDistrict = Generators.input(pickDistrict);
 function biplot(width, height) {
 return Plot.plot({
   width,
-  x: {inset: 20, ticks: 5, axis: null},
-  y: {inset: 20, ticks: 5, axis: null},
+  height: height - 120,
+  x: {inset: 20, ticks: 0, label: "PC1"},
+  y: {inset: 20, ticks: 0, label: "PC2"},
   marks: [
+    Plot.frame({stroke: "#BCBCBC"}),
     Plot.dot(obsScores, {
       x: "PC1",
       y: "PC2",
       fill: "#BCBCBC",
+      opacity: 0.5,
       r: 2.5
     }),
     Plot.hull(obsScores, {
       x: "PC1",
       y: "PC2",
       fill: d => inputDistrict.includes(d.district) ? d.district : null,
-      opacity: 0.1
+      opacity: 0.4
     }),
     Plot.hull(obsScores, {
       x: "PC1",
@@ -106,7 +109,17 @@ return Plot.plot({
       r: 3,
       opacity: 0.8
     }),
-    Plot.arrow(varLoadings, { x1: 0, y1: 0, x2: "PC1_scale", y2: "PC2_scale" })
+    Plot.arrow(varLoadings, { x1: 0, y1: 0, x2: "PC1_scale", y2: "PC2_scale" }),
+    Plot.text(varLoadings, {
+      text: "metal",
+      x: "PC1_scale",
+      y: "PC2_scale",
+      dy: -5,
+      dx: 30,
+      fill: "black",
+      stroke: "white",
+      fontSize: 11
+    })
   ]
 });
 }
@@ -116,12 +129,12 @@ return Plot.plot({
 function screeplot(width, height) {
 return Plot.plot({
   width,
-  height: height - 20,
+  height: height - 15,
   x: {label: null, ticks: 3},
-  y: {label: "Variance explained (%)", 
-      percent: true, 
+  y: {label: "Variance explained",  
       grid: true, 
-      ticks: 6},
+      ticks: 6,
+      tickFormat: d3.format(".0%")},
   marks: [
     Plot.barY(varExplained, {
       x: "pc",
@@ -134,18 +147,28 @@ return Plot.plot({
 }
 ```
 
-<div class="grid grid-cols-4" style="grid-auto-rows: 170px;">
-  <div class="card grid-colspan-2 grid-rowspan-3">
-    <h2>PCA biplot</h2>
+<div class="grid grid-cols-4" style="grid-auto-rows: 145px;">
+  <div class="card grid-colspan-2 grid-rowspan-4">
+    <h2>Principal component analysis</h2>
     ${pickDistrict}
     ${resize((width, height) => biplot(width, height))}
   </div>
-  <div class="card grid-colspan-2 grid-rowspan-3">
+  <div class="card grid-colspan-2 grid-rowspan-2">
     <h2>Screeplot</h2>
     ${resize((width, height) => screeplot(width, height))}
   </div>
+  <div class="card grid-colspan-2 grid-rowspan-2" style="padding: 0">
+    ${Inputs.table(varLoadings.map(({PC1_scale, PC2_scale, ...rest}) => rest), {height: 320})}
+  </div>
 </div>
 
-<div class="card" style="padding: 0">
-  ${Inputs.table(varLoadings.map(({PC1_scale, PC2_scale, ...rest}) => rest))}
+<div class="grid grid-cols-4" style="grid-auto-rows: 160px;">
+  <div class="card grid-colspan-4 grid-rowspan-3">
+    <h2>Soil metal concentration by district</h2>
+    <h3>Dots are individual soil sample values; black line is the median for each district. Box is the interquartile range. All values in mg/kg.</h3>
+    ${pickMetal}
+    ${resize((width, height) => boxPlot(width, height))}
+  </div>
 </div>
+
+  <div class="note" label="Data">Bedoya-Perales, N.S., Escobedo-Pacheco, E., Maus, D. et al. Dataset of metals and metalloids in food crops and soils sampled across the mining region of Moquegua in Peru. Sci Data 10, 483 (2023). <a href="https://doi.org/10.1038/s41597-023-02363-0">https://doi.org/10.1038/s41597-023-02363-0</a></div>
