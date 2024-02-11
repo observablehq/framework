@@ -109,12 +109,13 @@ export function ApiHistogram(
   function find(y, currentCount) {
     if (!(y1 <= y && y <= y2)) return;
     const currentValue = Math.floor(((Math.log(y) - Math.log(y1)) / (Math.log(y2) - Math.log(y1))) * dy);
-    let i = 0, sum = 0;
+    let i = 0, j, sum = 0;
     for (; i < value.length; ++i) {
       if (value.get(i) < currentValue) continue;
-      if (value.get(i) > currentValue || (sum += count.get(i)) >= currentCount) break;
+      if (value.get(i) > currentValue) break;
+      if ((sum += count.get((j = i))) >= currentCount) break;
     }
-    if (i >= 0 && i < value.length) return [i, sum - count.get(i) / 2];
+    if (sum) return [j, sum - count.get(j) / 2];
   }
 
   return plot;
