@@ -1,7 +1,5 @@
 import * as Plot from "npm:@observablehq/plot";
-import {extent} from "npm:d3-array";
-import {format} from "npm:d3-format";
-import {html} from "npm:htl";
+import {format} from "npm:d3";
 
 // Colors and scale
 const colorGenerating = "#88DCAD";
@@ -26,8 +24,8 @@ export function balancingAuthoritiesMap({
   width
 }) {
   return Plot.plot({
-    width: Math.min(width, 620),
-    height: Math.min(width, 620) * 0.6,
+    width,
+    height: width * 0.6,
     color: {
       ...color,
       transform: (d) => d / 100,
@@ -38,7 +36,6 @@ export function balancingAuthoritiesMap({
       insetTop: 15
     },
     r: {
-      domain: extent(eiaPoints, (d) => d.radius),
       range: [4, 30]
     },
     marks: [
@@ -134,7 +131,7 @@ export function balancingAuthoritiesLegend(width) {
         y2: 1,
         x1: -0.19,
         x2: 0.19,
-        fill: (x, y) => color.apply(x)
+        fill: (x) => color.apply(x)
       }),
       Plot.ruleX([-0.15, 0, 0.15], {insetBottom: -5}),
       Plot.axisX([-0.15, 0, 0.15], {tickFormat: format("+.0%"), tickSize: 0}),
