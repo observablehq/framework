@@ -130,7 +130,7 @@ const latencyCanvas = document.createElement("canvas");
   ${resize((width) => ApiHeatmap(latencyHeatmap.getChild("count"), null, {y1: 0.5, y2: 10_000, canvas: latencyCanvas, color: Object.assign(Plot.scale({color: {domain: [0, 100]}}), {label: "frequency"}), width, label: "Duration (ms)"}))}
 </div>
 
-Let’s look at a couple more routes of interest. The ${routeSwatch("/avatar/{hash}")} route is responsible for serving avatars (profile images). Avatars are used throughout Observable and this is one of the most popular routes.
+Let’s look at a couple more routes of interest. The ${routeSwatch("/avatar/{hash}")} route is responsible for serving avatars (profile images). Avatars are used throughout Observable and this is one of the highest-traffic routes.
 
 ```js
 const latencyAvatarHeatmap = visibility().then(() => FileAttachment("data/latency-heatmap-avatar.arrow").arrow());
