@@ -1,5 +1,5 @@
 import * as Plot from "npm:@observablehq/plot";
-import {extent} from "npm:d3-array";
+import {extent} from "npm:d3";
 
 // Top 5 balancing authorities chart
 export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDemand) {
