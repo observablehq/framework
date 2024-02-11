@@ -1,6 +1,7 @@
 export default {
   title: "Analyzing web logs",
   pager: false,
+  sidebar: false,
   toc: false,
   header: `<style>
 
