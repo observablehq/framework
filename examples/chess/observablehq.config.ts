@@ -1,6 +1,5 @@
 export default {
   title: "A year of chess rankings",
-  theme: "dashboard",
   pager: false,
   toc: false,
   header: `<style>

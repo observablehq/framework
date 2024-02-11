@@ -1,6 +1,6 @@
 export default {
   title: "U.S. electricity grid",
-  theme: "wide",
+  theme: "dashboard",
   pager: false,
   toc: false,
   header: `<style>
