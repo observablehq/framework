@@ -12,9 +12,7 @@ hm_soils <- read_xlsx("docs/data/heavy-metals.xlsx", skip = 1, na = "-") |>
     clean_names() |>
     slice(-1) |>
     select(-c(3, 4, 5, 14, 15, 16, 19:49)) |>
-    rename(
-        altitude_masl = altitude_m_a_s_l
-    )
+    rename(altitude_masl = altitude_m_a_s_l)
 
 # Update column names to only metal (e.g. "aluminum")
 metal_matrix <- c(sub("_.*", "", names(hm_soils)[13:35]))

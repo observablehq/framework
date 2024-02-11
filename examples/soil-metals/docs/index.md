@@ -1,4 +1,4 @@
-# Soil metals analysis
+# Soil metal analysis
 ## In mining regions across Moquegua, Peru
 
 ```js
@@ -157,7 +157,7 @@ return Plot.plot({
     <h2>Screeplot</h2>
     ${resize((width, height) => screeplot(width, height))}
   </div>
-  <div class="card grid-colspan-2 grid-rowspan-2" style="padding: 0">
+  <div class="card grid-colspan-2 grid-rowspan-2" style="padding: 0; border-radius: 12px; overflow: hidden;">
     ${Inputs.table(varLoadings.map(({PC1_scale, PC2_scale, ...rest}) => rest), {height: 320})}
   </div>
 </div>
