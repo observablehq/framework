@@ -139,7 +139,7 @@ const latencyAvatarCanvas = document.createElement("canvas");
 
 <div class="card">
   <h2>Response latency of /avatar/{hash}</h2>
-  ${resize((width) => ApiHeatmap(latencyAvatarHeatmap.getChild("count"), null, {y1: 0.5, y2: 10_000, canvas: latencyAvatarCanvas, color: Object.assign(Plot.scale({color: {domain: [0, 100]}}), {label: "frequency"}), width, label: "Duration (ms)"}))}
+  ${resize((width) => ApiHeatmap(latencyAvatarHeatmap.getChild("count"), null, {y1: 0.5, y2: 10_000, canvas: latencyAvatarCanvas, color: Object.assign(Plot.scale({color: {domain: [0, 50]}}), {label: "frequency"}), width, label: "Duration (ms)"}))}
 </div>
 
 Unfortunately, avatars are _slow_. Serving an avatar requires fetching an image for S3 and rescaling to the requested size. S3 is slow, and images are often large and expensive to resize. Furthermore, avatars are often requested in bulk — for example, an activity feed might show hundreds of avatars! The vertical streaks here represent individual clients spawning many simultaneous requests. We have room for improvement here.
@@ -153,9 +153,9 @@ const latencyDocumentsAtCanvas = document.createElement("canvas");
 
 <div class="card">
   <h2>Response latency of /documents/@{login}</h2>
-  ${resize((width) => ApiHeatmap(latencyDocumentsAtHeatmap.getChild("count"), null, {y1: 0.5, y2: 10_000, canvas: latencyDocumentsAtCanvas, color: Object.assign(Plot.scale({color: {domain: [0, 100]}}), {label: "frequency"}), width, label: "Duration (ms)"}))}
+  ${resize((width) => ApiHeatmap(latencyDocumentsAtHeatmap.getChild("count"), null, {y1: 0.5, y2: 10_000, canvas: latencyDocumentsAtCanvas, color: Object.assign(Plot.scale({color: {domain: [0, 30]}}), {label: "frequency"}), width, label: "Duration (ms)"}))}
 </div>
 
-This route is also slower than it should be, mostly due to complicated permissions logic. But the temporal pattern is interesting: at midnight UTC, latency noticeably increases for an hour or two. We believe this is an internal scheduled batch job causing resource contention. We want to optimize this route, too.
+This route is slower than we like, mostly due to complicated permissions that make the underlying database queries difficult to index. But the temporal pattern is interesting: at midnight UTC, latency noticeably increases for an hour or two. We believe an internal scheduled batch job is causing resource contention. We want to optimize this route, too.
 
 Web log analysis has been fruitful for the Observable team to prioritize optimization and manage traffic. Using these granular heatmaps, we’ve identified numerous opportunities for improvement that would otherwise go unnoticed.
