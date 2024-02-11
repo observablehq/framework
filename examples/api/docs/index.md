@@ -119,7 +119,7 @@ const latencyDocumentsPublicCanvas = document.createElement("canvas");
 
 <div class="small note">We support visualization research. If you’re interested in studying public notebooks, please reach out and let us help you write a polite scraper.</div>
 
-Above, we color by frequency instead of route. This better reveals the density of requests, though we cannot differentiate routes and therefore infer as much about behavior. Notice the spike in the early morning hours of January 31 — a bot scanning for vulnerabilities.
+Above, we color by frequency instead of route. This better reveals the density of requests, though we cannot differentiate routes and therefore infer as much about behavior. Notice the spike in the early morning hours of January 31. By looking at the associated logs, we determined this to be a bot scanning for vulnerabilities.
 
 ```js
 const latencyCanvas = document.createElement("canvas");
