@@ -1,5 +1,7 @@
 export default {
   title: "Hello, world!",
+  toc: false,
+  pager: false,
   header: `<style>
 
 #observablehq-header a[href] {

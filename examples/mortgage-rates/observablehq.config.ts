@@ -1,6 +1,6 @@
 export default {
   title: "Primary mortgage market survey",
-  theme: "alt",
+  pager: false,
   toc: false,
   header: `<style>
 
