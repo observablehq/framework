@@ -141,8 +141,8 @@ function centerResize(render) {
 }
 ```
 
-<div class="grid grid-cols-2">
-  <div class="card grid-rowspan-3" style="">
+<div class="grid grid-cols-4">
+  <div class="card grid-colspan-2 grid-rowspan-3">
     <h2>Change in demand by balancing authority</h2>
     <h3>Percent change in electricity demand from previous hour</h3>
     <figure style="max-width: none;">
@@ -171,15 +171,15 @@ function centerResize(render) {
       </figcaption>
     </figure>
   </div>
-  <div class="card">
+  <div class="card grid-colspan-2">
     <h2>Top 5 balancing authorities by demand at ${hourFormat(currentHour)} ${relativeDay().toLowerCase()} (GWh)</h2>
     ${resize((width, height) => top5BalancingAuthoritiesChart(width, height, top5LatestDemand, maxDemand))}
   </div>
-  <div class="card">
+  <div class="card grid-colspan-2">
     <h2>US electricity generation, demand, and demand forecast (GWh)</h2>
     ${resize((width, height) => usGenDemandForecastChart(width, height, usDemandGenForecast, currentHour))}
   </div>
-  <div class="card">
+  <div class="card grid-colspan-2">
     <h2>Neighboring country interchange (GWh)</h2>
     ${resize((width, height) => countryInterchangeChart(width, height, usDemandGenForecast, countryInterchangeSeries, currentHour))}
   </div>
