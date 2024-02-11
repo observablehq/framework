@@ -1,8 +1,3 @@
----
-toc: false
-theme: [air, near-midnight, wide]
----
-
 # U.S. electricity grid
 
 ```js

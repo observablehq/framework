@@ -1,8 +1,3 @@
----
-toc: false
-theme: dashboard
----
-
 # A year of chess rankings
 
 Rankings of the top ${TOP_N_COUNT} players of _standard_ chess in the last ${MONTHS_OF_DATA} months. Data: [International Chess Federation](https://ratings.fide.com/)

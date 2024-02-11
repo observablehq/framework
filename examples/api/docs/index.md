@@ -1,20 +1,6 @@
----
-toc: false
----
-
 ```js
 import {ApiHeatmap} from "./components/apiHeatmap.js";
 import {ApiHistogram} from "./components/apiHistogram.js";
-```
-
-```js
-const latencyHeatmap = FileAttachment("data/latency-heatmap.arrow").arrow();
-```
-
-```js
-const topRoutesPixel = d3.sort(d3.rollups(latencyHeatmap.getChild("route"), (D) => D.length, (d) => d).filter(([d]) => d), ([, d]) => -d).map(([route, count]) => ({route, count}));
-const routeColor = Object.assign(Plot.scale({color: {domain: topRoutesPixel.map((d) => d.route)}}), {label: "route"});
-const routeSwatch = (route) => html`<span style="white-space: nowrap;"><svg width=10 height=10 fill=${routeColor.apply(route)}><rect width=10 height=10></rect></svg> <span class="small">${route}</span></span>`;
 ```
 
 # Analyzing web logs
@@ -24,6 +10,7 @@ Web logs capture traffic metadata, such as the request time and route, how long 
 What if — instead of summarizing — we plotted _every_ request as a dot with time along *x*→ and latency (on a log scale) along *y*↑?
 
 ```js
+const latencyHeatmap = FileAttachment("data/latency-heatmap.arrow").arrow();
 const latencyByRouteCanvas = document.createElement("canvas");
 ```
 
@@ -31,6 +18,12 @@ const latencyByRouteCanvas = document.createElement("canvas");
   <h2>Response latency, color by route</h2>
   ${resize((width) => ApiHeatmap(latencyHeatmap.getChild("count"), latencyHeatmap.getChild("route"), {y1: 0.5, y2: 10_000, canvas: latencyByRouteCanvas, color: routeColor, width, label: "Duration (ms)"}))}
 </div>
+
+```js
+const topRoutesPixel = d3.sort(d3.rollups(latencyHeatmap.getChild("route"), (D) => D.length, (d) => d).filter(([d]) => d), ([, d]) => -d).map(([route, count]) => ({route, count}));
+const routeColor = Object.assign(Plot.scale({color: {domain: topRoutesPixel.map((d) => d.route)}}), {label: "route"});
+const routeSwatch = (route) => html`<span style="white-space: nowrap;"><svg width=10 height=10 fill=${routeColor.apply(route)}><rect width=10 height=10></rect></svg> <span class="small">${route}</span></span>`;
+```
 
 The plot above shows a sample of ${d3.sum(latencyHeatmap.getChild("count")).toLocaleString("en-US")} requests to Observable servers over a 7-day period. Color encodes the associated route. Hover to see the route.
 

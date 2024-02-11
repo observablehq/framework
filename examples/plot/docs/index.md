@@ -1,9 +1,4 @@
----
-toc: false
-theme: dashboard
----
-
-# Plot
+# Observable Plot downloads
 
 ```js
 import {trend} from "./components/trend.js";
@@ -170,12 +165,3 @@ const burndown = issues
     )
   }</div>
 </div>
-
-<!--
-TODO
-- count number of recent issue comments & reactions
-- show npm downloads by day of week
-- show the size of the bundle, or lines of source code over time
-- show [jsDelivr stats](https://www.jsdelivr.com/package/npm/@observablehq/plot?tab=stats)
-- show recent GitHub commit activity
--->
