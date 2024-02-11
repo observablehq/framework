@@ -334,16 +334,20 @@ async function cachedFetch(href: string): Promise<{headers: Headers; body: any}>
 async function resolveNpmVersion(specifier: string): Promise<string> {
   if (!npmVersionResolutionEnabled) throw new Error("npm version resolution is not enabled");
   const {name, range} = parseNpmSpecifier(specifier); // ignore path
+  if (range && /^\d+\.\d+\.\d+([-+].*)?$/.test(range)) return range; // exact version specified
   specifier = formatNpmSpecifier({name, range});
   const search = range ? `?specifier=${range}` : "";
-  if (name === "@duckdb/duckdb-wasm" && !range) return "1.28.0"; // https://github.com/duckdb/duckdb-wasm/issues/1561
   const {version} = (await cachedFetch(`https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`)).body;
   if (!version) throw new Error(`unable to resolve version: ${specifier}`);
   return version;
 }
 
 export async function resolveNpmImport(specifier: string): Promise<string> {
-  const {name, range, path = "+esm"} = parseNpmSpecifier(specifier);
+  const parsed = parseNpmSpecifier(specifier);
+  const {name, path = "+esm"} = parsed;
+  let {range} = parsed;
+  if (name === "@duckdb/duckdb-wasm" && !range) specifier = formatNpmSpecifier({name, range: (range = "1.28.0"), path}); // https://github.com/duckdb/duckdb-wasm/issues/1561
+  if (name === "parquet-wasm" && !range) specifier = formatNpmSpecifier({name, range: (range = "0.5.0"), path}); // https://github.com/observablehq/framework/issues/733
   try {
     const version = await resolveNpmVersion(specifier);
     return `https://cdn.jsdelivr.net/npm/${name}@${version}/${path}`;
