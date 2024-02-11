@@ -331,11 +331,10 @@ async function cachedFetch(href: string): Promise<{headers: Headers; body: any}>
   return promise;
 }
 
-async function resolveNpmVersion(specifier: string): Promise<string> {
+async function resolveNpmVersion({name, range}: {name: string; range?: string}): Promise<string> {
   if (!npmVersionResolutionEnabled) throw new Error("npm version resolution is not enabled");
-  const {name, range} = parseNpmSpecifier(specifier); // ignore path
   if (range && /^\d+\.\d+\.\d+([-+].*)?$/.test(range)) return range; // exact version specified
-  specifier = formatNpmSpecifier({name, range});
+  const specifier = formatNpmSpecifier({name, range});
   const search = range ? `?specifier=${range}` : "";
   const {version} = (await cachedFetch(`https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`)).body;
   if (!version) throw new Error(`unable to resolve version: ${specifier}`);
@@ -343,14 +342,11 @@ async function resolveNpmVersion(specifier: string): Promise<string> {
 }
 
 export async function resolveNpmImport(specifier: string): Promise<string> {
-  const parsed = parseNpmSpecifier(specifier);
-  const {name, path = "+esm"} = parsed;
-  let {range} = parsed;
-  if (name === "@duckdb/duckdb-wasm" && !range) specifier = formatNpmSpecifier({name, range: (range = "1.28.0"), path}); // https://github.com/duckdb/duckdb-wasm/issues/1561
-  if (name === "parquet-wasm" && !range) specifier = formatNpmSpecifier({name, range: (range = "0.5.0"), path}); // https://github.com/observablehq/framework/issues/733
+  let {name, range, path = "+esm"} = parseNpmSpecifier(specifier); // eslint-disable-line prefer-const
+  if (name === "@duckdb/duckdb-wasm" && !range) range = "1.28.0"; // https://github.com/duckdb/duckdb-wasm/issues/1561
+  if (name === "parquet-wasm" && !range) range = "0.5.0"; // https://github.com/observablehq/framework/issues/733
   try {
-    const version = await resolveNpmVersion(specifier);
-    return `https://cdn.jsdelivr.net/npm/${name}@${version}/${path}`;
+    return `https://cdn.jsdelivr.net/npm/${name}@${await resolveNpmVersion({name, range})}/${path}`;
   } catch {
     return `https://cdn.jsdelivr.net/npm/${name}${range ? `@${range}` : ""}/${path}`;
   }
