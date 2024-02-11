@@ -1,0 +1,10 @@
+.DS_Store
+dist/
+docs/.observablehq/cache/
+node_modules/
+yarn-error.log
+yarn.lock
+.Rhistory
+.Rapp.history
+.RData
+.Ruserdata
