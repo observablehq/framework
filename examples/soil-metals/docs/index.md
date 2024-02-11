@@ -78,8 +78,8 @@ function biplot(width, height) {
 return Plot.plot({
   width,
   height: height - 120,
-  x: {inset: 20, ticks: 0, label: "PC1"},
-  y: {inset: 20, ticks: 0, label: "PC2"},
+  x: {label: `PC1 (${d3.format(".1%")(varExplained.map(d => d.variance)[0])})`, ticks: 6},
+  y: {label: `PC1 (${d3.format(".1%")(varExplained.map(d => d.variance)[1])})`, ticks: 6},
   marks: [
     Plot.frame({stroke: "#BCBCBC"}),
     Plot.dot(obsScores, {
@@ -128,19 +128,24 @@ return Plot.plot({
 ```js
 function screeplot(width, height) {
 return Plot.plot({
+  marginTop: 15,
   width,
-  height: height - 15,
-  x: {label: null, ticks: 3},
-  y: {label: "Variance explained",  
-      grid: true, 
-      ticks: 6,
-      tickFormat: d3.format(".0%")},
+  height,
+  x: {label: null},
+  y: {axis: null},
   marks: [
     Plot.barY(varExplained, {
       x: "pc",
       y: "variance",
       fill: "gray",
       sort: { x: "y", reverse: true }
+    }),
+    Plot.ruleY([0]),
+    Plot.text(varExplained, {
+      text: (d) => d3.format(".1%")(d.variance),
+      x: "pc",
+      y: "variance",
+      dy: -8
     })
   ]
 });
@@ -150,11 +155,12 @@ return Plot.plot({
 <div class="grid grid-cols-4" style="grid-auto-rows: 145px;">
   <div class="card grid-colspan-2 grid-rowspan-4">
     <h2>Principal component analysis</h2>
+    <h3>Axis scales are for observation scores. See table for loading values.</h3>
     ${pickDistrict}
     ${resize((width, height) => biplot(width, height))}
   </div>
   <div class="card grid-colspan-2 grid-rowspan-2">
-    <h2>Screeplot</h2>
+    <h2>Variance explained</h2>
     ${resize((width, height) => screeplot(width, height))}
   </div>
   <div class="card grid-colspan-2 grid-rowspan-2" style="padding: 0; border-radius: 12px; overflow: hidden;">
