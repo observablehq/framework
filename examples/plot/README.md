@@ -1,6 +1,8 @@
 # Tracking Observable Plot
 
-This dashboard tracks several metrics about the development and usage of [Observable Plot](https://observablehq.com/plot/). It contains a single page in [`docs/index.md`](./docs/index.md), with no configuration file.
+This is an example Observable Framework project that tracks several metrics about the development and usage of [Observable Plot](https://observablehq.com/plot/). It contains a single page in [`docs/index.md`](./docs/index.md), with no configuration file.
+
+View the [live project](https://observablehq.com/framework/examples/plot/).
 
 ## Data loaders
 
