@@ -98,7 +98,7 @@ caltrans
 
 Working in a shell script is flexible. Within the shell script, work in whatever you language you like to access and prep your data, then write to standard output.
 
-The data loader example below, `penguin.csv.sh`, starts a Python script, accesses and wrangles data from a local file, and writes a CSV to standard output.
+The data loader example below, `penguin.csv.sh`, starts a Python script, accesses the [penguins data](https://journal.r-project.org/articles/RJ-2022-020/) data from a local file and does some basic wrangling, then writes a CSV to standard output.
 
 Create a file in your project source root, with the .csv.sh double extension (for example, `docs/my-data.csv.sh`), then paste the code below to get started.
 

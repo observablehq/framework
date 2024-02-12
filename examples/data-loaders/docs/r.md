@@ -4,7 +4,7 @@ Observable Framework supports [data loaders](../loaders) written in R, by passin
 
 ## CSV
 
-The data loader below (`penguin-kmeans.csv.R`) reads in the penguins data from a local file, performs [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering) based on culmen (bill) length and depth, then outputs a single CSV with penguin cluster assignments.
+The data loader below (`penguin-kmeans.csv.R`) reads in the [penguins data](https://journal.r-project.org/articles/RJ-2022-020/) from a local file, performs [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering) based on culmen (bill) length and depth, then outputs a single CSV with penguin cluster assignments.
 
 Create a file in your project source root, with the .csv.R double extension (for example, `docs/my-data.csv.R`), then paste the R code below to get started.
 
@@ -109,7 +109,7 @@ salmon
 
 ## ZIP
 
-The data loader below (`penguin-mlr.zip.R`) reads in the penguins data from a local file, performs multiple linear regression, then outputs multiple files (with model estimates and predictions) as a ZIP archive.
+The data loader below (`penguin-mlr.zip.R`) reads in the [penguins data](https://journal.r-project.org/articles/RJ-2022-020/) from a local file, performs multiple linear regression, then outputs multiple files (with model estimates and predictions) as a ZIP archive.
 
 Create a file in your project source root, with the .zip.R double extension (for example, `docs/my-data.zip.R`), then paste the R code below to get started.
 
