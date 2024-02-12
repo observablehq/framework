@@ -1,11 +1,12 @@
 import { version } from "./package.json" assert {type: "json"};
 
 export default {
-    //title: "Observable Framework",
+    title: "Data loader examples",
     pages: [
-        { name: "Python", path: "/python" },
-        { name: "JavaScript", path: "/js" },
-        { name: "R", path: "/r" },
-        { name: "Shell script", path: "/shell" }
+        { name: "Python (.py)", path: "/python" },
+        { name: "JavaScript (.js)", path: "/js" },
+        { name: "R (.R)", path: "/r" },
+        { name: "Shell script (.sh)", path: "/shell" },
+        { name: "Executable (.exe)", path: "/exe" }
     ]
 }
