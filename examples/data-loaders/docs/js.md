@@ -93,3 +93,5 @@ const doc = parseFromString(testing, "image/svg+xml");
 ```js echo
 doc
 ```
+
+## JSON

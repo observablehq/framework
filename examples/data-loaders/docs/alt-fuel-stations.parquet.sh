@@ -1,7 +1,7 @@
 duckdb -csv :memory: << EOF
 
 CREATE TABLE allp AS (
-  FROM 'https://data.openei.org/files/106/04232015altfuelstations.csv'
+  FROM 'https://data.openei.org/files/106/alt_fuel_stations%20%28Jul%2029%202021%29.csv'
 );
 
 CREATE TABLE cafuelstations AS (

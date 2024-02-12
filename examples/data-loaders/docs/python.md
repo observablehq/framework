@@ -1,6 +1,6 @@
 # Python data loader examples
 
-The Observable CLI supports [data loaders](../loaders) written in Python, by passing them to the [python3](https://www.python.org/) command. The latter must be available on your `$PATH`. Any library used by your scripts must also be installed.
+Observable Framework supports [data loaders](../loaders) written in Python, by passing them to the [python3](https://www.python.org/) command. The latter must be available on your `$PATH`. Any library used by your scripts must also be installed.
 
 ## CSV
 
