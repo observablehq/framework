@@ -7,6 +7,7 @@ import {mergeStyle} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
+import {computeHash} from "./hash.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
 import type {ParseResult} from "./markdown.js";
@@ -46,6 +47,7 @@ export interface BuildOptions {
   config: Config;
   clientEntry?: string;
   addPublic?: boolean;
+  hashFiles?: boolean;
 }
 
 export interface BuildEffects {
@@ -66,7 +68,7 @@ export interface BuildEffects {
 }
 
 export async function build(
-  {config, addPublic = true, clientEntry = "./src/client/index.js"}: BuildOptions,
+  {config, addPublic = true, clientEntry = "./src/client/index.js", hashFiles = true}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output)
 ): Promise<void> {
   const {root} = config;
@@ -86,6 +88,15 @@ export async function build(
   const imports = new Set<string>();
   const styles: Style[] = [];
   const pages = new Map<string, ParseResult>();
+  const hashes = new Map<string, string>();
+  const fileHash = (path: string, value: string | Buffer) => {
+    if (hashFiles) {
+      const hash = computeHash(value);
+      const out = `${path}?h=${hash}`;
+      hashes.set(path, out);
+    }
+    return path;
+  };
   for await (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);
     effects.output.write(`${faint("parse")} ${sourcePath}\n`);
@@ -115,7 +126,7 @@ export async function build(
       const code = await (entry.endsWith(".css")
         ? bundleStyles({path: clientPath})
         : rollupClient(clientPath, {minify: true}));
-      await effects.writeFile(outputPath, code);
+      await effects.writeFile(fileHash(outputPath, code), code);
     }
     for (const style of styles) {
       if ("path" in style) {
@@ -123,12 +134,12 @@ export async function build(
         const sourcePath = join(root, style.path);
         effects.output.write(`${faint("bundle")} ${sourcePath} ${faint("→")} `);
         const code = await bundleStyles({path: sourcePath});
-        await effects.writeFile(outputPath, code);
+        await effects.writeFile(fileHash(outputPath, code), code);
       } else {
         const outputPath = join("_observablehq", `theme-${style.theme}.css`);
         effects.output.write(`${faint("bundle")} theme-${style.theme}.css ${faint("→")} `);
         const code = await bundleStyles({theme: style.theme});
-        await effects.writeFile(outputPath, code);
+        await effects.writeFile(fileHash(outputPath, code), code);
       }
     }
   }
@@ -151,7 +162,7 @@ export async function build(
       }
     }
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-    await effects.copyFile(sourcePath, outputPath);
+    await effects.copyFile(sourcePath, fileHash(outputPath, await readFile(sourcePath, null)));
   }
 
   // Copy over the imported modules.
@@ -165,14 +176,14 @@ export async function build(
     }
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     const contents = await rewriteModule(await readFile(sourcePath, "utf-8"), file, importResolver);
-    await effects.writeFile(outputPath, contents);
+    await effects.writeFile(fileHash(outputPath, contents), contents);
   }
 
   // Copy over required distribution files.
   if (addPublic) {
     for (const [sourcePath, outputPath] of EXTRA_FILES) {
       effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-      await effects.copyFile(sourcePath, outputPath);
+      await effects.copyFile(sourcePath, fileHash(outputPath, await readFile(sourcePath, null)));
     }
   }
 
@@ -181,7 +192,7 @@ export async function build(
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
     effects.output.write(`${faint("render")} ${sourceFile} → `);
-    await effects.writeFile(outputPath, await render(parsed, {path, ...config}));
+    await effects.writeFile(outputPath, await render(parsed, {path, ...config}, hashes));
   }
 
   Telemetry.record({event: "build", step: "finish", pageCount});

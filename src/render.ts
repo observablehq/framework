@@ -35,7 +35,7 @@ export async function renderPreview(sourcePath: string, options: RenderOptions):
   };
 }
 
-export function renderDefineCell(cell: Transpile): string {
+export function renderDefineCell(cell: Transpile, hashes?: Map<string, string>): string {
   const {id, inline, inputs, outputs, files, body} = cell;
   return `define({${Object.entries({id, inline, inputs, outputs, files})
     .filter((arg) => arg[1] !== undefined)
@@ -49,7 +49,8 @@ type RenderInternalOptions =
 
 export async function render(
   parseResult: ParseResult,
-  options: RenderOptions & RenderInternalOptions
+  options: RenderOptions & RenderInternalOptions,
+  hashes?: Map<string, string>
 ): Promise<string> {
   const {root, base, path, pages, title, preview} = options;
   const sidebar = parseResult.data?.sidebar !== undefined ? Boolean(parseResult.data.sidebar) : options.sidebar;
@@ -82,7 +83,7 @@ import ${preview || parseResult.cells.length > 0 ? `{${preview ? "open, " : ""}d
   )};
 ${
   preview ? `\nopen({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
-}${parseResult.cells.map((cell) => `\n${renderDefineCell(cell)}`).join("")}`)}
+}${parseResult.cells.map((cell) => `\n${renderDefineCell(cell, hashes)}`).join("")}`)}
 </script>${sidebar ? html`\n${await renderSidebar(title, pages, path)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(parseResult), toc.label)}` : ""
   }
