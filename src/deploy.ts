@@ -273,10 +273,7 @@ export async function deploy(
   try {
     deployId = await apiClient.postDeploy({projectId: deployTarget.project.id, message});
   } catch (error) {
-    if (
-      isHttpError(error) &&
-      (error.statusCode === 404 || error.statusCode === 403)
-    ) {
+    if (isHttpError(error) && (error.statusCode === 404 || error.statusCode === 403)) {
       throw new CliError("Deploy failed. Please check your deploy configuration.", {cause: error});
     }
     throw error;
