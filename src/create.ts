@@ -126,7 +126,7 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
     },
     {
       onCancel: () => {
-        clack.cancel("create cancelled");
+        clack.cancel("create canceled");
         process.exit(0);
       }
     }
