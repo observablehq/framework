@@ -36,13 +36,10 @@ export async function renderPreview(sourcePath: string, options: RenderOptions):
 }
 
 function maybeHashed(files?: FileReference[], hashes?: Map<string, string>) {
-  return files && hashes
-    ? files.map(({path, ...rest}) => {
-        const [, relative, file] = path.match(/^((?:\.\.\/)+|\.\/)(.*)$/)!;
-        return {
-          path: file && hashes.has(file) ? `${relative}${hashes.get(file)}` : path,
-          ...rest
-        };
+  return files && hashes?.size
+    ? files.map((f) => {
+        const [, relative, file] = f.path.match(/^((?:\.\.\/)+|\.\/)(.*)$/)!;
+        return file && hashes.has(file) ? {...f, path: `${relative}${hashes.get(file)}`} : f;
       })
     : files;
 }
@@ -50,7 +47,6 @@ function maybeHashed(files?: FileReference[], hashes?: Map<string, string>) {
 export function renderDefineCell(cell: Transpile, hashes?: Map<string, string>): string {
   const {id, inline, inputs, outputs, body} = cell;
   const files = maybeHashed(cell.files, hashes);
-  if (files) console.warn(files);
   return `define({${Object.entries({id, inline, inputs, outputs, files})
     .filter((arg) => arg[1] !== undefined)
     .map((arg) => `${arg[0]}: ${JSON.stringify(arg[1])}`)
