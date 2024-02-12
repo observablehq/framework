@@ -1,8 +1,4 @@
----
-theme: alt
----
-
-# Primary Mortgage Market Survey
+# Primary mortgage market survey
 
 ```js
 const pmms = FileAttachment("data/pmms.csv").csv({typed: true});
@@ -77,7 +73,7 @@ function trend(v) {
 
 <div class="grid grid-cols-2" style="max-width: 672px">${frmCard(30, pmms)} ${frmCard(15, pmms)}</div>
 
-<p style="text-align: right; font-style: italic; font-size: smaller;">Data as of ${pmms.at(-1).date?.toLocaleDateString("en-us", {weekday: "long", year: "numeric", month: "short", day: "numeric", timeZone: "UTC"}) 
+<p style="text-align: right; font-style: italic; font-size: smaller;">Data as of ${pmms.at(-1).date?.toLocaleDateString("en-us", {weekday: "long", year: "numeric", month: "short", day: "numeric", timeZone: "UTC"})
 }. Source: <a href="https://www.freddiemac.com/pmms">Freddie Mac</a></p>
 
 <p class="card">${Plot.plot({

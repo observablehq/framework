@@ -1,7 +1,3 @@
----
-toc: false
----
-
 # Penguin classification
 
 ```js

@@ -1,115 +1,73 @@
----
-toc: false
-theme: dashboard
----
-
 # A year of chess rankings
 
-Rankings of the top ${TOP_N_COUNT} players of _standard_ chess in the last ${MONTHS_OF_DATA} months. Data: [International Chess Federation](https://ratings.fide.com/)
+Rankings of the top ${TOP_N_COUNT} players of _standard_ chess in the last ${MONTHS_OF_DATA} months.
 
 ```js
-const { womens, mens, MONTHS_OF_DATA, TOP_N_COUNT } = await FileAttachment("data/top-ranked-players.json").json();
-const titleMap = {
-  "GM": "Grand Master",
-  "WGM": "Womens Grand Master"
-};
-const darkScheme = Generators.observe((change) => {
-  const mm = window.matchMedia?.('(prefers-color-scheme: dark)');
-  if (!mm) return change("lighten");
-  change(mm.matches);
-  mm.addEventListener("change", () => change(mm.matches));
-});
+import {dark} from "./components/dark.js";
+import {revive} from "./components/revive.js";
 ```
 
 ```js
-function bumpMarks(data, { r = 3, curve = "bump-x", ...options }, [firstMonth, lastMonth]) {
-  options = Plot.stackY2(options);
-  options.y.label = "rank";
-  return Plot.marks(
-    Plot.lineY(data, Plot.binX({x: "first", y: "first", filter: null}, {
-      ...options,
-      stroke: options.z,
-      curve,
-      fill: null,
-      mixBlendMode: darkScheme ? "lighten" : "darken",
-      interval: "month"
-    })),
-    Plot.text(data, { ...options, text: options.y, fill: "black" }),
-    Plot.text(
-      data.filter(d => d.month === lastMonth),
-      Plot.selectFirst({
-        ...options,
-        text: options.z,
-        dy: 0,
-        dx: 10 + (r || options.strokeWidth / 2),
-        textAnchor: "start",
-        fill: "currentColor",
-      }),
-    ),
-    Plot.text(
-      data.filter(d => d.month === firstMonth),
-      Plot.selectLast({
-        ...options,
-        text: options.z,
-        dy: 0,
-        dx: -(10 + (r || options.strokeWidth / 2)),
-        textAnchor: "end",
-        fill: "currentColor"
-      })
-    )
-  );
+const {womens, mens, MONTHS_OF_DATA, TOP_N_COUNT} = await FileAttachment("data/top-ranked-players.json").json().then(revive);
+```
+
+```js
+function formatTitle(title) {
+  return title === "GM" ? "Grand Master" : title;
 }
+```
 
-function bumpChart(data, width) {
-  const months = [...new Set(data.map(d => d.month))].sort();
-  const tickFormat = dateString => {
-    const date = new Date(dateString);
-    return d3.utcFormat(date.getMonth() === 0 ? "%b %y" : "%b")(date);
-  }
-
+```js
+function bumpChart(data, {x = "month", y = "rating", z = "name", interval = "month", width} = {}) {
+  const rank = Plot.stackY2({x, z, order: y, reverse: true});
+  const [xmin, xmax] = d3.extent(Plot.valueof(data, x));
   return Plot.plot({
-    marginTop: 20,
-    marginBottom: 35,
-    marginLeft: 125,
-    marginRight: 125,
     width,
     x: {
-      domain: months,
-      tickFormat,
+      [width < 480 ? "insetRight" : "inset"]: 120,
       label: null,
       grid: true
     },
     y: {
       axis: null,
-      domain: [10.5, 1]
+      inset: 20,
+      reverse: true
     },
     color: {
-      domain: d3
-        .groupSort(
-          data,
-          (v) => v[0].rating,
-          (d) => d.name
-        )
-        .reverse()
+      scheme: "spectral"
     },
     marks: [
-      bumpMarks(data, {
-        x: "month",
-        z: "name",
-        order: "rating",
-        reverse: true,
+      Plot.lineY(data, Plot.binX({x: "first", y: "first", filter: null}, {
+        ...rank,
+        stroke: z,
         strokeWidth: 24,
-        strokeLinejoin: "round",
-        strokeLinecap: "round",
-        r: 0,
-        dy: ".35em",
-        fill: "white",
-        tip: true,
-        channels: {rating: "rating"},
-        title: (d) => `name: ${d.name}\ntitle: ${titleMap[d.title] ?? ""}\nborn: ${d.born}\nrating: ${d.rating}\nfederation: ${d.federation}\nmonth: ${d3.utcFormat("%b %y")(new Date(d.month))}`,
-        href: ({ id }) => `https://ratings.fide.com/profile/${id}`,
-        target: "_blank"
-      }, [months.at(0), months.at(-1)])
+        curve: "bump-x",
+        sort: {color: "y", reduce: "first"},
+        mixBlendMode: dark ? "lighten" : "darken",
+        interval
+      })),
+      Plot.text(data, {
+        ...rank,
+        text: rank.y,
+        fill: "black",
+        stroke: z,
+        channels: {[y]: y, "title\0": (d) => formatTitle(d.title), federation: "federation", born: (d) => String(d.born)},
+        tip: {format: {y: null, text: null}}
+      }),
+      width < 480 ? null : Plot.text(data, {
+        ...rank,
+        filter: (d) => d[x] <= xmin,
+        text: z,
+        dx: -20,
+        textAnchor: "end"
+      }),
+      Plot.text(data, {
+        ...rank,
+        filter: (d) => d[x] >= xmax,
+        text: z,
+        dx: 20,
+        textAnchor: "start"
+      })
     ]
   })
 }
@@ -117,11 +75,13 @@ function bumpChart(data, width) {
 
 <div class="grid">
   <div class="card">
-    <h1>Womens</h1>
-    ${resize((width) => bumpChart(womens, width))}
+    <h2>Top ten women players</h2>
+    ${resize((width) => bumpChart(womens, {width}))}
   </div>
   <div class="card">
-    <h1>Mens</h1>
-    ${resize((width) => bumpChart(mens, width))}
+    <h2>Top ten men players</h2>
+    ${resize((width) => bumpChart(mens, {width}))}
   </div>
 </div>
+
+Data: [International Chess Federation](https://ratings.fide.com/)
