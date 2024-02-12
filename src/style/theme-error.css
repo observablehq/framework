@@ -5,11 +5,10 @@ body {
 }
 
 body::after {
- content: "ERROR";
- position: fixed;
- background: white;
- padding: 4px 3em;
- top: 4px;
- z-index: 2;
+  content: "ERROR";
+  position: fixed;
+  background: white;
+  padding: 4px 3em;
+  top: 4px;
+  z-index: 2;
 }
-
