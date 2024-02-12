@@ -1,6 +1,6 @@
 # Shell script data loader examples
 
-In Observable Framework, you can write [data loaders](../loaders) in shell scripts.
+In Observable Framework, [data loaders](../loaders) can be created in shell scripts — they will be called with the system shell "sh".
 
 ## Parquet (with DuckDB)
 
