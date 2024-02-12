@@ -106,9 +106,7 @@ export async function deploy(
     if (apiKey) {
       currentUser = await apiClient.getCurrentUser();
       // List of valid workspaces that can be used to create projects.
-      currentUser.workspaces = currentUser.workspaces.filter((w) => {
-        return ["owner", "member"].includes(w.role);
-      });
+      currentUser.workspaces = currentUser.workspaces.filter((w) => w.role === "owner" || w.role === "member");
     }
   } catch (error) {
     if (isHttpError(error)) {
