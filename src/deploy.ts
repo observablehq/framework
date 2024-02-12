@@ -103,7 +103,13 @@ export async function deploy(
   let currentUser: GetCurrentUserResponse | null = null;
   let authError: null | "unauthenticated" | "forbidden" = null;
   try {
-    if (apiKey) currentUser = await apiClient.getCurrentUser();
+    if (apiKey) {
+      currentUser = await apiClient.getCurrentUser();
+      // List of valid workspaces that can be used to create projects.
+      currentUser.workspaces = currentUser.workspaces.filter((w) => {
+        return ["owner", "member"].includes(w.role) && ["starter_2024", "pro_2024", "enterprise_2024"].includes(w.tier);
+      });
+    }
   } catch (error) {
     if (isHttpError(error)) {
       if (error.statusCode === 401) authError = "unauthenticated";
