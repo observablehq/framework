@@ -13,6 +13,7 @@ import {
   invalidApiKey,
   mockObservableApi,
   userWithOneWorkspace,
+  userWithThreeWorkspaces,
   userWithTwoWorkspaces,
   userWithZeroWorkspaces,
   validApiKey
@@ -517,6 +518,19 @@ describe("deploy", () => {
     } catch (err) {
       assert.ok(err instanceof Error);
       assert.match(err.message, /out of inputs for select.*Which Observable workspace do you want to use/);
+    }
+  });
+
+  it("filters out workspace with the wrong tier or wrong role", async () => {
+    getCurrentObservableApi().handleGetCurrentUser({user: userWithThreeWorkspaces}).start();
+    const effects = new MockDeployEffects();
+    try {
+      await deploy(TEST_OPTIONS, effects);
+      assert.fail("expected error");
+    } catch (err) {
+      assert.ok(err instanceof Error);
+      assert.match(err.message, /out of inputs for select.*Which Observable workspace do you want to use/);
+      assert.ok("options" in err && Array.isArray(err.options) && err.options.length === 2);
     }
   });
 
