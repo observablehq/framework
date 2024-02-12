@@ -9,7 +9,7 @@ import * as clack from "@clack/prompts";
 import untildify from "untildify";
 import {version} from "../package.json";
 import type {ClackEffects} from "./clack.js";
-import {cyan, faint, inverse, reset, underline} from "./tty.js";
+import {cyan, faint, inverse, link, reset} from "./tty.js";
 
 export interface CreateEffects {
   clack: ClackEffects;
@@ -121,7 +121,7 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
         s.stop("Installed! 🎉");
         const instructions = [`cd ${rootPath}`, ...(packageManager ? [] : [installCommand]), `${runCommand} dev`];
         clack.note(instructions.map((line) => reset(cyan(line))).join("\n"), "Next steps…");
-        clack.outro(`Problems? ${underline("https://observablehq.com/framework/getting-started")}`);
+        clack.outro(`Problems? ${link("https://observablehq.com/framework/getting-started")}`);
       }
     },
     {
