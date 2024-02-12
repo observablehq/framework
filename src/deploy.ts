@@ -273,12 +273,14 @@ export async function deploy(
   try {
     deployId = await apiClient.postDeploy({projectId: deployTarget.project.id, message});
   } catch (error) {
-    if (isHttpError(error) && (error.statusCode === HttpStatusCode.NOT_FOUND || error.statusCode === HttpStatusCode.FORBIDDEN)) {
+    if (
+      isHttpError(error) &&
+      (error.statusCode === HttpStatusCode.NOT_FOUND || error.statusCode === HttpStatusCode.FORBIDDEN)
+    ) {
       throw new CliError("Deploy failed. Please check your deploy configuration.", {cause: error});
     }
     throw error;
   }
-
 
   // Build the project
   await build({config, clientEntry: "./src/client/deploy.js"}, new DeployBuildEffects(apiClient, deployId, effects));
@@ -345,7 +347,6 @@ class DeployBuildEffects implements BuildEffects {
       }
       throw error;
     }
-
   }
   async writeFile(outputPath: string, content: Buffer | string) {
     this.logger.log(outputPath);

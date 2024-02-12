@@ -1,7 +1,7 @@
 import type {MockAgent} from "undici";
 import {type Interceptable} from "undici";
 import PendingInterceptorsFormatter from "undici/lib/mock/pending-interceptors-formatter.js";
-import { HttpStatusCode } from "../../src/error.js";
+import {HttpStatusCode} from "../../src/error.js";
 import type {PostAuthRequestPollResponse, PostAuthRequestResponse} from "../../src/observableApiClient.js";
 import {
   type GetProjectResponse,
