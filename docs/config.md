@@ -106,6 +106,10 @@ In this case, the path to the stylesheet is resolved relative to the page’s Ma
 
 The project’s title. If specified, this text is used for the link to the home page in the sidebar, and to complement the titles of the webpages. For instance, a page titled “Sales” in a project titled “ACME, Inc.” will display “Sales | ACME, Inc.” in the browser’s title bar. If not specified, the home page link will appear as “Home” in the sidebar, and page titles will be shown as-is.
 
+## sidebar
+
+Whether to show the sidebar. Defaults to true if **pages** is not empty.
+
 ## pages
 
 An array containing pages and/or sections. If not specified, it defaults to all Markdown files found in the source root in directory listing order.
@@ -147,6 +151,10 @@ An HTML fragment to add to the header. Defaults to the empty string.
 ## footer
 
 An HTML fragment to add to the footer. Defaults to “Built with Observable.”
+
+## base
+
+The base path when serving the site. Currently this only affects the custom 404 page, if any.
 
 ## toc
 

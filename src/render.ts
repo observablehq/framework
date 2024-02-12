@@ -58,10 +58,11 @@ type RenderInternalOptions =
   | {preview: true}; // preview
 
 async function render(parseResult: ParseResult, options: RenderOptions & RenderInternalOptions): Promise<string> {
-  const {root, path, pages, title, search, preview} = options;
+  const {root, base, path, pages, title, preview, search} = options;
+  const sidebar = parseResult.data?.sidebar !== undefined ? Boolean(parseResult.data.sidebar) : options.sidebar;
   const toc = mergeToc(parseResult.data?.toc, options.toc);
   return String(html`<!DOCTYPE html>
-<meta charset="utf-8">${path === "/404" ? html`\n<base href="/">` : ""}
+<meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 ${
   parseResult.title || title
@@ -89,7 +90,7 @@ import ${preview || parseResult.cells.length > 0 ? `{${preview ? "open, " : ""}d
 ${
   preview ? `\nopen({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
 }${parseResult.cells.map((cell) => `\n${renderDefineCell(cell)}`).join("")}`)}
-</script>${pages.length > 0 ? html`\n${await renderSidebar(title, pages, path, search)}` : ""}${
+</script>${sidebar ? html`\n${await renderSidebar(title, pages, path, search)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(parseResult), toc.label)}` : ""
   }
 <div id="observablehq-center">${renderHeader(options, parseResult.data)}

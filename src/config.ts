@@ -34,8 +34,10 @@ export interface Script {
 export interface Config {
   root: string; // defaults to docs
   output: string; // defaults to dist
+  base: string; // defaults to "/"
   title?: string;
-  pages: (Page | Section)[]; // TODO rename to sidebar?
+  sidebar: boolean; // defaults to true if pages isn’t empty
+  pages: (Page | Section)[];
   pager: boolean; // defaults to true
   scripts: Script[]; // defaults to empty array
   head: string; // defaults to empty string
@@ -88,6 +90,8 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   let {
     root = defaultRoot,
     output = "dist",
+    base = "/",
+    sidebar,
     style,
     theme = "default",
     search,
@@ -101,12 +105,14 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   } = spec;
   root = String(root);
   output = String(output);
+  base = normalizeBase(base);
   if (style === null) style = null;
   else if (style !== undefined) style = {path: String(style)};
   else style = {theme: (theme = normalizeTheme(theme))};
   let {title, pages = await readPages(root), pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
+  sidebar = sidebar === undefined ? pages.length > 0 : Boolean(sidebar);
   pager = Boolean(pager);
   scripts = Array.from(scripts, normalizeScript);
   head = String(head);
@@ -115,7 +121,14 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
   search = Boolean(search);
-  return {root, output, title, pages, pager, scripts, head, header, footer, toc, style, deploy, search};
+  return {root, output, base, title, sidebar, pages, pager, scripts, head, header, footer, toc, style, deploy, search};
+}
+
+function normalizeBase(base: any): string {
+  base = String(base);
+  if (!base.startsWith("/")) throw new Error(`base must start with slash: ${base}`);
+  if (!base.endsWith("/")) base += "/";
+  return base;
 }
 
 function normalizeTheme(spec: any): string[] {
