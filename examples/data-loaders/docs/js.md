@@ -97,4 +97,32 @@ const doc = parseFromString(testing, "image/svg+xml");
 doc
 ```
 
+### TEST2 SVG
+
+```js echo
+const testing2 = FileAttachment("test2.svg")
+```
+
+```js echo
+testing2
+```
+
+```js echo
+const doc2 = parseFromString(testing, "image/svg+xml");
+```
+
+```js echo
+doc2
+```
+
+```js echo
+const svg = d3.select(doc2.documentElement).remove();
+```
+
+```js echo
+svg
+```
+
+Grrr.
+
 ## JSON
