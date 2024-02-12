@@ -6,7 +6,9 @@ Observable Framework supports [data loaders](../loaders) written in Python, by p
 
 The data loader below (`penguin-logistic.csv.py`) reads in the penguins data from a local file, performs [logistic regression](https://en.wikipedia.org/wiki/Logistic_regression), then outputs a single CSV with penguin species classifications.
 
-Copy and paste the code below into your own Python data loader (with extension .csv.py in your project source root, typically `docs`), then update with your own data and Python code to get started.
+Create a file in your project source root, with the .csv.py double extension (for example, `docs/my-data.csv.py`), then paste the Python code below to get started.
+
+<!-- TODO update with setup information, see: https://github.com/observablehq/framework/tree/main/examples/penguin-classification#reuse-this-example>-->
 
 ```python
 # Import libraries (must be installed)
@@ -35,6 +37,7 @@ Access the output of the data loader (here, `penguin-logistic.csv`) from the cli
 ```js echo
 const penguinClassification = FileAttachment("penguin-logistic.csv").csv({typed: true});
 ```
+
 `penguin-logistic.csv` [routes](../loaders#routing) to the `penguin-logistic.csv.py` data loader and reads its standard output stream.
 
 <!-- For local testing of penguin-logistic.csv.py only -->
@@ -53,12 +56,12 @@ predictions
 
 The data loader below (`birth-statistics.png.py`) accesses [birth data for Lake County, Illinois](https://data-lakecountyil.opendata.arcgis.com/datasets/lakecountyil::birth-statistics/explore) from a local geoJSON file. A simple choropleth of birth rates is created using `matplotlib`, then output as a PNG file.
 
-Copy and paste the code below into your own Python data loader (with extension .png.py in your project source root, typically `docs`), then update with your own data and Python code to get started.
+Create a file in your project source root, with the .png.py double extension (for example, `docs/my-png.png.py`), then paste the Python code below to get started.
 
 ```python
 # Import libraries (must be installed)
-import geopandas as gpd 
-import matplotlib.pyplot as plt 
+import geopandas as gpd
+import matplotlib.pyplot as plt
 import io
 import sys
 
@@ -91,9 +94,9 @@ birthRateMap
 
 ## Zip
 
-The data loader below `earthquakes.zip.py` accesses data on [earthquakes from the USGS](https://www.usgs.gov/programs/earthquake-hazards/earthquakes), then combines metadata (as JSON) and selected earthquake magnitude and location (as a CSV) in a zip archive. 
+The data loader below `earthquakes.zip.py` accesses data on [earthquakes from the USGS](https://www.usgs.gov/programs/earthquake-hazards/earthquakes), then combines metadata (as JSON) and selected earthquake magnitude and location (as a CSV) in a zip archive.
 
-Copy and paste the code below into your own Python data loader (with extension .zip.py in your project source root, typically `docs`), then update with your own data and Python code to get started.
+Create a file in your project source root, with the .zip.py double extension (for example, `docs/my-data.zip.py`), then paste the Python code below to get started.
 
 ```python
 # Import libraries (must be installed)
@@ -154,7 +157,7 @@ const quakeData = FileAttachment("earthquakes/quakes.csv").csv({typed: true})
 quakeData
 ```
 
-You can alternatively access the zip archive as a whole: 
+You can alternatively access the zip archive as a whole:
 
 ```js echo
 const quakeZip = FileAttachment("earthquakes.zip").zip()

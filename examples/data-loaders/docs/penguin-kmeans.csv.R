@@ -4,15 +4,15 @@ library(dplyr)
 library(tidyr)
 
 # Data access, wrangling and analysis
-penguins <- read_csv("docs/data/penguins.csv") |> 
+penguins <- read_csv("docs/data/penguins.csv") |>
   drop_na(culmen_depth_mm, culmen_length_mm)
 
-penguin_kmeans <- penguins |> 
-  select(culmen_depth_mm, culmen_length_mm) |> 
-  scale() |> 
+penguin_kmeans <- penguins |>
+  select(culmen_depth_mm, culmen_length_mm) |>
+  scale() |>
   kmeans(centers = 3)
 
-penguin_clusters <- penguins |> 
+penguin_clusters <- penguins |>
   mutate(cluster = penguin_kmeans$cluster)
 
 # Convert data frame to delimited string, then write to standard output

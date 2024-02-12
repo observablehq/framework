@@ -6,7 +6,7 @@ Observable Framework supports [data loaders](../loaders) written in R, by passin
 
 The data loader below (`penguin-kmeans.csv.R`) reads in the penguins data from a local file, performs [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering) based on culmen (bill) length and depth, then outputs a single CSV with penguin cluster assignments.
 
-Copy and paste the code below into your own R data loader (with extension .csv.R in your project source root, typically `docs`), then update with your own data and R code to get started.
+Create a file in your project source root, with the .csv.R double extension (for example, `docs/my-data.csv.R`), then paste the R code below to get started.
 
 ```r
 # Attach libraries (must be installed)
@@ -15,15 +15,15 @@ library(dplyr)
 library(tidyr)
 
 # Data access, wrangling and analysis
-penguins <- read_csv("docs/data/penguins.csv") |> 
+penguins <- read_csv("docs/data/penguins.csv") |>
   drop_na(culmen_depth_mm, culmen_length_mm)
 
-penguin_kmeans <- penguins |> 
-  select(culmen_depth_mm, culmen_length_mm) |> 
-  scale() |> 
+penguin_kmeans <- penguins |>
+  select(culmen_depth_mm, culmen_length_mm) |>
+  scale() |>
   kmeans(centers = 3)
 
-penguin_clusters <- penguins |> 
+penguin_clusters <- penguins |>
   mutate(cluster = penguin_kmeans$cluster)
 
 # Convert data frame to delimited string, then write to standard output
@@ -35,6 +35,7 @@ Access the output of the data loader (here, `penguin-kmeans.csv`) from the clien
 ```js run=false
 const penguinKmeans = FileAttachment("penguin-kmeans.csv").csv({typed: true});
 ```
+
 `penguin-kmeans.csv` [routes](../loaders#routing) to the `penguin-kmeans.csv.R` data loader and reads its standard output stream.
 
 <!-- For local testing of penguin-kmeans.csv.R only -->
@@ -51,9 +52,9 @@ penguinKmeans
 
 ## JSON
 
-The data loader below (`salmon.json.R`) scrapes adult daily salmon data at Bonneville Dam (2010 - 2022) from tables on the [Columbia River DART](https://www.cbr.washington.edu/dart) site, then returns the output as a JSON file. 
+The data loader below (`salmon.json.R`) scrapes adult daily salmon data at Bonneville Dam (2010 - 2022) from tables on the [Columbia River DART](https://www.cbr.washington.edu/dart) site, then returns the output as a JSON file.
 
-Copy and paste the code below into your own R data loader (with extension .json.R in your project source root, typically `docs`), then update with your own data and R code to get started.
+Create a file in your project source root, with the .json.R double extension (for example, `docs/my-data.json.R`), then paste the R code below to get started.
 
 ```r
 # Attach libraries (must be installed)
@@ -65,17 +66,17 @@ library(jsonlite)
 years <- seq(from = 2010, to = 2022, by = 1)
 url <- vector(length = length(years))
 query_urls <- for (i in seq_along(years)) {
-  url[i] <- paste0("http://www.cbr.washington.edu/dart/cs/php/rpt/adult_daily.php?sc=1&outputFormat=html&year=", 
-                       years[i], "&proj=BON&span=no&startdate=1%2F1&enddate=12%2F31&run=&syear=", 
-                       years[i], 
-                       "&eyear=", 
+  url[i] <- paste0("http://www.cbr.washington.edu/dart/cs/php/rpt/adult_daily.php?sc=1&outputFormat=html&year=",
+                       years[i], "&proj=BON&span=no&startdate=1%2F1&enddate=12%2F31&run=&syear=",
+                       years[i],
+                       "&eyear=",
                        years[i])
   }
 
 get_data <- function(url) {
-    url %>% 
-    read_html() %>% 
-    html_table() %>% 
+    url %>%
+    read_html() %>%
+    html_table() %>%
     flatten_df()
 }
 
@@ -106,12 +107,11 @@ salmon
 
 <!-- End local testing of salmon.json.R -->
 
-
 ## ZIP
 
-The data loader below (`penguin-mlr.zip.R`) reads in the penguins data from a local file, performs multiple linear regression, then outputs multiple files (with model estimates and predictions) as a ZIP archive. 
+The data loader below (`penguin-mlr.zip.R`) reads in the penguins data from a local file, performs multiple linear regression, then outputs multiple files (with model estimates and predictions) as a ZIP archive.
 
-Copy and paste the code below into your own R data loader (with extension .zip.R in your project source root, typically `docs`), then update with your own data and R code to get started.
+Create a file in your project source root, with the .zip.R double extension (for example, `docs/my-data.zip.R`), then paste the R code below to get started.
 
 ```r
 # Attach required packages (must be installed)
@@ -121,14 +121,14 @@ library(dplyr)
 library(broom)
 
 # Data access, wrangling and analysis
-penguins <- read_csv("docs/data/penguins.csv") |> 
+penguins <- read_csv("docs/data/penguins.csv") |>
     drop_na(body_mass_g, species, sex, flipper_length_mm, culmen_depth_mm)
 
 penguins_mlr <- lm(body_mass_g ~ species + sex + flipper_length_mm + culmen_depth_mm, data = penguins)
 
 mlr_est <- tidy(penguins_mlr)
 
-mlr_fit <- penguins |> 
+mlr_fit <- penguins |>
     mutate(body_mass_g_predict = penguins_mlr$fitted.values,
            body_mass_g_residual = penguins_mlr$residuals
     )
@@ -143,6 +143,7 @@ system("zip - -r .")
 ```
 
 The `system` function invokes the system command `"zip - -r ."`, where:
+
 - `zip` is the command for zipping files
 - `-` means the archive is output to standard output (required for data loaders)
 - `-r`, the recursive option, means all files are added to the zip archive

@@ -7,7 +7,7 @@ CREATE TABLE allp AS (
 CREATE TABLE cafuelstations AS (
   SELECT "Fuel Type Code" as Type,
   State,
-  ZIP as Zip,
+  ZIP,
   Latitude,
   Longitude 
   FROM allp
