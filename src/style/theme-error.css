@@ -10,5 +10,6 @@ body::after {
  background: white;
  padding: 4px 3em;
  top: 4px;
+ z-index: 2;
 }
 
