@@ -356,14 +356,6 @@ const workspaces = [
     id: "0000000000000003",
     login: "mock-user-ws-3",
     name: "Mock User's Third Workspace Wrong Tier",
-    tier: "pro",
-    type: "team",
-    role: "owner"
-  },
-  {
-    id: "0000000000000004",
-    login: "mock-user-ws-4",
-    name: "Mock User's Fourth Workspace Wrong Tier",
     tier: "pro_2024",
     type: "team",
     role: "viewer"
@@ -385,7 +377,7 @@ export const userWithTwoWorkspaces = {
   workspaces: workspaces.slice(0, 2)
 };
 
-export const userWithFourWorkspaces = {
+export const userWithThreeWorkspaces = {
   ...userBase,
   workspaces
 };

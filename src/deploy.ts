@@ -107,7 +107,7 @@ export async function deploy(
       currentUser = await apiClient.getCurrentUser();
       // List of valid workspaces that can be used to create projects.
       currentUser.workspaces = currentUser.workspaces.filter((w) => {
-        return ["owner", "member"].includes(w.role) && ["starter_2024", "pro_2024", "enterprise_2024"].includes(w.tier);
+        return ["owner", "member"].includes(w.role);
       });
     }
   } catch (error) {

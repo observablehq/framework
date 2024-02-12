@@ -12,7 +12,7 @@ import {
   getCurrentObservableApi,
   invalidApiKey,
   mockObservableApi,
-  userWithFourWorkspaces,
+  userWithThreeWorkspaces,
   userWithOneWorkspace,
   userWithTwoWorkspaces,
   userWithZeroWorkspaces,
@@ -522,7 +522,7 @@ describe("deploy", () => {
   });
 
   it("filters out workspace with the wrong tier or wrong role", async () => {
-    getCurrentObservableApi().handleGetCurrentUser({user: userWithFourWorkspaces}).start();
+    getCurrentObservableApi().handleGetCurrentUser({user: userWithThreeWorkspaces}).start();
     const effects = new MockDeployEffects();
     try {
       await deploy(TEST_OPTIONS, effects);
