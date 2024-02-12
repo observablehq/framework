@@ -35,18 +35,26 @@ export async function renderPreview(sourcePath: string, options: RenderOptions):
   };
 }
 
-function maybeHashed(files?: FileReference[], hashes?: Map<string, string>) {
-  return files && hashes?.size
-    ? files.map((f) => {
-        const [, relative, file] = f.path.match(/^((?:\.\.\/)+|\.\/)(.*)$/)!;
-        return file && hashes.has(file) ? {...f, path: `${relative}${hashes.get(file)}`} : f;
-      })
-    : files;
+function maybeHashed(res: string, hashes: Map<string, string> | undefined): string {
+  if (hashes?.size && res.startsWith(".")) {
+    const a = res.match(/^((?:\.\.\/)+|\.\/)(.*)$/);
+    if (a) {
+      const [, relative, file] = a;
+      if (hashes.has(file)) return `${relative}${hashes.get(file)}`;
+    }
+  }
+  return res;
 }
 
 export function renderDefineCell(cell: Transpile, hashes?: Map<string, string>): string {
   const {id, inline, inputs, outputs, body} = cell;
-  const files = maybeHashed(cell.files, hashes);
+  const files =
+    cell.files && hashes
+      ? cell.files.map((file) => {
+          const path = maybeHashed(file.path, hashes);
+          return path === file.path ? file : {...file, path};
+        })
+      : cell.files;
   return `define({${Object.entries({id, inline, inputs, outputs, files})
     .filter((arg) => arg[1] !== undefined)
     .map((arg) => `${arg[0]}: ${JSON.stringify(arg[1])}`)
@@ -74,7 +82,7 @@ ${
         .filter((title): title is string => !!title)
         .join(" | ")}</title>\n`
     : ""
-}${await renderHead(parseResult, options, path, createImportResolver(root, "_import"))}${
+}${await renderHead(parseResult, options, path, createImportResolver(root, "_import"), hashes)}${
     path === "/404"
       ? html.unsafe(`\n<script type="module">
 
@@ -89,7 +97,7 @@ if (location.pathname.endsWith("/")) {
 <script type="module">${html.unsafe(`
 
 import ${preview || parseResult.cells.length > 0 ? `{${preview ? "open, " : ""}define} from ` : ""}${JSON.stringify(
-    relativeUrl(path, "/_observablehq/client.js")
+    maybeHashed(relativeUrl(path, "/_observablehq/client.js"), hashes)
   )};
 ${
   preview ? `\nopen({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
@@ -184,7 +192,8 @@ async function renderHead(
   parseResult: ParseResult,
   options: Pick<Config, "scripts" | "style" | "head">,
   path: string,
-  resolver: ImportResolver
+  resolver: ImportResolver,
+  hashes
 ): Promise<Html> {
   const scripts = options.scripts;
   const head = parseResult.data?.head !== undefined ? parseResult.data.head : options.head;
@@ -196,33 +205,38 @@ async function renderHead(
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
   addImplicitSpecifiers(specifiers, inputs);
   await addImplicitStylesheets(stylesheets, specifiers);
-  const preloads = new Set<string>([relativeUrl(path, "/_observablehq/client.js")]);
+  const preloads = new Set<string>([maybeHashed(relativeUrl(path, "/_observablehq/client.js"), hashes)]);
   for (const specifier of specifiers) preloads.add(await resolver(path, specifier));
   await resolveModulePreloads(preloads);
+  const resolvedstylesheets = Array.from(stylesheets)
+    .sort()
+    .map((href) => resolveStylesheet(path, href))
+    .map((href) => maybeHashed(href, hashes));
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
-    Array.from(stylesheets)
-      .sort()
-      .map((href) => resolveStylesheet(path, href))
-      .map(renderStylesheetPreload) // <link rel=preload as=style>
+    resolvedstylesheets.map(renderStylesheetPreload) // <link rel=preload as=style>
   }${
-    Array.from(stylesheets)
-      .sort()
-      .map((href) => resolveStylesheet(path, href))
-      .map(renderStylesheet) // <link rel=stylesheet>
+    resolvedstylesheets.map(renderStylesheet) // <link rel=stylesheet>
   }${
-    Array.from(preloads).sort().map(renderModulePreload) // <link rel=modulepreload>
-  }${head ? html`\n${html.unsafe(head)}` : null}${html.unsafe(scripts.map((s) => renderScript(s, path)).join(""))}`;
+    Array.from(preloads)
+      .sort()
+      .map((href) => maybeHashed(href, hashes))
+      .map(renderModulePreload) // <link rel=modulepreload>
+  }${head ? html`\n${html.unsafe(head)}` : null}${html.unsafe(
+    scripts.map((s) => renderScript(s, path, hashes)).join("")
+  )}`;
 }
 
 export function resolveStylesheet(path: string, href: string): string {
-  return href.startsWith("observablehq:")
-    ? relativeUrl(path, `/_observablehq/${href.slice("observablehq:".length)}`)
-    : href;
+  if (href.startsWith("observablehq:")) {
+    const res = `_observablehq/${href.slice("observablehq:".length)}`;
+    return relativeUrl(path, `/${res}`);
+  }
+  return href;
 }
 
-function renderScript(script: Script, path: string): Html {
+function renderScript(script: Script, path: string, hashes: Map<string, string>): Html {
   return html`\n<script${script.type ? html` type="${script.type}"` : null}${script.async ? html` async` : null} src="${
-    /^\w+:/.test(script.src) ? script.src : relativeUrl(path, `/_import/${script.src}`)
+    /^\w+:/.test(script.src) ? script.src : maybeHashed(relativeUrl(path, `/_import/${script.src}`), hashes)
   }"></script>`;
 }
 
