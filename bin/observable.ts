@@ -116,7 +116,7 @@ try {
     }
     case "preview": {
       const {
-        values: {config, root, host, port}
+        values: {config, root, host, port, ["no-open"]: noopen}
       } = helpArgs(command, {
         options: {
           ...CONFIG_OPTION,
@@ -127,6 +127,10 @@ try {
           port: {
             type: "string",
             default: process.env.PORT
+          },
+          "no-open": {
+            type: "boolean",
+            default: false
           }
         }
       });
@@ -136,7 +140,8 @@ try {
         preview.preview({
           config: await readConfig(config, root),
           hostname: host!,
-          port: port === undefined ? undefined : +port
+          port: port === undefined ? undefined : +port,
+          open: !noopen
         })
       );
       break;

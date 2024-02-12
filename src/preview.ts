@@ -7,6 +7,7 @@ import type {IncomingMessage, RequestListener, Server, ServerResponse} from "nod
 import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
 import {difference} from "d3-array";
+import openBrowser from "open";
 import send from "send";
 import {type WebSocket, WebSocketServer} from "ws";
 import {version} from "../package.json";
@@ -31,6 +32,7 @@ const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public")
 export interface PreviewOptions {
   config: Config;
   hostname: string;
+  open?: boolean;
   port?: number;
   verbose?: boolean;
 }
@@ -54,7 +56,7 @@ export class PreviewServer {
     this._socketServer.on("connection", this._handleConnection);
   }
 
-  static async start({verbose = true, hostname, port, ...options}: PreviewOptions) {
+  static async start({verbose = true, hostname, port, open, ...options}: PreviewOptions) {
     Telemetry.record({event: "preview", step: "start"});
     const server = createServer();
     if (port === undefined) {
@@ -72,11 +74,13 @@ export class PreviewServer {
     } else {
       await new Promise<void>((resolve) => server.listen(port, hostname, resolve));
     }
+    const url = `http://${hostname}:${port}/`;
     if (verbose) {
       console.log(`${green(bold("Observable Framework"))} ${faint(`v${version}`)}`);
-      console.log(`${faint("↳")} ${link(`http://${hostname}:${port}/`)}`);
+      console.log(`${faint("↳")} ${link(url)}`);
       console.log("");
     }
+    if (open) openBrowser(url);
     return new PreviewServer({server, verbose, ...options});
   }
 
