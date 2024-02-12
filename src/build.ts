@@ -9,7 +9,9 @@ import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
-import {renderServerless} from "./render.js";
+import type {ParseResult} from "./markdown.js";
+import {parseMarkdown} from "./markdown.js";
+import {render} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {Telemetry} from "./telemetry.js";
 import {faint} from "./tty.js";
@@ -79,28 +81,28 @@ export async function build(
   if (!pageCount) throw new CliError(`Nothing to build: no page files found in your ${root} directory.`);
   effects.logger.log(`${faint("found")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
 
-  // Render .md files, building a list of file attachments as we go.
+  // Read .md files, building a list of file attachments as we go.
   const files = new Set<string>();
-  const imports: string[] = [];
+  const imports = new Set<string>();
   const styles: Style[] = [];
+  const pages = new Map<string, ParseResult>();
   for await (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);
-    const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
-    effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
+    effects.output.write(`${faint("parse")} ${sourcePath}\n`);
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
-    const render = await renderServerless(sourcePath, {path, ...config});
+    const parsed = await parseMarkdown(sourcePath, {path, ...config});
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
-    for (const file of render.files) files.add(resolveFile(file));
-    imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
-    await effects.writeFile(outputPath, render.html);
-    const style = mergeStyle(path, render.data?.style, render.data?.theme, config.style);
+    for (const file of parsed.files) files.add(resolveFile(file));
+    for (const file of parsed.imports.filter((i) => i.type === "local")) imports.add(resolveFile(file));
+    const style = mergeStyle(path, parsed.data?.style, parsed.data?.theme, config.style);
     if (style && !styles.some((s) => styleEquals(s, style))) styles.push(style);
+    pages.set(sourceFile, parsed);
   }
 
   // Add imported local scripts.
   for (const script of config.scripts) {
     if (!/^\w+:/.test(script.src)) {
-      imports.push(script.src);
+      imports.add(script.src);
     }
   }
 
@@ -173,6 +175,15 @@ export async function build(
       await effects.copyFile(sourcePath, outputPath);
     }
   }
+
+  // Render the pages
+  for (const [sourceFile, parsed] of pages) {
+    const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
+    const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
+    effects.output.write(`${faint("render")} ${sourceFile} → `);
+    await effects.writeFile(outputPath, await render(parsed, {path, ...config}));
+  }
+
   Telemetry.record({event: "build", step: "finish", pageCount});
 }
 

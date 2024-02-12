@@ -35,16 +35,6 @@ export async function renderPreview(sourcePath: string, options: RenderOptions):
   };
 }
 
-export async function renderServerless(sourcePath: string, options: RenderOptions): Promise<Render> {
-  const parseResult = await parseMarkdown(sourcePath, options);
-  return {
-    html: await render(parseResult, options),
-    files: parseResult.files,
-    imports: parseResult.imports,
-    data: parseResult.data
-  };
-}
-
 export function renderDefineCell(cell: Transpile): string {
   const {id, inline, inputs, outputs, files, body} = cell;
   return `define({${Object.entries({id, inline, inputs, outputs, files})
@@ -57,7 +47,10 @@ type RenderInternalOptions =
   | {preview?: false} // serverless
   | {preview: true}; // preview
 
-async function render(parseResult: ParseResult, options: RenderOptions & RenderInternalOptions): Promise<string> {
+export async function render(
+  parseResult: ParseResult,
+  options: RenderOptions & RenderInternalOptions
+): Promise<string> {
   const {root, base, path, pages, title, preview} = options;
   const sidebar = parseResult.data?.sidebar !== undefined ? Boolean(parseResult.data.sidebar) : options.sidebar;
   const toc = mergeToc(parseResult.data?.toc, options.toc);
