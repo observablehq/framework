@@ -387,7 +387,7 @@ export const userWithTwoWorkspaces = {
 
 export const userWithFourWorkspaces = {
   ...userBase,
-  workspaces: workspaces
+  workspaces
 };
 
 class FilteringPendingInterceptorFormatter extends PendingInterceptorsFormatter {

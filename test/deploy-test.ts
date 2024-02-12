@@ -12,8 +12,8 @@ import {
   getCurrentObservableApi,
   invalidApiKey,
   mockObservableApi,
-  userWithOneWorkspace,
   userWithFourWorkspaces,
+  userWithOneWorkspace,
   userWithTwoWorkspaces,
   userWithZeroWorkspaces,
   validApiKey
