@@ -80,7 +80,7 @@ export async function build(
   effects.logger.log(`${faint("found")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
 
   // Render .md files, building a list of file attachments as we go.
-  const files: string[] = [];
+  const files = new Set<string>();
   const imports: string[] = [];
   const styles: Style[] = [];
   for await (const sourceFile of visitMarkdownFiles(root)) {
@@ -90,7 +90,7 @@ export async function build(
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
     const render = await renderServerless(sourcePath, {path, ...config});
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
-    files.push(...render.files.map(resolveFile));
+    for (const file of render.files) files.add(resolveFile(file));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
     await effects.writeFile(outputPath, render.html);
     const style = mergeStyle(path, render.data?.style, render.data?.theme, config.style);
