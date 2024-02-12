@@ -56,7 +56,9 @@ else if (values.help) {
   command = "help";
 }
 
-const CLACKIFIED_COMMANDS = ["login", "deploy"];
+/** Commands that use Clack formatting. When handling CliErrors, clack.outro()
+ * will be used for these commands. */
+const CLACKIFIED_COMMANDS = ["create", "deploy", "login"];
 
 try {
   switch (command) {
