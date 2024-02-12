@@ -214,7 +214,7 @@ There is nothing surprising in this. If they but knew it, almost all men in thei
 }
 
 async function generateFile(path: string, contents: string): Promise<void> {
-  console.log(`${faint("generating")} ${path}`);
+  console.log(`${faint("generate")} ${path}`);
   await writeFile(path, contents);
 }
 
