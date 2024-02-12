@@ -1,6 +1,7 @@
 import type {MockAgent} from "undici";
 import {type Interceptable} from "undici";
 import PendingInterceptorsFormatter from "undici/lib/mock/pending-interceptors-formatter.js";
+import { HttpStatusCode } from "../../src/error.js";
 import type {PostAuthRequestPollResponse, PostAuthRequestResponse} from "../../src/observableApiClient.js";
 import {
   type GetProjectResponse,
@@ -76,8 +77,8 @@ class ObservableApiMock {
     user = userWithOneWorkspace,
     status = 200
   }: {user?: any; status?: number} = {}): ObservableApiMock {
-    const response = status == 200 ? JSON.stringify(user) : emptyErrorBody;
-    const headers = status === 401 ? {} : authorizationHeader(status !== 403);
+    const response = status == HttpStatusCode.OK ? JSON.stringify(user) : emptyErrorBody;
+    const headers = status === HttpStatusCode.UNAUTHORIZED ? {} : authorizationHeader(status !== 403);
     this.addHandler((pool) =>
       pool
         .intercept({path: "/cli/user", headers: headersMatcher(headers)})

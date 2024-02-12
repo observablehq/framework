@@ -13,7 +13,7 @@ import {version} from "../package.json";
 import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
 import {Loader} from "./dataloader.js";
-import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
+import {HttpError, HttpStatusCode, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
@@ -211,7 +211,7 @@ export class PreviewServer {
         res.statusCode = 500;
         console.error(error);
       }
-      if (req.method === "GET" && res.statusCode === 404) {
+      if (req.method === "GET" && res.statusCode === HttpStatusCode.NOT_FOUND) {
         try {
           const {html} = await renderPreview(join(root, "404.md"), {path: "/404", ...config});
           end(req, res, html, "text/html");

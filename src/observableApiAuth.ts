@@ -2,7 +2,7 @@ import os from "node:os";
 import * as clack from "@clack/prompts";
 import type {ClackEffects} from "./clack.js";
 import {commandInstruction, commandRequiresAuthenticationMessage} from "./commandInstruction.js";
-import {CliError, isHttpError} from "./error.js";
+import {CliError, HttpStatusCode, isHttpError} from "./error.js";
 import type {GetCurrentUserResponse, PostAuthRequestPollResponse} from "./observableApiClient.js";
 import {ObservableApiClient, getObservableUiOrigin} from "./observableApiClient.js";
 import type {ConfigEffects} from "./observableApiConfig.js";
@@ -122,7 +122,7 @@ export async function whoami(effects = defaultEffects) {
     }
     logger.log();
   } catch (error) {
-    if (isHttpError(error) && error.statusCode == 401) {
+    if (isHttpError(error) && error.statusCode == HttpStatusCode.UNAUTHORIZED) {
       if (apiKey.source === "env") {
         logger.log(`Your API key is invalid. Check the value of the ${apiKey.envVar} environment variable.`);
       } else if (apiKey.source === "file") {
