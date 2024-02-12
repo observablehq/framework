@@ -344,6 +344,7 @@ async function resolveNpmVersion({name, range}: {name: string; range?: string}):
 export async function resolveNpmImport(specifier: string): Promise<string> {
   let {name, range, path = "+esm"} = parseNpmSpecifier(specifier); // eslint-disable-line prefer-const
   if (name === "@duckdb/duckdb-wasm" && !range) range = "1.28.0"; // https://github.com/duckdb/duckdb-wasm/issues/1561
+  if (name === "apache-arrow" && !range) range = "13.0.0"; // https://github.com/observablehq/framework/issues/750
   if (name === "parquet-wasm" && !range) range = "0.5.0"; // https://github.com/observablehq/framework/issues/733
   try {
     return `https://cdn.jsdelivr.net/npm/${name}@${await resolveNpmVersion({name, range})}/${path}`;
