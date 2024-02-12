@@ -6,7 +6,7 @@ import {build} from "./build.js";
 import type {ClackEffects} from "./clack.js";
 import {commandRequiresAuthenticationMessage} from "./commandInstruction.js";
 import type {Config} from "./config.js";
-import {CliError, HttpStatusCode, isApiError, isHttpError} from "./error.js";
+import {CliError, isApiError, isHttpError} from "./error.js";
 import type {Logger, Writer} from "./logger.js";
 import {type AuthEffects, defaultEffects as defaultAuthEffects, formatUser, loginInner} from "./observableApiAuth.js";
 import {ObservableApiClient} from "./observableApiClient.js";
@@ -106,8 +106,8 @@ export async function deploy(
     if (apiKey) currentUser = await apiClient.getCurrentUser();
   } catch (error) {
     if (isHttpError(error)) {
-      if (error.statusCode === HttpStatusCode.UNAUTHORIZED) authError = "unauthenticated";
-      else if (error.statusCode === HttpStatusCode.FORBIDDEN) authError = "forbidden";
+      if (error.statusCode === 401) authError = "unauthenticated";
+      else if (error.statusCode === 403) authError = "forbidden";
       else throw error;
     } else {
       throw error;
@@ -168,7 +168,7 @@ export async function deploy(
       deployTarget = {create: false, workspace: project.owner, project};
       if (config.title !== project.title) projectUpdates.title = config.title;
     } catch (error) {
-      if (!isHttpError(error) || error.statusCode !== HttpStatusCode.NOT_FOUND) {
+      if (!isHttpError(error) || error.statusCode !== 404) {
         throw error;
       }
     }
@@ -275,7 +275,7 @@ export async function deploy(
   } catch (error) {
     if (
       isHttpError(error) &&
-      (error.statusCode === HttpStatusCode.NOT_FOUND || error.statusCode === HttpStatusCode.FORBIDDEN)
+      (error.statusCode === 404 || error.statusCode === 403)
     ) {
       throw new CliError("Deploy failed. Please check your deploy configuration.", {cause: error});
     }
@@ -340,7 +340,7 @@ class DeployBuildEffects implements BuildEffects {
     try {
       await this.apiClient.postDeployFile(this.deployId, sourcePath, outputPath);
     } catch (error) {
-      if (isHttpError(error) && error.statusCode === HttpStatusCode.CONTENT_TOO_LARGE) {
+      if (isHttpError(error) && error.statusCode === 413) {
         throw new CliError(`File too large to deploy: ${sourcePath}. Maximum file size is 50MB.`);
       }
       throw error;
@@ -393,7 +393,7 @@ export async function promptDeployTarget(
   try {
     existingProjects = await api.getWorkspaceProjects(workspace.login);
   } catch (error) {
-    if (isHttpError(error) && error.statusCode === HttpStatusCode.NOT_FOUND) {
+    if (isHttpError(error) && error.statusCode === 404) {
       throw new CliError(`Workspace ${workspace.login} not found.`, {cause: error});
     }
     throw error;
