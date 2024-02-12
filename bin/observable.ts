@@ -129,8 +129,7 @@ try {
             default: process.env.PORT
           },
           "no-open": {
-            type: "boolean",
-            default: false
+            type: "boolean"
           }
         }
       });
