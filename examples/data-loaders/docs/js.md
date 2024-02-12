@@ -8,7 +8,7 @@ Because data loaders run in this standard environment, they have to be written a
 
 The data loader below (`us-electricity.tsv.js`) accesses data on US hourly electricity demand and generation from the [Energy Information Administration](https://www.eia.gov/opendata/), does some basic wrangling, and returns a tab-separated value file. 
 
-Copy and paste the code below into your own JavaScript data loader (with extension .tsv.js in your project source root, typically `docs`), then update with your own data and JavaScript code to get started.
+Create a file in your project source root, with the .tsv.js double extension (for example, `docs/my-data.csv.js`), then paste the JavaScript code below to get started.
 
 ```js echo=true run=false
 // Import d3 functions:
