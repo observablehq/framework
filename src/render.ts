@@ -58,13 +58,13 @@ type RenderInternalOptions =
   | {preview: true}; // preview
 
 async function render(parseResult: ParseResult, options: RenderOptions & RenderInternalOptions): Promise<string> {
-  const {root, path, pages, title, preview} = options;
+  const {root, base, path, pages, title, preview} = options;
   const sidebaroption =
     parseResult.data?.sidebar === undefined ? options.sidebar : normalizeSidebar(parseResult.data.sidebar);
   const sidebar = sidebaroption === "auto" ? pages.length > 0 : sidebaroption;
   const toc = mergeToc(parseResult.data?.toc, options.toc);
   return String(html`<!DOCTYPE html>
-<meta charset="utf-8">${path === "/404" ? html`\n<base href="/">` : ""}
+<meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 ${
   parseResult.title || title

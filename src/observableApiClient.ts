@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import packageJson from "../package.json";
-import {CliError, HttpError} from "./error.js";
+import {CliError, HttpError, isApiError} from "./error.js";
 import type {ApiKey} from "./observableApiConfig.js";
 import {faint, red} from "./tty.js";
 
@@ -57,20 +57,26 @@ export class ObservableApiClient {
     }
 
     if (!response.ok) {
-      // check for version mismatch
-      if (response.status === 400) {
-        const body = await response.text();
-        try {
-          const data = JSON.parse(body);
-          if (Array.isArray(data.errors) && data.errors.some((d) => d.code === "VERSION_MISMATCH")) {
-            console.log(red("The version of Observable Framework you are using is not compatible with the server."));
-            console.log(faint(`Expected ${data.errors[0].meta.expected}, but using ${data.errors[0].meta.actual}`));
-          }
-        } catch (err) {
-          // just fall through
-        }
+      let details = await response.text();
+      try {
+        details = JSON.parse(details);
+      } catch (error) {
+        // that's ok
       }
-      throw new HttpError(`Unexpected response status ${JSON.stringify(response.status)}`, response.status);
+      const error = new HttpError(`Unexpected response status ${JSON.stringify(response.status)}`, response.status, {
+        details
+      });
+
+      // check for version mismatch
+      if (
+        response.status === 400 &&
+        isApiError(error) &&
+        error.details.errors.some((e) => e.code === "VERSION_MISMATCH")
+      ) {
+        console.log(red("The version of Observable Framework you are using is not compatible with the server."));
+        console.log(faint(`Expected ${details.errors[0].meta.expected}, but using ${details.errors[0].meta.actual}`));
+      }
+      throw error;
     }
 
     if (response.status === 204) return null as T;
@@ -126,6 +132,10 @@ export class ObservableApiClient {
     return pages.results;
   }
 
+  async getDeploy(deployId: string): Promise<GetDeployResponse> {
+    return await this._fetch<GetDeployResponse>(new URL(`/cli/deploy/${deployId}`, this._apiOrigin), {method: "GET"});
+  }
+
   async postDeploy({projectId, message}: {projectId: string; message: string}): Promise<string> {
     const data = await this._fetch<{id: string}>(new URL(`/cli/project/${projectId}/deploy`, this._apiOrigin), {
       method: "POST",
@@ -158,11 +168,11 @@ export class ObservableApiClient {
     });
   }
 
-  async postAuthRequest(scopes: string[]): Promise<PostAuthRequestResponse> {
+  async postAuthRequest(options: {scopes: string[]; deviceDescription: string}): Promise<PostAuthRequestResponse> {
     return await this._fetch<PostAuthRequestResponse>(new URL("/cli/auth/request", this._apiOrigin), {
       method: "POST",
       headers: {"content-type": "application/json"},
-      body: JSON.stringify({scopes})
+      body: JSON.stringify(options)
     });
   }
 
@@ -241,4 +251,10 @@ export interface PaginatedList<T> {
   // per_page: number;
   // total: number;
   // truncated: boolean;
+}
+
+export interface GetDeployResponse {
+  id: string;
+  status: string;
+  url: string;
 }

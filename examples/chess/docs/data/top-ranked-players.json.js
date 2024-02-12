@@ -5,13 +5,7 @@ const TOP_N_COUNT = 10;
 const MONTHS_OF_DATA = 12;
 
 function monthlyZipUrl(date) {
-  const id = date
-    .toLocaleString("en-US", {
-      month: "short",
-      year: "2-digit"
-    })
-    .toLowerCase()
-    .replace(" ", "");
+  const id = date.toLocaleString("en-US", {month: "short", year: "2-digit"}).toLowerCase().replace(" ", "");
   return `http://ratings.fide.com/download/standard_${id}frl.zip`;
 }
 
@@ -22,21 +16,13 @@ function isActivePlayer(player) {
 async function fetchAndFilterTopPlayers() {
   const today = utcMonth();
   const rankingsByMonth = [];
-
   for (const month of utcMonth.range(utcMonth.offset(today, -(MONTHS_OF_DATA - 1)), utcMonth.offset(today, 1))) {
-    rankingsByMonth.push(
-      await fetchFideData(monthlyZipUrl(month)).then((rows) =>
-        rows.sort((a, b) => b.rating - a.rating).map((d) => ({...d, month}))
-      )
-    );
+    const rows = await fetchFideData(monthlyZipUrl(month));
+    rows.sort((a, b) => b.rating - a.rating);
+    rankingsByMonth.push(rows.map((d) => ({...d, month})));
   }
-
-  // top active women
   const womens = rankingsByMonth.map((rankings) => rankings.filter((d) => d.sex === "F").slice(0, TOP_N_COUNT)).flat();
-
-  // top active men
   const mens = rankingsByMonth.map((rankings) => rankings.filter((d) => d.sex === "M").slice(0, TOP_N_COUNT)).flat();
-
   return {womens, mens, MONTHS_OF_DATA, TOP_N_COUNT};
 }
 
@@ -50,7 +36,6 @@ async function fetchFideData(url) {
 function parseFideFile(text) {
   const lines = text.split("\n");
   const records = [];
-
   for (let i = 1; i < lines.length; ++i) {
     const line = lines[i];
     const record = {
@@ -68,13 +53,11 @@ function parseFideFile(text) {
       born: +line.substring(126, 131).trim(),
       flags: line.substring(132, 136).trim()
     };
-
     if (isActivePlayer(record)) {
       records.push(record);
     }
   }
-
   return records;
 }
 
-console.log(JSON.stringify(await fetchAndFilterTopPlayers()));
+process.stdout.write(JSON.stringify(await fetchAndFilterTopPlayers()));

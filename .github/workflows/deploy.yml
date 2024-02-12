@@ -24,9 +24,17 @@ jobs:
             'examples/*/yarn.lock'
       - run: yarn --frozen-lockfile
       - run: yarn build
+      - name: Build example "api"
+        run: yarn --frozen-lockfile && yarn build
+        working-directory: examples/api
       - name: Build example "chess"
         run: yarn --frozen-lockfile && yarn build
         working-directory: examples/chess
+      - name: Build example "eia"
+        run: yarn --frozen-lockfile && yarn build
+        working-directory: examples/eia
+        env:
+          EIA_KEY: ${{ secrets.EIA_KEY }}
       - name: Build example "google-analytics"
         run: yarn --frozen-lockfile && yarn build
         working-directory: examples/google-analytics
@@ -37,20 +45,20 @@ jobs:
       - name: Build example "hello-world"
         run: yarn --frozen-lockfile && yarn build
         working-directory: examples/hello-world
+      - name: Build example "mortgage-rates"
+        run: yarn --frozen-lockfile && yarn build
+        working-directory: examples/mortgage-rates
+      - name: Build example "penguin-classification"
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          yarn --frozen-lockfile && yarn build
+        working-directory: examples/penguin-classification
       - name: Build example "plot"
         run: yarn --frozen-lockfile && yarn build
         working-directory: examples/plot
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build example "pmms"
-        run: yarn --frozen-lockfile && yarn build
-        working-directory: examples/pmms
-      - name: Build example "python"
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          yarn --frozen-lockfile && yarn build
-        working-directory: examples/python
       - run: mkdir dist/examples && for i in examples/*; do if [ -d $i/dist ]; then mv -v $i/dist dist/examples/$(basename $i); fi; done
       - uses: cloudflare/pages-action@1
         with:
@@ -60,7 +68,8 @@ jobs:
           directory: dist
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
       # TODO: This doesn't include the examples. How can we fix that?
-      - name: Deploy to Observable Cloud
-        run: yarn deploy -m "$(git log -1 --pretty=%s)"
-        env:
-          OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_API_TOKEN }}
+      # TODO: Re-enable deploy to Observable
+      # - name: Deploy to Observable
+      #   run: yarn deploy -m "$(git log -1 --pretty=%s)"
+      #   env:
+      #     OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_API_TOKEN }}
