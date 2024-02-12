@@ -1,6 +1,8 @@
 # JavaScript data loader examples
 
-Observable Framework supports [data loaders](../loaders) written in JavaScript. Functions used in JavaScript data loaders must be imported.
+Observable Framework supports [data loaders](../loaders) written in JavaScript. These data loaders run in the most standard way—using `node --no-warnings=ExperimentalWarning {script-name}` for JavaScript (.js) data loaders, and `tsx {script-name}` for TypeScript (.ts) data loaders. To test a data loader, you can run the relevant command directly in a shell.
+
+Because data loaders run in this standard environment, they have to be written as standard node (or tsx) scripts. For instance, they have to import explicitly every library that they use.
 
 ## TSV
 
