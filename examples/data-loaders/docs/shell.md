@@ -111,7 +111,7 @@ from sklearn.linear_model import LinearRegression
 
 penguins = pd.read_csv("docs/data/penguins.csv")
 
-penguins_complete = df.dropna(subset=["culmen_length_mm", "culmen_depth_mm", "flipper_length_mm", "body_mass_g"])
+penguins_complete = penguins.dropna(subset=["culmen_length_mm", "culmen_depth_mm", "flipper_length_mm", "body_mass_g"])
 
 penguins_complete.to_csv(sys.stdout)
 END_PYTHON
@@ -122,6 +122,6 @@ const penguins = FileAttachment("penguin.csv").csv({typed: true})
 ```
 
 ```js echo
-penguins
+display(Inputs.table(penguins))
 ```
 
