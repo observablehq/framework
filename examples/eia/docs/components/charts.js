@@ -52,8 +52,8 @@ export function countryInterchangeChart(width, height, usDemandGenForecast, coun
     height: height - 50,
     color: {legend: true, range: ["#B6B5B1", "#848890"]},
     grid: true,
-    y: {label: "GWh exported", labelOffset: 0, tickSize: 0},
     x: {type: "time", domain: extent(usDemandGenForecast.map((d) => d.date)), tickSize: 0, tickPadding: 3},
+    y: {label: "GWh exported", labelOffset: 0, tickSize: 0, tickSpacing: 20},
     marks: [
       Plot.ruleX([currentHour], {strokeOpacity: 0.5}),
       Plot.areaY(countryInterchangeSeries, {
