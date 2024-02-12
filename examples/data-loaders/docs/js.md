@@ -1,12 +1,14 @@
 # JavaScript data loader examples
 
-Observable Framework supports [data loaders](../loaders) written in JavaScript. Functions used in JavaScript data loaders must be imported.
+Observable Framework supports [data loaders](../loaders) written in JavaScript. These data loaders run in the most standard way—using `node --no-warnings=ExperimentalWarning {script-name}` for JavaScript (.js) data loaders, and `tsx {script-name}` for TypeScript (.ts) data loaders. To test a data loader, you can run the relevant command directly in a shell.
+
+Because data loaders run in this standard environment, they have to be written as standard node (or tsx) scripts. For instance, they have to import explicitly every library that they use.
 
 ## TSV
 
 The data loader below (`us-electricity.tsv.js`) accesses data on US hourly electricity demand and generation from the [Energy Information Administration](https://www.eia.gov/opendata/), does some basic wrangling, and returns a tab-separated value file. 
 
-Copy and paste the code below into your own JavaScript data loader (with extension .tsv.js in your project source root, typically `docs`), then update with your own data and JavaScript code to get started.
+Create a file in your project source root, with the .tsv.js double extension (for example, `docs/my-data.csv.js`), then paste the JavaScript code below to get started.
 
 ```js echo=true run=false
 // Import d3 functions:
