@@ -1,4 +1,4 @@
-# R data loaders
+# R data loader examples
 
 The Observable CLI supports [data loaders](../loaders) written in R, by passing them to the [Rscript](https://www.r-project.org/) command. The latter must be available on your `$PATH`. Any library used by your scripts must also be installed.
 
