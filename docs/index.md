@@ -17,11 +17,6 @@ toc: false
   margin: 2rem 0;
 }
 
-.hero .accent {
-  color: #ff725c;
-  font-style: italic;
-}
-
 .hero h2 {
   font-style: normal;
   font-size: 18px;
@@ -87,11 +82,11 @@ toc: false
 </style>
 
 <div class="hero">
-  <h1>The best dashboards are built with <span class="accent">code.</span></h1>
+  <h1>The best dashboards are built with <em class="red">code.</em></h1>
   <h2>Create fast, beautiful data apps, dashboards, and reports from the command line. Write Markdown, JavaScript, SQL, Python, R… and any language you like. Free and open-source.</h2>
   <div style="display: flex; align-items: center; gap: 2rem;">
     <pre data-copy>npm init @observablehq</pre>
-    <a href="./getting-started" class="small arrow">Get started</a>
+    <a href="./getting-started" class="small arrow" style="color: var(--theme-red);">Get started</a>
   </div>
 </div>
 
