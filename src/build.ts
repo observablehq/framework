@@ -47,7 +47,6 @@ export interface BuildOptions {
   config: Config;
   clientEntry?: string;
   addPublic?: boolean;
-  hash?: boolean;
 }
 
 export interface BuildEffects {
@@ -68,7 +67,7 @@ export interface BuildEffects {
 }
 
 export async function build(
-  {config, addPublic = true, clientEntry = "./src/client/index.js", hash = false}: BuildOptions,
+  {config, addPublic = true, clientEntry = "./src/client/index.js"}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output)
 ): Promise<void> {
   const {root} = config;
@@ -90,14 +89,11 @@ export async function build(
   const pages = new Map<string, ParseResult>();
   const hashes = new Map<string, string>();
   const fileHash = (path: string, value: string | Buffer) => {
-    if (hash) {
-      const h = computeHash(value);
-      const ext = extname(path);
-      const p = `${ext ? path.slice(0, -ext.length) : path}.${h.slice(0, 6)}${ext}`;
-      hashes.set(path, p);
-      return p;
-    }
-    return path;
+    const h = computeHash(value);
+    const ext = extname(path);
+    const p = `${ext ? path.slice(0, -ext.length) : path}.${h.slice(0, 6)}${ext}`;
+    hashes.set(path, p);
+    return p;
   };
   for await (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);

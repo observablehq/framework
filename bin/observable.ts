@@ -87,16 +87,13 @@ try {
     }
     case "build": {
       const {
-        values: {config, root, hash}
+        values: {config, root}
       } = helpArgs(command, {
         options: {
-          ...CONFIG_OPTION,
-          hash: {type: "boolean"}
+          ...CONFIG_OPTION
         }
       });
-      await import("../src/build.js").then(async (build) =>
-        build.build({config: await readConfig(config, root), hash})
-      );
+      await import("../src/build.js").then(async (build) => build.build({config: await readConfig(config, root)}));
       break;
     }
     case "create": {
