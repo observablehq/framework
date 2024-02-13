@@ -4,7 +4,7 @@ Observable Framework supports [data loaders](../loaders) written in Python, by p
 
 ## CSV
 
-The data loader below (`penguin-logistic.csv.py`) reads in the [penguins data](https://journal.r-project.org/articles/RJ-2022-020/) from a local file, performs [logistic regression](https://en.wikipedia.org/wiki/Logistic_regression), then outputs a single CSV with penguin species classifications.
+The data loader below (`penguin-logistic.csv.py`) reads in the penguins data from a local file, performs [logistic regression](https://en.wikipedia.org/wiki/Logistic_regression), then outputs a single CSV with penguin species classifications.
 
 Create a file in your project source root, with the .csv.py double extension (for example, `docs/my-data.csv.py`), then paste the Python code below to get started.
 

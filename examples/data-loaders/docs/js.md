@@ -8,7 +8,7 @@ Because data loaders run in this standard environment, they have to be written a
 
 The data loader below (`us-electricity.tsv.js`) accesses data on US hourly electricity demand and generation from the [Energy Information Administration](https://www.eia.gov/opendata/), does some basic wrangling, and returns a tab-separated value file.
 
-Create a file in your project source root, with the .tsv.js double extension (for example, `docs/my-data.csv.js`), then paste the JavaScript code below to get started.
+Create a file in your project source root, with the .tsv.js double extension (for example, `docs/my-data.tsv.js`), then paste the JavaScript code below to get started.
 
 ```js echo=true run=false
 // Import d3 functions:
@@ -46,16 +46,54 @@ const usElectricity = await d3.json(url).then((response) => {
 process.stdout.write(d3.tsvFormat(usElectricity));
 ```
 
-`us-electricity.tsv` [routes](../loaders#routing) to the `us-electricity.tsv.js` data loader and reads its standard output stream.
+Access the output of the data loader (here, `us-electricity.tsv`) using [`FileAttachment`](../javascript/files):
 
 ```js echo
 const usElectricity = FileAttachment("us-electricity.tsv").tsv();
 ```
 
+`us-electricity.tsv` [routes](../loaders#routing) to the `us-electricity.tsv.js` data loader and reads its standard output stream.
+
 ```js echo
 usElectricity
 ```
 
-## SVG
+## JSON
 
-## Zip
+The data loader below (`magic.json.js`) accesses Magic the Gathering card data from the [Scryfall API](https://scryfall.com/docs/api), does some basic wrangling, and returns a JSON.
+
+Create a file in your project source root, with the .json.js double extension (for example, `docs/my-data.json.js`), then paste the JavaScript code below to get started.
+
+```js run=false
+// Import d3 functions:
+import * as d3 from "d3";
+
+// Access and wrangle data
+const url = "https://api.scryfall.com/cards/search?order=cmc&q=c:red%20pow=3";
+
+const magicCards = await d3.json(url);
+
+const magicCardsData = magicCards.data.map((d) => ({
+  name: d.name,
+  release: d.released_at,
+  mana_cost: d.mana_cost,
+  type: d.type_line,
+  set: d.set_name,
+  rarity: d.rarity
+}));
+
+// Write as JSON to standard output:
+process.stdout.write(JSON.stringify(magicCardsData));
+```
+
+Access the output of the data loader (here, `magic.json`) using [`FileAttachment`](../javascript/files):
+
+```js echo
+const magicCards = FileAttachment("magic.json").json();
+```
+
+`magic.json` [routes](../loaders#routing) to the `us-electricity.tsv.js` data loader and reads its standard output stream.
+
+```js echo
+magicCards
+```

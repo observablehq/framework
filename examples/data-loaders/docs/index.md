@@ -9,6 +9,8 @@ This project is a collection of data loaders, grouped by loader type (e.g. Pytho
 
 Each page shows the contents of the data loaders, and includes live example code for accessing data loader outputs.
 
+Or, just [view the code](https://github.com/observablehq/framework/tree/main/examples/data-loaders/docs)!
+
 ### Python data loaders
 
 - **[`penguin-logistic.csv.py`](./python#csv)**: Accesses penguins data from a local file, performs logistic regression for species classification, and returns a CSV.
@@ -17,12 +19,13 @@ Each page shows the contents of the data loaders, and includes live example code
 
 ### JavaScript data loaders
 
-- **[`us-electricity.tsv.js`](./js#tsv)**: Access U.S. electricity data, performs basic wrangling, then returns a TSV file.
+- **[`us-electricity.tsv.js`](./js#tsv)**: Accesses U.S. electricity data, performs basic wrangling, then returns a TSV file.
+- **[`magic.json.js`](./js#json)**: Accesses Magic card data from an API, perform basic wrangling, then returns a JSON.
 
 ### R data loaders
 
 - **[`penguin-kmeans.csv.R`](./r#csv)**: Accesses penguins data from a local file, performs k-means clustering, and returns a CSV.
-- **[`salmon.json.R`](./r#json)**: Scrapes data from Columbia River DART, performs data wrangling, and returns a JSON.
+- **[`tolstoy.json.R`](./r#json)**: Wrangles text of _War and Peace_, finds the most common words by chapter, then returns a JSON.
 - **[`penguin-mlr.zip.R`](./r#zip)**: Accesses penguins data from a local file, performs multiple linear regression, and returns model estimates and predictions in two separate CSV files added to a Zip archive.
 
 ### Shell script data loaders

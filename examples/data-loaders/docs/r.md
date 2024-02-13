@@ -52,60 +52,61 @@ penguinKmeans
 
 ## JSON
 
-The data loader below (`salmon.json.R`) scrapes adult daily salmon data at Bonneville Dam (2010 - 2022) from tables on the [Columbia River DART](https://www.cbr.washington.edu/dart) site, then returns the output as a JSON file.
+The data loader below (`tolstoy.json.R`) accesses the text of _War and Peace_ from the [Gutenberg Project](https://www.gutenberg.org/ebooks/2600), finds the most common words by chapter, and returns a JSON.
 
 Create a file in your project source root, with the .json.R double extension (for example, `docs/my-data.json.R`), then paste the R code below to get started.
 
 ```r
 # Attach libraries (must be installed)
-library(rvest)
-library(purrr)
+library(tidytext)
+library(readr)
+library(dplyr)
+library(stringr)
 library(jsonlite)
 
-# Data access, wrangling and analysis
-years <- seq(from = 2010, to = 2022, by = 1)
-url <- vector(length = length(years))
-query_urls <- for (i in seq_along(years)) {
-  url[i] <- paste0("http://www.cbr.washington.edu/dart/cs/php/rpt/adult_daily.php?sc=1&outputFormat=html&year=",
-                       years[i], "&proj=BON&span=no&startdate=1%2F1&enddate=12%2F31&run=&syear=",
-                       years[i],
-                       "&eyear=",
-                       years[i])
-  }
+# Access and wrangle data
+tolstoy <- read_csv("https://www.gutenberg.org/cache/epub/2600/pg2600.txt") |>
+  rename(text = 1)
+booktext <- tolstoy[-(1:400), ]
+booktext <- booktext[-(51477:51770), ]
 
-get_data <- function(url) {
-    url %>%
-    read_html() %>%
-    html_table() %>%
-    flatten_df()
-}
+tidy_tolstoy <- booktext |>
+  mutate(book = cumsum(str_detect(text, "BOOK | EPILOGUE"))) |>
+  mutate(book = case_when(
+    book < 16 ~ paste("Book", book),
+    book == 16 ~ "Epilogue 1",
+    book == 17 ~ "Epilogue 2"
+  )) |>
+  group_by(book) |>
+  mutate(chapter = cumsum(str_detect(text, regex("CHAPTER", ignore_case = FALSE)))) |>
+  ungroup() |>
+  filter(!str_detect(text, regex("BOOK", ignore_case = FALSE))) |>
+  filter(!str_detect(text, regex("CHAPTER", ignore_case = FALSE))) |>
+  unnest_tokens(word, text) |>
+  anti_join(stop_words)
 
-dart_data <- map_dfr(url, get_data)
-dart_data[,4:13] <- lapply(dart_data[,4:13], as.numeric)
+# Find top 10 words (by count) for each chapter
+tolstoy_word_counts <- tidy_tolstoy |>
+  group_by(book, chapter) |>
+  count(word) |>
+  top_n(10, n) |>
+  arrange(desc(n), .by_group = TRUE)
 
 # Create JSON and write to standard output
-cat(toJSON(dart_data, pretty = TRUE))
+cat(toJSON(tolstoy_word_counts, pretty = TRUE))
 ```
 
-Access the output of the data loader (here, `salmon.json`) from the client using [`FileAttachment`](../javascript/files):
+Access the output of the data loader (here, `tolstoy.json`) from the client using [`FileAttachment`](../javascript/files):
 
-```js run=false
-const salmon = FileAttachment("salmon.json").json();
+```js echo
+const text = FileAttachment("tolstoy.json").json()
 ```
 
-`salmon.json` [routes](../loaders#routing) to the `salmon.json.R` data loader and reads its standard output stream.
+`tolstoy.json` [routes](../loaders#routing) to the `tolstoy.json.R` data loader and reads its standard output stream.
 
-<!-- For local testing of salmon.json.R only -->
-
-```js echo run
-const salmon = FileAttachment("salmon.json").json();
+```js echo
+text
 ```
-
-```js echo run
-salmon
-```
-
-<!-- End local testing of salmon.json.R -->
 
 ## ZIP
 
