@@ -3,18 +3,14 @@
 ```js
 const summary = FileAttachment("data/google-analytics-summary.csv").csv({typed: true});
 const hourly = FileAttachment("data/google-analytics-time-of-day.csv").csv({typed: true});
-const channels = FileAttachment("data/google-analytics-channels.csv").csv({typed: true});
 const channelBreakdown = FileAttachment("data/google-analytics-channel-breakdown.csv").csv({typed: true});
-const countries = FileAttachment("data/google-analytics-country.csv").csv({typed: true});
 ```
 
 ```js
 import {formatTrend} from "./components/formatTrend.js";
-import {horizonChart} from "./components/horizonChart.js";
 import {lineChart} from "./components/lineChart.js";
 import {marimekkoChart} from "./components/marimekkoChart.js";
 import {punchcardChart} from "./components/punchcardChart.js";
-import {worldMap} from "./components/worldMap.js";
 ```
 
 ```js
@@ -103,21 +99,15 @@ function trendNumber(data, focusData, metric, options) {
   <div class="card grid-rowspan-4" style="max-width: none; display: flex; flex-direction: column;">
     <h2>Active users by channel</h2>
     <h3>Rolling 28-day active users</h3>
-    <div style="flex-grow: 1;">${resize((width, height) => horizonChart(channels, {width, height, metric: "active28d", format: 's', z: 'channelGroup', color}))}</div>
-  </div>
-  <div class="card grid-rowspan-2">
-    <h2>Active users by country</h2>
-    <h3>Current rolling 28-day active users</h3>
-    ${resize((width) => worldMap(null, {width, /*lookup: countryLookup*/}))}
-  </div>
-  <div class="card grid-rowspan-4">
-    <h2>New vs. returning users by channel</h2>
-    <h3>Rolling 28-day active users by channel and split by new vs. returning</h3>
-    ${resize((width) => marimekkoChart(filteredChannelBreakdown, {width, metric:'active28d', format: '%', yDim: 'channelGroup', xDim: 'type', color}))}
+    <div style="flex-grow: 1;">${resize((width) => marimekkoChart(filteredChannelBreakdown, {width, metric:'active28d', format: '%', yDim: 'channelGroup', xDim: 'type', color}))}</div>
   </div>
   <div class="card grid-rowspan-2">
     <h2>Active users per day and hour of week</h2>
-    ${resize((width) => punchcardChart(hourly, {width, label: "active users"}))}
+    ${resize((width) => punchcardChart(hourly, {width, label: "active users", metric: "activeUsers"}))}
+  </div>
+  <div class="card grid-rowspan-2">
+    <h2>New users per day and hour of week</h2>
+    ${resize((width) => punchcardChart(hourly, {width, label: "new users", metric: "newUsers"}))}
   </div>
 </div>
 
