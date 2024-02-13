@@ -29,6 +29,24 @@ toc: false
   margin: 1rem 0;
 }
 
+.cta {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+@container not (min-width: 400px) {
+  .cta {
+    flex-direction: column;
+    align-items: start;
+    gap: 0;
+  }
+  .cta .observablehq-pre-container,
+  .cta pre:not(.observablehq-pre-container pre) {
+    width: 100%;
+  }
+}
+
 .gallery {
   margin: 4rem -1rem;
   gap: 2rem;
@@ -84,7 +102,7 @@ toc: false
 <div class="hero">
   <h1>The best data apps are built with <em class="red">code.</em></h1>
   <h2>Create fast, beautiful data apps, dashboards, and reports from the command line. Write Markdown, JavaScript, SQL, Python, R… and any language you like. Free and open-source.</h2>
-  <div style="display: flex; align-items: center; gap: 2rem;">
+  <div class="cta">
     <pre data-copy>npm init @observablehq</pre>
     <a href="./getting-started" class="small arrow" style="color: var(--theme-red);">Get started</a>
   </div>
