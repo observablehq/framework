@@ -38,6 +38,7 @@ export function ApiHeatmap(
     marginRight,
     marginBottom,
     marginLeft,
+    style: "overflow: visible;",
     x: {type: "utc", domain: [x1, x2]},
     y: {type: "log", domain: [y1, y2], label},
     color: {label: color.label},
