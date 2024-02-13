@@ -1,4 +1,6 @@
 ```js
+import "npm:apache-arrow";
+import "npm:parquet-wasm/esm/arrow1.js";
 import {ApiHeatmap} from "./components/apiHeatmap.js";
 import {ApiHistogram} from "./components/apiHistogram.js";
 ```
@@ -10,7 +12,7 @@ Web logs capture traffic metadata, such as the request time and route, how long 
 What if — instead of summarizing — we plotted _every_ request as a dot with time along *x*→ and latency (on a log scale) along *y*↑?
 
 ```js
-const latencyHeatmap = FileAttachment("data/latency-heatmap.arrow").arrow();
+const latencyHeatmap = FileAttachment("data/latency-heatmap.parquet").parquet();
 const latencyByRouteCanvas = document.createElement("canvas");
 ```
 
@@ -34,7 +36,7 @@ The detail in this plot is astonishing: it shows the varying performance of diff
 Collapsing *x*→ (time) gives a more traditional view of latency: a stacked histogram colored by route. This view focuses on performance. Notice ${routeSwatch("/documents/@{login}")} tends to be slow (~1 second), and ${routeSwatch("/avatar/{hash}")} tends to vary widely. Performance is contextualized by showing how much traffic routes receive in aggregate: area is proportional to request volume. The popular ${routeSwatch("/d/{id}.js")} and ${routeSwatch("/@{login}/{slug}.js")} routes power [notebook imports](https://observablehq.com/@observablehq/import), so we want them to be fast (and they are).
 
 ```js
-const latencyHistogram = FileAttachment("data/latency-histogram.arrow").arrow();
+const latencyHistogram = FileAttachment("data/latency-histogram.parquet").parquet();
 const histogramCanvas = document.createElement("canvas");
 ```
 
@@ -48,8 +50,8 @@ const histogramCanvas = document.createElement("canvas");
 Analyzing web logs lets us focus on optimizing routes that are both slow and popular, such as ${routeSwatch("/documents/@{login}")} and ${routeSwatch("/avatar/{hash}")}. We can confirm this by aggregating routes by total count and duration.
 
 ```js
-const topRoutesCount = visibility().then(() => FileAttachment("data/top-routes-count.arrow").arrow());
-const topRoutesDuration = visibility().then(() => FileAttachment("data/top-routes-duration.arrow").arrow());
+const topRoutesCount = visibility().then(() => FileAttachment("data/top-routes-count.parquet").parquet());
+const topRoutesDuration = visibility().then(() => FileAttachment("data/top-routes-duration.parquet").parquet());
 ```
 
 <div class="grid grid-cols-2">
@@ -92,7 +94,7 @@ But back to those _temporal_ patterns. These are fascinating because they don’
 We can use a dense scatterplot to visualize any quantitative request metric. Below we show response size in bytes along *y*↑. Response sizes are also important for performance, especially if latency measurements only consider the time it takes the server to send the response and not user-perceived latency across the network.
 
 ```js
-const sizeHeatmap = visibility().then(() => FileAttachment("data/size-heatmap.arrow").arrow());
+const sizeHeatmap = visibility().then(() => FileAttachment("data/size-heatmap.parquet").parquet());
 const sizeByRouteCanvas = document.createElement("canvas");
 ```
 
@@ -108,7 +110,7 @@ The daily pattern for ${routeSwatch("/document/{id}@{version}")} sticks out in t
 By filtering on route, we can see the periodic behavior of the scraper more clearly.
 
 ```js
-const latencyDocumentsPublicHeatmap = visibility().then(() => FileAttachment("data/latency-heatmap-documents-public.arrow").arrow());
+const latencyDocumentsPublicHeatmap = visibility().then(() => FileAttachment("data/latency-heatmap-documents-public.parquet").parquet());
 const latencyDocumentsPublicCanvas = document.createElement("canvas");
 ```
 
@@ -133,7 +135,7 @@ const latencyCanvas = document.createElement("canvas");
 Let’s look at a couple more routes of interest. The ${routeSwatch("/avatar/{hash}")} route is responsible for serving avatars (profile images). Avatars are used throughout Observable and this is one of the highest-traffic routes.
 
 ```js
-const latencyAvatarHeatmap = visibility().then(() => FileAttachment("data/latency-heatmap-avatar.arrow").arrow());
+const latencyAvatarHeatmap = visibility().then(() => FileAttachment("data/latency-heatmap-avatar.parquet").parquet());
 const latencyAvatarCanvas = document.createElement("canvas");
 ```
 
@@ -147,7 +149,7 @@ Unfortunately, avatars are _slow_. Serving an avatar requires fetching an image 
 The ${routeSwatch("/documents/@{login}")} route is also interesting. It lists the notebooks in the given workspace, such as when you go to your home page, or visit someone’s profile.
 
 ```js
-const latencyDocumentsAtHeatmap = visibility().then(() => FileAttachment("data/latency-heatmap-documents-at.arrow").arrow());
+const latencyDocumentsAtHeatmap = visibility().then(() => FileAttachment("data/latency-heatmap-documents-at.parquet").parquet());
 const latencyDocumentsAtCanvas = document.createElement("canvas");
 ```
 
