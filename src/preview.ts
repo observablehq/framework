@@ -23,7 +23,7 @@ import type {ParseResult} from "./markdown.js";
 import {renderPreview, resolveStylesheet} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {Telemetry} from "./telemetry.js";
-import {bold, faint, green, link} from "./tty.js";
+import {bold, faint, green, link, red} from "./tty.js";
 import {relativeUrl} from "./url.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
@@ -267,15 +267,15 @@ function getWatchPaths(parseResult: ParseResult): string[] {
 export function getPreviewStylesheet(path: string, data: ParseResult["data"], style: Config["style"]): string | null {
   try {
     style = mergeStyle(path, data?.style, data?.theme, style);
-    return !style
-      ? null
-      : "path" in style
-      ? relativeUrl(path, `/_import/${style.path}`)
-      : relativeUrl(path, `/_observablehq/theme-${style.theme.join(",")}.css`);
   } catch (error) {
-    if ("code" in (error as any)) throw error;
-    return relativeUrl(path, "/_observablehq/theme-error.css");
+    console.error(red(String(error)));
+    return relativeUrl(path, "/_observablehq/theme-.css");
   }
+  return !style
+    ? null
+    : "path" in style
+    ? relativeUrl(path, `/_import/${style.path}`)
+    : relativeUrl(path, `/_observablehq/theme-${style.theme.join(",")}.css`);
 }
 
 function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defaultStyle}: Config) {

@@ -31,8 +31,7 @@ export const THEMES: Theme[] = [
   ...LIGHT_THEMES,
   ...DARK_THEMES,
   {name: "alt", path: getClientPath("./src/style/theme-alt.css")},
-  {name: "wide", path: getClientPath("./src/style/theme-wide.css")},
-  {name: "error", path: getClientPath("./src/style/theme-error.css")}
+  {name: "wide", path: getClientPath("./src/style/theme-wide.css")}
 ].map((theme, i) => ({
   ...theme,
   index: i
