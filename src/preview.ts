@@ -355,8 +355,8 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
     path = initialPath;
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
+    current = await parseMarkdown(join(root, path + ".md"), {root, path});
     path += ".md";
-    current = await parseMarkdown(join(root, path), {root, path});
     if (current.hash !== initialHash) return void send({type: "reload"});
     stylesheets = await getStylesheets(current);
     attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(current), refreshAttachment);
