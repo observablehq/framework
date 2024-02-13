@@ -103,7 +103,11 @@ export async function deploy(
   let currentUser: GetCurrentUserResponse | null = null;
   let authError: null | "unauthenticated" | "forbidden" = null;
   try {
-    if (apiKey) currentUser = await apiClient.getCurrentUser();
+    if (apiKey) {
+      currentUser = await apiClient.getCurrentUser();
+      // List of valid workspaces that can be used to create projects.
+      currentUser.workspaces = currentUser.workspaces.filter((w) => w.role === "owner" || w.role === "member");
+    }
   } catch (error) {
     if (isHttpError(error)) {
       if (error.statusCode === 401) authError = "unauthenticated";
@@ -268,7 +272,16 @@ export async function deploy(
     if (clack.isCancel(input)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
     message = input;
   }
-  const deployId = await apiClient.postDeploy({projectId: deployTarget.project.id, message});
+
+  let deployId;
+  try {
+    deployId = await apiClient.postDeploy({projectId: deployTarget.project.id, message});
+  } catch (error) {
+    if (isHttpError(error) && (error.statusCode === 404 || error.statusCode === 403)) {
+      throw new CliError("Deploy failed. Please check your deploy configuration.", {cause: error});
+    }
+    throw error;
+  }
 
   // Build the project
   await build({config, clientEntry: "./src/client/deploy.js"}, new DeployBuildEffects(apiClient, deployId, effects));
@@ -325,7 +338,14 @@ class DeployBuildEffects implements BuildEffects {
   }
   async copyFile(sourcePath: string, outputPath: string) {
     this.logger.log(outputPath);
-    await this.apiClient.postDeployFile(this.deployId, sourcePath, outputPath);
+    try {
+      await this.apiClient.postDeployFile(this.deployId, sourcePath, outputPath);
+    } catch (error) {
+      if (isHttpError(error) && error.statusCode === 413) {
+        throw new CliError(`File too large to deploy: ${sourcePath}. Maximum file size is 50MB.`, {cause: error});
+      }
+      throw error;
+    }
   }
   async writeFile(outputPath: string, content: Buffer | string) {
     this.logger.log(outputPath);
