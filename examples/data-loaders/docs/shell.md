@@ -2,7 +2,7 @@
 
 In Observable Framework, [data loaders](../loaders) can be created in shell scripts — they will be called with the system shell "sh".
 
-## Parquet (with DuckDB)
+## Parquet
 
 The data loader below, `alt-fuel-stations.parquet.sh`, accesses data on alternative fuel stations from the [U.S. Department of Energy](https://catalog.data.gov/dataset/alternative-fueling-station-locations-422f2), simplifies to only California stations in SQL, then returns an Apache Parquet file.
 
@@ -71,7 +71,7 @@ const fuelTable = caAltFuel.query("SELECT * FROM fuelstations");
 display(Inputs.table(fuelTable))
 ```
 
-## JSON (with `curl`)
+## JSON
 
 Sometimes, all you need is `curl`!
 
@@ -94,7 +94,7 @@ const caltrans = FileAttachment("caltrans-districts.json").json()
 caltrans
 ```
 
-## CSV (with Python)
+## CSV
 
 Working in a shell script is flexible. Within the shell script, work in whatever you language you like to access and prep your data, then write to standard output.
 
