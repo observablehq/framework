@@ -1,10 +1,22 @@
+import {join} from "node:path";
+import {type BuildEffects, FileBuildEffects} from "./build.js";
+import {prepareOutput} from "./files.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
+import {faint} from "./tty.js";
 
-export async function convert(inputs: string[]): Promise<void> {
+export async function convert(
+  inputs: string[],
+  output: string,
+  effects: BuildEffects = new FileBuildEffects(output)
+): Promise<void> {
   for (const input of inputs.map(resolveInput)) {
+    effects.output.write(`${faint("loading")} ${input} ${faint("→")} `);
     const response = await fetch(input);
     if (!response.ok) throw new Error(`error fetching ${input}: ${response.status}`);
-    process.stdout.write(convertNodes((await response.json()).nodes));
+    const name = input.replace(/^https:\/\/api\.observablehq\.com\/document(\/@[^/]+)?\//, "").replace(/\//g, ",");
+    const destination = join(output, `${name}.md`);
+    await prepareOutput(destination);
+    await effects.writeFile(destination, convertNodes((await response.json()).nodes));
   }
 }
 
