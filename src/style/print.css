@@ -1,0 +1,6 @@
+@media print {
+  #observablehq-sidebar,
+  #observablehq-footer {
+    display: none !important;
+  }
+}
