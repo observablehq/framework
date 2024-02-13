@@ -350,7 +350,9 @@ class DeployBuildEffects implements BuildEffects {
     try {
       await this.apiClient.postDeployFile(this.deployId, sourcePath, outputPath);
     } catch (error) {
-      if (isHttpError(error) && error.statusCode === 413) {
+      // 413 is "Payload Too Large", however sometimes Cloudflare returns a
+      // custom Cloudflare error, 520. Sometimes we also see 502. Handle them all
+      if (isHttpError(error) && (error.statusCode === 413 || error.statusCode === 503 || error.statusCode === 520)) {
         throw new CliError(`File too large to deploy: ${sourcePath}. Maximum file size is 50MB.`, {cause: error});
       }
       throw error;
