@@ -179,8 +179,14 @@ try {
       break;
     }
     case "convert": {
-      const {positionals} = helpArgs(command, {allowPositionals: true});
-      await import("../src/convert.js").then((convert) => convert.convert(positionals));
+      const {
+        positionals,
+        values: {output}
+      } = helpArgs(command, {
+        options: {output: {type: "string", default: "."}},
+        allowPositionals: true
+      });
+      await import("../src/convert.js").then((convert) => convert.convert(positionals, String(output)));
       break;
     }
     default: {
