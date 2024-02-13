@@ -1,22 +1,59 @@
+import {access} from "node:fs/promises";
 import {join} from "node:path";
 import {type BuildEffects, FileBuildEffects} from "./build.js";
+import {isEnoent} from "./error.js";
 import {prepareOutput} from "./files.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
 import {faint} from "./tty.js";
 
+async function readyOutput(dir, name) {
+  const destination = join(dir, name);
+  try {
+    await access(destination, 0);
+    return false;
+  } catch (error) {
+    if (isEnoent(error)) {
+      await prepareOutput(destination);
+      return true;
+    }
+    throw error;
+  }
+}
+
 export async function convert(
   inputs: string[],
-  output: string,
+  {output, files: download_files}: {output: string; files: boolean},
   effects: BuildEffects = new FileBuildEffects(output)
 ): Promise<void> {
   for (const input of inputs.map(resolveInput)) {
-    effects.output.write(`${faint("loading")} ${input} ${faint("→")} `);
+    effects.output.write(
+      `${faint("reading")} ${input.replace("https://api.observablehq.com/document/", "")} ${faint("→")} `
+    );
     const response = await fetch(input);
     if (!response.ok) throw new Error(`error fetching ${input}: ${response.status}`);
-    const name = input.replace(/^https:\/\/api\.observablehq\.com\/document(\/@[^/]+)?\//, "").replace(/\//g, ",");
-    const destination = join(output, `${name}.md`);
-    await prepareOutput(destination);
-    await effects.writeFile(destination, convertNodes((await response.json()).nodes));
+    const name =
+      input.replace(/^https:\/\/api\.observablehq\.com\/document(\/@[^/]+)?\//, "").replace(/\//g, ",") + ".md";
+    const ready = await readyOutput(output, name);
+    if (!ready) {
+      effects.logger.warn(faint("skip"), name);
+    } else {
+      const {nodes, files} = await response.json();
+      await effects.writeFile(name, convertNodes(nodes));
+      if (download_files && files) {
+        for (const file of files) {
+          effects.output.write(`${faint("attachment")} ${file.name} ${faint("→")} `);
+          const ready = await readyOutput(output, file.name);
+          if (!ready) {
+            effects.logger.warn(faint("skip"), file.name);
+          } else {
+            const response = await fetch(file.download_url);
+            if (!response.ok) throw new Error(`error fetching ${file}: ${response.status}`);
+            await effects.writeFile(file.name, Buffer.from(await response.arrayBuffer()));
+            // TODO touch create_time: "2024-02-12T23:29:35.968Z";
+          }
+        }
+      }
+    }
   }
 }
 
