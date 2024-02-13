@@ -34,4 +34,4 @@ Each page shows the contents of the data loaders, and includes live example code
 ### Executable data loaders
 
 - **[`diamonds.jpeg.exe`](./exe#jpeg)**: Specifies R interpreter with a shebang, then creates a scatterplot in ggplot2 and returns the chart as a JPEG.
-- **[`raven.txt.exe`](./exe#txt)**: Specifies Julia interpreter with a shebang, the accesses _The Raven_ text and returns a single paragraph from the poem as text.
+- **[`raven.txt.exe`](./exe#txt)**: Specifies Julia interpreter with a shebang, then accesses _The Raven_ text and returns a single paragraph from the poem as text.
