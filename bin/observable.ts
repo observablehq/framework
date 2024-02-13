@@ -130,7 +130,8 @@ try {
             default: process.env.PORT
           },
           open: {
-            type: "boolean"
+            type: "boolean",
+            default: true
           },
           "no-open": {
             type: "boolean"
