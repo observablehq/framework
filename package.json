@@ -22,7 +22,7 @@
     "observable": "bin/observable-init.js"
   },
   "scripts": {
-    "dev": "rm -f docs/themes.md docs/theme/*.md && (tsx watch docs/theme/generate-themes.ts & tsx watch --no-warnings=ExperimentalWarning ./bin/observable.ts preview)",
+    "dev": "rm -f docs/themes.md docs/theme/*.md && (tsx watch docs/theme/generate-themes.ts & tsx watch --no-warnings=ExperimentalWarning ./bin/observable.ts preview --no-open)",
     "build": "yarn rebuild-themes && rm -rf dist && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts build",
     "deploy": "yarn rebuild-themes && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts deploy",
     "rebuild-themes": "rm -f docs/themes.md docs/theme/*.md && tsx docs/theme/generate-themes.ts",
