@@ -37,10 +37,10 @@ toc: false
 .gallery {
   margin: 4rem -1rem;
   gap: 2rem;
-  max-width: 640px;
+  max-width: calc(640px + 2rem);
 }
 
-.gallery figure {
+.gallery a {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -48,9 +48,16 @@ toc: false
 }
 
 .gallery img {
+  max-width: 100%;
   border-radius: 8px;
   box-shadow: 0 0 0 0.75px rgba(128, 128, 128, 0.2), 0 6px 12px 0 rgba(0, 0, 0, 0.2);
-  aspect-ratio: 592 / 462;
+  aspect-ratio: 2500 / 1900;
+}
+
+@media (prefers-color-scheme: dark) {
+  .gallery img {
+    box-shadow: 0 0 0 0.75px rgba(128, 128, 128, 0.2), 0 6px 12px 0 rgba(0, 0, 0, 0.4);
+  }
 }
 
 .gallery a:not(:hover, :focus) {
@@ -90,40 +97,32 @@ toc: false
 
 <div class="gallery grid grid-cols-2">
   <a href="./examples/api/" target="_blank">
-    <figure>
-      <picture>
-        <source srcset="./assets/api-logs-dark.png" media="(prefers-color-scheme: dark)">
-        <img class="crop" loading="lazy" src="./assets/api-logs.png" >
-      </picture>
-      <figcaption class="arrow">Analyzing web logs</figcaption>
-    </figure>
+    <picture>
+      <source srcset="./assets/api-dark.webp" media="(prefers-color-scheme: dark)">
+      <img src="./assets/api.webp">
+    </picture>
+    <div class="small arrow">Analyzing web logs</div>
   </a>
   <a href="./examples/eia/" target="_blank">
-    <figure>
-      <picture>
-        <source srcset="./assets/eia-dark.png" media="(prefers-color-scheme: dark)">
-        <img loading="lazy" src="./assets/eia.png">
-      </picture>
-      <figcaption class="arrow">U.S. electricity grid</figcaption>
-    </figure>
+    <picture>
+      <source srcset="./assets/eia-dark.webp" media="(prefers-color-scheme: dark)">
+      <img src="./assets/eia.webp">
+    </picture>
+    <div class="small arrow">U.S. electricity grid</div>
   </a>
   <a href="./examples/chess/" target="_blank">
-    <figure>
-      <picture>
-        <source srcset="./assets/chess-dark.png" media="(prefers-color-scheme: dark)">
-        <img loading="lazy" src="./assets/chess.png">
-      </picture>
-      <figcaption class="arrow">A year of chess rankings</figcaption>
-    </figure>
+    <picture>
+      <source srcset="./assets/chess-dark.webp" media="(prefers-color-scheme: dark)">
+      <img src="./assets/chess.webp">
+    </picture>
+    <div class="small arrow">A year of chess rankings</div>
   </a>
   <a href="./examples/plot/" target="_blank">
-    <figure>
-      <picture>
-        <source srcset="./assets/plot-downloads-dark.png" media="(prefers-color-scheme: dark)">
-        <img loading="lazy" src="./assets/plot-downloads.png">
-      </picture>
-      <figcaption class="arrow">Observable Plot downloads</figcaption>
-    </figure>
+    <picture>
+      <source srcset="./assets/plot-dark.webp" media="(prefers-color-scheme: dark)">
+      <img src="./assets/plot.webp">
+    </picture>
+    <div class="small arrow">Observable Plot downloads</div>
   </a>
 </div>
 
