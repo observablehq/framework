@@ -121,8 +121,8 @@ export async function deploy(
   if (!currentUser) {
     const message =
       authError === "unauthenticated" || authError === null
-        ? "You must be logged in to Observable Cloud to deploy. Do you want to do that now?"
-        : "Your authentication is invalid. Do you want to log in to Observable Cloud again?";
+        ? "You must be logged in to Observable to deploy. Do you want to do that now?"
+        : "Your authentication is invalid. Do you want to log in to Observable again?";
     const choice = await clack.confirm({
       message,
       active: "Yes, log in",
@@ -277,8 +277,17 @@ export async function deploy(
   try {
     deployId = await apiClient.postDeploy({projectId: deployTarget.project.id, message});
   } catch (error) {
-    if (isHttpError(error) && (error.statusCode === 404 || error.statusCode === 403)) {
-      throw new CliError("Deploy failed. Please check your deploy configuration.", {cause: error});
+    if (isHttpError(error)) {
+      if (error.statusCode === 404) {
+        throw new CliError(`Project @${deployTarget.workspace.login}/${deployTarget.project.slug} not found.`, {
+          cause: error
+        });
+      } else if (error.statusCode === 403) {
+        throw new CliError(
+          `You don't have permission to deploy to @${deployTarget.workspace.login}/${deployTarget.project.slug}.`,
+          {cause: error}
+        );
+      }
     }
     throw error;
   }
@@ -341,7 +350,9 @@ class DeployBuildEffects implements BuildEffects {
     try {
       await this.apiClient.postDeployFile(this.deployId, sourcePath, outputPath);
     } catch (error) {
-      if (isHttpError(error) && error.statusCode === 413) {
+      // 413 is "Payload Too Large", however sometimes Cloudflare returns a
+      // custom Cloudflare error, 520. Sometimes we also see 502. Handle them all
+      if (isHttpError(error) && (error.statusCode === 413 || error.statusCode === 503 || error.statusCode === 520)) {
         throw new CliError(`File too large to deploy: ${sourcePath}. Maximum file size is 50MB.`, {cause: error});
       }
       throw error;

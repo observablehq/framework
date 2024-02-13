@@ -130,7 +130,7 @@ export async function build(
       if ("path" in style) {
         const outputPath = join("_import", style.path);
         const sourcePath = join(root, style.path);
-        effects.output.write(`${faint("bundle")} ${sourcePath} ${faint("→")} `);
+        effects.output.write(`${faint("style")} ${sourcePath} ${faint("→")} `);
         const code = await bundleStyles({path: sourcePath});
         await effects.writeFile(outputPath, code);
       } else {

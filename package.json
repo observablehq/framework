@@ -1,7 +1,7 @@
 {
   "name": "@observablehq/framework",
   "license": "ISC",
-  "version": "1.0.0-rc.7",
+  "version": "1.0.0-rc.8",
   "type": "module",
   "publishConfig": {
     "access": "public"
@@ -29,7 +29,7 @@
     "test": "yarn test:mocha && yarn test:tsc && yarn test:lint && yarn test:prettier",
     "test:coverage": "c8 yarn test:mocha",
     "test:mocha": "rm -rf test/.observablehq/cache test/input/build/*/.observablehq/cache && OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles tsx --no-warnings=ExperimentalWarning ./node_modules/.bin/mocha 'test/**/*-test.*'",
-    "test:lint": "eslint src test",
+    "test:lint": "eslint src test --max-warnings=0",
     "test:prettier": "prettier --check src test",
     "test:tsc": "tsc --noEmit",
     "observable": "tsx --no-warnings=ExperimentalWarning ./bin/observable.ts"
