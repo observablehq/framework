@@ -1,4 +1,5 @@
-import {access} from "node:fs/promises";
+import {utimesSync} from "node:fs";
+import {access, utimes} from "node:fs/promises";
 import {join} from "node:path";
 import {type BuildEffects, FileBuildEffects} from "./build.js";
 import {isEnoent} from "./error.js";
@@ -37,8 +38,10 @@ export async function convert(
     if (!ready) {
       effects.logger.warn(faint("skip"), name);
     } else {
-      const {nodes, files} = await response.json();
+      const {nodes, files, update_time} = await response.json();
       await effects.writeFile(name, convertNodes(nodes));
+      const ts = new Date(update_time);
+      await utimes(join(output, name), ts, ts); // touch
       if (download_files && files) {
         for (const file of files) {
           effects.output.write(`${faint("attachment")} ${file.name} ${faint("→")} `);
@@ -49,7 +52,8 @@ export async function convert(
             const response = await fetch(file.download_url);
             if (!response.ok) throw new Error(`error fetching ${file}: ${response.status}`);
             await effects.writeFile(file.name, Buffer.from(await response.arrayBuffer()));
-            // TODO touch create_time: "2024-02-12T23:29:35.968Z";
+            const ts = new Date(file.create_time);
+            await utimes(join(output, file.name), ts, ts); // touch
           }
         }
       }
