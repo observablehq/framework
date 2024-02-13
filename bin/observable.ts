@@ -44,7 +44,7 @@ if (positionals.length > 0) {
   // Convert help <command> into <command> --help.
   if (command === "help" && positionals.length > 1) {
     const p = tokens.find((p) => p.kind === "positional" && p !== t)!;
-    args.splice(p.index, 1, "--help");
+    args.splice(p.index - 1, 1, "--help");
     command = positionals[1];
   }
 }
@@ -117,9 +117,8 @@ try {
       break;
     }
     case "preview": {
-      const {
-        values: {config, root, host, port, ["no-open"]: noopen}
-      } = helpArgs(command, {
+      const {values, tokens} = helpArgs(command, {
+        tokens: true,
         options: {
           ...CONFIG_OPTION,
           host: {
@@ -130,11 +129,22 @@ try {
             type: "string",
             default: process.env.PORT
           },
+          open: {
+            type: "boolean"
+          },
           "no-open": {
             type: "boolean"
           }
         }
       });
+      // https://nodejs.org/api/util.html#parseargs-tokens
+      for (const token of tokens) {
+        if (token.kind !== "option") continue;
+        const {name} = token;
+        if (name === "no-open") values.open = false;
+        else if (name === "open") values.open = true;
+      }
+      const {config, root, host, port, open} = values;
       enableNpmVersionResolution(false);
       enableRemoteModulePreload(false);
       await import("../src/preview.js").then(async (preview) =>
@@ -142,7 +152,7 @@ try {
           config: await readConfig(config, root),
           hostname: host!,
           port: port === undefined ? undefined : +port,
-          open: !noopen
+          open
         })
       );
       break;
