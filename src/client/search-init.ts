@@ -14,10 +14,7 @@ for (const link of document.querySelectorAll("#observablehq-search-results a")) 
 const load = () => {
   input.removeEventListener("focus", load);
   input.removeEventListener("keydown", load);
-  const s = document.createElement("script");
-  s.setAttribute("type", "module");
-  s.setAttribute("src", `${base}_observablehq/search.js`);
-  container.appendChild(s);
+  import(`${base}_observablehq/search.js`);
 };
 input.addEventListener("focus", load);
 input.addEventListener("keydown", load);
