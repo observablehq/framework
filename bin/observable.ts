@@ -167,7 +167,9 @@ try {
         options: {output: {type: "string", default: "."}},
         allowPositionals: true
       });
-      await import("../src/convert.js").then((convert) => convert.convert(positionals, String(output)));
+      await import("../src/convert.js").then((convert) =>
+        convert.convert(positionals, {output: String(output), files: true})
+      );
       break;
     }
     default: {
