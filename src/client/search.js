@@ -42,6 +42,8 @@ input.addEventListener("input", () => {
           .join("")}
       </ol>`;
 });
+
+// Handle a race condition where an input event fires while awaiting the index fetch.
 input.dispatchEvent(new Event("input"));
 
 addEventListener("keydown", (event) => {
