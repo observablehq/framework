@@ -78,6 +78,7 @@ try {
   logout       sign-out of Observable
   deploy       deploy a project to Observable
   whoami       check authentication status
+  convert      convert an Observable notebook to Markdown
   help         print usage information
   version      print the version`
       );
@@ -175,6 +176,11 @@ try {
     case "whoami": {
       helpArgs(command, {});
       await import("../src/observableApiAuth.js").then((auth) => auth.whoami());
+      break;
+    }
+    case "convert": {
+      const {positionals} = helpArgs(command, {allowPositionals: true});
+      await import("../src/convert.js").then((convert) => convert.convert(positionals));
       break;
     }
     default: {
