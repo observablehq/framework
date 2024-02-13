@@ -89,9 +89,7 @@ try {
       const {
         values: {config, root}
       } = helpArgs(command, {
-        options: {
-          ...CONFIG_OPTION
-        }
+        options: {...CONFIG_OPTION}
       });
       await import("../src/build.js").then(async (build) => build.build({config: await readConfig(config, root)}));
       break;
