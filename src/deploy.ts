@@ -338,7 +338,7 @@ class DeployBuildEffects implements BuildEffects {
       await this.apiClient.postDeployFile(this.deployId, sourcePath, outputPath);
     } catch (error) {
       if (isHttpError(error) && error.statusCode === 413) {
-        throw new CliError(`File too large to deploy: ${sourcePath}. Maximum file size is 50MB.`);
+        throw new CliError(`File too large to deploy: ${sourcePath}. Maximum file size is 50MB.`, {cause: error});
       }
       throw error;
     }
