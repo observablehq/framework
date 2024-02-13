@@ -8,7 +8,7 @@ Because data loaders run in this standard environment, they have to be written a
 
 The data loader below (`us-electricity.tsv.js`) accesses data on US hourly electricity demand and generation from the [Energy Information Administration](https://www.eia.gov/opendata/), does some basic wrangling, and returns a tab-separated value file.
 
-Create a file in your project source root, with the .tsv.js double extension (for example, `docs/my-data.tsv.js`), then paste the JavaScript code below to get started.
+Create a file in your project source root with the .tsv.js double extension (for example, `docs/data/my-data.tsv.js`), then paste the JavaScript code below to get started.
 
 ```js echo=true run=false
 // Import d3 functions:
@@ -49,7 +49,7 @@ process.stdout.write(d3.tsvFormat(usElectricity));
 Access the output of the data loader (here, `us-electricity.tsv`) using [`FileAttachment`](../javascript/files):
 
 ```js echo
-const usElectricity = FileAttachment("us-electricity.tsv").tsv();
+const usElectricity = FileAttachment("data/us-electricity.tsv").tsv();
 ```
 
 `us-electricity.tsv` [routes](../loaders#routing) to the `us-electricity.tsv.js` data loader and reads its standard output stream.
@@ -62,7 +62,7 @@ usElectricity
 
 The data loader below (`magic.json.js`) accesses Magic the Gathering card data from the [Scryfall API](https://scryfall.com/docs/api), does some basic wrangling, and returns a JSON.
 
-Create a file in your project source root, with the .json.js double extension (for example, `docs/my-data.json.js`), then paste the JavaScript code below to get started.
+Create a file in your project source root with the .json.js double extension (for example, `docs/data/my-data.json.js`), then paste the JavaScript code below to get started.
 
 ```js run=false
 // Import d3 functions:
@@ -89,10 +89,10 @@ process.stdout.write(JSON.stringify(magicCardsData));
 Access the output of the data loader (here, `magic.json`) using [`FileAttachment`](../javascript/files):
 
 ```js echo
-const magicCards = FileAttachment("magic.json").json();
+const magicCards = FileAttachment("data/magic.json").json();
 ```
 
-`magic.json` [routes](../loaders#routing) to the `us-electricity.tsv.js` data loader and reads its standard output stream.
+`magic.json` [routes](../loaders#routing) to the `magic.json.js` data loader and reads its standard output stream.
 
 ```js echo
 magicCards

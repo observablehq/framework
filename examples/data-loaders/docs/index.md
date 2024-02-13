@@ -9,7 +9,7 @@ This project is a collection of data loaders, grouped by loader type (e.g. Pytho
 
 Each page shows the contents of the data loaders, and includes live example code for accessing data loader outputs.
 
-Or, just [view the code](https://github.com/observablehq/framework/tree/main/examples/data-loaders/docs)!
+Or, just [view the code](https://github.com/observablehq/framework/tree/main/examples/data-loaders/docs/data)!
 
 ### Python data loaders
 

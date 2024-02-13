@@ -6,7 +6,7 @@ Observable Framework supports [data loaders](../loaders) written in Python, by p
 
 The data loader below (`penguin-logistic.csv.py`) reads in the penguins data from a local file, performs [logistic regression](https://en.wikipedia.org/wiki/Logistic_regression), then outputs a single CSV with penguin species classifications.
 
-Create a file in your project source root, with the .csv.py double extension (for example, `docs/my-data.csv.py`), then paste the Python code below to get started.
+Create a file in your project source root with the .csv.py double extension (for example, `docs/data/my-data.csv.py`), then paste the Python code below to get started.
 
 <!-- TODO update with setup information, see: https://github.com/observablehq/framework/tree/main/examples/penguin-classification#reuse-this-example>-->
 
@@ -17,7 +17,7 @@ from sklearn.linear_model import LogisticRegression
 import sys
 
 # Data access, wrangling and analysis
-df = pd.read_csv("docs/data/penguins.csv")
+df = pd.read_csv("docs/data-files/penguins.csv")
 
 X = df.iloc[:, [2, 3, 4, 5]]
 Y = df.iloc[:, 0]
@@ -32,10 +32,10 @@ results['speciecs_predicted'] = logreg.predict(X)
 results.to_csv(sys.stdout)
 ```
 
-Access the output of the data loader (here, `penguin-logistic.csv`) from the client using [`FileAttachment`](../javascript/files):
+Access the output of the data loader (here, `data/penguin-logistic.csv`) from the client using [`FileAttachment`](../javascript/files):
 
 ```js echo
-const penguinClassification = FileAttachment("penguin-logistic.csv").csv({typed: true});
+const penguinClassification = FileAttachment("data/penguin-logistic.csv").csv({typed: true});
 ```
 
 `penguin-logistic.csv` [routes](../loaders#routing) to the `penguin-logistic.csv.py` data loader and reads its standard output stream.
@@ -43,7 +43,7 @@ const penguinClassification = FileAttachment("penguin-logistic.csv").csv({typed:
 <!-- For local testing of penguin-logistic.csv.py only -->
 
 ```js echo run
-const predictions = FileAttachment("penguin-logistic.csv").csv({typed: true});
+const predictions = FileAttachment("data/penguin-logistic.csv").csv({typed: true});
 ```
 
 ```js echo run
@@ -56,7 +56,7 @@ predictions
 
 The data loader below (`birth-statistics.png.py`) accesses [birth data for Lake County, Illinois](https://data-lakecountyil.opendata.arcgis.com/datasets/lakecountyil::birth-statistics/explore) from a local geoJSON file. A simple choropleth of birth rates is created using `matplotlib`, then output as a PNG file.
 
-Create a file in your project source root, with the .png.py double extension (for example, `docs/my-png.png.py`), then paste the Python code below to get started.
+Create a file in your project source root with the .png.py double extension (for example, `docs/data/my-png.png.py`), then paste the Python code below to get started.
 
 ```python
 # Import libraries (must be installed)
@@ -66,7 +66,7 @@ import io
 import sys
 
 # Read in data
-birth_statistics = gpd.read_file('docs/data/birth_statistics.geojson')
+birth_statistics = gpd.read_file('docs/data-files/birth_statistics.geojson')
 
 # Create a basic choropleth map
 birth_statistics.plot(column='Birth_Rate', legend=True)
@@ -80,10 +80,10 @@ img_buffer.seek(0)
 sys.stdout.buffer.write(img_buffer.getvalue())
 ```
 
-Access the output of the data loader (here, `birth-statistics.png`) from the client using [`FileAttachment`](../javascript/files):
+Access the output of the data loader (here, `data/birth-statistics.png`) from the client using [`FileAttachment`](../javascript/files):
 
 ```js echo
-const birthRateMap = FileAttachment("birth-statistics.png").image();
+const birthRateMap = FileAttachment("data/birth-statistics.png").image();
 ```
 
 ```js echo
@@ -96,7 +96,7 @@ birthRateMap
 
 The data loader below `earthquakes.zip.py` accesses data on [earthquakes from the USGS](https://www.usgs.gov/programs/earthquake-hazards/earthquakes), then combines metadata (as JSON) and selected earthquake magnitude and location (as a CSV) in a zip archive.
 
-Create a file in your project source root, with the .zip.py double extension (for example, `docs/my-data.zip.py`), then paste the Python code below to get started.
+Create a file in your project source root with the .zip.py double extension (for example, `docs/data/my-data.zip.py`), then paste the Python code below to get started.
 
 ```python
 # Import libraries (must be installed)
@@ -146,11 +146,11 @@ sys.stdout.buffer.write(zip_buffer.getvalue())
 Access the output of the data loader (here, `quakes_metadata.json` and `quakes.csv`) from the client using [`FileAttachment`](../javascript/files):
 
 ```js echo
-const quakeMetadata = FileAttachment("earthquakes/quakes_metadata.json").json()
+const quakeMetadata = FileAttachment("data/earthquakes/quakes_metadata.json").json()
 ```
 
 ```js echo
-const quakeData = FileAttachment("earthquakes/quakes.csv").csv({typed: true})
+const quakeData = FileAttachment("data/earthquakes/quakes.csv").csv({typed: true})
 ```
 
 ```js echo
@@ -160,7 +160,7 @@ quakeData
 You can alternatively access the zip archive as a whole:
 
 ```js echo
-const quakeZip = FileAttachment("earthquakes.zip").zip()
+const quakeZip = FileAttachment("data/earthquakes.zip").zip()
 ```
 
 ```js echo

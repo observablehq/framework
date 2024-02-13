@@ -10,10 +10,10 @@ chmod +x docs/quakes.csv.exe
 
 The data loader below `diamonds.jpeg.exe` specifies the R interpreter, `Rscript`, to execute the file (`#!/usr/bin/env Rscript`). A scatterplot chart built with [`ggplot2`](https://ggplot2.tidyverse.org/) using the built-in diamonds dataset is returned as a JPEG to standard output.
 
-Create a file in your project source root, with the .jpeg.exe double extension (for example, `docs/my-chart.jpeg.exe`). Remember to make the script executable, for example using:
+Create a file in your project source root with the .jpeg.exe double extension (for example, `docs/data/my-chart.jpeg.exe`). Remember to make the script executable, for example using:
 
 ```sh
-chmod +x docs/my-chart.jpeg.exe
+chmod +x docs/data/my-chart.jpeg.exe
 ```
 
 Then, paste the code below to get started.
@@ -41,7 +41,7 @@ ggsave(plot = my_plot, filename = "/dev/stdout", device = "jpeg")
 Access the output of the data loader (here, `diamonds.jpeg`) from the client using [`FileAttachment`](../javascript/files):
 
 ```js echo
-const diamonds = FileAttachment("diamonds.jpeg").image({width: 500})
+const diamonds = FileAttachment("data/diamonds.jpeg").image({width: 500})
 ```
 
 `diamonds.jpeg` [routes](../loaders#routing) to the `diamonds.jpeg.exe` data loader and reads its standard output stream.
@@ -54,10 +54,10 @@ diamonds
 
 The data loader below `raven.txt.exe` specifies the Julia language interpreter using the shebang (`#!/usr/bin/env julia`). Text of Edgar Allen Poe's _The Raven_ is accessed from [Project Gutenberg](https://www.gutenberg.org/cache/epub/1065/pg1065.txt). The text is parsed and single paragraph (specified by number) is returned as text.
 
-Create a file in your project source root, with the .txt.exe double extension (for example, `docs/my-chart.txt.exe`). Remember to make the script executable, for example using:
+Create a file in your project source root with the .txt.exe double extension (for example, `docs/data/my-chart.txt.exe`). Remember to make the script executable, for example using:
 
 ```sh
-chmod +x docs/my-chart.txt.exe
+chmod +x docs/data/my-chart.txt.exe
 ```
 
 Then, paste the code below to get started.
@@ -105,7 +105,7 @@ println(result_paragraph)
 Access the output of the data loader (here, `raven.txt`) using [`FileAttachment`](../javascript/files):
 
 ```js echo
-const ravenParagraph = FileAttachment("raven.txt").text();
+const ravenParagraph = FileAttachment("data/raven.txt").text();
 ```
 
 `raven.txt` [routes](../loaders#routing) to the `raven.txt.exe` data loader and reads its standard output stream.

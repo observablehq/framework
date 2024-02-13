@@ -6,7 +6,7 @@ Observable Framework supports [data loaders](../loaders) written in R, by passin
 
 The data loader below (`penguin-kmeans.csv.R`) reads in the [penguins data](https://journal.r-project.org/articles/RJ-2022-020/) from a local file, performs [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering) based on culmen (bill) length and depth, then outputs a single CSV with penguin cluster assignments.
 
-Create a file in your project source root, with the .csv.R double extension (for example, `docs/my-data.csv.R`), then paste the R code below to get started.
+Create a file in your project source root with the .csv.R double extension (for example, `docs/data/my-data.csv.R`), then paste the R code below to get started.
 
 ```r
 # Attach libraries (must be installed)
@@ -15,7 +15,7 @@ library(dplyr)
 library(tidyr)
 
 # Data access, wrangling and analysis
-penguins <- read_csv("docs/data/penguins.csv") |>
+penguins <- read_csv("docs/data-files/penguins.csv") |>
   drop_na(culmen_depth_mm, culmen_length_mm)
 
 penguin_kmeans <- penguins |>
@@ -32,29 +32,21 @@ cat(format_csv(penguin_clusters))
 
 Access the output of the data loader (here, `penguin-kmeans.csv`) from the client using [`FileAttachment`](../javascript/files):
 
-```js run=false
-const penguinKmeans = FileAttachment("penguin-kmeans.csv").csv({typed: true});
+```js echo
+const penguinKmeans = FileAttachment("data/penguin-kmeans.csv").csv({typed: true});
 ```
 
 `penguin-kmeans.csv` [routes](../loaders#routing) to the `penguin-kmeans.csv.R` data loader and reads its standard output stream.
 
-<!-- For local testing of penguin-kmeans.csv.R only -->
-
-```js echo run
-const penguinKmeans = FileAttachment("penguin-kmeans.csv").csv({typed: true});
-```
-
-```js echo run
+```js echo
 penguinKmeans
 ```
-
-<!-- End local testing of penguin-kmeans.csv.R -->
 
 ## JSON
 
 The data loader below (`tolstoy.json.R`) accesses the text of _War and Peace_ from the [Gutenberg Project](https://www.gutenberg.org/ebooks/2600), finds the most common words by chapter, and returns a JSON.
 
-Create a file in your project source root, with the .json.R double extension (for example, `docs/my-data.json.R`), then paste the R code below to get started.
+Create a file in your project source root with the .json.R double extension (for example, `docs/data/my-data.json.R`), then paste the R code below to get started.
 
 ```r
 # Attach libraries (must be installed)
@@ -99,7 +91,7 @@ cat(toJSON(tolstoy_word_counts, pretty = TRUE))
 Access the output of the data loader (here, `tolstoy.json`) from the client using [`FileAttachment`](../javascript/files):
 
 ```js echo
-const text = FileAttachment("tolstoy.json").json()
+const text = FileAttachment("data/tolstoy.json").json()
 ```
 
 `tolstoy.json` [routes](../loaders#routing) to the `tolstoy.json.R` data loader and reads its standard output stream.
@@ -112,7 +104,7 @@ text
 
 The data loader below (`penguin-mlr.zip.R`) reads in the [penguins data](https://journal.r-project.org/articles/RJ-2022-020/) from a local file, performs multiple linear regression, then outputs multiple files (with model estimates and predictions) as a ZIP archive.
 
-Create a file in your project source root, with the .zip.R double extension (for example, `docs/my-data.zip.R`), then paste the R code below to get started.
+Create a file in your project source root with the .zip.R double extension (for example, `docs/data/my-data.zip.R`), then paste the R code below to get started.
 
 ```r
 # Attach required packages (must be installed)
@@ -122,7 +114,7 @@ library(dplyr)
 library(broom)
 
 # Data access, wrangling and analysis
-penguins <- read_csv("docs/data/penguins.csv") |>
+penguins <- read_csv("docs/data-files/penguins.csv") |>
     drop_na(body_mass_g, species, sex, flipper_length_mm, culmen_depth_mm)
 
 penguins_mlr <- lm(body_mass_g ~ species + sex + flipper_length_mm + culmen_depth_mm, data = penguins)
@@ -153,7 +145,7 @@ The `system` function invokes the system command `"zip - -r ."`, where:
 Load the output of the data loader (here, `penguin-mlr.zip`) from the client using [`FileAttachment`](../javascript/files). Here, that is:
 
 ```js echo
-const modelZip = FileAttachment("penguin-mlr.zip").zip();
+const modelZip = FileAttachment("data/penguin-mlr.zip").zip();
 ```
 
 Then access individual files from the ZIP archive:
@@ -169,7 +161,7 @@ modelEstimates
 Alternatively, access individual files from the ZIP archive straightaway:
 
 ```js echo
-const modelPredictions = FileAttachment("penguin-mlr/predictions.csv").csv({typed: true})
+const modelPredictions = FileAttachment("data/penguin-mlr/predictions.csv").csv({typed: true})
 ```
 
 ```js echo

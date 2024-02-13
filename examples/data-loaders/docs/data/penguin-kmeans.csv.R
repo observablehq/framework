@@ -4,7 +4,7 @@ library(dplyr)
 library(tidyr)
 
 # Data access, wrangling and analysis
-penguins <- read_csv("docs/data/penguins.csv") |>
+penguins <- read_csv("docs/data-files/penguins.csv") |>
   drop_na(culmen_depth_mm, culmen_length_mm)
 
 penguin_kmeans <- penguins |>

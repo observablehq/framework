@@ -5,7 +5,7 @@ library(dplyr)
 library(broom)
 
 # Data access, wrangling and analysis
-penguins <- read_csv("docs/data/penguins.csv") |>
+penguins <- read_csv("docs/data-files/penguins.csv") |>
     drop_na(body_mass_g, species, sex, flipper_length_mm, culmen_depth_mm)
 
 penguins_mlr <- lm(body_mass_g ~ species + sex + flipper_length_mm + culmen_depth_mm, data = penguins)
