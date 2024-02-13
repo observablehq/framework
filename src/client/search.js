@@ -1,4 +1,3 @@
-// TODO import only when needed
 import MiniSearch from "minisearch";
 
 const container = document.querySelector("#observablehq-search");
