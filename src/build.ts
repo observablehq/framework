@@ -9,7 +9,6 @@ import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
-import type {ParseResult} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
 import {render} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
@@ -85,7 +84,7 @@ export async function build(
   const files = new Set<string>();
   const imports = new Set<string>();
   const styles: Style[] = [];
-  const pages = new Map<string, ParseResult>();
+  const pages = new Set<string>();
   for await (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);
     effects.output.write(`${faint("parse")} ${sourcePath}\n`);
@@ -96,7 +95,7 @@ export async function build(
     for (const file of parsed.imports.filter((i) => i.type === "local")) imports.add(resolveFile(file));
     const style = mergeStyle(path, parsed.data?.style, parsed.data?.theme, config.style);
     if (style && !styles.some((s) => styleEquals(s, style))) styles.push(style);
-    pages.set(sourceFile, parsed);
+    pages.add(sourceFile);
   }
 
   // Add imported local scripts.
@@ -177,10 +176,11 @@ export async function build(
   }
 
   // Render the pages
-  for (const [sourceFile, parsed] of pages) {
+  for (const sourceFile of pages) {
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
     effects.output.write(`${faint("render")} ${sourceFile} → `);
+    const parsed = await parseMarkdown(join(root, sourceFile), {path, ...config});
     await effects.writeFile(outputPath, await render(parsed, {path, ...config}));
   }
 

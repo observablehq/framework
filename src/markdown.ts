@@ -421,7 +421,7 @@ const mdmap = new Map();
 
 export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptions): Promise<ParseResult> {
   const source = await readFile(sourcePath, "utf-8");
-  const code = computeHash(source);
+  const code = computeHash(`${root} ${path} ${source}`);
   const shortCode = code.slice(0, 4); // cap the memory footprint.
 
   if (!mdmap.has(shortCode) || mdmap.get(shortCode).code !== code) {
