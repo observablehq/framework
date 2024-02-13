@@ -1,4 +1,6 @@
 ```js
+import "npm:apache-arrow";
+import "npm:parquet-wasm/esm/arrow1.js";
 import {ApiHeatmap} from "./components/apiHeatmap.js";
 import {ApiHistogram} from "./components/apiHistogram.js";
 ```
