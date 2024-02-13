@@ -121,8 +121,8 @@ export async function deploy(
   if (!currentUser) {
     const message =
       authError === "unauthenticated" || authError === null
-        ? "You must be logged in to Observable Cloud to deploy. Do you want to do that now?"
-        : "Your authentication is invalid. Do you want to log in to Observable Cloud again?";
+        ? "You must be logged in to Observable to deploy. Do you want to do that now?"
+        : "Your authentication is invalid. Do you want to log in to Observable again?";
     const choice = await clack.confirm({
       message,
       active: "Yes, log in",
