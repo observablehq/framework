@@ -30,7 +30,7 @@ export async function searchIndex(config: Config, effects?: BuildEffects): Promi
   }
 
   for await (const file of visitMarkdownFiles(root)) {
-    const {html, title, data} = await parseMarkdown(join(root, file), {root, path: file});
+    const {html, title, data} = await parseMarkdown(join(root, file), {root, path: "/" + file.slice(0, -3)});
 
     // Skip page opted out of indexing, and non-pages unless opted-in.
     // We only log the first case.
