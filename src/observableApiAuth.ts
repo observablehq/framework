@@ -12,9 +12,9 @@ import {
   getObservableApiKey,
   setObservableApiKey
 } from "./observableApiConfig.js";
+import {Telemetry} from "./telemetry.js";
 import type {TtyEffects} from "./tty.js";
 import {bold, defaultEffects as defaultTtyEffects, inverse, link, yellow} from "./tty.js";
-import {Telemetry} from "./telemetry.js";
 
 const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
 
