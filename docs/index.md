@@ -2,140 +2,127 @@
 toc: false
 ---
 
-## ToDo
-- fix npm line
-- use webp
-- move assets up
-- fix shaddow
-
 <style>
 
 .hero {
-  display: flex;
-  flex-direction: column;
-  font-family: var(--serif);
-  _margin: 4rem 0 8rem;
+  font-family: var(--sans-serif);
+  margin: 4rem 0;
   text-wrap: balance;
-  _text-align: center;
 }
 
 .hero h1 {
-  font-size: 56px;
-  line-height: 70px;
-  letter-spacing: -0.15px;
+  font-size: 64px;
+  font-family: var(--serif);
+  line-height: 1;
   margin: 2rem 0;
-  _max-width: none;
-  _font-size: 14vw;
-  _font-weight: 900;
-  _line-height: 1;
-  _background: linear-gradient(30deg, var(--theme-foreground-focus), currentColor);
-  -_webkit-background-clip: text;
-  -_webkit-text-fill-color: transparent;
-  _background-clip: text;
 }
 
 .hero .accent {
-  color: #FF725C;
+  color: #ff725c;
   font-style: italic;
 }
 
-.foo {
-  font-family: 'SF Pro Text';
-  font-style: normal;
-  font-weight: 600;
-  font-size: 16px;
-  line-height: 16px;
-  color: #3B5FC0;
-}
-
 .hero h2 {
-  _margin: 0 0 3rem;
-  max-width: 34em;
-  font-size: 20px;
-  font-style: initial;
-  font-weight: 500;
-  line-height: 1.5;
+  font-style: normal;
+  font-size: 18px;
+  line-height: normal;
   color: var(--theme-foreground-muted);
 }
 
-@media (min-width: 640px) {
-  .hero h1 {
-    font-size: 90px;
-    line-height: 112px;
-  }
+.hero .observablehq-pre-container,
+.hero pre:not(.observablehq-pre-container pre) {
+  margin: 1rem 0;
 }
 
-figure img {
+.gallery {
+  margin: 4rem -1rem;
+  gap: 2rem;
+  max-width: 640px;
+}
+
+.gallery figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gallery img {
   border-radius: 8px;
-  margin: 1rem;
-  max-width: calc(100% - 2rem);
-  box-shadow: 0 0 0 0.75px rgba(128, 128, 128, 0.2), 0 6px 12px 6px rgba(0, 0, 0, 0.4);
-  aspect-ratio: 3024 / 1888;
-  object-fit: cover;
-  object-position: 0 100%;
+  box-shadow: 0 0 0 0.75px rgba(128, 128, 128, 0.2), 0 6px 12px 0 rgba(0, 0, 0, 0.2);
   aspect-ratio: 592 / 462;
 }
 
-figcaption {
-  text-align: center;
-  font-weight: 500;
-  font-size: 14pt;
+.gallery a:not(:hover, :focus) {
+  color: var(--theme-foreground-muted);
+}
+
+.gallery a:hover img,
+.gallery a:focus img {
+  box-shadow: 0 0 0 0.75px var(--theme-foreground-focus), 0 6px 12px 0 rgba(0, 0, 0, 0.2);
+}
+
+.gallery figcaption {
+  font-size: 12px;
+  color: inherit;
 }
 
 .arrow {
+  font-weight: 500;
+}
+
+.arrow::after {
+  content: "→";
   display: inline-block;
-  margin-left: 0.5rem;
+  margin-left: 0.25rem;
 }
 
 </style>
 
 <div class="hero">
-  <h1>The best dashboards are built with <span class="accent">code</span></h1>
+  <h1>The best dashboards are built with <span class="accent">code.</span></h1>
   <h2>Create fast, beautiful data apps, dashboards, and reports from the command line. Write Markdown, JavaScript, SQL, Python, R… and any language you like. Free and open-source.</h2>
-  <div style="display: flex; align-items: baseline; justify-content: start;">
+  <div style="display: flex; align-items: center; gap: 2rem;">
     <pre data-copy>npm init @observablehq</pre>
-    <a href="./getting-started" style="margin-left: 2em;" class="foo">
-      Get started
-      <span class="arrow">→</span>
-    </a>
+    <a href="./getting-started" class="small arrow">Get started</a>
   </div>
 </div>
 
-<div class="grid grid-cols-2">
-  <a href="https://observablehq.com/framework/examples/api">
+<div class="gallery grid grid-cols-2">
+  <a href="./examples/api/" target="_blank">
     <figure>
       <picture>
         <source srcset="./assets/api-logs-dark.png" media="(prefers-color-scheme: dark)">
         <img class="crop" loading="lazy" src="./assets/api-logs.png" >
       </picture>
-      <figcaption>API Logs<span class="arrow">→</span></figcaption>
+      <figcaption class="arrow">Analyzing web logs</figcaption>
     </figure>
   </a>
-  <a href="https://observablehq.com/framework/examples/eia">
+  <a href="./examples/eia/" target="_blank">
     <figure>
       <picture>
         <source srcset="./assets/eia-dark.png" media="(prefers-color-scheme: dark)">
         <img loading="lazy" src="./assets/eia.png">
       </picture>
-      <figcaption>US electricity generation<span class="arrow">→</span></figcaption>
+      <figcaption class="arrow">U.S. electricity grid</figcaption>
     </figure>
   </a>
-  <a href="https://observablehq.com/framework/examples/chess">
+  <a href="./examples/chess/" target="_blank">
     <figure>
       <picture>
         <source srcset="./assets/chess-dark.png" media="(prefers-color-scheme: dark)">
         <img loading="lazy" src="./assets/chess.png">
       </picture>
-      <figcaption>Chess Ranking<span class="arrow">→</span></figcaption>
+      <figcaption class="arrow">A year of chess rankings</figcaption>
     </figure>
   </a>
-  <a href="https://observablehq.com/framework/examples/plot">
+  <a href="./examples/plot/" target="_blank">
     <figure>
       <picture>
         <source srcset="./assets/plot-downloads-dark.png" media="(prefers-color-scheme: dark)">
         <img loading="lazy" src="./assets/plot-downloads.png">
       </picture>
-      <figcaption>Observable P Downloads<span class="arrow">→</span></figcaption>
+      <figcaption class="arrow">Observable Plot downloads</figcaption>
     </figure>
   </a>
 </div>
