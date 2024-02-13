@@ -2,32 +2,54 @@
 toc: false
 ---
 
+## ToDo
+- fix npm line
+- use webp
+- move assets up
+- fix shaddow
+
 <style>
 
 .hero {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  font-family: var(--sans-serif);
-  margin: 4rem 0 8rem;
+  font-family: var(--serif);
+  _margin: 4rem 0 8rem;
   text-wrap: balance;
-  text-align: center;
+  _text-align: center;
 }
 
 .hero h1 {
+  font-size: 56px;
+  line-height: 70px;
+  letter-spacing: -0.15px;
   margin: 2rem 0;
-  max-width: none;
-  font-size: 14vw;
-  font-weight: 900;
-  line-height: 1;
-  background: linear-gradient(30deg, var(--theme-foreground-focus), currentColor);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  _max-width: none;
+  _font-size: 14vw;
+  _font-weight: 900;
+  _line-height: 1;
+  _background: linear-gradient(30deg, var(--theme-foreground-focus), currentColor);
+  -_webkit-background-clip: text;
+  -_webkit-text-fill-color: transparent;
+  _background-clip: text;
+}
+
+.hero .accent {
+  color: #FF725C;
+  font-style: italic;
+}
+
+.foo {
+  font-family: 'SF Pro Text';
+  font-style: normal;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 16px;
+  color: #3B5FC0;
 }
 
 .hero h2 {
-  margin: 0 0 3rem;
+  _margin: 0 0 3rem;
   max-width: 34em;
   font-size: 20px;
   font-style: initial;
@@ -39,16 +61,83 @@ toc: false
 @media (min-width: 640px) {
   .hero h1 {
     font-size: 90px;
+    line-height: 112px;
   }
+}
+
+figure img {
+  border-radius: 8px;
+  margin: 1rem;
+  max-width: calc(100% - 2rem);
+  box-shadow: 0 0 0 0.75px rgba(128, 128, 128, 0.2), 0 6px 12px 6px rgba(0, 0, 0, 0.4);
+  aspect-ratio: 3024 / 1888;
+  object-fit: cover;
+  object-position: 0 100%;
+  aspect-ratio: 592 / 462;
+}
+
+figcaption {
+  text-align: center;
+  font-weight: 500;
+  font-size: 14pt;
+}
+
+.arrow {
+  display: inline-block;
+  margin-left: 0.5rem;
 }
 
 </style>
 
 <div class="hero">
-  <h1>The best dashboards are built with code</h1>
+  <h1>The best dashboards are built with <span class="accent">code</span></h1>
   <h2>Create fast, beautiful data apps, dashboards, and reports from the command line. Write Markdown, JavaScript, SQL, Python, R… and any language you like. Free and open-source.</h2>
-  <pre data-copy>npm init @observablehq</pre>
-  <a href="./getting-started">Get started<span style="display: inline-block; margin-left: 0.25rem;">→</span></a>
+  <div style="display: flex; align-items: baseline; justify-content: start;">
+    <pre data-copy>npm init @observablehq</pre>
+    <a href="./getting-started" style="margin-left: 2em;" class="foo">
+      Get started
+      <span class="arrow">→</span>
+    </a>
+  </div>
+</div>
+
+<div class="grid grid-cols-2">
+  <a href="https://observablehq.com/framework/examples/api">
+    <figure>
+      <picture>
+        <source srcset="./assets/api-logs-dark.png" media="(prefers-color-scheme: dark)">
+        <img class="crop" loading="lazy" src="./assets/api-logs.png" >
+      </picture>
+      <figcaption>API Logs<span class="arrow">→</span></figcaption>
+    </figure>
+  </a>
+  <a href="https://observablehq.com/framework/examples/eia">
+    <figure>
+      <picture>
+        <source srcset="./assets/eia-dark.png" media="(prefers-color-scheme: dark)">
+        <img loading="lazy" src="./assets/eia.png">
+      </picture>
+      <figcaption>US electricity generation<span class="arrow">→</span></figcaption>
+    </figure>
+  </a>
+  <a href="https://observablehq.com/framework/examples/chess">
+    <figure>
+      <picture>
+        <source srcset="./assets/chess-dark.png" media="(prefers-color-scheme: dark)">
+        <img loading="lazy" src="./assets/chess.png">
+      </picture>
+      <figcaption>Chess Ranking<span class="arrow">→</span></figcaption>
+    </figure>
+  </a>
+  <a href="https://observablehq.com/framework/examples/plot">
+    <figure>
+      <picture>
+        <source srcset="./assets/plot-downloads-dark.png" media="(prefers-color-scheme: dark)">
+        <img loading="lazy" src="./assets/plot-downloads.png">
+      </picture>
+      <figcaption>Observable P Downloads<span class="arrow">→</span></figcaption>
+    </figure>
+  </a>
 </div>
 
 **Observable Framework** is an [open-source](https://github.com/observablehq/framework) static site generator for data apps, dashboards, reports, and more. Framework includes a preview server for local development, and a command-line interface for automating builds & deploys.
