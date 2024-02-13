@@ -22,8 +22,8 @@ export class TestClackEffects implements ClackEffects {
     if (validate) validate(result);
     return result;
   }
-  async select({message}: clack.SelectOptions<any, any>) {
-    if (!this.inputs.length) throw new Error(`out of inputs for select: ${message}`);
+  async select({message, options}: clack.SelectOptions<any, any>) {
+    if (!this.inputs.length) throw Object.assign(new Error(`out of inputs for select: ${message}`), {options});
     return this.inputs.shift();
   }
   async confirm({message}: clack.ConfirmOptions) {
