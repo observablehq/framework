@@ -1,9 +1,0 @@
-@media print {
-  #observablehq-center {
-    padding-left: 1em !important;
-  }
-  #observablehq-sidebar,
-  #observablehq-footer {
-    display: none !important;
-  }
-}
