@@ -35,12 +35,13 @@ export const defaultEffects: AuthEffects = {
 };
 
 export async function login(effects: AuthEffects = defaultEffects) {
-  effects.clack.intro(inverse(" observable login "));
+  const {clack} = effects;
+  clack.intro(inverse(" observable login "));
 
   const {currentUser} = await loginInner(effects);
 
   if (currentUser.workspaces.length === 0) {
-    effects.clack.log.warn(`${yellow("Warning:")} You don't have any workspaces to deploy to.`);
+    clack.log.warn(`${yellow("Warning:")} You don't have any workspaces to deploy to.`);
   } else if (currentUser.workspaces.length > 1) {
     clack.note(
       [
@@ -50,11 +51,13 @@ export async function login(effects: AuthEffects = defaultEffects) {
       ].join("\n")
     );
   }
+  clack.outro("Logged in");
 
-  effects.clack.outro();
+  clack.outro();
 }
 
 export async function loginInner(effects: AuthEffects): Promise<{currentUser: GetCurrentUserResponse; apiKey: ApiKey}> {
+  const {clack} = effects;
   const apiClient = new ObservableApiClient();
   const requestInfo = await apiClient.postAuthRequest({
     scopes: ["projects:deploy", "projects:create"],
@@ -63,11 +66,11 @@ export async function loginInner(effects: AuthEffects): Promise<{currentUser: Ge
   const confirmUrl = new URL("/auth-device", OBSERVABLE_UI_ORIGIN);
   confirmUrl.searchParams.set("code", requestInfo.confirmationCode);
 
-  effects.clack.log.step(
+  clack.log.step(
     `Your confirmation code is ${bold(yellow(requestInfo.confirmationCode))}\n` +
       `Open ${link(confirmUrl)}\nin your browser, and confirm the code matches.`
   );
-  const spinner = effects.clack.spinner();
+  const spinner = clack.spinner();
   spinner.start("Waiting for confirmation...");
 
   let apiKey: PostAuthRequestPollResponse["apiKey"] | null = null;
