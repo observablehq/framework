@@ -29,17 +29,16 @@ input.addEventListener("input", () => {
       ? "<div>no results</div>"
       : `<div>${results.length === 11 ? "10+" : results.length} result${
           results.length === 1 ? "" : "s"
-        }</div><ol>${results
-          .map(({id, title, score}, i) => {
-            score = Math.min(6, Math.round(1 + 0.6 * score));
-            return `<li class="observablehq-link${
-              i === 0 ? ` ${c}` : ""
-            }" data-reference="${id}"><a href="${base}${id}"><span>${title}</span><small>${"●".repeat(
-              score
-            )}</small></a></li>`;
-          })
-          .join("")}
-      </ol>`;
+        }</div><ol>${"<li><a><span></span><small></small></a></li>".repeat(results.length)}</ol>`;
+  r.querySelectorAll("li").forEach((li, i) => {
+    const {id, score, title} = results[i];
+    li.setAttribute("class", `observablehq-link${i === 0 ? ` ${c}` : ""}`);
+    li.setAttribute("data-reference", id);
+    const a = li.firstChild;
+    a.setAttribute("href", `${base}${id}`);
+    a.firstChild.textContent = title;
+    a.children[1].textContent = "●".repeat(Math.min(6, Math.round(1 + 0.6 * score))); // small
+  });
 });
 
 // Handle a race condition where an input event fires while awaiting the index fetch.
