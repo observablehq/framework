@@ -277,8 +277,17 @@ export async function deploy(
   try {
     deployId = await apiClient.postDeploy({projectId: deployTarget.project.id, message});
   } catch (error) {
-    if (isHttpError(error) && (error.statusCode === 404 || error.statusCode === 403)) {
-      throw new CliError("Deploy failed. Please check your deploy configuration.", {cause: error});
+    if (isHttpError(error)) {
+      if (error.statusCode === 404) {
+        throw new CliError(`Project @${deployTarget.workspace.login}/${deployTarget.project.slug} not found.`, {
+          cause: error
+        });
+      } else if (error.statusCode === 403) {
+        throw new CliError(
+          `You don't have permission to deploy to @${deployTarget.workspace.login}/${deployTarget.project.slug}.`,
+          {cause: error}
+        );
+      }
     }
     throw error;
   }
