@@ -8,30 +8,35 @@ const x = Math.random();
 display(x);
 ```
 
-If you pass `display` a DOM element or node, it will be inserted directly into the page. Use this technique to render dynamic displays of data, such as charts and tables.
-
-<!-- TODO This is an obscure, pedagogical technique and not the best initial demonstration of display. -->
+You can display structured objects, too. Click on the object below to inspect it.
 
 ```js echo
-const span = document.createElement("span");
-span.appendChild(document.createTextNode("Your lucky number is "));
-span.appendChild(document.createTextNode(Math.floor(Math.random () * 10)));
-span.appendChild(document.createTextNode("!"));
-display(span);
+display({hello: {subject: "world"}, numbers: [1, 2, 3, 4]})
 ```
 
-You can create DOM elements using the standard [DOM API](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Introduction) or a helper library of your choosing. For example, the above can be written using [Hypertext Literal](../lib/htl) as:
-
-```js echo
-display(html`Your lucky number is ${Math.floor(Math.random () * 10)}!`);
-```
-
-You can call `display` multiple times to display multiple values. Values are displayed in the order they are received. Previously-displayed values will be cleared when the associated code block or inline expression is re-run.
+Calling `display` multiple times will display multiple values. Values are displayed in the order they are received. (Previously-displayed values will be cleared when the associated code block or inline expression is re-run.)
 
 ```js echo
 for (let i = 0; i < 5; ++i) {
   display(i);
 }
+```
+
+If you pass `display` a DOM node, it will be inserted directly into the page. Use this technique to render dynamic displays of data, such as charts and tables. Here is an example displaying a [text node](https://developer.mozilla.org/en-US/docs/Web/API/Document/createTextNode) created using the [DOM API](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Introduction):
+
+```js echo
+display(document.createTextNode(`Your lucky number is ${Math.floor(Math.random () * 10)}!`));
+```
+
+<div class="note">
+  <p>This is a contrived example — you wouldn’t normally create a text node by hand. Instead, you’d use an <a href="../javascript#inline-expressions">inline expression</a> to interpolate a value into Markdown. For example:</p>
+  <pre><code class="language-md">Your lucky number is &dollar;{Math.floor(Math.random () * 10)}!</code></pre>
+</div>
+
+You’ll often pass <code>display</code> a DOM node when you’re using a helper library such as <a href="../lib/plot">Observable Plot</a> or <a href="../lib/inputs">Observable Inputs</a> or a custom component (a function you’ve written that returns a DOM node) to create content. For example, the above can be written using [Hypertext Literal](../lib/htl) as:
+
+```js echo
+display(html`Your lucky number is ${Math.floor(Math.random () * 10)}!`);
 ```
 
 The `display` function returns the passed-in value. You can display any value (any expression) in code, not only top-level variables; use this as an alternative to `console.log` to debug your code.
