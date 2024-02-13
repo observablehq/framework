@@ -1,6 +1,6 @@
 import {existsSync} from "node:fs";
 import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
-import {basename, dirname, join} from "node:path";
+import {basename, dirname, extname, join} from "node:path";
 import {fileURLToPath} from "node:url";
 import type {Config, Style} from "./config.js";
 import {mergeStyle} from "./config.js";
@@ -90,7 +90,13 @@ export async function build(
   const pages = new Map<string, ParseResult>();
   const hashes = new Map<string, string>();
   const fileHash = (path: string, value: string | Buffer) => {
-    if (hash) hashes.set(path, `${path}?h=${computeHash(value)}`);
+    if (hash) {
+      const h = computeHash(value);
+      const ext = extname(path);
+      const p = `${ext ? path.slice(0, -ext.length) : path}.${h.slice(0, 6)}${ext}`;
+      hashes.set(path, p);
+      return p;
+    }
     return path;
   };
   for await (const sourceFile of visitMarkdownFiles(root)) {
