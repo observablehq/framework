@@ -38,8 +38,8 @@ type TelemetryTime = {
 };
 
 type TelemetryData = {
-  event: "build" | "deploy" | "preview" | "signal";
-  step?: "start" | "finish";
+  event: "build" | "deploy" | "preview" | "signal" | "login";
+  step?: "start" | "finish" | "error";
   [key: string]: unknown;
 };
 
