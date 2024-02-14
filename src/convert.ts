@@ -1,64 +1,76 @@
-import {utimesSync} from "node:fs";
-import {access, utimes} from "node:fs/promises";
+import {existsSync} from "node:fs";
+import {utimes, writeFile} from "node:fs/promises";
 import {join} from "node:path";
-import {type BuildEffects, FileBuildEffects} from "./build.js";
-import {isEnoent} from "./error.js";
+import * as clack from "@clack/prompts";
+import type {ClackEffects} from "./clack.js";
 import {prepareOutput} from "./files.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
-import {faint} from "./tty.js";
+import {bold, faint, inverse, red} from "./tty.js";
 
-async function readyOutput(dir, name) {
-  const destination = join(dir, name);
-  try {
-    await access(destination, 0);
-    return false;
-  } catch (error) {
-    if (isEnoent(error)) {
-      await prepareOutput(destination);
-      return true;
-    }
-    throw error;
-  }
+export interface ConvertEffects {
+  clack: ClackEffects;
+  prepareOutput(outputPath: string): Promise<void>;
+  existsSync(outputPath: string): boolean;
+  writeFile(outputPath: string, contents: Buffer | string): Promise<void>;
 }
+
+const defaultEffects: ConvertEffects = {
+  clack,
+  async prepareOutput(outputPath: string): Promise<void> {
+    await prepareOutput(outputPath);
+  },
+  existsSync(outputPath: string): boolean {
+    return existsSync(outputPath);
+  },
+  async writeFile(outputPath: string, contents: Buffer | string): Promise<void> {
+    await writeFile(outputPath, contents);
+  }
+};
 
 export async function convert(
   inputs: string[],
-  {output, files: download_files}: {output: string; files: boolean},
-  effects: BuildEffects = new FileBuildEffects(output)
+  {output, force = false, files: includeFiles}: {output: string; force?: boolean; files: boolean},
+  effects: ConvertEffects = defaultEffects
 ): Promise<void> {
-  for (const input of inputs.map(resolveInput)) {
-    effects.output.write(
-      `${faint("reading")} ${input.replace("https://api.observablehq.com/document/", "")} ${faint("→")} `
-    );
-    const response = await fetch(input);
-    if (!response.ok) throw new Error(`error fetching ${input}: ${response.status}`);
-    const name =
-      input.replace(/^https:\/\/api\.observablehq\.com\/document(\/@[^/]+)?\//, "").replace(/\//g, ",") + ".md";
-    const ready = await readyOutput(output, name);
-    if (!ready) {
-      effects.logger.warn(faint("skip"), name);
-    } else {
+  let success = 0;
+  clack.intro(`${inverse(" observable convert ")}`);
+  for (const input of inputs) {
+    let start = Date.now();
+    let s = clack.spinner();
+    try {
+      const url = resolveInput(input);
+      s.start(`Fetching ${url}`);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`error fetching ${url}: ${response.status}`); // TODO pretty
       const {nodes, files, update_time} = await response.json();
-      await effects.writeFile(name, convertNodes(nodes));
-      const ts = new Date(update_time);
-      await utimes(join(output, name), ts, ts); // touch
-      if (download_files && files) {
+      const name = inferFileName(url);
+      const path = join(output, name);
+      await effects.prepareOutput(path);
+      if (!force && effects.existsSync(path)) throw new Error(`${path} already exists`);
+      await effects.writeFile(path, convertNodes(nodes));
+      await touch(path, update_time);
+      s.stop(`Converted ${bold(path)} ${faint(`in ${(Date.now() - start).toLocaleString("en-US")}ms`)}`);
+      if (includeFiles) {
         for (const file of files) {
-          effects.output.write(`${faint("attachment")} ${file.name} ${faint("→")} `);
-          const ready = await readyOutput(output, file.name);
-          if (!ready) {
-            effects.logger.warn(faint("skip"), file.name);
-          } else {
-            const response = await fetch(file.download_url);
-            if (!response.ok) throw new Error(`error fetching ${file}: ${response.status}`);
-            await effects.writeFile(file.name, Buffer.from(await response.arrayBuffer()));
-            const ts = new Date(file.create_time);
-            await utimes(join(output, file.name), ts, ts); // touch
-          }
+          start = Date.now();
+          s = clack.spinner();
+          s.start(`Downloading ${file.name}`);
+          const response = await fetch(file.download_url);
+          if (!response.ok) throw new Error(`error fetching ${file.download_url}: ${response.status}`);
+          const filePath = join(output, file.name);
+          await effects.prepareOutput(filePath);
+          if (!force && effects.existsSync(filePath)) throw new Error(`${filePath} already exists`);
+          await effects.writeFile(filePath, Buffer.from(await response.arrayBuffer()));
+          await touch(filePath, file.create_time);
+          s.stop(`Downloaded ${bold(file.name)} ${faint(`in ${(Date.now() - start).toLocaleString("en-US")}ms`)}`);
         }
       }
+      ++success;
+    } catch (error) {
+      s.stop(`Converting ${input} failed: ${red(String(error))}`);
     }
   }
+  clack.outro(`${success} of ${inputs.length} notebook${inputs.length === 1 ? "" : "s"} converted`);
 }
 
 export function convertNodes(nodes): string {
@@ -78,6 +90,14 @@ export function convertNode(node): string {
   string += `${node.value}\n`;
   if (node.mode !== "md") string += "```\n";
   return string;
+}
+
+export function inferFileName(input: string): string {
+  return new URL(input).pathname.replace(/^\/document(\/@[^/]+)?\//, "").replace(/\//g, ",") + ".md";
+}
+
+async function touch(path: string, time: Date | string | number) {
+  await utimes(path, (time = new Date(time)), time);
 }
 
 export function resolveInput(input: string): string {
