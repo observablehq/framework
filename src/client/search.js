@@ -67,15 +67,12 @@ input.addEventListener("keydown", (event) => {
   if (code === "ArrowDown" || code === "ArrowUp" || code === "Enter") {
     const results = resultsContainer.querySelector("ol");
     if (!results) return;
-    const activeResult = results.querySelector(`.${activeClass}`);
-    if (code === "Enter") {
-      activeResult.querySelector("a").click();
-    } else if (code === "ArrowUp") {
-      activeResult.classList.remove(activeClass);
-      (activeResult.previousElementSibling ?? results.lastElementChild).classList.add(activeClass);
-    } else if (code === "ArrowDown") {
-      activeResult.classList.remove(activeClass);
-      (activeResult.nextElementSibling ?? results.firstElementChild).classList.add(activeClass);
-    }
+    let activeResult = results.querySelector(`.${activeClass}`);
+    if (code === "Enter") return activeResult.querySelector("a").click();
+    activeResult.classList.remove(activeClass);
+    if (code === "ArrowUp") activeResult = activeResult.previousElementSibling ?? results.lastElementChild;
+    else activeResult = activeResult.nextElementSibling ?? results.firstElementChild;
+    activeResult.classList.add(activeClass);
+    activeResult.scrollIntoView({block: "nearest"});
   }
 });

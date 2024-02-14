@@ -489,6 +489,12 @@
 
 #observablehq-search-results {
   --relevance-width: 32px;
+  position: absolute;
+  overflow-y: scroll;
+  top: 6.5rem;
+  left: 0;
+  right: 0.5rem;
+  bottom: 0;
 }
 
 #observablehq-search-results a span {
