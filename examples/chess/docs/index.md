@@ -12,12 +12,6 @@ const {womens, mens, MONTHS_OF_DATA, TOP_N_COUNT} = await FileAttachment("data/t
 ```
 
 ```js
-function formatTitle(title) {
-  return title === "GM" ? "Grand Master" : title;
-}
-```
-
-```js
 function bumpChart(data, {x = "month", y = "rating", z = "name", interval = "month", width} = {}) {
   const rank = Plot.stackY2({x, z, order: y, reverse: true});
   const [xmin, xmax] = d3.extent(Plot.valueof(data, x));
@@ -43,8 +37,8 @@ function bumpChart(data, {x = "month", y = "rating", z = "name", interval = "mon
         strokeWidth: 24,
         curve: "bump-x",
         sort: {color: "y", reduce: "first"},
-        mixBlendMode: dark ? "lighten" : "darken",
-        interval
+        interval,
+        render: halo({stroke: "var(--theme-background-alt)", strokeWidth: 27})
       })),
       Plot.text(data, {
         ...rank,
@@ -70,6 +64,23 @@ function bumpChart(data, {x = "month", y = "rating", z = "name", interval = "mon
       })
     ]
   })
+}
+
+function halo({stroke = "currentColor", strokeWidth = 3} = {}) {
+  return (index, scales, values, dimensions, context, next) => {
+    const g = next(index, scales, values, dimensions, context);
+    for (const path of [...g.childNodes]) {
+      const clone = path.cloneNode(true);
+      clone.setAttribute("stroke", stroke);
+      clone.setAttribute("stroke-width", strokeWidth);
+      path.parentNode.insertBefore(clone, path);
+    }
+    return g;
+  };
+}
+
+function formatTitle(title) {
+  return title === "GM" ? "Grand Master" : title;
 }
 ```
 
