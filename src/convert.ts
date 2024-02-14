@@ -46,25 +46,33 @@ export async function convert(
     const url = resolveInput(input);
     const name = inferFileName(url);
     const path = join(output, name);
-    s.start(`Downloading ${bold(path)}`);
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`error fetching ${url}: ${response.status}`);
-    const {nodes, files, update_time} = await response.json();
-    s.stop(`Downloaded ${bold(path)} ${faint(`in ${(Date.now() - start).toLocaleString("en-US")}ms`)}`);
-    if ((await maybeWrite(path, convertNodes(nodes), force, effects)) === undefined) n++;
-    await effects.touch(path, update_time);
-    if (includeFiles) {
-      for (const file of files) {
-        start = Date.now();
-        s = clack.spinner();
-        s.start(`Downloading ${bold(file.name)}`);
-        const filePath = join(output, file.name);
-        const response = await fetch(file.download_url);
-        if (!response.ok) throw new Error(`error fetching ${file.download_url}: ${response.status}`);
-        const buffer = Buffer.from(await response.arrayBuffer());
-        s.stop(`Downloaded ${bold(file.name)} ${faint(`in ${(Date.now() - start).toLocaleString("en-US")}ms`)}`);
-        if ((await maybeWrite(filePath, buffer, force, effects)) === undefined) n++;
-        await effects.touch(filePath, file.create_time);
+    if (await maybeFetch(path, force, effects)) {
+      s.start(`Downloading ${bold(path)}`);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`error fetching ${url}: ${response.status}`);
+      const {nodes, files, update_time} = await response.json();
+      s.stop(`Downloaded ${bold(path)} ${faint(`in ${(Date.now() - start).toLocaleString("en-US")}ms`)}`);
+      await effects.prepareOutput(path);
+      await effects.writeFile(path, convertNodes(nodes));
+      await effects.touch(path, update_time);
+      n++;
+      if (includeFiles) {
+        for (const file of files) {
+          const path = join(output, file.name);
+          if (await maybeFetch(path, force, effects)) {
+            start = Date.now();
+            s = clack.spinner();
+            s.start(`Downloading ${bold(file.name)}`);
+            const response = await fetch(file.download_url);
+            if (!response.ok) throw new Error(`error fetching ${file.download_url}: ${response.status}`);
+            const buffer = Buffer.from(await response.arrayBuffer());
+            s.stop(`Downloaded ${bold(file.name)} ${faint(`in ${(Date.now() - start).toLocaleString("en-US")}ms`)}`);
+            await effects.prepareOutput(path);
+            await effects.writeFile(path, buffer);
+            await effects.touch(path, file.create_time);
+            n++;
+          }
+        }
       }
     }
   }
@@ -73,23 +81,14 @@ export async function convert(
   );
 }
 
-async function maybeWrite(
-  path: string,
-  contents: Buffer | string,
-  force: boolean,
-  effects: ConvertEffects
-): Promise<true | undefined> {
+async function maybeFetch(path: string, force: boolean, effects: ConvertEffects): Promise<boolean> {
   const {clack} = effects;
   if (effects.existsSync(path) && !force) {
     const choice = await clack.confirm({message: `${bold(path)} already exists; replace?`, initialValue: false});
-    if (!choice) {
-      clack.outro(yellow("Skipping…"));
-      return true;
-    }
+    if (!choice) return clack.outro(yellow("Skipping…")), false;
     if (clack.isCancel(choice)) throw new CliError("Stopped convert", {print: false});
   }
-  await effects.prepareOutput(path);
-  await effects.writeFile(path, contents);
+  return true;
 }
 
 export function convertNodes(nodes): string {
