@@ -69,7 +69,7 @@ export default {
         {name: "Lodash", path: "/lib/lodash"},
         {name: "Mapbox GL JS", path: "/lib/mapbox-gl"},
         {name: "Mermaid", path: "/lib/mermaid"},
-        {name: "Microsoft Excel", path: "/lib/xlsx"},
+        {name: "Microsoft Excel (XLSX)", path: "/lib/xlsx"},
         {name: "Observable Generators", path: "/lib/generators"},
         {name: "Observable Inputs", path: "/lib/inputs"},
         {name: "Observable Plot", path: "/lib/plot"},
