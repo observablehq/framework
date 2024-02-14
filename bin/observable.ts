@@ -186,9 +186,7 @@ try {
         options: {output: {type: "string", default: "."}, force: {type: "boolean", short: "f"}},
         allowPositionals: true
       });
-      await import("../src/convert.js").then((convert) =>
-        convert.convert(positionals, {output: output!, force, files: true})
-      );
+      await import("../src/convert.js").then((convert) => convert.convert(positionals, {output: output!, force}));
       break;
     }
     default: {
