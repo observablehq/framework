@@ -531,6 +531,8 @@ describe("deploy", () => {
       assert.ok(err instanceof Error);
       assert.match(err.message, /out of inputs for select.*Which Observable workspace do you want to use/);
       assert.ok("options" in err && Array.isArray(err.options) && err.options.length === 2);
+      assert.ok("options" in err && Array.isArray(err.options) && err.options[0].value.role === "owner");
+      assert.ok("options" in err && Array.isArray(err.options) && err.options[1].value.role === "member");
     }
   });
 
