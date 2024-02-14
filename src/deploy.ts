@@ -103,7 +103,11 @@ export async function deploy(
   let currentUser: GetCurrentUserResponse | null = null;
   let authError: null | "unauthenticated" | "forbidden" = null;
   try {
-    if (apiKey) currentUser = await apiClient.getCurrentUser();
+    if (apiKey) {
+      currentUser = await apiClient.getCurrentUser();
+      // List of valid workspaces that can be used to create projects.
+      currentUser.workspaces = currentUser.workspaces.filter((w) => w.role === "owner" || w.role === "member");
+    }
   } catch (error) {
     if (isHttpError(error)) {
       if (error.statusCode === 401) authError = "unauthenticated";
@@ -117,8 +121,8 @@ export async function deploy(
   if (!currentUser) {
     const message =
       authError === "unauthenticated" || authError === null
-        ? "You must be logged in to Observable Cloud to deploy. Do you want to do that now?"
-        : "Your authentication is invalid. Do you want to log in to Observable Cloud again?";
+        ? "You must be logged in to Observable to deploy. Do you want to do that now?"
+        : "Your authentication is invalid. Do you want to log in to Observable again?";
     const choice = await clack.confirm({
       message,
       active: "Yes, log in",
@@ -268,7 +272,25 @@ export async function deploy(
     if (clack.isCancel(input)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
     message = input;
   }
-  const deployId = await apiClient.postDeploy({projectId: deployTarget.project.id, message});
+
+  let deployId;
+  try {
+    deployId = await apiClient.postDeploy({projectId: deployTarget.project.id, message});
+  } catch (error) {
+    if (isHttpError(error)) {
+      if (error.statusCode === 404) {
+        throw new CliError(`Project @${deployTarget.workspace.login}/${deployTarget.project.slug} not found.`, {
+          cause: error
+        });
+      } else if (error.statusCode === 403) {
+        throw new CliError(
+          `You don't have permission to deploy to @${deployTarget.workspace.login}/${deployTarget.project.slug}.`,
+          {cause: error}
+        );
+      }
+    }
+    throw error;
+  }
 
   // Build the project
   await build({config, clientEntry: "./src/client/deploy.js"}, new DeployBuildEffects(apiClient, deployId, effects));
@@ -325,7 +347,16 @@ class DeployBuildEffects implements BuildEffects {
   }
   async copyFile(sourcePath: string, outputPath: string) {
     this.logger.log(outputPath);
-    await this.apiClient.postDeployFile(this.deployId, sourcePath, outputPath);
+    try {
+      await this.apiClient.postDeployFile(this.deployId, sourcePath, outputPath);
+    } catch (error) {
+      // 413 is "Payload Too Large", however sometimes Cloudflare returns a
+      // custom Cloudflare error, 520. Sometimes we also see 502. Handle them all
+      if (isHttpError(error) && (error.statusCode === 413 || error.statusCode === 503 || error.statusCode === 520)) {
+        throw new CliError(`File too large to deploy: ${sourcePath}. Maximum file size is 50MB.`, {cause: error});
+      }
+      throw error;
+    }
   }
   async writeFile(outputPath: string, content: Buffer | string) {
     this.logger.log(outputPath);

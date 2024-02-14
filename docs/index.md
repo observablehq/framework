@@ -5,50 +5,138 @@ toc: false
 <style>
 
 .hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   font-family: var(--sans-serif);
-  margin: 4rem 0 8rem;
+  margin: 4rem 0;
   text-wrap: balance;
-  text-align: center;
 }
 
 .hero h1 {
-  margin: 2rem 0;
-  max-width: none;
-  font-size: 14vw;
-  font-weight: 900;
+  font-size: 64px;
+  font-family: var(--serif);
   line-height: 1;
-  background: linear-gradient(30deg, var(--theme-foreground-focus), currentColor);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  margin: 2rem 0;
 }
 
 .hero h2 {
-  margin: 0 0 3rem;
-  max-width: 34em;
-  font-size: 20px;
-  font-style: initial;
-  font-weight: 500;
-  line-height: 1.5;
+  font-style: normal;
+  font-size: 18px;
+  line-height: normal;
   color: var(--theme-foreground-muted);
 }
 
-@media (min-width: 640px) {
-  .hero h1 {
-    font-size: 90px;
+.hero .observablehq-pre-container,
+.hero pre:not(.observablehq-pre-container pre) {
+  margin: 1rem 0;
+}
+
+.cta {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+@container not (min-width: 400px) {
+  .cta {
+    flex-direction: column;
+    align-items: start;
+    gap: 0;
   }
+  .cta .observablehq-pre-container,
+  .cta pre:not(.observablehq-pre-container pre) {
+    width: 100%;
+  }
+}
+
+.gallery {
+  margin: 4rem -1rem;
+  gap: 2rem;
+  max-width: calc(640px + 2rem);
+}
+
+.gallery a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gallery img {
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 0 0 0.75px rgba(128, 128, 128, 0.2), 0 6px 12px 0 rgba(0, 0, 0, 0.2);
+  aspect-ratio: 2500 / 1900;
+}
+
+@media (prefers-color-scheme: dark) {
+  .gallery img {
+    box-shadow: 0 0 0 0.75px rgba(128, 128, 128, 0.2), 0 6px 12px 0 rgba(0, 0, 0, 0.4);
+  }
+}
+
+.gallery a:not(:hover, :focus) {
+  color: var(--theme-foreground-muted);
+}
+
+.gallery a:hover img,
+.gallery a:focus img {
+  box-shadow: 0 0 0 0.75px var(--theme-foreground-focus), 0 6px 12px 0 rgba(0, 0, 0, 0.2);
+}
+
+.gallery figcaption {
+  font-size: 12px;
+  color: inherit;
+}
+
+.arrow {
+  font-weight: 500;
+}
+
+.arrow::after {
+  content: "→";
+  display: inline-block;
+  margin-left: 0.25rem;
 }
 
 </style>
 
 <div class="hero">
-  <h1>The best dashboards are built with code</h1>
+  <h1>The best dashboards are built with <em class="red">code.</em></h1>
   <h2>Create fast, beautiful data apps, dashboards, and reports from the command line. Write Markdown, JavaScript, SQL, Python, R… and any language you like. Free and open-source.</h2>
-  <pre data-copy>npm init @observablehq</pre>
-  <a href="./getting-started">Get started<span style="display: inline-block; margin-left: 0.25rem;">→</span></a>
+  <div class="cta">
+    <pre data-copy>npm init @observablehq</pre>
+    <a href="./getting-started" class="small arrow" style="color: var(--theme-red);">Get started</a>
+  </div>
+</div>
+
+<div class="gallery grid grid-cols-2">
+  <a href="./examples/api/" target="_blank">
+    <picture>
+      <source srcset="./assets/api-dark.webp" media="(prefers-color-scheme: dark)">
+      <img src="./assets/api.webp">
+    </picture>
+    <div class="small arrow">Analyzing web logs</div>
+  </a>
+  <a href="./examples/eia/" target="_blank">
+    <picture>
+      <source srcset="./assets/eia-dark.webp" media="(prefers-color-scheme: dark)">
+      <img src="./assets/eia.webp">
+    </picture>
+    <div class="small arrow">U.S. electricity grid</div>
+  </a>
+  <a href="./examples/chess/" target="_blank">
+    <picture>
+      <source srcset="./assets/chess-dark.webp" media="(prefers-color-scheme: dark)">
+      <img src="./assets/chess.webp">
+    </picture>
+    <div class="small arrow">A year of chess rankings</div>
+  </a>
+  <a href="./examples/plot/" target="_blank">
+    <picture>
+      <source srcset="./assets/plot-dark.webp" media="(prefers-color-scheme: dark)">
+      <img src="./assets/plot.webp">
+    </picture>
+    <div class="small arrow">Observable Plot downloads</div>
+  </a>
 </div>
 
 **Observable Framework** is an [open-source](https://github.com/observablehq/framework) static site generator for data apps, dashboards, reports, and more. Framework includes a preview server for local development, and a command-line interface for automating builds & deploys.

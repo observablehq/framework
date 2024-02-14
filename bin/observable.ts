@@ -3,7 +3,7 @@ import * as clack from "@clack/prompts";
 import {readConfig} from "../src/config.js";
 import {CliError} from "../src/error.js";
 import {enableNpmVersionResolution, enableRemoteModulePreload} from "../src/javascript/imports.js";
-import {red} from "../src/tty.js";
+import {faint, link, red} from "../src/tty.js";
 
 const args = process.argv.slice(2);
 
@@ -26,6 +26,10 @@ const {values, positionals, tokens} = parseArgs({
     help: {
       type: "boolean",
       short: "h"
+    },
+    debug: {
+      type: "boolean",
+      short: "d"
     }
   },
   strict: false,
@@ -44,7 +48,7 @@ if (positionals.length > 0) {
   // Convert help <command> into <command> --help.
   if (command === "help" && positionals.length > 1) {
     const p = tokens.find((p) => p.kind === "positional" && p !== t)!;
-    args.splice(p.index, 1, "--help");
+    args.splice(p.index - 1, 1, "--help");
     command = positionals[1];
   }
 }
@@ -117,9 +121,8 @@ try {
       break;
     }
     case "preview": {
-      const {
-        values: {config, root, host, port}
-      } = helpArgs(command, {
+      const {values, tokens} = helpArgs(command, {
+        tokens: true,
         options: {
           ...CONFIG_OPTION,
           host: {
@@ -129,16 +132,32 @@ try {
           port: {
             type: "string",
             default: process.env.PORT
+          },
+          open: {
+            type: "boolean",
+            default: true
+          },
+          "no-open": {
+            type: "boolean"
           }
         }
       });
+      // https://nodejs.org/api/util.html#parseargs-tokens
+      for (const token of tokens) {
+        if (token.kind !== "option") continue;
+        const {name} = token;
+        if (name === "no-open") values.open = false;
+        else if (name === "open") values.open = true;
+      }
+      const {config, root, host, port, open} = values;
       enableNpmVersionResolution(false);
       enableRemoteModulePreload(false);
       await import("../src/preview.js").then(async (preview) =>
         preview.preview({
           config: await readConfig(config, root),
           hostname: host!,
-          port: port === undefined ? undefined : +port
+          port: port === undefined ? undefined : +port,
+          open
         })
       );
       break;
@@ -174,8 +193,36 @@ try {
       }
     }
     process.exit(error.exitCode);
+  } else {
+    if (command && CLACKIFIED_COMMANDS.includes(command)) {
+      clack.log.error(`${red("Error:")} ${error.message}`);
+      if (values.debug) {
+        clack.outro("The full error follows");
+        throw error;
+      } else {
+        clack.log.info("To see the full stack trace, run with the --debug flag.");
+        // clack.outro doesn't handle multiple lines well, so do it manually
+        console.log(
+          `${faint("│\n│")}  If you think this is a bug, please file an issue at\n${faint("└")}  ${link(
+            "https://github.com/observablehq/framework/issues\n"
+          )}`
+        );
+      }
+    } else {
+      console.error(`\n${red("Unexpected error:")} ${error.message}`);
+      if (values.debug) {
+        console.error("The full error follows\n");
+        throw error;
+      } else {
+        console.error("\nTip: To see the full stack trace, run with the --debug flag.\n");
+        console.error(
+          `If you think this is a bug, please file an issue at\n↳ ${link(
+            "https://github.com/observablehq/framework/issues\n"
+          )}`
+        );
+      }
+    }
   }
-  throw error;
 }
 
 // A wrapper for parseArgs that adds --help functionality with automatic usage.
@@ -184,7 +231,11 @@ try {
 function helpArgs<T extends ParseArgsConfig>(command: string | undefined, config: T): ReturnType<typeof parseArgs<T>> {
   let result: ReturnType<typeof parseArgs<T>>;
   try {
-    result = parseArgs<T>({...config, options: {...config.options, help: {type: "boolean", short: "h"}}, args});
+    result = parseArgs<T>({
+      ...config,
+      options: {...config.options, help: {type: "boolean", short: "h"}, debug: {type: "boolean"}},
+      args
+    });
   } catch (error: any) {
     if (!error.code?.startsWith("ERR_PARSE_ARGS_")) throw error;
     console.error(`observable: ${error.message}. See 'observable help${command ? ` ${command}` : ""}'.`);

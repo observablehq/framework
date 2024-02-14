@@ -106,7 +106,7 @@ export function open({hash, eval: compile} = {}) {
         break;
       }
       case "remove-stylesheet": {
-        document.head.querySelector(`link[href="${message.href}"]`)?.remove();
+        document.head.querySelector(`link[rel="stylesheet"][href="${message.href}"]`)?.remove();
         break;
       }
     }
