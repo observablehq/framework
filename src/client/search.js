@@ -29,15 +29,15 @@ input.addEventListener("input", () => {
       ? "<div>no results</div>"
       : `<div>${results.length === 11 ? "10+" : results.length} result${
           results.length === 1 ? "" : "s"
-        }</div><ol>${"<li><a><span></span><small></small></a></li>".repeat(results.length)}</ol>`;
+        }</div><ol>${"<li><a></a></li>".repeat(results.length)}</ol>`;
   r.querySelectorAll("li").forEach((li, i) => {
     const {id, score, title} = results[i];
     li.setAttribute("class", `observablehq-link${i === 0 ? ` ${c}` : ""}`);
     li.setAttribute("data-reference", id);
+    li.setAttribute("data-score", Math.min(5, Math.round(0.6 * score)));
     const a = li.firstChild;
     a.setAttribute("href", `${base}${id}`);
-    a.firstChild.textContent = title;
-    a.children[1].textContent = "●".repeat(Math.min(6, Math.round(1 + 0.6 * score))); // small
+    a.textContent = title;
   });
 });
 
