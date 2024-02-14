@@ -6,7 +6,7 @@ import type {ClackEffects} from "./clack.js";
 import {CliError} from "./error.js";
 import {prepareOutput} from "./files.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
-import {bold, faint, inverse, yellow} from "./tty.js";
+import {bold, faint, inverse} from "./tty.js";
 
 export interface ConvertEffects {
   clack: ClackEffects;
@@ -85,7 +85,7 @@ async function maybeFetch(path: string, force: boolean, effects: ConvertEffects)
   const {clack} = effects;
   if (effects.existsSync(path) && !force) {
     const choice = await clack.confirm({message: `${bold(path)} already exists; replace?`, initialValue: false});
-    if (!choice) return clack.outro(yellow("Skipping…")), false;
+    if (!choice) return clack.log.warn("Skipping…"), false;
     if (clack.isCancel(choice)) throw new CliError("Stopped convert", {print: false});
   }
   return true;
