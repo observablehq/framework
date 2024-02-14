@@ -12,6 +12,7 @@ export interface ConvertEffects {
   prepareOutput(outputPath: string): Promise<void>;
   existsSync(outputPath: string): boolean;
   writeFile(outputPath: string, contents: Buffer | string): Promise<void>;
+  touch(outputPath: string, date: Date | string | number): Promise<void>;
 }
 
 const defaultEffects: ConvertEffects = {
@@ -24,6 +25,9 @@ const defaultEffects: ConvertEffects = {
   },
   async writeFile(outputPath: string, contents: Buffer | string): Promise<void> {
     await writeFile(outputPath, contents);
+},
+  async touch(outputPath: string, date: Date | string | number): Promise<void> {
+    await utimes(outputPath, (date = new Date(date)), date);
   }
 };
 
@@ -48,7 +52,7 @@ export async function convert(
       await effects.prepareOutput(path);
       if (!force && effects.existsSync(path)) throw new Error(`${path} already exists`);
       await effects.writeFile(path, convertNodes(nodes));
-      await touch(path, update_time);
+      await effects.touch(path, update_time);
       s.stop(`Converted ${bold(path)} ${faint(`in ${(Date.now() - start).toLocaleString("en-US")}ms`)}`);
       if (includeFiles) {
         for (const file of files) {
@@ -61,7 +65,7 @@ export async function convert(
           await effects.prepareOutput(filePath);
           if (!force && effects.existsSync(filePath)) throw new Error(`${filePath} already exists`);
           await effects.writeFile(filePath, Buffer.from(await response.arrayBuffer()));
-          await touch(filePath, file.create_time);
+          await effects.touch(filePath, file.create_time);
           s.stop(`Downloaded ${bold(file.name)} ${faint(`in ${(Date.now() - start).toLocaleString("en-US")}ms`)}`);
         }
       }
@@ -94,10 +98,6 @@ export function convertNode(node): string {
 
 export function inferFileName(input: string): string {
   return new URL(input).pathname.replace(/^\/document(\/@[^/]+)?\//, "").replace(/\//g, ",") + ".md";
-}
-
-async function touch(path: string, time: Date | string | number) {
-  await utimes(path, (time = new Date(time)), time);
 }
 
 export function resolveInput(input: string): string {
