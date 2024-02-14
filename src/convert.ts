@@ -2,13 +2,14 @@ import {existsSync} from "node:fs";
 import {utimes, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import * as clack from "@clack/prompts";
+import wrapAnsi from "wrap-ansi";
 import type {ClackEffects} from "./clack.js";
 import {CliError} from "./error.js";
 import {prepareOutput} from "./files.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
-import {bold, faint, inverse} from "./tty.js";
+import {type TtyEffects, bold, faint, inverse, defaultEffects as ttyEffects, yellow, link, cyan, reset} from "./tty.js";
 
-export interface ConvertEffects {
+export interface ConvertEffects extends TtyEffects {
   clack: ClackEffects;
   prepareOutput(outputPath: string): Promise<void>;
   existsSync(outputPath: string): boolean;
@@ -17,6 +18,7 @@ export interface ConvertEffects {
 }
 
 const defaultEffects: ConvertEffects = {
+  ...ttyEffects,
   clack,
   async prepareOutput(outputPath: string): Promise<void> {
     await prepareOutput(outputPath);
@@ -76,6 +78,17 @@ export async function convert(
       }
     }
   }
+  clack.note(
+    wrapAnsi(
+      "Due to syntax differences between Observable notebooks and " +
+        "Observable Framework, converted notebooks may require further " +
+        "changes to function correctly. To learn more about JavaScript " +
+        "in Framework, please read:\n\n" +
+        reset(cyan(link("https://observablehq.com/framework/javascript"))),
+      Math.min(64, effects.outputColumns)
+    ),
+    "Note"
+  );
   clack.outro(
     `${inputs.length} notebook${inputs.length === 1 ? "" : "s"} converted; ${n} file${n === 1 ? "" : "s"} written`
   );
