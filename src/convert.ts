@@ -34,7 +34,7 @@ const defaultEffects: ConvertEffects = {
 
 export async function convert(
   inputs: string[],
-  {output, force = false, files: includeFiles}: {output: string; force?: boolean; files: boolean},
+  {output, force = false, files: includeFiles = true}: {output: string; force?: boolean; files?: boolean},
   effects: ConvertEffects = defaultEffects
 ): Promise<void> {
   const {clack} = effects;
