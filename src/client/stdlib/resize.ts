@@ -1,7 +1,8 @@
 // TODO Automatically disconnect the observer when the returned DIV is detached.
 export function resize(run: (width: number, height: number) => Node, invalidation?: Promise<void>): Node {
   const div = document.createElement("div");
-  div.style.cssText = "position: relative; height: 100%;";
+  div.style.position = "relative";
+  if (run.length !== 1) div.style.height = "100%";
   const observer = new ResizeObserver(([entry]) => {
     const {width, height} = entry.contentRect;
     while (div.lastChild) div.lastChild.remove();
