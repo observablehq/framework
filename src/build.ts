@@ -111,7 +111,7 @@ export async function build(
       const outputPath = join("_observablehq", name);
       effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
       const code = await (entry.endsWith(".css")
-        ? bundleStyles({path: clientPath})
+        ? bundleStyles({path: clientPath, minify: true})
         : rollupClient(clientPath, {minify: true}));
       await effects.writeFile(outputPath, code);
     }
@@ -120,12 +120,12 @@ export async function build(
         const outputPath = join("_import", style.path);
         const sourcePath = join(root, style.path);
         effects.output.write(`${faint("style")} ${sourcePath} ${faint("→")} `);
-        const code = await bundleStyles({path: sourcePath});
+        const code = await bundleStyles({path: sourcePath, minify: true});
         await effects.writeFile(outputPath, code);
       } else {
         const outputPath = join("_observablehq", `theme-${style.theme}.css`);
         effects.output.write(`${faint("bundle")} theme-${style.theme}.css ${faint("→")} `);
-        const code = await bundleStyles({theme: style.theme});
+        const code = await bundleStyles({theme: style.theme, minify: true});
         await effects.writeFile(outputPath, code);
       }
     }
