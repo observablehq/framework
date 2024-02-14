@@ -83,8 +83,29 @@ function trend(v) {
 
 Each week, [Freddie Mac](https://www.freddiemac.com/pmms/about-pmms.html) surveys lenders on rates and points for their ${colorLegend(30)}, ${colorLegend(15)}, and other mortgage products. Data as of ${pmms.at(-1).date?.toLocaleDateString("en-US", {year: "numeric", month: "long", day: "numeric"})}.
 
-<div class="grid grid-cols-3" style="margin-top: 2rem;">
+<style type="text/css">
+
+@container (min-width: 560px) {
+  .grid-cols-2-3 {
+    grid-template-columns: 1fr 1fr;
+  }
+  .grid-cols-2-3 .grid-colspan-2 {
+    grid-column: span 2;
+  }
+}
+
+@container (min-width: 840px) {
+  .grid-cols-2-3 {
+    grid-template-columns: 1fr 2fr;
+    grid-auto-flow: column;
+  }
+}
+
+</style>
+
+<div class="grid grid-cols-2-3" style="margin-top: 2rem;">
   <div class="card">${frmCard(30, pmms)}</div>
+  <div class="card">${frmCard(15, pmms)}</div>
   <div class="card grid-colspan-2 grid-rowspan-2" style="display: flex; flex-direction: column;">
     <h2>Rates over the past year</h2>
     <span style="flex-grow: 1;">${resize((width, height) =>
@@ -99,7 +120,6 @@ Each week, [Freddie Mac](https://www.freddiemac.com/pmms/about-pmms.html) survey
       })
     )}</span>
   </div>
-  <div class="card">${frmCard(15, pmms)}</div>
 </div>
 
 <div class="grid">
