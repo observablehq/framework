@@ -99,7 +99,7 @@ function trendNumber(data, focusData, metric, options) {
   <div class="card grid-rowspan-4" style="max-width: none; display: flex; flex-direction: column;">
     <h2>Active users by channel</h2>
     <h3>Rolling 28-day active users</h3>
-    <div style="flex-grow: 1;">${resize((width) => marimekkoChart(filteredChannelBreakdown, {width, metric:'active28d', format: '%', yDim: 'channelGroup', xDim: 'type', color}))}</div>
+    <div style="flex-grow: 1;">${resize((width, height) => marimekkoChart(filteredChannelBreakdown, {width, height, metric:'active28d', format: '%', yDim: 'channelGroup', xDim: 'type', color}))}</div>
   </div>
   <div class="card grid-rowspan-2">
     <h2>Active users per day and hour of week</h2>
@@ -111,4 +111,4 @@ function trendNumber(data, focusData, metric, options) {
   </div>
 </div>
 
-<p>This dashboard summarizes traffic to <a href="https://observablehq.com/plot/">Observable Plot’s documentation</a> from ${d3.extent(summary, (d) => d.date).map((d) => d.toLocaleDateString("en-US")).join(" to ")}. Data is pulled from the <a href="https://developers.google.com/analytics/devguides/reporting/data/v1/quickstart-client-libraries">Google Analytics Data API</a>.</p>
+<div class="small note">This dashboard summarizes traffic to <a href="https://observablehq.com/plot/">Observable Plot’s documentation</a> from ${d3.extent(summary, (d) => d.date).map((d) => d.toLocaleDateString("en-US")).join(" to ")}. Data is pulled from the <a href="https://developers.google.com/analytics/devguides/reporting/data/v1/quickstart-client-libraries">Google Analytics Data API</a>.</div>
