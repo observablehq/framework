@@ -168,7 +168,7 @@ try {
         allowPositionals: true
       });
       await import("../src/convert.js").then((convert) =>
-        convert.convert(positionals, {output: String(output), files: true})
+        convert.convert(positionals, {output: output!, files: true})
       );
       break;
     }
