@@ -342,7 +342,7 @@ const workspaces = [
     name: "Mock User's Workspace",
     tier: "pro_2024",
     type: "team",
-    role: "owner"
+    role: "member"
   },
   {
     id: "0000000000000002",
