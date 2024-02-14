@@ -85,7 +85,7 @@ async function maybeFetch(path: string, force: boolean, effects: ConvertEffects)
   const {clack} = effects;
   if (effects.existsSync(path) && !force) {
     const choice = await clack.confirm({message: `${bold(path)} already exists; replace?`, initialValue: false});
-    if (!choice) return clack.log.warn("Skipping…"), false;
+    if (!choice) return false;
     if (clack.isCancel(choice)) throw new CliError("Stopped convert", {print: false});
   }
   return true;
