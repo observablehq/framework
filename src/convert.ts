@@ -78,10 +78,7 @@ async function maybeWrite(
 ): Promise<void> {
   const {clack} = effects;
   if (effects.existsSync(path) && !force) {
-    const choice = await clack.confirm({
-      message: `${bold(path)} already exists; replace?`,
-      initialValue: false
-    });
+    const choice = await clack.confirm({message: `${bold(path)} already exists; replace?`, initialValue: false});
     if (!choice) clack.outro(yellow("Cancelled convert"));
     if (clack.isCancel(choice) || !choice) throw new CliError("Cancelled convert", {print: false});
   }
