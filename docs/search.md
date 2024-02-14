@@ -4,7 +4,7 @@ index: true
 
 # Search
 
-Framework provides built-in full-text page search using [MiniSearch](https://lucaong.github.io/minisearch/). Search results are queried on the client using a static index computed during build, and supports fuzzy and prefix matching.
+Framework provides built-in full-text page search using [MiniSearch](https://lucaong.github.io/minisearch/). Search results are queried on the client, with fuzzy and prefix matching, using a static index computed during build.
 
 <div class="tip">Search is not enabled by default. It is intended for larger projects with lots of static text, such as reports and documentation. Search will not index dynamic content such as data or charts. To enable search, set the <a href="./config#search"><b>search</b> option</a> to true in your config.</div>
 
