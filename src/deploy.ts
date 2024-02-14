@@ -353,6 +353,9 @@ class DeployBuildEffects implements BuildEffects {
     try {
       await this.apiClient.postDeployFile(this.deployId, sourcePath, outputPath);
     } catch (error) {
+      if (isApiError(error) && error.details.errors.some((e) => e.code === "FILE_QUOTA_EXCEEDED")) {
+        throw new CliError("You have reached the total file size limit.", {cause: error});
+      }
       // 413 is "Payload Too Large", however sometimes Cloudflare returns a
       // custom Cloudflare error, 520. Sometimes we also see 502. Handle them all
       if (isHttpError(error) && (error.statusCode === 413 || error.statusCode === 503 || error.statusCode === 520)) {
@@ -363,7 +366,14 @@ class DeployBuildEffects implements BuildEffects {
   }
   async writeFile(outputPath: string, content: Buffer | string) {
     this.logger.log(outputPath);
-    await this.apiClient.postDeployFileContents(this.deployId, content, outputPath);
+    try {
+      await this.apiClient.postDeployFileContents(this.deployId, content, outputPath);
+    } catch(error) {
+      if (isApiError(error) && error.details.errors.some((e) => e.code === "FILE_QUOTA_EXCEEDED")) {
+        throw new CliError("You have reached the total file size limit.", {cause: error});
+      }
+      throw error;
+    }
   }
 }
 
