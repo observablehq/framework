@@ -3,9 +3,10 @@ import {utimes, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import * as clack from "@clack/prompts";
 import type {ClackEffects} from "./clack.js";
+import {CliError} from "./error.js";
 import {prepareOutput} from "./files.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
-import {bold, faint, inverse, red} from "./tty.js";
+import {bold, faint, inverse, yellow} from "./tty.js";
 
 export interface ConvertEffects {
   clack: ClackEffects;
@@ -25,7 +26,7 @@ const defaultEffects: ConvertEffects = {
   },
   async writeFile(outputPath: string, contents: Buffer | string): Promise<void> {
     await writeFile(outputPath, contents);
-},
+  },
   async touch(outputPath: string, date: Date | string | number): Promise<void> {
     await utimes(outputPath, (date = new Date(date)), date);
   }
@@ -36,45 +37,56 @@ export async function convert(
   {output, force = false, files: includeFiles}: {output: string; force?: boolean; files: boolean},
   effects: ConvertEffects = defaultEffects
 ): Promise<void> {
-  let success = 0;
+  const {clack} = effects;
   clack.intro(`${inverse(" observable convert ")}`);
   for (const input of inputs) {
     let start = Date.now();
     let s = clack.spinner();
-    try {
-      const url = resolveInput(input);
-      s.start(`Fetching ${url}`);
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`error fetching ${url}: ${response.status}`); // TODO pretty
-      const {nodes, files, update_time} = await response.json();
-      const name = inferFileName(url);
-      const path = join(output, name);
-      await effects.prepareOutput(path);
-      if (!force && effects.existsSync(path)) throw new Error(`${path} already exists`);
-      await effects.writeFile(path, convertNodes(nodes));
-      await effects.touch(path, update_time);
-      s.stop(`Converted ${bold(path)} ${faint(`in ${(Date.now() - start).toLocaleString("en-US")}ms`)}`);
-      if (includeFiles) {
-        for (const file of files) {
-          start = Date.now();
-          s = clack.spinner();
-          s.start(`Downloading ${file.name}`);
-          const response = await fetch(file.download_url);
-          if (!response.ok) throw new Error(`error fetching ${file.download_url}: ${response.status}`);
-          const filePath = join(output, file.name);
-          await effects.prepareOutput(filePath);
-          if (!force && effects.existsSync(filePath)) throw new Error(`${filePath} already exists`);
-          await effects.writeFile(filePath, Buffer.from(await response.arrayBuffer()));
-          await effects.touch(filePath, file.create_time);
-          s.stop(`Downloaded ${bold(file.name)} ${faint(`in ${(Date.now() - start).toLocaleString("en-US")}ms`)}`);
-        }
+    const url = resolveInput(input);
+    const name = inferFileName(url);
+    const path = join(output, name);
+    s.start(`Downloading ${bold(path)}`);
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`error fetching ${url}: ${response.status}`);
+    const {nodes, files, update_time} = await response.json();
+    s.stop(`Downloaded ${bold(path)} ${faint(`in ${(Date.now() - start).toLocaleString("en-US")}ms`)}`);
+    await maybeWrite(path, convertNodes(nodes), force, effects);
+    await effects.touch(path, update_time);
+    if (includeFiles) {
+      for (const file of files) {
+        start = Date.now();
+        s = clack.spinner();
+        s.start(`Downloading ${bold(file.name)}`);
+        const filePath = join(output, file.name);
+        const response = await fetch(file.download_url);
+        if (!response.ok) throw new Error(`error fetching ${file.download_url}: ${response.status}`);
+        const buffer = Buffer.from(await response.arrayBuffer());
+        s.stop(`Downloaded ${bold(file.name)} ${faint(`in ${(Date.now() - start).toLocaleString("en-US")}ms`)}`);
+        await maybeWrite(filePath, buffer, force, effects);
+        await effects.touch(filePath, file.create_time);
       }
-      ++success;
-    } catch (error) {
-      s.stop(`Converting ${input} failed: ${red(String(error))}`);
     }
   }
-  clack.outro(`${success} of ${inputs.length} notebook${inputs.length === 1 ? "" : "s"} converted`);
+  clack.outro(`${inputs.length} notebook${inputs.length === 1 ? "" : "s"} converted`);
+}
+
+async function maybeWrite(
+  path: string,
+  contents: Buffer | string,
+  force: boolean,
+  effects: ConvertEffects
+): Promise<void> {
+  const {clack} = effects;
+  if (effects.existsSync(path) && !force) {
+    const choice = await clack.confirm({
+      message: `${bold(path)} already exists; replace?`,
+      initialValue: false
+    });
+    if (!choice) clack.outro(yellow("Cancelled convert"));
+    if (clack.isCancel(choice) || !choice) throw new CliError("Cancelled convert", {print: false});
+  }
+  await effects.prepareOutput(path);
+  await effects.writeFile(path, contents);
 }
 
 export function convertNodes(nodes): string {
