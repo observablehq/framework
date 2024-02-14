@@ -11,6 +11,7 @@ import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
 import {renderServerless} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
+import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {faint} from "./tty.js";
 import {resolvePath} from "./url.js";
@@ -21,24 +22,6 @@ const EXTRA_FILES = new Map([
     "_observablehq/runtime.js"
   ]
 ]);
-
-// TODO Remove library helpers (e.g., duckdb) when they are published to npm.
-function clientBundles(clientPath: string): [entry: string, name: string][] {
-  return [
-    [clientPath, "client.js"],
-    ["./src/client/stdlib.js", "stdlib.js"],
-    ["./src/client/stdlib/dot.js", "stdlib/dot.js"],
-    ["./src/client/stdlib/duckdb.js", "stdlib/duckdb.js"],
-    ["./src/client/stdlib/inputs.css", "stdlib/inputs.css"],
-    ["./src/client/stdlib/inputs.js", "stdlib/inputs.js"],
-    ["./src/client/stdlib/mermaid.js", "stdlib/mermaid.js"],
-    ["./src/client/stdlib/sqlite.js", "stdlib/sqlite.js"],
-    ["./src/client/stdlib/tex.js", "stdlib/tex.js"],
-    ["./src/client/stdlib/vega-lite.js", "stdlib/vega-lite.js"],
-    ["./src/client/stdlib/xlsx.js", "stdlib/xlsx.js"],
-    ["./src/client/stdlib/zip.js", "stdlib/zip.js"]
-  ];
-}
 
 export interface BuildOptions {
   config: Config;
@@ -106,13 +89,35 @@ export async function build(
 
   // Generate the client bundles.
   if (addPublic) {
-    for (const [entry, name] of clientBundles(clientEntry)) {
+    for (const [entry, name] of [
+      [clientEntry, "client.js"],
+      ["./src/client/stdlib.js", "stdlib.js"],
+      // TODO Prune this list based on which libraries are actually used.
+      // TODO Remove library helpers (e.g., duckdb) when they are published to npm.
+      ["./src/client/stdlib/dot.js", "stdlib/dot.js"],
+      ["./src/client/stdlib/duckdb.js", "stdlib/duckdb.js"],
+      ["./src/client/stdlib/inputs.css", "stdlib/inputs.css"],
+      ["./src/client/stdlib/inputs.js", "stdlib/inputs.js"],
+      ["./src/client/stdlib/mermaid.js", "stdlib/mermaid.js"],
+      ["./src/client/stdlib/sqlite.js", "stdlib/sqlite.js"],
+      ["./src/client/stdlib/tex.js", "stdlib/tex.js"],
+      ["./src/client/stdlib/vega-lite.js", "stdlib/vega-lite.js"],
+      ["./src/client/stdlib/xlsx.js", "stdlib/xlsx.js"],
+      ["./src/client/stdlib/zip.js", "stdlib/zip.js"],
+      ...(config.search ? [["./src/client/search.js", "search.js"]] : [])
+    ]) {
       const clientPath = getClientPath(entry);
       const outputPath = join("_observablehq", name);
       effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
       const code = await (entry.endsWith(".css")
         ? bundleStyles({path: clientPath, minify: true})
         : rollupClient(clientPath, {minify: true}));
+      await effects.writeFile(outputPath, code);
+    }
+    if (config.search) {
+      const outputPath = join("_observablehq", "minisearch.json");
+      const code = await searchIndex(config, effects);
+      effects.output.write(`${faint("search")} ${faint("→")} `);
       await effects.writeFile(outputPath, code);
     }
     for (const style of styles) {
