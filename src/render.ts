@@ -111,15 +111,14 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
     }"><a href="${relativeUrl(path, "/")}">${title}</a></li>
   </ol>${
     search
-      ? html`<div id="observablehq-search" data-root="${relativeUrl(
+      ? html`\n  <div id="observablehq-search" data-root="${relativeUrl(
           path,
           "/"
-        )}"><input type="search" placeholder="Search">
-        </div>
-        <div id="observablehq-search-results"></div>
-        <script>{${html.unsafe(
-          (await rollupClient(getClientPath("./src/client/search-init.ts"), {minify: true})).trim()
-        )}}</script>`
+        )}"><input type="search" placeholder="Search"></div>
+  <div id="observablehq-search-results"></div>
+  <script>{${html.unsafe(
+    (await rollupClient(getClientPath("./src/client/search-init.ts"), {minify: true})).trim()
+  )}}</script>`
       : ""
   }
   <ol>${pages.map((p, i) =>

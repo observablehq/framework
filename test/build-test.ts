@@ -43,7 +43,7 @@ describe("build", async () => {
       if (addPublic) {
         const publicDir = join(outputDir, "_observablehq");
         for (const file of findFiles(publicDir)) {
-          if (file.endsWith("minisearch.json")) continue;
+          if (file.endsWith(".json")) continue; // e.g., minisearch.json
           await (await open(join(publicDir, file), "w")).close();
         }
       }
@@ -92,7 +92,7 @@ class TestEffects extends FileBuildEffects {
   }
   async writeFile(outputPath: string, contents: string | Buffer): Promise<void> {
     if (typeof contents === "string" && outputPath.endsWith(".html")) {
-      contents = contents.replace(/^(<script>\{).*(\}<\/script>)$/m, "$1/* redacted init script */$2");
+      contents = contents.replace(/^(\s*<script>\{).*(\}<\/script>)$/gm, "$1/* redacted init script */$2");
     }
     return super.writeFile(outputPath, contents);
   }
