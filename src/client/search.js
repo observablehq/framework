@@ -2,12 +2,13 @@
 import MiniSearch from "../../node_modules/minisearch";
 
 const container = document.querySelector("#observablehq-search");
-const base = container.getAttribute("data-root");
+const shortcut = container.getAttribute("data-shortcut");
 const input = container.querySelector("input");
 const r = document.querySelector("#observablehq-search-results");
 const c = "observablehq-link-active";
 let value;
-const index = await fetch(`${base}_observablehq/minisearch.json`)
+
+const index = await fetch(import.meta.resolve("./minisearch.json"))
   .then((resp) => resp.json())
   .then((json) =>
     MiniSearch.loadJS(json, {
@@ -15,14 +16,17 @@ const index = await fetch(`${base}_observablehq/minisearch.json`)
       processTerm: (term) => term.slice(0, 15).toLowerCase() // see src/minisearch.json.ts
     })
   );
+
 input.addEventListener("input", () => {
   if (value === input.value) return;
   value = input.value;
   if (!value.length) {
+    container.setAttribute("data-shortcut", shortcut);
     container.parentElement.classList.remove("observablehq-search-results");
     r.innerHTML = "";
     return;
   }
+  container.setAttribute("data-shortcut", ""); // prevent conflict with close button
   container.parentElement.classList.add("observablehq-search-results");
   const results = index.search(value, {boost: {title: 4}, fuzzy: 0.15, prefix: true}).slice(0, 11);
   r.innerHTML =
@@ -37,7 +41,7 @@ input.addEventListener("input", () => {
     li.setAttribute("data-reference", id);
     li.setAttribute("data-score", Math.min(5, Math.round(0.6 * score)));
     const a = li.firstChild;
-    a.setAttribute("href", `${base}${id}`);
+    a.setAttribute("href", import.meta.resolve(`../${id}`));
     a.textContent = title;
   });
 });
