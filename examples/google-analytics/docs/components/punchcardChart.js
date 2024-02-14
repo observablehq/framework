@@ -1,19 +1,17 @@
 import * as Plot from "npm:@observablehq/plot";
 import * as d3 from "npm:d3";
 
-export function punchcardChart(data, {width, height, label, metric} = {}) {
+export function punchcardChart(data, {label, value, ...options} = {}) {
   const aggregatedValues = d3
     .rollups(
       data,
-      (v) => d3.median(v, (d) => d[metric]),
+      (v) => d3.median(v, (d) => d[value]),
       (d) => d.hour,
       (d) => d.dayOfWeek
     )
     .flatMap((d) => d[1].map((d) => d[1]));
-
   return Plot.plot({
-    width,
-    height,
+    ...options,
     inset: 12,
     padding: 0,
     marginBottom: 10,
@@ -39,7 +37,7 @@ export function punchcardChart(data, {width, height, label, metric} = {}) {
           {
             y: "dayOfWeek",
             x: "hour",
-            r: metric,
+            r: value,
             fill: "currentColor",
             stroke: "var(--theme-background)",
             sort: null,

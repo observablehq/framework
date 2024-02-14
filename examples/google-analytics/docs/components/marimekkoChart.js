@@ -1,54 +1,24 @@
 import * as Plot from "npm:@observablehq/plot";
 import * as d3 from "npm:d3";
 
-export function marimekkoChart(data, {width, height, xDim, yDim, metric, title, caption, color}) {
-  const xy = (options) => Marimekko({...options, x: xDim, y: yDim, value: metric});
+export function marimekkoChart(data, {x, y, value, color, ...options} = {}) {
+  const xy = (options) => Marimekko({...options, x, y, value});
   return Plot.plot({
-    width,
-    height,
-    subtitle: title,
-    caption,
+    ...options,
     label: null,
-    x: {percent: true, ticks: 10, tickFormat: (d) => (d === 100 ? `100%` : d)},
-    y: {percent: true, ticks: 10, tickFormat: (d) => (d === 100 ? `100%` : d)},
+    x: {percent: true, tickFormat: (d) => d + (d === 100 ? "%" : "")},
+    y: {percent: true, tickFormat: (d) => d + (d === 100 ? "%" : "")},
     color,
     marks: [
-      Plot.text(
-        data,
-        xy({
-          text: (d) => d[metric].toLocaleString("en"),
-          fontSize: 14,
-          fontWeight: 600,
-          stroke: yDim,
-          fill: "var(--theme-background)"
-        })
-      ),
-      Plot.rect(data, xy({fill: yDim, fillOpacity: 1})),
-      Plot.frame({fill: "var(--theme-background)", fillOpacity: 0.2}),
-      Plot.text(
-        data,
-        xy({
-          text: yDim,
-          fontSize: 11,
-          dy: -16,
-          fill: "var(--theme-background)"
-        })
-      ),
-      Plot.text(
-        data,
-        xy({
-          text: (d) => d[metric].toLocaleString("en"),
-          fontSize: 14,
-          fontWeight: 600,
-          fill: "var(--theme-background)"
-        })
-      ),
+      Plot.rect(data, xy({fill: y})),
+      Plot.text(data, xy({text: y, dy: -16, fill: "black"})),
+      Plot.text(data, xy({text: (d) => d[value].toLocaleString("en-US"), fontSize: 14, fontWeight: 600, fill: "black"})),
       Plot.text(
         data,
         Plot.selectMaxY(
           xy({
-            z: xDim,
-            text: (d) => `${d[xDim].slice(0, 1).toUpperCase()}${d[xDim].slice(1)}`,
+            z: x,
+            text: (d) => capitalize(d[x]),
             anchor: "top",
             lineAnchor: "bottom",
             fontSize: 12,
@@ -60,7 +30,11 @@ export function marimekkoChart(data, {width, height, xDim, yDim, metric, title, 
   });
 }
 
-// TODO attribution
+function capitalize([t, ...text]) {
+  return t.toUpperCase() + text.join("");
+}
+
+// https://observablehq.com/@observablehq/plot-marimekko
 function Marimekko({x, y, z, value = z, anchor = "middle", inset = 0.5, ...options} = {}) {
   const stackX = /\bleft$/i.test(anchor) ? Plot.stackX1 : /\bright$/i.test(anchor) ? Plot.stackX2 : Plot.stackX;
   const stackY = /^top\b/i.test(anchor) ? Plot.stackY2 : /^bottom\b/i.test(anchor) ? Plot.stackY1 : Plot.stackY;

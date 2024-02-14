@@ -21,7 +21,7 @@ const color = Plot.scale({
 });
 
 const filteredChannelBreakdown = channelBreakdown
-  .filter((d) => color.domain.includes(d.channelGroup) && d.type != "Unknown" && d.channelGroup !== 'Unassigned')
+  .filter((d) => color.domain.includes(d.channelGroup) && d.type != "Unknown" && d.channelGroup !== "Unassigned")
   .sort((a, b) => color.domain.indexOf(b.channelGroup) - color.domain.indexOf(a.channelGroup));
 
 function getCompareValue(data, metric) {
@@ -99,16 +99,14 @@ function trendNumber(data, focusData, metric, options) {
   <div class="card grid-rowspan-4" style="max-width: none; display: flex; flex-direction: column;">
     <h2>Active users by channel</h2>
     <h3>Rolling 28-day active users</h3>
-    <div style="flex-grow: 1;">${resize((width, height) => marimekkoChart(filteredChannelBreakdown, {width, height, metric:'active28d', format: '%', yDim: 'channelGroup', xDim: 'type', color}))}</div>
+    <div style="flex-grow: 1;">${resize((width, height) => marimekkoChart(filteredChannelBreakdown, {width, height, x: "type", y: "channelGroup", value: "active28d", color}))}</div>
   </div>
   <div class="card grid-rowspan-2">
     <h2>Active users per day and hour of week</h2>
-    ${resize((width) => punchcardChart(hourly, {width, label: "active users", metric: "activeUsers"}))}
+    ${resize((width) => punchcardChart(hourly, {width, label: "active users", value: "activeUsers"}))}
   </div>
   <div class="card grid-rowspan-2">
     <h2>New users per day and hour of week</h2>
-    ${resize((width) => punchcardChart(hourly, {width, label: "new users", metric: "newUsers"}))}
+    ${resize((width) => punchcardChart(hourly, {width, label: "new users", value: "newUsers"}))}
   </div>
 </div>
-
-<div class="small note">This dashboard summarizes traffic to <a href="https://observablehq.com/plot/">Observable Plot’s documentation</a> from ${d3.extent(summary, (d) => d.date).map((d) => d.toLocaleDateString("en-US")).join(" to ")}. Data is pulled from the <a href="https://developers.google.com/analytics/devguides/reporting/data/v1/quickstart-client-libraries">Google Analytics Data API</a>.</div>
