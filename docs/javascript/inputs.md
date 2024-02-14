@@ -1,156 +1,85 @@
 # JavaScript: Inputs
 
-Inputs are user-interface elements that accept data from a user. In a data app, inputs might prompt a viewer to:
+Inputs are graphical user interface elements such as dropdowns, radios, sliders, and text boxes that accept data from a user and enable interaction via [reactivity](./reactivity). They can also be custom elements that you design, such as charts that support interactive selection via pointing or brushing.
 
-- Select a URL from a dropdown list to view site traffic for a specific page
-- Interactively subset a table of users by typing in a domain name
-- Choose a date range to explore software downloads over a period of interest
+Inputs might prompt a viewer to:
 
-Inputs can be displayed with the [`view`](#view(element)) function, which is a special type of [display](display) function that additionally returns the input’s value generator, which can then be assigned to a variable for use elsewhere. 
+- Filter a table of users by typing in a name
+- Select a URL from a dropdown to view traffic to a specific page
+- Choose a date range to explore data within a period of interest
 
-For example, the radio input below prompts a user to select one from a series of values:
+Inputs are typically displayed using the built-in [`view`](#view(element)) function, which [displays](./display) the given element and returns a [value generator](./generators). The generator can then be declared as a [top-level variable](./reactivity) to expose the input’s value to the page. For example, the radio input below prompts the user to select their favorite team:
 
 ```js echo
 const team = view(Inputs.radio(["Metropolis Meteors", "Rockford Peaches", "Bears"], {label: "Favorite team:", value: "Metropolis Meteors"}));
 ```
 
-The `team` variable in this example now reactively updates when the user interacts with the radio input, triggering a new evaluation of the dependent code. Select different teams in the radio input above to update the text.
+The `team` variable here will reactively update when the user interacts with the radio input, triggering re-evaluation of referencing code blocks. Select different teams in the radio input above to update the text.
 
-```md
+My favorite baseball team is the ${team}!
+
+```md run=false
 My favorite baseball team is the ${team}!
 ```
 
-My favorite baseball team is the ${team}!
+You can implement custom inputs using arbitrary HTML. For example, here is a [range input](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/range) that lets you choose an integer between 1 and 15 (inclusive):
+
+```js echo
+const n = view(html`<input type=range step=1 min=1 max=15>`);
+```
+
+```js echo
+n // Try dragging the slider above
+```
+
+<div class="tip">To be compatible with <code>view</code>, custom inputs must emit <code>input</code> events and expose their current value as <i>element</i>.value. See <a href="../lib/generators#input(element)"><code>Generators.input</code></a> for more.</div>
+
+More often, you’ll use a helper library such as [Observable Inputs](../lib/inputs) or [Observable Plot](../lib/plot) to declare inputs. For example, here is [`Inputs.range`](../lib/inputs#range):
+
+```js echo
+const m = view(Inputs.range([1, 15], {label: "Favorite number", step: 1}));
+```
+
+```js echo
+m // Try dragging the slider above
+```
+
+To use a chart as an input, you can use Plot’s [pointer interaction](https://observablehq.com/plot/interactions/pointer), say by setting the **tip** option on a mark. In the scatterplot below, the penguin closest to the pointer is exposed as the reactive variable `penguin`.
+
+```js echo
+const penguin = view(Plot.dot(penguins, {x: "culmen_length_mm", y: "flipper_length_mm", tip: true}).plot());
+```
+
+```js echo
+penguin
+```
+
+In the future, Plot will support more interaction methods, including brushing. Please upvote [#5](https://github.com/observablehq/plot/issues/5) if you are interested in this feature.
 
 ## view(*element*)
 
-The `view` function used above does two things: (1) it displays the given DOM *element*, then (2) returns its corresponding value [generator](./generators), using [`Generators.input`](../lib/generators#input(element)) under the hood. Use `view` to display an input while also exposing the input’s value as a [reactive variable](./reactivity). You can reference the input’s value anywhere, and the code will run whenever the input changes.
+The `view` function used above does two things:
 
-The `view` function is not limited to Observable Inputs. For example, here is a simple range slider created with [html](../lib/htl):
+1. it [displays](./display) the given DOM *element*, and then
+2. returns its corresponding [value generator](./generators).
 
-```js echo
-const topn = view(html`<input type=range step=1 min=1 max=15 value=10>`);
-```
-
-Now we can reference `topn` elsewhere, for example to control how many groups are displayed in a sorted bar chart: 
+The `view` function uses [`Generators.input`](../lib/generators#input(element)) under the hood. You can also call `Generators.input` directly, say to declare the input as a top-level variable without immediately displaying it:
 
 ```js echo
-Plot.plot({
-  marginLeft: 50,
-  marks: [
-    Plot.barX(olympians, Plot.groupY({x: "count"}, {y: "nationality", sort: {y: "x", reverse: true, limit: topn}})),
-    Plot.ruleX([0])
-  ]
-})
+const nameInput = html`<input type="text" placeholder="anonymous">`;
+const name = Generators.input(nameInput);
 ```
 
-## Observable Inputs
+As a top-level variable, you can then display the input anywhere you like, such as within a [card](../css/card) using an [inline expression](../javascript#inline-expressions). And you can reference the input’s value reactively anywhere, too.
 
-The [Observable Inputs](../lib/inputs) library implements commonly used inputs — buttons, sliders, dropdowns, tables, and the like — as functions. Each input function returns an HTML element that emits *input* events for compatibility with [`view`](#view(element)) and [Generators.input](../lib/generators#input(element)). 
+<div class="card" style="display: grid; gap: 0.5rem;">
+  <div>Enter your name: ${nameInput}</div>
+  <div>Hi <b>${name || "anonymous"}</b>!</div>
+</div>
 
-### Usage
-
-Inputs are generally declared as follows: 
-
-```js run=false
-const value = view(Inputs.inputName(...));
+```html run=false
+<div class="card" style="display: grid; gap: 0.5rem;">
+  <div>Enter your name: ${nameInput}</div>
+  <div>Hi <b>${name || "anonymous"}</b>!</div>
+</div>
 ```
-
-where *value* is the named input value, and *inputName* is the input name (like `radio`, `button`, or `checkbox`). See the full list of [available inputs](../lib/inputs) with live examples, or visit the [Observable Inputs API reference](https://github.com/observablehq/inputs/blob/main/README.md) for more detail and specific input options.
-
-Options differ between inputs. For example, the checkbox input accepts options to disable all or certain values, sort displayed values, and only display repeated values *once* (among others):
-
-```js echo
-const checkout = view(Inputs.checkbox(["B","A","Z","Z","F","D","G","G","G","Q"], {disabled: ["F", "Q"], sort: true, unique: true, value: "B", label: "Choose categories:"}));
-```
-
-```js echo
-checkout
-```
-
-### Analysis with Observable Inputs
-
-To demonstrate Observable Inputs for data analysis, we’ll use the `olympians` sample dataset containing records on athletes that participated in the 2016 Rio olympics (from [Matt Riggott](https://flother.is/2017/olympic-games-data/)).
-
-```js echo
-Inputs.table(olympians)
-```
-
-Here, we create a subset of columns to simplify outputs:
-
-```js echo
-const columns = olympians.columns.slice(1, -1); // hide the id and info column to simplify
-```
-
-Now let’s wire up our data to a search input. Type whatever you want into the box and search will find matching rows in the data which we can then use in a table below.
-
-A few examples to try: **[mal]** will match *sex* = male, but also names that start with “mal”, such as Anna Malova; **[1986]** will match anyone born in 1986 (and a few other results); **[USA gym]** will match USA’s gymnastics team. Each space-separated term in your query is prefix-matched against all columns in the data.
-
-```js echo
-const search = view(Inputs.search(olympians, {
-  datalist: ["mal", "1986", "USA gym"], 
-  placeholder: "Search athletes"
-}))
-```
-
-```js echo
-Inputs.table(search, {columns})
-```
-
-If you like, you can sort the table columns by clicking on the column name. Click once to sort ascending, and click again to sort descending. Note that the sort order is temporary: it’ll go away if you reload the page. Specify the column name as the *sort* option above if you want this order to persist.
-
-For a more structured approach, we can use a select input to choose a sport, then *array*.filter to determine which rows are shown in the table. The *sort* and *unique* options tell the input to show only distinct values and to sort them alphabetically.
-
-```js echo
-const sport = view(Inputs.select(olympians.map(d => d.sport), {sort: true, unique: true, label: "sport"}));
-```
-
-```js echo
-const selectedAthletes = display(olympians.filter(d => d.sport === sport));
-```
-
-```js echo
-Inputs.table(selectedAthletes, {columns})
-```
-
-To visualize a column of data as a histogram, use the value of the select input with [Observable Plot](https://observablehq.com/plot/).
-
-```js echo
-Plot.plot({
-  x: {
-    domain: [1.3, 2.2]
-  },
-  marks: [
-    Plot.rectY(selectedAthletes, Plot.binX({y: "count"}, {x: "height", fill: "steelblue"})),
-    Plot.ruleY([0])
-  ]
-})
-```
-
-You can also pass grouped data to the select input as a [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) from key to array of values, say using [d3.group](https://d3js.org/d3-array/group). The value of the select input in this mode is the data in the selected group. Note that *unique* is no longer required, and that *sort* works here, too, sorting the keys of the map returned by d3.group.
-
-```js echo
-const groups = display(d3.group(olympians, d => d.sport));
-```
-
-```js echo
-const sportAthletes = view(Inputs.select(groups, {sort: true, label: "sport"}));
-```
-
-```js echo
-Inputs.table(sportAthletes, {columns})
-```
-
-The select input works well for categorical data, such as sports or nationalities, but how about quantitative dimensions such as height or weight? Here’s a range input that lets you pick a target weight; we then filter the table rows for any athlete within 10% of the target weight. Notice that some columns, such as sport, are strongly correlated with weight.
-
-```js echo
-const weight = view(Inputs.range(d3.extent(olympians, d => d.weight), {step: 1, label: "weight (kg)"}));
-```
-
-```js echo
-Inputs.table(olympians.filter(d => d.weight < weight * 1.1 && weight * 0.9 < d.weight), {sort: "weight", columns})
-```
-
-### License
-
-Observable Inputs are released under the [ISC license](https://github.com/observablehq/inputs/blob/main/LICENSE) and depend only on [Hypertext Literal](../lib/htl), our tagged template literal for safely generating dynamic HTML. If you are interested in contributing or wish to report an issue, please see [our repository](https://github.com/observablehq/inputs). For recent changes, please see our [release notes](https://github.com/observablehq/inputs/releases).

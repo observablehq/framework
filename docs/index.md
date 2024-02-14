@@ -98,6 +98,12 @@ index: false
   margin-left: 0.25rem;
 }
 
+@media (prefers-color-scheme: light) {
+  h1 {
+    --theme-red: #d75c48;
+  }
+}
+
 </style>
 
 <div class="hero">
