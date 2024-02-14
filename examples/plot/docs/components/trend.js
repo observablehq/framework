@@ -14,7 +14,7 @@ export function Trend(
   } = {}
 ) {
   const variant = value > 0 ? positive : value < 0 ? negative : base;
-  const text = value.toLocaleString(locale, format);
+  const text = value.toLocaleString(locale, {signDisplay: "always", ...format});
   const suffix = value > 0 ? positiveSuffix : value < 0 ? negativeSuffix : baseSuffix;
   return html`<span class="small ${variant}">${text}${suffix}`;
 }
