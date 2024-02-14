@@ -391,7 +391,7 @@ export async function promptDeployTarget(
       message: "Which Observable workspace do you want to use?",
       options: currentUser.workspaces
         .map((w) => ({value: w, label: formatUser(w)}))
-        .sort((a, b) => a.label.localeCompare(b.label)),
+        .sort((a, b) => -a.value.role.localeCompare(b.value.role) || a.label.localeCompare(b.label)),
       initialValue: currentUser.workspaces[0] // the oldest workspace, maybe?
     });
     if (clack.isCancel(chosenWorkspace)) {
