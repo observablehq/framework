@@ -22,9 +22,13 @@ function rewriteInputsNamespace(code: string) {
   return code.replace(/\b__ns__\b/g, "inputs-3a86ea");
 }
 
+const INLINE_CSS = Object.fromEntries(
+  ["svg", "png", "jpeg", "jpg", "gif", "eot", "otf", "woff", "woff2"].map((ext) => [`.${ext}`, "dataurl" as const])
+);
 export async function bundleStyles({path, theme}: {path?: string; theme?: string[]}): Promise<string> {
   const result = await build({
     bundle: true,
+    loader: INLINE_CSS,
     ...(path ? {entryPoints: [path]} : {stdin: {contents: renderTheme(theme!), loader: "css"}}),
     write: false,
     alias: STYLE_MODULES
