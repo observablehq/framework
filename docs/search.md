@@ -4,15 +4,15 @@ index: true
 
 # Search
 
-Search works in two stages: when Framework builds the site, it also creates an index of the contents. On the client, as soon as the user focuses the search input and starts typing a query, the index is retrieved and the matching pages are displayed in the sidebar. The user can then click on a result, or use the up ↑ and down ↓ arrow keys to navigate, then type return to open the page.
+Framework provides built-in full-text page search using [MiniSearch](https://lucaong.github.io/minisearch/). Search results are queried on the client using a static index computed during build, and supports fuzzy and prefix matching.
 
-To enable search on your project, add a **search**: true option to your site’s [configuration](config).
+<div class="tip">Search is not enabled by default. It is intended for larger projects with lots of static text, such as reports and documentation. Search will not index dynamic content such as data or charts. To enable search, set the <a href="./config#search"><b>search</b> option</a> to true in your config.</div>
 
-Indexation and retrieval are using [MiniSearch](https://lucaong.github.io/minisearch/), a JavaScript library that enables full-text search with many useful features (like prefix search, fuzzy search, ranking, boosting of fields).
+Search works in two stages: when Framework builds the site, it creates an index of the contents. On the client, as soon as the user focuses the search input and starts typing, the index is retrieved and the matching pages are displayed in the sidebar. The user can then click on a result, or use the up ↑ and down ↓ arrow keys to navigate, then type return to open the page.
 
-The pages are indexed each time you build, or deploy, your project; when working in preview, they are reindexed every 10 minutes.
+Pages are indexed each time you build or deploy your project. When working in preview, they are reindexed every 10 minutes.
 
-By default, all the pages found in the docs/ folder or defined in the configuration’s **pages** are indexed; you can however opt-out a page from the index by specifying an index: false property in its front-matter:
+By default, all the pages found in the project root (`docs` by default) or defined in the [**pages** config option](./config#pages) are indexed; you can however opt-out a page from the index by specifying an index: false property in its front matter:
 
 ```yaml
 ---
@@ -21,7 +21,7 @@ index: false
 ---
 ```
 
-Likewise, a page that is not referenced in the configuration’s **pages** can opt-in by having index: true in its front-matter:
+Likewise, a page that is not referenced in **pages** can opt-in by having index: true in its front matter:
 
 ```yaml
 ---
@@ -30,6 +30,4 @@ index: true
 ---
 ```
 
-Search is case-insensitive. The indexing script tries to avoid common pitfalls by ignoring HTML tags and non-word characters (such as punctuation, backticks, etc.) found in the pages’ markdown. It also ignores long words as well as sequences that contain more than 6 digits (such as API keys, for example).
-
-The selected pages are sorted by descending relevance, represented by a number of dots that reflects the terms found (exactly or with a fuzzy match) in the page, with less points given to relatively frequent terms, and more points given to terms found in the title.
+Search is case-insensitive. The indexing script tries to avoid common pitfalls by ignoring HTML tags and non-word characters such as punctuation. It also ignores long words, as well as sequences that contain more than 6 digits (such as API keys, for example).
