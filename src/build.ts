@@ -104,21 +104,20 @@ export async function build(
       ["./src/client/stdlib/vega-lite.js", "stdlib/vega-lite.js"],
       ["./src/client/stdlib/xlsx.js", "stdlib/xlsx.js"],
       ["./src/client/stdlib/zip.js", "stdlib/zip.js"],
-      ...(config.search
-        ? [
-            ["./src/client/search.js", "search.js"],
-            ["./src/minisearch.json.ts", "minisearch.json"]
-          ]
-        : [])
+      ...(config.search ? [["./src/client/search.js", "search.js"]] : [])
     ]) {
       const clientPath = getClientPath(entry);
       const outputPath = join("_observablehq", name);
       effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
       const code = await (entry.endsWith(".css")
         ? bundleStyles({path: clientPath})
-        : name === "minisearch.json"
-        ? searchIndex(config, effects)
         : rollupClient(clientPath, {minify: true}));
+      await effects.writeFile(outputPath, code);
+    }
+    if (config.search) {
+      const outputPath = join("_observablehq", "minisearch.json");
+      const code = await searchIndex(config, effects);
+      effects.output.write(`${faint("search")} ${faint("→")} `);
       await effects.writeFile(outputPath, code);
     }
     for (const style of styles) {

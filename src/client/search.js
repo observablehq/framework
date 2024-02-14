@@ -38,7 +38,6 @@ input.addEventListener("input", () => {
   r.querySelectorAll("li").forEach((li, i) => {
     const {id, score, title} = results[i];
     li.setAttribute("class", `observablehq-link${i === 0 ? ` ${c}` : ""}`);
-    li.setAttribute("data-reference", id);
     li.setAttribute("data-score", Math.min(5, Math.round(0.6 * score)));
     const a = li.firstChild;
     a.setAttribute("href", import.meta.resolve(`../${id}`));
