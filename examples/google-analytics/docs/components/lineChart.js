@@ -5,10 +5,11 @@ export function lineChart(data, {width, height = 94, x = "date", y, percent} = {
     width,
     height,
     axis: null,
+    margin: 0,
     insetTop: 10,
-    insetLeft: -15,
+    insetLeft: -17,
     insetRight: -17,
     y: {zero: true, percent, domain: percent ? [0, 100] : undefined},
-    marks: [Plot.areaY(data, {x, y, fillOpacity: 0.25}), Plot.lineY(data, {x, y, tip: true})]
+    marks: [Plot.areaY(data, {x, y, fillOpacity: 0.2}), Plot.lineY(data, {x, y, tip: true})]
   });
 }
