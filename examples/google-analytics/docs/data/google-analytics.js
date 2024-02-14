@@ -16,7 +16,9 @@ const defaultDimensionFilter = {
   filter: {
     fieldName: "fullPageUrl",
     stringFilter: {
-      value: "observablehq.com/plot/"
+      value: "observablehq.com/plot",
+      matchType: "BEGINS_WITH",
+      caseSensitive: false
     }
   }
 };
