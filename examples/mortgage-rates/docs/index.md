@@ -23,7 +23,7 @@ function frmCard(y, pmms) {
   return html.fragment`
     <h2 style="color: ${stroke}">${y}-year fixed-rate</b></h2>
     <h1>${formatPercent(pmms.at(-1)[key])}</h1>
-    <table class="table">
+    <table>
       <tr>
         <td>1-week change</td>
         <td align="right">${formatPercent(diff1, {signDisplay: "always"})}</td>
@@ -43,25 +43,27 @@ function frmCard(y, pmms) {
         <td align="right">${formatPercent(d3.mean(pmms.slice(-52), (d) => d[key]))}</td>
       </tr>
     </table>
-    ${Plot.plot({
-      width: 278,
-      height: 40,
-      axis: null,
-      x: {inset: 40},
-      marks: [
-        Plot.tickX(pmms.slice(-52), {
-          x: key,
-          stroke,
-          insetTop: 10,
-          insetBottom: 10,
-          title: (d) => `${d.date?.toLocaleDateString("en-us")}: ${d[key]}%`,
-          tip: {anchor: "bottom"}
-        }),
-        Plot.tickX(pmms.slice(-1), {x: key, strokeWidth: 2}),
-        Plot.text([`${range[0]}%`], {frameAnchor: "left"}),
-        Plot.text([`${range[1]}%`], {frameAnchor: "right"})
-      ]
-    })}
+    ${resize((width) =>
+      Plot.plot({
+        width,
+        height: 40,
+        axis: null,
+        x: {inset: 40},
+        marks: [
+          Plot.tickX(pmms.slice(-52), {
+            x: key,
+            stroke,
+            insetTop: 10,
+            insetBottom: 10,
+            title: (d) => `${d.date?.toLocaleDateString("en-us")}: ${d[key]}%`,
+            tip: {anchor: "bottom"}
+          }),
+          Plot.tickX(pmms.slice(-1), {x: key, strokeWidth: 2}),
+          Plot.text([`${range[0]}%`], {frameAnchor: "left"}),
+          Plot.text([`${range[1]}%`], {frameAnchor: "right"})
+        ]
+      })
+    )}
     <span class="small muted">52-week range</span>
   `;
 }
@@ -79,29 +81,25 @@ function trend(v) {
 }
 ```
 
-Each week, [Freddie Mac](https://www.freddiemac.com/pmms/about-pmms.html) surveys lenders on rates and points for their ${colorLegend(30)}, ${colorLegend(15)}, and other mortgage products.
-Data as of ${pmms.at(-1).date?.toLocaleDateString("en-US", {year: "numeric", month: "long", day: "numeric"})}.
+Each week, [Freddie Mac](https://www.freddiemac.com/pmms/about-pmms.html) surveys lenders on rates and points for their ${colorLegend(30)}, ${colorLegend(15)}, and other mortgage products. Data as of ${pmms.at(-1).date?.toLocaleDateString("en-US", {year: "numeric", month: "long", day: "numeric"})}.
 
-<div class="grid grid-cols-2" style="margin-top: 2rem; max-width: 640px;">
+<div class="grid grid-cols-3" style="margin-top: 2rem;">
   <div class="card">${frmCard(30, pmms)}</div>
-  <div class="card">${frmCard(15, pmms)}</div>
-</div>
-
-<div class="grid" style="max-width: 640px;">
-  <div class="card">
+  <div class="card grid-colspan-2 grid-rowspan-2" style="display: flex; flex-direction: column;">
     <h2>Rates over the past year</h2>
-    ${resize((width) =>
+    <span style="flex-grow: 1;">${resize((width, height) =>
       Plot.plot({
         width,
-        height: 250,
+        height,
         y: {grid: true, label: "rate (%)"},
         color,
         marks: [
           Plot.lineY(tidy.slice(-53 * 2), {x: "date", y: "rate", stroke: "type", curve: "step", tip: true, markerEnd: true})
         ]
       })
-    )}
+    )}</span>
   </div>
+  <div class="card">${frmCard(15, pmms)}</div>
 </div>
 
 <div class="grid">
