@@ -23,25 +23,6 @@ const EXTRA_FILES = new Map([
   ]
 ]);
 
-// TODO Remove library helpers (e.g., duckdb) when they are published to npm.
-function clientBundles(clientPath: string): [entry: string, name: string][] {
-  return [
-    [clientPath, "client.js"],
-    ["./src/client/stdlib.js", "stdlib.js"],
-    ["./src/client/stdlib/dot.js", "stdlib/dot.js"],
-    ["./src/client/stdlib/duckdb.js", "stdlib/duckdb.js"],
-    ["./src/client/stdlib/inputs.css", "stdlib/inputs.css"],
-    ["./src/client/stdlib/inputs.js", "stdlib/inputs.js"],
-    ["./src/client/stdlib/mermaid.js", "stdlib/mermaid.js"],
-    ["./src/client/stdlib/sqlite.js", "stdlib/sqlite.js"],
-    ["./src/client/stdlib/tex.js", "stdlib/tex.js"],
-    ["./src/client/stdlib/vega-lite.js", "stdlib/vega-lite.js"],
-    ["./src/client/stdlib/xlsx.js", "stdlib/xlsx.js"],
-    ["./src/client/stdlib/zip.js", "stdlib/zip.js"],
-    ["./src/client/search.js", "search.js"]
-  ];
-}
-
 export interface BuildOptions {
   config: Config;
   clientEntry?: string;
@@ -109,7 +90,20 @@ export async function build(
   // Generate the client bundles.
   if (addPublic) {
     for (const [entry, name] of [
-      ...clientBundles(clientEntry),
+      [clientEntry, "client.js"],
+      ["./src/client/stdlib.js", "stdlib.js"],
+      // TODO Prune this list based on which libraries are actually used.
+      // TODO Remove library helpers (e.g., duckdb) when they are published to npm.
+      ["./src/client/stdlib/dot.js", "stdlib/dot.js"],
+      ["./src/client/stdlib/duckdb.js", "stdlib/duckdb.js"],
+      ["./src/client/stdlib/inputs.css", "stdlib/inputs.css"],
+      ["./src/client/stdlib/inputs.js", "stdlib/inputs.js"],
+      ["./src/client/stdlib/mermaid.js", "stdlib/mermaid.js"],
+      ["./src/client/stdlib/sqlite.js", "stdlib/sqlite.js"],
+      ["./src/client/stdlib/tex.js", "stdlib/tex.js"],
+      ["./src/client/stdlib/vega-lite.js", "stdlib/vega-lite.js"],
+      ["./src/client/stdlib/xlsx.js", "stdlib/xlsx.js"],
+      ["./src/client/stdlib/zip.js", "stdlib/zip.js"],
       ...(config.search
         ? [
             ["./src/client/search.js", "search.js"],
