@@ -1,5 +1,10 @@
 import {html} from "npm:htl";
 
+export function trendNumber(data, {focus, value, format} = {}) {
+  const focusIndex = data.findIndex((d) => d === focus);
+  return formatTrend(focus[value] - data[focusIndex - 1]?.[value], format);
+}
+
 export function formatTrend(
   value,
   {

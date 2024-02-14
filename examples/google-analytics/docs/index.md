@@ -7,7 +7,7 @@ const channelBreakdown = FileAttachment("data/google-analytics-channel-breakdown
 ```
 
 ```js
-import {formatTrend} from "./components/formatTrend.js";
+import {trendNumber} from "./components/trendNumber.js";
 import {lineChart} from "./components/lineChart.js";
 import {marimekkoChart} from "./components/marimekkoChart.js";
 import {punchcardChart} from "./components/punchcardChart.js";
@@ -23,13 +23,6 @@ const color = Plot.scale({
 const filteredChannelBreakdown = channelBreakdown
   .filter((d) => color.domain.includes(d.channelGroup) && d.type != "Unknown" && d.channelGroup !== "Unassigned")
   .sort((a, b) => color.domain.indexOf(b.channelGroup) - color.domain.indexOf(a.channelGroup));
-
-function getCompareValue(data, metric) {
-  const maxDate = data[data.length - 1].date;
-  const compareDate = d3.utcDay.offset(maxDate, -1);
-  const match =  data.find((d) => +d.date === +compareDate)[metric];
-  return data[data.length - 1][metric] - match;
-}
 ```
 
 <style type="text/css">
@@ -42,6 +35,7 @@ function getCompareValue(data, metric) {
 </style>
 
 ```js
+// Like Generators.input, but works with resize, and adds a default value.
 function generateValue(target, defaultValue) {
   return Generators.observe((notify) => {
     const changed = ({target}) => notify(target.value ?? defaultValue);
@@ -52,45 +46,39 @@ function generateValue(target, defaultValue) {
 }
 
 const activeUsersChart = resize((width) => lineChart(summary, {width, y: "active28d"}));
-const activeUsers = generateValue(activeUsersChart, summary[summary.length - 1]);
 const engagementRateChart = resize((width) => lineChart(summary, {width, y: "engagementRate", percent: true}));
-const engagementRate = generateValue(engagementRateChart, summary[summary.length - 1]);
 const wauPerMauChart = resize((width) => lineChart(summary, {width, y: "wauPerMau", percent: true}));
-const wauPerMau = generateValue(wauPerMauChart, summary[summary.length - 1]);
 const engagedSessionsChart = resize((width) => lineChart(summary, {width, y: "engagedSessions"}));
-const engagedSessions = generateValue(engagedSessionsChart, summary[summary.length - 1]);
-```
 
-```js
-function trendNumber(data, focusData, metric, options) {
-  const focusIndex = data.findIndex((d) => d === focusData);
-  return formatTrend(focusData[metric] - data[focusIndex - 1]?.[metric], options);
-}
+const activeUsers = generateValue(activeUsersChart, summary[summary.length - 1]);
+const engagementRate = generateValue(engagementRateChart, summary[summary.length - 1]);
+const wauPerMau = generateValue(wauPerMauChart, summary[summary.length - 1]);
+const engagedSessions = generateValue(engagedSessionsChart, summary[summary.length - 1]);
 ```
 
 <div class="grid grid-cols-4">
   <div class="card crop">
     <h2>Rolling 28-day active users</h2>
     <span class="big">${activeUsers.active28d.toLocaleString("en-US")}</span>
-    ${trendNumber(summary, activeUsers, "active28d")}
+    ${trendNumber(summary, {focus: activeUsers, value: "active28d"})}
     ${activeUsersChart}
   </div>
   <div class="card crop">
     <h2>Engagement rate</h2>
     <span class="big">${engagementRate.engagementRate.toLocaleString("en-US", {style: "percent"})}</span>
-    ${trendNumber(summary, engagementRate, "engagementRate", {format: {style: "percent"}})}
+    ${trendNumber(summary, {focus: engagementRate, value: "engagementRate", format: {style: "percent"}})}
     ${engagementRateChart}
   </div>
   <div class="card crop">
     <h2>WAU/MAU ratio</h2>
     <span class="big">${wauPerMau.wauPerMau.toLocaleString("en-US", {style: "percent"})}</span>
-    ${trendNumber(summary, wauPerMau, "wauPerMau", {format: {style: "percent"}})}
+    ${trendNumber(summary, {focus: wauPerMau, value: "wauPerMau", format: {style: "percent"}})}
     ${wauPerMauChart}
   </div>
   <div class="card crop">
     <h2>Engaged sessions</h2>
     <span class="big">${engagedSessions.engagedSessions.toLocaleString("en-US")}</span>
-    ${trendNumber(summary, engagedSessions, "engagedSessions")}
+    ${trendNumber(summary, {focus: engagedSessions, value: "engagedSessions"})}
     ${engagedSessionsChart}
   </div>
 </div>
