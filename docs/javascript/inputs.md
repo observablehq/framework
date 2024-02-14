@@ -63,19 +63,23 @@ The `view` function used above does two things:
 1. it [displays](./display) the given DOM *element*, and then
 2. returns its corresponding [value generator](./generators).
 
-The `view` function uses [`Generators.input`](../lib/generators#input(element)) under the hood. You can also call `Generators.input` directly, say if you want to declare the input as a top-level variable while placing it elsewhere on the page, say using an [inline expression](../javascript#inline-expressions).
+The `view` function uses [`Generators.input`](../lib/generators#input(element)) under the hood. You can also call `Generators.input` directly, say to declare the input as a top-level variable without immediately displaying it:
 
 ```js echo
 const nameInput = html`<input type="text" placeholder="anonymous">`;
 const name = Generators.input(nameInput);
 ```
 
-Enter your name: ${nameInput}.
+As a top-level variable, you can then display the input anywhere you like, such as within a [card](../css/card) using an [inline expression](../javascript#inline-expressions). And you can reference the input’s value reactively anywhere, too.
 
-Hi ${name || "anonymous"}!
+<div class="card" style="display: grid; gap: 0.5rem;">
+  <div>Enter your name: ${nameInput}</div>
+  <div>Hi <b>${name || "anonymous"}</b>!</div>
+</div>
 
-```md run=false
-Enter your name: ${nameInput}.
-
-Hi ${name || "anonymous"}!
+```html run=false
+<div class="card" style="display: grid; gap: 0.5rem;">
+  <div>Enter your name: ${nameInput}</div>
+  <div>Hi <b>${name || "anonymous"}</b>!</div>
+</div>
 ```
