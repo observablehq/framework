@@ -109,9 +109,9 @@ Inputs.button("Copy to clipboard", {value: null, reduce: () => navigator.clipboa
 
 The available button input options are:
 
-* *label* - a label; either a string or an HTML element.
+* *label* - a label; either a string or an HTML element
 * *required* - if true, the initial value defaults to undefined.
-* *value* - the initial value; defaults to 0 or null if *required* is false.
-* *reduce* - a function to update the value on click; by default returns *value* + 1.
-* *width* - the width of the input (not including the label).
-* *disabled* - whether input is disabled; defaults to false.
+* *value* - the initial value; defaults to 0 or null if *required* is false
+* *reduce* - a function to update the value on click; by default returns *value* + 1
+* *width* - the width of the input (not including the label)
+* *disabled* - whether input is disabled; defaults to false
