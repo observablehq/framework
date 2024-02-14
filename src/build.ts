@@ -9,7 +9,7 @@ import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
-import {searchIndex} from "./minisearch.json.js";
+import {searchIndex} from "./search.js";
 import {renderServerless} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {Telemetry} from "./telemetry.js";

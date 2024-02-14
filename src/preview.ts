@@ -21,7 +21,7 @@ import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {getImplicitSpecifiers, getImplicitStylesheets} from "./libraries.js";
 import {diffMarkdown, parseMarkdown} from "./markdown.js";
 import type {ParseResult} from "./markdown.js";
-import {searchIndex} from "./minisearch.json.js";
+import {searchIndex} from "./search.js";
 import {renderPreview, resolveStylesheet} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {Telemetry} from "./telemetry.js";

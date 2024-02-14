@@ -1,7 +1,7 @@
 import {basename, join} from "node:path";
 import MiniSearch from "minisearch";
-import {visitMarkdownFiles} from "../src/files.js";
 import type {Config} from "./config.js";
+import {visitMarkdownFiles} from "./files.js";
 import type {Logger} from "./logger.js";
 import {parseMarkdown} from "./markdown.js";
 import {faint} from "./tty.js";
