@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import {convertNode, convertNodes, resolveInput} from "../src/convert.js";
+import {convertNode, convertNodes, inferFileName, resolveInput} from "../src/convert.js";
 
 describe("convertNodes", () => {
   it("converts multiple nodes", () => {
@@ -24,6 +24,21 @@ describe("convertNode", () => {
   });
   it("converts pinned to echo", () => {
     assert.strictEqual(convertNode({mode: "js", pinned: true, value: "1 + 2"}), "```js echo\n1 + 2\n```\n");
+  });
+});
+
+describe("inferFileName", () => {
+  it("infers a suitable file name based on identifier", () => {
+    assert.strictEqual(inferFileName("https://api.observablehq.com/document/1111111111111111"), "1111111111111111.md");
+  });
+  it("infers a suitable file name based on slug", () => {
+    assert.strictEqual(inferFileName("https://api.observablehq.com/document/@d3/bar-chart"), "bar-chart.md");
+  });
+  it("handles a slug with a suffix", () => {
+    assert.strictEqual(inferFileName("https://api.observablehq.com/document/@d3/bar-chart/2"), "bar-chart,2.md");
+  });
+  it("handles a different origin", () => {
+    assert.strictEqual(inferFileName("https://api.example.com/document/@d3/bar-chart"), "bar-chart.md");
   });
 });
 
