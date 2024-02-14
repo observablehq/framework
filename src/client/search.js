@@ -1,4 +1,5 @@
-import MiniSearch from "minisearch";
+// eslint-disable-next-line import/no-relative-packages
+import MiniSearch from "../../node_modules/minisearch/dist/es/index.js";
 
 const container = document.querySelector("#observablehq-search");
 const base = container.getAttribute("data-root");

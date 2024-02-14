@@ -37,7 +37,8 @@ function clientBundles(clientPath: string): [entry: string, name: string][] {
     ["./src/client/stdlib/tex.js", "stdlib/tex.js"],
     ["./src/client/stdlib/vega-lite.js", "stdlib/vega-lite.js"],
     ["./src/client/stdlib/xlsx.js", "stdlib/xlsx.js"],
-    ["./src/client/stdlib/zip.js", "stdlib/zip.js"]
+    ["./src/client/stdlib/zip.js", "stdlib/zip.js"],
+    ["./src/client/search.js", "search.js"]
   ];
 }
 
