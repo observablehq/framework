@@ -368,7 +368,7 @@ class DeployBuildEffects implements BuildEffects {
     this.logger.log(outputPath);
     try {
       await this.apiClient.postDeployFileContents(this.deployId, content, outputPath);
-    } catch(error) {
+    } catch (error) {
       if (isApiError(error) && error.details.errors.some((e) => e.code === "FILE_QUOTA_EXCEEDED")) {
         throw new CliError("You have reached the total file size limit.", {cause: error});
       }
