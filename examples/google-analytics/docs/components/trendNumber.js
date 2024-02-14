@@ -1,8 +1,8 @@
 import {html} from "npm:htl";
 
-export function trendNumber(data, {focus, value, format} = {}) {
+export function trendNumber(data, {focus, value, ...options} = {}) {
   const focusIndex = data.findIndex((d) => d === focus);
-  return formatTrend(focus[value] - data[focusIndex - 1]?.[value], format);
+  return formatTrend(focus[value] - data[focusIndex - 1]?.[value], options);
 }
 
 export function formatTrend(
