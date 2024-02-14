@@ -1,25 +1,24 @@
 import {csvFormat} from "d3-dsv";
+import {json} from "d3-fetch";
 import {timeDay, utcDay} from "d3-time";
-import {utcFormat} from "d3-time-format";
 
-async function load(project) {
-  const end = utcDay(timeDay()); // exclusive
+function formatDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+async function load(project: string, start: Date, end: Date) {
   const data: any[] = [];
-  const formatDate = utcFormat("%Y-%m-%d");
-  const min = new Date("2021-01-01");
   let batchStart = end;
   let batchEnd;
-  while (batchStart > min) {
+  while (batchStart > start) {
     batchEnd = batchStart;
     batchStart = utcDay.offset(batchStart, -365);
-    if (batchStart < min) batchStart = min;
-    const response = await fetch(
+    if (batchStart < start) batchStart = start;
+    const batch = await json(
       `https://api.npmjs.org/downloads/range/${formatDate(batchStart)}:${formatDate(
         utcDay.offset(batchEnd, -1)
       )}/${project}`
     );
-    if (!response.ok) throw new Error(`fetch failed: ${response.status}`);
-    const batch = await response.json();
     for (const {downloads: value, day: date} of batch.downloads.reverse()) {
       data.push({date: new Date(date), value});
     }
@@ -28,10 +27,10 @@ async function load(project) {
   // trim zeroes at both ends
   do {
     if (data[0].value === 0) data.shift();
-    else if (data.at(-1).value !== 0) data.pop();
+    else if (data.at(-1)?.value !== 0) data.pop();
     else return data;
   } while (data.length);
   throw new Error("empty dataset");
 }
 
-process.stdout.write(csvFormat(await load("@observablehq/plot")));
+process.stdout.write(csvFormat(await load("@observablehq/plot", new Date("2021-01-01"), utcDay(timeDay()))));
