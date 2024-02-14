@@ -28,18 +28,20 @@ function frmCard(y, pmms) {
         <td>1-week change</td>
         <td align="right">${formatPercent(diff1, {signDisplay: "always"})}</td>
         <td>${trend(diff1)}</td>
+      </tr>
       <tr>
         <td>1-year change</td>
         <td align="right">${formatPercent(diffY, {signDisplay: "always"})}</td>
         <td>${trend(diffY)}</td>
+      </tr>
       <tr>
         <td>4-week average</td>
         <td align="right">${formatPercent(d3.mean(pmms.slice(-4), (d) => d[key]))}</td>
-        <td></td>
+      </tr>
       <tr>
         <td>52-week average</td>
         <td align="right">${formatPercent(d3.mean(pmms.slice(-52), (d) => d[key]))}</td>
-        <td></td>
+      </tr>
     </table>
     ${Plot.plot({
       width: 278,
