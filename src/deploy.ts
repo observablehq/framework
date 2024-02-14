@@ -108,8 +108,8 @@ export async function deploy(
       // List of valid workspaces that can be used to create projects.
       currentUser.workspaces = currentUser.workspaces.filter(
         (w) =>
-          w.role === "owner" ||
-          (w.role === "member" && ["starter_2024", "pro_2024", "enterprise_2024"].includes(w.tier))
+          (w.role === "owner" || w.role === "member") &&
+          ["starter_2024", "pro_2024", "enterprise_2024"].includes(w.tier)
       );
     }
   } catch (error) {
