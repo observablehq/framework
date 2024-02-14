@@ -66,6 +66,7 @@
     "markdown-it": "^13.0.2",
     "markdown-it-anchor": "^8.6.7",
     "mime": "^3.0.0",
+    "minisearch": "^6.3.0",
     "open": "^9.1.0",
     "rollup": "^4.6.0",
     "rollup-plugin-esbuild": "^6.1.0",

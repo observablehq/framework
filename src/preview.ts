@@ -23,6 +23,7 @@ import {diffMarkdown, parseMarkdown} from "./markdown.js";
 import type {ParseResult} from "./markdown.js";
 import {renderPreview, resolveStylesheet} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
+import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, link, red} from "./tty.js";
 import {relativeUrl} from "./url.js";
@@ -108,6 +109,10 @@ export class PreviewServer {
         }
       } else if (pathname === "/_observablehq/client.js") {
         end(req, res, await rollupClient(getClientPath("./src/client/preview.js")), "text/javascript");
+      } else if (pathname === "/_observablehq/search.js") {
+        end(req, res, await rollupClient(getClientPath("./src/client/search.js")), "text/javascript");
+      } else if (pathname === "/_observablehq/minisearch.json") {
+        end(req, res, await searchIndex(config), "application/json");
       } else if ((match = /^\/_observablehq\/theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(pathname))) {
         end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
       } else if (pathname.startsWith("/_observablehq/")) {

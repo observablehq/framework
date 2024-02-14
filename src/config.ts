@@ -46,6 +46,7 @@ export interface Config {
   toc: TableOfContents;
   style: null | Style; // defaults to {theme: ["light", "dark"]}
   deploy: null | {workspace: string; project: string};
+  search: boolean; // default to false
 }
 
 export async function readConfig(configPath?: string, root?: string): Promise<Config> {
@@ -93,6 +94,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
     sidebar,
     style,
     theme = "default",
+    search,
     deploy,
     scripts = [],
     head = "",
@@ -118,7 +120,8 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   footer = String(footer);
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
-  return {root, output, base, title, sidebar, pages, pager, scripts, head, header, footer, toc, style, deploy};
+  search = Boolean(search);
+  return {root, output, base, title, sidebar, pages, pager, scripts, head, header, footer, toc, style, deploy, search};
 }
 
 function normalizeBase(base: any): string {
