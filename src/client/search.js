@@ -1,5 +1,4 @@
-// eslint-disable-next-line import/no-relative-packages
-import MiniSearch from "../../node_modules/minisearch";
+import MiniSearch from "minisearch";
 
 const container = document.querySelector("#observablehq-search");
 const shortcut = container.getAttribute("data-shortcut");
