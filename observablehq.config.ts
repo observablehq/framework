@@ -41,7 +41,7 @@ export default {
         {name: "Button", path: "/inputs/button"},
         {name: "Checkbox", path: "/inputs/checkbox"},
         {name: "Color", path: "/inputs/color"},
-        {name: "Date/Datetime", path: "/inputs/date"},
+        {name: "Date", path: "/inputs/date"},
         {name: "File", path: "/inputs/file"},
         {name: "Form", path: "/inputs/form"},
         {name: "Radio", path: "/inputs/radio"},
