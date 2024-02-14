@@ -29,7 +29,8 @@ describe("readConfig(undefined, root)", () => {
       deploy: {
         workspace: "acme",
         project: "bi"
-      }
+      },
+      search: false
     });
   });
   it("returns the default config if no config file is found", async () => {
@@ -48,7 +49,8 @@ describe("readConfig(undefined, root)", () => {
       header: "",
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-11T01:02:03">Jan 11, 2024</a>.',
-      deploy: null
+      deploy: null,
+      search: false
     });
   });
 });

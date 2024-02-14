@@ -1,5 +1,6 @@
 ---
 toc: false
+index: false
 ---
 
 <style>
@@ -95,6 +96,12 @@ toc: false
   content: "→";
   display: inline-block;
   margin-left: 0.25rem;
+}
+
+@media (prefers-color-scheme: light) {
+  h1 {
+    --theme-red: #d75c48;
+  }
 }
 
 </style>

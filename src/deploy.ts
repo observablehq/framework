@@ -104,9 +104,12 @@ export async function deploy(
   let authError: null | "unauthenticated" | "forbidden" = null;
   try {
     if (apiKey) {
+      const memberTiers = new Set(["starter_2024", "pro_2024", "enterprise_2024"]);
       currentUser = await apiClient.getCurrentUser();
       // List of valid workspaces that can be used to create projects.
-      currentUser.workspaces = currentUser.workspaces.filter((w) => w.role === "owner" || w.role === "member");
+      currentUser.workspaces = currentUser.workspaces.filter(
+        (w) => (w.role === "owner" || w.role === "member") && memberTiers.has(w.tier)
+      );
     }
   } catch (error) {
     if (isHttpError(error)) {
@@ -391,7 +394,7 @@ export async function promptDeployTarget(
       message: "Which Observable workspace do you want to use?",
       options: currentUser.workspaces
         .map((w) => ({value: w, label: formatUser(w)}))
-        .sort((a, b) => a.label.localeCompare(b.label)),
+        .sort((a, b) => b.value.role.localeCompare(a.value.role) || a.label.localeCompare(b.label)),
       initialValue: currentUser.workspaces[0] // the oldest workspace, maybe?
     });
     if (clack.isCancel(chosenWorkspace)) {
