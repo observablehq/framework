@@ -183,4 +183,4 @@ toc: false
 
 ## search
 
-Enable [search](search) on the project.
+Whether to enable [search](./search) on the project; defaults to false.

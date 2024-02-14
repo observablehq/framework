@@ -1,6 +1,6 @@
 ---
 toc: false
-title: Introduction
+index: false
 ---
 
 <style>

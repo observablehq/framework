@@ -111,7 +111,7 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
     }"><a href="${relativeUrl(path, "/")}">${title}</a></li>
   </ol>${
     search
-      ? html`<div id="observablehq-search" data-root="${relativeUrl(path, "/")}"><input type="search" />
+      ? html`<div id="observablehq-search" data-root="${relativeUrl(path, "/")}"><input type="search">
         </div>
         <div id="observablehq-search-results"></div>
         <script>{${html.unsafe(

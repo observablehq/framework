@@ -445,7 +445,9 @@
 
 #observablehq-search {
   position: relative;
-  padding: 0.5rem 0 0 0.5em;
+  padding: 0.5rem 0 0 0;
+  display: flex;
+  align-items: center;
 }
 
 #observablehq-search input {
@@ -457,15 +459,14 @@
   font-size: 13.3px;
   height: 28px;
 }
+
 #observablehq-search input::placeholder {
   color: var(--theme-foreground-faint);
 }
 
 #observablehq-search::before {
   position: absolute;
-  left: 1em;
-  top: 0.8rem;
-  display: flex;
+  left: 0.5rem;
   content: "";
   width: 1rem;
   height: 1rem;
@@ -478,7 +479,6 @@
 #observablehq-search::after {
   position: absolute;
   right: 6px;
-  top: 0.8rem;
   content: attr(data-shortcut);
   pointer-events: none;
 }
@@ -486,6 +486,10 @@
 #observablehq-search:hover::after,
 #observablehq-search:focus-within::after {
   content: "";
+}
+
+#observablehq-search-results {
+  --relevance-width: 32px;
 }
 
 #observablehq-search-results a span {
@@ -503,17 +507,27 @@
 
 #observablehq-search-results li {
   position: relative;
+  display: flex;
+  align-items: center;
 }
+
+#observablehq-search-results a {
+  flex-grow: 1;
+}
+
 #observablehq-search-results li:after,
 #observablehq-search-results a:after {
   content: "";
-  width: 32px;
+  width: var(--relevance-width);
   height: 4px;
   position: absolute;
-  top: 1.2em;
   right: 0.5em;
   border-radius: 2px;
   background: var(--theme-foreground-muted);
+}
+
+#observablehq-search-results li.observablehq-link-active:after {
+  background: var(--theme-foreground-focus);
 }
 
 #observablehq-search-results a:after {
@@ -521,19 +535,23 @@
 }
 
 #observablehq-search-results li[data-score="0"]:after {
-  width: 4px;
+  width: calc(var(--relevance-width) * 0.125);
 }
+
 #observablehq-search-results li[data-score="1"]:after {
-  width: 8px;
+  width: calc(var(--relevance-width) * 0.25);
 }
+
 #observablehq-search-results li[data-score="2"]:after {
-  width: 14px;
+  width: calc(var(--relevance-width) * 0.4375);
 }
+
 #observablehq-search-results li[data-score="3"]:after {
-  width: 20px;
+  width: calc(var(--relevance-width) * 0.625);
 }
+
 #observablehq-search-results li[data-score="4"]:after {
-  width: 26px;
+  width: calc(var(--relevance-width) * 0.8125);
 }
 
 @media print {
