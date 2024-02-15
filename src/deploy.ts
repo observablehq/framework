@@ -104,11 +104,11 @@ export async function deploy(
   let authError: null | "unauthenticated" | "forbidden" = null;
   try {
     if (apiKey) {
-      const memberTiers = new Set(["starter_2024", "pro_2024", "enterprise_2024"]);
+      const invalidTiers = new Set(["basic", "enterprise", "public", "pro", "pro_enterprise"]);
       currentUser = await apiClient.getCurrentUser();
       // List of valid workspaces that can be used to create projects.
       currentUser.workspaces = currentUser.workspaces.filter(
-        (w) => (w.role === "owner" || w.role === "member") && memberTiers.has(w.tier)
+        (w) => (w.role === "owner" || w.role === "member") && !invalidTiers.has(w.tier)
       );
     }
   } catch (error) {
