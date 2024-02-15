@@ -1,0 +1,11 @@
+@import url("observablehq:default.css");
+@import url("observablehq:theme-glacier.css");
+
+@font-face {
+  font-family: "atkinson";
+  src: url("atkinson-sample.woff2") format("woff2");
+}
+
+:root {
+  --serif: atkinson;
+}
