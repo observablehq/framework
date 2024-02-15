@@ -38,20 +38,26 @@ export async function bundleStyles({
   path?: string;
   theme?: string[];
 }): Promise<{text: string; files: AssetReference[]}> {
-  const result = await build({
-    bundle: true,
-    loader: INLINE_CSS,
-    ...(path ? {entryPoints: [path]} : {stdin: {contents: renderTheme(theme!), loader: "css"}}),
-    write: false,
-    outdir: "/_import",
-    assetNames: "assets/[name].[hash]",
-    alias: STYLE_MODULES
-  });
-  const {text} = result.outputFiles.at(-1)!;
-  return {
-    text: path === "src/client/stdlib/inputs.css" ? rewriteInputsNamespace(text) : text,
-    files: result.outputFiles.slice(0, -1).map(({path, contents}) => ({path: path.slice(1), contents}))
-  };
+  try {
+    const result = await build({
+      bundle: true,
+      loader: INLINE_CSS,
+      ...(path ? {entryPoints: [path]} : {stdin: {contents: renderTheme(theme!), loader: "css"}}),
+      write: false,
+      outdir: "/_import",
+      assetNames: "assets/[name].[hash]",
+      alias: STYLE_MODULES,
+      logLevel: "silent"
+    });
+    const {text} = result.outputFiles.at(-1)!;
+    return {
+      text: path === "src/client/stdlib/inputs.css" ? rewriteInputsNamespace(text) : text,
+      files: result.outputFiles.slice(0, -1).map(({path, contents}) => ({path: path.slice(1), contents}))
+    };
+  } catch (error: any) {
+    const err = error?.errors?.[0]?.location;
+    throw new Error(err ? `Error bundling ${err.file} line ${err.line}:\n${err.lineText}` : "Bundler error.");
+  }
 }
 
 export async function rollupClient(clientPath: string, {minify = false} = {}): Promise<string> {
