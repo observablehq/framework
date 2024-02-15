@@ -235,6 +235,7 @@ try {
       }
     }
   }
+  process.exit(1);
 }
 
 // A wrapper for parseArgs that adds --help functionality with automatic usage.
