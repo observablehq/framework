@@ -296,7 +296,7 @@ export async function deploy(
   }
 
   // Build the project
-  await build({config, clientEntry: "./src/client/deploy.js"}, new DeployBuildEffects(apiClient, deployId, effects));
+  await build({config}, new DeployBuildEffects(apiClient, deployId, effects));
 
   // Mark the deploy as uploaded
   await apiClient.postDeployUploaded(deployId);
