@@ -490,7 +490,7 @@
 #observablehq-search-results {
   --relevance-width: 32px;
   position: absolute;
-  overflow-y: scroll;
+  overflow-y: auto;
   top: 6.5rem;
   left: 0;
   right: 0.5rem;
