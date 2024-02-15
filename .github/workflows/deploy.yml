@@ -30,7 +30,7 @@ jobs:
         with:
           path: |
             docs/.observablehq/cache
-            'examples/*/docs/.observablehq/cache'
+            examples/*/docs/.observablehq/cache
           key: data-${{ hashFiles('docs/data/*', 'examples/*/docs/data/*') }}-${{ steps.date.outputs.date }}
       - if: steps.cache-data.outputs.cache-hit == 'true'
         run: find docs/.observablehq/cache examples/*/docs/.observablehq/cache -type f -exec touch {} +
