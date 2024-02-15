@@ -23,6 +23,17 @@ jobs:
             yarn.lock
             'examples/*/yarn.lock'
       - run: yarn --frozen-lockfile
+      - id: date
+        run: echo "date=$(TZ=America/Los_Angeles date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+      - id: cache-data
+        uses: actions/cache@v4
+        with:
+          path: |
+            docs/.observablehq/cache
+            'examples/*/docs/.observablehq/cache'
+          key: data-${{ hashFiles('docs/data/*', 'examples/*/docs/data/*') }}-${{ steps.date.outputs.date }}
+      - if: steps.cache-data.outputs.cache-hit == 'true'
+        run: find docs/.observablehq/cache examples/*/docs/.observablehq/cache -type f -exec touch {} +
       - run: yarn build
       - name: Build example "api"
         run: yarn --frozen-lockfile && yarn build
