@@ -10,7 +10,7 @@ import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
 import {renderServerless} from "./render.js";
-import {bundleStyles, rollupClient} from "./rollup.js";
+import {bundleStyles, rollupClient, saveCssAssets} from "./rollup.js";
 import {Telemetry} from "./telemetry.js";
 import {faint} from "./tty.js";
 import {resolvePath} from "./url.js";
@@ -60,7 +60,12 @@ export interface BuildEffects {
    * @param outputPath The path of this file relative to the outputRoot. For
    * example, in a local build this should be relative to the dist directory.
    */
-  writeFile(outputPath: string, contents: Buffer | string): Promise<void>;
+  writeFile(outputPath: string, contents: Buffer | Uint8Array | string): Promise<void>;
+
+  /**
+   * @param path The path to test relative to the outputRoot.
+   */
+  fileExists(path: string): Promise<boolean>;
 }
 
 export async function build(
@@ -110,9 +115,9 @@ export async function build(
       const clientPath = getClientPath(entry);
       const outputPath = join("_observablehq", name);
       effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
-      const code = await (entry.endsWith(".css")
-        ? bundleStyles({path: clientPath})
-        : rollupClient(clientPath, {minify: true}));
+      const code = entry.endsWith(".css")
+        ? (await bundleStyles({path: clientPath})).text
+        : await rollupClient(clientPath, {minify: true});
       await effects.writeFile(outputPath, code);
     }
     for (const style of styles) {
@@ -120,13 +125,14 @@ export async function build(
         const outputPath = join("_import", style.path);
         const sourcePath = join(root, style.path);
         effects.output.write(`${faint("style")} ${sourcePath} ${faint("→")} `);
-        const code = await bundleStyles({path: sourcePath, includePath: config.output});
-        await effects.writeFile(outputPath, code);
+        const {text, files} = await bundleStyles({path: sourcePath});
+        await effects.writeFile(outputPath, text);
+        await saveCssAssets(files, effects);
       } else {
         const outputPath = join("_observablehq", `theme-${style.theme}.css`);
         effects.output.write(`${faint("bundle")} theme-${style.theme}.css ${faint("→")} `);
-        const code = await bundleStyles({theme: style.theme});
-        await effects.writeFile(outputPath, code);
+        const {text} = await bundleStyles({theme: style.theme});
+        await effects.writeFile(outputPath, text);
       }
     }
   }
@@ -200,6 +206,16 @@ export class FileBuildEffects implements BuildEffects {
     this.logger.log(destination);
     await prepareOutput(destination);
     await writeFile(destination, contents);
+  }
+  async fileExists(path: string): Promise<boolean> {
+    path = join(this.outputRoot, path);
+    try {
+      await access(path, constants.R_OK);
+      return true;
+    } catch (error) {
+      if (!isEnoent(error)) throw error;
+    }
+    return false;
   }
 }
 

@@ -362,6 +362,9 @@ class DeployBuildEffects implements BuildEffects {
     this.logger.log(outputPath);
     await this.apiClient.postDeployFileContents(this.deployId, content, outputPath);
   }
+  async fileExists(): Promise<boolean> {
+    return false;
+  }
 }
 
 // export for testing

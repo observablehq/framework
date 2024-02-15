@@ -1,7 +1,7 @@
 import {createHash} from "node:crypto";
 import {watch} from "node:fs";
 import type {FSWatcher, WatchEventType} from "node:fs";
-import {access, constants, readFile, stat} from "node:fs/promises";
+import {access, constants, copyFile, readFile, stat, writeFile} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
@@ -15,14 +15,15 @@ import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
-import {getClientPath} from "./files.js";
+import {getClientPath, prepareOutput} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {getImplicitSpecifiers, getImplicitStylesheets} from "./libraries.js";
+import type {Logger, Writer} from "./logger.js";
 import {diffMarkdown, parseMarkdown} from "./markdown.js";
 import type {ParseResult} from "./markdown.js";
 import {renderPreview, resolveStylesheet} from "./render.js";
-import {bundleStyles, rollupClient} from "./rollup.js";
+import {bundleStyles, rollupClient, saveCssAssets} from "./rollup.js";
 import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, link, red} from "./tty.js";
 import {relativeUrl} from "./url.js";
@@ -37,6 +38,28 @@ export interface PreviewOptions {
   verbose?: boolean;
 }
 
+export interface PreviewEffects {
+  logger: Logger;
+  output: Writer;
+
+  /**
+   * @param outputPath The path of this file relative to the outputRoot. For
+   * example, in a local build this should be relative to the dist directory.
+   */
+  copyFile(sourcePath: string, outputPath: string): Promise<void>;
+
+  /**
+   * @param outputPath The path of this file relative to the outputRoot. For
+   * example, in a local build this should be relative to the dist directory.
+   */
+  writeFile(outputPath: string, contents: Buffer | Uint8Array | string): Promise<void>;
+
+  /**
+   * @param path The path to test relative to the outputRoot.
+   */
+  fileExists(path: string): Promise<boolean>;
+}
+
 export async function preview(options: PreviewOptions): Promise<PreviewServer> {
   return PreviewServer.start(options);
 }
@@ -46,14 +69,19 @@ export class PreviewServer {
   private readonly _server: ReturnType<typeof createServer>;
   private readonly _socketServer: WebSocketServer;
   private readonly _verbose: boolean;
+  private readonly _effects: PreviewEffects;
 
-  private constructor({config, server, verbose}: {config: Config; server: Server; verbose: boolean}) {
+  private constructor(
+    {config, server, verbose}: {config: Config; server: Server; verbose: boolean},
+    effects: PreviewEffects = new DefaultPreviewEffects(join(config.root, ".observablehq", "cache"))
+  ) {
     this._config = config;
     this._verbose = verbose;
     this._server = server;
     this._server.on("request", this._handleRequest);
     this._socketServer = new WebSocketServer({server: this._server});
     this._socketServer.on("connection", this._handleConnection);
+    this._effects = effects;
   }
 
   static async start({verbose = true, hostname, port, open, ...options}: PreviewOptions) {
@@ -102,14 +130,14 @@ export class PreviewServer {
         if (pathname.endsWith(".js")) {
           end(req, res, await rollupClient(path), "text/javascript");
         } else if (pathname.endsWith(".css")) {
-          end(req, res, await bundleStyles({path}), "text/css");
+          end(req, res, (await bundleStyles({path})).text, "text/css");
         } else {
           throw new HttpError(`Not found: ${pathname}`, 404);
         }
       } else if (pathname === "/_observablehq/client.js") {
         end(req, res, await rollupClient(getClientPath("./src/client/preview.js")), "text/javascript");
       } else if ((match = /^\/_observablehq\/theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(pathname))) {
-        end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
+        end(req, res, (await bundleStyles({theme: match.groups!.theme?.split(",") ?? []})).text, "text/css");
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
@@ -118,13 +146,13 @@ export class PreviewServer {
         const includePath = join(root, ".observablehq", "cache");
         try {
           if (pathname.startsWith("/_import/assets/")) {
-            const filepath = join(includePath, pathname);
-            await access(filepath, constants.R_OK);
-            send(req, filepath, {root: ""}).pipe(res);
+            await access(join(includePath, pathname), constants.R_OK);
+            send(req, pathname, {root: includePath}).pipe(res);
             return;
           } else if (pathname.endsWith(".css")) {
-            await access(filepath, constants.R_OK);
-            end(req, res, await bundleStyles({path: filepath, includePath}), "text/css");
+            const {text, files} = await bundleStyles({path: filepath});
+            await saveCssAssets(files, this._effects);
+            end(req, res, text, "text/css");
             return;
           } else if (pathname.endsWith(".js")) {
             const input = await readFile(filepath, "utf-8");
@@ -413,5 +441,42 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
   function send(message) {
     console.log(faint("↓"), message);
     socket.send(JSON.stringify(message));
+  }
+}
+
+class DefaultPreviewEffects implements PreviewEffects {
+  private readonly outputRoot: string;
+  readonly logger: Logger;
+  readonly output: Writer;
+  constructor(
+    outputRoot: string,
+    {logger = console, output = process.stdout}: {logger?: Logger; output?: Writer} = {}
+  ) {
+    if (!outputRoot) throw new Error("missing outputRoot");
+    this.logger = logger;
+    this.output = output;
+    this.outputRoot = outputRoot;
+  }
+  async copyFile(sourcePath: string, outputPath: string): Promise<void> {
+    const destination = join(this.outputRoot, outputPath);
+    this.logger.log(destination);
+    await prepareOutput(destination);
+    await copyFile(sourcePath, destination);
+  }
+  async writeFile(outputPath: string, contents: string | Buffer): Promise<void> {
+    const destination = join(this.outputRoot, outputPath);
+    this.logger.log(destination);
+    await prepareOutput(destination);
+    await writeFile(destination, contents);
+  }
+  async fileExists(path: string): Promise<boolean> {
+    path = join(this.outputRoot, path);
+    try {
+      await access(path, constants.R_OK);
+      return true;
+    } catch (error) {
+      if (!isEnoent(error)) throw error;
+    }
+    return false;
   }
 }
