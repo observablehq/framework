@@ -3,6 +3,9 @@
   "title": null,
   "files": [],
   "imports": [],
+  "inputs": [
+    "display"
+  ],
   "pieces": [
     {
       "type": "html",

@@ -10,6 +10,9 @@ export function findFeatures(node: Node, path: string, references: Identifier[],
   const featureMap = getFeatureReferenceMap(node);
   const features: Feature[] = [];
 
+  // TODO If the FileAttachment is part of a member expression, we should be
+  // able to tell which method they’re calling on the file attachment, and thus
+  // determine which bundles need to be included in the generated build.
   simple(node, {
     CallExpression(node) {
       const {callee} = node;

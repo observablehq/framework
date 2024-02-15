@@ -63,8 +63,9 @@ export async function build(
   effects.logger.log(`${faint("found")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
 
   // Render .md files, building a list of file attachments as we go.
-  const files: string[] = [];
-  const imports: string[] = [];
+  const files = new Set<string>();
+  const localImports = new Set<string>();
+  const globalImports = new Set<string>();
   const styles: Style[] = [];
   for await (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);
@@ -73,8 +74,21 @@ export async function build(
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
     const render = await renderServerless(sourcePath, {path, ...config});
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
-    files.push(...render.files.map(resolveFile));
-    imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
+    render.files.map(resolveFile).forEach(files.add, files);
+    render.imports.filter((i) => i.type === "local").forEach((i) => localImports.add(resolveFile(i)));
+    render.imports.filter((i) => i.type === "global").forEach((i) => globalImports.add(i.name));
+    if (render.inputs.includes("FileAttachment")) {
+      // TODO If you have a FileAttachment, you might also need to preload
+      // - npm:d3-dsv if you call FileAttachment.csv or FileAttachment.tsv
+      // - npm:apache-arrow if you call FileAttachment.arrow or FileAttachment.parquet
+      // - npm:parquet-wasm if you call FileAttachment.parquet
+      // - npm:@observablehq/sqlite if you call FileAttachment.sqlite
+      // - npm:@observablehq/zip if you call FileAttachment.zip
+      // - npm:@observablehq/xlsx if you call FileAttachment.xlsx
+      globalImports.add("npm:@observablehq/sqlite");
+      globalImports.add("npm:@observablehq/zip");
+      globalImports.add("npm:@observablehq/xlsx");
+    }
     await effects.writeFile(outputPath, render.html);
     const style = mergeStyle(path, render.data?.style, render.data?.theme, config.style);
     if (style && !styles.some((s) => styleEquals(s, style))) styles.push(style);
@@ -83,29 +97,27 @@ export async function build(
   // Add imported local scripts.
   for (const script of config.scripts) {
     if (!/^\w+:/.test(script.src)) {
-      imports.push(script.src);
+      localImports.add(script.src);
     }
   }
 
   // Generate the client bundles.
   if (addPublic) {
-    for (const [entry, name] of [
-      [clientEntry, "client.js"],
-      ["./src/client/stdlib.js", "stdlib.js"],
-      // TODO Prune this list based on which libraries are actually used.
-      // TODO Remove library helpers (e.g., duckdb) when they are published to npm.
-      ["./src/client/stdlib/dot.js", "stdlib/dot.js"],
-      ["./src/client/stdlib/duckdb.js", "stdlib/duckdb.js"],
-      ["./src/client/stdlib/inputs.css", "stdlib/inputs.css"],
-      ["./src/client/stdlib/inputs.js", "stdlib/inputs.js"],
-      ["./src/client/stdlib/mermaid.js", "stdlib/mermaid.js"],
-      ["./src/client/stdlib/sqlite.js", "stdlib/sqlite.js"],
-      ["./src/client/stdlib/tex.js", "stdlib/tex.js"],
-      ["./src/client/stdlib/vega-lite.js", "stdlib/vega-lite.js"],
-      ["./src/client/stdlib/xlsx.js", "stdlib/xlsx.js"],
-      ["./src/client/stdlib/zip.js", "stdlib/zip.js"],
-      ...(config.search ? [["./src/client/search.js", "search.js"]] : [])
-    ]) {
+    const bundles: [entry: string, name: string][] = [];
+    bundles.push([clientEntry, "client.js"]);
+    bundles.push(["./src/client/stdlib.js", "stdlib.js"]);
+    if (config.search) bundles.push(["./src/client/search.js", "search.js"]);
+    for (const lib of ["dot", "duckdb", "inputs", "mermaid", "sqlite", "tex", "vega-lite", "xlsx", "zip"]) {
+      if (globalImports.has(`npm:@observablehq/${lib}`)) {
+        bundles.push([`./src/client/stdlib/${lib}.js`, `stdlib/${lib}.js`]);
+      }
+    }
+    for (const lib of ["inputs"]) {
+      if (globalImports.has(`npm:@observablehq/${lib}`)) {
+        bundles.push([`./src/client/stdlib/${lib}.css`, `stdlib/${lib}.css`]);
+      }
+    }
+    for (const [entry, name] of bundles) {
       const clientPath = getClientPath(entry);
       const outputPath = join("_observablehq", name);
       effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
@@ -159,7 +171,7 @@ export async function build(
 
   // Copy over the imported modules.
   const importResolver = createImportResolver(root);
-  for (const file of imports) {
+  for (const file of localImports) {
     const sourcePath = join(root, file);
     const outputPath = join("_import", file);
     if (!existsSync(sourcePath)) {

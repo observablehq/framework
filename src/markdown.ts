@@ -16,6 +16,7 @@ import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
 import type {FileReference, ImportReference, PendingTranspile, Transpile} from "./javascript.js";
 import {transpileJavaScript} from "./javascript.js";
+import {getImplicitSpecifiers} from "./libraries.js";
 import {transpileTag} from "./tag.js";
 import {resolvePath} from "./url.js";
 
@@ -38,6 +39,7 @@ export interface ParseResult {
   data: {[key: string]: any} | null;
   files: FileReference[];
   imports: ImportReference[];
+  inputs: string[];
   pieces: HtmlPiece[];
   cells: CellPiece[];
   hash: string;
@@ -431,16 +433,45 @@ export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptio
   const context: ParseContext = {files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
   const tokens = md.parse(parts.content, context);
   const html = md.renderer.render(tokens, md.options, context); // Note: mutates context.pieces, context.files!
+  const cells = await toParseCells(context.pieces);
+  const inputs = findUnboundInputs(cells);
+  const imports = context.imports;
+  for (const name of getImplicitSpecifiers(inputs)) imports.push({type: "global", name});
   return {
     html,
     data: isEmpty(parts.data) ? null : parts.data,
     title: parts.data?.title ?? findTitle(tokens) ?? null,
     files: context.files,
-    imports: context.imports,
+    imports,
+    inputs,
     pieces: toParsePieces(context.pieces),
-    cells: await toParseCells(context.pieces),
+    cells,
     hash: await computeMarkdownHash(source, root, path, context.imports)
   };
+}
+
+// Returns any inputs that are not declared in outputs. These typically refer to
+// symbols provided by the standard library, such as d3 and Inputs.
+function findUnboundInputs(cells: CellPiece[]): string[] {
+  const outputs = new Set<string>();
+  const inputs = new Set<string>();
+  for (const cell of cells) {
+    if (cell.outputs) {
+      for (const output of cell.outputs) {
+        outputs.add(output);
+      }
+    }
+  }
+  for (const cell of cells) {
+    if (cell.inputs) {
+      for (const input of cell.inputs) {
+        if (!outputs.has(input)) {
+          inputs.add(input);
+        }
+      }
+    }
+  }
+  return Array.from(inputs);
 }
 
 async function computeMarkdownHash(

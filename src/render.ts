@@ -6,7 +6,7 @@ import {type Html, html} from "./html.js";
 import type {ImportResolver} from "./javascript/imports.js";
 import {createImportResolver, resolveModuleIntegrity, resolveModulePreloads} from "./javascript/imports.js";
 import type {FileReference, ImportReference, Transpile} from "./javascript.js";
-import {addImplicitSpecifiers, addImplicitStylesheets} from "./libraries.js";
+import {addImplicitStylesheets} from "./libraries.js";
 import {type ParseResult, parseMarkdown} from "./markdown.js";
 import {type PageLink, findLink, normalizePath} from "./pager.js";
 import {getPreviewStylesheet} from "./preview.js";
@@ -17,6 +17,7 @@ export interface Render {
   html: string;
   files: FileReference[];
   imports: ImportReference[];
+  inputs: string[];
   data: ParseResult["data"];
 }
 
@@ -31,6 +32,7 @@ export async function renderPreview(sourcePath: string, options: RenderOptions):
     html: await render(parseResult, {...options, preview: true}),
     files: parseResult.files,
     imports: parseResult.imports,
+    inputs: parseResult.inputs,
     data: parseResult.data
   };
 }
@@ -41,6 +43,7 @@ export async function renderServerless(sourcePath: string, options: RenderOption
     html: await render(parseResult, options),
     files: parseResult.files,
     imports: parseResult.imports,
+    inputs: parseResult.inputs,
     data: parseResult.data
   };
 }
@@ -200,8 +203,6 @@ async function renderHead(
   if (style) stylesheets.add(style);
   const specifiers = new Set<string>(["npm:@observablehq/runtime", "npm:@observablehq/stdlib"]);
   for (const {name} of parseResult.imports) specifiers.add(name);
-  const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
-  addImplicitSpecifiers(specifiers, inputs);
   await addImplicitStylesheets(stylesheets, specifiers);
   const preloads = new Set<string>([relativeUrl(path, "/_observablehq/client.js")]);
   for (const specifier of specifiers) preloads.add(await resolver(path, specifier));

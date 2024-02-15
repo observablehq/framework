@@ -2,7 +2,20 @@
   "data": null,
   "title": null,
   "files": [],
-  "imports": [],
+  "imports": [
+    {
+      "type": "global",
+      "name": "npm:@observablehq/dot"
+    },
+    {
+      "type": "global",
+      "name": "npm:@viz-js/viz"
+    }
+  ],
+  "inputs": [
+    "dot",
+    "display"
+  ],
   "pieces": [
     {
       "type": "html",
