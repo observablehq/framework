@@ -11,7 +11,6 @@ import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
 import {renderServerless} from "./render.js";
 import {bundleStyles, rollupClient, saveCssAssets} from "./rollup.js";
-import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {faint} from "./tty.js";
