@@ -21,6 +21,9 @@ const STYLE_MODULES = {
   ...Object.fromEntries(THEMES.map(({name, path}) => [`observablehq:theme-${name}.css`, path]))
 };
 
+// These libraries are currently bundled in to a wrapper.
+const BUNDLED_MODULES = ["@observablehq/inputs", "minisearch"];
+
 function rewriteInputsNamespace(code: string) {
   return code.replace(/\b__ns__\b/g, "inputs-3a86ea");
 }
@@ -65,7 +68,7 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
     input: clientPath,
     external: [/^https:/],
     plugins: [
-      nodeResolve({resolveOnly: ["@observablehq/inputs"]}),
+      nodeResolve({resolveOnly: BUNDLED_MODULES}),
       importResolve(clientPath),
       esbuild({
         target: "es2022",
@@ -136,7 +139,7 @@ async function resolveImport(source: string, specifier: string | AstNode): Promi
     ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/zip.js")), external: true} // TODO publish to npm
     : specifier.startsWith("npm:")
     ? {id: await resolveNpmImport(specifier.slice("npm:".length))}
-    : source !== specifier && !isPathImport(specifier) && specifier !== "@observablehq/inputs"
+    : source !== specifier && !isPathImport(specifier) && !BUNDLED_MODULES.includes(specifier)
     ? {id: await resolveNpmImport(specifier), external: true}
     : null;
 }

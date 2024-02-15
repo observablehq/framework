@@ -13,7 +13,7 @@ Move the time slider above the map to see how the “[duck curve](https://en.wik
 The (near) real-time hourly electric data needed to create this dashboard is loaded from several API endpoints on the EIA website. These endpoints require an API key that can be [requested from the website](https://www.eia.gov/opendata/documentation.php). To connect the data loaders to the EIA API, we add an `.env` file at the root of the project directory containing the API key:
 
 ```
-EIA_KEY=xxxxxxxxxxx
+EIA_KEY=xxxxxxxxxxxx
 ```
 
 You may want to add `.env` to a `.gitignore` file in your project root to keep the key from being exposed.

@@ -104,9 +104,12 @@ export async function deploy(
   let authError: null | "unauthenticated" | "forbidden" = null;
   try {
     if (apiKey) {
+      const invalidTiers = new Set(["basic", "enterprise", "public", "pro", "pro_enterprise"]);
       currentUser = await apiClient.getCurrentUser();
       // List of valid workspaces that can be used to create projects.
-      currentUser.workspaces = currentUser.workspaces.filter((w) => w.role === "owner" || w.role === "member");
+      currentUser.workspaces = currentUser.workspaces.filter(
+        (w) => (w.role === "owner" || w.role === "member") && !invalidTiers.has(w.tier)
+      );
     }
   } catch (error) {
     if (isHttpError(error)) {
@@ -293,7 +296,7 @@ export async function deploy(
   }
 
   // Build the project
-  await build({config, clientEntry: "./src/client/deploy.js"}, new DeployBuildEffects(apiClient, deployId, effects));
+  await build({config}, new DeployBuildEffects(apiClient, deployId, effects));
 
   // Mark the deploy as uploaded
   await apiClient.postDeployUploaded(deployId);
@@ -350,6 +353,9 @@ class DeployBuildEffects implements BuildEffects {
     try {
       await this.apiClient.postDeployFile(this.deployId, sourcePath, outputPath);
     } catch (error) {
+      if (isApiError(error) && error.details.errors.some((e) => e.code === "FILE_QUOTA_EXCEEDED")) {
+        throw new CliError("You have reached the total file size limit.", {cause: error});
+      }
       // 413 is "Payload Too Large", however sometimes Cloudflare returns a
       // custom Cloudflare error, 520. Sometimes we also see 502. Handle them all
       if (isHttpError(error) && (error.statusCode === 413 || error.statusCode === 503 || error.statusCode === 520)) {
@@ -360,7 +366,14 @@ class DeployBuildEffects implements BuildEffects {
   }
   async writeFile(outputPath: string, content: Buffer | string) {
     this.logger.log(outputPath);
-    await this.apiClient.postDeployFileContents(this.deployId, content, outputPath);
+    try {
+      await this.apiClient.postDeployFileContents(this.deployId, content, outputPath);
+    } catch (error) {
+      if (isApiError(error) && error.details.errors.some((e) => e.code === "FILE_QUOTA_EXCEEDED")) {
+        throw new CliError("You have reached the total file size limit.", {cause: error});
+      }
+      throw error;
+    }
   }
   async fileExists(): Promise<boolean> {
     return false;
@@ -394,7 +407,7 @@ export async function promptDeployTarget(
       message: "Which Observable workspace do you want to use?",
       options: currentUser.workspaces
         .map((w) => ({value: w, label: formatUser(w)}))
-        .sort((a, b) => a.label.localeCompare(b.label)),
+        .sort((a, b) => b.value.role.localeCompare(a.value.role) || a.label.localeCompare(b.label)),
       initialValue: currentUser.workspaces[0] // the oldest workspace, maybe?
     });
     if (clack.isCancel(chosenWorkspace)) {
