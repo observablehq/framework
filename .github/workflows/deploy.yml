@@ -28,10 +28,12 @@ jobs:
       - id: cache-data
         uses: actions/cache@v4
         with:
-          path: docs/.observablehq/cache
-          key: data-${{ hashFiles('docs/data/*') }}-${{ steps.date.outputs.date }}
+          path: |
+            docs/.observablehq/cache
+            'examples/*/docs/.observablehq/cache'
+          key: data-${{ hashFiles('docs/data/*', 'examples/*/docs/data/*') }}-${{ steps.date.outputs.date }}
       - if: steps.cache-data.outputs.cache-hit == 'true'
-        run: find docs/.observablehq/cache -type f -exec touch {} +
+        run: find docs/.observablehq/cache examples/*/docs/.observablehq/cache -type f -exec touch {} +
       - run: yarn build
       - name: Build example "api"
         run: yarn --frozen-lockfile && yarn build
