@@ -120,7 +120,7 @@ export async function build(
         const outputPath = join("_import", style.path);
         const sourcePath = join(root, style.path);
         effects.output.write(`${faint("style")} ${sourcePath} ${faint("→")} `);
-        const code = await bundleStyles({path: sourcePath});
+        const code = await bundleStyles({path: sourcePath, includePath: config.output});
         await effects.writeFile(outputPath, code);
       } else {
         const outputPath = join("_observablehq", `theme-${style.theme}.css`);

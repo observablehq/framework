@@ -115,10 +115,16 @@ export class PreviewServer {
       } else if (pathname.startsWith("/_import/")) {
         const path = pathname.slice("/_import".length);
         const filepath = join(root, path);
+        const includePath = join(root, ".observablehq", "cache");
         try {
-          if (pathname.endsWith(".css")) {
+          if (pathname.startsWith("/_import/assets/")) {
+            const filepath = join(includePath, pathname);
             await access(filepath, constants.R_OK);
-            end(req, res, await bundleStyles({path: filepath}), "text/css");
+            send(req, filepath, {root: ""}).pipe(res);
+            return;
+          } else if (pathname.endsWith(".css")) {
+            await access(filepath, constants.R_OK);
+            end(req, res, await bundleStyles({path: filepath, includePath}), "text/css");
             return;
           } else if (pathname.endsWith(".js")) {
             const input = await readFile(filepath, "utf-8");
