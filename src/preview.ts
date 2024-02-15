@@ -103,7 +103,7 @@ export class PreviewServer {
         if (pathname.endsWith(".js")) {
           end(req, res, await rollupClient(path), "text/javascript");
         } else if (pathname.endsWith(".css")) {
-          end(req, res, await bundleStyles({path}), "text/css");
+          end(req, res, (await bundleStyles({path})).text, "text/css");
         } else {
           throw new HttpError(`Not found: ${pathname}`, 404);
         }
@@ -114,7 +114,7 @@ export class PreviewServer {
       } else if (pathname === "/_observablehq/minisearch.json") {
         end(req, res, await searchIndex(config), "application/json");
       } else if ((match = /^\/_observablehq\/theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(pathname))) {
-        end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
+        end(req, res, (await bundleStyles({theme: match.groups!.theme?.split(",") ?? []})).text, "text/css");
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
@@ -123,7 +123,7 @@ export class PreviewServer {
         try {
           if (pathname.endsWith(".css")) {
             await access(filepath, constants.R_OK);
-            end(req, res, await bundleStyles({path: filepath}), "text/css");
+            end(req, res, (await bundleStyles({path: filepath})).text, "text/css");
             return;
           } else if (pathname.endsWith(".js")) {
             const input = await readFile(filepath, "utf-8");
