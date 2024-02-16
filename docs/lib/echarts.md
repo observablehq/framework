@@ -1,3 +1,7 @@
+---
+index: true
+---
+
 # Apache ECharts
 
 Apache ECharts is available by default as `echarts` in Markdown. You can also import it explicitly like so:
