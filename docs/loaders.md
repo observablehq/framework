@@ -144,6 +144,7 @@ For example, for the file `quakes.csv`, the following data loaders are considere
 - `quakes.csv.py`
 - `quakes.csv.R`
 - `quakes.csv.rs`
+- `quakes.csv.go`
 - `quakes.csv.sh`
 - `quakes.csv.exe`
 
