@@ -88,9 +88,7 @@ Framework includes a helper script (`observable create`) for creating new projec
   <p>If you run into difficulty following this tutorial, we’re happy to help! Please visit the <a href="https://talk.observablehq.com">Observable forum</a> or our <a href="https://github.com/observablehq/framework/discussions">GitHub discussions</a>.</p>
 </div>
 
-<div class="warning">
-  <p>Framework has been extensively tested with MacOS and Linux, but we are still working on compatibility with Windows. Some Windows users have reported successful installs with <a href="https://learn.microsoft.com/en-us/windows/wsl/install">WSL</a>, and we hope to offer a more streamlined solution in the near future. Stay tuned!</p>
-</div>
+<div class="caution">Framework does not currently support Windows, though some users have had success with the <a href="https://learn.microsoft.com/en-us/windows/wsl/install">Windows Subsystem for Linux (WSL)</a>. It you are interested in Windows support, please upvote <a href="https://github.com/observablehq/framework/issues/90">#90</a>.</div>
 
 To create a new project with npm, run:
 
