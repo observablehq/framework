@@ -1,3 +1,4 @@
+try {
 const toc = document.querySelector<HTMLElement>("#observablehq-toc");
 if (toc) {
   const highlight = toc.appendChild(document.createElement("div"));
@@ -46,4 +47,7 @@ if (toc) {
   };
   const observer = new IntersectionObserver(intersected, {rootMargin: "0px 0px -50% 0px"});
   for (const heading of headings) observer.observe(heading);
+}
+} catch (error) {
+  if (!(error instanceof DOMException)) throw error;
 }
