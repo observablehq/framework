@@ -63,9 +63,9 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
           .replaceAll(/[\n\r]/g, " ")
           .replaceAll(/<style\b.*<\/style\b[^>]*>/gi, " ")
           .replaceAll(/<[^>]+>/g, " ")
-          .normalize("NFD")
-          .replaceAll(/[\u0300-\u036f]/g, "")
       )
+      .normalize("NFD")
+      .replaceAll(/[\u0300-\u036f]/g, "")
       .replace(/[^\p{L}\p{N}]/gu, " "); // keep letters & numbers
 
     effects.logger.log(`${faint("search indexing")} ${path}`);
