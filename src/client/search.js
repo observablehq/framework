@@ -36,7 +36,7 @@ input.addEventListener("input", () => {
   }
   container.setAttribute("data-shortcut", ""); // prevent conflict with close button
   sidebar.classList.add("observablehq-search-results"); // hide pages while showing search results
-  const results = index.search(currentValue, {boost: {title: 4}, fuzzy: 0.15, prefix: true});
+  const results = index.search(currentValue, {boost: {title: 4, keywords: 4}, fuzzy: 0.15, prefix: true});
   resultsContainer.innerHTML =
     results.length === 0
       ? "<div>no results</div>"
