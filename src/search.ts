@@ -18,7 +18,7 @@ export interface SearchIndexEffects {
 const defaultEffects: SearchIndexEffects = {logger: console};
 
 const indexOptions = {
-  fields: ["title", "text"],
+  fields: ["title", "text", "keywords"],
   storeFields: ["title"],
   processTerm(term) {
     return term.match(/\p{N}/gu)?.length > 6 ? null : term.slice(0, 15).toLowerCase(); // fields to return with search results
@@ -69,7 +69,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
       .replace(/[^\p{L}\p{N}]/gu, " "); // keep letters & numbers
 
     effects.logger.log(`${faint("search indexing")} ${path}`);
-    index.add({id, title, text});
+    index.add({id, title, text, keywords: normalizeKeywords(data?.keywords)});
   }
 
   // Pass the serializable index options to the client.
@@ -87,4 +87,8 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
 
   indexCache.set(config, {json, freshUntil: +new Date() + reindexingDelay});
   return json;
+}
+
+function normalizeKeywords(keywords: any): string {
+  return keywords ? String(keywords) : "";
 }

@@ -1,3 +1,7 @@
+---
+keywords: textbox
+---
+
 # Text area input
 
 <a href="https://github.com/observablehq/inputs/blob/main/README.md#textarea" target="_blank">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/textarea.js" target="_blank">Source</a> · The textarea input allows freeform multi-line text entry. For a single line, see the [text](./text) input.
