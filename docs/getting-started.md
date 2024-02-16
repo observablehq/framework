@@ -85,8 +85,11 @@ Framework includes a helper script (`observable create`) for creating new projec
 
 <div class="tip">
   <p>Framework is a <a href="https://nodejs.org/">Node.js</a> application published to npm. You must have <a href="https://nodejs.org/en/download">Node.js 20.6 or later</a> installed before you can install Framework. Framework is a command-line interface (CLI) and runs in the terminal.</p>
-  <p>Framework has been extensively tested with MacOS and Linux, but we are still working on compatibility with Windows. Some Windows users have reported successful installs with <a href="https://learn.microsoft.com/en-us/windows/wsl/install">WSL</a>, and we hope to offer a more streamlined solution in the near future. Stay tuned!</p>
   <p>If you run into difficulty following this tutorial, we’re happy to help! Please visit the <a href="https://talk.observablehq.com">Observable forum</a> or our <a href="https://github.com/observablehq/framework/discussions">GitHub discussions</a>.</p>
+</div>
+
+<div class="warning">
+  <p>Framework has been extensively tested with MacOS and Linux, but we are still working on compatibility with Windows. Some Windows users have reported successful installs with <a href="https://learn.microsoft.com/en-us/windows/wsl/install">WSL</a>, and we hope to offer a more streamlined solution in the near future. Stay tuned!</p>
 </div>
 
 To create a new project with npm, run:
