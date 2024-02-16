@@ -415,20 +415,22 @@ const forecast = FileAttachment("./data/forecast.json").json();
 Now let’s add a chart using <a href="./lib/plot">Observable Plot</a>. Framework includes a variety of <a href="./javascript/imports#implicit-imports">recommended libraries</a> by default, including `Plot`, and you can always <a href="./javascript/imports">import more</a> from npm. Replace the `display(forecast)` code block with the following code:
 
 ```js run=false
-display(Plot.plot({
-  title: "Hourly temperature forecast",
-  x: {type: "utc", ticks: "day", label: null},
-  y: {grid: true, inset: 10, label: "Degrees (F)"},
-  marks: [
-    Plot.lineY(forecast.properties.periods, {
-      x: "startTime",
-      y: "temperature",
-      z: null, // varying color, not series
-      stroke: "temperature",
-      curve: "step-after"
-    })
-  ]
-}));
+display(
+  Plot.plot({
+    title: "Hourly temperature forecast",
+    x: {type: "utc", ticks: "day", label: null},
+    y: {grid: true, inset: 10, label: "Degrees (F)"},
+    marks: [
+      Plot.lineY(forecast.properties.periods, {
+        x: "startTime",
+        y: "temperature",
+        z: null, // varying color, not series
+        stroke: "temperature",
+        curve: "step-after"
+      })
+    ]
+  })
+);
 ```
 
 <div class="note">Because this is JSON data, <code>startTime</code> is a <code>string</code> rather than a <code>Date</code>. Setting the <code>type</code> of the <code>x</code> scale to <code>utc</code> tells Plot to interpret these values as temporal rather than ordinal.</div>
