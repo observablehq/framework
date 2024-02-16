@@ -1,5 +1,5 @@
 ---
-keywords: charts
+keywords: charts, geojson, maps
 ---
 
 # Observable Plot
