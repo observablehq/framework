@@ -16,7 +16,12 @@ const index = await fetch(import.meta.resolve("./minisearch.json"))
   .then((json) =>
     MiniSearch.loadJS(json, {
       ...json.options,
-      processTerm: (term) => term.slice(0, 15).toLowerCase() // see src/minisearch.json.ts
+      processTerm: (term) =>
+        term
+          .slice(0, 15)
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase() // see src/minisearch.json.ts
     })
   );
 
@@ -43,7 +48,7 @@ input.addEventListener("input", () => {
 function renderResult({id, score, title}, i) {
   return `<li data-score="${Math.min(5, Math.round(0.6 * score))}" class="observablehq-link${
     i === 0 ? ` ${activeClass}` : ""
-  }"><a href="${escapeDoubleQuote(import.meta.resolve(`../${id}`))}">${escapeText(title)}</a></li>`;
+  }"><a href="${escapeDoubleQuote(import.meta.resolve(`../${id}`))}">${escapeText(String(title ?? "—"))}</a></li>`;
 }
 
 function escapeDoubleQuote(text) {
