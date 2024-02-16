@@ -16,7 +16,12 @@ const index = await fetch(import.meta.resolve("./minisearch.json"))
   .then((json) =>
     MiniSearch.loadJS(json, {
       ...json.options,
-      processTerm: (term) => term.slice(0, 15).toLowerCase() // see src/minisearch.json.ts
+      processTerm: (term) =>
+        term
+          .slice(0, 15)
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase() // see src/minisearch.json.ts
     })
   );
 

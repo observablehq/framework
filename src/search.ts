@@ -1,4 +1,5 @@
 import {basename, join} from "node:path";
+import he from "he";
 import MiniSearch from "minisearch";
 import type {Config} from "./config.js";
 import {visitMarkdownFiles} from "./files.js";
@@ -20,7 +21,7 @@ const indexOptions = {
   fields: ["title", "text"],
   storeFields: ["title"],
   processTerm(term) {
-    return term.match(/\d/g)?.length > 6 ? null : term.slice(0, 15).toLowerCase(); // fields to return with search results
+    return term.match(/\p{N}/gu)?.length > 6 ? null : term.slice(0, 15).toLowerCase(); // fields to return with search results
   }
 };
 
@@ -55,11 +56,17 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
     // implicitly a leading slash here.
     const id = file.slice(0, basename(file) === "index.md" ? -"index.md".length : -3);
 
-    const text = html
-      .replaceAll(/[\n\r]/g, " ")
-      .replaceAll(/<style\b.*<\/style\b[^>]*>/gi, " ")
-      .replaceAll(/<[^>]+>/g, " ")
-      .replaceAll(/\W+/g, " ");
+    // eslint-disable-next-line import/no-named-as-default-member
+    const text = he
+      .decode(
+        html
+          .replaceAll(/[\n\r]/g, " ")
+          .replaceAll(/<style\b.*<\/style\b[^>]*>/gi, " ")
+          .replaceAll(/<[^>]+>/g, " ")
+      )
+      .normalize("NFD")
+      .replaceAll(/[\u0300-\u036f]/g, "")
+      .replace(/[^\p{L}\p{N}]/gu, " "); // keep letters & numbers
 
     effects.logger.log(`${faint("search indexing")} ${path}`);
     index.add({id, title, text});
