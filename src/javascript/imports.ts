@@ -15,17 +15,6 @@ import {getFeature, getFeatureReferenceMap, getStringLiteralValue, isStringLiter
 type ImportNode = ImportDeclaration | ImportExpression;
 type ExportNode = ExportAllDeclaration | ExportNamedDeclaration;
 
-let npmVersionResolutionEnabled = true;
-let remoteModulePreloadEnabled = true;
-
-export function enableNpmVersionResolution(enabled = true) {
-  // npmVersionResolutionEnabled = enabled;
-}
-
-export function enableRemoteModulePreload(enabled = true) {
-  // remoteModulePreloadEnabled = enabled;
-}
-
 export interface ImportsAndFeatures {
   imports: ImportReference[];
   features: Feature[];
@@ -316,7 +305,6 @@ function formatNpmSpecifier({name, range, path}: {name: string; range?: string; 
 const fetchCache = new Map<string, Promise<{headers: Headers; body: any}>>();
 
 async function cachedFetch(href: string): Promise<{headers: Headers; body: any}> {
-  if (!remoteModulePreloadEnabled) throw new Error("remote module preload is not enabled");
   let promise = fetchCache.get(href);
   if (promise) return promise;
   promise = (async () => {
@@ -333,7 +321,6 @@ async function cachedFetch(href: string): Promise<{headers: Headers; body: any}>
 
 // TODO If we already have a cached version that is compatible with the requested name@range, use that.
 async function resolveNpmVersion({name, range}: {name: string; range?: string}): Promise<string> {
-  if (!npmVersionResolutionEnabled) throw new Error("npm version resolution is not enabled");
   if (range && /^\d+\.\d+\.\d+([-+].*)?$/.test(range)) return range; // exact version specified
   const specifier = formatNpmSpecifier({name, range});
   const search = range ? `?specifier=${range}` : "";
@@ -412,7 +399,6 @@ const integrityCache = new Map<string, string>();
  * precomputes the subresource integrity hash for each fetched module.
  */
 export async function resolveModulePreloads(hrefs: Set<string>): Promise<void> {
-  if (!remoteModulePreloadEnabled) return;
   let resolve: () => void;
   const visited = new Set<string>();
   const queue = new Set<Promise<void>>();
