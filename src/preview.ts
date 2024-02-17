@@ -1,7 +1,7 @@
 import {createHash} from "node:crypto";
-import {existsSync, watch} from "node:fs";
+import {watch} from "node:fs";
 import type {FSWatcher, WatchEventType} from "node:fs";
-import {access, constants, mkdir, readFile, stat, writeFile} from "node:fs/promises";
+import {access, constants, readFile, stat} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
@@ -17,7 +17,7 @@ import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
-import {createImportResolver, rewriteModule} from "./javascript/imports.js";
+import {createImportResolver, populateNpmCache, rewriteModule} from "./javascript/imports.js";
 import {getImplicitSpecifiers, getImplicitStylesheets} from "./libraries.js";
 import {diffMarkdown, parseMarkdown} from "./markdown.js";
 import type {ParseResult} from "./markdown.js";
@@ -118,28 +118,8 @@ export class PreviewServer {
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_npm/")) {
-        const path = pathname.slice("/_npm/".length);
         const npmDir = join(root, ".observablehq", "npm");
-        const filePath = join(npmDir, path);
-        if (!existsSync(filePath)) {
-          const href = `https://cdn.jsdelivr.net/npm/${path.replace(/\+esm\.js$/, "+esm")}`;
-          process.stdout.write(`npm:${path} ${faint("→")} `);
-          const response = await fetch(href);
-          if (!response.ok) throw new Error(`unable to fetch: ${href}`);
-          process.stdout.write(`${filePath}\n`);
-          await mkdir(dirname(filePath), {recursive: true});
-          if (/^application\/javascript(;|$)/i.test(response.headers.get("content-type")!)) {
-            let body = await response.text();
-            // TODO parse and rewrite
-            // TODO rewrite sourceMappingURL
-            body = body.replace(/"\/npm\//g, '"/_npm/');
-            body = body.replace(/\/\+esm"/g, '/+esm.js"');
-            body = body.replace(/^\/\/# sourceMappingURL.*$/m, "");
-            await writeFile(filePath, body, "utf-8");
-          } else {
-            await writeFile(filePath, Buffer.from(await response.arrayBuffer()));
-          }
-        }
+        await populateNpmCache(npmDir, pathname.slice("/_npm/".length));
         send(req, pathname.slice("/_npm".length), {root: npmDir}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
         const path = pathname.slice("/_import".length);

@@ -1,7 +1,7 @@
 import {createHash} from "node:crypto";
 import {existsSync, readFileSync} from "node:fs";
-import {readdir} from "node:fs/promises";
-import {join} from "node:path";
+import {mkdir, readdir, writeFile} from "node:fs/promises";
+import {dirname, join} from "node:path";
 import {Parser} from "acorn";
 import type {Identifier, Node, Program} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression} from "acorn";
@@ -12,6 +12,7 @@ import {isEnoent} from "../error.js";
 import {type Feature, type ImportReference, type JavaScriptNode} from "../javascript.js";
 import {parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
+import {faint} from "../tty.js";
 import {relativeUrl, resolvePath} from "../url.js";
 import {getFeature, getFeatureReferenceMap, getStringLiteralValue, isStringLiteral} from "./features.js";
 
@@ -325,6 +326,37 @@ async function cachedFetch(href: string): Promise<{headers: Headers; body: any}>
   })();
   promise.catch(() => fetchCache.delete(href)); // try again on error
   fetchCache.set(href, promise);
+  return promise;
+}
+
+const npmRequests = new Map<string, Promise<void>>();
+
+export function populateNpmCache(npmDir: string, path: string): Promise<void> {
+  const filePath = join(npmDir, path);
+  if (existsSync(filePath)) return Promise.resolve();
+  let promise = npmRequests.get(path);
+  if (promise) return promise; // coalesce concurrent requests
+  promise = (async function () {
+    const href = `https://cdn.jsdelivr.net/npm/${path.replace(/\+esm\.js$/, "+esm")}`;
+    process.stdout.write(`npm:${path} ${faint("→")} `);
+    const response = await fetch(href);
+    if (!response.ok) throw new Error(`unable to fetch: ${href}`);
+    process.stdout.write(`${filePath}\n`);
+    await mkdir(dirname(filePath), {recursive: true});
+    if (/^application\/javascript(;|$)/i.test(response.headers.get("content-type")!)) {
+      let body = await response.text();
+      // TODO parse and rewrite
+      // TODO rewrite sourceMappingURL
+      body = body.replace(/"\/npm\//g, '"/_npm/');
+      body = body.replace(/\/\+esm"/g, '/+esm.js"');
+      body = body.replace(/^\/\/# sourceMappingURL.*$/m, "");
+      await writeFile(filePath, body, "utf-8");
+    } else {
+      await writeFile(filePath, Buffer.from(await response.arrayBuffer()));
+    }
+  })();
+  promise.finally(() => npmRequests.delete(path));
+  npmRequests.set(path, promise);
   return promise;
 }
 
