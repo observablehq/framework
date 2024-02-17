@@ -1,12 +1,13 @@
 import {createHash} from "node:crypto";
-import {watch} from "node:fs";
+import {existsSync, watch} from "node:fs";
 import type {FSWatcher, WatchEventType} from "node:fs";
-import {access, constants, readFile, stat} from "node:fs/promises";
+import {access, constants, mkdir, readFile, stat, writeFile} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
 import {difference} from "d3-array";
+import mime from "mime";
 import openBrowser from "open";
 import send from "send";
 import {type WebSocket, WebSocketServer} from "ws";
@@ -117,6 +118,26 @@ export class PreviewServer {
         end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
+      } else if (pathname.startsWith("/_npm/")) {
+        const path = pathname.slice("/_npm/".length);
+        const npmDir = join(root, ".observablehq", "npm");
+        const filePath = join(npmDir, path);
+        if (!existsSync(filePath)) {
+          const href = `https://cdn.jsdelivr.net/npm/${path}`;
+          process.stdout.write(`npm:${path} ${faint("→")} `);
+          const response = await fetch(href);
+          if (!response.ok) throw new Error(`unable to fetch: ${href}`);
+          let body = await response.text();
+          // TODO parse and rewrite
+          // TODO recursive fetch
+          // TODO rewrite sourceMappingURL too
+          body = body.replace(/"\/npm\//g, '"/_npm/');
+          process.stdout.write(`${filePath}\n`);
+          await mkdir(dirname(filePath), {recursive: true});
+          await writeFile(filePath, body, "utf-8");
+        }
+        res.setHeader("Content-Type", mime.getType(".js")!);
+        send(req, pathname.slice("/_npm".length), {root: npmDir}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
         const path = pathname.slice("/_import".length);
         const filepath = join(root, path);

@@ -19,11 +19,11 @@ let npmVersionResolutionEnabled = true;
 let remoteModulePreloadEnabled = true;
 
 export function enableNpmVersionResolution(enabled = true) {
-  npmVersionResolutionEnabled = enabled;
+  // npmVersionResolutionEnabled = enabled;
 }
 
 export function enableRemoteModulePreload(enabled = true) {
-  remoteModulePreloadEnabled = enabled;
+  // remoteModulePreloadEnabled = enabled;
 }
 
 export interface ImportsAndFeatures {
@@ -291,7 +291,7 @@ export function createImportResolver(root: string, base: "." | "_import" = "."):
       : specifier === "npm:@observablehq/zip"
       ? resolveBuiltin(base, path, "stdlib/zip.js") // TODO publish to npm
       : specifier.startsWith("npm:")
-      ? await resolveNpmImport(specifier.slice("npm:".length))
+      ? relativeUrl(path, await resolveNpmImport(specifier.slice("npm:".length)))
       : specifier;
   };
 }
@@ -331,6 +331,7 @@ async function cachedFetch(href: string): Promise<{headers: Headers; body: any}>
   return promise;
 }
 
+// TODO If we already have a cached version that is compatible with the requested name@range, use that.
 async function resolveNpmVersion({name, range}: {name: string; range?: string}): Promise<string> {
   if (!npmVersionResolutionEnabled) throw new Error("npm version resolution is not enabled");
   if (range && /^\d+\.\d+\.\d+([-+].*)?$/.test(range)) return range; // exact version specified
@@ -348,7 +349,7 @@ export async function resolveNpmImport(specifier: string): Promise<string> {
   if (name === "parquet-wasm" && !range) range = "0.5.0"; // https://github.com/observablehq/framework/issues/733
   if (name === "echarts" && !range) range = "5.4.3"; // https://github.com/observablehq/framework/pull/811
   try {
-    return `https://cdn.jsdelivr.net/npm/${name}@${await resolveNpmVersion({name, range})}/${path}`;
+    return `/_npm/${name}@${await resolveNpmVersion({name, range})}/${path}`;
   } catch {
     return `https://cdn.jsdelivr.net/npm/${name}${range ? `@${range}` : ""}/${path}`;
   }

@@ -111,7 +111,7 @@ async function resolveImport(source: string, specifier: string | AstNode): Promi
     : specifier === "npm:@observablehq/zip"
     ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/zip.js")), external: true} // TODO publish to npm
     : specifier.startsWith("npm:")
-    ? {id: await resolveNpmImport(specifier.slice("npm:".length))}
+    ? {id: await resolveNpmImport(specifier.slice("npm:".length)), external: true}
     : source !== specifier && !isPathImport(specifier) && !BUNDLED_MODULES.includes(specifier)
     ? {id: await resolveNpmImport(specifier), external: true}
     : null;
