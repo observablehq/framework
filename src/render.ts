@@ -222,9 +222,8 @@ async function renderHead(
 }
 
 export function resolveStylesheet(path: string, href: string): string {
-  return href.startsWith("observablehq:")
-    ? relativeUrl(path, `/_observablehq/${href.slice("observablehq:".length)}`)
-    : href;
+  if (href.startsWith("observablehq:")) href = `/_observablehq/${href.slice("observablehq:".length)}`;
+  return relativeUrl(path, href);
 }
 
 function renderScript(script: Script, path: string): Html {
