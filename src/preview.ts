@@ -123,20 +123,19 @@ export class PreviewServer {
         const npmDir = join(root, ".observablehq", "npm");
         const filePath = join(npmDir, path);
         if (!existsSync(filePath)) {
-          const href = `https://cdn.jsdelivr.net/npm/${path}`;
+          const href = `https://cdn.jsdelivr.net/npm/${path.replace(/\+esm\.js$/, "+esm")}`;
           process.stdout.write(`npm:${path} ${faint("→")} `);
           const response = await fetch(href);
           if (!response.ok) throw new Error(`unable to fetch: ${href}`);
           let body = await response.text();
           // TODO parse and rewrite
-          // TODO recursive fetch
-          // TODO rewrite sourceMappingURL too
+          // TODO rewrite sourceMappingURL
           body = body.replace(/"\/npm\//g, '"/_npm/');
+          body = body.replace(/^\/\/# sourceMappingURL.*$/m, "");
           process.stdout.write(`${filePath}\n`);
           await mkdir(dirname(filePath), {recursive: true});
           await writeFile(filePath, body, "utf-8");
         }
-        res.setHeader("Content-Type", mime.getType(".js")!);
         send(req, pathname.slice("/_npm".length), {root: npmDir}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
         const path = pathname.slice("/_import".length);

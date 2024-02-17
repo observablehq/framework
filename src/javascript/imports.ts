@@ -349,7 +349,7 @@ export async function resolveNpmImport(specifier: string): Promise<string> {
   if (name === "parquet-wasm" && !range) range = "0.5.0"; // https://github.com/observablehq/framework/issues/733
   if (name === "echarts" && !range) range = "5.4.3"; // https://github.com/observablehq/framework/pull/811
   try {
-    return `/_npm/${name}@${await resolveNpmVersion({name, range})}/${path}`;
+    return `/_npm/${name}@${await resolveNpmVersion({name, range})}/${path.replace(/\+esm$/, "+esm.js")}`;
   } catch {
     return `https://cdn.jsdelivr.net/npm/${name}${range ? `@${range}` : ""}/${path}`;
   }
