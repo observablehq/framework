@@ -15,11 +15,6 @@ const countryInterchangeSeries = FileAttachment("data/country-interchange.csv").
 ```
 
 ```js
-// US overall demand, generation, forecast
-const usOverview = FileAttachment("data/us-demand.csv").csv({typed: true});
-```
-
-```js
 const baHourlyDemand = FileAttachment("data/eia-ba-hourly.csv").csv({typed: true});
 ```
 
@@ -50,8 +45,8 @@ const eiaPoints = FileAttachment("data/eia-system-points.json").json().then(d =>
 ```
 
 ```js
-// US total demand, generation and forecast excluding total (sum)
-const usDemandGenForecast = usOverview.filter(d => d.name != "Total interchange");
+// US total demand, generation and forecast
+const usDemandGenForecast = FileAttachment("data/us-demand.csv").csv({typed: true});
 ```
 
 ```js
