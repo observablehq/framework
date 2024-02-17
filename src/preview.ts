@@ -127,14 +127,19 @@ export class PreviewServer {
           process.stdout.write(`npm:${path} ${faint("→")} `);
           const response = await fetch(href);
           if (!response.ok) throw new Error(`unable to fetch: ${href}`);
-          let body = await response.text();
-          // TODO parse and rewrite
-          // TODO rewrite sourceMappingURL
-          body = body.replace(/"\/npm\//g, '"/_npm/');
-          body = body.replace(/^\/\/# sourceMappingURL.*$/m, "");
           process.stdout.write(`${filePath}\n`);
           await mkdir(dirname(filePath), {recursive: true});
-          await writeFile(filePath, body, "utf-8");
+          if (/^application\/javascript(;|$)/i.test(response.headers.get("content-type")!)) {
+            let body = await response.text();
+            // TODO parse and rewrite
+            // TODO rewrite sourceMappingURL
+            body = body.replace(/"\/npm\//g, '"/_npm/');
+            body = body.replace(/\/\+esm"/g, '/+esm.js"');
+            body = body.replace(/^\/\/# sourceMappingURL.*$/m, "");
+            await writeFile(filePath, body, "utf-8");
+          } else {
+            await writeFile(filePath, Buffer.from(await response.arrayBuffer()));
+          }
         }
         send(req, pathname.slice("/_npm".length), {root: npmDir}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
