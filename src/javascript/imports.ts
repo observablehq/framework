@@ -1,10 +1,13 @@
 import {createHash} from "node:crypto";
-import {readFileSync} from "node:fs";
+import {existsSync, readFileSync} from "node:fs";
+import {readdir} from "node:fs/promises";
 import {join} from "node:path";
 import {Parser} from "acorn";
 import type {Identifier, Node, Program} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression} from "acorn";
 import {simple} from "acorn-walk";
+import {gt, satisfies} from "semver";
+import {getConfig} from "../config.js";
 import {isEnoent} from "../error.js";
 import {type Feature, type ImportReference, type JavaScriptNode} from "../javascript.js";
 import {parseOptions} from "../javascript.js";
@@ -285,7 +288,13 @@ export function createImportResolver(root: string, base: "." | "_import" = "."):
   };
 }
 
-function parseNpmSpecifier(specifier: string): {name: string; range?: string; path?: string} {
+interface NpmSpecifier {
+  name: string;
+  range?: string;
+  path?: string;
+}
+
+function parseNpmSpecifier(specifier: string): NpmSpecifier {
   const parts = specifier.split("/");
   const namerange = specifier.startsWith("@") ? [parts.shift()!, parts.shift()!].join("/") : parts.shift()!;
   const ranged = namerange.indexOf("@", 1);
@@ -296,7 +305,7 @@ function parseNpmSpecifier(specifier: string): {name: string; range?: string; pa
   };
 }
 
-function formatNpmSpecifier({name, range, path}: {name: string; range?: string; path?: string}): string {
+function formatNpmSpecifier({name, range, path}: NpmSpecifier): string {
   return `${name}${range ? `@${range}` : ""}${path ? `/${path}` : ""}`;
 }
 
@@ -319,13 +328,43 @@ async function cachedFetch(href: string): Promise<{headers: Headers; body: any}>
   return promise;
 }
 
-// TODO If we already have a cached version that is compatible with the requested name@range, use that.
-async function resolveNpmVersion({name, range}: {name: string; range?: string}): Promise<string> {
+export async function findCachedNpmVersion(specifier: NpmSpecifier): Promise<string | undefined> {
+  const {root} = getConfig();
+  let dir = join(root, ".observablehq", "npm");
+  let latestVersion: string | undefined;
+  if (specifier.name.startsWith("@")) {
+    const [scope] = specifier.name.split("/");
+    dir = join(dir, scope);
+    if (existsSync(dir)) {
+      for (const entry of await readdir(dir)) {
+        const version = maybeSatisfyingVersion(`${scope}/${entry}`, specifier);
+        if (version && (!latestVersion || gt(version, latestVersion))) latestVersion = version;
+      }
+    }
+  } else {
+    if (existsSync(dir)) {
+      for (const entry of await readdir(dir)) {
+        const version = maybeSatisfyingVersion(entry, specifier);
+        if (version && (!latestVersion || gt(version, latestVersion))) latestVersion = version;
+      }
+    }
+  }
+  return latestVersion;
+}
+
+function maybeSatisfyingVersion(entry: string, specifier: NpmSpecifier): string | undefined {
+  const {name, range} = parseNpmSpecifier(entry);
+  if (range && name === specifier.name && (!specifier.range || satisfies(range, specifier.range))) return range;
+}
+
+async function resolveNpmVersion(specifier: NpmSpecifier): Promise<string> {
+  const {name, range} = specifier;
   if (range && /^\d+\.\d+\.\d+([-+].*)?$/.test(range)) return range; // exact version specified
-  const specifier = formatNpmSpecifier({name, range});
+  const cachedVersion = await findCachedNpmVersion(specifier);
+  if (cachedVersion) return cachedVersion;
   const search = range ? `?specifier=${range}` : "";
   const {version} = (await cachedFetch(`https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`)).body;
-  if (!version) throw new Error(`unable to resolve version: ${specifier}`);
+  if (!version) throw new Error(`unable to resolve version: ${formatNpmSpecifier({name, range})}`);
   return version;
 }
 
