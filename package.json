@@ -51,6 +51,7 @@
     "@observablehq/runtime": "^5.9.4",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "acorn": "^8.11.2",
+    "acorn-import-attributes": "^1.9.2",
     "acorn-walk": "^8.3.0",
     "ci-info": "^4.0.0",
     "esbuild": "^0.19.8",
