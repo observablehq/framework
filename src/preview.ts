@@ -7,7 +7,6 @@ import type {IncomingMessage, RequestListener, Server, ServerResponse} from "nod
 import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
 import {difference} from "d3-array";
-import mime from "mime";
 import openBrowser from "open";
 import send from "send";
 import {type WebSocket, WebSocketServer} from "ws";
