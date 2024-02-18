@@ -16,7 +16,7 @@ import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
 import type {FileReference, ImportReference, PendingTranspile, Transpile} from "./javascript.js";
 import {transpileJavaScript} from "./javascript.js";
-import {getImplicitFileImports, getImplicitSpecifiers} from "./libraries.js";
+import {getImplicitFileImports, getImplicitImports} from "./libraries.js";
 import {transpileTag} from "./tag.js";
 import {resolvePath} from "./url.js";
 
@@ -436,7 +436,7 @@ export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptio
   const cells = await toParseCells(context.pieces);
   const inputs = findUnboundInputs(cells);
   const imports = context.imports; // TODO Set
-  for (const name of getImplicitSpecifiers(inputs)) imports.push({type: "global", name});
+  for (const name of getImplicitImports(inputs)) imports.push({type: "global", name});
   for (const name of getImplicitFileImports(context.files)) imports.push({type: "global", name});
   return {
     html,

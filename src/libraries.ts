@@ -30,42 +30,40 @@ export function getImplicitFileImports(files: Pick<FileReference, "method">[]): 
   return imports;
 }
 
-// TODO Rename to getImplicitImports
-export function getImplicitSpecifiers(inputs: Iterable<string>): Set<string> {
-  return addImplicitSpecifiers(new Set(), inputs);
+export function getImplicitImports(inputs: Iterable<string>): Set<string> {
+  return addImplicitImports(new Set(), inputs);
 }
 
-// TODO Rename to addImplicitImports
-export function addImplicitSpecifiers(specifiers: Set<string>, iterable: Iterable<string>): typeof specifiers {
-  const inputs = new Set(iterable); // TODO check instanceof Set
-  if (inputs.has("d3")) specifiers.add("npm:d3");
-  if (inputs.has("Plot")) specifiers.add("npm:d3").add("npm:@observablehq/plot");
-  if (inputs.has("htl") || inputs.has("html") || inputs.has("svg")) specifiers.add("npm:htl");
-  if (inputs.has("Inputs")) specifiers.add("npm:htl").add("npm:isoformat").add("npm:@observablehq/inputs");
-  if (inputs.has("dot")) specifiers.add("npm:@observablehq/dot").add("npm:@viz-js/viz");
-  if (inputs.has("duckdb")) specifiers.add("npm:@duckdb/duckdb-wasm");
-  if (inputs.has("DuckDBClient")) specifiers.add("npm:@observablehq/duckdb").add("npm:@duckdb/duckdb-wasm");
-  if (inputs.has("_")) specifiers.add("npm:lodash");
-  if (inputs.has("aq")) specifiers.add("npm:arquero");
-  if (inputs.has("Arrow")) specifiers.add("npm:apache-arrow");
-  if (inputs.has("L")) specifiers.add("npm:leaflet");
-  if (inputs.has("mapboxgl")) specifiers.add("npm:mapbox-gl");
-  if (inputs.has("mermaid")) specifiers.add("npm:@observablehq/mermaid").add("npm:mermaid").add("npm:d3");
-  if (inputs.has("SQLite") || inputs.has("SQLiteDatabaseClient")) specifiers.add("npm:@observablehq/sqlite");
-  if (inputs.has("tex")) specifiers.add("npm:@observablehq/tex").add("npm:katex");
-  if (inputs.has("topojson")) specifiers.add("npm:topojson-client");
-  if (inputs.has("vl")) specifiers.add("npm:vega").add("npm:vega-lite").add("npm:vega-lite-api");
-  return specifiers;
+export function addImplicitImports(imports: Set<string>, inputs: Iterable<string>): Set<string> {
+  const set = inputs instanceof Set ? inputs : new Set(inputs);
+  if (set.has("d3")) imports.add("npm:d3");
+  if (set.has("Plot")) imports.add("npm:d3").add("npm:@observablehq/plot");
+  if (set.has("htl") || set.has("html") || set.has("svg")) imports.add("npm:htl");
+  if (set.has("Inputs")) imports.add("npm:htl").add("npm:isoformat").add("npm:@observablehq/inputs");
+  if (set.has("dot")) imports.add("npm:@observablehq/dot").add("npm:@viz-js/viz");
+  if (set.has("duckdb")) imports.add("npm:@duckdb/duckdb-wasm");
+  if (set.has("DuckDBClient")) imports.add("npm:@observablehq/duckdb").add("npm:@duckdb/duckdb-wasm");
+  if (set.has("_")) imports.add("npm:lodash");
+  if (set.has("aq")) imports.add("npm:arquero");
+  if (set.has("Arrow")) imports.add("npm:apache-arrow");
+  if (set.has("L")) imports.add("npm:leaflet");
+  if (set.has("mapboxgl")) imports.add("npm:mapbox-gl");
+  if (set.has("mermaid")) imports.add("npm:@observablehq/mermaid").add("npm:mermaid").add("npm:d3");
+  if (set.has("SQLite") || set.has("SQLiteDatabaseClient")) imports.add("npm:@observablehq/sqlite");
+  if (set.has("tex")) imports.add("npm:@observablehq/tex").add("npm:katex");
+  if (set.has("topojson")) imports.add("npm:topojson-client");
+  if (set.has("vl")) imports.add("npm:vega").add("npm:vega-lite").add("npm:vega-lite-api");
+  return imports;
 }
 
-export async function getImplicitStylesheets(specifiers: Set<string>): Promise<Set<string>> {
-  return addImplicitStylesheets(new Set(), specifiers);
+export async function getImplicitStylesheets(imports: Set<string>): Promise<Set<string>> {
+  return addImplicitStylesheets(new Set(), imports);
 }
 
-export async function addImplicitStylesheets(stylesheets: Set<string>, specifiers: Set<string>): Promise<Set<string>> {
-  if (specifiers.has("npm:@observablehq/inputs")) stylesheets.add("observablehq:stdlib/inputs.css");
-  if (specifiers.has("npm:katex")) stylesheets.add(await resolveNpmImport("katex/dist/katex.min.css"));
-  if (specifiers.has("npm:leaflet")) stylesheets.add(await resolveNpmImport("leaflet/dist/leaflet.css"));
-  if (specifiers.has("npm:mapbox-gl")) stylesheets.add(await resolveNpmImport("mapbox-gl/dist/mapbox-gl.css"));
+export async function addImplicitStylesheets(stylesheets: Set<string>, imports: Set<string>): Promise<Set<string>> {
+  if (imports.has("npm:@observablehq/inputs")) stylesheets.add("observablehq:stdlib/inputs.css");
+  if (imports.has("npm:katex")) stylesheets.add(await resolveNpmImport("katex/dist/katex.min.css"));
+  if (imports.has("npm:leaflet")) stylesheets.add(await resolveNpmImport("leaflet/dist/leaflet.css"));
+  if (imports.has("npm:mapbox-gl")) stylesheets.add(await resolveNpmImport("mapbox-gl/dist/mapbox-gl.css"));
   return stylesheets;
 }

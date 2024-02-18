@@ -18,7 +18,7 @@ import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {createImportResolver, populateNpmCache, rewriteModule} from "./javascript/imports.js";
-import {getImplicitSpecifiers, getImplicitStylesheets} from "./libraries.js";
+import {getImplicitImports, getImplicitStylesheets} from "./libraries.js";
 import {diffMarkdown, parseMarkdown} from "./markdown.js";
 import type {ParseResult} from "./markdown.js";
 import {renderPreview, resolveStylesheet} from "./render.js";
@@ -304,7 +304,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
   async function getStylesheets({cells, data}: ParseResult): Promise<Set<string>> {
     const inputs = new Set<string>();
     for (const cell of cells) cell.inputs?.forEach(inputs.add, inputs);
-    const stylesheets = await getImplicitStylesheets(getImplicitSpecifiers(inputs));
+    const stylesheets = await getImplicitStylesheets(getImplicitImports(inputs));
     const style = getPreviewStylesheet(path!, data, defaultStyle);
     if (style) stylesheets.add(style);
     return new Set(Array.from(stylesheets, (href) => resolveStylesheet(path!, href)));
