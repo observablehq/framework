@@ -70,6 +70,23 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
     const implicitDisplay = node.expression && !inputs.includes("display") && !inputs.includes("view");
     if (implicitDisplay) inputs.push("display"), (node.async = true);
     if (findImportDeclarations(node).length > 0) node.async = true;
+    if (inputs.includes("FileAttachment")) {
+      // TODO For FileAttachment, we might also need:
+      //
+      // - npm:d3-dsv - .csv, .tsv
+      // - npm:apache-arrow - .arrow, .parquet
+      // - npm:parquet-wasm - .parquet
+      // - npm:@observablehq/sqlite - .sqlite, others
+      // - npm:@observablehq/zip - .zip
+      // - npm:@observablehq/xlsx - .xlsx
+      //
+      // The plan is to first look for member expressions of the form
+      // FileAttachment(name).method; then for any other FileAttachment
+      // references, determine the file type based on the file extension.
+      //
+      // In addition to downloading these npm imports here, we also want to
+      // preload these libraries on the page.
+    }
     return {
       id,
       expression: node.expression,

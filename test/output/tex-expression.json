@@ -2,7 +2,20 @@
   "data": null,
   "title": "Hello, ",
   "files": [],
-  "imports": [],
+  "imports": [
+    {
+      "type": "global",
+      "name": "npm:@observablehq/tex"
+    },
+    {
+      "type": "global",
+      "name": "npm:katex"
+    }
+  ],
+  "inputs": [
+    "tex",
+    "display"
+  ],
   "pieces": [
     {
       "type": "html",

@@ -2,7 +2,24 @@
   "data": null,
   "title": null,
   "files": [],
-  "imports": [],
+  "imports": [
+    {
+      "type": "global",
+      "name": "npm:@observablehq/mermaid"
+    },
+    {
+      "type": "global",
+      "name": "npm:mermaid"
+    },
+    {
+      "type": "global",
+      "name": "npm:d3"
+    }
+  ],
+  "inputs": [
+    "mermaid",
+    "display"
+  ],
   "pieces": [
     {
       "type": "html",

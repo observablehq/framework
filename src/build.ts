@@ -91,23 +91,21 @@ export async function build(
 
   // Generate the client bundles.
   if (addPublic) {
-    for (const [entry, name] of [
-      [clientEntry, "client.js"],
-      ["./src/client/stdlib.js", "stdlib.js"],
-      // TODO Prune this list based on which libraries are actually used.
-      // TODO Remove library helpers (e.g., duckdb) when they are published to npm.
-      ["./src/client/stdlib/dot.js", "stdlib/dot.js"],
-      ["./src/client/stdlib/duckdb.js", "stdlib/duckdb.js"],
-      ["./src/client/stdlib/inputs.css", "stdlib/inputs.css"],
-      ["./src/client/stdlib/inputs.js", "stdlib/inputs.js"],
-      ["./src/client/stdlib/mermaid.js", "stdlib/mermaid.js"],
-      ["./src/client/stdlib/sqlite.js", "stdlib/sqlite.js"],
-      ["./src/client/stdlib/tex.js", "stdlib/tex.js"],
-      ["./src/client/stdlib/vega-lite.js", "stdlib/vega-lite.js"],
-      ["./src/client/stdlib/xlsx.js", "stdlib/xlsx.js"],
-      ["./src/client/stdlib/zip.js", "stdlib/zip.js"],
-      ...(config.search ? [["./src/client/search.js", "search.js"]] : [])
-    ]) {
+    const bundles: [entry: string, name: string][] = [];
+    bundles.push([clientEntry, "client.js"]);
+    bundles.push(["./src/client/stdlib.js", "stdlib.js"]);
+    if (config.search) bundles.push(["./src/client/search.js", "search.js"]);
+    for (const lib of ["dot", "duckdb", "inputs", "mermaid", "sqlite", "tex", "vega-lite", "xlsx", "zip"]) {
+      if (globalImports.has(`npm:@observablehq/${lib}`)) {
+        bundles.push([`./src/client/stdlib/${lib}.js`, `stdlib/${lib}.js`]);
+      }
+    }
+    for (const lib of ["inputs"]) {
+      if (globalImports.has(`npm:@observablehq/${lib}`)) {
+        bundles.push([`./src/client/stdlib/${lib}.css`, `stdlib/${lib}.css`]);
+      }
+    }
+    for (const [entry, name] of bundles) {
       const clientPath = getClientPath(entry);
       const outputPath = join("_observablehq", name);
       effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
@@ -164,7 +162,7 @@ export async function build(
   // TODO Add implicit specifiers.
   for (const specifier of globalImports) {
     if (specifier.startsWith("npm:")) {
-      console.warn(specifier);
+      console.warn(`TODO ${specifier}`);
     }
   }
 

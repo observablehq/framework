@@ -1,10 +1,11 @@
 import {resolveNpmImport} from "./javascript/imports.js";
 
-export function getImplicitSpecifiers(inputs: Set<string>): Set<string> {
+export function getImplicitSpecifiers(inputs: Iterable<string>): Set<string> {
   return addImplicitSpecifiers(new Set(), inputs);
 }
 
-export function addImplicitSpecifiers(specifiers: Set<string>, inputs: Set<string>): typeof specifiers {
+export function addImplicitSpecifiers(specifiers: Set<string>, iterable: Iterable<string>): typeof specifiers {
+  const inputs = new Set(iterable);
   if (inputs.has("d3")) specifiers.add("npm:d3");
   if (inputs.has("Plot")) specifiers.add("npm:d3").add("npm:@observablehq/plot");
   if (inputs.has("htl") || inputs.has("html") || inputs.has("svg")) specifiers.add("npm:htl");
