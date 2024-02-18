@@ -364,7 +364,7 @@ Framework uses [file-based routing](./routing) not just for pages but for data l
 To load a file in JavaScript, use the built-in [`FileAttachment`](./javascript/files). In `weather.md`, replace the contents of the JavaScript code block (the parts inside the triple backticks <code>```</code>) with the following code:
 
 ```js run=false
-const forecast = FileAttachment("./data/forecast.json").json();
+const forecast = await FileAttachment("./data/forecast.json").json();
 ```
 
 <div class="note"><code>FileAttachment</code> is a special function that can only be passed a static string literal as an argument. This restriction enables static analysis, allowing Framework to determine which data loaders to run on build and improving security by only including referenced files in the published site.</div>
@@ -372,7 +372,7 @@ const forecast = FileAttachment("./data/forecast.json").json();
 You can now reference the variable `forecast` from other code. For example, you can add another code block that displays the `forecast` data.
 
 ```js run=false
-display(await forecast);
+display(forecast);
 ```
 
 This looks like:
