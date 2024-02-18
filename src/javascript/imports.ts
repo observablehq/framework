@@ -206,7 +206,7 @@ export function findImportDeclarations(cell: JavaScriptNode): ImportDeclaration[
 
 /**
  * Rewrites import specifiers in the specified JavaScript fenced code block or
- * inline expression. TODO parallelize multiple static imports.
+ * inline expression.
  */
 export async function rewriteImports(
   output: Sourcemap,
@@ -329,6 +329,34 @@ async function cachedFetch(href: string): Promise<{headers: Headers; body: any}>
   return promise;
 }
 
+/** Rewrites /npm/ import specifiers to be relative paths to /_npm/. */
+export function rewriteNpmImports(input: string, path: string): string {
+  const body = Parser.parse(input, parseOptions);
+  const output = new Sourcemap(input);
+
+  simple(body, {
+    ImportDeclaration: rewriteImport,
+    ImportExpression: rewriteImport,
+    ExportAllDeclaration: rewriteImport,
+    ExportNamedDeclaration: rewriteImport
+  });
+
+  function rewriteImport(node: ImportNode | ExportNode) {
+    if (isStringLiteral(node.source)) {
+      let value = getStringLiteralValue(node.source);
+      if (value.startsWith("/npm/")) {
+        value = `/_npm/${value.slice("/npm/".length)}`;
+        if (value.endsWith("/+esm")) value += ".js";
+        value = relativeUrl(path, value);
+        output.replaceLeft(node.source.start, node.source.end, JSON.stringify(value));
+      }
+    }
+  }
+
+  // TODO Preserve the source map, but download it too.
+  return String(output).replace(/^\/\/# sourceMappingURL=.*$\n?/m, "");
+}
+
 const npmRequests = new Map<string, Promise<void>>();
 
 export function populateNpmCache(npmDir: string, path: string): Promise<void> {
@@ -344,13 +372,7 @@ export function populateNpmCache(npmDir: string, path: string): Promise<void> {
     process.stdout.write(`${filePath}\n`);
     await mkdir(dirname(filePath), {recursive: true});
     if (/^application\/javascript(;|$)/i.test(response.headers.get("content-type")!)) {
-      let body = await response.text();
-      // TODO parse and rewrite
-      // TODO rewrite sourceMappingURL
-      body = body.replace(/"\/npm\//g, '"/_npm/');
-      body = body.replace(/\/\+esm"/g, '/+esm.js"');
-      body = body.replace(/^\/\/# sourceMappingURL.*$/m, "");
-      await writeFile(filePath, body, "utf-8");
+      await writeFile(filePath, rewriteNpmImports(await response.text(), path), "utf-8");
     } else {
       await writeFile(filePath, Buffer.from(await response.arrayBuffer()));
     }
