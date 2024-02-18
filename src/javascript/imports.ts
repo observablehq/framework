@@ -1,6 +1,6 @@
 import {createHash} from "node:crypto";
 import {readFileSync} from "node:fs";
-import {join} from "node:path";
+import {join, posix, sep} from "node:path";
 import {Parser} from "acorn";
 import type {Identifier, Node, Program} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression} from "acorn";
@@ -333,6 +333,7 @@ async function cachedFetch(href: string): Promise<{headers: Headers; body: any}>
 
 async function resolveNpmVersion({name, range}: {name: string; range?: string}): Promise<string> {
   if (!npmVersionResolutionEnabled) throw new Error("npm version resolution is not enabled");
+  range = (range ?? "").split(sep).join(posix.sep);
   if (range && /^\d+\.\d+\.\d+([-+].*)?$/.test(range)) return range; // exact version specified
   const specifier = formatNpmSpecifier({name, range});
   const search = range ? `?specifier=${range}` : "";
