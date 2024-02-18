@@ -19,6 +19,7 @@ const languages = {
   ".R": ["Rscript"],
   ".rs": ["rust-script"],
   ".go": ["go", "run"],
+  ".cmd": ["cmd", "/c"],
   ".sh": ["sh"],
   ".exe": []
 };
@@ -189,7 +190,7 @@ export abstract class Loader {
         );
       },
       (error) => {
-        effects.logger.log(`${red("error")} ${faint(`in ${formatElapsed(start)}:`)} ${red(error.message)}`);
+        effects.logger.log(`${red(`error caching ${key}`)} ${faint(`in ${formatElapsed(start)}:`)} ${red(error.message)}`);
       }
     );
     return command;
