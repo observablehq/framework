@@ -26,12 +26,15 @@ export function getClientPath(entry: string): string {
   return path;
 }
 
-export function fileReference(name: string, sourcePath: string): FileReference {
-  return {
+// TODO Rename to resolveFileReference? return FileResolution?
+export function fileReference({name, method}: {name: string; method?: string}, sourcePath: string): FileReference {
+  const reference: FileReference = {
     name: relativeUrl(sourcePath, name),
     mimeType: mime.getType(name),
     path: relativeUrl(sourcePath, join("_file", name))
   };
+  if (method) reference.method = method;
+  return reference;
 }
 
 export async function* visitMarkdownFiles(root: string): AsyncGenerator<string> {

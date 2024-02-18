@@ -1,20 +1,33 @@
-import type {CallExpression, Identifier, Literal, Node, TemplateLiteral} from "acorn";
-import {simple} from "acorn-walk";
+import {extname} from "node:path";
+import type {CallExpression, Identifier, Literal, MemberExpression, Node, TemplateLiteral} from "acorn";
+import {ancestor, simple} from "acorn-walk";
 import {getLocalPath} from "../files.js";
 import type {Feature} from "../javascript.js";
 import {defaultGlobals} from "./globals.js";
 import {findReferences} from "./references.js";
 import {syntaxError} from "./syntaxError.js";
 
+const KNOWN_FILE_EXTENSIONS = {
+  ".arrow": "arrow",
+  ".csv": "csv",
+  ".db": "sqlite",
+  ".html": "html",
+  ".json": "json",
+  ".parquet": "parquet",
+  ".sqlite": "sqlite",
+  ".tsv": "tsv",
+  ".txt": "text",
+  ".xlsx": "xlsx",
+  ".xml": "xml",
+  ".zip": "zip"
+};
+
 export function findFeatures(node: Node, path: string, references: Identifier[], input: string): Feature[] {
   const featureMap = getFeatureReferenceMap(node);
   const features: Feature[] = [];
 
-  // TODO If the FileAttachment is part of a member expression, we should be
-  // able to tell which method they’re calling on the file attachment, and thus
-  // determine which bundles need to be included in the generated build.
-  simple(node, {
-    CallExpression(node) {
+  ancestor(node, {
+    CallExpression(node, state, stack) {
       const {callee} = node;
       if (callee.type !== "Identifier") return;
       let type = featureMap.get(callee);
@@ -28,11 +41,23 @@ export function findFeatures(node: Node, path: string, references: Identifier[],
         if (name !== "FileAttachment") return;
         type = name;
       }
-      features.push(getFeature(type, node, path, input));
+      const feature = getFeature(type, node, path, input);
+      const parent = stack[stack.length - 2];
+      if (isMemberExpression(parent) && parent.property.type === "Identifier") {
+        feature.method = parent.property.name;
+      } else {
+        const method = KNOWN_FILE_EXTENSIONS[extname(feature.name)];
+        if (method) feature.method = method;
+      }
+      features.push(feature);
     }
   });
 
   return features;
+}
+
+function isMemberExpression(node?: Node): node is MemberExpression {
+  return node?.type === "MemberExpression";
 }
 
 /**

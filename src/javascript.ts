@@ -15,6 +15,8 @@ import {red} from "./tty.js";
 export interface FileReference {
   /** The relative path from the page to the original file (e.g., "./test.txt"). */
   name: string;
+  /** The method, if known. */
+  method?: string;
   /** The MIME type, if known; derived from the file extension. */
   mimeType: string | null;
   /** The relative path from the page to the file in _file (e.g., "../_file/sub/test.txt"). */
@@ -26,9 +28,11 @@ export interface ImportReference {
   type: "global" | "local";
 }
 
+// TODO Rename to FileReference; rename FileReference to FileResolution
 export interface Feature {
   type: "FileAttachment";
   name: string;
+  method?: string;
 }
 
 export interface BaseTranspile {
@@ -63,30 +67,11 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
   const {id, root, sourcePath, verbose = true} = options;
   try {
     const node = parseJavaScript(input, options);
-    const files = node.features
-      .filter((f) => f.type === "FileAttachment")
-      .map(({name}) => fileReference(name, sourcePath));
+    const files = node.features.filter((f) => f.type === "FileAttachment").map((f) => fileReference(f, sourcePath));
     const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
     const implicitDisplay = node.expression && !inputs.includes("display") && !inputs.includes("view");
     if (implicitDisplay) inputs.push("display"), (node.async = true);
     if (findImportDeclarations(node).length > 0) node.async = true;
-    if (files.length) {
-      // TODO For FileAttachment, we might also need:
-      //
-      // - npm:d3-dsv - .csv, .tsv
-      // - npm:apache-arrow - .arrow, .parquet
-      // - npm:parquet-wasm - .parquet
-      // - npm:@observablehq/sqlite - .sqlite, others
-      // - npm:@observablehq/zip - .zip
-      // - npm:@observablehq/xlsx - .xlsx
-      //
-      // The plan is to first look for member expressions of the form
-      // FileAttachment(name).method; then for any other FileAttachment
-      // references, determine the file type based on the file extension.
-      //
-      // In addition to downloading these npm imports here, we also want to
-      // preload these libraries on the page.
-    }
     return {
       id,
       expression: node.expression,

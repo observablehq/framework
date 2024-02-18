@@ -1,11 +1,43 @@
 import {resolveNpmImport} from "./javascript/imports.js";
+import {type FileReference} from "./javascript.js";
 
+export function getImplicitFileImports(files: FileReference[]): Set<string> {
+  const imports = new Set<string>();
+  for (const file of files) {
+    switch (file.method) {
+      case "csv":
+      case "tsv":
+        imports.add("npm:d3-dsv");
+        break;
+      case "arrow":
+        imports.add("npm:apache-arrow");
+        break;
+      case "parquet":
+        imports.add("npm:apache-arrow");
+        imports.add("npm:parquet-wasm/esm/arrow1.js");
+        break;
+      case "sqlite":
+        imports.add("npm:@observablehq/sqlite");
+        break;
+      case "xlsx":
+        imports.add("npm:@observablehq/xlsx");
+        break;
+      case "zip":
+        imports.add("npm:@observablehq/zip");
+        break;
+    }
+  }
+  return imports;
+}
+
+// TODO Rename to getImplicitImports
 export function getImplicitSpecifiers(inputs: Iterable<string>): Set<string> {
   return addImplicitSpecifiers(new Set(), inputs);
 }
 
+// TODO Rename to addImplicitImports
 export function addImplicitSpecifiers(specifiers: Set<string>, iterable: Iterable<string>): typeof specifiers {
-  const inputs = new Set(iterable);
+  const inputs = new Set(iterable); // TODO check instanceof Set
   if (inputs.has("d3")) specifiers.add("npm:d3");
   if (inputs.has("Plot")) specifiers.add("npm:d3").add("npm:@observablehq/plot");
   if (inputs.has("htl") || inputs.has("html") || inputs.has("svg")) specifiers.add("npm:htl");

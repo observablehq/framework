@@ -16,7 +16,7 @@ import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
 import type {FileReference, ImportReference, PendingTranspile, Transpile} from "./javascript.js";
 import {transpileJavaScript} from "./javascript.js";
-import {getImplicitSpecifiers} from "./libraries.js";
+import {getImplicitFileImports, getImplicitSpecifiers} from "./libraries.js";
 import {transpileTag} from "./tag.js";
 import {resolvePath} from "./url.js";
 
@@ -344,7 +344,7 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
   const resolvePath = (source: string): FileReference | undefined => {
     const path = getLocalPath(sourcePath, source);
     if (!path) return;
-    const file = fileReference(path, sourcePath);
+    const file = fileReference({name: path}, sourcePath);
     if (!filePaths.has(file.path)) {
       filePaths.add(file.path);
       context.files.push(file);
@@ -435,8 +435,9 @@ export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptio
   const html = md.renderer.render(tokens, md.options, context); // Note: mutates context.pieces, context.files!
   const cells = await toParseCells(context.pieces);
   const inputs = findUnboundInputs(cells);
-  const imports = context.imports;
+  const imports = context.imports; // TODO Set
   for (const name of getImplicitSpecifiers(inputs)) imports.push({type: "global", name});
+  for (const name of getImplicitFileImports(context.files)) imports.push({type: "global", name});
   return {
     html,
     data: isEmpty(parts.data) ? null : parts.data,

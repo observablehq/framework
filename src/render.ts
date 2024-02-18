@@ -47,10 +47,15 @@ export async function renderServerless(sourcePath: string, options: RenderOption
 
 export function renderDefineCell(cell: Transpile): string {
   const {id, inline, inputs, outputs, files, body} = cell;
-  return `define({${Object.entries({id, inline, inputs, outputs, files})
+  return `define({${Object.entries({id, inline, inputs, outputs, files: files && redactFiles(files)})
     .filter((arg) => arg[1] !== undefined)
     .map((arg) => `${arg[0]}: ${JSON.stringify(arg[1])}`)
     .join(", ")}, body: ${body}});\n`;
+}
+
+// TODO make this less messy
+function redactFiles(files: FileReference[]): FileReference[] {
+  return files.map((f) => (f.method ? {...f, method: undefined} : f));
 }
 
 type RenderInternalOptions =
