@@ -70,7 +70,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
     const implicitDisplay = node.expression && !inputs.includes("display") && !inputs.includes("view");
     if (implicitDisplay) inputs.push("display"), (node.async = true);
     if (findImportDeclarations(node).length > 0) node.async = true;
-    if (inputs.includes("FileAttachment")) {
+    if (files.length) {
       // TODO For FileAttachment, we might also need:
       //
       // - npm:d3-dsv - .csv, .tsv
