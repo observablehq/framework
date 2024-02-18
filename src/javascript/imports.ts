@@ -362,7 +362,7 @@ export function populateNpmCache(npmDir: string, path: string): Promise<void> {
 
 export async function findCachedNpmVersion(specifier: NpmSpecifier): Promise<string | undefined> {
   const {root} = getConfig();
-  let dir = join(root, ".observablehq", "npm");
+  let dir = join(root, ".observablehq", "cache", "_npm");
   let latestVersion: string | undefined;
   if (specifier.name.startsWith("@")) {
     const [scope] = specifier.name.split("/");

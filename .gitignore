@@ -1,7 +1,6 @@
 .env
 .DS_Store
 **/.observablehq/cache/
-**/.observablehq/npm/
 coverage/
 docs/themes.md
 docs/theme/*.md
