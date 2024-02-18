@@ -1,7 +1,7 @@
 import {resolveNpmImport} from "./javascript/imports.js";
 import {type FileReference} from "./javascript.js";
 
-export function getImplicitFileImports(files: FileReference[]): Set<string> {
+export function getImplicitFileImports(files: Pick<FileReference, "method">[]): Set<string> {
   const imports = new Set<string>();
   for (const file of files) {
     switch (file.method) {

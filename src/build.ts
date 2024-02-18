@@ -160,11 +160,11 @@ export async function build(
   // TODO Copy over npm imports (recursively).
   // TODO Compute unbound inputs.
   // TODO Add implicit specifiers.
-  for (const specifier of globalImports) {
-    if (specifier.startsWith("npm:")) {
-      console.warn(`TODO ${specifier}`);
-    }
-  }
+  // for (const specifier of globalImports) {
+  //   if (specifier.startsWith("npm:")) {
+  //     console.warn(`TODO ${specifier}`);
+  //   }
+  // }
 
   // Copy over imported local modules.
   const importResolver = createImportResolver(root);

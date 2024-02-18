@@ -208,6 +208,10 @@ async function renderHead(
   await addImplicitStylesheets(stylesheets, specifiers);
   const preloads = new Set<string>([relativeUrl(path, "/_observablehq/client.js")]);
   for (const specifier of specifiers) preloads.add(await resolver(path, specifier));
+  // TODO Transitive imports need to be resolved earlier because they’ll need to
+  // be downloaded during build, too. For example npm:@observablehq/sqlite
+  // imports npm:sql.js/dist/sql-wasm.js — and we need to special-case somewhere
+  // that the .wasm bundle is needed too. Likewise for npm:@observablehq/duckdb.
   await resolveModulePreloads(preloads);
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
     Array.from(stylesheets)
