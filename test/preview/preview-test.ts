@@ -6,8 +6,8 @@ import type {PreviewOptions, PreviewServer} from "../../src/preview.js";
 import {mockJsDelivr} from "../mocks/jsdelivr.js";
 
 const testHostRoot = "test/preview/dashboard";
-const testHostName = process.env.TEST_HOSTNAME ?? "127.0.0.1";
-const testPort = +(process.env.TEST_PORT ?? 8080);
+const testHostName = "127.0.0.1";
+const testPort = 3000;
 
 const testServerOptions: PreviewOptions = {
   config: await normalizeConfig({root: testHostRoot}),
