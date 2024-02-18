@@ -63,8 +63,9 @@ export async function build(
   effects.logger.log(`${faint("found")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
 
   // Render .md files, building a list of file attachments as we go.
-  const files: string[] = [];
-  const imports: string[] = [];
+  const files = new Set<string>();
+  const localImports = new Set<string>();
+  const globalImports = new Set<string>();
   const styles: Style[] = [];
   for await (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);
@@ -73,8 +74,9 @@ export async function build(
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
     const render = await renderServerless(sourcePath, {path, ...config});
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
-    files.push(...render.files.map(resolveFile));
-    imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
+    for (const f of render.files) files.add(resolveFile(f));
+    for (const i of render.imports) if (i.type === "local") localImports.add(resolveFile(i));
+    for (const i of render.imports) if (i.type === "global") globalImports.add(i.name);
     await effects.writeFile(outputPath, render.html);
     const style = mergeStyle(path, render.data?.style, render.data?.theme, config.style);
     if (style && !styles.some((s) => styleEquals(s, style))) styles.push(style);
@@ -83,7 +85,7 @@ export async function build(
   // Add imported local scripts.
   for (const script of config.scripts) {
     if (!/^\w+:/.test(script.src)) {
-      imports.push(script.src);
+      localImports.add(script.src);
     }
   }
 
@@ -157,9 +159,18 @@ export async function build(
     await effects.copyFile(sourcePath, outputPath);
   }
 
-  // Copy over the imported modules.
+  // TODO Copy over npm imports (recursively).
+  // TODO Compute unbound inputs.
+  // TODO Add implicit specifiers.
+  for (const specifier of globalImports) {
+    if (specifier.startsWith("npm:")) {
+      console.warn(specifier);
+    }
+  }
+
+  // Copy over imported local modules.
   const importResolver = createImportResolver(root);
-  for (const file of imports) {
+  for (const file of localImports) {
     const sourcePath = join(root, file);
     const outputPath = join("_import", file);
     if (!existsSync(sourcePath)) {
