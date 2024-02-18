@@ -372,7 +372,7 @@ const forecast = FileAttachment("./data/forecast.json").json();
 You can now reference the variable `forecast` from other code. For example, you can add another code block that displays the `forecast` data.
 
 ```js run=false
-display(forecast);
+display(await forecast);
 ```
 
 This looks like:
