@@ -482,7 +482,7 @@ function temperaturePlot(data, {width} = {}) {
 Now you can call `temperaturePlot` to display the forecast anywhere on the page:
 
 ```js run=false
-temperaturePlot(forecast)
+display(temperaturePlot(forecast));
 ```
 
 <div class="tip">JavaScript can be extracted into standalone modules (<code>.js</code> files) that you can <a href="./javascript/imports">import</a> into Markdown. This lets you share code across pages, write unit tests for components, and more.</div>
