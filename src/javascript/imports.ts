@@ -329,6 +329,29 @@ async function cachedFetch(href: string): Promise<{headers: Headers; body: any}>
   return promise;
 }
 
+export function findRelativeImports(input: string): Set<string> {
+  const body = Parser.parse(input, parseOptions);
+  const imports = new Set<string>();
+
+  simple(body, {
+    ImportDeclaration: findRelativeImport,
+    ImportExpression: findRelativeImport,
+    ExportAllDeclaration: findRelativeImport,
+    ExportNamedDeclaration: findRelativeImport
+  });
+
+  function findRelativeImport(node: ImportNode | ExportNode) {
+    if (isStringLiteral(node.source)) {
+      const value = getStringLiteralValue(node.source);
+      if (value.startsWith("./") || value.startsWith("../")) { // TODO leading /
+        imports.add(value);
+      }
+    }
+  }
+
+  return imports;
+}
+
 /** Rewrites /npm/ import specifiers to be relative paths to /_npm/. */
 export function rewriteNpmImports(input: string, path: string): string {
   const body = Parser.parse(input, parseOptions);

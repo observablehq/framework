@@ -8,6 +8,7 @@ import {Loader} from "./dataloader.js";
 import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
+import {findRelativeImports, populateNpmCache, resolveNpmImport} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
 import {renderServerless} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
@@ -157,14 +158,28 @@ export async function build(
     await effects.copyFile(sourcePath, outputPath);
   }
 
-  // TODO Copy over npm imports (recursively).
-  // TODO Compute unbound inputs.
-  // TODO Add implicit specifiers.
-  // for (const specifier of globalImports) {
-  //   if (specifier.startsWith("npm:")) {
-  //     console.warn(`TODO ${specifier}`);
-  //   }
-  // }
+  // Resolve npm imports.
+  const npmImports = new Set<string>();
+  for (const specifier of globalImports) {
+    if (specifier.startsWith("npm:")) {
+      const path = await resolveNpmImport(specifier.slice("npm:".length));
+      if (path.startsWith("/_npm/")) npmImports.add(path);
+    }
+  }
+
+  // Download npm imports, and resolve transitive dependencies. (Note that local
+  // imports are already resolved transitively by findImports… maybe we should
+  // find a way to consolidate this logic.)
+  const cacheDir = join(root, ".observablehq", "cache");
+  for (const path of npmImports) {
+    await populateNpmCache(cacheDir, path); // TODO effects
+    const sourcePath = join(cacheDir, path);
+    effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
+    await effects.copyFile(sourcePath, path);
+    for (const subpath of findRelativeImports(await readFile(sourcePath, "utf-8"))) {
+      npmImports.add(join(dirname(path), subpath));
+    }
+  }
 
   // Copy over imported local modules.
   const importResolver = createImportResolver(root);
