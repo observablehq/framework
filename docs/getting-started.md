@@ -385,7 +385,11 @@ This looks like:
   <figcaption>Using <code>FileAttachment</code> to load data.</figcaption>
 </figure>
 
-The built-in [`display`](./javascript/display) function displays the specified value, a bit like `console.log` in the browser’s console. As you may have noticed above with <code class="language-js">1 + 2</code>, `display` is called implicitly when a code block contains an expression.
+The built-in [`display`](./javascript/display) function displays the specified value, a bit like `console.log` in the browser’s console. As you can see below, `display` is called [implicitly](./javascript/display#implicit-display) when a code block contains an expression:
+
+```js echo
+1 + 2
+```
 
 For convenience, here’s a copy of the data so you can explore it here:
 
