@@ -372,7 +372,8 @@ export function populateNpmCache(npmDir: string, path: string): Promise<void> {
     process.stdout.write(`${filePath}\n`);
     await mkdir(dirname(filePath), {recursive: true});
     if (/^application\/javascript(;|$)/i.test(response.headers.get("content-type")!)) {
-      await writeFile(filePath, rewriteNpmImports(await response.text(), path), "utf-8");
+      const servePath = `/_npm/${path}`;
+      await writeFile(filePath, rewriteNpmImports(await response.text(), servePath), "utf-8");
     } else {
       await writeFile(filePath, Buffer.from(await response.arrayBuffer()));
     }
