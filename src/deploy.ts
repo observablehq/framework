@@ -9,7 +9,7 @@ import type {Config} from "./config.js";
 import {CliError, isApiError, isHttpError} from "./error.js";
 import type {Logger, Writer} from "./logger.js";
 import {type AuthEffects, defaultEffects as defaultAuthEffects, formatUser, loginInner} from "./observableApiAuth.js";
-import {ObservableApiClient} from "./observableApiClient.js";
+import {ObservableApiClient, getObservableUiOrigin} from "./observableApiClient.js";
 import {
   type GetCurrentUserResponse,
   type GetDeployResponse,
@@ -60,7 +60,13 @@ const defaultEffects: DeployEffects = {
 };
 
 type DeployTargetInfo =
-  | {create: true; workspace: {id: string; login: string}; projectSlug: string; title: string}
+  | {
+      create: true;
+      workspace: {id: string; login: string};
+      projectSlug: string;
+      title: string;
+      accessLevel: "private" | "public";
+    }
   | {create: false; workspace: {id: string; login: string}; project: GetProjectResponse};
 
 /** Deploy a project to ObservableHQ */
@@ -183,6 +189,19 @@ export async function deploy(
 
   deployTarget ??= await promptDeployTarget(effects, apiClient, config, currentUser);
 
+  if (message === undefined) {
+    if (effects.isTty) {
+      const input = await clack.text({
+        message: "What changed in this deploy?",
+        placeholder: "Enter a deploy message (optional)"
+      });
+      if (clack.isCancel(input)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
+      message = input;
+    } else {
+      throw new CliError("Deploy message is required. Use -m or --message to pass it.", {print: true, exitCode: 1});
+    }
+  }
+
   const previousProjectId = deployConfig?.projectId;
   let targetDescription: string;
 
@@ -267,15 +286,6 @@ export async function deploy(
   });
 
   // Create the new deploy on the server
-  if (message === undefined) {
-    const input = await clack.text({
-      message: "What changed in this deploy?",
-      placeholder: "Enter a deploy message (optional)"
-    });
-    if (clack.isCancel(input)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
-    message = input;
-  }
-
   let deployId;
   try {
     deployId = await apiClient.postDeploy({projectId: deployTarget.project.id, message});
@@ -333,7 +343,13 @@ export async function deploy(
   if (previousProjectId && previousProjectId === deployTarget.project.id && typeof projectUpdates?.title === "string") {
     await apiClient.postEditProject(deployTarget.project.id, projectUpdates as PostEditProjectRequest);
   }
-  clack.outro(`Deployed project now visible at ${link(deployInfo.url)}`);
+  const accessMessage =
+    deployTarget.project.accessLevel === "public"
+      ? "visible publicly at"
+      : deployTarget.project.accessLevel === "private"
+      ? "visible to your workspace at"
+      : "visible at";
+  clack.outro(`Deployed project now ${accessMessage} ${link(deployInfo.url)}`);
   Telemetry.record({event: "deploy", step: "finish"});
 }
 
@@ -487,5 +503,24 @@ export async function promptDeployTarget(
   }
   projectSlug = projectSlugChoice;
 
-  return {create: true, workspace, projectSlug, title};
+  const accessLevel = await clack.select<{value: "public" | "private"; label: string}[], "public" | "private">({
+    message: "How do you want to share this project?",
+    options: [
+      {value: "public", label: "Public to the world"},
+      {value: "private", label: "Visible only to you (you can add others later)"}
+    ]
+  });
+  if (clack.isCancel(accessLevel)) {
+    throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
+  }
+  if (accessLevel === "private") {
+    clack.log.message(
+      wrapAnsi(
+        `To share with others visit ${link(`${getObservableUiOrigin()}projects/@${workspace.login}`)}`,
+        effects.outputColumns - 4
+      )
+    );
+  }
+
+  return {create: true, workspace, projectSlug, title, accessLevel};
 }

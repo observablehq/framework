@@ -106,7 +106,8 @@ class ObservableApiMock {
             slug: projectSlug,
             title,
             creator: {id: "user-id", login: "user-login"},
-            owner: {id: "workspace-id", login: "workspace-login"}
+            owner: {id: "workspace-id", login: "workspace-login"},
+            accessLevel: "public"
           } satisfies GetProjectResponse)
         : emptyErrorBody;
     const headers = authorizationHeader(status !== 401 && status !== 403);
@@ -140,7 +141,8 @@ class ObservableApiMock {
             slug,
             title: "Mock Project",
             owner,
-            creator
+            creator,
+            accessLevel: "private"
           } satisfies GetProjectResponse)
         : emptyErrorBody;
     const headers = authorizationHeader(status !== 403);
@@ -186,7 +188,13 @@ class ObservableApiMock {
     const response =
       status === 200
         ? JSON.stringify({
-            results: projects.map((p) => ({...p, creator, owner, title: p.title ?? "Mock Title"}))
+            results: projects.map((p) => ({
+              ...p,
+              creator,
+              owner,
+              title: p.title ?? "Mock Title",
+              accessLevel: "private"
+            }))
           } satisfies PaginatedList<GetProjectResponse>)
         : emptyErrorBody;
     const headers = authorizationHeader(status !== 403);

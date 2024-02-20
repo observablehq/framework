@@ -220,7 +220,12 @@ describe("deploy", () => {
       .start();
 
     const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, isTty: true});
-    effects.clack.inputs.push(null, DEPLOY_CONFIG.projectSlug, "fix some bugs");
+    effects.clack.inputs.push(
+      null, // create new project
+      DEPLOY_CONFIG.projectSlug, // set slug
+      "private", // access level
+      "fix some bugs" // deploy message
+    );
 
     await deploy(TEST_OPTIONS, effects);
 
@@ -487,6 +492,8 @@ describe("deploy", () => {
     const effects = new MockDeployEffects();
     effects.clack.inputs.push(null); // which project do you want to use?
     effects.clack.inputs.push("test-project"); // which slug do you want to use?
+    effects.clack.inputs.push("publicly"); // access level
+    effects.clack.inputs.push("added some bugs"); // what changed?
 
     try {
       await deploy(TEST_OPTIONS, effects);
@@ -570,7 +577,8 @@ describe("deploy", () => {
         })
         .start();
       const effects = new MockDeployEffects({deployConfig: oldDeployConfig, isTty: true});
-      effects.clack.inputs.push(false);
+      effects.clack.inputs.push("solved a problem with the data"); // deploy message
+      effects.clack.inputs.push(false); // override prompt
       try {
         await deploy(TEST_OPTIONS, effects);
         assert.fail("expected error");
@@ -593,7 +601,7 @@ describe("deploy", () => {
         .start();
       const effects = new MockDeployEffects({deployConfig: oldDeployConfig, isTty: false, debug: true});
       try {
-        await deploy(TEST_OPTIONS, effects);
+        await deploy({...TEST_OPTIONS, message: "optimized query"}, effects);
         assert.fail("expected error");
       } catch (error) {
         CliError.assert(error, {message: "Cancelling deploy due to misconfiguration."});
@@ -613,7 +621,8 @@ describe("deploy", () => {
         })
         .start();
       const effects = new MockDeployEffects({deployConfig, isTty: true});
-      effects.clack.inputs.push(false);
+      effects.clack.inputs.push("recreate project"); // deploy message
+      effects.clack.inputs.push(false); // do you want to continue? (override prompt)
       try {
         await deploy(TEST_OPTIONS, effects);
       } catch (error) {
@@ -679,7 +688,8 @@ describe("promptDeployTarget", () => {
     effects.clack.inputs = [
       workspace, // which workspace do you want to use?
       true, //
-      projectSlug // what slug do you want to use
+      projectSlug, // what slug do you want to use
+      "private" // what visibility do you want to use
     ];
     const api = new ObservableApiClient({apiKey: {key: validApiKey, source: "test"}});
     getCurrentObservableApi().handleGetWorkspaceProjects({workspaceLogin: workspace.login, projects: []}).start();
@@ -688,7 +698,8 @@ describe("promptDeployTarget", () => {
       create: true,
       projectSlug,
       title: "Mock BI",
-      workspace
+      workspace,
+      accessLevel: "private"
     });
   });
 });

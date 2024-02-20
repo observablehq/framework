@@ -221,6 +221,7 @@ export interface GetProjectResponse {
   title: string;
   owner: {id: string; login: string};
   creator: {id: string; login: string};
+  accessLevel: "private" | "public";
   // Available fields that we don't use
   // servingRoot: string | null;
 }
