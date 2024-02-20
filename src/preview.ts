@@ -118,9 +118,9 @@ export class PreviewServer {
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_npm/")) {
-        const npmDir = join(root, ".observablehq", "cache", "_npm");
-        await populateNpmCache(npmDir, pathname.slice("/_npm/".length));
-        send(req, pathname.slice("/_npm".length), {root: npmDir}).pipe(res);
+        const cacheDir = join(root, ".observablehq", "cache");
+        await populateNpmCache(cacheDir, pathname);
+        send(req, pathname, {root: cacheDir}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
         const path = pathname.slice("/_import".length);
         const filepath = join(root, path);

@@ -359,21 +359,21 @@ export function rewriteNpmImports(input: string, path: string): string {
 
 const npmRequests = new Map<string, Promise<void>>();
 
-export function populateNpmCache(npmDir: string, path: string): Promise<void> {
-  const filePath = join(npmDir, path);
+export function populateNpmCache(cacheDir: string, path: string): Promise<void> {
+  const filePath = join(cacheDir, path);
   if (existsSync(filePath)) return Promise.resolve();
   let promise = npmRequests.get(path);
   if (promise) return promise; // coalesce concurrent requests
   promise = (async function () {
-    const href = `https://cdn.jsdelivr.net/npm/${path.replace(/\+esm\.js$/, "+esm")}`;
-    process.stdout.write(`npm:${path} ${faint("→")} `);
+    const specifier = path.slice("/_npm/".length).replace(/\+esm\.js$/, "+esm");
+    const href = `https://cdn.jsdelivr.net/npm/${specifier}`;
+    process.stdout.write(`npm:${specifier} ${faint("→")} `);
     const response = await fetch(href);
     if (!response.ok) throw new Error(`unable to fetch: ${href}`);
     process.stdout.write(`${filePath}\n`);
     await mkdir(dirname(filePath), {recursive: true});
     if (/^application\/javascript(;|$)/i.test(response.headers.get("content-type")!)) {
-      const servePath = `/_npm/${path}`;
-      await writeFile(filePath, rewriteNpmImports(await response.text(), servePath), "utf-8");
+      await writeFile(filePath, rewriteNpmImports(await response.text(), path), "utf-8");
     } else {
       await writeFile(filePath, Buffer.from(await response.arrayBuffer()));
     }
