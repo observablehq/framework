@@ -1,3 +1,7 @@
+---
+keywords: charts, geojson, maps
+---
+
 # Observable Plot
 
 [Observable Plot](https://observablehq.com/plot/) is a “JavaScript library for visualizing tabular data, focused on accelerating exploratory data analysis. It has a concise, memorable, yet expressive interface, featuring scales and layered marks.” It’s the sister library to our other visualization library, [D3.js](./d3). Observable Plot is available by default as `Plot` in Markdown, but you can import it explicitly like so:

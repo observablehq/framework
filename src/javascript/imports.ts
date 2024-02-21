@@ -355,6 +355,7 @@ export async function resolveNpmImport(specifier: string): Promise<UrlPath> {
   if (name === "@duckdb/duckdb-wasm" && !range) range = "1.28.0"; // https://github.com/duckdb/duckdb-wasm/issues/1561
   if (name === "apache-arrow" && !range) range = "13.0.0"; // https://github.com/observablehq/framework/issues/750
   if (name === "parquet-wasm" && !range) range = "0.5.0"; // https://github.com/observablehq/framework/issues/733
+  if (name === "echarts" && !range) range = "5.4.3"; // https://github.com/observablehq/framework/pull/811
   try {
     return UrlPath(`https://cdn.jsdelivr.net/npm/${name}@${await resolveNpmVersion({name, range})}/${path}`);
   } catch {

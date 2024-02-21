@@ -128,11 +128,10 @@ try {
           ...CONFIG_OPTION,
           host: {
             type: "string",
-            default: process.env.HOSTNAME ?? "127.0.0.1"
+            default: "127.0.0.1"
           },
           port: {
-            type: "string",
-            default: process.env.PORT
+            type: "string"
           },
           open: {
             type: "boolean",
