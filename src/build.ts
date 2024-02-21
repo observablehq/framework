@@ -184,7 +184,7 @@ export async function build(
   }
 
   // Copy over imported local modules.
-  const importResolver = createImportResolver(root, "_import");
+  const importResolver = createImportResolver(root);
   for (const file of localImports) {
     const sourcePath = join(root, file);
     const outputPath = join("_import", file);
@@ -193,7 +193,7 @@ export async function build(
       continue;
     }
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-    const contents = await rewriteModule(await readFile(sourcePath, "utf-8"), outputPath, importResolver);
+    const contents = await rewriteModule(await readFile(sourcePath, "utf-8"), file, importResolver);
     await effects.writeFile(outputPath, contents);
   }
 

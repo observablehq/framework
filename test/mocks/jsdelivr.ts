@@ -31,13 +31,15 @@ export function mockJsDelivr() {
     for (const [name, version] of packages) {
       dataClient
         .intercept({path: `/v1/packages/npm/${name}/resolved`, method: "GET"})
-        .reply(200, {version}, {headers: {"content-type": "application/json; charset=utf-8"}});
+        .reply(200, {version}, {headers: {"content-type": "application/json; charset=utf-8"}})
+        .persist();
     }
     const cdnClient = agent.get("https://cdn.jsdelivr.net");
     for (const [name, version] of packages) {
       cdnClient
         .intercept({path: `/npm/${name}@${version}/+esm`, method: "GET"})
-        .reply(200, "", {headers: {"cache-control": "public, immutable", "content-type": "text/javascript; charset=utf-8"}}); // prettier-ignore
+        .reply(200, "", {headers: {"cache-control": "public, immutable", "content-type": "text/javascript; charset=utf-8"}})
+        .persist(); // prettier-ignore
     }
   });
 }

@@ -75,7 +75,7 @@ ${
         .filter((title): title is string => !!title)
         .join(" | ")}</title>\n`
     : ""
-}${await renderHead(parseResult, options, path, createImportResolver(root, "_import"))}${
+}${await renderHead(parseResult, options, path, createImportResolver(root))}${
     path === "/404"
       ? html.unsafe(`\n<script type="module">
 

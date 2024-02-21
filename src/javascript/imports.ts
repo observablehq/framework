@@ -182,7 +182,7 @@ export async function rewriteModule(input: string, path: string, resolver: Impor
       output.replaceLeft(
         node.source.start,
         node.source.end,
-        JSON.stringify(await resolver(path, getStringLiteralValue(node.source)))
+        JSON.stringify(await resolver(join("_import", path), getStringLiteralValue(node.source)))
       );
     }
   }
@@ -257,32 +257,39 @@ export async function rewriteImports(
   }
 }
 
+/**
+ * Resolves the given import specifier from the source file at the specified
+ * path, typically as a relative path starting with "./" or "../".
+ */
 export type ImportResolver = (path: string, specifier: string) => Promise<string>;
 
-export function createImportResolver(root: string, base: "." | "_import" = "."): ImportResolver {
+/**
+ * Returns an import resolver for the given source root.
+ */
+export function createImportResolver(root: string): ImportResolver {
   return async (path, specifier) => {
     return isLocalImport(specifier, path)
-      ? relativeUrl(path, resolvePath(base, path, resolveImportHash(root, path, specifier)))
+      ? relativeUrl(path, resolvePath("_import", path.replace(/^_import\//, ""), resolveImportHash(root, path.replace(/^_import\//, ""), specifier))) // prettier-ignore
       : specifier === "npm:@observablehq/runtime"
-      ? resolveBuiltin(base, path, "runtime.js")
+      ? relativeUrl(path, "_observablehq/runtime.js")
       : specifier === "npm:@observablehq/stdlib"
-      ? resolveBuiltin(base, path, "stdlib.js")
+      ? relativeUrl(path, "_observablehq/stdlib.js")
       : specifier === "npm:@observablehq/dot"
-      ? resolveBuiltin(base, path, "stdlib/dot.js") // TODO publish to npm
+      ? relativeUrl(path, "_observablehq/stdlib/dot.js") // TODO publish to npm
       : specifier === "npm:@observablehq/duckdb"
-      ? resolveBuiltin(base, path, "stdlib/duckdb.js") // TODO publish to npm
+      ? relativeUrl(path, "_observablehq/stdlib/duckdb.js") // TODO publish to npm
       : specifier === "npm:@observablehq/inputs"
-      ? resolveBuiltin(base, path, "stdlib/inputs.js") // TODO publish to npm
+      ? relativeUrl(path, "_observablehq/stdlib/inputs.js") // TODO publish to npm
       : specifier === "npm:@observablehq/mermaid"
-      ? resolveBuiltin(base, path, "stdlib/mermaid.js") // TODO publish to npm
+      ? relativeUrl(path, "_observablehq/stdlib/mermaid.js") // TODO publish to npm
       : specifier === "npm:@observablehq/tex"
-      ? resolveBuiltin(base, path, "stdlib/tex.js") // TODO publish to npm
+      ? relativeUrl(path, "_observablehq/stdlib/tex.js") // TODO publish to npm
       : specifier === "npm:@observablehq/sqlite"
-      ? resolveBuiltin(base, path, "stdlib/sqlite.js") // TODO publish to npm
+      ? relativeUrl(path, "_observablehq/stdlib/sqlite.js") // TODO publish to npm
       : specifier === "npm:@observablehq/xlsx"
-      ? resolveBuiltin(base, path, "stdlib/xlsx.js") // TODO publish to npm
+      ? relativeUrl(path, "_observablehq/stdlib/xlsx.js") // TODO publish to npm
       : specifier === "npm:@observablehq/zip"
-      ? resolveBuiltin(base, path, "stdlib/zip.js") // TODO publish to npm
+      ? relativeUrl(path, "_observablehq/stdlib/zip.js") // TODO publish to npm
       : specifier.startsWith("npm:")
       ? relativeUrl(path, await resolveNpmImport(specifier.slice("npm:".length)))
       : specifier;
@@ -551,10 +558,6 @@ export async function resolveModulePreloads(hrefs: Set<string>): Promise<void> {
  */
 export function resolveModuleIntegrity(href: string): string | undefined {
   return integrityCache.get(href);
-}
-
-function resolveBuiltin(base: "." | "_import", path: string, specifier: string): string {
-  return relativeUrl(join(base === "." ? "_import" : ".", path), join("_observablehq", specifier));
 }
 
 /**

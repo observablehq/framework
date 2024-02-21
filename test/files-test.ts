@@ -56,8 +56,11 @@ describe("visitMarkdownFiles(root)", () => {
   });
 });
 
-async function collect<T>(generator: AsyncGenerator<T>): Promise<T[]> {
-  const values: T[] = [];
-  for await (const value of generator) values.push(value);
+async function collect(generator: AsyncGenerator<string>): Promise<string[]> {
+  const values: string[] = [];
+  for await (const value of generator) {
+    if (value.startsWith(".observablehq/cache/")) continue;
+    values.push(value);
+  }
   return values;
 }
