@@ -61,6 +61,7 @@ async function render(parseResult: ParseResult, options: RenderOptions & RenderI
   const {root, base, path, pages, title, preview, search} = options;
   const sidebar = parseResult.data?.sidebar !== undefined ? Boolean(parseResult.data.sidebar) : options.sidebar;
   const toc = mergeToc(parseResult.data?.toc, options.toc);
+  const draft = Boolean(parseResult.data?.draft);
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -94,7 +95,7 @@ ${
     toc.show ? html`\n${renderToc(findHeaders(parseResult), toc.label)}` : ""
   }
 <div id="observablehq-center">${renderHeader(options, parseResult.data)}
-<main id="observablehq-main" class="observablehq">
+<main id="observablehq-main" class="observablehq${draft ? " observablehq-draft" : ""}">
 ${html.unsafe(parseResult.html)}</main>${renderFooter(path, options, parseResult.data)}
 </div>
 `);

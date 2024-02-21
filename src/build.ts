@@ -13,7 +13,7 @@ import {renderServerless} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
-import {faint} from "./tty.js";
+import {faint, yellow} from "./tty.js";
 import {resolvePath} from "./url.js";
 
 const EXTRA_FILES = new Map([
@@ -72,6 +72,10 @@ export async function build(
     effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
     const render = await renderServerless(sourcePath, {path, ...config});
+    if (render?.data?.draft) {
+      effects.logger.log(yellow("skipping [draft]"));
+      continue;
+    }
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
     files.push(...render.files.map(resolveFile));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));

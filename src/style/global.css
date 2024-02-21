@@ -276,3 +276,13 @@ a[href].observablehq-header-anchor {
 .muted {
   color: var(--theme-foreground-muted);
 }
+
+.observablehq-draft::before {
+  content: "DRAFT";
+  position: absolute;
+  top: -1rem;
+  right: 0;
+  font-size: 1.5rem;
+  font-family: var(--monospace);
+  color: var(--theme-foreground-focus);
+}

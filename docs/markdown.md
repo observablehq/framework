@@ -15,6 +15,13 @@ toc: false
 ---
 ```
 
+The front matter supports the following options:
+
+- **title** — the title, defaults to the (first) first-level heading of the page, if any
+- **toc** — if false, disables the [table of contents](./config#toc)
+- **index** — if [search](./search) is enabled, should this page be indexed (defaults to true for pages listed in the sidebar, and false for any other page)
+- **draft** — whether this page is a draft; drafts are rendered in preview but skipped during build and deploy; drafts are not included in the default sidebar.
+
 ## Headings
 
 ```md

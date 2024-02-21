@@ -36,6 +36,7 @@ export interface ParseResult {
   title: string | null;
   html: string;
   data: {[key: string]: any} | null;
+  draft?: true;
   files: FileReference[];
   imports: ImportReference[];
   pieces: HtmlPiece[];
@@ -435,6 +436,7 @@ export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptio
     html,
     data: isEmpty(parts.data) ? null : parts.data,
     title: parts.data?.title ?? findTitle(tokens) ?? null,
+    draft: parts.data?.draft,
     files: context.files,
     imports: context.imports,
     pieces: toParsePieces(context.pieces),
