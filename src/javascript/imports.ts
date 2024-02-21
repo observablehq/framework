@@ -343,9 +343,7 @@ export function findRelativeImports(input: string): Set<string> {
   function findRelativeImport(node: ImportNode | ExportNode) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
-      if (value.startsWith("./") || value.startsWith("../")) { // TODO leading /
-        imports.add(value);
-      }
+      if (isPathImport(value)) imports.add(value);
     }
   }
 

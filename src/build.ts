@@ -90,7 +90,9 @@ export async function build(
     }
   }
 
-  // Generate the client bundles.
+  // Generate the client bundles. TODO For any client bundles that have npm:
+  // imports, the paths need to be made relative, not starting with /_npm/; for
+  // example stdlib imports npm:apache-arrow.
   if (addPublic) {
     const bundles: [entry: string, name: string][] = [];
     bundles.push([clientEntry, "client.js"]);
@@ -182,7 +184,7 @@ export async function build(
   }
 
   // Copy over imported local modules.
-  const importResolver = createImportResolver(root);
+  const importResolver = createImportResolver(root, "_import");
   for (const file of localImports) {
     const sourcePath = join(root, file);
     const outputPath = join("_import", file);
@@ -191,7 +193,7 @@ export async function build(
       continue;
     }
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-    const contents = await rewriteModule(await readFile(sourcePath, "utf-8"), file, importResolver);
+    const contents = await rewriteModule(await readFile(sourcePath, "utf-8"), outputPath, importResolver);
     await effects.writeFile(outputPath, contents);
   }
 
