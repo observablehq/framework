@@ -519,12 +519,16 @@ const integrityCache = new Map<string, string>();
  * Given a set of resolved module specifiers (URLs) to preload, fetches any
  * externally-hosted modules to compute the transitively-imported modules; also
  * precomputes the subresource integrity hash for each fetched module.
+ *
+ * Note: mutates hrefs!
  */
 export async function resolveModulePreloads(hrefs: Set<string>): Promise<void> {
   let resolve: () => void;
   const visited = new Set<string>();
   const queue = new Set<Promise<void>>();
 
+  // TODO This doesn’t work anymore because npm dependencies now start with
+  // /npm/ rather than https:.
   for (const href of hrefs) {
     if (href.startsWith("https:")) {
       enqueue(href);
