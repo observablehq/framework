@@ -23,7 +23,10 @@ describe("build", async () => {
     const path = fileJoin(inputRoot, name);
     if (!statSync(path).isDirectory()) continue;
     const only = name.startsWith("only.");
-    const skip = name.startsWith("skip.");
+    const skip =
+      name.startsWith("skip.") ||
+      (name.endsWith(".posix") && process.platform === "win32") ||
+      (name.endsWith(".win32") && process.platform !== "win32");
     const outname = only || skip ? name.slice(5) : name;
     (only ? it.only : skip ? it.skip : it)(unFilePath(fileJoin(inputRoot, name)), async () => {
       const actualDir = fileJoin(outputRoot, `${outname}-changed`);

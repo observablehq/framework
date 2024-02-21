@@ -1,4 +1,5 @@
 import assert from "node:assert";
+import os from "node:os";
 import {InternSet, difference} from "d3-array";
 import {renameSync, unlinkSync, utimesSync, writeFileSync} from "../src/brandedFs.js";
 import {FilePath} from "../src/brandedPath.js";
@@ -35,7 +36,9 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
     }
   });
   it("watches a file within a static archive", async () => {
-    const [watcher, watches] = await useWatcher("test/input/build/archives", "zip.md", ["static/file.txt"]);
+    const [watcher, watches] = await useWatcher(`test/input/build/archives.${os.platform()}`, "zip.md", [
+      "static/file.txt"
+    ]);
     try {
       touch(FilePath("test/input/build/archives/static.zip"));
       assert.deepStrictEqual(await watches(), ["static/file.txt"]);
@@ -43,10 +46,14 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
       watcher.close();
     }
   });
-  it("watches a file within an archive created by a data loader", async () => {
-    const [watcher, watches] = await useWatcher("test/input/build/archives", "zip.md", ["dynamic/file.txt"]);
+  it("watches a file within an archive created by a data loader", async function () {
+    const platform = os.platform();
+    if (platform === "win32") this.skip(); // .sh loaders don't work on Windows
+    const [watcher, watches] = await useWatcher(`test/input/build/archives.${platform}`, "zip.md", [
+      "dynamic/file.txt"
+    ]);
     try {
-      touch(FilePath("test/input/build/archives/dynamic.zip.sh"));
+      touch(FilePath(`test/input/build/archives.${platform}/dynamic.zip.sh`));
       assert.deepStrictEqual(await watches(), ["dynamic/file.txt"]);
     } finally {
       watcher.close();
