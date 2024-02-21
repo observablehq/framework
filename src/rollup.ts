@@ -51,7 +51,7 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
           "process.env.OBSERVABLE_ORIGIN": JSON.stringify(String(getObservableUiOrigin()).replace(/\/$/, ""))
         }
       }),
-      importMetaResolve()
+      importMetaResolve(clientPath)
     ]
   });
   try {
@@ -111,13 +111,14 @@ async function resolveImport(source: string, specifier: string | AstNode): Promi
     : specifier === "npm:@observablehq/zip"
     ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/zip.js")), external: true} // TODO publish to npm
     : specifier.startsWith("npm:")
-    ? {id: relativeUrl(source, await resolveNpmImport(specifier.slice("npm:".length))), external: true}
+    ? {id: relativeUrl(source.replace(/^src\/client\//, "_observablehq/"), await resolveNpmImport(specifier.slice("npm:".length))), external: true} // prettier-ignore
     : source !== specifier && !isPathImport(specifier) && !BUNDLED_MODULES.includes(specifier) // TODO fix src/client/ replace
     ? {id: relativeUrl(source.replace(/^src\/client\//, "_observablehq/"), await resolveNpmImport(specifier)), external: true} // prettier-ignore
     : null;
 }
 
-function importMetaResolve(): Plugin {
+function importMetaResolve(clientPath: string): Plugin {
+  const sourcePath = clientPath.replace(/^src\/client\//, "_observablehq/");
   return {
     name: "resolve-import-meta-resolve",
     async transform(code) {
@@ -143,10 +144,11 @@ function importMetaResolve(): Plugin {
 
       const output = new Sourcemap(code);
       for (const node of resolves) {
-        const specifier = getStringLiteralValue(node.arguments[0]);
+        const source = node.arguments[0];
+        const specifier = getStringLiteralValue(source);
         if (specifier.startsWith("npm:")) {
-          const resolution = await resolveNpmImport(specifier.slice("npm:".length));
-          output.replaceLeft(node.start, node.end, JSON.stringify(resolution));
+          const resolution = relativeUrl(sourcePath, await resolveNpmImport(specifier.slice("npm:".length)));
+          output.replaceLeft(source.start, source.end, JSON.stringify(resolution));
         }
       }
 
