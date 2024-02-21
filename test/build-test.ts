@@ -12,7 +12,7 @@ const silentEffects = {
   output: {write() {}}
 };
 
-describe.only("build", async () => {
+describe("build", async () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   mockJsDelivr();
 
