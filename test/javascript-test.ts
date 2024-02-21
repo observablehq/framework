@@ -1,15 +1,14 @@
 import assert from "node:assert";
-import {readdirSync, statSync} from "node:fs";
-import {mkdir, readFile, unlink, writeFile} from "node:fs/promises";
-import {basename, join, resolve} from "node:path";
+import {mkdir, readFile, readdirSync, statSync, unlink, writeFile} from "../src/brandedFs.js";
+import {FilePath, fileBasename, fileJoin, fileResolve, unFilePath} from "../src/brandedPath.js";
 import {isEnoent} from "../src/error.js";
 import {transpileJavaScript} from "../src/javascript.js";
 import {renderDefineCell} from "../src/render.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
 
-function isJsFile(inputRoot: string, fileName: string) {
+function isJsFile(inputRoot: FilePath, fileName: FilePath) {
   if (!fileName.endsWith(".js")) return false;
-  const path = join(inputRoot, fileName);
+  const path = fileJoin(inputRoot, fileName);
   return statSync(path).isFile();
 }
 
@@ -18,19 +17,19 @@ function runTests({
   outputRoot,
   filter = () => true
 }: {
-  inputRoot: string;
-  outputRoot: string;
-  filter?: (name: string) => boolean;
+  inputRoot: FilePath;
+  outputRoot: FilePath;
+  filter?: (name: FilePath) => boolean;
 }) {
   for (const name of readdirSync(inputRoot)) {
     if (!isJsFile(inputRoot, name) || !filter(name)) continue;
     const only = name.startsWith("only.");
     const skip = name.startsWith("skip.");
     const outname = only || skip ? name.slice(5) : name;
-    const path = join(inputRoot, name);
-    (only ? it.only : skip ? it.skip : it)(path, async () => {
-      const outfile = resolve(outputRoot, `${basename(outname, ".js")}.js`);
-      const diffile = resolve(outputRoot, `${basename(outname, ".js")}-changed.js`);
+    const path = fileJoin(inputRoot, name);
+    (only ? it.only : skip ? it.skip : it)(unFilePath(path), async () => {
+      const outfile = fileResolve(outputRoot, `${fileBasename(outname, ".js")}.js`);
+      const diffile = fileResolve(outputRoot, `${fileBasename(outname, ".js")}-changed.js`);
       const {body, ...transpile} = transpileJavaScript(await readFile(path, "utf8"), {
         id: "0",
         root: inputRoot,
@@ -75,21 +74,21 @@ describe("transpileJavaScript(input, options)", () => {
   mockJsDelivr();
 
   runTests({
-    inputRoot: "test/input",
-    outputRoot: "test/output"
+    inputRoot: FilePath("test/input"),
+    outputRoot: FilePath("test/output")
   });
 
   runTests({
-    inputRoot: "test/input/imports",
-    outputRoot: "test/output/imports",
+    inputRoot: FilePath("test/input/imports"),
+    outputRoot: FilePath("test/output/imports"),
     filter: (name) => name.endsWith("-import.js")
   });
 
   it("trims leading and trailing newlines", async () => {
     const {body} = transpileJavaScript("\ntest\n", {
       id: "0",
-      root: "test/input",
-      sourcePath: "index.js",
+      root: FilePath("test/input"),
+      sourcePath: FilePath("index.js"),
       verbose: false
     });
     assert.strictEqual(await body(), "async (test,display) => {\ndisplay(await(\ntest\n))\n}");
@@ -106,8 +105,8 @@ describe("transpileJavaScript(input, options)", () => {
           } as string,
           {
             id: "0",
-            root: "test/input",
-            sourcePath: "index.js",
+            root: FilePath("test/input"),
+            sourcePath: FilePath("index.js"),
             verbose: false
           }
         ),
@@ -117,8 +116,8 @@ describe("transpileJavaScript(input, options)", () => {
   it("respects the sourceLine option", async () => {
     const {body} = transpileJavaScript("foo,", {
       id: "0",
-      root: "test/input",
-      sourcePath: "index.js",
+      root: FilePath("test/input"),
+      sourcePath: FilePath("index.js"),
       sourceLine: 12,
       inline: true,
       verbose: false

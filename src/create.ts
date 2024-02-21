@@ -1,13 +1,13 @@
 import {exec} from "node:child_process";
-import {accessSync, existsSync, readdirSync, statSync} from "node:fs";
-import {constants, copyFile, mkdir, readFile, readdir, stat, writeFile} from "node:fs/promises";
-import {basename, dirname, join, normalize, resolve} from "node:path";
 import {setTimeout as sleep} from "node:timers/promises";
 import {fileURLToPath} from "node:url";
 import {promisify} from "node:util";
 import * as clack from "@clack/prompts";
 import untildify from "untildify";
 import {version} from "../package.json";
+import {accessSync, existsSync, readdirSync, statSync} from "./brandedFs.js";
+import {constants, copyFile, mkdir, readFile, readdir, stat, writeFile} from "./brandedFs.js";
+import {FilePath, fileBasename, fileDirname, fileJoin, fileNormalize, fileResolve, unFilePath} from "./brandedPath.js";
 import type {ClackEffects} from "./clack.js";
 import {cyan, faint, inverse, link, reset} from "./tty.js";
 
@@ -15,9 +15,9 @@ export interface CreateEffects {
   clack: ClackEffects;
   sleep: (delay?: number) => Promise<void>;
   log(output: string): void;
-  mkdir(outputPath: string, options?: {recursive?: boolean}): Promise<void>;
-  copyFile(sourcePath: string, outputPath: string): Promise<void>;
-  writeFile(outputPath: string, contents: string): Promise<void>;
+  mkdir(outputPath: FilePath, options?: {recursive?: boolean}): Promise<void>;
+  copyFile(sourcePath: FilePath, outputPath: FilePath): Promise<void>;
+  writeFile(outputPath: FilePath, contents: string): Promise<void>;
 }
 
 const defaultEffects: CreateEffects = {
@@ -26,13 +26,13 @@ const defaultEffects: CreateEffects = {
   log(output: string): void {
     console.log(output);
   },
-  async mkdir(outputPath: string, options): Promise<void> {
+  async mkdir(outputPath: FilePath, options): Promise<void> {
     await mkdir(outputPath, options);
   },
-  async copyFile(sourcePath: string, outputPath: string): Promise<void> {
+  async copyFile(sourcePath: FilePath, outputPath: FilePath): Promise<void> {
     await copyFile(sourcePath, outputPath);
   },
-  async writeFile(outputPath: string, contents: string): Promise<void> {
+  async writeFile(outputPath: FilePath, contents: string): Promise<void> {
     await writeFile(outputPath, contents);
   }
 };
@@ -46,23 +46,25 @@ const defaultEffects: CreateEffects = {
 export async function create(options = {}, effects: CreateEffects = defaultEffects): Promise<void> {
   const {clack} = effects;
   clack.intro(`${inverse(" observable create ")} ${faint(`v${version}`)}`);
-  const defaultRootPath = "./hello-framework";
+  const defaultRootPath = FilePath("./hello-framework");
   const defaultRootPathError = validateRootPath(defaultRootPath);
   await clack.group(
     {
       rootPath: () =>
         clack.text({
           message: "Where to create your project?",
-          placeholder: defaultRootPath,
-          defaultValue: defaultRootPathError ? undefined : defaultRootPath,
-          validate: (input) => validateRootPath(input, defaultRootPathError)
+          placeholder: unFilePath(defaultRootPath),
+          defaultValue: defaultRootPathError ? undefined : unFilePath(defaultRootPath),
+          validate: (input) => validateRootPath(FilePath(input), defaultRootPathError)
         }),
-      projectTitle: ({results: {rootPath}}) =>
+      projectTitle: ({results: {rootPath: rootPathStr}}) => {
+        const rootPath = FilePath(rootPathStr!);
         clack.text({
           message: "What to title your project?",
           placeholder: inferTitle(rootPath!),
           defaultValue: inferTitle(rootPath!)
-        }),
+        });
+      },
       includeSampleFiles: () =>
         clack.select({
           message: "Include sample files to help you get started?",
@@ -87,17 +89,16 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
           message: "Initialize git repository?"
         }),
       installing: async ({results: {rootPath, projectTitle, includeSampleFiles, packageManager, initializeGit}}) => {
-        rootPath = untildify(rootPath!);
         const s = clack.spinner();
         s.start("Copying template files");
         const template = includeSampleFiles ? "default" : "empty";
-        const templateDir = resolve(fileURLToPath(import.meta.url), "..", "..", "templates", template);
+        const templateDir = fileResolve(fileURLToPath(import.meta.url), "..", "..", "templates", template);
         const runCommand = packageManager === "yarn" ? "yarn" : `${packageManager ?? "npm"} run`;
         const installCommand = `${packageManager ?? "npm"} install`;
         await effects.sleep(1000);
         await recursiveCopyTemplate(
           templateDir,
-          rootPath!,
+          FilePath(untildify(rootPath!)),
           {
             runCommand,
             installCommand,
@@ -133,9 +134,9 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
   );
 }
 
-function validateRootPath(rootPath: string, defaultError?: string): string | undefined {
-  if (rootPath === "") return defaultError; // accept default value
-  rootPath = normalize(rootPath);
+function validateRootPath(rootPath: FilePath, defaultError?: string): string | undefined {
+  if (rootPath === FilePath("")) return defaultError; // accept default value
+  rootPath = fileNormalize(rootPath);
   if (!canWriteRecursive(rootPath)) return "Path is not writable.";
   if (!existsSync(rootPath)) return;
   if (!statSync(rootPath).isDirectory()) return "File already exists.";
@@ -143,14 +144,14 @@ function validateRootPath(rootPath: string, defaultError?: string): string | und
   if (readdirSync(rootPath).length !== 0) return "Directory is not empty.";
 }
 
-function inferTitle(rootPath: string): string {
-  return basename(rootPath!)
+function inferTitle(rootPath: FilePath): string {
+  return fileBasename(rootPath!)
     .split(/[-_\s]/)
     .map(([c, ...rest]) => c.toUpperCase() + rest.join(""))
     .join(" ");
 }
 
-function canWrite(path: string): boolean {
+function canWrite(path: FilePath): boolean {
   try {
     accessSync(path, constants.W_OK);
     return true;
@@ -159,9 +160,9 @@ function canWrite(path: string): boolean {
   }
 }
 
-function canWriteRecursive(path: string): boolean {
+function canWriteRecursive(path: FilePath): boolean {
   while (true) {
-    const dir = dirname(path);
+    const dir = fileDirname(path);
     if (canWrite(dir)) return true;
     if (dir === path) break;
     path = dir;
@@ -170,15 +171,15 @@ function canWriteRecursive(path: string): boolean {
 }
 
 async function recursiveCopyTemplate(
-  inputRoot: string,
-  outputRoot: string,
+  inputRoot: FilePath,
+  outputRoot: FilePath,
   context: Record<string, string>,
   effects: CreateEffects,
-  stepPath: string = "."
+  stepPath: FilePath = FilePath(".")
 ) {
-  const templatePath = join(inputRoot, stepPath);
+  const templatePath = fileJoin(inputRoot, stepPath);
   const templateStat = await stat(templatePath);
-  let outputPath = join(outputRoot, stepPath);
+  let outputPath = fileJoin(outputRoot, stepPath);
   if (templateStat.isDirectory()) {
     try {
       await effects.mkdir(outputPath, {recursive: true});
@@ -186,7 +187,7 @@ async function recursiveCopyTemplate(
       // that's ok
     }
     for (const entry of await readdir(templatePath)) {
-      await recursiveCopyTemplate(inputRoot, outputRoot, context, effects, join(stepPath, entry));
+      await recursiveCopyTemplate(inputRoot, outputRoot, context, effects, fileJoin(stepPath, entry));
     }
   } else {
     if (templatePath.endsWith(".DS_Store")) return;

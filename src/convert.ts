@@ -1,8 +1,8 @@
-import {existsSync} from "node:fs";
-import {utimes, writeFile} from "node:fs/promises";
-import {join} from "node:path";
 import * as clack from "@clack/prompts";
 import wrapAnsi from "wrap-ansi";
+import {utimes, writeFile} from "./brandedFs.js";
+import {existsSync} from "./brandedFs.js";
+import {type FilePath, fileJoin} from "./brandedPath.js";
 import type {ClackEffects} from "./clack.js";
 import {CliError} from "./error.js";
 import {prepareOutput} from "./files.js";
@@ -11,25 +11,25 @@ import {type TtyEffects, bold, cyan, faint, inverse, link, reset, defaultEffects
 
 export interface ConvertEffects extends TtyEffects {
   clack: ClackEffects;
-  prepareOutput(outputPath: string): Promise<void>;
-  existsSync(outputPath: string): boolean;
-  writeFile(outputPath: string, contents: Buffer | string): Promise<void>;
-  touch(outputPath: string, date: Date | string | number): Promise<void>;
+  prepareOutput(outputPath: FilePath): Promise<void>;
+  existsSync(outputPath: FilePath): boolean;
+  writeFile(outputPath: FilePath, contents: Buffer | string): Promise<void>;
+  touch(outputPath: FilePath, date: Date | string | number): Promise<void>;
 }
 
 const defaultEffects: ConvertEffects = {
   ...ttyEffects,
   clack,
-  async prepareOutput(outputPath: string): Promise<void> {
+  async prepareOutput(outputPath: FilePath): Promise<void> {
     await prepareOutput(outputPath);
   },
-  existsSync(outputPath: string): boolean {
+  existsSync(outputPath: FilePath): boolean {
     return existsSync(outputPath);
   },
-  async writeFile(outputPath: string, contents: Buffer | string): Promise<void> {
+  async writeFile(outputPath: FilePath, contents: Buffer | string): Promise<void> {
     await writeFile(outputPath, contents);
   },
-  async touch(outputPath: string, date: Date | string | number): Promise<void> {
+  async touch(outputPath: FilePath, date: Date | string | number): Promise<void> {
     await utimes(outputPath, (date = new Date(date)), date);
   }
 };
@@ -47,7 +47,7 @@ export async function convert(
     let s = clack.spinner();
     const url = resolveInput(input);
     const name = inferFileName(url);
-    const path = join(output, name);
+    const path = fileJoin(output, name);
     if (await maybeFetch(path, force, effects)) {
       s.start(`Downloading ${bold(path)}`);
       const response = await fetch(url);
@@ -60,7 +60,7 @@ export async function convert(
       n++;
       if (includeFiles) {
         for (const file of files) {
-          const path = join(output, file.name);
+          const path = fileJoin(output, file.name);
           if (await maybeFetch(path, force, effects)) {
             start = Date.now();
             s = clack.spinner();
@@ -94,7 +94,7 @@ export async function convert(
   );
 }
 
-async function maybeFetch(path: string, force: boolean, effects: ConvertEffects): Promise<boolean> {
+async function maybeFetch(path: FilePath, force: boolean, effects: ConvertEffects): Promise<boolean> {
   const {clack} = effects;
   if (effects.existsSync(path) && !force) {
     const choice = await clack.confirm({message: `${bold(path)} already exists; replace?`, initialValue: false});

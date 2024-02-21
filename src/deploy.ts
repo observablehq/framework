@@ -1,6 +1,7 @@
-import {join} from "node:path";
 import * as clack from "@clack/prompts";
 import wrapAnsi from "wrap-ansi";
+import {existsSync, readFile} from "./brandedFs.js";
+import {type FilePath, fileJoin, filePathToUrlPath} from "./brandedPath.js";
 import type {BuildEffects} from "./build.js";
 import {build} from "./build.js";
 import type {ClackEffects} from "./clack.js";
@@ -39,8 +40,8 @@ export interface DeployOptions {
 }
 
 export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
-  getDeployConfig: (sourceRoot: string) => Promise<DeployConfig>;
-  setDeployConfig: (sourceRoot: string, config: DeployConfig) => Promise<void>;
+  getDeployConfig: (sourceRoot: FilePath) => Promise<DeployConfig>;
+  setDeployConfig: (sourceRoot: FilePath, config: DeployConfig) => Promise<void>;
   clack: ClackEffects;
   logger: Logger;
   input: NodeJS.ReadableStream;
@@ -78,14 +79,16 @@ export async function deploy(
 
   if (deployConfig.workspaceLogin && !deployConfig.workspaceLogin.match(/^@?[a-z0-9-]+$/)) {
     throw new CliError(
-      `Found invalid workspace login in ${join(config.root, ".observablehq", "deploy.json")}: ${
+      `Found invalid workspace login in ${fileJoin(config.root, ".observablehq", "deploy.json")}: ${
         deployConfig.workspaceLogin
       }.`
     );
   }
   if (deployConfig.projectSlug && !deployConfig.projectSlug.match(/^[a-z0-9-]+$/)) {
     throw new CliError(
-      `Found invalid project slug in ${join(config.root, ".observablehq", "deploy.json")}: ${deployConfig.projectSlug}.`
+      `Found invalid project slug in ${fileJoin(config.root, ".observablehq", "deploy.json")}: ${
+        deployConfig.projectSlug
+      }.`
     );
   }
 
@@ -348,10 +351,10 @@ class DeployBuildEffects implements BuildEffects {
     this.logger = effects.logger;
     this.output = effects.output;
   }
-  async copyFile(sourcePath: string, outputPath: string) {
+  async copyFile(sourcePath: FilePath, outputPath: FilePath) {
     this.logger.log(outputPath);
     try {
-      await this.apiClient.postDeployFile(this.deployId, sourcePath, outputPath);
+      await this.apiClient.postDeployFile(this.deployId, sourcePath, filePathToUrlPath(outputPath));
     } catch (error) {
       if (isApiError(error) && error.details.errors.some((e) => e.code === "FILE_QUOTA_EXCEEDED")) {
         throw new CliError("You have reached the total file size limit.", {cause: error});
@@ -364,16 +367,24 @@ class DeployBuildEffects implements BuildEffects {
       throw error;
     }
   }
-  async writeFile(outputPath: string, content: Buffer | string) {
+  async writeFile(outputPath: FilePath, content: Buffer | string) {
     this.logger.log(outputPath);
     try {
-      await this.apiClient.postDeployFileContents(this.deployId, content, outputPath);
+      await this.apiClient.postDeployFileContents(this.deployId, content, filePathToUrlPath(outputPath));
     } catch (error) {
       if (isApiError(error) && error.details.errors.some((e) => e.code === "FILE_QUOTA_EXCEEDED")) {
         throw new CliError("You have reached the total file size limit.", {cause: error});
       }
       throw error;
     }
+  }
+  existsSync(path: FilePath) {
+    return existsSync(path);
+  }
+  readFile(path: FilePath): Promise<Buffer>;
+  readFile(path: FilePath, encoding: BufferEncoding): Promise<string>;
+  readFile(path: FilePath, encoding?: BufferEncoding): Promise<string | Buffer> {
+    return encoding ? readFile(path, encoding) : readFile(path);
   }
 }
 

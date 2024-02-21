@@ -1,10 +1,11 @@
 import {createHash} from "node:crypto";
-import {readFileSync} from "node:fs";
-import {join} from "node:path";
 import {Parser} from "acorn";
 import type {Identifier, Node, Program} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression} from "acorn";
 import {simple} from "acorn-walk";
+import {readFileSync} from "../brandedFs.js";
+import {FilePath} from "../brandedPath.js";
+import {UrlPath, fileJoin, filePathToUrlPath, unUrlPath, urlJoin, urlPathToFilePath} from "../brandedPath.js";
 import {isEnoent} from "../error.js";
 import {type Feature, type ImportReference, type JavaScriptNode} from "../javascript.js";
 import {parseOptions} from "../javascript.js";
@@ -55,10 +56,10 @@ export function findExports(body: Node): ExportNode[] {
  * Recursively processes any imported local ES modules. The returned transitive
  * import paths are relative to the given source path.
  */
-export function findImports(body: Node, root: string, path: string): ImportsAndFeatures {
+export function findImports(body: Node, root: FilePath, path: FilePath): ImportsAndFeatures {
   const imports: ImportReference[] = [];
   const features: Feature[] = [];
-  const paths: string[] = [];
+  const paths: UrlPath[] = [];
 
   simple(body, {
     ImportDeclaration: findImport,
@@ -69,9 +70,9 @@ export function findImports(body: Node, root: string, path: string): ImportsAndF
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
       if (isLocalImport(value, path)) {
-        paths.push(resolvePath(path, decodeURIComponent(value)));
+        paths.push(filePathToUrlPath(resolvePath(path, UrlPath(decodeURIComponent(unUrlPath(value))))));
       } else {
-        imports.push({name: value, type: "global"});
+        imports.push({name: UrlPath(value), type: "global"});
       }
     }
   }
@@ -84,7 +85,7 @@ export function findImports(body: Node, root: string, path: string): ImportsAndF
   // Make all local paths relative to the source path.
   for (const i of imports) {
     if (i.type === "local") {
-      i.name = relativeUrl(path, i.name);
+      i.name = relativeUrl(filePathToUrlPath(path), UrlPath(i.name));
     }
   }
 
@@ -97,15 +98,15 @@ export function findImports(body: Node, root: string, path: string): ImportsAndF
  * appends to imports. The paths here are always relative to the root (unlike
  * findImports above!).
  */
-export function parseLocalImports(root: string, paths: string[]): ImportsAndFeatures {
+export function parseLocalImports(root: FilePath, urlPaths: UrlPath[]): ImportsAndFeatures {
   const imports: ImportReference[] = [];
   const features: Feature[] = [];
-  const set = new Set(paths);
+  const map = new Map<UrlPath, FilePath>(urlPaths.map((urlPath) => [urlPath, urlPathToFilePath(urlPath)]));
 
-  for (const path of set) {
-    imports.push({type: "local", name: path});
+  for (const [urlPath, filePath] of map.entries()) {
+    imports.push({type: "local", name: urlPath});
     try {
-      const input = readFileSync(join(root, path), "utf-8");
+      const input = readFileSync(fileJoin(root, filePath), "utf-8");
       const body = Parser.parse(input, parseOptions);
 
       simple(
@@ -117,22 +118,23 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFeat
           ExportNamedDeclaration: findImport
         },
         undefined,
-        path
+        filePath
       );
 
-      features.push(...findImportFeatures(body, path, input));
+      features.push(...findImportFeatures(body, urlPath, input));
     } catch (error) {
       if (!isEnoent(error) && !(error instanceof SyntaxError)) throw error;
     }
   }
 
-  function findImport(node: ImportNode | ExportNode, path: string) {
+  function findImport(node: ImportNode | ExportNode, path: FilePath) {
     if (isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
       if (isLocalImport(value, path)) {
-        set.add(resolvePath(path, value));
+        const filePath = resolvePath(path, UrlPath(value));
+        map.set(filePathToUrlPath(filePath), filePath);
       } else {
-        imports.push({name: value, type: "global"});
+        imports.push({name: UrlPath(value), type: "global"});
         // non-local imports don't need to be traversed
       }
     }
@@ -141,14 +143,14 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFeat
   return {imports, features};
 }
 
-export function findImportFeatures(node: Node, path: string, input: string): Feature[] {
+export function findImportFeatures(node: Node, path: UrlPath, input: string): Feature[] {
   const featureMap = getFeatureReferenceMap(node);
   const features: Feature[] = [];
 
   simple(node, {
     CallExpression(node) {
       const type = featureMap.get(node.callee as Identifier);
-      if (type) features.push(getFeature(type, node, path, input));
+      if (type) features.push(getFeature(type, node, urlPathToFilePath(path), input));
     }
   });
 
@@ -156,7 +158,7 @@ export function findImportFeatures(node: Node, path: string, input: string): Fea
 }
 
 /** Rewrites import specifiers and FileAttachment calls in the specified ES module source. */
-export async function rewriteModule(input: string, path: string, resolver: ImportResolver): Promise<string> {
+export async function rewriteModule(input: string, path: FilePath, resolver: ImportResolver): Promise<string> {
   const body = Parser.parse(input, parseOptions);
   const featureMap = getFeatureReferenceMap(body);
   const output = new Sourcemap(input);
@@ -173,7 +175,9 @@ export async function rewriteModule(input: string, path: string, resolver: Impor
         const feature = getFeature(type, node, path, input); // validate syntax
         if (feature.type === "FileAttachment") {
           const arg = node.arguments[0];
-          const result = JSON.stringify(relativeUrl(join("_import", path), feature.name));
+          const result = JSON.stringify(
+            relativeUrl(urlJoin("_import", filePathToUrlPath(path)), UrlPath(feature.name))
+          );
           output.replaceLeft(arg.start, arg.end, `${result}, import.meta.url`);
         }
       }
@@ -218,7 +222,7 @@ export function findImportDeclarations(cell: JavaScriptNode): ImportDeclaration[
 export async function rewriteImports(
   output: Sourcemap,
   cell: JavaScriptNode,
-  sourcePath: string,
+  sourcePath: FilePath,
   resolver: ImportResolver
 ): Promise<void> {
   const expressions: ImportExpression[] = [];
@@ -264,35 +268,39 @@ export async function rewriteImports(
   }
 }
 
-export type ImportResolver = (path: string, specifier: string) => Promise<string>;
+export type ImportResolver = (path: FilePath, specifier: string) => Promise<UrlPath>;
 
-export function createImportResolver(root: string, base: "." | "_import" = "."): ImportResolver {
+export function createImportResolver(root: FilePath, base: "." | "_import" = "."): ImportResolver {
   return async (path, specifier) => {
+    const urlPath = filePathToUrlPath(path);
     return isLocalImport(specifier, path)
-      ? relativeUrl(path, resolvePath(base, path, resolveImportHash(root, path, specifier)))
+      ? relativeUrl(
+          urlPath,
+          filePathToUrlPath(resolvePath(FilePath(base), path, resolveImportHash(root, urlPath, specifier)))
+        )
       : specifier === "npm:@observablehq/runtime"
-      ? resolveBuiltin(base, path, "runtime.js")
+      ? resolveBuiltin(base, urlPath, "runtime.js")
       : specifier === "npm:@observablehq/stdlib"
-      ? resolveBuiltin(base, path, "stdlib.js")
+      ? resolveBuiltin(base, urlPath, "stdlib.js")
       : specifier === "npm:@observablehq/dot"
-      ? resolveBuiltin(base, path, "stdlib/dot.js") // TODO publish to npm
+      ? resolveBuiltin(base, urlPath, "stdlib/dot.js") // TODO publish to npm
       : specifier === "npm:@observablehq/duckdb"
-      ? resolveBuiltin(base, path, "stdlib/duckdb.js") // TODO publish to npm
+      ? resolveBuiltin(base, urlPath, "stdlib/duckdb.js") // TODO publish to npm
       : specifier === "npm:@observablehq/inputs"
-      ? resolveBuiltin(base, path, "stdlib/inputs.js") // TODO publish to npm
+      ? resolveBuiltin(base, urlPath, "stdlib/inputs.js") // TODO publish to npm
       : specifier === "npm:@observablehq/mermaid"
-      ? resolveBuiltin(base, path, "stdlib/mermaid.js") // TODO publish to npm
+      ? resolveBuiltin(base, urlPath, "stdlib/mermaid.js") // TODO publish to npm
       : specifier === "npm:@observablehq/tex"
-      ? resolveBuiltin(base, path, "stdlib/tex.js") // TODO publish to npm
+      ? resolveBuiltin(base, urlPath, "stdlib/tex.js") // TODO publish to npm
       : specifier === "npm:@observablehq/sqlite"
-      ? resolveBuiltin(base, path, "stdlib/sqlite.js") // TODO publish to npm
+      ? resolveBuiltin(base, urlPath, "stdlib/sqlite.js") // TODO publish to npm
       : specifier === "npm:@observablehq/xlsx"
-      ? resolveBuiltin(base, path, "stdlib/xlsx.js") // TODO publish to npm
+      ? resolveBuiltin(base, urlPath, "stdlib/xlsx.js") // TODO publish to npm
       : specifier === "npm:@observablehq/zip"
-      ? resolveBuiltin(base, path, "stdlib/zip.js") // TODO publish to npm
+      ? resolveBuiltin(base, urlPath, "stdlib/zip.js") // TODO publish to npm
       : specifier.startsWith("npm:")
       ? await resolveNpmImport(specifier.slice("npm:".length))
-      : specifier;
+      : UrlPath(specifier);
   };
 }
 
@@ -313,14 +321,14 @@ function formatNpmSpecifier({name, range, path}: {name: string; range?: string; 
 
 // Like import, don’t fetch the same package more than once to ensure
 // consistency; restart the server if you want to clear the cache.
-const fetchCache = new Map<string, Promise<{headers: Headers; body: any}>>();
+const fetchCache = new Map<UrlPath, Promise<{headers: Headers; body: any}>>();
 
-async function cachedFetch(href: string): Promise<{headers: Headers; body: any}> {
+async function cachedFetch(href: UrlPath): Promise<{headers: Headers; body: any}> {
   if (!remoteModulePreloadEnabled) throw new Error("remote module preload is not enabled");
   let promise = fetchCache.get(href);
   if (promise) return promise;
   promise = (async () => {
-    const response = await fetch(href);
+    const response = await fetch(unUrlPath(href));
     if (!response.ok) throw new Error(`unable to fetch: ${href}`);
     const json = /^application\/json(;|$)/.test(response.headers.get("content-type")!);
     const body = await (json ? response.json() : response.text());
@@ -336,24 +344,25 @@ async function resolveNpmVersion({name, range}: {name: string; range?: string}):
   if (range && /^\d+\.\d+\.\d+([-+].*)?$/.test(range)) return range; // exact version specified
   const specifier = formatNpmSpecifier({name, range});
   const search = range ? `?specifier=${range}` : "";
-  const {version} = (await cachedFetch(`https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`)).body;
+  const {version} = (await cachedFetch(UrlPath(`https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`)))
+    .body;
   if (!version) throw new Error(`unable to resolve version: ${specifier}`);
   return version;
 }
 
-export async function resolveNpmImport(specifier: string): Promise<string> {
+export async function resolveNpmImport(specifier: string): Promise<UrlPath> {
   let {name, range, path = "+esm"} = parseNpmSpecifier(specifier); // eslint-disable-line prefer-const
   if (name === "@duckdb/duckdb-wasm" && !range) range = "1.28.0"; // https://github.com/duckdb/duckdb-wasm/issues/1561
   if (name === "apache-arrow" && !range) range = "13.0.0"; // https://github.com/observablehq/framework/issues/750
   if (name === "parquet-wasm" && !range) range = "0.5.0"; // https://github.com/observablehq/framework/issues/733
   try {
-    return `https://cdn.jsdelivr.net/npm/${name}@${await resolveNpmVersion({name, range})}/${path}`;
+    return UrlPath(`https://cdn.jsdelivr.net/npm/${name}@${await resolveNpmVersion({name, range})}/${path}`);
   } catch {
-    return `https://cdn.jsdelivr.net/npm/${name}${range ? `@${range}` : ""}/${path}`;
+    return UrlPath(`https://cdn.jsdelivr.net/npm/${name}${range ? `@${range}` : ""}/${path}`);
   }
 }
 
-const preloadCache = new Map<string, Promise<Set<string> | undefined>>();
+const preloadCache = new Map<UrlPath, Promise<Set<UrlPath> | undefined>>();
 
 /**
  * Fetches the module at the specified URL and returns a promise to any
@@ -362,7 +371,7 @@ const preloadCache = new Map<string, Promise<Set<string> | undefined>>();
  * are considered, and the fetched module must be have immutable public caching;
  * dynamic imports may not be used and hence are not preloaded.
  */
-async function fetchModulePreloads(href: string): Promise<Set<string> | undefined> {
+async function fetchModulePreloads(href: UrlPath): Promise<Set<UrlPath> | undefined> {
   let promise = preloadCache.get(href);
   if (promise) return promise;
   promise = (async () => {
@@ -375,7 +384,7 @@ async function fetchModulePreloads(href: string): Promise<Set<string> | undefine
     const {headers, body} = response;
     const cache = headers.get("cache-control")?.split(/\s*,\s*/);
     if (!cache?.some((c) => c === "immutable") || !cache?.some((c) => c === "public")) return;
-    const imports = new Set<string>();
+    const imports = new Set<UrlPath>();
     let program: Program;
     try {
       program = Parser.parse(body, parseOptions);
@@ -391,7 +400,7 @@ async function fetchModulePreloads(href: string): Promise<Set<string> | undefine
     function findImport(node: ImportNode | ExportNode) {
       if (isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
-        if (isPathImport(value)) imports.add(String(new URL(value, href)));
+        if (isPathImport(value)) imports.add(UrlPath(String(new URL(value, unUrlPath(href)))));
       }
     }
     // TODO integrityCache.set(href, `sha384-${createHash("sha384").update(body).digest("base64")}`);
@@ -409,10 +418,10 @@ const integrityCache = new Map<string, string>();
  * externally-hosted modules to compute the transitively-imported modules; also
  * precomputes the subresource integrity hash for each fetched module.
  */
-export async function resolveModulePreloads(hrefs: Set<string>): Promise<void> {
+export async function resolveModulePreloads(hrefs: Set<UrlPath>): Promise<void> {
   if (!remoteModulePreloadEnabled) return;
   let resolve: () => void;
-  const visited = new Set<string>();
+  const visited = new Set<UrlPath>();
   const queue = new Set<Promise<void>>();
 
   for (const href of hrefs) {
@@ -421,7 +430,7 @@ export async function resolveModulePreloads(hrefs: Set<string>): Promise<void> {
     }
   }
 
-  function enqueue(href: string) {
+  function enqueue(href: UrlPath) {
     if (visited.has(href)) return;
     visited.add(href);
     const promise = (async () => {
@@ -450,16 +459,21 @@ export function resolveModuleIntegrity(href: string): string | undefined {
   return integrityCache.get(href);
 }
 
-function resolveBuiltin(base: "." | "_import", path: string, specifier: string): string {
-  return relativeUrl(join(base === "." ? "_import" : ".", path), join("_observablehq", specifier));
+function resolveBuiltin(base: "." | "_import", path: UrlPath, specifier: string): UrlPath {
+  return relativeUrl(urlJoin(base === "." ? "_import" : ".", path), urlJoin("_observablehq", specifier));
 }
 
 /**
  * Given the specified local import, applies the ?sha query string based on the
  * content hash of the imported module and its transitively imported modules.
  */
-function resolveImportHash(root: string, path: string, specifier: string): string {
-  return `${specifier}?sha=${getModuleHash(root, resolvePath(path, specifier))}`;
+function resolveImportHash(root: FilePath, path: UrlPath, specifier: string): UrlPath {
+  return UrlPath(
+    `${specifier}?sha=${getModuleHash(
+      root,
+      filePathToUrlPath(resolvePath(urlPathToFilePath(path), UrlPath(specifier)))
+    )}`
+  );
 }
 
 /**
@@ -467,10 +481,11 @@ function resolveImportHash(root: string, path: string, specifier: string): strin
  * given source root. This involves parsing the specified module to process
  * transitive imports.
  */
-function getModuleHash(root: string, path: string): string {
+function getModuleHash(root: FilePath, path: UrlPath): string {
   const hash = createHash("sha256");
+  const filePath = urlPathToFilePath(path);
   try {
-    hash.update(readFileSync(join(root, path), "utf-8"));
+    hash.update(readFileSync(fileJoin(root, filePath), "utf-8"));
   } catch (error) {
     if (!isEnoent(error)) throw error;
   }
@@ -479,7 +494,7 @@ function getModuleHash(root: string, path: string): string {
   for (const i of [...imports, ...features]) {
     if (i.type === "local" || i.type === "FileAttachment") {
       try {
-        hash.update(readFileSync(join(root, i.name), "utf-8"));
+        hash.update(readFileSync(fileJoin(root, urlPathToFilePath(UrlPath(i.name))), "utf-8"));
       } catch (error) {
         if (!isEnoent(error)) throw error;
         continue;
@@ -501,8 +516,8 @@ export function isPathImport(specifier: string): boolean {
   return ["./", "../", "/"].some((prefix) => specifier.startsWith(prefix));
 }
 
-export function isLocalImport(specifier: string, path: string): boolean {
-  return isPathImport(specifier) && !resolvePath(path, specifier).startsWith("../");
+export function isLocalImport(specifier: string, path: FilePath): boolean {
+  return isPathImport(specifier) && !resolvePath(path, UrlPath(specifier)).startsWith("../");
 }
 
 function isNamespaceSpecifier(node) {

@@ -1,5 +1,6 @@
 import {Parser, tokTypes} from "acorn";
 import type {Expression, Identifier, Node, Options, Program} from "acorn";
+import {type FilePath, type UrlPath, filePathToUrlPath} from "./brandedPath.js";
 import {fileReference} from "./files.js";
 import {findAssignments} from "./javascript/assignments.js";
 import {findAwaits} from "./javascript/awaits.js";
@@ -14,21 +15,21 @@ import {red} from "./tty.js";
 
 export interface FileReference {
   /** The relative path from the page to the original file (e.g., "./test.txt"). */
-  name: string;
+  name: UrlPath;
   /** The MIME type, if known; derived from the file extension. */
   mimeType: string | null;
   /** The relative path from the page to the file in _file (e.g., "../_file/sub/test.txt"). */
-  path: string;
+  path: UrlPath;
 }
 
 export interface ImportReference {
-  name: string;
+  name: UrlPath;
   type: "global" | "local";
 }
 
 export interface Feature {
   type: "FileAttachment";
-  name: string;
+  name: UrlPath;
 }
 
 export interface BaseTranspile {
@@ -51,8 +52,8 @@ export interface Transpile extends BaseTranspile {
 
 export interface ParseOptions {
   id: string;
-  root: string;
-  sourcePath: string;
+  root: FilePath;
+  sourcePath: FilePath;
   inline?: boolean;
   sourceLine?: number;
   globals?: Set<string>;
@@ -65,7 +66,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
     const node = parseJavaScript(input, options);
     const files = node.features
       .filter((f) => f.type === "FileAttachment")
-      .map(({name}) => fileReference(name, sourcePath));
+      .map(({name}) => fileReference(name, filePathToUrlPath(sourcePath)));
     const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
     const implicitDisplay = node.expression && !inputs.includes("display") && !inputs.includes("view");
     if (implicitDisplay) inputs.push("display"), (node.async = true);

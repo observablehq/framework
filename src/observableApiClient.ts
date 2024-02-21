@@ -1,5 +1,6 @@
-import fs from "node:fs/promises";
 import packageJson from "../package.json";
+import {readFile} from "./brandedFs.js";
+import {unUrlPath, type FilePath, type UrlPath} from "./brandedPath.js";
 import {CliError, HttpError, isApiError} from "./error.js";
 import type {ApiKey} from "./observableApiConfig.js";
 import {faint, red} from "./tty.js";
@@ -145,18 +146,18 @@ export class ObservableApiClient {
     return data.id;
   }
 
-  async postDeployFile(deployId: string, filePath: string, relativePath: string): Promise<void> {
-    const buffer = await fs.readFile(filePath);
+  async postDeployFile(deployId: string, filePath: FilePath, relativePath: UrlPath): Promise<void> {
+    const buffer = await readFile(filePath);
     return await this.postDeployFileContents(deployId, buffer, relativePath);
   }
 
-  async postDeployFileContents(deployId: string, contents: Buffer | string, relativePath: string): Promise<void> {
+  async postDeployFileContents(deployId: string, contents: Buffer | string, relativePath: UrlPath): Promise<void> {
     if (typeof contents === "string") contents = Buffer.from(contents);
     const url = new URL(`/cli/deploy/${deployId}/file`, this._apiOrigin);
     const body = new FormData();
     const blob = new Blob([contents]);
     body.append("file", blob);
-    body.append("client_name", relativePath);
+    body.append("client_name", unUrlPath(relativePath));
     await this._fetch(url, {method: "POST", body});
   }
 

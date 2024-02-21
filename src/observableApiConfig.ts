@@ -1,26 +1,26 @@
-import fs from "node:fs/promises";
 import os from "node:os";
-import path from "node:path";
+import {mkdir, readFile, writeFile} from "./brandedFs.js";
+import {FilePath, fileDirname, fileJoin, fileResolve} from "./brandedPath.js";
 import {CliError, isEnoent} from "./error.js";
 
 export interface ConfigEffects {
-  readFile: (path: string, encoding: "utf8") => Promise<string>;
-  writeFile: (path: string, contents: string) => Promise<void>;
+  readFile: (path: FilePath, encoding: "utf8") => Promise<string>;
+  writeFile: (path: FilePath, contents: string) => Promise<void>;
   env: typeof process.env;
-  cwd: typeof process.cwd;
-  mkdir: (path: string, options?: {recursive?: boolean}) => Promise<void>;
-  homedir: typeof os.homedir;
+  cwd: () => FilePath;
+  mkdir: (path: FilePath, options?: {recursive?: boolean}) => Promise<void>;
+  homedir: () => FilePath;
 }
 
 export const defaultEffects: ConfigEffects = {
-  readFile: (path, encoding) => fs.readFile(path, encoding),
-  writeFile: fs.writeFile,
+  readFile: (path, encoding) => readFile(path, encoding),
+  writeFile,
   mkdir: async (path, options) => {
-    await fs.mkdir(path, options);
+    await mkdir(path, options);
   },
   env: process.env,
-  cwd: process.cwd,
-  homedir: os.homedir
+  cwd: () => FilePath(process.cwd()),
+  homedir: () => FilePath(os.homedir())
 };
 
 const userConfigName = ".observablehq";
@@ -38,7 +38,7 @@ export interface DeployConfig {
 }
 
 export type ApiKey =
-  | {source: "file"; filePath: string; key: string}
+  | {source: "file"; filePath: FilePath; key: string}
   | {source: "env"; envVar: string; key: string}
   | {source: "test"; key: string}
   | {source: "login"; key: string};
@@ -66,10 +66,10 @@ export async function setObservableApiKey(info: null | {id: string; key: string}
 }
 
 export async function getDeployConfig(
-  sourceRoot: string,
+  sourceRoot: FilePath,
   effects: ConfigEffects = defaultEffects
 ): Promise<DeployConfig> {
-  const deployConfigPath = path.join(effects.cwd(), sourceRoot, ".observablehq", "deploy.json");
+  const deployConfigPath = fileJoin(effects.cwd(), sourceRoot, ".observablehq", "deploy.json");
   let config: object | null = null;
   try {
     const content = await effects.readFile(deployConfigPath, "utf8");
@@ -89,12 +89,12 @@ export async function getDeployConfig(
 }
 
 export async function setDeployConfig(
-  sourceRoot: string,
+  sourceRoot: FilePath,
   newConfig: DeployConfig,
   effects: ConfigEffects = defaultEffects
 ): Promise<void> {
-  const dir = path.join(effects.cwd(), sourceRoot, ".observablehq");
-  const deployConfigPath = path.join(dir, "deploy.json");
+  const dir = fileJoin(effects.cwd(), sourceRoot, ".observablehq");
+  const deployConfigPath = fileJoin(dir, "deploy.json");
   const oldConfig = (await getDeployConfig(sourceRoot)) || {};
   const merged = {...oldConfig, ...newConfig};
   await effects.mkdir(dir, {recursive: true});
@@ -103,14 +103,14 @@ export async function setDeployConfig(
 
 export async function loadUserConfig(
   effects: ConfigEffects = defaultEffects
-): Promise<{configPath: string; config: UserConfig}> {
-  const homeConfigPath = path.join(effects.homedir(), userConfigName);
+): Promise<{configPath: FilePath; config: UserConfig}> {
+  const homeConfigPath = fileJoin(effects.homedir(), userConfigName);
 
-  function* pathsToTry(): Generator<string> {
-    let cursor = path.resolve(effects.cwd());
+  function* pathsToTry(): Generator<FilePath> {
+    let cursor = fileResolve(effects.cwd());
     while (true) {
-      yield path.join(cursor, userConfigName);
-      const nextCursor = path.dirname(cursor);
+      yield fileJoin(cursor, userConfigName);
+      const nextCursor = fileDirname(cursor);
       if (nextCursor === cursor) break;
       cursor = nextCursor;
     }
@@ -138,7 +138,7 @@ export async function loadUserConfig(
 }
 
 async function writeUserConfig(
-  {configPath, config}: {configPath: string; config: UserConfig},
+  {configPath, config}: {configPath: FilePath; config: UserConfig},
   effects: ConfigEffects = defaultEffects
 ): Promise<void> {
   await effects.writeFile(configPath, JSON.stringify(config, null, 2));

@@ -1,5 +1,6 @@
 import assert from "node:assert";
-import {readFile, stat, unlink, utimes} from "node:fs/promises";
+import {readFile, stat, unlink, utimes} from "../src/brandedFs.js";
+import {FilePath, fileJoin} from "../src/brandedPath.js";
 import {type LoadEffects, Loader} from "../src/dataloader.js";
 
 const noopEffects: LoadEffects = {
@@ -9,35 +10,35 @@ const noopEffects: LoadEffects = {
 
 describe("data loaders are called with the appropriate command", () => {
   it("a .js data loader is called with node", async () => {
-    const loader = Loader.find("test", "dataloaders/data1.txt")!;
+    const loader = Loader.find(FilePath("test"), FilePath("dataloaders/data1.txt"))!;
     const out = await loader.load(noopEffects);
-    assert.strictEqual(await readFile("test/" + out, "utf-8"), "node\n");
+    assert.strictEqual(await readFile(fileJoin("test", out), "utf-8"), "node\n");
   });
   it("a .ts data loader is called with tsx", async () => {
-    const loader = Loader.find("test", "dataloaders/data2.txt")!;
+    const loader = Loader.find(FilePath("test"), FilePath("dataloaders/data2.txt"))!;
     const out = await loader.load(noopEffects);
-    assert.strictEqual(await readFile("test/" + out, "utf-8"), "tsx\n");
+    assert.strictEqual(await readFile(fileJoin("test", out), "utf-8"), "tsx\n");
   });
   it("a .sh data loader is called with sh", async () => {
-    const loader = Loader.find("test", "dataloaders/data3.txt")!;
+    const loader = Loader.find(FilePath("test"), FilePath("dataloaders/data3.txt"))!;
     const out = await loader.load(noopEffects);
-    assert.strictEqual(await readFile("test/" + out, "utf-8"), "shell\n");
+    assert.strictEqual(await readFile(fileJoin("test", out), "utf-8"), "shell\n");
   });
   it("a .exe data loader is invoked directly", async () => {
-    const loader = Loader.find("test", "dataloaders/data4.txt")!;
+    const loader = Loader.find(FilePath("test"), FilePath("dataloaders/data4.txt"))!;
     const out = await loader.load(noopEffects);
-    assert.strictEqual(await readFile("test/" + out, "utf-8"), "python3\n");
+    assert.strictEqual(await readFile(fileJoin("test", out), "utf-8"), "python3\n");
   });
   it("a .py data loader is called with python3", async () => {
-    const loader = Loader.find("test", "dataloaders/data5.txt")!;
+    const loader = Loader.find(FilePath("test"), FilePath("dataloaders/data5.txt"))!;
     const out = await loader.load(noopEffects);
-    assert.strictEqual(await readFile("test/" + out, "utf-8"), "python3\n");
+    assert.strictEqual(await readFile(fileJoin("test", out), "utf-8"), "python3\n");
   });
   // Skipping because this requires R to be installed (which is slow in CI).
   it.skip("a .R data loader is called with Rscript", async () => {
-    const loader = Loader.find("test", "dataloaders/data6.txt")!;
+    const loader = Loader.find(FilePath("test"), FilePath("dataloaders/data6.txt"))!;
     const out = await loader.load(noopEffects);
-    assert.strictEqual(await readFile("test/" + out, "utf-8"), "Rscript\n");
+    assert.strictEqual(await readFile(fileJoin("test", out), "utf-8"), "Rscript\n");
   });
 });
 
@@ -52,7 +53,7 @@ describe("data loaders optionally use a stale cache", () => {
         }
       }
     };
-    const loader = Loader.find("test", "dataloaders/data1.txt")!;
+    const loader = Loader.find(FilePath("test"), FilePath("dataloaders/data1.txt"))!;
     // save the loader times.
     const {atime, mtime} = await stat(loader.path);
     // set the loader mtime to Dec. 1st, 2023.
@@ -60,7 +61,7 @@ describe("data loaders optionally use a stale cache", () => {
     await utimes(loader.path, atime, time);
     // remove the cache set by another test (unless we it.only this test).
     try {
-      await unlink("test/.observablehq/cache/dataloaders/data1.txt");
+      await unlink(FilePath("test/.observablehq/cache/dataloaders/data1.txt"));
     } catch {
       // ignore;
     }
@@ -71,7 +72,7 @@ describe("data loaders optionally use a stale cache", () => {
     // touch the loader
     await utimes(loader.path, atime, Date.now() + 100);
     // run it with useStale=true (using stale)
-    const loader2 = Loader.find("test", "dataloaders/data1.txt", {useStale: true})!;
+    const loader2 = Loader.find(FilePath("test"), FilePath("dataloaders/data1.txt"), {useStale: true})!;
     await loader2.load(outputEffects);
     // run it with useStale=false (stale)
     await loader.load(outputEffects);

@@ -1,5 +1,4 @@
 import {createHash} from "node:crypto";
-import {readFile} from "node:fs/promises";
 import {type Patch, type PatchItem, getPatch} from "fast-array-diff";
 import equal from "fast-deep-equal";
 import matter from "gray-matter";
@@ -10,6 +9,8 @@ import {type RuleCore} from "markdown-it/lib/parser_core.js";
 import {type RuleInline} from "markdown-it/lib/parser_inline.js";
 import {type RenderRule, type default as Renderer} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
+import {readFile} from "./brandedFs.js";
+import {type FilePath, UrlPath, filePathToUrlPath, unUrlPath, urlPathToFilePath} from "./brandedPath.js";
 import {isEnoent} from "./error.js";
 import {fileReference, getLocalPath} from "./files.js";
 import {computeHash} from "./hash.js";
@@ -98,7 +99,7 @@ function getLiveSource(content: string, tag: string): string | undefined {
     : undefined;
 }
 
-function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: string): RenderRule {
+function makeFenceRenderer(root: FilePath, baseRenderer: RenderRule, sourcePath: FilePath): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
     const token = tokens[idx];
     const {tag, attributes} = parseInfo(token.info);
@@ -262,7 +263,7 @@ const transformPlaceholderCore: RuleCore = (state) => {
   state.tokens = output;
 };
 
-function makePlaceholderRenderer(root: string, sourcePath: string): RenderRule {
+function makePlaceholderRenderer(root: FilePath, sourcePath: FilePath): RenderRule {
   return (tokens, idx, options, context: ParseContext) => {
     const id = uniqueCodeId(context, tokens[idx].content);
     const token = tokens[idx];
@@ -296,7 +297,7 @@ function extendPiece(context: ParseContext, extend: Partial<RenderPiece>) {
   };
 }
 
-function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string): Renderer["render"] {
+function renderIntoPieces(renderer: Renderer, root: FilePath, sourcePath: FilePath): Renderer["render"] {
   return (tokens, options, context: ParseContext) => {
     const rules = renderer.rules;
     for (let i = 0, len = tokens.length; i < len; i++) {
@@ -334,15 +335,15 @@ const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcs
   {query: "video source[src]", src: "src"}
 ]);
 
-export function normalizePieceHtml(html: string, sourcePath: string, context: ParseContext): string {
+export function normalizePieceHtml(html: string, sourcePath: FilePath, context: ParseContext): string {
   const {document} = parseHTML(html);
 
   // Extracting references to files (such as from linked stylesheets).
   const filePaths = new Set<FileReference["path"]>();
-  const resolvePath = (source: string): FileReference | undefined => {
-    const path = getLocalPath(sourcePath, source);
+  const resolvePath = (source: UrlPath): FileReference | undefined => {
+    const path = getLocalPath(filePathToUrlPath(sourcePath), source);
     if (!path) return;
-    const file = fileReference(path, sourcePath);
+    const file = fileReference(filePathToUrlPath(path), filePathToUrlPath(sourcePath));
     if (!filePaths.has(file.path)) {
       filePaths.add(file.path);
       context.files.push(file);
@@ -357,16 +358,16 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
           .split(",")
           .map((p) => {
             const parts = p.trim().split(/\s+/);
-            const source = decodeURIComponent(parts[0]);
+            const source = UrlPath(decodeURIComponent(parts[0]));
             const file = resolvePath(source);
             return file ? `${file.path} ${parts.slice(1).join(" ")}`.trim() : parts.join(" ");
           })
           .filter((p) => !!p);
         if (paths && paths.length > 0) element.setAttribute(src, paths.join(", "));
       } else {
-        const source = decodeURIComponent(element.getAttribute(src)!);
+        const source = UrlPath(decodeURIComponent(element.getAttribute(src)!));
         const file = resolvePath(source);
-        if (file) element.setAttribute(src, file.path);
+        if (file) element.setAttribute(src, unUrlPath(file.path));
       }
     }
   }
@@ -413,21 +414,21 @@ async function toParseCells(pieces: RenderPiece[]): Promise<CellPiece[]> {
 }
 
 export interface ParseOptions {
-  root: string;
-  path: string;
+  root: FilePath;
+  path: UrlPath;
 }
 
-export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptions): Promise<ParseResult> {
+export async function parseMarkdown(sourcePath: FilePath, {root, path}: ParseOptions): Promise<ParseResult> {
   const source = await readFile(sourcePath, "utf-8");
   const parts = matter(source, {});
   const md = MarkdownIt({html: true});
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
-  md.renderer.rules.placeholder = makePlaceholderRenderer(root, path);
-  md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!, path);
+  md.renderer.rules.placeholder = makePlaceholderRenderer(root, urlPathToFilePath(path));
+  md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!, urlPathToFilePath(path));
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
-  md.renderer.render = renderIntoPieces(md.renderer, root, path);
+  md.renderer.render = renderIntoPieces(md.renderer, root, urlPathToFilePath(path));
   const context: ParseContext = {files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
   const tokens = md.parse(parts.content, context);
   const html = md.renderer.render(tokens, md.options, context); // Note: mutates context.pieces, context.files!
@@ -439,14 +440,14 @@ export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptio
     imports: context.imports,
     pieces: toParsePieces(context.pieces),
     cells: await toParseCells(context.pieces),
-    hash: await computeMarkdownHash(source, root, path, context.imports)
+    hash: await computeMarkdownHash(source, root, urlPathToFilePath(path), context.imports)
   };
 }
 
 async function computeMarkdownHash(
   contents: string,
-  root: string,
-  path: string,
+  root: FilePath,
+  path: FilePath,
   imports: ImportReference[]
 ): Promise<string> {
   const hash = createHash("sha256").update(contents);

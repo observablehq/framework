@@ -1,4 +1,5 @@
 import {parseHTML} from "linkedom";
+import {FilePath, UrlPath, unUrlPath, urlPathToFilePath} from "./brandedPath.js";
 import type {Config, Page, Script, Section} from "./config.js";
 import {mergeToc} from "./config.js";
 import {getClientPath} from "./files.js";
@@ -21,11 +22,11 @@ export interface Render {
 }
 
 export interface RenderOptions extends Config {
-  root: string;
-  path: string;
+  root: FilePath;
+  path: UrlPath;
 }
 
-export async function renderPreview(sourcePath: string, options: RenderOptions): Promise<Render> {
+export async function renderPreview(sourcePath: FilePath, options: RenderOptions): Promise<Render> {
   const parseResult = await parseMarkdown(sourcePath, options);
   return {
     html: await render(parseResult, {...options, preview: true}),
@@ -35,7 +36,7 @@ export async function renderPreview(sourcePath: string, options: RenderOptions):
   };
 }
 
-export async function renderServerless(sourcePath: string, options: RenderOptions): Promise<Render> {
+export async function renderServerless(sourcePath: FilePath, options: RenderOptions): Promise<Render> {
   const parseResult = await parseMarkdown(sourcePath, options);
   return {
     html: await render(parseResult, options),
@@ -62,7 +63,7 @@ async function render(parseResult: ParseResult, options: RenderOptions & RenderI
   const sidebar = parseResult.data?.sidebar !== undefined ? Boolean(parseResult.data.sidebar) : options.sidebar;
   const toc = mergeToc(parseResult.data?.toc, options.toc);
   return String(html`<!DOCTYPE html>
-<meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
+<meta charset="utf-8">${path === UrlPath("/404") ? html`\n<base href="${preview ? "/" : base}">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 ${
   parseResult.title || title
@@ -71,7 +72,7 @@ ${
         .join(" | ")}</title>\n`
     : ""
 }${await renderHead(parseResult, options, path, createImportResolver(root, "_import"))}${
-    path === "/404"
+    path === UrlPath("/404")
       ? html.unsafe(`\n<script type="module">
 
 if (location.pathname.endsWith("/")) {
@@ -85,7 +86,7 @@ if (location.pathname.endsWith("/")) {
 <script type="module">${html.unsafe(`
 
 import ${preview || parseResult.cells.length > 0 ? `{${preview ? "open, " : ""}define} from ` : ""}${JSON.stringify(
-    relativeUrl(path, "/_observablehq/client.js")
+    relativeUrl(path, UrlPath("/_observablehq/client.js"))
   )};
 ${
   preview ? `\nopen({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
@@ -100,24 +101,24 @@ ${html.unsafe(parseResult.html)}</main>${renderFooter(path, options, parseResult
 `);
 }
 
-async function renderSidebar(title = "Home", pages: (Page | Section)[], path: string, search: boolean): Promise<Html> {
+async function renderSidebar(title = "Home", pages: (Page | Section)[], path: UrlPath, search: boolean): Promise<Html> {
   return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
   <ol>
     <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
     <li class="observablehq-link${
-      normalizePath(path) === "/index" ? " observablehq-link-active" : ""
-    }"><a href="${relativeUrl(path, "/")}">${title}</a></li>
+      normalizePath(path) === UrlPath("/index") ? " observablehq-link-active" : ""
+    }"><a href="${relativeUrl(path, UrlPath("/"))}">${title}</a></li>
   </ol>${
     search
       ? html`\n  <div id="observablehq-search" data-root="${relativeUrl(
           path,
-          "/"
+          UrlPath("/")
         )}"><input type="search" placeholder="Search"></div>
   <div id="observablehq-search-results"></div>
   <script>{${html.unsafe(
-    (await rollupClient(getClientPath("./src/client/search-init.ts"), {minify: true})).trim()
+    (await rollupClient(getClientPath(FilePath("./src/client/search-init.ts")), {minify: true})).trim()
   )}}</script>`
       : ""
   }
@@ -142,7 +143,7 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
   </ol>
 </nav>
 <script>{${html.unsafe(
-    (await rollupClient(getClientPath("./src/client/sidebar-init.ts"), {minify: true})).trim()
+    (await rollupClient(getClientPath(FilePath("./src/client/sidebar-init.ts")), {minify: true})).trim()
   )}}</script>`;
 }
 
@@ -177,34 +178,34 @@ function renderToc(headers: Header[], label: string): Html {
 </aside>`;
 }
 
-function renderListItem(p: Page, path: string): Html {
+function renderListItem(p: Page, path: UrlPath): Html {
   return html`\n    <li class="observablehq-link${
     normalizePath(p.path) === path ? " observablehq-link-active" : ""
   }"><a href="${relativeUrl(path, prettyPath(p.path))}">${p.name}</a></li>`;
 }
 
-function prettyPath(path: string): string {
+function prettyPath(path: UrlPath): UrlPath {
   return path.replace(/\/index$/, "/") || "/";
 }
 
 async function renderHead(
   parseResult: ParseResult,
   options: Pick<Config, "scripts" | "style" | "head">,
-  path: string,
+  path: UrlPath,
   resolver: ImportResolver
 ): Promise<Html> {
   const scripts = options.scripts;
   const head = parseResult.data?.head !== undefined ? parseResult.data.head : options.head;
-  const stylesheets = new Set<string>(["https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"]); // prettier-ignore
+  const stylesheets = new Set<UrlPath>([UrlPath("https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap")]); // prettier-ignore
   const style = getPreviewStylesheet(path, parseResult.data, options.style);
   if (style) stylesheets.add(style);
   const specifiers = new Set<string>(["npm:@observablehq/runtime", "npm:@observablehq/stdlib"]);
-  for (const {name} of parseResult.imports) specifiers.add(name);
+  for (const {name} of parseResult.imports) specifiers.add(unUrlPath(name));
   const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
   addImplicitSpecifiers(specifiers, inputs);
   await addImplicitStylesheets(stylesheets, specifiers);
-  const preloads = new Set<string>([relativeUrl(path, "/_observablehq/client.js")]);
-  for (const specifier of specifiers) preloads.add(await resolver(path, specifier));
+  const preloads = new Set<UrlPath>([relativeUrl(path, UrlPath("/_observablehq/client.js"))]);
+  for (const specifier of specifiers) preloads.add(await resolver(urlPathToFilePath(path), specifier));
   await resolveModulePreloads(preloads);
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
     Array.from(stylesheets)
@@ -221,28 +222,30 @@ async function renderHead(
   }${head ? html`\n${html.unsafe(head)}` : null}${html.unsafe(scripts.map((s) => renderScript(s, path)).join(""))}`;
 }
 
-export function resolveStylesheet(path: string, href: string): string {
+export function resolveStylesheet(path: UrlPath, href: UrlPath): UrlPath {
   return href.startsWith("observablehq:")
-    ? relativeUrl(path, `/_observablehq/${href.slice("observablehq:".length)}`)
+    ? relativeUrl(path, UrlPath(`/_observablehq/${href.slice("observablehq:".length)}`))
     : href;
 }
 
-function renderScript(script: Script, path: string): Html {
+function renderScript(script: Script, path: UrlPath): Html {
   return html`\n<script${script.type ? html` type="${script.type}"` : null}${script.async ? html` async` : null} src="${
-    /^\w+:/.test(script.src) ? script.src : relativeUrl(path, `/_import/${script.src}`)
+    /^\w+:/.test(unUrlPath(script.src)) ? script.src : relativeUrl(path, UrlPath(`/_import/${script.src}`))
   }"></script>`;
 }
 
-function renderStylesheet(href: string): Html {
-  return html`\n<link rel="stylesheet" type="text/css" href="${href}"${/^\w+:/.test(href) ? " crossorigin" : ""}>`;
+function renderStylesheet(href: UrlPath): Html {
+  return html`\n<link rel="stylesheet" type="text/css" href="${href}"${
+    /^\w+:/.test(unUrlPath(href)) ? " crossorigin" : ""
+  }>`;
 }
 
-function renderStylesheetPreload(href: string): Html {
-  return html`\n<link rel="preload" as="style" href="${href}"${/^\w+:/.test(href) ? " crossorigin" : ""}>`;
+function renderStylesheetPreload(href: UrlPath): Html {
+  return html`\n<link rel="preload" as="style" href="${href}"${/^\w+:/.test(unUrlPath(href)) ? " crossorigin" : ""}>`;
 }
 
-function renderModulePreload(href: string): Html {
-  const integrity: string | undefined = resolveModuleIntegrity(href);
+function renderModulePreload(href: UrlPath): Html {
+  const integrity: string | undefined = resolveModuleIntegrity(unUrlPath(href));
   return html`\n<link rel="modulepreload" href="${href}"${integrity ? html` integrity="${integrity}"` : ""}>`;
 }
 
@@ -252,7 +255,7 @@ function renderHeader({header}: Pick<Config, "header">, data: ParseResult["data"
 }
 
 function renderFooter(
-  path: string,
+  path: UrlPath,
   options: Pick<Config, "pages" | "pager" | "title" | "footer">,
   data: ParseResult["data"]
 ): Html | null {
@@ -267,10 +270,10 @@ function renderFooter(
     : null;
 }
 
-function renderPager(path: string, {prev, next}: PageLink): Html {
+function renderPager(path: UrlPath, {prev, next}: PageLink): Html {
   return html`\n<nav>${prev ? renderRel(path, prev, "prev") : ""}${next ? renderRel(path, next, "next") : ""}</nav>`;
 }
 
-function renderRel(path: string, page: Page, rel: "prev" | "next"): Html {
+function renderRel(path: UrlPath, page: Page, rel: "prev" | "next"): Html {
   return html`<a rel="${rel}" href="${relativeUrl(path, prettyPath(page.path))}"><span>${page.name}</span></a>`;
 }

@@ -1,7 +1,19 @@
-import {existsSync} from "node:fs";
-import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
-import {basename, dirname, join} from "node:path";
 import {fileURLToPath} from "node:url";
+import {existsSync} from "./brandedFs.js";
+import {access, constants, copyFile, readFile, writeFile} from "./brandedFs.js";
+import {
+  FilePath,
+  fileBasename,
+  fileDirname,
+  fileJoin,
+  filePathToUrlPath,
+  unFilePath,
+  unUrlPath,
+  urlBasename,
+  urlDirname,
+  urlJoin,
+  urlPathToFilePath
+} from "./brandedPath.js";
 import type {Config, Style} from "./config.js";
 import {mergeStyle} from "./config.js";
 import {Loader} from "./dataloader.js";
@@ -16,10 +28,10 @@ import {Telemetry} from "./telemetry.js";
 import {faint} from "./tty.js";
 import {resolvePath} from "./url.js";
 
-const EXTRA_FILES = new Map([
+const EXTRA_FILES: Map<FilePath, FilePath> = new Map([
   [
-    join(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "../../dist/runtime.js"),
-    "_observablehq/runtime.js"
+    fileJoin(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "..", "..", "dist", "runtime.js"),
+    fileJoin("_observablehq", "runtime.js")
   ]
 ]);
 
@@ -32,18 +44,20 @@ export interface BuildOptions {
 export interface BuildEffects {
   logger: Logger;
   output: Writer;
+  existsSync: (path: FilePath) => boolean;
+  readFile(path: FilePath, encoding: "utf-8"): Promise<string>;
 
   /**
    * @param outputPath The path of this file relative to the outputRoot. For
    * example, in a local build this should be relative to the dist directory.
    */
-  copyFile(sourcePath: string, outputPath: string): Promise<void>;
+  copyFile(sourcePath: FilePath, outputPath: FilePath): Promise<void>;
 
   /**
    * @param outputPath The path of this file relative to the outputRoot. For
    * example, in a local build this should be relative to the dist directory.
    */
-  writeFile(outputPath: string, contents: Buffer | string): Promise<void>;
+  writeFile(outputPath: FilePath, contents: Buffer | string): Promise<void>;
 }
 
 export async function build(
@@ -56,34 +70,36 @@ export async function build(
   // Make sure all files are readable before starting to write output files.
   let pageCount = 0;
   for await (const sourceFile of visitMarkdownFiles(root)) {
-    await access(join(root, sourceFile), constants.R_OK);
+    await access(fileJoin(root, sourceFile), constants.R_OK);
     pageCount++;
   }
   if (!pageCount) throw new CliError(`Nothing to build: no page files found in your ${root} directory.`);
   effects.logger.log(`${faint("found")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
 
   // Render .md files, building a list of file attachments as we go.
-  const files: string[] = [];
-  const imports: string[] = [];
+  const files: FilePath[] = [];
+  const imports: FilePath[] = [];
   const styles: Style[] = [];
   for await (const sourceFile of visitMarkdownFiles(root)) {
-    const sourcePath = join(root, sourceFile);
-    const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
+    const sourcePath = fileJoin(root, sourceFile);
+    const outputPath = fileJoin(fileDirname(sourceFile), fileBasename(sourceFile, ".md") + ".html");
     effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
-    const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
-    const render = await renderServerless(sourcePath, {path, ...config});
+    const urlSourceFile = filePathToUrlPath(sourceFile);
+    const urlPath = urlJoin("/", urlDirname(urlSourceFile), urlBasename(urlSourceFile, ".md"));
+    const filePath = fileJoin(fileDirname(sourceFile), fileBasename(sourceFile, ".md"));
+    const render = await renderServerless(sourcePath, {path: urlPath, ...config});
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
     files.push(...render.files.map(resolveFile));
     imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
     await effects.writeFile(outputPath, render.html);
-    const style = mergeStyle(path, render.data?.style, render.data?.theme, config.style);
+    const style = mergeStyle(filePath, render.data?.style, render.data?.theme, config.style);
     if (style && !styles.some((s) => styleEquals(s, style))) styles.push(style);
   }
 
   // Add imported local scripts.
   for (const script of config.scripts) {
-    if (!/^\w+:/.test(script.src)) {
-      imports.push(script.src);
+    if (!/^\w+:/.test(unUrlPath(script.src))) {
+      imports.push(urlPathToFilePath(script.src));
     }
   }
 
@@ -106,8 +122,8 @@ export async function build(
       ["./src/client/stdlib/zip.js", "stdlib/zip.js"],
       ...(config.search ? [["./src/client/search.js", "search.js"]] : [])
     ]) {
-      const clientPath = getClientPath(entry);
-      const outputPath = join("_observablehq", name);
+      const clientPath = getClientPath(FilePath(entry));
+      const outputPath = fileJoin("_observablehq", name);
       effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
       const code = await (entry.endsWith(".css")
         ? bundleStyles({path: clientPath})
@@ -115,20 +131,20 @@ export async function build(
       await effects.writeFile(outputPath, code);
     }
     if (config.search) {
-      const outputPath = join("_observablehq", "minisearch.json");
+      const outputPath = fileJoin("_observablehq", "minisearch.json");
       const code = await searchIndex(config, effects);
       effects.output.write(`${faint("search")} ${faint("→")} `);
       await effects.writeFile(outputPath, code);
     }
     for (const style of styles) {
       if ("path" in style) {
-        const outputPath = join("_import", style.path);
-        const sourcePath = join(root, style.path);
+        const outputPath = fileJoin("_import", urlPathToFilePath(style.path));
+        const sourcePath = fileJoin(root, urlPathToFilePath(style.path));
         effects.output.write(`${faint("style")} ${sourcePath} ${faint("→")} `);
         const code = await bundleStyles({path: sourcePath});
         await effects.writeFile(outputPath, code);
       } else {
-        const outputPath = join("_observablehq", `theme-${style.theme}.css`);
+        const outputPath = fileJoin("_observablehq", `theme-${style.theme}.css`);
         effects.output.write(`${faint("bundle")} theme-${style.theme}.css ${faint("→")} `);
         const code = await bundleStyles({theme: style.theme});
         await effects.writeFile(outputPath, code);
@@ -138,16 +154,16 @@ export async function build(
 
   // Copy over the referenced files.
   for (const file of files) {
-    let sourcePath = join(root, file);
-    const outputPath = join("_file", file);
-    if (!existsSync(sourcePath)) {
-      const loader = Loader.find(root, join("/", file), {useStale: true});
+    let sourcePath = fileJoin(root, file);
+    const outputPath = fileJoin("_file", file);
+    if (!effects.existsSync(sourcePath)) {
+      const loader = Loader.find(root, file, {useStale: true});
       if (!loader) {
         effects.logger.error("missing referenced file", sourcePath);
         continue;
       }
       try {
-        sourcePath = join(root, await loader.load(effects));
+        sourcePath = fileJoin(root, await loader.load(effects));
       } catch (error) {
         if (!isEnoent(error)) throw error;
         continue;
@@ -160,14 +176,14 @@ export async function build(
   // Copy over the imported modules.
   const importResolver = createImportResolver(root);
   for (const file of imports) {
-    const sourcePath = join(root, file);
-    const outputPath = join("_import", file);
-    if (!existsSync(sourcePath)) {
+    const sourcePath = fileJoin(root, file);
+    const outputPath = fileJoin("_import", file);
+    if (!effects.existsSync(sourcePath)) {
       effects.logger.error("missing referenced file", sourcePath);
       continue;
     }
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-    const contents = await rewriteModule(await readFile(sourcePath, "utf-8"), file, importResolver);
+    const contents = await rewriteModule(await effects.readFile(sourcePath, "utf-8"), file, importResolver);
     await effects.writeFile(outputPath, contents);
   }
 
@@ -182,11 +198,11 @@ export async function build(
 }
 
 export class FileBuildEffects implements BuildEffects {
-  private readonly outputRoot: string;
+  private readonly outputRoot: FilePath;
   readonly logger: Logger;
   readonly output: Writer;
   constructor(
-    outputRoot: string,
+    outputRoot: FilePath,
     {logger = console, output = process.stdout}: {logger?: Logger; output?: Writer} = {}
   ) {
     if (!outputRoot) throw new Error("missing outputRoot");
@@ -194,14 +210,20 @@ export class FileBuildEffects implements BuildEffects {
     this.output = output;
     this.outputRoot = outputRoot;
   }
-  async copyFile(sourcePath: string, outputPath: string): Promise<void> {
-    const destination = join(this.outputRoot, outputPath);
+  existsSync(path: FilePath) {
+    return existsSync(unFilePath(path));
+  }
+  readFile(path: FilePath, encoding: "utf-8"): Promise<string> {
+    return readFile(path, encoding);
+  }
+  async copyFile(sourcePath: FilePath, outputPath: FilePath): Promise<void> {
+    const destination = fileJoin(this.outputRoot, outputPath);
     this.logger.log(destination);
     await prepareOutput(destination);
     await copyFile(sourcePath, destination);
   }
-  async writeFile(outputPath: string, contents: string | Buffer): Promise<void> {
-    const destination = join(this.outputRoot, outputPath);
+  async writeFile(outputPath: FilePath, contents: string | Buffer): Promise<void> {
+    const destination = fileJoin(this.outputRoot, outputPath);
     this.logger.log(destination);
     await prepareOutput(destination);
     await writeFile(destination, contents);

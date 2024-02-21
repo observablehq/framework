@@ -1,8 +1,7 @@
 import assert from "node:assert";
-import {readdirSync, statSync} from "node:fs";
-import {mkdir, readFile, unlink, writeFile} from "node:fs/promises";
-import {basename, join, resolve} from "node:path";
 import deepEqual from "fast-deep-equal";
+import {mkdir, readFile, readdirSync, statSync, unlink, writeFile} from "../src/brandedFs.js";
+import {FilePath, fileBasename, fileJoin, filePathToUrlPath, fileResolve} from "../src/brandedPath.js";
 import {isEnoent} from "../src/error.js";
 import {type ParseResult, parseMarkdown} from "../src/markdown.js";
 import {normalizePieceHtml} from "../src/markdown.js";
@@ -11,23 +10,24 @@ const html = (strings, ...values) => String.raw({raw: strings}, ...values);
 const mockContext = () => ({files: [], imports: [], pieces: [], startLine: 0, currentLine: 0});
 
 describe("parseMarkdown(input)", () => {
-  const inputRoot = "test/input";
-  const outputRoot = "test/output";
-  for (const name of readdirSync(inputRoot)) {
-    if (!name.endsWith(".md")) continue;
-    const path = join(inputRoot, name);
+  const inputRoot = FilePath("test/input");
+  const outputRoot = FilePath("test/output");
+  for (const fileName of readdirSync(inputRoot)) {
+    if (!fileName.endsWith(".md")) continue;
+    const urlName = filePathToUrlPath(fileName);
+    const path = fileJoin(inputRoot, fileName);
     if (!statSync(path).isFile()) continue;
-    const only = name.startsWith("only.");
-    const skip = name.startsWith("skip.");
-    const outname = only || skip ? name.slice(5) : name;
+    const only = urlName.startsWith("only.");
+    const skip = urlName.startsWith("skip.");
+    const outname = only || skip ? fileName.slice(5) : fileName;
 
-    (only ? it.only : skip ? it.skip : it)(`test/input/${name}`, async () => {
-      const snapshot = await parseMarkdown(path, {root: "test/input", path: name});
+    (only ? it.only : skip ? it.skip : it)(`test/input/${urlName}`, async () => {
+      const snapshot = await parseMarkdown(path, {root: FilePath("test/input"), path: urlName});
       let allequal = true;
       for (const ext of ["html", "json"]) {
         const actual = ext === "json" ? jsonMeta(snapshot) : snapshot[ext];
-        const outfile = resolve(outputRoot, `${basename(outname, ".md")}.${ext}`);
-        const diffile = resolve(outputRoot, `${basename(outname, ".md")}-changed.${ext}`);
+        const outfile = fileResolve(outputRoot, `${fileBasename(outname, ".md")}.${ext}`);
+        const diffile = fileResolve(outputRoot, `${fileBasename(outname, ".md")}-changed.${ext}`);
         let expected;
 
         try {
@@ -57,13 +57,13 @@ describe("parseMarkdown(input)", () => {
           await writeFile(diffile, actual, "utf8");
         }
       }
-      assert.ok(allequal, `${name} must match snapshot`);
+      assert.ok(allequal, `${urlName} must match snapshot`);
     });
   }
 });
 
 describe("normalizePieceHtml adds local file attachments", () => {
-  const sourcePath = "/attachments.md";
+  const sourcePath = FilePath("/attachments.md");
 
   it("img[src]", () => {
     const htmlStr = html`<img src="./test.png">`;
@@ -195,7 +195,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
 });
 
 describe("normalizePieceHtml only adds local files", () => {
-  const sourcePath = "/attachments.md";
+  const sourcePath = FilePath("/attachments.md");
 
   it("img[src] only adds local files", () => {
     const htmlStr = html`<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/American_Shorthair.jpg/900px-American_Shorthair.jpg">`;

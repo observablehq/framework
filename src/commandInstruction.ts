@@ -9,7 +9,7 @@ export function commandInstruction(
     env = process.env
   }: {color?: TtyColor | null; env?: Record<string, string | undefined>} = {}
 ): string {
-  if (!color) color = (s) => s;
+  if (!color) color = (s) => `${s}`;
 
   const prefix = env["npm_config_user_agent"]?.includes("yarn/")
     ? "yarn observable"

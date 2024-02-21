@@ -1,16 +1,31 @@
 import {createHash} from "node:crypto";
-import {watch} from "node:fs";
 import type {FSWatcher, WatchEventType} from "node:fs";
-import {access, constants, readFile, stat} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
-import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
 import {difference} from "d3-array";
 import openBrowser from "open";
 import send from "send";
 import {type WebSocket, WebSocketServer} from "ws";
 import {version} from "../package.json";
+import {access, constants, readFile, stat, watch} from "./brandedFs.js";
+import {
+  FilePath,
+  UrlPath,
+  fileBasename,
+  fileDirname,
+  fileExtname,
+  fileJoin,
+  fileNormalize,
+  filePathToUrlPath,
+  unFilePath,
+  unUrlPath,
+  urlBasename,
+  urlDirname,
+  urlJoin,
+  urlNormalize,
+  urlPathToFilePath
+} from "./brandedPath.js";
 import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
 import {Loader} from "./dataloader.js";
@@ -28,7 +43,7 @@ import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, link, red} from "./tty.js";
 import {relativeUrl} from "./url.js";
 
-const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
+const publicRoot = fileJoin(fileDirname(FilePath(fileURLToPath(import.meta.url))), "..", "public");
 
 export interface PreviewOptions {
   config: Config;
@@ -91,15 +106,15 @@ export class PreviewServer {
     if (this._verbose) console.log(faint(req.method!), req.url);
     try {
       const url = new URL(req.url!, "http://localhost");
-      let pathname = decodeURIComponent(url.pathname);
+      let pathname = UrlPath(decodeURIComponent(url.pathname));
       let match: RegExpExecArray | null;
-      if (pathname === "/_observablehq/runtime.js") {
-        const root = join(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "../../");
-        send(req, "/dist/runtime.js", {root}).pipe(res);
+      if (pathname === UrlPath("/_observablehq/runtime.js")) {
+        const root = fileJoin(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "../../");
+        send(req, "/dist/runtime.js", {root: unFilePath(root)}).pipe(res);
       } else if (pathname.startsWith("/_observablehq/stdlib.js")) {
-        end(req, res, await rollupClient(getClientPath("./src/client/stdlib.js")), "text/javascript");
+        end(req, res, await rollupClient(getClientPath(FilePath("./src/client/stdlib.js"))), "text/javascript");
       } else if (pathname.startsWith("/_observablehq/stdlib/")) {
-        const path = getClientPath("./src/client/" + pathname.slice("/_observablehq/".length));
+        const path = getClientPath(FilePath("./src/client/" + pathname.slice("/_observablehq/".length)));
         if (pathname.endsWith(".js")) {
           end(req, res, await rollupClient(path), "text/javascript");
         } else if (pathname.endsWith(".css")) {
@@ -107,19 +122,18 @@ export class PreviewServer {
         } else {
           throw new HttpError(`Not found: ${pathname}`, 404);
         }
-      } else if (pathname === "/_observablehq/client.js") {
-        end(req, res, await rollupClient(getClientPath("./src/client/preview.js")), "text/javascript");
-      } else if (pathname === "/_observablehq/search.js") {
-        end(req, res, await rollupClient(getClientPath("./src/client/search.js")), "text/javascript");
-      } else if (pathname === "/_observablehq/minisearch.json") {
+      } else if (pathname === UrlPath("/_observablehq/client.js")) {
+        end(req, res, await rollupClient(getClientPath(FilePath("./src/client/preview.js"))), "text/javascript");
+      } else if (pathname === UrlPath("/_observablehq/search.js")) {
+        end(req, res, await rollupClient(getClientPath(FilePath("./src/client/search.js"))), "text/javascript");
+      } else if (pathname === UrlPath("/_observablehq/minisearch.json")) {
         end(req, res, await searchIndex(config), "application/json");
-      } else if ((match = /^\/_observablehq\/theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(pathname))) {
+      } else if ((match = /^\/_observablehq\/theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(unUrlPath(pathname)))) {
         end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
       } else if (pathname.startsWith("/_observablehq/")) {
-        send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
+        send(req, unUrlPath(pathname).slice("/_observablehq".length), {root: unFilePath(publicRoot)}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
-        const path = pathname.slice("/_import".length);
-        const filepath = join(root, path);
+        const filepath = fileJoin(root, urlPathToFilePath(pathname));
         try {
           if (pathname.endsWith(".css")) {
             await access(filepath, constants.R_OK);
@@ -127,7 +141,7 @@ export class PreviewServer {
             return;
           } else if (pathname.endsWith(".js")) {
             const input = await readFile(filepath, "utf-8");
-            const output = await rewriteModule(input, path, createImportResolver(root));
+            const output = await rewriteModule(input, filepath, createImportResolver(root));
             end(req, res, output, "text/javascript");
             return;
           }
@@ -136,11 +150,11 @@ export class PreviewServer {
         }
         throw new HttpError(`Not found: ${pathname}`, 404);
       } else if (pathname.startsWith("/_file/")) {
-        const path = pathname.slice("/_file".length);
-        const filepath = join(root, path);
+        const path = urlPathToFilePath(pathname.slice("/_file".length));
+        const filepath = fileJoin(root, path);
         try {
           await access(filepath, constants.R_OK);
-          send(req, pathname.slice("/_file".length), {root}).pipe(res);
+          send(req, unUrlPath(pathname.slice("/_file".length)), {root: unFilePath(root)}).pipe(res);
           return;
         } catch (error) {
           if (!isEnoent(error)) throw error;
@@ -150,7 +164,7 @@ export class PreviewServer {
         const loader = Loader.find(root, path);
         if (loader) {
           try {
-            send(req, await loader.load(), {root}).pipe(res);
+            send(req, unFilePath(await loader.load()), {root: unFilePath(root)}).pipe(res);
             return;
           } catch (error) {
             if (!isEnoent(error)) throw error;
@@ -158,22 +172,22 @@ export class PreviewServer {
         }
         throw new HttpError(`Not found: ${pathname}`, 404);
       } else {
-        if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
-        let path = join(root, pathname);
+        if ((pathname = urlNormalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
+        let path = fileJoin(root, urlPathToFilePath(pathname));
 
         // If this path is for /index, redirect to the parent directory for a
         // tidy path. (This must be done before implicitly adding /index below!)
         // Respect precedence of dir/index.md over dir.md in choosing between
         // dir/ and dir!
-        if (basename(path, ".html") === "index") {
+        if (fileBasename(path, ".html") === "index") {
           try {
-            await stat(join(dirname(path), "index.md"));
-            res.writeHead(302, {Location: join(dirname(pathname), "/") + url.search});
+            await stat(fileJoin(fileDirname(path), "index.md"));
+            res.writeHead(302, {Location: urlJoin(urlDirname(pathname), "/") + url.search});
             res.end();
             return;
           } catch (error) {
             if (!isEnoent(error)) throw error;
-            res.writeHead(302, {Location: dirname(pathname) + url.search});
+            res.writeHead(302, {Location: urlDirname(pathname) + url.search});
             res.end();
             return;
           }
@@ -182,14 +196,14 @@ export class PreviewServer {
         // If this path resolves to a directory, then add an implicit /index to
         // the end of the path, assuming that the corresponding index.md exists.
         try {
-          if ((await stat(path)).isDirectory() && (await stat(join(path, "index.md"))).isFile()) {
+          if ((await stat(path)).isDirectory() && (await stat(fileJoin(path, "index.md"))).isFile()) {
             if (!pathname.endsWith("/")) {
               res.writeHead(302, {Location: pathname + "/" + url.search});
               res.end();
               return;
             }
-            pathname = join(pathname, "index");
-            path = join(path, "index");
+            pathname = urlJoin(pathname, "index");
+            path = fileJoin(path, "index");
           }
         } catch (error) {
           if (!isEnoent(error)) throw error; // internal error
@@ -197,8 +211,8 @@ export class PreviewServer {
 
         // If this path ends with .html, then redirect to drop the .html. TODO:
         // Check for the existence of the .md file first.
-        if (extname(path) === ".html") {
-          res.writeHead(302, {Location: join(dirname(pathname), basename(pathname, ".html")) + url.search});
+        if (fileExtname(path) === ".html") {
+          res.writeHead(302, {Location: urlJoin(urlDirname(pathname), urlBasename(pathname, ".html")) + url.search});
           res.end();
           return;
         }
@@ -206,7 +220,7 @@ export class PreviewServer {
         // Otherwise, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
         try {
-          const {html} = await renderPreview(path + ".md", {path: pathname, ...config});
+          const {html} = await renderPreview(FilePath(path + ".md"), {path: pathname, ...config});
           end(req, res, html, "text/html");
         } catch (error) {
           if (!isEnoent(error)) throw error; // internal error
@@ -222,7 +236,7 @@ export class PreviewServer {
       }
       if (req.method === "GET" && res.statusCode === 404) {
         try {
-          const {html} = await renderPreview(join(root, "404.md"), {path: "/404", ...config});
+          const {html} = await renderPreview(fileJoin(root, "404.md"), {path: UrlPath("/404"), ...config});
           end(req, res, html, "text/html");
           return;
         } catch {
@@ -265,53 +279,56 @@ function end(req: IncomingMessage, res: ServerResponse, content: string, type: s
   }
 }
 
-function getWatchPaths(parseResult: ParseResult): string[] {
-  const paths: string[] = [];
+function getWatchPaths(parseResult: ParseResult): FilePath[] {
+  const paths: FilePath[] = [];
   const {files, imports} = parseResult;
-  for (const f of files) paths.push(f.name);
-  for (const i of imports) paths.push(i.name);
+  for (const f of files) paths.push(urlPathToFilePath(f.name));
+  for (const i of imports) paths.push(urlPathToFilePath(i.name));
   return paths;
 }
 
-export function getPreviewStylesheet(path: string, data: ParseResult["data"], style: Config["style"]): string | null {
+export function getPreviewStylesheet(path: UrlPath, data: ParseResult["data"], style: Config["style"]): UrlPath | null {
+  const filePath = urlPathToFilePath(path);
   try {
-    style = mergeStyle(path, data?.style, data?.theme, style);
+    style = mergeStyle(filePath, data?.style, data?.theme, style);
   } catch (error) {
     console.error(red(String(error)));
-    return relativeUrl(path, "/_observablehq/theme-.css");
+    return relativeUrl(path, UrlPath("/_observablehq/theme-.css"));
   }
   return !style
     ? null
     : "path" in style
-    ? relativeUrl(path, `/_import/${style.path}`)
-    : relativeUrl(path, `/_observablehq/theme-${style.theme.join(",")}.css`);
+    ? relativeUrl(path, UrlPath(`/_import/${style.path}`))
+    : relativeUrl(path, UrlPath(`/_observablehq/theme-${style.theme.join(",")}.css`));
 }
 
 function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defaultStyle}: Config) {
-  let path: string | null = null;
+  let path: FilePath | null = null;
   let current: ParseResult | null = null;
-  let stylesheets: Set<string> | null = null;
+  let stylesheets: Set<UrlPath> | null = null;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
   let emptyTimeout: ReturnType<typeof setTimeout> | null = null;
 
   console.log(faint("socket open"), req.url);
 
-  async function getStylesheets({cells, data}: ParseResult): Promise<Set<string>> {
+  async function getStylesheets({cells, data}: ParseResult): Promise<Set<UrlPath>> {
     const inputs = new Set<string>();
+    const urlPath = filePathToUrlPath(path!);
     for (const cell of cells) cell.inputs?.forEach(inputs.add, inputs);
     const stylesheets = await getImplicitStylesheets(getImplicitSpecifiers(inputs));
-    const style = getPreviewStylesheet(path!, data, defaultStyle);
+    const style = getPreviewStylesheet(urlPath, data, defaultStyle);
     if (style) stylesheets.add(style);
-    return new Set(Array.from(stylesheets, (href) => resolveStylesheet(path!, href)));
+    return new Set(Array.from(stylesheets, (href) => resolveStylesheet(urlPath, href)));
   }
 
-  function refreshAttachment(name: string) {
+  function refreshAttachment(name: FilePath) {
+    const urlName = filePathToUrlPath(name);
     const {cells} = current!;
-    if (cells.some((cell) => cell.imports?.some((i) => i.name === name))) {
+    if (cells.some((cell) => cell.imports?.some((i) => i.name === urlName))) {
       watcher("change"); // trigger re-compilation of JavaScript to get new import hashes
     } else {
-      const affectedCells = cells.filter((cell) => cell.files?.some((f) => f.name === name));
+      const affectedCells = cells.filter((cell) => cell.files?.some((f) => f.name === urlName));
       if (affectedCells.length > 0) {
         send({type: "refresh", cellIds: affectedCells.map((cell) => cell.id)});
       }
@@ -324,7 +341,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
       case "rename": {
         markdownWatcher?.close();
         try {
-          markdownWatcher = watch(join(root, path), (event) => watcher(event));
+          markdownWatcher = watch(fileJoin(root, path), (event) => watcher(event));
         } catch (error) {
           if (!isEnoent(error)) throw error;
           console.error(`file no longer exists: ${path}`);
@@ -335,7 +352,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
         break;
       }
       case "change": {
-        const updated = await parseMarkdown(join(root, path), {root, path});
+        const updated = await parseMarkdown(fileJoin(root, path), {root, path: filePathToUrlPath(path)});
         // delay to avoid a possibly-empty file
         if (!force && updated.html === "") {
           if (!emptyTimeout) {
@@ -364,17 +381,17 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
     }
   }
 
-  async function hello({path: initialPath, hash: initialHash}: {path: string; hash: string}): Promise<void> {
+  async function hello({path: initialPath, hash: initialHash}: {path: UrlPath; hash: string}): Promise<void> {
     if (markdownWatcher || attachmentWatcher) throw new Error("already watching");
-    path = initialPath;
-    if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
-    if (path.endsWith("/")) path += "index";
-    path += ".md";
-    current = await parseMarkdown(join(root, path), {root, path});
+    path = urlPathToFilePath(initialPath);
+    if (!(path = fileNormalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
+    if (path.endsWith("/")) path = FilePath(path + "index");
+    path = FilePath(path + ".md");
+    current = await parseMarkdown(fileJoin(root, path), {root, path: filePathToUrlPath(path)});
     if (current.hash !== initialHash) return void send({type: "reload"});
     stylesheets = await getStylesheets(current);
     attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(current), refreshAttachment);
-    markdownWatcher = watch(join(root, path), (event) => watcher(event));
+    markdownWatcher = watch(fileJoin(root, path), (event) => watcher(event));
   }
 
   socket.on("message", async (data) => {

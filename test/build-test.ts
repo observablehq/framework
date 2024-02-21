@@ -1,8 +1,8 @@
 import assert from "node:assert";
-import {existsSync, readdirSync, statSync} from "node:fs";
-import {open, readFile, rm} from "node:fs/promises";
-import {join, normalize, relative} from "node:path";
 import {difference} from "d3-array";
+import {existsSync, open, readFile, readdirSync, rm, statSync} from "../src/brandedFs.js";
+import {fileJoin, fileNormalize, fileRelative, unFilePath} from "../src/brandedPath.js";
+import type {FilePath} from "../src/brandedPath.js";
 import {FileBuildEffects, build} from "../src/build.js";
 import {readConfig, setCurrentDate} from "../src/config.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
@@ -12,22 +12,22 @@ const silentEffects = {
   output: {write() {}}
 };
 
-describe("build", async () => {
+describe.only("build", async () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   mockJsDelivr();
 
   // Each sub-directory of test/input/build is a test case.
-  const inputRoot = "test/input/build";
-  const outputRoot = "test/output/build";
+  const inputRoot = fileJoin("test", "input", "build");
+  const outputRoot = fileJoin("test", "output", "build");
   for (const name of readdirSync(inputRoot)) {
-    const path = join(inputRoot, name);
+    const path = fileJoin(inputRoot, name);
     if (!statSync(path).isDirectory()) continue;
     const only = name.startsWith("only.");
     const skip = name.startsWith("skip.");
     const outname = only || skip ? name.slice(5) : name;
-    (only ? it.only : skip ? it.skip : it)(`${inputRoot}/${name}`, async () => {
-      const actualDir = join(outputRoot, `${outname}-changed`);
-      const expectedDir = join(outputRoot, outname);
+    (only ? it.only : skip ? it.skip : it)(unFilePath(fileJoin(inputRoot, name)), async () => {
+      const actualDir = fileJoin(outputRoot, `${outname}-changed`);
+      const expectedDir = fileJoin(outputRoot, outname);
       const generate = !existsSync(expectedDir) && process.env.CI !== "true";
       const outputDir = generate ? expectedDir : actualDir;
       const addPublic = name.endsWith("-public");
@@ -41,10 +41,10 @@ describe("build", async () => {
       // files because they change often; replace them with empty files so we
       // can at least check that the expected files exist.
       if (addPublic) {
-        const publicDir = join(outputDir, "_observablehq");
+        const publicDir = fileJoin(outputDir, "_observablehq");
         for (const file of findFiles(publicDir)) {
           if (file.endsWith(".json")) continue; // e.g., minisearch.json
-          await (await open(join(publicDir, file), "w")).close();
+          await (await open(fileJoin(publicDir, file), "w")).close();
         }
       }
 
@@ -58,8 +58,8 @@ describe("build", async () => {
       if (unexpectedFiles.size > 0) assert.fail(`Unexpected output files: ${Array.from(unexpectedFiles).join(", ")}`);
 
       for (const path of expectedFiles) {
-        const actual = await readFile(join(actualDir, path), "utf8");
-        const expected = await readFile(join(expectedDir, path), "utf8");
+        const actual = await readFile(fileJoin(actualDir, path), "utf8");
+        const expected = await readFile(fileJoin(expectedDir, path), "utf8");
         assert.ok(actual === expected, `${path} must match snapshot`);
       }
 
@@ -68,29 +68,29 @@ describe("build", async () => {
   }
 });
 
-function* findFiles(root: string): Iterable<string> {
+function* findFiles(root: FilePath): Iterable<FilePath> {
   const visited = new Set<number>();
-  const queue: string[] = [(root = normalize(root))];
+  const queue: FilePath[] = [(root = fileNormalize(root))];
   for (const path of queue) {
     const status = statSync(path);
     if (status.isDirectory()) {
       if (visited.has(status.ino)) throw new Error(`Circular directory: ${path}`);
       visited.add(status.ino);
       for (const entry of readdirSync(path)) {
-        if (entry === ".DS_Store") continue; // macOS
-        queue.push(join(path, entry));
+        if (unFilePath(entry) === ".DS_Store") continue; // macOS
+        queue.push(fileJoin(path, entry));
       }
     } else {
-      yield relative(root, path);
+      yield fileRelative(root, path);
     }
   }
 }
 
 class TestEffects extends FileBuildEffects {
-  constructor(outputRoot: string) {
+  constructor(outputRoot: FilePath) {
     super(outputRoot, silentEffects);
   }
-  async writeFile(outputPath: string, contents: string | Buffer): Promise<void> {
+  async writeFile(outputPath: FilePath, contents: string | Buffer): Promise<void> {
     if (typeof contents === "string" && outputPath.endsWith(".html")) {
       contents = contents.replace(/^(\s*<script>\{).*(\}<\/script>)$/gm, "$1/* redacted init script */$2");
     }

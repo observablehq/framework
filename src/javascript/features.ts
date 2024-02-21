@@ -5,8 +5,9 @@ import type {Feature} from "../javascript.js";
 import {defaultGlobals} from "./globals.js";
 import {findReferences} from "./references.js";
 import {syntaxError} from "./syntaxError.js";
+import {FilePath, UrlPath, filePathToUrlPath, unFilePath} from "../brandedPath.js";
 
-export function findFeatures(node: Node, path: string, references: Identifier[], input: string): Feature[] {
+export function findFeatures(node: Node, path: FilePath, references: Identifier[], input: string): Feature[] {
   const featureMap = getFeatureReferenceMap(node);
   const features: Feature[] = [];
 
@@ -82,7 +83,7 @@ export function getFeatureReferenceMap(node: Node): Map<Identifier, Feature["typ
   return map;
 }
 
-export function getFeature(type: Feature["type"], node: CallExpression, path: string, input: string): Feature {
+export function getFeature(type: Feature["type"], node: CallExpression, path: FilePath, input: string): Feature {
   const {
     arguments: args,
     arguments: [arg]
@@ -94,14 +95,14 @@ export function getFeature(type: Feature["type"], node: CallExpression, path: st
   }
 
   // Forbid file attachments that are not local paths; normalize the path.
-  let name: string | null = getStringLiteralValue(arg);
+  let name: FilePath | null = FilePath(getStringLiteralValue(arg));
   if (type === "FileAttachment") {
-    const localPath = getLocalPath(path, name);
+    const localPath = getLocalPath(filePathToUrlPath(path), filePathToUrlPath(name));
     if (!localPath) throw syntaxError(`non-local file path: ${name}`, node, input);
     name = localPath;
   }
 
-  return {type, name};
+  return {type, name: filePathToUrlPath(name)};
 }
 
 export function isStringLiteral(node: any): node is Literal | TemplateLiteral {

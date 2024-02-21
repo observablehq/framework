@@ -1,4 +1,5 @@
-import {basename, dirname, join} from "node:path";
+import type {UrlPath} from "./brandedPath.js";
+import {FilePath, fileJoin, filePathToUrlPath, urlBasename, urlDirname, urlJoin} from "./brandedPath.js";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import {parseMarkdown} from "./markdown.js";
@@ -7,7 +8,7 @@ import {resolvePath} from "./url.js";
 
 export interface Page {
   name: string;
-  path: string;
+  path: UrlPath;
 }
 
 export interface Section {
@@ -22,19 +23,19 @@ export interface TableOfContents {
 }
 
 export type Style =
-  | {path: string} // custom stylesheet
+  | {path: UrlPath} // custom stylesheet
   | {theme: string[]}; // zero or more named theme
 
 export interface Script {
-  src: string;
+  src: UrlPath;
   async: boolean;
   type: string | null;
 }
 
 export interface Config {
-  root: string; // defaults to docs
-  output: string; // defaults to dist
-  base: string; // defaults to "/"
+  root: FilePath; // defaults to docs
+  output: FilePath; // defaults to dist
+  base: UrlPath; // defaults to "/"
   title?: string;
   sidebar: boolean; // defaults to true if pages isn’t empty
   pages: (Page | Section)[];
@@ -49,16 +50,16 @@ export interface Config {
   search: boolean; // default to false
 }
 
-export async function readConfig(configPath?: string, root?: string): Promise<Config> {
+export async function readConfig(configPath?: FilePath, root?: FilePath): Promise<Config> {
   if (configPath === undefined) return readDefaultConfig(root);
-  const importPath = join(process.cwd(), root ?? ".", configPath);
+  const importPath = "file:///" + filePathToUrlPath(fileJoin(process.cwd(), root ?? ".", configPath));
   return normalizeConfig((await import(importPath)).default, root);
 }
 
-export async function readDefaultConfig(root?: string): Promise<Config> {
+export async function readDefaultConfig(root?: FilePath): Promise<Config> {
   for (const ext of [".js", ".ts"]) {
     try {
-      return await readConfig("observablehq.config" + ext, root);
+      return await readConfig(FilePath("observablehq.config" + ext), root);
     } catch (error: any) {
       if (error.code !== "ERR_MODULE_NOT_FOUND") throw error;
       continue;
@@ -67,13 +68,14 @@ export async function readDefaultConfig(root?: string): Promise<Config> {
   return normalizeConfig(undefined, root);
 }
 
-async function readPages(root: string): Promise<Page[]> {
+async function readPages(root: FilePath): Promise<Page[]> {
   const pages: Page[] = [];
   for await (const file of visitMarkdownFiles(root)) {
-    if (file === "index.md" || file === "404.md") continue;
-    const parsed = await parseMarkdown(join(root, file), {root, path: file});
-    const name = basename(file, ".md");
-    const page = {path: join("/", dirname(file), name), name: parsed.title ?? "Untitled"};
+    const urlFile = filePathToUrlPath(file);
+    if (file === FilePath("index.md") || file === FilePath("404.md")) continue;
+    const parsed = await parseMarkdown(fileJoin(root, file), {root, path: urlFile});
+    const name = urlBasename(urlFile, ".md");
+    const page = {path: urlJoin("/", urlDirname(urlFile), name), name: parsed.title ?? "Untitled"};
     if (name === "index") pages.unshift(page);
     else pages.push(page);
   }
@@ -86,7 +88,7 @@ export function setCurrentDate(date = new Date()): void {
   currentDate = date;
 }
 
-export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Promise<Config> {
+export async function normalizeConfig(spec: any = {}, defaultRoot = FilePath("docs")): Promise<Config> {
   let {
     root = defaultRoot,
     output = "dist",
@@ -178,12 +180,12 @@ export function mergeToc(spec: any, toc: TableOfContents): TableOfContents {
   return {label, show};
 }
 
-export function mergeStyle(path: string, style: any, theme: any, defaultStyle: null | Style): null | Style {
+export function mergeStyle(path: FilePath, style: any, theme: any, defaultStyle: null | Style): null | Style {
   return style === undefined && theme === undefined
     ? defaultStyle
     : style === null
     ? null // disable
     : style !== undefined
-    ? {path: resolvePath(path, style)}
+    ? {path: filePathToUrlPath(resolvePath(path, style))}
     : {theme: normalizeTheme(theme)};
 }

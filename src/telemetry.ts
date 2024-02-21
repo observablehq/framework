@@ -1,8 +1,8 @@
 import {exec} from "node:child_process";
 import {createHash, randomUUID} from "node:crypto";
-import {readFile, writeFile} from "node:fs/promises";
-import {join} from "node:path";
 import os from "os";
+import {readFile, writeFile} from "./brandedFs.js";
+import {fileJoin} from "./brandedPath.js";
 import {CliError} from "./error.js";
 import type {Logger} from "./logger.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
@@ -137,7 +137,7 @@ export class Telemetry {
 
   private async getPersistentId(name: string, generator = randomUUID) {
     const {readFile, writeFile} = this.effects;
-    const file = join(os.homedir(), ".observablehq");
+    const file = fileJoin(os.homedir(), ".observablehq");
     if (!this._config) {
       this._config = readFile(file, "utf8")
         .then(JSON.parse)

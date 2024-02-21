@@ -1,5 +1,6 @@
 import assert from "node:assert";
-import {join} from "node:path";
+import os from "node:os";
+import {type FilePath, fileJoin} from "../src/brandedPath.js";
 import type {ConfigEffects} from "../src/observableApiConfig.js";
 import {loadUserConfig} from "../src/observableApiConfig.js";
 
@@ -24,18 +25,18 @@ describe("loadUserConfig", () => {
 export class MockConfigEffects implements ConfigEffects {
   public env = {};
 
-  public _files: Map<string, string> = new Map();
-  public _readLog: string[] = [];
-  public _writeLog: string[] = [];
+  public _files: Map<FilePath, string> = new Map();
+  public _readLog: FilePath[] = [];
+  public _writeLog: FilePath[] = [];
 
-  async readFile(path: string): Promise<string> {
+  async readFile(path: FilePath): Promise<string> {
     this._readLog.push(path);
     const content = this._files.get(path);
     if (!content) throw enoentError("File not found in mock");
     return content;
   }
 
-  async writeFile(path: string, contents: string): Promise<void> {
+  async writeFile(path: FilePath, contents: string): Promise<void> {
     this._writeLog.push(path);
     this._files.set(path, contents);
   }
@@ -45,11 +46,14 @@ export class MockConfigEffects implements ConfigEffects {
   }
 
   homedir() {
-    return join("/", "home", "amaya");
+    return os.platform() === "win32" ? fileJoin("C:", "Users", "Amaya") : fileJoin("/", "home", "amaya");
   }
 
   cwd() {
-    return join("/", "opt", "projects", "acme-bi");
+    // it is an important detail that this is not inside the home dir
+    return os.platform() === "win32"
+      ? fileJoin("D:", "Projects", "acme-bi")
+      : fileJoin("/", "opt", "projects", "acme-bi");
   }
 }
 

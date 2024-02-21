@@ -1,3 +1,4 @@
+import {UrlPath} from "./brandedPath.js";
 import {resolveNpmImport} from "./javascript/imports.js";
 
 export function getImplicitSpecifiers(inputs: Set<string>): Set<string> {
@@ -25,12 +26,15 @@ export function addImplicitSpecifiers(specifiers: Set<string>, inputs: Set<strin
   return specifiers;
 }
 
-export async function getImplicitStylesheets(specifiers: Set<string>): Promise<Set<string>> {
+export async function getImplicitStylesheets(specifiers: Set<string>): Promise<Set<UrlPath>> {
   return addImplicitStylesheets(new Set(), specifiers);
 }
 
-export async function addImplicitStylesheets(stylesheets: Set<string>, specifiers: Set<string>): Promise<Set<string>> {
-  if (specifiers.has("npm:@observablehq/inputs")) stylesheets.add("observablehq:stdlib/inputs.css");
+export async function addImplicitStylesheets(
+  stylesheets: Set<UrlPath>,
+  specifiers: Set<string>
+): Promise<Set<UrlPath>> {
+  if (specifiers.has("npm:@observablehq/inputs")) stylesheets.add(UrlPath("observablehq:stdlib/inputs.css"));
   if (specifiers.has("npm:katex")) stylesheets.add(await resolveNpmImport("katex/dist/katex.min.css"));
   if (specifiers.has("npm:leaflet")) stylesheets.add(await resolveNpmImport("leaflet/dist/leaflet.css"));
   if (specifiers.has("npm:mapbox-gl")) stylesheets.add(await resolveNpmImport("mapbox-gl/dist/mapbox-gl.css"));

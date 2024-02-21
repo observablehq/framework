@@ -1,4 +1,4 @@
-import {dirname, join} from "node:path";
+import {FilePath, UrlPath, fileDirname, fileJoin, unUrlPath, urlJoin, urlPathToFilePath} from "./brandedPath.js";
 
 /**
  * Returns the normalized relative path from "/file/path/to/a" to
@@ -6,17 +6,17 @@ import {dirname, join} from "node:path";
  * are prefixed with "./", and paths that start without a slash are considered
  * from the root.
  */
-export function relativeUrl(source: string, target: string): string {
-  if (/^\w+:/.test(target)) return target;
-  const from = join("/", source).split(/[/]+/g).slice(0, -1);
-  const to = join("/", target).split(/[/]+/g);
+export function relativeUrl(source: UrlPath, target: UrlPath): UrlPath {
+  if (/^\w+:/.test(unUrlPath(target))) return target;
+  const from = urlJoin("/", source).split(/[/]+/g).slice(0, -1);
+  const to = urlJoin("/", target).split(/[/]+/g);
   const f = to.pop()!;
   const m = from.length;
   const n = Math.min(m, to.length);
   let i = 0;
   while (i < n && from[i] === to[i]) ++i;
   const k = m - i;
-  return (k ? "../".repeat(k) : "./") + to.slice(i).concat(f).join("/");
+  return UrlPath((k ? "../".repeat(k) : "./") + to.slice(i).concat(f).join("/"));
 }
 
 /**
@@ -24,9 +24,18 @@ export function relativeUrl(source: string, target: string): string {
  * defaults to ".", assuming that the target is a relative path such as an
  * import or fetch from the specified source.
  */
-export function resolvePath(source: string, target: string): string;
-export function resolvePath(root: string, source: string, target: string): string;
-export function resolvePath(root: string, source: string, target?: string): string {
-  if (target === undefined) (target = source), (source = root), (root = ".");
-  return join(root, target.startsWith("/") ? "." : dirname(source), target);
+export function resolvePath(source: FilePath, target: UrlPath): FilePath;
+export function resolvePath(root: FilePath, source: FilePath, target: UrlPath): FilePath;
+export function resolvePath(arg1: FilePath, arg2: FilePath | UrlPath, arg3?: UrlPath): FilePath {
+  let root: FilePath, source: FilePath, target: UrlPath;
+  if (arg3 === undefined) {
+    root = FilePath(".");
+    source = arg1;
+    target = arg2 as UrlPath;
+  } else {
+    root = arg1;
+    source = arg2 as FilePath;
+    target = arg3;
+  }
+  return fileJoin(root, target.startsWith("/") ? "." : fileDirname(source), urlPathToFilePath(target));
 }

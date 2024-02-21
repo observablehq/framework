@@ -1,16 +1,17 @@
 import assert from "node:assert";
-import {stat} from "node:fs/promises";
+import {stat} from "../src/brandedFs.js";
+import {FilePath} from "../src/brandedPath.js";
 import {maybeStat, prepareOutput, visitFiles, visitMarkdownFiles} from "../src/files.js";
 
 describe("prepareOutput(path)", () => {
   it("does nothing if passed the current directory", async () => {
-    assert.strictEqual(await prepareOutput("."), undefined);
+    assert.strictEqual(await prepareOutput(FilePath(".")), undefined);
   });
 });
 
 describe("maybeStat(path)", () => {
   it("returns stat if the file does not exist", async () => {
-    assert.deepStrictEqual(await maybeStat("README.md"), await stat("README.md"));
+    assert.deepStrictEqual(await maybeStat(FilePath("README.md")), await stat(FilePath("README.md")));
   });
   it("rethrows unexpected error", async () => {
     const expected = new Error();
@@ -20,18 +21,18 @@ describe("maybeStat(path)", () => {
           toString(): string {
             throw expected;
           }
-        } as string),
+        } as FilePath),
       expected
     );
   });
   it("returns undefined if the file does not exist", async () => {
-    assert.strictEqual(await maybeStat("does/not/exist.txt"), undefined);
+    assert.strictEqual(await maybeStat(FilePath("does/not/exist.txt")), undefined);
   });
 });
 
 describe("visitFiles(root)", () => {
   it("visits all files in a directory, return the relative path from the root", async () => {
-    assert.deepStrictEqual(await collect(visitFiles("test/input/build/files")), [
+    assert.deepStrictEqual(await collect(visitFiles(FilePath("test/input/build/files"))), [
       "custom-styles.css",
       "file-top.csv",
       "files.md",
@@ -43,13 +44,13 @@ describe("visitFiles(root)", () => {
     ]);
   });
   it("handles circular symlinks, visiting files only once", async () => {
-    assert.deepStrictEqual(await collect(visitFiles("test/input/circular-files")), ["a/a.txt", "b/b.txt"]);
+    assert.deepStrictEqual(await collect(visitFiles(FilePath("test/input/circular-files"))), ["a/a.txt", "b/b.txt"]);
   });
 });
 
 describe("visitMarkdownFiles(root)", () => {
   it("visits all Markdown files in a directory, return the relative path from the root", async () => {
-    assert.deepStrictEqual(await collect(visitMarkdownFiles("test/input/build/files")), [
+    assert.deepStrictEqual(await collect(visitMarkdownFiles(FilePath("test/input/build/files"))), [
       "files.md",
       "subsection/subfiles.md"
     ]);

@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import type {Program} from "acorn";
 import {Parser} from "acorn";
+import {FilePath} from "../../src/brandedPath.js";
 import {findFeatures} from "../../src/javascript/features.js";
 import {findReferences} from "../../src/javascript/references.js";
 
@@ -16,7 +17,7 @@ describe("findFeatures(node, path, references, input)", () => {
 
 function features(input) {
   const node = parse(input);
-  return findFeatures(node, "index.js", findReferences(node), input);
+  return findFeatures(node, FilePath("index.js"), findReferences(node), input);
 }
 
 function parse(input: string): Program {

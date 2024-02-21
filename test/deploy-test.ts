@@ -1,5 +1,6 @@
 import assert, {fail} from "node:assert";
 import {Readable, Writable} from "node:stream";
+import type {FilePath} from "../src/brandedPath.js";
 import {normalizeConfig} from "../src/config.js";
 import {type DeployEffects, type DeployOptions, deploy, promptDeployTarget} from "../src/deploy.js";
 import {CliError, isHttpError} from "../src/error.js";
@@ -110,7 +111,7 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     return this.deployConfig ?? {projectId: null, projectSlug: null, workspaceLogin: null};
   }
 
-  async setDeployConfig(sourceRoot: string, config: DeployConfig) {
+  async setDeployConfig(sourceRoot: FilePath, config: DeployConfig) {
     this.deployConfig = config;
   }
 

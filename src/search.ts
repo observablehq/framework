@@ -1,6 +1,6 @@
-import {basename, join} from "node:path";
 import he from "he";
 import MiniSearch from "minisearch";
+import {UrlPath, fileBasename, fileJoin, urlBasename} from "./brandedPath.js";
 import type {Config} from "./config.js";
 import {visitMarkdownFiles} from "./files.js";
 import type {Logger} from "./logger.js";
@@ -31,7 +31,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
   if (indexCache.has(config) && indexCache.get(config).freshUntil > +new Date()) return indexCache.get(config).json;
 
   // Get all the listed pages (which are indexed by default)
-  const pagePaths = new Set(["/index"]);
+  const pagePaths = new Set([UrlPath("/index")]);
   for (const p of pages) {
     if ("path" in p) pagePaths.add(p.path);
     else for (const {path} of p.pages) pagePaths.add(path);
@@ -40,12 +40,12 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
   // Index the pages
   const index = new MiniSearch(indexOptions);
   for await (const file of visitMarkdownFiles(root)) {
-    const path = join(root, file);
-    const {html, title, data} = await parseMarkdown(path, {root, path: "/" + file.slice(0, -3)});
+    const path = fileJoin(root, file);
+    const {html, title, data} = await parseMarkdown(path, {root, path: UrlPath("/" + file.slice(0, -3))});
 
     // Skip pages that opt-out of indexing, and skip unlisted pages unless
     // opted-in. We only log the first case.
-    const listed = pagePaths.has(`/${file.slice(0, -3)}`);
+    const listed = pagePaths.has(UrlPath(`/${file.slice(0, -3)}`));
     const indexed = data?.index === undefined ? listed : Boolean(data.index);
     if (!indexed) {
       if (listed) effects.logger.log(`${faint("skip")} ${file}`);
@@ -54,7 +54,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
 
     // This is the (top-level) serving path to the indexed page. There’s
     // implicitly a leading slash here.
-    const id = file.slice(0, basename(file) === "index.md" ? -"index.md".length : -3);
+    const id = file.slice(0, fileBasename(file) === "index.md" ? -"index.md".length : -3);
 
     // eslint-disable-next-line import/no-named-as-default-member
     const text = he
