@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import {readFile} from "../src/brandedFs.js";
-import type {FilePath} from "../src/brandedPath.js";
+import {FilePath} from "../src/brandedPath.js";
 import {type CreateEffects, create} from "../src/create.js";
 import {TestClackEffects} from "./mocks/clack.js";
 
@@ -18,16 +18,16 @@ describe("create", async () => {
     assert.deepStrictEqual(
       new Set(effects.outputs.keys()),
       new Set([
-        "template-test/.gitignore",
-        "template-test/docs/components/timeline.js",
-        "template-test/docs/data/launches.csv.js",
-        "template-test/docs/data/events.json",
-        "template-test/docs/example-dashboard.md",
-        "template-test/docs/example-report.md",
-        "template-test/docs/index.md",
-        "template-test/observablehq.config.ts",
-        "template-test/package.json",
-        "template-test/README.md"
+        FilePath("template-test/.gitignore"),
+        FilePath("template-test/docs/components/timeline.js"),
+        FilePath("template-test/docs/data/launches.csv.js"),
+        FilePath("template-test/docs/data/events.json"),
+        FilePath("template-test/docs/example-dashboard.md"),
+        FilePath("template-test/docs/example-report.md"),
+        FilePath("template-test/docs/index.md"),
+        FilePath("template-test/observablehq.config.ts"),
+        FilePath("template-test/package.json"),
+        FilePath("template-test/README.md")
       ])
     );
   });
@@ -44,11 +44,11 @@ describe("create", async () => {
     assert.deepStrictEqual(
       new Set(effects.outputs.keys()),
       new Set([
-        "template-test/.gitignore",
-        "template-test/docs/index.md",
-        "template-test/observablehq.config.ts",
-        "template-test/package.json",
-        "template-test/README.md"
+        FilePath("template-test/.gitignore"),
+        FilePath("template-test/docs/index.md"),
+        FilePath("template-test/observablehq.config.ts"),
+        FilePath("template-test/package.json"),
+        FilePath("template-test/README.md")
       ])
     );
   });

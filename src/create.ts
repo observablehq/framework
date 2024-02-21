@@ -59,7 +59,7 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
         }),
       projectTitle: ({results: {rootPath: rootPathStr}}) => {
         const rootPath = FilePath(rootPathStr!);
-        clack.text({
+        return clack.text({
           message: "What to title your project?",
           placeholder: inferTitle(rootPath!),
           defaultValue: inferTitle(rootPath!)
@@ -145,7 +145,7 @@ function validateRootPath(rootPath: FilePath, defaultError?: string): string | u
 }
 
 function inferTitle(rootPath: FilePath): string {
-  return fileBasename(rootPath!)
+  return fileBasename(rootPath)
     .split(/[-_\s]/)
     .map(([c, ...rest]) => c.toUpperCase() + rest.join(""))
     .join(" ");
@@ -197,7 +197,11 @@ async function recursiveCopyTemplate(
       contents = contents.replaceAll(/\{\{\s*(\w+)\s*\}\}/g, (_, key) => {
         const val = context[key];
         if (val) return val;
-        throw new Error(`no template variable ${key}`);
+        throw new Error(
+          `no template variable ${key} (expected one of ${Object.entries(context)
+            .map(([k, v]) => `${k}=${v}`)
+            .join(", ")})`
+        );
       });
       await effects.writeFile(outputPath, contents);
     } else {
