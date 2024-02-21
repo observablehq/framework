@@ -190,8 +190,10 @@ export async function build(
     const sourcePath = join(cacheDir, path);
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     await effects.copyFile(sourcePath, path);
-    for (const subpath of findRelativeImports(await readFile(sourcePath, "utf-8"))) {
-      npmImports.add(join(dirname(path), subpath));
+    if (path.endsWith(".js")) {
+      for (const subpath of findRelativeImports(await readFile(sourcePath, "utf-8"))) {
+        npmImports.add(join(dirname(path), subpath));
+      }
     }
   }
 
