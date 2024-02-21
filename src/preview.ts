@@ -292,7 +292,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
   let current: ParseResult | null = null;
   let stylesheets: Set<string> | null = null;
   let markdownWatcher: FSWatcher | null = null;
-  let attachmentWatcher: FileWatchers | null = null;
+  let dependencyWatcher: FileWatchers | null = null;
   let emptyTimeout: ReturnType<typeof setTimeout> | null = null;
 
   console.log(faint("socket open"), req.url);
@@ -306,8 +306,9 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
     return new Set(Array.from(stylesheets, (href) => resolveStylesheet(path!, href)));
   }
 
-  function refreshAttachment(name: string) {
-    const {cells} = current!;
+  function refreshDependency(name: string) {
+    const {cells, files} = current!;
+
     if (cells.some((cell) => cell.imports?.some((i) => i.name === name))) {
       watcher("change"); // trigger re-compilation of JavaScript to get new import hashes
     } else {
@@ -315,6 +316,10 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
       if (affectedCells.length > 0) {
         send({type: "refresh", cellIds: affectedCells.map((cell) => cell.id)});
       }
+    }
+
+    if (files.some(({ mimeType, name: styleSheetName }) => mimeType === "text/css" && styleSheetName === name)) {
+      send({type: "reload" }); // reload entire page on css change
     }
   }
 
@@ -357,15 +362,15 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
         const diff = diffMarkdown(current, updated);
         send({type: "update", diff, previousHash: current.hash, updatedHash: updated.hash});
         current = updated;
-        attachmentWatcher?.close();
-        attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(updated), refreshAttachment);
+        dependencyWatcher?.close();
+        dependencyWatcher = await FileWatchers.of(root, path, getWatchPaths(updated), refreshDependency);
         break;
       }
     }
   }
 
   async function hello({path: initialPath, hash: initialHash}: {path: string; hash: string}): Promise<void> {
-    if (markdownWatcher || attachmentWatcher) throw new Error("already watching");
+    if (markdownWatcher || dependencyWatcher) throw new Error("already watching");
     path = initialPath;
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
@@ -373,7 +378,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
     current = await parseMarkdown(join(root, path), {root, path});
     if (current.hash !== initialHash) return void send({type: "reload"});
     stylesheets = await getStylesheets(current);
-    attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(current), refreshAttachment);
+    dependencyWatcher = await FileWatchers.of(root, path, getWatchPaths(current), refreshDependency);
     markdownWatcher = watch(join(root, path), (event) => watcher(event));
   }
 
@@ -398,9 +403,9 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
   });
 
   socket.on("close", () => {
-    if (attachmentWatcher) {
-      attachmentWatcher.close();
-      attachmentWatcher = null;
+    if (dependencyWatcher) {
+      dependencyWatcher.close();
+      dependencyWatcher = null;
     }
     if (markdownWatcher) {
       markdownWatcher.close();
