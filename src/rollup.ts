@@ -5,7 +5,7 @@ import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
-import {FilePath, UrlPath, filePathToUrlPath, unFilePath} from "./brandedPath.js";
+import {FilePath, UrlPath, filePathToUrlPath, unFilePath, unUrlPath} from "./brandedPath.js";
 import {getClientPath} from "./files.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
 import {isPathImport, resolveNpmImport} from "./javascript/imports.js";
@@ -92,55 +92,63 @@ async function resolveImport(source: UrlPath, specifier: string | AstNode): Prom
   return typeof specifier !== "string"
     ? null
     : specifier.startsWith("observablehq:")
-    ? {id: relativeUrl(source, filePathToUrlPath(getClientPath(FilePath(`./src/client/${specifier.slice("observablehq:".length)}.js`)))), external: true} // prettier-ignore
+    ? {id: unUrlPath(relativeUrl(source, filePathToUrlPath(getClientPath(FilePath(`./src/client/${specifier.slice("observablehq:".length)}.js`))))), external: true} // prettier-ignore
     : specifier === "npm:@observablehq/runtime"
-    ? {id: relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/runtime.js")))), external: true}
+    ? {
+        id: unUrlPath(relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/runtime.js"))))),
+        external: true
+      }
     : specifier === "npm:@observablehq/stdlib"
-    ? {id: relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/stdlib.js")))), external: true}
+    ? {
+        id: unUrlPath(relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/stdlib.js"))))),
+        external: true
+      }
     : specifier === "npm:@observablehq/dot"
     ? {
-        id: relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/stdlib/dot.js")))),
+        id: unUrlPath(relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/stdlib/dot.js"))))),
         external: true
       } // TODO publish to npm
     : specifier === "npm:@observablehq/duckdb"
     ? {
-        id: relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/stdlib/duckdb.js")))),
+        id: unUrlPath(relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/stdlib/duckdb.js"))))),
         external: true
       } // TODO publish to npm
     : specifier === "npm:@observablehq/inputs"
     ? {
-        id: relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/stdlib/inputs.js")))),
+        id: unUrlPath(relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/stdlib/inputs.js"))))),
         external: true
       } // TODO publish to npm
     : specifier === "npm:@observablehq/mermaid"
     ? {
-        id: relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/stdlib/mermaid.js")))),
+        id: unUrlPath(
+          relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/stdlib/mermaid.js"))))
+        ),
         external: true
       } // TODO publish to npm
     : specifier === "npm:@observablehq/tex"
     ? {
-        id: relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/stdlib/tex.js")))),
+        id: unUrlPath(relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/stdlib/tex.js"))))),
         external: true
       } // TODO publish to npm
     : specifier === "npm:@observablehq/sqlite"
     ? {
-        id: relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/stdlib/sqlite.js")))),
+        id: unUrlPath(relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/stdlib/sqlite.js"))))),
         external: true
       } // TODO publish to npm
     : specifier === "npm:@observablehq/xlsx"
     ? {
-        id: relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/stdlib/xlsx.js")))),
+        id: unUrlPath(relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/stdlib/xlsx.js"))))),
         external: true
       } // TODO publish to npm
     : specifier === "npm:@observablehq/zip"
     ? {
-        id: relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/stdlib/zip.js")))),
+        id: unUrlPath(relativeUrl(source, filePathToUrlPath(getClientPath(FilePath("./src/client/stdlib/zip.js"))))),
         external: true
       } // TODO publish to npm
     : specifier.startsWith("npm:")
-    ? {id: await resolveNpmImport(specifier.slice("npm:".length))}
+    ? {id: unUrlPath(await resolveNpmImport(specifier.slice("npm:".length)))}
     : source !== UrlPath(specifier) && !isPathImport(specifier) && !BUNDLED_MODULES.includes(specifier)
-    ? {id: await resolveNpmImport(specifier), external: true}
+    ? {id: unUrlPath(await resolveNpmImport(specifier)), external: true}
     : null;
 }
 
