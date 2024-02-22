@@ -32,7 +32,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         if: failure()
         with:
-          name: test-output-changes
+          name: test-output-changes-${{ matrix.os }}-${{ matrix.version }}
           path: |
             test/output/*-changed.*
             test/output/build/*-changed/
