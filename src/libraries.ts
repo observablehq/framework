@@ -60,10 +60,49 @@ export async function getImplicitStylesheets(imports: Set<string>): Promise<Set<
   return addImplicitStylesheets(new Set(), imports);
 }
 
+/**
+ * These implicit stylesheets are added to the page on render so that the user
+ * doesn’t have to remember to add them. This should be kept consistent with
+ * addImplicitDownloads below. TODO Do we need to resolve the npm imports here,
+ * or could we simply use "npm:" imports for the stylesheet, too? TODO Support
+ * versioned imports, too, such as "npm:leaflet@1".
+ */
 export async function addImplicitStylesheets(stylesheets: Set<string>, imports: Set<string>): Promise<Set<string>> {
   if (imports.has("npm:@observablehq/inputs")) stylesheets.add("observablehq:stdlib/inputs.css");
   if (imports.has("npm:katex")) stylesheets.add(await resolveNpmImport("katex/dist/katex.min.css"));
   if (imports.has("npm:leaflet")) stylesheets.add(await resolveNpmImport("leaflet/dist/leaflet.css"));
   if (imports.has("npm:mapbox-gl")) stylesheets.add(await resolveNpmImport("mapbox-gl/dist/mapbox-gl.css"));
   return stylesheets;
+}
+
+/**
+ * While transitive imports of JavaScript modules are discovered via parsing,
+ * transitive dependencies on other supporting files such as stylesheets and
+ * WebAssembly files are often not discoverable statically. Hence, for any
+ * recommended library (that is, any library provided by default in Markdown,
+ * including with any library used by FileAttachment) we manually enumerate the
+ * needed additional downloads here. TODO Support versioned imports, too, such
+ * as "npm:leaflet@1".
+ */
+export function addImplicitDownloads(imports: Set<string>): Set<string> {
+  if (imports.has("npm:@observablehq/duckdb")) {
+    imports.add("npm:@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm");
+    imports.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js");
+    imports.add("npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm");
+    imports.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js");
+  }
+  if (imports.has("npm:@observablehq/sqlite")) {
+    imports.add("npm:sql.js/dist/sql-wasm.js");
+    imports.add("npm:sql.js/dist/sql-wasm.wasm");
+  }
+  if (imports.has("npm:leaflet")) {
+    imports.add("npm:leaflet/dist/leaflet.css");
+  }
+  if (imports.has("npm:katex")) {
+    imports.add("npm:katex/dist/katex.min.css");
+  }
+  if (imports.has("npm:mapbox-gl")) {
+    imports.add("npm:mapbox-gl/dist/mapbox-gl.css");
+  }
+  return imports;
 }

@@ -9,6 +9,7 @@ import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {findRelativeImports, populateNpmCache, resolveNpmImport} from "./javascript/imports.js";
+import {addImplicitDownloads} from "./libraries.js";
 import type {Logger, Writer} from "./logger.js";
 import {renderServerless} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
@@ -160,21 +161,9 @@ export async function build(
     await effects.copyFile(sourcePath, outputPath);
   }
 
-  // Resolve some special additional downloads.
-  if (globalImports.has("npm:@observablehq/duckdb")) {
-    globalImports.add("npm:@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm");
-    globalImports.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js");
-    globalImports.add("npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm");
-    globalImports.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js");
-  }
-  if (globalImports.has("npm:@observablehq/sqlite")) {
-    globalImports.add("npm:sql.js/dist/sql-wasm.js");
-    globalImports.add("npm:sql.js/dist/sql-wasm.wasm");
-  }
-
   // Resolve npm imports.
   const npmImports = new Set<string>();
-  for (const specifier of globalImports) {
+  for (const specifier of addImplicitDownloads(globalImports)) {
     if (specifier.startsWith("npm:")) {
       const path = await resolveNpmImport(specifier.slice("npm:".length));
       if (path.startsWith("/_npm/")) npmImports.add(path);
