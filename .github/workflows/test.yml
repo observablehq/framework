@@ -10,9 +10,11 @@ jobs:
   test:
     strategy:
       matrix:
-        version: [20] # temporary remove 21 for testing
+        version: [20, 21]
         os: [ubuntu-latest, windows-latest]
-      fail-fast: false # temporary for testing
+      fail-fast: false # temporary for better CI debugging
+      exclude:
+        - version: 21 # temporary remove 21 for faster CI
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
