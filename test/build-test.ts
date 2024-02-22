@@ -64,6 +64,9 @@ describe("build", async () => {
       for (const path of expectedFiles) {
         const actual = await readFile(fileJoin(actualDir, path), "utf8");
         const expected = await readFile(fileJoin(expectedDir, path), "utf8");
+        if (actual !== expected) {
+          console.log(JSON.stringify({expected, actual}));
+        }
         assert.ok(actual === expected, `${path} must match snapshot`);
       }
 
