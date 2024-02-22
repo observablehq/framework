@@ -2,8 +2,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "clean": "rm -rf docs/.observablehq/cache",
-    "build": "rm -rf dist && observable build",
+    "clean": "rimraf docs/.observablehq/cache",
+    "build": "rimraf dist && observable build",
     "dev": "observable preview",
     "deploy": "observable deploy",
     "observable": "observable"
@@ -12,6 +12,9 @@
     "@observablehq/framework": "latest",
     "d3-dsv": "^3.0.1",
     "d3-time-format": "^4.1.0"
+  },
+  "devDependencies": {
+    "rimraf": "^5.0.5"
   },
   "engines": {
     "node": ">=20.6"
