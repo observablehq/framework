@@ -494,10 +494,7 @@ function getModuleHash(root: FilePath, path: UrlPath): string {
   const hash = createHash("sha256");
   const filePath = urlPathToFilePath(path);
   try {
-    const fullPath = fileJoin(root, filePath);
-    const content = readFileSync(fullPath, "utf-8");
-    if (content.includes("\r")) throw new Error(`module contains carriage returns: ${fullPath}`);
-    hash.update(content);
+    hash.update(readFileSync(fileJoin(root, filePath), "utf-8"));
   } catch (error) {
     if (!isEnoent(error)) throw error;
   }
