@@ -28,6 +28,7 @@ const index = await fetch(import.meta.resolve(global.__minisearch))
 input.addEventListener("input", () => {
   if (currentValue === input.value) return;
   currentValue = input.value;
+  sessionStorage.setItem("search-query", currentValue);
   if (!currentValue.length) {
     container.setAttribute("data-shortcut", shortcut);
     sidebar.classList.remove("observablehq-search-results");
