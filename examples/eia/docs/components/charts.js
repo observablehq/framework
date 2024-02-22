@@ -43,14 +43,12 @@ export function usGenDemandForecastChart(width, height, usDemandGenForecast, cur
       Plot.line(usDemandGenForecast, {x: "date", y: (d) => d.value / 1000, stroke: "name", strokeWidth: 1.2}),
       Plot.ruleX(usDemandGenForecast, Plot.pointerX({
         x: "date", 
-        stroke: "#00ade4", 
         title: (d) => `${timeFormat("%-d %b %-I %p")(d.date)}\n${d.textSummary}`,
         tip: {
           anchor: "top-right",
           frameAnchor: "bottom-right",
           fontSize: 12,
           pointerSize: 0,
-          stroke: "#00ade4",
           dx: 8,
         }
       })),
