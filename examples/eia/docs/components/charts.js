@@ -43,6 +43,7 @@ export function usGenDemandForecastChart(width, height, detailData, summaryData,
       Plot.line(detailData, {x: "date", y: (d) => d.value / 1000, stroke: "name", strokeWidth: 1.2}),
       Plot.ruleX(summaryData, Plot.pointerX({
         x: "date",
+        strokeDasharray: [2,2],
         channels: {
           date: {value: "date", label: "Date"},
           d: {value: "D", label: "Demand"},
