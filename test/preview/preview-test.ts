@@ -1,11 +1,12 @@
 import chai, {assert, expect} from "chai";
 import chaiHttp from "chai-http";
+import {FilePath} from "../../src/brandedPath.js";
 import {normalizeConfig} from "../../src/config.js";
 import {preview} from "../../src/preview.js";
 import type {PreviewOptions, PreviewServer} from "../../src/preview.js";
 import {mockJsDelivr} from "../mocks/jsdelivr.js";
 
-const testHostRoot = "test/preview/dashboard";
+const testHostRoot = FilePath("test/preview/dashboard");
 const testHostName = "127.0.0.1";
 const testPort = 3000;
 

@@ -1,4 +1,5 @@
 import assert from "node:assert";
+import os from "node:os";
 import {stat} from "../src/brandedFs.js";
 import {FilePath} from "../src/brandedPath.js";
 import {maybeStat, prepareOutput, visitFiles, visitMarkdownFiles} from "../src/files.js";
@@ -33,26 +34,30 @@ describe("maybeStat(path)", () => {
 describe("visitFiles(root)", () => {
   it("visits all files in a directory, return the relative path from the root", async () => {
     assert.deepStrictEqual(await collect(visitFiles(FilePath("test/input/build/files"))), [
-      "custom-styles.css",
-      "file-top.csv",
-      "files.md",
-      "observable logo small.png",
-      "observable logo.png",
-      "subsection/additional-styles.css",
-      "subsection/file-sub.csv",
-      "subsection/subfiles.md"
+      FilePath("custom-styles.css"),
+      FilePath("file-top.csv"),
+      FilePath("files.md"),
+      FilePath("observable logo small.png"),
+      FilePath("observable logo.png"),
+      FilePath("subsection/additional-styles.css"),
+      FilePath("subsection/file-sub.csv"),
+      FilePath("subsection/subfiles.md")
     ]);
   });
-  it("handles circular symlinks, visiting files only once", async () => {
-    assert.deepStrictEqual(await collect(visitFiles(FilePath("test/input/circular-files"))), ["a/a.txt", "b/b.txt"]);
+  it("handles circular symlinks, visiting files only once", async function () {
+    if (os.platform() === "win32") this.skip(); // symlinks are not the same on Windows
+    assert.deepStrictEqual(await collect(visitFiles(FilePath("test/input/circular-files"))), [
+      FilePath("a/a.txt"),
+      FilePath("b/b.txt")
+    ]);
   });
 });
 
 describe("visitMarkdownFiles(root)", () => {
   it("visits all Markdown files in a directory, return the relative path from the root", async () => {
     assert.deepStrictEqual(await collect(visitMarkdownFiles(FilePath("test/input/build/files"))), [
-      "files.md",
-      "subsection/subfiles.md"
+      FilePath("files.md"),
+      FilePath("subsection/subfiles.md")
     ]);
   });
 });

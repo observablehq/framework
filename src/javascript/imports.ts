@@ -4,8 +4,16 @@ import type {Identifier, Node, Program} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {readFileSync} from "../brandedFs.js";
-import {FilePath} from "../brandedPath.js";
-import {UrlPath, fileJoin, filePathToUrlPath, unUrlPath, urlJoin, urlPathToFilePath} from "../brandedPath.js";
+import {
+  FilePath,
+  UrlPath,
+  fileJoin,
+  filePathToUrlPath,
+  fileSep,
+  unUrlPath,
+  urlJoin,
+  urlPathToFilePath
+} from "../brandedPath.js";
 import {isEnoent} from "../error.js";
 import {type Feature, type ImportReference, type JavaScriptNode} from "../javascript.js";
 import {parseOptions} from "../javascript.js";
@@ -150,7 +158,7 @@ export function findImportFeatures(node: Node, path: UrlPath, input: string): Fe
   simple(node, {
     CallExpression(node) {
       const type = featureMap.get(node.callee as Identifier);
-      if (type) features.push(getFeature(type, node, urlPathToFilePath(path), input));
+      if (type) features.push(getFeature(type, node, path, input));
     }
   });
 
@@ -172,7 +180,7 @@ export async function rewriteModule(input: string, path: FilePath, resolver: Imp
     CallExpression(node) {
       const type = featureMap.get(node.callee as Identifier);
       if (type) {
-        const feature = getFeature(type, node, path, input); // validate syntax
+        const feature = getFeature(type, node, filePathToUrlPath(path), input); // validate syntax
         if (feature.type === "FileAttachment") {
           const arg = node.arguments[0];
           const result = JSON.stringify(
@@ -518,7 +526,7 @@ export function isPathImport(specifier: string): boolean {
 }
 
 export function isLocalImport(specifier: string, path: FilePath): boolean {
-  return isPathImport(specifier) && !resolvePath(path, UrlPath(specifier)).startsWith("../");
+  return isPathImport(specifier) && !resolvePath(path, UrlPath(specifier)).startsWith(`..${fileSep}`);
 }
 
 function isNamespaceSpecifier(node) {

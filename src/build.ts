@@ -7,7 +7,6 @@ import {
   fileDirname,
   fileJoin,
   filePathToUrlPath,
-  unFilePath,
   unUrlPath,
   urlBasename,
   urlDirname,
@@ -211,7 +210,7 @@ export class FileBuildEffects implements BuildEffects {
     this.outputRoot = outputRoot;
   }
   existsSync(path: FilePath) {
-    return existsSync(unFilePath(path));
+    return existsSync(path);
   }
   readFile(path: FilePath, encoding: "utf-8"): Promise<string> {
     return readFile(path, encoding);

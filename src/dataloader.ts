@@ -1,6 +1,6 @@
-import {spawn} from "node:child_process";
 import {type WriteStream} from "node:fs";
 import {createGunzip} from "node:zlib";
+import {spawn} from "cross-spawn";
 import JSZip from "jszip";
 import {extract} from "tar-stream";
 import {createReadStream, existsSync, statSync} from "./brandedFs.js";

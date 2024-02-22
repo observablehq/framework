@@ -1,6 +1,6 @@
 import packageJson from "../package.json";
 import {readFile} from "./brandedFs.js";
-import {unUrlPath, type FilePath, type UrlPath} from "./brandedPath.js";
+import {type FilePath, type UrlPath, unUrlPath} from "./brandedPath.js";
 import {CliError, HttpError, isApiError} from "./error.js";
 import type {ApiKey} from "./observableApiConfig.js";
 import {faint, red} from "./tty.js";

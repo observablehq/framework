@@ -5,7 +5,7 @@ import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
-import {FilePath, UrlPath, filePathToUrlPath, unFilePath, unUrlPath} from "./brandedPath.js";
+import {FilePath, UrlPath, filePathToUrlPath, unFilePath} from "./brandedPath.js";
 import {getClientPath} from "./files.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
 import {isPathImport, resolveNpmImport} from "./javascript/imports.js";

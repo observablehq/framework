@@ -1,6 +1,6 @@
 import he from "he";
 import MiniSearch from "minisearch";
-import {UrlPath, fileBasename, fileJoin, urlBasename} from "./brandedPath.js";
+import {UrlPath, fileBasename, fileJoin} from "./brandedPath.js";
 import type {Config} from "./config.js";
 import {visitMarkdownFiles} from "./files.js";
 import type {Logger} from "./logger.js";

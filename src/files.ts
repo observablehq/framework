@@ -3,7 +3,7 @@ import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import mime from "mime";
 import {existsSync, mkdir, readdir, stat} from "./brandedFs.js";
-import {UrlPath, urlJoin, urlPathToFilePath} from "./brandedPath.js";
+import {UrlPath, fileSep, urlJoin, urlPathToFilePath} from "./brandedPath.js";
 import {FilePath, fileDirname, fileExtname, fileJoin, fileNormalize, fileRelative, unUrlPath} from "./brandedPath.js";
 import {isEnoent} from "./error.js";
 import type {FileReference} from "./javascript.js";
@@ -14,7 +14,7 @@ export function getLocalPath(sourcePath: UrlPath, name: UrlPath): FilePath | nul
   if (/^\w+:/.test(unUrlPath(name))) return null; // URL
   if (name.startsWith("#")) return null; // anchor tag
   const path = resolvePath(urlPathToFilePath(sourcePath), name);
-  if (path.startsWith("../")) return null; // goes above root
+  if (path.startsWith(`..${fileSep}`)) return null; // goes above root
   return path;
 }
 

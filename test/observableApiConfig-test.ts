@@ -4,20 +4,32 @@ import {type FilePath, fileJoin} from "../src/brandedPath.js";
 import type {ConfigEffects} from "../src/observableApiConfig.js";
 import {loadUserConfig} from "../src/observableApiConfig.js";
 
+const isWindows = os.platform() === "win32";
+
 describe("loadUserConfig", () => {
   it("checks expected directories for the config", async () => {
     const effects = new MockConfigEffects();
     assert.deepEqual(await loadUserConfig(effects), {
       config: {},
-      configPath: "/home/amaya/.observablehq"
+      configPath: isWindows ? "C:\\Users\\Amaya\\.observablehq" : "/home/amaya/.observablehq"
     });
-    assert.deepEqual(effects._readLog, [
-      "/opt/projects/acme-bi/.observablehq",
-      "/opt/projects/.observablehq",
-      "/opt/.observablehq",
-      "/.observablehq",
-      "/home/amaya/.observablehq"
-    ]);
+    assert.deepEqual(
+      effects._readLog,
+      isWindows
+        ? [
+            "D:\\Projects\\acme-bi\\.observablehq",
+            "D:\\Projects\\.observablehq",
+            "D:\\.observablehq",
+            "C:\\Users\\Amaya\\.observablehq"
+          ]
+        : [
+            "/opt/projects/acme-bi/.observablehq",
+            "/opt/projects/.observablehq",
+            "/opt/.observablehq",
+            "/.observablehq",
+            "/home/amaya/.observablehq"
+          ]
+    );
     assert.deepEqual(effects._writeLog, []);
   });
 });
@@ -46,14 +58,12 @@ export class MockConfigEffects implements ConfigEffects {
   }
 
   homedir() {
-    return os.platform() === "win32" ? fileJoin("C:", "Users", "Amaya") : fileJoin("/", "home", "amaya");
+    return isWindows ? fileJoin("C:", "Users", "Amaya") : fileJoin("/", "home", "amaya");
   }
 
   cwd() {
     // it is an important detail that this is not inside the home dir
-    return os.platform() === "win32"
-      ? fileJoin("D:", "Projects", "acme-bi")
-      : fileJoin("/", "opt", "projects", "acme-bi");
+    return isWindows ? fileJoin("D:", "Projects", "acme-bi") : fileJoin("/", "opt", "projects", "acme-bi");
   }
 }
 

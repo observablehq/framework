@@ -2,7 +2,7 @@ import assert from "node:assert";
 import os from "node:os";
 import {InternSet, difference} from "d3-array";
 import {renameSync, unlinkSync, utimesSync, writeFileSync} from "../src/brandedFs.js";
-import {FilePath} from "../src/brandedPath.js";
+import {FilePath, UrlPath} from "../src/brandedPath.js";
 import {FileWatchers} from "../src/fileWatchers.js";
 
 describe("FileWatchers.of(root, path, names, callback)", () => {
@@ -36,18 +36,17 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
     }
   });
   it("watches a file within a static archive", async () => {
-    const [watcher, watches] = await useWatcher(`test/input/build/archives.${os.platform()}`, "zip.md", [
-      "static/file.txt"
-    ]);
+    const platform = os.platform() === "win32" ? "win32" : "posix";
+    const [watcher, watches] = await useWatcher(`test/input/build/archives.${platform}`, "zip.md", ["static/file.txt"]);
     try {
-      touch(FilePath("test/input/build/archives/static.zip"));
+      touch(FilePath(`test/input/build/archives.${platform}/static.zip`));
       assert.deepStrictEqual(await watches(), ["static/file.txt"]);
     } finally {
       watcher.close();
     }
   });
   it("watches a file within an archive created by a data loader", async function () {
-    const platform = os.platform();
+    const platform = os.platform() === "win32" ? "win32" : "posix";
     if (platform === "win32") this.skip(); // .sh loaders don't work on Windows
     const [watcher, watches] = await useWatcher(`test/input/build/archives.${platform}`, "zip.md", [
       "dynamic/file.txt"
@@ -157,7 +156,10 @@ describe("FileWatchers.of(root, path, names, callback)", () => {
 
         // Then touch a different file to make sure the watcher is still alive.
         touch(FilePath("test/input/build/files/file-top.csv"));
-        assert.deepStrictEqual(difference(await watches(), ["temp.csv"]), new InternSet(["file-top.csv"]));
+        assert.deepStrictEqual(
+          difference(await watches(), [FilePath("temp.csv")]),
+          new InternSet([FilePath("file-top.csv")])
+        );
       } finally {
         watcher.close();
       }
@@ -171,25 +173,25 @@ async function useWatcher(
   rootStr: string,
   pathStr: string,
   namesStr: string[]
-): Promise<[watcher: FileWatchers, wait: (delay?: number) => Promise<FilePath[]>]> {
+): Promise<[watcher: FileWatchers, wait: (delay?: number) => Promise<UrlPath[]>]> {
   const root = FilePath(rootStr);
   const path = FilePath(pathStr);
-  const names = namesStr.map((name) => FilePath(name));
-  let watches = new Set<FilePath>();
-  let resume: ((value: FilePath[]) => void) | null = null;
+  const names = namesStr.map((name) => UrlPath(name));
+  let watches = new Set<UrlPath>();
+  let resume: ((value: UrlPath[]) => void) | null = null;
   const wait = (delay?: number) => {
     if (resume) throw new Error("already waiting");
-    const promise = new Promise<FilePath[]>((y) => (resume = y));
+    const promise = new Promise<UrlPath[]>((y) => (resume = y));
     if (delay == null) return promise;
-    const timeout = new Promise<FilePath[]>((y) => setTimeout(() => y([...watches].sort()), delay));
+    const timeout = new Promise<UrlPath[]>((y) => setTimeout(() => y([...watches].sort()), delay));
     return Promise.race([promise, timeout]);
   };
-  const watch = (name: FilePath) => {
+  const watch = (name: UrlPath) => {
     watches.add(name);
     const r = resume;
     if (r == null) return;
     resume = null;
-    setTimeout(() => (r([...watches].sort()), (watches = new Set<FilePath>())), 10);
+    setTimeout(() => (r([...watches].sort()), (watches = new Set<UrlPath>())), 10);
   };
   const watcher = await FileWatchers.of(root, path, names, watch);
   await pause();

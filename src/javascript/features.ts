@@ -1,11 +1,11 @@
 import type {CallExpression, Identifier, Literal, Node, TemplateLiteral} from "acorn";
 import {simple} from "acorn-walk";
+import {type FilePath, UrlPath, filePathToUrlPath} from "../brandedPath.js";
 import {getLocalPath} from "../files.js";
 import type {Feature} from "../javascript.js";
 import {defaultGlobals} from "./globals.js";
 import {findReferences} from "./references.js";
 import {syntaxError} from "./syntaxError.js";
-import {FilePath, UrlPath, filePathToUrlPath, unFilePath} from "../brandedPath.js";
 
 export function findFeatures(node: Node, path: FilePath, references: Identifier[], input: string): Feature[] {
   const featureMap = getFeatureReferenceMap(node);
@@ -26,7 +26,7 @@ export function findFeatures(node: Node, path: FilePath, references: Identifier[
         if (name !== "FileAttachment") return;
         type = name;
       }
-      features.push(getFeature(type, node, path, input));
+      features.push(getFeature(type, node, filePathToUrlPath(path), input));
     }
   });
 
@@ -83,7 +83,7 @@ export function getFeatureReferenceMap(node: Node): Map<Identifier, Feature["typ
   return map;
 }
 
-export function getFeature(type: Feature["type"], node: CallExpression, path: FilePath, input: string): Feature {
+export function getFeature(type: Feature["type"], node: CallExpression, path: UrlPath, input: string): Feature {
   const {
     arguments: args,
     arguments: [arg]
@@ -95,14 +95,15 @@ export function getFeature(type: Feature["type"], node: CallExpression, path: Fi
   }
 
   // Forbid file attachments that are not local paths; normalize the path.
-  let name: FilePath | null = FilePath(getStringLiteralValue(arg));
+  let name: UrlPath | null = UrlPath(getStringLiteralValue(arg));
   if (type === "FileAttachment") {
-    const localPath = getLocalPath(filePathToUrlPath(path), filePathToUrlPath(name));
-    if (!localPath) throw syntaxError(`non-local file path: ${name}`, node, input);
-    name = localPath;
+    const localFilePath = getLocalPath(path, name);
+    if (!localFilePath) throw syntaxError(`non-local file path: ${name}`, node, input);
+    const localUrlPath = filePathToUrlPath(localFilePath);
+    name = localUrlPath;
   }
 
-  return {type, name: filePathToUrlPath(name)};
+  return {type, name};
 }
 
 export function isStringLiteral(node: any): node is Literal | TemplateLiteral {

@@ -133,7 +133,8 @@ export class PreviewServer {
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, unUrlPath(pathname).slice("/_observablehq".length), {root: unFilePath(publicRoot)}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
-        const filepath = fileJoin(root, urlPathToFilePath(pathname));
+        const path = pathname.slice("/_import".length);
+        const filepath = fileJoin(root, urlPathToFilePath(path));
         try {
           if (pathname.endsWith(".css")) {
             await access(filepath, constants.R_OK);
@@ -279,11 +280,11 @@ function end(req: IncomingMessage, res: ServerResponse, content: string, type: s
   }
 }
 
-function getWatchPaths(parseResult: ParseResult): FilePath[] {
-  const paths: FilePath[] = [];
+function getWatchPaths(parseResult: ParseResult): UrlPath[] {
+  const paths: UrlPath[] = [];
   const {files, imports} = parseResult;
-  for (const f of files) paths.push(urlPathToFilePath(f.name));
-  for (const i of imports) paths.push(urlPathToFilePath(i.name));
+  for (const f of files) paths.push(f.name);
+  for (const i of imports) paths.push(i.name);
   return paths;
 }
 
@@ -322,13 +323,12 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
     return new Set(Array.from(stylesheets, (href) => resolveStylesheet(urlPath, href)));
   }
 
-  function refreshAttachment(name: FilePath) {
-    const urlName = filePathToUrlPath(name);
+  function refreshAttachment(name: UrlPath) {
     const {cells} = current!;
-    if (cells.some((cell) => cell.imports?.some((i) => i.name === urlName))) {
+    if (cells.some((cell) => cell.imports?.some((i) => i.name === name))) {
       watcher("change"); // trigger re-compilation of JavaScript to get new import hashes
     } else {
-      const affectedCells = cells.filter((cell) => cell.files?.some((f) => f.name === urlName));
+      const affectedCells = cells.filter((cell) => cell.files?.some((f) => f.name === name));
       if (affectedCells.length > 0) {
         send({type: "refresh", cellIds: affectedCells.map((cell) => cell.id)});
       }

@@ -8,7 +8,7 @@ describe("readConfig(undefined, root)", () => {
   before(() => setCurrentDate(new Date("2024-01-11T01:02:03")));
   it("imports the config file at the specified root", async () => {
     assert.deepStrictEqual(await readConfig(undefined, FilePath("test/input/build/config")), {
-      root: "test/input/build/config",
+      root: FilePath("test/input/build/config"),
       output: "dist",
       base: "/",
       style: {theme: ["air", "near-midnight"]},

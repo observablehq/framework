@@ -96,3 +96,6 @@ export function fileResolve(...paths: (string | FilePath)[]): FilePath {
 export function urlResolve(...paths: (string | UrlPath)[]): UrlPath {
   return UrlPath(osPath.resolve(...(paths as string[])));
 }
+
+export const fileSep = osPath.sep as unknown as FilePath;
+export const urlSep = posixPath.sep as unknown as UrlPath;

@@ -83,11 +83,11 @@ export function watch(path: FilePath, listener?: WatchListener<string>): fs.FSWa
   return fs.watch(unFilePath(path), listener);
 }
 
-export function utimes(path: FilePath, atime: number | Date, mtime: number | Date): Promise<void> {
+export function utimes(path: FilePath, atime: Date, mtime: Date): Promise<void> {
   return fsp.utimes(unFilePath(path), atime, mtime);
 }
 
-export function utimesSync(path: FilePath, atime: number | Date, mtime: number | Date): void {
+export function utimesSync(path: FilePath, atime: Date, mtime: Date): void {
   return fs.utimesSync(unFilePath(path), atime, mtime);
 }
 
