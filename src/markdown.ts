@@ -336,7 +336,7 @@ const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcs
   {query: "video source[src]", src: "src"}
 ]);
 
-async function normalizePieceHtml(html: string, root: string, sourcePath: string, context: ParseContext): Promise<string> {
+export async function normalizePieceHtml(html: string, root: string, sourcePath: string, context: ParseContext): Promise<string> {
   const {document} = parseHTML(html);
 
   // Extracting references to files (such as from linked stylesheets).
@@ -368,15 +368,31 @@ async function normalizePieceHtml(html: string, root: string, sourcePath: string
       } else {
         const source = decodeURIComponent(element.getAttribute(src)!);
         const file = resolvePath(source);
+        console.log({ file });
         if (file) {
-          try {
-            file.hash = computeHash(await readFile(join(root, file.name), "utf-8"));
-            element.setAttribute(src, `${file.path}?hash=${file.hash}`);
-          } catch (error) {
-            // if file not found, it will be reported as 404 in client console
-            if (!isEnoent(error)) throw error;
+          let url = file.path;
+          if (file.mimeType === "text/css") {
+            try {
+              const hash = computeHash(await readFile(join(root, file.name), "utf-u"));
+              url += `?hash=${hash}`;
+            } catch (error) {
+              // if file not found, it will be reported as 404 in client console
+              if (!isEnoent(error)) throw error;
+            }
           }
+
+          element.setAttribute(src, url);
         }
+
+        // if (file) {
+        //   try {
+        //     file.hash = computeHash(await readFile(join(root, file.name), "utf-8"));
+        //     element.setAttribute(src, `${file.path}?hash=${file.hash}`);
+        //   } catch (error) {
+        //     // if file not found, it will be reported as 404 in client console
+        //     if (!isEnoent(error)) throw error;
+        //   }
+        // }
       }
     }
   }
