@@ -52,7 +52,7 @@ export interface Config {
 
 export async function readConfig(configPath?: FilePath, root?: FilePath): Promise<Config> {
   if (configPath === undefined) return readDefaultConfig(root);
-  const importPath = "file:///" + filePathToUrlPath(fileJoin(process.cwd(), root ?? ".", configPath));
+  const importPath = "file://" + filePathToUrlPath(fileJoin(process.cwd(), root ?? ".", configPath));
   return normalizeConfig((await import(importPath)).default, root);
 }
 
