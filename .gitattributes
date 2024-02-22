@@ -1,0 +1,20 @@
+# Ask git to automatically convert text files into the system line ending when
+# checking out files, and to convert them to LF when committing.
+* text=auto
+
+# Our test inputs often get hashed, and so need to be consistent.
+test/input/* text eol=lf
+
+# Git can usually detect binary files, but lets mark the binary files we have
+# in the repository as binary just to be safe.
+*.arrow binary
+*.db binary
+*.jpg binary
+*.mp4 binary
+*.parquet binary
+*.png binary
+*.tar binary
+*.tgz binary
+*.webp binary
+*.xlsx binary
+*.zip binary
