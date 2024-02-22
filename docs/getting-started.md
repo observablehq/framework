@@ -649,6 +649,39 @@ forecast = requests.get(station["properties"]["forecastHourly"]).json()
 json.dump(forecast, sys.stdout)
 ```
 
+Here's another example <code>forecast.json.jl</code> in Julia:
+
+```julia run=false
+using Pkg
+Pkg.add("HTTP")
+Pkg.add("JSON")
+
+using HTTP, JSON
+
+longitude = -122.47
+latitude = 37.80
+
+URL = "https://api.weather.gov/points/$(latitude),$(longitude)"
+
+function get_api_response(url::String)
+
+    request = HTTP.request("GET",
+                            url;
+                            verbose = 0,
+                            retries = 2)
+    
+    response_text = String(request.body)
+    response_dict = JSON.parse(response_text)
+    
+    return response_dict
+end
+
+response_dict = get_api_response(URL)
+hourly_dict = get_api_response(response_dict["properties"]["forecastHourly"])
+
+JSON.print(stdout, hourly_dict)
+```
+
 To write the data loader in R, name it <code>forecast.json.R</code>. Or as shell script, <code>forecast.json.sh</code>. You get the idea. See [Data loaders: Routing](./loaders#routing) for more. The beauty of this approach is that you can leverage the strengths (and libraries) of multiple languages, and still get instant updates in the browser as you develop.
 
 ### Deploying via GitHub Actions
