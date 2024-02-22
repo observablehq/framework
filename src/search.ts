@@ -1,6 +1,6 @@
 import he from "he";
 import MiniSearch from "minisearch";
-import {UrlPath, fileBasename, fileJoin} from "./brandedPath.js";
+import {UrlPath, fileBasename, fileJoin, filePathToUrlPath, urlBasename} from "./brandedPath.js";
 import type {Config} from "./config.js";
 import {visitMarkdownFiles} from "./files.js";
 import type {Logger} from "./logger.js";
@@ -54,7 +54,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
 
     // This is the (top-level) serving path to the indexed page. There’s
     // implicitly a leading slash here.
-    const id = file.slice(0, fileBasename(file) === "index.md" ? -"index.md".length : -3);
+    const id = filePathToUrlPath(file.slice(0, fileBasename(file) === "index.md" ? -"index.md".length : -3));
 
     // eslint-disable-next-line import/no-named-as-default-member
     const text = he
