@@ -1,1 +1,1 @@
-zip -qj - test/input/build/archives/file.txt
+zip -qj - test/input/build.posix/file.txt
