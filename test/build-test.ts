@@ -62,11 +62,8 @@ describe("build", async () => {
       if (unexpectedFiles.size > 0) assert.fail(`Unexpected output files: ${Array.from(unexpectedFiles).join(", ")}`);
 
       for (const path of expectedFiles) {
-        const actual = await readFile(fileJoin(actualDir, path), "utf8");
-        const expected = await readFile(fileJoin(expectedDir, path), "utf8");
-        if (actual !== expected) {
-          console.log(JSON.stringify({expected, actual}));
-        }
+        const actual = (await readFile(fileJoin(actualDir, path), "utf8")).replaceAll("\r\n", "\n");
+        const expected = (await readFile(fileJoin(expectedDir, path), "utf8")).replaceAll("\r\n", "\n");
         assert.ok(actual === expected, `${path} must match snapshot`);
       }
 
