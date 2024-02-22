@@ -1,5 +1,5 @@
 import * as Plot from "npm:@observablehq/plot"
-import {extent, timeFormat} from "npm:d3"
+import {extent, format, timeFormat} from "npm:d3"
 
 // Top 5 balancing authorities chart
 export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDemand) {
@@ -24,13 +24,13 @@ export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDema
 }
 
 // US electricity demand, generation and forecasting chart
-export function usGenDemandForecastChart(width, height, usDemandGenForecast, currentHour) {
+export function usGenDemandForecastChart(width, height, detailData, summaryData, currentHour) {
   return Plot.plot({
     width,
     marginTop: 0,
     height: height - 50,
     y: {label: null},
-    x: {type: "time", tickSize: 0, tickPadding: 3},
+    x: {type: "time", tickSize: 0, tickPadding: 3, label: "Date"},
     color: {
       legend: true,
       domain: ["Demand", "Day-ahead demand forecast", "Net generation"],
@@ -40,18 +40,27 @@ export function usGenDemandForecastChart(width, height, usDemandGenForecast, cur
     grid: true,
     marks: [
       Plot.ruleX([currentHour], {strokeOpacity: 0.5}),
-      Plot.line(usDemandGenForecast, {x: "date", y: (d) => d.value / 1000, stroke: "name", strokeWidth: 1.2}),
-      Plot.ruleX(usDemandGenForecast, Plot.pointerX({
-        x: "date", 
-        title: (d) => `${timeFormat("%-d %b %-I %p")(d.date)}\n${d.textSummary}`,
+      Plot.line(detailData, {x: "date", y: (d) => d.value / 1000, stroke: "name", strokeWidth: 1.2}),
+      Plot.ruleX(summaryData, Plot.pointerX({
+        x: "date",
+        channels: {
+          date: {value: "date", label: "Date"},
+          d: {value: "D", label: "Demand"},
+          df: {value: "DF", label: "Demand forecast"},
+          ng: {value: "NG", label: "Net generation"}
+        },
         tip: {
-          anchor: "top-right",
-          frameAnchor: "bottom-right",
+          format: {
+            date: (d) => timeFormat("%-m/%-d %-I %p")(d),
+            d: (d) => `${format(".1f")(d / 1000)} GWh`,
+            df: (d) => `${format(".1f")(d / 1000)} GWh`,
+            ng: (d) => `${format(".1f")(d / 1000)} GWh`
+          },
           fontSize: 12,
-          pointerSize: 0,
-          dx: 8,
+          anchor: "bottom",
+          frameAnchor: "top"
         }
-      })),
+      }))
     ]
   })
 }
