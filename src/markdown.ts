@@ -1,5 +1,6 @@
 import {createHash} from "node:crypto";
 import {readFile} from "node:fs/promises";
+import {dirname, extname, join, normalize, relative} from "node:path";
 import {type Patch, type PatchItem, getPatch} from "fast-array-diff";
 import equal from "fast-deep-equal";
 import matter from "gray-matter";
@@ -297,7 +298,7 @@ function extendPiece(context: ParseContext, extend: Partial<RenderPiece>) {
 }
 
 function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string): Renderer["render"] {
-  return (tokens, options, context: ParseContext) => {
+  return async (tokens, options, context: ParseContext) => {
     const rules = renderer.rules;
     for (let i = 0, len = tokens.length; i < len; i++) {
       const type = tokens[i].type;
@@ -316,8 +317,9 @@ function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string):
     }
     let result = "";
     for (const piece of context.pieces) {
-      result += piece.html = normalizePieceHtml(piece.html, sourcePath, context);
+      result += piece.html = await normalizePieceHtml(piece.html, root, sourcePath, context);
     }
+
     return result;
   };
 }
@@ -334,7 +336,7 @@ const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcs
   {query: "video source[src]", src: "src"}
 ]);
 
-export function normalizePieceHtml(html: string, sourcePath: string, context: ParseContext): string {
+async function normalizePieceHtml(html: string, root: string, sourcePath: string, context: ParseContext): Promise<string> {
   const {document} = parseHTML(html);
 
   // Extracting references to files (such as from linked stylesheets).
@@ -366,7 +368,15 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
       } else {
         const source = decodeURIComponent(element.getAttribute(src)!);
         const file = resolvePath(source);
-        if (file) element.setAttribute(src, file.path);
+        if (file) {
+          try {
+            file.hash = computeHash(await readFile(join(root, file.name), "utf-8"));
+            element.setAttribute(src, `${file.path}?hash=${file.hash}`);
+          } catch (error) {
+            // if file not found, it will be reported as 404 in client console
+            if (!isEnoent(error)) throw error;
+          }
+        }
       }
     }
   }
@@ -430,7 +440,7 @@ export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptio
   md.renderer.render = renderIntoPieces(md.renderer, root, path);
   const context: ParseContext = {files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
   const tokens = md.parse(parts.content, context);
-  const html = md.renderer.render(tokens, md.options, context); // Note: mutates context.pieces, context.files!
+  const html = await md.renderer.render(tokens, md.options, context); // Note: mutates context.pieces, context.files!
   return {
     html,
     data: isEmpty(parts.data) ? null : parts.data,
