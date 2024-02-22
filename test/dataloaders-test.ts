@@ -31,7 +31,7 @@ describe("data loaders are called with the appropriate command", () => {
   it("a .exe data loader is invoked directly", async () => {
     const loader = Loader.find(FilePath("test"), FilePath("dataloaders/data4.txt"))!;
     const out = await loader.load(noopEffects);
-    assert.strictEqual(await readFile(fileJoin("test", out), "utf-8"), `python3${lineEnding}`);
+    assert.strictEqual(await readFile(fileJoin("test", out), "utf-8"), `python${lineEnding}`);
   });
   it("a .py data loader is called with python3", async () => {
     const loader = Loader.find(FilePath("test"), FilePath("dataloaders/data5.txt"))!;
