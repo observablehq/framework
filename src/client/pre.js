@@ -9,6 +9,7 @@ export function enableCopyButtons() {
   for (const pre of document.querySelectorAll("pre:not([data-copy=none])")) {
     const parent = pre.parentNode;
     const div = parent.insertBefore(document.createElement("div"), pre);
+    if (parent.classList.contains("observablehq-pre-container")) continue;
     div.className = "observablehq-pre-container";
     Object.assign(div.dataset, pre.dataset);
     div.appendChild(copyButton.content.cloneNode(true).firstChild).addEventListener("click", copy);
