@@ -122,6 +122,7 @@ export interface Page {
   path: string;
 }
 ```
+
 ```ts run=false
 export interface Section {
   name: string;
