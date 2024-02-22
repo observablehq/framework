@@ -422,6 +422,19 @@
   align-items: center;
 }
 
+.data-copied {
+  position: absolute;
+  top: -29px;
+  right: -3px;
+  background: var(--theme-background-alt);
+  color: var(--theme-foreground-muted);
+  font-size: 0.9em;
+  border-radius: 2px;
+  padding: 0.3em 0.5em;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .observablehq-pre-container[data-copy] .observablehq-pre-copy,
 .observablehq-pre-container:hover .observablehq-pre-copy,
 .observablehq-pre-container .observablehq-pre-copy:focus {
