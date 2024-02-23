@@ -6,8 +6,8 @@ import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
 import {getClientPath} from "./files.js";
-import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
 import {isPathImport, resolveNpmImport} from "./javascript/imports.js";
+import {type StringLiteral, getStringLiteralValue, isStringLiteral} from "./javascript/node.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
 import {Sourcemap} from "./sourcemap.js";
 import {THEMES, renderTheme} from "./theme.js";
@@ -145,7 +145,7 @@ function importMetaResolve(clientPath: string): Plugin {
       const output = new Sourcemap(code);
       for (const node of resolves) {
         const source = node.arguments[0];
-        const specifier = getStringLiteralValue(source);
+        const specifier = getStringLiteralValue(source as StringLiteral);
         if (specifier.startsWith("npm:")) {
           const resolution = relativeUrl(sourcePath, await resolveNpmImport(specifier.slice("npm:".length)));
           output.replaceLeft(source.start, source.end, JSON.stringify(resolution));

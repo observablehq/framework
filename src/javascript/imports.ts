@@ -3,7 +3,7 @@ import {existsSync, readFileSync} from "node:fs";
 import {mkdir, readdir, writeFile} from "node:fs/promises";
 import {dirname, join} from "node:path";
 import {Parser} from "acorn";
-import type {Identifier, Node, Program} from "acorn";
+import type {Node, Program} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {gt, satisfies} from "semver";
@@ -14,8 +14,8 @@ import {parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
 import {faint} from "../tty.js";
 import {relativeUrl, resolvePath} from "../url.js";
-import {getFeature, getFeatureReferenceMap, getStringLiteralValue, isStringLiteral} from "./features.js";
 import {findFileAttachments} from "./files.js";
+import {type StringLiteral, getStringLiteralValue, isStringLiteral} from "./node.js";
 
 type ImportNode = ImportDeclaration | ImportExpression;
 type ExportNode = ExportAllDeclaration | ExportNamedDeclaration;
@@ -194,7 +194,7 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFeat
   }
 
   function findImport(node: ImportNode | ExportNode, path: string) {
-    if (isStringLiteral(node.source)) {
+    if (node.source && isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
       if (isLocalImport(value, path)) {
         set.add(resolvePath(path, value));
@@ -211,7 +211,6 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFeat
 /** Rewrites import specifiers and FileAttachment calls in the specified ES module source. */
 export async function rewriteModule(input: string, path: string, resolver: ImportResolver): Promise<string> {
   const body = Parser.parse(input, parseOptions);
-  const featureMap = getFeatureReferenceMap(body);
   const output = new Sourcemap(input);
   const imports: (ImportNode | ExportNode)[] = [];
 
@@ -219,26 +218,20 @@ export async function rewriteModule(input: string, path: string, resolver: Impor
     ImportDeclaration: rewriteImport,
     ImportExpression: rewriteImport,
     ExportAllDeclaration: rewriteImport,
-    ExportNamedDeclaration: rewriteImport,
-    CallExpression(node) {
-      const type = featureMap.get(node.callee as Identifier);
-      if (type) {
-        const feature = getFeature(type, node, path, input); // validate syntax
-        if (feature.type === "FileAttachment") {
-          const arg = node.arguments[0];
-          const result = JSON.stringify(relativeUrl(join("_import", path), feature.name));
-          output.replaceLeft(arg.start, arg.end, `${result}, import.meta.url`);
-        }
-      }
-    }
+    ExportNamedDeclaration: rewriteImport
   });
 
   function rewriteImport(node: ImportNode | ExportNode) {
     imports.push(node);
   }
 
+  for (const file of findFileAttachments(body, path, input)) {
+    const result = JSON.stringify(relativeUrl(join("_import", path), file.path));
+    output.replaceLeft(file.node.arguments[0].start, file.node.arguments[0].end, `${result}, import.meta.url`);
+  }
+
   for (const node of imports) {
-    if (isStringLiteral(node.source)) {
+    if (node.source && isStringLiteral(node.source)) {
       output.replaceLeft(
         node.source.start,
         node.source.end,
@@ -280,7 +273,7 @@ export async function rewriteImports(
     output.replaceLeft(
       node.source.start,
       node.source.end,
-      JSON.stringify(await resolver(sourcePath, getStringLiteralValue(node.source)))
+      JSON.stringify(await resolver(sourcePath, getStringLiteralValue(node.source as StringLiteral)))
     );
   }
 
@@ -293,7 +286,9 @@ export async function rewriteImports(
         ? `{${node.specifiers.filter(isNotNamespaceSpecifier).map(rewriteImportSpecifier).join(", ")}}`
         : node.specifiers.find(isNamespaceSpecifier)?.local.name ?? "{}"
     );
-    imports.push(`import(${JSON.stringify(await resolver(sourcePath, getStringLiteralValue(node.source)))})`);
+    imports.push(
+      `import(${JSON.stringify(await resolver(sourcePath, getStringLiteralValue(node.source as StringLiteral)))})`
+    );
   }
 
   if (declarations.length > 1) {
@@ -394,7 +389,7 @@ export function findRelativeImports(input: string): Set<string> {
   });
 
   function findRelativeImport(node: ImportNode | ExportNode) {
-    if (isStringLiteral(node.source)) {
+    if (node.source && isStringLiteral(node.source)) {
       const value = getStringLiteralValue(node.source);
       if (isPathImport(value)) imports.add(value);
     }
@@ -416,7 +411,7 @@ export function rewriteNpmImports(input: string, path: string): string {
   });
 
   function rewriteImport(node: ImportNode | ExportNode) {
-    if (isStringLiteral(node.source)) {
+    if (node.source && isStringLiteral(node.source)) {
       let value = getStringLiteralValue(node.source);
       if (value.startsWith("/npm/")) {
         value = `/_npm/${value.slice("/npm/".length)}`;
@@ -546,7 +541,7 @@ async function fetchModulePreloads(href: string): Promise<Set<string> | undefine
       ExportNamedDeclaration: findImport
     });
     function findImport(node: ImportNode | ExportNode) {
-      if (isStringLiteral(node.source)) {
+      if (node.source && isStringLiteral(node.source)) {
         const value = getStringLiteralValue(node.source);
         if (isPathImport(value)) imports.add(String(new URL(value, href)));
       }

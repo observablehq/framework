@@ -13,8 +13,8 @@ describe("findFileAttachments(node, input)", () => {
     assert.deepStrictEqual(files('import {FileAttachment as F} from "npm:@observablehq/stdlib";\nF("foo.json")'), [{name: "foo.json", path: "foo.json", method: "json"}]);
   });
   it("allows relative paths", () => {
-    assert.deepStrictEqual(files('FileAttachment("./foo.json")', "data/bar.js"), [{name: "./foo.json", path: "data/foo.json", method: "json"}]);
-    assert.deepStrictEqual(files('FileAttachment("../foo.json")', "data/bar.js"), [{name: "../foo.json", path: "foo.json", method: "json"}]);
+    assert.deepStrictEqual(files('FileAttachment("./foo.json")', {path: "data/bar.js"}), [{name: "./foo.json", path: "data/foo.json", method: "json"}]);
+    assert.deepStrictEqual(files('FileAttachment("../foo.json")', {path: "data/bar.js"}), [{name: "../foo.json", path: "foo.json", method: "json"}]);
   });
   it("allows absolute paths", () => {
     assert.deepStrictEqual(files('FileAttachment("/foo.json")'), [{name: "/foo.json", path: "foo.json", method: "json"}]);
@@ -40,20 +40,20 @@ describe("findFileAttachments(node, input)", () => {
     assert.throws(() => files("FileAttachment('foo' + 42 + '.json')"), /requires a single literal string argument/);
   });
   it("resolves the path relative to the source", () => {
-    assert.deepStrictEqual(files('FileAttachment("foo.json")', "bar.js"), [{name: "foo.json", path: "foo.json", method: "json"}]);
-    assert.deepStrictEqual(files('FileAttachment("./foo.json")', "bar.js"), [{name: "./foo.json", path: "foo.json", method: "json"}]);
-    assert.deepStrictEqual(files('FileAttachment("/foo.json")', "bar.js"), [{name: "/foo.json", path: "foo.json", method: "json"}]);
-    assert.deepStrictEqual(files('FileAttachment("data/foo.json")', "bar.js"), [{name: "data/foo.json", path: "data/foo.json", method: "json"}]);
-    assert.deepStrictEqual(files('FileAttachment("foo.json")', "data/bar.js"), [{name: "foo.json", path: "data/foo.json", method: "json"}]);
-    assert.deepStrictEqual(files('FileAttachment("./foo.json")', "data/bar.js"), [{name: "./foo.json", path: "data/foo.json", method: "json"}]);
-    assert.deepStrictEqual(files('FileAttachment("../foo.json")', "data/bar.js"), [{name: "../foo.json", path: "foo.json", method: "json"}]);
-    assert.deepStrictEqual(files('FileAttachment("/foo.json")', "data/bar.js"), [{name: "/foo.json", path: "foo.json", method: "json"}]);
+    assert.deepStrictEqual(files('FileAttachment("foo.json")', {path: "bar.js"}), [{name: "foo.json", path: "foo.json", method: "json"}]);
+    assert.deepStrictEqual(files('FileAttachment("./foo.json")', {path: "bar.js"}), [{name: "./foo.json", path: "foo.json", method: "json"}]);
+    assert.deepStrictEqual(files('FileAttachment("/foo.json")', {path: "bar.js"}), [{name: "/foo.json", path: "foo.json", method: "json"}]);
+    assert.deepStrictEqual(files('FileAttachment("data/foo.json")', {path: "bar.js"}), [{name: "data/foo.json", path: "data/foo.json", method: "json"}]);
+    assert.deepStrictEqual(files('FileAttachment("foo.json")', {path: "data/bar.js"}), [{name: "foo.json", path: "data/foo.json", method: "json"}]);
+    assert.deepStrictEqual(files('FileAttachment("./foo.json")', {path: "data/bar.js"}), [{name: "./foo.json", path: "data/foo.json", method: "json"}]);
+    assert.deepStrictEqual(files('FileAttachment("../foo.json")', {path: "data/bar.js"}), [{name: "../foo.json", path: "foo.json", method: "json"}]);
+    assert.deepStrictEqual(files('FileAttachment("/foo.json")', {path: "data/bar.js"}), [{name: "/foo.json", path: "foo.json", method: "json"}]);
   });
   it("disallows paths outside the source root", () => {
-    assert.throws(() => files('FileAttachment("../foo.json")', "bar.js"), /non-local file path/);
-    assert.throws(() => files('FileAttachment("../../foo.json")', "data/bar.js"), /non-local file path/);
-    assert.throws(() => files('FileAttachment("/../foo.json")', "bar.js"), /non-local file path/);
-    assert.throws(() => files('FileAttachment("/../foo.json")', "data/bar.js"), /non-local file path/);
+    assert.throws(() => files('FileAttachment("../foo.json")', {path: "bar.js"}), /non-local file path/);
+    assert.throws(() => files('FileAttachment("../../foo.json")', {path: "data/bar.js"}), /non-local file path/);
+    assert.throws(() => files('FileAttachment("/../foo.json")', {path: "bar.js"}), /non-local file path/);
+    assert.throws(() => files('FileAttachment("/../foo.json")', {path: "data/bar.js"}), /non-local file path/);
   });
   it("disallows non-paths", () => {
     assert.throws(() => files('FileAttachment("https://example.com/foo.json")'), /non-local file path/);
@@ -97,10 +97,35 @@ describe("findFileAttachments(node, input)", () => {
     assert.deepStrictEqual(files('FileAttachment("foo.csv").text'), [{name: "foo.csv", path: "foo.csv", method: "text"}]);
     assert.deepStrictEqual(files('FileAttachment("foo.csv").json'), [{name: "foo.csv", path: "foo.csv", method: "json"}]);
   });
+  it("respects the given aliases", () => {
+    assert.deepStrictEqual(files('FileAttachment("foo.txt").csv', {aliases: []}), []);
+    assert.deepStrictEqual(files('File("foo.txt").csv', {aliases: ["File"]}), [{name: "foo.txt", path: "foo.txt", method: "csv"}]);
+  });
+  it("finds the import declaration", () => {
+    assert.deepStrictEqual(files('import {FileAttachment} from "npm:@observablehq/stdlib";\nFileAttachment("foo.txt").csv', {aliases: []}), [{name: "foo.txt", path: "foo.txt", method: "csv"}]);
+  });
+  it("finds the import declaration if aliased", () => {
+    assert.deepStrictEqual(files('import {FileAttachment as F} from "npm:@observablehq/stdlib";\nF("foo.txt").csv', {aliases: []}), [{name: "foo.txt", path: "foo.txt", method: "csv"}]);
+  });
+  it("finds the import declaration if aliased and masking a global", () => {
+    assert.deepStrictEqual(files('import {FileAttachment as File} from "npm:@observablehq/stdlib";\nFile("foo.txt").csv', {aliases: []}), [{name: "foo.txt", path: "foo.txt", method: "csv"}]);
+  });
+  it("finds the import declaration if multiple aliases", () => {
+    assert.deepStrictEqual(files('import {FileAttachment as F, FileAttachment as G} from "npm:@observablehq/stdlib";\nF("file1.txt");\nG("file2.txt");', {aliases: []}), [{name: "file1.txt", path: "file1.txt", method: "text"}, {name: "file2.txt", path: "file2.txt", method: "text"}]);
+  });
+  it("ignores import declarations from another module", () => {
+    assert.deepStrictEqual(files('import {FileAttachment as F} from "npm:@observablehq/not-stdlib";\nFileAttachment("file1.txt");', {aliases: []}), []);
+  });
+  it.skip("supports namespace imports", () => {
+    assert.deepStrictEqual(files('import * as O from "npm:@observablehq/stdlib";\nO.FileAttachment("foo.txt");', {aliases: []}), [{name: "foo.txt", path: "foo.txt", method: "text"}]);
+  });
+  it("ignores masked references", () => {
+    assert.deepStrictEqual(files('import {FileAttachment} from "npm:@observablehq/stdlib";\n((FileAttachment) => FileAttachment("file.txt"))(String);', {aliases: []}), []);
+  });
 });
 
-function files(input: string, path = "index.js") {
-  return findFileAttachments(parse(input), path, input, ["FileAttachment"]).map((f) => (delete (f as any).node, f));
+function files(input: string, {path = "index.md", aliases = ["FileAttachment"]} = {}) {
+  return findFileAttachments(parse(input), path, input, aliases).map((f) => (delete (f as any).node, f));
 }
 
 function parse(input: string): Program {

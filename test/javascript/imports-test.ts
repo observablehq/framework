@@ -1,8 +1,7 @@
 import assert from "node:assert";
-import type {Node, Program} from "acorn";
+import type {Program} from "acorn";
 import {Parser} from "acorn";
 import {ascending} from "d3-array";
-import {getFeatureReferenceMap} from "../../src/javascript/features.js";
 import {findExports, hasImportDeclaration} from "../../src/javascript/imports.js";
 import {parseLocalImports, rewriteModule, rewriteNpmImports} from "../../src/javascript/imports.js";
 import type {Feature, ImportReference} from "../../src/javascript.js";
@@ -125,48 +124,6 @@ describe("parseLocalImports(root, paths)", () => {
   });
 });
 
-describe("findImportFeatureReferences(node)", () => {
-  it("finds the import declaration", () => {
-    const node = parse('import {FileAttachment} from "npm:@observablehq/stdlib";\nFileAttachment("file.txt");');
-    assert.deepStrictEqual(Array.from(getFeatureReferenceMap(node).keys(), object), [
-      {type: "Identifier", name: "FileAttachment", start: 57, end: 71}
-    ]);
-  });
-  it("finds the import declaration if aliased", () => {
-    const node = parse('import {FileAttachment as F} from "npm:@observablehq/stdlib";\nF("file.txt");');
-    assert.deepStrictEqual(Array.from(getFeatureReferenceMap(node).keys(), object), [
-      {type: "Identifier", name: "F", start: 62, end: 63}
-    ]);
-  });
-  it("finds the import declaration if aliased and masking a global", () => {
-    const node = parse('import {FileAttachment as File} from "npm:@observablehq/stdlib";\nFile("file.txt");');
-    assert.deepStrictEqual(Array.from(getFeatureReferenceMap(node).keys(), object), [
-      {type: "Identifier", name: "File", start: 65, end: 69}
-    ]);
-  });
-  it("finds the import declaration if multiple aliases", () => {
-    const node = parse('import {FileAttachment as F, FileAttachment as G} from "npm:@observablehq/stdlib";\nF("file.txt");\nG("file.txt");'); // prettier-ignore
-    assert.deepStrictEqual(Array.from(getFeatureReferenceMap(node).keys(), object), [
-      {type: "Identifier", name: "F", start: 83, end: 84},
-      {type: "Identifier", name: "G", start: 98, end: 99}
-    ]);
-  });
-  it("ignores import declarations from another module", () => {
-    const node = parse('import {FileAttachment as F} from "npm:@observablehq/not-stdlib";\nF("file.txt");');
-    assert.deepStrictEqual(Array.from(getFeatureReferenceMap(node).keys(), object), []);
-  });
-  it.skip("supports namespace imports", () => {
-    const node = parse('import * as O from "npm:@observablehq/stdlib";\nO.FileAttachment("file.txt");');
-    assert.deepStrictEqual(Array.from(getFeatureReferenceMap(node).keys(), object), [
-      {type: "Identifier", name: "FileAttachment", start: 49, end: 63}
-    ]);
-  });
-  it("ignores masked references", () => {
-    const node = parse('import {FileAttachment} from "npm:@observablehq/stdlib";\n((FileAttachment) => FileAttachment("file.txt"))(String);'); // prettier-ignore
-    assert.deepStrictEqual(Array.from(getFeatureReferenceMap(node).keys(), object), []);
-  });
-});
-
 async function testFile(target: string, path: string): Promise<string> {
   const input = `import {FileAttachment} from "npm:@observablehq/stdlib";\nFileAttachment(${JSON.stringify(target)})`;
   const output = await rewriteModule(input, path, async (path, specifier) => specifier);
@@ -262,10 +219,6 @@ describe("rewriteModule(input, path, resolver)", () => {
 
 function parse(input: string): Program {
   return Parser.parse(input, {ecmaVersion: 13, sourceType: "module"});
-}
-
-function object(node: Node) {
-  return {...node};
 }
 
 function order(a: ImportReference | Feature, b: ImportReference | Feature): number {

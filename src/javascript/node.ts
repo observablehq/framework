@@ -1,6 +1,6 @@
 import type {Literal, MemberExpression, Node, TemplateLiteral} from "acorn";
 
-type StringLiteral =
+export type StringLiteral =
   | {type: "Literal"; value: string} // FileAttachment("foo.csv")
   | {type: "TemplateLiteral"; quasis: {value: {cooked: string}}[]}; // FileAttachment(`foo.csv`)
 
