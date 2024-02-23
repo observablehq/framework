@@ -21,7 +21,7 @@ describe("parseMarkdown(input)", () => {
     const skip = name.startsWith("skip.");
     const outname = only || skip ? name.slice(5) : name;
 
-    (only ? it.only : skip ? it.skip : it)(`test/input/${name}`, () => {
+    (only ? it.only : skip ? it.skip : it)(`test/input/${name}`, async () => {
       const snapshot = await parseMarkdown(path, {root: "test/input", path: name});
       let allequal = true;
       for (const ext of ["html", "json"]) {
@@ -239,7 +239,7 @@ describe("normalizePieceHtml only adds local files", () => {
     ]);
   });
 
-  it("video source[src] only adds local files", async () => {
+  it("video source[src] only adds local files", () => {
     const htmlStr = html`<video width="320" height="240" controls>
       <source src="https://www.youtube.com/watch?v=SsFyayu5csc" type="video/youtube"/>
       <source src="observable.mov" type="video/mov">
