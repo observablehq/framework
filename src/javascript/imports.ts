@@ -235,7 +235,7 @@ export async function rewriteModule(input: string, path: string, resolver: Impor
       output.replaceLeft(
         node.source.start,
         node.source.end,
-        JSON.stringify(await resolver(join("_import", path), getStringLiteralValue(node.source)))
+        JSON.stringify(await resolver(getStringLiteralValue(node.source)))
       );
     }
   }
@@ -247,12 +247,7 @@ export async function rewriteModule(input: string, path: string, resolver: Impor
  * Rewrites import specifiers in the specified JavaScript fenced code block or
  * inline expression.
  */
-export async function rewriteImports(
-  output: Sourcemap,
-  cell: JavaScriptNode,
-  sourcePath: string,
-  resolver: ImportResolver
-): Promise<void> {
+export async function rewriteImports(output: Sourcemap, cell: JavaScriptNode, resolver: ImportResolver): Promise<void> {
   const expressions: ImportExpression[] = [];
   const declarations: ImportDeclaration[] = [];
 
@@ -273,7 +268,7 @@ export async function rewriteImports(
     output.replaceLeft(
       node.source.start,
       node.source.end,
-      JSON.stringify(await resolver(sourcePath, getStringLiteralValue(node.source as StringLiteral)))
+      JSON.stringify(await resolver(getStringLiteralValue(node.source as StringLiteral)))
     );
   }
 
@@ -286,9 +281,7 @@ export async function rewriteImports(
         ? `{${node.specifiers.filter(isNotNamespaceSpecifier).map(rewriteImportSpecifier).join(", ")}}`
         : node.specifiers.find(isNamespaceSpecifier)?.local.name ?? "{}"
     );
-    imports.push(
-      `import(${JSON.stringify(await resolver(sourcePath, getStringLiteralValue(node.source as StringLiteral)))})`
-    );
+    imports.push(`import(${JSON.stringify(await resolver(getStringLiteralValue(node.source as StringLiteral)))})`);
   }
 
   if (declarations.length > 1) {
@@ -299,16 +292,16 @@ export async function rewriteImports(
 }
 
 /**
- * Resolves the given import specifier from the source file at the specified
- * path, typically as a relative path starting with "./" or "../".
+ * Resolves the given import specifier, typically as a relative path starting
+ * with "./" or "../".
  */
-export type ImportResolver = (path: string, specifier: string) => Promise<string>;
+export type ImportResolver = (specifier: string) => Promise<string>;
 
 /**
- * Returns an import resolver for the given source root.
+ * Returns an import resolver for the given source root and path.
  */
-export function createImportResolver(root: string): ImportResolver {
-  return async (path, specifier) => {
+export function createImportResolver(root: string, path: string): ImportResolver {
+  return async (specifier) => {
     return isLocalImport(specifier, path)
       ? relativeUrl(path, resolvePath("_import", path.replace(/^_import\//, ""), resolveImportHash(root, path.replace(/^_import\//, ""), specifier))) // prettier-ignore
       : specifier === "npm:@observablehq/runtime"

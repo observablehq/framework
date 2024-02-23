@@ -126,7 +126,7 @@ describe("parseLocalImports(root, paths)", () => {
 
 async function testFile(target: string, path: string): Promise<string> {
   const input = `import {FileAttachment} from "npm:@observablehq/stdlib";\nFileAttachment(${JSON.stringify(target)})`;
-  const output = await rewriteModule(input, path, async (path, specifier) => specifier);
+  const output = await rewriteModule(input, path, async (specifier) => specifier);
   return output.split("\n").pop()!;
 }
 
@@ -149,71 +149,71 @@ describe("rewriteModule(input, path, resolver)", () => {
   });
   it("ignores FileAttachment if masked by a reference", async () => {
     const input = 'import {FileAttachment} from "npm:@observablehq/stdlib";\n((FileAttachment) => FileAttachment("./test.txt"))(eval)'; // prettier-ignore
-    const output = (await rewriteModule(input, "test.js", async (path, specifier) => specifier)).split("\n").pop()!;
+    const output = (await rewriteModule(input, "test.js", async (specifier) => specifier)).split("\n").pop()!;
     assert.strictEqual(output, '((FileAttachment) => FileAttachment("./test.txt"))(eval)');
   });
   it("ignores FileAttachment if not imported", async () => {
     const input = 'import {Generators} from "npm:@observablehq/stdlib";\nFileAttachment("./test.txt")';
-    const output = (await rewriteModule(input, "test.js", async (path, specifier) => specifier)).split("\n").pop()!;
+    const output = (await rewriteModule(input, "test.js", async (specifier) => specifier)).split("\n").pop()!;
     assert.strictEqual(output, 'FileAttachment("./test.txt")');
   });
   it("ignores FileAttachment if a comma expression", async () => {
     const input = 'import {FileAttachment} from "npm:@observablehq/stdlib";\n(1, FileAttachment)("./test.txt")';
-    const output = (await rewriteModule(input, "test.js", async (path, specifier) => specifier)).split("\n").pop()!;
+    const output = (await rewriteModule(input, "test.js", async (specifier) => specifier)).split("\n").pop()!;
     assert.strictEqual(output, '(1, FileAttachment)("./test.txt")');
   });
   it("ignores FileAttachment if not imported from @observablehq/stdlib", async () => {
     const input = 'import {FileAttachment} from "npm:@observablehq/not-stdlib";\nFileAttachment("./test.txt")';
-    const output = (await rewriteModule(input, "test.js", async (path, specifier) => specifier)).split("\n").pop()!;
+    const output = (await rewriteModule(input, "test.js", async (specifier) => specifier)).split("\n").pop()!;
     assert.strictEqual(output, 'FileAttachment("./test.txt")');
   });
   it("rewrites FileAttachment when aliased", async () => {
     const input = 'import {FileAttachment as F} from "npm:@observablehq/stdlib";\nF("./test.txt")';
-    const output = (await rewriteModule(input, "test.js", async (path, specifier) => specifier)).split("\n").pop()!;
+    const output = (await rewriteModule(input, "test.js", async (specifier) => specifier)).split("\n").pop()!;
     assert.strictEqual(output, 'F("../test.txt", import.meta.url)');
   });
   it("rewrites FileAttachment when aliased to a global", async () => {
     const input = 'import {FileAttachment as File} from "npm:@observablehq/stdlib";\nFile("./test.txt")';
-    const output = (await rewriteModule(input, "test.js", async (path, specifier) => specifier)).split("\n").pop()!;
+    const output = (await rewriteModule(input, "test.js", async (specifier) => specifier)).split("\n").pop()!;
     assert.strictEqual(output, 'File("../test.txt", import.meta.url)');
   });
   it.skip("rewrites FileAttachment when imported as a namespace", async () => {
     const input = 'import * as O from "npm:@observablehq/stdlib";\nO.FileAttachment("./test.txt")';
-    const output = (await rewriteModule(input, "test.js", async (path, specifier) => specifier)).split("\n").pop()!;
+    const output = (await rewriteModule(input, "test.js", async (specifier) => specifier)).split("\n").pop()!;
     assert.strictEqual(output, 'O.FileAttachment("../test.txt", import.meta.url)');
   });
   it("ignores non-FileAttachment calls", async () => {
     const input = 'import {FileAttachment} from "npm:@observablehq/stdlib";\nFile("./test.txt")';
-    const output = (await rewriteModule(input, "test.js", async (path, specifier) => specifier)).split("\n").pop()!;
+    const output = (await rewriteModule(input, "test.js", async (specifier) => specifier)).split("\n").pop()!;
     assert.strictEqual(output, 'File("./test.txt")');
   });
   it("rewrites single-quoted literals", async () => {
     const input = "import {FileAttachment} from \"npm:@observablehq/stdlib\";\nFileAttachment('./test.txt')";
-    const output = (await rewriteModule(input, "test.js", async (path, specifier) => specifier)).split("\n").pop()!;
+    const output = (await rewriteModule(input, "test.js", async (specifier) => specifier)).split("\n").pop()!;
     assert.strictEqual(output, 'FileAttachment("../test.txt", import.meta.url)');
   });
   it("rewrites template-quoted literals", async () => {
     const input = 'import {FileAttachment} from "npm:@observablehq/stdlib";\nFileAttachment(`./test.txt`)';
-    const output = (await rewriteModule(input, "test.js", async (path, specifier) => specifier)).split("\n").pop()!;
+    const output = (await rewriteModule(input, "test.js", async (specifier) => specifier)).split("\n").pop()!;
     assert.strictEqual(output, 'FileAttachment("../test.txt", import.meta.url)');
   });
   it("throws a syntax error with non-literal calls", async () => {
     const input = "import {FileAttachment} from \"npm:@observablehq/stdlib\";\nFileAttachment(`./${'test'}.txt`)";
-    await assert.rejects(() => rewriteModule(input, "test.js", async (path, specifier) => specifier), /FileAttachment requires a single literal string/); // prettier-ignore
+    await assert.rejects(() => rewriteModule(input, "test.js", async (specifier) => specifier), /FileAttachment requires a single literal string/); // prettier-ignore
   });
   it("throws a syntax error with URL fetches", async () => {
     const input = 'import {FileAttachment} from "npm:@observablehq/stdlib";\nFileAttachment("https://example.com")';
-    await assert.rejects(() => rewriteModule(input, "test.js", async (path, specifier) => specifier), /non-local file path/); // prettier-ignore
+    await assert.rejects(() => rewriteModule(input, "test.js", async (specifier) => specifier), /non-local file path/); // prettier-ignore
   });
   it("ignores non-local path fetches", async () => {
     const input1 = 'import {FileAttachment} from "npm:@observablehq/stdlib";\nFileAttachment("../test.txt")';
     const input2 = 'import {FileAttachment} from "npm:@observablehq/stdlib";\nFileAttachment("./../test.txt")';
     const input3 = 'import {FileAttachment} from "npm:@observablehq/stdlib";\nFileAttachment("../../test.txt")';
     const input4 = 'import {FileAttachment} from "npm:@observablehq/stdlib";\nFileAttachment("./../../test.txt")';
-    await assert.rejects(() => rewriteModule(input1, "test.js", async (path, specifier) => specifier), /non-local file path/); // prettier-ignore
-    await assert.rejects(() => rewriteModule(input2, "test.js", async (path, specifier) => specifier), /non-local file path/); // prettier-ignore
-    await assert.rejects(() => rewriteModule(input3, "sub/test.js", async (path, specifier) => specifier), /non-local file path/); // prettier-ignore
-    await assert.rejects(() => rewriteModule(input4, "sub/test.js", async (path, specifier) => specifier), /non-local file path/); // prettier-ignore
+    await assert.rejects(() => rewriteModule(input1, "test.js", async (specifier) => specifier), /non-local file path/); // prettier-ignore
+    await assert.rejects(() => rewriteModule(input2, "test.js", async (specifier) => specifier), /non-local file path/); // prettier-ignore
+    await assert.rejects(() => rewriteModule(input3, "sub/test.js", async (specifier) => specifier), /non-local file path/); // prettier-ignore
+    await assert.rejects(() => rewriteModule(input4, "sub/test.js", async (specifier) => specifier), /non-local file path/); // prettier-ignore
   });
 });
 

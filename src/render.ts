@@ -75,7 +75,7 @@ ${
         .filter((title): title is string => !!title)
         .join(" | ")}</title>\n`
     : ""
-}${await renderHead(parseResult, options, path, createImportResolver(root))}${
+}${await renderHead(parseResult, options, path, createImportResolver(root, path))}${
     path === "/404"
       ? html.unsafe(`\n<script type="module">
 
@@ -210,7 +210,7 @@ async function renderHead(
   // transitive dependency on npm:katex.
   await addImplicitStylesheets(stylesheets, specifiers);
   const preloads = new Set<string>([relativeUrl(path, "/_observablehq/client.js")]);
-  for (const specifier of specifiers) preloads.add(await resolver(path, specifier));
+  for (const specifier of specifiers) preloads.add(await resolver(specifier));
   // TODO Transitive imports need to be resolved earlier because they’ll need to
   // be downloaded during build, too. For example npm:@observablehq/sqlite
   // imports npm:sql.js/dist/sql-wasm.js — and we need to special-case somewhere

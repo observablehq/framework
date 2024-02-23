@@ -85,7 +85,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
           output.insertLeft(0, "display(await(\n");
           output.insertRight(input.length, "\n))");
         }
-        await rewriteImports(output, node, sourcePath, createImportResolver(root));
+        await rewriteImports(output, node, createImportResolver(root, sourcePath));
         const result = `${node.async ? "async " : ""}(${inputs}) => {
 ${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.map(({name}) => name)}};` : ""}
 }`;
