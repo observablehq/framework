@@ -131,7 +131,7 @@ export class PreviewServer {
             return;
           } else if (pathname.endsWith(".js")) {
             const input = await readFile(filepath, "utf-8");
-            const output = await rewriteModule(input, path, createImportResolver(root, pathname));
+            const output = await rewriteModule(input, path, createImportResolver(root, pathname, path));
             end(req, res, output, "text/javascript");
             return;
           }

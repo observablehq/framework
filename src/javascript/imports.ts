@@ -298,12 +298,14 @@ export async function rewriteImports(output: Sourcemap, cell: JavaScriptNode, re
 export type ImportResolver = (specifier: string) => Promise<string>;
 
 /**
- * Returns an import resolver for the given source root and path.
+ * Returns an import resolver for the given source root and (serving) path. In
+ * Markdown, the serving path and the source path are the same; but within local
+ * JavaScript modules, the serving path is under _import.
  */
-export function createImportResolver(root: string, path: string): ImportResolver {
+export function createImportResolver(root: string, path: string, sourcePath = path): ImportResolver {
   return async (specifier) => {
     return isLocalImport(specifier, path)
-      ? relativeUrl(path, resolvePath("_import", path.replace(/^_import\//, ""), resolveImportHash(root, path.replace(/^_import\//, ""), specifier))) // prettier-ignore
+      ? relativeUrl(path, resolvePath("_import", sourcePath, resolveImportHash(root, sourcePath, specifier))) // prettier-ignore
       : specifier === "npm:@observablehq/runtime"
       ? relativeUrl(path, "_observablehq/runtime.js")
       : specifier === "npm:@observablehq/stdlib"

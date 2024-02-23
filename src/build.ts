@@ -195,7 +195,7 @@ export async function build(
       continue;
     }
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-    const resolver = createImportResolver(root, outputPath);
+    const resolver = createImportResolver(root, outputPath, file);
     const contents = await rewriteModule(await readFile(sourcePath, "utf-8"), file, resolver);
     await effects.writeFile(outputPath, contents);
   }
