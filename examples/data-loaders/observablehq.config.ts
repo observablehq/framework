@@ -1,5 +1,5 @@
 export default {
-  title: "Framework data loader examples",
+  title: "Data loaders",
   pages: [
     {name: "Python", path: "/python"},
     {name: "JavaScript", path: "/js"},

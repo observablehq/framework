@@ -1,53 +1,31 @@
-# Python data loader examples
+# Python data loaders
 
-Observable Framework supports [data loaders](../loaders) written in Python, by passing them to the [python3](https://www.python.org/) command. The latter must be available on your `$PATH`. Any library used by your scripts must also be installed.
+Observable Framework supports [data loaders](https://observablehq.com/framework/loaders) written in Python by passing them to the [python3](https://www.python.org/) command. The latter must be available on your `$PATH`. Any library used by your scripts must also be installed.
 
 ## CSV
 
-The data loader below (`penguin-logistic.csv.py`) reads in the penguins data from a local file, performs [logistic regression](https://en.wikipedia.org/wiki/Logistic_regression), then outputs a single CSV with penguin species classifications.
+The data loader below reads in the penguins data from a local file, performs [logistic regression](https://en.wikipedia.org/wiki/Logistic_regression), then outputs a single CSV with the original penguin data enriched with species classifications.
 
 Create a file in your project source root with the .csv.py double extension (for example, `docs/data/my-data.csv.py`), then paste the Python code below to get started.
 
 <!-- TODO update with setup information, see: https://github.com/observablehq/framework/tree/main/examples/penguin-classification#reuse-this-example>-->
 
-```python
-# Import libraries (must be installed)
-import pandas as pd
-from sklearn.linear_model import LogisticRegression
-import sys
-
-# Data access, wrangling and analysis
-df = pd.read_csv("docs/data-files/penguins.csv")
-
-X = df.iloc[:, [2, 3, 4, 5]]
-Y = df.iloc[:, 0]
-
-logreg = LogisticRegression()
-logreg.fit(X, Y)
-
-results = df.copy()
-results['speciecs_predicted'] = logreg.predict(X)
-
-# Write pandas data frame to CSV, and to standard output
-results.to_csv(sys.stdout)
+```js
+showCode(FileAttachment("data/penguin-logistic.csv.py"))
 ```
 
-Access the output of the data loader (here, `data/penguin-logistic.csv`) from the client using [`FileAttachment`](../javascript/files):
+Access the output of the data loader from the client using [`FileAttachment`](https://observablehq.com/framework/javascript/files):
 
 ```js echo
 const penguinClassification = FileAttachment("data/penguin-logistic.csv").csv({typed: true});
 ```
 
-`penguin-logistic.csv` [routes](../loaders#routing) to the `penguin-logistic.csv.py` data loader and reads its standard output stream.
+<p class="tip">The file attachment name does not include the <tt>.py</tt> extension. We rely on Framework’s <a href="https://observablehq.com/framework/routing">routing</a> to run the appropriate data loader.
 
-<!-- For local testing of penguin-logistic.csv.py only -->
+We can now display the dataset with the predictions:
 
-```js echo run
-const predictions = FileAttachment("data/penguin-logistic.csv").csv({typed: true});
-```
-
-```js echo run
-predictions
+```js echo
+Inputs.table(penguinClassification)
 ```
 
 <!-- End local testing of penguin-logistic.csv.py -->
@@ -165,4 +143,8 @@ const quakeZip = FileAttachment("data/earthquakes.zip").zip()
 
 ```js echo
 quakeZip
+```
+
+```js
+import {showCode} from "./components/showCode.js";
 ```

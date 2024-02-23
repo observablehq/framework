@@ -3,13 +3,13 @@ toc: false
 theme: dashboard
 ---
 
-# Observable Framework data loader examples
+# Data loader examples
 
-This project is a collection of data loaders, grouped by loader type (e.g. Python, shell script, JavaScript, etc.), that can be quickly explored and reused.
+This project is a collection of data loaders ready to be quickly explored and reused.
 
-Each page shows the contents of the data loaders, and includes live example code for accessing data loader outputs.
+Each page gathers examples of data loaders written in a given language (Python, shell script, JavaScript, etc.). It includes both their code and how to access their outputs.
 
-Or, just [view the code](https://github.com/observablehq/framework/tree/main/examples/data-loaders/docs/data)!
+Or, view the whole collection [on GitHub](https://github.com/observablehq/framework/tree/main/examples/data-loaders/docs/data).
 
 ### Python data loaders
 
