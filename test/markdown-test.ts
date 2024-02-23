@@ -21,7 +21,7 @@ describe("parseMarkdown(input)", () => {
     const skip = name.startsWith("skip.");
     const outname = only || skip ? name.slice(5) : name;
 
-    (only ? it.only : skip ? it.skip : it)(`test/input/${name}`, async () => {
+    (only ? it.only : skip ? it.skip : it)(`test/input/${name}`, () => {
       const snapshot = await parseMarkdown(path, {root: "test/input", path: name});
       let allequal = true;
       for (const ext of ["html", "json"]) {
@@ -65,7 +65,7 @@ describe("parseMarkdown(input)", () => {
 describe("normalizePieceHtml adds local file attachments", () => {
   const sourcePath = "/attachments.md";
 
-  it("img[src]", async () => {
+  it("img[src]", () => {
     const htmlStr = html`<img src="./test.png">`;
     const root = "/";
     const expected = html`<img src="./_file/test.png">`;
@@ -82,7 +82,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
     ]);
   });
 
-  it("img[srcset]", async () => {
+  it("img[srcset]", () => {
     const htmlStr = html`
         <img
           srcset="small.jpg 480w, large.jpg 800w"
@@ -115,7 +115,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
     ]);
   });
 
-  it("video[src]", async () => {
+  it("video[src]", () => {
     const htmlStr = html`<video src="observable.mov" controls>
       Your browser doesn't support HTML video.
       </video>`;
@@ -136,7 +136,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
     ]);
   });
 
-  it("video source[src]", async () => {
+  it("video source[src]", () => {
     const htmlStr = html`<video width="320" height="240" controls>
       <source src="observable.mp4" type="video/mp4">
       <source src="observable.mov" type="video/mov">
@@ -168,7 +168,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
     ]);
   });
 
-  it("picture source[srcset]", async () => {
+  it("picture source[srcset]", () => {
     const htmlStr = html`<picture>
       <source srcset="observable-logo-wide.png" media="(min-width: 600px)"/>
       <img src="observable-logo-narrow.png" />
@@ -202,7 +202,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
 describe("normalizePieceHtml only adds local files", () => {
   const sourcePath = "/attachments.md";
 
-  it("img[src] only adds local files", async () => {
+  it("img[src] only adds local files", () => {
     const htmlStr = html`<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/American_Shorthair.jpg/900px-American_Shorthair.jpg">`;
     const root = "/";
     const expected = html`<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/American_Shorthair.jpg/900px-American_Shorthair.jpg">`;
@@ -213,7 +213,7 @@ describe("normalizePieceHtml only adds local files", () => {
     assert.deepEqual(context.files, []);
   });
 
-  it("img[srcset] only adds local files", async () => {
+  it("img[srcset] only adds local files", () => {
     const htmlStr = html`
         <img
           srcset="small.jpg 480w, https://upload.wikimedia.org/900px-American_Shorthair.jpg 900w"
