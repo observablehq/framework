@@ -44,26 +44,39 @@ export function findExports(body: Node): ExportNode[] {
   return exports;
 }
 
+/** Returns true if the body includes an import declaration. */
+export function hasImportDeclaration(body: Node): boolean {
+  let has = false;
+
+  simple(body, {
+    ImportDeclaration() {
+      has = true;
+    }
+  });
+
+  return has;
+}
+
 /**
  * Finds all statically-analyzable import declarations and expressions in the
  * specified node.
  */
-export function findImports(body: Node): ImportNode[] {
-  const imports: ImportNode[] = [];
-
-  simple(body, {
-    ImportDeclaration: findImport,
-    ImportExpression: findImport
-  });
-
-  function findImport(node: ImportNode) {
-    if (isStringLiteral(node.source)) {
-      imports.push(node);
-    }
-  }
-
-  return imports;
-}
+// export function findImports(body: Node): ImportNode[] {
+//   const imports: ImportNode[] = [];
+//
+//   simple(body, {
+//     ImportDeclaration: findImport,
+//     ImportExpression: findImport
+//   });
+//
+//   function findImport(node: ImportNode) {
+//     if (isStringLiteral(node.source)) {
+//       imports.push(node);
+//     }
+//   }
+//
+//   return imports;
+// }
 
 /**
  * Finds all import and export nodes with statically-declared sources in the

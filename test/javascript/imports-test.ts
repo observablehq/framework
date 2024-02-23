@@ -3,8 +3,33 @@ import type {Node, Program} from "acorn";
 import {Parser} from "acorn";
 import {ascending} from "d3-array";
 import {getFeatureReferenceMap} from "../../src/javascript/features.js";
+import {findExports, hasImportDeclaration} from "../../src/javascript/imports.js";
 import {parseLocalImports, rewriteModule, rewriteNpmImports} from "../../src/javascript/imports.js";
 import type {Feature, ImportReference} from "../../src/javascript.js";
+
+describe("findExports(body)", () => {
+  it("finds export all declarations", () => {
+    const program = parse("export * from 'foo.js';\nexport * from 'bar.js';");
+    assert.deepStrictEqual(findExports(program), program.body);
+  });
+  it("finds named export declarations", () => {
+    const program = parse("export {foo} from 'foo.js';\nexport const bar = 2;");
+    assert.deepStrictEqual(findExports(program), program.body);
+  });
+  it("returns the empty array if there are no exports", () => {
+    assert.deepStrictEqual(findExports(parse("1 + 2;")), []);
+  });
+});
+
+describe("hasImportDeclaration(body)", () => {
+  it("returns true if the body has import declarations", () => {
+    assert.strictEqual(hasImportDeclaration(parse("import 'foo.js';")), true);
+  });
+  it("returns false if the body does not have import declarations", () => {
+    assert.strictEqual(hasImportDeclaration(parse("1 + 2;")), false);
+    assert.strictEqual(hasImportDeclaration(parse("import('foo.js');")), false);
+  });
+});
 
 // prettier-ignore
 describe("rewriteNpmImports(input, path)", () => {

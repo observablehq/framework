@@ -112,12 +112,7 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
     if (source != null) {
       const id = uniqueCodeId(context, token.content);
       const sourceLine = context.startLine + context.currentLine;
-      const transpile = transpileJavaScript(source, {
-        id,
-        root,
-        sourcePath,
-        sourceLine
-      });
+      const transpile = transpileJavaScript(source, {id, root, sourcePath, sourceLine});
       extendPiece(context, {code: [transpile]});
       // TODO don’t collect these here
       if (transpile.files) context.files.push(...transpile.files);
