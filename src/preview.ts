@@ -7,6 +7,7 @@ import type {IncomingMessage, RequestListener, Server, ServerResponse} from "nod
 import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
 import {difference} from "d3-array";
+import openBrowser from "open";
 import send from "send";
 import {type WebSocket, WebSocketServer} from "ws";
 import {version} from "../package.json";
@@ -22,8 +23,9 @@ import {diffMarkdown, parseMarkdown} from "./markdown.js";
 import type {ParseResult} from "./markdown.js";
 import {renderPreview, resolveStylesheet} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
+import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
-import {bold, faint, green, link} from "./tty.js";
+import {bold, faint, green, link, red} from "./tty.js";
 import {relativeUrl} from "./url.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
@@ -31,6 +33,7 @@ const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public")
 export interface PreviewOptions {
   config: Config;
   hostname: string;
+  open?: boolean;
   port?: number;
   verbose?: boolean;
 }
@@ -54,7 +57,7 @@ export class PreviewServer {
     this._socketServer.on("connection", this._handleConnection);
   }
 
-  static async start({verbose = true, hostname, port, ...options}: PreviewOptions) {
+  static async start({verbose = true, hostname, port, open, ...options}: PreviewOptions) {
     Telemetry.record({event: "preview", step: "start"});
     const server = createServer();
     if (port === undefined) {
@@ -72,11 +75,13 @@ export class PreviewServer {
     } else {
       await new Promise<void>((resolve) => server.listen(port, hostname, resolve));
     }
+    const url = `http://${hostname}:${port}/`;
     if (verbose) {
       console.log(`${green(bold("Observable Framework"))} ${faint(`v${version}`)}`);
-      console.log(`${faint("↳")} ${link(`http://${hostname}:${port}/`)}`);
+      console.log(`${faint("↳")} ${link(url)}`);
       console.log("");
     }
+    if (open) openBrowser(url);
     return new PreviewServer({server, verbose, ...options});
   }
 
@@ -104,6 +109,10 @@ export class PreviewServer {
         }
       } else if (pathname === "/_observablehq/client.js") {
         end(req, res, await rollupClient(getClientPath("./src/client/preview.js")), "text/javascript");
+      } else if (pathname === "/_observablehq/search.js") {
+        end(req, res, await rollupClient(getClientPath("./src/client/search.js")), "text/javascript");
+      } else if (pathname === "/_observablehq/minisearch.json") {
+        end(req, res, await searchIndex(config), "application/json");
       } else if ((match = /^\/_observablehq\/theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(pathname))) {
         end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
       } else if (pathname.startsWith("/_observablehq/")) {
@@ -265,7 +274,12 @@ function getWatchPaths(parseResult: ParseResult): string[] {
 }
 
 export function getPreviewStylesheet(path: string, data: ParseResult["data"], style: Config["style"]): string | null {
-  style = mergeStyle(path, data?.style, data?.theme, style);
+  try {
+    style = mergeStyle(path, data?.style, data?.theme, style);
+  } catch (error) {
+    console.error(red(String(error)));
+    return relativeUrl(path, "/_observablehq/theme-.css");
+  }
   return !style
     ? null
     : "path" in style

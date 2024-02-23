@@ -340,18 +340,25 @@ const workspaces = [
     id: "0000000000000001",
     login: "mock-user-ws",
     name: "Mock User's Workspace",
-    tier: "pro",
+    tier: "pro_2024",
     type: "team",
-    role: "owner"
+    role: "member"
   },
-
   {
     id: "0000000000000002",
     login: "mock-user-ws-2",
-    name: "Mock User's Second Workspace",
-    tier: "pro",
+    name: "Mock User Second Workspace",
+    tier: "pro_2024",
     type: "team",
     role: "owner"
+  },
+  {
+    id: "0000000000000003",
+    login: "mock-user-ws-3",
+    name: "Mock User's Third Workspace Wrong Tier",
+    tier: "pro_2024",
+    type: "team",
+    role: "viewer"
   }
 ];
 
@@ -368,6 +375,11 @@ export const userWithOneWorkspace = {
 export const userWithTwoWorkspaces = {
   ...userBase,
   workspaces: workspaces.slice(0, 2)
+};
+
+export const userWithThreeWorkspaces = {
+  ...userBase,
+  workspaces
 };
 
 class FilteringPendingInterceptorFormatter extends PendingInterceptorsFormatter {

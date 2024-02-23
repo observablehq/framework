@@ -41,7 +41,7 @@ export default {
         {name: "Button", path: "/inputs/button"},
         {name: "Checkbox", path: "/inputs/checkbox"},
         {name: "Color", path: "/inputs/color"},
-        {name: "Date/Datetime", path: "/inputs/date"},
+        {name: "Date", path: "/inputs/date"},
         {name: "File", path: "/inputs/file"},
         {name: "Form", path: "/inputs/form"},
         {name: "Radio", path: "/inputs/radio"},
@@ -69,7 +69,7 @@ export default {
         {name: "Lodash", path: "/lib/lodash"},
         {name: "Mapbox GL JS", path: "/lib/mapbox-gl"},
         {name: "Mermaid", path: "/lib/mermaid"},
-        {name: "Microsoft Excel", path: "/lib/xlsx"},
+        {name: "Microsoft Excel (XLSX)", path: "/lib/xlsx"},
         {name: "Observable Generators", path: "/lib/generators"},
         {name: "Observable Inputs", path: "/lib/inputs"},
         {name: "Observable Plot", path: "/lib/plot"},
@@ -106,5 +106,6 @@ export default {
   </div>
 </div>`,
   footer: `© ${new Date().getUTCFullYear()} Observable, Inc.`,
-  style: "style.css"
+  style: "style.css",
+  search: true
 };

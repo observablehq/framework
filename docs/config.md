@@ -122,6 +122,7 @@ export interface Page {
   path: string;
 }
 ```
+
 ```ts run=false
 export interface Section {
   name: string;
@@ -180,3 +181,7 @@ The table of contents configuration can also be set in the page’s YAML front m
 toc: false
 ---
 ```
+
+## search
+
+Whether to enable [search](./search) on the project; defaults to false.

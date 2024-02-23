@@ -1,3 +1,7 @@
+---
+keywords: file, fileattachment, attachment
+---
+
 # JavaScript: Files
 
 Load files — whether static or generated dynamically by a [data loader](../loaders) — using the built-in `FileAttachment` function. This is available by default in Markdown, but you can import it explicitly like so:

@@ -1,8 +1,6 @@
 # Table input
 
-[API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#table)
-
-The table input displays tabular data. It’s fast: rows are rendered lazily on scroll. It sorts: click a header to sort, and click again to reverse. And it selects: click a checkbox on any row, and the selected rows are exported as a view value. (And for searching, see the [search input](./search).) 
+<a href="https://github.com/observablehq/inputs/blob/main/README.md#table" target="_blank">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/table.js" target="_blank">Source</a> · The table input displays tabular data. It’s fast: rows are rendered lazily on scroll. It sorts: click a header to sort, and click again to reverse. And it selects: click a checkbox on any row, and the selected rows are exported as a view value. (And for searching, see the [search input](./search).)
 
 By default, all columns are visible. Only the first dozen rows are initially visible, but you can scroll to see more. Column headers are fixed for readability.
 
@@ -72,8 +70,8 @@ column.
 - Numbers are formatted using
   [_number_.toLocaleString](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/toLocaleString);
 - Dates are formatted in [ISO8601](https://en.wikipedia.org/wiki/ISO_8601);
-- Undefined and NaN values are empty;
-- Everything else is displayed as-is.
+- undefined and NaN values are empty;
+- everything else is displayed as-is.
 
 To override the default formatting, pass _format_ options for the desired
 columns.
@@ -81,14 +79,14 @@ columns.
 ```js echo
 Inputs.table(penguins, {
   format: {
-    culmen_length_mm: x => x.toFixed(1),
-    culmen_depth_mm: x => x.toFixed(1),
-    sex: x => x === "MALE" ? "M" : x === "FEMALE" ? "F" : ""
+    culmen_length_mm: (x) => x.toFixed(1),
+    culmen_depth_mm: (x) => x.toFixed(1),
+    sex: (x) => x === "MALE" ? "M" : x === "FEMALE" ? "F" : ""
   }
 })
 ```
 
-The _format_ function can return a text string or an HTML element.  
+The _format_ function can return a text string or an HTML element.
 For example, this can be used to render inline visualizations such as bars or [sparklines](https://observablehq.com/@mbostock/covid-cases-by-state).
 
 ```js echo
@@ -98,22 +96,24 @@ Inputs.table(penguins, {
     culmen_depth_mm: sparkbar(d3.max(penguins, d => d.culmen_depth_mm)),
     flipper_length_mm: sparkbar(d3.max(penguins, d => d.flipper_length_mm)),
     body_mass_g: sparkbar(d3.max(penguins, d => d.body_mass_g)),
-    sex: x => x.toLowerCase()
+    sex: (x) => x.toLowerCase()
   }
 })
 ```
 
 ```js echo
 function sparkbar(max) {
-  return x => htl.html`<div style="
-    background: lightblue;
+  return (x) => htl.html`<div style="
+    background: var(--theme-green);
+    color: black;
+    font: 10px/1.6 var(--sans-serif);
     width: ${100 * x / max}%;
     float: right;
     padding-right: 3px;
     box-sizing: border-box;
     overflow: visible;
     display: flex;
-    justify-content: end;">${x.toLocaleString("en")}`
+    justify-content: end;">${x.toLocaleString("en-US")}`
 }
 ```
 
@@ -163,29 +163,29 @@ Inputs.table(penguins, {
 You can preselect some rows in the table by setting the _value_ option to an
 array of references to the actual objects in your data.
 
-For example, to preselect the first two items, you could write:
+For example, to preselect the first two items, you could set _value_ to:
 
-```js echo run=false
-{ value: penguins.slice(0, 2)}
+```js echo
+penguins.slice(0, 2)
 ```
 
-or, if you just want to preselect the rows 1, 3, 7 and 9:
+or, if you want to preselect the rows 1, 3, 7 and 9:
 
-```js echo run=false
-{ value: penguins.filter((_,i)=>  [1, 3, 7, 9].includes(i))}
+```js echo
+[1, 3, 7, 9].map((i) => penguins[i])
 ```
 
 The _multiple_ option allows multiple rows to be selected (defaults to true).
 When false, only one row can be selected. To set the initial value in that case,
 just reference the preselected object:
 
-```js echo run=false
-{ multiple: false, value: penguins[4] }
+```js echo
+penguins[4]
 ```
 
 ```js echo
 Inputs.table(penguins, {
-  value: penguins.filter((_, i) => [1, 3, 7, 9].includes(i)),
+  value: [1, 3, 7, 9].map((i) => penguins[i]),
   multiple: true
 })
 ```
@@ -198,20 +198,20 @@ Thanks to [Ilyá Belsky](https://observablehq.com/@oluckyman) and [Brett Cooper]
 
 The available table input options are:
 
-* *columns* - the columns (property names) to show; defaults to *data*.columns.
-* *value* - a subset of *data* to use as the initial selection (checked rows), or a *data* item if *multiple* is false.
-* *rows* - the maximum number of rows to show; defaults to 11.5.
-* *sort* - the column to sort by; defaults to null (input order).
-* *reverse* - whether to reverse the initial sort (descending instead of ascending).
-* *format* - an object of column name to format function.
-* *align* - an object of column name to “left”, “right”, or “center”.
-* *header* - an object of column name to corresponding header; either a string or HTML element.
-* *width* - the table width, or an object of column name to width.
-* *maxWidth* - the maximum table width, if any.
-* *height* - the fixed table height, if any.
-* *maxHeight* - the maximum table height, if any; defaults to (*rows* + 1) * 22 - 1.
-* *layout* - the [table layout](https://developer.mozilla.org/en-US/docs/Web/CSS/table-layout); defaults to fixed for ≤12 columns.
-* *required* - if true, the table’s value is all *data* if no selection; defaults to true.
-* *multiple* - if true, allow multiple rows to be selected; defaults to true.
+* *columns* - the columns (property names) to show; defaults to *data*.columns
+* *value* - a subset of *data* to use as the initial selection (checked rows), or a *data* item if *multiple* is false
+* *rows* - the maximum number of rows to show; defaults to 11.5
+* *sort* - the column to sort by; defaults to null (input order)
+* *reverse* - whether to reverse the initial sort (descending instead of ascending)
+* *format* - an object of column name to format function
+* *align* - an object of column name to *left*, *right*, or *center*
+* *header* - an object of column name to corresponding header; either a string or HTML element
+* *width* - the table width, or an object of column name to width
+* *maxWidth* - the maximum table width, if any
+* *height* - the fixed table height, if any
+* *maxHeight* - the maximum table height, if any; defaults to (*rows* + 1) * 22 - 1
+* *layout* - the [table layout](https://developer.mozilla.org/en-US/docs/Web/CSS/table-layout); defaults to fixed for ≤12 columns
+* *required* - if true, the table’s value is all *data* if no selection; defaults to true
+* *multiple* - if true, allow multiple rows to be selected; defaults to true
 
-If *width* is “auto”, the table width will be based on the table contents; note that this may cause the table to resize as rows are lazily rendered.
+If *width* is *auto*, the table width will be based on the table contents; note that this may cause the table to resize as rows are lazily rendered.

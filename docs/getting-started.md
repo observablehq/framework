@@ -88,6 +88,8 @@ Framework includes a helper script (`observable create`) for creating new projec
   <p>If you run into difficulty following this tutorial, we’re happy to help! Please visit the <a href="https://talk.observablehq.com">Observable forum</a> or our <a href="https://github.com/observablehq/framework/discussions">GitHub discussions</a>.</p>
 </div>
 
+<div class="caution">Framework does not currently support Windows, though some users have had success with the <a href="https://learn.microsoft.com/en-us/windows/wsl/install">Windows Subsystem for Linux (WSL)</a>. It you are interested in Windows support, please upvote <a href="https://github.com/observablehq/framework/issues/90">#90</a>.</div>
+
 To create a new project with npm, run:
 
 <pre data-copy>npm init @observablehq</pre>
@@ -263,7 +265,7 @@ Now let’s add a page for our weather dashboard. Create a new file `docs/weathe
 # Weather report
 
 ```js
-1 + 2
+display(1 + 2);
 ```
 ````
 
@@ -383,7 +385,11 @@ This looks like:
   <figcaption>Using <code>FileAttachment</code> to load data.</figcaption>
 </figure>
 
-The built-in [`display`](./javascript/display) function displays the specified value, a bit like `console.log` in the browser’s console. As you may have noticed above with <code class="language-js">1 + 2</code>, `display` is called implicitly when a code block contains an expression.
+The built-in [`display`](./javascript/display) function displays the specified value, a bit like `console.log` in the browser’s console. As you can see below, `display` is called [implicitly](./javascript/display#implicit-display) when a code block contains an expression:
+
+```js echo
+1 + 2
+```
 
 For convenience, here’s a copy of the data so you can explore it here:
 
@@ -399,8 +405,9 @@ This is a GeoJSON `Feature` object of a `Polygon` geometry representing the grid
 </figure>
 
 ```js
+const ACCESS_TOKEN = "pk.eyJ1Ijoib2JzZXJ2YWJsZWhxLWVuZy1hZG1pbiIsImEiOiJjbHMxaTBwdDkwYnRsMmpxeG12M2kzdWFvIn0.Ga6eIWP2YNQrEW4FzHRcTQ";
 const map = L.map(document.querySelector("#map"));
-const tile = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+const tile = L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}@2x?access_token=${ACCESS_TOKEN}`, {attribution: '© <a href="https://www.mapbox.com/feedback/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
 const geo = L.geoJSON().addData(forecast).addTo(map);
 map.fitBounds(geo.getBounds(), {padding: [50, 50]});
 invalidation.then(() => map.remove());
@@ -415,20 +422,22 @@ const forecast = FileAttachment("./data/forecast.json").json();
 Now let’s add a chart using <a href="./lib/plot">Observable Plot</a>. Framework includes a variety of <a href="./javascript/imports#implicit-imports">recommended libraries</a> by default, including `Plot`, and you can always <a href="./javascript/imports">import more</a> from npm. Replace the `display(forecast)` code block with the following code:
 
 ```js run=false
-Plot.plot({
-  title: "Hourly temperature forecast",
-  x: {type: "utc", ticks: "day", label: null},
-  y: {grid: true, inset: 10, label: "Degrees (F)"},
-  marks: [
-    Plot.lineY(forecast.properties.periods, {
-      x: "startTime",
-      y: "temperature",
-      z: null, // varying color, not series
-      stroke: "temperature",
-      curve: "step-after"
-    })
-  ]
-})
+display(
+  Plot.plot({
+    title: "Hourly temperature forecast",
+    x: {type: "utc", ticks: "day", label: null},
+    y: {grid: true, inset: 10, label: "Degrees (F)"},
+    marks: [
+      Plot.lineY(forecast.properties.periods, {
+        x: "startTime",
+        y: "temperature",
+        z: null, // varying color, not series
+        stroke: "temperature",
+        curve: "step-after"
+      })
+    ]
+  })
+);
 ```
 
 <div class="note">Because this is JSON data, <code>startTime</code> is a <code>string</code> rather than a <code>Date</code>. Setting the <code>type</code> of the <code>x</code> scale to <code>utc</code> tells Plot to interpret these values as temporal rather than ordinal.</div>
@@ -477,7 +486,7 @@ function temperaturePlot(data, {width} = {}) {
 Now you can call `temperaturePlot` to display the forecast anywhere on the page:
 
 ```js run=false
-temperaturePlot(forecast)
+display(temperaturePlot(forecast));
 ```
 
 <div class="tip">JavaScript can be extracted into standalone modules (<code>.js</code> files) that you can <a href="./javascript/imports">import</a> into Markdown. This lets you share code across pages, write unit tests for components, and more.</div>
@@ -598,7 +607,7 @@ Lastly, you can enter an optional deploy message. Deploy messages are shown on O
 <span class="blue">└</span>
 </pre>
 
-<div class="tip">Deploy messages can be set using <code>yarn deploy <nobr>--message</nobr></code>. This is especially useful for continuous deployment from a git repository: the message can include the SHA, author, and message of the latest commit.</div>
+<div class="tip">Deploy messages can be set using <code>deploy <nobr>--message</nobr></code>. This is especially useful for continuous deployment from a git repository: the message can include the SHA, author, and message of the latest commit.</div>
 
 When deploy completes, Framework will show your project’s URL on observablehq.cloud. From there you can invite people to your private workspace to see your project, or make your project public so anyone can see it.
 

@@ -58,7 +58,7 @@ type RenderInternalOptions =
   | {preview: true}; // preview
 
 async function render(parseResult: ParseResult, options: RenderOptions & RenderInternalOptions): Promise<string> {
-  const {root, base, path, pages, title, preview} = options;
+  const {root, base, path, pages, title, preview, search} = options;
   const sidebar = parseResult.data?.sidebar !== undefined ? Boolean(parseResult.data.sidebar) : options.sidebar;
   const toc = mergeToc(parseResult.data?.toc, options.toc);
   return String(html`<!DOCTYPE html>
@@ -90,7 +90,7 @@ import ${preview || parseResult.cells.length > 0 ? `{${preview ? "open, " : ""}d
 ${
   preview ? `\nopen({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
 }${parseResult.cells.map((cell) => `\n${renderDefineCell(cell)}`).join("")}`)}
-</script>${sidebar ? html`\n${await renderSidebar(title, pages, path)}` : ""}${
+</script>${sidebar ? html`\n${await renderSidebar(title, pages, path, search)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(parseResult), toc.label)}` : ""
   }
 <div id="observablehq-center">${renderHeader(options, parseResult.data)}
@@ -100,7 +100,7 @@ ${html.unsafe(parseResult.html)}</main>${renderFooter(path, options, parseResult
 `);
 }
 
-async function renderSidebar(title = "Home", pages: (Page | Section)[], path: string): Promise<Html> {
+async function renderSidebar(title = "Home", pages: (Page | Section)[], path: string, search: boolean): Promise<Html> {
   return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
@@ -109,7 +109,18 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
     <li class="observablehq-link${
       normalizePath(path) === "/index" ? " observablehq-link-active" : ""
     }"><a href="${relativeUrl(path, "/")}">${title}</a></li>
-  </ol>
+  </ol>${
+    search
+      ? html`\n  <div id="observablehq-search" data-root="${relativeUrl(
+          path,
+          "/"
+        )}"><input type="search" placeholder="Search"></div>
+  <div id="observablehq-search-results"></div>
+  <script>{${html.unsafe(
+    (await rollupClient(getClientPath("./src/client/search-init.ts"), {minify: true})).trim()
+  )}}</script>`
+      : ""
+  }
   <ol>${pages.map((p, i) =>
     "pages" in p
       ? html`${i > 0 && "path" in pages[i - 1] ? html`</ol>` : ""}
@@ -140,7 +151,7 @@ interface Header {
   href: string;
 }
 
-const tocSelector = ["h1:not(:first-of-type)", "h2:not(h1 + h2):has(a.observablehq-header-anchor)"];
+const tocSelector = ["h1:not(:first-of-type)", "h2:not(h1 + h2)"];
 
 function findHeaders(parseResult: ParseResult): Header[] {
   return Array.from(parseHTML(parseResult.html).document.querySelectorAll(tocSelector.join(", ")))

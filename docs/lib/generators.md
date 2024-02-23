@@ -8,7 +8,7 @@ import {Generators} from "npm:@observablehq/stdlib";
 
 ## input(*element*)
 
-Returns an async generator that yields whenever the given *element* emits an *input* event, with the given *element*’s current value. (It’s a bit fancier than that because we special-case a few element types.) The built-in [`view` function](<../javascript/display#view(element)>) uses this.
+Returns an async generator that yields whenever the given *element* emits an *input* event, with the given *element*’s current value. (It’s a bit fancier than that because we special-case a few element types.) The built-in [`view` function](<../javascript/inputs#view(element)>) uses this.
 
 ```js echo
 const nameInput = display(document.createElement("input"));

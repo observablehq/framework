@@ -1,4 +1,4 @@
-# XLSX
+# Microsoft Excel (XLSX)
 
 [`FileAttachment`](../javascript/files) supports the [Microsoft Excel Open XML format](https://en.wikipedia.org/wiki/Office_Open_XML) via the `file.xlsx` method. This is implemented using the MIT-licensed [ExcelJS](https://github.com/exceljs/exceljs) library.
 

@@ -12,6 +12,7 @@ import {
   getObservableApiKey,
   setObservableApiKey
 } from "./observableApiConfig.js";
+import {Telemetry} from "./telemetry.js";
 import type {TtyEffects} from "./tty.js";
 import {bold, defaultEffects as defaultTtyEffects, inverse, link, yellow} from "./tty.js";
 
@@ -35,12 +36,14 @@ export const defaultEffects: AuthEffects = {
 };
 
 export async function login(effects: AuthEffects = defaultEffects) {
-  effects.clack.intro(inverse(" observable login "));
+  const {clack} = effects;
+  Telemetry.record({event: "login", step: "start"});
+  clack.intro(inverse(" observable login "));
 
   const {currentUser} = await loginInner(effects);
 
   if (currentUser.workspaces.length === 0) {
-    effects.clack.log.warn(`${yellow("Warning:")} You don't have any workspaces to deploy to.`);
+    clack.log.warn(`${yellow("Warning:")} You don't have any workspaces to deploy to.`);
   } else if (currentUser.workspaces.length > 1) {
     clack.note(
       [
@@ -50,11 +53,12 @@ export async function login(effects: AuthEffects = defaultEffects) {
       ].join("\n")
     );
   }
-
-  effects.clack.outro();
+  clack.outro("Logged in");
+  Telemetry.record({event: "login", step: "finish"});
 }
 
 export async function loginInner(effects: AuthEffects): Promise<{currentUser: GetCurrentUserResponse; apiKey: ApiKey}> {
+  const {clack} = effects;
   const apiClient = new ObservableApiClient();
   const requestInfo = await apiClient.postAuthRequest({
     scopes: ["projects:deploy", "projects:create"],
@@ -63,15 +67,16 @@ export async function loginInner(effects: AuthEffects): Promise<{currentUser: Ge
   const confirmUrl = new URL("/auth-device", OBSERVABLE_UI_ORIGIN);
   confirmUrl.searchParams.set("code", requestInfo.confirmationCode);
 
-  effects.clack.log.step(
+  clack.log.step(
     `Your confirmation code is ${bold(yellow(requestInfo.confirmationCode))}\n` +
       `Open ${link(confirmUrl)}\nin your browser, and confirm the code matches.`
   );
-  const spinner = effects.clack.spinner();
+  const spinner = clack.spinner();
   spinner.start("Waiting for confirmation...");
 
   let apiKey: PostAuthRequestPollResponse["apiKey"] | null = null;
   while (apiKey === null) {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     const requestPoll = await apiClient.postAuthRequestPoll(requestInfo.id);
     switch (requestPoll.status) {
       case "pending":
@@ -81,18 +86,23 @@ export async function loginInner(effects: AuthEffects): Promise<{currentUser: Ge
         break;
       case "expired":
         spinner.stop("Failed to confirm code.", 2);
+        Telemetry.record({event: "login", step: "error", code: "expired"});
         throw new CliError("That confirmation code expired.");
       case "consumed":
         spinner.stop("Failed to confirm code.", 2);
+        Telemetry.record({event: "login", step: "error", code: "consumed"});
         throw new CliError("That confirmation code has already been used.");
       default:
         spinner.stop("Failed to confirm code.", 2);
+        Telemetry.record({event: "login", step: "error", code: `unknown-${requestPoll.status}`});
         throw new CliError(`Received an unknown polling status ${requestPoll.status}.`);
     }
-    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
-  if (!apiKey) throw new CliError("No API key returned from server.");
+  if (!apiKey) {
+    Telemetry.record({event: "login", step: "error", code: "no-key"});
+    throw new CliError("No API key returned from server.");
+  }
   await effects.setObservableApiKey(apiKey);
 
   apiClient.setApiKey({source: "login", key: apiKey.key});
