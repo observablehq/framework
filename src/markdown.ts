@@ -320,7 +320,6 @@ function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string):
     for (const piece of context.pieces) {
       result += piece.html = normalizePieceHtml(piece.html, root, sourcePath, context);
     }
-
     return result;
   };
 }
@@ -369,7 +368,6 @@ export function normalizePieceHtml(html: string, root: string, sourcePath: strin
       } else {
         const source = decodeURIComponent(element.getAttribute(src)!);
         const file = resolvePath(source);
-
         if (file) {
           const url = file.mimeType === "text/css" ? constructStylesheetUrl(root, file) : file.path;
           element.setAttribute(src, url);

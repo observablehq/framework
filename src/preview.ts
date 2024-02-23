@@ -308,7 +308,6 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
 
   function refreshAttachment(name: string) {
     const {cells, files} = current!;
-
     if (cells.some((cell) => cell.imports?.some((i) => i.name === name))) {
       watcher("change"); // trigger re-compilation of JavaScript to get new import hashes
     } else {
