@@ -66,6 +66,31 @@ export function findImports(body: Node): ImportNode[] {
 }
 
 /**
+ * Finds all import and export nodes with statically-declared sources in the
+ * specified node. (Note that this is includes everything in findImports, but
+ * not everything in findExports because that also includes exports that are
+ * defined in the current module.)
+ */
+// export function findImportExports(body: Node): (ImportNode | ExportNode)[] {
+//   const imports: (ImportNode | ExportNode)[] = [];
+//
+//   simple(body, {
+//     ImportDeclaration: findImportExport,
+//     ImportExpression: findImportExport,
+//     ExportAllDeclaration: findImportExport,
+//     ExportNamedDeclaration: findImportExport
+//   });
+//
+//   function findImportExport(node: ImportNode | ExportNode) {
+//     if (isStringLiteral(node.source)) {
+//       imports.push(node);
+//     }
+//   }
+//
+//   return imports;
+// }
+
+/**
  * Finds all imports (both static and dynamic) in the specified node.
  * Recursively processes any imported local ES modules. The returned transitive
  * import paths are relative to the given source path.
@@ -156,7 +181,7 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFeat
   return {imports, features};
 }
 
-export function findImportFeatures(node: Node, path: string, input: string): Feature[] {
+function findImportFeatures(node: Node, path: string, input: string): Feature[] {
   const featureMap = getFeatureReferenceMap(node);
   const features: Feature[] = [];
 
