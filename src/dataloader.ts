@@ -20,6 +20,7 @@ const languages = {
   ".rs": ["rust-script"],
   ".go": ["go", "run"],
   ".sh": ["sh"],
+  ".php": ["php"],
   ".exe": []
 };
 
