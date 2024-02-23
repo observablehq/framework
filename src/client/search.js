@@ -41,15 +41,32 @@ input.addEventListener("input", () => {
   resultsContainer.innerHTML =
     results.length === 0
       ? "<div>no results</div>"
-      : `<div>${results.length.toLocaleString("en-US")} result${results.length === 1 ? "" : "s"}</div><ol>${results
-          .map(renderResult)
-          .join("")}</ol>`;
+      : `<div>${results.length.toLocaleString("en-US")} result${
+          results.length === 1 ? "" : "s"
+        }</div><ol>${renderResults(results)}</ol>`;
+  resultsContainer.querySelector(`.${activeClass}`).scrollIntoView({block: "nearest"});
 });
 
-function renderResult({id, score, title}, i) {
-  return `<li data-score="${Math.min(5, Math.round(0.6 * score))}" class="observablehq-link${
-    i === 0 ? ` ${activeClass}` : ""
-  }"><a href="${escapeDoubleQuote(import.meta.resolve(`../${id}`))}">${escapeText(String(title ?? "—"))}</a></li>`;
+function renderResults(results) {
+  const me = document.location.href.replace(/[?].*/, "");
+  let found;
+  results = results.map(({id, score, title}) => {
+    const href = import.meta.resolve(`../${id}`);
+    return {
+      title: String(title ?? "—"),
+      href,
+      score: Math.min(5, Math.round(0.6 * score)),
+      active: me === href && (found = true)
+    };
+  });
+  if (!found) results[0].active = true;
+  return results.map(renderResult).join("");
+}
+
+function renderResult({href, score, title, active}) {
+  return `<li data-score="${score}" class="observablehq-link${
+    active ? ` ${activeClass}` : ""
+  }"><a href="${escapeDoubleQuote(href)}">${escapeText(title)}</a></li>`;
 }
 
 function escapeDoubleQuote(text) {
