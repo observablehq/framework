@@ -318,7 +318,9 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
       }
     }
 
-    const stylesheet = files.find(({ mimeType, name: stylesheetName }) => mimeType === "text/css" && stylesheetName === name);
+    const stylesheet = files.find(
+      ({mimeType, name: stylesheetName}) => mimeType === "text/css" && stylesheetName === name
+    );
 
     if (stylesheet) {
       send({
