@@ -10,52 +10,22 @@ The data loader below (`us-electricity.tsv.js`) accesses data on US hourly elect
 
 Create a file in your project source root with the .tsv.js double extension (for example, `docs/data/my-data.tsv.js`), then paste the JavaScript code below to get started.
 
-```js echo=true run=false
-// Import d3 functions:
-import * as d3 from "d3";
-
-// Time endpoints and conversion to EIA API expected format
-const end = d3.timeDay.offset(d3.timeHour(new Date()), 1);
-const start = d3.timeHour(d3.utcDay.offset(end, -7));
-const convertDate = d3.timeFormat("%m%d%Y %H:%M:%S");
-
-// Access and wrangle data
-const url = `https://www.eia.gov/electricity/930-api/region_data/series_data?type[0]=D&type[1]=DF&type[2]=NG&type[3]=TI&start=${convertDate(
-  start
-)}&end=${convertDate(end)}&frequency=hourly&timezone=Eastern&limit=10000&respondent[0]=US48`;
-
-const tidySeries = (response, id, name) => {
-  let series = response[0].data;
-  return series.flatMap((s) => {
-    return s.VALUES.DATES.map((d, i) => {
-      return {
-        id: s[id],
-        name: s[name],
-        date: d,
-        value: s.VALUES.DATA[i]
-      };
-    });
-  });
-};
-
-const usElectricity = await d3.json(url).then((response) => {
-  return tidySeries(response, "TYPE_ID", "TYPE_NAME");
-});
-
-// Write to stdout as TSV
-process.stdout.write(d3.tsvFormat(usElectricity));
+```js
+showCode(FileAttachment("data/us-electricity.tsv.js"))
 ```
 
-Access the output of the data loader (here, `us-electricity.tsv`) using [`FileAttachment`](../javascript/files):
+Access the output of the data loader from the client using [`FileAttachment`](https://observablehq.com/framework/javascript/files):
 
 ```js echo
 const usElectricity = FileAttachment("data/us-electricity.tsv").tsv();
 ```
 
-`us-electricity.tsv` [routes](../loaders#routing) to the `us-electricity.tsv.js` data loader and reads its standard output stream.
+<p class="tip">The file attachment name does not include the <tt>.js</tt> extension. We rely on Framework’s <a href="https://observablehq.com/framework/routing">routing</a> to run the appropriate data loader.
+
+We can now display the attached dataset:
 
 ```js echo
-usElectricity
+Inputs.table(usElectricity)
 ```
 
 ## JSON
@@ -64,36 +34,24 @@ The data loader below (`magic.json.js`) accesses Magic the Gathering card data f
 
 Create a file in your project source root with the .json.js double extension (for example, `docs/data/my-data.json.js`), then paste the JavaScript code below to get started.
 
-```js run=false
-// Import d3 functions:
-import * as d3 from "d3";
-
-// Access and wrangle data
-const url = "https://api.scryfall.com/cards/search?order=cmc&q=c:red%20pow=3";
-
-const magicCards = await d3.json(url);
-
-const magicCardsData = magicCards.data.map((d) => ({
-  name: d.name,
-  release: d.released_at,
-  mana_cost: d.mana_cost,
-  type: d.type_line,
-  set: d.set_name,
-  rarity: d.rarity
-}));
-
-// Write as JSON to standard output:
-process.stdout.write(JSON.stringify(magicCardsData));
+```js
+showCode(FileAttachment("data/magic.json.js"))
 ```
 
-Access the output of the data loader (here, `magic.json`) using [`FileAttachment`](../javascript/files):
+Access the output of the data loader from the client using [`FileAttachment`](https://observablehq.com/framework/javascript/files):
 
 ```js echo
 const magicCards = FileAttachment("data/magic.json").json();
 ```
 
-`magic.json` [routes](../loaders#routing) to the `magic.json.js` data loader and reads its standard output stream.
+<p class="tip">The file attachment name does not include the <tt>.js</tt> extension. We rely on Framework’s <a href="https://observablehq.com/framework/routing">routing</a> to run the appropriate data loader.
+
+We can now display the attached dataset:
 
 ```js echo
-magicCards
+Inputs.table(magicCards)
+```
+
+```js
+import {showCode} from "./components/showCode.js";
 ```

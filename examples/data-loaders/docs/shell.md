@@ -10,35 +10,8 @@ Create a file in your project source root with the .parquet.sh double extension 
 
 <!-- TODO this one needs explaining. -->
 
-```sh
-duckdb -csv :memory: << EOF
-
-CREATE TABLE allp AS (
-  FROM 'https://data.openei.org/files/106/04232015altfuelstations.csv'
-);
-
-CREATE TABLE cafuelstations AS (
-  SELECT "Fuel Type Code" as Type,
-  State,
-  ZIP,
-  Latitude,
-  Longitude
-  FROM allp
-  WHERE State = 'CA'
-);
-
-COPY cafuelstations TO '$TMPDIR/cafuelstations.parquet' (FORMAT 'parquet', COMPRESSION 'GZIP');
-
-EOF
-
-# isatty
-if [ -t 1 ]; then
-  echo parquet file output at: $TMPDIR/cafuelstations.parquet
-  echo "duckdb -csv :memory: \"SELECT * FROM '$TMPDIR/cafuelstations.parquet'\""
-else
-  cat $TMPDIR/cafuelstations.parquet
-  rm $TMPDIR/cafuelstations.parquet
-fi
+```js
+showCode(FileAttachment("data/alt-fuel-stations.parquet.sh"))
 ```
 
 <!-- TODO explain -->
@@ -79,9 +52,8 @@ The data loader below, `caltrans-districts.json.sh`, accesses geojson of CalTran
 
 Create a file in your project source root with the .json.sh double extension (for example, `docs/data/my-data.json.sh`), then paste the code below to get started.
 
-```sh
-curl 'https://gis.data.ca.gov/datasets/0144574f750f4ccc88749004aca6eb0c_0.geojson?outSR=%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D' \
-  --compressed
+```js
+showCode(FileAttachment("data/caltrans-districts.json.sh"))
 ```
 
 Access the output of the data loader (here, `caltrans-districst.json`) using [`FileAttachment`](../javascript/files):
@@ -135,4 +107,8 @@ const penguins = FileAttachment("data/penguin.csv").csv({typed: true})
 
 ```js echo
 display(Inputs.table(penguins))
+```
+
+```js
+import {showCode} from "./components/showCode.js";
 ```

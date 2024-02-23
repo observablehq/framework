@@ -1,14 +1,17 @@
+# Import libraries (must be installed and available in environment)
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import io
 import sys
 
-# Data: https://catalog.data.gov/dataset/birth-statistics-a76a6
+# Read in data:
 birth_statistics = gpd.read_file("docs/data-files/birth_statistics.geojson")
 
+# Create a basic choropleth map
 birth_statistics.plot(column="Birth_Rate", legend=True)
 plt.axis("off")
 
+# Save plot to a virtual file, then write binary PNG data to stdout
 img_buffer = io.BytesIO()
 plt.savefig(img_buffer, format="png")
 img_buffer.seek(0)
