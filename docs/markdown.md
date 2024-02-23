@@ -90,12 +90,12 @@ Cell 1-2   |   Cell 2-2   |    Cell 3-2
 
 You can write HTML directly into Markdown. HTML is useful for greater control over layout, say to use CSS grid for a responsive bento box layout in a dashboard, or adding an external stylesheet via a link element. For example, here is an HTML details element:
 
-````html run=false
+```html run=false
 <details>
   <summary>Click me</summary>
   This text is not visible by default.
 </details>
-````
+```
 
 This produces:
 
