@@ -21,6 +21,7 @@ const languages = {
   ".go": ["go", "run"],
   ".sh": ["sh"],
   ".jl": ["julia"],
+  ".php": ["php"],
   ".exe": []
 };
 
