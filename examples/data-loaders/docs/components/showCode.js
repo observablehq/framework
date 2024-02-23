@@ -21,7 +21,6 @@ copyButton.innerHTML = '<button title="Copy code" class="observablehq-pre-copy">
 function enableCopyButton(pre) {
   const parent = pre.parentElement;
   const div = parent.insertBefore(document.createElement("div"), pre);
-  div.className = "observablehq-pre-container";
   Object.assign(div.dataset, pre.dataset);
   div.appendChild(copyButton.content.cloneNode(true).firstChild).addEventListener("click", copy);
   div.appendChild(pre);
