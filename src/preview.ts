@@ -382,11 +382,12 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
   }
 
   async function hello({path: initialPath, hash: initialHash}: {path: UrlPath; hash: string}): Promise<void> {
-    if (markdownWatcher || attachmentWatcher) throw new Error("already watching");
-    path = urlPathToFilePath(initialPath);
-    if (!(path = fileNormalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
-    if (path.endsWith("/")) path = FilePath(path + "index");
-    path = FilePath(path + ".md");
+    let urlPath = urlNormalize(initialPath);
+    if (!urlPath?.startsWith("/")) throw new Error(`Invalid path: ${initialPath}`);
+    if (urlPath.endsWith("/")) urlPath = UrlPath(urlPath + "index");
+    urlPath = UrlPath(urlPath + ".md");
+    path = urlPathToFilePath(urlPath);
+
     current = await parseMarkdown(fileJoin(root, path), {root, path: filePathToUrlPath(path)});
     if (current.hash !== initialHash) return void send({type: "reload"});
     stylesheets = await getStylesheets(current);
