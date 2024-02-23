@@ -70,7 +70,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
     const root = "/";
     const expected = html`<img src="./_file/test.png">`;
     const context = mockContext();
-    const actual = await normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
@@ -98,7 +98,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
                 800px" src="./_file/large.jpg" alt="Image for testing">
       `;
     const context = mockContext();
-    const actual = await normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
@@ -124,7 +124,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
       Your browser doesn't support HTML video.
       </video>`;
     const context = mockContext();
-    const actual = await normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
@@ -151,7 +151,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
       </video>`;
 
     const context = mockContext();
-    const actual = await normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
@@ -181,7 +181,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
     </picture>`;
 
     const context = mockContext();
-    const actual = await normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
@@ -207,7 +207,7 @@ describe("normalizePieceHtml only adds local files", () => {
     const root = "/";
     const expected = html`<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/American_Shorthair.jpg/900px-American_Shorthair.jpg">`;
     const context = mockContext();
-    const actual = await normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, []);
@@ -227,7 +227,7 @@ describe("normalizePieceHtml only adds local files", () => {
         <img srcset="./_file/small.jpg 480w, https://upload.wikimedia.org/900px-American_Shorthair.jpg 900w" sizes="(max-width: 600px) 480px, 900px" src="https://upload.wikimedia.org/900px-American_Shorthair.jpg" alt="Cat image for testing">
       `;
     const context = mockContext();
-    const actual = await normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
@@ -254,7 +254,7 @@ describe("normalizePieceHtml only adds local files", () => {
       </video>`;
 
     const context = mockContext();
-    const actual = await normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
