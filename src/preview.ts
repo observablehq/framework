@@ -19,7 +19,7 @@ import {getClientPath} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {getImplicitSpecifiers, getImplicitStylesheets} from "./libraries.js";
-import {diffMarkdown, parseMarkdown} from "./markdown.js";
+import {constructStylesheetUrl, diffMarkdown, parseMarkdown} from "./markdown.js";
 import type {ParseResult} from "./markdown.js";
 import {renderPreview, resolveStylesheet} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
@@ -322,14 +322,11 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
     const stylesheet = files.find(({ mimeType, name: stylesheetName }) => mimeType === "text/css" && stylesheetName === name);
 
     if (stylesheet) {
-      let url = stylesheet.path;
-      try {
-        const hash = computeHash(readFileSync(join(root, stylesheet.name), "utf-8"));
-        url += `?hash=${hash}`;
-      } catch (error) {
-        console.log({ error });
-      }
-      send({type: "update-stylesheet", href: url, path: stylesheet.path });
+      send({
+        type: "update-stylesheet",
+        href: constructStylesheetUrl(root, stylesheet),
+        path: stylesheet.path
+      });
     }
   }
 

@@ -371,17 +371,7 @@ export function normalizePieceHtml(html: string, root: string, sourcePath: strin
         const file = resolvePath(source);
 
         if (file) {
-          let url = file.path;
-          if (file.mimeType === "text/css") {
-            try {
-              const hash = computeHash(readFileSync(join(root, file.name), "utf-8"));
-              url += `?hash=${hash}`;
-            } catch (error) {
-              // if file not found, it will be reported as 404 in client console
-              if (!isEnoent(error)) throw error;
-            }
-          }
-
+          let url = file.mimeType === "text/css" ? constructStylesheetUrl(root, file) : file.path;
           element.setAttribute(src, url);
         }
       }
@@ -479,6 +469,19 @@ async function computeMarkdownHash(
     }
   }
   return hash.digest("hex");
+}
+
+export function constructStylesheetUrl(root, file) {
+  let url = file.path;
+  try {
+    // use readFileSync as it is called from a context that does not permit async
+    const hash = computeHash(readFileSync(join(root, file.name), "utf-8"));
+    url += `?hash=${hash}`;
+  } catch (error) {
+    // if file not found, it will be reported as 404 in client console
+    if (!isEnoent(error)) throw error;
+  }
+  return url;
 }
 
 // TODO Use gray-matter’s parts.isEmpty, but only when it’s accurate.
