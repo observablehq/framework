@@ -1,9 +1,10 @@
 import hljs from "https://cdn.jsdelivr.net/npm/highlight.js/+esm";
 
-export function showCode(file, {language = file.name.match(/\.(\w+)$/)?.[1], copy = true} = {}) {
+export function showCode(file, {language = file.name.match(/\.(\w+)$/)?.[1], copy = true, open = true} = {}) {
   const div = document.createElement("details");
+  if (open) div.setAttribute("open", "open");
   div.innerHTML = `
-    <summary>${file.name}</summary>
+    <summary><tt>${file.name}</tt>:</summary>
     <div class="observablehq-pre-container" data-language=${language}>
       <pre>loading file…</pre>
     </div>`;
