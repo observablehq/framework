@@ -34,9 +34,14 @@ const KNOWN_FILE_EXTENSIONS = {
  * SyntaxError if any of the calls are invalid (e.g., when FileAttachment is
  * passed a dynamic argument, or references a file that is outside the root).
  */
-export function findFiles(body: Node, path: string, input: string): FileExpression[] {
+export function findFileAttachments(
+  body: Node,
+  path: string,
+  input: string,
+  aliases?: Iterable<string> // ["FileAttachment"] for implicit import
+): FileExpression[] {
   const declarations = new Set<{name: string}>();
-  const alias = new Set<string>();
+  const alias = new Set<string>(aliases);
   let globals: Set<string> | undefined;
 
   // Find the declared local names of FileAttachment. Currently only named
@@ -71,9 +76,7 @@ export function findFiles(body: Node, path: string, input: string): FileExpressi
   const references = new Set(
     findReferences(body, {
       globals,
-      filterDeclaration: (identifier) =>
-        !declarations.has(identifier) && // treat the imported declaration as unbound
-        alias.has(identifier.name)
+      filterDeclaration: (identifier) => !declarations.has(identifier) // treat the imported declaration as unbound
     })
   );
 
@@ -87,17 +90,17 @@ export function findFiles(body: Node, path: string, input: string): FileExpressi
   ancestor(body, {
     CallExpression(node, state, stack) {
       const {callee} = node;
-      if (callee.type !== "Identifier" || !references.has(callee)) return;
+      if (callee.type !== "Identifier" || !alias.has(callee.name) || !references.has(callee)) return;
       const args = node.arguments;
-      if (args.length !== 1) throw syntaxError("FileAttachment requires a single argument", node, input);
+      if (args.length !== 1) throw syntaxError("FileAttachment requires a single literal string argument", node, input);
       const [arg] = args;
-      if (!isStringLiteral(arg)) throw syntaxError("FileAttachment requires a literal string argument", node, input);
+      if (!isStringLiteral(arg)) throw syntaxError("FileAttachment requires a single literal string argument", node, input); // prettier-ignore
       const fileName = getStringLiteralValue(arg);
       const filePath = getLocalPath(path, fileName);
       if (!filePath) throw syntaxError(`non-local file path: ${fileName}`, node, input);
       const parent = stack[stack.length - 2];
       const fileMethod =
-        isMemberExpression(parent) && parent.property.type === "Identifier"
+        parent && isMemberExpression(parent) && parent.property.type === "Identifier"
           ? parent.property.name // FileAttachment("foo.csv").csv
           : KNOWN_FILE_EXTENSIONS[extname(fileName)]; // bare FileAttachment("foo.csv")
       files.push({node, name: fileName, path: filePath, method: fileMethod});

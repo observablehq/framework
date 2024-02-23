@@ -15,7 +15,7 @@ import {Sourcemap} from "../sourcemap.js";
 import {faint} from "../tty.js";
 import {relativeUrl, resolvePath} from "../url.js";
 import {getFeature, getFeatureReferenceMap, getStringLiteralValue, isStringLiteral} from "./features.js";
-import {findFiles} from "./files.js";
+import {findFileAttachments} from "./files.js";
 
 type ImportNode = ImportDeclaration | ImportExpression;
 type ExportNode = ExportAllDeclaration | ExportNamedDeclaration;
@@ -105,11 +105,17 @@ export function hasImportDeclaration(body: Node): boolean {
 // }
 
 /**
- * Finds all imports (both static and dynamic) in the specified node.
- * Recursively processes any imported local ES modules. The returned transitive
- * import paths are relative to the given source path.
+ * Finds all imports (both static and dynamic) with statically-analyzable
+ * sources in the specified node, as well as file attachments. Recursively
+ * processes any imported local ES modules. The returned transitive import paths
+ * are relative to the given source path.
  */
-export function findImportsAndFeaturesRecursive(body: Node, root: string, path: string): ImportsAndFeatures {
+export function findImportsAndFeaturesRecursive(
+  body: Node,
+  root: string,
+  path: string,
+  input: string
+): ImportsAndFeatures {
   const imports: ImportReference[] = [];
   const features: Feature[] = [];
   const paths: string[] = [];
@@ -128,6 +134,11 @@ export function findImportsAndFeaturesRecursive(body: Node, root: string, path: 
         imports.push({name: value, type: "global"});
       }
     }
+  }
+
+  // Find any file attachments (calling the implicit built-in FileAttachment).
+  for (const file of findFileAttachments(body, path, input, ["FileAttachment"])) {
+    features.push({type: "FileAttachment", method: file.method, name: file.path});
   }
 
   // Recursively process any imported local ES modules.
@@ -174,7 +185,7 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFeat
         path
       );
 
-      for (const file of findFiles(body, path, input)) {
+      for (const file of findFileAttachments(body, path, input)) {
         features.push({type: "FileAttachment", method: file.method, name: file.path});
       }
     } catch (error) {

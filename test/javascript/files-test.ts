@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import type {Program} from "acorn";
 import {Parser} from "acorn";
-import {findFiles} from "../../src/javascript/files.js";
+import {findFileAttachments} from "../../src/javascript/files.js";
 
 // prettier-ignore
-describe("findFiles(node, input)", () => {
+describe("findFileAttachments(node, input)", () => {
   it("finds FileAttachment", () => {
     assert.deepStrictEqual(files('FileAttachment("foo.json")'), [{name: "foo.json", path: "foo.json", method: "json"}]);
   });
@@ -30,14 +30,14 @@ describe("findFiles(node, input)", () => {
     assert.deepStrictEqual(files("FileAttachment(`foo.json`)"), [{name: "foo.json", path: "foo.json", method: "json"}]);
   });
   it("disallows multiple arguments", () => {
-    assert.throws(() => files("FileAttachment('foo.json', false)"), /requires a single argument/);
+    assert.throws(() => files("FileAttachment('foo.json', false)"), /requires a single literal string argument/);
   });
   it("disallows non-string arguments", () => {
-    assert.throws(() => files("FileAttachment(42)"), /requires a literal string argument/);
+    assert.throws(() => files("FileAttachment(42)"), /requires a single literal string argument/);
   });
   it("disallows dynamic arguments", () => {
-    assert.throws(() => files("FileAttachment(`${42}`)"), /requires a literal string argument/);
-    assert.throws(() => files("FileAttachment('foo' + 42 + '.json')"), /requires a literal string argument/);
+    assert.throws(() => files("FileAttachment(`${42}`)"), /requires a single literal string argument/);
+    assert.throws(() => files("FileAttachment('foo' + 42 + '.json')"), /requires a single literal string argument/);
   });
   it("resolves the path relative to the source", () => {
     assert.deepStrictEqual(files('FileAttachment("foo.json")', "bar.js"), [{name: "foo.json", path: "foo.json", method: "json"}]);
@@ -100,7 +100,7 @@ describe("findFiles(node, input)", () => {
 });
 
 function files(input: string, path = "index.js") {
-  return findFiles(parse(input), path, input).map((f) => (delete (f as any).node, f));
+  return findFileAttachments(parse(input), path, input, ["FileAttachment"]).map((f) => (delete (f as any).node, f));
 }
 
 function parse(input: string): Program {

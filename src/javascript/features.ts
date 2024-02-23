@@ -1,64 +1,10 @@
-import {extname} from "node:path";
-import type {CallExpression, Identifier, Literal, MemberExpression, Node, TemplateLiteral} from "acorn";
-import {ancestor, simple} from "acorn-walk";
+import type {CallExpression, Identifier, Literal, Node, TemplateLiteral} from "acorn";
+import {simple} from "acorn-walk";
 import {getLocalPath} from "../files.js";
 import type {Feature} from "../javascript.js";
 import {defaultGlobals} from "./globals.js";
 import {findReferences} from "./references.js";
 import {syntaxError} from "./syntaxError.js";
-
-const KNOWN_FILE_EXTENSIONS = {
-  ".arrow": "arrow",
-  ".csv": "csv",
-  ".db": "sqlite",
-  ".html": "html",
-  ".json": "json",
-  ".parquet": "parquet",
-  ".sqlite": "sqlite",
-  ".tsv": "tsv",
-  ".txt": "text",
-  ".xlsx": "xlsx",
-  ".xml": "xml",
-  ".zip": "zip"
-};
-
-export function findFeatures(node: Node, path: string, references: Identifier[], input: string): Feature[] {
-  const featureMap = getFeatureReferenceMap(node);
-  const features: Feature[] = [];
-
-  ancestor(node, {
-    CallExpression(node, state, stack) {
-      const {callee} = node;
-      if (callee.type !== "Identifier") return;
-      let type = featureMap.get(callee);
-      // If this feature wasn’t explicitly imported into this cell, then ignore
-      // function calls that are not references to the feature. For example, if
-      // there’s a local variable called FileAttachment, that will mask the
-      // built-in FileAttachment and won’t be considered a feature.
-      if (!type) {
-        if (!references.includes(callee)) return;
-        const name = callee.name;
-        if (name !== "FileAttachment") return;
-        type = name;
-      }
-      const feature = getFeature(type, node, path, input);
-      const parent = stack[stack.length - 2];
-      if (isMemberExpression(parent) && parent.property.type === "Identifier") {
-        feature.method = parent.property.name;
-      } else {
-        const method = KNOWN_FILE_EXTENSIONS[extname(feature.name)];
-        if (method) feature.method = method;
-      }
-      features.push(feature);
-    }
-  });
-
-  return features;
-}
-
-function isMemberExpression(node?: Node): node is MemberExpression {
-  return node?.type === "MemberExpression";
-}
 
 /**
  * Returns a map from Identifier to the feature type, such as FileAttachment.
