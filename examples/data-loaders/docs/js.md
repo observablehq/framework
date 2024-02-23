@@ -6,7 +6,7 @@ Because data loaders run in this standard environment, they have to be written a
 
 ## TSV
 
-The data loader below (`us-electricity.tsv.js`) accesses data on US hourly electricity demand and generation from the [Energy Information Administration](https://www.eia.gov/opendata/), does some basic wrangling, and returns a tab-separated value file.
+The data loader below accesses data on US hourly electricity demand and generation from the [Energy Information Administration](https://www.eia.gov/opendata/), does some basic wrangling, and returns a tab-separated value file.
 
 Create a file in your project source root with the .tsv.js double extension (for example, `docs/data/my-data.tsv.js`), then paste the JavaScript code below to get started.
 
@@ -30,7 +30,7 @@ Inputs.table(usElectricity)
 
 ## JSON
 
-The data loader below (`magic.json.js`) accesses Magic the Gathering card data from the [Scryfall API](https://scryfall.com/docs/api), does some basic wrangling, and returns a JSON.
+The data loader below accesses Magic the Gathering card data from the [Scryfall API](https://scryfall.com/docs/api), does some basic wrangling, and returns a JSON.
 
 Create a file in your project source root with the .json.js double extension (for example, `docs/data/my-data.json.js`), then paste the JavaScript code below to get started.
 

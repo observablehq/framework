@@ -32,7 +32,7 @@ Inputs.table(penguinClassification)
 
 ## PNG
 
-The data loader below (`birth-statistics.png.py`) accesses [birth data for Lake County, Illinois](https://data-lakecountyil.opendata.arcgis.com/datasets/lakecountyil::birth-statistics/explore) from a local geoJSON file. A simple choropleth of birth rates is created using `matplotlib`, and output as a PNG file.
+The data loader below accesses [birth data for Lake County, Illinois](https://data-lakecountyil.opendata.arcgis.com/datasets/lakecountyil::birth-statistics/explore) from a local geoJSON file. A simple choropleth of birth rates is created using `matplotlib`, and output as a PNG file.
 
 Create a file in your project source root with the .png.py double extension (for example, `docs/data/my-png.png.py`), then paste the Python code below to get started.
 
@@ -54,7 +54,7 @@ birthRateMap
 
 ## Zip
 
-The data loader below `earthquakes.zip.py` accesses data on [earthquakes from the USGS](https://www.usgs.gov/programs/earthquake-hazards/earthquakes), then combines metadata (as JSON) and selected earthquake magnitude and location (as a CSV) in a zip archive.
+The data loader below accesses data on [earthquakes from the USGS](https://www.usgs.gov/programs/earthquake-hazards/earthquakes), then combines metadata (as JSON) and selected earthquake magnitude and location (as a CSV) in a zip archive.
 
 Create a file in your project source root with the .zip.py double extension (for example, `docs/data/my-data.zip.py`), then paste the Python code below to get started.
 

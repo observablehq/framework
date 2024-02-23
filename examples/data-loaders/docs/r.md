@@ -4,7 +4,7 @@ Observable Framework supports [data loaders](../loaders) written in R, by passin
 
 ## CSV
 
-The data loader below (`penguin-kmeans.csv.R`) reads in the [penguins data](https://journal.r-project.org/articles/RJ-2022-020/) from a local file, performs [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering) based on culmen (bill) length and depth, then outputs a CSV file the original penguins data enriched with cluster assignments.
+The data loader below reads in the [penguins data](https://journal.r-project.org/articles/RJ-2022-020/) from a local file, performs [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering) based on culmen (bill) length and depth, then outputs a CSV file the original penguins data enriched with cluster assignments.
 
 Create a file in your project source root with the .csv.R double extension (for example, `docs/data/my-data.csv.R`), then paste the R code below to get started.
 
@@ -20,7 +20,7 @@ const penguinKmeans = FileAttachment("data/penguin-kmeans.csv").csv({typed: true
 
 <p class="tip">The file attachment name does not include the <tt>.R</tt> extension. We rely on Framework’s <a href="https://observablehq.com/framework/routing">routing</a> to run the appropriate data loader.
 
-We can now display the dataset with the clusters:
+We can now display the dataset with the assigned clusters:
 
 ```js
 Inputs.table(penguinKmeans)
@@ -28,7 +28,7 @@ Inputs.table(penguinKmeans)
 
 ## JSON
 
-The data loader below (`tolstoy.json.R`) accesses the text of _War and Peace_ from the [Gutenberg Project](https://www.gutenberg.org/ebooks/2600), finds the most common words by chapter, and returns a JSON.
+The data loader below accesses the text of _War and Peace_ from the [Gutenberg Project](https://www.gutenberg.org/ebooks/2600), finds the most common words by chapter, and returns a JSON.
 
 Create a file in your project source root with the .json.R double extension (for example, `docs/data/my-data.json.R`), then paste the R code below to get started.
 
@@ -50,7 +50,7 @@ text
 
 ## ZIP
 
-The data loader below (`penguin-mlr.zip.R`) reads in the [penguins data](https://journal.r-project.org/articles/RJ-2022-020/) from a local file, performs multiple linear regression, then outputs multiple files (with model estimates and predictions) as a ZIP archive.
+The data loader below reads in the [penguins data](https://journal.r-project.org/articles/RJ-2022-020/) from a local file, performs multiple linear regression, then outputs multiple files (with model estimates and predictions) as a ZIP archive.
 
 Create a file in your project source root with the .zip.R double extension (for example, `docs/data/my-data.zip.R`), then paste the R code below to get started.
 

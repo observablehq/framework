@@ -8,7 +8,7 @@ chmod +x docs/quakes.csv.exe
 
 ## JPEG
 
-The data loader below `diamonds.jpeg.exe` specifies the R interpreter, `Rscript`, to execute the file (`#!/usr/bin/env Rscript`). A scatterplot chart built with [`ggplot2`](https://ggplot2.tidyverse.org/) using the built-in diamonds dataset is returned as a JPEG to standard output.
+The data loader below specifies the R interpreter, `Rscript`, to execute the file (`#!/usr/bin/env Rscript`). A scatterplot chart built with [`ggplot2`](https://ggplot2.tidyverse.org/) using the built-in diamonds dataset is returned as a JPEG to standard output.
 
 Create a file in your project source root with the .jpeg.exe double extension (for example, `docs/data/my-chart.jpeg.exe`). Remember to make the script executable, for example using:
 
@@ -38,7 +38,7 @@ diamonds
 
 ## TXT
 
-The data loader below `raven.txt.exe` specifies the Julia language interpreter using the shebang (`#!/usr/bin/env julia`). Text of Edgar Allen Poe's _The Raven_ is accessed from [Project Gutenberg](https://www.gutenberg.org/cache/epub/1065/pg1065.txt). The text is parsed and single paragraph (specified by number) is returned as text.
+The data loader below specifies the Julia language interpreter using the shebang (`#!/usr/bin/env julia`). Text of Edgar Allen Poe's _The Raven_ is accessed from [Project Gutenberg](https://www.gutenberg.org/cache/epub/1065/pg1065.txt). The text is parsed and single paragraph (specified by number) is returned as text.
 
 Create a file in your project source root with the .txt.exe double extension (for example, `docs/data/my-chart.txt.exe`). Remember to make the script executable, for example using:
 
