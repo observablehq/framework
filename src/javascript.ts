@@ -5,7 +5,7 @@ import {findAssignments} from "./javascript/assignments.js";
 import {findAwaits} from "./javascript/awaits.js";
 import {findDeclarations} from "./javascript/declarations.js";
 import {findFeatures} from "./javascript/features.js";
-import {findExports, findImportDeclarations, findImportsAndFeaturesRecursive} from "./javascript/imports.js";
+import {findExports, findImports, findImportsAndFeaturesRecursive} from "./javascript/imports.js";
 import {createImportResolver, rewriteImports} from "./javascript/imports.js";
 import {findReferences} from "./javascript/references.js";
 import {syntaxError} from "./javascript/syntaxError.js";
@@ -71,7 +71,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
     const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
     const implicitDisplay = node.expression && !inputs.includes("display") && !inputs.includes("view");
     if (implicitDisplay) inputs.push("display"), (node.async = true);
-    if (findImportDeclarations(node).length > 0) node.async = true;
+    if (findImports(node.body).some((i) => i.type === "ImportDeclaration")) node.async = true;
     return {
       id,
       expression: node.expression,

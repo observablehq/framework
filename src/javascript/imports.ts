@@ -45,8 +45,8 @@ export function findExports(body: Node): ExportNode[] {
 }
 
 /**
- * Finds all statically-analyzable import declarations (both static and dynamic)
- * in the specified node.
+ * Finds all statically-analyzable import declarations and expressions in the
+ * specified node.
  */
 export function findImports(body: Node): ImportNode[] {
   const imports: ImportNode[] = [];
@@ -210,20 +210,6 @@ export async function rewriteModule(input: string, path: string, resolver: Impor
   }
 
   return String(output);
-}
-
-export function findImportDeclarations(cell: JavaScriptNode): ImportDeclaration[] {
-  const declarations: ImportDeclaration[] = [];
-
-  simple(cell.body, {
-    ImportDeclaration(node) {
-      if (isStringLiteral(node.source)) {
-        declarations.push(node);
-      }
-    }
-  });
-
-  return declarations;
 }
 
 /**
