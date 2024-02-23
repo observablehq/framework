@@ -1,7 +1,7 @@
 import {Parser, tokTypes} from "acorn";
 import type {Expression, Identifier, Node, Options, Program} from "acorn";
 import {fileReference} from "./files.js";
-import {findAssignments} from "./javascript/assignments.js";
+import {checkAssignments} from "./javascript/assignments.js";
 import {findAwaits} from "./javascript/awaits.js";
 import {findDeclarations} from "./javascript/declarations.js";
 import {findFeatures} from "./javascript/features.js";
@@ -142,7 +142,7 @@ function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
   const exports = findExports(body);
   if (exports.length) throw syntaxError("Unexpected token 'export'", exports[0], input); // disallow exports
   const references = findReferences(body);
-  findAssignments(body, references, input);
+  checkAssignments(body, references, input);
   const declarations = expression ? null : findDeclarations(body as Program, input);
   const {imports, features: importedFeatures} = findImportsAndFeaturesRecursive(body, root, sourcePath);
   const features = findFeatures(body, sourcePath, references, input);

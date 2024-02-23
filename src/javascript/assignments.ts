@@ -3,7 +3,7 @@ import {simple} from "acorn-walk";
 import {defaultGlobals} from "./globals.js";
 import {syntaxError} from "./syntaxError.js";
 
-export function findAssignments(node: Node, references: Identifier[], input: string): void {
+export function checkAssignments(node: Node, references: Identifier[], input: string): void {
   function checkConst(node: Expression | Pattern | VariableDeclaration) {
     switch (node.type) {
       case "Identifier":
