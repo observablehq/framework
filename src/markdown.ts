@@ -371,7 +371,7 @@ export function normalizePieceHtml(html: string, root: string, sourcePath: strin
         const file = resolvePath(source);
 
         if (file) {
-          let url = file.mimeType === "text/css" ? constructStylesheetUrl(root, file) : file.path;
+          const url = file.mimeType === "text/css" ? constructStylesheetUrl(root, file) : file.path;
           element.setAttribute(src, url);
         }
       }

@@ -1,5 +1,5 @@
 import {createHash} from "node:crypto";
-import {readFileSync, watch} from "node:fs";
+import {watch} from "node:fs";
 import type {FSWatcher, WatchEventType} from "node:fs";
 import {access, constants, readFile, stat} from "node:fs/promises";
 import {createServer} from "node:http";
@@ -27,7 +27,6 @@ import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, link, red} from "./tty.js";
 import {relativeUrl} from "./url.js";
-import {computeHash} from "./hash.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
