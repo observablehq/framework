@@ -56,13 +56,15 @@ Create a file in your project source root with the .json.sh double extension (fo
 showCode(FileAttachment("data/caltrans-districts.json.sh"))
 ```
 
-Access the output of the data loader (here, `caltrans-districst.json`) using [`FileAttachment`](../javascript/files):
+Access the output of the data loader from the client using [`FileAttachment`](https://observablehq.com/framework/javascript/files):
 
 ```js echo
 const caltrans = FileAttachment("data/caltrans-districts.json").json()
 ```
 
-`caltrans-districts.json` [routes](../loaders#routing) to the `caltrans-districts.json` data loader and reads its standard output stream.
+<p class="tip">The file attachment name does not include the <tt>.sh</tt> extension. We rely on Framework’s <a href="https://observablehq.com/framework/routing">routing</a> to run the appropriate data loader.
+
+We can now explore the JSON output:
 
 ```js echo
 caltrans
@@ -76,37 +78,20 @@ The data loader example below, `penguin.csv.sh`, starts a Python script, accesse
 
 Create a file in your project source root with the .csv.sh double extension (for example, `docs/data/my-data.csv.sh`), then paste the code below to get started.
 
-```sh
-#!/bin/bash
-
-# Start a Python script
-python3 << END_PYTHON
-
-# Import libraries
-import sys
-import pandas as pd
-from sklearn.linear_model import LinearRegression
-
-# Data access and wrangling
-penguins = pd.read_csv("docs/data/penguins.csv")
-penguins_size = penguins[["species", "body_mass_g", "flipper_length_mm", "sex"]]
-penguins_complete = penguins_size.dropna(subset=["flipper_length_mm","body_mass_g"])
-
-# Write pandas df as a CSV to standard output
-penguins_complete.to_csv(sys.stdout)
-END_PYTHON
+```js
+showCode(FileAttachment("data/penguin.csv.sh"))
 ```
 
-Load the output of the data loader (here, `penguin.csv`) from the client using [`FileAttachment`](../javascript/files):
+Access the output of the data loader from the client using [`FileAttachment`](https://observablehq.com/framework/javascript/files):
 
 ```js echo
 const penguins = FileAttachment("data/penguin.csv").csv({typed: true})
 ```
 
-`penguin.csv` [routes](../loaders#routing) to the `penguin.csv.sh` data loader and reads its standard output stream.
+<p class="tip">The file attachment name does not include the <tt>.sh</tt> extension. We rely on Framework’s <a href="https://observablehq.com/framework/routing">routing</a> to run the appropriate data loader.
 
 ```js echo
-display(Inputs.table(penguins))
+Inputs.table(penguins)
 ```
 
 ```js

@@ -18,33 +18,19 @@ chmod +x docs/data/my-chart.jpeg.exe
 
 Then, paste the code below to get started.
 
-```exe
-#!/usr/bin/env Rscript
-
-# Load ggplot2
-library(ggplot2)
-
-# Create a scatterplot with built-in diamonds dataset
-my_plot <- ggplot(diamonds, aes(x = carat, y = price, color = cut)) +
-  geom_point(alpha = 0.6) +
-  labs(
-    title = "Diamonds Dataset: Carat vs Price by Cut",
-    x = "Carat",
-    y = "Price",
-    color = "Cut"
-  )
-
-# Save jpeg and write to standard output
-ggsave(plot = my_plot, filename = "/dev/stdout", device = "jpeg")
+```js
+showCode(FileAttachment("data/diamonds.jpeg.exe"), {language: "R"})
 ```
 
-Access the output of the data loader (here, `diamonds.jpeg`) from the client using [`FileAttachment`](../javascript/files):
+Access the output of the data loader from the client using [`FileAttachment`](https://observablehq.com/framework/javascript/files):
 
 ```js echo
-const diamonds = FileAttachment("data/diamonds.jpeg").image({width: 500})
+const diamonds = FileAttachment("data/diamonds.jpeg").image({width: 500});
 ```
 
-`diamonds.jpeg` [routes](../loaders#routing) to the `diamonds.jpeg.exe` data loader and reads its standard output stream.
+<p class="tip">The file attachment name does not include the <tt>.exe</tt> extension. We rely on Framework’s <a href="https://observablehq.com/framework/routing">routing</a> to run the appropriate data loader.
+
+We can now view the image:
 
 ```js echo
 diamonds
@@ -62,54 +48,24 @@ chmod +x docs/data/my-chart.txt.exe
 
 Then, paste the code below to get started.
 
-```exe
-#!/usr/bin/env julia
-
-# Load Julia packages (must be installed)
-using HTTP
-using Gumbo
-using TextAnalysis
-
-# Function to fetch text
-function fetch_text_from_url(url::String)
-  response = HTTP.get(url)
-  text = String(response.body)
-  text = replace(text, "\r" => "")
-  return text
-end
-
-# Split into paragraphs
-function split_into_paragraphs(text::String)
-    paragraphs = split(text, "\n\n")
-    return paragraphs
-end
-
-# Return a paragraph by number
-function get_paragraph_by_number(text::String, paragraph_number::Int)
-  paragraphs = split_into_paragraphs(text)
-  return paragraphs[paragraph_number]
-end
-
-# Text URL
-url = "https://www.gutenberg.org/cache/epub/1065/pg1065.txt"
-
-# Fetch text and access a paragraph by number
-text = fetch_text_from_url(url)
-paragraph_number = 29
-result_paragraph = get_paragraph_by_number(text, paragraph_number)
-
-# Print text to standard output
-println(result_paragraph)
+```js
+showCode(FileAttachment("data/raven.txt.exe"), {language: "Julia"})
 ```
 
-Access the output of the data loader (here, `raven.txt`) using [`FileAttachment`](../javascript/files):
+Access the output of the data loader from the client using [`FileAttachment`](https://observablehq.com/framework/javascript/files):
 
 ```js echo
 const ravenParagraph = FileAttachment("data/raven.txt").text();
 ```
 
-`raven.txt` [routes](../loaders#routing) to the `raven.txt.exe` data loader and reads its standard output stream.
+<p class="tip">The file attachment name does not include the <tt>.exe</tt> extension. We rely on Framework’s <a href="https://observablehq.com/framework/routing">routing</a> to run the appropriate data loader.
+
+We can now view the paragraph text:
 
 ```js echo
 ravenParagraph
+```
+
+```js
+import {showCode} from "./components/showCode.js";
 ```
