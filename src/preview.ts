@@ -16,7 +16,6 @@ import {
   fileDirname,
   fileExtname,
   fileJoin,
-  fileNormalize,
   filePathToUrlPath,
   unFilePath,
   unUrlPath,
