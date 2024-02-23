@@ -205,6 +205,9 @@ async function renderHead(
   if (style) stylesheets.add(style);
   const specifiers = new Set<string>(["npm:@observablehq/runtime", "npm:@observablehq/stdlib"]);
   for (const {name} of parseResult.imports) specifiers.add(name);
+  // TODO This fails to add the katex stylesheet because we have
+  // npm:@observablehq/tex in specifiers but have not yet resolved the
+  // transitive dependency on npm:katex.
   await addImplicitStylesheets(stylesheets, specifiers);
   const preloads = new Set<string>([relativeUrl(path, "/_observablehq/client.js")]);
   for (const specifier of specifiers) preloads.add(await resolver(path, specifier));
