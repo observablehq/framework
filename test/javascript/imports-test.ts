@@ -111,16 +111,16 @@ describe("parseLocalImports(root, paths)", () => {
   });
   it("find all local fetches in one file", () => {
     assert.deepStrictEqual(parseLocalImports("test/input/build/fetches", ["foo/foo.js"]).features.sort(order), [
-      {name: "foo/foo-data.csv", type: "FileAttachment"},
-      {name: "foo/foo-data.json", type: "FileAttachment"}
+      {name: "foo/foo-data.csv", method: "text", type: "FileAttachment"},
+      {name: "foo/foo-data.json", method: "json", type: "FileAttachment"}
     ]);
   });
   it("find all local fetches via transitive import", () => {
     assert.deepStrictEqual(parseLocalImports("test/input/build/fetches", ["top.js"]).features.sort(order), [
-      {name: "foo/foo-data.csv", type: "FileAttachment"},
-      {name: "foo/foo-data.json", type: "FileAttachment"},
-      {name: "top-data.csv", type: "FileAttachment"},
-      {name: "top-data.json", type: "FileAttachment"}
+      {name: "foo/foo-data.csv", method: "text", type: "FileAttachment"},
+      {name: "foo/foo-data.json", method: "json", type: "FileAttachment"},
+      {name: "top-data.csv", method: "text", type: "FileAttachment"},
+      {name: "top-data.json", method: "json", type: "FileAttachment"}
     ]);
   });
 });

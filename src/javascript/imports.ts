@@ -15,6 +15,7 @@ import {Sourcemap} from "../sourcemap.js";
 import {faint} from "../tty.js";
 import {relativeUrl, resolvePath} from "../url.js";
 import {getFeature, getFeatureReferenceMap, getStringLiteralValue, isStringLiteral} from "./features.js";
+import {findFiles} from "./files.js";
 
 type ImportNode = ImportDeclaration | ImportExpression;
 type ExportNode = ExportAllDeclaration | ExportNamedDeclaration;
@@ -173,7 +174,9 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFeat
         path
       );
 
-      features.push(...findImportFeatures(body, path, input));
+      for (const file of findFiles(body, path, input)) {
+        features.push({type: "FileAttachment", method: file.method, name: file.path});
+      }
     } catch (error) {
       if (!isEnoent(error) && !(error instanceof SyntaxError)) throw error;
     }
@@ -192,20 +195,6 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFeat
   }
 
   return {imports, features};
-}
-
-function findImportFeatures(node: Node, path: string, input: string): Feature[] {
-  const featureMap = getFeatureReferenceMap(node);
-  const features: Feature[] = [];
-
-  simple(node, {
-    CallExpression(node) {
-      const type = featureMap.get(node.callee as Identifier);
-      if (type) features.push(getFeature(type, node, path, input));
-    }
-  });
-
-  return features;
 }
 
 /** Rewrites import specifiers and FileAttachment calls in the specified ES module source. */
