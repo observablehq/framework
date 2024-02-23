@@ -5,7 +5,7 @@ import {findAssignments} from "./javascript/assignments.js";
 import {findAwaits} from "./javascript/awaits.js";
 import {findDeclarations} from "./javascript/declarations.js";
 import {findFeatures} from "./javascript/features.js";
-import {findExports, findImportDeclarations, findImports} from "./javascript/imports.js";
+import {findExports, findImportDeclarations, findImportsAndFeaturesRecursive} from "./javascript/imports.js";
 import {createImportResolver, rewriteImports} from "./javascript/imports.js";
 import {findReferences} from "./javascript/references.js";
 import {syntaxError} from "./javascript/syntaxError.js";
@@ -144,7 +144,7 @@ function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
   const references = findReferences(body);
   findAssignments(body, references, input);
   const declarations = expression ? null : findDeclarations(body as Program, input);
-  const {imports, features: importedFeatures} = findImports(body, root, sourcePath);
+  const {imports, features: importedFeatures} = findImportsAndFeaturesRecursive(body, root, sourcePath);
   const features = findFeatures(body, sourcePath, references, input);
   return {
     body,

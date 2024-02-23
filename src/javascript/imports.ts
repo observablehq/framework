@@ -26,7 +26,8 @@ export interface ImportsAndFeatures {
 
 /**
  * Finds all export declarations in the specified node. (This is used to
- * disallow exports within JavaScript code blocks.)
+ * disallow exports within JavaScript code blocks.) Note that this includes both
+ * "export const foo" declarations and "export {foo} from bar" declarations.
  */
 export function findExports(body: Node): ExportNode[] {
   const exports: ExportNode[] = [];
@@ -44,11 +45,32 @@ export function findExports(body: Node): ExportNode[] {
 }
 
 /**
+ * Finds all statically-analyzable import declarations (both static and dynamic)
+ * in the specified node.
+ */
+export function findImports(body: Node): ImportNode[] {
+  const imports: ImportNode[] = [];
+
+  simple(body, {
+    ImportDeclaration: findImport,
+    ImportExpression: findImport
+  });
+
+  function findImport(node: ImportNode) {
+    if (isStringLiteral(node.source)) {
+      imports.push(node);
+    }
+  }
+
+  return imports;
+}
+
+/**
  * Finds all imports (both static and dynamic) in the specified node.
  * Recursively processes any imported local ES modules. The returned transitive
  * import paths are relative to the given source path.
  */
-export function findImports(body: Node, root: string, path: string): ImportsAndFeatures {
+export function findImportsAndFeaturesRecursive(body: Node, root: string, path: string): ImportsAndFeatures {
   const imports: ImportReference[] = [];
   const features: Feature[] = [];
   const paths: string[] = [];

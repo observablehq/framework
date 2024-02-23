@@ -22,9 +22,10 @@ import {resolvePath} from "./url.js";
 
 export interface HtmlPiece {
   type: "html";
-  id: string;
+  id: string; // TODO remove this?
   html: string;
   cellIds?: string[];
+  // TODO files?: FileReference[]; for static file references
 }
 
 export interface CellPiece extends Transpile {
@@ -118,6 +119,7 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
         sourceLine
       });
       extendPiece(context, {code: [transpile]});
+      // TODO don’t collect these here
       if (transpile.files) context.files.push(...transpile.files);
       if (transpile.imports) context.imports.push(...transpile.imports);
       result += `<div id="cell-${id}" class="observablehq observablehq--block${
@@ -276,6 +278,7 @@ function makePlaceholderRenderer(root: string, sourcePath: string): RenderRule {
       sourceLine: context.startLine + context.currentLine
     });
     extendPiece(context, {code: [transpile]});
+    // TODO don’t collect these here
     if (transpile.files) context.files.push(...transpile.files);
     if (transpile.imports) context.imports.push(...transpile.imports);
     return `<span id="cell-${id}" class="observablehq--loading"></span>`;
@@ -318,6 +321,7 @@ function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string):
     }
     let result = "";
     for (const piece of context.pieces) {
+      // TODO store piece.files here
       result += piece.html = normalizePieceHtml(piece.html, sourcePath, context);
     }
     return result;
@@ -347,6 +351,7 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
     const file = fileReference({name: path}, sourcePath);
     if (!filePaths.has(file.path)) {
       filePaths.add(file.path);
+      // TODO accumulate and return files for this piece
       context.files.push(file);
     }
     return file;
@@ -398,7 +403,7 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
 function toParsePieces(pieces: RenderPiece[]): HtmlPiece[] {
   return pieces.map((piece) => ({
     type: "html",
-    id: "",
+    id: "", // TODO this seems wrong; id should be optional if not required
     cellIds: piece.code.map((code) => `${code.id}`),
     html: piece.html
   }));
@@ -438,6 +443,11 @@ export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptio
   const imports = context.imports; // TODO Set
   for (const name of getImplicitImports(inputs)) imports.push({type: "global", name});
   for (const name of getImplicitFileImports(context.files)) imports.push({type: "global", name});
+  // TODO Instead of collecting imports and files up to the top level, we should
+  // leave them attached to their separate pieces, and move the resolution
+  // somewhere else. Or we should do all of the import resolution here…
+  // Currently we do about half of the work here which is splitting the
+  // difference.
   return {
     html,
     data: isEmpty(parts.data) ? null : parts.data,
