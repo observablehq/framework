@@ -105,6 +105,11 @@ export function open({hash, eval: compile} = {}) {
         document.head.appendChild(link);
         break;
       }
+      case "update-stylesheet": {
+        const link = document.querySelector(`link[rel="stylesheet"][href^="${message.path}"]`);
+        link.href = message.href;
+        break;
+      }
       case "remove-stylesheet": {
         document.head.querySelector(`link[rel="stylesheet"][href="${message.href}"]`)?.remove();
         break;

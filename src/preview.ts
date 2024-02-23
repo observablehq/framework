@@ -1,5 +1,5 @@
 import {createHash} from "node:crypto";
-import {watch} from "node:fs";
+import {readFileSync, watch} from "node:fs";
 import type {FSWatcher, WatchEventType} from "node:fs";
 import {access, constants, readFile, stat} from "node:fs/promises";
 import {createServer} from "node:http";
@@ -27,6 +27,7 @@ import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, link, red} from "./tty.js";
 import {relativeUrl} from "./url.js";
+import {computeHash} from "./hash.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
@@ -318,8 +319,17 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
       }
     }
 
-    if (files.some(({ mimeType, name: styleSheetName }) => mimeType === "text/css" && styleSheetName === name)) {
-      send({type: "reload" }); // reload entire page on css change
+    const stylesheet = files.find(({ mimeType, name: stylesheetName }) => mimeType === "text/css" && stylesheetName === name);
+
+    if (stylesheet) {
+      let url = stylesheet.path;
+      try {
+        const hash = computeHash(readFileSync(join(root, stylesheet.name), "utf-8"));
+        url += `?hash=${hash}`;
+      } catch (error) {
+        console.log({ error });
+      }
+      send({type: "update-stylesheet", href: url, path: stylesheet.path });
     }
   }
 

@@ -1,4 +1,5 @@
 import {createHash} from "node:crypto";
+import {readFileSync} from "node:fs";
 import {readFile} from "node:fs/promises";
 import {join} from "node:path";
 import {type Patch, type PatchItem, getPatch} from "fast-array-diff";
@@ -297,10 +298,8 @@ function extendPiece(context: ParseContext, extend: Partial<RenderPiece>) {
   };
 }
 
-// function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string): Renderer["render"] {
-function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string):any {
-  console.log({ sourcePath });
-  return async (tokens, options, context: ParseContext) => {
+function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string): Renderer["render"] {
+  return (tokens, options, context: ParseContext) => {
     const rules = renderer.rules;
     for (let i = 0, len = tokens.length; i < len; i++) {
       const type = tokens[i].type;
@@ -319,7 +318,7 @@ function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string):
     }
     let result = "";
     for (const piece of context.pieces) {
-      result += piece.html = await normalizePieceHtml(piece.html, root, sourcePath, context);
+      result += piece.html = normalizePieceHtml(piece.html, root, sourcePath, context);
     }
 
     return result;
@@ -338,7 +337,7 @@ const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcs
   {query: "video source[src]", src: "src"}
 ]);
 
-export async function normalizePieceHtml(html: string, root: string, sourcePath: string, context: ParseContext): Promise<string> {
+export function normalizePieceHtml(html: string, root: string, sourcePath: string, context: ParseContext): string {
   const {document} = parseHTML(html);
 
   // Extracting references to files (such as from linked stylesheets).
@@ -375,7 +374,7 @@ export async function normalizePieceHtml(html: string, root: string, sourcePath:
           let url = file.path;
           if (file.mimeType === "text/css") {
             try {
-              const hash = computeHash(await readFile(join(root, file.name), "utf-8"));
+              const hash = computeHash(readFileSync(join(root, file.name), "utf-8"));
               url += `?hash=${hash}`;
             } catch (error) {
               // if file not found, it will be reported as 404 in client console
@@ -448,9 +447,7 @@ export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptio
   md.renderer.render = renderIntoPieces(md.renderer, root, path);
   const context: ParseContext = {files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
   const tokens = md.parse(parts.content, context);
-  console.log({ tokens });
-  const html = await md.renderer.render(tokens, md.options, context); // Note: mutates context.pieces, context.files!
-  console.log({ html });
+  const html = md.renderer.render(tokens, md.options, context); // Note: mutates context.pieces, context.files!
   return {
     html,
     data: isEmpty(parts.data) ? null : parts.data,
