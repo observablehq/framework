@@ -94,9 +94,7 @@ export async function build(
     }
   }
 
-  // Generate the client bundles. TODO For any client bundles that have npm:
-  // imports, the paths need to be made relative, not starting with /_npm/; for
-  // example stdlib imports npm:apache-arrow.
+  // Generate the client bundles.
   if (addPublic) {
     const bundles: [entry: string, name: string][] = [];
     bundles.push([clientEntry, "client.js"]);
