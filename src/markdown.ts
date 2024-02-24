@@ -51,6 +51,7 @@ interface RenderPiece {
 }
 
 interface ParseContext {
+  root: string;
   pieces: RenderPiece[];
   files: FileReference[];
   imports: ImportReference[];
@@ -318,7 +319,7 @@ function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string):
     }
     let result = "";
     for (const piece of context.pieces) {
-      result += piece.html = normalizePieceHtml(piece.html, root, sourcePath, context);
+      result += piece.html = normalizePieceHtml(piece.html, sourcePath, context);
     }
     return result;
   };
@@ -336,7 +337,7 @@ const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcs
   {query: "video source[src]", src: "src"}
 ]);
 
-export function normalizePieceHtml(html: string, root: string, sourcePath: string, context: ParseContext): string {
+export function normalizePieceHtml(html: string, sourcePath: string, context: ParseContext): string {
   const {document} = parseHTML(html);
 
   // Extracting references to files (such as from linked stylesheets).
@@ -369,7 +370,7 @@ export function normalizePieceHtml(html: string, root: string, sourcePath: strin
         const source = decodeURIComponent(element.getAttribute(src)!);
         const file = resolvePath(source);
         if (file) {
-          const url = file.mimeType === "text/css" ? constructStylesheetUrl(root, file) : file.path;
+          const url = file.mimeType === "text/css" ? constructStylesheetUrl(context.root, file) : file.path;
           element.setAttribute(src, url);
         }
       }
@@ -433,7 +434,7 @@ export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptio
   md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!, path);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
   md.renderer.render = renderIntoPieces(md.renderer, root, path);
-  const context: ParseContext = {files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
+  const context: ParseContext = {root, files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
   const tokens = md.parse(parts.content, context);
   const html = md.renderer.render(tokens, md.options, context); // Note: mutates context.pieces, context.files!
   return {

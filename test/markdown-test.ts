@@ -8,7 +8,7 @@ import {type ParseResult, parseMarkdown} from "../src/markdown.js";
 import {normalizePieceHtml} from "../src/markdown.js";
 
 const html = (strings, ...values) => String.raw({raw: strings}, ...values);
-const mockContext = () => ({files: [], imports: [], pieces: [], startLine: 0, currentLine: 0});
+const mockContext = () => ({root: "/", files: [], imports: [], pieces: [], startLine: 0, currentLine: 0});
 
 describe("parseMarkdown(input)", () => {
   const inputRoot = "test/input";
@@ -67,10 +67,9 @@ describe("normalizePieceHtml adds local file attachments", () => {
 
   it("img[src]", () => {
     const htmlStr = html`<img src="./test.png">`;
-    const root = "/";
     const expected = html`<img src="./_file/test.png">`;
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
@@ -92,13 +91,12 @@ describe("normalizePieceHtml adds local file attachments", () => {
           alt="Image for testing"
         />
       `;
-    const root = "/";
     const expected = html`
         <img srcset="./_file/small.jpg 480w, ./_file/large.jpg 800w" sizes="(max-width: 600px) 480px,
                 800px" src="./_file/large.jpg" alt="Image for testing">
       `;
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
@@ -119,12 +117,11 @@ describe("normalizePieceHtml adds local file attachments", () => {
     const htmlStr = html`<video src="observable.mov" controls>
       Your browser doesn't support HTML video.
       </video>`;
-    const root = "/";
     const expected = html`<video src="./_file/observable.mov" controls>
       Your browser doesn't support HTML video.
       </video>`;
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
@@ -142,7 +139,6 @@ describe("normalizePieceHtml adds local file attachments", () => {
       <source src="observable.mov" type="video/mov">
       Your browser doesn't support HTML video.
       </video>`;
-    const root = "/";
 
     const expected = html`<video width="320" height="240" controls>
       <source src="./_file/observable.mp4" type="video/mp4">
@@ -151,7 +147,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
       </video>`;
 
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
@@ -173,7 +169,6 @@ describe("normalizePieceHtml adds local file attachments", () => {
       <source srcset="observable-logo-wide.png" media="(min-width: 600px)"/>
       <img src="observable-logo-narrow.png" />
     </picture>`;
-    const root = "/";
 
     const expected = html`<picture>
       <source srcset="./_file/observable-logo-wide.png" media="(min-width: 600px)">
@@ -181,7 +176,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
     </picture>`;
 
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
@@ -204,10 +199,9 @@ describe("normalizePieceHtml only adds local files", () => {
 
   it("img[src] only adds local files", () => {
     const htmlStr = html`<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/American_Shorthair.jpg/900px-American_Shorthair.jpg">`;
-    const root = "/";
     const expected = html`<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/American_Shorthair.jpg/900px-American_Shorthair.jpg">`;
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, []);
@@ -222,12 +216,11 @@ describe("normalizePieceHtml only adds local files", () => {
           alt="Cat image for testing"
         />
       `;
-    const root = "/";
     const expected = html`
         <img srcset="./_file/small.jpg 480w, https://upload.wikimedia.org/900px-American_Shorthair.jpg 900w" sizes="(max-width: 600px) 480px, 900px" src="https://upload.wikimedia.org/900px-American_Shorthair.jpg" alt="Cat image for testing">
       `;
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
@@ -245,7 +238,6 @@ describe("normalizePieceHtml only adds local files", () => {
       <source src="observable.mov" type="video/mov">
       Your browser doesn't support HTML video.
       </video>`;
-    const root = "/";
 
     const expected = html`<video width="320" height="240" controls>
       <source src="https://www.youtube.com/watch?v=SsFyayu5csc" type="video/youtube">
@@ -254,7 +246,7 @@ describe("normalizePieceHtml only adds local files", () => {
       </video>`;
 
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
