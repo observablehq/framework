@@ -6,7 +6,7 @@ import {type Html, html} from "./html.js";
 import type {ImportResolver} from "./javascript/imports.js";
 import {createImportResolver, resolveModuleIntegrity, resolveModulePreloads} from "./javascript/imports.js";
 import type {FileReference, ImportReference, Transpile} from "./javascript.js";
-import {addImplicitStylesheets} from "./libraries.js";
+import {getImplicitStylesheets} from "./libraries.js";
 import {type ParseResult, parseMarkdown} from "./markdown.js";
 import {type PageLink, findLink, normalizePath} from "./pager.js";
 import {getPreviewStylesheet} from "./preview.js";
@@ -95,7 +95,7 @@ import ${preview || parseResult.cells.length > 0 ? `{${preview ? "open, " : ""}d
 ${
   preview ? `\nopen({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
 }${parseResult.cells.map((cell) => `\n${renderDefineCell(cell)}`).join("")}`)}
-</script>${sidebar ? html`\n${await renderSidebar(title, pages, path, search)}` : ""}${
+</script>${sidebar ? html`\n${await renderSidebar(title, pages, root, path, search)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(parseResult), toc.label)}` : ""
   }
 <div id="observablehq-center">${renderHeader(options, parseResult.data)}
@@ -105,7 +105,13 @@ ${html.unsafe(parseResult.html)}</main>${renderFooter(path, options, parseResult
 `);
 }
 
-async function renderSidebar(title = "Home", pages: (Page | Section)[], path: string, search: boolean): Promise<Html> {
+async function renderSidebar(
+  title = "Home",
+  pages: (Page | Section)[],
+  root: string,
+  path: string,
+  search: boolean
+): Promise<Html> {
   return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
@@ -122,7 +128,7 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
         )}"><input type="search" placeholder="Search"></div>
   <div id="observablehq-search-results"></div>
   <script>{${html.unsafe(
-    (await rollupClient(getClientPath("./src/client/search-init.ts"), path, {minify: true})).trim()
+    (await rollupClient(getClientPath("./src/client/search-init.ts"), root, path, {minify: true})).trim()
   )}}</script>`
       : ""
   }
@@ -147,7 +153,7 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
   </ol>
 </nav>
 <script>{${html.unsafe(
-    (await rollupClient(getClientPath("./src/client/sidebar-init.ts"), path, {minify: true})).trim()
+    (await rollupClient(getClientPath("./src/client/sidebar-init.ts"), root, path, {minify: true})).trim()
   )}}</script>`;
 }
 
@@ -208,7 +214,7 @@ async function renderHead(
   // TODO This fails to add the katex stylesheet because we have
   // npm:@observablehq/tex in specifiers but have not yet resolved the
   // transitive dependency on npm:katex.
-  await addImplicitStylesheets(stylesheets, specifiers);
+  for (const stylesheet of getImplicitStylesheets(specifiers)) stylesheets.add(await resolver(stylesheet));
   const preloads = new Set<string>([relativeUrl(path, "/_observablehq/client.js")]);
   for (const specifier of specifiers) preloads.add(await resolver(specifier));
   // TODO Transitive imports need to be resolved earlier because they’ll need to
@@ -216,6 +222,8 @@ async function renderHead(
   // imports npm:sql.js/dist/sql-wasm.js — and we need to special-case somewhere
   // that the .wasm bundle is needed too. Likewise for npm:@observablehq/duckdb.
   await resolveModulePreloads(preloads);
+  // TODO We shouldn’t need two-phase resolving for stylesheets; they should
+  // already be resolved by this point.
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
     Array.from(stylesheets)
       .sort()

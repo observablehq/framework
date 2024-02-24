@@ -49,17 +49,10 @@ export interface Config {
   search: boolean; // default to false
 }
 
-let currentConfig: Config | undefined;
-
-export function getConfig(): Config {
-  if (!currentConfig) throw new Error("config was not initialized");
-  return currentConfig;
-}
-
 export async function readConfig(configPath?: string, root?: string): Promise<Config> {
-  if (configPath === undefined) return (currentConfig = await readDefaultConfig(root));
+  if (configPath === undefined) return await readDefaultConfig(root);
   const importPath = join(process.cwd(), root ?? ".", configPath);
-  return (currentConfig = await normalizeConfig((await import(importPath)).default, root));
+  return await normalizeConfig((await import(importPath)).default, root);
 }
 
 export async function readDefaultConfig(root?: string): Promise<Config> {

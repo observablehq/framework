@@ -1,4 +1,3 @@
-import {resolveNpmImport} from "./javascript/imports.js";
 import {type FileReference} from "./javascript.js";
 
 export function getImplicitFileImports(files: Pick<FileReference, "method">[]): Set<string> {
@@ -56,7 +55,7 @@ export function addImplicitImports(imports: Set<string>, inputs: Iterable<string
   return imports;
 }
 
-export async function getImplicitStylesheets(imports: Set<string>): Promise<Set<string>> {
+export function getImplicitStylesheets(imports: Set<string>): Set<string> {
   return addImplicitStylesheets(new Set(), imports);
 }
 
@@ -67,11 +66,11 @@ export async function getImplicitStylesheets(imports: Set<string>): Promise<Set<
  * or could we simply use "npm:" imports for the stylesheet, too? TODO Support
  * versioned imports, too, such as "npm:leaflet@1".
  */
-export async function addImplicitStylesheets(stylesheets: Set<string>, imports: Set<string>): Promise<Set<string>> {
+export function addImplicitStylesheets(stylesheets: Set<string>, imports: Set<string>): Set<string> {
   if (imports.has("npm:@observablehq/inputs")) stylesheets.add("observablehq:stdlib/inputs.css");
-  if (imports.has("npm:katex")) stylesheets.add(await resolveNpmImport("katex/dist/katex.min.css"));
-  if (imports.has("npm:leaflet")) stylesheets.add(await resolveNpmImport("leaflet/dist/leaflet.css"));
-  if (imports.has("npm:mapbox-gl")) stylesheets.add(await resolveNpmImport("mapbox-gl/dist/mapbox-gl.css"));
+  if (imports.has("npm:katex")) stylesheets.add("npm:katex/dist/katex.min.css");
+  if (imports.has("npm:leaflet")) stylesheets.add("npm:leaflet/dist/leaflet.css");
+  if (imports.has("npm:mapbox-gl")) stylesheets.add("npm:mapbox-gl/dist/mapbox-gl.css");
   return stylesheets;
 }
 

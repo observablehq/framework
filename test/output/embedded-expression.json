@@ -3,9 +3,6 @@
   "title": "Embedded expression",
   "files": [],
   "imports": [],
-  "inputs": [
-    "display"
-  ],
   "pieces": [
     {
       "type": "html",

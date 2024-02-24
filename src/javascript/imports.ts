@@ -7,14 +7,16 @@ import type {Node, Program} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {gt, satisfies} from "semver";
-import {getConfig} from "../config.js";
 import {isEnoent} from "../error.js";
 import type {ImportReference, JavaScriptNode} from "../javascript.js";
 import {parseOptions} from "../javascript.js";
+import {getImplicitFileImports, getImplicitImports} from "../libraries.js";
+import type {CellPiece, ParseResult} from "../markdown.js";
 import {Sourcemap} from "../sourcemap.js";
 import {faint} from "../tty.js";
 import {relativeUrl, resolvePath} from "../url.js";
 import {type FileExpression, findFileAttachments} from "./files.js";
+import {defaultGlobals} from "./globals.js";
 import {type StringLiteral, getStringLiteralValue, isStringLiteral} from "./node.js";
 
 type ImportNode = ImportDeclaration | ImportExpression;
@@ -57,52 +59,6 @@ export function hasImportDeclaration(body: Node): boolean {
 
   return has;
 }
-
-/**
- * Finds all statically-analyzable import declarations and expressions in the
- * specified node.
- */
-// export function findImports(body: Node): ImportNode[] {
-//   const imports: ImportNode[] = [];
-//
-//   simple(body, {
-//     ImportDeclaration: findImport,
-//     ImportExpression: findImport
-//   });
-//
-//   function findImport(node: ImportNode) {
-//     if (isStringLiteral(node.source)) {
-//       imports.push(node);
-//     }
-//   }
-//
-//   return imports;
-// }
-
-/**
- * Finds all import and export nodes with statically-declared sources in the
- * specified node. (Note that this is includes everything in findImports, but
- * not everything in findExports because that also includes exports that are
- * defined in the current module.)
- */
-// export function findImportExports(body: Node): (ImportNode | ExportNode)[] {
-//   const imports: (ImportNode | ExportNode)[] = [];
-//
-//   simple(body, {
-//     ImportDeclaration: findImportExport,
-//     ImportExpression: findImportExport,
-//     ExportAllDeclaration: findImportExport,
-//     ExportNamedDeclaration: findImportExport
-//   });
-//
-//   function findImportExport(node: ImportNode | ExportNode) {
-//     if (isStringLiteral(node.source)) {
-//       imports.push(node);
-//     }
-//   }
-//
-//   return imports;
-// }
 
 /**
  * Finds all imports (both static and dynamic) with statically-analyzable
@@ -322,7 +278,7 @@ export function createImportResolver(root: string, path: string, sourcePath = pa
       : specifier === "npm:@observablehq/zip"
       ? relativeUrl(path, "_observablehq/stdlib/zip.js") // TODO publish to npm
       : specifier.startsWith("npm:")
-      ? relativeUrl(path, await resolveNpmImport(specifier.slice("npm:".length)))
+      ? relativeUrl(path, await resolveNpmImport(root, specifier.slice("npm:".length)))
       : specifier;
   };
 }
@@ -442,8 +398,7 @@ export function populateNpmCache(cacheDir: string, path: string): Promise<void> 
   return promise;
 }
 
-export async function findCachedNpmVersion(specifier: NpmSpecifier): Promise<string | undefined> {
-  const {root} = getConfig();
+export async function findCachedNpmVersion(root: string, specifier: NpmSpecifier): Promise<string | undefined> {
   let dir = join(root, ".observablehq", "cache", "_npm");
   let latestVersion: string | undefined;
   if (specifier.name.startsWith("@")) {
@@ -471,10 +426,10 @@ function maybeSatisfyingVersion(entry: string, specifier: NpmSpecifier): string 
   if (range && name === specifier.name && (!specifier.range || satisfies(range, specifier.range))) return range;
 }
 
-async function resolveNpmVersion(specifier: NpmSpecifier): Promise<string> {
+async function resolveNpmVersion(root: string, specifier: NpmSpecifier): Promise<string> {
   const {name, range} = specifier;
   if (range && /^\d+\.\d+\.\d+([-+].*)?$/.test(range)) return range; // exact version specified
-  const cachedVersion = await findCachedNpmVersion(specifier);
+  const cachedVersion = await findCachedNpmVersion(root, specifier);
   if (cachedVersion) return cachedVersion;
   const search = range ? `?specifier=${range}` : "";
   const {version} = (await cachedFetch(`https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`)).body;
@@ -482,17 +437,53 @@ async function resolveNpmVersion(specifier: NpmSpecifier): Promise<string> {
   return version;
 }
 
-export async function resolveNpmImport(specifier: string): Promise<string> {
+export async function resolveNpmImport(root: string, specifier: string): Promise<string> {
   let {name, range, path = "+esm"} = parseNpmSpecifier(specifier); // eslint-disable-line prefer-const
   if (name === "@duckdb/duckdb-wasm" && !range) range = "1.28.0"; // https://github.com/duckdb/duckdb-wasm/issues/1561
   if (name === "apache-arrow" && !range) range = "13.0.0"; // https://github.com/observablehq/framework/issues/750
   if (name === "parquet-wasm" && !range) range = "0.5.0"; // https://github.com/observablehq/framework/issues/733
   if (name === "echarts" && !range) range = "5.4.3"; // https://github.com/observablehq/framework/pull/811
   try {
-    return `/_npm/${name}@${await resolveNpmVersion({name, range})}/${path.replace(/\+esm$/, "+esm.js")}`;
+    return `/_npm/${name}@${await resolveNpmVersion(root, {name, range})}/${path.replace(/\+esm$/, "+esm.js")}`;
   } catch {
     return `https://cdn.jsdelivr.net/npm/${name}${range ? `@${range}` : ""}/${path}`;
   }
+}
+
+export async function resolveGlobalImports(parse: ParseResult, root: string, path: string): Promise<Set<string>> {
+  const inputs = findUnboundInputs(parse.cells);
+  const specifiers = new Set<string>(["npm:@observablehq/runtime", "npm:@observablehq/stdlib"]);
+  for (const i of parse.imports) if (i.type === "global") specifiers.add(i.name);
+  for (const name of getImplicitImports(inputs)) specifiers.add(name);
+  for (const name of getImplicitFileImports(parse.files)) specifiers.add(name);
+  const imports = new Set<string>();
+  const resolver = createImportResolver(root, path);
+  for (const s of specifiers) imports.add(await resolver(s));
+  return imports;
+}
+
+// Returns any inputs that are not declared in outputs. These typically refer to
+// symbols provided by the standard library, such as d3 and Inputs.
+export function findUnboundInputs(cells: CellPiece[]): string[] {
+  const outputs = new Set<string>(defaultGlobals).add("display").add("view").add("visibility").add("invalidation");
+  const inputs = new Set<string>();
+  for (const cell of cells) {
+    if (cell.outputs) {
+      for (const output of cell.outputs) {
+        outputs.add(output);
+      }
+    }
+  }
+  for (const cell of cells) {
+    if (cell.inputs) {
+      for (const input of cell.inputs) {
+        if (!outputs.has(input)) {
+          inputs.add(input);
+        }
+      }
+    }
+  }
+  return Array.from(inputs);
 }
 
 const preloadCache = new Map<string, Promise<Set<string> | undefined>>();

@@ -18,7 +18,6 @@ import {parseInfo} from "./info.js";
 import {resolveFileReference} from "./javascript/files.js";
 import type {FileReference, ImportReference, PendingTranspile, Transpile} from "./javascript.js";
 import {transpileJavaScript} from "./javascript.js";
-import {getImplicitFileImports, getImplicitImports} from "./libraries.js";
 import {transpileTag} from "./tag.js";
 import {resolvePath} from "./url.js";
 
@@ -27,7 +26,6 @@ export interface HtmlPiece {
   id: string; // TODO remove this?
   html: string;
   cellIds?: string[];
-  // TODO files?: FileReference[]; for static file references
 }
 
 export interface CellPiece extends Transpile {
@@ -42,7 +40,6 @@ export interface ParseResult {
   data: {[key: string]: any} | null;
   files: FileReference[];
   imports: ImportReference[];
-  inputs: string[];
   pieces: HtmlPiece[];
   cells: CellPiece[];
   hash: string;
@@ -116,7 +113,6 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
       const sourceLine = context.startLine + context.currentLine;
       const transpile = transpileJavaScript(source, {id, root, sourcePath, sourceLine});
       extendPiece(context, {code: [transpile]});
-      // TODO don’t collect these here
       if (transpile.files) context.files.push(...transpile.files);
       if (transpile.imports) context.imports.push(...transpile.imports);
       result += `<div id="cell-${id}" class="observablehq observablehq--block${
@@ -275,7 +271,6 @@ function makePlaceholderRenderer(root: string, sourcePath: string): RenderRule {
       sourceLine: context.startLine + context.currentLine
     });
     extendPiece(context, {code: [transpile]});
-    // TODO don’t collect these here
     if (transpile.files) context.files.push(...transpile.files);
     if (transpile.imports) context.imports.push(...transpile.imports);
     return `<span id="cell-${id}" class="observablehq--loading"></span>`;
@@ -318,7 +313,6 @@ function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string):
     }
     let result = "";
     for (const piece of context.pieces) {
-      // TODO store piece.files here
       result += piece.html = normalizePieceHtml(piece.html, sourcePath, context);
     }
     return result;
@@ -339,20 +333,20 @@ const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcs
 
 export function normalizePieceHtml(html: string, sourcePath: string, context: ParseContext): string {
   const {document} = parseHTML(html);
+  const filePaths = new Set<FileReference["path"]>();
 
   // Extracting references to files (such as from linked stylesheets).
-  const filePaths = new Set<FileReference["path"]>();
   const resolvePath = (source: string): FileReference | undefined => {
     const path = getLocalPath(sourcePath, source);
     if (!path) return;
     const file = resolveFileReference({path, mimeType: mime.getType(path)}, sourcePath);
     if (!filePaths.has(file.path)) {
       filePaths.add(file.path);
-      // TODO accumulate and return files for this piece
       context.files.push(file);
     }
     return file;
   };
+
   for (const {query, src} of SUPPORTED_PROPERTIES) {
     for (const element of document.querySelectorAll(query)) {
       if (src === "srcset") {
@@ -421,6 +415,7 @@ export interface ParseOptions {
   path: string;
 }
 
+// TODO This isn’t “parsing” — it’s transpiling.
 export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptions): Promise<ParseResult> {
   const source = await readFile(sourcePath, "utf-8");
   const parts = matter(source, {});
@@ -436,50 +431,16 @@ export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptio
   const tokens = md.parse(parts.content, context);
   const html = md.renderer.render(tokens, md.options, context); // Note: mutates context.pieces, context.files!
   const cells = await toParseCells(context.pieces);
-  const inputs = findUnboundInputs(cells);
-  const imports = context.imports; // TODO Set
-  for (const name of getImplicitImports(inputs)) imports.push({type: "global", name});
-  for (const name of getImplicitFileImports(context.files)) imports.push({type: "global", name});
-  // TODO Instead of collecting imports and files up to the top level, we should
-  // leave them attached to their separate pieces, and move the resolution
-  // somewhere else. Or we should do all of the import resolution here…
-  // Currently we do about half of the work here which is splitting the
-  // difference.
   return {
     html,
     data: isEmpty(parts.data) ? null : parts.data,
     title: parts.data?.title ?? findTitle(tokens) ?? null,
     files: context.files,
-    imports,
-    inputs,
+    imports: context.imports,
     pieces: toParsePieces(context.pieces),
     cells,
     hash: await computeMarkdownHash(source, root, path, context.imports)
   };
-}
-
-// Returns any inputs that are not declared in outputs. These typically refer to
-// symbols provided by the standard library, such as d3 and Inputs.
-function findUnboundInputs(cells: CellPiece[]): string[] {
-  const outputs = new Set<string>();
-  const inputs = new Set<string>();
-  for (const cell of cells) {
-    if (cell.outputs) {
-      for (const output of cell.outputs) {
-        outputs.add(output);
-      }
-    }
-  }
-  for (const cell of cells) {
-    if (cell.inputs) {
-      for (const input of cell.inputs) {
-        if (!outputs.has(input)) {
-          inputs.add(input);
-        }
-      }
-    }
-  }
-  return Array.from(inputs);
 }
 
 async function computeMarkdownHash(

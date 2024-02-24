@@ -36,13 +36,13 @@ export async function bundleStyles({path, theme}: {path?: string; theme?: string
   return rewriteInputsNamespace(text); // TODO only for inputs
 }
 
-export async function rollupClient(input: string, path: string, {minify = false} = {}): Promise<string> {
+export async function rollupClient(input: string, root: string, path: string, {minify = false} = {}): Promise<string> {
   const bundle = await rollup({
     input,
     external: [/^https:/],
     plugins: [
       nodeResolve({resolveOnly: BUNDLED_MODULES}),
-      importResolve(input, path),
+      importResolve(input, root, path),
       esbuild({
         target: "es2022",
         exclude: [], // don’t exclude node_modules
@@ -51,7 +51,7 @@ export async function rollupClient(input: string, path: string, {minify = false}
           "process.env.OBSERVABLE_ORIGIN": JSON.stringify(String(getObservableUiOrigin()).replace(/\/$/, ""))
         }
       }),
-      importMetaResolve(path)
+      importMetaResolve(root, path)
     ]
   });
   try {
@@ -77,7 +77,7 @@ function rewriteTypeScriptImports(code: string): string {
 }
 
 // TODO Consolidate with createImportResolver.
-function importResolve(input: string, path: string): Plugin {
+function importResolve(input: string, root: string, path: string): Plugin {
   async function resolve(specifier: string | AstNode): Promise<ResolveIdResult> {
     return typeof specifier !== "string" || specifier === input
       ? null
@@ -104,9 +104,9 @@ function importResolve(input: string, path: string): Plugin {
       : specifier === "npm:@observablehq/zip"
       ? {id: relativeUrl(path, "/_observablehq/stdlib/zip.js"), external: true} // TODO publish to npm
       : specifier.startsWith("npm:")
-      ? {id: relativeUrl(path, await resolveNpmImport(specifier.slice("npm:".length))), external: true}
+      ? {id: relativeUrl(path, await resolveNpmImport(root, specifier.slice("npm:".length))), external: true}
       : !isPathImport(specifier) && !BUNDLED_MODULES.includes(specifier)
-      ? {id: relativeUrl(path, await resolveNpmImport(specifier)), external: true}
+      ? {id: relativeUrl(path, await resolveNpmImport(root, specifier)), external: true}
       : null;
   }
   return {
@@ -116,7 +116,7 @@ function importResolve(input: string, path: string): Plugin {
   };
 }
 
-function importMetaResolve(path: string): Plugin {
+function importMetaResolve(root: string, path: string): Plugin {
   return {
     name: "resolve-import-meta-resolve",
     async transform(code) {
@@ -145,7 +145,7 @@ function importMetaResolve(path: string): Plugin {
         const source = node.arguments[0];
         const specifier = getStringLiteralValue(source as StringLiteral);
         if (specifier.startsWith("npm:")) {
-          const resolution = relativeUrl(path, await resolveNpmImport(specifier.slice("npm:".length)));
+          const resolution = relativeUrl(path, await resolveNpmImport(root, specifier.slice("npm:".length)));
           output.replaceLeft(source.start, source.end, JSON.stringify(resolution));
         }
       }

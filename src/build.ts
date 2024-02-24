@@ -115,7 +115,7 @@ export async function build(
       effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
       const code = await (entry.endsWith(".css")
         ? bundleStyles({path: clientPath})
-        : rollupClient(clientPath, outputPath, {minify: true}));
+        : rollupClient(clientPath, root, outputPath, {minify: true}));
       await effects.writeFile(outputPath, code);
     }
     if (config.search) {
@@ -165,7 +165,7 @@ export async function build(
   const npmImports = new Set<string>();
   for (const specifier of addImplicitDownloads(globalImports)) {
     if (specifier.startsWith("npm:")) {
-      const path = await resolveNpmImport(specifier.slice("npm:".length));
+      const path = await resolveNpmImport(root, specifier.slice("npm:".length));
       if (path.startsWith("/_npm/")) npmImports.add(path);
     }
   }

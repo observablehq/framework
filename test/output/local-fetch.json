@@ -9,10 +9,6 @@
     }
   ],
   "imports": [],
-  "inputs": [
-    "FileAttachment",
-    "display"
-  ],
   "pieces": [
     {
       "type": "html",

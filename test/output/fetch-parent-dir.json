@@ -16,9 +16,6 @@
     }
   ],
   "imports": [],
-  "inputs": [
-    "FileAttachment"
-  ],
   "pieces": [
     {
       "type": "html",
