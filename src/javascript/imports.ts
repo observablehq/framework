@@ -1,4 +1,4 @@
-import {createHash} from "node:crypto";
+import {Hash, createHash} from "node:crypto";
 import {existsSync, readFileSync} from "node:fs";
 import {mkdir, readdir, writeFile} from "node:fs/promises";
 import {dirname, join} from "node:path";
@@ -9,20 +9,20 @@ import {simple} from "acorn-walk";
 import {gt, satisfies} from "semver";
 import {getConfig} from "../config.js";
 import {isEnoent} from "../error.js";
-import {type Feature, type ImportReference, type JavaScriptNode} from "../javascript.js";
+import type {ImportReference, JavaScriptNode} from "../javascript.js";
 import {parseOptions} from "../javascript.js";
 import {Sourcemap} from "../sourcemap.js";
 import {faint} from "../tty.js";
 import {relativeUrl, resolvePath} from "../url.js";
-import {findFileAttachments} from "./files.js";
+import {type FileExpression, findFileAttachments} from "./files.js";
 import {type StringLiteral, getStringLiteralValue, isStringLiteral} from "./node.js";
 
 type ImportNode = ImportDeclaration | ImportExpression;
 type ExportNode = ExportAllDeclaration | ExportNamedDeclaration;
 
-export interface ImportsAndFeatures {
+interface ImportsAndFiles {
   imports: ImportReference[];
-  features: Feature[];
+  files: FileExpression[];
 }
 
 /**
@@ -110,14 +110,9 @@ export function hasImportDeclaration(body: Node): boolean {
  * processes any imported local ES modules. The returned transitive import paths
  * are relative to the given source path.
  */
-export function findImportsAndFeaturesRecursive(
-  body: Node,
-  root: string,
-  path: string,
-  input: string
-): ImportsAndFeatures {
+export function findImportsAndFilesRecursive(body: Node, root: string, path: string, input: string): ImportsAndFiles {
   const imports: ImportReference[] = [];
-  const features: Feature[] = [];
+  const files: FileExpression[] = [];
   const paths: string[] = [];
 
   simple(body, {
@@ -138,13 +133,13 @@ export function findImportsAndFeaturesRecursive(
 
   // Find any file attachments (calling the implicit built-in FileAttachment).
   for (const file of findFileAttachments(body, path, input, ["FileAttachment"])) {
-    features.push({type: "FileAttachment", method: file.method, name: file.path});
+    files.push(file);
   }
 
   // Recursively process any imported local ES modules.
   const transitive = parseLocalImports(root, paths);
   imports.push(...transitive.imports);
-  features.push(...transitive.features);
+  files.push(...transitive.files);
 
   // Make all local paths relative to the source path.
   for (const i of imports) {
@@ -153,7 +148,7 @@ export function findImportsAndFeaturesRecursive(
     }
   }
 
-  return {imports, features};
+  return {imports, files};
 }
 
 /**
@@ -162,9 +157,9 @@ export function findImportsAndFeaturesRecursive(
  * appends to imports. The paths here are always relative to the root (unlike
  * findImports above!).
  */
-export function parseLocalImports(root: string, paths: string[]): ImportsAndFeatures {
+export function parseLocalImports(root: string, paths: string[]): ImportsAndFiles {
   const imports: ImportReference[] = [];
-  const features: Feature[] = [];
+  const files: FileExpression[] = [];
   const set = new Set(paths);
 
   for (const path of set) {
@@ -186,7 +181,7 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFeat
       );
 
       for (const file of findFileAttachments(body, path, input)) {
-        features.push({type: "FileAttachment", method: file.method, name: file.path});
+        files.push(file);
       }
     } catch (error) {
       if (!isEnoent(error) && !(error instanceof SyntaxError)) throw error;
@@ -205,7 +200,7 @@ export function parseLocalImports(root: string, paths: string[]): ImportsAndFeat
     }
   }
 
-  return {imports, features};
+  return {imports, files};
 }
 
 /** Rewrites import specifiers and FileAttachment calls in the specified ES module source. */
@@ -615,24 +610,20 @@ function resolveImportHash(root: string, path: string, specifier: string): strin
  */
 function getModuleHash(root: string, path: string): string {
   const hash = createHash("sha256");
+  maybeHash(hash, root, path);
+  // TODO can’t simply concatenate here; we need a delimiter
+  const {imports, files} = parseLocalImports(root, [path]);
+  for (const i of imports) if (i.type === "local") maybeHash(hash, root, i.name);
+  for (const f of files) maybeHash(hash, root, f.path);
+  return hash.digest("hex");
+}
+
+function maybeHash(hash: Hash, root: string, path: string): void {
   try {
     hash.update(readFileSync(join(root, path), "utf-8"));
   } catch (error) {
     if (!isEnoent(error)) throw error;
   }
-  // TODO can’t simply concatenate here; we need a delimiter
-  const {imports, features} = parseLocalImports(root, [path]);
-  for (const i of [...imports, ...features]) {
-    if (i.type === "local" || i.type === "FileAttachment") {
-      try {
-        hash.update(readFileSync(join(root, i.name), "utf-8"));
-      } catch (error) {
-        if (!isEnoent(error)) throw error;
-        continue;
-      }
-    }
-  }
-  return hash.digest("hex");
 }
 
 function rewriteImportSpecifier(node) {

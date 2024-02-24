@@ -1,10 +1,11 @@
 import {Parser, tokTypes} from "acorn";
 import type {Expression, Identifier, Node, Options, Program} from "acorn";
-import {fileReference} from "./files.js";
 import {checkAssignments} from "./javascript/assignments.js";
 import {findAwaits} from "./javascript/awaits.js";
 import {findDeclarations} from "./javascript/declarations.js";
-import {findExports, findImportsAndFeaturesRecursive, hasImportDeclaration} from "./javascript/imports.js";
+import type {FileExpression} from "./javascript/files.js";
+import {resolveFileReference} from "./javascript/files.js";
+import {findExports, findImportsAndFilesRecursive, hasImportDeclaration} from "./javascript/imports.js";
 import {createImportResolver, rewriteImports} from "./javascript/imports.js";
 import {findReferences} from "./javascript/references.js";
 import {syntaxError} from "./javascript/syntaxError.js";
@@ -25,13 +26,6 @@ export interface FileReference {
 export interface ImportReference {
   name: string;
   type: "global" | "local";
-}
-
-// TODO Rename to FileReference; rename FileReference to FileResolution
-export interface Feature {
-  type: "FileAttachment";
-  name: string;
-  method?: string;
 }
 
 export interface BaseTranspile {
@@ -66,7 +60,6 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
   const {id, root, sourcePath, verbose = true} = options;
   try {
     const node = parseJavaScript(input, options);
-    const files = node.features.filter((f) => f.type === "FileAttachment").map((f) => fileReference(f, sourcePath));
     const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
     const implicitDisplay = node.expression && !inputs.includes("display") && !inputs.includes("view");
     if (implicitDisplay) inputs.push("display"), (node.async = true);
@@ -77,7 +70,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
       ...(inputs.length ? {inputs} : null),
       ...(options.inline ? {inline: true} : null),
       ...(node.declarations?.length ? {outputs: node.declarations.map(({name}) => name)} : null),
-      ...(files.length ? {files} : null),
+      ...(node.files.length ? {files: node.files.map((f) => resolveFileReference(f, sourcePath))} : null),
       body: async () => {
         const output = new Sourcemap(input);
         output.trim();
@@ -124,7 +117,7 @@ export interface JavaScriptNode {
   body: Node;
   declarations: Identifier[] | null; // null for expressions that can’t declare top-level variables, a.k.a outputs
   references: Identifier[]; // the unbound references, a.k.a. inputs
-  features: Feature[];
+  files: FileExpression[];
   imports: ImportReference[];
   expression: boolean; // is this an expression or a program cell?
   async: boolean; // does this use top-level await?
@@ -143,12 +136,12 @@ function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
   const references = findReferences(body);
   checkAssignments(body, references, input);
   const declarations = expression ? null : findDeclarations(body as Program, input);
-  const {imports, features} = findImportsAndFeaturesRecursive(body, root, sourcePath, input);
+  const {imports, files} = findImportsAndFilesRecursive(body, root, sourcePath, input);
   return {
     body,
     declarations,
     references,
-    features,
+    files,
     imports,
     expression: !!expression,
     async: findAwaits(body).length > 0

@@ -3,10 +3,8 @@ import {mkdir, readdir, stat} from "node:fs/promises";
 import {dirname, extname, join, normalize, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
-import mime from "mime";
 import {isEnoent} from "./error.js";
-import type {FileReference} from "./javascript.js";
-import {relativeUrl, resolvePath} from "./url.js";
+import {resolvePath} from "./url.js";
 
 // A path is local if it doesn’t go outside the the root.
 export function getLocalPath(sourcePath: string, name: string): string | null {
@@ -24,17 +22,6 @@ export function getClientPath(entry: string): string {
     if (existsSync(tspath)) return tspath;
   }
   return path;
-}
-
-// TODO Rename to resolveFileReference? return FileResolution?
-export function fileReference({name, method}: {name: string; method?: string}, sourcePath: string): FileReference {
-  const reference: FileReference = {
-    name: relativeUrl(sourcePath, name),
-    mimeType: mime.getType(name),
-    path: relativeUrl(sourcePath, join("_file", name))
-  };
-  if (method) reference.method = method;
-  return reference;
 }
 
 export async function* visitMarkdownFiles(root: string): AsyncGenerator<string> {

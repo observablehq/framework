@@ -1,7 +1,10 @@
-import {extname} from "node:path";
+import {extname, join} from "node:path";
 import type {CallExpression, Node} from "acorn";
 import {ancestor, simple} from "acorn-walk";
+import mime from "mime";
 import {getLocalPath} from "../files.js";
+import type {FileReference} from "../javascript.js";
+import {relativeUrl} from "../url.js";
 import {defaultGlobals} from "./globals.js";
 import {getStringLiteralValue, isMemberExpression, isStringLiteral} from "./node.js";
 import {findReferences} from "./references.js";
@@ -9,8 +12,8 @@ import {syntaxError} from "./syntaxError.js";
 
 export type FileExpression = {
   node: CallExpression;
-  name: string; // e.g., "foo.csv"
-  path: string; // TODO the path to the file relative to the source root
+  path: string; // the path to the file relative to the source root
+  mimeType: string | null; // e.g., "text/csv"
   method?: string; // e.g., "arrow" or "csv"
 };
 
@@ -103,9 +106,21 @@ export function findFileAttachments(
         parent && isMemberExpression(parent) && parent.property.type === "Identifier"
           ? parent.property.name // FileAttachment("foo.csv").csv
           : KNOWN_FILE_EXTENSIONS[extname(fileName)]; // bare FileAttachment("foo.csv")
-      files.push({node, name: fileName, path: filePath, method: fileMethod});
+      files.push({node, path: filePath, mimeType: mime.getType(fileName), method: fileMethod});
     }
   });
 
   return files;
+}
+
+export function resolveFileReference(
+  {path, mimeType, method}: Omit<FileExpression, "node">,
+  sourcePath: string
+): FileReference {
+  return {
+    name: relativeUrl(sourcePath, path),
+    mimeType,
+    path: relativeUrl(sourcePath, join("_file", path)),
+    ...(method && {method})
+  };
 }

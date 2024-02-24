@@ -10,10 +10,12 @@ import {type RuleCore} from "markdown-it/lib/parser_core.js";
 import {type RuleInline} from "markdown-it/lib/parser_inline.js";
 import {type RenderRule, type default as Renderer} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
+import mime from "mime";
 import {isEnoent} from "./error.js";
-import {fileReference, getLocalPath} from "./files.js";
+import {getLocalPath} from "./files.js";
 import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
+import {resolveFileReference} from "./javascript/files.js";
 import type {FileReference, ImportReference, PendingTranspile, Transpile} from "./javascript.js";
 import {transpileJavaScript} from "./javascript.js";
 import {getImplicitFileImports, getImplicitImports} from "./libraries.js";
@@ -343,7 +345,7 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
   const resolvePath = (source: string): FileReference | undefined => {
     const path = getLocalPath(sourcePath, source);
     if (!path) return;
-    const file = fileReference({name: path}, sourcePath);
+    const file = resolveFileReference({path, mimeType: mime.getType(path)}, sourcePath);
     if (!filePaths.has(file.path)) {
       filePaths.add(file.path);
       // TODO accumulate and return files for this piece

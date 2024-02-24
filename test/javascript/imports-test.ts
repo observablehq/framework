@@ -1,10 +1,8 @@
 import assert from "node:assert";
 import type {Program} from "acorn";
 import {Parser} from "acorn";
-import {ascending} from "d3-array";
 import {findExports, hasImportDeclaration} from "../../src/javascript/imports.js";
 import {parseLocalImports, rewriteModule, rewriteNpmImports} from "../../src/javascript/imports.js";
-import type {Feature, ImportReference} from "../../src/javascript.js";
 
 describe("findExports(body)", () => {
   it("finds export all declarations", () => {
@@ -79,48 +77,51 @@ describe("rewriteNpmImports(input, path)", () => {
 
 describe("parseLocalImports(root, paths)", () => {
   it("finds all local imports in one file", () => {
-    assert.deepStrictEqual(parseLocalImports("test/input/build/imports", ["foo/foo.js"]).imports.sort(order), [
+    assert.deepStrictEqual(parseLocalImports("test/input/build/imports", ["foo/foo.js"]).imports, [
+      {name: "foo/foo.js", type: "local"},
       {name: "npm:d3", type: "global"},
       {name: "bar/bar.js", type: "local"},
-      {name: "bar/baz.js", type: "local"},
-      {name: "foo/foo.js", type: "local"},
-      {name: "top.js", type: "local"}
+      {name: "top.js", type: "local"},
+      {name: "bar/baz.js", type: "local"}
     ]);
   });
   it("finds all local imports in multiple files", () => {
     assert.deepStrictEqual(
-      parseLocalImports("test/input/imports", ["transitive-static-import.js", "dynamic-import.js"]).imports.sort(order),
+      parseLocalImports("test/input/imports", ["transitive-static-import.js", "dynamic-import.js"]).imports,
       [
-        {name: "bar.js", type: "local"},
+        {name: "transitive-static-import.js", type: "local"},
         {name: "dynamic-import.js", type: "local"},
         {name: "other/foo.js", type: "local"},
-        {name: "transitive-static-import.js", type: "local"}
+        {name: "bar.js", type: "local"}
       ]
     );
   });
   it("ignores missing files", () => {
+    assert.deepStrictEqual(parseLocalImports("test/input/imports", ["static-import.js", "does-not-exist.js"]).imports, [
+      {name: "static-import.js", type: "local"},
+      {name: "does-not-exist.js", type: "local"},
+      {name: "bar.js", type: "local"}
+    ]);
+  });
+  it("find all local fetches in one file", () => {
     assert.deepStrictEqual(
-      parseLocalImports("test/input/imports", ["static-import.js", "does-not-exist.js"]).imports.sort(order),
+      parseLocalImports("test/input/build/fetches", ["foo/foo.js"]).files.map(({node, ...f}) => f),
       [
-        {name: "bar.js", type: "local"},
-        {name: "does-not-exist.js", type: "local"},
-        {name: "static-import.js", type: "local"}
+        {path: "foo/foo-data.json", mimeType: "application/json", method: "json"},
+        {path: "foo/foo-data.csv", mimeType: "text/csv", method: "text"}
       ]
     );
   });
-  it("find all local fetches in one file", () => {
-    assert.deepStrictEqual(parseLocalImports("test/input/build/fetches", ["foo/foo.js"]).features.sort(order), [
-      {name: "foo/foo-data.csv", method: "text", type: "FileAttachment"},
-      {name: "foo/foo-data.json", method: "json", type: "FileAttachment"}
-    ]);
-  });
   it("find all local fetches via transitive import", () => {
-    assert.deepStrictEqual(parseLocalImports("test/input/build/fetches", ["top.js"]).features.sort(order), [
-      {name: "foo/foo-data.csv", method: "text", type: "FileAttachment"},
-      {name: "foo/foo-data.json", method: "json", type: "FileAttachment"},
-      {name: "top-data.csv", method: "text", type: "FileAttachment"},
-      {name: "top-data.json", method: "json", type: "FileAttachment"}
-    ]);
+    assert.deepStrictEqual(
+      parseLocalImports("test/input/build/fetches", ["top.js"]).files.map(({node, ...f}) => f),
+      [
+        {path: "top-data.json", mimeType: "application/json", method: "json"},
+        {path: "top-data.csv", mimeType: "text/csv", method: "text"},
+        {path: "foo/foo-data.json", mimeType: "application/json", method: "json"},
+        {path: "foo/foo-data.csv", mimeType: "text/csv", method: "text"}
+      ]
+    );
   });
 });
 
@@ -219,8 +220,4 @@ describe("rewriteModule(input, path, resolver)", () => {
 
 function parse(input: string): Program {
   return Parser.parse(input, {ecmaVersion: 13, sourceType: "module"});
-}
-
-function order(a: ImportReference | Feature, b: ImportReference | Feature): number {
-  return ascending(a.type, b.type) || ascending(a.name, b.name);
 }
