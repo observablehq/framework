@@ -1,4 +1,4 @@
-import {Hash, createHash} from "node:crypto";
+import {type Hash, createHash} from "node:crypto";
 import {existsSync, readFileSync} from "node:fs";
 import {mkdir, readdir, writeFile} from "node:fs/promises";
 import {dirname, join} from "node:path";
