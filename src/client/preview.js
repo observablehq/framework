@@ -96,6 +96,11 @@ export function open({hash, eval: compile} = {}) {
         enableCopyButtons();
         break;
       }
+      case "update-image": {
+        const image = document.querySelector(`img[src^="${message.path}"]`);
+        image.src = message.src;
+        break;
+      }
       case "add-stylesheet": {
         const link = document.createElement("link");
         link.rel = "stylesheet";

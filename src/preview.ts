@@ -19,7 +19,7 @@ import {getClientPath} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import {getImplicitSpecifiers, getImplicitStylesheets} from "./libraries.js";
-import {constructStylesheetUrl, diffMarkdown, parseMarkdown} from "./markdown.js";
+import {constructAttachmentUrl, diffMarkdown, parseMarkdown} from "./markdown.js";
 import type {ParseResult} from "./markdown.js";
 import {renderPreview, resolveStylesheet} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
@@ -317,14 +317,23 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
       }
     }
 
+    const image = files.find(({mimeType, name: imageName}) => mimeType?.startsWith("image/") && imageName === name);
+    if (image) {
+      send({
+        type: "update-image",
+        src: constructAttachmentUrl(root, image),
+        path: image.path
+      });
+      return;
+    }
+
     const stylesheet = files.find(
       ({mimeType, name: stylesheetName}) => mimeType === "text/css" && stylesheetName === name
     );
-
     if (stylesheet) {
       send({
         type: "update-stylesheet",
-        href: constructStylesheetUrl(root, stylesheet),
+        href: constructAttachmentUrl(root, stylesheet),
         path: stylesheet.path
       });
     }

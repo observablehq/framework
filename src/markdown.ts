@@ -370,7 +370,10 @@ export function normalizePieceHtml(html: string, sourcePath: string, context: Pa
         const source = decodeURIComponent(element.getAttribute(src)!);
         const file = resolvePath(source);
         if (file) {
-          const url = file.mimeType === "text/css" ? constructStylesheetUrl(context.root, file) : file.path;
+          const url =
+            file.mimeType === "text/css" || file.mimeType?.startsWith("image/")
+              ? constructAttachmentUrl(context.root, file)
+              : file.path;
           element.setAttribute(src, url);
         }
       }
@@ -470,7 +473,7 @@ async function computeMarkdownHash(
   return hash.digest("hex");
 }
 
-export function constructStylesheetUrl(root, file) {
+export function constructAttachmentUrl(root, file) {
   let url = file.path;
   try {
     // use readFileSync as it is called from a context that does not permit async
