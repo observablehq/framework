@@ -2,7 +2,7 @@ import assert from "node:assert";
 import {join} from "node:path";
 import type {Program} from "acorn";
 import {Parser} from "acorn";
-import {findExports, hasImportDeclaration, resolveGlobalImports} from "../../src/javascript/imports.js";
+import {findExports, getGlobalImports, hasImportDeclaration} from "../../src/javascript/imports.js";
 import {parseLocalImports, rewriteModule, rewriteNpmImports} from "../../src/javascript/imports.js";
 import {parseMarkdown} from "../../src/markdown.js";
 import {mockJsDelivr} from "../mocks/jsdelivr.js";
@@ -31,21 +31,22 @@ describe("hasImportDeclaration(body)", () => {
   });
 });
 
-describe("resolveGlobalImports(parse, root, path)", () => {
+describe("getGlobalImports(parse)", () => {
   mockJsDelivr();
   it("resolves global imports", async () => {
     const root = "test/input";
     const path = "mermaid";
     const parse = await parseMarkdown(join(root, path) + ".md", {root, path});
-    const imports = await resolveGlobalImports(parse, root, path);
+    const imports = getGlobalImports(parse);
     assert.deepStrictEqual(
       imports,
       new Set([
-        "./_observablehq/runtime.js",
-        "./_observablehq/stdlib.js",
-        "./_observablehq/stdlib/mermaid.js",
-        "./_npm/d3@7.8.5/+esm.js",
-        "./_npm/mermaid@10.6.1/+esm.js"
+        "observablehq:client",
+        "npm:@observablehq/runtime",
+        "npm:@observablehq/stdlib",
+        "npm:@observablehq/mermaid",
+        "npm:d3",
+        "npm:mermaid"
       ])
     );
   });

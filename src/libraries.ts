@@ -1,7 +1,10 @@
 import {type FileReference} from "./javascript.js";
 
 export function getImplicitFileImports(files: Pick<FileReference, "method">[]): Set<string> {
-  const imports = new Set<string>();
+  return addImplicitFileImports(new Set<string>(), files);
+}
+
+export function addImplicitFileImports(imports: Set<string>, files: Pick<FileReference, "method">[]): Set<string> {
   for (const file of files) {
     switch (file.method) {
       case "csv":
@@ -36,22 +39,32 @@ export function getImplicitImports(inputs: Iterable<string>): Set<string> {
 export function addImplicitImports(imports: Set<string>, inputs: Iterable<string>): Set<string> {
   const set = inputs instanceof Set ? inputs : new Set(inputs);
   if (set.has("d3")) imports.add("npm:d3");
-  if (set.has("Plot")) imports.add("npm:d3").add("npm:@observablehq/plot");
+  if (set.has("Plot")) imports.add("npm:@observablehq/plot");
   if (set.has("htl") || set.has("html") || set.has("svg")) imports.add("npm:htl");
-  if (set.has("Inputs")) imports.add("npm:htl").add("npm:isoformat").add("npm:@observablehq/inputs");
-  if (set.has("dot")) imports.add("npm:@observablehq/dot").add("npm:@viz-js/viz");
+  if (set.has("Inputs")) imports.add("npm:@observablehq/inputs");
+  if (set.has("dot")) imports.add("npm:@observablehq/dot");
   if (set.has("duckdb")) imports.add("npm:@duckdb/duckdb-wasm");
-  if (set.has("DuckDBClient")) imports.add("npm:@observablehq/duckdb").add("npm:@duckdb/duckdb-wasm");
+  if (set.has("DuckDBClient")) imports.add("npm:@observablehq/duckdb");
   if (set.has("_")) imports.add("npm:lodash");
   if (set.has("aq")) imports.add("npm:arquero");
   if (set.has("Arrow")) imports.add("npm:apache-arrow");
   if (set.has("L")) imports.add("npm:leaflet");
   if (set.has("mapboxgl")) imports.add("npm:mapbox-gl");
-  if (set.has("mermaid")) imports.add("npm:@observablehq/mermaid").add("npm:mermaid").add("npm:d3");
+  if (set.has("mermaid")) imports.add("npm:@observablehq/mermaid");
   if (set.has("SQLite") || set.has("SQLiteDatabaseClient")) imports.add("npm:@observablehq/sqlite");
-  if (set.has("tex")) imports.add("npm:@observablehq/tex").add("npm:katex");
+  if (set.has("tex")) imports.add("npm:@observablehq/tex");
   if (set.has("topojson")) imports.add("npm:topojson-client");
-  if (set.has("vl")) imports.add("npm:vega").add("npm:vega-lite").add("npm:vega-lite-api");
+  if (set.has("vl")) imports.add("npm:vega-lite-api");
+  // TODO We should handle these transitive imports more generally.
+  if (imports.has("npm:@observablehq/dot")) imports.add("npm:@viz-js/viz");
+  if (imports.has("npm:@observablehq/duckdb")) imports.add("npm:@duckdb/duckdb-wasm");
+  if (imports.has("npm:@observablehq/inputs")) imports.add("npm:htl").add("npm:isoformat");
+  if (imports.has("npm:@observablehq/mermaid")) imports.add("npm:mermaid");
+  if (imports.has("npm:@observablehq/plot")) imports.add("npm:d3");
+  if (imports.has("npm:@observablehq/tex")) imports.add("npm:katex");
+  if (imports.has("npm:mermaid")) imports.add("npm:d3");
+  if (imports.has("npm:vega-lite-api")) imports.add("npm:vega-lite");
+  if (imports.has("npm:vega-lite")) imports.add("npm:vega");
   return imports;
 }
 

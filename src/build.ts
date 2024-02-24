@@ -7,11 +7,12 @@ import {mergeStyle} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
-import {createImportResolver, rewriteModule} from "./javascript/imports.js";
+import {createImportResolver, getGlobalImports, rewriteModule} from "./javascript/imports.js";
 import {findRelativeImports, populateNpmCache, resolveNpmImport} from "./javascript/imports.js";
 import {addImplicitDownloads} from "./libraries.js";
 import type {Logger, Writer} from "./logger.js";
-import {renderServerless} from "./render.js";
+import {parseMarkdown} from "./markdown.js";
+import {render} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
@@ -74,13 +75,15 @@ export async function build(
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
     effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
-    const render = await renderServerless(sourcePath, {path, ...config});
+    const options = {path, ...config};
+    const parse = await parseMarkdown(sourcePath, options);
+    const html = await render(parse, options);
     const resolveFile = ({name}) => resolvePath(sourceFile, name);
-    for (const f of render.files) files.add(resolveFile(f));
-    for (const i of render.imports) if (i.type === "local") localImports.add(resolveFile(i));
-    for (const i of render.imports) if (i.type === "global") globalImports.add(i.name);
-    await effects.writeFile(outputPath, render.html);
-    const style = mergeStyle(path, render.data?.style, render.data?.theme, config.style);
+    for (const f of parse.files) files.add(resolveFile(f));
+    for (const i of parse.imports) if (i.type === "local") localImports.add(resolveFile(i));
+    for (const i of getGlobalImports(parse)) globalImports.add(i);
+    await effects.writeFile(outputPath, html);
+    const style = mergeStyle(path, parse.data?.style, parse.data?.theme, config.style);
     if (style && !styles.some((s) => styleEquals(s, style))) styles.push(style);
   }
 

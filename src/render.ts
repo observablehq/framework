@@ -4,10 +4,10 @@ import {mergeToc} from "./config.js";
 import {getClientPath} from "./files.js";
 import {type Html, html} from "./html.js";
 import type {ImportResolver} from "./javascript/imports.js";
-import {createImportResolver, resolveModuleIntegrity, resolveModulePreloads} from "./javascript/imports.js";
+import {createImportResolver, getGlobalImports, resolveModuleIntegrity} from "./javascript/imports.js";
 import type {FileReference, ImportReference, Transpile} from "./javascript.js";
 import {getImplicitStylesheets} from "./libraries.js";
-import {type ParseResult, parseMarkdown} from "./markdown.js";
+import {type ParseResult} from "./markdown.js";
 import {type PageLink, findLink, normalizePath} from "./pager.js";
 import {getPreviewStylesheet} from "./preview.js";
 import {rollupClient} from "./rollup.js";
@@ -25,26 +25,6 @@ export interface RenderOptions extends Config {
   path: string;
 }
 
-export async function renderPreview(sourcePath: string, options: RenderOptions): Promise<Render> {
-  const parseResult = await parseMarkdown(sourcePath, options);
-  return {
-    html: await render(parseResult, {...options, preview: true}),
-    files: parseResult.files,
-    imports: parseResult.imports,
-    data: parseResult.data
-  };
-}
-
-export async function renderServerless(sourcePath: string, options: RenderOptions): Promise<Render> {
-  const parseResult = await parseMarkdown(sourcePath, options);
-  return {
-    html: await render(parseResult, options),
-    files: parseResult.files,
-    imports: parseResult.imports,
-    data: parseResult.data
-  };
-}
-
 export function renderDefineCell(cell: Transpile): string {
   const {id, inline, inputs, outputs, files, body} = cell;
   return `define({${Object.entries({id, inline, inputs, outputs, files: files && redactFiles(files)})
@@ -59,23 +39,23 @@ function redactFiles(files: FileReference[]): FileReference[] {
 }
 
 type RenderInternalOptions =
-  | {preview?: false} // serverless
+  | {preview?: false} // build
   | {preview: true}; // preview
 
-async function render(parseResult: ParseResult, options: RenderOptions & RenderInternalOptions): Promise<string> {
+export async function render(parse: ParseResult, options: RenderOptions & RenderInternalOptions): Promise<string> {
   const {root, base, path, pages, title, preview, search} = options;
-  const sidebar = parseResult.data?.sidebar !== undefined ? Boolean(parseResult.data.sidebar) : options.sidebar;
-  const toc = mergeToc(parseResult.data?.toc, options.toc);
+  const sidebar = parse.data?.sidebar !== undefined ? Boolean(parse.data.sidebar) : options.sidebar;
+  const toc = mergeToc(parse.data?.toc, options.toc);
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 ${
-  parseResult.title || title
-    ? html`<title>${[parseResult.title, parseResult.title === title ? null : title]
+  parse.title || title
+    ? html`<title>${[parse.title, parse.title === title ? null : title]
         .filter((title): title is string => !!title)
         .join(" | ")}</title>\n`
     : ""
-}${await renderHead(parseResult, options, path, createImportResolver(root, path))}${
+}${await renderHead(parse, options, path, createImportResolver(root, path))}${
     path === "/404"
       ? html.unsafe(`\n<script type="module">
 
@@ -89,18 +69,18 @@ if (location.pathname.endsWith("/")) {
   }
 <script type="module">${html.unsafe(`
 
-import ${preview || parseResult.cells.length > 0 ? `{${preview ? "open, " : ""}define} from ` : ""}${JSON.stringify(
+import ${preview || parse.cells.length > 0 ? `{${preview ? "open, " : ""}define} from ` : ""}${JSON.stringify(
     relativeUrl(path, "/_observablehq/client.js")
   )};
-${
-  preview ? `\nopen({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
-}${parseResult.cells.map((cell) => `\n${renderDefineCell(cell)}`).join("")}`)}
+${preview ? `\nopen({hash: ${JSON.stringify(parse.hash)}, eval: (body) => (0, eval)(body)});\n` : ""}${parse.cells
+    .map((cell) => `\n${renderDefineCell(cell)}`)
+    .join("")}`)}
 </script>${sidebar ? html`\n${await renderSidebar(title, pages, root, path, search)}` : ""}${
-    toc.show ? html`\n${renderToc(findHeaders(parseResult), toc.label)}` : ""
+    toc.show ? html`\n${renderToc(findHeaders(parse), toc.label)}` : ""
   }
-<div id="observablehq-center">${renderHeader(options, parseResult.data)}
+<div id="observablehq-center">${renderHeader(options, parse.data)}
 <main id="observablehq-main" class="observablehq">
-${html.unsafe(parseResult.html)}</main>${renderFooter(path, options, parseResult.data)}
+${html.unsafe(parse.html)}</main>${renderFooter(path, options, parse.data)}
 </div>
 `);
 }
@@ -199,49 +179,32 @@ function prettyPath(path: string): string {
 }
 
 async function renderHead(
-  parseResult: ParseResult,
+  parse: ParseResult,
   options: Pick<Config, "scripts" | "style" | "head">,
   path: string,
   resolver: ImportResolver
 ): Promise<Html> {
   const scripts = options.scripts;
-  const head = parseResult.data?.head !== undefined ? parseResult.data.head : options.head;
+  const head = parse.data?.head !== undefined ? parse.data.head : options.head;
   const stylesheets = new Set<string>(["https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"]); // prettier-ignore
-  const style = getPreviewStylesheet(path, parseResult.data, options.style);
+  const style = getPreviewStylesheet(path, parse.data, options.style);
   if (style) stylesheets.add(style);
-  const specifiers = new Set<string>(["npm:@observablehq/runtime", "npm:@observablehq/stdlib"]);
-  for (const {name} of parseResult.imports) specifiers.add(name);
-  // TODO This fails to add the katex stylesheet because we have
-  // npm:@observablehq/tex in specifiers but have not yet resolved the
-  // transitive dependency on npm:katex.
-  for (const stylesheet of getImplicitStylesheets(specifiers)) stylesheets.add(await resolver(stylesheet));
-  const preloads = new Set<string>([relativeUrl(path, "/_observablehq/client.js")]);
-  for (const specifier of specifiers) preloads.add(await resolver(specifier));
+  const imports = getGlobalImports(parse);
+  for (const s of getImplicitStylesheets(imports)) stylesheets.add(await resolver(s));
+  const resolvedImports = new Set<string>();
+  for (const i of imports) resolvedImports.add(await resolver(i));
+  for (const i of parse.imports) if (i.type === "local") resolvedImports.add(await resolver(i.name));
   // TODO Transitive imports need to be resolved earlier because they’ll need to
   // be downloaded during build, too. For example npm:@observablehq/sqlite
   // imports npm:sql.js/dist/sql-wasm.js — and we need to special-case somewhere
   // that the .wasm bundle is needed too. Likewise for npm:@observablehq/duckdb.
-  await resolveModulePreloads(preloads);
-  // TODO We shouldn’t need two-phase resolving for stylesheets; they should
-  // already be resolved by this point.
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
-    Array.from(stylesheets)
-      .sort()
-      .map((href) => resolveStylesheet(path, href))
-      .map(renderStylesheetPreload) // <link rel=preload as=style>
+    Array.from(stylesheets).sort().map(renderStylesheetPreload) // <link rel=preload as=style>
   }${
-    Array.from(stylesheets)
-      .sort()
-      .map((href) => resolveStylesheet(path, href))
-      .map(renderStylesheet) // <link rel=stylesheet>
+    Array.from(stylesheets).sort().map(renderStylesheet) // <link rel=stylesheet>
   }${
-    Array.from(preloads).sort().map(renderModulePreload) // <link rel=modulepreload>
+    Array.from(resolvedImports).sort().map(renderModulePreload) // <link rel=modulepreload>
   }${head ? html`\n${html.unsafe(head)}` : null}${html.unsafe(scripts.map((s) => renderScript(s, path)).join(""))}`;
-}
-
-export function resolveStylesheet(path: string, href: string): string {
-  if (href.startsWith("observablehq:")) href = `/_observablehq/${href.slice("observablehq:".length)}`;
-  return relativeUrl(path, href);
 }
 
 function renderScript(script: Script, path: string): Html {

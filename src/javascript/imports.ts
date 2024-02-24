@@ -1,7 +1,7 @@
 import {type Hash, createHash} from "node:crypto";
 import {existsSync, readFileSync} from "node:fs";
 import {mkdir, readdir, writeFile} from "node:fs/promises";
-import {dirname, join} from "node:path";
+import {dirname, extname, join} from "node:path";
 import {Parser} from "acorn";
 import type {Node, Program} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression} from "acorn";
@@ -10,7 +10,7 @@ import {gt, satisfies} from "semver";
 import {isEnoent} from "../error.js";
 import type {ImportReference, JavaScriptNode} from "../javascript.js";
 import {parseOptions} from "../javascript.js";
-import {getImplicitFileImports, getImplicitImports} from "../libraries.js";
+import {addImplicitFileImports, addImplicitImports} from "../libraries.js";
 import type {CellPiece, ParseResult} from "../markdown.js";
 import {Sourcemap} from "../sourcemap.js";
 import {faint} from "../tty.js";
@@ -277,6 +277,8 @@ export function createImportResolver(root: string, path: string, sourcePath = pa
       ? relativeUrl(path, "_observablehq/stdlib/xlsx.js") // TODO publish to npm
       : specifier === "npm:@observablehq/zip"
       ? relativeUrl(path, "_observablehq/stdlib/zip.js") // TODO publish to npm
+      : specifier.startsWith("observablehq:")
+      ? relativeUrl(path, `_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`)
       : specifier.startsWith("npm:")
       ? relativeUrl(path, await resolveNpmImport(root, specifier.slice("npm:".length)))
       : specifier;
@@ -450,15 +452,14 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
   }
 }
 
-export async function resolveGlobalImports(parse: ParseResult, root: string, path: string): Promise<Set<string>> {
+export function getGlobalImports(parse: ParseResult): Set<string> {
   const inputs = findUnboundInputs(parse.cells);
-  const specifiers = new Set<string>(["npm:@observablehq/runtime", "npm:@observablehq/stdlib"]);
-  for (const i of parse.imports) if (i.type === "global") specifiers.add(i.name);
-  for (const name of getImplicitImports(inputs)) specifiers.add(name);
-  for (const name of getImplicitFileImports(parse.files)) specifiers.add(name);
-  const imports = new Set<string>();
-  const resolver = createImportResolver(root, path);
-  for (const s of specifiers) imports.add(await resolver(s));
+  const imports = new Set<string>(["observablehq:client", "npm:@observablehq/runtime", "npm:@observablehq/stdlib"]);
+  for (const i of parse.imports) if (i.type === "global") imports.add(i.name);
+  addImplicitImports(imports, inputs);
+  addImplicitFileImports(imports, parse.files);
+  // TODO resolve transitive dependencies
+  // TODO resolve import paths
   return imports;
 }
 

@@ -21,7 +21,7 @@ import {createImportResolver, findUnboundInputs, populateNpmCache, rewriteModule
 import {getImplicitImports, getImplicitStylesheets} from "./libraries.js";
 import {diffMarkdown, parseMarkdown} from "./markdown.js";
 import type {ParseResult} from "./markdown.js";
-import {renderPreview, resolveStylesheet} from "./render.js";
+import {render} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
@@ -210,7 +210,9 @@ export class PreviewServer {
         // Otherwise, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
         try {
-          const {html} = await renderPreview(path + ".md", {path: pathname, ...config});
+          const options = {path: pathname, ...config, preview: true};
+          const parse = await parseMarkdown(path + ".md", options);
+          const html = await render(parse, options);
           end(req, res, html, "text/html");
         } catch (error) {
           if (!isEnoent(error)) throw error; // internal error
@@ -226,7 +228,9 @@ export class PreviewServer {
       }
       if (req.method === "GET" && res.statusCode === 404) {
         try {
-          const {html} = await renderPreview(join(root, "404.md"), {path: "/404", ...config});
+          const options = {path: "/404", ...config, preview: true};
+          const parse = await parseMarkdown(join(root, "404.md"), options);
+          const html = await render(parse, options);
           end(req, res, html, "text/html");
           return;
         } catch {
@@ -307,10 +311,9 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
     const stylesheets = new Set<string>();
     const resolver = createImportResolver(root, path!);
     for (const stylesheet of getImplicitStylesheets(imports)) stylesheets.add(await resolver(stylesheet));
-    const style = getPreviewStylesheet(path!, data, defaultStyle);
-    if (style) stylesheets.add(style);
-    // TODO We shouldn’t need two-phased resolving for stylesheets.
-    return new Set(Array.from(stylesheets, (href) => resolveStylesheet(path!, href)));
+    const stylesheet = getPreviewStylesheet(path!, data, defaultStyle);
+    if (stylesheet) stylesheets.add(await resolver(stylesheet));
+    return new Set(Array.from(stylesheets));
   }
 
   function refreshAttachment(name: string) {
