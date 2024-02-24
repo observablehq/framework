@@ -97,20 +97,20 @@ export class PreviewServer {
         const root = join(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "../../");
         send(req, "/dist/runtime.js", {root}).pipe(res);
       } else if (pathname.startsWith("/_observablehq/stdlib.js")) {
-        end(req, res, await rollupClient(getClientPath("./src/client/stdlib.js")), "text/javascript");
+        end(req, res, await rollupClient(getClientPath("./src/client/stdlib.js"), pathname), "text/javascript");
       } else if (pathname.startsWith("/_observablehq/stdlib/")) {
         const path = getClientPath("./src/client/" + pathname.slice("/_observablehq/".length));
         if (pathname.endsWith(".js")) {
-          end(req, res, await rollupClient(path), "text/javascript");
+          end(req, res, await rollupClient(path, pathname), "text/javascript");
         } else if (pathname.endsWith(".css")) {
           end(req, res, await bundleStyles({path}), "text/css");
         } else {
           throw new HttpError(`Not found: ${pathname}`, 404);
         }
       } else if (pathname === "/_observablehq/client.js") {
-        end(req, res, await rollupClient(getClientPath("./src/client/preview.js")), "text/javascript");
+        end(req, res, await rollupClient(getClientPath("./src/client/preview.js"), pathname), "text/javascript");
       } else if (pathname === "/_observablehq/search.js") {
-        end(req, res, await rollupClient(getClientPath("./src/client/search.js")), "text/javascript");
+        end(req, res, await rollupClient(getClientPath("./src/client/search.js"), pathname), "text/javascript");
       } else if (pathname === "/_observablehq/minisearch.json") {
         end(req, res, await searchIndex(config), "application/json");
       } else if ((match = /^\/_observablehq\/theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(pathname))) {

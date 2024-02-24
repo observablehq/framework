@@ -115,7 +115,7 @@ export async function build(
       effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
       const code = await (entry.endsWith(".css")
         ? bundleStyles({path: clientPath})
-        : rollupClient(clientPath, {minify: true}));
+        : rollupClient(clientPath, outputPath, {minify: true}));
       await effects.writeFile(outputPath, code);
     }
     if (config.search) {
