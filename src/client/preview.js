@@ -97,8 +97,8 @@ export function open({hash, eval: compile} = {}) {
         break;
       }
       case "update-image": {
-        const image = document.querySelector(`img[src^="${message.path}"]`);
-        image.src = message.src;
+        const images = document.querySelectorAll(`img[src^="${message.path}"]`);
+        images.forEach(image => image.src = message.src);
         break;
       }
       case "add-stylesheet": {
