@@ -5,10 +5,9 @@ import {extent} from "npm:d3";
 export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDemand) {
   return Plot.plot({
     marginTop: 8,
-    marginLeft: 250,
+    marginLeft: 8,
     height: height - 4,
     width,
-    y: {label: null, tickSize: 0},
     x: {label: null, grid: true, tickSize: 0, tickPadding: 2, domain: [0, maxDemand / 1000], nice: true},
     marks: [
       Plot.barX(top5Demand, {
@@ -18,6 +17,23 @@ export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDema
         sort: {y: "x", reverse: true, limit: 10},
         tip: true,
         title: ({ name, value }) => `name: ${name}\ndemand: ${value / 1000} GWh`
+      }),
+      Plot.axisY({
+        label: null,
+        tickSize: 0,
+        textAnchor: "start", 
+        stroke: "purple", 
+        strokeWidth: 3, 
+        dx: 16
+      }),
+      Plot.text({
+        text: "name",
+        y: "name",
+        x: 0,
+        textAnchor: "start",
+        stroke: "red",
+        strokeWidth: 3,
+        fill: "green"
       })
     ]
   });
