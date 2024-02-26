@@ -3,15 +3,13 @@ import type {Config, Page, Script, Section} from "./config.js";
 import {mergeToc} from "./config.js";
 import {getClientPath} from "./files.js";
 import {type Html, html} from "./html.js";
-import type {ImportResolver} from "./javascript/imports.js";
-import {createImportResolver, getGlobalImports, resolveModuleIntegrity} from "./javascript/imports.js";
-import type {FileReference, ImportReference, Transpile} from "./javascript.js";
-import {getImplicitStylesheets} from "./libraries.js";
-import {type ParseResult} from "./markdown.js";
+import type {FileReference} from "./javascript/files.js";
+import type {ImportReference} from "./javascript/imports.js";
+import type {Transpile} from "./javascript.js";
+import type {ParseResult} from "./markdown.js";
 import {type PageLink, findLink, normalizePath} from "./pager.js";
-import {getPreviewStylesheet} from "./preview.js";
+import {relativePath} from "./path.js";
 import {rollupClient} from "./rollup.js";
-import {relativeUrl} from "./url.js";
 
 export interface Render {
   html: string;
@@ -25,6 +23,8 @@ export interface RenderOptions extends Config {
   path: string;
 }
 
+// TODO Should this be folded in to transpileJavaScript? Or should
+// transpileJavaScript’s body be moved here? Probably the latter.
 export function renderDefineCell(cell: Transpile): string {
   const {id, inline, inputs, outputs, files, body} = cell;
   return `define({${Object.entries({id, inline, inputs, outputs, files: files && redactFiles(files)})
@@ -55,7 +55,7 @@ ${
         .filter((title): title is string => !!title)
         .join(" | ")}</title>\n`
     : ""
-}${await renderHead(parse, options, path, createImportResolver(root, path))}${
+}${renderHead(parse, options, path)}${
     path === "/404"
       ? html.unsafe(`\n<script type="module">
 
@@ -70,7 +70,7 @@ if (location.pathname.endsWith("/")) {
 <script type="module">${html.unsafe(`
 
 import ${preview || parse.cells.length > 0 ? `{${preview ? "open, " : ""}define} from ` : ""}${JSON.stringify(
-    relativeUrl(path, "/_observablehq/client.js")
+    relativePath(path, "/_observablehq/client.js")
   )};
 ${preview ? `\nopen({hash: ${JSON.stringify(parse.hash)}, eval: (body) => (0, eval)(body)});\n` : ""}${parse.cells
     .map((cell) => `\n${renderDefineCell(cell)}`)
@@ -99,10 +99,10 @@ async function renderSidebar(
     <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
     <li class="observablehq-link${
       normalizePath(path) === "/index" ? " observablehq-link-active" : ""
-    }"><a href="${relativeUrl(path, "/")}">${title}</a></li>
+    }"><a href="${relativePath(path, "/")}">${title}</a></li>
   </ol>${
     search
-      ? html`\n  <div id="observablehq-search" data-root="${relativeUrl(
+      ? html`\n  <div id="observablehq-search" data-root="${relativePath(
           path,
           "/"
         )}"><input type="search" placeholder="Search"></div>
@@ -171,45 +171,29 @@ function renderToc(headers: Header[], label: string): Html {
 function renderListItem(p: Page, path: string): Html {
   return html`\n    <li class="observablehq-link${
     normalizePath(p.path) === path ? " observablehq-link-active" : ""
-  }"><a href="${relativeUrl(path, prettyPath(p.path))}">${p.name}</a></li>`;
+  }"><a href="${relativePath(path, prettyPath(p.path))}">${p.name}</a></li>`;
 }
 
 function prettyPath(path: string): string {
   return path.replace(/\/index$/, "/") || "/";
 }
 
-async function renderHead(
-  parse: ParseResult,
-  options: Pick<Config, "scripts" | "style" | "head">,
-  path: string,
-  resolver: ImportResolver
-): Promise<Html> {
+function renderHead(parse: ParseResult, options: Pick<Config, "scripts" | "style" | "head">, path: string): Html {
   const scripts = options.scripts;
   const head = parse.data?.head !== undefined ? parse.data.head : options.head;
-  const stylesheets = new Set<string>(["https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"]); // prettier-ignore
-  const style = getPreviewStylesheet(path, parse.data, options.style);
-  if (style) stylesheets.add(style);
-  const imports = getGlobalImports(parse);
-  for (const s of getImplicitStylesheets(imports)) stylesheets.add(await resolver(s));
-  const resolvedImports = new Set<string>();
-  for (const i of imports) resolvedImports.add(await resolver(i));
-  for (const i of parse.imports) if (i.type === "local") resolvedImports.add(await resolver(i.name));
-  // TODO Transitive imports need to be resolved earlier because they’ll need to
-  // be downloaded during build, too. For example npm:@observablehq/sqlite
-  // imports npm:sql.js/dist/sql-wasm.js — and we need to special-case somewhere
-  // that the .wasm bundle is needed too. Likewise for npm:@observablehq/duckdb.
+  const {stylesheets, staticModules} = parse;
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
-    Array.from(stylesheets).sort().map(renderStylesheetPreload) // <link rel=preload as=style>
+    stylesheets.map(renderStylesheetPreload) // <link rel=preload as=style>
   }${
-    Array.from(stylesheets).sort().map(renderStylesheet) // <link rel=stylesheet>
+    stylesheets.map(renderStylesheet) // <link rel=stylesheet>
   }${
-    Array.from(resolvedImports).sort().map(renderModulePreload) // <link rel=modulepreload>
+    staticModules.map(renderModulePreload) // <link rel=modulepreload>
   }${head ? html`\n${html.unsafe(head)}` : null}${html.unsafe(scripts.map((s) => renderScript(s, path)).join(""))}`;
 }
 
 function renderScript(script: Script, path: string): Html {
   return html`\n<script${script.type ? html` type="${script.type}"` : null}${script.async ? html` async` : null} src="${
-    /^\w+:/.test(script.src) ? script.src : relativeUrl(path, `/_import/${script.src}`)
+    /^\w+:/.test(script.src) ? script.src : relativePath(path, `/_import/${script.src}`)
   }"></script>`;
 }
 
@@ -222,8 +206,7 @@ function renderStylesheetPreload(href: string): Html {
 }
 
 function renderModulePreload(href: string): Html {
-  const integrity: string | undefined = resolveModuleIntegrity(href);
-  return html`\n<link rel="modulepreload" href="${href}"${integrity ? html` integrity="${integrity}"` : ""}>`;
+  return html`\n<link rel="modulepreload" href="${href}">`;
 }
 
 function renderHeader({header}: Pick<Config, "header">, data: ParseResult["data"]): Html | null {
@@ -252,5 +235,5 @@ function renderPager(path: string, {prev, next}: PageLink): Html {
 }
 
 function renderRel(path: string, page: Page, rel: "prev" | "next"): Html {
-  return html`<a rel="${rel}" href="${relativeUrl(path, prettyPath(page.path))}"><span>${page.name}</span></a>`;
+  return html`<a rel="${rel}" href="${relativePath(path, prettyPath(page.path))}"><span>${page.name}</span></a>`;
 }

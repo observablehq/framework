@@ -25,33 +25,17 @@ Or you can use a [Vega-Lite JSON view specification](https://vega.github.io/vega
 ```js echo
 vl.render({
   spec: {
-    "width": 640,
-    "height": 400,
-    "data": {
-      "url": await FileAttachment("gistemp.csv").url()
-    },
-    "mark": "point",
-    "encoding": {
-      "x": {
-        "type": "temporal",
-        "field": "Date"
-      },
-      "y": {
-        "type": "quantitative",
-        "field": "Anomaly"
-      },
-      "color": {
-        "type": "quantitative",
-        "field": "Anomaly",
-        "scale": {
-          "range": "diverging",
-          "reverse": true
-        }
-      }
+    width: 640,
+    height: 400,
+    data: {url: await FileAttachment("gistemp.csv").url(), format: {type: "csv"}},
+    mark: "point",
+    encoding: {
+      x: {type: "temporal", field: "Date"},
+      y: {type: "quantitative", field: "Anomaly"},
+      color: {type: "quantitative", field: "Anomaly", scale: {range: "diverging", reverse: true}}
     }
   }
 })
 ```
 
 <div class="tip">When loading data from a file as above, use <a href="../javascript/files"><code>FileAttachment</code></a> so that referenced files are included on <a href="../getting-started#build">build</a>.</div>
-

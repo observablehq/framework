@@ -1,5 +1,6 @@
 import {createHash} from "node:crypto";
 import {readFile} from "node:fs/promises";
+import {join} from "node:path";
 import {type Patch, type PatchItem, getPatch} from "fast-array-diff";
 import equal from "fast-deep-equal";
 import matter from "gray-matter";
@@ -10,16 +11,22 @@ import {type RuleCore} from "markdown-it/lib/parser_core.js";
 import {type RuleInline} from "markdown-it/lib/parser_inline.js";
 import {type RenderRule, type default as Renderer} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
-import mime from "mime";
-import {isEnoent} from "./error.js";
+import {type Config, mergeStyle} from "./config.js";
 import {getLocalPath} from "./files.js";
 import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
-import {resolveFileReference} from "./javascript/files.js";
-import type {FileReference, ImportReference, PendingTranspile, Transpile} from "./javascript.js";
-import {transpileJavaScript} from "./javascript.js";
+import type {FileReference} from "./javascript/files.js";
+import {findFiles, resolveFileReference} from "./javascript/files.js";
+import {defaultGlobals} from "./javascript/globals.js";
+import type {ImportReference} from "./javascript/imports.js";
+import {createImportResolver, findImports, isPathImport} from "./javascript/imports.js";
+import {parseNpmSpecifier, resolveNpmImports} from "./javascript/npm.js";
+import type {PendingTranspile, Transpile} from "./javascript.js";
+import {parseModule, transpileJavaScript} from "./javascript.js";
+import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
+import {relativePath, resolvePath} from "./path.js";
 import {transpileTag} from "./tag.js";
-import {resolvePath} from "./url.js";
+import {red} from "./tty.js";
 
 export interface HtmlPiece {
   type: "html";
@@ -38,8 +45,10 @@ export interface ParseResult {
   title: string | null;
   html: string;
   data: {[key: string]: any} | null;
-  files: FileReference[];
-  imports: ImportReference[];
+  staticModules: string[];
+  dynamicModules: string[];
+  stylesheets: string[];
+  files: string[];
   pieces: HtmlPiece[];
   cells: CellPiece[];
   hash: string;
@@ -313,7 +322,7 @@ function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string):
     }
     let result = "";
     for (const piece of context.pieces) {
-      result += piece.html = normalizePieceHtml(piece.html, sourcePath, context);
+      result += piece.html = normalizePieceHtml(piece.html, root, sourcePath, context);
     }
     return result;
   };
@@ -331,15 +340,18 @@ const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcs
   {query: "video source[src]", src: "src"}
 ]);
 
-export function normalizePieceHtml(html: string, sourcePath: string, context: ParseContext): string {
+export function normalizePieceHtml(html: string, root: string, sourcePath: string, context: ParseContext): string {
   const {document} = parseHTML(html);
   const filePaths = new Set<FileReference["path"]>();
 
-  // Extracting references to files (such as from linked stylesheets).
+  // Extracting references to files (such as from linked stylesheets). TODO We
+  // should support resolving an npm: protocol import here, too; but that would
+  // mean this function needs to be async — or more likely that we should
+  // extract the references here (synchronously), but resolve them later.
   const resolvePath = (source: string): FileReference | undefined => {
     const path = getLocalPath(sourcePath, source);
     if (!path) return;
-    const file = resolveFileReference({path, mimeType: mime.getType(path)}, sourcePath);
+    const file = resolveFileReference({name: source}, root, sourcePath);
     if (!filePaths.has(file.path)) {
       filePaths.add(file.path);
       context.files.push(file);
@@ -413,10 +425,11 @@ async function toParseCells(pieces: RenderPiece[]): Promise<CellPiece[]> {
 export interface ParseOptions {
   root: string;
   path: string;
+  style?: Config["style"];
 }
 
 // TODO This isn’t “parsing” — it’s transpiling.
-export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptions): Promise<ParseResult> {
+export async function parseMarkdown(sourcePath: string, {root, path, style}: ParseOptions): Promise<ParseResult> {
   const source = await readFile(sourcePath, "utf-8");
   const parts = matter(source, {});
   const md = MarkdownIt({html: true});
@@ -427,40 +440,219 @@ export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptio
   md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!, path);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
   md.renderer.render = renderIntoPieces(md.renderer, root, path);
-  const context: ParseContext = {files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
+  const files: FileReference[] = [];
+  const imports: ImportReference[] = [];
+  const context: ParseContext = {files, imports, pieces: [], startLine: 0, currentLine: 0};
   const tokens = md.parse(parts.content, context);
   const html = md.renderer.render(tokens, md.options, context); // Note: mutates context.pieces, context.files!
-  const cells = await toParseCells(context.pieces);
+
+  // The purpose of this code is to resolve the dependencies (the other files)
+  // that the page needs. These dependencies are broken into three categories:
+  // imports (JavaScript), stylesheets (CSS), and other files (referenced either
+  // by FileAttachment or by static HTML).
+  //
+  // For imports, we distinguish between local imports (to other JavaScript
+  // modules within the source root) and global imports (typically to libraries
+  // published to npm but also to modules that Framework itself provides such as
+  // stdlib; perhaps better called “non-local”).
+  //
+  // We also distinguish between static imports (import declarations) and
+  // dynamic imports (import expressions): only static imports are preloaded,
+  // but both static and dynamic imports are included in the published site
+  // (dist). Transitive static imports from dynamically-imported modules are
+  // treated as dynamic since they should not be preloaded. For example, Mermaid
+  // implements about a dozen chart types as dynamic imports, and we only want
+  // to load the ones in use.
+  //
+  // TODO Perhaps even we shouldn’t download dynamic imports unless you
+  // explicitly enumerate them (by declaring them as static imports)? Especially
+  // given that Mermaid has tons of them, and some of them can’t even be served
+  // by jsDelivr (such as Elk)?
+  //
+  // TODO Imported files are currently broken.
+  //
+  // For files, we collect all FileAttachment calls within local modules, adding
+  // them to any files referenced by static HTML.
+  //
+  // For stylesheets, we are only concerned with the config style option or the
+  // page-level front matter style option where the stylesheet is served out of
+  // _import by generating a bundle from a local file — along with implicit
+  // stylesheets referenced by recommended libraries such as Leaflet.
+  // (Stylesheets referenced in static HTML are treated as files.)
+
+  // Prepare the initial set of stylesheets. TODO Instead of hard-coding the
+  // Source Serif Pro from Google Fonts here, we should parse the page’s
+  // stylesheet and look for external imports.
+  const stylesheets = new Set<string>();
+  stylesheets.add("https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"); // prettier-ignore
+  const stylesheet = getStylesheet(path, parts.data, style);
+  if (stylesheet) stylesheets.add(stylesheet);
+
+  const resolveImport = createImportResolver(root, "/"); // TODO special-case this
+  const asNpmSpecifier = (i: string) => i.replace(/^\/_npm\//, "npm:").replace(/\/\+esm\.js$/, "/+esm"); // TODO cleaner?
+  const importPaths = new Set<string>();
+
+  // Process the local imports first to collect files and transitive imports.
+  for (const i of imports) {
+    if (i.type === "local") {
+      const importPath = resolvePath(path, i.name);
+      if (importPaths.has(importPath)) continue;
+      importPaths.add(importPath);
+      const [body, input] = await parseModule(root, importPath);
+      for (let o of findImports(body, importPath, input)) {
+        if (i.method === "dynamic" && o.method === "static") o = {...o, method: "dynamic"};
+        if (o.type === "local") o = {...o, name: relativePath(path, resolvePath(importPath, o.name))};
+        imports.push(o);
+      }
+      for (let o of findFiles(body, importPath, input)) {
+        o = {...o, name: relativePath(path, resolvePath(importPath, o.name))};
+        files.push(resolveFileReference(o, root, path));
+      }
+    }
+  }
+
+  // Add implicit imports for files. These are technically dynamic imports, but
+  // we assume that referenced files will be loaded immediately and so treat
+  // them as static for preloads.
+  for (const i of getImplicitFileImports(files)) {
+    imports.push({name: i, type: "global", method: "static"});
+  }
+
+  // Add implicit imports for standard library built-ins, such as d3 and Plot.
+  for (const i of getImplicitInputImports(findFreeInputs(context.pieces))) {
+    imports.push({name: i, type: "global", method: "static"});
+  }
+
+  // Add implicit global imports (that every page needs).
+  imports.push({name: "observablehq:client", type: "global", method: "static"});
+  imports.push({name: "npm:@observablehq/runtime", type: "global", method: "static"});
+  imports.push({name: "npm:@observablehq/stdlib", type: "global", method: "static"});
+
+  // Process the global imports from npm. Note: this mutates the import names to
+  // the resolved exact version and path! TODO When resolving a built-in module
+  // such as npm:@observablehq/inputs, don’t allow a version or a path (since
+  // that will bypass self-hosting).
+  for (const i of imports) {
+    if (i.type === "global") {
+      const importPath = isPathImport(i.name) ? i.name : (i.name = (await resolveImport(i.name)).slice(".".length));
+      if (importPaths.has(importPath)) continue;
+      importPaths.add(importPath);
+      switch (importPath) {
+        case "/_observablehq/stdlib/dot.js":
+          imports.push({name: "npm:@viz-js/viz", type: "global", method: i.method});
+          break;
+        case "/_observablehq/stdlib/duckdb.js":
+          imports.push({name: "npm:@duckdb/duckdb-wasm", type: "global", method: i.method});
+          break;
+        case "/_observablehq/stdlib/inputs.js":
+          imports.push({name: "npm:htl", type: "global", method: i.method});
+          imports.push({name: "npm:isoformat", type: "global", method: i.method});
+          break;
+        case "/_observablehq/stdlib/mermaid.js":
+          imports.push({name: "npm:mermaid", type: "global", method: i.method});
+          break;
+        case "/_observablehq/stdlib/tex.js":
+          imports.push({name: "npm:katex", type: "global", method: i.method});
+          break;
+      }
+      if (importPath.startsWith("/_observablehq/")) continue;
+      for (let o of await resolveNpmImports(root, importPath)) {
+        if (i.method === "dynamic" && o.method === "static") o = {...o, method: "dynamic"};
+        if (o.type === "local") o = {...o, type: "global", name: resolvePath(importPath, o.name)};
+        imports.push(o);
+      }
+    }
+  }
+
+  // Add implicit stylesheets from global imports.
+  for (const {type, name} of imports) {
+    if (type === "global") {
+      if (name === "/_observablehq/stdlib/inputs.js") {
+        stylesheets.add(relativePath(path, "/_observablehq/stdlib/inputs.css"));
+      } else if (name.startsWith("/_npm/katex@")) {
+        const s = parseNpmSpecifier(asNpmSpecifier(name));
+        if (s.path === "+esm") stylesheets.add(relativePath(path, `/_npm/katex@${s.range}/dist/katex.min.css`));
+      } else if (name.startsWith("/_npm/leaflet@")) {
+        const s = parseNpmSpecifier(asNpmSpecifier(name));
+        if (s.path === "+esm") stylesheets.add(relativePath(path, `/_npm/leaflet@${s.range}/dist/leaflet.css`));
+      } else if (name.startsWith("/_npm/mapbox-gl@")) {
+        const s = parseNpmSpecifier(asNpmSpecifier(name));
+        if (s.path === "+esm") stylesheets.add(relativePath(path, `/_npm/mapbox-gl@${s.range}/dist/mapbox-gl.css`));
+      }
+    }
+  }
+
+  // Okay, phew! Now the last part is to normalize global import paths.
+  for (const i of imports) {
+    if (i.type === "global" && isPathImport(i.name)) {
+      i.name = relativePath(path, i.name);
+    }
+  }
+
+  // TODO
+  // addImplicitFiles(globalFiles, globalStaticImports); // TODO globalDynamicImports?
+
   return {
     html,
     data: isEmpty(parts.data) ? null : parts.data,
     title: parts.data?.title ?? findTitle(tokens) ?? null,
-    files: context.files,
-    imports: context.imports,
+    staticModules: [...new Set(imports.filter((i) => i.method === "static").map((i) => i.name))].sort(),
+    dynamicModules: [...new Set(imports.filter((i) => i.method === "dynamic").map((i) => i.name))].sort(),
+    files: [...new Set([...imports.map((i) => i.name), ...files.map((i) => i.name)])].sort(),
+    stylesheets: [...stylesheets].sort(),
     pieces: toParsePieces(context.pieces),
-    cells,
-    hash: await computeMarkdownHash(source, root, path, context.imports)
+    cells: await toParseCells(context.pieces), // TODO use already-resolved imports above?
+    hash: computeMarkdownHash(source, imports, files)
   };
 }
 
-async function computeMarkdownHash(
-  contents: string,
-  root: string,
-  path: string,
-  imports: ImportReference[]
-): Promise<string> {
-  const hash = createHash("sha256").update(contents);
-  // TODO can’t simply concatenate here; we need a delimiter
-  for (const i of imports) {
-    if (i.type === "local") {
-      try {
-        hash.update(await readFile(resolvePath(root, path, i.name), "utf-8"));
-      } catch (error) {
-        if (!isEnoent(error)) throw error;
-        continue;
+function getStylesheet(path: string, data: ParseResult["data"], style: Config["style"] = null): string | null {
+  try {
+    style = mergeStyle(path, data?.style, data?.theme, style);
+  } catch (error) {
+    // TODO This should error in build.
+    console.error(red(String(error)));
+    style = {theme: []};
+  }
+  return !style
+    ? null
+    : "path" in style
+    ? relativePath(path, join("_import", style.path)) // TODO ?sha=
+    : relativePath(path, `/_observablehq/theme-${style.theme.join(",")}.css`);
+}
+
+// Returns any inputs that are not declared in outputs. These typically refer to
+// symbols provided by the standard library, such as d3 and Inputs.
+function findFreeInputs(pieces: RenderPiece[]): string[] {
+  const outputs = new Set<string>(defaultGlobals).add("display").add("view").add("visibility").add("invalidation");
+  const inputs = new Set<string>();
+  for (const piece of pieces) {
+    for (const code of piece.code) {
+      if (code.outputs) {
+        for (const output of code.outputs) {
+          outputs.add(output);
+        }
       }
     }
   }
+  for (const piece of pieces) {
+    for (const code of piece.code) {
+      if (code.inputs) {
+        for (const input of code.inputs) {
+          if (!outputs.has(input)) {
+            inputs.add(input);
+          }
+        }
+      }
+    }
+  }
+  return Array.from(inputs);
+}
+
+function computeMarkdownHash(contents: string, imports: ImportReference[], files: FileReference[]): string {
+  const hash = createHash("sha256").update(contents);
+  for (const i of imports) hash.update(i.name);
+  for (const f of files) hash.update(f.path);
   return hash.digest("hex");
 }
 

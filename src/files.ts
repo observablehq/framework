@@ -4,7 +4,7 @@ import {dirname, extname, join, normalize, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {isEnoent} from "./error.js";
-import {resolvePath} from "./url.js";
+import {resolvePath} from "./path.js";
 
 // A path is local if it doesn’t go outside the the root.
 export function getLocalPath(sourcePath: string, name: string): string | null {

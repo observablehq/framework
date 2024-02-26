@@ -6,7 +6,7 @@ import {dirname, join} from "node:path";
  * are prefixed with "./", and paths that start without a slash are considered
  * from the root.
  */
-export function relativeUrl(source: string, target: string): string {
+export function relativePath(source: string, target: string): string {
   if (/^\w+:/.test(target)) return target;
   const from = join("/", source).split(/[/]+/g).slice(0, -1);
   const to = join("/", target).split(/[/]+/g);
@@ -28,5 +28,6 @@ export function resolvePath(source: string, target: string): string;
 export function resolvePath(root: string, source: string, target: string): string;
 export function resolvePath(root: string, source: string, target?: string): string {
   if (target === undefined) (target = source), (source = root), (root = ".");
-  return join(root, target.startsWith("/") ? "." : dirname(source), target);
+  const path = join(root, target.startsWith("/") ? "." : dirname(source), target);
+  return path.startsWith("../") ? path : `/${path}`;
 }

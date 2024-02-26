@@ -6,12 +6,14 @@ import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
 import {getClientPath} from "./files.js";
-import {isPathImport, resolveNpmImport} from "./javascript/imports.js";
-import {type StringLiteral, getStringLiteralValue, isStringLiteral} from "./javascript/node.js";
+import {isPathImport} from "./javascript/imports.js";
+import type {StringLiteral} from "./javascript/node.js";
+import {getStringLiteralValue, isStringLiteral} from "./javascript/node.js";
+import {resolveNpmImport} from "./javascript/npm.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
+import {relativePath} from "./path.js";
 import {Sourcemap} from "./sourcemap.js";
 import {THEMES, renderTheme} from "./theme.js";
-import {relativeUrl} from "./url.js";
 
 const STYLE_MODULES = {
   "observablehq:default.css": getClientPath("./src/style/default.css"),
@@ -82,31 +84,31 @@ function importResolve(input: string, root: string, path: string): Plugin {
     return typeof specifier !== "string" || specifier === input
       ? null
       : specifier.startsWith("observablehq:")
-      ? {id: relativeUrl(path, `/_observablehq/${specifier.slice("observablehq:".length)}.js`), external: true}
+      ? {id: relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}.js`), external: true}
       : specifier === "npm:@observablehq/runtime"
-      ? {id: relativeUrl(path, "/_observablehq/runtime.js"), external: true}
+      ? {id: relativePath(path, "/_observablehq/runtime.js"), external: true}
       : specifier === "npm:@observablehq/stdlib"
-      ? {id: relativeUrl(path, "/_observablehq/stdlib.js"), external: true}
+      ? {id: relativePath(path, "/_observablehq/stdlib.js"), external: true}
       : specifier === "npm:@observablehq/dot"
-      ? {id: relativeUrl(path, "/_observablehq/stdlib/dot.js"), external: true} // TODO publish to npm
+      ? {id: relativePath(path, "/_observablehq/stdlib/dot.js"), external: true} // TODO publish to npm
       : specifier === "npm:@observablehq/duckdb"
-      ? {id: relativeUrl(path, "/_observablehq/stdlib/duckdb.js"), external: true} // TODO publish to npm
+      ? {id: relativePath(path, "/_observablehq/stdlib/duckdb.js"), external: true} // TODO publish to npm
       : specifier === "npm:@observablehq/inputs"
-      ? {id: relativeUrl(path, "/_observablehq/stdlib/inputs.js"), external: true} // TODO publish to npm
+      ? {id: relativePath(path, "/_observablehq/stdlib/inputs.js"), external: true} // TODO publish to npm
       : specifier === "npm:@observablehq/mermaid"
-      ? {id: relativeUrl(path, "/_observablehq/stdlib/mermaid.js"), external: true} // TODO publish to npm
+      ? {id: relativePath(path, "/_observablehq/stdlib/mermaid.js"), external: true} // TODO publish to npm
       : specifier === "npm:@observablehq/tex"
-      ? {id: relativeUrl(path, "/_observablehq/stdlib/tex.js"), external: true} // TODO publish to npm
+      ? {id: relativePath(path, "/_observablehq/stdlib/tex.js"), external: true} // TODO publish to npm
       : specifier === "npm:@observablehq/sqlite"
-      ? {id: relativeUrl(path, "/_observablehq/stdlib/sqlite.js"), external: true} // TODO publish to npm
+      ? {id: relativePath(path, "/_observablehq/stdlib/sqlite.js"), external: true} // TODO publish to npm
       : specifier === "npm:@observablehq/xlsx"
-      ? {id: relativeUrl(path, "/_observablehq/stdlib/xlsx.js"), external: true} // TODO publish to npm
+      ? {id: relativePath(path, "/_observablehq/stdlib/xlsx.js"), external: true} // TODO publish to npm
       : specifier === "npm:@observablehq/zip"
-      ? {id: relativeUrl(path, "/_observablehq/stdlib/zip.js"), external: true} // TODO publish to npm
+      ? {id: relativePath(path, "/_observablehq/stdlib/zip.js"), external: true} // TODO publish to npm
       : specifier.startsWith("npm:")
-      ? {id: relativeUrl(path, await resolveNpmImport(root, specifier.slice("npm:".length))), external: true}
+      ? {id: relativePath(path, await resolveNpmImport(root, specifier.slice("npm:".length))), external: true}
       : !isPathImport(specifier) && !BUNDLED_MODULES.includes(specifier)
-      ? {id: relativeUrl(path, await resolveNpmImport(root, specifier)), external: true}
+      ? {id: relativePath(path, await resolveNpmImport(root, specifier)), external: true}
       : null;
   }
   return {
@@ -145,7 +147,7 @@ function importMetaResolve(root: string, path: string): Plugin {
         const source = node.arguments[0];
         const specifier = getStringLiteralValue(source as StringLiteral);
         if (specifier.startsWith("npm:")) {
-          const resolution = relativeUrl(path, await resolveNpmImport(root, specifier.slice("npm:".length)));
+          const resolution = relativePath(path, await resolveNpmImport(root, specifier.slice("npm:".length)));
           output.replaceLeft(source.start, source.end, JSON.stringify(resolution));
         }
       }

@@ -1,32 +1,19 @@
+import {readFile} from "node:fs/promises";
+import {join} from "node:path";
 import {Parser, tokTypes} from "acorn";
 import type {Expression, Identifier, Node, Options, Program} from "acorn";
 import {checkAssignments} from "./javascript/assignments.js";
 import {findAwaits} from "./javascript/awaits.js";
 import {findDeclarations} from "./javascript/declarations.js";
-import type {FileExpression} from "./javascript/files.js";
-import {resolveFileReference} from "./javascript/files.js";
-import {findExports, findImportsAndFilesRecursive, hasImportDeclaration} from "./javascript/imports.js";
+import type {FileExpression, FileReference} from "./javascript/files.js";
+import {findFiles, resolveFileReference} from "./javascript/files.js";
+import type {ImportReference} from "./javascript/imports.js";
+import {findExports, findImports, hasImportDeclaration} from "./javascript/imports.js";
 import {createImportResolver, rewriteImports} from "./javascript/imports.js";
 import {findReferences} from "./javascript/references.js";
 import {syntaxError} from "./javascript/syntaxError.js";
 import {Sourcemap} from "./sourcemap.js";
 import {red} from "./tty.js";
-
-export interface FileReference {
-  /** The relative path from the page to the original file (e.g., "./test.txt"). */
-  name: string;
-  /** The method, if known. */
-  method?: string;
-  /** The MIME type, if known; derived from the file extension. */
-  mimeType: string | null;
-  /** The relative path from the page to the file in _file (e.g., "../_file/sub/test.txt"). */
-  path: string;
-}
-
-export interface ImportReference {
-  name: string;
-  type: "global" | "local";
-}
 
 export interface BaseTranspile {
   id: string;
@@ -56,6 +43,7 @@ export interface ParseOptions {
   verbose?: boolean;
 }
 
+// TODO move this to renderDefineCell
 export function transpileJavaScript(input: string, options: ParseOptions): PendingTranspile {
   const {id, root, sourcePath, verbose = true} = options;
   try {
@@ -70,7 +58,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
       ...(inputs.length ? {inputs} : null),
       ...(options.inline ? {inline: true} : null),
       ...(node.declarations?.length ? {outputs: node.declarations.map(({name}) => name)} : null),
-      ...(node.files.length ? {files: node.files.map((f) => resolveFileReference(f, sourcePath))} : null),
+      ...(node.files.length ? {files: node.files.map((f) => resolveFileReference(f, root, sourcePath))} : null),
       body: async () => {
         const output = new Sourcemap(input);
         output.trim();
@@ -78,7 +66,7 @@ export function transpileJavaScript(input: string, options: ParseOptions): Pendi
           output.insertLeft(0, "display(await(\n");
           output.insertRight(input.length, "\n))");
         }
-        await rewriteImports(output, node, createImportResolver(root, sourcePath));
+        await rewriteImports(output, node.body, createImportResolver(root, sourcePath));
         const result = `${node.async ? "async " : ""}(${inputs}) => {
 ${String(output)}${node.declarations?.length ? `\nreturn {${node.declarations.map(({name}) => name)}};` : ""}
 }`;
@@ -124,7 +112,7 @@ export interface JavaScriptNode {
 }
 
 function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
-  const {inline = false, root, sourcePath} = options;
+  const {inline = false, sourcePath} = options;
   // First attempt to parse as an expression; if this fails, parse as a program.
   let expression = maybeParseExpression(input, parseOptions);
   if (expression?.type === "ClassExpression" && expression.id) expression = null; // treat named class as program
@@ -135,14 +123,12 @@ function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
   if (exports.length) throw syntaxError("Unexpected token 'export'", exports[0], input); // disallow exports
   const references = findReferences(body);
   checkAssignments(body, references, input);
-  const declarations = expression ? null : findDeclarations(body as Program, input);
-  const {imports, files} = findImportsAndFilesRecursive(body, root, sourcePath, input);
   return {
     body,
-    declarations,
+    declarations: expression ? null : findDeclarations(body as Program, input),
     references,
-    files,
-    imports,
+    files: findFiles(body, sourcePath, input, ["FileAttachment"]),
+    imports: findImports(body, sourcePath, input),
     expression: !!expression,
     async: findAwaits(body).length > 0
   };
@@ -159,4 +145,10 @@ function maybeParseExpression(input: string, options: Options): Expression | nul
   } catch {
     return null;
   }
+}
+
+export async function parseModule(root: string, path: string): Promise<[body: Program, input: string]> {
+  const input = await readFile(join(root, path), "utf-8");
+  const body = Parser.parse(input, parseOptions);
+  return [body, input];
 }

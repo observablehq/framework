@@ -1,4 +1,4 @@
-import {type FileReference} from "./javascript.js";
+import {type FileReference} from "./javascript/files.js";
 
 export function getImplicitFileImports(files: Pick<FileReference, "method">[]): Set<string> {
   return addImplicitFileImports(new Set<string>(), files);
@@ -32,11 +32,11 @@ export function addImplicitFileImports(imports: Set<string>, files: Pick<FileRef
   return imports;
 }
 
-export function getImplicitImports(inputs: Iterable<string>): Set<string> {
-  return addImplicitImports(new Set(), inputs);
+export function getImplicitInputImports(inputs: Iterable<string>): Set<string> {
+  return addImplicitInputImports(new Set(), inputs);
 }
 
-export function addImplicitImports(imports: Set<string>, inputs: Iterable<string>): Set<string> {
+export function addImplicitInputImports(imports: Set<string>, inputs: Iterable<string>): Set<string> {
   const set = inputs instanceof Set ? inputs : new Set(inputs);
   if (set.has("d3")) imports.add("npm:d3");
   if (set.has("Plot")) imports.add("npm:@observablehq/plot");
@@ -54,17 +54,7 @@ export function addImplicitImports(imports: Set<string>, inputs: Iterable<string
   if (set.has("SQLite") || set.has("SQLiteDatabaseClient")) imports.add("npm:@observablehq/sqlite");
   if (set.has("tex")) imports.add("npm:@observablehq/tex");
   if (set.has("topojson")) imports.add("npm:topojson-client");
-  if (set.has("vl")) imports.add("npm:vega-lite-api");
-  // TODO We should handle these transitive imports more generally.
-  if (imports.has("npm:@observablehq/dot")) imports.add("npm:@viz-js/viz");
-  if (imports.has("npm:@observablehq/duckdb")) imports.add("npm:@duckdb/duckdb-wasm");
-  if (imports.has("npm:@observablehq/inputs")) imports.add("npm:htl").add("npm:isoformat");
-  if (imports.has("npm:@observablehq/mermaid")) imports.add("npm:mermaid");
-  if (imports.has("npm:@observablehq/plot")) imports.add("npm:d3");
-  if (imports.has("npm:@observablehq/tex")) imports.add("npm:katex");
-  if (imports.has("npm:mermaid")) imports.add("npm:d3");
-  if (imports.has("npm:vega-lite-api")) imports.add("npm:vega-lite");
-  if (imports.has("npm:vega-lite")) imports.add("npm:vega");
+  if (set.has("vl")) imports.add("npm:vega-lite-api").add("npm:vega-lite").add("npm:vega");
   return imports;
 }
 
@@ -89,32 +79,22 @@ export function addImplicitStylesheets(stylesheets: Set<string>, imports: Set<st
 
 /**
  * While transitive imports of JavaScript modules are discovered via parsing,
- * transitive dependencies on other supporting files such as stylesheets and
- * WebAssembly files are often not discoverable statically. Hence, for any
- * recommended library (that is, any library provided by default in Markdown,
- * including with any library used by FileAttachment) we manually enumerate the
- * needed additional downloads here. TODO Support versioned imports, too, such
- * as "npm:leaflet@1".
+ * transitive dependencies on other supporting assets such as WebAssembly files
+ * are often not discoverable statically. Hence, for any recommended library
+ * (that is, any library provided by default in Markdown, including with any
+ * library used by FileAttachment) we manually enumerate the needed additional
+ * downloads here. TODO Support versioned imports, too, such as "npm:leaflet@1".
  */
-export function addImplicitDownloads(imports: Set<string>): Set<string> {
+export function addImplicitFiles(files: Set<string>, imports: Set<string>): Set<string> {
   if (imports.has("npm:@observablehq/duckdb")) {
-    imports.add("npm:@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm");
-    imports.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js");
-    imports.add("npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm");
-    imports.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js");
+    files.add("npm:@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm");
+    files.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js");
+    files.add("npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm");
+    files.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js");
   }
   if (imports.has("npm:@observablehq/sqlite")) {
-    imports.add("npm:sql.js/dist/sql-wasm.js");
-    imports.add("npm:sql.js/dist/sql-wasm.wasm");
+    files.add("npm:sql.js/dist/sql-wasm.js");
+    files.add("npm:sql.js/dist/sql-wasm.wasm");
   }
-  if (imports.has("npm:leaflet")) {
-    imports.add("npm:leaflet/dist/leaflet.css");
-  }
-  if (imports.has("npm:katex")) {
-    imports.add("npm:katex/dist/katex.min.css");
-  }
-  if (imports.has("npm:mapbox-gl")) {
-    imports.add("npm:mapbox-gl/dist/mapbox-gl.css");
-  }
-  return imports;
+  return files;
 }

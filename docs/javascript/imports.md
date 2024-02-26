@@ -2,6 +2,12 @@
 
 You can load a library using an `import` statement. For example:
 
+```js
+import {text} from "./foo.js";
+
+display(text);
+```
+
 ```js echo
 import confetti from "npm:canvas-confetti";
 ```

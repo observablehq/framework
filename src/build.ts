@@ -7,9 +7,7 @@ import {mergeStyle} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
-import {createImportResolver, getGlobalImports, rewriteModule} from "./javascript/imports.js";
-import {findRelativeImports, populateNpmCache, resolveNpmImport} from "./javascript/imports.js";
-import {addImplicitDownloads} from "./libraries.js";
+import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
 import {parseMarkdown} from "./markdown.js";
 import {render} from "./render.js";
@@ -17,7 +15,6 @@ import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {faint} from "./tty.js";
-import {resolvePath} from "./url.js";
 
 const EXTRA_FILES = new Map([
   [
@@ -78,10 +75,10 @@ export async function build(
     const options = {path, ...config};
     const parse = await parseMarkdown(sourcePath, options);
     const html = await render(parse, options);
-    const resolveFile = ({name}) => resolvePath(sourceFile, name);
-    for (const f of parse.files) files.add(resolveFile(f));
-    for (const i of parse.imports) if (i.type === "local") localImports.add(resolveFile(i));
-    for (const i of getGlobalImports(parse)) globalImports.add(i);
+    // for (const f of parse.files) files.add(resolvePath(sourceFile, f.name));
+    // for (const i of parse.localImports) localImports.add(resolvePath(sourceFile, i));
+    // for (const i of parse.globalImports) globalImports.add(i);
+    // TODO parse.stylesheets
     await effects.writeFile(outputPath, html);
     const style = mergeStyle(path, parse.data?.style, parse.data?.theme, config.style);
     if (style && !styles.some((s) => styleEquals(s, style))) styles.push(style);
@@ -163,29 +160,33 @@ export async function build(
   }
 
   // Resolve npm imports.
-  const npmImports = new Set<string>();
-  for (const specifier of addImplicitDownloads(globalImports)) {
-    if (specifier.startsWith("npm:")) {
-      const path = await resolveNpmImport(root, specifier.slice("npm:".length));
-      if (path.startsWith("/_npm/")) npmImports.add(path);
-    }
-  }
+  // TODO This should be done in parseMarkdown.
+  // const npmImports = new Set<string>();
+  // for (const specifier of addImplicitDownloads(globalImports)) {
+  //   if (specifier.startsWith("npm:")) {
+  //     effects.output.write(`${faint("resolve")} ${specifier} ${faint("→")} `);
+  //     const path = await resolveNpmImport(root, specifier.slice("npm:".length));
+  //     effects.output.write(`${path}\n`);
+  //     if (path.startsWith("/_npm/")) npmImports.add(path);
+  //   }
+  // }
 
   // Download npm imports, and resolve transitive dependencies. (Note that local
   // imports are already resolved transitively by findImports… maybe we should
   // find a way to consolidate this logic.)
-  const cacheDir = join(root, ".observablehq", "cache");
-  for (const path of npmImports) {
-    await populateNpmCache(cacheDir, path); // TODO effects
-    const sourcePath = join(cacheDir, path);
-    effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-    await effects.copyFile(sourcePath, path);
-    if (path.endsWith(".js")) {
-      for (const subpath of findRelativeImports(await readFile(sourcePath, "utf-8"))) {
-        npmImports.add(join(dirname(path), subpath));
-      }
-    }
-  }
+  // TODO This should be done in parseMarkdown?
+  // const cacheDir = join(root, ".observablehq", "cache");
+  // for (const path of npmImports) {
+  //   await populateNpmCache(cacheDir, path); // TODO effects
+  //   const sourcePath = join(cacheDir, path);
+  //   effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
+  //   await effects.copyFile(sourcePath, path);
+  //   if (path.endsWith(".js")) {
+  //     for (const subpath of findRelativeImports(await readFile(sourcePath, "utf-8"))) {
+  //       npmImports.add(join(dirname(path), subpath));
+  //     }
+  //   }
+  // }
 
   // Copy over imported local modules.
   for (const file of localImports) {

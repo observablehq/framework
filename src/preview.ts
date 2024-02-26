@@ -9,24 +9,23 @@ import {fileURLToPath} from "node:url";
 import {difference} from "d3-array";
 import openBrowser from "open";
 import send from "send";
-import {type WebSocket, WebSocketServer} from "ws";
+import type {WebSocket} from "ws";
+import {WebSocketServer} from "ws";
 import {version} from "../package.json";
 import type {Config} from "./config.js";
-import {mergeStyle} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
-import {createImportResolver, findUnboundInputs, populateNpmCache, rewriteModule} from "./javascript/imports.js";
-import {getImplicitImports, getImplicitStylesheets} from "./libraries.js";
+import {createImportResolver, rewriteModule} from "./javascript/imports.js";
+import {populateNpmCache} from "./javascript/npm.js";
 import {diffMarkdown, parseMarkdown} from "./markdown.js";
 import type {ParseResult} from "./markdown.js";
 import {render} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
-import {bold, faint, green, link, red} from "./tty.js";
-import {relativeUrl} from "./url.js";
+import {bold, faint, green, link} from "./tty.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
@@ -118,9 +117,8 @@ export class PreviewServer {
       } else if (pathname.startsWith("/_observablehq/")) {
         send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_npm/")) {
-        const cacheDir = join(root, ".observablehq", "cache");
-        await populateNpmCache(cacheDir, pathname);
-        send(req, pathname, {root: cacheDir}).pipe(res);
+        await populateNpmCache(root, pathname);
+        send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
         const path = pathname.slice("/_import".length);
         const filepath = join(root, path);
@@ -273,60 +271,15 @@ function end(req: IncomingMessage, res: ServerResponse, content: string, type: s
   }
 }
 
-function getWatchPaths(parseResult: ParseResult): string[] {
-  const paths: string[] = [];
-  const {files, imports} = parseResult;
-  for (const f of files) paths.push(f.name);
-  for (const i of imports) if (i.type === "local") paths.push(i.name);
-  return paths;
-}
-
-export function getPreviewStylesheet(path: string, data: ParseResult["data"], style: Config["style"]): string | null {
-  try {
-    style = mergeStyle(path, data?.style, data?.theme, style);
-  } catch (error) {
-    console.error(red(String(error)));
-    return relativeUrl(path, "/_observablehq/theme-.css");
-  }
-  return !style
-    ? null
-    : "path" in style
-    ? relativeUrl(path, `/_import/${style.path}`)
-    : relativeUrl(path, `/_observablehq/theme-${style.theme.join(",")}.css`);
-}
-
-function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defaultStyle}: Config) {
+function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Config) {
   let path: string | null = null;
   let current: ParseResult | null = null;
-  let stylesheets: Set<string> | null = null;
+  let stylesheets: string[] | null = null;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
   let emptyTimeout: ReturnType<typeof setTimeout> | null = null;
 
   console.log(faint("socket open"), req.url);
-
-  async function getStylesheets({cells, data}: ParseResult): Promise<Set<string>> {
-    const inputs = findUnboundInputs(cells);
-    const imports = getImplicitImports(inputs);
-    const stylesheets = new Set<string>();
-    const resolver = createImportResolver(root, path!);
-    for (const stylesheet of getImplicitStylesheets(imports)) stylesheets.add(await resolver(stylesheet));
-    const stylesheet = getPreviewStylesheet(path!, data, defaultStyle);
-    if (stylesheet) stylesheets.add(await resolver(stylesheet));
-    return new Set(Array.from(stylesheets));
-  }
-
-  function refreshAttachment(name: string) {
-    const {cells} = current!;
-    if (cells.some((cell) => cell.imports?.some((i) => i.name === name))) {
-      watcher("change"); // trigger re-compilation of JavaScript to get new import hashes
-    } else {
-      const affectedCells = cells.filter((cell) => cell.files?.some((f) => f.name === name));
-      if (affectedCells.length > 0) {
-        send({type: "refresh", cellIds: affectedCells.map((cell) => cell.id)});
-      }
-    }
-  }
 
   async function watcher(event: WatchEventType, force = false) {
     if (!path || !current) throw new Error("not initialized");
@@ -345,7 +298,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
         break;
       }
       case "change": {
-        const updated = await parseMarkdown(join(root, path), {root, path});
+        const updated = await parseMarkdown(join(root, path), {root, path, style});
         // delay to avoid a possibly-empty file
         if (!force && updated.html === "") {
           if (!emptyTimeout) {
@@ -360,7 +313,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
           emptyTimeout = null;
         }
         if (current.hash === updated.hash) break;
-        const updatedStylesheets = await getStylesheets(updated);
+        const updatedStylesheets = updated.stylesheets;
         for (const href of difference(stylesheets, updatedStylesheets)) send({type: "remove-stylesheet", href});
         for (const href of difference(updatedStylesheets, stylesheets)) send({type: "add-stylesheet", href});
         stylesheets = updatedStylesheets;
@@ -368,7 +321,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
         send({type: "update", diff, previousHash: current.hash, updatedHash: updated.hash});
         current = updated;
         attachmentWatcher?.close();
-        attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(updated), refreshAttachment);
+        attachmentWatcher = await FileWatchers.of(root, path, updated.files, () => watcher("change"));
         break;
       }
     }
@@ -382,8 +335,8 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style: defa
     path += ".md";
     current = await parseMarkdown(join(root, path), {root, path});
     if (current.hash !== initialHash) return void send({type: "reload"});
-    stylesheets = await getStylesheets(current);
-    attachmentWatcher = await FileWatchers.of(root, path, getWatchPaths(current), refreshAttachment);
+    stylesheets = current.stylesheets;
+    attachmentWatcher = await FileWatchers.of(root, path, current.files, () => watcher("change"));
     markdownWatcher = watch(join(root, path), (event) => watcher(event));
   }
 

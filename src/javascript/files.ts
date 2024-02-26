@@ -1,20 +1,35 @@
+import {createHash} from "node:crypto";
+import {readFileSync} from "node:fs";
 import {extname, join} from "node:path";
 import type {CallExpression, Node} from "acorn";
 import {ancestor, simple} from "acorn-walk";
 import mime from "mime";
+import {isEnoent} from "../error.js";
 import {getLocalPath} from "../files.js";
-import type {FileReference} from "../javascript.js";
-import {relativeUrl} from "../url.js";
+import {relativePath, resolvePath} from "../path.js";
 import {defaultGlobals} from "./globals.js";
 import {getStringLiteralValue, isMemberExpression, isStringLiteral} from "./node.js";
 import {findReferences} from "./references.js";
 import {syntaxError} from "./syntaxError.js";
 
 export type FileExpression = {
+  /** The FileAttachment(name) call expression. */
   node: CallExpression;
-  path: string; // the path to the file relative to the source root
-  mimeType: string | null; // e.g., "text/csv"
-  method?: string; // e.g., "arrow" or "csv"
+  /** The relative path to the source file from the referencing source. */
+  name: string;
+  /** The method, if known; e.g., "arrow" for FileAttachment("foo").arrow. */
+  method?: string;
+};
+
+export type FileReference = {
+  /** The relative path to the source file from the referencing source. */
+  name: string;
+  /** The relative path to the serving file (in _file) from the page. */
+  path: string;
+  /** The MIME type, if known. */
+  mimeType: string | null;
+  /** The method, if known; e.g., "arrow" for FileAttachment("foo").arrow. */
+  method?: string;
 };
 
 const KNOWN_FILE_EXTENSIONS = {
@@ -37,7 +52,7 @@ const KNOWN_FILE_EXTENSIONS = {
  * SyntaxError if any of the calls are invalid (e.g., when FileAttachment is
  * passed a dynamic argument, or references a file that is outside the root).
  */
-export function findFileAttachments(
+export function findFiles(
   body: Node,
   path: string,
   input: string,
@@ -90,6 +105,10 @@ export function findFileAttachments(
   // file method ("csv"); otherwise fallback to the to file extension to
   // determine the method. Also enforce that FileAttachment is passed a single
   // static string literal.
+  //
+  // Note that while dynamic imports require that paths start with ./, ../, or
+  // /, the same requirement is not true for file attachments. Unlike imports,
+  // you can’t reference a global file as a file attachment.
   ancestor(body, {
     CallExpression(node, state, stack) {
       const {callee} = node;
@@ -106,7 +125,7 @@ export function findFileAttachments(
         parent && isMemberExpression(parent) && parent.property.type === "Identifier"
           ? parent.property.name // FileAttachment("foo.csv").csv
           : KNOWN_FILE_EXTENSIONS[extname(fileName)]; // bare FileAttachment("foo.csv")
-      files.push({node, path: filePath, mimeType: mime.getType(fileName), method: fileMethod});
+      files.push({node, name: relativePath(path, filePath), method: fileMethod});
     }
   });
 
@@ -114,13 +133,25 @@ export function findFileAttachments(
 }
 
 export function resolveFileReference(
-  {path, mimeType, method}: Omit<FileExpression, "node">,
+  {name, method}: Pick<FileExpression, "name" | "method">,
+  root: string,
   sourcePath: string
 ): FileReference {
+  const path = resolvePath(sourcePath, name);
   return {
-    name: relativeUrl(sourcePath, path),
-    mimeType,
-    path: relativeUrl(sourcePath, join("_file", path)),
+    name,
+    mimeType: mime.getType(name),
+    path: `${relativePath(sourcePath, join("_file", path))}?sha=${hashFile(root, path)}`,
     ...(method && {method})
   };
+}
+
+function hashFile(root: string, path: string): string {
+  const hash = createHash("sha256");
+  try {
+    hash.update(readFileSync(join(root, path), "utf-8"));
+  } catch (error) {
+    if (!isEnoent(error)) throw error;
+  }
+  return hash.digest("hex");
 }
