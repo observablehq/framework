@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import {rewriteNpmImports} from "../../src/javascript/npm.js";
+import {rewriteNpmImports} from "../../src/npm.js";
 
 // prettier-ignore
 describe("rewriteNpmImports(input, path)", () => {

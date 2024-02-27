@@ -10,7 +10,7 @@ import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
 import {parseMarkdown} from "./markdown.js";
-import {render} from "./render.js";
+import {renderPage} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
@@ -74,7 +74,7 @@ export async function build(
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
     const options = {path, ...config};
     const parse = await parseMarkdown(sourcePath, options);
-    const html = await render(parse, options);
+    const html = await renderPage(parse, options);
     // for (const f of parse.files) files.add(resolvePath(sourceFile, f.name));
     // for (const i of parse.localImports) localImports.add(resolvePath(sourceFile, i));
     // for (const i of parse.globalImports) globalImports.add(i);

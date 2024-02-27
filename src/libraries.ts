@@ -1,12 +1,10 @@
-import {type FileReference} from "./javascript/files.js";
-
-export function getImplicitFileImports(files: Pick<FileReference, "method">[]): Set<string> {
-  return addImplicitFileImports(new Set<string>(), files);
+export function getImplicitFileImports(methods: Iterable<string>): Set<string> {
+  return addImplicitFileImports(new Set<string>(), methods);
 }
 
-export function addImplicitFileImports(imports: Set<string>, files: Pick<FileReference, "method">[]): Set<string> {
-  for (const file of files) {
-    switch (file.method) {
+export function addImplicitFileImports(imports: Set<string>, methods: Iterable<string>): Set<string> {
+  for (const method of methods) {
+    switch (method) {
       case "csv":
       case "tsv":
         imports.add("npm:d3-dsv");

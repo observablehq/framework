@@ -9,7 +9,7 @@ import {getClientPath} from "./files.js";
 import {isPathImport} from "./javascript/imports.js";
 import type {StringLiteral} from "./javascript/node.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/node.js";
-import {resolveNpmImport} from "./javascript/npm.js";
+import {resolveNpmImport} from "./npm.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
 import {relativePath} from "./path.js";
 import {Sourcemap} from "./sourcemap.js";

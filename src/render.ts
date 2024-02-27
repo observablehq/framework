@@ -1,51 +1,34 @@
 import {parseHTML} from "linkedom";
+import mime from "mime";
 import type {Config, Page, Script, Section} from "./config.js";
 import {mergeToc} from "./config.js";
 import {getClientPath} from "./files.js";
-import {type Html, html} from "./html.js";
-import type {FileReference} from "./javascript/files.js";
-import type {ImportReference} from "./javascript/imports.js";
-import type {Transpile} from "./javascript.js";
-import type {ParseResult} from "./markdown.js";
-import {type PageLink, findLink, normalizePath} from "./pager.js";
+import type {Html} from "./html.js";
+import {html} from "./html.js";
+import {transpileJavaScript} from "./javascript/transpile.js";
+import type {MarkdownPage} from "./markdown.js";
+import type {PageLink} from "./pager.js";
+import {findLink, normalizePath} from "./pager.js";
 import {relativePath} from "./path.js";
+import type {Resolvers} from "./resolvers.js";
+import {getResolvers, resolveImportPath} from "./resolvers.js";
 import {rollupClient} from "./rollup.js";
-
-export interface Render {
-  html: string;
-  files: FileReference[];
-  imports: ImportReference[];
-  data: ParseResult["data"];
-}
 
 export interface RenderOptions extends Config {
   root: string;
   path: string;
 }
 
-// TODO Should this be folded in to transpileJavaScript? Or should
-// transpileJavaScript’s body be moved here? Probably the latter.
-export function renderDefineCell(cell: Transpile): string {
-  const {id, inline, inputs, outputs, files, body} = cell;
-  return `define({${Object.entries({id, inline, inputs, outputs, files: files && redactFiles(files)})
-    .filter((arg) => arg[1] !== undefined)
-    .map((arg) => `${arg[0]}: ${JSON.stringify(arg[1])}`)
-    .join(", ")}, body: ${body}});\n`;
-}
-
-// TODO make this less messy
-function redactFiles(files: FileReference[]): FileReference[] {
-  return files.map((f) => (f.method ? {...f, method: undefined} : f));
-}
-
 type RenderInternalOptions =
   | {preview?: false} // build
   | {preview: true}; // preview
 
-export async function render(parse: ParseResult, options: RenderOptions & RenderInternalOptions): Promise<string> {
+export async function renderPage(parse: MarkdownPage, options: RenderOptions & RenderInternalOptions): Promise<string> {
   const {root, base, path, pages, title, preview, search} = options;
   const sidebar = parse.data?.sidebar !== undefined ? Boolean(parse.data.sidebar) : options.sidebar;
   const toc = mergeToc(parse.data?.toc, options.toc);
+  const resolvers = await getResolvers(parse, options);
+  const {files, resolveFile, resolveImport, resolveDynamicImport} = resolvers;
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -55,7 +38,7 @@ ${
         .filter((title): title is string => !!title)
         .join(" | ")}</title>\n`
     : ""
-}${renderHead(parse, options, path)}${
+}${renderHead(parse, resolvers, options)}${
     path === "/404"
       ? html.unsafe(`\n<script type="module">
 
@@ -69,11 +52,17 @@ if (location.pathname.endsWith("/")) {
   }
 <script type="module">${html.unsafe(`
 
-import ${preview || parse.cells.length > 0 ? `{${preview ? "open, " : ""}define} from ` : ""}${JSON.stringify(
-    relativePath(path, "/_observablehq/client.js")
-  )};
-${preview ? `\nopen({hash: ${JSON.stringify(parse.hash)}, eval: (body) => (0, eval)(body)});\n` : ""}${parse.cells
-    .map((cell) => `\n${renderDefineCell(cell)}`)
+import ${
+    preview || parse.pieces.some((p) => p.code.length) ? `{${preview ? "open, " : ""}define} from ` : ""
+  }${JSON.stringify(resolveImport("observablehq:client"))};${
+    files.size
+      ? `\nimport {registerFile} from ${JSON.stringify(resolveImport("observablehq:stdlib"))};
+${renderFiles(files, resolveFile)}`
+      : ""
+  }
+${preview ? `\nopen({hash: ${JSON.stringify(parse.hash)}, eval: (body) => (0, eval)(body)});\n` : ""}${parse.pieces
+    .flatMap((piece) => piece.code)
+    .map((code) => `\n${transpileJavaScript(code.node, {id: code.id, resolveImport, resolveDynamicImport})}`)
     .join("")}`)}
 </script>${sidebar ? html`\n${await renderSidebar(title, pages, root, path, search)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(parse), toc.label)}` : ""
@@ -83,6 +72,21 @@ ${preview ? `\nopen({hash: ${JSON.stringify(parse.hash)}, eval: (body) => (0, ev
 ${html.unsafe(parse.html)}</main>${renderFooter(path, options, parse.data)}
 </div>
 `);
+}
+
+function renderFiles(files: Iterable<string>, resolve: (name: string) => string): string {
+  return Array.from(files)
+    .sort()
+    .map((f) => renderFile(f, resolve))
+    .join("");
+}
+
+function renderFile(name: string, resolve: (name: string) => string): string {
+  return `\nregisterFile(${JSON.stringify(name)}, ${JSON.stringify({
+    name,
+    mimeType: mime.getType(name),
+    path: resolve(name)
+  })});`;
 }
 
 async function renderSidebar(
@@ -144,8 +148,8 @@ interface Header {
 
 const tocSelector = ["h1:not(:first-of-type)", "h2:not(h1 + h2)"];
 
-function findHeaders(parseResult: ParseResult): Header[] {
-  return Array.from(parseHTML(parseResult.html).document.querySelectorAll(tocSelector.join(", ")))
+function findHeaders(page: MarkdownPage): Header[] {
+  return Array.from(parseHTML(page.html).document.querySelectorAll(tocSelector.join(", ")))
     .map((node) => ({label: node.textContent, href: node.firstElementChild?.getAttribute("href")}))
     .filter((d): d is Header => !!d.label && !!d.href);
 }
@@ -168,32 +172,32 @@ function renderToc(headers: Header[], label: string): Html {
 </aside>`;
 }
 
-function renderListItem(p: Page, path: string): Html {
+function renderListItem(page: Page, path: string): Html {
   return html`\n    <li class="observablehq-link${
-    normalizePath(p.path) === path ? " observablehq-link-active" : ""
-  }"><a href="${relativePath(path, prettyPath(p.path))}">${p.name}</a></li>`;
+    normalizePath(page.path) === path ? " observablehq-link-active" : ""
+  }"><a href="${relativePath(path, prettyPath(page.path))}">${page.name}</a></li>`;
 }
 
 function prettyPath(path: string): string {
   return path.replace(/\/index$/, "/") || "/";
 }
 
-function renderHead(parse: ParseResult, options: Pick<Config, "scripts" | "style" | "head">, path: string): Html {
+function renderHead(parse: MarkdownPage, resolvers: Resolvers, options: RenderOptions): Html {
   const scripts = options.scripts;
   const head = parse.data?.head !== undefined ? parse.data.head : options.head;
-  const {stylesheets, staticModules} = parse;
+  const {stylesheets} = parse; // TODO
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
     stylesheets.map(renderStylesheetPreload) // <link rel=preload as=style>
   }${
     stylesheets.map(renderStylesheet) // <link rel=stylesheet>
   }${
-    staticModules.map(renderModulePreload) // <link rel=modulepreload>
-  }${head ? html`\n${html.unsafe(head)}` : null}${html.unsafe(scripts.map((s) => renderScript(s, path)).join(""))}`;
+    Array.from(resolvers.staticImports).map(resolvers.resolveImport).map(renderModulePreload) // <link rel=modulepreload>
+  }${head ? html`\n${html.unsafe(head)}` : null}${html.unsafe(scripts.map((s) => renderScript(s, options)).join(""))}`;
 }
 
-function renderScript(script: Script, path: string): Html {
+function renderScript(script: Script, {root, path}: RenderOptions): Html {
   return html`\n<script${script.type ? html` type="${script.type}"` : null}${script.async ? html` async` : null} src="${
-    /^\w+:/.test(script.src) ? script.src : relativePath(path, `/_import/${script.src}`)
+    /^\w+:/.test(script.src) ? script.src : relativePath(path, resolveImportPath(root, script.src))
   }"></script>`;
 }
 
@@ -209,7 +213,7 @@ function renderModulePreload(href: string): Html {
   return html`\n<link rel="modulepreload" href="${href}">`;
 }
 
-function renderHeader({header}: Pick<Config, "header">, data: ParseResult["data"]): Html | null {
+function renderHeader({header}: Pick<Config, "header">, data: MarkdownPage["data"]): Html | null {
   if (data?.header !== undefined) header = data?.header;
   return header ? html`\n<header id="observablehq-header">\n${html.unsafe(header)}\n</header>` : null;
 }
@@ -217,7 +221,7 @@ function renderHeader({header}: Pick<Config, "header">, data: ParseResult["data"
 function renderFooter(
   path: string,
   options: Pick<Config, "pages" | "pager" | "title" | "footer">,
-  data: ParseResult["data"]
+  data: MarkdownPage["data"]
 ): Html | null {
   let footer = options.footer;
   if (data?.footer !== undefined) footer = data?.footer;

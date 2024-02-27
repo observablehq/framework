@@ -1,9 +1,12 @@
+/* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
 import {readFile} from "node:fs/promises";
 import {join} from "node:path";
-import {type Patch, type PatchItem, getPatch} from "fast-array-diff";
+import type {Patch, PatchItem} from "fast-array-diff";
+import {getPatch} from "fast-array-diff";
 import equal from "fast-deep-equal";
 import matter from "gray-matter";
+import he from "he";
 import hljs from "highlight.js";
 import {parseHTML} from "linkedom";
 import MarkdownIt from "markdown-it";
@@ -15,53 +18,56 @@ import {type Config, mergeStyle} from "./config.js";
 import {getLocalPath} from "./files.js";
 import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
-import type {FileReference} from "./javascript/files.js";
-import {findFiles, resolveFileReference} from "./javascript/files.js";
+import type {FileExpression} from "./javascript/files.js";
+// import {findFiles, resolveFileReference} from "./javascript/files.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import type {ImportReference} from "./javascript/imports.js";
-import {createImportResolver, findImports, isPathImport} from "./javascript/imports.js";
-import {parseNpmSpecifier, resolveNpmImports} from "./javascript/npm.js";
-import type {PendingTranspile, Transpile} from "./javascript.js";
-import {parseModule, transpileJavaScript} from "./javascript.js";
-import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
+// import {createImportResolver, findImports, isPathImport} from "./javascript/imports.js";
+// import {parseNpmSpecifier, resolveNpmImports} from "./javascript/npm.js";
+import {getModuleInfo} from "./javascript/module.js";
+import type {JavaScriptNode} from "./javascript/parse.js";
+import {parseJavaScript} from "./javascript/parse.js";
+// import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
 import {relativePath, resolvePath} from "./path.js";
 import {transpileTag} from "./tag.js";
 import {red} from "./tty.js";
 
-export interface HtmlPiece {
-  type: "html";
-  id: string; // TODO remove this?
-  html: string;
-  cellIds?: string[];
-}
+// export interface HtmlPiece {
+//   type: "html";
+//   id: string; // TODO remove this?
+//   html: string;
+//   cellIds?: string[];
+// }
 
-export interface CellPiece extends Transpile {
-  type: "cell";
-}
+// export interface CellPiece extends Transpile {
+//   type: "cell";
+// }
 
-export type ParsePiece = HtmlPiece | CellPiece;
+// export type ParsePiece = HtmlPiece | CellPiece;
 
-export interface ParseResult {
+export interface MarkdownPage {
   title: string | null;
   html: string;
   data: {[key: string]: any} | null;
-  staticModules: string[];
-  dynamicModules: string[];
+  // staticModules: string[];
+  // dynamicModules: string[];
   stylesheets: string[];
-  files: string[];
-  pieces: HtmlPiece[];
-  cells: CellPiece[];
+  // files: string[];
+  pieces: MarkdownPiece[];
+  // cells: CellPiece[];
   hash: string;
 }
 
-interface RenderPiece {
+// TODO rename this, we’re not “rendering” here
+// TODO rename the concept of “pieces” and “cells” (and “nodes”) more generally
+export interface MarkdownPiece {
   html: string;
-  code: PendingTranspile[];
+  code: {id: string; node: JavaScriptNode}[];
 }
 
 interface ParseContext {
-  pieces: RenderPiece[];
-  files: FileReference[];
+  pieces: MarkdownPiece[];
+  files: Omit<FileExpression, "node">[];
   imports: ImportReference[];
   startLine: number;
   currentLine: number;
@@ -119,14 +125,21 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
     const source = isFalse(attributes.run) ? undefined : getLiveSource(token.content, tag);
     if (source != null) {
       const id = uniqueCodeId(context, token.content);
-      const sourceLine = context.startLine + context.currentLine;
-      const transpile = transpileJavaScript(source, {id, root, sourcePath, sourceLine});
-      extendPiece(context, {code: [transpile]});
-      if (transpile.files) context.files.push(...transpile.files);
-      if (transpile.imports) context.imports.push(...transpile.imports);
-      result += `<div id="cell-${id}" class="observablehq observablehq--block${
-        transpile.expression ? " observablehq--loading" : ""
-      }"></div>\n`;
+      try {
+        // TODO const sourceLine = context.startLine + context.currentLine;
+        const node = parseJavaScript(source, {path: sourcePath});
+        extendPiece(context, {code: [{id, node}]});
+        if (node.files) context.files.push(...node.files);
+        if (node.imports) context.imports.push(...node.imports);
+        result += `<div id="cell-${id}" class="observablehq observablehq--block${
+          node.expression ? " observablehq--loading" : ""
+        }"></div>\n`;
+      } catch (error) {
+        if (!(error instanceof SyntaxError)) throw error;
+        result += `<div id="cell-${id}" class="observablehq observablehq--block">
+  <div class="observablehq--inspect observablehq--error">SyntaxError: ${he.escape(error.message)}</div>
+</div>\n`;
+      }
       count++;
     }
     if (attributes.echo == null ? source == null : !isFalse(attributes.echo)) {
@@ -270,19 +283,23 @@ const transformPlaceholderCore: RuleCore = (state) => {
 
 function makePlaceholderRenderer(root: string, sourcePath: string): RenderRule {
   return (tokens, idx, options, context: ParseContext) => {
-    const id = uniqueCodeId(context, tokens[idx].content);
     const token = tokens[idx];
-    const transpile = transpileJavaScript(token.content, {
-      id,
-      root,
-      sourcePath,
-      inline: true,
-      sourceLine: context.startLine + context.currentLine
-    });
-    extendPiece(context, {code: [transpile]});
-    if (transpile.files) context.files.push(...transpile.files);
-    if (transpile.imports) context.imports.push(...transpile.imports);
-    return `<span id="cell-${id}" class="observablehq--loading"></span>`;
+    const id = uniqueCodeId(context, token.content);
+    try {
+      // TODO sourceLine: context.startLine + context.currentLine
+      const node = parseJavaScript(token.content, {path: sourcePath, inline: true});
+      extendPiece(context, {code: [{id, node}]});
+      if (node.files) context.files.push(...node.files);
+      if (node.imports) context.imports.push(...node.imports);
+      return `<span id="cell-${id}" class="observablehq--loading"></span>`;
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+      return `<span id="cell-${id}">
+  <span class="observablehq--inspect observablehq--error" style="display: block;">SyntaxError: ${he.escape(
+    error.message
+  )}</span>
+</span>`;
+    }
   };
 }
 
@@ -293,7 +310,7 @@ function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
   };
 }
 
-function extendPiece(context: ParseContext, extend: Partial<RenderPiece>) {
+function extendPiece(context: ParseContext, extend: Partial<MarkdownPiece>) {
   if (context.pieces.length === 0) context.pieces.push({html: "", code: []});
   const last = context.pieces[context.pieces.length - 1];
   context.pieces[context.pieces.length - 1] = {
@@ -342,21 +359,24 @@ const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcs
 
 export function normalizePieceHtml(html: string, root: string, sourcePath: string, context: ParseContext): string {
   const {document} = parseHTML(html);
-  const filePaths = new Set<FileReference["path"]>();
+  // const filePaths = new Set<FileReference["path"]>();
 
   // Extracting references to files (such as from linked stylesheets). TODO We
   // should support resolving an npm: protocol import here, too; but that would
   // mean this function needs to be async — or more likely that we should
   // extract the references here (synchronously), but resolve them later.
-  const resolvePath = (source: string): FileReference | undefined => {
+  const resolveFile = (source: string): string | undefined => {
     const path = getLocalPath(sourcePath, source);
     if (!path) return;
-    const file = resolveFileReference({name: source}, root, sourcePath);
-    if (!filePaths.has(file.path)) {
-      filePaths.add(file.path);
-      context.files.push(file);
-    }
-    return file;
+    // TODO record file references
+    // const file = resolveFileReference({name: source}, root, sourcePath);
+    // const file: Omit<FileExpression, "node"> = {name: source};
+    // if (!filePaths.has(file.path)) {
+    //   filePaths.add(file.path);
+    //   context.files.push(file);
+    // }
+    // return file;
+    return path;
   };
 
   for (const {query, src} of SUPPORTED_PROPERTIES) {
@@ -368,15 +388,15 @@ export function normalizePieceHtml(html: string, root: string, sourcePath: strin
           .map((p) => {
             const parts = p.trim().split(/\s+/);
             const source = decodeURIComponent(parts[0]);
-            const file = resolvePath(source);
-            return file ? `${file.path} ${parts.slice(1).join(" ")}`.trim() : parts.join(" ");
+            const path = resolveFile(source);
+            return path ? `${path} ${parts.slice(1).join(" ")}`.trim() : parts.join(" ");
           })
           .filter((p) => !!p);
         if (paths && paths.length > 0) element.setAttribute(src, paths.join(", "));
       } else {
         const source = decodeURIComponent(element.getAttribute(src)!);
-        const file = resolvePath(source);
-        if (file) element.setAttribute(src, file.path);
+        const path = resolveFile(source);
+        if (path) element.setAttribute(src, path);
       }
     }
   }
@@ -403,24 +423,24 @@ export function normalizePieceHtml(html: string, root: string, sourcePath: strin
   return isSingleElement(document) ? String(document) : `<span>${document}</span>`;
 }
 
-function toParsePieces(pieces: RenderPiece[]): HtmlPiece[] {
-  return pieces.map((piece) => ({
-    type: "html",
-    id: "", // TODO this seems wrong; id should be optional if not required
-    cellIds: piece.code.map((code) => `${code.id}`),
-    html: piece.html
-  }));
-}
+// function toParsePieces(pieces: Piece[]): HtmlPiece[] {
+//   return pieces.map((piece) => ({
+//     type: "html",
+//     id: "", // TODO this seems wrong; id should be optional if not required
+//     cellIds: piece.code.map((code) => `${code.id}`),
+//     html: piece.html
+//   }));
+// }
 
-async function toParseCells(pieces: RenderPiece[]): Promise<CellPiece[]> {
-  const cellPieces: CellPiece[] = [];
-  for (const piece of pieces) {
-    for (const {body, ...rest} of piece.code) {
-      cellPieces.push({type: "cell", ...rest, body: await body()});
-    }
-  }
-  return cellPieces;
-}
+// async function toParseCells(pieces: Piece[]): Promise<CellPiece[]> {
+//   const cellPieces: CellPiece[] = [];
+//   for (const piece of pieces) {
+//     for (const {body, ...rest} of piece.code) {
+//       cellPieces.push({type: "cell", ...rest, body: await body()});
+//     }
+//   }
+//   return cellPieces;
+// }
 
 export interface ParseOptions {
   root: string;
@@ -429,7 +449,7 @@ export interface ParseOptions {
 }
 
 // TODO This isn’t “parsing” — it’s transpiling.
-export async function parseMarkdown(sourcePath: string, {root, path, style}: ParseOptions): Promise<ParseResult> {
+export async function parseMarkdown(sourcePath: string, {root, path, style}: ParseOptions): Promise<MarkdownPage> {
   const source = await readFile(sourcePath, "utf-8");
   const parts = matter(source, {});
   const md = MarkdownIt({html: true});
@@ -440,11 +460,12 @@ export async function parseMarkdown(sourcePath: string, {root, path, style}: Par
   md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!, path);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
   md.renderer.render = renderIntoPieces(md.renderer, root, path);
+  const pieces: MarkdownPiece[] = [];
   const files: FileReference[] = [];
   const imports: ImportReference[] = [];
-  const context: ParseContext = {files, imports, pieces: [], startLine: 0, currentLine: 0};
+  const context: ParseContext = {files, imports, pieces, startLine: 0, currentLine: 0};
   const tokens = md.parse(parts.content, context);
-  const html = md.renderer.render(tokens, md.options, context); // Note: mutates context.pieces, context.files!
+  const html = md.renderer.render(tokens, md.options, context); // Note: mutates pieces, files, imports!
 
   // The purpose of this code is to resolve the dependencies (the other files)
   // that the page needs. These dependencies are broken into three categories:
@@ -488,106 +509,94 @@ export async function parseMarkdown(sourcePath: string, {root, path, style}: Par
   const stylesheet = getStylesheet(path, parts.data, style);
   if (stylesheet) stylesheets.add(stylesheet);
 
-  const resolveImport = createImportResolver(root, "/"); // TODO special-case this
-  const asNpmSpecifier = (i: string) => i.replace(/^\/_npm\//, "npm:").replace(/\/\+esm\.js$/, "/+esm"); // TODO cleaner?
-  const importPaths = new Set<string>();
+  // const resolveImport = createImportResolver(root, "/"); // TODO special-case this
+  // const asNpmSpecifier = (i: string) => i.replace(/^\/_npm\//, "npm:").replace(/\/\+esm\.js$/, "/+esm"); // TODO cleaner?
+  // const importPaths = new Set<string>();
 
-  // Process the local imports first to collect files and transitive imports.
-  for (const i of imports) {
-    if (i.type === "local") {
-      const importPath = resolvePath(path, i.name);
-      if (importPaths.has(importPath)) continue;
-      importPaths.add(importPath);
-      const [body, input] = await parseModule(root, importPath);
-      for (let o of findImports(body, importPath, input)) {
-        if (i.method === "dynamic" && o.method === "static") o = {...o, method: "dynamic"};
-        if (o.type === "local") o = {...o, name: relativePath(path, resolvePath(importPath, o.name))};
-        imports.push(o);
-      }
-      for (let o of findFiles(body, importPath, input)) {
-        o = {...o, name: relativePath(path, resolvePath(importPath, o.name))};
-        files.push(resolveFileReference(o, root, path));
-      }
-    }
-  }
+  // // Process the local imports first to collect files and transitive imports.
+  // for (const i of imports) {
+  //   if (i.type === "local") {
+  //     const importPath = resolvePath(path, i.name);
+  //     if (importPaths.has(importPath)) continue;
+  //     importPaths.add(importPath);
+  //     const [body, input] = await parseModule(root, importPath);
+  //     for (let o of findImports(body, importPath, input)) {
+  //       if (i.method === "dynamic" && o.method === "static") o = {...o, method: "dynamic"};
+  //       if (o.type === "local") o = {...o, name: relativePath(path, resolvePath(importPath, o.name))};
+  //       imports.push(o);
+  //     }
+  //     for (let o of findFiles(body, importPath, input)) {
+  //       o = {...o, name: relativePath(path, resolvePath(importPath, o.name))};
+  //       files.push(resolveFileReference(o, root, path));
+  //     }
+  //   }
+  // }
 
-  // Add implicit imports for files. These are technically dynamic imports, but
-  // we assume that referenced files will be loaded immediately and so treat
-  // them as static for preloads.
-  for (const i of getImplicitFileImports(files)) {
-    imports.push({name: i, type: "global", method: "static"});
-  }
+  // // Add implicit global imports (that every page needs).
+  // imports.push({name: "observablehq:client", type: "global", method: "static"});
+  // imports.push({name: "npm:@observablehq/runtime", type: "global", method: "static"});
+  // imports.push({name: "npm:@observablehq/stdlib", type: "global", method: "static"});
 
-  // Add implicit imports for standard library built-ins, such as d3 and Plot.
-  for (const i of getImplicitInputImports(findFreeInputs(context.pieces))) {
-    imports.push({name: i, type: "global", method: "static"});
-  }
+  // // Process the global imports from npm. Note: this mutates the import names to
+  // // the resolved exact version and path! TODO When resolving a built-in module
+  // // such as npm:@observablehq/inputs, don’t allow a version or a path (since
+  // // that will bypass self-hosting).
+  // for (const i of imports) {
+  //   if (i.type === "global") {
+  //     const importPath = isPathImport(i.name) ? i.name : (i.name = (await resolveImport(i.name)).slice(".".length));
+  //     if (importPaths.has(importPath)) continue;
+  //     importPaths.add(importPath);
+  //     switch (importPath) {
+  //       case "/_observablehq/stdlib/dot.js":
+  //         imports.push({name: "npm:@viz-js/viz", type: "global", method: i.method});
+  //         break;
+  //       case "/_observablehq/stdlib/duckdb.js":
+  //         imports.push({name: "npm:@duckdb/duckdb-wasm", type: "global", method: i.method});
+  //         break;
+  //       case "/_observablehq/stdlib/inputs.js":
+  //         imports.push({name: "npm:htl", type: "global", method: i.method});
+  //         imports.push({name: "npm:isoformat", type: "global", method: i.method});
+  //         break;
+  //       case "/_observablehq/stdlib/mermaid.js":
+  //         imports.push({name: "npm:mermaid", type: "global", method: i.method});
+  //         break;
+  //       case "/_observablehq/stdlib/tex.js":
+  //         imports.push({name: "npm:katex", type: "global", method: i.method});
+  //         break;
+  //     }
+  //     if (importPath.startsWith("/_observablehq/")) continue;
+  //     for (let o of await resolveNpmImports(root, importPath)) {
+  //       if (i.method === "dynamic" && o.method === "static") o = {...o, method: "dynamic"};
+  //       if (o.type === "local") o = {...o, type: "global", name: resolvePath(importPath, o.name)};
+  //       imports.push(o);
+  //     }
+  //   }
+  // }
 
-  // Add implicit global imports (that every page needs).
-  imports.push({name: "observablehq:client", type: "global", method: "static"});
-  imports.push({name: "npm:@observablehq/runtime", type: "global", method: "static"});
-  imports.push({name: "npm:@observablehq/stdlib", type: "global", method: "static"});
+  // // Add implicit stylesheets from global imports.
+  // for (const {type, name} of imports) {
+  //   if (type === "global") {
+  //     if (name === "/_observablehq/stdlib/inputs.js") {
+  //       stylesheets.add(relativePath(path, "/_observablehq/stdlib/inputs.css"));
+  //     } else if (name.startsWith("/_npm/katex@")) {
+  //       const s = parseNpmSpecifier(asNpmSpecifier(name));
+  //       if (s.path === "+esm") stylesheets.add(relativePath(path, `/_npm/katex@${s.range}/dist/katex.min.css`));
+  //     } else if (name.startsWith("/_npm/leaflet@")) {
+  //       const s = parseNpmSpecifier(asNpmSpecifier(name));
+  //       if (s.path === "+esm") stylesheets.add(relativePath(path, `/_npm/leaflet@${s.range}/dist/leaflet.css`));
+  //     } else if (name.startsWith("/_npm/mapbox-gl@")) {
+  //       const s = parseNpmSpecifier(asNpmSpecifier(name));
+  //       if (s.path === "+esm") stylesheets.add(relativePath(path, `/_npm/mapbox-gl@${s.range}/dist/mapbox-gl.css`));
+  //     }
+  //   }
+  // }
 
-  // Process the global imports from npm. Note: this mutates the import names to
-  // the resolved exact version and path! TODO When resolving a built-in module
-  // such as npm:@observablehq/inputs, don’t allow a version or a path (since
-  // that will bypass self-hosting).
-  for (const i of imports) {
-    if (i.type === "global") {
-      const importPath = isPathImport(i.name) ? i.name : (i.name = (await resolveImport(i.name)).slice(".".length));
-      if (importPaths.has(importPath)) continue;
-      importPaths.add(importPath);
-      switch (importPath) {
-        case "/_observablehq/stdlib/dot.js":
-          imports.push({name: "npm:@viz-js/viz", type: "global", method: i.method});
-          break;
-        case "/_observablehq/stdlib/duckdb.js":
-          imports.push({name: "npm:@duckdb/duckdb-wasm", type: "global", method: i.method});
-          break;
-        case "/_observablehq/stdlib/inputs.js":
-          imports.push({name: "npm:htl", type: "global", method: i.method});
-          imports.push({name: "npm:isoformat", type: "global", method: i.method});
-          break;
-        case "/_observablehq/stdlib/mermaid.js":
-          imports.push({name: "npm:mermaid", type: "global", method: i.method});
-          break;
-        case "/_observablehq/stdlib/tex.js":
-          imports.push({name: "npm:katex", type: "global", method: i.method});
-          break;
-      }
-      if (importPath.startsWith("/_observablehq/")) continue;
-      for (let o of await resolveNpmImports(root, importPath)) {
-        if (i.method === "dynamic" && o.method === "static") o = {...o, method: "dynamic"};
-        if (o.type === "local") o = {...o, type: "global", name: resolvePath(importPath, o.name)};
-        imports.push(o);
-      }
-    }
-  }
-
-  // Add implicit stylesheets from global imports.
-  for (const {type, name} of imports) {
-    if (type === "global") {
-      if (name === "/_observablehq/stdlib/inputs.js") {
-        stylesheets.add(relativePath(path, "/_observablehq/stdlib/inputs.css"));
-      } else if (name.startsWith("/_npm/katex@")) {
-        const s = parseNpmSpecifier(asNpmSpecifier(name));
-        if (s.path === "+esm") stylesheets.add(relativePath(path, `/_npm/katex@${s.range}/dist/katex.min.css`));
-      } else if (name.startsWith("/_npm/leaflet@")) {
-        const s = parseNpmSpecifier(asNpmSpecifier(name));
-        if (s.path === "+esm") stylesheets.add(relativePath(path, `/_npm/leaflet@${s.range}/dist/leaflet.css`));
-      } else if (name.startsWith("/_npm/mapbox-gl@")) {
-        const s = parseNpmSpecifier(asNpmSpecifier(name));
-        if (s.path === "+esm") stylesheets.add(relativePath(path, `/_npm/mapbox-gl@${s.range}/dist/mapbox-gl.css`));
-      }
-    }
-  }
-
-  // Okay, phew! Now the last part is to normalize global import paths.
-  for (const i of imports) {
-    if (i.type === "global" && isPathImport(i.name)) {
-      i.name = relativePath(path, i.name);
-    }
-  }
+  // // Okay, phew! Now the last part is to normalize global import paths.
+  // for (const i of imports) {
+  //   if (i.type === "global" && isPathImport(i.name)) {
+  //     i.name = relativePath(path, i.name);
+  //   }
+  // }
 
   // TODO
   // addImplicitFiles(globalFiles, globalStaticImports); // TODO globalDynamicImports?
@@ -596,17 +605,18 @@ export async function parseMarkdown(sourcePath: string, {root, path, style}: Par
     html,
     data: isEmpty(parts.data) ? null : parts.data,
     title: parts.data?.title ?? findTitle(tokens) ?? null,
-    staticModules: [...new Set(imports.filter((i) => i.method === "static").map((i) => i.name))].sort(),
-    dynamicModules: [...new Set(imports.filter((i) => i.method === "dynamic").map((i) => i.name))].sort(),
-    files: [...new Set([...imports.map((i) => i.name), ...files.map((i) => i.name)])].sort(),
+    // staticModules: [...new Set(imports.filter((i) => i.method === "static").map((i) => i.name))].sort(),
+    // dynamicModules: [...new Set(imports.filter((i) => i.method === "dynamic").map((i) => i.name))].sort(),
+    // files: [...new Set([...imports.map((i) => i.name), ...files.map((i) => i.name)])].sort(),
     stylesheets: [...stylesheets].sort(),
-    pieces: toParsePieces(context.pieces),
-    cells: await toParseCells(context.pieces), // TODO use already-resolved imports above?
-    hash: computeMarkdownHash(source, imports, files)
+    pieces
+    // pieces: toParsePieces(context.pieces),
+    // cells: await toParseCells(context.pieces), // TODO use already-resolved imports above?
+    // hash: computeMarkdownHash(source, imports, files)
   };
 }
 
-function getStylesheet(path: string, data: ParseResult["data"], style: Config["style"] = null): string | null {
+function getStylesheet(path: string, data: MarkdownPage["data"], style: Config["style"] = null): string | null {
   try {
     style = mergeStyle(path, data?.style, data?.theme, style);
   } catch (error) {
@@ -619,34 +629,6 @@ function getStylesheet(path: string, data: ParseResult["data"], style: Config["s
     : "path" in style
     ? relativePath(path, join("_import", style.path)) // TODO ?sha=
     : relativePath(path, `/_observablehq/theme-${style.theme.join(",")}.css`);
-}
-
-// Returns any inputs that are not declared in outputs. These typically refer to
-// symbols provided by the standard library, such as d3 and Inputs.
-function findFreeInputs(pieces: RenderPiece[]): string[] {
-  const outputs = new Set<string>(defaultGlobals).add("display").add("view").add("visibility").add("invalidation");
-  const inputs = new Set<string>();
-  for (const piece of pieces) {
-    for (const code of piece.code) {
-      if (code.outputs) {
-        for (const output of code.outputs) {
-          outputs.add(output);
-        }
-      }
-    }
-  }
-  for (const piece of pieces) {
-    for (const code of piece.code) {
-      if (code.inputs) {
-        for (const input of code.inputs) {
-          if (!outputs.has(input)) {
-            inputs.add(input);
-          }
-        }
-      }
-    }
-  }
-  return Array.from(inputs);
 }
 
 function computeMarkdownHash(contents: string, imports: ImportReference[], files: FileReference[]): string {
@@ -680,50 +662,50 @@ function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | undefined 
   }
 }
 
-function diffReducer(patch: PatchItem<ParsePiece>) {
-  // Remove body from remove updates, we just need the ids.
-  if (patch.type === "remove") {
-    return {
-      ...patch,
-      type: "remove",
-      items: patch.items.map((item) => ({
-        type: item.type,
-        id: item.id,
-        ...("cellIds" in item ? {cellIds: item.cellIds} : null)
-      }))
-    } as const;
-  }
-  return patch;
-}
+// function diffReducer(patch: PatchItem<ParsePiece>) {
+//   // Remove body from remove updates, we just need the ids.
+//   if (patch.type === "remove") {
+//     return {
+//       ...patch,
+//       type: "remove",
+//       items: patch.items.map((item) => ({
+//         type: item.type,
+//         id: item.id,
+//         ...("cellIds" in item ? {cellIds: item.cellIds} : null)
+//       }))
+//     } as const;
+//   }
+//   return patch;
+// }
 
-// Cells are unordered
-function getCellsPatch(prevCells: CellPiece[], nextCells: CellPiece[]): Patch<ParsePiece> {
-  return prevCells
-    .filter((prev) => !nextCells.some((next) => equal(prev, next)))
-    .map(
-      (cell): PatchItem<ParsePiece> => ({
-        type: "remove",
-        oldPos: prevCells.indexOf(cell),
-        newPos: -1,
-        items: [cell]
-      })
-    )
-    .concat(
-      nextCells
-        .filter((next) => !prevCells.some((prev) => equal(next, prev)))
-        .map(
-          (cell): PatchItem<ParsePiece> => ({
-            type: "add",
-            oldPos: -1,
-            newPos: nextCells.indexOf(cell),
-            items: [cell]
-          })
-        )
-    );
-}
+// // Cells are unordered
+// function getCellsPatch(prevCells: CellPiece[], nextCells: CellPiece[]): Patch<ParsePiece> {
+//   return prevCells
+//     .filter((prev) => !nextCells.some((next) => equal(prev, next)))
+//     .map(
+//       (cell): PatchItem<ParsePiece> => ({
+//         type: "remove",
+//         oldPos: prevCells.indexOf(cell),
+//         newPos: -1,
+//         items: [cell]
+//       })
+//     )
+//     .concat(
+//       nextCells
+//         .filter((next) => !prevCells.some((prev) => equal(next, prev)))
+//         .map(
+//           (cell): PatchItem<ParsePiece> => ({
+//             type: "add",
+//             oldPos: -1,
+//             newPos: nextCells.indexOf(cell),
+//             items: [cell]
+//           })
+//         )
+//     );
+// }
 
-export function diffMarkdown(oldParse: ParseResult, newParse: ParseResult) {
-  return getPatch<ParsePiece>(oldParse.pieces, newParse.pieces, equal)
-    .concat(getCellsPatch(oldParse.cells, newParse.cells))
-    .map(diffReducer);
-}
+// export function diffMarkdown(oldParse: MarkdownPage, newParse: MarkdownPage) {
+//   return getPatch<ParsePiece>(oldParse.pieces, newParse.pieces, equal)
+//     .concat(getCellsPatch(oldParse.cells, newParse.cells))
+//     .map(diffReducer);
+// }

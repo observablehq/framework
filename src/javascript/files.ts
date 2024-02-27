@@ -1,12 +1,8 @@
-import {createHash} from "node:crypto";
-import {readFileSync} from "node:fs";
-import {extname, join} from "node:path";
+import {extname} from "node:path";
 import type {CallExpression, Node} from "acorn";
 import {ancestor, simple} from "acorn-walk";
-import mime from "mime";
-import {isEnoent} from "../error.js";
 import {getLocalPath} from "../files.js";
-import {relativePath, resolvePath} from "../path.js";
+import {relativePath} from "../path.js";
 import {defaultGlobals} from "./globals.js";
 import {getStringLiteralValue, isMemberExpression, isStringLiteral} from "./node.js";
 import {findReferences} from "./references.js";
@@ -17,17 +13,6 @@ export type FileExpression = {
   node: CallExpression;
   /** The relative path to the source file from the referencing source. */
   name: string;
-  /** The method, if known; e.g., "arrow" for FileAttachment("foo").arrow. */
-  method?: string;
-};
-
-export type FileReference = {
-  /** The relative path to the source file from the referencing source. */
-  name: string;
-  /** The relative path to the serving file (in _file) from the page. */
-  path: string;
-  /** The MIME type, if known. */
-  mimeType: string | null;
   /** The method, if known; e.g., "arrow" for FileAttachment("foo").arrow. */
   method?: string;
 };
@@ -130,28 +115,4 @@ export function findFiles(
   });
 
   return files;
-}
-
-export function resolveFileReference(
-  {name, method}: Pick<FileExpression, "name" | "method">,
-  root: string,
-  sourcePath: string
-): FileReference {
-  const path = resolvePath(sourcePath, name);
-  return {
-    name,
-    mimeType: mime.getType(name),
-    path: `${relativePath(sourcePath, join("_file", path))}?sha=${hashFile(root, path)}`,
-    ...(method && {method})
-  };
-}
-
-function hashFile(root: string, path: string): string {
-  const hash = createHash("sha256");
-  try {
-    hash.update(readFileSync(join(root, path), "utf-8"));
-  } catch (error) {
-    if (!isEnoent(error)) throw error;
-  }
-  return hash.digest("hex");
 }

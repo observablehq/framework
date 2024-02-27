@@ -6,6 +6,7 @@ import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
+import {Parser} from "acorn";
 import {difference} from "d3-array";
 import openBrowser from "open";
 import send from "send";
@@ -17,11 +18,12 @@ import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
-import {createImportResolver, rewriteModule} from "./javascript/imports.js";
-import {populateNpmCache} from "./javascript/npm.js";
-import {diffMarkdown, parseMarkdown} from "./markdown.js";
-import type {ParseResult} from "./markdown.js";
-import {render} from "./render.js";
+import {parseOptions} from "./javascript/parse.js";
+import {/*diffMarkdown,*/ parseMarkdown} from "./markdown.js";
+import type {MarkdownPage} from "./markdown.js";
+import {populateNpmCache} from "./npm.js";
+import {renderPage} from "./render.js";
+import {rewriteModule} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
@@ -128,8 +130,7 @@ export class PreviewServer {
             end(req, res, await bundleStyles({path: filepath}), "text/css");
             return;
           } else if (pathname.endsWith(".js")) {
-            const input = await readFile(filepath, "utf-8");
-            const output = await rewriteModule(input, path, createImportResolver(root, pathname, path));
+            const output = await rewriteModule(root, pathname, path);
             end(req, res, output, "text/javascript");
             return;
           }
@@ -210,7 +211,7 @@ export class PreviewServer {
         try {
           const options = {path: pathname, ...config, preview: true};
           const parse = await parseMarkdown(path + ".md", options);
-          const html = await render(parse, options);
+          const html = await renderPage(parse, options);
           end(req, res, html, "text/html");
         } catch (error) {
           if (!isEnoent(error)) throw error; // internal error
@@ -228,7 +229,7 @@ export class PreviewServer {
         try {
           const options = {path: "/404", ...config, preview: true};
           const parse = await parseMarkdown(join(root, "404.md"), options);
-          const html = await render(parse, options);
+          const html = await renderPage(parse, options);
           end(req, res, html, "text/html");
           return;
         } catch {
@@ -273,7 +274,7 @@ function end(req: IncomingMessage, res: ServerResponse, content: string, type: s
 
 function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Config) {
   let path: string | null = null;
-  let current: ParseResult | null = null;
+  let current: MarkdownPage | null = null;
   let stylesheets: string[] | null = null;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;

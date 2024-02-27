@@ -4,7 +4,7 @@ import {mkdir, readFile, unlink, writeFile} from "node:fs/promises";
 import {basename, join, resolve} from "node:path";
 import deepEqual from "fast-deep-equal";
 import {isEnoent} from "../src/error.js";
-import {type ParseResult, parseMarkdown} from "../src/markdown.js";
+import {type MarkdownPage, parseMarkdown} from "../src/markdown.js";
 import {normalizePieceHtml} from "../src/markdown.js";
 
 const html = (strings, ...values) => String.raw({raw: strings}, ...values);
@@ -261,7 +261,7 @@ describe("normalizePieceHtml only adds local files", () => {
   });
 });
 
-function jsonMeta({html, ...rest}: ParseResult): string {
+function jsonMeta({html, ...rest}: MarkdownPage): string {
   return JSON.stringify(rest, null, 2);
 }
 

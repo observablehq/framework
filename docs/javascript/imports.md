@@ -4,7 +4,8 @@ You can load a library using an `import` statement. For example:
 
 ```js
 import {text} from "./foo.js";
-
+```
+```js
 display(text);
 ```
 

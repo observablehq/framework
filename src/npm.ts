@@ -1,16 +1,17 @@
-import {existsSync} from "node:fs";
+import {existsSync, read} from "node:fs";
 import {mkdir, readFile, readdir, writeFile} from "node:fs/promises";
 import {dirname, join} from "node:path";
 import {Parser} from "acorn";
 import {simple} from "acorn-walk";
-import {gt, satisfies} from "semver";
-import {parseOptions} from "../javascript.js";
-import {relativePath} from "../path.js";
-import {Sourcemap} from "../sourcemap.js";
-import {faint} from "../tty.js";
-import type {ExportNode, ImportNode, ImportReference} from "./imports.js";
-import {findImports} from "./imports.js";
-import {getStringLiteralValue, isStringLiteral} from "./node.js";
+import {gt, rsort, satisfies, sort} from "semver";
+import {isEnoent} from "./error.js";
+import type {ExportNode, ImportNode, ImportReference} from "./javascript/imports.js";
+import {findImports} from "./javascript/imports.js";
+import {getStringLiteralValue, isStringLiteral} from "./javascript/node.js";
+import {parseOptions} from "./javascript/parse.js";
+import {relativePath} from "./path.js";
+import {Sourcemap} from "./sourcemap.js";
+import {faint} from "./tty.js";
 
 export interface NpmSpecifier {
   name: string;
@@ -35,22 +36,22 @@ export function formatNpmSpecifier({name, range, path}: NpmSpecifier): string {
 
 // Like import, don’t fetch the same package more than once to ensure
 // consistency; restart the server if you want to clear the cache.
-const fetchCache = new Map<string, Promise<{headers: Headers; body: any}>>();
+// const fetchCache = new Map<string, Promise<{headers: Headers; body: any}>>();
 
-async function cachedFetch(href: string): Promise<{headers: Headers; body: any}> {
-  let promise = fetchCache.get(href);
-  if (promise) return promise;
-  promise = (async () => {
-    const response = await fetch(href);
-    if (!response.ok) throw new Error(`unable to fetch: ${href}`);
-    const json = /^application\/json(;|$)/.test(response.headers.get("content-type")!);
-    const body = await (json ? response.json() : response.text());
-    return {headers: response.headers, body};
-  })();
-  promise.catch(() => fetchCache.delete(href)); // try again on error
-  fetchCache.set(href, promise);
-  return promise;
-}
+// async function cachedFetch(href: string): Promise<{headers: Headers; body: any}> {
+//   let promise = fetchCache.get(href);
+//   if (promise) return promise;
+//   promise = (async () => {
+//     const response = await fetch(href);
+//     if (!response.ok) throw new Error(`unable to fetch: ${href}`);
+//     const json = /^application\/json(;|$)/.test(response.headers.get("content-type")!);
+//     const body = await (json ? response.json() : response.text());
+//     return {headers: response.headers, body};
+//   })();
+//   promise.catch(() => fetchCache.delete(href)); // try again on error
+//   fetchCache.set(href, promise);
+//   return promise;
+// }
 
 /** Rewrites /npm/ import specifiers to be relative paths to /_npm/. */
 export function rewriteNpmImports(input: string, path: string): string {
@@ -109,42 +110,49 @@ export async function populateNpmCache(root: string, path: string): Promise<stri
   return promise;
 }
 
-export async function findCachedNpmVersion(root: string, specifier: NpmSpecifier): Promise<string | undefined> {
-  let dir = join(root, ".observablehq", "cache", "_npm");
-  let latestVersion: string | undefined;
-  if (specifier.name.startsWith("@")) {
-    const [scope] = specifier.name.split("/");
-    dir = join(dir, scope);
-    if (existsSync(dir)) {
-      for (const entry of await readdir(dir)) {
-        const version = maybeSatisfyingVersion(`${scope}/${entry}`, specifier);
-        if (version && (!latestVersion || gt(version, latestVersion))) latestVersion = version;
-      }
-    }
-  } else {
-    if (existsSync(dir)) {
-      for (const entry of await readdir(dir)) {
-        const version = maybeSatisfyingVersion(entry, specifier);
-        if (version && (!latestVersion || gt(version, latestVersion))) latestVersion = version;
-      }
-    }
-  }
-  return latestVersion;
-}
+let npmVersionCache: Promise<Map<string, string[]>>;
 
-function maybeSatisfyingVersion(entry: string, specifier: NpmSpecifier): string | undefined {
-  const {name, range} = parseNpmSpecifier(entry);
-  if (range && name === specifier.name && (!specifier.range || satisfies(range, specifier.range))) return range;
+async function initializeNpmVersionCache(root: string): typeof npmVersionCache {
+  const cache = new Map<string, string[]>();
+  const cacheDir = join(root, ".observablehq", "cache", "_npm");
+  try {
+    for (const entry of await readdir(cacheDir)) {
+      if (entry.startsWith("@")) {
+        for (const subentry of await readdir(join(cacheDir, entry))) {
+          const {name, range} = parseNpmSpecifier(`${entry}/${subentry}`);
+          const versions = cache.get(name);
+          if (versions) versions.push(range!);
+          else cache.set(name, [range!]);
+        }
+      } else {
+        const {name, range} = parseNpmSpecifier(entry);
+        const versions = cache.get(name);
+        if (versions) versions.push(range!);
+        else cache.set(name, [range!]);
+      }
+    }
+  } catch (error) {
+    if (!isEnoent(error)) throw error;
+  }
+  for (const [key, value] of cache) {
+    cache.set(key, rsort(value));
+  }
+  return cache;
 }
 
 async function resolveNpmVersion(root: string, specifier: NpmSpecifier): Promise<string> {
   const {name, range} = specifier;
   if (range && /^\d+\.\d+\.\d+([-+].*)?$/.test(range)) return range; // exact version specified
-  const cachedVersion = await findCachedNpmVersion(root, specifier);
-  if (cachedVersion) return cachedVersion;
+  const cache = await (npmVersionCache ??= initializeNpmVersionCache(root));
+  const versions = cache.get(specifier.name);
+  if (versions) for (const version of versions) if (!range || satisfies(version, range)) return version;
   const search = range ? `?specifier=${range}` : "";
-  const {version} = (await cachedFetch(`https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`)).body;
+  const href = `https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`;
+  const response = await fetch(href);
+  if (!response.ok) throw new Error(`unable to fetch: ${href}`);
+  const {version} = await response.json();
   if (!version) throw new Error(`unable to resolve version: ${formatNpmSpecifier({name, range})}`);
+  cache.set(specifier.name, versions ? rsort(versions.concat(version)) : [version]);
   return version;
 }
 
@@ -155,7 +163,7 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
   if (name === "parquet-wasm" && !range) range = "0.5.0"; // https://github.com/observablehq/framework/issues/733
   if (name === "echarts" && !range) range = "5.4.3"; // https://github.com/observablehq/framework/pull/811
   try {
-    return `/_npm/${name}@${await resolveNpmVersion(root, {name, range})}/${path.replace(/\+esm$/, "+esm.js")}`;
+    return `/_npm/${name}@${await resolveNpmVersion(root, {name, range})}/${path.replace(/\+esm$/, "+esm.js")}`; // TODO use / instead of @
   } catch {
     return `https://cdn.jsdelivr.net/npm/${name}${range ? `@${range}` : ""}/${path}`;
   }
