@@ -12,7 +12,7 @@ export function FileAttachment(name, base = location.href) {
   const file = files.get(url);
   if (!file) throw new Error(`File not found: ${name}`);
   const {path, mimeType} = file;
-  return new FileAttachmentImpl(path, name.split("/").pop(), mimeType);
+  return new FileAttachmentImpl(String(new URL(path, base)), name.split("/").pop(), mimeType);
 }
 
 async function remote_fetch(file) {
