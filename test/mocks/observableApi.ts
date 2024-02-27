@@ -1,7 +1,11 @@
 import type {MockAgent} from "undici";
 import {type Interceptable} from "undici";
 import PendingInterceptorsFormatter from "undici/lib/mock/pending-interceptors-formatter.js";
-import type {GetCurrentUserResponse, PostAuthRequestPollResponse, PostAuthRequestResponse} from "../../src/observableApiClient.js";
+import type {
+  GetCurrentUserResponse,
+  PostAuthRequestPollResponse,
+  PostAuthRequestResponse
+} from "../../src/observableApiClient.js";
 import {
   type GetProjectResponse,
   type PaginatedList,
@@ -370,7 +374,7 @@ const workspaces = [
     tier: "pro_2024",
     type: "team",
     role: "guest_member",
-    projects_info: [{project_slug: "test-project", project_role: "editor"}]
+    projects_info: [{project_slug: "test-project-1", project_role: "editor"}]
   },
   {
     id: "0000000000000005",
@@ -379,7 +383,7 @@ const workspaces = [
     tier: "pro_2024",
     type: "team",
     role: "guest_member",
-    projects_info: [{project_slug: "test-project", project_role: "viewer"}]
+    projects_info: [{project_slug: "test-project-2", project_role: "viewer"}]
   }
 ] as GetCurrentUserResponse["workspaces"];
 

@@ -8,7 +8,13 @@ import {commandRequiresAuthenticationMessage} from "./commandInstruction.js";
 import type {Config} from "./config.js";
 import {CliError, isApiError, isHttpError} from "./error.js";
 import type {Logger, Writer} from "./logger.js";
-import {type AuthEffects, defaultEffects as defaultAuthEffects, formatUser, loginInner, validWorkspaces} from "./observableApiAuth.js";
+import {
+  type AuthEffects,
+  defaultEffects as defaultAuthEffects,
+  formatUser,
+  loginInner,
+  validWorkspaces
+} from "./observableApiAuth.js";
 import {ObservableApiClient} from "./observableApiClient.js";
 import {
   type GetCurrentUserResponse,

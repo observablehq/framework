@@ -533,7 +533,12 @@ describe("deploy", () => {
       assert.ok("options" in err && Array.isArray(err.options) && err.options.length === 3);
       assert.ok("options" in err && Array.isArray(err.options) && err.options[0].value.role === "owner");
       assert.ok("options" in err && Array.isArray(err.options) && err.options[1].value.role === "member");
-      assert.ok("options" in err && Array.isArray(err.options) && err.options[2].value.role === "guest_member" && err.options[2].value.projects_info.some((info) => info.project_role === "editor"));
+      assert.ok(
+        "options" in err &&
+          Array.isArray(err.options) &&
+          err.options[2].value.role === "guest_member" &&
+          err.options[2].value.projects_info.some((info) => info.project_role === "editor")
+      );
     }
   });
 

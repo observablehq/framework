@@ -153,13 +153,18 @@ export function formatUser(user: {name?: string; login: string}): string {
   return user.name ? `${user.name} (@${user.login})` : `@${user.login}`;
 }
 
-export function validWorkspaces(workspaces: GetCurrentUserResponse["workspaces"]): GetCurrentUserResponse["workspaces"] {
+export function validWorkspaces(
+  workspaces: GetCurrentUserResponse["workspaces"]
+): GetCurrentUserResponse["workspaces"] {
   return workspaces.filter((w) => {
     if (
-      VALID_TIERS.has(w.tier) && (
-        w.role === "owner" || w.role === "member" || (w.role === "guest_member" && w.projects_info.some((info) => info.project_role === "owner" || info.project_role === "editor"))
-      )
-    ) return true;
+      VALID_TIERS.has(w.tier) &&
+      (w.role === "owner" ||
+        w.role === "member" ||
+        (w.role === "guest_member" &&
+          w.projects_info.some((info) => info.project_role === "owner" || info.project_role === "editor")))
+    )
+      return true;
     return false;
-  })
+  });
 }

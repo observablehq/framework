@@ -212,6 +212,7 @@ type ProjectInfo = {
   project_slug: string;
   project_role: ProjectRole;
 };
+
 export interface WorkspaceResponse {
   id: string;
   login: string;
@@ -219,7 +220,7 @@ export interface WorkspaceResponse {
   tier: string;
   type: string;
   role: Role;
-  projects_info: ProjectInfo[]
+  projects_info: ProjectInfo[];
 }
 
 export type PostProjectResponse = GetProjectResponse;
