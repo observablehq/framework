@@ -35,12 +35,12 @@ export const defaultEffects: AuthEffects = {
   exitSuccess: () => process.exit(0)
 };
 
-export async function login(effects: AuthEffects = defaultEffects) {
+export async function login(effects: AuthEffects = defaultEffects, overrides = {}) {
   const {clack} = effects;
   Telemetry.record({event: "login", step: "start"});
   clack.intro(inverse(" observable login "));
 
-  const {currentUser} = await loginInner(effects);
+  const {currentUser} = await loginInner(effects, overrides);
 
   if (currentUser.workspaces.length === 0) {
     clack.log.warn(`${yellow("Warning:")} You don't have any workspaces to deploy to.`);
@@ -57,7 +57,10 @@ export async function login(effects: AuthEffects = defaultEffects) {
   Telemetry.record({event: "login", step: "finish"});
 }
 
-export async function loginInner(effects: AuthEffects): Promise<{currentUser: GetCurrentUserResponse; apiKey: ApiKey}> {
+export async function loginInner(
+  effects: AuthEffects,
+  {pollTime = 1000} = {}
+): Promise<{currentUser: GetCurrentUserResponse; apiKey: ApiKey}> {
   const {clack} = effects;
   const apiClient = new ObservableApiClient();
   const requestInfo = await apiClient.postAuthRequest({
@@ -76,7 +79,7 @@ export async function loginInner(effects: AuthEffects): Promise<{currentUser: Ge
 
   let apiKey: PostAuthRequestPollResponse["apiKey"] | null = null;
   while (apiKey === null) {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, pollTime));
     const requestPoll = await apiClient.postAuthRequestPoll(requestInfo.id);
     switch (requestPoll.status) {
       case "pending":
