@@ -1,8 +1,9 @@
 import {createHash} from "node:crypto";
-import {readFileSync, statSync} from "node:fs";
-import {join} from "node:path";
+import {existsSync, readFileSync, statSync} from "node:fs";
+import {join, relative} from "node:path";
 import type {Program} from "acorn";
 import {Parser} from "acorn";
+import {Loader} from "../dataloader.js";
 import {resolvePath} from "../path.js";
 import {findFiles} from "./files.js";
 import {findImports} from "./imports.js";
@@ -109,9 +110,15 @@ export function getModuleInfo(root: string, path: string): ModuleInfo | undefine
 
 /**
  * Returns the content hash for the specified file within the source root. If
- * the specified file does not exist, returns the hash of empty content.
+ * the specified file does not exist, returns the hash of empty content. If the
+ * referenced file does not exist, we check for the corresponding data loader
+ * and return its hash instead.
  */
 export function getFileHash(root: string, path: string): string {
+  if (!existsSync(join(root, path))) {
+    const loader = Loader.find(root, path);
+    if (loader) path = relative(root, loader.path);
+  }
   return getFileInfo(root, path)?.hash ?? createHash("sha256").digest("hex");
 }
 
