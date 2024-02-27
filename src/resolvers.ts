@@ -186,7 +186,7 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
 
   function resolveStylesheet(specifier: string): string {
     return isLocalImport(specifier, path)
-      ? relativePath(path, resolveImportPath(root, resolvePath(path, specifier)))
+      ? relativePath(path, resolveStylesheetPath(root, resolvePath(path, specifier)))
       : specifier.startsWith("observablehq:")
       ? relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}`)
       : resolutions.has(specifier)
@@ -206,6 +206,10 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
     resolveDynamicImport: resolveImport,
     resolveStylesheet
   };
+}
+
+export function resolveStylesheetPath(root: string, path: string): string {
+  return `/_import/${path}?sha=${getFileHash(root, path)}`;
 }
 
 export function resolveImportPath(root: string, path: string): string {

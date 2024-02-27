@@ -18,11 +18,12 @@ import {mergeStyle} from "./config.js";
 import {getLocalPath} from "./files.js";
 import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
-import type {ImportReference} from "./javascript/imports.js";
+// import type {ImportReference} from "./javascript/imports.js";
+import {getFileHash, getModuleHash} from "./javascript/module.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
-import {relativePath} from "./path.js";
-import {resolveFilePath} from "./resolvers.js";
+import {relativePath, resolvePath} from "./path.js";
+import {isLocalImport, resolveFilePath} from "./resolvers.js";
 import {transpileTag} from "./tag.js";
 import {red} from "./tty.js";
 
@@ -31,7 +32,7 @@ export interface MarkdownPage {
   html: string;
   data: {[key: string]: any} | null;
   style: string | null;
-  // TODO assets: Set<string>;
+  assets: Set<string>;
   code: {id: string; node: JavaScriptNode}[];
   hash: string;
 }
@@ -43,7 +44,7 @@ export interface MarkdownPage {
 
 interface ParseContext {
   code: {id: string; node: JavaScriptNode}[];
-  // TODO assets: Set<string>;
+  assets: Set<string>;
   startLine: number;
   currentLine: number;
 }
@@ -329,7 +330,7 @@ const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcs
   {query: "video source[src]", src: "src"}
 ]);
 
-export function rewriteHtml(html: string, root: string, path: string): string {
+export function rewriteHtml(html: string, root: string, path: string, context: ParseContext): string {
   const {document} = parseHTML(html);
 
   // Extracting references to files (such as from linked stylesheets).
@@ -338,9 +339,8 @@ export function rewriteHtml(html: string, root: string, path: string): string {
   // extract the references here (synchronously), but resolve them later.
   const resolveFile = (specifier: string): string | undefined => {
     const localPath = getLocalPath(path, specifier);
-    if (!localPath) return;
-    // TODO warn for non-local relative paths?
-    // TODO context.assets.add(localPath);
+    if (!localPath) return; // TODO warn for non-local relative paths?
+    context.assets.add(localPath);
     return relativePath(path, resolveFilePath(root, localPath));
   };
 
@@ -396,7 +396,7 @@ export interface ParseOptions {
 }
 
 // TODO This isn’t “parsing” — it’s transpiling.
-export async function parseMarkdown(sourcePath: string, {root, path, style}: ParseOptions): Promise<MarkdownPage> {
+export async function parseMarkdown(sourcePath: string, {root, path, style: configStyle}: ParseOptions): Promise<MarkdownPage> {
   const source = await readFile(sourcePath, "utf-8");
   const parts = matter(source, {});
   const md = MarkdownIt({html: true});
@@ -406,17 +406,21 @@ export async function parseMarkdown(sourcePath: string, {root, path, style}: Par
   md.renderer.rules.placeholder = makePlaceholderRenderer(root, path);
   md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!, path);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
+  const assets = new Set<string>();
   const code: {id: string; node: JavaScriptNode}[] = [];
-  const context: ParseContext = {code, startLine: 0, currentLine: 0};
+  const context: ParseContext = {assets, code, startLine: 0, currentLine: 0};
   const tokens = md.parse(parts.content, context);
-  const html = rewriteHtml(md.renderer.render(tokens, md.options, context), root, path); // Note: mutates code!
+  const html = rewriteHtml(md.renderer.render(tokens, md.options, context), root, path, context); // Note: mutates code, assets!
+  const style = getStylesheet(path, parts.data, configStyle);
+  if (style && isLocalImport(style, path)) assets.add(style);
   return {
     html,
     data: isEmpty(parts.data) ? null : parts.data,
     title: parts.data?.title ?? findTitle(tokens) ?? null,
-    style: getStylesheet(path, parts.data, style),
+    style,
+    assets,
     code,
-    hash: computeMarkdownHash(html, code)
+    hash: computeMarkdownHash(source, code, assets, root, path)
   };
 }
 
@@ -432,19 +436,24 @@ function getStylesheet(path: string, data: MarkdownPage["data"], style: Config["
     ? null
     : "path" in style
     ? relativePath(path, style.path)
-    : `observablehq:theme-${style.theme.join(",")}`;
+    : `observablehq:theme-${style.theme.join(",")}.css`;
 }
 
-function computeMarkdownHash(html: string, code: {id: string; node: JavaScriptNode}[]): string {
-  const hash = createHash("sha256").update(html);
+function computeMarkdownHash(
+  source: string,
+  code: {id: string; node: JavaScriptNode}[],
+  assets: Iterable<string>,
+  root: string,
+  path: string
+): string {
+  const hash = createHash("sha256").update(source);
   for (const {node} of code) {
-    for (const f of node.files) {
-      // TODO
-    }
+    for (const f of node.files) hash.update(getFileHash(root, resolvePath(path, f.name)));
+    for (const i of node.imports) if (i.type === "local") hash.update(getModuleHash(root, resolvePath(path, i.name)));
   }
-  // for (const i of imports) hash.update(i.name);
-  // for (const f of files) hash.update(f.path);
-  return hash.digest("hex");
+  for (const f of assets) hash.update(getFileHash(root, resolvePath(path, f)));
+  const hex = hash.digest("hex");
+  return hex;
 }
 
 // TODO Use gray-matter’s parts.isEmpty, but only when it’s accurate.
