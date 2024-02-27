@@ -1,9 +1,11 @@
 import assert from "node:assert";
+import {join as posixJoin} from "node:path/posix";
+import {join as win32Join} from "node:path/win32";
 import {pathToFileURL, toOsSlashes, toUrlSlashes} from "../src/normalizedPath.js";
 
 describe("toOsSlashes", () => {
   describe("on a posix platform", () => {
-    const opts = {sep: "/"} as const;
+    const opts = {sep: "/", join: posixJoin} as const;
 
     it("handles absolute paths", () => {
       assert.equal(toOsSlashes("/", opts), "/");
@@ -20,7 +22,7 @@ describe("toOsSlashes", () => {
   });
 
   describe("on Windows", () => {
-    const opts = {sep: "\\"} as const;
+    const opts = {sep: "\\", join: win32Join} as const;
 
     it("throws an error on absolute paths without drive letters", () => {
       for (const path of ["/", "/a", "/a/b", "/a/b/c"]) {

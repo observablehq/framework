@@ -42,7 +42,7 @@ export const homedir: typeof os.homedir = () => toUrlSlashes(os.homedir());
  * On Windows, absolute paths must start with a drive letter, e.g.
  * `/c:/path/to/file`.
  */
-export function toOsSlashes(originalPath: fs.PathLike, {sep = osPath.sep} = {}): string {
+export function toOsSlashes(originalPath: fs.PathLike, {sep = osPath.sep, osJoin = osPath.join} = {}): string {
   let path: string;
   if (originalPath instanceof Buffer) {
     path = originalPath.toString();
@@ -66,7 +66,7 @@ export function toOsSlashes(originalPath: fs.PathLike, {sep = osPath.sep} = {}):
   if (!driveLetter && isAbsolute) throw new Error(`expected a drive letter in absolute path: ${originalPath}`);
 
   if (!parts.length) return driveLetter + (isAbsolute ? sep : "");
-  let result = [driveLetter, isAbsolute ? sep : "", osPath.join(...parts)].join("");
+  let result = [driveLetter, isAbsolute ? sep : "", osJoin(...parts)].join("");
   if (path.endsWith("/")) result += sep;
   return result;
 }
