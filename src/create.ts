@@ -1,14 +1,24 @@
 import {exec} from "node:child_process";
-import {accessSync, existsSync, readdirSync, statSync} from "node:fs";
-import {constants, copyFile, mkdir, readFile, readdir, stat, writeFile} from "node:fs/promises";
-import {basename, dirname, join, normalize, resolve} from "node:path";
 import {setTimeout as sleep} from "node:timers/promises";
-import {fileURLToPath} from "node:url";
 import {promisify} from "node:util";
 import * as clack from "@clack/prompts";
 import untildify from "untildify";
 import {version} from "../package.json";
 import type {ClackEffects} from "./clack.js";
+import {
+  accessSync,
+  constants,
+  copyFile,
+  existsSync,
+  mkdir,
+  readFile,
+  readdir,
+  readdirSync,
+  stat,
+  statSync,
+  writeFile
+} from "./normalizedFs.js";
+import {basename, dirname, fileURLToPath, join, normalize, resolve} from "./normalizedPath.js";
 import {cyan, faint, inverse, link, reset} from "./tty.js";
 
 export interface CreateEffects {
@@ -87,7 +97,6 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
           message: "Initialize git repository?"
         }),
       installing: async ({results: {rootPath, projectTitle, includeSampleFiles, packageManager, initializeGit}}) => {
-        rootPath = untildify(rootPath!);
         const s = clack.spinner();
         s.start("Copying template files");
         const template = includeSampleFiles ? "default" : "empty";
@@ -97,7 +106,7 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
         await effects.sleep(1000);
         await recursiveCopyTemplate(
           templateDir,
-          rootPath!,
+          untildify(rootPath!),
           {
             runCommand,
             installCommand,
@@ -144,7 +153,7 @@ function validateRootPath(rootPath: string, defaultError?: string): string | und
 }
 
 function inferTitle(rootPath: string): string {
-  return basename(rootPath!)
+  return basename(rootPath)
     .split(/[-_\s]/)
     .map(([c, ...rest]) => c.toUpperCase() + rest.join(""))
     .join(" ");
@@ -196,7 +205,11 @@ async function recursiveCopyTemplate(
       contents = contents.replaceAll(/\{\{\s*(\w+)\s*\}\}/g, (_, key) => {
         const val = context[key];
         if (val) return val;
-        throw new Error(`no template variable ${key}`);
+        throw new Error(
+          `no template variable ${key} (expected one of ${Object.entries(context)
+            .map(([k, v]) => `${k}=${v}`)
+            .join(", ")})`
+        );
       });
       await effects.writeFile(outputPath, contents);
     } else {

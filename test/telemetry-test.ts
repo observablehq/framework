@@ -1,6 +1,6 @@
 import assert from "assert";
-import type {readFile} from "fs/promises";
 import {MockAgent, getGlobalDispatcher, setGlobalDispatcher} from "undici";
+import type {readFile} from "../src/normalizedFs.js";
 import {Telemetry} from "../src/telemetry.js";
 import {MockLogger} from "./mocks/logger.js";
 

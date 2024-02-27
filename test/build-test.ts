@@ -1,10 +1,10 @@
 import assert from "node:assert";
-import {existsSync, readdirSync, statSync} from "node:fs";
-import {open, readFile, rm} from "node:fs/promises";
-import {join, normalize, relative} from "node:path";
+import os from "node:os";
 import {difference} from "d3-array";
 import {FileBuildEffects, build} from "../src/build.js";
 import {readConfig, setCurrentDate} from "../src/config.js";
+import {existsSync, open, readFile, readdirSync, rm, statSync} from "../src/normalizedFs.js";
+import {join, normalize, relative} from "../src/normalizedPath.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
 
 const silentEffects = {
@@ -23,7 +23,10 @@ describe("build", async () => {
     const path = join(inputRoot, name);
     if (!statSync(path).isDirectory()) continue;
     const only = name.startsWith("only.");
-    const skip = name.startsWith("skip.");
+    const skip =
+      name.startsWith("skip.") ||
+      (name.endsWith(".posix") && os.platform() === "win32") ||
+      (name.endsWith(".win32") && os.platform() !== "win32");
     const outname = only || skip ? name.slice(5) : name;
     (only ? it.only : skip ? it.skip : it)(`${inputRoot}/${name}`, async () => {
       const actualDir = join(outputRoot, `${outname}-changed`);

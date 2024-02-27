@@ -1,6 +1,4 @@
 import {createHash} from "node:crypto";
-import {readFileSync} from "node:fs";
-import {join} from "node:path";
 import {Parser} from "acorn";
 import type {Identifier, Node, Program} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression} from "acorn";
@@ -8,6 +6,8 @@ import {simple} from "acorn-walk";
 import {isEnoent} from "../error.js";
 import {type Feature, type ImportReference, type JavaScriptNode} from "../javascript.js";
 import {parseOptions} from "../javascript.js";
+import {readFileSync} from "../normalizedFs.js";
+import {join} from "../normalizedPath.js";
 import {Sourcemap} from "../sourcemap.js";
 import {relativeUrl, resolvePath} from "../url.js";
 import {getFeature, getFeatureReferenceMap, getStringLiteralValue, isStringLiteral} from "./features.js";

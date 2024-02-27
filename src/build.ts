@@ -1,7 +1,3 @@
-import {existsSync} from "node:fs";
-import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
-import {basename, dirname, join} from "node:path";
-import {fileURLToPath} from "node:url";
 import type {Config, Style} from "./config.js";
 import {mergeStyle} from "./config.js";
 import {Loader} from "./dataloader.js";
@@ -9,6 +5,8 @@ import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
 import {createImportResolver, rewriteModule} from "./javascript/imports.js";
 import type {Logger, Writer} from "./logger.js";
+import {access, constants, copyFile, existsSync, readFile, writeFile} from "./normalizedFs.js";
+import {basename, dirname, fileURLToPath, join} from "./normalizedPath.js";
 import {renderServerless} from "./render.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
@@ -32,6 +30,8 @@ export interface BuildOptions {
 export interface BuildEffects {
   logger: Logger;
   output: Writer;
+  existsSync: (path: string) => boolean;
+  readFile(path: string, encoding: "utf-8"): Promise<string>;
 
   /**
    * @param outputPath The path of this file relative to the outputRoot. For
@@ -140,8 +140,8 @@ export async function build(
   for (const file of files) {
     let sourcePath = join(root, file);
     const outputPath = join("_file", file);
-    if (!existsSync(sourcePath)) {
-      const loader = Loader.find(root, join("/", file), {useStale: true});
+    if (!effects.existsSync(sourcePath)) {
+      const loader = Loader.find(root, file, {useStale: true});
       if (!loader) {
         effects.logger.error("missing referenced file", sourcePath);
         continue;
@@ -162,12 +162,12 @@ export async function build(
   for (const file of imports) {
     const sourcePath = join(root, file);
     const outputPath = join("_import", file);
-    if (!existsSync(sourcePath)) {
+    if (!effects.existsSync(sourcePath)) {
       effects.logger.error("missing referenced file", sourcePath);
       continue;
     }
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-    const contents = await rewriteModule(await readFile(sourcePath, "utf-8"), file, importResolver);
+    const contents = await rewriteModule(await effects.readFile(sourcePath, "utf-8"), file, importResolver);
     await effects.writeFile(outputPath, contents);
   }
 
@@ -193,6 +193,12 @@ export class FileBuildEffects implements BuildEffects {
     this.logger = logger;
     this.output = output;
     this.outputRoot = outputRoot;
+  }
+  existsSync(path: string) {
+    return existsSync(path);
+  }
+  readFile(path: string, encoding: "utf-8"): Promise<string> {
+    return readFile(path, encoding);
   }
   async copyFile(sourcePath: string, outputPath: string): Promise<void> {
     const destination = join(this.outputRoot, outputPath);

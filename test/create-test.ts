@@ -1,6 +1,6 @@
 import assert from "node:assert";
-import {readFile} from "node:fs/promises";
 import {type CreateEffects, create} from "../src/create.js";
+import {readFile} from "../src/normalizedFs.js";
 import {TestClackEffects} from "./mocks/clack.js";
 
 describe("create", async () => {

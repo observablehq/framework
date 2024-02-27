@@ -1,0 +1,16 @@
+# Ask git to automatically ensure that text files have posix-style line endings.
+* text eol=lf
+
+# Git can usually detect binary files, but lets mark the binary files we have
+# in the repository as binary just to be safe.
+*.arrow binary
+*.db binary
+*.jpg binary
+*.mp4 binary
+*.parquet binary
+*.png binary
+*.tar binary
+*.tgz binary
+*.webp binary
+*.xlsx binary
+*.zip binary

@@ -1,5 +1,4 @@
 import {createHash} from "node:crypto";
-import {readFile} from "node:fs/promises";
 import {type Patch, type PatchItem, getPatch} from "fast-array-diff";
 import equal from "fast-deep-equal";
 import matter from "gray-matter";
@@ -16,6 +15,7 @@ import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
 import type {FileReference, ImportReference, PendingTranspile, Transpile} from "./javascript.js";
 import {transpileJavaScript} from "./javascript.js";
+import {readFile} from "./normalizedFs.js";
 import {transpileTag} from "./tag.js";
 import {resolvePath} from "./url.js";
 

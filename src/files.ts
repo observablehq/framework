@@ -1,11 +1,9 @@
-import {type Stats, existsSync} from "node:fs";
-import {mkdir, readdir, stat} from "node:fs/promises";
-import {dirname, extname, join, normalize, relative} from "node:path";
-import {cwd} from "node:process";
-import {fileURLToPath} from "node:url";
+import {type Stats} from "node:fs";
 import mime from "mime";
 import {isEnoent} from "./error.js";
 import type {FileReference} from "./javascript.js";
+import {existsSync, mkdir, readdir, stat} from "./normalizedFs.js";
+import {cwd, dirname, extname, fileURLToPath, join, normalize, relative} from "./normalizedPath.js";
 import {relativeUrl, resolvePath} from "./url.js";
 
 // A path is local if it doesn’t go outside the the root.

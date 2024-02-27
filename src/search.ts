@@ -1,10 +1,10 @@
-import {basename, join} from "node:path";
 import he from "he";
 import MiniSearch from "minisearch";
 import type {Config} from "./config.js";
 import {visitMarkdownFiles} from "./files.js";
 import type {Logger} from "./logger.js";
 import {parseMarkdown} from "./markdown.js";
+import {basename, join} from "./normalizedPath.js";
 import {faint} from "./tty.js";
 
 // Avoid reindexing too often in preview.

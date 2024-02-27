@@ -8,14 +8,15 @@ import esbuild from "rollup-plugin-esbuild";
 import {getClientPath} from "./files.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
 import {isPathImport, resolveNpmImport} from "./javascript/imports.js";
+import {toOsSlashes, toUrlSlashes} from "./normalizedPath.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
 import {Sourcemap} from "./sourcemap.js";
 import {THEMES, renderTheme} from "./theme.js";
 import {relativeUrl} from "./url.js";
 
 const STYLE_MODULES = {
-  "observablehq:default.css": getClientPath("./src/style/default.css"),
-  ...Object.fromEntries(THEMES.map(({name, path}) => [`observablehq:theme-${name}.css`, path]))
+  "observablehq:default.css": toOsSlashes(getClientPath("./src/style/default.css")),
+  ...Object.fromEntries(THEMES.map(({name, path}) => [`observablehq:theme-${name}.css`, toOsSlashes(path)]))
 };
 
 // These libraries are currently bundled in to a wrapper.
@@ -28,7 +29,7 @@ function rewriteInputsNamespace(code: string) {
 export async function bundleStyles({path, theme}: {path?: string; theme?: string[]}): Promise<string> {
   const result = await build({
     bundle: true,
-    ...(path ? {entryPoints: [path]} : {stdin: {contents: renderTheme(theme!), loader: "css"}}),
+    ...(path ? {entryPoints: [toUrlSlashes(path)]} : {stdin: {contents: renderTheme(theme!), loader: "css"}}),
     write: false,
     alias: STYLE_MODULES
   });
@@ -38,7 +39,7 @@ export async function bundleStyles({path, theme}: {path?: string; theme?: string
 
 export async function rollupClient(clientPath: string, {minify = false} = {}): Promise<string> {
   const bundle = await rollup({
-    input: clientPath,
+    input: toOsSlashes(clientPath),
     external: [/^https:/],
     plugins: [
       nodeResolve({resolveOnly: BUNDLED_MODULES}),
@@ -85,7 +86,8 @@ function importResolve(clientPath: string): Plugin {
 }
 
 // TODO Consolidate with createImportResolver.
-async function resolveImport(source: string, specifier: string | AstNode): Promise<ResolveIdResult> {
+async function resolveImport(source: string, osSpecifier: string | AstNode): Promise<ResolveIdResult> {
+  const specifier = typeof osSpecifier === "string" ? toUrlSlashes(osSpecifier) : osSpecifier;
   return typeof specifier !== "string"
     ? null
     : specifier.startsWith("observablehq:")

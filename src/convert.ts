@@ -1,11 +1,11 @@
-import {existsSync} from "node:fs";
-import {utimes, writeFile} from "node:fs/promises";
-import {join} from "node:path";
 import * as clack from "@clack/prompts";
 import wrapAnsi from "wrap-ansi";
 import type {ClackEffects} from "./clack.js";
 import {CliError} from "./error.js";
 import {prepareOutput} from "./files.js";
+import {} from "./normalizedFs.js";
+import {existsSync, utimes, writeFile} from "./normalizedFs.js";
+import {join} from "./normalizedPath.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
 import {type TtyEffects, bold, cyan, faint, inverse, link, reset, defaultEffects as ttyEffects} from "./tty.js";
 

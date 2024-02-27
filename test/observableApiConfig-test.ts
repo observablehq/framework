@@ -1,22 +1,34 @@
 import assert from "node:assert";
-import {join} from "node:path";
+import os from "node:os";
 import type {ConfigEffects} from "../src/observableApiConfig.js";
 import {loadUserConfig} from "../src/observableApiConfig.js";
+
+const isWindows = os.platform() === "win32";
 
 describe("loadUserConfig", () => {
   it("checks expected directories for the config", async () => {
     const effects = new MockConfigEffects();
     assert.deepEqual(await loadUserConfig(effects), {
       config: {},
-      configPath: "/home/amaya/.observablehq"
+      configPath: isWindows ? "/C:/Users/Amaya/.observablehq" : "/home/amaya/.observablehq"
     });
-    assert.deepEqual(effects._readLog, [
-      "/opt/projects/acme-bi/.observablehq",
-      "/opt/projects/.observablehq",
-      "/opt/.observablehq",
-      "/.observablehq",
-      "/home/amaya/.observablehq"
-    ]);
+    assert.deepEqual(
+      effects._readLog,
+      isWindows
+        ? [
+            "/D:/Projects/acme-bi/.observablehq",
+            "/D:/Projects/.observablehq",
+            "/D:/.observablehq",
+            "/C:/Users/Amaya/.observablehq"
+          ]
+        : [
+            "/opt/projects/acme-bi/.observablehq",
+            "/opt/projects/.observablehq",
+            "/opt/.observablehq",
+            "/.observablehq",
+            "/home/amaya/.observablehq"
+          ]
+    );
     assert.deepEqual(effects._writeLog, []);
   });
 });
@@ -45,11 +57,12 @@ export class MockConfigEffects implements ConfigEffects {
   }
 
   homedir() {
-    return join("/", "home", "amaya");
+    return isWindows ? "/C:/Users/Amaya" : "/home/amaya";
   }
 
   cwd() {
-    return join("/", "opt", "projects", "acme-bi");
+    // it is important that this is not inside the home dir
+    return isWindows ? "/D:/Projects/acme-bi" : "/opt/projects/acme-bi";
   }
 }
 

@@ -1,26 +1,25 @@
-import fs from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
 import {CliError, isEnoent} from "./error.js";
+import {mkdir, readFile, writeFile} from "./normalizedFs.js";
+import {cwd, dirname, homedir, join, resolve} from "./normalizedPath.js";
 
 export interface ConfigEffects {
   readFile: (path: string, encoding: "utf8") => Promise<string>;
   writeFile: (path: string, contents: string) => Promise<void>;
   env: typeof process.env;
-  cwd: typeof process.cwd;
+  cwd: () => string;
   mkdir: (path: string, options?: {recursive?: boolean}) => Promise<void>;
-  homedir: typeof os.homedir;
+  homedir: () => string;
 }
 
 export const defaultEffects: ConfigEffects = {
-  readFile: (path, encoding) => fs.readFile(path, encoding),
-  writeFile: fs.writeFile,
+  readFile: (path, encoding) => readFile(path, encoding),
+  writeFile,
   mkdir: async (path, options) => {
-    await fs.mkdir(path, options);
+    await mkdir(path, options);
   },
   env: process.env,
-  cwd: process.cwd,
-  homedir: os.homedir
+  cwd,
+  homedir
 };
 
 const userConfigName = ".observablehq";
@@ -69,7 +68,7 @@ export async function getDeployConfig(
   sourceRoot: string,
   effects: ConfigEffects = defaultEffects
 ): Promise<DeployConfig> {
-  const deployConfigPath = path.join(effects.cwd(), sourceRoot, ".observablehq", "deploy.json");
+  const deployConfigPath = join(effects.cwd(), sourceRoot, ".observablehq", "deploy.json");
   let config: object | null = null;
   try {
     const content = await effects.readFile(deployConfigPath, "utf8");
@@ -93,8 +92,8 @@ export async function setDeployConfig(
   newConfig: DeployConfig,
   effects: ConfigEffects = defaultEffects
 ): Promise<void> {
-  const dir = path.join(effects.cwd(), sourceRoot, ".observablehq");
-  const deployConfigPath = path.join(dir, "deploy.json");
+  const dir = join(effects.cwd(), sourceRoot, ".observablehq");
+  const deployConfigPath = join(dir, "deploy.json");
   const oldConfig = (await getDeployConfig(sourceRoot)) || {};
   const merged = {...oldConfig, ...newConfig};
   await effects.mkdir(dir, {recursive: true});
@@ -104,13 +103,13 @@ export async function setDeployConfig(
 export async function loadUserConfig(
   effects: ConfigEffects = defaultEffects
 ): Promise<{configPath: string; config: UserConfig}> {
-  const homeConfigPath = path.join(effects.homedir(), userConfigName);
+  const homeConfigPath = join(effects.homedir(), userConfigName);
 
   function* pathsToTry(): Generator<string> {
-    let cursor = path.resolve(effects.cwd());
+    let cursor = resolve(effects.cwd());
     while (true) {
-      yield path.join(cursor, userConfigName);
-      const nextCursor = path.dirname(cursor);
+      yield join(cursor, userConfigName);
+      const nextCursor = dirname(cursor);
       if (nextCursor === cursor) break;
       cursor = nextCursor;
     }

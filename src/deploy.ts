@@ -1,4 +1,3 @@
-import {join} from "node:path";
 import * as clack from "@clack/prompts";
 import wrapAnsi from "wrap-ansi";
 import type {BuildEffects} from "./build.js";
@@ -8,6 +7,8 @@ import {commandRequiresAuthenticationMessage} from "./commandInstruction.js";
 import type {Config} from "./config.js";
 import {CliError, isApiError, isHttpError} from "./error.js";
 import type {Logger, Writer} from "./logger.js";
+import {existsSync, readFile} from "./normalizedFs.js";
+import {join} from "./normalizedPath.js";
 import {type AuthEffects, defaultEffects as defaultAuthEffects, formatUser, loginInner} from "./observableApiAuth.js";
 import {ObservableApiClient} from "./observableApiClient.js";
 import {
@@ -374,6 +375,14 @@ class DeployBuildEffects implements BuildEffects {
       }
       throw error;
     }
+  }
+  existsSync(path: string) {
+    return existsSync(path);
+  }
+  readFile(path: string): Promise<Buffer>;
+  readFile(path: string, encoding: BufferEncoding): Promise<string>;
+  readFile(path: string, encoding?: BufferEncoding): Promise<string | Buffer> {
+    return encoding ? readFile(path, encoding) : readFile(path);
   }
 }
 

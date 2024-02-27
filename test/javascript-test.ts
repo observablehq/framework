@@ -1,9 +1,8 @@
 import assert from "node:assert";
-import {readdirSync, statSync} from "node:fs";
-import {mkdir, readFile, unlink, writeFile} from "node:fs/promises";
-import {basename, join, resolve} from "node:path";
 import {isEnoent} from "../src/error.js";
 import {transpileJavaScript} from "../src/javascript.js";
+import {mkdir, readFile, readdirSync, statSync, unlink, writeFile} from "../src/normalizedFs.js";
+import {basename, join, resolve} from "../src/normalizedPath.js";
 import {renderDefineCell} from "../src/render.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
 

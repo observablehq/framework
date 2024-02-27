@@ -1,7 +1,7 @@
-import {basename, dirname, join} from "node:path";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import {parseMarkdown} from "./markdown.js";
+import {basename, cwd, dirname, join, pathToFileURL} from "./normalizedPath.js";
 import {resolveTheme} from "./theme.js";
 import {resolvePath} from "./url.js";
 
@@ -51,8 +51,8 @@ export interface Config {
 
 export async function readConfig(configPath?: string, root?: string): Promise<Config> {
   if (configPath === undefined) return readDefaultConfig(root);
-  const importPath = join(process.cwd(), root ?? ".", configPath);
-  return normalizeConfig((await import(importPath)).default, root);
+  const importPath = pathToFileURL(join(cwd(), root ?? ".", configPath));
+  return normalizeConfig((await import(importPath.toString())).default, root);
 }
 
 export async function readDefaultConfig(root?: string): Promise<Config> {

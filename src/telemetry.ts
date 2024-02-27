@@ -1,10 +1,10 @@
 import {exec} from "node:child_process";
 import {createHash, randomUUID} from "node:crypto";
-import {readFile, writeFile} from "node:fs/promises";
-import {join} from "node:path";
 import os from "os";
 import {CliError} from "./error.js";
 import type {Logger} from "./logger.js";
+import {readFile, writeFile} from "./normalizedFs.js";
+import {join} from "./normalizedPath.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
 import {link, magenta} from "./tty.js";
 

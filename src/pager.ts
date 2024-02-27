@@ -8,6 +8,7 @@ export type PageLink =
 // Pager links in the footer are computed once for a given navigation.
 const linkCache = new WeakMap<Config["pages"], Map<string, PageLink>>();
 
+/** Strip URL query string and hash fragment. */
 export function normalizePath(path: string): string {
   return path.replace(/[?#].*$/, "");
 }

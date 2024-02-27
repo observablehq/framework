@@ -1,7 +1,8 @@
-import {type FSWatcher, existsSync, watch} from "node:fs";
+import {type FSWatcher} from "node:fs";
 import {Loader} from "./dataloader.js";
 import {isEnoent} from "./error.js";
 import {maybeStat} from "./files.js";
+import {existsSync, watch} from "./normalizedFs.js";
 import {resolvePath} from "./url.js";
 
 export class FileWatchers {

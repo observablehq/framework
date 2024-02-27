@@ -1,6 +1,6 @@
-import fs from "node:fs/promises";
 import packageJson from "../package.json";
 import {CliError, HttpError, isApiError} from "./error.js";
+import {readFile} from "./normalizedFs.js";
 import type {ApiKey} from "./observableApiConfig.js";
 import {faint, red} from "./tty.js";
 
@@ -146,7 +146,7 @@ export class ObservableApiClient {
   }
 
   async postDeployFile(deployId: string, filePath: string, relativePath: string): Promise<void> {
-    const buffer = await fs.readFile(filePath);
+    const buffer = await readFile(filePath);
     return await this.postDeployFileContents(deployId, buffer, relativePath);
   }
 

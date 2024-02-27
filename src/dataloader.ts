@@ -1,12 +1,12 @@
-import {spawn} from "node:child_process";
-import {type WriteStream, createReadStream, existsSync, statSync} from "node:fs";
-import {mkdir, open, readFile, rename, unlink} from "node:fs/promises";
-import {dirname, extname, join} from "node:path";
+import {type WriteStream} from "node:fs";
 import {createGunzip} from "node:zlib";
+import {spawn} from "cross-spawn";
 import JSZip from "jszip";
 import {extract} from "tar-stream";
 import {maybeStat, prepareOutput} from "./files.js";
 import type {Logger, Writer} from "./logger.js";
+import {createReadStream, existsSync, mkdir, open, readFile, rename, statSync, unlink} from "./normalizedFs.js";
+import {dirname, extname, join} from "./normalizedPath.js";
 import {cyan, faint, green, red, yellow} from "./tty.js";
 
 const runningCommands = new Map<string, Promise<string>>();
