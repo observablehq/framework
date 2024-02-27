@@ -1,9 +1,9 @@
-import {existsSync, read} from "node:fs";
+import {existsSync} from "node:fs";
 import {mkdir, readFile, readdir, writeFile} from "node:fs/promises";
 import {dirname, join} from "node:path";
 import {Parser} from "acorn";
 import {simple} from "acorn-walk";
-import {gt, rsort, satisfies, sort} from "semver";
+import {rsort, satisfies} from "semver";
 import {isEnoent} from "./error.js";
 import type {ExportNode, ImportNode, ImportReference} from "./javascript/imports.js";
 import {findImports} from "./javascript/imports.js";
@@ -33,25 +33,6 @@ export function parseNpmSpecifier(specifier: string): NpmSpecifier {
 export function formatNpmSpecifier({name, range, path}: NpmSpecifier): string {
   return `${name}${range ? `@${range}` : ""}${path ? `/${path}` : ""}`;
 }
-
-// Like import, don’t fetch the same package more than once to ensure
-// consistency; restart the server if you want to clear the cache.
-// const fetchCache = new Map<string, Promise<{headers: Headers; body: any}>>();
-
-// async function cachedFetch(href: string): Promise<{headers: Headers; body: any}> {
-//   let promise = fetchCache.get(href);
-//   if (promise) return promise;
-//   promise = (async () => {
-//     const response = await fetch(href);
-//     if (!response.ok) throw new Error(`unable to fetch: ${href}`);
-//     const json = /^application\/json(;|$)/.test(response.headers.get("content-type")!);
-//     const body = await (json ? response.json() : response.text());
-//     return {headers: response.headers, body};
-//   })();
-//   promise.catch(() => fetchCache.delete(href)); // try again on error
-//   fetchCache.set(href, promise);
-//   return promise;
-// }
 
 /** Rewrites /npm/ import specifiers to be relative paths to /_npm/. */
 export function rewriteNpmImports(input: string, path: string): string {
@@ -162,11 +143,11 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
   if (name === "apache-arrow" && !range) range = "13.0.0"; // https://github.com/observablehq/framework/issues/750
   if (name === "parquet-wasm" && !range) range = "0.5.0"; // https://github.com/observablehq/framework/issues/733
   if (name === "echarts" && !range) range = "5.4.3"; // https://github.com/observablehq/framework/pull/811
-  try {
-    return `/_npm/${name}@${await resolveNpmVersion(root, {name, range})}/${path.replace(/\+esm$/, "+esm.js")}`; // TODO use / instead of @
-  } catch {
-    return `https://cdn.jsdelivr.net/npm/${name}${range ? `@${range}` : ""}/${path}`;
-  }
+  // try {
+  return `/_npm/${name}@${await resolveNpmVersion(root, {name, range})}/${path.replace(/\+esm$/, "+esm.js")}`; // TODO use / instead of @
+  // } catch {
+  //   return `https://cdn.jsdelivr.net/npm/${name}${range ? `@${range}` : ""}/${path}`;
+  // }
 }
 
 const npmImportsCache = new Map<string, Promise<ImportReference[]>>();
@@ -174,14 +155,6 @@ const npmImportsCache = new Map<string, Promise<ImportReference[]>>();
 /**
  * Resolves the direct dependencies of the specified npm path, such as
  * "/_npm/d3@7.8.5/+esm.js", returning the corresponding set of npm paths.
- *
- * TODO Investigate why "npm:mermaid" imports broken links to
- * "./dist/c4Diagram-b947cdbb.js/+esm.js". Should that "/+esm.js" be there? (And
- * in any case these are dynamic imports that we don’t want to preload, but that
- * we probably should attempt to download. Maybe that means we need a way to
- * suppress downloads that you don’t want, too? Or perhaps a way to list all of
- * the files that you want, and we’ll use that if present instead of trying to
- * download whatever we think you need.)
  */
 export async function resolveNpmImports(root: string, path: string): Promise<ImportReference[]> {
   if (!path.startsWith("/_npm/")) throw new Error(`invalid npm path: ${path}`);
@@ -191,7 +164,7 @@ export async function resolveNpmImports(root: string, path: string): Promise<Imp
     try {
       const filePath = await populateNpmCache(root, path);
       const source = await readFile(filePath, "utf-8");
-      const body = Parser.parse(source, parseOptions); // TODO await parseModule?
+      const body = Parser.parse(source, parseOptions);
       return findImports(body, path, source);
     } catch (error) {
       console.warn(`unable to fetch or parse: ${path}`);

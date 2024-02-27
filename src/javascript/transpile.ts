@@ -1,17 +1,23 @@
+import {readFile} from "node:fs/promises";
+import {join} from "node:path";
 import type {ImportDeclaration, ImportDefaultSpecifier, ImportNamespaceSpecifier, ImportSpecifier, Node} from "acorn";
+import {Parser} from "acorn";
 import {simple} from "acorn-walk";
-// import mime from "mime";
+import {resolveNpmImport} from "../npm.js";
+import {relativePath, resolvePath} from "../path.js";
+import {builtins, isLocalImport, resolveImportPath} from "../resolvers.js";
 import {Sourcemap} from "../sourcemap.js";
-// import type {FileExpression} from "./files.js";
+import {findFiles} from "./files.js";
+import type {ExportNode, ImportNode} from "./imports.js";
 import {hasImportDeclaration} from "./imports.js";
 import type {StringLiteral} from "./node.js";
 import {getStringLiteralValue, isStringLiteral} from "./node.js";
 import type {JavaScriptNode} from "./parse.js";
+import {parseOptions} from "./parse.js";
 
 export interface TranspileOptions {
   id: string;
   inline?: boolean;
-  // resolveFile?: (name: string) => string;
   resolveImport?: (specifier: string) => string;
   resolveDynamicImport?: (specifier: string) => string;
 }
@@ -36,6 +42,50 @@ export function transpileJavaScript(
   output.insertLeft(0, `define({id: ${JSON.stringify(id)}`);
   if (outputs.length) output.insertRight(node.input.length, `\nreturn {${outputs}};`);
   output.insertRight(node.input.length, "\n}});\n");
+  return String(output);
+}
+
+/** Rewrites import specifiers and FileAttachment calls in the specified ES module. */
+export async function rewriteModule(root: string, path: string, sourcePath = path): Promise<string> {
+  const input = await readFile(join(root, sourcePath), "utf-8");
+  const body = Parser.parse(input, parseOptions); // TODO ignore syntax error?
+  const output = new Sourcemap(input);
+  const imports: (ImportNode | ExportNode)[] = [];
+
+  simple(body, {
+    ImportDeclaration: rewriteImport,
+    ImportExpression: rewriteImport,
+    ExportAllDeclaration: rewriteImport,
+    ExportNamedDeclaration: rewriteImport
+  });
+
+  function rewriteImport(node: ImportNode | ExportNode) {
+    imports.push(node);
+  }
+
+  for (const {name, node} of findFiles(body, sourcePath, input)) {
+    const p = relativePath(path, resolvePath(sourcePath, name));
+    output.replaceLeft(node.arguments[0].start, node.arguments[0].end, `${JSON.stringify(p)}, import.meta.url`);
+  }
+
+  // TODO Dynamic imports are resolved differently (to jsDelivr)
+  // TODO Consolidate duplicate code with getResolvers?
+  for (const node of imports) {
+    if (node.source && isStringLiteral(node.source)) {
+      const specifier = getStringLiteralValue(node.source);
+      const p = isLocalImport(specifier, path)
+        ? relativePath(path, resolveImportPath(root, resolvePath(sourcePath, specifier)))
+        : builtins.has(specifier)
+        ? relativePath(path, builtins.get(specifier)!)
+        : specifier.startsWith("observablehq:")
+        ? relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}.js`)
+        : specifier.startsWith("npm:")
+        ? relativePath(path, await resolveNpmImport(root, specifier.slice("npm:".length)))
+        : specifier;
+      output.replaceLeft(node.source.start, node.source.end, JSON.stringify(p));
+    }
+  }
+
   return String(output);
 }
 

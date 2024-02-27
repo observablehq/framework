@@ -185,14 +185,13 @@ function prettyPath(path: string): string {
 function renderHead(parse: MarkdownPage, resolvers: Resolvers, options: RenderOptions): Html {
   const scripts = options.scripts;
   const head = parse.data?.head !== undefined ? parse.data.head : options.head;
-  const {stylesheets} = parse; // TODO
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
-    stylesheets.map(renderStylesheetPreload) // <link rel=preload as=style>
+    Array.from(resolvers.stylesheets, (i) => renderStylesheetPreload(resolvers.resolveStylesheet(i))) // <link rel=preload as=style>
   }${
-    stylesheets.map(renderStylesheet) // <link rel=stylesheet>
+    Array.from(resolvers.stylesheets, (i) => renderStylesheet(resolvers.resolveStylesheet(i))) // <link rel=stylesheet>
   }${
-    Array.from(resolvers.staticImports).map(resolvers.resolveImport).map(renderModulePreload) // <link rel=modulepreload>
-  }${head ? html`\n${html.unsafe(head)}` : null}${html.unsafe(scripts.map((s) => renderScript(s, options)).join(""))}`;
+    Array.from(resolvers.staticImports, (i) => renderModulePreload(resolvers.resolveImport(i))) // <link rel=modulepreload>
+  }${head ? html`\n${html.unsafe(head)}` : null}${scripts.map((s) => renderScript(s, options))}`;
 }
 
 function renderScript(script: Script, {root, path}: RenderOptions): Html {

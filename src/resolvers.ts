@@ -1,30 +1,23 @@
-import {readFile} from "node:fs/promises";
-import {join} from "node:path";
-import {Parser} from "acorn";
-import {simple} from "acorn-walk";
-import {findFiles} from "./javascript/files.js";
 import {defaultGlobals} from "./javascript/globals.js";
-import type {ExportNode, ImportNode} from "./javascript/imports.js";
 import {isPathImport} from "./javascript/imports.js";
 import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js";
-import {getStringLiteralValue, isStringLiteral} from "./javascript/node.js";
-import {parseOptions} from "./javascript/parse.js";
-import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
+import {getImplicitFileImports, getImplicitInputImports, getImplicitStylesheets} from "./libraries.js";
 import type {MarkdownPage} from "./markdown.js";
-import {populateNpmCache, resolveNpmImport} from "./npm.js";
+import {populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
 import {relativePath, resolvePath} from "./path.js";
-import {Sourcemap} from "./sourcemap.js";
 
 export interface Resolvers {
   files: Set<string>;
   localImports: Set<string>;
   staticImports: Set<string>;
+  stylesheets: Set<string>;
   resolveFile(specifier: string): string;
   resolveImport(specifier: string): string;
   resolveDynamicImport(specifier: string): string;
+  resolveStylesheet(specifier: string): string;
 }
 
-const builtins = new Map<string, string>([
+export const builtins = new Map<string, string>([
   ["npm:@observablehq/runtime", "/_observablehq/runtime.js"],
   ["npm:@observablehq/stdlib", "/_observablehq/stdlib.js"],
   ["npm:@observablehq/dot", "/_observablehq/stdlib/dot.js"], // TODO publish to npm
@@ -42,6 +35,7 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   const fileMethods = new Set<string>();
   const localImports = new Set<string>();
   const staticImports = new Set<string>();
+  const stylesheets = new Set<string>();
   const resolutions = new Map<string, string>();
 
   // Add built-in modules.
@@ -49,7 +43,12 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   staticImports.add("npm:@observablehq/runtime");
   staticImports.add("npm:@observablehq/stdlib");
 
-  // Collect directly attached files, local imports, and static imports.
+  // Add stylesheets. TODO Instead of hard-coding Source Serif Pro, parse the
+  // page’s stylesheet and look for external imports.
+  stylesheets.add("https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"); // prettier-ignore
+  if (page.style) stylesheets.add(page.style);
+
+  // Collect directly-attached files, local imports, and static imports.
   for (const piece of page.pieces) {
     for (const {node} of piece.code) {
       for (const f of node.files) {
@@ -67,6 +66,7 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
     }
   }
 
+  // Collect transitively-attached files, local imports, and static imports.
   for (const i of localImports) {
     const p = resolvePath(path, i);
     const info = getModuleInfo(root, p);
@@ -90,9 +90,9 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
     }
   }
 
-  // Add implicit imports for files. These are technically dynamic imports, but
-  // we assume that referenced files will be loaded immediately and so treat
-  // them as static for preloads.
+  // Add implicit imports for files. These are technically implemented as
+  // dynamic imports, but we assume that referenced files will be loaded
+  // immediately and so treat them as static for preloads.
   for (const i of getImplicitFileImports(fileMethods)) {
     staticImports.add(i);
   }
@@ -102,17 +102,45 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
     staticImports.add(i);
   }
 
+  // Add transitive imports for built-in libraries.
+  if (staticImports.has("npm:@observablehq/dot")) staticImports.add("npm:@viz-js/viz");
+  if (staticImports.has("npm:@observablehq/duckdb")) staticImports.add("npm:@duckdb/duckdb-wasm");
+  if (staticImports.has("npm:@observablehq/inputs")) staticImports.add("npm:htl").add("npm:isoformat");
+  if (staticImports.has("npm:@observablehq/mermaid")) staticImports.add("npm:mermaid");
+  if (staticImports.has("npm:@observablehq/tex")) staticImports.add("npm:katex");
+  if (staticImports.has("npm:@observablehq/xlsx")) staticImports.add("npm:exceljs");
+  if (staticImports.has("npm:@observablehq/zip")) staticImports.add("npm:jszip");
+
   // Resolve npm: imports.
   for (const specifier of staticImports) {
     if (specifier.startsWith("npm:") && !builtins.has(specifier)) {
-      const resolution = await resolveNpmImport(root, specifier.slice("npm:".length));
-      resolutions.set(specifier, resolution);
-      await populateNpmCache(root, resolution);
+      resolutions.set(specifier, await resolveNpmImport(root, specifier.slice("npm:".length)));
     }
   }
 
-  // TODO Resolve any npm: protocol imports that were not statically declared to jsDelivr.
-  // TODO Is stylesheet resolution going to live here, too?
+  // Follow transitive static imports of npm imports. This has the side-effect
+  // of populating the npm cache.
+  for (const value of resolutions.values()) {
+    for (const i of await resolveNpmImports(root, value)) {
+      if (i.type === "local" && i.method === "static") {
+        const path = resolvePath(value, i.name);
+        const specifier = path.replace(/^\/_npm\//, "npm:").replace(/\/\+esm\.js$/, "/+esm");
+        staticImports.add(specifier);
+        resolutions.set(specifier, path);
+      }
+    }
+  }
+
+  // Add implicit stylesheets.
+  for (const specifier of getImplicitStylesheets(staticImports)) {
+    stylesheets.add(specifier);
+    if (specifier.startsWith("npm:")) {
+      const path = await resolveNpmImport(root, specifier.slice("npm:".length));
+      resolutions.set(specifier, path);
+      await populateNpmCache(root, path);
+    }
+  }
+
   function resolveImport(specifier: string): string {
     return isLocalImport(specifier, path)
       ? relativePath(path, resolveImportPath(root, resolvePath(path, specifier)))
@@ -122,6 +150,8 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
       ? relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}.js`)
       : resolutions.has(specifier)
       ? relativePath(path, resolutions.get(specifier)!)
+      : specifier.startsWith("npm:")
+      ? `https://cdn.jsdelivr.net/npm/${specifier.slice("npm:".length)}`
       : specifier;
   }
 
@@ -129,58 +159,28 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
     return relativePath(path, resolveFilePath(root, resolvePath(path, specifier)));
   }
 
+  function resolveStylesheet(specifier: string): string {
+    return isLocalImport(specifier, path)
+      ? relativePath(path, resolveImportPath(root, resolvePath(path, specifier)))
+      : specifier.startsWith("observablehq:")
+      ? relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}`)
+      : resolutions.has(specifier)
+      ? relativePath(path, resolutions.get(specifier)!)
+      : specifier.startsWith("npm:")
+      ? `https://cdn.jsdelivr.net/npm/${specifier.slice("npm:".length)}`
+      : specifier;
+  }
+
   return {
     files,
     localImports,
     staticImports,
+    stylesheets,
     resolveFile,
     resolveImport,
-    resolveDynamicImport: resolveImport
+    resolveDynamicImport: resolveImport,
+    resolveStylesheet
   };
-}
-
-/** Rewrites import specifiers and FileAttachment calls in the specified ES module. */
-export async function rewriteModule(root: string, path: string, sourcePath = path): Promise<string> {
-  const input = await readFile(join(root, sourcePath), "utf-8");
-  const body = Parser.parse(input, parseOptions); // TODO ignore syntax error?
-  const output = new Sourcemap(input);
-  const imports: (ImportNode | ExportNode)[] = [];
-
-  simple(body, {
-    ImportDeclaration: rewriteImport,
-    ImportExpression: rewriteImport,
-    ExportAllDeclaration: rewriteImport,
-    ExportNamedDeclaration: rewriteImport
-  });
-
-  function rewriteImport(node: ImportNode | ExportNode) {
-    imports.push(node);
-  }
-
-  for (const {name, node} of findFiles(body, sourcePath, input)) {
-    const p = relativePath(path, resolvePath(sourcePath, name));
-    output.replaceLeft(node.arguments[0].start, node.arguments[0].end, `${JSON.stringify(p)}, import.meta.url`);
-  }
-
-  // TODO Dynamic imports are resolved differently (to jsDelivr)
-  // TODO Consolidate duplicate code with getResolvers?
-  for (const node of imports) {
-    if (node.source && isStringLiteral(node.source)) {
-      const specifier = getStringLiteralValue(node.source);
-      const p = isLocalImport(specifier, path)
-        ? relativePath(path, resolveImportPath(root, resolvePath(sourcePath, specifier)))
-        : builtins.has(specifier)
-        ? relativePath(path, builtins.get(specifier)!)
-        : specifier.startsWith("observablehq:")
-        ? relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}.js`)
-        : specifier.startsWith("npm:")
-        ? relativePath(path, await resolveNpmImport(root, specifier.slice("npm:".length)))
-        : specifier;
-      output.replaceLeft(node.source.start, node.source.end, JSON.stringify(p));
-    }
-  }
-
-  return String(output);
 }
 
 export function resolveImportPath(root: string, path: string): string {

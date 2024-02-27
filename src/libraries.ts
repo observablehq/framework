@@ -62,10 +62,8 @@ export function getImplicitStylesheets(imports: Set<string>): Set<string> {
 
 /**
  * These implicit stylesheets are added to the page on render so that the user
- * doesn’t have to remember to add them. This should be kept consistent with
- * addImplicitDownloads below. TODO Do we need to resolve the npm imports here,
- * or could we simply use "npm:" imports for the stylesheet, too? TODO Support
- * versioned imports, too, such as "npm:leaflet@1".
+ * doesn’t have to remember to add them. TODO Support versioned imports, too,
+ * such as "npm:leaflet@1".
  */
 export function addImplicitStylesheets(stylesheets: Set<string>, imports: Set<string>): Set<string> {
   if (imports.has("npm:@observablehq/inputs")) stylesheets.add("observablehq:stdlib/inputs.css");

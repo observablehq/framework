@@ -51,7 +51,8 @@ export interface MarkdownPage {
   data: {[key: string]: any} | null;
   // staticModules: string[];
   // dynamicModules: string[];
-  stylesheets: string[];
+  // stylesheets: string[];
+  style: string | null;
   // files: string[];
   pieces: MarkdownPiece[];
   // cells: CellPiece[];
@@ -501,14 +502,6 @@ export async function parseMarkdown(sourcePath: string, {root, path, style}: Par
   // stylesheets referenced by recommended libraries such as Leaflet.
   // (Stylesheets referenced in static HTML are treated as files.)
 
-  // Prepare the initial set of stylesheets. TODO Instead of hard-coding the
-  // Source Serif Pro from Google Fonts here, we should parse the page’s
-  // stylesheet and look for external imports.
-  const stylesheets = new Set<string>();
-  stylesheets.add("https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"); // prettier-ignore
-  const stylesheet = getStylesheet(path, parts.data, style);
-  if (stylesheet) stylesheets.add(stylesheet);
-
   // const resolveImport = createImportResolver(root, "/"); // TODO special-case this
   // const asNpmSpecifier = (i: string) => i.replace(/^\/_npm\//, "npm:").replace(/\/\+esm\.js$/, "/+esm"); // TODO cleaner?
   // const importPaths = new Set<string>();
@@ -573,24 +566,6 @@ export async function parseMarkdown(sourcePath: string, {root, path, style}: Par
   //   }
   // }
 
-  // // Add implicit stylesheets from global imports.
-  // for (const {type, name} of imports) {
-  //   if (type === "global") {
-  //     if (name === "/_observablehq/stdlib/inputs.js") {
-  //       stylesheets.add(relativePath(path, "/_observablehq/stdlib/inputs.css"));
-  //     } else if (name.startsWith("/_npm/katex@")) {
-  //       const s = parseNpmSpecifier(asNpmSpecifier(name));
-  //       if (s.path === "+esm") stylesheets.add(relativePath(path, `/_npm/katex@${s.range}/dist/katex.min.css`));
-  //     } else if (name.startsWith("/_npm/leaflet@")) {
-  //       const s = parseNpmSpecifier(asNpmSpecifier(name));
-  //       if (s.path === "+esm") stylesheets.add(relativePath(path, `/_npm/leaflet@${s.range}/dist/leaflet.css`));
-  //     } else if (name.startsWith("/_npm/mapbox-gl@")) {
-  //       const s = parseNpmSpecifier(asNpmSpecifier(name));
-  //       if (s.path === "+esm") stylesheets.add(relativePath(path, `/_npm/mapbox-gl@${s.range}/dist/mapbox-gl.css`));
-  //     }
-  //   }
-  // }
-
   // // Okay, phew! Now the last part is to normalize global import paths.
   // for (const i of imports) {
   //   if (i.type === "global" && isPathImport(i.name)) {
@@ -608,7 +583,8 @@ export async function parseMarkdown(sourcePath: string, {root, path, style}: Par
     // staticModules: [...new Set(imports.filter((i) => i.method === "static").map((i) => i.name))].sort(),
     // dynamicModules: [...new Set(imports.filter((i) => i.method === "dynamic").map((i) => i.name))].sort(),
     // files: [...new Set([...imports.map((i) => i.name), ...files.map((i) => i.name)])].sort(),
-    stylesheets: [...stylesheets].sort(),
+    // stylesheets: [...stylesheets].sort(),
+    style: getStylesheet(path, parts.data, style),
     pieces
     // pieces: toParsePieces(context.pieces),
     // cells: await toParseCells(context.pieces), // TODO use already-resolved imports above?
@@ -627,8 +603,8 @@ function getStylesheet(path: string, data: MarkdownPage["data"], style: Config["
   return !style
     ? null
     : "path" in style
-    ? relativePath(path, join("_import", style.path)) // TODO ?sha=
-    : relativePath(path, `/_observablehq/theme-${style.theme.join(",")}.css`);
+    ? relativePath(path, style.path)
+    : `observablehq:theme-${style.theme.join(",")}`;
 }
 
 function computeMarkdownHash(contents: string, imports: ImportReference[], files: FileReference[]): string {
