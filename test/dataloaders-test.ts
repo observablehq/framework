@@ -31,7 +31,7 @@ describe("data loaders are called with the appropriate command", () => {
     const loader = Loader.find("test", "dataloaders/data4.txt")!;
     const out = await loader.load(noopEffects);
     assert.strictEqual(await readFile("test/" + out, "utf-8"), `python${EOL}`);
-  });
+  }).slow();
   it("a .py data loader is called with python3", async () => {
     const loader = Loader.find("test", "dataloaders/data5.txt")!;
     const out = await loader.load(noopEffects);
