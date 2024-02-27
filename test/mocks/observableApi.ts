@@ -1,7 +1,7 @@
 import type {MockAgent} from "undici";
 import {type Interceptable} from "undici";
 import PendingInterceptorsFormatter from "undici/lib/mock/pending-interceptors-formatter.js";
-import type {PostAuthRequestPollResponse, PostAuthRequestResponse} from "../../src/observableApiClient.js";
+import type {GetCurrentUserResponse, PostAuthRequestPollResponse, PostAuthRequestResponse} from "../../src/observableApiClient.js";
 import {
   type GetProjectResponse,
   type PaginatedList,
@@ -342,7 +342,8 @@ const workspaces = [
     name: "Mock User's Workspace",
     tier: "pro_2024",
     type: "team",
-    role: "member"
+    role: "member",
+    projects_info: []
   },
   {
     id: "0000000000000002",
@@ -350,7 +351,8 @@ const workspaces = [
     name: "Mock User Second Workspace",
     tier: "pro_2024",
     type: "team",
-    role: "owner"
+    role: "owner",
+    projects_info: []
   },
   {
     id: "0000000000000003",
@@ -358,9 +360,28 @@ const workspaces = [
     name: "Mock User's Third Workspace Wrong Tier",
     tier: "pro_2024",
     type: "team",
-    role: "viewer"
+    role: "viewer",
+    projects_info: []
+  },
+  {
+    id: "0000000000000004",
+    login: "mock-user-ws-4",
+    name: "Mock User's Fourth Workspace Guest Member as Editor",
+    tier: "pro_2024",
+    type: "team",
+    role: "guest_member",
+    projects_info: [{project_slug: "test-project", project_role: "editor"}]
+  },
+  {
+    id: "0000000000000005",
+    login: "mock-user-ws-5",
+    name: "Mock User's Fifth Workspace Guest Member as Viewer",
+    tier: "pro_2024",
+    type: "team",
+    role: "guest_member",
+    projects_info: [{project_slug: "test-project", project_role: "viewer"}]
   }
-];
+] as GetCurrentUserResponse["workspaces"];
 
 export const userWithZeroWorkspaces = {
   ...userBase,
@@ -377,7 +398,7 @@ export const userWithTwoWorkspaces = {
   workspaces: workspaces.slice(0, 2)
 };
 
-export const userWithThreeWorkspaces = {
+export const userWithGuestMemberWorkspaces = {
   ...userBase,
   workspaces
 };
