@@ -18,6 +18,8 @@ import {bold, defaultEffects as defaultTtyEffects, inverse, link, yellow} from "
 
 const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
 
+export const VALID_TIERS = new Set(["starter_2024", "pro_2024", "enterprise_2024"]);
+
 /** Actions this command needs to take wrt its environment that may need mocked out. */
 export interface AuthEffects extends ConfigEffects, TtyEffects {
   clack: ClackEffects;
@@ -109,7 +111,8 @@ export async function loginInner(
   await effects.setObservableApiKey(apiKey);
 
   apiClient.setApiKey({source: "login", key: apiKey.key});
-  const currentUser = await apiClient.getCurrentUser();
+  let currentUser = await apiClient.getCurrentUser();
+  currentUser = {...currentUser, workspaces: validWorkspaces(currentUser.workspaces)};
   spinner.stop(`You are logged into ${OBSERVABLE_UI_ORIGIN.hostname} as ${formatUser(currentUser)}.`);
   return {currentUser, apiKey: {...apiKey, source: "login"}};
 }
@@ -151,4 +154,17 @@ export async function whoami(effects = defaultEffects) {
 
 export function formatUser(user: {name?: string; login: string}): string {
   return user.name ? `${user.name} (@${user.login})` : `@${user.login}`;
+}
+
+export function validWorkspaces(
+  workspaces: GetCurrentUserResponse["workspaces"]
+): GetCurrentUserResponse["workspaces"] {
+  return workspaces.filter(
+    (w) =>
+      VALID_TIERS.has(w.tier) &&
+      (w.role === "owner" ||
+        w.role === "member" ||
+        (w.role === "guest_member" &&
+          w.projects_info.some((info) => info.project_role === "owner" || info.project_role === "editor")))
+  );
 }
