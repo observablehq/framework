@@ -48,7 +48,7 @@ input.addEventListener("input", () => {
 });
 
 function renderResults(results) {
-  const me = document.location.href.replace(/[?].*/, "");
+  const me = document.location.href.replace(/[?#].*/, "");
   let found;
   results = results.map(({id, score, title}) => {
     const href = import.meta.resolve(`../${id}`);
