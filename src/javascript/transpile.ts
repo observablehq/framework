@@ -17,7 +17,6 @@ import {parseOptions} from "./parse.js";
 
 export interface TranspileOptions {
   id: string;
-  inline?: boolean;
   resolveImport?: (specifier: string) => string;
   resolveDynamicImport?: (specifier: string) => string;
 }
@@ -39,6 +38,7 @@ export function transpileJavaScript(
   output.insertLeft(0, `, body: ${async ? "async " : ""}(${inputs}) => {\n`);
   if (outputs.length) output.insertLeft(0, `, outputs: ${JSON.stringify(outputs)}`);
   if (inputs.length) output.insertLeft(0, `, inputs: ${JSON.stringify(inputs)}`);
+  if (node.inline) output.insertLeft(0, ", inline: true");
   output.insertLeft(0, `define({id: ${JSON.stringify(id)}`);
   if (outputs.length) output.insertRight(node.input.length, `\nreturn {${outputs}};`);
   output.insertRight(node.input.length, "\n}});\n");

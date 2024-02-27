@@ -7,6 +7,9 @@ import type {IncomingMessage, RequestListener, Server, ServerResponse} from "nod
 import {basename, dirname, extname, join, normalize} from "node:path";
 import {fileURLToPath} from "node:url";
 import {difference} from "d3-array";
+import type {PatchItem} from "fast-array-diff";
+import {getPatch} from "fast-array-diff";
+import {parseHTML} from "linkedom";
 import openBrowser from "open";
 import send from "send";
 import type {WebSocket} from "ws";
@@ -17,16 +20,17 @@ import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
-import {rewriteModule} from "./javascript/transpile.js";
-import {/*diffMarkdown,*/ parseMarkdown} from "./markdown.js";
-import type {MarkdownPage} from "./markdown.js";
+import {rewriteModule, transpileJavaScript} from "./javascript/transpile.js";
+import {parseMarkdown} from "./markdown.js";
+import type {MarkdownCode} from "./markdown.js";
 import {populateNpmCache} from "./npm.js";
 import {renderPage} from "./render.js";
+import type {Resolvers} from "./resolvers.js";
+import {getResolvers, isLocalImport} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, link} from "./tty.js";
-import {Resolvers, getResolvers, isLocalImport} from "./resolvers.js";
 
 const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
@@ -273,7 +277,9 @@ function end(req: IncomingMessage, res: ServerResponse, content: string, type: s
 
 function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Config) {
   let path: string | null = null;
-  let current: MarkdownPage | null = null;
+  let hash: string | null = null;
+  let html: string[] | null = null;
+  let code: Map<string, string> | null = null;
   let stylesheets: string[] | null = null;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
@@ -292,7 +298,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
   }
 
   async function watcher(event: WatchEventType, force = false) {
-    if (!path || !current) throw new Error("not initialized");
+    if (!path) throw new Error("not initialized");
     switch (event) {
       case "rename": {
         markdownWatcher?.close();
@@ -308,9 +314,9 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
         break;
       }
       case "change": {
-        const updated = await parseMarkdown(join(root, path), {root, path, style});
+        const page = await parseMarkdown(join(root, path), {root, path, style});
         // delay to avoid a possibly-empty file
-        if (!force && updated.html === "") {
+        if (!force && page.html === "") {
           if (!emptyTimeout) {
             emptyTimeout = setTimeout(() => {
               emptyTimeout = null;
@@ -322,15 +328,25 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
           clearTimeout(emptyTimeout);
           emptyTimeout = null;
         }
-        if (current.hash === updated.hash) break;
-        const resolvers = await getResolvers(updated, {root, path});
-        const updatedStylesheets = updated.style ? [resolvers.resolveStylesheet(updated.style)] : [];
-        for (const href of difference(stylesheets, updatedStylesheets)) send({type: "remove-stylesheet", href});
-        for (const href of difference(updatedStylesheets, stylesheets)) send({type: "add-stylesheet", href});
-        stylesheets = updatedStylesheets;
-        // const diff = diffMarkdown(current, updated);
-        // send({type: "update", diff, previousHash: current.hash, updatedHash: updated.hash});
-        current = updated;
+        if (hash === page.hash) break;
+        const previousHash = hash!;
+        const previousHtml = html!;
+        const previousCode = code!;
+        const previousStylesheets = stylesheets!;
+        hash = page.hash;
+        const resolvers = await getResolvers(page, {root, path});
+        html = getHtml(page.html);
+        code = getCode(page.code, resolvers);
+        stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
+        send({
+          type: "update",
+          diffHtml: diffHtml(previousHtml, html),
+          diffCode: diffCode(previousCode, code),
+          addedStylesheets: Array.from(difference(stylesheets, previousStylesheets)),
+          removedStylesheets: Array.from(difference(previousStylesheets, stylesheets)),
+          previousHash,
+          updatedHash: hash
+        });
         attachmentWatcher?.close();
         attachmentWatcher = await FileWatchers.of(root, path, getWatchFiles(resolvers), () => watcher("change"));
         break;
@@ -344,10 +360,13 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
     path += ".md";
-    current = await parseMarkdown(join(root, path), {root, path, style});
-    if (current.hash !== initialHash) return void send({type: "reload"});
-    const resolvers = await getResolvers(current, {root, path});
-    stylesheets = current.style ? [resolvers.resolveStylesheet(current.style)] : [];
+    const page = await parseMarkdown(join(root, path), {root, path, style});
+    if (page.hash !== initialHash) return void send({type: "reload"});
+    const resolvers = await getResolvers(page, {root, path});
+    hash = page.hash;
+    html = getHtml(page.html);
+    code = getCode(page.code, resolvers);
+    stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
     attachmentWatcher = await FileWatchers.of(root, path, getWatchFiles(resolvers), () => watcher("change"));
     markdownWatcher = watch(join(root, path), (event) => watcher(event));
   }
@@ -388,4 +407,43 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
     console.log(faint("↓"), message);
     socket.send(JSON.stringify(message));
   }
+}
+
+function getHtml(html: string): string[] {
+  return Array.from(parseHTML(`<!doctype html><html><body>${html}`).document.body.children, String);
+}
+
+function getCode(code: MarkdownCode[], {resolveImport, resolveDynamicImport}: Resolvers): Map<string, string> {
+  return new Map(code.map(({id, node}) => [id, transpileJavaScript(node, {id, resolveImport, resolveDynamicImport})]));
+}
+
+type CodePatch = {removed: string[]; added: string[]};
+
+function diffCode(oldCode: Map<string, string>, newCode: Map<string, string>): CodePatch {
+  const patch: CodePatch = {removed: [], added: []};
+  for (const [id] of oldCode) {
+    if (!newCode.has(id)) {
+      patch.removed.push(id);
+    }
+  }
+  for (const [id, body] of newCode) {
+    if (!oldCode.has(id)) {
+      patch.added.push(body);
+    }
+  }
+  return patch;
+}
+
+function diffHtml(oldHtml: string[], newHtml: string[]): RedactedPatch<string> {
+  return getPatch(oldHtml, newHtml).map(redactPatch);
+}
+
+type RedactedPatch<T> = RedactedPatchItem<T>[];
+
+type RedactedPatchItem<T> =
+  | {type: "add"; oldPos: number; newPos: number; items: T[]}
+  | {type: "remove"; oldPos: number; newPos: number; items: {length: number}};
+
+function redactPatch<T>(patch: PatchItem<T>): RedactedPatchItem<T> {
+  return patch.type === "remove" ? {...patch, type: "remove", items: {length: patch.items.length}} : patch;
 }

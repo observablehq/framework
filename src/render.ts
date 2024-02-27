@@ -60,7 +60,7 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
 ${renderFiles(files, resolveFile)}`
       : ""
   }
-${preview ? `\nopen({hash: ${JSON.stringify(page.hash)}, eval: (body) => (0, eval)(body)});\n` : ""}${page.code
+${preview ? `\nopen({hash: ${JSON.stringify(page.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
     .map(({node, id}) => `\n${transpileJavaScript(node, {id, resolveImport, resolveDynamicImport})}`)
     .join("")}`)}
 </script>${sidebar ? html`\n${await renderSidebar(title, pages, root, path, search)}` : ""}${

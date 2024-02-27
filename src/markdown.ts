@@ -1,9 +1,6 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
 import {readFile} from "node:fs/promises";
-// import type {Patch, PatchItem} from "fast-array-diff";
-// import {getPatch} from "fast-array-diff";
-// import equal from "fast-deep-equal";
 import matter from "gray-matter";
 import he from "he";
 import hljs from "highlight.js";
@@ -18,14 +15,16 @@ import {mergeStyle} from "./config.js";
 import {getLocalPath} from "./files.js";
 import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
-// import type {ImportReference} from "./javascript/imports.js";
+import {isPathImport} from "./javascript/imports.js";
 import {getFileHash, getModuleHash} from "./javascript/module.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
 import {relativePath, resolvePath} from "./path.js";
-import {isLocalImport, resolveFilePath} from "./resolvers.js";
+import {resolveFilePath} from "./resolvers.js";
 import {transpileTag} from "./tag.js";
 import {red} from "./tty.js";
+
+export type MarkdownCode = {id: string; node: JavaScriptNode};
 
 export interface MarkdownPage {
   title: string | null;
@@ -33,33 +32,18 @@ export interface MarkdownPage {
   data: {[key: string]: any} | null;
   style: string | null;
   assets: Set<string>;
-  code: {id: string; node: JavaScriptNode}[];
+  code: MarkdownCode[];
   hash: string;
 }
 
-// export interface MarkdownPiece {
-//   html: string;
-//   code: [];
-// }
-
 interface ParseContext {
-  code: {id: string; node: JavaScriptNode}[];
+  code: MarkdownCode[];
   assets: Set<string>;
   startLine: number;
   currentLine: number;
 }
 
-// const ELEMENT_NODE = 1; // Node.ELEMENT_NODE
 const TEXT_NODE = 3; // Node.TEXT_NODE
-
-// Returns true if the given document contains exactly one top-level element,
-// ignoring any surrounding whitespace text nodes.
-// function isSingleElement(document: Document): boolean {
-//   let {firstChild: first, lastChild: last} = document;
-//   while (first?.nodeType === TEXT_NODE && !first?.textContent?.trim()) first = first.nextSibling;
-//   while (last?.nodeType === TEXT_NODE && !last?.textContent?.trim()) last = last.previousSibling;
-//   return first !== null && first === last && first.nodeType === ELEMENT_NODE;
-// }
 
 function uniqueCodeId(context: ParseContext, content: string): string {
   const hash = computeHash(content).slice(0, 8);
@@ -89,13 +73,30 @@ function getLiveSource(content: string, tag: string): string | undefined {
     : undefined;
 }
 
+// TODO sourceLine and remap syntax error position; consider showing a code
+// snippet along with the error. Also, consider whether we want to show the
+// file name here.
+//
+// const message = error.message;
+// if (verbose) {
+//   let warning = error.message;
+//   const match = /^(.+)\s\((\d+):(\d+)\)$/.exec(message);
+//   if (match) {
+//     const line = +match[2] + (options?.sourceLine ?? 0);
+//     const column = +match[3] + 1;
+//     warning = `${match[1]} at line ${line}, column ${column}`;
+//   } else if (options?.sourceLine) {
+//     warning = `${message} at line ${options.sourceLine + 1}`;
+//   }
+//   console.error(red(`${error.name}: ${warning}`));
+// }
+
 function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: string): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
     const token = tokens[idx];
     const {tag, attributes} = parseInfo(token.info);
     token.info = tag;
     let html = "";
-    // let count = 0;
     const source = isFalse(attributes.run) ? undefined : getLiveSource(token.content, tag);
     if (source != null) {
       const id = uniqueCodeId(context, token.content);
@@ -112,15 +113,10 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
   <div class="observablehq--inspect observablehq--error">SyntaxError: ${he.escape(error.message)}</div>
 </div>\n`;
       }
-      // count++;
     }
     if (attributes.echo == null ? source == null : !isFalse(attributes.echo)) {
       html += baseRenderer(tokens, idx, options, context, self);
-      // count++;
     }
-    // Tokens should always be rendered as a single block element.
-    // TODO Remove this after we fix diffing?
-    // if (count > 1) html = "<div>" + html + "</div>";
     return html;
   };
 }
@@ -281,43 +277,6 @@ function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
   };
 }
 
-// function extendPiece(context: ParseContext, extend: Partial<MarkdownPiece>) {
-//   if (context.pieces.length === 0) context.pieces.push({html: "", code: []});
-//   const last = context.pieces[context.pieces.length - 1];
-//   context.pieces[context.pieces.length - 1] = {
-//     html: last.html + (extend.html ?? ""),
-//     code: [...last.code, ...(extend.code ? extend.code : [])]
-//   };
-// }
-
-// function makeRenderer(renderer: Renderer, root: string, sourcePath: string): Renderer["render"] {
-//   return (tokens, options, context: ParseContext) => {
-//     const rules = renderer.rules;
-//     // context.html = "";
-//     let html = "";
-//     for (let i = 0, len = tokens.length; i < len; i++) {
-//       const type = tokens[i].type;
-//       if (tokens[i].map) context.currentLine = tokens[i].map![0];
-//       if (type === "inline") {
-//         html += renderer.renderInline(tokens[i].children!, options, context);
-//       } else if (typeof rules[type] !== "undefined") {
-//         // if (tokens[i].level === 0 && tokens[i].nesting !== -1) context.pieces.push({html: "", code: []});
-//         html += rules[type]!(tokens, i, options, context, renderer);
-//       } else {
-//         // if (tokens[i].level === 0 && tokens[i].nesting !== -1) context.pieces.push({html: "", code: []});
-//         html += renderer.renderToken(tokens, i, options);
-//       }
-//       // context.html += html;
-//       // extendPiece(context, {html});
-//     }
-//     // let result = "";
-//     // for (const piece of context.pieces) {
-//     //   result += piece.html; // = normalizePieceHtml(piece.html, root, sourcePath, context);
-//     // }
-//     return html;
-//   };
-// }
-
 const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcset"}[] = Object.freeze([
   {query: "a[href][download]", src: "href"},
   {query: "audio[src]", src: "src"},
@@ -382,10 +341,6 @@ export function rewriteHtml(html: string, root: string, path: string, context: P
     code.innerHTML = html;
   }
 
-  // Ensure that the HTML for each piece generates exactly one top-level
-  // element. This is necessary for incremental update, and ensures that our
-  // parsing of the Markdown is consistent with the resulting HTML structure.
-  // return isSingleElement(document) ? String(document) : `<span>${document}</span>`;
   return String(document);
 }
 
@@ -395,8 +350,10 @@ export interface ParseOptions {
   style?: Config["style"];
 }
 
-// TODO This isn’t “parsing” — it’s transpiling.
-export async function parseMarkdown(sourcePath: string, {root, path, style: configStyle}: ParseOptions): Promise<MarkdownPage> {
+export async function parseMarkdown(
+  sourcePath: string,
+  {root, path, style: configStyle}: ParseOptions
+): Promise<MarkdownPage> {
   const source = await readFile(sourcePath, "utf-8");
   const parts = matter(source, {});
   const md = MarkdownIt({html: true});
@@ -407,12 +364,18 @@ export async function parseMarkdown(sourcePath: string, {root, path, style: conf
   md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!, path);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
   const assets = new Set<string>();
-  const code: {id: string; node: JavaScriptNode}[] = [];
+  const code: MarkdownCode[] = [];
   const context: ParseContext = {assets, code, startLine: 0, currentLine: 0};
   const tokens = md.parse(parts.content, context);
   const html = rewriteHtml(md.renderer.render(tokens, md.options, context), root, path, context); // Note: mutates code, assets!
   const style = getStylesheet(path, parts.data, configStyle);
-  if (style && isLocalImport(style, path)) assets.add(style);
+  const hash = createHash("sha256").update(source);
+  for (const {node} of code) {
+    for (const f of node.files) hash.update(getFileHash(root, resolvePath(path, f.name)));
+    for (const i of node.imports) if (i.type === "local") hash.update(getModuleHash(root, resolvePath(path, i.name)));
+  }
+  for (const f of assets) hash.update(getFileHash(root, resolvePath(path, f)));
+  if (style && isPathImport(style)) hash.update(getFileHash(root, resolvePath(path, style)));
   return {
     html,
     data: isEmpty(parts.data) ? null : parts.data,
@@ -420,7 +383,7 @@ export async function parseMarkdown(sourcePath: string, {root, path, style: conf
     style,
     assets,
     code,
-    hash: computeMarkdownHash(source, code, assets, root, path)
+    hash: hash.digest("hex")
   };
 }
 
@@ -437,23 +400,6 @@ function getStylesheet(path: string, data: MarkdownPage["data"], style: Config["
     : "path" in style
     ? relativePath(path, style.path)
     : `observablehq:theme-${style.theme.join(",")}.css`;
-}
-
-function computeMarkdownHash(
-  source: string,
-  code: {id: string; node: JavaScriptNode}[],
-  assets: Iterable<string>,
-  root: string,
-  path: string
-): string {
-  const hash = createHash("sha256").update(source);
-  for (const {node} of code) {
-    for (const f of node.files) hash.update(getFileHash(root, resolvePath(path, f.name)));
-    for (const i of node.imports) if (i.type === "local") hash.update(getModuleHash(root, resolvePath(path, i.name)));
-  }
-  for (const f of assets) hash.update(getFileHash(root, resolvePath(path, f)));
-  const hex = hash.digest("hex");
-  return hex;
 }
 
 // TODO Use gray-matter’s parts.isEmpty, but only when it’s accurate.
@@ -479,51 +425,3 @@ function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | undefined 
     }
   }
 }
-
-// function diffReducer(patch: PatchItem<ParsePiece>) {
-//   // Remove body from remove updates, we just need the ids.
-//   if (patch.type === "remove") {
-//     return {
-//       ...patch,
-//       type: "remove",
-//       items: patch.items.map((item) => ({
-//         type: item.type,
-//         id: item.id,
-//         ...("cellIds" in item ? {cellIds: item.cellIds} : null)
-//       }))
-//     } as const;
-//   }
-//   return patch;
-// }
-
-// // Cells are unordered
-// function getCellsPatch(prevCells: CellPiece[], nextCells: CellPiece[]): Patch<ParsePiece> {
-//   return prevCells
-//     .filter((prev) => !nextCells.some((next) => equal(prev, next)))
-//     .map(
-//       (cell): PatchItem<ParsePiece> => ({
-//         type: "remove",
-//         oldPos: prevCells.indexOf(cell),
-//         newPos: -1,
-//         items: [cell]
-//       })
-//     )
-//     .concat(
-//       nextCells
-//         .filter((next) => !prevCells.some((prev) => equal(next, prev)))
-//         .map(
-//           (cell): PatchItem<ParsePiece> => ({
-//             type: "add",
-//             oldPos: -1,
-//             newPos: nextCells.indexOf(cell),
-//             items: [cell]
-//           })
-//         )
-//     );
-// }
-
-// export function diffMarkdown(oldParse: MarkdownPage, newParse: MarkdownPage) {
-//   return getPatch<ParsePiece>(oldParse.pieces, newParse.pieces, equal)
-//     .concat(getCellsPatch(oldParse.cells, newParse.cells))
-//     .map(diffReducer);
-// }

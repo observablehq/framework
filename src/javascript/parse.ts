@@ -11,14 +11,10 @@ import {findReferences} from "./references.js";
 import {syntaxError} from "./syntaxError.js";
 
 export interface ParseOptions {
-  // root: string;
   /** The path to the source within the source root. */
   path: string;
   /** If true, treat the input as an inline expression instead of a fenced code block. */
   inline?: boolean;
-  // sourceLine?: number;
-  // globals?: Set<string>;
-  // verbose?: boolean;
 }
 
 export const parseOptions: Options = {
@@ -34,33 +30,16 @@ export interface JavaScriptNode {
   imports: ImportReference[];
   expression: boolean; // is this an expression or a program cell?
   async: boolean; // does this use top-level await?
+  inline: boolean;
   input: string;
 }
-
-// TODO sourceLine and remap syntax error position; consider showing a code
-// snippet along with the error. Also, consider whether we want to show the
-// file name here.
-//
-// const message = error.message;
-// if (verbose) {
-//   let warning = error.message;
-//   const match = /^(.+)\s\((\d+):(\d+)\)$/.exec(message);
-//   if (match) {
-//     const line = +match[2] + (options?.sourceLine ?? 0);
-//     const column = +match[3] + 1;
-//     warning = `${match[1]} at line ${line}, column ${column}`;
-//   } else if (options?.sourceLine) {
-//     warning = `${message} at line ${options.sourceLine + 1}`;
-//   }
-//   console.error(red(`${error.name}: ${warning}`));
-// }
 
 /**
  * Parses the specified JavaScript code block, or if the inline option is true,
  * the specified inline JavaScript expression.
  */
 export function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
-  const {inline, path} = options;
+  const {inline = false, path} = options;
   let expression = maybeParseExpression(input, parseOptions); // first attempt to parse as expression
   if (expression?.type === "ClassExpression" && expression.id) expression = null; // treat named class as program
   if (expression?.type === "FunctionExpression" && expression.id) expression = null; // treat named function as program
@@ -78,6 +57,7 @@ export function parseJavaScript(input: string, options: ParseOptions): JavaScrip
     imports: findImports(body, path, input),
     expression: !!expression,
     async: findAwaits(body).length > 0,
+    inline,
     input
   };
 }
