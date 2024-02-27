@@ -5,11 +5,11 @@ import {Parser} from "acorn";
 import {simple} from "acorn-walk";
 import {resolveNpmImport} from "../npm.js";
 import {relativePath, resolvePath} from "../path.js";
-import {builtins, isLocalImport, resolveImportPath} from "../resolvers.js";
+import {builtins, resolveImportPath} from "../resolvers.js";
 import {Sourcemap} from "../sourcemap.js";
 import {findFiles} from "./files.js";
 import type {ExportNode, ImportNode} from "./imports.js";
-import {hasImportDeclaration} from "./imports.js";
+import {hasImportDeclaration, isPathImport} from "./imports.js";
 import type {StringLiteral} from "./node.js";
 import {getStringLiteralValue, isStringLiteral} from "./node.js";
 import type {JavaScriptNode} from "./parse.js";
@@ -73,7 +73,7 @@ export async function rewriteModule(root: string, path: string, sourcePath = pat
   for (const node of imports) {
     if (node.source && isStringLiteral(node.source)) {
       const specifier = getStringLiteralValue(node.source);
-      const p = isLocalImport(specifier, path)
+      const p = isPathImport(specifier)
         ? relativePath(path, resolveImportPath(root, resolvePath(sourcePath, specifier)))
         : builtins.has(specifier)
         ? relativePath(path, builtins.get(specifier)!)

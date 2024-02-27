@@ -78,6 +78,7 @@
     "ws": "^8.14.2"
   },
   "devDependencies": {
+    "@types/d3-array": "^3.2.1",
     "@types/he": "^1.2.3",
     "@types/markdown-it": "^13.0.2",
     "@types/mime": "^3.0.2",

@@ -10,6 +10,7 @@ import {difference} from "d3-array";
 import type {PatchItem} from "fast-array-diff";
 import {getPatch} from "fast-array-diff";
 import {parseHTML} from "linkedom";
+import mime from "mime";
 import openBrowser from "open";
 import send from "send";
 import type {WebSocket} from "ws";
@@ -20,13 +21,14 @@ import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
+import {isPathImport} from "./javascript/imports.js";
 import {rewriteModule, transpileJavaScript} from "./javascript/transpile.js";
 import {parseMarkdown} from "./markdown.js";
-import type {MarkdownCode} from "./markdown.js";
+import type {MarkdownCode, MarkdownPage} from "./markdown.js";
 import {populateNpmCache} from "./npm.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
-import {getResolvers, isLocalImport} from "./resolvers.js";
+import {getResolvers} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
@@ -280,6 +282,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
   let hash: string | null = null;
   let html: string[] | null = null;
   let code: Map<string, string> | null = null;
+  let files: Map<string, string> | null = null;
   let stylesheets: string[] | null = null;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
@@ -290,9 +293,15 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
   function getWatchFiles(resolvers: Resolvers): Iterable<string> {
     const files = new Set<string>();
     for (const specifier of resolvers.stylesheets) {
-      if (isLocalImport(specifier, path!)) {
+      if (isPathImport(specifier)) {
         files.add(specifier);
       }
+    }
+    for (const specifier of resolvers.files) {
+      files.add(specifier);
+    }
+    for (const specifier of resolvers.localImports) {
+      files.add(specifier);
     }
     return files;
   }
@@ -332,16 +341,19 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
         const previousHash = hash!;
         const previousHtml = html!;
         const previousCode = code!;
+        const previousFiles = files!;
         const previousStylesheets = stylesheets!;
         hash = page.hash;
         const resolvers = await getResolvers(page, {root, path});
-        html = getHtml(page.html);
-        code = getCode(page.code, resolvers);
+        html = getHtml(page);
+        code = getCode(page, resolvers);
+        files = getFiles(resolvers);
         stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
         send({
           type: "update",
           diffHtml: diffHtml(previousHtml, html),
           diffCode: diffCode(previousCode, code),
+          diffFiles: diffFiles(previousFiles, files),
           addedStylesheets: Array.from(difference(stylesheets, previousStylesheets)),
           removedStylesheets: Array.from(difference(previousStylesheets, stylesheets)),
           previousHash,
@@ -364,8 +376,9 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
     if (page.hash !== initialHash) return void send({type: "reload"});
     const resolvers = await getResolvers(page, {root, path});
     hash = page.hash;
-    html = getHtml(page.html);
-    code = getCode(page.code, resolvers);
+    html = getHtml(page);
+    code = getCode(page, resolvers);
+    files = getFiles(resolvers);
     stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
     attachmentWatcher = await FileWatchers.of(root, path, getWatchFiles(resolvers), () => watcher("change"));
     markdownWatcher = watch(join(root, path), (event) => watcher(event));
@@ -409,26 +422,59 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
   }
 }
 
-function getHtml(html: string): string[] {
+function getHtml({html}: MarkdownPage): string[] {
   return Array.from(parseHTML(`<!doctype html><html><body>${html}`).document.body.children, String);
 }
 
-function getCode(code: MarkdownCode[], {resolveImport, resolveDynamicImport}: Resolvers): Map<string, string> {
-  return new Map(code.map(({id, node}) => [id, transpileJavaScript(node, {id, resolveImport, resolveDynamicImport})]));
+function getCode({code}: MarkdownPage, resolvers: Resolvers): Map<string, string> {
+  return new Map(code.map((code) => [code.id, transpileCode(code, resolvers)]));
+}
+
+// Including the file has as a comment ensures that the code changes when a
+// directly-referenced file changes, triggering re-evaluation. Note that when a
+// transitive import changes, or when a file referenced by a transitive import
+// changes, the sha is already included in the transpiled code, and hence will
+// likewise be re-evaluated.
+function transpileCode({id, node}: MarkdownCode, resolvers: Resolvers): string {
+  const hash = createHash("sha256");
+  for (const f of node.files) hash.update(resolvers.resolveFile(f.name));
+  return `${transpileJavaScript(node, {id, ...resolvers})} // ${hash.digest("hex")}`;
+}
+
+function getFiles({files, resolveFile}: Resolvers): Map<string, string> {
+  return new Map(Array.from(files, (f) => [f, resolveFile(f)]));
 }
 
 type CodePatch = {removed: string[]; added: string[]};
 
 function diffCode(oldCode: Map<string, string>, newCode: Map<string, string>): CodePatch {
   const patch: CodePatch = {removed: [], added: []};
-  for (const [id] of oldCode) {
-    if (!newCode.has(id)) {
+  for (const [id, body] of oldCode) {
+    if (newCode.get(id) !== body) {
       patch.removed.push(id);
     }
   }
   for (const [id, body] of newCode) {
-    if (!oldCode.has(id)) {
+    if (oldCode.get(id) !== body) {
       patch.added.push(body);
+    }
+  }
+  return patch;
+}
+
+type FileDeclaration = {name: string; mimeType: string | null; path: string};
+type FilePatch = {removed: string[]; added: FileDeclaration[]};
+
+function diffFiles(oldFiles: Map<string, string>, newFiles: Map<string, string>): FilePatch {
+  const patch: FilePatch = {removed: [], added: []};
+  for (const [name, path] of oldFiles) {
+    if (newFiles.get(name) !== path) {
+      patch.removed.push(name);
+    }
+  }
+  for (const [name, path] of newFiles) {
+    if (oldFiles.get(name) !== path) {
+      patch.added.push({name, mimeType: mime.getType(name), path});
     }
   }
   return patch;

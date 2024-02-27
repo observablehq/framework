@@ -1,3 +1,4 @@
+import {registerFile} from "npm:@observablehq/stdlib";
 import {cellsById, define} from "./main.js";
 import {enableCopyButtons} from "./pre.js";
 
@@ -73,6 +74,12 @@ export function open({hash, eval: compile} = {}) {
         }
         for (const body of message.diffCode.added) {
           compile(body);
+        }
+        for (const name of message.diffFiles.removed) {
+          registerFile(name, null);
+        }
+        for (const file of message.diffFiles.added) {
+          registerFile(file.name, file);
         }
         const {addedStylesheets, removedStylesheets} = message;
         if (addedStylesheets.length === 1 && removedStylesheets.length === 1) {

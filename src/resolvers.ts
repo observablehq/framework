@@ -167,7 +167,7 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   }
 
   function resolveImport(specifier: string): string {
-    return isLocalImport(specifier, path)
+    return isPathImport(specifier)
       ? relativePath(path, resolveImportPath(root, resolvePath(path, specifier)))
       : builtins.has(specifier)
       ? relativePath(path, builtins.get(specifier)!)
@@ -185,7 +185,7 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   }
 
   function resolveStylesheet(specifier: string): string {
-    return isLocalImport(specifier, path)
+    return isPathImport(specifier)
       ? relativePath(path, resolveStylesheetPath(root, resolvePath(path, specifier)))
       : specifier.startsWith("observablehq:")
       ? relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}`)
@@ -218,10 +218,6 @@ export function resolveImportPath(root: string, path: string): string {
 
 export function resolveFilePath(root: string, path: string): string {
   return `/_file/${path}?sha=${getFileHash(root, path)}`;
-}
-
-export function isLocalImport(specifier: string, path: string): boolean {
-  return isPathImport(specifier) && !resolvePath(path, specifier).startsWith("../");
 }
 
 // Returns any inputs that are not declared in outputs. These typically refer to
