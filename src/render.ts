@@ -23,22 +23,22 @@ type RenderInternalOptions =
   | {preview?: false} // build
   | {preview: true}; // preview
 
-export async function renderPage(parse: MarkdownPage, options: RenderOptions & RenderInternalOptions): Promise<string> {
+export async function renderPage(page: MarkdownPage, options: RenderOptions & RenderInternalOptions): Promise<string> {
   const {root, base, path, pages, title, preview, search} = options;
-  const sidebar = parse.data?.sidebar !== undefined ? Boolean(parse.data.sidebar) : options.sidebar;
-  const toc = mergeToc(parse.data?.toc, options.toc);
-  const resolvers = await getResolvers(parse, options);
+  const sidebar = page.data?.sidebar !== undefined ? Boolean(page.data.sidebar) : options.sidebar;
+  const toc = mergeToc(page.data?.toc, options.toc);
+  const resolvers = await getResolvers(page, options);
   const {files, resolveFile, resolveImport, resolveDynamicImport} = resolvers;
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 ${
-  parse.title || title
-    ? html`<title>${[parse.title, parse.title === title ? null : title]
+  page.title || title
+    ? html`<title>${[page.title, page.title === title ? null : title]
         .filter((title): title is string => !!title)
         .join(" | ")}</title>\n`
     : ""
-}${renderHead(parse, resolvers, options)}${
+}${renderHead(page, resolvers, options)}${
     path === "/404"
       ? html.unsafe(`\n<script type="module">
 
@@ -52,24 +52,23 @@ if (location.pathname.endsWith("/")) {
   }
 <script type="module">${html.unsafe(`
 
-import ${
-    preview || parse.pieces.some((p) => p.code.length) ? `{${preview ? "open, " : ""}define} from ` : ""
-  }${JSON.stringify(resolveImport("observablehq:client"))};${
+import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from ` : ""}${JSON.stringify(
+    resolveImport("observablehq:client")
+  )};${
     files.size
       ? `\nimport {registerFile} from ${JSON.stringify(resolveImport("observablehq:stdlib"))};
 ${renderFiles(files, resolveFile)}`
       : ""
   }
-${preview ? `\nopen({hash: ${JSON.stringify(parse.hash)}, eval: (body) => (0, eval)(body)});\n` : ""}${parse.pieces
-    .flatMap((piece) => piece.code)
-    .map((code) => `\n${transpileJavaScript(code.node, {id: code.id, resolveImport, resolveDynamicImport})}`)
+${preview ? `\nopen({hash: ${JSON.stringify(page.hash)}, eval: (body) => (0, eval)(body)});\n` : ""}${page.code
+    .map(({node, id}) => `\n${transpileJavaScript(node, {id, resolveImport, resolveDynamicImport})}`)
     .join("")}`)}
 </script>${sidebar ? html`\n${await renderSidebar(title, pages, root, path, search)}` : ""}${
-    toc.show ? html`\n${renderToc(findHeaders(parse), toc.label)}` : ""
+    toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
-<div id="observablehq-center">${renderHeader(options, parse.data)}
+<div id="observablehq-center">${renderHeader(options, page.data)}
 <main id="observablehq-main" class="observablehq">
-${html.unsafe(parse.html)}</main>${renderFooter(path, options, parse.data)}
+${html.unsafe(page.html)}</main>${renderFooter(path, options, page.data)}
 </div>
 `);
 }

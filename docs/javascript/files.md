@@ -145,15 +145,15 @@ A common gotcha with JSON is that it has no built-in date type; dates are theref
 
 To display an image, you can use a static image in [Markdown](../markdown) such as `<img src="horse.jpg">` or `![horse](horse.jpg)`. Likewise, you can use a `video` or `audio` element. Per [file-based routing](../routing#files), static references to these files are automatically detected and therefore these files will be included in the built output.
 
-<video src="horse.mp4" autoplay muted loop controls>
+<video src="horse.mp4" autoplay muted loop controls></video>
 
-```md
-<video src="horse.mp4" autoplay muted loop controls>
+```html run=false
+<video src="horse.mp4" autoplay muted loop controls></video>
 ```
 
 If you want to manipulate an image in JavaScript, use `file.image`. For example, below we load an image and invert the RGB channel values.
 
-<canvas id="horse-canvas" width="640" height="512" style="max-width: 100%;">
+<canvas id="horse-canvas" width="640" height="512" style="max-width: 100%;"></canvas>
 
 ```js echo
 const canvas = document.querySelector("#horse-canvas");

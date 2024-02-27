@@ -76,19 +76,17 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   if (page.style) stylesheets.add(page.style);
 
   // Collect directly-attached files, local imports, and static imports.
-  for (const piece of page.pieces) {
-    for (const {node} of piece.code) {
-      for (const f of node.files) {
-        files.add(f.name);
-        if (f.method) fileMethods.add(f.method);
+  for (const {node} of page.code) {
+    for (const f of node.files) {
+      files.add(f.name);
+      if (f.method) fileMethods.add(f.method);
+    }
+    for (const i of node.imports) {
+      if (i.type === "local") {
+        localImports.add(i.name);
       }
-      for (const i of node.imports) {
-        if (i.type === "local") {
-          localImports.add(i.name);
-        }
-        if (i.method === "static") {
-          staticImports.add(i.name);
-        }
+      if (i.method === "static") {
+        staticImports.add(i.name);
       }
     }
   }
@@ -229,23 +227,19 @@ function findFreeInputs(page: MarkdownPage): Set<string> {
   const inputs = new Set<string>();
 
   // Compute all declared variables.
-  for (const piece of page.pieces) {
-    for (const {node} of piece.code) {
-      if (node.declarations) {
-        for (const {name} of node.declarations) {
-          outputs.add(name);
-        }
+  for (const {node} of page.code) {
+    if (node.declarations) {
+      for (const {name} of node.declarations) {
+        outputs.add(name);
       }
     }
   }
 
   // Compute all unbound references.
-  for (const piece of page.pieces) {
-    for (const {node} of piece.code) {
-      for (const {name} of node.references) {
-        if (!outputs.has(name)) {
-          inputs.add(name);
-        }
+  for (const {node} of page.code) {
+    for (const {name} of node.references) {
+      if (!outputs.has(name)) {
+        inputs.add(name);
       }
     }
   }

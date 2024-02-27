@@ -5,7 +5,7 @@ import {basename, join, resolve} from "node:path";
 import deepEqual from "fast-deep-equal";
 import {isEnoent} from "../src/error.js";
 import {type MarkdownPage, parseMarkdown} from "../src/markdown.js";
-import {normalizePieceHtml} from "../src/markdown.js";
+import {rewriteHtml} from "../src/markdown.js";
 
 const html = (strings, ...values) => String.raw({raw: strings}, ...values);
 const mockContext = () => ({files: [], imports: [], pieces: [], startLine: 0, currentLine: 0});
@@ -70,7 +70,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
     const htmlStr = html`<img src="./test.png">`;
     const expected = html`<img src="./_file/test.png">`;
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = rewriteHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
@@ -97,7 +97,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
                 800px" src="./_file/large.jpg" alt="Image for testing">
       `;
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = rewriteHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
@@ -122,7 +122,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
       Your browser doesn't support HTML video.
       </video>`;
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = rewriteHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
@@ -148,7 +148,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
       </video>`;
 
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = rewriteHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
@@ -177,7 +177,7 @@ describe("normalizePieceHtml adds local file attachments", () => {
     </picture>`;
 
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = rewriteHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
@@ -203,7 +203,7 @@ describe("normalizePieceHtml only adds local files", () => {
     const htmlStr = html`<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/American_Shorthair.jpg/900px-American_Shorthair.jpg">`;
     const expected = html`<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/American_Shorthair.jpg/900px-American_Shorthair.jpg">`;
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = rewriteHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, []);
@@ -222,7 +222,7 @@ describe("normalizePieceHtml only adds local files", () => {
         <img srcset="./_file/small.jpg 480w, https://upload.wikimedia.org/900px-American_Shorthair.jpg 900w" sizes="(max-width: 600px) 480px, 900px" src="https://upload.wikimedia.org/900px-American_Shorthair.jpg" alt="Cat image for testing">
       `;
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = rewriteHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
@@ -248,7 +248,7 @@ describe("normalizePieceHtml only adds local files", () => {
       </video>`;
 
     const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, root, sourcePath, context);
+    const actual = rewriteHtml(htmlStr, root, sourcePath, context);
 
     assert.equal(actual, expected);
     assert.deepEqual(context.files, [
