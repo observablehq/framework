@@ -339,7 +339,7 @@ const userBase = {
   has_workspace: false
 };
 
-const workspaces = [
+const workspaces: GetCurrentUserResponse["workspaces"] = [
   {
     id: "0000000000000001",
     login: "mock-user-ws",
@@ -385,7 +385,7 @@ const workspaces = [
     role: "guest_member",
     projects_info: [{project_slug: "test-project-2", project_role: "viewer"}]
   }
-] as GetCurrentUserResponse["workspaces"];
+];
 
 export const userWithZeroWorkspaces = {
   ...userBase,

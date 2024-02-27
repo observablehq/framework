@@ -112,7 +112,7 @@ export async function deploy(
     if (apiKey) {
       currentUser = await apiClient.getCurrentUser();
       // List of valid workspaces that can be used to create projects.
-      currentUser.workspaces = validWorkspaces(currentUser.workspaces);
+      currentUser = {...currentUser, workspaces: validWorkspaces(currentUser.workspaces)};
     }
   } catch (error) {
     if (isHttpError(error)) {
