@@ -1,66 +1,39 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
 import {readFile} from "node:fs/promises";
-import {join} from "node:path";
-import type {Patch, PatchItem} from "fast-array-diff";
-import {getPatch} from "fast-array-diff";
-import equal from "fast-deep-equal";
+// import type {Patch, PatchItem} from "fast-array-diff";
+// import {getPatch} from "fast-array-diff";
+// import equal from "fast-deep-equal";
 import matter from "gray-matter";
 import he from "he";
 import hljs from "highlight.js";
 import {parseHTML} from "linkedom";
 import MarkdownIt from "markdown-it";
-import {type RuleCore} from "markdown-it/lib/parser_core.js";
-import {type RuleInline} from "markdown-it/lib/parser_inline.js";
-import {type RenderRule, type default as Renderer} from "markdown-it/lib/renderer.js";
+import type {RuleCore} from "markdown-it/lib/parser_core.js";
+import type {RuleInline} from "markdown-it/lib/parser_inline.js";
+import type {RenderRule, default as Renderer} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
-import {type Config, mergeStyle} from "./config.js";
+import type {Config} from "./config.js";
+import {mergeStyle} from "./config.js";
 import {getLocalPath} from "./files.js";
 import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
-import type {FileExpression} from "./javascript/files.js";
-// import {findFiles, resolveFileReference} from "./javascript/files.js";
-import {defaultGlobals} from "./javascript/globals.js";
 import type {ImportReference} from "./javascript/imports.js";
-// import {createImportResolver, findImports, isPathImport} from "./javascript/imports.js";
-// import {parseNpmSpecifier, resolveNpmImports} from "./javascript/npm.js";
-import {getModuleInfo} from "./javascript/module.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
-// import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
-import {relativePath, resolvePath} from "./path.js";
+import {relativePath} from "./path.js";
 import {transpileTag} from "./tag.js";
 import {red} from "./tty.js";
-
-// export interface HtmlPiece {
-//   type: "html";
-//   id: string; // TODO remove this?
-//   html: string;
-//   cellIds?: string[];
-// }
-
-// export interface CellPiece extends Transpile {
-//   type: "cell";
-// }
-
-// export type ParsePiece = HtmlPiece | CellPiece;
 
 export interface MarkdownPage {
   title: string | null;
   html: string;
   data: {[key: string]: any} | null;
-  // staticModules: string[];
-  // dynamicModules: string[];
-  // stylesheets: string[];
   style: string | null;
-  // files: string[];
   pieces: MarkdownPiece[];
-  // cells: CellPiece[];
   hash: string;
 }
 
-// TODO rename this, we’re not “rendering” here
-// TODO rename the concept of “pieces” and “cells” (and “nodes”) more generally
 export interface MarkdownPiece {
   html: string;
   code: {id: string; node: JavaScriptNode}[];
@@ -68,8 +41,6 @@ export interface MarkdownPiece {
 
 interface ParseContext {
   pieces: MarkdownPiece[];
-  files: Omit<FileExpression, "node">[];
-  imports: ImportReference[];
   startLine: number;
   currentLine: number;
 }
@@ -130,8 +101,6 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
         // TODO const sourceLine = context.startLine + context.currentLine;
         const node = parseJavaScript(source, {path: sourcePath});
         extendPiece(context, {code: [{id, node}]});
-        if (node.files) context.files.push(...node.files);
-        if (node.imports) context.imports.push(...node.imports);
         result += `<div id="cell-${id}" class="observablehq observablehq--block${
           node.expression ? " observablehq--loading" : ""
         }"></div>\n`;
@@ -290,8 +259,6 @@ function makePlaceholderRenderer(root: string, sourcePath: string): RenderRule {
       // TODO sourceLine: context.startLine + context.currentLine
       const node = parseJavaScript(token.content, {path: sourcePath, inline: true});
       extendPiece(context, {code: [{id, node}]});
-      if (node.files) context.files.push(...node.files);
-      if (node.imports) context.imports.push(...node.imports);
       return `<span id="cell-${id}" class="observablehq--loading"></span>`;
     } catch (error) {
       if (!(error instanceof SyntaxError)) throw error;
@@ -424,25 +391,6 @@ export function normalizePieceHtml(html: string, root: string, sourcePath: strin
   return isSingleElement(document) ? String(document) : `<span>${document}</span>`;
 }
 
-// function toParsePieces(pieces: Piece[]): HtmlPiece[] {
-//   return pieces.map((piece) => ({
-//     type: "html",
-//     id: "", // TODO this seems wrong; id should be optional if not required
-//     cellIds: piece.code.map((code) => `${code.id}`),
-//     html: piece.html
-//   }));
-// }
-
-// async function toParseCells(pieces: Piece[]): Promise<CellPiece[]> {
-//   const cellPieces: CellPiece[] = [];
-//   for (const piece of pieces) {
-//     for (const {body, ...rest} of piece.code) {
-//       cellPieces.push({type: "cell", ...rest, body: await body()});
-//     }
-//   }
-//   return cellPieces;
-// }
-
 export interface ParseOptions {
   root: string;
   path: string;
@@ -462,132 +410,16 @@ export async function parseMarkdown(sourcePath: string, {root, path, style}: Par
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
   md.renderer.render = renderIntoPieces(md.renderer, root, path);
   const pieces: MarkdownPiece[] = [];
-  const files: FileReference[] = [];
-  const imports: ImportReference[] = [];
-  const context: ParseContext = {files, imports, pieces, startLine: 0, currentLine: 0};
+  const context: ParseContext = {pieces, startLine: 0, currentLine: 0};
   const tokens = md.parse(parts.content, context);
-  const html = md.renderer.render(tokens, md.options, context); // Note: mutates pieces, files, imports!
-
-  // The purpose of this code is to resolve the dependencies (the other files)
-  // that the page needs. These dependencies are broken into three categories:
-  // imports (JavaScript), stylesheets (CSS), and other files (referenced either
-  // by FileAttachment or by static HTML).
-  //
-  // For imports, we distinguish between local imports (to other JavaScript
-  // modules within the source root) and global imports (typically to libraries
-  // published to npm but also to modules that Framework itself provides such as
-  // stdlib; perhaps better called “non-local”).
-  //
-  // We also distinguish between static imports (import declarations) and
-  // dynamic imports (import expressions): only static imports are preloaded,
-  // but both static and dynamic imports are included in the published site
-  // (dist). Transitive static imports from dynamically-imported modules are
-  // treated as dynamic since they should not be preloaded. For example, Mermaid
-  // implements about a dozen chart types as dynamic imports, and we only want
-  // to load the ones in use.
-  //
-  // TODO Perhaps even we shouldn’t download dynamic imports unless you
-  // explicitly enumerate them (by declaring them as static imports)? Especially
-  // given that Mermaid has tons of them, and some of them can’t even be served
-  // by jsDelivr (such as Elk)?
-  //
-  // TODO Imported files are currently broken.
-  //
-  // For files, we collect all FileAttachment calls within local modules, adding
-  // them to any files referenced by static HTML.
-  //
-  // For stylesheets, we are only concerned with the config style option or the
-  // page-level front matter style option where the stylesheet is served out of
-  // _import by generating a bundle from a local file — along with implicit
-  // stylesheets referenced by recommended libraries such as Leaflet.
-  // (Stylesheets referenced in static HTML are treated as files.)
-
-  // const resolveImport = createImportResolver(root, "/"); // TODO special-case this
-  // const asNpmSpecifier = (i: string) => i.replace(/^\/_npm\//, "npm:").replace(/\/\+esm\.js$/, "/+esm"); // TODO cleaner?
-  // const importPaths = new Set<string>();
-
-  // // Process the local imports first to collect files and transitive imports.
-  // for (const i of imports) {
-  //   if (i.type === "local") {
-  //     const importPath = resolvePath(path, i.name);
-  //     if (importPaths.has(importPath)) continue;
-  //     importPaths.add(importPath);
-  //     const [body, input] = await parseModule(root, importPath);
-  //     for (let o of findImports(body, importPath, input)) {
-  //       if (i.method === "dynamic" && o.method === "static") o = {...o, method: "dynamic"};
-  //       if (o.type === "local") o = {...o, name: relativePath(path, resolvePath(importPath, o.name))};
-  //       imports.push(o);
-  //     }
-  //     for (let o of findFiles(body, importPath, input)) {
-  //       o = {...o, name: relativePath(path, resolvePath(importPath, o.name))};
-  //       files.push(resolveFileReference(o, root, path));
-  //     }
-  //   }
-  // }
-
-  // // Add implicit global imports (that every page needs).
-  // imports.push({name: "observablehq:client", type: "global", method: "static"});
-  // imports.push({name: "npm:@observablehq/runtime", type: "global", method: "static"});
-  // imports.push({name: "npm:@observablehq/stdlib", type: "global", method: "static"});
-
-  // // Process the global imports from npm. Note: this mutates the import names to
-  // // the resolved exact version and path! TODO When resolving a built-in module
-  // // such as npm:@observablehq/inputs, don’t allow a version or a path (since
-  // // that will bypass self-hosting).
-  // for (const i of imports) {
-  //   if (i.type === "global") {
-  //     const importPath = isPathImport(i.name) ? i.name : (i.name = (await resolveImport(i.name)).slice(".".length));
-  //     if (importPaths.has(importPath)) continue;
-  //     importPaths.add(importPath);
-  //     switch (importPath) {
-  //       case "/_observablehq/stdlib/dot.js":
-  //         imports.push({name: "npm:@viz-js/viz", type: "global", method: i.method});
-  //         break;
-  //       case "/_observablehq/stdlib/duckdb.js":
-  //         imports.push({name: "npm:@duckdb/duckdb-wasm", type: "global", method: i.method});
-  //         break;
-  //       case "/_observablehq/stdlib/inputs.js":
-  //         imports.push({name: "npm:htl", type: "global", method: i.method});
-  //         imports.push({name: "npm:isoformat", type: "global", method: i.method});
-  //         break;
-  //       case "/_observablehq/stdlib/mermaid.js":
-  //         imports.push({name: "npm:mermaid", type: "global", method: i.method});
-  //         break;
-  //       case "/_observablehq/stdlib/tex.js":
-  //         imports.push({name: "npm:katex", type: "global", method: i.method});
-  //         break;
-  //     }
-  //     if (importPath.startsWith("/_observablehq/")) continue;
-  //     for (let o of await resolveNpmImports(root, importPath)) {
-  //       if (i.method === "dynamic" && o.method === "static") o = {...o, method: "dynamic"};
-  //       if (o.type === "local") o = {...o, type: "global", name: resolvePath(importPath, o.name)};
-  //       imports.push(o);
-  //     }
-  //   }
-  // }
-
-  // // Okay, phew! Now the last part is to normalize global import paths.
-  // for (const i of imports) {
-  //   if (i.type === "global" && isPathImport(i.name)) {
-  //     i.name = relativePath(path, i.name);
-  //   }
-  // }
-
-  // TODO
-  // addImplicitFiles(globalFiles, globalStaticImports); // TODO globalDynamicImports?
-
+  const html = md.renderer.render(tokens, md.options, context); // Note: mutates pieces!
   return {
     html,
     data: isEmpty(parts.data) ? null : parts.data,
     title: parts.data?.title ?? findTitle(tokens) ?? null,
-    // staticModules: [...new Set(imports.filter((i) => i.method === "static").map((i) => i.name))].sort(),
-    // dynamicModules: [...new Set(imports.filter((i) => i.method === "dynamic").map((i) => i.name))].sort(),
-    // files: [...new Set([...imports.map((i) => i.name), ...files.map((i) => i.name)])].sort(),
-    // stylesheets: [...stylesheets].sort(),
     style: getStylesheet(path, parts.data, style),
-    pieces
-    // pieces: toParsePieces(context.pieces),
-    // cells: await toParseCells(context.pieces), // TODO use already-resolved imports above?
+    pieces,
+    hash: "" // TODO
     // hash: computeMarkdownHash(source, imports, files)
   };
 }

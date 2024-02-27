@@ -30,6 +30,33 @@ export const builtins = new Map<string, string>([
   ["npm:@observablehq/zip", "/_observablehq/stdlib/zip.js"] // TODO publish to npm
 ]);
 
+/**
+ * Resolves the dependencies (the other files) that the page needs. Dependencies
+ * are in three categories: imports (JavaScript modules), stylesheets (CSS), and
+ * files (referenced either by FileAttachment or by static HTML).
+ *
+ * For imports, we distinguish between local imports (to other JavaScript
+ * modules within the source root) and global imports (typically to libraries
+ * published to npm but also to modules that Framework itself provides such as
+ * stdlib; perhaps better called “non-local”). We also distinguish between
+ * static imports (import declarations) and dynamic imports (import
+ * expressions): only static imports are preloaded, but both static and dynamic
+ * imports are included in the published site (dist). Transitive static imports
+ * from dynamically-imported modules are treated as dynamic since they should
+ * not be preloaded. For example, Mermaid implements about a dozen chart types
+ * as dynamic imports, and we only want to load the ones in use.
+ *
+ * For stylesheets, we are only concerned with the config style option or the
+ * page-level front matter style option where the stylesheet is served out of
+ * _import by generating a bundle from a local file — along with implicit
+ * stylesheets referenced by recommended libraries such as Leaflet. (Stylesheets
+ * referenced in static HTML are treated as files.)
+ *
+ * For files, we collect all FileAttachment calls within local modules, adding
+ * them to any files referenced by static HTML.
+ *
+ * TODO Resolve implicit downloads, too (addImplicitFiles).
+ */
 export async function getResolvers(page: MarkdownPage, {root, path}: {root: string; path: string}): Promise<Resolvers> {
   const files = new Set<string>();
   const fileMethods = new Set<string>();
@@ -44,7 +71,7 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   staticImports.add("npm:@observablehq/stdlib");
 
   // Add stylesheets. TODO Instead of hard-coding Source Serif Pro, parse the
-  // page’s stylesheet and look for external imports.
+  // page’s stylesheet to look for external imports.
   stylesheets.add("https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"); // prettier-ignore
   if (page.style) stylesheets.add(page.style);
 
