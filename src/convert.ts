@@ -3,7 +3,6 @@ import wrapAnsi from "wrap-ansi";
 import type {ClackEffects} from "./clack.js";
 import {CliError} from "./error.js";
 import {prepareOutput} from "./files.js";
-import {} from "./normalizedFs.js";
 import {existsSync, utimes, writeFile} from "./normalizedFs.js";
 import {join} from "./normalizedPath.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
