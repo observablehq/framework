@@ -195,3 +195,35 @@ toc: false
 ## search
 
 Whether to enable [search](./search) on the project; defaults to false.
+
+## interpreters
+
+The interpreters option specifies additional languages for data loaders, indicating the extension and associated interpreter (see [routing](./loaders#routing) for details). The list of supported interpreters defaults to:
+
+```js run=false
+{
+  ".js": ["node", "--no-warnings=ExperimentalWarning"],
+  ".ts": ["tsx"],
+  ".sh": ["sh"],
+  ".exe": [""],
+  ".jl": ["julia"],
+  ".go": ["go", "run"],
+  ".php": ["php"],
+  ".py": ["python3"],
+  ".r": ["Rscript"],
+  ".R": ["Rscript"],
+  ".rs": ["rust-script"]
+}
+```
+
+Keys specify the extension, and values indicate the associated command and options. For example, to add perl (extension `.pl`), and AppleScript (`.scpt`), to the list above:
+
+```js run=false
+interpreters: {".pl": ["perl"], ".scpt": ["osascript"]}
+```
+
+To disable an extension, set its value to null:
+
+```js run=false
+interpreters: {".exe": null, ".rs": null}
+```
