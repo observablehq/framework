@@ -24,7 +24,10 @@ import {resolveFilePath} from "./resolvers.js";
 import {transpileTag} from "./tag.js";
 import {red} from "./tty.js";
 
-export type MarkdownCode = {id: string; node: JavaScriptNode};
+export interface MarkdownCode {
+  id: string;
+  node: JavaScriptNode;
+}
 
 export interface MarkdownPage {
   title: string | null;
