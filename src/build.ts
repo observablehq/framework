@@ -1,11 +1,12 @@
 import {existsSync} from "node:fs";
-import {access, constants, copyFile, writeFile} from "node:fs/promises";
+import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
 import {basename, dirname, join} from "node:path";
 // import {fileURLToPath} from "node:url";
 import type {Config, Style} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {CliError, isEnoent} from "./error.js";
 import {prepareOutput, visitMarkdownFiles} from "./files.js";
+import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import {parseMarkdown} from "./markdown.js";
 import {populateNpmCache} from "./npm.js";
@@ -168,24 +169,24 @@ export async function build(
 
   // Download npm imports.
   for (const path of globalImports) {
+    if (!path.startsWith("/_npm/")) continue; // skip _observablehq
     effects.output.write(`${faint("download")} ${path} ${faint("→")} `);
     const sourcePath = await populateNpmCache(root, path); // TODO effects
     await effects.copyFile(sourcePath, path);
   }
 
   // Copy over imported local modules.
-  // for (const file of localImports) {
-  //   const sourcePath = join(root, file);
-  //   const outputPath = join("_import", file);
-  //   if (!existsSync(sourcePath)) {
-  //     effects.logger.error("missing referenced file", sourcePath);
-  //     continue;
-  //   }
-  //   effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-  //   const resolver = createImportResolver(root, outputPath, file);
-  //   const contents = await rewriteModule(await readFile(sourcePath, "utf-8"), file, resolver);
-  //   await effects.writeFile(outputPath, contents);
-  // }
+  for (const path of localImports) {
+    const sourcePath = join(root, path);
+    const outputPath = join("_import", path);
+    if (!existsSync(sourcePath)) {
+      effects.logger.error("missing referenced file", sourcePath);
+      continue;
+    }
+    effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
+    const contents = await transpileModule(await readFile(sourcePath, "utf-8"), root, outputPath, path);
+    await effects.writeFile(outputPath, contents);
+  }
 
   // // Copy over required distribution files.
   // if (addPublic) {

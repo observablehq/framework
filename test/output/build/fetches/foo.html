@@ -3,20 +3,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Top</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="./_observablehq/theme-air,near-midnight.css">
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
-<link rel="stylesheet" type="text/css" href="./_observablehq/theme-air,near-midnight.css">
+<link rel="preload" as="style" href="./_observablehq/theme-air,near-midnight.css">
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
-<link rel="modulepreload" href="./_import/foo/foo.js?sha=ddc538dfc10d83a59458d5893c89191ef3b2c9b1c02ef6da055423f37388ecf4">
+<link rel="stylesheet" type="text/css" href="./_observablehq/theme-air,near-midnight.css">
 <link rel="modulepreload" href="./_observablehq/client.js">
 <link rel="modulepreload" href="./_observablehq/runtime.js">
 <link rel="modulepreload" href="./_observablehq/stdlib.js">
+<link rel="modulepreload" href="./_import/foo/foo.js?sha=6fd063d5f14f3bb844cfdb599bf3bdd643c4d0f89841591f769960fd58104e6c">
 <script type="module">
 
 import {define} from "./_observablehq/client.js";
+import {registerFile} from "./_observablehq/stdlib.js";
 
-define({id: "47a695da", inputs: ["display"], outputs: ["fooJsonData","fooCsvData"], files: [{"name":"./foo/foo-data.json","mimeType":"application/json","path":"./_file/foo/foo-data.json"},{"name":"./foo/foo-data.csv","mimeType":"text/csv","path":"./_file/foo/foo-data.csv"}], body: async (display) => {
-const {fooJsonData, fooCsvData} = await import("./_import/foo/foo.js?sha=ddc538dfc10d83a59458d5893c89191ef3b2c9b1c02ef6da055423f37388ecf4");
+registerFile("./foo/foo-data.csv", {"name":"./foo/foo-data.csv","mimeType":"text/csv","path":"./_file/foo/foo-data.csv?sha=24ef46342999cefdead1c1d4849f97444f0ed9185251dee73ab1b9f2fc1eba0b"});
+registerFile("./foo/foo-data.json", {"name":"./foo/foo-data.json","mimeType":"application/json","path":"./_file/foo/foo-data.json?sha=67358ed8fd6cd4d8aac33acaa376b58237beb891c3e984e505d3e57e43f7d320"});
+
+define({id: "47a695da", inputs: ["display"], outputs: ["fooJsonData","fooCsvData"], body: async (display) => {
+const {fooJsonData, fooCsvData} = await import("./_import/foo/foo.js?sha=6fd063d5f14f3bb844cfdb599bf3bdd643c4d0f89841591f769960fd58104e6c");
 
 display(fooJsonData);
 display(fooCsvData);
