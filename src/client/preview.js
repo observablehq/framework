@@ -1,5 +1,5 @@
 import {registerFile} from "npm:@observablehq/stdlib";
-import {cellsById, define} from "./main.js";
+import {undefine} from "./main.js";
 import {enableCopyButtons} from "./pre.js";
 
 export * from "./index.js";
@@ -22,13 +22,6 @@ export function open({hash, eval: compile} = {}) {
     switch (message.type) {
       case "reload": {
         location.reload();
-        break;
-      }
-      case "refresh": {
-        message.cellIds.forEach((id) => {
-          const cell = cellsById.get(id);
-          if (cell) define(cell.cell);
-        });
         break;
       }
       case "update": {
@@ -69,8 +62,7 @@ export function open({hash, eval: compile} = {}) {
           }
         }
         for (const id of message.diffCode.removed) {
-          cellsById.get(id)?.variables.forEach((v) => v.delete());
-          cellsById.delete(id);
+          undefine(id);
         }
         for (const body of message.diffCode.added) {
           compile(body);

@@ -34,8 +34,6 @@ import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, link} from "./tty.js";
 
-const publicRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
-
 export interface PreviewOptions {
   config: Config;
   hostname: string;
@@ -121,8 +119,6 @@ export class PreviewServer {
         end(req, res, await searchIndex(config), "application/json");
       } else if ((match = /^\/_observablehq\/theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(pathname))) {
         end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
-      } else if (pathname.startsWith("/_observablehq/")) {
-        send(req, pathname.slice("/_observablehq".length), {root: publicRoot}).pipe(res);
       } else if (pathname.startsWith("/_npm/")) {
         await populateNpmCache(root, pathname);
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
@@ -277,6 +273,22 @@ function end(req: IncomingMessage, res: ServerResponse, content: string, type: s
   }
 }
 
+function getWatchFiles(resolvers: Resolvers): Iterable<string> {
+  const files = new Set<string>();
+  for (const specifier of resolvers.stylesheets) {
+    if (isPathImport(specifier)) {
+      files.add(specifier);
+    }
+  }
+  for (const specifier of resolvers.files) {
+    files.add(specifier);
+  }
+  for (const specifier of resolvers.localImports) {
+    files.add(specifier);
+  }
+  return files;
+}
+
 function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Config) {
   let path: string | null = null;
   let hash: string | null = null;
@@ -289,22 +301,6 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
   let emptyTimeout: ReturnType<typeof setTimeout> | null = null;
 
   console.log(faint("socket open"), req.url);
-
-  function getWatchFiles(resolvers: Resolvers): Iterable<string> {
-    const files = new Set<string>();
-    for (const specifier of resolvers.stylesheets) {
-      if (isPathImport(specifier)) {
-        files.add(specifier);
-      }
-    }
-    for (const specifier of resolvers.files) {
-      files.add(specifier);
-    }
-    for (const specifier of resolvers.localImports) {
-      files.add(specifier);
-    }
-    return files;
-  }
 
   async function watcher(event: WatchEventType, force = false) {
     if (!path) throw new Error("not initialized");

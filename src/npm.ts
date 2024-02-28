@@ -143,11 +143,7 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
   if (name === "apache-arrow" && !range) range = "13.0.0"; // https://github.com/observablehq/framework/issues/750
   if (name === "parquet-wasm" && !range) range = "0.5.0"; // https://github.com/observablehq/framework/issues/733
   if (name === "echarts" && !range) range = "5.4.3"; // https://github.com/observablehq/framework/pull/811
-  // try {
-  return `/_npm/${name}@${await resolveNpmVersion(root, {name, range})}/${path.replace(/\+esm$/, "+esm.js")}`; // TODO use / instead of @
-  // } catch {
-  //   return `https://cdn.jsdelivr.net/npm/${name}${range ? `@${range}` : ""}/${path}`;
-  // }
+  return `/_npm/${name}@${await resolveNpmVersion(root, {name, range})}/${path.replace(/\+esm$/, "+esm.js")}`;
 }
 
 const npmImportsCache = new Map<string, Promise<ImportReference[]>>();

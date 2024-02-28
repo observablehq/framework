@@ -22,7 +22,10 @@ export function relativePath(source: string, target: string): string {
 /**
  * Returns the path to the specified target within the given source root, which
  * defaults to ".", assuming that the target is a relative path such as an
- * import or fetch from the specified source.
+ * import or fetch from the specified source. Typically returns a path starting
+ * with a slash (indicating that it is relative to the source root), but may
+ * return a path start with dot-dot-slash (../) if the path goes outside the
+ * specified root (e.g., from _import to _npm).
  */
 export function resolvePath(source: string, target: string): string;
 export function resolvePath(root: string, source: string, target: string): string;
