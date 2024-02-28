@@ -56,7 +56,7 @@ export function getImplicitStylesheets(imports: Iterable<string>): Set<string> {
  * library used by FileAttachment) we manually enumerate the needed additional
  * downloads here. TODO Support versioned imports, too, such as "npm:leaflet@1".
  */
-export function getImplicitFiles(imports: Iterable<string>): Set<string> {
+export function getImplicitDownloads(imports: Iterable<string>): Set<string> {
   const set = setof(imports);
   const implicits = new Set<string>();
   if (set.has("npm:@observablehq/duckdb")) {
@@ -68,6 +68,68 @@ export function getImplicitFiles(imports: Iterable<string>): Set<string> {
   if (set.has("npm:@observablehq/sqlite")) {
     implicits.add("npm:sql.js/dist/sql-wasm.js");
     implicits.add("npm:sql.js/dist/sql-wasm.wasm");
+  }
+  if (set.has("npm:katex")) {
+    implicits.add("npm:katex/dist/fonts/KaTeX_AMS-Regular.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_AMS-Regular.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_AMS-Regular.woff2");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Caligraphic-Bold.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Caligraphic-Bold.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Caligraphic-Bold.woff2");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Caligraphic-Regular.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Caligraphic-Regular.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Caligraphic-Regular.woff2");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Fraktur-Bold.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Fraktur-Bold.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Fraktur-Bold.woff2");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Fraktur-Regular.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Fraktur-Regular.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Fraktur-Regular.woff2");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Main-Bold.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Main-Bold.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Main-Bold.woff2");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Main-BoldItalic.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Main-BoldItalic.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Main-BoldItalic.woff2");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Main-Italic.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Main-Italic.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Main-Italic.woff2");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Main-Regular.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Main-Regular.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Main-Regular.woff2");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Math-BoldItalic.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Math-BoldItalic.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Math-BoldItalic.woff2");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Math-Italic.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Math-Italic.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Math-Italic.woff2");
+    implicits.add("npm:katex/dist/fonts/KaTeX_SansSerif-Bold.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_SansSerif-Bold.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_SansSerif-Bold.woff2");
+    implicits.add("npm:katex/dist/fonts/KaTeX_SansSerif-Italic.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_SansSerif-Italic.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_SansSerif-Italic.woff2");
+    implicits.add("npm:katex/dist/fonts/KaTeX_SansSerif-Regular.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_SansSerif-Regular.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_SansSerif-Regular.woff2");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Script-Regular.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Script-Regular.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Script-Regular.woff2");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Size1-Regular.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Size1-Regular.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Size1-Regular.woff2");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Size2-Regular.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Size2-Regular.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Size2-Regular.woff2");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Size3-Regular.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Size3-Regular.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Size3-Regular.woff2");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Size4-Regular.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Size4-Regular.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Size4-Regular.woff2");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Typewriter-Regular.ttf");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Typewriter-Regular.woff");
+    implicits.add("npm:katex/dist/fonts/KaTeX_Typewriter-Regular.woff2");
   }
   return implicits;
 }

@@ -1,10 +1,6 @@
 import assert from "node:assert";
-import {
-  getImplicitFileImports,
-  getImplicitFiles,
-  getImplicitInputImports,
-  getImplicitStylesheets
-} from "../src/libraries.js";
+import {getImplicitDownloads, getImplicitStylesheets} from "../src/libraries.js";
+import {getImplicitFileImports, getImplicitInputImports} from "../src/libraries.js";
 
 describe("getImplicitFileImports(files)", () => {
   it("supports known file methods", () => {
@@ -52,10 +48,10 @@ describe("getImplicitStylesheets(imports)", () => {
   });
 });
 
-describe("getImplicitFiles(imports)", () => {
+describe("getImplicitDownloads(imports)", () => {
   it("supports known imports", () => {
     assert.deepStrictEqual(
-      getImplicitFiles(["npm:@observablehq/duckdb"]),
+      getImplicitDownloads(["npm:@observablehq/duckdb"]),
       new Set([
         "npm:@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm",
         "npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js",
@@ -64,7 +60,7 @@ describe("getImplicitFiles(imports)", () => {
       ])
     );
     assert.deepStrictEqual(
-      getImplicitFiles(["npm:@observablehq/sqlite"]),
+      getImplicitDownloads(["npm:@observablehq/sqlite"]),
       new Set(["npm:sql.js/dist/sql-wasm.js", "npm:sql.js/dist/sql-wasm.wasm"])
     );
   });

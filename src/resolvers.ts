@@ -1,6 +1,7 @@
 import {defaultGlobals} from "./javascript/globals.js";
 import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js";
-import {getImplicitDependencies, getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
+import {getImplicitDependencies, getImplicitDownloads} from "./libraries.js";
+import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
 import {getImplicitStylesheets} from "./libraries.js";
 import type {MarkdownPage} from "./markdown.js";
 import {populateNpmCache, resolveNpmImport, resolveNpmImports, resolveNpmSpecifier} from "./npm.js";
@@ -179,6 +180,17 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   // Add implicit stylesheets.
   for (const specifier of getImplicitStylesheets(staticImports)) {
     stylesheets.add(specifier);
+    if (specifier.startsWith("npm:")) {
+      const path = await resolveNpmImport(root, specifier.slice("npm:".length));
+      resolutions.set(specifier, path);
+      await populateNpmCache(root, path);
+    }
+  }
+
+  // Add implicit downloads. (This should be maybe be stored separately rather
+  // than being tossed into global imports, but it works for now.)
+  for (const specifier of getImplicitDownloads(globalImports)) {
+    globalImports.add(specifier);
     if (specifier.startsWith("npm:")) {
       const path = await resolveNpmImport(root, specifier.slice("npm:".length));
       resolutions.set(specifier, path);
