@@ -342,6 +342,16 @@ export function rewriteHtml(html: string, root: string, path: string, context: P
     code.innerHTML = html;
   }
 
+  // Linkedom allows <head> elements (for unknown reasons?) but browsers ignore
+  // them, so we need to dissolve them to ensure incremental update works.
+  // TODO Perhaps we should re-insert this content into the head?
+  // https://github.com/observablehq/framework/issues/379
+  for (const head of document.querySelectorAll("head")) {
+    const p = document.createElement("p");
+    p.append(...head.childNodes);
+    head.replaceWith(p);
+  }
+
   return String(document);
 }
 
