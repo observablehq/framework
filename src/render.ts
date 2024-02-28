@@ -28,7 +28,7 @@ export async function renderPage(page: MarkdownPage, options: RenderOptions & Re
   const sidebar = page.data?.sidebar !== undefined ? Boolean(page.data.sidebar) : options.sidebar;
   const toc = mergeToc(page.data?.toc, options.toc);
   const resolvers = await getResolvers(page, options);
-  const {files, resolveFile, resolveImport, resolveDynamicImport} = resolvers;
+  const {files, resolveFile, resolveImport} = resolvers;
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -61,7 +61,7 @@ ${renderFiles(files, resolveFile)}`
       : ""
   }
 ${preview ? `\nopen({hash: ${JSON.stringify(page.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
-    .map(({node, id}) => `\n${transpileJavaScript(node, {id, resolveImport, resolveDynamicImport})}`)
+    .map(({node, id}) => `\n${transpileJavaScript(node, {id, resolveImport})}`)
     .join("")}`)}
 </script>${sidebar ? html`\n${await renderSidebar(title, pages, root, path, search)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""

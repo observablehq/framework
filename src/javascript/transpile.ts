@@ -16,13 +16,9 @@ import {parseOptions} from "./parse.js";
 export interface TranspileOptions {
   id: string;
   resolveImport?: (specifier: string) => string;
-  resolveDynamicImport?: (specifier: string) => string;
 }
 
-export function transpileJavaScript(
-  node: JavaScriptNode,
-  {id, resolveImport, resolveDynamicImport}: TranspileOptions
-): string {
+export function transpileJavaScript(node: JavaScriptNode, {id, resolveImport}: TranspileOptions): string {
   let async = node.async;
   const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
   const outputs = Array.from(new Set<string>(node.declarations?.map((r) => r.name)));
@@ -31,7 +27,7 @@ export function transpileJavaScript(
   if (hasImportDeclaration(node.body)) async = true;
   const output = new Sourcemap(node.input).trim();
   rewriteImportDeclarations(output, node.body, resolveImport);
-  rewriteImportExpressions(output, node.body, resolveDynamicImport);
+  rewriteImportExpressions(output, node.body, resolveImport);
   if (display) output.insertLeft(0, "display(await(\n").insertRight(node.input.length, "\n))");
   output.insertLeft(0, `, body: ${async ? "async " : ""}(${inputs}) => {\n`);
   if (outputs.length) output.insertLeft(0, `, outputs: ${JSON.stringify(outputs)}`);
@@ -75,9 +71,7 @@ export async function transpileModule(input: string, root: string, path: string,
         : specifier.startsWith("observablehq:")
         ? relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}.js`)
         : specifier.startsWith("npm:")
-        ? node.type === "ImportExpression"
-          ? `https://cdn.jsdelivr.net/npm/${specifier.slice("npm:".length)}`
-          : relativePath(path, await resolveNpmImport(root, specifier.slice("npm:".length)))
+        ? relativePath(path, await resolveNpmImport(root, specifier.slice("npm:".length)))
         : specifier;
       output.replaceLeft(node.source.start, node.source.end, JSON.stringify(p));
     }

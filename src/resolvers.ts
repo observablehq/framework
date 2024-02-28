@@ -12,7 +12,6 @@ export interface Resolvers {
   stylesheets: Set<string>;
   resolveFile(specifier: string): string;
   resolveImport(specifier: string): string;
-  resolveDynamicImport(specifier: string): string;
   resolveStylesheet(specifier: string): string;
 }
 
@@ -202,7 +201,6 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
     stylesheets,
     resolveFile,
     resolveImport,
-    resolveDynamicImport: resolveImport,
     resolveStylesheet
   };
 }

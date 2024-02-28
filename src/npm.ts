@@ -50,13 +50,9 @@ export function rewriteNpmImports(input: string, path: string): string {
     if (node.source && isStringLiteral(node.source)) {
       let value = getStringLiteralValue(node.source);
       if (value.startsWith("/npm/")) {
-        if (node.type === "ImportExpression") {
-          value = `https://cdn.jsdelivr.net${value}`;
-        } else {
-          value = `/_npm/${value.slice("/npm/".length)}`;
-          if (value.endsWith("/+esm")) value += ".js";
-          value = relativePath(path, value);
-        }
+        value = `/_npm/${value.slice("/npm/".length)}`;
+        if (value.endsWith("/+esm")) value += ".js";
+        value = relativePath(path, value);
         output.replaceLeft(node.source.start, node.source.end, JSON.stringify(value));
       }
     }
@@ -125,28 +121,48 @@ async function initializeNpmVersionCache(root: string): typeof npmVersionCache {
   return cache;
 }
 
+const npmVersionRequests = new Map<string, Promise<string>>();
+
 async function resolveNpmVersion(root: string, specifier: NpmSpecifier): Promise<string> {
   const {name, range} = specifier;
   if (range && /^\d+\.\d+\.\d+([-+].*)?$/.test(range)) return range; // exact version specified
   const cache = await (npmVersionCache ??= initializeNpmVersionCache(root));
   const versions = cache.get(specifier.name);
   if (versions) for (const version of versions) if (!range || satisfies(version, range)) return version;
-  const search = range ? `?specifier=${range}` : "";
-  const href = `https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${search}`;
-  const response = await fetch(href);
-  if (!response.ok) throw new Error(`unable to fetch: ${href}`);
-  const {version} = await response.json();
-  if (!version) throw new Error(`unable to resolve version: ${formatNpmSpecifier({name, range})}`);
-  cache.set(specifier.name, versions ? rsort(versions.concat(version)) : [version]);
-  return version;
+  const href = `https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${range ? `?specifier=${range}` : ""}`;
+  let promise = npmVersionRequests.get(href);
+  if (promise) return promise; // coalesce concurrent requests
+  promise = (async function () {
+    console.info(`${faint("resolving")} npm:${formatNpmSpecifier(specifier)}`);
+    const response = await fetch(href);
+    if (!response.ok) throw new Error(`unable to fetch: ${href}`);
+    const {version} = await response.json();
+    if (!version) throw new Error(`unable to resolve version: ${formatNpmSpecifier({name, range})}`);
+    cache.set(specifier.name, versions ? rsort(versions.concat(version)) : [version]);
+    mkdir(join(root, ".observablehq", "cache", "_npm", formatNpmSpecifier({name, range: version})), {recursive: true}); // disk cache
+    return version;
+  })();
+  promise.catch(() => {}).then(() => npmVersionRequests.delete(href));
+  npmVersionRequests.set(href, promise);
+  return promise;
 }
 
 export async function resolveNpmImport(root: string, specifier: string): Promise<string> {
-  let {name, range, path = "+esm"} = parseNpmSpecifier(specifier); // eslint-disable-line prefer-const
-  if (name === "@duckdb/duckdb-wasm" && !range) range = "1.28.0"; // https://github.com/duckdb/duckdb-wasm/issues/1561
-  if (name === "apache-arrow" && !range) range = "13.0.0"; // https://github.com/observablehq/framework/issues/750
-  if (name === "parquet-wasm" && !range) range = "0.5.0"; // https://github.com/observablehq/framework/issues/733
-  if (name === "echarts" && !range) range = "5.4.3"; // https://github.com/observablehq/framework/pull/811
+  const {
+    name,
+    range = name === "@duckdb/duckdb-wasm"
+      ? "1.28.0" // https://github.com/duckdb/duckdb-wasm/issues/1561
+      : name === "apache-arrow"
+      ? "13.0.0" // https://github.com/observablehq/framework/issues/750
+      : name === "parquet-wasm"
+      ? "0.5.0" // https://github.com/observablehq/framework/issues/733
+      : name === "echarts"
+      ? "5.4.3" // https://github.com/observablehq/framework/pull/811
+      : undefined,
+    path = name === "mermaid"
+      ? "dist/mermaid.esm.min.mjs/+esm" // TODO
+      : "+esm"
+  } = parseNpmSpecifier(specifier);
   return `/_npm/${name}@${await resolveNpmVersion(root, {name, range})}/${path.replace(/\+esm$/, "+esm.js")}`;
 }
 
