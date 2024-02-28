@@ -1,6 +1,7 @@
 import {existsSync} from "node:fs";
 import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
-import {basename, dirname, join} from "node:path";
+import {basename, dirname, join, relative} from "node:path";
+import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import type {Config} from "./config.js";
 import {Loader} from "./dataloader.js";
@@ -10,9 +11,9 @@ import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import {parseMarkdown} from "./markdown.js";
 import {populateNpmCache} from "./npm.js";
-import {isPathImport, resolvePath} from "./path.js";
+import {resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
-import {getResolvers} from "./resolvers.js";
+import {getResolvers, resolveNpmSpecifier} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
@@ -74,7 +75,7 @@ export async function build(
     for (const f of resolvers.files) files.add(resolvePath(sourceFile, f));
     for (const i of resolvers.localImports) localImports.add(resolvePath(sourceFile, i));
     for (const i of resolvers.globalImports) globalImports.add(resolvePath(sourceFile, resolvers.resolveImport(i)));
-    for (const s of resolvers.stylesheets) stylesheets.add(s);
+    for (const s of resolvers.stylesheets) stylesheets.add(/^\w+:/.test(s) ? s : resolvePath(sourceFile, s));
     await effects.writeFile(outputPath, html);
   }
 
@@ -83,7 +84,7 @@ export async function build(
     globalImports.add("/_observablehq/search.js");
     const outputPath = join("_observablehq", "minisearch.json");
     const code = await searchIndex(config, effects);
-    effects.output.write(`${faint("search")} ${faint("→")} `);
+    effects.output.write(`${faint("index →")} `);
     await effects.writeFile(outputPath, code);
   }
 
@@ -91,12 +92,15 @@ export async function build(
   if (addPublic) {
     for (const path of globalImports) {
       if (path === "/_observablehq/runtime.js") {
-        const sourcePath = join(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "../../dist/runtime.js");
+        const sourcePath = relative(
+          cwd(),
+          join(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "../../dist/runtime.js")
+        );
         effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
         await effects.copyFile(sourcePath, path);
       } else if (path.startsWith("/_observablehq/")) {
         const clientPath = getClientPath(`./src/client/${path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)}`); // prettier-ignore
-        effects.output.write(`${faint("bundle")} ${path} ${faint("→")} `);
+        effects.output.write(`${faint("build")} ${clientPath} ${faint("→")} `);
         const code = await rollupClient(clientPath, root, path, {minify: true});
         await effects.writeFile(path, code);
       }
@@ -104,20 +108,20 @@ export async function build(
     for (const specifier of stylesheets) {
       if (specifier.startsWith("observablehq:")) {
         const path = `/_observablehq/${specifier.slice("observablehq:".length)}`;
-        effects.output.write(`${faint("bundle")} ${specifier} ${faint("→")} `);
+        effects.output.write(`${faint("build")} ${specifier} ${faint("→")} `);
         if (specifier.startsWith("observablehq:theme-")) {
           const match = /^observablehq:theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(specifier);
           const code = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? []});
           await effects.writeFile(path, code);
         } else {
-          effects.output.write(`${faint("bundle")} ${specifier} ${faint("→")} `);
-          const code = await bundleStyles({path});
+          const clientPath = getClientPath(`./src/client/${path.slice("/_observablehq/".length)}`);
+          const code = await bundleStyles({path: clientPath});
           await effects.writeFile(`/_observablehq/${specifier.slice("observablehq:".length)}`, code);
         }
-      } else if (isPathImport(specifier)) {
+      } else if (!/^\w+:/.test(specifier)) {
         const outputPath = join("_import", specifier);
         const sourcePath = join(root, specifier);
-        effects.output.write(`${faint("bundle")} ${sourcePath} ${faint("→")} `);
+        effects.output.write(`${faint("build")} ${sourcePath} ${faint("→")} `);
         const code = await bundleStyles({path: sourcePath});
         await effects.writeFile(outputPath, code);
       }
@@ -148,7 +152,7 @@ export async function build(
   // Download npm imports.
   for (const path of globalImports) {
     if (!path.startsWith("/_npm/")) continue; // skip _observablehq
-    effects.output.write(`${faint("download")} ${path} ${faint("→")} `);
+    effects.output.write(`${faint("copy")} ${resolveNpmSpecifier(path)} ${faint("→")} `);
     const sourcePath = await populateNpmCache(root, path); // TODO effects
     await effects.copyFile(sourcePath, path);
   }

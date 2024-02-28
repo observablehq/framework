@@ -228,7 +228,7 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   };
 }
 
-function resolveNpmSpecifier(path: string): string {
+export function resolveNpmSpecifier(path: string): string {
   return path.replace(/^\/_npm\//, "npm:").replace(/\/\+esm\.js$/, "/+esm");
 }
 
