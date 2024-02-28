@@ -65,8 +65,6 @@ export async function transpileModule(input: string, root: string, path: string,
     output.replaceLeft(node.arguments[0].start, node.arguments[0].end, `${JSON.stringify(p)}, import.meta.url`);
   }
 
-  // TODO Dynamic imports are resolved differently (to jsDelivr)
-  // TODO Consolidate duplicate code with getResolvers?
   for (const node of imports) {
     if (node.source && isStringLiteral(node.source)) {
       const specifier = getStringLiteralValue(node.source);
@@ -77,7 +75,9 @@ export async function transpileModule(input: string, root: string, path: string,
         : specifier.startsWith("observablehq:")
         ? relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}.js`)
         : specifier.startsWith("npm:")
-        ? relativePath(path, await resolveNpmImport(root, specifier.slice("npm:".length)))
+        ? node.type === "ImportExpression"
+          ? `https://cdn.jsdelivr.net/npm/${specifier.slice("npm:".length)}`
+          : relativePath(path, await resolveNpmImport(root, specifier.slice("npm:".length)))
         : specifier;
       output.replaceLeft(node.source.start, node.source.end, JSON.stringify(p));
     }

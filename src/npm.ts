@@ -50,9 +50,13 @@ export function rewriteNpmImports(input: string, path: string): string {
     if (node.source && isStringLiteral(node.source)) {
       let value = getStringLiteralValue(node.source);
       if (value.startsWith("/npm/")) {
-        value = `/_npm/${value.slice("/npm/".length)}`;
-        if (value.endsWith("/+esm")) value += ".js";
-        value = relativePath(path, value);
+        if (node.type === "ImportExpression") {
+          value = `https://cdn.jsdelivr.net${value}`;
+        } else {
+          value = `/_npm/${value.slice("/npm/".length)}`;
+          if (value.endsWith("/+esm")) value += ".js";
+          value = relativePath(path, value);
+        }
         output.replaceLeft(node.source.start, node.source.end, JSON.stringify(value));
       }
     }
