@@ -17,6 +17,12 @@ export interface Resolvers {
   resolveStylesheet(specifier: string): string;
 }
 
+const defaultImports = [
+  "observablehq:client", // Framework client
+  "npm:@observablehq/runtime", // Runtime
+  "npm:@observablehq/stdlib" // Standard library
+];
+
 export const builtins = new Map<string, string>([
   ["npm:@observablehq/runtime", "/_observablehq/runtime.js"],
   ["npm:@observablehq/stdlib", "/_observablehq/stdlib.js"],
@@ -62,16 +68,10 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   const files = new Set<string>();
   const fileMethods = new Set<string>();
   const localImports = new Set<string>();
-  const globalImports = new Set<string>();
-  const staticImports = new Set<string>();
+  const globalImports = new Set<string>(defaultImports);
+  const staticImports = new Set<string>(defaultImports);
   const stylesheets = new Set<string>();
   const resolutions = new Map<string, string>();
-
-  // Add built-in modules.
-  // TODO Add these to globalImports, too? But they’re built-ins…
-  staticImports.add("observablehq:client");
-  staticImports.add("npm:@observablehq/runtime");
-  staticImports.add("npm:@observablehq/stdlib");
 
   // Add stylesheets. TODO Instead of hard-coding Source Serif Pro, parse the
   // page’s stylesheet to look for external imports.

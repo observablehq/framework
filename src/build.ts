@@ -1,31 +1,25 @@
 import {existsSync} from "node:fs";
 import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
 import {basename, dirname, join} from "node:path";
-// import {fileURLToPath} from "node:url";
-import type {Config, Style} from "./config.js";
+import {fileURLToPath} from "node:url";
+import type {Config} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {CliError, isEnoent} from "./error.js";
-import {prepareOutput, visitMarkdownFiles} from "./files.js";
+import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import {parseMarkdown} from "./markdown.js";
 import {populateNpmCache} from "./npm.js";
-import {resolvePath} from "./path.js";
+import {isPathImport, resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
 import {getResolvers} from "./resolvers.js";
+import {bundleStyles, rollupClient} from "./rollup.js";
+import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {faint} from "./tty.js";
 
-// const EXTRA_FILES = new Map([
-//   [
-//     join(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "../../dist/runtime.js"),
-//     "_observablehq/runtime.js"
-//   ]
-// ]);
-
 export interface BuildOptions {
   config: Config;
-  clientEntry?: string;
   addPublic?: boolean;
 }
 
@@ -47,7 +41,7 @@ export interface BuildEffects {
 }
 
 export async function build(
-  {config, addPublic = true, clientEntry = "./src/client/index.js"}: BuildOptions,
+  {config, addPublic = true}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output)
 ): Promise<void> {
   const {root} = config;
@@ -62,11 +56,11 @@ export async function build(
   if (!pageCount) throw new CliError(`Nothing to build: no page files found in your ${root} directory.`);
   effects.logger.log(`${faint("found")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
 
-  // Render .md files, building a list of file attachments as we go.
+  // Render .md files, building a list of additional assets as we go.
   const files = new Set<string>();
   const localImports = new Set<string>();
   const globalImports = new Set<string>();
-  // const styles: Style[] = [];
+  const stylesheets = new Set<string>();
   for await (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
@@ -80,71 +74,55 @@ export async function build(
     for (const f of resolvers.files) files.add(resolvePath(sourceFile, f));
     for (const i of resolvers.localImports) localImports.add(resolvePath(sourceFile, i));
     for (const i of resolvers.globalImports) globalImports.add(resolvePath(sourceFile, resolvers.resolveImport(i)));
-    // TODO parse.stylesheets
+    for (const s of resolvers.stylesheets) stylesheets.add(s);
     await effects.writeFile(outputPath, html);
-    // const style = mergeStyle(path, page.data?.style, page.data?.theme, config.style);
-    // if (style && !styles.some((s) => styleEquals(s, style))) styles.push(style);
   }
 
-  // Things to copy:
-  // - files attachments and assets
-  // - local imports
-  // - global imports
-  // - stylesheets
+  // Add the search bundle and data, if needed.
+  if (config.search) {
+    globalImports.add("/_observablehq/search.js");
+    const outputPath = join("_observablehq", "minisearch.json");
+    const code = await searchIndex(config, effects);
+    effects.output.write(`${faint("search")} ${faint("→")} `);
+    await effects.writeFile(outputPath, code);
+  }
 
-  // // Add imported local scripts.
-  // for (const script of config.scripts) {
-  //   if (!/^\w+:/.test(script.src)) {
-  //     localImports.add(script.src);
-  //   }
-  // }
-
-  // // Generate the client bundles.
-  // if (addPublic) {
-  //   const bundles: [entry: string, name: string][] = [];
-  //   bundles.push([clientEntry, "client.js"]);
-  //   bundles.push(["./src/client/stdlib.js", "stdlib.js"]);
-  //   if (config.search) bundles.push(["./src/client/search.js", "search.js"]);
-  //   for (const lib of ["dot", "duckdb", "inputs", "mermaid", "sqlite", "tex", "vega-lite", "xlsx", "zip"]) {
-  //     if (globalImports.has(`npm:@observablehq/${lib}`)) {
-  //       bundles.push([`./src/client/stdlib/${lib}.js`, `stdlib/${lib}.js`]);
-  //     }
-  //   }
-  //   for (const lib of ["inputs"]) {
-  //     if (globalImports.has(`npm:@observablehq/${lib}`)) {
-  //       bundles.push([`./src/client/stdlib/${lib}.css`, `stdlib/${lib}.css`]);
-  //     }
-  //   }
-  //   for (const [entry, name] of bundles) {
-  //     const clientPath = getClientPath(entry);
-  //     const outputPath = join("_observablehq", name);
-  //     effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
-  //     const code = await (entry.endsWith(".css")
-  //       ? bundleStyles({path: clientPath})
-  //       : rollupClient(clientPath, root, outputPath, {minify: true}));
-  //     await effects.writeFile(outputPath, code);
-  //   }
-  //   if (config.search) {
-  //     const outputPath = join("_observablehq", "minisearch.json");
-  //     const code = await searchIndex(config, effects);
-  //     effects.output.write(`${faint("search")} ${faint("→")} `);
-  //     await effects.writeFile(outputPath, code);
-  //   }
-  //   for (const style of styles) {
-  //     if ("path" in style) {
-  //       const outputPath = join("_import", style.path);
-  //       const sourcePath = join(root, style.path);
-  //       effects.output.write(`${faint("style")} ${sourcePath} ${faint("→")} `);
-  //       const code = await bundleStyles({path: sourcePath});
-  //       await effects.writeFile(outputPath, code);
-  //     } else {
-  //       const outputPath = join("_observablehq", `theme-${style.theme}.css`);
-  //       effects.output.write(`${faint("bundle")} theme-${style.theme}.css ${faint("→")} `);
-  //       const code = await bundleStyles({theme: style.theme});
-  //       await effects.writeFile(outputPath, code);
-  //     }
-  //   }
-  // }
+  // Generate the client bundles (JavaScript and styles).
+  if (addPublic) {
+    for (const path of globalImports) {
+      if (path === "/_observablehq/runtime.js") {
+        const sourcePath = join(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "../../dist/runtime.js");
+        effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
+        await effects.copyFile(sourcePath, path);
+      } else if (path.startsWith("/_observablehq/")) {
+        const clientPath = getClientPath(`./src/client/${path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)}`); // prettier-ignore
+        effects.output.write(`${faint("bundle")} ${path} ${faint("→")} `);
+        const code = await rollupClient(clientPath, root, path, {minify: true});
+        await effects.writeFile(path, code);
+      }
+    }
+    for (const specifier of stylesheets) {
+      if (specifier.startsWith("observablehq:")) {
+        const path = `/_observablehq/${specifier.slice("observablehq:".length)}`;
+        effects.output.write(`${faint("bundle")} ${specifier} ${faint("→")} `);
+        if (specifier.startsWith("observablehq:theme-")) {
+          const match = /^observablehq:theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(specifier);
+          const code = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? []});
+          await effects.writeFile(path, code);
+        } else {
+          effects.output.write(`${faint("bundle")} ${specifier} ${faint("→")} `);
+          const code = await bundleStyles({path});
+          await effects.writeFile(`/_observablehq/${specifier.slice("observablehq:".length)}`, code);
+        }
+      } else if (isPathImport(specifier)) {
+        const outputPath = join("_import", specifier);
+        const sourcePath = join(root, specifier);
+        effects.output.write(`${faint("bundle")} ${sourcePath} ${faint("→")} `);
+        const code = await bundleStyles({path: sourcePath});
+        await effects.writeFile(outputPath, code);
+      }
+    }
+  }
 
   // Copy over the referenced files.
   for (const file of files) {
@@ -188,14 +166,6 @@ export async function build(
     await effects.writeFile(outputPath, contents);
   }
 
-  // // Copy over required distribution files.
-  // if (addPublic) {
-  //   for (const [sourcePath, outputPath] of EXTRA_FILES) {
-  //     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-  //     await effects.copyFile(sourcePath, outputPath);
-  //   }
-  // }
-
   Telemetry.record({event: "build", step: "finish", pageCount});
 }
 
@@ -224,12 +194,4 @@ export class FileBuildEffects implements BuildEffects {
     await prepareOutput(destination);
     await writeFile(destination, contents);
   }
-}
-
-function styleEquals(a: Style, b: Style): boolean {
-  return "path" in a && "path" in b
-    ? a.path === b.path
-    : "theme" in a && "theme" in b
-    ? a.theme.join() === b.theme.join()
-    : false;
 }
