@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import {relativePath, resolveLocalPath, resolvePath} from "../src/path.js";
+import {isPathImport, relativePath, resolveLocalPath, resolvePath} from "../src/path.js";
 
 describe("resolvePath(source, target)", () => {
   it("returns the path to the specified target within the source root", () => {
@@ -102,5 +102,28 @@ describe("relativePath(source, target)", () => {
     assert.strictEqual(relativePath("foo/bar", "foo/"), "./");
     assert.strictEqual(relativePath("foo/bar", "baz/bar"), "../baz/bar");
     assert.strictEqual(relativePath("foo////baz", "baz//bar"), "../baz/bar");
+  });
+});
+
+describe("isPathImport(specifier)", () => {
+  it("returns true for paths starting with dot-slash (./)", () => {
+    assert.strictEqual(isPathImport("./foo"), true);
+    assert.strictEqual(isPathImport("./foo/bar"), true);
+  });
+  it("returns true for paths starting with dot-dot-slash (../)", () => {
+    assert.strictEqual(isPathImport("../foo"), true);
+    assert.strictEqual(isPathImport("../foo/bar"), true);
+  });
+  it("returns true for paths starting with slash (/)", () => {
+    assert.strictEqual(isPathImport("/"), true);
+    assert.strictEqual(isPathImport("/foo"), true);
+    assert.strictEqual(isPathImport("/foo/bar"), true);
+  });
+  it("returns false for other paths", () => {
+    assert.strictEqual(isPathImport(""), false);
+    assert.strictEqual(isPathImport("#foo"), false);
+    assert.strictEqual(isPathImport("foo"), false);
+    assert.strictEqual(isPathImport("foo:bar"), false);
+    assert.strictEqual(isPathImport("foo://bar"), false);
   });
 });

@@ -1,7 +1,7 @@
 import type {Node} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression} from "acorn";
 import {simple} from "acorn-walk";
-import {resolvePath} from "../path.js";
+import {isPathImport, relativePath, resolveLocalPath} from "../path.js";
 import {getStringLiteralValue, isStringLiteral} from "./node.js";
 import {syntaxError} from "./syntaxError.js";
 
@@ -68,15 +68,15 @@ export function findImports(body: Node, path: string, input: string): ImportRefe
   function findImport(node: ImportNode | ExportNode) {
     if (!node.source || !isStringLiteral(node.source)) return;
     const name = decodeURIComponent(getStringLiteralValue(node.source));
-    const type = isPathImport(name) ? "local" : "global";
     const method = node.type === "ImportExpression" ? "dynamic" : "static";
-    if (type === "local" && !resolvePath(path, name).startsWith("/")) throw syntaxError(`non-local import: ${name}`, node, input); // prettier-ignore
-    imports.push({name, type, method});
+    if (isPathImport(name)) {
+      const localPath = resolveLocalPath(path, name);
+      if (!localPath) throw syntaxError(`non-local import: ${name}`, node, input); // prettier-ignore
+      imports.push({name: relativePath(path, localPath), type: "local", method});
+    } else {
+      imports.push({name, type: "global", method});
+    }
   }
 
   return imports;
-}
-
-export function isPathImport(specifier: string): boolean {
-  return ["./", "../", "/"].some((prefix) => specifier.startsWith(prefix));
 }

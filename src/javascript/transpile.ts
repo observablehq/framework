@@ -1,15 +1,13 @@
-import {readFile} from "node:fs/promises";
-import {join} from "node:path";
 import type {ImportDeclaration, ImportDefaultSpecifier, ImportNamespaceSpecifier, ImportSpecifier, Node} from "acorn";
 import {Parser} from "acorn";
 import {simple} from "acorn-walk";
 import {resolveNpmImport} from "../npm.js";
-import {relativePath, resolvePath} from "../path.js";
+import {isPathImport, relativePath, resolvePath} from "../path.js";
 import {builtins, resolveImportPath} from "../resolvers.js";
 import {Sourcemap} from "../sourcemap.js";
 import {findFiles} from "./files.js";
 import type {ExportNode, ImportNode} from "./imports.js";
-import {hasImportDeclaration, isPathImport} from "./imports.js";
+import {hasImportDeclaration} from "./imports.js";
 import type {StringLiteral} from "./node.js";
 import {getStringLiteralValue, isStringLiteral} from "./node.js";
 import type {JavaScriptNode} from "./parse.js";
@@ -46,8 +44,7 @@ export function transpileJavaScript(
 }
 
 /** Rewrites import specifiers and FileAttachment calls in the specified ES module. */
-export async function rewriteModule(root: string, path: string, sourcePath = path): Promise<string> {
-  const input = await readFile(join(root, sourcePath), "utf-8");
+export async function transpileModule(input: string, root: string, path: string, sourcePath = path): Promise<string> {
   const body = Parser.parse(input, parseOptions); // TODO ignore syntax error?
   const output = new Sourcemap(input);
   const imports: (ImportNode | ExportNode)[] = [];

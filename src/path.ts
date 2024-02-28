@@ -47,3 +47,7 @@ export function resolveLocalPath(source: string, target: string): string | null 
   if (path.startsWith("../")) return null; // goes above root
   return path;
 }
+
+export function isPathImport(specifier: string): boolean {
+  return ["./", "../", "/"].some((prefix) => specifier.startsWith(prefix));
+}

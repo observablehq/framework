@@ -6,12 +6,11 @@ import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
 import {getClientPath} from "./files.js";
-import {isPathImport} from "./javascript/imports.js";
 import type {StringLiteral} from "./javascript/node.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/node.js";
 import {resolveNpmImport} from "./npm.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
-import {relativePath} from "./path.js";
+import {isPathImport, relativePath} from "./path.js";
 import {Sourcemap} from "./sourcemap.js";
 import {THEMES, renderTheme} from "./theme.js";
 

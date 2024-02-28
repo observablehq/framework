@@ -1,10 +1,9 @@
 import {defaultGlobals} from "./javascript/globals.js";
-import {isPathImport} from "./javascript/imports.js";
 import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js";
 import {getImplicitFileImports, getImplicitInputImports, getImplicitStylesheets} from "./libraries.js";
 import type {MarkdownPage} from "./markdown.js";
 import {populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
-import {relativePath, resolvePath} from "./path.js";
+import {isPathImport, relativePath, resolvePath} from "./path.js";
 
 export interface Resolvers {
   files: Set<string>;

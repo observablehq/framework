@@ -1,7 +1,7 @@
 import {createHash} from "node:crypto";
 import {watch} from "node:fs";
 import type {FSWatcher, WatchEventType} from "node:fs";
-import {access, constants, stat} from "node:fs/promises";
+import {access, constants, readFile, stat} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
 import {basename, dirname, extname, join, normalize} from "node:path";
@@ -21,11 +21,11 @@ import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
-import {isPathImport} from "./javascript/imports.js";
-import {rewriteModule, transpileJavaScript} from "./javascript/transpile.js";
+import {transpileModule, transpileJavaScript} from "./javascript/transpile.js";
 import {parseMarkdown} from "./markdown.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
 import {populateNpmCache} from "./npm.js";
+import {isPathImport} from "./path.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
 import {getResolvers} from "./resolvers.js";
@@ -131,7 +131,8 @@ export class PreviewServer {
             end(req, res, await bundleStyles({path: filepath}), "text/css");
             return;
           } else if (pathname.endsWith(".js")) {
-            const output = await rewriteModule(root, pathname, path);
+            const input = await readFile(join(root, path), "utf-8");
+            const output = await transpileModule(input, root, pathname, path);
             end(req, res, output, "text/javascript");
             return;
           }
