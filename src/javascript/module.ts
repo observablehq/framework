@@ -27,6 +27,8 @@ export type ModuleInfo = {
   localDynamicImports: Set<string>;
   /** The module’s global static imports (typically npm: protocol imports). */
   globalStaticImports: Set<string>;
+  /** The module’s global dynamic imports (typically npm: protocol imports). */
+  globalDynamicImports: Set<string>;
   /** The module’s attached file paths (relative to the module). */
   files: Set<string>;
   /** The module’s attached file methods. */
@@ -92,16 +94,31 @@ export function getModuleInfo(root: string, path: string): ModuleInfo | undefine
     const hash = createHash("sha256").update(source).digest("hex");
     const imports = findImports(body, path, source);
     const files = findFiles(body, path, source);
+    const localStaticImports = new Set<string>();
+    const localDynamicImports = new Set<string>();
+    const globalStaticImports = new Set<string>();
+    const globalDynamicImports = new Set<string>();
+    for (const i of imports) {
+      (i.type === "local"
+        ? i.method === "static"
+          ? localStaticImports
+          : localDynamicImports
+        : i.method === "static"
+        ? globalStaticImports
+        : globalDynamicImports
+      ).add(i.name);
+    }
     moduleInfoCache.set(
       key,
       (info = {
         mtimeMs,
         hash,
-        localStaticImports: new Set(imports.filter((i) => i.type === "local" && i.method === "static").map((i) => i.name)), // prettier-ignore
-        localDynamicImports: new Set(imports.filter((i) => i.type === "local" && i.method === "dynamic").map((i) => i.name)), // prettier-ignore
-        globalStaticImports: new Set(imports.filter((i) => i.type === "global" && i.method === "static").map((i) => i.name)), // prettier-ignore
         files: new Set(files.map((f) => f.name)),
-        fileMethods: new Set(files.map((f) => f.method).filter((m): m is string => m !== undefined))
+        fileMethods: new Set(files.map((f) => f.method).filter((m): m is string => m !== undefined)),
+        localStaticImports,
+        localDynamicImports,
+        globalStaticImports,
+        globalDynamicImports
       })
     );
   }

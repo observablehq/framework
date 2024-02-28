@@ -53,7 +53,8 @@ export const builtins = new Map<string, string>([
  * For files, we collect all FileAttachment calls within local modules, adding
  * them to any files referenced by static HTML.
  *
- * TODO Resolve implicit downloads, too (addImplicitFiles).
+ * TODO Resolve implicit downloads, too (addImplicitFiles). And collect global
+ * dynamic imports for download, too.
  */
 export async function getResolvers(page: MarkdownPage, {root, path}: {root: string; path: string}): Promise<Resolvers> {
   const files = new Set<string>();
