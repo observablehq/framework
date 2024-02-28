@@ -56,7 +56,7 @@ export function addImplicitInputImports(imports: Set<string>, inputs: Iterable<s
   return imports;
 }
 
-export function getImplicitStylesheets(imports: Set<string>): Set<string> {
+export function getImplicitStylesheets(imports: Iterable<string>): Set<string> {
   return addImplicitStylesheets(new Set(), imports);
 }
 
@@ -65,11 +65,12 @@ export function getImplicitStylesheets(imports: Set<string>): Set<string> {
  * doesn’t have to remember to add them. TODO Support versioned imports, too,
  * such as "npm:leaflet@1".
  */
-export function addImplicitStylesheets(stylesheets: Set<string>, imports: Set<string>): Set<string> {
-  if (imports.has("npm:@observablehq/inputs")) stylesheets.add("observablehq:stdlib/inputs.css");
-  if (imports.has("npm:katex")) stylesheets.add("npm:katex/dist/katex.min.css");
-  if (imports.has("npm:leaflet")) stylesheets.add("npm:leaflet/dist/leaflet.css");
-  if (imports.has("npm:mapbox-gl")) stylesheets.add("npm:mapbox-gl/dist/mapbox-gl.css");
+export function addImplicitStylesheets(stylesheets: Set<string>, imports: Iterable<string>): Set<string> {
+  const set = imports instanceof Set ? imports : new Set(imports);
+  if (set.has("npm:@observablehq/inputs")) stylesheets.add("observablehq:stdlib/inputs.css");
+  if (set.has("npm:katex")) stylesheets.add("npm:katex/dist/katex.min.css");
+  if (set.has("npm:leaflet")) stylesheets.add("npm:leaflet/dist/leaflet.css");
+  if (set.has("npm:mapbox-gl")) stylesheets.add("npm:mapbox-gl/dist/mapbox-gl.css");
   return stylesheets;
 }
 
@@ -81,14 +82,19 @@ export function addImplicitStylesheets(stylesheets: Set<string>, imports: Set<st
  * library used by FileAttachment) we manually enumerate the needed additional
  * downloads here. TODO Support versioned imports, too, such as "npm:leaflet@1".
  */
-export function addImplicitFiles(files: Set<string>, imports: Set<string>): Set<string> {
-  if (imports.has("npm:@observablehq/duckdb")) {
+export function getImplicitFiles(imports: Iterable<string>): Set<string> {
+  return addImplicitFiles(new Set(), imports);
+}
+
+export function addImplicitFiles(files: Set<string>, imports: Iterable<string>): Set<string> {
+  const set = imports instanceof Set ? imports : new Set(imports);
+  if (set.has("npm:@observablehq/duckdb")) {
     files.add("npm:@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm");
     files.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js");
     files.add("npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm");
     files.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js");
   }
-  if (imports.has("npm:@observablehq/sqlite")) {
+  if (set.has("npm:@observablehq/sqlite")) {
     files.add("npm:sql.js/dist/sql-wasm.js");
     files.add("npm:sql.js/dist/sql-wasm.wasm");
   }

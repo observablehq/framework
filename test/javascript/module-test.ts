@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import type {ModuleInfo} from "../../src/javascript/module.js";
+import type {FileInfo, ModuleInfo} from "../../src/javascript/module.js";
 import {getFileHash, getFileInfo, getModuleHash, getModuleInfo} from "../../src/javascript/module.js";
 
 const emptyHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
