@@ -29,7 +29,7 @@ export function getImplicitInputImports(inputs: Iterable<string>): Set<string> {
   if (set.has("SQLite") || set.has("SQLiteDatabaseClient")) implicits.add("npm:@observablehq/sqlite");
   if (set.has("tex")) implicits.add("npm:@observablehq/tex");
   if (set.has("topojson")) implicits.add("npm:topojson-client");
-  if (set.has("vl")) implicits.add("npm:vega-lite-api").add("npm:vega-lite").add("npm:vega");
+  if (set.has("vl")) implicits.add("observablehq:stdlib/vega-lite");
   return implicits;
 }
 
@@ -144,6 +144,7 @@ export function getImplicitDependencies(imports: Iterable<string>): Set<string> 
   if (set.has("npm:@observablehq/tex")) implicits.add("npm:katex");
   if (set.has("npm:@observablehq/xlsx")) implicits.add("npm:exceljs");
   if (set.has("npm:@observablehq/zip")) implicits.add("npm:jszip");
+  if (set.has("observablehq:stdlib/vega-lite")) implicits.add("npm:vega-lite-api").add("npm:vega-lite").add("npm:vega");
   return implicits;
 }
 

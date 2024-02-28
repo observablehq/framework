@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import {getImplicitDownloads, getImplicitStylesheets} from "../src/libraries.js";
+import {getImplicitDependencies, getImplicitDownloads, getImplicitStylesheets} from "../src/libraries.js";
 import {getImplicitFileImports, getImplicitInputImports} from "../src/libraries.js";
 
 describe("getImplicitFileImports(files)", () => {
@@ -35,7 +35,7 @@ describe("getImplicitInputImports(inputs)", () => {
     assert.deepStrictEqual(getImplicitInputImports(["SQLiteDatabaseClient"]), new Set(["npm:@observablehq/sqlite"]));
     assert.deepStrictEqual(getImplicitInputImports(["tex"]), new Set(["npm:@observablehq/tex"]));
     assert.deepStrictEqual(getImplicitInputImports(["topojson"]), new Set(["npm:topojson-client"]));
-    assert.deepStrictEqual(getImplicitInputImports(["vl"]), new Set(["npm:vega-lite-api", "npm:vega-lite", "npm:vega"])); // prettier-ignore
+    assert.deepStrictEqual(getImplicitInputImports(["vl"]), new Set(["observablehq:stdlib/vega-lite"]));
   });
 });
 
@@ -63,5 +63,18 @@ describe("getImplicitDownloads(imports)", () => {
       getImplicitDownloads(["npm:@observablehq/sqlite"]),
       new Set(["npm:sql.js/dist/sql-wasm.js", "npm:sql.js/dist/sql-wasm.wasm"])
     );
+  });
+});
+
+describe("getImplicitDependencies(imports)", () => {
+  it("supports known imports", () => {
+    assert.deepStrictEqual(getImplicitDependencies(["npm:@observablehq/dot"]), new Set(["npm:@viz-js/viz"]));
+    assert.deepStrictEqual(getImplicitDependencies(["npm:@observablehq/duckdb"]), new Set(["npm:@duckdb/duckdb-wasm"]));
+    assert.deepStrictEqual(getImplicitDependencies(["npm:@observablehq/inputs"]), new Set(["npm:htl", "npm:isoformat"])); // prettier-ignore
+    assert.deepStrictEqual(getImplicitDependencies(["npm:@observablehq/mermaid"]), new Set(["npm:mermaid"]));
+    assert.deepStrictEqual(getImplicitDependencies(["npm:@observablehq/tex"]), new Set(["npm:katex"]));
+    assert.deepStrictEqual(getImplicitDependencies(["npm:@observablehq/xlsx"]), new Set(["npm:exceljs"]));
+    assert.deepStrictEqual(getImplicitDependencies(["npm:@observablehq/zip"]), new Set(["npm:jszip"]));
+    assert.deepStrictEqual(getImplicitDependencies(["observablehq:stdlib/vega-lite"]), new Set(["npm:vega-lite-api", "npm:vega-lite", "npm:vega"])); // prettier-ignore
   });
 });
