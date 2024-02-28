@@ -97,7 +97,7 @@ None of the files in `frames` above are loaded until a [content method](#support
 
 The contents often dictate the appropriate method — for example, an Apache Arrow file is almost always read with `file.arrow`. When multiple methods are valid, choose based on your needs. For example, you can load a CSV file using `file.text` to implement parsing yourself instead of using D3.
 
-In addition to the above, you can get the resolved relative path to the file using `file.url`. This returns a [promise](./promises) to a string:
+In addition to the above, you can get the resolved absolute URL of the file using `file.url`. This returns a [promise](./promises) to a string:
 
 ```js echo
 FileAttachment("volcano.json").url()
