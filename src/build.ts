@@ -48,7 +48,7 @@ export async function build(
   {config, addPublic = true}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output)
 ): Promise<void> {
-  const {root} = config;
+  const {root, interpreters} = config;
   Telemetry.record({event: "build", step: "start"});
 
   // Make sure all files are readable before starting to write output files.
@@ -147,7 +147,6 @@ export async function build(
   }
 
   // Copy over the referenced files, accumulating hashed aliases.
-  const {interpreters} = config;
   for (const file of files) {
     let sourcePath = join(root, file);
     if (!existsSync(sourcePath)) {

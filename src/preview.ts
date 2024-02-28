@@ -90,8 +90,7 @@ export class PreviewServer {
 
   _handleRequest: RequestListener = async (req, res) => {
     const config = this._config;
-    const root = config.root;
-    const interpreters = config.interpreters;
+    const {root, interpreters} = config;
     if (this._verbose) console.log(faint(req.method!), req.url);
     try {
       const url = new URL(req.url!, "http://localhost");
