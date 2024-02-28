@@ -8,7 +8,13 @@ import {commandRequiresAuthenticationMessage} from "./commandInstruction.js";
 import type {Config} from "./config.js";
 import {CliError, isApiError, isHttpError} from "./error.js";
 import type {Logger, Writer} from "./logger.js";
-import {type AuthEffects, defaultEffects as defaultAuthEffects, formatUser, loginInner} from "./observableApiAuth.js";
+import {
+  type AuthEffects,
+  defaultEffects as defaultAuthEffects,
+  formatUser,
+  loginInner,
+  validWorkspaces
+} from "./observableApiAuth.js";
 import {ObservableApiClient} from "./observableApiClient.js";
 import {
   type GetCurrentUserResponse,
@@ -104,12 +110,9 @@ export async function deploy(
   let authError: null | "unauthenticated" | "forbidden" = null;
   try {
     if (apiKey) {
-      const invalidTiers = new Set(["basic", "enterprise", "public", "pro", "pro_enterprise"]);
       currentUser = await apiClient.getCurrentUser();
       // List of valid workspaces that can be used to create projects.
-      currentUser.workspaces = currentUser.workspaces.filter(
-        (w) => (w.role === "owner" || w.role === "member") && !invalidTiers.has(w.tier)
-      );
+      currentUser = {...currentUser, workspaces: validWorkspaces(currentUser.workspaces)};
     }
   } catch (error) {
     if (isHttpError(error)) {

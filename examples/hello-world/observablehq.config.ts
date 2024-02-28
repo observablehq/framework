@@ -2,6 +2,7 @@ export default {
   title: "Hello, world!",
   toc: false,
   pager: false,
+  scripts: [{type: "module", async: true, src: "https://events.observablehq.com/client.js"}],
   header: `<style>
 
 #observablehq-header a[href] {

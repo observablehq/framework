@@ -204,13 +204,23 @@ export interface GetCurrentUserResponse {
   workspaces: WorkspaceResponse[];
 }
 
+type Role = "owner" | "member" | "viewer" | "guest_member" | "guest_viewer";
+
+type ProjectRole = "owner" | "editor" | "viewer";
+
+type ProjectInfo = {
+  project_slug: string;
+  project_role: ProjectRole;
+};
+
 export interface WorkspaceResponse {
   id: string;
   login: string;
   name: string;
   tier: string;
   type: string;
-  role: string;
+  role: Role;
+  projects_info: ProjectInfo[];
 }
 
 export type PostProjectResponse = GetProjectResponse;

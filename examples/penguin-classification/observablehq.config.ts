@@ -2,6 +2,7 @@ export default {
   title: "Penguin classification",
   pager: false,
   toc: false,
+  scripts: [{type: "module", async: true, src: "https://events.observablehq.com/client.js"}],
   header: `<style>
 
 #observablehq-header a[href] {
