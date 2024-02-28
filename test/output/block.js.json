@@ -1,0 +1,57 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 19,
+    "body": [
+      {
+        "type": "BlockStatement",
+        "start": 0,
+        "end": 18,
+        "body": [
+          {
+            "type": "ExpressionStatement",
+            "start": 4,
+            "end": 16,
+            "expression": {
+              "type": "CallExpression",
+              "start": 4,
+              "end": 15,
+              "callee": {
+                "type": "Identifier",
+                "start": 4,
+                "end": 11,
+                "name": "display"
+              },
+              "arguments": [
+                {
+                  "type": "Literal",
+                  "start": 12,
+                  "end": 14,
+                  "value": 42,
+                  "raw": "42"
+                }
+              ],
+              "optional": false
+            }
+          }
+        ]
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [],
+  "references": [
+    {
+      "type": "Identifier",
+      "start": 4,
+      "end": 11,
+      "name": "display"
+    }
+  ],
+  "files": [],
+  "imports": [],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

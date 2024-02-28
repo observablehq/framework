@@ -1,0 +1,97 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 27,
+    "body": [
+      {
+        "type": "ExpressionStatement",
+        "start": 0,
+        "end": 26,
+        "expression": {
+          "type": "CallExpression",
+          "start": 0,
+          "end": 25,
+          "callee": {
+            "type": "Identifier",
+            "start": 0,
+            "end": 14,
+            "name": "FileAttachment"
+          },
+          "arguments": [
+            {
+              "type": "TemplateLiteral",
+              "start": 15,
+              "end": 24,
+              "expressions": [],
+              "quasis": [
+                {
+                  "type": "TemplateElement",
+                  "start": 16,
+                  "end": 23,
+                  "value": {
+                    "raw": "test.js",
+                    "cooked": "test.js"
+                  },
+                  "tail": true
+                }
+              ]
+            }
+          ],
+          "optional": false
+        }
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [],
+  "references": [
+    {
+      "type": "Identifier",
+      "start": 0,
+      "end": 14,
+      "name": "FileAttachment"
+    }
+  ],
+  "files": [
+    {
+      "node": {
+        "type": "CallExpression",
+        "start": 0,
+        "end": 25,
+        "callee": {
+          "type": "Identifier",
+          "start": 0,
+          "end": 14,
+          "name": "FileAttachment"
+        },
+        "arguments": [
+          {
+            "type": "TemplateLiteral",
+            "start": 15,
+            "end": 24,
+            "expressions": [],
+            "quasis": [
+              {
+                "type": "TemplateElement",
+                "start": 16,
+                "end": 23,
+                "value": {
+                  "raw": "test.js",
+                  "cooked": "test.js"
+                },
+                "tail": true
+              }
+            ]
+          }
+        ],
+        "optional": false
+      },
+      "name": "./test.js"
+    }
+  ],
+  "imports": [],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

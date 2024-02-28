@@ -24,8 +24,8 @@ describe("parseMarkdown(input)", () => {
       let allequal = true;
       for (const ext of ["html", "json"]) {
         const actual = ext === "json" ? jsonMeta(snapshot) : snapshot[ext];
-        const outfile = resolve(outputRoot, `${basename(outname, ".md")}.${ext}`);
-        const diffile = resolve(outputRoot, `${basename(outname, ".md")}-changed.${ext}`);
+        const outfile = resolve(outputRoot, `${ext === "json" ? outname : basename(outname, ".md")}.${ext}`);
+        const diffile = resolve(outputRoot, `${ext === "json" ? outname : basename(outname, ".md")}-changed.${ext}`);
         let expected;
 
         try {

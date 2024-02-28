@@ -5,7 +5,6 @@ import {basename, join, resolve} from "node:path";
 import {isEnoent} from "../../src/error.js";
 import {parseJavaScript} from "../../src/javascript/parse.js";
 import {transpileJavaScript, transpileModule} from "../../src/javascript/transpile.js";
-import {mockJsDelivr} from "../mocks/jsdelivr.js";
 
 function isJsFile(inputRoot: string, fileName: string) {
   if (!fileName.endsWith(".js")) return false;
@@ -13,15 +12,7 @@ function isJsFile(inputRoot: string, fileName: string) {
   return statSync(path).isFile();
 }
 
-function runTests({
-  inputRoot,
-  outputRoot,
-  filter = () => true
-}: {
-  inputRoot: string;
-  outputRoot: string;
-  filter?: (name: string) => boolean;
-}) {
+function runTests(inputRoot: string, outputRoot: string, filter: (name: string) => boolean = () => true) {
   for (const name of readdirSync(inputRoot)) {
     if (!isJsFile(inputRoot, name) || !filter(name)) continue;
     const only = name.startsWith("only.");
@@ -31,7 +22,7 @@ function runTests({
     (only ? it.only : skip ? it.skip : it)(path, async () => {
       const outfile = resolve(outputRoot, `${basename(outname, ".js")}.js`);
       const diffile = resolve(outputRoot, `${basename(outname, ".js")}-changed.js`);
-      const input = await readFile(path, "utf-8");
+      const input = await readFile(path, "utf8");
       let actual: string;
       let expected: string;
 
@@ -75,16 +66,8 @@ function runTests({
 }
 
 describe("transpileJavaScript(input, options)", () => {
-  mockJsDelivr();
-  runTests({
-    inputRoot: "test/input",
-    outputRoot: "test/output"
-  });
-  runTests({
-    inputRoot: "test/input/imports",
-    outputRoot: "test/output/imports",
-    filter: (name) => name.endsWith("-import.js")
-  });
+  runTests("test/input", "test/output");
+  runTests("test/input/imports", "test/output/imports", (name) => name.endsWith("-import.js"));
   it("trims leading and trailing newlines", async () => {
     const node = parseJavaScript("\ntest\n", {path: "index.js"});
     const body = transpileJavaScript(node, {id: "0"});

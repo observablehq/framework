@@ -1,0 +1,154 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 81,
+    "body": [
+      {
+        "type": "VariableDeclaration",
+        "start": 0,
+        "end": 80,
+        "declarations": [
+          {
+            "type": "VariableDeclarator",
+            "start": 6,
+            "end": 79,
+            "id": {
+              "type": "Identifier",
+              "start": 6,
+              "end": 7,
+              "name": "x"
+            },
+            "init": {
+              "type": "CallExpression",
+              "start": 10,
+              "end": 79,
+              "callee": {
+                "type": "FunctionExpression",
+                "start": 11,
+                "end": 76,
+                "id": null,
+                "expression": false,
+                "generator": true,
+                "async": false,
+                "params": [],
+                "body": {
+                  "type": "BlockStatement",
+                  "start": 23,
+                  "end": 76,
+                  "body": [
+                    {
+                      "type": "ForStatement",
+                      "start": 27,
+                      "end": 74,
+                      "init": {
+                        "type": "VariableDeclaration",
+                        "start": 32,
+                        "end": 41,
+                        "declarations": [
+                          {
+                            "type": "VariableDeclarator",
+                            "start": 36,
+                            "end": 41,
+                            "id": {
+                              "type": "Identifier",
+                              "start": 36,
+                              "end": 37,
+                              "name": "i"
+                            },
+                            "init": {
+                              "type": "Literal",
+                              "start": 40,
+                              "end": 41,
+                              "value": 0,
+                              "raw": "0"
+                            }
+                          }
+                        ],
+                        "kind": "let"
+                      },
+                      "test": {
+                        "type": "BinaryExpression",
+                        "start": 43,
+                        "end": 49,
+                        "left": {
+                          "type": "Identifier",
+                          "start": 43,
+                          "end": 44,
+                          "name": "i"
+                        },
+                        "operator": "<",
+                        "right": {
+                          "type": "Literal",
+                          "start": 47,
+                          "end": 49,
+                          "value": 10,
+                          "raw": "10"
+                        }
+                      },
+                      "update": {
+                        "type": "UpdateExpression",
+                        "start": 51,
+                        "end": 54,
+                        "operator": "++",
+                        "prefix": true,
+                        "argument": {
+                          "type": "Identifier",
+                          "start": 53,
+                          "end": 54,
+                          "name": "i"
+                        }
+                      },
+                      "body": {
+                        "type": "BlockStatement",
+                        "start": 56,
+                        "end": 74,
+                        "body": [
+                          {
+                            "type": "ExpressionStatement",
+                            "start": 62,
+                            "end": 70,
+                            "expression": {
+                              "type": "YieldExpression",
+                              "start": 62,
+                              "end": 69,
+                              "delegate": false,
+                              "argument": {
+                                "type": "Identifier",
+                                "start": 68,
+                                "end": 69,
+                                "name": "i"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              "arguments": [],
+              "optional": false
+            }
+          }
+        ],
+        "kind": "const"
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 6,
+      "end": 7,
+      "name": "x"
+    }
+  ],
+  "references": [],
+  "files": [],
+  "imports": [],
+  "expression": false,
+  "async": false,
+  "inline": false
+}
