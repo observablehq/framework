@@ -50,9 +50,9 @@ export interface Config {
 }
 
 export async function readConfig(configPath?: string, root?: string): Promise<Config> {
-  if (configPath === undefined) return await readDefaultConfig(root);
+  if (configPath === undefined) return readDefaultConfig(root);
   const importPath = join(process.cwd(), root ?? ".", configPath);
-  return await normalizeConfig((await import(importPath)).default, root);
+  return normalizeConfig((await import(importPath)).default, root);
 }
 
 export async function readDefaultConfig(root?: string): Promise<Config> {
