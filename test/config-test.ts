@@ -2,6 +2,19 @@ import assert from "node:assert";
 import {normalizeConfig as config, mergeToc, readConfig, setCurrentDate} from "../src/config.js";
 
 const root = "test/input/build/config";
+const interpreters = new Map([
+  [".R", ["Rscript"]],
+  [".exe", []],
+  [".go", ["go", "run"]],
+  [".jl", ["julia"]],
+  [".js", ["node", "--no-warnings=ExperimentalWarning"]],
+  [".php", ["php"]],
+  [".py", ["python3"]],
+  [".r", ["Rscript"]],
+  [".rs", ["rust-script"]],
+  [".sh", ["sh"]],
+  [".ts", ["tsx"]]
+]);
 
 describe("readConfig(undefined, root)", () => {
   before(() => setCurrentDate(new Date("2024-01-11T01:02:03")));
@@ -30,7 +43,8 @@ describe("readConfig(undefined, root)", () => {
         workspace: "acme",
         project: "bi"
       },
-      search: false
+      search: false,
+      interpreters
     });
   });
   it("returns the default config if no config file is found", async () => {
@@ -50,7 +64,8 @@ describe("readConfig(undefined, root)", () => {
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-11T01:02:03">Jan 11, 2024</a>.',
       deploy: null,
-      search: false
+      search: false,
+      interpreters
     });
   });
 });

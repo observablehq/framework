@@ -3,10 +3,11 @@ import {mkdirSync, renameSync, unlinkSync, utimesSync, writeFileSync} from "node
 import {basename, dirname, extname, join} from "node:path/posix";
 import {InternSet, difference} from "d3-array";
 import {temporaryDirectoryTask} from "tempy";
+import {normalizeConfig} from "../src/config.js";
 import {FileWatchers} from "../src/fileWatchers.js";
 import {resolvePath} from "../src/path.js";
 
-describe("FileWatchers.of(root, path, names, callback)", () => {
+describe("FileWatchers.of(root, path, names, callback)", async () => {
   it(
     "watches a file",
     withTemporyWatcher("files.md", ["file-top.csv"], async (root, wait) => {
@@ -166,7 +167,8 @@ function withTemporyWatcher(...args: any): () => Promise<void> {
         writeFileSync(join(root, p), basename(p, extname(p)) === "empty" ? "" : p);
       }
 
-      const watcher = await FileWatchers.of(root, path, watchPaths, watch);
+      const {interpreters} = await normalizeConfig();
+      const watcher = await FileWatchers.of(root, path, interpreters, watchPaths, watch);
 
       await pause();
       try {

@@ -91,6 +91,7 @@ export class PreviewServer {
   _handleRequest: RequestListener = async (req, res) => {
     const config = this._config;
     const root = config.root;
+    const interpreters = config.interpreters;
     if (this._verbose) console.log(faint(req.method!), req.url);
     try {
       const url = new URL(req.url!, "http://localhost");
@@ -141,7 +142,7 @@ export class PreviewServer {
         }
 
         // Look for a data loader for this file.
-        const loader = Loader.find(root, path);
+        const loader = Loader.find(root, path, interpreters);
         if (loader) {
           try {
             send(req, await loader.load(), {root}).pipe(res);
@@ -282,7 +283,7 @@ function getWatchFiles(resolvers: Resolvers): Iterable<string> {
   return files;
 }
 
-function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Config) {
+function handleWatch(socket: WebSocket, req: IncomingMessage, {root, interpreters, style}: Config) {
   let path: string | null = null;
   let hash: string | null = null;
   let html: string[] | null = null;
@@ -349,7 +350,9 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
           updatedHash: hash
         });
         attachmentWatcher?.close();
-        attachmentWatcher = await FileWatchers.of(root, path, getWatchFiles(resolvers), () => watcher("change"));
+        attachmentWatcher = await FileWatchers.of(root, path, interpreters, getWatchFiles(resolvers), () =>
+          watcher("change")
+        );
         break;
       }
     }
@@ -369,7 +372,9 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
     code = getCode(page, resolvers);
     files = getFiles(resolvers);
     stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
-    attachmentWatcher = await FileWatchers.of(root, path, getWatchFiles(resolvers), () => watcher("change"));
+    attachmentWatcher = await FileWatchers.of(root, path, interpreters, getWatchFiles(resolvers), () =>
+      watcher("change")
+    );
     markdownWatcher = watch(join(root, path), (event) => watcher(event));
   }
 

@@ -50,7 +50,22 @@ export interface Config {
   style: null | Style; // defaults to {theme: ["light", "dark"]}
   deploy: null | {workspace: string; project: string};
   search: boolean; // default to false
+  interpreters: Map<string, string[]>; // Map of extension to interpreter commands
 }
+
+const defaultInterpreters = {
+  ".js": ["node", "--no-warnings=ExperimentalWarning"],
+  ".ts": ["tsx"],
+  ".sh": ["sh"],
+  ".exe": [],
+  ".jl": ["julia"],
+  ".go": ["go", "run"],
+  ".php": ["php"],
+  ".py": ["python3"],
+  ".r": ["Rscript"],
+  ".R": ["Rscript"],
+  ".rs": ["rust-script"]
+};
 
 export async function readConfig(configPath?: string, root?: string): Promise<Config> {
   if (configPath === undefined) return readDefaultConfig(root);
@@ -105,7 +120,8 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
     header = "",
     footer = `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="${formatIsoDate(
       currentDate
-    )}">${formatLocaleDate(currentDate)}</a>.`
+    )}">${formatLocaleDate(currentDate)}</a>.`,
+    interpreters
   } = spec;
   root = String(root);
   output = String(output);
@@ -125,7 +141,25 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
   search = Boolean(search);
-  return {root, output, base, title, sidebar, pages, pager, scripts, head, header, footer, toc, style, deploy, search};
+  interpreters = new Map(Object.entries({...defaultInterpreters, ...interpreters}).filter(([, i]) => i != null));
+  return {
+    root,
+    output,
+    base,
+    title,
+    sidebar,
+    pages,
+    pager,
+    scripts,
+    head,
+    header,
+    footer,
+    toc,
+    style,
+    deploy,
+    search,
+    interpreters
+  };
 }
 
 function normalizeBase(base: any): string {

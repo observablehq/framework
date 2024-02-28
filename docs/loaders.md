@@ -126,42 +126,37 @@ Like with any other file, these files from generated archives are live in previe
 
 ## Routing
 
-Data loaders live in the source root (typically `docs`) alongside your other source files. When a file is referenced from JavaScript via `FileAttachment`, if the file does not exist, Observable Framework will look for a file of the same name with a double extension to see if there is a corresponding data loader. The following second extensions are checked, in order, with the corresponding language and interpreter:
+Data loaders live in the source root (typically `docs`) alongside your other source files. When a file is referenced from JavaScript via `FileAttachment`, if the file does not exist, Observable Framework will look for a file of the same name with a double extension to see if there is a corresponding data loader. By default, the following second extensions are checked with the corresponding language and interpreter:
 
 - `.js` - JavaScript (`node`)
 - `.ts` - TypeScript (`tsx`)
+- `.sh` - shell script (`sh`)
+- `.exe` - arbitrary executable
+- `.go` - Go (`go run`)
+- `.jl` - Julia (`julia`)
+- `.php` - PHP (`php`)
 - `.py` - Python (`python3`)
 - `.R` - R (`Rscript`)
 - `.rs` - Rust (`rust-script`)
-- `.go` - Go (`go run`)
-- `.sh` - shell script (`sh`)
-- `.exe` - arbitrary executable
 
-For example, for the file `quakes.csv`, the following data loaders are considered:
+For example, for the file `quakes.csv`, the following data loaders are considered: `quakes.csv.js`, `quakes.csv.ts`, `quakes.csv.sh`, `quakes.csv.exe`, `quakes.csv.go`, `quakes.csv.jl`, etc. (The first match takes priority.)
 
-- `quakes.csv.js`
-- `quakes.csv.ts`
-- `quakes.csv.py`
-- `quakes.csv.R`
-- `quakes.csv.rs`
-- `quakes.csv.go`
-- `quakes.csv.sh`
-- `quakes.csv.exe`
+The **interpreters** [configuration option](./config#interpreters) specifies the list of supported extensions.
 
-If you use `.py`, `.R`, `.rs`, or `.go`, the corresponding interpreter (`python3`, `Rscript`, `rust-script`, or `go run`, respectively) must be installed and available on your `$PATH`. Any additional modules, packages, libraries, _etc._, must also be installed before you can use them.
+The corresponding interpreter must be installed and available on your `$PATH`. Any additional modules, packages, libraries, _etc._, must also be installed before you can use them.
 
-Whereas `.js`, `.ts`, `.py`, `.R`, `.rs`, `.go`, and `.sh` data loaders are run via interpreters, `.exe` data loaders are run directly and must have the executable bit set. This is typically done via [`chmod`](https://en.wikipedia.org/wiki/Chmod). For example:
+`.exe` data loaders are run directly and must have the executable bit set. This is typically done via [`chmod`](https://en.wikipedia.org/wiki/Chmod). For example:
 
 ```sh
 chmod +x docs/quakes.csv.exe
 ```
 
-While a `.exe` data loader may be any binary executable (_e.g.,_ compiled from C), it is often convenient to specify another interpreter using a [shebang](<https://en.wikipedia.org/wiki/Shebang_(Unix)>). For example, to write a data loader in Julia:
+While a `.exe` data loader may be any binary executable (_e.g.,_ compiled from C), it is often convenient to specify another interpreter using a [shebang](<https://en.wikipedia.org/wiki/Shebang_(Unix)>). For example, to write a data loader in Perl:
 
-```julia
-#!/usr/bin/env julia
+```perl
+#!/usr/bin/env perl
 
-println("hello world")
+print("Hello World\n");
 ```
 
 If multiple requests are made concurrently for the same data loader, the data loader will only run once; each concurrent request will receive the same response.

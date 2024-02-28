@@ -5,25 +5,12 @@ import {createGunzip} from "node:zlib";
 import {spawn} from "cross-spawn";
 import JSZip from "jszip";
 import {extract} from "tar-stream";
+import type {Config} from "./config.js";
 import {maybeStat, prepareOutput} from "./files.js";
 import type {Logger, Writer} from "./logger.js";
 import {cyan, faint, green, red, yellow} from "./tty.js";
 
 const runningCommands = new Map<string, Promise<string>>();
-
-const languages = {
-  ".js": ["node", "--no-warnings=ExperimentalWarning"],
-  ".ts": ["tsx"],
-  ".py": ["python3"],
-  ".r": ["Rscript"],
-  ".R": ["Rscript"],
-  ".rs": ["rust-script"],
-  ".go": ["go", "run"],
-  ".sh": ["sh"],
-  ".jl": ["julia"],
-  ".php": ["php"],
-  ".exe": []
-};
 
 export interface LoadEffects {
   logger: Logger;
@@ -81,8 +68,13 @@ export abstract class Loader {
    * abort if we find a matching folder or reach the source root; for example,
    * if docs/data exists, we won’t look for a docs/data.zip.
    */
-  static find(sourceRoot: string, targetPath: string, {useStale = false} = {}): Loader | undefined {
-    const exact = this.findExact(sourceRoot, targetPath, {useStale});
+  static find(
+    sourceRoot: string,
+    targetPath: string,
+    interpreters: Config["interpreters"],
+    {useStale = false} = {}
+  ): Loader | undefined {
+    const exact = this.findExact(sourceRoot, targetPath, interpreters, {useStale});
     if (exact) return exact;
     let dir = dirname(targetPath);
     for (let parent: string; true; dir = parent) {
@@ -103,7 +95,7 @@ export abstract class Loader {
           useStale
         });
       }
-      const archiveLoader = this.findExact(sourceRoot, archive, {useStale});
+      const archiveLoader = this.findExact(sourceRoot, archive, interpreters, {useStale});
       if (archiveLoader) {
         return new Extractor({
           preload: async (options) => archiveLoader.load(options),
@@ -117,8 +109,13 @@ export abstract class Loader {
     }
   }
 
-  private static findExact(sourceRoot: string, targetPath: string, {useStale}): Loader | undefined {
-    for (const [ext, [command, ...args]] of Object.entries(languages)) {
+  private static findExact(
+    sourceRoot: string,
+    targetPath: string,
+    interpreters: Config["interpreters"],
+    {useStale}
+  ): Loader | undefined {
+    for (const [ext, [command, ...args]] of interpreters) {
       if (!existsSync(join(sourceRoot, targetPath + ext))) continue;
       if (extname(targetPath) === "") {
         console.warn(`invalid data loader path: ${targetPath + ext}`);

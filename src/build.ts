@@ -147,10 +147,11 @@ export async function build(
   }
 
   // Copy over the referenced files, accumulating hashed aliases.
+  const {interpreters} = config;
   for (const file of files) {
     let sourcePath = join(root, file);
     if (!existsSync(sourcePath)) {
-      const loader = Loader.find(root, join("/", file), {useStale: true});
+      const loader = Loader.find(root, join("/", file), interpreters, {useStale: true});
       if (!loader) {
         effects.logger.error("missing referenced file", sourcePath);
         continue;
