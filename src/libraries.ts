@@ -1,63 +1,36 @@
 export function getImplicitFileImports(methods: Iterable<string>): Set<string> {
-  return addImplicitFileImports(new Set<string>(), methods);
-}
-
-export function addImplicitFileImports(imports: Set<string>, methods: Iterable<string>): Set<string> {
-  for (const method of methods) {
-    switch (method) {
-      case "csv":
-      case "tsv":
-        imports.add("npm:d3-dsv");
-        break;
-      case "arrow":
-        imports.add("npm:apache-arrow");
-        break;
-      case "parquet":
-        imports.add("npm:apache-arrow");
-        imports.add("npm:parquet-wasm/esm/arrow1.js");
-        break;
-      case "sqlite":
-        imports.add("npm:@observablehq/sqlite");
-        break;
-      case "xlsx":
-        imports.add("npm:@observablehq/xlsx");
-        break;
-      case "zip":
-        imports.add("npm:@observablehq/zip");
-        break;
-    }
-  }
-  return imports;
+  const set = setof(methods);
+  const implicits = new Set<string>();
+  if (set.has("csv") || set.has("tsv")) implicits.add("npm:d3-dsv");
+  if (set.has("arrow")) implicits.add("npm:apache-arrow");
+  if (set.has("parquet")) implicits.add("npm:apache-arrow").add("npm:parquet-wasm/esm/arrow1.js");
+  if (set.has("sqlite")) implicits.add("npm:@observablehq/sqlite");
+  if (set.has("xlsx")) implicits.add("npm:@observablehq/xlsx");
+  if (set.has("zip")) implicits.add("npm:@observablehq/zip");
+  return implicits;
 }
 
 export function getImplicitInputImports(inputs: Iterable<string>): Set<string> {
-  return addImplicitInputImports(new Set(), inputs);
-}
-
-export function addImplicitInputImports(imports: Set<string>, inputs: Iterable<string>): Set<string> {
-  const set = inputs instanceof Set ? inputs : new Set(inputs);
-  if (set.has("d3")) imports.add("npm:d3");
-  if (set.has("Plot")) imports.add("npm:@observablehq/plot");
-  if (set.has("htl") || set.has("html") || set.has("svg")) imports.add("npm:htl");
-  if (set.has("Inputs")) imports.add("npm:@observablehq/inputs");
-  if (set.has("dot")) imports.add("npm:@observablehq/dot");
-  if (set.has("duckdb")) imports.add("npm:@duckdb/duckdb-wasm");
-  if (set.has("DuckDBClient")) imports.add("npm:@observablehq/duckdb");
-  if (set.has("_")) imports.add("npm:lodash");
-  if (set.has("aq")) imports.add("npm:arquero");
-  if (set.has("Arrow")) imports.add("npm:apache-arrow");
-  if (set.has("L")) imports.add("npm:leaflet");
-  if (set.has("mapboxgl")) imports.add("npm:mapbox-gl");
-  if (set.has("mermaid")) imports.add("npm:@observablehq/mermaid");
-  if (set.has("SQLite") || set.has("SQLiteDatabaseClient")) imports.add("npm:@observablehq/sqlite");
-  if (set.has("tex")) imports.add("npm:@observablehq/tex");
-  if (set.has("topojson")) imports.add("npm:topojson-client");
-  if (set.has("vl")) imports.add("npm:vega-lite-api").add("npm:vega-lite").add("npm:vega");
-  return imports;
-}
-
-export function getImplicitStylesheets(imports: Iterable<string>): Set<string> {
-  return addImplicitStylesheets(new Set(), imports);
+  const set = setof(inputs);
+  const implicits = new Set<string>();
+  if (set.has("d3")) implicits.add("npm:d3");
+  if (set.has("Plot")) implicits.add("npm:@observablehq/plot");
+  if (set.has("htl") || set.has("html") || set.has("svg")) implicits.add("npm:htl");
+  if (set.has("Inputs")) implicits.add("npm:@observablehq/inputs");
+  if (set.has("dot")) implicits.add("npm:@observablehq/dot");
+  if (set.has("duckdb")) implicits.add("npm:@duckdb/duckdb-wasm");
+  if (set.has("DuckDBClient")) implicits.add("npm:@observablehq/duckdb");
+  if (set.has("_")) implicits.add("npm:lodash");
+  if (set.has("aq")) implicits.add("npm:arquero");
+  if (set.has("Arrow")) implicits.add("npm:apache-arrow");
+  if (set.has("L")) implicits.add("npm:leaflet");
+  if (set.has("mapboxgl")) implicits.add("npm:mapbox-gl");
+  if (set.has("mermaid")) implicits.add("npm:@observablehq/mermaid");
+  if (set.has("SQLite") || set.has("SQLiteDatabaseClient")) implicits.add("npm:@observablehq/sqlite");
+  if (set.has("tex")) implicits.add("npm:@observablehq/tex");
+  if (set.has("topojson")) implicits.add("npm:topojson-client");
+  if (set.has("vl")) implicits.add("npm:vega-lite-api").add("npm:vega-lite").add("npm:vega");
+  return implicits;
 }
 
 /**
@@ -65,13 +38,14 @@ export function getImplicitStylesheets(imports: Iterable<string>): Set<string> {
  * doesn’t have to remember to add them. TODO Support versioned imports, too,
  * such as "npm:leaflet@1".
  */
-export function addImplicitStylesheets(stylesheets: Set<string>, imports: Iterable<string>): Set<string> {
-  const set = imports instanceof Set ? imports : new Set(imports);
-  if (set.has("npm:@observablehq/inputs")) stylesheets.add("observablehq:stdlib/inputs.css");
-  if (set.has("npm:katex")) stylesheets.add("npm:katex/dist/katex.min.css");
-  if (set.has("npm:leaflet")) stylesheets.add("npm:leaflet/dist/leaflet.css");
-  if (set.has("npm:mapbox-gl")) stylesheets.add("npm:mapbox-gl/dist/mapbox-gl.css");
-  return stylesheets;
+export function getImplicitStylesheets(imports: Iterable<string>): Set<string> {
+  const set = setof(imports);
+  const implicits = new Set<string>();
+  if (set.has("npm:@observablehq/inputs")) implicits.add("observablehq:stdlib/inputs.css");
+  if (set.has("npm:katex")) implicits.add("npm:katex/dist/katex.min.css");
+  if (set.has("npm:leaflet")) implicits.add("npm:leaflet/dist/leaflet.css");
+  if (set.has("npm:mapbox-gl")) implicits.add("npm:mapbox-gl/dist/mapbox-gl.css");
+  return implicits;
 }
 
 /**
@@ -83,20 +57,34 @@ export function addImplicitStylesheets(stylesheets: Set<string>, imports: Iterab
  * downloads here. TODO Support versioned imports, too, such as "npm:leaflet@1".
  */
 export function getImplicitFiles(imports: Iterable<string>): Set<string> {
-  return addImplicitFiles(new Set(), imports);
-}
-
-export function addImplicitFiles(files: Set<string>, imports: Iterable<string>): Set<string> {
-  const set = imports instanceof Set ? imports : new Set(imports);
+  const set = setof(imports);
+  const implicits = new Set<string>();
   if (set.has("npm:@observablehq/duckdb")) {
-    files.add("npm:@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm");
-    files.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js");
-    files.add("npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm");
-    files.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js");
+    implicits.add("npm:@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm");
+    implicits.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js");
+    implicits.add("npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm");
+    implicits.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js");
   }
   if (set.has("npm:@observablehq/sqlite")) {
-    files.add("npm:sql.js/dist/sql-wasm.js");
-    files.add("npm:sql.js/dist/sql-wasm.wasm");
+    implicits.add("npm:sql.js/dist/sql-wasm.js");
+    implicits.add("npm:sql.js/dist/sql-wasm.wasm");
   }
-  return files;
+  return implicits;
+}
+
+export function getImplicitDependencies(imports: Iterable<string>): Set<string> {
+  const set = setof(imports);
+  const implicits = new Set<string>();
+  if (set.has("npm:@observablehq/dot")) implicits.add("npm:@viz-js/viz");
+  if (set.has("npm:@observablehq/duckdb")) implicits.add("npm:@duckdb/duckdb-wasm");
+  if (set.has("npm:@observablehq/inputs")) implicits.add("npm:htl").add("npm:isoformat");
+  if (set.has("npm:@observablehq/mermaid")) implicits.add("npm:mermaid");
+  if (set.has("npm:@observablehq/tex")) implicits.add("npm:katex");
+  if (set.has("npm:@observablehq/xlsx")) implicits.add("npm:exceljs");
+  if (set.has("npm:@observablehq/zip")) implicits.add("npm:jszip");
+  return implicits;
+}
+
+function setof<T>(iterable: Iterable<T>): Set<T> {
+  return iterable instanceof Set ? iterable : new Set(iterable);
 }

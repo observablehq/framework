@@ -1,6 +1,7 @@
 import {defaultGlobals} from "./javascript/globals.js";
 import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js";
-import {getImplicitFileImports, getImplicitInputImports, getImplicitStylesheets} from "./libraries.js";
+import {getImplicitDependencies, getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
+import {getImplicitStylesheets} from "./libraries.js";
 import type {MarkdownPage} from "./markdown.js";
 import {populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
 import {isPathImport, relativePath, resolvePath} from "./path.js";
@@ -8,6 +9,7 @@ import {isPathImport, relativePath, resolvePath} from "./path.js";
 export interface Resolvers {
   files: Set<string>;
   localImports: Set<string>;
+  globalImports: Set<string>;
   staticImports: Set<string>;
   stylesheets: Set<string>;
   resolveFile(specifier: string): string;
@@ -60,11 +62,13 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   const files = new Set<string>();
   const fileMethods = new Set<string>();
   const localImports = new Set<string>();
+  const globalImports = new Set<string>();
   const staticImports = new Set<string>();
   const stylesheets = new Set<string>();
   const resolutions = new Map<string, string>();
 
   // Add built-in modules.
+  // TODO Add these to globalImports, too? But they’re built-ins…
   staticImports.add("observablehq:client");
   staticImports.add("npm:@observablehq/runtime");
   staticImports.add("npm:@observablehq/stdlib");
@@ -81,16 +85,12 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
       if (f.method) fileMethods.add(f.method);
     }
     for (const i of node.imports) {
-      if (i.type === "local") {
-        localImports.add(i.name);
-      }
-      if (i.method === "static") {
-        staticImports.add(i.name);
-      }
+      (i.type === "local" ? localImports : globalImports).add(i.name);
+      if (i.method === "static") staticImports.add(i.name);
     }
   }
 
-  // Collect transitively-attached files, local imports, and static imports.
+  // Collect transitively-attached files and imports.
   for (const i of localImports) {
     const p = resolvePath(path, i);
     const info = getModuleInfo(root, p);
@@ -111,6 +111,10 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
     }
     for (const o of info.globalStaticImports) {
       staticImports.add(o);
+      globalImports.add(o);
+    }
+    for (const o of info.globalDynamicImports) {
+      globalImports.add(o);
     }
   }
 
@@ -119,38 +123,55 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   // immediately and so treat them as static for preloads.
   for (const i of getImplicitFileImports(fileMethods)) {
     staticImports.add(i);
+    globalImports.add(i);
   }
 
   // Add implicit imports for standard library built-ins, such as d3 and Plot.
   for (const i of getImplicitInputImports(findFreeInputs(page))) {
     staticImports.add(i);
+    globalImports.add(i);
   }
 
   // Add transitive imports for built-in libraries.
-  if (staticImports.has("npm:@observablehq/dot")) staticImports.add("npm:@viz-js/viz");
-  if (staticImports.has("npm:@observablehq/duckdb")) staticImports.add("npm:@duckdb/duckdb-wasm");
-  if (staticImports.has("npm:@observablehq/inputs")) staticImports.add("npm:htl").add("npm:isoformat");
-  if (staticImports.has("npm:@observablehq/mermaid")) staticImports.add("npm:mermaid");
-  if (staticImports.has("npm:@observablehq/tex")) staticImports.add("npm:katex");
-  if (staticImports.has("npm:@observablehq/xlsx")) staticImports.add("npm:exceljs");
-  if (staticImports.has("npm:@observablehq/zip")) staticImports.add("npm:jszip");
+  for (const i of getImplicitDependencies(staticImports)) {
+    staticImports.add(i);
+  }
+  for (const i of getImplicitDependencies(globalImports)) {
+    globalImports.add(i);
+  }
 
   // Resolve npm: imports.
-  for (const specifier of staticImports) {
-    if (specifier.startsWith("npm:") && !builtins.has(specifier)) {
-      resolutions.set(specifier, await resolveNpmImport(root, specifier.slice("npm:".length)));
+  for (const i of globalImports) {
+    if (i.startsWith("npm:") && !builtins.has(i)) {
+      resolutions.set(i, await resolveNpmImport(root, i.slice("npm:".length)));
     }
   }
 
-  // Follow transitive static imports of npm imports. This has the side-effect
-  // of populating the npm cache.
+  // Follow transitive imports of npm imports. This has the side-effect of
+  // populating the npm cache.
   for (const value of resolutions.values()) {
+    for (const i of await resolveNpmImports(root, value)) {
+      if (i.type === "local") {
+        const path = resolvePath(value, i.name);
+        const specifier = resolveNpmSpecifier(path);
+        globalImports.add(specifier);
+        resolutions.set(specifier, path);
+      }
+    }
+  }
+
+  // Resolve transitive static npm: imports.
+  const npmStaticResolutions = new Set<string>();
+  for (const i of staticImports) {
+    const r = resolutions.get(i);
+    if (r) npmStaticResolutions.add(r);
+  }
+  for (const value of npmStaticResolutions) {
     for (const i of await resolveNpmImports(root, value)) {
       if (i.type === "local" && i.method === "static") {
         const path = resolvePath(value, i.name);
-        const specifier = path.replace(/^\/_npm\//, "npm:").replace(/\/\+esm\.js$/, "/+esm");
+        const specifier = resolveNpmSpecifier(path);
         staticImports.add(specifier);
-        resolutions.set(specifier, path);
       }
     }
   }
@@ -198,12 +219,17 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   return {
     files,
     localImports,
+    globalImports,
     staticImports,
     stylesheets,
     resolveFile,
     resolveImport,
     resolveStylesheet
   };
+}
+
+function resolveNpmSpecifier(path: string): string {
+  return path.replace(/^\/_npm\//, "npm:").replace(/\/\+esm\.js$/, "/+esm");
 }
 
 export function resolveStylesheetPath(root: string, path: string): string {

@@ -17,6 +17,7 @@ import {rollupClient} from "./rollup.js";
 export interface RenderOptions extends Config {
   root: string;
   path: string;
+  resolvers?: Resolvers;
 }
 
 type RenderInternalOptions =
@@ -24,10 +25,9 @@ type RenderInternalOptions =
   | {preview: true}; // preview
 
 export async function renderPage(page: MarkdownPage, options: RenderOptions & RenderInternalOptions): Promise<string> {
-  const {root, base, path, pages, title, preview, search} = options;
+  const {root, base, path, pages, title, preview, search, resolvers = await getResolvers(page, options)} = options;
   const sidebar = page.data?.sidebar !== undefined ? Boolean(page.data.sidebar) : options.sidebar;
   const toc = mergeToc(page.data?.toc, options.toc);
-  const resolvers = await getResolvers(page, options);
   const {files, resolveFile, resolveImport} = resolvers;
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
