@@ -172,7 +172,7 @@ function centerResize(render) {
     </figure>
   </div>
   <div class="card grid-colspan-2">
-    <h2>Top 5 balancing authorities by demand at ${hourFormat(currentHour)} ${relativeDay().toLowerCase()} (GWh)</h2>
+    <h2>Top 5 balancing authorities by demand at ${hourFormat(currentHour)} ${relativeDay().toLowerCase()}</h2>
     ${resize((width, height) => top5BalancingAuthoritiesChart(width, height, top5LatestDemand, maxDemand))}
   </div>
   <div class="card grid-colspan-2">

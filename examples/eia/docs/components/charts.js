@@ -1,39 +1,58 @@
 import * as Plot from "npm:@observablehq/plot";
-import {extent} from "npm:d3";
+import {extent, format} from "npm:d3";
 
 // Top 5 balancing authorities chart
 export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDemand) {
   return Plot.plot({
-    marginTop: 8,
+    marginTop: 6,
     marginLeft: 8,
-    height: height - 4,
+    height: height - 10,
     width,
-    x: {label: null, grid: true, tickSize: 0, tickPadding: 2, domain: [0, maxDemand / 1000], nice: true},
+    x: {
+      label: "Demand (GWh)", 
+      labelOffset: -2,
+      grid: true, 
+      tickSize: 0, 
+      tickPadding: 6, 
+      domain: [0, maxDemand / 1000], 
+      nice: true
+    },
     marks: [
       Plot.barX(top5Demand, {
         y: "name",
         x: (d) => d.value / 1000,
-        fill: "#9498a0",
+        fill: "var(--theme-foreground-alt)",
+        opacity: 0.15,
         sort: {y: "x", reverse: true, limit: 10},
-        tip: true,
-        title: ({ name, value }) => `name: ${name}\ndemand: ${value / 1000} GWh`
+        channels: {demand: {value: (d) => `${format(".1f")(d.value / 1000)} GWh`, label: "Demand"}},
+        tip: {
+          format: {
+            value: (d) => `${d} GWh`,
+            y: false,
+            x: false,
+          },
+          fontSize: 12,
+          anchor: "top",
+          frameAnchor: "right",
+          dy: 5
+        }
       }),
       Plot.axisY({
         label: null,
-        tickSize: 0,
-        textAnchor: "start", 
-        stroke: "purple", 
-        strokeWidth: 3, 
-        dx: 16
+        tickFormat: null,
+        tickSize: 0
       }),
-      Plot.text({
+      Plot.text(top5Demand, {
         text: "name",
         y: "name",
         x: 0,
+        dx: 8,
+        fontSize: 12,
+        fontWeight: 500,
         textAnchor: "start",
-        stroke: "red",
-        strokeWidth: 3,
-        fill: "green"
+        fill: "var(--theme-foreground-alt)",
+        stroke: "var(--theme-background-alt)",
+        strokeOpacity: 0.6,
       })
     ]
   });
