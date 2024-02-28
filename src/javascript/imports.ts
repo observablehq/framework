@@ -2,7 +2,7 @@ import type {Node} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {isPathImport, relativePath, resolveLocalPath} from "../path.js";
-import {getStringLiteralValue, isStringLiteral} from "./node.js";
+import {getStringLiteralValue, isStringLiteral} from "./source.js";
 import {syntaxError} from "./syntaxError.js";
 
 export interface ImportReference {

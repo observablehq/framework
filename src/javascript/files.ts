@@ -1,10 +1,10 @@
 import {extname} from "node:path";
-import type {CallExpression, Node} from "acorn";
+import type {CallExpression, MemberExpression, Node} from "acorn";
 import {ancestor, simple} from "acorn-walk";
 import {relativePath, resolveLocalPath} from "../path.js";
 import {defaultGlobals} from "./globals.js";
-import {getStringLiteralValue, isMemberExpression, isStringLiteral} from "./node.js";
 import {findReferences} from "./references.js";
+import {getStringLiteralValue, isStringLiteral} from "./source.js";
 import {syntaxError} from "./syntaxError.js";
 
 export type FileExpression = {
@@ -114,4 +114,8 @@ export function findFiles(
   });
 
   return files;
+}
+
+function isMemberExpression(node: Node): node is MemberExpression {
+  return node.type === "MemberExpression";
 }

@@ -8,10 +8,10 @@ import {Sourcemap} from "../sourcemap.js";
 import {findFiles} from "./files.js";
 import type {ExportNode, ImportNode} from "./imports.js";
 import {hasImportDeclaration} from "./imports.js";
-import type {StringLiteral} from "./node.js";
-import {getStringLiteralValue, isStringLiteral} from "./node.js";
 import type {JavaScriptNode} from "./parse.js";
 import {parseOptions} from "./parse.js";
+import type {StringLiteral} from "./source.js";
+import {getStringLiteralValue, isStringLiteral} from "./source.js";
 
 export interface TranspileOptions {
   id: string;

@@ -1,12 +1,8 @@
-import type {Literal, MemberExpression, Node, TemplateLiteral} from "acorn";
+import type {Literal, Node, TemplateLiteral} from "acorn";
 
 export type StringLiteral =
   | {type: "Literal"; value: string} // FileAttachment("foo.csv")
   | {type: "TemplateLiteral"; quasis: {value: {cooked: string}}[]}; // FileAttachment(`foo.csv`)
-
-export function isMemberExpression(node: Node): node is MemberExpression {
-  return node.type === "MemberExpression";
-}
 
 export function isLiteral(node: Node): node is Literal {
   return node.type === "Literal";
