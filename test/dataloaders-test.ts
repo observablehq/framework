@@ -1,6 +1,9 @@
 import assert from "node:assert";
 import os from "node:os";
+import osPath from "node:path";
+import {cross} from "d3-array";
 import {type LoadEffects, Loader} from "../src/dataloader.js";
+import {maybeStat} from "../src/files.js";
 import {readFile, stat, unlink, utimes} from "../src/normalizedFs.js";
 
 const noopEffects: LoadEffects = {
@@ -27,10 +30,11 @@ describe("data loaders are called with the appropriate command", () => {
     const out = await loader.load(noopEffects);
     assert.strictEqual(await readFile("test/" + out, "utf-8"), "shell\n");
   });
-  it("a .exe data loader is invoked directly", async () => {
+  it("a .exe data loader is invoked directly", async function () {
+    if (!(await isOnPath("perl"))) this.skip();
     const loader = Loader.find("test", "dataloaders/data4.txt")!;
     const out = await loader.load(noopEffects);
-    assert.strictEqual(await readFile("test/" + out, "utf-8"), `python${EOL}`);
+    assert.strictEqual(await readFile("test/" + out, "utf-8"), "perl\n");
   }).slow();
   it("a .py data loader is called with python3", async () => {
     const loader = Loader.find("test", "dataloaders/data5.txt")!;
@@ -38,7 +42,8 @@ describe("data loaders are called with the appropriate command", () => {
     assert.strictEqual(await readFile("test/" + out, "utf-8"), `python${EOL}`);
   });
   // Skipping because this requires R to be installed (which is slow in CI).
-  it.skip("a .R data loader is called with Rscript", async () => {
+  it("a .R data loader is called with Rscript", async function () {
+    if (!(await isOnPath("Rscript"))) this.skip();
     const loader = Loader.find("test", "dataloaders/data6.txt")!;
     const out = await loader.load(noopEffects);
     assert.strictEqual(await readFile("test/" + out, "utf-8"), "Rscript\n");
@@ -95,3 +100,16 @@ it("a dataloader can use use a stale cache", async () => {
     ]
   );
 });
+
+async function isOnPath(binary: string): Promise<boolean> {
+  // based on https://github.com/springernature/hasbin/blob/master/lib/hasbin.js#L55
+  const envPath = (process.env["PATH"] ?? "").split(osPath.delimiter);
+  const envPathExt = (process.env["PATHEXT"] ?? "").split(osPath.delimiter);
+  if (!envPathExt.includes("")) envPathExt.push("");
+  const potentialPaths = cross(envPath, envPathExt).map(([path, ext]) => osPath.join(path, binary + ext));
+  for (const potential of potentialPaths) {
+    const stat = await maybeStat(potential);
+    if (stat?.isFile() && stat.mode & 0o111) return true;
+  }
+  return false;
+}
