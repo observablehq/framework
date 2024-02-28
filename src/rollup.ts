@@ -77,7 +77,6 @@ function rewriteTypeScriptImports(code: string): string {
   return code.replace(/(?<=\bimport\(([`'"])[\w./]+)\.ts(?=\1\))/g, ".js");
 }
 
-// TODO Consolidate with createImportResolver.
 function importResolve(input: string, root: string, path: string): Plugin {
   async function resolve(specifier: string | AstNode): Promise<ResolveIdResult> {
     return typeof specifier !== "string" || specifier === input
@@ -106,7 +105,7 @@ function importResolve(input: string, root: string, path: string): Plugin {
       ? {id: relativePath(path, "/_observablehq/stdlib/zip.js"), external: true} // TODO publish to npm
       : specifier.startsWith("npm:")
       ? {id: relativePath(path, await resolveNpmImport(root, specifier.slice("npm:".length))), external: true}
-      : !isPathImport(specifier) && !BUNDLED_MODULES.includes(specifier)
+      : !isPathImport(specifier) && !BUNDLED_MODULES.includes(specifier) // e.g., inputs.js imports "htl"
       ? {id: relativePath(path, await resolveNpmImport(root, specifier)), external: true}
       : null;
   }

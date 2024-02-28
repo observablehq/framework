@@ -208,6 +208,7 @@ export async function build(
       await effects.copyFile(sourcePath, outputPath);
     }
   }
+
   Telemetry.record({event: "build", step: "finish", pageCount});
 }
 
