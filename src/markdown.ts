@@ -20,6 +20,7 @@ import {parseJavaScript} from "./javascript/parse.js";
 import {isPathImport, relativePath, resolveLocalPath, resolvePath} from "./path.js";
 import {resolveFilePath} from "./resolvers.js";
 import {transpileTag} from "./tag.js";
+import {InvalidThemeError} from "./theme.js";
 import {red} from "./tty.js";
 
 export interface MarkdownCode {
@@ -402,8 +403,8 @@ function getStylesheet(path: string, data: MarkdownPage["data"], style: Config["
   try {
     style = mergeStyle(path, data?.style, data?.theme, style);
   } catch (error) {
-    // TODO This should error in build.
-    console.error(red(String(error)));
+    if (!(error instanceof InvalidThemeError)) throw error;
+    console.error(red(String(error))); // TODO error during build
     style = {theme: []};
   }
   return !style

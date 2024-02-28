@@ -184,6 +184,6 @@ export function mergeStyle(path: string, style: any, theme: any, defaultStyle: n
     : style === null
     ? null // disable
     : style !== undefined
-    ? {path: resolvePath(path, style)}
+    ? {path: resolvePath(path, String(style))}
     : {theme: normalizeTheme(theme)};
 }

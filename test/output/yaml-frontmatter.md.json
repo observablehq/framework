@@ -7,8 +7,8 @@
     ]
   },
   "title": "YAML",
-  "style": "observablehq:theme-.css",
+  "style": "./one,two",
   "assets": {},
   "code": [],
-  "hash": "4eaac96d34b7bc948ef51b4140bd88f2eea8bfaea1c615a34b759abc7da2a785"
+  "hash": "cd44e1d49b831ecfb431c24fb193171a19de1f1597242ff13d63722167b0cfaf"
 }
