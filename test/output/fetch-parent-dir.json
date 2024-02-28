@@ -1,120 +1,251 @@
 {
   "data": null,
   "title": "Parent dir",
-  "files": [
+  "style": null,
+  "assets": {},
+  "code": [
     {
-      "name": "./NOENT.md",
-      "mimeType": "text/markdown",
-      "path": "./_file/NOENT.md",
-      "method": "text"
-    },
-    {
-      "name": "./tex-expression.md",
-      "mimeType": "text/markdown",
-      "path": "./_file/tex-expression.md",
-      "method": "text"
-    }
-  ],
-  "imports": [],
-  "pieces": [
-    {
-      "type": "html",
-      "id": "",
-      "cellIds": [],
-      "html": "<h1 id=\"parent-dir\" tabindex=\"-1\"><a class=\"observablehq-header-anchor\" href=\"#parent-dir\">Parent dir</a></h1>\n"
-    },
-    {
-      "type": "html",
-      "id": "",
-      "cellIds": [],
-      "html": "<p>Trying to fetch from the parent directory should fail.</p>\n"
-    },
-    {
-      "type": "html",
-      "id": "",
-      "cellIds": [
-        "17636ecf"
-      ],
-      "html": "<div id=\"cell-17636ecf\" class=\"observablehq observablehq--block observablehq--loading\"></div>\n"
-    },
-    {
-      "type": "html",
-      "id": "",
-      "cellIds": [
-        "78e756b8"
-      ],
-      "html": "<div id=\"cell-78e756b8\" class=\"observablehq observablehq--block observablehq--loading\"></div>\n"
-    },
-    {
-      "type": "html",
-      "id": "",
-      "cellIds": [
-        "c68a5211"
-      ],
-      "html": "<div id=\"cell-c68a5211\" class=\"observablehq observablehq--block\"></div>\n"
-    },
-    {
-      "type": "html",
-      "id": "",
-      "cellIds": [
-        "d306f60f"
-      ],
-      "html": "<div id=\"cell-d306f60f\" class=\"observablehq observablehq--block\"></div>\n"
-    }
-  ],
-  "cells": [
-    {
-      "type": "cell",
-      "id": "17636ecf",
-      "expression": true,
-      "body": "() => { throw new SyntaxError(\"non-local file path: ../NOENT.md (1:14)\"); }"
-    },
-    {
-      "type": "cell",
-      "id": "78e756b8",
-      "expression": true,
-      "body": "() => { throw new SyntaxError(\"non-local file path: ../README.md (1:14)\"); }"
-    },
-    {
-      "type": "cell",
       "id": "c68a5211",
-      "expression": false,
-      "inputs": [
-        "FileAttachment"
-      ],
-      "outputs": [
-        "fail3"
-      ],
-      "files": [
-        {
-          "name": "./NOENT.md",
-          "mimeType": "text/markdown",
-          "path": "./_file/NOENT.md",
-          "method": "text"
-        }
-      ],
-      "body": "(FileAttachment) => {\nconst fail3 = FileAttachment(\"./NOENT.md\").text()\nreturn {fail3};\n}"
+      "node": {
+        "body": {
+          "type": "Program",
+          "start": 0,
+          "end": 50,
+          "body": [
+            {
+              "type": "VariableDeclaration",
+              "start": 0,
+              "end": 49,
+              "declarations": [
+                {
+                  "type": "VariableDeclarator",
+                  "start": 6,
+                  "end": 49,
+                  "id": {
+                    "type": "Identifier",
+                    "start": 6,
+                    "end": 11,
+                    "name": "fail3"
+                  },
+                  "init": {
+                    "type": "CallExpression",
+                    "start": 14,
+                    "end": 49,
+                    "callee": {
+                      "type": "MemberExpression",
+                      "start": 14,
+                      "end": 47,
+                      "object": {
+                        "type": "CallExpression",
+                        "start": 14,
+                        "end": 42,
+                        "callee": {
+                          "type": "Identifier",
+                          "start": 14,
+                          "end": 28,
+                          "name": "FileAttachment"
+                        },
+                        "arguments": [
+                          {
+                            "type": "Literal",
+                            "start": 29,
+                            "end": 41,
+                            "value": "./NOENT.md",
+                            "raw": "\"./NOENT.md\""
+                          }
+                        ],
+                        "optional": false
+                      },
+                      "property": {
+                        "type": "Identifier",
+                        "start": 43,
+                        "end": 47,
+                        "name": "text"
+                      },
+                      "computed": false,
+                      "optional": false
+                    },
+                    "arguments": [],
+                    "optional": false
+                  }
+                }
+              ],
+              "kind": "const"
+            }
+          ],
+          "sourceType": "module"
+        },
+        "declarations": [
+          {
+            "type": "Identifier",
+            "start": 6,
+            "end": 11,
+            "name": "fail3"
+          }
+        ],
+        "references": [
+          {
+            "type": "Identifier",
+            "start": 14,
+            "end": 28,
+            "name": "FileAttachment"
+          }
+        ],
+        "files": [
+          {
+            "node": {
+              "type": "CallExpression",
+              "start": 14,
+              "end": 42,
+              "callee": {
+                "type": "Identifier",
+                "start": 14,
+                "end": 28,
+                "name": "FileAttachment"
+              },
+              "arguments": [
+                {
+                  "type": "Literal",
+                  "start": 29,
+                  "end": 41,
+                  "value": "./NOENT.md",
+                  "raw": "\"./NOENT.md\""
+                }
+              ],
+              "optional": false
+            },
+            "name": "./NOENT.md",
+            "method": "text"
+          }
+        ],
+        "imports": [],
+        "expression": false,
+        "async": false,
+        "inline": false,
+        "input": "const fail3 = FileAttachment(\"./NOENT.md\").text()\n"
+      }
     },
     {
-      "type": "cell",
       "id": "d306f60f",
-      "expression": false,
-      "inputs": [
-        "FileAttachment"
-      ],
-      "outputs": [
-        "ok1"
-      ],
-      "files": [
-        {
-          "name": "./tex-expression.md",
-          "mimeType": "text/markdown",
-          "path": "./_file/tex-expression.md",
-          "method": "text"
-        }
-      ],
-      "body": "(FileAttachment) => {\nconst ok1 = FileAttachment(\"./tex-expression.md\").text()\nreturn {ok1};\n}"
+      "node": {
+        "body": {
+          "type": "Program",
+          "start": 0,
+          "end": 57,
+          "body": [
+            {
+              "type": "VariableDeclaration",
+              "start": 0,
+              "end": 56,
+              "declarations": [
+                {
+                  "type": "VariableDeclarator",
+                  "start": 6,
+                  "end": 56,
+                  "id": {
+                    "type": "Identifier",
+                    "start": 6,
+                    "end": 9,
+                    "name": "ok1"
+                  },
+                  "init": {
+                    "type": "CallExpression",
+                    "start": 12,
+                    "end": 56,
+                    "callee": {
+                      "type": "MemberExpression",
+                      "start": 12,
+                      "end": 54,
+                      "object": {
+                        "type": "CallExpression",
+                        "start": 12,
+                        "end": 49,
+                        "callee": {
+                          "type": "Identifier",
+                          "start": 12,
+                          "end": 26,
+                          "name": "FileAttachment"
+                        },
+                        "arguments": [
+                          {
+                            "type": "Literal",
+                            "start": 27,
+                            "end": 48,
+                            "value": "./tex-expression.md",
+                            "raw": "\"./tex-expression.md\""
+                          }
+                        ],
+                        "optional": false
+                      },
+                      "property": {
+                        "type": "Identifier",
+                        "start": 50,
+                        "end": 54,
+                        "name": "text"
+                      },
+                      "computed": false,
+                      "optional": false
+                    },
+                    "arguments": [],
+                    "optional": false
+                  }
+                }
+              ],
+              "kind": "const"
+            }
+          ],
+          "sourceType": "module"
+        },
+        "declarations": [
+          {
+            "type": "Identifier",
+            "start": 6,
+            "end": 9,
+            "name": "ok1"
+          }
+        ],
+        "references": [
+          {
+            "type": "Identifier",
+            "start": 12,
+            "end": 26,
+            "name": "FileAttachment"
+          }
+        ],
+        "files": [
+          {
+            "node": {
+              "type": "CallExpression",
+              "start": 12,
+              "end": 49,
+              "callee": {
+                "type": "Identifier",
+                "start": 12,
+                "end": 26,
+                "name": "FileAttachment"
+              },
+              "arguments": [
+                {
+                  "type": "Literal",
+                  "start": 27,
+                  "end": 48,
+                  "value": "./tex-expression.md",
+                  "raw": "\"./tex-expression.md\""
+                }
+              ],
+              "optional": false
+            },
+            "name": "./tex-expression.md",
+            "method": "text"
+          }
+        ],
+        "imports": [],
+        "expression": false,
+        "async": false,
+        "inline": false,
+        "input": "const ok1 = FileAttachment(\"./tex-expression.md\").text()\n"
+      }
     }
   ],
-  "hash": "9586c3074a1d67626e336df05b96596ddf363cf2a1ea764ad7193e970e392dd3"
+  "hash": "54152919da458f2713188b8015da314ec401a95ddd56fc0cae46cf11dbe4d9b5"
 }

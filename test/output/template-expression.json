@@ -1,28 +1,39 @@
 {
   "data": null,
   "title": null,
-  "files": [],
-  "imports": [],
-  "pieces": [
+  "style": null,
+  "assets": {},
+  "code": [
     {
-      "type": "html",
-      "id": "",
-      "cellIds": [
-        "12fd0aea"
-      ],
-      "html": "<p><span id=\"cell-12fd0aea\" class=\"observablehq--loading\"></span></p>\n"
-    }
-  ],
-  "cells": [
-    {
-      "type": "cell",
       "id": "12fd0aea",
-      "expression": true,
-      "inputs": [
-        "display"
-      ],
-      "inline": true,
-      "body": "async (display) => {\ndisplay(await(\n`}'\"`\n))\n}"
+      "node": {
+        "body": {
+          "type": "TemplateLiteral",
+          "start": 0,
+          "end": 5,
+          "expressions": [],
+          "quasis": [
+            {
+              "type": "TemplateElement",
+              "start": 1,
+              "end": 4,
+              "value": {
+                "raw": "}'\"",
+                "cooked": "}'\""
+              },
+              "tail": true
+            }
+          ]
+        },
+        "declarations": null,
+        "references": [],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": false,
+        "inline": true,
+        "input": "`}'\"`"
+      }
     }
   ],
   "hash": "1ddca31d89d4e4b1032194e35e1c51395937c029915a4b170ea6c106f89bcd40"

@@ -37,7 +37,7 @@ export interface MarkdownPage {
   hash: string;
 }
 
-interface ParseContext {
+export interface ParseContext {
   code: MarkdownCode[];
   assets: Set<string>;
   startLine: number;
@@ -300,7 +300,7 @@ export function rewriteHtml(html: string, root: string, path: string, context: P
   const resolveFile = (specifier: string): string | undefined => {
     const localPath = resolveLocalPath(path, specifier);
     if (!localPath) return; // TODO warn for non-local relative paths?
-    context.assets.add(localPath);
+    context.assets.add(relativePath(path, localPath));
     return relativePath(path, resolveFilePath(root, localPath));
   };
 

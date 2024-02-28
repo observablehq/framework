@@ -1,28 +1,62 @@
 {
   "data": null,
   "title": null,
-  "files": [],
-  "imports": [],
-  "pieces": [
+  "style": null,
+  "assets": {},
+  "code": [
     {
-      "type": "html",
-      "id": "",
-      "cellIds": [
-        "1ffa6d4f"
-      ],
-      "html": "<div id=\"cell-1ffa6d4f\" class=\"observablehq observablehq--block observablehq--loading\"></div>\n"
-    }
-  ],
-  "cells": [
-    {
-      "type": "cell",
       "id": "1ffa6d4f",
-      "expression": true,
-      "inputs": [
-        "mermaid",
-        "display"
-      ],
-      "body": "async (mermaid,display) => {\ndisplay(await(\nawait mermaid`graph TD;\n    A-->B;\n    A-->C;\n    B-->D;\n    C-->D;`\n))\n}"
+      "node": {
+        "body": {
+          "type": "AwaitExpression",
+          "start": 0,
+          "end": 68,
+          "argument": {
+            "type": "TaggedTemplateExpression",
+            "start": 6,
+            "end": 68,
+            "tag": {
+              "type": "Identifier",
+              "start": 6,
+              "end": 13,
+              "name": "mermaid"
+            },
+            "quasi": {
+              "type": "TemplateLiteral",
+              "start": 13,
+              "end": 68,
+              "expressions": [],
+              "quasis": [
+                {
+                  "type": "TemplateElement",
+                  "start": 14,
+                  "end": 67,
+                  "value": {
+                    "raw": "graph TD;\n    A-->B;\n    A-->C;\n    B-->D;\n    C-->D;",
+                    "cooked": "graph TD;\n    A-->B;\n    A-->C;\n    B-->D;\n    C-->D;"
+                  },
+                  "tail": true
+                }
+              ]
+            }
+          }
+        },
+        "declarations": null,
+        "references": [
+          {
+            "type": "Identifier",
+            "start": 6,
+            "end": 13,
+            "name": "mermaid"
+          }
+        ],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": true,
+        "inline": false,
+        "input": "await mermaid`graph TD;\n    A-->B;\n    A-->C;\n    B-->D;\n    C-->D;`"
+      }
     }
   ],
   "hash": "6d9b9a614504f0decca01c59af8f6bae96982a675312166fedc028078dedf093"

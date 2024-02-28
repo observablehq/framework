@@ -1,16 +1,8 @@
 {
   "data": null,
   "title": null,
-  "files": [],
-  "imports": [],
-  "pieces": [
-    {
-      "type": "html",
-      "id": "",
-      "cellIds": [],
-      "html": "<span><!-- this is a comment -->\n</span>"
-    }
-  ],
-  "cells": [],
+  "style": null,
+  "assets": {},
+  "code": [],
   "hash": "710f0c338bd546b7f30a6ec9c10575edf45259e95520a101ebd1043da83115e9"
 }

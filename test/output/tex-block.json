@@ -1,28 +1,70 @@
 {
   "data": null,
   "title": null,
-  "files": [],
-  "imports": [],
-  "pieces": [
+  "style": null,
+  "assets": {},
+  "code": [
     {
-      "type": "html",
-      "id": "",
-      "cellIds": [
-        "5ceee90d"
-      ],
-      "html": "<div id=\"cell-5ceee90d\" class=\"observablehq observablehq--block observablehq--loading\"></div>\n"
-    }
-  ],
-  "cells": [
-    {
-      "type": "cell",
       "id": "5ceee90d",
-      "expression": true,
-      "inputs": [
-        "tex",
-        "display"
-      ],
-      "body": "async (tex,display) => {\ndisplay(await(\ntex.block`\\int_0^1 (x + y)dx`\n))\n}"
+      "node": {
+        "body": {
+          "type": "TaggedTemplateExpression",
+          "start": 0,
+          "end": 29,
+          "tag": {
+            "type": "MemberExpression",
+            "start": 0,
+            "end": 9,
+            "object": {
+              "type": "Identifier",
+              "start": 0,
+              "end": 3,
+              "name": "tex"
+            },
+            "property": {
+              "type": "Identifier",
+              "start": 4,
+              "end": 9,
+              "name": "block"
+            },
+            "computed": false,
+            "optional": false
+          },
+          "quasi": {
+            "type": "TemplateLiteral",
+            "start": 9,
+            "end": 29,
+            "expressions": [],
+            "quasis": [
+              {
+                "type": "TemplateElement",
+                "start": 10,
+                "end": 28,
+                "value": {
+                  "raw": "\\int_0^1 (x + y)dx",
+                  "cooked": "int_0^1 (x + y)dx"
+                },
+                "tail": true
+              }
+            ]
+          }
+        },
+        "declarations": null,
+        "references": [
+          {
+            "type": "Identifier",
+            "start": 0,
+            "end": 3,
+            "name": "tex"
+          }
+        ],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": false,
+        "inline": false,
+        "input": "tex.block`\\int_0^1 (x + y)dx`"
+      }
     }
   ],
   "hash": "1dbd20327d20522a4c0bb9200ebee1b3a9d8a15651758f1a559a1ec589eb7750"

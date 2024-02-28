@@ -1,48 +1,75 @@
 {
   "data": null,
   "title": "Local fetch",
-  "files": [
+  "style": null,
+  "assets": {},
+  "code": [
     {
-      "name": "./local-fetch.md",
-      "mimeType": "text/markdown",
-      "path": "./_file/local-fetch.md"
-    }
-  ],
-  "imports": [],
-  "pieces": [
-    {
-      "type": "html",
-      "id": "",
-      "cellIds": [],
-      "html": "<h1 id=\"local-fetch\" tabindex=\"-1\"><a class=\"observablehq-header-anchor\" href=\"#local-fetch\">Local fetch</a></h1>\n"
-    },
-    {
-      "type": "html",
-      "id": "",
-      "cellIds": [
-        "9c4f4e4f"
-      ],
-      "html": "<div id=\"cell-9c4f4e4f\" class=\"observablehq observablehq--block observablehq--loading\"></div>\n"
-    }
-  ],
-  "cells": [
-    {
-      "type": "cell",
       "id": "9c4f4e4f",
-      "expression": true,
-      "inputs": [
-        "FileAttachment",
-        "display"
-      ],
-      "files": [
-        {
-          "name": "./local-fetch.md",
-          "mimeType": "text/markdown",
-          "path": "./_file/local-fetch.md"
-        }
-      ],
-      "body": "async (FileAttachment,display) => {\ndisplay(await(\nFileAttachment(\"./local-fetch.md\")\n))\n}"
+      "node": {
+        "body": {
+          "type": "CallExpression",
+          "start": 0,
+          "end": 34,
+          "callee": {
+            "type": "Identifier",
+            "start": 0,
+            "end": 14,
+            "name": "FileAttachment"
+          },
+          "arguments": [
+            {
+              "type": "Literal",
+              "start": 15,
+              "end": 33,
+              "value": "./local-fetch.md",
+              "raw": "\"./local-fetch.md\""
+            }
+          ],
+          "optional": false
+        },
+        "declarations": null,
+        "references": [
+          {
+            "type": "Identifier",
+            "start": 0,
+            "end": 14,
+            "name": "FileAttachment"
+          }
+        ],
+        "files": [
+          {
+            "node": {
+              "type": "CallExpression",
+              "start": 0,
+              "end": 34,
+              "callee": {
+                "type": "Identifier",
+                "start": 0,
+                "end": 14,
+                "name": "FileAttachment"
+              },
+              "arguments": [
+                {
+                  "type": "Literal",
+                  "start": 15,
+                  "end": 33,
+                  "value": "./local-fetch.md",
+                  "raw": "\"./local-fetch.md\""
+                }
+              ],
+              "optional": false
+            },
+            "name": "./local-fetch.md"
+          }
+        ],
+        "imports": [],
+        "expression": true,
+        "async": false,
+        "inline": false,
+        "input": "FileAttachment(\"./local-fetch.md\")\n"
+      }
     }
   ],
-  "hash": "3f31c6717790dfd2fb68fb8bf9c11b4fcb44a2014ab382c1a8bbbf711a99857e"
+  "hash": "3f148c739b747b6ab9410639c14959f0956a1f15c19b6cb45cf6b36538a9a8d0"
 }

@@ -4,11 +4,9 @@ import {mkdir, readFile, unlink, writeFile} from "node:fs/promises";
 import {basename, join, resolve} from "node:path";
 import deepEqual from "fast-deep-equal";
 import {isEnoent} from "../src/error.js";
-import {type MarkdownPage, parseMarkdown} from "../src/markdown.js";
+import type {MarkdownPage, ParseContext} from "../src/markdown.js";
+import {parseMarkdown} from "../src/markdown.js";
 import {rewriteHtml} from "../src/markdown.js";
-
-const html = (strings, ...values) => String.raw({raw: strings}, ...values);
-const mockContext = () => ({files: [], imports: [], pieces: [], startLine: 0, currentLine: 0});
 
 describe("parseMarkdown(input)", () => {
   const inputRoot = "test/input";
@@ -62,202 +60,63 @@ describe("parseMarkdown(input)", () => {
   }
 });
 
-describe("normalizePieceHtml adds local file attachments", () => {
-  const root = "/";
-  const sourcePath = "/attachments.md";
-
-  it("img[src]", () => {
-    const htmlStr = html`<img src="./test.png">`;
-    const expected = html`<img src="./_file/test.png">`;
+describe("rewriteHtml(html, root, path, context)", () => {
+  const mockContext = (): ParseContext => ({code: [], assets: new Set(), startLine: 0, currentLine: 0});
+  it("adds local files from img[src]", () => {
+    const html = '<img src="./test.png">';
+    const expected = '<img src="./_file/test.png?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855">'; // prettier-ignore
     const context = mockContext();
-    const actual = rewriteHtml(htmlStr, root, sourcePath, context);
-
-    assert.equal(actual, expected);
-    assert.deepEqual(context.files, [
-      {
-        mimeType: "image/png",
-        name: "./test.png",
-        path: "./_file/test.png"
-      }
-    ]);
+    assert.strictEqual(rewriteHtml(html, "docs", "page", context), expected);
+    assert.deepStrictEqual(context.assets, new Set(["./test.png"]));
   });
-
-  it("img[srcset]", () => {
-    const htmlStr = html`
-        <img
-          srcset="small.jpg 480w, large.jpg 800w"
-          sizes="(max-width: 600px) 480px,
-                800px"
-          src="large.jpg"
-          alt="Image for testing"
-        />
-      `;
-    const expected = html`
-        <img srcset="./_file/small.jpg 480w, ./_file/large.jpg 800w" sizes="(max-width: 600px) 480px,
-                800px" src="./_file/large.jpg" alt="Image for testing">
-      `;
+  it("adds local files from img[srcset]", () => {
+    const html = '<img srcset="small.jpg 480w, large.jpg 800w" sizes="(max-width: 600px) 480px, 800px" src="large.jpg" alt="Image for testing">'; // prettier-ignore
+    const expected = '<img srcset="./_file/small.jpg?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 480w, ./_file/large.jpg?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 800w" sizes="(max-width: 600px) 480px, 800px" src="./_file/large.jpg?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" alt="Image for testing">'; // prettier-ignore
     const context = mockContext();
-    const actual = rewriteHtml(htmlStr, root, sourcePath, context);
-
-    assert.equal(actual, expected);
-    assert.deepEqual(context.files, [
-      {
-        mimeType: "image/jpeg",
-        name: "./large.jpg",
-        path: "./_file/large.jpg"
-      },
-      {
-        mimeType: "image/jpeg",
-        name: "./small.jpg",
-        path: "./_file/small.jpg"
-      }
-    ]);
+    assert.strictEqual(rewriteHtml(html, "docs", "page", context), expected);
+    assert.deepStrictEqual(context.assets, new Set(["./large.jpg", "./small.jpg"]));
   });
-
-  it("video[src]", () => {
-    const htmlStr = html`<video src="observable.mov" controls>
-      Your browser doesn't support HTML video.
-      </video>`;
-    const expected = html`<video src="./_file/observable.mov" controls>
-      Your browser doesn't support HTML video.
-      </video>`;
+  it("adds local files from video[src]", () => {
+    const html = '<video src="observable.mov" controls></video>'; // prettier-ignore
+    const expected = '<video src="./_file/observable.mov?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" controls></video>'; // prettier-ignore
     const context = mockContext();
-    const actual = rewriteHtml(htmlStr, root, sourcePath, context);
-
-    assert.equal(actual, expected);
-    assert.deepEqual(context.files, [
-      {
-        mimeType: "video/quicktime",
-        name: "./observable.mov",
-        path: "./_file/observable.mov"
-      }
-    ]);
+    assert.strictEqual(rewriteHtml(html, "docs", "page", context), expected);
+    assert.deepStrictEqual(context.assets, new Set(["./observable.mov"]));
   });
-
-  it("video source[src]", () => {
-    const htmlStr = html`<video width="320" height="240" controls>
-      <source src="observable.mp4" type="video/mp4">
-      <source src="observable.mov" type="video/mov">
-      Your browser doesn't support HTML video.
-      </video>`;
-
-    const expected = html`<video width="320" height="240" controls>
-      <source src="./_file/observable.mp4" type="video/mp4">
-      <source src="./_file/observable.mov" type="video/mov">
-      Your browser doesn't support HTML video.
-      </video>`;
-
+  it("adds local files from video source[src]", () => {
+    const html = '<video width="320" height="240" controls><source src="observable.mp4" type="video/mp4"><source src="observable.mov" type="video/mov"></video>'; // prettier-ignore
+    const expected = '<video width="320" height="240" controls><source src="./_file/observable.mp4?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" type="video/mp4"><source src="./_file/observable.mov?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" type="video/mov"></video>'; // prettier-ignore
     const context = mockContext();
-    const actual = rewriteHtml(htmlStr, root, sourcePath, context);
-
-    assert.equal(actual, expected);
-    assert.deepEqual(context.files, [
-      {
-        mimeType: "video/mp4",
-        name: "./observable.mp4",
-        path: "./_file/observable.mp4"
-      },
-      {
-        mimeType: "video/quicktime",
-        name: "./observable.mov",
-        path: "./_file/observable.mov"
-      }
-    ]);
+    assert.strictEqual(rewriteHtml(html, "docs", "page", context), expected);
+    assert.deepStrictEqual(context.assets, new Set(["./observable.mp4", "./observable.mov"]));
   });
-
-  it("picture source[srcset]", () => {
-    const htmlStr = html`<picture>
-      <source srcset="observable-logo-wide.png" media="(min-width: 600px)"/>
-      <img src="observable-logo-narrow.png" />
-    </picture>`;
-
-    const expected = html`<picture>
-      <source srcset="./_file/observable-logo-wide.png" media="(min-width: 600px)">
-      <img src="./_file/observable-logo-narrow.png">
-    </picture>`;
-
+  it("adds local files from picture source[srcset]", () => {
+    const html = '<picture><source srcset="observable-logo-wide.png" media="(min-width: 600px)"><img src="observable-logo-narrow.png"></picture>'; // prettier-ignore
+    const expected = '<picture><source srcset="./_file/observable-logo-wide.png?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" media="(min-width: 600px)"><img src="./_file/observable-logo-narrow.png?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"></picture>'; // prettier-ignore
     const context = mockContext();
-    const actual = rewriteHtml(htmlStr, root, sourcePath, context);
-
-    assert.equal(actual, expected);
-    assert.deepEqual(context.files, [
-      {
-        mimeType: "image/png",
-        name: "./observable-logo-narrow.png",
-        path: "./_file/observable-logo-narrow.png"
-      },
-      {
-        mimeType: "image/png",
-        name: "./observable-logo-wide.png",
-        path: "./_file/observable-logo-wide.png"
-      }
-    ]);
+    assert.strictEqual(rewriteHtml(html, "docs", "page", context), expected);
+    assert.deepStrictEqual(context.assets, new Set(["./observable-logo-narrow.png", "./observable-logo-wide.png"]));
   });
-});
-
-describe("normalizePieceHtml only adds local files", () => {
-  const root = "/";
-  const sourcePath = "/attachments.md";
-
-  it("img[src] only adds local files", () => {
-    const htmlStr = html`<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/American_Shorthair.jpg/900px-American_Shorthair.jpg">`;
-    const expected = html`<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/American_Shorthair.jpg/900px-American_Shorthair.jpg">`;
+  it("ignores non-local files from img[src]", () => {
+    const html = '<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/American_Shorthair.jpg/900px-American_Shorthair.jpg">'; // prettier-ignore
+    const expected = html;
     const context = mockContext();
-    const actual = rewriteHtml(htmlStr, root, sourcePath, context);
-
-    assert.equal(actual, expected);
-    assert.deepEqual(context.files, []);
+    assert.strictEqual(rewriteHtml(html, "docs", "page", context), expected);
+    assert.deepStrictEqual(context.assets, new Set());
   });
-
-  it("img[srcset] only adds local files", () => {
-    const htmlStr = html`
-        <img
-          srcset="small.jpg 480w, https://upload.wikimedia.org/900px-American_Shorthair.jpg 900w"
-          sizes="(max-width: 600px) 480px, 900px"
-          src="https://upload.wikimedia.org/900px-American_Shorthair.jpg"
-          alt="Cat image for testing"
-        />
-      `;
-    const expected = html`
-        <img srcset="./_file/small.jpg 480w, https://upload.wikimedia.org/900px-American_Shorthair.jpg 900w" sizes="(max-width: 600px) 480px, 900px" src="https://upload.wikimedia.org/900px-American_Shorthair.jpg" alt="Cat image for testing">
-      `;
+  it("ignores non-local files from img[srcset]", () => {
+    const html = '<img srcset="small.jpg 480w, https://upload.wikimedia.org/900px-American_Shorthair.jpg 900w" sizes="(max-width: 600px) 480px, 900px" src="https://upload.wikimedia.org/900px-American_Shorthair.jpg" alt="Cat image for testing">'; // prettier-ignore
+    const expected = '<img srcset="./_file/small.jpg?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 480w, https://upload.wikimedia.org/900px-American_Shorthair.jpg 900w" sizes="(max-width: 600px) 480px, 900px" src="https://upload.wikimedia.org/900px-American_Shorthair.jpg" alt="Cat image for testing">'; // prettier-ignore
     const context = mockContext();
-    const actual = rewriteHtml(htmlStr, root, sourcePath, context);
-
-    assert.equal(actual, expected);
-    assert.deepEqual(context.files, [
-      {
-        mimeType: "image/jpeg",
-        name: "./small.jpg",
-        path: "./_file/small.jpg"
-      }
-    ]);
+    assert.strictEqual(rewriteHtml(html, "docs", "page", context), expected);
+    assert.deepStrictEqual(context.assets, new Set(["./small.jpg"]));
   });
-
-  it("video source[src] only adds local files", () => {
-    const htmlStr = html`<video width="320" height="240" controls>
-      <source src="https://www.youtube.com/watch?v=SsFyayu5csc" type="video/youtube"/>
-      <source src="observable.mov" type="video/mov">
-      Your browser doesn't support HTML video.
-      </video>`;
-
-    const expected = html`<video width="320" height="240" controls>
-      <source src="https://www.youtube.com/watch?v=SsFyayu5csc" type="video/youtube">
-      <source src="./_file/observable.mov" type="video/mov">
-      Your browser doesn't support HTML video.
-      </video>`;
-
+  it("ignores non-local files from video source[src]", () => {
+    const html = '<video width="320" height="240" controls><source src="https://www.youtube.com/watch?v=SsFyayu5csc" type="video/youtube"><source src="observable.mov" type="video/mov"></video>'; // prettier-ignore
+    const expected = '<video width="320" height="240" controls><source src="https://www.youtube.com/watch?v=SsFyayu5csc" type="video/youtube"><source src="./_file/observable.mov?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" type="video/mov"></video>'; // prettier-ignore
     const context = mockContext();
-    const actual = rewriteHtml(htmlStr, root, sourcePath, context);
-
-    assert.equal(actual, expected);
-    assert.deepEqual(context.files, [
-      {
-        mimeType: "video/quicktime",
-        name: "./observable.mov",
-        path: "./_file/observable.mov"
-      }
-    ]);
+    assert.strictEqual(rewriteHtml(html, "docs", "page", context), expected);
+    assert.deepStrictEqual(context.assets, new Set(["./observable.mov"]));
   });
 });
 

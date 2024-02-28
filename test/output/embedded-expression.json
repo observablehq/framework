@@ -1,34 +1,41 @@
 {
   "data": null,
   "title": "Embedded expression",
-  "files": [],
-  "imports": [],
-  "pieces": [
+  "style": null,
+  "assets": {},
+  "code": [
     {
-      "type": "html",
-      "id": "",
-      "cellIds": [],
-      "html": "<h1 id=\"embedded-expression\" tabindex=\"-1\"><a class=\"observablehq-header-anchor\" href=\"#embedded-expression\">Embedded expression</a></h1>\n"
-    },
-    {
-      "type": "html",
-      "id": "",
-      "cellIds": [
-        "6212702c"
-      ],
-      "html": "<p>One plus two is <span id=\"cell-6212702c\" class=\"observablehq--loading\"></span>.</p>\n"
-    }
-  ],
-  "cells": [
-    {
-      "type": "cell",
       "id": "6212702c",
-      "expression": true,
-      "inputs": [
-        "display"
-      ],
-      "inline": true,
-      "body": "async (display) => {\ndisplay(await(\n1 + 2\n))\n}"
+      "node": {
+        "body": {
+          "type": "BinaryExpression",
+          "start": 0,
+          "end": 5,
+          "left": {
+            "type": "Literal",
+            "start": 0,
+            "end": 1,
+            "value": 1,
+            "raw": "1"
+          },
+          "operator": "+",
+          "right": {
+            "type": "Literal",
+            "start": 4,
+            "end": 5,
+            "value": 2,
+            "raw": "2"
+          }
+        },
+        "declarations": null,
+        "references": [],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": false,
+        "inline": true,
+        "input": "1 + 2"
+      }
     }
   ],
   "hash": "a9e5ef0e43af5ca3669ebca7ace93a58f4f06b4192067a770f7be3cf1edfbfb6"

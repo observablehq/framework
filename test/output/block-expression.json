@@ -1,28 +1,41 @@
 {
   "data": null,
   "title": null,
-  "files": [],
-  "imports": [],
-  "pieces": [
+  "style": null,
+  "assets": {},
+  "code": [
     {
-      "type": "html",
-      "id": "",
-      "cellIds": [
-        "6212702c"
-      ],
-      "html": "<div><span id=\"cell-6212702c\" class=\"observablehq--loading\"></span></div>\n"
-    }
-  ],
-  "cells": [
-    {
-      "type": "cell",
       "id": "6212702c",
-      "expression": true,
-      "inputs": [
-        "display"
-      ],
-      "inline": true,
-      "body": "async (display) => {\ndisplay(await(\n1 + 2\n))\n}"
+      "node": {
+        "body": {
+          "type": "BinaryExpression",
+          "start": 0,
+          "end": 5,
+          "left": {
+            "type": "Literal",
+            "start": 0,
+            "end": 1,
+            "value": 1,
+            "raw": "1"
+          },
+          "operator": "+",
+          "right": {
+            "type": "Literal",
+            "start": 4,
+            "end": 5,
+            "value": 2,
+            "raw": "2"
+          }
+        },
+        "declarations": null,
+        "references": [],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": false,
+        "inline": true,
+        "input": "1 + 2"
+      }
     }
   ],
   "hash": "ce09e20b956c2d34ace6c261623306829d6b0468cb797a6226dbff737185b7ec"

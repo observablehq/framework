@@ -1,28 +1,28 @@
 {
   "data": null,
   "title": null,
-  "files": [],
-  "imports": [],
-  "pieces": [
+  "style": null,
+  "assets": {},
+  "code": [
     {
-      "type": "html",
-      "id": "",
-      "cellIds": [
-        "08961c06"
-      ],
-      "html": "<p><span id=\"cell-08961c06\" class=\"observablehq--loading\"></span></p>\n"
-    }
-  ],
-  "cells": [
-    {
-      "type": "cell",
       "id": "08961c06",
-      "expression": true,
-      "inputs": [
-        "display"
-      ],
-      "inline": true,
-      "body": "async (display) => {\ndisplay(await(\n'}\"'\n))\n}"
+      "node": {
+        "body": {
+          "type": "Literal",
+          "start": 0,
+          "end": 4,
+          "value": "}\"",
+          "raw": "'}\"'"
+        },
+        "declarations": null,
+        "references": [],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": false,
+        "inline": true,
+        "input": "'}\"'"
+      }
     }
   ],
   "hash": "b48a5eea909f2e4be0d1f34e9df66c5a03e8dfac2529c179451d3ea674988c60"
