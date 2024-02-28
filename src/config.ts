@@ -58,6 +58,7 @@ const defaultInterpreters = {
   ".ts": ["tsx"],
   ".sh": ["sh"],
   ".exe": [],
+  ".java": ["java"],
   ".jl": ["julia"],
   ".go": ["go", "run"],
   ".php": ["php"],
