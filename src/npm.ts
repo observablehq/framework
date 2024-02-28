@@ -133,13 +133,15 @@ async function resolveNpmVersion(root: string, specifier: NpmSpecifier): Promise
   let promise = npmVersionRequests.get(href);
   if (promise) return promise; // coalesce concurrent requests
   promise = (async function () {
-    console.info(`${faint("resolving")} npm:${formatNpmSpecifier(specifier)}`);
+    process.stdout.write(`npm:${formatNpmSpecifier(specifier)} ${faint("→")} `);
     const response = await fetch(href);
     if (!response.ok) throw new Error(`unable to fetch: ${href}`);
     const {version} = await response.json();
     if (!version) throw new Error(`unable to resolve version: ${formatNpmSpecifier({name, range})}`);
+    const spec = formatNpmSpecifier({name, range: version});
+    process.stdout.write(`npm:${spec}\n`);
     cache.set(specifier.name, versions ? rsort(versions.concat(version)) : [version]);
-    mkdir(join(root, ".observablehq", "cache", "_npm", formatNpmSpecifier({name, range: version})), {recursive: true}); // disk cache
+    mkdir(join(root, ".observablehq", "cache", "_npm", spec), {recursive: true}); // disk cache
     return version;
   })();
   promise.catch(() => {}).then(() => npmVersionRequests.delete(href));
