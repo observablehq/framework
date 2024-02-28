@@ -6,6 +6,7 @@ const interpreters = new Map([
   [".R", ["Rscript"]],
   [".exe", []],
   [".go", ["go", "run"]],
+  [".java", ["java"]],
   [".jl", ["julia"]],
   [".js", ["node", "--no-warnings=ExperimentalWarning"]],
   [".php", ["php"]],
