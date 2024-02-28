@@ -12,8 +12,8 @@ import {
   getCurrentObservableApi,
   invalidApiKey,
   mockObservableApi,
+  userWithGuestMemberWorkspaces,
   userWithOneWorkspace,
-  userWithThreeWorkspaces,
   userWithTwoWorkspaces,
   userWithZeroWorkspaces,
   validApiKey
@@ -522,7 +522,7 @@ describe("deploy", () => {
   });
 
   it("filters out workspace with the wrong tier or wrong role", async () => {
-    getCurrentObservableApi().handleGetCurrentUser({user: userWithThreeWorkspaces}).start();
+    getCurrentObservableApi().handleGetCurrentUser({user: userWithGuestMemberWorkspaces}).start();
     const effects = new MockDeployEffects();
     try {
       await deploy(TEST_OPTIONS, effects);
@@ -530,9 +530,15 @@ describe("deploy", () => {
     } catch (err) {
       assert.ok(err instanceof Error);
       assert.match(err.message, /out of inputs for select.*Which Observable workspace do you want to use/);
-      assert.ok("options" in err && Array.isArray(err.options) && err.options.length === 2);
+      assert.ok("options" in err && Array.isArray(err.options) && err.options.length === 3);
       assert.ok("options" in err && Array.isArray(err.options) && err.options[0].value.role === "owner");
       assert.ok("options" in err && Array.isArray(err.options) && err.options[1].value.role === "member");
+      assert.ok(
+        "options" in err &&
+          Array.isArray(err.options) &&
+          err.options[2].value.role === "guest_member" &&
+          err.options[2].value.projects_info.some((info) => info.project_role === "editor")
+      );
     }
   });
 
