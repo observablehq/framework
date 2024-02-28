@@ -5,6 +5,11 @@ import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {isEnoent} from "./error.js";
 
+/**
+ * Returns the relative path from the current working directory to the given
+ * Framework source file, such as "./src/client/search.js". This is typically
+ * used to rollup JavaScript and style bundles for built-in modules.
+ */
 export function getClientPath(entry: string): string {
   const path = relative(cwd(), join(dirname(fileURLToPath(import.meta.url)), "..", entry));
   if (path.endsWith(".js") && !existsSync(path)) {
@@ -14,6 +19,7 @@ export function getClientPath(entry: string): string {
   return path;
 }
 
+/** Yields every Markdown (.md) file within the given root, recursively. */
 export async function* visitMarkdownFiles(root: string): AsyncGenerator<string> {
   for await (const file of visitFiles(root)) {
     if (extname(file) !== ".md") continue;
@@ -21,6 +27,7 @@ export async function* visitMarkdownFiles(root: string): AsyncGenerator<string> 
   }
 }
 
+/** Yields every file within the given root, recursively. */
 export async function* visitFiles(root: string): AsyncGenerator<string> {
   const visited = new Set<number>();
   const queue: string[] = [(root = normalize(root))];
@@ -38,7 +45,7 @@ export async function* visitFiles(root: string): AsyncGenerator<string> {
   }
 }
 
-// Like fs.stat, but returns undefined instead of throwing ENOENT if not found.
+/** Like fs.stat, but returns undefined instead of throwing ENOENT if not found. */
 export async function maybeStat(path: string): Promise<Stats | undefined> {
   try {
     return await stat(path);
@@ -47,6 +54,7 @@ export async function maybeStat(path: string): Promise<Stats | undefined> {
   }
 }
 
+/** Like recursive mkdir, but for the parent of the specified output. */
 export async function prepareOutput(outputPath: string): Promise<void> {
   const outputDir = dirname(outputPath);
   if (outputDir === ".") return;
