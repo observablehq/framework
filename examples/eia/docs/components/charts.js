@@ -1,6 +1,12 @@
 import * as Plot from "npm:@observablehq/plot"
 import {extent, format, timeFormat} from "npm:d3"
 
+const friendlyTypeName = {
+  demandActual: "Demand (actual)",
+  demandForecast: "Demand (forecast)",
+  netGeneration: "Net generation"
+}
+
 // Top 5 balancing authorities chart
 export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDemand) {
   return Plot.plot({
@@ -33,29 +39,35 @@ export function usGenDemandForecastChart(width, height, detailData, summaryData,
     x: {type: "time", tickSize: 0, tickPadding: 3, label: "Date"},
     color: {
       legend: true,
-      domain: ["Demand", "Day-ahead demand forecast", "Net generation"],
+      domain: ["demandActual", "demandForecast", "netGeneration"],
+      tickFormat: d => friendlyTypeName[d],
       range: ["#ff8ab7", "#6cc5b0", "#a463f2"]
     },
     tip: { frameAnchor: "bottom-left",  },
     grid: true,
     marks: [
       Plot.ruleX([currentHour], {strokeOpacity: 0.5}),
-      Plot.line(detailData, {x: "date", y: (d) => d.value / 1000, stroke: "name", strokeWidth: 1.2}),
+      Plot.line(detailData, {
+        x: "date",
+        y: (d) => d.value / 1000,
+        stroke: "name", 
+        strokeWidth: 1.2,
+      }),
       Plot.ruleX(summaryData, Plot.pointerX({
         x: "date",
         strokeDasharray: [2,2],
         channels: {
           date: {value: "date", label: "Date"},
-          d: {value: "D", label: "Demand"},
-          df: {value: "DF", label: "Demand forecast"},
-          ng: {value: "NG", label: "Net generation"}
+          demandActual: {value: "demandActual", label: friendlyTypeName["demandActual"]},
+          demandForecast: {value: "demandForecast", label: friendlyTypeName["demandForecast"]},
+          netGeneration: {value: "netGeneration", label: friendlyTypeName["netGeneration"]}
         },
         tip: {
           format: {
             date: (d) => timeFormat("%-m/%-d %-I %p")(d),
-            d: (d) => `${format(".1f")(d / 1000)} GWh`,
-            df: (d) => `${format(".1f")(d / 1000)} GWh`,
-            ng: (d) => `${format(".1f")(d / 1000)} GWh`
+            demandActual: (d) => `${format(".1f")(d / 1000)} GWh`,
+            demandForecast: (d) => `${format(".1f")(d / 1000)} GWh`,
+            netGeneration: (d) => `${format(".1f")(d / 1000)} GWh`
           },
           fontSize: 12,
           anchor: "bottom",

@@ -10,15 +10,15 @@ const usDemandUrl = `https://www.eia.gov/electricity/930-api/region_data/series_
 
 const datetimeFormat = d3.utcParse("%m/%d/%Y %H:%M:%S")
 const dateFormat = d3.utcParse("%m/%d/%Y")
+const typeNameRemap = {DF: "demandForecast", D: "demandActual", NG: "netGeneration"}
 
 // Flatten JSON from date / type / value hierarchy to a tidy array
-const jsonToTidy = (data, id, name) => {
+const jsonToTidy = (data, id) => {
   let series = data[0].data
   return series.flatMap(s => {
     return s.VALUES.DATES.map((d, i) => {
       return {
-        id: s[id],
-        name: s[name],
+        name: typeNameRemap[s[id]],
         date: datetimeFormat(d) ?? dateFormat(d),
         value: s.VALUES.DATA[i]
       }
@@ -29,8 +29,8 @@ const jsonToTidy = (data, id, name) => {
 // Roll up each hour's values into a single row for a cohesive tip
 function tidyToRollup(data) {
   const rolledToDate = data.reduce((map, d) => {
-    let value = map.get(d.date.getTime()) ?? { date: d.date, DF: null, D: null, NG: null }
-    value[d.id] = d.value
+    let value = map.get(d.date.getTime()) ?? { date: d.date, demandForecast: null, demandActual: null, netGeneration: null }
+    value[d.name] = d.value
     return map.set(d.date.getTime() , value)
   }, new Map())
 
@@ -40,7 +40,7 @@ function tidyToRollup(data) {
 }
 
 const jsonData = await d3.json(usDemandUrl)
-const tidySeries = jsonToTidy(jsonData, "TYPE_ID", "TYPE_NAME")
+const tidySeries = jsonToTidy(jsonData, "TYPE_ID")
 const summaryData = tidyToRollup(tidySeries)
 
 const zip = new JSZip();

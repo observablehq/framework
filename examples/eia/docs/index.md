@@ -172,7 +172,7 @@ function centerResize(render) {
     ${resize((width, height) => top5BalancingAuthoritiesChart(width, height, top5LatestDemand, maxDemand))}
   </div>
   <div class="card grid-colspan-2">
-    <h2>US electricity generation, demand, and demand forecast (GWh)</h2>
+    <h2>US electricity generation demand vs. day-ahead forecast (GWh)</h2>
     ${resize((width, height) => usGenDemandForecastChart(width, height, usDemandGenForecast, usDemandGenForecastSummary, currentHour))}
   </div>
   <div class="card grid-colspan-2">
