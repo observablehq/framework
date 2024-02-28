@@ -72,7 +72,7 @@ export async function populateNpmCache(root: string, path: string): Promise<stri
   let promise = npmRequests.get(path);
   if (promise) return promise; // coalesce concurrent requests
   promise = (async function () {
-    const specifier = path.slice("/_npm/".length).replace(/\/\+esm\.js$/, "/+esm");
+    const specifier = resolveNpmSpecifier(path);
     const href = `https://cdn.jsdelivr.net/npm/${specifier}`;
     process.stdout.write(`npm:${specifier} ${faint("→")} `);
     const response = await fetch(href);
@@ -191,4 +191,8 @@ export async function resolveNpmImports(root: string, path: string): Promise<Imp
   })();
   npmImportsCache.set(path, promise);
   return promise;
+}
+
+export function resolveNpmSpecifier(path: string): string {
+  return path.replace(/^\/_npm\//, "").replace(/\/\+esm\.js$/, "/+esm");
 }

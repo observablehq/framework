@@ -3,7 +3,7 @@ import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js"
 import {getImplicitDependencies, getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
 import {getImplicitStylesheets} from "./libraries.js";
 import type {MarkdownPage} from "./markdown.js";
-import {populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
+import {populateNpmCache, resolveNpmImport, resolveNpmImports, resolveNpmSpecifier} from "./npm.js";
 import {isPathImport, relativePath, resolvePath} from "./path.js";
 
 export interface Resolvers {
@@ -153,7 +153,7 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
     for (const i of await resolveNpmImports(root, value)) {
       if (i.type === "local") {
         const path = resolvePath(value, i.name);
-        const specifier = resolveNpmSpecifier(path);
+        const specifier = `npm:${resolveNpmSpecifier(path)}`;
         globalImports.add(specifier);
         resolutions.set(specifier, path);
       }
@@ -170,7 +170,7 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
     for (const i of await resolveNpmImports(root, value)) {
       if (i.type === "local" && i.method === "static") {
         const path = resolvePath(value, i.name);
-        const specifier = resolveNpmSpecifier(path);
+        const specifier = `npm:${resolveNpmSpecifier(path)}`;
         staticImports.add(specifier);
       }
     }
@@ -226,10 +226,6 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
     resolveImport,
     resolveStylesheet
   };
-}
-
-export function resolveNpmSpecifier(path: string): string {
-  return path.replace(/^\/_npm\//, "npm:").replace(/\/\+esm\.js$/, "/+esm");
 }
 
 export function resolveStylesheetPath(root: string, path: string): string {

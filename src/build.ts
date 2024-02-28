@@ -10,10 +10,10 @@ import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import {parseMarkdown} from "./markdown.js";
-import {populateNpmCache} from "./npm.js";
+import {populateNpmCache, resolveNpmImport, resolveNpmSpecifier} from "./npm.js";
 import {resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
-import {getResolvers, resolveNpmSpecifier} from "./resolvers.js";
+import {getResolvers} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
@@ -92,10 +92,7 @@ export async function build(
   if (addPublic) {
     for (const path of globalImports) {
       if (path === "/_observablehq/runtime.js") {
-        const sourcePath = relative(
-          cwd(),
-          join(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "../../dist/runtime.js")
-        );
+        const sourcePath = relative(cwd(), join(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "../../dist/runtime.js")); // prettier-ignore
         effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
         await effects.copyFile(sourcePath, path);
       } else if (path.startsWith("/_observablehq/")) {
@@ -118,6 +115,11 @@ export async function build(
           const code = await bundleStyles({path: clientPath});
           await effects.writeFile(`/_observablehq/${specifier.slice("observablehq:".length)}`, code);
         }
+      } else if (specifier.startsWith("npm:")) {
+        effects.output.write(`${faint("copy")} ${specifier} ${faint("→")} `);
+        const path = await resolveNpmImport(root, specifier.slice("npm:".length));
+        const sourcePath = await populateNpmCache(root, path); // TODO effects
+        await effects.copyFile(sourcePath, path);
       } else if (!/^\w+:/.test(specifier)) {
         const outputPath = join("_import", specifier);
         const sourcePath = join(root, specifier);
@@ -152,7 +154,7 @@ export async function build(
   // Download npm imports.
   for (const path of globalImports) {
     if (!path.startsWith("/_npm/")) continue; // skip _observablehq
-    effects.output.write(`${faint("copy")} ${resolveNpmSpecifier(path)} ${faint("→")} `);
+    effects.output.write(`${faint("copy")} npm:${resolveNpmSpecifier(path)} ${faint("→")} `);
     const sourcePath = await populateNpmCache(root, path); // TODO effects
     await effects.copyFile(sourcePath, path);
   }
