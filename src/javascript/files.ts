@@ -1,8 +1,7 @@
 import {extname} from "node:path";
 import type {CallExpression, Node} from "acorn";
 import {ancestor, simple} from "acorn-walk";
-import {getLocalPath} from "../files.js";
-import {relativePath} from "../path.js";
+import {relativePath, resolveLocalPath} from "../path.js";
 import {defaultGlobals} from "./globals.js";
 import {getStringLiteralValue, isMemberExpression, isStringLiteral} from "./node.js";
 import {findReferences} from "./references.js";
@@ -103,7 +102,7 @@ export function findFiles(
       const [arg] = args;
       if (!isStringLiteral(arg)) throw syntaxError("FileAttachment requires a single literal string argument", node, input); // prettier-ignore
       const fileName = getStringLiteralValue(arg);
-      const filePath = getLocalPath(path, fileName);
+      const filePath = resolveLocalPath(path, fileName);
       if (!filePath) throw syntaxError(`non-local file path: ${fileName}`, node, input);
       const parent = stack[stack.length - 2];
       const fileMethod =

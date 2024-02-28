@@ -12,14 +12,13 @@ import type {RenderRule} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
 import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
-import {getLocalPath} from "./files.js";
 import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
 import {isPathImport} from "./javascript/imports.js";
 import {getFileHash, getModuleHash} from "./javascript/module.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
-import {relativePath, resolvePath} from "./path.js";
+import {relativePath, resolveLocalPath, resolvePath} from "./path.js";
 import {resolveFilePath} from "./resolvers.js";
 import {transpileTag} from "./tag.js";
 import {red} from "./tty.js";
@@ -300,7 +299,7 @@ export function rewriteHtml(html: string, root: string, path: string, context: P
   // mean this function needs to be async — or more likely that we should
   // extract the references here (synchronously), but resolve them later.
   const resolveFile = (specifier: string): string | undefined => {
-    const localPath = getLocalPath(path, specifier);
+    const localPath = resolveLocalPath(path, specifier);
     if (!localPath) return; // TODO warn for non-local relative paths?
     context.assets.add(localPath);
     return relativePath(path, resolveFilePath(root, localPath));

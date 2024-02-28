@@ -2,7 +2,7 @@ import assert from "node:assert";
 import type {Program} from "acorn";
 import {Parser} from "acorn";
 import {findExports, hasImportDeclaration} from "../../src/javascript/imports.js";
-import {isLocalImport, rewriteModule} from "../../src/javascript/imports.js";
+// import {isLocalImport, rewriteModule} from "../../src/javascript/imports.js";
 import {resolvePath} from "../../src/path.js";
 
 describe("isLocalImport", () => {

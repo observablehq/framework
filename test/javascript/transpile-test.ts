@@ -74,7 +74,7 @@ function runTests({
   }
 }
 
-describe.only("transpileJavaScript(input, options)", () => {
+describe("transpileJavaScript(input, options)", () => {
   mockJsDelivr();
   runTests({
     inputRoot: "test/input",

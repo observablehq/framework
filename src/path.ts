@@ -34,3 +34,16 @@ export function resolvePath(root: string, source: string, target?: string): stri
   const path = join(root, target.startsWith("/") ? "." : dirname(source), target);
   return path.startsWith("../") ? path : `/${path}`;
 }
+
+/**
+ * Like resolvePath, except returns null if the specified target goes outside
+ * the source root, and treats paths that start with protocols (e.g., npm:) or
+ * hashes (e.g., #foo) as non-local paths and likewise returns null.
+ */
+export function resolveLocalPath(source: string, target: string): string | null {
+  if (/^\w+:/.test(target)) return null; // URL
+  if (target.startsWith("#")) return null; // anchor tag
+  const path = resolvePath(source, target);
+  if (path.startsWith("../")) return null; // goes above root
+  return path;
+}
