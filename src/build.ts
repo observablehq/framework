@@ -190,10 +190,6 @@ export async function build(
   }
 
   // Render pages, resolving against content-hashed file names!
-  //
-  // TODO For files that don’t exist, fileAliases won’t have a corresponding
-  // entry, and so this lets the missing file pass through. I think we should
-  // probably still strip the ?sha in that case?
   for (const [sourceFile, {page, resolvers}] of pages) {
     const sourcePath = join(root, sourceFile);
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
@@ -207,7 +203,7 @@ export async function build(
         resolveFile(specifier: string) {
           const r = resolvers.resolveFile(specifier);
           const a = fileAliases.get(resolvePath(path, r));
-          return a ? relativePath(path, a) : r;
+          return a ? relativePath(path, a) : specifier; // fallback to specifier if enoent
         }
       }
     });

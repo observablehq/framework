@@ -16,9 +16,9 @@ import {define} from "./_observablehq/client.js";
 import {registerFile} from "./_observablehq/stdlib.js";
 
 registerFile("./dynamic/file.txt", {"name":"./dynamic/file.txt","mimeType":"text/plain","path":"./_file/dynamic/file.c93138d8.txt"});
-registerFile("./dynamic/not-found.txt", {"name":"./dynamic/not-found.txt","mimeType":"text/plain","path":"./_file/dynamic/not-found.txt?sha=68223db0bf721258cce808d45ff5c77e0f14b35240d25940f40ed9cd1ad74fde"});
+registerFile("./dynamic/not-found.txt", {"name":"./dynamic/not-found.txt","mimeType":"text/plain","path":"./dynamic/not-found.txt"});
 registerFile("./static/file.txt", {"name":"./static/file.txt","mimeType":"text/plain","path":"./_file/static/file.d9014c46.txt"});
-registerFile("./static/not-found.txt", {"name":"./static/not-found.txt","mimeType":"text/plain","path":"./_file/static/not-found.txt?sha=e6afff224da77b900cfe3ab8789f2283883300e1497548c30af66dfe4c29b429"});
+registerFile("./static/not-found.txt", {"name":"./static/not-found.txt","mimeType":"text/plain","path":"./static/not-found.txt"});
 
 define({id: "d3b9d0ee", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
 display(await(
