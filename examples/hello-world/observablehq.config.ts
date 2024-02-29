@@ -2,7 +2,9 @@ export default {
   title: "Hello, world!",
   toc: false,
   pager: false,
-  scripts: [{type: "module", async: true, src: "https://events.observablehq.com/client.js"}],
+  head: `<script type="module" async src="https://events.observablehq.com/client.js"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9B88TP6PKQ"></script>
+<script>window.dataLayer=window.dataLayer||[];\nfunction gtag(){dataLayer.push(arguments);}\ngtag('js',new Date());\ngtag('config','G-9B88TP6PKQ');</script>`,
   header: `<style>
 
 #observablehq-header a[href] {
