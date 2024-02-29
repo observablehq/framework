@@ -274,6 +274,9 @@ function end(req: IncomingMessage, res: ServerResponse, content: string, type: s
   }
 }
 
+// Note that while we appear to be watching the referenced files here,
+// FileWatchers will magically watch the corresponding data loader if a
+// referenced file does not exist!
 function getWatchFiles(resolvers: Resolvers): Iterable<string> {
   const files = new Set<string>();
   for (const specifier of resolvers.stylesheets) {

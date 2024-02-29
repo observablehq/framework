@@ -10,7 +10,7 @@ import type {PageLink} from "./pager.js";
 import {findLink, normalizePath} from "./pager.js";
 import {relativePath} from "./path.js";
 import type {Resolvers} from "./resolvers.js";
-import {getResolvers, resolveImportPath} from "./resolvers.js";
+import {getResolvers} from "./resolvers.js";
 import {rollupClient} from "./rollup.js";
 
 export interface RenderOptions extends Config {
@@ -178,22 +178,26 @@ function prettyPath(path: string): string {
   return path.replace(/\/index$/, "/") || "/";
 }
 
-function renderHead(parse: MarkdownPage, resolvers: Resolvers, options: RenderOptions): Html {
-  const scripts = options.scripts;
-  const head = parse.data?.head !== undefined ? parse.data.head : options.head;
+function renderHead(parse: MarkdownPage, resolvers: Resolvers, {scripts, head, root}: RenderOptions): Html {
+  if (parse.data?.head !== undefined) head = String(parse.data.head);
+  const resolveScript = (src: string) => (/^\w+:/.test(src) ? src : resolvers.resolveImport(relativePath(root, src)));
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
     Array.from(resolvers.stylesheets, (i) => renderStylesheetPreload(resolvers.resolveStylesheet(i))) // <link rel=preload as=style>
   }${
     Array.from(resolvers.stylesheets, (i) => renderStylesheet(resolvers.resolveStylesheet(i))) // <link rel=stylesheet>
   }${
     Array.from(resolvers.staticImports, (i) => renderModulePreload(resolvers.resolveImport(i))) // <link rel=modulepreload>
-  }${head ? html`\n${html.unsafe(head)}` : null}${scripts.map((s) => renderScript(s, options))}`;
+  }${
+    head ? html`\n${html.unsafe(head)}` : null // arbitrary user content
+  }${
+    Array.from(scripts, (s) => renderScript(s, resolveScript)) // <script src>
+  }`;
 }
 
-function renderScript(script: Script, {root, path}: RenderOptions): Html {
-  return html`\n<script${script.type ? html` type="${script.type}"` : null}${script.async ? html` async` : null} src="${
-    /^\w+:/.test(script.src) ? script.src : relativePath(path, resolveImportPath(root, script.src))
-  }"></script>`;
+function renderScript(script: Script, resolve: (specifier: string) => string): Html {
+  return html`\n<script${script.type ? html` type="${script.type}"` : null}${
+    script.async ? html` async` : null
+  } src="${resolve(script.src)}"></script>`;
 }
 
 function renderStylesheet(href: string): Html {
