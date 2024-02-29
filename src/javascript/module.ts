@@ -130,6 +130,9 @@ export function getModuleInfo(root: string, path: string): ModuleInfo | undefine
  * the specified file does not exist, returns the hash of empty content. If the
  * referenced file does not exist, we check for the corresponding data loader
  * and return its hash instead.
+ *
+ * TODO During build, this needs to compute the hash of the generated file, not
+ * the data loader.
  */
 export function getFileHash(root: string, path: string): string {
   if (!existsSync(join(root, path))) {

@@ -65,9 +65,6 @@ export const builtins = new Map<string, string>([
  *
  * For files, we collect all FileAttachment calls within local modules, adding
  * them to any files referenced by static HTML.
- *
- * TODO Resolve implicit downloads, too (addImplicitFiles). And collect global
- * dynamic imports for download, too.
  */
 export async function getResolvers(page: MarkdownPage, {root, path}: {root: string; path: string}): Promise<Resolvers> {
   const hash = createHash("sha256").update(page.html);
@@ -79,15 +76,6 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   const staticImports = new Set<string>(defaultImports);
   const stylesheets = new Set<string>();
   const resolutions = new Map<string, string>();
-
-  // TODO The hash needs to change if a referenced file changes, so maybe this
-  // for (const {node} of code) {
-  //   for (const f of node.files) hash.update(getFileHash(root, resolvePath(path, f.name)));
-  //   for (const i of node.imports) if (i.type === "local") hash.update(getModuleHash(root, resolvePath(path, i.name)));
-  // }
-  // for (const f of assets) hash.update(getFileHash(root, resolvePath(path, f)));
-  // if (style && isPathImport(style)) hash.update(getFileHash(root, resolvePath(path, style)));
-  // hash: hash.digest("hex") // TODO move to getResolvers
 
   // Add stylesheets. TODO Instead of hard-coding Source Serif Pro, parse the
   // page’s stylesheet to look for external imports.
@@ -105,6 +93,13 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
       if (i.method === "static") staticImports.add(i.name);
     }
   }
+
+  // Compute the content hash. TODO In build, this needs to consider the output
+  // of data loaders, rather than the source of data loaders.
+  for (const f of assets) hash.update(getFileHash(root, resolvePath(path, f)));
+  for (const f of files) hash.update(getFileHash(root, resolvePath(path, f)));
+  for (const i of localImports) hash.update(getModuleHash(root, resolvePath(path, i)));
+  if (page.style && isPathImport(page.style)) hash.update(getFileHash(root, resolvePath(path, page.style)));
 
   // Collect transitively-attached files and imports.
   for (const i of localImports) {
