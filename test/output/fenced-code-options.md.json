@@ -2,7 +2,6 @@
   "data": null,
   "title": "Fenced code options",
   "style": null,
-  "assets": {},
   "code": [
     {
       "id": "fe9e095e",
@@ -276,6 +275,5 @@
         "input": "function langAndAttributes() {\n  return 1;\n}\n"
       }
     }
-  ],
-  "hash": "39951f0e499abb1c6d0c2f82a72d223bba4683e1e7f0114d2e319c0ea160051d"
+  ]
 }

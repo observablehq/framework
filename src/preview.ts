@@ -20,8 +20,9 @@ import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
+import {parseHtml, rewriteHtml} from "./html.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
-import {parseHtml, parseMarkdown} from "./markdown.js";
+import {parseMarkdown} from "./markdown.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
 import {populateNpmCache} from "./npm.js";
 import {isPathImport} from "./path.js";
@@ -333,15 +334,15 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
           clearTimeout(emptyTimeout);
           emptyTimeout = null;
         }
-        if (hash === page.hash) break;
+        const resolvers = await getResolvers(page, {root, path});
+        if (hash === resolvers.hash) break;
         const previousHash = hash!;
         const previousHtml = html!;
         const previousCode = code!;
         const previousFiles = files!;
         const previousStylesheets = stylesheets!;
-        hash = page.hash;
-        const resolvers = await getResolvers(page, {root, path});
-        html = getHtml(page);
+        hash = resolvers.hash;
+        html = getHtml(page, resolvers);
         code = getCode(page, resolvers);
         files = getFiles(resolvers);
         stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
@@ -369,10 +370,10 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
     if (path.endsWith("/")) path += "index";
     path += ".md";
     const page = await parseMarkdown(join(root, path), {root, path, style});
-    if (page.hash !== initialHash) return void send({type: "reload"});
     const resolvers = await getResolvers(page, {root, path});
-    hash = page.hash;
-    html = getHtml(page);
+    if (resolvers.hash !== initialHash) return void send({type: "reload"});
+    hash = resolvers.hash;
+    html = getHtml(page, resolvers);
     code = getCode(page, resolvers);
     files = getFiles(resolvers);
     stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
@@ -418,8 +419,8 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
   }
 }
 
-function getHtml({html}: MarkdownPage): string[] {
-  return Array.from(parseHtml(html).document.body.children, (d) => d.outerHTML);
+function getHtml({html}: MarkdownPage, {resolveFile}: Resolvers): string[] {
+  return Array.from(parseHtml(rewriteHtml(html, resolveFile)).document.body.children, (d) => d.outerHTML);
 }
 
 function getCode({code}: MarkdownPage, resolvers: Resolvers): Map<string, string> {

@@ -2,7 +2,6 @@
   "data": null,
   "title": null,
   "style": null,
-  "assets": {},
   "code": [
     {
       "id": "6212702c",
@@ -37,6 +36,5 @@
         "input": "1 + 2"
       }
     }
-  ],
-  "hash": "ce09e20b956c2d34ace6c261623306829d6b0468cb797a6226dbff737185b7ec"
+  ]
 }

@@ -3,10 +3,9 @@ import type {Config, Page, Script, Section} from "./config.js";
 import {mergeToc} from "./config.js";
 import {getClientPath} from "./files.js";
 import type {Html} from "./html.js";
-import {html} from "./html.js";
+import {html, parseHtml, rewriteHtml} from "./html.js";
 import {transpileJavaScript} from "./javascript/transpile.js";
 import type {MarkdownPage} from "./markdown.js";
-import {parseHtml} from "./markdown.js";
 import type {PageLink} from "./pager.js";
 import {findLink, normalizePath} from "./pager.js";
 import {relativePath} from "./path.js";
@@ -60,7 +59,7 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
 ${renderFiles(files, resolveFile)}`
       : ""
   }
-${preview ? `\nopen({hash: ${JSON.stringify(page.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
+${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
     .map(({node, id}) => `\n${transpileJavaScript(node, {id, resolveImport})}`)
     .join("")}`)}
 </script>${sidebar ? html`\n${await renderSidebar(title, pages, root, path, search)}` : ""}${
@@ -68,7 +67,7 @@ ${preview ? `\nopen({hash: ${JSON.stringify(page.hash)}, eval: (body) => eval(bo
   }
 <div id="observablehq-center">${renderHeader(options, page.data)}
 <main id="observablehq-main" class="observablehq">
-${html.unsafe(page.html)}</main>${renderFooter(path, options, page.data)}
+${html.unsafe(rewriteHtml(page.html, resolvers.resolveFile))}</main>${renderFooter(path, options, page.data)}
 </div>
 `);
 }

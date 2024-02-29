@@ -2,7 +2,6 @@
   "data": null,
   "title": "Parent dir",
   "style": null,
-  "assets": {},
   "code": [
     {
       "id": "c68a5211",
@@ -246,6 +245,5 @@
         "input": "const ok1 = FileAttachment(\"./tex-expression.md\").text()\n"
       }
     }
-  ],
-  "hash": "54152919da458f2713188b8015da314ec401a95ddd56fc0cae46cf11dbe4d9b5"
+  ]
 }

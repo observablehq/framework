@@ -2,7 +2,6 @@
   "data": null,
   "title": null,
   "style": null,
-  "assets": {},
   "code": [
     {
       "id": "5ceee90d",
@@ -66,6 +65,5 @@
         "input": "tex.block`\\int_0^1 (x + y)dx`"
       }
     }
-  ],
-  "hash": "1dbd20327d20522a4c0bb9200ebee1b3a9d8a15651758f1a559a1ec589eb7750"
+  ]
 }

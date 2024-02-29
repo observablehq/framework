@@ -2,7 +2,6 @@
   "data": null,
   "title": null,
   "style": null,
-  "assets": {},
   "code": [
     {
       "id": "12fd0aea",
@@ -35,6 +34,5 @@
         "input": "`}'\"`"
       }
     }
-  ],
-  "hash": "1ddca31d89d4e4b1032194e35e1c51395937c029915a4b170ea6c106f89bcd40"
+  ]
 }

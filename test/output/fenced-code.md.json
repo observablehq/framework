@@ -2,7 +2,6 @@
   "data": null,
   "title": "Fenced code",
   "style": null,
-  "assets": {},
   "code": [
     {
       "id": "fe9e095e",
@@ -90,6 +89,5 @@
         "input": "function add(a, b) {\n  return a + b;\n}\n"
       }
     }
-  ],
-  "hash": "4e0bcba1bcafa669c63b983fd96dcecbfda779ccb93c5b82e26396bfc85e93b6"
+  ]
 }

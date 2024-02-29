@@ -1,3 +1,5 @@
+import {createHash} from "node:crypto";
+import {findAssets} from "./html.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js";
 import {getImplicitDependencies, getImplicitDownloads} from "./libraries.js";
@@ -8,6 +10,8 @@ import {populateNpmCache, resolveNpmImport, resolveNpmImports, resolveNpmSpecifi
 import {isPathImport, relativePath, resolvePath} from "./path.js";
 
 export interface Resolvers {
+  hash: string;
+  assets: Set<string>;
   files: Set<string>;
   localImports: Set<string>;
   globalImports: Set<string>;
@@ -66,6 +70,8 @@ export const builtins = new Map<string, string>([
  * dynamic imports for download, too.
  */
 export async function getResolvers(page: MarkdownPage, {root, path}: {root: string; path: string}): Promise<Resolvers> {
+  const hash = createHash("sha256").update(page.html);
+  const assets = findAssets(page.html, path);
   const files = new Set<string>();
   const fileMethods = new Set<string>();
   const localImports = new Set<string>();
@@ -73,6 +79,15 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   const staticImports = new Set<string>(defaultImports);
   const stylesheets = new Set<string>();
   const resolutions = new Map<string, string>();
+
+  // TODO The hash needs to change if a referenced file changes, so maybe this
+  // for (const {node} of code) {
+  //   for (const f of node.files) hash.update(getFileHash(root, resolvePath(path, f.name)));
+  //   for (const i of node.imports) if (i.type === "local") hash.update(getModuleHash(root, resolvePath(path, i.name)));
+  // }
+  // for (const f of assets) hash.update(getFileHash(root, resolvePath(path, f)));
+  // if (style && isPathImport(style)) hash.update(getFileHash(root, resolvePath(path, style)));
+  // hash: hash.digest("hex") // TODO move to getResolvers
 
   // Add stylesheets. TODO Instead of hard-coding Source Serif Pro, parse the
   // page’s stylesheet to look for external imports.
@@ -229,6 +244,8 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   }
 
   return {
+    hash: hash.digest("hex"),
+    assets,
     files,
     localImports,
     globalImports,

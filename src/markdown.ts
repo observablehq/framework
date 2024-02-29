@@ -3,9 +3,6 @@ import {createHash} from "node:crypto";
 import {readFile} from "node:fs/promises";
 import matter from "gray-matter";
 import he from "he";
-import hljs from "highlight.js";
-import type {DOMWindow} from "jsdom";
-import {JSDOM, VirtualConsole} from "jsdom";
 import MarkdownIt from "markdown-it";
 import type {RuleCore} from "markdown-it/lib/parser_core.js";
 import type {RuleInline} from "markdown-it/lib/parser_inline.js";
@@ -13,13 +10,10 @@ import type {RenderRule} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
 import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
-import {computeHash} from "./hash.js";
 import {parseInfo} from "./info.js";
-import {getFileHash, getModuleHash} from "./javascript/module.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
-import {isPathImport, relativePath, resolveLocalPath, resolvePath} from "./path.js";
-import {resolveFilePath} from "./resolvers.js";
+import {relativePath} from "./path.js";
 import {transpileTag} from "./tag.js";
 import {InvalidThemeError} from "./theme.js";
 import {red} from "./tty.js";
@@ -34,28 +28,17 @@ export interface MarkdownPage {
   html: string;
   data: {[key: string]: any} | null;
   style: string | null;
-  assets: Set<string>;
   code: MarkdownCode[];
-  hash: string;
 }
 
 export interface ParseContext {
   code: MarkdownCode[];
-  assets: Set<string>;
   startLine: number;
   currentLine: number;
 }
 
-function isText(node: Node): node is Text {
-  return node.nodeType === 3;
-}
-
-function isElement(node: Node): node is Element {
-  return node.nodeType === 1;
-}
-
 function uniqueCodeId(context: ParseContext, content: string): string {
-  const hash = computeHash(content).slice(0, 8);
+  const hash = createHash("sha256").update(content).digest("hex").slice(0, 8);
   let id = hash;
   let count = 1;
   while (context.code.some((code) => code.id === id)) id = `${hash}-${count++}`;
@@ -286,81 +269,6 @@ function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
   };
 }
 
-const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcset"}[] = Object.freeze([
-  {query: "a[href][download]", src: "href"},
-  {query: "audio[src]", src: "src"},
-  {query: "audio source[src]", src: "src"},
-  {query: "img[src]", src: "src"},
-  {query: "img[srcset]", src: "srcset"},
-  {query: "link[href]", src: "href"},
-  {query: "picture source[srcset]", src: "srcset"},
-  {query: "video[src]", src: "src"},
-  {query: "video source[src]", src: "src"}
-]);
-
-export function parseHtml(html: string): DOMWindow {
-  return new JSDOM(`<!DOCTYPE html><body>${html}`, {virtualConsole: new VirtualConsole()}).window;
-}
-
-export function rewriteHtml(html: string, root: string, path: string, context: ParseContext): string {
-  const {document} = parseHtml(html);
-
-  // Extracting references to files (such as from linked stylesheets).
-  // TODO Support resolving an npm: protocol import here, too? but that would
-  // mean this function needs to be async — or more likely that we should
-  // extract the references here (synchronously), but resolve them later.
-  const resolveFile = (specifier: string): string | undefined => {
-    const localPath = resolveLocalPath(path, specifier);
-    if (!localPath) return; // TODO warn for non-local relative paths?
-    context.assets.add(relativePath(path, localPath));
-    return relativePath(path, resolveFilePath(root, localPath));
-  };
-
-  for (const {query, src} of SUPPORTED_PROPERTIES) {
-    for (const element of document.querySelectorAll(query)) {
-      if (src === "srcset") {
-        const srcset = element.getAttribute(src)!;
-        const paths = srcset
-          .split(",")
-          .map((p) => {
-            const parts = p.trim().split(/\s+/);
-            const source = decodeURIComponent(parts[0]);
-            const path = resolveFile(source);
-            return path ? `${path} ${parts.slice(1).join(" ")}`.trim() : parts.join(" ");
-          })
-          .filter((p) => !!p);
-        if (paths && paths.length > 0) element.setAttribute(src, paths.join(", "));
-      } else {
-        const source = decodeURIComponent(element.getAttribute(src)!);
-        const path = resolveFile(source);
-        if (path) element.setAttribute(src, path);
-      }
-    }
-  }
-
-  // Syntax highlighting for <code> elements. The code could contain an inline
-  // expression within, or other HTML, but we only highlight text nodes that are
-  // direct children of code elements.
-  for (const code of document.querySelectorAll("code[class*='language-']")) {
-    const language = [...code.classList].find((c) => c.startsWith("language-"))?.slice("language-".length);
-    if (!language) continue;
-    if (code.parentElement?.tagName === "PRE") code.parentElement.setAttribute("data-language", language);
-    if (!hljs.getLanguage(language)) continue;
-    let html = "";
-    code.normalize(); // coalesce adjacent text nodes
-    for (const child of code.childNodes) {
-      html += isText(child)
-        ? hljs.highlight(child.textContent!, {language}).value
-        : isElement(child)
-        ? child.outerHTML
-        : "";
-    }
-    code.innerHTML = html;
-  }
-
-  return document.body.innerHTML;
-}
-
 export interface ParseOptions {
   root: string;
   path: string;
@@ -380,27 +288,17 @@ export async function parseMarkdown(
   md.renderer.rules.placeholder = makePlaceholderRenderer(root, path);
   md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!, path);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
-  const assets = new Set<string>();
   const code: MarkdownCode[] = [];
-  const context: ParseContext = {assets, code, startLine: 0, currentLine: 0};
+  const context: ParseContext = {code, startLine: 0, currentLine: 0};
   const tokens = md.parse(parts.content, context);
-  const html = rewriteHtml(md.renderer.render(tokens, md.options, context), root, path, context); // Note: mutates code, assets!
+  const html = md.renderer.render(tokens, md.options, context); // Note: mutates code, assets!
   const style = getStylesheet(path, parts.data, configStyle);
-  const hash = createHash("sha256").update(source);
-  for (const {node} of code) {
-    for (const f of node.files) hash.update(getFileHash(root, resolvePath(path, f.name)));
-    for (const i of node.imports) if (i.type === "local") hash.update(getModuleHash(root, resolvePath(path, i.name)));
-  }
-  for (const f of assets) hash.update(getFileHash(root, resolvePath(path, f)));
-  if (style && isPathImport(style)) hash.update(getFileHash(root, resolvePath(path, style)));
   return {
     html,
     data: isEmpty(parts.data) ? null : parts.data,
     title: parts.data?.title ?? findTitle(tokens) ?? null,
     style,
-    assets,
-    code,
-    hash: hash.digest("hex")
+    code
   };
 }
 

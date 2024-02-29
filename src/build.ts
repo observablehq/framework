@@ -71,7 +71,7 @@ export async function build(
     const page = await parseMarkdown(sourcePath, options);
     const resolvers = await getResolvers(page, {root, path: sourceFile});
     const html = await renderPage(page, {...options, resolvers});
-    for (const f of page.assets) files.add(resolvePath(sourceFile, f));
+    for (const f of resolvers.assets) files.add(resolvePath(sourceFile, f));
     for (const f of resolvers.files) files.add(resolvePath(sourceFile, f));
     for (const i of resolvers.localImports) localImports.add(resolvePath(sourceFile, i));
     for (const i of resolvers.globalImports) globalImports.add(resolvePath(sourceFile, resolvers.resolveImport(i)));

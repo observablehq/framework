@@ -2,7 +2,6 @@
   "data": null,
   "title": "Local fetch",
   "style": null,
-  "assets": {},
   "code": [
     {
       "id": "9c4f4e4f",
@@ -70,6 +69,5 @@
         "input": "FileAttachment(\"./local-fetch.md\")\n"
       }
     }
-  ],
-  "hash": "3f148c739b747b6ab9410639c14959f0956a1f15c19b6cb45cf6b36538a9a8d0"
+  ]
 }
