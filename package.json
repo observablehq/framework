@@ -60,8 +60,8 @@
     "highlight.js": "^11.8.0",
     "is-docker": "^3.0.0",
     "is-wsl": "^3.1.0",
+    "jsdom": "^24.0.0",
     "jszip": "^3.10.1",
-    "linkedom": "^0.15.6",
     "markdown-it": "^13.0.2",
     "markdown-it-anchor": "^8.6.7",
     "mime": "^3.0.0",
@@ -80,6 +80,7 @@
   "devDependencies": {
     "@types/d3-array": "^3.2.1",
     "@types/he": "^1.2.3",
+    "@types/jsdom": "^21.1.6",
     "@types/markdown-it": "^13.0.2",
     "@types/mime": "^3.0.2",
     "@types/mocha": "^10.0.2",

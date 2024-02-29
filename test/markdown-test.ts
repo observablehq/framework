@@ -78,14 +78,14 @@ describe("rewriteHtml(html, root, path, context)", () => {
   });
   it("adds local files from video[src]", () => {
     const html = '<video src="observable.mov" controls></video>'; // prettier-ignore
-    const expected = '<video src="./_file/observable.mov?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" controls></video>'; // prettier-ignore
+    const expected = '<video src="./_file/observable.mov?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" controls=""></video>'; // prettier-ignore
     const context = mockContext();
     assert.strictEqual(rewriteHtml(html, "docs", "page", context), expected);
     assert.deepStrictEqual(context.assets, new Set(["./observable.mov"]));
   });
   it("adds local files from video source[src]", () => {
     const html = '<video width="320" height="240" controls><source src="observable.mp4" type="video/mp4"><source src="observable.mov" type="video/mov"></video>'; // prettier-ignore
-    const expected = '<video width="320" height="240" controls><source src="./_file/observable.mp4?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" type="video/mp4"><source src="./_file/observable.mov?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" type="video/mov"></video>'; // prettier-ignore
+    const expected = '<video width="320" height="240" controls=""><source src="./_file/observable.mp4?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" type="video/mp4"><source src="./_file/observable.mov?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" type="video/mov"></video>'; // prettier-ignore
     const context = mockContext();
     assert.strictEqual(rewriteHtml(html, "docs", "page", context), expected);
     assert.deepStrictEqual(context.assets, new Set(["./observable.mp4", "./observable.mov"]));
@@ -113,7 +113,7 @@ describe("rewriteHtml(html, root, path, context)", () => {
   });
   it("ignores non-local files from video source[src]", () => {
     const html = '<video width="320" height="240" controls><source src="https://www.youtube.com/watch?v=SsFyayu5csc" type="video/youtube"><source src="observable.mov" type="video/mov"></video>'; // prettier-ignore
-    const expected = '<video width="320" height="240" controls><source src="https://www.youtube.com/watch?v=SsFyayu5csc" type="video/youtube"><source src="./_file/observable.mov?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" type="video/mov"></video>'; // prettier-ignore
+    const expected = '<video width="320" height="240" controls=""><source src="https://www.youtube.com/watch?v=SsFyayu5csc" type="video/youtube"><source src="./_file/observable.mov?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" type="video/mov"></video>'; // prettier-ignore
     const context = mockContext();
     assert.strictEqual(rewriteHtml(html, "docs", "page", context), expected);
     assert.deepStrictEqual(context.assets, new Set(["./observable.mov"]));

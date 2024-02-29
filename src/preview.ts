@@ -9,7 +9,6 @@ import {fileURLToPath} from "node:url";
 import {difference} from "d3-array";
 import type {PatchItem} from "fast-array-diff";
 import {getPatch} from "fast-array-diff";
-import {parseHTML} from "linkedom";
 import mime from "mime";
 import openBrowser from "open";
 import send from "send";
@@ -22,7 +21,7 @@ import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
-import {parseMarkdown} from "./markdown.js";
+import {parseHtml, parseMarkdown} from "./markdown.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
 import {populateNpmCache} from "./npm.js";
 import {isPathImport} from "./path.js";
@@ -420,7 +419,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
 }
 
 function getHtml({html}: MarkdownPage): string[] {
-  return Array.from(parseHTML(`<!doctype html><html><body>${html}`).document.body.children, String);
+  return Array.from(parseHtml(html).document.body.children, (d) => d.outerHTML);
 }
 
 function getCode({code}: MarkdownPage, resolvers: Resolvers): Map<string, string> {

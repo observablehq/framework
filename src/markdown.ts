@@ -4,7 +4,8 @@ import {readFile} from "node:fs/promises";
 import matter from "gray-matter";
 import he from "he";
 import hljs from "highlight.js";
-import {parseHTML} from "linkedom";
+import type {DOMWindow} from "jsdom";
+import {JSDOM, VirtualConsole} from "jsdom";
 import MarkdownIt from "markdown-it";
 import type {RuleCore} from "markdown-it/lib/parser_core.js";
 import type {RuleInline} from "markdown-it/lib/parser_inline.js";
@@ -45,7 +46,13 @@ export interface ParseContext {
   currentLine: number;
 }
 
-const TEXT_NODE = 3; // Node.TEXT_NODE
+function isText(node: Node): node is Text {
+  return node.nodeType === 3;
+}
+
+function isElement(node: Node): node is Element {
+  return node.nodeType === 1;
+}
 
 function uniqueCodeId(context: ParseContext, content: string): string {
   const hash = computeHash(content).slice(0, 8);
@@ -291,8 +298,12 @@ const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcs
   {query: "video source[src]", src: "src"}
 ]);
 
+export function parseHtml(html: string): DOMWindow {
+  return new JSDOM(`<!DOCTYPE html><body>${html}`, {virtualConsole: new VirtualConsole()}).window;
+}
+
 export function rewriteHtml(html: string, root: string, path: string, context: ParseContext): string {
-  const {document} = parseHTML(html);
+  const {document} = parseHtml(html);
 
   // Extracting references to files (such as from linked stylesheets).
   // TODO Support resolving an npm: protocol import here, too? but that would
@@ -338,22 +349,16 @@ export function rewriteHtml(html: string, root: string, path: string, context: P
     let html = "";
     code.normalize(); // coalesce adjacent text nodes
     for (const child of code.childNodes) {
-      html += child.nodeType === TEXT_NODE ? hljs.highlight(child.textContent!, {language}).value : String(child);
+      html += isText(child)
+        ? hljs.highlight(child.textContent!, {language}).value
+        : isElement(child)
+        ? child.outerHTML
+        : "";
     }
     code.innerHTML = html;
   }
 
-  // Linkedom allows <head> elements (for unknown reasons?) but browsers ignore
-  // them, so we need to dissolve them to ensure incremental update works.
-  // TODO Perhaps we should re-insert this content into the head?
-  // https://github.com/observablehq/framework/issues/379
-  for (const head of document.querySelectorAll("head")) {
-    const p = document.createElement("p");
-    p.append(...head.childNodes);
-    head.replaceWith(p);
-  }
-
-  return String(document);
+  return document.body.innerHTML;
 }
 
 export interface ParseOptions {

@@ -1,4 +1,3 @@
-import {parseHTML} from "linkedom";
 import mime from "mime";
 import type {Config, Page, Script, Section} from "./config.js";
 import {mergeToc} from "./config.js";
@@ -7,6 +6,7 @@ import type {Html} from "./html.js";
 import {html} from "./html.js";
 import {transpileJavaScript} from "./javascript/transpile.js";
 import type {MarkdownPage} from "./markdown.js";
+import {parseHtml} from "./markdown.js";
 import type {PageLink} from "./pager.js";
 import {findLink, normalizePath} from "./pager.js";
 import {relativePath} from "./path.js";
@@ -145,10 +145,10 @@ interface Header {
   href: string;
 }
 
-const tocSelector = ["h1:not(:first-of-type)", "h2:not(h1 + h2)"];
+const tocSelector = ["h1:not(:first-of-type)", "h2:first-child", ":not(h1) + h2"];
 
 function findHeaders(page: MarkdownPage): Header[] {
-  return Array.from(parseHTML(page.html).document.querySelectorAll(tocSelector.join(", ")))
+  return Array.from(parseHtml(page.html).document.querySelectorAll(tocSelector.join(", ")))
     .map((node) => ({label: node.textContent, href: node.firstElementChild?.getAttribute("href")}))
     .filter((d): d is Header => !!d.label && !!d.href);
 }
