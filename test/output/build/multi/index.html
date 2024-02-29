@@ -16,8 +16,8 @@
 import {define} from "./_observablehq/client.js";
 import {registerFile} from "./_observablehq/stdlib.js";
 
-registerFile("./file1.csv", {"name":"./file1.csv","mimeType":"text/csv","path":"./_file/file1.csv?sha=259f3fd9a472921e4ccd39d95d566b6f5553effa5c05481b2b51abc36fe7abe8"});
-registerFile("./file2.csv", {"name":"./file2.csv","mimeType":"text/csv","path":"./_file/file2.csv?sha=c70f7d51479f6004b5c5eb378faa995650f50fa684faa82003903aa2972f9d4c"});
+registerFile("./file1.csv", {"name":"./file1.csv","mimeType":"text/csv","path":"./_file/file1.259f3fd9.csv"});
+registerFile("./file2.csv", {"name":"./file2.csv","mimeType":"text/csv","path":"./_file/file2.c70f7d51.csv"});
 
 define({id: "1bcb5df5", inputs: ["FileAttachment"], outputs: ["f1"], body: (FileAttachment) => {
 const f1 = FileAttachment("file1.csv").csv();

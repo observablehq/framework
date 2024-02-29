@@ -16,8 +16,8 @@
 import {define} from "./_observablehq/client.js";
 import {registerFile} from "./_observablehq/stdlib.js";
 
-registerFile("./foo/foo-data.csv", {"name":"./foo/foo-data.csv","mimeType":"text/csv","path":"./_file/foo/foo-data.csv?sha=24ef46342999cefdead1c1d4849f97444f0ed9185251dee73ab1b9f2fc1eba0b"});
-registerFile("./foo/foo-data.json", {"name":"./foo/foo-data.json","mimeType":"application/json","path":"./_file/foo/foo-data.json?sha=67358ed8fd6cd4d8aac33acaa376b58237beb891c3e984e505d3e57e43f7d320"});
+registerFile("./foo/foo-data.csv", {"name":"./foo/foo-data.csv","mimeType":"text/csv","path":"./_file/foo/foo-data.24ef4634.csv"});
+registerFile("./foo/foo-data.json", {"name":"./foo/foo-data.json","mimeType":"application/json","path":"./_file/foo/foo-data.67358ed8.json"});
 
 define({id: "47a695da", inputs: ["display"], outputs: ["fooJsonData","fooCsvData"], body: async (display) => {
 const {fooJsonData, fooCsvData} = await import("./_import/foo/foo.js?sha=6fd063d5f14f3bb844cfdb599bf3bdd643c4d0f89841591f769960fd58104e6c");
