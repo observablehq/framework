@@ -121,7 +121,7 @@ export class PreviewServer {
             return;
           } else if (pathname.endsWith(".js")) {
             const input = await readFile(join(root, path), "utf-8");
-            const output = await transpileModule(input, root, pathname, path);
+            const output = await transpileModule(input, {root, path});
             end(req, res, output, "text/javascript");
             return;
           }

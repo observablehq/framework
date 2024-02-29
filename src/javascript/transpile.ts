@@ -1,9 +1,9 @@
+import {join} from "node:path/posix";
 import type {ImportDeclaration, ImportDefaultSpecifier, ImportNamespaceSpecifier, ImportSpecifier, Node} from "acorn";
 import {Parser} from "acorn";
 import {simple} from "acorn-walk";
-import {resolveNpmImport} from "../npm.js";
-import {isPathImport, relativePath, resolvePath} from "../path.js";
-import {builtins, resolveImportPath} from "../resolvers.js";
+import {relativePath, resolvePath} from "../path.js";
+import {getModuleResolver} from "../resolvers.js";
 import {Sourcemap} from "../sourcemap.js";
 import {findFiles} from "./files.js";
 import type {ExportNode, ImportNode} from "./imports.js";
@@ -39,8 +39,18 @@ export function transpileJavaScript(node: JavaScriptNode, {id, resolveImport}: T
   return String(output);
 }
 
+export interface TranspileModuleOptions {
+  root: string;
+  path: string;
+  resolveImport?: (specifier: string) => Promise<string>;
+}
+
 /** Rewrites import specifiers and FileAttachment calls in the specified ES module. */
-export async function transpileModule(input: string, root: string, path: string, sourcePath = path): Promise<string> {
+export async function transpileModule(
+  input: string,
+  {root, path, resolveImport = getModuleResolver(root, path)}: TranspileModuleOptions
+): Promise<string> {
+  const servePath = `/${join("_import", path)}`;
   const body = Parser.parse(input, parseOptions); // TODO ignore syntax error?
   const output = new Sourcemap(input);
   const imports: (ImportNode | ExportNode)[] = [];
@@ -56,24 +66,15 @@ export async function transpileModule(input: string, root: string, path: string,
     imports.push(node);
   }
 
-  for (const {name, node} of findFiles(body, sourcePath, input)) {
-    const p = relativePath(path, resolvePath(sourcePath, name));
+  for (const {name, node} of findFiles(body, path, input)) {
+    const p = relativePath(servePath, resolvePath(path, name));
     output.replaceLeft(node.arguments[0].start, node.arguments[0].end, `${JSON.stringify(p)}, import.meta.url`);
   }
 
   for (const node of imports) {
     if (node.source && isStringLiteral(node.source)) {
       const specifier = getStringLiteralValue(node.source);
-      const p = isPathImport(specifier)
-        ? relativePath(path, resolveImportPath(root, resolvePath(sourcePath, specifier)))
-        : builtins.has(specifier)
-        ? relativePath(path, builtins.get(specifier)!)
-        : specifier.startsWith("observablehq:")
-        ? relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}.js`)
-        : specifier.startsWith("npm:")
-        ? relativePath(path, await resolveNpmImport(root, specifier.slice("npm:".length)))
-        : specifier;
-      output.replaceLeft(node.source.start, node.source.end, JSON.stringify(p));
+      output.replaceLeft(node.source.start, node.source.end, JSON.stringify(await resolveImport(specifier)));
     }
   }
 

@@ -6,15 +6,16 @@ import type {Config} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
+import {getModuleHash} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
 import {populateNpmCache, resolveNpmImport, resolveNpmSpecifier} from "./npm.js";
-import {relativePath, resolvePath} from "./path.js";
+import {isPathImport, relativePath, resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
-import {getResolvers, resolveFilePath} from "./resolvers.js";
+import {getModuleResolver, getResolvers, resolveFilePath, resolveImportPath} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
@@ -93,7 +94,9 @@ export async function build(
 
   // Generate the client bundles (JavaScript and styles).
   //
-  // TODO These should have content hashes, too.
+  // TODO We should use a content hash for imported custom stylesheets, and
+  // perhaps we could bake the Framework version number into built-in
+  // stylesheets and modules (or the content hash; whatever’s easier).
   if (addPublic) {
     for (const path of globalImports) {
       if (path.startsWith("/_observablehq/")) {
@@ -150,11 +153,11 @@ export async function build(
     }
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     const contents = await readFile(sourcePath);
+    const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
     const ext = extname(file);
-    const hash = createHash("sha256").update(contents).digest("hex");
-    const alias = `/${join("_file", dirname(file), `${basename(file, ext)}.${hash.slice(0, 8)}${ext}`)}`;
+    const alias = `/${join("_file", dirname(file), `${basename(file, ext)}.${hash}${ext}`)}`;
     fileAliases.set(resolveFilePath(root, file), alias);
-    await effects.copyFile(sourcePath, alias);
+    await effects.writeFile(alias, contents);
   }
 
   // Download npm imports.
@@ -169,24 +172,37 @@ export async function build(
     await effects.copyFile(sourcePath, path);
   }
 
-  // Copy over imported local modules.
-  //
-  // TODO We want to override the resolveImport passed to transpileModule so
-  // that the module hash is incorporated into the file name rather than in the
-  // query string. This hash won’t be “correct” with respect to the generated
-  // files, but it will be correct with respect to the transitive closure of
-  // module sources so that should be fine (because the hashed file names aren’t
-  // baked into the transpiled modules).
+  // Copy over imported local modules, overriding import resolution so that
+  // module hash is incorporated into the file name rather than in the query
+  // string. Note that this hash is not of the content of the module itself, but
+  // of the transitive closure of the module and its imports and files.
+  const importAliases = new Map<string, string>();
+  const resolveImportAlias = (path: string): string => {
+    const hash = getModuleHash(root, path).slice(0, 8);
+    const ext = extname(path);
+    return `/${join("_import", dirname(path), basename(path, ext))}.${hash}${ext}`;
+  };
   for (const path of localImports) {
     const sourcePath = join(root, path);
-    const outputPath = join("_import", path);
     if (!existsSync(sourcePath)) {
       effects.logger.error("missing referenced file", sourcePath);
       continue;
     }
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-    const contents = await transpileModule(await readFile(sourcePath, "utf-8"), root, outputPath, path);
-    await effects.writeFile(outputPath, contents);
+    const resolveImport = getModuleResolver(root, path);
+    const input = await readFile(sourcePath, "utf-8");
+    const contents = await transpileModule(input, {
+      root,
+      path,
+      async resolveImport(specifier) {
+        return isPathImport(specifier)
+          ? relativePath(join("_import", path), resolveImportAlias(resolvePath(path, specifier)))
+          : resolveImport(specifier);
+      }
+    });
+    const alias = resolveImportAlias(path);
+    importAliases.set(resolveImportPath(root, path), alias);
+    await effects.writeFile(alias, contents);
   }
 
   // Render pages, resolving against content-hashed file names!
@@ -200,10 +216,15 @@ export async function build(
       ...options,
       resolvers: {
         ...resolvers,
-        resolveFile(specifier: string) {
+        resolveFile(specifier) {
           const r = resolvers.resolveFile(specifier);
           const a = fileAliases.get(resolvePath(path, r));
           return a ? relativePath(path, a) : specifier; // fallback to specifier if enoent
+        },
+        resolveImport(specifier) {
+          const r = resolvers.resolveImport(specifier);
+          const a = importAliases.get(resolvePath(path, r));
+          return a ? relativePath(path, a) : isPathImport(specifier) ? specifier : r; // fallback to specifier if enoent
         }
       }
     });

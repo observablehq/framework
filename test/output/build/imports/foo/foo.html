@@ -11,11 +11,11 @@
 <link rel="modulepreload" href="../_observablehq/runtime.js">
 <link rel="modulepreload" href="../_observablehq/stdlib.js">
 <link rel="modulepreload" href="../_npm/d3@7.8.5/+esm.js">
-<link rel="modulepreload" href="../_import/bar/bar.js?sha=13bb80563b5df406d11cd13c9166985fa499f38d0bf52ea4d0c25a796049d25e">
-<link rel="modulepreload" href="../_import/top.js?sha=160847a6b4890d59f8e8862911bfbe3b8066955d31f2708cafbe51945c3c57b6">
-<link rel="modulepreload" href="../_import/foo/foo bar.js?sha=b173d3de992d774fc15cf24ef3e545dc0ed38add79917de4c255aff04da73aa5">
-<link rel="modulepreload" href="../_import/bar/baz.js?sha=cdbfb28bb950c2dbb3d52106e967089155d893bfcea5953ac186df915af53e5c">
-<link rel="modulepreload" href="../_import/foo/foo.js?sha=821499d0549c3637774aecd6c186e4cee183d673bce7696879c7ba7f14343113">
+<link rel="modulepreload" href="../_import/bar/bar.13bb8056.js">
+<link rel="modulepreload" href="../_import/top.160847a6.js">
+<link rel="modulepreload" href="../_import/foo/foo bar.b173d3de.js">
+<link rel="modulepreload" href="../_import/bar/baz.cdbfb28b.js">
+<link rel="modulepreload" href="../_import/foo/foo.821499d0.js">
 <script type="module">
 
 import {define} from "../_observablehq/client.js";
@@ -24,7 +24,7 @@ import {registerFile} from "../_observablehq/stdlib.js";
 registerFile("../top.js", {"name":"../top.js","mimeType":"application/javascript","path":"../_file/top.a53c5d5b.js"});
 
 define({id: "261e010e", inputs: ["display","FileAttachment"], outputs: ["d3","bar","top"], body: async (display,FileAttachment) => {
-const [d3, {bar}, {top}] = await Promise.all([import("../_npm/d3@7.8.5/+esm.js"), import("../_import/bar/bar.js?sha=13bb80563b5df406d11cd13c9166985fa499f38d0bf52ea4d0c25a796049d25e"), import("../_import/top.js?sha=160847a6b4890d59f8e8862911bfbe3b8066955d31f2708cafbe51945c3c57b6")]);
+const [d3, {bar}, {top}] = await Promise.all([import("../_npm/d3@7.8.5/+esm.js"), import("../_import/bar/bar.13bb8056.js"), import("../_import/top.160847a6.js")]);
 
 display(bar);
 display(top);
@@ -33,7 +33,7 @@ return {d3,bar,top};
 }});
 
 define({id: "ec24b17a", inputs: ["display"], outputs: ["foobar"], body: async (display) => {
-const {foobar} = await import("../_import/foo/foo%20bar.js?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+const {foobar} = await import("./foo%20bar.js");
 display(foobar);
 return {foobar};
 }});

@@ -10,7 +10,7 @@
 <link rel="modulepreload" href="./_observablehq/client.js">
 <link rel="modulepreload" href="./_observablehq/runtime.js">
 <link rel="modulepreload" href="./_observablehq/stdlib.js">
-<link rel="modulepreload" href="./_import/foo/foo.js?sha=6fd063d5f14f3bb844cfdb599bf3bdd643c4d0f89841591f769960fd58104e6c">
+<link rel="modulepreload" href="./_import/foo/foo.6fd063d5.js">
 <script type="module">
 
 import {define} from "./_observablehq/client.js";
@@ -20,7 +20,7 @@ registerFile("./foo/foo-data.csv", {"name":"./foo/foo-data.csv","mimeType":"text
 registerFile("./foo/foo-data.json", {"name":"./foo/foo-data.json","mimeType":"application/json","path":"./_file/foo/foo-data.67358ed8.json"});
 
 define({id: "47a695da", inputs: ["display"], outputs: ["fooJsonData","fooCsvData"], body: async (display) => {
-const {fooJsonData, fooCsvData} = await import("./_import/foo/foo.js?sha=6fd063d5f14f3bb844cfdb599bf3bdd643c4d0f89841591f769960fd58104e6c");
+const {fooJsonData, fooCsvData} = await import("./_import/foo/foo.6fd063d5.js");
 
 display(fooJsonData);
 display(fooCsvData);

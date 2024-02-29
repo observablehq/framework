@@ -253,6 +253,27 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   };
 }
 
+/**
+ * Returns the import resolver used for transpiling local modules. Unlike
+ * getResolvers, this is independent of any specific page, and is done without
+ * knowing the transitive imports ahead of time. But it should be consistent
+ * with the resolveImport returned by getResolvers (assuming caching).
+ */
+export function getModuleResolver(root: string, path: string): (specifier: string) => Promise<string> {
+  const servePath = `/${join("_import", path)}`;
+  return async (specifier) => {
+    return isPathImport(specifier)
+      ? relativePath(servePath, resolveImportPath(root, resolvePath(path, specifier)))
+      : builtins.has(specifier)
+      ? relativePath(servePath, builtins.get(specifier)!)
+      : specifier.startsWith("observablehq:")
+      ? relativePath(servePath, `/_observablehq/${specifier.slice("observablehq:".length)}.js`)
+      : specifier.startsWith("npm:")
+      ? relativePath(servePath, await resolveNpmImport(root, specifier.slice("npm:".length)))
+      : specifier;
+  };
+}
+
 export function resolveStylesheetPath(root: string, path: string): string {
   return `/${join("_import", path)}?sha=${getFileHash(root, path)}`;
 }
