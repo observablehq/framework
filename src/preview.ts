@@ -97,28 +97,18 @@ export class PreviewServer {
       const url = new URL(req.url!, "http://localhost");
       let pathname = decodeURIComponent(url.pathname);
       let match: RegExpExecArray | null;
-      if (pathname === "/_observablehq/runtime.js") {
-        const root = join(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "../../");
-        send(req, "/dist/runtime.js", {root}).pipe(res);
-      } else if (pathname.startsWith("/_observablehq/stdlib.js")) {
-        end(req, res, await rollupClient(getClientPath("./src/client/stdlib.js"), root, pathname), "text/javascript");
-      } else if (pathname.startsWith("/_observablehq/stdlib/")) {
-        const path = getClientPath("./src/client/" + pathname.slice("/_observablehq/".length));
-        if (pathname.endsWith(".js")) {
-          end(req, res, await rollupClient(path, root, pathname), "text/javascript");
-        } else if (pathname.endsWith(".css")) {
-          end(req, res, await bundleStyles({path}), "text/css");
-        } else {
-          throw new HttpError(`Not found: ${pathname}`, 404);
-        }
-      } else if (pathname === "/_observablehq/client.js") {
+      if (pathname === "/_observablehq/client.js") {
         end(req, res, await rollupClient(getClientPath("./src/client/preview.js"), root, pathname), "text/javascript");
-      } else if (pathname === "/_observablehq/search.js") {
-        end(req, res, await rollupClient(getClientPath("./src/client/search.js"), root, pathname), "text/javascript");
       } else if (pathname === "/_observablehq/minisearch.json") {
         end(req, res, await searchIndex(config), "application/json");
       } else if ((match = /^\/_observablehq\/theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(pathname))) {
         end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
+      } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".js")) {
+        const path = getClientPath("./src/client/" + pathname.slice("/_observablehq/".length));
+        end(req, res, await rollupClient(path, root, pathname), "text/javascript");
+      } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".css")) {
+        const path = getClientPath("./src/client/" + pathname.slice("/_observablehq/".length));
+        end(req, res, await bundleStyles({path}), "text/css");
       } else if (pathname.startsWith("/_npm/")) {
         await populateNpmCache(root, pathname);
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);

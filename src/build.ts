@@ -1,9 +1,7 @@
 import {createHash} from "node:crypto";
 import {existsSync} from "node:fs";
 import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
-import {basename, dirname, extname, join, relative} from "node:path";
-import {cwd} from "node:process";
-import {fileURLToPath} from "node:url";
+import {basename, dirname, extname, join} from "node:path";
 import type {Config} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {CliError, isEnoent} from "./error.js";
@@ -94,13 +92,11 @@ export async function build(
   }
 
   // Generate the client bundles (JavaScript and styles).
+  //
+  // TODO These should have content hashes, too.
   if (addPublic) {
     for (const path of globalImports) {
-      if (path === "/_observablehq/runtime.js") {
-        const sourcePath = relative(cwd(), join(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "../../dist/runtime.js")); // prettier-ignore
-        effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-        await effects.copyFile(sourcePath, path);
-      } else if (path.startsWith("/_observablehq/")) {
+      if (path.startsWith("/_observablehq/")) {
         const clientPath = getClientPath(`./src/client/${path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)}`); // prettier-ignore
         effects.output.write(`${faint("build")} ${clientPath} ${faint("→")} `);
         const code = await rollupClient(clientPath, root, path, {minify: true});
@@ -162,6 +158,10 @@ export async function build(
   }
 
   // Download npm imports.
+  //
+  // TODO It might be nice to use content hashes for these, too, but it would
+  // involve rewriting the files since populateNpmCache doesn’t let you pass in
+  // a resolver.
   for (const path of globalImports) {
     if (!path.startsWith("/_npm/")) continue; // skip _observablehq
     effects.output.write(`${faint("copy")} npm:${resolveNpmSpecifier(path)} ${faint("→")} `);
@@ -190,6 +190,10 @@ export async function build(
   }
 
   // Render pages, resolving against content-hashed file names!
+  //
+  // TODO For files that don’t exist, fileAliases won’t have a corresponding
+  // entry, and so this lets the missing file pass through. I think we should
+  // probably still strip the ?sha in that case?
   for (const [sourceFile, {page, resolvers}] of pages) {
     const sourcePath = join(root, sourceFile);
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");

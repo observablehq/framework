@@ -20,7 +20,13 @@ const STYLE_MODULES = {
 };
 
 // These libraries are currently bundled in to a wrapper.
-const BUNDLED_MODULES = ["@observablehq/inputs", "minisearch"];
+const BUNDLED_MODULES = [
+  "@observablehq/inputs", // observablehq:stdlib/inputs.js
+  "@observablehq/inspector", // observablehq:runtime.js
+  "@observablehq/runtime", // observablehq:runtime.js
+  "isoformat", // observablehq:runtime.js
+  "minisearch" // observablehq:search.js
+];
 
 function rewriteInputsNamespace(code: string) {
   return code.replace(/\b__ns__\b/g, "inputs-3a86ea");
@@ -53,7 +59,11 @@ export async function rollupClient(input: string, root: string, path: string, {m
         }
       }),
       importMetaResolve(root, path)
-    ]
+    ],
+    onwarn(message, warn) {
+      if (message.code === "CIRCULAR_DEPENDENCY") return;
+      warn(message);
+    }
   });
   try {
     const output = await bundle.generate({format: "es"});
@@ -85,7 +95,7 @@ function importResolve(input: string, root: string, path: string): Plugin {
       ? {id: relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}.js`), external: true}
       : specifier === "npm:@observablehq/runtime"
       ? {id: relativePath(path, "/_observablehq/runtime.js"), external: true}
-      : specifier === "npm:@observablehq/stdlib"
+      : specifier === "npm:@observablehq/stdlib" || specifier === "@observablehq/stdlib"
       ? {id: relativePath(path, "/_observablehq/stdlib.js"), external: true}
       : specifier === "npm:@observablehq/dot"
       ? {id: relativePath(path, "/_observablehq/stdlib/dot.js"), external: true} // TODO publish to npm
