@@ -67,7 +67,8 @@ export function usGenDemandForecastChart(width, height, detailData, summaryData,
             date: (d) => timeFormat("%-m/%-d %-I %p")(d),
             demandActual: (d) => `${format(".1f")(d / 1000)} GWh`,
             demandForecast: (d) => `${format(".1f")(d / 1000)} GWh`,
-            netGeneration: (d) => `${format(".1f")(d / 1000)} GWh`
+            netGeneration: (d) => `${format(".1f")(d / 1000)} GWh`,
+            x: false
           },
           fontSize: 12,
           anchor: "bottom",
