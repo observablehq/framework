@@ -1,6 +1,7 @@
+import {createHash} from "node:crypto";
 import {existsSync} from "node:fs";
 import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
-import {basename, dirname, join, relative} from "node:path";
+import {basename, dirname, extname, join, relative} from "node:path";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import type {Config} from "./config.js";
@@ -9,15 +10,17 @@ import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
+import type {MarkdownPage} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
 import {populateNpmCache, resolveNpmImport, resolveNpmSpecifier} from "./npm.js";
-import {resolvePath} from "./path.js";
+import {relativePath, resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
-import {getResolvers} from "./resolvers.js";
+import type {Resolvers} from "./resolvers.js";
+import {getResolvers, resolveFilePath} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
-import {faint} from "./tty.js";
+import {faint, yellow} from "./tty.js";
 
 export interface BuildOptions {
   config: Config;
@@ -57,26 +60,28 @@ export async function build(
   if (!pageCount) throw new CliError(`Nothing to build: no page files found in your ${root} directory.`);
   effects.logger.log(`${faint("found")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
 
-  // Render .md files, building a list of additional assets as we go.
+  // Parse .md files, building a list of additional assets as we go.
+  const pages = new Map<string, {page: MarkdownPage; resolvers: Resolvers}>();
   const files = new Set<string>();
   const localImports = new Set<string>();
   const globalImports = new Set<string>();
   const stylesheets = new Set<string>();
   for await (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);
-    const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
-    effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
     const options = {path, ...config};
+    effects.output.write(`${faint("parse")} ${sourcePath} `);
+    const start = performance.now();
     const page = await parseMarkdown(sourcePath, options);
     const resolvers = await getResolvers(page, {root, path: sourceFile});
-    const html = await renderPage(page, {...options, resolvers});
+    const elapsed = Math.floor(performance.now() - start);
     for (const f of resolvers.assets) files.add(resolvePath(sourceFile, f));
     for (const f of resolvers.files) files.add(resolvePath(sourceFile, f));
     for (const i of resolvers.localImports) localImports.add(resolvePath(sourceFile, i));
     for (const i of resolvers.globalImports) globalImports.add(resolvePath(sourceFile, resolvers.resolveImport(i)));
     for (const s of resolvers.stylesheets) stylesheets.add(/^\w+:/.test(s) ? s : resolvePath(sourceFile, s));
-    await effects.writeFile(outputPath, html);
+    effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
+    pages.set(sourceFile, {page, resolvers});
   }
 
   // Add the search bundle and data, if needed.
@@ -130,10 +135,10 @@ export async function build(
     }
   }
 
-  // Copy over the referenced files.
+  // Copy over the referenced files, accumulating hashed aliases.
+  const fileAliases = new Map<string, string>();
   for (const file of files) {
     let sourcePath = join(root, file);
-    const outputPath = join("_file", file);
     if (!existsSync(sourcePath)) {
       const loader = Loader.find(root, join("/", file), {useStale: true});
       if (!loader) {
@@ -148,7 +153,12 @@ export async function build(
       }
     }
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-    await effects.copyFile(sourcePath, outputPath);
+    const contents = await readFile(sourcePath);
+    const ext = extname(file);
+    const hash = createHash("sha256").update(contents).digest("hex");
+    const alias = `/${join("_file", dirname(file), `${basename(file, ext)}.${hash.slice(0, 8)}${ext}`)}`;
+    fileAliases.set(resolveFilePath(root, file), alias);
+    await effects.copyFile(sourcePath, alias);
   }
 
   // Download npm imports.
@@ -160,6 +170,13 @@ export async function build(
   }
 
   // Copy over imported local modules.
+  //
+  // TODO We want to override the resolveImport passed to transpileModule so
+  // that the module hash is incorporated into the file name rather than in the
+  // query string. This hash won’t be “correct” with respect to the generated
+  // files, but it will be correct with respect to the transitive closure of
+  // module sources so that should be fine (because the hashed file names aren’t
+  // baked into the transpiled modules).
   for (const path of localImports) {
     const sourcePath = join(root, path);
     const outputPath = join("_import", path);
@@ -170,6 +187,27 @@ export async function build(
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     const contents = await transpileModule(await readFile(sourcePath, "utf-8"), root, outputPath, path);
     await effects.writeFile(outputPath, contents);
+  }
+
+  // Render pages, resolving against content-hashed file names!
+  for (const [sourceFile, {page, resolvers}] of pages) {
+    const sourcePath = join(root, sourceFile);
+    const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
+    const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
+    const options = {path, ...config};
+    effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
+    const html = await renderPage(page, {
+      ...options,
+      resolvers: {
+        ...resolvers,
+        resolveFile(specifier: string) {
+          const r = resolvers.resolveFile(specifier);
+          const a = fileAliases.get(resolvePath(path, r));
+          return a ? relativePath(path, a) : r;
+        }
+      }
+    });
+    await effects.writeFile(outputPath, html);
   }
 
   Telemetry.record({event: "build", step: "finish", pageCount});

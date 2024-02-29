@@ -1,4 +1,5 @@
 import {createHash} from "node:crypto";
+import {join} from "node:path/posix";
 import {findAssets} from "./html.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js";
@@ -253,15 +254,15 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
 }
 
 export function resolveStylesheetPath(root: string, path: string): string {
-  return `/_import/${path}?sha=${getFileHash(root, path)}`;
+  return `/${join("_import", path)}?sha=${getFileHash(root, path)}`;
 }
 
 export function resolveImportPath(root: string, path: string): string {
-  return `/_import/${path}?sha=${getModuleHash(root, path)}`;
+  return `/${join("_import", path)}?sha=${getModuleHash(root, path)}`;
 }
 
 export function resolveFilePath(root: string, path: string): string {
-  return `/_file/${path}?sha=${getFileHash(root, path)}`;
+  return `/${join("_file", path)}?sha=${getFileHash(root, path)}`;
 }
 
 // Returns any inputs that are not declared in outputs. These typically refer to
