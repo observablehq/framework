@@ -2,9 +2,9 @@ const toc = document.querySelector<HTMLElement>("#observablehq-toc");
 if (toc) {
   const highlight = toc.appendChild(document.createElement("div"));
   highlight.classList.add("observablehq-secondary-link-highlight");
-  const headings = Array.from(document.querySelectorAll<HTMLElement>(toc.dataset.selector!))
-    .reverse()
-    .filter((e) => e.querySelector("a.observablehq-header-anchor"));
+  const headings = Array.from(document.querySelector("#observablehq-main")!.querySelectorAll(toc.dataset.selector!))
+    .filter((e) => e.querySelector("a.observablehq-header-anchor"))
+    .reverse();
   const links = toc.querySelectorAll<HTMLElement>(".observablehq-secondary-link");
   const relink = (): HTMLElement | undefined => {
     for (const link of links) {

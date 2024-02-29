@@ -145,18 +145,16 @@ interface Header {
   href: string;
 }
 
-const tocSelector = ["h1:not(:first-of-type)", "h2:first-child", ":not(h1) + h2"];
+const tocSelector = "h1:not(:first-of-type), h2:first-child, :not(h1) + h2";
 
 function findHeaders(page: MarkdownPage): Header[] {
-  return Array.from(parseHtml(page.html).document.querySelectorAll(tocSelector.join(", ")))
+  return Array.from(parseHtml(page.html).document.querySelectorAll(tocSelector))
     .map((node) => ({label: node.textContent, href: node.firstElementChild?.getAttribute("href")}))
     .filter((d): d is Header => !!d.label && !!d.href);
 }
 
 function renderToc(headers: Header[], label: string): Html {
-  return html`<aside id="observablehq-toc" data-selector="${tocSelector
-    .map((selector) => `#observablehq-main ${selector}`)
-    .join(", ")}">
+  return html`<aside id="observablehq-toc" data-selector="${tocSelector}">
 <nav>${
     headers.length > 0
       ? html`
