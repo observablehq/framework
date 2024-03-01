@@ -52,8 +52,12 @@ context.fillStyle = getComputedStyle(canvas).color;
 context.clearRect(0, 0, canvas.width, canvas.height);
 
 const path = d3.geoPath(d3.geoEquirectangular(), context);
-const stream = await FileAttachment("ne_110m_land/ne_110m_land.shp").url();
-const source = await shapefile.open(stream);
+const source = await shapefile.open(
+  ...(await Promise.all([
+    FileAttachment("ne_110m_land/ne_110m_land.shp").stream(),
+    FileAttachment("ne_110m_land/ne_110m_land.dbf").stream()
+  ]))
+);
 
 while (true) {
   const {done, value} = await source.read();
