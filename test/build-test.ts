@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import {existsSync, readdirSync, statSync} from "node:fs";
 import {open, readFile, rm} from "node:fs/promises";
-import {join, normalize, relative} from "node:path";
+import {join, normalize, relative} from "node:path/posix";
 import {difference} from "d3-array";
 import {FileBuildEffects, build} from "../src/build.js";
 import {readConfig, setCurrentDate} from "../src/config.js";

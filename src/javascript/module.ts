@@ -1,6 +1,6 @@
 import {createHash} from "node:crypto";
 import {existsSync, readFileSync, statSync} from "node:fs";
-import {join, relative} from "node:path";
+import {join, relative} from "node:path/posix";
 import type {Program} from "acorn";
 import {Parser} from "acorn";
 import {Loader} from "../dataloader.js";

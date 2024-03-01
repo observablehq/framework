@@ -1,7 +1,7 @@
 import {exec} from "node:child_process";
 import {createHash, randomUUID} from "node:crypto";
 import {readFile, writeFile} from "node:fs/promises";
-import {join} from "node:path";
+import {join} from "node:path/posix";
 import os from "os";
 import {CliError} from "./error.js";
 import type {Logger} from "./logger.js";

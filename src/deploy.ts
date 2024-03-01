@@ -1,4 +1,4 @@
-import {join} from "node:path";
+import {join} from "node:path/posix";
 import * as clack from "@clack/prompts";
 import wrapAnsi from "wrap-ansi";
 import type {BuildEffects} from "./build.js";

@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import {join} from "node:path";
+import {join} from "node:path/posix";
 import type {ConfigEffects} from "../src/observableApiConfig.js";
 import {loadUserConfig} from "../src/observableApiConfig.js";
 

@@ -1,7 +1,7 @@
 import {exec} from "node:child_process";
 import {accessSync, existsSync, readdirSync, statSync} from "node:fs";
 import {constants, copyFile, mkdir, readFile, readdir, stat, writeFile} from "node:fs/promises";
-import {basename, dirname, join, normalize, resolve} from "node:path";
+import {basename, dirname, join, normalize, resolve} from "node:path/posix";
 import {setTimeout as sleep} from "node:timers/promises";
 import {fileURLToPath} from "node:url";
 import {promisify} from "node:util";

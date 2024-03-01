@@ -1,7 +1,7 @@
 import {spawn} from "node:child_process";
 import {type WriteStream, createReadStream, existsSync, statSync} from "node:fs";
 import {mkdir, open, readFile, rename, unlink} from "node:fs/promises";
-import {dirname, extname, join} from "node:path";
+import {dirname, extname, join} from "node:path/posix";
 import {createGunzip} from "node:zlib";
 import JSZip from "jszip";
 import {extract} from "tar-stream";
