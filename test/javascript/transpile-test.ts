@@ -13,6 +13,10 @@ function isJsFile(inputRoot: string, fileName: string) {
   return statSync(path).isFile();
 }
 
+function mockResolveImport(specifier: string): string {
+  return specifier.replace(/^npm:/, "https://cdn.jsdelivr.net/npm/");
+}
+
 function runTests(inputRoot: string, outputRoot: string, filter: (name: string) => boolean = () => true) {
   for (const name of readdirSync(inputRoot)) {
     if (!isJsFile(inputRoot, name) || !filter(name)) continue;
@@ -29,7 +33,7 @@ function runTests(inputRoot: string, outputRoot: string, filter: (name: string) 
 
       try {
         const node = parseJavaScript(input, {path: name});
-        actual = transpileJavaScript(node, {id: "0"});
+        actual = transpileJavaScript(node, {id: "0", resolveImport: mockResolveImport});
       } catch (error) {
         if (!(error instanceof SyntaxError)) throw error;
         actual = `define({id: "0", body: () => { throw new SyntaxError(${JSON.stringify(error.message)}); }});\n`;

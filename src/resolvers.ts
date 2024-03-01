@@ -1,5 +1,5 @@
 import {createHash} from "node:crypto";
-import {join} from "node:path/posix";
+import {extname, join} from "node:path/posix";
 import {findAssets} from "./html.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js";
@@ -215,7 +215,7 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
       : builtins.has(specifier)
       ? relativePath(path, builtins.get(specifier)!)
       : specifier.startsWith("observablehq:")
-      ? relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}.js`)
+      ? relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`) // prettier-ignore
       : resolutions.has(specifier)
       ? relativePath(path, resolutions.get(specifier)!)
       : specifier.startsWith("npm:")
@@ -267,7 +267,7 @@ export function getModuleResolver(root: string, path: string): (specifier: strin
       : builtins.has(specifier)
       ? relativePath(servePath, builtins.get(specifier)!)
       : specifier.startsWith("observablehq:")
-      ? relativePath(servePath, `/_observablehq/${specifier.slice("observablehq:".length)}.js`)
+      ? relativePath(servePath, `/_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`) // prettier-ignore
       : specifier.startsWith("npm:")
       ? relativePath(servePath, await resolveNpmImport(root, specifier.slice("npm:".length)))
       : specifier;

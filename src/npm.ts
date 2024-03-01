@@ -1,13 +1,15 @@
 import {existsSync} from "node:fs";
 import {mkdir, readFile, readdir, writeFile} from "node:fs/promises";
 import {dirname, join} from "node:path";
+import type {CallExpression} from "acorn";
 import {Parser} from "acorn";
 import {simple} from "acorn-walk";
 import {rsort, satisfies} from "semver";
 import {isEnoent} from "./error.js";
 import type {ExportNode, ImportNode, ImportReference} from "./javascript/imports.js";
-import {findImports} from "./javascript/imports.js";
+import {findImports, isImportMetaResolve} from "./javascript/imports.js";
 import {parseOptions} from "./javascript/parse.js";
+import type {StringLiteral} from "./javascript/source.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/source.js";
 import {relativePath} from "./path.js";
 import {Sourcemap} from "./sourcemap.js";
@@ -43,18 +45,29 @@ export function rewriteNpmImports(input: string, path: string): string {
     ImportDeclaration: rewriteImport,
     ImportExpression: rewriteImport,
     ExportAllDeclaration: rewriteImport,
-    ExportNamedDeclaration: rewriteImport
+    ExportNamedDeclaration: rewriteImport,
+    CallExpression: rewriteImportMetaResolve
   });
 
   function rewriteImport(node: ImportNode | ExportNode) {
     if (node.source && isStringLiteral(node.source)) {
-      let value = getStringLiteralValue(node.source);
-      if (value.startsWith("/npm/")) {
-        value = `/_npm/${value.slice("/npm/".length)}`;
-        if (value.endsWith("/+esm")) value += ".js";
-        value = relativePath(path, value);
-        output.replaceLeft(node.source.start, node.source.end, JSON.stringify(value));
-      }
+      rewriteImportSource(node.source);
+    }
+  }
+
+  function rewriteImportMetaResolve(node: CallExpression) {
+    if (isImportMetaResolve(node) && isStringLiteral(node.arguments[0])) {
+      rewriteImportSource(node.arguments[0]);
+    }
+  }
+
+  function rewriteImportSource(source: StringLiteral) {
+    let value = getStringLiteralValue(source);
+    if (value.startsWith("/npm/")) {
+      value = `/_npm/${value.slice("/npm/".length)}`;
+      if (value.endsWith("/+esm")) value += ".js";
+      value = relativePath(path, value);
+      output.replaceLeft(source.start, source.end, JSON.stringify(value));
     }
   }
 

@@ -1,3 +1,4 @@
+import {extname} from "node:path/posix";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
 import {type CallExpression} from "acorn";
 import {simple} from "acorn-walk";
@@ -100,7 +101,7 @@ function importResolve(input: string, root: string, path: string): Plugin {
     return typeof specifier !== "string" || specifier === input
       ? null
       : specifier.startsWith("observablehq:")
-      ? {id: relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}.js`), external: true}
+      ? {id: relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`), external: true} // prettier-ignore
       : specifier === "npm:@observablehq/runtime"
       ? {id: relativePath(path, "/_observablehq/runtime.js"), external: true}
       : specifier === "npm:@observablehq/stdlib" || specifier === "@observablehq/stdlib"

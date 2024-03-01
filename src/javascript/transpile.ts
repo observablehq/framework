@@ -1,13 +1,14 @@
 import {join} from "node:path/posix";
-import type {ImportDeclaration, ImportDefaultSpecifier, ImportNamespaceSpecifier, ImportSpecifier, Node} from "acorn";
+import type {CallExpression, Node} from "acorn";
+import type {ImportDeclaration, ImportDefaultSpecifier, ImportNamespaceSpecifier, ImportSpecifier} from "acorn";
 import {Parser} from "acorn";
 import {simple} from "acorn-walk";
-import {relativePath, resolvePath} from "../path.js";
+import {isPathImport, relativePath, resolvePath} from "../path.js";
 import {getModuleResolver} from "../resolvers.js";
 import {Sourcemap} from "../sourcemap.js";
 import {findFiles} from "./files.js";
 import type {ExportNode, ImportNode} from "./imports.js";
-import {hasImportDeclaration} from "./imports.js";
+import {hasImportDeclaration, isImportMetaResolve} from "./imports.js";
 import type {JavaScriptNode} from "./parse.js";
 import {parseOptions} from "./parse.js";
 import type {StringLiteral} from "./source.js";
@@ -54,27 +55,46 @@ export async function transpileModule(
   const body = Parser.parse(input, parseOptions); // TODO ignore syntax error?
   const output = new Sourcemap(input);
   const imports: (ImportNode | ExportNode)[] = [];
+  const calls: CallExpression[] = [];
 
   simple(body, {
     ImportDeclaration: rewriteImport,
     ImportExpression: rewriteImport,
     ExportAllDeclaration: rewriteImport,
-    ExportNamedDeclaration: rewriteImport
+    ExportNamedDeclaration: rewriteImport,
+    CallExpression: rewriteCall
   });
 
   function rewriteImport(node: ImportNode | ExportNode) {
     imports.push(node);
   }
 
+  function rewriteCall(node: CallExpression) {
+    calls.push(node);
+  }
+
+  async function rewriteImportSource(source: StringLiteral) {
+    const specifier = getStringLiteralValue(source);
+    output.replaceLeft(source.start, source.end, JSON.stringify(await resolveImport(specifier)));
+  }
+
   for (const {name, node} of findFiles(body, path, input)) {
+    const source = node.arguments[0];
     const p = relativePath(servePath, resolvePath(path, name));
-    output.replaceLeft(node.arguments[0].start, node.arguments[0].end, `${JSON.stringify(p)}, import.meta.url`);
+    output.replaceLeft(source.start, source.end, `${JSON.stringify(p)}, import.meta.url`);
   }
 
   for (const node of imports) {
-    if (node.source && isStringLiteral(node.source)) {
-      const specifier = getStringLiteralValue(node.source);
-      output.replaceLeft(node.source.start, node.source.end, JSON.stringify(await resolveImport(specifier)));
+    const source = node.source;
+    if (source && isStringLiteral(source)) {
+      await rewriteImportSource(source);
+    }
+  }
+
+  for (const node of calls) {
+    const source = node.arguments[0];
+    if (isImportMetaResolve(node) && isStringLiteral(source)) {
+      await rewriteImportSource(source);
     }
   }
 
@@ -86,13 +106,26 @@ function rewriteImportExpressions(
   body: Node,
   resolve: (specifier: string) => string = String
 ): void {
+  function rewriteImportSource(source: StringLiteral) {
+    output.replaceLeft(source.start, source.end, JSON.stringify(resolve(getStringLiteralValue(source))));
+  }
   simple(body, {
     ImportExpression(node) {
-      if (isStringLiteral(node.source)) {
+      const source = node.source;
+      if (isStringLiteral(source)) {
+        rewriteImportSource(source);
+      }
+    },
+    CallExpression(node) {
+      const source = node.arguments[0];
+      if (isImportMetaResolve(node) && isStringLiteral(source)) {
+        const resolution = resolve(getStringLiteralValue(source));
         output.replaceLeft(
-          node.source.start,
-          node.source.end,
-          JSON.stringify(resolve(getStringLiteralValue(node.source)))
+          node.start,
+          node.end,
+          isPathImport(resolution)
+            ? `new URL(${JSON.stringify(resolution)}, location).href`
+            : JSON.stringify(resolution)
         );
       }
     }

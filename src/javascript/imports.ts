@@ -1,4 +1,5 @@
 import type {Node} from "acorn";
+import type {CallExpression} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {isPathImport, relativePath, resolveLocalPath} from "../path.js";
@@ -62,12 +63,14 @@ export function findImports(body: Node, path: string, input: string): ImportRefe
     ImportDeclaration: findImport,
     ImportExpression: findImport,
     ExportAllDeclaration: findImport,
-    ExportNamedDeclaration: findImport
+    ExportNamedDeclaration: findImport,
+    CallExpression: findImportMetaResolve
   });
 
   function findImport(node: ImportNode | ExportNode) {
-    if (!node.source || !isStringLiteral(node.source)) return;
-    const name = decodeURIComponent(getStringLiteralValue(node.source));
+    const source = node.source;
+    if (!source || !isStringLiteral(source)) return;
+    const name = decodeURIComponent(getStringLiteralValue(source));
     const method = node.type === "ImportExpression" ? "dynamic" : "static";
     if (isPathImport(name)) {
       const localPath = resolveLocalPath(path, name);
@@ -78,5 +81,30 @@ export function findImports(body: Node, path: string, input: string): ImportRefe
     }
   }
 
+  function findImportMetaResolve(node: CallExpression) {
+    const source = node.arguments[0];
+    if (!isImportMetaResolve(node) || !isStringLiteral(source)) return;
+    const name = decodeURIComponent(getStringLiteralValue(source));
+    if (isPathImport(name)) {
+      const localPath = resolveLocalPath(path, name);
+      if (!localPath) throw syntaxError(`non-local import: ${name}`, node, input); // prettier-ignore
+      imports.push({name: relativePath(path, localPath), type: "local", method: "dynamic"});
+    } else {
+      imports.push({name, type: "global", method: "dynamic"});
+    }
+  }
+
   return imports;
+}
+
+export function isImportMetaResolve(node: CallExpression): boolean {
+  return (
+    node.callee.type === "MemberExpression" &&
+    node.callee.object.type === "MetaProperty" &&
+    node.callee.object.meta.name === "import" &&
+    node.callee.object.property.name === "meta" &&
+    node.callee.property.type === "Identifier" &&
+    node.callee.property.name === "resolve" &&
+    node.arguments.length > 0
+  );
 }
