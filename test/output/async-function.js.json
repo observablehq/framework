@@ -1,0 +1,92 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 66,
+    "body": [
+      {
+        "type": "FunctionDeclaration",
+        "start": 0,
+        "end": 65,
+        "id": {
+          "type": "Identifier",
+          "start": 15,
+          "end": 23,
+          "name": "addAsync"
+        },
+        "expression": false,
+        "generator": false,
+        "async": true,
+        "params": [
+          {
+            "type": "Identifier",
+            "start": 24,
+            "end": 25,
+            "name": "a"
+          },
+          {
+            "type": "Identifier",
+            "start": 27,
+            "end": 28,
+            "name": "b"
+          }
+        ],
+        "body": {
+          "type": "BlockStatement",
+          "start": 30,
+          "end": 65,
+          "body": [
+            {
+              "type": "ReturnStatement",
+              "start": 34,
+              "end": 63,
+              "argument": {
+                "type": "BinaryExpression",
+                "start": 41,
+                "end": 62,
+                "left": {
+                  "type": "AwaitExpression",
+                  "start": 42,
+                  "end": 49,
+                  "argument": {
+                    "type": "Identifier",
+                    "start": 48,
+                    "end": 49,
+                    "name": "a"
+                  }
+                },
+                "operator": "+",
+                "right": {
+                  "type": "AwaitExpression",
+                  "start": 54,
+                  "end": 61,
+                  "argument": {
+                    "type": "Identifier",
+                    "start": 60,
+                    "end": 61,
+                    "name": "b"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 15,
+      "end": 23,
+      "name": "addAsync"
+    }
+  ],
+  "references": [],
+  "files": [],
+  "imports": [],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

@@ -219,14 +219,20 @@ class ObservableApiMock {
 
   handlePostDeployFile({
     deployId,
+    clientName,
     status = 204,
     repeat = 1
-  }: {deployId?: string; status?: number; repeat?: number} = {}): ObservableApiMock {
+  }: {deployId?: string; clientName?: string; status?: number; repeat?: number} = {}): ObservableApiMock {
     const response = status == 204 ? "" : emptyErrorBody;
     const headers = authorizationHeader(status !== 403);
     this.addHandler((pool) => {
       pool
-        .intercept({path: `/cli/deploy/${deployId}/file`, method: "POST", headers: headersMatcher(headers)})
+        .intercept({
+          path: `/cli/deploy/${deployId}/file`,
+          method: "POST",
+          headers: headersMatcher(headers),
+          body: clientName === undefined ? undefined : formDataMatcher({client_name: clientName})
+        })
         .reply(status, response)
         .times(repeat);
     });
@@ -326,6 +332,18 @@ function headersMatcher(expected: Record<string, string | RegExp>): (headers: Re
     for (const [key, expected] of Object.entries(lowercaseExpected)) {
       if (typeof expected === "string" && lowercaseActual[key] !== expected) return false;
       if (expected instanceof RegExp && !lowercaseActual[key].match(expected)) return false;
+    }
+    return true;
+  };
+}
+
+function formDataMatcher(expected: Record<string, string>): (body: string) => boolean {
+  // actually FormData, not string
+  return (actual: any) => {
+    for (const key in expected) {
+      if (!(actual.get(key) === expected[key])) {
+        return false;
+      }
     }
     return true;
   };

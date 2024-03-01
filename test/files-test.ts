@@ -1,6 +1,18 @@
 import assert from "node:assert";
 import {stat} from "node:fs/promises";
-import {maybeStat, prepareOutput, visitFiles, visitMarkdownFiles} from "../src/files.js";
+import {getClientPath, maybeStat, prepareOutput, visitFiles, visitMarkdownFiles} from "../src/files.js";
+
+describe("getClientPath(entry)", () => {
+  it("returns the relative path to the specified source", () => {
+    assert.strictEqual(getClientPath("src/client/main.js"), "src/client/main.js");
+    assert.strictEqual(getClientPath("./src/client/main.js"), "src/client/main.js");
+    assert.strictEqual(getClientPath("./src/client/main.ts"), "src/client/main.ts");
+    assert.strictEqual(getClientPath("./src/client/stdlib/resize.ts"), "src/client/stdlib/resize.ts");
+  });
+  it("returns a TypeScript (.ts) path if the JavaScript (.js) does not exist", () => {
+    assert.strictEqual(getClientPath("./src/client/stdlib/resize.js"), "src/client/stdlib/resize.ts");
+  });
+});
 
 describe("prepareOutput(path)", () => {
   it("does nothing if passed the current directory", async () => {
@@ -56,8 +68,11 @@ describe("visitMarkdownFiles(root)", () => {
   });
 });
 
-async function collect<T>(generator: AsyncGenerator<T>): Promise<T[]> {
-  const values: T[] = [];
-  for await (const value of generator) values.push(value);
+async function collect(generator: AsyncGenerator<string>): Promise<string[]> {
+  const values: string[] = [];
+  for await (const value of generator) {
+    if (value.startsWith(".observablehq/cache/")) continue;
+    values.push(value);
+  }
   return values;
 }

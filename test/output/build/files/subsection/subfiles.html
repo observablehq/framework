@@ -2,24 +2,29 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="../_observablehq/theme-air,near-midnight.css">
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
-<link rel="stylesheet" type="text/css" href="../_observablehq/theme-air,near-midnight.css">
+<link rel="preload" as="style" href="../_observablehq/theme-air,near-midnight.css">
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
+<link rel="stylesheet" type="text/css" href="../_observablehq/theme-air,near-midnight.css">
 <link rel="modulepreload" href="../_observablehq/client.js">
 <link rel="modulepreload" href="../_observablehq/runtime.js">
 <link rel="modulepreload" href="../_observablehq/stdlib.js">
+<link rel="modulepreload" href="../_npm/d3-dsv@3.0.1/+esm.js">
 <script type="module">
 
 import {define} from "../_observablehq/client.js";
+import {registerFile} from "../_observablehq/stdlib.js";
 
-define({id: "ef9a31ef", inputs: ["FileAttachment","display"], files: [{"name":"../file-top.csv","mimeType":"text/csv","path":"../_file/file-top.csv"}], body: async (FileAttachment,display) => {
+registerFile("../file-top.csv", {"name":"../file-top.csv","mimeType":"text/csv","path":"../_file/file-top.01a7ce0a.csv"});
+registerFile("./file-sub.csv", {"name":"./file-sub.csv","mimeType":"text/csv","path":"../_file/subsection/file-sub.72c2c61c.csv"});
+
+define({id: "ef9a31ef", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
 display(await(
 FileAttachment("../file-top.csv")
 ))
 }});
 
-define({id: "834ecf9f", inputs: ["FileAttachment","display"], files: [{"name":"./file-sub.csv","mimeType":"text/csv","path":"../_file/subsection/file-sub.csv"}], body: async (FileAttachment,display) => {
+define({id: "834ecf9f", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
 display(await(
 FileAttachment("file-sub.csv")
 ))
@@ -39,15 +44,15 @@ FileAttachment("file-sub.csv")
   </ol>
 </nav>
 <script>{/* redacted init script */}</script>
-<aside id="observablehq-toc" data-selector="#observablehq-main h1:not(:first-of-type), #observablehq-main h2:not(h1 + h2)">
+<aside id="observablehq-toc" data-selector="h1:not(:first-of-type), h2:first-child, :not(h1) + h2">
 <nav>
 </nav>
 </aside>
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
-<span><link rel="stylesheet" href="../_file/custom-styles.css">
-<link rel="stylesheet" href="../_file/subsection/additional-styles.css">
-</span><div id="cell-ef9a31ef" class="observablehq observablehq--block observablehq--loading"></div>
+<link rel="stylesheet" href="../_file/custom-styles.b072c9c8.css">
+<link rel="stylesheet" href="../_file/subsection/additional-styles.3a854b3a.css">
+<div id="cell-ef9a31ef" class="observablehq observablehq--block observablehq--loading"></div>
 <div id="cell-834ecf9f" class="observablehq observablehq--block observablehq--loading"></div>
 </main>
 <footer id="observablehq-footer">

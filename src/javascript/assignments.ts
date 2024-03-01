@@ -3,8 +3,11 @@ import {simple} from "acorn-walk";
 import {defaultGlobals} from "./globals.js";
 import {syntaxError} from "./syntaxError.js";
 
-export function findAssignments(node: Node, references: Identifier[], input: string): void {
-  function checkConst(node: Expression | Pattern | VariableDeclaration) {
+type Assignable = Expression | Pattern | VariableDeclaration;
+
+/** Throws a SyntaxError for any illegal assignments. */
+export function checkAssignments(node: Node, references: Identifier[], input: string): void {
+  function checkConst(node: Assignable) {
     switch (node.type) {
       case "Identifier":
         if (references.includes(node)) throw syntaxError(`Assignment to external variable '${node.name}'`, node, input);
@@ -21,22 +24,17 @@ export function findAssignments(node: Node, references: Identifier[], input: str
         break;
     }
   }
-
+  function checkConstLeft({left}: {left: Assignable}) {
+    checkConst(left);
+  }
+  function checkConstArgument({argument}: {argument: Assignable}) {
+    checkConst(argument);
+  }
   simple(node, {
-    AssignmentExpression(node) {
-      checkConst(node.left);
-    },
-    AssignmentPattern(node) {
-      checkConst(node.left);
-    },
-    UpdateExpression(node) {
-      checkConst(node.argument);
-    },
-    ForOfStatement(node) {
-      checkConst(node.left);
-    },
-    ForInStatement(node) {
-      checkConst(node.left);
-    }
+    AssignmentExpression: checkConstLeft,
+    AssignmentPattern: checkConstLeft,
+    UpdateExpression: checkConstArgument,
+    ForOfStatement: checkConstLeft,
+    ForInStatement: checkConstLeft
   });
 }

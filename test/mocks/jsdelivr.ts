@@ -28,16 +28,16 @@ export function mockJsDelivr() {
   before(async () => {
     const agent = getCurrentAgent();
     const dataClient = agent.get("https://data.jsdelivr.com");
+    const cdnClient = agent.get("https://cdn.jsdelivr.net");
     for (const [name, version] of packages) {
       dataClient
         .intercept({path: `/v1/packages/npm/${name}/resolved`, method: "GET"})
-        .reply(200, {version}, {headers: {"content-type": "application/json; charset=utf-8"}});
-    }
-    const cdnClient = agent.get("https://cdn.jsdelivr.net");
-    for (const [name, version] of packages) {
+        .reply(200, {version}, {headers: {"content-type": "application/json; charset=utf-8"}})
+        .persist();
       cdnClient
-        .intercept({path: `/npm/${name}@${version}/+esm`, method: "GET"})
-        .reply(200, "", {headers: {"cache-control": "public, immutable", "content-type": "text/javascript; charset=utf-8"}}); // prettier-ignore
+        .intercept({path: new RegExp(`^/npm/${name}@${version}/`), method: "GET"})
+        .reply(200, "", {headers: {"cache-control": "public, immutable", "content-type": "text/javascript; charset=utf-8"}})
+        .persist(); // prettier-ignore
     }
   });
 }

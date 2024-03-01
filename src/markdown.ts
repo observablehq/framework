@@ -1,80 +1,47 @@
+/* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
 import {readFile} from "node:fs/promises";
-import {type Patch, type PatchItem, getPatch} from "fast-array-diff";
-import equal from "fast-deep-equal";
 import matter from "gray-matter";
-import hljs from "highlight.js";
-import {parseHTML} from "linkedom";
+import he from "he";
 import MarkdownIt from "markdown-it";
-import {type RuleCore} from "markdown-it/lib/parser_core.js";
-import {type RuleInline} from "markdown-it/lib/parser_inline.js";
-import {type RenderRule, type default as Renderer} from "markdown-it/lib/renderer.js";
+import type {RuleCore} from "markdown-it/lib/parser_core.js";
+import type {RuleInline} from "markdown-it/lib/parser_inline.js";
+import type {RenderRule} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
-import {isEnoent} from "./error.js";
-import {fileReference, getLocalPath} from "./files.js";
-import {computeHash} from "./hash.js";
+import type {Config} from "./config.js";
+import {mergeStyle} from "./config.js";
 import {parseInfo} from "./info.js";
-import type {FileReference, ImportReference, PendingTranspile, Transpile} from "./javascript.js";
-import {transpileJavaScript} from "./javascript.js";
+import type {JavaScriptNode} from "./javascript/parse.js";
+import {parseJavaScript} from "./javascript/parse.js";
+import {relativePath} from "./path.js";
 import {transpileTag} from "./tag.js";
-import {resolvePath} from "./url.js";
+import {InvalidThemeError} from "./theme.js";
+import {red} from "./tty.js";
 
-export interface HtmlPiece {
-  type: "html";
+export interface MarkdownCode {
   id: string;
-  html: string;
-  cellIds?: string[];
+  node: JavaScriptNode;
 }
 
-export interface CellPiece extends Transpile {
-  type: "cell";
-}
-
-export type ParsePiece = HtmlPiece | CellPiece;
-
-export interface ParseResult {
+export interface MarkdownPage {
   title: string | null;
   html: string;
   data: {[key: string]: any} | null;
-  files: FileReference[];
-  imports: ImportReference[];
-  pieces: HtmlPiece[];
-  cells: CellPiece[];
-  hash: string;
+  style: string | null;
+  code: MarkdownCode[];
 }
 
-interface RenderPiece {
-  html: string;
-  code: PendingTranspile[];
-}
-
-interface ParseContext {
-  pieces: RenderPiece[];
-  files: FileReference[];
-  imports: ImportReference[];
+export interface ParseContext {
+  code: MarkdownCode[];
   startLine: number;
   currentLine: number;
 }
 
-const ELEMENT_NODE = 1; // Node.ELEMENT_NODE
-const TEXT_NODE = 3; // Node.TEXT_NODE
-
-// Returns true if the given document contains exactly one top-level element,
-// ignoring any surrounding whitespace text nodes.
-function isSingleElement(document: Document): boolean {
-  let {firstChild: first, lastChild: last} = document;
-  while (first?.nodeType === TEXT_NODE && !first?.textContent?.trim()) first = first.nextSibling;
-  while (last?.nodeType === TEXT_NODE && !last?.textContent?.trim()) last = last.previousSibling;
-  return first !== null && first === last && first.nodeType === ELEMENT_NODE;
-}
-
 function uniqueCodeId(context: ParseContext, content: string): string {
-  const hash = computeHash(content).slice(0, 8);
+  const hash = createHash("sha256").update(content).digest("hex").slice(0, 8);
   let id = hash;
   let count = 1;
-  while (context.pieces.some((piece) => piece.code.some((code) => code.id === id))) {
-    id = `${hash}-${count++}`;
-  }
+  while (context.code.some((code) => code.id === id)) id = `${hash}-${count++}`;
   return id;
 }
 
@@ -98,38 +65,51 @@ function getLiveSource(content: string, tag: string): string | undefined {
     : undefined;
 }
 
+// TODO sourceLine and remap syntax error position; consider showing a code
+// snippet along with the error. Also, consider whether we want to show the
+// file name here.
+//
+// const message = error.message;
+// if (verbose) {
+//   let warning = error.message;
+//   const match = /^(.+)\s\((\d+):(\d+)\)$/.exec(message);
+//   if (match) {
+//     const line = +match[2] + (options?.sourceLine ?? 0);
+//     const column = +match[3] + 1;
+//     warning = `${match[1]} at line ${line}, column ${column}`;
+//   } else if (options?.sourceLine) {
+//     warning = `${message} at line ${options.sourceLine + 1}`;
+//   }
+//   console.error(red(`${error.name}: ${warning}`));
+// }
+
 function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: string): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
     const token = tokens[idx];
     const {tag, attributes} = parseInfo(token.info);
     token.info = tag;
-    let result = "";
-    let count = 0;
+    let html = "";
     const source = isFalse(attributes.run) ? undefined : getLiveSource(token.content, tag);
     if (source != null) {
       const id = uniqueCodeId(context, token.content);
-      const sourceLine = context.startLine + context.currentLine;
-      const transpile = transpileJavaScript(source, {
-        id,
-        root,
-        sourcePath,
-        sourceLine
-      });
-      extendPiece(context, {code: [transpile]});
-      if (transpile.files) context.files.push(...transpile.files);
-      if (transpile.imports) context.imports.push(...transpile.imports);
-      result += `<div id="cell-${id}" class="observablehq observablehq--block${
-        transpile.expression ? " observablehq--loading" : ""
-      }"></div>\n`;
-      count++;
+      try {
+        // TODO const sourceLine = context.startLine + context.currentLine;
+        const node = parseJavaScript(source, {path: sourcePath});
+        context.code.push({id, node});
+        html += `<div id="cell-${id}" class="observablehq observablehq--block${
+          node.expression ? " observablehq--loading" : ""
+        }"></div>\n`;
+      } catch (error) {
+        if (!(error instanceof SyntaxError)) throw error;
+        html += `<div id="cell-${id}" class="observablehq observablehq--block">
+  <div class="observablehq--inspect observablehq--error">SyntaxError: ${he.escape(error.message)}</div>
+</div>\n`;
+      }
     }
     if (attributes.echo == null ? source == null : !isFalse(attributes.echo)) {
-      result += baseRenderer(tokens, idx, options, context, self);
-      count++;
+      html += baseRenderer(tokens, idx, options, context, self);
     }
-    // Tokens should always be rendered as a single block element.
-    if (count > 1) result = "<div>" + result + "</div>";
-    return result;
+    return html;
   };
 }
 
@@ -264,19 +244,21 @@ const transformPlaceholderCore: RuleCore = (state) => {
 
 function makePlaceholderRenderer(root: string, sourcePath: string): RenderRule {
   return (tokens, idx, options, context: ParseContext) => {
-    const id = uniqueCodeId(context, tokens[idx].content);
     const token = tokens[idx];
-    const transpile = transpileJavaScript(token.content, {
-      id,
-      root,
-      sourcePath,
-      inline: true,
-      sourceLine: context.startLine + context.currentLine
-    });
-    extendPiece(context, {code: [transpile]});
-    if (transpile.files) context.files.push(...transpile.files);
-    if (transpile.imports) context.imports.push(...transpile.imports);
-    return `<span id="cell-${id}" class="observablehq--loading"></span>`;
+    const id = uniqueCodeId(context, token.content);
+    try {
+      // TODO sourceLine: context.startLine + context.currentLine
+      const node = parseJavaScript(token.content, {path: sourcePath, inline: true});
+      context.code.push({id, node});
+      return `<span id="cell-${id}" class="observablehq--loading"></span>`;
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+      return `<span id="cell-${id}">
+  <span class="observablehq--inspect observablehq--error" style="display: block;">SyntaxError: ${he.escape(
+    error.message
+  )}</span>
+</span>`;
+    }
   };
 }
 
@@ -287,137 +269,16 @@ function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
   };
 }
 
-function extendPiece(context: ParseContext, extend: Partial<RenderPiece>) {
-  if (context.pieces.length === 0) context.pieces.push({html: "", code: []});
-  const last = context.pieces[context.pieces.length - 1];
-  context.pieces[context.pieces.length - 1] = {
-    html: last.html + (extend.html ?? ""),
-    code: [...last.code, ...(extend.code ? extend.code : [])]
-  };
-}
-
-function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string): Renderer["render"] {
-  return (tokens, options, context: ParseContext) => {
-    const rules = renderer.rules;
-    for (let i = 0, len = tokens.length; i < len; i++) {
-      const type = tokens[i].type;
-      if (tokens[i].map) context.currentLine = tokens[i].map![0];
-      let html = "";
-      if (type === "inline") {
-        html = renderer.renderInline(tokens[i].children!, options, context);
-      } else if (typeof rules[type] !== "undefined") {
-        if (tokens[i].level === 0 && tokens[i].nesting !== -1) context.pieces.push({html: "", code: []});
-        html = rules[type]!(tokens, i, options, context, renderer);
-      } else {
-        if (tokens[i].level === 0 && tokens[i].nesting !== -1) context.pieces.push({html: "", code: []});
-        html = renderer.renderToken(tokens, i, options);
-      }
-      extendPiece(context, {html});
-    }
-    let result = "";
-    for (const piece of context.pieces) {
-      result += piece.html = normalizePieceHtml(piece.html, sourcePath, context);
-    }
-    return result;
-  };
-}
-
-const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcset"}[] = Object.freeze([
-  {query: "a[href][download]", src: "href"},
-  {query: "audio[src]", src: "src"},
-  {query: "audio source[src]", src: "src"},
-  {query: "img[src]", src: "src"},
-  {query: "img[srcset]", src: "srcset"},
-  {query: "link[href]", src: "href"},
-  {query: "picture source[srcset]", src: "srcset"},
-  {query: "video[src]", src: "src"},
-  {query: "video source[src]", src: "src"}
-]);
-
-export function normalizePieceHtml(html: string, sourcePath: string, context: ParseContext): string {
-  const {document} = parseHTML(html);
-
-  // Extracting references to files (such as from linked stylesheets).
-  const filePaths = new Set<FileReference["path"]>();
-  const resolvePath = (source: string): FileReference | undefined => {
-    const path = getLocalPath(sourcePath, source);
-    if (!path) return;
-    const file = fileReference(path, sourcePath);
-    if (!filePaths.has(file.path)) {
-      filePaths.add(file.path);
-      context.files.push(file);
-    }
-    return file;
-  };
-  for (const {query, src} of SUPPORTED_PROPERTIES) {
-    for (const element of document.querySelectorAll(query)) {
-      if (src === "srcset") {
-        const srcset = element.getAttribute(src)!;
-        const paths = srcset
-          .split(",")
-          .map((p) => {
-            const parts = p.trim().split(/\s+/);
-            const source = decodeURIComponent(parts[0]);
-            const file = resolvePath(source);
-            return file ? `${file.path} ${parts.slice(1).join(" ")}`.trim() : parts.join(" ");
-          })
-          .filter((p) => !!p);
-        if (paths && paths.length > 0) element.setAttribute(src, paths.join(", "));
-      } else {
-        const source = decodeURIComponent(element.getAttribute(src)!);
-        const file = resolvePath(source);
-        if (file) element.setAttribute(src, file.path);
-      }
-    }
-  }
-
-  // Syntax highlighting for <code> elements. The code could contain an inline
-  // expression within, or other HTML, but we only highlight text nodes that are
-  // direct children of code elements.
-  for (const code of document.querySelectorAll("code[class*='language-']")) {
-    const language = [...code.classList].find((c) => c.startsWith("language-"))?.slice("language-".length);
-    if (!language) continue;
-    if (code.parentElement?.tagName === "PRE") code.parentElement.setAttribute("data-language", language);
-    if (!hljs.getLanguage(language)) continue;
-    let html = "";
-    code.normalize(); // coalesce adjacent text nodes
-    for (const child of code.childNodes) {
-      html += child.nodeType === TEXT_NODE ? hljs.highlight(child.textContent!, {language}).value : String(child);
-    }
-    code.innerHTML = html;
-  }
-
-  // Ensure that the HTML for each piece generates exactly one top-level
-  // element. This is necessary for incremental update, and ensures that our
-  // parsing of the Markdown is consistent with the resulting HTML structure.
-  return isSingleElement(document) ? String(document) : `<span>${document}</span>`;
-}
-
-function toParsePieces(pieces: RenderPiece[]): HtmlPiece[] {
-  return pieces.map((piece) => ({
-    type: "html",
-    id: "",
-    cellIds: piece.code.map((code) => `${code.id}`),
-    html: piece.html
-  }));
-}
-
-async function toParseCells(pieces: RenderPiece[]): Promise<CellPiece[]> {
-  const cellPieces: CellPiece[] = [];
-  for (const piece of pieces) {
-    for (const {body, ...rest} of piece.code) {
-      cellPieces.push({type: "cell", ...rest, body: await body()});
-    }
-  }
-  return cellPieces;
-}
-
 export interface ParseOptions {
   root: string;
   path: string;
+  style?: Config["style"];
 }
 
-export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptions): Promise<ParseResult> {
+export async function parseMarkdown(
+  sourcePath: string,
+  {root, path, style: configStyle}: ParseOptions
+): Promise<MarkdownPage> {
   const source = await readFile(sourcePath, "utf-8");
   const parts = matter(source, {});
   const md = MarkdownIt({html: true});
@@ -427,41 +288,33 @@ export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptio
   md.renderer.rules.placeholder = makePlaceholderRenderer(root, path);
   md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!, path);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
-  md.renderer.render = renderIntoPieces(md.renderer, root, path);
-  const context: ParseContext = {files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
+  const code: MarkdownCode[] = [];
+  const context: ParseContext = {code, startLine: 0, currentLine: 0};
   const tokens = md.parse(parts.content, context);
-  const html = md.renderer.render(tokens, md.options, context); // Note: mutates context.pieces, context.files!
+  const html = md.renderer.render(tokens, md.options, context); // Note: mutates code, assets!
+  const style = getStylesheet(path, parts.data, configStyle);
   return {
     html,
     data: isEmpty(parts.data) ? null : parts.data,
     title: parts.data?.title ?? findTitle(tokens) ?? null,
-    files: context.files,
-    imports: context.imports,
-    pieces: toParsePieces(context.pieces),
-    cells: await toParseCells(context.pieces),
-    hash: await computeMarkdownHash(source, root, path, context.imports)
+    style,
+    code
   };
 }
 
-async function computeMarkdownHash(
-  contents: string,
-  root: string,
-  path: string,
-  imports: ImportReference[]
-): Promise<string> {
-  const hash = createHash("sha256").update(contents);
-  // TODO can’t simply concatenate here; we need a delimiter
-  for (const i of imports) {
-    if (i.type === "local") {
-      try {
-        hash.update(await readFile(resolvePath(root, path, i.name), "utf-8"));
-      } catch (error) {
-        if (!isEnoent(error)) throw error;
-        continue;
-      }
-    }
+function getStylesheet(path: string, data: MarkdownPage["data"], style: Config["style"] = null): string | null {
+  try {
+    style = mergeStyle(path, data?.style, data?.theme, style);
+  } catch (error) {
+    if (!(error instanceof InvalidThemeError)) throw error;
+    console.error(red(String(error))); // TODO error during build
+    style = {theme: []};
   }
-  return hash.digest("hex");
+  return !style
+    ? null
+    : "path" in style
+    ? relativePath(path, style.path)
+    : `observablehq:theme-${style.theme.join(",")}.css`;
 }
 
 // TODO Use gray-matter’s parts.isEmpty, but only when it’s accurate.
@@ -486,52 +339,4 @@ function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | undefined 
       }
     }
   }
-}
-
-function diffReducer(patch: PatchItem<ParsePiece>) {
-  // Remove body from remove updates, we just need the ids.
-  if (patch.type === "remove") {
-    return {
-      ...patch,
-      type: "remove",
-      items: patch.items.map((item) => ({
-        type: item.type,
-        id: item.id,
-        ...("cellIds" in item ? {cellIds: item.cellIds} : null)
-      }))
-    } as const;
-  }
-  return patch;
-}
-
-// Cells are unordered
-function getCellsPatch(prevCells: CellPiece[], nextCells: CellPiece[]): Patch<ParsePiece> {
-  return prevCells
-    .filter((prev) => !nextCells.some((next) => equal(prev, next)))
-    .map(
-      (cell): PatchItem<ParsePiece> => ({
-        type: "remove",
-        oldPos: prevCells.indexOf(cell),
-        newPos: -1,
-        items: [cell]
-      })
-    )
-    .concat(
-      nextCells
-        .filter((next) => !prevCells.some((prev) => equal(next, prev)))
-        .map(
-          (cell): PatchItem<ParsePiece> => ({
-            type: "add",
-            oldPos: -1,
-            newPos: nextCells.indexOf(cell),
-            items: [cell]
-          })
-        )
-    );
-}
-
-export function diffMarkdown(oldParse: ParseResult, newParse: ParseResult) {
-  return getPatch<ParsePiece>(oldParse.pieces, newParse.pieces, equal)
-    .concat(getCellsPatch(oldParse.cells, newParse.cells))
-    .map(diffReducer);
 }

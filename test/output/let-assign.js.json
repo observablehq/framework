@@ -1,0 +1,92 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 21,
+    "body": [
+      {
+        "type": "VariableDeclaration",
+        "start": 0,
+        "end": 6,
+        "declarations": [
+          {
+            "type": "VariableDeclarator",
+            "start": 4,
+            "end": 5,
+            "id": {
+              "type": "Identifier",
+              "start": 4,
+              "end": 5,
+              "name": "x"
+            },
+            "init": null
+          }
+        ],
+        "kind": "let"
+      },
+      {
+        "type": "ExpressionStatement",
+        "start": 7,
+        "end": 13,
+        "expression": {
+          "type": "AssignmentExpression",
+          "start": 7,
+          "end": 12,
+          "operator": "=",
+          "left": {
+            "type": "Identifier",
+            "start": 7,
+            "end": 8,
+            "name": "x"
+          },
+          "right": {
+            "type": "Literal",
+            "start": 11,
+            "end": 12,
+            "value": 1,
+            "raw": "1"
+          }
+        }
+      },
+      {
+        "type": "ExpressionStatement",
+        "start": 14,
+        "end": 20,
+        "expression": {
+          "type": "AssignmentExpression",
+          "start": 14,
+          "end": 19,
+          "operator": "=",
+          "left": {
+            "type": "Identifier",
+            "start": 14,
+            "end": 15,
+            "name": "x"
+          },
+          "right": {
+            "type": "Literal",
+            "start": 18,
+            "end": 19,
+            "value": 2,
+            "raw": "2"
+          }
+        }
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 4,
+      "end": 5,
+      "name": "x"
+    }
+  ],
+  "references": [],
+  "files": [],
+  "imports": [],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

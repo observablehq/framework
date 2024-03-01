@@ -1,31 +1,29 @@
+import {createHash} from "node:crypto";
 import {existsSync} from "node:fs";
 import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
-import {basename, dirname, join} from "node:path";
-import {fileURLToPath} from "node:url";
-import type {Config, Style} from "./config.js";
-import {mergeStyle} from "./config.js";
+import {basename, dirname, extname, join} from "node:path";
+import type {Config} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
-import {createImportResolver, rewriteModule} from "./javascript/imports.js";
+import {getModuleHash} from "./javascript/module.js";
+import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
-import {renderServerless} from "./render.js";
+import type {MarkdownPage} from "./markdown.js";
+import {parseMarkdown} from "./markdown.js";
+import {populateNpmCache, resolveNpmImport, resolveNpmSpecifier} from "./npm.js";
+import {isPathImport, relativePath, resolvePath} from "./path.js";
+import {renderPage} from "./render.js";
+import type {Resolvers} from "./resolvers.js";
+import {getModuleResolver, getResolvers} from "./resolvers.js";
+import {resolveFilePath, resolveImportPath, resolveStylesheetPath} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
-import {faint} from "./tty.js";
-import {resolvePath} from "./url.js";
-
-const EXTRA_FILES = new Map([
-  [
-    join(fileURLToPath(import.meta.resolve("@observablehq/runtime")), "../../dist/runtime.js"),
-    "_observablehq/runtime.js"
-  ]
-]);
+import {faint, yellow} from "./tty.js";
 
 export interface BuildOptions {
   config: Config;
-  clientEntry?: string;
   addPublic?: boolean;
 }
 
@@ -47,7 +45,7 @@ export interface BuildEffects {
 }
 
 export async function build(
-  {config, addPublic = true, clientEntry = "./src/client/index.js"}: BuildOptions,
+  {config, addPublic = true}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output)
 ): Promise<void> {
   const {root} = config;
@@ -62,84 +60,91 @@ export async function build(
   if (!pageCount) throw new CliError(`Nothing to build: no page files found in your ${root} directory.`);
   effects.logger.log(`${faint("found")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
 
-  // Render .md files, building a list of file attachments as we go.
-  const files: string[] = [];
-  const imports: string[] = [];
-  const styles: Style[] = [];
+  // Parse .md files, building a list of additional assets as we go.
+  const pages = new Map<string, {page: MarkdownPage; resolvers: Resolvers}>();
+  const files = new Set<string>();
+  const localImports = new Set<string>();
+  const globalImports = new Set<string>();
+  const stylesheets = new Set<string>();
   for await (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);
-    const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
-    effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
-    const render = await renderServerless(sourcePath, {path, ...config});
-    const resolveFile = ({name}) => resolvePath(sourceFile, name);
-    files.push(...render.files.map(resolveFile));
-    imports.push(...render.imports.filter((i) => i.type === "local").map(resolveFile));
-    await effects.writeFile(outputPath, render.html);
-    const style = mergeStyle(path, render.data?.style, render.data?.theme, config.style);
-    if (style && !styles.some((s) => styleEquals(s, style))) styles.push(style);
+    const options = {path, ...config};
+    effects.output.write(`${faint("parse")} ${sourcePath} `);
+    const start = performance.now();
+    const page = await parseMarkdown(sourcePath, options);
+    const resolvers = await getResolvers(page, {root, path: sourceFile});
+    const elapsed = Math.floor(performance.now() - start);
+    for (const f of resolvers.assets) files.add(resolvePath(sourceFile, f));
+    for (const f of resolvers.files) files.add(resolvePath(sourceFile, f));
+    for (const i of resolvers.localImports) localImports.add(resolvePath(sourceFile, i));
+    for (const i of resolvers.globalImports) globalImports.add(resolvePath(sourceFile, resolvers.resolveImport(i)));
+    for (const s of resolvers.stylesheets) stylesheets.add(/^\w+:/.test(s) ? s : resolvePath(sourceFile, s));
+    effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
+    pages.set(sourceFile, {page, resolvers});
   }
 
-  // Add imported local scripts.
-  for (const script of config.scripts) {
-    if (!/^\w+:/.test(script.src)) {
-      imports.push(script.src);
-    }
+  // For cache-breaking we rename most assets to include content hashes.
+  const aliases = new Map<string, string>();
+
+  // Add the search bundle and data, if needed.
+  if (config.search) {
+    globalImports.add("/_observablehq/search.js");
+    const contents = await searchIndex(config, effects);
+    effects.output.write(`${faint("index →")} `);
+    const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
+    const alias = `/_observablehq/minisearch.${hash}.json`;
+    aliases.set("/_observablehq/minisearch.json", alias);
+    await effects.writeFile(join("_observablehq", `minisearch.${hash}.json`), contents);
   }
 
-  // Generate the client bundles.
+  // Generate the client bundles (JavaScript and styles). TODO Use a content
+  // hash, or perhaps the Framework version number for built-in modules.
   if (addPublic) {
-    for (const [entry, name] of [
-      [clientEntry, "client.js"],
-      ["./src/client/stdlib.js", "stdlib.js"],
-      // TODO Prune this list based on which libraries are actually used.
-      // TODO Remove library helpers (e.g., duckdb) when they are published to npm.
-      ["./src/client/stdlib/dot.js", "stdlib/dot.js"],
-      ["./src/client/stdlib/duckdb.js", "stdlib/duckdb.js"],
-      ["./src/client/stdlib/inputs.css", "stdlib/inputs.css"],
-      ["./src/client/stdlib/inputs.js", "stdlib/inputs.js"],
-      ["./src/client/stdlib/mermaid.js", "stdlib/mermaid.js"],
-      ["./src/client/stdlib/sqlite.js", "stdlib/sqlite.js"],
-      ["./src/client/stdlib/tex.js", "stdlib/tex.js"],
-      ["./src/client/stdlib/vega-lite.js", "stdlib/vega-lite.js"],
-      ["./src/client/stdlib/xlsx.js", "stdlib/xlsx.js"],
-      ["./src/client/stdlib/zip.js", "stdlib/zip.js"],
-      ...(config.search ? [["./src/client/search.js", "search.js"]] : [])
-    ]) {
-      const clientPath = getClientPath(entry);
-      const outputPath = join("_observablehq", name);
-      effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
-      const code = await (entry.endsWith(".css")
-        ? bundleStyles({path: clientPath})
-        : rollupClient(clientPath, {minify: true}));
-      await effects.writeFile(outputPath, code);
+    for (const path of globalImports) {
+      if (path.startsWith("/_observablehq/")) {
+        const clientPath = getClientPath(`./src/client/${path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)}`); // prettier-ignore
+        effects.output.write(`${faint("build")} ${clientPath} ${faint("→")} `);
+        const define: {[key: string]: string} = {};
+        if (config.search) define["global.__minisearch"] = JSON.stringify(relativePath(path, aliases.get("/_observablehq/minisearch.json")!)); // prettier-ignore
+        const contents = await rollupClient(clientPath, root, path, {minify: true, define});
+        await effects.writeFile(path, contents);
+      }
     }
-    if (config.search) {
-      const outputPath = join("_observablehq", "minisearch.json");
-      const code = await searchIndex(config, effects);
-      effects.output.write(`${faint("search")} ${faint("→")} `);
-      await effects.writeFile(outputPath, code);
-    }
-    for (const style of styles) {
-      if ("path" in style) {
-        const outputPath = join("_import", style.path);
-        const sourcePath = join(root, style.path);
-        effects.output.write(`${faint("style")} ${sourcePath} ${faint("→")} `);
-        const code = await bundleStyles({path: sourcePath});
-        await effects.writeFile(outputPath, code);
-      } else {
-        const outputPath = join("_observablehq", `theme-${style.theme}.css`);
-        effects.output.write(`${faint("bundle")} theme-${style.theme}.css ${faint("→")} `);
-        const code = await bundleStyles({theme: style.theme});
-        await effects.writeFile(outputPath, code);
+    for (const specifier of stylesheets) {
+      if (specifier.startsWith("observablehq:")) {
+        const path = `/_observablehq/${specifier.slice("observablehq:".length)}`;
+        effects.output.write(`${faint("build")} ${specifier} ${faint("→")} `);
+        if (specifier.startsWith("observablehq:theme-")) {
+          const match = /^observablehq:theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(specifier);
+          const contents = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? []});
+          await effects.writeFile(path, contents);
+        } else {
+          const clientPath = getClientPath(`./src/client/${path.slice("/_observablehq/".length)}`);
+          const contents = await bundleStyles({path: clientPath});
+          await effects.writeFile(`/_observablehq/${specifier.slice("observablehq:".length)}`, contents);
+        }
+      } else if (specifier.startsWith("npm:")) {
+        effects.output.write(`${faint("copy")} ${specifier} ${faint("→")} `);
+        const path = await resolveNpmImport(root, specifier.slice("npm:".length));
+        const sourcePath = await populateNpmCache(root, path); // TODO effects
+        await effects.copyFile(sourcePath, path);
+      } else if (!/^\w+:/.test(specifier)) {
+        const sourcePath = join(root, specifier);
+        effects.output.write(`${faint("build")} ${sourcePath} ${faint("→")} `);
+        const contents = await bundleStyles({path: sourcePath});
+        const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
+        const ext = extname(specifier);
+        const alias = `/${join("_import", dirname(specifier), `${basename(specifier, ext)}.${hash}${ext}`)}`;
+        aliases.set(resolveStylesheetPath(root, specifier), alias);
+        await effects.writeFile(alias, contents);
       }
     }
   }
 
-  // Copy over the referenced files.
+  // Copy over the referenced files, accumulating hashed aliases.
   for (const file of files) {
     let sourcePath = join(root, file);
-    const outputPath = join("_file", file);
     if (!existsSync(sourcePath)) {
       const loader = Loader.find(root, join("/", file), {useStale: true});
       if (!loader) {
@@ -154,30 +159,87 @@ export async function build(
       }
     }
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-    await effects.copyFile(sourcePath, outputPath);
+    const contents = await readFile(sourcePath);
+    const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
+    const ext = extname(file);
+    const alias = `/${join("_file", dirname(file), `${basename(file, ext)}.${hash}${ext}`)}`;
+    aliases.set(resolveFilePath(root, file), alias);
+    await effects.writeFile(alias, contents);
   }
 
-  // Copy over the imported modules.
-  const importResolver = createImportResolver(root);
-  for (const file of imports) {
-    const sourcePath = join(root, file);
-    const outputPath = join("_import", file);
+  // Download npm imports. TODO It might be nice to use content hashes for
+  // these, too, but it would involve rewriting the files since populateNpmCache
+  // doesn’t let you pass in a resolver.
+  for (const path of globalImports) {
+    if (!path.startsWith("/_npm/")) continue; // skip _observablehq
+    effects.output.write(`${faint("copy")} npm:${resolveNpmSpecifier(path)} ${faint("→")} `);
+    const sourcePath = await populateNpmCache(root, path); // TODO effects
+    await effects.copyFile(sourcePath, path);
+  }
+
+  // Copy over imported local modules, overriding import resolution so that
+  // module hash is incorporated into the file name rather than in the query
+  // string. Note that this hash is not of the content of the module itself, but
+  // of the transitive closure of the module and its imports and files.
+  const resolveImportAlias = (path: string): string => {
+    const hash = getModuleHash(root, path).slice(0, 8);
+    const ext = extname(path);
+    return `/${join("_import", dirname(path), basename(path, ext))}.${hash}${ext}`;
+  };
+  for (const path of localImports) {
+    const sourcePath = join(root, path);
     if (!existsSync(sourcePath)) {
       effects.logger.error("missing referenced file", sourcePath);
       continue;
     }
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-    const contents = await rewriteModule(await readFile(sourcePath, "utf-8"), file, importResolver);
-    await effects.writeFile(outputPath, contents);
+    const resolveImport = getModuleResolver(root, path);
+    const input = await readFile(sourcePath, "utf-8");
+    const contents = await transpileModule(input, {
+      root,
+      path,
+      async resolveImport(specifier) {
+        return isPathImport(specifier)
+          ? relativePath(join("_import", path), resolveImportAlias(resolvePath(path, specifier)))
+          : resolveImport(specifier);
+      }
+    });
+    const alias = resolveImportAlias(path);
+    aliases.set(resolveImportPath(root, path), alias);
+    await effects.writeFile(alias, contents);
   }
 
-  // Copy over required distribution files.
-  if (addPublic) {
-    for (const [sourcePath, outputPath] of EXTRA_FILES) {
-      effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-      await effects.copyFile(sourcePath, outputPath);
-    }
+  // Render pages, resolving against content-hashed file names!
+  for (const [sourceFile, {page, resolvers}] of pages) {
+    const sourcePath = join(root, sourceFile);
+    const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
+    const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
+    const options = {path, ...config};
+    effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
+    const html = await renderPage(page, {
+      ...options,
+      resolvers: {
+        ...resolvers,
+        resolveFile(specifier) {
+          const r = resolvers.resolveFile(specifier);
+          const a = aliases.get(resolvePath(path, r));
+          return a ? relativePath(path, a) : specifier; // fallback to specifier if enoent
+        },
+        resolveStylesheet(specifier) {
+          const r = resolvers.resolveStylesheet(specifier);
+          const a = aliases.get(resolvePath(path, r));
+          return a ? relativePath(path, a) : isPathImport(specifier) ? specifier : r; // fallback to specifier if enoent
+        },
+        resolveImport(specifier) {
+          const r = resolvers.resolveImport(specifier);
+          const a = aliases.get(resolvePath(path, r));
+          return a ? relativePath(path, a) : isPathImport(specifier) ? specifier : r; // fallback to specifier if enoent
+        }
+      }
+    });
+    await effects.writeFile(outputPath, html);
   }
+
   Telemetry.record({event: "build", step: "finish", pageCount});
 }
 
@@ -206,12 +268,4 @@ export class FileBuildEffects implements BuildEffects {
     await prepareOutput(destination);
     await writeFile(destination, contents);
   }
-}
-
-function styleEquals(a: Style, b: Style): boolean {
-  return "path" in a && "path" in b
-    ? a.path === b.path
-    : "theme" in a && "theme" in b
-    ? a.theme.join() === b.theme.join()
-    : false;
 }

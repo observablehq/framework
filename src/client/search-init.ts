@@ -5,8 +5,7 @@ container.setAttribute("data-shortcut", `${/Mac|iPhone/.test(navigator.platform)
 
 // Load search.js on demand
 const input = container.querySelector<HTMLInputElement>("input")!;
-const base = container.getAttribute("data-root");
-const load = () => import(`${base}_observablehq/search.js`);
+const load = () => import("observablehq:search");
 input.addEventListener("focus", load, {once: true});
 input.addEventListener("keydown", load, {once: true});
 

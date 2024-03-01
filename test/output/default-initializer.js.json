@@ -1,0 +1,70 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 25,
+    "body": [
+      {
+        "type": "FunctionDeclaration",
+        "start": 0,
+        "end": 24,
+        "id": {
+          "type": "Identifier",
+          "start": 9,
+          "end": 12,
+          "name": "fun"
+        },
+        "expression": false,
+        "generator": false,
+        "async": false,
+        "params": [
+          {
+            "type": "AssignmentPattern",
+            "start": 13,
+            "end": 20,
+            "left": {
+              "type": "Identifier",
+              "start": 13,
+              "end": 16,
+              "name": "foo"
+            },
+            "right": {
+              "type": "Identifier",
+              "start": 19,
+              "end": 20,
+              "name": "x"
+            }
+          }
+        ],
+        "body": {
+          "type": "BlockStatement",
+          "start": 22,
+          "end": 24,
+          "body": []
+        }
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 9,
+      "end": 12,
+      "name": "fun"
+    }
+  ],
+  "references": [
+    {
+      "type": "Identifier",
+      "start": 19,
+      "end": 20,
+      "name": "x"
+    }
+  ],
+  "files": [],
+  "imports": [],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

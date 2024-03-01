@@ -2,8 +2,8 @@ import {basename, dirname, join} from "node:path";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import {parseMarkdown} from "./markdown.js";
+import {resolvePath} from "./path.js";
 import {resolveTheme} from "./theme.js";
-import {resolvePath} from "./url.js";
 
 export interface Page {
   name: string;
@@ -184,6 +184,6 @@ export function mergeStyle(path: string, style: any, theme: any, defaultStyle: n
     : style === null
     ? null // disable
     : style !== undefined
-    ? {path: resolvePath(path, style)}
+    ? {path: resolvePath(path, String(style))}
     : {theme: normalizeTheme(theme)};
 }

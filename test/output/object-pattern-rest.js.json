@@ -1,0 +1,182 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 44,
+    "body": [
+      {
+        "type": "VariableDeclaration",
+        "start": 0,
+        "end": 43,
+        "declarations": [
+          {
+            "type": "VariableDeclarator",
+            "start": 6,
+            "end": 42,
+            "id": {
+              "type": "ObjectPattern",
+              "start": 6,
+              "end": 21,
+              "properties": [
+                {
+                  "type": "Property",
+                  "start": 7,
+                  "end": 8,
+                  "method": false,
+                  "shorthand": true,
+                  "computed": false,
+                  "key": {
+                    "type": "Identifier",
+                    "start": 7,
+                    "end": 8,
+                    "name": "x"
+                  },
+                  "kind": "init",
+                  "value": {
+                    "type": "Identifier",
+                    "start": 7,
+                    "end": 8,
+                    "name": "x"
+                  }
+                },
+                {
+                  "type": "Property",
+                  "start": 10,
+                  "end": 11,
+                  "method": false,
+                  "shorthand": true,
+                  "computed": false,
+                  "key": {
+                    "type": "Identifier",
+                    "start": 10,
+                    "end": 11,
+                    "name": "y"
+                  },
+                  "kind": "init",
+                  "value": {
+                    "type": "Identifier",
+                    "start": 10,
+                    "end": 11,
+                    "name": "y"
+                  }
+                },
+                {
+                  "type": "RestElement",
+                  "start": 13,
+                  "end": 20,
+                  "argument": {
+                    "type": "Identifier",
+                    "start": 16,
+                    "end": 20,
+                    "name": "rest"
+                  }
+                }
+              ]
+            },
+            "init": {
+              "type": "ObjectExpression",
+              "start": 24,
+              "end": 42,
+              "properties": [
+                {
+                  "type": "Property",
+                  "start": 25,
+                  "end": 29,
+                  "method": false,
+                  "shorthand": false,
+                  "computed": false,
+                  "key": {
+                    "type": "Identifier",
+                    "start": 25,
+                    "end": 26,
+                    "name": "x"
+                  },
+                  "value": {
+                    "type": "Literal",
+                    "start": 28,
+                    "end": 29,
+                    "value": 1,
+                    "raw": "1"
+                  },
+                  "kind": "init"
+                },
+                {
+                  "type": "Property",
+                  "start": 31,
+                  "end": 35,
+                  "method": false,
+                  "shorthand": false,
+                  "computed": false,
+                  "key": {
+                    "type": "Identifier",
+                    "start": 31,
+                    "end": 32,
+                    "name": "y"
+                  },
+                  "value": {
+                    "type": "Literal",
+                    "start": 34,
+                    "end": 35,
+                    "value": 2,
+                    "raw": "2"
+                  },
+                  "kind": "init"
+                },
+                {
+                  "type": "Property",
+                  "start": 37,
+                  "end": 41,
+                  "method": false,
+                  "shorthand": false,
+                  "computed": false,
+                  "key": {
+                    "type": "Identifier",
+                    "start": 37,
+                    "end": 38,
+                    "name": "z"
+                  },
+                  "value": {
+                    "type": "Literal",
+                    "start": 40,
+                    "end": 41,
+                    "value": 3,
+                    "raw": "3"
+                  },
+                  "kind": "init"
+                }
+              ]
+            }
+          }
+        ],
+        "kind": "const"
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 7,
+      "end": 8,
+      "name": "x"
+    },
+    {
+      "type": "Identifier",
+      "start": 10,
+      "end": 11,
+      "name": "y"
+    },
+    {
+      "type": "Identifier",
+      "start": 16,
+      "end": 20,
+      "name": "rest"
+    }
+  ],
+  "references": [],
+  "files": [],
+  "imports": [],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

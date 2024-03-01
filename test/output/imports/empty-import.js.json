@@ -1,0 +1,36 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 19,
+    "body": [
+      {
+        "type": "ImportDeclaration",
+        "start": 0,
+        "end": 18,
+        "specifiers": [],
+        "source": {
+          "type": "Literal",
+          "start": 7,
+          "end": 17,
+          "value": "./bar.js",
+          "raw": "\"./bar.js\""
+        }
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [],
+  "references": [],
+  "files": [],
+  "imports": [
+    {
+      "name": "./bar.js",
+      "type": "local",
+      "method": "static"
+    }
+  ],
+  "expression": false,
+  "async": false,
+  "inline": false
+}
