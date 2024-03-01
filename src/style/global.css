@@ -277,12 +277,7 @@ a[href].observablehq-header-anchor {
   color: var(--theme-foreground-muted);
 }
 
-.observablehq--draft::before {
-  content: "DRAFT";
-  position: absolute;
-  top: -1rem;
-  right: 0;
-  font-size: 1.5rem;
-  font-family: var(--monospace);
+.observablehq--draft >:first-child::before {
+  content: "[DRAFT] ";
   color: var(--theme-foreground-focus);
 }
