@@ -22,16 +22,20 @@
     "observable": "bin/observable-init.js"
   },
   "scripts": {
-    "dev": "rm -f docs/themes.md docs/theme/*.md && (tsx watch docs/theme/generate-themes.ts & tsx watch --no-warnings=ExperimentalWarning ./bin/observable.ts preview --no-open)",
-    "build": "yarn rebuild-themes && rm -rf dist && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts build",
-    "deploy": "yarn rebuild-themes && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts deploy",
-    "rebuild-themes": "rm -f docs/themes.md docs/theme/*.md && tsx docs/theme/generate-themes.ts",
-    "test": "yarn test:mocha && yarn test:tsc && yarn test:lint && yarn test:prettier",
+    "dev": "turbo themes:rebuild preview",
+    "preview": "tsx watch --no-warnings=ExperimentalWarning ./bin/observable.ts preview --no-open",
+    "build": "turbo rebuild-themes && rm -rf dist && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts build",
+    "deploy": "turbo rebuild-themes && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts deploy",
+    "test": "turbo test:clean test:mocha1 test:mocha2 test:tsc test:lint test:prettier",
     "test:coverage": "c8 yarn test:mocha",
-    "test:mocha": "rm -rf test/.observablehq/cache test/input/build/*/.observablehq/cache && OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles tsx --no-warnings=ExperimentalWarning ./node_modules/.bin/mocha 'test/**/*-test.*'",
+    "test:clean": "rm -rf test/.observablehq/cache test/input/build/*/.observablehq/cache",
+    "test:mocha": "OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles tsx --no-warnings=ExperimentalWarning ./node_modules/.bin/mocha 'test/**/*-test.*'",
+    "test:mocha1": "OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles tsx --no-warnings=ExperimentalWarning ./node_modules/.bin/mocha 'test/*/*-test.*'",
+    "test:mocha2": "OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles tsx --no-warnings=ExperimentalWarning ./node_modules/.bin/mocha 'test/*-test.*'",
     "test:lint": "eslint src test --max-warnings=0",
     "test:prettier": "prettier --check src test",
     "test:tsc": "tsc --noEmit",
+    "themes:rebuild": "tsx docs/theme/generate-themes.ts",
     "observable": "tsx --no-warnings=ExperimentalWarning ./bin/observable.ts"
   },
   "c8": {
@@ -78,6 +82,7 @@
     "ws": "^8.14.2"
   },
   "devDependencies": {
+    "turbo": "1",
     "@types/d3-array": "^3.2.1",
     "@types/he": "^1.2.3",
     "@types/jsdom": "^21.1.6",

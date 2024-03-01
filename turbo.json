@@ -1,0 +1,14 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "pipeline": {
+    "test:mocha": {},
+    "test:mocha1": {},
+    "test:mocha2": {},
+    "test:tsc": {},
+    "test:lint": {},
+    "test:prettier": {},
+    "themes:rebuild": {
+      "outputs": ["./docs/theme/"]
+    }
+  }
+}
