@@ -33,15 +33,19 @@ export function open({hash, eval: compile} = {}) {
         }
         hash = message.updatedHash;
         let offset = 0;
+        const addedCells = new Map();
+        const removedCells = new Map();
         for (const {type, oldPos, items} of message.diffHtml) {
           switch (type) {
             case "add": {
               for (const item of items) {
-                if (oldPos + offset < root.children.length) {
-                  root.children[oldPos + offset].insertAdjacentHTML("beforebegin", item);
+                const pos = oldPos + offset;
+                if (pos < root.children.length) {
+                  root.children[pos].insertAdjacentHTML("beforebegin", item);
                 } else {
                   root.insertAdjacentHTML("beforeend", item);
                 }
+                indexCells(addedCells, root.children[pos]);
                 ++offset;
               }
               break;
@@ -49,17 +53,23 @@ export function open({hash, eval: compile} = {}) {
             case "remove": {
               let removes = 0;
               for (let i = 0; i < items.length; ++i) {
-                if (oldPos + offset < root.children.length) {
-                  root.children[oldPos + offset].remove();
+                const pos = oldPos + offset;
+                if (pos < root.children.length) {
+                  const child = root.children[pos];
+                  indexCells(removedCells, child);
+                  child.remove();
                   ++removes;
                 } else {
-                  console.error(`remove out of range: ${oldPos + offset} ≮ ${root.children.length}`);
+                  console.error(`remove out of range: ${pos} ≮ ${root.children.length}`);
                 }
               }
               offset -= removes;
               break;
             }
           }
+        }
+        for (const [id, removed] of removedCells) {
+          addedCells.get(id)?.replaceWith(removed);
         }
         for (const id of message.diffCode.removed) {
           undefine(id);
@@ -105,6 +115,15 @@ export function open({hash, eval: compile} = {}) {
   socket.onclose = () => {
     console.info("socket close");
   };
+
+  function indexCells(map, node) {
+    if (node.id.startsWith("cell-")) {
+      map.set(node.id, node);
+    }
+    for (const cell of node.querySelectorAll("[id^=cell-]")) {
+      map.set(cell.id, cell);
+    }
+  }
 
   function send(message) {
     console.info("↑", message);
