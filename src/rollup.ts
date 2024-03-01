@@ -58,6 +58,7 @@ export async function rollupClient(
       esbuild({
         target: "es2022",
         exclude: [], // don’t exclude node_modules
+        keepNames: true,
         minify,
         define: {
           "global.__minisearch": '"./minisearch.json"',
