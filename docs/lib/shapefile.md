@@ -43,7 +43,9 @@ Plot.plot({
 
 Or, streaming to a canvas:
 
-<canvas id="map-canvas" width="960" height="491" style="max-width: 100%;"></canvas>
+<figure style="max-width: 100%;">
+  <canvas id="map-canvas" width="960" height="491"></canvas>
+</figure>
 
 ```js echo
 const canvas = document.querySelector("#map-canvas");
