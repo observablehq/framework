@@ -176,7 +176,7 @@ function prettyPath(path: string): string {
 }
 
 function renderHead(parse: MarkdownPage, resolvers: Resolvers, {scripts, head, root}: RenderOptions): Html {
-  if (parse.data?.head !== undefined) head = String(parse.data.head);
+  if (parse.data?.head !== undefined) head = parse.data.head;
   const resolveScript = (src: string) => (/^\w+:/.test(src) ? src : resolvers.resolveImport(relativePath(root, src)));
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
     Array.from(resolvers.stylesheets, (i) => renderStylesheetPreload(resolvers.resolveStylesheet(i))) // <link rel=preload as=style>
