@@ -194,6 +194,7 @@ export async function resolveNpmImports(root: string, path: string): Promise<Imp
   promise = (async function () {
     try {
       const filePath = await populateNpmCache(root, path);
+      if (!/\.(m|c)?js$/i.test(path)) return []; // not JavaScript; TODO traverse CSS, too
       const source = await readFile(filePath, "utf-8");
       const body = Parser.parse(source, parseOptions);
       return findImports(body, path, source);

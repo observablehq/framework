@@ -69,6 +69,13 @@ export function getImplicitDownloads(imports: Iterable<string>): Set<string> {
     implicits.add("npm:sql.js/dist/sql-wasm.js");
     implicits.add("npm:sql.js/dist/sql-wasm.wasm");
   }
+  if (set.has("npm:leaflet")) {
+    implicits.add("npm:leaflet/dist/images/layers.png");
+    implicits.add("npm:leaflet/dist/images/layers-2x.png");
+    implicits.add("npm:leaflet/dist/images/marker-icon.png");
+    implicits.add("npm:leaflet/dist/images/marker-icon-2x.png");
+    implicits.add("npm:leaflet/dist/images/marker-shadow.png");
+  }
   if (set.has("npm:katex")) {
     implicits.add("npm:katex/dist/fonts/KaTeX_AMS-Regular.ttf");
     implicits.add("npm:katex/dist/fonts/KaTeX_AMS-Regular.woff");
