@@ -21,26 +21,6 @@ import {
 import {MockAuthEffects} from "./observableApiAuth-test.js";
 import {MockConfigEffects} from "./observableApiConfig-test.js";
 
-// These files are implicitly generated. This may change over time, so they’re
-// enumerated here for clarity. TODO We should enforce that these files are
-// specifically uploaded, rather than just the number of files.
-const EXTRA_FILES: string[] = [
-  "_observablehq/client.js",
-  "_observablehq/runtime.js",
-  "_observablehq/stdlib.js",
-  "_observablehq/stdlib/dot.js",
-  "_observablehq/stdlib/duckdb.js",
-  "_observablehq/stdlib/inputs.css",
-  "_observablehq/stdlib/inputs.js",
-  "_observablehq/stdlib/mermaid.js",
-  "_observablehq/stdlib/sqlite.js",
-  "_observablehq/stdlib/tex.js",
-  "_observablehq/stdlib/vega-lite.js",
-  "_observablehq/stdlib/xlsx.js",
-  "_observablehq/stdlib/zip.js",
-  "_observablehq/style.css"
-];
-
 interface MockDeployEffectsOptions {
   apiKey?: string | null;
   deployConfig?: DeployConfig | null;
@@ -148,7 +128,11 @@ describe("deploy", () => {
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
+      .handlePostDeployFile({deployId, clientName: "index.html"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/theme-air,near-midnight.css"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/client.js"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/runtime.js"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/stdlib.js"})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId, deployStatus: "uploaded"})
       .start();
@@ -165,13 +149,14 @@ describe("deploy", () => {
     const oldTitle = `${TEST_CONFIG.title!} old`;
     getCurrentObservableApi()
       .handleGetCurrentUser()
-      .handleGetProject({
-        ...DEPLOY_CONFIG,
-        title: oldTitle
-      })
+      .handleGetProject({...DEPLOY_CONFIG, title: oldTitle})
       .handleUpdateProject({projectId: DEPLOY_CONFIG.projectId, title: TEST_CONFIG.title!})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
+      .handlePostDeployFile({deployId, clientName: "index.html"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/theme-air,near-midnight.css"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/client.js"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/runtime.js"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/stdlib.js"})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId})
       .start();
@@ -191,7 +176,11 @@ describe("deploy", () => {
       .handleGetCurrentUser()
       .handleGetProject(deployConfig)
       .handlePostDeploy({projectId: deployConfig.projectId, deployId})
-      .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
+      .handlePostDeployFile({deployId, clientName: "index.html"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/theme-air,near-midnight.css"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/client.js"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/runtime.js"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/stdlib.js"})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId})
       .start();
@@ -214,7 +203,11 @@ describe("deploy", () => {
       })
       .handlePostProject({projectId: DEPLOY_CONFIG.projectId})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
+      .handlePostDeployFile({deployId, clientName: "index.html"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/theme-air,near-midnight.css"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/client.js"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/runtime.js"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/stdlib.js"})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId})
       .start();
@@ -443,7 +436,11 @@ describe("deploy", () => {
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
+      .handlePostDeployFile({deployId, clientName: "index.html"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/theme-air,near-midnight.css"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/client.js"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/runtime.js"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/stdlib.js"})
       .handlePostDeployUploaded({deployId, status: 500})
       .start();
     const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG});
@@ -554,7 +551,11 @@ describe("deploy", () => {
           projectId: newProjectId
         })
         .handlePostDeploy({projectId: newProjectId, deployId})
-        .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
+        .handlePostDeployFile({deployId, clientName: "index.html"})
+        .handlePostDeployFile({deployId, clientName: "_observablehq/theme-air,near-midnight.css"})
+        .handlePostDeployFile({deployId, clientName: "_observablehq/client.js"})
+        .handlePostDeployFile({deployId, clientName: "_observablehq/runtime.js"})
+        .handlePostDeployFile({deployId, clientName: "_observablehq/stdlib.js"})
         .handlePostDeployUploaded({deployId})
         .handleGetDeploy({deployId})
         .start();
@@ -638,7 +639,11 @@ describe("deploy", () => {
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .handlePostDeployFile({deployId, repeat: EXTRA_FILES.length + 1})
+      .handlePostDeployFile({deployId, clientName: "index.html"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/theme-air,near-midnight.css"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/client.js"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/runtime.js"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/stdlib.js"})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId})
       .start();

@@ -1,0 +1,27 @@
+{
+  "body": {
+    "type": "AwaitExpression",
+    "start": 0,
+    "end": 13,
+    "argument": {
+      "type": "Identifier",
+      "start": 6,
+      "end": 13,
+      "name": "promise"
+    }
+  },
+  "declarations": null,
+  "references": [
+    {
+      "type": "Identifier",
+      "start": 6,
+      "end": 13,
+      "name": "promise"
+    }
+  ],
+  "files": [],
+  "imports": [],
+  "expression": true,
+  "async": true,
+  "inline": false
+}

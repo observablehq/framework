@@ -353,9 +353,10 @@ class DeployBuildEffects implements BuildEffects {
     this.output = effects.output;
   }
   async copyFile(sourcePath: string, outputPath: string) {
-    this.logger.log(outputPath);
+    const relativePath = outputPath.replace(/^\//, "");
+    this.logger.log(relativePath);
     try {
-      await this.apiClient.postDeployFile(this.deployId, sourcePath, outputPath);
+      await this.apiClient.postDeployFile(this.deployId, sourcePath, relativePath);
     } catch (error) {
       if (isApiError(error) && error.details.errors.some((e) => e.code === "FILE_QUOTA_EXCEEDED")) {
         throw new CliError("You have reached the total file size limit.", {cause: error});
@@ -369,9 +370,10 @@ class DeployBuildEffects implements BuildEffects {
     }
   }
   async writeFile(outputPath: string, content: Buffer | string) {
-    this.logger.log(outputPath);
+    const relativePath = outputPath.replace(/^\//, "");
+    this.logger.log(relativePath);
     try {
-      await this.apiClient.postDeployFileContents(this.deployId, content, outputPath);
+      await this.apiClient.postDeployFileContents(this.deployId, content, relativePath);
     } catch (error) {
       if (isApiError(error) && error.details.errors.some((e) => e.code === "FILE_QUOTA_EXCEEDED")) {
         throw new CliError("You have reached the total file size limit.", {cause: error});

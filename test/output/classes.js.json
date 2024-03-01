@@ -1,0 +1,66 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 26,
+    "body": [
+      {
+        "type": "ClassDeclaration",
+        "start": 0,
+        "end": 12,
+        "id": {
+          "type": "Identifier",
+          "start": 6,
+          "end": 9,
+          "name": "Foo"
+        },
+        "superClass": null,
+        "body": {
+          "type": "ClassBody",
+          "start": 10,
+          "end": 12,
+          "body": []
+        }
+      },
+      {
+        "type": "ClassDeclaration",
+        "start": 13,
+        "end": 25,
+        "id": {
+          "type": "Identifier",
+          "start": 19,
+          "end": 22,
+          "name": "Bar"
+        },
+        "superClass": null,
+        "body": {
+          "type": "ClassBody",
+          "start": 23,
+          "end": 25,
+          "body": []
+        }
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 6,
+      "end": 9,
+      "name": "Foo"
+    },
+    {
+      "type": "Identifier",
+      "start": 19,
+      "end": 22,
+      "name": "Bar"
+    }
+  ],
+  "references": [],
+  "files": [],
+  "imports": [],
+  "expression": false,
+  "async": false,
+  "inline": false
+}
