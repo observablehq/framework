@@ -43,7 +43,12 @@ export async function bundleStyles({path, theme}: {path?: string; theme?: string
   return rewriteInputsNamespace(text); // TODO only for inputs
 }
 
-export async function rollupClient(input: string, root: string, path: string, {minify = false} = {}): Promise<string> {
+export async function rollupClient(
+  input: string,
+  root: string,
+  path: string,
+  {define, minify}: {define?: {[key: string]: string}; minify?: boolean} = {}
+): Promise<string> {
   const bundle = await rollup({
     input,
     external: [/^https:/],
@@ -55,7 +60,9 @@ export async function rollupClient(input: string, root: string, path: string, {m
         exclude: [], // don’t exclude node_modules
         minify,
         define: {
-          "process.env.OBSERVABLE_ORIGIN": JSON.stringify(String(getObservableUiOrigin()).replace(/\/$/, ""))
+          "global.__minisearch": '"./minisearch.json"',
+          "process.env.OBSERVABLE_ORIGIN": JSON.stringify(String(getObservableUiOrigin()).replace(/\/$/, "")),
+          ...define
         }
       }),
       importMetaResolve(root, path)

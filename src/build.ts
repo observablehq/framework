@@ -83,26 +83,30 @@ export async function build(
     pages.set(sourceFile, {page, resolvers});
   }
 
+  // For cache-breaking we rename most assets to include content hashes.
+  const aliases = new Map<string, string>();
+
   // Add the search bundle and data, if needed.
   if (config.search) {
     globalImports.add("/_observablehq/search.js");
-    const outputPath = join("_observablehq", "minisearch.json");
     const code = await searchIndex(config, effects);
     effects.output.write(`${faint("index →")} `);
-    await effects.writeFile(outputPath, code);
+    const hash = createHash("sha256").update(code).digest("hex").slice(0, 8);
+    const alias = `/_observablehq/minisearch.${hash}.json`;
+    aliases.set("/_observablehq/minisearch.json", alias);
+    await effects.writeFile(join("_observablehq", `minisearch.${hash}.json`), code);
   }
 
-  // Generate the client bundles (JavaScript and styles).
-  //
-  // TODO We should use a content hash for imported custom stylesheets, and
-  // perhaps we could bake the Framework version number into built-in
-  // stylesheets and modules (or the content hash; whatever’s easier).
+  // Generate the client bundles (JavaScript and styles). TODO Use a content
+  // hash, or perhaps the Framework version number for built-in modules.
   if (addPublic) {
     for (const path of globalImports) {
       if (path.startsWith("/_observablehq/")) {
         const clientPath = getClientPath(`./src/client/${path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)}`); // prettier-ignore
         effects.output.write(`${faint("build")} ${clientPath} ${faint("→")} `);
-        const code = await rollupClient(clientPath, root, path, {minify: true});
+        const define: {[key: string]: string} = {};
+        if (config.search) define["global.__minisearch"] = JSON.stringify(relativePath(path, aliases.get("/_observablehq/minisearch.json")!)); // prettier-ignore
+        const code = await rollupClient(clientPath, root, path, {minify: true, define});
         await effects.writeFile(path, code);
       }
     }
@@ -135,7 +139,6 @@ export async function build(
   }
 
   // Copy over the referenced files, accumulating hashed aliases.
-  const fileAliases = new Map<string, string>();
   for (const file of files) {
     let sourcePath = join(root, file);
     if (!existsSync(sourcePath)) {
@@ -156,15 +159,13 @@ export async function build(
     const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
     const ext = extname(file);
     const alias = `/${join("_file", dirname(file), `${basename(file, ext)}.${hash}${ext}`)}`;
-    fileAliases.set(resolveFilePath(root, file), alias);
+    aliases.set(resolveFilePath(root, file), alias);
     await effects.writeFile(alias, contents);
   }
 
-  // Download npm imports.
-  //
-  // TODO It might be nice to use content hashes for these, too, but it would
-  // involve rewriting the files since populateNpmCache doesn’t let you pass in
-  // a resolver.
+  // Download npm imports. TODO It might be nice to use content hashes for
+  // these, too, but it would involve rewriting the files since populateNpmCache
+  // doesn’t let you pass in a resolver.
   for (const path of globalImports) {
     if (!path.startsWith("/_npm/")) continue; // skip _observablehq
     effects.output.write(`${faint("copy")} npm:${resolveNpmSpecifier(path)} ${faint("→")} `);
@@ -176,7 +177,6 @@ export async function build(
   // module hash is incorporated into the file name rather than in the query
   // string. Note that this hash is not of the content of the module itself, but
   // of the transitive closure of the module and its imports and files.
-  const importAliases = new Map<string, string>();
   const resolveImportAlias = (path: string): string => {
     const hash = getModuleHash(root, path).slice(0, 8);
     const ext = extname(path);
@@ -201,7 +201,7 @@ export async function build(
       }
     });
     const alias = resolveImportAlias(path);
-    importAliases.set(resolveImportPath(root, path), alias);
+    aliases.set(resolveImportPath(root, path), alias);
     await effects.writeFile(alias, contents);
   }
 
@@ -218,12 +218,12 @@ export async function build(
         ...resolvers,
         resolveFile(specifier) {
           const r = resolvers.resolveFile(specifier);
-          const a = fileAliases.get(resolvePath(path, r));
+          const a = aliases.get(resolvePath(path, r));
           return a ? relativePath(path, a) : specifier; // fallback to specifier if enoent
         },
         resolveImport(specifier) {
           const r = resolvers.resolveImport(specifier);
-          const a = importAliases.get(resolvePath(path, r));
+          const a = aliases.get(resolvePath(path, r));
           return a ? relativePath(path, a) : isPathImport(specifier) ? specifier : r; // fallback to specifier if enoent
         }
       }
