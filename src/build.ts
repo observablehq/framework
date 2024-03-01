@@ -15,7 +15,8 @@ import {populateNpmCache, resolveNpmImport, resolveNpmSpecifier} from "./npm.js"
 import {isPathImport, relativePath, resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
-import {getModuleResolver, getResolvers, resolveFilePath, resolveImportPath} from "./resolvers.js";
+import {getModuleResolver, getResolvers} from "./resolvers.js";
+import {resolveFilePath, resolveImportPath, resolveStylesheetPath} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
@@ -89,12 +90,12 @@ export async function build(
   // Add the search bundle and data, if needed.
   if (config.search) {
     globalImports.add("/_observablehq/search.js");
-    const code = await searchIndex(config, effects);
+    const contents = await searchIndex(config, effects);
     effects.output.write(`${faint("index →")} `);
-    const hash = createHash("sha256").update(code).digest("hex").slice(0, 8);
+    const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
     const alias = `/_observablehq/minisearch.${hash}.json`;
     aliases.set("/_observablehq/minisearch.json", alias);
-    await effects.writeFile(join("_observablehq", `minisearch.${hash}.json`), code);
+    await effects.writeFile(join("_observablehq", `minisearch.${hash}.json`), contents);
   }
 
   // Generate the client bundles (JavaScript and styles). TODO Use a content
@@ -106,8 +107,8 @@ export async function build(
         effects.output.write(`${faint("build")} ${clientPath} ${faint("→")} `);
         const define: {[key: string]: string} = {};
         if (config.search) define["global.__minisearch"] = JSON.stringify(relativePath(path, aliases.get("/_observablehq/minisearch.json")!)); // prettier-ignore
-        const code = await rollupClient(clientPath, root, path, {minify: true, define});
-        await effects.writeFile(path, code);
+        const contents = await rollupClient(clientPath, root, path, {minify: true, define});
+        await effects.writeFile(path, contents);
       }
     }
     for (const specifier of stylesheets) {
@@ -116,12 +117,12 @@ export async function build(
         effects.output.write(`${faint("build")} ${specifier} ${faint("→")} `);
         if (specifier.startsWith("observablehq:theme-")) {
           const match = /^observablehq:theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(specifier);
-          const code = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? []});
-          await effects.writeFile(path, code);
+          const contents = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? []});
+          await effects.writeFile(path, contents);
         } else {
           const clientPath = getClientPath(`./src/client/${path.slice("/_observablehq/".length)}`);
-          const code = await bundleStyles({path: clientPath});
-          await effects.writeFile(`/_observablehq/${specifier.slice("observablehq:".length)}`, code);
+          const contents = await bundleStyles({path: clientPath});
+          await effects.writeFile(`/_observablehq/${specifier.slice("observablehq:".length)}`, contents);
         }
       } else if (specifier.startsWith("npm:")) {
         effects.output.write(`${faint("copy")} ${specifier} ${faint("→")} `);
@@ -129,11 +130,14 @@ export async function build(
         const sourcePath = await populateNpmCache(root, path); // TODO effects
         await effects.copyFile(sourcePath, path);
       } else if (!/^\w+:/.test(specifier)) {
-        const outputPath = join("_import", specifier);
         const sourcePath = join(root, specifier);
         effects.output.write(`${faint("build")} ${sourcePath} ${faint("→")} `);
-        const code = await bundleStyles({path: sourcePath});
-        await effects.writeFile(outputPath, code);
+        const contents = await bundleStyles({path: sourcePath});
+        const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
+        const ext = extname(specifier);
+        const alias = `/${join("_import", dirname(specifier), `${basename(specifier, ext)}.${hash}${ext}`)}`;
+        aliases.set(resolveStylesheetPath(root, specifier), alias);
+        await effects.writeFile(alias, contents);
       }
     }
   }
@@ -220,6 +224,11 @@ export async function build(
           const r = resolvers.resolveFile(specifier);
           const a = aliases.get(resolvePath(path, r));
           return a ? relativePath(path, a) : specifier; // fallback to specifier if enoent
+        },
+        resolveStylesheet(specifier) {
+          const r = resolvers.resolveStylesheet(specifier);
+          const a = aliases.get(resolvePath(path, r));
+          return a ? relativePath(path, a) : isPathImport(specifier) ? specifier : r; // fallback to specifier if enoent
         },
         resolveImport(specifier) {
           const r = resolvers.resolveImport(specifier);

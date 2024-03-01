@@ -104,10 +104,7 @@ async function renderSidebar(
     }"><a href="${relativePath(path, "/")}">${title}</a></li>
   </ol>${
     search
-      ? html`\n  <div id="observablehq-search" data-root="${relativePath(
-          path,
-          "/"
-        )}"><input type="search" placeholder="Search"></div>
+      ? html`\n  <div id="observablehq-search"><input type="search" placeholder="Search"></div>
   <div id="observablehq-search-results"></div>
   <script>{${html.unsafe(
     (await rollupClient(getClientPath("./src/client/search-init.ts"), root, path, {minify: true})).trim()
