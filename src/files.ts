@@ -2,7 +2,7 @@ import type {Stats} from "node:fs";
 import {existsSync} from "node:fs";
 import {mkdir, readdir, stat} from "node:fs/promises";
 import op from "node:path";
-import {join, normalize, relative, sep} from "node:path/posix";
+import {extname, join, normalize, relative, sep} from "node:path/posix";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {isEnoent} from "./error.js";
@@ -32,7 +32,7 @@ export function getClientPath(entry: string): string {
 /** Yields every Markdown (.md) file within the given root, recursively. */
 export async function* visitMarkdownFiles(root: string): AsyncGenerator<string> {
   for await (const file of visitFiles(root)) {
-    if (op.extname(file) !== ".md") continue;
+    if (extname(file) !== ".md") continue;
     yield file;
   }
 }
