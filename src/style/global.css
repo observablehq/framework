@@ -279,5 +279,5 @@ a[href].observablehq-header-anchor {
 
 .observablehq--draft > :first-child::before {
   content: "[DRAFT] ";
-  color: var(--theme-foreground-focus);
+  color: var(--theme-foreground-muted);
 }
