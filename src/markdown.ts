@@ -91,6 +91,8 @@ function getLiveSource(content: string, tag: string): string | undefined {
     ? transpileTag(content, "html", true)
     : tag === "svg"
     ? transpileTag(content, "svg", true)
+    : tag === "css"
+    ? transpileTag(content, "css", true)
     : tag === "dot"
     ? transpileTag(content, "dot", false)
     : tag === "mermaid"
