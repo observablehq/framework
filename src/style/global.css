@@ -277,7 +277,7 @@ a[href].observablehq-header-anchor {
   color: var(--theme-foreground-muted);
 }
 
-.observablehq-draft::before {
+.observablehq--draft::before {
   content: "DRAFT";
   position: absolute;
   top: -1rem;

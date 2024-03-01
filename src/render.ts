@@ -67,7 +67,7 @@ ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => ev
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
 <div id="observablehq-center">${renderHeader(options, page.data)}
-<main id="observablehq-main" class="observablehq${draft ? " observablehq-draft" : ""}">
+<main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">
 ${html.unsafe(rewriteHtml(page.html, resolvers.resolveFile))}</main>${renderFooter(path, options, page.data)}
 </div>
 `);

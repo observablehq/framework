@@ -27,7 +27,6 @@ export interface MarkdownPage {
   title: string | null;
   html: string;
   data: {[key: string]: any} | null;
-  draft?: true;
   style: string | null;
   code: MarkdownCode[];
 }
@@ -298,7 +297,6 @@ export async function parseMarkdown(
     html,
     data: isEmpty(parts.data) ? null : parts.data,
     title: parts.data?.title ?? findTitle(tokens) ?? null,
-    draft: parts.data?.draft,
     style,
     code
   };

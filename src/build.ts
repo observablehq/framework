@@ -74,7 +74,7 @@ export async function build(
     const start = performance.now();
     const page = await parseMarkdown(sourcePath, options);
     if (page?.data?.draft) {
-      effects.logger.log(yellow("skipping [draft]"));
+      effects.logger.log(faint("(skipped)"));
       continue;
     }
     const resolvers = await getResolvers(page, {root, path: sourceFile});
