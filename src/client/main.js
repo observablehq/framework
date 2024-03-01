@@ -1,5 +1,4 @@
 import {Runtime} from "observablehq:runtime";
-import {registerFile} from "observablehq:stdlib";
 import {FileAttachment, Generators, Mutable, resize} from "observablehq:stdlib";
 import {inspect, inspectError} from "./inspect.js";
 import * as recommendedLibraries from "./stdlib/recommendedLibraries.js";
@@ -19,10 +18,10 @@ const library = {
 const runtime = new Runtime(library);
 export const main = runtime.module();
 
-export const cellsById = new Map(); // TODO hide
+const cellsById = new Map();
 
 export function define(cell) {
-  const {id, inline, inputs = [], outputs = [], files = [], body} = cell;
+  const {id, inline, inputs = [], outputs = [], body} = cell;
   const variables = [];
   cellsById.get(id)?.variables.forEach((v) => v.delete());
   cellsById.set(id, {cell, variables});
@@ -58,7 +57,11 @@ export function define(cell) {
   v.define(outputs.length ? `cell ${id}` : null, inputs, body);
   variables.push(v);
   for (const o of outputs) variables.push(main.variable(true).define(o, [`cell ${id}`], (exports) => exports[o]));
-  for (const f of files) registerFile(f.name, f);
+}
+
+export function undefine(id) {
+  cellsById.get(id)?.variables.forEach((v) => v.delete());
+  cellsById.delete(id);
 }
 
 // Note: Element.prototype is instanceof Node, but cannot be inserted!

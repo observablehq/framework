@@ -3,54 +3,63 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Tar</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="./_observablehq/theme-air,near-midnight.css">
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
-<link rel="stylesheet" type="text/css" href="./_observablehq/theme-air,near-midnight.css">
+<link rel="preload" as="style" href="./_observablehq/theme-air,near-midnight.css">
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
+<link rel="stylesheet" type="text/css" href="./_observablehq/theme-air,near-midnight.css">
 <link rel="modulepreload" href="./_observablehq/client.js">
 <link rel="modulepreload" href="./_observablehq/runtime.js">
 <link rel="modulepreload" href="./_observablehq/stdlib.js">
 <script type="module">
 
 import {define} from "./_observablehq/client.js";
+import {registerFile} from "./_observablehq/stdlib.js";
 
-define({id: "d5134368", inputs: ["FileAttachment","display"], files: [{"name":"./static-tar/file.txt","mimeType":"text/plain","path":"./_file/static-tar/file.txt"}], body: async (FileAttachment,display) => {
+registerFile("./dynamic-tar-gz/does-not-exist.txt", {"name":"./dynamic-tar-gz/does-not-exist.txt","mimeType":"text/plain","path":"./dynamic-tar-gz/does-not-exist.txt"});
+registerFile("./dynamic-tar-gz/file.txt", {"name":"./dynamic-tar-gz/file.txt","mimeType":"text/plain","path":"./_file/dynamic-tar-gz/file.c93138d8.txt"});
+registerFile("./dynamic-tar/does-not-exist.txt", {"name":"./dynamic-tar/does-not-exist.txt","mimeType":"text/plain","path":"./dynamic-tar/does-not-exist.txt"});
+registerFile("./dynamic-tar/file.txt", {"name":"./dynamic-tar/file.txt","mimeType":"text/plain","path":"./_file/dynamic-tar/file.c93138d8.txt"});
+registerFile("./static-tar/does-not-exist.txt", {"name":"./static-tar/does-not-exist.txt","mimeType":"text/plain","path":"./static-tar/does-not-exist.txt"});
+registerFile("./static-tar/file.txt", {"name":"./static-tar/file.txt","mimeType":"text/plain","path":"./_file/static-tar/file.c93138d8.txt"});
+registerFile("./static-tgz/file.txt", {"name":"./static-tgz/file.txt","mimeType":"text/plain","path":"./_file/static-tgz/file.c93138d8.txt"});
+
+define({id: "d5134368", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
 display(await(
 await FileAttachment("static-tar/file.txt").text()
 ))
 }});
 
-define({id: "a0c06958", inputs: ["FileAttachment","display"], files: [{"name":"./static-tgz/file.txt","mimeType":"text/plain","path":"./_file/static-tgz/file.txt"}], body: async (FileAttachment,display) => {
+define({id: "a0c06958", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
 display(await(
 await FileAttachment("static-tgz/file.txt").text()
 ))
 }});
 
-define({id: "d84cd7fb", inputs: ["FileAttachment","display"], files: [{"name":"./static-tar/does-not-exist.txt","mimeType":"text/plain","path":"./_file/static-tar/does-not-exist.txt"}], body: async (FileAttachment,display) => {
+define({id: "d84cd7fb", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
 display(await(
 await FileAttachment("static-tar/does-not-exist.txt").text()
 ))
 }});
 
-define({id: "86bd51aa", inputs: ["FileAttachment","display"], files: [{"name":"./dynamic-tar/file.txt","mimeType":"text/plain","path":"./_file/dynamic-tar/file.txt"}], body: async (FileAttachment,display) => {
+define({id: "86bd51aa", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
 display(await(
 await FileAttachment("dynamic-tar/file.txt").text()
 ))
 }});
 
-define({id: "95938c22", inputs: ["FileAttachment","display"], files: [{"name":"./dynamic-tar/does-not-exist.txt","mimeType":"text/plain","path":"./_file/dynamic-tar/does-not-exist.txt"}], body: async (FileAttachment,display) => {
+define({id: "95938c22", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
 display(await(
 await FileAttachment("dynamic-tar/does-not-exist.txt").text()
 ))
 }});
 
-define({id: "7e5740fd", inputs: ["FileAttachment","display"], files: [{"name":"./dynamic-tar-gz/file.txt","mimeType":"text/plain","path":"./_file/dynamic-tar-gz/file.txt"}], body: async (FileAttachment,display) => {
+define({id: "7e5740fd", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
 display(await(
 await FileAttachment("dynamic-tar-gz/file.txt").text()
 ))
 }});
 
-define({id: "d0a58efd", inputs: ["FileAttachment","display"], files: [{"name":"./dynamic-tar-gz/does-not-exist.txt","mimeType":"text/plain","path":"./_file/dynamic-tar-gz/does-not-exist.txt"}], body: async (FileAttachment,display) => {
+define({id: "d0a58efd", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
 display(await(
 await FileAttachment("dynamic-tar-gz/does-not-exist.txt").text()
 ))
@@ -70,7 +79,7 @@ await FileAttachment("dynamic-tar-gz/does-not-exist.txt").text()
   </ol>
 </nav>
 <script>{/* redacted init script */}</script>
-<aside id="observablehq-toc" data-selector="#observablehq-main h1:not(:first-of-type), #observablehq-main h2:not(h1 + h2)">
+<aside id="observablehq-toc" data-selector="h1:not(:first-of-type), h2:first-child, :not(h1) + h2">
 <nav>
 </nav>
 </aside>

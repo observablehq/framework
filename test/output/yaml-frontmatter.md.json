@@ -1,0 +1,12 @@
+{
+  "data": {
+    "title": "YAML",
+    "style": [
+      "one",
+      "two"
+    ]
+  },
+  "title": "YAML",
+  "style": "./one,two",
+  "code": []
+}

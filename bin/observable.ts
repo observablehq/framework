@@ -2,7 +2,6 @@ import {type ParseArgsConfig, parseArgs} from "node:util";
 import * as clack from "@clack/prompts";
 import {readConfig} from "../src/config.js";
 import {CliError} from "../src/error.js";
-import {enableNpmVersionResolution, enableRemoteModulePreload} from "../src/javascript/imports.js";
 import {faint, link, red} from "../src/tty.js";
 
 const args = process.argv.slice(2);
@@ -150,8 +149,6 @@ try {
         else if (name === "open") values.open = true;
       }
       const {config, root, host, port, open} = values;
-      enableNpmVersionResolution(false);
-      enableRemoteModulePreload(false);
       await import("../src/preview.js").then(async (preview) =>
         preview.preview({
           config: await readConfig(config, root),

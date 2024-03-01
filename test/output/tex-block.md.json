@@ -1,0 +1,69 @@
+{
+  "data": null,
+  "title": null,
+  "style": null,
+  "code": [
+    {
+      "id": "5ceee90d",
+      "node": {
+        "body": {
+          "type": "TaggedTemplateExpression",
+          "start": 0,
+          "end": 29,
+          "tag": {
+            "type": "MemberExpression",
+            "start": 0,
+            "end": 9,
+            "object": {
+              "type": "Identifier",
+              "start": 0,
+              "end": 3,
+              "name": "tex"
+            },
+            "property": {
+              "type": "Identifier",
+              "start": 4,
+              "end": 9,
+              "name": "block"
+            },
+            "computed": false,
+            "optional": false
+          },
+          "quasi": {
+            "type": "TemplateLiteral",
+            "start": 9,
+            "end": 29,
+            "expressions": [],
+            "quasis": [
+              {
+                "type": "TemplateElement",
+                "start": 10,
+                "end": 28,
+                "value": {
+                  "raw": "\\int_0^1 (x + y)dx",
+                  "cooked": "int_0^1 (x + y)dx"
+                },
+                "tail": true
+              }
+            ]
+          }
+        },
+        "declarations": null,
+        "references": [
+          {
+            "type": "Identifier",
+            "start": 0,
+            "end": 3,
+            "name": "tex"
+          }
+        ],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": false,
+        "inline": false,
+        "input": "tex.block`\\int_0^1 (x + y)dx`"
+      }
+    }
+  ]
+}

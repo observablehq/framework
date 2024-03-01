@@ -7,16 +7,9 @@ import {mockJsDelivr} from "../mocks/jsdelivr.js";
 
 const testHostRoot = "test/preview/dashboard";
 const testHostName = "127.0.0.1";
-const testPort = 3000;
-
-const testServerOptions: PreviewOptions = {
-  config: await normalizeConfig({root: testHostRoot}),
-  hostname: testHostName,
-  port: testPort,
-  verbose: false
-};
-
+const testPort = 3210; // avoid conflict with preview server
 const testServerUrl = `http://${testHostName}:${testPort}`;
+
 chai.use(chaiHttp);
 
 describe("preview server", () => {
@@ -25,6 +18,12 @@ describe("preview server", () => {
   mockJsDelivr();
 
   before(async () => {
+    const testServerOptions: PreviewOptions = {
+      config: await normalizeConfig({root: testHostRoot}),
+      hostname: testHostName,
+      port: testPort,
+      verbose: false
+    };
     testServer = (await preview(testServerOptions)).server;
   });
 

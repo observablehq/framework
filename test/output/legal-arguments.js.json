@@ -1,0 +1,70 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 44,
+    "body": [
+      {
+        "type": "FunctionDeclaration",
+        "start": 0,
+        "end": 43,
+        "id": {
+          "type": "Identifier",
+          "start": 9,
+          "end": 12,
+          "name": "foo"
+        },
+        "expression": false,
+        "generator": false,
+        "async": false,
+        "params": [],
+        "body": {
+          "type": "BlockStatement",
+          "start": 15,
+          "end": 43,
+          "body": [
+            {
+              "type": "ReturnStatement",
+              "start": 17,
+              "end": 41,
+              "argument": {
+                "type": "MemberExpression",
+                "start": 24,
+                "end": 40,
+                "object": {
+                  "type": "Identifier",
+                  "start": 24,
+                  "end": 33,
+                  "name": "arguments"
+                },
+                "property": {
+                  "type": "Identifier",
+                  "start": 34,
+                  "end": 40,
+                  "name": "length"
+                },
+                "computed": false,
+                "optional": false
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 9,
+      "end": 12,
+      "name": "foo"
+    }
+  ],
+  "references": [],
+  "files": [],
+  "imports": [],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

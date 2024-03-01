@@ -5,7 +5,7 @@ import type {Config} from "./config.js";
 import {visitMarkdownFiles} from "./files.js";
 import type {Logger} from "./logger.js";
 import {parseMarkdown} from "./markdown.js";
-import {faint} from "./tty.js";
+import {faint, strikethrough} from "./tty.js";
 
 // Avoid reindexing too often in preview.
 const indexCache = new WeakMap();
@@ -48,7 +48,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
     const listed = pagePaths.has(`/${file.slice(0, -3)}`);
     const indexed = data?.index === undefined ? listed : Boolean(data.index);
     if (!indexed) {
-      if (listed) effects.logger.log(`${faint("skip")} ${file}`);
+      if (listed) effects.logger.log(`${faint("index")} ${strikethrough(path)} ${faint("(skipped)")}`);
       continue;
     }
 
@@ -68,7 +68,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
       .replaceAll(/[\u0300-\u036f]/g, "")
       .replace(/[^\p{L}\p{N}]/gu, " "); // keep letters & numbers
 
-    effects.logger.log(`${faint("search indexing")} ${path}`);
+    effects.logger.log(`${faint("index")} ${path}`);
     index.add({id, title, text, keywords: normalizeKeywords(data?.keywords)});
   }
 

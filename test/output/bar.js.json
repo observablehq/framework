@@ -1,0 +1,64 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 26,
+    "body": [
+      {
+        "type": "VariableDeclaration",
+        "start": 0,
+        "end": 26,
+        "declarations": [
+          {
+            "type": "VariableDeclarator",
+            "start": 6,
+            "end": 25,
+            "id": {
+              "type": "Identifier",
+              "start": 6,
+              "end": 9,
+              "name": "bar"
+            },
+            "init": {
+              "type": "CallExpression",
+              "start": 12,
+              "end": 25,
+              "callee": {
+                "type": "Identifier",
+                "start": 12,
+                "end": 18,
+                "name": "Symbol"
+              },
+              "arguments": [
+                {
+                  "type": "Literal",
+                  "start": 19,
+                  "end": 24,
+                  "value": "bar",
+                  "raw": "\"bar\""
+                }
+              ],
+              "optional": false
+            }
+          }
+        ],
+        "kind": "const"
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 6,
+      "end": 9,
+      "name": "bar"
+    }
+  ],
+  "references": [],
+  "files": [],
+  "imports": [],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

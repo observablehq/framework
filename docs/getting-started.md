@@ -303,7 +303,7 @@ async function json(url) {
 const station = await json(`https://api.weather.gov/points/&dollar;{latitude},&dollar;{longitude}`);
 const forecast = await json(station.properties.forecastHourly);
 
-process.stdout.write(JSON.stringify(forecast));</pre>
+process.stdout.write(JSON.stringify(forecast));</code></pre>
 
 ```js
 const location = view(Locator([-122.47, 37.8]));

@@ -2,8 +2,6 @@
 
 Markdown in Observable Framework follows the [CommonMark spec](https://spec.commonmark.org/) and is powered by [markdown-it](https://github.com/markdown-it/markdown-it).  We also feature [live JavaScript](./javascript) as either [fenced code blocks](./javascript#fenced-code-blocks) (<code>```js</code>) or [inline expressions](./javascript#inline-expressions) (<code>$\{…}</code>), and [HTML in Markdown](#html), and [front matter](#front-matter) for page-level configuration. If you don’t already know Markdown, please see [GitHub’s guide to Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) for an introduction.
 
-<div class="note">Observable Framework currently deviates from CommonMark in how blank lines are handled in HTML; see below. This is a limitation of our parser needed for incremental update during preview.</div>
-
 Here are a few examples of Markdown content to get you started.
 
 ## Front matter
@@ -97,12 +95,12 @@ Cell 1-2   |   Cell 2-2   |    Cell 3-2
 
 You can write HTML directly into Markdown. HTML is useful for greater control over layout, say to use CSS grid for a responsive bento box layout in a dashboard, or adding an external stylesheet via a link element. For example, here is an HTML details element:
 
-````html run=false
+```html run=false
 <details>
   <summary>Click me</summary>
   This text is not visible by default.
 </details>
-````
+```
 
 This produces:
 
@@ -110,31 +108,5 @@ This produces:
   <summary>Click me</summary>
   This text is not visible by default.
 </details>
-
-In Markdown, blank lines denote separate HTML blocks; be sure to avoid blank lines if you want to treat a chunk of HTML as a single block. For example, write this:
-
-```md
-<!-- 👍 one HTML block -->
-<ul>
-  <li>one</li>
-  <li>two</li>
-  <li>three</li>
-</ul>
-```
-
-Don’t write this:
-
-```md
-<!-- 👎 three HTML blocks -->
-<ul>
-
-  <li>one</li>
-  <li>two</li>
-  <li>three</li>
-
-</ul>
-```
-
-In the latter case, the li elements become top-level and wrapped in a span, rather than children of the ul.
 
 Also see [Hypertext Literal](./lib/htl) for generating dynamic HTML in JavaScript.

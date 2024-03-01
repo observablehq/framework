@@ -1,0 +1,56 @@
+{
+  "data": null,
+  "title": null,
+  "style": null,
+  "code": [
+    {
+      "id": "391a3a26",
+      "node": {
+        "body": {
+          "type": "TaggedTemplateExpression",
+          "start": 0,
+          "end": 147,
+          "tag": {
+            "type": "Identifier",
+            "start": 0,
+            "end": 3,
+            "name": "dot"
+          },
+          "quasi": {
+            "type": "TemplateLiteral",
+            "start": 3,
+            "end": 147,
+            "expressions": [],
+            "quasis": [
+              {
+                "type": "TemplateElement",
+                "start": 4,
+                "end": 146,
+                "value": {
+                  "raw": "digraph D {\n\n  A [shape=diamond]\n  B [shape=box]\n  C [shape=circle]\n\n  A -> B [style=dashed]\n  A -> C\n  A -> D [penwidth=5, arrowhead=none]\n\n}",
+                  "cooked": "digraph D {\n\n  A [shape=diamond]\n  B [shape=box]\n  C [shape=circle]\n\n  A -> B [style=dashed]\n  A -> C\n  A -> D [penwidth=5, arrowhead=none]\n\n}"
+                },
+                "tail": true
+              }
+            ]
+          }
+        },
+        "declarations": null,
+        "references": [
+          {
+            "type": "Identifier",
+            "start": 0,
+            "end": 3,
+            "name": "dot"
+          }
+        ],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": false,
+        "inline": false,
+        "input": "dot`digraph D {\n\n  A [shape=diamond]\n  B [shape=box]\n  C [shape=circle]\n\n  A -> B [style=dashed]\n  A -> C\n  A -> D [penwidth=5, arrowhead=none]\n\n}`"
+      }
+    }
+  ]
+}

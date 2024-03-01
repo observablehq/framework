@@ -122,6 +122,7 @@ export interface Page {
   path: string;
 }
 ```
+
 ```ts run=false
 export interface Section {
   name: string;
@@ -151,6 +152,16 @@ An HTML fragment to add to the header. Defaults to the empty string.
 ## footer
 
 An HTML fragment to add to the footer. Defaults to “Built with Observable.”
+
+## scripts
+
+Additional scripts to add to the head, such as for analytics. Unlike the **head** option, this allows you to reference a local script in the source root.
+
+```js run=false
+export default {
+  scripts: [{type: "module", async: true, src: "analytics.js"}]
+};
+```
 
 ## base
 
