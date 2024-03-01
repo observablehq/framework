@@ -378,6 +378,9 @@ class DeployBuildEffects implements BuildEffects {
       throw error;
     }
   }
+  async fileExists(): Promise<boolean> {
+    return false;
+  }
 }
 
 // export for testing

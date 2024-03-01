@@ -1,3 +1,4 @@
+import {basename} from "path";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
 import {type CallExpression} from "acorn";
 import {simple} from "acorn-walk";
@@ -5,12 +6,14 @@ import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
+import type {BuildEffects} from "./build.js";
 import {getClientPath} from "./files.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
 import {isPathImport, resolveNpmImport} from "./javascript/imports.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
 import {Sourcemap} from "./sourcemap.js";
 import {THEMES, renderTheme} from "./theme.js";
+import {faint} from "./tty.js";
 import {relativeUrl} from "./url.js";
 
 const STYLE_MODULES = {
@@ -25,15 +28,39 @@ function rewriteInputsNamespace(code: string) {
   return code.replace(/\b__ns__\b/g, "inputs-3a86ea");
 }
 
-export async function bundleStyles({path, theme}: {path?: string; theme?: string[]}): Promise<string> {
-  const result = await build({
-    bundle: true,
-    ...(path ? {entryPoints: [path]} : {stdin: {contents: renderTheme(theme!), loader: "css"}}),
-    write: false,
-    alias: STYLE_MODULES
-  });
-  const text = result.outputFiles[0].text;
-  return rewriteInputsNamespace(text); // TODO only for inputs
+type AssetReference = {path: string; contents: Uint8Array};
+
+const INLINE_CSS = Object.fromEntries(
+  ["svg", "png", "jpeg", "jpg", "gif", "eot", "otf", "woff", "woff2"].map((ext) => [`.${ext}`, "file" as const])
+);
+
+export async function bundleStyles({
+  path,
+  theme
+}: {
+  path?: string;
+  theme?: string[];
+}): Promise<{text: string; files: AssetReference[]}> {
+  try {
+    const result = await build({
+      bundle: true,
+      loader: INLINE_CSS,
+      ...(path ? {entryPoints: [path]} : {stdin: {contents: renderTheme(theme!), loader: "css"}}),
+      write: false,
+      outdir: "/_import",
+      assetNames: "assets/[name].[hash]",
+      alias: STYLE_MODULES,
+      logLevel: "silent"
+    });
+    const {text} = result.outputFiles.at(-1)!;
+    return {
+      text: path === "src/client/stdlib/inputs.css" ? rewriteInputsNamespace(text) : text,
+      files: result.outputFiles.slice(0, -1).map(({path, contents}) => ({path: path.slice(1), contents}))
+    };
+  } catch (error: any) {
+    const err = error?.errors?.[0]?.location;
+    throw new Error(err ? `Error bundling ${err.file} line ${err.line}:\n${err.lineText}` : "Bundler error.");
+  }
 }
 
 export async function rollupClient(clientPath: string, {minify = false} = {}): Promise<string> {
@@ -153,4 +180,13 @@ function importMetaResolve(): Plugin {
       return {code: String(output)};
     }
   };
+}
+
+export async function saveCssAssets(files: AssetReference[], effects: BuildEffects): Promise<void> {
+  for (const {path, contents} of files) {
+    if (!(await effects.fileExists(path))) {
+      effects.output.write(`${faint("asset")} ${basename(path)} ${faint("→")} `);
+      await effects.writeFile(path, contents);
+    }
+  }
 }
