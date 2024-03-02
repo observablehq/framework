@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import {existsSync, readdirSync, statSync} from "node:fs";
 import {open, readFile, rm} from "node:fs/promises";
+import os from "node:os";
 import {join, normalize, relative} from "node:path/posix";
 import {difference} from "d3-array";
 import {FileBuildEffects, build} from "../src/build.js";
@@ -25,7 +26,13 @@ describe("build", async () => {
     const only = name.startsWith("only.");
     const skip = name.startsWith("skip.");
     const outname = only || skip ? name.slice(5) : name;
-    (only ? it.only : skip ? it.skip : it)(`${inputRoot}/${name}`, async () => {
+    (only
+      ? it.only
+      : skip ||
+        (name.endsWith(".posix") && os.platform() === "win32") ||
+        (name.endsWith(".win32") && os.platform() !== "win32")
+      ? it.skip
+      : it)(`${inputRoot}/${name}`, async () => {
       const actualDir = join(outputRoot, `${outname}-changed`);
       const expectedDir = join(outputRoot, outname);
       const generate = !existsSync(expectedDir) && process.env.CI !== "true";

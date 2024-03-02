@@ -124,7 +124,7 @@ function importResolve(input: string, root: string, path: string): Plugin {
       ? {id: relativePath(path, "/_observablehq/stdlib/zip.js"), external: true} // TODO publish to npm
       : specifier.startsWith("npm:")
       ? {id: relativePath(path, await resolveNpmImport(root, specifier.slice("npm:".length))), external: true}
-      : !isPathImport(specifier) && !BUNDLED_MODULES.includes(specifier) // e.g., inputs.js imports "htl"
+      : !/^[a-z]:\\/i.test(specifier) && !isPathImport(specifier) && !BUNDLED_MODULES.includes(specifier) // e.g., inputs.js imports "htl"
       ? {id: relativePath(path, await resolveNpmImport(root, specifier)), external: true}
       : null;
   }
