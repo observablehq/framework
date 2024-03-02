@@ -64,11 +64,11 @@ export async function convert(
           if (await maybeFetch(path, force, effects)) {
             start = Date.now();
             s = clack.spinner();
-            s.start(`Downloading ${bold(file.name)}`);
+            s.start(`Downloading ${bold(path)}`);
             const response = await fetch(file.download_url);
             if (!response.ok) throw new Error(`error fetching ${file.download_url}: ${response.status}`);
             const buffer = Buffer.from(await response.arrayBuffer());
-            s.stop(`Downloaded ${bold(file.name)} ${faint(`in ${(Date.now() - start).toLocaleString("en-US")}ms`)}`);
+            s.stop(`Downloaded ${bold(path)} ${faint(`in ${(Date.now() - start).toLocaleString("en-US")}ms`)}`);
             await effects.prepareOutput(path);
             await effects.writeFile(path, buffer);
             await effects.touch(path, file.create_time);
