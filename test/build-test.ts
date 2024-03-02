@@ -108,5 +108,5 @@ class TestEffects extends FileBuildEffects {
 }
 
 async function isEmpty(path: string): Promise<boolean> {
-  return !(await visitFiles(path).next()).done;
+  return !!(await visitFiles(path).next()).done;
 }
