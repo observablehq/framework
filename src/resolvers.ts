@@ -3,13 +3,13 @@ import {extname, join} from "node:path/posix";
 import {findAssets} from "./html.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js";
+import {resolveJsrImport} from "./jsr.js";
 import {getImplicitDependencies, getImplicitDownloads} from "./libraries.js";
 import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
 import {getImplicitStylesheets} from "./libraries.js";
 import type {MarkdownPage} from "./markdown.js";
 import {populateNpmCache, resolveNpmImport, resolveNpmImports, resolveNpmSpecifier} from "./npm.js";
 import {isPathImport, relativePath, resolvePath} from "./path.js";
-import { resolveJsrImport } from "./jsr.js";
 
 export interface Resolvers {
   hash: string;
@@ -201,27 +201,25 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   }
 
   // Add implicit stylesheets.
+  // TODO Add jsr: here as needed?
   for (const specifier of getImplicitStylesheets(staticImports)) {
     stylesheets.add(specifier);
     if (specifier.startsWith("npm:")) {
       const path = await resolveNpmImport(root, specifier.slice("npm:".length));
       resolutions.set(specifier, path);
       await populateNpmCache(root, path);
-    } else if (specifier.startsWith("jsr:")) {
-      // TODO jsr:
     }
   }
 
   // Add implicit downloads. (This should be maybe be stored separately rather
   // than being tossed into global imports, but it works for now.)
+  // TODO Add jsr: here as needed?
   for (const specifier of getImplicitDownloads(globalImports)) {
     globalImports.add(specifier);
     if (specifier.startsWith("npm:")) {
       const path = await resolveNpmImport(root, specifier.slice("npm:".length));
       resolutions.set(specifier, path);
       await populateNpmCache(root, path);
-    } else if (specifier.startsWith("jsr:")) {
-      // TODO jsr:
     }
   }
 
