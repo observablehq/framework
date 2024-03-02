@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import {readFile} from "node:fs/promises";
 import {type CreateEffects, create} from "../src/create.js";
+import {fromOsPath} from "../src/files.js";
 import {TestClackEffects} from "./mocks/clack.js";
 
 describe("create", async () => {
@@ -60,9 +61,9 @@ class TestCreateEffects implements CreateEffects {
   log(): void {}
   async mkdir(): Promise<void> {} // TODO test?
   async copyFile(sourcePath: string, outputPath: string): Promise<void> {
-    this.outputs.set(outputPath, await readFile(sourcePath, "utf-8"));
+    this.outputs.set(fromOsPath(outputPath), await readFile(sourcePath, "utf-8"));
   }
   async writeFile(outputPath: string, contents: string): Promise<void> {
-    this.outputs.set(outputPath, contents);
+    this.outputs.set(fromOsPath(outputPath), contents);
   }
 }

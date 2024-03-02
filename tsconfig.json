@@ -8,6 +8,9 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
+    "paths": {
+      "observablehq:search": ["./src/client/search.js"]
+    }
   },
   "include": ["src/**/*", "docs/**/*", "test/**/*"]
 }

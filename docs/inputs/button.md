@@ -2,7 +2,7 @@
 
 <a href="https://github.com/observablehq/inputs/blob/main/README.md#button" target="_blank">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/button.js" target="_blank">Source</a> · The button input emits an *input* event when you click it. Buttons may be used to trigger the evaluation of cells, say to restart an animation. For example, below is an animation that progressively hides a bar. Clicking the button will restart the animation.
 
-<canvas id="canvas" width="360" height="20" style="max-width: 100%; color: var(--theme-foreground-focus); border: solid 1px var(--theme-foreground);">
+<canvas id="canvas" width="360" height="20" style="max-width: 100%; color: var(--theme-foreground-focus); border: solid 1px var(--theme-foreground);"></canvas>
 
 ```js echo
 const replay = view(Inputs.button("Replay"));

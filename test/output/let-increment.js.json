@@ -1,0 +1,86 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 21,
+    "body": [
+      {
+        "type": "VariableDeclaration",
+        "start": 0,
+        "end": 10,
+        "declarations": [
+          {
+            "type": "VariableDeclarator",
+            "start": 4,
+            "end": 9,
+            "id": {
+              "type": "Identifier",
+              "start": 4,
+              "end": 5,
+              "name": "x"
+            },
+            "init": {
+              "type": "Literal",
+              "start": 8,
+              "end": 9,
+              "value": 0,
+              "raw": "0"
+            }
+          }
+        ],
+        "kind": "let"
+      },
+      {
+        "type": "ExpressionStatement",
+        "start": 11,
+        "end": 15,
+        "expression": {
+          "type": "UpdateExpression",
+          "start": 11,
+          "end": 14,
+          "operator": "++",
+          "prefix": true,
+          "argument": {
+            "type": "Identifier",
+            "start": 13,
+            "end": 14,
+            "name": "x"
+          }
+        }
+      },
+      {
+        "type": "ExpressionStatement",
+        "start": 16,
+        "end": 20,
+        "expression": {
+          "type": "UpdateExpression",
+          "start": 16,
+          "end": 19,
+          "operator": "++",
+          "prefix": false,
+          "argument": {
+            "type": "Identifier",
+            "start": 16,
+            "end": 17,
+            "name": "x"
+          }
+        }
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 4,
+      "end": 5,
+      "name": "x"
+    }
+  ],
+  "references": [],
+  "files": [],
+  "imports": [],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

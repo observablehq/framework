@@ -1,0 +1,105 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 38,
+    "body": [
+      {
+        "type": "VariableDeclaration",
+        "start": 0,
+        "end": 13,
+        "declarations": [
+          {
+            "type": "VariableDeclarator",
+            "start": 4,
+            "end": 12,
+            "id": {
+              "type": "Identifier",
+              "start": 4,
+              "end": 5,
+              "name": "a"
+            },
+            "init": {
+              "type": "Literal",
+              "start": 8,
+              "end": 12,
+              "value": null,
+              "raw": "null"
+            }
+          }
+        ],
+        "kind": "let"
+      },
+      {
+        "type": "VariableDeclaration",
+        "start": 14,
+        "end": 28,
+        "declarations": [
+          {
+            "type": "VariableDeclarator",
+            "start": 18,
+            "end": 27,
+            "id": {
+              "type": "Identifier",
+              "start": 18,
+              "end": 19,
+              "name": "b"
+            },
+            "init": {
+              "type": "Literal",
+              "start": 22,
+              "end": 27,
+              "value": false,
+              "raw": "false"
+            }
+          }
+        ],
+        "kind": "let"
+      },
+      {
+        "type": "ExpressionStatement",
+        "start": 29,
+        "end": 37,
+        "expression": {
+          "type": "AssignmentExpression",
+          "start": 29,
+          "end": 36,
+          "operator": "||=",
+          "left": {
+            "type": "Identifier",
+            "start": 29,
+            "end": 30,
+            "name": "a"
+          },
+          "right": {
+            "type": "Identifier",
+            "start": 35,
+            "end": 36,
+            "name": "b"
+          }
+        }
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 4,
+      "end": 5,
+      "name": "a"
+    },
+    {
+      "type": "Identifier",
+      "start": 18,
+      "end": 19,
+      "name": "b"
+    }
+  ],
+  "references": [],
+  "files": [],
+  "imports": [],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

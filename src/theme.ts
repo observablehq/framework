@@ -46,6 +46,8 @@ export function findTheme(name: string): Theme | undefined {
   return THEMES.find((t) => t.name === name);
 }
 
+export class InvalidThemeError extends Error {}
+
 export function resolveTheme(names: string[]): string[] {
   if (!names.length) return []; // preserve explicitly empty theme
   const themes: Theme[] = [];
@@ -75,7 +77,7 @@ export function resolveTheme(names: string[]): string[] {
       }
       default: {
         const theme = findTheme(name);
-        if (!theme) throw new Error(`unknown theme: ${name}`);
+        if (!theme) throw new InvalidThemeError(`unknown theme: ${name}`);
         themes.push(theme);
         break;
       }

@@ -1,4 +1,4 @@
-import {join} from "node:path";
+import {join} from "node:path/posix";
 import * as clack from "@clack/prompts";
 import wrapAnsi from "wrap-ansi";
 import type {BuildEffects} from "./build.js";
@@ -8,7 +8,13 @@ import {commandRequiresAuthenticationMessage} from "./commandInstruction.js";
 import type {Config} from "./config.js";
 import {CliError, isApiError, isHttpError} from "./error.js";
 import type {Logger, Writer} from "./logger.js";
-import {type AuthEffects, defaultEffects as defaultAuthEffects, formatUser, loginInner} from "./observableApiAuth.js";
+import {
+  type AuthEffects,
+  defaultEffects as defaultAuthEffects,
+  formatUser,
+  loginInner,
+  validWorkspaces
+} from "./observableApiAuth.js";
 import {ObservableApiClient} from "./observableApiClient.js";
 import {
   type GetCurrentUserResponse,
@@ -104,12 +110,9 @@ export async function deploy(
   let authError: null | "unauthenticated" | "forbidden" = null;
   try {
     if (apiKey) {
-      const invalidTiers = new Set(["basic", "enterprise", "public", "pro", "pro_enterprise"]);
       currentUser = await apiClient.getCurrentUser();
       // List of valid workspaces that can be used to create projects.
-      currentUser.workspaces = currentUser.workspaces.filter(
-        (w) => (w.role === "owner" || w.role === "member") && !invalidTiers.has(w.tier)
-      );
+      currentUser = {...currentUser, workspaces: validWorkspaces(currentUser.workspaces)};
     }
   } catch (error) {
     if (isHttpError(error)) {
@@ -349,9 +352,10 @@ class DeployBuildEffects implements BuildEffects {
     this.output = effects.output;
   }
   async copyFile(sourcePath: string, outputPath: string) {
-    this.logger.log(outputPath);
+    const relativePath = outputPath.replace(/^\//, "");
+    this.logger.log(relativePath);
     try {
-      await this.apiClient.postDeployFile(this.deployId, sourcePath, outputPath);
+      await this.apiClient.postDeployFile(this.deployId, sourcePath, relativePath);
     } catch (error) {
       if (isApiError(error) && error.details.errors.some((e) => e.code === "FILE_QUOTA_EXCEEDED")) {
         throw new CliError("You have reached the total file size limit.", {cause: error});
@@ -365,9 +369,10 @@ class DeployBuildEffects implements BuildEffects {
     }
   }
   async writeFile(outputPath: string, content: Buffer | string) {
-    this.logger.log(outputPath);
+    const relativePath = outputPath.replace(/^\//, "");
+    this.logger.log(relativePath);
     try {
-      await this.apiClient.postDeployFileContents(this.deployId, content, outputPath);
+      await this.apiClient.postDeployFileContents(this.deployId, content, relativePath);
     } catch (error) {
       if (isApiError(error) && error.details.errors.some((e) => e.code === "FILE_QUOTA_EXCEEDED")) {
         throw new CliError("You have reached the total file size limit.", {cause: error});

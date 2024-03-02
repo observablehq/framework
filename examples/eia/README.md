@@ -36,7 +36,7 @@ Several static files used in the dashboard were downloaded from the EIA Hourly E
 
 ## Charts
 
-The charts and map are drawn with [Observable Plot](https://observablehq/com/plot), and saved as components in `components/charts.js` and `components/map.js` to simplify our layout code in `index.md`. 
+The charts and map are drawn with [Observable Plot](https://observablehq.com/plot/), and saved as components in `components/charts.js` and `components/map.js` to simplify our layout code in `index.md`. 
 
 ## Thanks
 

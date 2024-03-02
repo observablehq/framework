@@ -1,0 +1,22 @@
+{
+  "body": {
+    "type": "ClassExpression",
+    "start": 0,
+    "end": 8,
+    "id": null,
+    "superClass": null,
+    "body": {
+      "type": "ClassBody",
+      "start": 6,
+      "end": 8,
+      "body": []
+    }
+  },
+  "declarations": null,
+  "references": [],
+  "files": [],
+  "imports": [],
+  "expression": true,
+  "async": false,
+  "inline": false
+}

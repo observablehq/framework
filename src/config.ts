@@ -1,9 +1,12 @@
-import {basename, dirname, join} from "node:path";
+import op from "node:path";
+import {basename, dirname, join} from "node:path/posix";
+import {cwd} from "node:process";
+import {pathToFileURL} from "node:url";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import {parseMarkdown} from "./markdown.js";
+import {resolvePath} from "./path.js";
 import {resolveTheme} from "./theme.js";
-import {resolvePath} from "./url.js";
 
 export interface Page {
   name: string;
@@ -51,7 +54,7 @@ export interface Config {
 
 export async function readConfig(configPath?: string, root?: string): Promise<Config> {
   if (configPath === undefined) return readDefaultConfig(root);
-  const importPath = join(process.cwd(), root ?? ".", configPath);
+  const importPath = pathToFileURL(op.join(cwd(), root ?? ".", configPath)).toString();
   return normalizeConfig((await import(importPath)).default, root);
 }
 
@@ -72,6 +75,7 @@ async function readPages(root: string): Promise<Page[]> {
   for await (const file of visitMarkdownFiles(root)) {
     if (file === "index.md" || file === "404.md") continue;
     const parsed = await parseMarkdown(join(root, file), {root, path: file});
+    if (parsed?.data?.draft) continue;
     const name = basename(file, ".md");
     const page = {path: join("/", dirname(file), name), name: parsed.title ?? "Untitled"};
     if (name === "index") pages.unshift(page);
@@ -184,6 +188,6 @@ export function mergeStyle(path: string, style: any, theme: any, defaultStyle: n
     : style === null
     ? null // disable
     : style !== undefined
-    ? {path: resolvePath(path, style)}
+    ? {path: resolvePath(path, String(style))}
     : {theme: normalizeTheme(theme)};
 }

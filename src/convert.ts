@@ -1,6 +1,6 @@
 import {existsSync} from "node:fs";
 import {utimes, writeFile} from "node:fs/promises";
-import {join} from "node:path";
+import {join} from "node:path/posix";
 import * as clack from "@clack/prompts";
 import wrapAnsi from "wrap-ansi";
 import type {ClackEffects} from "./clack.js";

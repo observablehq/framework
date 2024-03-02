@@ -6,6 +6,6 @@ docs/themes.md
 docs/theme/*.md
 dist/
 node_modules/
-test/output/*-changed.*
-test/output/build/*-changed/
+test/output/**/*-changed.*
+test/output/build/**/*-changed/
 yarn-error.log

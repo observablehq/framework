@@ -1,0 +1,61 @@
+{
+  "data": null,
+  "title": null,
+  "style": null,
+  "code": [
+    {
+      "id": "1ffa6d4f",
+      "node": {
+        "body": {
+          "type": "AwaitExpression",
+          "start": 0,
+          "end": 68,
+          "argument": {
+            "type": "TaggedTemplateExpression",
+            "start": 6,
+            "end": 68,
+            "tag": {
+              "type": "Identifier",
+              "start": 6,
+              "end": 13,
+              "name": "mermaid"
+            },
+            "quasi": {
+              "type": "TemplateLiteral",
+              "start": 13,
+              "end": 68,
+              "expressions": [],
+              "quasis": [
+                {
+                  "type": "TemplateElement",
+                  "start": 14,
+                  "end": 67,
+                  "value": {
+                    "raw": "graph TD;\n    A-->B;\n    A-->C;\n    B-->D;\n    C-->D;",
+                    "cooked": "graph TD;\n    A-->B;\n    A-->C;\n    B-->D;\n    C-->D;"
+                  },
+                  "tail": true
+                }
+              ]
+            }
+          }
+        },
+        "declarations": null,
+        "references": [
+          {
+            "type": "Identifier",
+            "start": 6,
+            "end": 13,
+            "name": "mermaid"
+          }
+        ],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": true,
+        "inline": false,
+        "input": "await mermaid`graph TD;\n    A-->B;\n    A-->C;\n    B-->D;\n    C-->D;`"
+      }
+    }
+  ]
+}
