@@ -28,7 +28,7 @@
     "rebuild-themes": "rimraf --glob docs/themes.md docs/theme/*.md && tsx docs/theme/generate-themes.ts",
     "test": "concurrently npm:test:mocha npm:test:tsc npm:test:lint npm:test:prettier",
     "test:coverage": "c8 yarn test:mocha",
-    "test:mocha": "rimraf --glob test/.observablehq/cache test/input/build/*/.observablehq/cache && cross-env OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles tsx --no-warnings=ExperimentalWarning ./node_modules/mocha/bin/mocha.js 'test/**/*-test.*'",
+    "test:mocha": "rimraf --glob test/.observablehq/cache test/input/build/*/.observablehq/cache && cross-env OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles tsx --no-warnings=ExperimentalWarning ./node_modules/mocha/bin/mocha.js -p 'test/**/*-test.*'",
     "test:lint": "eslint src test --max-warnings=0",
     "test:prettier": "prettier --check src test",
     "test:tsc": "tsc --noEmit",
