@@ -422,6 +422,35 @@
   align-items: center;
 }
 
+.observablehq-pre-copied::before {
+  content: "Copied!";
+  position: absolute;
+  right: calc(100% + 0.25rem);
+  background: var(--theme-background-alt);
+  color: var(--theme-green);
+  font: var(--font-small);
+  border-radius: 4px;
+  padding: 4px 8px;
+  pointer-events: none;
+  animation-name: observablehq-pre-copied;
+  animation-duration: 250ms;
+  animation-direction: alternate;
+  animation-iteration-count: 2;
+}
+
+@keyframes observablehq-pre-copied {
+  0% {
+    opacity: 0;
+    transform: translateX(0.5rem);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
 .observablehq-pre-container[data-copy] .observablehq-pre-copy,
 .observablehq-pre-container:hover .observablehq-pre-copy,
 .observablehq-pre-container .observablehq-pre-copy:focus {
