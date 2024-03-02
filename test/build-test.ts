@@ -1,7 +1,8 @@
 import assert from "node:assert";
 import {existsSync, readdirSync, statSync} from "node:fs";
 import {open, readFile, rm} from "node:fs/promises";
-import {join, normalize, relative} from "node:path";
+import os from "node:os";
+import {join, normalize, relative} from "node:path/posix";
 import {difference} from "d3-array";
 import {FileBuildEffects, build} from "../src/build.js";
 import {readConfig, setCurrentDate} from "../src/config.js";
@@ -12,7 +13,7 @@ const silentEffects = {
   output: {write() {}}
 };
 
-describe("build", async () => {
+describe("build", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   mockJsDelivr();
 
@@ -22,10 +23,17 @@ describe("build", async () => {
   for (const name of readdirSync(inputRoot)) {
     const path = join(inputRoot, name);
     if (!statSync(path).isDirectory()) continue;
+    if (isEmpty(path)) continue;
     const only = name.startsWith("only.");
     const skip = name.startsWith("skip.");
     const outname = only || skip ? name.slice(5) : name;
-    (only ? it.only : skip ? it.skip : it)(`${inputRoot}/${name}`, async () => {
+    (only
+      ? it.only
+      : skip ||
+        (name.endsWith(".posix") && os.platform() === "win32") ||
+        (name.endsWith(".win32") && os.platform() !== "win32")
+      ? it.skip
+      : it)(`${inputRoot}/${name}`, async () => {
       const actualDir = join(outputRoot, `${outname}-changed`);
       const expectedDir = join(outputRoot, outname);
       const generate = !existsSync(expectedDir) && process.env.CI !== "true";
@@ -96,4 +104,12 @@ class TestEffects extends FileBuildEffects {
     }
     return super.writeFile(outputPath, contents);
   }
+}
+
+function isEmpty(path: string): boolean {
+  for (const f of readdirSync(path, {recursive: true, withFileTypes: true})) {
+    if (f.isDirectory() || f.name === ".DS_Store") continue;
+    return false;
+  }
+  return true;
 }

@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import {readdirSync, statSync} from "node:fs";
 import {mkdir, readFile, unlink, writeFile} from "node:fs/promises";
-import {basename, join, resolve} from "node:path";
+import {basename, join, resolve} from "node:path/posix";
 import deepEqual from "fast-deep-equal";
 import {isEnoent} from "../src/error.js";
 import type {MarkdownPage} from "../src/markdown.js";

@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import {stat} from "node:fs/promises";
+import os from "node:os";
 import {getClientPath, maybeStat, prepareOutput, visitFiles, visitMarkdownFiles} from "../src/files.js";
 
 describe("getClientPath(entry)", () => {
@@ -54,7 +55,8 @@ describe("visitFiles(root)", () => {
       "subsection/subfiles.md"
     ]);
   });
-  it("handles circular symlinks, visiting files only once", async () => {
+  it("handles circular symlinks, visiting files only once", async function () {
+    if (os.platform() === "win32") this.skip(); // symlinks are not the same on Windows
     assert.deepStrictEqual(await collect(visitFiles("test/input/circular-files")), ["a/a.txt", "b/b.txt"]);
   });
 });

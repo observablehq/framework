@@ -1,4 +1,4 @@
-import {basename, join} from "node:path";
+import {basename, join} from "node:path/posix";
 import he from "he";
 import MiniSearch from "minisearch";
 import type {Config} from "./config.js";

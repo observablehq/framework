@@ -1,6 +1,6 @@
 import {existsSync} from "node:fs";
 import {mkdir, readFile, readdir, writeFile} from "node:fs/promises";
-import {dirname, join} from "node:path";
+import {dirname, join} from "node:path/posix";
 import type {CallExpression} from "acorn";
 import {Parser} from "acorn";
 import {simple} from "acorn-walk";
