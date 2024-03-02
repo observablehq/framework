@@ -277,7 +277,7 @@ a[href].observablehq-header-anchor {
   color: var(--theme-foreground-muted);
 }
 
-.observablehq--draft > :first-child::before {
-  content: "[DRAFT] ";
+.observablehq--draft > h1:first-of-type::after {
+  content: " [DRAFT]";
   color: var(--theme-foreground-muted);
 }
