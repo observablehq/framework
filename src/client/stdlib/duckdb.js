@@ -42,6 +42,11 @@ const bundle = await duckdb.selectBundle({
 
 const logger = new duckdb.ConsoleLogger();
 
+export async function sql(strings, ...args) {
+  const db = await DuckDBClient.of();
+  return await db.query(strings.join("?"), args);
+}
+
 export class DuckDBClient {
   constructor(db) {
     Object.defineProperties(this, {

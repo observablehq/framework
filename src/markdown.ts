@@ -48,13 +48,15 @@ function isFalse(attribute: string | undefined): boolean {
   return attribute?.toLowerCase() === "false";
 }
 
-function getLiveSource(content: string, tag: string): string | undefined {
+function getLiveSource(content: string, tag: string, attributes: Record<string, string>): string | undefined {
   return tag === "js"
     ? content
     : tag === "tex"
     ? transpileTag(content, "tex.block", true)
     : tag === "html"
     ? transpileTag(content, "html.fragment", true)
+    : tag === "sql"
+    ? `${attributes.id ? `const ${attributes.id} = ` : ""}${transpileTag(content, "sql", true)}` // TODO parse id
     : tag === "svg"
     ? transpileTag(content, "svg.fragment", true)
     : tag === "dot"
@@ -88,9 +90,9 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
     const {tag, attributes} = parseInfo(token.info);
     token.info = tag;
     let html = "";
-    const source = isFalse(attributes.run) ? undefined : getLiveSource(token.content, tag);
+    const source = isFalse(attributes.run) ? undefined : getLiveSource(token.content, tag, attributes);
     if (source != null) {
-      const id = uniqueCodeId(context, token.content);
+      const id = uniqueCodeId(context, source);
       try {
         // TODO const sourceLine = context.startLine + context.currentLine;
         const node = parseJavaScript(source, {path: sourcePath});
