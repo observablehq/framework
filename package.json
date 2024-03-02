@@ -29,6 +29,7 @@
     "test": "concurrently npm:test:mocha npm:test:tsc npm:test:lint npm:test:prettier",
     "test:coverage": "c8 yarn test:mocha",
     "test:mocha": "rimraf --glob test/.observablehq/cache test/input/build/*/.observablehq/cache && cross-env OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles tsx --no-warnings=ExperimentalWarning ./node_modules/mocha/bin/mocha.js -p 'test/**/*-test.*'",
+    "test:mocha:serial": "rimraf --glob test/.observablehq/cache test/input/build/*/.observablehq/cache && cross-env OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles tsx --no-warnings=ExperimentalWarning ./node_modules/mocha/bin/mocha.js 'test/**/*-test.*'",
     "test:lint": "eslint src test --max-warnings=0",
     "test:prettier": "prettier --check src test",
     "test:tsc": "tsc --noEmit",
@@ -108,6 +109,7 @@
     "mocha": "^10.2.0",
     "prettier": "^3.0.3 <3.1",
     "rimraf": "^5.0.5",
+    "tempy": "^3.1.0",
     "typescript": "^5.2.2",
     "undici": "^5.27.2"
   },
