@@ -17,7 +17,7 @@ export function fromOsPath(path: string): string {
 
 /**
  * Returns the relative path from the current working directory to the given
- * Framework source file, such as "./src/client/search.js". This is typigit pucally
+ * Framework source file, such as "./src/client/search.js". This is typically
  * used to rollup JavaScript and style bundles for built-in modules.
  */
 export function getClientPath(entry: string): string {
