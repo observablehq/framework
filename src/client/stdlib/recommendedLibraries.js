@@ -5,7 +5,7 @@ export const d3 = () => import("npm:d3");
 export const dot = () => import("observablehq:stdlib/dot").then((dot) => dot.default);
 export const duckdb = () => import("npm:@duckdb/duckdb-wasm");
 export const DuckDBClient = () => import("observablehq:stdlib/duckdb").then((duckdb) => duckdb.DuckDBClient);
-export const echarts = () => import("npm:echarts/dist/echarts.esm.js");
+export const echarts = () => import("npm:echarts/dist/echarts.esm.min.js");
 export const htl = () => import("npm:htl");
 export const html = () => import("npm:htl").then((htl) => htl.html);
 export const svg = () => import("npm:htl").then((htl) => htl.svg);

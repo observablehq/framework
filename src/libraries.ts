@@ -1,8 +1,8 @@
 export function getImplicitFileImports(methods: Iterable<string>): Set<string> {
   const set = setof(methods);
   const implicits = new Set<string>();
-  if (set.has("csv") || set.has("tsv")) implicits.add("npm:d3-dsv");
   if (set.has("arrow")) implicits.add("npm:apache-arrow");
+  if (set.has("csv") || set.has("tsv")) implicits.add("npm:d3-dsv");
   if (set.has("parquet")) implicits.add("npm:apache-arrow").add("npm:parquet-wasm/esm/arrow1.js");
   if (set.has("sqlite")) implicits.add("npm:@observablehq/sqlite");
   if (set.has("xlsx")) implicits.add("npm:@observablehq/xlsx");
@@ -13,19 +13,20 @@ export function getImplicitFileImports(methods: Iterable<string>): Set<string> {
 export function getImplicitInputImports(inputs: Iterable<string>): Set<string> {
   const set = setof(inputs);
   const implicits = new Set<string>();
-  if (set.has("d3")) implicits.add("npm:d3");
-  if (set.has("Plot")) implicits.add("npm:@observablehq/plot");
-  if (set.has("htl") || set.has("html") || set.has("svg")) implicits.add("npm:htl");
-  if (set.has("Inputs")) implicits.add("npm:@observablehq/inputs");
-  if (set.has("dot")) implicits.add("npm:@observablehq/dot");
-  if (set.has("duckdb")) implicits.add("npm:@duckdb/duckdb-wasm");
-  if (set.has("DuckDBClient")) implicits.add("npm:@observablehq/duckdb");
   if (set.has("_")) implicits.add("npm:lodash");
   if (set.has("aq")) implicits.add("npm:arquero");
   if (set.has("Arrow")) implicits.add("npm:apache-arrow");
+  if (set.has("d3")) implicits.add("npm:d3");
+  if (set.has("dot")) implicits.add("npm:@observablehq/dot");
+  if (set.has("duckdb")) implicits.add("npm:@duckdb/duckdb-wasm");
+  if (set.has("DuckDBClient")) implicits.add("npm:@observablehq/duckdb");
+  if (set.has("echarts")) implicits.add("npm:echarts/dist/echarts.esm.min.js");
+  if (set.has("htl") || set.has("html") || set.has("svg")) implicits.add("npm:htl");
+  if (set.has("Inputs")) implicits.add("npm:@observablehq/inputs");
   if (set.has("L")) implicits.add("npm:leaflet");
   if (set.has("mapboxgl")) implicits.add("npm:mapbox-gl");
   if (set.has("mermaid")) implicits.add("npm:@observablehq/mermaid");
+  if (set.has("Plot")) implicits.add("npm:@observablehq/plot");
   if (set.has("SQLite") || set.has("SQLiteDatabaseClient")) implicits.add("npm:@observablehq/sqlite");
   if (set.has("tex")) implicits.add("npm:@observablehq/tex");
   if (set.has("topojson")) implicits.add("npm:topojson-client");
