@@ -75,6 +75,7 @@ async function readPages(root: string): Promise<Page[]> {
   for await (const file of visitMarkdownFiles(root)) {
     if (file === "index.md" || file === "404.md") continue;
     const parsed = await parseMarkdown(join(root, file), {root, path: file});
+    if (parsed?.data?.draft) continue;
     const name = basename(file, ".md");
     const page = {path: join("/", dirname(file), name), name: parsed.title ?? "Untitled"};
     if (name === "index") pages.unshift(page);

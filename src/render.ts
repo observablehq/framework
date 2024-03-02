@@ -27,6 +27,7 @@ export async function renderPage(page: MarkdownPage, options: RenderOptions & Re
   const {root, base, path, pages, title, preview, search, resolvers = await getResolvers(page, options)} = options;
   const sidebar = page.data?.sidebar !== undefined ? Boolean(page.data.sidebar) : options.sidebar;
   const toc = mergeToc(page.data?.toc, options.toc);
+  const draft = Boolean(page.data?.draft);
   const {files, resolveFile, resolveImport} = resolvers;
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
@@ -66,7 +67,7 @@ ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => ev
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
 <div id="observablehq-center">${renderHeader(options, page.data)}
-<main id="observablehq-main" class="observablehq">
+<main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">
 ${html.unsafe(rewriteHtml(page.html, resolvers.resolveFile))}</main>${renderFooter(path, options, page.data)}
 </div>
 `);

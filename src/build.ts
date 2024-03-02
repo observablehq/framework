@@ -73,6 +73,10 @@ export async function build(
     effects.output.write(`${faint("parse")} ${sourcePath} `);
     const start = performance.now();
     const page = await parseMarkdown(sourcePath, options);
+    if (page?.data?.draft) {
+      effects.logger.log(faint("(skipped)"));
+      continue;
+    }
     const resolvers = await getResolvers(page, {root, path: sourceFile});
     const elapsed = Math.floor(performance.now() - start);
     for (const f of resolvers.assets) files.add(resolvePath(sourceFile, f));

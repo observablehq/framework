@@ -276,3 +276,8 @@ a[href].observablehq-header-anchor {
 .muted {
   color: var(--theme-foreground-muted);
 }
+
+.observablehq--draft > h1:first-of-type::after {
+  content: " [DRAFT]";
+  color: var(--theme-foreground-muted);
+}
