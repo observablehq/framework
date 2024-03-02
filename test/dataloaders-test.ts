@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import {readFile, stat, unlink, utimes} from "node:fs/promises";
+import os from "node:os";
 import {type LoadEffects, Loader} from "../src/dataloader.js";
 
 const noopEffects: LoadEffects = {
@@ -7,7 +8,7 @@ const noopEffects: LoadEffects = {
   output: {write() {}}
 };
 
-describe("data loaders are called with the appropriate command", () => {
+describe("Loader.find(root, path)", () => {
   it("a .js data loader is called with node", async () => {
     const loader = Loader.find("test", "dataloaders/data1.txt")!;
     const out = await loader.load(noopEffects);
@@ -18,7 +19,8 @@ describe("data loaders are called with the appropriate command", () => {
     const out = await loader.load(noopEffects);
     assert.strictEqual(await readFile("test/" + out, "utf-8"), "tsx\n");
   });
-  it("a .sh data loader is called with sh", async () => {
+  it("a .sh data loader is called with sh", async function () {
+    if (os.platform() === "win32") this.skip();
     const loader = Loader.find("test", "dataloaders/data3.txt")!;
     const out = await loader.load(noopEffects);
     assert.strictEqual(await readFile("test/" + out, "utf-8"), "shell\n");
@@ -26,12 +28,12 @@ describe("data loaders are called with the appropriate command", () => {
   it("a .exe data loader is invoked directly", async () => {
     const loader = Loader.find("test", "dataloaders/data4.txt")!;
     const out = await loader.load(noopEffects);
-    assert.strictEqual(await readFile("test/" + out, "utf-8"), "python3\n");
+    assert.strictEqual(await readFile("test/" + out, "utf-8"), `python3${os.EOL}`);
   });
   it("a .py data loader is called with python3", async () => {
     const loader = Loader.find("test", "dataloaders/data5.txt")!;
     const out = await loader.load(noopEffects);
-    assert.strictEqual(await readFile("test/" + out, "utf-8"), "python3\n");
+    assert.strictEqual(await readFile("test/" + out, "utf-8"), `python3${os.EOL}`);
   });
   // Skipping because this requires R to be installed (which is slow in CI).
   it.skip("a .R data loader is called with Rscript", async () => {
@@ -39,10 +41,7 @@ describe("data loaders are called with the appropriate command", () => {
     const out = await loader.load(noopEffects);
     assert.strictEqual(await readFile("test/" + out, "utf-8"), "Rscript\n");
   });
-});
-
-describe("data loaders optionally use a stale cache", () => {
-  it("a dataloader can use ", async () => {
+  it("data loaders optionally use a stale cache", async () => {
     const out = [] as string[];
     const outputEffects: LoadEffects = {
       logger: {log() {}, warn() {}, error() {}},
@@ -56,7 +55,7 @@ describe("data loaders optionally use a stale cache", () => {
     // save the loader times.
     const {atime, mtime} = await stat(loader.path);
     // set the loader mtime to Dec. 1st, 2023.
-    const time = Date.UTC(2023, 11, 1) / 1000;
+    const time = new Date(2023, 11, 1);
     await utimes(loader.path, atime, time);
     // remove the cache set by another test (unless we it.only this test).
     try {
@@ -69,7 +68,7 @@ describe("data loaders optionally use a stale cache", () => {
     // run again (fresh)
     await loader.load(outputEffects);
     // touch the loader
-    await utimes(loader.path, atime, Date.now() + 100);
+    await utimes(loader.path, atime, new Date(Date.now() + 100));
     // run it with useStale=true (using stale)
     const loader2 = Loader.find("test", "dataloaders/data1.txt", {useStale: true})!;
     await loader2.load(outputEffects);

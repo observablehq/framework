@@ -80,6 +80,7 @@
     "ws": "^8.14.2"
   },
   "devDependencies": {
+    "@types/cross-spawn": "^6.0.6",
     "@types/d3-array": "^3.2.1",
     "@types/he": "^1.2.3",
     "@types/jsdom": "^21.1.6",
