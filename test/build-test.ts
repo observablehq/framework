@@ -6,7 +6,6 @@ import {join, normalize, relative} from "node:path/posix";
 import {difference} from "d3-array";
 import {FileBuildEffects, build} from "../src/build.js";
 import {readConfig, setCurrentDate} from "../src/config.js";
-import {visitFiles} from "../src/files.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
 
 const silentEffects = {
@@ -14,7 +13,7 @@ const silentEffects = {
   output: {write() {}}
 };
 
-describe("build", async () => {
+describe("build", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   mockJsDelivr();
 
@@ -24,7 +23,7 @@ describe("build", async () => {
   for (const name of readdirSync(inputRoot)) {
     const path = join(inputRoot, name);
     if (!statSync(path).isDirectory()) continue;
-    if (await isEmpty(path)) continue;
+    if (isEmpty(path)) continue;
     const only = name.startsWith("only.");
     const skip = name.startsWith("skip.");
     const outname = only || skip ? name.slice(5) : name;
@@ -107,6 +106,10 @@ class TestEffects extends FileBuildEffects {
   }
 }
 
-async function isEmpty(path: string): Promise<boolean> {
-  return !!(await visitFiles(path).next()).done;
+function isEmpty(path: string): boolean {
+  for (const f of readdirSync(path, {recursive: true, withFileTypes: true})) {
+    if (f.isDirectory() || f.name === ".DS_Store") continue;
+    return false;
+  }
+  return true;
 }
