@@ -138,6 +138,12 @@ export function getImplicitDownloads(imports: Iterable<string>): Set<string> {
     implicits.add("npm:katex/dist/fonts/KaTeX_Typewriter-Regular.woff");
     implicits.add("npm:katex/dist/fonts/KaTeX_Typewriter-Regular.woff2");
   }
+  if (set.has("npm:parquet-wasm/esm/arrow1.js")) {
+    implicits.add("npm:parquet-wasm/esm/arrow1_bg.wasm");
+  }
+  if (set.has("npm:parquet-wasm/esm/arrow2.js")) {
+    implicits.add("npm:parquet-wasm/esm/arrow2_bg.wasm");
+  }
   return implicits;
 }
 
