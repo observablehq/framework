@@ -6,6 +6,7 @@ import {join, normalize, relative} from "node:path/posix";
 import {difference} from "d3-array";
 import {FileBuildEffects, build} from "../src/build.js";
 import {readConfig, setCurrentDate} from "../src/config.js";
+import {visitFiles} from "../src/files.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
 
 const silentEffects = {
@@ -23,6 +24,7 @@ describe("build", async () => {
   for (const name of readdirSync(inputRoot)) {
     const path = join(inputRoot, name);
     if (!statSync(path).isDirectory()) continue;
+    if (await isEmpty(path)) continue;
     const only = name.startsWith("only.");
     const skip = name.startsWith("skip.");
     const outname = only || skip ? name.slice(5) : name;
@@ -103,4 +105,8 @@ class TestEffects extends FileBuildEffects {
     }
     return super.writeFile(outputPath, contents);
   }
+}
+
+async function isEmpty(path: string): Promise<boolean> {
+  return !(await visitFiles(path).next()).done;
 }
