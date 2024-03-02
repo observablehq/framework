@@ -102,7 +102,7 @@ export async function build(
   // hash, or perhaps the Framework version number for built-in modules.
   if (addPublic) {
     for (const path of globalImports) {
-      if (path.startsWith("/_observablehq/")) {
+      if (path.startsWith("/_observablehq/") && path.endsWith(".js")) {
         const clientPath = getClientPath(`./src/client/${path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)}`); // prettier-ignore
         effects.output.write(`${faint("build")} ${clientPath} ${faint("→")} `);
         const define: {[key: string]: string} = {};
