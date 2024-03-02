@@ -1,6 +1,6 @@
 import {existsSync} from "node:fs";
 import {mkdir, readFile, readdir, writeFile} from "node:fs/promises";
-import {dirname, join} from "node:path";
+import {dirname, join} from "node:path/posix";
 import type {CallExpression} from "acorn";
 import {Parser} from "acorn";
 import {simple} from "acorn-walk";
@@ -194,6 +194,7 @@ export async function resolveNpmImports(root: string, path: string): Promise<Imp
   promise = (async function () {
     try {
       const filePath = await populateNpmCache(root, path);
+      if (!/\.(m|c)?js$/i.test(path)) return []; // not JavaScript; TODO traverse CSS, too
       const source = await readFile(filePath, "utf-8");
       const body = Parser.parse(source, parseOptions);
       return findImports(body, path, source);

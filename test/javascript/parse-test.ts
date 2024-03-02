@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import {readdirSync, statSync} from "node:fs";
 import {mkdir, readFile, unlink, writeFile} from "node:fs/promises";
-import {join, resolve} from "node:path";
+import {join, resolve} from "node:path/posix";
 import {isEnoent} from "../../src/error.js";
 import type {JavaScriptNode} from "../../src/javascript/parse.js";
 import {parseJavaScript} from "../../src/javascript/parse.js";

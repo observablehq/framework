@@ -1,4 +1,4 @@
-import {extname} from "node:path";
+import {extname} from "node:path/posix";
 import type {CallExpression, MemberExpression, Node} from "acorn";
 import {ancestor, simple} from "acorn-walk";
 import {relativePath, resolveLocalPath} from "../path.js";

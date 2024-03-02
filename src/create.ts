@@ -1,7 +1,8 @@
 import {exec} from "node:child_process";
 import {accessSync, existsSync, readdirSync, statSync} from "node:fs";
 import {constants, copyFile, mkdir, readFile, readdir, stat, writeFile} from "node:fs/promises";
-import {basename, dirname, join, normalize, resolve} from "node:path";
+import op from "node:path";
+import {basename, dirname, join, normalize} from "node:path/posix";
 import {setTimeout as sleep} from "node:timers/promises";
 import {fileURLToPath} from "node:url";
 import {promisify} from "node:util";
@@ -91,7 +92,7 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
         const s = clack.spinner();
         s.start("Copying template files");
         const template = includeSampleFiles ? "default" : "empty";
-        const templateDir = resolve(fileURLToPath(import.meta.url), "..", "..", "templates", template);
+        const templateDir = op.resolve(fileURLToPath(import.meta.url), "..", "..", "templates", template);
         const runCommand = packageManager === "yarn" ? "yarn" : `${packageManager ?? "npm"} run`;
         const installCommand = `${packageManager ?? "npm"} install`;
         await effects.sleep(1000);

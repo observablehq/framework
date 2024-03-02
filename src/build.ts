@@ -1,7 +1,7 @@
 import {createHash} from "node:crypto";
 import {existsSync} from "node:fs";
 import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
-import {basename, dirname, extname, join} from "node:path";
+import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {CliError, isEnoent} from "./error.js";

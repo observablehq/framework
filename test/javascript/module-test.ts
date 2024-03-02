@@ -110,11 +110,11 @@ describe("getFileHash(root, path)", () => {
     assert.strictEqual(getFileHash("test/input/build/files", "file-top.csv"), "01a7ce0aea79f9cddb22e772b2cc9a9f3229a64a5fd941eec8d8ddc41fb07c34"); // prettier-ignore
   });
   it("returns the content hash for the specified file’s data loader", () => {
-    assert.strictEqual(getFileHash("test/input/build/archives", "dynamic.zip.sh"), "68223db0bf721258cce808d45ff5c77e0f14b35240d25940f40ed9cd1ad74fde"); // prettier-ignore
-    assert.strictEqual(getFileHash("test/input/build/archives", "dynamic.zip"), "68223db0bf721258cce808d45ff5c77e0f14b35240d25940f40ed9cd1ad74fde"); // prettier-ignore
-    assert.strictEqual(getFileHash("test/input/build/archives", "dynamic/file.txt"), "68223db0bf721258cce808d45ff5c77e0f14b35240d25940f40ed9cd1ad74fde"); // prettier-ignore
-    assert.strictEqual(getFileHash("test/input/build/archives", "static.zip"), "e6afff224da77b900cfe3ab8789f2283883300e1497548c30af66dfe4c29b429"); // prettier-ignore
-    assert.strictEqual(getFileHash("test/input/build/archives", "static/file.txt"), "e6afff224da77b900cfe3ab8789f2283883300e1497548c30af66dfe4c29b429"); // prettier-ignore
+    assert.strictEqual(getFileHash("test/input/build/archives.posix", "dynamic.zip.sh"), "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"); // prettier-ignore
+    assert.strictEqual(getFileHash("test/input/build/archives.posix", "dynamic.zip"), "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"); // prettier-ignore
+    assert.strictEqual(getFileHash("test/input/build/archives.posix", "dynamic/file.txt"), "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"); // prettier-ignore
+    assert.strictEqual(getFileHash("test/input/build/archives.posix", "static.zip"), "e6afff224da77b900cfe3ab8789f2283883300e1497548c30af66dfe4c29b429"); // prettier-ignore
+    assert.strictEqual(getFileHash("test/input/build/archives.posix", "static/file.txt"), "e6afff224da77b900cfe3ab8789f2283883300e1497548c30af66dfe4c29b429"); // prettier-ignore
   });
   it("returns the empty hash if the specified file does not exist", () => {
     assert.strictEqual(getFileHash("test/input/build/files", "does-not-exist.csv"), emptyHash);
@@ -124,13 +124,13 @@ describe("getFileHash(root, path)", () => {
 describe("getFileInfo(root, path)", () => {
   it("returns the info for the specified file", () => {
     assert.deepStrictEqual(redactFileInfo("test/input/build/files", "file-top.csv"), {hash: "01a7ce0aea79f9cddb22e772b2cc9a9f3229a64a5fd941eec8d8ddc41fb07c34"}); // prettier-ignore
-    assert.deepStrictEqual(redactFileInfo("test/input/build/archives", "dynamic.zip.sh"), {hash: "68223db0bf721258cce808d45ff5c77e0f14b35240d25940f40ed9cd1ad74fde"}); // prettier-ignore
-    assert.deepStrictEqual(redactFileInfo("test/input/build/archives", "static.zip"), {hash: "e6afff224da77b900cfe3ab8789f2283883300e1497548c30af66dfe4c29b429"}); // prettier-ignore
+    assert.deepStrictEqual(redactFileInfo("test/input/build/archives.posix", "dynamic.zip.sh"), {hash: "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"}); // prettier-ignore
+    assert.deepStrictEqual(redactFileInfo("test/input/build/archives.posix", "static.zip"), {hash: "e6afff224da77b900cfe3ab8789f2283883300e1497548c30af66dfe4c29b429"}); // prettier-ignore
   });
   it("returns undefined if the specified file is created by a data loader", () => {
-    assert.strictEqual(getFileInfo("test/input/build/archives", "dynamic.zip"), undefined);
-    assert.strictEqual(getFileInfo("test/input/build/archives", "dynamic/file.txt"), undefined);
-    assert.strictEqual(getFileInfo("test/input/build/archives", "static/file.txt"), undefined);
+    assert.strictEqual(getFileInfo("test/input/build/archives.posix", "dynamic.zip"), undefined);
+    assert.strictEqual(getFileInfo("test/input/build/archives.posix", "dynamic/file.txt"), undefined);
+    assert.strictEqual(getFileInfo("test/input/build/archives.posix", "static/file.txt"), undefined);
   });
 });
 

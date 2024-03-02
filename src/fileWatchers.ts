@@ -1,5 +1,5 @@
 import {type FSWatcher, existsSync, watch} from "node:fs";
-import {join} from "node:path";
+import {join} from "node:path/posix";
 import {Loader} from "./dataloader.js";
 import {isEnoent} from "./error.js";
 import {maybeStat} from "./files.js";
