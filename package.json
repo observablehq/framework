@@ -11,11 +11,8 @@
     "url": "https://github.com/observablehq/framework.git"
   },
   "files": [
-    "bin/**/*.js",
-    "bin/**/*.ts",
-    "src/**/*.js",
-    "src/**/*.ts",
-    "src/**/*.css",
+    "build/**/*.js",
+    "build/**/*.css",
     "templates"
   ],
   "bin": {
@@ -23,6 +20,7 @@
   },
   "scripts": {
     "dev": "rimraf --glob docs/themes.md docs/theme/*.md && (tsx watch docs/theme/generate-themes.ts & tsx watch --no-warnings=ExperimentalWarning ./bin/observable.ts preview --no-open)",
+    "build:esbuild": "rimraf build && yarn esbuild --outdir=build --platform=node $(find bin src \\( -name '*.ts' -o -name '*.js' -o -name '*.css' \\) ! -name '*.d.ts' )",
     "build": "yarn rebuild-themes && rimraf dist && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts build",
     "deploy": "yarn rebuild-themes && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts deploy",
     "rebuild-themes": "rimraf --glob docs/themes.md docs/theme/*.md && tsx docs/theme/generate-themes.ts",
@@ -75,7 +73,6 @@
     "semver": "^7.5.4",
     "send": "^0.18.0",
     "tar-stream": "^3.1.6",
-    "tsx": "~4.2.1",
     "untildify": "^5.0.0",
     "wrap-ansi": "^9.0.0",
     "ws": "^8.14.2"
@@ -110,6 +107,7 @@
     "prettier": "^3.0.3 <3.1",
     "rimraf": "^5.0.5",
     "tempy": "^3.1.0",
+    "tsx": "~4.2.1",
     "typescript": "^5.2.2",
     "undici": "^5.27.2"
   },
