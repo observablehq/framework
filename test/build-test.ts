@@ -4,8 +4,8 @@ import {open, readFile, rm} from "node:fs/promises";
 import os from "node:os";
 import {join, normalize, relative} from "node:path/posix";
 import {difference} from "d3-array";
-import {FileBuildEffects, build} from "../build/build.js";
-import {readConfig, setCurrentDate} from "../build/config.js";
+import {FileBuildEffects, build} from "../src/build.js";
+import {readConfig, setCurrentDate} from "../src/config.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
 
 const silentEffects = {
