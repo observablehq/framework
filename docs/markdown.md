@@ -18,6 +18,7 @@ The front matter supports the following options:
 - **title** — the page title; defaults to the (first) first-level heading of the page, if any
 - **toc** — if false, disables the [table of contents](./config#toc)
 - **index** — whether to index this page if [search](./search) is enabled; defaults to true for listed pages
+- **keywords** - additional words to index for [search](./search); boosted at the same weight as the title
 - **draft** — whether to skip this page during build; drafts are also not listed in the default sidebar
 
 ## Headings
