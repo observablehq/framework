@@ -17,16 +17,27 @@ export function fromOsPath(path: string): string {
 
 /**
  * Returns the relative path from the current working directory to the given
- * Framework source file, such as "./src/client/search.js". This is typically
- * used to rollup JavaScript and style bundles for built-in modules.
+ * Framework source file, such as "search.js". This is typically used to rollup
+ * JavaScript or TypeScript for built-in modules. (Note that TypeScript is
+ * only detected during local development, as TypeScript is converted to
+ * JavaScript before publishing.)
  */
 export function getClientPath(entry: string): string {
-  const path = fromOsPath(op.relative(cwd(), op.join(fileURLToPath(import.meta.url), "..", "..", entry)));
+  const path = fromOsPath(op.relative(cwd(), op.join(fileURLToPath(import.meta.url), "..", "client", entry)));
   if (path.endsWith(".js") && !existsSync(path)) {
     const tspath = path.slice(0, -".js".length) + ".ts";
     if (existsSync(tspath)) return tspath;
   }
   return path;
+}
+
+/**
+ * Returns the relative path from the current working directory to the given
+ * Framework source file, such as "default.css". This is typically used to
+ * rollup style bundles for built-in modules.
+ */
+export function getStylePath(entry: string): string {
+  return fromOsPath(op.relative(cwd(), op.join(fileURLToPath(import.meta.url), "..", "style", entry)));
 }
 
 /** Yields every Markdown (.md) file within the given root, recursively. */

@@ -107,7 +107,7 @@ export async function build(
   if (addPublic) {
     for (const path of globalImports) {
       if (path.startsWith("/_observablehq/") && path.endsWith(".js")) {
-        const clientPath = getClientPath(`./src/client/${path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)}`); // prettier-ignore
+        const clientPath = getClientPath(path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)); // prettier-ignore
         effects.output.write(`${faint("build")} ${clientPath} ${faint("→")} `);
         const define: {[key: string]: string} = {};
         if (config.search) define["global.__minisearch"] = JSON.stringify(relativePath(path, aliases.get("/_observablehq/minisearch.json")!)); // prettier-ignore
@@ -124,7 +124,7 @@ export async function build(
           const contents = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? []});
           await effects.writeFile(path, contents);
         } else {
-          const clientPath = getClientPath(`./src/client/${path.slice("/_observablehq/".length)}`);
+          const clientPath = getClientPath(path.slice("/_observablehq/".length));
           const contents = await bundleStyles({path: clientPath});
           await effects.writeFile(`/_observablehq/${specifier.slice("observablehq:".length)}`, contents);
         }
