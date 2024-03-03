@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import {fileURLToPath} from "node:url";
-import crossSpawn from "cross-spawn";
+import {sync} from "cross-spawn";
 
-crossSpawn.sync(
+sync(
   "node",
   [
     "--no-warnings=ExperimentalWarning",

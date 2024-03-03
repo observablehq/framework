@@ -13,7 +13,7 @@ import openBrowser from "open";
 import send from "send";
 import type {WebSocket} from "ws";
 import {WebSocketServer} from "ws";
-import {version} from "../package.json";
+import pkg from "../package.json" with {type: "json"};
 import type {Config} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
@@ -80,7 +80,7 @@ export class PreviewServer {
     }
     const url = `http://${hostname}:${port}/`;
     if (verbose) {
-      console.log(`${green(bold("Observable Framework"))} ${faint(`v${version}`)}`);
+      console.log(`${green(bold("Observable Framework"))} ${faint(`v${pkg.version}`)}`);
       console.log(`${faint("↳")} ${link(url)}`);
       console.log("");
     }

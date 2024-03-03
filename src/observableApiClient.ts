@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import packageJson from "../package.json";
+import pkg from "../package.json" with {type: "json"};
 import {CliError, HttpError, isApiError} from "./error.js";
 import type {ApiKey} from "./observableApiConfig.js";
 import {faint, red} from "./tty.js";
@@ -36,7 +36,7 @@ export class ObservableApiClient {
     this._apiOrigin = apiOrigin;
     this._apiHeaders = {
       Accept: "application/json",
-      "User-Agent": `Observable Framework ${packageJson.version}`,
+      "User-Agent": `Observable Framework ${pkg.version}`,
       "X-Observable-Api-Version": "2023-12-06"
     };
     if (apiKey) this.setApiKey(apiKey);

@@ -16,11 +16,11 @@
     "templates"
   ],
   "bin": {
-    "observable": "bin/observable-init.js"
+    "observable": "build/bin/observable-init.js"
   },
   "scripts": {
-    "dev": "rimraf --glob docs/themes.md docs/theme/*.md && (tsx watch docs/theme/generate-themes.ts & tsx watch --no-warnings=ExperimentalWarning ./bin/observable.ts preview --no-open)",
-    "build:esbuild": "rimraf build && yarn esbuild --outdir=build --platform=node $(find bin src \\( -name '*.ts' -o -name '*.js' -o -name '*.css' \\) ! -name '*.d.ts' )",
+    "dev": "rimraf --glob docs/themes.md docs/theme/*.md && (tsx watch docs/theme/generate-themes.ts & tsx watch --no-warnings=ExperimentalWarning ./src/bin/observable.ts preview --no-open)",
+    "build:esbuild": "esbuild --outdir=build --outbase=src --platform=node $(find src \\( -name '*.ts' -o -name '*.js' -o -name '*.css' \\) ! -name '*.d.ts' )",
     "build": "yarn rebuild-themes && rimraf dist && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts build",
     "deploy": "yarn rebuild-themes && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts deploy",
     "rebuild-themes": "rimraf --glob docs/themes.md docs/theme/*.md && tsx docs/theme/generate-themes.ts",
@@ -107,7 +107,7 @@
     "prettier": "^3.0.3 <3.1",
     "rimraf": "^5.0.5",
     "tempy": "^3.1.0",
-    "tsx": "~4.2.1",
+    "tsx": "^4.7.1",
     "typescript": "^5.2.2",
     "undici": "^5.27.2"
   },

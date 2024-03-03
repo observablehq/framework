@@ -8,7 +8,7 @@ import {fileURLToPath} from "node:url";
 import {promisify} from "node:util";
 import * as clack from "@clack/prompts";
 import untildify from "untildify";
-import {version} from "../package.json";
+import pkg from "../package.json" with {type: "json"};
 import type {ClackEffects} from "./clack.js";
 import {cyan, faint, inverse, link, reset} from "./tty.js";
 
@@ -46,7 +46,7 @@ const defaultEffects: CreateEffects = {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function create(options = {}, effects: CreateEffects = defaultEffects): Promise<void> {
   const {clack} = effects;
-  clack.intro(`${inverse(" observable create ")} ${faint(`v${version}`)}`);
+  clack.intro(`${inverse(" observable create ")} ${faint(`v${pkg.version}`)}`);
   const defaultRootPath = "./hello-framework";
   const defaultRootPathError = validateRootPath(defaultRootPath);
   await clack.group(

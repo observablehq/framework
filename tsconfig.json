@@ -2,7 +2,7 @@
   "compilerOptions": {
     "noImplicitAny": false,
     "lib": ["ES2023", "DOM.Iterable"],
-    "module": "Node16",
+    "module": "NodeNext",
     "target": "ES2022",
     "strict": true,
     "esModuleInterop": true,

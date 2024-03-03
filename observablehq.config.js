@@ -1,4 +1,4 @@
-import {version} from "./package.json" assert {type: "json"};
+import pkg from "./package.json" with {type: "json"};
 
 export default {
   title: "Observable Framework",
@@ -104,7 +104,7 @@ export default {
       <span class="hide-if-small">Observable</span> Framework
     </a>
     <span style="display: flex; align-items: baseline; gap: 0.5rem; font-size: 14px;">
-      <a target="_blank" href="https://github.com/observablehq/framework/releases"><span>${version}</span></a>
+      <a target="_blank" href="https://github.com/observablehq/framework/releases"><span>${pkg.version}</span></a>
       <a target="_blank" href="https://github.com/observablehq/framework"><span>GitHub</span></a>
     </span>
   </div>

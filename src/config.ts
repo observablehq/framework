@@ -59,7 +59,7 @@ export async function readConfig(configPath?: string, root?: string): Promise<Co
 }
 
 export async function readDefaultConfig(root?: string): Promise<Config> {
-  for (const ext of [".js", ".ts"]) {
+  for (const ext of [".js"/*, ".ts" */]) { // TODO needs tsx :(
     try {
       return await readConfig("observablehq.config" + ext, root);
     } catch (error: any) {

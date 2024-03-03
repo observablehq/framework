@@ -180,7 +180,7 @@ export class Telemetry {
 
   private get environment() {
     return (this._environment ??= Promise.all([
-      import("../package.json"),
+      import("../package.json", {with: {type: "json"}}),
       import("ci-info"),
       import("is-docker"),
       import("is-wsl")
