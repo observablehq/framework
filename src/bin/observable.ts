@@ -86,7 +86,7 @@ try {
     }
     case "version": {
       helpArgs(command, {});
-      await import("../../package.json", {with: {type: "json"}}).then(({default: pkg}) => console.log(pkg.version));
+      console.log(process.env.npm_package_version);
       break;
     }
     case "build": {

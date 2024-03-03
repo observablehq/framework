@@ -59,7 +59,8 @@ export async function readConfig(configPath?: string, root?: string): Promise<Co
 }
 
 export async function readDefaultConfig(root?: string): Promise<Config> {
-  for (const ext of [".js"/*, ".ts" */]) { // TODO needs tsx :(
+  // TODO run esbuild (bundle?) on .ts
+  for (const ext of [".js" /*, ".ts" */]) {
     try {
       return await readConfig("observablehq.config" + ext, root);
     } catch (error: any) {
