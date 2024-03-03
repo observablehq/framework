@@ -191,7 +191,7 @@ try {
       break;
     }
   }
-} catch (error) {
+} catch (error: any) {
   if (error instanceof CliError) {
     if (error.print) {
       if (command && CLACKIFIED_COMMANDS.includes(command)) {
@@ -203,7 +203,7 @@ try {
     process.exit(error.exitCode);
   } else {
     if (command && CLACKIFIED_COMMANDS.includes(command)) {
-      clack.log.error(`${red("Error:")} ${(error as any).message}`);
+      clack.log.error(`${red("Error:")} ${error.message}`);
       if (values.debug) {
         clack.outro("The full error follows");
         throw error;
@@ -217,7 +217,7 @@ try {
         );
       }
     } else {
-      console.error(`\n${red("Unexpected error:")} ${(error as any).message}`);
+      console.error(`\n${red("Unexpected error:")} ${error.message}`);
       if (values.debug) {
         console.error("The full error follows\n");
         throw error;

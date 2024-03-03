@@ -16,7 +16,7 @@
     "templates"
   ],
   "bin": {
-    "observable": "build/bin/observable-init.js"
+    "observable": "build/bin/observable.js"
   },
   "scripts": {
     "dev": "rimraf --glob docs/themes.md docs/theme/*.md && (tsx watch docs/theme/generate-themes.ts & tsx watch --no-warnings=ExperimentalWarning ./src/bin/observable.ts preview --no-open)",
@@ -80,6 +80,7 @@
     "semver": "^7.5.4",
     "send": "^0.18.0",
     "tar-stream": "^3.1.6",
+    "tsx": "^4.7.1",
     "untildify": "^5.0.0",
     "wrap-ansi": "^9.0.0",
     "ws": "^8.14.2"
@@ -114,7 +115,6 @@
     "prettier": "^3.0.3 <3.1",
     "rimraf": "^5.0.5",
     "tempy": "^3.1.0",
-    "tsx": "^4.7.1",
     "typescript": "^5.2.2",
     "undici": "^5.27.2"
   },
