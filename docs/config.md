@@ -195,6 +195,7 @@ toc: false
 ## search
 
 Whether to enable [search](./search) on the project; defaults to false.
+
 ## interpreters
 
 The **interpreters** option specifies additional interpreted languages for data loaders, indicating the file extension and associated interpreter (see [loader routing](./loaders#routing) for more). The default list of interpreters is:
