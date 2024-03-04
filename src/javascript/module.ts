@@ -3,6 +3,7 @@ import {existsSync, readFileSync, statSync} from "node:fs";
 import {join, relative} from "node:path/posix";
 import type {Program} from "acorn";
 import {Parser} from "acorn";
+import type {Config} from "../config.js";
 import {Loader} from "../dataloader.js";
 import {resolvePath} from "../path.js";
 import {findFiles} from "./files.js";
@@ -134,9 +135,9 @@ export function getModuleInfo(root: string, path: string): ModuleInfo | undefine
  * TODO During build, this needs to compute the hash of the generated file, not
  * the data loader.
  */
-export function getFileHash(root: string, path: string): string {
-  if (!existsSync(join(root, path))) {
-    const loader = Loader.find(root, path);
+export function getFileHash(root: string, path: string, interpreters?: Config["interpreters"]): string {
+  if (interpreters && !existsSync(join(root, path))) {
+    const loader = Loader.find(root, path, interpreters);
     if (loader) path = relative(root, loader.path);
   }
   return getFileInfo(root, path)?.hash ?? createHash("sha256").digest("hex");

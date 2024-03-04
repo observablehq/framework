@@ -326,7 +326,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, interpreter
           clearTimeout(emptyTimeout);
           emptyTimeout = null;
         }
-        const resolvers = await getResolvers(page, {root, path});
+        const resolvers = await getResolvers(page, {root, path, interpreters});
         if (hash === resolvers.hash) break;
         const previousHash = hash!;
         const previousHtml = html!;
@@ -364,7 +364,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, interpreter
     if (path.endsWith("/")) path += "index";
     path += ".md";
     const page = await parseMarkdown(join(root, path), {root, path, style});
-    const resolvers = await getResolvers(page, {root, path});
+    const resolvers = await getResolvers(page, {root, path, interpreters});
     if (resolvers.hash !== initialHash) return void send({type: "reload"});
     hash = resolvers.hash;
     html = getHtml(page, resolvers);

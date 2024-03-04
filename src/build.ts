@@ -77,7 +77,7 @@ export async function build(
       effects.logger.log(faint("(skipped)"));
       continue;
     }
-    const resolvers = await getResolvers(page, {root, path: sourceFile});
+    const resolvers = await getResolvers(page, {root, path: sourceFile, interpreters});
     const elapsed = Math.floor(performance.now() - start);
     for (const f of resolvers.assets) files.add(resolvePath(sourceFile, f));
     for (const f of resolvers.files) files.add(resolvePath(sourceFile, f));
@@ -167,7 +167,7 @@ export async function build(
     const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
     const ext = extname(file);
     const alias = `/${join("_file", dirname(file), `${basename(file, ext)}.${hash}${ext}`)}`;
-    aliases.set(resolveFilePath(root, file), alias);
+    aliases.set(resolveFilePath(root, file, interpreters), alias);
     await effects.writeFile(alias, contents);
   }
 

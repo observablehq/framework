@@ -1,5 +1,6 @@
 import {createHash} from "node:crypto";
 import {extname, join} from "node:path/posix";
+import type {Config} from "./config.js";
 import {findAssets} from "./html.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js";
@@ -67,7 +68,10 @@ export const builtins = new Map<string, string>([
  * For files, we collect all FileAttachment calls within local modules, adding
  * them to any files referenced by static HTML.
  */
-export async function getResolvers(page: MarkdownPage, {root, path}: {root: string; path: string}): Promise<Resolvers> {
+export async function getResolvers(
+  page: MarkdownPage,
+  {root, path, interpreters}: {root: string; path: string; interpreters: Config["interpreters"]}
+): Promise<Resolvers> {
   const hash = createHash("sha256").update(page.html);
   const assets = findAssets(page.html, path);
   const files = new Set<string>();
@@ -97,10 +101,11 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
 
   // Compute the content hash. TODO In build, this needs to consider the output
   // of data loaders, rather than the source of data loaders.
-  for (const f of assets) hash.update(getFileHash(root, resolvePath(path, f)));
-  for (const f of files) hash.update(getFileHash(root, resolvePath(path, f)));
+  for (const f of assets) hash.update(getFileHash(root, resolvePath(path, f), interpreters));
+  for (const f of files) hash.update(getFileHash(root, resolvePath(path, f), interpreters));
   for (const i of localImports) hash.update(getModuleHash(root, resolvePath(path, i)));
-  if (page.style && isPathImport(page.style)) hash.update(getFileHash(root, resolvePath(path, page.style)));
+  if (page.style && isPathImport(page.style))
+    hash.update(getFileHash(root, resolvePath(path, page.style), interpreters));
 
   // Collect transitively-attached files and imports.
   for (const i of localImports) {
@@ -224,7 +229,7 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   }
 
   function resolveFile(specifier: string): string {
-    return relativePath(path, resolveFilePath(root, resolvePath(path, specifier)));
+    return relativePath(path, resolveFilePath(root, resolvePath(path, specifier), interpreters));
   }
 
   function resolveStylesheet(specifier: string): string {
@@ -282,8 +287,8 @@ export function resolveImportPath(root: string, path: string): string {
   return `/${join("_import", path)}?sha=${getModuleHash(root, path)}`;
 }
 
-export function resolveFilePath(root: string, path: string): string {
-  return `/${join("_file", path)}?sha=${getFileHash(root, path)}`;
+export function resolveFilePath(root: string, path: string, interpreters: Config["interpreters"]): string {
+  return `/${join("_file", path)}?sha=${getFileHash(root, path, interpreters)}`;
 }
 
 // Returns any inputs that are not declared in outputs. These typically refer to
