@@ -12,8 +12,14 @@ const {values, positionals} = parseArgs({
   }
 });
 
+const entryPoints = await glob(positionals, {ignore: values.ignore});
+
+for (const p of entryPoints) {
+  console.log(p);
+}
+
 await build({
-  entryPoints: await glob(positionals, {ignore: values.ignore}),
+  entryPoints,
   define: {"process.env.npm_package_version": `"${process.env.npm_package_version}"`},
   outdir: values.outdir,
   outbase: values.outbase,
