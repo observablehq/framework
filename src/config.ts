@@ -2,6 +2,7 @@ import op from "node:path";
 import {basename, dirname, join} from "node:path/posix";
 import {cwd} from "node:process";
 import {pathToFileURL} from "node:url";
+import type MarkdownIt from "markdown-it";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import {parseMarkdown} from "./markdown.js";
@@ -50,6 +51,7 @@ export interface Config {
   style: null | Style; // defaults to {theme: ["light", "dark"]}
   deploy: null | {workspace: string; project: string};
   search: boolean; // default to false
+  markdownIt?: (md: MarkdownIt) => MarkdownIt;
 }
 
 export async function readConfig(configPath?: string, root?: string): Promise<Config> {
@@ -107,6 +109,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
       currentDate
     )}">${formatLocaleDate(currentDate)}</a>.`
   } = spec;
+  const {markdownIt} = spec;
   root = String(root);
   output = String(output);
   base = normalizeBase(base);
@@ -125,7 +128,25 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
   search = Boolean(search);
-  return {root, output, base, title, sidebar, pages, pager, scripts, head, header, footer, toc, style, deploy, search};
+  if (markdownIt !== undefined && typeof markdownIt !== "function") throw new Error("markdownIt must be a function");
+  return {
+    root,
+    output,
+    base,
+    title,
+    sidebar,
+    pages,
+    pager,
+    scripts,
+    head,
+    header,
+    footer,
+    toc,
+    style,
+    deploy,
+    search,
+    markdownIt
+  };
 }
 
 function normalizeBase(base: any): string {
