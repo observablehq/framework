@@ -18,5 +18,6 @@ await build({
   outdir: values.outdir,
   outbase: values.outbase,
   platform: "node",
-  sourcemap: values.sourcemap ? "linked" : false
+  sourcemap: values.sourcemap ? "linked" : false,
+  logLevel: "info"
 });
