@@ -200,7 +200,7 @@ Whether to enable [search](./search) on the project; defaults to false.
 
 A hook for registering additional [markdown-it](https://github.com/markdown-it/markdown-it) plugins. For example, to use [markdown-it-footnote](https://github.com/markdown-it/markdown-it-footnote):
 
-```js
+```js run=false
 import type MarkdownIt from "markdown-it";
 import MarkdownItFootnote from "markdown-it-footnote";
 
