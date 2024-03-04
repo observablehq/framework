@@ -176,15 +176,19 @@ function prettyPath(path: string): string {
   return path.replace(/\/index$/, "/") || "/";
 }
 
-function renderHead(parse: MarkdownPage, resolvers: Resolvers, {scripts, head, root}: RenderOptions): Html {
+function renderHead(
+  parse: MarkdownPage,
+  {stylesheets, staticImports, resolveImport, resolveStylesheet}: Resolvers,
+  {scripts, head, root}: RenderOptions
+): Html {
   if (parse.data?.head !== undefined) head = parse.data.head;
-  const resolveScript = (src: string) => (/^\w+:/.test(src) ? src : resolvers.resolveImport(relativePath(root, src)));
+  const resolveScript = (src: string) => (/^\w+:/.test(src) ? src : resolveImport(relativePath(root, src)));
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
-    Array.from(resolvers.stylesheets, (i) => renderStylesheetPreload(resolvers.resolveStylesheet(i))) // <link rel=preload as=style>
+    Array.from(new Set(Array.from(stylesheets, (i) => resolveStylesheet(i))), renderStylesheetPreload) // <link rel=preload as=style>
   }${
-    Array.from(resolvers.stylesheets, (i) => renderStylesheet(resolvers.resolveStylesheet(i))) // <link rel=stylesheet>
+    Array.from(new Set(Array.from(stylesheets, (i) => resolveStylesheet(i))), renderStylesheet) // <link rel=stylesheet>
   }${
-    Array.from(resolvers.staticImports, (i) => renderModulePreload(resolvers.resolveImport(i))) // <link rel=modulepreload>
+    Array.from(new Set(Array.from(staticImports, (i) => resolveImport(i))), renderModulePreload) // <link rel=modulepreload>
   }${
     head ? html`\n${html.unsafe(head)}` : null // arbitrary user content
   }${

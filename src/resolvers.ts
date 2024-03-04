@@ -184,6 +184,7 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
         const path = resolvePath(value, i.name);
         const specifier = `npm:${resolveNpmSpecifier(path)}`;
         staticImports.add(specifier);
+        npmStaticResolutions.add(path);
       }
     }
   }
