@@ -108,7 +108,7 @@ async function renderSidebar(
       ? html`\n  <div id="observablehq-search"><input type="search" placeholder="Search"></div>
   <div id="observablehq-search-results"></div>
   <script>{${html.unsafe(
-    (await rollupClient(getClientPath("./src/client/search-init.ts"), root, path, {minify: true})).trim()
+    (await rollupClient(getClientPath("search-init.js"), root, path, {minify: true})).trim()
   )}}</script>`
       : ""
   }
@@ -133,7 +133,7 @@ async function renderSidebar(
   </ol>
 </nav>
 <script>{${html.unsafe(
-    (await rollupClient(getClientPath("./src/client/sidebar-init.ts"), root, path, {minify: true})).trim()
+    (await rollupClient(getClientPath("sidebar-init.js"), root, path, {minify: true})).trim()
   )}}</script>`;
 }
 

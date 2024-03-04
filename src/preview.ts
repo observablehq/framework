@@ -13,7 +13,6 @@ import openBrowser from "open";
 import send from "send";
 import type {WebSocket} from "ws";
 import {WebSocketServer} from "ws";
-import {version} from "../package.json";
 import type {Config} from "./config.js";
 import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
@@ -80,7 +79,7 @@ export class PreviewServer {
     }
     const url = `http://${hostname}:${port}/`;
     if (verbose) {
-      console.log(`${green(bold("Observable Framework"))} ${faint(`v${version}`)}`);
+      console.log(`${green(bold("Observable Framework"))} ${faint(`v${process.env.npm_package_version}`)}`);
       console.log(`${faint("↳")} ${link(url)}`);
       console.log("");
     }
@@ -97,16 +96,16 @@ export class PreviewServer {
       let pathname = decodeURIComponent(url.pathname);
       let match: RegExpExecArray | null;
       if (pathname === "/_observablehq/client.js") {
-        end(req, res, await rollupClient(getClientPath("./src/client/preview.js"), root, pathname), "text/javascript");
+        end(req, res, await rollupClient(getClientPath("preview.js"), root, pathname), "text/javascript");
       } else if (pathname === "/_observablehq/minisearch.json") {
         end(req, res, await searchIndex(config), "application/json");
       } else if ((match = /^\/_observablehq\/theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(pathname))) {
         end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
       } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".js")) {
-        const path = getClientPath("./src/client/" + pathname.slice("/_observablehq/".length));
+        const path = getClientPath(pathname.slice("/_observablehq/".length));
         end(req, res, await rollupClient(path, root, pathname), "text/javascript");
       } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".css")) {
-        const path = getClientPath("./src/client/" + pathname.slice("/_observablehq/".length));
+        const path = getClientPath(pathname.slice("/_observablehq/".length));
         end(req, res, await bundleStyles({path}), "text/css");
       } else if (pathname.startsWith("/_npm/")) {
         await populateNpmCache(root, pathname);

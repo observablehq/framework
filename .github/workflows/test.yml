@@ -21,7 +21,7 @@ jobs:
           node-version: ${{ matrix.version }}
           cache: yarn
       - run: yarn --frozen-lockfile
-      - run: yarn c8 --check-coverage -x src/**/*.d.ts -x src/preview.ts -x src/observableApiConfig.ts -x src/client -x src/convert.ts --lines 80 --per-file yarn test:mocha
+      - run: yarn test:coverage
       - run: yarn test:tsc
       - run: |
           echo ::add-matcher::.github/eslint.json

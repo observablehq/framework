@@ -6,7 +6,7 @@ import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
-import {getClientPath} from "./files.js";
+import {getStylePath} from "./files.js";
 import type {StringLiteral} from "./javascript/source.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/source.js";
 import {resolveNpmImport} from "./npm.js";
@@ -16,7 +16,7 @@ import {Sourcemap} from "./sourcemap.js";
 import {THEMES, renderTheme} from "./theme.js";
 
 const STYLE_MODULES = {
-  "observablehq:default.css": getClientPath("./src/style/default.css"),
+  "observablehq:default.css": getStylePath("default.css"),
   ...Object.fromEntries(THEMES.map(({name, path}) => [`observablehq:theme-${name}.css`, path]))
 };
 
