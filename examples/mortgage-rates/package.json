@@ -11,6 +11,6 @@
     "d3-time-format": "^4.1.0"
   },
   "engines": {
-    "node": ">=20.6"
+    "node": ">=18"
   }
 }

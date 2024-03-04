@@ -9,6 +9,6 @@
     "@observablehq/framework": "link:../.."
   },
   "engines": {
-    "node": ">=20.6"
+    "node": ">=18"
   }
 }
