@@ -198,7 +198,7 @@ Whether to enable [search](./search) on the project; defaults to false.
 
 ## interpreters
 
-The interpreters option specifies additional languages for data loaders, indicating the extension and associated interpreter (see [routing](./loaders#routing) for details). The list of supported interpreters defaults to:
+The **interpreters** option specifies additional interpreted languages for data loaders, indicating the file extension and associated interpreter (see [loader routing](./loaders#routing) for more). The default list of interpreters is:
 
 ```js run=false
 {
