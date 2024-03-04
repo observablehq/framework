@@ -69,7 +69,7 @@ export async function readConfig(configPath?: string, root?: string): Promise<Co
 
 export async function readDefaultConfig(root?: string): Promise<Config> {
   const jsPath = resolveConfig("observablehq.config.js", root);
-  if (existsSync(jsPath)) return normalizeConfig((await import(jsPath)).default, root);
+  if (existsSync(jsPath)) return normalizeConfig((await import(pathToFileURL(jsPath).href)).default, root);
   const tsPath = resolveConfig("observablehq.config.ts", root);
   if (!existsSync(tsPath)) return normalizeConfig(undefined, root);
   await import("tsx/esm"); // lazy tsx
