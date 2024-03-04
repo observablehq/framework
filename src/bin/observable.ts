@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import {type ParseArgsConfig, parseArgs} from "node:util";
 import * as clack from "@clack/prompts";
 import {readConfig} from "../config.js";

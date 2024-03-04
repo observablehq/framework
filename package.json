@@ -20,7 +20,6 @@
   },
   "scripts": {
     "dev": "rimraf --glob docs/themes.md docs/theme/*.md && (tsx watch docs/theme/generate-themes.ts & tsx watch --no-warnings=ExperimentalWarning ./src/bin/observable.ts preview --no-open)",
-    "build:esbuild": "rimraf build && node build.js --outdir=build --outbase=src \"src/**/*.{ts,js,css}\" --ignore \"**/*.d.ts\"",
     "build:mocha": "rimraf build.test && node build.js --sourcemap --outdir=build.test \"{src,test}/**/*.{ts,js,css}\" --ignore \"test/input/**\" --ignore \"test/output/**\" --ignore \"test/preview/dashboard/**\" --ignore \"**/*.d.ts\" && cp -r templates build.test",
     "build": "yarn rebuild-themes && rimraf dist && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts build",
     "deploy": "yarn rebuild-themes && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts deploy",
@@ -32,7 +31,8 @@
     "test:lint": "eslint src test --max-warnings=0",
     "test:prettier": "prettier --check src test",
     "test:tsc": "tsc --noEmit",
-    "observable": "tsx --no-warnings=ExperimentalWarning ./bin/observable.ts"
+    "observable": "tsx --no-warnings=ExperimentalWarning ./bin/observable.ts",
+    "prepublishOnly": "rimraf build && node build.js --outdir=build --outbase=src \"src/**/*.{ts,js,css}\" --ignore \"**/*.d.ts\""
   },
   "c8": {
     "all": true,
