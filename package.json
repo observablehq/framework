@@ -21,7 +21,7 @@
   "scripts": {
     "dev": "rimraf --glob docs/themes.md docs/theme/*.md && (tsx watch docs/theme/generate-themes.ts & tsx watch --no-warnings=ExperimentalWarning ./src/bin/observable.ts preview --no-open)",
     "build:esbuild": "rimraf build && node build.js --outdir=build --outbase=src 'src/**/*.{ts,js,css}' --ignore '**/*.d.ts'",
-    "build:mocha": "rimraf build.test && node build.js --sourcemap --outdir=build.test '{src,test}/**/*.{ts,js,css}' --ignore 'test/input/*' --ignore 'test/output/*' --ignore 'test/preview/dashboard/**' --ignore '**/*.d.ts' && cp -r templates build.test",
+    "build:mocha": "rimraf build.test && node build.js --sourcemap --outdir=build.test 'src/**/*.{ts,js,css}' 'test/**/*.{ts,js,css}' --ignore 'test/input/*' --ignore 'test/output/*' --ignore 'test/preview/dashboard/**' --ignore '**/*.d.ts' && cp -r templates build.test",
     "build": "yarn rebuild-themes && rimraf dist && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts build",
     "deploy": "yarn rebuild-themes && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts deploy",
     "rebuild-themes": "rimraf --glob docs/themes.md docs/theme/*.md && tsx docs/theme/generate-themes.ts",
