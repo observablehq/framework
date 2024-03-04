@@ -62,7 +62,7 @@ else if (values.help) {
 
 /** Commands that use Clack formatting. When handling CliErrors, clack.outro()
  * will be used for these commands. */
-const CLACKIFIED_COMMANDS = ["create", "deploy", "login"];
+const CLACKIFIED_COMMANDS = ["create", "deploy", "login", "convert"];
 
 try {
   switch (command) {
@@ -78,6 +78,7 @@ try {
   logout       sign-out of Observable
   deploy       deploy a project to Observable
   whoami       check authentication status
+  convert      convert an Observable notebook to Markdown
   help         print usage information
   version      print the version`
       );
@@ -177,6 +178,17 @@ try {
       await import("../src/observableApiAuth.js").then((auth) => auth.whoami());
       break;
     }
+    case "convert": {
+      const {
+        positionals,
+        values: {output, force}
+      } = helpArgs(command, {
+        options: {output: {type: "string", default: "."}, force: {type: "boolean", short: "f"}},
+        allowPositionals: true
+      });
+      await import("../src/convert.js").then((convert) => convert.convert(positionals, {output: output!, force}));
+      break;
+    }
     default: {
       console.error(`observable: unknown command '${command}'. See 'observable help'.`);
       process.exit(1);
@@ -223,6 +235,7 @@ try {
       }
     }
   }
+  process.exit(1);
 }
 
 // A wrapper for parseArgs that adds --help functionality with automatic usage.
