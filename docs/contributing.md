@@ -11,7 +11,7 @@ yarn
 Next start the local preview server:
 
 ```sh
-yarn dev
+yarn docs:dev
 ```
 
 Lastly visit <http://127.0.0.1:3000>.
@@ -21,7 +21,7 @@ The local preview server restarts automatically if you edit any of the TypeScrip
 To generate the static site:
 
 ```sh
-yarn build
+yarn docs:build
 ```
 
 This creates the `dist` folder. View the site using your preferred web server, such as:

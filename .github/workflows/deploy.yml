@@ -35,6 +35,7 @@ jobs:
       - if: steps.cache-data.outputs.cache-hit == 'true'
         run: find docs/.observablehq/cache examples/*/docs/.observablehq/cache -type f -exec touch {} +
       - run: yarn build
+      - run: yarn docs:build
       - name: Build example "api"
         run: yarn --frozen-lockfile && yarn build
         working-directory: examples/api
