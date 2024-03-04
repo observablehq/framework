@@ -20,8 +20,8 @@
   },
   "scripts": {
     "dev": "rimraf --glob docs/themes.md docs/theme/*.md && (tsx watch docs/theme/generate-themes.ts & tsx watch --no-warnings=ExperimentalWarning ./src/bin/observable.ts preview --no-open)",
-    "build:esbuild": "rimraf build && esbuild --define:process.env.npm_package_version=\\\"${npm_package_version}\\\" --outdir=build --outbase=src --platform=node $(find src \\( -name '*.ts' -o -name '*.js' -o -name '*.css' \\) ! -name '*.d.ts' )",
-    "build:mocha": "rimraf build.test && esbuild --sourcemap --define:process.env.npm_package_version=\\\"${npm_package_version}\\\" --outdir=build.test --platform=node $(find src test \\( -name '*.ts' -o -name '*.js' -o -name '*.css' \\) ! -path 'test/input/*' ! -path 'test/output/*' ! -path 'test/preview/dashboard/*' ! -name '*.d.ts' ) && cp -r templates build.test",
+    "build:esbuild": "rimraf build && node build --outdir=build --outbase=src 'src/**/*.{ts,js,css}' --ignore '**/*.d.ts'",
+    "build:mocha": "rimraf build.test && node build --sourcemap --outdir=build.test '{src,test}/**/*.{ts,js,css}' --ignore 'test/input/*' --ignore 'test/output/*' --ignore 'test/preview/dashboard/**' --ignore '**/*.d.ts' && cp -r templates build.test",
     "build": "yarn rebuild-themes && rimraf dist && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts build",
     "deploy": "yarn rebuild-themes && tsx --no-warnings=ExperimentalWarning ./bin/observable.ts deploy",
     "rebuild-themes": "rimraf --glob docs/themes.md docs/theme/*.md && tsx docs/theme/generate-themes.ts",
@@ -111,6 +111,7 @@
     "eslint-import-resolver-typescript": "^3.6.1",
     "eslint-plugin-import": "^2.29.0",
     "fast-deep-equal": "^3.1.3",
+    "glob": "^10.3.10",
     "mocha": "^10.2.0",
     "prettier": "^3.0.3 <3.1",
     "rimraf": "^5.0.5",
