@@ -19,5 +19,6 @@ await build({
   outbase: values.outbase,
   platform: "node",
   sourcemap: values.sourcemap ? "linked" : false,
+  format: "esm",
   logLevel: "info"
 });
