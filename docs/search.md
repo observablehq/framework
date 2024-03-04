@@ -6,7 +6,11 @@ index: true
 
 Framework provides built-in full-text page search using [MiniSearch](https://lucaong.github.io/minisearch/). Search results are queried on the client, with fuzzy and prefix matching, using a static index computed during build.
 
-<div class="tip">Search is not enabled by default. It is intended for larger projects with lots of static text, such as reports and documentation. Search will not index dynamic content such as data or charts. To enable search, set the <a href="./config#search"><b>search</b> option</a> to true in your config.</div>
+<div class="tip">
+
+Search is not enabled by default. It is intended for larger projects with lots of static text, such as reports and documentation. Search will not index dynamic content such as data or charts. To enable search, set the [**search** option](./config#search) to true in your config.
+
+</div>
 
 Search works in two stages: when Framework builds the site, it creates an index of the contents. On the client, as soon as the user focuses the search input and starts typing, the index is retrieved and the matching pages are displayed in the sidebar. The user can then click on a result, or use the up ↑ and down ↓ arrow keys to navigate, then type return to open the page.
 
@@ -31,3 +35,5 @@ index: true
 ```
 
 Search is case-insensitive. The indexing script tries to avoid common pitfalls by ignoring HTML tags and non-word characters such as punctuation. It also ignores long words, as well as sequences that contain more than 6 digits (such as API keys, for example).
+
+Words in the page’s title are weighted more than words in the text, allowing these pages to rank higher in the search results. Keywords defined in the page’s [front matter](./markdown#front-matter) are indexed with the contents and also weighted more.
