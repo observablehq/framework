@@ -281,7 +281,8 @@ function getWatchFiles(resolvers: Resolvers): Iterable<string> {
   return files;
 }
 
-function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Config) {
+function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
+  const {root} = config;
   let path: string | null = null;
   let hash: string | null = null;
   let html: string[] | null = null;
@@ -311,7 +312,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
         break;
       }
       case "change": {
-        const page = await parseMarkdown(join(root, path), {root, path, style});
+        const page = await parseMarkdown(join(root, path), {path, ...config});
         // delay to avoid a possibly-empty file
         if (!force && page.html === "") {
           if (!emptyTimeout) {
@@ -356,11 +357,11 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
 
   async function hello({path: initialPath, hash: initialHash}: {path: string; hash: string}): Promise<void> {
     if (markdownWatcher || attachmentWatcher) throw new Error("already watching");
-    path = initialPath;
+    path = decodeURIComponent(initialPath);
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
     path += ".md";
-    const page = await parseMarkdown(join(root, path), {root, path, style});
+    const page = await parseMarkdown(join(root, path), {path, ...config});
     const resolvers = await getResolvers(page, {root, path});
     if (resolvers.hash !== initialHash) return void send({type: "reload"});
     hash = resolvers.hash;

@@ -272,16 +272,17 @@ function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
 export interface ParseOptions {
   root: string;
   path: string;
+  markdownIt?: Config["markdownIt"];
   style?: Config["style"];
 }
 
 export async function parseMarkdown(
   sourcePath: string,
-  {root, path, style: configStyle}: ParseOptions
+  {root, path, markdownIt = (md) => md, style: configStyle}: ParseOptions
 ): Promise<MarkdownPage> {
   const source = await readFile(sourcePath, "utf-8");
   const parts = matter(source, {});
-  const md = MarkdownIt({html: true});
+  const md = markdownIt(MarkdownIt({html: true}));
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
