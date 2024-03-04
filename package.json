@@ -20,19 +20,20 @@
   },
   "scripts": {
     "dev": "rimraf --glob docs/themes.md docs/theme/*.md && (tsx watch docs/theme/generate-themes.ts & tsx watch --no-warnings=ExperimentalWarning ./src/bin/observable.ts preview --no-open)",
-    "build:mocha": "rimraf build.test && node build.js --sourcemap --outdir=build.test \"{src,test}/**/*.{ts,js,css}\" --ignore \"test/input/**\" --ignore \"test/output/**\" --ignore \"test/preview/dashboard/**\" --ignore \"**/*.d.ts\" && cp -r templates build.test",
-    "build": "yarn rebuild-themes && rimraf dist && tsx --no-warnings=ExperimentalWarning ./src/bin/observable.ts build",
-    "deploy": "yarn rebuild-themes && tsx --no-warnings=ExperimentalWarning ./src/bin/observable.ts deploy",
-    "rebuild-themes": "rimraf --glob docs/themes.md docs/theme/*.md && tsx docs/theme/generate-themes.ts",
+    "docs:themes": "rimraf --glob docs/themes.md docs/theme/*.md && tsx docs/theme/generate-themes.ts",
+    "docs:build": "yarn docs:themes && rimraf dist && tsx --no-warnings=ExperimentalWarning ./src/bin/observable.ts build",
+    "docs:deploy": "yarn docs:themes && tsx --no-warnings=ExperimentalWarning ./src/bin/observable.ts deploy",
+    "build": "rimraf build && node build.js --outdir=build --outbase=src \"src/**/*.{ts,js,css}\" --ignore \"**/*.d.ts\"",
     "test": "concurrently npm:test:mocha npm:test:tsc npm:test:lint npm:test:prettier",
     "test:coverage": "c8 --check-coverage --lines 80 --per-file yarn test:mocha",
-    "test:mocha": "yarn build:mocha && rimraf --glob test/.observablehq/cache test/input/build/*/.observablehq/cache && cross-env OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles mocha -p \"build.test/test/**/*-test.js\"",
-    "test:mocha:serial": "yarn build:mocha && rimraf --glob test/.observablehq/cache test/input/build/*/.observablehq/cache && cross-env OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles mocha \"build.test/test/**/*-test.js\"",
+    "test:build": "rimraf build.test && node build.js --sourcemap --outdir=build.test \"{src,test}/**/*.{ts,js,css}\" --ignore \"test/input/**\" --ignore \"test/output/**\" --ignore \"test/preview/dashboard/**\" --ignore \"**/*.d.ts\" && cp -r templates build.test",
+    "test:mocha": "yarn test:build && rimraf --glob test/.observablehq/cache test/input/build/*/.observablehq/cache && cross-env OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles mocha -p \"build.test/test/**/*-test.js\"",
+    "test:mocha:serial": "yarn test:build && rimraf --glob test/.observablehq/cache test/input/build/*/.observablehq/cache && cross-env OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles mocha \"build.test/test/**/*-test.js\"",
     "test:lint": "eslint src test --max-warnings=0",
     "test:prettier": "prettier --check src test",
     "test:tsc": "tsc --noEmit",
     "observable": "tsx --no-warnings=ExperimentalWarning ./src/bin/observable.ts",
-    "prepublishOnly": "rimraf build && node build.js --outdir=build --outbase=src \"src/**/*.{ts,js,css}\" --ignore \"**/*.d.ts\""
+    "prepublishOnly": "yarn build"
   },
   "c8": {
     "all": true,
