@@ -14,7 +14,7 @@ const {values, positionals} = parseArgs({
 
 const entryPoints = await glob(positionals, {ignore: values.ignore});
 
-console.log({entryPoints});
+console.log({positionals, entryPoints});
 
 await build({
   entryPoints,
