@@ -110,6 +110,7 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
         if (packageManager) {
           s.message(`Installing dependencies via ${packageManager}`);
           await effects.sleep(1000);
+          if (packageManager === "yarn") await writeFile(join(rootPath, "yarn.lock"), "");
           await promisify(exec)(installCommand, {cwd: rootPath});
         }
         if (initializeGit) {
