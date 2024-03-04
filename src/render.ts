@@ -117,7 +117,7 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
         )}"><input type="search" placeholder="Search"></div>
   <div id="observablehq-search-results"></div>
   <script>{${html.unsafe(
-    (await rollupClient(getClientPath("./src/client/search-init.ts"), {minify: true})).trim()
+    (await rollupClient(getClientPath("./src/client/search-init.ts"), {minify: true})).text.trim()
   )}}</script>`
       : ""
   }
@@ -142,7 +142,7 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
   </ol>
 </nav>
 <script>{${html.unsafe(
-    (await rollupClient(getClientPath("./src/client/sidebar-init.ts"), {minify: true})).trim()
+    (await rollupClient(getClientPath("./src/client/sidebar-init.ts"), {minify: true})).text.trim()
   )}}</script>`;
 }
 

@@ -33,19 +33,34 @@ export async function bundleStyles({
   minify?: boolean;
   path?: string;
   theme?: string[];
-}): Promise<string> {
+}): Promise<{text: string; sourcemap?: string}> {
   const result = await build({
     bundle: true,
     ...(path ? {entryPoints: [path]} : {stdin: {contents: renderTheme(theme!), loader: "css"}}),
     write: false,
     minify,
+    sourcemap: !!path,
     alias: STYLE_MODULES
   });
-  const text = result.outputFiles[0].text;
-  return rewriteInputsNamespace(text); // TODO only for inputs
+  let text = result.outputFiles[0].text;
+  let sourcemap;
+  if (path) {
+    const groups = text.match(
+      /^(?<text>.*)[/][*]# sourceMappingURL=data:application[/]json;base64,(?<sourcemap>[a-zA-Z0-9+]+=) [*][/]$/m
+    )?.groups;
+    if (groups) {
+      ({text, sourcemap} = groups);
+      console.warn({path, sourcemap});
+    }
+  }
+  if (path === "src/client/stdlib/inputs.js") text = rewriteInputsNamespace(text);
+  return {text, sourcemap};
 }
 
-export async function rollupClient(clientPath: string, {minify = false} = {}): Promise<string> {
+export async function rollupClient(
+  clientPath: string,
+  {minify = false} = {}
+): Promise<{text: string; sourcemap?: string}> {
   const bundle = await rollup({
     input: clientPath,
     external: [/^https:/],
@@ -64,11 +79,11 @@ export async function rollupClient(clientPath: string, {minify = false} = {}): P
     ]
   });
   try {
-    const output = await bundle.generate({format: "es"});
+    const output = await bundle.generate({format: "es", sourcemap: "inline"});
     let code = output.output.find((o): o is OutputChunk => o.type === "chunk")!.code; // TODO don’t assume one chunk?
     code = rewriteTypeScriptImports(code);
-    code = rewriteInputsNamespace(code); // TODO only for inputs
-    return code;
+    if (clientPath === "src/client/stdlib/inputs.js") code = rewriteInputsNamespace(code); // TODO only for inputs
+    return {text: code};
   } finally {
     await bundle.close();
   }

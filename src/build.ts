@@ -109,10 +109,11 @@ export async function build(
       const clientPath = getClientPath(entry);
       const outputPath = join("_observablehq", name);
       effects.output.write(`${faint("bundle")} ${clientPath} ${faint("→")} `);
-      const code = await (entry.endsWith(".css")
+      const {text, sourcemap} = await (entry.endsWith(".css")
         ? bundleStyles({path: clientPath, minify: true})
         : rollupClient(clientPath, {minify: true}));
-      await effects.writeFile(outputPath, code);
+      console.warn(sourcemap);
+      await effects.writeFile(outputPath, text);
     }
     if (config.search) {
       const outputPath = join("_observablehq", "minisearch.json");
@@ -125,13 +126,15 @@ export async function build(
         const outputPath = join("_import", style.path);
         const sourcePath = join(root, style.path);
         effects.output.write(`${faint("style")} ${sourcePath} ${faint("→")} `);
-        const code = await bundleStyles({path: sourcePath, minify: true});
-        await effects.writeFile(outputPath, code);
+        const {text, sourcemap} = await bundleStyles({path: sourcePath, minify: true});
+        await effects.writeFile(outputPath, text);
+        console.warn(sourcemap);
       } else {
         const outputPath = join("_observablehq", `theme-${style.theme}.css`);
         effects.output.write(`${faint("bundle")} theme-${style.theme}.css ${faint("→")} `);
-        const code = await bundleStyles({theme: style.theme, minify: true});
-        await effects.writeFile(outputPath, code);
+        const {text, sourcemap} = await bundleStyles({theme: style.theme, minify: true});
+        await effects.writeFile(outputPath, text);
+        console.warn(sourcemap);
       }
     }
   }
