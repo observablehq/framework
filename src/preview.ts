@@ -357,7 +357,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
 
   async function hello({path: initialPath, hash: initialHash}: {path: string; hash: string}): Promise<void> {
     if (markdownWatcher || attachmentWatcher) throw new Error("already watching");
-    path = initialPath;
+    path = decodeURIComponent(initialPath);
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
     path += ".md";
