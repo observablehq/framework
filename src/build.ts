@@ -107,7 +107,7 @@ export async function build(
   if (addPublic) {
     for (const path of globalImports) {
       if (path.startsWith("/_observablehq/") && path.endsWith(".js")) {
-        const clientPath = getClientPath(`./src/client/${path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)}`); // prettier-ignore
+        const clientPath = getClientPath(path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)); // prettier-ignore
         effects.output.write(`${faint("build")} ${clientPath} ${faint("→")} `);
         const define: {[key: string]: string} = {};
         if (config.search) define["global.__minisearch"] = JSON.stringify(relativePath(path, aliases.get("/_observablehq/minisearch.json")!)); // prettier-ignore
@@ -121,11 +121,11 @@ export async function build(
         effects.output.write(`${faint("build")} ${specifier} ${faint("→")} `);
         if (specifier.startsWith("observablehq:theme-")) {
           const match = /^observablehq:theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(specifier);
-          const contents = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? []});
+          const contents = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? [], minify: true});
           await effects.writeFile(path, contents);
         } else {
-          const clientPath = getClientPath(`./src/client/${path.slice("/_observablehq/".length)}`);
-          const contents = await bundleStyles({path: clientPath});
+          const clientPath = getClientPath(path.slice("/_observablehq/".length));
+          const contents = await bundleStyles({path: clientPath, minify: true});
           await effects.writeFile(`/_observablehq/${specifier.slice("observablehq:".length)}`, contents);
         }
       } else if (specifier.startsWith("npm:")) {
@@ -136,7 +136,7 @@ export async function build(
       } else if (!/^\w+:/.test(specifier)) {
         const sourcePath = join(root, specifier);
         effects.output.write(`${faint("build")} ${sourcePath} ${faint("→")} `);
-        const contents = await bundleStyles({path: sourcePath});
+        const contents = await bundleStyles({path: sourcePath, minify: true});
         const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
         const ext = extname(specifier);
         const alias = `/${join("_import", dirname(specifier), `${basename(specifier, ext)}.${hash}${ext}`)}`;

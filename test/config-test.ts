@@ -45,7 +45,8 @@ describe("readConfig(undefined, root)", () => {
         project: "bi"
       },
       search: false,
-      interpreters
+      interpreters,
+      markdownIt: undefined
     });
   });
   it("returns the default config if no config file is found", async () => {
@@ -66,7 +67,8 @@ describe("readConfig(undefined, root)", () => {
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-11T01:02:03">Jan 11, 2024</a>.',
       deploy: null,
       search: false,
-      interpreters
+      interpreters,
+      markdownIt: undefined
     });
   });
 });

@@ -1,8 +1,9 @@
+#!/usr/bin/env node
 import {type ParseArgsConfig, parseArgs} from "node:util";
 import * as clack from "@clack/prompts";
-import {readConfig} from "../src/config.js";
-import {CliError} from "../src/error.js";
-import {faint, link, red} from "../src/tty.js";
+import {readConfig} from "../config.js";
+import {CliError} from "../error.js";
+import {faint, link, red} from "../tty.js";
 
 const args = process.argv.slice(2);
 
@@ -86,7 +87,7 @@ try {
     }
     case "version": {
       helpArgs(command, {});
-      await import("../package.json").then(({version}: any) => console.log(version));
+      console.log(process.env.npm_package_version);
       break;
     }
     case "build": {
@@ -95,12 +96,12 @@ try {
       } = helpArgs(command, {
         options: {...CONFIG_OPTION}
       });
-      await import("../src/build.js").then(async (build) => build.build({config: await readConfig(config, root)}));
+      await import("../build.js").then(async (build) => build.build({config: await readConfig(config, root)}));
       break;
     }
     case "create": {
       helpArgs(command, {});
-      await import("../src/create.js").then(async (create) => create.create());
+      await import("../create.js").then(async (create) => create.create());
       break;
     }
     case "deploy": {
@@ -115,7 +116,7 @@ try {
           }
         }
       });
-      await import("../src/deploy.js").then(async (deploy) =>
+      await import("../deploy.js").then(async (deploy) =>
         deploy.deploy({config: await readConfig(config, root), message})
       );
       break;
@@ -149,7 +150,7 @@ try {
         else if (name === "open") values.open = true;
       }
       const {config, root, host, port, open} = values;
-      await import("../src/preview.js").then(async (preview) =>
+      await import("../preview.js").then(async (preview) =>
         preview.preview({
           config: await readConfig(config, root),
           hostname: host!,
@@ -161,17 +162,17 @@ try {
     }
     case "login": {
       helpArgs(command, {});
-      await import("../src/observableApiAuth.js").then((auth) => auth.login());
+      await import("../observableApiAuth.js").then((auth) => auth.login());
       break;
     }
     case "logout": {
       helpArgs(command, {});
-      await import("../src/observableApiAuth.js").then((auth) => auth.logout());
+      await import("../observableApiAuth.js").then((auth) => auth.logout());
       break;
     }
     case "whoami": {
       helpArgs(command, {});
-      await import("../src/observableApiAuth.js").then((auth) => auth.whoami());
+      await import("../observableApiAuth.js").then((auth) => auth.whoami());
       break;
     }
     case "convert": {
@@ -182,7 +183,7 @@ try {
         options: {output: {type: "string", default: "."}, force: {type: "boolean", short: "f"}},
         allowPositionals: true
       });
-      await import("../src/convert.js").then((convert) => convert.convert(positionals, {output: output!, force}));
+      await import("../convert.js").then((convert) => convert.convert(positionals, {output: output!, force}));
       break;
     }
     default: {
@@ -191,7 +192,7 @@ try {
       break;
     }
   }
-} catch (error) {
+} catch (error: any) {
   if (error instanceof CliError) {
     if (error.print) {
       if (command && CLACKIFIED_COMMANDS.includes(command)) {

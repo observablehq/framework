@@ -6,7 +6,7 @@ import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
-import {getClientPath} from "./files.js";
+import {getStylePath} from "./files.js";
 import type {StringLiteral} from "./javascript/source.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/source.js";
 import {resolveNpmImport} from "./npm.js";
@@ -16,7 +16,7 @@ import {Sourcemap} from "./sourcemap.js";
 import {THEMES, renderTheme} from "./theme.js";
 
 const STYLE_MODULES = {
-  "observablehq:default.css": getClientPath("./src/style/default.css"),
+  "observablehq:default.css": getStylePath("default.css"),
   ...Object.fromEntries(THEMES.map(({name, path}) => [`observablehq:theme-${name}.css`, path]))
 };
 
@@ -33,11 +33,20 @@ function rewriteInputsNamespace(code: string) {
   return code.replace(/\b__ns__\b/g, "inputs-3a86ea");
 }
 
-export async function bundleStyles({path, theme}: {path?: string; theme?: string[]}): Promise<string> {
+export async function bundleStyles({
+  minify = false,
+  path,
+  theme
+}: {
+  minify?: boolean;
+  path?: string;
+  theme?: string[];
+}): Promise<string> {
   const result = await build({
     bundle: true,
     ...(path ? {entryPoints: [path]} : {stdin: {contents: renderTheme(theme!), loader: "css"}}),
     write: false,
+    minify,
     alias: STYLE_MODULES
   });
   const text = result.outputFiles[0].text;

@@ -195,7 +195,7 @@ toc: false
 ## search
 
 Whether to enable [search](./search) on the project; defaults to false.
-
+code 
 ## interpreters
 
 The **interpreters** option specifies additional interpreted languages for data loaders, indicating the file extension and associated interpreter (see [loader routing](./loaders#routing) for more). The default list of interpreters is:
@@ -205,7 +205,7 @@ The **interpreters** option specifies additional interpreted languages for data 
   ".js": ["node", "--no-warnings=ExperimentalWarning"],
   ".ts": ["tsx"],
   ".sh": ["sh"],
-  ".exe": [""],
+  ".exe": [],
   ".jl": ["julia"],
   ".go": ["go", "run"],
   ".php": ["php"],
@@ -226,4 +226,17 @@ To disable an extension, set its value to null:
 
 ```js run=false
 interpreters: {".exe": null, ".rs": null}
+```
+
+## markdownIt
+
+A hook for registering additional [markdown-it](https://github.com/markdown-it/markdown-it) plugins. For example, to use [markdown-it-footnote](https://github.com/markdown-it/markdown-it-footnote):
+
+```js
+import type MarkdownIt from "markdown-it";
+import MarkdownItFootnote from "markdown-it-footnote";
+
+export default {
+  markdownIt: (md: MarkdownIt) => md.use(MarkdownItFootnote);
+};
 ```

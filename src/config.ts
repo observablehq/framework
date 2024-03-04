@@ -1,7 +1,9 @@
+import {existsSync} from "node:fs";
 import op from "node:path";
 import {basename, dirname, join} from "node:path/posix";
 import {cwd} from "node:process";
 import {pathToFileURL} from "node:url";
+import type MarkdownIt from "markdown-it";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import {parseMarkdown} from "./markdown.js";
@@ -51,6 +53,7 @@ export interface Config {
   deploy: null | {workspace: string; project: string};
   search: boolean; // default to false
   interpreters: Map<string, string[]>; // Map of extension to interpreter commands
+  markdownIt?: (md: MarkdownIt) => MarkdownIt;
 }
 
 const defaultInterpreters = {
@@ -68,22 +71,27 @@ const defaultInterpreters = {
   ".rs": ["rust-script"]
 };
 
+/**
+ * Returns the absolute path to the specified config file, which is specified as a
+ * path relative to the given root (if any). If you want to import this, you should
+ * pass the result to pathToFileURL.
+ */
+function resolveConfig(configPath: string, root = "."): string {
+  return op.join(cwd(), root, configPath);
+}
+
 export async function readConfig(configPath?: string, root?: string): Promise<Config> {
   if (configPath === undefined) return readDefaultConfig(root);
-  const importPath = pathToFileURL(op.join(cwd(), root ?? ".", configPath)).toString();
-  return normalizeConfig((await import(importPath)).default, root);
+  return normalizeConfig((await import(pathToFileURL(resolveConfig(configPath, root)).href)).default, root);
 }
 
 export async function readDefaultConfig(root?: string): Promise<Config> {
-  for (const ext of [".js", ".ts"]) {
-    try {
-      return await readConfig("observablehq.config" + ext, root);
-    } catch (error: any) {
-      if (error.code !== "ERR_MODULE_NOT_FOUND") throw error;
-      continue;
-    }
-  }
-  return normalizeConfig(undefined, root);
+  const jsPath = resolveConfig("observablehq.config.js", root);
+  if (existsSync(jsPath)) return normalizeConfig((await import(pathToFileURL(jsPath).href)).default, root);
+  const tsPath = resolveConfig("observablehq.config.ts", root);
+  if (!existsSync(tsPath)) return normalizeConfig(undefined, root);
+  await import("tsx/esm"); // lazy tsx
+  return normalizeConfig((await import(pathToFileURL(tsPath).href)).default, root);
 }
 
 async function readPages(root: string): Promise<Page[]> {
@@ -124,6 +132,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
     )}">${formatLocaleDate(currentDate)}</a>.`,
     interpreters
   } = spec;
+  const {markdownIt} = spec;
   root = String(root);
   output = String(output);
   base = normalizeBase(base);
@@ -143,6 +152,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
   search = Boolean(search);
   interpreters = new Map(Object.entries({...defaultInterpreters, ...interpreters}).filter(([, i]) => i != null));
+  if (markdownIt !== undefined && typeof markdownIt !== "function") throw new Error("markdownIt must be a function");
   return {
     root,
     output,
@@ -159,7 +169,8 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
     style,
     deploy,
     search,
-    interpreters
+    interpreters,
+    markdownIt
   };
 }
 
