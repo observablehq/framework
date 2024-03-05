@@ -50,6 +50,7 @@ export function hasImportDeclaration(body: Node): boolean {
 
   return has;
 }
+
 /**
  * Finds all imports (both static and dynamic, local and global) with
  * statically-analyzable sources in the specified node. Note: this includes only
