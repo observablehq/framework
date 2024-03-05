@@ -1,6 +1,5 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
-import {readFile} from "node:fs/promises";
 import matter from "gray-matter";
 import he from "he";
 import MarkdownIt from "markdown-it";
@@ -276,12 +275,11 @@ export interface ParseOptions {
   style?: Config["style"];
 }
 
-export async function parseMarkdown(
-  sourcePath: string,
+export function parseMarkdown(
+  input: string,
   {root, path, markdownIt = (md) => md, style: configStyle}: ParseOptions
-): Promise<MarkdownPage> {
-  const source = await readFile(sourcePath, "utf-8");
-  const parts = matter(source, {});
+): MarkdownPage {
+  const parts = matter(input, {});
   const md = markdownIt(MarkdownIt({html: true}));
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);

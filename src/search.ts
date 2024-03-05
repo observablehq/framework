@@ -1,3 +1,4 @@
+import {readFile} from "node:fs/promises";
 import {basename, join} from "node:path/posix";
 import he from "he";
 import MiniSearch from "minisearch";
@@ -41,7 +42,8 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
   const index = new MiniSearch(indexOptions);
   for await (const file of visitMarkdownFiles(root)) {
     const path = join(root, file);
-    const {html, title, data} = await parseMarkdown(path, {root, path: "/" + file.slice(0, -3)});
+    const source = await readFile(path, "utf8");
+    const {html, title, data} = parseMarkdown(source, {root, path: "/" + file.slice(0, -3)});
 
     // Skip pages that opt-out of indexing, and skip unlisted pages unless
     // opted-in. We only log the first case.

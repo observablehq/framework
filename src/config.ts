@@ -1,4 +1,5 @@
 import {existsSync} from "node:fs";
+import {readFile} from "node:fs/promises";
 import op from "node:path";
 import {basename, dirname, join} from "node:path/posix";
 import {cwd} from "node:process";
@@ -82,7 +83,8 @@ async function readPages(root: string): Promise<Page[]> {
   const pages: Page[] = [];
   for await (const file of visitMarkdownFiles(root)) {
     if (file === "index.md" || file === "404.md") continue;
-    const parsed = await parseMarkdown(join(root, file), {root, path: file});
+    const source = await readFile(join(root, file), "utf8");
+    const parsed = parseMarkdown(source, {root, path: file});
     if (parsed?.data?.draft) continue;
     const name = basename(file, ".md");
     const page = {path: join("/", dirname(file), name), name: parsed.title ?? "Untitled"};
