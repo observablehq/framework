@@ -55,9 +55,23 @@ if (location.pathname.endsWith("/")) {
 import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from ` : ""}${JSON.stringify(
     resolveImport("observablehq:client")
   )};${
-    files.size
-      ? `\nimport {registerFile} from ${JSON.stringify(resolveImport("observablehq:stdlib"))};
-${renderFiles(files, resolveFile)}`
+    files.size || page.data?.sql
+      ? `\nimport {registerFile${page.data?.sql ? ", FileAttachment" : ""}} from ${JSON.stringify(
+          resolveImport("observablehq:stdlib")
+        )};`
+      : ""
+  }${
+    page.data?.sql
+      ? `\nimport {registerTable} from ${JSON.stringify(resolveImport("npm:@observablehq/duckdb"))};`
+      : ""
+  }${files.size ? `\n${renderFiles(files, resolveFile)}` : ""}${
+    page.data?.sql
+      ? `\n${Object.entries<string>(page.data.sql).map(
+          ([name, source]) =>
+            `${renderFile(source, resolvers.resolveFile)}\nregisterTable(${JSON.stringify(
+              name
+            )}, FileAttachment(${JSON.stringify(source)}));`
+        )}`
       : ""
   }
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
