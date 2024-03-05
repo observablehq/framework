@@ -61,9 +61,7 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
         )};`
       : ""
   }${
-    page.data?.sql
-      ? `\nimport {registerTable} from ${JSON.stringify(resolveImport("npm:@observablehq/duckdb"))};`
-      : ""
+    page.data?.sql ? `\nimport {registerTable} from ${JSON.stringify(resolveImport("npm:@observablehq/duckdb"))};` : ""
   }${files.size ? `\n${renderFiles(files, resolveFile)}` : ""}${
     page.data?.sql
       ? `\n${Object.entries<string>(page.data.sql).map(
