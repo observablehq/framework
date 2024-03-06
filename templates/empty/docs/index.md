@@ -1,5 +1,4 @@
 ---
-theme: alt
 toc: false
 ---
 
