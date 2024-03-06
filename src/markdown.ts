@@ -13,6 +13,7 @@ import {parseInfo} from "./info.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
 import {relativePath} from "./path.js";
+import {transpileSql} from "./sql.js";
 import {transpileTag} from "./tag.js";
 import {InvalidThemeError} from "./theme.js";
 import {red} from "./tty.js";
@@ -48,13 +49,15 @@ function isFalse(attribute: string | undefined): boolean {
   return attribute?.toLowerCase() === "false";
 }
 
-function getLiveSource(content: string, tag: string): string | undefined {
+function getLiveSource(content: string, tag: string, attributes: Record<string, string>): string | undefined {
   return tag === "js"
     ? content
     : tag === "tex"
     ? transpileTag(content, "tex.block", true)
     : tag === "html"
     ? transpileTag(content, "html.fragment", true)
+    : tag === "sql"
+    ? transpileSql(content, attributes)
     : tag === "svg"
     ? transpileTag(content, "svg.fragment", true)
     : tag === "dot"
@@ -88,22 +91,23 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
     const {tag, attributes} = parseInfo(token.info);
     token.info = tag;
     let html = "";
-    const source = isFalse(attributes.run) ? undefined : getLiveSource(token.content, tag);
-    if (source != null) {
-      const id = uniqueCodeId(context, token.content);
-      try {
+    let source: string | undefined;
+    try {
+      source = isFalse(attributes.run) ? undefined : getLiveSource(token.content, tag, attributes);
+      if (source != null) {
+        const id = uniqueCodeId(context, source);
         // TODO const sourceLine = context.startLine + context.currentLine;
         const node = parseJavaScript(source, {path: sourcePath});
         context.code.push({id, node});
         html += `<div id="cell-${id}" class="observablehq observablehq--block${
           node.expression ? " observablehq--loading" : ""
         }"></div>\n`;
-      } catch (error) {
-        if (!(error instanceof SyntaxError)) throw error;
-        html += `<div id="cell-${id}" class="observablehq observablehq--block">
+      }
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+      html += `<div class="observablehq observablehq--block">
   <div class="observablehq--inspect observablehq--error">SyntaxError: ${he.escape(error.message)}</div>
 </div>\n`;
-      }
     }
     if (attributes.echo == null ? source == null : !isFalse(attributes.echo)) {
       html += baseRenderer(tokens, idx, options, context, self);

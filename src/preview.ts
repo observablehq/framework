@@ -290,6 +290,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
   let html: string[] | null = null;
   let code: Map<string, string> | null = null;
   let files: Map<string, string> | null = null;
+  let tables: Map<string, string> | null = null;
   let stylesheets: string[] | null = null;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
@@ -335,21 +336,22 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
         const previousHtml = html!;
         const previousCode = code!;
         const previousFiles = files!;
+        const previousTables = tables!;
         const previousStylesheets = stylesheets!;
         hash = resolvers.hash;
         html = getHtml(page, resolvers);
         code = getCode(page, resolvers);
         files = getFiles(resolvers);
+        tables = getTables(page);
         stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
         send({
           type: "update",
-          diffHtml: diffHtml(previousHtml, html),
-          diffCode: diffCode(previousCode, code),
-          diffFiles: diffFiles(previousFiles, files),
-          addedStylesheets: Array.from(difference(stylesheets, previousStylesheets)),
-          removedStylesheets: Array.from(difference(previousStylesheets, stylesheets)),
-          previousHash,
-          updatedHash: hash
+          html: diffHtml(previousHtml, html),
+          code: diffCode(previousCode, code),
+          files: diffFiles(previousFiles, files),
+          tables: diffTables(previousTables, tables, previousFiles, files),
+          stylesheets: diffStylesheets(previousStylesheets, stylesheets),
+          hash: {previous: previousHash, current: hash}
         });
         attachmentWatcher?.close();
         attachmentWatcher = await FileWatchers.of(root, path, getWatchFiles(resolvers), () => watcher("change"));
@@ -372,6 +374,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
     html = getHtml(page, resolvers);
     code = getCode(page, resolvers);
     files = getFiles(resolvers);
+    tables = getTables(page);
     stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
     attachmentWatcher = await FileWatchers.of(root, path, getWatchFiles(resolvers), () => watcher("change"));
     markdownWatcher = watch(join(root, path), (event) => watcher(event));
@@ -438,6 +441,10 @@ function getFiles({files, resolveFile}: Resolvers): Map<string, string> {
   return new Map(Array.from(files, (f) => [f, resolveFile(f)]));
 }
 
+function getTables({data}: MarkdownPage): Map<string, string> {
+  return new Map(Object.entries(data?.sql ?? {}));
+}
+
 type CodePatch = {removed: string[]; added: string[]};
 
 function diffCode(oldCode: Map<string, string>, newCode: Map<string, string>): CodePatch {
@@ -473,6 +480,32 @@ function diffFiles(oldFiles: Map<string, string>, newFiles: Map<string, string>)
   return patch;
 }
 
+type TableDeclaration = {name: string; path: string};
+type TablePatch = {removed: string[]; added: TableDeclaration[]};
+
+function diffTables(
+  oldTables: Map<string, string>,
+  newTables: Map<string, string>,
+  oldFiles: Map<string, string>,
+  newFiles: Map<string, string>
+): TablePatch {
+  const patch: TablePatch = {removed: [], added: []};
+  for (const [name, path] of oldTables) {
+    if (newTables.get(name) !== path) {
+      patch.removed.push(name);
+    }
+  }
+  for (const [name, path] of newTables) {
+    if (oldTables.get(name) !== path) {
+      patch.added.push({name, path});
+    } else if (newFiles.get(path) !== oldFiles.get(path)) {
+      patch.removed.push(name);
+      patch.added.push({name, path});
+    }
+  }
+  return patch;
+}
+
 function diffHtml(oldHtml: string[], newHtml: string[]): RedactedPatch<string> {
   return getPatch(oldHtml, newHtml).map(redactPatch);
 }
@@ -485,4 +518,13 @@ type RedactedPatchItem<T> =
 
 function redactPatch<T>(patch: PatchItem<T>): RedactedPatchItem<T> {
   return patch.type === "remove" ? {...patch, type: "remove", items: {length: patch.items.length}} : patch;
+}
+
+type StylesheetPatch = {removed: string[]; added: string[]};
+
+function diffStylesheets(oldStylesheets: string[], newStylesheets: string[]): StylesheetPatch {
+  return {
+    removed: Array.from(difference(oldStylesheets, newStylesheets)),
+    added: Array.from(difference(newStylesheets, oldStylesheets))
+  };
 }
