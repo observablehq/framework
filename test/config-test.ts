@@ -2,6 +2,7 @@ import assert from "node:assert";
 import {normalizeConfig as config, mergeToc, readConfig, setCurrentDate} from "../src/config.js";
 
 const root = "test/input/build/config";
+
 const interpreters = new Map([
   [".R", ["Rscript"]],
   [".exe", []],
