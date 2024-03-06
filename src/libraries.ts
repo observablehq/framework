@@ -20,7 +20,7 @@ export function getImplicitInputImports(inputs: Iterable<string>): Set<string> {
   if (set.has("dot")) implicits.add("npm:@observablehq/dot");
   if (set.has("duckdb")) implicits.add("npm:@duckdb/duckdb-wasm");
   if (set.has("DuckDBClient") || set.has("sql")) implicits.add("npm:@observablehq/duckdb");
-  if (set.has("echarts")) implicits.add("npm:echarts/dist/echarts.esm.min.js");
+  if (set.has("echarts")) implicits.add("npm:echarts");
   if (set.has("htl") || set.has("html") || set.has("svg")) implicits.add("npm:htl");
   if (set.has("Inputs")) implicits.add("npm:@observablehq/inputs");
   if (set.has("L")) implicits.add("npm:leaflet");
