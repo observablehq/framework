@@ -16,7 +16,6 @@ export function transpileSql(content: string, {id, display}: Record<string, stri
 }
 
 function isValidBinding(input: string): boolean {
-  console.warn("isValidBinding", {input});
   try {
     const parser = new (Parser as any)(acornOptions, input, 0); // private constructor
     parser.nextToken();
