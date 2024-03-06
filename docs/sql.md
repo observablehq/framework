@@ -40,7 +40,7 @@ You can interpolate dynamic values into SQL queries using inline expressions `${
 const mag = view(Inputs.range([6, 20], {label: "Magnitude"}));
 ```
 
-```sql
+```sql echo
 SELECT * FROM gaia WHERE phot_g_mean_mag BETWEEN ${mag - 0.1} AND ${mag + 0.1};
 ```
 
