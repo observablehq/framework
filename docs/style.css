@@ -36,15 +36,15 @@
 }
 
 a.observablehq-version-badge {
-  font-size: 12px;
-  font-family: var(--sans-serif);
+  font: 500 12px var(--sans-serif);
   display: inline-block;
-  transform: translateY(-0.8em);
+  vertical-align: top;
   padding: 2px 8px;
-  color: var(--theme-foreground-focus);
-  background: color-mix(in srgb, var(--theme-foreground-focus), transparent 75%);
+  color: var(--theme-green);
+  background: color-mix(in srgb, var(--theme-green), transparent 80%);
   border-radius: 12px;
-  content: attr(data-version-badge);
-  text-decoration: underline;
-  text-underline-offset: 2px;
+}
+
+.observablehq-version-badge::before {
+  content: "^" attr(data-version);
 }
