@@ -75,7 +75,7 @@ ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => ev
 </script>${sidebar ? html`\n${await renderSidebar(title, pages, root, path, search)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
-<div id="observablehq-center">${renderHeader(options, page.data)}
+<div id="observablehq-center">${renderHeader(page, resolvers.resolveFile)}
 <main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">
 ${html.unsafe(rewriteHtml(page.html, resolvers.resolveFile))}</main>${renderFooter(path, options, page.data)}
 </div>
@@ -223,9 +223,10 @@ function renderModulePreload(href: string): Html {
   return html`\n<link rel="modulepreload" href="${href}">`;
 }
 
-function renderHeader({header}: Pick<Config, "header">, data: MarkdownPage["data"]): Html | null {
-  if (data?.header !== undefined) header = data?.header;
-  return header ? html`\n<header id="observablehq-header">\n${html.unsafe(header)}\n</header>` : null;
+function renderHeader({header}: MarkdownPage, resolve: (specifier: string) => string): Html | null {
+  return header
+    ? html`\n<header id="observablehq-header">\n${html.unsafe(rewriteHtml(header, resolve))}\n</header>`
+    : null;
 }
 
 function renderFooter(

@@ -9,6 +9,7 @@ import type {RenderRule} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
 import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
+import {resolveAssets} from "./html.js";
 import {parseInfo} from "./info.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
@@ -25,7 +26,8 @@ export interface MarkdownCode {
 
 export interface MarkdownPage {
   title: string | null;
-  html: string;
+  header: string;
+  html: string; // TODO body
   data: {[key: string]: any} | null;
   style: string | null;
   code: MarkdownCode[];
@@ -276,14 +278,15 @@ export interface ParseOptions {
   root: string;
   path: string;
   markdownIt?: Config["markdownIt"];
+  header?: Config["header"];
   style?: Config["style"];
 }
 
 export function parseMarkdown(
   input: string,
-  {root, path, markdownIt = (md) => md, style: configStyle}: ParseOptions
+  {root, path, markdownIt = (md) => md, header: configHeader, style: configStyle}: ParseOptions
 ): MarkdownPage {
-  const parts = matter(input, {});
+  const {content, data} = matter(input, {});
   const md = markdownIt(MarkdownIt({html: true}));
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
@@ -293,16 +296,25 @@ export function parseMarkdown(
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
   const code: MarkdownCode[] = [];
   const context: ParseContext = {code, startLine: 0, currentLine: 0};
-  const tokens = md.parse(parts.content, context);
+  const tokens = md.parse(content, context);
   const html = md.renderer.render(tokens, md.options, context); // Note: mutates code, assets!
-  const style = getStylesheet(path, parts.data, configStyle);
+  const style = getStylesheet(path, data, configStyle);
   return {
     html,
-    data: isEmpty(parts.data) ? null : parts.data,
-    title: parts.data?.title ?? findTitle(tokens) ?? null,
+    header: getHeader(data.header, configHeader, path),
+    data,
+    title: data?.title ?? findTitle(tokens) ?? null,
     style,
     code
   };
+}
+
+function getHeader(header: any, configHeader: string | undefined, path: string): string {
+  return header !== undefined
+    ? String(header)
+    : configHeader
+    ? resolveAssets(configHeader, (specifier) => relativePath(path, specifier))
+    : "";
 }
 
 function getStylesheet(path: string, data: MarkdownPage["data"], style: Config["style"] = null): string | null {
@@ -318,12 +330,6 @@ function getStylesheet(path: string, data: MarkdownPage["data"], style: Config["
     : "path" in style
     ? relativePath(path, style.path)
     : `observablehq:theme-${style.theme.join(",")}.css`;
-}
-
-// TODO Use gray-matter’s parts.isEmpty, but only when it’s accurate.
-function isEmpty(object) {
-  for (const key in object) return false;
-  return true;
 }
 
 // TODO Make this smarter.

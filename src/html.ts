@@ -52,9 +52,13 @@ export function findAssets(html: string, path: string): Set<string> {
   return assets;
 }
 
-export function rewriteHtml(html: string, resolve: (specifier: string) => string = String): string {
+export function resolveAssets(html: string, resolve: (specifier: string) => string): string {
   const {document} = parseHtml(html);
+  rewriteAssets(document, resolve);
+  return document.body.innerHTML;
+}
 
+function rewriteAssets(document: Document, resolve: (specifier: string) => string): void {
   const maybeResolve = (specifier: string): string => {
     return isAssetPath(specifier) ? resolve(specifier) : specifier;
   };
@@ -65,6 +69,12 @@ export function rewriteHtml(html: string, resolve: (specifier: string) => string
       element.setAttribute(src, src === "srcset" ? resolveSrcset(source, maybeResolve) : maybeResolve(source));
     }
   }
+}
+
+export function rewriteHtml(html: string, resolve?: (specifier: string) => string): string {
+  const {document} = parseHtml(html);
+
+  if (resolve !== undefined) rewriteAssets(document, resolve);
 
   // Syntax highlighting for <code> elements. The code could contain an inline
   // expression within, or other HTML, but we only highlight text nodes that are
