@@ -86,8 +86,8 @@ SELECT MIN(phot_g_mean_mag) AS min FROM gaia
 ```
 ````
 
-```sql id="[{'min(phot_g_mean_mag)': min}]"
-SELECT MIN(phot_g_mean_mag) FROM gaia
+```sql id=[{min}]
+SELECT MIN(phot_g_mean_mag) AS min FROM gaia
 ```
 
 ```js echo
@@ -96,7 +96,7 @@ min
 
 <div class="tip">
 
-For complex destructuring patterns, you may need to quote the `id` directive. For example, to pull out the column named `min(phot_g_mean_mag)` to the variable named `min`, say <code style="white-space: nowrap;">id="[{'min(phot_g_mean_mag)': min}]"</code>.
+For complex destructuring patterns, you may need to quote the `id` directive. For example, to pull out the column named `min(phot_g_mean_mag)` to the variable named `min`, say <code style="white-space: nowrap;">id="[{'min(phot_g_mean_mag)': min}]"</code>. Or to pull out the `min` and `max` columns, say <code style="white-space: nowrap;">id="[{min, max}]"</code>.
 
 </div>
 
