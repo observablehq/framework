@@ -171,11 +171,11 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
       ? "13.0.0" // https://github.com/observablehq/framework/issues/750
       : name === "parquet-wasm"
       ? "0.5.0" // https://github.com/observablehq/framework/issues/733
-      : name === "echarts"
-      ? "5.4.3" // https://github.com/observablehq/framework/pull/811
       : undefined,
     path = name === "mermaid"
-      ? "dist/mermaid.esm.min.mjs/+esm" // TODO
+      ? "dist/mermaid.esm.min.mjs/+esm"
+      : name === "echarts"
+      ? "dist/echarts.esm.min.js"
       : "+esm"
   } = parseNpmSpecifier(specifier);
   return `/_npm/${name}@${await resolveNpmVersion(root, {name, range})}/${path.replace(/\+esm$/, "+esm.js")}`;

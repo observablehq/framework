@@ -7,7 +7,7 @@ index: true
 Apache ECharts is available by default as `echarts` in Markdown. You can also import it explicitly like so:
 
 ```js run=false
-import * as echarts from "npm:echarts/dist/echarts.esm.js";
+import * as echarts from "npm:echarts";
 ```
 
 To use ECharts, declare a container element with the desired dimensions, [display it](../javascript/display), and then call `echarts.init`.
