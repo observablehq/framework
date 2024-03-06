@@ -8,7 +8,8 @@ const noopEffects: LoadEffects = {
   output: {write() {}}
 };
 
-describe("Loader.find(root, path)", () => {
+describe("Loader.find(root, path)", function () {
+  if (os.platform() === "win32") this.timeout(5000);
   it("a .js data loader is called with node", async () => {
     const loader = Loader.find("test", "dataloaders/data1.txt")!;
     const out = await loader.load(noopEffects);
