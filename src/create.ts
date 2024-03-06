@@ -80,7 +80,7 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
             {value: "yarn", label: "Yes, via yarn", hint: "recommended"},
             {value: null, label: "No"}
           ],
-          initialValue: inferPackageManager()
+          initialValue: inferPackageManager("npm")
         }),
       initializeGit: () =>
         clack.confirm({
@@ -110,6 +110,7 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
         if (packageManager) {
           s.message(`Installing dependencies via ${packageManager}`);
           await effects.sleep(1000);
+          if (packageManager === "yarn") await writeFile(join(rootPath, "yarn.lock"), "");
           await promisify(exec)(installCommand, {cwd: rootPath});
         }
         if (initializeGit) {
@@ -205,12 +206,12 @@ async function recursiveCopyTemplate(
   }
 }
 
-function inferPackageManager(): string | null {
+function inferPackageManager(defaultValue: string | null): string | null {
   const userAgent = process.env["npm_config_user_agent"];
-  if (!userAgent) return null;
+  if (!userAgent) return defaultValue;
   const pkgSpec = userAgent.split(" ")[0]!; // userAgent is non-empty, so this is always defined
-  if (!pkgSpec) return null;
+  if (!pkgSpec) return defaultValue;
   const [name, version] = pkgSpec.split("/");
-  if (!name || !version) return null;
+  if (!name || !version) return defaultValue;
   return name;
 }

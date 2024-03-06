@@ -107,32 +107,27 @@ export async function getResolvers(
   if (page.style && isPathImport(page.style))
     hash.update(getFileHash(root, resolvePath(path, page.style), interpreters));
 
-  // Collect transitively-attached files and imports.
+  // Collect transitively-attached files and local imports.
   for (const i of localImports) {
     const p = resolvePath(path, i);
     const info = getModuleInfo(root, p);
     if (!info) continue;
-    for (const f of info.files) {
-      files.add(relativePath(path, resolvePath(p, f)));
-    }
-    for (const m of info.fileMethods) {
-      fileMethods.add(m);
-    }
-    for (const o of info.localStaticImports) {
-      const r = relativePath(path, resolvePath(p, o));
-      localImports.add(r);
-      staticImports.add(r);
-    }
-    for (const o of info.localDynamicImports) {
-      localImports.add(relativePath(path, resolvePath(p, o)));
-    }
-    for (const o of info.globalStaticImports) {
-      staticImports.add(o);
-      globalImports.add(o);
-    }
-    for (const o of info.globalDynamicImports) {
-      globalImports.add(o);
-    }
+    for (const f of info.files) files.add(relativePath(path, resolvePath(p, f)));
+    for (const m of info.fileMethods) fileMethods.add(m);
+    for (const o of info.localStaticImports) localImports.add(relativePath(path, resolvePath(p, o)));
+    for (const o of info.localDynamicImports) localImports.add(relativePath(path, resolvePath(p, o)));
+    for (const o of info.globalStaticImports) globalImports.add(o);
+    for (const o of info.globalDynamicImports) globalImports.add(o);
+  }
+
+  // Collect static imports from transitive local imports.
+  for (const i of staticImports) {
+    if (!localImports.has(i)) continue;
+    const p = resolvePath(path, i);
+    const info = getModuleInfo(root, p);
+    if (!info) continue;
+    for (const o of info.localStaticImports) staticImports.add(relativePath(path, resolvePath(p, o)));
+    for (const o of info.globalStaticImports) staticImports.add(o);
   }
 
   // Add implicit imports for files. These are technically implemented as
@@ -189,6 +184,7 @@ export async function getResolvers(
         const path = resolvePath(value, i.name);
         const specifier = `npm:${resolveNpmSpecifier(path)}`;
         staticImports.add(specifier);
+        npmStaticResolutions.add(path);
       }
     }
   }
@@ -223,8 +219,6 @@ export async function getResolvers(
       ? relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`) // prettier-ignore
       : resolutions.has(specifier)
       ? relativePath(path, resolutions.get(specifier)!)
-      : specifier.startsWith("npm:")
-      ? `https://cdn.jsdelivr.net/npm/${specifier.slice("npm:".length)}`
       : specifier;
   }
 
@@ -239,8 +233,6 @@ export async function getResolvers(
       ? relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}`)
       : resolutions.has(specifier)
       ? relativePath(path, resolutions.get(specifier)!)
-      : specifier.startsWith("npm:")
-      ? `https://cdn.jsdelivr.net/npm/${specifier.slice("npm:".length)}`
       : specifier;
   }
 

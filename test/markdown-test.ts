@@ -19,7 +19,8 @@ describe("parseMarkdown(input)", () => {
     const outname = only || skip ? name.slice(5) : name;
 
     (only ? it.only : skip ? it.skip : it)(`test/input/${name}`, async () => {
-      const snapshot = await parseMarkdown(path, {root: "test/input", path: name});
+      const source = await readFile(path, "utf8");
+      const snapshot = parseMarkdown(source, {root: "test/input", path: name});
       let allequal = true;
       for (const ext of ["html", "json"]) {
         const actual = ext === "json" ? jsonMeta(snapshot) : snapshot[ext];

@@ -12,5 +12,6 @@
       "observablehq:search": ["./src/client/search.js"]
     }
   },
-  "include": ["src/**/*", "docs/**/*", "test/**/*"]
+  "include": ["src/**/*", "docs/**/*", "test/**/*"],
+  "exclude": ["test/build/**/*"]
 }

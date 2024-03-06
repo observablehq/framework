@@ -1,7 +1,7 @@
 {
   "name": "@observablehq/framework",
   "license": "ISC",
-  "version": "1.0.0",
+  "version": "1.1.2",
   "type": "module",
   "publishConfig": {
     "access": "public"
@@ -11,40 +11,41 @@
     "url": "https://github.com/observablehq/framework.git"
   },
   "files": [
-    "build/**/*.js",
-    "build/**/*.css",
+    "dist/**/*.js",
+    "dist/**/*.css",
     "templates"
   ],
   "bin": {
-    "observable": "build/bin/observable.js"
+    "observable": "dist/bin/observable.js"
   },
   "scripts": {
     "dev": "rimraf --glob docs/themes.md docs/theme/*.md && (tsx watch docs/theme/generate-themes.ts & tsx watch --no-warnings=ExperimentalWarning ./src/bin/observable.ts preview --no-open)",
-    "build:mocha": "rimraf build.test && node build.js --sourcemap --outdir=build.test \"{src,test}/**/*.{ts,js,css}\" --ignore \"test/input/**\" --ignore \"test/output/**\" --ignore \"test/preview/dashboard/**\" --ignore \"**/*.d.ts\" && cp -r templates build.test",
-    "build": "yarn rebuild-themes && rimraf dist && tsx --no-warnings=ExperimentalWarning ./src/bin/observable.ts build",
-    "deploy": "yarn rebuild-themes && tsx --no-warnings=ExperimentalWarning ./src/bin/observable.ts deploy",
-    "rebuild-themes": "rimraf --glob docs/themes.md docs/theme/*.md && tsx docs/theme/generate-themes.ts",
+    "docs:themes": "rimraf --glob docs/themes.md docs/theme/*.md && tsx docs/theme/generate-themes.ts",
+    "docs:build": "yarn docs:themes && rimraf docs/.observablehq/dist && tsx --no-warnings=ExperimentalWarning ./src/bin/observable.ts build",
+    "docs:deploy": "yarn docs:themes && tsx --no-warnings=ExperimentalWarning ./src/bin/observable.ts deploy",
+    "build": "rimraf dist && node build.js --outdir=dist --outbase=src \"src/**/*.{ts,js,css}\" --ignore \"**/*.d.ts\"",
     "test": "concurrently npm:test:mocha npm:test:tsc npm:test:lint npm:test:prettier",
     "test:coverage": "c8 --check-coverage --lines 80 --per-file yarn test:mocha",
-    "test:mocha": "yarn build:mocha && rimraf --glob test/.observablehq/cache test/input/build/*/.observablehq/cache && cross-env OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles mocha -p \"build.test/test/**/*-test.js\"",
-    "test:mocha:serial": "yarn build:mocha && rimraf --glob test/.observablehq/cache test/input/build/*/.observablehq/cache && cross-env OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles mocha \"build.test/test/**/*-test.js\"",
+    "test:build": "rimraf test/build && node build.js --sourcemap --outdir=test/build \"{src,test}/**/*.{ts,js,css}\" --ignore \"test/input/**\" --ignore \"test/output/**\" --ignore \"test/preview/dashboard/**\" --ignore \"**/*.d.ts\" && cp -r templates test/build",
+    "test:mocha": "yarn test:build && rimraf --glob test/.observablehq/cache test/input/build/*/.observablehq/cache && cross-env OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles mocha -p \"test/build/test/**/*-test.js\"",
+    "test:mocha:serial": "yarn test:build && rimraf --glob test/.observablehq/cache test/input/build/*/.observablehq/cache && cross-env OBSERVABLE_TELEMETRY_DISABLE=1 TZ=America/Los_Angeles mocha \"test/build/test/**/*-test.js\"",
     "test:lint": "eslint src test --max-warnings=0",
     "test:prettier": "prettier --check src test",
     "test:tsc": "tsc --noEmit",
     "observable": "tsx --no-warnings=ExperimentalWarning ./src/bin/observable.ts",
-    "prepublishOnly": "rimraf build && node build.js --outdir=build --outbase=src \"src/**/*.{ts,js,css}\" --ignore \"**/*.d.ts\""
+    "prepublishOnly": "yarn build"
   },
   "c8": {
     "all": true,
     "include": [
-      "build.test/src/**/*.js"
+      "test/build/src/**/*.js"
     ],
     "exclude": [
-      "build.test/src/bin/",
-      "build.test/src/client/",
-      "build.test/src/convert.js",
-      "build.test/src/observableApiConfig.js",
-      "build.test/src/preview.js"
+      "test/build/src/bin/",
+      "test/build/src/client/",
+      "test/build/src/convert.js",
+      "test/build/src/observableApiConfig.js",
+      "test/build/src/preview.js"
     ],
     "reporter": [
       "text",
@@ -61,6 +62,7 @@
     "ci-info": "^4.0.0",
     "cross-env": "^7.0.3",
     "cross-spawn": "^7.0.3",
+    "d3-array": "^3.2.4",
     "esbuild": "^0.19.8",
     "fast-array-diff": "^1.1.0",
     "gray-matter": "^4.0.3",
@@ -104,7 +106,6 @@
     "chai": "^4.3.10",
     "chai-http": "^4.4.0",
     "concurrently": "^8.2.2",
-    "d3-array": "^3.2.4",
     "d3-dsv": "^3.0.1",
     "eslint": "^8.50.0",
     "eslint-config-prettier": "^9.1.0",

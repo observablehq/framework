@@ -1,4 +1,5 @@
 export default {
+  output: "docs/.observablehq/dist",
   title: "Observable Framework",
   pages: [
     {name: "Getting started", path: "/getting-started"},

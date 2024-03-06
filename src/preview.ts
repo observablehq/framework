@@ -200,7 +200,8 @@ export class PreviewServer {
         // Anything else should 404; static files should be matched above.
         try {
           const options = {path: pathname, ...config, preview: true};
-          const parse = await parseMarkdown(path + ".md", options);
+          const source = await readFile(path + ".md", "utf8");
+          const parse = parseMarkdown(source, options);
           const html = await renderPage(parse, options);
           end(req, res, html, "text/html");
         } catch (error) {
@@ -218,7 +219,8 @@ export class PreviewServer {
       if (req.method === "GET" && res.statusCode === 404) {
         try {
           const options = {path: "/404", ...config, preview: true};
-          const parse = await parseMarkdown(join(root, "404.md"), options);
+          const source = await readFile(join(root, "404.md"), "utf8");
+          const parse = parseMarkdown(source, options);
           const html = await renderPage(parse, options);
           end(req, res, html, "text/html");
           return;
@@ -312,7 +314,8 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
         break;
       }
       case "change": {
-        const page = await parseMarkdown(join(root, path), {path, ...config});
+        const source = await readFile(join(root, path), "utf8");
+        const page = parseMarkdown(source, {path, ...config});
         // delay to avoid a possibly-empty file
         if (!force && page.html === "") {
           if (!emptyTimeout) {
@@ -363,7 +366,8 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
     path += ".md";
-    const page = await parseMarkdown(join(root, path), {path, ...config});
+    const source = await readFile(join(root, path), "utf8");
+    const page = parseMarkdown(source, {path, ...config});
     const resolvers = await getResolvers(page, {root, path, interpreters});
     if (resolvers.hash !== initialHash) return void send({type: "reload"});
     hash = resolvers.hash;
