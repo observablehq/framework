@@ -2,13 +2,12 @@ import {existsSync} from "node:fs";
 import {mkdir, readFile, readdir, writeFile} from "node:fs/promises";
 import {dirname, join} from "node:path/posix";
 import type {CallExpression} from "acorn";
-import {Parser} from "acorn";
 import {simple} from "acorn-walk";
 import {rsort, satisfies} from "semver";
 import {isEnoent} from "./error.js";
 import type {ExportNode, ImportNode, ImportReference} from "./javascript/imports.js";
 import {findImports, isImportMetaResolve} from "./javascript/imports.js";
-import {parseOptions} from "./javascript/parse.js";
+import {parseProgram} from "./javascript/parse.js";
 import type {StringLiteral} from "./javascript/source.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/source.js";
 import {relativePath} from "./path.js";
@@ -38,7 +37,7 @@ export function formatNpmSpecifier({name, range, path}: NpmSpecifier): string {
 
 /** Rewrites /npm/ import specifiers to be relative paths to /_npm/. */
 export function rewriteNpmImports(input: string, path: string): string {
-  const body = Parser.parse(input, parseOptions);
+  const body = parseProgram(input);
   const output = new Sourcemap(input);
 
   simple(body, {
@@ -171,11 +170,11 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
       ? "13.0.0" // https://github.com/observablehq/framework/issues/750
       : name === "parquet-wasm"
       ? "0.5.0" // https://github.com/observablehq/framework/issues/733
-      : name === "echarts"
-      ? "5.4.3" // https://github.com/observablehq/framework/pull/811
       : undefined,
     path = name === "mermaid"
-      ? "dist/mermaid.esm.min.mjs/+esm" // TODO
+      ? "dist/mermaid.esm.min.mjs/+esm"
+      : name === "echarts"
+      ? "dist/echarts.esm.min.js"
       : "+esm"
   } = parseNpmSpecifier(specifier);
   return `/_npm/${name}@${await resolveNpmVersion(root, {name, range})}/${path.replace(/\+esm$/, "+esm.js")}`;
@@ -196,7 +195,7 @@ export async function resolveNpmImports(root: string, path: string): Promise<Imp
       const filePath = await populateNpmCache(root, path);
       if (!/\.(m|c)?js$/i.test(path)) return []; // not JavaScript; TODO traverse CSS, too
       const source = await readFile(filePath, "utf-8");
-      const body = Parser.parse(source, parseOptions);
+      const body = parseProgram(source);
       return findImports(body, path, source);
     } catch (error) {
       console.warn(`unable to fetch or parse: ${path}`);
