@@ -4,7 +4,7 @@ index: true
 
 # Apache ECharts
 
-[Apache ECharts](https://echarts.apache.org), an open source JavaScript visualization library, is available by default as `echarts` in Markdown. You can also import it explicitly like so:
+[Apache ECharts](https://echarts.apache.org), an open-source JavaScript visualization library, is available by default as `echarts` in Markdown. You can also import it explicitly like so:
 
 ```js run=false
 import * as echarts from "npm:echarts";
