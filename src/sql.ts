@@ -9,10 +9,10 @@ export function transpileSql(content: string, {id, display}: Record<string, stri
   return id === undefined
     ? display === "false"
       ? `${sql};`
-      : `Inputs.table(${sql})`
+      : `display(Inputs.table(await ${sql}));`
     : display === "false"
     ? `const ${id} = await ${sql};`
-    : `const ${id} = await ((_) => (display(Inputs.table(_)), _))(${sql});`;
+    : `const ${id} = ((_) => (display(Inputs.table(_)), _))(await ${sql});`;
 }
 
 function isValidBinding(input: string): boolean {

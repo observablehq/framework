@@ -34,6 +34,16 @@ This produces a table:
 SELECT * FROM gaia ORDER BY phot_g_mean_mag LIMIT 10
 ```
 
+You can interpolate dynamic values into SQL queries using inline expressions `${…}`. For example, to show the stars around a given brightness:
+
+```js echo
+const mag = view(Inputs.range([6, 20], {label: "Magnitude"}));
+```
+
+```sql
+SELECT * FROM gaia WHERE phot_g_mean_mag BETWEEN ${mag - 0.1} AND ${mag + 0.1};
+```
+
 To refer to the results of a query in JavaScript, use the `id` directive. For example, to refer to the results of the previous query as `top10`:
 
 ````md
@@ -76,15 +86,21 @@ SELECT MIN(phot_g_mean_mag) AS min FROM gaia
 ```
 ````
 
-```sql id=[{min}]
-SELECT MIN(phot_g_mean_mag) AS min FROM gaia
+```sql id="[{'min(phot_g_mean_mag)': min}]"
+SELECT MIN(phot_g_mean_mag) FROM gaia
 ```
 
 ```js echo
 min
 ```
 
-Another example…
+<div class="tip">
+
+For complex destructuring patterns, you may need to quote the `id` directive. For example, to pull out the column named `min(phot_g_mean_mag)` to the variable named `min`, say <code style="white-space: nowrap;">id="[{'min(phot_g_mean_mag)': min}]"</code>.
+
+</div>
+
+As another example, we can use SQL to count the number of stars in each 2°×2° bin of the sky.
 
 ```sql id=bins echo
 SELECT
@@ -97,6 +113,8 @@ GROUP BY
   1,
   2
 ```
+
+We can then visualize the result as a heatmap using Observable Plot’s raster mark:
 
 ```js echo
 Plot.plot({
@@ -119,7 +137,7 @@ Plot.plot({
 
 ## SQL literals
 
-You can also invoke the `sql` tagged template literal directly.
+SQL fenced code blocks are shorthand for the `sql` tagged template literal. You can invoke the `sql` tagged template literal directly like so:
 
 ```js echo
 const rows = await sql`SELECT random() AS random`;
