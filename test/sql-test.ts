@@ -3,7 +3,7 @@ import {transpileSql} from "../src/sql.js";
 
 describe("transpileSql(content, attributes)", () => {
   it("compiles a sql expression", () => {
-    assert.strictEqual(transpileSql("SELECT 1 + 2"), "sql`SELECT 1 + 2`");
+    assert.strictEqual(transpileSql("SELECT 1 + 2"), "Inputs.table(sql`SELECT 1 + 2`)");
   });
   it("compiles a sql expression with id", () => {
     assert.strictEqual(transpileSql("SELECT 1 + 2", {id: "foo"}), "const foo = await sql`SELECT 1 + 2`;");
@@ -22,13 +22,13 @@ describe("transpileSql(content, attributes)", () => {
     assert.throws(() => transpileSql("SELECT 1 + 2", {id: "([foo])"}), /invalid binding/);
   });
   it("compiles a sql expression with id and display", () => {
-    assert.strictEqual(transpileSql("SELECT 1 + 2", {id: "foo", display: ""}), "const foo = display(await sql`SELECT 1 + 2`);"); // prettier-ignore
+    assert.strictEqual(transpileSql("SELECT 1 + 2", {id: "foo", display: ""}), "const foo = await ((_) => (display(Inputs.table(_)), _))(sql`SELECT 1 + 2`);"); // prettier-ignore
   });
   it("ignores display if display is implicit", () => {
-    assert.strictEqual(transpileSql("SELECT 1 + 2", {display: ""}), "sql`SELECT 1 + 2`");
-    assert.strictEqual(transpileSql("SELECT 1 + 2", {display: "t"}), "sql`SELECT 1 + 2`");
-    assert.strictEqual(transpileSql("SELECT 1 + 2", {display: "f"}), "sql`SELECT 1 + 2`");
-    assert.strictEqual(transpileSql("SELECT 1 + 2", {display: "true"}), "sql`SELECT 1 + 2`");
+    assert.strictEqual(transpileSql("SELECT 1 + 2", {display: ""}), "Inputs.table(sql`SELECT 1 + 2`)");
+    assert.strictEqual(transpileSql("SELECT 1 + 2", {display: "t"}), "Inputs.table(sql`SELECT 1 + 2`)");
+    assert.strictEqual(transpileSql("SELECT 1 + 2", {display: "f"}), "Inputs.table(sql`SELECT 1 + 2`)");
+    assert.strictEqual(transpileSql("SELECT 1 + 2", {display: "true"}), "Inputs.table(sql`SELECT 1 + 2`)");
   });
   it("compiles a sql expression with display=false", () => {
     assert.strictEqual(transpileSql("SELECT 1 + 2", {display: "false"}), "sql`SELECT 1 + 2`;");

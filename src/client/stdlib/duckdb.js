@@ -40,7 +40,7 @@ const bundle = await duckdb.selectBundle({
   }
 });
 
-const logger = new duckdb.ConsoleLogger();
+const logger = new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING);
 
 let db;
 let inserts = [];

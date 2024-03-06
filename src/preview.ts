@@ -349,7 +349,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
           html: diffHtml(previousHtml, html),
           code: diffCode(previousCode, code),
           files: diffFiles(previousFiles, files),
-          tables: diffTables(previousTables, tables),
+          tables: diffTables(previousTables, tables, previousFiles, files),
           stylesheets: diffStylesheets(previousStylesheets, stylesheets),
           hash: {previous: previousHash, current: hash}
         });
@@ -483,7 +483,12 @@ function diffFiles(oldFiles: Map<string, string>, newFiles: Map<string, string>)
 type TableDeclaration = {name: string; path: string};
 type TablePatch = {removed: string[]; added: TableDeclaration[]};
 
-function diffTables(oldTables: Map<string, string>, newTables: Map<string, string>): TablePatch {
+function diffTables(
+  oldTables: Map<string, string>,
+  newTables: Map<string, string>,
+  oldFiles: Map<string, string>,
+  newFiles: Map<string, string>
+): TablePatch {
   const patch: TablePatch = {removed: [], added: []};
   for (const [name, path] of oldTables) {
     if (newTables.get(name) !== path) {
@@ -492,6 +497,9 @@ function diffTables(oldTables: Map<string, string>, newTables: Map<string, strin
   }
   for (const [name, path] of newTables) {
     if (oldTables.get(name) !== path) {
+      patch.added.push({name, path});
+    } else if (newFiles.get(path) !== oldFiles.get(path)) {
+      patch.removed.push(name);
       patch.added.push({name, path});
     }
   }
