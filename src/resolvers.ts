@@ -95,6 +95,13 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
     }
   }
 
+  // Add SQL sources.
+  if (page.data?.sql) {
+    for (const source of Object.values(page.data.sql)) {
+      files.add(String(source));
+    }
+  }
+
   // Compute the content hash. TODO In build, this needs to consider the output
   // of data loaders, rather than the source of data loaders.
   for (const f of assets) hash.update(getFileHash(root, resolvePath(path, f)));

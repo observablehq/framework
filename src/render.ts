@@ -65,10 +65,7 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
   }${files.size ? `\n${renderFiles(files, resolveFile)}` : ""}${
     page.data?.sql
       ? `\n${Object.entries<string>(page.data.sql).map(
-          ([name, source]) =>
-            `${renderFile(source, resolvers.resolveFile)}\nregisterTable(${JSON.stringify(
-              name
-            )}, FileAttachment(${JSON.stringify(source)}));`
+          ([name, source]) => `registerTable(${JSON.stringify(name)}, FileAttachment(${JSON.stringify(source)}));`
         )}`
       : ""
   }
