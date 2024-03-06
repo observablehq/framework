@@ -44,16 +44,23 @@ const logger = new duckdb.ConsoleLogger();
 
 let db;
 let inserts = [];
+const sources = new Map();
 
 export function registerTable(name, source) {
-  db ??= DuckDBClient.of();
-  inserts.push(db.then((db) => insertSource(db._db, name, source)));
+  if (source == null) {
+    sources.delete(name);
+    db = DuckDBClient.of(); // drop existing tables and views before re-inserting
+    inserts = Array.from(sources, (i) => db.then((db) => insertSource(db._db, ...i)));
+  } else {
+    sources.set(name, source);
+    db ??= DuckDBClient.of(); // lazy instantiation
+    inserts.push(db.then((db) => insertSource(db._db, name, source)));
+  }
 }
 
 export async function sql(strings, ...args) {
-  db ??= DuckDBClient.of();
   await Promise.all(inserts);
-  return (await db).query(strings.join("?"), args);
+  return (await (db ??= DuckDBClient.of())).query(strings.join("?"), args);
 }
 
 export class DuckDBClient {
