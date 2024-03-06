@@ -68,7 +68,7 @@ export const builtins = new Map<string, string>([
  * them to any files referenced by static HTML.
  */
 export async function getResolvers(page: MarkdownPage, {root, path}: {root: string; path: string}): Promise<Resolvers> {
-  const hash = createHash("sha256").update(page.html);
+  const hash = createHash("sha256").update(page.html).update(JSON.stringify(page.data));
   const assets = findAssets(page.html, path);
   const files = new Set<string>();
   const fileMethods = new Set<string>();
