@@ -150,7 +150,7 @@ For example, for the file `quakes.csv`, the following data loaders are considere
 
 If you use `.py`, `.R`, `.rs`, or `.go`, the corresponding interpreter (`python3`, `Rscript`, `rust-script`, or `go run`, respectively) must be installed and available on your `$PATH`. Any additional modules, packages, libraries, _etc._, must also be installed before you can use them.
 
-Data loaders run from the same working directory as the `observable build` (or `preview`) command; in Node, you can access the current working directory by calling `process.cwd()`, and the script’s own location with [import.meta.url](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta). To compute the path of a file relative to the script location, use [import.meta.resolve](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta/resolve). For example, a data loader could read a file sitting next to it in the docs/ directory with the following command:
+Data loaders run from the same working directory as the `observable build` (or `preview`) command; in Node, you can access the current working directory by calling `process.cwd()`, and the script’s own location with [`import.meta.url`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta). To compute the path of a file relative to the script location, use [`import.meta.resolve`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta/resolve). For example, a data loader could read a file sitting next to it in the `docs/` directory with the following command:
 
 ```js run=false
 import {readFile} from "node:fs/promises";
