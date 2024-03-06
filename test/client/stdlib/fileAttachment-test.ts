@@ -13,31 +13,31 @@ describe("FileAttachment(name)", () => {
     const f = FileAttachment("./test.csv");
     assert.strictEqual(f.name, "test.csv");
     assert.strictEqual(f.mimeType, "text/csv");
-    assert.strictEqual(await f.url(), "http://localhost:3000/_file/test.csv?sha=edd06c0d902e9ce083a9a5d8d0e655732c72e8129d3c60bfe69d228265e892d6");
+    assert.strictEqual(await f.url(), "http://localhost:3000/_file/test.csv?sha=edd06c0d902e9ce083a9a5d8d0e655732c72e8129d3c60bfe69d228265e892d6"); // prettier-ignore
   });
   it("normalizes the specified file path", async () => {
     const f = FileAttachment("test.csv");
     assert.strictEqual(f.name, "test.csv");
     assert.strictEqual(f.mimeType, "text/csv");
-    assert.strictEqual(await f.url(), "http://localhost:3000/_file/test.csv?sha=edd06c0d902e9ce083a9a5d8d0e655732c72e8129d3c60bfe69d228265e892d6");
+    assert.strictEqual(await f.url(), "http://localhost:3000/_file/test.csv?sha=edd06c0d902e9ce083a9a5d8d0e655732c72e8129d3c60bfe69d228265e892d6"); // prettier-ignore
   });
   it("resolves the specified path relative to the current location", async () => {
     const f = FileAttachment("/test.csv");
     assert.strictEqual(f.name, "test.csv");
     assert.strictEqual(f.mimeType, "text/csv");
-    assert.strictEqual(await f.url(), "http://localhost:3000/_file/test.csv?sha=edd06c0d902e9ce083a9a5d8d0e655732c72e8129d3c60bfe69d228265e892d6");
+    assert.strictEqual(await f.url(), "http://localhost:3000/_file/test.csv?sha=edd06c0d902e9ce083a9a5d8d0e655732c72e8129d3c60bfe69d228265e892d6"); // prettier-ignore
   });
   it("resolves the specified path relative to the specified location (1)", async () => {
     const f = FileAttachment("/test.csv", "http://localhost:3000/sub/path");
     assert.strictEqual(f.name, "test.csv");
     assert.strictEqual(f.mimeType, "text/csv");
-    assert.strictEqual(await f.url(), "http://localhost:3000/_file/test.csv?sha=edd06c0d902e9ce083a9a5d8d0e655732c72e8129d3c60bfe69d228265e892d6");
+    assert.strictEqual(await f.url(), "http://localhost:3000/_file/test.csv?sha=edd06c0d902e9ce083a9a5d8d0e655732c72e8129d3c60bfe69d228265e892d6"); // prettier-ignore
   });
   it("resolves the specified path relative to the specified location (2)", async () => {
     const f = FileAttachment("../test.csv", "http://localhost:3000/sub/path");
     assert.strictEqual(f.name, "test.csv");
     assert.strictEqual(f.mimeType, "text/csv");
-    assert.strictEqual(await f.url(), "http://localhost:3000/_file/test.csv?sha=edd06c0d902e9ce083a9a5d8d0e655732c72e8129d3c60bfe69d228265e892d6");
+    assert.strictEqual(await f.url(), "http://localhost:3000/_file/test.csv?sha=edd06c0d902e9ce083a9a5d8d0e655732c72e8129d3c60bfe69d228265e892d6"); // prettier-ignore
   });
   it("throws an error if the file does not exist", async () => {
     assert.throws(() => FileAttachment("does-not-exist.csv"), /file not found/i);
