@@ -57,7 +57,7 @@ export async function rollupClient(
   input: string,
   root: string,
   path: string,
-  {define, minify}: {define?: {[key: string]: string}; minify?: boolean} = {}
+  {define, keepNames, minify}: {define?: {[key: string]: string}; keepNames?: boolean; minify?: boolean} = {}
 ): Promise<string> {
   const bundle = await rollup({
     input,
@@ -68,7 +68,7 @@ export async function rollupClient(
       esbuild({
         target: "es2022",
         exclude: [], // don’t exclude node_modules
-        keepNames: true,
+        keepNames,
         minify,
         define: {
           "global.__minisearch": '"./minisearch.json"',

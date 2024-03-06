@@ -5,8 +5,8 @@ sql:
 
 # SQL
 
-```sql echo
-SELECT 1 + ${Math.random()}
+```sql id=[{random}]
+SELECT 1 + ${Math.random()} AS "random"
 ```
 
 ```sql echo

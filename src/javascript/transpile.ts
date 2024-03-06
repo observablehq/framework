@@ -1,7 +1,6 @@
 import {join} from "node:path/posix";
 import type {CallExpression, Node} from "acorn";
 import type {ImportDeclaration, ImportDefaultSpecifier, ImportNamespaceSpecifier, ImportSpecifier} from "acorn";
-import {Parser} from "acorn";
 import {simple} from "acorn-walk";
 import {isPathImport, relativePath, resolvePath} from "../path.js";
 import {getModuleResolver} from "../resolvers.js";
@@ -10,7 +9,7 @@ import {findFiles} from "./files.js";
 import type {ExportNode, ImportNode} from "./imports.js";
 import {hasImportDeclaration, isImportMetaResolve} from "./imports.js";
 import type {JavaScriptNode} from "./parse.js";
-import {parseOptions} from "./parse.js";
+import {parseProgram} from "./parse.js";
 import type {StringLiteral} from "./source.js";
 import {getStringLiteralValue, isStringLiteral} from "./source.js";
 
@@ -52,7 +51,7 @@ export async function transpileModule(
   {root, path, resolveImport = getModuleResolver(root, path)}: TranspileModuleOptions
 ): Promise<string> {
   const servePath = `/${join("_import", path)}`;
-  const body = Parser.parse(input, parseOptions); // TODO ignore syntax error?
+  const body = parseProgram(input); // TODO ignore syntax error?
   const output = new Sourcemap(input);
   const imports: (ImportNode | ExportNode)[] = [];
   const calls: CallExpression[] = [];
