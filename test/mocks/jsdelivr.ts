@@ -10,6 +10,7 @@ const packages: [name: string, version: string][] = [
   ["canvas-confetti", "1.9.2"],
   ["d3-dsv", "3.0.1"],
   ["d3", "7.8.5"],
+  ["echarts", "5.5.0"],
   ["exceljs", "4.4.0"],
   ["htl", "0.3.1"],
   ["jszip", "3.10.1"],
