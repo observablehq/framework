@@ -70,6 +70,7 @@ export default {
         {name: "Mapbox GL JS", path: "/lib/mapbox-gl"},
         {name: "Mermaid", path: "/lib/mermaid"},
         {name: "Microsoft Excel (XLSX)", path: "/lib/xlsx"},
+        {name: "Mosaic", path: "/lib/mosaic"},
         {name: "Observable Generators", path: "/lib/generators"},
         {name: "Observable Inputs", path: "/lib/inputs"},
         {name: "Observable Plot", path: "/lib/plot"},
