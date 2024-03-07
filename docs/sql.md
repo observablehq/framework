@@ -99,7 +99,7 @@ For complex destructuring patterns, you may need to quote the `id` directive. Fo
 For dynamic or interactive queries that respond to user input, you can interpolate values into SQL queries using inline expressions `${…}`. For example, to show the stars around a given brightness:
 
 ```js echo
-const mag = view(Inputs.range([6, 20], {label: "Magnitude"}));
+const mag = view(Inputs.range([6, 22], {label: "Magnitude"}));
 ```
 
 ```sql echo
@@ -151,7 +151,25 @@ const rows = await sql`SELECT random() AS random`;
 rows[0].random
 ```
 
-The `sql` tagged template literal is available by default in Markdown, but you can also import it explicitly as:
+The `sql` tag is useful for querying data within JavaScript, such as to query data for visualization without needing to create a separate SQL code block and giving the data a name. For example, below we use DuckDB to bin stars by brightness, and then visualize the bins as a histogram using a [rect mark](https://observablehq.com/plot/marks/rect).
+
+```js echo
+Plot.plot({
+  x: {round: true, label: "phot_g_mean_mag"},
+  marks: [
+    Plot.axisY({tickFormat: (d) => d / 1000, label: "count (thousands)"}),
+    Plot.rectY(await sql`
+      SELECT
+        FLOOR(phot_g_mean_mag / 0.2) * 0.2 AS mag1
+      , mag1 + 0.2 AS mag2
+      , COUNT() AS count
+      FROM gaia GROUP BY 1
+    `, {x1: "mag1", x2: "mag2", y: "count", tip: true})
+  ]
+})
+```
+
+The `sql` tag is available by default in Markdown. You can also import it explicitly as:
 
 ```js echo
 import {sql} from "npm:@observablehq/duckdb";
