@@ -17,7 +17,7 @@ The map views for pickups and dropoffs are coordinated. You can also select an i
 
 ---
 
-The code below creates an instance of Mosaic and the three coordinated views. (Please upvote [#1011](https://github.com/observablehq/framework/issues/1011) if you would like better support for Mosaic.)
+The code below creates three views, coordinated by Mosaic’s [crossfilter](https://uwdata.github.io/mosaic/api/core/selection.html#selection-crossfilter) helper.
 
 ```js echo
 // Create a shared filter
