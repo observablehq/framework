@@ -22,7 +22,7 @@ export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDema
         y: "name",
         x: (d) => d.value / 1000,
         fill: "var(--theme-foreground-alt)",
-        opacity: 0.15,
+        opacity: 0.25,
         sort: {y: "x", reverse: true, limit: 10},
         channels: {demand: {value: (d) => `${format(".1f")(d.value / 1000)} GWh`, label: "Demand"}},
         tip: {
