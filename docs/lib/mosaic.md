@@ -1,3 +1,8 @@
+---
+sql:
+  trips: nyc-taxi.parquet
+---
+
 # Mosaic
 
 [Mosaic](https://uwdata.github.io/mosaic/) is a system for linking data visualizations, tables, and input widgets, all leveraging a database (DuckDB) for scalable processing. With Mosaic, you can interactively visualize and explore millions —and even billions— of data points.
@@ -15,17 +20,6 @@ The map views for pickups and dropoffs are coordinated. You can also select an i
 The code below creates an instance of Mosaic and the three coordinated views. (Please upvote [#1011](https://github.com/observablehq/framework/issues/1011) if you would like better support for Mosaic.)
 
 ```js echo
-import {createAPIContext, wasmConnector} from "npm:@uwdata/vgplot";
-
-// Instantiate a Mosaic context and a database
-const vg = createAPIContext();
-const mc = vg.coordinator();
-mc.databaseConnector(wasmConnector());
-
-// Load the dataset into the database
-const trips = await FileAttachment("nyc-taxi.parquet").url();
-mc.exec([vg.loadParquet("trips", trips)]);
-
 // Create a shared filter
 const $filter = vg.Selection.crossfilter();
 
