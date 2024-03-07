@@ -112,7 +112,7 @@ export async function build(
         effects.output.write(`${faint("build")} ${clientPath} ${faint("→")} `);
         const define: {[key: string]: string} = {};
         if (config.search) define["global.__minisearch"] = JSON.stringify(relativePath(path, aliases.get("/_observablehq/minisearch.json")!)); // prettier-ignore
-        const contents = await rollupClient(clientPath, root, path, {minify: true, define});
+        const contents = await rollupClient(clientPath, root, path, {minify: true, keepNames: true, define});
         await effects.writeFile(path, contents);
       }
     }

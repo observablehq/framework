@@ -8,7 +8,7 @@ import {Loader} from "../dataloader.js";
 import {resolvePath} from "../path.js";
 import {findFiles} from "./files.js";
 import {findImports} from "./imports.js";
-import {parseOptions} from "./parse.js";
+import {parseProgram} from "./parse.js";
 
 export type FileInfo = {
   /** The last-modified time of the file; used to invalidate the cache. */
@@ -87,7 +87,7 @@ export function getModuleInfo(root: string, path: string): ModuleInfo | undefine
     let body: Program;
     try {
       source = readFileSync(key, "utf-8");
-      body = Parser.parse(source, parseOptions);
+      body = parseProgram(source);
     } catch {
       moduleInfoCache.delete(key); // delete stale entry
       return; // ignore parse error

@@ -228,7 +228,7 @@ To disable an extension, set its value to null:
 interpreters: {".exe": null, ".rs": null}
 ```
 
-## markdownIt
+## markdownIt <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" target="_blank" class="observablehq-version-badge" data-version="1.1.0" title="Added in v1.1.0"></a>
 
 A hook for registering additional [markdown-it](https://github.com/markdown-it/markdown-it) plugins. For example, to use [markdown-it-footnote](https://github.com/markdown-it/markdown-it-footnote):
 

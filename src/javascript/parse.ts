@@ -17,7 +17,7 @@ export interface ParseOptions {
   inline?: boolean;
 }
 
-export const parseOptions: Options = {
+export const acornOptions: Options = {
   ecmaVersion: 13,
   sourceType: "module"
 };
@@ -40,11 +40,11 @@ export interface JavaScriptNode {
  */
 export function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
   const {inline = false, path} = options;
-  let expression = maybeParseExpression(input, parseOptions); // first attempt to parse as expression
+  let expression = maybeParseExpression(input); // first attempt to parse as expression
   if (expression?.type === "ClassExpression" && expression.id) expression = null; // treat named class as program
   if (expression?.type === "FunctionExpression" && expression.id) expression = null; // treat named function as program
   if (!expression && inline) throw new SyntaxError("invalid expression"); // inline code must be an expression
-  const body = expression ?? Parser.parse(input, parseOptions); // otherwise parse as a program
+  const body = expression ?? parseProgram(input); // otherwise parse as a program
   const exports = findExports(body);
   if (exports.length) throw syntaxError("Unexpected token 'export'", exports[0], input); // disallow exports
   const references = findReferences(body);
@@ -62,12 +62,16 @@ export function parseJavaScript(input: string, options: ParseOptions): JavaScrip
   };
 }
 
+export function parseProgram(input: string): Program {
+  return Parser.parse(input, acornOptions);
+}
+
 /**
  * Parses a single expression; like parseExpressionAt, but returns null if
  * additional input follows the expression.
  */
-function maybeParseExpression(input: string, options: Options): Expression | null {
-  const parser = new (Parser as any)(options, input, 0); // private constructor
+export function maybeParseExpression(input: string): Expression | null {
+  const parser = new (Parser as any)(acornOptions, input, 0); // private constructor
   parser.nextToken();
   try {
     const node = parser.parseExpression();

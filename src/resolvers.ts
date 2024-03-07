@@ -72,7 +72,7 @@ export async function getResolvers(
   page: MarkdownPage,
   {root, path, interpreters}: {root: string; path: string; interpreters: Config["interpreters"]}
 ): Promise<Resolvers> {
-  const hash = createHash("sha256").update(page.html);
+  const hash = createHash("sha256").update(page.html).update(JSON.stringify(page.data));
   const assets = findAssets(page.html, path);
   const files = new Set<string>();
   const fileMethods = new Set<string>();
@@ -96,6 +96,13 @@ export async function getResolvers(
     for (const i of node.imports) {
       (i.type === "local" ? localImports : globalImports).add(i.name);
       if (i.method === "static") staticImports.add(i.name);
+    }
+  }
+
+  // Add SQL sources.
+  if (page.data?.sql) {
+    for (const source of Object.values(page.data.sql)) {
+      files.add(String(source));
     }
   }
 
