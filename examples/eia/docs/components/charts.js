@@ -43,7 +43,6 @@ export function usGenDemandForecastChart(width, height, detailData, summaryData,
       tickFormat: d => friendlyTypeName[d],
       range: ["#ff8ab7", "#6cc5b0", "#a463f2"]
     },
-    tip: { frameAnchor: "bottom-left",  },
     grid: true,
     marks: [
       Plot.ruleX([currentHour], {strokeOpacity: 0.5}),
