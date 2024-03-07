@@ -2,14 +2,13 @@
 
 [Mosaic](https://uwdata.github.io/mosaic/) is a system for linking data visualizations, tables, and input widgets, all leveraging a database (DuckDB) for scalable processing. With Mosaic, you can interactively visualize and explore millions —and even billions— of data points.
 
-The example below shows 1 million taxi rides pickup and dropoff points in NYC on Jan 1-3, 2010. The dataset is stored in a 8MB parquet file, originally generated with a data loader.
+The example below shows 1 million taxi rides pickup and dropoff points in New York City on Jan 1–3, 2010. The dataset is stored in a 8MB [Apache Parquet](./arrow#apache-parquet) file, generated with a data loader.
 
 ${maps}
 
 ${histogram}
 
-The map views for pickups and dropoffs are coordinated. You can also select an interval in the histogram to filter the maps.
-_What spatial patterns can you find?_
+The map views for pickups and dropoffs are coordinated. You can also select an interval in the histogram to filter the maps. _What spatial patterns can you find?_
 
 ---
 
@@ -41,6 +40,7 @@ const defaultAttributes = [
   vg.yDomain([57900, 57900 + 28.36 * 550]), // ensure aspect ratio of 1
   vg.colorScale("symlog")
 ];
+
 const maps = vg.hconcat(
   vg.plot(
     vg.raster(vg.from("trips", {filterBy: $filter}), {x: "px", y: "py", imageRendering: "pixelated"}),
