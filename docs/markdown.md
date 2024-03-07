@@ -20,7 +20,7 @@ The front matter supports the following options:
 - **index** — whether to index this page if [search](./search) is enabled; defaults to true for listed pages
 - **keywords** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" target="_blank" class="observablehq-version-badge" data-version="1.1.0" title="Added in v1.1.0"></a> - additional words to index for [search](./search); boosted at the same weight as the title
 - **draft** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" target="_blank" class="observablehq-version-badge" data-version="1.1.0" title="Added in v1.1.0"></a> — whether to skip this page during build; drafts are also not listed in the default sidebar
-- - **sql** <a href="https://github.com/observablehq/framework/releases/tag/v1.2.0" target="_blank" class="observablehq-version-badge" data-version="1.2.0" title="Added in v1.2.0"></a> — 
+- - **sql** <a href="https://github.com/observablehq/framework/releases/tag/v1.2.0" target="_blank" class="observablehq-version-badge" data-version="1.2.0" title="Added in v1.2.0"></a> — table definitions for [SQL code blocks](./sql)
 
 ## Headings
 
