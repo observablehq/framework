@@ -426,11 +426,10 @@
   content: "Copied!";
   position: absolute;
   right: calc(100% + 0.25rem);
-  background: var(--theme-background-alt);
+  background: linear-gradient(to right, transparent, var(--theme-background-alt) 10%);
   color: var(--theme-green);
   font: var(--font-small);
-  border-radius: 4px;
-  padding: 4px 8px;
+  padding: 4px 8px 4px 16px;
   pointer-events: none;
   animation-name: observablehq-pre-copied;
   animation-duration: 250ms;
