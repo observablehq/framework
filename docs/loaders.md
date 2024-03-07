@@ -130,19 +130,19 @@ Data loaders live in the source root (typically `docs`) alongside your other sou
 
 - `.js` - JavaScript (`node`)
 - `.ts` - TypeScript (`tsx`)
-- `.sh` - shell script (`sh`)
-- `.exe` - arbitrary executable
-- `.go` - Go (`go run`)
-- `.java` — Java (`java`; requires Java 11+ and [single-file programs](https://openjdk.org/jeps/330))
-- `.jl` - Julia (`julia`)
-- `.php` - PHP (`php`)
 - `.py` - Python (`python3`)
 - `.R` - R (`Rscript`)
 - `.rs` - Rust (`rust-script`)
+- `.go` - Go (`go run`)
+- `.sh` - shell script (`sh`)
+- `.exe` - arbitrary executable
+- `.java` — Java (`java`; requires Java 11+ and [single-file programs](https://openjdk.org/jeps/330))
+- `.jl` - Julia (`julia`)
+- `.php` - PHP (`php`)
 
-For example, for the file `quakes.csv`, the following data loaders are considered: `quakes.csv.js`, `quakes.csv.ts`, `quakes.csv.sh`, `quakes.csv.exe`, `quakes.csv.go`, `quakes.csv.java`, etc. (The first match takes priority.)
+For example, for the file `quakes.csv`, the following data loaders are considered: `quakes.csv.js`, `quakes.csv.ts`, `quakes.csv.py`, `quakes.csv.R`, `quakes.csv.rs`, `quakes.csv.go`, etc. (The first match takes priority.)
 
-The **interpreters** [configuration option](./config#interpreters) specifies the list of supported extensions.
+The **interpreters** [configuration option](./config#interpreters) can be used to extend the list of supported extensions.
 
 The corresponding interpreter must be installed and available on your `$PATH`. Any additional modules, packages, libraries, _etc._, must also be installed before you can use them.
 

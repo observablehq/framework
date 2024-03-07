@@ -60,16 +60,16 @@ export interface Config {
 const defaultInterpreters = {
   ".js": ["node", "--no-warnings=ExperimentalWarning"],
   ".ts": ["tsx"],
+  ".py": ["python3"],
+  ".r": ["Rscript"],
+  ".R": ["Rscript"],
+  ".rs": ["rust-script"],
+  ".go": ["go", "run"],
   ".sh": ["sh"],
   ".exe": [],
   ".java": ["java"],
   ".jl": ["julia"],
-  ".go": ["go", "run"],
-  ".php": ["php"],
-  ".py": ["python3"],
-  ".r": ["Rscript"],
-  ".R": ["Rscript"],
-  ".rs": ["rust-script"]
+  ".php": ["php"]
 };
 
 /**

@@ -204,15 +204,16 @@ The **interpreters** option specifies additional interpreted languages for data 
 {
   ".js": ["node", "--no-warnings=ExperimentalWarning"],
   ".ts": ["tsx"],
-  ".sh": ["sh"],
-  ".exe": [],
-  ".jl": ["julia"],
-  ".go": ["go", "run"],
-  ".php": ["php"],
   ".py": ["python3"],
   ".r": ["Rscript"],
   ".R": ["Rscript"],
   ".rs": ["rust-script"]
+  ".go": ["go", "run"],
+  ".sh": ["sh"],
+  ".exe": [],
+  ".java": ["java"],
+  ".jl": ["julia"],
+  ".php": ["php"],
 }
 ```
 
