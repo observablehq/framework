@@ -2,7 +2,6 @@ import {createHash} from "node:crypto";
 import {existsSync, readFileSync, statSync} from "node:fs";
 import {join, relative} from "node:path/posix";
 import type {Program} from "acorn";
-import {Parser} from "acorn";
 import type {Config} from "../config.js";
 import {Loader} from "../dataloader.js";
 import {resolvePath} from "../path.js";
