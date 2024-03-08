@@ -11,6 +11,12 @@ describe("getDependencyResolver(root, path, input)", () => {
     const resolver = await getDependencyResolver(root, "/_npm/d3@7.8.5/+esm.js", `import '${specifier}';\n`);
     assert.strictEqual(resolver(specifier), "../d3-array@3.2.4/dist/d3-array.js");
   });
+  it("finds /npm/ import resolutions and re-resolves their versions", async () => {
+    const root = "test/input/build/simple-public";
+    const specifier = "/npm/d3-array@3.2.3/dist/d3-array.js";
+    const resolver = await getDependencyResolver(root, "/_npm/d3@7.8.5/+esm.js", `import.meta.resolve('${specifier}');\n`);
+    assert.strictEqual(resolver(specifier), "../d3-array@3.2.4/dist/d3-array.js");
+  });
 });
 
 // prettier-ignore

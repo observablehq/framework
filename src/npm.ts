@@ -101,6 +101,15 @@ export async function populateNpmCache(root: string, path: string): Promise<stri
   return promise;
 }
 
+/**
+ * Returns an import resolver for rewriting an npm module from jsDelivr,
+ * replacing /npm/ import specifiers with relative paths, and re-resolving
+ * versions against the module’s package.json file. (jsDeliver bakes-in the
+ * exact version the first time a module is built and doesn’t update it when a
+ * new version of a dependency is published; we always want to import the latest
+ * version to ensure that we don’t load duplicate copies of transitive
+ * dependencies at different versions.)
+ */
 export async function getDependencyResolver(
   root: string,
   path: string,
