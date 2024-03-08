@@ -44,7 +44,7 @@ SELECT * FROM gaia ORDER BY phot_g_mean_mag LIMIT 10
 SELECT * FROM gaia ORDER BY phot_g_mean_mag LIMIT 10
 ```
 
-This returns an array of 10 rows, inspected here:
+This returns an array of 10 rows as an [Apache Arrow](./lib/arrow) table, inspected here:
 
 ```js echo
 top10
@@ -144,11 +144,11 @@ Plot.plot({
 SQL fenced code blocks are shorthand for the `sql` tagged template literal. You can invoke the `sql` tagged template literal directly like so:
 
 ```js echo
-const rows = await sql`SELECT random() AS random`;
+const [row] = await sql`SELECT random() AS random`;
 ```
 
 ```js echo
-rows[0].random
+row.random
 ```
 
 The `sql` tag is useful for querying data within JavaScript, such as to query data for visualization without needing to create a separate SQL code block and giving the data a name. For example, below we use DuckDB to bin stars by brightness, and then visualize the bins as a histogram using a [rect mark](https://observablehq.com/plot/marks/rect).
