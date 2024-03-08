@@ -1,0 +1,25 @@
+# https://docs.docker.com/compose/compose-file/
+services:
+  test-18-18:
+    build:
+      context: .
+      args:
+        NODE_VERSION: 18.18
+
+  test-18-19:
+    build:
+      context: .
+      args:
+        NODE_VERSION: 18.19
+
+  test-20:
+    build:
+      context: .
+      args:
+        NODE_VERSION: 20
+
+  test-21:
+    build:
+      context: .
+      args:
+        NODE_VERSION: 21
