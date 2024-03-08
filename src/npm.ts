@@ -144,9 +144,8 @@ export async function getDependencyResolver(
   // If there are dependencies to resolve, load the package.json and use the semver
   // range there instead of the (stale) resolution that jsDelivr provides.
   if (dependencies.size > 0) {
-    await populateNpmCache(root, `/_npm/${name}@${range}/package.json`);
-    const pkgRoot = join(root, ".observablehq", "cache", "_npm", `${name}@${range}`);
-    const pkg = JSON.parse(await readFile(join(pkgRoot, "package.json"), "utf-8"));
+    const pkgPath = await populateNpmCache(root, `/_npm/${name}@${range}/package.json`);
+    const pkg = JSON.parse(await readFile(pkgPath, "utf-8"));
     for (const dependency of dependencies) {
       const {name: depName, path: depPath = "+esm"} = parseNpmSpecifier(dependency.slice("/npm/".length));
       const range =

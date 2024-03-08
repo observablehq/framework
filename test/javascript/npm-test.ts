@@ -1,6 +1,17 @@
 import assert from "node:assert";
-import {rewriteNpmImports} from "../../src/npm.js";
+import {getDependencyResolver, rewriteNpmImports} from "../../src/npm.js";
 import {relativePath} from "../../src/path.js";
+import {mockJsDelivr} from "../mocks/jsdelivr.js";
+
+describe("getDependencyResolver(root, path, input)", () => {
+  mockJsDelivr();
+  it("finds /npm/ imports and re-resolves their versions", async () => {
+    const root = "test/input/build/simple-public";
+    const specifier = "/npm/d3-array@3.2.3/dist/d3-array.js";
+    const resolver = await getDependencyResolver(root, "/_npm/d3@7.8.5/+esm.js", `import '${specifier}';\n`);
+    assert.strictEqual(resolver(specifier), "../d3-array@3.2.4/dist/d3-array.js");
+  });
+});
 
 // prettier-ignore
 describe("rewriteNpmImports(input, resolve)", () => {
