@@ -91,7 +91,7 @@ export class DuckDBClient {
       throw error;
     }
     return {
-      schema: getArrowTableSchema(batch.value),
+      schema: batch.value.schema,
       async *readRows() {
         try {
           while (!batch.done) {
@@ -106,15 +106,20 @@ export class DuckDBClient {
   }
 
   async query(query, params) {
-    const result = await this.queryStream(query, params);
-    const results = [];
-    for await (const rows of result.readRows()) {
-      for (const row of rows) {
-        results.push(row);
+    const connection = await this._db.connect();
+    let table;
+    try {
+      if (params?.length > 0) {
+        const statement = await connection.prepare(query);
+        table = await statement.query(...params);
+      } else {
+        table = await connection.query(query);
       }
+    } catch (error) {
+      await connection.close();
+      throw error;
     }
-    results.schema = result.schema;
-    return results;
+    return table;
   }
 
   async queryRow(query, params) {
@@ -360,49 +365,4 @@ function isArrowTable(value) {
     value.schema &&
     Array.isArray(value.schema.fields)
   );
-}
-
-function getArrowTableSchema(table) {
-  return table.schema.fields.map(getArrowFieldSchema);
-}
-
-function getArrowFieldSchema(field) {
-  return {
-    name: field.name,
-    type: getArrowType(field.type),
-    nullable: field.nullable,
-    databaseType: `${field.type}`
-  };
-}
-
-// https://github.com/apache/arrow/blob/89f9a0948961f6e94f1ef5e4f310b707d22a3c11/js/src/enum.ts#L140-L141
-function getArrowType(type) {
-  switch (type.typeId) {
-    case 2: // Int
-      return "integer";
-    case 3: // Float
-    case 7: // Decimal
-      return "number";
-    case 4: // Binary
-    case 15: // FixedSizeBinary
-      return "buffer";
-    case 5: // Utf8
-      return "string";
-    case 6: // Bool
-      return "boolean";
-    case 8: // Date
-    case 9: // Time
-    case 10: // Timestamp
-      return "date";
-    case 12: // List
-    case 16: // FixedSizeList
-      return "array";
-    case 13: // Struct
-    case 14: // Union
-      return "object";
-    case 11: // Interval
-    case 17: // Map
-    default:
-      return "other";
-  }
 }
