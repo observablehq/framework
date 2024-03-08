@@ -159,8 +159,8 @@ export async function getDependencyResolver(
     for (const dependency of dependencies) {
       const {name: depName, path: depPath = "+esm"} = parseNpmSpecifier(dependency.slice("/npm/".length));
       const range =
-        (name === "arquero" || name === "@uwdata/mosaic-core") && depName === "apache-arrow"
-          ? "latest" // force Arquero & Mosaic to use the latest version of Arrow
+        (name === "arquero" || name === "@uwdata/mosaic-core" || name === "@duckdb/duckdb-wasm") && depName === "apache-arrow" // prettier-ignore
+          ? "latest" // force Arquero, Mosaic & DuckDB-Wasm to use the (same) latest version of Arrow
           : name === "@uwdata/mosaic-core" && depName === "@duckdb/duckdb-wasm"
           ? "1.28.0" // force Mosaic to use the latest (stable) version of DuckDB-Wasm
           : pkg.dependencies?.[depName] ?? pkg.devDependencies?.[depName] ?? pkg.peerDependencies?.[depName];
