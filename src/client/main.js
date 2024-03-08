@@ -15,7 +15,7 @@ const library = {
   ...sampleDatasets
 };
 
-const runtime = new Runtime(library);
+export const runtime = new Runtime(library);
 export const main = runtime.module();
 
 const cellsById = new Map();

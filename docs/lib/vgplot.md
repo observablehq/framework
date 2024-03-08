@@ -6,5 +6,5 @@ sql:
 # Hello, vgplot
 
 ```js echo
-vg.plot(vg.raster(vg.from("gaia"), {x: "ra", y: "dec", fill: "density", pixelSize: 1}))
+vg.plot(vg.raster(vg.from("gaia"), {x: "ra", y: "dec", fill: "density"}))
 ```
