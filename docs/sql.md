@@ -44,7 +44,7 @@ SELECT * FROM gaia ORDER BY phot_g_mean_mag LIMIT 10
 SELECT * FROM gaia ORDER BY phot_g_mean_mag LIMIT 10
 ```
 
-This returns an array of 10 rows, inspected here:
+This returns an array of 10 rows as an [Apache Arrow](./lib/arrow) table, inspected here:
 
 ```js echo
 top10
