@@ -59,8 +59,12 @@ export function registerTable(name, source) {
 }
 
 export async function sql(strings, ...args) {
+  return (await getDefaultClient()).query(strings.join("?"), args);
+}
+
+export async function getDefaultClient() {
   await Promise.all(inserts);
-  return (await (db ??= DuckDBClient.of())).query(strings.join("?"), args);
+  return await (db ??= DuckDBClient.of());
 }
 
 export class DuckDBClient {

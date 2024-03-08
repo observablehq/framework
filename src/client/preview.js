@@ -1,6 +1,6 @@
 import {registerTable} from "npm:@observablehq/duckdb";
 import {FileAttachment, registerFile} from "npm:@observablehq/stdlib";
-import {main, undefine} from "./main.js";
+import {main, runtime, undefine} from "./main.js";
 import {enableCopyButtons} from "./pre.js";
 
 export * from "./index.js";
@@ -92,7 +92,10 @@ export function open({hash, eval: compile} = {}) {
         }
         if (message.tables.removed.length || message.tables.added.length) {
           const sql = main._resolve("sql");
-          sql.define(sql._promise); // re-evaluate sql code
+          runtime._updates.add(sql); // re-evaluate sql code
+          runtime._compute();
+          const vg = runtime._builtin._resolve("vg");
+          vg.define("vg", [], vg._definition); // reload vgplot, then re-evaluate vg code
         }
         if (message.stylesheets.added.length === 1 && message.stylesheets.removed.length === 1) {
           const [newHref] = message.stylesheets.added;

@@ -19,4 +19,5 @@ export const SQLite = () => import("observablehq:stdlib/sqlite").then((sqlite) =
 export const SQLiteDatabaseClient = () => import("observablehq:stdlib/sqlite").then((sqlite) => sqlite.SQLiteDatabaseClient); // prettier-ignore
 export const tex = () => import("observablehq:stdlib/tex").then((tex) => tex.default);
 export const topojson = () => import("npm:topojson-client");
+export const vg = () => import("observablehq:stdlib/vgplot").then((vg) => vg.default());
 export const vl = () => import("observablehq:stdlib/vega-lite").then((vl) => vl.default);
