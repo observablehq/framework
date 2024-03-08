@@ -152,8 +152,6 @@ export function getImplicitDownloads(imports: Iterable<string>): Set<string> {
 export function getImplicitDependencies(imports: Iterable<string>): Set<string> {
   const set = setof(imports);
   const implicits = new Set<string>();
-  if (set.has("observablehq:stdlib/vega-lite")) implicits.add("npm:vega-lite-api").add("npm:vega-lite").add("npm:vega");
-  if (set.has("observablehq:stdlib/vgplot")) implicits.add("npm:@uwdata/vgplot").add("npm:@observablehq/duckdb");
   if (set.has("npm:@observablehq/dot")) implicits.add("npm:@viz-js/viz");
   if (set.has("npm:@observablehq/duckdb")) implicits.add("npm:@duckdb/duckdb-wasm");
   if (set.has("npm:@observablehq/inputs")) implicits.add("npm:htl").add("npm:isoformat");
@@ -161,6 +159,8 @@ export function getImplicitDependencies(imports: Iterable<string>): Set<string> 
   if (set.has("npm:@observablehq/tex")) implicits.add("npm:katex");
   if (set.has("npm:@observablehq/xlsx")) implicits.add("npm:exceljs");
   if (set.has("npm:@observablehq/zip")) implicits.add("npm:jszip");
+  if (set.has("observablehq:stdlib/vega-lite")) implicits.add("npm:vega-lite-api").add("npm:vega-lite").add("npm:vega");
+  if (set.has("observablehq:stdlib/vgplot")) implicits.add("npm:@uwdata/vgplot").add("npm:@observablehq/duckdb").add("npm:@duckdb/duckdb-wasm"); // prettier-ignore
   return implicits;
 }
 
