@@ -7,6 +7,7 @@ import * as sampleDatasets from "./stdlib/sampleDatasets.js";
 const library = {
   now: () => Generators.now(),
   width: () => Generators.width(document.querySelector("main")),
+  dark: () => Generators.dark(),
   resize: () => resize,
   FileAttachment: () => FileAttachment,
   Generators: () => Generators,
