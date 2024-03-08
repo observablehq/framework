@@ -75,7 +75,7 @@ const width = Generators.width(document.querySelector("main"));
 width
 ```
 
-## dark()
+## dark() <a href="https://github.com/observablehq/framework/pull/1025" target="_blank" class="observablehq-version-badge" data-version="prerelease" title="Added in #1025"></a>
 
 Returns an async generator that yields a boolean indicating whether the page is currently displayed with a dark [color-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/color-scheme).
 

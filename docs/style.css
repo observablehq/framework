@@ -46,5 +46,5 @@ a.observablehq-version-badge {
 }
 
 .observablehq-version-badge::before {
-  content: "^" attr(data-version);
+  content: attr(data-version);
 }
