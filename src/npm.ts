@@ -142,8 +142,9 @@ export async function getDependencyResolver(
   function findImportSource(source: StringLiteral) {
     const value = getStringLiteralValue(source);
     if (value.startsWith("/npm/")) {
-      const {name: depName} = parseNpmSpecifier(value.slice("/npm/".length));
+      const {name: depName, range: depRange} = parseNpmSpecifier(value.slice("/npm/".length));
       if (depName === name) return; // ignore self-references, e.g. mermaid plugin
+      if (existsSync(join(root, ".observablehq", "cache", "_npm", `${depName}@${depRange}`))) return; // already resolved
       dependencies.add(value);
     }
   }
@@ -158,10 +159,10 @@ export async function getDependencyResolver(
     for (const dependency of dependencies) {
       const {name: depName, path: depPath = "+esm"} = parseNpmSpecifier(dependency.slice("/npm/".length));
       const range =
-        name === "@uwdata/mosaic-core" && depName === "apache-arrow"
-          ? "13.0.0" // force Mosaic to use our version of Arrow
+        (name === "arquero" || name === "@uwdata/mosaic-core") && depName === "apache-arrow"
+          ? "latest" // force Arquero & Mosaic to use the latest version of Arrow
           : name === "@uwdata/mosaic-core" && depName === "@duckdb/duckdb-wasm"
-          ? "1.28.0" // force Mosaic to use our version of DuckDB-Wasm
+          ? "1.28.0" // force Mosaic to use the latest (stable) version of DuckDB-Wasm
           : pkg.dependencies?.[depName] ?? pkg.devDependencies?.[depName] ?? pkg.peerDependencies?.[depName];
       if (range === undefined) continue; // only resolve if we find a range
       resolutions.set(dependency, await resolveNpmImport(root, `${depName}@${range}/${depPath}`));
@@ -239,8 +240,6 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
     name,
     range = name === "@duckdb/duckdb-wasm"
       ? "1.28.0" // https://github.com/duckdb/duckdb-wasm/issues/1561
-      : name === "apache-arrow"
-      ? "13.0.0" // https://github.com/observablehq/framework/issues/750
       : name === "parquet-wasm"
       ? "0.5.0" // https://github.com/observablehq/framework/issues/733
       : undefined,

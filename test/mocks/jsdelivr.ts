@@ -5,7 +5,7 @@ const packages: [name: string, {version: string; dependencies?: Record<string, s
   ["@observablehq/inputs", {version: "0.10.6"}],
   ["@observablehq/plot", {version: "0.6.11"}],
   ["@viz-js/viz", {version: "3.2.3"}],
-  ["apache-arrow", {version: "14.0.1"}],
+  ["apache-arrow", {version: "15.0.1"}],
   ["arquero", {version: "5.3.0"}],
   ["canvas-confetti", {version: "1.9.2"}],
   ["d3-array", {version: "3.2.4"}],
