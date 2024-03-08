@@ -79,7 +79,7 @@ width
 
 Returns an async generator that yields a boolean indicating whether the page is currently displayed with a dark [color-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/color-scheme).
 
-If the page supports dark mode (for example with the default Framework themes), the value reflects the user’s prefered color scheme. It will yield if that value changes, and update the charts that depend on it without needing to reload the page — this happens at dusk (if the user settings adapt from light to dark), and conversely at dawn, from dark to light; and of course, when the user is playing with their settings.
+If the page supports dark mode (for example with the default Framework themes), the value reflects the user’s preferred color scheme. It will yield if that value changes, and update the charts that depend on it without needing to reload the page — this happens at dusk (if the user settings adapt from light to dark), and conversely at dawn, from dark to light; and of course, when the user is playing with their settings.
 
 If the page does _not_ support dark mode, and only has a light theme, the value is always false, and likewise it is always true if the page only has a dark theme.
 
