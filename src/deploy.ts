@@ -473,7 +473,7 @@ export async function promptDeployTarget(
       throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
     }
     title = titleChoice;
-    clack.log.info("You should add this title to your observablehq.config.ts file.");
+    clack.log.info("You should add this title to your observablehq.config.js file.");
   }
 
   // TODO This should refer to the URL of the project, not the slug.

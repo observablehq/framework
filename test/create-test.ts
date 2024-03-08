@@ -27,7 +27,7 @@ describe("create", async () => {
         "template-test/docs/example-report.md",
         "template-test/docs/index.md",
         "template-test/docs/penguins.csv",
-        "template-test/observablehq.config.ts",
+        "template-test/observablehq.config.js",
         "template-test/package.json",
         "template-test/README.md"
       ])
@@ -50,7 +50,7 @@ describe("create", async () => {
         "template-test/docs/aapl.csv",
         "template-test/docs/index.md",
         "template-test/docs/penguins.csv",
-        "template-test/observablehq.config.ts",
+        "template-test/observablehq.config.js",
         "template-test/package.json",
         "template-test/README.md"
       ])
