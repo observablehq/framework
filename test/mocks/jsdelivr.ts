@@ -39,6 +39,10 @@ export function mockJsDelivr() {
         .intercept({path: new RegExp(`^/npm/${name}@${version}/`), method: "GET"})
         .reply(200, "", {headers: {"cache-control": "public, immutable", "content-type": "text/javascript; charset=utf-8"}})
         .persist(); // prettier-ignore
+      cdnClient
+        .intercept({path: new RegExp(`^/npm/${name}@${version}/package.json`), method: "GET"})
+        .reply(200, "", {headers: {"cache-control": "public, immutable", "content-type": "application/json; charset=utf-8"}})
+        .persist(); // prettier-ignore
     }
   });
 }

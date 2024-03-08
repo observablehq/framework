@@ -36,7 +36,7 @@ export function formatNpmSpecifier({name, range, path}: NpmSpecifier): string {
 }
 
 /** Rewrites /npm/ import specifiers to be relative paths to /_npm/. */
-export function rewriteNpmImports(input: string, path: string): string {
+export function rewriteNpmImports(input: string, resolve: (specifier: string) => string = String): string {
   const body = parseProgram(input);
   const output = new Sourcemap(input);
 
@@ -61,13 +61,9 @@ export function rewriteNpmImports(input: string, path: string): string {
   }
 
   function rewriteImportSource(source: StringLiteral) {
-    let value = getStringLiteralValue(source);
-    if (value.startsWith("/npm/")) {
-      value = `/_npm/${value.slice("/npm/".length)}`;
-      if (value.endsWith("/+esm")) value += ".js";
-      value = relativePath(path, value);
-      output.replaceLeft(source.start, source.end, JSON.stringify(value));
-    }
+    const value = getStringLiteralValue(source);
+    const resolved = resolve(value);
+    if (value !== resolved) output.replaceLeft(source.start, source.end, JSON.stringify(resolved));
   }
 
   // TODO Preserve the source map, but download it too.
@@ -92,7 +88,9 @@ export async function populateNpmCache(root: string, path: string): Promise<stri
     process.stdout.write(`${filePath}\n`);
     await mkdir(dirname(filePath), {recursive: true});
     if (/^application\/javascript(;|$)/i.test(response.headers.get("content-type")!)) {
-      await writeFile(filePath, rewriteNpmImports(await response.text(), path), "utf-8");
+      const source = await response.text();
+      const resolver = await getDependencyResolver(root, path, source);
+      await writeFile(filePath, rewriteNpmImports(source, resolver), "utf-8");
     } else {
       await writeFile(filePath, Buffer.from(await response.arrayBuffer()));
     }
@@ -101,6 +99,73 @@ export async function populateNpmCache(root: string, path: string): Promise<stri
   promise.catch(() => {}).then(() => npmRequests.delete(path));
   npmRequests.set(path, promise);
   return promise;
+}
+
+export async function getDependencyResolver(
+  root: string,
+  path: string,
+  input: string
+): Promise<(specifier: string) => string> {
+  const body = parseProgram(input);
+  const dependencies = new Set<string>();
+  const {name, range} = parseNpmSpecifier(resolveNpmSpecifier(path));
+
+  simple(body, {
+    ImportDeclaration: findImport,
+    ImportExpression: findImport,
+    ExportAllDeclaration: findImport,
+    ExportNamedDeclaration: findImport,
+    CallExpression: findImportMetaResolve
+  });
+
+  function findImport(node: ImportNode | ExportNode) {
+    if (node.source && isStringLiteral(node.source)) {
+      findImportSource(node.source);
+    }
+  }
+
+  function findImportMetaResolve(node: CallExpression) {
+    if (isImportMetaResolve(node) && isStringLiteral(node.arguments[0])) {
+      findImportSource(node.arguments[0]);
+    }
+  }
+
+  function findImportSource(source: StringLiteral) {
+    const value = getStringLiteralValue(source);
+    if (value.startsWith("/npm/")) {
+      const {name: depName} = parseNpmSpecifier(value.slice("/npm/".length));
+      if (depName === name) return; // ignore self-references, e.g. mermaid plugin
+      dependencies.add(value);
+    }
+  }
+
+  const resolutions = new Map<string, string>();
+
+  // If there are dependencies to resolve, load the package.json and use the semver
+  // range there instead of the (stale) resolution that jsDelivr provides.
+  if (dependencies.size > 0) {
+    await populateNpmCache(root, `/_npm/${name}@${range}/package.json`);
+    const pkgRoot = join(root, ".observablehq", "cache", "_npm", `${name}@${range}`);
+    const pkg = JSON.parse(await readFile(join(pkgRoot, "package.json"), "utf-8"));
+    for (const dependency of dependencies) {
+      const {name: depName, path: depPath = "+esm"} = parseNpmSpecifier(dependency.slice("/npm/".length));
+      const range =
+        name === "@uwdata/mosaic-core" && depName === "apache-arrow"
+          ? "13.0.0" // force Mosaic to use our version of Arrow
+          : name === "@uwdata/mosaic-core" && depName === "@duckdb/duckdb-wasm"
+          ? "1.28.0" // force Mosaic to use our version of DuckDB-Wasm
+          : pkg.dependencies?.[depName] ?? pkg.devDependencies?.[depName] ?? pkg.peerDependencies?.[depName];
+      if (range === undefined) continue; // only resolve if we find a range
+      resolutions.set(dependency, await resolveNpmImport(root, `${depName}@${range}/${depPath}`));
+    }
+  }
+
+  return (specifier: string) => {
+    if (!specifier.startsWith("/npm/")) return specifier;
+    if (resolutions.has(specifier)) specifier = resolutions.get(specifier)!;
+    else specifier = `/_npm/${specifier.slice("/npm/".length)}${specifier.endsWith("/+esm") ? ".js" : ""}`;
+    return relativePath(path, specifier);
+  };
 }
 
 let npmVersionCache: Promise<Map<string, string[]>>;
@@ -197,8 +262,8 @@ export async function resolveNpmImports(root: string, path: string): Promise<Imp
       const source = await readFile(filePath, "utf-8");
       const body = parseProgram(source);
       return findImports(body, path, source);
-    } catch (error) {
-      console.warn(`unable to fetch or parse: ${path}`);
+    } catch (error: any) {
+      console.warn(`unable to fetch or parse ${path}: ${error.message}`);
       return [];
     }
   })();
