@@ -43,7 +43,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
   for await (const file of visitMarkdownFiles(root)) {
     const path = join(root, file);
     const source = await readFile(path, "utf8");
-    const {html, title, data} = parseMarkdown(source, {root, path: "/" + file.slice(0, -3)});
+    const {html, title, data} = parseMarkdown(source, {...config, root, path: "/" + file.slice(0, -3)});
 
     // Skip pages that opt-out of indexing, and skip unlisted pages unless
     // opted-in. We only log the first case.
