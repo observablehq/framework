@@ -3,7 +3,7 @@ import he from "he";
 import hljs from "highlight.js";
 import type {DOMWindow} from "jsdom";
 import {JSDOM, VirtualConsole} from "jsdom";
-import {relativePath, resolveLocalPath} from "./path.js";
+import {isAssetPath, relativePath, resolveLocalPath} from "./path.js";
 
 const ASSET_PROPERTIES: readonly [selector: string, src: string][] = [
   ["a[href][download]", "href"],
@@ -17,53 +17,89 @@ const ASSET_PROPERTIES: readonly [selector: string, src: string][] = [
   ["video[src]", "src"]
 ];
 
-export function isAssetPath(specifier: string): boolean {
-  return !/^(\w+:|#)/.test(specifier);
+export function isJavaScript({type}: HTMLScriptElement): boolean {
+  return !type || type === "text/javascript" || type === "application/javascript" || type === "module";
 }
 
 export function parseHtml(html: string): DOMWindow {
   return new JSDOM(`<!DOCTYPE html><body>${html}`, {virtualConsole: new VirtualConsole()}).window;
 }
 
-export function findAssets(html: string, path: string): Set<string> {
-  const {document} = parseHtml(html);
-  const assets = new Set<string>();
+interface Assets {
+  files: Set<string>;
+  localImports: Set<string>;
+  globalImports: Set<string>;
+}
 
-  const maybeAsset = (specifier: string): void => {
+export function findAssets(html: string, path: string): Assets {
+  const {document} = parseHtml(html);
+  const files = new Set<string>();
+  const localImports = new Set<string>();
+  const globalImports = new Set<string>();
+
+  const maybeFile = (specifier: string): void => {
     if (!isAssetPath(specifier)) return;
     const localPath = resolveLocalPath(path, specifier);
     if (!localPath) return console.warn(`non-local asset path: ${specifier}`);
-    assets.add(relativePath(path, localPath));
+    files.add(relativePath(path, localPath));
   };
 
   for (const [selector, src] of ASSET_PROPERTIES) {
     for (const element of document.querySelectorAll(selector)) {
-      const source = decodeURIComponent(element.getAttribute(src)!);
+      const source = decodeURI(element.getAttribute(src)!);
       if (src === "srcset") {
         for (const s of parseSrcset(source)) {
-          maybeAsset(s);
+          maybeFile(s);
         }
       } else {
-        maybeAsset(source);
+        maybeFile(source);
       }
     }
   }
 
-  return assets;
+  for (const script of document.querySelectorAll<HTMLScriptElement>("script[src]")) {
+    const src = script.getAttribute("src")!;
+    if (isJavaScript(script)) {
+      if (isAssetPath(src)) {
+        const localPath = resolveLocalPath(path, src);
+        if (!localPath) {
+          console.warn(`non-local asset path: ${src}`);
+          continue;
+        }
+        localImports.add(relativePath(path, localPath));
+      } else {
+        globalImports.add(src);
+      }
+    } else {
+      maybeFile(src);
+    }
+  }
+
+  return {files, localImports, globalImports};
 }
 
-export function rewriteHtml(html: string, resolve: (specifier: string) => string = String): string {
+interface HtmlResolvers {
+  resolveFile?: (specifier: string) => string;
+  resolveScript?: (specifier: string) => string;
+}
+
+export function rewriteHtml(html: string, {resolveFile = String, resolveScript = String}: HtmlResolvers): string {
   const {document} = parseHtml(html);
 
-  const maybeResolve = (specifier: string): string => {
-    return isAssetPath(specifier) ? resolve(specifier) : specifier;
+  const maybeResolveFile = (specifier: string): string => {
+    return isAssetPath(specifier) ? resolveFile(specifier) : specifier;
   };
 
   for (const [selector, src] of ASSET_PROPERTIES) {
     for (const element of document.querySelectorAll(selector)) {
-      const source = decodeURIComponent(element.getAttribute(src)!);
-      element.setAttribute(src, src === "srcset" ? resolveSrcset(source, maybeResolve) : maybeResolve(source));
+      const source = decodeURI(element.getAttribute(src)!);
+      element.setAttribute(src, src === "srcset" ? resolveSrcset(source, maybeResolveFile) : maybeResolveFile(source));
     }
+  }
+
+  for (const script of document.querySelectorAll<HTMLScriptElement>("script[src]")) {
+    const src = decodeURI(script.getAttribute("src")!);
+    script.setAttribute("src", (isJavaScript(script) ? resolveScript : maybeResolveFile)(src));
   }
 
   // Syntax highlighting for <code> elements. The code could contain an inline
