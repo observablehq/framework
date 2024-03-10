@@ -283,7 +283,7 @@ export function parseMarkdown(input: string, {root, path, markdownIt, style: con
   const parts = matter(input, {});
   let md = MarkdownIt({html: true, linkify: true});
   md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
-  if (typeof markdownIt === "function") md = markdownIt(md);
+  if (typeof markdownIt !== undefined) md = markdownIt(md);
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
