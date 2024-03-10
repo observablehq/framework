@@ -279,12 +279,11 @@ export interface ParseOptions {
   style?: Config["style"];
 }
 
-export function parseMarkdown(
-  input: string,
-  {root, path, markdownIt = (md) => md, style: configStyle}: ParseOptions
-): MarkdownPage {
+export function parseMarkdown(input: string, {root, path, markdownIt, style: configStyle}: ParseOptions): MarkdownPage {
   const parts = matter(input, {});
-  const md = markdownIt(MarkdownIt({html: true}));
+  let md = MarkdownIt({html: true, linkify: true});
+  md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
+  if (markdownIt !== undefined) md = markdownIt(md);
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
