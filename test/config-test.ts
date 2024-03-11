@@ -1,4 +1,5 @@
 import assert from "node:assert";
+import MarkdownIt from "markdown-it";
 import {normalizeConfig as config, mergeToc, readConfig, setCurrentDate} from "../src/config.js";
 
 const root = "test/input/build/config";
@@ -6,7 +7,9 @@ const root = "test/input/build/config";
 describe("readConfig(undefined, root)", () => {
   before(() => setCurrentDate(new Date("2024-01-11T01:02:03")));
   it("imports the config file at the specified root", async () => {
-    assert.deepStrictEqual(await readConfig(undefined, "test/input/build/config"), {
+    const {md, ...config} = await readConfig(undefined, "test/input/build/config");
+    assert(md instanceof MarkdownIt);
+    assert.deepStrictEqual(config, {
       root: "test/input/build/config",
       output: "dist",
       base: "/",
@@ -30,12 +33,13 @@ describe("readConfig(undefined, root)", () => {
         workspace: "acme",
         project: "bi"
       },
-      search: false,
-      markdownIt: undefined
+      search: false
     });
   });
   it("returns the default config if no config file is found", async () => {
-    assert.deepStrictEqual(await readConfig(undefined, "test/input/build/simple"), {
+    const {md, ...config} = await readConfig(undefined, "test/input/build/simple");
+    assert(md instanceof MarkdownIt);
+    assert.deepStrictEqual(config, {
       root: "test/input/build/simple",
       output: "dist",
       base: "/",
@@ -51,8 +55,7 @@ describe("readConfig(undefined, root)", () => {
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-11T01:02:03">Jan 11, 2024</a>.',
       deploy: null,
-      search: false,
-      markdownIt: undefined
+      search: false
     });
   });
 });

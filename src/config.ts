@@ -7,7 +7,7 @@ import {pathToFileURL} from "node:url";
 import type MarkdownIt from "markdown-it";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
-import {parseMarkdown} from "./markdown.js";
+import {createMarkdownIt, parseMarkdown} from "./markdown.js";
 import {resolvePath} from "./path.js";
 import {resolveTheme} from "./theme.js";
 
@@ -53,7 +53,7 @@ export interface Config {
   style: null | Style; // defaults to {theme: ["light", "dark"]}
   deploy: null | {workspace: string; project: string};
   search: boolean; // default to false
-  markdownIt?: (md: MarkdownIt) => MarkdownIt;
+  md: MarkdownIt;
 }
 
 /**
@@ -79,12 +79,12 @@ export async function readDefaultConfig(root?: string): Promise<Config> {
   return normalizeConfig((await import(pathToFileURL(tsPath).href)).default, root);
 }
 
-async function readPages(root: string): Promise<Page[]> {
+async function readPages(root: string, md: MarkdownIt): Promise<Page[]> {
   const pages: Page[] = [];
   for await (const file of visitMarkdownFiles(root)) {
     if (file === "index.md" || file === "404.md") continue;
     const source = await readFile(join(root, file), "utf8");
-    const parsed = parseMarkdown(source, {root, path: file});
+    const parsed = parseMarkdown(source, {path: file, md});
     if (parsed?.data?.draft) continue;
     const name = basename(file, ".md");
     const page = {path: join("/", dirname(file), name), name: parsed.title ?? "Untitled"};
@@ -117,14 +117,14 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
       currentDate
     )}">${formatLocaleDate(currentDate)}</a>.`
   } = spec;
-  const {markdownIt} = spec;
   root = String(root);
   output = String(output);
   base = normalizeBase(base);
   if (style === null) style = null;
   else if (style !== undefined) style = {path: String(style)};
   else style = {theme: (theme = normalizeTheme(theme))};
-  let {title, pages = await readPages(root), pager = true, toc = true} = spec;
+  const md = createMarkdownIt(spec);
+  let {title, pages = await readPages(root, md), pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
   sidebar = sidebar === undefined ? pages.length > 0 : Boolean(sidebar);
@@ -136,7 +136,6 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
   search = Boolean(search);
-  if (markdownIt !== undefined && typeof markdownIt !== "function") throw new Error("markdownIt must be a function");
   return {
     root,
     output,
@@ -153,7 +152,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
     style,
     deploy,
     search,
-    markdownIt
+    md
   };
 }
 
