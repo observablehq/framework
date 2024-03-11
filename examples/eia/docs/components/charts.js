@@ -22,7 +22,7 @@ export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDema
         y: "name",
         x: (d) => d.value / 1000,
         fill: "var(--theme-foreground-alt)",
-        opacity: 0.25,
+        opacity: 0.2,
         sort: {y: "x", reverse: true, limit: 10},
         channels: {demand: {value: (d) => `${format(".1f")(d.value / 1000)} GWh`, label: "Demand"}},
         tip: {
@@ -46,13 +46,11 @@ export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDema
         text: "name",
         y: "name",
         x: 0,
-        dx: 8,
-        fontSize: 12,
+        dx: 4,
+        fontSize: 11,
         fontWeight: 500,
         textAnchor: "start",
         fill: "var(--theme-foreground-alt)",
-        stroke: "var(--theme-background-alt)",
-        strokeOpacity: 0.6,
       })
     ]
   });
