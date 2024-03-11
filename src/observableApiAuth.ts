@@ -18,6 +18,8 @@ import {bold, defaultEffects as defaultTtyEffects, inverse, link, yellow} from "
 
 const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
 
+export const VALID_TIERS = new Set(["starter_2024", "pro_2024", "enterprise_2024"]);
+
 /** Actions this command needs to take wrt its environment that may need mocked out. */
 export interface AuthEffects extends ConfigEffects, TtyEffects {
   clack: ClackEffects;
@@ -35,12 +37,12 @@ export const defaultEffects: AuthEffects = {
   exitSuccess: () => process.exit(0)
 };
 
-export async function login(effects: AuthEffects = defaultEffects) {
+export async function login(effects: AuthEffects = defaultEffects, overrides = {}) {
   const {clack} = effects;
   Telemetry.record({event: "login", step: "start"});
   clack.intro(inverse(" observable login "));
 
-  const {currentUser} = await loginInner(effects);
+  const {currentUser} = await loginInner(effects, overrides);
 
   if (currentUser.workspaces.length === 0) {
     clack.log.warn(`${yellow("Warning:")} You don't have any workspaces to deploy to.`);
@@ -57,7 +59,10 @@ export async function login(effects: AuthEffects = defaultEffects) {
   Telemetry.record({event: "login", step: "finish"});
 }
 
-export async function loginInner(effects: AuthEffects): Promise<{currentUser: GetCurrentUserResponse; apiKey: ApiKey}> {
+export async function loginInner(
+  effects: AuthEffects,
+  {pollTime = 1000} = {}
+): Promise<{currentUser: GetCurrentUserResponse; apiKey: ApiKey}> {
   const {clack} = effects;
   const apiClient = new ObservableApiClient();
   const requestInfo = await apiClient.postAuthRequest({
@@ -76,7 +81,7 @@ export async function loginInner(effects: AuthEffects): Promise<{currentUser: Ge
 
   let apiKey: PostAuthRequestPollResponse["apiKey"] | null = null;
   while (apiKey === null) {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, pollTime));
     const requestPoll = await apiClient.postAuthRequestPoll(requestInfo.id);
     switch (requestPoll.status) {
       case "pending":
@@ -106,7 +111,8 @@ export async function loginInner(effects: AuthEffects): Promise<{currentUser: Ge
   await effects.setObservableApiKey(apiKey);
 
   apiClient.setApiKey({source: "login", key: apiKey.key});
-  const currentUser = await apiClient.getCurrentUser();
+  let currentUser = await apiClient.getCurrentUser();
+  currentUser = {...currentUser, workspaces: validWorkspaces(currentUser.workspaces)};
   spinner.stop(`You are logged into ${OBSERVABLE_UI_ORIGIN.hostname} as ${formatUser(currentUser)}.`);
   return {currentUser, apiKey: {...apiKey, source: "login"}};
 }
@@ -148,4 +154,17 @@ export async function whoami(effects = defaultEffects) {
 
 export function formatUser(user: {name?: string; login: string}): string {
   return user.name ? `${user.name} (@${user.login})` : `@${user.login}`;
+}
+
+export function validWorkspaces(
+  workspaces: GetCurrentUserResponse["workspaces"]
+): GetCurrentUserResponse["workspaces"] {
+  return workspaces.filter(
+    (w) =>
+      VALID_TIERS.has(w.tier) &&
+      (w.role === "owner" ||
+        w.role === "member" ||
+        (w.role === "guest_member" &&
+          w.projects_info.some((info) => info.project_role === "owner" || info.project_role === "editor")))
+  );
 }

@@ -1,9 +1,15 @@
-import {basename, dirname, join} from "node:path";
+import {existsSync} from "node:fs";
+import {readFile} from "node:fs/promises";
+import op from "node:path";
+import {basename, dirname, join} from "node:path/posix";
+import {cwd} from "node:process";
+import {pathToFileURL} from "node:url";
+import type MarkdownIt from "markdown-it";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
-import {parseMarkdown} from "./markdown.js";
+import {createMarkdownIt, parseMarkdown} from "./markdown.js";
+import {resolvePath} from "./path.js";
 import {resolveTheme} from "./theme.js";
-import {resolvePath} from "./url.js";
 
 export interface Page {
   name: string;
@@ -47,31 +53,39 @@ export interface Config {
   style: null | Style; // defaults to {theme: ["light", "dark"]}
   deploy: null | {workspace: string; project: string};
   search: boolean; // default to false
+  md: MarkdownIt;
+}
+
+/**
+ * Returns the absolute path to the specified config file, which is specified as a
+ * path relative to the given root (if any). If you want to import this, you should
+ * pass the result to pathToFileURL.
+ */
+function resolveConfig(configPath: string, root = "."): string {
+  return op.join(cwd(), root, configPath);
 }
 
 export async function readConfig(configPath?: string, root?: string): Promise<Config> {
   if (configPath === undefined) return readDefaultConfig(root);
-  const importPath = join(process.cwd(), root ?? ".", configPath);
-  return normalizeConfig((await import(importPath)).default, root);
+  return normalizeConfig((await import(pathToFileURL(resolveConfig(configPath, root)).href)).default, root);
 }
 
 export async function readDefaultConfig(root?: string): Promise<Config> {
-  for (const ext of [".js", ".ts"]) {
-    try {
-      return await readConfig("observablehq.config" + ext, root);
-    } catch (error: any) {
-      if (error.code !== "ERR_MODULE_NOT_FOUND") throw error;
-      continue;
-    }
-  }
-  return normalizeConfig(undefined, root);
+  const jsPath = resolveConfig("observablehq.config.js", root);
+  if (existsSync(jsPath)) return normalizeConfig((await import(pathToFileURL(jsPath).href)).default, root);
+  const tsPath = resolveConfig("observablehq.config.ts", root);
+  if (!existsSync(tsPath)) return normalizeConfig(undefined, root);
+  await import("tsx/esm"); // lazy tsx
+  return normalizeConfig((await import(pathToFileURL(tsPath).href)).default, root);
 }
 
-async function readPages(root: string): Promise<Page[]> {
+async function readPages(root: string, md: MarkdownIt): Promise<Page[]> {
   const pages: Page[] = [];
   for await (const file of visitMarkdownFiles(root)) {
     if (file === "index.md" || file === "404.md") continue;
-    const parsed = await parseMarkdown(join(root, file), {root, path: file});
+    const source = await readFile(join(root, file), "utf8");
+    const parsed = parseMarkdown(source, {path: file, md});
+    if (parsed?.data?.draft) continue;
     const name = basename(file, ".md");
     const page = {path: join("/", dirname(file), name), name: parsed.title ?? "Untitled"};
     if (name === "index") pages.unshift(page);
@@ -109,7 +123,8 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   if (style === null) style = null;
   else if (style !== undefined) style = {path: String(style)};
   else style = {theme: (theme = normalizeTheme(theme))};
-  let {title, pages = await readPages(root), pager = true, toc = true} = spec;
+  const md = createMarkdownIt(spec);
+  let {title, pages = await readPages(root, md), pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
   sidebar = sidebar === undefined ? pages.length > 0 : Boolean(sidebar);
@@ -121,7 +136,24 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
   search = Boolean(search);
-  return {root, output, base, title, sidebar, pages, pager, scripts, head, header, footer, toc, style, deploy, search};
+  return {
+    root,
+    output,
+    base,
+    title,
+    sidebar,
+    pages,
+    pager,
+    scripts,
+    head,
+    header,
+    footer,
+    toc,
+    style,
+    deploy,
+    search,
+    md
+  };
 }
 
 function normalizeBase(base: any): string {
@@ -184,6 +216,6 @@ export function mergeStyle(path: string, style: any, theme: any, defaultStyle: n
     : style === null
     ? null // disable
     : style !== undefined
-    ? {path: resolvePath(path, style)}
+    ? {path: resolvePath(path, String(style))}
     : {theme: normalizeTheme(theme)};
 }

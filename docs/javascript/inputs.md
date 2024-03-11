@@ -1,3 +1,7 @@
+---
+keywords: viewof
+---
+
 # JavaScript: Inputs
 
 Inputs are graphical user interface elements such as dropdowns, radios, sliders, and text boxes that accept data from a user and enable interaction via [reactivity](./reactivity). They can also be custom elements that you design, such as charts that support interactive selection via pointing or brushing.

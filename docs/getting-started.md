@@ -84,17 +84,17 @@ These are just first steps. You can continue to develop projects after publishin
 Framework includes a helper script (`observable create`) for creating new projects. After a few quick prompts — where to create the project, your preferred package manager, *etc.* — it will stamp out a fresh project from a template.
 
 <div class="tip">
-  <p>Framework is a <a href="https://nodejs.org/">Node.js</a> application published to npm. You must have <a href="https://nodejs.org/en/download">Node.js 20.6 or later</a> installed before you can install Framework. Framework is a command-line interface (CLI) and runs in the terminal.</p>
+  <p>Framework is a <a href="https://nodejs.org/">Node.js</a> application published to npm. You must have <a href="https://nodejs.org/en/download">Node.js 18 or later</a> installed before you can install Framework. Framework is a command-line interface (CLI) and runs in the terminal.</p>
   <p>If you run into difficulty following this tutorial, we’re happy to help! Please visit the <a href="https://talk.observablehq.com">Observable forum</a> or our <a href="https://github.com/observablehq/framework/discussions">GitHub discussions</a>.</p>
 </div>
 
 To create a new project with npm, run:
 
-<pre data-copy>npm init @observablehq</pre>
+<pre data-copy>npm init <span class="win">"</span>@observablehq<span class="win">"</span></pre>
 
 If you prefer Yarn, run:
 
-<pre data-copy>yarn create @observablehq</pre>
+<pre data-copy>yarn create <span class="win">"</span>@observablehq<span class="win">"</span></pre>
 
 You can run the above command anywhere, but you may want to `cd` to your `~/Development` directory first (or wherever you do local development).
 
@@ -221,7 +221,7 @@ Or with Yarn:
 
 You should see something like this:
 
-<pre data-copy="none"><b class="green">Observable Framework</b> v1.0.0
+<pre data-copy="none"><b class="green">Observable Framework</b> v1.2.0
 ↳ <u><a href="http://127.0.0.1:3000/" style="color: inherit;">http://127.0.0.1:3000/</a></u></pre>
 
 <div class="tip">
@@ -263,7 +263,7 @@ Now let’s add a page for our weather dashboard. Create a new file `docs/weathe
 # Weather report
 
 ```js
-1 + 2
+display(1 + 2);
 ```
 ````
 
@@ -301,7 +301,7 @@ async function json(url) {
 const station = await json(`https://api.weather.gov/points/&dollar;{latitude},&dollar;{longitude}`);
 const forecast = await json(station.properties.forecastHourly);
 
-process.stdout.write(JSON.stringify(forecast));</pre>
+process.stdout.write(JSON.stringify(forecast));</code></pre>
 
 ```js
 const location = view(Locator([-122.47, 37.8]));
@@ -383,7 +383,11 @@ This looks like:
   <figcaption>Using <code>FileAttachment</code> to load data.</figcaption>
 </figure>
 
-The built-in [`display`](./javascript/display) function displays the specified value, a bit like `console.log` in the browser’s console. As you may have noticed above with <code class="language-js">1 + 2</code>, `display` is called implicitly when a code block contains an expression.
+The built-in [`display`](./javascript/display) function displays the specified value, a bit like `console.log` in the browser’s console. As you can see below, `display` is called [implicitly](./javascript/display#implicit-display) when a code block contains an expression:
+
+```js echo
+1 + 2
+```
 
 For convenience, here’s a copy of the data so you can explore it here:
 
@@ -399,8 +403,9 @@ This is a GeoJSON `Feature` object of a `Polygon` geometry representing the grid
 </figure>
 
 ```js
+const ACCESS_TOKEN = "pk.eyJ1Ijoib2JzZXJ2YWJsZWhxLWVuZy1hZG1pbiIsImEiOiJjbHMxaTBwdDkwYnRsMmpxeG12M2kzdWFvIn0.Ga6eIWP2YNQrEW4FzHRcTQ";
 const map = L.map(document.querySelector("#map"));
-const tile = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+const tile = L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}@2x?access_token=${ACCESS_TOKEN}`, {attribution: '© <a href="https://www.mapbox.com/feedback/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
 const geo = L.geoJSON().addData(forecast).addTo(map);
 map.fitBounds(geo.getBounds(), {padding: [50, 50]});
 invalidation.then(() => map.remove());
@@ -415,20 +420,22 @@ const forecast = FileAttachment("./data/forecast.json").json();
 Now let’s add a chart using <a href="./lib/plot">Observable Plot</a>. Framework includes a variety of <a href="./javascript/imports#implicit-imports">recommended libraries</a> by default, including `Plot`, and you can always <a href="./javascript/imports">import more</a> from npm. Replace the `display(forecast)` code block with the following code:
 
 ```js run=false
-Plot.plot({
-  title: "Hourly temperature forecast",
-  x: {type: "utc", ticks: "day", label: null},
-  y: {grid: true, inset: 10, label: "Degrees (F)"},
-  marks: [
-    Plot.lineY(forecast.properties.periods, {
-      x: "startTime",
-      y: "temperature",
-      z: null, // varying color, not series
-      stroke: "temperature",
-      curve: "step-after"
-    })
-  ]
-})
+display(
+  Plot.plot({
+    title: "Hourly temperature forecast",
+    x: {type: "utc", ticks: "day", label: null},
+    y: {grid: true, inset: 10, label: "Degrees (F)"},
+    marks: [
+      Plot.lineY(forecast.properties.periods, {
+        x: "startTime",
+        y: "temperature",
+        z: null, // varying color, not series
+        stroke: "temperature",
+        curve: "step-after"
+      })
+    ]
+  })
+);
 ```
 
 <div class="note">Because this is JSON data, <code>startTime</code> is a <code>string</code> rather than a <code>Date</code>. Setting the <code>type</code> of the <code>x</code> scale to <code>utc</code> tells Plot to interpret these values as temporal rather than ordinal.</div>
@@ -477,7 +484,7 @@ function temperaturePlot(data, {width} = {}) {
 Now you can call `temperaturePlot` to display the forecast anywhere on the page:
 
 ```js run=false
-temperaturePlot(forecast)
+display(temperaturePlot(forecast));
 ```
 
 <div class="tip">JavaScript can be extracted into standalone modules (<code>.js</code> files) that you can <a href="./javascript/imports">import</a> into Markdown. This lets you share code across pages, write unit tests for components, and more.</div>

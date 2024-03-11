@@ -1,3 +1,3 @@
-define({id: "0", inputs: ["FileAttachment"], files: [{"name":"./test.js","mimeType":"application/javascript","path":"./_file/test.js"}], body: (FileAttachment) => {
+define({id: "0", inputs: ["FileAttachment"], body: (FileAttachment) => {
 FileAttachment(`test.js`);
 }});

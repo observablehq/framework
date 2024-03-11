@@ -3,7 +3,7 @@
   "scripts": {
     "dev": "observable preview",
     "build": "rm -rf dist && observable build",
-    "postinstall": "ln -sf ../../../../bin/observable-init.js node_modules/.bin/observable"
+    "postinstall": "ln -sf ../../../../dist/bin/observable.js node_modules/.bin/observable"
   },
   "dependencies": {
     "@observablehq/framework": "link:../..",
@@ -12,6 +12,6 @@
     "jszip": "^3.10.1"
   },
   "engines": {
-    "node": ">=20.6"
+    "node": ">=18"
   }
 }

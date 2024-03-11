@@ -122,6 +122,7 @@ export interface Page {
   path: string;
 }
 ```
+
 ```ts run=false
 export interface Section {
   name: string;
@@ -151,6 +152,16 @@ An HTML fragment to add to the header. Defaults to the empty string.
 ## footer
 
 An HTML fragment to add to the footer. Defaults to “Built with Observable.”
+
+## scripts
+
+Additional scripts to add to the head, such as for analytics. Unlike the **head** option, this allows you to reference a local script in the source root.
+
+```js run=false
+export default {
+  scripts: [{type: "module", async: true, src: "analytics.js"}]
+};
+```
 
 ## base
 
@@ -184,3 +195,16 @@ toc: false
 ## search
 
 Whether to enable [search](./search) on the project; defaults to false.
+
+## markdownIt <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" target="_blank" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a>
+
+A hook for registering additional [markdown-it](https://github.com/markdown-it/markdown-it) plugins. For example, to use [markdown-it-footnote](https://github.com/markdown-it/markdown-it-footnote):
+
+```js run=false
+import type MarkdownIt from "markdown-it";
+import MarkdownItFootnote from "markdown-it-footnote";
+
+export default {
+  markdownIt: (md: MarkdownIt) => md.use(MarkdownItFootnote);
+};
+```

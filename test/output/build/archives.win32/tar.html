@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Tar</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
+<link rel="preload" as="style" href="./_observablehq/theme-air,near-midnight.css">
+<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
+<link rel="stylesheet" type="text/css" href="./_observablehq/theme-air,near-midnight.css">
+<link rel="modulepreload" href="./_observablehq/client.js">
+<link rel="modulepreload" href="./_observablehq/runtime.js">
+<link rel="modulepreload" href="./_observablehq/stdlib.js">
+<script type="module">
+
+import {define} from "./_observablehq/client.js";
+import {registerFile} from "./_observablehq/stdlib.js";
+
+registerFile("./static-tar/does-not-exist.txt", {"name":"./static-tar/does-not-exist.txt","mimeType":"text/plain","path":"./static-tar/does-not-exist.txt"});
+registerFile("./static-tar/file.txt", {"name":"./static-tar/file.txt","mimeType":"text/plain","path":"./_file/static-tar/file.c93138d8.txt"});
+registerFile("./static-tgz/file.txt", {"name":"./static-tgz/file.txt","mimeType":"text/plain","path":"./_file/static-tgz/file.c93138d8.txt"});
+
+define({id: "d5134368", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
+display(await(
+await FileAttachment("static-tar/file.txt").text()
+))
+}});
+
+define({id: "a0c06958", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
+display(await(
+await FileAttachment("static-tgz/file.txt").text()
+))
+}});
+
+define({id: "d84cd7fb", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
+display(await(
+await FileAttachment("static-tar/does-not-exist.txt").text()
+))
+}});
+
+</script>
+<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
+<label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
+<nav id="observablehq-sidebar">
+  <ol>
+    <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
+    <li class="observablehq-link"><a href="./">Home</a></li>
+  </ol>
+  <ol>
+    <li class="observablehq-link observablehq-link-active"><a href="./tar">Tar</a></li>
+    <li class="observablehq-link"><a href="./zip">Zip</a></li>
+  </ol>
+</nav>
+<script>{/* redacted init script */}</script>
+<aside id="observablehq-toc" data-selector="h1:not(:first-of-type), h2:first-child, :not(h1) + h2">
+<nav>
+</nav>
+</aside>
+<div id="observablehq-center">
+<main id="observablehq-main" class="observablehq">
+<h1 id="tar" tabindex="-1"><a class="observablehq-header-anchor" href="#tar">Tar</a></h1>
+<div id="cell-d5134368" class="observablehq observablehq--block observablehq--loading"></div>
+<div id="cell-a0c06958" class="observablehq observablehq--block observablehq--loading"></div>
+<div id="cell-d84cd7fb" class="observablehq observablehq--block observablehq--loading"></div>
+</main>
+<footer id="observablehq-footer">
+<nav><a rel="prev" href="./"><span>Home</span></a><a rel="next" href="./zip"><span>Zip</span></a></nav>
+<div>Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.</div>
+</footer>
+</div>

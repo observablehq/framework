@@ -1,0 +1,93 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 47,
+    "body": [
+      {
+        "type": "ImportDeclaration",
+        "start": 0,
+        "end": 31,
+        "specifiers": [
+          {
+            "type": "ImportSpecifier",
+            "start": 8,
+            "end": 11,
+            "imported": {
+              "type": "Identifier",
+              "start": 8,
+              "end": 11,
+              "name": "foo"
+            },
+            "local": {
+              "type": "Identifier",
+              "start": 8,
+              "end": 11,
+              "name": "foo"
+            }
+          }
+        ],
+        "source": {
+          "type": "Literal",
+          "start": 18,
+          "end": 30,
+          "value": "./noent.js",
+          "raw": "\"./noent.js\""
+        }
+      },
+      {
+        "type": "ExpressionStatement",
+        "start": 33,
+        "end": 46,
+        "expression": {
+          "type": "CallExpression",
+          "start": 33,
+          "end": 45,
+          "callee": {
+            "type": "Identifier",
+            "start": 33,
+            "end": 40,
+            "name": "display"
+          },
+          "arguments": [
+            {
+              "type": "Identifier",
+              "start": 41,
+              "end": 44,
+              "name": "foo"
+            }
+          ],
+          "optional": false
+        }
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 8,
+      "end": 11,
+      "name": "foo"
+    }
+  ],
+  "references": [
+    {
+      "type": "Identifier",
+      "start": 33,
+      "end": 40,
+      "name": "display"
+    }
+  ],
+  "files": [],
+  "imports": [
+    {
+      "name": "./noent.js",
+      "type": "local",
+      "method": "static"
+    }
+  ],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

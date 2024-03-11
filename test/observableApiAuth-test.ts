@@ -19,7 +19,7 @@ describe("login command", () => {
       .handleGetCurrentUser()
       .start();
 
-    await login(effects);
+    await login(effects, {pollTime: 10});
     assert.deepEqual(await effects.setApiKeyDeferred.promise, {id: "MOCK-ID", key: validApiKey});
     assert.equal(effects.observableApiKey, validApiKey);
     effects.clack.log.assertLogged({
@@ -37,7 +37,7 @@ describe("login command", () => {
       .handleGetCurrentUser()
       .start();
 
-    await login(effects);
+    await login(effects, {pollTime: 10});
     assert.equal(effects.observableApiKey, validApiKey);
   }).timeout(3000);
 
@@ -46,7 +46,7 @@ describe("login command", () => {
     getCurrentObservableApi().handlePostAuthRequest("FAKEPASS").handlePostAuthRequestPoll("expired").start();
 
     try {
-      await login(effects);
+      await login(effects, {pollTime: 10});
       assert.fail("expected failure");
     } catch (error) {
       CliError.assert(error, {message: "That confirmation code expired."});
@@ -59,7 +59,7 @@ describe("login command", () => {
     getCurrentObservableApi().handlePostAuthRequest("FAKEPASS").handlePostAuthRequestPoll("consumed").start();
 
     try {
-      await login(effects);
+      await login(effects, {pollTime: 10});
       assert.fail("expected failure");
     } catch (error) {
       CliError.assert(error, {message: "That confirmation code has already been used."});

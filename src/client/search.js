@@ -8,7 +8,7 @@ const resultsContainer = document.querySelector("#observablehq-search-results");
 const activeClass = "observablehq-link-active";
 let currentValue;
 
-const index = await fetch(import.meta.resolve("./minisearch.json"))
+const index = await fetch(import.meta.resolve(global.__minisearch))
   .then((response) => {
     if (!response.ok) throw new Error(`unable to load minisearch.json: ${response.status}`);
     return response.json();
@@ -16,7 +16,12 @@ const index = await fetch(import.meta.resolve("./minisearch.json"))
   .then((json) =>
     MiniSearch.loadJS(json, {
       ...json.options,
-      processTerm: (term) => term.slice(0, 15).toLowerCase() // see src/minisearch.json.ts
+      processTerm: (term) =>
+        term
+          .slice(0, 15)
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase() // see src/minisearch.json.ts
     })
   );
 
@@ -31,7 +36,7 @@ input.addEventListener("input", () => {
   }
   container.setAttribute("data-shortcut", ""); // prevent conflict with close button
   sidebar.classList.add("observablehq-search-results"); // hide pages while showing search results
-  const results = index.search(currentValue, {boost: {title: 4}, fuzzy: 0.15, prefix: true});
+  const results = index.search(currentValue, {boost: {title: 4, keywords: 4}, fuzzy: 0.15, prefix: true});
   resultsContainer.innerHTML =
     results.length === 0
       ? "<div>no results</div>"
@@ -43,7 +48,7 @@ input.addEventListener("input", () => {
 function renderResult({id, score, title}, i) {
   return `<li data-score="${Math.min(5, Math.round(0.6 * score))}" class="observablehq-link${
     i === 0 ? ` ${activeClass}` : ""
-  }"><a href="${escapeDoubleQuote(import.meta.resolve(`../${id}`))}">${escapeText(title)}</a></li>`;
+  }"><a href="${escapeDoubleQuote(import.meta.resolve(`../${id}`))}">${escapeText(String(title ?? "—"))}</a></li>`;
 }
 
 function escapeDoubleQuote(text) {

@@ -144,10 +144,20 @@ For example, for the file `quakes.csv`, the following data loaders are considere
 - `quakes.csv.py`
 - `quakes.csv.R`
 - `quakes.csv.rs`
+- `quakes.csv.go`
 - `quakes.csv.sh`
 - `quakes.csv.exe`
 
 If you use `.py`, `.R`, `.rs`, or `.go`, the corresponding interpreter (`python3`, `Rscript`, `rust-script`, or `go run`, respectively) must be installed and available on your `$PATH`. Any additional modules, packages, libraries, _etc._, must also be installed before you can use them.
+
+Data loaders are run in the same working directory in which you run the `observable build` or `observable preview` command, which is typically the project root. In Node, you can access the current working directory by calling `process.cwd()`, and the data loader’s source location with [`import.meta.url`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta). To compute the path of a file relative to the data loader source (rather than relative to the current working directory), use [`import.meta.resolve`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta/resolve). For example, a data loader in `docs/summary.txt.js` could read the file `docs/table.txt` as:
+
+```js run=false
+import {readFile} from "node:fs/promises";
+import {fileURLToPath} from "node:url";
+
+const table = await readFile(fileURLToPath(import.meta.resolve("./table.txt")), "utf-8");
+```
 
 Whereas `.js`, `.ts`, `.py`, `.R`, `.rs`, `.go`, and `.sh` data loaders are run via interpreters, `.exe` data loaders are run directly and must have the executable bit set. This is typically done via [`chmod`](https://en.wikipedia.org/wiki/Chmod). For example:
 
