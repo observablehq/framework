@@ -167,6 +167,10 @@ export default {
 
 The base path when serving the site. Currently this only affects the custom 404 page, if any.
 
+## cleanUrls
+
+A boolean that indicates whether relative links to HTML pages should format “clean” URLs without an extension (_e.g._ `./config` and `./`), or as an explicit file path (`./config.html` and `./index.html`). Defaults to true.
+
 ## toc
 
 The table of contents configuration.
