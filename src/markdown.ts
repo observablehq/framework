@@ -279,7 +279,7 @@ export interface ParseOptions {
   root: string;
   path: string;
   style?: Config["style"];
-  md?: MarkdownIt;
+  md: MarkdownIt;
 }
 
 export function mdparser({markdownIt}: {markdownIt?: (md: MarkdownIt) => MarkdownIt} = {}): MarkdownIt {
@@ -299,7 +299,6 @@ export function parseMarkdown(input: string, {path, style: configStyle, md}: Par
   const parts = matter(input, {});
   const code: MarkdownCode[] = [];
   const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
-  if (md === undefined) md = mdparser();
   const tokens = md.parse(parts.content, context);
   const html = md.renderer.render(tokens, md.options, context); // Note: mutates code, assets!
   const style = getStylesheet(path, parts.data, configStyle);

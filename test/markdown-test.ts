@@ -3,11 +3,13 @@ import {readdirSync, statSync} from "node:fs";
 import {mkdir, readFile, unlink, writeFile} from "node:fs/promises";
 import {basename, join, resolve} from "node:path/posix";
 import deepEqual from "fast-deep-equal";
+import {normalizeConfig} from "../src/config.js";
 import {isEnoent} from "../src/error.js";
 import type {MarkdownPage} from "../src/markdown.js";
 import {parseMarkdown} from "../src/markdown.js";
 
-describe("parseMarkdown(input)", () => {
+describe("parseMarkdown(input)", async () => {
+  const {md} = await normalizeConfig();
   const inputRoot = "test/input";
   const outputRoot = "test/output";
   for (const name of readdirSync(inputRoot)) {
@@ -20,7 +22,7 @@ describe("parseMarkdown(input)", () => {
 
     (only ? it.only : skip ? it.skip : it)(`test/input/${name}`, async () => {
       const source = await readFile(path, "utf8");
-      const snapshot = parseMarkdown(source, {root: "test/input", path: name});
+      const snapshot = parseMarkdown(source, {root: "test/input", path: name, md});
       let allequal = true;
       for (const ext of ["html", "json"]) {
         const actual = ext === "json" ? jsonMeta(snapshot) : snapshot[ext];
