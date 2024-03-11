@@ -7,8 +7,7 @@ import {pathToFileURL} from "node:url";
 import type MarkdownIt from "markdown-it";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
-import {parseMarkdown} from "./markdown.js";
-import {mdparser} from "./markdown.js";
+import {createMarkdownIt, parseMarkdown} from "./markdown.js";
 import {resolvePath} from "./path.js";
 import {resolveTheme} from "./theme.js";
 
@@ -124,7 +123,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   if (style === null) style = null;
   else if (style !== undefined) style = {path: String(style)};
   else style = {theme: (theme = normalizeTheme(theme))};
-  const md = mdparser(spec);
+  const md = createMarkdownIt(spec);
   let {title, pages = await readPages(root, md), pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);

@@ -282,17 +282,16 @@ export interface ParseOptions {
   md: MarkdownIt;
 }
 
-export function mdparser({markdownIt}: {markdownIt?: (md: MarkdownIt) => MarkdownIt} = {}): MarkdownIt {
-  let md = MarkdownIt({html: true, linkify: true});
+export function createMarkdownIt({markdownIt}: {markdownIt?: (md: MarkdownIt) => MarkdownIt} = {}): MarkdownIt {
+  const md = MarkdownIt({html: true, linkify: true});
   md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
-  if (markdownIt !== undefined) md = markdownIt(md);
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
   md.renderer.rules.placeholder = makePlaceholderRenderer();
   md.renderer.rules.fence = makeFenceRenderer(md.renderer.rules.fence!);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
-  return md;
+  return markdownIt === undefined ? md : markdownIt(md);
 }
 
 export function parseMarkdown(input: string, {path, style: configStyle, md}: ParseOptions): MarkdownPage {
