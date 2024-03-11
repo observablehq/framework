@@ -1,11 +1,11 @@
-import * as Plot from "npm:@observablehq/plot"
-import {extent, format, timeFormat} from "npm:d3"
+import * as Plot from "npm:@observablehq/plot";
+import {extent, format, timeFormat} from "npm:d3";
 
 const friendlyTypeName = {
   demandActual: "Demand (actual)",
   demandForecast: "Demand (forecast)",
   netGeneration: "Net generation"
-}
+};
 
 // Top 5 balancing authorities chart
 export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDemand) {
