@@ -276,9 +276,9 @@ function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
 }
 
 export interface ParseOptions {
+  md: MarkdownIt;
   path: string;
   style?: Config["style"];
-  md: MarkdownIt;
 }
 
 export function createMarkdownIt({markdownIt}: {markdownIt?: (md: MarkdownIt) => MarkdownIt} = {}): MarkdownIt {
@@ -293,17 +293,17 @@ export function createMarkdownIt({markdownIt}: {markdownIt?: (md: MarkdownIt) =>
   return markdownIt === undefined ? md : markdownIt(md);
 }
 
-export function parseMarkdown(input: string, {path, style: configStyle, md}: ParseOptions): MarkdownPage {
-  const parts = matter(input, {});
+export function parseMarkdown(input: string, {md, path, style: configStyle}: ParseOptions): MarkdownPage {
+  const {content, data} = matter(input, {});
   const code: MarkdownCode[] = [];
   const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
-  const tokens = md.parse(parts.content, context);
+  const tokens = md.parse(content, context);
   const html = md.renderer.render(tokens, md.options, context); // Note: mutates code, assets!
-  const style = getStylesheet(path, parts.data, configStyle);
+  const style = getStylesheet(path, data, configStyle);
   return {
     html,
-    data: isEmpty(parts.data) ? null : parts.data,
-    title: parts.data?.title ?? findTitle(tokens) ?? null,
+    data: isEmpty(data) ? null : data,
+    title: data?.title ?? findTitle(tokens) ?? null,
     style,
     code
   };
