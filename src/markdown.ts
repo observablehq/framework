@@ -276,10 +276,9 @@ function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
 }
 
 export interface ParseOptions {
-  root: string;
+  md: MarkdownIt;
   path: string;
   style?: Config["style"];
-  md?: MarkdownIt;
 }
 
 function cleanPath(href: string, clean: boolean): string {
@@ -290,16 +289,15 @@ function cleanPath(href: string, clean: boolean): string {
   return href;
 }
 
-export function mdparser({
+export function createMarkdownIt({
   markdownIt,
   cleanUrls = true
 }: {
   markdownIt?: (md: MarkdownIt) => MarkdownIt;
   cleanUrls?: boolean;
 } = {}): MarkdownIt {
-  let md = MarkdownIt({html: true, linkify: true});
+  const md = MarkdownIt({html: true, linkify: true});
   md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
-  if (markdownIt !== undefined) md = markdownIt(md);
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
@@ -308,21 +306,20 @@ export function mdparser({
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
   const {normalizeLink} = md;
   md.normalizeLink = (href: string) => normalizeLink(cleanPath(href, cleanUrls));
-  return md;
+  return markdownIt === undefined ? md : markdownIt(md);
 }
 
-export function parseMarkdown(input: string, {path, style: configStyle, md}: ParseOptions): MarkdownPage {
-  const parts = matter(input, {});
+export function parseMarkdown(input: string, {md, path, style: configStyle}: ParseOptions): MarkdownPage {
+  const {content, data} = matter(input, {});
   const code: MarkdownCode[] = [];
   const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
-  if (md === undefined) md = mdparser();
-  const tokens = md.parse(parts.content, context);
+  const tokens = md.parse(content, context);
   const html = md.renderer.render(tokens, md.options, context); // Note: mutates code, assets!
-  const style = getStylesheet(path, parts.data, configStyle);
+  const style = getStylesheet(path, data, configStyle);
   return {
     html,
-    data: isEmpty(parts.data) ? null : parts.data,
-    title: parts.data?.title ?? findTitle(tokens) ?? null,
+    data: isEmpty(data) ? null : data,
+    title: data?.title ?? findTitle(tokens) ?? null,
     style,
     code
   };
