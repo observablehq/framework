@@ -277,7 +277,8 @@ function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
 
 function makeLinkNormalizer(baseNormalize: (url: string) => string, clean: boolean): (url: string) => string {
   return (url) => {
-    if (url.startsWith("./") || url.startsWith("../")) {
+    // Only clean relative links; ignore e.g. "https:" links.
+    if (!/^\w+:/.test(url)) {
       const g = url.match(/(?<dir>[^#?]*\/)((?<file>[^/?#]*?)([.]html)?)(?<q>[?#].*)?$/)?.groups;
       if (g) url = `${g.dir}${g.file === "" || g.file === "index" ? "" : g.file + (clean ? "" : ".html")}${g.q ?? ""}`;
     }

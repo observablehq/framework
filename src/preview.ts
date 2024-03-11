@@ -1,10 +1,10 @@
 import {createHash} from "node:crypto";
 import {watch} from "node:fs";
 import type {FSWatcher, WatchEventType} from "node:fs";
-import {access, constants, readFile, stat} from "node:fs/promises";
+import {access, constants, readFile} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
-import {basename, dirname, extname, join, normalize} from "node:path/posix";
+import {join, normalize} from "node:path/posix";
 import {difference} from "d3-array";
 import type {PatchItem} from "fast-array-diff";
 import {getPatch} from "fast-array-diff";
@@ -152,60 +152,24 @@ export class PreviewServer {
         throw new HttpError(`Not found: ${pathname}`, 404);
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
+
+        // Normalize the pathname (e.g., dropping ".html").
+        const normalizedPathname = config.md.normalizeLink(pathname);
+        if (pathname !== normalizedPathname) {
+          res.writeHead(302, {Location: normalizedPathname + url.search});
+          res.end();
+          return;
+        }
+
+        // If this path ends with a slash, then add an implicit /index to the
+        // end of the path.
         let path = join(root, pathname);
-
-        // If this path is for /index, redirect to the parent directory for a
-        // tidy path. (This must be done before implicitly adding /index below!)
-        // Respect precedence of dir/index.md over dir.md in choosing between
-        // dir/ and dir!
-        if (basename(path, ".html") === "index") {
-          try {
-            await stat(join(dirname(path), "index.md"));
-            res.writeHead(302, {Location: join(dirname(pathname), "/") + url.search});
-            res.end();
-            return;
-          } catch (error) {
-            if (!isEnoent(error)) throw error;
-            res.writeHead(302, {Location: dirname(pathname) + url.search});
-            res.end();
-            return;
-          }
+        if (pathname.endsWith("/")) {
+          pathname = join(pathname, "index");
+          path = join(path, "index");
         }
 
-        // If this path resolves to a directory, then add an implicit /index to
-        // the end of the path, assuming that the corresponding index.md exists.
-        try {
-          if ((await stat(path)).isDirectory() && (await stat(join(path, "index.md"))).isFile()) {
-            if (!pathname.endsWith("/")) {
-              res.writeHead(302, {Location: pathname + "/" + url.search});
-              res.end();
-              return;
-            }
-            pathname = join(pathname, "index");
-            path = join(path, "index");
-          }
-        } catch (error) {
-          if (!isEnoent(error)) throw error; // internal error
-        }
-
-        // If this path ends with .html and cleanUrls are enabled, then redirect
-        // to drop the .html.
-        if (extname(path) === ".html") {
-          path = path.slice(0, -".html".length);
-          pathname = pathname.slice(0, -".html".length);
-          if (config.md.normalizeLink("./hello") === "./hello") {
-            try {
-              await stat(path + ".md");
-              res.writeHead(302, {Location: join(dirname(pathname), basename(pathname, ".html")) + url.search});
-              res.end();
-              return;
-            } catch (error) {
-              if (!isEnoent(error)) throw error; // internal error
-            }
-          }
-        }
-
-        // Otherwise, serve the corresponding Markdown file, if it exists.
+        // Lastly, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
         try {
           const options = {path: pathname, ...config, preview: true};
