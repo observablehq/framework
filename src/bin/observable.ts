@@ -105,19 +105,32 @@ try {
       break;
     }
     case "deploy": {
+      const buildDescription = "one of 'prompt', 'if-stale', 'always', or 'never'";
       const {
-        values: {config, root, message}
+        values: {config, root, message, build}
       } = helpArgs(command, {
         options: {
           ...CONFIG_OPTION,
           message: {
             type: "string",
             short: "m"
+          },
+          build: {
+            type: "string",
+            description: buildDescription
           }
         }
       });
+      if (build && !["prompt", "if-stale", "always", "never"].includes(build)) {
+        console.log(`Invalid build option: ${build}, expected ${buildDescription}`);
+        process.exit(1);
+      }
       await import("../deploy.js").then(async (deploy) =>
-        deploy.deploy({config: await readConfig(config, root), message})
+        deploy.deploy({
+          config: await readConfig(config, root),
+          message,
+          buildBehavior: build as "prompt" | "if-stale" | "always" | "never" | undefined
+        })
       );
       break;
     }
@@ -235,10 +248,25 @@ try {
   process.exit(1);
 }
 
+type DescribableParseArgsConfig = ParseArgsConfig & {
+  options?: {
+    [longOption: string]: {
+      type: "string" | "boolean";
+      multiple?: boolean | undefined;
+      short?: string | undefined;
+      default?: string | boolean | string[] | boolean[] | undefined;
+      description?: string;
+    };
+  };
+};
+
 // A wrapper for parseArgs that adds --help functionality with automatic usage.
 // TODO It’d be nicer nice if we could change the return type to denote
 // arguments with default values, and to enforce required arguments, if any.
-function helpArgs<T extends ParseArgsConfig>(command: string | undefined, config: T): ReturnType<typeof parseArgs<T>> {
+function helpArgs<T extends DescribableParseArgsConfig>(
+  command: string | undefined,
+  config: T
+): ReturnType<typeof parseArgs<T>> {
   let result: ReturnType<typeof parseArgs<T>>;
   try {
     result = parseArgs<T>({
@@ -259,6 +287,16 @@ function helpArgs<T extends ParseArgsConfig>(command: string | undefined, config
         .map(([name, {default: def}]) => ` [--${name}${def === undefined ? "" : `=${def}`}]`)
         .join("")}`
     );
+    if (Object.values(config.options ?? {}).some((spec) => spec.description)) {
+      console.log();
+      for (const [long, spec] of Object.entries(config.options ?? {})) {
+        if (spec.description) {
+          const left = `  ${spec.short ? `-${spec.short}, ` : ""}--${long}`.padEnd(20);
+          console.log(`${left}${spec.description}`);
+        }
+      }
+      console.log();
+    }
     process.exit(0);
   }
   return result;

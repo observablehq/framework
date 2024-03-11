@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import {commandRequiresAuthenticationMessage} from "../src/commandInstruction.js";
+import {Deferred} from "../src/deferred.js";
 import {CliError} from "../src/error.js";
 import {type AuthEffects, login, logout, whoami} from "../src/observableApiAuth.js";
 import {TestClackEffects} from "./mocks/clack.js";
@@ -109,19 +110,6 @@ describe("whoami command", () => {
     ]);
   });
 });
-
-class Deferred<T = unknown> {
-  promise: Promise<T>;
-  resolve!: (value: T) => void;
-  reject!: (reason?: any) => void;
-
-  constructor() {
-    this.promise = new Promise((resolve, reject) => {
-      this.resolve = resolve;
-      this.reject = reject;
-    });
-  }
-}
 
 export class MockAuthEffects extends MockConfigEffects implements AuthEffects {
   public logger = new MockLogger();
