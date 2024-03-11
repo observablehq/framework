@@ -81,7 +81,8 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
         options: {
           fields: indexOptions.fields,
           storeFields: indexOptions.storeFields
-        }
+        },
+        cleanUrls: config.md.normalizeLink("./hello") === "./hello"
       },
       index.toJSON()
     )

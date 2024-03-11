@@ -8,13 +8,13 @@ const resultsContainer = document.querySelector("#observablehq-search-results");
 const activeClass = "observablehq-link-active";
 let currentValue;
 
-const index = await fetch(import.meta.resolve(global.__minisearch))
+const {index, cleanUrls} = await fetch(import.meta.resolve(global.__minisearch))
   .then((response) => {
     if (!response.ok) throw new Error(`unable to load minisearch.json: ${response.status}`);
     return response.json();
   })
-  .then((json) =>
-    MiniSearch.loadJS(json, {
+  .then((json) => ({
+    index: MiniSearch.loadJS(json, {
       ...json.options,
       processTerm: (term) =>
         term
@@ -22,8 +22,9 @@ const index = await fetch(import.meta.resolve(global.__minisearch))
           .normalize("NFD")
           .replace(/[\u0300-\u036f]/g, "")
           .toLowerCase() // see src/minisearch.json.ts
-    })
-  );
+    }),
+    cleanUrls: json.cleanUrls
+  }));
 
 input.addEventListener("input", () => {
   if (currentValue === input.value) return;
@@ -48,7 +49,9 @@ input.addEventListener("input", () => {
 function renderResult({id, score, title}, i) {
   return `<li data-score="${Math.min(5, Math.round(0.6 * score))}" class="observablehq-link${
     i === 0 ? ` ${activeClass}` : ""
-  }"><a href="${escapeDoubleQuote(import.meta.resolve(`../${id}`))}">${escapeText(String(title ?? "—"))}</a></li>`;
+  }"><a href="${escapeDoubleQuote(
+    import.meta.resolve(`../${id}${cleanUrls || id.endsWith("/") ? "" : ".html"}`)
+  )}">${escapeText(String(title ?? "—"))}</a></li>`;
 }
 
 function escapeDoubleQuote(text) {

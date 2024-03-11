@@ -188,12 +188,21 @@ export class PreviewServer {
           if (!isEnoent(error)) throw error; // internal error
         }
 
-        // If this path ends with .html, then redirect to drop the .html. TODO:
-        // Check for the existence of the .md file first.
+        // If this path ends with .html and cleanUrls are enabled, then redirect
+        // to drop the .html.
         if (extname(path) === ".html") {
-          res.writeHead(302, {Location: join(dirname(pathname), basename(pathname, ".html")) + url.search});
-          res.end();
-          return;
+          path = path.slice(0, -".html".length);
+          pathname = pathname.slice(0, -".html".length);
+          if (config.md.normalizeLink("./hello") === "./hello") {
+            try {
+              await stat(path + ".md");
+              res.writeHead(302, {Location: join(dirname(pathname), basename(pathname, ".html")) + url.search});
+              res.end();
+              return;
+            } catch (error) {
+              if (!isEnoent(error)) throw error; // internal error
+            }
+          }
         }
 
         // Otherwise, serve the corresponding Markdown file, if it exists.
