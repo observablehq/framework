@@ -84,7 +84,7 @@ async function readPages(root: string, md: MarkdownIt): Promise<Page[]> {
   for await (const file of visitMarkdownFiles(root)) {
     if (file === "index.md" || file === "404.md") continue;
     const source = await readFile(join(root, file), "utf8");
-    const parsed = parseMarkdown(source, {root, path: file, md});
+    const parsed = parseMarkdown(source, {path: file, md});
     if (parsed?.data?.draft) continue;
     const name = basename(file, ".md");
     const page = {path: join("/", dirname(file), name), name: parsed.title ?? "Untitled"};

@@ -276,7 +276,6 @@ function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
 }
 
 export interface ParseOptions {
-  root: string;
   path: string;
   style?: Config["style"];
   md: MarkdownIt;
