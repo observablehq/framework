@@ -215,7 +215,8 @@ export async function deploy(
           break;
         }
         case "prompt": {
-          if (!effects.isTty) throw new CliError("No build files found. Pass --if-missing=build to automatically rebuild.");
+          if (!effects.isTty)
+            throw new CliError("No build files found. Pass --if-missing=build to automatically rebuild.");
           const choice = await clack.select({
             message: "No build files found. Do you want to build the project now?",
             options: [
