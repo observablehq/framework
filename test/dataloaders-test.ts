@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import {readFile, stat, unlink, utimes} from "node:fs/promises";
 import os from "node:os";
-import {normalizeConfig} from "../src/config.js";
+import {defaultInterpreters as interpreters} from "../src/config.js";
 import {type LoadEffects, Loader} from "../src/dataloader.js";
 
 const noopEffects: LoadEffects = {
@@ -9,8 +9,7 @@ const noopEffects: LoadEffects = {
   output: {write() {}}
 };
 
-describe("Loader.find(root, path)", async () => {
-  const {interpreters} = await normalizeConfig();
+describe("Loader.find(root, path)", () => {
   it("a .js data loader is called with node", async () => {
     const loader = Loader.find("test", "dataloaders/data1.txt", interpreters)!;
     const out = await loader.load(noopEffects);
@@ -45,8 +44,7 @@ describe("Loader.find(root, path)", async () => {
   });
 });
 
-describe("data loaders optionally use a stale cache", async () => {
-  const {interpreters} = await normalizeConfig();
+describe("data loaders optionally use a stale cache", () => {
   it("data loaders optionally use a stale cache", async () => {
     const out = [] as string[];
     const outputEffects: LoadEffects = {

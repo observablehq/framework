@@ -3,10 +3,10 @@ import {normalizeConfig} from "../src/config.js";
 import {parseMarkdown} from "../src/markdown.js";
 import {getResolvers} from "../src/resolvers.js";
 
-describe("getResolvers(page, {root, path})", async () => {
-  const {md} = await normalizeConfig();
+const {md, interpreters} = await normalizeConfig();
+
+describe("getResolvers(page, {root, path})", () => {
   const builtins = ["npm:@observablehq/runtime", "npm:@observablehq/stdlib", "observablehq:client"];
-  const {interpreters} = await normalizeConfig();
   it("resolves directly-attached files", async () => {
     const options = {root: "test/input", path: "attached.md", interpreters, md};
     const page = parseMarkdown("${FileAttachment('foo.csv')}", options);

@@ -57,20 +57,20 @@ export interface Config {
   md: MarkdownIt;
 }
 
-const defaultInterpreters = {
-  ".js": ["node", "--no-warnings=ExperimentalWarning"],
-  ".ts": ["tsx"],
-  ".py": ["python3"],
-  ".r": ["Rscript"],
-  ".R": ["Rscript"],
-  ".rs": ["rust-script"],
-  ".go": ["go", "run"],
-  ".java": ["java"],
-  ".jl": ["julia"],
-  ".php": ["php"],
-  ".sh": ["sh"],
-  ".exe": []
-};
+export const defaultInterpreters: Config["interpreters"] = new Map([
+  [".js", ["node", "--no-warnings=ExperimentalWarning"]],
+  [".ts", ["tsx"]],
+  [".py", ["python3"]],
+  [".r", ["Rscript"]],
+  [".R", ["Rscript"]],
+  [".rs", ["rust-script"]],
+  [".go", ["go", "run"]],
+  [".java", ["java"]],
+  [".jl", ["julia"]],
+  [".php", ["php"]],
+  [".sh", ["sh"]],
+  [".exe", []]
+]);
 
 /**
  * Returns the absolute path to the specified config file, which is specified as a
@@ -153,7 +153,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
   search = Boolean(search);
-  interpreters = new Map(Object.entries({...defaultInterpreters, ...interpreters}).filter(([, i]) => i != null));
+  interpreters = new Map([...defaultInterpreters, ...Object.entries(interpreters ?? {})].filter(([, i]) => i != null));
   return {
     root,
     output,

@@ -8,8 +8,9 @@ import {isEnoent} from "../src/error.js";
 import type {MarkdownPage} from "../src/markdown.js";
 import {makeLinkNormalizer, parseMarkdown, parseRelativeUrl} from "../src/markdown.js";
 
-describe("parseMarkdown(input)", async () => {
-  const {md} = await normalizeConfig();
+const {md} = await normalizeConfig();
+
+describe("parseMarkdown(input)", () => {
   const inputRoot = "test/input";
   const outputRoot = "test/output";
   for (const name of readdirSync(inputRoot)) {
