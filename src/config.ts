@@ -192,6 +192,7 @@ function normalizePage(spec: any): Page {
   let {name, path} = spec;
   name = String(name);
   path = String(path);
+  if (path.endsWith("/")) path = `${path}index`;
   return {name, path};
 }
 
