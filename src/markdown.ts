@@ -1,5 +1,6 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
+import {extname} from "node:path/posix";
 import matter from "gray-matter";
 import he from "he";
 import MarkdownIt from "markdown-it";
@@ -35,6 +36,7 @@ export interface ParseContext {
   code: MarkdownCode[];
   startLine: number;
   currentLine: number;
+  path: string;
 }
 
 function uniqueCodeId(context: ParseContext, content: string): string {
@@ -85,8 +87,9 @@ function getLiveSource(content: string, tag: string, attributes: Record<string, 
 //   console.error(red(`${error.name}: ${warning}`));
 // }
 
-function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: string): RenderRule {
+function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
+    const {path} = context;
     const token = tokens[idx];
     const {tag, attributes} = parseInfo(token.info);
     token.info = tag;
@@ -97,7 +100,7 @@ function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: s
       if (source != null) {
         const id = uniqueCodeId(context, source);
         // TODO const sourceLine = context.startLine + context.currentLine;
-        const node = parseJavaScript(source, {path: sourcePath});
+        const node = parseJavaScript(source, {path});
         context.code.push({id, node});
         html += `<div id="cell-${id}" class="observablehq observablehq--block${
           node.expression ? " observablehq--loading" : ""
@@ -177,7 +180,7 @@ function parsePlaceholder(content: string, replacer: (i: number, j: number) => v
 
 function transformPlaceholderBlock(token) {
   const input = token.content;
-  if (/^\s*<script(\s|>)/.test(input)) return [token]; // ignore <script> elements
+  if (/^\s*<script[\s>]/.test(input)) return [token]; // ignore <script> elements
   const output: any[] = [];
   let i = 0;
   parsePlaceholder(input, (j, k) => {
@@ -245,13 +248,14 @@ const transformPlaceholderCore: RuleCore = (state) => {
   state.tokens = output;
 };
 
-function makePlaceholderRenderer(root: string, sourcePath: string): RenderRule {
+function makePlaceholderRenderer(): RenderRule {
   return (tokens, idx, options, context: ParseContext) => {
+    const {path} = context;
     const token = tokens[idx];
     const id = uniqueCodeId(context, token.content);
     try {
       // TODO sourceLine: context.startLine + context.currentLine
-      const node = parseJavaScript(token.content, {path: sourcePath, inline: true});
+      const node = parseJavaScript(token.content, {path, inline: true});
       context.code.push({id, node});
       return `<span id="cell-${id}" class="observablehq--loading"></span>`;
     } catch (error) {
@@ -272,34 +276,70 @@ function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
   };
 }
 
+export function parseRelativeUrl(url: string): {pathname: string; search: string; hash: string} {
+  let search: string;
+  let hash: string;
+  const i = url.indexOf("#");
+  if (i < 0) hash = "";
+  else (hash = url.slice(i)), (url = url.slice(0, i));
+  const j = url.indexOf("?");
+  if (j < 0) search = "";
+  else (search = url.slice(j)), (url = url.slice(0, j));
+  return {pathname: url, search, hash};
+}
+
+export function makeLinkNormalizer(baseNormalize: (url: string) => string, clean: boolean): (url: string) => string {
+  return (url) => {
+    // Only clean relative links; ignore e.g. "https:" links.
+    if (!/^\w+:/.test(url)) {
+      const u = parseRelativeUrl(url);
+      let {pathname} = u;
+      if (pathname && !pathname.endsWith("/") && !extname(pathname)) pathname += ".html";
+      if (pathname === "index.html") pathname = ".";
+      else if (pathname.endsWith("/index.html")) pathname = pathname.slice(0, -"index.html".length);
+      else if (clean) pathname = pathname.replace(/\.html$/, "");
+      url = pathname + u.search + u.hash;
+    }
+    return baseNormalize(url);
+  };
+}
+
 export interface ParseOptions {
-  root: string;
+  md: MarkdownIt;
   path: string;
-  markdownIt?: Config["markdownIt"];
   style?: Config["style"];
 }
 
-export function parseMarkdown(
-  input: string,
-  {root, path, markdownIt = (md) => md, style: configStyle}: ParseOptions
-): MarkdownPage {
-  const parts = matter(input, {});
-  const md = markdownIt(MarkdownIt({html: true}));
+export function createMarkdownIt({
+  markdownIt,
+  cleanUrls = true
+}: {
+  markdownIt?: (md: MarkdownIt) => MarkdownIt;
+  cleanUrls?: boolean;
+} = {}): MarkdownIt {
+  const md = MarkdownIt({html: true, linkify: true});
+  md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
-  md.renderer.rules.placeholder = makePlaceholderRenderer(root, path);
-  md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!, path);
+  md.renderer.rules.placeholder = makePlaceholderRenderer();
+  md.renderer.rules.fence = makeFenceRenderer(md.renderer.rules.fence!);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
+  md.normalizeLink = makeLinkNormalizer(md.normalizeLink, cleanUrls);
+  return markdownIt === undefined ? md : markdownIt(md);
+}
+
+export function parseMarkdown(input: string, {md, path, style: configStyle}: ParseOptions): MarkdownPage {
+  const {content, data} = matter(input, {});
   const code: MarkdownCode[] = [];
-  const context: ParseContext = {code, startLine: 0, currentLine: 0};
-  const tokens = md.parse(parts.content, context);
+  const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
+  const tokens = md.parse(content, context);
   const html = md.renderer.render(tokens, md.options, context); // Note: mutates code, assets!
-  const style = getStylesheet(path, parts.data, configStyle);
+  const style = getStylesheet(path, data, configStyle);
   return {
     html,
-    data: isEmpty(parts.data) ? null : parts.data,
-    title: parts.data?.title ?? findTitle(tokens) ?? null,
+    data: isEmpty(data) ? null : data,
+    title: data?.title ?? findTitle(tokens) ?? null,
     style,
     code
   };

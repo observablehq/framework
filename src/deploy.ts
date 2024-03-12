@@ -66,7 +66,7 @@ const defaultEffects: DeployEffects = {
 };
 
 type DeployTargetInfo =
-  | {create: true; workspace: {id: string; login: string}; projectSlug: string; title: string}
+  | {create: true; workspace: {id: string; login: string}; projectSlug: string; title: string; accessLevel: string}
   | {create: false; workspace: {id: string; login: string}; project: GetProjectResponse};
 
 /** Deploy a project to ObservableHQ */
@@ -194,7 +194,8 @@ export async function deploy(
       const project = await apiClient.postProject({
         slug: deployTarget.projectSlug,
         title: deployTarget.title,
-        workspaceId: deployTarget.workspace.id
+        workspaceId: deployTarget.workspace.id,
+        accessLevel: deployTarget.accessLevel
       });
       deployTarget = {create: false, workspace: deployTarget.workspace, project};
     } catch (error) {
@@ -473,7 +474,7 @@ export async function promptDeployTarget(
       throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
     }
     title = titleChoice;
-    clack.log.info("You should add this title to your observablehq.config.ts file.");
+    clack.log.info("You should add this title to your observablehq.config.js file.");
   }
 
   // TODO This should refer to the URL of the project, not the slug.
@@ -492,5 +493,16 @@ export async function promptDeployTarget(
   }
   projectSlug = projectSlugChoice;
 
-  return {create: true, workspace, projectSlug, title};
+  const accessLevel: string | symbol = await clack.select({
+    message: "Who is allowed to access your project?",
+    options: [
+      {value: "private", label: "Private", hint: "only allow workspace members"},
+      {value: "public", label: "Public", hint: "allow anyone"}
+    ]
+  });
+  if (clack.isCancel(accessLevel)) {
+    throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
+  }
+
+  return {create: true, workspace, projectSlug, title, accessLevel};
 }

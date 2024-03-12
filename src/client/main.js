@@ -7,6 +7,7 @@ import * as sampleDatasets from "./stdlib/sampleDatasets.js";
 const library = {
   now: () => Generators.now(),
   width: () => Generators.width(document.querySelector("main")),
+  dark: () => Generators.dark(),
   resize: () => resize,
   FileAttachment: () => FileAttachment,
   Generators: () => Generators,
@@ -15,7 +16,7 @@ const library = {
   ...sampleDatasets
 };
 
-const runtime = new Runtime(library);
+export const runtime = new Runtime(library);
 export const main = runtime.module();
 
 const cellsById = new Map();

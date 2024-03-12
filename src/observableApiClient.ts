@@ -101,16 +101,18 @@ export class ObservableApiClient {
   async postProject({
     title,
     slug,
-    workspaceId
+    workspaceId,
+    accessLevel
   }: {
     title: string;
     slug: string;
     workspaceId: string;
+    accessLevel: string;
   }): Promise<PostProjectResponse> {
     return await this._fetch<PostProjectResponse>(new URL("/cli/project", this._apiOrigin), {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({title, slug, workspace: workspaceId})
+      body: JSON.stringify({title, slug, workspace: workspaceId, accessLevel})
     });
   }
 
@@ -225,6 +227,7 @@ export interface WorkspaceResponse {
 export type PostProjectResponse = GetProjectResponse;
 
 export interface GetProjectResponse {
+  accessLevel: string;
   id: string;
   slug: string;
   title: string;

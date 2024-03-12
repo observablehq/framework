@@ -213,7 +213,7 @@ describe("deploy", () => {
       .start();
 
     const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, isTty: true});
-    effects.clack.inputs.push(null, DEPLOY_CONFIG.projectSlug, "fix some bugs");
+    effects.clack.inputs.push(null, DEPLOY_CONFIG.projectSlug, "private", "fix some bugs");
 
     await deploy(TEST_OPTIONS, effects);
 
@@ -484,6 +484,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects();
     effects.clack.inputs.push(null); // which project do you want to use?
     effects.clack.inputs.push("test-project"); // which slug do you want to use?
+    effects.clack.inputs.push("private"); // who is allowed to access your project?
 
     try {
       await deploy(TEST_OPTIONS, effects);
@@ -687,15 +688,18 @@ describe("promptDeployTarget", () => {
     const effects = new MockDeployEffects();
     const workspace = userWithTwoWorkspaces.workspaces[1];
     const projectSlug = "new-project";
+    const accessLevel = "private";
     effects.clack.inputs = [
       workspace, // which workspace do you want to use?
       true, //
-      projectSlug // what slug do you want to use
+      projectSlug, // what slug do you want to use
+      accessLevel // who is allowed to access your project?
     ];
     const api = new ObservableApiClient({apiKey: {key: validApiKey, source: "test"}});
     getCurrentObservableApi().handleGetWorkspaceProjects({workspaceLogin: workspace.login, projects: []}).start();
     const result = await promptDeployTarget(effects, api, TEST_CONFIG, userWithTwoWorkspaces);
     assert.deepEqual(result, {
+      accessLevel,
       create: true,
       projectSlug,
       title: "Mock BI",
