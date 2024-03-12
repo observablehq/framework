@@ -24,10 +24,12 @@ type RenderInternalOptions =
   | {preview: true}; // preview
 
 export async function renderPage(page: MarkdownPage, options: RenderOptions & RenderInternalOptions): Promise<string> {
+  const {data} = page;
   const {root, md, base, path, pages, title, preview, search, resolvers = await getResolvers(page, options)} = options;
-  const sidebar = page.data?.sidebar !== undefined ? Boolean(page.data.sidebar) : options.sidebar;
-  const toc = mergeToc(page.data?.toc, options.toc);
-  const draft = Boolean(page.data?.draft);
+  const {normalizeLink} = md;
+  const sidebar = data?.sidebar !== undefined ? Boolean(data.sidebar) : options.sidebar;
+  const toc = mergeToc(data?.toc, options.toc);
+  const draft = Boolean(data?.draft);
   const {files, resolveFile, resolveImport} = resolvers;
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
@@ -55,16 +57,16 @@ if (location.pathname.endsWith("/")) {
 import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from ` : ""}${JSON.stringify(
     resolveImport("observablehq:client")
   )};${
-    files.size || page.data?.sql
-      ? `\nimport {registerFile${page.data?.sql ? ", FileAttachment" : ""}} from ${JSON.stringify(
+    files.size || data?.sql
+      ? `\nimport {registerFile${data?.sql ? ", FileAttachment" : ""}} from ${JSON.stringify(
           resolveImport("observablehq:stdlib")
         )};`
       : ""
+  }${data?.sql ? `\nimport {registerTable} from ${JSON.stringify(resolveImport("npm:@observablehq/duckdb"))};` : ""}${
+    files.size ? `\n${renderFiles(files, resolveFile)}` : ""
   }${
-    page.data?.sql ? `\nimport {registerTable} from ${JSON.stringify(resolveImport("npm:@observablehq/duckdb"))};` : ""
-  }${files.size ? `\n${renderFiles(files, resolveFile)}` : ""}${
-    page.data?.sql
-      ? `\n${Object.entries<string>(page.data.sql)
+    data?.sql
+      ? `\n${Object.entries<string>(data.sql)
           .map(([name, source]) => `registerTable(${JSON.stringify(name)}, FileAttachment(${JSON.stringify(source)}));`)
           .join("\n")}`
       : ""
@@ -72,17 +74,12 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
     .map(({node, id}) => `\n${transpileJavaScript(node, {id, resolveImport})}`)
     .join("")}`)}
-</script>${sidebar ? html`\n${await renderSidebar(title, pages, root, path, search, md.normalizeLink)}` : ""}${
+</script>${sidebar ? html`\n${await renderSidebar(title, pages, root, path, search, normalizeLink)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
-<div id="observablehq-center">${renderHeader(options, page.data)}
+<div id="observablehq-center">${renderHeader(options, data)}
 <main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">
-${html.unsafe(rewriteHtml(page.html, resolvers.resolveFile))}</main>${renderFooter(
-    path,
-    options,
-    page.data,
-    md.normalizeLink
-  )}
+${html.unsafe(rewriteHtml(page.html, resolvers.resolveFile))}</main>${renderFooter(path, options, data, normalizeLink)}
 </div>
 `);
 }
