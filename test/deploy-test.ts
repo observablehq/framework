@@ -5,7 +5,9 @@ import {normalizeConfig, setCurrentDate} from "../src/config.js";
 import {type DeployEffects, type DeployOptions, deploy, promptDeployTarget} from "../src/deploy.js";
 import {CliError, isHttpError} from "../src/error.js";
 import {visitFiles} from "../src/files.js";
-import {type GetCurrentUserResponse, ObservableApiClient} from "../src/observableApiClient.js";
+import type {ObservableApiClientOptions} from "../src/observableApiClient.js";
+import type {GetCurrentUserResponse} from "../src/observableApiClient.js";
+import {ObservableApiClient} from "../src/observableApiClient.js";
 import type {DeployConfig} from "../src/observableApiConfig.js";
 import {TestClackEffects} from "./mocks/clack.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
@@ -122,6 +124,12 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
 
   close() {
     assert.deepEqual(this.ioResponses, []);
+  }
+
+  makeApiClient() {
+    const opts: ObservableApiClientOptions = {clack: this.clack};
+    if (this.observableApiKey) opts.apiKey = {key: this.observableApiKey, source: "test"};
+    return new ObservableApiClient(opts);
   }
 }
 
@@ -720,7 +728,7 @@ describe("promptDeployTarget", () => {
 
   it("throws when not on a tty", async () => {
     const effects = new MockDeployEffects({isTty: false});
-    const api = new ObservableApiClient({apiKey: {key: validApiKey, source: "test"}});
+    const api = effects.makeApiClient();
     try {
       await promptDeployTarget(effects, api, TEST_CONFIG, {} as GetCurrentUserResponse);
     } catch (error) {
@@ -730,7 +738,7 @@ describe("promptDeployTarget", () => {
 
   it("throws an error when the user has no workspaces", async () => {
     const effects = new MockDeployEffects();
-    const api = new ObservableApiClient({apiKey: {key: validApiKey, source: "test"}});
+    const api = effects.makeApiClient();
     try {
       await promptDeployTarget(effects, api, TEST_CONFIG, userWithZeroWorkspaces);
     } catch (error) {
@@ -750,7 +758,7 @@ describe("promptDeployTarget", () => {
       projectSlug, // what slug do you want to use
       accessLevel // who is allowed to access your project?
     ];
-    const api = new ObservableApiClient({apiKey: {key: validApiKey, source: "test"}});
+    const api = effects.makeApiClient();
     getCurrentObservableApi().handleGetWorkspaceProjects({workspaceLogin: workspace.login, projects: []}).start();
     const result = await promptDeployTarget(effects, api, TEST_CONFIG, userWithTwoWorkspaces);
     assert.deepEqual(result, {

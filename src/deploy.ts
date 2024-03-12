@@ -92,7 +92,7 @@ export async function deploy(
   clack.intro(inverse(" observable deploy "));
 
   let apiKey = await effects.getObservableApiKey(effects);
-  const apiClient = new ObservableApiClient(apiKey ? {apiKey} : {});
+  const apiClient = new ObservableApiClient(apiKey ? {apiKey, clack} : {clack});
   const deployConfig = await effects.getDeployConfig(config.root);
 
   if (deployConfig.workspaceLogin && !deployConfig.workspaceLogin.match(/^@?[a-z0-9-]+$/)) {
