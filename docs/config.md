@@ -200,7 +200,7 @@ toc: false
 
 Whether to enable [search](./search) on the project; defaults to false.
 
-## interpreters
+## interpreters <a href="https://github.com/observablehq/framework/pull/935" target="_blank" class="observablehq-version-badge" data-version="prerelease" title="Added in #935"></a>
 
 The **interpreters** option specifies additional interpreted languages for data loaders, indicating the file extension and associated interpreter. (See [loader routing](./loaders#routing) for more.) The default list of interpreters is:
 
