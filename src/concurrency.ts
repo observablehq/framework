@@ -32,3 +32,23 @@ export async function runAllWithConcurrencyLimit<T>(
 
   await Promise.all(pending);
 }
+
+export class RateLimiter {
+  // This works by chaining together promises, one for each call to `this.wait`.
+  // This implicitly forms a queue of callers. The important thing is that we
+  // never have two of this function's `setTimeout`s running concurrently, since
+  // that could cause us to exceed the rate limit.
+
+  private _nextTick: Promise<void>;
+
+  constructor(private ratePerSecond: number) {
+    this._nextTick = Promise.resolve();
+  }
+
+  /** Wait long enough to avoid going over the rate limit. */
+  async wait() {
+    const nextTick = this._nextTick;
+    this._nextTick = nextTick.then(() => new Promise((res) => setTimeout(res, 1000 / this.ratePerSecond)));
+    await nextTick;
+  }
+}

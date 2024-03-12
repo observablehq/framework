@@ -6,7 +6,7 @@ import wrapAnsi from "wrap-ansi";
 import {FileBuildEffects, build} from "./build.js";
 import type {ClackEffects} from "./clack.js";
 import {commandRequiresAuthenticationMessage} from "./commandInstruction.js";
-import {runAllWithConcurrencyLimit} from "./concurrency.js";
+import {RateLimiter, runAllWithConcurrencyLimit} from "./concurrency.js";
 import type {Config} from "./config.js";
 import {CliError, isApiError, isEnoent, isHttpError} from "./error.js";
 import {visitFiles} from "./files.js";
@@ -391,7 +391,12 @@ export async function deploy(
   // Upload the files
   const uploadSpinner = clack.spinner();
   uploadSpinner.start("");
+
+  const rateLimiter = new RateLimiter(10);
+  const waitForRateLimit = buildFilePaths.length <= 300 ? () => {} : () => rateLimiter.wait();
+
   await runAllWithConcurrencyLimit(buildFilePaths, async (path, i) => {
+    await waitForRateLimit();
     uploadSpinner.message(`${i + 1} / ${buildFilePaths!.length} ${path.slice(0, effects.outputColumns - 10)}`);
     await apiClient.postDeployFile(deployId, join(config.output, path), path);
   });
