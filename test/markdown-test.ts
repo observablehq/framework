@@ -105,6 +105,14 @@ describe("makeLinkNormalizer(normalize, false)", () => {
     assert.strictEqual(normalize("index"), ".");
     assert.strictEqual(normalize("index.html"), ".");
   });
+  it("preserves links to directories", () => {
+    assert.strictEqual(normalize(""), "");
+    assert.strictEqual(normalize("/"), "/");
+    assert.strictEqual(normalize("./"), "./");
+    assert.strictEqual(normalize("../"), "../");
+    assert.strictEqual(normalize("foo/"), "foo/");
+    assert.strictEqual(normalize("./foo/"), "./foo/");
+  });
   it("preserves a relative path", () => {
     assert.strictEqual(normalize("./foo"), "./foo.html");
     assert.strictEqual(normalize("./foo.png"), "./foo.png");
@@ -153,6 +161,14 @@ describe("makeLinkNormalizer(normalize, true)", () => {
     assert.strictEqual(normalize("/index.html"), "/");
     assert.strictEqual(normalize("index"), ".");
     assert.strictEqual(normalize("index.html"), ".");
+  });
+  it("preserves links to directories", () => {
+    assert.strictEqual(normalize(""), "");
+    assert.strictEqual(normalize("/"), "/");
+    assert.strictEqual(normalize("./"), "./");
+    assert.strictEqual(normalize("../"), "../");
+    assert.strictEqual(normalize("foo/"), "foo/");
+    assert.strictEqual(normalize("./foo/"), "./foo/");
   });
   it("preserves a relative path", () => {
     assert.strictEqual(normalize("./foo"), "./foo");

@@ -292,18 +292,13 @@ export function makeLinkNormalizer(baseNormalize: (url: string) => string, clean
   return (url) => {
     // Only clean relative links; ignore e.g. "https:" links.
     if (!/^\w+:/.test(url)) {
-      try {
-        const u = parseRelativeUrl(url);
-        let {pathname} = u;
-        if (pathname === "index" || pathname === "index.html") pathname = ".";
-        else if (pathname.endsWith("/index.html")) pathname = pathname.slice(0, -"index.html".length);
-        else if (pathname.endsWith("/index")) pathname = pathname.slice(0, -"index".length);
-        else if (clean) pathname = pathname.replace(/\.html$/, "");
-        else if (!extname(pathname)) pathname += ".html";
-        url = pathname + u.search + u.hash;
-      } catch {
-        // ignore invalid links
-      }
+      const u = parseRelativeUrl(url);
+      let {pathname} = u;
+      if (pathname && !pathname.endsWith("/") && !extname(pathname)) pathname += ".html";
+      if (pathname === "index.html") pathname = ".";
+      else if (pathname.endsWith("/index.html")) pathname = pathname.slice(0, -"index.html".length);
+      else if (clean) pathname = pathname.replace(/\.html$/, "");
+      url = pathname + u.search + u.hash;
     }
     return baseNormalize(url);
   };
