@@ -7,7 +7,7 @@ import {normalizeConfig} from "../src/config.js";
 import {FileWatchers} from "../src/fileWatchers.js";
 import {resolvePath} from "../src/path.js";
 
-describe("FileWatchers.of(root, path, names, callback)", async () => {
+describe("FileWatchers.of(root, path, names, callback)", () => {
   it(
     "watches a file",
     withTemporyWatcher("files.md", ["file-top.csv"], async (root, wait) => {
