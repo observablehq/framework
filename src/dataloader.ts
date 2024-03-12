@@ -13,6 +13,21 @@ import {cyan, faint, green, red, yellow} from "./tty.js";
 
 const runningCommands = new Map<string, Promise<string>>();
 
+export const defaultInterpreters: Record<string, string[]> = {
+  ".js": ["node", "--no-warnings=ExperimentalWarning"],
+  ".ts": ["tsx"],
+  ".py": ["python3"],
+  ".r": ["Rscript"],
+  ".R": ["Rscript"],
+  ".rs": ["rust-script"],
+  ".go": ["go", "run"],
+  ".java": ["java"],
+  ".jl": ["julia"],
+  ".php": ["php"],
+  ".sh": ["sh"],
+  ".exe": []
+};
+
 export interface LoadEffects {
   logger: Logger;
   output: Writer;
@@ -29,21 +44,6 @@ export interface LoaderOptions {
   targetPath: string;
   useStale: boolean;
 }
-
-export const defaultInterpreters: Record<string, string[]> = {
-  ".js": ["node", "--no-warnings=ExperimentalWarning"],
-  ".ts": ["tsx"],
-  ".py": ["python3"],
-  ".r": ["Rscript"],
-  ".R": ["Rscript"],
-  ".rs": ["rust-script"],
-  ".go": ["go", "run"],
-  ".java": ["java"],
-  ".jl": ["julia"],
-  ".php": ["php"],
-  ".sh": ["sh"],
-  ".exe": []
-};
 
 export class LoaderResolver {
   private readonly root: string;
