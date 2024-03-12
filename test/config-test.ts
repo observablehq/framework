@@ -3,29 +3,12 @@ import MarkdownIt from "markdown-it";
 import {normalizeConfig as config, mergeToc, readConfig, setCurrentDate} from "../src/config.js";
 import {LoaderResolver} from "../src/dataloader.js";
 
-const root = "test/input/build/config";
-
-// const interpreters = new Map([
-//   [".R", ["Rscript"]],
-//   [".exe", []],
-//   [".go", ["go", "run"]],
-//   [".java", ["java"]],
-//   [".jl", ["julia"]],
-//   [".js", ["node", "--no-warnings=ExperimentalWarning"]],
-//   [".php", ["php"]],
-//   [".py", ["python3"]],
-//   [".r", ["Rscript"]],
-//   [".rs", ["rust-script"]],
-//   [".sh", ["sh"]],
-//   [".ts", ["tsx"]]
-// ]);
-
 describe("readConfig(undefined, root)", () => {
   before(() => setCurrentDate(new Date("2024-01-11T01:02:03")));
   it("imports the config file at the specified root", async () => {
     const {md, loaders, ...config} = await readConfig(undefined, "test/input/build/config");
     assert(md instanceof MarkdownIt);
-    assert(loaders instanceof LoaderResolver); // TODO test implementation
+    assert(loaders instanceof LoaderResolver);
     assert.deepStrictEqual(config, {
       root: "test/input/build/config",
       output: "dist",
@@ -56,7 +39,7 @@ describe("readConfig(undefined, root)", () => {
   it("returns the default config if no config file is found", async () => {
     const {md, loaders, ...config} = await readConfig(undefined, "test/input/build/simple");
     assert(md instanceof MarkdownIt);
-    assert(loaders instanceof LoaderResolver); // TODO test implementation
+    assert(loaders instanceof LoaderResolver);
     assert.deepStrictEqual(config, {
       root: "test/input/build/simple",
       output: "dist",
@@ -79,6 +62,7 @@ describe("readConfig(undefined, root)", () => {
 });
 
 describe("normalizeConfig(spec, root)", () => {
+  const root = "test/input/build/config";
   it("coerces the title to a string", async () => {
     assert.strictEqual((await config({title: 42, pages: []}, root)).title, "42");
     assert.strictEqual((await config({title: null, pages: []}, root)).title, "null");
@@ -158,6 +142,7 @@ describe("normalizeConfig(spec, root)", () => {
 });
 
 describe("mergeToc(spec, toc)", () => {
+  const root = "test/input/build/config";
   it("merges page- and project-level toc config", async () => {
     const toc = (await config({pages: [], toc: true}, root)).toc;
     assert.deepStrictEqual(mergeToc({show: false}, toc), {label: "Contents", show: false});
