@@ -393,7 +393,7 @@ export async function deploy(
   const uploadSpinner = clack.spinner();
   uploadSpinner.start("");
 
-  const rateLimiter = new RateLimiter(10);
+  const rateLimiter = new RateLimiter(5);
   const waitForRateLimit = buildFilePaths.length <= 300 ? () => {} : () => rateLimiter.wait();
 
   await runAllWithConcurrencyLimit(buildFilePaths, async (path, i) => {
