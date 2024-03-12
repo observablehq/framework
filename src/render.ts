@@ -24,10 +24,12 @@ type RenderInternalOptions =
   | {preview: true}; // preview
 
 export async function renderPage(page: MarkdownPage, options: RenderOptions & RenderInternalOptions): Promise<string> {
-  const {root, base, path, pages, title, preview, search, resolvers = await getResolvers(page, options)} = options;
-  const sidebar = page.data?.sidebar !== undefined ? Boolean(page.data.sidebar) : options.sidebar;
-  const toc = mergeToc(page.data?.toc, options.toc);
-  const draft = Boolean(page.data?.draft);
+  const {data} = page;
+  const {root, md, base, path, pages, title, preview, search, resolvers = await getResolvers(page, options)} = options;
+  const {normalizeLink} = md;
+  const sidebar = data?.sidebar !== undefined ? Boolean(data.sidebar) : options.sidebar;
+  const toc = mergeToc(data?.toc, options.toc);
+  const draft = Boolean(data?.draft);
   const {files, resolveFile, resolveImport} = resolvers;
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
@@ -55,16 +57,16 @@ if (location.pathname.endsWith("/")) {
 import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from ` : ""}${JSON.stringify(
     resolveImport("observablehq:client")
   )};${
-    files.size || page.data?.sql
-      ? `\nimport {registerFile${page.data?.sql ? ", FileAttachment" : ""}} from ${JSON.stringify(
+    files.size || data?.sql
+      ? `\nimport {registerFile${data?.sql ? ", FileAttachment" : ""}} from ${JSON.stringify(
           resolveImport("observablehq:stdlib")
         )};`
       : ""
+  }${data?.sql ? `\nimport {registerTable} from ${JSON.stringify(resolveImport("npm:@observablehq/duckdb"))};` : ""}${
+    files.size ? `\n${renderFiles(files, resolveFile)}` : ""
   }${
-    page.data?.sql ? `\nimport {registerTable} from ${JSON.stringify(resolveImport("npm:@observablehq/duckdb"))};` : ""
-  }${files.size ? `\n${renderFiles(files, resolveFile)}` : ""}${
-    page.data?.sql
-      ? `\n${Object.entries<string>(page.data.sql)
+    data?.sql
+      ? `\n${Object.entries<string>(data.sql)
           .map(([name, source]) => `registerTable(${JSON.stringify(name)}, FileAttachment(${JSON.stringify(source)}));`)
           .join("\n")}`
       : ""
@@ -72,12 +74,12 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
     .map(({node, id}) => `\n${transpileJavaScript(node, {id, resolveImport})}`)
     .join("")}`)}
-</script>${sidebar ? html`\n${await renderSidebar(title, pages, root, path, search)}` : ""}${
+</script>${sidebar ? html`\n${await renderSidebar(title, pages, root, path, search, normalizeLink)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
-<div id="observablehq-center">${renderHeader(options, page.data)}
+<div id="observablehq-center">${renderHeader(options, data)}
 <main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">
-${html.unsafe(rewriteHtml(page.html, resolvers.resolveFile))}</main>${renderFooter(path, options, page.data)}
+${html.unsafe(rewriteHtml(page.html, resolvers.resolveFile))}</main>${renderFooter(path, options, data, normalizeLink)}
 </div>
 `);
 }
@@ -102,7 +104,8 @@ async function renderSidebar(
   pages: (Page | Section)[],
   root: string,
   path: string,
-  search: boolean
+  search: boolean,
+  normalizeLink: (href: string) => string
 ): Promise<Html> {
   return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
@@ -111,7 +114,7 @@ async function renderSidebar(
     <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
     <li class="observablehq-link${
       normalizePath(path) === "/index" ? " observablehq-link-active" : ""
-    }"><a href="${relativePath(path, "/")}">${title}</a></li>
+    }"><a href="${normalizeLink(relativePath(path, "/"))}">${title}</a></li>
   </ol>${
     search
       ? html`\n  <div id="observablehq-search"><input type="search" placeholder="Search"></div>
@@ -132,11 +135,15 @@ async function renderSidebar(
         : ""
     }>
       <summary>${p.name}</summary>
-      <ol>${p.pages.map((p) => renderListItem(p, path))}
+      <ol>${p.pages.map((p) => renderListItem(p, path, normalizeLink))}
       </ol>
     </details>`
       : "path" in p
-      ? html`${i > 0 && "pages" in pages[i - 1] ? html`\n  </ol>\n  <ol>` : ""}${renderListItem(p, path)}`
+      ? html`${i > 0 && "pages" in pages[i - 1] ? html`\n  </ol>\n  <ol>` : ""}${renderListItem(
+          p,
+          path,
+          normalizeLink
+        )}`
       : ""
   )}
   </ol>
@@ -175,14 +182,10 @@ function renderToc(headers: Header[], label: string): Html {
 </aside>`;
 }
 
-function renderListItem(page: Page, path: string): Html {
+function renderListItem(page: Page, path: string, normalizeLink: (href: string) => string): Html {
   return html`\n    <li class="observablehq-link${
     normalizePath(page.path) === path ? " observablehq-link-active" : ""
-  }"><a href="${relativePath(path, prettyPath(page.path))}">${page.name}</a></li>`;
-}
-
-function prettyPath(path: string): string {
-  return path.replace(/\/index$/, "/") || "/";
+  }"><a href="${normalizeLink(relativePath(path, page.path))}">${page.name}</a></li>`;
 }
 
 function renderHead(
@@ -231,23 +234,26 @@ function renderHeader({header}: Pick<Config, "header">, data: MarkdownPage["data
 function renderFooter(
   path: string,
   options: Pick<Config, "pages" | "pager" | "title" | "footer">,
-  data: MarkdownPage["data"]
+  data: MarkdownPage["data"],
+  normalizeLink: (href: string) => string
 ): Html | null {
   let footer = options.footer;
   if (data?.footer !== undefined) footer = data?.footer;
   const link = options.pager ? findLink(path, options) : null;
   return link || footer
-    ? html`\n<footer id="observablehq-footer">${link ? renderPager(path, link) : ""}${
+    ? html`\n<footer id="observablehq-footer">${link ? renderPager(path, link, normalizeLink) : ""}${
         footer ? html`\n<div>${html.unsafe(footer)}</div>` : ""
       }
 </footer>`
     : null;
 }
 
-function renderPager(path: string, {prev, next}: PageLink): Html {
-  return html`\n<nav>${prev ? renderRel(path, prev, "prev") : ""}${next ? renderRel(path, next, "next") : ""}</nav>`;
+function renderPager(path: string, {prev, next}: PageLink, normalizeLink: (href: string) => string): Html {
+  return html`\n<nav>${prev ? renderRel(path, prev, "prev", normalizeLink) : ""}${
+    next ? renderRel(path, next, "next", normalizeLink) : ""
+  }</nav>`;
 }
 
-function renderRel(path: string, page: Page, rel: "prev" | "next"): Html {
-  return html`<a rel="${rel}" href="${relativePath(path, prettyPath(page.path))}"><span>${page.name}</span></a>`;
+function renderRel(path: string, page: Page, rel: "prev" | "next", normalizeLink: (href: string) => string): Html {
+  return html`<a rel="${rel}" href="${normalizeLink(relativePath(path, page.path))}"><span>${page.name}</span></a>`;
 }
