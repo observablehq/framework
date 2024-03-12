@@ -1,9 +1,7 @@
 import {createHash} from "node:crypto";
-import {existsSync, readFileSync, statSync} from "node:fs";
-import {join, relative} from "node:path/posix";
+import {readFileSync, statSync} from "node:fs";
+import {join} from "node:path/posix";
 import type {Program} from "acorn";
-import type {Config} from "../config.js";
-import {Loader} from "../dataloader.js";
 import {resolvePath} from "../path.js";
 import {findFiles} from "./files.js";
 import {findImports} from "./imports.js";
@@ -130,15 +128,8 @@ export function getModuleInfo(root: string, path: string): ModuleInfo | undefine
  * the specified file does not exist, returns the hash of empty content. If the
  * referenced file does not exist, we check for the corresponding data loader
  * and return its hash instead.
- *
- * TODO During build, this needs to compute the hash of the generated file, not
- * the data loader.
  */
-export function getFileHash(root: string, path: string, interpreters?: Config["interpreters"]): string {
-  if (interpreters && !existsSync(join(root, path))) {
-    const loader = Loader.find(root, path, interpreters);
-    if (loader) path = relative(root, loader.path);
-  }
+export function getFileHash(root: string, path: string): string {
   return getFileInfo(root, path)?.hash ?? createHash("sha256").digest("hex");
 }
 

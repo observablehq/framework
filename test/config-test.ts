@@ -1,29 +1,31 @@
 import assert from "node:assert";
 import MarkdownIt from "markdown-it";
 import {normalizeConfig as config, mergeToc, readConfig, setCurrentDate} from "../src/config.js";
+import {LoaderResolver} from "../src/dataloader.js";
 
 const root = "test/input/build/config";
 
-const interpreters = new Map([
-  [".R", ["Rscript"]],
-  [".exe", []],
-  [".go", ["go", "run"]],
-  [".java", ["java"]],
-  [".jl", ["julia"]],
-  [".js", ["node", "--no-warnings=ExperimentalWarning"]],
-  [".php", ["php"]],
-  [".py", ["python3"]],
-  [".r", ["Rscript"]],
-  [".rs", ["rust-script"]],
-  [".sh", ["sh"]],
-  [".ts", ["tsx"]]
-]);
+// const interpreters = new Map([
+//   [".R", ["Rscript"]],
+//   [".exe", []],
+//   [".go", ["go", "run"]],
+//   [".java", ["java"]],
+//   [".jl", ["julia"]],
+//   [".js", ["node", "--no-warnings=ExperimentalWarning"]],
+//   [".php", ["php"]],
+//   [".py", ["python3"]],
+//   [".r", ["Rscript"]],
+//   [".rs", ["rust-script"]],
+//   [".sh", ["sh"]],
+//   [".ts", ["tsx"]]
+// ]);
 
 describe("readConfig(undefined, root)", () => {
   before(() => setCurrentDate(new Date("2024-01-11T01:02:03")));
   it("imports the config file at the specified root", async () => {
-    const {md, ...config} = await readConfig(undefined, "test/input/build/config");
+    const {md, loaders, ...config} = await readConfig(undefined, "test/input/build/config");
     assert(md instanceof MarkdownIt);
+    assert(loaders instanceof LoaderResolver); // TODO test implementation
     assert.deepStrictEqual(config, {
       root: "test/input/build/config",
       output: "dist",
@@ -48,13 +50,13 @@ describe("readConfig(undefined, root)", () => {
         workspace: "acme",
         project: "bi"
       },
-      search: false,
-      interpreters
+      search: false
     });
   });
   it("returns the default config if no config file is found", async () => {
-    const {md, ...config} = await readConfig(undefined, "test/input/build/simple");
+    const {md, loaders, ...config} = await readConfig(undefined, "test/input/build/simple");
     assert(md instanceof MarkdownIt);
+    assert(loaders instanceof LoaderResolver); // TODO test implementation
     assert.deepStrictEqual(config, {
       root: "test/input/build/simple",
       output: "dist",
@@ -71,8 +73,7 @@ describe("readConfig(undefined, root)", () => {
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-11T01:02:03">Jan 11, 2024</a>.',
       deploy: null,
-      search: false,
-      interpreters
+      search: false
     });
   });
 });

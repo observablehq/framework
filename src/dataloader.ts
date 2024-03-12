@@ -1,12 +1,13 @@
 import {type WriteStream, createReadStream, existsSync, statSync} from "node:fs";
 import {mkdir, open, readFile, rename, unlink} from "node:fs/promises";
-import {dirname, extname, join} from "node:path/posix";
+import {dirname, extname, join, relative} from "node:path/posix";
 import {createGunzip} from "node:zlib";
 import {spawn} from "cross-spawn";
 import JSZip from "jszip";
 import {extract} from "tar-stream";
-import type {Config} from "./config.js";
 import {maybeStat, prepareOutput} from "./files.js";
+import {FileWatchers} from "./fileWatchers.js";
+import {getFileHash} from "./javascript/module.js";
 import type {Logger, Writer} from "./logger.js";
 import {cyan, faint, green, red, yellow} from "./tty.js";
 
@@ -23,24 +24,131 @@ const defaultEffects: LoadEffects = {
 };
 
 export interface LoaderOptions {
+  root: string;
   path: string;
-  sourceRoot: string;
   targetPath: string;
   useStale: boolean;
 }
 
+export const defaultInterpreters: Record<string, string[]> = {
+  ".js": ["node", "--no-warnings=ExperimentalWarning"],
+  ".ts": ["tsx"],
+  ".py": ["python3"],
+  ".r": ["Rscript"],
+  ".R": ["Rscript"],
+  ".rs": ["rust-script"],
+  ".go": ["go", "run"],
+  ".java": ["java"],
+  ".jl": ["julia"],
+  ".php": ["php"],
+  ".sh": ["sh"],
+  ".exe": []
+};
+
+export class LoaderResolver {
+  private readonly root: string;
+  private readonly interpreters: Map<string, string[]>;
+
+  constructor({root, interpreters}: {root: string; interpreters?: Record<string, string[] | null>}) {
+    this.root = root;
+    this.interpreters = new Map(
+      Object.entries({...defaultInterpreters, ...interpreters}).filter(
+        (entry): entry is [string, string[]] => entry[1] != null
+      )
+    );
+  }
+
+  /**
+   * Finds the loader for the specified target path, relative to the specified
+   * source root, if it exists. If there is no such loader, returns undefined.
+   * For files within archives, we find the first parent folder that exists, but
+   * abort if we find a matching folder or reach the source root; for example,
+   * if docs/data exists, we won’t look for a docs/data.zip.
+   */
+  find(targetPath: string, {useStale = false} = {}): Loader | undefined {
+    const exact = this.findExact(targetPath, {useStale});
+    if (exact) return exact;
+    let dir = dirname(targetPath);
+    for (let parent: string; true; dir = parent) {
+      parent = dirname(dir);
+      if (parent === dir) return; // reached source root
+      if (existsSync(join(this.root, dir))) return; // found folder
+      if (existsSync(join(this.root, parent))) break; // found parent
+    }
+    for (const [ext, Extractor] of extractors) {
+      const archive = dir + ext;
+      if (existsSync(join(this.root, archive))) {
+        return new Extractor({
+          preload: async () => archive,
+          inflatePath: targetPath.slice(archive.length - ext.length + 1),
+          path: join(this.root, archive),
+          root: this.root,
+          targetPath,
+          useStale
+        });
+      }
+      const archiveLoader = this.findExact(archive, {useStale});
+      if (archiveLoader) {
+        return new Extractor({
+          preload: async (options) => archiveLoader.load(options),
+          inflatePath: targetPath.slice(archive.length - ext.length + 1),
+          path: archiveLoader.path,
+          root: this.root,
+          targetPath,
+          useStale
+        });
+      }
+    }
+  }
+
+  private findExact(targetPath: string, {useStale}): Loader | undefined {
+    for (const [ext, [command, ...args]] of this.interpreters) {
+      if (!existsSync(join(this.root, targetPath + ext))) continue;
+      if (extname(targetPath) === "") {
+        console.warn(`invalid data loader path: ${targetPath + ext}`);
+        return;
+      }
+      const path = join(this.root, targetPath + ext);
+      return new CommandLoader({
+        command: command ?? path,
+        args: command == null ? args : [...args, path],
+        path,
+        root: this.root,
+        targetPath,
+        useStale
+      });
+    }
+  }
+
+  watchFiles(path: string, watchPaths: Iterable<string>, callback: (name: string) => void) {
+    return FileWatchers.of(this.root, path, this, watchPaths, callback);
+  }
+
+  getFileHash(path: string): string {
+    if (!existsSync(join(this.root, path))) {
+      const loader = this.find(path);
+      if (loader) path = relative(this.root, loader.path);
+    }
+    return getFileHash(this.root, path);
+  }
+
+  resolveFilePath(path: string): string {
+    return `/${join("_file", path)}?sha=${this.getFileHash(path)}`;
+  }
+}
+
 export abstract class Loader {
+  /**
+   * The source root relative to the current working directory, such as docs.
+   */
+  readonly root: string;
+
   /**
    * The path to the loader script or executable relative to the current working
    * directory. This is exposed so that clients can check which file to watch to
    * see if the loader is edited (and in which case it needs to be re-run).
    */
   readonly path: string;
-
-  /**
-   * The source root relative to the current working directory, such as docs.
-   */
-  readonly sourceRoot: string;
 
   /**
    * The path to the loader script’s output relative to the destination root.
@@ -54,83 +162,11 @@ export abstract class Loader {
    */
   readonly useStale?: boolean;
 
-  constructor({path, sourceRoot, targetPath, useStale}: LoaderOptions) {
+  constructor({root, path, targetPath, useStale}: LoaderOptions) {
+    this.root = root;
     this.path = path;
-    this.sourceRoot = sourceRoot;
     this.targetPath = targetPath;
     this.useStale = useStale;
-  }
-
-  /**
-   * Finds the loader for the specified target path, relative to the specified
-   * source root, if it exists. If there is no such loader, returns undefined.
-   * For files within archives, we find the first parent folder that exists, but
-   * abort if we find a matching folder or reach the source root; for example,
-   * if docs/data exists, we won’t look for a docs/data.zip.
-   */
-  static find(
-    sourceRoot: string,
-    targetPath: string,
-    interpreters: Config["interpreters"],
-    {useStale = false} = {}
-  ): Loader | undefined {
-    const exact = this.findExact(sourceRoot, targetPath, interpreters, {useStale});
-    if (exact) return exact;
-    let dir = dirname(targetPath);
-    for (let parent: string; true; dir = parent) {
-      parent = dirname(dir);
-      if (parent === dir) return; // reached source root
-      if (existsSync(join(sourceRoot, dir))) return; // found folder
-      if (existsSync(join(sourceRoot, parent))) break; // found parent
-    }
-    for (const [ext, Extractor] of extractors) {
-      const archive = dir + ext;
-      if (existsSync(join(sourceRoot, archive))) {
-        return new Extractor({
-          preload: async () => archive,
-          inflatePath: targetPath.slice(archive.length - ext.length + 1),
-          path: join(sourceRoot, archive),
-          sourceRoot,
-          targetPath,
-          useStale
-        });
-      }
-      const archiveLoader = this.findExact(sourceRoot, archive, interpreters, {useStale});
-      if (archiveLoader) {
-        return new Extractor({
-          preload: async (options) => archiveLoader.load(options),
-          inflatePath: targetPath.slice(archive.length - ext.length + 1),
-          path: archiveLoader.path,
-          sourceRoot,
-          targetPath,
-          useStale
-        });
-      }
-    }
-  }
-
-  private static findExact(
-    sourceRoot: string,
-    targetPath: string,
-    interpreters: Config["interpreters"],
-    {useStale}
-  ): Loader | undefined {
-    for (const [ext, [command, ...args]] of interpreters) {
-      if (!existsSync(join(sourceRoot, targetPath + ext))) continue;
-      if (extname(targetPath) === "") {
-        console.warn(`invalid data loader path: ${targetPath + ext}`);
-        return;
-      }
-      const path = join(sourceRoot, targetPath + ext);
-      return new CommandLoader({
-        command: command ?? path,
-        args: command == null ? args : [...args, path],
-        path,
-        sourceRoot,
-        targetPath,
-        useStale
-      });
-    }
   }
 
   /**
@@ -139,12 +175,12 @@ export abstract class Loader {
    * the source root.
    */
   async load(effects = defaultEffects): Promise<string> {
-    const key = join(this.sourceRoot, this.targetPath);
+    const key = join(this.root, this.targetPath);
     let command = runningCommands.get(key);
     if (!command) {
       command = (async () => {
         const outputPath = join(".observablehq", "cache", this.targetPath);
-        const cachePath = join(this.sourceRoot, outputPath);
+        const cachePath = join(this.root, outputPath);
         const loaderStat = await maybeStat(this.path);
         const cacheStat = await maybeStat(cachePath);
         if (!cacheStat) effects.output.write(faint("[missing] "));
@@ -152,7 +188,7 @@ export abstract class Loader {
           if (this.useStale) return effects.output.write(faint("[using stale] ")), outputPath;
           else effects.output.write(faint("[stale] "));
         } else return effects.output.write(faint("[fresh] ")), outputPath;
-        const tempPath = join(this.sourceRoot, ".observablehq", "cache", `${this.targetPath}.${process.pid}`);
+        const tempPath = join(this.root, ".observablehq", "cache", `${this.targetPath}.${process.pid}`);
         const errorPath = tempPath + ".err";
         const errorStat = await maybeStat(errorPath);
         if (errorStat) {
@@ -182,7 +218,7 @@ export abstract class Loader {
     command.then(
       (path) => {
         effects.logger.log(
-          `${green("success")} ${cyan(formatSize(statSync(join(this.sourceRoot, path)).size))} ${faint(
+          `${green("success")} ${cyan(formatSize(statSync(join(this.root, path)).size))} ${faint(
             `in ${formatElapsed(start)}`
           )}`
         );
@@ -252,7 +288,7 @@ class ZipExtractor extends Loader {
   }
 
   async exec(output: WriteStream, effects?: LoadEffects): Promise<void> {
-    const archivePath = join(this.sourceRoot, await this.preload(effects));
+    const archivePath = join(this.root, await this.preload(effects));
     const file = (await JSZip.loadAsync(await readFile(archivePath))).file(this.inflatePath);
     if (!file) throw Object.assign(new Error("file not found"), {code: "ENOENT"});
     const pipe = file.nodeStream().pipe(output);
@@ -279,7 +315,7 @@ class TarExtractor extends Loader {
   }
 
   async exec(output: WriteStream, effects?: LoadEffects): Promise<void> {
-    const archivePath = join(this.sourceRoot, await this.preload(effects));
+    const archivePath = join(this.root, await this.preload(effects));
     const tar = extract();
     const input = createReadStream(archivePath);
     (this.gunzip ? input.pipe(createGunzip()) : input).pipe(tar);

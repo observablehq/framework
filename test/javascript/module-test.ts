@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import {normalizeConfig} from "../../src/config.js";
 import type {FileInfo, ModuleInfo} from "../../src/javascript/module.js";
 import {getFileHash, getFileInfo, getModuleHash, getModuleInfo} from "../../src/javascript/module.js";
 
@@ -110,17 +109,8 @@ describe("getFileHash(root, path)", () => {
   it("returns the content hash for the specified file", () => {
     assert.strictEqual(getFileHash("test/input/build/files", "file-top.csv"), "01a7ce0aea79f9cddb22e772b2cc9a9f3229a64a5fd941eec8d8ddc41fb07c34"); // prettier-ignore
   });
-  it("returns the content hash for the specified file’s data loader", async () => {
-    const {interpreters} = await normalizeConfig();
-    assert.strictEqual(getFileHash("test/input/build/archives.posix", "dynamic.zip.sh"), "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"); // prettier-ignore
-    assert.strictEqual(getFileHash("test/input/build/archives.posix", "dynamic.zip", interpreters), "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"); // prettier-ignore
-    assert.strictEqual(getFileHash("test/input/build/archives.posix", "dynamic/file.txt", interpreters), "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"); // prettier-ignore
-    assert.strictEqual(getFileHash("test/input/build/archives.posix", "static.zip", interpreters), "e6afff224da77b900cfe3ab8789f2283883300e1497548c30af66dfe4c29b429"); // prettier-ignore
-    assert.strictEqual(getFileHash("test/input/build/archives.posix", "static/file.txt", interpreters), "e6afff224da77b900cfe3ab8789f2283883300e1497548c30af66dfe4c29b429"); // prettier-ignore
-  });
   it("returns the empty hash if the specified file does not exist", async () => {
-    const {interpreters} = await normalizeConfig();
-    assert.strictEqual(getFileHash("test/input/build/files", "does-not-exist.csv", interpreters), emptyHash);
+    assert.strictEqual(getFileHash("test/input/build/files", "does-not-exist.csv"), emptyHash);
   });
 });
 

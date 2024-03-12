@@ -5,6 +5,7 @@ import {basename, dirname, join} from "node:path/posix";
 import {cwd} from "node:process";
 import {pathToFileURL} from "node:url";
 import type MarkdownIt from "markdown-it";
+import {LoaderResolver} from "./dataloader.js";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import {createMarkdownIt, parseMarkdown} from "./markdown.js";
@@ -53,24 +54,9 @@ export interface Config {
   style: null | Style; // defaults to {theme: ["light", "dark"]}
   deploy: null | {workspace: string; project: string};
   search: boolean; // default to false
-  interpreters: Map<string, string[]>; // Map of extension to interpreter commands
   md: MarkdownIt;
+  loaders: LoaderResolver;
 }
-
-export const defaultInterpreters: Config["interpreters"] = new Map([
-  [".js", ["node", "--no-warnings=ExperimentalWarning"]],
-  [".ts", ["tsx"]],
-  [".py", ["python3"]],
-  [".r", ["Rscript"]],
-  [".R", ["Rscript"]],
-  [".rs", ["rust-script"]],
-  [".go", ["go", "run"]],
-  [".java", ["java"]],
-  [".jl", ["julia"]],
-  [".php", ["php"]],
-  [".sh", ["sh"]],
-  [".exe", []]
-]);
 
 /**
  * Returns the absolute path to the specified config file, which is specified as a
@@ -153,7 +139,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
   search = Boolean(search);
-  interpreters = new Map([...defaultInterpreters, ...Object.entries(interpreters ?? {})].filter(([, i]) => i != null));
+  interpreters = normalizeInterpreters(interpreters);
   return {
     root,
     output,
@@ -170,8 +156,8 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
     style,
     deploy,
     search,
-    interpreters,
-    md
+    md,
+    loaders: new LoaderResolver({root, interpreters})
   };
 }
 
@@ -213,6 +199,14 @@ function normalizePage(spec: any): Page {
   path = String(path);
   if (path.endsWith("/")) path = `${path}index`;
   return {name, path};
+}
+
+function normalizeInterpreters(spec: any): Record<string, string[] | null> {
+  return Object.fromEntries(
+    Object.entries<any>(spec ?? {}).map(([key, value]): [string, string[] | null] => {
+      return [String(key), value == null ? null : Array.from(value, String)];
+    })
+  );
 }
 
 function normalizeToc(spec: any): TableOfContents {
