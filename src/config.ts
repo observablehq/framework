@@ -65,11 +65,11 @@ const defaultInterpreters = {
   ".R": ["Rscript"],
   ".rs": ["rust-script"],
   ".go": ["go", "run"],
-  ".sh": ["sh"],
-  ".exe": [],
   ".java": ["java"],
   ".jl": ["julia"],
-  ".php": ["php"]
+  ".php": ["php"],
+  ".sh": ["sh"],
+  ".exe": []
 };
 
 /**

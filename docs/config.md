@@ -202,7 +202,7 @@ Whether to enable [search](./search) on the project; defaults to false.
 
 ## interpreters
 
-The **interpreters** option specifies additional interpreted languages for data loaders, indicating the file extension and associated interpreter (see [loader routing](./loaders#routing) for more). The default list of interpreters is:
+The **interpreters** option specifies additional interpreted languages for data loaders, indicating the file extension and associated interpreter. (See [loader routing](./loaders#routing) for more.) The default list of interpreters is:
 
 ```js run=false
 {
@@ -213,24 +213,33 @@ The **interpreters** option specifies additional interpreted languages for data 
   ".R": ["Rscript"],
   ".rs": ["rust-script"]
   ".go": ["go", "run"],
-  ".sh": ["sh"],
-  ".exe": [],
   ".java": ["java"],
   ".jl": ["julia"],
   ".php": ["php"],
+  ".sh": ["sh"],
+  ".exe": []
 }
 ```
 
-Keys specify the extension, and values indicate the associated command and options. For example, to add perl (extension `.pl`), and AppleScript (`.scpt`), to the list above:
+Keys specify the file extension and values the associated command and arguments. For example, to add Perl (extension `.pl`) and AppleScript (`.scpt`) to the list above:
 
 ```js run=false
-interpreters: {".pl": ["perl"], ".scpt": ["osascript"]}
+export default {
+  interpreters: {
+    ".pl": ["perl"],
+    ".scpt": ["osascript"]
+  }
+};
 ```
 
-To disable an extension, set its value to null:
+To disable an interpreter, set its value to null. For example, to disable Rust:
 
 ```js run=false
-interpreters: {".exe": null, ".rs": null}
+export default {
+  interpreters: {
+    ".rs": null
+  }
+};
 ```
 
 ## markdownIt <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" target="_blank" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a>
