@@ -126,7 +126,7 @@ Like with any other file, these files from generated archives are live in previe
 
 ## Routing
 
-Data loaders live in the source root (typically `docs`) alongside your other source files. When a file is referenced from JavaScript via `FileAttachment`, if the file does not exist, Observable Framework will look for a file of the same name with a double extension to see if there is a corresponding data loader. By default, the following second extensions are checked with the corresponding language and interpreter:
+Data loaders live in the source root (typically `docs`) alongside your other source files. When a file is referenced from JavaScript via `FileAttachment`, if the file does not exist, Observable Framework will look for a file of the same name with a double extension to see if there is a corresponding data loader. By default, the following second extensions are checked, in order, with the corresponding language and interpreter:
 
 - `.js` - JavaScript (`node`)
 - `.ts` - TypeScript (`tsx`)
