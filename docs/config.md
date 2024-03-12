@@ -167,9 +167,9 @@ export default {
 
 The base path when serving the site. Currently this only affects the custom 404 page, if any.
 
-## cleanUrls
+## cleanUrls <a href="https://github.com/observablehq/framework/pull/1037" target="_blank" class="observablehq-version-badge" data-version="prerelease" title="Added in #1037"></a>
 
-A boolean that indicates whether relative links to HTML pages should format “clean” URLs without an extension (_e.g._ `./config` and `./`), or as an explicit file path (`./config.html` and `./index.html`). Defaults to true.
+Whether page links should be “clean”, _i.e._, formatted without a `.html` extension. Defaults to true. If true, a link to `config.html` will be formatted as `config`. Regardless of this setting, a link to an index page will drop the implied `index.html`; for example `foo/index.html` will be formatted as `foo/`.
 
 ## toc
 
