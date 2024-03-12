@@ -31,6 +31,7 @@ export function getImplicitInputImports(inputs: Iterable<string>): Set<string> {
   if (set.has("tex")) implicits.add("npm:@observablehq/tex");
   if (set.has("topojson")) implicits.add("npm:topojson-client");
   if (set.has("vl")) implicits.add("observablehq:stdlib/vega-lite");
+  if (set.has("vg")) implicits.add("observablehq:stdlib/vgplot");
   return implicits;
 }
 
@@ -159,6 +160,7 @@ export function getImplicitDependencies(imports: Iterable<string>): Set<string> 
   if (set.has("npm:@observablehq/xlsx")) implicits.add("npm:exceljs");
   if (set.has("npm:@observablehq/zip")) implicits.add("npm:jszip");
   if (set.has("observablehq:stdlib/vega-lite")) implicits.add("npm:vega-lite-api").add("npm:vega-lite").add("npm:vega");
+  if (set.has("observablehq:stdlib/vgplot")) implicits.add("npm:@uwdata/vgplot").add("npm:@observablehq/duckdb").add("npm:@duckdb/duckdb-wasm"); // prettier-ignore
   return implicits;
 }
 

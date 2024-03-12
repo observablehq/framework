@@ -110,7 +110,7 @@ index: false
   <h1>The best dashboards are built with <em class="red">code.</em></h1>
   <h2>Create fast, beautiful data apps, dashboards, and reports from the command line. Write Markdown, JavaScript, SQL, Python, R… and any language you like. Free and open-source.</h2>
   <div class="cta">
-    <pre data-copy>npm init @observablehq</pre>
+    <pre data-copy>npm init <span class="win">"</span>@observablehq<span class="win">"</span></pre>
     <a href="./getting-started" class="small arrow" style="color: var(--theme-red);">Get started</a>
   </div>
 </div>
