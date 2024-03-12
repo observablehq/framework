@@ -6,7 +6,7 @@ import {temporaryDirectoryTask} from "tempy";
 import {LoaderResolver} from "../src/dataloader.js";
 import {resolvePath} from "../src/path.js";
 
-describe("FileWatchers.of(root, path, loaders, names, callback)", () => {
+describe("FileWatchers.of(loaders, path, names, callback)", () => {
   it(
     "watches a file",
     withTemporyWatcher("files.md", ["file-top.csv"], async (root, wait) => {

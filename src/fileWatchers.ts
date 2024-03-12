@@ -1,5 +1,5 @@
-import {type FSWatcher, existsSync, watch} from "node:fs";
-import {join} from "node:path/posix";
+import type {FSWatcher} from "node:fs";
+import {watch} from "node:fs";
 import type {LoaderResolver} from "./dataloader.js";
 import {isEnoent} from "./error.js";
 import {maybeStat} from "./files.js";
@@ -8,19 +8,11 @@ import {resolvePath} from "./path.js";
 export class FileWatchers {
   private readonly watchers: FSWatcher[] = [];
 
-  static async of(
-    root: string,
-    path: string,
-    loaders: LoaderResolver,
-    names: Iterable<string>,
-    callback: (name: string) => void
-  ) {
+  static async of(loaders: LoaderResolver, path: string, names: Iterable<string>, callback: (name: string) => void) {
     const that = new FileWatchers();
     const {watchers} = that;
     for (const name of names) {
-      const filePath = resolvePath(path, name);
-      const exactPath = join(root, filePath);
-      const watchPath = existsSync(exactPath) ? exactPath : loaders.find(filePath)?.path;
+      const watchPath = loaders.getWatchPath(resolvePath(path, name));
       if (!watchPath) continue;
       let currentStat = await maybeStat(watchPath);
       let watcher: FSWatcher;

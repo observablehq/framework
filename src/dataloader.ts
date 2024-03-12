@@ -120,8 +120,13 @@ export class LoaderResolver {
     }
   }
 
+  getWatchPath(path: string): string | undefined {
+    const exactPath = join(this.root, path);
+    return existsSync(exactPath) ? exactPath : this.find(path)?.path;
+  }
+
   watchFiles(path: string, watchPaths: Iterable<string>, callback: (name: string) => void) {
-    return FileWatchers.of(this.root, path, this, watchPaths, callback);
+    return FileWatchers.of(this, path, watchPaths, callback);
   }
 
   getFileHash(path: string): string {
