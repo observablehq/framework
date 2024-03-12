@@ -200,6 +200,48 @@ toc: false
 
 Whether to enable [search](./search) on the project; defaults to false.
 
+## interpreters
+
+The **interpreters** option specifies additional interpreted languages for data loaders, indicating the file extension and associated interpreter. (See [loader routing](./loaders#routing) for more.) The default list of interpreters is:
+
+```js run=false
+{
+  ".js": ["node", "--no-warnings=ExperimentalWarning"],
+  ".ts": ["tsx"],
+  ".py": ["python3"],
+  ".r": ["Rscript"],
+  ".R": ["Rscript"],
+  ".rs": ["rust-script"]
+  ".go": ["go", "run"],
+  ".java": ["java"],
+  ".jl": ["julia"],
+  ".php": ["php"],
+  ".sh": ["sh"],
+  ".exe": []
+}
+```
+
+Keys specify the file extension and values the associated command and arguments. For example, to add Perl (extension `.pl`) and AppleScript (`.scpt`) to the list above:
+
+```js run=false
+export default {
+  interpreters: {
+    ".pl": ["perl"],
+    ".scpt": ["osascript"]
+  }
+};
+```
+
+To disable an interpreter, set its value to null. For example, to disable Rust:
+
+```js run=false
+export default {
+  interpreters: {
+    ".rs": null
+  }
+};
+```
+
 ## markdownIt <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" target="_blank" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a>
 
 A hook for registering additional [markdown-it](https://github.com/markdown-it/markdown-it) plugins. For example, to use [markdown-it-footnote](https://github.com/markdown-it/markdown-it-footnote):

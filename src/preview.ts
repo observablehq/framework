@@ -14,10 +14,9 @@ import send from "send";
 import type {WebSocket} from "ws";
 import {WebSocketServer} from "ws";
 import type {Config} from "./config.js";
-import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
-import {FileWatchers} from "./fileWatchers.js";
+import type {FileWatchers} from "./fileWatchers.js";
 import {parseHtml, rewriteHtml} from "./html.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import {parseMarkdown} from "./markdown.js";
@@ -89,7 +88,7 @@ export class PreviewServer {
 
   _handleRequest: RequestListener = async (req, res) => {
     const config = this._config;
-    const root = config.root;
+    const {root, loaders} = config;
     if (this._verbose) console.log(faint(req.method!), req.url);
     try {
       const url = new URL(req.url!, "http://localhost");
@@ -140,7 +139,7 @@ export class PreviewServer {
         }
 
         // Look for a data loader for this file.
-        const loader = Loader.find(root, path);
+        const loader = loaders.find(path);
         if (loader) {
           try {
             send(req, await loader.load(), {root}).pipe(res);
@@ -257,7 +256,7 @@ function getWatchFiles(resolvers: Resolvers): Iterable<string> {
 }
 
 function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
-  const {root} = config;
+  const {root, loaders} = config;
   let path: string | null = null;
   let hash: string | null = null;
   let html: string[] | null = null;
@@ -303,7 +302,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
           clearTimeout(emptyTimeout);
           emptyTimeout = null;
         }
-        const resolvers = await getResolvers(page, {root, path});
+        const resolvers = await getResolvers(page, {root, path, loaders});
         if (hash === resolvers.hash) break;
         const previousHash = hash!;
         const previousHtml = html!;
@@ -327,7 +326,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
           hash: {previous: previousHash, current: hash}
         });
         attachmentWatcher?.close();
-        attachmentWatcher = await FileWatchers.of(root, path, getWatchFiles(resolvers), () => watcher("change"));
+        attachmentWatcher = await loaders.watchFiles(path, getWatchFiles(resolvers), () => watcher("change"));
         break;
       }
     }
@@ -341,7 +340,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
     path = join(dirname(path), basename(path, ".html") + ".md");
     const source = await readFile(join(root, path), "utf8");
     const page = parseMarkdown(source, {path, ...config});
-    const resolvers = await getResolvers(page, {root, path});
+    const resolvers = await getResolvers(page, {root, path, loaders});
     if (resolvers.hash !== initialHash) return void send({type: "reload"});
     hash = resolvers.hash;
     html = getHtml(page, resolvers);
@@ -349,7 +348,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
     files = getFiles(resolvers);
     tables = getTables(page);
     stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
-    attachmentWatcher = await FileWatchers.of(root, path, getWatchFiles(resolvers), () => watcher("change"));
+    attachmentWatcher = await loaders.watchFiles(path, getWatchFiles(resolvers), () => watcher("change"));
     markdownWatcher = watch(join(root, path), (event) => watcher(event));
   }
 

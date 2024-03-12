@@ -5,6 +5,7 @@ import {basename, dirname, join} from "node:path/posix";
 import {cwd} from "node:process";
 import {pathToFileURL} from "node:url";
 import type MarkdownIt from "markdown-it";
+import {LoaderResolver} from "./dataloader.js";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import {createMarkdownIt, parseMarkdown} from "./markdown.js";
@@ -54,6 +55,7 @@ export interface Config {
   deploy: null | {workspace: string; project: string};
   search: boolean; // default to false
   md: MarkdownIt;
+  loaders: LoaderResolver;
 }
 
 /**
@@ -115,7 +117,8 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
     header = "",
     footer = `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="${formatIsoDate(
       currentDate
-    )}">${formatLocaleDate(currentDate)}</a>.`
+    )}">${formatLocaleDate(currentDate)}</a>.`,
+    interpreters
   } = spec;
   root = String(root);
   output = String(output);
@@ -136,6 +139,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
   search = Boolean(search);
+  interpreters = normalizeInterpreters(interpreters);
   return {
     root,
     output,
@@ -152,7 +156,8 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
     style,
     deploy,
     search,
-    md
+    md,
+    loaders: new LoaderResolver({root, interpreters})
   };
 }
 
@@ -194,6 +199,14 @@ function normalizePage(spec: any): Page {
   path = String(path);
   if (path.endsWith("/")) path = `${path}index`;
   return {name, path};
+}
+
+function normalizeInterpreters(spec: any): Record<string, string[] | null> {
+  return Object.fromEntries(
+    Object.entries<any>(spec ?? {}).map(([key, value]): [string, string[] | null] => {
+      return [String(key), value == null ? null : Array.from(value, String)];
+    })
+  );
 }
 
 function normalizeToc(spec: any): TableOfContents {
