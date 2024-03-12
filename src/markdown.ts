@@ -1,5 +1,6 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
+import {extname} from "node:path/posix";
 import matter from "gray-matter";
 import he from "he";
 import MarkdownIt from "markdown-it";
@@ -275,12 +276,34 @@ function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
   };
 }
 
-function makeLinkNormalizer(baseNormalize: (url: string) => string, clean: boolean): (url: string) => string {
+export function parseRelativeUrl(url: string): {pathname: string; search: string; hash: string} {
+  let search: string;
+  let hash: string;
+  const i = url.indexOf("#");
+  if (i < 0) hash = "";
+  else (hash = url.slice(i)), (url = url.slice(0, i));
+  const j = url.indexOf("?");
+  if (j < 0) search = "";
+  else (search = url.slice(j)), (url = url.slice(0, j));
+  return {pathname: url, search, hash};
+}
+
+export function makeLinkNormalizer(baseNormalize: (url: string) => string, clean: boolean): (url: string) => string {
   return (url) => {
     // Only clean relative links; ignore e.g. "https:" links.
     if (!/^\w+:/.test(url)) {
-      const g = url.match(/(?<dir>[^#?]*\/)((?<file>[^/?#]*?)([.]html)?)(?<q>[?#].*)?$/)?.groups;
-      if (g) url = `${g.dir}${g.file === "" || g.file === "index" ? "" : g.file + (clean ? "" : ".html")}${g.q ?? ""}`;
+      try {
+        const u = parseRelativeUrl(url);
+        let {pathname} = u;
+        if (pathname === "index" || pathname === "index.html") pathname = ".";
+        else if (pathname.endsWith("/index.html")) pathname = pathname.slice(0, -"index.html".length);
+        else if (pathname.endsWith("/index")) pathname = pathname.slice(0, -"index".length);
+        else if (clean) pathname = pathname.replace(/\.html$/, "");
+        else if (!extname(pathname)) pathname += ".html";
+        url = pathname + u.search + u.hash;
+      } catch {
+        // ignore invalid links
+      }
     }
     return baseNormalize(url);
   };
