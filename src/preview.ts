@@ -4,7 +4,7 @@ import type {FSWatcher, WatchEventType} from "node:fs";
 import {access, constants, readFile} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
-import {join, normalize} from "node:path/posix";
+import {basename, dirname, join, normalize} from "node:path/posix";
 import {difference} from "d3-array";
 import type {PatchItem} from "fast-array-diff";
 import {getPatch} from "fast-array-diff";
@@ -173,7 +173,7 @@ export class PreviewServer {
         // Anything else should 404; static files should be matched above.
         try {
           const options = {path: pathname, ...config, preview: true};
-          const source = await readFile(path + ".md", "utf8");
+          const source = await readFile(join(dirname(path), basename(path, ".html") + ".md"), "utf8");
           const parse = parseMarkdown(source, options);
           const html = await renderPage(parse, options);
           end(req, res, html, "text/html");
@@ -338,7 +338,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
     path = decodeURIComponent(initialPath);
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
-    path += ".md";
+    path = join(dirname(path), basename(path, ".html") + ".md");
     const source = await readFile(join(root, path), "utf8");
     const page = parseMarkdown(source, {path, ...config});
     const resolvers = await getResolvers(page, {root, path});

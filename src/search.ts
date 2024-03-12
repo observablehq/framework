@@ -1,5 +1,5 @@
 import {readFile} from "node:fs/promises";
-import {basename, join} from "node:path/posix";
+import {basename, dirname, join} from "node:path/posix";
 import he from "he";
 import MiniSearch from "minisearch";
 import type {Config} from "./config.js";
@@ -27,7 +27,7 @@ const indexOptions = {
 };
 
 export async function searchIndex(config: Config, effects = defaultEffects): Promise<string> {
-  const {root, pages, search} = config;
+  const {root, pages, search, md} = config;
   if (!search) return "{}";
   if (indexCache.has(config) && indexCache.get(config).freshUntil > +new Date()) return indexCache.get(config).json;
 
@@ -41,22 +41,19 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
   // Index the pages
   const index = new MiniSearch(indexOptions);
   for await (const file of visitMarkdownFiles(root)) {
-    const path = join(root, file);
-    const source = await readFile(path, "utf8");
-    const {html, title, data} = parseMarkdown(source, {...config, path: "/" + file.slice(0, -3)});
+    const sourcePath = join(root, file);
+    const source = await readFile(sourcePath, "utf8");
+    const path = `/${join(dirname(file), basename(file, ".md"))}`;
+    const {html, title, data} = parseMarkdown(source, {...config, path});
 
     // Skip pages that opt-out of indexing, and skip unlisted pages unless
     // opted-in. We only log the first case.
-    const listed = pagePaths.has(`/${file.slice(0, -3)}`);
+    const listed = pagePaths.has(path);
     const indexed = data?.index === undefined ? listed : Boolean(data.index);
     if (!indexed) {
-      if (listed) effects.logger.log(`${faint("index")} ${strikethrough(path)} ${faint("(skipped)")}`);
+      if (listed) effects.logger.log(`${faint("index")} ${strikethrough(sourcePath)} ${faint("(skipped)")}`);
       continue;
     }
-
-    // This is the (top-level) serving path to the indexed page. There’s
-    // implicitly a leading slash here.
-    const id = file.slice(0, basename(file) === "index.md" ? -"index.md".length : -3);
 
     // eslint-disable-next-line import/no-named-as-default-member
     const text = he
@@ -70,8 +67,8 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
       .replaceAll(/[\u0300-\u036f]/g, "")
       .replace(/[^\p{L}\p{N}]/gu, " "); // keep letters & numbers
 
-    effects.logger.log(`${faint("index")} ${path}`);
-    index.add({id, title, text, keywords: normalizeKeywords(data?.keywords)});
+    effects.logger.log(`${faint("index")} ${sourcePath}`);
+    index.add({id: md.normalizeLink(path).slice("/".length), title, text, keywords: normalizeKeywords(data?.keywords)});
   }
 
   // Pass the serializable index options to the client.
@@ -81,8 +78,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
         options: {
           fields: indexOptions.fields,
           storeFields: indexOptions.storeFields
-        },
-        cleanUrls: config.md.normalizeLink("./hello") === "./hello"
+        }
       },
       index.toJSON()
     )
