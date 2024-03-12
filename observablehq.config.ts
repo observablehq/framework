@@ -1,6 +1,5 @@
-import {version} from "./package.json" assert {type: "json"};
-
 export default {
+  output: "docs/.observablehq/dist",
   title: "Observable Framework",
   pages: [
     {name: "Getting started", path: "/getting-started"},
@@ -8,6 +7,7 @@ export default {
     {name: "Markdown", path: "/markdown"},
     {name: "JavaScript", path: "/javascript"},
     {name: "Data loaders", path: "/loaders"},
+    {name: "SQL", path: "/sql"},
     {name: "Themes", path: "/themes"},
     {name: "Configuration", path: "/config"},
     {
@@ -70,6 +70,7 @@ export default {
         {name: "Mapbox GL JS", path: "/lib/mapbox-gl"},
         {name: "Mermaid", path: "/lib/mermaid"},
         {name: "Microsoft Excel (XLSX)", path: "/lib/xlsx"},
+        {name: "Mosaic vgplot", path: "/lib/mosaic"},
         {name: "Observable Generators", path: "/lib/generators"},
         {name: "Observable Inputs", path: "/lib/inputs"},
         {name: "Observable Plot", path: "/lib/plot"},
@@ -84,11 +85,16 @@ export default {
     {name: "Contributing", path: "/contributing"}
   ],
   base: "/framework",
-  scripts: [{type: "module", async: true, src: "analytics.js"}],
   head: `<link rel="apple-touch-icon" href="https://static.observablehq.com/favicon-512.0667824687f99c942a02e06e2db1a060911da0bf3606671676a255b1cf97b4fe.png">
-<link rel="icon" type="image/png" href="https://static.observablehq.com/favicon-512.0667824687f99c942a02e06e2db1a060911da0bf3606671676a255b1cf97b4fe.png" sizes="512x512">
+<link rel="icon" type="image/png" href="https://static.observablehq.com/favicon-512.0667824687f99c942a02e06e2db1a060911da0bf3606671676a255b1cf97b4fe.png" sizes="512x512">${
+    process.env.CI
+      ? `
+<script type="module" async src="https://events.observablehq.com/client.js"></script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-9B88TP6PKQ"></script>
-<script>window.dataLayer=window.dataLayer||[];\nfunction gtag(){dataLayer.push(arguments);}\ngtag('js',new Date());\ngtag('config','G-9B88TP6PKQ');</script>`,
+<script>window.dataLayer=window.dataLayer||[];\nfunction gtag(){dataLayer.push(arguments);}\ngtag('js',new Date());\ngtag('config','G-9B88TP6PKQ');</script>`
+      : ""
+  }
+<script type="module">/Win/.test(navigator.platform) || Array.from(document.querySelectorAll(".win"), (e) => e.remove())</script>`,
   header: `<div style="display: flex; align-items: center; gap: 0.5rem; height: 2.2rem; margin: -1.5rem -2rem 2rem -2rem; padding: 0.5rem 2rem; border-bottom: solid 1px var(--theme-foreground-faintest); font: 500 16px var(--sans-serif);">
   <a href="https://observablehq.com/" style="display: flex; align-items: center;">
     <svg width="22" height="22" viewBox="0 0 21.92930030822754 22.68549919128418" fill="currentColor">
@@ -100,7 +106,7 @@ export default {
       <span class="hide-if-small">Observable</span> Framework
     </a>
     <span style="display: flex; align-items: baseline; gap: 0.5rem; font-size: 14px;">
-      <a target="_blank" href="https://github.com/observablehq/framework/releases"><span>${version}</span></a>
+      <a target="_blank" href="https://github.com/observablehq/framework/releases"><span>${process.env.npm_package_version}</span></a>
       <a target="_blank" href="https://github.com/observablehq/framework"><span>GitHub</span></a>
     </span>
   </div>

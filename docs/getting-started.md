@@ -84,19 +84,17 @@ These are just first steps. You can continue to develop projects after publishin
 Framework includes a helper script (`observable create`) for creating new projects. After a few quick prompts — where to create the project, your preferred package manager, *etc.* — it will stamp out a fresh project from a template.
 
 <div class="tip">
-  <p>Framework is a <a href="https://nodejs.org/">Node.js</a> application published to npm. You must have <a href="https://nodejs.org/en/download">Node.js 20.6 or later</a> installed before you can install Framework. Framework is a command-line interface (CLI) and runs in the terminal.</p>
+  <p>Framework is a <a href="https://nodejs.org/">Node.js</a> application published to npm. You must have <a href="https://nodejs.org/en/download">Node.js 18 or later</a> installed before you can install Framework. Framework is a command-line interface (CLI) and runs in the terminal.</p>
   <p>If you run into difficulty following this tutorial, we’re happy to help! Please visit the <a href="https://talk.observablehq.com">Observable forum</a> or our <a href="https://github.com/observablehq/framework/discussions">GitHub discussions</a>.</p>
 </div>
 
-<div class="caution">Framework does not currently support Windows, though some users have had success with the <a href="https://learn.microsoft.com/en-us/windows/wsl/install">Windows Subsystem for Linux (WSL)</a>. It you are interested in Windows support, please upvote <a href="https://github.com/observablehq/framework/issues/90">#90</a>.</div>
-
 To create a new project with npm, run:
 
-<pre data-copy>npm init @observablehq</pre>
+<pre data-copy>npm init <span class="win">"</span>@observablehq<span class="win">"</span></pre>
 
 If you prefer Yarn, run:
 
-<pre data-copy>yarn create @observablehq</pre>
+<pre data-copy>yarn create <span class="win">"</span>@observablehq<span class="win">"</span></pre>
 
 You can run the above command anywhere, but you may want to `cd` to your `~/Development` directory first (or wherever you do local development).
 
@@ -223,7 +221,7 @@ Or with Yarn:
 
 You should see something like this:
 
-<pre data-copy="none"><b class="green">Observable Framework</b> v1.0.0
+<pre data-copy="none"><b class="green">Observable Framework</b> v1.2.0
 ↳ <u><a href="http://127.0.0.1:3000/" style="color: inherit;">http://127.0.0.1:3000/</a></u></pre>
 
 <div class="tip">
@@ -303,7 +301,7 @@ async function json(url) {
 const station = await json(`https://api.weather.gov/points/&dollar;{latitude},&dollar;{longitude}`);
 const forecast = await json(station.properties.forecastHourly);
 
-process.stdout.write(JSON.stringify(forecast));</pre>
+process.stdout.write(JSON.stringify(forecast));</code></pre>
 
 ```js
 const location = view(Locator([-122.47, 37.8]));

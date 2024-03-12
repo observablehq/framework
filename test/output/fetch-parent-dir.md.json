@@ -1,0 +1,249 @@
+{
+  "data": null,
+  "title": "Parent dir",
+  "style": null,
+  "code": [
+    {
+      "id": "c68a5211",
+      "node": {
+        "body": {
+          "type": "Program",
+          "start": 0,
+          "end": 50,
+          "body": [
+            {
+              "type": "VariableDeclaration",
+              "start": 0,
+              "end": 49,
+              "declarations": [
+                {
+                  "type": "VariableDeclarator",
+                  "start": 6,
+                  "end": 49,
+                  "id": {
+                    "type": "Identifier",
+                    "start": 6,
+                    "end": 11,
+                    "name": "fail3"
+                  },
+                  "init": {
+                    "type": "CallExpression",
+                    "start": 14,
+                    "end": 49,
+                    "callee": {
+                      "type": "MemberExpression",
+                      "start": 14,
+                      "end": 47,
+                      "object": {
+                        "type": "CallExpression",
+                        "start": 14,
+                        "end": 42,
+                        "callee": {
+                          "type": "Identifier",
+                          "start": 14,
+                          "end": 28,
+                          "name": "FileAttachment"
+                        },
+                        "arguments": [
+                          {
+                            "type": "Literal",
+                            "start": 29,
+                            "end": 41,
+                            "value": "./NOENT.md",
+                            "raw": "\"./NOENT.md\""
+                          }
+                        ],
+                        "optional": false
+                      },
+                      "property": {
+                        "type": "Identifier",
+                        "start": 43,
+                        "end": 47,
+                        "name": "text"
+                      },
+                      "computed": false,
+                      "optional": false
+                    },
+                    "arguments": [],
+                    "optional": false
+                  }
+                }
+              ],
+              "kind": "const"
+            }
+          ],
+          "sourceType": "module"
+        },
+        "declarations": [
+          {
+            "type": "Identifier",
+            "start": 6,
+            "end": 11,
+            "name": "fail3"
+          }
+        ],
+        "references": [
+          {
+            "type": "Identifier",
+            "start": 14,
+            "end": 28,
+            "name": "FileAttachment"
+          }
+        ],
+        "files": [
+          {
+            "node": {
+              "type": "CallExpression",
+              "start": 14,
+              "end": 42,
+              "callee": {
+                "type": "Identifier",
+                "start": 14,
+                "end": 28,
+                "name": "FileAttachment"
+              },
+              "arguments": [
+                {
+                  "type": "Literal",
+                  "start": 29,
+                  "end": 41,
+                  "value": "./NOENT.md",
+                  "raw": "\"./NOENT.md\""
+                }
+              ],
+              "optional": false
+            },
+            "name": "./NOENT.md",
+            "method": "text"
+          }
+        ],
+        "imports": [],
+        "expression": false,
+        "async": false,
+        "inline": false,
+        "input": "const fail3 = FileAttachment(\"./NOENT.md\").text()\n"
+      }
+    },
+    {
+      "id": "d306f60f",
+      "node": {
+        "body": {
+          "type": "Program",
+          "start": 0,
+          "end": 57,
+          "body": [
+            {
+              "type": "VariableDeclaration",
+              "start": 0,
+              "end": 56,
+              "declarations": [
+                {
+                  "type": "VariableDeclarator",
+                  "start": 6,
+                  "end": 56,
+                  "id": {
+                    "type": "Identifier",
+                    "start": 6,
+                    "end": 9,
+                    "name": "ok1"
+                  },
+                  "init": {
+                    "type": "CallExpression",
+                    "start": 12,
+                    "end": 56,
+                    "callee": {
+                      "type": "MemberExpression",
+                      "start": 12,
+                      "end": 54,
+                      "object": {
+                        "type": "CallExpression",
+                        "start": 12,
+                        "end": 49,
+                        "callee": {
+                          "type": "Identifier",
+                          "start": 12,
+                          "end": 26,
+                          "name": "FileAttachment"
+                        },
+                        "arguments": [
+                          {
+                            "type": "Literal",
+                            "start": 27,
+                            "end": 48,
+                            "value": "./tex-expression.md",
+                            "raw": "\"./tex-expression.md\""
+                          }
+                        ],
+                        "optional": false
+                      },
+                      "property": {
+                        "type": "Identifier",
+                        "start": 50,
+                        "end": 54,
+                        "name": "text"
+                      },
+                      "computed": false,
+                      "optional": false
+                    },
+                    "arguments": [],
+                    "optional": false
+                  }
+                }
+              ],
+              "kind": "const"
+            }
+          ],
+          "sourceType": "module"
+        },
+        "declarations": [
+          {
+            "type": "Identifier",
+            "start": 6,
+            "end": 9,
+            "name": "ok1"
+          }
+        ],
+        "references": [
+          {
+            "type": "Identifier",
+            "start": 12,
+            "end": 26,
+            "name": "FileAttachment"
+          }
+        ],
+        "files": [
+          {
+            "node": {
+              "type": "CallExpression",
+              "start": 12,
+              "end": 49,
+              "callee": {
+                "type": "Identifier",
+                "start": 12,
+                "end": 26,
+                "name": "FileAttachment"
+              },
+              "arguments": [
+                {
+                  "type": "Literal",
+                  "start": 27,
+                  "end": 48,
+                  "value": "./tex-expression.md",
+                  "raw": "\"./tex-expression.md\""
+                }
+              ],
+              "optional": false
+            },
+            "name": "./tex-expression.md",
+            "method": "text"
+          }
+        ],
+        "imports": [],
+        "expression": false,
+        "async": false,
+        "inline": false,
+        "input": "const ok1 = FileAttachment(\"./tex-expression.md\").text()\n"
+      }
+    }
+  ]
+}

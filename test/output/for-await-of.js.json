@@ -1,0 +1,133 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 72,
+    "body": [
+      {
+        "type": "VariableDeclaration",
+        "start": 0,
+        "end": 18,
+        "declarations": [
+          {
+            "type": "VariableDeclarator",
+            "start": 6,
+            "end": 17,
+            "id": {
+              "type": "Identifier",
+              "start": 6,
+              "end": 12,
+              "name": "values"
+            },
+            "init": {
+              "type": "ArrayExpression",
+              "start": 15,
+              "end": 17,
+              "elements": []
+            }
+          }
+        ],
+        "kind": "const"
+      },
+      {
+        "type": "ForOfStatement",
+        "start": 19,
+        "end": 71,
+        "await": true,
+        "left": {
+          "type": "VariableDeclaration",
+          "start": 30,
+          "end": 41,
+          "declarations": [
+            {
+              "type": "VariableDeclarator",
+              "start": 36,
+              "end": 41,
+              "id": {
+                "type": "Identifier",
+                "start": 36,
+                "end": 41,
+                "name": "value"
+              },
+              "init": null
+            }
+          ],
+          "kind": "const"
+        },
+        "right": {
+          "type": "CallExpression",
+          "start": 45,
+          "end": 50,
+          "callee": {
+            "type": "Identifier",
+            "start": 45,
+            "end": 48,
+            "name": "foo"
+          },
+          "arguments": [],
+          "optional": false
+        },
+        "body": {
+          "type": "ExpressionStatement",
+          "start": 52,
+          "end": 71,
+          "expression": {
+            "type": "CallExpression",
+            "start": 52,
+            "end": 70,
+            "callee": {
+              "type": "MemberExpression",
+              "start": 52,
+              "end": 63,
+              "object": {
+                "type": "Identifier",
+                "start": 52,
+                "end": 58,
+                "name": "values"
+              },
+              "property": {
+                "type": "Identifier",
+                "start": 59,
+                "end": 63,
+                "name": "push"
+              },
+              "computed": false,
+              "optional": false
+            },
+            "arguments": [
+              {
+                "type": "Identifier",
+                "start": 64,
+                "end": 69,
+                "name": "value"
+              }
+            ],
+            "optional": false
+          }
+        }
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 6,
+      "end": 12,
+      "name": "values"
+    }
+  ],
+  "references": [
+    {
+      "type": "Identifier",
+      "start": 45,
+      "end": 48,
+      "name": "foo"
+    }
+  ],
+  "files": [],
+  "imports": [],
+  "expression": false,
+  "async": true,
+  "inline": false
+}

@@ -10,7 +10,7 @@ The `card` class is used to group and delineate content. The `card` classes appl
 </div>
 ```
 
-<div class="tip"><a href="../lib/plot">Observable Plot</a>’s <b>title</b> and <b>subtitle</b> options generate <code>h2</code> and <code>h3</code> elements, respectively, and so will inherit these card styles.<code>
+<div class="tip"><a href="../lib/plot">Observable Plot</a>’s <b>title</b> and <b>subtitle</b> options generate <code>h2</code> and <code>h3</code> elements, respectively, and so will inherit these card styles.</div>
 
 Cards can be used on their own, but they most often exist in a [grid](./grid). Cards can contain whatever you like, including text, images, charts, tables, inputs, and more.
 

@@ -3,21 +3,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Top</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="./_observablehq/theme-air,near-midnight.css">
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
-<link rel="stylesheet" type="text/css" href="./_observablehq/theme-air,near-midnight.css">
+<link rel="preload" as="style" href="./_observablehq/theme-air,near-midnight.css">
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
-<link rel="modulepreload" href="./_import/foo/foo.js?sha=ddc538dfc10d83a59458d5893c89191ef3b2c9b1c02ef6da055423f37388ecf4">
-<link rel="modulepreload" href="./_import/top.js?sha=a713c9f9e5b3c1e456a16cd100388f7eacfe48ee5fcaf7772f405abe53541cd0">
+<link rel="stylesheet" type="text/css" href="./_observablehq/theme-air,near-midnight.css">
 <link rel="modulepreload" href="./_observablehq/client.js">
 <link rel="modulepreload" href="./_observablehq/runtime.js">
 <link rel="modulepreload" href="./_observablehq/stdlib.js">
+<link rel="modulepreload" href="./_import/top.d8f5cc36.js">
+<link rel="modulepreload" href="./_import/foo/foo.6fd063d5.js">
 <script type="module">
 
 import {define} from "./_observablehq/client.js";
+import {registerFile} from "./_observablehq/stdlib.js";
 
-define({id: "cb908c08", inputs: ["display"], outputs: ["fooCsvData","fooJsonData","topCsvData","topJsonData"], files: [{"name":"./top-data.json","mimeType":"application/json","path":"./_file/top-data.json"},{"name":"./top-data.csv","mimeType":"text/csv","path":"./_file/top-data.csv"},{"name":"./foo/foo-data.json","mimeType":"application/json","path":"./_file/foo/foo-data.json"},{"name":"./foo/foo-data.csv","mimeType":"text/csv","path":"./_file/foo/foo-data.csv"}], body: async (display) => {
-const {fooCsvData, fooJsonData, topCsvData, topJsonData} = await import("./_import/top.js?sha=a713c9f9e5b3c1e456a16cd100388f7eacfe48ee5fcaf7772f405abe53541cd0");
+registerFile("./foo/foo-data.csv", {"name":"./foo/foo-data.csv","mimeType":"text/csv","path":"./_file/foo/foo-data.24ef4634.csv"});
+registerFile("./foo/foo-data.json", {"name":"./foo/foo-data.json","mimeType":"application/json","path":"./_file/foo/foo-data.67358ed8.json"});
+registerFile("./top-data.csv", {"name":"./top-data.csv","mimeType":"text/csv","path":"./_file/top-data.24ef4634.csv"});
+registerFile("./top-data.json", {"name":"./top-data.json","mimeType":"application/json","path":"./_file/top-data.67358ed8.json"});
+
+define({id: "cb908c08", inputs: ["display"], outputs: ["fooCsvData","fooJsonData","topCsvData","topJsonData"], body: async (display) => {
+const {fooCsvData, fooJsonData, topCsvData, topJsonData} = await import("./_import/top.d8f5cc36.js");
 
 display(fooJsonData);
 display(fooCsvData);
@@ -40,7 +46,7 @@ return {fooCsvData,fooJsonData,topCsvData,topJsonData};
   </ol>
 </nav>
 <script>{/* redacted init script */}</script>
-<aside id="observablehq-toc" data-selector="#observablehq-main h1:not(:first-of-type), #observablehq-main h2:not(h1 + h2)">
+<aside id="observablehq-toc" data-selector="h1:not(:first-of-type), h2:first-child, :not(h1) + h2">
 <nav>
 </nav>
 </aside>

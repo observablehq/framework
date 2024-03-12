@@ -1,5 +1,4 @@
 import fs from "node:fs/promises";
-import packageJson from "../package.json";
 import {CliError, HttpError, isApiError} from "./error.js";
 import type {ApiKey} from "./observableApiConfig.js";
 import {faint, red} from "./tty.js";
@@ -36,7 +35,7 @@ export class ObservableApiClient {
     this._apiOrigin = apiOrigin;
     this._apiHeaders = {
       Accept: "application/json",
-      "User-Agent": `Observable Framework ${packageJson.version}`,
+      "User-Agent": `Observable Framework ${process.env.npm_package_version}`,
       "X-Observable-Api-Version": "2023-12-06"
     };
     if (apiKey) this.setApiKey(apiKey);
@@ -102,16 +101,18 @@ export class ObservableApiClient {
   async postProject({
     title,
     slug,
-    workspaceId
+    workspaceId,
+    accessLevel
   }: {
     title: string;
     slug: string;
     workspaceId: string;
+    accessLevel: string;
   }): Promise<PostProjectResponse> {
     return await this._fetch<PostProjectResponse>(new URL("/cli/project", this._apiOrigin), {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({title, slug, workspace: workspaceId})
+      body: JSON.stringify({title, slug, workspace: workspaceId, accessLevel})
     });
   }
 
@@ -204,18 +205,29 @@ export interface GetCurrentUserResponse {
   workspaces: WorkspaceResponse[];
 }
 
+type Role = "owner" | "member" | "viewer" | "guest_member" | "guest_viewer";
+
+type ProjectRole = "owner" | "editor" | "viewer";
+
+type ProjectInfo = {
+  project_slug: string;
+  project_role: ProjectRole;
+};
+
 export interface WorkspaceResponse {
   id: string;
   login: string;
   name: string;
   tier: string;
   type: string;
-  role: string;
+  role: Role;
+  projects_info: ProjectInfo[];
 }
 
 export type PostProjectResponse = GetProjectResponse;
 
 export interface GetProjectResponse {
+  accessLevel: string;
   id: string;
   slug: string;
   title: string;

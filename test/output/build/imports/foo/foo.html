@@ -3,25 +3,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Foo</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="../_observablehq/theme-air,near-midnight.css">
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
-<link rel="stylesheet" type="text/css" href="../_observablehq/theme-air,near-midnight.css">
+<link rel="preload" as="style" href="../_observablehq/theme-air,near-midnight.css">
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
-<link rel="modulepreload" href="../_import/bar/bar.js?sha=2e71da6918681d51fd9e7ed79b03aed514771c2e1583af42783665aff3f5ef5e">
-<link rel="modulepreload" href="../_import/bar/baz.js?sha=e48bbd08d9d69efb7c743b54db47ff7efb1f6bf5f59648c861d5cb8fa0096ce6">
-<link rel="modulepreload" href="../_import/foo/foo bar.js?sha=5e2eddd03e133a77ecac1154c24bc8473a3007dc841a4cc2b685bb1e76a347b1">
-<link rel="modulepreload" href="../_import/foo/foo.js?sha=056eae1b54d6d0e3046f38c8e7b3af2796b70e6505afb47427357e415005d997">
-<link rel="modulepreload" href="../_import/top.js?sha=43e37c2a4fe9ca94e62d0d8acd5dbd8bdd5f0ec845503964f465979c4c82c2a3">
+<link rel="stylesheet" type="text/css" href="../_observablehq/theme-air,near-midnight.css">
 <link rel="modulepreload" href="../_observablehq/client.js">
 <link rel="modulepreload" href="../_observablehq/runtime.js">
 <link rel="modulepreload" href="../_observablehq/stdlib.js">
-<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/d3@7.8.5/+esm">
+<link rel="modulepreload" href="../_npm/d3@7.8.5/+esm.js">
+<link rel="modulepreload" href="../_import/bar/bar.13bb8056.js">
+<link rel="modulepreload" href="../_import/top.160847a6.js">
+<link rel="modulepreload" href="../_import/foo/foo bar.b173d3de.js">
+<link rel="modulepreload" href="../_import/bar/baz.cdbfb28b.js">
+<link rel="modulepreload" href="../_import/foo/foo.821499d0.js">
 <script type="module">
 
 import {define} from "../_observablehq/client.js";
+import {registerFile} from "../_observablehq/stdlib.js";
 
-define({id: "261e010e", inputs: ["display","FileAttachment"], outputs: ["d3","bar","top"], files: [{"name":"../top.js","mimeType":"application/javascript","path":"../_file/top.js"}], body: async (display,FileAttachment) => {
-const [d3, {bar}, {top}] = await Promise.all([import("https://cdn.jsdelivr.net/npm/d3@7.8.5/+esm"), import("../_import/bar/bar.js?sha=2e71da6918681d51fd9e7ed79b03aed514771c2e1583af42783665aff3f5ef5e"), import("../_import/top.js?sha=43e37c2a4fe9ca94e62d0d8acd5dbd8bdd5f0ec845503964f465979c4c82c2a3")]);
+registerFile("../top.js", {"name":"../top.js","mimeType":"application/javascript","path":"../_file/top.a53c5d5b.js"});
+
+define({id: "261e010e", inputs: ["display","FileAttachment"], outputs: ["d3","bar","top"], body: async (display,FileAttachment) => {
+const [d3, {bar}, {top}] = await Promise.all([import("../_npm/d3@7.8.5/+esm.js"), import("../_import/bar/bar.13bb8056.js"), import("../_import/top.160847a6.js")]);
 
 display(bar);
 display(top);
@@ -30,7 +33,7 @@ return {d3,bar,top};
 }});
 
 define({id: "ec24b17a", inputs: ["display"], outputs: ["foobar"], body: async (display) => {
-const {foobar} = await import("../_import/foo/foo%20bar.js?sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+const {foobar} = await import("./foo%20bar.js");
 display(foobar);
 return {foobar};
 }});
@@ -48,7 +51,7 @@ return {foobar};
   </ol>
 </nav>
 <script>{/* redacted init script */}</script>
-<aside id="observablehq-toc" data-selector="#observablehq-main h1:not(:first-of-type), #observablehq-main h2:not(h1 + h2)">
+<aside id="observablehq-toc" data-selector="h1:not(:first-of-type), h2:first-child, :not(h1) + h2">
 <nav>
 </nav>
 </aside>

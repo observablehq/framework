@@ -1,0 +1,73 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 57,
+    "body": [
+      {
+        "type": "ExpressionStatement",
+        "start": 0,
+        "end": 11,
+        "expression": {
+          "type": "CallExpression",
+          "start": 0,
+          "end": 10,
+          "callee": {
+            "type": "Identifier",
+            "start": 0,
+            "end": 8,
+            "name": "confetti"
+          },
+          "arguments": [],
+          "optional": false
+        }
+      },
+      {
+        "type": "ImportDeclaration",
+        "start": 13,
+        "end": 56,
+        "specifiers": [
+          {
+            "type": "ImportDefaultSpecifier",
+            "start": 20,
+            "end": 28,
+            "local": {
+              "type": "Identifier",
+              "start": 20,
+              "end": 28,
+              "name": "confetti"
+            }
+          }
+        ],
+        "source": {
+          "type": "Literal",
+          "start": 34,
+          "end": 55,
+          "value": "npm:canvas-confetti",
+          "raw": "\"npm:canvas-confetti\""
+        }
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 20,
+      "end": 28,
+      "name": "confetti"
+    }
+  ],
+  "references": [],
+  "files": [],
+  "imports": [
+    {
+      "name": "npm:canvas-confetti",
+      "type": "global",
+      "method": "static"
+    }
+  ],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

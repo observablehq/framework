@@ -1,11 +1,12 @@
-import {basename, join} from "node:path";
+import {readFile} from "node:fs/promises";
+import {basename, join} from "node:path/posix";
 import he from "he";
 import MiniSearch from "minisearch";
 import type {Config} from "./config.js";
 import {visitMarkdownFiles} from "./files.js";
 import type {Logger} from "./logger.js";
 import {parseMarkdown} from "./markdown.js";
-import {faint} from "./tty.js";
+import {faint, strikethrough} from "./tty.js";
 
 // Avoid reindexing too often in preview.
 const indexCache = new WeakMap();
@@ -41,14 +42,15 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
   const index = new MiniSearch(indexOptions);
   for await (const file of visitMarkdownFiles(root)) {
     const path = join(root, file);
-    const {html, title, data} = await parseMarkdown(path, {root, path: "/" + file.slice(0, -3)});
+    const source = await readFile(path, "utf8");
+    const {html, title, data} = parseMarkdown(source, {...config, path: "/" + file.slice(0, -3)});
 
     // Skip pages that opt-out of indexing, and skip unlisted pages unless
     // opted-in. We only log the first case.
     const listed = pagePaths.has(`/${file.slice(0, -3)}`);
     const indexed = data?.index === undefined ? listed : Boolean(data.index);
     if (!indexed) {
-      if (listed) effects.logger.log(`${faint("skip")} ${file}`);
+      if (listed) effects.logger.log(`${faint("index")} ${strikethrough(path)} ${faint("(skipped)")}`);
       continue;
     }
 
@@ -68,7 +70,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
       .replaceAll(/[\u0300-\u036f]/g, "")
       .replace(/[^\p{L}\p{N}]/gu, " "); // keep letters & numbers
 
-    effects.logger.log(`${faint("search indexing")} ${path}`);
+    effects.logger.log(`${faint("index")} ${path}`);
     index.add({id, title, text, keywords: normalizeKeywords(data?.keywords)});
   }
 

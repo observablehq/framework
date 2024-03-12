@@ -3,20 +3,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Top</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="./_observablehq/theme-air,near-midnight.css">
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
-<link rel="stylesheet" type="text/css" href="./_observablehq/theme-air,near-midnight.css">
+<link rel="preload" as="style" href="./_observablehq/theme-air,near-midnight.css">
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
-<link rel="modulepreload" href="./_import/foo/foo.js?sha=ddc538dfc10d83a59458d5893c89191ef3b2c9b1c02ef6da055423f37388ecf4">
+<link rel="stylesheet" type="text/css" href="./_observablehq/theme-air,near-midnight.css">
 <link rel="modulepreload" href="./_observablehq/client.js">
 <link rel="modulepreload" href="./_observablehq/runtime.js">
 <link rel="modulepreload" href="./_observablehq/stdlib.js">
+<link rel="modulepreload" href="./_import/foo/foo.6fd063d5.js">
 <script type="module">
 
 import {define} from "./_observablehq/client.js";
+import {registerFile} from "./_observablehq/stdlib.js";
 
-define({id: "47a695da", inputs: ["display"], outputs: ["fooJsonData","fooCsvData"], files: [{"name":"./foo/foo-data.json","mimeType":"application/json","path":"./_file/foo/foo-data.json"},{"name":"./foo/foo-data.csv","mimeType":"text/csv","path":"./_file/foo/foo-data.csv"}], body: async (display) => {
-const {fooJsonData, fooCsvData} = await import("./_import/foo/foo.js?sha=ddc538dfc10d83a59458d5893c89191ef3b2c9b1c02ef6da055423f37388ecf4");
+registerFile("./foo/foo-data.csv", {"name":"./foo/foo-data.csv","mimeType":"text/csv","path":"./_file/foo/foo-data.24ef4634.csv"});
+registerFile("./foo/foo-data.json", {"name":"./foo/foo-data.json","mimeType":"application/json","path":"./_file/foo/foo-data.67358ed8.json"});
+
+define({id: "47a695da", inputs: ["display"], outputs: ["fooJsonData","fooCsvData"], body: async (display) => {
+const {fooJsonData, fooCsvData} = await import("./_import/foo/foo.6fd063d5.js");
 
 display(fooJsonData);
 display(fooCsvData);
@@ -37,7 +41,7 @@ return {fooJsonData,fooCsvData};
   </ol>
 </nav>
 <script>{/* redacted init script */}</script>
-<aside id="observablehq-toc" data-selector="#observablehq-main h1:not(:first-of-type), #observablehq-main h2:not(h1 + h2)">
+<aside id="observablehq-toc" data-selector="h1:not(:first-of-type), h2:first-child, :not(h1) + h2">
 <nav>
 </nav>
 </aside>

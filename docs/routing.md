@@ -17,7 +17,7 @@ A typical project looks like this:
 │  └─ index.md
 ├─ .gitignore
 ├─ README.md
-├─ observablehq.config.ts
+├─ observablehq.config.js
 ├─ yarn.lock
 └─ package.json
 ```
@@ -46,7 +46,7 @@ You can put [data loaders](./loaders) or static files anywhere in your source ro
 
 This is the home page for your site. You can have as many additional pages as you’d like, but you should always have a home page, too.
 
-#### `observablehq.config.ts`
+#### `observablehq.config.js`
 
 This is the [project configuration](./config) file, such as the pages and sections in the sidebar navigation, and the project’s title. The config file can be written in either TypeScript (`.ts`) or JavaScript (`.js`).
 

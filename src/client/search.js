@@ -8,7 +8,7 @@ const resultsContainer = document.querySelector("#observablehq-search-results");
 const activeClass = "observablehq-link-active";
 let currentValue;
 
-const index = await fetch(import.meta.resolve("./minisearch.json"))
+const index = await fetch(import.meta.resolve(global.__minisearch))
   .then((response) => {
     if (!response.ok) throw new Error(`unable to load minisearch.json: ${response.status}`);
     return response.json();

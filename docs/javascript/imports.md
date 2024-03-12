@@ -40,6 +40,36 @@ import confetti from "npm:canvas-confetti@1/dist/confetti.module.mjs";
 
 If you’re having difficulty getting an import working, it may help to browse the package and see what files are available as well as what’s exported in the `package.json`. You can browse the contents of a published module via jsDelivr; for example, for `canvas-confetti` see <https://cdn.jsdelivr.net/npm/canvas-confetti/>.
 
+### Self-hosting of npm imports
+
+Framework automatically downloads `npm:` imports from jsDelivr during preview and build. This improves performance and security of your built site by removing external code dependencies. It also improves performance during local preview by only downloading libraries once.
+
+Downloads from npm are cached in `.observablehq/cache/_npm` within your [source root](../config#root). You can clear the cache and restart the server to re-fetch the latest versions of libraries from npm.
+
+Self-hosting of `npm:` imports applies to static imports, dynamic imports, and import resolutions (`import.meta.resolve`), provided the specifier is a static string literal. For example to load D3:
+
+```js run=false
+import * as d3 from "npm:d3";
+```
+
+```js run=false
+const d3 = await import("npm:d3");
+```
+
+In both cases above, the latest version of `d3` is resolved and downloaded from jsDelivr as an ES module, including all of its transitive dependencies.
+
+<div class="tip">You can load a library from a CDN at runtime by importing a URL. However, we recommend self-hosted <code>npm:</code> to improve performance and security, and to improve reliability by letting you control when you upgrade.</div>
+
+Transitive static imports are also registered as module preloads (using `<link rel="modulepreload">`), such that the requests happen in parallel and as early as possible, rather than being chained. This dramatically improves performance on page load. Framework also preloads `npm:` imports for [`FileAttachment`](./files) methods, such as `d3-dsv` for [CSV](../lib/csv).
+
+Import resolutions allow you to download files from npm. These files are automatically downloaded for self-hosting, too. For example, to load U.S. county geometry:
+
+```js run=false
+const data = await fetch(import.meta.resolve("npm:us-atlas/counties-albers-10m.json")).then((r) => r.json());
+```
+
+Framework automatically downloads files as needed for [recommended libraries](./imports#implicit-imports), and resolves import resolutions in transitive static and dynamic imports. For example, [DuckDB](../lib/duckdb) needs WebAssembly bundles, and [KaTeX](../lib/tex) needs a stylesheet and fonts. For any dependencies that are not statically analyzable (such as `fetch` calls or dynamic arguments to `import`) you can call `import.meta.resolve` to register additional files to download from npm.
+
 ## Local imports
 
 In addition to npm, you can import JavaScript from local modules. This is useful for organizing your code: you can move JavaScript out of Markdown and create components and helpers that can be imported across multiple pages. This also means you can write unit tests for your code, and share code with any other web applications.

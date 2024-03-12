@@ -1,6 +1,1 @@
-define({id: "0", inputs: ["display"], outputs: ["foo"], body: async (display) => {
-const {foo} = await import("./../../bar.js");
-
-display(foo);
-return {foo};
-}});
+define({id: "0", body: () => { throw new SyntaxError("non-local import: ./../../bar.js (1:0)"); }});

@@ -1,0 +1,167 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 72,
+    "body": [
+      {
+        "type": "TryStatement",
+        "start": 0,
+        "end": 71,
+        "block": {
+          "type": "BlockStatement",
+          "start": 4,
+          "end": 43,
+          "body": [
+            {
+              "type": "VariableDeclaration",
+              "start": 8,
+              "end": 20,
+              "declarations": [
+                {
+                  "type": "VariableDeclarator",
+                  "start": 12,
+                  "end": 19,
+                  "id": {
+                    "type": "ArrayPattern",
+                    "start": 12,
+                    "end": 15,
+                    "elements": [
+                      {
+                        "type": "Identifier",
+                        "start": 13,
+                        "end": 14,
+                        "name": "x"
+                      }
+                    ]
+                  },
+                  "init": {
+                    "type": "Identifier",
+                    "start": 18,
+                    "end": 19,
+                    "name": "y"
+                  }
+                }
+              ],
+              "kind": "let"
+            },
+            {
+              "type": "ExpressionStatement",
+              "start": 23,
+              "end": 27,
+              "expression": {
+                "type": "UpdateExpression",
+                "start": 23,
+                "end": 26,
+                "operator": "++",
+                "prefix": false,
+                "argument": {
+                  "type": "Identifier",
+                  "start": 23,
+                  "end": 24,
+                  "name": "x"
+                }
+              }
+            },
+            {
+              "type": "ExpressionStatement",
+              "start": 30,
+              "end": 41,
+              "expression": {
+                "type": "CallExpression",
+                "start": 30,
+                "end": 40,
+                "callee": {
+                  "type": "Identifier",
+                  "start": 30,
+                  "end": 37,
+                  "name": "display"
+                },
+                "arguments": [
+                  {
+                    "type": "Identifier",
+                    "start": 38,
+                    "end": 39,
+                    "name": "x"
+                  }
+                ],
+                "optional": false
+              }
+            }
+          ]
+        },
+        "handler": {
+          "type": "CatchClause",
+          "start": 44,
+          "end": 71,
+          "param": {
+            "type": "Identifier",
+            "start": 51,
+            "end": 52,
+            "name": "e"
+          },
+          "body": {
+            "type": "BlockStatement",
+            "start": 54,
+            "end": 71,
+            "body": [
+              {
+                "type": "ExpressionStatement",
+                "start": 58,
+                "end": 69,
+                "expression": {
+                  "type": "CallExpression",
+                  "start": 58,
+                  "end": 68,
+                  "callee": {
+                    "type": "Identifier",
+                    "start": 58,
+                    "end": 65,
+                    "name": "display"
+                  },
+                  "arguments": [
+                    {
+                      "type": "Identifier",
+                      "start": 66,
+                      "end": 67,
+                      "name": "e"
+                    }
+                  ],
+                  "optional": false
+                }
+              }
+            ]
+          }
+        },
+        "finalizer": null
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [],
+  "references": [
+    {
+      "type": "Identifier",
+      "start": 18,
+      "end": 19,
+      "name": "y"
+    },
+    {
+      "type": "Identifier",
+      "start": 30,
+      "end": 37,
+      "name": "display"
+    },
+    {
+      "type": "Identifier",
+      "start": 58,
+      "end": 65,
+      "name": "display"
+    }
+  ],
+  "files": [],
+  "imports": [],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

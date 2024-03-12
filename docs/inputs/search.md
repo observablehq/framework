@@ -4,7 +4,12 @@
 
 By default, the query is split into terms separated by spaces; each term is then prefix-matched against the property values (the fields) of each row in the data. Try searching for “gen” below to find Gentoo penguins.
 
-```js echo
+```js
+const searchInput = Inputs.search(penguins, {placeholder: "Search penguins…"});
+const search = view(searchInput);
+```
+
+```js run=false
 const search = view(Inputs.search(penguins, {placeholder: "Search penguins…"}));
 ```
 
@@ -19,11 +24,11 @@ Inputs.table(search)
 ```
 
 ```js
-const input = document.querySelector("input[placeholder='Search penguins…']");
 for (const abbr of document.querySelectorAll("abbr")) {
   abbr.title = `Search for “${abbr.textContent}”`;
   abbr.style.cursor = "default";
   abbr.onclick = () => {
+    const input = searchInput.querySelector("input");
     input.value = abbr.textContent;
     input.dispatchEvent(new Event("input", {bubbles: true}));
   };
