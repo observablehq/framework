@@ -105,9 +105,10 @@ try {
       break;
     }
     case "deploy": {
-      const buildDescription = "one of 'prompt', 'if-stale', 'always', or 'never'";
+      const missingDescription = "one of 'build', 'cancel', or 'prompt' (the default)";
+      const staleDescription = "one of 'build', 'cancel', 'deploy', or 'prompt' (the default)";
       const {
-        values: {config, root, message, build}
+        values: {config, root, message, "if-stale": ifStale, "if-missing": ifMissing}
       } = helpArgs(command, {
         options: {
           ...CONFIG_OPTION,
@@ -115,21 +116,34 @@ try {
             type: "string",
             short: "m"
           },
-          build: {
+          "if-stale": {
             type: "string",
-            description: buildDescription
+            description: `What to do if the output directory is stale: ${staleDescription}`
+          },
+          "if-missing": {
+            type: "string",
+            description: `What to do if the output directory is missing: ${missingDescription}`
           }
         }
       });
-      if (build && !["prompt", "if-stale", "always", "never"].includes(build)) {
-        console.log(`Invalid build option: ${build}, expected ${buildDescription}`);
+      if (ifStale && ifStale !== "prompt" && ifStale !== "build" && ifStale !== "cancel" && ifStale !== "deploy") {
+        console.log(`Invalid --ifStale option: ${ifStale}, expected ${staleDescription}`);
         process.exit(1);
       }
+      if (ifMissing && ifMissing !== "prompt" && ifMissing !== "build" && ifMissing !== "cancel") {
+        console.log(`Invalid --ifMissing option: ${ifMissing}, expected ${missingDescription}`);
+        process.exit(1);
+      }
+      if (!process.stdin.isTTY && (ifStale === "prompt" || ifMissing === "prompt")) {
+        throw new CliError("Cannot prompt for input in non-interactive mode");
+      }
+
       await import("../deploy.js").then(async (deploy) =>
         deploy.deploy({
           config: await readConfig(config, root),
           message,
-          buildBehavior: build as "prompt" | "if-stale" | "always" | "never" | undefined
+          ifBuildMissing: (ifMissing ?? "prompt") as "prompt" | "build" | "cancel",
+          ifBuildStale: (ifStale ?? "prompt") as "prompt" | "build" | "cancel" | "deploy"
         })
       );
       break;

@@ -46,7 +46,8 @@ export interface DeployOptions {
   config: Config;
   message?: string;
   deployPollInterval?: number;
-  buildBehavior?: "prompt" | "always" | "never" | "if-stale";
+  ifBuildStale: "prompt" | "build" | "cancel" | "deploy";
+  ifBuildMissing: "prompt" | "build" | "cancel";
 }
 
 export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
@@ -80,15 +81,11 @@ type DeployTargetInfo =
 
 /** Deploy a project to ObservableHQ */
 export async function deploy(
-  {config, message, buildBehavior, deployPollInterval = DEPLOY_POLL_INTERVAL_MS}: DeployOptions,
+  {config, message, ifBuildMissing, ifBuildStale, deployPollInterval = DEPLOY_POLL_INTERVAL_MS}: DeployOptions,
   effects = defaultEffects
 ): Promise<void> {
-  if (buildBehavior === "prompt" && !effects.isTty) {
-    throw new CliError("can't use --build=prompt when not on a TTY");
-  }
-  buildBehavior ??= "prompt";
   const {clack} = effects;
-  Telemetry.record({event: "deploy", step: "start", buildBehavior});
+  Telemetry.record({event: "deploy", step: "start", ifBuildMissing, ifBuildStale});
   clack.intro(inverse(" observable deploy "));
 
   let apiKey = await effects.getObservableApiKey(effects);
@@ -204,23 +201,21 @@ export async function deploy(
 
   let buildFilePaths: string[] | null = null;
 
-  let doBuild = buildBehavior === "always";
-  if (buildBehavior !== "always") {
-    let youngestAge;
-    try {
-      ({buildFilePaths, youngestAge} = await findBuildFiles(effects, config));
-    } catch (error) {
-      if (CliError.match(error, {message: /No build files found/})) {
-        if (buildBehavior === "never" || !effects.isTty) {
+  let doBuild = false;
+  let youngestAge;
+  try {
+    ({buildFilePaths, youngestAge} = await findBuildFiles(effects, config));
+  } catch (error) {
+    if (CliError.match(error, {message: /No build files found/})) {
+      switch (ifBuildMissing) {
+        case "cancel":
           throw new CliError("No build files found.");
-        }
-        if (buildBehavior === "if-stale") {
+        case "build": {
           doBuild = true;
-        } else {
-          if (!effects.isTty)
-            throw new CliError(
-              "No build files found. Specify --build=always or --build=if-stale to automatically build."
-            );
+          break;
+        }
+        case "prompt": {
+          if (!effects.isTty) throw new CliError("No build files found. Pass --if-missing=build to automatically rebuild.");
           const choice = await clack.select({
             message: "No build files found. Do you want to build the project now?",
             options: [
@@ -232,18 +227,24 @@ export async function deploy(
             throw new CliError("User canceled deploy", {print: false, exitCode: 0});
           }
           doBuild = true;
+          break;
         }
-      } else {
-        throw error;
       }
+    } else {
+      throw error;
     }
+  }
 
-    if (!doBuild && youngestAge > BUILD_AGE_WARNING_MS) {
-      if (buildBehavior === "if-stale") {
+  if (!doBuild && youngestAge > BUILD_AGE_WARNING_MS) {
+    switch (ifBuildStale) {
+      case "cancel":
+        throw new CliError("Build is stale.");
+      case "build": {
         doBuild = true;
-      } else if (buildBehavior === "prompt") {
-        if (!effects.isTty)
-          throw new CliError("Build is stale. Specify --build=always or --build=if-stale to automatically re-build.");
+        break;
+      }
+      case "prompt": {
+        if (!effects.isTty) throw new CliError("Build is stale. Pass --if-stale=build to automatically rebuild.");
         const ageFormatted =
           youngestAge < 1000 * 60 * 60
             ? `${Math.round(youngestAge / 1000 / 60)} minutes ago`
@@ -268,8 +269,7 @@ export async function deploy(
   }
 
   if (doBuild) {
-    if (buildBehavior === "never") throw new Error("Can't build during deploy when --build=never is passed");
-    console.log("building project");
+    clack.log.step("Building project");
     await build({config}, new FileBuildEffects(config.output, {logger: effects.logger, output: effects.output}));
     ({buildFilePaths} = await findBuildFiles(effects, config));
   }

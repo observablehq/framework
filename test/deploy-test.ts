@@ -145,7 +145,8 @@ const TEST_OPTIONS: DeployOptions = {
   config: TEST_CONFIG,
   message: undefined,
   deployPollInterval: 0,
-  buildBehavior: "never"
+  ifBuildMissing: "cancel",
+  ifBuildStale: "deploy"
 };
 const DEPLOY_CONFIG: DeployConfig & {projectId: string; projectSlug: string; workspaceLogin: string} = {
   projectId: "project123",
@@ -699,9 +700,9 @@ describe("deploy", () => {
   it("prompts if the build doesn't exist", async () => {
     const deployOptions = {
       ...TEST_OPTIONS,
-      buildBehavior: undefined,
+      ifBuildMissing: "prompt",
       config: {...TEST_OPTIONS.config, output: "test/output/does-not-exist"}
-    };
+    } satisfies DeployOptions;
     getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
     const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, fixedStatTime: new Date("2024-03-10")});
     await assert.rejects(() => deploy(deployOptions, effects), /out of inputs for select: No build files/);
@@ -711,8 +712,8 @@ describe("deploy", () => {
   it("prompts if the build is stale", async () => {
     const deployOptions = {
       ...TEST_OPTIONS,
-      buildBehavior: undefined
-    };
+      ifBuildStale: "prompt"
+    } satisfies DeployOptions;
     getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
     const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, fixedStatTime: new Date("2024-03-10")});
     await assert.rejects(
