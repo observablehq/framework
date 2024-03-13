@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import {transpileTypeScript} from "../src/tag.js";
+import {transpileTypeScript} from "../src/typescript.js";
 
 describe("transpileTypeScript(input)", () => {
   it("basic", () => {

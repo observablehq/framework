@@ -17,8 +17,8 @@ import {relativePath} from "./path.js";
 import {transpileSql} from "./sql.js";
 import {transpileTag} from "./tag.js";
 import {InvalidThemeError} from "./theme.js";
-import {transpileTypeScript} from "./typescript.js";
 import {red} from "./tty.js";
+import {transpileTypeScript} from "./typescript.js";
 
 export interface MarkdownCode {
   id: string;
