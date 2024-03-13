@@ -457,7 +457,7 @@ describe("deploy", () => {
     effects.clack.inputs.push("fix some more bugs");
 
     try {
-      await deploy(TEST_OPTIONS, effects);
+      await deploy({...TEST_OPTIONS, maxConcurrency: 1}, effects);
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));

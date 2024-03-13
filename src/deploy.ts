@@ -48,6 +48,7 @@ export interface DeployOptions {
   deployPollInterval?: number;
   ifBuildStale: "prompt" | "build" | "cancel" | "deploy";
   ifBuildMissing: "prompt" | "build" | "cancel";
+  maxConcurrency?: number;
 }
 
 export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
@@ -81,7 +82,14 @@ type DeployTargetInfo =
 
 /** Deploy a project to ObservableHQ */
 export async function deploy(
-  {config, message, ifBuildMissing, ifBuildStale, deployPollInterval = DEPLOY_POLL_INTERVAL_MS}: DeployOptions,
+  {
+    config,
+    message,
+    ifBuildMissing,
+    ifBuildStale,
+    deployPollInterval = DEPLOY_POLL_INTERVAL_MS,
+    maxConcurrency
+  }: DeployOptions,
   effects = defaultEffects
 ): Promise<void> {
   const {clack} = effects;
@@ -396,11 +404,15 @@ export async function deploy(
   const rateLimiter = new RateLimiter(5);
   const waitForRateLimit = buildFilePaths.length <= 300 ? () => {} : () => rateLimiter.wait();
 
-  await runAllWithConcurrencyLimit(buildFilePaths, async (path, i) => {
-    await waitForRateLimit();
-    uploadSpinner.message(`${i + 1} / ${buildFilePaths!.length} ${path.slice(0, effects.outputColumns - 10)}`);
-    await apiClient.postDeployFile(deployId, join(config.output, path), path);
-  });
+  await runAllWithConcurrencyLimit(
+    buildFilePaths,
+    async (path, i) => {
+      await waitForRateLimit();
+      uploadSpinner.message(`${i + 1} / ${buildFilePaths!.length} ${path.slice(0, effects.outputColumns - 10)}`);
+      await apiClient.postDeployFile(deployId, join(config.output, path), path);
+    },
+    {maxConcurrency}
+  );
   uploadSpinner.stop(`${buildFilePaths.length} uploaded`);
 
   // Mark the deploy as uploaded
