@@ -1,6 +1,6 @@
 import {type WriteStream, createReadStream, existsSync, statSync} from "node:fs";
 import {mkdir, open, readFile, rename, unlink} from "node:fs/promises";
-import {basename, dirname, extname, join, relative} from "node:path/posix";
+import {dirname, extname, join, relative} from "node:path/posix";
 import {createGunzip} from "node:zlib";
 import {spawn} from "cross-spawn";
 import JSZip from "jszip";
@@ -10,6 +10,7 @@ import {FileWatchers} from "./fileWatchers.js";
 import {getFileHash} from "./javascript/module.js";
 import type {Logger, Writer} from "./logger.js";
 import {cyan, faint, green, red, yellow} from "./tty.js";
+import {getTypeScriptPath} from "./typescript.js";
 
 const runningCommands = new Map<string, Promise<string>>();
 
@@ -124,8 +125,7 @@ export class LoaderResolver {
     const exactPath = join(this.root, path);
     if (existsSync(exactPath)) return exactPath;
     if (path.endsWith(".js")) {
-      // TODO consolidate this resolving
-      const tspath = join(this.root, dirname(path), basename(path, ".js") + ".ts");
+      const tspath = getTypeScriptPath(exactPath);
       if (existsSync(tspath)) return tspath;
     }
     return this.find(path)?.path;

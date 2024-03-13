@@ -1,9 +1,9 @@
 import {createHash} from "node:crypto";
 import {existsSync, readFileSync, statSync} from "node:fs";
-import {basename, dirname, join} from "node:path/posix";
+import {join} from "node:path/posix";
 import type {Program} from "acorn";
 import {resolvePath} from "../path.js";
-import {transpileTypeScript} from "../typescript.js";
+import {getTypeScriptPath, transpileTypeScript} from "../typescript.js";
 import {findFiles} from "./files.js";
 import {findImports} from "./imports.js";
 import {parseProgram} from "./parse.js";
@@ -72,9 +72,8 @@ export function getModuleHash(root: string, path: string): string {
  */
 export function getModuleInfo(root: string, path: string): ModuleInfo | undefined {
   let key = join(root, path);
-  // TODO Shouldn’t the path always end with .js?
   if (!existsSync(key) && path.endsWith(".js")) {
-    const tskey = join(dirname(key), basename(key, ".js") + ".ts");
+    const tskey = getTypeScriptPath(key);
     if (existsSync(tskey)) key = tskey;
   }
   let mtimeMs: number;

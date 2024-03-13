@@ -12,3 +12,8 @@ export function transpileTypeScript(input: string): string {
     return input;
   }
 }
+
+export function getTypeScriptPath(path: string): string {
+  if (!path.endsWith(".js")) throw new Error(`expected .js: ${path}`);
+  return path.slice(0, -".js".length) + ".ts";
+}

@@ -30,7 +30,7 @@ import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, link} from "./tty.js";
-import {transpileTypeScript} from "./typescript.js";
+import {getTypeScriptPath, transpileTypeScript} from "./typescript.js";
 
 export interface PreviewOptions {
   config: Config;
@@ -120,7 +120,7 @@ export class PreviewServer {
             return;
           } else if (pathname.endsWith(".js")) {
             if (!existsSync(filepath)) {
-              const tspath = join(dirname(filepath), basename(filepath, ".js") + ".ts");
+              const tspath = getTypeScriptPath(filepath);
               if (existsSync(tspath)) filepath = tspath;
             }
             let input = await readFile(filepath, "utf-8");
