@@ -1,10 +1,10 @@
 # Deploying
 
-When it comes time to share your project, you have a few options for deploying it for others to see. Framework is compatible with many static site hosts and automation environments, but here we'll focus on using GitHub Actions to deploy to Observable.
+When time comes to share your project, you have many options for deploying it for others to see. Framework is compatible with many static site hosts and automation environments. In this guide we’ll focus on deploying to Observable with GitHub Actions.
 
 ## Manually deploying to Observable
 
-If you don't already have a project to deploy, you can make one by following [getting-started](./getting-started). First, make sure that your project builds without error:
+If you don’t already have a project to deploy, you can create one by following [getting-started](./getting-started). First, make sure that your project builds without error:
 
 ```sh
 $ npm run build
@@ -16,15 +16,15 @@ Once that is done you can deploy to Observable with the command
 $ npm run deploy
 ```
 
-The first time you run this it will prompt you for details needed to set up the project on the server such as the project's _slug_ (which determines its URL) and the access level. If you don't already have an Observable account or aren't signed in, this command will also guide you through setting that up.
+The first time you run this, it will prompt you for details needed to set up the project on the server, such as the project's _slug_ (which determines its URL), and the access level. If you don’t already have an Observable account or aren’t signed in, this command will also guide you through setting that up.
 
-When the deploy command is finished, it will print a link to observablehq.cloud where you can view your deployed project. If you choose "private" as the access level, you can now share that link with anyone who is a memberof  your workspace. If you chose "public", you can share that link with anyone and they'll be able to see your Framework project.
+When the deploy command finishes, it prints a link to observablehq.cloud where you can view your deployed project. If you choose “private” as the access level, you can now share that link with anyone who is a member of  your workspace. If you chose “public”, you can share that link with anyone and they’ll be able to see your Framework project.
 
 <div class="note">The deploy command will create a file at <code>docs/.observablehq/deploy.json</code> which you should commit to git. If you have configured a source root besides `docs/`, the file will be placed there instead. This file is used to store the project to deploy to, and is required for automated deploys.</div>
 
 ## Automated deploys to Observable
 
-To set up automatic deploys, we'll be using GitHub actions. In your git repository, create and commit a file at `.github/workflows/deploy.yml`. Here is a starting example:
+To set up automatic deploys, we’ll be using [GitHub actions](https://github.com/features/actions). In your git repository, create and commit a file at `.github/workflows/deploy.yml`. Here is a starting example:
 
 ```yaml
 name: Deploy
@@ -54,17 +54,19 @@ jobs:
           OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_TOKEN }}
 ```
 
-When deploying automatically, you won't be able to login with a browser the way you did for manual deploys. Instead you can authenticate via the environment variable `OBSERVABLE_TOKEN` using an API key from Observable.
+When deploying automatically, you won’t be able to login with a browser the way you did for manual deploys. Instead, you will authenticate via the environment variable `OBSERVABLE_TOKEN`, using an API key from Observable.
 
-To create an API token, on https://observablehq.com open your workspace's settings and choose "API keys". From there create a new API key, and assign it the "Deploy new versions of projects" scope. We'll need to secure give our workflow file access that key. 
+To create a token, go to https://observablehq.com and open your workspace settings. Choose “API keys”. From there, create a new key, and assign it the "Deploy new versions of projects" scope.
 
-To do that, we'll use GitHub secrets. Sign in to the settings of your GitHub, and add a secret named `OBSERVABLE_TOKEN`. You can see [GitHub's documentation](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions) for more information about secrets.
+That token is the equivalent of a password giving write access to your hosted project. **Do not commit it to git** (and, if it is exposed in any way, take a minute to revoke it and create a new one instead—or contact support).
 
-This `deploy.yml` will automatically build and deploy your project whenever you change the code, and once per day to keep your data up-to-date.
+To pass this information securely to the Github action (so it can effectively be authorized to deploy the project to Observable), we’ll use GitHub secrets. Sign in to the settings of your GitHub account, and add a secret named `OBSERVABLE_TOKEN`. See [GitHub’s documentation](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions) for more information about secrets.
+
+This `deploy.yml` will automatically build and deploy your project once per day (to keep your data up-to-date), as well as whenever you push a new version of the code to your repository (so you can make changes at any time).
 
 ### Caching
 
-If you have data loaders that take a long time to run or that simply don't need to update every time you change your project code, you can set up caching to automatically re-use existing data from previous builds. To do that, add the following steps to your `deploy.yml` before you run `build`:
+If some of your data loaders take a long time to run, or simply don’t need to be updated every time you modify the code, you can set up caching to automatically re-use existing data from previous builds. To do that, add the following steps to your `deploy.yml` before you run `build`:
 
 ```yaml
 jobs:
@@ -83,9 +85,9 @@ jobs:
       # ...
 ```
 
-This uses one cache per calendar day. If you re-deploy multiple times in a day, the results of your data loaders will be-reused on the second and subsequent runs. You can customize the `date` and `cache-data` steps to change the cadence of the caching. For example you could use `date +'%Y-%U'` to cache data for a week or `date +'%Y-%m-%dT%H` to cache it for only an hour.
+This uses one cache per calendar day. If you re-deploy multiple times in a day, the results of your data loaders will be reused on the second and subsequent runs. You can customize the `date` and `cache-data` steps to change the cadence of the caching. For example you could use `date +'%Y-%U'` to cache data for a week or `date +'%Y-%m-%dT%H` to cache it for only an hour.
 
-<div class="note">You'll need to update the paths used in this config if you've customized `observablehq.config.js` to have a different `root`.</div>
+<div class="note">You’ll need to change the paths used in this config if `observablehq.config.js` points to a different `root`.</div>
 
 ## Deploying to other services
 
