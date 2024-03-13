@@ -1,6 +1,5 @@
 import {Parser, tokTypes} from "acorn";
 import type {Expression, Identifier, Options, Program} from "acorn";
-import {transpileTypeScript} from "../typescript.js";
 import {checkAssignments} from "./assignments.js";
 import {findAwaits} from "./awaits.js";
 import {findDeclarations} from "./declarations.js";
@@ -40,7 +39,6 @@ export interface JavaScriptNode {
  * the specified inline JavaScript expression.
  */
 export function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
-  input = transpileTypeScript(input); // TODO conditional
   const {inline = false, path} = options;
   let expression = maybeParseExpression(input); // first attempt to parse as expression
   if (expression?.type === "ClassExpression" && expression.id) expression = null; // treat named class as program

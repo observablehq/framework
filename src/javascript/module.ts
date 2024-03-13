@@ -90,7 +90,7 @@ export function getModuleInfo(root: string, path: string): ModuleInfo | undefine
     let body: Program;
     try {
       source = readFileSync(key, "utf-8");
-      source = transpileTypeScript(source); // TODO conditional
+      if (key.endsWith(".ts")) source = transpileTypeScript(source);
       body = parseProgram(source);
     } catch {
       moduleInfoCache.delete(key); // delete stale entry

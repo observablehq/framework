@@ -20,6 +20,7 @@ import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {faint, yellow} from "./tty.js";
+import {transpileTypeScript} from "./typescript.js";
 
 export interface BuildOptions {
   config: Config;
@@ -198,7 +199,8 @@ export async function build(
     }
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     const resolveImport = getModuleResolver(root, path);
-    const input = await readFile(sourcePath, "utf-8");
+    let input = await readFile(sourcePath, "utf-8");
+    if (path.endsWith(".ts")) input = transpileTypeScript(input);
     const contents = await transpileModule(input, {
       root,
       path,

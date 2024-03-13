@@ -103,6 +103,7 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
       if (source != null) {
         const id = uniqueCodeId(context, source);
         // TODO const sourceLine = context.startLine + context.currentLine;
+        if (tag === "ts") source = transpileTypeScript(source);
         const node = parseJavaScript(source, {path});
         context.code.push({id, node});
         html += `<div id="cell-${id}" class="observablehq observablehq--block${
@@ -258,7 +259,8 @@ function makePlaceholderRenderer(): RenderRule {
     const id = uniqueCodeId(context, token.content);
     try {
       // TODO sourceLine: context.startLine + context.currentLine
-      const node = parseJavaScript(token.content, {path, inline: true});
+      const input = transpileTypeScript(token.content);
+      const node = parseJavaScript(input, {path, inline: true});
       context.code.push({id, node});
       return `<span id="cell-${id}" class="observablehq--loading"></span>`;
     } catch (error) {
