@@ -42,13 +42,13 @@ add(1 as number, 3)
 
 Inline expressions are also converted when they appear to be written in TypeScript:
 
+1 + 2 = ${add(1 as number, 2)}.
+
 ```md echo
 1 + 2 = ${add(1 as number, 2)}.
 ```
 
-1 + 2 = ${add(1 as number, 2)}.
-
-Errors echo up as expected:
+Syntax errors are shown as expected:
 
 ```ts echo
 function bad() ::: {
@@ -56,12 +56,10 @@ function bad() ::: {
 }
 ```
 
-Imports are transpiled too:
+Imports are transpiled too (here `sum.js` refers to `sum.ts`; by convention, TypeScript files have the `.ts` extension but are imported using `.js`):
 
 ```ts echo
-import {sum} from "./sum.ts"; // TODO import sum.ts as sum.js
-```
+import {sum} from "./sum.js";
 
-```js
-sum(1, 2)
+display(sum(1, 2));
 ```

@@ -1,5 +1,5 @@
 import {createHash} from "node:crypto";
-import {watch} from "node:fs";
+import {existsSync, watch} from "node:fs";
 import type {FSWatcher, WatchEventType} from "node:fs";
 import {access, constants, readFile} from "node:fs/promises";
 import {createServer} from "node:http";
@@ -30,7 +30,6 @@ import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, link} from "./tty.js";
-import {transpileTypeScript} from "./typescript.js";
 
 export interface PreviewOptions {
   config: Config;
@@ -112,14 +111,18 @@ export class PreviewServer {
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
         const path = pathname.slice("/_import".length);
-        const filepath = join(root, path);
+        let filepath = join(root, path);
         try {
           if (pathname.endsWith(".css")) {
             await access(filepath, constants.R_OK);
             end(req, res, await bundleStyles({path: filepath}), "text/css");
             return;
-          } else if (pathname.endsWith(".js") || pathname.endsWith(".ts")) {
-            const input = await readFile(join(root, path), "utf-8");
+          } else if (pathname.endsWith(".js")) {
+            if (!existsSync(filepath)) {
+              const tspath = join(dirname(filepath), basename(filepath, ".js") + ".ts");
+              if (existsSync(tspath)) filepath = tspath;
+            }
+            const input = await readFile(filepath, "utf-8");
             const output = await transpileModule(input, {root, path});
             end(req, res, output, "text/javascript");
             return;

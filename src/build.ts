@@ -188,7 +188,7 @@ export async function build(
   const resolveImportAlias = (path: string): string => {
     const hash = getModuleHash(root, path).slice(0, 8);
     const ext = extname(path);
-    return `/${join("_import", dirname(path), basename(path, ext))}.${hash}${ext === "ts" ? "js" : "ts"}`;
+    return `/${join("_import", dirname(path), basename(path, ext))}.${hash}${ext === "ts" ? "js" : ext}`;
   };
   for (const path of localImports) {
     const sourcePath = join(root, path);

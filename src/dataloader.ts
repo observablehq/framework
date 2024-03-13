@@ -1,6 +1,6 @@
 import {type WriteStream, createReadStream, existsSync, statSync} from "node:fs";
 import {mkdir, open, readFile, rename, unlink} from "node:fs/promises";
-import {dirname, extname, join, relative} from "node:path/posix";
+import {basename, dirname, extname, join, relative} from "node:path/posix";
 import {createGunzip} from "node:zlib";
 import {spawn} from "cross-spawn";
 import JSZip from "jszip";
@@ -122,7 +122,13 @@ export class LoaderResolver {
 
   getWatchPath(path: string): string | undefined {
     const exactPath = join(this.root, path);
-    return existsSync(exactPath) ? exactPath : this.find(path)?.path;
+    if (existsSync(exactPath)) return exactPath;
+    if (path.endsWith(".js")) {
+      // TODO consolidate this resolving
+      const tspath = join(this.root, dirname(path), basename(path, ".js") + ".ts");
+      if (existsSync(tspath)) return tspath;
+    }
+    return this.find(path)?.path;
   }
 
   watchFiles(path: string, watchPaths: Iterable<string>, callback: (name: string) => void) {

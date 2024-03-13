@@ -40,7 +40,7 @@ export interface JavaScriptNode {
  * the specified inline JavaScript expression.
  */
 export function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
-  input = transpileTypeScript(input);
+  input = transpileTypeScript(input); // TODO conditional
   const {inline = false, path} = options;
   let expression = maybeParseExpression(input); // first attempt to parse as expression
   if (expression?.type === "ClassExpression" && expression.id) expression = null; // treat named class as program
