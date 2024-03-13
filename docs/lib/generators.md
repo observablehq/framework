@@ -94,7 +94,7 @@ This generator is available by default as `dark` in Markdown. It can be used to 
 ```js echo
 Plot.plot({
   height: 260,
-  color: {scheme: dark ? "turbo" : "blues"},
+  color: {scheme: dark ? "turbo" : "ylgnbu"},
   marks: [
     Plot.rectY(
       olympians,
