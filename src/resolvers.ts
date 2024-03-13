@@ -1,5 +1,6 @@
 import {createHash} from "node:crypto";
 import {extname, join} from "node:path/posix";
+import type {LoaderResolver} from "./dataloader.js";
 import {findAssets} from "./html.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js";
@@ -67,7 +68,10 @@ export const builtins = new Map<string, string>([
  * For files, we collect all FileAttachment calls within local modules, adding
  * them to any files referenced by static HTML.
  */
-export async function getResolvers(page: MarkdownPage, {root, path}: {root: string; path: string}): Promise<Resolvers> {
+export async function getResolvers(
+  page: MarkdownPage,
+  {root, path, loaders}: {root: string; path: string; loaders: LoaderResolver}
+): Promise<Resolvers> {
   const hash = createHash("sha256").update(page.html).update(JSON.stringify(page.data));
   const assets = findAssets(page.html, path);
   const files = new Set<string>();
@@ -104,10 +108,10 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
 
   // Compute the content hash. TODO In build, this needs to consider the output
   // of data loaders, rather than the source of data loaders.
-  for (const f of assets) hash.update(getFileHash(root, resolvePath(path, f)));
-  for (const f of files) hash.update(getFileHash(root, resolvePath(path, f)));
+  for (const f of assets) hash.update(loaders.getFileHash(resolvePath(path, f)));
+  for (const f of files) hash.update(loaders.getFileHash(resolvePath(path, f)));
   for (const i of localImports) hash.update(getModuleHash(root, resolvePath(path, i)));
-  if (page.style && isPathImport(page.style)) hash.update(getFileHash(root, resolvePath(path, page.style)));
+  if (page.style && isPathImport(page.style)) hash.update(loaders.getFileHash(resolvePath(path, page.style)));
 
   // Collect transitively-attached files and local imports.
   for (const i of localImports) {
@@ -225,7 +229,7 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   }
 
   function resolveFile(specifier: string): string {
-    return relativePath(path, resolveFilePath(root, resolvePath(path, specifier)));
+    return relativePath(path, loaders.resolveFilePath(resolvePath(path, specifier)));
   }
 
   function resolveStylesheet(specifier: string): string {
@@ -279,10 +283,6 @@ export function resolveStylesheetPath(root: string, path: string): string {
 
 export function resolveImportPath(root: string, path: string): string {
   return `/${join("_import", path)}?sha=${getModuleHash(root, path)}`;
-}
-
-export function resolveFilePath(root: string, path: string): string {
-  return `/${join("_file", path)}?sha=${getFileHash(root, path)}`;
 }
 
 // Returns any inputs that are not declared in outputs. These typically refer to

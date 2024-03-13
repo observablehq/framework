@@ -167,6 +167,10 @@ export default {
 
 The base path when serving the site. Currently this only affects the custom 404 page, if any.
 
+## cleanUrls <a href="https://github.com/observablehq/framework/pull/1037" target="_blank" class="observablehq-version-badge" data-version="prerelease" title="Added in #1037"></a>
+
+Whether page links should be “clean”, _i.e._, formatted without a `.html` extension. Defaults to true. If true, a link to `config.html` will be formatted as `config`. Regardless of this setting, a link to an index page will drop the implied `index.html`; for example `foo/index.html` will be formatted as `foo/`.
+
 ## toc
 
 The table of contents configuration.
@@ -195,6 +199,48 @@ toc: false
 ## search
 
 Whether to enable [search](./search) on the project; defaults to false.
+
+## interpreters <a href="https://github.com/observablehq/framework/pull/935" target="_blank" class="observablehq-version-badge" data-version="prerelease" title="Added in #935"></a>
+
+The **interpreters** option specifies additional interpreted languages for data loaders, indicating the file extension and associated interpreter. (See [loader routing](./loaders#routing) for more.) The default list of interpreters is:
+
+```js run=false
+{
+  ".js": ["node", "--no-warnings=ExperimentalWarning"],
+  ".ts": ["tsx"],
+  ".py": ["python3"],
+  ".r": ["Rscript"],
+  ".R": ["Rscript"],
+  ".rs": ["rust-script"]
+  ".go": ["go", "run"],
+  ".java": ["java"],
+  ".jl": ["julia"],
+  ".php": ["php"],
+  ".sh": ["sh"],
+  ".exe": []
+}
+```
+
+Keys specify the file extension and values the associated command and arguments. For example, to add Perl (extension `.pl`) and AppleScript (`.scpt`) to the list above:
+
+```js run=false
+export default {
+  interpreters: {
+    ".pl": ["perl"],
+    ".scpt": ["osascript"]
+  }
+};
+```
+
+To disable an interpreter, set its value to null. For example, to disable Rust:
+
+```js run=false
+export default {
+  interpreters: {
+    ".rs": null
+  }
+};
+```
 
 ## markdownIt <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" target="_blank" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a>
 
