@@ -1,0 +1,50 @@
+@import url("observablehq:default.css");
+@import url("observablehq:theme-air.css") (prefers-color-scheme: light);
+@import url("observablehq:theme-near-midnight.css") (prefers-color-scheme: dark);
+
+#observablehq-header a[href] {
+  color: inherit;
+}
+
+#observablehq-header a[target="_blank"] {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  text-decoration: none;
+}
+
+#observablehq-header a[target="_blank"]:hover span {
+  text-decoration: underline;
+}
+
+#observablehq-header a[target="_blank"]::after {
+  content: "\2197";
+}
+
+#observablehq-header a[target="_blank"]:not(:hover, :focus)::after {
+  color: var(--theme-foreground-muted);
+}
+
+#observablehq-main {
+  min-height: calc(100vh - 23.8rem);
+}
+
+@container not (min-width: 640px) {
+  .hide-if-small {
+    display: none;
+  }
+}
+
+a.observablehq-version-badge {
+  font: 500 12px var(--sans-serif);
+  display: inline-block;
+  vertical-align: top;
+  padding: 2px 8px;
+  color: var(--theme-green);
+  background: color-mix(in srgb, var(--theme-green), transparent 80%);
+  border-radius: 12px;
+}
+
+.observablehq-version-badge::before {
+  content: attr(data-version);
+}

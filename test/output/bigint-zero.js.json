@@ -1,0 +1,17 @@
+{
+  "body": {
+    "type": "Literal",
+    "start": 0,
+    "end": 2,
+    "value": "0",
+    "raw": "0n",
+    "bigint": "0"
+  },
+  "declarations": null,
+  "references": [],
+  "files": [],
+  "imports": [],
+  "expression": true,
+  "async": false,
+  "inline": false
+}

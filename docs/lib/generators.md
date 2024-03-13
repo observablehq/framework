@@ -6,9 +6,9 @@ The Observable standard library includes several generator utilities. These are 
 import {Generators} from "npm:@observablehq/stdlib";
 ```
 
-## Generators.input(*element*)
+## input(*element*)
 
-Returns an async generator that yields whenever the given *element* emits an *input* event, with the given *element*’s current value. (It’s a bit fancier than that because we special-case a few element types.) The built-in [`view` function](<../javascript/display#view(element)>) uses this.
+Returns an async generator that yields whenever the given *element* emits an *input* event, with the given *element*’s current value. (It’s a bit fancier than that because we special-case a few element types.) The built-in [`view` function](<../javascript/inputs#view(element)>) uses this.
 
 ```js echo
 const nameInput = display(document.createElement("input"));
@@ -19,7 +19,7 @@ const name = Generators.input(nameInput);
 name
 ```
 
-## Generators.observe(*change*)
+## observe(*change*)
 
 Returns an async generator that yields whenever the callback function *change* is called, with the value passed.
 
@@ -35,7 +35,7 @@ const hash = Generators.observe((change) => {
 hash
 ```
 
-## Generators.queue(*change*)
+## queue(*change*)
 
 Returns an async generator that yields whenever the callback function *change* is called, with the value passed. This is identical to Generators.observe, except that if *change* is called multiple times before the consumer has a chance to process the yielded result, values will not be dropped; use this if you require that the consumer not miss a yielded value.
 
@@ -51,7 +51,7 @@ const hash = Generators.queue((change) => {
 hash
 ```
 
-## Generators.now()
+## now()
 
 Returns a generator that repeatedly yields `Date.now()`, forever. This generator is available by default as `now` in Markdown.
 
@@ -63,7 +63,7 @@ const now = Generators.now();
 now
 ```
 
-## Generators.width(*element*)
+## width(*element*)
 
 Returns an async generator that yields the width of the given target *element*. Using a [ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver), the generator will yield whenever the width of the *element* changes. This generator for the `main` element is available by default as `width` in Markdown.
 
@@ -73,4 +73,40 @@ const width = Generators.width(document.querySelector("main"));
 
 ```js echo
 width
+```
+
+## dark() <a href="https://github.com/observablehq/framework/pull/1025" target="_blank" class="observablehq-version-badge" data-version="prerelease" title="Added in #1025"></a>
+
+Returns an async generator that yields a boolean indicating whether the page is currently displayed with a dark [color-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/color-scheme).
+
+If the page supports dark mode (for example with the default Framework themes), the value reflects the user’s preferred color scheme. It will yield if that value changes, and update the charts that depend on it without needing to reload the page — this happens at dusk (if the user settings adapt from light to dark), and conversely at dawn, from dark to light; and of course, when the user is playing with their settings.
+
+If the page does _not_ support dark mode, and only has a light theme, the value is always false, and likewise it is always true if the page only has a dark theme.
+
+```js echo
+html`<em>Current theme: ${dark ? "dark" : "light"}</em>`
+```
+
+This generator is available by default as `dark` in Markdown. It can be used to pick a [color scheme](https://observablehq.com/plot/features/scales#color-scales) for a chart, or an appropriate [mix-blend-mode](https://developer.mozilla.org/en-US/docs/Web/CSS/mix-blend-mode):
+
+```js echo
+Plot.plot({
+  height: 260,
+  color: {scheme: dark ? "turbo" : "blues"},
+  marks: [
+    Plot.rectY(
+      olympians,
+      Plot.binX(
+        {y2: "count"},
+        {
+          x: "weight",
+          fill: "weight",
+          z: "sex",
+          mixBlendMode: dark ? "screen" : "multiply"
+        }
+      )
+    ),
+    Plot.ruleY([0])
+  ]
+})
 ```

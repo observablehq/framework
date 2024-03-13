@@ -2,19 +2,36 @@ const toggle = document.querySelector("#observablehq-sidebar-toggle");
 if (toggle) {
   let indeterminate = toggle.indeterminate;
   toggle.onclick = () => {
-    const matches = matchMedia("(min-width: calc(640px + 17px * 4 + 240px + 17px * 2))").matches;
+    const matches = matchMedia("(min-width: calc(640px + 6rem + 272px))").matches;
     if (indeterminate) (toggle.checked = !matches), (indeterminate = false);
     else if (toggle.checked === matches) indeterminate = true;
     toggle.indeterminate = indeterminate;
-    if (indeterminate) localStorage.removeItem("observablehq-sidebar");
-    else localStorage.setItem("observablehq-sidebar", toggle.checked);
+    if (indeterminate) sessionStorage.removeItem("observablehq-sidebar");
+    else sessionStorage.setItem("observablehq-sidebar", toggle.checked);
   };
   addEventListener("keypress", (event) => {
-    if (event.key === "b" && event.metaKey && !event.ctrlKey) {
+    if (
+      event.code === "KeyB" &&
+      (event.metaKey || event.altKey) &&
+      !event.ctrlKey &&
+      (event.target === document.body || event.target === toggle || event.target?.closest("#observablehq-sidebar"))
+    ) {
       toggle.click();
       event.preventDefault();
     }
   });
+  const title = `Toggle sidebar ${
+    /Mac|iPhone/.test(navigator.platform)
+      ? /Firefox/.test(navigator.userAgent)
+        ? "⌥" // option symbol for mac firefox
+        : "⌘" // command symbol for mac other
+      : "Alt-" // for other os or browser
+  }B`;
+  for (const label of document.querySelectorAll(
+    "#observablehq-sidebar-toggle, label[for='observablehq-sidebar-toggle']"
+  )) {
+    label.title = title;
+  }
 }
 
 // Prevent double-clicking the summary toggle from selecting text.

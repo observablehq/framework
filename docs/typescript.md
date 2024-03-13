@@ -1,4 +1,4 @@
-# TypeScript ([#79](https://github.com/observablehq/cli/issues/79))
+# TypeScript
 
 [Observable Markdown](./markdown) supports TypeScript — an extension of JavaScript adding types to the language — in fenced code blocks and inline expressions.
 
@@ -10,15 +10,18 @@ TypeScript is also supported in [data loaders](./loaders).
 
 ````md
 ```ts
-TypeScript code here…
+const message: string = "Hello, world!";
 ```
 ````
 
 try this one:
 
 ```ts echo
-import {FileAttachment} from "npm:@observablehq/stdlib";
-FileAttachment(`./test.txt`)
+const file: FileAttachment = FileAttachment("javascript/hello.txt");
+```
+
+```ts echo
+file.text()
 ```
 
 ```ts echo
@@ -56,7 +59,7 @@ function bad() ::: {
 Imports are transpiled too:
 
 ```ts echo
-import {sum} from "./sum.ts";
+import {sum} from "./sum.ts"; // TODO import sum.ts as sum.js
 ```
 
 ```js

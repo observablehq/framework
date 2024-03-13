@@ -12,7 +12,7 @@ We also provide `SQLiteDatabaseClient`, a [`DatabaseClient`](https://observableh
 import {SQLiteDatabaseClient} from "npm:@observablehq/sqlite";
 ```
 
-The easiest way to construct a SQLite database client is to declare a [`FileAttachment`](../javascript/files) and then call `file.sqlite()` to load a SQLite file. This returns a promise. (Here we rely on [implicit await](../javascript/promises).)
+The easiest way to construct a SQLite database client is to declare a [`FileAttachment`](../javascript/files) and then call `file.sqlite` to load a SQLite file. This returns a promise. (Here we rely on [implicit await](../javascript/promises).)
 
 ```js echo
 const db = FileAttachment("chinook.db").sqlite();
@@ -40,7 +40,7 @@ const customers = db.sql`SELECT * FROM customers`;
 display(await customers);
 ```
 
-A call to `db.sql` returns a promise to an array of objects; each object represents a row returned from the query. For better readability, you can display query results using [Inputs.table](./inputs#table).
+A call to `db.sql` returns a promise to an array of objects; each object represents a row returned from the query. For better readability, you can display query results using [`Inputs.table`](./inputs#table).
 
 ```js echo
 Inputs.table(customers)

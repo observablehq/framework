@@ -1,0 +1,66 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 43,
+    "body": [
+      {
+        "type": "VariableDeclaration",
+        "start": 0,
+        "end": 43,
+        "declarations": [
+          {
+            "type": "VariableDeclarator",
+            "start": 6,
+            "end": 42,
+            "id": {
+              "type": "Identifier",
+              "start": 6,
+              "end": 9,
+              "name": "foo"
+            },
+            "init": {
+              "type": "AwaitExpression",
+              "start": 12,
+              "end": 42,
+              "argument": {
+                "type": "ImportExpression",
+                "start": 18,
+                "end": 42,
+                "source": {
+                  "type": "Literal",
+                  "start": 25,
+                  "end": 41,
+                  "value": "./other/foo.js",
+                  "raw": "\"./other/foo.js\""
+                }
+              }
+            }
+          }
+        ],
+        "kind": "const"
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 6,
+      "end": 9,
+      "name": "foo"
+    }
+  ],
+  "references": [],
+  "files": [],
+  "imports": [
+    {
+      "name": "./other/foo.js",
+      "type": "local",
+      "method": "dynamic"
+    }
+  ],
+  "expression": false,
+  "async": true,
+  "inline": false
+}

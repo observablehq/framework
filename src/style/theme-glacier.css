@@ -1,0 +1,7 @@
+@import url("./abstract-light.css");
+
+:root {
+  --theme-foreground: #1c3957;
+  --theme-foreground-focus: #d75c48;
+  --theme-background-a: #f4faff;
+}

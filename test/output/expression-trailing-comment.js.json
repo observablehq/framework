@@ -1,0 +1,16 @@
+{
+  "body": {
+    "type": "Literal",
+    "start": 0,
+    "end": 2,
+    "value": 42,
+    "raw": "42"
+  },
+  "declarations": null,
+  "references": [],
+  "files": [],
+  "imports": [],
+  "expression": true,
+  "async": false,
+  "inline": false
+}

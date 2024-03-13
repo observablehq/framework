@@ -1,7 +1,16 @@
+import {existsSync} from "node:fs";
 import {readFile} from "node:fs/promises";
-import {basename, dirname, extname, join} from "node:path";
-import {visitFiles} from "./files.js";
-import {parseMarkdown} from "./markdown.js";
+import op from "node:path";
+import {basename, dirname, join} from "node:path/posix";
+import {cwd} from "node:process";
+import {pathToFileURL} from "node:url";
+import type MarkdownIt from "markdown-it";
+import {LoaderResolver} from "./dataloader.js";
+import {visitMarkdownFiles} from "./files.js";
+import {formatIsoDate, formatLocaleDate} from "./format.js";
+import {createMarkdownIt, parseMarkdown} from "./markdown.js";
+import {resolvePath} from "./path.js";
+import {resolveTheme} from "./theme.js";
 
 export interface Page {
   name: string;
@@ -19,37 +28,66 @@ export interface TableOfContents {
   show: boolean; // defaults to true
 }
 
+export type Style =
+  | {path: string} // custom stylesheet
+  | {theme: string[]}; // zero or more named theme
+
+export interface Script {
+  src: string;
+  async: boolean;
+  type: string | null;
+}
+
 export interface Config {
   root: string; // defaults to docs
   output: string; // defaults to dist
+  base: string; // defaults to "/"
   title?: string;
-  pages: (Page | Section)[]; // TODO rename to sidebar?
+  sidebar: boolean; // defaults to true if pages isn’t empty
+  pages: (Page | Section)[];
   pager: boolean; // defaults to true
+  scripts: Script[]; // defaults to empty array
+  head: string; // defaults to empty string
+  header: string; // defaults to empty string
+  footer: string; // defaults to “Built with Observable on [date].”
   toc: TableOfContents;
+  style: null | Style; // defaults to {theme: ["light", "dark"]}
+  deploy: null | {workspace: string; project: string};
+  search: boolean; // default to false
+  md: MarkdownIt;
+  loaders: LoaderResolver;
+}
+
+/**
+ * Returns the absolute path to the specified config file, which is specified as a
+ * path relative to the given root (if any). If you want to import this, you should
+ * pass the result to pathToFileURL.
+ */
+function resolveConfig(configPath: string, root = "."): string {
+  return op.join(cwd(), root, configPath);
 }
 
 export async function readConfig(configPath?: string, root?: string): Promise<Config> {
   if (configPath === undefined) return readDefaultConfig(root);
-  const importPath = join(process.cwd(), root ?? ".", configPath);
-  return normalizeConfig((await import(importPath)).default, root);
+  return normalizeConfig((await import(pathToFileURL(resolveConfig(configPath, root)).href)).default, root);
 }
 
 export async function readDefaultConfig(root?: string): Promise<Config> {
-  for (const ext of [".js", ".ts"]) {
-    try {
-      return await readConfig("observablehq.config" + ext, root);
-    } catch (error) {
-      continue;
-    }
-  }
-  return normalizeConfig(undefined, root);
+  const jsPath = resolveConfig("observablehq.config.js", root);
+  if (existsSync(jsPath)) return normalizeConfig((await import(pathToFileURL(jsPath).href)).default, root);
+  const tsPath = resolveConfig("observablehq.config.ts", root);
+  if (!existsSync(tsPath)) return normalizeConfig(undefined, root);
+  await import("tsx/esm"); // lazy tsx
+  return normalizeConfig((await import(pathToFileURL(tsPath).href)).default, root);
 }
 
-async function readPages(root: string): Promise<Page[]> {
+async function readPages(root: string, md: MarkdownIt): Promise<Page[]> {
   const pages: Page[] = [];
-  for await (const file of visitFiles(root)) {
-    if (file === "404.md" || extname(file) !== ".md") continue;
-    const parsed = await parseMarkdown(await readFile(join(root, file), "utf-8"), root, file);
+  for await (const file of visitMarkdownFiles(root)) {
+    if (file === "index.md" || file === "404.md") continue;
+    const source = await readFile(join(root, file), "utf8");
+    const parsed = parseMarkdown(source, {path: file, md});
+    if (parsed?.data?.draft) continue;
     const name = basename(file, ".md");
     const page = {path: join("/", dirname(file), name), name: parsed.title ?? "Untitled"};
     if (name === "index") pages.unshift(page);
@@ -58,16 +96,89 @@ async function readPages(root: string): Promise<Page[]> {
   return pages;
 }
 
+let currentDate = new Date();
+
+export function setCurrentDate(date = new Date()): void {
+  currentDate = date;
+}
+
 export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Promise<Config> {
-  let {root = defaultRoot, output = "dist"} = spec;
+  let {
+    root = defaultRoot,
+    output = "dist",
+    base = "/",
+    sidebar,
+    style,
+    theme = "default",
+    search,
+    deploy,
+    scripts = [],
+    head = "",
+    header = "",
+    footer = `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="${formatIsoDate(
+      currentDate
+    )}">${formatLocaleDate(currentDate)}</a>.`,
+    interpreters
+  } = spec;
   root = String(root);
   output = String(output);
-  let {title, pages = await readPages(root), pager = true, toc = true} = spec;
+  base = normalizeBase(base);
+  if (style === null) style = null;
+  else if (style !== undefined) style = {path: String(style)};
+  else style = {theme: (theme = normalizeTheme(theme))};
+  const md = createMarkdownIt(spec);
+  let {title, pages = await readPages(root, md), pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
+  sidebar = sidebar === undefined ? pages.length > 0 : Boolean(sidebar);
   pager = Boolean(pager);
+  scripts = Array.from(scripts, normalizeScript);
+  head = String(head);
+  header = String(header);
+  footer = String(footer);
   toc = normalizeToc(toc);
-  return {root, output, title, pages, pager, toc};
+  deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
+  search = Boolean(search);
+  interpreters = normalizeInterpreters(interpreters);
+  return {
+    root,
+    output,
+    base,
+    title,
+    sidebar,
+    pages,
+    pager,
+    scripts,
+    head,
+    header,
+    footer,
+    toc,
+    style,
+    deploy,
+    search,
+    md,
+    loaders: new LoaderResolver({root, interpreters})
+  };
+}
+
+function normalizeBase(base: any): string {
+  base = String(base);
+  if (!base.startsWith("/")) throw new Error(`base must start with slash: ${base}`);
+  if (!base.endsWith("/")) base += "/";
+  return base;
+}
+
+function normalizeTheme(spec: any): string[] {
+  return resolveTheme(typeof spec === "string" ? [spec] : spec === null ? [] : Array.from(spec, String));
+}
+
+function normalizeScript(spec: any): Script {
+  if (typeof spec === "string") spec = {src: spec};
+  let {src, async = false, type} = spec;
+  src = String(src);
+  async = Boolean(async);
+  type = type == null ? null : String(type);
+  return {src, async, type};
 }
 
 function normalizePageOrSection(spec: any): Page | Section {
@@ -86,7 +197,16 @@ function normalizePage(spec: any): Page {
   let {name, path} = spec;
   name = String(name);
   path = String(path);
+  if (path.endsWith("/")) path = `${path}index`;
   return {name, path};
+}
+
+function normalizeInterpreters(spec: any): Record<string, string[] | null> {
+  return Object.fromEntries(
+    Object.entries<any>(spec ?? {}).map(([key, value]): [string, string[] | null] => {
+      return [String(key), value == null ? null : Array.from(value, String)];
+    })
+  );
 }
 
 function normalizeToc(spec: any): TableOfContents {
@@ -102,4 +222,14 @@ export function mergeToc(spec: any, toc: TableOfContents): TableOfContents {
   label = String(label);
   show = Boolean(show);
   return {label, show};
+}
+
+export function mergeStyle(path: string, style: any, theme: any, defaultStyle: null | Style): null | Style {
+  return style === undefined && theme === undefined
+    ? defaultStyle
+    : style === null
+    ? null // disable
+    : style !== undefined
+    ? {path: resolvePath(path, String(style))}
+    : {theme: normalizeTheme(theme)};
 }

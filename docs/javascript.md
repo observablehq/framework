@@ -1,6 +1,6 @@
 # JavaScript
 
-The Observable CLI supports JavaScript in Markdown for charts, inputs, and other dynamic, interactive, and graphical content. This client-side JavaScript runs in the browser on load, and re-runs automatically when [reactive variables](./javascript/reactivity) change or when you edit pages during preview.
+Observable Framework supports JavaScript in Markdown for charts, inputs, and other dynamic, interactive, and graphical content. This client-side JavaScript runs in the browser on load, and re-runs automatically when [reactive variables](./javascript/reactivity) change or when you edit pages during preview.
 
 JavaScript in Markdown can be expressed either as [fenced code blocks](#fenced-code-blocks) or [inline expressions](#inline-expressions). You can also write JavaScript modules alongside Markdown files and [import them](./javascript/imports) into Markdown. (And you can run JavaScript, TypeScript, Python, or any other programming language during build to generate data using [data loaders](./loaders).)
 
@@ -88,9 +88,23 @@ The current time is ${new Date(now).toLocaleTimeString("en-US")}.
 The current time is ${new Date(now).toLocaleTimeString("en-US")}.
 ```
 
-As with code blocks, if an inline expression evaluates to a DOM node, it will be displayed. For example, you can interpolate a sparkline ${Plot.plot({axis: null, margin: 0, width: 80, height: 17, x: {type: "band", round: false}, marks: [Plot.barY(aapl.slice(-15), {x: "Date", y1: 150, y2: "Close", fill: "steelblue"})]})} or even a reactive input ${Inputs.bind(html`<input type=range style="width: 120px;">`, numberInput)} ${number} into prose.
+As with code blocks, if an inline expression evaluates to a DOM element or node, it will be inserted into the page. For example, you can…
 
-```js
+interpolate a sparkline ${Plot.plot({axis: null, margin: 0, width: 80, height: 17, x: {type: "band", round: false}, marks: [Plot.rectY(aapl.slice(-15), {x: "Date", y1: 150, y2: "Close", fill: "var(--theme-blue)"})]})}
+
+```md echo
+interpolate a sparkline ${Plot.plot({axis: null, margin: 0, width: 80, height: 17, x: {type: "band", round: false}, marks: [Plot.rectY(aapl.slice(-15), {x: "Date", y1: 150, y2: "Close", fill: "var(--theme-blue)"})]})}
+```
+
+or even a reactive input ${Inputs.bind(html`<input type=range style="width: 120px;">`, numberInput)} ${number}
+
+```md
+or even a reactive input ${Inputs.bind(html`<input type=range style="width: 120px;">`, numberInput)} ${number}
+```
+
+into prose.
+
+```js echo
 const numberInput = Inputs.input(0);
 const number = Generators.input(numberInput);
 ```

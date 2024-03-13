@@ -1,0 +1,18 @@
+{
+  "type": "module",
+  "scripts": {
+    "dev": "observable preview",
+    "build": "rm -rf dist && observable build",
+    "postinstall": "ln -sf ../../../../dist/bin/observable.js node_modules/.bin/observable"
+  },
+  "dependencies": {
+    "@observablehq/framework": "link:../..",
+    "d3": "^7.8.5",
+    "dotenv": "^16.3.1",
+    "topojson-client": "^3.1.0",
+    "topojson-simplify": "^3.0.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

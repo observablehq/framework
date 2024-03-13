@@ -1,0 +1,16 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 0,
+    "body": [],
+    "sourceType": "module"
+  },
+  "declarations": [],
+  "references": [],
+  "files": [],
+  "imports": [],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

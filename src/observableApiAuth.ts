@@ -1,83 +1,136 @@
-import type {IncomingMessage} from "http";
-import {randomBytes} from "node:crypto";
-import {type RequestListener, type ServerResponse, createServer} from "node:http";
-import type {Socket} from "node:net";
 import os from "node:os";
-import {isatty} from "node:tty";
-import open from "open";
-import {HttpError, isHttpError} from "./error.js";
-import type {Logger} from "./logger.js";
-import {ObservableApiClient, getObservableUiHost} from "./observableApiClient.js";
-import {type ApiKey, getObservableApiKey, setObservableApiKey} from "./observableApiConfig.js";
+import * as clack from "@clack/prompts";
+import type {ClackEffects} from "./clack.js";
+import {commandInstruction, commandRequiresAuthenticationMessage} from "./commandInstruction.js";
+import {CliError, isHttpError} from "./error.js";
+import type {GetCurrentUserResponse, PostAuthRequestPollResponse} from "./observableApiClient.js";
+import {ObservableApiClient, getObservableUiOrigin} from "./observableApiClient.js";
+import type {ConfigEffects} from "./observableApiConfig.js";
+import {
+  type ApiKey,
+  defaultEffects as defaultConfigEffects,
+  getObservableApiKey,
+  setObservableApiKey
+} from "./observableApiConfig.js";
+import {Telemetry} from "./telemetry.js";
+import type {TtyEffects} from "./tty.js";
+import {bold, defaultEffects as defaultTtyEffects, inverse, link, yellow} from "./tty.js";
 
-const OBSERVABLEHQ_UI_HOST = getObservableUiHost();
+const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
 
-export const commandRequiresAuthenticationMessage = `You need to be authenticated to ${
-  getObservableUiHost().hostname
-} to run this command. Please run \`observable login\`.`;
+export const VALID_TIERS = new Set(["starter_2024", "pro_2024", "enterprise_2024"]);
 
 /** Actions this command needs to take wrt its environment that may need mocked out. */
-export interface CommandEffects {
-  openUrlInBrowser: (url: string) => Promise<void>;
-  logger: Logger;
-  isatty: (fd: number) => boolean;
-  waitForEnter: () => Promise<void>;
-  getObservableApiKey: (logger: Logger) => Promise<ApiKey>;
-  setObservableApiKey: (id: string, key: string) => Promise<void>;
+export interface AuthEffects extends ConfigEffects, TtyEffects {
+  clack: ClackEffects;
+  getObservableApiKey: (effects: AuthEffects) => Promise<ApiKey | null>;
+  setObservableApiKey: (info: {id: string; key: string} | null) => Promise<void>;
   exitSuccess: () => void;
 }
 
-const defaultEffects: CommandEffects = {
-  openUrlInBrowser: async (target) => void (await open(target)),
-  logger: console,
-  isatty,
-  waitForEnter,
+export const defaultEffects: AuthEffects = {
+  ...defaultConfigEffects,
+  ...defaultTtyEffects,
+  clack,
   getObservableApiKey,
   setObservableApiKey,
   exitSuccess: () => process.exit(0)
 };
 
-export async function login(effects = defaultEffects) {
-  const nonce = randomBytes(8).toString("base64");
-  const server = new LoginServer({nonce, effects});
-  await server.start();
+export async function login(effects: AuthEffects = defaultEffects, overrides = {}) {
+  const {clack} = effects;
+  Telemetry.record({event: "login", step: "start"});
+  clack.intro(inverse(" observable login "));
 
-  const url = new URL("/settings/api-keys/generate", OBSERVABLEHQ_UI_HOST);
-  const name = `Observable CLI on ${os.hostname()}`;
-  const request = {
-    nonce,
-    port: server.port,
-    name,
-    scopes: ["projects:deploy", "projects:create"],
-    version: "2023-11-06"
-  };
-  url.searchParams.set("request", Buffer.from(JSON.stringify(request)).toString("base64"));
+  const {currentUser} = await loginInner(effects, overrides);
 
-  const {logger} = effects;
-  if (effects.isatty(process.stdin.fd)) {
-    logger.log(`Press Enter to open ${url.hostname} in your browser...`);
-    await effects.waitForEnter();
-    await effects.openUrlInBrowser(url.toString());
-  } else {
-    logger.log("Open this link in your browser to continue authentication:");
-    logger.log(`\n\t${url.toString()}\n`);
+  if (currentUser.workspaces.length === 0) {
+    clack.log.warn(`${yellow("Warning:")} You don't have any workspaces to deploy to.`);
+  } else if (currentUser.workspaces.length > 1) {
+    clack.note(
+      [
+        "You have access to the following workspaces:",
+        "",
+        ...currentUser.workspaces.map((workspace) => ` * ${formatUser(workspace)}`)
+      ].join("\n")
+    );
   }
-  return server; // for testing
-  // execution continues in the server's request handler
+  clack.outro("Logged in");
+  Telemetry.record({event: "login", step: "finish"});
+}
+
+export async function loginInner(
+  effects: AuthEffects,
+  {pollTime = 1000} = {}
+): Promise<{currentUser: GetCurrentUserResponse; apiKey: ApiKey}> {
+  const {clack} = effects;
+  const apiClient = new ObservableApiClient();
+  const requestInfo = await apiClient.postAuthRequest({
+    scopes: ["projects:deploy", "projects:create"],
+    deviceDescription: os.hostname()
+  });
+  const confirmUrl = new URL("/auth-device", OBSERVABLE_UI_ORIGIN);
+  confirmUrl.searchParams.set("code", requestInfo.confirmationCode);
+
+  clack.log.step(
+    `Your confirmation code is ${bold(yellow(requestInfo.confirmationCode))}\n` +
+      `Open ${link(confirmUrl)}\nin your browser, and confirm the code matches.`
+  );
+  const spinner = clack.spinner();
+  spinner.start("Waiting for confirmation...");
+
+  let apiKey: PostAuthRequestPollResponse["apiKey"] | null = null;
+  while (apiKey === null) {
+    await new Promise((resolve) => setTimeout(resolve, pollTime));
+    const requestPoll = await apiClient.postAuthRequestPoll(requestInfo.id);
+    switch (requestPoll.status) {
+      case "pending":
+        break;
+      case "accepted":
+        apiKey = requestPoll.apiKey;
+        break;
+      case "expired":
+        spinner.stop("Failed to confirm code.", 2);
+        Telemetry.record({event: "login", step: "error", code: "expired"});
+        throw new CliError("That confirmation code expired.");
+      case "consumed":
+        spinner.stop("Failed to confirm code.", 2);
+        Telemetry.record({event: "login", step: "error", code: "consumed"});
+        throw new CliError("That confirmation code has already been used.");
+      default:
+        spinner.stop("Failed to confirm code.", 2);
+        Telemetry.record({event: "login", step: "error", code: `unknown-${requestPoll.status}`});
+        throw new CliError(`Received an unknown polling status ${requestPoll.status}.`);
+    }
+  }
+
+  if (!apiKey) {
+    Telemetry.record({event: "login", step: "error", code: "no-key"});
+    throw new CliError("No API key returned from server.");
+  }
+  await effects.setObservableApiKey(apiKey);
+
+  apiClient.setApiKey({source: "login", key: apiKey.key});
+  let currentUser = await apiClient.getCurrentUser();
+  currentUser = {...currentUser, workspaces: validWorkspaces(currentUser.workspaces)};
+  spinner.stop(`You are logged into ${OBSERVABLE_UI_ORIGIN.hostname} as ${formatUser(currentUser)}.`);
+  return {currentUser, apiKey: {...apiKey, source: "login"}};
+}
+
+export async function logout(effects = defaultEffects) {
+  await effects.setObservableApiKey(null);
 }
 
 export async function whoami(effects = defaultEffects) {
   const {logger} = effects;
-  const apiKey = await effects.getObservableApiKey(logger);
-  const apiClient = new ObservableApiClient({
-    apiKey,
-    logger
-  });
+  const apiKey = await effects.getObservableApiKey(effects);
+  if (!apiKey) throw new CliError(commandRequiresAuthenticationMessage);
+  const apiClient = new ObservableApiClient({apiKey});
 
   try {
     const user = await apiClient.getCurrentUser();
     logger.log();
-    logger.log(`You are logged into ${OBSERVABLEHQ_UI_HOST.hostname} as ${formatUser(user)}.`);
+    logger.log(`You are logged into ${OBSERVABLE_UI_ORIGIN.hostname} as ${formatUser(user)}.`);
     logger.log();
     logger.log("You have access to the following workspaces:");
     for (const workspace of user.workspaces) {
@@ -85,12 +138,11 @@ export async function whoami(effects = defaultEffects) {
     }
     logger.log();
   } catch (error) {
-    console.log(error);
     if (isHttpError(error) && error.statusCode == 401) {
       if (apiKey.source === "env") {
         logger.log(`Your API key is invalid. Check the value of the ${apiKey.envVar} environment variable.`);
       } else if (apiKey.source === "file") {
-        logger.log("Your API key is invalid. Run `observable login` to log in again.");
+        logger.log(`Your API key is invalid. Run ${commandInstruction("login")} to log in again.`);
       } else {
         logger.log("Your API key is invalid.");
       }
@@ -100,160 +152,19 @@ export async function whoami(effects = defaultEffects) {
   }
 }
 
-class LoginServer {
-  private _server: ReturnType<typeof createServer>;
-  private _nonce: string;
-  private _effects: CommandEffects;
-  isRunning: boolean;
-  private _sockets: Set<Socket>;
-
-  constructor({nonce, effects}: {nonce: string; effects: CommandEffects}) {
-    this._nonce = nonce;
-    this._effects = effects;
-    this._server = createServer();
-    this._server.on("request", (request, response) => this._handleRequest(request, response));
-    this.isRunning = false;
-    this._sockets = new Set();
-
-    // track open sockets so we can manually close them in a hurry in tests
-    this._server.on("connection", (socket) => {
-      this._sockets.add(socket);
-      socket.once("close", () => this._sockets.delete(socket));
-    });
-  }
-
-  async start() {
-    await new Promise<void>((resolve) => {
-      // A port of 0 binds to an arbitrary open port. This prevents port
-      // conflicts, and also makes it more difficult for potentially malicious
-      // third parties to find the auth server.
-      this._server.listen(0, "localhost", resolve);
-    });
-    this.isRunning = true;
-  }
-
-  /** Immediately stops the server, rudely dropping any active or kept-alive connections. */
-  async stop(): Promise<void> {
-    const promise = new Promise((resolve, reject) =>
-      this._server.close((err) => (err ? reject(err) : resolve(undefined)))
-    );
-    // Destroy any pending sockets so that we stop immediately instead of
-    // waiting for keep-alives. Useful so that tests don't hang.
-    for (const socket of this._sockets) {
-      socket.destroy();
-    }
-    await promise;
-    this.isRunning = false;
-  }
-
-  get port() {
-    const address = this._server.address();
-    if (!address || typeof address === "string") throw new Error("invalid server address");
-    return address.port;
-  }
-
-  _handleRequest: RequestListener = async (request, response) => {
-    const {pathname} = new URL(request.url!, "http://localhost");
-    try {
-      if (!this.isTrustedOrigin(request)) throw new HttpError("Bad request", 400);
-
-      if (request.method === "OPTIONS" && pathname === "/api-key") return await this.optionsApiKey(request, response);
-      if (request.method === "POST" && pathname === "/api-key") return await this.postApiKey(request, response);
-      throw new HttpError("Not found", 404);
-    } catch (error) {
-      console.error(error);
-      response.statusCode = isHttpError(error) ? error.statusCode : 500;
-      response.setHeader("Content-Type", "application/json");
-      response.end(
-        JSON.stringify({
-          success: false,
-          message: error instanceof Error ? error.message : "Oops, an error occurred"
-        })
-      );
-    }
-  };
-
-  private async optionsApiKey(req: IncomingMessage, res: ServerResponse): Promise<void> {
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    // Relies on a "trusted origin" check in `_handleRequest`.
-    if (req.headers["origin"]) res.setHeader("Access-Control-Allow-Origin", req.headers["origin"]);
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    res.end();
-  }
-
-  private async postApiKey(req: IncomingMessage, res: ServerResponse): Promise<void> {
-    const body: any = await new Promise((resolve, reject) => {
-      const chunks: string[] = [];
-      req.setEncoding("utf8");
-      req.on("readable", () => {
-        let chunk: string;
-        while (null !== (chunk = req.read())) {
-          chunks.push(chunk);
-        }
-      });
-
-      req.on("end", () => {
-        try {
-          resolve(JSON.parse(chunks.join("")));
-        } catch (err) {
-          reject(new HttpError("Invalid JSON", 400));
-        }
-      });
-
-      req.on("error", reject);
-    });
-
-    if (body.nonce !== this._nonce) {
-      throw new HttpError("Invalid nonce", 400);
-    }
-
-    await this._effects.setObservableApiKey(body.id, body.key);
-
-    res.statusCode = 201;
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    if (req.headers["origin"]) res.setHeader("Access-Control-Allow-Origin", req.headers["origin"]);
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    await Promise.race([
-      // ignoring any potential errors ending the response
-      new Promise((resolve) => res.end(() => resolve(undefined))),
-      new Promise((resolve) => setTimeout(resolve, 500))
-    ]);
-
-    this._effects.logger.log("Successfully logged in.");
-    await this.stop();
-    this._effects.exitSuccess();
-  }
-
-  isTrustedOrigin(req: IncomingMessage): boolean {
-    const origin = req.headers["origin"];
-    if (!origin) return false;
-    let parsedOrigin;
-    try {
-      parsedOrigin = new URL(origin);
-    } catch (err) {
-      return false;
-    }
-    return (
-      parsedOrigin.protocol === OBSERVABLEHQ_UI_HOST.protocol &&
-      parsedOrigin.host === OBSERVABLEHQ_UI_HOST.host &&
-      parsedOrigin.port === OBSERVABLEHQ_UI_HOST.port
-    );
-  }
-}
-
-/** Waits for the user to press enter. */
-function waitForEnter(): Promise<void> {
-  return new Promise((resolve) => {
-    function onData(chunk) {
-      if (chunk[0] === "\n".charCodeAt(0)) {
-        process.stdin.off("data", onData);
-        resolve(undefined);
-      }
-    }
-    process.stdin.on("data", onData);
-  });
-}
-
-function formatUser(user) {
+export function formatUser(user: {name?: string; login: string}): string {
   return user.name ? `${user.name} (@${user.login})` : `@${user.login}`;
+}
+
+export function validWorkspaces(
+  workspaces: GetCurrentUserResponse["workspaces"]
+): GetCurrentUserResponse["workspaces"] {
+  return workspaces.filter(
+    (w) =>
+      VALID_TIERS.has(w.tier) &&
+      (w.role === "owner" ||
+        w.role === "member" ||
+        (w.role === "guest_member" &&
+          w.projects_info.some((info) => info.project_role === "owner" || info.project_role === "editor")))
+  );
 }

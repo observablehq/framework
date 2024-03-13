@@ -1,0 +1,7 @@
+@import url("./abstract-dark.css");
+
+:root {
+  --theme-foreground: #dcdcee;
+  --theme-foreground-focus: #81a9f6;
+  --theme-background-b: #0b0b16;
+}

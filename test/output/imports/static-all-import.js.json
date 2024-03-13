@@ -1,0 +1,140 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 76,
+    "body": [
+      {
+        "type": "ImportDeclaration",
+        "start": 0,
+        "end": 29,
+        "specifiers": [
+          {
+            "type": "ImportSpecifier",
+            "start": 8,
+            "end": 11,
+            "imported": {
+              "type": "Identifier",
+              "start": 8,
+              "end": 11,
+              "name": "foo"
+            },
+            "local": {
+              "type": "Identifier",
+              "start": 8,
+              "end": 11,
+              "name": "foo"
+            }
+          }
+        ],
+        "source": {
+          "type": "Literal",
+          "start": 18,
+          "end": 28,
+          "value": "./foo.js",
+          "raw": "\"./foo.js\""
+        }
+      },
+      {
+        "type": "ImportDeclaration",
+        "start": 30,
+        "end": 59,
+        "specifiers": [
+          {
+            "type": "ImportSpecifier",
+            "start": 38,
+            "end": 41,
+            "imported": {
+              "type": "Identifier",
+              "start": 38,
+              "end": 41,
+              "name": "bar"
+            },
+            "local": {
+              "type": "Identifier",
+              "start": 38,
+              "end": 41,
+              "name": "bar"
+            }
+          }
+        ],
+        "source": {
+          "type": "Literal",
+          "start": 48,
+          "end": 58,
+          "value": "./bar.js",
+          "raw": "\"./bar.js\""
+        }
+      },
+      {
+        "type": "ExpressionStatement",
+        "start": 61,
+        "end": 75,
+        "expression": {
+          "type": "BinaryExpression",
+          "start": 61,
+          "end": 74,
+          "left": {
+            "type": "CallExpression",
+            "start": 61,
+            "end": 66,
+            "callee": {
+              "type": "Identifier",
+              "start": 61,
+              "end": 64,
+              "name": "foo"
+            },
+            "arguments": [],
+            "optional": false
+          },
+          "operator": "+",
+          "right": {
+            "type": "CallExpression",
+            "start": 69,
+            "end": 74,
+            "callee": {
+              "type": "Identifier",
+              "start": 69,
+              "end": 72,
+              "name": "bar"
+            },
+            "arguments": [],
+            "optional": false
+          }
+        }
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 8,
+      "end": 11,
+      "name": "foo"
+    },
+    {
+      "type": "Identifier",
+      "start": 38,
+      "end": 41,
+      "name": "bar"
+    }
+  ],
+  "references": [],
+  "files": [],
+  "imports": [
+    {
+      "name": "./foo.js",
+      "type": "local",
+      "method": "static"
+    },
+    {
+      "name": "./bar.js",
+      "type": "local",
+      "method": "static"
+    }
+  ],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

@@ -1,14 +1,10 @@
 # Markdown
 
-Markdown in the Observable CLI follows the [CommonMark spec](https://spec.commonmark.org/)* and is powered by [markdown-it](https://github.com/markdown-it/markdown-it). If you don’t already know Markdown, please see [GitHub’s guide to Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) for an introduction.
-
-Markdown in the Observable CLI also offers [live JavaScript](./javascript) as either [fenced code blocks](./javascript#fenced-code-blocks) (<code>```js</code>) or [inline expressions](./javascript#inline-expressions) (<code>$\{…}</code>), allows [HTML in Markdown](#html), and allows [YAML front matter](#yaml-front-matter) for page-level configuration.
-
-*The Observable CLI currently deviates from CommonMark in how blank lines are handled in HTML; see below. This is a limitation of our parser needed for incremental update during preview. We’d like to remove this deviation in the future.
+Markdown in Observable Framework follows the [CommonMark spec](https://spec.commonmark.org/) and is powered by [markdown-it](https://github.com/markdown-it/markdown-it).  We also feature [live JavaScript](./javascript) as either [fenced code blocks](./javascript#fenced-code-blocks) (<code>```js</code>) or [inline expressions](./javascript#inline-expressions) (<code>$\{…}</code>), and [HTML in Markdown](#html), and [front matter](#front-matter) for page-level configuration. If you don’t already know Markdown, please see [GitHub’s guide to Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) for an introduction.
 
 Here are a few examples of Markdown content to get you started.
 
-## YAML front matter
+## Front matter
 
 ```yaml
 ---
@@ -16,6 +12,15 @@ title: My favorite page
 toc: false
 ---
 ```
+
+The front matter supports the following options:
+
+- **title** — the page title; defaults to the (first) first-level heading of the page, if any
+- **toc** — if false, disables the [table of contents](./config#toc)
+- **index** — whether to index this page if [search](./search) is enabled; defaults to true for listed pages
+- **keywords** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" target="_blank" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a> - additional words to index for [search](./search); boosted at the same weight as the title
+- **draft** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" target="_blank" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a> — whether to skip this page during build; drafts are also not listed in the default sidebar
+- **sql** <a href="https://github.com/observablehq/framework/releases/tag/v1.2.0" target="_blank" class="observablehq-version-badge" data-version="^1.2.0" title="Added in v1.2.0"></a> — table definitions for [SQL code blocks](./sql)
 
 ## Headings
 
@@ -25,7 +30,7 @@ toc: false
 ### A third-level heading
 ```
 
-Note: a second-level heading (`##`) immediately following a first-level heading (`#`) is styled specially as a subtitle.
+<div class="note">A second-level heading (<code>##</code>) immediately following a first-level heading (<code>#</code>) is styled specially as a subtitle.</div>
 
 ## Styling
 
@@ -92,12 +97,12 @@ Cell 1-2   |   Cell 2-2   |    Cell 3-2
 
 You can write HTML directly into Markdown. HTML is useful for greater control over layout, say to use CSS grid for a responsive bento box layout in a dashboard, or adding an external stylesheet via a link element. For example, here is an HTML details element:
 
-````html
+```html run=false
 <details>
   <summary>Click me</summary>
   This text is not visible by default.
 </details>
-````
+```
 
 This produces:
 
@@ -105,31 +110,5 @@ This produces:
   <summary>Click me</summary>
   This text is not visible by default.
 </details>
-
-In Markdown, blank lines denote separate HTML blocks; be sure to avoid blank lines if you want to treat a chunk of HTML as a single block. For example, write this:
-
-```md
-<!-- 👍 one HTML block -->
-<ul>
-  <li>one</li>
-  <li>two</li>
-  <li>three</li>
-</ul>
-```
-
-Don’t write this:
-
-```md
-<!-- 👎 three HTML blocks -->
-<ul>
-
-  <li>one</li>
-  <li>two</li>
-  <li>three</li>
-
-</ul>
-```
-
-In the latter case, the li elements become top-level and wrapped in a span, rather than children of the ul.
 
 Also see [Hypertext Literal](./lib/htl) for generating dynamic HTML in JavaScript.

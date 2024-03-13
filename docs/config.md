@@ -1,14 +1,14 @@
 # Configuration
 
-A `observablehq.config.js` (or `observablehq.config.ts`) file located in the project root allows configuration of your project. For example, a site might use a config file to set the project’s title and control the order of pages shown in the sidebar:
+A `observablehq.config.js` (or `observablehq.config.ts`) file located in the project root allows configuration of your project. For example, a site might use a config file to set the project’s title and the sidebar contents:
 
 ```js run=false
 export default {
   title: "My awesome project",
   pages: [
-    {name: "Getting awesome", path: "/getting-awesome"},
-    {name: "Being awesome", path: "/being-awesome"},
-    {name: "Staying awesome", path: "/staying-awesome"}
+    {name: "Getting ever more awesome", path: "/getting-awesome"},
+    {name: "Being totally awesome", path: "/being-awesome"},
+    {name: "Staying as awesome as ever", path: "/staying-awesome"}
   ]
 };
 ```
@@ -27,9 +27,88 @@ The path to the source root; defaults to `docs`.
 
 The path to the output root; defaults to `dist`.
 
+## theme
+
+The theme name or names, if any; defaults to `default`. [Themes](./themes) affect visual appearance by specifying colors and fonts, or by augmenting default styles. The theme option is a shorthand alternative to specifying a [custom stylesheet](#style).
+
+To force light mode:
+
+```js run=false
+theme: "light"
+```
+
+To force dark mode:
+
+```js run=false
+theme: "dark"
+```
+
+For dashboards, to compose the default light and dark themes with `alt` and `wide`:
+
+```js run=false
+theme: "dashboard"
+```
+
+Or more explicitly:
+
+```js run=false
+theme: ["air", "near-midnight", "alt", "wide"]
+```
+
+You can also apply a theme to an individual page via the [front matter](./markdown#front-matter):
+
+```yaml
+---
+theme: [glacier, slate]
+---
+```
+
+See the [list of available themes](./themes) for more.
+
+## style
+
+The path to a custom stylesheet, relative to the source root. This option takes precedence over the [theme option](#theme) (if any), providing more control by allowing you to remove or alter the default stylesheet and define a custom theme.
+
+The custom stylesheet should typically import `observablehq:default.css` to build on the default styles. You can also import any of the built-in themes. For example, to create a stylesheet that builds up on the `air` theme, create a `custom-style.css` file in the `docs` folder, then set the style option to `custom-style.css`:
+
+```css
+@import url("observablehq:default.css");
+@import url("observablehq:theme-air.css");
+
+:root {
+  --theme-foreground-focus: green;
+}
+```
+
+The default styles are implemented using CSS custom properties. These properties are designed to be defined by themes or custom stylesheets. The following custom properties are supported:
+
+- `--theme-foreground` - page foreground color, _e.g._ black
+- `--theme-background` - page background color, _e.g._ white
+- `--theme-background-alt` - block background color, _e.g._ light gray
+- `--theme-foreground-alt` - heading foreground color, _e.g._ brown
+- `--theme-foreground-muted` - secondary text foreground color, _e.g._ dark gray
+- `--theme-foreground-faint` - faint border color, _e.g._ middle gray
+- `--theme-foreground-fainter` - fainter border color, _e.g._ light gray
+- `--theme-foreground-faintest` - faintest border color, _e.g._ almost white
+- `--theme-foreground-focus` - emphasis foreground color, _e.g._ blue
+
+A custom stylesheet can be applied to an individual page via the [front matter](./markdown#front-matter):
+
+```yaml
+---
+style: custom-style.css
+---
+```
+
+In this case, the path to the stylesheet is resolved relative to the page’s Markdown file rather than the source root.
+
 ## title
 
 The project’s title. If specified, this text is used for the link to the home page in the sidebar, and to complement the titles of the webpages. For instance, a page titled “Sales” in a project titled “ACME, Inc.” will display “Sales | ACME, Inc.” in the browser’s title bar. If not specified, the home page link will appear as “Home” in the sidebar, and page titles will be shown as-is.
+
+## sidebar
+
+Whether to show the sidebar. Defaults to true if **pages** is not empty.
 
 ## pages
 
@@ -43,6 +122,7 @@ export interface Page {
   path: string;
 }
 ```
+
 ```ts run=false
 export interface Section {
   name: string;
@@ -50,7 +130,6 @@ export interface Section {
   open?: boolean;
 }
 ```
-
 
 If a section’s **open** option is not set, it defaults to true.
 
@@ -61,6 +140,36 @@ The pages list should _not_ include the root page, `index.md`. Also, we don’t 
 ## pager
 
 Whether to show the previous & next footer links; defaults to true.
+
+## head
+
+An HTML fragment to add to the head. Defaults to the empty string.
+
+## header
+
+An HTML fragment to add to the header. Defaults to the empty string.
+
+## footer
+
+An HTML fragment to add to the footer. Defaults to “Built with Observable.”
+
+## scripts
+
+Additional scripts to add to the head, such as for analytics. Unlike the **head** option, this allows you to reference a local script in the source root.
+
+```js run=false
+export default {
+  scripts: [{type: "module", async: true, src: "analytics.js"}]
+};
+```
+
+## base
+
+The base path when serving the site. Currently this only affects the custom 404 page, if any.
+
+## cleanUrls <a href="https://github.com/observablehq/framework/pull/1037" target="_blank" class="observablehq-version-badge" data-version="prerelease" title="Added in #1037"></a>
+
+Whether page links should be “clean”, _i.e._, formatted without a `.html` extension. Defaults to true. If true, a link to `config.html` will be formatted as `config`. Regardless of this setting, a link to an index page will drop the implied `index.html`; for example `foo/index.html` will be formatted as `foo/`.
 
 ## toc
 
@@ -85,4 +194,63 @@ The table of contents configuration can also be set in the page’s YAML front m
 ---
 toc: false
 ---
+```
+
+## search
+
+Whether to enable [search](./search) on the project; defaults to false.
+
+## interpreters <a href="https://github.com/observablehq/framework/pull/935" target="_blank" class="observablehq-version-badge" data-version="prerelease" title="Added in #935"></a>
+
+The **interpreters** option specifies additional interpreted languages for data loaders, indicating the file extension and associated interpreter. (See [loader routing](./loaders#routing) for more.) The default list of interpreters is:
+
+```js run=false
+{
+  ".js": ["node", "--no-warnings=ExperimentalWarning"],
+  ".ts": ["tsx"],
+  ".py": ["python3"],
+  ".r": ["Rscript"],
+  ".R": ["Rscript"],
+  ".rs": ["rust-script"]
+  ".go": ["go", "run"],
+  ".java": ["java"],
+  ".jl": ["julia"],
+  ".php": ["php"],
+  ".sh": ["sh"],
+  ".exe": []
+}
+```
+
+Keys specify the file extension and values the associated command and arguments. For example, to add Perl (extension `.pl`) and AppleScript (`.scpt`) to the list above:
+
+```js run=false
+export default {
+  interpreters: {
+    ".pl": ["perl"],
+    ".scpt": ["osascript"]
+  }
+};
+```
+
+To disable an interpreter, set its value to null. For example, to disable Rust:
+
+```js run=false
+export default {
+  interpreters: {
+    ".rs": null
+  }
+};
+```
+
+## markdownIt <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" target="_blank" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a>
+
+A hook for registering additional [markdown-it](https://github.com/markdown-it/markdown-it) plugins. For example, to use [markdown-it-footnote](https://github.com/markdown-it/markdown-it-footnote):
+
+```js run=false
+import type MarkdownIt from "markdown-it";
+import MarkdownItFootnote from "markdown-it-footnote";
+
+export default {
+  markdownIt: (md: MarkdownIt) => md.use(MarkdownItFootnote);
+};
 ```

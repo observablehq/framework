@@ -1,14 +1,14 @@
 import assert from "node:assert";
 import {readdirSync, statSync} from "node:fs";
 import {mkdir, readFile, unlink, writeFile} from "node:fs/promises";
-import {basename, join, resolve} from "node:path";
+import {basename, join, resolve} from "node:path/posix";
 import deepEqual from "fast-deep-equal";
+import {normalizeConfig} from "../src/config.js";
 import {isEnoent} from "../src/error.js";
-import {type ParseResult, parseMarkdown} from "../src/markdown.js";
-import {normalizePieceHtml} from "../src/markdown.js";
+import type {MarkdownPage} from "../src/markdown.js";
+import {makeLinkNormalizer, parseMarkdown, parseRelativeUrl} from "../src/markdown.js";
 
-const html = (strings, ...values) => String.raw({raw: strings}, ...values);
-const mockContext = () => ({files: [], imports: [], pieces: [], startLine: 0, currentLine: 0});
+const {md} = await normalizeConfig();
 
 describe("parseMarkdown(input)", () => {
   const inputRoot = "test/input";
@@ -22,12 +22,13 @@ describe("parseMarkdown(input)", () => {
     const outname = only || skip ? name.slice(5) : name;
 
     (only ? it.only : skip ? it.skip : it)(`test/input/${name}`, async () => {
-      const snapshot = await parseMarkdown(await readFile(path, "utf8"), "test/input", name);
+      const source = await readFile(path, "utf8");
+      const snapshot = parseMarkdown(source, {path: name, md});
       let allequal = true;
       for (const ext of ["html", "json"]) {
         const actual = ext === "json" ? jsonMeta(snapshot) : snapshot[ext];
-        const outfile = resolve(outputRoot, `${basename(outname, ".md")}.${ext}`);
-        const diffile = resolve(outputRoot, `${basename(outname, ".md")}-changed.${ext}`);
+        const outfile = resolve(outputRoot, `${ext === "json" ? outname : basename(outname, ".md")}.${ext}`);
+        const diffile = resolve(outputRoot, `${ext === "json" ? outname : basename(outname, ".md")}-changed.${ext}`);
         let expected;
 
         try {
@@ -62,204 +63,140 @@ describe("parseMarkdown(input)", () => {
   }
 });
 
-describe("normalizePieceHtml adds local file attachments", () => {
-  const sourcePath = "/attachments.md";
-
-  it("img[src]", () => {
-    const htmlStr = html`<img src="./test.png">`;
-    const expected = html`<img src="./_file/test.png">`;
-    const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
-
-    assert.equal(actual, expected);
-    assert.deepEqual(context.files, [
-      {
-        mimeType: "image/png",
-        name: "./test.png",
-        path: "./_file/test.png"
-      }
-    ]);
+describe("parseRelativeUrl(url)", () => {
+  it("handles paths", () => {
+    assert.deepStrictEqual(parseRelativeUrl("foo"), {pathname: "foo", search: "", hash: ""});
+    assert.deepStrictEqual(parseRelativeUrl("foo.html"), {pathname: "foo.html", search: "", hash: ""});
+    assert.deepStrictEqual(parseRelativeUrl("../foo"), {pathname: "../foo", search: "", hash: ""});
+    assert.deepStrictEqual(parseRelativeUrl("./foo"), {pathname: "./foo", search: "", hash: ""});
+    assert.deepStrictEqual(parseRelativeUrl("/foo"), {pathname: "/foo", search: "", hash: ""});
+    assert.deepStrictEqual(parseRelativeUrl("/foo%3Fbar"), {pathname: "/foo%3Fbar", search: "", hash: ""});
   });
-
-  it("img[srcset]", () => {
-    const htmlStr = html`
-        <img
-          srcset="small.jpg 480w, large.jpg 800w"
-          sizes="(max-width: 600px) 480px,
-                800px"
-          src="large.jpg"
-          alt="Image for testing"
-        />
-      `;
-    const expected = html`
-        <img srcset="./_file/small.jpg 480w, ./_file/large.jpg 800w" sizes="(max-width: 600px) 480px,
-                800px" src="./_file/large.jpg" alt="Image for testing">
-      `;
-    const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
-
-    assert.equal(actual, expected);
-    assert.deepEqual(context.files, [
-      {
-        mimeType: "image/jpeg",
-        name: "./large.jpg",
-        path: "./_file/large.jpg"
-      },
-      {
-        mimeType: "image/jpeg",
-        name: "./small.jpg",
-        path: "./_file/small.jpg"
-      }
-    ]);
+  it("handles queries", () => {
+    assert.deepStrictEqual(parseRelativeUrl("foo?bar"), {pathname: "foo", search: "?bar", hash: ""});
   });
-
-  it("video[src]", () => {
-    const htmlStr = html`<video src="observable.mov" controls>
-      Your browser doesn't support HTML video.
-      </video>`;
-    const expected = html`<video src="./_file/observable.mov" controls>
-      Your browser doesn't support HTML video.
-      </video>`;
-    const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
-
-    assert.equal(actual, expected);
-    assert.deepEqual(context.files, [
-      {
-        mimeType: "video/quicktime",
-        name: "./observable.mov",
-        path: "./_file/observable.mov"
-      }
-    ]);
+  it("handles hashes", () => {
+    assert.deepStrictEqual(parseRelativeUrl("foo#bar"), {pathname: "foo", search: "", hash: "#bar"});
+    assert.deepStrictEqual(parseRelativeUrl("foo#bar?baz"), {pathname: "foo", search: "", hash: "#bar?baz"});
   });
-
-  it("video source[src]", () => {
-    const htmlStr = html`<video width="320" height="240" controls>
-      <source src="observable.mp4" type="video/mp4">
-      <source src="observable.mov" type="video/mov">
-      Your browser doesn't support HTML video.
-      </video>`;
-
-    const expected = html`<video width="320" height="240" controls>
-      <source src="./_file/observable.mp4" type="video/mp4">
-      <source src="./_file/observable.mov" type="video/mov">
-      Your browser doesn't support HTML video.
-      </video>`;
-
-    const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
-
-    assert.equal(actual, expected);
-    assert.deepEqual(context.files, [
-      {
-        mimeType: "video/mp4",
-        name: "./observable.mp4",
-        path: "./_file/observable.mp4"
-      },
-      {
-        mimeType: "video/quicktime",
-        name: "./observable.mov",
-        path: "./_file/observable.mov"
-      }
-    ]);
-  });
-
-  it("picture source[srcset]", () => {
-    const htmlStr = html`<picture>
-      <source srcset="observable-logo-wide.png" media="(min-width: 600px)"/>
-      <img src="observable-logo-narrow.png" />
-    </picture>`;
-
-    const expected = html`<picture>
-      <source srcset="./_file/observable-logo-wide.png" media="(min-width: 600px)">
-      <img src="./_file/observable-logo-narrow.png">
-    </picture>`;
-
-    const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
-
-    assert.equal(actual, expected);
-    assert.deepEqual(context.files, [
-      {
-        mimeType: "image/png",
-        name: "./observable-logo-narrow.png",
-        path: "./_file/observable-logo-narrow.png"
-      },
-      {
-        mimeType: "image/png",
-        name: "./observable-logo-wide.png",
-        path: "./_file/observable-logo-wide.png"
-      }
-    ]);
+  it("handles queries and hashes", () => {
+    assert.deepStrictEqual(parseRelativeUrl("foo?bar#baz"), {pathname: "foo", search: "?bar", hash: "#baz"});
   });
 });
 
-describe("normalizePieceHtml only adds local files", () => {
-  const sourcePath = "/attachments.md";
-
-  it("img[src] only adds local files", () => {
-    const htmlStr = html`<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/American_Shorthair.jpg/900px-American_Shorthair.jpg">`;
-    const expected = html`<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/American_Shorthair.jpg/900px-American_Shorthair.jpg">`;
-    const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
-
-    assert.equal(actual, expected);
-    assert.deepEqual(context.files, []);
+describe("makeLinkNormalizer(normalize, false)", () => {
+  const normalize = makeLinkNormalizer(String, false);
+  it("appends .html to extension-less links", () => {
+    assert.strictEqual(normalize("foo"), "foo.html");
   });
-
-  it("img[srcset] only adds local files", () => {
-    const htmlStr = html`
-        <img
-          srcset="small.jpg 480w, https://upload.wikimedia.org/900px-American_Shorthair.jpg 900w"
-          sizes="(max-width: 600px) 480px, 900px"
-          src="https://upload.wikimedia.org/900px-American_Shorthair.jpg"
-          alt="Cat image for testing"
-        />
-      `;
-    const expected = html`
-        <img srcset="./_file/small.jpg 480w, https://upload.wikimedia.org/900px-American_Shorthair.jpg 900w" sizes="(max-width: 600px) 480px, 900px" src="https://upload.wikimedia.org/900px-American_Shorthair.jpg" alt="Cat image for testing">
-      `;
-    const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
-
-    assert.equal(actual, expected);
-    assert.deepEqual(context.files, [
-      {
-        mimeType: "image/jpeg",
-        name: "./small.jpg",
-        path: "./_file/small.jpg"
-      }
-    ]);
+  it("does not append .html to extensioned links", () => {
+    assert.strictEqual(normalize("foo.png"), "foo.png");
+    assert.strictEqual(normalize("foo.html"), "foo.html");
+    assert.strictEqual(normalize("foo.md"), "foo.md");
   });
-
-  it("video source[src] only adds local files", () => {
-    const htmlStr = html`<video width="320" height="240" controls>
-      <source src="https://www.youtube.com/watch?v=SsFyayu5csc" type="video/youtube"/>
-      <source src="observable.mov" type="video/mov">
-      Your browser doesn't support HTML video.
-      </video>`;
-
-    const expected = html`<video width="320" height="240" controls>
-      <source src="https://www.youtube.com/watch?v=SsFyayu5csc" type="video/youtube">
-      <source src="./_file/observable.mov" type="video/mov">
-      Your browser doesn't support HTML video.
-      </video>`;
-
-    const context = mockContext();
-    const actual = normalizePieceHtml(htmlStr, sourcePath, context);
-
-    assert.equal(actual, expected);
-    assert.deepEqual(context.files, [
-      {
-        mimeType: "video/quicktime",
-        name: "./observable.mov",
-        path: "./_file/observable.mov"
-      }
-    ]);
+  it("converts index links to directories", () => {
+    assert.strictEqual(normalize("foo/index"), "foo/");
+    assert.strictEqual(normalize("foo/index.html"), "foo/");
+    assert.strictEqual(normalize("../index"), "../");
+    assert.strictEqual(normalize("../index.html"), "../");
+    assert.strictEqual(normalize("./index"), "./");
+    assert.strictEqual(normalize("./index.html"), "./");
+    assert.strictEqual(normalize("/index"), "/");
+    assert.strictEqual(normalize("/index.html"), "/");
+    assert.strictEqual(normalize("index"), ".");
+    assert.strictEqual(normalize("index.html"), ".");
+  });
+  it("preserves links to directories", () => {
+    assert.strictEqual(normalize(""), "");
+    assert.strictEqual(normalize("/"), "/");
+    assert.strictEqual(normalize("./"), "./");
+    assert.strictEqual(normalize("../"), "../");
+    assert.strictEqual(normalize("foo/"), "foo/");
+    assert.strictEqual(normalize("./foo/"), "./foo/");
+  });
+  it("preserves a relative path", () => {
+    assert.strictEqual(normalize("./foo"), "./foo.html");
+    assert.strictEqual(normalize("./foo.png"), "./foo.png");
+    assert.strictEqual(normalize("../foo"), "../foo.html");
+    assert.strictEqual(normalize("../foo.png"), "../foo.png");
+    assert.strictEqual(normalize("/foo"), "/foo.html");
+    assert.strictEqual(normalize("/foo.png"), "/foo.png");
+  });
+  it("preserves the query", () => {
+    assert.strictEqual(normalize("foo.png?bar"), "foo.png?bar");
+    assert.strictEqual(normalize("foo.html?bar"), "foo.html?bar");
+    assert.strictEqual(normalize("foo?bar"), "foo.html?bar");
+  });
+  it("preserves the hash", () => {
+    assert.strictEqual(normalize("foo.png#bar"), "foo.png#bar");
+    assert.strictEqual(normalize("foo.html#bar"), "foo.html#bar");
+    assert.strictEqual(normalize("foo#bar"), "foo.html#bar");
+  });
+  it("preserves the query and hash", () => {
+    assert.strictEqual(normalize("foo.png?bar#baz"), "foo.png?bar#baz");
+    assert.strictEqual(normalize("foo.html?bar#baz"), "foo.html?bar#baz");
+    assert.strictEqual(normalize("foo?bar#baz"), "foo.html?bar#baz");
   });
 });
 
-function jsonMeta({html, ...rest}: ParseResult): string {
+describe("makeLinkNormalizer(normalize, true)", () => {
+  const normalize = makeLinkNormalizer(String, true);
+  it("does not append .html to extension-less links", () => {
+    assert.strictEqual(normalize("foo"), "foo");
+  });
+  it("does not append .html to extensioned links", () => {
+    assert.strictEqual(normalize("foo.png"), "foo.png");
+    assert.strictEqual(normalize("foo.md"), "foo.md");
+  });
+  it("removes .html from extensioned links", () => {
+    assert.strictEqual(normalize("foo.html"), "foo");
+  });
+  it("converts index links to directories", () => {
+    assert.strictEqual(normalize("foo/index"), "foo/");
+    assert.strictEqual(normalize("foo/index.html"), "foo/");
+    assert.strictEqual(normalize("../index"), "../");
+    assert.strictEqual(normalize("../index.html"), "../");
+    assert.strictEqual(normalize("./index"), "./");
+    assert.strictEqual(normalize("./index.html"), "./");
+    assert.strictEqual(normalize("/index"), "/");
+    assert.strictEqual(normalize("/index.html"), "/");
+    assert.strictEqual(normalize("index"), ".");
+    assert.strictEqual(normalize("index.html"), ".");
+  });
+  it("preserves links to directories", () => {
+    assert.strictEqual(normalize(""), "");
+    assert.strictEqual(normalize("/"), "/");
+    assert.strictEqual(normalize("./"), "./");
+    assert.strictEqual(normalize("../"), "../");
+    assert.strictEqual(normalize("foo/"), "foo/");
+    assert.strictEqual(normalize("./foo/"), "./foo/");
+  });
+  it("preserves a relative path", () => {
+    assert.strictEqual(normalize("./foo"), "./foo");
+    assert.strictEqual(normalize("./foo.png"), "./foo.png");
+    assert.strictEqual(normalize("../foo"), "../foo");
+    assert.strictEqual(normalize("../foo.png"), "../foo.png");
+    assert.strictEqual(normalize("/foo"), "/foo");
+    assert.strictEqual(normalize("/foo.png"), "/foo.png");
+  });
+  it("preserves the query", () => {
+    assert.strictEqual(normalize("foo.png?bar"), "foo.png?bar");
+    assert.strictEqual(normalize("foo.html?bar"), "foo?bar");
+    assert.strictEqual(normalize("foo?bar"), "foo?bar");
+  });
+  it("preserves the hash", () => {
+    assert.strictEqual(normalize("foo.png#bar"), "foo.png#bar");
+    assert.strictEqual(normalize("foo.html#bar"), "foo#bar");
+    assert.strictEqual(normalize("foo#bar"), "foo#bar");
+  });
+  it("preserves the query and hash", () => {
+    assert.strictEqual(normalize("foo.png?bar#baz"), "foo.png?bar#baz");
+    assert.strictEqual(normalize("foo.html?bar#baz"), "foo?bar#baz");
+    assert.strictEqual(normalize("foo?bar#baz"), "foo?bar#baz");
+  });
+});
+
+function jsonMeta({html, ...rest}: MarkdownPage): string {
   return JSON.stringify(rest, null, 2);
 }
 

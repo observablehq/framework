@@ -4,11 +4,21 @@ copyButton.innerHTML = '<button title="Copy code" class="observablehq-pre-copy">
 enableCopyButtons();
 
 export function enableCopyButtons() {
-  for (const pre of document.querySelectorAll("pre")) {
-    pre.appendChild(copyButton.content.cloneNode(true).firstChild).addEventListener("click", copy);
+  for (const pre of document.querySelectorAll("pre:not([data-copy=none])")) {
+    const parent = pre.parentNode;
+    if (parent.classList.contains("observablehq-pre-container")) continue;
+    const div = parent.insertBefore(document.createElement("div"), pre);
+    div.className = "observablehq-pre-container";
+    Object.assign(div.dataset, pre.dataset);
+    div.appendChild(copyButton.content.cloneNode(true).firstChild).addEventListener("click", copy);
+    div.appendChild(pre);
   }
 }
 
-async function copy({currentTarget}) {
-  await navigator.clipboard.writeText(currentTarget.parentElement.textContent.trimEnd());
+async function copy({currentTarget: target}) {
+  await navigator.clipboard.writeText(target.nextElementSibling.textContent.trim());
+  const [animation] = target.getAnimations({subtree: true});
+  if (animation) animation.currentTime = 0;
+  target.classList.add("observablehq-pre-copied");
+  target.addEventListener("animationend", () => target.classList.remove("observablehq-pre-copied"), {once: true});
 }

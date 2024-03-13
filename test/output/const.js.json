@@ -1,0 +1,50 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 13,
+    "body": [
+      {
+        "type": "VariableDeclaration",
+        "start": 0,
+        "end": 12,
+        "declarations": [
+          {
+            "type": "VariableDeclarator",
+            "start": 6,
+            "end": 11,
+            "id": {
+              "type": "Identifier",
+              "start": 6,
+              "end": 7,
+              "name": "x"
+            },
+            "init": {
+              "type": "Literal",
+              "start": 10,
+              "end": 11,
+              "value": 1,
+              "raw": "1"
+            }
+          }
+        ],
+        "kind": "const"
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 6,
+      "end": 7,
+      "name": "x"
+    }
+  ],
+  "references": [],
+  "files": [],
+  "imports": [],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

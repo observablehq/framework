@@ -10,32 +10,36 @@ To demonstrate, let’s load a file that describes the counties, states and gene
 
 ```js echo
 const us = FileAttachment("counties-albers-10m.json").json();
-
-display(await us);
+```
+```js echo
+us
 ```
 
 We can then create a GeoJSON object for each feature we want to display. First, the general outline of the nation:
 
 ```js echo
 const nation = topojson.feature(us, us.objects.nation);
-
-display(nation);
+```
+```js echo
+nation
 ```
 
 The counties mesh, which includes each of the delimitations once (instead of once per county). This avoids an additional stroke on the perimeter of the map, which would otherwise mask intricate features such as islands and inlets.
 
 ```js echo
 const countiesmesh = topojson.mesh(us, us.objects.counties);
-
-display(countiesmesh);
+```
+```js echo
+countiesmesh
 ```
 
 The _statemesh_ likewise contains the internal borders between states, _i.e._, everything but the coastlines and country borders.
 
 ```js echo
 const statemesh = topojson.mesh(us, us.objects.states, (a, b) => a !== b)
-
-display(statemesh);
+```
+```js echo
+statemesh
 ```
 
 Putting it together as a map using [Observable Plot](./plot):

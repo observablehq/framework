@@ -1,13 +1,20 @@
 import assert from "node:assert";
-import {normalizeConfig as config, mergeToc, readConfig} from "../src/config.js";
-
-const root = "test/input/build/config";
+import MarkdownIt from "markdown-it";
+import {normalizeConfig as config, mergeToc, readConfig, setCurrentDate} from "../src/config.js";
+import {LoaderResolver} from "../src/dataloader.js";
 
 describe("readConfig(undefined, root)", () => {
+  before(() => setCurrentDate(new Date("2024-01-11T01:02:03")));
   it("imports the config file at the specified root", async () => {
-    assert.deepStrictEqual(await readConfig(undefined, "test/input/build/config"), {
+    const {md, loaders, ...config} = await readConfig(undefined, "test/input/build/config");
+    assert(md instanceof MarkdownIt);
+    assert(loaders instanceof LoaderResolver);
+    assert.deepStrictEqual(config, {
       root: "test/input/build/config",
       output: "dist",
+      base: "/",
+      style: {theme: ["air", "near-midnight"]},
+      sidebar: true,
       pages: [
         {path: "/index", name: "Index"},
         {path: "/one", name: "One<Two"},
@@ -16,22 +23,46 @@ describe("readConfig(undefined, root)", () => {
       ],
       title: undefined,
       toc: {label: "On this page", show: true},
-      pager: true
+      pager: true,
+      scripts: [],
+      head: "",
+      header: "",
+      footer:
+        'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-11T01:02:03">Jan 11, 2024</a>.',
+      deploy: {
+        workspace: "acme",
+        project: "bi"
+      },
+      search: false
     });
   });
   it("returns the default config if no config file is found", async () => {
-    assert.deepStrictEqual(await readConfig(undefined, "test/input/build/simple"), {
+    const {md, loaders, ...config} = await readConfig(undefined, "test/input/build/simple");
+    assert(md instanceof MarkdownIt);
+    assert(loaders instanceof LoaderResolver);
+    assert.deepStrictEqual(config, {
       root: "test/input/build/simple",
       output: "dist",
+      base: "/",
+      style: {theme: ["air", "near-midnight"]},
+      sidebar: true,
       pages: [{name: "Build test case", path: "/simple"}],
       title: undefined,
       toc: {label: "Contents", show: true},
-      pager: true
+      pager: true,
+      scripts: [],
+      head: "",
+      header: "",
+      footer:
+        'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-11T01:02:03">Jan 11, 2024</a>.',
+      deploy: null,
+      search: false
     });
   });
 });
 
 describe("normalizeConfig(spec, root)", () => {
+  const root = "test/input/build/config";
   it("coerces the title to a string", async () => {
     assert.strictEqual((await config({title: 42, pages: []}, root)).title, "42");
     assert.strictEqual((await config({title: null, pages: []}, root)).title, "null");
@@ -42,7 +73,6 @@ describe("normalizeConfig(spec, root)", () => {
   });
   it("populates default pages", async () => {
     assert.deepStrictEqual((await config({}, root)).pages, [
-      {name: "Index", path: "/index"},
       {name: "One", path: "/one"},
       {name: "H1: Section", path: "/toc-override"},
       {name: "H1: Section", path: "/toc"},
@@ -89,9 +119,30 @@ describe("normalizeConfig(spec, root)", () => {
   it("populates default pager", async () => {
     assert.strictEqual((await config({pages: []}, root)).pager, true);
   });
+  describe("deploy", () => {
+    it("considers deploy optional", async () => {
+      assert.strictEqual((await config({pages: []}, root)).deploy, null);
+    });
+    it("coerces workspace", async () => {
+      assert.strictEqual(
+        (await config({pages: [], deploy: {workspace: 538, project: "bi"}}, root)).deploy?.workspace,
+        "538"
+      );
+    });
+    it("strips leading @ from workspace", async () => {
+      assert.strictEqual((await config({pages: [], deploy: {workspace: "@acme"}}, root)).deploy?.workspace, "acme");
+    });
+    it("coerces project", async () => {
+      assert.strictEqual(
+        (await config({pages: [], deploy: {workspace: "adams", project: 42}}, root)).deploy?.project,
+        "42"
+      );
+    });
+  });
 });
 
 describe("mergeToc(spec, toc)", () => {
+  const root = "test/input/build/config";
   it("merges page- and project-level toc config", async () => {
     const toc = (await config({pages: [], toc: true}, root)).toc;
     assert.deepStrictEqual(mergeToc({show: false}, toc), {label: "Contents", show: false});

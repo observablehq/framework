@@ -1,0 +1,7 @@
+.plot-d6a7b5 {
+  --plot-background: var(--theme-background);
+}
+
+p .plot-d6a7b5 {
+  display: inline-block;
+}
