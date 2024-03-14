@@ -31,7 +31,6 @@ export async function renderPage(page: MarkdownPage, options: RenderOptions & Re
   const toc = mergeToc(data?.toc, options.toc);
   const draft = Boolean(data?.draft);
   const {files, resolveFile, resolveImport, lastModified} = resolvers;
-
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
