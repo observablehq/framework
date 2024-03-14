@@ -133,6 +133,11 @@ export class LoaderResolver {
     return FileWatchers.of(this, path, watchPaths, callback);
   }
 
+  // Compute file Hash and update the lastModified map. For data loaders, use
+  // the output if it is already available (cached). In build this is always the
+  // case (unless the data loaders fail). However in preview we return the page
+  // before running the data loaders (which will run on demand from the page),
+  // so there might be a temporary discrepancy when a cache is stale.
   getFileHash(name: string): string {
     let path = name;
     if (!existsSync(join(this.root, path))) {
@@ -141,7 +146,17 @@ export class LoaderResolver {
     }
     try {
       const ts = Math.floor(statSync(join(this.root, path)).mtimeMs);
-      this.lastModified.set(resolvePath(this.root, name), ts);
+      const key = resolvePath(this.root, name);
+      this.lastModified.set(key, ts);
+      if (name !== path) {
+        try {
+          const cachePath = join(".observablehq", "cache", name);
+          this.lastModified.set(key, Math.floor(statSync(join(this.root, cachePath)).mtimeMs));
+          path = cachePath; // on success
+        } catch (error) {
+          if (!isEnoent(error)) throw error;
+        }
+      }
     } catch (error) {
       if (!isEnoent(error)) throw error;
     }
