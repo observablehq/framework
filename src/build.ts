@@ -10,7 +10,7 @@ import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
-import {populateNpmCache, resolveNpmImport, resolveNpmSpecifier} from "./npm.js";
+import {extractNpmSpecifier, populateNpmCache, resolveNpmImport} from "./npm.js";
 import {isPathImport, relativePath, resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
@@ -176,7 +176,7 @@ export async function build(
   // doesn’t let you pass in a resolver.
   for (const path of globalImports) {
     if (!path.startsWith("/_npm/")) continue; // skip _observablehq
-    effects.output.write(`${faint("copy")} npm:${resolveNpmSpecifier(path)} ${faint("→")} `);
+    effects.output.write(`${faint("copy")} npm:${extractNpmSpecifier(path)} ${faint("→")} `);
     const sourcePath = await populateNpmCache(root, path); // TODO effects
     await effects.copyFile(sourcePath, path);
   }
