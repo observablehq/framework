@@ -1,6 +1,6 @@
 # Deploying
 
-When time comes to share your project, you have many options for deploying it for others to see. Framework is compatible with many static site hosts and automation environments. In this guide we’ll focus on deploying to Observable with GitHub Actions.
+When time comes to share your project, you have many options for deploying it for others to see. Framework is compatible with many static site hosts and automation environments. In this guide we’ll focus on deploying to Observable manually, then with GitHub Actions.
 
 ## Manually deploying to Observable
 
@@ -16,11 +16,11 @@ Once that is done you can deploy to Observable with the command
 $ npm run deploy
 ```
 
-The first time you run this, it will prompt you for details needed to set up the project on the server, such as the project's _slug_ (which determines its URL), and the access level. If you don’t already have an Observable account or aren’t signed in, this command will also guide you through setting that up.
+The first time you run this command, you will be prompted for details needed to set up the project on the server, such as the project's _slug_ (which determines its URL), and the access level. If you don’t already have an Observable account or aren’t signed in, this command will also guide you through setting that up.
 
 When the deploy command finishes, it prints a link to observablehq.cloud where you can view your deployed project. If you choose “private” as the access level, you can now share that link with anyone who is a member of  your workspace. If you chose “public”, you can share that link with anyone and they’ll be able to see your Framework project.
 
-<div class="note">The deploy command creates a file at <code>docs/.observablehq/deploy.json</code> with information on where to deploy the project. It is required for automated deploys. You should commit it to git to make it available to GitHub Actions. (If you have configured a source root besides `docs/`, the file will be placed there instead.)</div>
+<div class="note">The deploy command creates a file at <code>docs/.observablehq/deploy.json</code> with information on where to deploy the project. It is required for automated deploys. You should commit it to git to make it available to GitHub Actions. (If you have configured a source root besides <code>docs/</code>, the file will be placed there instead.)</div>
 
 ## Automated deploys to Observable
 
@@ -87,7 +87,7 @@ jobs:
 
 This uses one cache per calendar day (in the “America/Los_Angeles” time zone). If you deploy multiple times in a day, the results of your data loaders will be reused on the second and subsequent runs. You can customize the `date` and `cache-data` steps to change the cadence of the caching. For example you could use `date +'%Y-%U'` to cache data for a week or `date +'%Y-%m-%dT%H` to cache it for only an hour.
 
-<div class="note">You’ll need to change the paths used in this config if `observablehq.config.js` points to a different `root`.</div>
+<div class="note">You’ll need to change the paths used in this config if <code>observablehq.config.js</code> points to a different <code>root</code>.</div>
 
 ## Deploying to other services
 
