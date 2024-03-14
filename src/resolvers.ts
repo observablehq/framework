@@ -22,6 +22,7 @@ export interface Resolvers {
   resolveFile(specifier: string): string;
   resolveImport(specifier: string): string;
   resolveStylesheet(specifier: string): string;
+  lastModified: Map<string, number>;
 }
 
 const defaultImports = [
@@ -81,6 +82,7 @@ export async function getResolvers(
   const staticImports = new Set<string>(defaultImports);
   const stylesheets = new Set<string>();
   const resolutions = new Map<string, string>();
+  const lastModified = loaders.lastModified;
 
   // Add stylesheets. TODO Instead of hard-coding Source Serif Pro, parse the
   // page’s stylesheet to look for external imports.
@@ -252,7 +254,8 @@ export async function getResolvers(
     stylesheets,
     resolveFile,
     resolveImport,
-    resolveStylesheet
+    resolveStylesheet,
+    lastModified
   };
 }
 

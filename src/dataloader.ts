@@ -5,10 +5,12 @@ import {createGunzip} from "node:zlib";
 import {spawn} from "cross-spawn";
 import JSZip from "jszip";
 import {extract} from "tar-stream";
+import {isEnoent} from "./error.js";
 import {maybeStat, prepareOutput} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {getFileHash} from "./javascript/module.js";
 import type {Logger, Writer} from "./logger.js";
+import {resolvePath} from "./path.js";
 import {cyan, faint, green, red, yellow} from "./tty.js";
 
 const runningCommands = new Map<string, Promise<string>>();
@@ -48,6 +50,7 @@ export interface LoaderOptions {
 export class LoaderResolver {
   private readonly root: string;
   private readonly interpreters: Map<string, string[]>;
+  lastModified: Map<string, number>;
 
   constructor({root, interpreters}: {root: string; interpreters?: Record<string, string[] | null>}) {
     this.root = root;
@@ -56,6 +59,7 @@ export class LoaderResolver {
         (entry): entry is [string, string[]] => entry[1] != null
       )
     );
+    this.lastModified = new Map();
   }
 
   /**
@@ -129,10 +133,17 @@ export class LoaderResolver {
     return FileWatchers.of(this, path, watchPaths, callback);
   }
 
-  getFileHash(path: string): string {
+  getFileHash(name: string): string {
+    let path = name;
     if (!existsSync(join(this.root, path))) {
       const loader = this.find(path);
       if (loader) path = relative(this.root, loader.path);
+    }
+    try {
+      const ts = Math.floor(statSync(join(this.root, path)).mtimeMs);
+      this.lastModified.set(resolvePath(this.root, name), ts);
+    } catch (error) {
+      if (!isEnoent(error)) throw error;
     }
     return getFileHash(this.root, path);
   }
