@@ -215,15 +215,17 @@ function renderScript(script: Script, resolve: (specifier: string) => string): H
 }
 
 function renderStylesheet(href: string): Html {
-  return html`\n<link rel="stylesheet" type="text/css" href="${href}"${/^\w+:/.test(href) ? " crossorigin" : ""}>`;
+  return html`\n<link rel="stylesheet" type="text/css" href="${encodeURI(href)}"${
+    /^\w+:/.test(href) ? " crossorigin" : ""
+  }>`;
 }
 
 function renderStylesheetPreload(href: string): Html {
-  return html`\n<link rel="preload" as="style" href="${href}"${/^\w+:/.test(href) ? " crossorigin" : ""}>`;
+  return html`\n<link rel="preload" as="style" href="${encodeURI(href)}"${/^\w+:/.test(href) ? " crossorigin" : ""}>`;
 }
 
 function renderModulePreload(href: string): Html {
-  return html`\n<link rel="modulepreload" href="${href}">`;
+  return html`\n<link rel="modulepreload" href="${encodeURI(href)}">`;
 }
 
 function renderHeader({header}: Pick<Config, "header">, data: MarkdownPage["data"]): Html | null {
