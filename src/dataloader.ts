@@ -133,7 +133,7 @@ export class LoaderResolver {
     return FileWatchers.of(this, path, watchPaths, callback);
   }
 
-  // Compute file Hash and update the lastModified map. For data loaders, use
+  // Compute file hash and update the lastModified map. For data loaders, use
   // the output if it is already available (cached). In build this is always the
   // case (unless the data loaders fail). However in preview we return the page
   // before running the data loaders (which will run on demand from the page),
