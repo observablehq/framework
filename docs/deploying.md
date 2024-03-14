@@ -20,7 +20,7 @@ The first time you run this, it will prompt you for details needed to set up the
 
 When the deploy command finishes, it prints a link to observablehq.cloud where you can view your deployed project. If you choose “private” as the access level, you can now share that link with anyone who is a member of  your workspace. If you chose “public”, you can share that link with anyone and they’ll be able to see your Framework project.
 
-<div class="note">The deploy command will create a file at <code>docs/.observablehq/deploy.json</code> which you should commit to git. If you have configured a source root besides `docs/`, the file will be placed there instead. This file is used to store the project to deploy to, and is required for automated deploys.</div>
+<div class="note">The deploy command creates a file at <code>docs/.observablehq/deploy.json</code> with information on where to deploy the project. It is required for automated deploys. You should commit it to git to make it available to GitHub Actions. (If you have configured a source root besides `docs/`, the file will be placed there instead.)</div>
 
 ## Automated deploys to Observable
 
@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
@@ -76,7 +76,7 @@ jobs:
       - id: date
         run: echo "date=$(TZ=America/Los_Angeles date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
       - id: cache-data
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: docs/.observablehq/cache
           key: data-${{ hashFiles('docs/data/*') }}-${{ steps.date.outputs.date }}
@@ -85,7 +85,7 @@ jobs:
       # ...
 ```
 
-This uses one cache per calendar day. If you re-deploy multiple times in a day, the results of your data loaders will be reused on the second and subsequent runs. You can customize the `date` and `cache-data` steps to change the cadence of the caching. For example you could use `date +'%Y-%U'` to cache data for a week or `date +'%Y-%m-%dT%H` to cache it for only an hour.
+This uses one cache per calendar day (in the “America/Los_Angeles” time zone). If you deploy multiple times in a day, the results of your data loaders will be reused on the second and subsequent runs. You can customize the `date` and `cache-data` steps to change the cadence of the caching. For example you could use `date +'%Y-%U'` to cache data for a week or `date +'%Y-%m-%dT%H` to cache it for only an hour.
 
 <div class="note">You’ll need to change the paths used in this config if `observablehq.config.js` points to a different `root`.</div>
 
@@ -97,4 +97,4 @@ The output of Observable Framework is set of static files that can be hosted by 
 $ npm run build
 ```
 
-Then you can upload the contents of your `dist/` directory to your static webhost of choice. You can customize the output directory using the `output` option of your configuration file. For more options related to deploying to other hosts, see [configuration](./config).
+Then you can upload the contents of your `dist/` directory to your static webhost of choice. Some webhosts may need the `cleanUrls` option <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" target="_blank" class="observablehq-version-badge" data-version="^1.3.0" title="Added in v1.3.0"></a> set to false in your project configuration file. For details and other options, see [configuration](./config).
