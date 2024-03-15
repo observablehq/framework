@@ -22,25 +22,25 @@ registerFile("./unknown-mime-extension.really", {"name":"./unknown-mime-extensio
 
 define({id: "10037545", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
 display(await(
-FileAttachment("file-top.csv")
+FileAttachment("./file-top.csv")
 ))
 }});
 
 define({id: "453a8147", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
 display(await(
-FileAttachment("subsection/file-sub.csv")
+FileAttachment("./subsection/file-sub.csv")
 ))
 }});
 
 define({id: "444c421e", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
 display(await(
-FileAttachment("observable logo.png")
+FileAttachment("./observable logo.png")
 ))
 }});
 
 define({id: "cee3ab67", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
 display(await(
-FileAttachment("unknown-mime-extension.really")
+FileAttachment("./unknown-mime-extension.really")
 ))
 }});
 

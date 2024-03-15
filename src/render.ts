@@ -65,7 +65,13 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
       : ""
   }${data?.sql ? `\nimport {registerTable} from ${JSON.stringify(resolveImport("npm:@observablehq/duckdb"))};` : ""}${
     files.size
-      ? `\n${renderFiles(files, resolveFile, (name: string) => loaders.getLastModified(resolvePath(path, name)))}`
+      ? `\n${renderFiles(
+          files,
+          resolveFile,
+          preview
+            ? (name: string) => loaders.getSourceLastModified(resolvePath(path, name))
+            : (name: string) => loaders.getOutputLastModified(resolvePath(path, name))
+        )}`
       : ""
   }${
     data?.sql
@@ -75,7 +81,7 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
       : ""
   }
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
-    .map(({node, id}) => `\n${transpileJavaScript(node, {id, resolveImport})}`)
+    .map(({node, id}) => `\n${transpileJavaScript(node, {id, path, resolveImport})}`)
     .join("")}`)}
 </script>${sidebar ? html`\n${await renderSidebar(title, pages, root, path, search, normalizeLink)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""

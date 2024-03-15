@@ -114,23 +114,26 @@ describe("LoaderResolver.getFileHash(path)", () => {
   });
 });
 
-describe("LoaderResolver.getLastModified(path)", () => {
+describe("LoaderResolver.get{Source,Output}LastModified(path)", () => {
   const time1 = new Date(Date.UTC(2023, 11, 1));
   const time2 = new Date(Date.UTC(2024, 2, 1));
   const loaders = new LoaderResolver({root: "test"});
-  it("returns the last modification time for a simple file", async () => {
+  it("both return the last modification time for a simple file", async () => {
     await utimes("test/input/loader/simple.txt", time1, time1);
-    assert.strictEqual(loaders.getLastModified("input/loader/simple.txt"), +time1);
+    assert.strictEqual(loaders.getSourceLastModified("input/loader/simple.txt"), +time1);
+    assert.strictEqual(loaders.getOutputLastModified("input/loader/simple.txt"), +time1);
   });
-  it("returns an undefined last modification time for a missing file", async () => {
-    assert.strictEqual(loaders.getLastModified("input/loader/missing.txt"), undefined);
+  it("both return an undefined last modification time for a missing file", async () => {
+    assert.strictEqual(loaders.getSourceLastModified("input/loader/missing.txt"), undefined);
+    assert.strictEqual(loaders.getOutputLastModified("input/loader/missing.txt"), undefined);
   });
-  it("returns the last modification time for a cached data loader", async () => {
+  it("returns the last modification time of the loader in preview, and of the cache, on build", async () => {
     await utimes("test/input/loader/cached.txt.sh", time1, time1);
     await mkdir("test/.observablehq/cache/input/loader/", {recursive: true});
     await writeFile("test/.observablehq/cache/input/loader/cached.txt", "2024-03-01 00:00:00");
     await utimes("test/.observablehq/cache/input/loader/cached.txt", time2, time2);
-    assert.strictEqual(loaders.getLastModified("input/loader/cached.txt"), +time2);
+    assert.strictEqual(loaders.getSourceLastModified("input/loader/cached.txt"), +time1);
+    assert.strictEqual(loaders.getOutputLastModified("input/loader/cached.txt"), +time2);
     // clean up
     try {
       await unlink("test/.observablehq/cache/input/loader/cached.txt");
@@ -139,8 +142,9 @@ describe("LoaderResolver.getLastModified(path)", () => {
       // ignore;
     }
   });
-  it("returns the last modification time for a data loader that has no cache", async () => {
+  it("returns the last modification time of the data loader in preview, and null in build, when there is no cache", async () => {
     await utimes("test/input/loader/not-cached.txt.sh", time1, time1);
-    assert.strictEqual(loaders.getLastModified("input/loader/not-cached.txt"), +time1);
+    assert.strictEqual(loaders.getSourceLastModified("input/loader/not-cached.txt"), +time1);
+    assert.strictEqual(loaders.getOutputLastModified("input/loader/not-cached.txt"), undefined);
   });
 });

@@ -12,6 +12,7 @@ import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImpor
 import {isAssetPath, isPathImport, relativePath, resolveLocalPath, resolvePath} from "./path.js";
 
 export interface Resolvers {
+  path: string;
   hash: string;
   assets: Set<string>; // like files, but not registered for FileAttachment
   files: Set<string>;
@@ -259,6 +260,7 @@ export async function getResolvers(
   }
 
   return {
+    path,
     hash: hash.digest("hex"),
     assets,
     files,

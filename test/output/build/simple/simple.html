@@ -18,7 +18,7 @@ import {registerFile} from "./_observablehq/stdlib.js";
 registerFile("./data.txt", {"name":"./data.txt","mimeType":"text/plain","path":"./_file/data.9d63c3b5.txt","lastModified":/* ts */1706742000000});
 
 define({id: "115586ff", inputs: ["FileAttachment"], outputs: ["result"], body: (FileAttachment) => {
-let result = FileAttachment("data.txt").text();
+let result = FileAttachment("./data.txt").text();
 return {result};
 }});
 
