@@ -32,7 +32,7 @@ volcano
 
 ### Static analysis
 
-The `FileAttachment` function can _only_ be passed a static string literal; constructing a dynamic path such as `FileAttachment("my" + "file.csv")` is invalid syntax. Static analysis is used to invoke [data loaders](../loaders) at build time, and ensures that only referenced files are included in the generated output during build. This also allows to include a content hash in the file name for cache breaking during deploy.
+The `FileAttachment` function can _only_ be passed a static string literal; constructing a dynamic path such as `FileAttachment("my" + "file.csv")` is invalid syntax. Static analysis is used to invoke [data loaders](../loaders) at build time, and ensures that only referenced files are included in the generated output during build. This also allows a content hash in the file name for cache breaking during deploy.
 
 If you have multiple files, you can enumerate them explicitly like so:
 
@@ -52,9 +52,7 @@ const frames = [
 
 None of the files in `frames` above are loaded until a [content method](#supported-formats) is invoked, for example by saying `frames[0].image()`.
 
-### Edge cases
-
-Missing files don’t exhibit a lastModified property. To determine the file’s MIME type, its extension is checked against the [mime](https://www.npmjs.com/package/mime) database; it defaults to `application/octet-stream`.
+For missing files, `file.lastModified` is undefined. The `file.mimeType` is determined by checking the file extension against the [`mime-db` media type database](https://github.com/jshttp/mime-db); it defaults to `application/octet-stream`.
 
 ## Supported formats
 
