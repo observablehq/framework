@@ -31,6 +31,7 @@ interface Assets {
   files: Set<string>;
   localImports: Set<string>;
   globalImports: Set<string>;
+  staticImports: Set<string>;
 }
 
 export function findAssets(html: string, path: string): Assets {
@@ -38,6 +39,7 @@ export function findAssets(html: string, path: string): Assets {
   const files = new Set<string>();
   const localImports = new Set<string>();
   const globalImports = new Set<string>();
+  const staticImports = new Set<string>();
 
   const maybeFile = (specifier: string): void => {
     if (!isAssetPath(specifier)) return;
@@ -60,7 +62,7 @@ export function findAssets(html: string, path: string): Assets {
   }
 
   for (const script of document.querySelectorAll<HTMLScriptElement>("script[src]")) {
-    const src = script.getAttribute("src")!;
+    let src = script.getAttribute("src")!;
     if (isJavaScript(script)) {
       if (isAssetPath(src)) {
         const localPath = resolveLocalPath(path, src);
@@ -68,16 +70,19 @@ export function findAssets(html: string, path: string): Assets {
           console.warn(`non-local asset path: ${src}`);
           continue;
         }
-        localImports.add(relativePath(path, localPath));
+        localImports.add((src = relativePath(path, localPath)));
       } else {
         globalImports.add(src);
+      }
+      if (script.getAttribute("type")?.toLowerCase() === "module") {
+        staticImports.add(src); // modulepreload
       }
     } else {
       maybeFile(src);
     }
   }
 
-  return {files, localImports, globalImports};
+  return {files, localImports, globalImports, staticImports};
 }
 
 interface HtmlResolvers {
