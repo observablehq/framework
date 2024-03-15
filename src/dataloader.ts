@@ -7,7 +7,7 @@ import JSZip from "jszip";
 import {extract} from "tar-stream";
 import {maybeStat, prepareOutput} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
-import {getFileHash} from "./javascript/module.js";
+import {getFileHash, getFileInfo} from "./javascript/module.js";
 import type {Logger, Writer} from "./logger.js";
 import {cyan, faint, green, red, yellow} from "./tty.js";
 
@@ -129,12 +129,35 @@ export class LoaderResolver {
     return FileWatchers.of(this, path, watchPaths, callback);
   }
 
-  getFileHash(path: string): string {
+  /**
+   * Get the actual path of a file. For data loaders, it is the output if
+   * already available (cached). In build this is always the case (unless the
+   * corresponding data loader fails). However in preview we return the page
+   * before running the data loaders (which will run on demand from the page),
+   * so there might be a temporary discrepancy when a cache is stale.
+   */
+  private getFilePath(name: string): string {
+    let path = name;
     if (!existsSync(join(this.root, path))) {
       const loader = this.find(path);
-      if (loader) path = relative(this.root, loader.path);
+      if (loader) {
+        path = relative(this.root, loader.path);
+        if (name !== path) {
+          const cachePath = join(".observablehq", "cache", name);
+          if (existsSync(join(this.root, cachePath))) path = cachePath;
+        }
+      }
     }
-    return getFileHash(this.root, path);
+    return path;
+  }
+
+  getFileHash(name: string): string {
+    return getFileHash(this.root, this.getFilePath(name));
+  }
+
+  getLastModified(name: string): number | undefined {
+    const entry = getFileInfo(this.root, this.getFilePath(name));
+    return entry && Math.floor(entry.mtimeMs);
   }
 
   resolveFilePath(path: string): string {

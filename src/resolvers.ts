@@ -114,8 +114,7 @@ export async function getResolvers(
     }
   }
 
-  // Compute the content hash. TODO In build, this needs to consider the output
-  // of data loaders, rather than the source of data loaders.
+  // Compute the content hash.
   for (const f of assets) hash.update(loaders.getFileHash(resolvePath(path, f)));
   for (const f of files) hash.update(loaders.getFileHash(resolvePath(path, f)));
   for (const i of localImports) hash.update(getModuleHash(root, resolvePath(path, i)));
