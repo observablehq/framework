@@ -25,12 +25,13 @@ type RenderInternalOptions =
 
 export async function renderPage(page: MarkdownPage, options: RenderOptions & RenderInternalOptions): Promise<string> {
   const {data} = page;
-  const {root, md, base, path, pages, title, preview, search, resolvers = await getResolvers(page, options)} = options;
+  const {root, md, base, path, pages, title, preview, search} = options;
+  const {loaders, resolvers = await getResolvers(page, options)} = options;
   const {normalizeLink} = md;
   const sidebar = data?.sidebar !== undefined ? Boolean(data.sidebar) : options.sidebar;
   const toc = mergeToc(data?.toc, options.toc);
   const draft = Boolean(data?.draft);
-  const {files, resolveFile, resolveImport, lastModified} = resolvers;
+  const {files, resolveFile, resolveImport} = resolvers;
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -64,7 +65,7 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
       : ""
   }${data?.sql ? `\nimport {registerTable} from ${JSON.stringify(resolveImport("npm:@observablehq/duckdb"))};` : ""}${
     files.size
-      ? `\n${renderFiles(files, resolveFile, (name: string) => lastModified.get(resolvePath(path, name)))}`
+      ? `\n${renderFiles(files, resolveFile, (name: string) => loaders.getLastModified(resolvePath(path, name)))}`
       : ""
   }${
     data?.sql
@@ -86,22 +87,14 @@ ${html.unsafe(rewriteHtml(page.html, resolvers.resolveFile))}</main>${renderFoot
 `);
 }
 
-function renderFiles(
-  files: Iterable<string>,
-  resolve: (name: string) => string,
-  getLastModified: (name: string) => number | undefined
-): string {
+function renderFiles(files: Iterable<string>, resolve: (name: string) => string, getLastModified): string {
   return Array.from(files)
     .sort()
     .map((f) => renderFile(f, resolve, getLastModified))
     .join("");
 }
 
-function renderFile(
-  name: string,
-  resolve: (name: string) => string,
-  getLastModified: (name: string) => number | undefined
-): string {
+function renderFile(name: string, resolve: (name: string) => string, getLastModified): string {
   return `\nregisterFile(${JSON.stringify(name)}, ${JSON.stringify({
     name,
     mimeType: mime.getType(name) ?? undefined,

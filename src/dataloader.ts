@@ -5,12 +5,10 @@ import {createGunzip} from "node:zlib";
 import {spawn} from "cross-spawn";
 import JSZip from "jszip";
 import {extract} from "tar-stream";
-import {isEnoent} from "./error.js";
 import {maybeStat, prepareOutput} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
-import {getFileHash} from "./javascript/module.js";
+import {getFileHash, getFileInfo} from "./javascript/module.js";
 import type {Logger, Writer} from "./logger.js";
-import {resolvePath} from "./path.js";
 import {cyan, faint, green, red, yellow} from "./tty.js";
 
 const runningCommands = new Map<string, Promise<string>>();
@@ -50,7 +48,6 @@ export interface LoaderOptions {
 export class LoaderResolver {
   private readonly root: string;
   private readonly interpreters: Map<string, string[]>;
-  lastModified: Map<string, number>;
 
   constructor({root, interpreters}: {root: string; interpreters?: Record<string, string[] | null>}) {
     this.root = root;
@@ -59,7 +56,6 @@ export class LoaderResolver {
         (entry): entry is [string, string[]] => entry[1] != null
       )
     );
-    this.lastModified = new Map();
   }
 
   /**
@@ -133,34 +129,33 @@ export class LoaderResolver {
     return FileWatchers.of(this, path, watchPaths, callback);
   }
 
-  // Compute file hash and update the lastModified map. For data loaders, use
-  // the output if it is already available (cached). In build this is always the
-  // case (unless the data loaders fail). However in preview we return the page
+  // Get the actual path of a file. For data loaders, it is the output if
+  // already available (cached). In build this is always the case (unless the
+  // corresponding data loader fails). However in preview we return the page
   // before running the data loaders (which will run on demand from the page),
   // so there might be a temporary discrepancy when a cache is stale.
-  getFileHash(name: string): string {
+  private getFilePath(name: string): string {
     let path = name;
     if (!existsSync(join(this.root, path))) {
       const loader = this.find(path);
-      if (loader) path = relative(this.root, loader.path);
-    }
-    try {
-      const ts = Math.floor(statSync(join(this.root, path)).mtimeMs);
-      const key = resolvePath(this.root, name);
-      this.lastModified.set(key, ts);
-      if (name !== path) {
-        try {
+      if (loader) {
+        path = relative(this.root, loader.path);
+        if (name !== path) {
           const cachePath = join(".observablehq", "cache", name);
-          this.lastModified.set(key, Math.floor(statSync(join(this.root, cachePath)).mtimeMs));
-          path = cachePath; // on success
-        } catch (error) {
-          if (!isEnoent(error)) throw error;
+          if (existsSync(join(this.root, cachePath))) path = cachePath;
         }
       }
-    } catch (error) {
-      if (!isEnoent(error)) throw error;
     }
-    return getFileHash(this.root, path);
+    return path;
+  }
+
+  getFileHash(name: string): string {
+    return getFileHash(this.root, this.getFilePath(name));
+  }
+
+  getLastModified(name: string): number | undefined {
+    const entry = getFileInfo(this.root, this.getFilePath(name));
+    return entry && Math.floor(entry.mtimeMs);
   }
 
   resolveFilePath(path: string): string {
