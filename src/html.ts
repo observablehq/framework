@@ -18,7 +18,9 @@ const ASSET_PROPERTIES: readonly [selector: string, src: string][] = [
 ];
 
 export function isJavaScript({type}: HTMLScriptElement): boolean {
-  return !type || type === "text/javascript" || type === "application/javascript" || type === "module";
+  if (!type) return true;
+  type = type.toLowerCase();
+  return type === "text/javascript" || type === "application/javascript" || type === "module";
 }
 
 export function parseHtml(html: string): DOMWindow {
