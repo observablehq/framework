@@ -155,7 +155,7 @@ export class LoaderResolver {
     return path;
   }
 
-  getFileHash(name: string): string {
+  getSourceFileHash(name: string): string {
     return getFileHash(this.root, this.getSourceFilePath(name));
   }
 
@@ -170,7 +170,7 @@ export class LoaderResolver {
   }
 
   resolveFilePath(path: string): string {
-    return `/${join("_file", path)}?sha=${this.getFileHash(path)}`;
+    return `/${join("_file", path)}?sha=${this.getSourceFileHash(path)}`;
   }
 }
 

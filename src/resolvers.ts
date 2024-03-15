@@ -116,10 +116,10 @@ export async function getResolvers(
   }
 
   // Compute the content hash.
-  for (const f of assets) hash.update(loaders.getFileHash(resolvePath(path, f)));
-  for (const f of files) hash.update(loaders.getFileHash(resolvePath(path, f)));
+  for (const f of assets) hash.update(loaders.getSourceFileHash(resolvePath(path, f)));
+  for (const f of files) hash.update(loaders.getSourceFileHash(resolvePath(path, f)));
   for (const i of localImports) hash.update(getModuleHash(root, resolvePath(path, i)));
-  if (page.style && isPathImport(page.style)) hash.update(loaders.getFileHash(resolvePath(path, page.style)));
+  if (page.style && isPathImport(page.style)) hash.update(loaders.getSourceFileHash(resolvePath(path, page.style)));
 
   // Collect transitively-attached files and local imports.
   for (const i of localImports) {
