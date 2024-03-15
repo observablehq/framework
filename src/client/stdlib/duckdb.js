@@ -254,6 +254,14 @@ async function insertFile(database, name, file, options) {
         if (/\.parquet$/i.test(file.name)) {
           return await connection.query(`CREATE VIEW '${name}' AS SELECT * FROM parquet_scan('${file.name}')`);
         }
+        if (/\.(db|ddb|duckdb)$/i.test(file.name)) {
+          // https://duckdb.org/internals/storage.html#storage-header
+          const magic = await fetch(await file.url(), {headers: {range: "bytes=0-11"}})
+            .then((d) => d.blob())
+            .then((d) => d.slice(8, 12).text());
+          if (magic === "DUCK") return await connection.query(`ATTACH '${file.name}' AS ${name} (READ_ONLY)`);
+          else console.warn(`${file.name} does not appear to be a valid DuckDB database file.`);
+        }
         throw new Error(`unknown file type: ${file.mimeType}`);
     }
   } finally {
