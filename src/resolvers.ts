@@ -9,19 +9,20 @@ import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
 import {getImplicitStylesheets} from "./libraries.js";
 import type {MarkdownPage} from "./markdown.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
-import {isPathImport, relativePath, resolvePath} from "./path.js";
+import {isAssetPath, isPathImport, relativePath, resolveLocalPath, resolvePath} from "./path.js";
 
 export interface Resolvers {
   hash: string;
-  assets: Set<string>;
+  assets: Set<string>; // like files, but not registered for FileAttachment
   files: Set<string>;
   localImports: Set<string>;
   globalImports: Set<string>;
   staticImports: Set<string>;
-  stylesheets: Set<string>;
+  stylesheets: Set<string>; // stylesheets to be added by render
   resolveFile(specifier: string): string;
   resolveImport(specifier: string): string;
   resolveStylesheet(specifier: string): string;
+  resolveScript(specifier: string): string;
 }
 
 const defaultImports = [
@@ -73,7 +74,7 @@ export async function getResolvers(
   {root, path, loaders}: {root: string; path: string; loaders: LoaderResolver}
 ): Promise<Resolvers> {
   const hash = createHash("sha256").update(page.html).update(JSON.stringify(page.data));
-  const assets = findAssets(page.html, path);
+  const assets = new Set<string>();
   const files = new Set<string>();
   const fileMethods = new Set<string>();
   const localImports = new Set<string>();
@@ -81,6 +82,13 @@ export async function getResolvers(
   const staticImports = new Set<string>(defaultImports);
   const stylesheets = new Set<string>();
   const resolutions = new Map<string, string>();
+
+  // Add assets.
+  const info = findAssets(page.html, path);
+  for (const f of info.files) assets.add(f);
+  for (const i of info.localImports) localImports.add(i);
+  for (const i of info.globalImports) globalImports.add(i);
+  for (const i of info.staticImports) staticImports.add(i);
 
   // Add stylesheets. TODO Instead of hard-coding Source Serif Pro, parse the
   // page’s stylesheet to look for external imports.
@@ -241,6 +249,15 @@ export async function getResolvers(
       : specifier;
   }
 
+  function resolveScript(src: string): string {
+    if (isAssetPath(src)) {
+      const localPath = resolveLocalPath(path, src);
+      return localPath ? resolveImport(relativePath(path, localPath)) : src;
+    } else {
+      return resolveImport(src);
+    }
+  }
+
   return {
     hash: hash.digest("hex"),
     assets,
@@ -251,6 +268,7 @@ export async function getResolvers(
     stylesheets,
     resolveFile,
     resolveImport,
+    resolveScript,
     resolveStylesheet
   };
 }
