@@ -238,6 +238,11 @@ export async function build(
           const r = resolvers.resolveImport(specifier);
           const a = aliases.get(resolvePath(path, r));
           return a ? relativePath(path, a) : isPathImport(specifier) ? specifier : r; // fallback to specifier if enoent
+        },
+        resolveScript(specifier) {
+          const r = resolvers.resolveScript(specifier);
+          const a = aliases.get(resolvePath(path, r));
+          return a ? relativePath(path, a) : specifier; // fallback to specifier if enoent
         }
       }
     });

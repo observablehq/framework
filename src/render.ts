@@ -8,7 +8,7 @@ import {transpileJavaScript} from "./javascript/transpile.js";
 import type {MarkdownPage} from "./markdown.js";
 import type {PageLink} from "./pager.js";
 import {findLink, normalizePath} from "./pager.js";
-import {relativePath} from "./path.js";
+import {relativePath, resolvePath} from "./path.js";
 import type {Resolvers} from "./resolvers.js";
 import {getResolvers} from "./resolvers.js";
 import {rollupClient} from "./rollup.js";
@@ -25,7 +25,8 @@ type RenderInternalOptions =
 
 export async function renderPage(page: MarkdownPage, options: RenderOptions & RenderInternalOptions): Promise<string> {
   const {data} = page;
-  const {root, md, base, path, pages, title, preview, search, resolvers = await getResolvers(page, options)} = options;
+  const {root, md, base, path, pages, title, preview, search} = options;
+  const {loaders, resolvers = await getResolvers(page, options)} = options;
   const {normalizeLink} = md;
   const sidebar = data?.sidebar !== undefined ? Boolean(data.sidebar) : options.sidebar;
   const toc = mergeToc(data?.toc, options.toc);
@@ -63,7 +64,15 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
         )};`
       : ""
   }${data?.sql ? `\nimport {registerTable} from ${JSON.stringify(resolveImport("npm:@observablehq/duckdb"))};` : ""}${
-    files.size ? `\n${renderFiles(files, resolveFile)}` : ""
+    files.size
+      ? `\n${renderFiles(
+          files,
+          resolveFile,
+          preview
+            ? (name: string) => loaders.getSourceLastModified(resolvePath(path, name))
+            : (name: string) => loaders.getOutputLastModified(resolvePath(path, name))
+        )}`
+      : ""
   }${
     data?.sql
       ? `\n${Object.entries<string>(data.sql)
@@ -72,7 +81,7 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
       : ""
   }
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
-    .map(({node, id}) => `\n${transpileJavaScript(node, {id, resolveImport})}`)
+    .map(({node, id}) => `\n${transpileJavaScript(node, {id, path, resolveImport})}`)
     .join("")}`)}
 </script>${sidebar ? html`\n${await renderSidebar(title, pages, root, path, search, normalizeLink)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
@@ -84,18 +93,19 @@ ${html.unsafe(rewriteHtml(page.html, resolvers))}</main>${renderFooter(path, opt
 `);
 }
 
-function renderFiles(files: Iterable<string>, resolve: (name: string) => string): string {
+function renderFiles(files: Iterable<string>, resolve: (name: string) => string, getLastModified): string {
   return Array.from(files)
     .sort()
-    .map((f) => renderFile(f, resolve))
+    .map((f) => renderFile(f, resolve, getLastModified))
     .join("");
 }
 
-function renderFile(name: string, resolve: (name: string) => string): string {
+function renderFile(name: string, resolve: (name: string) => string, getLastModified): string {
   return `\nregisterFile(${JSON.stringify(name)}, ${JSON.stringify({
     name,
     mimeType: mime.getType(name) ?? undefined,
-    path: resolve(name)
+    path: resolve(name),
+    lastModified: getLastModified(name)
   })});`;
 }
 
