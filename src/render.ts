@@ -97,7 +97,7 @@ function renderFiles(files: Iterable<string>, resolve: (name: string) => string,
 function renderFile(name: string, resolve: (name: string) => string, getLastModified): string {
   return `\nregisterFile(${JSON.stringify(name)}, ${JSON.stringify({
     name,
-    mimeType: mime.getType(name) ?? "application/octet-stream",
+    mimeType: mime.getType(name) ?? undefined,
     path: resolve(name),
     lastModified: getLastModified(name)
   })});`;

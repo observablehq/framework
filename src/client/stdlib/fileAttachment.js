@@ -28,7 +28,7 @@ async function dsv(file, delimiter, {array = false, typed = false} = {}) {
 }
 
 export class AbstractFile {
-  constructor(name, mimeType, lastModified) {
+  constructor(name, mimeType = "application/octet-stream", lastModified) {
     Object.defineProperty(this, "mimeType", {value: `${mimeType}`, enumerable: true});
     Object.defineProperty(this, "name", {value: `${name}`, enumerable: true});
     if (lastModified !== undefined) Object.defineProperty(this, "lastModified", {value: Number(lastModified), enumerable: true}); // prettier-ignore
