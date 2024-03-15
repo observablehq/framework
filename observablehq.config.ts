@@ -10,6 +10,7 @@ export default {
     {name: "SQL", path: "/sql"},
     {name: "Themes", path: "/themes"},
     {name: "Configuration", path: "/config"},
+    {name: "Deploying", path: "/deploying"},
     {
       name: "JavaScript",
       open: false,

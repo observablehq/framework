@@ -80,7 +80,7 @@ export async function populateNpmCache(root: string, path: string): Promise<stri
   let promise = npmRequests.get(path);
   if (promise) return promise; // coalesce concurrent requests
   promise = (async function () {
-    const specifier = resolveNpmSpecifier(path);
+    const specifier = extractNpmSpecifier(path);
     const href = `https://cdn.jsdelivr.net/npm/${specifier}`;
     process.stdout.write(`npm:${specifier} ${faint("→")} `);
     const response = await fetch(href);
@@ -117,7 +117,7 @@ export async function getDependencyResolver(
 ): Promise<(specifier: string) => string> {
   const body = parseProgram(input);
   const dependencies = new Set<string>();
-  const {name, range} = parseNpmSpecifier(resolveNpmSpecifier(path));
+  const {name, range} = parseNpmSpecifier(extractNpmSpecifier(path));
 
   simple(body, {
     ImportDeclaration: findImport,
@@ -172,7 +172,7 @@ export async function getDependencyResolver(
   return (specifier: string) => {
     if (!specifier.startsWith("/npm/")) return specifier;
     if (resolutions.has(specifier)) specifier = resolutions.get(specifier)!;
-    else specifier = `/_npm/${specifier.slice("/npm/".length)}${specifier.endsWith("/+esm") ? ".js" : ""}`;
+    else specifier = fromJsDelivrPath(specifier);
     return relativePath(path, specifier);
   };
 }
@@ -249,14 +249,14 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
       ? "dist/echarts.esm.min.js"
       : "+esm"
   } = parseNpmSpecifier(specifier);
-  return `/_npm/${name}@${await resolveNpmVersion(root, {name, range})}/${path.replace(/\+esm$/, "+esm.js")}`;
+  return `/_npm/${name}@${await resolveNpmVersion(root, {name, range})}/${path.replace(/\+esm$/, "_esm.js")}`;
 }
 
 const npmImportsCache = new Map<string, Promise<ImportReference[]>>();
 
 /**
  * Resolves the direct dependencies of the specified npm path, such as
- * "/_npm/d3@7.8.5/+esm.js", returning the corresponding set of npm paths.
+ * "/_npm/d3@7.8.5/_esm.js", returning the corresponding set of npm paths.
  */
 export async function resolveNpmImports(root: string, path: string): Promise<ImportReference[]> {
   if (!path.startsWith("/_npm/")) throw new Error(`invalid npm path: ${path}`);
@@ -278,6 +278,20 @@ export async function resolveNpmImports(root: string, path: string): Promise<Imp
   return promise;
 }
 
-export function resolveNpmSpecifier(path: string): string {
-  return path.replace(/^\/_npm\//, "").replace(/\/\+esm\.js$/, "/+esm");
+/**
+ * Given a local npm path such as "/_npm/d3@7.8.5/_esm.js", returns the
+ * corresponding npm specifier such as "d3@7.8.5".
+ */
+export function extractNpmSpecifier(path: string): string {
+  if (!path.startsWith("/_npm/")) throw new Error(`invalid npm path: ${path}`);
+  return path.replace(/^\/_npm\//, "").replace(/\/_esm\.js$/, "/+esm");
+}
+
+/**
+ * Given a jsDelivr path such as "/npm/d3@7.8.5/+esm", returns the corresponding
+ * local path such as "/_npm/d3@7.8.5/_esm.js".
+ */
+export function fromJsDelivrPath(path: string): string {
+  if (!path.startsWith("/npm/")) throw new Error(`invalid jsDelivr path: ${path}`);
+  return path.replace(/^\/npm\//, "/_npm/").replace(/\/\+esm$/, "/_esm.js");
 }

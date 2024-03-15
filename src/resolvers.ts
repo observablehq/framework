@@ -8,7 +8,7 @@ import {getImplicitDependencies, getImplicitDownloads} from "./libraries.js";
 import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
 import {getImplicitStylesheets} from "./libraries.js";
 import type {MarkdownPage} from "./markdown.js";
-import {populateNpmCache, resolveNpmImport, resolveNpmImports, resolveNpmSpecifier} from "./npm.js";
+import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
 import {isPathImport, relativePath, resolvePath} from "./path.js";
 
 export interface Resolvers {
@@ -172,7 +172,7 @@ export async function getResolvers(
     for (const i of await resolveNpmImports(root, value)) {
       if (i.type === "local") {
         const path = resolvePath(value, i.name);
-        const specifier = `npm:${resolveNpmSpecifier(path)}`;
+        const specifier = `npm:${extractNpmSpecifier(path)}`;
         globalImports.add(specifier);
         resolutions.set(specifier, path);
       }
@@ -189,7 +189,7 @@ export async function getResolvers(
     for (const i of await resolveNpmImports(root, value)) {
       if (i.type === "local" && i.method === "static") {
         const path = resolvePath(value, i.name);
-        const specifier = `npm:${resolveNpmSpecifier(path)}`;
+        const specifier = `npm:${extractNpmSpecifier(path)}`;
         staticImports.add(specifier);
         npmStaticResolutions.add(path);
       }

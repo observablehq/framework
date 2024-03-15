@@ -221,7 +221,7 @@ Or with Yarn:
 
 You should see something like this:
 
-<pre data-copy="none"><b class="green">Observable Framework</b> v1.2.0
+<pre data-copy="none"><b class="green">Observable Framework</b> v1.3.0
 ↳ <u><a href="http://127.0.0.1:3000/" style="color: inherit;">http://127.0.0.1:3000/</a></u></pre>
 
 <div class="tip">
@@ -649,9 +649,9 @@ json.dump(forecast, sys.stdout)
 
 To write the data loader in R, name it <code>forecast.json.R</code>. Or as shell script, <code>forecast.json.sh</code>. You get the idea. See [Data loaders: Routing](./loaders#routing) for more. The beauty of this approach is that you can leverage the strengths (and libraries) of multiple languages, and still get instant updates in the browser as you develop.
 
-### Deploying via GitHub Actions
+### Deploying automatically
 
-You can schedule builds and deploy your project automatically on commit, or on a schedule. See <a href="https://github.com/observablehq/framework/blob/main/.github/workflows/deploy.yml">this documentation site’s deploy.yml</a> for an example.
+You can schedule builds and deploy your project automatically on commit, or on a schedule. See [deploying](./deploying) for more details.
 
 ### Ask for help, or share your feedback
 
