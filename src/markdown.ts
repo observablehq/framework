@@ -334,7 +334,7 @@ export function parseMarkdown(input: string, {md, path, style: configStyle}: Par
   const code: MarkdownCode[] = [];
   const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
   const tokens = md.parse(content, context);
-  const html = md.renderer.render(tokens, md.options, context); // Note: mutates code, assets!
+  const html = md.renderer.render(tokens, md.options, context); // Note: mutates code!
   const style = getStylesheet(path, data, configStyle);
   return {
     html,

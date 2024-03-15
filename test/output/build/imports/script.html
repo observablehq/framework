@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Multi test</title>
+<title>Scripts</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
 <link rel="preload" as="style" href="./_observablehq/theme-air,near-midnight.css">
@@ -10,30 +10,10 @@
 <link rel="modulepreload" href="./_observablehq/client.js">
 <link rel="modulepreload" href="./_observablehq/runtime.js">
 <link rel="modulepreload" href="./_observablehq/stdlib.js">
-<link rel="modulepreload" href="./_npm/d3-dsv@3.0.1/_esm.js">
+<link rel="modulepreload" href="./_import/top.160847a6.js">
 <script type="module">
 
-import {define} from "./_observablehq/client.js";
-import {registerFile} from "./_observablehq/stdlib.js";
-
-registerFile("./file1.csv", {"name":"./file1.csv","mimeType":"text/csv","path":"./_file/file1.259f3fd9.csv"});
-registerFile("./file2.csv", {"name":"./file2.csv","mimeType":"text/csv","path":"./_file/file2.c70f7d51.csv"});
-
-define({id: "1bcb5df5", inputs: ["FileAttachment"], outputs: ["f1"], body: (FileAttachment) => {
-const f1 = FileAttachment("file1.csv").csv();
-return {f1};
-}});
-
-define({id: "db071921", inputs: ["Input","f1","display"], body: async (Input,f1,display) => {
-display(await(
-Input.table(f1)
-))
-}});
-
-define({id: "494b10bd", inputs: ["FileAttachment"], outputs: ["f2"], body: (FileAttachment) => {
-const f2 = FileAttachment("./file2.csv");
-return {f2};
-}});
+import "./_observablehq/client.js";
 
 </script>
 <input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
@@ -41,10 +21,11 @@ return {f2};
 <nav id="observablehq-sidebar">
   <ol>
     <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
-    <li class="observablehq-link observablehq-link-active"><a href="./">Home</a></li>
+    <li class="observablehq-link"><a href="./">Home</a></li>
   </ol>
   <ol>
-    <li class="observablehq-link"><a href="./subsection/">Sub-Section</a></li>
+    <li class="observablehq-link observablehq-link-active"><a href="./script">Scripts</a></li>
+    <li class="observablehq-link"><a href="./foo/foo">Foo</a></li>
   </ol>
 </nav>
 <script>{/* redacted init script */}</script>
@@ -54,13 +35,12 @@ return {f2};
 </aside>
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
-<h1 id="multi-test" tabindex="-1"><a class="observablehq-header-anchor" href="#multi-test">Multi test</a></h1>
-<div id="cell-1bcb5df5" class="observablehq observablehq--block"></div>
-<div id="cell-db071921" class="observablehq observablehq--block observablehq--loading"></div>
-<div id="cell-494b10bd" class="observablehq observablehq--block"></div>
+<h1 id="scripts" tabindex="-1"><a class="observablehq-header-anchor" href="#scripts">Scripts</a></h1>
+<script src="./_import/top.js?sha=160847a6b4890d59f8e8862911bfbe3b8066955d31f2708cafbe51945c3c57b6" type="module"></script>
+<script src="./_file/top.a53c5d5b.js" type="other"></script>
 </main>
 <footer id="observablehq-footer">
-<nav><a rel="next" href="./subsection/"><span>Sub-Section</span></a></nav>
+<nav><a rel="prev" href="./"><span>Home</span></a><a rel="next" href="./foo/foo"><span>Foo</span></a></nav>
 <div>Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.</div>
 </footer>
 </div>
