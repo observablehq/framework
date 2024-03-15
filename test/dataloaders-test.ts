@@ -115,8 +115,8 @@ describe("LoaderResolver.getFileHash(path)", () => {
 });
 
 describe("LoaderResolver.getLastModified(path)", () => {
-  const time1 = new Date(2023, 11, 1);
-  const time2 = new Date(2024, 2, 1);
+  const time1 = new Date(Date.UTC(2023, 11, 1));
+  const time2 = new Date(Date.UTC(2024, 2, 1));
   const loaders = new LoaderResolver({root: "test"});
   it("returns the last modification time for a simple file", async () => {
     await utimes("test/input/loader/simple.txt", time1, time1);
@@ -128,7 +128,7 @@ describe("LoaderResolver.getLastModified(path)", () => {
   it("returns the last modification time for a cached data loader", async () => {
     await utimes("test/input/loader/cached.txt.sh", time1, time1);
     await mkdir("test/.observablehq/cache/input/loader/", {recursive: true});
-    await writeFile("test/.observablehq/cache/input/loader/cached.txt", "HELLO");
+    await writeFile("test/.observablehq/cache/input/loader/cached.txt", "2024-03-01 00:00:00");
     await utimes("test/.observablehq/cache/input/loader/cached.txt", time2, time2);
     assert.strictEqual(loaders.getLastModified("input/loader/cached.txt"), +time2);
     // clean up
