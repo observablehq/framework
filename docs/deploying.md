@@ -1,40 +1,48 @@
 # Deploying
 
-When time comes to share your project, you have many options for deploying it for others to see. Framework is compatible with many static site hosts and automation environments. In this guide we’ll focus on deploying to Observable manually, then with GitHub Actions.
+You can host your built Framework project on any static site hosting service, or self-host it with any static site server. This guide covers deploying to [Observable](https://observablehq.com), which is the easiest way to host your Framework project as support is built-in. We’ll also cover setting up automated deploys with GitHub Actions.
 
-## Manually deploying to Observable
+<div class="tip">
 
-If you don’t already have a project to deploy, you can create one by following [getting-started](./getting-started). First, make sure that your project builds without error:
+If you don’t already have a project ready to deploy, create one by following our [Getting started guide](./getting-started).
+
+</div>
+
+## Manual deploys
+
+First, make sure that your project builds without error:
 
 ```sh
-$ npm run build
+npm run build
 ```
 
-Once that is done you can deploy to Observable with the command
+Once that is done you can deploy to Observable:
 
 ```sh
-$ npm run deploy
+npm run deploy
 ```
 
-The first time you run this command, you will be prompted for details needed to set up the project on the server, such as the project's _slug_ (which determines its URL), and the access level. If you don’t already have an Observable account or aren’t signed in, this command will also guide you through setting that up.
+The first time you deploy a project, you will be prompted to configure the project’s _slug_ (which determines its URL), access level, and other details. If you don’t yet have an Observable account or aren’t signed-in, you will also be prompted to sign-up or sign-in.
 
-When the deploy command finishes, it prints a link to observablehq.cloud where you can view your deployed project. If you choose “private” as the access level, you can now share that link with anyone who is a member of  your workspace. If you chose “public”, you can share that link with anyone and they’ll be able to see your Framework project.
+When the deploy command finishes, it prints a link to observablehq.cloud where you can view your deployed project. If you choose *private* as the access level, that link will only be accessible to members of your Observable workspace. (You can invite people to your workspace by going to observablehq.com.) If you chose *public*, you can share your project link with anyone.
 
-<div class="note">The deploy command creates a file at <code>docs/.observablehq/deploy.json</code> with information on where to deploy the project. It is required for automated deploys. You should commit it to git to make it available to GitHub Actions. (If you have configured a source root besides <code>docs/</code>, the file will be placed there instead.)</div>
+<div class="note">The deploy command creates a file at <code>docs/.observablehq/deploy.json</code> with information on where to deploy the project. This file is required for automated deploys. You will need to commit this file to git to deploy via GitHub Actions. (If you have configured a source root besides <code>docs</code>, the file will be placed there instead.)</div>
 
-## Automated deploys to Observable
+## Automated deploys
 
-To set up automatic deploys, we’ll be using [GitHub actions](https://github.com/features/actions). In your git repository, create and commit a file at `.github/workflows/deploy.yml`. Here is a starting example:
+To set up automatic deploys (also known as *continuous deployment* or *CD*), we recommend [GitHub Actions](https://github.com/features/actions). In your git repository, create and commit a file at `.github/workflows/deploy.yml`. Here is a starting example:
 
 ```yaml
 name: Deploy
+
 on:
   # Run this workflow whenever a new commit is pushed to main.
   push: {branches: [main]}
   # Run this workflow once per day, at 10:15 UTC
   schedule: [{cron: "15 10 * * *"}]
-  # Run this workflow when triggered manually in GitHub's UI.
+  # Run this workflow when triggered manually in GitHub’s UI.
   workflow_dispatch: {}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -54,15 +62,39 @@ jobs:
           OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_TOKEN }}
 ```
 
-When deploying automatically, you won’t be able to login with a browser the way you did for manual deploys. Instead, you will authenticate via the environment variable `OBSERVABLE_TOKEN`, using an API key from Observable.
+When deploying automatically, you can’t sign-in in your browser the way you did for manual deploys; instead, your GitHub action will authenticate using an Observable API key (also known as a *token* and referred to as `OBSERVABLE_TOKEN` above).
 
-To create a token, go to https://observablehq.com and open your workspace settings. Choose “API keys”. From there, create a new key, and assign it the "Deploy new versions of projects" scope.
+To create an API key:
 
-That token is the equivalent of a password giving write access to your hosted project. **Do not commit it to git** (and, if it is exposed in any way, take a minute to revoke it and create a new one instead—or contact support).
+1. Go to [observablehq.com](https://observablehq.com).
+2. In the left sidebar, click **Settings**.
+3. In the right sidebar, click **API / Notebook Keys**.
+4. Click **New API Key**.
+5. Check the **Deploy new versions of projects** checkbox.
+6. Give your key a description, such as “Deploy via GitHub Actions”.
+7. Click **Create API Key**.
 
-To pass this information securely to the Github action (so it can effectively be authorized to deploy the project to Observable), we’ll use GitHub secrets. Sign in to the settings of your GitHub account, and add a secret named `OBSERVABLE_TOKEN`. See [GitHub’s documentation](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions) for more information about secrets.
+<div class="caution">
 
-This `deploy.yml` will automatically build and deploy your project once per day (to keep your data up-to-date), as well as whenever you push a new version of the code to your repository (so you can make changes at any time).
+The token you create is the equivalent of a password giving write access to your hosted project. **Do not commit it to git** or share it with anyone you don’t trust. If you accidentally expose your key, you can go back to your settings to immediately revoke it (and create a new key).
+
+</div>
+
+In a moment, you’ll copy-paste your new Observable API key, so leave this window open for now. (If you accidentally close the window, you can delete the old key and create a new one. For security, API keys are only shown once upon creation.)
+
+To authenticate with Observable and to access the Observable API key securely from our Github action, we’ll use a [GitHub secret](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions).
+
+To create a GitHub secret, in a new window:
+
+1. Go to your GitHub repository.
+2. In the top navigation, click **Settings**.
+3. In the left sidebar, click **Secrets and variables**, then **Actions**.
+4. Click **New repository secret**.
+5. In the **Name** field, enter `OBSERVABLE_TOKEN`.
+6. In the **Secret** field, paste the API key you created on Observable.
+7. Click **Add secret**.
+
+After you’ve performed these steps, the `deploy.yml` above will automatically build and deploy your project once per day (to keep your data up-to-date), as well as whenever you push a new version of the code to your repository (so you can make changes at any time).
 
 ### Caching
 
@@ -85,16 +117,22 @@ jobs:
       # ...
 ```
 
-This uses one cache per calendar day (in the “America/Los_Angeles” time zone). If you deploy multiple times in a day, the results of your data loaders will be reused on the second and subsequent runs. You can customize the `date` and `cache-data` steps to change the cadence of the caching. For example you could use `date +'%Y-%U'` to cache data for a week or `date +'%Y-%m-%dT%H` to cache it for only an hour.
+This uses one cache per calendar day (in the `America/Los_Angeles` time zone). If you deploy multiple times in a day, the results of your data loaders will be reused on the second and subsequent runs. You can customize the `date` and `cache-data` steps to change the cadence of the caching. For example you could use `date +'%Y-%U'` to cache data for a week or `date +'%Y-%m-%dT%H` to cache it for only an hour.
 
-<div class="note">You’ll need to change the paths used in this config if <code>observablehq.config.js</code> points to a different <code>root</code>.</div>
+<div class="note">You’ll need to edit the paths above if you’ve configured a source root other than <code>docs</code>.</div>
 
-## Deploying to other services
+## Other hosting services
 
-The output of Observable Framework is set of static files that can be hosted by many services. To build a hostable copy of your project, run:
+Observable Framework builds a set of static files that can be hosted by any static site hosting services. To build your project, run:
 
 ```sh
-$ npm run build
+npm run build
 ```
 
-Then you can upload the contents of your `dist/` directory to your static webhost of choice. Some webhosts may need the `cleanUrls` option <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" target="_blank" class="observablehq-version-badge" data-version="^1.3.0" title="Added in v1.3.0"></a> set to false in your project configuration file. For details and other options, see [configuration](./config).
+Then upload the contents of your `dist` directory to your static service of choice.
+
+<div class="tip">By default, Framework generates “clean” URLs by dropping the `.html` extension from page links. Not all webhosts support this; some need the <a href="./config#cleanUrls"><b>cleanUrls</b> config option</a> set to false.</div>
+
+<div class="tip">When deploying to GitHub Pages without using GitHub’s related actions (<a href="https://github.com/actions/configure-pages">configure-pages</a>,
+<a href="https://github.com/actions/deploy-pages">deploy-pages</a>, and
+<a href="https://github.com/actions/upload-pages-artifact">upload-pages-artifact</a>), you may need to create a <code>.nojekyll</code> file in your <code>dist</code> folder after building. See GitHub’s documentation on <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages#static-site-generators">static site generators</a> for more.</div>
