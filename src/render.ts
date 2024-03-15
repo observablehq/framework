@@ -79,7 +79,7 @@ ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => ev
   }
 <div id="observablehq-center">${renderHeader(options, data)}
 <main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">
-${html.unsafe(rewriteHtml(page.html, resolvers.resolveFile))}</main>${renderFooter(path, options, data, normalizeLink)}
+${html.unsafe(rewriteHtml(page.html, resolvers))}</main>${renderFooter(path, options, data, normalizeLink)}
 </div>
 `);
 }

@@ -92,7 +92,7 @@ export class PreviewServer {
     if (this._verbose) console.log(faint(req.method!), req.url);
     try {
       const url = new URL(req.url!, "http://localhost");
-      let pathname = decodeURIComponent(url.pathname);
+      let pathname = decodeURI(url.pathname);
       let match: RegExpExecArray | null;
       if (pathname === "/_observablehq/client.js") {
         end(req, res, await rollupClient(getClientPath("preview.js"), root, pathname), "text/javascript");
@@ -334,7 +334,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
 
   async function hello({path: initialPath, hash: initialHash}: {path: string; hash: string}): Promise<void> {
     if (markdownWatcher || attachmentWatcher) throw new Error("already watching");
-    path = decodeURIComponent(initialPath);
+    path = decodeURI(initialPath);
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
     path = join(dirname(path), basename(path, ".html") + ".md");
@@ -390,8 +390,8 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
   }
 }
 
-function getHtml({html}: MarkdownPage, {resolveFile}: Resolvers): string[] {
-  return Array.from(parseHtml(rewriteHtml(html, resolveFile)).document.body.children, (d) => d.outerHTML);
+function getHtml({html}: MarkdownPage, resolvers: Resolvers): string[] {
+  return Array.from(parseHtml(rewriteHtml(html, resolvers)).document.body.children, (d) => d.outerHTML);
 }
 
 function getCode({code}: MarkdownPage, resolvers: Resolvers): Map<string, string> {

@@ -71,7 +71,7 @@ export function findImports(body: Node, path: string, input: string): ImportRefe
   function findImport(node: ImportNode | ExportNode) {
     const source = node.source;
     if (!source || !isStringLiteral(source)) return;
-    const name = decodeURIComponent(getStringLiteralValue(source));
+    const name = decodeURI(getStringLiteralValue(source));
     const method = node.type === "ImportExpression" ? "dynamic" : "static";
     if (isPathImport(name)) {
       const localPath = resolveLocalPath(path, name);
@@ -85,7 +85,7 @@ export function findImports(body: Node, path: string, input: string): ImportRefe
   function findImportMetaResolve(node: CallExpression) {
     const source = node.arguments[0];
     if (!isImportMetaResolve(node) || !isStringLiteral(source)) return;
-    const name = decodeURIComponent(getStringLiteralValue(source));
+    const name = decodeURI(getStringLiteralValue(source));
     if (isPathImport(name)) {
       const localPath = resolveLocalPath(path, name);
       if (!localPath) throw syntaxError(`non-local import: ${name}`, node, input); // prettier-ignore
