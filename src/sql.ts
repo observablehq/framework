@@ -1,6 +1,13 @@
 import {Parser, tokTypes} from "acorn";
+import {CompileOptions, compile as prql2sql} from "prql-js";
 import {acornOptions} from "./javascript/parse.js";
 import {transpileTag} from "./tag.js";
+
+const prqlOptions = Object.assign(new CompileOptions(), {
+  target: "sql.duckdb",
+  format: false,
+  signature_comment: false
+});
 
 export function transpileSql(content: string, {id, display}: Record<string, string> = {}): string {
   if (id !== undefined && !isValidBinding(id)) throw new SyntaxError(`invalid binding: ${id}`);
@@ -13,6 +20,16 @@ export function transpileSql(content: string, {id, display}: Record<string, stri
     : display === "false"
     ? `const ${id} = await ${sql};`
     : `const ${id} = ((_) => (display(Inputs.table(_)), _))(await ${sql});`;
+}
+
+export function transpilePrql(content: string, attributes?: Record<string, string>): string {
+  try {
+    content = prql2sql(content, prqlOptions) ?? "";
+  } catch (error: any) {
+    const [message] = JSON.parse(error.message).inner;
+    throw new SyntaxError(message.display);
+  }
+  return transpileSql(content, attributes);
 }
 
 function isValidBinding(input: string): boolean {
