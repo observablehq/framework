@@ -3,7 +3,7 @@ import type {Config, Page, Script, Section} from "./config.js";
 import {mergeToc} from "./config.js";
 import {getClientPath} from "./files.js";
 import type {Html, HtmlResolvers} from "./html.js";
-import {html, parseHtml, rewriteHtml, rewriteHtmlPaths} from "./html.js";
+import {html, parseHtml, rewriteHtml} from "./html.js";
 import {transpileJavaScript} from "./javascript/transpile.js";
 import type {MarkdownPage} from "./markdown.js";
 import type {PageLink} from "./pager.js";

@@ -85,11 +85,14 @@ export async function getResolvers(
   const resolutions = new Map<string, string>();
 
   // Add assets.
-  const info = findAssets(page.body, path);
-  for (const f of info.files) assets.add(f);
-  for (const i of info.localImports) localImports.add(i);
-  for (const i of info.globalImports) globalImports.add(i);
-  for (const i of info.staticImports) staticImports.add(i);
+  for (const html of [page.header, page.body]) {
+    if (!html) continue;
+    const info = findAssets(html, path);
+    for (const f of info.files) assets.add(f);
+    for (const i of info.localImports) localImports.add(i);
+    for (const i of info.globalImports) globalImports.add(i);
+    for (const i of info.staticImports) staticImports.add(i);
+  }
 
   // Add stylesheets. TODO Instead of hard-coding Source Serif Pro, parse the
   // page’s stylesheet to look for external imports.
