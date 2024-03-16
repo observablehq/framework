@@ -1,5 +1,9 @@
 # Configuration
 
+```js
+confetti();
+```
+
 A `observablehq.config.js` (or `observablehq.config.ts`) file located in the project root allows configuration of your project. For example, a site might use a config file to set the project’s title and the sidebar contents:
 
 ```js run=false
