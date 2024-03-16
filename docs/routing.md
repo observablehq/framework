@@ -240,7 +240,7 @@ File attachments can be also be pulled from archives. The following archive exte
 - `.tar` - for [tarballs](<https://en.wikipedia.org/wiki/Tar_(computing)>)
 - `.tar.gz` and `.tgz` - for [compressed tarballs](https://en.wikipedia.org/wiki/Gzip)
 
-For example, say you have a `quakes.zip` archive that includes yearly files for observed earthquakes. If you reference `FileAttachment("quakes/2021.csv")` in code, Observable Framework will pull the `2021.csv` from `quakes.zip`. So this source root:
+For example, say you have a `quakes.zip` archive that includes yearly files for observed earthquakes. If you reference `FileAttachment("quakes/2021.csv")`, Framework will pull the `2021.csv` from `quakes.zip`. So this source root:
 
 ```ini
 .
