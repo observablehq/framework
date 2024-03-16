@@ -174,25 +174,3 @@ The `sql` tag is available by default in Markdown. You can also import it explic
 ```js echo
 import {sql} from "npm:@observablehq/duckdb";
 ```
-
-## PRQL
-
-[PRQL](https://prql-lang.org/) (pronounced “prequel”) is a “modern language for transforming data — a simple, powerful, pipelined SQL replacement.” To use PRQL instead of SQL, create a PRQL fenced code block (<code>```prql</code>). For example:
-
-````md
-```prql
-from gaia
-sort {phot_g_mean_mag}
-take 10
-```
-````
-
-This produces:
-
-```prql
-from gaia
-sort {phot_g_mean_mag}
-take 10
-```
-
-Because PRQL is compiled to SQL during build, Framework does not support a `prql` tagged template literal; PRQL can only be used in PRQL code blocks.
