@@ -26,7 +26,7 @@ describe("parseMarkdown(input)", () => {
       const snapshot = parseMarkdown(source, {path: name, md});
       let allequal = true;
       for (const ext of ["html", "json"]) {
-        const actual = ext === "json" ? jsonMeta(snapshot) : snapshot[ext];
+        const actual = ext === "json" ? jsonMeta(snapshot) : snapshot.body;
         const outfile = resolve(outputRoot, `${ext === "json" ? outname : basename(outname, ".md")}.${ext}`);
         const diffile = resolve(outputRoot, `${ext === "json" ? outname : basename(outname, ".md")}-changed.${ext}`);
         let expected;
@@ -196,7 +196,7 @@ describe("makeLinkNormalizer(normalize, true)", () => {
   });
 });
 
-function jsonMeta({html, ...rest}: MarkdownPage): string {
+function jsonMeta({body, header, ...rest}: MarkdownPage): string {
   return JSON.stringify(rest, null, 2);
 }
 

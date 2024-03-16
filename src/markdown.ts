@@ -10,6 +10,7 @@ import type {RenderRule} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
 import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
+import {rewriteHtmlPaths} from "./html.js";
 import {parseInfo} from "./info.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
@@ -26,7 +27,8 @@ export interface MarkdownCode {
 
 export interface MarkdownPage {
   title: string | null;
-  html: string;
+  body: string;
+  header: string | null;
   data: {[key: string]: any} | null;
   style: string | null;
   code: MarkdownCode[];
@@ -307,6 +309,7 @@ export function makeLinkNormalizer(baseNormalize: (url: string) => string, clean
 export interface ParseOptions {
   md: MarkdownIt;
   path: string;
+  header?: Config["header"];
   style?: Config["style"];
 }
 
@@ -329,15 +332,16 @@ export function createMarkdownIt({
   return markdownIt === undefined ? md : markdownIt(md);
 }
 
-export function parseMarkdown(input: string, {md, path, style: configStyle}: ParseOptions): MarkdownPage {
+export function parseMarkdown(input: string, {md, path, header, style: configStyle}: ParseOptions): MarkdownPage {
   const {content, data} = matter(input, {});
   const code: MarkdownCode[] = [];
   const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
   const tokens = md.parse(content, context);
-  const html = md.renderer.render(tokens, md.options, context); // Note: mutates code!
+  const body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
   const style = getStylesheet(path, data, configStyle);
   return {
-    html,
+    header: data.header != null ? String(data.header) : header != null ? rewriteHtmlPaths(header, path) : null,
+    body,
     data: isEmpty(data) ? null : data,
     title: data?.title ?? findTitle(tokens) ?? null,
     style,

@@ -74,7 +74,7 @@ export async function getResolvers(
   page: MarkdownPage,
   {root, path, loaders}: {root: string; path: string; loaders: LoaderResolver}
 ): Promise<Resolvers> {
-  const hash = createHash("sha256").update(page.html).update(JSON.stringify(page.data));
+  const hash = createHash("sha256").update(page.body).update(JSON.stringify(page.data));
   const assets = new Set<string>();
   const files = new Set<string>();
   const fileMethods = new Set<string>();
@@ -85,7 +85,7 @@ export async function getResolvers(
   const resolutions = new Map<string, string>();
 
   // Add assets.
-  const info = findAssets(page.html, path);
+  const info = findAssets(page.body, path);
   for (const f of info.files) assets.add(f);
   for (const i of info.localImports) localImports.add(i);
   for (const i of info.globalImports) globalImports.add(i);

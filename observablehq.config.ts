@@ -103,7 +103,7 @@ export default {
     </svg>
   </a>
   <div style="display: flex; flex-grow: 1; justify-content: space-between; align-items: baseline;">
-    <a href="https://observablehq.com/framework/">
+    <a href="/">
       <span class="hide-if-small">Observable</span> Framework
     </a>
     <span style="display: flex; align-items: baseline; gap: 0.5rem; font-size: 14px;">

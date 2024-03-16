@@ -2,8 +2,8 @@ import mime from "mime";
 import type {Config, Page, Script, Section} from "./config.js";
 import {mergeToc} from "./config.js";
 import {getClientPath} from "./files.js";
-import type {Html} from "./html.js";
-import {html, parseHtml, rewriteHtml} from "./html.js";
+import type {Html, HtmlResolvers} from "./html.js";
+import {html, parseHtml, rewriteHtml, rewriteHtmlPaths} from "./html.js";
 import {transpileJavaScript} from "./javascript/transpile.js";
 import type {MarkdownPage} from "./markdown.js";
 import type {PageLink} from "./pager.js";
@@ -86,9 +86,9 @@ ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => ev
 </script>${sidebar ? html`\n${await renderSidebar(title, pages, root, path, search, normalizeLink)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
-<div id="observablehq-center">${renderHeader(options, data)}
+<div id="observablehq-center">${renderHeader(page.header, resolvers)}
 <main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">
-${html.unsafe(rewriteHtml(page.html, resolvers))}</main>${renderFooter(path, options, data, normalizeLink)}
+${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(path, options, data, normalizeLink)}
 </div>
 `);
 }
@@ -171,7 +171,7 @@ interface Header {
 const tocSelector = "h1:not(:first-of-type), h2:first-child, :not(h1) + h2";
 
 function findHeaders(page: MarkdownPage): Header[] {
-  return Array.from(parseHtml(page.html).document.querySelectorAll(tocSelector))
+  return Array.from(parseHtml(page.body).document.querySelectorAll(tocSelector))
     .map((node) => ({label: node.textContent, href: node.firstElementChild?.getAttribute("href")}))
     .filter((d): d is Header => !!d.label && !!d.href);
 }
@@ -236,9 +236,10 @@ function renderModulePreload(href: string): Html {
   return html`\n<link rel="modulepreload" href="${href}">`;
 }
 
-function renderHeader({header}: Pick<Config, "header">, data: MarkdownPage["data"]): Html | null {
-  if (data?.header !== undefined) header = data?.header;
-  return header ? html`\n<header id="observablehq-header">\n${html.unsafe(header)}\n</header>` : null;
+function renderHeader(header: MarkdownPage["header"], resolvers: HtmlResolvers): Html | null {
+  return header
+    ? html`\n<header id="observablehq-header">\n${html.unsafe(rewriteHtml(header, resolvers))}\n</header>`
+    : null;
 }
 
 function renderFooter(

@@ -5,8 +5,20 @@ import type {DOMWindow} from "jsdom";
 import {JSDOM, VirtualConsole} from "jsdom";
 import {isAssetPath, relativePath, resolveLocalPath} from "./path.js";
 
-const ASSET_PROPERTIES: readonly [selector: string, src: string][] = [
+const ASSET_ATTRIBUTES: readonly [selector: string, src: string][] = [
   ["a[href][download]", "href"],
+  ["audio source[src]", "src"],
+  ["audio[src]", "src"],
+  ["img[src]", "src"],
+  ["img[srcset]", "srcset"],
+  ["link[href]", "href"],
+  ["picture source[srcset]", "srcset"],
+  ["video source[src]", "src"],
+  ["video[src]", "src"]
+];
+
+const PATH_ATTRIBUTES: readonly [selector: string, src: string][] = [
+  ["a[href]", "href"],
   ["audio source[src]", "src"],
   ["audio[src]", "src"],
   ["img[src]", "src"],
@@ -48,7 +60,7 @@ export function findAssets(html: string, path: string): Assets {
     files.add(relativePath(path, localPath));
   };
 
-  for (const [selector, src] of ASSET_PROPERTIES) {
+  for (const [selector, src] of ASSET_ATTRIBUTES) {
     for (const element of document.querySelectorAll(selector)) {
       const source = decodeURI(element.getAttribute(src)!);
       if (src === "srcset") {
@@ -85,19 +97,39 @@ export function findAssets(html: string, path: string): Assets {
   return {files, localImports, globalImports, staticImports};
 }
 
-interface HtmlResolvers {
-  resolveFile?: (specifier: string) => string;
-  resolveScript?: (specifier: string) => string;
+export function rewriteHtmlPaths(html: string, path: string): string {
+  const {document} = parseHtml(html);
+
+  const resolvePath = (specifier: string): string => {
+    return isAssetPath(specifier) ? relativePath(path, specifier) : specifier;
+  };
+
+  for (const [selector, src] of PATH_ATTRIBUTES) {
+    for (const element of document.querySelectorAll(selector)) {
+      const source = decodeURI(element.getAttribute(src)!);
+      element.setAttribute(src, src === "srcset" ? resolveSrcset(source, resolvePath) : resolvePath(source));
+    }
+  }
+
+  return document.body.innerHTML;
 }
 
-export function rewriteHtml(html: string, {resolveFile = String, resolveScript = String}: HtmlResolvers): string {
+export interface HtmlResolvers {
+  resolveFile: (specifier: string) => string;
+  resolveScript: (specifier: string) => string;
+}
+
+export function rewriteHtml(
+  html: string,
+  {resolveFile = String, resolveScript = String}: Partial<HtmlResolvers>
+): string {
   const {document} = parseHtml(html);
 
   const maybeResolveFile = (specifier: string): string => {
     return isAssetPath(specifier) ? resolveFile(specifier) : specifier;
   };
 
-  for (const [selector, src] of ASSET_PROPERTIES) {
+  for (const [selector, src] of ASSET_ATTRIBUTES) {
     for (const element of document.querySelectorAll(selector)) {
       const source = decodeURI(element.getAttribute(src)!);
       element.setAttribute(src, src === "srcset" ? resolveSrcset(source, maybeResolveFile) : maybeResolveFile(source));
