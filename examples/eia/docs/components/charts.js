@@ -30,7 +30,18 @@ export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDema
 }
 
 // US electricity demand, generation and forecasting chart
-export function usGenDemandForecastChart(width, height, detailData, summaryData, currentHour) {
+export function usGenDemandForecastChart(width, height, data, currentHour) {
+  
+  // Roll up each hour's values into a single row for a cohesive tip
+  const rolledToHour = data.reduce((map, d) => {
+    let value = map.get(d.date.getTime()) ?? { date: d.date, demandForecast: null, demandActual: null, netGeneration: null };
+    value[d.name] = d.value;
+    return map.set(d.date.getTime() , value);
+  }, new Map())
+
+  const rolledUpSparse = [];
+  rolledToHour.forEach((d) => { rolledUpSparse.push(d) });
+
   return Plot.plot({
     width,
     marginTop: 0,
@@ -46,13 +57,13 @@ export function usGenDemandForecastChart(width, height, detailData, summaryData,
     grid: true,
     marks: [
       Plot.ruleX([currentHour], {strokeOpacity: 0.5}),
-      Plot.line(detailData, {
+      Plot.line(data, {
         x: "date",
         y: (d) => d.value / 1000,
         stroke: "name", 
         strokeWidth: 1.2,
       }),
-      Plot.ruleX(summaryData, Plot.pointerX({
+      Plot.ruleX(rolledUpSparse, Plot.pointerX({
         x: "date",
         strokeDasharray: [2,2],
         channels: {

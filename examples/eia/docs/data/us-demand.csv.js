@@ -1,5 +1,4 @@
 import * as d3 from "d3";
-import JSZip from "jszip";
 
 // Construct web API call for last 7 days of hourly demand data in MWh
 // Types: DF = forecasted demand, D = demand (actual), NG = net generation
@@ -26,25 +25,7 @@ const jsonToTidy = (data, id) => {
   })
 };
 
-// Roll up each hour's values into a single row for a cohesive tip
-function tidyToRollup(data) {
-  const rolledToDate = data.reduce((map, d) => {
-    let value = map.get(d.date.getTime()) ?? { date: d.date, demandForecast: null, demandActual: null, netGeneration: null }
-    value[d.name] = d.value
-    return map.set(d.date.getTime() , value)
-  }, new Map())
-
-  const rolledUpSparse = []
-  rolledToDate.forEach((d) => { rolledUpSparse.push(d) })
-  return rolledUpSparse
-}
-
 const jsonData = await d3.json(usDemandUrl);
 const tidySeries = jsonToTidy(jsonData, "TYPE_ID");
-const summaryData = tidyToRollup(tidySeries);
 
-const zip = new JSZip();
-zip.file("summary.csv", d3.csvFormat(summaryData));
-zip.file("detail.csv", d3.csvFormat(tidySeries));
-zip.generateNodeStream().pipe(process.stdout);
-
+process.stdout.write(d3.csvFormat(tidySeries));

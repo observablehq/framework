@@ -46,8 +46,7 @@ const eiaPoints = FileAttachment("data/eia-system-points.json").json().then(d =>
 
 ```js
 // US total demand, generation and forecast
-const usDemandGenForecast = FileAttachment("data/us-demand/detail.csv").csv({typed: true});
-const usDemandGenForecastSummary = FileAttachment("data/us-demand/summary.csv").csv({typed: true});
+const usDemandGenForecast = FileAttachment("data/us-demand.csv").csv({typed: true});
 ```
 
 ```js
@@ -173,7 +172,7 @@ function centerResize(render) {
   </div>
   <div class="card grid-colspan-2">
     <h2>US electricity generation demand vs. day-ahead forecast (GWh)</h2>
-    ${resize((width, height) => usGenDemandForecastChart(width, height, usDemandGenForecast, usDemandGenForecastSummary, currentHour))}
+    ${resize((width, height) => usGenDemandForecastChart(width, height, usDemandGenForecast, currentHour))}
   </div>
   <div class="card grid-colspan-2">
     <h2>Neighboring country interchange (GWh)</h2>
