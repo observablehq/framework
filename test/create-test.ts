@@ -4,7 +4,7 @@ import {type CreateEffects, create} from "../src/create.js";
 import {fromOsPath} from "../src/files.js";
 import {TestClackEffects} from "./mocks/clack.js";
 
-describe("create", async () => {
+describe("create", () => {
   it("instantiates the default template", async () => {
     const effects = new TestCreateEffects();
     effects.clack.inputs.push(

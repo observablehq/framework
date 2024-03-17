@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>A link</title>
+<title>Scripts</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
 <link rel="preload" as="style" href="./_observablehq/theme-air,near-midnight.css">
@@ -10,6 +10,7 @@
 <link rel="modulepreload" href="./_observablehq/client.js">
 <link rel="modulepreload" href="./_observablehq/runtime.js">
 <link rel="modulepreload" href="./_observablehq/stdlib.js">
+<link rel="modulepreload" href="./_import/top.160847a6.js">
 <script type="module">
 
 import "./_observablehq/client.js";
@@ -20,10 +21,11 @@ import "./_observablehq/client.js";
 <nav id="observablehq-sidebar">
   <ol>
     <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
-    <li class="observablehq-link observablehq-link-active"><a href="./">Home</a></li>
+    <li class="observablehq-link"><a href="./">Home</a></li>
   </ol>
   <ol>
-    <li class="observablehq-link"><a href="./a%20space">A page</a></li>
+    <li class="observablehq-link observablehq-link-active"><a href="./script">Scripts</a></li>
+    <li class="observablehq-link"><a href="./foo/foo">Foo</a></li>
   </ol>
 </nav>
 <script>{/* redacted init script */}</script>
@@ -33,11 +35,12 @@ import "./_observablehq/client.js";
 </aside>
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
-<h1 id="a-link" tabindex="-1"><a class="observablehq-header-anchor" href="#a-link">A link</a></h1>
-<p>I link to <a href="a%20space">a page with a space</a>.</p>
+<h1 id="scripts" tabindex="-1"><a class="observablehq-header-anchor" href="#scripts">Scripts</a></h1>
+<script src="./_import/top.160847a6.js" type="module"></script>
+<script src="./_file/top.a53c5d5b.js" type="other"></script>
 </main>
 <footer id="observablehq-footer">
-<nav><a rel="next" href="./a%20space"><span>A page</span></a></nav>
+<nav><a rel="prev" href="./"><span>Home</span></a><a rel="next" href="./foo/foo"><span>Foo</span></a></nav>
 <div>Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.</div>
 </footer>
 </div>

@@ -108,7 +108,7 @@ In addition to resolving versions of directly-imported modules, Observable Frame
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/+esm">
 ```
 
-<div class="note">We’d also like to download imported modules from the CDN during build, making the built site entirely self-contained; see <a href="https://github.com/observablehq/framework/issues/20">#20</a>. This would further enable subresource integrity hashes; see <a href="https://github.com/observablehq/framework/issues/306">#306</a>.</div>
+<div class="note">Framework automatically downloads <code>npm:</code> imports from npm during preview and build, making the built site entirely self-contained. If you prefer not to self-host a module, and instead load it from an external server at runtime, import a full URL instead of using the <code>npm:</code> protocol.</div>
 
 ## Implicit imports
 

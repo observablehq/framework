@@ -1,4 +1,3 @@
-import {registerTable} from "npm:@observablehq/duckdb";
 import {FileAttachment, registerFile} from "npm:@observablehq/stdlib";
 import {main, runtime, undefine} from "./main.js";
 import {enableCopyButtons} from "./pre.js";
@@ -17,7 +16,7 @@ export function open({hash, eval: compile} = {}) {
     send({type: "hello", path: location.pathname, hash});
   };
 
-  socket.onmessage = (event) => {
+  socket.onmessage = async (event) => {
     const message = JSON.parse(event.data);
     console.info("↓", message);
     switch (message.type) {
@@ -84,11 +83,14 @@ export function open({hash, eval: compile} = {}) {
         for (const file of message.files.added) {
           registerFile(file.name, file);
         }
-        for (const name of message.tables.removed) {
-          registerTable(name, null);
-        }
-        for (const table of message.tables.added) {
-          registerTable(table.name, FileAttachment(table.path));
+        if (message.tables.removed.length || message.tables.added.length) {
+          const {registerTable} = await import("npm:@observablehq/duckdb");
+          for (const name of message.tables.removed) {
+            registerTable(name, null);
+          }
+          for (const table of message.tables.added) {
+            registerTable(table.name, FileAttachment(table.path));
+          }
         }
         if (message.tables.removed.length || message.tables.added.length) {
           const sql = main._resolve("sql");

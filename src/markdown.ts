@@ -1,5 +1,6 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
+import {extname} from "node:path/posix";
 import matter from "gray-matter";
 import he from "he";
 import MarkdownIt from "markdown-it";
@@ -275,13 +276,47 @@ function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
   };
 }
 
+export function parseRelativeUrl(url: string): {pathname: string; search: string; hash: string} {
+  let search: string;
+  let hash: string;
+  const i = url.indexOf("#");
+  if (i < 0) hash = "";
+  else (hash = url.slice(i)), (url = url.slice(0, i));
+  const j = url.indexOf("?");
+  if (j < 0) search = "";
+  else (search = url.slice(j)), (url = url.slice(0, j));
+  return {pathname: url, search, hash};
+}
+
+export function makeLinkNormalizer(baseNormalize: (url: string) => string, clean: boolean): (url: string) => string {
+  return (url) => {
+    // Only clean relative links; ignore e.g. "https:" links.
+    if (!/^\w+:/.test(url)) {
+      const u = parseRelativeUrl(url);
+      let {pathname} = u;
+      if (pathname && !pathname.endsWith("/") && !extname(pathname)) pathname += ".html";
+      if (pathname === "index.html") pathname = ".";
+      else if (pathname.endsWith("/index.html")) pathname = pathname.slice(0, -"index.html".length);
+      else if (clean) pathname = pathname.replace(/\.html$/, "");
+      url = pathname + u.search + u.hash;
+    }
+    return baseNormalize(url);
+  };
+}
+
 export interface ParseOptions {
   md: MarkdownIt;
   path: string;
   style?: Config["style"];
 }
 
-export function createMarkdownIt({markdownIt}: {markdownIt?: (md: MarkdownIt) => MarkdownIt} = {}): MarkdownIt {
+export function createMarkdownIt({
+  markdownIt,
+  cleanUrls = true
+}: {
+  markdownIt?: (md: MarkdownIt) => MarkdownIt;
+  cleanUrls?: boolean;
+} = {}): MarkdownIt {
   const md = MarkdownIt({html: true, linkify: true});
   md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
@@ -290,6 +325,7 @@ export function createMarkdownIt({markdownIt}: {markdownIt?: (md: MarkdownIt) =>
   md.renderer.rules.placeholder = makePlaceholderRenderer();
   md.renderer.rules.fence = makeFenceRenderer(md.renderer.rules.fence!);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
+  md.normalizeLink = makeLinkNormalizer(md.normalizeLink, cleanUrls);
   return markdownIt === undefined ? md : markdownIt(md);
 }
 
@@ -298,7 +334,7 @@ export function parseMarkdown(input: string, {md, path, style: configStyle}: Par
   const code: MarkdownCode[] = [];
   const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
   const tokens = md.parse(content, context);
-  const html = md.renderer.render(tokens, md.options, context); // Note: mutates code, assets!
+  const html = md.renderer.render(tokens, md.options, context); // Note: mutates code!
   const style = getStylesheet(path, data, configStyle);
   return {
     html,

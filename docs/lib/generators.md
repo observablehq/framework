@@ -75,16 +75,18 @@ const width = Generators.width(document.querySelector("main"));
 width
 ```
 
-## dark() <a href="https://github.com/observablehq/framework/pull/1025" target="_blank" class="observablehq-version-badge" data-version="prerelease" title="Added in #1025"></a>
+## dark() <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" target="_blank" class="observablehq-version-badge" data-version="^1.3.0" title="Added in 1.3.0"></a>
 
-Returns an async generator that yields a boolean indicating whether the page is currently displayed with a dark [color-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/color-scheme).
+Returns an async generator that yields a boolean indicating whether the page is currently displayed with a dark [color scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/color-scheme).
 
-If the page supports dark mode (for example with the default Framework themes), the value reflects the user’s preferred color scheme. It will yield if that value changes, and update the charts that depend on it without needing to reload the page — this happens at dusk (if the user settings adapt from light to dark), and conversely at dawn, from dark to light; and of course, when the user is playing with their settings.
+If the page supports both light and dark mode (as with the [default theme](../themes)), the value reflects the user’s [preferred color scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme). The generator will yield a new value if the preferred color changes — as when the user changes their system settings, or if the user’s system adapts automatically to the diurnal cycle — allowing you to update the display as needed without requiring a page reload.
 
-If the page does _not_ support dark mode, and only has a light theme, the value is always false, and likewise it is always true if the page only has a dark theme.
+If the page only supports light mode, the value is always false; likewise it is always true if the page only has a dark theme.
 
-```js echo
-html`<em>Current theme: ${dark ? "dark" : "light"}</em>`
+The current theme is: *${dark ? "dark" : "light"}*.
+
+```md run=false
+The current theme is: *${dark ? "dark" : "light"}*.
 ```
 
 This generator is available by default as `dark` in Markdown. It can be used to pick a [color scheme](https://observablehq.com/plot/features/scales#color-scales) for a chart, or an appropriate [mix-blend-mode](https://developer.mozilla.org/en-US/docs/Web/CSS/mix-blend-mode):
@@ -92,7 +94,7 @@ This generator is available by default as `dark` in Markdown. It can be used to 
 ```js echo
 Plot.plot({
   height: 260,
-  color: {scheme: dark ? "turbo" : "blues"},
+  color: {scheme: dark ? "turbo" : "ylgnbu"},
   marks: [
     Plot.rectY(
       olympians,

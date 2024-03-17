@@ -29,14 +29,14 @@ The base map is created in the `us-states.json.js` data loader, which uses [Topo
 
 ### Static files
 
-Several static files used in the dashboard were downloaded from the EIA Hourly Electric Grid Monitor [About page](https://www.eia.gov/electricity/gridmonitor/about) (EIA-930 data reference tables), and not created or processed in data loaders. These files contain reference information that expect to remain unchanged, including: 
+Several static files used in the dashboard were downloaded from the EIA Hourly Electric Grid Monitor [About page](https://www.eia.gov/electricity/gridmonitor/about) (EIA-930 data reference tables), and not created or processed in data loaders. These files contain reference information that expect to remain unchanged, including:
 
-- `eia-bia-reference.csv`: Reference information about balancing authority name, time zone, region, country, etc.
+- `eia-bia-reference.csv`: Reference information about balancing authority name, time zone, region, country, _etc._
 - `eia-connections-reference.csv`: Reference information about connections between balancing authorities
 
 ## Charts
 
-The charts and map are drawn with [Observable Plot](https://observablehq.com/plot/), and saved as components in `components/charts.js` and `components/map.js` to simplify our layout code in `index.md`. 
+The charts and map are drawn with [Observable Plot](https://observablehq.com/plot/), and saved as components in `components/charts.js` and `components/map.js` to simplify our layout code in `index.md`.
 
 ## Thanks
 

@@ -33,7 +33,7 @@ function runTests(inputRoot: string, outputRoot: string, filter: (name: string) 
 
       try {
         const node = parseJavaScript(input, {path: name});
-        actual = transpileJavaScript(node, {id: "0", resolveImport: mockResolveImport});
+        actual = transpileJavaScript(node, {id: "0", path: name, resolveImport: mockResolveImport});
       } catch (error) {
         if (!(error instanceof SyntaxError)) throw error;
         actual = `define({id: "0", body: () => { throw new SyntaxError(${JSON.stringify(error.message)}); }});\n`;
@@ -75,7 +75,7 @@ describe("transpileJavaScript(input, options)", () => {
   runTests("test/input/imports", "test/output/imports", (name) => name.endsWith("-import.js"));
   it("trims leading and trailing newlines", async () => {
     const node = parseJavaScript("\ntest\n", {path: "index.js"});
-    const body = transpileJavaScript(node, {id: "0"});
+    const body = transpileJavaScript(node, {id: "0", path: "index.js"});
     assert.strictEqual(body, 'define({id: "0", inputs: ["test","display"], body: async (test,display) => {\ndisplay(await(\ntest\n))\n}});\n'); // prettier-ignore
   });
 });

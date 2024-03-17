@@ -5,7 +5,9 @@ import {type DeployEffects, type DeployOptions, deploy, promptDeployTarget} from
 import {CliError, isHttpError} from "../src/error.js";
 import {type GetCurrentUserResponse, ObservableApiClient} from "../src/observableApiClient.js";
 import type {DeployConfig} from "../src/observableApiConfig.js";
+import {MockAuthEffects} from "./mocks/authEffects.js";
 import {TestClackEffects} from "./mocks/clack.js";
+import {MockConfigEffects} from "./mocks/configEffects.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
 import {MockLogger} from "./mocks/logger.js";
 import {
@@ -18,8 +20,6 @@ import {
   userWithZeroWorkspaces,
   validApiKey
 } from "./mocks/observableApi.js";
-import {MockAuthEffects} from "./observableApiAuth-test.js";
-import {MockConfigEffects} from "./observableApiConfig-test.js";
 
 interface MockDeployEffectsOptions {
   apiKey?: string | null;

@@ -10,7 +10,7 @@
 <link rel="modulepreload" href="../_observablehq/client.js">
 <link rel="modulepreload" href="../_observablehq/runtime.js">
 <link rel="modulepreload" href="../_observablehq/stdlib.js">
-<link rel="modulepreload" href="../_npm/d3@7.8.5/+esm.js">
+<link rel="modulepreload" href="../_npm/d3@7.8.5/_esm.js">
 <link rel="modulepreload" href="../_import/bar/bar.13bb8056.js">
 <link rel="modulepreload" href="../_import/top.160847a6.js">
 <link rel="modulepreload" href="../_import/foo/foo bar.b173d3de.js">
@@ -21,14 +21,14 @@
 import {define} from "../_observablehq/client.js";
 import {registerFile} from "../_observablehq/stdlib.js";
 
-registerFile("../top.js", {"name":"../top.js","mimeType":"application/javascript","path":"../_file/top.a53c5d5b.js"});
+registerFile("../top.js", {"name":"../top.js","mimeType":"text/javascript","path":"../_file/top.a53c5d5b.js","lastModified":/* ts */1706742000000});
 
 define({id: "261e010e", inputs: ["display","FileAttachment"], outputs: ["d3","bar","top"], body: async (display,FileAttachment) => {
-const [d3, {bar}, {top}] = await Promise.all([import("../_npm/d3@7.8.5/+esm.js"), import("../_import/bar/bar.13bb8056.js"), import("../_import/top.160847a6.js")]);
+const [d3, {bar}, {top}] = await Promise.all([import("../_npm/d3@7.8.5/_esm.js"), import("../_import/bar/bar.13bb8056.js"), import("../_import/top.160847a6.js")]);
 
 display(bar);
 display(top);
-FileAttachment("/top.js");
+FileAttachment("../top.js");
 return {d3,bar,top};
 }});
 
@@ -47,6 +47,7 @@ return {foobar};
     <li class="observablehq-link"><a href="../">Home</a></li>
   </ol>
   <ol>
+    <li class="observablehq-link"><a href="../script">Scripts</a></li>
     <li class="observablehq-link observablehq-link-active"><a href="./foo">Foo</a></li>
   </ol>
 </nav>
@@ -62,7 +63,7 @@ return {foobar};
 <div id="cell-ec24b17a" class="observablehq observablehq--block"></div>
 </main>
 <footer id="observablehq-footer">
-<nav><a rel="prev" href="../"><span>Home</span></a></nav>
+<nav><a rel="prev" href="../script"><span>Scripts</span></a></nav>
 <div>Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.</div>
 </footer>
 </div>
