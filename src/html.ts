@@ -54,10 +54,13 @@ export function findAssets(html: string, path: string): Assets {
   const staticImports = new Set<string>();
 
   const maybeFile = (specifier: string): void => {
-    if (!isAssetPath(specifier)) return;
-    const localPath = resolveLocalPath(path, specifier);
-    if (!localPath) return console.warn(`non-local asset path: ${specifier}`);
-    files.add(relativePath(path, localPath));
+    if (isAssetPath(specifier)) {
+      const localPath = resolveLocalPath(path, specifier);
+      if (!localPath) return console.warn(`non-local asset path: ${specifier}`);
+      files.add(relativePath(path, localPath));
+    } else {
+      globalImports.add(specifier);
+    }
   };
 
   for (const [selector, src] of ASSET_ATTRIBUTES) {
@@ -116,17 +119,18 @@ export function rewriteHtmlPaths(html: string, path: string): string {
 
 export interface HtmlResolvers {
   resolveFile: (specifier: string) => string;
+  resolveImport: (specifier: string) => string;
   resolveScript: (specifier: string) => string;
 }
 
 export function rewriteHtml(
   html: string,
-  {resolveFile = String, resolveScript = String}: Partial<HtmlResolvers>
+  {resolveFile = String, resolveImport = String, resolveScript = String}: Partial<HtmlResolvers>
 ): string {
   const {document} = parseHtml(html);
 
   const maybeResolveFile = (specifier: string): string => {
-    return isAssetPath(specifier) ? resolveFile(specifier) : specifier;
+    return isAssetPath(specifier) ? resolveFile(specifier) : resolveImport(specifier);
   };
 
   for (const [selector, src] of ASSET_ATTRIBUTES) {
