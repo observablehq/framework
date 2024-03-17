@@ -361,7 +361,7 @@ function getHtml(
   {path, [key]: defaultValue}: ParseOptions
 ): string | null {
   return data[key] !== undefined
-    ? data[key] != null
+    ? data[key]
       ? String(data[key])
       : null
     : defaultValue != null
