@@ -67,14 +67,14 @@ export function usGenDemandForecastChart(width, height, data, currentHour) {
         x: "date",
         strokeDasharray: [2,2],
         channels: {
-          date: {value: "date", label: "Date"},
+          date: {value: "date", label: "Time"},
           demandActual: {value: "demandActual", label: friendlyTypeName["demandActual"]},
           demandForecast: {value: "demandForecast", label: friendlyTypeName["demandForecast"]},
           netGeneration: {value: "netGeneration", label: friendlyTypeName["netGeneration"]}
         },
         tip: {
           format: {
-            date: (d) => timeFormat("%-m/%-d %-I %p")(d),
+            date: (d) => timeFormat("%-d %b %-I %p")(d),
             demandActual: (d) => `${format(".1f")(d / 1000)} GWh`,
             demandForecast: (d) => `${format(".1f")(d / 1000)} GWh`,
             netGeneration: (d) => `${format(".1f")(d / 1000)} GWh`,
