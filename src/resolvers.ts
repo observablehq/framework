@@ -85,7 +85,7 @@ export async function getResolvers(
   const resolutions = new Map<string, string>();
 
   // Add assets.
-  for (const html of [page.header, page.body]) {
+  for (const html of [page.head, page.header, page.body, page.footer]) {
     if (!html) continue;
     const info = findAssets(html, path);
     for (const f of info.files) assets.add(f);

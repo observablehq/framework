@@ -86,8 +86,8 @@ export default {
     {name: "Contributing", path: "/contributing"}
   ],
   base: "/framework",
-  head: `<link rel="apple-touch-icon" href="https://static.observablehq.com/favicon-512.0667824687f99c942a02e06e2db1a060911da0bf3606671676a255b1cf97b4fe.png">
-<link rel="icon" type="image/png" href="https://static.observablehq.com/favicon-512.0667824687f99c942a02e06e2db1a060911da0bf3606671676a255b1cf97b4fe.png" sizes="512x512">${
+  head: `<link rel="apple-touch-icon" href="/favicon.png">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="512x512">${
     process.env.CI
       ? `
 <script type="module" async src="https://events.observablehq.com/client.js"></script>

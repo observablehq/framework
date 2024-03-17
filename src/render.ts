@@ -1,5 +1,5 @@
 import mime from "mime";
-import type {Config, Page, Script, Section} from "./config.js";
+import type {Config, Page, Script} from "./config.js";
 import {mergeToc} from "./config.js";
 import {getClientPath} from "./files.js";
 import type {Html, HtmlResolvers} from "./html.js";
@@ -25,9 +25,8 @@ type RenderInternalOptions =
 
 export async function renderPage(page: MarkdownPage, options: RenderOptions & RenderInternalOptions): Promise<string> {
   const {data} = page;
-  const {root, md, base, path, pages, title, preview, search} = options;
+  const {base, path, title, preview} = options;
   const {loaders, resolvers = await getResolvers(page, options)} = options;
-  const {normalizeLink} = md;
   const sidebar = data?.sidebar !== undefined ? Boolean(data.sidebar) : options.sidebar;
   const toc = mergeToc(data?.toc, options.toc);
   const draft = Boolean(data?.draft);
@@ -41,7 +40,7 @@ ${
         .filter((title): title is string => !!title)
         .join(" | ")}</title>\n`
     : ""
-}${renderHead(page, resolvers, options)}${
+}${renderHead(page.head, resolvers, options)}${
     path === "/404"
       ? html.unsafe(`\n<script type="module">
 
@@ -69,8 +68,8 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
           files,
           resolveFile,
           preview
-            ? (name: string) => loaders.getSourceLastModified(resolvePath(path, name))
-            : (name: string) => loaders.getOutputLastModified(resolvePath(path, name))
+            ? (name) => loaders.getSourceLastModified(resolvePath(path, name))
+            : (name) => loaders.getOutputLastModified(resolvePath(path, name))
         )}`
       : ""
   }${
@@ -83,24 +82,32 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
     .map(({node, id}) => `\n${transpileJavaScript(node, {id, path, resolveImport})}`)
     .join("")}`)}
-</script>${sidebar ? html`\n${await renderSidebar(title, pages, root, path, search, normalizeLink)}` : ""}${
+</script>${sidebar ? html`\n${await renderSidebar(options)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
 <div id="observablehq-center">${renderHeader(page.header, resolvers)}
 <main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">
-${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(path, options, data, normalizeLink)}
+${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(page.footer, resolvers, options)}
 </div>
 `);
 }
 
-function renderFiles(files: Iterable<string>, resolve: (name: string) => string, getLastModified): string {
+function renderFiles(
+  files: Iterable<string>,
+  resolve: (name: string) => string,
+  getLastModified: (name: string) => number | undefined
+): string {
   return Array.from(files)
     .sort()
     .map((f) => renderFile(f, resolve, getLastModified))
     .join("");
 }
 
-function renderFile(name: string, resolve: (name: string) => string, getLastModified): string {
+function renderFile(
+  name: string,
+  resolve: (name: string) => string,
+  getLastModified: (name: string) => number | undefined
+): string {
   return `\nregisterFile(${JSON.stringify(name)}, ${JSON.stringify({
     name,
     mimeType: mime.getType(name) ?? undefined,
@@ -109,14 +116,9 @@ function renderFile(name: string, resolve: (name: string) => string, getLastModi
   })});`;
 }
 
-async function renderSidebar(
-  title = "Home",
-  pages: (Page | Section)[],
-  root: string,
-  path: string,
-  search: boolean,
-  normalizeLink: (href: string) => string
-): Promise<Html> {
+async function renderSidebar(options: RenderOptions): Promise<Html> {
+  const {title = "Home", pages, root, path, search, md} = options;
+  const {normalizeLink} = md;
   return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
@@ -124,7 +126,7 @@ async function renderSidebar(
     <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
     <li class="observablehq-link${
       normalizePath(path) === "/index" ? " observablehq-link-active" : ""
-    }"><a href="${normalizeLink(relativePath(path, "/"))}">${title}</a></li>
+    }"><a href="${md.normalizeLink(relativePath(path, "/"))}">${title}</a></li>
   </ol>${
     search
       ? html`\n  <div id="observablehq-search"><input type="search" placeholder="Search"></div>
@@ -198,12 +200,8 @@ function renderListItem(page: Page, path: string, normalizeLink: (href: string) 
   }"><a href="${normalizeLink(relativePath(path, page.path))}">${page.name}</a></li>`;
 }
 
-function renderHead(
-  parse: MarkdownPage,
-  {stylesheets, staticImports, resolveImport, resolveStylesheet}: Resolvers,
-  {scripts, head, root}: RenderOptions
-): Html {
-  if (parse.data?.head !== undefined) head = parse.data.head;
+function renderHead(head: MarkdownPage["head"], resolvers: Resolvers, {scripts, root}: RenderOptions): Html {
+  const {stylesheets, staticImports, resolveImport, resolveStylesheet} = resolvers;
   const resolveScript = (src: string) => (/^\w+:/.test(src) ? src : resolveImport(relativePath(root, src)));
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
     Array.from(new Set(Array.from(stylesheets, (i) => resolveStylesheet(i))), renderStylesheetPreload) // <link rel=preload as=style>
@@ -212,7 +210,7 @@ function renderHead(
   }${
     Array.from(new Set(Array.from(staticImports, (i) => resolveImport(i))), renderModulePreload) // <link rel=modulepreload>
   }${
-    head ? html`\n${html.unsafe(head)}` : null // arbitrary user content
+    head ? html`\n${html.unsafe(rewriteHtml(head, resolvers))}` : null // arbitrary user content
   }${
     Array.from(scripts, (s) => renderScript(s, resolveScript)) // <script src>
   }`;
@@ -242,18 +240,12 @@ function renderHeader(header: MarkdownPage["header"], resolvers: HtmlResolvers):
     : null;
 }
 
-function renderFooter(
-  path: string,
-  options: Pick<Config, "pages" | "pager" | "title" | "footer">,
-  data: MarkdownPage["data"],
-  normalizeLink: (href: string) => string
-): Html | null {
-  let footer = options.footer;
-  if (data?.footer !== undefined) footer = data?.footer;
+function renderFooter(footer: MarkdownPage["footer"], resolvers: HtmlResolvers, options: RenderOptions): Html | null {
+  const {path, md} = options;
   const link = options.pager ? findLink(path, options) : null;
   return link || footer
-    ? html`\n<footer id="observablehq-footer">${link ? renderPager(path, link, normalizeLink) : ""}${
-        footer ? html`\n<div>${html.unsafe(footer)}</div>` : ""
+    ? html`\n<footer id="observablehq-footer">${link ? renderPager(path, link, md.normalizeLink) : ""}${
+        footer ? html`\n<div>${html.unsafe(rewriteHtml(footer, resolvers))}</div>` : ""
       }
 </footer>`
     : null;

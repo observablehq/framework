@@ -196,7 +196,7 @@ describe("makeLinkNormalizer(normalize, true)", () => {
   });
 });
 
-function jsonMeta({body, header, ...rest}: MarkdownPage): string {
+function jsonMeta({head, header, body, footer, ...rest}: MarkdownPage): string {
   return JSON.stringify(rest, null, 2);
 }
 

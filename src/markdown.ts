@@ -27,8 +27,10 @@ export interface MarkdownCode {
 
 export interface MarkdownPage {
   title: string | null;
-  body: string;
+  head: string | null;
   header: string | null;
+  body: string;
+  footer: string | null;
   data: {[key: string]: any} | null;
   style: string | null;
   code: MarkdownCode[];
@@ -309,8 +311,10 @@ export function makeLinkNormalizer(baseNormalize: (url: string) => string, clean
 export interface ParseOptions {
   md: MarkdownIt;
   path: string;
-  header?: Config["header"];
   style?: Config["style"];
+  head?: Config["head"];
+  header?: Config["header"];
+  footer?: Config["footer"];
 }
 
 export function createMarkdownIt({
@@ -332,26 +336,42 @@ export function createMarkdownIt({
   return markdownIt === undefined ? md : markdownIt(md);
 }
 
-export function parseMarkdown(input: string, {md, path, header, style: configStyle}: ParseOptions): MarkdownPage {
+export function parseMarkdown(input: string, options: ParseOptions): MarkdownPage {
+  const {md, path} = options;
   const {content, data} = matter(input, {});
   const code: MarkdownCode[] = [];
   const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
   const tokens = md.parse(content, context);
   const body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
-  const style = getStylesheet(path, data, configStyle);
   return {
-    header: data.header != null ? String(data.header) : header != null ? rewriteHtmlPaths(header, path) : null,
+    head: getHtml("head", data, options),
+    header: getHtml("header", data, options),
     body,
+    footer: getHtml("footer", data, options),
     data: isEmpty(data) ? null : data,
-    title: data?.title ?? findTitle(tokens) ?? null,
-    style,
+    title: data.title ?? findTitle(tokens) ?? null,
+    style: getStyle(data, options),
     code
   };
 }
 
-function getStylesheet(path: string, data: MarkdownPage["data"], style: Config["style"] = null): string | null {
+function getHtml(
+  key: "head" | "header" | "footer",
+  data: Record<string, any>,
+  {path, [key]: defaultValue}: ParseOptions
+): string | null {
+  return data[key] !== undefined
+    ? data[key] != null
+      ? String(data[key])
+      : null
+    : defaultValue != null
+    ? rewriteHtmlPaths(defaultValue, path)
+    : null;
+}
+
+function getStyle(data: Record<string, any>, {path, style = null}: ParseOptions): string | null {
   try {
-    style = mergeStyle(path, data?.style, data?.theme, style);
+    style = mergeStyle(path, data.style, data.theme, style);
   } catch (error) {
     if (!(error instanceof InvalidThemeError)) throw error;
     console.error(red(String(error))); // TODO error during build
