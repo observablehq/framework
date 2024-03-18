@@ -1,11 +1,16 @@
 import * as Plot from "npm:@observablehq/plot";
-import {extent, format, timeFormat} from "npm:d3";
+import {extent, format, rollup, timeFormat} from "npm:d3";
 
-const friendlyTypeName = {
-  demandActual: "Demand (actual)",
-  demandForecast: "Demand (forecast)",
-  netGeneration: "Net generation"
-};
+function friendlyTypeName(d) {
+  switch (d) {
+    case "demandActual":
+      return "Demand (actual)";
+    case "demandForecast":
+      return "Demand (forecast)";
+    case "netGeneration":
+      return "Net generation";
+  }
+}
 
 // Top 5 balancing authorities chart
 export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDemand) {
@@ -23,7 +28,7 @@ export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDema
         fill: "#9498a0",
         sort: {y: "x", reverse: true, limit: 10},
         tip: true,
-        title: ({ name, value }) => `name: ${name}\ndemand: ${value / 1000} GWh`
+        title: ({name, value}) => `name: ${name}\ndemand: ${value / 1000} GWh`
       })
     ]
   });
@@ -31,16 +36,12 @@ export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDema
 
 // US electricity demand, generation and forecasting chart
 export function usGenDemandForecastChart(width, height, data, currentHour) {
-  
   // Roll up each hour's values into a single row for a cohesive tip
-  const rolledToHour = data.reduce((map, d) => {
-    let value = map.get(d.date.getTime()) ?? { date: d.date, demandForecast: null, demandActual: null, netGeneration: null };
-    value[d.name] = d.value;
-    return map.set(d.date.getTime() , value);
-  }, new Map());
-
-  const rolledUpSparse = [];
-  for (const d of rolledToHour) rolledUpSparse.push(d);
+  const compoundTips = rollup(
+    data,
+    (v) => ({...v[0], ...Object.fromEntries(v.map(({name, value}) => [name, value]))}),
+    (d) => d.date
+  ).values();
 
   return Plot.plot({
     width,
@@ -51,7 +52,7 @@ export function usGenDemandForecastChart(width, height, data, currentHour) {
     color: {
       legend: true,
       domain: ["demandActual", "demandForecast", "netGeneration"],
-      tickFormat: (d) => friendlyTypeName[d],
+      tickFormat: friendlyTypeName,
       range: ["#ff8ab7", "#6cc5b0", "#a463f2"]
     },
     grid: true,
@@ -60,31 +61,34 @@ export function usGenDemandForecastChart(width, height, data, currentHour) {
       Plot.line(data, {
         x: "date",
         y: (d) => d.value / 1000,
-        stroke: "name", 
-        strokeWidth: 1.2,
+        stroke: "name",
+        strokeWidth: 1.2
       }),
-      Plot.ruleX(rolledUpSparse, Plot.pointerX({
-        x: "date",
-        strokeDasharray: [2,2],
-        channels: {
-          date: {value: "date", label: "Time"},
-          demandActual: {value: "demandActual", label: friendlyTypeName["demandActual"]},
-          demandForecast: {value: "demandForecast", label: friendlyTypeName["demandForecast"]},
-          netGeneration: {value: "netGeneration", label: friendlyTypeName["netGeneration"]}
-        },
-        tip: {
-          format: {
-            date: (d) => timeFormat("%-d %b %-I %p")(d),
-            demandActual: (d) => `${format(".1f")(d / 1000)} GWh`,
-            demandForecast: (d) => `${format(".1f")(d / 1000)} GWh`,
-            netGeneration: (d) => `${format(".1f")(d / 1000)} GWh`,
-            x: false
+      Plot.ruleX(
+        compoundTips,
+        Plot.pointerX({
+          x: "date",
+          strokeDasharray: [2, 2],
+          channels: {
+            date: {value: "date", label: "Time"},
+            demandActual: {value: "demandActual", label: friendlyTypeName("demandActual")},
+            demandForecast: {value: "demandForecast", label: friendlyTypeName("demandForecast")},
+            netGeneration: {value: "netGeneration", label: friendlyTypeName("netGeneration")}
           },
-          fontSize: 12,
-          anchor: "bottom",
-          frameAnchor: "top"
-        }
-      }))
+          tip: {
+            format: {
+              date: (d) => timeFormat("%-d %b %-I %p")(d),
+              demandActual: (d) => `${format(".1f")(d / 1000)} GWh`,
+              demandForecast: (d) => `${format(".1f")(d / 1000)} GWh`,
+              netGeneration: (d) => `${format(".1f")(d / 1000)} GWh`,
+              x: false
+            },
+            fontSize: 12,
+            anchor: "bottom",
+            frameAnchor: "top"
+          }
+        })
+      )
     ]
   });
 }
