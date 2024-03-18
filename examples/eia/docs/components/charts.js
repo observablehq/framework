@@ -26,7 +26,7 @@ export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDema
         title: ({ name, value }) => `name: ${name}\ndemand: ${value / 1000} GWh`
       })
     ]
-  })
+  });
 }
 
 // US electricity demand, generation and forecasting chart
@@ -37,10 +37,10 @@ export function usGenDemandForecastChart(width, height, data, currentHour) {
     let value = map.get(d.date.getTime()) ?? { date: d.date, demandForecast: null, demandActual: null, netGeneration: null };
     value[d.name] = d.value;
     return map.set(d.date.getTime() , value);
-  }, new Map())
+  }, new Map());
 
   const rolledUpSparse = [];
-  rolledToHour.forEach((d) => { rolledUpSparse.push(d) });
+  for (const d of rolledToHour) rolledUpSparse.push(d);
 
   return Plot.plot({
     width,
@@ -51,7 +51,7 @@ export function usGenDemandForecastChart(width, height, data, currentHour) {
     color: {
       legend: true,
       domain: ["demandActual", "demandForecast", "netGeneration"],
-      tickFormat: d => friendlyTypeName[d],
+      tickFormat: (d) => friendlyTypeName[d],
       range: ["#ff8ab7", "#6cc5b0", "#a463f2"]
     },
     grid: true,
@@ -86,7 +86,7 @@ export function usGenDemandForecastChart(width, height, data, currentHour) {
         }
       }))
     ]
-  })
+  });
 }
 
 // Canada & Mexico interchange area chart
@@ -110,5 +110,5 @@ export function countryInterchangeChart(width, height, usDemandGenForecast, coun
       }),
       Plot.ruleY([0], {strokeOpacity: 0.3})
     ]
-  })
+  });
 }
