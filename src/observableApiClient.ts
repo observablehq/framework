@@ -1,7 +1,10 @@
 import fs from "node:fs/promises";
+import type {ClackEffects} from "./clack.js";
 import {CliError, HttpError, isApiError} from "./error.js";
 import type {ApiKey} from "./observableApiConfig.js";
 import {faint, red} from "./tty.js";
+
+const MIN_RATE_LIMIT_RETRY_AFTER = 1;
 
 export function getObservableUiOrigin(env = process.env): URL {
   const urlText = env["OBSERVABLE_ORIGIN"] ?? "https://observablehq.com";
@@ -27,17 +30,26 @@ export function getObservableApiOrigin(env = process.env): URL {
   return uiOrigin;
 }
 
+export type ObservableApiClientOptions = {
+  apiOrigin?: URL;
+  apiKey?: ApiKey;
+  clack: ClackEffects;
+};
+
 export class ObservableApiClient {
   private _apiHeaders: Record<string, string>;
   private _apiOrigin: URL;
+  private _clack: ClackEffects;
+  private _rateLimit: null | Promise<void> = null;
 
-  constructor({apiKey, apiOrigin = getObservableApiOrigin()}: {apiOrigin?: URL; apiKey?: ApiKey} = {}) {
+  constructor({apiKey, apiOrigin = getObservableApiOrigin(), clack}: ObservableApiClientOptions) {
     this._apiOrigin = apiOrigin;
     this._apiHeaders = {
       Accept: "application/json",
       "User-Agent": `Observable Framework ${process.env.npm_package_version}`,
       "X-Observable-Api-Version": "2023-12-06"
     };
+    this._clack = clack;
     if (apiKey) this.setApiKey(apiKey);
   }
 
@@ -47,12 +59,25 @@ export class ObservableApiClient {
 
   private async _fetch<T = unknown>(url: URL, options: RequestInit): Promise<T> {
     let response;
+    const doFetch = async () => await fetch(url, {...options, headers: {...this._apiHeaders, ...options.headers}});
     try {
-      response = await fetch(url, {...options, headers: {...this._apiHeaders, ...options.headers}});
+      response = await doFetch();
     } catch (error) {
       // Check for undici failures and print them in a way that shows more details. Helpful in tests.
       if (error instanceof Error && error.message === "fetch failed") console.error(error);
       throw error;
+    }
+
+    if (response.status === 429) {
+      // rate limit
+      if (this._rateLimit === null) {
+        let retryAfter = +response.headers.get("Retry-After");
+        if (isNaN(retryAfter) || retryAfter < MIN_RATE_LIMIT_RETRY_AFTER) retryAfter = MIN_RATE_LIMIT_RETRY_AFTER;
+        this._clack.log.warn(`Hit server rate limit. Waiting for ${retryAfter} seconds.`);
+        this._rateLimit = new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
+      }
+      await this._rateLimit;
+      response = await doFetch();
     }
 
     if (!response.ok) {

@@ -105,19 +105,46 @@ try {
       break;
     }
     case "deploy": {
+      const missingDescription = "one of 'build', 'cancel', or 'prompt' (the default)";
+      const staleDescription = "one of 'build', 'cancel', 'deploy', or 'prompt' (the default)";
       const {
-        values: {config, root, message}
+        values: {config, root, message, "if-stale": ifStale, "if-missing": ifMissing}
       } = helpArgs(command, {
         options: {
           ...CONFIG_OPTION,
           message: {
             type: "string",
             short: "m"
+          },
+          "if-stale": {
+            type: "string",
+            description: `What to do if the output directory is stale: ${staleDescription}`
+          },
+          "if-missing": {
+            type: "string",
+            description: `What to do if the output directory is missing: ${missingDescription}`
           }
         }
       });
+      if (ifStale && ifStale !== "prompt" && ifStale !== "build" && ifStale !== "cancel" && ifStale !== "deploy") {
+        console.log(`Invalid --if-stale option: ${ifStale}, expected ${staleDescription}`);
+        process.exit(1);
+      }
+      if (ifMissing && ifMissing !== "prompt" && ifMissing !== "build" && ifMissing !== "cancel") {
+        console.log(`Invalid --if-missing option: ${ifMissing}, expected ${missingDescription}`);
+        process.exit(1);
+      }
+      if (!process.stdin.isTTY && (ifStale === "prompt" || ifMissing === "prompt")) {
+        throw new CliError("Cannot prompt for input in non-interactive mode");
+      }
+
       await import("../deploy.js").then(async (deploy) =>
-        deploy.deploy({config: await readConfig(config, root), message})
+        deploy.deploy({
+          config: await readConfig(config, root),
+          message,
+          ifBuildMissing: (ifMissing ?? "prompt") as "prompt" | "build" | "cancel",
+          ifBuildStale: (ifStale ?? "prompt") as "prompt" | "build" | "cancel" | "deploy"
+        })
       );
       break;
     }
@@ -235,10 +262,25 @@ try {
   process.exit(1);
 }
 
+type DescribableParseArgsConfig = ParseArgsConfig & {
+  options?: {
+    [longOption: string]: {
+      type: "string" | "boolean";
+      multiple?: boolean | undefined;
+      short?: string | undefined;
+      default?: string | boolean | string[] | boolean[] | undefined;
+      description?: string;
+    };
+  };
+};
+
 // A wrapper for parseArgs that adds --help functionality with automatic usage.
 // TODO It’d be nicer nice if we could change the return type to denote
 // arguments with default values, and to enforce required arguments, if any.
-function helpArgs<T extends ParseArgsConfig>(command: string | undefined, config: T): ReturnType<typeof parseArgs<T>> {
+function helpArgs<T extends DescribableParseArgsConfig>(
+  command: string | undefined,
+  config: T
+): ReturnType<typeof parseArgs<T>> {
   let result: ReturnType<typeof parseArgs<T>>;
   try {
     result = parseArgs<T>({
@@ -259,6 +301,16 @@ function helpArgs<T extends ParseArgsConfig>(command: string | undefined, config
         .map(([name, {default: def}]) => ` [--${name}${def === undefined ? "" : `=${def}`}]`)
         .join("")}`
     );
+    if (Object.values(config.options ?? {}).some((spec) => spec.description)) {
+      console.log();
+      for (const [long, spec] of Object.entries(config.options ?? {})) {
+        if (spec.description) {
+          const left = `  ${spec.short ? `-${spec.short}, ` : ""}--${long}`.padEnd(20);
+          console.log(`${left}${spec.description}`);
+        }
+      }
+      console.log();
+    }
     process.exit(0);
   }
   return result;

@@ -1,13 +1,16 @@
+import type {Stats} from "node:fs";
+import {stat} from "node:fs/promises";
 import {join} from "node:path/posix";
 import * as clack from "@clack/prompts";
 import wrapAnsi from "wrap-ansi";
-import type {BuildEffects} from "./build.js";
-import {build} from "./build.js";
+import {FileBuildEffects, build} from "./build.js";
 import type {ClackEffects} from "./clack.js";
 import {commandRequiresAuthenticationMessage} from "./commandInstruction.js";
+import {RateLimiter, runAllWithConcurrencyLimit} from "./concurrency.js";
 import type {Config} from "./config.js";
-import {CliError, isApiError, isHttpError} from "./error.js";
-import type {Logger, Writer} from "./logger.js";
+import {CliError, isApiError, isEnoent, isHttpError} from "./error.js";
+import {visitFiles} from "./files.js";
+import type {Logger} from "./logger.js";
 import {
   type AuthEffects,
   defaultEffects as defaultAuthEffects,
@@ -37,11 +40,15 @@ import {bold, defaultEffects as defaultTtyEffects, inverse, link, underline, yel
 
 const DEPLOY_POLL_MAX_MS = 1000 * 60 * 5;
 const DEPLOY_POLL_INTERVAL_MS = 1000 * 5;
+const BUILD_AGE_WARNING_MS = 1000 * 60 * 5;
 
 export interface DeployOptions {
   config: Config;
-  message: string | undefined;
+  message?: string;
   deployPollInterval?: number;
+  ifBuildStale: "prompt" | "build" | "cancel" | "deploy";
+  ifBuildMissing: "prompt" | "build" | "cancel";
+  maxConcurrency?: number;
 }
 
 export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
@@ -51,6 +58,8 @@ export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
   logger: Logger;
   input: NodeJS.ReadableStream;
   output: NodeJS.WritableStream;
+  visitFiles: (root: string) => AsyncGenerator<string>;
+  stat: (path: string) => Promise<Stats>;
 }
 
 const defaultEffects: DeployEffects = {
@@ -62,7 +71,9 @@ const defaultEffects: DeployEffects = {
   clack,
   logger: console,
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
+  visitFiles,
+  stat
 };
 
 type DeployTargetInfo =
@@ -71,15 +82,22 @@ type DeployTargetInfo =
 
 /** Deploy a project to ObservableHQ */
 export async function deploy(
-  {config, message, deployPollInterval = DEPLOY_POLL_INTERVAL_MS}: DeployOptions,
+  {
+    config,
+    message,
+    ifBuildMissing,
+    ifBuildStale,
+    deployPollInterval = DEPLOY_POLL_INTERVAL_MS,
+    maxConcurrency
+  }: DeployOptions,
   effects = defaultEffects
 ): Promise<void> {
   const {clack} = effects;
-  Telemetry.record({event: "deploy", step: "start"});
+  Telemetry.record({event: "deploy", step: "start", ifBuildMissing, ifBuildStale});
   clack.intro(inverse(" observable deploy "));
 
   let apiKey = await effects.getObservableApiKey(effects);
-  const apiClient = new ObservableApiClient(apiKey ? {apiKey} : {});
+  const apiClient = new ObservableApiClient(apiKey ? {apiKey, clack} : {clack});
   const deployConfig = await effects.getDeployConfig(config.root);
 
   if (deployConfig.workspaceLogin && !deployConfig.workspaceLogin.match(/^@?[a-z0-9-]+$/)) {
@@ -189,34 +207,85 @@ export async function deploy(
   const previousProjectId = deployConfig?.projectId;
   let targetDescription: string;
 
-  if (deployTarget.create) {
-    try {
-      const project = await apiClient.postProject({
-        slug: deployTarget.projectSlug,
-        title: deployTarget.title,
-        workspaceId: deployTarget.workspace.id,
-        accessLevel: deployTarget.accessLevel
-      });
-      deployTarget = {create: false, workspace: deployTarget.workspace, project};
-    } catch (error) {
-      if (isApiError(error) && error.details.errors.some((e) => e.code === "TOO_MANY_PROJECTS")) {
-        clack.log.error(
-          wrapAnsi(
-            `The Starter tier can only deploy one project. Upgrade to unlimited projects at ${link(
-              `https://observablehq.com/team/@${deployTarget.workspace.login}/settings`
-            )}`,
-            effects.outputColumns - 4
-          )
-        );
-      } else {
-        clack.log.error(
-          wrapAnsi(`Could not create project: ${error instanceof Error ? error.message : error}`, effects.outputColumns)
-        );
+  let buildFilePaths: string[] | null = null;
+
+  let doBuild = false;
+  let youngestAge;
+  try {
+    ({buildFilePaths, youngestAge} = await findBuildFiles(effects, config));
+  } catch (error) {
+    if (CliError.match(error, {message: /No build files found/})) {
+      switch (ifBuildMissing) {
+        case "cancel":
+          throw new CliError("No build files found.");
+        case "build": {
+          doBuild = true;
+          break;
+        }
+        case "prompt": {
+          if (!effects.isTty)
+            throw new CliError("No build files found. Pass --if-missing=build to automatically rebuild.");
+          const choice = await clack.select({
+            message: "No build files found. Do you want to build the project now?",
+            options: [
+              {value: true, label: "Yes, build now and then deploy"},
+              {value: false, label: "No, cancel deploy"}
+            ]
+          });
+          if (clack.isCancel(choice) || !choice) {
+            throw new CliError("User canceled deploy", {print: false, exitCode: 0});
+          }
+          doBuild = true;
+          break;
+        }
       }
-      clack.outro(yellow("Deploy canceled"));
-      throw new CliError("Error during deploy", {cause: error, print: false});
+    } else {
+      throw error;
     }
-  } else {
+  }
+
+  if (!doBuild && youngestAge > BUILD_AGE_WARNING_MS) {
+    switch (ifBuildStale) {
+      case "cancel":
+        throw new CliError("Build is stale.");
+      case "build": {
+        doBuild = true;
+        break;
+      }
+      case "prompt": {
+        if (!effects.isTty) throw new CliError("Build is stale. Pass --if-stale=build to automatically rebuild.");
+        const ageFormatted =
+          youngestAge < 1000 * 60 * 60
+            ? `${Math.round(youngestAge / 1000 / 60)} minutes ago`
+            : youngestAge < 1000 * 60 * 60 * 12
+            ? `${Math.round(youngestAge / 1000 / 60 / 60)} hours ago`
+            : `at ${new Date(Date.now() - youngestAge).toLocaleString()}`;
+        type ChoiceValue = "build-now" | "deploy-stale" | "cancel";
+        const choice = await clack.select<{value: ChoiceValue; label: string}[], ChoiceValue>({
+          message: `Your project was last built ${ageFormatted}. What do you want to do?`,
+          options: [
+            {value: "build-now", label: "Rebuild and then deploy"},
+            {value: "deploy-stale", label: "Deploy as is"},
+            {value: "cancel", label: "Cancel the deploy"}
+          ]
+        });
+        if (clack.isCancel(choice) || choice === "cancel") {
+          throw new CliError("User canceled deploy", {print: false, exitCode: 0});
+        }
+        doBuild = choice === "build-now";
+      }
+    }
+  }
+
+  if (doBuild) {
+    clack.log.step("Building project");
+    await build({config}, new FileBuildEffects(config.output, {logger: effects.logger, output: effects.output}));
+    ({buildFilePaths} = await findBuildFiles(effects, config));
+  }
+
+  if (!buildFilePaths || !buildFilePaths) throw new Error("No build files found.");
+
+  if (!deployTarget.create) {
     // Check last deployed state. If it's not the same project, ask the user if
     // they want to continue anyways. In non-interactive mode just cancel.
     targetDescription = `${deployTarget.project.title} (@${deployTarget.workspace.login}/${deployTarget.project.slug})`;
@@ -264,13 +333,6 @@ export async function deploy(
     }
   }
 
-  await effects.setDeployConfig(config.root, {
-    projectId: deployTarget.project.id,
-    projectSlug: deployTarget.project.slug,
-    workspaceLogin: deployTarget.workspace.login
-  });
-
-  // Create the new deploy on the server
   if (message === undefined) {
     const input = await clack.text({
       message: "What changed in this deploy?",
@@ -280,6 +342,42 @@ export async function deploy(
     message = input;
   }
 
+  if (deployTarget.create) {
+    try {
+      const project = await apiClient.postProject({
+        slug: deployTarget.projectSlug,
+        title: deployTarget.title,
+        workspaceId: deployTarget.workspace.id,
+        accessLevel: deployTarget.accessLevel
+      });
+      deployTarget = {create: false, workspace: deployTarget.workspace, project};
+    } catch (error) {
+      if (isApiError(error) && error.details.errors.some((e) => e.code === "TOO_MANY_PROJECTS")) {
+        clack.log.error(
+          wrapAnsi(
+            `The Starter tier can only deploy one project. Upgrade to unlimited projects at ${link(
+              `https://observablehq.com/team/@${deployTarget.workspace.login}/settings`
+            )}`,
+            effects.outputColumns - 4
+          )
+        );
+      } else {
+        clack.log.error(
+          wrapAnsi(`Could not create project: ${error instanceof Error ? error.message : error}`, effects.outputColumns)
+        );
+      }
+      clack.outro(yellow("Deploy canceled"));
+      throw new CliError("Error during deploy", {cause: error, print: false});
+    }
+  }
+
+  await effects.setDeployConfig(config.root, {
+    projectId: deployTarget.project.id,
+    projectSlug: deployTarget.project.slug,
+    workspaceLogin: deployTarget.workspace.login
+  });
+
+  // Create the new deploy on the server
   let deployId;
   try {
     deployId = await apiClient.postDeploy({projectId: deployTarget.project.id, message});
@@ -299,8 +397,23 @@ export async function deploy(
     throw error;
   }
 
-  // Build the project
-  await build({config}, new DeployBuildEffects(apiClient, deployId, effects));
+  // Upload the files
+  const uploadSpinner = clack.spinner();
+  uploadSpinner.start("");
+
+  const rateLimiter = new RateLimiter(5);
+  const waitForRateLimit = buildFilePaths.length <= 300 ? () => {} : () => rateLimiter.wait();
+
+  await runAllWithConcurrencyLimit(
+    buildFilePaths,
+    async (path, i) => {
+      await waitForRateLimit();
+      uploadSpinner.message(`${i + 1} / ${buildFilePaths!.length} ${path.slice(0, effects.outputColumns - 10)}`);
+      await apiClient.postDeployFile(deployId, join(config.output, path), path);
+    },
+    {maxConcurrency}
+  );
+  uploadSpinner.stop(`${buildFilePaths.length} uploaded`);
 
   // Mark the deploy as uploaded
   await apiClient.postDeployUploaded(deployId);
@@ -341,46 +454,43 @@ export async function deploy(
   Telemetry.record({event: "deploy", step: "finish"});
 }
 
-class DeployBuildEffects implements BuildEffects {
-  readonly logger: Logger;
-  readonly output: Writer;
-  constructor(
-    private readonly apiClient: ObservableApiClient,
-    private readonly deployId: string,
-    effects: DeployEffects
-  ) {
-    this.logger = effects.logger;
-    this.output = effects.output;
-  }
-  async copyFile(sourcePath: string, outputPath: string) {
-    const relativePath = outputPath.replace(/^\//, "");
-    this.logger.log(relativePath);
-    try {
-      await this.apiClient.postDeployFile(this.deployId, sourcePath, relativePath);
-    } catch (error) {
-      if (isApiError(error) && error.details.errors.some((e) => e.code === "FILE_QUOTA_EXCEEDED")) {
-        throw new CliError("You have reached the total file size limit.", {cause: error});
+async function findBuildFiles(
+  effects: DeployEffects,
+  config: Config
+): Promise<{buildFilePaths: string[]; youngestAge: number}> {
+  let youngestAge = Infinity;
+  const buildFilePaths: string[] = [];
+  const nowMs = Date.now();
+
+  try {
+    for await (const file of effects.visitFiles(config.output)) {
+      let stat: Stats;
+      const joinedPath = join(config.output, file);
+      try {
+        stat = await effects.stat(joinedPath);
+      } catch (error) {
+        throw new CliError(`Error accessing file ${file}: ${error}`, {cause: error});
       }
-      // 413 is "Payload Too Large", however sometimes Cloudflare returns a
-      // custom Cloudflare error, 520. Sometimes we also see 502. Handle them all
-      if (isHttpError(error) && (error.statusCode === 413 || error.statusCode === 503 || error.statusCode === 520)) {
-        throw new CliError(`File too large to deploy: ${sourcePath}. Maximum file size is 50MB.`, {cause: error});
+      if (stat?.isFile()) {
+        buildFilePaths.push(file);
+        // youngestAge = Math.min(youngestAge, nowMs - stat.ctimeMs);
+        if (nowMs - stat.ctimeMs < youngestAge) {
+          youngestAge = nowMs - stat.ctimeMs;
+        }
       }
-      throw error;
     }
-  }
-  async writeFile(outputPath: string, content: Buffer | string) {
-    const relativePath = outputPath.replace(/^\//, "");
-    this.logger.log(relativePath);
-    try {
-      await this.apiClient.postDeployFileContents(this.deployId, content, relativePath);
-    } catch (error) {
-      if (isApiError(error) && error.details.errors.some((e) => e.code === "FILE_QUOTA_EXCEEDED")) {
-        throw new CliError("You have reached the total file size limit.", {cause: error});
-      }
-      throw error;
+  } catch (error) {
+    if (isEnoent(error)) {
+      throw new CliError(`No build files found at ${config.output}`, {cause: error});
     }
+    throw new CliError(`Error enumerating build files: ${error}`, {cause: error});
   }
+
+  if (!buildFilePaths.length) {
+    throw new CliError(`No build files found at ${config.output}`);
+  }
+
+  return {buildFilePaths, youngestAge};
 }
 
 // export for testing
