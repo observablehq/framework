@@ -25,7 +25,7 @@ sql:
 ---
 ```
 
-<div class="tip">For performance and reliability, we recommend using local files rather than loading data from external servers at runtime. If needded, you can use a <a href="./loaders">data loader</a> to take a snapshot of a remote data during build.</div>
+<div class="tip">For performance and reliability, we recommend using local files rather than loading data from external servers at runtime. If needed, you can use a <a href="./loaders">data loader</a> to take a snapshot of a remote data during build.</div>
 
 ## SQL code blocks
 
