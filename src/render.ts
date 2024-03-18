@@ -8,7 +8,7 @@ import {transpileJavaScript} from "./javascript/transpile.js";
 import type {MarkdownPage} from "./markdown.js";
 import type {PageLink} from "./pager.js";
 import {findLink, normalizePath} from "./pager.js";
-import {relativePath, resolvePath} from "./path.js";
+import {isAssetPath, relativePath, resolvePath, resolveRelativePath} from "./path.js";
 import type {Resolvers} from "./resolvers.js";
 import {getResolvers} from "./resolvers.js";
 import {rollupClient} from "./rollup.js";
@@ -64,7 +64,7 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
       : ""
   }${data?.sql ? `\nimport {registerTable} from ${JSON.stringify(resolveImport("npm:@observablehq/duckdb"))};` : ""}${
     files.size
-      ? `\n${renderFiles(
+      ? `\n${registerFiles(
           files,
           resolveFile,
           preview
@@ -72,13 +72,7 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
             : (name) => loaders.getOutputLastModified(resolvePath(path, name))
         )}`
       : ""
-  }${
-    data?.sql
-      ? `\n${Object.entries<string>(data.sql)
-          .map(([name, source]) => `registerTable(${JSON.stringify(name)}, FileAttachment(${JSON.stringify(source)}));`)
-          .join("\n")}`
-      : ""
-  }
+  }${data?.sql ? `\n${registerTables(data.sql, options)}` : ""}
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
     .map(({node, id}) => `\n${transpileJavaScript(node, {id, path, resolveImport})}`)
     .join("")}`)}
@@ -92,18 +86,32 @@ ${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(page.foot
 `);
 }
 
-function renderFiles(
+function registerTables(sql: Record<string, any>, options: RenderOptions): string {
+  return Object.entries(sql)
+    .map(([name, source]) => registerTable(name, source, options))
+    .join("\n");
+}
+
+function registerTable(name: string, source: any, {path}: RenderOptions): string {
+  return `registerTable(${JSON.stringify(name)}, ${
+    isAssetPath(source)
+      ? `FileAttachment(${JSON.stringify(resolveRelativePath(path, source))})`
+      : JSON.stringify(source)
+  });`;
+}
+
+function registerFiles(
   files: Iterable<string>,
   resolve: (name: string) => string,
   getLastModified: (name: string) => number | undefined
 ): string {
   return Array.from(files)
     .sort()
-    .map((f) => renderFile(f, resolve, getLastModified))
+    .map((f) => registerFile(f, resolve, getLastModified))
     .join("");
 }
 
-function renderFile(
+function registerFile(
   name: string,
   resolve: (name: string) => string,
   getLastModified: (name: string) => number | undefined

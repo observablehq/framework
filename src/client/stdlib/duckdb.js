@@ -185,31 +185,33 @@ Object.defineProperty(DuckDBClient.prototype, "dialect", {
 
 async function insertSource(database, name, source) {
   source = await source;
-  if (isFileAttachment(source)) {
-    // bare file
-    await insertFile(database, name, source);
-  } else if (isArrowTable(source)) {
-    // bare arrow table
-    await insertArrowTable(database, name, source);
-  } else if (Array.isArray(source)) {
-    // bare array of objects
-    await insertArray(database, name, source);
-  } else if (isArqueroTable(source)) {
-    await insertArqueroTable(database, name, source);
-  } else if ("data" in source) {
-    // data + options
-    const {data, ...options} = source;
-    if (isArrowTable(data)) {
-      await insertArrowTable(database, name, data, options);
-    } else {
-      await insertArray(database, name, data, options);
+  if (isFileAttachment(source)) return insertFile(database, name, source);
+  if (isArrowTable(source)) return insertArrowTable(database, name, source);
+  if (Array.isArray(source)) return insertArray(database, name, source);
+  if (isArqueroTable(source)) return insertArqueroTable(database, name, source);
+  if (typeof source === "string") return insertUrl(database, name, source);
+  if (source && typeof source === "object") {
+    if ("data" in source) {
+      // data + options
+      const {data, ...options} = source;
+      if (isArrowTable(data)) return insertArrowTable(database, name, data, options);
+      return insertArray(database, name, data, options);
     }
-  } else if ("file" in source) {
-    // file + options
-    const {file, ...options} = source;
-    await insertFile(database, name, file, options);
-  } else {
-    throw new Error(`invalid source: ${source}`);
+    if ("file" in source) {
+      // file + options
+      const {file, ...options} = source;
+      return insertFile(database, name, file, options);
+    }
+  }
+  throw new Error(`invalid source: ${source}`);
+}
+
+async function insertUrl(database, name, url) {
+  const connection = await database.connect();
+  try {
+    await connection.query(`CREATE VIEW '${name}' AS FROM '${url}'`);
+  } finally {
+    await connection.close();
   }
 }
 

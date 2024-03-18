@@ -90,22 +90,18 @@ And `db.queryRow`:
 db.queryRow("SELECT count() AS count FROM gaia")
 ```
 
-Finally, the `DuckDBClient.sql` method takes the same arguments as `DuckDBClient.of` and returns the corresponding `db.sql` template literal, bound to the database so it be used directly:
+See the [DatabaseClient Specification](https://observablehq.com/@observablehq/database-client-specification) for more details on these methods.
 
-```js echo
-const sql = DuckDBClient.sql({
-  quakes: d3.csv("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.csv", d3.autoType)
-});
+Finally, the `DuckDBClient.sql` method takes the same arguments as `DuckDBClient.of` and returns the corresponding `db.sql` tagged template literal. The returned function can be used to redefine the built-in [`sql` tagged template literal](../sql#sql-literals) and thereby change the database used by [SQL code blocks](../sql), allowing you to query dynamically-registered tables (unlike the **sql** front matter option).
+
+```js
+const feed = view(Inputs.select(new Map([["M4.5+", "4.5"], ["M2.5+", "2.5"], ["All", "all"]]), {label: "Earthquake feed"}));
 ```
 
 ```js echo
-[...await sql`SELECT COUNT() FROM quakes`]
+const sql = DuckDBClient.sql({quakes: `https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/${feed}_day.csv`});
 ```
-
-Furthermore, when this variable is named `sql` like above, it drives the contents of [sql fenced code blocks](../sql):
 
 ```sql echo
-SELECT * FROM quakes WHERE mag >= 4 ORDER BY mag DESC;
+SELECT * FROM quakes ORDER BY updated DESC;
 ```
-
-See the [DatabaseClient Specification](https://observablehq.com/@observablehq/database-client-specification) for more details.
