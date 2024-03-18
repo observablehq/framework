@@ -76,4 +76,22 @@ And `db.queryRow`:
 db.queryRow("SELECT count() AS count FROM gaia")
 ```
 
+Finally, the `DuckDBClient.sql` method takes thee same arguments as `DuckDBClient.of` and returns the corresponding `db.sql` template literal, bound to the database so it be used directly:
+
+```js echo
+const sql = DuckDBClient.sql({
+  quakes: d3.csv("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.csv", d3.autoType)
+});
+```
+
+```js echo
+[...await sql`SELECT COUNT() FROM quakes`]
+```
+
+Furthermore, when this variable is named `sql` like above, it drives the contents of [sql fenced code blocks](../sql):
+
+```sql echo
+SELECT * FROM quakes WHERE mag >= 4 ORDER BY mag DESC;
+```
+
 See the [DatabaseClient Specification](https://observablehq.com/@observablehq/database-client-specification) for more details.

@@ -16,6 +16,8 @@ sql:
 ---
 ```
 
+Alternatively, register tables from live data (and any other JavaScript variable) by defining the `sql` symbol with [DuckDBClient.sql](./lib/duckdb).
+
 ## SQL code blocks
 
 To run SQL queries, create a SQL fenced code block (<code>```sql</code>). For example, to query the first 10 rows from the `gaia` table:
@@ -171,6 +173,6 @@ Plot.plot({
 
 The `sql` tag is available by default in Markdown. You can also import it explicitly as:
 
-```js echo
+```js run=false
 import {sql} from "npm:@observablehq/duckdb";
 ```
