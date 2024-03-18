@@ -240,7 +240,6 @@ export async function getResolvers(
   }
 
   function resolveFile(specifier: string): string {
-    if (/^\w+:/.test(specifier)) return specifier;
     return relativePath(path, loaders.resolveFilePath(resolvePath(path, specifier)));
   }
 

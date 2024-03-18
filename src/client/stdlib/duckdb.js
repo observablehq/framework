@@ -181,31 +181,41 @@ Object.defineProperty(DuckDBClient.prototype, "dialect", {
 
 async function insertSource(database, name, source) {
   source = await source;
-  if (isFileAttachment(source)) {
-    // bare file
-    await insertFile(database, name, source);
-  } else if (isArrowTable(source)) {
-    // bare arrow table
-    await insertArrowTable(database, name, source);
-  } else if (Array.isArray(source)) {
-    // bare array of objects
-    await insertArray(database, name, source);
-  } else if (isArqueroTable(source)) {
-    await insertArqueroTable(database, name, source);
-  } else if ("data" in source) {
-    // data + options
-    const {data, ...options} = source;
-    if (isArrowTable(data)) {
-      await insertArrowTable(database, name, data, options);
-    } else {
-      await insertArray(database, name, data, options);
+  if (isFileAttachment(source)) return insertFile(database, name, source);
+  if (isArrowTable(source)) return insertArrowTable(database, name, source);
+  if (Array.isArray(source)) return insertArray(database, name, source);
+  if (isArqueroTable(source)) return insertArqueroTable(database, name, source);
+  if (typeof source === "string") return insertUrl(database, name, source);
+  if (source == null) return; // ignore nullish data
+  if (source && typeof source === "object") {
+    if ("data" in source) {
+      // data + options
+      const {data, ...options} = source;
+      if (isArrowTable(data)) {
+        return insertArrowTable(database, name, data, options);
+      } else {
+        return insertArray(database, name, data, options);
+      }
+    } else if ("file" in source) {
+      // file + options
+      const {file, ...options} = source;
+      return insertFile(database, name, file, options);
+    } else if ("url" in source) {
+      // url + options
+      const {url, ...options} = source;
+      return insertUrl(database, name, url, options);
     }
-  } else if ("file" in source) {
-    // file + options
-    const {file, ...options} = source;
-    await insertFile(database, name, file, options);
-  } else {
-    throw new Error(`invalid source: ${source}`);
+  }
+  throw new Error(`invalid source: ${source}`);
+}
+
+// TODO options to specify type?
+async function insertUrl(database, name, url) {
+  const connection = await database.connect();
+  try {
+    await connection.query(`CREATE TABLE '${name}' AS FROM '${url}'`);
+  } finally {
+    await connection.close();
   }
 }
 

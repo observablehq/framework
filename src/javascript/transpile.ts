@@ -2,7 +2,7 @@ import {join} from "node:path/posix";
 import type {CallExpression, Node} from "acorn";
 import type {ImportDeclaration, ImportDefaultSpecifier, ImportNamespaceSpecifier, ImportSpecifier} from "acorn";
 import {simple} from "acorn-walk";
-import {isPathImport, relativePath, resolvePath} from "../path.js";
+import {isPathImport, relativePath, resolvePath, resolveRelativePath} from "../path.js";
 import {getModuleResolver} from "../resolvers.js";
 import {Sourcemap} from "../sourcemap.js";
 import type {FileExpression} from "./files.js";
@@ -106,7 +106,7 @@ export async function transpileModule(
 function rewriteFileExpressions(output: Sourcemap, files: FileExpression[], path: string): void {
   for (const {name, node} of files) {
     const source = node.arguments[0];
-    const resolved = relativePath(path, resolvePath(path, name));
+    const resolved = resolveRelativePath(path, name);
     output.replaceLeft(source.start, source.end, JSON.stringify(resolved));
   }
 }

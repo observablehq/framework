@@ -1,6 +1,7 @@
 ---
 sql:
   gaia: ./lib/gaia-sample.parquet
+  quakes: https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.csv
 ---
 
 # SQL <a href="https://github.com/observablehq/framework/releases/tag/v1.2.0" target="_blank" class="observablehq-version-badge" data-version="^1.2.0" title="Added in v1.2.0"></a>
@@ -15,6 +16,20 @@ sql:
   gaia: ./lib/gaia-sample.parquet
 ---
 ```
+```sql
+SELECT COUNT(*) FROM quakes
+```
+
+To load externally-hosted data, you can use a full URL:
+
+```yaml
+---
+sql:
+  quakes: https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.csv
+---
+```
+
+<div class="tip">For performance and reliability, we recommend using local files rather than loading data from external servers at runtime. If needded, you can use a <a href="./loaders">data loader</a> to take a snapshot of a remote data during build.</div>
 
 ## SQL code blocks
 
