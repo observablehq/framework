@@ -205,7 +205,7 @@ async function insertSource(database, name, source) {
 async function insertUrl(database, name, url) {
   const connection = await database.connect();
   try {
-    await connection.query(`CREATE TABLE '${name}' AS FROM '${url}'`);
+    await connection.query(`CREATE VIEW '${name}' AS FROM '${url}'`);
   } finally {
     await connection.close();
   }
