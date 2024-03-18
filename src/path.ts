@@ -65,3 +65,10 @@ export function isPathImport(specifier: string): boolean {
 export function isAssetPath(specifier: string): boolean {
   return !/^(\w+:|#)/.test(specifier);
 }
+
+/**
+ * Returns the relative path to the specified target from the given source.
+ */
+export function resolveRelativePath(source: string, target: string): string {
+  return relativePath(source, resolvePath(source, target));
+}

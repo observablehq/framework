@@ -89,7 +89,7 @@ export function open({hash, eval: compile} = {}) {
             registerTable(name, null);
           }
           for (const table of message.tables.added) {
-            registerTable(table.name, FileAttachment(table.path));
+            registerTable(table.name, !/^(\w+:|#)/.test(table.path) ? FileAttachment(table.path) : table.path);
           }
         }
         if (message.tables.removed.length || message.tables.added.length) {
