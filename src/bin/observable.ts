@@ -127,11 +127,11 @@ try {
         }
       });
       if (ifStale && ifStale !== "prompt" && ifStale !== "build" && ifStale !== "cancel" && ifStale !== "deploy") {
-        console.log(`Invalid --ifStale option: ${ifStale}, expected ${staleDescription}`);
+        console.log(`Invalid --if-stale option: ${ifStale}, expected ${staleDescription}`);
         process.exit(1);
       }
       if (ifMissing && ifMissing !== "prompt" && ifMissing !== "build" && ifMissing !== "cancel") {
-        console.log(`Invalid --ifMissing option: ${ifMissing}, expected ${missingDescription}`);
+        console.log(`Invalid --if-missing option: ${ifMissing}, expected ${missingDescription}`);
         process.exit(1);
       }
       if (!process.stdin.isTTY && (ifStale === "prompt" || ifMissing === "prompt")) {
