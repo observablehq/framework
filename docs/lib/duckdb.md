@@ -53,7 +53,19 @@ Plot.plot({
 })
 ```
 
-When using file attachments, the following formats are supported: [CSV](./lib/csv), [TSV](./lib/csv), [JSON](./javascript/files#json), [Apache Arrow](./lib/arrow), [Apache Parquet](./lib/arrow#apache-parquet), and DuckDB database files (typically using the extension `.db`, `.ddb`, or `.duckdb`).
+When using file attachments, the following formats are supported for tables: [CSV](./lib/csv), [TSV](./lib/csv), [JSON](./javascript/files#json), [Apache Arrow](./lib/arrow), [Apache Parquet](./lib/arrow#apache-parquet).
+
+Complete databases saved as DuckDB files (typically using the extension `.db`, `.ddb`, or `.duckdb`) can be attached too:
+
+```js run=false
+const db = await DuckDBClient.of({base: FileAttachment("database.db")});
+```
+
+and queried like so (note the hierarchical path to the table):
+
+```js run=false
+db.sql`SELECT COUNT() FROM base.tablename;`
+```
 
 For externally-hosted data, you can create an empty `DuckDBClient` and load a table from a SQL query, say using [`read_parquet`](https://duckdb.org/docs/guides/import/parquet_import) or [`read_csv`](https://duckdb.org/docs/guides/import/csv_import). DuckDB offers many affordances to make this easier (in many cases it detects the file format and uses the correct loader automatically).
 
