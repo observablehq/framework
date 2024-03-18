@@ -1,5 +1,5 @@
-import {Deferred} from "../deferred.js";
 import type {AuthEffects} from "../../src/observableApiAuth.js";
+import {Deferred} from "../deferred.js";
 import {TestClackEffects} from "./clack.js";
 import {MockConfigEffects} from "./configEffects.js";
 import {MockLogger} from "./logger.js";
