@@ -64,7 +64,7 @@ export async function loginInner(
   {pollTime = 1000} = {}
 ): Promise<{currentUser: GetCurrentUserResponse; apiKey: ApiKey}> {
   const {clack} = effects;
-  const apiClient = new ObservableApiClient();
+  const apiClient = new ObservableApiClient({clack});
   const requestInfo = await apiClient.postAuthRequest({
     scopes: ["projects:deploy", "projects:create"],
     deviceDescription: os.hostname()
@@ -125,7 +125,7 @@ export async function whoami(effects = defaultEffects) {
   const {logger} = effects;
   const apiKey = await effects.getObservableApiKey(effects);
   if (!apiKey) throw new CliError(commandRequiresAuthenticationMessage);
-  const apiClient = new ObservableApiClient({apiKey});
+  const apiClient = new ObservableApiClient({apiKey, clack: effects.clack});
 
   try {
     const user = await apiClient.getCurrentUser();

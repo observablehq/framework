@@ -1,20 +1,8 @@
 import type {AuthEffects} from "../../src/observableApiAuth.js";
+import {Deferred} from "../deferred.js";
 import {TestClackEffects} from "./clack.js";
 import {MockConfigEffects} from "./configEffects.js";
 import {MockLogger} from "./logger.js";
-
-class Deferred<T = unknown> {
-  promise: Promise<T>;
-  resolve!: (value: T) => void;
-  reject!: (reason?: any) => void;
-
-  constructor() {
-    this.promise = new Promise((resolve, reject) => {
-      this.resolve = resolve;
-      this.reject = reject;
-    });
-  }
-}
 
 export class MockAuthEffects extends MockConfigEffects implements AuthEffects {
   public logger = new MockLogger();

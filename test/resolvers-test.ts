@@ -3,12 +3,14 @@ import type {Config} from "../src/config.js";
 import {normalizeConfig} from "../src/config.js";
 import {parseMarkdown} from "../src/markdown.js";
 import {getResolvers} from "../src/resolvers.js";
+import {mockJsDelivr} from "./mocks/jsdelivr.js";
 
 async function getOptions({root, path}: {root: string; path: string}): Promise<Config & {path: string}> {
   return {...(await normalizeConfig({root})), path};
 }
 
 describe("getResolvers(page, {root, path})", () => {
+  mockJsDelivr();
   const builtins = ["npm:@observablehq/runtime", "npm:@observablehq/stdlib", "observablehq:client"];
   it("resolves directly-attached files", async () => {
     const options = await getOptions({root: "test/input", path: "attached.md"});
