@@ -255,6 +255,9 @@ async function insertFile(database, name, file, options) {
         if (/\.parquet$/i.test(file.name)) {
           return await connection.query(`CREATE VIEW '${name}' AS SELECT * FROM parquet_scan('${file.name}')`);
         }
+        if (/\.(db|ddb|duckdb)$/i.test(file.name)) {
+          return await connection.query(`ATTACH '${file.name}' AS ${name} (READ_ONLY)`);
+        }
         throw new Error(`unknown file type: ${file.mimeType}`);
     }
   } finally {
