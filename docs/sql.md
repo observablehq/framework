@@ -1,7 +1,6 @@
 ---
 sql:
   gaia: ./lib/gaia-sample.parquet
-  quakes: https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.csv
 ---
 
 # SQL <a href="https://github.com/observablehq/framework/releases/tag/v1.2.0" target="_blank" class="observablehq-version-badge" data-version="^1.2.0" title="Added in v1.2.0"></a>
@@ -15,9 +14,6 @@ To use SQL, first register the desired tables in the page’s [front matter](./m
 sql:
   gaia: ./lib/gaia-sample.parquet
 ---
-```
-```sql
-SELECT COUNT(*) FROM quakes
 ```
 
 To load externally-hosted data, you can use a full URL:
