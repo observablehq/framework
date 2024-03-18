@@ -63,6 +63,7 @@
     "cross-env": "^7.0.3",
     "cross-spawn": "^7.0.3",
     "d3-array": "^3.2.4",
+    "earcut": "^2.2.4",
     "esbuild": "^0.20.1",
     "fast-array-diff": "^1.1.0",
     "gray-matter": "^4.0.3",

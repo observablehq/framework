@@ -11,6 +11,7 @@ import {parseProgram} from "./javascript/parse.js";
 import type {StringLiteral} from "./javascript/source.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/source.js";
 import {relativePath} from "./path.js";
+import {rollupClient} from "./rollup.js";
 import {Sourcemap} from "./sourcemap.js";
 import {faint} from "./tty.js";
 
@@ -71,6 +72,23 @@ export function rewriteNpmImports(input: string, resolve: (specifier: string) =>
 }
 
 const npmRequests = new Map<string, Promise<string>>();
+
+export async function populateEsmCache(root: string, path: string): Promise<string> {
+  const a = path.match(/^\/_module\/(.*)\/_esm\.js$/);
+  if (!a) throw new Error(`invalid module path: ${path}`);
+  const filePath = join(root, ".observablehq", "cache", path);
+  if (existsSync(filePath)) return filePath;
+  const name = a[1];
+  process.stdout.write(`module:${name} ${faint("→")} `);
+  await mkdir(dirname(filePath), {recursive: true});
+  await writeFile(
+    filePath,
+    await rollupClient(name, root, path, {keepNames: true, minify: true, nodeResolveOnly: [name]}),
+    "utf-8"
+  );
+  process.stdout.write(`${filePath}\n`);
+  return filePath;
+}
 
 /** Note: path must start with "/_npm/". */
 export async function populateNpmCache(root: string, path: string): Promise<string> {

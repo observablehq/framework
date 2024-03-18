@@ -1,5 +1,6 @@
 import {createHash} from "node:crypto";
 import {extname, join} from "node:path/posix";
+import {dependencies} from "../package.json";
 import type {LoaderResolver} from "./dataloader.js";
 import {findAssets} from "./html.js";
 import {defaultGlobals} from "./javascript/globals.js";
@@ -203,6 +204,13 @@ export async function getResolvers(
         staticImports.add(specifier);
         npmStaticResolutions.add(path);
       }
+    }
+  }
+
+  // Rollup imported local modules (bare module specifiers).
+  for (const i of globalImports) {
+    if (i in dependencies) {
+      resolutions.set(i, `/_module/${i}/_esm.js`);
     }
   }
 

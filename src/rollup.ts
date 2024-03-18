@@ -57,13 +57,18 @@ export async function rollupClient(
   input: string,
   root: string,
   path: string,
-  {define, keepNames, minify}: {define?: {[key: string]: string}; keepNames?: boolean; minify?: boolean} = {}
+  {
+    define,
+    keepNames,
+    minify,
+    nodeResolveOnly = BUNDLED_MODULES
+  }: {define?: {[key: string]: string}; keepNames?: boolean; minify?: boolean; nodeResolveOnly?: string[]} = {}
 ): Promise<string> {
   const bundle = await rollup({
     input,
     external: [/^https:/],
     plugins: [
-      nodeResolve({resolveOnly: BUNDLED_MODULES}),
+      nodeResolve({resolveOnly: nodeResolveOnly}),
       importResolve(input, root, path),
       esbuild({
         target: "es2022",

@@ -10,7 +10,7 @@ import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
-import {extractNpmSpecifier, populateNpmCache, resolveNpmImport} from "./npm.js";
+import {extractNpmSpecifier, populateEsmCache, populateNpmCache, resolveNpmImport} from "./npm.js";
 import {isPathImport, relativePath, resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
@@ -113,6 +113,12 @@ export async function build(
         if (config.search) define["global.__minisearch"] = JSON.stringify(relativePath(path, aliases.get("/_observablehq/minisearch.json")!)); // prettier-ignore
         const contents = await rollupClient(clientPath, root, path, {minify: true, keepNames: true, define});
         await effects.writeFile(path, contents);
+      }
+
+      // /_module/earcut/_esm.js
+      if (path.startsWith("/_module/") && path.endsWith(".js")) {
+        const filePath = await populateEsmCache(root, path);
+        await effects.copyFile(filePath, path);
       }
     }
     for (const specifier of stylesheets) {

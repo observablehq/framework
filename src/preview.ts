@@ -21,7 +21,7 @@ import {parseHtml, rewriteHtml} from "./html.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import {parseMarkdown} from "./markdown.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
-import {populateNpmCache} from "./npm.js";
+import {populateEsmCache, populateNpmCache} from "./npm.js";
 import {isPathImport} from "./path.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
@@ -108,6 +108,9 @@ export class PreviewServer {
         end(req, res, await bundleStyles({path}), "text/css");
       } else if (pathname.startsWith("/_npm/")) {
         await populateNpmCache(root, pathname);
+        send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
+      } else if (pathname.startsWith("/_module/")) {
+        await populateEsmCache(root, pathname);
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
         const path = pathname.slice("/_import".length);
