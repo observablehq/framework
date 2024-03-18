@@ -1,5 +1,7 @@
 # DuckDB
 
+<div class="tip">The most convenient way to use DuckDB in Observable is the built-in <a href="../sql">SQL code blocks</a> and <a href="../sql#sql-literals"><code>sql</code> tagged template literal</a>. Use <code>DuckDBClient</code> or DuckDB-Wasm directly, as shown here, if you need greater control.</div>
+
 DuckDB is “an in-process SQL OLAP Database Management System. [DuckDB-Wasm](https://github.com/duckdb/duckdb-wasm) brings DuckDB to every browser thanks to WebAssembly.” DuckDB-Wasm is available by default as `duckdb` in Markdown, but you can explicitly import it as:
 
 ```js echo
@@ -12,7 +14,7 @@ For convenience, we provide a [`DatabaseClient`](https://observablehq.com/@obser
 import {DuckDBClient} from "npm:@observablehq/duckdb";
 ```
 
-To get a DuckDB client, pass zero or more named tables to `DuckDBClient.of`. Each table can be expressed as a [`FileAttachment`](../javascript/files), [Arquero table](./arquero), [Arrow table](./arrow), an array of objects, or a promise to the same. For example, below we load a sample of 250,000 stars from the [Gaia Star Catalog](https://observablehq.com/@cmudig/peeking-into-the-gaia-star-catalog) as a [Apache Parquet](https://parquet.apache.org/) file:
+To get a DuckDB client, pass zero or more named tables to `DuckDBClient.of`. Each table can be expressed as a [`FileAttachment`](../javascript/files), [Arquero table](./arquero), [Arrow table](./arrow), an array of objects, or a promise to the same. For file attachments, the following formats are supported: [CSV](./lib/csv), [TSV](./lib/csv), [JSON](./javascript/files#json), [Apache Arrow](./lib/arrow), and [Apache Parquet](./lib/arrow#apache-parquet). For example, below we load a sample of 250,000 stars from the [Gaia Star Catalog](https://observablehq.com/@cmudig/peeking-into-the-gaia-star-catalog) as a Parquet file:
 
 ```js echo
 const db = DuckDBClient.of({gaia: FileAttachment("gaia-sample.parquet")});
@@ -53,7 +55,17 @@ Plot.plot({
 })
 ```
 
-For externally-hosted data, you can create an empty `DuckDBClient` and load a table from a SQL query, say using [`read_parquet`](https://duckdb.org/docs/guides/import/parquet_import) or [`read_csv`](https://duckdb.org/docs/guides/import/csv_import).
+You can also [attach](https://duckdb.org/docs/sql/statements/attach) a complete database saved as DuckDB file, typically using the `.db` file extension (or `.ddb` or `.duckdb`). In this case, the associated name (below `base`) is a _schema_ name rather than a _table_ name.
+
+```js echo
+const db2 = await DuckDBClient.of({base: FileAttachment("quakes.db")});
+```
+
+```js echo
+db2.queryRow(`SELECT COUNT() FROM base.events`)
+```
+
+For externally-hosted data, you can create an empty `DuckDBClient` and load a table from a SQL query, say using [`read_parquet`](https://duckdb.org/docs/guides/import/parquet_import) or [`read_csv`](https://duckdb.org/docs/guides/import/csv_import). DuckDB offers many affordances to make this easier (in many cases it detects the file format and uses the correct loader automatically).
 
 ```js run=false
 const db = await DuckDBClient.of();
@@ -69,6 +81,8 @@ As an alternative to `db.sql`, there’s also `db.query`:
 ```js echo
 db.query("SELECT * FROM gaia LIMIT 10")
 ```
+
+<div class="note">The <code>db.sql</code> and <code>db.query</code> methods return a promise to an <a href="./arrow">Arrow table</a>. This columnar representation is much more efficient than an array-of-objects. You can inspect the contents of an Arrow table using <a href="../inputs/table"><code>Inputs.table</code></a> and pass the data to <a href="./plot">Plot</a>.</div>
 
 And `db.queryRow`:
 

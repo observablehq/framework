@@ -290,7 +290,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
         const source = await readFile(join(root, path), "utf8");
         const page = parseMarkdown(source, {path, ...config});
         // delay to avoid a possibly-empty file
-        if (!force && page.html === "") {
+        if (!force && page.body === "") {
           if (!emptyTimeout) {
             emptyTimeout = setTimeout(() => {
               emptyTimeout = null;
@@ -390,8 +390,8 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
   }
 }
 
-function getHtml({html}: MarkdownPage, resolvers: Resolvers): string[] {
-  return Array.from(parseHtml(rewriteHtml(html, resolvers)).document.body.children, (d) => d.outerHTML);
+function getHtml({body}: MarkdownPage, resolvers: Resolvers): string[] {
+  return Array.from(parseHtml(rewriteHtml(body, resolvers)).document.body.children, (d) => d.outerHTML);
 }
 
 function getCode({code}: MarkdownPage, resolvers: Resolvers): Map<string, string> {
