@@ -92,9 +92,6 @@ function registerTables(sql: Record<string, any>, options: RenderOptions): strin
     .join("\n");
 }
 
-// const source = node.arguments[0];
-// output.replaceLeft(source.start, source.end, JSON.stringify(resolved));
-
 function registerTable(name: string, source: any, {path}: RenderOptions): string {
   return `registerTable(${JSON.stringify(name)}, ${
     isAssetPath(source)
@@ -102,10 +99,6 @@ function registerTable(name: string, source: any, {path}: RenderOptions): string
       : JSON.stringify(source)
   });`;
 }
-
-// function normalizeTableSource(path: string, name: string): string {
-//   return relativePath(path, resolvePath(path, name));
-// }
 
 function registerFiles(
   files: Iterable<string>,

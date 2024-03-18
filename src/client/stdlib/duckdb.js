@@ -186,30 +186,22 @@ async function insertSource(database, name, source) {
   if (Array.isArray(source)) return insertArray(database, name, source);
   if (isArqueroTable(source)) return insertArqueroTable(database, name, source);
   if (typeof source === "string") return insertUrl(database, name, source);
-  if (source == null) return; // ignore nullish data
   if (source && typeof source === "object") {
     if ("data" in source) {
       // data + options
       const {data, ...options} = source;
-      if (isArrowTable(data)) {
-        return insertArrowTable(database, name, data, options);
-      } else {
-        return insertArray(database, name, data, options);
-      }
-    } else if ("file" in source) {
+      if (isArrowTable(data)) return insertArrowTable(database, name, data, options);
+      return insertArray(database, name, data, options);
+    }
+    if ("file" in source) {
       // file + options
       const {file, ...options} = source;
       return insertFile(database, name, file, options);
-    } else if ("url" in source) {
-      // url + options
-      const {url, ...options} = source;
-      return insertUrl(database, name, url, options);
     }
   }
   throw new Error(`invalid source: ${source}`);
 }
 
-// TODO options to specify type?
 async function insertUrl(database, name, url) {
   const connection = await database.connect();
   try {
