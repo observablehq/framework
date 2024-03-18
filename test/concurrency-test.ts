@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import {runAllWithConcurrencyLimit} from "../src/concurrency.js";
-import {Deferred} from "../src/deferred.js";
+import {Deferred} from "./deferred.js";
 
 describe("concurrencyLimit", () => {
   it("it should process all jobs", async () => {
