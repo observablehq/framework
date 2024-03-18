@@ -146,8 +146,7 @@ const TEST_OPTIONS: DeployOptions = {
   message: undefined,
   deployPollInterval: 0,
   ifBuildMissing: "cancel",
-  ifBuildStale: "deploy",
-  maxConcurrency: 1
+  ifBuildStale: "deploy"
 };
 const DEPLOY_CONFIG: DeployConfig & {projectId: string; projectSlug: string; workspaceLogin: string} = {
   projectId: "project123",
@@ -458,7 +457,7 @@ describe("deploy", () => {
     effects.clack.inputs.push("fix some more bugs");
 
     try {
-      await deploy(TEST_OPTIONS, effects);
+      await deploy({...TEST_OPTIONS, maxConcurrency: 1}, effects);
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));
