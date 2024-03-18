@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import {readFile, stat, unlink, utimes} from "node:fs/promises";
+import {mkdir, readFile, rmdir, stat, unlink, utimes, writeFile} from "node:fs/promises";
 import os from "node:os";
 import type {LoadEffects} from "../src/dataloader.js";
 import {LoaderResolver} from "../src/dataloader.js";
@@ -99,17 +99,52 @@ describe("LoaderResolver.find(path, {useStale: true})", () => {
   });
 });
 
-describe("LoaderResolver.getFileHash(path)", () => {
+describe("LoaderResolver.getSourceFileHash(path)", () => {
   it("returns the content hash for the specified file’s data loader", async () => {
     const loaders = new LoaderResolver({root: "test/input/build/archives.posix"});
-    assert.strictEqual(loaders.getFileHash("dynamic.zip.sh"), "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"); // prettier-ignore
-    assert.strictEqual(loaders.getFileHash("dynamic.zip"), "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"); // prettier-ignore
-    assert.strictEqual(loaders.getFileHash("dynamic/file.txt"), "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"); // prettier-ignore
-    assert.strictEqual(loaders.getFileHash("static.zip"), "e6afff224da77b900cfe3ab8789f2283883300e1497548c30af66dfe4c29b429"); // prettier-ignore
-    assert.strictEqual(loaders.getFileHash("static/file.txt"), "e6afff224da77b900cfe3ab8789f2283883300e1497548c30af66dfe4c29b429"); // prettier-ignore
+    assert.strictEqual(loaders.getSourceFileHash("dynamic.zip.sh"), "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"); // prettier-ignore
+    assert.strictEqual(loaders.getSourceFileHash("dynamic.zip"), "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"); // prettier-ignore
+    assert.strictEqual(loaders.getSourceFileHash("dynamic/file.txt"), "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"); // prettier-ignore
+    assert.strictEqual(loaders.getSourceFileHash("static.zip"), "e6afff224da77b900cfe3ab8789f2283883300e1497548c30af66dfe4c29b429"); // prettier-ignore
+    assert.strictEqual(loaders.getSourceFileHash("static/file.txt"), "e6afff224da77b900cfe3ab8789f2283883300e1497548c30af66dfe4c29b429"); // prettier-ignore
   });
   it("returns the empty hash if the specified file does not exist", async () => {
     const loaders = new LoaderResolver({root: "test/input/build/files"});
-    assert.strictEqual(loaders.getFileHash("does-not-exist.csv"), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"); // prettier-ignore
+    assert.strictEqual(loaders.getSourceFileHash("does-not-exist.csv"), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"); // prettier-ignore
+  });
+});
+
+describe("LoaderResolver.get{Source,Output}LastModified(path)", () => {
+  const time1 = new Date(Date.UTC(2023, 11, 1));
+  const time2 = new Date(Date.UTC(2024, 2, 1));
+  const loaders = new LoaderResolver({root: "test"});
+  it("both return the last modification time for a simple file", async () => {
+    await utimes("test/input/loader/simple.txt", time1, time1);
+    assert.strictEqual(loaders.getSourceLastModified("input/loader/simple.txt"), +time1);
+    assert.strictEqual(loaders.getOutputLastModified("input/loader/simple.txt"), +time1);
+  });
+  it("both return an undefined last modification time for a missing file", async () => {
+    assert.strictEqual(loaders.getSourceLastModified("input/loader/missing.txt"), undefined);
+    assert.strictEqual(loaders.getOutputLastModified("input/loader/missing.txt"), undefined);
+  });
+  it("returns the last modification time of the loader in preview, and of the cache, on build", async () => {
+    await utimes("test/input/loader/cached.txt.sh", time1, time1);
+    await mkdir("test/.observablehq/cache/input/loader/", {recursive: true});
+    await writeFile("test/.observablehq/cache/input/loader/cached.txt", "2024-03-01 00:00:00");
+    await utimes("test/.observablehq/cache/input/loader/cached.txt", time2, time2);
+    assert.strictEqual(loaders.getSourceLastModified("input/loader/cached.txt"), +time1);
+    assert.strictEqual(loaders.getOutputLastModified("input/loader/cached.txt"), +time2);
+    // clean up
+    try {
+      await unlink("test/.observablehq/cache/input/loader/cached.txt");
+      await rmdir("test/.observablehq/cache/input/loader", {recursive: true});
+    } catch {
+      // ignore;
+    }
+  });
+  it("returns the last modification time of the data loader in preview, and null in build, when there is no cache", async () => {
+    await utimes("test/input/loader/not-cached.txt.sh", time1, time1);
+    assert.strictEqual(loaders.getSourceLastModified("input/loader/not-cached.txt"), +time1);
+    assert.strictEqual(loaders.getOutputLastModified("input/loader/not-cached.txt"), undefined);
   });
 });

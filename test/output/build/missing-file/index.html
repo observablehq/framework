@@ -19,7 +19,7 @@ registerFile("./does-not-exist.txt", {"name":"./does-not-exist.txt","mimeType":"
 
 define({id: "5760fd93", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
 display(await(
-FileAttachment("does-not-exist.txt")
+FileAttachment("./does-not-exist.txt")
 ))
 }});
 

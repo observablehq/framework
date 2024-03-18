@@ -12,6 +12,7 @@ import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImpor
 import {isAssetPath, isPathImport, relativePath, resolveLocalPath, resolvePath} from "./path.js";
 
 export interface Resolvers {
+  path: string;
   hash: string;
   assets: Set<string>; // like files, but not registered for FileAttachment
   files: Set<string>;
@@ -114,12 +115,11 @@ export async function getResolvers(
     }
   }
 
-  // Compute the content hash. TODO In build, this needs to consider the output
-  // of data loaders, rather than the source of data loaders.
-  for (const f of assets) hash.update(loaders.getFileHash(resolvePath(path, f)));
-  for (const f of files) hash.update(loaders.getFileHash(resolvePath(path, f)));
+  // Compute the content hash.
+  for (const f of assets) hash.update(loaders.getSourceFileHash(resolvePath(path, f)));
+  for (const f of files) hash.update(loaders.getSourceFileHash(resolvePath(path, f)));
   for (const i of localImports) hash.update(getModuleHash(root, resolvePath(path, i)));
-  if (page.style && isPathImport(page.style)) hash.update(loaders.getFileHash(resolvePath(path, page.style)));
+  if (page.style && isPathImport(page.style)) hash.update(loaders.getSourceFileHash(resolvePath(path, page.style)));
 
   // Collect transitively-attached files and local imports.
   for (const i of localImports) {
@@ -260,6 +260,7 @@ export async function getResolvers(
   }
 
   return {
+    path,
     hash: hash.digest("hex"),
     assets,
     files,

@@ -146,18 +146,19 @@ export class DuckDBClient {
   }
 
   async describeTables() {
-    const tables = await this.query("SHOW TABLES");
-    return tables.map(({name}) => ({name}));
+    return Array.from(await this.query("SHOW TABLES"), ({name}) => ({name}));
   }
 
   async describeColumns({table} = {}) {
-    const columns = await this.query(`DESCRIBE ${this.escape(table)}`);
-    return columns.map(({column_name, column_type, null: nullable}) => ({
-      name: column_name,
-      type: getDuckDBType(column_type),
-      nullable: nullable !== "NO",
-      databaseType: column_type
-    }));
+    return Array.from(
+      await this.query(`DESCRIBE ${this.escape(table)}`),
+      ({column_name, column_type, null: nullable}) => ({
+        name: column_name,
+        type: getDuckDBType(column_type),
+        nullable: nullable !== "NO",
+        databaseType: column_type
+      })
+    );
   }
 
   static async of(sources = {}, config = {}) {
