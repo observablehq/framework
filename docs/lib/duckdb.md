@@ -76,7 +76,7 @@ And `db.queryRow`:
 db.queryRow("SELECT count() AS count FROM gaia")
 ```
 
-Finally, the `DuckDBClient.sql` method takes thee same arguments as `DuckDBClient.of` and returns the corresponding `db.sql` template literal, bound to the database so it be used directly:
+Finally, the `DuckDBClient.sql` method takes the same arguments as `DuckDBClient.of` and returns the corresponding `db.sql` template literal, bound to the database so it be used directly:
 
 ```js echo
 const sql = DuckDBClient.sql({
