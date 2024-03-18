@@ -44,7 +44,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
     const sourcePath = join(root, file);
     const source = await readFile(sourcePath, "utf8");
     const path = `/${join(dirname(file), basename(file, ".md"))}`;
-    const {html, title, data} = parseMarkdown(source, {...config, path});
+    const {body, title, data} = parseMarkdown(source, {...config, path});
 
     // Skip pages that opt-out of indexing, and skip unlisted pages unless
     // opted-in. We only log the first case.
@@ -58,7 +58,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
     // eslint-disable-next-line import/no-named-as-default-member
     const text = he
       .decode(
-        html
+        body
           .replaceAll(/[\n\r]/g, " ")
           .replaceAll(/<style\b.*<\/style\b[^>]*>/gi, " ")
           .replaceAll(/<[^>]+>/g, " ")
