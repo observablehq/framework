@@ -173,6 +173,10 @@ export class DuckDBClient {
     await Promise.all(Object.entries(sources).map(([name, source]) => insertSource(db, name, source)));
     return new DuckDBClient(db);
   }
+
+  static sql() {
+    return this.of.apply(this, arguments).then((db) => db.sql.bind(db));
+  }
 }
 
 Object.defineProperty(DuckDBClient.prototype, "dialect", {
