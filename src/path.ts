@@ -1,4 +1,4 @@
-import {dirname, extname, join} from "node:path/posix";
+import {dirname, join} from "node:path/posix";
 
 /**
  * Returns the normalized relative path from "/file/path/to/a" to
