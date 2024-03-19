@@ -15,6 +15,7 @@ import {parseInfo} from "./info.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
 import {relativePath} from "./path.js";
+import {transpilePrql} from "./prql.js";
 import {transpileSql} from "./sql.js";
 import {transpileTag} from "./tag.js";
 import {InvalidThemeError} from "./theme.js";
@@ -64,6 +65,8 @@ function getLiveSource(content: string, tag: string, attributes: Record<string, 
     ? transpileTag(content, "html.fragment", true)
     : tag === "sql"
     ? transpileSql(content, attributes)
+    : tag === "prql"
+    ? transpilePrql(content, attributes)
     : tag === "svg"
     ? transpileTag(content, "svg.fragment", true)
     : tag === "dot"
