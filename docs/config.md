@@ -114,7 +114,7 @@ Whether to show the sidebar. Defaults to true if **pages** is not empty.
 
 An array containing pages and sections. If not specified, it defaults to all Markdown files found in the source root in directory listing order.
 
-Both pages and sections have a **name**, which typically corresponds to the page’s title. The name gets displayed in the sidebar. A click on the name of a page directs to the corresponding **path** (starting from the root), while a click on the name of a section opens that sections (or closes it if it’s already open). Sections must indicate an array of **pages**, and optionally specify whether they are **open** by default (if **open** is not set, it defaults to true; if **open** is false, the section is closed unless the current page blelongs to that section).
+Both pages and sections have a **name**, which typically corresponds to the page’s title. The name gets displayed in the sidebar. A click on the name of a page directs to the corresponding **path** (starting from the root), while a click on the name of a section opens that sections (or closes it if it’s already open). Sections must indicate an array of **pages**, and optionally specify whether they are **open** by default (if **open** is not set, it defaults to true; if **open** is false, the section is closed unless the current page belongs to that section).
 
 Here is an example of **pages** specifying two sections:
 
