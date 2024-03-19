@@ -26,6 +26,12 @@ The first time you deploy a project, you will be prompted to configure the proje
 
 When the deploy command finishes, it prints a link to observablehq.cloud where you can view your deployed project. If you choose *private* as the access level, that link will only be accessible to members of your Observable workspace. (You can invite people to your workspace by going to observablehq.com.) If you chose *public*, you can share your project link with anyone.
 
+Besides the common options (`--help`, `--root`, `--config`), the `deploy` command supports the following options:
+
+- `--message` - displayed in the list of deploys
+- `--if-stale` - what to do if the output directory is stale (older than 5 minutes): one of 'build', 'cancel', 'deploy', or 'prompt' (the default)
+- `--if-missing` - what to do if the output directory is missing: one of 'build', 'cancel', or 'prompt' (the default)
+
 <div class="note">The deploy command creates a file at <code>docs/.observablehq/deploy.json</code> with information on where to deploy the project. This file is required for automated deploys. You will need to commit this file to git to deploy via GitHub Actions. (If you have configured a source root besides <code>docs</code>, the file will be placed there instead.)</div>
 
 ## Automated deploys
