@@ -114,9 +114,9 @@ Whether to show the sidebar. Defaults to true if **pages** is not empty.
 
 An array containing pages and sections. If not specified, it defaults to all Markdown files found in the source root in directory listing order.
 
-Both pages and sections have a **name**, which typically corresponds to the page’s title. The name gets displayed in the sidebar. A click on the name of a page directs to the corresponding **path** (starting from the root), while a click on the name of a section opens that sections (or closes it if it’s already open). Sections must indicate an array of **pages**, and optionally specify whether they are **open** by default (if **open** is not set, it defaults to true; if **open** is false, the section is closed unless the current page belongs to that section).
+Both pages and sections have a **name**, which typically corresponds to the page’s title. The name gets displayed in the sidebar. Clicking on a page navigates to the corresponding **path**, which should start with a leading slash and be relative to the root; the path can also be specified as a full URL to navigate to an external site. Clicking on a section header opens or closes that section. Each section must specify an array of **pages**, and optionally whether the section is **open** by default. If **open** is not set, it defaults to true. If **open** is false, the section is closed unless the current page belongs to that section.
 
-Here is an example of **pages** specifying two sections:
+For example, here **pages** specifies two sections and a total of four pages:
 
 ```js run=false
 export default {
@@ -126,7 +126,7 @@ export default {
       pages: [
         {name: "Page 1", path: "/s01/page1"},
         {name: "Page 2", path: "/s01/page2"}
-      ],
+      ]
     },
     {
       name: "Section 2",
@@ -134,19 +134,19 @@ export default {
       pages: [
         {name: "Page 3", path: "/s02/page3"},
         {name: "Page 4", path: "/s02/page4"}
-      ],
+      ]
     }
   ]
 }
 ```
 
-Projects can have “unlisted” pages that are not included in the pages list. These pages will still be accessible if linked from other pages or visited directly, but they won’t be listed in the sidebar or linked to via the previous & next footer.
+Projects can have “unlisted” pages that are not referenced in **pages**. These pages can still be linked from other pages or visited directly, but they won’t be listed in the sidebar or linked to via the previous & next pager links.
 
-The pages list should _not_ include the root page, `index.md`. Also, we don’t recommend using query strings or anchor fragments, as these will prevent the previous & next footer links from navigating.
+The pages list should _not_ include the home page (`/`) as this is automatically linked at the top of the sidebar. We also do not recommend listing the same page multiple times (say with different query parameters or anchor fragments), as this causes the previous & next pager links to cycle.
 
 ## pager
 
-Whether to show the previous & next footer links; defaults to true. The pages are considered in the same order as they appear in the sidebar.
+Whether to show the previous & next links in the footer; defaults to true. The pages are considered in the same order as they appear in the sidebar.
 
 ## head
 
