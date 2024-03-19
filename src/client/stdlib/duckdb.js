@@ -115,9 +115,8 @@ export class DuckDBClient {
       } else {
         table = await connection.query(query);
       }
-    } catch (error) {
+    } finally {
       await connection.close();
-      throw error;
     }
     return table;
   }
