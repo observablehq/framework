@@ -112,26 +112,33 @@ Whether to show the sidebar. Defaults to true if **pages** is not empty.
 
 ## pages
 
-An array containing pages and/or sections. If not specified, it defaults to all Markdown files found in the source root in directory listing order.
+An array containing pages and sections. If not specified, it defaults to all Markdown files found in the source root in directory listing order.
 
-The following TypeScript interfaces describe pages and sections:
+Both pages and sections have a **name**, which typically corresponds to the page’s title. The name gets displayed in the sidebar. A click on the name of a page directs to the corresponding **path** (starting from the root), while a click on the name of a section opens that sections (or closes it if it’s already open). Sections must indicate an array of **pages**, and optionally specify whether they are **open** by default (if **open** is not set, it defaults to true; if **open** is false, the section is closed unless the current page blelongs to that section).
 
-```ts run=false
-export interface Page {
-  name: string;
-  path: string;
+Here is an example of **pages** specifying two sections:
+
+```js run=false
+export default {
+  pages: [
+    {
+      name: "Section 1",
+      pages: [
+        {name: "Page 1", path: "/s01/page1"},
+        {name: "Page 2", path: "/s01/page2"}
+      ],
+    },
+    {
+      name: "Section 2",
+      open: false,
+      pages: [
+        {name: "Page 3", path: "/s02/page3"},
+        {name: "Page 4", path: "/s02/page4"}
+      ],
+    }
+  ]
 }
 ```
-
-```ts run=false
-export interface Section {
-  name: string;
-  pages: Page[];
-  open?: boolean;
-}
-```
-
-If a section’s **open** option is not set, it defaults to true.
 
 Projects can have “unlisted” pages that are not included in the pages list. These pages will still be accessible if linked from other pages or visited directly, but they won’t be listed in the sidebar or linked to via the previous & next footer.
 
@@ -139,7 +146,7 @@ The pages list should _not_ include the root page, `index.md`. Also, we don’t 
 
 ## pager
 
-Whether to show the previous & next footer links; defaults to true.
+Whether to show the previous & next footer links; defaults to true. The pages
 
 ## head
 
