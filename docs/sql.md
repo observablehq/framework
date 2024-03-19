@@ -16,7 +16,7 @@ sql:
 ---
 ```
 
-To load externally-hosted data, you can use a full URL: <a href="https://github.com/observablehq/framework/releases/tag/v1.4.0" target="_blank" class="observablehq-version-badge" data-version="^1.4.0" title="Added in 1.4.0"></a>
+To load externally-hosted data, use a full URL: <a href="https://github.com/observablehq/framework/releases/tag/v1.4.0" target="_blank" class="observablehq-version-badge" data-version="^1.4.0" title="Added in 1.4.0"></a>
 
 ```yaml
 ---

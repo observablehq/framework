@@ -55,7 +55,7 @@ Plot.plot({
 })
 ```
 
-You can also [attach](https://duckdb.org/docs/sql/statements/attach) a complete database saved as DuckDB file, typically using the `.db` file extension (or `.ddb` or `.duckdb`). <a href="https://github.com/observablehq/framework/releases/tag/v1.4.0" target="_blank" class="observablehq-version-badge" data-version="^1.4.0" title="Added in 1.4.0"></a> In this case, the associated name (below `base`) is a _schema_ name rather than a _table_ name.
+You can also [attach](https://duckdb.org/docs/sql/statements/attach) a complete database saved as DuckDB file, <a href="https://github.com/observablehq/framework/releases/tag/v1.4.0" target="_blank" class="observablehq-version-badge" data-version="^1.4.0" title="Added in 1.4.0"></a> typically using the `.db` file extension (or `.ddb` or `.duckdb`). In this case, the associated name (below `base`) is a _schema_ name rather than a _table_ name.
 
 ```js echo
 const db2 = await DuckDBClient.of({base: FileAttachment("quakes.db")});
