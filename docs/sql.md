@@ -16,7 +16,7 @@ sql:
 ---
 ```
 
-To load externally-hosted data, you can use a full URL:
+To load externally-hosted data, you can use a full URL: <a href="https://github.com/observablehq/framework/releases/tag/v1.4.0" target="_blank" class="observablehq-version-badge" data-version="^1.4.0" title="Added in 1.4.0"></a>
 
 ```yaml
 ---
@@ -25,7 +25,7 @@ sql:
 ---
 ```
 
-<div class="tip">For performance and reliability, we recommend using local files rather than loading data from external servers at runtime. If needed, you can use a <a href="./loaders">data loader</a> to take a snapshot of a remote data during build.</div>
+<div class="tip">For performance and reliability, we recommend using local files rather than loading data from external servers at runtime. You can use a <a href="./loaders">data loader</a> to take a snapshot of a remote data during build if needed.</div>
 
 You can also register tables via code (say to have sources that are defined dynamically via user input) by defining the `sql` symbol with [DuckDBClient.sql](./lib/duckdb).
 
