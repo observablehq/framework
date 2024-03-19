@@ -14,7 +14,7 @@ import {rewriteHtmlPaths} from "./html.js";
 import {parseInfo} from "./info.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
-import {relativePath} from "./path.js";
+import {isAssetPath, parseRelativeUrl, relativePath} from "./path.js";
 import {transpileSql} from "./sql.js";
 import {transpileTag} from "./tag.js";
 import {InvalidThemeError} from "./theme.js";
@@ -280,22 +280,10 @@ function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
   };
 }
 
-export function parseRelativeUrl(url: string): {pathname: string; search: string; hash: string} {
-  let search: string;
-  let hash: string;
-  const i = url.indexOf("#");
-  if (i < 0) hash = "";
-  else (hash = url.slice(i)), (url = url.slice(0, i));
-  const j = url.indexOf("?");
-  if (j < 0) search = "";
-  else (search = url.slice(j)), (url = url.slice(0, j));
-  return {pathname: url, search, hash};
-}
-
 export function makeLinkNormalizer(baseNormalize: (url: string) => string, clean: boolean): (url: string) => string {
   return (url) => {
-    // Only clean relative links; ignore e.g. "https:" links.
-    if (!/^\w+:/.test(url)) {
+    // Only clean local links (and ignore e.g. "https:" links).
+    if (isAssetPath(url)) {
       const u = parseRelativeUrl(url);
       let {pathname} = u;
       if (pathname && !pathname.endsWith("/") && !extname(pathname)) pathname += ".html";

@@ -83,20 +83,57 @@ describe("normalizeConfig(spec, root)", () => {
   it("coerces pages to an array", async () => {
     assert.deepStrictEqual((await config({pages: new Set()}, root)).pages, []);
   });
-  it("coerces pages", async () => {
+  it("coerces and normalizes page paths", async () => {
     const inpages = [
       {name: 42, path: true},
-      {name: null, path: {toString: () => "yes"}}
+      {name: null, path: {toString: () => "yes"}},
+      {name: "Index", path: "/foo/index"},
+      {name: "Index.html", path: "/foo/index.html"},
+      {name: "Page.html", path: "/foo.html"}
     ];
     const outpages = [
-      {name: "42", path: "true"},
-      {name: "null", path: "yes"}
+      {name: "42", path: "/true"},
+      {name: "null", path: "/yes"},
+      {name: "Index", path: "/foo/index"},
+      {name: "Index.html", path: "/foo/index"},
+      {name: "Page.html", path: "/foo"}
+    ];
+    assert.deepStrictEqual((await config({pages: inpages}, root)).pages, outpages);
+  });
+  it("allows external page paths", async () => {
+    const pages = [{name: "Example.com", path: "https://example.com"}];
+    assert.deepStrictEqual((await config({pages}, root)).pages, pages);
+  });
+  it("allows page paths to have query strings and anchor fragments", async () => {
+    const inpages = [
+      {name: "Anchor fragment on index", path: "/test/index#foo=bar"},
+      {name: "Anchor fragment on index.html", path: "/test/index.html#foo=bar"},
+      {name: "Anchor fragment on page.html", path: "/test.html#foo=bar"},
+      {name: "Anchor fragment on slash", path: "/test/#foo=bar"},
+      {name: "Anchor fragment", path: "/test#foo=bar"},
+      {name: "Query string on index", path: "/test/index?foo=bar"},
+      {name: "Query string on index.html", path: "/test/index.html?foo=bar"},
+      {name: "Query string on page.html", path: "/test.html?foo=bar"},
+      {name: "Query string on slash", path: "/test/?foo=bar"},
+      {name: "Query string", path: "/test?foo=bar"}
+    ];
+    const outpages = [
+      {name: "Anchor fragment on index", path: "/test/index#foo=bar"},
+      {name: "Anchor fragment on index.html", path: "/test/index#foo=bar"},
+      {name: "Anchor fragment on page.html", path: "/test#foo=bar"},
+      {name: "Anchor fragment on slash", path: "/test/index#foo=bar"},
+      {name: "Anchor fragment", path: "/test#foo=bar"},
+      {name: "Query string on index", path: "/test/index?foo=bar"},
+      {name: "Query string on index.html", path: "/test/index?foo=bar"},
+      {name: "Query string on page.html", path: "/test?foo=bar"},
+      {name: "Query string on slash", path: "/test/index?foo=bar"},
+      {name: "Query string", path: "/test?foo=bar"}
     ];
     assert.deepStrictEqual((await config({pages: inpages}, root)).pages, outpages);
   });
   it("coerces sections", async () => {
     const inpages = [{name: 42, pages: new Set([{name: null, path: {toString: () => "yes"}}])}];
-    const outpages = [{name: "42", open: true, pages: [{name: "null", path: "yes"}]}];
+    const outpages = [{name: "42", open: true, pages: [{name: "null", path: "/yes"}]}];
     assert.deepStrictEqual((await config({pages: inpages}, root)).pages, outpages);
   });
   it("coerces toc", async () => {
