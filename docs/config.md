@@ -146,7 +146,7 @@ The pages list should _not_ include the home page (`/`) as this is automatically
 
 ## pager
 
-Whether to show the previous & next links in the footer; defaults to true. The pages are considered in the same order as they appear in the sidebar.
+Whether to show the previous & next links in the footer; defaults to true. The pages are linked in the same order as they appear in the sidebar.
 
 ## head
 
