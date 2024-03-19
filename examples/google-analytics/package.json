@@ -3,7 +3,7 @@
   "scripts": {
     "dev": "observable preview",
     "build": "rm -rf dist && observable build",
-    "postinstall": "ln -sf ../../../../bin/observable-init.js node_modules/.bin/observable"
+    "postinstall": "ln -sf ../../../../dist/bin/observable.js node_modules/.bin/observable"
   },
   "dependencies": {
     "@google-analytics/data": "^4.3.0",
@@ -11,7 +11,7 @@
     "dotenv": "^16.3.1"
   },
   "engines": {
-    "node": ">=20.6"
+    "node": ">=18"
   },
   "devDependencies": {
     "@types/node": "^20.10.6"

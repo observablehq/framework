@@ -1,13 +1,11 @@
 import {createHash} from "node:crypto";
-import {existsSync, readFileSync, statSync} from "node:fs";
-import {join, relative} from "node:path/posix";
+import {readFileSync, statSync} from "node:fs";
+import {join} from "node:path/posix";
 import type {Program} from "acorn";
-import {Parser} from "acorn";
-import {Loader} from "../dataloader.js";
 import {resolvePath} from "../path.js";
 import {findFiles} from "./files.js";
 import {findImports} from "./imports.js";
-import {parseOptions} from "./parse.js";
+import {parseProgram} from "./parse.js";
 
 export type FileInfo = {
   /** The last-modified time of the file; used to invalidate the cache. */
@@ -86,7 +84,7 @@ export function getModuleInfo(root: string, path: string): ModuleInfo | undefine
     let body: Program;
     try {
       source = readFileSync(key, "utf-8");
-      body = Parser.parse(source, parseOptions);
+      body = parseProgram(source);
     } catch {
       moduleInfoCache.delete(key); // delete stale entry
       return; // ignore parse error
@@ -130,15 +128,8 @@ export function getModuleInfo(root: string, path: string): ModuleInfo | undefine
  * the specified file does not exist, returns the hash of empty content. If the
  * referenced file does not exist, we check for the corresponding data loader
  * and return its hash instead.
- *
- * TODO During build, this needs to compute the hash of the generated file, not
- * the data loader.
  */
 export function getFileHash(root: string, path: string): string {
-  if (!existsSync(join(root, path))) {
-    const loader = Loader.find(root, path);
-    if (loader) path = relative(root, loader.path);
-  }
   return getFileInfo(root, path)?.hash ?? createHash("sha256").digest("hex");
 }
 

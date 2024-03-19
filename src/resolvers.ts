@@ -1,5 +1,6 @@
 import {createHash} from "node:crypto";
 import {extname, join} from "node:path/posix";
+import type {LoaderResolver} from "./dataloader.js";
 import {findAssets} from "./html.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js";
@@ -8,20 +9,22 @@ import {getImplicitDependencies, getImplicitDownloads} from "./libraries.js";
 import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
 import {getImplicitStylesheets} from "./libraries.js";
 import type {MarkdownPage} from "./markdown.js";
-import {populateNpmCache, resolveNpmImport, resolveNpmImports, resolveNpmSpecifier} from "./npm.js";
-import {isPathImport, relativePath, resolvePath} from "./path.js";
+import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
+import {isAssetPath, isPathImport, relativePath, resolveLocalPath, resolvePath} from "./path.js";
 
 export interface Resolvers {
+  path: string;
   hash: string;
-  assets: Set<string>;
+  assets: Set<string>; // like files, but not registered for FileAttachment
   files: Set<string>;
   localImports: Set<string>;
   globalImports: Set<string>;
   staticImports: Set<string>;
-  stylesheets: Set<string>;
+  stylesheets: Set<string>; // stylesheets to be added by render
   resolveFile(specifier: string): string;
   resolveImport(specifier: string): string;
   resolveStylesheet(specifier: string): string;
+  resolveScript(specifier: string): string;
 }
 
 const defaultImports = [
@@ -68,9 +71,12 @@ export const builtins = new Map<string, string>([
  * For files, we collect all FileAttachment calls within local modules, adding
  * them to any files referenced by static HTML.
  */
-export async function getResolvers(page: MarkdownPage, {root, path}: {root: string; path: string}): Promise<Resolvers> {
-  const hash = createHash("sha256").update(page.html);
-  const assets = findAssets(page.html, path);
+export async function getResolvers(
+  page: MarkdownPage,
+  {root, path, loaders}: {root: string; path: string; loaders: LoaderResolver}
+): Promise<Resolvers> {
+  const hash = createHash("sha256").update(page.body).update(JSON.stringify(page.data));
+  const assets = new Set<string>();
   const files = new Set<string>();
   const fileMethods = new Set<string>();
   const localImports = new Set<string>();
@@ -78,6 +84,16 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   const staticImports = new Set<string>(defaultImports);
   const stylesheets = new Set<string>();
   const resolutions = new Map<string, string>();
+
+  // Add assets.
+  for (const html of [page.head, page.header, page.body, page.footer]) {
+    if (!html) continue;
+    const info = findAssets(html, path);
+    for (const f of info.files) assets.add(f);
+    for (const i of info.localImports) localImports.add(i);
+    for (const i of info.globalImports) globalImports.add(i);
+    for (const i of info.staticImports) staticImports.add(i);
+  }
 
   // Add stylesheets. TODO Instead of hard-coding Source Serif Pro, parse the
   // page’s stylesheet to look for external imports.
@@ -96,39 +112,40 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
     }
   }
 
-  // Compute the content hash. TODO In build, this needs to consider the output
-  // of data loaders, rather than the source of data loaders.
-  for (const f of assets) hash.update(getFileHash(root, resolvePath(path, f)));
-  for (const f of files) hash.update(getFileHash(root, resolvePath(path, f)));
-  for (const i of localImports) hash.update(getModuleHash(root, resolvePath(path, i)));
-  if (page.style && isPathImport(page.style)) hash.update(getFileHash(root, resolvePath(path, page.style)));
+  // Add SQL sources.
+  if (page.data?.sql) {
+    for (const source of Object.values(page.data.sql)) {
+      files.add(String(source));
+    }
+  }
 
-  // Collect transitively-attached files and imports.
+  // Compute the content hash.
+  for (const f of assets) hash.update(loaders.getSourceFileHash(resolvePath(path, f)));
+  for (const f of files) hash.update(loaders.getSourceFileHash(resolvePath(path, f)));
+  for (const i of localImports) hash.update(getModuleHash(root, resolvePath(path, i)));
+  if (page.style && isPathImport(page.style)) hash.update(loaders.getSourceFileHash(resolvePath(path, page.style)));
+
+  // Collect transitively-attached files and local imports.
   for (const i of localImports) {
     const p = resolvePath(path, i);
     const info = getModuleInfo(root, p);
     if (!info) continue;
-    for (const f of info.files) {
-      files.add(relativePath(path, resolvePath(p, f)));
-    }
-    for (const m of info.fileMethods) {
-      fileMethods.add(m);
-    }
-    for (const o of info.localStaticImports) {
-      const r = relativePath(path, resolvePath(p, o));
-      localImports.add(r);
-      staticImports.add(r);
-    }
-    for (const o of info.localDynamicImports) {
-      localImports.add(relativePath(path, resolvePath(p, o)));
-    }
-    for (const o of info.globalStaticImports) {
-      staticImports.add(o);
-      globalImports.add(o);
-    }
-    for (const o of info.globalDynamicImports) {
-      globalImports.add(o);
-    }
+    for (const f of info.files) files.add(relativePath(path, resolvePath(p, f)));
+    for (const m of info.fileMethods) fileMethods.add(m);
+    for (const o of info.localStaticImports) localImports.add(relativePath(path, resolvePath(p, o)));
+    for (const o of info.localDynamicImports) localImports.add(relativePath(path, resolvePath(p, o)));
+    for (const o of info.globalStaticImports) globalImports.add(o);
+    for (const o of info.globalDynamicImports) globalImports.add(o);
+  }
+
+  // Collect static imports from transitive local imports.
+  for (const i of staticImports) {
+    if (!localImports.has(i)) continue;
+    const p = resolvePath(path, i);
+    const info = getModuleInfo(root, p);
+    if (!info) continue;
+    for (const o of info.localStaticImports) staticImports.add(relativePath(path, resolvePath(p, o)));
+    for (const o of info.globalStaticImports) staticImports.add(o);
   }
 
   // Add implicit imports for files. These are technically implemented as
@@ -170,7 +187,7 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
       for (const i of await resolveNpmImports(root, value)) {
         if (i.type === "local") {
           const path = resolvePath(value, i.name);
-          const specifier = `npm:${resolveNpmSpecifier(path)}`;
+          const specifier = `npm:${extractNpmSpecifier(path)}`;
           globalImports.add(specifier);
           resolutions.set(specifier, path);
         }
@@ -186,13 +203,15 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
     const r = resolutions.get(i);
     if (r) globalStaticResolutions.add(r);
   }
+
   for (const value of globalStaticResolutions) {
     if (value.startsWith("/_npm/")) {
       for (const i of await resolveNpmImports(root, value)) {
         if (i.type === "local" && i.method === "static") {
           const path = resolvePath(value, i.name);
-          const specifier = `npm:${resolveNpmSpecifier(path)}`;
+          const specifier = `npm:${extractNpmSpecifier(path)}`;
           staticImports.add(specifier);
+          globalStaticResolutions.add(path);
         }
       }
     } else {
@@ -201,25 +220,27 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   }
 
   // Add implicit stylesheets.
-  // TODO Add jsr: here as needed?
   for (const specifier of getImplicitStylesheets(staticImports)) {
     stylesheets.add(specifier);
     if (specifier.startsWith("npm:")) {
       const path = await resolveNpmImport(root, specifier.slice("npm:".length));
       resolutions.set(specifier, path);
       await populateNpmCache(root, path);
+    } else if (specifier.startsWith("jsr:")) {
+      // TODO jsr:
     }
   }
 
   // Add implicit downloads. (This should be maybe be stored separately rather
   // than being tossed into global imports, but it works for now.)
-  // TODO Add jsr: here as needed?
   for (const specifier of getImplicitDownloads(globalImports)) {
     globalImports.add(specifier);
     if (specifier.startsWith("npm:")) {
       const path = await resolveNpmImport(root, specifier.slice("npm:".length));
       resolutions.set(specifier, path);
       await populateNpmCache(root, path);
+    } else if (specifier.startsWith("jsr:")) {
+      // TODO jsr:
     }
   }
 
@@ -236,7 +257,7 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
   }
 
   function resolveFile(specifier: string): string {
-    return relativePath(path, resolveFilePath(root, resolvePath(path, specifier)));
+    return relativePath(path, loaders.resolveFilePath(resolvePath(path, specifier)));
   }
 
   function resolveStylesheet(specifier: string): string {
@@ -249,7 +270,17 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
       : specifier;
   }
 
+  function resolveScript(src: string): string {
+    if (isAssetPath(src)) {
+      const localPath = resolveLocalPath(path, src);
+      return localPath ? resolveImport(relativePath(path, localPath)) : src;
+    } else {
+      return resolveImport(src);
+    }
+  }
+
   return {
+    path,
     hash: hash.digest("hex"),
     assets,
     files,
@@ -259,6 +290,7 @@ export async function getResolvers(page: MarkdownPage, {root, path}: {root: stri
     stylesheets,
     resolveFile,
     resolveImport,
+    resolveScript,
     resolveStylesheet
   };
 }
@@ -290,10 +322,6 @@ export function resolveStylesheetPath(root: string, path: string): string {
 
 export function resolveImportPath(root: string, path: string): string {
   return `/${join("_import", path)}?sha=${getModuleHash(root, path)}`;
-}
-
-export function resolveFilePath(root: string, path: string): string {
-  return `/${join("_file", path)}?sha=${getFileHash(root, path)}`;
 }
 
 // Returns any inputs that are not declared in outputs. These typically refer to

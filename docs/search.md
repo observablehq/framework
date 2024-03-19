@@ -31,3 +31,13 @@ index: true
 ```
 
 Search is case-insensitive. The indexing script tries to avoid common pitfalls by ignoring HTML tags and non-word characters such as punctuation. It also ignores long words, as well as sequences that contain more than 6 digits (such as API keys, for example).
+
+You can specify additional comma-separated words to index using the **keywords** option in [Markdown front matter](./markdown). For example:
+
+```yaml
+---
+keywords: file, fileattachment
+---
+```
+
+These keywords are boosted at the same weight as the page title.

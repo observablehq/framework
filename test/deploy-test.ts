@@ -1,11 +1,17 @@
 import assert, {fail} from "node:assert";
+import {stat} from "node:fs/promises";
 import {Readable, Writable} from "node:stream";
-import {normalizeConfig} from "../src/config.js";
+import {normalizeConfig, setCurrentDate} from "../src/config.js";
 import {type DeployEffects, type DeployOptions, deploy, promptDeployTarget} from "../src/deploy.js";
 import {CliError, isHttpError} from "../src/error.js";
-import {type GetCurrentUserResponse, ObservableApiClient} from "../src/observableApiClient.js";
+import {visitFiles} from "../src/files.js";
+import type {ObservableApiClientOptions} from "../src/observableApiClient.js";
+import type {GetCurrentUserResponse} from "../src/observableApiClient.js";
+import {ObservableApiClient} from "../src/observableApiClient.js";
 import type {DeployConfig} from "../src/observableApiConfig.js";
+import {MockAuthEffects} from "./mocks/authEffects.js";
 import {TestClackEffects} from "./mocks/clack.js";
+import {MockConfigEffects} from "./mocks/configEffects.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
 import {MockLogger} from "./mocks/logger.js";
 import {
@@ -18,8 +24,6 @@ import {
   userWithZeroWorkspaces,
   validApiKey
 } from "./mocks/observableApi.js";
-import {MockAuthEffects} from "./observableApiAuth-test.js";
-import {MockConfigEffects} from "./observableApiConfig-test.js";
 
 interface MockDeployEffectsOptions {
   apiKey?: string | null;
@@ -27,6 +31,7 @@ interface MockDeployEffectsOptions {
   isTty?: boolean;
   outputColumns?: number;
   debug?: boolean;
+  fixedStatTime?: Date;
 }
 
 class MockDeployEffects extends MockAuthEffects implements DeployEffects {
@@ -45,13 +50,15 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
   private debug: boolean;
   private configEffects: MockConfigEffects;
   private authEffects: MockAuthEffects;
+  private fixedStatTime: Date | undefined;
 
   constructor({
     apiKey = validApiKey,
     deployConfig = null,
     isTty = true,
     outputColumns = 80,
-    debug = false
+    debug = false,
+    fixedStatTime
   }: MockDeployEffectsOptions = {}) {
     super();
     this.authEffects = new MockAuthEffects();
@@ -62,6 +69,7 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     this.isTty = isTty;
     this.outputColumns = outputColumns;
     this.debug = debug;
+    this.fixedStatTime = fixedStatTime;
 
     this.output = new Writable({
       write: (data, _enc, callback) => {
@@ -94,6 +102,21 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     this.deployConfig = config;
   }
 
+  async *visitFiles(path) {
+    yield* visitFiles(path);
+  }
+
+  async stat(path) {
+    const s = await stat(path);
+    if (this.fixedStatTime) {
+      for (const key of ["a", "c", "m", "birth"] as const) {
+        s[`${key}time`] = this.fixedStatTime;
+        s[`${key}timeMs`] = this.fixedStatTime.getTime();
+      }
+    }
+    return s;
+  }
+
   addIoResponse(prompt: RegExp, response: string) {
     this.ioResponses.push({prompt, response});
     return this;
@@ -102,6 +125,12 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
   close() {
     assert.deepEqual(this.ioResponses, []);
   }
+
+  makeApiClient() {
+    const opts: ObservableApiClientOptions = {clack: this.clack};
+    if (this.observableApiKey) opts.apiKey = {key: this.observableApiKey, source: "test"};
+    return new ObservableApiClient(opts);
+  }
 }
 
 // This test should have exactly one index.md in it, and nothing else; that one
@@ -109,9 +138,16 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
 const TEST_SOURCE_ROOT = "test/input/build/simple-public";
 const TEST_CONFIG = await normalizeConfig({
   root: TEST_SOURCE_ROOT,
+  output: "test/output/build/simple-public",
   title: "Mock BI"
 });
-const TEST_OPTIONS: DeployOptions = {config: TEST_CONFIG, message: undefined, deployPollInterval: 0};
+const TEST_OPTIONS: DeployOptions = {
+  config: TEST_CONFIG,
+  message: undefined,
+  deployPollInterval: 0,
+  ifBuildMissing: "cancel",
+  ifBuildStale: "deploy"
+};
 const DEPLOY_CONFIG: DeployConfig & {projectId: string; projectSlug: string; workspaceLogin: string} = {
   projectId: "project123",
   projectSlug: "bi",
@@ -119,6 +155,7 @@ const DEPLOY_CONFIG: DeployConfig & {projectId: string; projectSlug: string; wor
 };
 
 describe("deploy", () => {
+  before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   mockObservableApi();
   mockJsDelivr();
 
@@ -137,8 +174,8 @@ describe("deploy", () => {
       .handleGetDeploy({deployId, deployStatus: "uploaded"})
       .start();
 
-    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG});
-    effects.clack.inputs = ["fix some bugs"];
+    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, fixedStatTime: new Date("2024-03-10")});
+    effects.clack.inputs = ["fix some bugs"]; // "what changed?"
     await deploy(TEST_OPTIONS, effects);
 
     effects.close();
@@ -161,8 +198,8 @@ describe("deploy", () => {
       .handleGetDeploy({deployId})
       .start();
 
-    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG});
-    effects.clack.inputs.push("change project title");
+    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, fixedStatTime: new Date("2024-03-10")});
+    effects.clack.inputs.push("change project title"); // "what changed?"
     await deploy(TEST_OPTIONS, effects);
 
     effects.close();
@@ -213,7 +250,7 @@ describe("deploy", () => {
       .start();
 
     const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, isTty: true});
-    effects.clack.inputs.push(null, DEPLOY_CONFIG.projectSlug, "fix some bugs");
+    effects.clack.inputs.push(null, DEPLOY_CONFIG.projectSlug, "private", "fix some bugs");
 
     await deploy(TEST_OPTIONS, effects);
 
@@ -420,7 +457,7 @@ describe("deploy", () => {
     effects.clack.inputs.push("fix some more bugs");
 
     try {
-      await deploy(TEST_OPTIONS, effects);
+      await deploy({...TEST_OPTIONS, maxConcurrency: 1}, effects);
       fail("Should have thrown an error");
     } catch (error) {
       assert.ok(isHttpError(error));
@@ -484,6 +521,8 @@ describe("deploy", () => {
     const effects = new MockDeployEffects();
     effects.clack.inputs.push(null); // which project do you want to use?
     effects.clack.inputs.push("test-project"); // which slug do you want to use?
+    effects.clack.inputs.push("private"); // who is allowed to access your project?
+    effects.clack.inputs.push("something new"); // what changed in this deploy?
 
     try {
       await deploy(TEST_OPTIONS, effects);
@@ -577,7 +616,7 @@ describe("deploy", () => {
         })
         .start();
       const effects = new MockDeployEffects({deployConfig: oldDeployConfig, isTty: true});
-      effects.clack.inputs.push(false);
+      effects.clack.inputs.push(false); // State doesn't match do you want to continue deploying?
       try {
         await deploy(TEST_OPTIONS, effects);
         assert.fail("expected error");
@@ -657,6 +696,32 @@ describe("deploy", () => {
 
     effects.close();
   });
+
+  it("prompts if the build doesn't exist", async () => {
+    const deployOptions = {
+      ...TEST_OPTIONS,
+      ifBuildMissing: "prompt",
+      config: {...TEST_OPTIONS.config, output: "test/output/does-not-exist"}
+    } satisfies DeployOptions;
+    getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
+    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, fixedStatTime: new Date("2024-03-10")});
+    await assert.rejects(() => deploy(deployOptions, effects), /out of inputs for select: No build files/);
+    effects.close();
+  });
+
+  it("prompts if the build is stale", async () => {
+    const deployOptions = {
+      ...TEST_OPTIONS,
+      ifBuildStale: "prompt"
+    } satisfies DeployOptions;
+    getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
+    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, fixedStatTime: new Date("2024-03-10")});
+    await assert.rejects(
+      () => deploy(deployOptions, effects),
+      /out of inputs for select: Your project was last built at/
+    );
+    effects.close();
+  });
 });
 
 describe("promptDeployTarget", () => {
@@ -664,7 +729,7 @@ describe("promptDeployTarget", () => {
 
   it("throws when not on a tty", async () => {
     const effects = new MockDeployEffects({isTty: false});
-    const api = new ObservableApiClient({apiKey: {key: validApiKey, source: "test"}});
+    const api = effects.makeApiClient();
     try {
       await promptDeployTarget(effects, api, TEST_CONFIG, {} as GetCurrentUserResponse);
     } catch (error) {
@@ -674,7 +739,7 @@ describe("promptDeployTarget", () => {
 
   it("throws an error when the user has no workspaces", async () => {
     const effects = new MockDeployEffects();
-    const api = new ObservableApiClient({apiKey: {key: validApiKey, source: "test"}});
+    const api = effects.makeApiClient();
     try {
       await promptDeployTarget(effects, api, TEST_CONFIG, userWithZeroWorkspaces);
     } catch (error) {
@@ -687,15 +752,18 @@ describe("promptDeployTarget", () => {
     const effects = new MockDeployEffects();
     const workspace = userWithTwoWorkspaces.workspaces[1];
     const projectSlug = "new-project";
+    const accessLevel = "private";
     effects.clack.inputs = [
       workspace, // which workspace do you want to use?
       true, //
-      projectSlug // what slug do you want to use
+      projectSlug, // what slug do you want to use
+      accessLevel // who is allowed to access your project?
     ];
-    const api = new ObservableApiClient({apiKey: {key: validApiKey, source: "test"}});
+    const api = effects.makeApiClient();
     getCurrentObservableApi().handleGetWorkspaceProjects({workspaceLogin: workspace.login, projects: []}).start();
     const result = await promptDeployTarget(effects, api, TEST_CONFIG, userWithTwoWorkspaces);
     assert.deepEqual(result, {
+      accessLevel,
       create: true,
       projectSlug,
       title: "Mock BI",

@@ -1,17 +1,20 @@
 import assert from "node:assert";
 import {stat} from "node:fs/promises";
 import os from "node:os";
-import {getClientPath, maybeStat, prepareOutput, visitFiles, visitMarkdownFiles} from "../src/files.js";
+import {getClientPath, getStylePath, maybeStat, prepareOutput, visitFiles, visitMarkdownFiles} from "../src/files.js";
 
 describe("getClientPath(entry)", () => {
   it("returns the relative path to the specified source", () => {
-    assert.strictEqual(getClientPath("src/client/main.js"), "src/client/main.js");
-    assert.strictEqual(getClientPath("./src/client/main.js"), "src/client/main.js");
-    assert.strictEqual(getClientPath("./src/client/main.ts"), "src/client/main.ts");
-    assert.strictEqual(getClientPath("./src/client/stdlib/resize.ts"), "src/client/stdlib/resize.ts");
+    assert.strictEqual(getClientPath("main.js"), "test/build/src/client/main.js");
+    assert.strictEqual(getClientPath("./main.js"), "test/build/src/client/main.js");
+    assert.strictEqual(getClientPath("stdlib/resize.js"), "test/build/src/client/stdlib/resize.js");
+    assert.strictEqual(getClientPath("./stdlib/resize.js"), "test/build/src/client/stdlib/resize.js");
   });
-  it("returns a TypeScript (.ts) path if the JavaScript (.js) does not exist", () => {
-    assert.strictEqual(getClientPath("./src/client/stdlib/resize.js"), "src/client/stdlib/resize.ts");
+});
+
+describe("geStylePath(entry)", () => {
+  it("returns the relative path to the specified style", () => {
+    assert.strictEqual(getStylePath("default.css"), "test/build/src/style/default.css");
   });
 });
 

@@ -1,6 +1,6 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
-import {readFile} from "node:fs/promises";
+import {extname} from "node:path/posix";
 import matter from "gray-matter";
 import he from "he";
 import MarkdownIt from "markdown-it";
@@ -10,10 +10,12 @@ import type {RenderRule} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
 import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
+import {rewriteHtmlPaths} from "./html.js";
 import {parseInfo} from "./info.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
 import {relativePath} from "./path.js";
+import {transpileSql} from "./sql.js";
 import {transpileTag} from "./tag.js";
 import {InvalidThemeError} from "./theme.js";
 import {red} from "./tty.js";
@@ -25,7 +27,10 @@ export interface MarkdownCode {
 
 export interface MarkdownPage {
   title: string | null;
-  html: string;
+  head: string | null;
+  header: string | null;
+  body: string;
+  footer: string | null;
   data: {[key: string]: any} | null;
   style: string | null;
   code: MarkdownCode[];
@@ -35,6 +40,7 @@ export interface ParseContext {
   code: MarkdownCode[];
   startLine: number;
   currentLine: number;
+  path: string;
 }
 
 function uniqueCodeId(context: ParseContext, content: string): string {
@@ -49,13 +55,15 @@ function isFalse(attribute: string | undefined): boolean {
   return attribute?.toLowerCase() === "false";
 }
 
-function getLiveSource(content: string, tag: string): string | undefined {
+function getLiveSource(content: string, tag: string, attributes: Record<string, string>): string | undefined {
   return tag === "js"
     ? content
     : tag === "tex"
     ? transpileTag(content, "tex.block", true)
     : tag === "html"
     ? transpileTag(content, "html.fragment", true)
+    : tag === "sql"
+    ? transpileSql(content, attributes)
     : tag === "svg"
     ? transpileTag(content, "svg.fragment", true)
     : tag === "dot"
@@ -83,28 +91,30 @@ function getLiveSource(content: string, tag: string): string | undefined {
 //   console.error(red(`${error.name}: ${warning}`));
 // }
 
-function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: string): RenderRule {
+function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
+    const {path} = context;
     const token = tokens[idx];
     const {tag, attributes} = parseInfo(token.info);
     token.info = tag;
     let html = "";
-    const source = isFalse(attributes.run) ? undefined : getLiveSource(token.content, tag);
-    if (source != null) {
-      const id = uniqueCodeId(context, token.content);
-      try {
+    let source: string | undefined;
+    try {
+      source = isFalse(attributes.run) ? undefined : getLiveSource(token.content, tag, attributes);
+      if (source != null) {
+        const id = uniqueCodeId(context, source);
         // TODO const sourceLine = context.startLine + context.currentLine;
-        const node = parseJavaScript(source, {path: sourcePath});
+        const node = parseJavaScript(source, {path});
         context.code.push({id, node});
         html += `<div id="cell-${id}" class="observablehq observablehq--block${
           node.expression ? " observablehq--loading" : ""
         }"></div>\n`;
-      } catch (error) {
-        if (!(error instanceof SyntaxError)) throw error;
-        html += `<div id="cell-${id}" class="observablehq observablehq--block">
+      }
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+      html += `<div class="observablehq observablehq--block">
   <div class="observablehq--inspect observablehq--error">SyntaxError: ${he.escape(error.message)}</div>
 </div>\n`;
-      }
     }
     if (attributes.echo == null ? source == null : !isFalse(attributes.echo)) {
       html += baseRenderer(tokens, idx, options, context, self);
@@ -174,7 +184,7 @@ function parsePlaceholder(content: string, replacer: (i: number, j: number) => v
 
 function transformPlaceholderBlock(token) {
   const input = token.content;
-  if (/^\s*<script(\s|>)/.test(input)) return [token]; // ignore <script> elements
+  if (/^\s*<script[\s>]/.test(input)) return [token]; // ignore <script> elements
   const output: any[] = [];
   let i = 0;
   parsePlaceholder(input, (j, k) => {
@@ -242,13 +252,14 @@ const transformPlaceholderCore: RuleCore = (state) => {
   state.tokens = output;
 };
 
-function makePlaceholderRenderer(root: string, sourcePath: string): RenderRule {
+function makePlaceholderRenderer(): RenderRule {
   return (tokens, idx, options, context: ParseContext) => {
+    const {path} = context;
     const token = tokens[idx];
     const id = uniqueCodeId(context, token.content);
     try {
       // TODO sourceLine: context.startLine + context.currentLine
-      const node = parseJavaScript(token.content, {path: sourcePath, inline: true});
+      const node = parseJavaScript(token.content, {path, inline: true});
       context.code.push({id, node});
       return `<span id="cell-${id}" class="observablehq--loading"></span>`;
     } catch (error) {
@@ -269,42 +280,98 @@ function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
   };
 }
 
-export interface ParseOptions {
-  root: string;
-  path: string;
-  style?: Config["style"];
+export function parseRelativeUrl(url: string): {pathname: string; search: string; hash: string} {
+  let search: string;
+  let hash: string;
+  const i = url.indexOf("#");
+  if (i < 0) hash = "";
+  else (hash = url.slice(i)), (url = url.slice(0, i));
+  const j = url.indexOf("?");
+  if (j < 0) search = "";
+  else (search = url.slice(j)), (url = url.slice(0, j));
+  return {pathname: url, search, hash};
 }
 
-export async function parseMarkdown(
-  sourcePath: string,
-  {root, path, style: configStyle}: ParseOptions
-): Promise<MarkdownPage> {
-  const source = await readFile(sourcePath, "utf-8");
-  const parts = matter(source, {});
-  const md = MarkdownIt({html: true});
+export function makeLinkNormalizer(baseNormalize: (url: string) => string, clean: boolean): (url: string) => string {
+  return (url) => {
+    // Only clean relative links; ignore e.g. "https:" links.
+    if (!/^\w+:/.test(url)) {
+      const u = parseRelativeUrl(url);
+      let {pathname} = u;
+      if (pathname && !pathname.endsWith("/") && !extname(pathname)) pathname += ".html";
+      if (pathname === "index.html") pathname = ".";
+      else if (pathname.endsWith("/index.html")) pathname = pathname.slice(0, -"index.html".length);
+      else if (clean) pathname = pathname.replace(/\.html$/, "");
+      url = pathname + u.search + u.hash;
+    }
+    return baseNormalize(url);
+  };
+}
+
+export interface ParseOptions {
+  md: MarkdownIt;
+  path: string;
+  style?: Config["style"];
+  head?: Config["head"];
+  header?: Config["header"];
+  footer?: Config["footer"];
+}
+
+export function createMarkdownIt({
+  markdownIt,
+  cleanUrls = true
+}: {
+  markdownIt?: (md: MarkdownIt) => MarkdownIt;
+  cleanUrls?: boolean;
+} = {}): MarkdownIt {
+  const md = MarkdownIt({html: true, linkify: true});
+  md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
-  md.renderer.rules.placeholder = makePlaceholderRenderer(root, path);
-  md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!, path);
+  md.renderer.rules.placeholder = makePlaceholderRenderer();
+  md.renderer.rules.fence = makeFenceRenderer(md.renderer.rules.fence!);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
+  md.normalizeLink = makeLinkNormalizer(md.normalizeLink, cleanUrls);
+  return markdownIt === undefined ? md : markdownIt(md);
+}
+
+export function parseMarkdown(input: string, options: ParseOptions): MarkdownPage {
+  const {md, path} = options;
+  const {content, data} = matter(input, {});
   const code: MarkdownCode[] = [];
-  const context: ParseContext = {code, startLine: 0, currentLine: 0};
-  const tokens = md.parse(parts.content, context);
-  const html = md.renderer.render(tokens, md.options, context); // Note: mutates code, assets!
-  const style = getStylesheet(path, parts.data, configStyle);
+  const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
+  const tokens = md.parse(content, context);
+  const body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
   return {
-    html,
-    data: isEmpty(parts.data) ? null : parts.data,
-    title: parts.data?.title ?? findTitle(tokens) ?? null,
-    style,
+    head: getHtml("head", data, options),
+    header: getHtml("header", data, options),
+    body,
+    footer: getHtml("footer", data, options),
+    data: isEmpty(data) ? null : data,
+    title: data.title ?? findTitle(tokens) ?? null,
+    style: getStyle(data, options),
     code
   };
 }
 
-function getStylesheet(path: string, data: MarkdownPage["data"], style: Config["style"] = null): string | null {
+function getHtml(
+  key: "head" | "header" | "footer",
+  data: Record<string, any>,
+  {path, [key]: defaultValue}: ParseOptions
+): string | null {
+  return data[key] !== undefined
+    ? data[key]
+      ? String(data[key])
+      : null
+    : defaultValue != null
+    ? rewriteHtmlPaths(defaultValue, path)
+    : null;
+}
+
+function getStyle(data: Record<string, any>, {path, style = null}: ParseOptions): string | null {
   try {
-    style = mergeStyle(path, data?.style, data?.theme, style);
+    style = mergeStyle(path, data.style, data.theme, style);
   } catch (error) {
     if (!(error instanceof InvalidThemeError)) throw error;
     console.error(red(String(error))); // TODO error during build

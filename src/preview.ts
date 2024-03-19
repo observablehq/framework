@@ -1,10 +1,10 @@
 import {createHash} from "node:crypto";
 import {watch} from "node:fs";
 import type {FSWatcher, WatchEventType} from "node:fs";
-import {access, constants, readFile, stat} from "node:fs/promises";
+import {access, constants, readFile} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
-import {basename, dirname, extname, join, normalize} from "node:path/posix";
+import {basename, dirname, join, normalize} from "node:path/posix";
 import {difference} from "d3-array";
 import type {PatchItem} from "fast-array-diff";
 import {getPatch} from "fast-array-diff";
@@ -13,12 +13,10 @@ import openBrowser from "open";
 import send from "send";
 import type {WebSocket} from "ws";
 import {WebSocketServer} from "ws";
-import {version} from "../package.json";
 import type {Config} from "./config.js";
-import {Loader} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
-import {FileWatchers} from "./fileWatchers.js";
+import type {FileWatchers} from "./fileWatchers.js";
 import {parseHtml, rewriteHtml} from "./html.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import {parseMarkdown} from "./markdown.js";
@@ -80,7 +78,7 @@ export class PreviewServer {
     }
     const url = `http://${hostname}:${port}/`;
     if (verbose) {
-      console.log(`${green(bold("Observable Framework"))} ${faint(`v${version}`)}`);
+      console.log(`${green(bold("Observable Framework"))} ${faint(`v${process.env.npm_package_version}`)}`);
       console.log(`${faint("↳")} ${link(url)}`);
       console.log("");
     }
@@ -90,23 +88,23 @@ export class PreviewServer {
 
   _handleRequest: RequestListener = async (req, res) => {
     const config = this._config;
-    const root = config.root;
+    const {root, loaders} = config;
     if (this._verbose) console.log(faint(req.method!), req.url);
     try {
       const url = new URL(req.url!, "http://localhost");
-      let pathname = decodeURIComponent(url.pathname);
+      let pathname = decodeURI(url.pathname);
       let match: RegExpExecArray | null;
       if (pathname === "/_observablehq/client.js") {
-        end(req, res, await rollupClient(getClientPath("./src/client/preview.js"), root, pathname), "text/javascript");
+        end(req, res, await rollupClient(getClientPath("preview.js"), root, pathname), "text/javascript");
       } else if (pathname === "/_observablehq/minisearch.json") {
         end(req, res, await searchIndex(config), "application/json");
       } else if ((match = /^\/_observablehq\/theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(pathname))) {
         end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
       } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".js")) {
-        const path = getClientPath("./src/client/" + pathname.slice("/_observablehq/".length));
+        const path = getClientPath(pathname.slice("/_observablehq/".length));
         end(req, res, await rollupClient(path, root, pathname), "text/javascript");
       } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".css")) {
-        const path = getClientPath("./src/client/" + pathname.slice("/_observablehq/".length));
+        const path = getClientPath(pathname.slice("/_observablehq/".length));
         end(req, res, await bundleStyles({path}), "text/css");
       } else if (pathname.startsWith("/_npm/")) {
         await populateNpmCache(root, pathname);
@@ -144,7 +142,7 @@ export class PreviewServer {
         }
 
         // Look for a data loader for this file.
-        const loader = Loader.find(root, path);
+        const loader = loaders.find(path);
         if (loader) {
           try {
             send(req, await loader.load(), {root}).pipe(res);
@@ -156,55 +154,29 @@ export class PreviewServer {
         throw new HttpError(`Not found: ${pathname}`, 404);
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
-        let path = join(root, pathname);
 
-        // If this path is for /index, redirect to the parent directory for a
-        // tidy path. (This must be done before implicitly adding /index below!)
-        // Respect precedence of dir/index.md over dir.md in choosing between
-        // dir/ and dir!
-        if (basename(path, ".html") === "index") {
-          try {
-            await stat(join(dirname(path), "index.md"));
-            res.writeHead(302, {Location: join(dirname(pathname), "/") + url.search});
-            res.end();
-            return;
-          } catch (error) {
-            if (!isEnoent(error)) throw error;
-            res.writeHead(302, {Location: dirname(pathname) + url.search});
-            res.end();
-            return;
-          }
-        }
-
-        // If this path resolves to a directory, then add an implicit /index to
-        // the end of the path, assuming that the corresponding index.md exists.
-        try {
-          if ((await stat(path)).isDirectory() && (await stat(join(path, "index.md"))).isFile()) {
-            if (!pathname.endsWith("/")) {
-              res.writeHead(302, {Location: pathname + "/" + url.search});
-              res.end();
-              return;
-            }
-            pathname = join(pathname, "index");
-            path = join(path, "index");
-          }
-        } catch (error) {
-          if (!isEnoent(error)) throw error; // internal error
-        }
-
-        // If this path ends with .html, then redirect to drop the .html. TODO:
-        // Check for the existence of the .md file first.
-        if (extname(path) === ".html") {
-          res.writeHead(302, {Location: join(dirname(pathname), basename(pathname, ".html")) + url.search});
+        // Normalize the pathname (e.g., dropping ".html").
+        const normalizedPathname = config.md.normalizeLink(pathname);
+        if (pathname !== normalizedPathname) {
+          res.writeHead(302, {Location: normalizedPathname + url.search});
           res.end();
           return;
         }
 
-        // Otherwise, serve the corresponding Markdown file, if it exists.
+        // If this path ends with a slash, then add an implicit /index to the
+        // end of the path.
+        let path = join(root, pathname);
+        if (pathname.endsWith("/")) {
+          pathname = join(pathname, "index");
+          path = join(path, "index");
+        }
+
+        // Lastly, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
         try {
           const options = {path: pathname, ...config, preview: true};
-          const parse = await parseMarkdown(path + ".md", options);
+          const source = await readFile(join(dirname(path), basename(path, ".html") + ".md"), "utf8");
+          const parse = parseMarkdown(source, options);
           const html = await renderPage(parse, options);
           end(req, res, html, "text/html");
         } catch (error) {
@@ -222,7 +194,8 @@ export class PreviewServer {
       if (req.method === "GET" && res.statusCode === 404) {
         try {
           const options = {path: "/404", ...config, preview: true};
-          const parse = await parseMarkdown(join(root, "404.md"), options);
+          const source = await readFile(join(root, "404.md"), "utf8");
+          const parse = parseMarkdown(source, options);
           const html = await renderPage(parse, options);
           end(req, res, html, "text/html");
           return;
@@ -285,12 +258,14 @@ function getWatchFiles(resolvers: Resolvers): Iterable<string> {
   return files;
 }
 
-function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Config) {
+function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
+  const {root, loaders} = config;
   let path: string | null = null;
   let hash: string | null = null;
   let html: string[] | null = null;
   let code: Map<string, string> | null = null;
   let files: Map<string, string> | null = null;
+  let tables: Map<string, string> | null = null;
   let stylesheets: string[] | null = null;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
@@ -315,9 +290,10 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
         break;
       }
       case "change": {
-        const page = await parseMarkdown(join(root, path), {root, path, style});
+        const source = await readFile(join(root, path), "utf8");
+        const page = parseMarkdown(source, {path, ...config});
         // delay to avoid a possibly-empty file
-        if (!force && page.html === "") {
+        if (!force && page.body === "") {
           if (!emptyTimeout) {
             emptyTimeout = setTimeout(() => {
               emptyTimeout = null;
@@ -329,30 +305,31 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
           clearTimeout(emptyTimeout);
           emptyTimeout = null;
         }
-        const resolvers = await getResolvers(page, {root, path});
+        const resolvers = await getResolvers(page, {root, path, loaders});
         if (hash === resolvers.hash) break;
         const previousHash = hash!;
         const previousHtml = html!;
         const previousCode = code!;
         const previousFiles = files!;
+        const previousTables = tables!;
         const previousStylesheets = stylesheets!;
         hash = resolvers.hash;
         html = getHtml(page, resolvers);
         code = getCode(page, resolvers);
         files = getFiles(resolvers);
+        tables = getTables(page);
         stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
         send({
           type: "update",
-          diffHtml: diffHtml(previousHtml, html),
-          diffCode: diffCode(previousCode, code),
-          diffFiles: diffFiles(previousFiles, files),
-          addedStylesheets: Array.from(difference(stylesheets, previousStylesheets)),
-          removedStylesheets: Array.from(difference(previousStylesheets, stylesheets)),
-          previousHash,
-          updatedHash: hash
+          html: diffHtml(previousHtml, html),
+          code: diffCode(previousCode, code),
+          files: diffFiles(previousFiles, files),
+          tables: diffTables(previousTables, tables, previousFiles, files),
+          stylesheets: diffStylesheets(previousStylesheets, stylesheets),
+          hash: {previous: previousHash, current: hash}
         });
         attachmentWatcher?.close();
-        attachmentWatcher = await FileWatchers.of(root, path, getWatchFiles(resolvers), () => watcher("change"));
+        attachmentWatcher = await loaders.watchFiles(path, getWatchFiles(resolvers), () => watcher("change"));
         break;
       }
     }
@@ -360,19 +337,21 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
 
   async function hello({path: initialPath, hash: initialHash}: {path: string; hash: string}): Promise<void> {
     if (markdownWatcher || attachmentWatcher) throw new Error("already watching");
-    path = initialPath;
+    path = decodeURI(initialPath);
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
-    path += ".md";
-    const page = await parseMarkdown(join(root, path), {root, path, style});
-    const resolvers = await getResolvers(page, {root, path});
+    path = join(dirname(path), basename(path, ".html") + ".md");
+    const source = await readFile(join(root, path), "utf8");
+    const page = parseMarkdown(source, {path, ...config});
+    const resolvers = await getResolvers(page, {root, path, loaders});
     if (resolvers.hash !== initialHash) return void send({type: "reload"});
     hash = resolvers.hash;
     html = getHtml(page, resolvers);
     code = getCode(page, resolvers);
     files = getFiles(resolvers);
+    tables = getTables(page);
     stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
-    attachmentWatcher = await FileWatchers.of(root, path, getWatchFiles(resolvers), () => watcher("change"));
+    attachmentWatcher = await loaders.watchFiles(path, getWatchFiles(resolvers), () => watcher("change"));
     markdownWatcher = watch(join(root, path), (event) => watcher(event));
   }
 
@@ -414,8 +393,8 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, {root, style}: Con
   }
 }
 
-function getHtml({html}: MarkdownPage, {resolveFile}: Resolvers): string[] {
-  return Array.from(parseHtml(rewriteHtml(html, resolveFile)).document.body.children, (d) => d.outerHTML);
+function getHtml({body}: MarkdownPage, resolvers: Resolvers): string[] {
+  return Array.from(parseHtml(rewriteHtml(body, resolvers)).document.body.children, (d) => d.outerHTML);
 }
 
 function getCode({code}: MarkdownPage, resolvers: Resolvers): Map<string, string> {
@@ -437,6 +416,10 @@ function getFiles({files, resolveFile}: Resolvers): Map<string, string> {
   return new Map(Array.from(files, (f) => [f, resolveFile(f)]));
 }
 
+function getTables({data}: MarkdownPage): Map<string, string> {
+  return new Map(Object.entries(data?.sql ?? {}));
+}
+
 type CodePatch = {removed: string[]; added: string[]};
 
 function diffCode(oldCode: Map<string, string>, newCode: Map<string, string>): CodePatch {
@@ -454,7 +437,7 @@ function diffCode(oldCode: Map<string, string>, newCode: Map<string, string>): C
   return patch;
 }
 
-type FileDeclaration = {name: string; mimeType: string | null; path: string};
+type FileDeclaration = {name: string; mimeType?: string; path: string};
 type FilePatch = {removed: string[]; added: FileDeclaration[]};
 
 function diffFiles(oldFiles: Map<string, string>, newFiles: Map<string, string>): FilePatch {
@@ -466,7 +449,33 @@ function diffFiles(oldFiles: Map<string, string>, newFiles: Map<string, string>)
   }
   for (const [name, path] of newFiles) {
     if (oldFiles.get(name) !== path) {
-      patch.added.push({name, mimeType: mime.getType(name), path});
+      patch.added.push({name, mimeType: mime.getType(name) ?? undefined, path});
+    }
+  }
+  return patch;
+}
+
+type TableDeclaration = {name: string; path: string};
+type TablePatch = {removed: string[]; added: TableDeclaration[]};
+
+function diffTables(
+  oldTables: Map<string, string>,
+  newTables: Map<string, string>,
+  oldFiles: Map<string, string>,
+  newFiles: Map<string, string>
+): TablePatch {
+  const patch: TablePatch = {removed: [], added: []};
+  for (const [name, path] of oldTables) {
+    if (newTables.get(name) !== path) {
+      patch.removed.push(name);
+    }
+  }
+  for (const [name, path] of newTables) {
+    if (oldTables.get(name) !== path) {
+      patch.added.push({name, path});
+    } else if (newFiles.get(path) !== oldFiles.get(path)) {
+      patch.removed.push(name);
+      patch.added.push({name, path});
     }
   }
   return patch;
@@ -484,4 +493,13 @@ type RedactedPatchItem<T> =
 
 function redactPatch<T>(patch: PatchItem<T>): RedactedPatchItem<T> {
   return patch.type === "remove" ? {...patch, type: "remove", items: {length: patch.items.length}} : patch;
+}
+
+type StylesheetPatch = {removed: string[]; added: string[]};
+
+function diffStylesheets(oldStylesheets: string[], newStylesheets: string[]): StylesheetPatch {
+  return {
+    removed: Array.from(difference(oldStylesheets, newStylesheets)),
+    added: Array.from(difference(newStylesheets, oldStylesheets))
+  };
 }

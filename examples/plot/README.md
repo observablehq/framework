@@ -28,7 +28,7 @@ The [`npm-downloads.csv.ts`](./docs/data/npm-downloads.csv.ts) loader retrieves 
 
 ## Big numbers
 
-Key performance indicators are displayed as “big numbers” with, in some cases, a trend indicating growth over one week. Their layout is using the convenience CSS classes _big_, _red_ etc.
+Key performance indicators are displayed as “big numbers” with, in some cases, a trend indicating growth over one week. Their layout is using the convenience CSS classes _big_, _red_ _etc._
 
 ## Charts
 

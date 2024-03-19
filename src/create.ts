@@ -8,7 +8,6 @@ import {fileURLToPath} from "node:url";
 import {promisify} from "node:util";
 import * as clack from "@clack/prompts";
 import untildify from "untildify";
-import {version} from "../package.json";
 import type {ClackEffects} from "./clack.js";
 import {cyan, faint, inverse, link, reset} from "./tty.js";
 
@@ -46,7 +45,7 @@ const defaultEffects: CreateEffects = {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function create(options = {}, effects: CreateEffects = defaultEffects): Promise<void> {
   const {clack} = effects;
-  clack.intro(`${inverse(" observable create ")} ${faint(`v${version}`)}`);
+  clack.intro(`${inverse(" observable create ")} ${faint(`v${process.env.npm_package_version}`)}`);
   const defaultRootPath = "./hello-framework";
   const defaultRootPathError = validateRootPath(defaultRootPath);
   await clack.group(
@@ -81,7 +80,7 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
             {value: "yarn", label: "Yes, via yarn", hint: "recommended"},
             {value: null, label: "No"}
           ],
-          initialValue: inferPackageManager()
+          initialValue: inferPackageManager("npm")
         }),
       initializeGit: () =>
         clack.confirm({
@@ -111,6 +110,7 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
         if (packageManager) {
           s.message(`Installing dependencies via ${packageManager}`);
           await effects.sleep(1000);
+          if (packageManager === "yarn") await writeFile(join(rootPath, "yarn.lock"), "");
           await promisify(exec)(installCommand, {cwd: rootPath});
         }
         if (initializeGit) {
@@ -206,12 +206,12 @@ async function recursiveCopyTemplate(
   }
 }
 
-function inferPackageManager(): string | null {
+function inferPackageManager(defaultValue: string | null): string | null {
   const userAgent = process.env["npm_config_user_agent"];
-  if (!userAgent) return null;
+  if (!userAgent) return defaultValue;
   const pkgSpec = userAgent.split(" ")[0]!; // userAgent is non-empty, so this is always defined
-  if (!pkgSpec) return null;
+  if (!pkgSpec) return defaultValue;
   const [name, version] = pkgSpec.split("/");
-  if (!name || !version) return null;
+  if (!name || !version) return defaultValue;
   return name;
 }

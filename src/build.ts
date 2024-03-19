@@ -3,7 +3,6 @@ import {existsSync} from "node:fs";
 import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
-import {Loader} from "./dataloader.js";
 import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
 import {getModuleHash} from "./javascript/module.js";
@@ -11,12 +10,12 @@ import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
-import {populateNpmCache, resolveNpmImport, resolveNpmSpecifier} from "./npm.js";
+import {extractNpmSpecifier, populateNpmCache, resolveNpmImport} from "./npm.js";
 import {isPathImport, relativePath, resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
 import {getModuleResolver, getResolvers} from "./resolvers.js";
-import {resolveFilePath, resolveImportPath, resolveStylesheetPath} from "./resolvers.js";
+import {resolveImportPath, resolveStylesheetPath} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
@@ -48,7 +47,7 @@ export async function build(
   {config, addPublic = true}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output)
 ): Promise<void> {
-  const {root} = config;
+  const {root, loaders} = config;
   Telemetry.record({event: "build", step: "start"});
 
   // Make sure all files are readable before starting to write output files.
@@ -72,12 +71,13 @@ export async function build(
     const options = {path, ...config};
     effects.output.write(`${faint("parse")} ${sourcePath} `);
     const start = performance.now();
-    const page = await parseMarkdown(sourcePath, options);
+    const source = await readFile(sourcePath, "utf8");
+    const page = parseMarkdown(source, options);
     if (page?.data?.draft) {
       effects.logger.log(faint("(skipped)"));
       continue;
     }
-    const resolvers = await getResolvers(page, {root, path: sourceFile});
+    const resolvers = await getResolvers(page, {root, path: sourceFile, loaders});
     const elapsed = Math.floor(performance.now() - start);
     for (const f of resolvers.assets) files.add(resolvePath(sourceFile, f));
     for (const f of resolvers.files) files.add(resolvePath(sourceFile, f));
@@ -107,11 +107,11 @@ export async function build(
   if (addPublic) {
     for (const path of globalImports) {
       if (path.startsWith("/_observablehq/") && path.endsWith(".js")) {
-        const clientPath = getClientPath(`./src/client/${path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)}`); // prettier-ignore
+        const clientPath = getClientPath(path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)); // prettier-ignore
         effects.output.write(`${faint("build")} ${clientPath} ${faint("→")} `);
         const define: {[key: string]: string} = {};
         if (config.search) define["global.__minisearch"] = JSON.stringify(relativePath(path, aliases.get("/_observablehq/minisearch.json")!)); // prettier-ignore
-        const contents = await rollupClient(clientPath, root, path, {minify: true, define});
+        const contents = await rollupClient(clientPath, root, path, {minify: true, keepNames: true, define});
         await effects.writeFile(path, contents);
       }
     }
@@ -121,11 +121,11 @@ export async function build(
         effects.output.write(`${faint("build")} ${specifier} ${faint("→")} `);
         if (specifier.startsWith("observablehq:theme-")) {
           const match = /^observablehq:theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(specifier);
-          const contents = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? []});
+          const contents = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? [], minify: true});
           await effects.writeFile(path, contents);
         } else {
-          const clientPath = getClientPath(`./src/client/${path.slice("/_observablehq/".length)}`);
-          const contents = await bundleStyles({path: clientPath});
+          const clientPath = getClientPath(path.slice("/_observablehq/".length));
+          const contents = await bundleStyles({path: clientPath, minify: true});
           await effects.writeFile(`/_observablehq/${specifier.slice("observablehq:".length)}`, contents);
         }
       } else if (specifier.startsWith("npm:")) {
@@ -136,7 +136,7 @@ export async function build(
       } else if (!/^\w+:/.test(specifier)) {
         const sourcePath = join(root, specifier);
         effects.output.write(`${faint("build")} ${sourcePath} ${faint("→")} `);
-        const contents = await bundleStyles({path: sourcePath});
+        const contents = await bundleStyles({path: sourcePath, minify: true});
         const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
         const ext = extname(specifier);
         const alias = `/${join("_import", dirname(specifier), `${basename(specifier, ext)}.${hash}${ext}`)}`;
@@ -150,7 +150,7 @@ export async function build(
   for (const file of files) {
     let sourcePath = join(root, file);
     if (!existsSync(sourcePath)) {
-      const loader = Loader.find(root, join("/", file), {useStale: true});
+      const loader = loaders.find(join("/", file), {useStale: true});
       if (!loader) {
         effects.logger.error("missing referenced file", sourcePath);
         continue;
@@ -167,7 +167,7 @@ export async function build(
     const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
     const ext = extname(file);
     const alias = `/${join("_file", dirname(file), `${basename(file, ext)}.${hash}${ext}`)}`;
-    aliases.set(resolveFilePath(root, file), alias);
+    aliases.set(loaders.resolveFilePath(file), alias);
     await effects.writeFile(alias, contents);
   }
 
@@ -176,7 +176,7 @@ export async function build(
   // doesn’t let you pass in a resolver.
   for (const path of globalImports) {
     if (path.startsWith("/_npm/")) {
-      effects.output.write(`${faint("copy")} npm:${resolveNpmSpecifier(path)} ${faint("→")} `);
+      effects.output.write(`${faint("copy")} npm:${extractNpmSpecifier(path)} ${faint("→")} `);
       const sourcePath = await populateNpmCache(root, path); // TODO effects
       await effects.copyFile(sourcePath, path);
     } else if (path.startsWith("/_jsr/")) {
@@ -241,6 +241,11 @@ export async function build(
           const r = resolvers.resolveImport(specifier);
           const a = aliases.get(resolvePath(path, r));
           return a ? relativePath(path, a) : isPathImport(specifier) ? specifier : r; // fallback to specifier if enoent
+        },
+        resolveScript(specifier) {
+          const r = resolvers.resolveScript(specifier);
+          const a = aliases.get(resolvePath(path, r));
+          return a ? relativePath(path, a) : specifier; // fallback to specifier if enoent
         }
       }
     });

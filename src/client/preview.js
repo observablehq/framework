@@ -1,5 +1,5 @@
-import {registerFile} from "npm:@observablehq/stdlib";
-import {undefine} from "./main.js";
+import {FileAttachment, registerFile} from "npm:@observablehq/stdlib";
+import {main, runtime, undefine} from "./main.js";
 import {enableCopyButtons} from "./pre.js";
 
 export * from "./index.js";
@@ -16,7 +16,7 @@ export function open({hash, eval: compile} = {}) {
     send({type: "hello", path: location.pathname, hash});
   };
 
-  socket.onmessage = (event) => {
+  socket.onmessage = async (event) => {
     const message = JSON.parse(event.data);
     console.info("↓", message);
     switch (message.type) {
@@ -26,16 +26,16 @@ export function open({hash, eval: compile} = {}) {
       }
       case "update": {
         const root = document.querySelector("main");
-        if (message.previousHash !== hash) {
+        if (message.hash.previous !== hash) {
           console.log("contents out of sync");
           location.reload();
           break;
         }
-        hash = message.updatedHash;
+        hash = message.hash.current;
         let offset = 0;
         const addedCells = new Map();
         const removedCells = new Map();
-        for (const {type, oldPos, items} of message.diffHtml) {
+        for (const {type, oldPos, items} of message.html) {
           switch (type) {
             case "add": {
               for (const item of items) {
@@ -71,26 +71,41 @@ export function open({hash, eval: compile} = {}) {
         for (const [id, removed] of removedCells) {
           addedCells.get(id)?.replaceWith(removed);
         }
-        for (const id of message.diffCode.removed) {
+        for (const id of message.code.removed) {
           undefine(id);
         }
-        for (const body of message.diffCode.added) {
+        for (const body of message.code.added) {
           compile(body);
         }
-        for (const name of message.diffFiles.removed) {
+        for (const name of message.files.removed) {
           registerFile(name, null);
         }
-        for (const file of message.diffFiles.added) {
+        for (const file of message.files.added) {
           registerFile(file.name, file);
         }
-        const {addedStylesheets, removedStylesheets} = message;
-        if (addedStylesheets.length === 1 && removedStylesheets.length === 1) {
-          const [newHref] = addedStylesheets;
-          const [oldHref] = removedStylesheets;
+        if (message.tables.removed.length || message.tables.added.length) {
+          const {registerTable} = await import("npm:@observablehq/duckdb");
+          for (const name of message.tables.removed) {
+            registerTable(name, null);
+          }
+          for (const table of message.tables.added) {
+            registerTable(table.name, !/^(\w+:|#)/.test(table.path) ? FileAttachment(table.path) : table.path);
+          }
+        }
+        if (message.tables.removed.length || message.tables.added.length) {
+          const sql = main._resolve("sql");
+          runtime._updates.add(sql); // re-evaluate sql code
+          runtime._compute();
+          const vg = runtime._builtin._resolve("vg");
+          vg.define("vg", [], vg._definition); // reload vgplot, then re-evaluate vg code
+        }
+        if (message.stylesheets.added.length === 1 && message.stylesheets.removed.length === 1) {
+          const [newHref] = message.stylesheets.added;
+          const [oldHref] = message.stylesheets.removed;
           const link = document.head.querySelector(`link[rel="stylesheet"][href="${oldHref}"]`);
           link.href = newHref;
         } else {
-          for (const href of addedStylesheets) {
+          for (const href of message.stylesheets.added) {
             const link = document.createElement("link");
             link.rel = "stylesheet";
             link.type = "text/css";
@@ -98,7 +113,7 @@ export function open({hash, eval: compile} = {}) {
             link.href = href;
             document.head.appendChild(link);
           }
-          for (const href of removedStylesheets) {
+          for (const href of message.stylesheets.removed) {
             document.head.querySelector(`link[rel="stylesheet"][href="${href}"]`)?.remove();
           }
         }

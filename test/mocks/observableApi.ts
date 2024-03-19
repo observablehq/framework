@@ -95,17 +95,20 @@ class ObservableApiMock {
     projectSlug,
     projectId = "project123",
     title = "Mock BI",
+    accessLevel = "private",
     status = 200
   }: {
     workspaceLogin: string;
     projectSlug: string;
     projectId?: string;
     title?: string;
+    accessLevel?: string;
     status?: number;
   }): ObservableApiMock {
     const response =
       status === 200
         ? JSON.stringify({
+            accessLevel,
             id: projectId,
             slug: projectSlug,
             title,
@@ -126,12 +129,14 @@ class ObservableApiMock {
     projectId = "project123",
     workspaceId = workspaces[0].id,
     slug = "mock-project",
+    accessLevel = "private",
     status = 200
   }: {
     projectId?: string;
     title?: string;
     slug?: string;
     workspaceId?: string;
+    accessLevel?: string;
     status?: number;
   } = {}): ObservableApiMock {
     const owner = workspaces.find((w) => w.id === workspaceId);
@@ -140,6 +145,7 @@ class ObservableApiMock {
     const response =
       status == 200
         ? JSON.stringify({
+            accessLevel,
             id: projectId,
             slug,
             title: "Mock Project",
@@ -181,7 +187,7 @@ class ObservableApiMock {
     status = 200
   }: {
     workspaceLogin: string;
-    projects: {slug: string; id: string; title?: string}[];
+    projects: {slug: string; id: string; title?: string; accessLevel?: string}[];
     status?: number;
   }): ObservableApiMock {
     const owner = workspaces.find((w) => w.login === workspaceLogin);
@@ -190,7 +196,13 @@ class ObservableApiMock {
     const response =
       status === 200
         ? JSON.stringify({
-            results: projects.map((p) => ({...p, creator, owner, title: p.title ?? "Mock Title"}))
+            results: projects.map((p) => ({
+              ...p,
+              creator,
+              owner,
+              title: p.title ?? "Mock Title",
+              accessLevel: p.accessLevel ?? "private"
+            }))
           } satisfies PaginatedList<GetProjectResponse>)
         : emptyErrorBody;
     const headers = authorizationHeader(status !== 403);

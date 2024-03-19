@@ -7,6 +7,7 @@ import * as sampleDatasets from "./stdlib/sampleDatasets.js";
 const library = {
   now: () => Generators.now(),
   width: () => Generators.width(document.querySelector("main")),
+  dark: () => Generators.dark(),
   resize: () => resize,
   FileAttachment: () => FileAttachment,
   Generators: () => Generators,
@@ -15,7 +16,7 @@ const library = {
   ...sampleDatasets
 };
 
-const runtime = new Runtime(library);
+export const runtime = new Runtime(library);
 export const main = runtime.module();
 
 const cellsById = new Map();
@@ -26,37 +27,50 @@ export function define(cell) {
   cellsById.get(id)?.variables.forEach((v) => v.delete());
   cellsById.set(id, {cell, variables});
   const root = document.querySelector(`#cell-${id}`);
-  let reset = null;
-  const clear = () => ((root.innerHTML = ""), root.classList.remove("observablehq--loading"), (reset = null));
-  const display = inline
-    ? (v) => {
-        reset?.();
-        if (isNode(v) || typeof v === "string" || !v?.[Symbol.iterator]) root.append(v);
-        else root.append(...v);
-        return v;
+  const rejected = (error) => (clear(root), console.error(error), root.append(inspectError(error)));
+  const v = main.variable({_node: root, rejected}, {shadow: {}}); // _node for visibility promise
+  if (inputs.includes("display") || inputs.includes("view")) {
+    let displayVersion = -1; // the variable._version of currently-displayed values
+    const display = inline ? displayInline : displayBlock;
+    const vd = new v.constructor(2, v._module);
+    vd.define(
+      inputs.filter((i) => i !== "display" && i !== "view"),
+      () => {
+        let version = v._version; // capture version on input change
+        return (value) => {
+          if (version < displayVersion) throw new Error("stale display");
+          else if (version > displayVersion) clear(root);
+          displayVersion = version;
+          display(root, value);
+          return value;
+        };
       }
-    : (v) => {
-        reset?.();
-        root.append(isNode(v) ? v : inspect(v));
-        return v;
-      };
-  const v = main.variable(
-    {
-      _node: root, // for visibility promise
-      pending: () => (reset = clear),
-      fulfilled: () => reset?.(),
-      rejected: (error) => (reset?.(), console.error(error), root.append(inspectError(error)))
-    },
-    {
-      shadow: {
-        display: () => display,
-        view: () => (v) => Generators.input(display(v))
-      }
+    );
+    v._shadow.set("display", vd);
+    if (inputs.includes("view")) {
+      const vv = new v.constructor(2, v._module, null, {shadow: {}});
+      vv._shadow.set("display", vd);
+      vv.define(["display"], (display) => (v) => Generators.input(display(v)));
+      v._shadow.set("view", vv);
     }
-  );
+  }
   v.define(outputs.length ? `cell ${id}` : null, inputs, body);
   variables.push(v);
   for (const o of outputs) variables.push(main.variable(true).define(o, [`cell ${id}`], (exports) => exports[o]));
+}
+
+function clear(root) {
+  root.innerHTML = "";
+  root.classList.remove("observablehq--loading");
+}
+
+function displayInline(root, value) {
+  if (isNode(value) || typeof value === "string" || !value?.[Symbol.iterator]) root.append(value);
+  else root.append(...value);
+}
+
+function displayBlock(root, value) {
+  root.append(isNode(value) ? value : inspect(value));
 }
 
 export function undefine(id) {

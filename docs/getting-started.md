@@ -84,19 +84,17 @@ These are just first steps. You can continue to develop projects after publishin
 Framework includes a helper script (`observable create`) for creating new projects. After a few quick prompts — where to create the project, your preferred package manager, *etc.* — it will stamp out a fresh project from a template.
 
 <div class="tip">
-  <p>Framework is a <a href="https://nodejs.org/">Node.js</a> application published to npm. You must have <a href="https://nodejs.org/en/download">Node.js 20.6 or later</a> installed before you can install Framework. Framework is a command-line interface (CLI) and runs in the terminal.</p>
+  <p>Framework is a <a href="https://nodejs.org/">Node.js</a> application published to npm. You must have <a href="https://nodejs.org/en/download">Node.js 18 or later</a> installed before you can install Framework. Framework is a command-line interface (CLI) and runs in the terminal.</p>
   <p>If you run into difficulty following this tutorial, we’re happy to help! Please visit the <a href="https://talk.observablehq.com">Observable forum</a> or our <a href="https://github.com/observablehq/framework/discussions">GitHub discussions</a>.</p>
 </div>
 
-<div class="caution">Framework does not currently support Windows, though some users have had success with the <a href="https://learn.microsoft.com/en-us/windows/wsl/install">Windows Subsystem for Linux (WSL)</a>. It you are interested in Windows support, please upvote <a href="https://github.com/observablehq/framework/issues/90">#90</a>.</div>
-
 To create a new project with npm, run:
 
-<pre data-copy>npm init @observablehq</pre>
+<pre data-copy>npm init <span class="win">"</span>@observablehq<span class="win">"</span></pre>
 
 If you prefer Yarn, run:
 
-<pre data-copy>yarn create @observablehq</pre>
+<pre data-copy>yarn create <span class="win">"</span>@observablehq<span class="win">"</span></pre>
 
 You can run the above command anywhere, but you may want to `cd` to your `~/Development` directory first (or wherever you do local development).
 
@@ -211,7 +209,7 @@ Next, `cd` into your new project folder.
 
 Framework’s local development server lets you preview your site in the browser as you make rapid changes. The preview server generates pages on-the-fly: as you edit files in your editor, changes are instantly streamed to your browser.
 
-<div class="tip">You can work offline with the preview server, but you must be connected to the internet to <a href="./javascript/imports">import libraries</a> from npm. In the future, we intend to support self-hosting imported libraries; please upvote <a href="https://github.com/observablehq/framework/issues/20">#20</a> and <a href="https://github.com/observablehq/framework/issues/360">#360</a> if you are interested in this feature.</div>
+<div class="tip">You can develop offline, but you must connect to the internet to <a href="./javascript/imports">import new libraries</a> from npm. Framework self-hosts imports: modules are downloaded from npm and stored in a local cache the first time you import them, and are included in <code>dist</code> when you build your project. In the future, we also plan to support importing from <code>node_modules</code>; please upvote <a href="https://github.com/observablehq/framework/issues/360">#360</a> if you are interested in this feature.</div>
 
 To start the preview server using npm:
 
@@ -223,7 +221,7 @@ Or with Yarn:
 
 You should see something like this:
 
-<pre data-copy="none"><b class="green">Observable Framework</b> v1.0.0
+<pre data-copy="none"><b class="green">Observable Framework</b> v1.3.0
 ↳ <u><a href="http://127.0.0.1:3000/" style="color: inherit;">http://127.0.0.1:3000/</a></u></pre>
 
 <div class="tip">
@@ -651,9 +649,9 @@ json.dump(forecast, sys.stdout)
 
 To write the data loader in R, name it <code>forecast.json.R</code>. Or as shell script, <code>forecast.json.sh</code>. You get the idea. See [Data loaders: Routing](./loaders#routing) for more. The beauty of this approach is that you can leverage the strengths (and libraries) of multiple languages, and still get instant updates in the browser as you develop.
 
-### Deploying via GitHub Actions
+### Deploying automatically
 
-You can schedule builds and deploy your project automatically on commit, or on a schedule. See <a href="https://github.com/observablehq/framework/blob/main/.github/workflows/deploy.yml">this documentation site’s deploy.yml</a> for an example.
+You can schedule builds and deploy your project automatically on commit, or on a schedule. See [deploying](./deploying) for more details.
 
 ### Ask for help, or share your feedback
 

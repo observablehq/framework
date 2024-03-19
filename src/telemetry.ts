@@ -1,8 +1,8 @@
 import {exec} from "node:child_process";
 import {createHash, randomUUID} from "node:crypto";
 import {readFile, writeFile} from "node:fs/promises";
+import os from "node:os";
 import {join} from "node:path/posix";
-import os from "os";
 import {CliError} from "./error.js";
 import type {Logger} from "./logger.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
@@ -179,28 +179,25 @@ export class Telemetry {
   }
 
   private get environment() {
-    return (this._environment ??= Promise.all([
-      import("../package.json"),
-      import("ci-info"),
-      import("is-docker"),
-      import("is-wsl")
-    ]).then(([{default: pkg}, ci, {default: isDocker}, {default: isWSL}]) => {
-      const cpus = os.cpus() || [];
-      return {
-        version: pkg.version,
-        node: process.versions.node,
-        systemPlatform: os.platform(),
-        systemRelease: os.release(),
-        systemArchitecture: os.arch(),
-        cpuCount: cpus.length,
-        cpuModel: cpus.length ? cpus[0].model : null,
-        cpuSpeed: cpus.length ? cpus[0].speed : null,
-        memoryInMb: Math.trunc(os.totalmem() / Math.pow(1024, 2)),
-        isCI: ci.name || ci.isCI,
-        isDocker: isDocker(),
-        isWSL
-      };
-    }));
+    return (this._environment ??= Promise.all([import("ci-info"), import("is-docker"), import("is-wsl")]).then(
+      ([ci, {default: isDocker}, {default: isWSL}]) => {
+        const cpus = os.cpus() || [];
+        return {
+          version: process.env.npm_package_version!,
+          node: process.versions.node,
+          systemPlatform: os.platform(),
+          systemRelease: os.release(),
+          systemArchitecture: os.arch(),
+          cpuCount: cpus.length,
+          cpuModel: cpus.length ? cpus[0].model : null,
+          cpuSpeed: cpus.length ? cpus[0].speed : null,
+          memoryInMb: Math.trunc(os.totalmem() / Math.pow(1024, 2)),
+          isCI: ci.name || ci.isCI,
+          isDocker: isDocker(),
+          isWSL
+        };
+      }
+    ));
   }
 
   private async showBannerIfNeeded() {

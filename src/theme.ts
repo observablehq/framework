@@ -1,4 +1,4 @@
-import {getClientPath} from "./files.js";
+import {getStylePath} from "./files.js";
 
 export interface Theme {
   name: string;
@@ -9,29 +9,29 @@ export interface Theme {
 }
 
 const LIGHT_THEMES: Omit<Theme, "index">[] = [
-  {name: "air", path: getClientPath("./src/style/theme-air.css"), light: true},
-  {name: "cotton", path: getClientPath("./src/style/theme-cotton.css"), light: true},
-  {name: "glacier", path: getClientPath("./src/style/theme-glacier.css"), light: true},
-  {name: "parchment", path: getClientPath("./src/style/theme-parchment.css"), light: true}
+  {name: "air", path: getStylePath("theme-air.css"), light: true},
+  {name: "cotton", path: getStylePath("theme-cotton.css"), light: true},
+  {name: "glacier", path: getStylePath("theme-glacier.css"), light: true},
+  {name: "parchment", path: getStylePath("theme-parchment.css"), light: true}
 ];
 
 const DARK_THEMES: Omit<Theme, "index">[] = [
-  {name: "coffee", path: getClientPath("./src/style/theme-coffee.css"), dark: true},
-  {name: "deep-space", path: getClientPath("./src/style/theme-deep-space.css"), dark: true},
-  {name: "ink", path: getClientPath("./src/style/theme-ink.css"), dark: true},
-  {name: "midnight", path: getClientPath("./src/style/theme-midnight.css"), dark: true},
-  {name: "near-midnight", path: getClientPath("./src/style/theme-near-midnight.css"), dark: true},
-  {name: "ocean-floor", path: getClientPath("./src/style/theme-ocean-floor.css"), dark: true},
-  {name: "slate", path: getClientPath("./src/style/theme-slate.css"), dark: true},
-  {name: "stark", path: getClientPath("./src/style/theme-stark.css"), dark: true},
-  {name: "sun-faded", path: getClientPath("./src/style/theme-sun-faded.css"), dark: true}
+  {name: "coffee", path: getStylePath("theme-coffee.css"), dark: true},
+  {name: "deep-space", path: getStylePath("theme-deep-space.css"), dark: true},
+  {name: "ink", path: getStylePath("theme-ink.css"), dark: true},
+  {name: "midnight", path: getStylePath("theme-midnight.css"), dark: true},
+  {name: "near-midnight", path: getStylePath("theme-near-midnight.css"), dark: true},
+  {name: "ocean-floor", path: getStylePath("theme-ocean-floor.css"), dark: true},
+  {name: "slate", path: getStylePath("theme-slate.css"), dark: true},
+  {name: "stark", path: getStylePath("theme-stark.css"), dark: true},
+  {name: "sun-faded", path: getStylePath("theme-sun-faded.css"), dark: true}
 ];
 
 export const THEMES: Theme[] = [
   ...LIGHT_THEMES,
   ...DARK_THEMES,
-  {name: "alt", path: getClientPath("./src/style/theme-alt.css")},
-  {name: "wide", path: getClientPath("./src/style/theme-wide.css")}
+  {name: "alt", path: getStylePath("theme-alt.css")},
+  {name: "wide", path: getStylePath("theme-wide.css")}
 ].map((theme, i) => ({
   ...theme,
   index: i

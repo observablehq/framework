@@ -17,7 +17,7 @@ A typical project looks like this:
 │  └─ index.md
 ├─ .gitignore
 ├─ README.md
-├─ observablehq.config.ts
+├─ observablehq.config.js
 ├─ yarn.lock
 └─ package.json
 ```
@@ -46,7 +46,7 @@ You can put [data loaders](./loaders) or static files anywhere in your source ro
 
 This is the home page for your site. You can have as many additional pages as you’d like, but you should always have a home page, too.
 
-#### `observablehq.config.ts`
+#### `observablehq.config.js`
 
 This is the [project configuration](./config) file, such as the pages and sections in the sidebar navigation, and the project’s title. The config file can be written in either TypeScript (`.ts`) or JavaScript (`.js`).
 
@@ -157,14 +157,14 @@ The resulting output root is:
 .
 ├─ dist
 │  ├─ _import
-│  │  └─ chart.js
+│  │  └─ chart.c79c2048.js
 │  ├─ _observablehq
 │  │  └─ ... # additional assets for serving the site
 │  └─ index.html
 └─ ...
 ```
 
-The import declaration is automatically rewritten during build to point to `./_import/chart.js` instead of `./chart.js`. (In the future [#260](https://github.com/observablehq/framework/issues/260), Observable Framework will add a content hash to the imported module name for cache-breaking.)
+The import declaration is automatically rewritten during build to point to `./_import/chart.c79c2048.js` instead of `./chart.js`. The content hash `c79c2048` ensures cache-breaking during deploy, and allows assets to be marked as `cache-control: immutable` to improve performance.
 
 Use a leading slash to denote paths relative to the source root, such as `/chart.js` instead of `./chart.js`. This allows you to use the same path to import a module from anywhere, even in nested folders. Observable Framework always generates relative links so that the generated site can be served under a base path.
 
@@ -186,18 +186,18 @@ Any files referenced by `FileAttachment` will automatically be copied to the `_f
 .
 ├─ dist
 │  ├─ _file
-│  │  └─ quakes.csv
+│  │  └─ quakes.e5f2eb94.csv
 │  ├─ _observablehq
 │  │  └─ ... # additional assets for serving the site
 │  └─ index.html
 └─ ...
 ```
 
-`FileAttachment` references are automatically rewritten during build; for example, a reference to `quakes.csv` might be replaced with `_file/quakes.csv`. (In the future [#260](https://github.com/observablehq/framework/issues/260), Observable Framework will add a content hash to the attached file name for cache-breaking.) Only the files you reference statically are copied to the output root (`dist`), so nothing extra or unused is included in the built site.
+`FileAttachment` references are automatically rewritten during build; for example, a reference to `quakes.csv` might be replaced with `_file/quakes.e5f2eb94.csv`. (As with imports, file names are given a content hash, here `e5f2eb94`, to improve performance.) Only the files you reference statically are copied to the output root (`dist`), so nothing extra or unused is included in the built site.
 
 [Imported modules](#imports) can use `FileAttachment`, too. In this case, the path to the file is _relative to the importing module_ in the same fashion as `import`; this is accomplished by resolving relative paths at runtime with [`import.meta.url`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta).
 
-Some additional assets are automatically promoted to file attachments and copied to `_file`. For example, if you have a `<link rel="stylesheet" href="style.css">` declared statically in a Markdown page, the `style.css` file will be copied to `_file`, too. The HTML elements eligible for file attachments are `audio`, `img`, `link`, `picture`, and `video`.
+Some additional assets are automatically promoted to file attachments and copied to `_file`. For example, if you have a `<link rel="stylesheet" href="style.css">` declared statically in a Markdown page, the `style.css` file will be copied to `_file`, too (and the file name given a content hash). The HTML elements eligible for file attachments are `audio`, `img`, `link`, `picture`, and `video`.
 
 ## Data loaders
 
@@ -223,7 +223,7 @@ This will produce the following output root:
 .
 ├─ dist
 │  ├─ _file
-│  │  └─ quakes.json
+│  │  └─ quakes.99da78d9.json
 │  ├─ _observablehq
 │  │  └─ ... # additional assets for serving the site
 │  └─ index.html
@@ -240,7 +240,7 @@ File attachments can be also be pulled from archives. The following archive exte
 - `.tar` - for [tarballs](<https://en.wikipedia.org/wiki/Tar_(computing)>)
 - `.tar.gz` and `.tgz` - for [compressed tarballs](https://en.wikipedia.org/wiki/Gzip)
 
-For example, say you have a `quakes.zip` archive that includes yearly files for observed earthquakes. If you reference `FileAttachment("quakes/2021.csv")` in code, Observable Framework will pull the `2021.csv` from `quakes.zip`. So this source root:
+For example, say you have a `quakes.zip` archive that includes yearly files for observed earthquakes. If you reference `FileAttachment("quakes/2021.csv")`, Framework will pull the `2021.csv` from `quakes.zip`. So this source root:
 
 ```ini
 .
@@ -257,7 +257,7 @@ Becomes this output:
 ├─ dist
 │  ├─ _file
 │  │  └─ quakes
-│  │     └─ 2021.csv
+│  │     └─ 2021.e5f2eb94.csv
 │  ├─ _observablehq
 │  │  └─ ... # additional assets for serving the site
 │  └─ index.html

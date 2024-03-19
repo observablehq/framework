@@ -4,7 +4,7 @@ import {type CreateEffects, create} from "../src/create.js";
 import {fromOsPath} from "../src/files.js";
 import {TestClackEffects} from "./mocks/clack.js";
 
-describe("create", async () => {
+describe("create", () => {
   it("instantiates the default template", async () => {
     const effects = new TestCreateEffects();
     effects.clack.inputs.push(
@@ -19,13 +19,15 @@ describe("create", async () => {
       new Set(effects.outputs.keys()),
       new Set([
         "template-test/.gitignore",
+        "template-test/docs/aapl.csv",
         "template-test/docs/components/timeline.js",
-        "template-test/docs/data/launches.csv.js",
         "template-test/docs/data/events.json",
+        "template-test/docs/data/launches.csv.js",
         "template-test/docs/example-dashboard.md",
         "template-test/docs/example-report.md",
         "template-test/docs/index.md",
-        "template-test/observablehq.config.ts",
+        "template-test/docs/penguins.csv",
+        "template-test/observablehq.config.js",
         "template-test/package.json",
         "template-test/README.md"
       ])
@@ -45,8 +47,10 @@ describe("create", async () => {
       new Set(effects.outputs.keys()),
       new Set([
         "template-test/.gitignore",
+        "template-test/docs/aapl.csv",
         "template-test/docs/index.md",
-        "template-test/observablehq.config.ts",
+        "template-test/docs/penguins.csv",
+        "template-test/observablehq.config.js",
         "template-test/package.json",
         "template-test/README.md"
       ])
