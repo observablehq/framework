@@ -6,7 +6,7 @@ import deepEqual from "fast-deep-equal";
 import {normalizeConfig} from "../src/config.js";
 import {isEnoent} from "../src/error.js";
 import type {MarkdownPage} from "../src/markdown.js";
-import {makeLinkNormalizer, parseMarkdown, parseRelativeUrl} from "../src/markdown.js";
+import {makeLinkNormalizer, parseMarkdown} from "../src/markdown.js";
 
 const {md} = await normalizeConfig();
 
@@ -61,27 +61,6 @@ describe("parseMarkdown(input)", () => {
       assert.ok(allequal, `${name} must match snapshot`);
     });
   }
-});
-
-describe("parseRelativeUrl(url)", () => {
-  it("handles paths", () => {
-    assert.deepStrictEqual(parseRelativeUrl("foo"), {pathname: "foo", search: "", hash: ""});
-    assert.deepStrictEqual(parseRelativeUrl("foo.html"), {pathname: "foo.html", search: "", hash: ""});
-    assert.deepStrictEqual(parseRelativeUrl("../foo"), {pathname: "../foo", search: "", hash: ""});
-    assert.deepStrictEqual(parseRelativeUrl("./foo"), {pathname: "./foo", search: "", hash: ""});
-    assert.deepStrictEqual(parseRelativeUrl("/foo"), {pathname: "/foo", search: "", hash: ""});
-    assert.deepStrictEqual(parseRelativeUrl("/foo%3Fbar"), {pathname: "/foo%3Fbar", search: "", hash: ""});
-  });
-  it("handles queries", () => {
-    assert.deepStrictEqual(parseRelativeUrl("foo?bar"), {pathname: "foo", search: "?bar", hash: ""});
-  });
-  it("handles hashes", () => {
-    assert.deepStrictEqual(parseRelativeUrl("foo#bar"), {pathname: "foo", search: "", hash: "#bar"});
-    assert.deepStrictEqual(parseRelativeUrl("foo#bar?baz"), {pathname: "foo", search: "", hash: "#bar?baz"});
-  });
-  it("handles queries and hashes", () => {
-    assert.deepStrictEqual(parseRelativeUrl("foo?bar#baz"), {pathname: "foo", search: "?bar", hash: "#baz"});
-  });
 });
 
 describe("makeLinkNormalizer(normalize, false)", () => {
