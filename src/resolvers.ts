@@ -4,6 +4,7 @@ import type {LoaderResolver} from "./dataloader.js";
 import {findAssets} from "./html.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js";
+import {resolveJsrImport} from "./jsr.js";
 import {getImplicitDependencies, getImplicitDownloads} from "./libraries.js";
 import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
 import {getImplicitStylesheets} from "./libraries.js";
@@ -169,40 +170,52 @@ export async function getResolvers(
     globalImports.add(i);
   }
 
-  // Resolve npm: imports.
+  // Resolve npm: and jsr: imports.
   for (const i of globalImports) {
-    if (i.startsWith("npm:") && !builtins.has(i)) {
+    if (builtins.has(i)) continue;
+    if (i.startsWith("npm:")) {
       resolutions.set(i, await resolveNpmImport(root, i.slice("npm:".length)));
+    } else if (i.startsWith("jsr:")) {
+      resolutions.set(i, await resolveJsrImport(root, i.slice("jsr:".length)));
     }
   }
 
   // Follow transitive imports of npm imports. This has the side-effect of
   // populating the npm cache.
   for (const value of resolutions.values()) {
-    for (const i of await resolveNpmImports(root, value)) {
-      if (i.type === "local") {
-        const path = resolvePath(value, i.name);
-        const specifier = `npm:${extractNpmSpecifier(path)}`;
-        globalImports.add(specifier);
-        resolutions.set(specifier, path);
+    if (value.startsWith("/_npm/")) {
+      for (const i of await resolveNpmImports(root, value)) {
+        if (i.type === "local") {
+          const path = resolvePath(value, i.name);
+          const specifier = `npm:${extractNpmSpecifier(path)}`;
+          globalImports.add(specifier);
+          resolutions.set(specifier, path);
+        }
       }
+    } else if (value.startsWith("/_jsr/")) {
+      // TODO jsr:
     }
   }
 
-  // Resolve transitive static npm: imports.
-  const npmStaticResolutions = new Set<string>();
+  // Resolve transitive static npm: and jsr: imports.
+  const globalStaticResolutions = new Set<string>();
   for (const i of staticImports) {
     const r = resolutions.get(i);
-    if (r) npmStaticResolutions.add(r);
+    if (r) globalStaticResolutions.add(r);
   }
-  for (const value of npmStaticResolutions) {
-    for (const i of await resolveNpmImports(root, value)) {
-      if (i.type === "local" && i.method === "static") {
-        const path = resolvePath(value, i.name);
-        const specifier = `npm:${extractNpmSpecifier(path)}`;
-        staticImports.add(specifier);
-        npmStaticResolutions.add(path);
+
+  for (const value of globalStaticResolutions) {
+    if (value.startsWith("/_npm/")) {
+      for (const i of await resolveNpmImports(root, value)) {
+        if (i.type === "local" && i.method === "static") {
+          const path = resolvePath(value, i.name);
+          const specifier = `npm:${extractNpmSpecifier(path)}`;
+          staticImports.add(specifier);
+          globalStaticResolutions.add(path);
+        }
       }
+    } else {
+      // TODO jsr:
     }
   }
 
@@ -213,6 +226,8 @@ export async function getResolvers(
       const path = await resolveNpmImport(root, specifier.slice("npm:".length));
       resolutions.set(specifier, path);
       await populateNpmCache(root, path);
+    } else if (specifier.startsWith("jsr:")) {
+      // TODO jsr:
     }
   }
 
@@ -224,6 +239,8 @@ export async function getResolvers(
       const path = await resolveNpmImport(root, specifier.slice("npm:".length));
       resolutions.set(specifier, path);
       await populateNpmCache(root, path);
+    } else if (specifier.startsWith("jsr:")) {
+      // TODO jsr:
     }
   }
 
