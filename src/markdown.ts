@@ -69,7 +69,7 @@ function getLiveSource(content: string, tag: string, attributes: Record<string, 
     : tag === "dot"
     ? transpileTag(content, "dot", false)
     : tag === "mermaid"
-    ? transpileTag(content, "await mermaid", false)
+    ? transpileTag(content, "await dark, mermaid", false)
     : undefined;
 }
 

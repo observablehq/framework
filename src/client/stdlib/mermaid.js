@@ -1,8 +1,12 @@
 import mer from "npm:mermaid";
+import {Generators} from "observablehq:stdlib";
 
 let nextId = 0;
-const theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "neutral";
-mer.initialize({startOnLoad: false, securityLevel: "loose", theme});
+
+(async () => {
+  for await (const dark of Generators.dark())
+    mer.initialize({startOnLoad: false, securityLevel: "loose", theme: dark ? "dark" : "neutral"});
+})();
 
 export default async function mermaid() {
   const root = document.createElement("div");

@@ -4,48 +4,67 @@
   "style": null,
   "code": [
     {
-      "id": "68f6d8d0",
+      "id": "96e42c05",
       "node": {
         "body": {
-          "type": "AwaitExpression",
+          "type": "SequenceExpression",
           "start": 0,
-          "end": 68,
-          "argument": {
-            "type": "TaggedTemplateExpression",
-            "start": 6,
-            "end": 68,
-            "tag": {
-              "type": "Identifier",
-              "start": 6,
-              "end": 13,
-              "name": "mermaid"
+          "end": 74,
+          "expressions": [
+            {
+              "type": "AwaitExpression",
+              "start": 0,
+              "end": 10,
+              "argument": {
+                "type": "Identifier",
+                "start": 6,
+                "end": 10,
+                "name": "dark"
+              }
             },
-            "quasi": {
-              "type": "TemplateLiteral",
-              "start": 13,
-              "end": 68,
-              "expressions": [],
-              "quasis": [
-                {
-                  "type": "TemplateElement",
-                  "start": 14,
-                  "end": 67,
-                  "value": {
-                    "raw": "graph TD;\n    A-->B;\n    A-->C;\n    B-->D;\n    C-->D;",
-                    "cooked": "graph TD;\n    A-->B;\n    A-->C;\n    B-->D;\n    C-->D;"
-                  },
-                  "tail": true
-                }
-              ]
+            {
+              "type": "TaggedTemplateExpression",
+              "start": 12,
+              "end": 74,
+              "tag": {
+                "type": "Identifier",
+                "start": 12,
+                "end": 19,
+                "name": "mermaid"
+              },
+              "quasi": {
+                "type": "TemplateLiteral",
+                "start": 19,
+                "end": 74,
+                "expressions": [],
+                "quasis": [
+                  {
+                    "type": "TemplateElement",
+                    "start": 20,
+                    "end": 73,
+                    "value": {
+                      "raw": "graph TD;\n    A-->B;\n    A-->C;\n    B-->D;\n    C-->D;",
+                      "cooked": "graph TD;\n    A-->B;\n    A-->C;\n    B-->D;\n    C-->D;"
+                    },
+                    "tail": true
+                  }
+                ]
+              }
             }
-          }
+          ]
         },
         "declarations": null,
         "references": [
           {
             "type": "Identifier",
             "start": 6,
-            "end": 13,
+            "end": 10,
+            "name": "dark"
+          },
+          {
+            "type": "Identifier",
+            "start": 12,
+            "end": 19,
             "name": "mermaid"
           }
         ],
@@ -54,7 +73,7 @@
         "expression": true,
         "async": true,
         "inline": false,
-        "input": "await mermaid`graph TD;\n    A-->B;\n    A-->C;\n    B-->D;\n    C-->D;`"
+        "input": "await dark, mermaid`graph TD;\n    A-->B;\n    A-->C;\n    B-->D;\n    C-->D;`"
       }
     }
   ]
