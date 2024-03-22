@@ -40,7 +40,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
 
   // Index the pages
   const index = new MiniSearch(indexOptions);
-  for await (const file of visitMarkdownFiles(root)) {
+  for (const file of visitMarkdownFiles(root)) {
     const sourcePath = join(root, file);
     const source = await readFile(sourcePath, "utf8");
     const path = `/${join(dirname(file), basename(file, ".md"))}`;

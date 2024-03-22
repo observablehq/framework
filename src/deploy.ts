@@ -58,7 +58,7 @@ export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
   logger: Logger;
   input: NodeJS.ReadableStream;
   output: NodeJS.WritableStream;
-  visitFiles: (root: string) => AsyncGenerator<string>;
+  visitFiles: (root: string) => Generator<string>;
   stat: (path: string) => Promise<Stats>;
 }
 
