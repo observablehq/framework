@@ -52,7 +52,7 @@ export async function build(
 
   // Make sure all files are readable before starting to write output files.
   let pageCount = 0;
-  for await (const sourceFile of visitMarkdownFiles(root)) {
+  for (const sourceFile of visitMarkdownFiles(root)) {
     await access(join(root, sourceFile), constants.R_OK);
     pageCount++;
   }
@@ -65,7 +65,7 @@ export async function build(
   const localImports = new Set<string>();
   const globalImports = new Set<string>();
   const stylesheets = new Set<string>();
-  for await (const sourceFile of visitMarkdownFiles(root)) {
+  for (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
     const options = {path, ...config};
