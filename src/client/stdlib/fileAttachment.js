@@ -16,7 +16,7 @@ export function FileAttachment(name, base = location) {
 }
 
 async function remote_fetch(file) {
-  const response = await fetch(file.href);
+  const response = await fetch(await file.url());
   if (!response.ok) throw new Error(`Unable to load file: ${file.name}`);
   return response;
 }
@@ -57,13 +57,14 @@ export class AbstractFile {
     return dsv(this, "\t", options);
   }
   async image(props) {
+    const url = await this.url();
     return new Promise((resolve, reject) => {
       const i = new Image();
-      if (new URL(this.href, document.baseURI).origin !== new URL(location).origin) i.crossOrigin = "anonymous";
+      if (new URL(url, document.baseURI).origin !== new URL(location).origin) i.crossOrigin = "anonymous";
       Object.assign(i, props);
       i.onload = () => resolve(i);
       i.onerror = () => reject(new Error(`Unable to load file: ${this.name}`));
-      i.src = this.href;
+      i.src = url;
     });
   }
   async arrow() {
@@ -99,7 +100,6 @@ class FileAttachmentImpl extends AbstractFile {
     super(name, mimeType, lastModified);
     Object.defineProperty(this, "href", {value: href});
   }
-  /** @deprecated Use this.href instead. */
   async url() {
     return this.href;
   }
