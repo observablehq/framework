@@ -4,7 +4,13 @@ import {enableCopyButtons} from "./pre.js";
 
 export * from "./index.js";
 
+let minReopenDelay = 1000;
+let maxReopenDelay = 30000;
+let reopenDelay = minReopenDelay;
+let reopenDecay = 1.1; // exponential backoff factor
+
 export function open({hash, eval: compile} = {}) {
+  let opened = false;
   const socket = new WebSocket(
     Object.assign(new URL("/_observablehq", location.href), {
       protocol: location.protocol === "https:" ? "wss" : "ws"
@@ -13,6 +19,8 @@ export function open({hash, eval: compile} = {}) {
 
   socket.onopen = () => {
     console.info("socket open");
+    opened = true;
+    reopenDelay = minReopenDelay;
     send({type: "hello", path: location.pathname, hash});
   };
 
@@ -123,12 +131,10 @@ export function open({hash, eval: compile} = {}) {
     }
   };
 
-  socket.onerror = (error) => {
-    console.error(error);
-  };
-
   socket.onclose = () => {
-    console.info("socket close");
+    if (opened) console.info("socket close");
+    reopenDelay = Math.min(maxReopenDelay, reopenDelay * reopenDecay); // exponential backoff
+    setTimeout(() => open({hash, eval: compile}), reopenDelay);
   };
 
   function indexCells(map, node) {
