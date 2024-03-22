@@ -1,6 +1,12 @@
 import {formatPrefix} from "d3-format";
 
-const {stargazers_count} = await github("/repos/observablehq/framework").catch(() => ({stargazers_count: 4242}));
+let stargazers_count: number;
+try {
+  ({stargazers_count} = await github("/repos/observablehq/framework"));
+} catch (error) {
+  if (process.env.CI) throw error;
+  stargazers_count = NaN;
+}
 
 export default {
   output: "docs/.observablehq/dist",
@@ -114,10 +120,9 @@ export default {
       <a target="_blank" href="https://github.com/observablehq/framework/releases"><span>${
         process.env.npm_package_version
       }</span></a>
-      <a target="_blank" data-decoration="★" href="https://github.com/observablehq/framework"><span>GitHub️ ${formatPrefix(
-        ".1s",
-        1000
-      )(stargazers_count)}</span></a>
+      <a target="_blank" data-decoration="★" href="https://github.com/observablehq/framework"><span>GitHub️ ${
+        stargazers_count ? formatPrefix(".1s", 1000)(stargazers_count) : ""
+      }</span></a>
     </span>
   </div>
 </div>`,
