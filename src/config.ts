@@ -9,7 +9,7 @@ import {LoaderResolver} from "./dataloader.js";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import {createMarkdownIt, parseMarkdown} from "./markdown.js";
-import {resolvePath} from "./path.js";
+import {isAssetPath, parseRelativeUrl, resolvePath} from "./path.js";
 import {resolveTheme} from "./theme.js";
 
 export interface Page {
@@ -197,7 +197,13 @@ function normalizePage(spec: any): Page {
   let {name, path} = spec;
   name = String(name);
   path = String(path);
-  if (path.endsWith("/")) path = `${path}index`;
+  if (isAssetPath(path)) {
+    const u = parseRelativeUrl(join("/", path)); // add leading slash
+    let {pathname} = u;
+    pathname = pathname.replace(/\.html$/i, ""); // remove trailing .html
+    pathname = pathname.replace(/\/$/, "/index"); // add trailing index
+    path = pathname + u.search + u.hash;
+  }
   return {name, path};
 }
 

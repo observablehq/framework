@@ -72,3 +72,15 @@ export function isAssetPath(specifier: string): boolean {
 export function resolveRelativePath(source: string, target: string): string {
   return relativePath(source, resolvePath(source, target));
 }
+
+export function parseRelativeUrl(url: string): {pathname: string; search: string; hash: string} {
+  let search: string;
+  let hash: string;
+  const i = url.indexOf("#");
+  if (i < 0) hash = "";
+  else (hash = url.slice(i)), (url = url.slice(0, i));
+  const j = url.indexOf("?");
+  if (j < 0) search = "";
+  else (search = url.slice(j)), (url = url.slice(0, j));
+  return {pathname: url, search, hash};
+}
