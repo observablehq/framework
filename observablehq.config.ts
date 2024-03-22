@@ -1,3 +1,13 @@
+import {formatPrefix} from "d3-format";
+
+let stargazers_count: number;
+try {
+  ({stargazers_count} = await github("/repos/observablehq/framework"));
+} catch (error) {
+  if (process.env.CI) throw error;
+  stargazers_count = NaN;
+}
+
 export default {
   output: "docs/.observablehq/dist",
   title: "Observable Framework",
@@ -106,9 +116,13 @@ export default {
     <a href="/">
       <span class="hide-if-small">Observable</span> Framework
     </a>
-    <span style="display: flex; align-items: baseline; gap: 0.5rem; font-size: 14px;">
-      <a target="_blank" href="https://github.com/observablehq/framework/releases"><span>${process.env.npm_package_version}</span></a>
-      <a target="_blank" href="https://github.com/observablehq/framework"><span>GitHub</span></a>
+    <span style="display: flex; align-items: baseline; gap: 1rem; font-size: 14px;">
+      <a target="_blank" href="https://github.com/observablehq/framework/releases"><span>${
+        process.env.npm_package_version
+      }</span></a>
+      <a target="_blank" data-decoration="★" href="https://github.com/observablehq/framework"><span>GitHub️ ${
+        stargazers_count ? formatPrefix(".1s", 1000)(stargazers_count) : ""
+      }</span></a>
     </span>
   </div>
 </div>`,
@@ -116,3 +130,17 @@ export default {
   style: "style.css",
   search: true
 };
+
+async function github(
+  path: string,
+  {
+    authorization = process.env.GITHUB_TOKEN && `token ${process.env.GITHUB_TOKEN}`,
+    accept = "application/vnd.github.v3+json"
+  } = {}
+) {
+  const url = new URL(path, "https://api.github.com");
+  const headers = {...(authorization && {authorization}), accept};
+  const response = await fetch(url, {headers});
+  if (!response.ok) throw new Error(`fetch error: ${response.status} ${url}`);
+  return await response.json();
+}

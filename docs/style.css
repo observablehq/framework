@@ -21,6 +21,10 @@
   content: "\2197";
 }
 
+#observablehq-header a[target="_blank"][data-decoration]::after {
+  content: attr(data-decoration);
+}
+
 #observablehq-header a[target="_blank"]:not(:hover, :focus)::after {
   color: var(--theme-foreground-muted);
 }
