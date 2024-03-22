@@ -89,7 +89,7 @@ export function findAssets(html: string, path: string): Assets {
       } else {
         globalImports.add(src);
       }
-      if (script.getAttribute("type")?.toLowerCase() === "module") {
+      if (script.getAttribute("type")?.toLowerCase() === "module" && !script.hasAttribute("async")) {
         staticImports.add(src); // modulepreload
       }
     } else {
