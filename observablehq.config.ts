@@ -117,10 +117,14 @@ export default {
       <span class="hide-if-small">Observable</span> Framework
     </a>
     <span style="display: flex; align-items: baseline; gap: 1rem; font-size: 14px;">
-      <a target="_blank" href="https://github.com/observablehq/framework/releases"><span>${
+      <a target="_blank" title="${
+        process.env.npm_package_version
+      } release notes" href="https://github.com/observablehq/framework/releases"><span>${
         process.env.npm_package_version
       }</span></a>
-      <a target="_blank" data-decoration="★" href="https://github.com/observablehq/framework"><span>GitHub️ ${
+      <a target="_blank" data-decoration="★" title="${stargazers_count.toLocaleString(
+        "en-US"
+      )} GitHub stars" href="https://github.com/observablehq/framework"><span>GitHub️ ${
         stargazers_count ? formatPrefix(".1s", 1000)(stargazers_count) : ""
       }</span></a>
     </span>
