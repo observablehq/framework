@@ -1,8 +1,10 @@
 import fs from "node:fs/promises";
-import packageJson from "../package.json";
-import {CliError, HttpError} from "./error.js";
+import type {ClackEffects} from "./clack.js";
+import {CliError, HttpError, isApiError} from "./error.js";
 import type {ApiKey} from "./observableApiConfig.js";
 import {faint, red} from "./tty.js";
+
+const MIN_RATE_LIMIT_RETRY_AFTER = 1;
 
 export function getObservableUiOrigin(env = process.env): URL {
   const urlText = env["OBSERVABLE_ORIGIN"] ?? "https://observablehq.com";
@@ -28,17 +30,26 @@ export function getObservableApiOrigin(env = process.env): URL {
   return uiOrigin;
 }
 
+export type ObservableApiClientOptions = {
+  apiOrigin?: URL;
+  apiKey?: ApiKey;
+  clack: ClackEffects;
+};
+
 export class ObservableApiClient {
   private _apiHeaders: Record<string, string>;
   private _apiOrigin: URL;
+  private _clack: ClackEffects;
+  private _rateLimit: null | Promise<void> = null;
 
-  constructor({apiKey, apiOrigin = getObservableApiOrigin()}: {apiOrigin?: URL; apiKey?: ApiKey} = {}) {
+  constructor({apiKey, apiOrigin = getObservableApiOrigin(), clack}: ObservableApiClientOptions) {
     this._apiOrigin = apiOrigin;
     this._apiHeaders = {
       Accept: "application/json",
-      "User-Agent": `Observable Framework ${packageJson.version}`,
+      "User-Agent": `Observable Framework ${process.env.npm_package_version}`,
       "X-Observable-Api-Version": "2023-12-06"
     };
+    this._clack = clack;
     if (apiKey) this.setApiKey(apiKey);
   }
 
@@ -48,29 +59,48 @@ export class ObservableApiClient {
 
   private async _fetch<T = unknown>(url: URL, options: RequestInit): Promise<T> {
     let response;
+    const doFetch = async () => await fetch(url, {...options, headers: {...this._apiHeaders, ...options.headers}});
     try {
-      response = await fetch(url, {...options, headers: {...this._apiHeaders, ...options.headers}});
+      response = await doFetch();
     } catch (error) {
       // Check for undici failures and print them in a way that shows more details. Helpful in tests.
       if (error instanceof Error && error.message === "fetch failed") console.error(error);
       throw error;
     }
 
-    if (!response.ok) {
-      // check for version mismatch
-      if (response.status === 400) {
-        const body = await response.text();
-        try {
-          const data = JSON.parse(body);
-          if (Array.isArray(data.errors) && data.errors.some((d) => d.code === "VERSION_MISMATCH")) {
-            console.log(red("The version of Observable Framework you are using is not compatible with the server."));
-            console.log(faint(`Expected ${data.errors[0].meta.expected}, but using ${data.errors[0].meta.actual}`));
-          }
-        } catch (err) {
-          // just fall through
-        }
+    if (response.status === 429) {
+      // rate limit
+      if (this._rateLimit === null) {
+        let retryAfter = +response.headers.get("Retry-After");
+        if (isNaN(retryAfter) || retryAfter < MIN_RATE_LIMIT_RETRY_AFTER) retryAfter = MIN_RATE_LIMIT_RETRY_AFTER;
+        this._clack.log.warn(`Hit server rate limit. Waiting for ${retryAfter} seconds.`);
+        this._rateLimit = new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
       }
-      throw new HttpError(`Unexpected response status ${JSON.stringify(response.status)}`, response.status);
+      await this._rateLimit;
+      response = await doFetch();
+    }
+
+    if (!response.ok) {
+      let details = await response.text();
+      try {
+        details = JSON.parse(details);
+      } catch (error) {
+        // that's ok
+      }
+      const error = new HttpError(`Unexpected response status ${JSON.stringify(response.status)}`, response.status, {
+        details
+      });
+
+      // check for version mismatch
+      if (
+        response.status === 400 &&
+        isApiError(error) &&
+        error.details.errors.some((e) => e.code === "VERSION_MISMATCH")
+      ) {
+        console.log(red("The version of Observable Framework you are using is not compatible with the server."));
+        console.log(faint(`Expected ${details.errors[0].meta.expected}, but using ${details.errors[0].meta.actual}`));
+      }
+      throw error;
     }
 
     if (response.status === 204) return null as T;
@@ -96,16 +126,18 @@ export class ObservableApiClient {
   async postProject({
     title,
     slug,
-    workspaceId
+    workspaceId,
+    accessLevel
   }: {
     title: string;
     slug: string;
     workspaceId: string;
+    accessLevel: string;
   }): Promise<PostProjectResponse> {
     return await this._fetch<PostProjectResponse>(new URL("/cli/project", this._apiOrigin), {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({title, slug, workspace: workspaceId})
+      body: JSON.stringify({title, slug, workspace: workspaceId, accessLevel})
     });
   }
 
@@ -124,6 +156,10 @@ export class ObservableApiClient {
     );
     // todo: handle pagination?
     return pages.results;
+  }
+
+  async getDeploy(deployId: string): Promise<GetDeployResponse> {
+    return await this._fetch<GetDeployResponse>(new URL(`/cli/deploy/${deployId}`, this._apiOrigin), {method: "GET"});
   }
 
   async postDeploy({projectId, message}: {projectId: string; message: string}): Promise<string> {
@@ -158,11 +194,11 @@ export class ObservableApiClient {
     });
   }
 
-  async postAuthRequest(scopes: string[]): Promise<PostAuthRequestResponse> {
+  async postAuthRequest(options: {scopes: string[]; deviceDescription: string}): Promise<PostAuthRequestResponse> {
     return await this._fetch<PostAuthRequestResponse>(new URL("/cli/auth/request", this._apiOrigin), {
       method: "POST",
       headers: {"content-type": "application/json"},
-      body: JSON.stringify({scopes})
+      body: JSON.stringify(options)
     });
   }
 
@@ -194,18 +230,29 @@ export interface GetCurrentUserResponse {
   workspaces: WorkspaceResponse[];
 }
 
+type Role = "owner" | "member" | "viewer" | "guest_member" | "guest_viewer";
+
+type ProjectRole = "owner" | "editor" | "viewer";
+
+type ProjectInfo = {
+  project_slug: string;
+  project_role: ProjectRole;
+};
+
 export interface WorkspaceResponse {
   id: string;
   login: string;
   name: string;
   tier: string;
   type: string;
-  role: string;
+  role: Role;
+  projects_info: ProjectInfo[];
 }
 
 export type PostProjectResponse = GetProjectResponse;
 
 export interface GetProjectResponse {
+  accessLevel: string;
   id: string;
   slug: string;
   title: string;
@@ -241,4 +288,10 @@ export interface PaginatedList<T> {
   // per_page: number;
   // total: number;
   // truncated: boolean;
+}
+
+export interface GetDeployResponse {
+  id: string;
+  status: string;
+  url: string;
 }

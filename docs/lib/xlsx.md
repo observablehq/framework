@@ -1,4 +1,4 @@
-# XLSX
+# Microsoft Excel (XLSX)
 
 [`FileAttachment`](../javascript/files) supports the [Microsoft Excel Open XML format](https://en.wikipedia.org/wiki/Office_Open_XML) via the `file.xlsx` method. This is implemented using the MIT-licensed [ExcelJS](https://github.com/exceljs/exceljs) library.
 
@@ -60,6 +60,6 @@ Some additional details on values: dates are interpreted as UTC; formula results
 
 If you’d prefer to use [ExcelJS](https://github.com/exceljs/exceljs) directly, you can import it like so:
 
-```js echo
+```js run=false
 import Excel from "npm:exceljs";
 ```

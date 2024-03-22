@@ -40,6 +40,7 @@ h6 {
   margin-top: 0;
   margin-bottom: 0.25rem;
   scroll-margin-top: 1rem;
+  text-wrap: balance;
 }
 
 h2 + p,
@@ -274,5 +275,10 @@ a[href].observablehq-header-anchor {
 }
 
 .muted {
+  color: var(--theme-foreground-muted);
+}
+
+.observablehq--draft > h1:first-of-type::after {
+  content: " [DRAFT]";
   color: var(--theme-foreground-muted);
 }

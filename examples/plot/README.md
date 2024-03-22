@@ -1,6 +1,8 @@
 # Tracking Observable Plot
 
-This dashboard tracks several metrics about the development and usage of [Observable Plot](https://observablehq.com/plot/). It contains a single page in [`docs/index.md`](./docs/index.md), with no configuration file.
+This is an example Observable Framework project that tracks several metrics about the development and usage of [Observable Plot](https://observablehq.com/plot/). It contains a single page in [`docs/index.md`](./docs/index.md), with no configuration file.
+
+View the [live project](https://observablehq.com/framework/examples/plot/).
 
 ## Data loaders
 
@@ -26,7 +28,7 @@ The [`npm-downloads.csv.ts`](./docs/data/npm-downloads.csv.ts) loader retrieves 
 
 ## Big numbers
 
-Key performance indicators are displayed as “big numbers” with, in some cases, a trend indicating growth over one week. Their layout is using the convenience CSS classes _big_, _red_ etc.
+Key performance indicators are displayed as “big numbers” with, in some cases, a trend indicating growth over one week. Their layout is using the convenience CSS classes _big_, _red_ _etc._
 
 ## Charts
 

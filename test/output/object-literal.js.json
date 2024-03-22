@@ -1,0 +1,38 @@
+{
+  "body": {
+    "type": "ObjectExpression",
+    "start": 0,
+    "end": 6,
+    "properties": [
+      {
+        "type": "Property",
+        "start": 1,
+        "end": 5,
+        "method": false,
+        "shorthand": false,
+        "computed": false,
+        "key": {
+          "type": "Identifier",
+          "start": 1,
+          "end": 2,
+          "name": "a"
+        },
+        "value": {
+          "type": "Literal",
+          "start": 4,
+          "end": 5,
+          "value": 1,
+          "raw": "1"
+        },
+        "kind": "init"
+      }
+    ]
+  },
+  "declarations": null,
+  "references": [],
+  "files": [],
+  "imports": [],
+  "expression": true,
+  "async": false,
+  "inline": false
+}

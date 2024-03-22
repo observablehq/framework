@@ -1,18 +1,18 @@
 const files = new Map();
 
 export function registerFile(name, file) {
-  const url = String(new URL(name, location.href));
-  if (file == null) files.delete(url);
-  else files.set(url, file);
+  const href = new URL(name, location).href;
+  if (file == null) files.delete(href);
+  else files.set(href, file);
 }
 
-export function FileAttachment(name, base = location.href) {
+export function FileAttachment(name, base = location) {
   if (new.target !== undefined) throw new TypeError("FileAttachment is not a constructor");
-  const url = String(new URL(name, base));
-  const file = files.get(url);
+  const href = new URL(name, base).href;
+  const file = files.get(href);
   if (!file) throw new Error(`File not found: ${name}`);
-  const {path, mimeType} = file;
-  return new FileAttachmentImpl(path, name.split("/").pop(), mimeType);
+  const {path, mimeType, lastModified} = file;
+  return new FileAttachmentImpl(new URL(path, location).href, name.split("/").pop(), mimeType, lastModified);
 }
 
 async function remote_fetch(file) {
@@ -28,9 +28,10 @@ async function dsv(file, delimiter, {array = false, typed = false} = {}) {
 }
 
 export class AbstractFile {
-  constructor(name, mimeType) {
-    Object.defineProperty(this, "name", {value: name, enumerable: true});
-    if (mimeType !== undefined) Object.defineProperty(this, "mimeType", {value: mimeType + "", enumerable: true});
+  constructor(name, mimeType = "application/octet-stream", lastModified) {
+    Object.defineProperty(this, "name", {value: `${name}`, enumerable: true});
+    Object.defineProperty(this, "mimeType", {value: `${mimeType}`, enumerable: true});
+    if (lastModified !== undefined) Object.defineProperty(this, "lastModified", {value: Number(lastModified), enumerable: true}); // prettier-ignore
   }
   async blob() {
     return (await remote_fetch(this)).blob();
@@ -95,12 +96,12 @@ export class AbstractFile {
 }
 
 class FileAttachmentImpl extends AbstractFile {
-  constructor(url, name, mimeType) {
-    super(name, mimeType);
-    Object.defineProperty(this, "_url", {value: url});
+  constructor(href, name, mimeType, lastModified) {
+    super(name, mimeType, lastModified);
+    Object.defineProperty(this, "href", {value: href});
   }
   async url() {
-    return (await this._url) + "";
+    return this.href;
   }
 }
 

@@ -8,28 +8,35 @@ const x = Math.random();
 display(x);
 ```
 
-If you pass `display` a DOM element or node, it will be inserted directly into the page. Use this technique to render dynamic displays of data, such as charts and tables.
+You can display structured objects, too. Click on the object below to inspect it.
 
 ```js echo
-const span = document.createElement("span");
-span.appendChild(document.createTextNode("Your lucky number is "));
-span.appendChild(document.createTextNode(Math.floor(Math.random () * 10)));
-span.appendChild(document.createTextNode("!"));
-display(span);
+display({hello: {subject: "world"}, numbers: [1, 2, 3, 4]})
 ```
 
-You can create DOM elements using the standard [DOM API](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Introduction) or a helper library of your choosing. For example, the above can be written using [Hypertext Literal](../lib/htl) as:
-
-```js echo
-display(html`Your lucky number is ${Math.floor(Math.random () * 10)}!`);
-```
-
-You can call `display` multiple times to display multiple values. Values are displayed in the order they are received. Previously-displayed values will be cleared when the associated code block or inline expression is re-run.
+Calling `display` multiple times will display multiple values. Values are displayed in the order they are received. (Previously-displayed values will be cleared when the associated code block or inline expression is re-run.)
 
 ```js echo
 for (let i = 0; i < 5; ++i) {
   display(i);
 }
+```
+
+If you pass `display` a DOM node, it will be inserted directly into the page. Use this technique to render dynamic displays of data, such as charts and tables. Here is an example displaying a [text node](https://developer.mozilla.org/en-US/docs/Web/API/Document/createTextNode) created using the [DOM API](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Introduction):
+
+```js echo
+display(document.createTextNode(`Your lucky number is ${Math.floor(Math.random () * 10)}!`));
+```
+
+<div class="note">
+  <p>This is a contrived example — you wouldn’t normally create a text node by hand. Instead, you’d use an <a href="../javascript#inline-expressions">inline expression</a> to interpolate a value into Markdown. For example:</p>
+  <pre><code class="language-md">Your lucky number is &dollar;{Math.floor(Math.random () * 10)}!</code></pre>
+</div>
+
+You’ll often pass <code>display</code> a DOM node when you’re using a helper library such as <a href="../lib/plot">Observable Plot</a> or <a href="../lib/inputs">Observable Inputs</a> or a custom component (a function you’ve written that returns a DOM node) to create content. For example, the above can be written using [Hypertext Literal](../lib/htl) as:
+
+```js echo
+display(html`Your lucky number is ${Math.floor(Math.random () * 10)}!`);
 ```
 
 The `display` function returns the passed-in value. You can display any value (any expression) in code, not only top-level variables; use this as an alternative to `console.log` to debug your code.
@@ -104,17 +111,32 @@ The current width is ${width}.
 import {resize} from "npm:@observablehq/stdlib";
 ```
 
-For more control, or in a grid where you want to respond to either width or height changing, use the built-in `resize` helper. This takes a render function which is called whenever the width or height changes; the element returned by the render function is inserted into the DOM.
+(Internally, `width` is implemented by [`Generators.width`](../lib/generators#width(element)).)
+
+For more control, or in a [grid](../css/grid) where you want to respond to either width or height changing, use the built-in `resize` helper. This takes a render function which is called whenever the width or height [changes](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver), and the element returned by the render function is inserted into the DOM.
 
 ```html echo
 <div class="grid grid-cols-4">
   <div class="card">
-    ${resize((width) => html`This card is ${width}px wide.`)}
+    ${resize((width) => `This card is ${width}px wide.`)}
   </div>
 </div>
 ```
 
-See also [`Generators.width`](../lib/generators#width(element)).
+If your container defines a height, such as `240px` in the example below, then you can use both the `width` and `height` arguments to the render function:
+
+```html echo
+<div class="grid grid-cols-2" style="grid-auto-rows: 240px;">
+  <div class="card" style="padding: 0;">
+    ${resize((width, height) => Plot.barY([9, 4, 8, 1, 11, 3, 4, 2, 7, 5]).plot({width, height}))}
+  </div>
+  <div class="card" style="padding: 0;">
+    ${resize((width, height) => Plot.barY([3, 4, 2, 7, 5, 9, 4, 8, 1, 11]).plot({width, height}))}
+  </div>
+</div>
+```
+
+<div class="tip">If you are using <code>resize</code> with both <code>width</code> and <code>height</code> and see nothing rendered, it may be because your parent container does not have its own height specified. When both arguments are used, the rendered element is implicitly <code>position: absolute</code> to avoid affecting the size of its parent and causing a feedback loop.</div>
 
 ## display(*value*)
 
@@ -134,4 +156,14 @@ Inputs.button("Click me", {value: 0, reduce: (i) => displayThere(++i)})
 
 ## view(*element*)
 
-The [`view` function](./inputs#viewelement) is a special type of display function that inserts the given DOM *element* (typically an input), then returns its corresponding value [generator](./generators) via [`Generators.input`](../lib/generators#input(element)). When the user interacts with the input, this triggers the [reactive evaluation](reactivity) of all the JavaScript code that reference this value.
+The [`view` function](./inputs#view(element)) is a wrapper for `display` that returns a [value generator](./generators) for the given input element (rather than the input element itself). For example, below we display an input element and expose its value to the page as the variable `text`.
+
+```js echo
+const text = view(html`<input type="text" placeholder="Type something here">`);
+```
+
+```js echo
+text // Try typing into the box above
+```
+
+When you type into the textbox, the generator will yield a new value, triggering the [reactive evaluation](./reactivity) of any code blocks that reference `text`. See [Inputs](./inputs) for more.

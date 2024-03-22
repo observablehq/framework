@@ -15,6 +15,10 @@ export function enableCopyButtons() {
   }
 }
 
-async function copy({currentTarget}) {
-  await navigator.clipboard.writeText(currentTarget.parentElement.textContent.trimEnd());
+async function copy({currentTarget: target}) {
+  await navigator.clipboard.writeText(target.nextElementSibling.textContent.trim());
+  const [animation] = target.getAnimations({subtree: true});
+  if (animation) animation.currentTime = 0;
+  target.classList.add("observablehq-pre-copied");
+  target.addEventListener("animationend", () => target.classList.remove("observablehq-pre-copied"), {once: true});
 }

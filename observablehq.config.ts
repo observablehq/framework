@@ -1,6 +1,15 @@
-import {version} from "./package.json" assert {type: "json"};
+import {formatPrefix} from "d3-format";
+
+let stargazers_count: number;
+try {
+  ({stargazers_count} = await github("/repos/observablehq/framework"));
+} catch (error) {
+  if (process.env.CI) throw error;
+  stargazers_count = NaN;
+}
 
 export default {
+  output: "docs/.observablehq/dist",
   title: "Observable Framework",
   pages: [
     {name: "Getting started", path: "/getting-started"},
@@ -8,9 +17,10 @@ export default {
     {name: "Markdown", path: "/markdown"},
     {name: "JavaScript", path: "/javascript"},
     {name: "Data loaders", path: "/loaders"},
-    {name: "Components", path: "/components"},
+    {name: "SQL", path: "/sql"},
     {name: "Themes", path: "/themes"},
     {name: "Configuration", path: "/config"},
+    {name: "Deploying", path: "/deploying"},
     {
       name: "JavaScript",
       open: false,
@@ -26,28 +36,13 @@ export default {
       ]
     },
     {
-      name: "Layout",
+      name: "CSS",
       open: false,
       pages: [
-        {name: "Card", path: "/layout/card"},
-        {name: "Grid", path: "/layout/grid"},
-        {name: "Note", path: "/layout/note"},
-        {name: "Resize", path: "/layout/resize"}
-      ]
-    },
-    {
-      name: "Charts",
-      open: false,
-      pages: [
-        {name: "Area", path: "/charts/area"},
-        {name: "Arrow", path: "/charts/arrow"},
-        {name: "Bar", path: "/charts/bar"},
-        {name: "Cell", path: "/charts/cell"},
-        {name: "Dot", path: "/charts/dot"},
-        {name: "Facets", path: "/charts/facets"},
-        {name: "Grouping data", path: "/charts/grouping-data"},
-        {name: "Line", path: "/charts/line"},
-        {name: "Tick", path: "/charts/tick"}
+        {name: "Card", path: "/css/card"},
+        {name: "Color", path: "/css/color"},
+        {name: "Grid", path: "/css/grid"},
+        {name: "Note", path: "/css/note"}
       ]
     },
     {
@@ -57,7 +52,7 @@ export default {
         {name: "Button", path: "/inputs/button"},
         {name: "Checkbox", path: "/inputs/checkbox"},
         {name: "Color", path: "/inputs/color"},
-        {name: "Date/Datetime", path: "/inputs/date"},
+        {name: "Date", path: "/inputs/date"},
         {name: "File", path: "/inputs/file"},
         {name: "Form", path: "/inputs/form"},
         {name: "Radio", path: "/inputs/radio"},
@@ -85,7 +80,8 @@ export default {
         {name: "Lodash", path: "/lib/lodash"},
         {name: "Mapbox GL JS", path: "/lib/mapbox-gl"},
         {name: "Mermaid", path: "/lib/mermaid"},
-        {name: "Microsoft Excel", path: "/lib/xlsx"},
+        {name: "Microsoft Excel (XLSX)", path: "/lib/xlsx"},
+        {name: "Mosaic vgplot", path: "/lib/mosaic"},
         {name: "Observable Generators", path: "/lib/generators"},
         {name: "Observable Inputs", path: "/lib/inputs"},
         {name: "Observable Plot", path: "/lib/plot"},
@@ -99,11 +95,17 @@ export default {
     },
     {name: "Contributing", path: "/contributing"}
   ],
-  scripts: [{type: "module", async: true, src: "analytics.js"}],
-  head: `<link rel="apple-touch-icon" href="https://static.observablehq.com/favicon-512.0667824687f99c942a02e06e2db1a060911da0bf3606671676a255b1cf97b4fe.png">
-<link rel="icon" type="image/png" href="https://static.observablehq.com/favicon-512.0667824687f99c942a02e06e2db1a060911da0bf3606671676a255b1cf97b4fe.png" sizes="512x512">
+  base: "/framework",
+  head: `<link rel="apple-touch-icon" href="/favicon.png">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="512x512">${
+    process.env.CI
+      ? `
+<script type="module" async src="https://events.observablehq.com/client.js"></script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-9B88TP6PKQ"></script>
-<script>window.dataLayer=window.dataLayer||[];\nfunction gtag(){dataLayer.push(arguments);}\ngtag('js',new Date());\ngtag('config','G-9B88TP6PKQ');</script>`,
+<script>window.dataLayer=window.dataLayer||[];\nfunction gtag(){dataLayer.push(arguments);}\ngtag('js',new Date());\ngtag('config','G-9B88TP6PKQ');</script>`
+      : ""
+  }
+<script type="module">/Win/.test(navigator.platform) || Array.from(document.querySelectorAll(".win"), (e) => e.remove())</script>`,
   header: `<div style="display: flex; align-items: center; gap: 0.5rem; height: 2.2rem; margin: -1.5rem -2rem 2rem -2rem; padding: 0.5rem 2rem; border-bottom: solid 1px var(--theme-foreground-faintest); font: 500 16px var(--sans-serif);">
   <a href="https://observablehq.com/" style="display: flex; align-items: center;">
     <svg width="22" height="22" viewBox="0 0 21.92930030822754 22.68549919128418" fill="currentColor">
@@ -111,15 +113,38 @@ export default {
     </svg>
   </a>
   <div style="display: flex; flex-grow: 1; justify-content: space-between; align-items: baseline;">
-    <a href="https://observablehq.com/framework/">
+    <a href="/">
       <span class="hide-if-small">Observable</span> Framework
     </a>
-    <span style="display: flex; align-items: baseline; gap: 0.5rem; font-size: 14px;">
-      <a target="_blank" href="https://github.com/observablehq/framework/releases"><span>${version}</span></a>
-      <a target="_blank" href="https://github.com/observablehq/framework"><span>GitHub</span></a>
+    <span style="display: flex; align-items: baseline; gap: 1rem; font-size: 14px;">
+      <a target="_blank" title="${
+        process.env.npm_package_version
+      } release notes" href="https://github.com/observablehq/framework/releases"><span>${
+        process.env.npm_package_version
+      }</span></a>
+      <a target="_blank" data-decoration="★" title="${stargazers_count.toLocaleString(
+        "en-US"
+      )} GitHub stars" href="https://github.com/observablehq/framework"><span>GitHub️ ${
+        stargazers_count ? formatPrefix(".1s", 1000)(stargazers_count) : ""
+      }</span></a>
     </span>
   </div>
 </div>`,
   footer: `© ${new Date().getUTCFullYear()} Observable, Inc.`,
-  style: "style.css"
+  style: "style.css",
+  search: true
 };
+
+async function github(
+  path: string,
+  {
+    authorization = process.env.GITHUB_TOKEN && `token ${process.env.GITHUB_TOKEN}`,
+    accept = "application/vnd.github.v3+json"
+  } = {}
+) {
+  const url = new URL(path, "https://api.github.com");
+  const headers = {...(authorization && {authorization}), accept};
+  const response = await fetch(url, {headers});
+  if (!response.ok) throw new Error(`fetch error: ${response.status} ${url}`);
+  return await response.json();
+}

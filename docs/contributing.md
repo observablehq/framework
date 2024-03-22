@@ -21,13 +21,13 @@ The local preview server restarts automatically if you edit any of the TypeScrip
 To generate the static site:
 
 ```sh
-yarn build
+yarn docs:build
 ```
 
-This creates the `dist` folder. View the site using your preferred web server, such as:
+This creates the `docs/.observablehq/dist` folder. View the site using your preferred web server, such as:
 
 ```sh
-http-server dist
+http-server docs/.observablehq/dist
 ```
 
 This documentation site is built on GitHub using Observable Framework; see the [deploy workflow](https://github.com/observablehq/framework/blob/main/.github/workflows/deploy.yml). Please open a pull request if you’d like to contribute. Contributors are expected to follow our [code of conduct](https://github.com/observablehq/.github/blob/master/CODE_OF_CONDUCT.md). 🙏
@@ -54,8 +54,8 @@ To release a new version, first update the [package.json](https://github.com/obs
 Once the above is done, you can publish the release via GitHub:
 
 1. Go to [**Draft a new release**](https://github.com/observablehq/framework/releases/new).
-2. Under **Choose a tag**, enter the new version with a `v` *e.g.* `v0.0.5`.
-3. Click **Create new tag: v0.0.5**.
+2. Under **Choose a tag**, enter the new version with a `v` *e.g.* `v1.2.3`.
+3. Click **Create new tag: v1.2.3**.
 4. Leave the **Target** as `main`.
 5. Click **Publish release**.
 

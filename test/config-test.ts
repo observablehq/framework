@@ -1,15 +1,20 @@
 import assert from "node:assert";
+import MarkdownIt from "markdown-it";
 import {normalizeConfig as config, mergeToc, readConfig, setCurrentDate} from "../src/config.js";
-
-const root = "test/input/build/config";
+import {LoaderResolver} from "../src/dataloader.js";
 
 describe("readConfig(undefined, root)", () => {
   before(() => setCurrentDate(new Date("2024-01-11T01:02:03")));
   it("imports the config file at the specified root", async () => {
-    assert.deepStrictEqual(await readConfig(undefined, "test/input/build/config"), {
+    const {md, loaders, ...config} = await readConfig(undefined, "test/input/build/config");
+    assert(md instanceof MarkdownIt);
+    assert(loaders instanceof LoaderResolver);
+    assert.deepStrictEqual(config, {
       root: "test/input/build/config",
       output: "dist",
+      base: "/",
       style: {theme: ["air", "near-midnight"]},
+      sidebar: true,
       pages: [
         {path: "/index", name: "Index"},
         {path: "/one", name: "One<Two"},
@@ -27,14 +32,20 @@ describe("readConfig(undefined, root)", () => {
       deploy: {
         workspace: "acme",
         project: "bi"
-      }
+      },
+      search: false
     });
   });
   it("returns the default config if no config file is found", async () => {
-    assert.deepStrictEqual(await readConfig(undefined, "test/input/build/simple"), {
+    const {md, loaders, ...config} = await readConfig(undefined, "test/input/build/simple");
+    assert(md instanceof MarkdownIt);
+    assert(loaders instanceof LoaderResolver);
+    assert.deepStrictEqual(config, {
       root: "test/input/build/simple",
       output: "dist",
+      base: "/",
       style: {theme: ["air", "near-midnight"]},
+      sidebar: true,
       pages: [{name: "Build test case", path: "/simple"}],
       title: undefined,
       toc: {label: "Contents", show: true},
@@ -44,12 +55,14 @@ describe("readConfig(undefined, root)", () => {
       header: "",
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-11T01:02:03">Jan 11, 2024</a>.',
-      deploy: null
+      deploy: null,
+      search: false
     });
   });
 });
 
 describe("normalizeConfig(spec, root)", () => {
+  const root = "test/input/build/config";
   it("coerces the title to a string", async () => {
     assert.strictEqual((await config({title: 42, pages: []}, root)).title, "42");
     assert.strictEqual((await config({title: null, pages: []}, root)).title, "null");
@@ -70,20 +83,57 @@ describe("normalizeConfig(spec, root)", () => {
   it("coerces pages to an array", async () => {
     assert.deepStrictEqual((await config({pages: new Set()}, root)).pages, []);
   });
-  it("coerces pages", async () => {
+  it("coerces and normalizes page paths", async () => {
     const inpages = [
       {name: 42, path: true},
-      {name: null, path: {toString: () => "yes"}}
+      {name: null, path: {toString: () => "yes"}},
+      {name: "Index", path: "/foo/index"},
+      {name: "Index.html", path: "/foo/index.html"},
+      {name: "Page.html", path: "/foo.html"}
     ];
     const outpages = [
-      {name: "42", path: "true"},
-      {name: "null", path: "yes"}
+      {name: "42", path: "/true"},
+      {name: "null", path: "/yes"},
+      {name: "Index", path: "/foo/index"},
+      {name: "Index.html", path: "/foo/index"},
+      {name: "Page.html", path: "/foo"}
+    ];
+    assert.deepStrictEqual((await config({pages: inpages}, root)).pages, outpages);
+  });
+  it("allows external page paths", async () => {
+    const pages = [{name: "Example.com", path: "https://example.com"}];
+    assert.deepStrictEqual((await config({pages}, root)).pages, pages);
+  });
+  it("allows page paths to have query strings and anchor fragments", async () => {
+    const inpages = [
+      {name: "Anchor fragment on index", path: "/test/index#foo=bar"},
+      {name: "Anchor fragment on index.html", path: "/test/index.html#foo=bar"},
+      {name: "Anchor fragment on page.html", path: "/test.html#foo=bar"},
+      {name: "Anchor fragment on slash", path: "/test/#foo=bar"},
+      {name: "Anchor fragment", path: "/test#foo=bar"},
+      {name: "Query string on index", path: "/test/index?foo=bar"},
+      {name: "Query string on index.html", path: "/test/index.html?foo=bar"},
+      {name: "Query string on page.html", path: "/test.html?foo=bar"},
+      {name: "Query string on slash", path: "/test/?foo=bar"},
+      {name: "Query string", path: "/test?foo=bar"}
+    ];
+    const outpages = [
+      {name: "Anchor fragment on index", path: "/test/index#foo=bar"},
+      {name: "Anchor fragment on index.html", path: "/test/index#foo=bar"},
+      {name: "Anchor fragment on page.html", path: "/test#foo=bar"},
+      {name: "Anchor fragment on slash", path: "/test/index#foo=bar"},
+      {name: "Anchor fragment", path: "/test#foo=bar"},
+      {name: "Query string on index", path: "/test/index?foo=bar"},
+      {name: "Query string on index.html", path: "/test/index?foo=bar"},
+      {name: "Query string on page.html", path: "/test?foo=bar"},
+      {name: "Query string on slash", path: "/test/index?foo=bar"},
+      {name: "Query string", path: "/test?foo=bar"}
     ];
     assert.deepStrictEqual((await config({pages: inpages}, root)).pages, outpages);
   });
   it("coerces sections", async () => {
     const inpages = [{name: 42, pages: new Set([{name: null, path: {toString: () => "yes"}}])}];
-    const outpages = [{name: "42", open: true, pages: [{name: "null", path: "yes"}]}];
+    const outpages = [{name: "42", open: true, pages: [{name: "null", path: "/yes"}]}];
     assert.deepStrictEqual((await config({pages: inpages}, root)).pages, outpages);
   });
   it("coerces toc", async () => {
@@ -129,6 +179,7 @@ describe("normalizeConfig(spec, root)", () => {
 });
 
 describe("mergeToc(spec, toc)", () => {
+  const root = "test/input/build/config";
   it("merges page- and project-level toc config", async () => {
     const toc = (await config({pages: [], toc: true}, root)).toc;
     assert.deepStrictEqual(mergeToc({show: false}, toc), {label: "Contents", show: false});

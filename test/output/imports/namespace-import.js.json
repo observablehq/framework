@@ -1,0 +1,87 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 48,
+    "body": [
+      {
+        "type": "ImportDeclaration",
+        "start": 0,
+        "end": 32,
+        "specifiers": [
+          {
+            "type": "ImportNamespaceSpecifier",
+            "start": 7,
+            "end": 15,
+            "local": {
+              "type": "Identifier",
+              "start": 12,
+              "end": 15,
+              "name": "bar"
+            }
+          }
+        ],
+        "source": {
+          "type": "Literal",
+          "start": 21,
+          "end": 31,
+          "value": "./bar.js",
+          "raw": "\"./bar.js\""
+        }
+      },
+      {
+        "type": "ExpressionStatement",
+        "start": 34,
+        "end": 47,
+        "expression": {
+          "type": "CallExpression",
+          "start": 34,
+          "end": 46,
+          "callee": {
+            "type": "Identifier",
+            "start": 34,
+            "end": 41,
+            "name": "display"
+          },
+          "arguments": [
+            {
+              "type": "Identifier",
+              "start": 42,
+              "end": 45,
+              "name": "bar"
+            }
+          ],
+          "optional": false
+        }
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 12,
+      "end": 15,
+      "name": "bar"
+    }
+  ],
+  "references": [
+    {
+      "type": "Identifier",
+      "start": 34,
+      "end": 41,
+      "name": "display"
+    }
+  ],
+  "files": [],
+  "imports": [
+    {
+      "name": "./bar.js",
+      "type": "local",
+      "method": "static"
+    }
+  ],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

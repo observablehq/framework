@@ -1,6 +1,11 @@
 import type {MockAgent} from "undici";
 import {type Interceptable} from "undici";
-import type {PostAuthRequestPollResponse, PostAuthRequestResponse} from "../../src/observableApiClient.js";
+import PendingInterceptorsFormatter from "undici/lib/mock/pending-interceptors-formatter.js";
+import type {
+  GetCurrentUserResponse,
+  PostAuthRequestPollResponse,
+  PostAuthRequestResponse
+} from "../../src/observableApiClient.js";
 import {
   type GetProjectResponse,
   type PaginatedList,
@@ -55,9 +60,9 @@ class ObservableApiMock {
     for (const intercept of agent.pendingInterceptors()) {
       if (intercept.origin === getOrigin()) {
         console.log(`Expected all intercepts for ${getOrigin()} to be handled`);
-        // This will include other interceptors that are not related to the
-        // Observable API, but it has a nice output.
-        agent.assertNoPendingInterceptors();
+        agent.assertNoPendingInterceptors({
+          pendingInterceptorsFormatter: new FilteringPendingInterceptorFormatter(getOrigin())
+        });
       }
     }
   }
@@ -66,13 +71,18 @@ class ObservableApiMock {
     return this._agent?.pendingInterceptors();
   }
 
+  addHandler(handler: (pool: Interceptable) => void): ObservableApiMock {
+    this._handlers.push(handler);
+    return this;
+  }
+
   handleGetCurrentUser({
     user = userWithOneWorkspace,
     status = 200
   }: {user?: any; status?: number} = {}): ObservableApiMock {
     const response = status == 200 ? JSON.stringify(user) : emptyErrorBody;
-    const headers = authorizationHeader(status != 401);
-    this._handlers.push((pool) =>
+    const headers = status === 401 ? {} : authorizationHeader(status !== 403);
+    this.addHandler((pool) =>
       pool
         .intercept({path: "/cli/user", headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
@@ -85,17 +95,20 @@ class ObservableApiMock {
     projectSlug,
     projectId = "project123",
     title = "Mock BI",
+    accessLevel = "private",
     status = 200
   }: {
     workspaceLogin: string;
     projectSlug: string;
     projectId?: string;
     title?: string;
+    accessLevel?: string;
     status?: number;
   }): ObservableApiMock {
     const response =
       status === 200
         ? JSON.stringify({
+            accessLevel,
             id: projectId,
             slug: projectSlug,
             title,
@@ -103,8 +116,8 @@ class ObservableApiMock {
             owner: {id: "workspace-id", login: "workspace-login"}
           } satisfies GetProjectResponse)
         : emptyErrorBody;
-    const headers = authorizationHeader(status != 401);
-    this._handlers.push((pool) =>
+    const headers = authorizationHeader(status !== 401 && status !== 403);
+    this.addHandler((pool) =>
       pool
         .intercept({path: `/cli/project/@${workspaceLogin}/${projectSlug}`, headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
@@ -116,12 +129,14 @@ class ObservableApiMock {
     projectId = "project123",
     workspaceId = workspaces[0].id,
     slug = "mock-project",
+    accessLevel = "private",
     status = 200
   }: {
     projectId?: string;
     title?: string;
     slug?: string;
     workspaceId?: string;
+    accessLevel?: string;
     status?: number;
   } = {}): ObservableApiMock {
     const owner = workspaces.find((w) => w.id === workspaceId);
@@ -130,6 +145,7 @@ class ObservableApiMock {
     const response =
       status == 200
         ? JSON.stringify({
+            accessLevel,
             id: projectId,
             slug,
             title: "Mock Project",
@@ -137,8 +153,8 @@ class ObservableApiMock {
             creator
           } satisfies GetProjectResponse)
         : emptyErrorBody;
-    const headers = authorizationHeader(status != 401);
-    this._handlers.push((pool) =>
+    const headers = authorizationHeader(status !== 403);
+    this.addHandler((pool) =>
       pool
         .intercept({path: "/cli/project", method: "POST", headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
@@ -156,8 +172,8 @@ class ObservableApiMock {
     status?: number;
   } = {}): ObservableApiMock {
     const response = status == 200 ? JSON.stringify({title, slug: "bi"}) : emptyErrorBody;
-    const headers = authorizationHeader(status != 401);
-    this._handlers.push((pool) =>
+    const headers = authorizationHeader(status !== 403);
+    this.addHandler((pool) =>
       pool
         .intercept({path: `/cli/project/${projectId}/edit`, method: "POST", headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
@@ -171,7 +187,7 @@ class ObservableApiMock {
     status = 200
   }: {
     workspaceLogin: string;
-    projects: {slug: string; id: string; title?: string}[];
+    projects: {slug: string; id: string; title?: string; accessLevel?: string}[];
     status?: number;
   }): ObservableApiMock {
     const owner = workspaces.find((w) => w.login === workspaceLogin);
@@ -180,11 +196,17 @@ class ObservableApiMock {
     const response =
       status === 200
         ? JSON.stringify({
-            results: projects.map((p) => ({...p, creator, owner, title: p.title ?? "Mock Title"}))
+            results: projects.map((p) => ({
+              ...p,
+              creator,
+              owner,
+              title: p.title ?? "Mock Title",
+              accessLevel: p.accessLevel ?? "private"
+            }))
           } satisfies PaginatedList<GetProjectResponse>)
         : emptyErrorBody;
-    const headers = authorizationHeader(status != 401);
-    this._handlers.push((pool) =>
+    const headers = authorizationHeader(status !== 403);
+    this.addHandler((pool) =>
       pool
         .intercept({path: `/cli/workspace/@${workspaceLogin}/projects`, headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
@@ -198,8 +220,8 @@ class ObservableApiMock {
     status = 200
   }: {projectId?: string; deployId?: string; status?: number} = {}): ObservableApiMock {
     const response = status == 200 ? JSON.stringify({id: deployId}) : emptyErrorBody;
-    const headers = authorizationHeader(status != 401);
-    this._handlers.push((pool) =>
+    const headers = authorizationHeader(status !== 403);
+    this.addHandler((pool) =>
       pool
         .intercept({path: `/cli/project/${projectId}/deploy`, method: "POST", headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
@@ -209,14 +231,20 @@ class ObservableApiMock {
 
   handlePostDeployFile({
     deployId,
+    clientName,
     status = 204,
     repeat = 1
-  }: {deployId?: string; status?: number; repeat?: number} = {}): ObservableApiMock {
+  }: {deployId?: string; clientName?: string; status?: number; repeat?: number} = {}): ObservableApiMock {
     const response = status == 204 ? "" : emptyErrorBody;
-    const headers = authorizationHeader(status != 401);
-    this._handlers.push((pool) => {
+    const headers = authorizationHeader(status !== 403);
+    this.addHandler((pool) => {
       pool
-        .intercept({path: `/cli/deploy/${deployId}/file`, method: "POST", headers: headersMatcher(headers)})
+        .intercept({
+          path: `/cli/deploy/${deployId}/file`,
+          method: "POST",
+          headers: headersMatcher(headers),
+          body: clientName === undefined ? undefined : formDataMatcher({client_name: clientName})
+        })
         .reply(status, response)
         .times(repeat);
     });
@@ -232,10 +260,29 @@ class ObservableApiMock {
             url: `${getObservableUiOrigin()}/@mock-user-ws/test-project`
           })
         : emptyErrorBody;
-    const headers = authorizationHeader(status != 401);
-    this._handlers.push((pool) =>
+    const headers = authorizationHeader(status !== 403);
+    this.addHandler((pool) =>
       pool
         .intercept({path: `/cli/deploy/${deployId}/uploaded`, method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response, {headers: {"content-type": "application/json"}})
+    );
+    return this;
+  }
+
+  handleGetDeploy({
+    deployId,
+    deployStatus = "uploaded",
+    status = 200
+  }: {
+    deployId: string;
+    deployStatus?: string;
+    status?: number;
+  }): ObservableApiMock {
+    const response = status === 200 ? JSON.stringify({id: deployId, status: deployStatus}) : emptyErrorBody;
+    const headers = authorizationHeader(status !== 401);
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: `/cli/deploy/${deployId}`, headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
     );
     return this;
@@ -246,9 +293,17 @@ class ObservableApiMock {
       confirmationCode,
       id: "authRequestId"
     };
-    this._handlers.push((pool) =>
+    this.addHandler((pool) =>
       pool
-        .intercept({path: "/cli/auth/request", method: "POST"})
+        .intercept({
+          path: "/cli/auth/request",
+          method: "POST",
+          body: (body) => {
+            const data = JSON.parse(body);
+            return Array.isArray(data.scopes) && typeof data.deviceDescription === "string";
+          },
+          headers: headersMatcher({"User-Agent": /.+/})
+        })
         .reply(200, JSON.stringify(response), {headers: {"content-type": "application/json"}})
     );
     return this;
@@ -262,7 +317,7 @@ class ObservableApiMock {
       status,
       apiKey: status === "accepted" ? apiKey ?? {id: "apiKey1234", key: validApiKey} : null
     };
-    this._handlers.push((pool) =>
+    this.addHandler((pool) =>
       pool
         .intercept({
           path: "/cli/auth/request/poll",
@@ -282,12 +337,25 @@ function authorizationHeader(valid: boolean) {
  *
  * If `expected` contains an "undefined" value, then it asserts that the header
  * is not present in the actual headers. */
-function headersMatcher(expected: Record<string, string>): (headers: Record<string, string>) => boolean {
+function headersMatcher(expected: Record<string, string | RegExp>): (headers: Record<string, string>) => boolean {
   const lowercaseExpected = Object.fromEntries(Object.entries(expected).map(([key, val]) => [key.toLowerCase(), val]));
   return (actual) => {
     const lowercaseActual = Object.fromEntries(Object.entries(actual).map(([key, val]) => [key.toLowerCase(), val]));
     for (const [key, expected] of Object.entries(lowercaseExpected)) {
-      if (lowercaseActual[key] !== expected) return false;
+      if (typeof expected === "string" && lowercaseActual[key] !== expected) return false;
+      if (expected instanceof RegExp && !lowercaseActual[key].match(expected)) return false;
+    }
+    return true;
+  };
+}
+
+function formDataMatcher(expected: Record<string, string>): (body: string) => boolean {
+  // actually FormData, not string
+  return (actual: any) => {
+    for (const key in expected) {
+      if (!(actual.get(key) === expected[key])) {
+        return false;
+      }
     }
     return true;
   };
@@ -301,23 +369,51 @@ const userBase = {
   has_workspace: false
 };
 
-const workspaces = [
+const workspaces: GetCurrentUserResponse["workspaces"] = [
   {
     id: "0000000000000001",
     login: "mock-user-ws",
     name: "Mock User's Workspace",
-    tier: "pro",
+    tier: "pro_2024",
     type: "team",
-    role: "owner"
+    role: "member",
+    projects_info: []
   },
-
   {
     id: "0000000000000002",
     login: "mock-user-ws-2",
-    name: "Mock User's Second Workspace",
-    tier: "pro",
+    name: "Mock User Second Workspace",
+    tier: "pro_2024",
     type: "team",
-    role: "owner"
+    role: "owner",
+    projects_info: []
+  },
+  {
+    id: "0000000000000003",
+    login: "mock-user-ws-3",
+    name: "Mock User's Third Workspace Wrong Tier",
+    tier: "pro_2024",
+    type: "team",
+    role: "viewer",
+    projects_info: []
+  },
+  {
+    id: "0000000000000004",
+    login: "mock-user-ws-4",
+    name: "Mock User's Fourth Workspace Guest Member as Editor",
+    tier: "pro_2024",
+    type: "team",
+    role: "guest_member",
+    projects_info: [{project_slug: "test-project-1", project_role: "editor"}]
+  },
+  {
+    id: "0000000000000005",
+    login: "mock-user-ws-5",
+    name: "Mock User's Fifth Workspace Guest Member as Viewer",
+    tier: "pro_2024",
+    type: "team",
+    role: "guest_member",
+    projects_info: [{project_slug: "test-project-2", project_role: "viewer"}]
   }
 ];
 
@@ -335,3 +431,18 @@ export const userWithTwoWorkspaces = {
   ...userBase,
   workspaces: workspaces.slice(0, 2)
 };
+
+export const userWithGuestMemberWorkspaces = {
+  ...userBase,
+  workspaces
+};
+
+class FilteringPendingInterceptorFormatter extends PendingInterceptorsFormatter {
+  constructor(private readonly _origin: string) {
+    super();
+  }
+
+  format(interceptors: readonly {origin: string}[]) {
+    return super.format(interceptors.filter((i) => i.origin === this._origin));
+  }
+}

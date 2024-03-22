@@ -1,7 +1,6 @@
 import fs from "node:fs/promises";
 import os from "node:os";
-import path from "node:path";
-import {commandRequiresAuthenticationMessage} from "./commandInstruction.js";
+import op from "node:path";
 import {CliError, isEnoent} from "./error.js";
 
 export interface ConfigEffects {
@@ -33,7 +32,7 @@ interface UserConfig {
 }
 
 export interface DeployConfig {
-  projectId: string | null;
+  projectId?: string | null;
   projectSlug: string | null;
   workspaceLogin: string | null;
 }
@@ -44,7 +43,7 @@ export type ApiKey =
   | {source: "test"; key: string}
   | {source: "login"; key: string};
 
-export async function getObservableApiKey(effects: ConfigEffects = defaultEffects): Promise<ApiKey> {
+export async function getObservableApiKey(effects: ConfigEffects = defaultEffects): Promise<ApiKey | null> {
   const envVar = "OBSERVABLE_TOKEN";
   if (effects.env[envVar]) {
     return {source: "env", envVar, key: effects.env[envVar]};
@@ -53,7 +52,7 @@ export async function getObservableApiKey(effects: ConfigEffects = defaultEffect
   if (config.auth?.key) {
     return {source: "file", filePath: configPath, key: config.auth.key};
   }
-  throw new CliError(commandRequiresAuthenticationMessage);
+  return null;
 }
 
 export async function setObservableApiKey(info: null | {id: string; key: string}): Promise<void> {
@@ -70,7 +69,7 @@ export async function getDeployConfig(
   sourceRoot: string,
   effects: ConfigEffects = defaultEffects
 ): Promise<DeployConfig> {
-  const deployConfigPath = path.join(effects.cwd(), sourceRoot, ".observablehq", "deploy.json");
+  const deployConfigPath = op.join(effects.cwd(), sourceRoot, ".observablehq", "deploy.json");
   let config: object | null = null;
   try {
     const content = await effects.readFile(deployConfigPath, "utf8");
@@ -94,8 +93,8 @@ export async function setDeployConfig(
   newConfig: DeployConfig,
   effects: ConfigEffects = defaultEffects
 ): Promise<void> {
-  const dir = path.join(effects.cwd(), sourceRoot, ".observablehq");
-  const deployConfigPath = path.join(dir, "deploy.json");
+  const dir = op.join(effects.cwd(), sourceRoot, ".observablehq");
+  const deployConfigPath = op.join(dir, "deploy.json");
   const oldConfig = (await getDeployConfig(sourceRoot)) || {};
   const merged = {...oldConfig, ...newConfig};
   await effects.mkdir(dir, {recursive: true});
@@ -105,13 +104,13 @@ export async function setDeployConfig(
 export async function loadUserConfig(
   effects: ConfigEffects = defaultEffects
 ): Promise<{configPath: string; config: UserConfig}> {
-  const homeConfigPath = path.join(effects.homedir(), userConfigName);
+  const homeConfigPath = op.join(effects.homedir(), userConfigName);
 
   function* pathsToTry(): Generator<string> {
-    let cursor = path.resolve(effects.cwd());
+    let cursor = op.resolve(effects.cwd());
     while (true) {
-      yield path.join(cursor, userConfigName);
-      const nextCursor = path.dirname(cursor);
+      yield op.join(cursor, userConfigName);
+      const nextCursor = op.dirname(cursor);
       if (nextCursor === cursor) break;
       cursor = nextCursor;
     }

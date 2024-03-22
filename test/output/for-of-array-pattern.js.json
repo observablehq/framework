@@ -1,0 +1,120 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 36,
+    "body": [
+      {
+        "type": "VariableDeclaration",
+        "start": 0,
+        "end": 9,
+        "declarations": [
+          {
+            "type": "VariableDeclarator",
+            "start": 4,
+            "end": 5,
+            "id": {
+              "type": "Identifier",
+              "start": 4,
+              "end": 5,
+              "name": "a"
+            },
+            "init": null
+          },
+          {
+            "type": "VariableDeclarator",
+            "start": 7,
+            "end": 8,
+            "id": {
+              "type": "Identifier",
+              "start": 7,
+              "end": 8,
+              "name": "b"
+            },
+            "init": null
+          }
+        ],
+        "kind": "let"
+      },
+      {
+        "type": "ForOfStatement",
+        "start": 10,
+        "end": 35,
+        "await": false,
+        "left": {
+          "type": "ArrayPattern",
+          "start": 15,
+          "end": 21,
+          "elements": [
+            {
+              "type": "Identifier",
+              "start": 16,
+              "end": 17,
+              "name": "a"
+            },
+            {
+              "type": "Identifier",
+              "start": 19,
+              "end": 20,
+              "name": "b"
+            }
+          ]
+        },
+        "right": {
+          "type": "ArrayExpression",
+          "start": 25,
+          "end": 33,
+          "elements": [
+            {
+              "type": "ArrayExpression",
+              "start": 26,
+              "end": 32,
+              "elements": [
+                {
+                  "type": "Literal",
+                  "start": 27,
+                  "end": 28,
+                  "value": 1,
+                  "raw": "1"
+                },
+                {
+                  "type": "Literal",
+                  "start": 30,
+                  "end": 31,
+                  "value": 2,
+                  "raw": "2"
+                }
+              ]
+            }
+          ]
+        },
+        "body": {
+          "type": "EmptyStatement",
+          "start": 34,
+          "end": 35
+        }
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 4,
+      "end": 5,
+      "name": "a"
+    },
+    {
+      "type": "Identifier",
+      "start": 7,
+      "end": 8,
+      "name": "b"
+    }
+  ],
+  "references": [],
+  "files": [],
+  "imports": [],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

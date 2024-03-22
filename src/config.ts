@@ -1,10 +1,16 @@
-import {stat} from "node:fs/promises";
-import {basename, dirname, join} from "node:path";
+import {existsSync} from "node:fs";
+import {readFile, stat} from "node:fs/promises";
+import op from "node:path";
+import {basename, dirname, join} from "node:path/posix";
+import {cwd} from "node:process";
+import {pathToFileURL} from "node:url";
+import type MarkdownIt from "markdown-it";
+import {LoaderResolver} from "./dataloader.js";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
-import {parseMarkdown} from "./markdown.js";
+import {createMarkdownIt, parseMarkdown} from "./markdown.js";
+import {isAssetPath, parseRelativeUrl, resolvePath} from "./path.js";
 import {resolveTheme} from "./theme.js";
-import {resolvePath} from "./url.js";
 
 export interface Page {
   name: string;
@@ -35,8 +41,10 @@ export interface Script {
 export interface Config {
   root: string; // defaults to docs
   output: string; // defaults to dist
+  base: string; // defaults to "/"
   title?: string;
-  pages: (Page | Section)[]; // TODO rename to sidebar?
+  sidebar: boolean; // defaults to true if pages isn’t empty
+  pages: (Page | Section)[];
   pager: boolean; // defaults to true
   scripts: Script[]; // defaults to empty array
   head: string; // defaults to empty string
@@ -45,34 +53,48 @@ export interface Config {
   toc: TableOfContents;
   style: null | Style; // defaults to {theme: ["light", "dark"]}
   deploy: null | {workspace: string; project: string};
+  search: boolean; // default to false
+  md: MarkdownIt;
+  loaders: LoaderResolver;
+}
+
+/**
+ * Returns the absolute path to the specified config file, which is specified as a
+ * path relative to the given root (if any). If you want to import this, you should
+ * pass the result to pathToFileURL.
+ */
+function resolveConfig(configPath: string, root = "."): string {
+  return op.join(cwd(), root, configPath);
+}
+
+// By using the modification time of the config, we ensure that we pick up any
+// changes to the config on reload.
+async function importConfig(path: string): Promise<any> {
+  const {mtimeMs} = await stat(path);
+  return (await import(`${pathToFileURL(path).href}?${mtimeMs}`)).default;
 }
 
 export async function readConfig(configPath?: string, root?: string): Promise<Config> {
   if (configPath === undefined) return readDefaultConfig(root);
-  // By using the modification time of the config, we ensure that we pick up any
-  // changes to the config on reload.
-  const importPath = join(process.cwd(), root ?? ".", configPath);
-  const importStat = await stat(importPath);
-  return normalizeConfig((await import(`${importPath}?${importStat.mtimeMs}`)).default, root);
+  return normalizeConfig(await importConfig(resolveConfig(configPath, root)), root);
 }
 
 export async function readDefaultConfig(root?: string): Promise<Config> {
-  for (const ext of [".js", ".ts"]) {
-    try {
-      return await readConfig("observablehq.config" + ext, root);
-    } catch (error: any) {
-      if (error.code !== "ERR_MODULE_NOT_FOUND" && error.code !== "ENOENT") throw error;
-      continue;
-    }
-  }
-  return normalizeConfig(undefined, root);
+  const jsPath = resolveConfig("observablehq.config.js", root);
+  if (existsSync(jsPath)) return normalizeConfig(await importConfig(jsPath), root);
+  const tsPath = resolveConfig("observablehq.config.ts", root);
+  if (!existsSync(tsPath)) return normalizeConfig(undefined, root);
+  await import("tsx/esm"); // lazy tsx
+  return normalizeConfig(await importConfig(tsPath), root);
 }
 
-async function readPages(root: string): Promise<Page[]> {
+async function readPages(root: string, md: MarkdownIt): Promise<Page[]> {
   const pages: Page[] = [];
   for await (const file of visitMarkdownFiles(root)) {
     if (file === "index.md" || file === "404.md") continue;
-    const parsed = await parseMarkdown(join(root, file), {root, path: file});
+    const source = await readFile(join(root, file), "utf8");
+    const parsed = parseMarkdown(source, {path: file, md});
+    if (parsed?.data?.draft) continue;
     const name = basename(file, ".md");
     const page = {path: join("/", dirname(file), name), name: parsed.title ?? "Untitled"};
     if (name === "index") pages.unshift(page);
@@ -91,24 +113,31 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   let {
     root = defaultRoot,
     output = "dist",
+    base = "/",
+    sidebar,
     style,
     theme = "default",
+    search,
     deploy,
     scripts = [],
     head = "",
     header = "",
     footer = `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="${formatIsoDate(
       currentDate
-    )}">${formatLocaleDate(currentDate)}</a>.`
+    )}">${formatLocaleDate(currentDate)}</a>.`,
+    interpreters
   } = spec;
   root = String(root);
   output = String(output);
+  base = normalizeBase(base);
   if (style === null) style = null;
   else if (style !== undefined) style = {path: String(style)};
   else style = {theme: (theme = normalizeTheme(theme))};
-  let {title, pages = await readPages(root), pager = true, toc = true} = spec;
+  const md = createMarkdownIt(spec);
+  let {title, pages = await readPages(root, md), pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
   pages = Array.from(pages, normalizePageOrSection);
+  sidebar = sidebar === undefined ? pages.length > 0 : Boolean(sidebar);
   pager = Boolean(pager);
   scripts = Array.from(scripts, normalizeScript);
   head = String(head);
@@ -116,7 +145,34 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   footer = String(footer);
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
-  return {root, output, title, pages, pager, scripts, head, header, footer, toc, style, deploy};
+  search = Boolean(search);
+  interpreters = normalizeInterpreters(interpreters);
+  return {
+    root,
+    output,
+    base,
+    title,
+    sidebar,
+    pages,
+    pager,
+    scripts,
+    head,
+    header,
+    footer,
+    toc,
+    style,
+    deploy,
+    search,
+    md,
+    loaders: new LoaderResolver({root, interpreters})
+  };
+}
+
+function normalizeBase(base: any): string {
+  base = String(base);
+  if (!base.startsWith("/")) throw new Error(`base must start with slash: ${base}`);
+  if (!base.endsWith("/")) base += "/";
+  return base;
 }
 
 function normalizeTheme(spec: any): string[] {
@@ -148,7 +204,22 @@ function normalizePage(spec: any): Page {
   let {name, path} = spec;
   name = String(name);
   path = String(path);
+  if (isAssetPath(path)) {
+    const u = parseRelativeUrl(join("/", path)); // add leading slash
+    let {pathname} = u;
+    pathname = pathname.replace(/\.html$/i, ""); // remove trailing .html
+    pathname = pathname.replace(/\/$/, "/index"); // add trailing index
+    path = pathname + u.search + u.hash;
+  }
   return {name, path};
+}
+
+function normalizeInterpreters(spec: any): Record<string, string[] | null> {
+  return Object.fromEntries(
+    Object.entries<any>(spec ?? {}).map(([key, value]): [string, string[] | null] => {
+      return [String(key), value == null ? null : Array.from(value, String)];
+    })
+  );
 }
 
 function normalizeToc(spec: any): TableOfContents {
@@ -172,6 +243,6 @@ export function mergeStyle(path: string, style: any, theme: any, defaultStyle: n
     : style === null
     ? null // disable
     : style !== undefined
-    ? {path: resolvePath(path, style)}
+    ? {path: resolvePath(path, String(style))}
     : {theme: normalizeTheme(theme)};
 }

@@ -40,7 +40,32 @@ const bundle = await duckdb.selectBundle({
   }
 });
 
-const logger = new duckdb.ConsoleLogger();
+const logger = new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING);
+
+let db;
+let inserts = [];
+const sources = new Map();
+
+export function registerTable(name, source) {
+  if (source == null) {
+    sources.delete(name);
+    db = DuckDBClient.of(); // drop existing tables and views before re-inserting
+    inserts = Array.from(sources, (i) => db.then((db) => insertSource(db._db, ...i)));
+  } else {
+    sources.set(name, source);
+    db ??= DuckDBClient.of(); // lazy instantiation
+    inserts.push(db.then((db) => insertSource(db._db, name, source)));
+  }
+}
+
+export async function sql(strings, ...args) {
+  return (await getDefaultClient()).query(strings.join("?"), args);
+}
+
+export async function getDefaultClient() {
+  await Promise.all(inserts);
+  return await (db ??= DuckDBClient.of());
+}
 
 export class DuckDBClient {
   constructor(db) {
@@ -66,7 +91,7 @@ export class DuckDBClient {
       throw error;
     }
     return {
-      schema: getArrowTableSchema(batch.value),
+      schema: batch.value.schema,
       async *readRows() {
         try {
           while (!batch.done) {
@@ -81,15 +106,19 @@ export class DuckDBClient {
   }
 
   async query(query, params) {
-    const result = await this.queryStream(query, params);
-    const results = [];
-    for await (const rows of result.readRows()) {
-      for (const row of rows) {
-        results.push(row);
+    const connection = await this._db.connect();
+    let table;
+    try {
+      if (params?.length > 0) {
+        const statement = await connection.prepare(query);
+        table = await statement.query(...params);
+      } else {
+        table = await connection.query(query);
       }
+    } finally {
+      await connection.close();
     }
-    results.schema = result.schema;
-    return results;
+    return table;
   }
 
   async queryRow(query, params) {
@@ -116,18 +145,19 @@ export class DuckDBClient {
   }
 
   async describeTables() {
-    const tables = await this.query("SHOW TABLES");
-    return tables.map(({name}) => ({name}));
+    return Array.from(await this.query("SHOW TABLES"), ({name}) => ({name}));
   }
 
   async describeColumns({table} = {}) {
-    const columns = await this.query(`DESCRIBE ${this.escape(table)}`);
-    return columns.map(({column_name, column_type, null: nullable}) => ({
-      name: column_name,
-      type: getDuckDBType(column_type),
-      nullable: nullable !== "NO",
-      databaseType: column_type
-    }));
+    return Array.from(
+      await this.query(`DESCRIBE ${this.escape(table)}`),
+      ({column_name, column_type, null: nullable}) => ({
+        name: column_name,
+        type: getDuckDBType(column_type),
+        nullable: nullable !== "NO",
+        databaseType: column_type
+      })
+    );
   }
 
   static async of(sources = {}, config = {}) {
@@ -139,44 +169,50 @@ export class DuckDBClient {
       config = {...config, query: {...config.query, castBigIntToDouble: true}};
     }
     await db.open(config);
-    await Promise.all(
-      Object.entries(sources).map(async ([name, source]) => {
-        source = await source;
-        if (isFileAttachment(source)) {
-          // bare file
-          await insertFile(db, name, source);
-        } else if (isArrowTable(source)) {
-          // bare arrow table
-          await insertArrowTable(db, name, source);
-        } else if (Array.isArray(source)) {
-          // bare array of objects
-          await insertArray(db, name, source);
-        } else if (isArqueroTable(source)) {
-          await insertArqueroTable(db, name, source);
-        } else if ("data" in source) {
-          // data + options
-          const {data, ...options} = source;
-          if (isArrowTable(data)) {
-            await insertArrowTable(db, name, data, options);
-          } else {
-            await insertArray(db, name, data, options);
-          }
-        } else if ("file" in source) {
-          // file + options
-          const {file, ...options} = source;
-          await insertFile(db, name, file, options);
-        } else {
-          throw new Error(`invalid source: ${source}`);
-        }
-      })
-    );
+    await Promise.all(Object.entries(sources).map(([name, source]) => insertSource(db, name, source)));
     return new DuckDBClient(db);
+  }
+
+  static sql() {
+    return this.of.apply(this, arguments).then((db) => db.sql.bind(db));
   }
 }
 
 Object.defineProperty(DuckDBClient.prototype, "dialect", {
   value: "duckdb"
 });
+
+async function insertSource(database, name, source) {
+  source = await source;
+  if (isFileAttachment(source)) return insertFile(database, name, source);
+  if (isArrowTable(source)) return insertArrowTable(database, name, source);
+  if (Array.isArray(source)) return insertArray(database, name, source);
+  if (isArqueroTable(source)) return insertArqueroTable(database, name, source);
+  if (typeof source === "string") return insertUrl(database, name, source);
+  if (source && typeof source === "object") {
+    if ("data" in source) {
+      // data + options
+      const {data, ...options} = source;
+      if (isArrowTable(data)) return insertArrowTable(database, name, data, options);
+      return insertArray(database, name, data, options);
+    }
+    if ("file" in source) {
+      // file + options
+      const {file, ...options} = source;
+      return insertFile(database, name, file, options);
+    }
+  }
+  throw new Error(`invalid source: ${source}`);
+}
+
+async function insertUrl(database, name, url) {
+  const connection = await database.connect();
+  try {
+    await connection.query(`CREATE VIEW '${name}' AS FROM '${url}'`);
+  } finally {
+    await connection.close();
+  }
+}
 
 async function insertFile(database, name, file, options) {
   const url = await file.url();
@@ -223,6 +259,9 @@ async function insertFile(database, name, file, options) {
         }
         if (/\.parquet$/i.test(file.name)) {
           return await connection.query(`CREATE VIEW '${name}' AS SELECT * FROM parquet_scan('${file.name}')`);
+        }
+        if (/\.(db|ddb|duckdb)$/i.test(file.name)) {
+          return await connection.query(`ATTACH '${file.name}' AS ${name} (READ_ONLY)`);
         }
         throw new Error(`unknown file type: ${file.mimeType}`);
     }
@@ -335,49 +374,4 @@ function isArrowTable(value) {
     value.schema &&
     Array.isArray(value.schema.fields)
   );
-}
-
-function getArrowTableSchema(table) {
-  return table.schema.fields.map(getArrowFieldSchema);
-}
-
-function getArrowFieldSchema(field) {
-  return {
-    name: field.name,
-    type: getArrowType(field.type),
-    nullable: field.nullable,
-    databaseType: `${field.type}`
-  };
-}
-
-// https://github.com/apache/arrow/blob/89f9a0948961f6e94f1ef5e4f310b707d22a3c11/js/src/enum.ts#L140-L141
-function getArrowType(type) {
-  switch (type.typeId) {
-    case 2: // Int
-      return "integer";
-    case 3: // Float
-    case 7: // Decimal
-      return "number";
-    case 4: // Binary
-    case 15: // FixedSizeBinary
-      return "buffer";
-    case 5: // Utf8
-      return "string";
-    case 6: // Bool
-      return "boolean";
-    case 8: // Date
-    case 9: // Time
-    case 10: // Timestamp
-      return "date";
-    case 12: // List
-    case 16: // FixedSizeList
-      return "array";
-    case 13: // Struct
-    case 14: // Union
-      return "object";
-    case 11: // Interval
-    case 17: // Map
-    default:
-      return "other";
-  }
 }

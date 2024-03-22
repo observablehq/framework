@@ -1,0 +1,27 @@
+{
+  "data": null,
+  "title": null,
+  "style": null,
+  "code": [
+    {
+      "id": "08961c06",
+      "node": {
+        "body": {
+          "type": "Literal",
+          "start": 0,
+          "end": 4,
+          "value": "}\"",
+          "raw": "'}\"'"
+        },
+        "declarations": null,
+        "references": [],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": false,
+        "inline": true,
+        "input": "'}\"'"
+      }
+    }
+  ]
+}

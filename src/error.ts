@@ -1,11 +1,18 @@
 import assert from "node:assert";
 
+interface HttpErrorOptions extends ErrorOptions {
+  details?: unknown;
+}
+
 export class HttpError extends Error {
   public readonly statusCode: number;
+  public readonly details?: unknown;
 
-  constructor(message: string, statusCode: number, options?: ErrorOptions) {
-    super(message, options);
+  constructor(message: string, statusCode: number, options?: HttpErrorOptions) {
+    const {details, ...errorOptions} = options ?? {};
+    super(message, errorOptions);
     this.statusCode = statusCode;
+    this.details = details;
     Error.captureStackTrace(this, HttpError);
   }
 }
@@ -20,6 +27,17 @@ export function isSystemError(error: unknown): error is NodeJS.ErrnoException {
 
 export function isHttpError(error: unknown): error is HttpError {
   return error instanceof Error && "statusCode" in error;
+}
+
+export function isApiError(error: unknown): error is HttpError & {details: {errors: {code: string}[]}} {
+  return (
+    isHttpError(error) &&
+    !!error.details &&
+    typeof error.details === "object" &&
+    "errors" in error.details &&
+    Array.isArray(error.details.errors) &&
+    error.details.errors.every((e) => typeof e === "object" && "code" in e)
+  );
 }
 
 /** Throw this to indicate the CLI should exit with a non-zero exit code. */
@@ -53,5 +71,19 @@ export class CliError extends Error {
     }
     assert.equal(error.exitCode, exitCode, `Expected exit code to be ${exitCode}, but got ${error.exitCode}`);
     assert.equal(error.print, print, `Expected print to be ${print}, but got ${error.print}`);
+  }
+
+  /** Use in tests to check if a thrown error is the error you expected. */
+  static match(
+    error: unknown,
+    {message, exitCode, print}: {message?: RegExp | string; exitCode?: number; print?: boolean} = {}
+  ): error is CliError {
+    if (!(error instanceof Error)) return false;
+    if (!(error instanceof CliError)) return false;
+    if (message !== undefined && typeof message === "string" && error.message !== message) return false;
+    if (message !== undefined && message instanceof RegExp && !message.test(error.message)) return false;
+    if (exitCode !== undefined && error.exitCode !== exitCode) return false;
+    if (print !== undefined && error.print !== print) return false;
+    return true;
   }
 }

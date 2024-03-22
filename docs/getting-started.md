@@ -11,10 +11,9 @@
 
 .crop {
   border-radius: 8px;
-  border: solid 1px #333;
   margin: 1rem;
   max-width: calc(100% - 2rem);
-  box-shadow: 0 6px 12px 6px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 0.75px rgba(128, 128, 128, 0.2), 0 6px 12px 6px rgba(0, 0, 0, 0.4);
   aspect-ratio: 3024 / 1888;
   object-fit: cover;
   object-position: 0 100%;
@@ -85,21 +84,17 @@ These are just first steps. You can continue to develop projects after publishin
 Framework includes a helper script (`observable create`) for creating new projects. After a few quick prompts — where to create the project, your preferred package manager, *etc.* — it will stamp out a fresh project from a template.
 
 <div class="tip">
-  <p>Framework is a <a href="https://nodejs.org/">Node.js</a> application published to npm. You must have <a href="https://nodejs.org/en/download">Node.js 20.6 or later</a> installed before you can install Framework. Framework is a command-line interface (CLI) and runs in the terminal.</p>
+  <p>Framework is a <a href="https://nodejs.org/">Node.js</a> application published to npm. You must have <a href="https://nodejs.org/en/download">Node.js 18 or later</a> installed before you can install Framework. Framework is a command-line interface (CLI) and runs in the terminal.</p>
   <p>If you run into difficulty following this tutorial, we’re happy to help! Please visit the <a href="https://talk.observablehq.com">Observable forum</a> or our <a href="https://github.com/observablehq/framework/discussions">GitHub discussions</a>.</p>
 </div>
 
 To create a new project with npm, run:
 
-<pre data-copy>npm init @observablehq</pre>
+<pre data-copy>npm init <span class="win">"</span>@observablehq<span class="win">"</span></pre>
 
 If you prefer Yarn, run:
 
-<pre data-copy>yarn create @observablehq</pre>
-
-<div class="warning" label="Note to early access participants">The commands above will not work until Framework is published to npm and made publicly available. Until then, you’ll need to install <a href="https://classic.yarnpkg.com/en/docs/install">Yarn 1.x</a> and run this instead:
-<pre data-copy><code class="language-sh">yarn global add https://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@github.com/observablehq/framework</code></pre>
-<pre data-copy><code class="language-sh">$(yarn global bin)/observable create</code></pre></div>
+<pre data-copy>yarn create <span class="win">"</span>@observablehq<span class="win">"</span></pre>
 
 You can run the above command anywhere, but you may want to `cd` to your `~/Development` directory first (or wherever you do local development).
 
@@ -197,10 +192,12 @@ And that’s it! After some downloading, copying, and installing, your new proje
 <span class="muted">│</span>
 <span class="green">◇</span>  Installed! 🎉
 <span class="muted">│</span>
-<span class="green">◇</span>  Next steps…
-<span class="muted">│</span>
-<span class="muted">│</span>  <span class="focus">cd ./hello-framework</span>
-<span class="muted">│</span>  <span class="focus">yarn dev</span>
+<span class="green">◇</span>  Next steps… <span class="muted">──────────╮</span>
+<span class="muted">│</span>                        <span class="muted">│</span>
+<span class="muted">│</span>  <span class="focus">cd ./hello-framework</span>  <span class="muted">│</span>
+<span class="muted">│</span>  <span class="focus">yarn dev</span>              <span class="muted">│</span>
+<span class="muted">│</span>                        <span class="muted">│</span>
+<span class="muted">├────────────────────────╯</span>
 <span class="muted">│</span>
 <span class="muted">└</span>  Problems? <u><a href="https://observablehq.com/framework/getting-started" style="color: inherit;">https://observablehq.com/framework/getting-started</a></u></pre>
 
@@ -212,7 +209,7 @@ Next, `cd` into your new project folder.
 
 Framework’s local development server lets you preview your site in the browser as you make rapid changes. The preview server generates pages on-the-fly: as you edit files in your editor, changes are instantly streamed to your browser.
 
-<div class="tip">You can work offline with the preview server, but you must be connected to the internet to <a href="./javascript/imports">import libraries</a> from npm. In the future, we intend to support self-hosting imported libraries; please upvote <a href="https://github.com/observablehq/framework/issues/20">#20</a> and <a href="https://github.com/observablehq/framework/issues/360">#360</a> if you are interested in this feature.</div>
+<div class="tip">You can develop offline, but you must connect to the internet to <a href="./javascript/imports">import new libraries</a> from npm. Framework self-hosts imports: modules are downloaded from npm and stored in a local cache the first time you import them, and are included in <code>dist</code> when you build your project. In the future, we also plan to support importing from <code>node_modules</code>; please upvote <a href="https://github.com/observablehq/framework/issues/360">#360</a> if you are interested in this feature.</div>
 
 To start the preview server using npm:
 
@@ -224,7 +221,7 @@ Or with Yarn:
 
 You should see something like this:
 
-<pre data-copy="none"><b class="green">Observable Framework</b> v1.0.0
+<pre data-copy="none"><b class="green">Observable Framework</b> v1.3.0
 ↳ <u><a href="http://127.0.0.1:3000/" style="color: inherit;">http://127.0.0.1:3000/</a></u></pre>
 
 <div class="tip">
@@ -235,7 +232,10 @@ You should see something like this:
 Now visit <http://127.0.0.1:3000> in your browser, which should look like:
 
 <figure class="wide">
-  <img loading="lazy" src="./getting-started/hello-framework.webp" style="aspect-ratio: 3248 / 2112;">
+  <picture>
+    <source srcset="./getting-started/hello-framework-dark.webp" media="(prefers-color-scheme: dark)">
+    <img loading="lazy" src="./getting-started/hello-framework.webp" style="aspect-ratio: 3248 / 2112;">
+  </picture>
   <figcaption>The default home page (<code>docs/index.md</code>) after creating a new project.</figcaption>
 </figure>
 
@@ -246,7 +246,10 @@ Live preview means that as you save changes, your in-browser preview updates ins
 To experience live preview, open <code>docs/index.md</code> in your preferred text editor — below we show Visual Studio Code — and position your browser window so that you can see your editor and browser side-by-side. If you then replace the text “Hello, Observable Framework” with “Hi, Mom!” and save, you should see:
 
 <figure class="wide">
-  <img loading="lazy" src="./getting-started/hi-mom.webp" class="crop">
+  <picture>
+    <source srcset="./getting-started/hi-mom-dark.webp" media="(prefers-color-scheme: dark)">
+    <img loading="lazy" src="./getting-started/hi-mom.webp" class="crop">
+  </picture>
   <figcaption>No seriously — hi, Mom! Thanks for supporting me all these years.</figcaption>
 </figure>
 
@@ -260,7 +263,7 @@ Now let’s add a page for our weather dashboard. Create a new file `docs/weathe
 # Weather report
 
 ```js
-1 + 2
+display(1 + 2);
 ```
 ````
 
@@ -269,7 +272,10 @@ To see the new page in the sidebar, reload the page.
 If you click on the **Weather report** link in the sidebar, it’ll take you to <http://127.0.0.1:3000/weather>, where you should see:
 
 <figure class="wide">
-  <img loading="lazy" src="./getting-started/hello-weather.webp" class="crop">
+  <picture>
+    <source srcset="./getting-started/hello-weather-dark.webp" media="(prefers-color-scheme: dark)">
+    <img loading="lazy" src="./getting-started/hello-weather.webp" class="crop">
+  </picture>
   <figcaption>The humble beginnings of a local weather dashboard.</figcaption>
 </figure>
 
@@ -295,7 +301,7 @@ async function json(url) {
 const station = await json(`https://api.weather.gov/points/&dollar;{latitude},&dollar;{longitude}`);
 const forecast = await json(station.properties.forecastHourly);
 
-process.stdout.write(JSON.stringify(forecast));</pre>
+process.stdout.write(JSON.stringify(forecast));</code></pre>
 
 ```js
 const location = view(Locator([-122.47, 37.8]));
@@ -370,11 +376,18 @@ display(forecast);
 This looks like:
 
 <figure class="wide">
-  <img loading="lazy" src="./getting-started/hello-data.webp" class="crop">
+  <picture>
+    <source srcset="./getting-started/hello-data-dark.webp" media="(prefers-color-scheme: dark)">
+    <img loading="lazy" src="./getting-started/hello-data.webp" class="crop">
+  </picture>
   <figcaption>Using <code>FileAttachment</code> to load data.</figcaption>
 </figure>
 
-The built-in [`display`](./javascript/display) function displays the specified value, a bit like `console.log` in the browser’s console. As you may have noticed above with <code class="language-js">1 + 2</code>, `display` is called implicitly when a code block contains an expression.
+The built-in [`display`](./javascript/display) function displays the specified value, a bit like `console.log` in the browser’s console. As you can see below, `display` is called [implicitly](./javascript/display#implicit-display) when a code block contains an expression:
+
+```js echo
+1 + 2
+```
 
 For convenience, here’s a copy of the data so you can explore it here:
 
@@ -390,8 +403,9 @@ This is a GeoJSON `Feature` object of a `Polygon` geometry representing the grid
 </figure>
 
 ```js
+const ACCESS_TOKEN = "pk.eyJ1Ijoib2JzZXJ2YWJsZWhxLWVuZy1hZG1pbiIsImEiOiJjbHMxaTBwdDkwYnRsMmpxeG12M2kzdWFvIn0.Ga6eIWP2YNQrEW4FzHRcTQ";
 const map = L.map(document.querySelector("#map"));
-const tile = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+const tile = L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}@2x?access_token=${ACCESS_TOKEN}`, {attribution: '© <a href="https://www.mapbox.com/feedback/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
 const geo = L.geoJSON().addData(forecast).addTo(map);
 map.fitBounds(geo.getBounds(), {padding: [50, 50]});
 invalidation.then(() => map.remove());
@@ -406,20 +420,22 @@ const forecast = FileAttachment("./data/forecast.json").json();
 Now let’s add a chart using <a href="./lib/plot">Observable Plot</a>. Framework includes a variety of <a href="./javascript/imports#implicit-imports">recommended libraries</a> by default, including `Plot`, and you can always <a href="./javascript/imports">import more</a> from npm. Replace the `display(forecast)` code block with the following code:
 
 ```js run=false
-Plot.plot({
-  title: "Hourly temperature forecast",
-  x: {type: "utc", ticks: "day", label: null},
-  y: {grid: true, inset: 10, label: "Degrees (F)"},
-  marks: [
-    Plot.lineY(forecast.properties.periods, {
-      x: "startTime",
-      y: "temperature",
-      z: null, // varying color, not series
-      stroke: "temperature",
-      curve: "step-after"
-    })
-  ]
-})
+display(
+  Plot.plot({
+    title: "Hourly temperature forecast",
+    x: {type: "utc", ticks: "day", label: null},
+    y: {grid: true, inset: 10, label: "Degrees (F)"},
+    marks: [
+      Plot.lineY(forecast.properties.periods, {
+        x: "startTime",
+        y: "temperature",
+        z: null, // varying color, not series
+        stroke: "temperature",
+        curve: "step-after"
+      })
+    ]
+  })
+);
 ```
 
 <div class="note">Because this is JSON data, <code>startTime</code> is a <code>string</code> rather than a <code>Date</code>. Setting the <code>type</code> of the <code>x</code> scale to <code>utc</code> tells Plot to interpret these values as temporal rather than ordinal.</div>
@@ -427,7 +443,10 @@ Plot.plot({
 You should now see:
 
 <figure class="wide">
-  <img loading="lazy" src="./getting-started/hello-plot.webp" class="crop">
+  <picture>
+    <source srcset="./getting-started/hello-plot-dark.webp" media="(prefers-color-scheme: dark)">
+    <img loading="lazy" src="./getting-started/hello-plot.webp" class="crop">
+  </picture>
   <figcaption>Using <code>Plot</code> to make a chart.</figcaption>
 </figure>
 
@@ -465,7 +484,7 @@ function temperaturePlot(data, {width} = {}) {
 Now you can call `temperaturePlot` to display the forecast anywhere on the page:
 
 ```js run=false
-temperaturePlot(forecast)
+display(temperaturePlot(forecast));
 ```
 
 <div class="tip">JavaScript can be extracted into standalone modules (<code>.js</code> files) that you can <a href="./javascript/imports">import</a> into Markdown. This lets you share code across pages, write unit tests for components, and more.</div>
@@ -506,7 +525,10 @@ toc: false
 ```
 
 <figure class="wide">
-  <img loading="lazy" src="./getting-started/hello-grid.webp" class="crop">
+  <picture>
+    <source srcset="./getting-started/hello-grid-dark.webp" media="(prefers-color-scheme: dark)">
+    <img loading="lazy" src="./getting-started/hello-grid.webp" class="crop">
+  </picture>
   <figcaption>Adopting a grid layout and the <code>dashboard</code> theme.</figcaption>
 </figure>
 
@@ -583,7 +605,7 @@ Lastly, you can enter an optional deploy message. Deploy messages are shown on O
 <span class="blue">└</span>
 </pre>
 
-<div class="tip">Deploy messages can be set using <code>yarn deploy <nobr>--message</nobr></code>. This is especially useful for continuous deployment from a git repository: the message can include the SHA, author, and message of the latest commit.</div>
+<div class="tip">Deploy messages can be set using <code>deploy <nobr>--message</nobr></code>. This is especially useful for continuous deployment from a git repository: the message can include the SHA, author, and message of the latest commit.</div>
 
 When deploy completes, Framework will show your project’s URL on observablehq.cloud. From there you can invite people to your private workspace to see your project, or make your project public so anyone can see it.
 
@@ -627,9 +649,9 @@ json.dump(forecast, sys.stdout)
 
 To write the data loader in R, name it <code>forecast.json.R</code>. Or as shell script, <code>forecast.json.sh</code>. You get the idea. See [Data loaders: Routing](./loaders#routing) for more. The beauty of this approach is that you can leverage the strengths (and libraries) of multiple languages, and still get instant updates in the browser as you develop.
 
-### Deploying via GitHub Actions
+### Deploying automatically
 
-You can schedule builds and deploy your project automatically on commit, or on a schedule. See <a href="https://github.com/observablehq/framework/blob/main/.github/workflows/deploy.yml">this documentation site’s deploy.yml</a> for an example.
+You can schedule builds and deploy your project automatically on commit, or on a schedule. See [deploying](./deploying) for more details.
 
 ### Ask for help, or share your feedback
 
