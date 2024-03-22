@@ -28,6 +28,8 @@ When the deploy command finishes, it prints a link to observablehq.cloud where y
 
 <div class="note">The deploy command creates a file at <code>docs/.observablehq/deploy.json</code> with information on where to deploy the project. This file is required for automated deploys. You will need to commit this file to git to deploy via GitHub Actions. (If you have configured a source root besides <code>docs</code>, the file will be placed there instead.)</div>
 
+<div class="tip">To see more available options when deploying:<pre><code class="language-sh">npm run deploy -- --help</code></pre></div>
+
 ## Automated deploys
 
 To set up automatic deploys (also known as *continuous deployment* or *CD*), we recommend [GitHub Actions](https://github.com/features/actions). In your git repository, create and commit a file at `.github/workflows/deploy.yml`. Here is a starting example:
