@@ -87,9 +87,12 @@ Cell 1-2   |   Cell 2-2   |    Cell 3-2
 [external link](<https://en.wikipedia.org/wiki/Tar_(computing)>)
 ```
 
+For privacy and convenience, links to external resources are given a default `rel` attribute of [`noreferrer`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noreferrer) and [`noopener`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noopener), and a default `target` attribute of [`_blank`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#target). Hence by default an external link will open in a new window and not pass the (potentially sensitive) referrer to the (potentially untrusted) external site. You can override this behavior by specifying the `rel` or `target` attribute explicitly. For example `<a href="https://example.com" target="_self">` will open in the same window, and `<a href="https://acme.com" rel="">` will allow the referrer.
+
 ## Images
 
 ```md
+![A horse](./horse.jpg)
 ![A happy kitten](https://placekitten.com/200/300)
 ```
 
@@ -110,5 +113,29 @@ This produces:
   <summary>Click me</summary>
   This text is not visible by default.
 </details>
+
+You can put Markdown inside of HTML by surrounding it with blank lines:
+
+<div class="grid grid-cols-4">
+  <div class="card">
+
+## Card title
+
+This is **Markdown** inside of _HTML_!
+
+  </div>
+</div>
+
+```md run=false
+<div class="grid grid-cols-4">
+  <div class="card">
+
+## Card title
+
+This is **Markdown** inside of _HTML_!
+
+  </div>
+</div>
+```
 
 Also see [Hypertext Literal](./lib/htl) for generating dynamic HTML in JavaScript.

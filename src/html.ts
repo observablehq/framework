@@ -145,6 +145,13 @@ export function rewriteHtml(
     script.setAttribute("src", (isJavaScript(script) ? resolveScript : maybeResolveFile)(src));
   }
 
+  for (const a of document.querySelectorAll<HTMLAnchorElement>("a[href]")) {
+    const href = a.getAttribute("href")!;
+    if (!/^(\w+:)/.test(href)) continue;
+    if (!a.hasAttribute("target")) a.setAttribute("target", "_blank");
+    if (!a.hasAttribute("rel")) a.setAttribute("rel", "noopener noreferrer");
+  }
+
   // Syntax highlighting for <code> elements. The code could contain an inline
   // expression within, or other HTML, but we only highlight text nodes that are
   // direct children of code elements.
