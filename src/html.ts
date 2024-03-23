@@ -145,7 +145,7 @@ export function rewriteHtml(
     script.setAttribute("src", (isJavaScript(script) ? resolveScript : maybeResolveFile)(src));
   }
 
-  for (const a of document.querySelectorAll<HTMLScriptElement>("a[href]")) {
+  for (const a of document.querySelectorAll<HTMLAnchorElement>("a[href]")) {
     const href = a.getAttribute("href")!;
     if (!/^(\w+:)/.test(href)) continue;
     if (!a.hasAttribute("target")) a.setAttribute("target", "_blank");
