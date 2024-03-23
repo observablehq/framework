@@ -87,7 +87,7 @@ Cell 1-2   |   Cell 2-2   |    Cell 3-2
 [external link](<https://en.wikipedia.org/wiki/Tar_(computing)>)
 ```
 
-For increased privacy and safety, links that point to external resources are created by default with the `rel="noreferrer noopener"` attribute. Their `target` attribute defaults to `_blank`, asking the browser to open a new window (use an explicit markup `<a target="_self" href="…">` to open the link in the same window).
+For privacy and convenience, links to external resources are given a default `rel` attribute of [`noreferrer`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noreferrer) and [`noopener`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noopener), and a default `target` attribute of [`_blank`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#target). Hence by default an external link will open in a new window and not pass the (potentially sensitive) referrer to the (potentially untrusted) external site. You can override this behavior by specifying the `rel` or `target` attribute explicitly. For example `<a href="https://example.com" target="_self">` will open in the same window, and `<a href="https://acme.com" rel="">` will allow the referrer.
 
 ## Images
 
