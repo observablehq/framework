@@ -19,10 +19,10 @@ export interface SearchIndexEffects {
 const defaultEffects: SearchIndexEffects = {logger: console};
 
 const indexOptions = {
-  fields: ["title", "text", "keywords"],
+  fields: ["title", "text", "keywords"], // fields to return with search results
   storeFields: ["title"],
   processTerm(term: string) {
-    return (term.match(/\p{N}/gu)?.length ?? 0) > 6 ? null : term.slice(0, 15).toLowerCase(); // fields to return with search results
+    return (term.match(/\p{N}/gu)?.length ?? 0) > 6 ? null : term.slice(0, 15).toLowerCase();
   }
 };
 
