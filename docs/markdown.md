@@ -114,4 +114,28 @@ This produces:
   This text is not visible by default.
 </details>
 
+You can put Markdown inside of HTML by surrounding it with blank lines:
+
+<div class="grid grid-cols-4">
+  <div class="card">
+
+## Card title
+
+This is **Markdown** inside of _HTML_!
+
+  </div>
+</div>
+
+```md run=false
+<div class="grid grid-cols-4">
+  <div class="card">
+
+## Card title
+
+This is **Markdown** inside of _HTML_!
+
+  </div>
+</div>
+```
+
 Also see [Hypertext Literal](./lib/htl) for generating dynamic HTML in JavaScript.
