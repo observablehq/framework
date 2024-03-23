@@ -92,6 +92,7 @@
   top: 0;
   bottom: 0;
   left: -272px;
+  margin-left: calc(max(0px, (100vw - 1252px)/2 - 272px));
   box-sizing: border-box;
   padding: 0 0.5rem 1rem 0.5rem;
   overflow-y: auto;
@@ -237,6 +238,7 @@
   right: 0;
   bottom: 0;
   overflow-y: auto;
+  margin-right: calc(max(0px, (100vw - 1252px)/2 - 272px));
 }
 
 #observablehq-toc nav {
