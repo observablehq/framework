@@ -92,6 +92,7 @@ For privacy and convenience, links to external resources are given a default `re
 ## Images
 
 ```md
+![A horse](./horse.jpg)
 ![A happy kitten](https://placekitten.com/200/300)
 ```
 
