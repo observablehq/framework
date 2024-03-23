@@ -87,6 +87,8 @@ Cell 1-2   |   Cell 2-2   |    Cell 3-2
 [external link](<https://en.wikipedia.org/wiki/Tar_(computing)>)
 ```
 
+For increased privacy and safety, links that point to external resources are created by default with the `rel="noreferrer noopener"` attribute. Their `target` attribute defaults to `_blank`, asking the browser to open a new window (use an explicit markup `<a target="_self" href="…">` to open the link in the same window).
+
 ## Images
 
 ```md
