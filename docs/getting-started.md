@@ -98,12 +98,12 @@ If you prefer Yarn, run:
 
 You can run the above command anywhere, but you may want to `cd` to your `~/Development` directory first (or wherever you do local development).
 
-The first prompt asks where to create your new project. Enter `./hello-framework` to create a directory named `hello-framework` within the current directory. Or just hit Enter, as this is conveniently the default. (The `./` is implied, so `./hello-framework` is equivalent to `hello-framework`. You can create a project in a different directory by entering a path that starts with `../` or `~/` or `/`.)
+The first prompt asks where to create your new project. Enter `hello-framework` to create a directory named `hello-framework` within the current directory. Or just hit Enter, as this is conveniently the default. (You can create a project in a different directory by entering a relative or absolute path; on macOS or Linux, such paths start with `../` or `~/` or `/`.)
 
 <pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="focus">◆</span>  Where to create your project?
-<span class="focus">│</span>  ./hello-framework<span class="invert">&nbsp;</span>
+<span class="focus">│</span>  hello-framework<span class="invert">&nbsp;</span>
 <span class="focus">└</span></pre>
 
 Next you’ll enter the project’s title. A project’s title appears in the sidebar as well as on all pages. You can hit Enter here to accept the default title derived from the directory name.
@@ -111,7 +111,7 @@ Next you’ll enter the project’s title. A project’s title appears in the si
 <pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Where to create your project?
-<span class="muted">│</span>  <span class="muted">./hello-framework</span>
+<span class="muted">│</span>  <span class="muted">hello-framework</span>
 <span class="muted">│</span>
 <span class="focus">◆</span>  What to title your project?
 <span class="focus">│</span>  <span class="muted"><span class="invert">H</span>ello Framework</span>
@@ -137,7 +137,7 @@ If you use npm or Yarn as your preferred package manager, declare your allegianc
 <pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Where to create your project?
-<span class="muted">│</span>  <span class="muted">./hello-framework</span>
+<span class="muted">│</span>  <span class="muted">hello-framework</span>
 <span class="muted">│</span>
 <span class="green">◇</span>  What to title your project?
 <span class="muted">│</span>  <span class="muted">Hello Framework</span>
@@ -156,7 +156,7 @@ If you’ll continue developing your project after you finish this tutorial and 
 <pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Where to create your project?
-<span class="muted">│</span>  <span class="muted">./hello-framework</span>
+<span class="muted">│</span>  <span class="muted">hello-framework</span>
 <span class="muted">│</span>
 <span class="green">◇</span>  What to title your project?
 <span class="muted">│</span>  <span class="muted">Hello Framework</span>
@@ -176,7 +176,7 @@ And that’s it! After some downloading, copying, and installing, your new proje
 <pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Where to create your project?
-<span class="muted">│</span>  <span class="muted">./hello-framework</span>
+<span class="muted">│</span>  <span class="muted">hello-framework</span>
 <span class="muted">│</span>
 <span class="green">◇</span>  What to title your project?
 <span class="muted">│</span>  <span class="muted">Hello Framework</span>
@@ -194,7 +194,7 @@ And that’s it! After some downloading, copying, and installing, your new proje
 <span class="muted">│</span>
 <span class="green">◇</span>  Next steps… <span class="muted">──────────╮</span>
 <span class="muted">│</span>                        <span class="muted">│</span>
-<span class="muted">│</span>  <span class="focus">cd ./hello-framework</span>  <span class="muted">│</span>
+<span class="muted">│</span>  <span class="focus">cd hello-framework</span>  <span class="muted">│</span>
 <span class="muted">│</span>  <span class="focus">yarn dev</span>              <span class="muted">│</span>
 <span class="muted">│</span>                        <span class="muted">│</span>
 <span class="muted">├────────────────────────╯</span>

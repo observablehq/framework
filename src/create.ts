@@ -46,7 +46,7 @@ const defaultEffects: CreateEffects = {
 export async function create(options = {}, effects: CreateEffects = defaultEffects): Promise<void> {
   const {clack} = effects;
   clack.intro(`${inverse(" observable create ")} ${faint(`v${process.env.npm_package_version}`)}`);
-  const defaultRootPath = "./hello-framework";
+  const defaultRootPath = "hello-framework";
   const defaultRootPathError = validateRootPath(defaultRootPath);
   await clack.group(
     {
