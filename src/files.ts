@@ -52,6 +52,11 @@ export function* visitMarkdownFiles(root: string): Generator<string> {
 export function* visitFiles(root: string): Generator<string> {
   const visited = new Set<number>();
   const queue: string[] = [(root = normalize(root))];
+  try {
+    visited.add(statSync(join(root, ".observablehq")).ino);
+  } catch {
+    // ignore the .observablehq directory, if it exists
+  }
   for (const path of queue) {
     const status = statSync(path);
     if (status.isDirectory()) {

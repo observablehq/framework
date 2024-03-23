@@ -42,7 +42,7 @@ describe("build", () => {
 
       await rm(actualDir, {recursive: true, force: true});
       if (generate) console.warn(`! generating ${expectedDir}`);
-      const config = Object.assign(await readConfig(undefined, path), {output: outputDir});
+      const config = {...await readConfig(undefined, path), output: outputDir};
       await build({config, addPublic}, new TestEffects(outputDir));
 
       // In the addPublic case, we don’t want to test the contents of the public
