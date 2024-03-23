@@ -1,3 +1,4 @@
+import {createHash} from "node:crypto";
 import {existsSync, readFileSync} from "node:fs";
 import {stat} from "node:fs/promises";
 import op from "node:path";
@@ -8,7 +9,7 @@ import type MarkdownIt from "markdown-it";
 import {LoaderResolver} from "./dataloader.js";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
-import {createMarkdownIt, parseMarkdown} from "./markdown.js";
+import {createMarkdownIt, parseMarkdownMetadata} from "./markdown.js";
 import {isAssetPath, parseRelativeUrl, resolvePath} from "./path.js";
 import {resolveTheme} from "./theme.js";
 
@@ -88,18 +89,29 @@ export async function readDefaultConfig(root?: string): Promise<Config> {
   return normalizeConfig(await importConfig(tsPath), root);
 }
 
+let cachedPages: {key: string; pages: Page[]} | null = null;
+
 function readPages(root: string, md: MarkdownIt): Page[] {
-  const pages: Page[] = [];
+  const files: {file: string; source: string}[] = [];
+  const hash = createHash("sha256");
   for (const file of visitMarkdownFiles(root)) {
     if (file === "index.md" || file === "404.md") continue;
     const source = readFileSync(join(root, file), "utf8");
-    const parsed = parseMarkdown(source, {path: file, md});
+    files.push({file, source});
+    hash.update(file).update(source);
+  }
+  const key = hash.digest("hex");
+  if (cachedPages?.key === key) return cachedPages.pages;
+  const pages: Page[] = [];
+  for (const {file, source} of files) {
+    const parsed = parseMarkdownMetadata(source, {path: file, md});
     if (parsed?.data?.draft) continue;
     const name = basename(file, ".md");
     const page = {path: join("/", dirname(file), name), name: parsed.title ?? "Untitled"};
     if (name === "index") pages.unshift(page);
     else pages.push(page);
   }
+  cachedPages = {key, pages};
   return pages;
 }
 
@@ -109,7 +121,15 @@ export function setCurrentDate(date = new Date()): void {
   currentDate = date;
 }
 
+// The config is used as a cache key for other operations; for example the pages
+// are used as a cache key for search indexing and the previous & next links in
+// the footer. When given the same spec (because import returned the same
+// module), we want to return the same Config instance.
+const configCache = new WeakMap<any, Config>();
+
 export function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Config {
+  const cachedConfig = configCache.get(spec);
+  if (cachedConfig) return cachedConfig;
   let {
     root = defaultRoot,
     output = "dist",
@@ -168,6 +188,7 @@ export function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Config {
   };
   if (pages === undefined) Object.defineProperty(config, "pages", {get: () => readPages(root, md)});
   if (sidebar === undefined) Object.defineProperty(config, "sidebar", {get: () => config.pages.length > 0});
+  configCache.set(spec, config);
   return config;
 }
 

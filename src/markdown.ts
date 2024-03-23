@@ -343,6 +343,16 @@ export function parseMarkdown(input: string, options: ParseOptions): MarkdownPag
   };
 }
 
+/** Like parseMarkdown, but optimized to return only metadata. */
+export function parseMarkdownMetadata(input: string, options: ParseOptions): Pick<MarkdownPage, "data" | "title"> {
+  const {md, path} = options;
+  const {content, data} = matter(input, {});
+  return {
+    data: isEmpty(data) ? null : data,
+    title: data.title ?? findTitle(md.parse(content, {code: [], startLine: 0, currentLine: 0, path})) ?? null
+  };
+}
+
 function getHtml(
   key: "head" | "header" | "footer",
   data: Record<string, any>,

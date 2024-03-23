@@ -4,7 +4,7 @@ import {normalizeConfig as config, mergeToc, readConfig, setCurrentDate} from ".
 import {LoaderResolver} from "../src/dataloader.js";
 
 describe("readConfig(undefined, root)", () => {
-  before(() => setCurrentDate(new Date("2024-01-11T01:02:03")));
+  before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   it("imports the config file at the specified root", async () => {
     const {md, loaders, ...config} = await readConfig(undefined, "test/input/build/config");
     assert(md instanceof MarkdownIt);
@@ -28,7 +28,7 @@ describe("readConfig(undefined, root)", () => {
       head: "",
       header: "",
       footer:
-        'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-11T01:02:03">Jan 11, 2024</a>.',
+        'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
       deploy: {
         workspace: "acme",
         project: "bi"
@@ -54,7 +54,7 @@ describe("readConfig(undefined, root)", () => {
       head: "",
       header: "",
       footer:
-        'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-11T01:02:03">Jan 11, 2024</a>.',
+        'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
       deploy: null,
       search: false
     });
