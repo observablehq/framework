@@ -223,9 +223,9 @@ export class PreviewServer {
     }
   };
 
-  _handleConnection = async (socket: WebSocket, req: IncomingMessage) => {
+  _handleConnection = (socket: WebSocket, req: IncomingMessage) => {
     if (req.url === "/_observablehq") {
-      handleWatch(socket, req, await this._readConfig());
+      handleWatch(socket, req, this._readConfig()); // can’t await; messages would be dropped
     } else {
       socket.close();
     }
@@ -273,8 +273,8 @@ function getWatchFiles(resolvers: Resolvers): Iterable<string> {
   return files;
 }
 
-function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
-  const {root, loaders} = config;
+function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Promise<Config>) {
+  let config: Config | null = null;
   let path: string | null = null;
   let hash: string | null = null;
   let html: string[] | null = null;
@@ -289,7 +289,8 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
   console.log(faint("socket open"), req.url);
 
   async function watcher(event: WatchEventType, force = false) {
-    if (!path) throw new Error("not initialized");
+    if (!path || !config) throw new Error("not initialized");
+    const {root, loaders} = config;
     switch (event) {
       case "rename": {
         markdownWatcher?.close();
@@ -356,6 +357,8 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
     path = join(dirname(path), basename(path, ".html") + ".md");
+    config = await configPromise;
+    const {root, loaders} = config;
     const source = await readFile(join(root, path), "utf8");
     const page = parseMarkdown(source, {path, ...config});
     const resolvers = await getResolvers(page, {root, path, loaders});
@@ -402,7 +405,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
     console.log(faint("socket close"), req.url);
   });
 
-  function send(message) {
+  function send(message: any) {
     console.log(faint("↓"), message);
     socket.send(JSON.stringify(message));
   }
