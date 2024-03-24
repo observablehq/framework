@@ -38,7 +38,7 @@ export interface MarkdownPage {
   code: MarkdownCode[];
 }
 
-export interface ParseContext {
+interface ParseContext {
   code: MarkdownCode[];
   startLine: number;
   currentLine: number;
@@ -340,7 +340,7 @@ export function parseMarkdown(input: string, options: ParseOptions): MarkdownPag
     body,
     footer: getHtml("footer", data, options),
     data,
-    title: data.title ?? findTitle(tokens) ?? null,
+    title: data.title !== undefined ? data.title : findTitle(tokens),
     style: getStyle(data, options),
     code
   };
@@ -353,7 +353,10 @@ export function parseMarkdownMetadata(input: string, options: ParseOptions): Pic
   const data = normalizeFrontMatter(frontMatter);
   return {
     data,
-    title: data.title ?? findTitle(md.parse(content, {code: [], startLine: 0, currentLine: 0, path})) ?? null
+    title:
+      data.title !== undefined
+        ? data.title
+        : findTitle(md.parse(content, {code: [], startLine: 0, currentLine: 0, path}))
   };
 }
 
@@ -387,7 +390,7 @@ function getStyle(data: FrontMatter, {path, style = null}: ParseOptions): string
 }
 
 // TODO Make this smarter.
-function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | undefined {
+function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | null {
   for (const [i, token] of tokens.entries()) {
     if (token.type === "heading_open" && token.tag === "h1") {
       const next = tokens[i + 1];
@@ -402,4 +405,5 @@ function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | undefined 
       }
     }
   }
+  return null;
 }
