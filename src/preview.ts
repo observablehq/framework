@@ -435,7 +435,7 @@ function getFiles({files, resolveFile}: Resolvers): Map<string, string> {
 }
 
 function getTables({data}: MarkdownPage): Map<string, string> {
-  return new Map(Object.entries(data?.sql ?? {}));
+  return new Map(Object.entries(data.sql ?? {}));
 }
 
 type CodePatch = {removed: string[]; added: string[]};
