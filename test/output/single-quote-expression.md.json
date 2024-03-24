@@ -9,9 +9,9 @@
         "body": {
           "type": "Literal",
           "start": 0,
-          "end": 4,
+          "end": 5,
           "value": "}\"",
-          "raw": "'}\"'"
+          "raw": "\"}\\\"\""
         },
         "declarations": null,
         "references": [],
@@ -20,7 +20,7 @@
         "expression": true,
         "async": false,
         "inline": true,
-        "input": "'}\"'"
+        "input": "\"}\\\"\""
       }
     }
   ]

@@ -1,8 +1,9 @@
 import {createHash} from "node:crypto";
-import {readFileSync, statSync} from "node:fs";
+import {existsSync, readFileSync, statSync} from "node:fs";
 import {join} from "node:path/posix";
 import type {Program} from "acorn";
 import {resolvePath} from "../path.js";
+import {getTypeScriptPath, transpileTypeScript} from "../typescript.js";
 import {findFiles} from "./files.js";
 import {findImports} from "./imports.js";
 import {parseProgram} from "./parse.js";
@@ -70,7 +71,11 @@ export function getModuleHash(root: string, path: string): string {
  * source root, or undefined if the module does not exist or has invalid syntax.
  */
 export function getModuleInfo(root: string, path: string): ModuleInfo | undefined {
-  const key = join(root, path);
+  let key = join(root, path);
+  if (!existsSync(key) && path.endsWith(".js")) {
+    const tskey = getTypeScriptPath(key);
+    if (existsSync(tskey)) key = tskey;
+  }
   let mtimeMs: number;
   try {
     ({mtimeMs} = statSync(key));
@@ -84,6 +89,7 @@ export function getModuleInfo(root: string, path: string): ModuleInfo | undefine
     let body: Program;
     try {
       source = readFileSync(key, "utf-8");
+      if (key.endsWith(".ts")) source = transpileTypeScript(source);
       body = parseProgram(source);
     } catch {
       moduleInfoCache.delete(key); // delete stale entry

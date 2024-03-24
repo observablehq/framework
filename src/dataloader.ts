@@ -10,6 +10,7 @@ import {FileWatchers} from "./fileWatchers.js";
 import {getFileHash, getFileInfo} from "./javascript/module.js";
 import type {Logger, Writer} from "./logger.js";
 import {cyan, faint, green, red, yellow} from "./tty.js";
+import {getTypeScriptPath} from "./typescript.js";
 
 const runningCommands = new Map<string, Promise<string>>();
 
@@ -122,7 +123,12 @@ export class LoaderResolver {
 
   getWatchPath(path: string): string | undefined {
     const exactPath = join(this.root, path);
-    return existsSync(exactPath) ? exactPath : this.find(path)?.path;
+    if (existsSync(exactPath)) return exactPath;
+    if (path.endsWith(".js")) {
+      const tspath = getTypeScriptPath(exactPath);
+      if (existsSync(tspath)) return tspath;
+    }
+    return this.find(path)?.path;
   }
 
   watchFiles(path: string, watchPaths: Iterable<string>, callback: (name: string) => void) {
