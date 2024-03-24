@@ -14,6 +14,7 @@ import send from "send";
 import type {WebSocket} from "ws";
 import {WebSocketServer} from "ws";
 import type {Config} from "./config.js";
+import {readConfig} from "./config.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import type {FileWatchers} from "./fileWatchers.js";
@@ -32,7 +33,8 @@ import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, link} from "./tty.js";
 
 export interface PreviewOptions {
-  config: Config;
+  config?: string;
+  root?: string;
   hostname: string;
   open?: boolean;
   port?: number;
@@ -44,13 +46,25 @@ export async function preview(options: PreviewOptions): Promise<PreviewServer> {
 }
 
 export class PreviewServer {
-  private readonly _config: Config;
+  private readonly _config: string | undefined;
+  private readonly _root: string | undefined;
   private readonly _server: ReturnType<typeof createServer>;
   private readonly _socketServer: WebSocketServer;
   private readonly _verbose: boolean;
 
-  private constructor({config, server, verbose}: {config: Config; server: Server; verbose: boolean}) {
+  private constructor({
+    config,
+    root,
+    server,
+    verbose
+  }: {
+    config?: string;
+    root?: string;
+    server: Server;
+    verbose: boolean;
+  }) {
     this._config = config;
+    this._root = root;
     this._verbose = verbose;
     this._server = server;
     this._server.on("request", this._handleRequest);
@@ -86,8 +100,12 @@ export class PreviewServer {
     return new PreviewServer({server, verbose, ...options});
   }
 
+  async _readConfig() {
+    return readConfig(this._config, this._root);
+  }
+
   _handleRequest: RequestListener = async (req, res) => {
-    const config = this._config;
+    const config = await this._readConfig();
     const {root, loaders} = config;
     if (this._verbose) console.log(faint(req.method!), req.url);
     try {
@@ -205,9 +223,9 @@ export class PreviewServer {
     }
   };
 
-  _handleConnection = async (socket: WebSocket, req: IncomingMessage) => {
+  _handleConnection = (socket: WebSocket, req: IncomingMessage) => {
     if (req.url === "/_observablehq") {
-      handleWatch(socket, req, this._config);
+      handleWatch(socket, req, this._readConfig()); // can’t await; messages would be dropped
     } else {
       socket.close();
     }
@@ -255,8 +273,8 @@ function getWatchFiles(resolvers: Resolvers): Iterable<string> {
   return files;
 }
 
-function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
-  const {root, loaders} = config;
+function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Promise<Config>) {
+  let config: Config | null = null;
   let path: string | null = null;
   let hash: string | null = null;
   let html: string[] | null = null;
@@ -271,7 +289,8 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
   console.log(faint("socket open"), req.url);
 
   async function watcher(event: WatchEventType, force = false) {
-    if (!path) throw new Error("not initialized");
+    if (!path || !config) throw new Error("not initialized");
+    const {root, loaders} = config;
     switch (event) {
       case "rename": {
         markdownWatcher?.close();
@@ -338,6 +357,8 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
     path = join(dirname(path), basename(path, ".html") + ".md");
+    config = await configPromise;
+    const {root, loaders} = config;
     const source = await readFile(join(root, path), "utf8");
     const page = parseMarkdown(source, {path, ...config});
     const resolvers = await getResolvers(page, {root, path, loaders});
@@ -384,7 +405,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
     console.log(faint("socket close"), req.url);
   });
 
-  function send(message) {
+  function send(message: any) {
     console.log(faint("↓"), message);
     socket.send(JSON.stringify(message));
   }

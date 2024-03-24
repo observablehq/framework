@@ -1,15 +1,15 @@
 const files = new Map();
 
 export function registerFile(name, file) {
-  const url = new URL(name, location).href;
-  if (file == null) files.delete(url);
-  else files.set(url, file);
+  const href = new URL(name, location).href;
+  if (file == null) files.delete(href);
+  else files.set(href, file);
 }
 
-export function FileAttachment(name, base = location.href) {
+export function FileAttachment(name, base = location) {
   if (new.target !== undefined) throw new TypeError("FileAttachment is not a constructor");
-  const url = new URL(name, base).href;
-  const file = files.get(url);
+  const href = new URL(name, base).href;
+  const file = files.get(href);
   if (!file) throw new Error(`File not found: ${name}`);
   const {path, mimeType, lastModified} = file;
   return new FileAttachmentImpl(new URL(path, location).href, name.split("/").pop(), mimeType, lastModified);
@@ -29,8 +29,8 @@ async function dsv(file, delimiter, {array = false, typed = false} = {}) {
 
 export class AbstractFile {
   constructor(name, mimeType = "application/octet-stream", lastModified) {
-    Object.defineProperty(this, "mimeType", {value: `${mimeType}`, enumerable: true});
     Object.defineProperty(this, "name", {value: `${name}`, enumerable: true});
+    Object.defineProperty(this, "mimeType", {value: `${mimeType}`, enumerable: true});
     if (lastModified !== undefined) Object.defineProperty(this, "lastModified", {value: Number(lastModified), enumerable: true}); // prettier-ignore
   }
   async blob() {
@@ -96,12 +96,12 @@ export class AbstractFile {
 }
 
 class FileAttachmentImpl extends AbstractFile {
-  constructor(url, name, mimeType, lastModified) {
+  constructor(href, name, mimeType, lastModified) {
     super(name, mimeType, lastModified);
-    Object.defineProperty(this, "_url", {value: url});
+    Object.defineProperty(this, "href", {value: href});
   }
   async url() {
-    return `${await this._url}`;
+    return this.href;
   }
 }
 

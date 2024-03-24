@@ -1,5 +1,6 @@
-import {existsSync} from "node:fs";
-import {readFile} from "node:fs/promises";
+import {createHash} from "node:crypto";
+import {existsSync, readFileSync} from "node:fs";
+import {stat} from "node:fs/promises";
 import op from "node:path";
 import {basename, dirname, join} from "node:path/posix";
 import {cwd} from "node:process";
@@ -8,8 +9,8 @@ import type MarkdownIt from "markdown-it";
 import {LoaderResolver} from "./dataloader.js";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
-import {createMarkdownIt, parseMarkdown} from "./markdown.js";
-import {resolvePath} from "./path.js";
+import {createMarkdownIt, parseMarkdownMetadata} from "./markdown.js";
+import {isAssetPath, parseRelativeUrl, resolvePath} from "./path.js";
 import {resolveTheme} from "./theme.js";
 
 export interface Page {
@@ -67,32 +68,50 @@ function resolveConfig(configPath: string, root = "."): string {
   return op.join(cwd(), root, configPath);
 }
 
+// By using the modification time of the config, we ensure that we pick up any
+// changes to the config on reload.
+async function importConfig(path: string): Promise<any> {
+  const {mtimeMs} = await stat(path);
+  return (await import(`${pathToFileURL(path).href}?${mtimeMs}`)).default;
+}
+
 export async function readConfig(configPath?: string, root?: string): Promise<Config> {
   if (configPath === undefined) return readDefaultConfig(root);
-  return normalizeConfig((await import(pathToFileURL(resolveConfig(configPath, root)).href)).default, root);
+  return normalizeConfig(await importConfig(resolveConfig(configPath, root)), root);
 }
 
 export async function readDefaultConfig(root?: string): Promise<Config> {
   const jsPath = resolveConfig("observablehq.config.js", root);
-  if (existsSync(jsPath)) return normalizeConfig((await import(pathToFileURL(jsPath).href)).default, root);
+  if (existsSync(jsPath)) return normalizeConfig(await importConfig(jsPath), root);
   const tsPath = resolveConfig("observablehq.config.ts", root);
   if (!existsSync(tsPath)) return normalizeConfig(undefined, root);
   await import("tsx/esm"); // lazy tsx
-  return normalizeConfig((await import(pathToFileURL(tsPath).href)).default, root);
+  return normalizeConfig(await importConfig(tsPath), root);
 }
 
-async function readPages(root: string, md: MarkdownIt): Promise<Page[]> {
-  const pages: Page[] = [];
-  for await (const file of visitMarkdownFiles(root)) {
+let cachedPages: {key: string; pages: Page[]} | null = null;
+
+function readPages(root: string, md: MarkdownIt): Page[] {
+  const files: {file: string; source: string}[] = [];
+  const hash = createHash("sha256");
+  for (const file of visitMarkdownFiles(root)) {
     if (file === "index.md" || file === "404.md") continue;
-    const source = await readFile(join(root, file), "utf8");
-    const parsed = parseMarkdown(source, {path: file, md});
+    const source = readFileSync(join(root, file), "utf8");
+    files.push({file, source});
+    hash.update(file).update(source);
+  }
+  const key = hash.digest("hex");
+  if (cachedPages?.key === key) return cachedPages.pages;
+  const pages: Page[] = [];
+  for (const {file, source} of files) {
+    const parsed = parseMarkdownMetadata(source, {path: file, md});
     if (parsed?.data?.draft) continue;
     const name = basename(file, ".md");
     const page = {path: join("/", dirname(file), name), name: parsed.title ?? "Untitled"};
     if (name === "index") pages.unshift(page);
     else pages.push(page);
   }
+  cachedPages = {key, pages};
   return pages;
 }
 
@@ -102,7 +121,15 @@ export function setCurrentDate(date = new Date()): void {
   currentDate = date;
 }
 
-export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Promise<Config> {
+// The config is used as a cache key for other operations; for example the pages
+// are used as a cache key for search indexing and the previous & next links in
+// the footer. When given the same spec (because import returned the same
+// module), we want to return the same Config instance.
+const configCache = new WeakMap<any, Config>();
+
+export function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Config {
+  const cachedConfig = configCache.get(spec);
+  if (cachedConfig) return cachedConfig;
   let {
     root = defaultRoot,
     output = "dist",
@@ -127,10 +154,10 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   else if (style !== undefined) style = {path: String(style)};
   else style = {theme: (theme = normalizeTheme(theme))};
   const md = createMarkdownIt(spec);
-  let {title, pages = await readPages(root, md), pager = true, toc = true} = spec;
+  let {title, pages, pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
-  pages = Array.from(pages, normalizePageOrSection);
-  sidebar = sidebar === undefined ? pages.length > 0 : Boolean(sidebar);
+  if (pages !== undefined) pages = Array.from(pages, normalizePageOrSection);
+  if (sidebar !== undefined) sidebar = Boolean(sidebar);
   pager = Boolean(pager);
   scripts = Array.from(scripts, normalizeScript);
   head = String(head);
@@ -140,7 +167,7 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
   search = Boolean(search);
   interpreters = normalizeInterpreters(interpreters);
-  return {
+  const config = {
     root,
     output,
     base,
@@ -159,6 +186,10 @@ export async function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Pro
     md,
     loaders: new LoaderResolver({root, interpreters})
   };
+  if (pages === undefined) Object.defineProperty(config, "pages", {get: () => readPages(root, md)});
+  if (sidebar === undefined) Object.defineProperty(config, "sidebar", {get: () => config.pages.length > 0});
+  configCache.set(spec, config);
+  return config;
 }
 
 function normalizeBase(base: any): string {
@@ -197,7 +228,13 @@ function normalizePage(spec: any): Page {
   let {name, path} = spec;
   name = String(name);
   path = String(path);
-  if (path.endsWith("/")) path = `${path}index`;
+  if (isAssetPath(path)) {
+    const u = parseRelativeUrl(join("/", path)); // add leading slash
+    let {pathname} = u;
+    pathname = pathname.replace(/\.html$/i, ""); // remove trailing .html
+    pathname = pathname.replace(/\/$/, "/index"); // add trailing index
+    path = pathname + u.search + u.hash;
+  }
   return {name, path};
 }
 

@@ -89,7 +89,7 @@ export function findAssets(html: string, path: string): Assets {
       } else {
         globalImports.add(src);
       }
-      if (script.getAttribute("type")?.toLowerCase() === "module") {
+      if (script.getAttribute("type")?.toLowerCase() === "module" && !script.hasAttribute("async")) {
         staticImports.add(src); // modulepreload
       }
     } else {
@@ -143,6 +143,13 @@ export function rewriteHtml(
   for (const script of document.querySelectorAll<HTMLScriptElement>("script[src]")) {
     const src = decodeURI(script.getAttribute("src")!);
     script.setAttribute("src", (isJavaScript(script) ? resolveScript : maybeResolveFile)(src));
+  }
+
+  for (const a of document.querySelectorAll<HTMLAnchorElement>("a[href]")) {
+    const href = a.getAttribute("href")!;
+    if (!/^(\w+:)/.test(href)) continue;
+    if (!a.hasAttribute("target")) a.setAttribute("target", "_blank");
+    if (!a.hasAttribute("rel")) a.setAttribute("rel", "noopener noreferrer");
   }
 
   // Syntax highlighting for <code> elements. The code could contain an inline

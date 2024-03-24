@@ -118,7 +118,9 @@ export async function loginInner(
 }
 
 export async function logout(effects = defaultEffects) {
+  const {logger} = effects;
   await effects.setObservableApiKey(null);
+  logger.log(`You are now logged out of ${OBSERVABLE_UI_ORIGIN.hostname}.`);
 }
 
 export async function whoami(effects = defaultEffects) {

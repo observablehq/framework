@@ -9,8 +9,8 @@ import {parseMarkdown} from "./markdown.js";
 import {faint, strikethrough} from "./tty.js";
 
 // Avoid reindexing too often in preview.
-const indexCache = new WeakMap();
-const reindexingDelay = 10 * 60 * 1000; // 10 minutes
+const indexCache = new WeakMap<Config["pages"], {json: string; freshUntil: number}>();
+const reindexDelay = 10 * 60 * 1000; // 10 minutes
 
 export interface SearchIndexEffects {
   logger: Logger;
@@ -19,17 +19,18 @@ export interface SearchIndexEffects {
 const defaultEffects: SearchIndexEffects = {logger: console};
 
 const indexOptions = {
-  fields: ["title", "text", "keywords"],
+  fields: ["title", "text", "keywords"], // fields to return with search results
   storeFields: ["title"],
-  processTerm(term) {
-    return term.match(/\p{N}/gu)?.length > 6 ? null : term.slice(0, 15).toLowerCase(); // fields to return with search results
+  processTerm(term: string) {
+    return (term.match(/\p{N}/gu)?.length ?? 0) > 6 ? null : term.slice(0, 15).toLowerCase();
   }
 };
 
 export async function searchIndex(config: Config, effects = defaultEffects): Promise<string> {
   const {root, pages, search, md} = config;
   if (!search) return "{}";
-  if (indexCache.has(config) && indexCache.get(config).freshUntil > +new Date()) return indexCache.get(config).json;
+  const cached = indexCache.get(pages);
+  if (cached && cached.freshUntil > Date.now()) return cached.json;
 
   // Get all the listed pages (which are indexed by default)
   const pagePaths = new Set(["/index"]);
@@ -40,7 +41,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
 
   // Index the pages
   const index = new MiniSearch(indexOptions);
-  for await (const file of visitMarkdownFiles(root)) {
+  for (const file of visitMarkdownFiles(root)) {
     const sourcePath = join(root, file);
     const source = await readFile(sourcePath, "utf8");
     const path = `/${join(dirname(file), basename(file, ".md"))}`;
@@ -84,7 +85,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
     )
   );
 
-  indexCache.set(config, {json, freshUntil: +new Date() + reindexingDelay});
+  indexCache.set(pages, {json, freshUntil: Date.now() + reindexDelay});
   return json;
 }
 

@@ -179,7 +179,8 @@ try {
       const {config, root, host, port, open} = values;
       await import("../preview.js").then(async (preview) =>
         preview.preview({
-          config: await readConfig(config, root),
+          config,
+          root,
           hostname: host!,
           port: port === undefined ? undefined : +port,
           open
