@@ -44,7 +44,7 @@ export interface Config {
   output: string; // defaults to dist
   base: string; // defaults to "/"
   title?: string;
-  sidebar: boolean; // defaults to true if pages isn’t empty
+  sidebar: "hidden" | boolean; // defaults to true if pages isn’t empty
   pages: (Page | Section)[];
   pager: boolean; // defaults to true
   scripts: Script[]; // defaults to empty array
@@ -157,7 +157,7 @@ export function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Config {
   let {title, pages, pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
   if (pages !== undefined) pages = Array.from(pages, normalizePageOrSection);
-  if (sidebar !== undefined) sidebar = Boolean(sidebar);
+  if (sidebar !== undefined) sidebar = normalizeSidebar(sidebar);
   pager = Boolean(pager);
   scripts = Array.from(scripts, normalizeScript);
   head = String(head);
@@ -274,4 +274,15 @@ export function mergeStyle(
     : theme === undefined
     ? defaultStyle
     : {theme};
+}
+
+// Validates the specified required string against the allowed list of keywords.
+function keyword<T extends Lowercase<string>>(input: any, name: string, allowed: T[]): T {
+  const i = `${input}`.toLowerCase() as T;
+  if (!allowed.includes(i)) throw new Error(`invalid ${name}: ${input}`);
+  return i;
+}
+
+export function normalizeSidebar(sidebar: unknown): Config["sidebar"] {
+  return typeof sidebar === "string" ? keyword(sidebar, "sidebar", ["hidden"]) : Boolean(sidebar);
 }

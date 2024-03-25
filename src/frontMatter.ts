@@ -1,5 +1,6 @@
 import matter from "gray-matter";
-import {normalizeTheme} from "./config.js";
+import type {Config} from "./config.js";
+import {normalizeSidebar, normalizeTheme} from "./config.js";
 import {yellow} from "./tty.js";
 
 export interface FrontMatter {
@@ -10,7 +11,7 @@ export interface FrontMatter {
   index?: boolean;
   keywords?: string[];
   draft?: boolean;
-  sidebar?: boolean;
+  sidebar?: Config["sidebar"];
   sql?: {[key: string]: string};
 }
 
@@ -32,7 +33,7 @@ export function normalizeFrontMatter(spec: any = {}): FrontMatter {
   if (spec == null || typeof spec !== "object") return frontMatter;
   const {title, sidebar, toc, index, keywords, draft, sql, style, theme} = spec;
   if (title !== undefined) frontMatter.title = stringOrNull(title);
-  if (sidebar !== undefined) frontMatter.sidebar = Boolean(sidebar);
+  if (sidebar !== undefined) frontMatter.sidebar = maybeNormalizeSidebar(sidebar);
   if (toc !== undefined) frontMatter.toc = normalizeToc(toc);
   if (index !== undefined) frontMatter.index = Boolean(index);
   if (keywords !== undefined) frontMatter.keywords = normalizeKeywords(keywords);
@@ -66,4 +67,12 @@ function normalizeSql(spec: unknown): {[key: string]: string} {
   const sql: {[key: string]: string} = {};
   for (const key in spec) sql[key] = String(spec[key]);
   return sql;
+}
+
+function maybeNormalizeSidebar(sidebar: unknown): Config["sidebar"] | undefined {
+  try {
+    return normalizeSidebar(sidebar);
+  } catch {
+    // ignore invalid
+  }
 }

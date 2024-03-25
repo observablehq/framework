@@ -108,7 +108,13 @@ The project’s title. If specified, this text is used for the link to the home 
 
 ## sidebar
 
-Whether to show the sidebar. Defaults to true if **pages** is not empty.
+Whether to create and show the sidebar. One of:
+
+- *true* (default) — create a sidebar
+- *false* (default) — do not create a sidebar
+- *hidden* — create an initally-hidden sidebar
+
+If **pages** is non-empty, **sidebar** defaults to true; otherwise it defaults to *false*. If **sidebar** is *true*, the initial sidebar visibility depends on the window width. The user can open or close the sidebar by clicking its toggle or using the Command-B keyboard shortcut. The display state of the sidebar is persisted in [session storage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage). If **sidebar** is *hidden*, the sidebar is initially hidden regardless of window width.
 
 ## pages
 
