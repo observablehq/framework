@@ -304,7 +304,6 @@ export interface ParseOptions {
   head?: Config["head"];
   header?: Config["header"];
   footer?: Config["footer"];
-  build?: boolean;
 }
 
 export function createMarkdownIt({
@@ -327,8 +326,8 @@ export function createMarkdownIt({
 }
 
 export function parseMarkdown(input: string, options: ParseOptions): MarkdownPage {
-  const {md, path, build} = options;
-  const {content, data} = readFrontMatter(input, build);
+  const {md, path} = options;
+  const {content, data} = readFrontMatter(input);
   const code: MarkdownCode[] = [];
   const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
   const tokens = md.parse(content, context);

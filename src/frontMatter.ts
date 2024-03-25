@@ -1,5 +1,6 @@
 import matter from "gray-matter";
 import {normalizeTheme} from "./config.js";
+import {yellow} from "./tty.js";
 
 export interface FrontMatter {
   title?: string | null;
@@ -13,26 +14,14 @@ export interface FrontMatter {
   sql?: {[key: string]: string};
 }
 
-interface FrontMatterException {
-  reason: string;
-  mark: {buffer: string};
-}
-
-export function readFrontMatter(input: string, build?: boolean): {content: string; data: FrontMatter} {
+export function readFrontMatter(input: string): {content: string; data: FrontMatter} {
   try {
     const {content, data} = matter(input, {});
     return {content, data: normalizeFrontMatter(data)};
-  } catch (error) {
-    if (!build && "mark" in (error as any)) {
-      const {
-        reason,
-        mark: {buffer}
-      } = error as FrontMatterException;
-      return {
-        content: `<div class="observablehq--inspect observablehq--error">Invalid front matter\n${reason}</div>
-        <pre>${String(buffer).slice(0, -1)}</pre>\n\n${input.slice(buffer.length + 6)}`,
-        data: {}
-      };
+  } catch (error: any) {
+    if ("mark" in error) {
+      console.warn(`${yellow("Ignoring invalid front matter")}\n${error.reason}\n${error.mark.buffer.slice(0, -1)}`);
+      return {data: {}, content: input.slice(error.mark.buffer.length + 6)};
     }
     throw error;
   }
