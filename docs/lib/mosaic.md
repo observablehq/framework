@@ -3,7 +3,7 @@ sql:
   trips: nyc-taxi.parquet
 ---
 
-# Mosaic vgplot <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" target="_blank" class="observablehq-version-badge" data-version="^1.3.0" title="Added in 1.3.0"></a>
+# Mosaic vgplot <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" class="observablehq-version-badge" data-version="^1.3.0" title="Added in 1.3.0"></a>
 
 [Mosaic](https://uwdata.github.io/mosaic/) is a system for linking data visualizations, tables, and inputs, leveraging [DuckDB](./duckdb) for scalable processing. Mosaic includes an interactive grammar of graphics, [Mosaic vgplot](https://uwdata.github.io/mosaic/vgplot/), built on [Observable Plot](./plot). With vgplot, you can interactively visualize and explore millions — even billions — of data points.
 

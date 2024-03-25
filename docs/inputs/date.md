@@ -1,6 +1,6 @@
 # Date input
 
-<a href="https://github.com/observablehq/inputs/blob/main/README.md#date" target="_blank">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/date.js" target="_blank">Source</a> · The date input specifies a date.
+<a href="https://github.com/observablehq/inputs/blob/main/README.md#date">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/date.js">Source</a> · The date input specifies a date.
 
 ```js echo
 const date = view(Inputs.date());
