@@ -1,12 +1,13 @@
 {
   "data": {
     "title": "YAML",
-    "style": [
+    "keywords": [
       "one",
       "two"
-    ]
+    ],
+    "style": "custom.css"
   },
   "title": "YAML",
-  "style": "./one,two",
+  "style": "./custom.css",
   "code": []
 }

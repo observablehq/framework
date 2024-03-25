@@ -104,10 +104,10 @@ function readPages(root: string, md: MarkdownIt): Page[] {
   if (cachedPages?.key === key) return cachedPages.pages;
   const pages: Page[] = [];
   for (const {file, source} of files) {
-    const parsed = parseMarkdownMetadata(source, {path: file, md});
-    if (parsed?.data?.draft) continue;
+    const {data, title} = parseMarkdownMetadata(source, {path: file, md});
+    if (data.draft) continue;
     const name = basename(file, ".md");
-    const page = {path: join("/", dirname(file), name), name: parsed.title ?? "Untitled"};
+    const page = {path: join("/", dirname(file), name), name: title ?? "Untitled"};
     if (name === "index") pages.unshift(page);
     else pages.push(page);
   }
@@ -199,7 +199,7 @@ function normalizeBase(base: any): string {
   return base;
 }
 
-function normalizeTheme(spec: any): string[] {
+export function normalizeTheme(spec: any): string[] {
   return resolveTheme(typeof spec === "string" ? [spec] : spec === null ? [] : Array.from(spec, String));
 }
 
@@ -254,19 +254,24 @@ function normalizeToc(spec: any): TableOfContents {
   return {label, show};
 }
 
-export function mergeToc(spec: any, toc: TableOfContents): TableOfContents {
-  let {label = toc.label, show = toc.show} = typeof spec !== "object" ? {show: spec} : spec ?? {};
-  label = String(label);
-  show = Boolean(show);
+export function mergeToc(spec: Partial<TableOfContents> = {}, toc: TableOfContents): TableOfContents {
+  const {label = toc.label, show = toc.show} = spec;
   return {label, show};
 }
 
-export function mergeStyle(path: string, style: any, theme: any, defaultStyle: null | Style): null | Style {
+export function mergeStyle(
+  path: string,
+  style: string | null | undefined,
+  theme: string[] | undefined,
+  defaultStyle: null | Style
+): null | Style {
   return style === undefined && theme === undefined
     ? defaultStyle
     : style === null
     ? null // disable
     : style !== undefined
-    ? {path: resolvePath(path, String(style))}
-    : {theme: normalizeTheme(theme)};
+    ? {path: resolvePath(path, style)}
+    : theme === undefined
+    ? defaultStyle
+    : {theme};
 }

@@ -112,7 +112,7 @@ export async function getResolvers(
   }
 
   // Add SQL sources.
-  if (page.data?.sql) {
+  if (page.data.sql) {
     for (const source of Object.values(page.data.sql)) {
       files.add(String(source));
     }
