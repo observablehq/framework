@@ -284,6 +284,6 @@ function keyword<T extends Lowercase<string>>(input: any, name: string, allowed:
 
 export function normalizeSidebar(sidebar: Config["sidebar"]): Config["sidebar"] {
   return typeof sidebar === "string"
-    ? keyword<Config["sidebar"] & string>(sidebar, "sidebar option", ["auto", "hidden"])
+    ? keyword(sidebar, "sidebar option", ["auto", "hidden"])
     : Boolean(sidebar);
 }
