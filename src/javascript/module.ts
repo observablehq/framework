@@ -1,5 +1,5 @@
 import {createHash} from "node:crypto";
-import {readFileSync, statSync} from "node:fs";
+import {accessSync, constants, readFileSync, statSync} from "node:fs";
 import {join} from "node:path/posix";
 import type {Program} from "acorn";
 import {resolvePath} from "../path.js";
@@ -141,10 +141,13 @@ export function getFileInfo(root: string, path: string): FileInfo | undefined {
   const key = join(root, path);
   let mtimeMs: number;
   try {
-    ({mtimeMs} = statSync(key));
+    const stat = statSync(key);
+    if (!stat.isFile()) return; // ignore non-files
+    accessSync(key, constants.R_OK); // verify that file is readable
+    ({mtimeMs} = stat);
   } catch {
     fileInfoCache.delete(key); // delete stale entry
-    return; // ignore missing file
+    return; // ignore missing, non-readable file
   }
   let entry = fileInfoCache.get(key);
   if (!entry || entry.mtimeMs < mtimeMs) {
