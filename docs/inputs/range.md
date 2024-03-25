@@ -4,7 +4,7 @@ keywords: sliders
 
 # Range input
 
-<a href="https://github.com/observablehq/inputs/blob/main/README.md#range" target="_blank">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/range.js" target="_blank">Source</a> · The range input specifies a number between the given *min* and *max* (inclusive). This number can be adjusted roughly by sliding, or precisely by typing. A range input is also known as a slider.
+<a href="https://github.com/observablehq/inputs/blob/main/README.md#range">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/range.js">Source</a> · The range input specifies a number between the given *min* and *max* (inclusive). This number can be adjusted roughly by sliding, or precisely by typing. A range input is also known as a slider.
 
 By default, a range chooses a floating point number between 0 and 1 with full precision, which is often more precision than desired.
 
