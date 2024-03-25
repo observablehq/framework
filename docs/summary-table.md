@@ -67,12 +67,15 @@ function table(data, options = {}) {
   </footer>`;
   container.appendChild(footer);
 
-  requestAnimationFrame(() => summaries.filter(({type}) => type).append(summary));
+  requestAnimationFrame(() => {
+    for (const s of summaries.filter(({type}) => type)) summary(s);
+  });
   return container;
 }
 
-function summary({name, type, values}) {
-  const {width: w, height} = this.getBoundingClientRect();
+async function summary(div) {
+  const {name, type, values} = d3.select(div).datum();
+  const {width: w, height} = div.getBoundingClientRect();
   const width = Math.min(200, (w ?? 80));
   let chart;
 
@@ -180,10 +183,10 @@ function summary({name, type, values}) {
       ]
     });
   }
-  return chart ? html`<div style=${type === "Utf8" ? "" : {
+  div.append(chart ? html`<div style=${type === "Utf8" ? "" : {
     position: "absolute",
     right: 0
-  }}>${chart}` : html`<span>Unknown type ${type}`;
+  }}>${chart}` : html`<span>Unknown type ${type}`);
 }
 ```
 
