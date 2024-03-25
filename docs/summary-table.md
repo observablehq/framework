@@ -21,7 +21,7 @@ SELECT a::int
 ```
 
 ```sql echo
-FROM range(10, 22, 2);
+SELECT floor(sqrt(range)), count() FROM range(10, 2278, 2) GROUP BY 1 ORDER BY 2 DESC, 1 DESC LIMIT 10;
 ```
 
 ```sql echo
@@ -77,21 +77,56 @@ function summary({name, type, values}) {
   let chart;
 
   // Count values, NaN, nulls, distinct
-  // TODO use DuckdB?
+  // TODO optimize with DuckdB?
   let max = -Infinity;
   let min = Infinity;
+  let count = 0;
   let nulls = 0;
   const distinct = new Set();
   const capped = 100; // max number of distinct values to count
   for (const v of values) {
     if (v == null) {nulls++; continue;}
+    count++;
     if (min > v) min = v; // note this works for strings too
     if (max < v) max = v;
     if (distinct.size <= capped && !distinct.has(v)) distinct.add(v);
   }
 
-  if (distinct.size <= 10 || type === "Utf8") {
-    const stackOptions = (type === "Utf8") ? {order: "sum", reverse: true} : {order: "value"};
+  // categorical
+  if (type === "Utf8") {
+    const stackOptions = {order: "sum", reverse: true};
+    const counts = new Map();
+    for (const v of values) {
+      if (v == null) continue;
+      if (counts.has(v)) counts.set(v, 1 + counts.get(v)); else counts.set(v, 1);
+    }
+    const topX = d3.sort(counts, ([, c]) => -c).slice(0, 10);
+    const visible = new Set(topX.filter(([, c]) => c / count > 0.1).map(([key]) => key));
+    // TODO:
+    // - if the “others” group has a single value, use it
+    // - if a category is already named "Others", use "…" instead
+    // - separate the nulls
+
+    chart = Plot.plot({
+      width,
+      height,
+      style: "overflow: visible;",
+      x: {axis: null},
+      y: {axis: null},
+      marginLeft: 2,
+      marginRight: 2,
+      marginTop: 0,
+      marginBottom: 13,
+      marks: [
+        Plot.barX(values, Plot.stackX(stackOptions, Plot.groupZ({x: "count"}, {z: d => visible.has(d) ? d : "Others", insetRight: 1, fill: "var(--theme-foreground-focus)"}))),
+        Plot.text(values, Plot.stackX(stackOptions, Plot.groupZ({x: "count", text: "first"}, {text: d => visible.has(d) ? d : "Others", z: d => visible.has(d) ? d : "Others", fill: "var(--plot-background)"}))),
+      ]
+    });
+  }
+
+  // ordinal
+  else if (distinct.size <= 10) {
+    const stackOptions = {order: "z"};
     chart = Plot.plot({
       width,
       height,
@@ -108,6 +143,7 @@ function summary({name, type, values}) {
       ]
     });
   }
+  // temporal, quantitative
   else {
     const thresholds = Math.max(10, Math.min(50, d3.thresholdScott(values, min, max))); // TODO optimize thresholdScott
     chart = Plot.plot({
@@ -150,7 +186,7 @@ function summary({name, type, values}) {
 
 <style>
 
-  table .type {font-size: smaller; font-weight: normal; height: 1.35em;}
+  table .type {font-size: smaller; font-weight: normal; color: var(--theme-foreground-muted); height: 1.35em;}
   table .summary {font-size: smaller; font-weight: normal; height: 33px;}
   footer {font-family: var(--sans-serif); font-size: small; color: var(--theme-foreground-faint)}
 
