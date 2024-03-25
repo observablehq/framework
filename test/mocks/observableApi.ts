@@ -1,7 +1,11 @@
 import type {MockAgent} from "undici";
 import {type Interceptable} from "undici";
 import PendingInterceptorsFormatter from "undici/lib/mock/pending-interceptors-formatter.js";
-import type {PostAuthRequestPollResponse, PostAuthRequestResponse} from "../../src/observableApiClient.js";
+import type {
+  GetCurrentUserResponse,
+  PostAuthRequestPollResponse,
+  PostAuthRequestResponse
+} from "../../src/observableApiClient.js";
 import {
   type GetProjectResponse,
   type PaginatedList,
@@ -91,17 +95,20 @@ class ObservableApiMock {
     projectSlug,
     projectId = "project123",
     title = "Mock BI",
+    accessLevel = "private",
     status = 200
   }: {
     workspaceLogin: string;
     projectSlug: string;
     projectId?: string;
     title?: string;
+    accessLevel?: string;
     status?: number;
   }): ObservableApiMock {
     const response =
       status === 200
         ? JSON.stringify({
+            accessLevel,
             id: projectId,
             slug: projectSlug,
             title,
@@ -122,12 +129,14 @@ class ObservableApiMock {
     projectId = "project123",
     workspaceId = workspaces[0].id,
     slug = "mock-project",
+    accessLevel = "private",
     status = 200
   }: {
     projectId?: string;
     title?: string;
     slug?: string;
     workspaceId?: string;
+    accessLevel?: string;
     status?: number;
   } = {}): ObservableApiMock {
     const owner = workspaces.find((w) => w.id === workspaceId);
@@ -136,6 +145,7 @@ class ObservableApiMock {
     const response =
       status == 200
         ? JSON.stringify({
+            accessLevel,
             id: projectId,
             slug,
             title: "Mock Project",
@@ -177,7 +187,7 @@ class ObservableApiMock {
     status = 200
   }: {
     workspaceLogin: string;
-    projects: {slug: string; id: string; title?: string}[];
+    projects: {slug: string; id: string; title?: string; accessLevel?: string}[];
     status?: number;
   }): ObservableApiMock {
     const owner = workspaces.find((w) => w.login === workspaceLogin);
@@ -186,7 +196,13 @@ class ObservableApiMock {
     const response =
       status === 200
         ? JSON.stringify({
-            results: projects.map((p) => ({...p, creator, owner, title: p.title ?? "Mock Title"}))
+            results: projects.map((p) => ({
+              ...p,
+              creator,
+              owner,
+              title: p.title ?? "Mock Title",
+              accessLevel: p.accessLevel ?? "private"
+            }))
           } satisfies PaginatedList<GetProjectResponse>)
         : emptyErrorBody;
     const headers = authorizationHeader(status !== 403);
@@ -215,14 +231,20 @@ class ObservableApiMock {
 
   handlePostDeployFile({
     deployId,
+    clientName,
     status = 204,
     repeat = 1
-  }: {deployId?: string; status?: number; repeat?: number} = {}): ObservableApiMock {
+  }: {deployId?: string; clientName?: string; status?: number; repeat?: number} = {}): ObservableApiMock {
     const response = status == 204 ? "" : emptyErrorBody;
     const headers = authorizationHeader(status !== 403);
     this.addHandler((pool) => {
       pool
-        .intercept({path: `/cli/deploy/${deployId}/file`, method: "POST", headers: headersMatcher(headers)})
+        .intercept({
+          path: `/cli/deploy/${deployId}/file`,
+          method: "POST",
+          headers: headersMatcher(headers),
+          body: clientName === undefined ? undefined : formDataMatcher({client_name: clientName})
+        })
         .reply(status, response)
         .times(repeat);
     });
@@ -327,6 +349,18 @@ function headersMatcher(expected: Record<string, string | RegExp>): (headers: Re
   };
 }
 
+function formDataMatcher(expected: Record<string, string>): (body: string) => boolean {
+  // actually FormData, not string
+  return (actual: any) => {
+    for (const key in expected) {
+      if (!(actual.get(key) === expected[key])) {
+        return false;
+      }
+    }
+    return true;
+  };
+}
+
 const userBase = {
   id: "0000000000000000",
   login: "mock-user",
@@ -335,23 +369,51 @@ const userBase = {
   has_workspace: false
 };
 
-const workspaces = [
+const workspaces: GetCurrentUserResponse["workspaces"] = [
   {
     id: "0000000000000001",
     login: "mock-user-ws",
     name: "Mock User's Workspace",
-    tier: "pro",
+    tier: "pro_2024",
     type: "team",
-    role: "owner"
+    role: "member",
+    projects_info: []
   },
-
   {
     id: "0000000000000002",
     login: "mock-user-ws-2",
-    name: "Mock User's Second Workspace",
-    tier: "pro",
+    name: "Mock User Second Workspace",
+    tier: "pro_2024",
     type: "team",
-    role: "owner"
+    role: "owner",
+    projects_info: []
+  },
+  {
+    id: "0000000000000003",
+    login: "mock-user-ws-3",
+    name: "Mock User's Third Workspace Wrong Tier",
+    tier: "pro_2024",
+    type: "team",
+    role: "viewer",
+    projects_info: []
+  },
+  {
+    id: "0000000000000004",
+    login: "mock-user-ws-4",
+    name: "Mock User's Fourth Workspace Guest Member as Editor",
+    tier: "pro_2024",
+    type: "team",
+    role: "guest_member",
+    projects_info: [{project_slug: "test-project-1", project_role: "editor"}]
+  },
+  {
+    id: "0000000000000005",
+    login: "mock-user-ws-5",
+    name: "Mock User's Fifth Workspace Guest Member as Viewer",
+    tier: "pro_2024",
+    type: "team",
+    role: "guest_member",
+    projects_info: [{project_slug: "test-project-2", project_role: "viewer"}]
   }
 ];
 
@@ -368,6 +430,11 @@ export const userWithOneWorkspace = {
 export const userWithTwoWorkspaces = {
   ...userBase,
   workspaces: workspaces.slice(0, 2)
+};
+
+export const userWithGuestMemberWorkspaces = {
+  ...userBase,
+  workspaces
 };
 
 class FilteringPendingInterceptorFormatter extends PendingInterceptorsFormatter {

@@ -23,7 +23,19 @@ jobs:
             yarn.lock
             'examples/*/yarn.lock'
       - run: yarn --frozen-lockfile
+      - id: date
+        run: echo "date=$(TZ=America/Los_Angeles date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+      - id: cache-data
+        uses: actions/cache@v4
+        with:
+          path: |
+            docs/.observablehq/cache
+            examples/*/docs/.observablehq/cache
+          key: data-${{ hashFiles('docs/data/*', 'examples/*/docs/data/*') }}-${{ steps.date.outputs.date }}
+      - if: steps.cache-data.outputs.cache-hit == 'true'
+        run: find docs/.observablehq/cache examples/*/docs/.observablehq/cache -type f -exec touch {} +
       - run: yarn build
+      - run: yarn docs:build
       - name: Build example "api"
         run: yarn --frozen-lockfile && yarn build
         working-directory: examples/api
@@ -59,17 +71,11 @@ jobs:
         working-directory: examples/plot
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: mkdir dist/examples && for i in examples/*; do if [ -d $i/dist ]; then mv -v $i/dist dist/examples/$(basename $i); fi; done
+      - run: mkdir docs/.observablehq/dist/examples && for i in examples/*; do if [ -d $i/dist ]; then mv -v $i/dist docs/.observablehq/dist/examples/$(basename $i); fi; done
       - uses: cloudflare/pages-action@1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: framework-pages
-          directory: dist
+          projectName: framework
+          directory: docs/.observablehq/dist
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-      # TODO: This doesn't include the examples. How can we fix that?
-      # TODO: Re-enable deploy to Observable
-      # - name: Deploy to Observable
-      #   run: yarn deploy -m "$(git log -1 --pretty=%s)"
-      #   env:
-      #     OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_API_TOKEN }}

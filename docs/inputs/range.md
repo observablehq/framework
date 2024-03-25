@@ -1,8 +1,10 @@
+---
+keywords: sliders
+---
+
 # Range input
 
-[API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#range)
-
-The range input specifies a number between the given *min* and *max* (inclusive). This number can be adjusted roughly by sliding, or precisely by typing. A range input is also known as a slider.
+<a href="https://github.com/observablehq/inputs/blob/main/README.md#range">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/range.js">Source</a> · The range input specifies a number between the given *min* and *max* (inclusive). This number can be adjusted roughly by sliding, or precisely by typing. A range input is also known as a slider.
 
 By default, a range chooses a floating point number between 0 and 1 with full precision, which is often more precision than desired.
 
@@ -13,8 +15,6 @@ const x = view(Inputs.range());
 ```js echo
 x
 ```
-
-The current value of *x* is ${x.toLocaleString("en")}.
 
 The *step* option is strongly encouraged to set the desired precision (the interval between adjacent values). For integers, use *step* = 1. The up and down buttons in the number input will only work if a *step* is specified. To change the extent, pass [*min*, *max*] as the first argument.
 
@@ -102,16 +102,16 @@ d
 
 The available range input options are:
 
-* *label* - a label; either a string or an HTML element.
-* *step* - the step (precision); the interval between adjacent values.
-* *format* - a format function; defaults to [formatTrim](https://github.com/observablehq/inputs?tab=readme-ov-file#inputsformattrimnumber).
-* *placeholder* - a placeholder string for when the input is empty.
-* *transform* - an optional non-linear transform.
-* *invert* - the inverse transform.
-* *validate* - a function to check whether the number input is valid.
-* *value* - the initial value; defaults to (*min* + *max*) / 2.
-* *width* - the width of the input (not including the label).
-* *disabled* - whether input is disabled; defaults to false.
+* *label* - a label; either a string or an HTML element
+* *step* - the step (precision); the interval between adjacent values
+* *format* - a format function; defaults to [formatTrim](https://github.com/observablehq/inputs?tab=readme-ov-file#inputsformattrimnumber)
+* *placeholder* - a placeholder string for when the input is empty
+* *transform* - an optional non-linear transform
+* *invert* - the inverse transform
+* *validate* - a function to check whether the number input is valid
+* *value* - the initial value; defaults to (*min* + *max*) / 2
+* *width* - the width of the input (not including the label)
+* *disabled* - whether input is disabled; defaults to false
 
 The given *value* is clamped to the given extent, and rounded if *step* is defined. However, note that the *min*, *max* and *step* options affect only the slider behavior, the number input’s buttons, and whether the browser shows a warning if a typed number is invalid; they do not constrain the typed number.
 
@@ -119,4 +119,4 @@ If *validate* is not defined, [*number*.checkValidity](https://html.spec.whatwg.
 
 The *format* function should return a string value that is compatible with native number parsing. Hence, the default [formatTrim](https://github.com/observablehq/inputs?tab=readme-ov-file#inputsformattrimnumber) is recommended.
 
-If a *transform* function is specified, an inverse transform function *invert* is strongly recommended. If *invert* is not provided, the Range will fallback to Newton’s method, but this may be slow or inaccurate. Passing Math.sqrt, Math.log, or Math.exp as a *transform* will automatically supply the corresponding *invert*. If *min* is greater than *max*, *i.e.* if the extent is inverted, then *transform* and *invert* will default to `value => -value`.
+If a *transform* function is specified, an inverse transform function *invert* is strongly recommended. If *invert* is not provided, the Range will fallback to Newton’s method, but this may be slow or inaccurate. Passing Math.sqrt, Math.log, or Math.exp as a *transform* will automatically supply the corresponding *invert*. If *min* is greater than *max*, *i.e.* if the extent is inverted, then *transform* and *invert* will default to `(value) => -value`.

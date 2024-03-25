@@ -54,7 +54,7 @@ We never collect identifying or sensitive information, such as environment varia
 Setting the `OBSERVABLE_TELEMETRY_DISABLE` environment variable to `true` disables telemetry collection entirely. For example:
 
 ```sh
-OBSERVABLE_TELEMETRY_DISABLE=true yarn build
+OBSERVABLE_TELEMETRY_DISABLE=true npm run build
 ```
 
 Setting the `OBSERVABLE_TELEMETRY_DEBUG` environment variable to `true` also disables telemetry collection, instead printing telemetry data to stderr. Use this to inspect what telemetry data would be collected.

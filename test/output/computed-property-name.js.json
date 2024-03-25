@@ -1,0 +1,95 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 39,
+    "body": [
+      {
+        "type": "VariableDeclaration",
+        "start": 0,
+        "end": 38,
+        "declarations": [
+          {
+            "type": "VariableDeclarator",
+            "start": 6,
+            "end": 37,
+            "id": {
+              "type": "Identifier",
+              "start": 6,
+              "end": 7,
+              "name": "x"
+            },
+            "init": {
+              "type": "ArrowFunctionExpression",
+              "start": 10,
+              "end": 37,
+              "id": null,
+              "expression": true,
+              "generator": false,
+              "async": false,
+              "params": [
+                {
+                  "type": "ObjectPattern",
+                  "start": 11,
+                  "end": 27,
+                  "properties": [
+                    {
+                      "type": "Property",
+                      "start": 12,
+                      "end": 26,
+                      "method": false,
+                      "shorthand": false,
+                      "computed": true,
+                      "key": {
+                        "type": "Identifier",
+                        "start": 13,
+                        "end": 18,
+                        "name": "field"
+                      },
+                      "value": {
+                        "type": "Identifier",
+                        "start": 21,
+                        "end": 26,
+                        "name": "value"
+                      },
+                      "kind": "init"
+                    }
+                  ]
+                }
+              ],
+              "body": {
+                "type": "Identifier",
+                "start": 32,
+                "end": 37,
+                "name": "value"
+              }
+            }
+          }
+        ],
+        "kind": "const"
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 6,
+      "end": 7,
+      "name": "x"
+    }
+  ],
+  "references": [
+    {
+      "type": "Identifier",
+      "start": 13,
+      "end": 18,
+      "name": "field"
+    }
+  ],
+  "files": [],
+  "imports": [],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

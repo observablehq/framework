@@ -38,7 +38,7 @@ const colors = ["#4269d0", "#efb118", "#ff725c", "#6cc5b0"];
 const duration = 2000;
 ```
 
-<canvas id="canvas" width="640" height="30" style="max-width: 100%; height: 30px;">
+<canvas id="canvas" width="640" height="30" style="max-width: 100%; height: 30px;"></canvas>
 
 ```js echo
 const canvas = document.querySelector("#canvas");
@@ -60,7 +60,7 @@ invalidation.then(() => cancelAnimationFrame(frame));
 
 The `visibility` function returns a promise that resolves when the code block’s display root is visible. This allows you to defer animation or computation until the content scrolls into view. If you missed the animation, try reloading the page and then scrolling down.
 
-<canvas id="canvas2" width="640" height="30" style="max-width: 100%; height: 30px;">
+<canvas id="canvas2" width="640" height="30" style="max-width: 100%; height: 30px;"></canvas>
 
 ```js echo
 await visibility(); // wait until this node is visible

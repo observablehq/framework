@@ -1,167 +1,155 @@
 # Observable Plot downloads
 
 ```js
-import {trend} from "./components/trend.js";
-import {DailyPlot, today, start} from "./components/dailyPlot.js";
+import {revive} from "./components/revive.js";
+import {Trend} from "./components/trend.js";
+import {BurndownPlot} from "./components/burndownPlot.js";
+import {DailyPlot} from "./components/dailyPlot.js";
 ```
 
 ```js
 const versions = FileAttachment("data/plot-version-data.csv").csv({typed: true});
 const downloads = FileAttachment("data/plot-npm-downloads.csv").csv({typed: true});
-const issues = FileAttachment("data/plot-github-issues.json").json().then((data) => data.map((d) => (d.open = d3.utcDay(new Date(d.created_at)), d.close = d.closed_at ? d3.utcDay(new Date(d.closed_at)) : null, d)));
+const issues = FileAttachment("data/plot-github-issues.json").json().then(revive);
 const stars = FileAttachment("data/plot-github-stars.csv").csv({typed: true});
 ```
 
 ```js
-const lastMonth = d3.utcDay.offset(today, -28);
-const lastWeek = d3.utcDay.offset(today, -7);
-const x = {domain: [start, today]};
+// These dates are declared globally to ensure consistency across plots.
+const end = d3.utcDay(d3.utcHour.offset(d3.utcHour(), -10));
+const start = d3.utcYear.offset(end, -2);
+const lastMonth = d3.utcDay.offset(end, -28);
+const lastWeek = d3.utcDay.offset(end, -7);
+const x = {domain: [start, end]};
 ```
 
-```js
-const burndown = issues
-  .filter((d) => !d.pull_request)
-  .flatMap((issue) => Array.from(d3.utcDay.range(
-      d3.utcDay.offset(Math.max(start, issue.open), -1),
-      d3.utcDay.offset(issue.close ?? today, 2)
-    ), (date) => ({
-        date,
-        id: issue.number,
-        open: issue.open,
-        title: `#${issue.number}: ${issue.title}\n\nOpened ${
-          issue.open.toISOString().slice(0,10)}${
-            issue.close ? `\nClosed ${issue.close.toISOString().slice(0,10)}` : ""
-        }`
-      })
-    )
-  );
-```
-
-<div class="grid grid-cols-4" style="grid-auto-rows: 86px;">
-  <div class="card">
-    <h2>Current release</h2>
+<div class="grid grid-cols-4">
+  <a class="card" href="https://github.com/observablehq/plot/releases" style="color: inherit;">
+    <h2>Latest release</h2>
     <span class="big">${versions.at(-1).version}</span>
-    <a href="https://github.com/observablehq/plot/releases" style="color: inherit;">
-      ${((days) => days === 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`)(d3.  utcDay.count(versions.at(-1).date, new Date()))}
-    </a>
-  </div>
-  <div class="card">
+    <span class="muted">${((days) => days === 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`)(d3.  utcDay.count(versions.at(-1).date, new Date()))}</span>
+  </a>
+  <a class="card" href="https://github.com/observablehq/plot" style="color: inherit;">
     <h2>GitHub stars</h2>
     <span class="big">${stars.length.toLocaleString("en-US")}</span>
-    ${trend(d3.sum(stars, (d) => d.starred_at >= lastWeek))}</span>
-  </div>
-  <div class="card">
+    ${Trend(d3.sum(stars, (d) => d.starred_at >= lastWeek))}</span>
+    <span class="muted">over 7d</span>
+  </a>
+  <a class="card" href="https://npmjs.com/package/@observablehq/plot" style="color: inherit;">
     <h2>Daily npm downloads</h2>
     <span class="big">${downloads[0].value.toLocaleString("en-US")}</span>
-    ${trend(downloads[7].value
-      ? (downloads[0].value - downloads[7].value) / downloads[7].value
-      : undefined, {format: "+.1%"})}
-  </div>
-  <div class="card">
+    ${Trend(downloads[7].value ? (downloads[0].value - downloads[7].value) / downloads[7].value : undefined, {format: {style: "percent"}})}
+    <span class="muted">over 7d</span>
+  </a>
+  <a class="card" href="https://npmjs.com/package/@observablehq/plot" style="color: inherit;">
     <h2>Total npm downloads</h2>
     <span class="big">${d3.sum(downloads, (d) => d.value).toLocaleString("en-US")}</span>
-  </div>
+  </a>
 </div>
 
-<div class="card grid grid-cols-1" style="grid-auto-rows: calc(260px + 2rem);">
-  ${resize((width, height) => DailyPlot(downloads, {width, height, title: "Daily npm downloads", label: "downloads", domain: [0, 6000], versions}))}
+<div class="card">
+  <h2>Daily npm downloads</h2>
+  <h3>28d <b style="color: var(--theme-foreground);">—</b> and 7d <b style="color: var(--theme-foreground-focus);">—</b> moving average</h3>
+  ${resize((width) =>
+    DailyPlot(downloads, {
+      width,
+      marginRight: 40,
+      x,
+      y: {insetTop: 40, domain: [0, 6000], label: "downloads"},
+      annotations: versions.filter((d) => !/-/.test(d.version)).map((d) => ({date: d.date, text: d.version, href: `https://github.com/observablehq/plot/releases/v${d.version}`}))
+    })
+  )}
 </div>
 
-<div class="card grid grid-cols-1">
-  ${resize((width) => Plot.plot({
-    width,
-    caption: "Downloads per version (last 7 days)",
-    x: {label: null, tickFormat: "s", round: true, axis: "top"},
-    y: {type: "band", reverse: true},
-    marginTop: 20,
-    marginBottom: 0,
-    color: {type: "categorical", scheme: "ylgnbu"},
-    marks: [
-      Plot.barX(versions, {
-        x: "downloads",
-        stroke: "white",
-        strokeWidth: 0.5,
-        y: d => d.version.split(".").slice(0,2).join("."),
-        fill: d => d.version.split(".").slice(0,2).join("."),
-        tip: {
-          channels: {
-            version: "version",
-            released: d => `${d3.utcDay.count(d.date, Date.now())} days ago`,
-            downloads: "downloads",
-          },
-          format: {fill: false, x: false, y: false}
-        }
-      }),
-      Plot.textX(versions, Plot.stackX({
-        x: "downloads",
-        y: d => d.version.split(".").slice(0,2).join("."),
-        text: d => d.downloads > 500 ? d.version : null,
-        fill: "white",
-        stroke: d => d.version.split(".").slice(0,2).join("."),
-        strokeWidth: 5,
-        pointerEvents: null
-      }))
-    ]
-  })
-)}
+<div class="card">
+  <h2>Weekly downloads by version</h2>
+  <h3>Last 7d, grouped by major version</h3>
+  ${resize((width) =>
+    Plot.plot({
+      width,
+      x: {label: null, round: true, axis: "top"},
+      y: {type: "band", reverse: true},
+      marginBottom: 0,
+      color: {type: "ordinal", scheme: "ylgnbu"},
+      marks: [
+        Plot.barX(versions, {
+          x: "downloads",
+          stroke: "white",
+          strokeWidth: 0.5,
+          y: (d) => d.version.split(".").slice(0, 2).join("."),
+          fill: (d) => d.version.split(".").slice(0, 2).join("."),
+          tip: {
+            channels: {
+              version: "version",
+              released: (d) => `${d3.utcDay.count(d.date, Date.now()).toLocaleString("en-US")} days ago`,
+              downloads: "downloads",
+            },
+            format: {fill: false, x: false, y: false}
+          }
+        }),
+        Plot.ruleX([0]),
+        Plot.textX(versions, Plot.stackX({
+          x: "downloads",
+          y: (d) => d.version.split(".").slice(0, 2).join("."),
+          text: (d) => d.downloads > 500 ? d.version : null,
+          fill: "white",
+          stroke: (d) => d.version.split(".").slice(0, 2).join("."),
+          strokeWidth: 5,
+          pointerEvents: null
+        }))
+      ]
+    })
+  )}
 </div>
 
-<div class="grid grid-cols-4" style="grid-auto-rows: 86px;">
-  <div class="card">
+<div class="grid grid-cols-4">
+  <a class="card" href="https://github.com/observablehq/plot/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc" style="color: inherit;">
     <h2>Open issues</h2>
-    <a href="https://github.com/observablehq/plot/issues" class="big" style="color: inherit;">${d3.sum(issues, (d) => !d.pull_request && d.state === "open").toLocaleString("en-US")}</a>
-  </div>
-  <div class="card">
-    <h2>Opened issues, 28d</h2>
-    <span class="big">${d3.sum(issues, (d) => !d.pull_request && d.open >= lastMonth).toLocaleString("en-US")}</span>
-  </div>
-  <div class="card">
-    <h2>Closed issues, 28d</h2>
-    <span class="big">${d3.sum(issues, (d) => !d.pull_request && d.close >= lastMonth).toLocaleString("en-US")}</span>
-  </div>
-  <div class="card">
+    <span class="big">${d3.sum(issues, (d) => !d.pull_request && d.state === "open").toLocaleString("en-US")}</span>
+  </a>
+  <a class="card" href="https://github.com/observablehq/plot/pulls?q=is%3Apr+is%3Aopen+sort%3Aupdated-desc+draft%3Afalse" style="color: inherit;">
     <h2>Open PRs</h2>
-    <a class="big" href="https://github.com/observablehq/plot/pulls?q=is%3Apr+is%3Aopen+draft%3Afalse" style="color: inherit;">${d3.sum(issues, (d) => d.pull_request && d.state === "open" && !d.draft).toLocaleString("en-US")}</a>
+    <span class="big">${d3.sum(issues, (d) => d.pull_request && d.state === "open" && !d.draft).toLocaleString("en-US")}</span>
+  </a>
+  <a class="card" href="https://github.com/observablehq/plot/issues?q=sort%3Acreated-desc" style="color: inherit;">
+    <h2>Recent opened issues</h2>
+    <span class="big">${d3.sum(issues, (d) => !d.pull_request && d.open >= lastMonth).toLocaleString("en-US")}</span>
+    <span class="muted">in 28d</span>
+  </a>
+  <a class="card" href="https://github.com/observablehq/plot/issues?q=is%3Aissue+is%3Aclosed+sort%3Aupdated-desc" style="color: inherit;">
+    <h2>Recent closed issues</h2>
+    <span class="big">${d3.sum(issues, (d) => !d.pull_request && d.close >= lastMonth).toLocaleString("en-US")}</span>
+    <span class="muted">in 28d</span>
+  </a>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>Open issues over time</h2>
+    ${BurndownPlot(issues.filter((d) => !d.pull_request), {x, color: {legend: true, label: "open month"}})}
   </div>
 </div>
 
-<div class="grid grid-cols-2" style="grid-auto-rows: 276px;">
-  <div class="card">${resize((width, height) => Plot.plot({
-    width,
-    height,
-    marginLeft: 0,
-    marginRight: 30,
-    round: true,
-    x,
-    y: {axis: "right", grid: true, label: "↑ Open issues"},
-    marks: [
-      Plot.areaY(burndown, {
-        x: "date",
-        y: 1,
-        curve: "step-before",
-        fill: "open",
-        z: "id",
-        title: "title",
-        tip: true
-      }),
-      Plot.ruleY([0])
-    ]
-  }))}</div>
-  <div class="card" style="padding: 0;">${
-    Inputs.table(
+<div class="grid">
+  <div class="card" style="padding: 0;">
+    ${Inputs.table(
       issues
         .filter((d) => d.state === "open" && d.reactions.total_count > 5)
         .sort((a, b) => b.reactions.total_count - a.reactions.total_count)
         .map((d) => ({
           "title": {title: d.title, number: d.number},
           "reactions": d.reactions.total_count,
-          "days old": d3.utcDay.count(d.open, today)
+          "days old": d3.utcDay.count(d.created_at, end)
         })),
       {
+        width,
+        header: {
+          title: "Top issues"
+        },
         format: {
           title: (d) => html`<a href=https://github.com/observablehq/plot/issues/${d.number} target=_blank>${d.title}</a>`
         }
       }
-    )
-  }</div>
+    )}
+  </div>
 </div>

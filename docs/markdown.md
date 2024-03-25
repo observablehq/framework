@@ -2,8 +2,6 @@
 
 Markdown in Observable Framework follows the [CommonMark spec](https://spec.commonmark.org/) and is powered by [markdown-it](https://github.com/markdown-it/markdown-it).  We also feature [live JavaScript](./javascript) as either [fenced code blocks](./javascript#fenced-code-blocks) (<code>```js</code>) or [inline expressions](./javascript#inline-expressions) (<code>$\{…}</code>), and [HTML in Markdown](#html), and [front matter](#front-matter) for page-level configuration. If you don’t already know Markdown, please see [GitHub’s guide to Markdown](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) for an introduction.
 
-<div class="note">Observable Framework currently deviates from CommonMark in how blank lines are handled in HTML; see below. This is a limitation of our parser needed for incremental update during preview.</div>
-
 Here are a few examples of Markdown content to get you started.
 
 ## Front matter
@@ -14,6 +12,15 @@ title: My favorite page
 toc: false
 ---
 ```
+
+The front matter supports the following options:
+
+- **title** — the page title; defaults to the (first) first-level heading of the page, if any
+- **toc** — if false, disables the [table of contents](./config#toc)
+- **index** — whether to index this page if [search](./search) is enabled; defaults to true for listed pages
+- **keywords** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a> - additional words to index for [search](./search); boosted at the same weight as the title
+- **draft** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a> — whether to skip this page during build; drafts are also not listed in the default sidebar
+- **sql** <a href="https://github.com/observablehq/framework/releases/tag/v1.2.0" class="observablehq-version-badge" data-version="^1.2.0" title="Added in v1.2.0"></a> — table definitions for [SQL code blocks](./sql)
 
 ## Headings
 
@@ -80,9 +87,12 @@ Cell 1-2   |   Cell 2-2   |    Cell 3-2
 [external link](<https://en.wikipedia.org/wiki/Tar_(computing)>)
 ```
 
+For privacy and convenience, links to external resources are given a default `rel` attribute of [`noreferrer`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noreferrer) and [`noopener`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noopener), and a default `target` attribute of [`_blank`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#target). Hence by default an external link will open in a new window and not pass the (potentially sensitive) referrer to the (potentially untrusted) external site. You can override this behavior by specifying the `rel` or `target` attribute explicitly. For example `<a href="https://example.com" target="_self">` will open in the same window, and `<a href="https://acme.com" rel="">` will allow the referrer.
+
 ## Images
 
 ```md
+![A horse](./horse.jpg)
 ![A happy kitten](https://placekitten.com/200/300)
 ```
 
@@ -90,12 +100,12 @@ Cell 1-2   |   Cell 2-2   |    Cell 3-2
 
 You can write HTML directly into Markdown. HTML is useful for greater control over layout, say to use CSS grid for a responsive bento box layout in a dashboard, or adding an external stylesheet via a link element. For example, here is an HTML details element:
 
-````html run=false
+```html run=false
 <details>
   <summary>Click me</summary>
   This text is not visible by default.
 </details>
-````
+```
 
 This produces:
 
@@ -104,30 +114,28 @@ This produces:
   This text is not visible by default.
 </details>
 
-In Markdown, blank lines denote separate HTML blocks; be sure to avoid blank lines if you want to treat a chunk of HTML as a single block. For example, write this:
+You can put Markdown inside of HTML by surrounding it with blank lines:
 
-```md
-<!-- 👍 one HTML block -->
-<ul>
-  <li>one</li>
-  <li>two</li>
-  <li>three</li>
-</ul>
+<div class="grid grid-cols-4">
+  <div class="card">
+
+## Card title
+
+This is **Markdown** inside of _HTML_!
+
+  </div>
+</div>
+
+```md run=false
+<div class="grid grid-cols-4">
+  <div class="card">
+
+## Card title
+
+This is **Markdown** inside of _HTML_!
+
+  </div>
+</div>
 ```
-
-Don’t write this:
-
-```md
-<!-- 👎 three HTML blocks -->
-<ul>
-
-  <li>one</li>
-  <li>two</li>
-  <li>three</li>
-
-</ul>
-```
-
-In the latter case, the li elements become top-level and wrapped in a span, rather than children of the ul.
 
 Also see [Hypertext Literal](./lib/htl) for generating dynamic HTML in JavaScript.

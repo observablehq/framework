@@ -1,3 +1,4 @@
+import {extname} from "node:path/posix";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
 import {type CallExpression} from "acorn";
 import {simple} from "acorn-walk";
@@ -5,51 +6,82 @@ import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
-import {getClientPath} from "./files.js";
-import {getStringLiteralValue, isStringLiteral} from "./javascript/features.js";
-import {isPathImport, resolveNpmImport} from "./javascript/imports.js";
+import {getStylePath} from "./files.js";
+import type {StringLiteral} from "./javascript/source.js";
+import {getStringLiteralValue, isStringLiteral} from "./javascript/source.js";
+import {resolveNpmImport} from "./npm.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
+import {isPathImport, relativePath} from "./path.js";
 import {Sourcemap} from "./sourcemap.js";
 import {THEMES, renderTheme} from "./theme.js";
-import {relativeUrl} from "./url.js";
 
 const STYLE_MODULES = {
-  "observablehq:default.css": getClientPath("./src/style/default.css"),
+  "observablehq:default.css": getStylePath("default.css"),
   ...Object.fromEntries(THEMES.map(({name, path}) => [`observablehq:theme-${name}.css`, path]))
 };
+
+// These libraries are currently bundled in to a wrapper.
+const BUNDLED_MODULES = [
+  "@observablehq/inputs", // observablehq:stdlib/inputs.js
+  "@observablehq/inspector", // observablehq:runtime.js
+  "@observablehq/runtime", // observablehq:runtime.js
+  "isoformat", // observablehq:runtime.js
+  "minisearch" // observablehq:search.js
+];
 
 function rewriteInputsNamespace(code: string) {
   return code.replace(/\b__ns__\b/g, "inputs-3a86ea");
 }
 
-export async function bundleStyles({path, theme}: {path?: string; theme?: string[]}): Promise<string> {
+export async function bundleStyles({
+  minify = false,
+  path,
+  theme
+}: {
+  minify?: boolean;
+  path?: string;
+  theme?: string[];
+}): Promise<string> {
   const result = await build({
     bundle: true,
     ...(path ? {entryPoints: [path]} : {stdin: {contents: renderTheme(theme!), loader: "css"}}),
     write: false,
+    minify,
     alias: STYLE_MODULES
   });
   const text = result.outputFiles[0].text;
   return rewriteInputsNamespace(text); // TODO only for inputs
 }
 
-export async function rollupClient(clientPath: string, {minify = false} = {}): Promise<string> {
+export async function rollupClient(
+  input: string,
+  root: string,
+  path: string,
+  {define, keepNames, minify}: {define?: {[key: string]: string}; keepNames?: boolean; minify?: boolean} = {}
+): Promise<string> {
   const bundle = await rollup({
-    input: clientPath,
+    input,
     external: [/^https:/],
     plugins: [
-      nodeResolve({resolveOnly: ["@observablehq/inputs"]}),
-      importResolve(clientPath),
+      nodeResolve({resolveOnly: BUNDLED_MODULES}),
+      importResolve(input, root, path),
       esbuild({
         target: "es2022",
         exclude: [], // don’t exclude node_modules
+        keepNames,
         minify,
         define: {
-          "process.env.OBSERVABLE_ORIGIN": JSON.stringify(String(getObservableUiOrigin()).replace(/\/$/, ""))
+          "global.__minisearch": '"./minisearch.json"',
+          "process.env.OBSERVABLE_ORIGIN": JSON.stringify(String(getObservableUiOrigin()).replace(/\/$/, "")),
+          ...define
         }
       }),
-      importMetaResolve()
-    ]
+      importMetaResolve(root, path)
+    ],
+    onwarn(message, warn) {
+      if (message.code === "CIRCULAR_DEPENDENCY") return;
+      warn(message);
+    }
   });
   try {
     const output = await bundle.generate({format: "es"});
@@ -73,48 +105,46 @@ function rewriteTypeScriptImports(code: string): string {
   return code.replace(/(?<=\bimport\(([`'"])[\w./]+)\.ts(?=\1\))/g, ".js");
 }
 
-function importResolve(clientPath: string): Plugin {
+function importResolve(input: string, root: string, path: string): Plugin {
+  async function resolve(specifier: string | AstNode): Promise<ResolveIdResult> {
+    return typeof specifier !== "string" || specifier === input
+      ? null
+      : specifier.startsWith("observablehq:")
+      ? {id: relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`), external: true} // prettier-ignore
+      : specifier === "npm:@observablehq/runtime"
+      ? {id: relativePath(path, "/_observablehq/runtime.js"), external: true}
+      : specifier === "npm:@observablehq/stdlib" || specifier === "@observablehq/stdlib"
+      ? {id: relativePath(path, "/_observablehq/stdlib.js"), external: true}
+      : specifier === "npm:@observablehq/dot"
+      ? {id: relativePath(path, "/_observablehq/stdlib/dot.js"), external: true} // TODO publish to npm
+      : specifier === "npm:@observablehq/duckdb"
+      ? {id: relativePath(path, "/_observablehq/stdlib/duckdb.js"), external: true} // TODO publish to npm
+      : specifier === "npm:@observablehq/inputs"
+      ? {id: relativePath(path, "/_observablehq/stdlib/inputs.js"), external: true} // TODO publish to npm
+      : specifier === "npm:@observablehq/mermaid"
+      ? {id: relativePath(path, "/_observablehq/stdlib/mermaid.js"), external: true} // TODO publish to npm
+      : specifier === "npm:@observablehq/tex"
+      ? {id: relativePath(path, "/_observablehq/stdlib/tex.js"), external: true} // TODO publish to npm
+      : specifier === "npm:@observablehq/sqlite"
+      ? {id: relativePath(path, "/_observablehq/stdlib/sqlite.js"), external: true} // TODO publish to npm
+      : specifier === "npm:@observablehq/xlsx"
+      ? {id: relativePath(path, "/_observablehq/stdlib/xlsx.js"), external: true} // TODO publish to npm
+      : specifier === "npm:@observablehq/zip"
+      ? {id: relativePath(path, "/_observablehq/stdlib/zip.js"), external: true} // TODO publish to npm
+      : specifier.startsWith("npm:")
+      ? {id: relativePath(path, await resolveNpmImport(root, specifier.slice("npm:".length))), external: true}
+      : !/^[a-z]:\\/i.test(specifier) && !isPathImport(specifier) && !BUNDLED_MODULES.includes(specifier) // e.g., inputs.js imports "htl"
+      ? {id: relativePath(path, await resolveNpmImport(root, specifier)), external: true}
+      : null;
+  }
   return {
     name: "resolve-import",
-    resolveId: (specifier) => resolveImport(clientPath, specifier),
-    resolveDynamicImport: (specifier) => resolveImport(clientPath, specifier)
+    resolveId: resolve,
+    resolveDynamicImport: resolve
   };
 }
 
-// TODO Consolidate with createImportResolver.
-async function resolveImport(source: string, specifier: string | AstNode): Promise<ResolveIdResult> {
-  return typeof specifier !== "string"
-    ? null
-    : specifier.startsWith("observablehq:")
-    ? {id: relativeUrl(source, getClientPath(`./src/client/${specifier.slice("observablehq:".length)}.js`)), external: true} // prettier-ignore
-    : specifier === "npm:@observablehq/runtime"
-    ? {id: relativeUrl(source, getClientPath("./src/client/runtime.js")), external: true}
-    : specifier === "npm:@observablehq/stdlib"
-    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib.js")), external: true}
-    : specifier === "npm:@observablehq/dot"
-    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/dot.js")), external: true} // TODO publish to npm
-    : specifier === "npm:@observablehq/duckdb"
-    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/duckdb.js")), external: true} // TODO publish to npm
-    : specifier === "npm:@observablehq/inputs"
-    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/inputs.js")), external: true} // TODO publish to npm
-    : specifier === "npm:@observablehq/mermaid"
-    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/mermaid.js")), external: true} // TODO publish to npm
-    : specifier === "npm:@observablehq/tex"
-    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/tex.js")), external: true} // TODO publish to npm
-    : specifier === "npm:@observablehq/sqlite"
-    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/sqlite.js")), external: true} // TODO publish to npm
-    : specifier === "npm:@observablehq/xlsx"
-    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/xlsx.js")), external: true} // TODO publish to npm
-    : specifier === "npm:@observablehq/zip"
-    ? {id: relativeUrl(source, getClientPath("./src/client/stdlib/zip.js")), external: true} // TODO publish to npm
-    : specifier.startsWith("npm:")
-    ? {id: await resolveNpmImport(specifier.slice("npm:".length))}
-    : source !== specifier && !isPathImport(specifier) && specifier !== "@observablehq/inputs"
-    ? {id: await resolveNpmImport(specifier), external: true}
-    : null;
-}
-
-function importMetaResolve(): Plugin {
+function importMetaResolve(root: string, path: string): Plugin {
   return {
     name: "resolve-import-meta-resolve",
     async transform(code) {
@@ -140,10 +170,11 @@ function importMetaResolve(): Plugin {
 
       const output = new Sourcemap(code);
       for (const node of resolves) {
-        const specifier = getStringLiteralValue(node.arguments[0]);
+        const source = node.arguments[0];
+        const specifier = getStringLiteralValue(source as StringLiteral);
         if (specifier.startsWith("npm:")) {
-          const resolution = await resolveNpmImport(specifier.slice("npm:".length));
-          output.replaceLeft(node.start, node.end, JSON.stringify(resolution));
+          const resolution = relativePath(path, await resolveNpmImport(root, specifier.slice("npm:".length)));
+          output.replaceLeft(source.start, source.end, JSON.stringify(resolution));
         }
       }
 

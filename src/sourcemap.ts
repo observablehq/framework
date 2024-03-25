@@ -39,20 +39,20 @@ export class Sourcemap {
     }
     return lo;
   }
-  insertLeft(index: number, value: string): void {
-    this.replaceLeft(index, index, value);
+  insertLeft(index: number, value: string): typeof this {
+    return this.replaceLeft(index, index, value);
   }
-  insertRight(index: number, value: string): void {
-    this.replaceRight(index, index, value);
+  insertRight(index: number, value: string): typeof this {
+    return this.replaceRight(index, index, value);
   }
-  delete(start: number, end: number): void {
-    this.replaceRight(start, end, "");
+  delete(start: number, end: number): typeof this {
+    return this.replaceRight(start, end, "");
   }
-  replaceLeft(start: number, end: number, value: string): void {
-    this._edits.splice(this._bisectLeft(start), 0, {start, end, value});
+  replaceLeft(start: number, end: number, value: string): typeof this {
+    return this._edits.splice(this._bisectLeft(start), 0, {start, end, value}), this;
   }
-  replaceRight(start: number, end: number, value: string): void {
-    this._edits.splice(this._bisectRight(start), 0, {start, end, value});
+  replaceRight(start: number, end: number, value: string): typeof this {
+    return this._edits.splice(this._bisectRight(start), 0, {start, end, value}), this;
   }
   translate(position: Position): Position {
     let index = 0;
@@ -79,10 +79,11 @@ export class Sourcemap {
     const l = positionSubtract(position, co);
     return positionAdd(ci, l);
   }
-  trim(): void {
+  trim(): typeof this {
     const input = this.input;
     if (input.startsWith("\n")) this.delete(0, 1); // TODO better trim
     if (input.endsWith("\n")) this.delete(input.length - 1, input.length); // TODO better trim
+    return this;
   }
   toString(): string {
     let output = "";

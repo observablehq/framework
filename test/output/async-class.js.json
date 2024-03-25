@@ -1,0 +1,120 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 77,
+    "body": [
+      {
+        "type": "ClassDeclaration",
+        "start": 0,
+        "end": 76,
+        "id": {
+          "type": "Identifier",
+          "start": 6,
+          "end": 9,
+          "name": "Foo"
+        },
+        "superClass": null,
+        "body": {
+          "type": "ClassBody",
+          "start": 10,
+          "end": 76,
+          "body": [
+            {
+              "type": "MethodDefinition",
+              "start": 14,
+              "end": 74,
+              "static": false,
+              "computed": false,
+              "key": {
+                "type": "Identifier",
+                "start": 20,
+                "end": 28,
+                "name": "addAsync"
+              },
+              "kind": "method",
+              "value": {
+                "type": "FunctionExpression",
+                "start": 28,
+                "end": 74,
+                "id": null,
+                "expression": false,
+                "generator": false,
+                "async": true,
+                "params": [
+                  {
+                    "type": "Identifier",
+                    "start": 29,
+                    "end": 30,
+                    "name": "a"
+                  },
+                  {
+                    "type": "Identifier",
+                    "start": 32,
+                    "end": 33,
+                    "name": "b"
+                  }
+                ],
+                "body": {
+                  "type": "BlockStatement",
+                  "start": 35,
+                  "end": 74,
+                  "body": [
+                    {
+                      "type": "ReturnStatement",
+                      "start": 41,
+                      "end": 70,
+                      "argument": {
+                        "type": "BinaryExpression",
+                        "start": 48,
+                        "end": 69,
+                        "left": {
+                          "type": "AwaitExpression",
+                          "start": 49,
+                          "end": 56,
+                          "argument": {
+                            "type": "Identifier",
+                            "start": 55,
+                            "end": 56,
+                            "name": "a"
+                          }
+                        },
+                        "operator": "+",
+                        "right": {
+                          "type": "AwaitExpression",
+                          "start": 61,
+                          "end": 68,
+                          "argument": {
+                            "type": "Identifier",
+                            "start": 67,
+                            "end": 68,
+                            "name": "b"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 6,
+      "end": 9,
+      "name": "Foo"
+    }
+  ],
+  "references": [],
+  "files": [],
+  "imports": [],
+  "expression": false,
+  "async": false,
+  "inline": false
+}

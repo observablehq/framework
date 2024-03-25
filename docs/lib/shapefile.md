@@ -43,7 +43,9 @@ Plot.plot({
 
 Or, streaming to a canvas:
 
-<canvas id="map-canvas" width="960" height="491" style="max-width: 100%;">
+<figure style="max-width: 100%;">
+  <canvas id="map-canvas" width="960" height="491"></canvas>
+</figure>
 
 ```js echo
 const canvas = document.querySelector("#map-canvas");
@@ -52,8 +54,12 @@ context.fillStyle = getComputedStyle(canvas).color;
 context.clearRect(0, 0, canvas.width, canvas.height);
 
 const path = d3.geoPath(d3.geoEquirectangular(), context);
-const stream = await FileAttachment("ne_110m_land/ne_110m_land.shp").url();
-const source = await shapefile.open(stream);
+const source = await shapefile.open(
+  ...(await Promise.all([
+    FileAttachment("ne_110m_land/ne_110m_land.shp").stream(),
+    FileAttachment("ne_110m_land/ne_110m_land.dbf").stream()
+  ]))
+);
 
 while (true) {
   const {done, value} = await source.read();

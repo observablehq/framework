@@ -7,6 +7,7 @@ export const faint = color(2, 22);
 export const italic = color(3, 23);
 export const underline = color(4, 24);
 export const inverse = color(7, 27);
+export const strikethrough = color(9, 29);
 export const red = color(31, 39);
 export const green = color(32, 39);
 export const yellow = color(33, 39);
