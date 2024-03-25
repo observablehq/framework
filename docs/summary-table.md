@@ -73,7 +73,7 @@ function table(data, options = {}) {
 
 function summary({name, type, values}) {
   const {width: w, height} = this.getBoundingClientRect();
-  const width = Math.min(200, (w ?? 80) - 10);
+  const width = Math.min(200, (w ?? 80));
   let chart;
 
   // Count values, NaN, nulls, distinct
@@ -145,18 +145,21 @@ function summary({name, type, values}) {
   }
   // temporal, quantitative
   else {
+    const niceK = 5;
+    const isDate = type.startsWith("Date");
     const thresholds = Math.max(10, Math.min(50, d3.thresholdScott(values, min, max))); // TODO optimize thresholdScott
+    const domain = d3.nice(min, max, niceK);
+    if (domain.length > 2) domain.splice(1, domain.length - 2);
+    const ticks = isDate ? d3.utcTicks(...domain, niceK) : d3.ticks(...domain, niceK);
+    if (ticks.length > 2) ticks.splice(1, ticks.length - 2);
     chart = Plot.plot({
       width,
       height,
       style: "overflow: visible;",
-      x: {
-        round: true,
-        nice: true
-      },
+      x: {round: true, nice: niceK},
       y: {axis: null},
-      marginLeft: 9,
-      marginRight: 9,
+      marginLeft: 4,
+      marginRight: 12,
       marginTop: 0,
       marginBottom: 13,
       marks: [
@@ -171,9 +174,9 @@ function summary({name, type, values}) {
           inset: 0,
           insetRight: 1,
         })),
-        min * max <= 0 ? Plot.ruleX([0]) : [],
+        domain[0] * domain[1] <= 0 ? Plot.ruleX([0]) : [],
         Plot.ruleY([0]),
-        Plot.axisX({tickSpacing: 41, tickSize: 3, tickPadding: 2, fontSize: 8, ...(!type.startsWith("Date") && Math.max(Math.abs(min), Math.abs(max)) >= 1e5 && {tickFormat: "s"})}),
+        Plot.axisX(ticks, {tickSize: 3, tickPadding: 2, fontSize: 8, ...(!isDate && {tickFormat: "s"})}),
       ]
     });
   }
