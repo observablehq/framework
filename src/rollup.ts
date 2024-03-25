@@ -66,7 +66,7 @@ export async function rollupClient(
       nodeResolve({resolveOnly: BUNDLED_MODULES}),
       importResolve(input, root, path),
       esbuild({
-        target: "es2022",
+        target: ["es2022", "chrome96", "firefox96", "safari16", "node18"],
         exclude: [], // don’t exclude node_modules
         keepNames,
         minify,
