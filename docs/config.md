@@ -110,14 +110,11 @@ The project’s title. If specified, this text is used for the link to the home 
 
 Whether to create and show the sidebar. One of:
 
-- **true** — create a sidebar
-- **false** — do not create a sidebar
-- **auto** — default, create a sidebar if **pages** is not empty.
-- **hidden** — create a hidden sidebar
+- *true* (default) — create a sidebar
+- *false* (default) — do not create a sidebar
+- *hidden* — create an initally-hidden sidebar
 
-By default, the sidebar is hidden on smaller screens and displayed on larger screens. However, the user can choose to display or hide it with a button and shortcut key (meta-B), and this choice is respected during the [page session](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage).
-
-If the option is set to _hidden,_ the sidebar always starts up hidden, requiring a user action to display it.
+If **pages** is non-empty, **sidebar** defaults to true; otherwise it defaults to *false*. If **sidebar** is *true*, the initial sidebar visibility depends on the window width. The user can open or close the sidebar by clicking its toggle or using the Command-B keyboard shortcut. The display state of the sidebar is persisted in [session storage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage). If **sidebar** is *hidden*, the sidebar is initially hidden regardless of window width.
 
 ## pages
 

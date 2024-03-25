@@ -44,7 +44,7 @@ export interface Config {
   output: string; // defaults to dist
   base: string; // defaults to "/"
   title?: string;
-  sidebar: "auto" | "auto-hidden" | "hidden" | boolean; // auto defaults to true if pages isn’t empty
+  sidebar: "hidden" | boolean; // defaults to pages.length > 0
   pages: (Page | Section)[];
   pager: boolean; // defaults to true
   scripts: Script[]; // defaults to empty array
@@ -134,7 +134,7 @@ export function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Config {
     root = defaultRoot,
     output = "dist",
     base = "/",
-    sidebar = "auto",
+    sidebar,
     style,
     theme = "default",
     search,
@@ -187,6 +187,7 @@ export function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Config {
     loaders: new LoaderResolver({root, interpreters})
   };
   if (pages === undefined) Object.defineProperty(config, "pages", {get: () => readPages(root, md)});
+  if (sidebar === undefined) Object.defineProperty(config, "sidebar", {get: () => config.pages.length > 0});
   configCache.set(spec, config);
   return config;
 }
@@ -284,13 +285,6 @@ function keyword<T extends Lowercase<string>>(input: any, name: string, allowed:
 
 export function normalizeSidebar(sidebar: unknown): Config["sidebar"] {
   return typeof sidebar === "string"
-    ? keyword(sidebar, "sidebar option", ["auto", "auto-hidden", "hidden"])
+    ? keyword(sidebar, "sidebar option", ["hidden"])
     : Boolean(sidebar);
-}
-
-export function mergeSidebar(sidebar: Config["sidebar"] | undefined, config: Config): boolean | "hidden" {
-  if (sidebar === undefined) sidebar = config.sidebar;
-  if (sidebar === "auto") sidebar = config.pages.length > 0;
-  else if (sidebar === "auto-hidden") sidebar = config.pages.length > 0 ? "hidden" : false;
-  return sidebar;
 }
