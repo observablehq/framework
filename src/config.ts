@@ -44,7 +44,7 @@ export interface Config {
   output: string; // defaults to dist
   base: string; // defaults to "/"
   title?: string;
-  sidebar: "hidden" | boolean; // defaults to pages.length > 0
+  sidebar: "hidden" | boolean; // defaults to true if pages isn’t empty
   pages: (Page | Section)[];
   pager: boolean; // defaults to true
   scripts: Script[]; // defaults to empty array
@@ -157,7 +157,7 @@ export function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Config {
   let {title, pages, pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
   if (pages !== undefined) pages = Array.from(pages, normalizePageOrSection);
-  sidebar = normalizeSidebar(sidebar);
+  if (sidebar !== undefined) sidebar = normalizeSidebar(sidebar);
   pager = Boolean(pager);
   scripts = Array.from(scripts, normalizeScript);
   head = String(head);
@@ -284,7 +284,5 @@ function keyword<T extends Lowercase<string>>(input: any, name: string, allowed:
 }
 
 export function normalizeSidebar(sidebar: unknown): Config["sidebar"] {
-  return typeof sidebar === "string"
-    ? keyword(sidebar, "sidebar option", ["hidden"])
-    : Boolean(sidebar);
+  return typeof sidebar === "string" ? keyword(sidebar, "sidebar", ["hidden"]) : Boolean(sidebar);
 }

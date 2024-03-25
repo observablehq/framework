@@ -14,7 +14,7 @@ describe("readConfig(undefined, root)", () => {
       output: "dist",
       base: "/",
       style: {theme: ["air", "near-midnight"]},
-      sidebar: "auto",
+      sidebar: true,
       pages: [
         {path: "/index", name: "Index"},
         {path: "/one", name: "One<Two"},
@@ -45,7 +45,7 @@ describe("readConfig(undefined, root)", () => {
       output: "dist",
       base: "/",
       style: {theme: ["air", "near-midnight"]},
-      sidebar: "auto",
+      sidebar: true,
       pages: [{name: "Build test case", path: "/simple"}],
       title: undefined,
       toc: {label: "Contents", show: true},
