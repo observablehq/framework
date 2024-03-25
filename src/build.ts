@@ -72,7 +72,7 @@ export async function build(
     effects.output.write(`${faint("parse")} ${sourcePath} `);
     const start = performance.now();
     const source = await readFile(sourcePath, "utf8");
-    const page = parseMarkdown(source, {...options, build: true});
+    const page = parseMarkdown(source, options);
     if (page.data.draft) {
       effects.logger.log(faint("(skipped)"));
       continue;
