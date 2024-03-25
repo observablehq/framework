@@ -2,7 +2,7 @@
 index: true
 ---
 
-# Apache ECharts <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" target="_blank" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a>
+# Apache ECharts <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a>
 
 [Apache ECharts](https://echarts.apache.org), an open-source JavaScript visualization library, is available by default as `echarts` in Markdown. You can also import it explicitly like so:
 

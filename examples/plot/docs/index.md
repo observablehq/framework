@@ -24,24 +24,24 @@ const x = {domain: [start, end]};
 ```
 
 <div class="grid grid-cols-4">
-  <a class="card" href="https://github.com/observablehq/plot/releases" target="_blank" style="color: inherit;">
+  <a class="card" href="https://github.com/observablehq/plot/releases" style="color: inherit;">
     <h2>Latest release</h2>
     <span class="big">${versions.at(-1).version}</span>
     <span class="muted">${((days) => days === 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`)(d3.  utcDay.count(versions.at(-1).date, new Date()))}</span>
   </a>
-  <a class="card" href="https://github.com/observablehq/plot" target="_blank" style="color: inherit;">
+  <a class="card" href="https://github.com/observablehq/plot" style="color: inherit;">
     <h2>GitHub stars</h2>
     <span class="big">${stars.length.toLocaleString("en-US")}</span>
     ${Trend(d3.sum(stars, (d) => d.starred_at >= lastWeek))}</span>
     <span class="muted">over 7d</span>
   </a>
-  <a class="card" href="https://npmjs.com/package/@observablehq/plot" target="_blank" style="color: inherit;">
+  <a class="card" href="https://npmjs.com/package/@observablehq/plot" style="color: inherit;">
     <h2>Daily npm downloads</h2>
     <span class="big">${downloads[0].value.toLocaleString("en-US")}</span>
     ${Trend(downloads[7].value ? (downloads[0].value - downloads[7].value) / downloads[7].value : undefined, {format: {style: "percent"}})}
     <span class="muted">over 7d</span>
   </a>
-  <a class="card" href="https://npmjs.com/package/@observablehq/plot" target="_blank" style="color: inherit;">
+  <a class="card" href="https://npmjs.com/package/@observablehq/plot" style="color: inherit;">
     <h2>Total npm downloads</h2>
     <span class="big">${d3.sum(downloads, (d) => d.value).toLocaleString("en-US")}</span>
   </a>
@@ -103,20 +103,20 @@ const x = {domain: [start, end]};
 </div>
 
 <div class="grid grid-cols-4">
-  <a class="card" href="https://github.com/observablehq/plot/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc" target="_blank" style="color: inherit;">
+  <a class="card" href="https://github.com/observablehq/plot/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc" style="color: inherit;">
     <h2>Open issues</h2>
     <span class="big">${d3.sum(issues, (d) => !d.pull_request && d.state === "open").toLocaleString("en-US")}</span>
   </a>
-  <a class="card" href="https://github.com/observablehq/plot/pulls?q=is%3Apr+is%3Aopen+sort%3Aupdated-desc+draft%3Afalse" target="_blank" style="color: inherit;">
+  <a class="card" href="https://github.com/observablehq/plot/pulls?q=is%3Apr+is%3Aopen+sort%3Aupdated-desc+draft%3Afalse" style="color: inherit;">
     <h2>Open PRs</h2>
     <span class="big">${d3.sum(issues, (d) => d.pull_request && d.state === "open" && !d.draft).toLocaleString("en-US")}</span>
   </a>
-  <a class="card" href="https://github.com/observablehq/plot/issues?q=sort%3Acreated-desc" target="_blank" style="color: inherit;">
+  <a class="card" href="https://github.com/observablehq/plot/issues?q=sort%3Acreated-desc" style="color: inherit;">
     <h2>Recent opened issues</h2>
     <span class="big">${d3.sum(issues, (d) => !d.pull_request && d.open >= lastMonth).toLocaleString("en-US")}</span>
     <span class="muted">in 28d</span>
   </a>
-  <a class="card" href="https://github.com/observablehq/plot/issues?q=is%3Aissue+is%3Aclosed+sort%3Aupdated-desc" target="_blank" style="color: inherit;">
+  <a class="card" href="https://github.com/observablehq/plot/issues?q=is%3Aissue+is%3Aclosed+sort%3Aupdated-desc" style="color: inherit;">
     <h2>Recent closed issues</h2>
     <span class="big">${d3.sum(issues, (d) => !d.pull_request && d.close >= lastMonth).toLocaleString("en-US")}</span>
     <span class="muted">in 28d</span>
