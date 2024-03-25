@@ -1,6 +1,6 @@
 import matter from "gray-matter";
 import type {Config} from "./config.js";
-import {normalizeTheme} from "./config.js";
+import {normalizeSidebar, normalizeTheme} from "./config.js";
 import {yellow} from "./tty.js";
 
 export interface FrontMatter {
@@ -33,7 +33,7 @@ export function normalizeFrontMatter(spec: any = {}): FrontMatter {
   if (spec == null || typeof spec !== "object") return frontMatter;
   const {title, sidebar, toc, index, keywords, draft, sql, style, theme} = spec;
   if (title !== undefined) frontMatter.title = stringOrNull(title);
-  if (sidebar !== undefined) frontMatter.sidebar = normalizeSidebar(sidebar);
+  if (sidebar !== undefined) frontMatter.sidebar = maybeNormalizeSidebar(sidebar);
   if (toc !== undefined) frontMatter.toc = normalizeToc(toc);
   if (index !== undefined) frontMatter.index = Boolean(index);
   if (keywords !== undefined) frontMatter.keywords = normalizeKeywords(keywords);
@@ -69,8 +69,10 @@ function normalizeSql(spec: unknown): {[key: string]: string} {
   return sql;
 }
 
-function normalizeSidebar(sidebar: unknown): Config["sidebar"] | undefined {
-  if (typeof sidebar !== "string") return Boolean(sidebar);
-  sidebar = `${sidebar}`.toLowerCase();
-  return sidebar === "auto" || sidebar === "hidden" ? sidebar : undefined;
+function maybeNormalizeSidebar(sidebar: unknown): Config["sidebar"] | undefined {
+  try {
+    return normalizeSidebar(sidebar);
+  } catch {
+    // ignore invalid
+  }
 }

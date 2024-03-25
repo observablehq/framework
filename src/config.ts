@@ -44,7 +44,7 @@ export interface Config {
   output: string; // defaults to dist
   base: string; // defaults to "/"
   title?: string;
-  sidebar: "auto" | "hidden" | boolean; // auto defaults to true if pages isn’t empty
+  sidebar: "auto" | "auto-hidden" | "hidden" | boolean; // auto defaults to true if pages isn’t empty
   pages: (Page | Section)[];
   pager: boolean; // defaults to true
   scripts: Script[]; // defaults to empty array
@@ -282,8 +282,15 @@ function keyword<T extends Lowercase<string>>(input: any, name: string, allowed:
   return i;
 }
 
-export function normalizeSidebar(sidebar: Config["sidebar"]): Config["sidebar"] {
+export function normalizeSidebar(sidebar: unknown): Config["sidebar"] {
   return typeof sidebar === "string"
-    ? keyword(sidebar, "sidebar option", ["auto", "hidden"])
+    ? keyword(sidebar, "sidebar option", ["auto", "auto-hidden", "hidden"])
     : Boolean(sidebar);
+}
+
+export function mergeSidebar(sidebar: Config["sidebar"] | undefined, config: Config): boolean | "hidden" {
+  if (sidebar === undefined) sidebar = config.sidebar;
+  if (sidebar === "auto") sidebar = config.pages.length > 0;
+  else if (sidebar === "auto-hidden") sidebar = config.pages.length > 0 ? "hidden" : false;
+  return sidebar;
 }

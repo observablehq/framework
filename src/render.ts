@@ -1,6 +1,6 @@
 import mime from "mime";
 import type {Config, Page, Script} from "./config.js";
-import {mergeToc} from "./config.js";
+import {mergeSidebar, mergeToc} from "./config.js";
 import {getClientPath} from "./files.js";
 import type {Html, HtmlResolvers} from "./html.js";
 import {html, parseHtml, rewriteHtml} from "./html.js";
@@ -28,8 +28,7 @@ export async function renderPage(page: MarkdownPage, options: RenderOptions & Re
   const {base, path, title, preview} = options;
   const {loaders, resolvers = await getResolvers(page, options)} = options;
   const {draft = false} = data;
-  let {sidebar = options.sidebar} = data;
-  if (sidebar === "auto") sidebar = options.pages.length > 0;
+  const sidebar = mergeSidebar(data.sidebar, options);
   const toc = mergeToc(data.toc, options.toc);
   const {files, resolveFile, resolveImport} = resolvers;
   return String(html`<!DOCTYPE html>
