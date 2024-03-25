@@ -1,7 +1,6 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
 import {extname} from "node:path/posix";
-import matter from "gray-matter";
 import he from "he";
 import MarkdownIt from "markdown-it";
 import type {RuleCore} from "markdown-it/lib/parser_core.js";
@@ -11,7 +10,7 @@ import MarkdownItAnchor from "markdown-it-anchor";
 import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
 import type {FrontMatter} from "./frontMatter.js";
-import {normalizeFrontMatter} from "./frontMatter.js";
+import {readFrontMatter} from "./frontMatter.js";
 import {rewriteHtmlPaths} from "./html.js";
 import {parseInfo} from "./info.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
@@ -305,6 +304,7 @@ export interface ParseOptions {
   head?: Config["head"];
   header?: Config["header"];
   footer?: Config["footer"];
+  build?: boolean;
 }
 
 export function createMarkdownIt({
@@ -327,9 +327,8 @@ export function createMarkdownIt({
 }
 
 export function parseMarkdown(input: string, options: ParseOptions): MarkdownPage {
-  const {md, path} = options;
-  const {content, data: frontMatter} = matter(input, {});
-  const data = normalizeFrontMatter(frontMatter);
+  const {md, path, build} = options;
+  const {content, data} = readFrontMatter(input, build);
   const code: MarkdownCode[] = [];
   const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
   const tokens = md.parse(content, context);
@@ -349,8 +348,7 @@ export function parseMarkdown(input: string, options: ParseOptions): MarkdownPag
 /** Like parseMarkdown, but optimized to return only metadata. */
 export function parseMarkdownMetadata(input: string, options: ParseOptions): Pick<MarkdownPage, "data" | "title"> {
   const {md, path} = options;
-  const {content, data: frontMatter} = matter(input, {});
-  const data = normalizeFrontMatter(frontMatter);
+  const {content, data} = readFrontMatter(input);
   return {
     data,
     title:
