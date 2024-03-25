@@ -20,8 +20,8 @@ export function readFrontMatter(input: string): {content: string; data: FrontMat
     return {content, data: normalizeFrontMatter(data)};
   } catch (error: any) {
     if ("mark" in error) {
-      console.warn(`${yellow("Ignoring invalid front matter")}\n${error.reason}\n${error.mark.buffer.slice(0, -1)}`);
-      return {data: {}, content: input.slice(error.mark.buffer.length + 6)};
+      console.warn(`${yellow("Invalid front matter")}: ${error.reason}`);
+      return {data: {}, content: input};
     }
     throw error;
   }
