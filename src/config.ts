@@ -86,9 +86,7 @@ async function resolveDefaultConfig(root?: string): Promise<string | undefined> 
   const jsPath = resolveConfig("observablehq.config.js", root);
   if (existsSync(jsPath)) return jsPath;
   const tsPath = resolveConfig("observablehq.config.ts", root);
-  if (!existsSync(tsPath)) return;
-  await import("tsx/esm"); // lazy tsx
-  return tsPath;
+  if (existsSync(tsPath)) return await import("tsx/esm"), tsPath; // lazy tsx
 }
 
 let cachedPages: {key: string; pages: Page[]} | null = null;
