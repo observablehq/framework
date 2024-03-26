@@ -37,13 +37,7 @@ const defaultEffects: CreateEffects = {
   }
 };
 
-// TODO Do we want to accept the output path as a command-line argument,
-// still? It’s not sufficient to run observable create non-interactively,
-// though we could just apply all the defaults in that case, and then expose
-// command-line arguments for the other prompts. In any case, our immediate
-// priority is supporting the interactive case, not the automated one.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function create(options = {}, effects: CreateEffects = defaultEffects): Promise<void> {
+export async function create(effects: CreateEffects = defaultEffects): Promise<void> {
   const {clack} = effects;
   clack.intro(`${inverse(" observable create ")} ${faint(`v${process.env.npm_package_version}`)}`);
   const defaultRootPath = "hello-framework";
@@ -118,6 +112,11 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
           await effects.sleep(1000);
           await promisify(exec)("git init", {cwd: rootPath});
           await promisify(exec)("git add -A", {cwd: rootPath});
+        }
+        if (packageManager) {
+          s.message("Initializing Framework cache");
+          await effects.sleep(1000);
+          await promisify(exec)(`${runCommand} build`, {cwd: rootPath});
         }
         s.stop("Installed! 🎉");
         const instructions = [`cd ${rootPath}`, ...(packageManager ? [] : [installCommand]), `${runCommand} dev`];
