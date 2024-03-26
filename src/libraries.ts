@@ -26,6 +26,7 @@ export function getImplicitInputImports(inputs: Iterable<string>): Set<string> {
   if (set.has("L")) implicits.add("npm:leaflet");
   if (set.has("mapboxgl")) implicits.add("npm:mapbox-gl");
   if (set.has("mermaid")) implicits.add("npm:@observablehq/mermaid");
+  if (set.has("p5")) implicits.add("observablehq:stdlib/p5");
   if (set.has("Plot")) implicits.add("npm:@observablehq/plot");
   if (set.has("SQLite") || set.has("SQLiteDatabaseClient")) implicits.add("npm:@observablehq/sqlite");
   if (set.has("tex")) implicits.add("npm:@observablehq/tex");
@@ -159,6 +160,7 @@ export function getImplicitDependencies(imports: Iterable<string>): Set<string> 
   if (set.has("npm:@observablehq/tex")) implicits.add("npm:katex");
   if (set.has("npm:@observablehq/xlsx")) implicits.add("npm:exceljs");
   if (set.has("npm:@observablehq/zip")) implicits.add("npm:jszip");
+  if (set.has("observablehq:stdlib/p5")) implicits.add("npm:p5");
   if (set.has("observablehq:stdlib/vega-lite")) implicits.add("npm:vega-lite-api").add("npm:vega-lite").add("npm:vega");
   if (set.has("observablehq:stdlib/vgplot")) implicits.add("npm:@uwdata/vgplot").add("npm:@observablehq/duckdb").add("npm:@duckdb/duckdb-wasm"); // prettier-ignore
   return implicits;
