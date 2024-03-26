@@ -14,7 +14,7 @@ describe("create", () => {
       null, // Install dependencies?
       false // Initialize git repository?
     );
-    await create(undefined, effects);
+    await create(effects);
     assert.deepStrictEqual(
       new Set(effects.outputs.keys()),
       new Set([
@@ -42,7 +42,7 @@ describe("create", () => {
       null, // Install dependencies?
       false // Initialize git repository?
     );
-    await create(undefined, effects);
+    await create(effects);
     assert.deepStrictEqual(
       new Set(effects.outputs.keys()),
       new Set([
