@@ -122,7 +122,7 @@ Next, decide whether you want sample files in your new project. These files demo
 <pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Where to create your project?
-<span class="muted">│</span>  <span class="muted">./hello-framework</span>
+<span class="muted">│</span>  <span class="muted">hello-framework</span>
 <span class="muted">│</span>
 <span class="green">◇</span>  What to title your project?
 <span class="muted">│</span>  <span class="muted">Hello Framework</span>
@@ -194,7 +194,7 @@ And that’s it! After some downloading, copying, and installing, your new proje
 <span class="muted">│</span>
 <span class="green">◇</span>  Next steps… <span class="muted">──────────╮</span>
 <span class="muted">│</span>                        <span class="muted">│</span>
-<span class="muted">│</span>  <span class="focus">cd hello-framework</span>  <span class="muted">│</span>
+<span class="muted">│</span>  <span class="focus">cd hello-framework</span>    <span class="muted">│</span>
 <span class="muted">│</span>  <span class="focus">yarn dev</span>              <span class="muted">│</span>
 <span class="muted">│</span>                        <span class="muted">│</span>
 <span class="muted">├────────────────────────╯</span>
@@ -221,7 +221,7 @@ Or with Yarn:
 
 You should see something like this:
 
-<pre data-copy="none"><b class="green">Observable Framework</b> v1.3.0
+<pre data-copy="none"><b class="green">Observable Framework</b> v1.5.0
 ↳ <u><a href="http://127.0.0.1:3000/" style="color: inherit;">http://127.0.0.1:3000/</a></u></pre>
 
 <div class="tip">

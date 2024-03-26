@@ -99,7 +99,7 @@ For missing files, `file.lastModified` is undefined. The `file.mimeType` is dete
 
 The contents often dictate the appropriate method — for example, an Apache Arrow file is almost always read with `file.arrow`. When multiple methods are valid, choose based on your needs. For example, you can load a CSV file using `file.text` to implement parsing yourself instead of using D3.
 
-In addition to the above, you can get the resolved absolute URL of the file using `file.href`:
+In addition to the above, you can get the resolved absolute URL of the file using `file.href`: <a href="https://github.com/observablehq/framework/releases/tag/v1.5.0" class="observablehq-version-badge" data-version="^1.5.0" title="Added in 1.5.0"></a>
 
 ```js echo
 FileAttachment("volcano.json").href
