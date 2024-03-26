@@ -88,7 +88,7 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
         const templateDir = op.resolve(fileURLToPath(import.meta.url), "..", "..", "templates", template);
         const runCommand = packageManager === "yarn" ? "yarn" : `${packageManager ?? "npm"} run`;
         const installCommand = `${packageManager ?? "npm"} install`;
-        await effects.sleep(1000);
+        await effects.sleep(1000); // this step is fast; give the spinner a chance to show
         await recursiveCopyTemplate(
           templateDir,
           rootPath!,
@@ -103,19 +103,17 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
         );
         if (packageManager) {
           s.message(`Installing dependencies via ${packageManager}`);
-          await effects.sleep(1000);
           if (packageManager === "yarn") await writeFile(join(rootPath, "yarn.lock"), "");
           await promisify(exec)(installCommand, {cwd: rootPath});
         }
         if (initializeGit) {
           s.message("Initializing git repository");
-          await effects.sleep(1000);
+          await effects.sleep(1000); // this step is fast; give the spinner a chance to show
           await promisify(exec)("git init", {cwd: rootPath});
           await promisify(exec)("git add -A", {cwd: rootPath});
         }
         if (packageManager) {
           s.message("Initializing Framework cache");
-          await effects.sleep(1000);
           await promisify(exec)(`${runCommand} build`, {cwd: rootPath});
         }
         s.stop("Installed! 🎉");
