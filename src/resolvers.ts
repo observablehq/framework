@@ -8,7 +8,7 @@ import {getImplicitDependencies, getImplicitDownloads} from "./libraries.js";
 import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
 import {getImplicitStylesheets} from "./libraries.js";
 import type {MarkdownPage} from "./markdown.js";
-import {resolveNodeImport} from "./node.js";
+import {extractNodeSpecifier, resolveNodeImport, resolveNodeImports} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
 import {isAssetPath, isPathImport, relativePath, resolveLocalPath, resolvePath} from "./path.js";
 
@@ -178,13 +178,14 @@ export async function getResolvers(
       try {
         resolutions.set(i, await resolveNodeImport(root, i));
       } catch {
-        // ignore resolution error; allow the import to be resolved at runtime
+        // ignore error; allow the import to be resolved at runtime
       }
     }
   }
 
-  // Follow transitive imports of npm imports. This has the side-effect of
-  // populating the npm cache. TODO Transitive node imports, too?
+  // Follow transitive imports of npm and bare imports. This has the side-effect
+  // of populating the npm cache; the node import cache is already transitively
+  // populated above.
   for (const [key, value] of resolutions) {
     if (key.startsWith("npm:")) {
       for (const i of await resolveNpmImports(root, value)) {
@@ -195,31 +196,49 @@ export async function getResolvers(
           resolutions.set(specifier, path);
         }
       }
+    } else if (!/^\w+:/.test(key)) {
+      for (const i of await resolveNodeImports(root, value)) {
+        if (i.type === "local") {
+          const path = resolvePath(value, i.name);
+          const specifier = extractNodeSpecifier(path);
+          globalImports.add(specifier);
+          resolutions.set(specifier, path);
+        }
+      }
     }
   }
 
-  // Resolve transitive static npm: imports.
-  // TODO Transitive static node imports, too?
-  const npmStaticResolutions = new Set<string>();
+  // Resolve transitive static npm: and bare imports.
+  const staticResolutions = new Map<string, string>();
   for (const i of staticImports) {
-    if (i.startsWith("npm:")) {
+    if (i.startsWith("npm:") || !/^\w+:/.test(i)) {
       const r = resolutions.get(i);
-      if (r) npmStaticResolutions.add(r);
+      if (r) staticResolutions.set(i, r);
     }
   }
-  for (const value of npmStaticResolutions) {
-    for (const i of await resolveNpmImports(root, value)) {
-      if (i.type === "local" && i.method === "static") {
-        const path = resolvePath(value, i.name);
-        const specifier = `npm:${extractNpmSpecifier(path)}`;
-        staticImports.add(specifier);
-        npmStaticResolutions.add(path);
+  for (const [key, value] of staticResolutions) {
+    if (key.startsWith("npm:")) {
+      for (const i of await resolveNpmImports(root, value)) {
+        if (i.type === "local" && i.method === "static") {
+          const path = resolvePath(value, i.name);
+          const specifier = `npm:${extractNpmSpecifier(path)}`;
+          staticImports.add(specifier);
+          staticResolutions.set(specifier, path);
+        }
+      }
+    } else if (!/^\w+:/.test(key)) {
+      for (const i of await resolveNodeImports(root, value)) {
+        if (i.type === "local" && i.method === "static") {
+          const path = resolvePath(value, i.name);
+          const specifier = extractNodeSpecifier(path);
+          staticImports.add(specifier);
+          staticResolutions.set(specifier, path);
+        }
       }
     }
   }
 
   // Add implicit stylesheets.
-  // TODO Node imports?
   for (const specifier of getImplicitStylesheets(staticImports)) {
     stylesheets.add(specifier);
     if (specifier.startsWith("npm:")) {

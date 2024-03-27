@@ -7,6 +7,9 @@ import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
 import {prepareOutput} from "./files.js";
+import type {ImportReference} from "./javascript/imports.js";
+import {findImports} from "./javascript/imports.js";
+import {parseProgram} from "./javascript/parse.js";
 import {parseNpmSpecifier} from "./npm.js";
 import {isPathImport} from "./path.js";
 import {faint} from "./tty.js";
@@ -45,6 +48,33 @@ async function resolveNodeImportInternal(root: string, packageRoot: string, spec
     await promise;
   }
   return `/_node/${resolution}`;
+}
+
+/**
+ * Resolves the direct dependencies of the specified node import path, such as
+ * "/_node/d3-array@3.2.4/src/index.js", returning a set of node import paths.
+ */
+export async function resolveNodeImports(root: string, path: string): Promise<ImportReference[]> {
+  if (!path.startsWith("/_node/")) throw new Error(`invalid node path: ${path}`);
+  try {
+    const filePath = join(root, ".observablehq", "cache", path);
+    if (!/\.(m|c)?js$/i.test(path)) return []; // not JavaScript; TODO traverse CSS, too
+    const source = await readFile(filePath, "utf-8");
+    const body = parseProgram(source);
+    return findImports(body, path, source);
+  } catch (error: any) {
+    console.warn(`unable to fetch or parse ${path}: ${error.message}`);
+    return [];
+  }
+}
+
+/**
+ * Given a local npm path such as "/_node/d3-array@3.2.4/src/index.js", returns
+ * the corresponding npm specifier such as "d3-array@3.2.4/src/index.js".
+ */
+export function extractNodeSpecifier(path: string): string {
+  if (!path.startsWith("/_node/")) throw new Error(`invalid node path: ${path}`);
+  return path.replace(/^\/_node\//, "");
 }
 
 async function bundle(input: string, root: string, packageRoot: string): Promise<string> {
