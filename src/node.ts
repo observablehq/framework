@@ -5,6 +5,7 @@ import {dirname, join, relative} from "node:path/posix";
 import {pathToFileURL} from "node:url";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
+import esbuild from "rollup-plugin-esbuild";
 import {prepareOutput} from "./files.js";
 import {parseNpmSpecifier} from "./npm.js";
 import {isPathImport} from "./path.js";
@@ -41,8 +42,12 @@ async function bundle(input: string, root: string, packageRoot: string): Promise
   const bundle = await rollup({
     input,
     plugins: [
-      importResolve(root, packageRoot)
-      // TODO minify with esbuild during build
+      importResolve(root, packageRoot),
+      esbuild({
+        target: ["es2022", "chrome96", "firefox96", "safari16", "node18"],
+        exclude: [], // don’t exclude node_modules
+        minify: true
+      })
     ],
     onwarn(message, warn) {
       if (message.code === "CIRCULAR_DEPENDENCY") return;
