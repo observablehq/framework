@@ -8,9 +8,9 @@ import {getImplicitDependencies, getImplicitDownloads} from "./libraries.js";
 import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
 import {getImplicitStylesheets} from "./libraries.js";
 import type {MarkdownPage} from "./markdown.js";
+import {resolveNodeImport} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
 import {isAssetPath, isPathImport, relativePath, resolveLocalPath, resolvePath} from "./path.js";
-import {resolveNodeImport} from "./node.js";
 
 export interface Resolvers {
   path: string;
@@ -170,13 +170,11 @@ export async function getResolvers(
     globalImports.add(i);
   }
 
-  // Resolve npm: and node imports.
+  // Resolve npm: and bare imports.
   for (const i of globalImports) {
-    if (i.startsWith("observablehq:") || builtins.has(i)) {
-      continue;
-    } else if (i.startsWith("npm:")) {
+    if (i.startsWith("npm:") && !builtins.has(i)) {
       resolutions.set(i, await resolveNpmImport(root, i.slice("npm:".length)));
-    } else {
+    } else if (!/^\w+:/.test(i)) {
       resolutions.set(i, await resolveNodeImport(root, i));
     }
   }
