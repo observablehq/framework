@@ -172,7 +172,7 @@ export class PreviewServer {
 
         // Normalize the pathname (e.g., dropping ".html").
         const normalizedPathname = config.md.normalizeLink(pathname);
-        if (pathname !== normalizedPathname) {
+        if (url.pathname !== normalizedPathname) {
           res.writeHead(302, {Location: normalizedPathname + url.search});
           res.end();
           return;
