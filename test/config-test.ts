@@ -1,4 +1,5 @@
 import assert from "node:assert";
+import {resolve} from "node:path";
 import MarkdownIt from "markdown-it";
 import {normalizeConfig as config, mergeToc, readConfig, setCurrentDate} from "../src/config.js";
 import {LoaderResolver} from "../src/dataloader.js";
@@ -33,7 +34,8 @@ describe("readConfig(undefined, root)", () => {
         workspace: "acme",
         project: "bi"
       },
-      search: false
+      search: false,
+      watchPath: resolve("test/input/build/config/observablehq.config.js")
     });
   });
   it("returns the default config if no config file is found", async () => {
@@ -56,7 +58,8 @@ describe("readConfig(undefined, root)", () => {
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
       deploy: null,
-      search: false
+      search: false,
+      watchPath: undefined
     });
   });
 });
