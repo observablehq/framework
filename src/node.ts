@@ -15,6 +15,8 @@ export async function resolveNodeImport(root: string, spec: string): Promise<str
   return resolveNodeImportInternal(root, root, spec);
 }
 
+const bundlePromises = new Map<string, Promise<void>>();
+
 async function resolveNodeImportInternal(root: string, packageRoot: string, spec: string): Promise<string> {
   const specifier = parseNpmSpecifier(spec);
   const require = createRequire(pathToFileURL(join(packageRoot, "/")));
@@ -30,10 +32,17 @@ async function resolveNodeImportInternal(root: string, packageRoot: string, spec
   const resolution = `${specifier.name}@${version}/${relativePath}`;
   const outputPath = join(root, ".observablehq", "cache", "_node", resolution);
   if (!existsSync(outputPath)) {
-    process.stdout.write(`${spec} ${faint("→")} `);
-    await prepareOutput(outputPath);
-    await writeFile(outputPath, await bundle(pathResolution, root, packageResolution));
-    process.stdout.write(`${resolution}\n`);
+    let promise = bundlePromises.get(outputPath);
+    if (!promise) {
+      promise = (async () => {
+        process.stdout.write(`${spec} ${faint("→")} ${resolution}\n`);
+        await prepareOutput(outputPath);
+        await writeFile(outputPath, await bundle(pathResolution, root, packageResolution));
+      })();
+      bundlePromises.set(outputPath, promise);
+      promise.catch(() => {}).then(() => bundlePromises.delete(outputPath));
+    }
+    await promise;
   }
   return `/_node/${resolution}`;
 }

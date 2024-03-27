@@ -175,7 +175,11 @@ export async function getResolvers(
     if (i.startsWith("npm:") && !builtins.has(i)) {
       resolutions.set(i, await resolveNpmImport(root, i.slice("npm:".length)));
     } else if (!/^\w+:/.test(i)) {
-      resolutions.set(i, await resolveNodeImport(root, i));
+      try {
+        resolutions.set(i, await resolveNodeImport(root, i));
+      } catch {
+        // ignore resolution error; allow the import to be resolved at runtime
+      }
     }
   }
 
