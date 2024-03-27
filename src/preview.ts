@@ -124,6 +124,8 @@ export class PreviewServer {
       } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".css")) {
         const path = getClientPath(pathname.slice("/_observablehq/".length));
         end(req, res, await bundleStyles({path}), "text/css");
+      } else if (pathname.startsWith("/_node/")) {
+        send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
       } else if (pathname.startsWith("/_npm/")) {
         await populateNpmCache(root, pathname);
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);

@@ -10,6 +10,7 @@ import {getImplicitStylesheets} from "./libraries.js";
 import type {MarkdownPage} from "./markdown.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
 import {isAssetPath, isPathImport, relativePath, resolveLocalPath, resolvePath} from "./path.js";
+import {resolveNodeImport} from "./node.js";
 
 export interface Resolvers {
   path: string;
@@ -169,31 +170,40 @@ export async function getResolvers(
     globalImports.add(i);
   }
 
-  // Resolve npm: imports.
+  // Resolve npm: and node imports.
   for (const i of globalImports) {
-    if (i.startsWith("npm:") && !builtins.has(i)) {
+    if (i.startsWith("observablehq:") || builtins.has(i)) {
+      continue;
+    } else if (i.startsWith("npm:")) {
       resolutions.set(i, await resolveNpmImport(root, i.slice("npm:".length)));
+    } else {
+      resolutions.set(i, await resolveNodeImport(root, i));
     }
   }
 
   // Follow transitive imports of npm imports. This has the side-effect of
-  // populating the npm cache.
-  for (const value of resolutions.values()) {
-    for (const i of await resolveNpmImports(root, value)) {
-      if (i.type === "local") {
-        const path = resolvePath(value, i.name);
-        const specifier = `npm:${extractNpmSpecifier(path)}`;
-        globalImports.add(specifier);
-        resolutions.set(specifier, path);
+  // populating the npm cache. TODO Transitive node imports, too?
+  for (const [key, value] of resolutions) {
+    if (key.startsWith("npm:")) {
+      for (const i of await resolveNpmImports(root, value)) {
+        if (i.type === "local") {
+          const path = resolvePath(value, i.name);
+          const specifier = `npm:${extractNpmSpecifier(path)}`;
+          globalImports.add(specifier);
+          resolutions.set(specifier, path);
+        }
       }
     }
   }
 
   // Resolve transitive static npm: imports.
+  // TODO Transitive static node imports, too?
   const npmStaticResolutions = new Set<string>();
   for (const i of staticImports) {
-    const r = resolutions.get(i);
-    if (r) npmStaticResolutions.add(r);
+    if (i.startsWith("npm:")) {
+      const r = resolutions.get(i);
+      if (r) npmStaticResolutions.add(r);
+    }
   }
   for (const value of npmStaticResolutions) {
     for (const i of await resolveNpmImports(root, value)) {
@@ -207,6 +217,7 @@ export async function getResolvers(
   }
 
   // Add implicit stylesheets.
+  // TODO Node imports?
   for (const specifier of getImplicitStylesheets(staticImports)) {
     stylesheets.add(specifier);
     if (specifier.startsWith("npm:")) {
