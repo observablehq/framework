@@ -3,7 +3,7 @@ import {existsSync} from "node:fs";
 import {rm} from "node:fs/promises";
 import {extractNodeSpecifier, resolveNodeImport, resolveNodeImports} from "../src/node.js";
 
-describe.only("resolveNodeImport(root, spec)", () => {
+describe("resolveNodeImport(root, spec)", () => {
   const importRoot = "../../input/packages/.observablehq/cache";
   before(async () => {
     await rm("docs/.observablehq/cache/_node", {recursive: true, force: true});
