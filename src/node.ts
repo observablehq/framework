@@ -7,7 +7,7 @@ import {pathToFileURL} from "node:url";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
-import {fromOsPath, prepareOutput} from "./files.js";
+import {fromOsPath, prepareOutput, toOsPath} from "./files.js";
 import type {ImportReference} from "./javascript/imports.js";
 import {isJavaScript, parseImports} from "./javascript/imports.js";
 import {parseNpmSpecifier} from "./npm.js";
@@ -32,7 +32,16 @@ async function resolveNodeImportInternal(root: string, packageRoot: string, spec
   } while (!existsSync(op.join(packageResolution, "package.json")));
   const {version} = JSON.parse(await readFile(op.join(packageResolution, "package.json"), "utf-8"));
   const resolution = `${specifier.name}@${version}/${fromOsPath(op.relative(packageResolution, pathResolution))}`;
-  const outputPath = op.join(root, ".observablehq", "cache", "_node", resolution);
+  const outputPath = op.join(root, ".observablehq", "cache", "_node", toOsPath(resolution));
+  console.warn("resolveNodeImportInternal", {
+    root,
+    packageRoot,
+    spec,
+    packageResolution,
+    pathResolution,
+    resolution,
+    outputPath
+  });
   if (!existsSync(outputPath)) {
     let promise = bundlePromises.get(outputPath);
     if (!promise) {
@@ -100,6 +109,7 @@ function importResolve(root: string, packageRoot: string): Plugin {
   async function resolve(specifier: string | AstNode): Promise<ResolveIdResult> {
     if (typeof specifier !== "string") throw new Error(`unexpected specifier: ${specifier}`);
     if (isPathImport(specifier)) return null;
+    console.warn("importResolve", {root, packageRoot, specifier});
     return {id: await resolveNodeImportInternal(root, packageRoot, specifier), external: true};
   }
   return {
