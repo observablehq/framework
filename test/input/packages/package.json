@@ -1,0 +1,10 @@
+{
+  "type": "module",
+  "dependencies": {
+    "test-browser-condition": "^1.0.0",
+    "test-browser-field": "^1.0.0",
+    "test-browser-map": "^1.0.0",
+    "test-import-condition": "^1.0.0",
+    "test-shorthand-export": "^1.0.0"
+  }
+}

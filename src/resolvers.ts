@@ -8,6 +8,7 @@ import {getImplicitDependencies, getImplicitDownloads} from "./libraries.js";
 import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
 import {getImplicitStylesheets} from "./libraries.js";
 import type {MarkdownPage} from "./markdown.js";
+import {extractNodeSpecifier, resolveNodeImport, resolveNodeImports} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
 import {isAssetPath, isPathImport, relativePath, resolveLocalPath, resolvePath} from "./path.js";
 
@@ -169,39 +170,70 @@ export async function getResolvers(
     globalImports.add(i);
   }
 
-  // Resolve npm: imports.
+  // Resolve npm: and bare imports.
   for (const i of globalImports) {
     if (i.startsWith("npm:") && !builtins.has(i)) {
       resolutions.set(i, await resolveNpmImport(root, i.slice("npm:".length)));
-    }
-  }
-
-  // Follow transitive imports of npm imports. This has the side-effect of
-  // populating the npm cache.
-  for (const value of resolutions.values()) {
-    for (const i of await resolveNpmImports(root, value)) {
-      if (i.type === "local") {
-        const path = resolvePath(value, i.name);
-        const specifier = `npm:${extractNpmSpecifier(path)}`;
-        globalImports.add(specifier);
-        resolutions.set(specifier, path);
+    } else if (!/^\w+:/.test(i)) {
+      try {
+        resolutions.set(i, await resolveNodeImport(root, i));
+      } catch {
+        // ignore error; allow the import to be resolved at runtime
       }
     }
   }
 
-  // Resolve transitive static npm: imports.
-  const npmStaticResolutions = new Set<string>();
-  for (const i of staticImports) {
-    const r = resolutions.get(i);
-    if (r) npmStaticResolutions.add(r);
+  // Follow transitive imports of npm and bare imports. This has the side-effect
+  // of populating the npm cache; the node import cache is already transitively
+  // populated above.
+  for (const [key, value] of resolutions) {
+    if (key.startsWith("npm:")) {
+      for (const i of await resolveNpmImports(root, value)) {
+        if (i.type === "local") {
+          const path = resolvePath(value, i.name);
+          const specifier = `npm:${extractNpmSpecifier(path)}`;
+          globalImports.add(specifier);
+          resolutions.set(specifier, path);
+        }
+      }
+    } else if (!/^\w+:/.test(key)) {
+      for (const i of await resolveNodeImports(root, value)) {
+        if (i.type === "local") {
+          const path = resolvePath(value, i.name);
+          const specifier = extractNodeSpecifier(path);
+          globalImports.add(specifier);
+          resolutions.set(specifier, path);
+        }
+      }
+    }
   }
-  for (const value of npmStaticResolutions) {
-    for (const i of await resolveNpmImports(root, value)) {
-      if (i.type === "local" && i.method === "static") {
-        const path = resolvePath(value, i.name);
-        const specifier = `npm:${extractNpmSpecifier(path)}`;
-        staticImports.add(specifier);
-        npmStaticResolutions.add(path);
+
+  // Resolve transitive static npm: and bare imports.
+  const staticResolutions = new Map<string, string>();
+  for (const i of staticImports) {
+    if (i.startsWith("npm:") || !/^\w+:/.test(i)) {
+      const r = resolutions.get(i);
+      if (r) staticResolutions.set(i, r);
+    }
+  }
+  for (const [key, value] of staticResolutions) {
+    if (key.startsWith("npm:")) {
+      for (const i of await resolveNpmImports(root, value)) {
+        if (i.type === "local" && i.method === "static") {
+          const path = resolvePath(value, i.name);
+          const specifier = `npm:${extractNpmSpecifier(path)}`;
+          staticImports.add(specifier);
+          staticResolutions.set(specifier, path);
+        }
+      }
+    } else if (!/^\w+:/.test(key)) {
+      for (const i of await resolveNodeImports(root, value)) {
+        if (i.type === "local" && i.method === "static") {
+          const path = resolvePath(value, i.name);
+          const specifier = extractNodeSpecifier(path);
+          staticImports.add(specifier);
+          staticResolutions.set(specifier, path);
+        }
       }
     }
   }
