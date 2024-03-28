@@ -103,11 +103,12 @@ async function bundle(input: string, cacheRoot: string, packageRoot: string): Pr
 function importResolve(input: string, cacheRoot: string, packageRoot: string): Plugin {
   async function resolve(specifier: string | AstNode): Promise<ResolveIdResult> {
     console.log("importResolve", {input, specifier, cacheRoot, packageRoot});
-    return typeof specifier !== "string" || isPathImport(specifier) || specifier === input
-      ? null // relative import
-      : /^\w+:/.test(specifier)
-      ? {id: specifier, external: true} // https: import, e.g.
-      : {id: await resolveNodeImportInternal(cacheRoot, packageRoot, specifier), external: true}; // bare import
+    return typeof specifier !== "string" || // AST node?
+      isPathImport(specifier) || // relative path, e.g., ./foo.js
+      /^\w+:/.test(specifier) || // windows file path, https: URL, etc.
+      specifier === input // entry point
+      ? null // don’t do any additional resolution
+      : {id: await resolveNodeImportInternal(cacheRoot, packageRoot, specifier), external: true}; // resolve bare import
   }
   return {
     name: "resolve-import",
