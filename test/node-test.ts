@@ -10,11 +10,11 @@ describe("resolveNodeImport(root, spec)", () => {
     }
   });
   it("resolves the version of a direct dependency", async () => {
-    assert.deepStrictEqual(await resolveNodeImport("docs", "d3-array"), "/_node/d3-array@3.2.4/src/index.js");
-    assert.deepStrictEqual(await resolveNodeImport("docs", "mime"), "/_node/mime@4.0.1/dist/src/index.js");
+    assert.deepStrictEqual(await resolveNodeImport("docs", "d3-array"), "/_node/d3-array@3.2.4/index.js");
+    assert.deepStrictEqual(await resolveNodeImport("docs", "mime"), "/_node/mime@4.0.1/index.js");
   });
   it("allows entry points", async () => {
-    assert.deepStrictEqual(await resolveNodeImport("docs", "mime/lite"), "/_node/mime@4.0.1/dist/src/index_lite.js");
+    assert.deepStrictEqual(await resolveNodeImport("docs", "mime/lite"), "/_node/mime@4.0.1/lite.js");
   });
   it("allows non-javascript entry points", async () => {
     assert.deepStrictEqual(await resolveNodeImport("docs", "glob/package.json"), "/_node/glob@10.3.10/package.json");
@@ -34,7 +34,7 @@ describe("resolveNodeImports(root, path)", () => {
     assert.deepStrictEqual(await resolveNodeImports("docs", await resolveNodeImport("docs", "d3-array")), [
       {
         method: "static",
-        name: "../../internmap@2.0.3/src/index.js",
+        name: "../internmap@2.0.3/index.js",
         type: "local"
       }
     ]);
@@ -46,6 +46,6 @@ describe("resolveNodeImports(root, path)", () => {
 
 describe("extractNodeSpecifier(path)", () => {
   it("returns the node specifier from the given path", () => {
-    assert.strictEqual(extractNodeSpecifier("/_node/d3-array@3.2.4/src/index.js"), "d3-array@3.2.4/src/index.js");
+    assert.strictEqual(extractNodeSpecifier("/_node/d3-array@3.2.4/index.js"), "d3-array@3.2.4/index.js");
   });
 });
