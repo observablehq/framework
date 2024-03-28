@@ -10,8 +10,8 @@ jobs:
   test:
     strategy:
       matrix:
-        version: [20]
-        os: [windows-latest]
+        version: [20, 21]
+        os: [ubuntu-latest, windows-latest]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -21,7 +21,7 @@ jobs:
           node-version: ${{ matrix.version }}
           cache: yarn
       - run: yarn --frozen-lockfile
-      - run: yarn test:mocha:serial
+      - run: yarn test:coverage
       - run: yarn test:tsc
       - run: |
           echo ::add-matcher::.github/eslint.json

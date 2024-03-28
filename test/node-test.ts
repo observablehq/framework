@@ -3,7 +3,7 @@ import {existsSync} from "node:fs";
 import {rm} from "node:fs/promises";
 import {extractNodeSpecifier, resolveNodeImport, resolveNodeImports} from "../src/node.js";
 
-describe.only("resolveNodeImport(root, spec)", () => {
+describe("resolveNodeImport(root, spec)", () => {
   before(async () => {
     if (existsSync("docs/.observablehq/cache/_node")) {
       await rm("docs/.observablehq/cache/_node", {recursive: true});
@@ -24,7 +24,7 @@ describe.only("resolveNodeImport(root, spec)", () => {
   });
 });
 
-describe.only("resolveNodeImports(root, path)", () => {
+describe("resolveNodeImports(root, path)", () => {
   before(async () => {
     if (existsSync("docs/.observablehq/cache/_node")) {
       await rm("docs/.observablehq/cache/_node", {recursive: true});
@@ -44,7 +44,7 @@ describe.only("resolveNodeImports(root, path)", () => {
   });
 });
 
-describe.only("extractNodeSpecifier(path)", () => {
+describe("extractNodeSpecifier(path)", () => {
   it("returns the node specifier from the given path", () => {
     assert.strictEqual(extractNodeSpecifier("/_node/d3-array@3.2.4/src/index.js"), "d3-array@3.2.4/src/index.js");
   });

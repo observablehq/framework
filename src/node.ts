@@ -33,15 +33,6 @@ async function resolveNodeImportInternal(root: string, packageRoot: string, spec
   const {version} = JSON.parse(await readFile(op.join(packageResolution, "package.json"), "utf-8"));
   const resolution = `${specifier.name}@${version}/${fromOsPath(op.relative(packageResolution, pathResolution))}`;
   const outputPath = op.join(root, ".observablehq", "cache", "_node", toOsPath(resolution));
-  console.warn("resolveNodeImportInternal", {
-    root,
-    packageRoot,
-    spec,
-    packageResolution,
-    pathResolution,
-    resolution,
-    outputPath
-  });
   if (!existsSync(outputPath)) {
     let promise = bundlePromises.get(outputPath);
     if (!promise) {
@@ -107,10 +98,11 @@ async function bundle(input: string, root: string, packageRoot: string): Promise
 
 function importResolve(input: string, root: string, packageRoot: string): Plugin {
   async function resolve(specifier: string | AstNode): Promise<ResolveIdResult> {
-    if (typeof specifier !== "string") throw new Error(`unexpected specifier: ${specifier}`);
-    if (isPathImport(specifier) || specifier === input) return null;
-    console.warn("importResolve", {root, packageRoot, specifier});
-    return {id: await resolveNodeImportInternal(root, packageRoot, specifier), external: true};
+    return typeof specifier !== "string" || isPathImport(specifier) || specifier === input
+      ? null // relative import
+      : /^\w+:/.test(specifier)
+      ? {id: specifier, external: true} // https: import, e.g.
+      : {id: await resolveNodeImportInternal(root, packageRoot, specifier), external: true}; // bare import
   }
   return {
     name: "resolve-import",
