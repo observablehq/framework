@@ -174,7 +174,7 @@ export class PreviewServer {
 
         // Normalize the pathname (e.g., dropping ".html").
         const normalizedPathname = config.md.normalizeLink(pathname);
-        if (pathname !== normalizedPathname) {
+        if (url.pathname !== normalizedPathname) {
           res.writeHead(302, {Location: normalizedPathname + url.search});
           res.end();
           return;
@@ -284,6 +284,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
   let files: Map<string, string> | null = null;
   let tables: Map<string, string> | null = null;
   let stylesheets: string[] | null = null;
+  let configWatcher: FSWatcher | null = null;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
   let emptyTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -354,7 +355,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
   }
 
   async function hello({path: initialPath, hash: initialHash}: {path: string; hash: string}): Promise<void> {
-    if (markdownWatcher || attachmentWatcher) throw new Error("already watching");
+    if (markdownWatcher || configWatcher || attachmentWatcher) throw new Error("already watching");
     path = decodeURI(initialPath);
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
@@ -373,6 +374,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
     attachmentWatcher = await loaders.watchFiles(path, getWatchFiles(resolvers), () => watcher("change"));
     markdownWatcher = watch(join(root, path), (event) => watcher(event));
+    if (config.watchPath) configWatcher = watch(config.watchPath, () => send({type: "reload"}));
   }
 
   socket.on("message", async (data) => {
@@ -403,6 +405,10 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     if (markdownWatcher) {
       markdownWatcher.close();
       markdownWatcher = null;
+    }
+    if (configWatcher) {
+      configWatcher.close();
+      configWatcher = null;
     }
     console.log(faint("socket close"), req.url);
   });

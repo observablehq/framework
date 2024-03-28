@@ -57,6 +57,7 @@ export interface Config {
   search: boolean; // default to false
   md: MarkdownIt;
   loaders: LoaderResolver;
+  watchPath?: string;
 }
 
 /**
@@ -76,17 +77,16 @@ async function importConfig(path: string): Promise<any> {
 }
 
 export async function readConfig(configPath?: string, root?: string): Promise<Config> {
-  if (configPath === undefined) return readDefaultConfig(root);
-  return normalizeConfig(await importConfig(resolveConfig(configPath, root)), root);
+  if (configPath === undefined) configPath = await resolveDefaultConfig(root);
+  if (configPath === undefined) return normalizeConfig(undefined, root);
+  return normalizeConfig(await importConfig(configPath), root, configPath);
 }
 
-export async function readDefaultConfig(root?: string): Promise<Config> {
+async function resolveDefaultConfig(root?: string): Promise<string | undefined> {
   const jsPath = resolveConfig("observablehq.config.js", root);
-  if (existsSync(jsPath)) return normalizeConfig(await importConfig(jsPath), root);
+  if (existsSync(jsPath)) return jsPath;
   const tsPath = resolveConfig("observablehq.config.ts", root);
-  if (!existsSync(tsPath)) return normalizeConfig(undefined, root);
-  await import("tsx/esm"); // lazy tsx
-  return normalizeConfig(await importConfig(tsPath), root);
+  if (existsSync(tsPath)) return await import("tsx/esm"), tsPath; // lazy tsx
 }
 
 let cachedPages: {key: string; pages: Page[]} | null = null;
@@ -127,7 +127,7 @@ export function setCurrentDate(date = new Date()): void {
 // module), we want to return the same Config instance.
 const configCache = new WeakMap<any, Config>();
 
-export function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Config {
+export function normalizeConfig(spec: any = {}, defaultRoot = "docs", watchPath?: string): Config {
   const cachedConfig = configCache.get(spec);
   if (cachedConfig) return cachedConfig;
   let {
@@ -184,7 +184,8 @@ export function normalizeConfig(spec: any = {}, defaultRoot = "docs"): Config {
     deploy,
     search,
     md,
-    loaders: new LoaderResolver({root, interpreters})
+    loaders: new LoaderResolver({root, interpreters}),
+    watchPath
   };
   if (pages === undefined) Object.defineProperty(config, "pages", {get: () => readPages(root, md)});
   if (sidebar === undefined) Object.defineProperty(config, "sidebar", {get: () => config.pages.length > 0});
