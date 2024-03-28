@@ -1,8 +1,10 @@
+import {readFile} from "node:fs/promises";
 import type {Node} from "acorn";
 import type {CallExpression} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {isPathImport, relativePath, resolveLocalPath} from "../path.js";
+import {parseProgram} from "./parse.js";
 import {getStringLiteralValue, isStringLiteral} from "./source.js";
 import {syntaxError} from "./syntaxError.js";
 
@@ -108,4 +110,24 @@ export function isImportMetaResolve(node: CallExpression): boolean {
     node.callee.property.name === "resolve" &&
     node.arguments.length > 0
   );
+}
+
+const parseImportsCache = new Map<string, Promise<ImportReference[]>>();
+
+export async function parseImports(path: string): Promise<ImportReference[]> {
+  if (!/\.(m|c)?js$/i.test(path)) return []; // not JavaScript; TODO traverse CSS, too
+  let promise = parseImportsCache.get(path);
+  if (promise) return promise;
+  promise = (async function () {
+    try {
+      const source = await readFile(path, "utf-8");
+      const body = parseProgram(source);
+      return findImports(body, path, source);
+    } catch (error: any) {
+      console.warn(`unable to fetch or parse ${path}: ${error.message}`);
+      return [];
+    }
+  })();
+  parseImportsCache.set(path, promise);
+  return promise;
 }

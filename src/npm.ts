@@ -6,7 +6,7 @@ import {simple} from "acorn-walk";
 import {rsort, satisfies} from "semver";
 import {isEnoent} from "./error.js";
 import type {ExportNode, ImportNode, ImportReference} from "./javascript/imports.js";
-import {findImports, isImportMetaResolve} from "./javascript/imports.js";
+import {isImportMetaResolve, parseImports} from "./javascript/imports.js";
 import {parseProgram} from "./javascript/parse.js";
 import type {StringLiteral} from "./javascript/source.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/source.js";
@@ -252,30 +252,13 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
   return `/_npm/${name}@${await resolveNpmVersion(root, {name, range})}/${path.replace(/\+esm$/, "_esm.js")}`;
 }
 
-const npmImportsCache = new Map<string, Promise<ImportReference[]>>();
-
 /**
  * Resolves the direct dependencies of the specified npm path, such as
  * "/_npm/d3@7.8.5/_esm.js", returning the corresponding set of npm paths.
  */
 export async function resolveNpmImports(root: string, path: string): Promise<ImportReference[]> {
   if (!path.startsWith("/_npm/")) throw new Error(`invalid npm path: ${path}`);
-  let promise = npmImportsCache.get(path);
-  if (promise) return promise;
-  promise = (async function () {
-    try {
-      const filePath = await populateNpmCache(root, path);
-      if (!/\.(m|c)?js$/i.test(path)) return []; // not JavaScript; TODO traverse CSS, too
-      const source = await readFile(filePath, "utf-8");
-      const body = parseProgram(source);
-      return findImports(body, path, source);
-    } catch (error: any) {
-      console.warn(`unable to fetch or parse ${path}: ${error.message}`);
-      return [];
-    }
-  })();
-  npmImportsCache.set(path, promise);
-  return promise;
+  return parseImports(await populateNpmCache(root, path));
 }
 
 /**

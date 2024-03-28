@@ -8,8 +8,7 @@ import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
 import {prepareOutput} from "./files.js";
 import type {ImportReference} from "./javascript/imports.js";
-import {findImports} from "./javascript/imports.js";
-import {parseProgram} from "./javascript/parse.js";
+import {parseImports} from "./javascript/imports.js";
 import {parseNpmSpecifier} from "./npm.js";
 import {isPathImport} from "./path.js";
 import {faint} from "./tty.js";
@@ -56,16 +55,7 @@ async function resolveNodeImportInternal(root: string, packageRoot: string, spec
  */
 export async function resolveNodeImports(root: string, path: string): Promise<ImportReference[]> {
   if (!path.startsWith("/_node/")) throw new Error(`invalid node path: ${path}`);
-  try {
-    const filePath = join(root, ".observablehq", "cache", path);
-    if (!/\.(m|c)?js$/i.test(path)) return []; // not JavaScript; TODO traverse CSS, too
-    const source = await readFile(filePath, "utf-8");
-    const body = parseProgram(source);
-    return findImports(body, path, source);
-  } catch (error: any) {
-    console.warn(`unable to fetch or parse ${path}: ${error.message}`);
-    return [];
-  }
+  return parseImports(join(root, ".observablehq", "cache", path));
 }
 
 /**
