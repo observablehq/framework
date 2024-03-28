@@ -1,5 +1,5 @@
 import {existsSync} from "node:fs";
-import {readFile, writeFile} from "node:fs/promises";
+import {copyFile, readFile, writeFile} from "node:fs/promises";
 import {createRequire} from "node:module";
 import {dirname, join, relative} from "node:path/posix";
 import {pathToFileURL} from "node:url";
@@ -8,7 +8,7 @@ import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
 import {prepareOutput} from "./files.js";
 import type {ImportReference} from "./javascript/imports.js";
-import {parseImports} from "./javascript/imports.js";
+import {isJavaScript, parseImports} from "./javascript/imports.js";
 import {parseNpmSpecifier} from "./npm.js";
 import {isPathImport} from "./path.js";
 import {faint} from "./tty.js";
@@ -39,7 +39,11 @@ async function resolveNodeImportInternal(root: string, packageRoot: string, spec
       promise = (async () => {
         process.stdout.write(`${spec} ${faint("→")} ${resolution}\n`);
         await prepareOutput(outputPath);
-        await writeFile(outputPath, await bundle(pathResolution, root, packageResolution));
+        if (isJavaScript(pathResolution)) {
+          await writeFile(outputPath, await bundle(pathResolution, root, packageResolution));
+        } else {
+          await copyFile(pathResolution, outputPath);
+        }
       })();
       bundlePromises.set(outputPath, promise);
       promise.catch(() => {}).then(() => bundlePromises.delete(outputPath));
@@ -55,7 +59,7 @@ async function resolveNodeImportInternal(root: string, packageRoot: string, spec
  */
 export async function resolveNodeImports(root: string, path: string): Promise<ImportReference[]> {
   if (!path.startsWith("/_node/")) throw new Error(`invalid node path: ${path}`);
-  return parseImports(join(root, ".observablehq", "cache", path));
+  return parseImports(join(root, ".observablehq", "cache"), path);
 }
 
 /**

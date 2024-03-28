@@ -1,8 +1,8 @@
 import assert from "node:assert";
-import {extractNpmSpecifier, getDependencyResolver, rewriteNpmImports} from "../../src/npm.js";
-import {fromJsDelivrPath} from "../../src/npm.js";
-import {relativePath} from "../../src/path.js";
-import {mockJsDelivr} from "../mocks/jsdelivr.js";
+import {extractNpmSpecifier, getDependencyResolver, rewriteNpmImports} from "../src/npm.js";
+import {fromJsDelivrPath} from "../src/npm.js";
+import {relativePath} from "../src/path.js";
+import {mockJsDelivr} from "./mocks/jsdelivr.js";
 
 describe("getDependencyResolver(root, path, input)", () => {
   mockJsDelivr();

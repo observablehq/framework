@@ -258,7 +258,8 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
  */
 export async function resolveNpmImports(root: string, path: string): Promise<ImportReference[]> {
   if (!path.startsWith("/_npm/")) throw new Error(`invalid npm path: ${path}`);
-  return parseImports(await populateNpmCache(root, path));
+  await populateNpmCache(root, path);
+  return parseImports(join(root, ".observablehq", "cache"), path);
 }
 
 /**

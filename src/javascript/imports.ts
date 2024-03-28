@@ -1,4 +1,5 @@
 import {readFile} from "node:fs/promises";
+import {join} from "node:path/posix";
 import type {Node} from "acorn";
 import type {CallExpression} from "acorn";
 import type {ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportExpression} from "acorn";
@@ -61,6 +62,7 @@ export function hasImportDeclaration(body: Node): boolean {
  */
 export function findImports(body: Node, path: string, input: string): ImportReference[] {
   const imports: ImportReference[] = [];
+  const keys = new Set<string>();
 
   simple(body, {
     ImportDeclaration: findImport,
@@ -70,6 +72,11 @@ export function findImports(body: Node, path: string, input: string): ImportRefe
     CallExpression: findImportMetaResolve
   });
 
+  function addImport(ref: ImportReference) {
+    const key = `${ref.type}:${ref.method}:${ref.name}`;
+    if (!keys.has(key)) keys.add(key), imports.push(ref);
+  }
+
   function findImport(node: ImportNode | ExportNode) {
     const source = node.source;
     if (!source || !isStringLiteral(source)) return;
@@ -78,9 +85,9 @@ export function findImports(body: Node, path: string, input: string): ImportRefe
     if (isPathImport(name)) {
       const localPath = resolveLocalPath(path, name);
       if (!localPath) throw syntaxError(`non-local import: ${name}`, node, input); // prettier-ignore
-      imports.push({name: relativePath(path, localPath), type: "local", method});
+      addImport({name: relativePath(path, localPath), type: "local", method});
     } else {
-      imports.push({name, type: "global", method});
+      addImport({name, type: "global", method});
     }
   }
 
@@ -91,9 +98,9 @@ export function findImports(body: Node, path: string, input: string): ImportRefe
     if (isPathImport(name)) {
       const localPath = resolveLocalPath(path, name);
       if (!localPath) throw syntaxError(`non-local import: ${name}`, node, input); // prettier-ignore
-      imports.push({name: relativePath(path, localPath), type: "local", method: "dynamic"});
+      addImport({name: relativePath(path, localPath), type: "local", method: "dynamic"});
     } else {
-      imports.push({name, type: "global", method: "dynamic"});
+      addImport({name, type: "global", method: "dynamic"});
     }
   }
 
@@ -112,15 +119,20 @@ export function isImportMetaResolve(node: CallExpression): boolean {
   );
 }
 
+export function isJavaScript(path: string): boolean {
+  return /\.(m|c)?js$/i.test(path);
+}
+
 const parseImportsCache = new Map<string, Promise<ImportReference[]>>();
 
-export async function parseImports(path: string): Promise<ImportReference[]> {
-  if (!/\.(m|c)?js$/i.test(path)) return []; // not JavaScript; TODO traverse CSS, too
-  let promise = parseImportsCache.get(path);
+export async function parseImports(root: string, path: string): Promise<ImportReference[]> {
+  if (!isJavaScript(path)) return []; // TODO traverse CSS, too
+  const filePath = join(root, path);
+  let promise = parseImportsCache.get(filePath);
   if (promise) return promise;
   promise = (async function () {
     try {
-      const source = await readFile(path, "utf-8");
+      const source = await readFile(filePath, "utf-8");
       const body = parseProgram(source);
       return findImports(body, path, source);
     } catch (error: any) {
@@ -128,6 +140,6 @@ export async function parseImports(path: string): Promise<ImportReference[]> {
       return [];
     }
   })();
-  parseImportsCache.set(path, promise);
+  parseImportsCache.set(filePath, promise);
   return promise;
 }
