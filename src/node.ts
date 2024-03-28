@@ -22,6 +22,7 @@ export async function resolveNodeImport(root: string, spec: string): Promise<str
 const bundlePromises = new Map<string, Promise<void>>();
 
 async function resolveNodeImportInternal(cacheRoot: string, packageRoot: string, spec: string): Promise<string> {
+  console.log("resolveNodeImportInternal", {cacheRoot, packageRoot, spec});
   const {name, path = "."} = parseNpmSpecifier(spec);
   const require = createRequire(pathToFileURL(op.join(packageRoot, "/")));
   const pathResolution = require.resolve(spec);
@@ -73,6 +74,7 @@ export function extractNodeSpecifier(path: string): string {
 }
 
 async function bundle(input: string, cacheRoot: string, packageRoot: string): Promise<string> {
+  console.log("bundle", {input, cacheRoot, packageRoot});
   const bundle = await rollup({
     input,
     plugins: [
@@ -98,13 +100,14 @@ async function bundle(input: string, cacheRoot: string, packageRoot: string): Pr
   }
 }
 
-function importResolve(input: string, root: string, packageRoot: string): Plugin {
+function importResolve(input: string, cacheRoot: string, packageRoot: string): Plugin {
   async function resolve(specifier: string | AstNode): Promise<ResolveIdResult> {
+    console.log("importResolve", {input, specifier, cacheRoot, packageRoot});
     return typeof specifier !== "string" || isPathImport(specifier) || specifier === input
       ? null // relative import
       : /^\w+:/.test(specifier)
       ? {id: specifier, external: true} // https: import, e.g.
-      : {id: await resolveNodeImportInternal(root, packageRoot, specifier), external: true}; // bare import
+      : {id: await resolveNodeImportInternal(cacheRoot, packageRoot, specifier), external: true}; // bare import
   }
   return {
     name: "resolve-import",
