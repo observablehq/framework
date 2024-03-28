@@ -9,6 +9,7 @@ import type MarkdownIt from "markdown-it";
 import {LoaderResolver} from "./dataloader.js";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
+import type {FrontMatter} from "./frontMatter.js";
 import {createMarkdownIt, parseMarkdownMetadata} from "./markdown.js";
 import {isAssetPath, parseRelativeUrl, resolvePath} from "./path.js";
 import {resolveTheme} from "./theme.js";
@@ -39,18 +40,21 @@ export interface Script {
   type: string | null;
 }
 
+type HtmlFormatter = (path: string, data: FrontMatter, options: Config) => string;
+
 export interface Config {
   root: string; // defaults to docs
   output: string; // defaults to dist
-  base: string; // defaults to "/"
+  base: string; // e.g. "/framework/"; defaults to "/"
+  origin: string; // e.g. "https://observablehq.com"; defaults to ""
   title?: string;
   sidebar: boolean; // defaults to true if pages isn’t empty
   pages: (Page | Section)[];
   pager: boolean; // defaults to true
   scripts: Script[]; // defaults to empty array
-  head: string; // defaults to empty string
-  header: string; // defaults to empty string
-  footer: string; // defaults to “Built with Observable on [date].”
+  head: HtmlFormatter; // defaults to empty string
+  header: HtmlFormatter; // defaults to empty string
+  footer: HtmlFormatter; // defaults to “Built with Observable on [date].”
   toc: TableOfContents;
   style: null | Style; // defaults to {theme: ["light", "dark"]}
   deploy: null | {workspace: string; project: string};
@@ -133,7 +137,8 @@ export function normalizeConfig(spec: any = {}, defaultRoot = "docs", watchPath?
   let {
     root = defaultRoot,
     output = "dist",
-    base = "/",
+    base,
+    origin = "",
     sidebar,
     style,
     theme = "default",
@@ -149,7 +154,7 @@ export function normalizeConfig(spec: any = {}, defaultRoot = "docs", watchPath?
   } = spec;
   root = String(root);
   output = String(output);
-  base = normalizeBase(base);
+  ({origin, base} = normalizeOrigin(origin, base));
   if (style === null) style = null;
   else if (style !== undefined) style = {path: String(style)};
   else style = {theme: (theme = normalizeTheme(theme))};
@@ -160,9 +165,9 @@ export function normalizeConfig(spec: any = {}, defaultRoot = "docs", watchPath?
   if (sidebar !== undefined) sidebar = Boolean(sidebar);
   pager = Boolean(pager);
   scripts = Array.from(scripts, normalizeScript);
-  head = String(head);
-  header = String(header);
-  footer = String(footer);
+  head = htmlFormatter(head);
+  header = htmlFormatter(header);
+  footer = htmlFormatter(footer);
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
   search = Boolean(search);
@@ -170,6 +175,7 @@ export function normalizeConfig(spec: any = {}, defaultRoot = "docs", watchPath?
   const config = {
     root,
     output,
+    origin,
     base,
     title,
     sidebar,
@@ -193,11 +199,19 @@ export function normalizeConfig(spec: any = {}, defaultRoot = "docs", watchPath?
   return config;
 }
 
-function normalizeBase(base: any): string {
+function normalizeOrigin(origin: any, base: any): {origin: string; base: string} {
+  origin = String(origin);
+  if (!origin) {
+    if (base === undefined) base = "/";
+    else base = String(base);
+  } else {
+    if (!/^\w+:/.test(origin)) throw new Error(`origin must start with protocol (https:) ${origin}`);
+    if (base === undefined) ({origin, pathname: base} = new URL(origin));
+  }
   base = String(base);
   if (!base.startsWith("/")) throw new Error(`base must start with slash: ${base}`);
   if (!base.endsWith("/")) base += "/";
-  return base;
+  return {origin, base};
 }
 
 export function normalizeTheme(spec: any): string[] {
@@ -215,6 +229,12 @@ function normalizeScript(spec: any): Script {
 
 function normalizePageOrSection(spec: any): Page | Section {
   return ("pages" in spec ? normalizeSection : normalizePage)(spec);
+}
+
+function htmlFormatter(spec: any): HtmlFormatter {
+  return typeof spec === "function"
+    ? (...args) => String(spec(...args))
+    : ((spec = String(spec) as string), () => spec);
 }
 
 function normalizeSection(spec: any): Section {

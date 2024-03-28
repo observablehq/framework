@@ -1,4 +1,5 @@
 import {formatPrefix} from "d3-format";
+import type {Config} from "./src/config.js";
 
 let stargazers_count: number;
 try {
@@ -7,6 +8,28 @@ try {
   if (process.env.CI) throw error;
   stargazers_count = NaN;
 }
+
+const headprod = process.env.CI
+  ? `<script type="module" async src="https://events.observablehq.com/client.js"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9B88TP6PKQ"></script>
+<script>window.dataLayer=window.dataLayer||[];\nfunction gtag(){dataLayer.push(arguments);}\ngtag('js',new Date());\ngtag('config','G-9B88TP6PKQ');</script>
+`
+  : "";
+
+function openGraph(path, data, config) {
+  return `<meta property="og:title" content="${data.title || config.title}" />
+<meta property="og:url" content="${config.origin}${config.base}${path.slice(1)}" />${
+    data.thumbnail ? `\n<meta property="og:image" content="${data.thumbnail}" />` : ""
+  }
+`;
+}
+
+const head = function (path: string, data: any /* FrontMatter */, config: Config) {
+  const og = openGraph(path, data, config);
+  return `<link rel="apple-touch-icon" href="/favicon.png">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="512x512">
+${og}${headprod}<script type="module"> /Win/.test(navigator.platform) || Array.from(document.querySelectorAll(".win"), (e) => e.remove()) < /script>`;
+};
 
 export default {
   output: "docs/.observablehq/dist",
@@ -95,17 +118,8 @@ export default {
     },
     {name: "Contributing", path: "/contributing"}
   ],
-  base: "/framework",
-  head: `<link rel="apple-touch-icon" href="/favicon.png">
-<link rel="icon" type="image/png" href="/favicon.png" sizes="512x512">${
-    process.env.CI
-      ? `
-<script type="module" async src="https://events.observablehq.com/client.js"></script>
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-9B88TP6PKQ"></script>
-<script>window.dataLayer=window.dataLayer||[];\nfunction gtag(){dataLayer.push(arguments);}\ngtag('js',new Date());\ngtag('config','G-9B88TP6PKQ');</script>`
-      : ""
-  }
-<script type="module">/Win/.test(navigator.platform) || Array.from(document.querySelectorAll(".win"), (e) => e.remove())</script>`,
+  origin: "https://observablehq.com/framework",
+  head,
   header: `<div style="display: flex; align-items: center; gap: 0.5rem; height: 2.2rem; margin: -1.5rem -2rem 2rem -2rem; padding: 0.5rem 2rem; border-bottom: solid 1px var(--theme-foreground-faintest); font: 500 16px var(--sans-serif);">
   <a href="https://observablehq.com/" target="_self" rel="" style="display: flex; align-items: center;">
     <svg width="22" height="22" viewBox="0 0 21.92930030822754 22.68549919128418" fill="currentColor">
