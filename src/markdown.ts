@@ -359,7 +359,7 @@ export function parseMarkdownMetadata(input: string, options: ParseOptions): Pic
 
 function getHtml(
   key: "head" | "header" | "footer",
-  data: Record<string, any>,
+  data: FrontMatter,
   {path, [key]: defaultValue}: ParseOptions
 ): string | null {
   return data[key] !== undefined
