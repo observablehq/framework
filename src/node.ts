@@ -23,14 +23,25 @@ const bundlePromises = new Map<string, Promise<void>>();
 async function resolveNodeImportInternal(root: string, packageRoot: string, spec: string): Promise<string> {
   const specifier = parseNpmSpecifier(spec);
   const require = createRequire(pathToFileURL(op.join(packageRoot, "/")));
-  const pathResolution = require.resolve(spec);
+  let pathResolution = require.resolve(spec);
   let packageResolution = pathResolution;
   do {
     const p = op.dirname(packageResolution);
     if (p === packageResolution) throw new Error(`unable to resolve package.json: ${spec}`);
     packageResolution = p;
   } while (!existsSync(op.join(packageResolution, "package.json")));
-  const {version} = JSON.parse(await readFile(op.join(packageResolution, "package.json"), "utf-8"));
+  const {version, browser} = JSON.parse(await readFile(op.join(packageResolution, "package.json"), "utf-8"));
+  if (browser) {
+    if (typeof browser === "string") pathResolution = op.join(packageResolution, browser);
+    else if (typeof browser === "object") {
+      for (const [key, value] of Object.entries(browser)) {
+        if (typeof value === "string" && op.join(packageResolution, key) === pathResolution) {
+          pathResolution = op.join(packageResolution, value);
+          break;
+        }
+      }
+    }
+  }
   const resolution = `${specifier.name}@${version}/${fromOsPath(op.relative(packageResolution, pathResolution))}`;
   const outputPath = op.join(root, ".observablehq", "cache", "_node", toOsPath(resolution));
   if (!existsSync(outputPath)) {

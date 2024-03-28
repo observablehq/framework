@@ -49,3 +49,17 @@ describe("extractNodeSpecifier(path)", () => {
     assert.strictEqual(extractNodeSpecifier("/_node/d3-array@3.2.4/src/index.js"), "d3-array@3.2.4/src/index.js");
   });
 });
+
+describe("browser condition", () => {
+  before(async () => {
+    if (existsSync("docs/.observablehq/cache/_node")) {
+      await rm("docs/.observablehq/cache/_node", {recursive: true});
+    }
+  });
+  it("bundles the file specified as browser condition (string)", async () => {
+    assert.deepStrictEqual(await resolveNodeImport("docs", "supports-color"), "/_node/supports-color@7.2.0/browser.js");
+  });
+  it("bundles the file specified as browser condition (map)", async () => {
+    assert.deepStrictEqual(await resolveNodeImport("docs", "asap"), "/_node/asap@2.0.6/browser-asap.js");
+  });
+});
