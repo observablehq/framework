@@ -84,7 +84,7 @@ async function bundle(input: string, root: string, packageRoot: string): Promise
   const bundle = await rollup({
     input,
     plugins: [
-      importResolve(root, packageRoot),
+      importResolve(input, root, packageRoot),
       esbuild({
         target: ["es2022", "chrome96", "firefox96", "safari16", "node18"],
         exclude: [], // don’t exclude node_modules
@@ -105,10 +105,10 @@ async function bundle(input: string, root: string, packageRoot: string): Promise
   }
 }
 
-function importResolve(root: string, packageRoot: string): Plugin {
+function importResolve(input: string, root: string, packageRoot: string): Plugin {
   async function resolve(specifier: string | AstNode): Promise<ResolveIdResult> {
     if (typeof specifier !== "string") throw new Error(`unexpected specifier: ${specifier}`);
-    if (isPathImport(specifier)) return null;
+    if (isPathImport(specifier) || specifier === input) return null;
     console.warn("importResolve", {root, packageRoot, specifier});
     return {id: await resolveNodeImportInternal(root, packageRoot, specifier), external: true};
   }
