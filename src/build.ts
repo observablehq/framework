@@ -10,6 +10,7 @@ import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
+import {extractNodeSpecifier} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport} from "./npm.js";
 import {isPathImport, relativePath, resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
@@ -20,7 +21,6 @@ import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {faint, yellow} from "./tty.js";
-import {extractNodeSpecifier} from "./node.js";
 
 export interface BuildOptions {
   config: Config;
