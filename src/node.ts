@@ -1,12 +1,13 @@
 import {existsSync} from "node:fs";
 import {copyFile, readFile, writeFile} from "node:fs/promises";
 import {createRequire} from "node:module";
-import {dirname, join, relative} from "node:path/posix";
+import op from "node:path";
+import {join} from "node:path/posix";
 import {pathToFileURL} from "node:url";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
-import {prepareOutput} from "./files.js";
+import {fromOsPath, prepareOutput} from "./files.js";
 import type {ImportReference} from "./javascript/imports.js";
 import {isJavaScript, parseImports} from "./javascript/imports.js";
 import {parseNpmSpecifier} from "./npm.js";
@@ -21,18 +22,17 @@ const bundlePromises = new Map<string, Promise<void>>();
 
 async function resolveNodeImportInternal(root: string, packageRoot: string, spec: string): Promise<string> {
   const specifier = parseNpmSpecifier(spec);
-  const require = createRequire(pathToFileURL(join(packageRoot, "/")));
+  const require = createRequire(pathToFileURL(op.join(packageRoot, "/")));
   const pathResolution = require.resolve(spec);
   let packageResolution = pathResolution;
   do {
-    const p = dirname(packageResolution);
+    const p = op.dirname(packageResolution);
     if (p === packageResolution) throw new Error(`unable to resolve package.json: ${spec}`);
     packageResolution = p;
-  } while (!existsSync(join(packageResolution, "package.json")));
-  const {version} = JSON.parse(await readFile(join(packageResolution, "package.json"), "utf-8"));
-  const relativePath = relative(packageResolution, pathResolution);
-  const resolution = `${specifier.name}@${version}/${relativePath}`;
-  const outputPath = join(root, ".observablehq", "cache", "_node", resolution);
+  } while (!existsSync(op.join(packageResolution, "package.json")));
+  const {version} = JSON.parse(await readFile(op.join(packageResolution, "package.json"), "utf-8"));
+  const resolution = `${specifier.name}@${version}/${fromOsPath(op.relative(packageResolution, pathResolution))}`;
+  const outputPath = op.join(root, ".observablehq", "cache", "_node", resolution);
   if (!existsSync(outputPath)) {
     let promise = bundlePromises.get(outputPath);
     if (!promise) {
