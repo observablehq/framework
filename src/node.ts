@@ -5,6 +5,7 @@ import op from "node:path";
 import {extname, join} from "node:path/posix";
 import {pathToFileURL} from "node:url";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
+import {packageDirectory} from "pkg-dir";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
@@ -25,12 +26,8 @@ async function resolveNodeImportInternal(cacheRoot: string, packageRoot: string,
   const {name, path = "."} = parseNpmSpecifier(spec);
   const require = createRequire(pathToFileURL(op.join(packageRoot, "/")));
   const pathResolution = require.resolve(spec);
-  let packageResolution = pathResolution;
-  do {
-    const p = op.dirname(packageResolution);
-    if (p === packageResolution) throw new Error(`unable to resolve package.json: ${spec}`);
-    packageResolution = p;
-  } while (!existsSync(op.join(packageResolution, "package.json")));
+  const packageResolution = await packageDirectory({cwd: op.dirname(pathResolution)});
+  if (!packageResolution) throw new Error(`unable to resolve package.json: ${spec}`);
   const {version} = JSON.parse(await readFile(op.join(packageResolution, "package.json"), "utf-8"));
   const resolution = `${name}@${version}/${extname(path) ? path : path === "." ? "index.js" : `${path}.js`}`;
   const outputPath = op.join(cacheRoot, toOsPath(resolution));
