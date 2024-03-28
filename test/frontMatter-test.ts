@@ -15,7 +15,9 @@ describe("normalizeFrontMatter(spec)", () => {
     assert.deepStrictEqual(normalizeFrontMatter({title: 42}), {title: "42"});
     assert.deepStrictEqual(normalizeFrontMatter({title: undefined}), {});
     assert.deepStrictEqual(normalizeFrontMatter({title: null}), {title: null});
+    assert.deepStrictEqual(normalizeFrontMatter({title: false}), {title: null});
     assert.deepStrictEqual(normalizeFrontMatter({title: ""}), {title: ""});
+    assert.deepStrictEqual(normalizeFrontMatter({title: 0}), {title: "0"});
     assert.deepStrictEqual(normalizeFrontMatter({title: "foo"}), {title: "foo"});
     assert.deepStrictEqual(normalizeFrontMatter({title: {toString: () => "foo"}}), {title: "foo"});
   });

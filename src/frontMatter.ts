@@ -7,6 +7,9 @@ export interface FrontMatter {
   toc?: {show?: boolean; label?: string};
   style?: string | null;
   theme?: string[];
+  head?: string | null;
+  header?: string | null;
+  footer?: string | null;
   index?: boolean;
   keywords?: string[];
   draft?: boolean;
@@ -30,7 +33,7 @@ export function readFrontMatter(input: string): {content: string; data: FrontMat
 export function normalizeFrontMatter(spec: any = {}): FrontMatter {
   const frontMatter: FrontMatter = {};
   if (spec == null || typeof spec !== "object") return frontMatter;
-  const {title, sidebar, toc, index, keywords, draft, sql, style, theme} = spec;
+  const {title, sidebar, toc, index, keywords, draft, sql, head, header, footer, style, theme} = spec;
   if (title !== undefined) frontMatter.title = stringOrNull(title);
   if (sidebar !== undefined) frontMatter.sidebar = Boolean(sidebar);
   if (toc !== undefined) frontMatter.toc = normalizeToc(toc);
@@ -38,13 +41,16 @@ export function normalizeFrontMatter(spec: any = {}): FrontMatter {
   if (keywords !== undefined) frontMatter.keywords = normalizeKeywords(keywords);
   if (draft !== undefined) frontMatter.draft = Boolean(draft);
   if (sql !== undefined) frontMatter.sql = normalizeSql(sql);
+  if (head !== undefined) frontMatter.head = stringOrNull(head);
+  if (header !== undefined) frontMatter.header = stringOrNull(header);
+  if (footer !== undefined) frontMatter.footer = stringOrNull(footer);
   if (style !== undefined) frontMatter.style = stringOrNull(style);
   if (theme !== undefined) frontMatter.theme = normalizeTheme(theme);
   return frontMatter;
 }
 
 function stringOrNull(spec: unknown): string | null {
-  return spec == null ? null : String(spec);
+  return spec == null || spec === false ? null : String(spec);
 }
 
 function normalizeToc(spec: unknown): {show?: boolean; label?: string} {
