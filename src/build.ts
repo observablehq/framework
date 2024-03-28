@@ -20,6 +20,7 @@ import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {faint, yellow} from "./tty.js";
+import {extractNodeSpecifier} from "./node.js";
 
 export interface BuildOptions {
   config: Config;
@@ -175,10 +176,14 @@ export async function build(
   // these, too, but it would involve rewriting the files since populateNpmCache
   // doesn’t let you pass in a resolver.
   for (const path of globalImports) {
-    if (!path.startsWith("/_npm/")) continue; // skip _observablehq
-    effects.output.write(`${faint("copy")} npm:${extractNpmSpecifier(path)} ${faint("→")} `);
-    const sourcePath = await populateNpmCache(root, path); // TODO effects
-    await effects.copyFile(sourcePath, path);
+    if (path.startsWith("/_npm/")) {
+      effects.output.write(`${faint("copy")} npm:${extractNpmSpecifier(path)} ${faint("→")} `);
+      const sourcePath = await populateNpmCache(root, path); // TODO effects
+      await effects.copyFile(sourcePath, path);
+    } else if (path.startsWith("/_node/")) {
+      effects.output.write(`${faint("copy")} ${extractNodeSpecifier(path)} ${faint("→")} `);
+      await effects.copyFile(join(root, ".observablehq", "cache", path), path);
+    }
   }
 
   // Copy over imported local modules, overriding import resolution so that
