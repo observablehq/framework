@@ -21,12 +21,6 @@ async function remote_fetch(file) {
   return response;
 }
 
-async function dsv(file, delimiter, {array = false, typed = false} = {}) {
-  const [text, d3] = await Promise.all([file.text(), import("npm:d3-dsv")]);
-  const parse = delimiter === "\t" ? (array ? d3.tsvParseRows : d3.tsvParse) : array ? d3.csvParseRows : d3.csvParse;
-  return parse(text, typed && d3.autoType);
-}
-
 export class AbstractFile {
   constructor(name, mimeType = "application/octet-stream", lastModified) {
     Object.defineProperty(this, "name", {value: `${name}`, enumerable: true});
@@ -50,11 +44,17 @@ export class AbstractFile {
   async stream() {
     return (await remote_fetch(this)).body;
   }
+  async dsv({delimiter = ",", array = false, typed = false} = {}) {
+    const [text, d3] = await Promise.all([this.text(), import("npm:d3-dsv")]);
+    const format = d3.dsvFormat(delimiter);
+    const parse = array ? format.parseRows : format.parse;
+    return parse(text, typed && d3.autoType);
+  }
   async csv(options) {
-    return dsv(this, ",", options);
+    return this.dsv({...options, delimiter: ","});
   }
   async tsv(options) {
-    return dsv(this, "\t", options);
+    return this.dsv({...options, delimiter: "\t"});
   }
   async image(props) {
     const url = await this.url();
