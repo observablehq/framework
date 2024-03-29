@@ -2,6 +2,7 @@ export default {
   title: "Primary mortgage market survey",
   pager: false,
   toc: false,
+  sidebar: false,
   head:
     process.env.CI &&
     `<script type="module" async src="https://events.observablehq.com/client.js"></script>
