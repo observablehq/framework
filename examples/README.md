@@ -10,5 +10,5 @@
 - **Google analytics** — Load data from the G.A. API and analyze your website’s traffic. [[code](./google-analytics)] [[live project](https://observablehq.com/framework/examples/google-analytics/)]
 - **Hello, world!** — A minimal test. [[code](./hello-world)] [[live project](https://observablehq.com/framework/examples/hello-world/)]
 - **Plot** — TypeScript data loaders that access metadata from the Observable Plot Github repo. [[code](./plot)] [[live project](https://observablehq.com/framework/examples/plot/)]
-- **Mortgage rates** — A small dashboard reproducing Freddie Mac’s historic mortgage rates dashboard. [[code](./mortgage-rates)] [[live project](https://observablehq.com/framework/examples/mortgage-rates/)]
+- **Mortgage rates** — A small dashboard reproducing Freddie Mac’s historic mortgage rates dashboard. [[code](./mortgage-rates)] [[live project](https://observablehq.com/framework/examples/mortgage-rates/)][[interactive version](https://observablehq.com/framework/examples/mortgage-rates/interactive)]
 - **Penguin classification** — In a Python data loader, we use logistic regression to predict penguin species based on body size measurements. [[code](./penguin-classification)] [[live project](https://observablehq.com/framework/examples/penguin-classification/)]
