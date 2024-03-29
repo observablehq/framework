@@ -1,8 +1,9 @@
+import {createHash} from "node:crypto";
 import {existsSync} from "node:fs";
 import {copyFile, readFile, writeFile} from "node:fs/promises";
 import {createRequire} from "node:module";
 import op from "node:path";
-import {extname, join} from "node:path/posix";
+import {basename, extname, join} from "node:path/posix";
 import {pathToFileURL} from "node:url";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
 import {packageDirectory} from "pkg-dir";
@@ -29,7 +30,9 @@ async function resolveNodeImportInternal(cacheRoot: string, packageRoot: string,
   const packageResolution = await packageDirectory({cwd: op.dirname(pathResolution)});
   if (!packageResolution) throw new Error(`unable to resolve package.json: ${spec}`);
   const {version} = JSON.parse(await readFile(op.join(packageResolution, "package.json"), "utf-8"));
-  const resolution = `${name}@${version}/${extname(path) ? path : path === "." ? "index.js" : `${path}.js`}`;
+  const hash = createHash("sha256").update(spec).update(version).digest("hex").slice(0, 8);
+  const ext = extname(path);
+  const resolution = `${name}@${version}/${hash}/${basename(path === "." ? name : path, ext)}${ext || ".js"}`;
   const outputPath = op.join(cacheRoot, toOsPath(resolution));
   if (!existsSync(outputPath)) {
     let promise = bundlePromises.get(outputPath);
@@ -66,7 +69,7 @@ export async function resolveNodeImports(root: string, path: string): Promise<Im
  */
 export function extractNodeSpecifier(path: string): string {
   if (!path.startsWith("/_node/")) throw new Error(`invalid node path: ${path}`);
-  return path.replace(/^\/_node\//, "");
+  return path.slice("/_node/".length);
 }
 
 async function bundle(input: string, cacheRoot: string, packageRoot: string): Promise<string> {
