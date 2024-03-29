@@ -63,15 +63,6 @@ export async function resolveNodeImports(root: string, path: string): Promise<Im
   return parseImports(join(root, ".observablehq", "cache"), path);
 }
 
-/**
- * Given a local npm path such as "/_node/d3-array@3.2.4/src/index.js", returns
- * the corresponding npm specifier such as "d3-array@3.2.4/src/index.js".
- */
-export function extractNodeSpecifier(path: string): string {
-  if (!path.startsWith("/_node/")) throw new Error(`invalid node path: ${path}`);
-  return path.slice("/_node/".length);
-}
-
 async function bundle(input: string, cacheRoot: string, packageRoot: string): Promise<string> {
   const bundle = await rollup({
     input,
