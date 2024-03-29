@@ -269,7 +269,18 @@ export async function resolveNpmImports(root: string, path: string): Promise<Imp
  */
 export function extractNpmSpecifier(path: string): string {
   if (!path.startsWith("/_npm/")) throw new Error(`invalid npm path: ${path}`);
-  return path.replace(/^\/_npm\//, "").replace(/\/_esm\.js$/, "/+esm");
+  const parts = path.split("/");
+  parts.splice(0, 2); // delete /_npm
+  const i = parts[0].startsWith("@") ? 2 : 1;
+  if (parts[i] === "_esm" || (i === parts.length - 1 && parts[i] === "_esm.js")) {
+    parts.splice(i, 1); // delete _esm
+    parts.push("+esm"); // append +esm
+  }
+  // TODO If we added an extension to the path, we should remove it here, but
+  // we can’t distinguish between the case where the extension was added by us
+  // (as in `npm:mime/lite`) and the case where it was added by the user (as
+  // in `npm:mime/lite.js/+esm`).
+  return parts.join("/");
 }
 
 /**

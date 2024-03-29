@@ -73,6 +73,9 @@ describe("extractNpmSpecifier(path)", () => {
   it("returns the npm specifier for the given local npm path", () => {
     assert.strictEqual(extractNpmSpecifier("/_npm/d3@7.8.5/_esm.js"), "d3@7.8.5/+esm");
     assert.strictEqual(extractNpmSpecifier("/_npm/d3@7.8.5/dist/d3.js"), "d3@7.8.5/dist/d3.js");
+    assert.strictEqual(extractNpmSpecifier("/_npm/d3@7.8.5/_esm/dist/d3.js"), "d3@7.8.5/dist/d3.js/+esm");
+    assert.strictEqual(extractNpmSpecifier("/_npm/mime@4.0.1/_esm/lite.js"), "mime@4.0.1/lite/+esm");
+    assert.strictEqual(extractNpmSpecifier("/_npm/@uwdata/vgplot@0.7.1/_esm.js"), "@uwdata/vgplot@0.7.1/+esm");
   });
   it("throws if not given a local npm path", () => {
     assert.throws(() => extractNpmSpecifier("/npm/d3@7.8.5/+esm"), /invalid npm path/);
