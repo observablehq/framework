@@ -68,7 +68,7 @@ When deploying automatically, you can’t sign-in in your browser the way you di
 
 To create an API key:
 
-1. Open the [API Key settings](https://observablehq.com/select-workspace?next=api-keys-settings) for your ObservableHQ workspace.
+1. Open the [API Key settings](https://observablehq.com/select-workspace?next=api-keys-settings) for your Observable workspace.
 2. Click **New API Key**.
 3. Check the **Deploy new versions of projects** checkbox.
 4. Give your key a description, such as “Deploy via GitHub Actions”.
