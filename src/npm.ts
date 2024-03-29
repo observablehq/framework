@@ -250,17 +250,15 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
       : "+esm"
   } = parseNpmSpecifier(specifier);
   const version = await resolveNpmVersion(root, {name, range});
-  return fromJsDelivrPath(
-    `/npm/${name}@${version}/${
-      extname(path) || // npm:foo/bar.js
-      path === "" || // npm:foo/
-      path.endsWith("/") || // npm:foo/bar/
-      path === "+esm" || // npm:foo/+esm
-      path.endsWith("/+esm") // npm:foo/bar/+esm
-        ? path
-        : `${path}/+esm`
-    }`
-  );
+  return `/_npm/${name}@${version}/${
+    extname(path) || // npm:foo/bar.js
+    path === "" || // npm:foo/
+    path.endsWith("/") // npm:foo/bar/
+      ? path
+      : path === "+esm" // npm:foo/+esm
+      ? "_esm.js"
+      : path.replace(/(?:\/\+esm)?$/, "._esm.js") // npm:foo/bar or npm:foo/bar/+esm
+  }`;
 }
 
 /**
