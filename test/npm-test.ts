@@ -62,6 +62,10 @@ describe("resolveNodeImport(root, specifier)", () => {
   it("does not add /_esm.js if given a path with a file extension", async () => {
     assert.strictEqual(await resolveNpmImport(root, "d3-array/src/index.js"), "/_npm/d3-array@3.2.4/src/index.js");
   });
+  it("does not add /_esm.js if given a path with a trailing slash", async () => {
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/"), "/_npm/d3-array@3.2.4/");
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/src/"), "/_npm/d3-array@3.2.4/src/");
+  });
 });
 
 describe("extractNpmSpecifier(path)", () => {

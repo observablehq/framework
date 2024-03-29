@@ -250,9 +250,9 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
       : "+esm"
   } = parseNpmSpecifier(specifier);
   return `/_npm/${name}@${await resolveNpmVersion(root, {name, range})}/${
-    extname(path)
-      ? path // preserve the existing extension
-      : path.endsWith("/+esm") || path === "+esm" || !path
+    extname(path) || path.endsWith("/") || path === ""
+      ? path // use the path as-is if it has a file extension or trailing slash
+      : path.endsWith("/+esm") || path === "+esm" || path === undefined
       ? `${path.slice(0, -"+esm".length)}_esm.js` // remove +esm; add _esm.js
       : `${path}/_esm.js` // add /_esm.js
   }`;
