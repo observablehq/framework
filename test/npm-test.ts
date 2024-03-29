@@ -1,5 +1,11 @@
 import assert from "node:assert";
-import {extractNpmSpecifier, getDependencyResolver, rewriteNpmImports} from "../src/npm.js";
+import {
+  extractNpmSpecifier,
+  getDependencyResolver,
+  parseNpmSpecifier,
+  resolveNpmImport,
+  rewriteNpmImports
+} from "../src/npm.js";
 import {fromJsDelivrPath} from "../src/npm.js";
 import {relativePath} from "../src/path.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
@@ -17,6 +23,50 @@ describe("getDependencyResolver(root, path, input)", () => {
     const specifier = "/npm/d3-array@3.2.3/dist/d3-array.js";
     const resolver = await getDependencyResolver(root, "/_npm/d3@7.8.5/_esm.js", `import.meta.resolve('${specifier}');\n`); // prettier-ignore
     assert.strictEqual(resolver(specifier), "../d3-array@3.2.4/dist/d3-array.js");
+  });
+});
+
+describe("parseNpmSpecifier(specifier)", () => {
+  it("parses the name", () => {
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array"), {name: "d3-array", range: undefined, path: undefined});
+  });
+  it("parses the name and range", () => {
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array@1"), {name: "d3-array", range: "1", path: undefined});
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array@latest"), {name: "d3-array", range: "latest", path: undefined});
+  });
+  it("parses the name and path", () => {
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array"), {name: "d3-array", range: undefined, path: undefined});
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/foo"), {name: "d3-array", range: undefined, path: "foo"});
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/foo/bar"), {name: "d3-array", range: undefined, path: "foo/bar"}); // prettier-ignore
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/foo.js"), {name: "d3-array", range: undefined, path: "foo.js"});
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/foo/bar.js"), {name: "d3-array", range: undefined, path: "foo/bar.js"}); // prettier-ignore
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/+esm"), {name: "d3-array", range: undefined, path: "+esm"});
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/foo.js/+esm"), {name: "d3-array", range: undefined, path: "foo.js/+esm"}); // prettier-ignore
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/foo/bar.js/+esm"), {name: "d3-array", range: undefined, path: "foo/bar.js/+esm"}); // prettier-ignore
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/foo/+esm"), {name: "d3-array", range: undefined, path: "foo/+esm"}); // prettier-ignore
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/foo/bar/+esm"), {name: "d3-array", range: undefined, path: "foo/bar/+esm"}); // prettier-ignore
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/"), {name: "d3-array", range: undefined, path: ""});
+  });
+  it("parses the name, version, and path", () => {
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array@1/foo"), {name: "d3-array", range: "1", path: "foo"});
+  });
+});
+
+describe("resolveNodeImport(root, specifier)", () => {
+  mockJsDelivr();
+  const root = "test/input/build/simple";
+  it("implicitly adds /_esm.js for specifiers without an extension", async () => {
+    assert.strictEqual(await resolveNpmImport(root, "d3-array"), "/_npm/d3-array@3.2.4/_esm.js");
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/src"), "/_npm/d3-array@3.2.4/src/_esm.js");
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/foo+bar"), "/_npm/d3-array@3.2.4/foo+bar/_esm.js");
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/foo+esm"), "/_npm/d3-array@3.2.4/foo+esm/_esm.js");
+  });
+  it("replaces /+esm with /_esm.js", async () => {
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/+esm"), "/_npm/d3-array@3.2.4/_esm.js");
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/src/+esm"), "/_npm/d3-array@3.2.4/src/_esm.js");
+  });
+  it("does not add /_esm.js if given a path with a file extension", async () => {
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/src/index.js"), "/_npm/d3-array@3.2.4/src/index.js");
   });
 });
 

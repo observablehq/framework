@@ -1,6 +1,6 @@
 import {existsSync} from "node:fs";
 import {mkdir, readFile, readdir, writeFile} from "node:fs/promises";
-import {dirname, join} from "node:path/posix";
+import {dirname, extname, join} from "node:path/posix";
 import type {CallExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {rsort, satisfies} from "semver";
@@ -249,7 +249,13 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
       ? "dist/echarts.esm.min.js"
       : "+esm"
   } = parseNpmSpecifier(specifier);
-  return `/_npm/${name}@${await resolveNpmVersion(root, {name, range})}/${path.replace(/\+esm$/, "_esm.js")}`;
+  return `/_npm/${name}@${await resolveNpmVersion(root, {name, range})}/${
+    extname(path)
+      ? path // preserve the existing extension
+      : path.endsWith("/+esm") || path === "+esm" || !path
+      ? `${path.slice(0, -"+esm".length)}_esm.js` // remove +esm; add _esm.js
+      : `${path}/_esm.js` // add /_esm.js
+  }`;
 }
 
 /**
