@@ -51,14 +51,14 @@ describe("resolveNpmImport(root, specifier)", () => {
   const root = "test/input/build/simple";
   it("implicitly adds /_esm.js for specifiers without an extension", async () => {
     assert.strictEqual(await resolveNpmImport(root, "d3-array"), "/_npm/d3-array@3.2.4/_esm.js");
-    assert.strictEqual(await resolveNpmImport(root, "d3-array/src"), "/_npm/d3-array@3.2.4/_esm/src.js");
-    assert.strictEqual(await resolveNpmImport(root, "d3-array/foo+bar"), "/_npm/d3-array@3.2.4/_esm/foo+bar.js");
-    assert.strictEqual(await resolveNpmImport(root, "d3-array/foo+esm"), "/_npm/d3-array@3.2.4/_esm/foo+esm.js");
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/src"), "/_npm/d3-array@3.2.4/src._esm.js");
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/foo+bar"), "/_npm/d3-array@3.2.4/foo+bar._esm.js");
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/foo+esm"), "/_npm/d3-array@3.2.4/foo+esm._esm.js");
   });
-  it("replaces /+esm with /_esm.js", async () => {
+  it("replaces /+esm with /_esm.js or ._esm.js", async () => {
     assert.strictEqual(await resolveNpmImport(root, "d3-array/+esm"), "/_npm/d3-array@3.2.4/_esm.js");
-    assert.strictEqual(await resolveNpmImport(root, "d3-array/src/+esm"), "/_npm/d3-array@3.2.4/_esm/src.js");
-    assert.strictEqual(await resolveNpmImport(root, "d3-array/src/index.js/+esm"), "/_npm/d3-array@3.2.4/_esm/src/index.js"); // prettier-ignore
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/src/+esm"), "/_npm/d3-array@3.2.4/src._esm.js");
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/src/index.js/+esm"), "/_npm/d3-array@3.2.4/src/index.js._esm.js"); // prettier-ignore
   });
   it("does not add /_esm.js if given a path with a file extension", async () => {
     assert.strictEqual(await resolveNpmImport(root, "d3-array/src/index.js"), "/_npm/d3-array@3.2.4/src/index.js");
@@ -73,8 +73,8 @@ describe("extractNpmSpecifier(path)", () => {
   it("returns the npm specifier for the given local npm path", () => {
     assert.strictEqual(extractNpmSpecifier("/_npm/d3@7.8.5/_esm.js"), "d3@7.8.5/+esm");
     assert.strictEqual(extractNpmSpecifier("/_npm/d3@7.8.5/dist/d3.js"), "d3@7.8.5/dist/d3.js");
-    assert.strictEqual(extractNpmSpecifier("/_npm/d3@7.8.5/_esm/dist/d3.js"), "d3@7.8.5/dist/d3.js/+esm");
-    assert.strictEqual(extractNpmSpecifier("/_npm/mime@4.0.1/_esm/lite.js"), "mime@4.0.1/lite/+esm");
+    assert.strictEqual(extractNpmSpecifier("/_npm/d3@7.8.5/dist/d3.js._esm.js"), "d3@7.8.5/dist/d3.js/+esm");
+    assert.strictEqual(extractNpmSpecifier("/_npm/mime@4.0.1/lite._esm.js"), "mime@4.0.1/lite/+esm");
     assert.strictEqual(extractNpmSpecifier("/_npm/@uwdata/vgplot@0.7.1/_esm.js"), "@uwdata/vgplot@0.7.1/+esm");
   });
   it("throws if not given a local npm path", () => {
@@ -87,7 +87,7 @@ describe("fromJsDelivrPath(path)", () => {
   it("returns the local npm path for the given jsDelivr path", () => {
     assert.strictEqual(fromJsDelivrPath("/npm/d3@7.8.5/+esm"), "/_npm/d3@7.8.5/_esm.js");
     assert.strictEqual(fromJsDelivrPath("/npm/d3@7.8.5/dist/d3.js"), "/_npm/d3@7.8.5/dist/d3.js");
-    assert.strictEqual(fromJsDelivrPath("/npm/d3@7.8.5/dist/d3.js/+esm"), "/_npm/d3@7.8.5/_esm/dist/d3.js");
+    assert.strictEqual(fromJsDelivrPath("/npm/d3@7.8.5/dist/d3.js/+esm"), "/_npm/d3@7.8.5/dist/d3.js._esm.js");
   });
   it("throws if not given a jsDelivr path", () => {
     assert.throws(() => fromJsDelivrPath("/_npm/d3@7.8.5/_esm.js"), /invalid jsDelivr path/);

@@ -250,7 +250,17 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
       : "+esm"
   } = parseNpmSpecifier(specifier);
   const version = await resolveNpmVersion(root, {name, range});
-  return fromJsDelivrPath(`/npm/${name}@${version}/${path}`);
+  return fromJsDelivrPath(
+    `/npm/${name}@${version}/${
+      extname(path) || // npm:foo/bar.js
+      path === "" || // npm:foo/
+      path.endsWith("/") || // npm:foo/bar/
+      path === "+esm" || // npm:foo/+esm
+      path.endsWith("/+esm") // npm:foo/bar/+esm
+        ? path
+        : `${path}/+esm`
+    }`
+  );
 }
 
 /**
@@ -265,40 +275,34 @@ export async function resolveNpmImports(root: string, path: string): Promise<Imp
 
 /**
  * Given a local npm path such as "/_npm/d3@7.8.5/_esm.js", returns the
- * corresponding npm specifier such as "d3@7.8.5/+esm".
+ * corresponding npm specifier such as "d3@7.8.5/+esm". For example:
+ *
+ * /_npm/mime@4.0.1/_esm.js         → mime@4.0.1/+esm
+ * /_npm/mime@4.0.1/lite._esm.js    → mime@4.0.1/lite/+esm
+ * /_npm/mime@4.0.1/lite.js._esm.js → mime@4.0.1/lite.js/+esm
  */
 export function extractNpmSpecifier(path: string): string {
   if (!path.startsWith("/_npm/")) throw new Error(`invalid npm path: ${path}`);
-  const parts = path.split("/");
-  parts.splice(0, 2); // delete /_npm
-  const i = parts[0].startsWith("@") ? 2 : 1;
-  if (parts[i] === "_esm" || (i === parts.length - 1 && parts[i] === "_esm.js")) {
-    parts.splice(i, 1); // delete _esm
-    parts.push("+esm"); // append +esm
-  }
-  // TODO If we added an extension to the path, we should remove it here, but
-  // we can’t distinguish between the case where the extension was added by us
-  // (as in `npm:mime/lite`) and the case where it was added by the user (as
-  // in `npm:mime/lite.js/+esm`).
-  return parts.join("/");
+  const parts = path.split("/"); // ["", "_npm", "mime@4.0.1", "lite.js._esm.js"]
+  const i = parts[2].startsWith("@") ? 4 : 3; // test for scoped package
+  const namever = parts.slice(2, i).join("/"); // "mime@4.0.1" or "@observablehq/inputs@0.10.6"
+  const subpath = parts.slice(i).join("/"); // "_esm.js" or "lite._esm.js" or "lite.js._esm.js"
+  return `${namever}/${subpath === "_esm.js" ? "+esm" : subpath.replace(/\._esm\.js$/, "/+esm")}`;
 }
 
 /**
  * Given a jsDelivr path such as "/npm/d3@7.8.5/+esm", returns the corresponding
- * local path such as "/_npm/d3@7.8.5/_esm.js".
+ * local path such as "/_npm/d3@7.8.5/_esm.js". For example:
+ *
+ * /npm/mime@4.0.1/+esm         → /_npm/mime@4.0.1/_esm.js
+ * /npm/mime@4.0.1/lite/+esm    → /_npm/mime@4.0.1/lite._esm.js
+ * /npm/mime@4.0.1/lite.js/+esm → /_npm/mime@4.0.1/lite.js._esm.js
  */
 export function fromJsDelivrPath(path: string): string {
   if (!path.startsWith("/npm/")) throw new Error(`invalid jsDelivr path: ${path}`);
-  const esm = path.endsWith("/+esm");
-  const parts = path.split("/");
-  parts[1] = "_npm"; // replace npm with _npm
-  if (esm || !(extname(path) || path.endsWith("/"))) {
-    if (esm) parts.pop(); // drop /+esm
-    parts.splice(parts[2].startsWith("@") ? 4 : 3, 0, "_esm"); // insert _esm
-    path = parts.join("/");
-    if (!extname(path)) path += ".js";
-  } else {
-    path = parts.join("/");
-  }
-  return path;
+  const parts = path.split("/"); // e.g. ["", "npm", "mime@4.0.1", "lite", "+esm"]
+  const i = parts[2].startsWith("@") ? 4 : 3; // test for scoped package
+  const namever = parts.slice(2, i).join("/"); // "mime@4.0.1" or "@observablehq/inputs@0.10.6"
+  const subpath = parts.slice(i).join("/"); // "+esm" or "lite/+esm" or "lite.js/+esm"
+  return `/_npm/${namever}/${subpath === "+esm" ? "_esm.js" : subpath.replace(/\/\+esm$/, "._esm.js")}`;
 }
