@@ -24,7 +24,7 @@ npm run deploy
 
 The first time you deploy a project, you will be prompted to configure the project’s _slug_ (which determines its URL), access level, and other details. If you don’t yet have an Observable account or aren’t signed-in, you will also be prompted to sign-up or sign-in.
 
-When the deploy command finishes, it prints a link to observablehq.cloud where you can view your deployed project. If you choose *private* as the access level, that link will only be accessible to members of your Observable workspace. (You can invite people to your workspace by going to observablehq.com.) If you chose *public*, you can share your project link with anyone.
+When the deploy command finishes, it prints a link to observablehq.cloud where you can view your deployed project. If you choose *private* as the access level, that link will only be accessible to members of your Observable workspace. (You can invite people to your workspace by going to observablehq.com.) If you chose *public*, you can share your project link with anyone. You can change the access level of a project later [from your workspace projects page](https://observablehq.com/select-workspace?next=projects).
 
 <div class="note">The deploy command creates a file at <code>docs/.observablehq/deploy.json</code> with information on where to deploy the project. This file is required for automated deploys. You will need to commit this file to git to deploy via GitHub Actions. (If you have configured a source root besides <code>docs</code>, the file will be placed there instead.)</div>
 
@@ -68,13 +68,11 @@ When deploying automatically, you can’t sign-in in your browser the way you di
 
 To create an API key:
 
-1. Go to [observablehq.com](https://observablehq.com).
-2. In the left sidebar, click **Settings**.
-3. In the right sidebar, click **API / Notebook Keys**.
-4. Click **New API Key**.
-5. Check the **Deploy new versions of projects** checkbox.
-6. Give your key a description, such as “Deploy via GitHub Actions”.
-7. Click **Create API Key**.
+1. Open the [API Key settings](https://observablehq.com/select-workspace?next=api-keys-settings) for your Observable workspace.
+2. Click **New API Key**.
+3. Check the **Deploy new versions of projects** checkbox.
+4. Give your key a description, such as “Deploy via GitHub Actions”.
+5. Click **Create API Key**.
 
 <div class="caution">
 
