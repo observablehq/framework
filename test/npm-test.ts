@@ -58,7 +58,7 @@ describe("resolveNpmImport(root, specifier)", () => {
   it("replaces /+esm with /_esm.js", async () => {
     assert.strictEqual(await resolveNpmImport(root, "d3-array/+esm"), "/_npm/d3-array@3.2.4/_esm.js");
     assert.strictEqual(await resolveNpmImport(root, "d3-array/src/+esm"), "/_npm/d3-array@3.2.4/_esm/src.js");
-    assert.strictEqual(await resolveNpmImport(root, "d3-array/src/index.js/+esm"), "/_npm/d3-array@3.2.4/_esm/src/index.js");
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/src/index.js/+esm"), "/_npm/d3-array@3.2.4/_esm/src/index.js"); // prettier-ignore
   });
   it("does not add /_esm.js if given a path with a file extension", async () => {
     assert.strictEqual(await resolveNpmImport(root, "d3-array/src/index.js"), "/_npm/d3-array@3.2.4/src/index.js");
