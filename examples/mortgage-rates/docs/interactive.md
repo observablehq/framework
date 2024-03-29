@@ -1,4 +1,4 @@
-# Primary mortgage market survey
+# Primary mortgage market survey (interactive)
 
 ```js
 const pmms = FileAttachment("data/pmms.csv").csv({typed: true});
