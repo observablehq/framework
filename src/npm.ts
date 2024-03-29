@@ -1,6 +1,6 @@
 import {existsSync} from "node:fs";
 import {mkdir, readFile, readdir, writeFile} from "node:fs/promises";
-import {dirname, join} from "node:path/posix";
+import {dirname, extname, join} from "node:path/posix";
 import type {CallExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {rsort, satisfies} from "semver";
@@ -249,7 +249,16 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
       ? "dist/echarts.esm.min.js"
       : "+esm"
   } = parseNpmSpecifier(specifier);
-  return `/_npm/${name}@${await resolveNpmVersion(root, {name, range})}/${path.replace(/\+esm$/, "_esm.js")}`;
+  const version = await resolveNpmVersion(root, {name, range});
+  return `/_npm/${name}@${version}/${
+    extname(path) || // npm:foo/bar.js
+    path === "" || // npm:foo/
+    path.endsWith("/") // npm:foo/bar/
+      ? path
+      : path === "+esm" // npm:foo/+esm
+      ? "_esm.js"
+      : path.replace(/(?:\/\+esm)?$/, "._esm.js") // npm:foo/bar or npm:foo/bar/+esm
+  }`;
 }
 
 /**
@@ -264,18 +273,34 @@ export async function resolveNpmImports(root: string, path: string): Promise<Imp
 
 /**
  * Given a local npm path such as "/_npm/d3@7.8.5/_esm.js", returns the
- * corresponding npm specifier such as "d3@7.8.5".
+ * corresponding npm specifier such as "d3@7.8.5/+esm". For example:
+ *
+ * /_npm/mime@4.0.1/_esm.js         → mime@4.0.1/+esm
+ * /_npm/mime@4.0.1/lite._esm.js    → mime@4.0.1/lite/+esm
+ * /_npm/mime@4.0.1/lite.js._esm.js → mime@4.0.1/lite.js/+esm
  */
 export function extractNpmSpecifier(path: string): string {
   if (!path.startsWith("/_npm/")) throw new Error(`invalid npm path: ${path}`);
-  return path.replace(/^\/_npm\//, "").replace(/\/_esm\.js$/, "/+esm");
+  const parts = path.split("/"); // ["", "_npm", "mime@4.0.1", "lite.js._esm.js"]
+  const i = parts[2].startsWith("@") ? 4 : 3; // test for scoped package
+  const namever = parts.slice(2, i).join("/"); // "mime@4.0.1" or "@observablehq/inputs@0.10.6"
+  const subpath = parts.slice(i).join("/"); // "_esm.js" or "lite._esm.js" or "lite.js._esm.js"
+  return `${namever}/${subpath === "_esm.js" ? "+esm" : subpath.replace(/\._esm\.js$/, "/+esm")}`;
 }
 
 /**
  * Given a jsDelivr path such as "/npm/d3@7.8.5/+esm", returns the corresponding
- * local path such as "/_npm/d3@7.8.5/_esm.js".
+ * local path such as "/_npm/d3@7.8.5/_esm.js". For example:
+ *
+ * /npm/mime@4.0.1/+esm         → /_npm/mime@4.0.1/_esm.js
+ * /npm/mime@4.0.1/lite/+esm    → /_npm/mime@4.0.1/lite._esm.js
+ * /npm/mime@4.0.1/lite.js/+esm → /_npm/mime@4.0.1/lite.js._esm.js
  */
 export function fromJsDelivrPath(path: string): string {
   if (!path.startsWith("/npm/")) throw new Error(`invalid jsDelivr path: ${path}`);
-  return path.replace(/^\/npm\//, "/_npm/").replace(/\/\+esm$/, "/_esm.js");
+  const parts = path.split("/"); // e.g. ["", "npm", "mime@4.0.1", "lite", "+esm"]
+  const i = parts[2].startsWith("@") ? 4 : 3; // test for scoped package
+  const namever = parts.slice(2, i).join("/"); // "mime@4.0.1" or "@observablehq/inputs@0.10.6"
+  const subpath = parts.slice(i).join("/"); // "+esm" or "lite/+esm" or "lite.js/+esm"
+  return `/_npm/${namever}/${subpath === "+esm" ? "_esm.js" : subpath.replace(/\/\+esm$/, "._esm.js")}`;
 }
