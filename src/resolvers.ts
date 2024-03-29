@@ -8,7 +8,7 @@ import {getImplicitDependencies, getImplicitDownloads} from "./libraries.js";
 import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
 import {getImplicitStylesheets} from "./libraries.js";
 import type {MarkdownPage} from "./markdown.js";
-import {extractNodeSpecifier, resolveNodeImport, resolveNodeImports} from "./node.js";
+import {resolveNodeImport, resolveNodeImports} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
 import {isAssetPath, isPathImport, relativePath, resolveLocalPath, resolvePath} from "./path.js";
 
@@ -200,9 +200,9 @@ export async function getResolvers(
       for (const i of await resolveNodeImports(root, value)) {
         if (i.type === "local") {
           const path = resolvePath(value, i.name);
-          const specifier = extractNodeSpecifier(path);
-          globalImports.add(specifier);
-          resolutions.set(specifier, path);
+          const cache = path.slice("/_node/".length);
+          globalImports.add(cache);
+          resolutions.set(cache, path);
         }
       }
     }
@@ -230,9 +230,9 @@ export async function getResolvers(
       for (const i of await resolveNodeImports(root, value)) {
         if (i.type === "local" && i.method === "static") {
           const path = resolvePath(value, i.name);
-          const specifier = extractNodeSpecifier(path);
-          staticImports.add(specifier);
-          staticResolutions.set(specifier, path);
+          const cache = path.slice("/_node/".length);
+          staticImports.add(cache);
+          staticResolutions.set(cache, path);
         }
       }
     }
