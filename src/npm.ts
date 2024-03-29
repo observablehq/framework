@@ -249,13 +249,8 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
       ? "dist/echarts.esm.min.js"
       : "+esm"
   } = parseNpmSpecifier(specifier);
-  return `/_npm/${name}@${await resolveNpmVersion(root, {name, range})}/${
-    extname(path) || path.endsWith("/") || path === ""
-      ? path // use the path as-is if it has a file extension or trailing slash
-      : path.endsWith("/+esm") || path === "+esm" || path === undefined
-      ? `${path.slice(0, -"+esm".length)}_esm.js` // remove +esm; add _esm.js
-      : `${path}/_esm.js` // add /_esm.js
-  }`;
+  const version = await resolveNpmVersion(root, {name, range});
+  return fromJsDelivrPath(`/npm/${name}@${version}/${path}`);
 }
 
 /**
@@ -270,7 +265,7 @@ export async function resolveNpmImports(root: string, path: string): Promise<Imp
 
 /**
  * Given a local npm path such as "/_npm/d3@7.8.5/_esm.js", returns the
- * corresponding npm specifier such as "d3@7.8.5".
+ * corresponding npm specifier such as "d3@7.8.5/+esm".
  */
 export function extractNpmSpecifier(path: string): string {
   if (!path.startsWith("/_npm/")) throw new Error(`invalid npm path: ${path}`);
@@ -283,5 +278,16 @@ export function extractNpmSpecifier(path: string): string {
  */
 export function fromJsDelivrPath(path: string): string {
   if (!path.startsWith("/npm/")) throw new Error(`invalid jsDelivr path: ${path}`);
-  return path.replace(/^\/npm\//, "/_npm/").replace(/\/\+esm$/, "/_esm.js");
+  const esm = path.endsWith("/+esm");
+  const parts = path.split("/");
+  parts[1] = "_npm"; // replace npm with _npm
+  if (esm || !(extname(path) || path.endsWith("/"))) {
+    if (esm) parts.pop(); // drop /+esm
+    parts.splice(parts[2].startsWith("@") ? 4 : 3, 0, "_esm"); // insert _esm
+    path = parts.join("/");
+    if (!extname(path)) path += ".js";
+  } else {
+    path = parts.join("/");
+  }
+  return path;
 }
