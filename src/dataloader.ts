@@ -1,5 +1,6 @@
 import {createHash} from "node:crypto";
-import {type WriteStream, createReadStream, existsSync, statSync} from "node:fs";
+import type {WriteStream} from "node:fs";
+import {createReadStream, existsSync, statSync} from "node:fs";
 import {mkdir, open, readFile, rename, unlink} from "node:fs/promises";
 import {dirname, extname, join, relative} from "node:path/posix";
 import {createGunzip} from "node:zlib";

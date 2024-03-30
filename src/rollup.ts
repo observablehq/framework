@@ -1,6 +1,6 @@
 import {extname} from "node:path/posix";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
-import {type CallExpression} from "acorn";
+import type {CallExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";

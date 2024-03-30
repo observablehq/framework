@@ -11,28 +11,18 @@ import type {Config} from "./config.js";
 import {CliError, isApiError, isEnoent, isHttpError} from "./error.js";
 import {visitFiles} from "./files.js";
 import type {Logger} from "./logger.js";
-import {
-  type AuthEffects,
-  defaultEffects as defaultAuthEffects,
-  formatUser,
-  loginInner,
-  validWorkspaces
-} from "./observableApiAuth.js";
+import type {AuthEffects} from "./observableApiAuth.js";
+import {defaultEffects as defaultAuthEffects, formatUser, loginInner, validWorkspaces} from "./observableApiAuth.js";
 import {ObservableApiClient} from "./observableApiClient.js";
-import {
-  type GetCurrentUserResponse,
-  type GetDeployResponse,
-  type GetProjectResponse,
-  type PostEditProjectRequest,
-  type WorkspaceResponse
+import type {
+  GetCurrentUserResponse,
+  GetDeployResponse,
+  GetProjectResponse,
+  PostEditProjectRequest,
+  WorkspaceResponse
 } from "./observableApiClient.js";
-import {
-  type ConfigEffects,
-  type DeployConfig,
-  defaultEffects as defaultConfigEffects,
-  getDeployConfig,
-  setDeployConfig
-} from "./observableApiConfig.js";
+import type {ConfigEffects, DeployConfig} from "./observableApiConfig.js";
+import {defaultEffects as defaultConfigEffects, getDeployConfig, setDeployConfig} from "./observableApiConfig.js";
 import {slugify} from "./slugify.js";
 import {Telemetry} from "./telemetry.js";
 import type {TtyEffects} from "./tty.js";
