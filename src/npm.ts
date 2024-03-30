@@ -77,7 +77,7 @@ export async function populateNpmCache(root: string, path: string): Promise<stri
   if (!path.startsWith("/_npm/")) throw new Error(`invalid npm path: ${path}`);
   const filePath = join(root, ".observablehq", "cache", path);
   if (existsSync(filePath)) return filePath;
-  let promise = npmRequests.get(path);
+  let promise = npmRequests.get(filePath);
   if (promise) return promise; // coalesce concurrent requests
   promise = (async function () {
     const specifier = extractNpmSpecifier(path);
@@ -96,8 +96,8 @@ export async function populateNpmCache(root: string, path: string): Promise<stri
     }
     return filePath;
   })();
-  promise.catch(() => {}).then(() => npmRequests.delete(path));
-  npmRequests.set(path, promise);
+  promise.catch(() => {}).then(() => npmRequests.delete(filePath));
+  npmRequests.set(filePath, promise);
   return promise;
 }
 
@@ -177,9 +177,7 @@ export async function getDependencyResolver(
   };
 }
 
-let npmVersionCache: Promise<Map<string, string[]>>;
-
-async function initializeNpmVersionCache(root: string): typeof npmVersionCache {
+async function initializeNpmVersionCache(root: string): Promise<Map<string, string[]>> {
   const cache = new Map<string, string[]>();
   const cacheDir = join(root, ".observablehq", "cache", "_npm");
   try {
@@ -207,12 +205,19 @@ async function initializeNpmVersionCache(root: string): typeof npmVersionCache {
   return cache;
 }
 
+const npmVersionCaches = new Map<string, Promise<Map<string, string[]>>>();
 const npmVersionRequests = new Map<string, Promise<string>>();
+
+function getNpmVersionCache(root: string): Promise<Map<string, string[]>> {
+  let cache = npmVersionCaches.get(root);
+  if (!cache) npmVersionCaches.set(root, (cache = initializeNpmVersionCache(root)));
+  return cache;
+}
 
 async function resolveNpmVersion(root: string, specifier: NpmSpecifier): Promise<string> {
   const {name, range} = specifier;
   if (range && /^\d+\.\d+\.\d+([-+].*)?$/.test(range)) return range; // exact version specified
-  const cache = await (npmVersionCache ??= initializeNpmVersionCache(root));
+  const cache = await getNpmVersionCache(root);
   const versions = cache.get(specifier.name);
   if (versions) for (const version of versions) if (!range || satisfies(version, range)) return version;
   const href = `https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${range ? `?specifier=${range}` : ""}`;
