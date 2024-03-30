@@ -247,18 +247,19 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
       ? "dist/mermaid.esm.min.mjs/+esm"
       : name === "echarts"
       ? "dist/echarts.esm.min.js"
-      : "+esm"
+      : undefined
   } = parseNpmSpecifier(specifier);
-  const version = await resolveNpmVersion(root, {name, range});
-  return `/_npm/${name}@${version}/${
-    extname(path) || // npm:foo/bar.js
-    path === "" || // npm:foo/
-    path.endsWith("/") // npm:foo/bar/
-      ? path
-      : path === "+esm" // npm:foo/+esm
+  if (name === "jquery-ui" && range === undefined && path === undefined) return "/_observablehq/stdlib/jquery-ui.js"; // jquery-ui shim
+  const rpath =
+    path === undefined || path === "+esm" // npm:foo/+esm
       ? "_esm.js"
-      : path.replace(/(?:\/\+esm)?$/, "._esm.js") // npm:foo/bar or npm:foo/bar/+esm
-  }`;
+      : extname(path) || // npm:foo/bar.js
+        path === "" || // npm:foo/
+        path.endsWith("/") // npm:foo/bar/
+      ? path
+      : path.replace(/(?:\/\+esm)?$/, "._esm.js"); // npm:foo/bar or npm:foo/bar/+esm
+  const version = await resolveNpmVersion(root, {name, range});
+  return `/_npm/${name}@${version}/${rpath}`;
 }
 
 /**

@@ -47,6 +47,7 @@ export function getImplicitStylesheets(imports: Iterable<string>): Set<string> {
   if (set.has("npm:katex")) implicits.add("npm:katex/dist/katex.min.css");
   if (set.has("npm:leaflet")) implicits.add("npm:leaflet/dist/leaflet.css");
   if (set.has("npm:mapbox-gl")) implicits.add("npm:mapbox-gl/dist/mapbox-gl.css");
+  if (set.has("npm:jquery-ui")) implicits.add("npm:jquery-ui/dist/themes/base/jquery-ui.css");
   return implicits;
 }
 

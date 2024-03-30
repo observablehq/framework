@@ -187,7 +187,7 @@ export async function getResolvers(
   // of populating the npm cache; the node import cache is already transitively
   // populated above.
   for (const [key, value] of resolutions) {
-    if (key.startsWith("npm:")) {
+    if (key.startsWith("npm:") && value.startsWith("/_npm/")) {
       for (const i of await resolveNpmImports(root, value)) {
         if (i.type === "local") {
           const path = resolvePath(value, i.name);
@@ -217,7 +217,7 @@ export async function getResolvers(
     }
   }
   for (const [key, value] of staticResolutions) {
-    if (key.startsWith("npm:")) {
+    if (key.startsWith("npm:") && value.startsWith("/_npm/")) {
       for (const i of await resolveNpmImports(root, value)) {
         if (i.type === "local" && i.method === "static") {
           const path = resolvePath(value, i.name);
