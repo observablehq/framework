@@ -247,6 +247,8 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
       ? "dist/mermaid.esm.min.mjs/+esm"
       : name === "echarts"
       ? "dist/echarts.esm.min.js"
+      : name === "jquery-ui"
+      ? "dist/jquery-ui.js/+esm"
       : "+esm"
   } = parseNpmSpecifier(specifier);
   const version = await resolveNpmVersion(root, {name, range});
