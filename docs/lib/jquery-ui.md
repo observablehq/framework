@@ -1,6 +1,14 @@
+---
+index: true
+---
+
 # jQuery UI
 
 <link rel="stylesheet" href="npm:jquery-ui/dist/themes/base/jquery-ui.css">
+
+```html run=false
+<link rel="stylesheet" href="npm:jquery-ui/dist/themes/base/jquery-ui.css">
+```
 
 ```js echo
 import $ from "npm:jquery";
@@ -8,14 +16,19 @@ self.jQuery = $;
 await import("npm:jquery-ui");
 ```
 
-<p>
-  <label for="amount">Price range:</label>
-  ${value.join("–")}
-</p>
+Price range: ${value.join("–")}
+
+```md run=false
+Price range: ${value.join("–")}
+```
 
 <div style="max-width: 320px;" id="slider"></div>
 
-```js
+```html run=false
+<div style="max-width: 320px;" id="slider"></div>
+```
+
+```js echo
 const value = Generators.observe((notify) => {
   const slider = $("#slider");
   slider.slider({
