@@ -247,6 +247,8 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
       ? "dist/mermaid.esm.min.mjs/+esm"
       : name === "echarts"
       ? "dist/echarts.esm.min.js/+esm"
+      : name === "deck.gl"
+      ? "dist.min.js/+esm"
       : "+esm"
   } = parseNpmSpecifier(specifier);
   const version = await resolveNpmVersion(root, {name, range});
