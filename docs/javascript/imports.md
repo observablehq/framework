@@ -1,46 +1,65 @@
 # JavaScript: Imports
 
-You can load a library using an `import` statement. For example:
+You can load a library using an [`import` statement](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import). For example, to load [canvas-confetti](https://github.com/catdad/canvas-confetti) from [npm](https://www.npmjs.com/package/canvas-confetti):
 
 ```js echo
 import confetti from "npm:canvas-confetti";
 ```
 
-<div class="tip">Thanks to <a href="./reactivity">reactivity</a>, imports can live in a JavaScript block anywhere on the page. But by convention, imports are commonly placed at the top of source files for readability.</div>
-
-You can use an imported library anywhere on the page.
+The imported symbols can then be referenced in any code block or inline expression — not only in the code block that declares the import.
 
 ```js echo
-Inputs.button("Throw confetti!", {reduce: () => confetti()})
+Inputs.button("Throw confetti! 🎉", {reduce: () => confetti()})
 ```
+
+<div class="tip">Imports can live in code blocks anywhere on the page, but by convention, imports are commonly placed at the top of pages for readability.</div>
+
+Framework provides a variety of ways to import. When you reference `d3`, `Inputs`, `Plot` or some other built-in, you’re [implicitly importing](#implicit-imports) from npm. In addition, you can import modules explicitly from:
+
+- [npm](#npm-imports),
+- [`node_modules`](#node-imports),
+- [local paths](#local-imports), or
+- [remote URLs](#url-imports).
+
+With the exception of remote URL imports, imports are self-hosted: imported modules are downloaded if needed and bundled with your project, improving performance and security. In some cases you may need to specify additional files to download via [import resolutions](#dynamic-imports).
 
 ## npm imports
 
-An `npm:` specifier, as shown above, denotes that the imported library will be loaded from npm rather than from `node_modules`. You don’t have to install imported libraries beforehand — just import, and the cloud shall provide. (This convention is also [used by Deno](https://docs.deno.com/runtime/manual/node/npm_specifiers).)
+Framework downloads `npm:` imports, as above, from the [npm package registry](https://www.npmjs.com/) via the [jsDelivr CDN](https://www.jsdelivr.com/esm). Unlike [imports from `node_modules`](#node-imports), you don’t have to install `npm:` imports — just import, and the cloud shall provide. 😌
 
-Under the hood, `npm:` imports are powered by [jsDelivr’s esm.run CDN](https://www.jsdelivr.com/esm). The import above is thus equivalent to:
+By default, npm imports resolve to the latest version of the given package. Imported versions are resolved on build, or during preview after you clear your npm cache and restart the server.
 
-```js run=false
-import confetti from "https://cdn.jsdelivr.net/npm/canvas-confetti/+esm";
-```
-
-<div class="note">We plan on supporting importing from <code>node_modules</code> using bare module specifiers (<i>e.g.</i>, <code>import confetti from "canvas-confetti"</code>). If you’d like this feature, please upvote <a href="https://github.com/observablehq/framework/issues/360">#360</a>.</div>
-
-To load a specific version of a library, add a semver range:
+To load an earlier or specific version of a package, add a [semver range](https://docs.npmjs.com/about-semantic-versioning). For example, to load major version 1 of `canvas-confetti`:
 
 ```js run=false
 import confetti from "npm:canvas-confetti@1";
 ```
 
-To load a specific entry point, add a slash and the desired path:
+If the import path is not specified, it defaults to `/+esm`. The default entry point is determined by the `package.json`; see [jsDelivr’s GitHub](https://github.com/jsdelivr/jsdelivr/issues/18263) for details.
+
+To load a different entry point, specify the desired path. For example, to load the `lite` entry point to the `mime` package:
+
+```js echo
+import mime from "npm:mime/lite";
+```
+
+Similarly, to load the file `dist/confetti.module.mjs` within `canvas-confetti`:
 
 ```js run=false
-import confetti from "npm:canvas-confetti@1/dist/confetti.module.mjs";
+import confetti2 from "npm:canvas-confetti/dist/confetti.module.mjs";
+```
+
+With the imported path has a file extension, it will be loaded as-is. When it doesn’t, the `/+esm` directive is implicitly appended to have jsDelivr bundle the code as an ES module. You can also specify the `/+esm` directive explicitly, say to apply it to a path with an extension:
+
+```js run=false
+import confetti from "npm:canvas-confetti/dist/confetti.module.mjs/+esm";
 ```
 
 If you’re having difficulty getting an import working, it may help to browse the package and see what files are available as well as what’s exported in the `package.json`. You can browse the contents of a published module via jsDelivr; for example, for `canvas-confetti` see <https://cdn.jsdelivr.net/npm/canvas-confetti/>.
 
 ### Self-hosting of npm imports
+
+<!-- The downloaded library is [self-hosted](#self-hosting-of-npm-imports), meaning that you only need to fetch the file once from jsDelivr during preview or build, and that you built site won’t have a runtime dependency on jsDelivr’s API. -->
 
 Framework automatically downloads `npm:` imports from jsDelivr during preview and build. This improves performance and security of your built site by removing external code dependencies. It also improves performance during local preview by only downloading libraries once.
 
@@ -62,13 +81,21 @@ In both cases above, the latest version of `d3` is resolved and downloaded from 
 
 Transitive static imports are also registered as module preloads (using `<link rel="modulepreload">`), such that the requests happen in parallel and as early as possible, rather than being chained. This dramatically improves performance on page load. Framework also preloads `npm:` imports for [`FileAttachment`](./files) methods, such as `d3-dsv` for [CSV](../lib/csv).
 
-Import resolutions allow you to download files from npm. These files are automatically downloaded for self-hosting, too. For example, to load U.S. county geometry:
+Framework automatically downloads files as needed for [recommended libraries](./imports#implicit-imports), and resolves import resolutions in transitive static and dynamic imports. For example, [DuckDB](../lib/duckdb) needs WebAssembly bundles, and [KaTeX](../lib/tex) needs a stylesheet and fonts. For any dependencies that are not statically analyzable (such as `fetch` calls or dynamic arguments to `import`) you can call `import.meta.resolve` to register additional files to download from npm.
+
+## Node imports
+
+Bare module specifiers, such as `d3` and `lodash`, are imported from `node_modules`. For example:
 
 ```js run=false
-const data = await fetch(import.meta.resolve("npm:us-atlas/counties-albers-10m.json")).then((r) => r.json());
+import {encode} from "he";
 ```
 
-Framework automatically downloads files as needed for [recommended libraries](./imports#implicit-imports), and resolves import resolutions in transitive static and dynamic imports. For example, [DuckDB](../lib/duckdb) needs WebAssembly bundles, and [KaTeX](../lib/tex) needs a stylesheet and fonts. For any dependencies that are not statically analyzable (such as `fetch` calls or dynamic arguments to `import`) you can call `import.meta.resolve` to register additional files to download from npm.
+Supports entry points.
+
+Does not support version ranges.
+
+Only supports browser-compatible modules.
 
 ## Local imports
 
@@ -91,6 +118,45 @@ and the imported value of `foo` is: ${foo}.
 Observable Framework automatically watches imported local modules during preview, so any changes to these files will instantly update in the browser via hot module replacement.
 
 <div class="note">While there is <a href="./reactivity">reactivity</a> across <a href="../javascript">JavaScript code blocks</a> in Markdown, there’s no reactivity within a JavaScript module. However, you can write <a href="./promises">async functions</a> and <a href="./generators">generator functions</a> to define reactive variables. And you can import the Observable standard library into local modules, so you can reference <a href="./files">files</a> and use other standard library features.</div>
+
+TK You can use `npm:` and node imports within local modules, too.
+
+## URL imports
+
+You can import a JavaScript file from a URL. This is useful for loading a library that isn’t published to npm.
+
+The `npm:canvas-confetti` import above is thus equivalent to:
+
+```js run=false
+import confetti from "https://cdn.jsdelivr.net/npm/canvas-confetti/+esm";
+```
+
+This is not exactly the same as importing `npm:canvas-confetti`: if you import from an external URL, the import won’t be self-hosted. Instead, the library will be fetched from the CDN at runtime. Importing a URL is most useful for loading a library that isn’t available on npm.
+
+## Dynamic imports
+
+[`import` expression](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import)
+
+```js run=false
+const {default: confetti} = await import("npm:canvas-confetti");
+```
+
+Framework only resolves statically-analyzable imports, as when the `import` function is passed a single string literal. Dynamic imports are primarily used to load imports lazily. You can also use dynamic imports to load a library from a URL (in which case Framework doesn’t need to resolve the URL).
+
+## Import resolutions
+
+You can use [`import.meta.resolve`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta/resolve) to invoke Framework’s import resolution statically. This function takes an import specifier and returns the resolved URL. For example:
+
+
+```js echo
+import.meta.resolve("npm:canvas-confetti")
+```
+
+In addition to being useful for debugging, import resolutions allow you to download files from npm. These files are automatically downloaded for self-hosting, too. For example, to load U.S. county geometry:
+
+```js run=false
+const data = await fetch(import.meta.resolve("npm:us-atlas/counties-albers-10m.json")).then((r) => r.json());
+```
 
 ## Module preloads
 
