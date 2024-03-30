@@ -6,7 +6,7 @@ import {simple} from "acorn-walk";
 import {rsort, satisfies} from "semver";
 import {isEnoent} from "./error.js";
 import type {ExportNode, ImportNode, ImportReference} from "./javascript/imports.js";
-import {isImportMetaResolve, parseImports} from "./javascript/imports.js";
+import {isImportMetaResolve, isJavaScript, parseImports} from "./javascript/imports.js";
 import {parseProgram} from "./javascript/parse.js";
 import type {StringLiteral} from "./javascript/source.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/source.js";
@@ -246,12 +246,12 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
     path = name === "mermaid"
       ? "dist/mermaid.esm.min.mjs/+esm"
       : name === "echarts"
-      ? "dist/echarts.esm.min.js"
+      ? "dist/echarts.esm.min.js/+esm"
       : "+esm"
   } = parseNpmSpecifier(specifier);
   const version = await resolveNpmVersion(root, {name, range});
   return `/_npm/${name}@${version}/${
-    extname(path) || // npm:foo/bar.js
+    (extname(path) && !isJavaScript(path)) || // npm:foo/bar.css
     path === "" || // npm:foo/
     path.endsWith("/") // npm:foo/bar/
       ? path
