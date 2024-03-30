@@ -27,7 +27,7 @@ With the exception of remote URL imports, imports are self-hosted: imported modu
 
 Framework downloads `npm:` imports, as above, from the [npm package registry](https://www.npmjs.com/) via the [jsDelivr CDN](https://www.jsdelivr.com/esm). Unlike [imports from `node_modules`](#node-imports), you don’t have to install `npm:` imports — just import, and the cloud shall provide. 😌
 
-By default, npm imports resolve to the latest version of the given package. Imported versions are resolved on build, or during preview after you clear your npm cache and restart the server.
+By default, npm imports resolve to the latest version of the given package. Imported versions are resolved on build, or during preview after you clear your [npm cache](#self-hosting-of-npm-imports) and restart the server.
 
 To load an earlier or specific version of a package, add a [semver range](https://docs.npmjs.com/about-semantic-versioning). For example, to load major version 1 of `canvas-confetti`:
 
