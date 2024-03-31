@@ -252,6 +252,8 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
       ? "dist/mermaid.esm.min.mjs/+esm"
       : name === "echarts"
       ? "dist/echarts.esm.min.js/+esm"
+      : name === "jquery-ui"
+      ? "dist/jquery-ui.js/+esm"
       : name === "deck.gl"
       ? "dist.min.js/+esm"
       : "+esm"
