@@ -35,7 +35,7 @@ Framework provides a variety of ways to import. When you reference `d3`, `Inputs
 - [local paths](#local-imports), or
 - [remote URLs](#url-imports).
 
-With the exception of remote URL imports, imported modules are bundled with your project, improving performance and security. In some cases, such as stylesheets and WebAssembly modules, you may need to specify additional files to download via [`import.meta.resolve`](#dynamic-imports).
+With the exception of remote URL imports, imported modules are bundled with your project, improving performance, security, and stability. In some cases, such as stylesheets and WebAssembly modules, you may need to specify additional files to download via [`import.meta.resolve`](#dynamic-imports).
 
 ## npm imports
 
@@ -63,9 +63,9 @@ import confetti from "npm:canvas-confetti/dist/confetti.module.mjs";
 
 ### Self-hosting of npm imports
 
-Framework downloads `npm:` imports from jsDelivr during preview and build. This improves performance and security of your built site by removing runtime dependencies on external sites. It also improves performance during local preview by only downloading libraries once.
+Framework downloads `npm:` imports from jsDelivr during preview and build. This improves performance, security, and stability of your built site by removing runtime dependencies on external sites.
 
-Downloads from npm are cached in `.observablehq/cache/_npm` within your [source root](../config#root) (`docs` by default). You can clear the cache and restart the server to re-fetch the latest versions of libraries from npm.
+Downloads from npm are cached in `.observablehq/cache/_npm` within your [source root](../config#root) (`docs` by default). An imported module is downloaded from jsDelivr only if it is not already in the cache. You can clear the cache and restart the server to re-fetch the latest versions of libraries from npm.
 
 Self-hosting of `npm:` imports applies to transitive static and [dynamic imports](#dynamic-imports). In addition to downloading modules, Framework downloads supporting files as needed for [recommended libraries](./imports#implicit-imports) and [`import.meta.resolve`](#import-resolutions). For example, [DuckDB](../lib/duckdb) needs WebAssembly modules, and [KaTeX](../lib/tex) needs a stylesheet and fonts. For dynamic imports and `import.meta.resolve`, Framework is only able to self-host import specifiers that are static string literals.
 
