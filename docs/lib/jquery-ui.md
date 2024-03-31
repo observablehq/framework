@@ -4,6 +4,8 @@ index: true
 
 # jQuery UI
 
+[jQuery UI](https://jqueryui.com/) is a set of user interface interactions, effects, widgets, and themes built on top of the jQuery JavaScript Library.
+
 <link rel="stylesheet" href="npm:jquery-ui/dist/themes/base/jquery-ui.css">
 
 ```html run=false
