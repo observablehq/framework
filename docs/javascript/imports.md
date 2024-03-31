@@ -41,7 +41,7 @@ With the exception of remote URL imports, imported modules are bundled with your
 
 Framework downloads `npm:` imports from the [npm package registry](https://www.npmjs.com/) via the [jsDelivr CDN](https://www.jsdelivr.com/esm). Unlike [imports from `node_modules`](#node-imports), you don’t have to install `npm:` imports — just import, and the cloud shall provide. 😌
 
-By default, npm imports resolve to the latest version of the given package. Imported versions are resolved on build, or during preview after you clear your [npm cache](#self-hosting-of-npm-imports) and restart the server. To load an earlier or specific version of a package, add a [semver range](https://docs.npmjs.com/about-semantic-versioning). For example, to load major version 1 of canvas-confetti:
+By default, npm imports resolve to the latest version of the given package. Imported versions are resolved on build or during preview and cached in your [npm cache](#self-hosting-of-npm-imports). To load an earlier or specific version of a package, add a [semver range](https://docs.npmjs.com/about-semantic-versioning). For example, to load major version 1 of canvas-confetti:
 
 ```js run=false
 import confetti from "npm:canvas-confetti@1";
@@ -59,7 +59,7 @@ Similarly, to load the file `dist/confetti.module.mjs` from canvas-confetti:
 import confetti from "npm:canvas-confetti/dist/confetti.module.mjs";
 ```
 
-<div class="tip">If you’re having difficulty importing, it may help to browse the package and see what files are available, and what’s exported in the <code>package.json</code>. You can browse the contents of a published module via jsDelivr; for example, for canvas-confetti see <a href="https://cdn.jsdelivr.net/npm/canvas-confetti/">https://cdn.jsdelivr.net/npm/canvas-confetti/</a>.</div>
+<div class="tip">If you’re having difficulty importing, it may help to browse the package and see what files are available, and what’s exported in the <code>package.json</code>. You can browse the contents of a published module via jsDelivr; for example, see <a href="https://cdn.jsdelivr.net/npm/canvas-confetti/">https://cdn.jsdelivr.net/npm/canvas-confetti/</a>.</div>
 
 ### Self-hosting of npm imports
 
@@ -89,7 +89,7 @@ Unlike `npm:` imports, node imports do not support semver ranges: the imported v
 
 Imports from `node_modules` are cached in `.observablehq/cache/_node` within your [source root](../config#root) (`docs` by default). You shouldn’t need to clear this cache as it is automatically managed, but feel free to clear it you like.
 
-Framework (via esbuild) automatically converts CommonJS to ES modules. However, not all Node-compatible packages are usable in the browser; node imports are only supported for browser-compatible modules that do not rely on Node-specific APIs.
+Framework (via [esbuild](https://esbuild.github.io/)) automatically converts CommonJS to ES modules. However, not all Node-compatible packages are usable in the browser; node imports are only supported for browser-compatible modules that do not rely on Node-specific APIs.
 
 ## Local imports
 
@@ -168,7 +168,7 @@ An import of canvas-confetti is preloaded as:
 <link rel="modulepreload" href="/_npm/canvas-confetti@1.9.2/_esm.js">
 ```
 
-Module preloading applies to transitive dependencies, too. For example, `npm:d3-array` has two dependencies which are preloaded as:
+Module preloading applies to transitive dependencies, too. For example, `npm:d3-array` has two dependencies (`isoformat` and `internmap`) which are preloaded as:
 
 ```js
 import "npm:d3-array";
@@ -219,7 +219,7 @@ Click on any of the imported symbols below to learn more.
 
 ## Require
 
-If you’re familiar with Observable notebooks, you be familiar with `require`. We recommend that you avoid `require` as the underlying Asynchronous Module Definition (AMD) convention has been made obsolete by standard imports in JavaScript, and AMD tends to be implemented inconsistently.
+If you’re familiar with Observable notebooks, you may be familiar with `require`. We recommend that you avoid `require` as the underlying Asynchronous Module Definition (AMD) convention has been made obsolete by standard imports in JavaScript, and AMD tends to be implemented inconsistently.
 
 If you really need `require`, you can import it from [d3-require](https://github.com/d3/d3-require):
 
