@@ -1,7 +1,33 @@
 import assert from "node:assert";
 import {existsSync} from "node:fs";
 import {rm} from "node:fs/promises";
-import {extractNodeSpecifier, resolveNodeImport, resolveNodeImports} from "../src/node.js";
+import {extractNodeSpecifier, isNodeBuiltin, resolveNodeImport, resolveNodeImports} from "../src/node.js";
+
+describe("isNodeBuiltin(specifier)", () => {
+  it("returns true for node: specifiers", () => {
+    assert.strictEqual(isNodeBuiltin("node:fs"), true);
+    assert.strictEqual(isNodeBuiltin("node:path"), true);
+    assert.strictEqual(isNodeBuiltin("node:path/posix"), true);
+  });
+  it("returns false for what are probably not node built-ins", () => {
+    assert.strictEqual(isNodeBuiltin(""), false);
+    assert.strictEqual(isNodeBuiltin("/fs"), false);
+    assert.strictEqual(isNodeBuiltin("./fs"), false);
+    assert.strictEqual(isNodeBuiltin("/node:fs"), false);
+    assert.strictEqual(isNodeBuiltin("./node:fs"), false);
+    assert.strictEqual(isNodeBuiltin("foo"), false);
+    assert.strictEqual(isNodeBuiltin("notnode:fs"), false);
+  });
+  it("returns true for certain know built-in modules:", () => {
+    assert.strictEqual(isNodeBuiltin("fs"), true);
+    assert.strictEqual(isNodeBuiltin("path"), true);
+    assert.strictEqual(isNodeBuiltin("path/posix"), true);
+  });
+  it("considers submodules such as fs/promises", () => {
+    assert.strictEqual(isNodeBuiltin("fs/promises"), true);
+    assert.strictEqual(isNodeBuiltin("fs/whatever"), true);
+  });
+});
 
 describe("resolveNodeImport(root, spec)", () => {
   const importRoot = "../../input/packages/.observablehq/cache";

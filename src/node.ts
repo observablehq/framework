@@ -100,6 +100,7 @@ async function bundle(input: string, cacheRoot: string, packageRoot: string): Pr
 function importResolve(input: string, cacheRoot: string, packageRoot: string): Plugin {
   async function resolve(specifier: string | AstNode): Promise<ResolveIdResult> {
     return typeof specifier !== "string" || // AST node?
+      isNodeBuiltin(specifier) || // node built-in, e.g., "node:fs" or "fs"
       isPathImport(specifier) || // relative path, e.g., ./foo.js
       /^\w+:/.test(specifier) || // windows file path, https: URL, etc.
       specifier === input // entry point
@@ -112,3 +113,67 @@ function importResolve(input: string, cacheRoot: string, packageRoot: string): P
     resolveDynamicImport: resolve
   };
 }
+
+export function isNodeBuiltin(specifier: string): boolean {
+  return specifier.startsWith("node:") || nodeBuiltins.has(specifier.replace(/\/.*/, ""));
+}
+
+// https://github.com/evanw/esbuild/blob/9d1777f23d9b64c186345223d92f319e59388d8b/internal/resolver/resolver.go#L2802-L2874
+const nodeBuiltins = new Set([
+  "_http_agent",
+  "_http_client",
+  "_http_common",
+  "_http_incoming",
+  "_http_outgoing",
+  "_http_server",
+  "_stream_duplex",
+  "_stream_passthrough",
+  "_stream_readable",
+  "_stream_transform",
+  "_stream_wrap",
+  "_stream_writable",
+  "_tls_common",
+  "_tls_wrap",
+  "assert",
+  "async_hooks",
+  "buffer",
+  "child_process",
+  "cluster",
+  "console",
+  "constants",
+  "crypto",
+  "dgram",
+  "diagnostics_channel",
+  "dns",
+  "domain",
+  "events",
+  "fs",
+  "http",
+  "http2",
+  "https",
+  "inspector",
+  "module",
+  "net",
+  "os",
+  "path",
+  "perf_hooks",
+  "process",
+  "punycode",
+  "querystring",
+  "readline",
+  "repl",
+  "stream",
+  "string_decoder",
+  "sys",
+  "timers",
+  "tls",
+  "trace_events",
+  "tty",
+  "url",
+  "util",
+  "v8",
+  "vm",
+  "wasi",
+  "worker_threads",
+  "zlib"
+]);
