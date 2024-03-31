@@ -27,6 +27,7 @@
     "@typescript-eslint/no-explicit-any": 0,
     "@typescript-eslint/no-this-alias": 0,
     "@typescript-eslint/no-unused-vars": ["error", {"ignoreRestSiblings": true}],
+    "import/consistent-type-specifier-style": "warn",
     "import/first": "warn",
     "import/newline-after-import": "warn",
     "import/no-duplicates": "off",

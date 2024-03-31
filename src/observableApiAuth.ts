@@ -5,9 +5,8 @@ import {commandInstruction, commandRequiresAuthenticationMessage} from "./comman
 import {CliError, isHttpError} from "./error.js";
 import type {GetCurrentUserResponse, PostAuthRequestPollResponse} from "./observableApiClient.js";
 import {ObservableApiClient, getObservableUiOrigin} from "./observableApiClient.js";
-import type {ConfigEffects} from "./observableApiConfig.js";
+import type {ApiKey, ConfigEffects} from "./observableApiConfig.js";
 import {
-  type ApiKey,
   defaultEffects as defaultConfigEffects,
   getObservableApiKey,
   setObservableApiKey

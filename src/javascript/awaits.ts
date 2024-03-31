@@ -1,4 +1,4 @@
-import {type Node} from "acorn";
+import type {Node} from "acorn";
 import {recursive} from "acorn-walk";
 
 export function findAwaits(node: Node): Node[] {

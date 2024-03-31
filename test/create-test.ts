@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import {readFile} from "node:fs/promises";
-import {type CreateEffects, create} from "../src/create.js";
+import type {CreateEffects} from "../src/create.js";
+import {create} from "../src/create.js";
 import {fromOsPath} from "../src/files.js";
 import {TestClackEffects} from "./mocks/clack.js";
 
