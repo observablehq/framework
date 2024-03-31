@@ -16,7 +16,7 @@ Depending on the package, you may want to import specific named exports, or to i
 
 ```js run=false
 import {rollup} from "npm:d3-array"; // a single named import
-import * as d3 from "npm:d3"; // a namespace import
+import * as d3 from "npm:d3"; // import everything as a namespace
 ```
 
 Imported symbols can be referenced in any code block or inline expression — not only in the code block that declares the import.
