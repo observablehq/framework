@@ -168,7 +168,7 @@ An import of canvas-confetti is preloaded as:
 <link rel="modulepreload" href="/_npm/canvas-confetti@1.9.2/_esm.js">
 ```
 
-Module preloading applies to transitive dependencies, too. For example, `npm:d3-array` has two dependencies (`isoformat` and `internmap`) which are preloaded as:
+Module preloading applies to transitive dependencies, too. For example, d3-array depends on isoformat and internmap, which together are preloaded as:
 
 ```js
 import "npm:d3-array";
