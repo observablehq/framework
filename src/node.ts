@@ -76,6 +76,8 @@ async function bundle(input: string, cacheRoot: string, packageRoot: string): Pr
       nodeResolve({browser: true, rootDir: packageRoot}),
       importResolve(input, cacheRoot, packageRoot),
       esbuild({
+        format: "esm",
+        platform: "browser",
         target: ["es2022", "chrome96", "firefox96", "safari16", "node18"],
         exclude: [], // don’t exclude node_modules
         minify: true
