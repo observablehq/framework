@@ -12,7 +12,7 @@ import type {StringLiteral} from "./javascript/source.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/source.js";
 import {relativePath} from "./path.js";
 import {Sourcemap} from "./sourcemap.js";
-import {faint} from "./tty.js";
+import {faint, yellow} from "./tty.js";
 
 export interface NpmSpecifier {
   name: string;
@@ -144,7 +144,7 @@ export async function getDependencyResolver(
     if (value.startsWith("/npm/")) {
       const {name: depName, range: depRange} = parseNpmSpecifier(value.slice("/npm/".length));
       if (depName === name) return; // ignore self-references, e.g. mermaid plugin
-      if (existsSync(join(root, ".observablehq", "cache", "_npm", `${depName}@${depRange}`))) return; // already resolved
+      if (depRange && existsSync(join(root, ".observablehq", "cache", "_npm", `${depName}@${depRange}`))) return; // already resolved
       dependencies.add(value);
     }
   }
@@ -163,9 +163,11 @@ export async function getDependencyResolver(
           ? "latest" // force Arquero, Mosaic & DuckDB-Wasm to use the (same) latest version of Arrow
           : name === "@uwdata/mosaic-core" && depName === "@duckdb/duckdb-wasm"
           ? "1.28.0" // force Mosaic to use the latest (stable) version of DuckDB-Wasm
-          : pkg.dependencies?.[depName] ?? pkg.devDependencies?.[depName] ?? pkg.peerDependencies?.[depName];
-      if (range === undefined) continue; // only resolve if we find a range
-      resolutions.set(dependency, await resolveNpmImport(root, `${depName}@${range}/${depPath}`));
+          : pkg.dependencies?.[depName] ??
+            pkg.devDependencies?.[depName] ??
+            pkg.peerDependencies?.[depName] ??
+            void console.warn(yellow(`${depName} is an undeclared dependency of ${name}; resolving latest version`));
+      resolutions.set(dependency, await resolveNpmImport(root, `${depName}${range ? `@${range}` : ""}/${depPath}`));
     }
   }
 
