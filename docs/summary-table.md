@@ -77,7 +77,7 @@ function table(data, options = {}) {
   const filters = new Map();
 
   requestAnimationFrame(() => {
-    for (const s of summaries.filter(({type}) => type)) summary(s);
+    for (const s of summaries.filter(({type}) => type)) summary(s, filters, refresh);
   });
 
   // save table headers for the dirty copy below
@@ -112,6 +112,7 @@ function table(data, options = {}) {
         let tmp;
         filters.set("search", (i) => textFields.some(({values}) => ((tmp = values.get(i)) && re.test(tmp))));
       } catch(error) {
+        // malformed RegExp: surface the error? or ignore and treat as string?
         console.warn(error);
       }
     }
@@ -119,7 +120,7 @@ function table(data, options = {}) {
   }
 }
 
-async function summary(div) {
+async function summary(div, filters, refresh) {
   const {name, type, values} = d3.select(div).datum();
   const {width: w, height} = div.getBoundingClientRect();
   const width = Math.min(200, (w ?? 80));
@@ -145,16 +146,24 @@ async function summary(div) {
   if (type === "Utf8") {
     const stackOptions = {order: "sum", reverse: true};
     const counts = new Map();
+    let nulls = 0;
     for (const v of values) {
-      if (v == null) continue;
+      if (v == null) {nulls++; continue;}
       if (counts.has(v)) counts.set(v, 1 + counts.get(v)); else counts.set(v, 1);
     }
     const topX = d3.sort(counts, ([, c]) => -c).slice(0, 10);
-    const visible = new Set(topX.filter(([, c]) => c / count > 0.1).map(([key]) => key));
+    const visible = new Map(topX.filter(([, c]) => c / count > 0.3));
+    const others =  d3.sum(counts, ([key, c]) => visible.has(key) ? 0 : c);
+
     // TODO:
     // - if the “others” group has a single value, use it
     // - if a category is already named "Others", use "…" instead
-    // - separate the nulls
+
+    const bars = [...visible];
+    const Other = {toString() {return "Other"}};
+    const Null = {toString() {return "null"}};
+    if (others) bars.push([Other, others]);
+    if (nulls) bars.push([Null, nulls]);
 
     chart = Plot.plot({
       width,
@@ -167,9 +176,33 @@ async function summary(div) {
       marginTop: 0,
       marginBottom: 13,
       marks: [
-        Plot.barX(values, Plot.stackX(stackOptions, Plot.groupZ({x: "count"}, {z: d => visible.has(d) ? d : "Others", insetRight: 1, fill: "var(--theme-foreground-focus)"}))),
-        Plot.text(values, Plot.stackX(stackOptions, Plot.groupZ({x: "count", text: "first"}, {text: d => visible.has(d) ? d : "Others", z: d => visible.has(d) ? d : "Others", fill: "var(--plot-background)"}))),
+        Plot.barX(bars, {x: "1", insetRight: 1, fill: ([x]) => typeof x === "string" ? "var(--theme-foreground-focus)" : "gray"}),
+        Plot.text(bars, Plot.stackX({text: "0", x: "1", fill: "var(--plot-background)", pointerEvents: "none"})),
       ]
+    });
+
+    let currentMode;
+    const buttons = d3.select(chart).selectAll("rect").on("click", function(event) {
+      const mode = bars[this.__data__][0];
+      if (filters.has(name) && currentMode === mode) {
+        filters.delete(name);
+        currentMode = undefined;
+        d3.select(this).classed("selected", false);
+      }
+      else {
+        if (mode === Null) {
+          filters.set(name, (i) => values.get(i) == null);
+        } else if (mode === Other) {
+          filters.set(name, (i) => {
+            const v = values.get(i);
+            return v != null && !visible.has(v);
+          });
+        } else filters.set(name, (i) => values.get(i) === mode);
+        currentMode = mode;
+        d3.select(chart).selectAll("rect").classed("selected", false);
+        d3.select(this).classed("selected", true);
+      }
+      refresh();
     });
   }
 
@@ -242,5 +275,6 @@ async function summary(div) {
   .summary-table table .type {font-size: smaller; font-weight: normal; color: var(--theme-foreground-muted); height: 1.35em;}
   .summary-table table .summary {font-size: smaller; font-weight: normal; height: 33px;}
   .summary-table footer {font-family: var(--sans-serif); font-size: small; color: var(--theme-foreground-faint)}
+  .summary-table rect.selected { fill: orange; }
 
 </style>
