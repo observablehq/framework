@@ -1,5 +1,11 @@
 # JavaScript: Promises
 
+A [promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) represents the result of an asynchronous operation — such as loading data, importing a module dynamically, running an animation, or even waiting for the user to do something — and is the foundational primitive of asynchronous programming in JavaScript.
+
+<div class="tip">If you aren’t yet familiar with promises in JavaScript, we highly encourage you to read MDN’s <i><a href="https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Asynchronous/Promises">How to use promises</a></i> and <i><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises">Using promises</a></i> guides first.</div>
+
+Because asynchronous operations are so common when building interactive interfaces, Framework
+
 When code refers to a promise defined in another code block, the referencing code implicitly awaits the promise.
 
 Most often, promises are used to load files, fetch data from a remote server, or query a database. TK Elaborate some more and give more specific examples of promises, including `FileAttachment`, `fetch`, `db.sql`, waiting to click on a button.
