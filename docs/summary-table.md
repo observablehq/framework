@@ -48,7 +48,7 @@ const Inputs = ({..._Inputs, table})
 
 function table(data, options = {}) {
   if (!data) return data;
-  const table = _Inputs.table(data, options);
+  let table = _Inputs.table(data, options);
 
 // Duck typing Arrow table
   if (!Array.isArray(data?.schema?.fields)) return container;
@@ -66,16 +66,44 @@ function table(data, options = {}) {
   const th = d3.select(container).select("thead").selectAll("th").data([{}, ...fields]);
   th.append("div").classed("type", true).html(({type}) => type);
   const summaries = th.append("div").classed("summary", true);
+
+  const textFields = fields.filter(({type}) => type === "Utf8");
   const footer = html`<footer style="width: 100%; height: 1em;">
-    <div style="position: absolute; left: 0;"><!-- <input type="search" placeholder="Search text fields"> --></div>
+    ${textFields.length ? html`<div style="position: absolute; left: 0;"><input type="search" placeholder="Search text fields" onkeyup=${search} onchange=${search}></div>` : ""}
     <div style="position: absolute; right: 0;">${data.numRows.toLocaleString("en-US")} rows</div>
   </footer>`;
   container.appendChild(footer);
+
+  const filters = new Map();
 
   requestAnimationFrame(() => {
     for (const s of summaries.filter(({type}) => type)) summary(s);
   });
   return container;
+
+  function refresh() {
+    const index0 = d3.range(data.length ?? data.numRows);
+    let index = index0;
+    for (const [, f] of filters) index = index.filter(f);
+    table.replaceWith(table = _Inputs.table(index === index0 ? data : take(data, index), options))
+  }
+  function take(data, index) {
+    return Array.from(index, (i) => data.get(i));
+  }
+
+  function search() {
+    const value = this.value;
+    filters.delete("search");
+    if (value) {
+      try {
+        const re = new RegExp(`(^|\b)${value}`, "ui");
+        filters.set("search", (i) => textFields.some(({values}) => re.test(values.get(i))));
+      } catch(error) {
+        console.warn(error);
+      }
+    }
+    refresh();
+  }
 }
 
 async function summary(div) {
