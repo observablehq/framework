@@ -68,9 +68,10 @@ function table(data, options = {}) {
   const summaries = th.append("div").classed("summary", true);
 
   const textFields = fields.filter(({type}) => type === "Utf8");
+  const tally = html`<div style="position: absolute; right: 0;">${data.numRows.toLocaleString("en-US")} rows</div>`;
   const footer = html`<footer style="width: 100%; height: 1em;">
     ${textFields.length ? html`<div style="position: absolute; left: 0;"><input type="search" placeholder="Search text fields" onkeyup=${search} onchange=${search}></div>` : ""}
-    <div style="position: absolute; right: 0;">${data.numRows.toLocaleString("en-US")} rows</div>
+    ${tally}
   </footer>`;
   container.appendChild(footer);
 
@@ -97,6 +98,8 @@ function table(data, options = {}) {
     const th = d3.select(table).selectAll("th");
     th.append((d, i) => thtype[i]);
     th.append((d, i) => thsummary[i]);
+
+    tally.innerHTML = index === index0 ? `${index.length} rows` : `<b>${index.length}</b> / ${index0.length}`;
   }
 
   function take(data, index) {
