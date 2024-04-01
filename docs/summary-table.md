@@ -79,14 +79,26 @@ function table(data, options = {}) {
   requestAnimationFrame(() => {
     for (const s of summaries.filter(({type}) => type)) summary(s);
   });
+
+  // save table headers for the dirty copy below
+  const thtype = [...d3.select(table).selectAll("th :nth-child(2)")]
+  const thsummary = [...d3.select(table).selectAll("th :nth-child(3)")]
   return container;
 
   function refresh() {
     const index0 = d3.range(data.length ?? data.numRows);
     let index = index0;
     for (const [, f] of filters) index = index.filter(f);
-    table.replaceWith(table = _Inputs.table(index === index0 ? data : take(data, index), options))
+
+    // TODO: make a fork of Inputs.table that works with index
+    // In the meantime, here's a very dirty approach
+    const _data = index === index0 ? data : take(data, index);
+    table.replaceWith(table = _Inputs.table(_data, options));
+    const th = d3.select(table).selectAll("th");
+    th.append((d, i) => thtype[i]);
+    th.append((d, i) => thsummary[i]);
   }
+
   function take(data, index) {
     return Array.from(index, (i) => data.get(i));
   }
@@ -97,7 +109,8 @@ function table(data, options = {}) {
     if (value) {
       try {
         const re = new RegExp(`(^|\b)${value}`, "ui");
-        filters.set("search", (i) => textFields.some(({values}) => re.test(values.get(i))));
+        let tmp;
+        filters.set("search", (i) => textFields.some(({values}) => ((tmp = values.get(i)) && re.test(tmp))));
       } catch(error) {
         console.warn(error);
       }
