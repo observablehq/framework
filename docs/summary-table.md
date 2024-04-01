@@ -148,23 +148,22 @@ async function summary(div, filters, refresh) {
   // categorical
   if (type === "Utf8") {
     const stackOptions = {order: "sum", reverse: true};
-    const counts = new Map();
+    let counts = new Map();
     let nulls = 0;
     for (const v of values) {
       if (v == null) {nulls++; continue;}
       if (counts.has(v)) counts.set(v, 1 + counts.get(v)); else counts.set(v, 1);
     }
-    const topX = d3.sort(counts, ([, c]) => -c).slice(0, 10);
-    const visible = new Map(topX.filter(([, c]) => c / count > 0.3));
+    counts =  d3.sort(counts, ([, c]) => -c);
+    const topX = counts.slice(0, 10);
+    let visible = new Map(topX.filter(([, c]) => c / count > 0.07));
+    if (counts.length === visible.size + 1) visible = new Map(counts); // if the “others” group has a single value, use it
     const others =  d3.sum(counts, ([key, c]) => visible.has(key) ? 0 : c);
 
-    // TODO:
-    // - if the “others” group has a single value, use it
-    // - if a category is already named "Others", use "…" instead
-
     const bars = [...visible];
-    const Other = {toString() {return "Other"}};
-    const Null = {toString() {return "null"}};
+
+    const Other = {toString() {return "…"}}
+    const Null = {toString() {return "ø"}};
     if (others) bars.push([Other, others]);
     if (nulls) bars.push([Null, nulls]);
 
