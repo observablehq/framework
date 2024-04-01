@@ -145,9 +145,9 @@ async function summary(div, filters, refresh) {
     if (distinct.size <= capped && !distinct.has(v)) distinct.add(v);
   }
 
-  // categorical
-  if (type === "Utf8") {
-    const stackOptions = {order: "sum", reverse: true};
+  const categorical = type === "Utf8";
+  const ordinal = !categorical && distinct.size <= 10;
+  if (categorical || ordinal) {
     let counts = new Map();
     let nulls = 0;
     for (const v of values) {
@@ -161,6 +161,7 @@ async function summary(div, filters, refresh) {
     const others =  d3.sum(counts, ([key, c]) => visible.has(key) ? 0 : c);
 
     const bars = [...visible];
+    if (ordinal) bars.sort(([a], [b]) => +a - +b);
 
     const Other = {toString() {return "…"}}
     const Null = {toString() {return "ø"}};
@@ -178,7 +179,7 @@ async function summary(div, filters, refresh) {
       marginTop: 0,
       marginBottom: 13,
       marks: [
-        Plot.barX(bars, {x: "1", insetRight: 1, fill: ([x]) => typeof x === "string" ? "var(--theme-foreground-focus)" : "gray"}),
+        Plot.barX(bars, {x: "1", insetRight: 1, fill: ([x]) => typeof x === "object" ? "gray" : "var(--theme-foreground-focus)"}),
         Plot.text(bars, Plot.stackX({text: "0", x: "1", fill: "var(--plot-background)", pointerEvents: "none"})),
       ]
     });
@@ -208,25 +209,6 @@ async function summary(div, filters, refresh) {
     });
   }
 
-  // ordinal
-  else if (distinct.size <= 10) {
-    const stackOptions = {order: "z"};
-    chart = Plot.plot({
-      width,
-      height,
-      style: "overflow: visible;",
-      x: {axis: null},
-      y: {axis: null},
-      marginLeft: 2,
-      marginRight: 2,
-      marginTop: 0,
-      marginBottom: 13,
-      marks: [
-        Plot.barX(values, Plot.stackX(stackOptions, Plot.groupZ({x: "count"}, {z: Plot.identity, insetRight: 1, fill: "var(--theme-foreground-focus)"}))),
-        Plot.text(values, Plot.stackX(stackOptions, Plot.groupZ({x: "count", text: "first"}, {z: Plot.identity, fill: "var(--plot-background)"}))),
-      ]
-    });
-  }
   // temporal, quantitative
   else {
     const niceK = 5;
