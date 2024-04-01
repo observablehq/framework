@@ -48,15 +48,20 @@ const Inputs = ({..._Inputs, table})
 
 function table(data, options = {}) {
   if (!data) return data;
+  const table = _Inputs.table(data, options);
 
-  const container = document.createElement("div");
-  container.append(_Inputs.table(data, options));
-
-  // Duck typing Arrow table
+// Duck typing Arrow table
   if (!Array.isArray(data?.schema?.fields)) return container;
 
   // Get the fields as described by Arrow, in the order given (potentially) by the options.
   const fields = (options.columns?.map(k => data.schema.find(({name}) => name === k)) ?? data.schema.fields).map(({name, type}) => ({name: String(name), type: String(type), values: data.getChild(name)}));
+
+  const container = document.createElement("div");
+  container.append(table);
+  container.setAttribute("class", "summary-table");
+  d3.select(table)
+    .style("min-width", `${120 * fields.length}px`)
+    .style("max-width", `${280 * fields.length}px`);
 
   const th = d3.select(container).select("thead").selectAll("th").data([{}, ...fields]);
   th.append("div").classed("type", true).html(({type}) => type);
@@ -192,8 +197,9 @@ async function summary(div) {
 
 <style>
 
-  table .type {font-size: smaller; font-weight: normal; color: var(--theme-foreground-muted); height: 1.35em;}
-  table .summary {font-size: smaller; font-weight: normal; height: 33px;}
-  footer {font-family: var(--sans-serif); font-size: small; color: var(--theme-foreground-faint)}
+  .summary-table {max-width: 100%; overflow-x: auto;}
+  .summary-table table .type {font-size: smaller; font-weight: normal; color: var(--theme-foreground-muted); height: 1.35em;}
+  .summary-table table .summary {font-size: smaller; font-weight: normal; height: 33px;}
+  .summary-table footer {font-family: var(--sans-serif); font-size: small; color: var(--theme-foreground-faint)}
 
 </style>
