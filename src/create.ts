@@ -8,24 +8,23 @@ import {fileURLToPath} from "node:url";
 import {promisify} from "node:util";
 import * as clack from "@clack/prompts";
 import untildify from "untildify";
+import wrapAnsi from "wrap-ansi";
 import type {ClackEffects} from "./clack.js";
-import {cyan, faint, inverse, link, reset} from "./tty.js";
+import type {TtyEffects} from "./tty.js";
+import {cyan, defaultEffects as defaultTtyEffects, faint, inverse, link, reset} from "./tty.js";
 
-export interface CreateEffects {
+export interface CreateEffects extends TtyEffects {
   clack: ClackEffects;
   sleep: (delay?: number) => Promise<void>;
-  log(output: string): void;
   mkdir(outputPath: string, options?: {recursive?: boolean}): Promise<void>;
   copyFile(sourcePath: string, outputPath: string): Promise<void>;
   writeFile(outputPath: string, contents: string): Promise<void>;
 }
 
 const defaultEffects: CreateEffects = {
+  ...defaultTtyEffects,
   clack,
   sleep,
-  log(output: string): void {
-    console.log(output);
-  },
   async mkdir(outputPath: string, options): Promise<void> {
     await mkdir(outputPath, options);
   },
@@ -82,6 +81,7 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
         }),
       installing: async ({results: {rootPath, projectTitle, includeSampleFiles, packageManager, initializeGit}}) => {
         rootPath = untildify(rootPath!);
+        let spinning = true;
         const s = clack.spinner();
         s.start("Copying template files");
         const template = includeSampleFiles ? "default" : "empty";
@@ -114,9 +114,20 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
         }
         if (packageManager) {
           s.message("Initializing Framework cache");
-          await promisify(exec)(`${runCommand} build`, {cwd: rootPath});
+          try {
+            await promisify(exec)(`${runCommand} build`, {cwd: rootPath});
+          } catch {
+            spinning = false;
+            s.stop("Installed! 🎉");
+            clack.log.warn(
+              wrapAnsi(
+                "Failed to initialize Framework cache. This may be a transient error loading data from external servers or downloading imported modules from jsDelivr; or it might be a network configuration issue such as a firewall blocking traffic. You can ignore this error for now and Framework will automatically try to download again on preview or build. If you continue to experience issues, please check your network configuration.",
+                Math.min(80, effects.outputColumns)
+              ) + `\n\nWant help? ${link("https://github.com/observablehq/framework/issues")}\n`
+            );
+          }
         }
-        s.stop("Installed! 🎉");
+        if (spinning) s.stop("Installed! 🎉");
         const instructions = [`cd ${rootPath}`, ...(packageManager ? [] : [installCommand]), `${runCommand} dev`];
         clack.note(instructions.map((line) => reset(cyan(line))).join("\n"), "Next steps…");
         clack.outro(`Problems? ${link("https://observablehq.com/framework/getting-started")}`);

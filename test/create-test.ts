@@ -4,6 +4,7 @@ import type {CreateEffects} from "../src/create.js";
 import {create} from "../src/create.js";
 import {fromOsPath} from "../src/files.js";
 import {TestClackEffects} from "./mocks/clack.js";
+import {MockLogger} from "./mocks/logger.js";
 
 describe("create", () => {
   it("instantiates the default template", async () => {
@@ -60,10 +61,12 @@ describe("create", () => {
 });
 
 class TestCreateEffects implements CreateEffects {
+  isTty = true;
+  outputColumns = 80;
+  logger = new MockLogger();
   outputs = new Map<string, string>();
   clack = new TestClackEffects();
   async sleep(): Promise<void> {}
-  log(): void {}
   async mkdir(): Promise<void> {} // TODO test?
   async copyFile(sourcePath: string, outputPath: string): Promise<void> {
     this.outputs.set(fromOsPath(outputPath), await readFile(sourcePath, "utf-8"));
