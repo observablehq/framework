@@ -2,7 +2,8 @@ import assert, {fail} from "node:assert";
 import {stat} from "node:fs/promises";
 import {Readable, Writable} from "node:stream";
 import {normalizeConfig, setCurrentDate} from "../src/config.js";
-import {type DeployEffects, type DeployOptions, deploy, promptDeployTarget} from "../src/deploy.js";
+import type {DeployEffects, DeployOptions} from "../src/deploy.js";
+import {deploy, promptDeployTarget} from "../src/deploy.js";
 import {CliError, isHttpError} from "../src/error.js";
 import {visitFiles} from "../src/files.js";
 import type {ObservableApiClientOptions} from "../src/observableApiClient.js";
@@ -102,11 +103,11 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     this.deployConfig = config;
   }
 
-  async *visitFiles(path) {
+  *visitFiles(path: string) {
     yield* visitFiles(path);
   }
 
-  async stat(path) {
+  async stat(path: string) {
     const s = await stat(path);
     if (this.fixedStatTime) {
       for (const key of ["a", "c", "m", "birth"] as const) {
@@ -136,7 +137,7 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
 // This test should have exactly one index.md in it, and nothing else; that one
 // page is why we +1 to the number of extra files.
 const TEST_SOURCE_ROOT = "test/input/build/simple-public";
-const TEST_CONFIG = await normalizeConfig({
+const TEST_CONFIG = normalizeConfig({
   root: TEST_SOURCE_ROOT,
   output: "test/output/build/simple-public",
   title: "Mock BI"
@@ -295,7 +296,7 @@ describe("deploy", () => {
   });
 
   it("prompts for title when a deploy target is configured, project doesn't exist, and config has no title", async () => {
-    const config = await normalizeConfig({
+    const config = normalizeConfig({
       root: TEST_SOURCE_ROOT
       // no title!
     });
@@ -318,7 +319,7 @@ describe("deploy", () => {
 
   it("throws an error if project doesn't exist and workspace doesn't exist", async () => {
     const deployConfig = DEPLOY_CONFIG;
-    const config = await normalizeConfig({
+    const config = normalizeConfig({
       root: TEST_SOURCE_ROOT,
       title: "Some title"
     });
@@ -344,7 +345,7 @@ describe("deploy", () => {
   });
 
   it("throws an error if workspace is invalid", async () => {
-    const config = await normalizeConfig({root: TEST_SOURCE_ROOT});
+    const config = normalizeConfig({root: TEST_SOURCE_ROOT});
     const deployConfig = {
       ...DEPLOY_CONFIG,
       workspaceLogin: "ACME Inc."
@@ -362,7 +363,7 @@ describe("deploy", () => {
   });
 
   it("throws an error if project is invalid", async () => {
-    const config = await normalizeConfig({
+    const config = normalizeConfig({
       root: TEST_SOURCE_ROOT
     });
     const deployConfig = {

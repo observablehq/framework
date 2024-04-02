@@ -1,8 +1,8 @@
 import assert from "node:assert";
-import {extractNpmSpecifier, getDependencyResolver, rewriteNpmImports} from "../../src/npm.js";
-import {fromJsDelivrPath} from "../../src/npm.js";
-import {relativePath} from "../../src/path.js";
-import {mockJsDelivr} from "../mocks/jsdelivr.js";
+import {extractNpmSpecifier, parseNpmSpecifier} from "../src/npm.js";
+import {fromJsDelivrPath, getDependencyResolver, resolveNpmImport, rewriteNpmImports} from "../src/npm.js";
+import {relativePath} from "../src/path.js";
+import {mockJsDelivr} from "./mocks/jsdelivr.js";
 
 describe("getDependencyResolver(root, path, input)", () => {
   mockJsDelivr();
@@ -20,10 +20,65 @@ describe("getDependencyResolver(root, path, input)", () => {
   });
 });
 
+describe("parseNpmSpecifier(specifier)", () => {
+  it("parses the name", () => {
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array"), {name: "d3-array", range: undefined, path: undefined});
+  });
+  it("parses the name and range", () => {
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array@1"), {name: "d3-array", range: "1", path: undefined});
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array@latest"), {name: "d3-array", range: "latest", path: undefined});
+  });
+  it("parses the name and path", () => {
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array"), {name: "d3-array", range: undefined, path: undefined});
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/foo"), {name: "d3-array", range: undefined, path: "foo"});
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/foo/bar"), {name: "d3-array", range: undefined, path: "foo/bar"}); // prettier-ignore
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/foo.js"), {name: "d3-array", range: undefined, path: "foo.js"});
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/foo/bar.js"), {name: "d3-array", range: undefined, path: "foo/bar.js"}); // prettier-ignore
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/+esm"), {name: "d3-array", range: undefined, path: "+esm"});
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/foo.js/+esm"), {name: "d3-array", range: undefined, path: "foo.js/+esm"}); // prettier-ignore
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/foo/bar.js/+esm"), {name: "d3-array", range: undefined, path: "foo/bar.js/+esm"}); // prettier-ignore
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/foo/+esm"), {name: "d3-array", range: undefined, path: "foo/+esm"}); // prettier-ignore
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/foo/bar/+esm"), {name: "d3-array", range: undefined, path: "foo/bar/+esm"}); // prettier-ignore
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array/"), {name: "d3-array", range: undefined, path: ""});
+  });
+  it("parses the name, version, and path", () => {
+    assert.deepStrictEqual(parseNpmSpecifier("d3-array@1/foo"), {name: "d3-array", range: "1", path: "foo"});
+  });
+});
+
+describe("resolveNpmImport(root, specifier)", () => {
+  mockJsDelivr();
+  const root = "test/input/build/simple";
+  it("implicitly adds ._esm.js for specifiers without an extension", async () => {
+    assert.strictEqual(await resolveNpmImport(root, "d3-array"), "/_npm/d3-array@3.2.4/_esm.js");
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/src"), "/_npm/d3-array@3.2.4/src._esm.js");
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/foo+bar"), "/_npm/d3-array@3.2.4/foo+bar._esm.js");
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/foo+esm"), "/_npm/d3-array@3.2.4/foo+esm._esm.js");
+  });
+  it("replaces /+esm with /_esm.js or ._esm.js", async () => {
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/+esm"), "/_npm/d3-array@3.2.4/_esm.js");
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/src/+esm"), "/_npm/d3-array@3.2.4/src._esm.js");
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/src/index.js/+esm"), "/_npm/d3-array@3.2.4/src/index.js._esm.js"); // prettier-ignore
+  });
+  it("does not add ._esm.js for specifiers with a JavaScript extension", async () => {
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/src/index.js"), "/_npm/d3-array@3.2.4/src/index.js");
+  });
+  it("does not add ._esm.js for specifiers with a non-JavaScript extension", async () => {
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/src/index.css"), "/_npm/d3-array@3.2.4/src/index.css");
+  });
+  it("does not add /_esm.js for specifiers with a trailing slash", async () => {
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/"), "/_npm/d3-array@3.2.4/");
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/src/"), "/_npm/d3-array@3.2.4/src/");
+  });
+});
+
 describe("extractNpmSpecifier(path)", () => {
   it("returns the npm specifier for the given local npm path", () => {
     assert.strictEqual(extractNpmSpecifier("/_npm/d3@7.8.5/_esm.js"), "d3@7.8.5/+esm");
     assert.strictEqual(extractNpmSpecifier("/_npm/d3@7.8.5/dist/d3.js"), "d3@7.8.5/dist/d3.js");
+    assert.strictEqual(extractNpmSpecifier("/_npm/d3@7.8.5/dist/d3.js._esm.js"), "d3@7.8.5/dist/d3.js/+esm");
+    assert.strictEqual(extractNpmSpecifier("/_npm/mime@4.0.1/lite._esm.js"), "mime@4.0.1/lite/+esm");
+    assert.strictEqual(extractNpmSpecifier("/_npm/@uwdata/vgplot@0.7.1/_esm.js"), "@uwdata/vgplot@0.7.1/+esm");
   });
   it("throws if not given a local npm path", () => {
     assert.throws(() => extractNpmSpecifier("/npm/d3@7.8.5/+esm"), /invalid npm path/);
@@ -35,6 +90,7 @@ describe("fromJsDelivrPath(path)", () => {
   it("returns the local npm path for the given jsDelivr path", () => {
     assert.strictEqual(fromJsDelivrPath("/npm/d3@7.8.5/+esm"), "/_npm/d3@7.8.5/_esm.js");
     assert.strictEqual(fromJsDelivrPath("/npm/d3@7.8.5/dist/d3.js"), "/_npm/d3@7.8.5/dist/d3.js");
+    assert.strictEqual(fromJsDelivrPath("/npm/d3@7.8.5/dist/d3.js/+esm"), "/_npm/d3@7.8.5/dist/d3.js._esm.js");
   });
   it("throws if not given a jsDelivr path", () => {
     assert.throws(() => fromJsDelivrPath("/_npm/d3@7.8.5/_esm.js"), /invalid jsDelivr path/);

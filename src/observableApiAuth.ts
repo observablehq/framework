@@ -5,9 +5,8 @@ import {commandInstruction, commandRequiresAuthenticationMessage} from "./comman
 import {CliError, isHttpError} from "./error.js";
 import type {GetCurrentUserResponse, PostAuthRequestPollResponse} from "./observableApiClient.js";
 import {ObservableApiClient, getObservableUiOrigin} from "./observableApiClient.js";
-import type {ConfigEffects} from "./observableApiConfig.js";
+import type {ApiKey, ConfigEffects} from "./observableApiConfig.js";
 import {
-  type ApiKey,
   defaultEffects as defaultConfigEffects,
   getObservableApiKey,
   setObservableApiKey
@@ -118,7 +117,9 @@ export async function loginInner(
 }
 
 export async function logout(effects = defaultEffects) {
+  const {logger} = effects;
   await effects.setObservableApiKey(null);
+  logger.log(`You are now logged out of ${OBSERVABLE_UI_ORIGIN.hostname}.`);
 }
 
 export async function whoami(effects = defaultEffects) {

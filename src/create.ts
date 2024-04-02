@@ -8,24 +8,23 @@ import {fileURLToPath} from "node:url";
 import {promisify} from "node:util";
 import * as clack from "@clack/prompts";
 import untildify from "untildify";
+import wrapAnsi from "wrap-ansi";
 import type {ClackEffects} from "./clack.js";
-import {cyan, faint, inverse, link, reset} from "./tty.js";
+import type {TtyEffects} from "./tty.js";
+import {cyan, defaultEffects as defaultTtyEffects, faint, inverse, link, reset} from "./tty.js";
 
-export interface CreateEffects {
+export interface CreateEffects extends TtyEffects {
   clack: ClackEffects;
   sleep: (delay?: number) => Promise<void>;
-  log(output: string): void;
   mkdir(outputPath: string, options?: {recursive?: boolean}): Promise<void>;
   copyFile(sourcePath: string, outputPath: string): Promise<void>;
   writeFile(outputPath: string, contents: string): Promise<void>;
 }
 
 const defaultEffects: CreateEffects = {
+  ...defaultTtyEffects,
   clack,
   sleep,
-  log(output: string): void {
-    console.log(output);
-  },
   async mkdir(outputPath: string, options): Promise<void> {
     await mkdir(outputPath, options);
   },
@@ -37,16 +36,10 @@ const defaultEffects: CreateEffects = {
   }
 };
 
-// TODO Do we want to accept the output path as a command-line argument,
-// still? It’s not sufficient to run observable create non-interactively,
-// though we could just apply all the defaults in that case, and then expose
-// command-line arguments for the other prompts. In any case, our immediate
-// priority is supporting the interactive case, not the automated one.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function create(options = {}, effects: CreateEffects = defaultEffects): Promise<void> {
+export async function create(effects: CreateEffects = defaultEffects): Promise<void> {
   const {clack} = effects;
   clack.intro(`${inverse(" observable create ")} ${faint(`v${process.env.npm_package_version}`)}`);
-  const defaultRootPath = "./hello-framework";
+  const defaultRootPath = "hello-framework";
   const defaultRootPathError = validateRootPath(defaultRootPath);
   await clack.group(
     {
@@ -88,13 +81,14 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
         }),
       installing: async ({results: {rootPath, projectTitle, includeSampleFiles, packageManager, initializeGit}}) => {
         rootPath = untildify(rootPath!);
+        let spinning = true;
         const s = clack.spinner();
         s.start("Copying template files");
         const template = includeSampleFiles ? "default" : "empty";
         const templateDir = op.resolve(fileURLToPath(import.meta.url), "..", "..", "templates", template);
         const runCommand = packageManager === "yarn" ? "yarn" : `${packageManager ?? "npm"} run`;
         const installCommand = `${packageManager ?? "npm"} install`;
-        await effects.sleep(1000);
+        await effects.sleep(1000); // this step is fast; give the spinner a chance to show
         await recursiveCopyTemplate(
           templateDir,
           rootPath!,
@@ -109,17 +103,31 @@ export async function create(options = {}, effects: CreateEffects = defaultEffec
         );
         if (packageManager) {
           s.message(`Installing dependencies via ${packageManager}`);
-          await effects.sleep(1000);
           if (packageManager === "yarn") await writeFile(join(rootPath, "yarn.lock"), "");
           await promisify(exec)(installCommand, {cwd: rootPath});
         }
         if (initializeGit) {
           s.message("Initializing git repository");
-          await effects.sleep(1000);
+          await effects.sleep(1000); // this step is fast; give the spinner a chance to show
           await promisify(exec)("git init", {cwd: rootPath});
           await promisify(exec)("git add -A", {cwd: rootPath});
         }
-        s.stop("Installed! 🎉");
+        if (packageManager) {
+          s.message("Initializing Framework cache");
+          try {
+            await promisify(exec)(`${runCommand} build`, {cwd: rootPath});
+          } catch {
+            spinning = false;
+            s.stop("Installed! 🎉");
+            clack.log.warn(
+              wrapAnsi(
+                "Failed to initialize Framework cache. This may be a transient error loading data from external servers or downloading imported modules from jsDelivr; or it might be a network configuration issue such as a firewall blocking traffic. You can ignore this error for now and Framework will automatically try to download again on preview or build. If you continue to experience issues, please check your network configuration.",
+                Math.min(80, effects.outputColumns)
+              ) + `\n\nWant help? ${link("https://github.com/observablehq/framework/issues")}\n`
+            );
+          }
+        }
+        if (spinning) s.stop("Installed! 🎉");
         const instructions = [`cd ${rootPath}`, ...(packageManager ? [] : [installCommand]), `${runCommand} dev`];
         clack.note(instructions.map((line) => reset(cyan(line))).join("\n"), "Next steps…");
         clack.outro(`Problems? ${link("https://observablehq.com/framework/getting-started")}`);

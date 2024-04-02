@@ -7,7 +7,8 @@ import type {ClackEffects} from "./clack.js";
 import {CliError} from "./error.js";
 import {prepareOutput} from "./files.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
-import {type TtyEffects, bold, cyan, faint, inverse, link, reset, defaultEffects as ttyEffects} from "./tty.js";
+import type {TtyEffects} from "./tty.js";
+import {bold, cyan, faint, inverse, link, reset, defaultEffects as ttyEffects} from "./tty.js";
 
 export interface ConvertEffects extends TtyEffects {
   clack: ClackEffects;

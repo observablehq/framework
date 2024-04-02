@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import {type ParseArgsConfig, parseArgs} from "node:util";
+import type {ParseArgsConfig} from "node:util";
+import {parseArgs} from "node:util";
 import * as clack from "@clack/prompts";
 import {readConfig} from "../config.js";
 import {CliError} from "../error.js";
@@ -179,7 +180,8 @@ try {
       const {config, root, host, port, open} = values;
       await import("../preview.js").then(async (preview) =>
         preview.preview({
-          config: await readConfig(config, root),
+          config,
+          root,
           hostname: host!,
           port: port === undefined ? undefined : +port,
           open
@@ -240,8 +242,8 @@ try {
         // clack.outro doesn't handle multiple lines well, so do it manually
         console.log(
           `${faint("│\n│")}  If you think this is a bug, please file an issue at\n${faint("└")}  ${link(
-            "https://github.com/observablehq/framework/issues\n"
-          )}`
+            "https://github.com/observablehq/framework/issues"
+          )}\n`
         );
       }
     } else {
@@ -253,8 +255,8 @@ try {
         console.error("\nTip: To see the full stack trace, run with the --debug flag.\n");
         console.error(
           `If you think this is a bug, please file an issue at\n↳ ${link(
-            "https://github.com/observablehq/framework/issues\n"
-          )}`
+            "https://github.com/observablehq/framework/issues"
+          )}\n`
         );
       }
     }

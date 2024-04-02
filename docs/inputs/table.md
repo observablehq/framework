@@ -1,6 +1,6 @@
 # Table input
 
-<a href="https://github.com/observablehq/inputs/blob/main/README.md#table" target="_blank">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/table.js" target="_blank">Source</a> · The table input displays tabular data. It’s fast: rows are rendered lazily on scroll. It sorts: click a header to sort, and click again to reverse. And it selects: click a checkbox on any row, and the selected rows are exported as a view value. (And for searching, see the [search input](./search).)
+<a href="https://github.com/observablehq/inputs/blob/main/README.md#table">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/table.js">Source</a> · The table input displays tabular data. It’s fast: rows are rendered lazily on scroll. It sorts: click a header to sort, and click again to reverse. And it selects: click a checkbox on any row, and the selected rows are exported as a view value. (And for searching, see the [search input](./search).)
 
 By default, all columns are visible. Only the first dozen rows are initially visible, but you can scroll to see more. Column headers are fixed for readability.
 

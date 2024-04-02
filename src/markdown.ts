@@ -1,7 +1,6 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
 import {extname} from "node:path/posix";
-import matter from "gray-matter";
 import he from "he";
 import MarkdownIt from "markdown-it";
 import type {RuleCore} from "markdown-it/lib/parser_core.js";
@@ -10,6 +9,8 @@ import type {RenderRule} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
 import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
+import type {FrontMatter} from "./frontMatter.js";
+import {readFrontMatter} from "./frontMatter.js";
 import {rewriteHtmlPaths} from "./html.js";
 import {parseInfo} from "./info.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
@@ -31,12 +32,12 @@ export interface MarkdownPage {
   header: string | null;
   body: string;
   footer: string | null;
-  data: {[key: string]: any} | null;
+  data: FrontMatter;
   style: string | null;
   code: MarkdownCode[];
 }
 
-export interface ParseContext {
+interface ParseContext {
   code: MarkdownCode[];
   startLine: number;
   currentLine: number;
@@ -326,7 +327,7 @@ export function createMarkdownIt({
 
 export function parseMarkdown(input: string, options: ParseOptions): MarkdownPage {
   const {md, path} = options;
-  const {content, data} = matter(input, {});
+  const {content, data} = readFrontMatter(input);
   const code: MarkdownCode[] = [];
   const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
   const tokens = md.parse(content, context);
@@ -336,16 +337,29 @@ export function parseMarkdown(input: string, options: ParseOptions): MarkdownPag
     header: getHtml("header", data, options),
     body,
     footer: getHtml("footer", data, options),
-    data: isEmpty(data) ? null : data,
-    title: data.title ?? findTitle(tokens) ?? null,
+    data,
+    title: data.title !== undefined ? data.title : findTitle(tokens),
     style: getStyle(data, options),
     code
   };
 }
 
+/** Like parseMarkdown, but optimized to return only metadata. */
+export function parseMarkdownMetadata(input: string, options: ParseOptions): Pick<MarkdownPage, "data" | "title"> {
+  const {md, path} = options;
+  const {content, data} = readFrontMatter(input);
+  return {
+    data,
+    title:
+      data.title !== undefined
+        ? data.title
+        : findTitle(md.parse(content, {code: [], startLine: 0, currentLine: 0, path}))
+  };
+}
+
 function getHtml(
   key: "head" | "header" | "footer",
-  data: Record<string, any>,
+  data: FrontMatter,
   {path, [key]: defaultValue}: ParseOptions
 ): string | null {
   return data[key] !== undefined
@@ -357,7 +371,7 @@ function getHtml(
     : null;
 }
 
-function getStyle(data: Record<string, any>, {path, style = null}: ParseOptions): string | null {
+function getStyle(data: FrontMatter, {path, style = null}: ParseOptions): string | null {
   try {
     style = mergeStyle(path, data.style, data.theme, style);
   } catch (error) {
@@ -372,14 +386,8 @@ function getStyle(data: Record<string, any>, {path, style = null}: ParseOptions)
     : `observablehq:theme-${style.theme.join(",")}.css`;
 }
 
-// TODO Use gray-matter’s parts.isEmpty, but only when it’s accurate.
-function isEmpty(object) {
-  for (const key in object) return false;
-  return true;
-}
-
 // TODO Make this smarter.
-function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | undefined {
+function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | null {
   for (const [i, token] of tokens.entries()) {
     if (token.type === "heading_open" && token.tag === "h1") {
       const next = tokens[i + 1];
@@ -394,4 +402,5 @@ function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | undefined 
       }
     }
   }
+  return null;
 }

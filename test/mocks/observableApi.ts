@@ -1,17 +1,14 @@
 import type {MockAgent} from "undici";
-import {type Interceptable} from "undici";
+import type {Interceptable} from "undici";
 import PendingInterceptorsFormatter from "undici/lib/mock/pending-interceptors-formatter.js";
 import type {
   GetCurrentUserResponse,
+  GetProjectResponse,
+  PaginatedList,
   PostAuthRequestPollResponse,
   PostAuthRequestResponse
 } from "../../src/observableApiClient.js";
-import {
-  type GetProjectResponse,
-  type PaginatedList,
-  getObservableApiOrigin,
-  getObservableUiOrigin
-} from "../../src/observableApiClient.js";
+import {getObservableApiOrigin, getObservableUiOrigin} from "../../src/observableApiClient.js";
 import {getCurrentAgent, mockAgent} from "./undici.js";
 
 export const validApiKey = "MOCK-VALID-KEY";

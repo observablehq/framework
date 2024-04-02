@@ -10,6 +10,7 @@ import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
+import {extractNodeSpecifier} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport} from "./npm.js";
 import {isPathImport, relativePath, resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
@@ -52,7 +53,7 @@ export async function build(
 
   // Make sure all files are readable before starting to write output files.
   let pageCount = 0;
-  for await (const sourceFile of visitMarkdownFiles(root)) {
+  for (const sourceFile of visitMarkdownFiles(root)) {
     await access(join(root, sourceFile), constants.R_OK);
     pageCount++;
   }
@@ -65,7 +66,7 @@ export async function build(
   const localImports = new Set<string>();
   const globalImports = new Set<string>();
   const stylesheets = new Set<string>();
-  for await (const sourceFile of visitMarkdownFiles(root)) {
+  for (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
     const options = {path, ...config};
@@ -73,7 +74,7 @@ export async function build(
     const start = performance.now();
     const source = await readFile(sourcePath, "utf8");
     const page = parseMarkdown(source, options);
-    if (page?.data?.draft) {
+    if (page.data.draft) {
       effects.logger.log(faint("(skipped)"));
       continue;
     }
@@ -175,10 +176,14 @@ export async function build(
   // these, too, but it would involve rewriting the files since populateNpmCache
   // doesn’t let you pass in a resolver.
   for (const path of globalImports) {
-    if (!path.startsWith("/_npm/")) continue; // skip _observablehq
-    effects.output.write(`${faint("copy")} npm:${extractNpmSpecifier(path)} ${faint("→")} `);
-    const sourcePath = await populateNpmCache(root, path); // TODO effects
-    await effects.copyFile(sourcePath, path);
+    if (path.startsWith("/_npm/")) {
+      effects.output.write(`${faint("copy")} npm:${extractNpmSpecifier(path)} ${faint("→")} `);
+      const sourcePath = await populateNpmCache(root, path); // TODO effects
+      await effects.copyFile(sourcePath, path);
+    } else if (path.startsWith("/_node/")) {
+      effects.output.write(`${faint("copy")} ${extractNodeSpecifier(path)} ${faint("→")} `);
+      await effects.copyFile(join(root, ".observablehq", "cache", path), path);
+    }
   }
 
   // Copy over imported local modules, overriding import resolution so that

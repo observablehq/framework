@@ -1,6 +1,6 @@
 # Comma-separated values
 
-To load a [comma-separated values](https://en.wikipedia.org/wiki/Comma-separated_values) (CSV) file, use [`FileAttachment`](../javascript/files). The `file.csv` and `file.tsv` methods are implemented using [D3](https://d3js.org/d3-dsv) and are based on [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180).
+To load a [comma-separated values](https://en.wikipedia.org/wiki/Comma-separated_values) (CSV) file, use [`FileAttachment`](../javascript/files)`.csv`. The `csv`, `tsv`, and `dsv` method implementations are based on [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180).
 
 ```js echo
 const gistemp = FileAttachment("gistemp.csv").csv({typed: true});
@@ -18,7 +18,7 @@ The column names are listed in the `columns` property:
 gistemp.columns
 ```
 
-You can also load a tab-separated values (TSV) file using [`FileAttachment`](../javascript/files):
+You can also load a tab-separated values (TSV) file using `FileAttachment.tsv`:
 
 ```js echo
 const capitals = FileAttachment("us-state-capitals.tsv").tsv({typed: true});
@@ -26,6 +26,12 @@ const capitals = FileAttachment("us-state-capitals.tsv").tsv({typed: true});
 
 ```js echo
 Inputs.table(capitals)
+```
+
+For a different delimiter, use `FileAttachment.dsv`. <a href="https://github.com/observablehq/framework/pull/1172" class="observablehq-version-badge" data-version="prerelease" title="Added in #1172"></a> For example, for semicolon separated values:
+
+```js run=false
+const capitals = FileAttachment("us-state-capitals.csv").dsv({delimiter: ";", typed: true});
 ```
 
 ## Type coercion

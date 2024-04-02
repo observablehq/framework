@@ -98,7 +98,7 @@ ${themes.dark.map((theme) => `- \`${theme}\`${theme === dark ? " (default)" : ""
 
 When both a light and a dark mode theme are specified, theme styles are applied selectively based on the user’s preferred color scheme. This is implemented via [\`prefers-color-scheme\`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme) and typically relies on the user’s operating system settings.
 
-<div class="tip">On macOS, you can create a menubar <a href="https://support.apple.com/guide/shortcuts-mac/intro-to-shortcuts-apdf22b0444c/mac" target="_blank">shortcut</a> to quickly toggle between light and dark mode. This is useful for testing.</div>
+<div class="tip">On macOS, you can create a menubar <a href="https://support.apple.com/guide/shortcuts-mac/intro-to-shortcuts-apdf22b0444c/mac">shortcut</a> to quickly toggle between light and dark mode. This is useful for testing.</div>
 
 <div class="tip">Designing charts that work well in both light and dark mode can be challenging. If you’d prefer to design for only one mode, set the theme explicitly to <code>light</code> or <code>dark</code>.</div>
 

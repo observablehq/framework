@@ -1,6 +1,6 @@
 import type {Stats} from "node:fs";
-import {existsSync} from "node:fs";
-import {mkdir, readdir, stat} from "node:fs/promises";
+import {existsSync, readdirSync, statSync} from "node:fs";
+import {mkdir, stat} from "node:fs/promises";
 import op from "node:path";
 import {extname, join, normalize, relative, sep} from "node:path/posix";
 import {cwd} from "node:process";
@@ -41,23 +41,28 @@ export function getStylePath(entry: string): string {
 }
 
 /** Yields every Markdown (.md) file within the given root, recursively. */
-export async function* visitMarkdownFiles(root: string): AsyncGenerator<string> {
-  for await (const file of visitFiles(root)) {
+export function* visitMarkdownFiles(root: string): Generator<string> {
+  for (const file of visitFiles(root)) {
     if (extname(file) !== ".md") continue;
     yield file;
   }
 }
 
 /** Yields every file within the given root, recursively. */
-export async function* visitFiles(root: string): AsyncGenerator<string> {
+export function* visitFiles(root: string): Generator<string> {
   const visited = new Set<number>();
   const queue: string[] = [(root = normalize(root))];
+  try {
+    visited.add(statSync(join(root, ".observablehq")).ino);
+  } catch {
+    // ignore the .observablehq directory, if it exists
+  }
   for (const path of queue) {
-    const status = await stat(path);
+    const status = statSync(path);
     if (status.isDirectory()) {
       if (visited.has(status.ino)) continue; // circular symlink
       visited.add(status.ino);
-      for (const entry of await readdir(path)) {
+      for (const entry of readdirSync(path)) {
         queue.push(join(path, entry));
       }
     } else {

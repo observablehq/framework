@@ -27,9 +27,8 @@ export async function renderPage(page: MarkdownPage, options: RenderOptions & Re
   const {data} = page;
   const {base, path, title, preview} = options;
   const {loaders, resolvers = await getResolvers(page, options)} = options;
-  const sidebar = data?.sidebar !== undefined ? Boolean(data.sidebar) : options.sidebar;
-  const toc = mergeToc(data?.toc, options.toc);
-  const draft = Boolean(data?.draft);
+  const {draft = false, sidebar = options.sidebar} = data;
+  const toc = mergeToc(data.toc, options.toc);
   const {files, resolveFile, resolveImport} = resolvers;
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
@@ -86,13 +85,13 @@ ${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(page.foot
 `);
 }
 
-function registerTables(sql: Record<string, any>, options: RenderOptions): string {
+function registerTables(sql: Record<string, string>, options: RenderOptions): string {
   return Object.entries(sql)
     .map(([name, source]) => registerTable(name, source, options))
     .join("\n");
 }
 
-function registerTable(name: string, source: any, {path}: RenderOptions): string {
+function registerTable(name: string, source: string, {path}: RenderOptions): string {
   return `registerTable(${JSON.stringify(name)}, ${
     isAssetPath(source)
       ? `FileAttachment(${JSON.stringify(resolveRelativePath(path, source))})`

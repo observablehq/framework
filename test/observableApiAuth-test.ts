@@ -72,7 +72,7 @@ describe("logout command", () => {
     await logout(effects);
     assert.equal(effects.observableApiKey, null);
     assert.equal(await effects.setApiKeyDeferred.promise, undefined);
-    effects.logger.assertExactLogs([]);
+    effects.logger.assertExactLogs([/^You are now logged out of/]);
   });
 });
 

@@ -100,13 +100,16 @@ describe("LoaderResolver.find(path, {useStale: true})", () => {
 });
 
 describe("LoaderResolver.getSourceFileHash(path)", () => {
+  const time = new Date(Date.UTC(2023, 11, 1));
   it("returns the content hash for the specified file’s data loader", async () => {
+    await utimes("test/input/build/archives.posix/dynamic.zip.sh", time, time);
+    await utimes("test/input/build/archives.posix/static.zip", time, time);
     const loaders = new LoaderResolver({root: "test/input/build/archives.posix"});
     assert.strictEqual(loaders.getSourceFileHash("dynamic.zip.sh"), "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"); // prettier-ignore
-    assert.strictEqual(loaders.getSourceFileHash("dynamic.zip"), "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"); // prettier-ignore
-    assert.strictEqual(loaders.getSourceFileHash("dynamic/file.txt"), "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"); // prettier-ignore
+    assert.strictEqual(loaders.getSourceFileHash("dynamic.zip"), "64acd011e27907a2594fda3272bfc951e75db4c80495ce41e84ced61383bbb60"); // prettier-ignore
+    assert.strictEqual(loaders.getSourceFileHash("dynamic/file.txt"), "64acd011e27907a2594fda3272bfc951e75db4c80495ce41e84ced61383bbb60"); // prettier-ignore
     assert.strictEqual(loaders.getSourceFileHash("static.zip"), "e6afff224da77b900cfe3ab8789f2283883300e1497548c30af66dfe4c29b429"); // prettier-ignore
-    assert.strictEqual(loaders.getSourceFileHash("static/file.txt"), "e6afff224da77b900cfe3ab8789f2283883300e1497548c30af66dfe4c29b429"); // prettier-ignore
+    assert.strictEqual(loaders.getSourceFileHash("static/file.txt"), "76ac155a1184b392ed40fb79eff680d5bf57e8afd9a494b1066f26dfd1e4c5e6"); // prettier-ignore
   });
   it("returns the empty hash if the specified file does not exist", async () => {
     const loaders = new LoaderResolver({root: "test/input/build/files"});
