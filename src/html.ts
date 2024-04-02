@@ -5,6 +5,8 @@ import type {DOMWindow} from "jsdom";
 import {JSDOM, VirtualConsole} from "jsdom";
 import {isAssetPath, relativePath, resolveLocalPath} from "./path.js";
 
+const ABSOLUTE_PATH_ATTRIBUTES: readonly [selector: string, src: string][] = [["meta[property='og:image']", "content"]];
+
 const ASSET_ATTRIBUTES: readonly [selector: string, src: string][] = [
   ["a[href][download]", "href"],
   ["audio source[src]", "src"],
@@ -14,7 +16,8 @@ const ASSET_ATTRIBUTES: readonly [selector: string, src: string][] = [
   ["link[href]", "href"],
   ["picture source[srcset]", "srcset"],
   ["video source[src]", "src"],
-  ["video[src]", "src"]
+  ["video[src]", "src"],
+  ...ABSOLUTE_PATH_ATTRIBUTES
 ];
 
 const PATH_ATTRIBUTES: readonly [selector: string, src: string][] = [
@@ -26,7 +29,8 @@ const PATH_ATTRIBUTES: readonly [selector: string, src: string][] = [
   ["link[href]", "href"],
   ["picture source[srcset]", "srcset"],
   ["video source[src]", "src"],
-  ["video[src]", "src"]
+  ["video[src]", "src"],
+  ...ABSOLUTE_PATH_ATTRIBUTES
 ];
 
 export function isJavaScript({type}: HTMLScriptElement): boolean {
@@ -135,8 +139,10 @@ export function rewriteHtml(
 
   for (const [selector, src] of ASSET_ATTRIBUTES) {
     for (const element of document.querySelectorAll(selector)) {
-      const source = decodeURI(element.getAttribute(src)!);
-      element.setAttribute(src, src === "srcset" ? resolveSrcset(source, maybeResolveFile) : maybeResolveFile(source));
+      let source = decodeURI(element.getAttribute(src)!);
+      source = src === "srcset" ? resolveSrcset(source, maybeResolveFile) : maybeResolveFile(source);
+      console.warn({selector, src, source, html});
+      element.setAttribute(src, source);
     }
   }
 

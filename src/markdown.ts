@@ -325,20 +325,23 @@ export function createMarkdownIt({
   return markdownIt === undefined ? md : markdownIt(md);
 }
 
-export function parseMarkdown(input: string, options: ParseOptions): MarkdownPage {
+export function parseMarkdown(input: string, options: ParseOptions & Config): MarkdownPage {
   const {md, path} = options;
   const {content, data} = readFrontMatter(input);
   const code: MarkdownCode[] = [];
   const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
   const tokens = md.parse(content, context);
   const body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
+  const title = data.title !== undefined ? data.title : findTitle(tokens);
+  console.warn({data});
+  const meta = {...data, title};
   return {
-    head: getHtml("head", data, options),
-    header: getHtml("header", data, options),
+    head: getHtml("head", meta, options),
+    header: getHtml("header", meta, options),
     body,
-    footer: getHtml("footer", data, options),
+    footer: getHtml("footer", meta, options),
     data,
-    title: data.title !== undefined ? data.title : findTitle(tokens),
+    title,
     style: getStyle(data, options),
     code
   };
@@ -357,17 +360,14 @@ export function parseMarkdownMetadata(input: string, options: ParseOptions): Pic
   };
 }
 
-function getHtml(
-  key: "head" | "header" | "footer",
-  data: FrontMatter,
-  {path, [key]: defaultValue}: ParseOptions
-): string | null {
+function getHtml(key: "head" | "header" | "footer", data: FrontMatter, config: Config & ParseOptions): string | null {
+  const {path, [key]: defaultValue} = config;
   return data[key] !== undefined
     ? data[key]
       ? String(data[key])
       : null
     : defaultValue != null
-    ? rewriteHtmlPaths(defaultValue, path)
+    ? rewriteHtmlPaths(defaultValue(path, data, config), path)
     : null;
 }
 
