@@ -50,12 +50,13 @@ display(Inputs.table(await sql`SELECT * FROM aapl`, {columns: ["Date", "Open"]})
 // TODO sorting should be stable.
 // TODO clip & center categorical/ordinal labels (needs measuring text).
 // TODO instead of "other", count "uniques" as in data table cells?
+// TODO display nulls cf. https://github.com/observablehq/inputs/pull/214
 import * as _Inputs from "npm:@observablehq/inputs"
 import * as Arrow from "npm:apache-arrow";
 import * as d3 from "npm:d3";
 import {html} from "npm:htl";
 
-width; // refresh when resized
+width; // refresh when resized (TODO: OK to remove this?)
 
 const Inputs = ({..._Inputs, table});
 
@@ -117,8 +118,8 @@ function table(data, options = {}) {
     const _data = index === index0 ? data : take(data, index);
     table.replaceWith(table = _Inputs.table(_data, options));
     d3.select(table)
-    .style("min-width", `${120 * fields.length}px`)
-    .style("max-width", `${280 * fields.length}px`);
+      .style("min-width", `${120 * fields.length}px`)
+      .style("max-width", `${280 * fields.length}px`);
     const th = d3.select(table).selectAll("th");
     th.append((d, i) => thtype[i]);
     th.append((d, i) => thsummary[i]);
