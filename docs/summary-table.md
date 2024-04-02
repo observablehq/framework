@@ -50,7 +50,7 @@ function table(data, options = {}) {
   if (!data) return data;
   let table = _Inputs.table(data, options);
 
-// Duck typing Arrow table
+  // Duck typing Arrow table
   if (!Array.isArray(data?.schema?.fields)) return container;
 
   // Get the fields as described by Arrow, in the order given (potentially) by the options.
@@ -196,6 +196,7 @@ async function summary(div, filters, refresh) {
       ]
     });
 
+    // TODO multiple selections with event.shiftKey
     let currentMode;
     const buttons = d3.select(chart).selectAll("rect").on("click", function(event) {
       const mode = bars[this.__data__][0];
