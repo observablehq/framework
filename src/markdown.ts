@@ -1,6 +1,6 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
-import matter from "gray-matter";
+import {extname} from "node:path/posix";
 import he from "he";
 import MarkdownIt from "markdown-it";
 import type {RuleCore} from "markdown-it/lib/parser_core.js";
@@ -9,10 +9,13 @@ import type {RenderRule} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
 import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
+import type {FrontMatter} from "./frontMatter.js";
+import {readFrontMatter} from "./frontMatter.js";
+import {rewriteHtmlPaths} from "./html.js";
 import {parseInfo} from "./info.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
-import {relativePath} from "./path.js";
+import {isAssetPath, parseRelativeUrl, relativePath} from "./path.js";
 import {transpileSql} from "./sql.js";
 import {transpileTag} from "./tag.js";
 import {InvalidThemeError} from "./theme.js";
@@ -25,13 +28,16 @@ export interface MarkdownCode {
 
 export interface MarkdownPage {
   title: string | null;
-  html: string;
-  data: {[key: string]: any} | null;
+  head: string | null;
+  header: string | null;
+  body: string;
+  footer: string | null;
+  data: FrontMatter;
   style: string | null;
   code: MarkdownCode[];
 }
 
-export interface ParseContext {
+interface ParseContext {
   code: MarkdownCode[];
   startLine: number;
   currentLine: number;
@@ -275,13 +281,38 @@ function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
   };
 }
 
+export function makeLinkNormalizer(baseNormalize: (url: string) => string, clean: boolean): (url: string) => string {
+  return (url) => {
+    // Only clean local links (and ignore e.g. "https:" links).
+    if (isAssetPath(url)) {
+      const u = parseRelativeUrl(url);
+      let {pathname} = u;
+      if (pathname && !pathname.endsWith("/") && !extname(pathname)) pathname += ".html";
+      if (pathname === "index.html") pathname = ".";
+      else if (pathname.endsWith("/index.html")) pathname = pathname.slice(0, -"index.html".length);
+      else if (clean) pathname = pathname.replace(/\.html$/, "");
+      url = pathname + u.search + u.hash;
+    }
+    return baseNormalize(url);
+  };
+}
+
 export interface ParseOptions {
   md: MarkdownIt;
   path: string;
   style?: Config["style"];
+  head?: Config["head"];
+  header?: Config["header"];
+  footer?: Config["footer"];
 }
 
-export function createMarkdownIt({markdownIt}: {markdownIt?: (md: MarkdownIt) => MarkdownIt} = {}): MarkdownIt {
+export function createMarkdownIt({
+  markdownIt,
+  cleanUrls = true
+}: {
+  markdownIt?: (md: MarkdownIt) => MarkdownIt;
+  cleanUrls?: boolean;
+} = {}): MarkdownIt {
   const md = MarkdownIt({html: true, linkify: true});
   md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
@@ -290,28 +321,59 @@ export function createMarkdownIt({markdownIt}: {markdownIt?: (md: MarkdownIt) =>
   md.renderer.rules.placeholder = makePlaceholderRenderer();
   md.renderer.rules.fence = makeFenceRenderer(md.renderer.rules.fence!);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
+  md.normalizeLink = makeLinkNormalizer(md.normalizeLink, cleanUrls);
   return markdownIt === undefined ? md : markdownIt(md);
 }
 
-export function parseMarkdown(input: string, {md, path, style: configStyle}: ParseOptions): MarkdownPage {
-  const {content, data} = matter(input, {});
+export function parseMarkdown(input: string, options: ParseOptions): MarkdownPage {
+  const {md, path} = options;
+  const {content, data} = readFrontMatter(input);
   const code: MarkdownCode[] = [];
   const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
   const tokens = md.parse(content, context);
-  const html = md.renderer.render(tokens, md.options, context); // Note: mutates code, assets!
-  const style = getStylesheet(path, data, configStyle);
+  const body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
   return {
-    html,
-    data: isEmpty(data) ? null : data,
-    title: data?.title ?? findTitle(tokens) ?? null,
-    style,
+    head: getHtml("head", data, options),
+    header: getHtml("header", data, options),
+    body,
+    footer: getHtml("footer", data, options),
+    data,
+    title: data.title !== undefined ? data.title : findTitle(tokens),
+    style: getStyle(data, options),
     code
   };
 }
 
-function getStylesheet(path: string, data: MarkdownPage["data"], style: Config["style"] = null): string | null {
+/** Like parseMarkdown, but optimized to return only metadata. */
+export function parseMarkdownMetadata(input: string, options: ParseOptions): Pick<MarkdownPage, "data" | "title"> {
+  const {md, path} = options;
+  const {content, data} = readFrontMatter(input);
+  return {
+    data,
+    title:
+      data.title !== undefined
+        ? data.title
+        : findTitle(md.parse(content, {code: [], startLine: 0, currentLine: 0, path}))
+  };
+}
+
+function getHtml(
+  key: "head" | "header" | "footer",
+  data: FrontMatter,
+  {path, [key]: defaultValue}: ParseOptions
+): string | null {
+  return data[key] !== undefined
+    ? data[key]
+      ? String(data[key])
+      : null
+    : defaultValue != null
+    ? rewriteHtmlPaths(defaultValue, path)
+    : null;
+}
+
+function getStyle(data: FrontMatter, {path, style = null}: ParseOptions): string | null {
   try {
-    style = mergeStyle(path, data?.style, data?.theme, style);
+    style = mergeStyle(path, data.style, data.theme, style);
   } catch (error) {
     if (!(error instanceof InvalidThemeError)) throw error;
     console.error(red(String(error))); // TODO error during build
@@ -324,14 +386,8 @@ function getStylesheet(path: string, data: MarkdownPage["data"], style: Config["
     : `observablehq:theme-${style.theme.join(",")}.css`;
 }
 
-// TODO Use gray-matter’s parts.isEmpty, but only when it’s accurate.
-function isEmpty(object) {
-  for (const key in object) return false;
-  return true;
-}
-
 // TODO Make this smarter.
-function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | undefined {
+function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | null {
   for (const [i, token] of tokens.entries()) {
     if (token.type === "heading_open" && token.tag === "h1") {
       const next = tokens[i + 1];
@@ -346,4 +402,5 @@ function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | undefined 
       }
     }
   }
+  return null;
 }

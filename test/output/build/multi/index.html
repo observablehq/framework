@@ -10,17 +10,17 @@
 <link rel="modulepreload" href="./_observablehq/client.js">
 <link rel="modulepreload" href="./_observablehq/runtime.js">
 <link rel="modulepreload" href="./_observablehq/stdlib.js">
-<link rel="modulepreload" href="./_npm/d3-dsv@3.0.1/+esm.js">
+<link rel="modulepreload" href="./_npm/d3-dsv@3.0.1/_esm.js">
 <script type="module">
 
 import {define} from "./_observablehq/client.js";
 import {registerFile} from "./_observablehq/stdlib.js";
 
-registerFile("./file1.csv", {"name":"./file1.csv","mimeType":"text/csv","path":"./_file/file1.259f3fd9.csv"});
-registerFile("./file2.csv", {"name":"./file2.csv","mimeType":"text/csv","path":"./_file/file2.c70f7d51.csv"});
+registerFile("./file1.csv", {"name":"./file1.csv","mimeType":"text/csv","path":"./_file/file1.259f3fd9.csv","lastModified":/* ts */1706742000000});
+registerFile("./file2.csv", {"name":"./file2.csv","mimeType":"text/csv","path":"./_file/file2.c70f7d51.csv","lastModified":/* ts */1706742000000});
 
 define({id: "1bcb5df5", inputs: ["FileAttachment"], outputs: ["f1"], body: (FileAttachment) => {
-const f1 = FileAttachment("file1.csv").csv();
+const f1 = FileAttachment("./file1.csv").csv();
 return {f1};
 }});
 
@@ -61,6 +61,6 @@ return {f2};
 </main>
 <footer id="observablehq-footer">
 <nav><a rel="next" href="./subsection/"><span>Sub-Section</span></a></nav>
-<div>Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.</div>
+<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.</div>
 </footer>
 </div>

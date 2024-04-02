@@ -1,6 +1,5 @@
 import chai, {assert, expect} from "chai";
 import chaiHttp from "chai-http";
-import {normalizeConfig} from "../../src/config.js";
 import {preview} from "../../src/preview.js";
 import type {PreviewOptions, PreviewServer} from "../../src/preview.js";
 import {mockJsDelivr} from "../mocks/jsdelivr.js";
@@ -19,7 +18,7 @@ describe("preview server", () => {
 
   before(async () => {
     const testServerOptions: PreviewOptions = {
-      config: await normalizeConfig({root: testHostRoot}),
+      root: testHostRoot,
       hostname: testHostName,
       port: testPort,
       verbose: false

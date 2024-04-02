@@ -15,10 +15,10 @@
 import {define} from "./_observablehq/client.js";
 import {registerFile} from "./_observablehq/stdlib.js";
 
-registerFile("./data.txt", {"name":"./data.txt","mimeType":"text/plain","path":"./_file/data.9d63c3b5.txt"});
+registerFile("./data.txt", {"name":"./data.txt","mimeType":"text/plain","path":"./_file/data.9d63c3b5.txt","lastModified":/* ts */1706742000000});
 
 define({id: "115586ff", inputs: ["FileAttachment"], outputs: ["result"], body: (FileAttachment) => {
-let result = FileAttachment("data.txt").text();
+let result = FileAttachment("./data.txt").text();
 return {result};
 }});
 
@@ -51,6 +51,6 @@ display(result);
 </main>
 <footer id="observablehq-footer">
 <nav><a rel="prev" href="./"><span>Home</span></a></nav>
-<div>Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.</div>
+<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.</div>
 </footer>
 </div>

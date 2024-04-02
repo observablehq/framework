@@ -2,9 +2,10 @@ import {join} from "node:path/posix";
 import type {CallExpression, Node} from "acorn";
 import type {ImportDeclaration, ImportDefaultSpecifier, ImportNamespaceSpecifier, ImportSpecifier} from "acorn";
 import {simple} from "acorn-walk";
-import {isPathImport, relativePath, resolvePath} from "../path.js";
+import {isPathImport, relativePath, resolvePath, resolveRelativePath} from "../path.js";
 import {getModuleResolver} from "../resolvers.js";
 import {Sourcemap} from "../sourcemap.js";
+import type {FileExpression} from "./files.js";
 import {findFiles} from "./files.js";
 import type {ExportNode, ImportNode} from "./imports.js";
 import {hasImportDeclaration, isImportMetaResolve} from "./imports.js";
@@ -15,10 +16,11 @@ import {getStringLiteralValue, isStringLiteral} from "./source.js";
 
 export interface TranspileOptions {
   id: string;
+  path: string;
   resolveImport?: (specifier: string) => string;
 }
 
-export function transpileJavaScript(node: JavaScriptNode, {id, resolveImport}: TranspileOptions): string {
+export function transpileJavaScript(node: JavaScriptNode, {id, path, resolveImport}: TranspileOptions): string {
   let async = node.async;
   const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
   const outputs = Array.from(new Set<string>(node.declarations?.map((r) => r.name)));
@@ -28,6 +30,7 @@ export function transpileJavaScript(node: JavaScriptNode, {id, resolveImport}: T
   const output = new Sourcemap(node.input).trim();
   rewriteImportDeclarations(output, node.body, resolveImport);
   rewriteImportExpressions(output, node.body, resolveImport);
+  rewriteFileExpressions(output, node.files, path);
   if (display) output.insertLeft(0, "display(await(\n").insertRight(node.input.length, "\n))");
   output.insertLeft(0, `, body: ${async ? "async " : ""}(${inputs}) => {\n`);
   if (outputs.length) output.insertLeft(0, `, outputs: ${JSON.stringify(outputs)}`);
@@ -98,6 +101,14 @@ export async function transpileModule(
   }
 
   return String(output);
+}
+
+function rewriteFileExpressions(output: Sourcemap, files: FileExpression[], path: string): void {
+  for (const {name, node} of files) {
+    const source = node.arguments[0];
+    const resolved = resolveRelativePath(path, name);
+    output.replaceLeft(source.start, source.end, JSON.stringify(resolved));
+  }
 }
 
 function rewriteImportExpressions(

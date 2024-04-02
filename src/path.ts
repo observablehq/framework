@@ -48,6 +48,39 @@ export function resolveLocalPath(source: string, target: string): string | null 
   return path;
 }
 
+/**
+ * Returns true if the specified specifier refers to a local path, as opposed to
+ * a global import from npm or a URL. Local paths start with ./, ../, or /.
+ */
 export function isPathImport(specifier: string): boolean {
   return ["./", "../", "/"].some((prefix) => specifier.startsWith(prefix));
+}
+
+/**
+ * Like isPathImport, but more lax; this is used to detect when an HTML element
+ * such as an image refers to a local asset. Whereas isPathImport requires a
+ * local path to start with ./, ../, or /, isAssetPath only requires that a
+ * local path not start with a protocol (e.g., http: or https:) or a hash (#).
+ */
+export function isAssetPath(specifier: string): boolean {
+  return !/^(\w+:|#)/.test(specifier);
+}
+
+/**
+ * Returns the relative path to the specified target from the given source.
+ */
+export function resolveRelativePath(source: string, target: string): string {
+  return relativePath(source, resolvePath(source, target));
+}
+
+export function parseRelativeUrl(url: string): {pathname: string; search: string; hash: string} {
+  let search: string;
+  let hash: string;
+  const i = url.indexOf("#");
+  if (i < 0) hash = "";
+  else (hash = url.slice(i)), (url = url.slice(0, i));
+  const j = url.indexOf("?");
+  if (j < 0) search = "";
+  else (search = url.slice(j)), (url = url.slice(0, j));
+  return {pathname: url, search, hash};
 }

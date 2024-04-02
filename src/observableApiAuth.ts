@@ -5,9 +5,8 @@ import {commandInstruction, commandRequiresAuthenticationMessage} from "./comman
 import {CliError, isHttpError} from "./error.js";
 import type {GetCurrentUserResponse, PostAuthRequestPollResponse} from "./observableApiClient.js";
 import {ObservableApiClient, getObservableUiOrigin} from "./observableApiClient.js";
-import type {ConfigEffects} from "./observableApiConfig.js";
+import type {ApiKey, ConfigEffects} from "./observableApiConfig.js";
 import {
-  type ApiKey,
   defaultEffects as defaultConfigEffects,
   getObservableApiKey,
   setObservableApiKey
@@ -64,7 +63,7 @@ export async function loginInner(
   {pollTime = 1000} = {}
 ): Promise<{currentUser: GetCurrentUserResponse; apiKey: ApiKey}> {
   const {clack} = effects;
-  const apiClient = new ObservableApiClient();
+  const apiClient = new ObservableApiClient({clack});
   const requestInfo = await apiClient.postAuthRequest({
     scopes: ["projects:deploy", "projects:create"],
     deviceDescription: os.hostname()
@@ -118,14 +117,16 @@ export async function loginInner(
 }
 
 export async function logout(effects = defaultEffects) {
+  const {logger} = effects;
   await effects.setObservableApiKey(null);
+  logger.log(`You are now logged out of ${OBSERVABLE_UI_ORIGIN.hostname}.`);
 }
 
 export async function whoami(effects = defaultEffects) {
   const {logger} = effects;
   const apiKey = await effects.getObservableApiKey(effects);
   if (!apiKey) throw new CliError(commandRequiresAuthenticationMessage);
-  const apiClient = new ObservableApiClient({apiKey});
+  const apiClient = new ObservableApiClient({apiKey, clack: effects.clack});
 
   try {
     const user = await apiClient.getCurrentUser();

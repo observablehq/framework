@@ -115,9 +115,8 @@ export class DuckDBClient {
       } else {
         table = await connection.query(query);
       }
-    } catch (error) {
+    } finally {
       await connection.close();
-      throw error;
     }
     return table;
   }
@@ -146,18 +145,19 @@ export class DuckDBClient {
   }
 
   async describeTables() {
-    const tables = await this.query("SHOW TABLES");
-    return tables.map(({name}) => ({name}));
+    return Array.from(await this.query("SHOW TABLES"), ({name}) => ({name}));
   }
 
   async describeColumns({table} = {}) {
-    const columns = await this.query(`DESCRIBE ${this.escape(table)}`);
-    return columns.map(({column_name, column_type, null: nullable}) => ({
-      name: column_name,
-      type: getDuckDBType(column_type),
-      nullable: nullable !== "NO",
-      databaseType: column_type
-    }));
+    return Array.from(
+      await this.query(`DESCRIBE ${this.escape(table)}`),
+      ({column_name, column_type, null: nullable}) => ({
+        name: column_name,
+        type: getDuckDBType(column_type),
+        nullable: nullable !== "NO",
+        databaseType: column_type
+      })
+    );
   }
 
   static async of(sources = {}, config = {}) {
@@ -172,6 +172,10 @@ export class DuckDBClient {
     await Promise.all(Object.entries(sources).map(([name, source]) => insertSource(db, name, source)));
     return new DuckDBClient(db);
   }
+
+  static sql() {
+    return this.of.apply(this, arguments).then((db) => db.sql.bind(db));
+  }
 }
 
 Object.defineProperty(DuckDBClient.prototype, "dialect", {
@@ -180,31 +184,33 @@ Object.defineProperty(DuckDBClient.prototype, "dialect", {
 
 async function insertSource(database, name, source) {
   source = await source;
-  if (isFileAttachment(source)) {
-    // bare file
-    await insertFile(database, name, source);
-  } else if (isArrowTable(source)) {
-    // bare arrow table
-    await insertArrowTable(database, name, source);
-  } else if (Array.isArray(source)) {
-    // bare array of objects
-    await insertArray(database, name, source);
-  } else if (isArqueroTable(source)) {
-    await insertArqueroTable(database, name, source);
-  } else if ("data" in source) {
-    // data + options
-    const {data, ...options} = source;
-    if (isArrowTable(data)) {
-      await insertArrowTable(database, name, data, options);
-    } else {
-      await insertArray(database, name, data, options);
+  if (isFileAttachment(source)) return insertFile(database, name, source);
+  if (isArrowTable(source)) return insertArrowTable(database, name, source);
+  if (Array.isArray(source)) return insertArray(database, name, source);
+  if (isArqueroTable(source)) return insertArqueroTable(database, name, source);
+  if (typeof source === "string") return insertUrl(database, name, source);
+  if (source && typeof source === "object") {
+    if ("data" in source) {
+      // data + options
+      const {data, ...options} = source;
+      if (isArrowTable(data)) return insertArrowTable(database, name, data, options);
+      return insertArray(database, name, data, options);
     }
-  } else if ("file" in source) {
-    // file + options
-    const {file, ...options} = source;
-    await insertFile(database, name, file, options);
-  } else {
-    throw new Error(`invalid source: ${source}`);
+    if ("file" in source) {
+      // file + options
+      const {file, ...options} = source;
+      return insertFile(database, name, file, options);
+    }
+  }
+  throw new Error(`invalid source: ${source}`);
+}
+
+async function insertUrl(database, name, url) {
+  const connection = await database.connect();
+  try {
+    await connection.query(`CREATE VIEW '${name}' AS FROM '${url}'`);
+  } finally {
+    await connection.close();
   }
 }
 
@@ -253,6 +259,9 @@ async function insertFile(database, name, file, options) {
         }
         if (/\.parquet$/i.test(file.name)) {
           return await connection.query(`CREATE VIEW '${name}' AS SELECT * FROM parquet_scan('${file.name}')`);
+        }
+        if (/\.(db|ddb|duckdb)$/i.test(file.name)) {
+          return await connection.query(`ATTACH '${file.name}' AS ${name} (READ_ONLY)`);
         }
         throw new Error(`unknown file type: ${file.mimeType}`);
     }

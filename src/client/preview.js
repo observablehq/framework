@@ -1,11 +1,16 @@
-import {registerTable} from "npm:@observablehq/duckdb";
 import {FileAttachment, registerFile} from "npm:@observablehq/stdlib";
 import {main, runtime, undefine} from "./main.js";
 import {enableCopyButtons} from "./pre.js";
 
 export * from "./index.js";
 
+let minReopenDelay = 1000;
+let maxReopenDelay = 30000;
+let reopenDelay = minReopenDelay;
+let reopenDecay = 1.1; // exponential backoff factor
+
 export function open({hash, eval: compile} = {}) {
+  let opened = false;
   const socket = new WebSocket(
     Object.assign(new URL("/_observablehq", location.href), {
       protocol: location.protocol === "https:" ? "wss" : "ws"
@@ -14,10 +19,12 @@ export function open({hash, eval: compile} = {}) {
 
   socket.onopen = () => {
     console.info("socket open");
+    opened = true;
+    reopenDelay = minReopenDelay;
     send({type: "hello", path: location.pathname, hash});
   };
 
-  socket.onmessage = (event) => {
+  socket.onmessage = async (event) => {
     const message = JSON.parse(event.data);
     console.info("↓", message);
     switch (message.type) {
@@ -84,11 +91,14 @@ export function open({hash, eval: compile} = {}) {
         for (const file of message.files.added) {
           registerFile(file.name, file);
         }
-        for (const name of message.tables.removed) {
-          registerTable(name, null);
-        }
-        for (const table of message.tables.added) {
-          registerTable(table.name, FileAttachment(table.path));
+        if (message.tables.removed.length || message.tables.added.length) {
+          const {registerTable} = await import("npm:@observablehq/duckdb");
+          for (const name of message.tables.removed) {
+            registerTable(name, null);
+          }
+          for (const table of message.tables.added) {
+            registerTable(table.name, !/^(\w+:|#)/.test(table.path) ? FileAttachment(table.path) : table.path);
+          }
         }
         if (message.tables.removed.length || message.tables.added.length) {
           const sql = main._resolve("sql");
@@ -121,12 +131,10 @@ export function open({hash, eval: compile} = {}) {
     }
   };
 
-  socket.onerror = (error) => {
-    console.error(error);
-  };
-
   socket.onclose = () => {
-    console.info("socket close");
+    if (opened) console.info("socket close");
+    reopenDelay = Math.min(maxReopenDelay, reopenDelay * reopenDecay); // exponential backoff
+    setTimeout(() => open({hash, eval: compile}), reopenDelay);
   };
 
   function indexCells(map, node) {

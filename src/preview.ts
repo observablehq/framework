@@ -1,10 +1,10 @@
 import {createHash} from "node:crypto";
 import {watch} from "node:fs";
 import type {FSWatcher, WatchEventType} from "node:fs";
-import {access, constants, readFile, stat} from "node:fs/promises";
+import {access, constants, readFile} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
-import {basename, dirname, extname, join, normalize} from "node:path/posix";
+import {basename, dirname, join, normalize} from "node:path/posix";
 import {difference} from "d3-array";
 import type {PatchItem} from "fast-array-diff";
 import {getPatch} from "fast-array-diff";
@@ -14,10 +14,10 @@ import send from "send";
 import type {WebSocket} from "ws";
 import {WebSocketServer} from "ws";
 import type {Config} from "./config.js";
-import {Loader} from "./dataloader.js";
+import {readConfig} from "./config.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
-import {FileWatchers} from "./fileWatchers.js";
+import type {FileWatchers} from "./fileWatchers.js";
 import {parseHtml, rewriteHtml} from "./html.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import {parseMarkdown} from "./markdown.js";
@@ -33,7 +33,8 @@ import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, link} from "./tty.js";
 
 export interface PreviewOptions {
-  config: Config;
+  config?: string;
+  root?: string;
   hostname: string;
   open?: boolean;
   port?: number;
@@ -45,13 +46,25 @@ export async function preview(options: PreviewOptions): Promise<PreviewServer> {
 }
 
 export class PreviewServer {
-  private readonly _config: Config;
+  private readonly _config: string | undefined;
+  private readonly _root: string | undefined;
   private readonly _server: ReturnType<typeof createServer>;
   private readonly _socketServer: WebSocketServer;
   private readonly _verbose: boolean;
 
-  private constructor({config, server, verbose}: {config: Config; server: Server; verbose: boolean}) {
+  private constructor({
+    config,
+    root,
+    server,
+    verbose
+  }: {
+    config?: string;
+    root?: string;
+    server: Server;
+    verbose: boolean;
+  }) {
     this._config = config;
+    this._root = root;
     this._verbose = verbose;
     this._server = server;
     this._server.on("request", this._handleRequest);
@@ -87,13 +100,17 @@ export class PreviewServer {
     return new PreviewServer({server, verbose, ...options});
   }
 
+  async _readConfig() {
+    return readConfig(this._config, this._root);
+  }
+
   _handleRequest: RequestListener = async (req, res) => {
-    const config = this._config;
-    const root = config.root;
+    const config = await this._readConfig();
+    const {root, loaders} = config;
     if (this._verbose) console.log(faint(req.method!), req.url);
     try {
       const url = new URL(req.url!, "http://localhost");
-      let pathname = decodeURIComponent(url.pathname);
+      let pathname = decodeURI(url.pathname);
       let match: RegExpExecArray | null;
       if (pathname === "/_observablehq/client.js") {
         end(req, res, await rollupClient(getClientPath("preview.js"), root, pathname), "text/javascript");
@@ -107,6 +124,8 @@ export class PreviewServer {
       } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".css")) {
         const path = getClientPath(pathname.slice("/_observablehq/".length));
         end(req, res, await bundleStyles({path}), "text/css");
+      } else if (pathname.startsWith("/_node/")) {
+        send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
       } else if (pathname.startsWith("/_npm/")) {
         await populateNpmCache(root, pathname);
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
@@ -140,7 +159,7 @@ export class PreviewServer {
         }
 
         // Look for a data loader for this file.
-        const loader = Loader.find(root, path);
+        const loader = loaders.find(path);
         if (loader) {
           try {
             send(req, await loader.load(), {root}).pipe(res);
@@ -152,55 +171,28 @@ export class PreviewServer {
         throw new HttpError(`Not found: ${pathname}`, 404);
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
-        let path = join(root, pathname);
 
-        // If this path is for /index, redirect to the parent directory for a
-        // tidy path. (This must be done before implicitly adding /index below!)
-        // Respect precedence of dir/index.md over dir.md in choosing between
-        // dir/ and dir!
-        if (basename(path, ".html") === "index") {
-          try {
-            await stat(join(dirname(path), "index.md"));
-            res.writeHead(302, {Location: join(dirname(pathname), "/") + url.search});
-            res.end();
-            return;
-          } catch (error) {
-            if (!isEnoent(error)) throw error;
-            res.writeHead(302, {Location: dirname(pathname) + url.search});
-            res.end();
-            return;
-          }
-        }
-
-        // If this path resolves to a directory, then add an implicit /index to
-        // the end of the path, assuming that the corresponding index.md exists.
-        try {
-          if ((await stat(path)).isDirectory() && (await stat(join(path, "index.md"))).isFile()) {
-            if (!pathname.endsWith("/")) {
-              res.writeHead(302, {Location: pathname + "/" + url.search});
-              res.end();
-              return;
-            }
-            pathname = join(pathname, "index");
-            path = join(path, "index");
-          }
-        } catch (error) {
-          if (!isEnoent(error)) throw error; // internal error
-        }
-
-        // If this path ends with .html, then redirect to drop the .html. TODO:
-        // Check for the existence of the .md file first.
-        if (extname(path) === ".html") {
-          res.writeHead(302, {Location: join(dirname(pathname), basename(pathname, ".html")) + url.search});
+        // Normalize the pathname (e.g., dropping ".html").
+        const normalizedPathname = config.md.normalizeLink(pathname);
+        if (url.pathname !== normalizedPathname) {
+          res.writeHead(302, {Location: normalizedPathname + url.search});
           res.end();
           return;
         }
 
-        // Otherwise, serve the corresponding Markdown file, if it exists.
+        // If this path ends with a slash, then add an implicit /index to the
+        // end of the path.
+        let path = join(root, pathname);
+        if (pathname.endsWith("/")) {
+          pathname = join(pathname, "index");
+          path = join(path, "index");
+        }
+
+        // Lastly, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
         try {
           const options = {path: pathname, ...config, preview: true};
-          const source = await readFile(path + ".md", "utf8");
+          const source = await readFile(join(dirname(path), basename(path, ".html") + ".md"), "utf8");
           const parse = parseMarkdown(source, options);
           const html = await renderPage(parse, options);
           end(req, res, html, "text/html");
@@ -233,9 +225,9 @@ export class PreviewServer {
     }
   };
 
-  _handleConnection = async (socket: WebSocket, req: IncomingMessage) => {
+  _handleConnection = (socket: WebSocket, req: IncomingMessage) => {
     if (req.url === "/_observablehq") {
-      handleWatch(socket, req, this._config);
+      handleWatch(socket, req, this._readConfig()); // can’t await; messages would be dropped
     } else {
       socket.close();
     }
@@ -283,8 +275,8 @@ function getWatchFiles(resolvers: Resolvers): Iterable<string> {
   return files;
 }
 
-function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
-  const {root} = config;
+function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Promise<Config>) {
+  let config: Config | null = null;
   let path: string | null = null;
   let hash: string | null = null;
   let html: string[] | null = null;
@@ -292,6 +284,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
   let files: Map<string, string> | null = null;
   let tables: Map<string, string> | null = null;
   let stylesheets: string[] | null = null;
+  let configWatcher: FSWatcher | null = null;
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
   let emptyTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -299,7 +292,8 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
   console.log(faint("socket open"), req.url);
 
   async function watcher(event: WatchEventType, force = false) {
-    if (!path) throw new Error("not initialized");
+    if (!path || !config) throw new Error("not initialized");
+    const {root, loaders} = config;
     switch (event) {
       case "rename": {
         markdownWatcher?.close();
@@ -318,7 +312,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
         const source = await readFile(join(root, path), "utf8");
         const page = parseMarkdown(source, {path, ...config});
         // delay to avoid a possibly-empty file
-        if (!force && page.html === "") {
+        if (!force && page.body === "") {
           if (!emptyTimeout) {
             emptyTimeout = setTimeout(() => {
               emptyTimeout = null;
@@ -330,7 +324,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
           clearTimeout(emptyTimeout);
           emptyTimeout = null;
         }
-        const resolvers = await getResolvers(page, {root, path});
+        const resolvers = await getResolvers(page, {root, path, loaders});
         if (hash === resolvers.hash) break;
         const previousHash = hash!;
         const previousHtml = html!;
@@ -354,21 +348,23 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
           hash: {previous: previousHash, current: hash}
         });
         attachmentWatcher?.close();
-        attachmentWatcher = await FileWatchers.of(root, path, getWatchFiles(resolvers), () => watcher("change"));
+        attachmentWatcher = await loaders.watchFiles(path, getWatchFiles(resolvers), () => watcher("change"));
         break;
       }
     }
   }
 
   async function hello({path: initialPath, hash: initialHash}: {path: string; hash: string}): Promise<void> {
-    if (markdownWatcher || attachmentWatcher) throw new Error("already watching");
-    path = decodeURIComponent(initialPath);
+    if (markdownWatcher || configWatcher || attachmentWatcher) throw new Error("already watching");
+    path = decodeURI(initialPath);
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
-    path += ".md";
+    path = join(dirname(path), basename(path, ".html") + ".md");
+    config = await configPromise;
+    const {root, loaders} = config;
     const source = await readFile(join(root, path), "utf8");
     const page = parseMarkdown(source, {path, ...config});
-    const resolvers = await getResolvers(page, {root, path});
+    const resolvers = await getResolvers(page, {root, path, loaders});
     if (resolvers.hash !== initialHash) return void send({type: "reload"});
     hash = resolvers.hash;
     html = getHtml(page, resolvers);
@@ -376,8 +372,9 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
     files = getFiles(resolvers);
     tables = getTables(page);
     stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
-    attachmentWatcher = await FileWatchers.of(root, path, getWatchFiles(resolvers), () => watcher("change"));
+    attachmentWatcher = await loaders.watchFiles(path, getWatchFiles(resolvers), () => watcher("change"));
     markdownWatcher = watch(join(root, path), (event) => watcher(event));
+    if (config.watchPath) configWatcher = watch(config.watchPath, () => send({type: "reload"}));
   }
 
   socket.on("message", async (data) => {
@@ -409,17 +406,21 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, config: Config) {
       markdownWatcher.close();
       markdownWatcher = null;
     }
+    if (configWatcher) {
+      configWatcher.close();
+      configWatcher = null;
+    }
     console.log(faint("socket close"), req.url);
   });
 
-  function send(message) {
+  function send(message: any) {
     console.log(faint("↓"), message);
     socket.send(JSON.stringify(message));
   }
 }
 
-function getHtml({html}: MarkdownPage, {resolveFile}: Resolvers): string[] {
-  return Array.from(parseHtml(rewriteHtml(html, resolveFile)).document.body.children, (d) => d.outerHTML);
+function getHtml({body}: MarkdownPage, resolvers: Resolvers): string[] {
+  return Array.from(parseHtml(rewriteHtml(body, resolvers)).document.body.children, (d) => d.outerHTML);
 }
 
 function getCode({code}: MarkdownPage, resolvers: Resolvers): Map<string, string> {
@@ -442,7 +443,7 @@ function getFiles({files, resolveFile}: Resolvers): Map<string, string> {
 }
 
 function getTables({data}: MarkdownPage): Map<string, string> {
-  return new Map(Object.entries(data?.sql ?? {}));
+  return new Map(Object.entries(data.sql ?? {}));
 }
 
 type CodePatch = {removed: string[]; added: string[]};

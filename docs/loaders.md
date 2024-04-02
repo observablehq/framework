@@ -48,7 +48,7 @@ const quakes = FileAttachment("quakes.csv").csv({typed: true});
 Now you can display the earthquakes in a map using [Observable Plot](./lib/plot):
 
 ```js
-const world = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@1/world/110m.json").then((response) => response.json());
+const world = await fetch(import.meta.resolve("npm:world-atlas@1/world/110m.json")).then((response) => response.json());
 const land = topojson.feature(world, world.objects.land);
 ```
 
@@ -126,7 +126,7 @@ Like with any other file, these files from generated archives are live in previe
 
 ## Routing
 
-Data loaders live in the source root (typically `docs`) alongside your other source files. When a file is referenced from JavaScript via `FileAttachment`, if the file does not exist, Observable Framework will look for a file of the same name with a double extension to see if there is a corresponding data loader. The following second extensions are checked, in order, with the corresponding language and interpreter:
+Data loaders live in the source root (typically `docs`) alongside your other source files. When a file is referenced from JavaScript via `FileAttachment`, if the file does not exist, Observable Framework will look for a file of the same name with a double extension to see if there is a corresponding data loader. By default, the following second extensions are checked, in order, with the corresponding language and interpreter:
 
 - `.js` - JavaScript (`node`)
 - `.ts` - TypeScript (`tsx`)
@@ -134,21 +134,41 @@ Data loaders live in the source root (typically `docs`) alongside your other sou
 - `.R` - R (`Rscript`)
 - `.rs` - Rust (`rust-script`)
 - `.go` - Go (`go run`)
+- `.java` — Java (`java`; requires Java 11+ and [single-file programs](https://openjdk.org/jeps/330))
+- `.jl` - Julia (`julia`)
+- `.php` - PHP (`php`)
 - `.sh` - shell script (`sh`)
 - `.exe` - arbitrary executable
 
-For example, for the file `quakes.csv`, the following data loaders are considered:
+For example, for the file `quakes.csv`, the following data loaders are considered: `quakes.csv.js`, `quakes.csv.ts`, `quakes.csv.py`, _etc._ The first match is used.
 
-- `quakes.csv.js`
-- `quakes.csv.ts`
-- `quakes.csv.py`
-- `quakes.csv.R`
-- `quakes.csv.rs`
-- `quakes.csv.go`
-- `quakes.csv.sh`
-- `quakes.csv.exe`
+<div class="tip">The <b>interpreters</b> <a href="./config#interpreters">configuration option</a> can be used to extend the list of supported extensions.</div>
 
-If you use `.py`, `.R`, `.rs`, or `.go`, the corresponding interpreter (`python3`, `Rscript`, `rust-script`, or `go run`, respectively) must be installed and available on your `$PATH`. Any additional modules, packages, libraries, _etc._, must also be installed before you can use them.
+To use an interpreted data loader (anything other than `.exe`), the corresponding interpreter must be installed and available on your `$PATH`. Any additional modules, packages, libraries, _etc._, must also be installed. Some interpreters are not available on all platforms; for example `sh` is only available on Unix-like systems.
+
+<div class="tip">
+
+You can use a virtual environment in Python, such as [uv](https://github.com/astral-sh/uv), to install libraries locally to the project. This is useful when working in multiple projects, and when collaborating; you can also track dependencies in a `requirements.txt` file. To create a virtual environment with uv, run:
+
+```sh
+uv venv # Create a virtual environment at .venv.
+```
+
+To activate the virtual environment on macOS or Linux:
+
+```sh
+source .venv/bin/activate
+```
+
+Or on Windows:
+
+```sh
+.venv\Scripts\activate
+```
+
+You can then run the `observable preview` or `observable build` commands as usual; data loaders will run within the virtual environment. Run the `deactivate` command to exit the virtual environment.
+
+</div>
 
 Data loaders are run in the same working directory in which you run the `observable build` or `observable preview` command, which is typically the project root. In Node, you can access the current working directory by calling `process.cwd()`, and the data loader’s source location with [`import.meta.url`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta). To compute the path of a file relative to the data loader source (rather than relative to the current working directory), use [`import.meta.resolve`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta/resolve). For example, a data loader in `docs/summary.txt.js` could read the file `docs/table.txt` as:
 
@@ -159,18 +179,18 @@ import {fileURLToPath} from "node:url";
 const table = await readFile(fileURLToPath(import.meta.resolve("./table.txt")), "utf-8");
 ```
 
-Whereas `.js`, `.ts`, `.py`, `.R`, `.rs`, `.go`, and `.sh` data loaders are run via interpreters, `.exe` data loaders are run directly and must have the executable bit set. This is typically done via [`chmod`](https://en.wikipedia.org/wiki/Chmod). For example:
+Executable (`.exe`) data loaders are run directly and must have the executable bit set. This is typically done via [`chmod`](https://en.wikipedia.org/wiki/Chmod). For example:
 
 ```sh
 chmod +x docs/quakes.csv.exe
 ```
 
-While a `.exe` data loader may be any binary executable (_e.g.,_ compiled from C), it is often convenient to specify another interpreter using a [shebang](<https://en.wikipedia.org/wiki/Shebang_(Unix)>). For example, to write a data loader in Julia:
+While a `.exe` data loader may be any binary executable (_e.g.,_ compiled from C), it is often convenient to specify another interpreter using a [shebang](<https://en.wikipedia.org/wiki/Shebang_(Unix)>). For example, to write a data loader in Perl:
 
-```julia
-#!/usr/bin/env julia
+```perl
+#!/usr/bin/env perl
 
-println("hello world")
+print("Hello World\n");
 ```
 
 If multiple requests are made concurrently for the same data loader, the data loader will only run once; each concurrent request will receive the same response.

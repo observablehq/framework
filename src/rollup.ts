@@ -1,6 +1,6 @@
 import {extname} from "node:path/posix";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
-import {type CallExpression} from "acorn";
+import type {CallExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
@@ -66,7 +66,9 @@ export async function rollupClient(
       nodeResolve({resolveOnly: BUNDLED_MODULES}),
       importResolve(input, root, path),
       esbuild({
-        target: "es2022",
+        format: "esm",
+        platform: "browser",
+        target: ["es2022", "chrome96", "firefox96", "safari16", "node18"],
         exclude: [], // don’t exclude node_modules
         keepNames,
         minify,

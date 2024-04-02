@@ -24,6 +24,7 @@ export const defaultEffects: ConfigEffects = {
 };
 
 const userConfigName = ".observablehq";
+
 interface UserConfig {
   auth?: {
     id: string;

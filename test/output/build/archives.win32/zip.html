@@ -15,18 +15,18 @@
 import {define} from "./_observablehq/client.js";
 import {registerFile} from "./_observablehq/stdlib.js";
 
-registerFile("./static/file.txt", {"name":"./static/file.txt","mimeType":"text/plain","path":"./_file/static/file.d9014c46.txt"});
+registerFile("./static/file.txt", {"name":"./static/file.txt","mimeType":"text/plain","path":"./_file/static/file.d9014c46.txt","lastModified":/* ts */1706742000000});
 registerFile("./static/not-found.txt", {"name":"./static/not-found.txt","mimeType":"text/plain","path":"./static/not-found.txt"});
 
 define({id: "d3b9d0ee", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
 display(await(
-await FileAttachment("static/file.txt").text()
+await FileAttachment("./static/file.txt").text()
 ))
 }});
 
 define({id: "bab54217", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
 display(await(
-await FileAttachment("static/not-found.txt").text()
+await FileAttachment("./static/not-found.txt").text()
 ))
 }});
 
@@ -56,6 +56,6 @@ await FileAttachment("static/not-found.txt").text()
 </main>
 <footer id="observablehq-footer">
 <nav><a rel="prev" href="./tar"><span>Tar</span></a></nav>
-<div>Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.</div>
+<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.</div>
 </footer>
 </div>

@@ -26,7 +26,7 @@ describe("build", () => {
     if (isEmpty(path)) continue;
     const only = name.startsWith("only.");
     const skip = name.startsWith("skip.");
-    const outname = only || skip ? name.slice(5) : name;
+    const outname = name.replace(/^only\.|skip\./, "");
     (only
       ? it.only
       : skip ||
@@ -42,7 +42,7 @@ describe("build", () => {
 
       await rm(actualDir, {recursive: true, force: true});
       if (generate) console.warn(`! generating ${expectedDir}`);
-      const config = Object.assign(await readConfig(undefined, path), {output: outputDir});
+      const config = {...(await readConfig(undefined, path)), output: outputDir};
       await build({config, addPublic}, new TestEffects(outputDir));
 
       // In the addPublic case, we don’t want to test the contents of the public
@@ -101,6 +101,7 @@ class TestEffects extends FileBuildEffects {
   async writeFile(outputPath: string, contents: string | Buffer): Promise<void> {
     if (typeof contents === "string" && outputPath.endsWith(".html")) {
       contents = contents.replace(/^(\s*<script>\{).*(\}<\/script>)$/gm, "$1/* redacted init script */$2");
+      contents = contents.replace(/^(registerFile\(.*,"lastModified":)\d+(\}\);)$/gm, "$1/* ts */1706742000000$2");
     }
     return super.writeFile(outputPath, contents);
   }

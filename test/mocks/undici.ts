@@ -1,4 +1,5 @@
-import {type Dispatcher, MockAgent, getGlobalDispatcher, setGlobalDispatcher} from "undici";
+import type {Dispatcher} from "undici";
+import {MockAgent, getGlobalDispatcher, setGlobalDispatcher} from "undici";
 
 let currentAgent: MockAgent | null = null;
 

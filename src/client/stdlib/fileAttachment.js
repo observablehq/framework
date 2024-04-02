@@ -1,18 +1,18 @@
 const files = new Map();
 
 export function registerFile(name, file) {
-  const url = new URL(name, location).href;
-  if (file == null) files.delete(url);
-  else files.set(url, file);
+  const href = new URL(name, location).href;
+  if (file == null) files.delete(href);
+  else files.set(href, file);
 }
 
-export function FileAttachment(name, base = location.href) {
+export function FileAttachment(name, base = location) {
   if (new.target !== undefined) throw new TypeError("FileAttachment is not a constructor");
-  const url = new URL(name, base).href;
-  const file = files.get(url);
+  const href = new URL(name, base).href;
+  const file = files.get(href);
   if (!file) throw new Error(`File not found: ${name}`);
-  const {path, mimeType} = file;
-  return new FileAttachmentImpl(new URL(path, location).href, name.split("/").pop(), mimeType);
+  const {path, mimeType, lastModified} = file;
+  return new FileAttachmentImpl(new URL(path, location).href, name.split("/").pop(), mimeType, lastModified);
 }
 
 async function remote_fetch(file) {
@@ -21,16 +21,11 @@ async function remote_fetch(file) {
   return response;
 }
 
-async function dsv(file, delimiter, {array = false, typed = false} = {}) {
-  const [text, d3] = await Promise.all([file.text(), import("npm:d3-dsv")]);
-  const parse = delimiter === "\t" ? (array ? d3.tsvParseRows : d3.tsvParse) : array ? d3.csvParseRows : d3.csvParse;
-  return parse(text, typed && d3.autoType);
-}
-
 export class AbstractFile {
-  constructor(name, mimeType = "application/octet-stream") {
+  constructor(name, mimeType = "application/octet-stream", lastModified) {
     Object.defineProperty(this, "name", {value: `${name}`, enumerable: true});
     Object.defineProperty(this, "mimeType", {value: `${mimeType}`, enumerable: true});
+    if (lastModified !== undefined) Object.defineProperty(this, "lastModified", {value: Number(lastModified), enumerable: true}); // prettier-ignore
   }
   async blob() {
     return (await remote_fetch(this)).blob();
@@ -49,11 +44,17 @@ export class AbstractFile {
   async stream() {
     return (await remote_fetch(this)).body;
   }
+  async dsv({delimiter = ",", array = false, typed = false} = {}) {
+    const [text, d3] = await Promise.all([this.text(), import("npm:d3-dsv")]);
+    const format = d3.dsvFormat(delimiter);
+    const parse = array ? format.parseRows : format.parse;
+    return parse(text, typed && d3.autoType);
+  }
   async csv(options) {
-    return dsv(this, ",", options);
+    return this.dsv({...options, delimiter: ","});
   }
   async tsv(options) {
-    return dsv(this, "\t", options);
+    return this.dsv({...options, delimiter: "\t"});
   }
   async image(props) {
     const url = await this.url();
@@ -95,12 +96,12 @@ export class AbstractFile {
 }
 
 class FileAttachmentImpl extends AbstractFile {
-  constructor(url, name, mimeType) {
-    super(name, mimeType);
-    Object.defineProperty(this, "_url", {value: url});
+  constructor(href, name, mimeType, lastModified) {
+    super(name, mimeType, lastModified);
+    Object.defineProperty(this, "href", {value: href});
   }
   async url() {
-    return `${await this._url}`;
+    return this.href;
   }
 }
 

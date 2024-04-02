@@ -1,5 +1,5 @@
 import {readFile} from "node:fs/promises";
-import {basename, join} from "node:path/posix";
+import {basename, dirname, join} from "node:path/posix";
 import he from "he";
 import MiniSearch from "minisearch";
 import type {Config} from "./config.js";
@@ -9,8 +9,8 @@ import {parseMarkdown} from "./markdown.js";
 import {faint, strikethrough} from "./tty.js";
 
 // Avoid reindexing too often in preview.
-const indexCache = new WeakMap();
-const reindexingDelay = 10 * 60 * 1000; // 10 minutes
+const indexCache = new WeakMap<Config["pages"], {json: string; freshUntil: number}>();
+const reindexDelay = 10 * 60 * 1000; // 10 minutes
 
 export interface SearchIndexEffects {
   logger: Logger;
@@ -19,17 +19,18 @@ export interface SearchIndexEffects {
 const defaultEffects: SearchIndexEffects = {logger: console};
 
 const indexOptions = {
-  fields: ["title", "text", "keywords"],
+  fields: ["title", "text", "keywords"], // fields to return with search results
   storeFields: ["title"],
-  processTerm(term) {
-    return term.match(/\p{N}/gu)?.length > 6 ? null : term.slice(0, 15).toLowerCase(); // fields to return with search results
+  processTerm(term: string) {
+    return (term.match(/\p{N}/gu)?.length ?? 0) > 6 ? null : term.slice(0, 15).toLowerCase();
   }
 };
 
 export async function searchIndex(config: Config, effects = defaultEffects): Promise<string> {
-  const {root, pages, search} = config;
+  const {root, pages, search, md} = config;
   if (!search) return "{}";
-  if (indexCache.has(config) && indexCache.get(config).freshUntil > +new Date()) return indexCache.get(config).json;
+  const cached = indexCache.get(pages);
+  if (cached && cached.freshUntil > Date.now()) return cached.json;
 
   // Get all the listed pages (which are indexed by default)
   const pagePaths = new Set(["/index"]);
@@ -40,28 +41,25 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
 
   // Index the pages
   const index = new MiniSearch(indexOptions);
-  for await (const file of visitMarkdownFiles(root)) {
-    const path = join(root, file);
-    const source = await readFile(path, "utf8");
-    const {html, title, data} = parseMarkdown(source, {...config, path: "/" + file.slice(0, -3)});
+  for (const file of visitMarkdownFiles(root)) {
+    const sourcePath = join(root, file);
+    const source = await readFile(sourcePath, "utf8");
+    const path = `/${join(dirname(file), basename(file, ".md"))}`;
+    const {body, title, data} = parseMarkdown(source, {...config, path});
 
     // Skip pages that opt-out of indexing, and skip unlisted pages unless
     // opted-in. We only log the first case.
-    const listed = pagePaths.has(`/${file.slice(0, -3)}`);
+    const listed = pagePaths.has(path);
     const indexed = data?.index === undefined ? listed : Boolean(data.index);
     if (!indexed) {
-      if (listed) effects.logger.log(`${faint("index")} ${strikethrough(path)} ${faint("(skipped)")}`);
+      if (listed) effects.logger.log(`${faint("index")} ${strikethrough(sourcePath)} ${faint("(skipped)")}`);
       continue;
     }
-
-    // This is the (top-level) serving path to the indexed page. There’s
-    // implicitly a leading slash here.
-    const id = file.slice(0, basename(file) === "index.md" ? -"index.md".length : -3);
 
     // eslint-disable-next-line import/no-named-as-default-member
     const text = he
       .decode(
-        html
+        body
           .replaceAll(/[\n\r]/g, " ")
           .replaceAll(/<style\b.*<\/style\b[^>]*>/gi, " ")
           .replaceAll(/<[^>]+>/g, " ")
@@ -70,8 +68,8 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
       .replaceAll(/[\u0300-\u036f]/g, "")
       .replace(/[^\p{L}\p{N}]/gu, " "); // keep letters & numbers
 
-    effects.logger.log(`${faint("index")} ${path}`);
-    index.add({id, title, text, keywords: normalizeKeywords(data?.keywords)});
+    effects.logger.log(`${faint("index")} ${sourcePath}`);
+    index.add({id: md.normalizeLink(path).slice("/".length), title, text, keywords: normalizeKeywords(data?.keywords)});
   }
 
   // Pass the serializable index options to the client.
@@ -87,7 +85,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
     )
   );
 
-  indexCache.set(config, {json, freshUntil: +new Date() + reindexingDelay});
+  indexCache.set(pages, {json, freshUntil: Date.now() + reindexDelay});
   return json;
 }
 

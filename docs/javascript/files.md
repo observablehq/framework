@@ -10,7 +10,7 @@ Load files — whether static or generated dynamically by a [data loader](../loa
 import {FileAttachment} from "npm:@observablehq/stdlib";
 ```
 
-The `FileAttachment` function takes a path and returns a file handle. This handle exposes the file’s name and [MIME type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types).
+The `FileAttachment` function takes a path and returns a file handle. This handle exposes the file’s name, [MIME type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types), and modification time <a href="https://github.com/observablehq/framework/releases/tag/v1.4.0" class="observablehq-version-badge" data-version="^1.4.0" title="Added in 1.4.0"></a> (represented as the number of milliseconds since UNIX epoch).
 
 ```js echo
 FileAttachment("volcano.json")
@@ -32,7 +32,7 @@ volcano
 
 ### Static analysis
 
-The `FileAttachment` function can _only_ be passed a static string literal; constructing a dynamic path such as `FileAttachment("my" + "file.csv")` is invalid syntax. Static analysis is used to invoke [data loaders](../loaders) at build time, and ensures that only referenced files are included in the generated output during build. In the future [#260](https://github.com/observablehq/framework/issues/260), it will also allow content hashes for cache breaking during deploy.
+The `FileAttachment` function can _only_ be passed a static string literal; constructing a dynamic path such as `FileAttachment("my" + "file.csv")` is invalid syntax. Static analysis is used to invoke [data loaders](../loaders) at build time, and ensures that only referenced files are included in the generated output during build. This also allows a content hash in the file name for cache breaking during deploy.
 
 If you have multiple files, you can enumerate them explicitly like so:
 
@@ -51,6 +51,8 @@ const frames = [
 ```
 
 None of the files in `frames` above are loaded until a [content method](#supported-formats) is invoked, for example by saying `frames[0].image()`.
+
+For missing files, `file.lastModified` is undefined. The `file.mimeType` is determined by checking the file extension against the [`mime-db` media type database](https://github.com/jshttp/mime-db); it defaults to `application/octet-stream`.
 
 ## Supported formats
 
@@ -97,10 +99,10 @@ None of the files in `frames` above are loaded until a [content method](#support
 
 The contents often dictate the appropriate method — for example, an Apache Arrow file is almost always read with `file.arrow`. When multiple methods are valid, choose based on your needs. For example, you can load a CSV file using `file.text` to implement parsing yourself instead of using D3.
 
-In addition to the above, you can get the resolved absolute URL of the file using `file.url`. This returns a [promise](./promises) to a string:
+In addition to the above, you can get the resolved absolute URL of the file using `file.href`: <a href="https://github.com/observablehq/framework/releases/tag/v1.5.0" class="observablehq-version-badge" data-version="^1.5.0" title="Added in 1.5.0"></a>
 
 ```js echo
-FileAttachment("volcano.json").url()
+FileAttachment("volcano.json").href
 ```
 
 See [file-based routing](../routing#files) for additional details.

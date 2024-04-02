@@ -1,8 +1,7 @@
 import {createHash} from "node:crypto";
-import {existsSync, readFileSync, statSync} from "node:fs";
-import {join, relative} from "node:path/posix";
+import {accessSync, constants, readFileSync, statSync} from "node:fs";
+import {join} from "node:path/posix";
 import type {Program} from "acorn";
-import {Loader} from "../dataloader.js";
 import {resolvePath} from "../path.js";
 import {findFiles} from "./files.js";
 import {findImports} from "./imports.js";
@@ -129,15 +128,8 @@ export function getModuleInfo(root: string, path: string): ModuleInfo | undefine
  * the specified file does not exist, returns the hash of empty content. If the
  * referenced file does not exist, we check for the corresponding data loader
  * and return its hash instead.
- *
- * TODO During build, this needs to compute the hash of the generated file, not
- * the data loader.
  */
 export function getFileHash(root: string, path: string): string {
-  if (!existsSync(join(root, path))) {
-    const loader = Loader.find(root, path);
-    if (loader) path = relative(root, loader.path);
-  }
   return getFileInfo(root, path)?.hash ?? createHash("sha256").digest("hex");
 }
 
@@ -149,10 +141,13 @@ export function getFileInfo(root: string, path: string): FileInfo | undefined {
   const key = join(root, path);
   let mtimeMs: number;
   try {
-    ({mtimeMs} = statSync(key));
+    const stat = statSync(key);
+    if (!stat.isFile()) return; // ignore non-files
+    accessSync(key, constants.R_OK); // verify that file is readable
+    ({mtimeMs} = stat);
   } catch {
     fileInfoCache.delete(key); // delete stale entry
-    return; // ignore missing file
+    return; // ignore missing, non-readable file
   }
   let entry = fileInfoCache.get(key);
   if (!entry || entry.mtimeMs < mtimeMs) {

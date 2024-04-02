@@ -112,34 +112,41 @@ Whether to show the sidebar. Defaults to true if **pages** is not empty.
 
 ## pages
 
-An array containing pages and/or sections. If not specified, it defaults to all Markdown files found in the source root in directory listing order.
+An array containing pages and sections. If not specified, it defaults to all Markdown files found in the source root in directory listing order.
 
-The following TypeScript interfaces describe pages and sections:
+Both pages and sections have a **name**, which typically corresponds to the page’s title. The name gets displayed in the sidebar. Clicking on a page navigates to the corresponding **path**, which should start with a leading slash and be relative to the root; the path can also be specified as a full URL to navigate to an external site. Clicking on a section header opens or closes that section. Each section must specify an array of **pages**, and optionally whether the section is **open** by default. If **open** is not set, it defaults to true. If **open** is false, the section is closed unless the current page belongs to that section.
 
-```ts run=false
-export interface Page {
-  name: string;
-  path: string;
+For example, here **pages** specifies two sections and a total of four pages:
+
+```js run=false
+export default {
+  pages: [
+    {
+      name: "Section 1",
+      pages: [
+        {name: "Page 1", path: "/s01/page1"},
+        {name: "Page 2", path: "/s01/page2"}
+      ]
+    },
+    {
+      name: "Section 2",
+      open: false,
+      pages: [
+        {name: "Page 3", path: "/s02/page3"},
+        {name: "Page 4", path: "/s02/page4"}
+      ]
+    }
+  ]
 }
 ```
 
-```ts run=false
-export interface Section {
-  name: string;
-  pages: Page[];
-  open?: boolean;
-}
-```
+Projects can have “unlisted” pages that are not referenced in **pages**. These pages can still be linked from other pages or visited directly, but they won’t be listed in the sidebar or linked to via the previous & next pager links.
 
-If a section’s **open** option is not set, it defaults to true.
-
-Projects can have “unlisted” pages that are not included in the pages list. These pages will still be accessible if linked from other pages or visited directly, but they won’t be listed in the sidebar or linked to via the previous & next footer.
-
-The pages list should _not_ include the root page, `index.md`. Also, we don’t recommend using query strings or anchor fragments, as these will prevent the previous & next footer links from navigating.
+The pages list should _not_ include the home page (`/`) as this is automatically linked at the top of the sidebar. We also do not recommend listing the same page multiple times (say with different query parameters or anchor fragments), as this causes the previous & next pager links to cycle.
 
 ## pager
 
-Whether to show the previous & next footer links; defaults to true.
+Whether to show the previous & next links in the footer; defaults to true. The pages are linked in the same order as they appear in the sidebar.
 
 ## head
 
@@ -166,6 +173,10 @@ export default {
 ## base
 
 The base path when serving the site. Currently this only affects the custom 404 page, if any.
+
+## cleanUrls <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" class="observablehq-version-badge" data-version="^1.3.0" title="Added in 1.3.0"></a>
+
+Whether page links should be “clean”, _i.e._, formatted without a `.html` extension. Defaults to true. If true, a link to `config.html` will be formatted as `config`. Regardless of this setting, a link to an index page will drop the implied `index.html`; for example `foo/index.html` will be formatted as `foo/`.
 
 ## toc
 
@@ -196,7 +207,49 @@ toc: false
 
 Whether to enable [search](./search) on the project; defaults to false.
 
-## markdownIt <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" target="_blank" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a>
+## interpreters <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" class="observablehq-version-badge" data-version="^1.3.0" title="Added in 1.3.0"></a>
+
+The **interpreters** option specifies additional interpreted languages for data loaders, indicating the file extension and associated interpreter. (See [loader routing](./loaders#routing) for more.) The default list of interpreters is:
+
+```js run=false
+{
+  ".js": ["node", "--no-warnings=ExperimentalWarning"],
+  ".ts": ["tsx"],
+  ".py": ["python3"],
+  ".r": ["Rscript"],
+  ".R": ["Rscript"],
+  ".rs": ["rust-script"]
+  ".go": ["go", "run"],
+  ".java": ["java"],
+  ".jl": ["julia"],
+  ".php": ["php"],
+  ".sh": ["sh"],
+  ".exe": []
+}
+```
+
+Keys specify the file extension and values the associated command and arguments. For example, to add Perl (extension `.pl`) and AppleScript (`.scpt`) to the list above:
+
+```js run=false
+export default {
+  interpreters: {
+    ".pl": ["perl"],
+    ".scpt": ["osascript"]
+  }
+};
+```
+
+To disable an interpreter, set its value to null. For example, to disable Rust:
+
+```js run=false
+export default {
+  interpreters: {
+    ".rs": null
+  }
+};
+```
+
+## markdownIt <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a>
 
 A hook for registering additional [markdown-it](https://github.com/markdown-it/markdown-it) plugins. For example, to use [markdown-it-footnote](https://github.com/markdown-it/markdown-it-footnote):
 
