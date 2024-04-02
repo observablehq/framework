@@ -10,13 +10,13 @@ describe("getDependencyResolver(root, path, input)", () => {
     const root = "test/input/build/simple-public";
     const specifier = "/npm/d3-array@3.2.3/dist/d3-array.js";
     const resolver = await getDependencyResolver(root, "/_npm/d3@7.8.5/_esm.js", `import '${specifier}';\n`); // prettier-ignore
-    assert.strictEqual(resolver(specifier), "../d3-array@3.2.4/dist/d3-array.js._esm.js");
+    assert.strictEqual(resolver(specifier), "../d3-array@3.2.4/dist/d3-array.js");
   });
   it("finds /npm/ import resolutions and re-resolves their versions", async () => {
     const root = "test/input/build/simple-public";
     const specifier = "/npm/d3-array@3.2.3/dist/d3-array.js";
     const resolver = await getDependencyResolver(root, "/_npm/d3@7.8.5/_esm.js", `import.meta.resolve('${specifier}');\n`); // prettier-ignore
-    assert.strictEqual(resolver(specifier), "../d3-array@3.2.4/dist/d3-array.js._esm.js");
+    assert.strictEqual(resolver(specifier), "../d3-array@3.2.4/dist/d3-array.js");
   });
 });
 
@@ -55,13 +55,13 @@ describe("resolveNpmImport(root, specifier)", () => {
     assert.strictEqual(await resolveNpmImport(root, "d3-array/foo+bar"), "/_npm/d3-array@3.2.4/foo+bar._esm.js");
     assert.strictEqual(await resolveNpmImport(root, "d3-array/foo+esm"), "/_npm/d3-array@3.2.4/foo+esm._esm.js");
   });
-  it("implicitly adds ._esm.js for specifiers with a JavaScript extension", async () => {
-    assert.strictEqual(await resolveNpmImport(root, "d3-array/src/index.js"), "/_npm/d3-array@3.2.4/src/index.js._esm.js"); // prettier-ignore
-  });
   it("replaces /+esm with /_esm.js or ._esm.js", async () => {
     assert.strictEqual(await resolveNpmImport(root, "d3-array/+esm"), "/_npm/d3-array@3.2.4/_esm.js");
     assert.strictEqual(await resolveNpmImport(root, "d3-array/src/+esm"), "/_npm/d3-array@3.2.4/src._esm.js");
     assert.strictEqual(await resolveNpmImport(root, "d3-array/src/index.js/+esm"), "/_npm/d3-array@3.2.4/src/index.js._esm.js"); // prettier-ignore
+  });
+  it("does not add ._esm.js for specifiers with a JavaScript extension", async () => {
+    assert.strictEqual(await resolveNpmImport(root, "d3-array/src/index.js"), "/_npm/d3-array@3.2.4/src/index.js");
   });
   it("does not add ._esm.js for specifiers with a non-JavaScript extension", async () => {
     assert.strictEqual(await resolveNpmImport(root, "d3-array/src/index.css"), "/_npm/d3-array@3.2.4/src/index.css");
