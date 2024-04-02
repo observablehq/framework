@@ -41,6 +41,10 @@ display(Inputs.table(await sql`SELECT * FROM aapl`, {columns: ["Date", "Open"]})
 ```
 
 ```js echo
+// TODO reset button (in the tally).
+// TODO rename types (Utf8 => string, Date32 => Date…).
+// TODO control the width of the tally for small tables.
+// TODO the height of the table should not shrink when filtering.
 import * as _Inputs from "npm:@observablehq/inputs"
 import * as Arrow from "npm:apache-arrow";
 import * as d3 from "npm:d3";
@@ -48,7 +52,7 @@ import {html} from "npm:htl";
 
 width; // refresh when resized
 
-const Inputs = ({..._Inputs, table})
+const Inputs = ({..._Inputs, table});
 
 function table(data, options = {}) {
   if (!data) return data;
@@ -276,7 +280,7 @@ async function summary(div, filters, refresh) {
       });
     d3.select(chart).append("g").call(brush);
   }
-  div.append(chart ? html`<div style=${type === "Utf8" ? "" : {
+  div.append(chart ? html`<div style=${type === "Utf8" || `${type}`.startsWith("Date") ? "" : {
     position: "absolute",
     right: 0
   }}>${chart}` : html`<span>Unknown type ${type}`);
