@@ -242,8 +242,8 @@ try {
         // clack.outro doesn't handle multiple lines well, so do it manually
         console.log(
           `${faint("│\n│")}  If you think this is a bug, please file an issue at\n${faint("└")}  ${link(
-            "https://github.com/observablehq/framework/issues\n"
-          )}`
+            "https://github.com/observablehq/framework/issues"
+          )}\n`
         );
       }
     } else {
@@ -255,8 +255,8 @@ try {
         console.error("\nTip: To see the full stack trace, run with the --debug flag.\n");
         console.error(
           `If you think this is a bug, please file an issue at\n↳ ${link(
-            "https://github.com/observablehq/framework/issues\n"
-          )}`
+            "https://github.com/observablehq/framework/issues"
+          )}\n`
         );
       }
     }
