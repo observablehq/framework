@@ -37,6 +37,10 @@ const sql = DuckDBClient.sql({aapl, penguins, gaia: FileAttachment("/lib/gaia-sa
 ```
 
 ```js echo
+display(Inputs.table(await sql`SELECT * FROM aapl`, {columns: ["Date", "Open"]}));
+```
+
+```js echo
 import * as _Inputs from "npm:@observablehq/inputs"
 import * as Arrow from "npm:apache-arrow";
 import * as d3 from "npm:d3";
@@ -54,7 +58,7 @@ function table(data, options = {}) {
   if (!Array.isArray(data?.schema?.fields)) return container;
 
   // Get the fields as described by Arrow, in the order given (potentially) by the options.
-  const fields = (options.columns?.map(k => data.schema.find(({name}) => name === k)) ?? data.schema.fields).map(({name, type}) => ({name: String(name), type: String(type), values: data.getChild(name)}));
+  const fields = (options.columns?.map(k => data.schema.fields.find(({name}) => name === k)) ?? data.schema.fields).map(({name, type}) => ({name: String(name), type: String(type), values: data.getChild(name)}));
 
   options.columns = fields.map(({name}) => name);
 
