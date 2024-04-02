@@ -86,9 +86,15 @@ function table(data, options = {}) {
   // save table headers for the dirty copy below
   const thtype = [...d3.select(table).selectAll("th :nth-child(2)")]
   const thsummary = [...d3.select(table).selectAll("th :nth-child(3)")]
+  let debounce;
   return container;
 
+  // debounce refreshes
   function refresh() {
+    debounce |= setTimeout(refresh1, 50);
+  }
+
+  function refresh1() {
     const index0 = d3.range(data.length ?? data.numRows);
     let index = index0;
     for (const [, f] of filters) index = index.filter(f);
@@ -105,6 +111,7 @@ function table(data, options = {}) {
     th.append((d, i) => thsummary[i]);
 
     tally.innerHTML = index === index0 ? `${index.length.toLocaleString("en-US")} rows` : `<b>${index.length.toLocaleString("en-US")}</b> / ${index0.length.toLocaleString("en-US")}`;
+    debounce = null;
   }
 
   function take(data, index) {
@@ -223,6 +230,8 @@ async function summary(div, filters, refresh) {
     if (domain.length > 2) domain.splice(1, domain.length - 2);
     const ticks = isDate ? d3.utcTicks(...domain, niceK) : d3.ticks(...domain, niceK);
     if (ticks.length > 2) ticks.splice(1, ticks.length - 2);
+
+    // TODO show count of invalid values, make them selectable.
     chart = Plot.plot({
       width,
       height,
@@ -258,7 +267,7 @@ async function summary(div, filters, refresh) {
           const [min, max] = selection;
           filters.set(name, (i) => min <= X[i] && X[i] <= max);
         } else filters.delete(name);
-        refresh(); // TODO debounce
+        refresh();
       });
     d3.select(chart).append("g").call(brush);
   }
