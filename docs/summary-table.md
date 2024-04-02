@@ -56,6 +56,8 @@ function table(data, options = {}) {
   // Get the fields as described by Arrow, in the order given (potentially) by the options.
   const fields = (options.columns?.map(k => data.schema.find(({name}) => name === k)) ?? data.schema.fields).map(({name, type}) => ({name: String(name), type: String(type), values: data.getChild(name)}));
 
+  options.columns = fields.map(({name}) => name);
+
   const container = document.createElement("div");
   container.append(table);
   container.setAttribute("class", "summary-table");
@@ -68,7 +70,7 @@ function table(data, options = {}) {
   const summaries = th.append("div").classed("summary", true);
 
   const textFields = fields.filter(({type}) => type === "Utf8");
-  const tally = html`<div style="position: absolute; right: 0;">${data.numRows.toLocaleString("en-US")} rows</div>`;
+  const tally = html`<div class="tally">${data.numRows.toLocaleString("en-US")} rows</div>`;
   const footer = html`<footer style="width: 100%; height: 1em;">
     ${textFields.length ? html`<div style="position: absolute; left: 0;"><input type="search" placeholder="Search text fields" onkeyup=${search} onchange=${search}></div>` : ""}
     ${tally}
@@ -102,7 +104,7 @@ function table(data, options = {}) {
     th.append((d, i) => thtype[i]);
     th.append((d, i) => thsummary[i]);
 
-    tally.innerHTML = index === index0 ? `${index.length} rows` : `<b>${index.length}</b> / ${index0.length}`;
+    tally.innerHTML = index === index0 ? `${index.length.toLocaleString("en-US")} rows` : `<b>${index.length.toLocaleString("en-US")}</b> / ${index0.length.toLocaleString("en-US")}`;
   }
 
   function take(data, index) {
@@ -251,8 +253,7 @@ async function summary(div, filters, refresh) {
 
     const X = Array.from(values, chart.scale("x").apply);
     const brush = d3.brushX()
-      .on("end", refresh)
-      .on("brush", ({selection}) => {
+      .on("brush end", ({selection}) => {
         if (selection) {
           const [min, max] = selection;
           filters.set(name, (i) => min <= X[i] && X[i] <= max);
@@ -275,5 +276,6 @@ async function summary(div, filters, refresh) {
   .summary-table table .summary {font-size: smaller; font-weight: normal; height: 33px;}
   .summary-table footer {font-family: var(--sans-serif); font-size: small; color: var(--theme-foreground-faint)}
   .summary-table rect.selected { fill: orange; }
+  .summary-table .tally {position: absolute; right: 0; font-variant-numeric: tabular-nums;}
 
 </style>
