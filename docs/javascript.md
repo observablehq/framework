@@ -1,12 +1,12 @@
 # JavaScript
 
-Observable Framework supports JavaScript in Markdown for charts, inputs, and other dynamic, interactive, and graphical content. This client-side JavaScript runs in the browser on load, and re-runs automatically when [reactive variables](./javascript/reactivity) change or when you edit pages during preview.
+Observable Framework supports JavaScript in Markdown for charts, inputs, and other dynamic, interactive, and graphical content. This client-side JavaScript runs in the browser on load, and re-runs automatically when [reactive variables](./reactivity) change or when you edit pages during preview.
 
-JavaScript in Markdown can be expressed either as [fenced code blocks](#fenced-code-blocks) or [inline expressions](#inline-expressions). You can also write JavaScript modules alongside Markdown files and [import them](./javascript/imports) into Markdown. (And you can run JavaScript, TypeScript, Python, or any other programming language during build to generate data using [data loaders](./loaders).)
+JavaScript in Markdown can be expressed either as [fenced code blocks](#fenced-code-blocks) or [inline expressions](#inline-expressions). You can also write JavaScript modules alongside Markdown files and [import them](./imports) into Markdown. (And you can run JavaScript, TypeScript, Python, or any other programming language during build to generate data using [data loaders](./loaders).)
 
 ## Fenced code blocks
 
-JavaScript fenced code blocks (<code>```js</code>) are typically used to [display content](./javascript/display) such as charts and inputs. They can also be used for logic by declaring top-level variables, say to load data or declare helper functions.
+JavaScript fenced code blocks (<code>```js</code>) are typically used to [display content](./display) such as charts and inputs. They can also be used for logic by declaring top-level variables, say to load data or declare helper functions.
 
 JavaScript blocks come in two forms: *expression* blocks and *program* blocks. An expression block looks like this (and note the lack of semicolon):
 
@@ -52,7 +52,7 @@ html`1 + 2 &equals; <b>${1 + 2}</b>`
 Plot.lineY(aapl, {x: "Date", y: "Close"}).plot({y: {grid: true}})
 ```
 
-Fenced code blocks automatically re-run when referenced [reactive variables](./javascript/reactivity) change (or when you edit the page during preview). The block below references the built-in variable `now` representing the current time in milliseconds; because `now` is reactive, this block runs sixty times a second and each each new span it returns replaces the one previously displayed.
+Fenced code blocks automatically re-run when referenced [reactive variables](./reactivity) change (or when you edit the page during preview). The block below references the built-in variable `now` representing the current time in milliseconds; because `now` is reactive, this block runs sixty times a second and each each new span it returns replaces the one previously displayed.
 
 ```js echo
 html`<span style=${{color: `hsl(${(now / 10) % 360} 100% 50%)`}}>Rainbow text!</span>`
@@ -64,7 +64,7 @@ A program block looks like this:
 const x = 1 + 2;
 ```
 
-A program block doesn’t display anything by default, but you can call the built-in [`display` function](./javascript/display) explicitly. The above block defines the top-level variable `x` with a value of ${x}.
+A program block doesn’t display anything by default, but you can call the built-in [`display` function](./display) explicitly. The above block defines the top-level variable `x` with a value of ${x}.
 
 (A technical note: the parser first attempts to parse the input as an expression; if that fails, it parses it as a program. So, code such as `{foo: 1}` is interpreted as an object literal rather than a block with a labeled statement.)
 

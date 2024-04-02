@@ -12,7 +12,7 @@ A data loader can be as simple as a shell script that invokes [curl](https://cur
 curl https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson
 ```
 
-Observable Framework uses [file-based routing](./routing), so assuming this shell script is named `quakes.json.sh`, a `quakes.json` file is then generated at build time. You can access this file from the client using [`FileAttachment`](./javascript/files):
+Observable Framework uses [file-based routing](./routing), so assuming this shell script is named `quakes.json.sh`, a `quakes.json` file is then generated at build time. You can access this file from the client using [`FileAttachment`](./data#files):
 
 ```js echo
 FileAttachment("quakes.json").json()
@@ -109,7 +109,7 @@ const metadata = FileAttachment("quakes/metadata.json").json();
 const features = FileAttachment("quakes/features.csv").csv({typed: true});
 ```
 
-The ZIP file itself can be also referenced as a whole — for example if the names of the files are not known in advance — with [`FileAttachment.zip`](../javascript/files#zip):
+The ZIP file itself can be also referenced as a whole — for example if the names of the files are not known in advance — with [`FileAttachment.zip`](./lib/zip):
 
 ```js echo
 const zip = FileAttachment("quakes.zip").zip();
@@ -122,7 +122,7 @@ The following archive extensions are supported:
 - `.tar` - for [tarballs](<https://en.wikipedia.org/wiki/Tar_(computing)>)
 - `.tar.gz` and `.tgz` - for [compressed tarballs](https://en.wikipedia.org/wiki/Gzip)
 
-Like with any other file, these files from generated archives are live in preview (they will refresh automatically if the corresponding data loader script is edited), and are added to the build if and only if referenced by `FileAttachment` (see [Files: ZIP](./javascript/files#zip-archives)).
+Like with any other file, these files from generated archives are live in preview (they will refresh automatically if the corresponding data loader script is edited), and are added to the build if and only if referenced by `FileAttachment` (see [Files: ZIP](./lib/zip)).
 
 ## Routing
 

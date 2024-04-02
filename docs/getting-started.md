@@ -209,7 +209,7 @@ Next, `cd` into your new project folder.
 
 Framework’s local development server lets you preview your site in the browser as you make rapid changes. The preview server generates pages on-the-fly: as you edit files in your editor, changes are instantly streamed to your browser.
 
-<div class="tip">You can develop offline, but you must connect to the internet to <a href="./javascript/imports">import new libraries</a> from npm. Framework self-hosts imports: modules are downloaded from npm and stored in a local cache the first time you import them, and are included in <code>dist</code> when you build your project. In the future, we also plan to support importing from <code>node_modules</code>; please upvote <a href="https://github.com/observablehq/framework/issues/360">#360</a> if you are interested in this feature.</div>
+<div class="tip">You can develop offline, but you must connect to the internet to <a href="./imports">import new libraries</a> from npm. Framework self-hosts imports: modules are downloaded from npm and stored in a local cache the first time you import them, and are included in <code>dist</code> when you build your project. In the future, we also plan to support importing from <code>node_modules</code>; please upvote <a href="https://github.com/observablehq/framework/issues/360">#360</a> if you are interested in this feature.</div>
 
 To start the preview server using npm:
 
@@ -359,7 +359,7 @@ If this barfs a bunch of JSON in the terminal, it’s working as intended. 😅 
 
 Framework uses [file-based routing](./routing) not just for pages but for data loaders as well: the data loader <code>forecast.json.js</code> serves the file <code>forecast.json</code>. To load this file from <code>docs<span class="wbr">/</span>weather.md</code> we use the relative path <code>./data<span class="wbr">/</span>forecast.json</code>. In effect, data loaders are simply a naming convention for generating “static” files — a big advantage of which is that you can edit a data loader and the changes immediately propagate to the live preview without needing a reload.
 
-To load a file in JavaScript, use the built-in [`FileAttachment`](./javascript/files). In `weather.md`, replace the contents of the JavaScript code block (the parts inside the triple backticks <code>```</code>) with the following code:
+To load a file in JavaScript, use the built-in [`FileAttachment`](./data#files). In `weather.md`, replace the contents of the JavaScript code block (the parts inside the triple backticks <code>```</code>) with the following code:
 
 ```js run=false
 const forecast = FileAttachment("./data/forecast.json").json();
@@ -383,7 +383,7 @@ This looks like:
   <figcaption>Using <code>FileAttachment</code> to load data.</figcaption>
 </figure>
 
-The built-in [`display`](./javascript/display) function displays the specified value, a bit like `console.log` in the browser’s console. As you can see below, `display` is called [implicitly](./javascript/display#implicit-display) when a code block contains an expression:
+The built-in [`display`](./display) function displays the specified value, a bit like `console.log` in the browser’s console. As you can see below, `display` is called [implicitly](./display#implicit-display) when a code block contains an expression:
 
 ```js echo
 1 + 2
@@ -417,7 +417,7 @@ const forecast = FileAttachment("./data/forecast.json").json();
 
 ### Plots
 
-Now let’s add a chart using <a href="./lib/plot">Observable Plot</a>. Framework includes a variety of <a href="./javascript/imports#implicit-imports">recommended libraries</a> by default, including `Plot`, and you can always <a href="./javascript/imports">import more</a> from npm. Replace the `display(forecast)` code block with the following code:
+Now let’s add a chart using <a href="./lib/plot">Observable Plot</a>. Framework includes a variety of <a href="./imports#implicit-imports">recommended libraries</a> by default, including `Plot`, and you can always <a href="./imports">import more</a> from npm. Replace the `display(forecast)` code block with the following code:
 
 ```js run=false
 display(
@@ -487,7 +487,7 @@ Now you can call `temperaturePlot` to display the forecast anywhere on the page:
 display(temperaturePlot(forecast));
 ```
 
-<div class="tip">JavaScript can be extracted into standalone modules (<code>.js</code> files) that you can <a href="./javascript/imports">import</a> into Markdown. This lets you share code across pages, write unit tests for components, and more.</div>
+<div class="tip">JavaScript can be extracted into standalone modules (<code>.js</code> files) that you can <a href="./imports">import</a> into Markdown. This lets you share code across pages, write unit tests for components, and more.</div>
 
 ### Layout
 

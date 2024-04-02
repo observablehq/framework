@@ -79,4 +79,4 @@ Use the `resize` helper to re-render content when the container resizes.
 </div>
 ```
 
-See [Responsive display](../javascript/display#responsive-display) for more.
+See [Responsive display](../display#responsive-display) for more.

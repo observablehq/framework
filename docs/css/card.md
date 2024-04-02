@@ -29,7 +29,7 @@ Cards can be used on their own, but they most often exist in a [grid](./grid). C
 
 <div class="tip">Remove the padding from a card if it contains only a table.</div>
 
-To place an input inside a card, first declare a detached input as a [top-level variable](../javascript/reactivity#top-level-variables) and use [`Generators.input`](../lib/generators#inputelement) to expose its reactive value:
+To place an input inside a card, first declare a detached input as a [top-level variable](../reactivity#top-level-variables) and use [`Generators.input`](../lib/generators#inputelement) to expose its reactive value:
 
 ```js echo
 const industryInput = Inputs.select(industries.map((d) => d.industry), {unique: true, sort: true, label: "Industry:"});
