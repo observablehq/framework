@@ -260,7 +260,7 @@ async function summary(div, filters, refresh) {
         } else filters.delete(name);
         refresh(); // TODO debounce
       });
-    d3.select(chart).call(brush);
+    d3.select(chart).append("g").call(brush);
   }
   div.append(chart ? html`<div style=${type === "Utf8" ? "" : {
     position: "absolute",
