@@ -1,3 +1,3 @@
-<meta http-equiv="refresh" content="0; url=../display#inputs">
+<meta http-equiv="refresh" content="0; url=../reactivity#inputs">
 
-Moved to [Display: Inputs](../display#inputs).
+Moved to [Reactivity: Inputs](../reactivity#inputs).

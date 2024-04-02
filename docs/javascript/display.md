@@ -1,3 +1,3 @@
-<meta http-equiv="refresh" content="0; url=../display">
+<meta http-equiv="refresh" content="0; url=../javascript#displays">
 
-Moved to [Display](../display).
+Moved to [JavaScript: Displays](../javascript#displays).

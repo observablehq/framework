@@ -16,25 +16,15 @@ export default {
     {name: "Routing", path: "/routing"},
     {name: "Markdown", path: "/markdown"},
     {name: "JavaScript", path: "/javascript"},
-    {name: "Reactivity", path: "/reactivity"},
-    {name: "Display", path: "/display"},
     {name: "Data", path: "/data"},
     {name: "Data loaders", path: "/loaders"},
     {name: "SQL", path: "/sql"},
+    {name: "Reactivity", path: "/reactivity"},
     {name: "Imports", path: "/imports"},
+    {name: "Layout", path: "/layout"},
     {name: "Themes", path: "/themes"},
     {name: "Configuration", path: "/config"},
     {name: "Deploying", path: "/deploying"},
-    {
-      name: "CSS",
-      open: false,
-      pages: [
-        {name: "Card", path: "/css/card"},
-        {name: "Color", path: "/css/color"},
-        {name: "Grid", path: "/css/grid"},
-        {name: "Note", path: "/css/note"}
-      ]
-    },
     {
       name: "Inputs",
       open: false,

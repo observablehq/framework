@@ -209,8 +209,6 @@ Next, `cd` into your new project folder.
 
 Framework’s local development server lets you preview your site in the browser as you make rapid changes. The preview server generates pages on-the-fly: as you edit files in your editor, changes are instantly streamed to your browser.
 
-<div class="tip">You can develop offline, but you must connect to the internet to <a href="./imports">import new libraries</a> from npm. Framework self-hosts imports: modules are downloaded from npm and stored in a local cache the first time you import them, and are included in <code>dist</code> when you build your project. In the future, we also plan to support importing from <code>node_modules</code>; please upvote <a href="https://github.com/observablehq/framework/issues/360">#360</a> if you are interested in this feature.</div>
-
 To start the preview server using npm:
 
 <pre data-copy>npm run dev</pre>
@@ -252,8 +250,6 @@ To experience live preview, open <code>docs/index.md</code> in your preferred te
   </picture>
   <figcaption>No seriously — hi, Mom! Thanks for supporting me all these years.</figcaption>
 </figure>
-
-<div class="tip">If you don’t see an update after saving, try reloading. The preview socket may disconnect if you’re idle. Please upvote <a href="https://github.com/observablehq/framework/issues/50">#50</a> if you run into this issue.</div>
 
 ### Create a new page
 
@@ -383,7 +379,7 @@ This looks like:
   <figcaption>Using <code>FileAttachment</code> to load data.</figcaption>
 </figure>
 
-The built-in [`display`](./display) function displays the specified value, a bit like `console.log` in the browser’s console. As you can see below, `display` is called [implicitly](./display#implicit-display) when a code block contains an expression:
+The built-in [`display`](./javascript#display(value)) function displays the specified value, a bit like `console.log` in the browser’s console. As you can see below, `display` is called [implicitly](./javascript#implicit-display) when a code block contains an expression:
 
 ```js echo
 1 + 2
@@ -515,7 +511,7 @@ When placing charts in a grid, you typically want to render responsively based o
 </div>
 ```
 
-Lastly, let’s apply the `dashboard` [theme](./themes) and disable the table of contents (`toc`) using [YAML front matter](./markdown). The `dashboard` theme allows the main column to span the full width of the window; without it, the main column width is limited to 1152px as appropriate for documentation or a report.
+Lastly, let’s apply the `dashboard` [theme](./themes) and disable the table of contents (`toc`) using [YAML front matter](./markdown#front-matter). The `dashboard` theme allows the main column to span the full width of the window; without it, the main column width is limited to 1152px as appropriate for documentation or a report.
 
 ```yaml run=false
 ---

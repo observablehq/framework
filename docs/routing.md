@@ -1,6 +1,8 @@
 # Routing
 
-Observable Framework uses file-based routing: each page in your project has a corresponding [Markdown](./markdown) file (`.md`) of the same name. In addition to pages, you can have [importable](./imports) JavaScript modules (`.js`), [data loaders](./loaders) for generating data snapshots (_e.g._, `.csv.py`), and [static assets](./data#files) such as images and files (_e.g._, `.png`).
+TODO This should probably be broken up into its respective parts: pages, files, imports, data loaders, archives. That or this should be moved to the end because it’s more of an advanced topic?
+
+Framework uses file-based routing: each page in your project has a corresponding [Markdown](./markdown) file (`.md`) of the same name. In addition to pages, you can have [importable](./imports) JavaScript modules (`.js`), [data loaders](./loaders) for generating data snapshots (_e.g._, `.csv.py`), and [static assets](./data#files) such as images and files (_e.g._, `.png`).
 
 A typical project looks like this:
 
@@ -24,7 +26,7 @@ A typical project looks like this:
 
 #### `docs`
 
-This is the “source root” — where your source files live. It doesn’t have to be named `docs`, but that’s the default; you can change it using the **root** [config option](./config). Pages go here. Each page is a Markdown file. Observable Framework uses [file-based routing](./routing), which means that the name of the file controls where the page is served. You can create as many pages as you like. Use folders to organize your pages.
+This is the “source root” — where your source files live. It doesn’t have to be named `docs`, but that’s the default; you can change it using the **root** [config option](./config). Pages go here. Each page is a Markdown file. Framework uses [file-based routing](./routing), which means that the name of the file controls where the page is served. You can create as many pages as you like. Use folders to organize your pages.
 
 #### `docs/.observablehq/cache`
 
