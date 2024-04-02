@@ -41,10 +41,15 @@ display(Inputs.table(await sql`SELECT * FROM aapl`, {columns: ["Date", "Open"]})
 ```
 
 ```js echo
-// TODO reset button (in the tally).
+// TODO add a reset button (in the tally).
 // TODO rename types (Utf8 => string, Date32 => Date…).
 // TODO control the width of the tally for small tables.
 // TODO the height of the table should not shrink when filtering.
+// TODO do we want it to be an input.
+// TODO do we want a row number like in the data table cell.
+// TODO sorting should be stable.
+// TODO clip & center categorical/ordinal labels (needs measuring text).
+// TODO instead of "other", count "uniques" as in data table cells?
 import * as _Inputs from "npm:@observablehq/inputs"
 import * as Arrow from "npm:apache-arrow";
 import * as d3 from "npm:d3";
