@@ -95,6 +95,9 @@ function table(data, options = {}) {
     // In the meantime, here's a very dirty approach
     const _data = index === index0 ? data : take(data, index);
     table.replaceWith(table = _Inputs.table(_data, options));
+    d3.select(table)
+    .style("min-width", `${120 * fields.length}px`)
+    .style("max-width", `${280 * fields.length}px`);
     const th = d3.select(table).selectAll("th");
     th.append((d, i) => thtype[i]);
     th.append((d, i) => thsummary[i]);
@@ -245,6 +248,18 @@ async function summary(div, filters, refresh) {
         Plot.axisX(ticks, {tickSize: 3, tickPadding: 2, fontSize: 8, ...(!isDate && {tickFormat: "s"})}),
       ]
     });
+
+    const X = Array.from(values, chart.scale("x").apply);
+    const brush = d3.brushX()
+      .on("end", refresh)
+      .on("brush", ({selection}) => {
+        if (selection) {
+          const [min, max] = selection;
+          filters.set(name, (i) => min <= X[i] && X[i] <= max);
+        } else filters.delete(name);
+        refresh(); // TODO debounce
+      });
+    d3.select(chart).call(brush);
   }
   div.append(chart ? html`<div style=${type === "Utf8" ? "" : {
     position: "absolute",
