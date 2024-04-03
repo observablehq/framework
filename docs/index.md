@@ -115,31 +115,31 @@ index: false
 </div>
 
 <div class="gallery grid grid-cols-2">
-  <a href="./examples/api/" target="_blank">
+  <a href="https://observablehq.com/framework/examples/api/" target="_blank">
     <picture>
-      <source srcset="./assets/api-dark.webp" media="(prefers-color-scheme: dark)">
-      <img src="./assets/api.webp">
+      <source srcset="./assets/api.webp" media="(prefers-color-scheme: dark)">
+      <img src="./assets/api-dark.webp">
     </picture>
     <div class="small arrow">Analyzing web logs</div>
   </a>
-  <a href="./examples/eia/" target="_blank">
+  <a href="https://observablehq.com/framework/examples/eia/" target="_blank">
     <picture>
-      <source srcset="./assets/eia-dark.webp" media="(prefers-color-scheme: dark)">
-      <img src="./assets/eia.webp">
+      <source srcset="./assets/eia.webp" media="(prefers-color-scheme: dark)">
+      <img src="./assets/eia-dark.webp">
     </picture>
     <div class="small arrow">U.S. electricity grid</div>
   </a>
-  <a href="./examples/chess/" target="_blank">
+  <a href="https://observablehq.com/framework/examples/chess/" target="_blank">
     <picture>
-      <source srcset="./assets/chess-dark.webp" media="(prefers-color-scheme: dark)">
-      <img src="./assets/chess.webp">
+      <source srcset="./assets/chess.webp" media="(prefers-color-scheme: dark)">
+      <img src="./assets/chess-dark.webp">
     </picture>
     <div class="small arrow">A year of chess rankings</div>
   </a>
-  <a href="./examples/plot/" target="_blank">
+  <a href="https://observablehq.com/framework/examples/plot/" target="_blank">
     <picture>
-      <source srcset="./assets/plot-dark.webp" media="(prefers-color-scheme: dark)">
-      <img src="./assets/plot.webp">
+      <source srcset="./assets/plot.webp" media="(prefers-color-scheme: dark)">
+      <img src="./assets/plot-dark.webp">
     </picture>
     <div class="small arrow">Observable Plot downloads</div>
   </a>

@@ -53,47 +53,48 @@
 
 </style>
 
-Observable Framework — or “Framework” for short — is an open-source static-site generator for data apps. A *data app* is an application that is primarily a display of data. A data app helps you derive insights from data (to better understand) and evaluate potential decisions (to better take action). A data app might be:
+Observable Framework — or “Framework” for short — is an open-source static-site generator for data apps. By *data app* we mean an application that is primarily a display of data. A data app helps you derive insights (to understand) and evaluate potential decisions (to take action).
 
-* a **live dashboard** that shows what is currently happening, placing current events in context of recent or historical trends, or
-* a **point-in-time report** that combines graphics and prose to present in-depth analysis, perhaps with recommendations or hypothesized explanations of observed behavior, or
-* a set of **interactive visualizations** that allow “self-service” exploratory analysis, perhaps to better understand a model or to investigate activity.
-
-Whereas data warehouses are tools for data — storing records and executing queries — data apps are tools for thought — organizing knowledge and sharing insights. As such, data apps tend to be highly opinionated and customized to the bespoke demands of a data-driven organization.
-
-**Interactive visualization** - self-service exploration of data through an opionated interface.
-
-TODO Mosaic taxis visualization.
-
-**Dashboards** - putting current performance in context — how are things going?
+A data app might be a set of coordinated **interactive visualizations** for “self-service” exploratory analysis, perhaps to better understand a computational model or to investigate activity;
 
 <div class="gallery grid grid-cols-2">
-  <a href="./examples/plot/" target="_blank">
+  <a href="https://observablehq.com/framework/lib/mosaic" target="_blank">
     <picture>
-      <source srcset="./assets/plot-dark.webp" media="(prefers-color-scheme: dark)">
-      <img src="./assets/plot.webp">
+      <img src="./assets/mosaic.webp">
+    </picture>
+    <div class="small arrow">Taxi rides in New York City</div>
+  </a>
+</div>
+
+… a **live dashboard** that shows what is currently happening, placing current events in context of recent or historical trends;
+
+<div class="gallery grid grid-cols-2">
+  <a href="https://observablehq.com/framework/examples/plot/">
+    <picture>
+      <source srcset="./assets/plot.webp" media="(prefers-color-scheme: dark)">
+      <img src="./assets/plot-dark.webp">
     </picture>
     <div class="small arrow">Observable Plot downloads</div>
   </a>
 </div>
 
-**Reports** - point-in-time analysis, in depth. More prose, more context.
+… a **point-in-time report** that combines graphics and prose to present in-depth analysis, perhaps with recommendations or hypotheses about observed behavior;
 
 <div class="gallery grid grid-cols-2">
-  <a href="./examples/api/" target="_blank">
+  <a href="https://observablehq.com/framework/examples/api/">
     <picture>
-      <source srcset="./assets/api-dark.webp" media="(prefers-color-scheme: dark)">
-      <img src="./assets/api.webp">
+      <source srcset="./assets/api.webp" media="(prefers-color-scheme: dark)">
+      <img src="./assets/api-dark.webp">
     </picture>
     <div class="small arrow">Analyzing web logs</div>
   </a>
 </div>
 
-Framework’s emphasis on client-side JavaScript affords fantastic expressivity for custom, performant, interactive graphics. And Framework’s polyglot data loader architecture affords limitless flexibility preparing and crunching data. Whether your team prefers Python, R, SQL, or something else, Framework can help you build a better data app. Framework can be used for business intelligence, product analytics, monitoring, and more.
+… or any number of other displays of data. Data apps are useful in almost every domain: business intelligence, product analytics, monitoring operations, scientific reporting, and more. Data apps are tools for thought — for answering questions, exploring possibilities, organizing knowledge, and communicating insights.
 
-Why should you use Framework? Here are a few reasons.
+Why use Framework for your data apps? Here are a few reasons.
 
-## Framework is code
+## The power of code
 
 Business intelligence as code. Alternative to custom web development.
 
@@ -105,11 +106,15 @@ Modern development is built on files. Files have myriad strengths, but the stron
 
 This isn’t just about using your preferred text editor. Now you can bring your own source control and code review system, too. You can write unit tests and run linters. You can automate builds with continuous integration or deployment. You can work offline. You can self-host. You can generate or edit content programmatically, say to format code or to find-and-replace across files.
 
-## Framework is polyglot
+Data apps tend to be highly opinionated and customized to the bespoke demands of a data-driven organization.
 
-Multiple languages working together.
+## Polyglot meets the web
 
-## Framework is static
+Most web application frameworks focus on a single language — say Next.js for JavaScript, Streamlit for Python, or Shiny for R. Framework is polyglot, meaning it can use multiple languages together. A polyglot approach is especially relevant for data apps, where data teams like to use Python or R (or other specialized languages) for data analysis, while leveraging the full power of JavaScript for client-side interactive graphics. Now you can have your cake and eat it too. 🍰
+
+Framework’s emphasis on client-side JavaScript affords fantastic expressivity for custom, performant, interactive graphics. And Framework’s polyglot data loader architecture affords limitless flexibility preparing and crunching data. Whether your team prefers Python, R, SQL, or something else, Framework can help you build a better data app.
+
+## Static-site architecture
 
 Fewer moving parts. Easier to host anywhere. Great performance.
 
@@ -127,8 +132,10 @@ Framework’s data loaders solve this “last mile” problem by computing stati
 
 The speed of modern data warehouses is astonishing. But far too often something is missing for new analysis — some untapped data source, some not-yet-materialized view for a query to run at interactive speeds. Framework’s data loaders let you bypass these hurdles and produce a fast dashboard without “heavy lifting” in your data warehouse. And once your analysis demonstrates value, you can shift work to your data warehouse and simplify your data loaders. Framework lets you build faster and quickly validate your ideas.
 
-We believe Framework will change how you think about data, and effect a better user experience. And by securely hosting apps alongside notebooks, Observable now offers an end-to-end solution for data analysis and presentation.
-
-## Framework is reactive
+## Automatic reactivity
 
 Data visualization. User interaction. Real-time updates.
+
+## An end-to-end solution
+
+We believe Framework will change how you think about data, and effect a better user experience. And by securely hosting apps alongside notebooks, Observable now offers an end-to-end solution for data analysis and presentation.
