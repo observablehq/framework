@@ -227,6 +227,7 @@ export interface GetCurrentUserResponse {
   name: string;
   tier: string;
   has_workspace: boolean;
+  settings: Record<string, string | null>,
   workspaces: WorkspaceResponse[];
 }
 
@@ -246,7 +247,8 @@ export interface WorkspaceResponse {
   tier: string;
   type: string;
   role: Role;
-  projects_info: ProjectInfo[];
+  projects_info: ProjectInfo[],
+  settings: Record<string, string | null>;
 }
 
 export type PostProjectResponse = GetProjectResponse;

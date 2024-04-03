@@ -593,12 +593,16 @@ export async function promptDeployTarget(
   }
   projectSlug = projectSlugChoice;
 
+  const allowLinkShared = workspace.role === "owner" || (workspace.settings && workspace.settings?.allow_link_shared === "true")
+  const accessLevelOptions = [
+    allowLinkShared ?  {value: "link_shared", label: "Link shared", hint: "allow anyone with the link"} : null,
+    {value: "private", label: "Private", hint: "only allow workspace members"},
+    {value: "public", label: "Public", hint: "allow anyone"}
+  ].filter((option) => option !== null) as {value: string; label: string; hint: string}[];
+
   const accessLevel: string | symbol = await clack.select({
     message: "Who is allowed to access your project?",
-    options: [
-      {value: "private", label: "Private", hint: "only allow workspace members"},
-      {value: "public", label: "Public", hint: "allow anyone"}
-    ]
+    options: accessLevelOptions
   });
   if (clack.isCancel(accessLevel)) {
     throw new CliError("User canceled deploy.", {print: false, exitCode: 0});

@@ -363,6 +363,7 @@ const userBase = {
   login: "mock-user",
   name: "Mock User",
   tier: "public",
+  settings: {},
   has_workspace: false
 };
 
@@ -374,6 +375,7 @@ const workspaces: GetCurrentUserResponse["workspaces"] = [
     tier: "pro_2024",
     type: "team",
     role: "member",
+    settings: {},
     projects_info: []
   },
   {
@@ -383,6 +385,7 @@ const workspaces: GetCurrentUserResponse["workspaces"] = [
     tier: "pro_2024",
     type: "team",
     role: "owner",
+    settings: {},
     projects_info: []
   },
   {
@@ -392,6 +395,7 @@ const workspaces: GetCurrentUserResponse["workspaces"] = [
     tier: "pro_2024",
     type: "team",
     role: "viewer",
+    settings: {},
     projects_info: []
   },
   {
@@ -401,6 +405,7 @@ const workspaces: GetCurrentUserResponse["workspaces"] = [
     tier: "pro_2024",
     type: "team",
     role: "guest_member",
+    settings: {},
     projects_info: [{project_slug: "test-project-1", project_role: "editor"}]
   },
   {
@@ -410,7 +415,18 @@ const workspaces: GetCurrentUserResponse["workspaces"] = [
     tier: "pro_2024",
     type: "team",
     role: "guest_member",
+    settings: {},
     projects_info: [{project_slug: "test-project-2", project_role: "viewer"}]
+  },
+  {
+    id: "0000000000000006",
+    login: "mock-user-ws-6",
+    name: "Mock User's Sixth Workspace",
+    tier: "pro_2024",
+    type: "team",
+    role: "member",
+    settings: {allow_link_shared: "true"},
+    projects_info: []
   }
 ];
 
@@ -433,6 +449,11 @@ export const userWithGuestMemberWorkspaces = {
   ...userBase,
   workspaces
 };
+
+export const userWithSettingsWorkspaces = {
+  ...userBase,
+  workspaces: workspaces.slice(-1)
+}
 
 class FilteringPendingInterceptorFormatter extends PendingInterceptorsFormatter {
   constructor(private readonly _origin: string) {
