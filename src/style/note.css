@@ -3,8 +3,8 @@
 .warning,
 .caution {
   border-left: solid 1px;
-  padding: 1rem 2rem;
   border-radius: 0 4px 4px 0;
+  padding: 1rem 1.5rem;
   margin: 1rem 0;
   box-sizing: border-box;
   max-width: 640px;
@@ -64,4 +64,18 @@
 .warning[label]::before,
 .caution[label]::before {
   content: attr(label);
+}
+
+.note > p:first-child,
+.tip > p:first-child,
+.warning > p:first-child,
+.caution > p:first-child {
+  margin-top: 0;
+}
+
+.note > p:last-child,
+.tip > p:last-child,
+.warning > p:last-child,
+.caution > p:last-child {
+  margin-bottom: 0;
 }
