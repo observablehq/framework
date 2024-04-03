@@ -453,7 +453,7 @@ export const userWithGuestMemberWorkspaces = {
 export const userWithSettingsWorkspaces = {
   ...userBase,
   workspaces: workspaces.slice(-1)
-}
+};
 
 class FilteringPendingInterceptorFormatter extends PendingInterceptorsFormatter {
   constructor(private readonly _origin: string) {

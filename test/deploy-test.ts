@@ -569,7 +569,10 @@ describe("deploy", () => {
       assert.ok(err instanceof Error);
       assert.match(err.message, /out of inputs for select.*Which Observable workspace do you want to use/);
       assert.ok("options" in err && Array.isArray(err.options) && err.options.length === 4);
-      assert.deepEqual(err.options.map((o) => o.value.role), ["owner", "member", "member", "guest_member"]);
+      assert.deepEqual(
+        err.options.map((o) => o.value.role),
+        ["owner", "member", "member", "guest_member"]
+      );
       const guestMember = err.options.find((o) => o.value.role === "guest_member");
       assert.ok(guestMember.value.projects_info.some((info) => info.project_role === "editor"));
     }
@@ -774,9 +777,9 @@ describe("promptDeployTarget", () => {
     const deployConfig = {workspaceLogin: workspace.login, projectSlug};
     const effects = new MockDeployEffects({deployConfig, isTty: true});
     effects.clack.inputs.push(
-      true,  // create new project
-      projectSlug, // project slug to use
-    )
+      true, // create new project
+      projectSlug // project slug to use
+    );
     const api = effects.makeApiClient();
     getCurrentObservableApi().handleGetWorkspaceProjects({workspaceLogin: workspace.login, projects: []}).start();
 
