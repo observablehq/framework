@@ -208,7 +208,7 @@ Next, `cd` into your new project folder.
 
 <pre data-copy>cd hello-framework</pre>
 
-Framework’s local development server lets you preview your site in the browser as you make rapid changes. The preview server generates pages on-the-fly: as you edit files in your editor, changes are instantly streamed to your browser.
+Framework’s local development server lets you preview your site in the browser as you make rapid changes. The preview server generates pages on the fly: as you edit files in your editor, changes are instantly streamed to your browser.
 
 To start the preview server using npm:
 
@@ -335,7 +335,7 @@ const [longitude, latitude] = location;
 
 To personalize this code snippet to your current location, edit the <code>longitude</code> and <code>latitude</code> values above, or click the **Locate me** button above.
 
-<div class="caution">NWS does not provide forecasts for points outside the United States, so if you specify such a location the API will return an error and the data loader will fail.</div>
+<div class="caution">NWS does not provide forecasts for points outside the United States. If you specify such a location the API will error and the data loader will fail.</div>
 
 <div class="tip">If you would rather write your data loader in Python, R, or some other language, take a peek at the <a href="#next-steps">next steps</a> below before continuing.</div>
 
@@ -354,7 +354,7 @@ If this barfs a bunch of JSON in the terminal, it’s working as intended. 😅 
 
 ### File attachments
 
-Framework uses [file-based routing](./routing) not just for pages but for data loaders as well: the data loader <code>forecast.json.js</code> serves the file <code>forecast.json</code>. To load this file from <code>docs<span class="wbr">/</span>weather.md</code> we use the relative path <code>./data<span class="wbr">/</span>forecast.json</code>. In effect, data loaders are simply a naming convention for generating “static” files — a big advantage of which is that you can edit a data loader and the changes immediately propagate to the live preview without needing a reload.
+Framework uses [file-based routing](./loaders#routing) for data loaders: the data loader <code>forecast.json.js</code> serves the file <code>forecast.json</code>. To load this file from <code>docs<span class="wbr">/</span>weather.md</code> we use the relative path <code>./data<span class="wbr">/</span>forecast.json</code>. In effect, data loaders are simply a naming convention for generating “static” files — a big advantage of which is that you can edit a data loader and the changes immediately propagate to the live preview without needing a reload.
 
 To load a file in JavaScript, use the built-in [`FileAttachment`](./data#files). In `weather.md`, replace the contents of the JavaScript code block (the parts inside the triple backticks <code>```</code>) with the following code:
 
@@ -601,8 +601,6 @@ Lastly, you can enter an optional deploy message. Deploy messages are shown on O
 <span class="blue">│</span>  <span class="muted"><span class="invert">E</span>nter a deploy message (optional)</span>
 <span class="blue">└</span>
 </pre>
-
-<div class="tip">Deploy messages can be set using <code>deploy <nobr>--message</nobr></code>. This is especially useful for continuous deployment from a git repository: the message can include the SHA, author, and message of the latest commit.</div>
 
 When deploy completes, Framework will show your project’s URL on observablehq.cloud. From there you can invite people to your private workspace to see your project, or make your project public so anyone can see it.
 

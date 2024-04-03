@@ -4,7 +4,7 @@
 .caution {
   border-left: solid 1px;
   border-radius: 0 4px 4px 0;
-  padding: 1rem 1.5rem;
+  padding: 1rem 2rem;
   margin: 1rem 0;
   box-sizing: border-box;
   max-width: 640px;
@@ -66,16 +66,16 @@
   content: attr(label);
 }
 
-.note > p:first-child,
-.tip > p:first-child,
-.warning > p:first-child,
-.caution > p:first-child {
+.note > :first-child,
+.tip > :first-child,
+.warning > :first-child,
+.caution > :first-child {
   margin-top: 0;
 }
 
-.note > p:last-child,
-.tip > p:last-child,
-.warning > p:last-child,
-.caution > p:last-child {
+.note > :last-child,
+.tip > :last-child,
+.warning > :last-child,
+.caution > :last-child {
   margin-bottom: 0;
 }
