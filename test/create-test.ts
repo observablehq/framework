@@ -22,6 +22,7 @@ describe("create", () => {
       new Set([
         "template-test/.gitignore",
         "template-test/docs/aapl.csv",
+        "template-test/docs/observable.png",
         "template-test/docs/components/timeline.js",
         "template-test/docs/data/events.json",
         "template-test/docs/data/launches.csv.js",
@@ -50,6 +51,7 @@ describe("create", () => {
       new Set([
         "template-test/.gitignore",
         "template-test/docs/aapl.csv",
+        "template-test/docs/observable.png",
         "template-test/docs/index.md",
         "template-test/docs/penguins.csv",
         "template-test/observablehq.config.js",
