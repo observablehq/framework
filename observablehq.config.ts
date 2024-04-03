@@ -100,7 +100,7 @@ export default {
 <link rel="icon" type="image/png" href="/favicon.png" sizes="512x512">${
     process.env.CI
       ? `
-<script type="module" async src="https://events.observablehq.com/client.js"></script>
+<script type="module" async src="https://events.observablehq.com/client.js?pageLoad"></script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-9B88TP6PKQ"></script>
 <script>window.dataLayer=window.dataLayer||[];\nfunction gtag(){dataLayer.push(arguments);}\ngtag('js',new Date());\ngtag('config','G-9B88TP6PKQ');</script>`
       : ""
