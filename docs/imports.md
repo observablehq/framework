@@ -234,3 +234,40 @@ const d3 = await require("d3@5");
 ```
 
 <div class="caution">We recommend that you use <code>import</code> instead of <code>require</code>: it’s the modern standard, more reliable, more forward-looking, and faster.</div>
+
+## Routing
+
+Imported modules are copied to the output root (`dist` by default) during build, too. Only referenced imported modules are copied; modules that aren’t imported are not included.
+
+For example, if you have the following source root:
+
+```ini
+.
+├─ docs
+│  ├─ chart.js
+│  └─ index.md
+└─ ...
+```
+
+And `index.md` includes a JavaScript code block that says:
+
+```js run=false
+import {Chart} from "./chart.js";
+```
+
+The resulting output root is:
+
+```ini
+.
+├─ dist
+│  ├─ _import
+│  │  └─ chart.c79c2048.js
+│  ├─ _observablehq
+│  │  └─ ... # additional assets for serving the site
+│  └─ index.html
+└─ ...
+```
+
+The import declaration is automatically rewritten during build to point to `./_import/chart.c79c2048.js` instead of `./chart.js`. The content hash `c79c2048` ensures cache-breaking during deploy, and allows assets to be marked as `cache-control: immutable` to improve performance.
+
+Use a leading slash to denote paths relative to the source root, such as `/chart.js` instead of `./chart.js`. This allows you to use the same path to import a module from anywhere, even in nested folders. Framework always generates relative links so that the generated site can be served under a base path.

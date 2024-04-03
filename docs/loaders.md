@@ -195,6 +195,65 @@ print("Hello World\n");
 
 If multiple requests are made concurrently for the same data loader, the data loader will only run once; each concurrent request will receive the same response.
 
+TODO Files can also be generated at build time by [data loaders](./loaders): arbitrary programs that live alongside Markdown pages and other static files in your source root (`docs`). For example, if you want to generate a `quakes.json` file at build time by fetching and caching data from the USGS, you could write a data loader in a shell script like so:
+
+```ini
+.
+├─ docs
+│  ├─ index.md
+│  └─ quakes.json.sh
+└─ ...
+```
+
+Where `quakes.json.sh` is:
+
+```sh
+curl https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson
+```
+
+This will produce the following output root:
+
+```ini
+.
+├─ dist
+│  ├─ _file
+│  │  └─ quakes.99da78d9.json
+│  ├─ _observablehq
+│  │  └─ ... # additional assets for serving the site
+│  └─ index.html
+└─ ...
+```
+
+File attachments can be also be pulled from archives. The following archive extensions are supported:
+
+- `.zip` - for the [ZIP](<https://en.wikipedia.org/wiki/ZIP_(file_format)>) archive format
+- `.tar` - for [tarballs](<https://en.wikipedia.org/wiki/Tar_(computing)>)
+- `.tar.gz` and `.tgz` - for [compressed tarballs](https://en.wikipedia.org/wiki/Gzip)
+
+For example, say you have a `quakes.zip` archive that includes yearly files for observed earthquakes. If you reference `FileAttachment("quakes/2021.csv")`, Framework will pull the `2021.csv` from `quakes.zip`. So this source root:
+
+```ini
+.
+├─ docs
+│  ├─ quakes.zip
+│  └─ index.md
+└─ ...
+```
+
+Becomes this output:
+
+```ini
+.
+├─ dist
+│  ├─ _file
+│  │  └─ quakes
+│  │     └─ 2021.e5f2eb94.csv
+│  ├─ _observablehq
+│  │  └─ ... # additional assets for serving the site
+│  └─ index.html
+└─ ...
+```
+
 ## Output
 
 Data loaders must output to [standard output](<https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)>). The first extension (such as `.csv`) does not affect the generated snapshot; the data loader is solely responsible for producing the expected output (such as CSV). If you wish to log additional information from within a data loader, be sure to log to stderr, say by using [`console.warn`](https://developer.mozilla.org/en-US/docs/Web/API/console/warn); otherwise the logs will be included in the output file and sent to the client.

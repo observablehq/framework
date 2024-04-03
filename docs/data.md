@@ -215,3 +215,34 @@ while (true) {
 
 display(total);
 ```
+
+## Routing
+
+Attached files live in the source root (by default `docs`) alongside your Markdown pages. For example, say `index.md` has some JavaScript code that references `FileAttachment("quakes.csv")`:
+
+```ini
+.
+├─ docs
+│  ├─ index.md
+│  └─ quakes.csv
+└─ ...
+```
+
+On build, any files referenced by `FileAttachment` will automatically be copied to the `_file` folder under the output root (`dist`), here resulting in:
+
+```ini
+.
+├─ dist
+│  ├─ _file
+│  │  └─ quakes.e5f2eb94.csv
+│  ├─ _observablehq
+│  │  └─ ... # additional assets for serving the site
+│  └─ index.html
+└─ ...
+```
+
+`FileAttachment` references are automatically rewritten during build; for example, a reference to `quakes.csv` might be replaced with `_file/quakes.e5f2eb94.csv`. (As with imports, file names are given a content hash, here `e5f2eb94`, to improve performance.) Only the files you reference statically are copied to the output root (`dist`), so nothing extra or unused is included in the built site.
+
+[Imported modules](./imports) can use `FileAttachment`, too. In this case, the path to the file is _relative to the importing module_ in the same fashion as `import`; this is accomplished by resolving relative paths at runtime with [`import.meta.url`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta).
+
+Some additional assets are automatically promoted to file attachments and copied to `_file`. For example, if you have a `<link rel="stylesheet" href="style.css">` declared statically in a Markdown page, the `style.css` file will be copied to `_file`, too (and the file name given a content hash). The HTML elements eligible for file attachments are `audio`, `img`, `link`, `picture`, and `video`.
