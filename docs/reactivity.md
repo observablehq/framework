@@ -32,7 +32,7 @@ A top-level variable declared in a JavaScript fenced code block can be reference
 const x = 1, y = 2;
 ```
 
-Then you can reference `x` and `y` elsewhere on the page (with values ${x} and ${y}, respectively). Top-level variable declarations are effectively [hoisted](https://developer.mozilla.org/en-US/docs/Glossary/Hoisting); you can reference variables even if the defining code block appears later on the page, and code runs in topological rather than top-down document order. If multiple blocks define top-level variables with the same name, references to these variables will throw a duplicate definition error.
+Then you can reference `x` and `y` elsewhere on the page (with values ${x} and ${y}, respectively). Top-level variable declarations are effectively [hoisted](https://developer.mozilla.org/en-US/docs/Glossary/Hoisting); you can reference variables even if the defining code block appears later on the page, and code runs in topological rather than top-down document order.
 
 To prevent variables from being visible outside the current block, make them local with a block statement:
 
@@ -41,6 +41,8 @@ To prevent variables from being visible outside the current block, make them loc
   const z = 3;
 }
 ```
+
+If multiple blocks define top-level variables with the same name, these blocks will still run, but any references to these variables in other blocks will throw a duplicate definition error because the definition is ambiguous.
 
 ## Promises
 
@@ -59,7 +61,7 @@ And it means instead of needing to `await` a promise defined in another code blo
 Declaring a file attachment without an await.
 
 ```js echo
-const volcano = FileAttachment("volcano.json").json();
+const volcano = FileAttachment("./javascript/volcano.json").json();
 ```
 ```js echo
 volcano
