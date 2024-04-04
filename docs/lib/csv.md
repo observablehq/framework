@@ -6,7 +6,7 @@ To load a [comma-separated values](https://en.wikipedia.org/wiki/Comma-separated
 const gistemp = FileAttachment("gistemp.csv").csv({typed: true});
 ```
 
-The value of `gistemp` above is a [promise](./promises) to an array of objects. In other code blocks, the promise is resolved implicitly and hence you can refer to it as an array of objects.
+The value of `gistemp` above is a [promise](../javascript/promises) to an array of objects. In other code blocks, the promise is resolved implicitly and hence you can refer to it as an array of objects.
 
 ```js echo
 gistemp
