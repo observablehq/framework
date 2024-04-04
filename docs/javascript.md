@@ -2,13 +2,13 @@
 
 Use client-side JavaScript to render charts, inputs, and other dynamic, interactive, and graphical content. JavaScript in [Markdown](./markdown) can be expressed either as [fenced code blocks](#fenced-code-blocks) or [inline expressions](#inline-expressions). You can also write JavaScript modules alongside Markdown files and [import them](./imports).
 
-<div class="tip">JavaScript runs in the browser on load, and runs <a href="./reactivity">reactively</a>.</div>
+<div class="tip">JavaScript runs on load, and re-runs <a href="./reactivity">reactively</a> when variables change.</div>
 
 <!-- (And you can run JavaScript, TypeScript, Python, or any other programming language during build to generate data using [data loaders](./loaders).) -->
 
 ## Fenced code blocks
 
-JavaScript fenced code blocks (<code>```js</code>) are typically used to [display content](#displays) such as charts and inputs. They can also be used for logic by declaring top-level variables, say to load data or declare helper functions.
+JavaScript fenced code blocks (<code>```js</code>) are typically used to display content such as charts and inputs. They can also be used for logic by declaring top-level variables, say to load data or declare helper functions.
 
 JavaScript blocks come in two forms: *expression* blocks and *program* blocks. An expression block looks like this (and note the lack of semicolon):
 
@@ -18,13 +18,21 @@ JavaScript blocks come in two forms: *expression* blocks and *program* blocks. A
 ```
 ````
 
-This produces:
+Expression blocks [implicitly display](#implicit-display), producing:
 
 ```js
 1 + 2
 ```
 
-Note that JavaScript fenced code blocks do not echo their code by default. If you want to show the code, use the `echo` directive:
+A program block looks like this:
+
+```js echo
+const foo = 1 + 2;
+```
+
+A program block doesn’t display anything by default, but you can call the built-in [`display` function](#display(value)) explicitly. The above block defines the top-level variable `foo` with a value of ${foo}.
+
+JavaScript blocks do not echo their code by default. If you want to show the code, use the `echo` directive:
 
 ````md
 ```js echo
@@ -44,31 +52,31 @@ If an expression evaluates to a DOM node, the node is displayed as-is.
 document.createTextNode("Hello, world!")
 ```
 
-While you can use the [standard DOM API](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model) directly to create content, you’ll typically use a helper library such as the `html` and `svg` tagged template literals provided by [Hypertext Literal](./lib/htl), [Observable Plot](./lib/plot)’s `Plot.plot` method, or [D3](./lib/d3) to create DOM elements for display.
+While you can use the [standard DOM API](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model) directly to create content, you’ll typically use a helper library such as [Hypertext Literal](./lib/htl), [Observable Plot](./lib/plot), or [D3](./lib/d3) to create DOM elements for display. For example, here’s a component that displays a greeting:
 
 ```js echo
-html`1 + 2 &equals; <b>${1 + 2}</b>`
+function greeting(name) {
+  return html`Hello, <i>${name}</i>!`;
+}
 ```
+
+```js echo
+greeting("world")
+```
+
+And here’s a line chart of Apple’s stock price:
 
 ```js echo
 Plot.lineY(aapl, {x: "Date", y: "Close"}).plot({y: {grid: true}})
 ```
 
-Fenced code blocks automatically re-run when referenced [reactive variables](./reactivity) change (or when you edit the page during preview). The block below references the built-in variable `now` representing the current time in milliseconds; because `now` is reactive, this block runs sixty times a second and each each new span it returns replaces the one previously displayed.
+Code blocks automatically re-run when referenced [reactive variables](./reactivity) change (or when you edit the page during preview). The block below references the built-in variable `now` representing the current time in milliseconds; because `now` is reactive, this block runs sixty times a second and each each new span it returns replaces the one previously displayed.
 
 ```js echo
 html`<span style=${{color: `hsl(${(now / 10) % 360} 100% 50%)`}}>Rainbow text!</span>`
 ```
 
-A program block looks like this:
-
-```js echo
-const x = 1 + 2;
-```
-
-A program block doesn’t display anything by default, but you can call the built-in [`display` function](#display(value)) explicitly. The above block defines the top-level variable `x` with a value of ${x}.
-
-(A technical note: the parser first attempts to parse the input as an expression; if that fails, it parses it as a program. So, code such as `{foo: 1}` is interpreted as an object literal rather than a block with a labeled statement.)
+<!-- (A technical note: the parser first attempts to parse the input as an expression; if that fails, it parses it as a program. So, code such as `{foo: 1}` is interpreted as an object literal rather than a block with a labeled statement.) -->
 
 ## Inline expressions
 
@@ -113,7 +121,7 @@ const number = Generators.input(numberInput);
 
 Unlike code blocks, expressions cannot declare top-level reactive variables.
 
-## Displays
+## Explicit display
 
 The built-in `display` function displays the specified value.
 
@@ -268,7 +276,3 @@ If your container defines a height, such as `240px` in the example below, then y
 ```
 
 <div class="tip">If you are using <code>resize</code> with both <code>width</code> and <code>height</code> and see nothing rendered, it may be because your parent container does not have its own height specified. When both arguments are used, the rendered element is implicitly <code>position: absolute</code> to avoid affecting the size of its parent and causing a feedback loop.</div>
-
-### resize(*render*)
-
-TODO
