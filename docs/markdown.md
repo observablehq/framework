@@ -87,7 +87,11 @@ Now routes are served as:
 /missions/gemini → dist/missions/gemini.html → docs/missions/gemini.md
 ```
 
-## Headings
+## Content
+
+Here are some common types of Markdown content.
+
+### Headings
 
 ```md
 # A first-level heading
@@ -97,7 +101,7 @@ Now routes are served as:
 
 <div class="note">A second-level heading (<code>##</code>) immediately following a first-level heading (<code>#</code>) is styled specially as a subtitle.</div>
 
-## Styling
+### Styling
 
 ```md
 this is **bold** text
@@ -109,7 +113,7 @@ this is `monospaced` text
 > this is quoted text
 ```
 
-## Tables
+### Tables
 
 ```md
 Column 1   | Column 2     | Column 3
@@ -125,7 +129,7 @@ Cell 1-1   |   Cell 2-1   |    Cell 3-1
 Cell 1-2   |   Cell 2-2   |    Cell 3-2
 ```
 
-## Lists
+### Lists
 
 ```md
 - red
@@ -143,7 +147,7 @@ Cell 1-2   |   Cell 2-2   |    Cell 3-2
    1. third second
 ```
 
-## Links
+### Links
 
 ```md
 <https://example.com>
@@ -154,7 +158,7 @@ Cell 1-2   |   Cell 2-2   |    Cell 3-2
 
 For privacy and convenience, external links are given a default `rel` attribute of [`noreferrer`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noreferrer) [`noopener`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noopener) and a default `target` attribute of [`_blank`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#target). <a href="https://github.com/observablehq/framework/releases/tag/v1.5.0" class="observablehq-version-badge" data-version="^1.5.0" title="Added in 1.5.0"></a> Hence by default an external link will open in a new window and not pass the (potentially sensitive) referrer to the (potentially untrusted) external site. You can override this behavior by specifying the `rel` or `target` attribute explicitly. For example `<a href="https://example.com" target="_self">` will open in the same window, and `<a href="https://acme.com" rel="">` will allow the referrer.
 
-## Images
+### Images
 
 ```md
 ![A horse](./horse.jpg)
@@ -163,7 +167,7 @@ For privacy and convenience, external links are given a default `rel` attribute 
 
 ## HTML
 
-You can write HTML directly into Markdown. HTML is useful for greater control over layout, say to use CSS grid for a responsive bento box layout in a dashboard, or adding an external stylesheet via a link element. For example, here is an HTML details element:
+You can also write HTML directly into Markdown. HTML is useful for greater control over layout, say to use CSS grid for a responsive bento box layout in a dashboard, or adding an external stylesheet via a link element. For example, here is an HTML details element:
 
 ```html run=false
 <details>
@@ -198,35 +202,6 @@ This is **Markdown** inside of _HTML_!
   </div>
 </div>
 ```
-
-Also see [Hypertext Literal](./lib/htl) for generating dynamic HTML in JavaScript.
-
-## Front matter
-
-```yaml
----
-title: My favorite page
-toc: false
----
-```
-
-The front matter supports the following options:
-
-- **title** - the page title; defaults to the (first) first-level heading of the page, if any
-- **index** - whether to index this page if [search](./search) is enabled; defaults to true for listed pages
-- **keywords** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a> - additional words to index for [search](./search); boosted at the same weight as the title
-- **draft** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a> - whether to skip this page during build; drafts are also not listed in the default sidebar
-- **sql** <a href="https://github.com/observablehq/framework/releases/tag/v1.2.0" class="observablehq-version-badge" data-version="^1.2.0" title="Added in v1.2.0"></a> - table definitions for [SQL code blocks](./sql)
-
-The front matter can also override the following [project configuration](./config) options:
-
-- **toc** - the [table of contents](./config#toc)
-- **style** - the [custom stylesheet](./config#style)
-- **theme** - the [theme](./config#theme)
-- **head** - the [head](./config#head)
-- **header** - the [header](./config#header)
-- **footer** - the [footer](./config#footer)
-- **sidebar** - whether to show the [sidebar](./config#sidebar)
 
 ## Grids
 
@@ -421,3 +396,30 @@ You can disable the label entirely with an empty `label` attribute.
 ```html run=false
 <div class="note" label>This note has no label.</div>
 ```
+
+## Front matter
+
+```yaml
+---
+title: My favorite page
+toc: false
+---
+```
+
+The front matter supports the following options:
+
+- **title** - the page title; defaults to the (first) first-level heading of the page, if any
+- **index** - whether to index this page if [search](./search) is enabled; defaults to true for listed pages
+- **keywords** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a> - additional words to index for [search](./search); boosted at the same weight as the title
+- **draft** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a> - whether to skip this page during build; drafts are also not listed in the default sidebar
+- **sql** <a href="https://github.com/observablehq/framework/releases/tag/v1.2.0" class="observablehq-version-badge" data-version="^1.2.0" title="Added in v1.2.0"></a> - table definitions for [SQL code blocks](./sql)
+
+The front matter can also override the following [project configuration](./config) options:
+
+- **toc** - the [table of contents](./config#toc)
+- **style** - the [custom stylesheet](./config#style)
+- **theme** - the [theme](./config#theme)
+- **head** - the [head](./config#head)
+- **header** - the [header](./config#header)
+- **footer** - the [footer](./config#footer)
+- **sidebar** - whether to show the [sidebar](./config#sidebar)
