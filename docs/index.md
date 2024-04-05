@@ -122,26 +122,26 @@ index: false
     </picture>
     <div class="small arrow">Analyzing web logs</div>
   </a>
-  <a href="https://observablehq.com/framework/examples/eia/" target="_blank">
-    <picture>
-      <source srcset="./assets/eia.webp" media="(prefers-color-scheme: dark)">
-      <img src="./assets/eia-dark.webp">
-    </picture>
-    <div class="small arrow">U.S. electricity grid</div>
-  </a>
-  <a href="https://observablehq.com/framework/examples/chess/" target="_blank">
-    <picture>
-      <source srcset="./assets/chess.webp" media="(prefers-color-scheme: dark)">
-      <img src="./assets/chess-dark.webp">
-    </picture>
-    <div class="small arrow">A year of chess rankings</div>
-  </a>
   <a href="https://observablehq.com/framework/examples/plot/" target="_blank">
     <picture>
       <source srcset="./assets/plot.webp" media="(prefers-color-scheme: dark)">
       <img src="./assets/plot-dark.webp">
     </picture>
     <div class="small arrow">Observable Plot downloads</div>
+  </a>
+  <a href="https://observablehq.com/framework/examples/mortgage-rates/interactive" target="_blank">
+    <picture>
+      <source srcset="./assets/mortgage-rates.webp" media="(prefers-color-scheme: dark)">
+      <img src="./assets/mortgage-rates-dark.webp">
+    </picture>
+    <div class="small arrow">Fixed-rate mortgages</div>
+  </a>
+  <a href="https://observablehq.com/framework/examples/eia/" target="_blank">
+    <picture>
+      <source srcset="./assets/eia.webp" media="(prefers-color-scheme: dark)">
+      <img src="./assets/eia-dark.webp">
+    </picture>
+    <div class="small arrow">U.S. electricity grid</div>
   </a>
 </div>
 
