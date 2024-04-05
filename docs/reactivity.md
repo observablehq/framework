@@ -4,18 +4,16 @@ keywords: viewof
 
 # Reactivity
 
-JavaScript in Framework runs like a spreadsheet: code re-runs automatically when referenced variables change. This has several benefits:
+JavaScript in Framework runs like a spreadsheet: code re-runs automatically when referenced variables change. This affords:
 
-- Easier interactivity - automatically keep state in sync
-- Easier asynchronous programming - implicitly await promises
-- Performance - efficient, incremental re-rendering
-- Flexibility - write code and prose in any order
+- Easier interactivity because state is automatically kept in sync
+- Easier asynchronous programming via implicit await of promises
+- Better performance with incremental re-rendering
+- Greater flexibility by writing code and prose in any order
 
-Unlike reactive libraries, Framework’s reactivity is implemented at the language level as part of the JavaScript runtime: there’s no new API or syntax to learn. It’s vanilla JavaScript, but the code runs automatically.
+Reactivity is especially helpful for data apps because these apps tend to have complex state. (See Observable’s founding essay, [_A Better Way to Code_](https://medium.com/@mbostock/a-better-way-to-code-2b1d2876a3a0).) For example, you might want to update a chart when a user interacts with a menu or composes a query. Or you might simply want to load several datasets in parallel. Reactivity means you don’t have to manage complex state changes — you can code declaratively as if state were static and immutable, letting the runtime manage state for you.
 
-Why reactivity? Interactive and asynchronous state is a ubiquitous challenge in building interactive interfaces. (See Observable’s founding essay, [_A Better Way to Code_](https://medium.com/@mbostock/a-better-way-to-code-2b1d2876a3a0).) For example, you might want to update a chart when a user interacts with a menu. Or you might simply want to load several datasets in parallel. Reactivity means you don’t have to manage complex state changes manually — you can code declaratively as if state were static and immutable, and let the runtime manage state changes for you.
-
-Code blocks in Markdown run in topological order determined by [top-level variable](#top-level-variables) references (or _dataflow_), rather than in top-down document order. For example, here we reference variables `x` and `y` even though they are defined in a code block farther down the page:
+Unlike reactive libraries, Framework’s reactivity is implemented at the language layer as part of the JavaScript runtime: there’s no new API or syntax to learn. It’s vanilla JavaScript, but the code runs automatically. Code blocks in Markdown run in topological order determined by [top-level variable](#top-level-variables) references (or _dataflow_), rather than in top-down document order. For example, here we reference variables `x` and `y` even though they are defined in a code block farther down the page:
 
 ```js echo
 x + y
@@ -25,7 +23,7 @@ When code (such as `x + y`) references top-level variables (such as `x` and `y`)
 
 Reactivity also allows incremental evaluation of code when values change: only the code blocks that are “downstream” of changed variables run. This makes interaction and animation more performant because you’re not re-rendering the entire page when state changes.
 
-Framework’s reactivity manifests as:
+To be more precise, Framework’s reactivity manifests as:
 
 - [Promises](#promises) are implicitly awaited across code blocks
 - [Generators](#generators) are implicitly iterated across code blocks
