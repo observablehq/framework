@@ -9,6 +9,8 @@ A typical project consists of:
 - Other static assets (`.png`, `.css`, _etc._)
 - A project configuration file (`observablehq.config.js`)
 
+Pages are written in Markdown (`.md`) with HTML, JavaScript, SQL, and other languages. JavaScript can also be written in separate modules (`.js`) and imported. Data loaders can be written in Python, R, JavaScript, or any other language, and output data snapshots. These snapshots, along with static data files, can be loaded into pages to render charts, tables, and other dynamic content.
+
 And a typical project is structured like this:
 
 ```ini
