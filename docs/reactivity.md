@@ -4,25 +4,35 @@ keywords: viewof
 
 # Reactivity
 
-TODO More important than the code running out of order is that you can use reactivity to handle interactivity. For example, you can use a slider to change a value and see the result immediately. Also, it simplifies asynchronous programming, because promises are implicitly awaited.
+JavaScript in Framework runs like a spreadsheet: code re-runs automatically when referenced variables change. This has several benefits:
 
-JavaScript in Markdown runs reactively: in topological order as determined by [top-level variable](#top-level-variables) references, as in a spreadsheet. For example, here we reference variables `x` and `y` even though they are defined in a code block below:
+- Easier interactivity - automatically keep state in sync
+- Easier asynchronous programming - implicitly await promises
+- Performance - efficient, incremental re-rendering
+- Flexibility - write code and prose in any order
+
+Unlike reactive libraries, Framework’s reactivity is implemented at the language level as part of the JavaScript runtime: there’s no new API or syntax to learn. It’s vanilla JavaScript, but the code runs automatically.
+
+Why reactivity? Interactive and asynchronous state is a ubiquitous challenge in building interactive interfaces. (See Observable’s founding essay, [_A Better Way to Code_](https://medium.com/@mbostock/a-better-way-to-code-2b1d2876a3a0).) For example, you might want to update a chart when a user interacts with a menu. Or you might simply want to load several datasets in parallel. Reactivity means you don’t have to manage complex state changes manually — you can code declaratively as if state were static and immutable, and let the runtime manage state changes for you.
+
+Code blocks in Markdown run in topological order determined by [top-level variable](#top-level-variables) references (or _dataflow_), rather than in top-down document order. For example, here we reference variables `x` and `y` even though they are defined in a code block farther down the page:
 
 ```js echo
 x + y
 ```
 
-When code (such as `x + y`) references top-level variables (such as `x` and `y`) defined by other code, the *referencing* code automatically runs after the *defining* code. Since code runs independently of its order on the page, giving you the flexibility to arrange your code however you like.
+When code (such as `x + y`) references top-level variables (such as `x` and `y`) defined by other code, the *referencing* code automatically runs _after_ the *defining* code. Since code runs independent of its order on the page, you can arrange code however you like.
 
-In addition to meaning you can write your code in any code, reactivity also means that code is evaluated incrementally when values change. In general, this means that interaction is much more performant, because you’re not re-rendering the entire page when something changes.
+Reactivity also allows incremental evaluation of code when values change: only the code blocks that are “downstream” of changed variables run. This makes interaction and animation more performant because you’re not re-rendering the entire page when state changes.
 
-Special treatment for:
+Framework’s reactivity manifests as:
 
-- [Promises](#promises) (implicit await)
-- [Generators](#generators) (implicit iteration)
-- Editing code during runtime
+- [Promises](#promises) are implicitly awaited across code blocks
+- [Generators](#generators) are implicitly iterated across code blocks
+- Editing code (or files) triggers reactive updates during preview
+- The [`invalidation` promise](#invalidation) allows clean-up
 
-Reactivity (implicit await and iteration) only applies _across_ code blocks, not _within_ a code block — hence we say reactivity applies only to [top-level variables](#top-level-variables) that are visible across code blocks. So if one code block defines a promise, and a second code block references that promise, the second code block will wait for the promise to resolve before running; but if you reference the promise within the first code block, you’ll see a promise, not the resolved value.
+We’ll cover each of these below.
 
 ## Top-level variables
 
@@ -32,9 +42,9 @@ A top-level variable declared in a JavaScript fenced code block can be reference
 const x = 1, y = 2;
 ```
 
-Then you can reference `x` and `y` elsewhere on the page (with values ${x} and ${y}, respectively). Top-level variable declarations are effectively [hoisted](https://developer.mozilla.org/en-US/docs/Glossary/Hoisting); you can reference variables even if the defining code block appears later on the page, and code runs in topological rather than top-down document order.
+Then you can reference `x` and `y` elsewhere on the page (with values ${x} and ${y}, respectively); top-level variable declarations are effectively [hoisted](https://developer.mozilla.org/en-US/docs/Glossary/Hoisting).
 
-To prevent variables from being visible outside the current block, make them local with a block statement:
+To prevent variables from being visible outside the current block, make them local with a block statement (curly braces):
 
 ```js echo
 {
@@ -42,32 +52,31 @@ To prevent variables from being visible outside the current block, make them loc
 }
 ```
 
-If multiple blocks define top-level variables with the same name, these blocks will still run, but any references to these variables in other blocks will throw a duplicate definition error because the definition is ambiguous.
+If multiple blocks define top-level variables with the same name, these blocks will still run, but any references to duplicated variables in other blocks will throw a duplicate definition error because the definition is ambiguous.
 
 ## Promises
 
 <div class="tip">See <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises">MDN’s <i>Using promises</i></a> for an introduction to promises.</div>
 
-A [promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) represents the result of an asynchronous operation: some data loaded from a file, say, or a module imported dynamically, or the end of an animation, or some text input from the user. For the most part, you can use promises in Framework the same way you use them in any vanilla JavaScript environment. But there’s one special feature of Framework that makes working with promises a bit more convenient:
+A [promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) represents the result of an asynchronous operation: some data loaded from a file, say, or a module imported dynamically, or the end of an animation, or some text input from the user.
 
-**When one code block refers to a promise defined in another code block, the referencing code block implicitly awaits the promise.**
+In Framework, when one code block refers to a promise defined in another code block, the referencing code block implicitly awaits the promise. This means promises are often invisible — you don’t have to worry whether something is a promise or whether it’s resolved.
 
-We call this *implicit `await`*.
+<div class="note">Implicit <code>await</code> only applies <i>across</i> code blocks, not <i>within</i> a code block. Within a code block, a promise is just a promise.</div>
 
-Implicit `await` only applies _across_ code blocks, not _within_ a code block.
-
-And it means instead of needing to `await` a promise defined in another code block, the entire code block waits for the promise to resolve before running. This makes it easier to work with promises in Framework, because you don’t have to worry about whether a promise has resolved before you use it.
-
-Declaring a file attachment without an await.
+For example, below `FileAttachment.json` returns a promise, and so the value of `volcano` is a promise.
 
 ```js echo
 const volcano = FileAttachment("./javascript/volcano.json").json();
 ```
+
+And yet if we reference `volcano` in another code block, we don’t need to `await`. The `await` is implicit; the code block automatically waits for the `volcano` promise to resolve before running.
+
 ```js echo
 volcano
 ```
 
-Declaring multiple file attachments means that the files will load in parallel. This is faster than loading them sequentially using explicit `await`, and simpler than using `Promise.all`.
+This pattern is especially useful for loading multiple files. The files are loaded in parallel, and referencing code blocks only wait for the files they need. This is faster than loading files sequentially with `await`, and simpler than `Promise.all`.
 
 ```js run=false
 const a = FileAttachment("a.csv").csv({typed: true});
@@ -75,7 +84,7 @@ const b = FileAttachment("b.csv").csv({typed: true});
 const c = FileAttachment("c.csv").csv({typed: true});
 ```
 
-Implicit await causes the entire code block to wait, not just the expression that references the promise.
+Implicit await causes the entire code block to wait, not just expressions that reference promises. This distinction is usually invisible, but you might notice if you have a code block that references both “slow” and “fast” promises: the code block waits for all promises to resolve, and thus is gated by the slowest promise. Below, “fast” and “slow” are printed at the same time.
 
 ```js echo
 const fast = new Promise((resolve) => setTimeout(() => resolve("fast"), 500));
@@ -86,7 +95,7 @@ display(fast);
 display(slow);
 ```
 
-Implicit await means that you wait for the defining code block to fulfill, not just the referenced promise.
+Implicit await means waiting for the defining code block to fulfill, not only the referenced promises. Below, even though `one` and `two` are defined synchronously, the referencing code block must wait 5 seconds for the defining block to resolve. This allows a defining code block to initialize state asynchronously while preventing referencing code blocks from seeing partially-initialized state.
 
 ```js echo
 const one = 1;
@@ -97,7 +106,7 @@ await new Promise((resolve) => setTimeout(resolve, 5000));
 one + two // waits 5 seconds!
 ```
 
-Implicit await means that you can’t handle errors across code blocks. However, you can handle errors _within_ a code block. For example, you could specify fallback data for a file that fails to load.
+Implicit await means that you can’t handle errors across code blocks: if a promise rejects, the reference code block simply doesn’t run, so it has no way of catching errors. That said, you can handle errors _within_ a code block. For example, you can specify fallback data for a file that fails to load.
 
 ```js run=false
 const volcano = FileAttachment("volcano.json")
@@ -105,21 +114,17 @@ const volcano = FileAttachment("volcano.json")
   .catch(() => ({width: 87, height: 61, values: []}));
 ```
 
-TK Replace a synchronous variable with a promise without changing the referencing code.
-
-Most often, promises are used to load files, fetch data from a remote server, or query a database. TK Elaborate some more and give more specific examples of promises, including `FileAttachment`, `fetch`, `db.sql`, waiting to click on a button.
-
-As a contrived example, within the block below, `hello` is a promise that resolves via `setTimeout`; if you reference `hello` from another code block or expression, the other code won’t run until the timeout fires and will see `hello` as a string.
+Implicit await applies to inline expressions, too, not just fenced code blocks.
 
 ```js echo
-const hello = new Promise((resolve) => {
-  setTimeout(() => {
-    resolve("hello");
-  }, 1000);
-});
+const hello = new Promise((resolve) => setTimeout(() => resolve("hello"), 1000));
 ```
 
 Hello is: ${hello}.
+
+```md run=false
+Hello is: ${hello}.
+```
 
 ## Generators
 
