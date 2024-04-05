@@ -237,9 +237,7 @@ const d3 = await require("d3@5");
 
 ## Routing
 
-Imported modules are copied to the output root (`dist` by default) during build, too. Only referenced imported modules are copied; modules that aren’t imported are not included.
-
-For example, if you have the following source root:
+Imported modules are copied to the output root (`dist` by default) during build, too. Only referenced imported modules are copied; modules that aren’t imported are not included. For example, if you have the following source root:
 
 ```ini
 .

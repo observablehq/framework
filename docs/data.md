@@ -4,11 +4,23 @@ keywords: file, fileattachment, attachment
 
 # Data
 
-You can load data one of three ways:
+Data is typically represented by:
 
-- from a static file; for checked-in data
-- from a data loader; for dynamic data generated at build time
-- from a remote URL (e.g., fetch or web socket); for real-time, externally-managed data
+- a **static file** for static, checked-in data
+- a **data loader** for dynamic data captured during build
+- a **remote URL** for externally-managed (or real-time) data
+
+The first two of these are _local_ data, meaning that Framework bundles data into your project on build; while the last is _remote_ data, meaning that the data is fetched from a remote server whenever a user loads a page. We recommend using local data whenever possible as self-hosted data is typically more reliable, secure, and performant than remote data.
+
+TODO Give more examples of when you’d use a static file vs. a data loader vs. a remote URL.
+
+Data can be loaded onto the page using:
+
+- `FileAttachment` for managed data
+- `fetch` or `WebSocket` for unmanaged data
+- as a static asset, such as an image or video
+
+(Framework does not currently support server-side rendering of data-driven content, so all data-driven content is rendered dynamically on the client; however, you can generate Markdown pages as a preprocessing step if desired.)
 
 ## Files
 
