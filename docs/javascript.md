@@ -1,6 +1,6 @@
 # JavaScript
 
-Use client-side JavaScript to render charts, inputs, and other dynamic, interactive, and graphical content. JavaScript in [Markdown](./markdown) can be expressed either as [fenced code blocks](#fenced-code-blocks) or [inline expressions](#inline-expressions). You can also write JavaScript modules alongside Markdown files and [import them](./imports).
+Use JavaScript to render charts, inputs, and other dynamic, interactive, and graphical content on the client. JavaScript in [Markdown](./markdown) can be expressed either as [fenced code blocks](#fenced-code-blocks) or [inline expressions](#inline-expressions). You can also [import](./imports) JavaScript modules to share code across pages.
 
 <div class="tip">JavaScript runs on load, and re-runs <a href="./reactivity">reactively</a> when variables change.</div>
 
@@ -28,7 +28,7 @@ A program block looks like this (note the semicolon):
 const foo = 1 + 2;
 ```
 
-A program block doesn’t display anything by default, but you can call the built-in [`display` function](#explicit-display) explicitly if desired. The above block defines the top-level variable `foo` with a value of ${foo}.
+A program block doesn’t display anything by default, but you can call [`display`](#explicit-display) to display something.
 
 JavaScript blocks do not show their code by default. If you want to show the code, use the `echo` directive:
 
@@ -38,19 +38,19 @@ JavaScript blocks do not show their code by default. If you want to show the cod
 ```
 ````
 
-The code is displayed below the output, like so:
+The code is rendered below the output, like so:
 
 ```js echo
 1 + 2
 ```
 
-If an expression evaluates to a DOM node, the node is displayed as-is.
+If an expression evaluates to a DOM node, the node is inserted into the page directly above the code block. Use this to create dynamic content such as charts and tables.
 
 ```js echo
-document.createTextNode("Hello, world!")
+document.createTextNode("[insert chart here]") // some imagination required
 ```
 
-You can use the [standard DOM API](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model) to create content, but typically you’ll use a helper library such as [Hypertext Literal](./lib/htl), [Observable Plot](./lib/plot), or [D3](./lib/d3) to create content. For example, here’s a component that displays a greeting:
+You can use the [DOM API](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model) to create content as above, but typically you’ll use a helper library such as [Hypertext Literal](./lib/htl), [Observable Plot](./lib/plot), or [D3](./lib/d3) to create content. For example, here’s a component that displays a greeting:
 
 ```js echo
 function greeting(name) {
@@ -62,7 +62,7 @@ function greeting(name) {
 greeting("world")
 ```
 
-And here’s a line chart of Apple’s stock price:
+And here’s a line chart of Apple’s stock price using [Observable Plot](./lib/plot):
 
 ```js echo
 Plot.lineY(aapl, {x: "Date", y: "Close"}).plot({y: {grid: true}})
@@ -78,7 +78,7 @@ html`<span style=${{color: `hsl(${(now / 10) % 360} 100% 50%)`}}>Rainbow text!</
 
 ## Inline expressions
 
-Inline JavaScript expressions (<code>$\{…}</code>) interpolate values into Markdown. They are typically used to display numbers such as metrics, or to arrange visual elements such as charts into rich HTML layouts.
+Inline expressions <code>$\{…}</code> interpolate values into Markdown. They are typically used to display numbers such as metrics, or to arrange visual elements such as charts into rich HTML layouts.
 
 For example, this paragraph simulates rolling a 20-sided dice:
 
@@ -98,10 +98,10 @@ The current time is ${new Date(now).toLocaleTimeString("en-US")}.
 
 Likewise, if an inline expression evaluates to a DOM element or node, it will be inserted into the page. For example, you can…
 
-interpolate a sparkline ${Plot.plot({axis: null, margin: 0, width: 80, height: 17, x: {type: "band", round: false}, marks: [Plot.rectY(aapl.slice(-15), {x: "Date", y1: 150, y2: "Close", fill: d3.interpolateRainbow(number / 100)})]})}
+interpolate a sparkline ${Plot.plot({axis: null, margin: 0, width: 80, height: 17, x: {type: "band", round: false}, marks: [Plot.rectY(aapl.slice(-15 - number, -1 - number), {x: "Date", y1: 150, y2: "Close", fill: "var(--theme-foreground-focus)"})]})}
 
 ```md echo
-interpolate a sparkline ${Plot.plot({axis: null, margin: 0, width: 80, height: 17, x: {type: "band", round: false}, marks: [Plot.rectY(aapl.slice(-15), {x: "Date", y1: 150, y2: "Close", fill: d3.interpolateRainbow(number / 100)})]})}
+interpolate a sparkline ${Plot.plot({axis: null, margin: 0, width: 80, height: 17, x: {type: "band", round: false}, marks: [Plot.rectY(aapl.slice(-15 - number, -1 - number), {x: "Date", y1: 150, y2: "Close", fill: "var(--theme-foreground-focus)"})]})}
 ```
 
 or even a reactive input ${Inputs.bind(html`<input type=range style="width: 120px;">`, numberInput)} ${number}
@@ -113,11 +113,11 @@ or even a reactive input ${Inputs.bind(html`<input type=range style="width: 120p
 into prose.
 
 ```js echo
-const numberInput = Inputs.input(89);
+const numberInput = Inputs.input(0);
 const number = Generators.input(numberInput);
 ```
 
-Unlike code blocks, expressions cannot declare top-level reactive variables.
+Expressions cannot declare top-level reactive variables. To declare a variable, use a code block instead. You can declare a variable in a code block (without displaying it) and then display it somewhere else using an inline expression.
 
 ## Explicit display
 
@@ -135,7 +135,7 @@ You can display structured objects, too. Click on the object below to inspect it
 display({hello: {subject: "world"}, numbers: [1, 2, 3, 4]})
 ```
 
-Calling `display` multiple times will display multiple values. Values are displayed in the order they are received. (Previously-displayed values will be cleared when the associated code block or inline expression is re-run.)
+Calling `display` multiple times will display multiple values. Values are displayed in the order they are received. Previously-displayed values will be cleared when the associated code block or inline expression is invalidated.
 
 ```js echo
 for (let i = 0; i < 5; ++i) {
@@ -146,19 +146,13 @@ for (let i = 0; i < 5; ++i) {
 If you pass `display` a DOM node, it will be inserted directly into the page. Use this technique to render dynamic displays of data, such as charts and tables.
 
 ```js echo
-display(document.createTextNode(`Your lucky number is ${Math.floor(Math.random () * 10)}!`));
+display(html`Your lucky number is ${Math.floor(Math.random () * 10)}!`);
 ```
 
 <div class="note">
-  <p>This is a contrived example — you wouldn’t normally create a text node by hand. Instead, you’d use an <a href="./javascript#inline-expressions">inline expression</a> to interpolate a value into Markdown. For example:</p>
+  <p>This is a contrived example — you normally use an <a href="./javascript#inline-expressions">inline expression</a> to interpolate a value into Markdown. For example:</p>
   <pre><code class="language-md">Your lucky number is &dollar;{Math.floor(Math.random () * 10)}!</code></pre>
 </div>
-
-You’ll often pass <code>display</code> a DOM node when you’re using a helper library such as <a href="./lib/plot">Observable Plot</a> or <a href="./lib/inputs">Observable Inputs</a> or a custom component (a function you’ve written that returns a DOM node) to create content. For example, the above can be written using [Hypertext Literal](./lib/htl) as:
-
-```js echo
-display(html`Your lucky number is ${Math.floor(Math.random () * 10)}!`);
-```
 
 The `display` function returns the passed-in value. You can display any value (any expression) in code, not only top-level variables; use this as an alternative to `console.log` to debug your code.
 
@@ -172,7 +166,7 @@ The value of `y` is ${y}.
 The value of `y` is ${y}.
 ```
 
-When the value passed to `display` is not a DOM element or node, the behavior of `display` depends on whether it is called within a fenced code block or an inline expression. In fenced code blocks, `display` will use the [Observable Inspector](https://github.com/observablehq/inspector).
+When the value passed to `display` is not a DOM element or node, the behavior of `display` depends on whether it is called within a fenced code block or an inline expression. In fenced code blocks, `display` will use the [inspector](https://github.com/observablehq/inspector).
 
 ```js echo
 display([1, 2, 3]);
@@ -186,7 +180,7 @@ ${display([1, 2, 3])}
 ${display([1, 2, 3])}
 ```
 
-The `display` function is scoped to each code block, meaning that the `display` function is a closure bound to where it will display on the page. But you can capture a code block’s `display` function by assigning it to a [top-level variable](./reactivity):
+The `display` function is scoped to each code block, meaning that the `display` function is a closure bound to where it will display on the page. But you can capture a code block’s `display` function by assigning it to a top-level variable:
 
 ```js echo
 const displayThere = display;
@@ -236,7 +230,7 @@ Implicit display also implicitly awaits promises.
 
 ## Responsive display
 
-In Markdown, the built-in `width` reactive variable represents the current width of the main element. This can be a handy thing to pass, say, as the **width** option to [Observable Plot](./lib/plot).
+In Markdown, the built-in `width` reactive variable represents the current width of the main element. This variable is implemented by [`Generators.width`](./lib/generators#width(element)) and backed by a [`ResizeObserver`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver). The reactive width can be a handy thing to pass, say, as the **width** option to [Observable Plot](./lib/plot).
 
 ```html echo
 The current width is ${width}.
@@ -245,8 +239,6 @@ The current width is ${width}.
 ```js
 import {resize} from "npm:@observablehq/stdlib";
 ```
-
-(Internally, `width` is implemented by [`Generators.width`](./lib/generators#width(element)).)
 
 For more control, or in a [grid](./css/grid) where you want to respond to either width or height changing, use the built-in `resize` helper. This takes a render function which is called whenever the width or height [changes](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver), and the element returned by the render function is inserted into the DOM.
 
