@@ -1,12 +1,12 @@
 # Projects
 
-A Framework project consists of:
+A Framework project consists of a home page (`index.md`) and any of the following:
 
-- A home page (`index.md`) and additional pages (`.md`)
-- Shared components (`.js`)
+- Additional pages (`.md`)
 - Data loaders (`.csv.py`, `.json.ts`, _etc._)
 - Static data files (`.csv`, `.json`, `.parquet`, _etc._)
 - Other static assets (`.png`, `.css`, _etc._)
+- Shared components (`.js`)
 - A project configuration file (`observablehq.config.js`)
 
 Pages are written in Markdown (`.md`) intermingled with HTML, JavaScript, SQL, and other languages. JavaScript can also be imported from local modules (`.js`) and npm. Data loaders can be written in Python, R, JavaScript, or any other language, and output data snapshots. These snapshots, along with static data files, can be loaded into pages to render charts, tables, and other dynamic content.
