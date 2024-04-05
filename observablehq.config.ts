@@ -76,8 +76,8 @@ export default {
     {name: "Contributing", path: "/contributing"}
   ],
   base: "/framework",
-  head: `<link rel="apple-touch-icon" href="/favicon.png">
-<link rel="icon" type="image/png" href="/favicon.png" sizes="512x512">${
+  head: `<link rel="apple-touch-icon" href="/observable.png">
+<link rel="icon" type="image/png" href="/observable.png" sizes="32x32">${
     process.env.CI
       ? `
 <script type="module" async src="https://events.observablehq.com/client.js?pageLoad"></script>
