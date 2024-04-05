@@ -222,7 +222,7 @@ As you might imagine, you can use such a generator to drive an animation. A gene
 
 ## Inputs
 
-Inputs are graphical user interface elements such as dropdowns, radios, sliders, and text boxes that accept data from a user and enable interaction via [reactivity](./reactivity). They can also be custom elements that you design, such as charts that support interactive selection via pointing or brushing.
+Inputs are graphical user interface elements such as dropdowns, radios, sliders, and text boxes that accept data from a user and enable interaction via reactivity. They can also be custom elements that you design, such as charts that support interactive selection via pointing or brushing.
 
 Inputs might prompt a viewer to:
 
@@ -230,13 +230,13 @@ Inputs might prompt a viewer to:
 - Select a URL from a dropdown to view traffic to a specific page
 - Choose a date range to explore data within a period of interest
 
-Inputs are typically displayed using the built-in [`view`](#view(element)) function, which [displays](../javascript#explicit-display) the given element and returns a [value generator](./reactivity#generators). The generator can then be declared as a [top-level variable](./reactivity) to expose the input’s value to the page. For example, the radio input below prompts the user to select their favorite team:
+Inputs are typically displayed using the built-in `view` function, which [displays](../javascript#explicit-display) the given element and returns a corresponding value generator (`Generators.input`) to expose the input’s value to the page. For example, the radio input below prompts for your favorite team:
 
 ```js echo
 const team = view(Inputs.radio(["Metropolis Meteors", "Rockford Peaches", "Bears"], {label: "Favorite team:", value: "Metropolis Meteors"}));
 ```
 
-The `team` variable here will reactively update when the user interacts with the radio input, triggering re-evaluation of referencing code blocks. Select different teams in the radio input above to update the text.
+Code blocks that reference `team` re-run automatically when the user interacts with the radio input. Try selecting a different team.
 
 My favorite baseball team is the ${team}!
 
@@ -244,7 +244,7 @@ My favorite baseball team is the ${team}!
 My favorite baseball team is the ${team}!
 ```
 
-You can implement custom inputs using arbitrary HTML. For example, here is a [range input](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/range) that lets you choose an integer between 1 and 15 (inclusive):
+The above example uses `Inputs.radio`, which is provided by [Observable Inputs](./lib/inputs). You can also implement custom inputs using arbitrary HTML. For example, here is a [range input](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/range) that lets you choose an integer between 1 and 15 (inclusive):
 
 ```js echo
 const n = view(html`<input type=range step=1 min=1 max=15>`);
@@ -254,17 +254,7 @@ const n = view(html`<input type=range step=1 min=1 max=15>`);
 n // Try dragging the slider above
 ```
 
-<div class="tip">To be compatible with <code>view</code>, custom inputs must emit <code>input</code> events and expose their current value as <i>element</i>.value. See <a href="./lib/generators#input(element)"><code>Generators.input</code></a> for more.</div>
-
-More often, you’ll use a helper library such as [Observable Inputs](./lib/inputs) or [Observable Plot](./lib/plot) to declare inputs. For example, here is [`Inputs.range`](./lib/inputs#range):
-
-```js echo
-const m = view(Inputs.range([1, 15], {label: "Favorite number", step: 1}));
-```
-
-```js echo
-m // Try dragging the slider above
-```
+<div class="tip">To be compatible with <code>view</code>, custom inputs must emit <code>input</code> events when their value changes, and expose their current value as <i>element</i>.value. See <a href="./lib/generators#input(element)"><code>Generators.input</code></a> for more.</div>
 
 To use a chart as an input, you can use Plot’s [pointer interaction](https://observablehq.com/plot/interactions/pointer), say by setting the **tip** option on a mark. In the scatterplot below, the penguin closest to the pointer is exposed as the reactive variable `penguin`.
 
@@ -278,33 +268,19 @@ penguin
 
 In the future, Plot will support more interaction methods, including brushing. Please upvote [#5](https://github.com/observablehq/plot/issues/5) if you are interested in this feature.
 
-### view(*element*)
-
-The [`view` function](#view(element)) is a wrapper for `display` that returns a [value generator](./reactivity#generators) for the given input element (rather than the input element itself). For example, below we display an input element and expose its value to the page as the variable `text`.
-
-```js echo
-const text = view(html`<input type="text" placeholder="Type something here">`);
-```
-
-```js echo
-text // Try typing into the box above
-```
-
-When you type into the textbox, the generator will yield a new value, triggering the [reactive evaluation](./reactivity) of any code blocks that reference `text`. See [Inputs](./reactivity#inputs) for more.
-
-The `view` function used above does two things:
+The `view` function does two things:
 
 1. it [displays](../javascript#explicit-display) the given DOM *element*, and then
-2. returns its corresponding [value generator](./reactivity#generators).
+2. returns a corresponding value generator.
 
-The `view` function uses [`Generators.input`](../lib/generators#input(element)) under the hood. You can also call `Generators.input` directly, say to declare the input as a top-level variable without immediately displaying it:
+The `view` function uses [`Generators.input`](../lib/generators#input(element)) under the hood. As shown above, you can call `Generators.input` directly, say to declare the input as a top-level variable without immediately displaying it.
 
 ```js echo
 const subjectInput = html`<input type="text" placeholder="anonymous">`;
 const subject = Generators.input(subjectInput);
 ```
 
-As a top-level variable, you can then display the input anywhere you like, such as within a [card](./layout#card) using an [inline expression](./javascript#inline-expressions). And you can reference the input’s value reactively anywhere, too.
+You can then display the input anywhere you like. And you can reference the input’s value reactively anywhere, too. Below, both are displayed in a card.
 
 <div class="card" style="display: grid; gap: 0.5rem;">
   <div>Enter your name: ${subjectInput}</div>
