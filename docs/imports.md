@@ -192,7 +192,7 @@ For convenience, Framework provides recommended libraries by default in Markdown
 
 Click on any of the imported symbols below to learn more.
 
-<pre><code class="language-js">import {<a href="./data#files">FileAttachment</a>} from "npm:@observablehq/stdlib";</code></pre>
+<pre><code class="language-js">import {<a href="./files">FileAttachment</a>} from "npm:@observablehq/stdlib";</code></pre>
 <pre><code class="language-js">import {<a href="./reactivity#generators">Generators</a>} from "npm:@observablehq/stdlib";</code></pre>
 <pre><code class="language-js">import {<a href="./reactivity#mutables">Mutable</a>} from "npm:@observablehq/stdlib";</code></pre>
 <pre><code class="language-js">import <a href="./lib/dot">dot</a> from "npm:@observablehq/dot";</code></pre>

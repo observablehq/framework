@@ -1,3 +1,3 @@
-<meta http-equiv="refresh" content="0; url=../data">
+<meta http-equiv="refresh" content="0; url=../files">
 
-Moved to [Data](../data).
+Moved to [Files](../files).

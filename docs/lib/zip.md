@@ -1,8 +1,6 @@
 # ZIP
 
-TODO Move this to `../data.md`.
-
-To load a [ZIP archive](<https://en.wikipedia.org/wiki/ZIP_(file_format)>), use [`FileAttachment`](../data#files).
+To load a [ZIP archive](<https://en.wikipedia.org/wiki/ZIP_(file_format)>), use [`FileAttachment`](../files).
 
 ```js echo
 const muybridge = FileAttachment("muybridge.zip").zip();

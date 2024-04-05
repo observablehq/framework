@@ -1,6 +1,6 @@
 # Microsoft Excel (XLSX)
 
-[`FileAttachment`](../data#files) supports the [Microsoft Excel Open XML format](https://en.wikipedia.org/wiki/Office_Open_XML) via the `file.xlsx` method. This is implemented using the MIT-licensed [ExcelJS](https://github.com/exceljs/exceljs) library.
+[`FileAttachment`](../files) supports the [Microsoft Excel Open XML format](https://en.wikipedia.org/wiki/Office_Open_XML) via the `file.xlsx` method. This is implemented using the MIT-licensed [ExcelJS](https://github.com/exceljs/exceljs) library.
 
 ```js echo
 const workbook = FileAttachment("laser-report.xlsx").xlsx();

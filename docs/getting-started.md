@@ -356,7 +356,7 @@ If this barfs a bunch of JSON in the terminal, it’s working as intended. 😅 
 
 Framework uses [file-based routing](./loaders#routing) for data loaders: the data loader <code>forecast.json.js</code> serves the file <code>forecast.json</code>. To load this file from <code>docs<span class="wbr">/</span>weather.md</code> we use the relative path <code>./data<span class="wbr">/</span>forecast.json</code>. In effect, data loaders are simply a naming convention for generating “static” files — a big advantage of which is that you can edit a data loader and the changes immediately propagate to the live preview without needing a reload.
 
-To load a file in JavaScript, use the built-in [`FileAttachment`](./data#files). In `weather.md`, replace the contents of the JavaScript code block (the parts inside the triple backticks <code>```</code>) with the following code:
+To load a file in JavaScript, use the built-in [`FileAttachment`](./files). In `weather.md`, replace the contents of the JavaScript code block (the parts inside the triple backticks <code>```</code>) with the following code:
 
 ```js run=false
 const forecast = FileAttachment("./data/forecast.json").json();

@@ -4,7 +4,7 @@ keywords: viewof
 
 # Reactivity
 
-JavaScript in Framework runs like a spreadsheet: code re-runs automatically when referenced variables change. This brings:
+Framework runs like a spreadsheet: code re-runs automatically when referenced variables change. This brings:
 
 - Easier interactivity because state is automatically kept in sync
 - Easier asynchronous programming via implicit await of promises
@@ -65,7 +65,7 @@ In Framework, when one code block refers to a promise defined in another code bl
 For example, below `FileAttachment.json` returns a promise, and so the value of `volcano` is a promise.
 
 ```js echo
-const volcano = FileAttachment("./javascript/volcano.json").json();
+const volcano = FileAttachment("volcano.json").json();
 ```
 
 And yet if we reference `volcano` in another code block, we don’t need to `await`. The `await` is implicit; the code block automatically waits for the `volcano` promise to resolve before running.
@@ -219,6 +219,25 @@ As you might imagine, you can use such a generator to drive an animation. A gene
   <rect fill="#4269d0" width="32" height="32" x=${(i % (640 + 32)) - 32}></rect>
 </svg>
 ```
+
+You can also use a generator to stream live data. Here is a WebSocket that listens for Blockchain transactions:
+
+```js echo
+const socket = new WebSocket("wss://ws.blockchain.info/inv");
+invalidation.then(() => socket.close());
+socket.addEventListener("open", () => socket.send(JSON.stringify({op: "unconfirmed_sub"})));
+const message = Generators.observe((change) => {
+  const messaged = (event) => change(JSON.parse(event.data));
+  socket.addEventListener("message", messaged);
+  return () => socket.removeEventListener("message", messaged);
+});
+```
+
+```js echo
+message.x // the most recently reported transaction
+```
+
+TODO Turn this into a visualization?
 
 ## Inputs
 

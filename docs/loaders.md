@@ -1,10 +1,13 @@
 # Data loaders
 
-**Data loaders** generate files — typically static snapshots of data — at build time. For example, a data loader might query a database and output a CSV file, or server-side render a chart and output a PNG image.
+**Data loaders** generate static snapshots of data during build. For example, a data loader might query a database and output CSV data, or server-side render a chart and output a PNG image.
 
-Why generate data at build time? Conventional dashboards are often slow or even unreliable because database queries are executed for each viewer on load. By preparing static data snapshots ahead of time during build, dashboards load instantly with no external dependency on your database. You can also optimize data snapshots for what your dashboard needs, further improving performance and offering more control over what information is shared with viewers.
+Why static snapshots? Performance is critical for dashboards: users don’t like to wait, and dashboards only create value if users look at them. Data loaders practically force your app to be fast because data is precomputed and thus can be served instantly — you don’t need to run queries separately for each user on load. Furthermore, data can be highly optimized (and aggregated and anonymized), minimizing what you send to the client. And since data loaders run only during build, your users don’t need direct access to your data warehouse, making your dashboards more secure and robust.
 
-Data loaders can be written in any programming language. They can even invoke binary executables such as ffmpeg or DuckDB! For convenience, Observable Framework has built-in support for common languages: JavaScript, TypeScript, Python, and R. Naturally you can use any third-party library or SDK for these languages, too.
+<div class="tip">Data loaders are optional. You can use <code>fetch</code> or <code>WebSocket</code> if you prefer to load data at runtime, or you can store data in static files.</div>
+<div class="tip">You can use <a href="./deploying">continuous deployment</a> to rebuild data as often as you like, ensuring that data is always up-to-date.</div>
+
+Data loaders can be written in any programming language. They can even invoke binary executables such as ffmpeg or DuckDB. For convenience, Framework has built-in support for common languages: JavaScript, TypeScript, Python, and R. Naturally you can use any third-party library or SDK for these languages, too.
 
 A data loader can be as simple as a shell script that invokes [curl](https://curl.se/) to fetch recent earthquakes from the [USGS](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php):
 
@@ -12,7 +15,7 @@ A data loader can be as simple as a shell script that invokes [curl](https://cur
 curl https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson
 ```
 
-Observable Framework uses [file-based routing](./routing), so assuming this shell script is named `quakes.json.sh`, a `quakes.json` file is then generated at build time. You can access this file from the client using [`FileAttachment`](./data#files):
+Data loaders use [file-based routing](#routing), so assuming this shell script is named `quakes.json.sh`, a `quakes.json` file is then generated at build time. You can access this file from the client using [`FileAttachment`](./files):
 
 ```js echo
 FileAttachment("quakes.json").json()

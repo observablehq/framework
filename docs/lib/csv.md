@@ -1,6 +1,6 @@
 # Comma-separated values
 
-To load a [comma-separated values](https://en.wikipedia.org/wiki/Comma-separated_values) (CSV) file, use [`FileAttachment`](../data#files)`.csv`. The `csv`, `tsv`, and `dsv` method implementations are based on [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180).
+To load a [comma-separated values](https://en.wikipedia.org/wiki/Comma-separated_values) (CSV) file, use [`FileAttachment`](../files)`.csv`. The `csv`, `tsv`, and `dsv` method implementations are based on [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180).
 
 ```js echo
 const gistemp = FileAttachment("gistemp.csv").csv({typed: true});

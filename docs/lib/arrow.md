@@ -2,7 +2,7 @@
 
 [Apache Arrow](https://arrow.apache.org/) “defines a language-independent columnar memory format for flat and hierarchical data, organized for efficient analytic operations.” You will probably not consume it directly, but it is used by [Arquero](./arquero), [DuckDB](./duckdb), and other libraries to handle data efficiently.
 
-To load an [Arrow IPC file](https://arrow.apache.org/docs/format/Columnar.html#format-ipc), use [`FileAttachment`](../data#files).
+To load an [Arrow IPC file](https://arrow.apache.org/docs/format/Columnar.html#format-ipc), use [`FileAttachment`](../files).
 
 ```js echo
 const flights = FileAttachment("flights-200k.arrow").arrow();

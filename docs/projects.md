@@ -72,7 +72,7 @@ Framework uses file-based routing: each page in your project has a corresponding
 └─ ...
 ```
 
-<!-- In addition to pages, you can have [importable](./imports) JavaScript modules (`.js`), [data loaders](./loaders) for generating data snapshots (_e.g._, `.csv.py`), and [static assets](./data#files) such as images and files (_e.g._, `.png`). -->
+<!-- In addition to pages, you can have [importable](./imports) JavaScript modules (`.js`), [data loaders](./loaders) for generating data snapshots (_e.g._, `.csv.py`), and [static assets](./files) such as images and files (_e.g._, `.png`). -->
 
 When the site is built, the output root (`dist`) will contain two corresponding static HTML pages (`hello.html` and `index.html`), along with a few additional assets needed for the site to work.
 
