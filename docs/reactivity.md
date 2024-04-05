@@ -126,51 +126,11 @@ Hello is: ${hello}.
 
 ## Generators
 
-Values that change over time — such as interactive inputs, animation parameters, or streaming data — can be represented reactively in Framework as [async generators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator). When a top-level generator is declared, code in other blocks sees the generator’s latest yielded value and runs each time the generator yields a new value.
+Values that change over time — such as interactive inputs, animation parameters, or streaming data — can be represented in Framework as [async generators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator). When a top-level generator is declared, code in other blocks sees the generator’s latest yielded value and runs each time the generator yields a new value.
 
-<!-- TK Talk about how this is different than just using a `requestAnimationFrame` loop because you can write your animation more declaratively, and then maybe you can have a scrubber that controls the animation instead of being driven by time.
--->
+<div class="note">As with implicit await and promises, implicit iteration of generators only applies <i>across</i> code blocks, not <i>within</i> a code block.</div>
 
-For example, here is a generator `j` that increments once a second:
-
-```js echo
-const j = (async function* () {
-  for (let j = 0; true; ++j) {
-    yield j;
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  }
-})();
-```
-
-The value of j is: ${j}.
-
-```md
-The value of j is: ${j}.
-```
-
-If the generator does not explicitly `await`, the generator will yield every [animation frame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame), which is typically 60 times per second. Also, the generator will automatically pause when the page is put in a background tab.
-
-```js echo
-const i = (function* () {
-  for (let i = 0; true; ++i) {
-    yield i;
-  }
-})();
-```
-
-The value of i is: ${i}.
-
-```md
-The value of i is: ${i}.
-```
-
-The examples above are “scripted” generators, meaning that the code dictates a fixed sequence of output values over time (1, 2, 3…). This demonstrates the concept of generators, but it’s not representative of generators in practice.
-
-More commonly, generators in Framework are used to represent user input. And the purpose of the generator is to represent the user input as a [reactive variable](./reactivity), such that any code that references this user input automatically re-runs when the user changes their input.
-
-Normally we don’t implement the generator manually; we use a helper method.
-
-And here’s an HTML input element using [`Generators.input`](<../lib/generators#input(element)>):
+As an example, here’s an HTML input element. By passing it to [`Generators.input`](<../lib/generators#input(element)>), we can define a generator that yields the input’s value each time it changes.
 
 <input id="nameInput">
 
@@ -181,11 +141,23 @@ And here’s an HTML input element using [`Generators.input`](<../lib/generators
 const name = Generators.input(nameInput);
 ```
 
+Now when we reference `name` in another code block, it refers to the current value of the input element, and the code block runs each time the input changes. Try typing into the input field above.
+
 ```js echo
 name
 ```
 
-Or using `Generators.observe`…
+Implicit iteration of generators applies to inline expressions, too.
+
+Hello, ${name || "anonymous"}!
+
+```md run=false
+Hello, ${name || "anonymous"}!
+```
+
+The above example uses `Generators.input`, which is a helper method that takes an input element and returns a corresponding value generator. More often, you’ll use the `view` function to define an [input](#inputs); we’ll cover that below, but first we’ll take a deeper look at how generators work.
+
+The `Generators.observe` helper is a more general way to create a generator that “pushes” or “emits” events asynchronously. This helper takes an initializer function and passes it a `notify` callback which you call with each new value; the initializer can also return a disposal function to cleanup when the generator is terminated. The resulting generator yields each value you pass to `notify`. To implement the `name` generator above using `Generators.observe`:
 
 ```js run=false
 const name = Generators.observe((notify) => {
@@ -196,53 +168,7 @@ const name = Generators.observe((notify) => {
 });
 ```
 
-Or manually implementing the generator…
-
-```js run=false
-const name = (async function* () {
-  let resolve;
-  const inputted = () => resolve?.();
-  nameInput.addEventListener("input", inputted);
-  try {
-    while (true) {
-      yield nameInput.value;
-      await new Promise((_) => (resolve = _));
-    }
-  } finally {
-    nameInput.removeEventListener("input", inputted);
-  }
-})();
-```
-
-As you might imagine, you can use such a generator to drive an animation.
-
-With canvas:
-
-<canvas id="canvas" width="640" height="32"></canvas>
-
-```html run=false
-<canvas id="canvas" width="640" height="32"></canvas>
-```
-```js echo
-const context = canvas.getContext("2d");
-```
-```js echo
-context.clearRect(0, 0, 640, 32);
-context.fillStyle = "#4269d0";
-context.fillRect((i % (640 + 32)) - 32, 0, 32, 32);
-```
-
-Or with SVG:
-
-```svg echo
-<svg width="640" height="32">
-  <rect fill="#4269d0" width="32" height="32" x=${(i % (640 + 32)) - 32}></rect>
-</svg>
-```
-
-You could do the same thing with a `requestAnimationFrame` loop, but then you have to remember to handle the `invalidation` promise so that the animation loop is terminated when the code is re-evaluated; otherwise you could have multiple animation loops happening concurrently, competing for the same canvas.
-
-As another example, you can use the built-in [`Generators.observe`](<../lib/generators#observe(change)>) to represent the current pointer coordinates:
+As another example, here is using `Generators.observe` to expose the current pointer coordinates:
 
 ```js echo
 const pointer = Generators.observe((change) => {
@@ -253,56 +179,46 @@ const pointer = Generators.observe((change) => {
 });
 ```
 
-Pointer is: ${pointer.map(Math.round).join(", ")}.
-
-```md
-Pointer is: ${pointer.map(Math.round).join(", ")}.
+```js echo
+pointer.map(Math.round) // try moving your mouse
 ```
 
-See [Data: Web sockets](./data#web-sockets) for an example of using a generator to stream live data.
-
-## Mutables
-
-Normally, only the code block that declares a [top-level variable](./reactivity) can define it or assign to it. You can however use the `Mutable` function to declare a mutable generator, allowing other code to mutate the generator’s value.
-
-`Mutable` is available by default in Markdown but you can import it explicitly like so:
+And here’s a generator `j` that increments once a second, defined directly by an immediately-invoked async generator function.
 
 ```js echo
-import {Mutable} from "npm:@observablehq/stdlib";
+const j = (async function* () {
+  for (let j = 0; true; ++j) {
+    yield j;
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+})();
 ```
-
-Then to use it:
 
 ```js echo
-const count = Mutable(0);
-const increment = () => ++count.value;
-const reset = () => count.value = 0;
+j
 ```
 
-In other code, you can now create buttons to increment and reset the count like so:
+If a generator does not explicitly `await`, it will yield once every [animation frame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame), typically 60 times per second. Generators also automatically pause when the page is put in a background tab.
 
 ```js echo
-Inputs.button([["Increment", increment], ["Reset", reset]])
+const i = (function* () {
+  for (let i = 0; true; ++i) {
+    yield i;
+  }
+})();
 ```
 
-<style type="text/css">
-@keyframes flash {
-  from { background-color: var(--theme-blue); }
-  to { background-color: none; }
-}
-.flash {
-  animation-name: flash;
-  animation-duration: 1s;
-}
-</style>
-
-Count is: ${html`<span class="flash">${count}</span>`}.
-
-```md
-Count is: ${html`<span class="flash">${count}</span>`}.
+```js echo
+i
 ```
 
-Within the defining code block, `count` is a generator and `count.value` can be read and written to as desired; in other code, `count` is the generator’s current value. Other code that references `count` will re-run automatically whenever `count.value` is reassigned — so be careful you don’t cause an infinite loop!
+As you might imagine, you can use such a generator to drive an animation. A generator is typically easier than a `requestAnimationFrame` loop because the animation is declarative — the code runs automatically whenever `i` changes — and because you don’t have to handle [invalidation](#invalidation) to terminate the loop.
+
+```svg echo
+<svg width="640" height="32">
+  <rect fill="#4269d0" width="32" height="32" x=${(i % (640 + 32)) - 32}></rect>
+</svg>
+```
 
 ## Inputs
 
@@ -384,23 +300,66 @@ The `view` function used above does two things:
 The `view` function uses [`Generators.input`](../lib/generators#input(element)) under the hood. You can also call `Generators.input` directly, say to declare the input as a top-level variable without immediately displaying it:
 
 ```js echo
-const nameInput = html`<input type="text" placeholder="anonymous">`;
-const name = Generators.input(nameInput);
+const subjectInput = html`<input type="text" placeholder="anonymous">`;
+const subject = Generators.input(subjectInput);
 ```
 
 As a top-level variable, you can then display the input anywhere you like, such as within a [card](./layout#card) using an [inline expression](./javascript#inline-expressions). And you can reference the input’s value reactively anywhere, too.
 
 <div class="card" style="display: grid; gap: 0.5rem;">
-  <div>Enter your name: ${nameInput}</div>
-  <div>Hi <b>${name || "anonymous"}</b>!</div>
+  <div>Enter your name: ${subjectInput}</div>
+  <div>Hi <b>${subject || "anonymous"}</b>!</div>
 </div>
 
 ```html run=false
 <div class="card" style="display: grid; gap: 0.5rem;">
-  <div>Enter your name: ${nameInput}</div>
-  <div>Hi <b>${name || "anonymous"}</b>!</div>
+  <div>Enter your name: ${subjectInput}</div>
+  <div>Hi <b>${subject || "anonymous"}</b>!</div>
 </div>
 ```
+
+## Mutables
+
+Normally, only the code block that declares a [top-level variable](./reactivity) can define it or assign to it. You can however use the `Mutable` function to declare a mutable generator, allowing other code to mutate the generator’s value.
+
+`Mutable` is available by default in Markdown but you can import it explicitly like so:
+
+```js echo
+import {Mutable} from "npm:@observablehq/stdlib";
+```
+
+Then to use it:
+
+```js echo
+const count = Mutable(0);
+const increment = () => ++count.value;
+const reset = () => count.value = 0;
+```
+
+In other code, you can now create buttons to increment and reset the count like so:
+
+```js echo
+Inputs.button([["Increment", increment], ["Reset", reset]])
+```
+
+<style type="text/css">
+@keyframes flash {
+  from { background-color: var(--theme-blue); }
+  to { background-color: none; }
+}
+.flash {
+  animation-name: flash;
+  animation-duration: 1s;
+}
+</style>
+
+Count is: ${html`<span class="flash">${count}</span>`}.
+
+```md
+Count is: ${html`<span class="flash">${count}</span>`}.
+```
+
+Within the defining code block, `count` is a generator and `count.value` can be read and written to as desired; in other code, `count` is the generator’s current value. Other code that references `count` will re-run automatically whenever `count.value` is reassigned — so be careful you don’t cause an infinite loop!
 
 ## Invalidation
 
@@ -414,18 +373,18 @@ const colors = ["#4269d0", "#efb118", "#ff725c", "#6cc5b0"];
 const duration = 2000;
 ```
 
-<canvas id="canvas" width="640" height="30" style="max-width: 100%; height: 30px;"></canvas>
+<canvas id="canvas1" width="640" height="30" style="max-width: 100%; height: 30px;"></canvas>
 
 ```js echo
-const canvas = document.querySelector("#canvas");
-const context = canvas.getContext("2d");
+const canvas1 = document.querySelector("#canvas1");
+const context1 = canvas1.getContext("2d");
 const color = colors[clicks % 4]; // cycle through colors on click
 const start = performance.now(); // when the animation started
 
 let frame = requestAnimationFrame(function tick(now) {
   const t = Math.min(1, (now - start) / duration);
-  context.fillStyle = color;
-  context.fillRect(0, 0, t * canvas.width, canvas.height);
+  context1.fillStyle = color;
+  context1.fillRect(0, 0, t * canvas1.width, canvas1.height);
   if (t < 1) frame = requestAnimationFrame(tick);
 });
 
@@ -441,14 +400,14 @@ The `visibility` function returns a promise that resolves when the code block’
 ```js echo
 await visibility(); // wait until this node is visible
 
-const canvas = document.querySelector("#canvas2");
-const context = canvas.getContext("2d");
+const canvas2 = document.querySelector("#canvas2");
+const context2 = canvas2.getContext("2d");
 const start = performance.now();
 
 let frame = requestAnimationFrame(function tick(now) {
   const t = Math.min(1, (now - start) / duration);
-  context.fillStyle = "#a463f2";
-  context.fillRect(0, 0, t * canvas.width, canvas.height);
+  context2.fillStyle = "#a463f2";
+  context2.fillRect(0, 0, t * canvas2.width, canvas2.height);
   if (t < 1) frame = requestAnimationFrame(tick);
 });
 ```
