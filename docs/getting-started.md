@@ -78,14 +78,14 @@ We’ll touch on each of these steps in this tutorial.
 
 First you’ll setup your local development environment by [**creating**](#1.-create) a project. Next you’ll [**develop**](#2.-develop): an iterative process where you save changes to source files in your editor while previewing the result in your browser. When you’re ready to share, it’s time to [**publish**](#3.-publish): you can either build a static site for self-hosting or deploy directly to Observable. Lastly, you can invite people to view your project!
 
-These are just first steps. You can continue to develop projects after publishing, and republish as needed. You can also setup <a href="./deploying">continuous deployment</a> to publish your site automatically on commit or on schedule. We’ll cover these [next steps](#next-steps) briefly below.
+These are just first steps. You can continue to develop projects after publishing, and republish as needed. You can also setup continuous deployment to publish your site automatically on commit or on schedule. We’ll cover these [next steps](#next-steps) briefly below.
 
 ## 1. Create
 
 Framework includes a helper script (`observable create`) for creating new projects. After a few quick prompts — where to create the project, your preferred package manager, *etc.* — it will stamp out a fresh project from a template.
 
 <div class="tip">
-  <p>Framework is a <a href="https://nodejs.org/">Node.js</a> application published to npm. You must have <a href="https://nodejs.org/en/download">Node.js 18 or later</a> installed before you can install Framework. Framework is a command-line interface (CLI) and runs in the terminal.</p>
+  <p>Framework is a <a href="https://nodejs.org/">Node.js</a> application published to npm. You must have <a href="https://nodejs.org/en/download">Node.js 18 or later</a> installed before you can install Framework. Framework is a command-line interface (CLI) that runs in the terminal.</p>
   <p>If you run into difficulty following this tutorial, we’re happy to help! Please visit the <a href="https://talk.observablehq.com">Observable forum</a> or our <a href="https://github.com/observablehq/framework/discussions">GitHub discussions</a>.</p>
 </div>
 
@@ -99,7 +99,7 @@ If you prefer Yarn, run:
 
 You can run the above command anywhere, but you may want to `cd` to your `~/Development` directory first (or wherever you do local development).
 
-The first prompt asks where to create your new project. Enter `hello-framework` to create a directory named `hello-framework` within the current directory. Or just hit Enter, as this is conveniently the default. (You can create a project in a different directory by entering a relative or absolute path; on macOS or Linux, such paths start with `../` or `~/` or `/`.)
+The first prompt asks where to create your new project. Enter `hello-framework` to create a directory named `hello-framework` within the current directory. Or just hit Enter, as this is the default. (You can create a project in a different directory by entering a relative path; on macOS or Linux, such paths start with `../` or `~/` or `/`.)
 
 <pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
@@ -107,7 +107,7 @@ The first prompt asks where to create your new project. Enter `hello-framework` 
 <span class="focus">│</span>  hello-framework<span class="invert">&nbsp;</span>
 <span class="focus">└</span></pre>
 
-Next you’ll enter the project’s title. A project’s title appears in the sidebar as well as on all pages. You can hit Enter here to accept the default title derived from the directory name.
+Next you’ll enter the project’s title. The title will appear in the sidebar as well as on all pages. You can hit Enter here to accept the default title, which is derived from the directory name you entered in the previous step.
 
 <pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
@@ -133,7 +133,7 @@ Next, decide whether you want sample files in your new project. These files demo
 <span class="focus">│</span>  <span class="muted">○ No, create an empty project</span>
 <span class="focus">└</span></pre>
 
-If you use npm or Yarn as your preferred package manager, declare your allegiance now. The package manager you used to launch `observable create` will be selected by default, so you can just hit Enter again to continue. If you prefer a different package manager (say pnpm), choose `No`; you can always install dependencies after the project is created.
+If you use npm or Yarn as your preferred package manager, declare your allegiance now. The package manager you used to launch `observable create` will be selected by default, so you can just hit Enter again to continue. If you prefer a different package manager (say pnpm), choose `No`; you can install dependencies after the project is created.
 
 <pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
@@ -223,7 +223,7 @@ You should see something like this:
 <pre data-copy="none"><b class="green">Observable Framework</b> v1.5.1
 ↳ <u><a href="http://127.0.0.1:3000/" style="color: inherit;">http://127.0.0.1:3000/</a></u></pre>
 
-<div class="tip">
+<div class="note">
   <p>If port 3000 is in use, the preview server will choose the next available port, so your actual port may vary. To specify port 4321 (and similarly for any other port), use <nobr><code>--port 4321</code></nobr>.</p>
   <p>For security, the preview server is by default only accessible on your local machine using the <a href="https://en.wikipedia.org/wiki/Localhost">loopback address</a> 127.0.0.1. To allow remote connections, use <nobr><code>--host 0.0.0.0</code></nobr>.</p>
 </div>
@@ -561,7 +561,7 @@ If this is your first time deploying to Observable, you’ll be prompted to crea
 
 <div class="note">If you have multiple workspaces on Observable, you’ll be prompted to chose a workspace before creating a project. And if you’ve previously deployed projects to your chosen workspace, you can chose to deploy to an existing project, overwriting its contents.</div>
 
-When creating a new project, you need to specify a <i>slug</i> which — together with your workspace username — determines the URL of your project. The slug is a short identifier consisting of lowercase letters, numbers, and hyphens. By default, Framework will suggest a slug based on your project’s title.
+When creating a new project, you need to specify a <i>slug</i> which — together with your workspace username — determines the URL of your project. The slug is a short identifier consisting of lowercase letters, numbers, and hyphens. By default, Framework will suggest a slug based on your project’s title. You can change the slug later, and Observable will automatically redirect to the latest URL.
 
 <pre data-copy="none">
 <span class="muted">┌</span>  <span class="invert"> observable deploy </span>
@@ -578,8 +578,6 @@ When creating a new project, you need to specify a <i>slug</i> which — togethe
 <span class="blue">│</span>  <span class="muted"><span class="invert">h</span>ello-framework</span>
 <span class="blue">└</span>
 </pre>
-
-<div class="tip">You can change the slug later, and Observable will automatically redirect to the latest URL.</div>
 
 Lastly, you can enter an optional deploy message. Deploy messages are shown on Observable and help you keep track of deploy history. For now, you can just leave this blank by hitting Enter.
 

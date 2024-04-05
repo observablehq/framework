@@ -4,9 +4,34 @@
 
 <!-- Framework Markdown follows the [CommonMark spec](https://spec.commonmark.org/) and is powered by [markdown-it](https://github.com/markdown-it/markdown-it). -->
 
-Markdown is a language for formatting text and content; it’s a lightweight, ergonomic alternative (and complement) to HTML. Markdown in Framework extends [CommonMark](https://commonmark.org/) with a handful of features useful for data apps, including [reactive](./reactivity) [JavaScript](./javascript), [HTML](#html), [YAML front matter](#front-matter), [grids](#grids), [cards](#cards), and [notes](#notes). This page covers both standard CommonMark features and Framework extensions.
+Markdown is a language for formatting text and content; it’s a lightweight, ergonomic alternative (and complement) to HTML. Markdown in Framework extends [CommonMark](https://commonmark.org/) with a handful of features useful for data apps, including [reactive](./reactivity) [JavaScript](./javascript), [HTML](#html), [YAML front matter](#front-matter), [grids](#grids), [cards](#cards), and [notes](#notes). This page covers common types of Markdown content.
 
-Here are some common types of Markdown content.
+## Front matter
+
+```yaml
+---
+title: My favorite page
+toc: false
+---
+```
+
+The front matter supports the following options:
+
+- **title** - the page title; defaults to the (first) first-level heading of the page, if any
+- **index** - whether to index this page if [search](./search) is enabled; defaults to true for listed pages
+- **keywords** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a> - additional words to index for [search](./search); boosted at the same weight as the title
+- **draft** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a> - whether to skip this page during build; drafts are also not listed in the default sidebar
+- **sql** <a href="https://github.com/observablehq/framework/releases/tag/v1.2.0" class="observablehq-version-badge" data-version="^1.2.0" title="Added in v1.2.0"></a> - table definitions for [SQL code blocks](./sql)
+
+The front matter can also override the following [project configuration](./config) options:
+
+- **toc** - the [table of contents](./config#toc)
+- **style** - the [custom stylesheet](./config#style)
+- **theme** - the [theme](./config#theme)
+- **head** - the [head](./config#head)
+- **header** - the [header](./config#header)
+- **footer** - the [footer](./config#footer)
+- **sidebar** - whether to show the [sidebar](./config#sidebar)
 
 ## Headings
 
@@ -313,30 +338,3 @@ You can disable the label entirely with an empty `label` attribute.
 ```html run=false
 <div class="note" label>This note has no label.</div>
 ```
-
-## Front matter
-
-```yaml
----
-title: My favorite page
-toc: false
----
-```
-
-The front matter supports the following options:
-
-- **title** - the page title; defaults to the (first) first-level heading of the page, if any
-- **index** - whether to index this page if [search](./search) is enabled; defaults to true for listed pages
-- **keywords** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a> - additional words to index for [search](./search); boosted at the same weight as the title
-- **draft** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a> - whether to skip this page during build; drafts are also not listed in the default sidebar
-- **sql** <a href="https://github.com/observablehq/framework/releases/tag/v1.2.0" class="observablehq-version-badge" data-version="^1.2.0" title="Added in v1.2.0"></a> - table definitions for [SQL code blocks](./sql)
-
-The front matter can also override the following [project configuration](./config) options:
-
-- **toc** - the [table of contents](./config#toc)
-- **style** - the [custom stylesheet](./config#style)
-- **theme** - the [theme](./config#theme)
-- **head** - the [head](./config#head)
-- **header** - the [header](./config#header)
-- **footer** - the [footer](./config#footer)
-- **sidebar** - whether to show the [sidebar](./config#sidebar)
