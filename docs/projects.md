@@ -1,12 +1,22 @@
 # Projects
 
-A typical project looks like this:
+A typical project consists of:
+
+- A home page (`index.md`) and additional pages (`.md`)
+- Shared components (`.js`)
+- Data loaders (`.csv.py`, `.json.js`, _etc._)
+- Static data files (`.csv`, `.json`, _etc._)
+- Other static assets (`.png`, `.css`, _etc._)
+- A project configuration file (`observablehq.config.js`)
+
+And a typical project is structured like this:
 
 ```ini
 .
 ├─ docs
 │  ├─ .observablehq
-│  │  └─ cache
+│  │  ├─ cache
+│  │  └─ deploy.json
 │  ├─ components
 │  │  └─ dotmap.js
 │  ├─ data
