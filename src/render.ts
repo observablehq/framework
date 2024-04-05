@@ -75,7 +75,7 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
     .map(({node, id}) => `\n${transpileJavaScript(node, {id, path, resolveImport})}`)
     .join("")}`)}
-</script>${sidebar ? html`\n${await renderSidebar(options)}` : ""}${
+</script>${sidebar ? html`\n${await renderSidebar(sidebar, options)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
 <div id="observablehq-center">${renderHeader(page.header, resolvers)}
@@ -123,10 +123,12 @@ function registerFile(
   })});`;
 }
 
-async function renderSidebar(options: RenderOptions): Promise<Html> {
+async function renderSidebar(sidebar: true | "hidden", options: RenderOptions): Promise<Html> {
   const {title = "Home", pages, root, path, search, md} = options;
   const {normalizeLink} = md;
-  return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
+  return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar"${
+    sidebar === "hidden" ? " data-hidden" : ""
+  }>
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
   <ol>
