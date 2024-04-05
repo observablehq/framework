@@ -256,22 +256,7 @@ Pointer is: ${pointer.map(Math.round).join(", ")}.
 Pointer is: ${pointer.map(Math.round).join(", ")}.
 ```
 
-Here is a WebSocket that listens for Blockchain transactions:
-
-```js echo
-const socket = new WebSocket("wss://ws.blockchain.info/inv");
-invalidation.then(() => socket.close());
-socket.addEventListener("open", () => socket.send(JSON.stringify({op: "unconfirmed_sub"})));
-const message = Generators.observe((change) => {
-  const messaged = (event) => change(JSON.parse(event.data));
-  socket.addEventListener("message", messaged);
-  return () => socket.removeEventListener("message", messaged);
-});
-```
-
-```js echo
-message.x // the most recently reported transaction
-```
+See [Data: Web sockets](./data#web-sockets) for an example of using a generator to stream live data.
 
 ## Mutables
 

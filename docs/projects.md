@@ -47,3 +47,84 @@ This is the home page for your site. You can have as many additional pages as yo
 #### `observablehq.config.js`
 
 This is the [project configuration](./config) file, such as the pages and sections in the sidebar navigation, and the project’s title. The config file can be written in either TypeScript (`.ts`) or JavaScript (`.js`).
+
+## Routing
+
+Framework uses file-based routing: each page in your project has a corresponding Markdown file (`.md`) of the same name. For example, here’s a simple project that only has two pages (`hello.md` and `index.md`) in the source root (`docs`):
+
+```ini
+.
+├─ docs
+│  ├─ hello.md
+│  └─ index.md
+└─ ...
+```
+
+<!-- In addition to pages, you can have [importable](./imports) JavaScript modules (`.js`), [data loaders](./loaders) for generating data snapshots (_e.g._, `.csv.py`), and [static assets](./data#files) such as images and files (_e.g._, `.png`). -->
+
+When the site is built, the output root (`dist`) will contain two corresponding static HTML pages (`hello.html` and `index.html`), along with a few additional assets needed for the site to work.
+
+```ini
+.
+├─ dist
+│  ├─ _observablehq
+│  │  └─ ... # additional assets for serving the site
+│  ├─ hello.html
+│  └─ index.html
+└─ ...
+```
+
+For this site, routes map to files as:
+
+```
+/      → dist/index.html → docs/index.md
+/hello → dist/hello.html → docs/hello.md
+```
+
+This assumes “clean URLs” as supported by most static site servers; `/hello` can also be accessed as `/hello.html`, and `/` can be accessed as `/index` and `/index.html`. (Some static site servers automatically redirect to clean URLs, but we recommend being consistent when linking to your site.)
+
+Projects should always have a top-level `index.md`; this is the root page of your project, and it’s what people visit by default.
+
+Pages can live in folders. For example:
+
+```ini
+.
+├─ docs
+│  ├─ missions
+|  |  ├─ index.md
+|  |  ├─ apollo.md
+│  │  └─ gemini.md
+│  └─ index.md
+└─ ...
+```
+
+With this setup, routes are served as:
+
+```
+/                → dist/index.html           → docs/index.md
+/missions/       → dist/missions/index.html  → docs/missions/index.md
+/missions/apollo → dist/missions/apollo.html → docs/missions/apollo.md
+/missions/gemini → dist/missions/gemini.html → docs/missions/gemini.md
+```
+
+As a variant of the above structure, you can move the `missions/index.md` up to a `missions.md` in the parent folder:
+
+```ini
+.
+├─ docs
+│  ├─ missions
+|  |  ├─ apollo.md
+│  │  └─ gemini.md
+│  ├─ missions.md
+│  └─ index.md
+└─ ...
+```
+
+Now routes are served as:
+
+```
+/                → dist/index.html           → docs/index.md
+/missions        → dist/missions.html        → docs/missions.md
+/missions/apollo → dist/missions/apollo.html → docs/missions/apollo.md
+/missions/gemini → dist/missions/gemini.html → docs/missions/gemini.md
+```

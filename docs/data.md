@@ -246,3 +246,35 @@ On build, any files referenced by `FileAttachment` will automatically be copied 
 [Imported modules](./imports) can use `FileAttachment`, too. In this case, the path to the file is _relative to the importing module_ in the same fashion as `import`; this is accomplished by resolving relative paths at runtime with [`import.meta.url`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta).
 
 Some additional assets are automatically promoted to file attachments and copied to `_file`. For example, if you have a `<link rel="stylesheet" href="style.css">` declared statically in a Markdown page, the `style.css` file will be copied to `_file`, too (and the file name given a content hash). The HTML elements eligible for file attachments are `audio`, `img`, `link`, `picture`, and `video`.
+
+## Remote data
+
+### Fetch
+
+```js echo
+const info = await fetch(`https://registry.npmjs.org/@observablehq/plot`).then((response) => response.json());
+```
+```js echo
+Inputs.table(Object.values(info.versions).map(({version}) => ({version, date: new Date(info.time[version])})))
+```
+
+### Web sockets
+
+Here is a WebSocket that listens for Blockchain transactions:
+
+```js echo
+const socket = new WebSocket("wss://ws.blockchain.info/inv");
+invalidation.then(() => socket.close());
+socket.addEventListener("open", () => socket.send(JSON.stringify({op: "unconfirmed_sub"})));
+const message = Generators.observe((change) => {
+  const messaged = (event) => change(JSON.parse(event.data));
+  socket.addEventListener("message", messaged);
+  return () => socket.removeEventListener("message", messaged);
+});
+```
+
+```js echo
+message.x // the most recently reported transaction
+```
+
+TODO Turn this into a visualization?
