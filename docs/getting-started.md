@@ -380,7 +380,7 @@ This looks like:
   <figcaption>Using <code>FileAttachment</code> to load data.</figcaption>
 </figure>
 
-The built-in [`display`](./javascript#display(value)) function displays the specified value, a bit like `console.log` in the browser’s console. As you can see below, `display` is called [implicitly](./javascript#implicit-display) when a code block contains an expression:
+The built-in [`display`](./javascript#explicit-display) function displays the specified value, a bit like `console.log` in the browser’s console. As you can see below, `display` is called [implicitly](./javascript#implicit-display) when a code block contains an expression:
 
 ```js echo
 1 + 2

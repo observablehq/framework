@@ -4,11 +4,9 @@ Use client-side JavaScript to render charts, inputs, and other dynamic, interact
 
 <div class="tip">JavaScript runs on load, and re-runs <a href="./reactivity">reactively</a> when variables change.</div>
 
-<!-- (And you can run JavaScript, TypeScript, Python, or any other programming language during build to generate data using [data loaders](./loaders).) -->
-
 ## Fenced code blocks
 
-JavaScript fenced code blocks (<code>```js</code>) are typically used to display content such as charts and inputs. They can also be used for logic by declaring top-level variables, say to load data or declare helper functions.
+JavaScript fenced code blocks (<code>```js</code>) are typically used to display content such as charts and inputs. They can also be used to declare top-level variables, say to load data or declare helper functions.
 
 JavaScript blocks come in two forms: *expression* blocks and *program* blocks. An expression block looks like this (and note the lack of semicolon):
 
@@ -24,15 +22,15 @@ Expression blocks [implicitly display](#implicit-display), producing:
 1 + 2
 ```
 
-A program block looks like this:
+A program block looks like this (note the semicolon):
 
 ```js echo
 const foo = 1 + 2;
 ```
 
-A program block doesn’t display anything by default, but you can call the built-in [`display` function](#display(value)) explicitly. The above block defines the top-level variable `foo` with a value of ${foo}.
+A program block doesn’t display anything by default, but you can call the built-in [`display` function](#explicit-display) explicitly if desired. The above block defines the top-level variable `foo` with a value of ${foo}.
 
-JavaScript blocks do not echo their code by default. If you want to show the code, use the `echo` directive:
+JavaScript blocks do not show their code by default. If you want to show the code, use the `echo` directive:
 
 ````md
 ```js echo
@@ -52,7 +50,7 @@ If an expression evaluates to a DOM node, the node is displayed as-is.
 document.createTextNode("Hello, world!")
 ```
 
-While you can use the [standard DOM API](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model) directly to create content, you’ll typically use a helper library such as [Hypertext Literal](./lib/htl), [Observable Plot](./lib/plot), or [D3](./lib/d3) to create DOM elements for display. For example, here’s a component that displays a greeting:
+You can use the [standard DOM API](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model) to create content, but typically you’ll use a helper library such as [Hypertext Literal](./lib/htl), [Observable Plot](./lib/plot), or [D3](./lib/d3) to create content. For example, here’s a component that displays a greeting:
 
 ```js echo
 function greeting(name) {
@@ -70,7 +68,7 @@ And here’s a line chart of Apple’s stock price:
 Plot.lineY(aapl, {x: "Date", y: "Close"}).plot({y: {grid: true}})
 ```
 
-Code blocks automatically re-run when referenced [reactive variables](./reactivity) change (or when you edit the page during preview). The block below references the built-in variable `now` representing the current time in milliseconds; because `now` is reactive, this block runs sixty times a second and each each new span it returns replaces the one previously displayed.
+Code blocks automatically re-run when referenced [reactive variables](./reactivity) change, or when you edit the page during preview. The block below references the built-in variable `now` representing the current time in milliseconds; because `now` is reactive, this block runs sixty times a second and each each new span it returns replaces the one previously displayed.
 
 ```js echo
 html`<span style=${{color: `hsl(${(now / 10) % 360} 100% 50%)`}}>Rainbow text!</span>`
@@ -90,7 +88,7 @@ You rolled ${Math.floor(Math.random() * 20) + 1}.
 
 You rolled ${Math.floor(Math.random() * 20) + 1}. (Reload the page to re-roll.)
 
-Like fenced code blocks, inline expressions automatically re-run when referenced reactive variables change (or when you edit the page during preview).
+Like fenced code blocks, inline expressions automatically re-run when referenced reactive variables change or when you edit the page during preview.
 
 The current time is ${new Date(now).toLocaleTimeString("en-US")}.
 
@@ -98,12 +96,12 @@ The current time is ${new Date(now).toLocaleTimeString("en-US")}.
 The current time is ${new Date(now).toLocaleTimeString("en-US")}.
 ```
 
-As with code blocks, if an inline expression evaluates to a DOM element or node, it will be inserted into the page. For example, you can…
+Likewise, if an inline expression evaluates to a DOM element or node, it will be inserted into the page. For example, you can…
 
-interpolate a sparkline ${Plot.plot({axis: null, margin: 0, width: 80, height: 17, x: {type: "band", round: false}, marks: [Plot.rectY(aapl.slice(-15), {x: "Date", y1: 150, y2: "Close", fill: "var(--theme-blue)"})]})}
+interpolate a sparkline ${Plot.plot({axis: null, margin: 0, width: 80, height: 17, x: {type: "band", round: false}, marks: [Plot.rectY(aapl.slice(-15), {x: "Date", y1: 150, y2: "Close", fill: d3.interpolateRainbow(number / 100)})]})}
 
 ```md echo
-interpolate a sparkline ${Plot.plot({axis: null, margin: 0, width: 80, height: 17, x: {type: "band", round: false}, marks: [Plot.rectY(aapl.slice(-15), {x: "Date", y1: 150, y2: "Close", fill: "var(--theme-blue)"})]})}
+interpolate a sparkline ${Plot.plot({axis: null, margin: 0, width: 80, height: 17, x: {type: "band", round: false}, marks: [Plot.rectY(aapl.slice(-15), {x: "Date", y1: 150, y2: "Close", fill: d3.interpolateRainbow(number / 100)})]})}
 ```
 
 or even a reactive input ${Inputs.bind(html`<input type=range style="width: 120px;">`, numberInput)} ${number}
@@ -115,7 +113,7 @@ or even a reactive input ${Inputs.bind(html`<input type=range style="width: 120p
 into prose.
 
 ```js echo
-const numberInput = Inputs.input(0);
+const numberInput = Inputs.input(89);
 const number = Generators.input(numberInput);
 ```
 
@@ -145,7 +143,7 @@ for (let i = 0; i < 5; ++i) {
 }
 ```
 
-If you pass `display` a DOM node, it will be inserted directly into the page. Use this technique to render dynamic displays of data, such as charts and tables. Here is an example displaying a [text node](https://developer.mozilla.org/en-US/docs/Web/API/Document/createTextNode) created using the [DOM API](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Introduction):
+If you pass `display` a DOM node, it will be inserted directly into the page. Use this technique to render dynamic displays of data, such as charts and tables.
 
 ```js echo
 display(document.createTextNode(`Your lucky number is ${Math.floor(Math.random () * 10)}!`));
@@ -188,10 +186,6 @@ ${display([1, 2, 3])}
 ${display([1, 2, 3])}
 ```
 
-### display(*value*)
-
-If `value` is a DOM node, adds it to the page. Otherwise, converts the given `value` to a suitable DOM node and displays that instead. Returns the given `value`.
-
 The `display` function is scoped to each code block, meaning that the `display` function is a closure bound to where it will display on the page. But you can capture a code block’s `display` function by assigning it to a [top-level variable](./reactivity):
 
 ```js echo
@@ -206,7 +200,7 @@ Inputs.button("Click me", {value: 0, reduce: (i) => displayThere(++i)})
 
 ## Implicit display
 
-JavaScript expression fenced code blocks are implicitly wrapped with a call to [`display`](#display(value)). For example, this arithmetic expression displays implicitly:
+JavaScript expression fenced code blocks are implicitly wrapped with a call to [`display`](#explicit-display). For example, this arithmetic expression displays implicitly:
 
 ```js echo
 1 + 2 // implicit display
@@ -237,6 +231,8 @@ ${display(1), display(2)}
 ```md
 ${display(1), display(2)}
 ```
+
+Implicit display also implicitly awaits promises.
 
 ## Responsive display
 

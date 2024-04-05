@@ -311,7 +311,7 @@ Inputs might prompt a viewer to:
 - Select a URL from a dropdown to view traffic to a specific page
 - Choose a date range to explore data within a period of interest
 
-Inputs are typically displayed using the built-in [`view`](#view(element)) function, which [displays](#display(value)) the given element and returns a [value generator](./reactivity#generators). The generator can then be declared as a [top-level variable](./reactivity) to expose the input’s value to the page. For example, the radio input below prompts the user to select their favorite team:
+Inputs are typically displayed using the built-in [`view`](#view(element)) function, which [displays](../javascript#explicit-display) the given element and returns a [value generator](./reactivity#generators). The generator can then be declared as a [top-level variable](./reactivity) to expose the input’s value to the page. For example, the radio input below prompts the user to select their favorite team:
 
 ```js echo
 const team = view(Inputs.radio(["Metropolis Meteors", "Rockford Peaches", "Bears"], {label: "Favorite team:", value: "Metropolis Meteors"}));
@@ -375,7 +375,7 @@ When you type into the textbox, the generator will yield a new value, triggering
 
 The `view` function used above does two things:
 
-1. it [displays](#display(value)) the given DOM *element*, and then
+1. it [displays](../javascript#explicit-display) the given DOM *element*, and then
 2. returns its corresponding [value generator](./reactivity#generators).
 
 The `view` function uses [`Generators.input`](../lib/generators#input(element)) under the hood. You can also call `Generators.input` directly, say to declare the input as a top-level variable without immediately displaying it:
