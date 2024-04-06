@@ -45,10 +45,10 @@ The code powering this example is quite elaborate. Let’s split it into its mai
 The accidentology data is loaded as a CSV file; the country shapes are coming from a [TopoJSON](./topojson) file, which we convert to GeoJSON.
 
 ```js echo
-const data = FileAttachment("/data/uk-accidents.csv").csv({array: true, typed: true});
+const data = FileAttachment("../data/uk-accidents.csv").csv({array: true, typed: true});
 const topo = import.meta.resolve("npm:visionscarto-world-atlas/world/50m.json");
-const world = await fetch(topo).then((response) => response.json());
-const countries = topojson.feature(world, world.objects.countries);
+const world = fetch(topo).then((response) => response.json());
+const countries = world.then((world) => topojson.feature(world, world.objects.countries));
 ```
 
 ### 2. The layout
