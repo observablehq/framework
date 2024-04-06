@@ -4,41 +4,39 @@ toc: false
 
 # deck.gl
 
-[deck.gl](https://deck.gl/) is a GPU-powered framework for visual exploratory data analysis of large datasets. You can import it as a module, then consume its methods like so:
+[deck.gl](https://deck.gl/) is a “GPU-powered framework for visual exploratory data analysis of large datasets.” You can import it like so:
 
 ```js echo
 import deck from "npm:deck.gl";
+```
+
+You can then refer to deck.gl’s various components such as `deck.DeckGL` or `deck.HexagonLayer`. For more shorthand, you can destructure these symbols into top-level variables:
+
+```js echo
 const {DeckGL, AmbientLight, GeoJsonLayer, HexagonLayer, LightingEffect, PointLight} = deck;
 ```
 
 The example below is adapted [from the documentation](https://deck.gl/examples/hexagon-layer).
 
-<div style="width: 100%; position: relative;">
+<div class="card" style="margin: 0 -1rem; position: relative;">
 
-<div class=card style="max-width: 270px; position: absolute; top:0; margin-left: 14px; right:14px; z-index:1;">
-
-# UK Road Safety
-
-## Personal injury road accidents from 1979
-
-# ${d3.format(".4s")(data.length)} ACCIDENTS
+## Personal injury road accidents, 1979–unknown year
+### A random sample (?) of ${data.length.toLocaleString("en-US")} accidents
 
 ${colorLegend}
 
-<div style="font-size: small; text-align: right; font-style: italic;"><a href="https://www.data.gov.uk/">data.gov.uk</a></div>
+<figure style="max-width: none;">
+  <div id="container" style="border-radius: 8px; background: rgb(18,35,48); height: 800px; width: 100%; margin: 1rem 0; "></div>
+  <figcaption>Data: <a href="https://www.data.gov.uk/dataset/cb7ae6f0-4be6-4935-9277-47e5ce24a11f/road-safety-data">Department for Transport</a></figcaption>
+</figure>
+
+</div>
 
 ```js
-const radius = view(Inputs.range([500, 20000], {value: 1000, label: "radius", step: 100}));
-const coverage = view(Inputs.range([0, 1], {value: 1, label: "coverage", step: 0.01}));
-const upperPercentile = view(Inputs.range([0, 100], {value: 100, label: "upper percentile", step: 1}));
-const replay = view(Object.assign(Inputs.button("↻"), {style: "position: absolute; right: 14px; width: 2em;"}));
+const radius = view(Inputs.range([500, 20000], {value: 1000, label: "Radius", step: 100}));
+const coverage = view(Inputs.range([0, 1], {value: 1, label: "Coverage", step: 0.01}));
+const upperPercentile = view(Inputs.range([0, 100], {value: 100, label: "Upper percentile", step: 1}));
 ```
-
-</div>
-
-<div id="container" style="background: rgb(18,35,48); height: 800px; width: 100%;"></div>
-
-</div>
 
 The code powering this example is quite elaborate. Let’s split it into its main components:
 
@@ -76,7 +74,6 @@ ${colorLegend}
 const radius = view(Inputs.range([500, 20000], {value: 1000, label: "radius", step: 100}));
 const coverage = view(Inputs.range([0, 1], {value: 1, label: "coverage", step: 0.01}));
 const upperPercentile = view(Inputs.range([0, 100], {value: 100, label: "upper percentile", step: 1}));
-const replay = view(Object.assign(Inputs.button("↻"), {style: "position: absolute; right: 14px; width: 2em;"}));
 ```
 
 </div>
@@ -101,13 +98,11 @@ const colorRange = [
 const colorLegend = Plot.plot({
   margin: 0,
   marginTop: 20,
-  width: 270,
+  width: 180,
   height: 35,
-  x: {padding: 0, round: false, axis: null},
+  x: {padding: 0, axis: null},
   marks: [
-    Plot.cellX(colorRange, {
-      fill: ([r, g, b]) => `rgb(${r},${g},${b})`
-    }),
+    Plot.cellX(colorRange, {fill: ([r, g, b]) => `rgb(${r},${g},${b})`, inset: 0.5}),
     Plot.text(["Fewer"], {frameAnchor: "top-left", dy: -12}),
     Plot.text(["More"], {frameAnchor: "top-right", dy: -12})
   ]
@@ -211,12 +206,14 @@ deckInstance.setProps({
 Lastly, the `t` variable controls the height of the extruded hexagons with a [generator](../javascript/generators) (that can be reset with a button input):
 
 ```js echo
-const t = (replay, Generators.queue((notify) => {
+const t = Generators.queue((notify) => {
   const duration = 900;
   const delay = 500;
   const t = d3.timer((elapsed) => {
     if (elapsed > duration) t.stop();
     notify(d3.easeCubicInOut(elapsed / duration));
   }, delay);
-}));
+});
 ```
+
+TODO I think there’s a simpler way to do the animation?
