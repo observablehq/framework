@@ -220,24 +220,36 @@ As you might imagine, you can use such a generator to drive an animation. A gene
 </svg>
 ```
 
-You can also use a generator to stream live data. Here is a WebSocket that listens for Blockchain transactions:
+You can also use a generator to stream live data. Here is a WebSocket that listens for the current price of Bitcoin, keeping the last minute of data in memory.
 
 ```js echo
-const socket = new WebSocket("wss://ws.blockchain.info/inv");
+const socket = new WebSocket("wss://ws.eodhistoricaldata.com/ws/crypto?api_token=demo");
 invalidation.then(() => socket.close());
-socket.addEventListener("open", () => socket.send(JSON.stringify({op: "unconfirmed_sub"})));
-const message = Generators.observe((change) => {
-  const messaged = (event) => change(JSON.parse(event.data));
+socket.addEventListener("open", () => socket.send(JSON.stringify({action: "subscribe", symbols: "BTC-USD"})));
+const messages = Generators.observe((change) => {
+  const messages = [];
+  const duration = messages.duration = 60_000;
+  const messaged = (event) => {
+    const m = JSON.parse(event.data);
+    const t = m.t;
+    if (t == null) return;
+    while ((t - messages[0]?.t) > duration) messages.shift();
+    messages.push(m);
+    change(messages);
+  };
   socket.addEventListener("message", messaged);
   return () => socket.removeEventListener("message", messaged);
 });
 ```
 
 ```js echo
-message.x // the most recently reported transaction
+Plot.plot({
+  marginLeft: 50,
+  x: {type: "time", domain: [now - messages.duration, now]},
+  y: {type: "linear", label: "price", inset: 10},
+  marks: [Plot.lineY(messages, {x: "t", y: "p", curve: "step", clip: true})]
+})
 ```
-
-TODO Turn this into a visualization?
 
 ## Inputs
 
