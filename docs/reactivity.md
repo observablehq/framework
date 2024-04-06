@@ -68,10 +68,16 @@ For example, below `FileAttachment.json` returns a promise, and so the value of 
 const volcano = FileAttachment("volcano.json").json();
 ```
 
-And yet if we reference `volcano` in another code block, we don’t need to `await`. The `await` is implicit; the code block automatically waits for the `volcano` promise to resolve before running.
+And yet if we reference `volcano` in another code block or inline expression, we don’t need to `await`. The `await` is implicit; the code block automatically waits for the `volcano` promise to resolve before running.
 
 ```js echo
 volcano
+```
+
+The volcano dataset has ${volcano.values.length.toLocaleString("en-US")} values.
+
+```md run=false
+The volcano dataset has ${volcano.values.length.toLocaleString("en-US")} values.
 ```
 
 This pattern is especially useful for loading multiple files. The files are loaded in parallel, and referencing code blocks only wait for the files they need. This is faster than loading files sequentially with `await`, and simpler than `Promise.all`.
@@ -112,18 +118,6 @@ const volcano = FileAttachment("volcano.json")
   .catch(() => ({width: 87, height: 61, values: []}));
 ```
 
-Implicit await applies to inline expressions, too, not just fenced code blocks.
-
-```js echo
-const hello = new Promise((resolve) => setTimeout(() => resolve("hello"), 1000));
-```
-
-Hello is: ${hello}.
-
-```md run=false
-Hello is: ${hello}.
-```
-
 ## Generators
 
 Values that change over time — such as interactive inputs, animation parameters, or streaming data — can be represented in Framework as [async generators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator). When a top-level generator is declared, code in other blocks sees the generator’s latest yielded value and runs each time the generator yields a new value.
@@ -141,13 +135,11 @@ As an example, here’s an HTML input element. By passing it to [`Generators.inp
 const name = Generators.input(nameInput);
 ```
 
-Now when we reference `name` in another code block, it refers to the current value of the input element, and the code block runs each time the input changes. Try typing into the input field above.
+Now when we reference `name` in another code block or inline expression, it refers to the current value of the input element, and the code block runs each time the input changes. Try typing into the input field above.
 
 ```js echo
 name
 ```
-
-Implicit iteration of generators applies to inline expressions, too.
 
 Hello, ${name || "anonymous"}!
 
@@ -383,7 +375,6 @@ const duration = 2000;
 <canvas id="canvas1" width="640" height="30" style="max-width: 100%; height: 30px;"></canvas>
 
 ```js echo
-const canvas1 = document.querySelector("#canvas1");
 const context1 = canvas1.getContext("2d");
 const color = colors[clicks % 4]; // cycle through colors on click
 const start = performance.now(); // when the animation started
@@ -407,7 +398,6 @@ The `visibility` function returns a promise that resolves when the code block’
 ```js echo
 await visibility(); // wait until this node is visible
 
-const canvas2 = document.querySelector("#canvas2");
 const context2 = canvas2.getContext("2d");
 const start = performance.now();
 
