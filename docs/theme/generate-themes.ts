@@ -232,12 +232,14 @@ theme: ${theme}
 toc: false
 head: false
 header: false
+sidebar: false
 ---
 
-<style>
-#observablehq-sidebar-toggle {display: none;}
-</style>
-
+\`\`\`js
+const alphabet = FileAttachment("../data/alphabet.csv").csv({typed: true});
+const industries = FileAttachment("../data/industries.csv").csv({typed: true});
+const penguins = FileAttachment("../data/penguins.csv").csv({typed: true});
+\`\`\`
 
 \`\`\`js
 const subset = new Set(["Transportation and Utilities", "Mining and Extraction", "Finance", "Agriculture", "Information"]);
