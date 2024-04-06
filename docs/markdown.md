@@ -1,10 +1,8 @@
 # Markdown
 
-<div class="tip">See <a href="https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax">GitHub’s guide to Markdown</a> for an introduction.</div>
-
 <!-- Framework Markdown follows the [CommonMark spec](https://spec.commonmark.org/) and is powered by [markdown-it](https://github.com/markdown-it/markdown-it). -->
 
-Markdown is a language for formatting text and content; it’s a lightweight, ergonomic alternative (and complement) to HTML. Markdown in Framework extends [CommonMark](https://commonmark.org/) with a handful of features useful for data apps, including [reactive](./reactivity) [JavaScript](./javascript), [HTML](#html), [YAML front matter](#front-matter), [grids](#grids), [cards](#cards), and [notes](#notes). This page covers common types of Markdown content.
+Markdown is a language for formatting text and content; it’s a lightweight, ergonomic alternative (and complement) to HTML. Markdown in Framework extends [CommonMark](https://commonmark.org/) with a handful of features useful for data apps, including [reactive](./reactivity) [JavaScript](./javascript), [HTML](#html), [YAML front matter](#front-matter), [grids](#grids), [cards](#cards), and [notes](#notes). This page covers Framework’s extensions to Markdown, along with [basic syntax](#basic-syntax).
 
 ## Front matter
 
@@ -33,83 +31,9 @@ The front matter can also override the following [project configuration](./confi
 - **footer** - the [footer](./config#footer)
 - **sidebar** - whether to show the [sidebar](./config#sidebar)
 
-## Headings
-
-```md
-# A first-level heading
-## A second-level heading
-### A third-level heading
-```
-
-<div class="note">A second-level heading (<code>##</code>) immediately following a first-level heading (<code>#</code>) is styled specially as a subtitle.</div>
-
-## Styling
-
-```md
-this is **bold** text
-this is __bold__ text
-this is *italic* text
-this is _italic_ text
-this is ~~strikethrough~~ text
-this is `monospaced` text
-> this is quoted text
-```
-
-## Tables
-
-```md
-Column 1   | Column 2     | Column 3
----------- | ------------ | ----------
-Cell 1-1   | Cell 2-1     | Cell 3-1
-Cell 1-2   | Cell 2-2     | Cell 3-2
-```
-
-```md
-Align left | Align center | Align right
-:--------- | :----------: | ----------:
-Cell 1-1   |   Cell 2-1   |    Cell 3-1
-Cell 1-2   |   Cell 2-2   |    Cell 3-2
-```
-
-## Lists
-
-```md
-- red
-- green
-- blue
-  - light blue
-  - dark blue
-```
-
-```md
-1. first
-1. second
-1. third
-   1. third first
-   1. third second
-```
-
-## Links
-
-```md
-<https://example.com>
-[relative link](./dashboard)
-[external link](https://example.com)
-[external link](<https://en.wikipedia.org/wiki/Tar_(computing)>)
-```
-
-For privacy and convenience, external links are given a default `rel` attribute of [`noreferrer`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noreferrer) [`noopener`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noopener) and a default `target` attribute of [`_blank`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#target). <a href="https://github.com/observablehq/framework/releases/tag/v1.5.0" class="observablehq-version-badge" data-version="^1.5.0" title="Added in 1.5.0"></a> Hence by default an external link will open in a new window and not pass the (potentially sensitive) referrer to the (potentially untrusted) external site. You can override this behavior by specifying the `rel` or `target` attribute explicitly. For example `<a href="https://example.com" target="_self">` will open in the same window, and `<a href="https://acme.com" rel="">` will allow the referrer.
-
-## Images
-
-```md
-![A horse](./horse.jpg)
-![A happy kitten](https://placekitten.com/200/300)
-```
-
 ## HTML
 
-You can also write HTML directly into Markdown. HTML is useful for greater control over layout, say to use CSS grid for a responsive bento box layout in a dashboard, or adding an external stylesheet via a link element. For example, here is an HTML details element:
+You can write HTML directly into Markdown. HTML is useful for greater control over layout, say to use CSS grid for a responsive bento box layout in a dashboard, or adding an external stylesheet via a link element. For example, here is an HTML details element:
 
 ```html run=false
 <details>
@@ -337,4 +261,84 @@ You can disable the label entirely with an empty `label` attribute.
 
 ```html run=false
 <div class="note" label>This note has no label.</div>
+```
+
+## Basic syntax
+
+Here are some examples of common Markdown features.
+
+<div class="tip">For more, see <a href="https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax">GitHub’s guide to Markdown</a>.</div>
+
+### Headings
+
+```md
+# A first-level heading
+## A second-level heading
+### A third-level heading
+```
+
+<div class="note">A second-level heading (<code>##</code>) immediately following a first-level heading (<code>#</code>) is styled specially as a subtitle.</div>
+
+### Styling
+
+```md
+this is **bold** text
+this is __bold__ text
+this is *italic* text
+this is _italic_ text
+this is ~~strikethrough~~ text
+this is `monospaced` text
+> this is quoted text
+```
+
+### Tables
+
+```md
+Column 1   | Column 2     | Column 3
+---------- | ------------ | ----------
+Cell 1-1   | Cell 2-1     | Cell 3-1
+Cell 1-2   | Cell 2-2     | Cell 3-2
+```
+
+```md
+Align left | Align center | Align right
+:--------- | :----------: | ----------:
+Cell 1-1   |   Cell 2-1   |    Cell 3-1
+Cell 1-2   |   Cell 2-2   |    Cell 3-2
+```
+
+### Lists
+
+```md
+- red
+- green
+- blue
+  - light blue
+  - dark blue
+```
+
+```md
+1. first
+1. second
+1. third
+   1. third first
+   1. third second
+```
+
+### Links
+
+```md
+<https://example.com>
+[relative link](./dashboard)
+[external link](https://example.com)
+[external link](<https://en.wikipedia.org/wiki/Tar_(computing)>)
+```
+
+For privacy and convenience, external links are given a default `rel` attribute of [`noreferrer`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noreferrer) [`noopener`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noopener) and a default `target` attribute of [`_blank`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#target). <a href="https://github.com/observablehq/framework/releases/tag/v1.5.0" class="observablehq-version-badge" data-version="^1.5.0" title="Added in 1.5.0"></a> Hence by default an external link will open in a new window and not pass the (potentially sensitive) referrer to the (potentially untrusted) external site. You can override this behavior by specifying the `rel` or `target` attribute explicitly. For example `<a href="https://example.com" target="_self">` will open in the same window, and `<a href="https://acme.com" rel="">` will allow the referrer.
+
+### Images
+
+```md
+![A horse](./horse.jpg)
+![A happy kitten](https://placekitten.com/200/300)
 ```
