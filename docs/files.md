@@ -16,7 +16,7 @@ The `FileAttachment` function takes a path and returns a file handle. This handl
 FileAttachment("volcano.json")
 ```
 
-Like a local [import](./imports), the path is relative to the calling code’s source file: either the page’s Markdown file or the imported local JavaScript module. (To load a remote file, use [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API), or use a [data loader](./loaders) to download the file at build time.)
+Like a [local import](./imports#local-imports), the path is relative to the calling code’s source file: either the page’s Markdown file or the imported local JavaScript module. To load a remote file, use [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API), or use a [data loader](./loaders) to download the file at build time.
 
 Calling `FileAttachment` doesn’t actually load the file; the contents are only loaded when you invoke a [file contents method](#supported-formats). For example, to load a JSON file:
 
@@ -24,7 +24,7 @@ Calling `FileAttachment` doesn’t actually load the file; the contents are only
 const volcano = FileAttachment("volcano.json").json();
 ```
 
-The value of `volcano` above is a [promise](./promises). In other code blocks, the promise is resolved implicitly and hence you can refer to the resolved value directly.
+The value of `volcano` above is a [promise](./promises). In other code blocks, the promise is [implicitly awaited](./reactivity#promises) and hence you can refer to the resolved value directly.
 
 ```js echo
 volcano
@@ -97,7 +97,7 @@ For missing files, `file.lastModified` is undefined. The `file.mimeType` is dete
 [xlsx]: ./lib/xlsx
 [zip]: ./lib/zip
 
-The contents often dictate the appropriate method — for example, an Apache Arrow file is almost always read with `file.arrow`. When multiple methods are valid, choose based on your needs. For example, you can load a CSV file using `file.text` to implement parsing yourself instead of using D3.
+The contents of a file often dictate the appropriate method — for example, an Apache Arrow file is almost always read with `file.arrow`. When multiple methods are valid, choose based on your needs. For example, you can load a CSV file using `file.text` to implement parsing yourself instead of using D3.
 
 In addition to the above, you can get the resolved absolute URL of the file using `file.href`: <a href="https://github.com/observablehq/framework/releases/tag/v1.5.0" class="observablehq-version-badge" data-version="^1.5.0" title="Added in 1.5.0"></a>
 
@@ -105,7 +105,7 @@ In addition to the above, you can get the resolved absolute URL of the file usin
 FileAttachment("volcano.json").href
 ```
 
-See [file-based routing](../routing#files) for additional details.
+See [file-based routing](#routing) for additional details.
 
 ## Basic formats
 
@@ -145,7 +145,7 @@ A common gotcha with JSON is that it has no built-in date type; dates are theref
 
 ### Media
 
-To display an image, you can use a static image in [Markdown](../markdown) such as `<img src="horse.jpg">` or `![horse](horse.jpg)`. Likewise, you can use a `video` or `audio` element. Per [file-based routing](../routing#files), static references to these files are automatically detected and therefore these files will be included in the built output.
+To display an image, you can use a static image in [Markdown](../markdown) such as `<img src="horse.jpg">` or `![horse](horse.jpg)`. Likewise, you can use a `video` or `audio` element. Per [file-based routing](#routing), static references to these files are automatically detected and therefore these files will be included in the built output.
 
 <video src="horse.mp4" autoplay muted loop controls></video>
 
@@ -235,6 +235,6 @@ On build, any files referenced by `FileAttachment` will automatically be copied 
 
 `FileAttachment` references are automatically rewritten during build; for example, a reference to `quakes.csv` might be replaced with `_file/quakes.e5f2eb94.csv`. (As with imports, file names are given a content hash, here `e5f2eb94`, to improve performance.) Only the files you reference statically are copied to the output root (`dist`), so nothing extra or unused is included in the built site.
 
-[Imported modules](./imports) can use `FileAttachment`, too. In this case, the path to the file is _relative to the importing module_ in the same fashion as `import`; this is accomplished by resolving relative paths at runtime with [`import.meta.url`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta).
+[Imported local modules](./imports#local-imports) can use `FileAttachment`, too. In this case, the path to the file is _relative to the importing module_ in the same fashion as `import`; this is accomplished by resolving relative paths at runtime with [`import.meta.url`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta).
 
 Some additional assets are automatically promoted to file attachments and copied to `_file`. For example, if you have a `<link rel="stylesheet" href="style.css">` declared statically in a Markdown page, the `style.css` file will be copied to `_file`, too (and the file name given a content hash). The HTML elements eligible for file attachments are `audio`, `img`, `link`, `picture`, and `video`.
