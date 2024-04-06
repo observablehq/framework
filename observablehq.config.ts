@@ -14,7 +14,7 @@ export default {
   pages: [
     {name: "What is Framework?", path: "/what-is-framework"},
     {name: "Getting started", path: "/getting-started"},
-    {name: "Projects", path: "/projects"},
+    {name: "Project structure", path: "/project-structure"},
     {name: "Markdown", path: "/markdown"},
     {name: "JavaScript", path: "/javascript"},
     {name: "Reactivity", path: "/reactivity"},

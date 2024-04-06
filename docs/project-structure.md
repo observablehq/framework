@@ -1,4 +1,4 @@
-# Projects
+# Project structure
 
 A Framework project consists of a home page (`index.md`) and any of the following:
 
