@@ -206,14 +206,16 @@ deckInstance.setProps({
 Lastly, the `t` variable controls the height of the extruded hexagons with a [generator](../javascript/generators) (that can be reset with a button input):
 
 ```js echo
-const t = Generators.queue((notify) => {
-  const duration = 900;
-  const delay = 500;
-  const t = d3.timer((elapsed) => {
-    if (elapsed > duration) t.stop();
-    notify(d3.easeCubicInOut(elapsed / duration));
-  }, delay);
-});
+t
 ```
 
-TODO I think there’s a simpler way to do the animation?
+```js echo
+const t = (function* () {
+  const duration = 1000;
+  const start = performance.now();
+  const end = start + duration;
+  let now;
+  while ((now = performance.now()) < end) yield d3.easeCubicInOut(Math.max(0, (now - start) / duration));
+  yield 1;
+})();
+```
