@@ -33,9 +33,9 @@ Framework provides a variety of ways to import. When you reference `d3`, `Inputs
 - [npm](#npm-imports),
 - [`node_modules`](#node-imports),
 - [local paths](#local-imports), or
-- [remote URLs](#url-imports).
+- [remote URLs](#remote-imports).
 
-With the exception of remote URL imports, imported modules are bundled with your project, improving performance, security, and stability. In some cases, such as stylesheets and WebAssembly modules, you may need to specify additional files to download via [`import.meta.resolve`](#dynamic-imports).
+With the exception of remote imports, imported modules are bundled with your project, improving performance, security, and stability. In some cases, such as stylesheets and WebAssembly modules, you may need to specify additional files to download via [`import.meta.resolve`](#dynamic-imports).
 
 ## npm imports
 
@@ -107,7 +107,7 @@ Then you can import `foo` as:
 import {foo} from "./foo.js";
 ```
 
-Within a local module, you can import other local modules, as well as `npm:`, node, and URL imports. You can also reference local files within a local module by importing [`FileAttachment`](./data#files) from the Observable standard library like so:
+Within a local module, you can import other local modules, as well as `npm:`, node, and remote imports. You can also reference local files within a local module by importing [`FileAttachment`](./data#files) from the Observable standard library like so:
 
 ```js run=false
 import {FileAttachment} from "npm:@observablehq/stdlib";
@@ -119,9 +119,9 @@ Framework automatically watches imported local modules and their associated file
 
 <div class="note">While there is <a href="./reactivity">reactivity</a> in Markdown across <a href="./javascript">code blocks</a>, there’s no reactivity within vanilla JavaScript modules. You can, however, export <a href="./reactivity#promises">async functions</a> and <a href="./reactivity#generators">generator functions</a> to define reactive variables.</div>
 
-## URL imports
+## Remote imports
 
-Lastly, you can import a JavaScript file from an arbitrary URL. This is useful for loading a library at runtime, say for an analytics script that isn’t published to a package registry and isn’t version-controlled.
+Lastly, you can import a JavaScript file from an arbitrary URL at runtime. This is useful for loading a library from a remote server, say for an analytics script that isn’t published to a package registry and isn’t version-controlled.
 
 The `npm:canvas-confetti` import above is approximately equivalent to importing from jsDelivr using `/+esm`:
 
@@ -129,7 +129,7 @@ The `npm:canvas-confetti` import above is approximately equivalent to importing 
 import confetti from "https://cdn.jsdelivr.net/npm/canvas-confetti/+esm";
 ```
 
-Unlike `npm:` and `node_modules` imports, imports from remote URLs will not be self-hosted; the module will be fetched from the remove server at runtime. Use URL imports with caution as they are less secure and may degrade performance.
+Unlike `npm:` and `node_modules` imports, remove imports are not be self-hosted; the module will be fetched from the remote server at runtime. Use remote imports with caution as they are less secure and may degrade performance.
 
 ## Dynamic imports
 
@@ -139,7 +139,7 @@ Dynamic imports, also known as [*import expressions*](https://developer.mozilla.
 const {default: confetti} = await import("npm:canvas-confetti");
 ```
 
-Framework only resolves statically-analyzable dynamic imports, as when `import` is passed a single string literal.
+You can use dynamic imports with `npm:`, node, local, and remote imports. However, Framework can only resolve statically-analyzable dynamic imports, as when `import` is passed a single string literal.
 
 ## Import resolutions
 
@@ -156,7 +156,7 @@ While useful for debugging, `import.meta.resolve` also allows you to download fi
 const data = await fetch(import.meta.resolve("npm:us-atlas/counties-albers-10m.json")).then((r) => r.json());
 ```
 
-As with dynamic imports, Framework only resolves statically-analyzable import resolutions, as when `import.meta.resolve` is passed a single string literal.
+As with dynamic imports, you can use import resolutions with `npm:`, node, local, and remote imports; and Framework only resolves statically-analyzable import resolutions, as when `import.meta.resolve` is passed a single string literal.
 
 ## Module preloads
 
