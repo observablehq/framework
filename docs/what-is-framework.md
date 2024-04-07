@@ -102,7 +102,7 @@ Modern development is a marvel. Framework is free and open-source, and projects 
 
 ## Polyglot meets the web
 
-Most application frameworks focus on a single language, such as JavaScript, Python, or R. Framework is different. Framework is _polyglot_: it brings multiple languages together. This approach is especially valuable for data apps where data teams have a preferred language(s) for data analysis but want the full power of JavaScript for interactive graphics. Have your cake and eat it too. 🍰
+Most application frameworks focus on a single language, such as JavaScript, Python, or R. Framework is different. Framework is _polyglot_: it brings multiple languages together. This approach is especially valuable for data apps where data teams have preferred languages for data analysis but want the full power of JavaScript for interactive graphics. Have your cake and eat it too. 🍰
 
 With Framework, editing a Python or R data loader immediately updates the browser preview; no reloading required. Framework’s preview server automatically watches for changes and re-runs the data loader, pushing updates over a socket. And thanks to reactivity, the browser can efficiently incrementally update the display.
 

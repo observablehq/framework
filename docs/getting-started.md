@@ -99,7 +99,7 @@ If you prefer Yarn, run:
 
 You can run the above command anywhere, but you may want to `cd` to your `~/Development` directory first (or wherever you do local development).
 
-The first prompt asks where to create your new project. Enter `hello-framework` to create a directory named `hello-framework` within the current directory. Or just hit Enter, as this is the default. (You can create a project in a different directory by entering a relative path; on macOS or Linux, such paths start with `../` or `~/` or `/`.)
+The first prompt asks where to create your new project. Enter `hello-framework` to create a directory named `hello-framework` within the current directory. Or just hit Enter, as this is the default. (You can create a project in a different directory by entering a relative path; on macOS or Linux, such paths start with `../` or `~/` or `/` _etc._)
 
 <pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
