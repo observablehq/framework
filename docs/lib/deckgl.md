@@ -4,13 +4,13 @@ toc: false
 
 # deck.gl
 
-[deck.gl](https://deck.gl/) is a “GPU-powered framework for visual exploratory data analysis of large datasets.” You can import it like so:
+[deck.gl](https://deck.gl/) is a “GPU-powered framework for visual exploratory data analysis of large datasets.” You can import deck.gl’s [standalone bundle](https://deck.gl/docs/get-started/using-standalone#using-the-scripting-api) like so:
 
 ```js echo
 import deck from "npm:deck.gl";
 ```
 
-You can then refer to deck.gl’s various components such as `deck.DeckGL` or `deck.HexagonLayer`. For more shorthand, you can destructure these symbols into top-level variables:
+You can then refer to deck.gl’s various components such as `deck.DeckGL` or `deck.HexagonLayer`. Or for more concise references, you can destructure these symbols into top-level variables:
 
 ```js echo
 const {DeckGL, AmbientLight, GeoJsonLayer, HexagonLayer, LightingEffect, PointLight} = deck;
@@ -18,23 +18,22 @@ const {DeckGL, AmbientLight, GeoJsonLayer, HexagonLayer, LightingEffect, PointLi
 
 The example below is adapted [from the documentation](https://deck.gl/examples/hexagon-layer).
 
-<div class="card" style="margin: 0 -1rem; position: relative;">
+<div class="card" style="margin: 0 -1rem;">
 
-## Personal injury road accidents, 1979–unknown year
-### A random sample (?) of ${data.length.toLocaleString("en-US")} accidents
+## Personal injury road collisons, 2022
+### ${data.length.toLocaleString("en-US")} reported collisons on public roads
 
-${colorLegend}
-
-<figure style="max-width: none;">
-  <div id="container" style="border-radius: 8px; background: rgb(18,35,48); height: 800px; width: 100%; margin: 1rem 0; "></div>
+<figure style="max-width: none; position: relative;">
+  <div id="container" style="border-radius: 8px; overflow: hidden; background: rgb(18, 35, 48); height: 800px; margin: 1rem 0; "></div>
+  <div style="position: absolute; top: 1rem; right: 1rem; filter: drop-shadow(0 0 4px rgba(0,0,0,.5));">${colorLegend}</div>
   <figcaption>Data: <a href="https://www.data.gov.uk/dataset/cb7ae6f0-4be6-4935-9277-47e5ce24a11f/road-safety-data">Department for Transport</a></figcaption>
 </figure>
 
 </div>
 
 ```js
-const radius = view(Inputs.range([500, 20000], {value: 1000, label: "Radius", step: 100}));
 const coverage = view(Inputs.range([0, 1], {value: 1, label: "Coverage", step: 0.01}));
+const radius = view(Inputs.range([500, 20000], {value: 1000, label: "Radius", step: 100}));
 const upperPercentile = view(Inputs.range([0, 100], {value: 100, label: "Upper percentile", step: 1}));
 ```
 
@@ -45,7 +44,7 @@ The code powering this example is quite elaborate. Let’s split it into its mai
 The accidentology data is loaded as a CSV file; the country shapes are coming from a [TopoJSON](./topojson) file, which we convert to GeoJSON.
 
 ```js echo
-const data = FileAttachment("../data/uk-accidents.csv").csv({array: true, typed: true});
+const data = FileAttachment("../data/uk-accidents.csv").csv({array: true, typed: true}).then((data) => data.slice(1));
 const topo = import.meta.resolve("npm:visionscarto-world-atlas/world/50m.json");
 const world = fetch(topo).then((response) => response.json());
 const countries = world.then((world) => topojson.feature(world, world.objects.countries));
@@ -56,29 +55,16 @@ const countries = world.then((world) => topojson.feature(world, world.objects.co
 Using nested divs, we position a large area for the chart, and a card floating on top that will receive the title, the color legend, and interactive controls:
 
 ````html run=false
-<div style="width: 100%; position: relative;">
+<div class="card" style="margin: 0 -1rem;">
 
-<div class=card style="max-width: 270px; position: absolute; top:0; margin-left: 14px; right:14px; z-index:1;">
+## Personal injury road collisons, 2022
+### ${data.length.toLocaleString("en-US")} reported collisons on public roads
 
-# UK Road Safety
-
-## Personal injury road accidents from 1979
-
-# ${d3.format(".4s")(data.length)} ACCIDENTS
-
-${colorLegend}
-
-<div style="font-size: small; text-align: right; font-style: italic;"><a href="https://www.data.gov.uk/">data.gov.uk</a></div>
-
-```js
-const radius = view(Inputs.range([500, 20000], {value: 1000, label: "radius", step: 100}));
-const coverage = view(Inputs.range([0, 1], {value: 1, label: "coverage", step: 0.01}));
-const upperPercentile = view(Inputs.range([0, 100], {value: 100, label: "upper percentile", step: 1}));
-```
-
-</div>
-
-<div id="container" style="background: rgb(18,35,48); height: 800px; width: 100%;"></div>
+<figure style="max-width: none; position: relative;">
+  <div id="container" style="border-radius: 8px; overflow: hidden; background: rgb(18, 35, 48); height: 800px; margin: 1rem 0; "></div>
+  <div style="position: absolute; top: 1rem; right: 1rem; filter: drop-shadow(0 0 4px rgba(0,0,0,.5));">${colorLegend}</div>
+  <figcaption>Data: <a href="https://www.data.gov.uk/dataset/cb7ae6f0-4be6-4935-9277-47e5ce24a11f/road-safety-data">Department for Transport</a></figcaption>
+</figure>
 
 </div>
 ````
