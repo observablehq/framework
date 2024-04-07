@@ -1,3 +1,3 @@
-<meta http-equiv="refresh" content="0; url=./markdown#routing">
+<meta http-equiv="refresh" content="0; url=./project-structure">
 
-Moved to [Markdown: Routing](./markdown#routing).
+Moved to [Project structure](./project-structure).
