@@ -32,7 +32,7 @@ The example below is adapted [from the documentation](https://deck.gl/examples/h
 </div>
 
 ```js
-const coverage = view(Inputs.range([0, 1], {value: 1, label: "Coverage", step: 0.01}));
+const coverage = view(Inputs.range([0, 1], {value: 0.5, label: "Coverage", step: 0.01}));
 const radius = view(Inputs.range([500, 20000], {value: 1000, label: "Radius", step: 100}));
 const upperPercentile = view(Inputs.range([0, 100], {value: 100, label: "Upper percentile", step: 1}));
 ```
@@ -44,7 +44,7 @@ The code powering this example is quite elaborate. Let’s split it into its mai
 The accidentology data is loaded as a CSV file; the country shapes are coming from a [TopoJSON](./topojson) file, which we convert to GeoJSON.
 
 ```js echo
-const data = FileAttachment("../data/uk-accidents.csv").csv({array: true, typed: true}).then((data) => data.slice(1));
+const data = FileAttachment("../data/dft-road-collisions.csv").csv({array: true, typed: true}).then((data) => data.slice(1));
 const topo = import.meta.resolve("npm:visionscarto-world-atlas/world/50m.json");
 const world = fetch(topo).then((response) => response.json());
 const countries = world.then((world) => topojson.feature(world, world.objects.countries));
@@ -136,7 +136,7 @@ function getTooltip({object}) {
   const count = object.points.length;
   return `latitude: ${lat.toFixed(2)}
     longitude: ${lng.toFixed(2)}
-    ${count} accidents`;
+    ${count} collisions`;
 }
 ```
 
@@ -174,7 +174,7 @@ deckInstance.setProps({
       upperPercentile,
       colorRange,
       elevationScale: 50,
-      elevationRange: [0, 3000 * t],
+      elevationRange: [0, 5000 * t],
       extruded: true,
       getPosition: (d) => d,
       pickable: true,
