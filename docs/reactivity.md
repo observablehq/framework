@@ -21,7 +21,7 @@ x + y
 
 When code (such as `x + y`) references top-level variables (such as `x` and `y`) defined by other code, the *referencing* code automatically runs _after_ the *defining* code. Since code runs independent of its order on the page, you can arrange code however you like.
 
-Reactivity also allows incremental evaluation of code when values change: only the code blocks that are “downstream” of changed variables run. This makes interaction and animation more performant because you’re not re-rendering the entire page when state changes.
+Reactivity also allows incremental evaluation of code when values change: only the code blocks that are downstream of changed variables run. This makes interaction and animation more performant because you’re not re-rendering the entire page when state changes.
 
 To be precise, Framework’s reactivity manifests as:
 
@@ -62,7 +62,7 @@ In Framework, when one code block refers to a promise defined in another code bl
 
 <div class="note">Implicit <code>await</code> only applies <i>across</i> code blocks, not <i>within</i> a code block. Within a code block, a promise is just a promise.</div>
 
-For example, below `FileAttachment.json` returns a promise, and so the value of `volcano` is a promise.
+For example, below `FileAttachment.json` returns a promise, and so the value of `volcano` inside the code block is a promise.
 
 ```js echo
 const volcano = FileAttachment("volcano.json").json();

@@ -66,7 +66,7 @@ A data app might be a set of coordinated **interactive visualizations** for “s
   </a>
 </div>
 
-… or it might be a **live dashboard** that shows places current events in the context of recent or historical trends;
+… or it might be a **live dashboard** that places current events in the context of recent or historical trends;
 
 <div class="gallery grid grid-cols-2">
   <a href="https://observablehq.com/framework/examples/plot/">
