@@ -107,7 +107,7 @@ Then you can import `foo` as:
 import {foo} from "./foo.js";
 ```
 
-Within a local module, you can import other local modules, as well as `npm:`, node, and remote imports. You can also reference local files within a local module by importing [`FileAttachment`](./data#files) from the Observable standard library like so:
+Within a local module, you can import other local modules, as well as `npm:`, node, and remote imports. You can also reference local files within a local module by importing [`FileAttachment`](./files) from the Observable standard library like so:
 
 ```js run=false
 import {FileAttachment} from "npm:@observablehq/stdlib";
@@ -160,7 +160,7 @@ As with dynamic imports, you can use import resolutions with `npm:`, node, local
 
 ## Module preloads
 
-Static imports are [preloaded](#module-preloads) such that imported modules are loaded in parallel and as early as possible, rather than being chained and waiting until JavaScript code execution. This can dramatically reduce page load times. Framework also preloads imports for [`FileAttachment`](./data#files) methods, such as d3-dsv for [CSV](./lib/csv).
+Static imports are [preloaded](#module-preloads) such that imported modules are loaded in parallel and as early as possible, rather than being chained and waiting until JavaScript code execution. This can dramatically reduce page load times. Framework also preloads imports for [`FileAttachment`](./files) methods, such as d3-dsv for [CSV](./lib/csv).
 
 An import of canvas-confetti is preloaded as:
 
