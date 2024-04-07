@@ -1,3 +1,3 @@
-<meta http-equiv="refresh" content="0; url=../layout#cards">
+<meta http-equiv="refresh" content="0; url=../markdown#cards">
 
-Moved to [Layout: Cards](../layout#cards).
+Moved to [Layout: Cards](../markdown#cards).
