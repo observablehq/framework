@@ -21,6 +21,7 @@ describe("findLink(path, options)", () => {
       pages: [
         {
           name: "section",
+          collapsible: true,
           open: true,
           pages: [
             {name: "a", path: "/a"},
