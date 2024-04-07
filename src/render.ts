@@ -168,8 +168,8 @@ async function renderSidebar(options: RenderOptions): Promise<Html> {
   )}}</script>`;
 }
 
-function isSectionActive(s: Section<Page | Section<Page>>, path: string): boolean {
-  return s.pages.some((p) => ("pages" in p ? p.pages.some((p) => p.path === path) : normalizePath(p.path) === path));
+function isSectionActive(s: Section<Page>, path: string): boolean {
+  return s.pages.some((p) => normalizePath(p.path) === path);
 }
 
 interface Header {
