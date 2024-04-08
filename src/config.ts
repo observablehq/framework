@@ -13,20 +13,21 @@ import {createMarkdownIt, parseMarkdownMetadata} from "./markdown.js";
 import {isAssetPath, parseRelativeUrl, resolvePath} from "./path.js";
 import {resolveTheme} from "./theme.js";
 
+export interface TableOfContents {
+  show: boolean;
+  label: string;
+}
+
 export interface Page {
   name: string;
   path: string;
 }
 
-export interface Section {
+export interface Section<T = Page> {
   name: string;
-  open: boolean; // defaults to true
-  pages: Page[];
-}
-
-export interface TableOfContents {
-  label: string; // defaults to "Contents"
-  show: boolean; // defaults to true
+  collapsible: boolean; // defaults to false
+  open: boolean; // defaults to true; always true if collapsible is false
+  pages: T[];
 }
 
 export type Style =
@@ -45,7 +46,7 @@ export interface Config {
   base: string; // defaults to "/"
   title?: string;
   sidebar: boolean; // defaults to true if pages isn’t empty
-  pages: (Page | Section)[];
+  pages: (Page | Section<Page>)[];
   pager: boolean; // defaults to true
   scripts: Script[]; // defaults to empty array
   head: string; // defaults to empty string
@@ -156,7 +157,7 @@ export function normalizeConfig(spec: any = {}, defaultRoot = "docs", watchPath?
   const md = createMarkdownIt(spec);
   let {title, pages, pager = true, toc = true} = spec;
   if (title !== undefined) title = String(title);
-  if (pages !== undefined) pages = Array.from(pages, normalizePageOrSection);
+  if (pages !== undefined) pages = normalizePages(pages);
   if (sidebar !== undefined) sidebar = Boolean(sidebar);
   pager = Boolean(pager);
   scripts = Array.from(scripts, normalizeScript);
@@ -213,16 +214,19 @@ function normalizeScript(spec: any): Script {
   return {src, async, type};
 }
 
-function normalizePageOrSection(spec: any): Page | Section {
-  return ("pages" in spec ? normalizeSection : normalizePage)(spec);
+function normalizePages(spec: any): Config["pages"] {
+  return Array.from(spec, (spec: any) =>
+    "pages" in spec ? normalizeSection(spec, (spec: any) => normalizePage(spec)) : normalizePage(spec)
+  );
 }
 
-function normalizeSection(spec: any): Section {
-  let {name, open = true, pages} = spec;
+function normalizeSection<T>(spec: any, normalizePage: (spec: any) => T): Section<T> {
+  let {name, open, collapsible = open === undefined ? false : true, pages} = spec;
   name = String(name);
-  open = Boolean(open);
+  collapsible = Boolean(collapsible);
+  open = collapsible ? Boolean(open) : true;
   pages = Array.from(pages, normalizePage);
-  return {name, open, pages};
+  return {name, collapsible, open, pages};
 }
 
 function normalizePage(spec: any): Page {
