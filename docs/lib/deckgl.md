@@ -86,6 +86,7 @@ const colorLegend = Plot.plot({
   marginTop: 20,
   width: 180,
   height: 35,
+  style: "color: white;",
   x: {padding: 0, axis: null},
   marks: [
     Plot.cellX(colorRange, {fill: ([r, g, b]) => `rgb(${r},${g},${b})`, inset: 0.5}),
