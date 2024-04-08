@@ -20,8 +20,8 @@ The example below is adapted [from the documentation](https://deck.gl/examples/h
 
 <div class="card" style="margin: 0 -1rem;">
 
-## Personal injury road collisons, 2022
-### ${data.length.toLocaleString("en-US")} reported collisons on public roads
+## Personal injury road collisions, 2022
+### ${data.length.toLocaleString("en-US")} reported collisions on public roads
 
 <figure style="max-width: none; position: relative;">
   <div id="container" style="border-radius: 8px; overflow: hidden; background: rgb(18, 35, 48); height: 800px; margin: 1rem 0; "></div>
@@ -57,8 +57,8 @@ Using nested divs, we position a large area for the chart, and a card floating o
 ````html run=false
 <div class="card" style="margin: 0 -1rem;">
 
-## Personal injury road collisons, 2022
-### ${data.length.toLocaleString("en-US")} reported collisons on public roads
+## Personal injury road collisions, 2022
+### ${data.length.toLocaleString("en-US")} reported collisions on public roads
 
 <figure style="max-width: none; position: relative;">
   <div id="container" style="border-radius: 8px; overflow: hidden; background: rgb(18, 35, 48); height: 800px; margin: 1rem 0; "></div>
