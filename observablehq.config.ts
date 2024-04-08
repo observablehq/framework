@@ -12,39 +12,19 @@ export default {
   output: "docs/.observablehq/dist",
   title: "Observable Framework",
   pages: [
+    {name: "What is Framework?", path: "/what-is-framework"},
     {name: "Getting started", path: "/getting-started"},
-    {name: "Routing", path: "/routing"},
+    {name: "Project structure", path: "/project-structure"},
     {name: "Markdown", path: "/markdown"},
     {name: "JavaScript", path: "/javascript"},
+    {name: "Reactivity", path: "/reactivity"},
+    {name: "Imports", path: "/imports"},
     {name: "Data loaders", path: "/loaders"},
+    {name: "Files", path: "/files"},
     {name: "SQL", path: "/sql"},
     {name: "Themes", path: "/themes"},
     {name: "Configuration", path: "/config"},
     {name: "Deploying", path: "/deploying"},
-    {
-      name: "JavaScript",
-      open: false,
-      pages: [
-        {name: "Reactivity", path: "/javascript/reactivity"},
-        {name: "Display", path: "/javascript/display"},
-        {name: "Inputs", path: "/javascript/inputs"},
-        {name: "Imports", path: "/javascript/imports"},
-        {name: "Files", path: "/javascript/files"},
-        {name: "Promises", path: "/javascript/promises"},
-        {name: "Generators", path: "/javascript/generators"},
-        {name: "Mutables", path: "/javascript/mutables"}
-      ]
-    },
-    {
-      name: "CSS",
-      open: false,
-      pages: [
-        {name: "Card", path: "/css/card"},
-        {name: "Color", path: "/css/color"},
-        {name: "Grid", path: "/css/grid"},
-        {name: "Note", path: "/css/note"}
-      ]
-    },
     {
       name: "Inputs",
       open: false,

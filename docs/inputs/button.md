@@ -27,7 +27,7 @@ const progress = (function* () {
 })();
 ```
 
-<div class="note">The <code>progress</code> top-level variable is declared as a <a href="../javascript/generators">generator</a>. This causes the Observable runtime to automatically advance the generator on each animation frame. If you prefer, you could write this animation using a standard <code>requestAnimationFrame</code> loop, but generators are nice because the animation will automatically be interrupted when the code is <a href="../javascript/reactivity#invalidation">invalidated</a>.</div>
+<div class="note">The <code>progress</code> top-level variable is declared as a <a href="../reactivity#generators">generator</a>. This causes the Observable runtime to automatically advance the generator on each animation frame. If you prefer, you could write this animation using a standard <code>requestAnimationFrame</code> loop, but generators are nice because the animation will automatically be interrupted when the code is <a href="../reactivity#invalidation">invalidated</a>.</div>
 
 You can also use buttons to count clicks. While the value of a button is often not needed, it defaults to zero and is incremented each time the button is clicked.
 

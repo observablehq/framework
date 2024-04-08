@@ -45,7 +45,7 @@ dataset, for example. Undefined values go to the end.
 Inputs.table(penguins, {sort: "body_mass_g", reverse: true})
 ```
 
-Tables are [view-compatible](../javascript/inputs#view(element)): using the
+Tables are [view-compatible](../reactivity#inputs): using the
 view function, you can use a table to select rows and refer to them from other
 cells, say to chart a subset of the data. Click the checkbox on the left edge of
 a row to select it, and click the checkbox in the header row to clear the

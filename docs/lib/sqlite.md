@@ -12,7 +12,7 @@ We also provide `SQLiteDatabaseClient`, a [`DatabaseClient`](https://observableh
 import {SQLiteDatabaseClient} from "npm:@observablehq/sqlite";
 ```
 
-The easiest way to construct a SQLite database client is to declare a [`FileAttachment`](../javascript/files) and then call `file.sqlite` to load a SQLite file. This returns a promise. (Here we rely on [implicit await](../javascript/promises).)
+The easiest way to construct a SQLite database client is to declare a [`FileAttachment`](../files) and then call `file.sqlite` to load a SQLite file. This returns a promise. (Here we rely on [implicit await](../reactivity#promises).)
 
 ```js echo
 const db = FileAttachment("chinook.db").sqlite();
@@ -40,13 +40,13 @@ const customers = db.sql`SELECT * FROM customers`;
 display(await customers);
 ```
 
-A call to `db.sql` returns a promise to an array of objects; each object represents a row returned from the query. For better readability, you can display query results using [`Inputs.table`](./inputs#table).
+A call to `db.sql` returns a promise to an array of objects; each object represents a row returned from the query. For better readability, you can display query results using [`Inputs.table`](../inputs/table).
 
 ```js echo
 Inputs.table(customers)
 ```
 
-For interactive or dynamic queries, you can interpolate reactive variables into SQL queries. For example, you can declare a [text input](./inputs#text) to prompt the query to enter a search term, and then interpolate the input into the query parameter.
+For interactive or dynamic queries, you can interpolate reactive variables into SQL queries. For example, you can declare a [text input](../inputs/text) to prompt the query to enter a search term, and then interpolate the input into the query parameter.
 
 ```js echo
 const name = view(Inputs.text({label: "Name", placeholder: "Search track names"}));
