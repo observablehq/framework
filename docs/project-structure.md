@@ -23,13 +23,13 @@ And a typical project is structured like this:
 │  │  └─ dotmap.js        # shared JavaScript module
 │  ├─ data
 │  │  └─ quakes.csv.ts    # data loader
-│  ├─ index.md           # home page
-│  └─ quakes.md            # page
+│  ├─ index.md            # home page
+│  └─ quakes.md           # page
 ├─ .gitignore
 ├─ README.md
 ├─ observablehq.config.js # project configuration
-├─ package.json # project node configuration
-└─ yarn.lock # installation information
+├─ package.json           # node package dependencies
+└─ yarn.lock              # node package lockfile
 ```
 
 #### `docs`
