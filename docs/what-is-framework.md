@@ -96,7 +96,7 @@ Why use Framework for your data app? Here are a few reasons.
 
 ## The power of code
 
-Good data apps are highly customized — they present an opinionated perspective and reflect your brand. Point-and-click tools may be easy to use but suffer limited expressivity and power. With code, there’s no limit to what you can create. (See our [D3](https://observablehq.com/@d3/gallery) and [Plot](https://observablehq.com/@observablehq/plot-gallery) galleries for inspiration.)
+Good data apps are highly customized — they present an opinionated perspective and reflect your brand. Point-and-click tools may be easy to use but suffer from limited expressivity and power. With code, there’s no limit to what you can create. (See our [D3](https://observablehq.com/@d3/gallery) and [Plot](https://observablehq.com/@observablehq/plot-gallery) galleries for inspiration.)
 
 Modern development is a marvel. Framework is free and open-source, and projects are just local files, making it easy to incorporate into your existing workflow. Use your preferred editor, source control, and code review system. Write unit tests. Run linters. Automate builds with continuous integration or deployment. Work offline. Self-host. Generate or revise content programmatically with AI. You can do it all.
 
