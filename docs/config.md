@@ -261,3 +261,5 @@ export default {
   markdownIt: (md: MarkdownIt) => md.use(MarkdownItFootnote);
 };
 ```
+
+Markdown plugins must be added to your project with `npm add markdown-it-footnote` or `yarn add markdown-it-footnote`.
