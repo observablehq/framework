@@ -74,8 +74,6 @@ const digraph = dot`digraph {
   ${digraph}
 </figure>
 
-We’ll touch on each of these steps in this tutorial.
-
 First you’ll setup your local development environment by [**creating**](#1.-create) a project. Next you’ll [**develop**](#2.-develop): an iterative process where you save changes to source files in your editor while previewing the result in your browser. When you’re ready to share, it’s time to [**publish**](#3.-publish): you can either build a static site for self-hosting or deploy directly to Observable. Lastly, you can invite people to view your project!
 
 These are just first steps. You can continue to develop projects after publishing, and republish as needed. You can also setup continuous deployment to publish your site automatically on commit or on schedule. We’ll cover these [next steps](#next-steps) briefly below.

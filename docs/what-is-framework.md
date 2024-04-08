@@ -112,7 +112,7 @@ Whether your team prefers Python, R, SQL — or even some new language you inven
 
 Performance is critical for dashboards: users don’t like to wait, and dashboards only create value if users look at them. Framework’s data architecture practically forces your app to be fast because data is precomputed at build time. Furthermore, data snapshots can be highly-optimized (and aggregated and anonymized), minimizing what you send to the client. And since data loaders run only during build, viewers don’t need direct access to the underlying data sources and your dashboards are more secure and robust.
 
-The speed of modern data warehouses is astonishing. But often warehouse changes are needed for analysis — say to add some untapped data source, or not-yet-materialized view. Framework’s data loaders let you bypass these hurdles and quickly produce a performant dashboard without “heavy lifting” in your data warehouse. Seeing is believing, and Framework lets you quickly validate ideas.
+The speed of modern data warehouses is astonishing. But often time-consuming warehouse changes are needed for analysis — say adding some untapped data source or not-yet-materialized view. Framework’s data loaders let you shortcut this work and quickly produce a performant dashboard. Seeing is believing, and Framework lets you validate ideas faster.
 
 ## Automatic reactivity
 

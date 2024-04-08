@@ -262,8 +262,8 @@ As another example, say you have a `quakes.zip` archive that includes yearly fil
 ```ini
 .
 ├─ docs
-│  ├─ quakes.zip
-│  └─ index.md
+│  ├─ index.md
+│  └─ quakes.zip
 └─ ...
 ```
 
