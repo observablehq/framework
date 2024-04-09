@@ -19,7 +19,7 @@ const regions = new Set([
   "United States Lower 48"
 ]);
 
-const baHourlyData = JSON.parse(readFileSync("docs/data/baHourlyJSON-20240401-20240403.json"));
+const baHourlyData = JSON.parse(readFileSync("docs/data/baHourly.json"));
 
 const baHourly = baHourlyData.response.data
   .filter((d) => d.type == "D") // Only use demand ("D")

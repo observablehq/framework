@@ -19,9 +19,7 @@ const tidySeries = (response) => {
   });
 };
 
-const countryInterchangeSeriesJSON = JSON.parse(
-  readFileSync("docs/data/countryInterchangeSeries-20240328-20240403.json")
-);
+const countryInterchangeSeriesJSON = JSON.parse(readFileSync("docs/data/countryInterchange.json"));
 
 const countryInterchangeSeries = tidySeries(countryInterchangeSeriesJSON);
 

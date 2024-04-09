@@ -5,7 +5,7 @@ import {readFileSync} from "node:fs";
 
 const datetimeFormat = d3.utcParse("%m/%d/%Y %H:%M:%S");
 const dateFormat = d3.utcParse("%m/%d/%Y");
-const typeNameRemap = {DF: "demandForecast", D: "demandActual", NG: "netGeneration"};
+const typeNameRemap = {DF: "demandForecast", D: "demandActual", NG: "netGeneration", TI: "totalInterchange"};
 
 // Flatten JSON from date / type / value hierarchy to a tidy array
 const jsonToTidy = (data) => {
@@ -21,7 +21,7 @@ const jsonToTidy = (data) => {
   });
 };
 
-const usOverview = JSON.parse(readFileSync("docs/data/usOverviewSeries-20240328-20240403.json"));
+const usOverview = JSON.parse(readFileSync("docs/data/usOverview.json"));
 
 const tidySeries = jsonToTidy(usOverview);
 
