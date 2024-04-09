@@ -1,4 +1,5 @@
 import * as Plot from "npm:@observablehq/plot";
+import * as d3 from "npm:d3";
 import {extent, format, rollup, timeFormat} from "npm:d3";
 
 function friendlyTypeName(d) {
@@ -110,7 +111,11 @@ export function countryInterchangeChart(width, height, usDemandGenForecast, coun
         y: (d) => d.value / 1000,
         curve: "step",
         fill: "name",
-        tip: true
+        tip: true,
+        title: (d) =>
+          `Country: ${d.name}\nDate: ${d.date.toLocaleString("en-US", {hour: "numeric", hour12: true})} ${d3.timeFormat(
+            "%B %d, %Y"
+          )(d.date)}\nGWh exported: ${d.value / 1000}`
       })
       //Plot.ruleY([0], {strokeOpacity: 0.3})
     ]
