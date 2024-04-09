@@ -1,12 +1,12 @@
 # Comma-separated values
 
-To load a [comma-separated values](https://en.wikipedia.org/wiki/Comma-separated_values) (CSV) file, use [`FileAttachment`](../javascript/files)`.csv`. The `csv`, `tsv`, and `dsv` method implementations are based on [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180).
+To load a [comma-separated values](https://en.wikipedia.org/wiki/Comma-separated_values) (CSV) file, use [`FileAttachment`](../files)`.csv`. The `csv`, `tsv`, and `dsv` method implementations are based on [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180).
 
 ```js echo
 const gistemp = FileAttachment("gistemp.csv").csv({typed: true});
 ```
 
-The value of `gistemp` above is a [promise](./promises) to an array of objects. In other code blocks, the promise is resolved implicitly and hence you can refer to it as an array of objects.
+The value of `gistemp` above is a [promise](../reactivity#promises) to an array of objects. In other code blocks, the promise is resolved implicitly and hence you can refer to it as an array of objects.
 
 ```js echo
 gistemp

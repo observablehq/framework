@@ -1,5 +1,5 @@
 import mime from "mime";
-import type {Config, Page, Script} from "./config.js";
+import type {Config, Page, Script, Section} from "./config.js";
 import {mergeToc} from "./config.js";
 import {getClientPath} from "./files.js";
 import type {Html, HtmlResolvers} from "./html.js";
@@ -146,17 +146,13 @@ async function renderSidebar(options: RenderOptions): Promise<Html> {
   <ol>${pages.map((p, i) =>
     "pages" in p
       ? html`${i > 0 && "path" in pages[i - 1] ? html`</ol>` : ""}
-    <details${
-      p.pages.some((p) => normalizePath(p.path) === path)
-        ? html` open class="observablehq-section-active"`
-        : p.open
-        ? " open"
-        : ""
+    <${p.collapsible ? (p.open || isSectionActive(p, path) ? "details open" : "details") : "section"}${
+      isSectionActive(p, path) ? html` class="observablehq-section-active"` : ""
     }>
       <summary>${p.name}</summary>
       <ol>${p.pages.map((p) => renderListItem(p, path, normalizeLink))}
       </ol>
-    </details>`
+    </${p.collapsible ? "details" : "section"}>`
       : "path" in p
       ? html`${i > 0 && "pages" in pages[i - 1] ? html`\n  </ol>\n  <ol>` : ""}${renderListItem(
           p,
@@ -170,6 +166,10 @@ async function renderSidebar(options: RenderOptions): Promise<Html> {
 <script>{${html.unsafe(
     (await rollupClient(getClientPath("sidebar-init.js"), root, path, {minify: true})).trim()
   )}}</script>`;
+}
+
+function isSectionActive(s: Section<Page>, path: string): boolean {
+  return s.pages.some((p) => normalizePath(p.path) === path);
 }
 
 interface Header {

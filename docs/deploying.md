@@ -64,6 +64,8 @@ jobs:
           OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_TOKEN }}
 ```
 
+<div class="tip">As shown above, deploy messages can be set using <code>--message</code>. This is especially useful for continuous deployment from a git repository: the message can include the SHA, author, and message of the latest commit.</div>
+
 When deploying automatically, you can’t sign-in in your browser the way you did for manual deploys; instead, your GitHub action will authenticate using an Observable API key (also known as a *token* and referred to as `OBSERVABLE_TOKEN` above).
 
 To create an API key:

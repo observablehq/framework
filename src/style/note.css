@@ -2,8 +2,9 @@
 .tip,
 .warning,
 .caution {
-  border-left: solid 1px var(--theme-foreground-fainter);
-  padding: 0 2rem;
+  border-left: solid 1px;
+  border-radius: 0 4px 4px 0;
+  padding: 1rem 2rem;
   margin: 1rem 0;
   box-sizing: border-box;
   max-width: 640px;
@@ -13,15 +14,24 @@
 .tip::before,
 .warning::before,
 .caution::before {
-  content: "Note";
   display: block;
   margin-bottom: 1rem;
   font-weight: 700;
+}
+
+.note {
+  border-left-color: var(--theme-foreground-fainter);
+  background-color: var(--theme-background-alt);
+}
+
+.note::before {
+  content: "Note";
   color: var(--theme-foreground-muted);
 }
 
 .tip {
   border-left-color: var(--theme-green);
+  background-color: color-mix(in srgb, var(--theme-green), var(--theme-background) 90%);
 }
 
 .tip::before {
@@ -31,6 +41,7 @@
 
 .warning {
   border-left-color: var(--theme-yellow);
+  background-color: color-mix(in srgb, var(--theme-yellow), var(--theme-background) 90%);
 }
 
 .warning::before {
@@ -40,6 +51,7 @@
 
 .caution {
   border-left-color: var(--theme-red);
+  background-color: color-mix(in srgb, var(--theme-red), var(--theme-background) 90%);
 }
 
 .caution::before {
@@ -52,4 +64,18 @@
 .warning[label]::before,
 .caution[label]::before {
   content: attr(label);
+}
+
+.note > :first-child,
+.tip > :first-child,
+.warning > :first-child,
+.caution > :first-child {
+  margin-top: 0;
+}
+
+.note > :last-child,
+.tip > :last-child,
+.warning > :last-child,
+.caution > :last-child {
+  margin-bottom: 0;
 }

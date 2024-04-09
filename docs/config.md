@@ -114,7 +114,9 @@ Whether to show the sidebar. Defaults to true if **pages** is not empty.
 
 An array containing pages and sections. If not specified, it defaults to all Markdown files found in the source root in directory listing order.
 
-Both pages and sections have a **name**, which typically corresponds to the page’s title. The name gets displayed in the sidebar. Clicking on a page navigates to the corresponding **path**, which should start with a leading slash and be relative to the root; the path can also be specified as a full URL to navigate to an external site. Clicking on a section header opens or closes that section. Each section must specify an array of **pages**, and optionally whether the section is **open** by default. If **open** is not set, it defaults to true. If **open** is false, the section is closed unless the current page belongs to that section.
+Both pages and sections have a **name**, which typically corresponds to the page’s title. The name gets displayed in the sidebar. Clicking on a page navigates to the corresponding **path**, which should start with a leading slash and be relative to the root; the path can also be specified as a full URL to navigate to an external site. Each section must specify an array of **pages**.
+
+Sections may be **collapsible**. <a href="https://github.com/observablehq/framework/pull/1208" class="observablehq-version-badge" data-version="prerelease" title="Added in #1208"></a> If the **open** option is set, the **collapsible** option defaults to true; otherwise it defaults to false. If the section is not collapsible, the **open** option is ignored and the section is always open; otherwise, the **open** option defaults to true. When a section is collapsible, clicking on a section header opens or closes that section. A section will always be open if the current page belongs to that section.
 
 For example, here **pages** specifies two sections and a total of four pages:
 

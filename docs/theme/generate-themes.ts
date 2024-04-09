@@ -109,7 +109,7 @@ Theme modifiers are intended to compose with the above color themes. They are:
 - \`alt\` - swap the page and card background colors
 - \`wide\` - make the main column full-width
 
-The \`alt\` theme swaps the page and card background colors. This brings [cards](./css/card) to the foreground and is recommended for dashboards.
+The \`alt\` theme swaps the page and card background colors. This brings [cards](./markdown#cards) to the foreground and is recommended for dashboards.
 
 <div class="grid grid-cols-2">${renderThemeSection(["light-alt", "light", "dark-alt", "dark"])}</div>
 
@@ -134,7 +134,96 @@ In addition to themes and theme modifiers, there are special aliases:
 - \`light\` - an alias for \`${light}\`
 - \`dark\` - an alias for \`${dark}\`
 
-On its own, \`default\` is equivalent to \`[light, dark]\` (or \`[${light}, ${dark}]\`). The \`default\` theme is applied by default if you don’t specify any color theme. You can also use \`default\` to combine a specific light or dark theme with the default theme of the opposing mode; for example \`[cotton, default]\` is equivalent to \`[cotton, dark]\`, and \`[coffee, default]\` is equivalent to \`[coffee, light]\`.`;
+On its own, \`default\` is equivalent to \`[light, dark]\` (or \`[${light}, ${dark}]\`). The \`default\` theme is applied by default if you don’t specify any color theme. You can also use \`default\` to combine a specific light or dark theme with the default theme of the opposing mode; for example \`[cotton, default]\` is equivalent to \`[cotton, dark]\`, and \`[coffee, default]\` is equivalent to \`[coffee, light]\`.
+
+## Colors
+
+The following custom properties are defined by the current theme:
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Color</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>--theme-foreground</code></td>
+      <td><div style="background-color: var(--theme-foreground); width: 2rem; height: 1rem;"></div></td>
+      <td>page foreground color</td>
+    </tr>
+    <tr>
+      <td><code>--theme-background</code></td>
+      <td><div style="background-color: var(--theme-background); width: 2rem; height: 1rem;"></div></td>
+      <td>page background color</td>
+    </tr>
+    <tr>
+      <td><code>--theme-background-alt</code></td>
+      <td><div style="background-color: var(--theme-background-alt); width: 2rem; height: 1rem;"></div></td>
+      <td>block background color</td>
+    </tr>
+    <tr>
+      <td><code>--theme-foreground-alt</code></td>
+      <td><div style="background-color: var(--theme-foreground-alt); width: 2rem; height: 1rem;"></div></td>
+      <td>heading foreground color</td>
+    </tr>
+    <tr>
+      <td><code>--theme-foreground-muted</code></td>
+      <td><div style="background-color: var(--theme-foreground-muted); width: 2rem; height: 1rem;"></div></td>
+      <td>secondary text foreground color</td>
+    </tr>
+    <tr>
+      <td><code>--theme-foreground-faint</code></td>
+      <td><div style="background-color: var(--theme-foreground-faint); width: 2rem; height: 1rem;"></div></td>
+      <td>faint border color</td>
+    </tr>
+    <tr>
+      <td><code>--theme-foreground-fainter</code></td>
+      <td><div style="background-color: var(--theme-foreground-fainter); width: 2rem; height: 1rem;"></div></td>
+      <td>fainter border color</td>
+    </tr>
+    <tr>
+      <td><code>--theme-foreground-faintest</code></td>
+      <td><div style="background-color: var(--theme-foreground-faintest); width: 2rem; height: 1rem;"></div></td>
+      <td>faintest border color</td>
+    </tr>
+    <tr>
+      <td><code>--theme-foreground-focus</code></td>
+      <td><div style="background-color: var(--theme-foreground-focus); width: 2rem; height: 1rem;"></div></td>
+      <td>emphasis foreground color</td>
+    </tr>
+  </tbody>
+</table>
+
+You can use these properties anywhere you like. For example, to style a line chart to match the focus color:
+
+\`\`\`js echo
+Plot.lineY(aapl, {x: "Date", y: "Close", stroke: "var(--theme-foreground-focus)"}).plot()
+\`\`\`
+
+A handful of color classes are also provided:
+
+\`\`\`html echo
+<div class="red">I am red text.</div>
+\`\`\`
+
+\`\`\`html echo
+<div class="yellow">I am yellow text.</div>
+\`\`\`
+
+\`\`\`html echo
+<div class="green">I am green text.</div>
+\`\`\`
+
+\`\`\`html echo
+<div class="blue">I am blue text.</div>
+\`\`\`
+
+\`\`\`html echo
+<div class="muted">I am muted text.</div>
+\`\`\``;
 }
 
 function renderTheme(theme: string): string {
@@ -143,12 +232,14 @@ theme: ${theme}
 toc: false
 head: false
 header: false
+sidebar: false
 ---
 
-<style>
-#observablehq-sidebar-toggle {display: none;}
-</style>
-
+\`\`\`js
+const alphabet = FileAttachment("../data/alphabet.csv").csv({typed: true});
+const industries = FileAttachment("../data/industries.csv").csv({typed: true});
+const penguins = FileAttachment("../data/penguins.csv").csv({typed: true});
+\`\`\`
 
 \`\`\`js
 const subset = new Set(["Transportation and Utilities", "Mining and Extraction", "Finance", "Agriculture", "Information"]);

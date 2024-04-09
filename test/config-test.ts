@@ -20,7 +20,12 @@ describe("readConfig(undefined, root)", () => {
         {path: "/index", name: "Index"},
         {path: "/one", name: "One<Two"},
         {name: "Two", path: "/sub/two"},
-        {name: "Closed subsection", open: false, pages: [{name: "Closed page", path: "/closed/page"}]}
+        {
+          name: "Closed subsection",
+          collapsible: true,
+          open: false,
+          pages: [{name: "Closed page", path: "/closed/page"}]
+        }
       ],
       title: undefined,
       toc: {label: "On this page", show: true},
@@ -136,7 +141,7 @@ describe("normalizeConfig(spec, root)", () => {
   });
   it("coerces sections", () => {
     const inpages = [{name: 42, pages: new Set([{name: null, path: {toString: () => "yes"}}])}];
-    const outpages = [{name: "42", open: true, pages: [{name: "null", path: "/yes"}]}];
+    const outpages = [{name: "42", collapsible: false, open: true, pages: [{name: "null", path: "/yes"}]}];
     assert.deepStrictEqual(config({pages: inpages}, root).pages, outpages);
   });
   it("coerces toc", () => {

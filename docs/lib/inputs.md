@@ -12,7 +12,7 @@ Or, just import the specific inputs you want:
 import {button, color} from "npm:@observablehq/inputs";
 ```
 
-Inputs are typically passed to the [`view` function](<../javascript/inputs#view(element)>) for display, while exposing the input’s [value generator](../javascript/generators) as a [reactive variable](../javascript/reactivity). Options differ between inputs. For example, the checkbox input accepts options to disable all or certain values, sort displayed values, and only display repeated values _once_ (among others):
+Inputs are typically passed to the [`view` function](<../reactivity#inputs>) for display, while exposing the input’s [value generator](../reactivity#generators) as a [reactive variable](../reactivity). Options differ between inputs. For example, the checkbox input accepts options to disable all or certain values, sort displayed values, and only display repeated values _once_ (among others):
 
 ```js echo
 const checkout = view(

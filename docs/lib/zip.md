@@ -1,6 +1,6 @@
 # ZIP
 
-To load a [ZIP archive](<https://en.wikipedia.org/wiki/ZIP_(file_format)>), use [`FileAttachment`](../javascript/files).
+To load a [ZIP archive](<https://en.wikipedia.org/wiki/ZIP_(file_format)>), use [`FileAttachment`](../files).
 
 ```js echo
 const muybridge = FileAttachment("muybridge.zip").zip();
@@ -24,7 +24,7 @@ To pull out a single file from the archive, use the `archive.file` method. It re
 muybridge.file("deer.jpeg").image({width: 320, alt: "A deer"})
 ```
 
-That said, if you know the name of the file within the ZIP archive statically, you don’t need to load the ZIP archive; you can simply request the [file within the archive](../routing#archives) directly. The specified file is then extracted from the ZIP archive at build time.
+That said, if you know the name of the file within the ZIP archive statically, you don’t need to load the ZIP archive; you can simply request the [file within the archive](../loaders#archives) directly. The specified file is then extracted from the ZIP archive at build time.
 
 ```js echo
 FileAttachment("muybridge/deer.jpeg").image({width: 320, alt: "A deer"})
