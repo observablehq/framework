@@ -98,7 +98,7 @@ export function usGenDemandForecastChart(width, height, data, currentHour) {
 export function countryInterchangeChart(width, height, usDemandGenForecast, countryInterchangeSeries, currentHour) {
   return Plot.plot({
     width,
-    marginTop: 5,
+    marginTop: 10,
     height: height - 50,
     color: {legend: true, range: ["#B6B5B1", "#848890"]},
     grid: true,
@@ -113,9 +113,10 @@ export function countryInterchangeChart(width, height, usDemandGenForecast, coun
         fill: "name",
         tip: true,
         title: (d) =>
-          `Country: ${d.name}\nDate: ${d.date.toLocaleString("en-US", {hour: "numeric", hour12: true})} ${d3.timeFormat(
-            "%B %d, %Y"
-          )(d.date)}\nGWh exported: ${d.value / 1000}`
+          `Country: ${d.name}\nDate: ${d3.timeFormat("%-d %b")(d.date)} ${d.date.toLocaleString("en-US", {
+            hour: "numeric",
+            hour12: true
+          })}\nExported: ${d.value / 1000} GWh`
       })
       //Plot.ruleY([0], {strokeOpacity: 0.3})
     ]

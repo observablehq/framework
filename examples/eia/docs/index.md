@@ -129,7 +129,7 @@ hoursAgoInput.querySelector("input[type=number]").remove();
 // Get current date in readable format
 const formatDate = d3.utcFormat("%B %d, %Y");
 const currentHour = new Date(endHour.getTime() - hoursAgo * MS_IN_AN_HOUR);
-const currentDate = formatDate(currentHour)
+const currentDate = d3.timeFormat("%-d %b %Y")(currentHour)
 ```
 
 ```js
@@ -149,7 +149,7 @@ function centerResize(render) {
     <figure style="max-width: none;">
       <div style="display: flex; flex-direction: column; align-items: center;">
         <h1 style="margin-top: 0.5rem;">${hourFormat(currentHour)}</h1>
-        <div>${d3.timeFormat("%d %b %Y")(currentHour)} </div>
+        <div>${currentDate} </div>
         <div style="display: flex; align-items: center;">
           <div>-${hoursBackOfData} hrs</div>
           ${hoursAgoInput}
@@ -173,7 +173,7 @@ function centerResize(render) {
     </figure>
   </div>
   <div class="card grid-colspan-2">
-    <h2>Top 5 balancing authorities by demand at ${hourFormat(currentHour)} ${d3.timeFormat("%d %b %Y")(currentHour)} (GWh)</h2>
+    <h2>Top 5 balancing authorities by demand on ${currentDate} at ${hourFormat(currentHour)} (GWh)</h2>
     ${resize((width, height) => top5BalancingAuthoritiesChart(width, height, top5LatestDemand, maxDemand))}
   </div>
   <div class="card grid-colspan-2">
