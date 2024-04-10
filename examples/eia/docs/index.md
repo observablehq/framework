@@ -1,6 +1,7 @@
 # U.S. electricity grid
 
 ```js
+// Import components
 import {countryInterchangeChart, top5BalancingAuthoritiesChart, usGenDemandForecastChart} from "./components/charts.js";
 import {balancingAuthoritiesLegend, balancingAuthoritiesMap} from "./components/map.js";
 ```
@@ -12,23 +13,19 @@ import {balancingAuthoritiesLegend, balancingAuthoritiesMap} from "./components/
 
 // International electricity interchange
 const countryInterchangeSeries = FileAttachment("data/country-interchange.csv").csv({typed: true});
-```
 
-```js
+// Balancing authority demand
 const baHourlyDemand = FileAttachment("data/eia-ba-hourly.csv").csv({typed: true});
-```
 
-```js
+// US total demand, generation and forecast
+const usDemandGenForecastAll = FileAttachment("data/us-demand.csv").csv({typed: true});
+
 // BA connections
 const eiaConnRef = FileAttachment("data/eia-connections-reference.csv").csv({typed: true});
-```
 
-```js
 // BA status (generating or not)
 const eiaBARef = FileAttachment("data/eia-bia-reference.csv").csv({typed: true});
-```
 
-```js
 //
 // Spatial data (country, states, BA locations)
 //
@@ -37,29 +34,18 @@ const eiaBARef = FileAttachment("data/eia-bia-reference.csv").csv({typed: true})
 const us = await FileAttachment("data/us-states.json").json();
 const nation = us.features.find(({id}) => id === "nation");
 const statemesh = us.features.find(({id}) => id === "statemesh");
-```
 
-```js
 // Balancing authority representative locations
 const eiaPoints = FileAttachment("data/eia-system-points.json").json().then(d => d[0].data);
 ```
 
 ```js
-// US total demand, generation and forecast
-const usDemandGenForecastAll = FileAttachment("data/us-demand.csv").csv({typed: true});
-```
-
-```js
-// Omit
+// Omit total interchange
 const usDemandGenForecast = usDemandGenForecastAll.filter(d => d.name != "totalInterchange");
-```
 
-```js
-// Generating only BAs
+// Get generating only balancing authorities
 const genOnlyBA = eiaBARef.filter(d => d["Generation Only BA"] == "Yes").map(d => d["BA Code"]);
-```
 
-```js
 const baHourlyClean = baHourlyDemand
   .map((d) => ({
     "Date": timeParse(d.period).toLocaleString("en-us", {month: "short", day: "2-digit", hour: "2-digit"}),
