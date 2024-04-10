@@ -97,7 +97,8 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
             installCommand,
             rootPath: rootPath!,
             projectTitle: projectTitle as string,
-            projectTitleString: JSON.stringify(projectTitle as string)
+            projectTitleString: JSON.stringify(projectTitle as string),
+            frameworkVersionString: JSON.stringify(`^${process.env.npm_package_version}`)
           },
           effects
         );
