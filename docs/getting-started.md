@@ -116,7 +116,7 @@ Next you’ll enter the project’s title. The title will appear in the sidebar 
 <span class="focus">│</span>  <span class="muted"><span class="invert">H</span>ello Framework</span>
 <span class="focus">└</span></pre>
 
-Next, decide whether you want sample files in your new project. These files demonstrate common techniques and are handy for learning — you can edit the code and see what happens. But if you’d prefer a more minimal starter project with less to delete later, you can omit them. They’re not needed for this tutorial.
+Next, you’ll be asked whether you want sample files in your new project. These files demonstrate common techniques and are handy for learning — you can edit the code and see what happens. You’ll want them now for this tutorial, but in the future you can omit them if you’d prefer a minimal starter project.
 
 <pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
