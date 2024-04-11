@@ -31,9 +31,9 @@ const eiaBARef = FileAttachment("data/eia-bia-reference.csv").csv({typed: true})
 //
 
 // US states
-const us = await FileAttachment("data/us-states.json").json();
-const nation = us.features.find(({id}) => id === "nation");
-const statemesh = us.features.find(({id}) => id === "statemesh");
+const us = FileAttachment("data/us-states.json").json();
+const nation = us.then((us) => us.features.find(({id}) => id === "nation"));
+const statemesh = us.then((us) => us.features.find(({id}) => id === "statemesh"));
 
 // Balancing authority representative locations
 const eiaPoints = FileAttachment("data/eia-system-points.json").json().then(d => d[0].data);
