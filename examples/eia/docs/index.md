@@ -115,7 +115,7 @@ hoursAgoInput.querySelector("input[type=number]").remove();
 // Get current date in readable format
 const formatDate = d3.utcFormat("%B %d, %Y");
 const currentHour = new Date(endHour.getTime() - hoursAgo * MS_IN_AN_HOUR);
-const currentDate = d3.timeFormat("%-d %b %Y")(currentHour)
+const currentDate = d3.timeFormat("%-d %b %Y")(currentHour);
 ```
 
 ```js
