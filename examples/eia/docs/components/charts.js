@@ -1,5 +1,4 @@
 import * as Plot from "npm:@observablehq/plot";
-import * as d3 from "npm:d3";
 import {extent, format, rollup, timeFormat} from "npm:d3";
 
 function friendlyTypeName(d) {
