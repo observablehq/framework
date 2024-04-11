@@ -119,7 +119,6 @@ export function countryInterchangeChart(width, height, usDemandGenForecast, coun
             hour: "numeric"
           })}\nExported: ${(d.value / 1000).toLocaleString("en-US")} GWh`
       })
-      //Plot.ruleY([0], {strokeOpacity: 0.3})
     ]
   });
 }
