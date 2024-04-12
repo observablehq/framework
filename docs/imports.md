@@ -47,7 +47,7 @@ By default, npm imports resolve to the latest version of the given package. Impo
 import confetti from "npm:canvas-confetti@1";
 ```
 
-If the import path is not specified, it defaults to the default entry point is determined by the `package.json`; see [jsDelivr’s GitHub](https://github.com/jsdelivr/jsdelivr/issues/18263) for details. To load a different entry point, specify the desired path. For example, to load mime’s `lite` entry point:
+If the import path is not specified, it uses the default entry point from `package.json`; see [jsDelivr’s GitHub](https://github.com/jsdelivr/jsdelivr/issues/18263) for details. To load a different entry point, specify the desired path. For example, to load mime’s `lite` entry point:
 
 ```js run=false
 import mime from "npm:mime/lite";
