@@ -2,7 +2,7 @@ import {existsSync} from "node:fs";
 import {copyFile, readFile, writeFile} from "node:fs/promises";
 import {createRequire} from "node:module";
 import op from "node:path";
-import {dirname, extname, join, relative} from "node:path/posix";
+import {extname, join} from "node:path/posix";
 import {pathToFileURL} from "node:url";
 import commonjs from "@rollup/plugin-commonjs";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
@@ -14,7 +14,7 @@ import {prepareOutput, toOsPath} from "./files.js";
 import type {ImportReference} from "./javascript/imports.js";
 import {isJavaScript, parseImports} from "./javascript/imports.js";
 import {parseNpmSpecifier, rewriteNpmImports} from "./npm.js";
-import {isPathImport} from "./path.js";
+import {isPathImport, relativePath} from "./path.js";
 import {faint} from "./tty.js";
 
 export async function resolveNodeImport(root: string, spec: string): Promise<string> {
@@ -72,6 +72,8 @@ async function resolveNodeImportInternal(cacheRoot: string, packageRoot: string,
 function overrideNodeResolution(specifier: string, packageResolution: string): string {
   return specifier === "react"
     ? op.join(packageResolution, "cjs", "react.production.min.js")
+    : specifier === "react/jsx-runtime"
+    ? op.join(packageResolution, "cjs", "react-jsx-runtime.production.min.js")
     : specifier === "react-dom" || specifier === "react-dom/client"
     ? op.join(packageResolution, "cjs", "react-dom.production.min.js")
     : specifier === "scheduler"
@@ -124,7 +126,7 @@ async function bundle(path: string, input: string, cacheRoot: string, packageRoo
   try {
     const output = await bundle.generate({format: "es", exports: "named"});
     const code = output.output.find((o): o is OutputChunk => o.type === "chunk")!.code;
-    return rewriteNpmImports(code, (i) => (i.startsWith("/_node/") ? relative(dirname(path), i) : i));
+    return rewriteNpmImports(code, (i) => (i.startsWith("/_node/") ? relativePath(path, i) : i));
   } finally {
     await bundle.close();
   }
