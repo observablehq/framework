@@ -71,7 +71,7 @@ Downloads from npm are cached in `.observablehq/cache/_npm` within your [source 
 
 Self-hosting of `npm:` imports applies to transitive static and [dynamic imports](#dynamic-imports). In addition to downloading modules, Framework downloads supporting files as needed for [recommended libraries](#implicit-imports) and [`import.meta.resolve`](#import-resolutions). For example, [DuckDB](./lib/duckdb) needs WebAssembly modules, and [KaTeX](./lib/tex) needs a stylesheet and fonts. For dynamic imports and `import.meta.resolve`, Framework is only able to self-host import specifiers that are static string literals.
 
-## Node imports
+## Node imports <a href="https://github.com/observablehq/framework/pull/1156" class="observablehq-version-badge" data-version="prerelease" title="Added in #1156"></a>
 
 If you prefer to manage dependencies with a package manager such as npm or Yarn, you can import from `node_modules` instead of importing from the npm package registry via jsDelivr. This is useful for exactly managing versions via lockfiles, for importing [private packages](https://docs.npmjs.com/creating-and-publishing-private-packages) from the npm registry, or for importing from a different registry such as [GitHub Packages](https://github.com/features/packages). Node imports are also useful for sharing code with other applications that do not support `npm:` protocol imports.
 
