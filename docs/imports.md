@@ -47,17 +47,19 @@ By default, npm imports resolve to the latest version of the given package. Impo
 import confetti from "npm:canvas-confetti@1";
 ```
 
-If the import path is not specified, it defaults to the default entry point is determined by the `package.json`; see [jsDelivr’s GitHub](https://github.com/jsdelivr/jsdelivr/issues/18263) for details. To load a different entry point, specify the desired path. For example, to load mime’s `lite` entry point:
+To import a specific [entry point](https://nodejs.org/api/packages.html#package-entry-points), append a slash `/` and the desired entry point path to the package name. For example, to load mime’s `lite` entry point:
 
 ```js run=false
 import mime from "npm:mime/lite";
 ```
 
-Similarly, to load the file `dist/confetti.module.mjs` from canvas-confetti:
+Similarly, to import the file `dist/confetti.module.mjs` from canvas-confetti:
 
 ```js run=false
 import confetti from "npm:canvas-confetti/dist/confetti.module.mjs";
 ```
+
+If you do not specify an entry point, the default entry point is determined by the imported package’s `package.json`, typically by the [`exports` field](https://nodejs.org/api/packages.html#exports); see [jsDelivr’s GitHub](https://github.com/jsdelivr/jsdelivr/issues/18263) for details. 
 
 <div class="tip">If you’re having difficulty importing, it may help to browse the package and see what files are available, and what’s exported in the <code>package.json</code>. You can browse the contents of a published module via jsDelivr; for example, see <a href="https://cdn.jsdelivr.net/npm/canvas-confetti/">https://cdn.jsdelivr.net/npm/canvas-confetti/</a>.</div>
 
@@ -69,7 +71,7 @@ Downloads from npm are cached in `.observablehq/cache/_npm` within your [source 
 
 Self-hosting of `npm:` imports applies to transitive static and [dynamic imports](#dynamic-imports). In addition to downloading modules, Framework downloads supporting files as needed for [recommended libraries](#implicit-imports) and [`import.meta.resolve`](#import-resolutions). For example, [DuckDB](./lib/duckdb) needs WebAssembly modules, and [KaTeX](./lib/tex) needs a stylesheet and fonts. For dynamic imports and `import.meta.resolve`, Framework is only able to self-host import specifiers that are static string literals.
 
-## Node imports
+## Node imports <a href="https://github.com/observablehq/framework/pull/1156" class="observablehq-version-badge" data-version="prerelease" title="Added in #1156"></a>
 
 If you prefer to manage dependencies with a package manager such as npm or Yarn, you can import from `node_modules` instead of importing from the npm package registry via jsDelivr. This is useful for exactly managing versions via lockfiles, for importing [private packages](https://docs.npmjs.com/creating-and-publishing-private-packages) from the npm registry, or for importing from a different registry such as [GitHub Packages](https://github.com/features/packages). Node imports are also useful for sharing code with other applications that do not support `npm:` protocol imports.
 

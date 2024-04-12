@@ -420,6 +420,7 @@ export async function deploy(
     }
     deployInfo = await apiClient.getDeploy(deployId);
     switch (deployInfo.status) {
+      case "created":
       case "pending":
         break;
       case "uploaded":
