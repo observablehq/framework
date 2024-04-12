@@ -6,8 +6,9 @@ import {extname, join} from "node:path/posix";
 import {pathToFileURL} from "node:url";
 import commonjs from "@rollup/plugin-commonjs";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
+import virtual from "@rollup/plugin-virtual";
 import {packageDirectory} from "pkg-dir";
-import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
+import type {AstNode, InputPluginOption, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
 import {prepareOutput, toOsPath} from "./files.js";
@@ -41,12 +42,7 @@ async function resolveNodeImportInternal(cacheRoot: string, packageRoot: string,
         if (isJavaScript(pathResolution)) {
           await writeFile(
             outputPath,
-            await bundle(
-              `/_node/${resolution}`,
-              overrideNodeResolution(spec, packageResolution),
-              cacheRoot,
-              packageResolution
-            )
+            await bundle(`/_node/${resolution}`, spec, require, cacheRoot, packageResolution)
           );
         } else {
           await copyFile(pathResolution, outputPath);
@@ -58,27 +54,6 @@ async function resolveNodeImportInternal(cacheRoot: string, packageRoot: string,
     await promise;
   }
   return `/_node/${resolution}`;
-}
-
-/**
- * React (and its dependencies) are still distributed as CommonJS modules, which
- * means we lose named exports when we bundle them as an ES module — there’s
- * only a default export. We can fix this by importing the production bundle
- * instead, which is (by luck) compatible with cjs-module-lexer. This is quite
- * terrible, and I hope that the React team distributes ES modules soon.
- *
- * https://github.com/facebook/react/issues/11503
- */
-function overrideNodeResolution(specifier: string, packageResolution: string): string {
-  return specifier === "react"
-    ? op.join(packageResolution, "cjs", "react.production.min.js")
-    : specifier === "react/jsx-runtime"
-    ? op.join(packageResolution, "cjs", "react-jsx-runtime.production.min.js")
-    : specifier === "react-dom" || specifier === "react-dom/client"
-    ? op.join(packageResolution, "cjs", "react-dom.production.min.js")
-    : specifier === "scheduler"
-    ? op.join(packageResolution, "cjs", "scheduler.production.min.js")
-    : specifier;
 }
 
 /**
@@ -99,10 +74,35 @@ export function extractNodeSpecifier(path: string): string {
   return path.replace(/^\/_node\//, "");
 }
 
-async function bundle(path: string, input: string, cacheRoot: string, packageRoot: string): Promise<string> {
+/**
+ * React (and its dependencies) are distributed as CommonJS modules, and worse,
+ * they’re incompatible with cjs-module-lexer; so when we try to import them as
+ * ES modules we only see a default export. We fix this by creating a shim
+ * module that exports everything that is visible to require. I hope the React
+ * team distributes ES modules soon…
+ *
+ * https://github.com/facebook/react/issues/11503
+ */
+function isBadCommonJs(specifier: string): boolean {
+  const {name} = parseNpmSpecifier(specifier);
+  return name === "react" || name === "react-dom" || name === "react-is" || name === "scheduler";
+}
+
+function shimCommonJs(specifier: string, require: NodeRequire): string {
+  return `export {${Object.keys(require(specifier))}} from ${JSON.stringify(specifier)};\n`;
+}
+
+async function bundle(
+  path: string,
+  input: string,
+  require: NodeRequire,
+  cacheRoot: string,
+  packageRoot: string
+): Promise<string> {
   const bundle = await rollup({
-    input,
+    input: isBadCommonJs(input) ? "-" : path,
     plugins: [
+      ...(isBadCommonJs(input) ? [virtual({"-": shimCommonJs(input, require)})] : []),
       importResolve(input, cacheRoot, packageRoot),
       nodeResolve({browser: true, rootDir: packageRoot}),
       commonjs({esmExternals: true}),
