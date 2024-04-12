@@ -698,6 +698,35 @@ describe("deploy", () => {
     effects.close();
   });
 
+  it("will re-poll for both created and pending deploy statuses", async () => {
+    const deployId = "deploy456";
+    getCurrentObservableApi()
+      .handlePostAuthRequest()
+      .handlePostAuthRequestPoll("accepted")
+      .handleGetCurrentUser()
+      .handleGetProject(DEPLOY_CONFIG)
+      .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
+      .handlePostDeployFile({deployId, clientName: "index.html"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/theme-air,near-midnight.css"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/client.js"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/runtime.js"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/stdlib.js"})
+      .handlePostDeployUploaded({deployId})
+      .handleGetDeploy({deployId, deployStatus: "created"})
+      .handleGetDeploy({deployId, deployStatus: "pending"})
+      .handleGetDeploy({deployId, deployStatus: "uploaded"})
+      .start();
+
+    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, apiKey: null});
+    effects.clack.inputs = [
+      true, // do you want to log in?
+      "fix some bugs" // deploy message
+    ];
+    await deploy(TEST_OPTIONS, effects);
+
+    effects.close();
+  });
+
   it("prompts if the build doesn't exist", async () => {
     const deployOptions = {
       ...TEST_OPTIONS,
