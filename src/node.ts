@@ -22,7 +22,7 @@ export async function resolveNodeImport(root: string, spec: string): Promise<str
   return resolveNodeImportInternal(op.join(root, ".observablehq", "cache", "_node"), root, spec);
 }
 
-const bundlePromises = new Map<string, Promise<void>>();
+const bundlePromises = new Map<string, Promise<string>>();
 
 async function resolveNodeImportInternal(cacheRoot: string, packageRoot: string, spec: string): Promise<string> {
   const {name, path = "."} = parseNpmSpecifier(spec);
@@ -33,27 +33,23 @@ async function resolveNodeImportInternal(cacheRoot: string, packageRoot: string,
   const {version} = JSON.parse(await readFile(op.join(packageResolution, "package.json"), "utf-8"));
   const resolution = `${name}@${version}/${extname(path) ? path : path === "." ? "index.js" : `${path}.js`}`;
   const outputPath = op.join(cacheRoot, toOsPath(resolution));
-  if (!existsSync(outputPath)) {
-    let promise = bundlePromises.get(outputPath);
-    if (!promise) {
-      promise = (async () => {
-        process.stdout.write(`${spec} ${faint("→")} ${resolution}\n`);
-        await prepareOutput(outputPath);
-        if (isJavaScript(pathResolution)) {
-          await writeFile(
-            outputPath,
-            await bundle(`/_node/${resolution}`, spec, require, cacheRoot, packageResolution)
-          );
-        } else {
-          await copyFile(pathResolution, outputPath);
-        }
-      })();
-      bundlePromises.set(outputPath, promise);
-      promise.catch(console.error).then(() => bundlePromises.delete(outputPath));
+  const resolutionPath = `/_node/${resolution}`;
+  if (existsSync(outputPath)) return resolutionPath;
+  let promise = bundlePromises.get(outputPath);
+  if (promise) return promise; // coalesce concurrent requests
+  promise = (async () => {
+    console.log(`${spec} ${faint("→")} ${outputPath}`);
+    await prepareOutput(outputPath);
+    if (isJavaScript(pathResolution)) {
+      await writeFile(outputPath, await bundle(resolutionPath, spec, require, cacheRoot, packageResolution), "utf-8");
+    } else {
+      await copyFile(pathResolution, outputPath);
     }
-    await promise;
-  }
-  return `/_node/${resolution}`;
+    return resolutionPath;
+  })();
+  promise.catch(console.error).then(() => bundlePromises.delete(outputPath));
+  bundlePromises.set(outputPath, promise);
+  return promise;
 }
 
 /**
