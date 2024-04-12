@@ -8,7 +8,7 @@ import commonjs from "@rollup/plugin-commonjs";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
 import virtual from "@rollup/plugin-virtual";
 import {packageDirectory} from "pkg-dir";
-import type {AstNode, InputPluginOption, OutputChunk, Plugin, ResolveIdResult} from "rollup";
+import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
 import {prepareOutput, toOsPath} from "./files.js";
@@ -100,12 +100,12 @@ async function bundle(
   packageRoot: string
 ): Promise<string> {
   const bundle = await rollup({
-    input: isBadCommonJs(input) ? "-" : path,
+    input: isBadCommonJs(input) ? "-" : input,
     plugins: [
-      ...(isBadCommonJs(input) ? [virtual({"-": shimCommonJs(input, require)})] : []),
+      ...(isBadCommonJs(input) ? [(virtual as any)({"-": shimCommonJs(input, require)})] : []),
       importResolve(input, cacheRoot, packageRoot),
       nodeResolve({browser: true, rootDir: packageRoot}),
-      commonjs({esmExternals: true}),
+      (commonjs as any)({esmExternals: true}),
       esbuild({
         format: "esm",
         platform: "browser",
