@@ -4,7 +4,9 @@ import {createRequire} from "node:module";
 import op from "node:path";
 import {extname, join} from "node:path/posix";
 import {pathToFileURL} from "node:url";
+import commonjs from "@rollup/plugin-commonjs";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
+import virtual from "@rollup/plugin-virtual";
 import {packageDirectory} from "pkg-dir";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
@@ -12,15 +14,15 @@ import esbuild from "rollup-plugin-esbuild";
 import {prepareOutput, toOsPath} from "./files.js";
 import type {ImportReference} from "./javascript/imports.js";
 import {isJavaScript, parseImports} from "./javascript/imports.js";
-import {parseNpmSpecifier} from "./npm.js";
-import {isPathImport} from "./path.js";
+import {parseNpmSpecifier, rewriteNpmImports} from "./npm.js";
+import {isPathImport, relativePath} from "./path.js";
 import {faint} from "./tty.js";
 
 export async function resolveNodeImport(root: string, spec: string): Promise<string> {
   return resolveNodeImportInternal(op.join(root, ".observablehq", "cache", "_node"), root, spec);
 }
 
-const bundlePromises = new Map<string, Promise<void>>();
+const bundlePromises = new Map<string, Promise<string>>();
 
 async function resolveNodeImportInternal(cacheRoot: string, packageRoot: string, spec: string): Promise<string> {
   const {name, path = "."} = parseNpmSpecifier(spec);
@@ -31,24 +33,23 @@ async function resolveNodeImportInternal(cacheRoot: string, packageRoot: string,
   const {version} = JSON.parse(await readFile(op.join(packageResolution, "package.json"), "utf-8"));
   const resolution = `${name}@${version}/${extname(path) ? path : path === "." ? "index.js" : `${path}.js`}`;
   const outputPath = op.join(cacheRoot, toOsPath(resolution));
-  if (!existsSync(outputPath)) {
-    let promise = bundlePromises.get(outputPath);
-    if (!promise) {
-      promise = (async () => {
-        process.stdout.write(`${spec} ${faint("→")} ${resolution}\n`);
-        await prepareOutput(outputPath);
-        if (isJavaScript(pathResolution)) {
-          await writeFile(outputPath, await bundle(spec, cacheRoot, packageResolution));
-        } else {
-          await copyFile(pathResolution, outputPath);
-        }
-      })();
-      bundlePromises.set(outputPath, promise);
-      promise.catch(() => {}).then(() => bundlePromises.delete(outputPath));
+  const resolutionPath = `/_node/${resolution}`;
+  if (existsSync(outputPath)) return resolutionPath;
+  let promise = bundlePromises.get(outputPath);
+  if (promise) return promise; // coalesce concurrent requests
+  promise = (async () => {
+    console.log(`${spec} ${faint("→")} ${outputPath}`);
+    await prepareOutput(outputPath);
+    if (isJavaScript(pathResolution)) {
+      await writeFile(outputPath, await bundle(resolutionPath, spec, require, cacheRoot, packageResolution), "utf-8");
+    } else {
+      await copyFile(pathResolution, outputPath);
     }
-    await promise;
-  }
-  return `/_node/${resolution}`;
+    return resolutionPath;
+  })();
+  promise.catch(console.error).then(() => bundlePromises.delete(outputPath));
+  bundlePromises.set(outputPath, promise);
+  return promise;
 }
 
 /**
@@ -69,29 +70,59 @@ export function extractNodeSpecifier(path: string): string {
   return path.replace(/^\/_node\//, "");
 }
 
-async function bundle(input: string, cacheRoot: string, packageRoot: string): Promise<string> {
+/**
+ * React (and its dependencies) are distributed as CommonJS modules, and worse,
+ * they’re incompatible with cjs-module-lexer; so when we try to import them as
+ * ES modules we only see a default export. We fix this by creating a shim
+ * module that exports everything that is visible to require. I hope the React
+ * team distributes ES modules soon…
+ *
+ * https://github.com/facebook/react/issues/11503
+ */
+function isBadCommonJs(specifier: string): boolean {
+  const {name} = parseNpmSpecifier(specifier);
+  return name === "react" || name === "react-dom" || name === "react-is" || name === "scheduler";
+}
+
+function shimCommonJs(specifier: string, require: NodeRequire): string {
+  return `export {${Object.keys(require(specifier))}} from ${JSON.stringify(specifier)};\n`;
+}
+
+async function bundle(
+  path: string,
+  input: string,
+  require: NodeRequire,
+  cacheRoot: string,
+  packageRoot: string
+): Promise<string> {
   const bundle = await rollup({
-    input,
+    input: isBadCommonJs(input) ? "-" : input,
     plugins: [
-      nodeResolve({browser: true, rootDir: packageRoot}),
+      ...(isBadCommonJs(input) ? [(virtual as any)({"-": shimCommonJs(input, require)})] : []),
       importResolve(input, cacheRoot, packageRoot),
+      nodeResolve({browser: true, rootDir: packageRoot}),
+      (commonjs as any)({esmExternals: true}),
       esbuild({
         format: "esm",
         platform: "browser",
         target: ["es2022", "chrome96", "firefox96", "safari16", "node18"],
         exclude: [], // don’t exclude node_modules
+        define: {"process.env.NODE_ENV": JSON.stringify("production")},
         minify: true
       })
     ],
+    external(source) {
+      return source.startsWith("/_node/");
+    },
     onwarn(message, warn) {
       if (message.code === "CIRCULAR_DEPENDENCY") return;
       warn(message);
     }
   });
   try {
-    const output = await bundle.generate({format: "es"});
-    const code = output.output.find((o): o is OutputChunk => o.type === "chunk")!.code; // TODO don’t assume one chunk?
-    return code;
+    const output = await bundle.generate({format: "es", exports: "named"});
+    const code = output.output.find((o): o is OutputChunk => o.type === "chunk")!.code;
+    return rewriteNpmImports(code, (i) => (i.startsWith("/_node/") ? relativePath(path, i) : i));
   } finally {
     await bundle.close();
   }

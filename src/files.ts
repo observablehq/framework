@@ -48,21 +48,17 @@ export function* visitMarkdownFiles(root: string): Generator<string> {
   }
 }
 
-/** Yields every file within the given root, recursively. */
+/** Yields every file within the given root, recursively, ignoring .observablehq. */
 export function* visitFiles(root: string): Generator<string> {
   const visited = new Set<number>();
   const queue: string[] = [(root = normalize(root))];
-  try {
-    visited.add(statSync(join(root, ".observablehq")).ino);
-  } catch {
-    // ignore the .observablehq directory, if it exists
-  }
   for (const path of queue) {
     const status = statSync(path);
     if (status.isDirectory()) {
       if (visited.has(status.ino)) continue; // circular symlink
       visited.add(status.ino);
       for (const entry of readdirSync(path)) {
+        if (entry === ".observablehq") continue; // ignore the .observablehq directory
         queue.push(join(path, entry));
       }
     } else {

@@ -75,29 +75,28 @@ const npmRequests = new Map<string, Promise<string>>();
 /** Note: path must start with "/_npm/". */
 export async function populateNpmCache(root: string, path: string): Promise<string> {
   if (!path.startsWith("/_npm/")) throw new Error(`invalid npm path: ${path}`);
-  const filePath = join(root, ".observablehq", "cache", path);
-  if (existsSync(filePath)) return filePath;
-  let promise = npmRequests.get(filePath);
+  const outputPath = join(root, ".observablehq", "cache", path);
+  if (existsSync(outputPath)) return outputPath;
+  let promise = npmRequests.get(outputPath);
   if (promise) return promise; // coalesce concurrent requests
-  promise = (async function () {
+  promise = (async () => {
     const specifier = extractNpmSpecifier(path);
     const href = `https://cdn.jsdelivr.net/npm/${specifier}`;
-    process.stdout.write(`npm:${specifier} ${faint("→")} `);
+    console.log(`npm:${specifier} ${faint("→")} ${outputPath}`);
     const response = await fetch(href);
     if (!response.ok) throw new Error(`unable to fetch: ${href}`);
-    process.stdout.write(`${filePath}\n`);
-    await mkdir(dirname(filePath), {recursive: true});
+    await mkdir(dirname(outputPath), {recursive: true});
     if (/^application\/javascript(;|$)/i.test(response.headers.get("content-type")!)) {
       const source = await response.text();
       const resolver = await getDependencyResolver(root, path, source);
-      await writeFile(filePath, rewriteNpmImports(source, resolver), "utf-8");
+      await writeFile(outputPath, rewriteNpmImports(source, resolver), "utf-8");
     } else {
-      await writeFile(filePath, Buffer.from(await response.arrayBuffer()));
+      await writeFile(outputPath, Buffer.from(await response.arrayBuffer()));
     }
-    return filePath;
+    return outputPath;
   })();
-  promise.catch(() => {}).then(() => npmRequests.delete(filePath));
-  npmRequests.set(filePath, promise);
+  promise.catch(console.error).then(() => npmRequests.delete(outputPath));
+  npmRequests.set(outputPath, promise);
   return promise;
 }
 
@@ -237,7 +236,7 @@ async function resolveNpmVersion(root: string, specifier: NpmSpecifier): Promise
     mkdir(join(root, ".observablehq", "cache", "_npm", spec), {recursive: true}); // disk cache
     return version;
   })();
-  promise.catch(() => {}).then(() => npmVersionRequests.delete(href));
+  promise.catch(console.error).then(() => npmVersionRequests.delete(href));
   npmVersionRequests.set(href, promise);
   return promise;
 }

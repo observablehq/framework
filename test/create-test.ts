@@ -50,10 +50,8 @@ describe("create", () => {
       new Set(effects.outputs.keys()),
       new Set([
         "template-test/.gitignore",
-        "template-test/docs/aapl.csv",
         "template-test/docs/observable.png",
         "template-test/docs/index.md",
-        "template-test/docs/penguins.csv",
         "template-test/observablehq.config.js",
         "template-test/package.json",
         "template-test/README.md"
