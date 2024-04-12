@@ -1,4 +1,312 @@
 period,ba,baAbb,value
+2024-04-12T22,Imperial Irrigation District,IID,447
+2024-04-12T22,Tampa Electric Company,TEC,2634
+2024-04-12T22,Western Area Power Administration - Rocky Mountain Region,WACM,3501
+2024-04-12T22,Louisville Gas and Electric Company and Kentucky Utilities Company,LGEE,0
+2024-04-12T22,Florida Power & Light Co.,FPL,18531
+2024-04-12T22,South Carolina Public Service Authority,SC,2465
+2024-04-12T22,Tennessee Valley Authority,TVA,15923
+2024-04-12T22,Seminole Electric Cooperative,SEC,276
+2024-04-12T22,Portland General Electric Company,PGE,2278
+2024-04-12T22,"PJM Interconnection, LLC",PJM,82603
+2024-04-12T22,Public Utility District No. 1 of Chelan County,CHPD,163
+2024-04-12T22,Bonneville Power Administration,BPAT,6485
+2024-04-12T22,Tucson Electric Power,TEPC,1268
+2024-04-12T22,"Southern Company Services, Inc. - Trans",SOCO,22917
+2024-04-12T22,"Associated Electric Cooperative, Inc.",AECI,1776
+2024-04-12T22,New York Independent System Operator,NYIS,16055
+2024-04-12T22,JEA,JEA,
+2024-04-12T22,City of Homestead,HST,95
+2024-04-12T22,"Midcontinent Independent System Operator, Inc.",MISO,66568
+2024-04-12T22,Nevada Power Company,NEVP,3864
+2024-04-12T22,"Electric Reliability Council of Texas, Inc.",ERCO,50653
+2024-04-12T22,NorthWestern Corporation,NWMT,1253
+2024-04-12T22,ISO New England,ISNE,12784
+2024-04-12T22,Los Angeles Department of Water and Power,LDWP,102
+2024-04-12T22,Salt River Project Agricultural Improvement and Power District,SRP,3891
+2024-04-12T22,Southwestern Power Administration,SPA,-314
+2024-04-12T22,Western Area Power Administration - Desert Southwest Region,WALC,1141
+2024-04-12T22,Gainesville Regional Utilities,GVL,243
+2024-04-12T22,City of Tallahassee,TAL,316
+2024-04-12T22,Southwest Power Pool,SWPP,29644
+2024-04-12T22,Balancing Authority of Northern California,BANC,1809
+2024-04-12T22,Avista Corporation,AVA,1364
+2024-04-12T22,"Dominion Energy South Carolina, Inc.",SCEG,2354
+2024-04-12T22,"City of Tacoma, Department of Public Utilities, Light Division",TPWR,508
+2024-04-12T22,Arizona Public Service Company,AZPS,2878
+2024-04-12T22,Seattle City Light,SCL,948
+2024-04-12T22,Public Service Company of New Mexico,PNM,1451
+2024-04-12T22,El Paso Electric Company,EPE,922
+2024-04-12T22,Idaho Power Company,IPCO,1643
+2024-04-12T22,California Independent System Operator,CISO,22267
+2024-04-12T22,Public Service Company of Colorado,PSCO,4226
+2024-04-12T22,Turlock Irrigation District,TIDC,297
+2024-04-12T22,Florida Municipal Power Pool,FMPP,2321
+2024-04-12T22,PUD No. 1 of Douglas County,DOPD,213
+2024-04-12T21,Seattle City Light,SCL,1096
+2024-04-12T21,New York Independent System Operator,NYIS,16016
+2024-04-12T21,South Carolina Public Service Authority,SC,2530
+2024-04-12T21,"PJM Interconnection, LLC",PJM,82774
+2024-04-12T21,Florida Municipal Power Pool,FMPP,2243
+2024-04-12T21,ISO New England,ISNE,12815
+2024-04-12T21,Imperial Irrigation District,IID,411
+2024-04-12T21,Southwest Power Pool,SWPP,29427
+2024-04-12T21,"City of Tacoma, Department of Public Utilities, Light Division",TPWR,515
+2024-04-12T21,PUD No. 1 of Douglas County,DOPD,219
+2024-04-12T21,JEA,JEA,1539
+2024-04-12T21,Bonneville Power Administration,BPAT,6341
+2024-04-12T21,"Associated Electric Cooperative, Inc.",AECI,1716
+2024-04-12T21,Western Area Power Administration - Rocky Mountain Region,WACM,3456
+2024-04-12T21,Florida Power & Light Co.,FPL,18208
+2024-04-12T21,"Southern Company Services, Inc. - Trans",SOCO,22838
+2024-04-12T21,Salt River Project Agricultural Improvement and Power District,SRP,3684
+2024-04-12T21,Tampa Electric Company,TEC,2574
+2024-04-12T21,Public Service Company of New Mexico,PNM,1379
+2024-04-12T21,Public Utility District No. 1 of Chelan County,CHPD,168
+2024-04-12T21,City of Tallahassee,TAL,315
+2024-04-12T21,Louisville Gas and Electric Company and Kentucky Utilities Company,LGEE,4044
+2024-04-12T21,"Electric Reliability Council of Texas, Inc.",ERCO,49344
+2024-04-12T21,Tennessee Valley Authority,TVA,15789
+2024-04-12T21,City of Homestead,HST,91
+2024-04-12T21,Los Angeles Department of Water and Power,LDWP,107
+2024-04-12T21,Avista Corporation,AVA,1385
+2024-04-12T21,Seminole Electric Cooperative,SEC,267
+2024-04-12T21,"Dominion Energy South Carolina, Inc.",SCEG,2330
+2024-04-12T21,Balancing Authority of Northern California,BANC,1814
+2024-04-12T21,Public Service Company of Colorado,PSCO,4101
+2024-04-12T21,Portland General Electric Company,PGE,2299
+2024-04-12T21,El Paso Electric Company,EPE,894
+2024-04-12T21,Western Area Power Administration - Desert Southwest Region,WALC,1127
+2024-04-12T21,Turlock Irrigation District,TIDC,298
+2024-04-12T21,Southwestern Power Administration,SPA,-253
+2024-04-12T21,"Midcontinent Independent System Operator, Inc.",MISO,66815
+2024-04-12T21,NorthWestern Corporation,NWMT,1270
+2024-04-12T21,Nevada Power Company,NEVP,3726
+2024-04-12T21,California Independent System Operator,CISO,22564
+2024-04-12T21,Arizona Public Service Company,AZPS,2699
+2024-04-12T21,Tucson Electric Power,TEPC,1207
+2024-04-12T21,Idaho Power Company,IPCO,1667
+2024-04-12T21,Gainesville Regional Utilities,GVL,236
+2024-04-12T20,"PJM Interconnection, LLC",PJM,83371
+2024-04-12T20,Public Service Company of Colorado,PSCO,4063
+2024-04-12T20,PUD No. 1 of Douglas County,DOPD,217
+2024-04-12T20,Nevada Power Company,NEVP,3594
+2024-04-12T20,"Electric Reliability Council of Texas, Inc.",ERCO,47869
+2024-04-12T20,"City of Tacoma, Department of Public Utilities, Light Division",TPWR,534
+2024-04-12T20,Florida Municipal Power Pool,FMPP,2185
+2024-04-12T20,"Southern Company Services, Inc. - Trans",SOCO,22663
+2024-04-12T20,Western Area Power Administration - Desert Southwest Region,WALC,1109
+2024-04-12T20,"Associated Electric Cooperative, Inc.",AECI,1736
+2024-04-12T20,Imperial Irrigation District,IID,385
+2024-04-12T20,Southwestern Power Administration,SPA,-268
+2024-04-12T20,Seattle City Light,SCL,1127
+2024-04-12T20,Seminole Electric Cooperative,SEC,251
+2024-04-12T20,Gainesville Regional Utilities,GVL,225
+2024-04-12T20,NorthWestern Corporation,NWMT,1289
+2024-04-12T20,Southwest Power Pool,SWPP,29359
+2024-04-12T20,South Carolina Public Service Authority,SC,2477
+2024-04-12T20,Portland General Electric Company,PGE,2322
+2024-04-12T20,Public Service Company of New Mexico,PNM,1301
+2024-04-12T20,"Midcontinent Independent System Operator, Inc.",MISO,67107
+2024-04-12T20,ISO New England,ISNE,12688
+2024-04-12T20,Turlock Irrigation District,TIDC,294
+2024-04-12T20,California Independent System Operator,CISO,22262
+2024-04-12T20,City of Homestead,HST,85
+2024-04-12T20,Florida Power & Light Co.,FPL,17549
+2024-04-12T20,El Paso Electric Company,EPE,864
+2024-04-12T20,Tampa Electric Company,TEC,2455
+2024-04-12T20,"Dominion Energy South Carolina, Inc.",SCEG,2285
+2024-04-12T20,New York Independent System Operator,NYIS,15808
+2024-04-12T20,Public Utility District No. 1 of Chelan County,CHPD,168
+2024-04-12T20,Tucson Electric Power,TEPC,1164
+2024-04-12T20,Balancing Authority of Northern California,BANC,1698
+2024-04-12T20,Louisville Gas and Electric Company and Kentucky Utilities Company,LGEE,4095
+2024-04-12T20,JEA,JEA,1469
+2024-04-12T20,Los Angeles Department of Water and Power,LDWP,104
+2024-04-12T20,City of Tallahassee,TAL,335
+2024-04-12T20,Salt River Project Agricultural Improvement and Power District,SRP,3537
+2024-04-12T20,Western Area Power Administration - Rocky Mountain Region,WACM,3479
+2024-04-12T20,Tennessee Valley Authority,TVA,15945
+2024-04-12T20,Avista Corporation,AVA,1389
+2024-04-12T20,Arizona Public Service Company,AZPS,2572
+2024-04-12T20,Bonneville Power Administration,BPAT,6491
+2024-04-12T20,Idaho Power Company,IPCO,1630
+2024-04-12T19,California Independent System Operator,CISO,22493
+2024-04-12T19,City of Tallahassee,TAL,322
+2024-04-12T19,Seminole Electric Cooperative,SEC,235
+2024-04-12T19,"Midcontinent Independent System Operator, Inc.",MISO,67604
+2024-04-12T19,Idaho Power Company,IPCO,1615
+2024-04-12T19,PUD No. 1 of Douglas County,DOPD,227
+2024-04-12T19,Western Area Power Administration - Desert Southwest Region,WALC,1098
+2024-04-12T19,Imperial Irrigation District,IID,359
+2024-04-12T19,NorthWestern Corporation,NWMT,1299
+2024-04-12T19,South Carolina Public Service Authority,SC,2433
+2024-04-12T19,Public Service Company of New Mexico,PNM,1257
+2024-04-12T19,"PJM Interconnection, LLC",PJM,83861
+2024-04-12T19,"City of Tacoma, Department of Public Utilities, Light Division",TPWR,545
+2024-04-12T19,Tennessee Valley Authority,TVA,16180
+2024-04-12T19,New York Independent System Operator,NYIS,15769
+2024-04-12T19,Tucson Electric Power,TEPC,1121
+2024-04-12T19,Avista Corporation,AVA,1411
+2024-04-12T19,Portland General Electric Company,PGE,2344
+2024-04-12T19,Salt River Project Agricultural Improvement and Power District,SRP,3352
+2024-04-12T19,Florida Power & Light Co.,FPL,16834
+2024-04-12T19,Turlock Irrigation District,TIDC,289
+2024-04-12T19,Florida Municipal Power Pool,FMPP,2074
+2024-04-12T19,Balancing Authority of Northern California,BANC,1679
+2024-04-12T19,Public Service Company of Colorado,PSCO,4047
+2024-04-12T19,Nevada Power Company,NEVP,3517
+2024-04-12T19,ISO New England,ISNE,12881
+2024-04-12T19,Louisville Gas and Electric Company and Kentucky Utilities Company,LGEE,4163
+2024-04-12T19,"Electric Reliability Council of Texas, Inc.",ERCO,46649
+2024-04-12T19,"Southern Company Services, Inc. - Trans",SOCO,22762
+2024-04-12T19,JEA,JEA,1406
+2024-04-12T19,Western Area Power Administration - Rocky Mountain Region,WACM,3556
+2024-04-12T19,"Dominion Energy South Carolina, Inc.",SCEG,2234
+2024-04-12T19,City of Homestead,HST,80
+2024-04-12T19,Los Angeles Department of Water and Power,LDWP,104
+2024-04-12T19,"Associated Electric Cooperative, Inc.",AECI,1782
+2024-04-12T19,Southwestern Power Administration,SPA,-273
+2024-04-12T19,Southwest Power Pool,SWPP,29292
+2024-04-12T19,Arizona Public Service Company,AZPS,2668
+2024-04-12T19,El Paso Electric Company,EPE,844
+2024-04-12T19,Bonneville Power Administration,BPAT,6661
+2024-04-12T19,Tampa Electric Company,TEC,2352
+2024-04-12T19,Public Utility District No. 1 of Chelan County,CHPD,179
+2024-04-12T19,Seattle City Light,SCL,1161
+2024-04-12T19,Gainesville Regional Utilities,GVL,215
+2024-04-12T18,El Paso Electric Company,EPE,829
+2024-04-12T18,JEA,JEA,1350
+2024-04-12T18,NorthWestern Corporation,NWMT,1313
+2024-04-12T18,Tucson Electric Power,TEPC,1101
+2024-04-12T18,"Electric Reliability Council of Texas, Inc.",ERCO,45522
+2024-04-12T18,Turlock Irrigation District,TIDC,290
+2024-04-12T18,Florida Power & Light Co.,FPL,16183
+2024-04-12T18,Tampa Electric Company,TEC,2257
+2024-04-12T18,ISO New England,ISNE,12934
+2024-04-12T18,New York Independent System Operator,NYIS,16118
+2024-04-12T18,Seminole Electric Cooperative,SEC,222
+2024-04-12T18,Arizona Public Service Company,AZPS,2626
+2024-04-12T18,City of Homestead,HST,76
+2024-04-12T18,Public Service Company of New Mexico,PNM,1270
+2024-04-12T18,"City of Tacoma, Department of Public Utilities, Light Division",TPWR,566
+2024-04-12T18,Imperial Irrigation District,IID,340
+2024-04-12T18,City of Tallahassee,TAL,309
+2024-04-12T18,Florida Municipal Power Pool,FMPP,1991
+2024-04-12T18,Western Area Power Administration - Desert Southwest Region,WALC,1086
+2024-04-12T18,PUD No. 1 of Douglas County,DOPD,231
+2024-04-12T18,Idaho Power Company,IPCO,1636
+2024-04-12T18,"PJM Interconnection, LLC",PJM,84576
+2024-04-12T18,"Dominion Energy South Carolina, Inc.",SCEG,2207
+2024-04-12T18,Seattle City Light,SCL,1187
+2024-04-12T18,Balancing Authority of Northern California,BANC,1675
+2024-04-12T18,Salt River Project Agricultural Improvement and Power District,SRP,3215
+2024-04-12T18,Public Utility District No. 1 of Chelan County,CHPD,185
+2024-04-12T18,Louisville Gas and Electric Company and Kentucky Utilities Company,LGEE,4165
+2024-04-12T18,Southwestern Power Administration,SPA,-302
+2024-04-12T18,"Associated Electric Cooperative, Inc.",AECI,1802
+2024-04-12T18,Nevada Power Company,NEVP,3451
+2024-04-12T18,Tennessee Valley Authority,TVA,16369
+2024-04-12T18,Western Area Power Administration - Rocky Mountain Region,WACM,3586
+2024-04-12T18,Avista Corporation,AVA,1428
+2024-04-12T18,"Southern Company Services, Inc. - Trans",SOCO,22872
+2024-04-12T18,Portland General Electric Company,PGE,2392
+2024-04-12T18,"Midcontinent Independent System Operator, Inc.",MISO,68025
+2024-04-12T18,Southwest Power Pool,SWPP,29221
+2024-04-12T18,South Carolina Public Service Authority,SC,2418
+2024-04-12T18,Los Angeles Department of Water and Power,LDWP,99
+2024-04-12T18,Public Service Company of Colorado,PSCO,4050
+2024-04-12T18,Bonneville Power Administration,BPAT,6818
+2024-04-12T18,Gainesville Regional Utilities,GVL,206
+2024-04-12T18,California Independent System Operator,CISO,22724
+2024-04-12T17,California Independent System Operator,CISO,23403
+2024-04-12T17,Bonneville Power Administration,BPAT,6961
+2024-04-12T17,JEA,JEA,1297
+2024-04-12T17,"Associated Electric Cooperative, Inc.",AECI,1889
+2024-04-12T17,Public Service Company of New Mexico,PNM,1301
+2024-04-12T17,Florida Power & Light Co.,FPL,15576
+2024-04-12T17,Gainesville Regional Utilities,GVL,200
+2024-04-12T17,"City of Tacoma, Department of Public Utilities, Light Division",TPWR,573
+2024-04-12T17,"PJM Interconnection, LLC",PJM,85281
+2024-04-12T17,Southwestern Power Administration,SPA,20
+2024-04-12T17,Imperial Irrigation District,IID,331
+2024-04-12T17,"Dominion Energy South Carolina, Inc.",SCEG,2213
+2024-04-12T17,Seminole Electric Cooperative,SEC,211
+2024-04-12T17,El Paso Electric Company,EPE,812
+2024-04-12T17,City of Homestead,HST,71
+2024-04-12T17,Arizona Public Service Company,AZPS,2794
+2024-04-12T17,PUD No. 1 of Douglas County,DOPD,239
+2024-04-12T17,Tennessee Valley Authority,TVA,16633
+2024-04-12T17,Florida Municipal Power Pool,FMPP,1913
+2024-04-12T17,Balancing Authority of Northern California,BANC,1710
+2024-04-12T17,Avista Corporation,AVA,1460
+2024-04-12T17,Los Angeles Department of Water and Power,LDWP,106
+2024-04-12T17,Tucson Electric Power,TEPC,1122
+2024-04-12T17,"Midcontinent Independent System Operator, Inc.",MISO,68356
+2024-04-12T17,Nevada Power Company,NEVP,3440
+2024-04-12T17,Seattle City Light,SCL,1198
+2024-04-12T17,City of Tallahassee,TAL,281
+2024-04-12T17,Western Area Power Administration - Rocky Mountain Region,WACM,3614
+2024-04-12T17,ISO New England,ISNE,12949
+2024-04-12T17,Southwest Power Pool,SWPP,29389
+2024-04-12T17,Western Area Power Administration - Desert Southwest Region,WALC,1060
+2024-04-12T17,Turlock Irrigation District,TIDC,292
+2024-04-12T17,Idaho Power Company,IPCO,1645
+2024-04-12T17,Tampa Electric Company,TEC,2167
+2024-04-12T17,Salt River Project Agricultural Improvement and Power District,SRP,3040
+2024-04-12T17,"Southern Company Services, Inc. - Trans",SOCO,22998
+2024-04-12T17,Public Service Company of Colorado,PSCO,4136
+2024-04-12T17,South Carolina Public Service Authority,SC,2413
+2024-04-12T17,Public Utility District No. 1 of Chelan County,CHPD,197
+2024-04-12T17,NorthWestern Corporation,NWMT,1323
+2024-04-12T17,Portland General Electric Company,PGE,2487
+2024-04-12T17,New York Independent System Operator,NYIS,15776
+2024-04-12T17,Louisville Gas and Electric Company and Kentucky Utilities Company,LGEE,4104
+2024-04-12T17,"Electric Reliability Council of Texas, Inc.",ERCO,44777
+2024-04-12T16,Turlock Irrigation District,TIDC,294
+2024-04-12T16,South Carolina Public Service Authority,SC,2417
+2024-04-12T16,El Paso Electric Company,EPE,791
+2024-04-12T16,Seminole Electric Cooperative,SEC,204
+2024-04-12T16,Arizona Public Service Company,AZPS,2924
+2024-04-12T16,"Southern Company Services, Inc. - Trans",SOCO,23248
+2024-04-12T16,Florida Municipal Power Pool,FMPP,1863
+2024-04-12T16,Avista Corporation,AVA,1472
+2024-04-12T16,"Dominion Energy South Carolina, Inc.",SCEG,2240
+2024-04-12T16,Southwestern Power Administration,SPA,23
+2024-04-12T16,Southwest Power Pool,SWPP,29556
+2024-04-12T16,Public Service Company of Colorado,PSCO,4221
+2024-04-12T16,Tucson Electric Power,TEPC,1155
+2024-04-12T16,Western Area Power Administration - Desert Southwest Region,WALC,1071
+2024-04-12T16,California Independent System Operator,CISO,23504
+2024-04-12T16,New York Independent System Operator,NYIS,15955
+2024-04-12T16,City of Homestead,HST,66
+2024-04-12T16,"City of Tacoma, Department of Public Utilities, Light Division",TPWR,579
+2024-04-12T16,Bonneville Power Administration,BPAT,7035
+2024-04-12T16,Tennessee Valley Authority,TVA,16725
+2024-04-12T16,"Electric Reliability Council of Texas, Inc.",ERCO,44311
+2024-04-12T16,"Midcontinent Independent System Operator, Inc.",MISO,68990
+2024-04-12T16,"Associated Electric Cooperative, Inc.",AECI,1957
+2024-04-12T16,Florida Power & Light Co.,FPL,15101
+2024-04-12T16,Idaho Power Company,IPCO,1690
+2024-04-12T16,Los Angeles Department of Water and Power,LDWP,123
+2024-04-12T16,NorthWestern Corporation,NWMT,1339
+2024-04-12T16,Imperial Irrigation District,IID,306
+2024-04-12T16,Western Area Power Administration - Rocky Mountain Region,WACM,3620
+2024-04-12T16,PUD No. 1 of Douglas County,DOPD,251
+2024-04-12T16,"PJM Interconnection, LLC",PJM,85273
+2024-04-12T16,Public Service Company of New Mexico,PNM,1350
+2024-04-12T16,Portland General Electric Company,PGE,2650
+2024-04-12T16,JEA,JEA,1319
+2024-04-12T16,Louisville Gas and Electric Company and Kentucky Utilities Company,LGEE,4098
+2024-04-12T16,Public Utility District No. 1 of Chelan County,CHPD,209
+2024-04-12T16,Tampa Electric Company,TEC,2095
+2024-04-12T16,Balancing Authority of Northern California,BANC,1684
+2024-04-12T16,Seattle City Light,SCL,1204
+2024-04-12T16,City of Tallahassee,TAL,276
+2024-04-12T16,ISO New England,ISNE,13182
+2024-04-12T16,Gainesville Regional Utilities,GVL,197
+2024-04-12T16,Salt River Project Agricultural Improvement and Power District,SRP,2962
+2024-04-12T16,Nevada Power Company,NEVP,3466
 2024-04-12T15,Turlock Irrigation District,TIDC,296
 2024-04-12T15,Seminole Electric Cooperative,SEC,198
 2024-04-12T15,"PJM Interconnection, LLC",PJM,85586
@@ -7,47 +315,47 @@ period,ba,baAbb,value
 2024-04-12T15,City of Tallahassee,TAL,285
 2024-04-12T15,Nevada Power Company,NEVP,3490
 2024-04-12T15,"Midcontinent Independent System Operator, Inc.",MISO,69517
-2024-04-12T15,Seattle City Light,SCL,1034
+2024-04-12T15,Seattle City Light,SCL,1165
 2024-04-12T15,South Carolina Public Service Authority,SC,2418
 2024-04-12T15,Gainesville Regional Utilities,GVL,195
-2024-04-12T15,Salt River Project Agricultural Improvement and Power District,SRP,2975
+2024-04-12T15,Salt River Project Agricultural Improvement and Power District,SRP,2967
 2024-04-12T15,ISO New England,ISNE,13356
-2024-04-12T15,Bonneville Power Administration,BPAT,5647
-2024-04-12T15,Tucson Electric Power,TEPC,1206
+2024-04-12T15,Bonneville Power Administration,BPAT,7018
+2024-04-12T15,Tucson Electric Power,TEPC,1211
 2024-04-12T15,Tampa Electric Company,TEC,2046
-2024-04-12T15,Avista Corporation,AVA,1466
-2024-04-12T15,Louisville Gas and Electric Company and Kentucky Utilities Company,LGEE,0
-2024-04-12T15,Florida Municipal Power Pool,FMPP,1836
+2024-04-12T15,Avista Corporation,AVA,1465
+2024-04-12T15,Louisville Gas and Electric Company and Kentucky Utilities Company,LGEE,4103
+2024-04-12T15,Florida Municipal Power Pool,FMPP,1813
 2024-04-12T15,Public Utility District No. 1 of Chelan County,CHPD,224
 2024-04-12T15,Western Area Power Administration - Desert Southwest Region,WALC,1011
-2024-04-12T15,Arizona Public Service Company,AZPS,2876
+2024-04-12T15,Arizona Public Service Company,AZPS,2967
 2024-04-12T15,City of Homestead,HST,61
 2024-04-12T15,"City of Tacoma, Department of Public Utilities, Light Division",TPWR,575
-2024-04-12T15,Balancing Authority of Northern California,BANC,1664
+2024-04-12T15,Balancing Authority of Northern California,BANC,1665
 2024-04-12T15,Public Service Company of New Mexico,PNM,1408
 2024-04-12T15,California Independent System Operator,CISO,22653
-2024-04-12T15,Tennessee Valley Authority,TVA,16691
+2024-04-12T15,Tennessee Valley Authority,TVA,16742
 2024-04-12T15,"Southern Company Services, Inc. - Trans",SOCO,23341
 2024-04-12T15,New York Independent System Operator,NYIS,16191
 2024-04-12T15,NorthWestern Corporation,NWMT,1370
-2024-04-12T15,"Dominion Energy South Carolina, Inc.",SCEG,2264
+2024-04-12T15,"Dominion Energy South Carolina, Inc.",SCEG,2211
 2024-04-12T15,Western Area Power Administration - Rocky Mountain Region,WACM,3608
 2024-04-12T15,Los Angeles Department of Water and Power,LDWP,194
-2024-04-12T15,Southwestern Power Administration,SPA,-960
+2024-04-12T15,Southwestern Power Administration,SPA,24
 2024-04-12T15,PUD No. 1 of Douglas County,DOPD,258
 2024-04-12T15,Portland General Electric Company,PGE,2580
-2024-04-12T15,JEA,JEA,
+2024-04-12T15,JEA,JEA,1292
 2024-04-12T15,El Paso Electric Company,EPE,805
 2024-04-12T15,Imperial Irrigation District,IID,298
 2024-04-12T15,Southwest Power Pool,SWPP,29789
 2024-04-12T15,"Electric Reliability Council of Texas, Inc.",ERCO,43817
-2024-04-12T15,Public Service Company of Colorado,PSCO,4367
-2024-04-12T15,"Associated Electric Cooperative, Inc.",AECI,
-2024-04-12T14,Southwestern Power Administration,SPA,-1148
-2024-04-12T14,"Dominion Energy South Carolina, Inc.",SCEG,2243
+2024-04-12T15,Public Service Company of Colorado,PSCO,4365
+2024-04-12T15,"Associated Electric Cooperative, Inc.",AECI,2065
+2024-04-12T14,Southwestern Power Administration,SPA,26
+2024-04-12T14,"Dominion Energy South Carolina, Inc.",SCEG,2206
 2024-04-12T14,Los Angeles Department of Water and Power,LDWP,224
 2024-04-12T14,Nevada Power Company,NEVP,3447
-2024-04-12T14,Bonneville Power Administration,BPAT,7008
+2024-04-12T14,Bonneville Power Administration,BPAT,6645
 2024-04-12T14,Western Area Power Administration - Rocky Mountain Region,WACM,3605
 2024-04-12T14,Seminole Electric Cooperative,SEC,194
 2024-04-12T14,Gainesville Regional Utilities,GVL,191
@@ -58,8 +366,8 @@ period,ba,baAbb,value
 2024-04-12T14,Seattle City Light,SCL,1088
 2024-04-12T14,Tucson Electric Power,TEPC,1228
 2024-04-12T14,Tampa Electric Company,TEC,1996
-2024-04-12T14,Public Service Company of Colorado,PSCO,4557
-2024-04-12T14,Florida Municipal Power Pool,FMPP,1746
+2024-04-12T14,Public Service Company of Colorado,PSCO,4555
+2024-04-12T14,Florida Municipal Power Pool,FMPP,1744
 2024-04-12T14,Louisville Gas and Electric Company and Kentucky Utilities Company,LGEE,4140
 2024-04-12T14,New York Independent System Operator,NYIS,16316
 2024-04-12T14,"Midcontinent Independent System Operator, Inc.",MISO,70090
@@ -78,16 +386,16 @@ period,ba,baAbb,value
 2024-04-12T14,Turlock Irrigation District,TIDC,284
 2024-04-12T14,JEA,JEA,1281
 2024-04-12T14,"City of Tacoma, Department of Public Utilities, Light Division",TPWR,548
-2024-04-12T14,"Associated Electric Cooperative, Inc.",AECI,
+2024-04-12T14,"Associated Electric Cooperative, Inc.",AECI,2185
 2024-04-12T14,Public Utility District No. 1 of Chelan County,CHPD,209
-2024-04-12T14,Balancing Authority of Northern California,BANC,1583
+2024-04-12T14,Balancing Authority of Northern California,BANC,1575
 2024-04-12T14,Tennessee Valley Authority,TVA,16984
 2024-04-12T14,El Paso Electric Company,EPE,810
 2024-04-12T14,Salt River Project Agricultural Improvement and Power District,SRP,2886
 2024-04-12T14,ISO New England,ISNE,13400
 2024-04-12T14,California Independent System Operator,CISO,21016
 2024-04-12T14,PUD No. 1 of Douglas County,DOPD,255
-2024-04-12T13,Public Service Company of Colorado,PSCO,4538
+2024-04-12T13,Public Service Company of Colorado,PSCO,4535
 2024-04-12T13,Los Angeles Department of Water and Power,LDWP,219
 2024-04-12T13,"Southern Company Services, Inc. - Trans",SOCO,23303
 2024-04-12T13,"PJM Interconnection, LLC",PJM,84652
@@ -99,19 +407,19 @@ period,ba,baAbb,value
 2024-04-12T13,City of Tallahassee,TAL,291
 2024-04-12T13,Southwest Power Pool,SWPP,30396
 2024-04-12T13,City of Homestead,HST,54
-2024-04-12T13,"Associated Electric Cooperative, Inc.",AECI,
+2024-04-12T13,"Associated Electric Cooperative, Inc.",AECI,2342
 2024-04-12T13,Tennessee Valley Authority,TVA,17103
 2024-04-12T13,NorthWestern Corporation,NWMT,1308
 2024-04-12T13,"City of Tacoma, Department of Public Utilities, Light Division",TPWR,495
 2024-04-12T13,Bonneville Power Administration,BPAT,6084
 2024-04-12T13,El Paso Electric Company,EPE,795
 2024-04-12T13,Tucson Electric Power,TEPC,1187
-2024-04-12T13,Southwestern Power Administration,SPA,-1229
+2024-04-12T13,Southwestern Power Administration,SPA,18
 2024-04-12T13,Avista Corporation,AVA,1252
 2024-04-12T13,Louisville Gas and Electric Company and Kentucky Utilities Company,LGEE,4043
 2024-04-12T13,Seattle City Light,SCL,960
 2024-04-12T13,Idaho Power Company,IPCO,1595
-2024-04-12T13,"Dominion Energy South Carolina, Inc.",SCEG,2220
+2024-04-12T13,"Dominion Energy South Carolina, Inc.",SCEG,2185
 2024-04-12T13,Salt River Project Agricultural Improvement and Power District,SRP,2742
 2024-04-12T13,Nevada Power Company,NEVP,3353
 2024-04-12T13,Public Service Company of New Mexico,PNM,1488
@@ -129,14 +437,14 @@ period,ba,baAbb,value
 2024-04-12T13,Florida Municipal Power Pool,FMPP,1683
 2024-04-12T13,Imperial Irrigation District,IID,263
 2024-04-12T13,Western Area Power Administration - Rocky Mountain Region,WACM,3548
-2024-04-12T13,Balancing Authority of Northern California,BANC,1458
+2024-04-12T13,Balancing Authority of Northern California,BANC,1459
 2024-04-12T13,Florida Power & Light Co.,FPL,13238
 2024-04-12T12,South Carolina Public Service Authority,SC,2321
 2024-04-12T12,Louisville Gas and Electric Company and Kentucky Utilities Company,LGEE,3945
-2024-04-12T12,Tennessee Valley Authority,TVA,16751
+2024-04-12T12,Tennessee Valley Authority,TVA,16750
 2024-04-12T12,Southwest Power Pool,SWPP,29314
 2024-04-12T12,Seattle City Light,SCL,866
-2024-04-12T12,Public Service Company of Colorado,PSCO,4235
+2024-04-12T12,Public Service Company of Colorado,PSCO,4234
 2024-04-12T12,NorthWestern Corporation,NWMT,1202
 2024-04-12T12,Avista Corporation,AVA,1153
 2024-04-12T12,Western Area Power Administration - Rocky Mountain Region,WACM,3541
@@ -148,7 +456,7 @@ period,ba,baAbb,value
 2024-04-12T12,City of Homestead,HST,55
 2024-04-12T12,PUD No. 1 of Douglas County,DOPD,215
 2024-04-12T12,Turlock Irrigation District,TIDC,256
-2024-04-12T12,"Dominion Energy South Carolina, Inc.",SCEG,2181
+2024-04-12T12,"Dominion Energy South Carolina, Inc.",SCEG,2137
 2024-04-12T12,Western Area Power Administration - Desert Southwest Region,WALC,961
 2024-04-12T12,Bonneville Power Administration,BPAT,5666
 2024-04-12T12,"City of Tacoma, Department of Public Utilities, Light Division",TPWR,449
@@ -169,11 +477,11 @@ period,ba,baAbb,value
 2024-04-12T12,Imperial Irrigation District,IID,267
 2024-04-12T12,Tampa Electric Company,TEC,1907
 2024-04-12T12,City of Tallahassee,TAL,282
-2024-04-12T12,"Associated Electric Cooperative, Inc.",AECI,
+2024-04-12T12,"Associated Electric Cooperative, Inc.",AECI,2327
 2024-04-12T12,Florida Municipal Power Pool,FMPP,1628
 2024-04-12T12,"Midcontinent Independent System Operator, Inc.",MISO,68568
 2024-04-12T12,Gainesville Regional Utilities,GVL,182
-2024-04-12T12,Southwestern Power Administration,SPA,-960
+2024-04-12T12,Southwestern Power Administration,SPA,30
 2024-04-12T12,Florida Power & Light Co.,FPL,12551
 2024-04-12T11,Nevada Power Company,NEVP,3231
 2024-04-12T11,City of Homestead,HST,57
@@ -192,7 +500,7 @@ period,ba,baAbb,value
 2024-04-12T11,ISO New England,ISNE,11704
 2024-04-12T11,Arizona Public Service Company,AZPS,2762
 2024-04-12T11,"PJM Interconnection, LLC",PJM,78678
-2024-04-12T11,"Dominion Energy South Carolina, Inc.",SCEG,2124
+2024-04-12T11,"Dominion Energy South Carolina, Inc.",SCEG,2068
 2024-04-12T11,Western Area Power Administration - Desert Southwest Region,WALC,952
 2024-04-12T11,"Electric Reliability Council of Texas, Inc.",ERCO,38150
 2024-04-12T11,Los Angeles Department of Water and Power,LDWP,206
@@ -203,7 +511,7 @@ period,ba,baAbb,value
 2024-04-12T11,City of Tallahassee,TAL,230
 2024-04-12T11,Idaho Power Company,IPCO,1303
 2024-04-12T11,California Independent System Operator,CISO,20316
-2024-04-12T11,Public Service Company of Colorado,PSCO,3980
+2024-04-12T11,Public Service Company of Colorado,PSCO,3979
 2024-04-12T11,"City of Tacoma, Department of Public Utilities, Light Division",TPWR,428
 2024-04-12T11,PUD No. 1 of Douglas County,DOPD,204
 2024-04-12T11,"Southern Company Services, Inc. - Trans",SOCO,21629
@@ -214,12 +522,11 @@ period,ba,baAbb,value
 2024-04-12T11,Portland General Electric Company,PGE,1961
 2024-04-12T11,Tampa Electric Company,TEC,1852
 2024-04-12T11,Southwestern Power Administration,SPA,19
-2024-04-12T11,"Associated Electric Cooperative, Inc.",AECI,
+2024-04-12T11,"Associated Electric Cooperative, Inc.",AECI,2068
 2024-04-12T11,JEA,JEA,1136
 2024-04-12T11,Public Service Company of New Mexico,PNM,1316
 2024-04-12T11,South Carolina Public Service Authority,SC,2248
 2024-04-12T11,"Midcontinent Independent System Operator, Inc.",MISO,63850
-2024-04-12T10,City of Tallahassee,TAL,206
 2024-04-12T10,Salt River Project Agricultural Improvement and Power District,SRP,2646
 2024-04-12T10,NorthWestern Corporation,NWMT,1131
 2024-04-12T10,Gainesville Regional Utilities,GVL,154
@@ -228,7 +535,7 @@ period,ba,baAbb,value
 2024-04-12T10,Tampa Electric Company,TEC,1695
 2024-04-12T10,Florida Municipal Power Pool,FMPP,1414
 2024-04-12T10,Bonneville Power Administration,BPAT,5466
-2024-04-12T10,"Dominion Energy South Carolina, Inc.",SCEG,1995
+2024-04-12T10,"Dominion Energy South Carolina, Inc.",SCEG,1906
 2024-04-12T10,"City of Tacoma, Department of Public Utilities, Light Division",TPWR,431
 2024-04-12T10,"PJM Interconnection, LLC",PJM,73245
 2024-04-12T10,"Southern Company Services, Inc. - Trans",SOCO,19750
@@ -253,7 +560,7 @@ period,ba,baAbb,value
 2024-04-12T10,El Paso Electric Company,EPE,662
 2024-04-12T10,California Independent System Operator,CISO,20595
 2024-04-12T10,Western Area Power Administration - Desert Southwest Region,WALC,951
-2024-04-12T10,"Associated Electric Cooperative, Inc.",AECI,1766
+2024-04-12T10,"Associated Electric Cooperative, Inc.",AECI,1883
 2024-04-12T10,ISO New England,ISNE,10906
 2024-04-12T10,City of Homestead,HST,55
 2024-04-12T10,Seattle City Light,SCL,823
@@ -263,8 +570,9 @@ period,ba,baAbb,value
 2024-04-12T10,Portland General Electric Company,PGE,1957
 2024-04-12T10,Western Area Power Administration - Rocky Mountain Region,WACM,3282
 2024-04-12T10,"Midcontinent Independent System Operator, Inc.",MISO,59913
+2024-04-12T10,City of Tallahassee,TAL,206
 2024-04-12T09,PUD No. 1 of Douglas County,DOPD,201
-2024-04-12T09,"Dominion Energy South Carolina, Inc.",SCEG,1905
+2024-04-12T09,"Dominion Energy South Carolina, Inc.",SCEG,1821
 2024-04-12T09,Arizona Public Service Company,AZPS,2895
 2024-04-12T09,"City of Tacoma, Department of Public Utilities, Light Division",TPWR,433
 2024-04-12T09,JEA,JEA,945
@@ -287,7 +595,7 @@ period,ba,baAbb,value
 2024-04-12T09,Tucson Electric Power,TEPC,1114
 2024-04-12T09,Balancing Authority of Northern California,BANC,1443
 2024-04-12T09,El Paso Electric Company,EPE,702
-2024-04-12T09,"Associated Electric Cooperative, Inc.",AECI,1806
+2024-04-12T09,"Associated Electric Cooperative, Inc.",AECI,1805
 2024-04-12T09,Florida Municipal Power Pool,FMPP,1331
 2024-04-12T09,Southwest Power Pool,SWPP,25548
 2024-04-12T09,"Electric Reliability Council of Texas, Inc.",ERCO,36430
@@ -307,7 +615,6 @@ period,ba,baAbb,value
 2024-04-12T09,Seattle City Light,SCL,833
 2024-04-12T09,Western Area Power Administration - Desert Southwest Region,WALC,959
 2024-04-12T09,Imperial Irrigation District,IID,307
-2024-04-12T08,"City of Tacoma, Department of Public Utilities, Light Division",TPWR,446
 2024-04-12T08,"Midcontinent Independent System Operator, Inc.",MISO,58103
 2024-04-12T08,El Paso Electric Company,EPE,713
 2024-04-12T08,PUD No. 1 of Douglas County,DOPD,200
@@ -319,11 +626,11 @@ period,ba,baAbb,value
 2024-04-12T08,"Southern Company Services, Inc. - Trans",SOCO,18652
 2024-04-12T08,Portland General Electric Company,PGE,2044
 2024-04-12T08,Tucson Electric Power,TEPC,1162
-2024-04-12T08,"Dominion Energy South Carolina, Inc.",SCEG,1909
+2024-04-12T08,"Dominion Energy South Carolina, Inc.",SCEG,1824
 2024-04-12T08,Gainesville Regional Utilities,GVL,149
 2024-04-12T08,Western Area Power Administration - Rocky Mountain Region,WACM,3244
 2024-04-12T08,Bonneville Power Administration,BPAT,5640
-2024-04-12T08,"Associated Electric Cooperative, Inc.",AECI,1779
+2024-04-12T08,"Associated Electric Cooperative, Inc.",AECI,1774
 2024-04-12T08,NorthWestern Corporation,NWMT,1142
 2024-04-12T08,California Independent System Operator,CISO,22494
 2024-04-12T08,Tampa Electric Company,TEC,1622
@@ -351,6 +658,7 @@ period,ba,baAbb,value
 2024-04-12T08,Louisville Gas and Electric Company and Kentucky Utilities Company,LGEE,3251
 2024-04-12T08,"Electric Reliability Council of Texas, Inc.",ERCO,36887
 2024-04-12T08,Western Area Power Administration - Desert Southwest Region,WALC,980
+2024-04-12T08,"City of Tacoma, Department of Public Utilities, Light Division",TPWR,446
 2024-04-12T07,Balancing Authority of Northern California,BANC,1625
 2024-04-12T07,City of Tallahassee,TAL,209
 2024-04-12T07,Portland General Electric Company,PGE,2158
@@ -385,12 +693,12 @@ period,ba,baAbb,value
 2024-04-12T07,PUD No. 1 of Douglas County,DOPD,206
 2024-04-12T07,City of Homestead,HST,57
 2024-04-12T07,Tampa Electric Company,TEC,1674
-2024-04-12T07,"Associated Electric Cooperative, Inc.",AECI,1757
+2024-04-12T07,"Associated Electric Cooperative, Inc.",AECI,1756
 2024-04-12T07,Imperial Irrigation District,IID,363
 2024-04-12T07,Salt River Project Agricultural Improvement and Power District,SRP,3112
 2024-04-12T07,"PJM Interconnection, LLC",PJM,71217
 2024-04-12T07,ISO New England,ISNE,10356
-2024-04-12T07,"Dominion Energy South Carolina, Inc.",SCEG,1935
+2024-04-12T07,"Dominion Energy South Carolina, Inc.",SCEG,1851
 2024-04-12T07,JEA,JEA,968
 2024-04-12T07,Florida Municipal Power Pool,FMPP,1390
 2024-04-12T07,NorthWestern Corporation,NWMT,1153
@@ -432,7 +740,7 @@ period,ba,baAbb,value
 2024-04-12T06,Tennessee Valley Authority,TVA,13733
 2024-04-12T06,Arizona Public Service Company,AZPS,3505
 2024-04-12T06,New York Independent System Operator,NYIS,12988
-2024-04-12T06,"Dominion Energy South Carolina, Inc.",SCEG,2003
+2024-04-12T06,"Dominion Energy South Carolina, Inc.",SCEG,1918
 2024-04-12T06,Los Angeles Department of Water and Power,LDWP,247
 2024-04-12T06,Southwest Power Pool,SWPP,25976
 2024-04-12T06,Salt River Project Agricultural Improvement and Power District,SRP,3383
@@ -476,7 +784,7 @@ period,ba,baAbb,value
 2024-04-12T05,PUD No. 1 of Douglas County,DOPD,226
 2024-04-12T05,Turlock Irrigation District,TIDC,352
 2024-04-12T05,Gainesville Regional Utilities,GVL,183
-2024-04-12T05,"Dominion Energy South Carolina, Inc.",SCEG,2098
+2024-04-12T05,"Dominion Energy South Carolina, Inc.",SCEG,2017
 2024-04-12T05,Imperial Irrigation District,IID,435
 2024-04-12T05,"City of Tacoma, Department of Public Utilities, Light Division",TPWR,538
 2024-04-12T05,Seminole Electric Cooperative,SEC,170
@@ -588,7 +896,6 @@ period,ba,baAbb,value
 2024-04-12T02,ISO New England,ISNE,12686
 2024-04-12T02,City of Tallahassee,TAL,314
 2024-04-12T02,JEA,JEA,1474
-2024-04-12T02,"Associated Electric Cooperative, Inc.",AECI,2091
 2024-04-12T02,"Electric Reliability Council of Texas, Inc.",ERCO,47267
 2024-04-12T02,Tampa Electric Company,TEC,2521
 2024-04-12T02,Salt River Project Agricultural Improvement and Power District,SRP,4098
@@ -615,6 +922,7 @@ period,ba,baAbb,value
 2024-04-12T02,Western Area Power Administration - Rocky Mountain Region,WACM,3520
 2024-04-12T02,Idaho Power Company,IPCO,1647
 2024-04-12T02,"Midcontinent Independent System Operator, Inc.",MISO,68285
+2024-04-12T02,"Associated Electric Cooperative, Inc.",AECI,2091
 2024-04-12T01,Tampa Electric Company,TEC,2667
 2024-04-12T01,California Independent System Operator,CISO,23133
 2024-04-12T01,Seminole Electric Cooperative,SEC,241
@@ -679,7 +987,6 @@ period,ba,baAbb,value
 2024-04-12T00,Tucson Electric Power,TEPC,1413.23
 2024-04-12T00,"Dominion Energy South Carolina, Inc.",SCEG,2770
 2024-04-12T00,NorthWestern Corporation,NWMT,1281
-2024-04-12T00,"PJM Interconnection, LLC",PJM,87218
 2024-04-12T00,Tampa Electric Company,TEC,2689
 2024-04-12T00,Seminole Electric Cooperative,SEC,250
 2024-04-12T00,Balancing Authority of Northern California,BANC,2049
@@ -703,6 +1010,7 @@ period,ba,baAbb,value
 2024-04-12T00,ISO New England,ISNE,13855
 2024-04-12T00,Los Angeles Department of Water and Power,LDWP,137
 2024-04-12T00,JEA,JEA,1589
+2024-04-12T00,"PJM Interconnection, LLC",PJM,87218
 2024-04-11T23,New York Independent System Operator,NYIS,16950
 2024-04-11T23,Southwest Power Pool,SWPP,28960
 2024-04-11T23,California Independent System Operator,CISO,21013
@@ -967,48 +1275,3 @@ period,ba,baAbb,value
 2024-04-11T18,South Carolina Public Service Authority,SC,2518
 2024-04-11T18,Western Area Power Administration - Desert Southwest Region,WALC,997
 2024-04-11T18,"Dominion Energy South Carolina, Inc.",SCEG,2586
-2024-04-11T17,Florida Municipal Power Pool,FMPP,2424
-2024-04-11T17,"Southern Company Services, Inc. - Trans",SOCO,22530
-2024-04-11T17,Avista Corporation,AVA,1569
-2024-04-11T17,Public Service Company of New Mexico,PNM,1314
-2024-04-11T17,Tampa Electric Company,TEC,2810
-2024-04-11T17,Seminole Electric Cooperative,SEC,207
-2024-04-11T17,City of Homestead,HST,83
-2024-04-11T17,JEA,JEA,1480
-2024-04-11T17,City of Tallahassee,TAL,340
-2024-04-11T17,Western Area Power Administration - Desert Southwest Region,WALC,988
-2024-04-11T17,Public Utility District No. 1 of Chelan County,CHPD,221
-2024-04-11T17,PUD No. 1 of Douglas County,DOPD,256
-2024-04-11T17,Tennessee Valley Authority,TVA,16541.36
-2024-04-11T17,Florida Power & Light Co.,FPL,19305
-2024-04-11T17,El Paso Electric Company,EPE,754
-2024-04-11T17,Salt River Project Agricultural Improvement and Power District,SRP,2882
-2024-04-11T17,Gainesville Regional Utilities,GVL,238
-2024-04-11T17,Nevada Power Company,NEVP,3651
-2024-04-11T17,Southwestern Power Administration,SPA,23
-2024-04-11T17,"City of Tacoma, Department of Public Utilities, Light Division",TPWR,581
-2024-04-11T17,ISO New England,ISNE,13164
-2024-04-11T17,New York Independent System Operator,NYIS,15973
-2024-04-11T17,Seattle City Light,SCL,1148
-2024-04-11T17,Balancing Authority of Northern California,BANC,1715
-2024-04-11T17,Western Area Power Administration - Rocky Mountain Region,WACM,3552
-2024-04-11T17,Idaho Power Company,IPCO,1684
-2024-04-11T17,Tucson Electric Power,TEPC,1098.78
-2024-04-11T17,Southwest Power Pool,SWPP,29791
-2024-04-11T17,"Dominion Energy South Carolina, Inc.",SCEG,2560
-2024-04-11T17,"Electric Reliability Council of Texas, Inc.",ERCO,44000
-2024-04-11T17,NorthWestern Corporation,NWMT,1366
-2024-04-11T17,Bonneville Power Administration,BPAT,7112
-2024-04-11T17,South Carolina Public Service Authority,SC,2530
-2024-04-11T17,Portland General Electric Company,PGE,2523
-2024-04-11T17,Arizona Public Service Company,AZPS,2759
-2024-04-11T17,"Midcontinent Independent System Operator, Inc.",MISO,67327
-2024-04-11T17,California Independent System Operator,CISO,23067
-2024-04-11T17,Louisville Gas and Electric Company and Kentucky Utilities Company,LGEE,4105
-2024-04-11T17,Public Service Company of Colorado,PSCO,4629
-2024-04-11T17,"PJM Interconnection, LLC",PJM,86089
-2024-04-11T17,"Associated Electric Cooperative, Inc.",AECI,1903
-2024-04-11T17,Los Angeles Department of Water and Power,LDWP,99
-2024-04-11T17,Turlock Irrigation District,TIDC,293
-2024-04-11T17,Imperial Irrigation District,IID,333
-2024-04-11T16,New York Independent System Operator,NYIS,16258
