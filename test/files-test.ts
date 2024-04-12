@@ -62,6 +62,9 @@ describe("visitFiles(root)", () => {
     if (os.platform() === "win32") this.skip(); // symlinks are not the same on Windows
     assert.deepStrictEqual(collect(visitFiles("test/input/circular-files")), ["a/a.txt", "b/b.txt"]);
   });
+  it("ignores .observablehq at any level", function () {
+    assert.deepStrictEqual(collect(visitFiles("test/files")), ["visible.txt", "sub/visible.txt"]);
+  });
 });
 
 describe("visitMarkdownFiles(root)", () => {
