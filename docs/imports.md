@@ -47,17 +47,19 @@ By default, npm imports resolve to the latest version of the given package. Impo
 import confetti from "npm:canvas-confetti@1";
 ```
 
-If the import path is not specified, it uses the default entry point from `package.json`; see [jsDelivr’s GitHub](https://github.com/jsdelivr/jsdelivr/issues/18263) for details. To load a different entry point, specify the desired path. For example, to load mime’s `lite` entry point:
+To import a specific [entry point](https://nodejs.org/api/packages.html#package-entry-points), append a slash `/` and the desired entry point path to the package name. For example, to load mime’s `lite` entry point:
 
 ```js run=false
 import mime from "npm:mime/lite";
 ```
 
-Similarly, to load the file `dist/confetti.module.mjs` from canvas-confetti:
+Similarly, to import the file `dist/confetti.module.mjs` from canvas-confetti:
 
 ```js run=false
 import confetti from "npm:canvas-confetti/dist/confetti.module.mjs";
 ```
+
+If you do not specify an entry point, the default entry point is determined by the imported package’s `package.json`, typically by the [`exports` field](https://nodejs.org/api/packages.html#exports); see [jsDelivr’s GitHub](https://github.com/jsdelivr/jsdelivr/issues/18263) for details. 
 
 <div class="tip">If you’re having difficulty importing, it may help to browse the package and see what files are available, and what’s exported in the <code>package.json</code>. You can browse the contents of a published module via jsDelivr; for example, see <a href="https://cdn.jsdelivr.net/npm/canvas-confetti/">https://cdn.jsdelivr.net/npm/canvas-confetti/</a>.</div>
 
