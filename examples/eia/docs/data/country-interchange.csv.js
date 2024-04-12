@@ -6,7 +6,7 @@ const {EIA_KEY} = process.env;
 
 const end = d3.timeDay.offset(d3.timeHour(new Date()), 1);
 const start = d3.timeHour(d3.utcDay.offset(end, -7));
-const convertDate = d3.timeFormat("%Y-%m-%dT%H"); // Convert dates into the format the EIA web API expects
+const convertDate = d3.timeFormat("%Y-%m-%dT%H");
 
 // Electricity exported (in GWh) from the lower 48 US states to Canada and Mexico
 const countryInterchangeUrl = `https://api.eia.gov/v2/electricity/rto/interchange-data/data/?api_key=${EIA_KEY}&frequency=hourly&data[0]=value&facets[fromba][]=US48&start=${convertDate(
