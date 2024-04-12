@@ -6,6 +6,7 @@ import {isEnoent} from "../../src/error.js";
 import {parseJavaScript} from "../../src/javascript/parse.js";
 import type {TranspileModuleOptions} from "../../src/javascript/transpile.js";
 import {transpileJavaScript, transpileModule} from "../../src/javascript/transpile.js";
+import {mockJsDelivr} from "../mocks/jsdelivr.js";
 
 function isJsFile(inputRoot: string, fileName: string) {
   if (!fileName.endsWith(".js")) return false;
@@ -106,6 +107,7 @@ describe("transpileModule(input, root, path, sourcePath)", () => {
 });
 
 describe("transpileModule(input, root, path)", () => {
+  mockJsDelivr();
   const options: TranspileModuleOptions = {root: "docs", path: "test.js"};
   it("rewrites relative files with import.meta.resolve", async () => {
     assert.strictEqual(await testFile("./test.txt", "test.js"), 'FileAttachment("../test.txt", import.meta.url)'); // prettier-ignore
