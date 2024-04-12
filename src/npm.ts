@@ -237,7 +237,7 @@ async function resolveNpmVersion(root: string, specifier: NpmSpecifier): Promise
     mkdir(join(root, ".observablehq", "cache", "_npm", spec), {recursive: true}); // disk cache
     return version;
   })();
-  promise.catch(() => {}).then(() => npmVersionRequests.delete(href));
+  promise.catch(console.error).then(() => npmVersionRequests.delete(href));
   npmVersionRequests.set(href, promise);
   return promise;
 }

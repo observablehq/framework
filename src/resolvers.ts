@@ -327,6 +327,8 @@ export function getModuleResolver(root: string, path: string): (specifier: strin
       ? relativePath(servePath, `/_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`) // prettier-ignore
       : specifier.startsWith("npm:")
       ? relativePath(servePath, await resolveNpmImport(root, specifier.slice("npm:".length)))
+      : !/^\w+:/.test(specifier)
+      ? relativePath(servePath, await resolveNodeImport(root, specifier))
       : specifier;
   };
 }
