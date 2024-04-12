@@ -44,7 +44,7 @@ async function resolveNodeImportInternal(cacheRoot: string, packageRoot: string,
         }
       })();
       bundlePromises.set(outputPath, promise);
-      promise.catch(() => {}).then(() => bundlePromises.delete(outputPath));
+      promise.catch(console.error).then(() => bundlePromises.delete(outputPath));
     }
     await promise;
   }
