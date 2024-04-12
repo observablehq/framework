@@ -19,32 +19,24 @@ import {useState} from "react";
 import {Fragment, jsx, jsxs} from "react/jsx-runtime";
 
 function createContent() {
-  const [counter, setCounter] = useState(0);
+  const [color, setColor] = useState("lightblue");
   return jsxs(Fragment, {
     children: [
-      jsx("p", {
-        children: ["Hello, world! ", counter]
+      jsx("h4", {
+        children: "Hello, world!"
       }),
       "\n",
       jsx("p", {
         children: "This content is rendered by React."
       }),
       "\n",
-      jsx("div", {
+      jsx("button", {
         style: {
-          backgroundColor: "indigo",
+          backgroundColor: color,
           padding: "1rem"
         },
-        onClick: () => setCounter(counter + 1),
-        children: jsxs("p", {
-          children: [
-            "Try changing the background color to ",
-            jsx("code", {
-              children: "tomato"
-            }),
-            "."
-          ]
-        })
+        onClick: () => setColor(`hsl(${Math.random()*360} 80% 70%)`),
+        children: "Click me to change the background color."
       })
     ]
   });
