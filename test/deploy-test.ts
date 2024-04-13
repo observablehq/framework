@@ -108,10 +108,9 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     this.deployConfig = config;
   }
 
-  *visitFiles(path: string, {ignoreObservable = true} = {}) {
-    yield* visitFiles(path, {ignoreObservable});
+  *visitFiles(path: string, options?: {ignoreObservable?: boolean}) {
+    yield* visitFiles(path, options);
   }
-
   async stat(path: string) {
     function overrideTime(s: Stats, date: Date) {
       for (const key of ["a", "c", "m", "birth"] as const) {

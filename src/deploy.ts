@@ -49,7 +49,7 @@ export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
   logger: Logger;
   input: NodeJS.ReadableStream;
   output: NodeJS.WritableStream;
-  visitFiles: (root: string, {ignoreObservable}?: {ignoreObservable?: boolean}) => Generator<string>;
+  visitFiles: (root: string, { ignoreObservable }?: {ignoreObservable?: boolean | undefined}) => Generator<string>;
   stat: (path: string) => Promise<Stats>;
   build: ({config, addPublic}: BuildOptions, effects?: BuildEffects) => Promise<void>;
 }
@@ -459,24 +459,12 @@ export async function deploy(
 async function findOldestSourceAge(effects: DeployEffects, config: Config): Promise<number> {
   let oldestAge = -Infinity;
   const nowMs = Date.now();
-
-  try {
-    for await (const file of effects.visitFiles(config.root, {ignoreObservable: false})) {
-      let stat: Stats;
-      const joinedPath = join(config.root, file);
-      try {
-        stat = await effects.stat(joinedPath);
-        if (stat?.isFile()) {
-          if (nowMs - stat.mtimeMs > oldestAge) {
-            oldestAge = nowMs - stat.mtimeMs;
-          }
-        }
-      } catch (error) {
-        // ignore
-      }
+  for await (const file of effects.visitFiles(config.root, {ignoreObservable: false})) {
+    const joinedPath = join(config.root, file);
+    const stat = await effects.stat(joinedPath);
+    if (nowMs - stat.mtimeMs > oldestAge) {
+      oldestAge = nowMs - stat.mtimeMs;
     }
-  } catch (error) {
-    // ignore
   }
   return oldestAge;
 }
@@ -491,26 +479,18 @@ async function findBuildFiles(
 
   try {
     for await (const file of effects.visitFiles(config.output)) {
-      let stat: Stats;
       const joinedPath = join(config.output, file);
-      try {
-        stat = await effects.stat(joinedPath);
-      } catch (error) {
-        throw new CliError(`Error accessing file ${file}: ${error}`, {cause: error});
-      }
-      if (stat?.isFile()) {
-        buildFilePaths.push(file);
-        // youngestAge = Math.min(youngestAge, nowMs - stat.mtimeMs);
-        if (nowMs - stat.mtimeMs < youngestAge) {
-          youngestAge = nowMs - stat.mtimeMs;
-        }
+      const stat = await effects.stat(joinedPath);
+      buildFilePaths.push(file);
+      if (nowMs - stat.mtimeMs < youngestAge) {
+        youngestAge = nowMs - stat.mtimeMs;
       }
     }
   } catch (error) {
     if (isEnoent(error)) {
       throw new CliError(`No build files found at ${config.output}`, {cause: error});
     }
-    throw new CliError(`Error enumerating build files: ${error}`, {cause: error});
+    throw error;
   }
 
   if (!buildFilePaths.length) {
