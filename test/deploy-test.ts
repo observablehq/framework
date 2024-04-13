@@ -2,6 +2,8 @@ import assert, {fail} from "node:assert";
 import type {Stats} from "node:fs";
 import {stat} from "node:fs/promises";
 import {Readable, Writable} from "node:stream";
+import type {BuildEffects, BuildOptions} from "../src/build.js";
+import {FileBuildEffects} from "../src/build.js";
 import {normalizeConfig, setCurrentDate} from "../src/config.js";
 import type {DeployEffects, DeployOptions} from "../src/deploy.js";
 import {deploy, promptDeployTarget} from "../src/deploy.js";
@@ -128,6 +130,10 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     return s;
   }
 
+  async build(): Promise<void> {
+    // Don't actually build.
+  };
+
   addIoResponse(prompt: RegExp, response: string) {
     this.ioResponses.push({prompt, response});
     return this;
@@ -150,7 +156,7 @@ const TEST_SOURCE_ROOT = "test/input/build/simple-public";
 const TEST_CONFIG = normalizeConfig({
   root: TEST_SOURCE_ROOT,
   output: "test/output/build/simple-public",
-  title: "Mock BI"
+  title: "Build test case"
 });
 const TEST_OPTIONS: DeployOptions = {
   config: TEST_CONFIG,
@@ -860,7 +866,7 @@ describe("promptDeployTarget", () => {
       accessLevel,
       create: true,
       projectSlug,
-      title: "Mock BI",
+      title: "Build test case",
       workspace
     });
   });

@@ -3,6 +3,7 @@ import {stat} from "node:fs/promises";
 import {join} from "node:path/posix";
 import * as clack from "@clack/prompts";
 import wrapAnsi from "wrap-ansi";
+import type {BuildEffects, BuildOptions} from "./build.js";
 import {FileBuildEffects, build} from "./build.js";
 import type {ClackEffects} from "./clack.js";
 import {commandRequiresAuthenticationMessage} from "./commandInstruction.js";
@@ -50,6 +51,7 @@ export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
   output: NodeJS.WritableStream;
   visitFiles: (root: string, {ignoreObservable}?: {ignoreObservable?: boolean}) => Generator<string>;
   stat: (path: string) => Promise<Stats>;
+  build: ({ config, addPublic }: BuildOptions, effects?: BuildEffects) => Promise<void>;
 }
 
 const defaultEffects: DeployEffects = {
@@ -63,7 +65,8 @@ const defaultEffects: DeployEffects = {
   input: process.stdin,
   output: process.stdout,
   visitFiles,
-  stat
+  stat,
+  build
 };
 
 type DeployTargetInfo =
@@ -274,7 +277,7 @@ export async function deploy(
 
   if (doBuild) {
     clack.log.step("Building project");
-    await build({config}, new FileBuildEffects(config.output, {logger: effects.logger, output: effects.output}));
+    await effects.build({config}, new FileBuildEffects(config.output, {logger: effects.logger, output: effects.output}));
     ({buildFilePaths} = await findBuildFiles(effects, config));
   }
 
