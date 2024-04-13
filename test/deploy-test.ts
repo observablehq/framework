@@ -1,4 +1,5 @@
 import assert, {fail} from "node:assert";
+import type {Stats} from "node:fs";
 import {stat} from "node:fs/promises";
 import {Readable, Writable} from "node:stream";
 import {normalizeConfig, setCurrentDate} from "../src/config.js";
@@ -32,7 +33,8 @@ interface MockDeployEffectsOptions {
   isTty?: boolean;
   outputColumns?: number;
   debug?: boolean;
-  fixedStatTime?: Date;
+  fixedInputStatTime?: Date;
+  fixedOutputStatTime?: Date;
 }
 
 class MockDeployEffects extends MockAuthEffects implements DeployEffects {
@@ -51,7 +53,8 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
   private debug: boolean;
   private configEffects: MockConfigEffects;
   private authEffects: MockAuthEffects;
-  private fixedStatTime: Date | undefined;
+  private fixedInputStatTime: Date | undefined;
+  private fixedOutputStatTime: Date | undefined;
 
   constructor({
     apiKey = validApiKey,
@@ -59,7 +62,8 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     isTty = true,
     outputColumns = 80,
     debug = false,
-    fixedStatTime
+    fixedInputStatTime,
+    fixedOutputStatTime
   }: MockDeployEffectsOptions = {}) {
     super();
     this.authEffects = new MockAuthEffects();
@@ -70,7 +74,8 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     this.isTty = isTty;
     this.outputColumns = outputColumns;
     this.debug = debug;
-    this.fixedStatTime = fixedStatTime;
+    this.fixedInputStatTime = fixedInputStatTime;
+    this.fixedOutputStatTime = fixedOutputStatTime;
 
     this.output = new Writable({
       write: (data, _enc, callback) => {
@@ -103,17 +108,22 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     this.deployConfig = config;
   }
 
-  *visitFiles(path: string) {
-    yield* visitFiles(path);
+  *visitFiles(path: string, {ignoreObservable = true} = {}) {
+    yield* visitFiles(path, {ignoreObservable});
   }
 
   async stat(path: string) {
-    const s = await stat(path);
-    if (this.fixedStatTime) {
+    function overrideTime(s: Stats, date: Date) {
       for (const key of ["a", "c", "m", "birth"] as const) {
-        s[`${key}time`] = this.fixedStatTime;
-        s[`${key}timeMs`] = this.fixedStatTime.getTime();
+        s[`${key}time`] = date;
+        s[`${key}timeMs`] = date.getTime();
       }
+    };
+    const s = await stat(path);
+    if (path.startsWith("test/input/") && this.fixedInputStatTime) {
+      overrideTime(s, this.fixedInputStatTime);
+    } else if (path.startsWith("test/output/") && this.fixedOutputStatTime) {
+      overrideTime(s, this.fixedOutputStatTime);
     }
     return s;
   }
@@ -175,7 +185,7 @@ describe("deploy", () => {
       .handleGetDeploy({deployId, deployStatus: "uploaded"})
       .start();
 
-    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, fixedStatTime: new Date("2024-03-10")});
+    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, fixedInputStatTime: new Date("2024-03-09"), fixedOutputStatTime: new Date("2024-03-10")});
     effects.clack.inputs = ["fix some bugs"]; // "what changed?"
     await deploy(TEST_OPTIONS, effects);
 
@@ -199,7 +209,7 @@ describe("deploy", () => {
       .handleGetDeploy({deployId})
       .start();
 
-    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, fixedStatTime: new Date("2024-03-10")});
+    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, fixedInputStatTime: new Date("2024-03-09"), fixedOutputStatTime: new Date("2024-03-10")});
     effects.clack.inputs.push("change project title"); // "what changed?"
     await deploy(TEST_OPTIONS, effects);
 
@@ -734,7 +744,7 @@ describe("deploy", () => {
       config: {...TEST_OPTIONS.config, output: "test/output/does-not-exist"}
     } satisfies DeployOptions;
     getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
-    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, fixedStatTime: new Date("2024-03-10")});
+    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, fixedInputStatTime: new Date("2024-03-09"), fixedOutputStatTime: new Date("2024-03-10")});
     await assert.rejects(() => deploy(deployOptions, effects), /out of inputs for select: No build files/);
     effects.close();
   });
@@ -745,7 +755,7 @@ describe("deploy", () => {
       ifBuildStale: "prompt"
     } satisfies DeployOptions;
     getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
-    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, fixedStatTime: new Date("2024-03-10")});
+    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, fixedInputStatTime: new Date("2024-03-09"), fixedOutputStatTime: new Date("2024-03-10")});
     await assert.rejects(
       () => deploy(deployOptions, effects),
       /out of inputs for select: Your project was last built at/

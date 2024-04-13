@@ -48,7 +48,7 @@ export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
   logger: Logger;
   input: NodeJS.ReadableStream;
   output: NodeJS.WritableStream;
-  visitFiles: (root: string) => Generator<string>;
+  visitFiles: (root: string, {ignoreObservable}?: {ignoreObservable?: boolean}) => Generator<string>;
   stat: (path: string) => Promise<Stats>;
 }
 
@@ -200,9 +200,9 @@ export async function deploy(
   let buildFilePaths: string[] | null = null;
 
   let doBuild = false;
-  let youngestAge;
+  let youngestBuildAge;
   try {
-    ({buildFilePaths, youngestAge} = await findBuildFiles(effects, config));
+    ({buildFilePaths, youngestAge: youngestBuildAge} = await findBuildFiles(effects, config));
   } catch (error) {
     if (CliError.match(error, {message: /No build files found/})) {
       switch (ifBuildMissing) {
@@ -233,8 +233,13 @@ export async function deploy(
       throw error;
     }
   }
+  const youngestSourceAge = await findYoungestSourceAge(effects, config);
+  if (youngestSourceAge < youngestBuildAge) {
+    // We have newer source files, so rebuild.
+    doBuild = true;
+  }
 
-  if (!doBuild && youngestAge > BUILD_AGE_WARNING_MS) {
+  if (!doBuild && youngestBuildAge > BUILD_AGE_WARNING_MS) {
     switch (ifBuildStale) {
       case "cancel":
         throw new CliError("Build is stale.");
@@ -245,11 +250,11 @@ export async function deploy(
       case "prompt": {
         if (!effects.isTty) throw new CliError("Build is stale. Pass --if-stale=build to automatically rebuild.");
         const ageFormatted =
-          youngestAge < 1000 * 60 * 60
-            ? `${Math.round(youngestAge / 1000 / 60)} minutes ago`
-            : youngestAge < 1000 * 60 * 60 * 12
-            ? `${Math.round(youngestAge / 1000 / 60 / 60)} hours ago`
-            : `at ${new Date(Date.now() - youngestAge).toLocaleString()}`;
+          youngestBuildAge < 1000 * 60 * 60
+            ? `${Math.round(youngestBuildAge / 1000 / 60)} minutes ago`
+            : youngestBuildAge < 1000 * 60 * 60 * 12
+            ? `${Math.round(youngestBuildAge / 1000 / 60 / 60)} hours ago`
+            : `at ${new Date(Date.now() - youngestBuildAge).toLocaleString()}`;
         type ChoiceValue = "build-now" | "deploy-stale" | "cancel";
         const choice = await clack.select<{value: ChoiceValue; label: string}[], ChoiceValue>({
           message: `Your project was last built ${ageFormatted}. What do you want to do?`,
@@ -443,6 +448,34 @@ export async function deploy(
   }
   clack.outro(`Deployed project now visible at ${link(deployInfo.url)}`);
   Telemetry.record({event: "deploy", step: "finish"});
+}
+
+async function findYoungestSourceAge(
+  effects: DeployEffects,
+  config: Config
+): Promise<number> {
+  let youngestAge = Infinity;
+  const nowMs = Date.now();
+
+  try {
+    for await (const file of effects.visitFiles(config.root, {ignoreObservable: false})) {
+      let stat: Stats;
+      const joinedPath = join(config.root, file);
+      try {
+        stat = await effects.stat(joinedPath);
+        if (stat?.isFile()) {
+          if (nowMs - stat.ctimeMs < youngestAge) {
+            youngestAge = nowMs - stat.ctimeMs;
+          }
+        }
+      } catch (error) {
+        // ignore
+      }
+    }
+  } catch (error) {
+    // ignore
+  }
+  return youngestAge;
 }
 
 async function findBuildFiles(
