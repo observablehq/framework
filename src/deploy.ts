@@ -461,8 +461,8 @@ async function findOldestSourceAge(effects: DeployEffects, config: Config): Prom
       try {
         stat = await effects.stat(joinedPath);
         if (stat?.isFile()) {
-          if (nowMs - stat.ctimeMs > oldestAge) {
-            oldestAge = nowMs - stat.ctimeMs;
+          if (nowMs - stat.mtimeMs > oldestAge) {
+            oldestAge = nowMs - stat.mtimeMs;
           }
         }
       } catch (error) {
@@ -494,9 +494,9 @@ async function findBuildFiles(
       }
       if (stat?.isFile()) {
         buildFilePaths.push(file);
-        // youngestAge = Math.min(youngestAge, nowMs - stat.ctimeMs);
-        if (nowMs - stat.ctimeMs < youngestAge) {
-          youngestAge = nowMs - stat.ctimeMs;
+        // youngestAge = Math.min(youngestAge, nowMs - stat.mtimeMs);
+        if (nowMs - stat.mtimeMs < youngestAge) {
+          youngestAge = nowMs - stat.mtimeMs;
         }
       }
     }
