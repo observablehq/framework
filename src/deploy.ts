@@ -51,7 +51,7 @@ export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
   output: NodeJS.WritableStream;
   visitFiles: (root: string, {ignoreObservable}?: {ignoreObservable?: boolean}) => Generator<string>;
   stat: (path: string) => Promise<Stats>;
-  build: ({ config, addPublic }: BuildOptions, effects?: BuildEffects) => Promise<void>;
+  build: ({config, addPublic}: BuildOptions, effects?: BuildEffects) => Promise<void>;
 }
 
 const defaultEffects: DeployEffects = {
@@ -277,7 +277,10 @@ export async function deploy(
 
   if (doBuild) {
     clack.log.step("Building project");
-    await effects.build({config}, new FileBuildEffects(config.output, {logger: effects.logger, output: effects.output}));
+    await effects.build(
+      {config},
+      new FileBuildEffects(config.output, {logger: effects.logger, output: effects.output})
+    );
     ({buildFilePaths} = await findBuildFiles(effects, config));
   }
 

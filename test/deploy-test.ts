@@ -130,7 +130,7 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
 
   async build(): Promise<void> {
     // Don't actually build.
-  };
+  }
 
   addIoResponse(prompt: RegExp, response: string) {
     this.ioResponses.push({prompt, response});
