@@ -233,8 +233,8 @@ export async function deploy(
       throw error;
     }
   }
-  const youngestSourceAge = await findYoungestSourceAge(effects, config);
-  if (youngestSourceAge < youngestBuildAge) {
+  const oldestSourceAge = await findOldestSourceAge(effects, config);
+  if (oldestSourceAge < youngestBuildAge) {
     // We have newer source files, so rebuild.
     doBuild = true;
   }
@@ -450,8 +450,8 @@ export async function deploy(
   Telemetry.record({event: "deploy", step: "finish"});
 }
 
-async function findYoungestSourceAge(effects: DeployEffects, config: Config): Promise<number> {
-  let youngestAge = Infinity;
+async function findOldestSourceAge(effects: DeployEffects, config: Config): Promise<number> {
+  let oldestAge = -Infinity;
   const nowMs = Date.now();
 
   try {
@@ -461,8 +461,8 @@ async function findYoungestSourceAge(effects: DeployEffects, config: Config): Pr
       try {
         stat = await effects.stat(joinedPath);
         if (stat?.isFile()) {
-          if (nowMs - stat.ctimeMs < youngestAge) {
-            youngestAge = nowMs - stat.ctimeMs;
+          if (nowMs - stat.ctimeMs > oldestAge) {
+            oldestAge = nowMs - stat.ctimeMs;
           }
         }
       } catch (error) {
@@ -472,7 +472,7 @@ async function findYoungestSourceAge(effects: DeployEffects, config: Config): Pr
   } catch (error) {
     // ignore
   }
-  return youngestAge;
+  return oldestAge;
 }
 
 async function findBuildFiles(
