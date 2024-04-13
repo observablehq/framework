@@ -15,20 +15,53 @@ function friendlyTypeName(d) {
 // Top 5 balancing authorities chart
 export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDemand) {
   return Plot.plot({
-    marginTop: 8,
-    marginLeft: 250,
-    height: height - 4,
+    marginTop: 6,
+    marginLeft: 8,
+    height: height - 10,
     width,
-    y: {label: null, tickSize: 0},
-    x: {label: null, grid: true, tickSize: 0, tickPadding: 2, domain: [0, maxDemand / 1000], nice: true},
+    x: {
+      label: "Demand (GWh)", 
+      labelOffset: -2,
+      grid: true, 
+      tickSize: 0, 
+      tickPadding: 6, 
+      domain: [0, maxDemand / 1000], 
+      nice: true
+    },
     marks: [
       Plot.barX(top5Demand, {
         y: "name",
         x: (d) => d.value / 1000,
-        fill: "#9498a0",
+        fill: "var(--theme-foreground-alt)",
+        opacity: 0.2,
         sort: {y: "x", reverse: true, limit: 10},
-        tip: true,
-        title: ({name, value}) => `name: ${name}\ndemand: ${value / 1000} GWh`
+        channels: {demand: {value: (d) => `${format(".1f")(d.value / 1000)} GWh`, label: "Demand"}},
+        tip: {
+          format: {
+            value: (d) => `${d} GWh`,
+            y: false,
+            x: false,
+          },
+          fontSize: 12,
+          anchor: "top",
+          frameAnchor: "right",
+          dy: 5
+        }
+      }),
+      Plot.axisY({
+        label: null,
+        tickFormat: null,
+        tickSize: 0
+      }),
+      Plot.text(top5Demand, {
+        text: "name",
+        y: "name",
+        x: 0,
+        dx: 4,
+        fontSize: 11,
+        fontWeight: 500,
+        textAnchor: "start",
+        fill: "var(--theme-foreground-alt)",
       })
     ]
   });
