@@ -778,6 +778,52 @@ describe("deploy", () => {
     );
     effects.close();
   });
+
+  it("doesn't prompt for staleness if source files are newer", async () => {
+    const deployId = "deploy456";
+    getCurrentObservableApi()
+      .handlePostAuthRequest()
+      .handlePostAuthRequestPoll("accepted")
+      .handleGetCurrentUser()
+      .handleGetProject(DEPLOY_CONFIG)
+      .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
+      .handlePostDeployFile({deployId, clientName: "index.html"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/theme-air,near-midnight.css"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/client.js"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/runtime.js"})
+      .handlePostDeployFile({deployId, clientName: "_observablehq/stdlib.js"})
+      .handlePostDeployUploaded({deployId})
+      .handleGetDeploy({deployId})
+      .start();
+
+    const deployOptions = {
+      ...TEST_OPTIONS,
+      ifBuildStale: "prompt"
+    } satisfies DeployOptions;
+
+    const effects = new MockDeployEffects({
+      deployConfig: DEPLOY_CONFIG,
+      apiKey: null,
+      fixedInputStatTime: new Date("2024-03-11"),
+      fixedOutputStatTime: new Date("2024-03-10")
+    });
+    effects.clack.inputs = [
+      true, // do you want to log in?
+      "fix some bugs" // deploy message
+    ];
+
+    // getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
+    // const effects = new MockDeployEffects({
+    //   deployConfig: DEPLOY_CONFIG,
+    //   fixedInputStatTime: new Date("2024-03-11"),
+    //   fixedOutputStatTime: new Date("2024-03-10")
+    // });
+
+    await deploy(deployOptions, effects);
+    // await deploy(TEST_OPTIONS, effects);
+
+    effects.close();
+  });
 });
 
 describe("promptDeployTarget", () => {
