@@ -812,15 +812,7 @@ describe("deploy", () => {
       "fix some bugs" // deploy message
     ];
 
-    // getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
-    // const effects = new MockDeployEffects({
-    //   deployConfig: DEPLOY_CONFIG,
-    //   fixedInputStatTime: new Date("2024-03-11"),
-    //   fixedOutputStatTime: new Date("2024-03-10")
-    // });
-
     await deploy(deployOptions, effects);
-    // await deploy(TEST_OPTIONS, effects);
 
     effects.close();
   });
