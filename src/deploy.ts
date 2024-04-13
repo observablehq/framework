@@ -450,10 +450,7 @@ export async function deploy(
   Telemetry.record({event: "deploy", step: "finish"});
 }
 
-async function findYoungestSourceAge(
-  effects: DeployEffects,
-  config: Config
-): Promise<number> {
+async function findYoungestSourceAge(effects: DeployEffects, config: Config): Promise<number> {
   let youngestAge = Infinity;
   const nowMs = Date.now();
 
