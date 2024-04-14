@@ -219,7 +219,7 @@ export async function deploy(
         if (!effects.isTty) throw new CliError("No build files found. Pass --build to automatically build.");
         const choice = await clack.confirm({
           message: "No build files found. Do you want to build the project now?",
-          active: "Yes, build now and then deploy",
+          active: "Yes, build and then deploy",
           inactive: "No, cancel deploy"
         });
         if (clack.isCancel(choice) || !choice) {
@@ -262,7 +262,7 @@ export async function deploy(
         message += "Would you like to build before deploying?";
         const choice = await clack.confirm({
           message,
-          active: "Yes, build",
+          active: "Yes, build and then deploy",
           inactive: "No, deploy as is"
         });
         if (clack.isCancel(choice)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
