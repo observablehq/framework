@@ -159,9 +159,7 @@ const TEST_OPTIONS: DeployOptions = {
   config: TEST_CONFIG,
   message: undefined,
   deployPollInterval: 0,
-  ifBuildMissing: "cancel",
-  ifBuildStale: "deploy",
-  ifBuildOlder: "deploy"
+  force: "deploy" // default to not re-building and just deploying output as-is
 };
 const DEPLOY_CONFIG: DeployConfig & {projectId: string; projectSlug: string; workspaceLogin: string} = {
   projectId: "project123",
@@ -752,7 +750,7 @@ describe("deploy", () => {
   it("prompts if the build doesn't exist", async () => {
     const deployOptions = {
       ...TEST_OPTIONS,
-      ifBuildMissing: "prompt",
+      force: null,
       config: {...TEST_OPTIONS.config, output: "test/output/does-not-exist"}
     } satisfies DeployOptions;
     getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
@@ -768,7 +766,7 @@ describe("deploy", () => {
   it("prompts if the build is stale", async () => {
     const deployOptions = {
       ...TEST_OPTIONS,
-      ifBuildStale: "prompt"
+      force: null,
     } satisfies DeployOptions;
     getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
     const effects = new MockDeployEffects({
@@ -780,10 +778,10 @@ describe("deploy", () => {
     effects.close();
   });
 
-  it("can prompt if build is older than source", async () => {
+  it("prompts if build is older than source", async () => {
     const deployOptions = {
       ...TEST_OPTIONS,
-      ifBuildOlder: "prompt"
+      force: null
     } satisfies DeployOptions;
     getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
     const effects = new MockDeployEffects({
@@ -798,15 +796,15 @@ describe("deploy", () => {
     effects.close();
   });
 
-  it("can build if build is older than source", async () => {
+  it("can force a build", async () => {
     const deployOptions = {
       ...TEST_OPTIONS,
-      ifBuildOlder: "build"
+      force: "build"
     } satisfies DeployOptions;
     getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
-      fixedInputStatTime: new Date("2024-03-11"),
+      fixedInputStatTime: new Date("2024-03-09"),
       fixedOutputStatTime: new Date("2024-03-10")
     });
     effects.build = async () => {
@@ -824,7 +822,7 @@ describe("deploy", () => {
     effects.close();
   });
 
-  it("can deploy if build is older than source", async () => {
+  it("can force a deploy", async () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
       .handlePostAuthRequest()
@@ -843,13 +841,13 @@ describe("deploy", () => {
 
     const deployOptions = {
       ...TEST_OPTIONS,
-      ifBuildOlder: "deploy"
+      force: "deploy"
     } satisfies DeployOptions;
 
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
       apiKey: null,
-      fixedInputStatTime: new Date("2024-03-11"),
+      fixedInputStatTime: new Date("2024-03-11"),  // newer source files
       fixedOutputStatTime: new Date("2024-03-10")
     });
     effects.clack.inputs = [

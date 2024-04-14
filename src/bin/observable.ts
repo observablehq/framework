@@ -106,11 +106,8 @@ try {
       break;
     }
     case "deploy": {
-      const missingDescription = "one of 'build', 'cancel', or 'prompt' (the default)";
-      const staleDescription = "one of 'build', 'cancel', 'deploy', or 'prompt' (the default)";
-      const olderDescription = "one of 'build', 'cancel', 'deploy', or 'prompt' (the default)";
       const {
-        values: {config, root, message, "if-stale": ifStale, "if-missing": ifMissing, "if-older": ifOlder}
+        values: {config, root, message, build, "no-build": noBuild}
       } = helpArgs(command, {
         options: {
           ...CONFIG_OPTION,
@@ -118,43 +115,24 @@ try {
             type: "string",
             short: "m"
           },
-          "if-stale": {
-            type: "string",
-            description: `What to do if the output directory is stale: ${staleDescription}`
+          build: {
+            type: "boolean",
+            short: "b",
+            description: "Always re-build project before deploying"
           },
-          "if-missing": {
-            type: "string",
-            description: `What to do if the output directory is missing: ${missingDescription}`
-          },
-          "if-older": {
-            type: "string",
-            description: `What to do if the output files are older than source files: ${olderDescription}`
+          "no-build": {
+            type: "boolean",
+            short: "n",
+            description: "Don't re-build project if needed; deploy as-is"
           }
         }
       });
-      if (ifStale && ifStale !== "prompt" && ifStale !== "build" && ifStale !== "cancel" && ifStale !== "deploy") {
-        console.log(`Invalid --if-stale option: ${ifStale}, expected ${staleDescription}`);
-        process.exit(1);
-      }
-      if (ifMissing && ifMissing !== "prompt" && ifMissing !== "build" && ifMissing !== "cancel") {
-        console.log(`Invalid --if-missing option: ${ifMissing}, expected ${missingDescription}`);
-        process.exit(1);
-      }
-      if (ifOlder && ifOlder !== "prompt" && ifOlder !== "build" && ifOlder !== "cancel" && ifOlder !== "deploy") {
-        console.log(`Invalid --if-older option: ${ifOlder}, expected ${olderDescription}`);
-        process.exit(1);
-      }
-      if (!process.stdin.isTTY && (ifStale === "prompt" || ifMissing === "prompt")) {
-        throw new CliError("Cannot prompt for input in non-interactive mode");
-      }
 
       await import("../deploy.js").then(async (deploy) =>
         deploy.deploy({
           config: await readConfig(config, root),
           message,
-          ifBuildMissing: (ifMissing ?? "prompt") as "prompt" | "build" | "cancel",
-          ifBuildStale: (ifStale ?? "prompt") as "prompt" | "build" | "cancel" | "deploy",
-          ifBuildOlder: (ifOlder ?? "prompt") as "prompt" | "build" | "cancel" | "deploy"
+          force: build ? "build" : noBuild ? "deploy" : null
         })
       );
       break;
