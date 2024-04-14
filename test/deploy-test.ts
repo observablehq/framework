@@ -160,7 +160,8 @@ const TEST_OPTIONS: DeployOptions = {
   message: undefined,
   deployPollInterval: 0,
   ifBuildMissing: "cancel",
-  ifBuildStale: "deploy"
+  ifBuildStale: "deploy",
+  ifBuildOlder: "deploy"
 };
 const DEPLOY_CONFIG: DeployConfig & {projectId: string; projectSlug: string; workspaceLogin: string} = {
   projectId: "project123",
@@ -777,12 +778,56 @@ describe("deploy", () => {
     });
     await assert.rejects(
       () => deploy(deployOptions, effects),
-      /out of inputs for select: Your project was last built at/
+      /out of inputs for select: You last built this project/
     );
     effects.close();
   });
 
-  it("doesn't prompt for staleness if source files are newer", async () => {
+  it("can prompt if build is older than source", async () => {
+    const deployOptions = {
+      ...TEST_OPTIONS,
+      ifBuildOlder: "prompt"
+    } satisfies DeployOptions;
+    getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
+    const effects = new MockDeployEffects({
+      deployConfig: DEPLOY_CONFIG,
+      fixedInputStatTime: new Date("2024-03-11"),
+      fixedOutputStatTime: new Date("2024-03-10")
+    });
+    await assert.rejects(
+      () => deploy(deployOptions, effects),
+      /out of inputs for select: Your source files have changed/
+    );
+    effects.close();
+  });
+
+  it("can build if build is older than source", async () => {
+    const deployOptions = {
+      ...TEST_OPTIONS,
+      ifBuildOlder: "build"
+    } satisfies DeployOptions;
+    getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
+    const effects = new MockDeployEffects({
+      deployConfig: DEPLOY_CONFIG,
+      fixedInputStatTime: new Date("2024-03-11"),
+      fixedOutputStatTime: new Date("2024-03-10")
+    });
+    effects.build = async () => {
+      // Change our no-op test build() to throw, so we can verify it ran.
+      throw new Error("build() was called");
+    };
+    try {
+      await deploy(deployOptions, effects);
+      fail("build() was never called");
+    } catch (error) {
+      if (!(error instanceof Error) || error.message !== "build() was called") {
+        throw error;
+      }
+    }
+    effects.close();
+  });
+
+  it("can deploy if build is older than source", async () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
       .handlePostAuthRequest()
@@ -801,7 +846,7 @@ describe("deploy", () => {
 
     const deployOptions = {
       ...TEST_OPTIONS,
-      ifBuildStale: "prompt"
+      ifBuildOlder: "deploy"
     } satisfies DeployOptions;
 
     const effects = new MockDeployEffects({
