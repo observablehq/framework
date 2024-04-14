@@ -462,8 +462,17 @@ async function findMostRecentSourceMtimeMs(effects: DeployEffects, config: Confi
     }
   }
   const cachePath = join(config.root, ".observablehq/cache");
-  const cacheStat = await effects.stat(cachePath);
-  return Math.max(mostRecentMtimeMs, cacheStat.mtimeMs);
+  try {
+    const cacheStat = await effects.stat(cachePath);
+    if (cacheStat.mtimeMs > mostRecentMtimeMs) {
+      mostRecentMtimeMs = cacheStat.mtimeMs;
+    }
+  } catch (error) {
+    if (!isEnoent(error)) {
+      throw error;
+    }
+  }
+  return mostRecentMtimeMs;
 }
 
 async function findBuildFiles(
