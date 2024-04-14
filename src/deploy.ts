@@ -50,14 +50,7 @@ export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
   logger: Logger;
   input: NodeJS.ReadableStream;
   output: NodeJS.WritableStream;
-  visitFiles: (
-    root: string,
-    {
-      ignoreObservable
-    }?: {
-      ignoreObservable?: boolean | undefined;
-    }
-  ) => Generator<string>;
+  visitFiles: (root: string) => Generator<string>;
   stat: (path: string) => Promise<Stats>;
   build: ({config, addPublic}: BuildOptions, effects?: BuildEffects) => Promise<void>;
 }
@@ -461,14 +454,16 @@ export async function deploy(
 
 async function findMostRecentSourceMtimeMs(effects: DeployEffects, config: Config): Promise<number> {
   let mostRecentMtimeMs = -Infinity;
-  for await (const file of effects.visitFiles(config.root, {ignoreObservable: false})) {
+  for await (const file of effects.visitFiles(config.root)) {
     const joinedPath = join(config.root, file);
     const stat = await effects.stat(joinedPath);
     if (stat.mtimeMs > mostRecentMtimeMs) {
       mostRecentMtimeMs = stat.mtimeMs;
     }
   }
-  return mostRecentMtimeMs;
+  const cachePath = join(config.root, ".observablehq/cache");
+  const cacheStat = await effects.stat(cachePath);
+  return Math.max(mostRecentMtimeMs, cacheStat.mtimeMs);
 }
 
 async function findBuildFiles(

@@ -49,7 +49,7 @@ export function* visitMarkdownFiles(root: string): Generator<string> {
 }
 
 /** Yields every file within the given root, recursively, ignoring .observablehq. */
-export function* visitFiles(root: string, {ignoreObservable = true} = {}): Generator<string> {
+export function* visitFiles(root: string): Generator<string> {
   const visited = new Set<number>();
   const queue: string[] = [(root = normalize(root))];
   for (const path of queue) {
@@ -58,7 +58,7 @@ export function* visitFiles(root: string, {ignoreObservable = true} = {}): Gener
       if (visited.has(status.ino)) continue; // circular symlink
       visited.add(status.ino);
       for (const entry of readdirSync(path)) {
-        if (ignoreObservable && entry === ".observablehq") continue;
+        if (entry === ".observablehq") continue; // ignore the .observablehq directory
         queue.push(join(path, entry));
       }
     } else {
