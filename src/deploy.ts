@@ -38,6 +38,8 @@ export interface DeployOptions {
   message?: string;
   deployPollInterval?: number;
   force: "build" | "deploy" | null;
+  ifBuildStale: "prompt" | "build" | "cancel" | "deploy";
+  ifBuildMissing: "prompt" | "build" | "cancel";  
   maxConcurrency?: number;
 }
 
@@ -81,7 +83,15 @@ type DeployTargetInfo =
 
 /** Deploy a project to ObservableHQ */
 export async function deploy(
-  {config, force, message, deployPollInterval = DEPLOY_POLL_INTERVAL_MS, maxConcurrency}: DeployOptions,
+  {
+    config, 
+    force,     
+    ifBuildMissing,
+    ifBuildStale,
+    message, 
+    deployPollInterval = DEPLOY_POLL_INTERVAL_MS, 
+    maxConcurrency
+  }: DeployOptions,
   effects = defaultEffects
 ): Promise<void> {
   const {clack} = effects;
@@ -208,9 +218,11 @@ export async function deploy(
     ({buildFilePaths, leastRecentMtimeMs: leastRecentBuildMtimeMs} = await findBuildFiles(effects, config));
   } catch (error) {
     if (CliError.match(error, {message: /No build files found/})) {
-      if (force === "deploy") {
+      if (ifBuildMissing === "cancel" || force === "deploy") {
         throw new CliError("No build files found.");
-      } else if (!force) {
+      } else if (ifBuildMissing === "build") {
+        doBuild = true;
+      } else if (ifBuildMissing === "prompt" || !force) {
         if (!effects.isTty) throw new CliError("No build files found. Pass --build to automatically build.");
         const choice = await clack.confirm({
           message: "No build files found. Do you want to build the project now?",
@@ -227,44 +239,62 @@ export async function deploy(
     }
   }
 
-  if (!doBuild && !force) {
+  if (!doBuild) {
     const mostRecentSourceMtimeMs = await findMostRecentSourceMtimeMs(effects, config);
     if (mostRecentSourceMtimeMs > leastRecentBuildMtimeMs) {
-      if (!effects.isTty)
-        throw new CliError(
-          "Source files are newer than build files. Pass --build or --no-build to automatically build or deploy."
-        );
-      const choice = await clack.confirm({
-        message:
-          "Your source files have changed since the last time you built. Would you like to re-build before deploy?",
-        active: "Yes, re-build",
-        inactive: "No, deploy as is"
-      });
-      if (clack.isCancel(choice)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
-      doBuild = !!choice;
+      if (force === "deploy") {
+        // do nothing
+      } if (ifBuildStale === "cancel") {
+        throw new CliError("Build is stale.");
+      } else if (ifBuildStale === "build") {
+        doBuild = true;
+      } else if (ifBuildStale === "prompt" || !force) {
+        if (!effects.isTty)
+          throw new CliError(
+            "Source files are newer than build files. Pass --build or --no-build to automatically build or deploy."
+          );
+        const choice = await clack.confirm({
+          message:
+            "Your source files have changed since the last time you built. Would you like to re-build before deploy?",
+          active: "Yes, re-build",
+          inactive: "No, deploy as is"
+        });
+        if (clack.isCancel(choice)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
+        doBuild = !!choice;  
+      }
     }
   }
 
-  const buildAge = new Date().getTime() - leastRecentBuildMtimeMs;
-  if (!doBuild && !force && buildAge > BUILD_AGE_WARNING_MS) {
-    if (!effects.isTty)
-      throw new CliError("Build is stale. Pass --build or --no-build to automatically build or deploy.");
-    const ageMinutes = Math.round(buildAge / 1000 / 60);
-    const ageFormatted =
-      buildAge < 1000 * 60 * 60
-        ? `${ageMinutes} minutes ago`
-        : buildAge < 1000 * 60 * 60 * 12
-        ? `${Math.round(buildAge / 1000 / 60 / 60)} hours ago`
-        : `at ${new Date(Date.now() - buildAge).toLocaleString()}`;
-    const message = `You last built this project ${ageFormatted}. Would you like to re-build before deploy?`;
-    const choice = await clack.confirm({
-      message,
-      active: "Yes, re-build",
-      inactive: "No, deploy as is",
-      initialValue: ageMinutes <= 5
-    });
-    if (clack.isCancel(choice)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
-    doBuild = !!choice;
+  if (!doBuild) {
+    const buildAge = new Date().getTime() - leastRecentBuildMtimeMs;
+    if (buildAge > BUILD_AGE_WARNING_MS) {
+      if (force === "deploy") {
+        // do nothing
+      } else if (ifBuildStale === "cancel") {
+        throw new CliError("Build is stale.");
+      } else if (ifBuildStale === "build") {
+        doBuild = true;
+      } else if (ifBuildStale === "prompt" || !force) {
+        if (!effects.isTty)
+          throw new CliError("Build is stale. Pass --build or --no-build to automatically build or deploy.");
+        const ageMinutes = Math.round(buildAge / 1000 / 60);
+        const ageFormatted =
+          buildAge < 1000 * 60 * 60
+            ? `${ageMinutes} minutes ago`
+            : buildAge < 1000 * 60 * 60 * 12
+            ? `${Math.round(buildAge / 1000 / 60 / 60)} hours ago`
+            : `at ${new Date(Date.now() - buildAge).toLocaleString()}`;
+        const message = `You last built this project ${ageFormatted}. Would you like to re-build before deploy?`;
+        const choice = await clack.confirm({
+          message,
+          active: "Yes, re-build",
+          inactive: "No, deploy as is",
+          initialValue: ageMinutes <= 5
+        });
+        if (clack.isCancel(choice)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
+        doBuild = !!choice;  
+      }
+    }
   }
 
   if (doBuild) {

@@ -159,7 +159,9 @@ const TEST_OPTIONS: DeployOptions = {
   config: TEST_CONFIG,
   message: undefined,
   deployPollInterval: 0,
-  force: "deploy" // default to not re-building and just deploying output as-is
+  ifBuildMissing: "cancel",
+  ifBuildStale: "deploy",
+  force: "deploy", // default to not re-building and just deploying output as-is
 };
 const DEPLOY_CONFIG: DeployConfig & {projectId: string; projectSlug: string; workspaceLogin: string} = {
   projectId: "project123",
@@ -751,6 +753,7 @@ describe("deploy", () => {
     const deployOptions = {
       ...TEST_OPTIONS,
       force: null,
+      ifBuildMissing: "prompt",
       config: {...TEST_OPTIONS.config, output: "test/output/does-not-exist"}
     } satisfies DeployOptions;
     getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
@@ -766,7 +769,8 @@ describe("deploy", () => {
   it("prompts if the build is stale", async () => {
     const deployOptions = {
       ...TEST_OPTIONS,
-      force: null
+      force: null,
+      ifBuildStale: "prompt"
     } satisfies DeployOptions;
     getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
     const effects = new MockDeployEffects({
