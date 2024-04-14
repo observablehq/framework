@@ -158,8 +158,7 @@ try {
       break;
     }
     case "preview": {
-      const {values, tokens} = helpArgs(command, {
-        tokens: true,
+      const {values} = helpArgs(command, {
         options: {
           ...CONFIG_OPTION,
           host: {
@@ -178,13 +177,6 @@ try {
           }
         }
       });
-      // https://nodejs.org/api/util.html#parseargs-tokens
-      for (const token of tokens) {
-        if (token.kind !== "option") continue;
-        const {name} = token;
-        if (name === "no-open") values.open = false;
-        else if (name === "open") values.open = true;
-      }
       const {config, root, host, port, open} = values;
       await import("../preview.js").then(async (preview) =>
         preview.preview({
@@ -291,11 +283,22 @@ function helpArgs<T extends DescribableParseArgsConfig>(
   command: string | undefined,
   config: T
 ): ReturnType<typeof parseArgs<T>> {
+  const {options = {}} = config;
+
+  // Find the boolean --foo options that have a corresponding boolean --no-foo.
+  const booleanPairs: string[] = [];
+  for (const key in options) {
+    if (options[key].type === "boolean" && !key.startsWith("no-") && options[`no-${key}`]?.type === "boolean") {
+      booleanPairs.push(key);
+    }
+  }
+
   let result: ReturnType<typeof parseArgs<T>>;
   try {
     result = parseArgs<T>({
       ...config,
-      options: {...config.options, help: {type: "boolean", short: "h"}, debug: {type: "boolean"}},
+      tokens: config.tokens || booleanPairs.length > 0,
+      options: {...options, help: {type: "boolean", short: "h"}, debug: {type: "boolean"}},
       args
     });
   } catch (error: any) {
@@ -303,17 +306,19 @@ function helpArgs<T extends DescribableParseArgsConfig>(
     console.error(`observable: ${error.message}. See 'observable help${command ? ` ${command}` : ""}'.`);
     process.exit(1);
   }
+
+  // Log automatic help.
   if ((result.values as any).help) {
     console.log(
       `Usage: observable ${command}${command === undefined || command === "help" ? " <command>" : ""}${Object.entries(
-        config.options ?? {}
+        options
       )
         .map(([name, {default: def}]) => ` [--${name}${def === undefined ? "" : `=${def}`}]`)
         .join("")}`
     );
-    if (Object.values(config.options ?? {}).some((spec) => spec.description)) {
+    if (Object.values(options).some((spec) => spec.description)) {
       console.log();
-      for (const [long, spec] of Object.entries(config.options ?? {})) {
+      for (const [long, spec] of Object.entries(options)) {
         if (spec.description) {
           const left = `  ${spec.short ? `-${spec.short}, ` : ""}--${long}`.padEnd(20);
           console.log(`${left}${spec.description}`);
@@ -323,5 +328,20 @@ function helpArgs<T extends DescribableParseArgsConfig>(
     }
     process.exit(0);
   }
+
+  // Merge --no-foo into --foo based on order
+  // https://nodejs.org/api/util.html#parseargs-tokens
+  if ("tokens" in result && result.tokens) {
+    const {values, tokens} = result;
+    for (const key of booleanPairs) {
+      for (const token of tokens) {
+        if (token.kind !== "option") continue;
+        const {name} = token;
+        if (name === `no-${key}`) values[key] = false;
+        else if (name === key) values[key] = true;
+      }
+    }
+  }
+
   return result;
 }
