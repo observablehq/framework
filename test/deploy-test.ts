@@ -159,8 +159,6 @@ const TEST_OPTIONS: DeployOptions = {
   config: TEST_CONFIG,
   message: undefined,
   deployPollInterval: 0,
-  ifBuildMissing: "cancel",
-  ifBuildStale: "deploy",
   force: "deploy" // default to not re-building and just deploying output as-is
 };
 const DEPLOY_CONFIG: DeployConfig & {projectId: string; projectSlug: string; workspaceLogin: string} = {
@@ -753,7 +751,6 @@ describe("deploy", () => {
     const deployOptions = {
       ...TEST_OPTIONS,
       force: null,
-      ifBuildMissing: "prompt",
       config: {...TEST_OPTIONS.config, output: "test/output/does-not-exist"}
     } satisfies DeployOptions;
     getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
@@ -769,8 +766,7 @@ describe("deploy", () => {
   it("prompts if the build is stale", async () => {
     const deployOptions = {
       ...TEST_OPTIONS,
-      force: null,
-      ifBuildStale: "prompt"
+      force: null
     } satisfies DeployOptions;
     getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
     const effects = new MockDeployEffects({
@@ -778,7 +774,7 @@ describe("deploy", () => {
       fixedInputStatTime: new Date("2024-03-09"),
       fixedOutputStatTime: new Date("2024-03-10")
     });
-    await assert.rejects(() => deploy(deployOptions, effects), /out of inputs for select: You last built this project/);
+    await assert.rejects(() => deploy(deployOptions, effects), /out of inputs for select: You built this project/);
     effects.close();
   });
 
@@ -845,8 +841,7 @@ describe("deploy", () => {
 
     const deployOptions = {
       ...TEST_OPTIONS,
-      force: "deploy", // will trump ifBuildStale
-      ifBuildStale: "prompt"
+      force: "deploy"
     } satisfies DeployOptions;
 
     const effects = new MockDeployEffects({

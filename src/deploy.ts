@@ -38,8 +38,6 @@ export interface DeployOptions {
   message?: string;
   deployPollInterval?: number;
   force: "build" | "deploy" | null;
-  ifBuildStale: "prompt" | "build" | "cancel" | "deploy";
-  ifBuildMissing: "prompt" | "build" | "cancel";
   maxConcurrency?: number;
 }
 
@@ -76,19 +74,11 @@ type DeployTargetInfo =
 
 /** Deploy a project to ObservableHQ */
 export async function deploy(
-  {
-    config,
-    message,
-    force,
-    ifBuildMissing,
-    ifBuildStale,
-    deployPollInterval = DEPLOY_POLL_INTERVAL_MS,
-    maxConcurrency
-  }: DeployOptions,
+  {config, message, force, deployPollInterval = DEPLOY_POLL_INTERVAL_MS, maxConcurrency}: DeployOptions,
   effects = defaultEffects
 ): Promise<void> {
   const {clack} = effects;
-  Telemetry.record({event: "deploy", step: "start", ifBuildMissing, ifBuildStale, force});
+  Telemetry.record({event: "deploy", step: "start", force});
   clack.intro(inverse(" observable deploy "));
 
   let apiKey = await effects.getObservableApiKey(effects);
@@ -201,29 +191,28 @@ export async function deploy(
 
   const previousProjectId = deployConfig?.projectId;
   let targetDescription: string;
-
   let buildFilePaths: string[] | null = null;
-
   let doBuild = force === "build";
 
-  let leastRecentBuildMtimeMs;
+  // Check if the build is missing. If it is present, then continue; otherwise
+  // if --no-build was specified, then error; otherwise if in a tty, ask the
+  // user if they want to build; otherwise build automatically.
   try {
-    ({buildFilePaths, leastRecentMtimeMs: leastRecentBuildMtimeMs} = await findBuildFiles(effects, config));
+    buildFilePaths = await findBuildFiles(effects, config);
   } catch (error) {
     if (CliError.match(error, {message: /No build files found/})) {
-      if (ifBuildMissing === "cancel" || force === "deploy") {
+      if (force === "deploy") {
         throw new CliError("No build files found.");
-      } else if (ifBuildMissing === "build") {
-        doBuild = true;
-      } else if (ifBuildMissing === "prompt" || !force) {
-        if (!effects.isTty) throw new CliError("No build files found. Pass --build to automatically build.");
-        const choice = await clack.confirm({
-          message: "No build files found. Do you want to build the project now?",
-          active: "Yes, build and then deploy",
-          inactive: "No, cancel deploy"
-        });
-        if (clack.isCancel(choice) || !choice) {
-          throw new CliError("User canceled deploy", {print: false, exitCode: 0});
+      } else if (!force) {
+        if (effects.isTty) {
+          const choice = await clack.confirm({
+            message: "No build files found. Do you want to build the project now?",
+            active: "Yes, build and then deploy",
+            inactive: "No, cancel deploy"
+          });
+          if (clack.isCancel(choice) || !choice) {
+            throw new CliError("User canceled deploy", {print: false, exitCode: 0});
+          }
         }
         doBuild = true;
       }
@@ -232,43 +221,30 @@ export async function deploy(
     }
   }
 
-  if (!doBuild) {
+  // If we haven’t decided yet whether or not we’re building, check how old the
+  // build is, and whether it is stale (i.e., whether the source files are newer
+  // than the build). If in a tty, ask the user if they want to build; otherwise
+  // deploy as is.
+  if (!doBuild && !force && effects.isTty) {
+    const leastRecentBuildMtimeMs = await findLeastRecentBuildMtimeMs(effects, config);
     const mostRecentSourceMtimeMs = await findMostRecentSourceMtimeMs(effects, config);
     const buildAge = Date.now() - leastRecentBuildMtimeMs;
-    if (mostRecentSourceMtimeMs > leastRecentBuildMtimeMs || buildAge > BUILD_AGE_WARNING_MS) {
-      if (force === "deploy") {
-        // do nothing
-      } else if (ifBuildStale === "cancel") {
-        throw new CliError("Build is stale.");
-      } else if (ifBuildStale === "build") {
-        doBuild = true;
-      } else if (ifBuildStale === "prompt" || !force) {
-        if (!effects.isTty)
-          throw new CliError("Build is stale. Pass --build or --no-build to automatically build or deploy.");
-        let message = "";
-        if (mostRecentSourceMtimeMs > leastRecentBuildMtimeMs) {
-          message += "Your source files have changed since the last time you built. ";
-        }
-        if (buildAge > BUILD_AGE_WARNING_MS) {
-          const ageMinutes = Math.round(buildAge / 1000 / 60);
-          const ageFormatted =
-            buildAge < 1000 * 60 * 60
-              ? `${ageMinutes} minutes ago`
-              : buildAge < 1000 * 60 * 60 * 12
-              ? `${Math.round(buildAge / 1000 / 60 / 60)} hours ago`
-              : `at ${new Date(Date.now() - buildAge).toLocaleString()}`;
-          message += `You last built this project ${ageFormatted}. `;
-        }
-        message += "Would you like to build before deploying?";
-        const choice = await clack.confirm({
-          message,
-          active: "Yes, build and then deploy",
-          inactive: "No, deploy as is"
-        });
-        if (clack.isCancel(choice)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
-        doBuild = !!choice;
-      }
+    let initialValue = buildAge > BUILD_AGE_WARNING_MS;
+    let message = "";
+    if (mostRecentSourceMtimeMs > leastRecentBuildMtimeMs) {
+      message += "Your source files have changed since the last time you built. ";
+      initialValue = true;
     }
+    message += `You built this project ${formatAge(buildAge)}. `;
+    message += "Would you like to build again before deploying?";
+    const choice = await clack.confirm({
+      message,
+      initialValue,
+      active: "Yes, build and then deploy",
+      inactive: "No, deploy as is"
+    });
+    if (clack.isCancel(choice)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
+    doBuild = !!choice;
   }
 
   if (doBuild) {
@@ -277,10 +253,10 @@ export async function deploy(
       {config},
       new FileBuildEffects(config.output, {logger: effects.logger, output: effects.output})
     );
-    ({buildFilePaths} = await findBuildFiles(effects, config));
+    buildFilePaths = await findBuildFiles(effects, config);
   }
 
-  if (!buildFilePaths || !buildFilePaths) throw new Error("No build files found.");
+  if (!buildFilePaths) throw new Error("No build files found.");
 
   if (!deployTarget.create) {
     // Check last deployed state. If it's not the same project, ask the user if
@@ -475,21 +451,23 @@ async function findMostRecentSourceMtimeMs(effects: DeployEffects, config: Confi
   return mostRecentMtimeMs;
 }
 
-async function findBuildFiles(
-  effects: DeployEffects,
-  config: Config
-): Promise<{buildFilePaths: string[]; leastRecentMtimeMs: number}> {
+async function findLeastRecentBuildMtimeMs(effects: DeployEffects, config: Config): Promise<number> {
   let leastRecentMtimeMs = Infinity;
-  const buildFilePaths: string[] = [];
+  for await (const file of effects.visitFiles(config.output)) {
+    const joinedPath = join(config.output, file);
+    const stat = await effects.stat(joinedPath);
+    if (stat.mtimeMs < leastRecentMtimeMs) {
+      leastRecentMtimeMs = stat.mtimeMs;
+    }
+  }
+  return leastRecentMtimeMs;
+}
 
+async function findBuildFiles(effects: DeployEffects, config: Config): Promise<string[]> {
+  const buildFilePaths: string[] = [];
   try {
     for await (const file of effects.visitFiles(config.output)) {
-      const joinedPath = join(config.output, file);
-      const stat = await effects.stat(joinedPath);
       buildFilePaths.push(file);
-      if (stat.mtimeMs < leastRecentMtimeMs) {
-        leastRecentMtimeMs = stat.mtimeMs;
-      }
     }
   } catch (error) {
     if (isEnoent(error)) {
@@ -497,12 +475,10 @@ async function findBuildFiles(
     }
     throw error;
   }
-
   if (!buildFilePaths.length) {
     throw new CliError(`No build files found at ${config.output}`);
   }
-
-  return {buildFilePaths, leastRecentMtimeMs};
+  return buildFilePaths;
 }
 
 // export for testing
@@ -627,4 +603,20 @@ export async function promptDeployTarget(
   }
 
   return {create: true, workspace, projectSlug, title, accessLevel};
+}
+
+function formatAge(age: number): string {
+  if (age < 1000 * 60) {
+    const seconds = Math.round(age / 1000);
+    return `${seconds} second${seconds === 1 ? "" : "s"} ago`;
+  }
+  if (age < 1000 * 60 * 60) {
+    const minutes = Math.round(age / 1000 / 60);
+    return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  }
+  if (age < 1000 * 60 * 60 * 12) {
+    const hours = Math.round(age / 1000 / 60 / 60);
+    return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  }
+  return `at ${new Date(Date.now() - age).toLocaleString("en")}`;
 }
