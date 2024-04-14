@@ -127,11 +127,11 @@ try {
           },
           build: {
             type: "boolean",
-            description: "Always re-build project before deploying"
+            description: "Always build before deploying"
           },
           "no-build": {
             type: "boolean",
-            description: "Don't re-build project if needed; deploy as-is"
+            description: "Don’t build before deploying; deploy as is"
           }
         }
       });
@@ -146,7 +146,6 @@ try {
       if (!process.stdin.isTTY && (ifStale === "prompt" || ifMissing === "prompt")) {
         throw new CliError("Cannot prompt for input in non-interactive mode");
       }
-
       await import("../deploy.js").then(async (deploy) =>
         deploy.deploy({
           config: await readConfig(config, root),
