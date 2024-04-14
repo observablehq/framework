@@ -766,7 +766,7 @@ describe("deploy", () => {
   it("prompts if the build is stale", async () => {
     const deployOptions = {
       ...TEST_OPTIONS,
-      force: null,
+      force: null
     } satisfies DeployOptions;
     getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
     const effects = new MockDeployEffects({
@@ -847,7 +847,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
       apiKey: null,
-      fixedInputStatTime: new Date("2024-03-11"),  // newer source files
+      fixedInputStatTime: new Date("2024-03-11"), // newer source files
       fixedOutputStatTime: new Date("2024-03-10")
     });
     effects.clack.inputs = [
