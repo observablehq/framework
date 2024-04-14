@@ -85,17 +85,17 @@ type DeployTargetInfo =
 export async function deploy(
   {
     config,
+    message,
     force,
     ifBuildMissing,
     ifBuildStale,
-    message,
     deployPollInterval = DEPLOY_POLL_INTERVAL_MS,
     maxConcurrency
   }: DeployOptions,
   effects = defaultEffects
 ): Promise<void> {
   const {clack} = effects;
-  Telemetry.record({event: "deploy", step: "start", force});
+  Telemetry.record({event: "deploy", step: "start", ifBuildMissing, ifBuildStale, force});
   clack.intro(inverse(" observable deploy "));
 
   let apiKey = await effects.getObservableApiKey(effects);
