@@ -776,10 +776,7 @@ describe("deploy", () => {
       fixedInputStatTime: new Date("2024-03-09"),
       fixedOutputStatTime: new Date("2024-03-10")
     });
-    await assert.rejects(
-      () => deploy(deployOptions, effects),
-      /out of inputs for select: You last built this project/
-    );
+    await assert.rejects(() => deploy(deployOptions, effects), /out of inputs for select: You last built this project/);
     effects.close();
   });
 

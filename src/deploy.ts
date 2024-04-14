@@ -50,7 +50,7 @@ export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
   logger: Logger;
   input: NodeJS.ReadableStream;
   output: NodeJS.WritableStream;
-  visitFiles: (root: string, { ignoreObservable }?: {ignoreObservable?: boolean | undefined}) => Generator<string>;
+  visitFiles: (root: string, {ignoreObservable}?: {ignoreObservable?: boolean | undefined}) => Generator<string>;
   stat: (path: string) => Promise<Stats>;
   build: ({config, addPublic}: BuildOptions, effects?: BuildEffects) => Promise<void>;
 }
@@ -250,9 +250,11 @@ export async function deploy(
           break;
         }
         case "prompt": {
-          if (!effects.isTty) throw new CliError("Build is older than source files. Pass --if-older=build to automatically rebuild.");
+          if (!effects.isTty)
+            throw new CliError("Build is older than source files. Pass --if-older=build to automatically rebuild.");
           const choice = await clack.confirm({
-            message: "Your source files have changed since the last time you built. Would you like to re-build before deploy?",
+            message:
+              "Your source files have changed since the last time you built. Would you like to re-build before deploy?",
             active: "Yes, re-build",
             inactive: "No, deploy as is"
           });
