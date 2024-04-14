@@ -161,7 +161,7 @@ const TEST_OPTIONS: DeployOptions = {
   deployPollInterval: 0,
   ifBuildMissing: "cancel",
   ifBuildStale: "deploy",
-  force: "deploy", // default to not re-building and just deploying output as-is
+  force: "deploy" // default to not re-building and just deploying output as-is
 };
 const DEPLOY_CONFIG: DeployConfig & {projectId: string; projectSlug: string; workspaceLogin: string} = {
   projectId: "project123",

@@ -107,7 +107,7 @@ try {
     }
     case "deploy": {
       const missingDescription = "one of 'build', 'cancel', or 'prompt' (the default)";
-      const staleDescription = "one of 'build', 'cancel', 'deploy', or 'prompt' (the default)";      
+      const staleDescription = "one of 'build', 'cancel', 'deploy', or 'prompt' (the default)";
       const {
         values: {config, root, message, "if-stale": ifStale, "if-missing": ifMissing, build, "no-build": noBuild}
       } = helpArgs(command, {
@@ -124,7 +124,7 @@ try {
           "if-missing": {
             type: "string",
             description: `What to do if the output directory is missing: ${missingDescription}`
-          },                    
+          },
           build: {
             type: "boolean",
             description: "Always re-build project before deploying"
@@ -152,7 +152,7 @@ try {
           config: await readConfig(config, root),
           message,
           ifBuildMissing: (ifMissing ?? "prompt") as "prompt" | "build" | "cancel",
-          ifBuildStale: (ifStale ?? "prompt") as "prompt" | "build" | "cancel" | "deploy",          
+          ifBuildStale: (ifStale ?? "prompt") as "prompt" | "build" | "cancel" | "deploy",
           force: build ? "build" : noBuild ? "deploy" : null
         })
       );

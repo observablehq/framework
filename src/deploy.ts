@@ -39,7 +39,7 @@ export interface DeployOptions {
   deployPollInterval?: number;
   force: "build" | "deploy" | null;
   ifBuildStale: "prompt" | "build" | "cancel" | "deploy";
-  ifBuildMissing: "prompt" | "build" | "cancel";  
+  ifBuildMissing: "prompt" | "build" | "cancel";
   maxConcurrency?: number;
 }
 
@@ -84,12 +84,12 @@ type DeployTargetInfo =
 /** Deploy a project to ObservableHQ */
 export async function deploy(
   {
-    config, 
-    force,     
+    config,
+    force,
     ifBuildMissing,
     ifBuildStale,
-    message, 
-    deployPollInterval = DEPLOY_POLL_INTERVAL_MS, 
+    message,
+    deployPollInterval = DEPLOY_POLL_INTERVAL_MS,
     maxConcurrency
   }: DeployOptions,
   effects = defaultEffects
@@ -244,7 +244,8 @@ export async function deploy(
     if (mostRecentSourceMtimeMs > leastRecentBuildMtimeMs) {
       if (force === "deploy") {
         // do nothing
-      } if (ifBuildStale === "cancel") {
+      }
+      if (ifBuildStale === "cancel") {
         throw new CliError("Build is stale.");
       } else if (ifBuildStale === "build") {
         doBuild = true;
@@ -260,7 +261,7 @@ export async function deploy(
           inactive: "No, deploy as is"
         });
         if (clack.isCancel(choice)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
-        doBuild = !!choice;  
+        doBuild = !!choice;
       }
     }
   }
@@ -292,7 +293,7 @@ export async function deploy(
           initialValue: ageMinutes <= 5
         });
         if (clack.isCancel(choice)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
-        doBuild = !!choice;  
+        doBuild = !!choice;
       }
     }
   }
