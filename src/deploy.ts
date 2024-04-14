@@ -259,10 +259,10 @@ export async function deploy(
               : `at ${new Date(Date.now() - buildAge).toLocaleString()}`;
           message += `You last built this project ${ageFormatted}. `;
         }
-        message += "Would you like to re-build before deploy?";
+        message += "Would you like to build before deploying?";
         const choice = await clack.confirm({
           message,
-          active: "Yes, re-build",
+          active: "Yes, build",
           inactive: "No, deploy as is"
         });
         if (clack.isCancel(choice)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
