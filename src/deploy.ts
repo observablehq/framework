@@ -203,9 +203,9 @@ export async function deploy(
 
   let doBuild = force === "build";
 
-  let youngestBuildAge;
+  let leastRecentBuildMtimeMs;
   try {
-    ({buildFilePaths, youngestAge: youngestBuildAge} = await findBuildFiles(effects, config));
+    ({buildFilePaths, leastRecentMtimeMs: leastRecentBuildMtimeMs} = await findBuildFiles(effects, config));
   } catch (error) {
     if (CliError.match(error, {message: /No build files found/})) {
       if (force === "deploy") {
@@ -228,11 +228,11 @@ export async function deploy(
   }
 
   if (!doBuild && !force) {
-    const oldestSourceAge = await findOldestSourceAge(effects, config);
-    if (oldestSourceAge < youngestBuildAge) {
+    const mostRecentSourceMtimeMs = await findMostRecentSourceMtimeMs(effects, config);
+    if (mostRecentSourceMtimeMs > leastRecentBuildMtimeMs) {
       if (!effects.isTty)
         throw new CliError(
-          "Build is older than source files. Pass --build or --no-build to automatically build or deploy."
+          "Source files are newer than build files. Pass --build or --no-build to automatically build or deploy."
         );
       const choice = await clack.confirm({
         message:
@@ -240,20 +240,22 @@ export async function deploy(
         active: "Yes, re-build",
         inactive: "No, deploy as is"
       });
+      if (clack.isCancel(choice)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
       doBuild = !!choice;
     }
   }
 
-  if (!doBuild && !force && youngestBuildAge > BUILD_AGE_WARNING_MS) {
+  const buildAge = new Date().getTime() - leastRecentBuildMtimeMs;
+  if (!doBuild && !force && buildAge > BUILD_AGE_WARNING_MS) {
     if (!effects.isTty)
       throw new CliError("Build is stale. Pass --build or --no-build to automatically build or deploy.");
-    const ageMinutes = Math.round(youngestBuildAge / 1000 / 60);
+    const ageMinutes = Math.round(buildAge / 1000 / 60);
     const ageFormatted =
-      youngestBuildAge < 1000 * 60 * 60
+      buildAge < 1000 * 60 * 60
         ? `${ageMinutes} minutes ago`
-        : youngestBuildAge < 1000 * 60 * 60 * 12
-        ? `${Math.round(youngestBuildAge / 1000 / 60 / 60)} hours ago`
-        : `at ${new Date(Date.now() - youngestBuildAge).toLocaleString()}`;
+        : buildAge < 1000 * 60 * 60 * 12
+        ? `${Math.round(buildAge / 1000 / 60 / 60)} hours ago`
+        : `at ${new Date(Date.now() - buildAge).toLocaleString()}`;
     const message = `You last built this project ${ageFormatted}. Would you like to re-build before deploy?`;
     const choice = await clack.confirm({
       message,
@@ -261,6 +263,7 @@ export async function deploy(
       inactive: "No, deploy as is",
       initialValue: ageMinutes <= 5
     });
+    if (clack.isCancel(choice)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
     doBuild = !!choice;
   }
 
@@ -445,34 +448,32 @@ export async function deploy(
   Telemetry.record({event: "deploy", step: "finish"});
 }
 
-async function findOldestSourceAge(effects: DeployEffects, config: Config): Promise<number> {
-  let oldestAge = -Infinity;
-  const nowMs = Date.now();
+async function findMostRecentSourceMtimeMs(effects: DeployEffects, config: Config): Promise<number> {
+  let mostRecentMtimeMs = -Infinity;
   for await (const file of effects.visitFiles(config.root, {ignoreObservable: false})) {
     const joinedPath = join(config.root, file);
     const stat = await effects.stat(joinedPath);
-    if (nowMs - stat.mtimeMs > oldestAge) {
-      oldestAge = nowMs - stat.mtimeMs;
+    if (stat.mtimeMs > mostRecentMtimeMs) {
+      mostRecentMtimeMs = stat.mtimeMs;
     }
   }
-  return oldestAge;
+  return mostRecentMtimeMs;
 }
 
 async function findBuildFiles(
   effects: DeployEffects,
   config: Config
-): Promise<{buildFilePaths: string[]; youngestAge: number}> {
-  let youngestAge = Infinity;
+): Promise<{buildFilePaths: string[]; leastRecentMtimeMs: number}> {
+  let leastRecentMtimeMs = Infinity;
   const buildFilePaths: string[] = [];
-  const nowMs = Date.now();
 
   try {
     for await (const file of effects.visitFiles(config.output)) {
       const joinedPath = join(config.output, file);
       const stat = await effects.stat(joinedPath);
       buildFilePaths.push(file);
-      if (nowMs - stat.mtimeMs < youngestAge) {
-        youngestAge = nowMs - stat.mtimeMs;
+      if (stat.mtimeMs < leastRecentMtimeMs) {
+        leastRecentMtimeMs = stat.mtimeMs;
       }
     }
   } catch (error) {
@@ -486,7 +487,7 @@ async function findBuildFiles(
     throw new CliError(`No build files found at ${config.output}`);
   }
 
-  return {buildFilePaths, youngestAge};
+  return {buildFilePaths, leastRecentMtimeMs};
 }
 
 // export for testing
