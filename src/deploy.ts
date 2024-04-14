@@ -234,7 +234,7 @@ export async function deploy(
 
   if (!doBuild) {
     const mostRecentSourceMtimeMs = await findMostRecentSourceMtimeMs(effects, config);
-    const buildAge = new Date().getTime() - leastRecentBuildMtimeMs;
+    const buildAge = Date.now() - leastRecentBuildMtimeMs;
     if (mostRecentSourceMtimeMs > leastRecentBuildMtimeMs || buildAge > BUILD_AGE_WARNING_MS) {
       if (force === "deploy") {
         // do nothing
