@@ -244,8 +244,7 @@ export async function deploy(
     if (mostRecentSourceMtimeMs > leastRecentBuildMtimeMs) {
       if (force === "deploy") {
         // do nothing
-      }
-      if (ifBuildStale === "cancel") {
+      } else if (ifBuildStale === "cancel") {
         throw new CliError("Build is stale.");
       } else if (ifBuildStale === "build") {
         doBuild = true;
