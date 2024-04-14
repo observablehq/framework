@@ -845,7 +845,8 @@ describe("deploy", () => {
 
     const deployOptions = {
       ...TEST_OPTIONS,
-      force: "deploy"
+      force: "deploy", // will trump ifBuildStale
+      ifBuildStale: "prompt"
     } satisfies DeployOptions;
 
     const effects = new MockDeployEffects({
