@@ -1,5 +1,5 @@
 import matter from "gray-matter";
-import {normalizeTheme} from "./config.js";
+import {normalizeTheme, stringOrNull} from "./config.js";
 import {yellow} from "./tty.js";
 
 export interface FrontMatter {
@@ -47,10 +47,6 @@ export function normalizeFrontMatter(spec: any = {}): FrontMatter {
   if (style !== undefined) frontMatter.style = stringOrNull(style);
   if (theme !== undefined) frontMatter.theme = normalizeTheme(theme);
   return frontMatter;
-}
-
-function stringOrNull(spec: unknown): string | null {
-  return spec == null || spec === false ? null : String(spec);
 }
 
 function normalizeToc(spec: unknown): {show?: boolean; label?: string} {
