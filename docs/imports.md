@@ -75,7 +75,7 @@ Self-hosting of `npm:` imports applies to transitive static and [dynamic imports
 
 You can import from `node_modules`. This is useful for managing dependencies with a package manager such as npm or Yarn, for importing private packages from the npm registry, or for importing from a different package registry such as GitHub.
 
-After installing a package (_e.g._, `npm install` or `yarn add`), import it using a bare specifier such as `d3` or `lodash`. For example, to import canvas-confetti:
+After installing a package (say with `npm install` or `yarn add`), import it using a bare specifier such as `d3` or `lodash`. For example, to import canvas-confetti:
 
 ```js run=false
 import confetti from "canvas-confetti";
