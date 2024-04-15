@@ -87,6 +87,8 @@ Or to import Apache Arrow:
 import * as Arrow from "apache-arrow";
 ```
 
+<div class="note">Not all Node packages are usable in the browser; Node imports are only supported for modules that do not rely on Node-specific APIs and that can be converted to ES modules via <a href="https://esbuild.github.io/">esbuild</a>. If you have difficulty importing a module, please ask for help by <a href="https://github.com/observablehq/framework/discussions">opening a discussion</a>.</div>
+
 You can also import specific [entry points](https://nodejs.org/api/packages.html#package-entry-points) by adding the entry point subpath after the package name. For example, to import mime’s `lite` entry point:
 
 ```js run=false
@@ -94,8 +96,6 @@ import mime from "mime/lite";
 ```
 
 Unlike `npm:` imports, Node imports do not support semver ranges: the imported version is determined by what is installed in your `node_modules` directory. Use your package manager (_e.g._, edit your `package.json` and run `npm install`, or run `npm update`) to change which version is imported.
-
-Framework (via [esbuild](https://esbuild.github.io/)) automatically converts CommonJS to ES modules. However, not all Node packages are usable in the browser; Node imports are only supported for browser-compatible modules that do not rely on Node-specific APIs. If you have difficulty importing a module, please ask for help by [opening a discussion](https://github.com/observablehq/framework/discussions).
 
 Imports from `node_modules` are cached in `.observablehq/cache/_node` within your [source root](./config#root) (`docs` by default). You shouldn’t need to clear this cache as it is automatically managed, but feel free to clear it you like.
 
