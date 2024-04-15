@@ -114,8 +114,6 @@ jobs:
         with:
           path: docs/.observablehq/cache
           key: data-${{ hashFiles('docs/data/*') }}-${{ steps.date.outputs.date }}
-      - if: steps.cache-data.outputs.cache-hit == 'true'
-        run: find docs/.observablehq/cache -type f -exec touch {} +
       # ...
 ```
 
