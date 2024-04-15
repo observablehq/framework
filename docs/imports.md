@@ -39,7 +39,7 @@ With the exception of remote imports, imported modules are bundled with your pro
 
 ## npm imports
 
-Framework downloads `npm:` imports from the [npm package registry](https://www.npmjs.com/) via the [jsDelivr CDN](https://www.jsdelivr.com/esm). Unlike [imports from `node_modules`](#node-imports), you don’t have to install `npm:` imports — just import, and the cloud shall provide. 😌
+You can import a package from the [npm registry](https://www.npmjs.com/) using the `npm:` protocol. When you import using `npm:`, Framework automatically downloads and self-hosts the package via the [jsDelivr CDN](https://www.jsdelivr.com/esm). Unlike [imports from `node_modules`](#node-imports), you don’t have to install `npm:` imports — just import, and the cloud shall provide. 😌
 
 By default, npm imports resolve to the latest version of the given package. Imported versions are resolved on build or during preview and cached in your [npm cache](#self-hosting-of-npm-imports). To load an earlier or specific version of a package, add a [semver range](https://docs.npmjs.com/about-semantic-versioning). For example, to load major version 1 of canvas-confetti:
 
@@ -59,7 +59,7 @@ Similarly, to import the file `dist/confetti.module.mjs` from canvas-confetti:
 import confetti from "npm:canvas-confetti/dist/confetti.module.mjs";
 ```
 
-If you do not specify an entry point, the default entry point is determined by the imported package’s `package.json`, typically by the [`exports` field](https://nodejs.org/api/packages.html#exports); see [jsDelivr’s GitHub](https://github.com/jsdelivr/jsdelivr/issues/18263) for details. 
+If you do not specify an entry point, the default entry point is determined by the imported package’s `package.json`, typically by the [`exports` field](https://nodejs.org/api/packages.html#exports); see [jsDelivr’s GitHub](https://github.com/jsdelivr/jsdelivr/issues/18263) for details.
 
 <div class="tip">If you’re having difficulty importing, it may help to browse the package and see what files are available, and what’s exported in the <code>package.json</code>. You can browse the contents of a published module via jsDelivr; for example, see <a href="https://cdn.jsdelivr.net/npm/canvas-confetti/">https://cdn.jsdelivr.net/npm/canvas-confetti/</a>.</div>
 
@@ -73,25 +73,31 @@ Self-hosting of `npm:` imports applies to transitive static and [dynamic imports
 
 ## Node imports <a href="https://github.com/observablehq/framework/pull/1156" class="observablehq-version-badge" data-version="prerelease" title="Added in #1156"></a>
 
-If you prefer to manage dependencies with a package manager such as npm or Yarn, you can import from `node_modules` instead of importing from the npm package registry via jsDelivr. This is useful for exactly managing versions via lockfiles, for importing [private packages](https://docs.npmjs.com/creating-and-publishing-private-packages) from the npm registry, or for importing from a different registry such as [GitHub Packages](https://github.com/features/packages). Node imports are also useful for sharing code with other applications that do not support `npm:` protocol imports.
+You can import from `node_modules`. This is useful for managing dependencies with a package manager such as npm or Yarn, for importing private packages from the npm registry, or for importing from a different package registry such as GitHub.
 
-To import from `node_modules`, use a bare specifier without the `npm:` protocol, such as `d3` or `lodash`. For example, to import [he](https://github.com/mathiasbynens/he):
+After installing a package (_e.g._, `npm install` or `yarn add`), import it using a bare specifier such as `d3` or `lodash`. For example, to import canvas-confetti:
 
 ```js run=false
-import he from "he";
+import confetti from "canvas-confetti";
 ```
 
-As with `npm:` imports, you can import specific [entry points](https://nodejs.org/api/packages.html#package-entry-points). For example, to import mime’s `lite` entry point:
+Or to import Apache Arrow:
+
+```js run=false
+import * as Arrow from "apache-arrow";
+```
+
+You can also import specific [entry points](https://nodejs.org/api/packages.html#package-entry-points) by adding the entry point subpath after the package name. For example, to import mime’s `lite` entry point:
 
 ```js run=false
 import mime from "mime/lite";
 ```
 
-Unlike `npm:` imports, node imports do not support semver ranges: the imported version is determined by what is installed in your `node_modules` directory, which in turn is determined by your `package.json` file, your package manager’s lockfile, _etc._ Use your package manager (_e.g._, `npm update`) to change which version is imported.
+Unlike `npm:` imports, Node imports do not support semver ranges: the imported version is determined by what is installed in your `node_modules` directory. Use your package manager (_e.g._, edit your `package.json` and run `npm install`, or run `npm update`) to change which version is imported.
+
+Framework (via [esbuild](https://esbuild.github.io/)) automatically converts CommonJS to ES modules. However, not all Node packages are usable in the browser; Node imports are only supported for browser-compatible modules that do not rely on Node-specific APIs. If you have difficulty importing a module, please ask for help by [opening a discussion](https://github.com/observablehq/framework/discussions).
 
 Imports from `node_modules` are cached in `.observablehq/cache/_node` within your [source root](./config#root) (`docs` by default). You shouldn’t need to clear this cache as it is automatically managed, but feel free to clear it you like.
-
-Framework (via [esbuild](https://esbuild.github.io/)) automatically converts CommonJS to ES modules. However, not all Node-compatible packages are usable in the browser; node imports are only supported for browser-compatible modules that do not rely on Node-specific APIs.
 
 ## Local imports
 
@@ -109,7 +115,7 @@ Then you can import `foo` as:
 import {foo} from "./foo.js";
 ```
 
-Within a local module, you can import other local modules, as well as `npm:`, node, and remote imports. You can also reference local files within a local module by importing [`FileAttachment`](./files) from the Observable standard library like so:
+Within a local module, you can import other local modules, as well as `npm:`, Node, and remote imports. You can also reference local files within a local module by importing [`FileAttachment`](./files) from the Observable standard library like so:
 
 ```js run=false
 import {FileAttachment} from "npm:@observablehq/stdlib";
@@ -141,7 +147,7 @@ Dynamic imports, also known as [*import expressions*](https://developer.mozilla.
 const {default: confetti} = await import("npm:canvas-confetti");
 ```
 
-You can use dynamic imports with `npm:`, node, local, and remote imports. However, Framework can only resolve statically-analyzable dynamic imports, as when `import` is passed a single string literal.
+You can use dynamic imports with `npm:`, Node, local, and remote imports. However, Framework can only resolve statically-analyzable dynamic imports, as when `import` is passed a single string literal.
 
 ## Import resolutions
 
@@ -158,7 +164,7 @@ While useful for debugging, `import.meta.resolve` also allows you to download fi
 const data = await fetch(import.meta.resolve("npm:us-atlas/counties-albers-10m.json")).then((r) => r.json());
 ```
 
-As with dynamic imports, you can use import resolutions with `npm:`, node, local, and remote imports; and Framework only resolves statically-analyzable import resolutions, as when `import.meta.resolve` is passed a single string literal.
+As with dynamic imports, you can use import resolutions with `npm:`, Node, local, and remote imports; and Framework only resolves statically-analyzable import resolutions, as when `import.meta.resolve` is passed a single string literal.
 
 ## Module preloads
 
