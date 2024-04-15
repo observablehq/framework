@@ -28,7 +28,7 @@ const capitals = FileAttachment("us-state-capitals.tsv").tsv({typed: true});
 Inputs.table(capitals)
 ```
 
-For a different delimiter, use `FileAttachment.dsv`. <a href="https://github.com/observablehq/framework/pull/1172" class="observablehq-version-badge" data-version="prerelease" title="Added in #1172"></a> For example, for semicolon separated values:
+For a different delimiter, use `FileAttachment.dsv`. <a href="https://github.com/observablehq/framework/releases/tag/v1.6.0" class="observablehq-version-badge" data-version="^1.6.0" title="Added in 1.6.0"></a> For example, for semicolon separated values:
 
 ```js run=false
 const capitals = FileAttachment("us-state-capitals.csv").dsv({delimiter: ";", typed: true});
