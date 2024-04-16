@@ -172,7 +172,8 @@ export class PreviewServer {
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
 
-        // Normalize the pathname (e.g., dropping ".html").
+        // Normalize the pathname (e.g., adding ".html" if cleanUrls is false,
+        // dropping ".html" if cleanUrls is true) and redirect if necessary.
         const normalizedPathname = config.md.normalizeLink(pathname);
         if (url.pathname !== normalizedPathname) {
           res.writeHead(302, {Location: normalizedPathname + url.search});
@@ -181,17 +182,20 @@ export class PreviewServer {
         }
 
         // If this path ends with a slash, then add an implicit /index to the
-        // end of the path.
+        // end of the path. Otherwise, remove the .html extension (we use clean
+        // paths as the internal canonical representation; see normalizePage).
         let path = join(root, pathname);
         if (pathname.endsWith("/")) {
           pathname = join(pathname, "index");
           path = join(path, "index");
+        } else {
+          pathname = pathname.replace(/\.html$/, "");
         }
 
         // Lastly, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
         try {
-          const options = {path: pathname.replace(/\.html$/, ""), ...config, preview: true};
+          const options = {path: pathname, ...config, preview: true};
           const source = await readFile(join(dirname(path), basename(path, ".html") + ".md"), "utf8");
           const parse = parseMarkdown(source, options);
           const html = await renderPage(parse, options);
