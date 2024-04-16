@@ -479,13 +479,15 @@ Or with Yarn:
 
 This command will ask you a few questions to configure your deploy, including which Observable workspace to use and whether the project should be public or private. You can also enter an optional message to associate with the deploy, but for now feel free to leave this blank by hitting Enter.
 
+When deploy completes, Framework will show your project’s URL on observablehq.cloud, like below. From there you can invite people to your private workspace to see your project, or make your project public so anyone can see it.
+
 <pre data-copy="none">
 <span class="muted">┌</span>  <span class="invert"> observable deploy </span>
 <span class="muted">│</span>
 <span class="blue">●</span>  To configure deploy, we need to ask you a few questions.
 <span class="muted">│</span>
 <span class="green">◇</span>  Which Observable workspace do you want to use?
-<span class="muted">│  ACME Inc. (@example)</span>
+<span class="muted">│  Example Inc. (@example)</span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Which project do you want to use?
 <span class="muted">│  Create a new project</span>
@@ -506,11 +508,7 @@ This command will ask you a few questions to configure your deploy, including wh
 <span class="muted">└</span>  <span class="muted">Deployed project now visible at <u>https://example.observablehq.cloud/hello-framework/</u></span>
 </pre>
 
-When deploy completes, Framework will show your project’s URL on observablehq.cloud.
-
 <div class="tip">Your deploy configuration is saved to <code>docs<span class="wbr">/</span>.observablehq<span class="wbr">/</span>deploy.json</code>. When collaborating on a project, you should commit this file to git so your collaborators don’t have to separately configure deploy.</div>
-
-From there you can invite people to your private workspace to see your project, or make your project public so anyone can see it.
 
 ### Self hosting
 
