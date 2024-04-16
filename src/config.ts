@@ -49,9 +49,9 @@ export interface Config {
   pages: (Page | Section<Page>)[];
   pager: boolean; // defaults to true
   scripts: Script[]; // defaults to empty array
-  head: string; // defaults to empty string
-  header: string; // defaults to empty string
-  footer: string; // defaults to “Built with Observable on [date].”
+  head: string | null; // defaults to null
+  header: string | null; // defaults to null
+  footer: string | null; // defaults to “Built with Observable on [date].”
   toc: TableOfContents;
   style: null | Style; // defaults to {theme: ["light", "dark"]}
   deploy: null | {workspace: string; project: string};
@@ -161,9 +161,9 @@ export function normalizeConfig(spec: any = {}, defaultRoot = "docs", watchPath?
   if (sidebar !== undefined) sidebar = Boolean(sidebar);
   pager = Boolean(pager);
   scripts = Array.from(scripts, normalizeScript);
-  head = String(head);
-  header = String(header);
-  footer = String(footer);
+  head = stringOrNull(head);
+  header = stringOrNull(header);
+  footer = stringOrNull(footer);
   toc = normalizeToc(toc);
   deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
   search = Boolean(search);
@@ -279,4 +279,8 @@ export function mergeStyle(
     : theme === undefined
     ? defaultStyle
     : {theme};
+}
+
+export function stringOrNull(spec: unknown): string | null {
+  return spec == null || spec === false ? null : String(spec);
 }
