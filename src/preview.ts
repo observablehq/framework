@@ -191,7 +191,7 @@ export class PreviewServer {
         // Lastly, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
         try {
-          const options = {path: pathname, ...config, preview: true};
+          const options = {path: pathname.replace(/\.html$/, ""), ...config, preview: true};
           const source = await readFile(join(dirname(path), basename(path, ".html") + ".md"), "utf8");
           const parse = parseMarkdown(source, options);
           const html = await renderPage(parse, options);
