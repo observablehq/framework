@@ -97,87 +97,19 @@ If you prefer Yarn, run:
 
 You can run the above command anywhere, but you may want to `cd` to your `~/Development` directory first (or wherever you do local development).
 
-The first prompt asks where to create your new project. Enter `hello-framework` to create a directory named `hello-framework` within the current directory. Or just hit Enter, as this is the default. (You can create a project in a different directory by entering a relative path; on macOS or Linux, such paths start with `../` or `~/` or `/` _etc._)
+This command will ask you a series of questions in order to initialize your new project. For this tutorial, you can simply hit Enter to accept the default values. When you’re done, you should see something like this:
 
 <pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
-<span class="focus">◆</span>  Where to create your project?
-<span class="focus">│</span>  hello-framework<span class="invert">&nbsp;</span>
-<span class="focus">└</span></pre>
-
-Next you’ll enter the project’s title. The title will appear in the sidebar as well as on all pages. You can hit Enter here to accept the default title, which is derived from the directory name you entered in the previous step.
-
-<pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
+<span class="green">◆</span>  Welcome to Observable Framework! 👋 This command will help you create a new
+<span class="muted">│</span>  project. When prompted, you can press Enter to accept the default value.
 <span class="muted">│</span>
-<span class="green">◇</span>  Where to create your project?
-<span class="muted">│</span>  <span class="muted">hello-framework</span>
+<span class="muted">│</span>  Want help? <u>https://observablehq.com/framework/getting-started</u>
 <span class="muted">│</span>
-<span class="focus">◆</span>  What to title your project?
-<span class="focus">│</span>  <span class="muted"><span class="invert">H</span>ello Framework</span>
-<span class="focus">└</span></pre>
-
-Next, you’ll be asked whether you want sample files in your new project. These files demonstrate common techniques and are handy for learning — you can edit the code and see what happens. You’ll want them now for this tutorial, but in the future you can omit them if you’d prefer a minimal starter project.
-
-<pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
+<span class="green">◇</span>  Where should we create your project?
+<span class="muted">│</span>  <span class="muted">./hello-framework</span>
 <span class="muted">│</span>
-<span class="green">◇</span>  Where to create your project?
-<span class="muted">│</span>  <span class="muted">hello-framework</span>
-<span class="muted">│</span>
-<span class="green">◇</span>  What to title your project?
-<span class="muted">│</span>  <span class="muted">Hello Framework</span>
-<span class="muted">│</span>
-<span class="focus">◆</span>  Include sample files to help you get started?
-<span class="focus">│</span>  <span class="green">●</span> Yes, include sample files <span class="muted">(recommended)</span>
-<span class="focus">│</span>  <span class="muted">○ No, create an empty project</span>
-<span class="focus">└</span></pre>
-
-If you use npm or Yarn as your preferred package manager, declare your allegiance now. The package manager you used to launch `observable create` will be selected by default, so you can just hit Enter again to continue. If you prefer a different package manager (say pnpm), choose `No`; you can install dependencies after the project is created.
-
-<pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
-<span class="muted">│</span>
-<span class="green">◇</span>  Where to create your project?
-<span class="muted">│</span>  <span class="muted">hello-framework</span>
-<span class="muted">│</span>
-<span class="green">◇</span>  What to title your project?
-<span class="muted">│</span>  <span class="muted">Hello Framework</span>
-<span class="muted">│</span>
-<span class="green">◇</span>  Include sample files to help you get started?
-<span class="muted">│</span>  <span class="muted">Yes, include sample files</span>
-<span class="muted">│</span>
-<span class="focus">◆</span>  Install dependencies?
-<span class="focus">│</span>  <span class="muted">○ Yes, via npm</span>
-<span class="focus">│</span>  <span class="green">●</span> Yes, via yarn <span class="muted">(recommended)</span>
-<span class="focus">│</span>  <span class="muted">○ No</span>
-<span class="focus">└</span></pre>
-
-If you’ll continue developing your project after you finish this tutorial and want source control, answer `Yes` to initialize a git repository. Or say `No` — you can always do it later by running `git init`.
-
-<pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
-<span class="muted">│</span>
-<span class="green">◇</span>  Where to create your project?
-<span class="muted">│</span>  <span class="muted">hello-framework</span>
-<span class="muted">│</span>
-<span class="green">◇</span>  What to title your project?
-<span class="muted">│</span>  <span class="muted">Hello Framework</span>
-<span class="muted">│</span>
-<span class="green">◇</span>  Include sample files to help you get started?
-<span class="muted">│</span>  <span class="muted">Yes, include sample files</span>
-<span class="muted">│</span>
-<span class="green">◇</span>  Install dependencies?
-<span class="muted">│</span>  <span class="muted">Yes, via yarn</span>
-<span class="muted">│</span>
-<span class="focus">◆</span>  Initialize a git repository?
-<span class="focus">│</span>  <span class="green">●</span> Yes <span class="muted">/ ○ No</span>
-<span class="focus">└</span></pre>
-
-And that’s it! After some downloading, copying, and installing, your new project is ready to go. 🎉
-
-<pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
-<span class="muted">│</span>
-<span class="green">◇</span>  Where to create your project?
-<span class="muted">│</span>  <span class="muted">hello-framework</span>
-<span class="muted">│</span>
-<span class="green">◇</span>  What to title your project?
+<span class="green">◇</span>  What should we title your project?
 <span class="muted">│</span>  <span class="muted">Hello Framework</span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Include sample files to help you get started?
@@ -198,7 +130,9 @@ And that’s it! After some downloading, copying, and installing, your new proje
 <span class="muted">│</span>                        <span class="muted">│</span>
 <span class="muted">├────────────────────────╯</span>
 <span class="muted">│</span>
-<span class="muted">└</span>  Problems? <u><a href="https://observablehq.com/framework/getting-started" style="color: inherit;">https://observablehq.com/framework/getting-started</a></u></pre>
+<span class="muted">└</span>  Problems? <u><a href="https://github.com/observablehq/framework/discussions" style="color: inherit;">https://github.com/observablehq/framework/discussions</a></u></pre>
+
+And that’s it! Your new project is ready to go. 🎉
 
 ## 2. Develop
 
@@ -533,7 +467,7 @@ _Ta-da!_ 🎉 Perhaps not the most exciting dashboard yet, but it has potential!
 
 ## 3. Publish
 
-When you’re ready to share your project — whether privately with specific people you want to invite, or publicly with the world — you can quickly deploy it to [Observable](https://observablehq.com) using the `deploy` command:
+When you’re ready to share your project — either privately or publicly — you can quickly deploy it to [Observable](https://observablehq.com) using the `deploy` command:
 
 <pre data-copy>npm run deploy</pre>
 
@@ -541,27 +475,11 @@ Or with Yarn:
 
 <pre data-copy>yarn deploy</pre>
 
-<div class="note">If you don’t have an Observable account yet, the first time you deploy you’ll be prompted to create one. Observable is free for individuals and small teams, and we offer paid tiers for larger teams.</div>
+<div class="note">If you don’t have an Observable account yet, you will be prompted to sign up. Observable is free for individuals and small teams, and we offer paid tiers for larger teams.</div>
 
-If this is your first time deploying to Observable, you’ll be prompted to create a new project. This determines where you project lives on Observable.
+This command will ask you a few questions to configure your deploy, including which Observable workspace to use and whether the project should be public or private. You can also enter an optional message to associate with the deploy, but for now feel free to leave this blank by hitting Enter.
 
-<div class="tip">Your deploy configuration is saved to <code>docs<span class="wbr">/</span>.observablehq<span class="wbr">/</span>deploy.json</code>. When collaborating on a project, you should commit this file to git so your collaborators don’t have to separately configure deploy.</div>
-
-<pre data-copy="none">
-<span class="muted">┌</span>  <span class="invert"> observable deploy </span>
-<span class="muted">│</span>
-<span class="blue">●</span>  To configure deploy, we need to ask you a few questions.
-<span class="muted">│</span>
-<span class="green">◇</span>  Deploying to the <b>ACME Inc. (@acme)</b> workspace.
-<span class="muted">│</span>
-<span class="blue">◆</span>  No projects found. Do you want to create a new project?
-<span class="blue">│</span>  <span class="green">●</span> Yes, continue / <span class="muted">○ No, cancel</span>
-<span class="blue">└</span>
-</pre>
-
-<div class="note">If you have multiple workspaces on Observable, you’ll be prompted to chose a workspace before creating a project. And if you’ve previously deployed projects to your chosen workspace, you can chose to deploy to an existing project, overwriting its contents.</div>
-
-When creating a new project, you need to specify a <i>slug</i> which — together with your workspace username — determines the URL of your project. The slug is a short identifier consisting of lowercase letters, numbers, and hyphens. By default, Framework will suggest a slug based on your project’s title. You can change the slug later, and Observable will automatically redirect to the latest URL.
+When deploy completes, Framework will show your project’s URL on observablehq.cloud, like below. From there you can invite people to your private workspace to see your project, or make your project public so anyone can see it.
 
 <pre data-copy="none">
 <span class="muted">┌</span>  <span class="invert"> observable deploy </span>
@@ -569,25 +487,7 @@ When creating a new project, you need to specify a <i>slug</i> which — togethe
 <span class="blue">●</span>  To configure deploy, we need to ask you a few questions.
 <span class="muted">│</span>
 <span class="green">◇</span>  Which Observable workspace do you want to use?
-<span class="muted">│  ACME Inc. (@acme)</span>
-<span class="muted">│</span>
-<span class="green">◇</span>  Which project do you want to use?
-<span class="muted">│  Create a new project</span>
-<span class="muted">│</span>
-<span class="blue">◆</span>  What slug do you want to use?
-<span class="blue">│</span>  <span class="muted"><span class="invert">h</span>ello-framework</span>
-<span class="blue">└</span>
-</pre>
-
-Lastly, you can enter an optional deploy message. Deploy messages are shown on Observable and help you keep track of deploy history. For now, you can just leave this blank by hitting Enter.
-
-<pre data-copy="none">
-<span class="muted">┌</span>  <span class="invert"> observable deploy </span>
-<span class="muted">│</span>
-<span class="blue">●</span>  To configure deploy, we need to ask you a few questions.
-<span class="muted">│</span>
-<span class="green">◇</span>  Which Observable workspace do you want to use?
-<span class="muted">│  ACME Inc. (@acme)</span>
+<span class="muted">│  Example Inc. (@example)</span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Which project do you want to use?
 <span class="muted">│  Create a new project</span>
@@ -595,12 +495,20 @@ Lastly, you can enter an optional deploy message. Deploy messages are shown on O
 <span class="green">◇</span>  What slug do you want to use?
 <span class="muted">│  hello-framework</span>
 <span class="muted">│</span>
-<span class="blue">◆</span>  What changed in this deploy?
-<span class="blue">│</span>  <span class="muted"><span class="invert">E</span>nter a deploy message (optional)</span>
-<span class="blue">└</span>
+<span class="green">◇</span>  Who is allowed to access your project?
+<span class="muted">│  Private</span>
+<span class="muted">│</span>
+<span class="green">◇</span>  What changed in this deploy?
+<span class="muted">│</span>  <span class="muted">Enter a deploy message (optional)</span>
+<span class="muted">│</span>
+<span class="green">◇</span>  18 uploaded
+<span class="muted">│</span>
+<span class="green">◇</span>  Deploy complete
+<span class="muted">│</span>
+<span class="muted">└</span>  <span class="muted">Deployed project now visible at <u>https://example.observablehq.cloud/hello-framework/</u></span>
 </pre>
 
-When deploy completes, Framework will show your project’s URL on observablehq.cloud. From there you can invite people to your private workspace to see your project, or make your project public so anyone can see it.
+<div class="tip">Your deploy configuration is saved to <code>docs<span class="wbr">/</span>.observablehq<span class="wbr">/</span>deploy.json</code>. When collaborating on a project, you should commit this file to git so your collaborators don’t have to separately configure deploy.</div>
 
 ### Self hosting
 

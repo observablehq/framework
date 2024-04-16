@@ -34,6 +34,8 @@ We’ll cover each of these below.
 
 ## Top-level variables
 
+<div class="tip">Only pages can declare top-level reactive variables. Components can’t define their own reactive state, but you can pass values to them.</div>
+
 A top-level variable declared in a JavaScript fenced code block can be referenced in another code block or inline expression on the same page. So if you say:
 
 ```js echo

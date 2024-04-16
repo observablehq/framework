@@ -91,7 +91,7 @@ class ObservableApiMock {
     workspaceLogin,
     projectSlug,
     projectId = "project123",
-    title = "Mock BI",
+    title = "Build test case",
     accessLevel = "private",
     status = 200
   }: {

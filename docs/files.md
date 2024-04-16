@@ -64,6 +64,7 @@ For missing files, `file.lastModified` is undefined. The `file.mimeType` is dete
 | [`file.arrow`][arrow]        | [`Table`][arrow-table]
 | [`file.blob`][binary]        | [`Blob`][blob]
 | [`file.csv`][csv]            | [`Array`][array]
+| [`file.dsv`][csv]            | [`Array`][array]
 | [`file.html`][markup]        | [`Document`][document]
 | [`file.image`][media]        | [`HTMLImageElement`][image]
 | [`file.json`][json]          | [`Array`][array], [`Object`][object], _etc._

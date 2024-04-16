@@ -139,7 +139,7 @@ Like with any other file, files from generated archives are live in preview (ref
 
 ## Routing
 
-Data loaders live in the source root (typically `docs`) alongside your other source files. When a file is referenced from JavaScript via `FileAttachment`, if the file does not exist, Observable Framework will look for a file of the same name with a double extension to see if there is a corresponding data loader. By default, the following second extensions are checked, in order, with the corresponding language and interpreter:
+Data loaders live in the source root (typically `docs`) alongside your other source files. When a file is referenced from JavaScript via `FileAttachment`, if the file does not exist, Framework will look for a file of the same name with a double extension to see if there is a corresponding data loader. By default, the following second extensions are checked, in order, with the corresponding language and interpreter:
 
 - `.js` - JavaScript (`node`)
 - `.ts` - TypeScript (`tsx`)
@@ -214,18 +214,6 @@ If multiple requests are made concurrently for the same data loader, the data lo
 
 Data loaders must output to [standard output](<https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)>). The first extension (such as `.csv`) does not affect the generated snapshot; the data loader is solely responsible for producing the expected output (such as CSV). If you wish to log additional information from within a data loader, be sure to log to stderr, say by using [`console.warn`](https://developer.mozilla.org/en-US/docs/Web/API/console/warn); otherwise the logs will be included in the output file and sent to the client.
 
-## Caching
-
-When a data loader runs successfully, its output is saved to the cache within the source root, typically `docs/.observablehq/cache`.
-
-Observable Framework considers the cache “fresh” if the modification time of the cached output is newer than the modification time of the corresponding data loader. So, if you edit a data loader (or update its modification time with `touch`), the cache is invalidated. When previewing a page that uses the data loader, the preview server will detect that the data loader was edited and automatically run it, pushing the new data down to the client and re-evaluating any referencing code — no reload required!
-
-To purge the data loader cache, delete the cache. For example:
-
-```sh
-rm -rf docs/.observablehq/cache
-```
-
 ## Building
 
 Data loaders generate files at build time that live alongside other [static files](./files) in the `_file` directory of the output root. For example, to generate a `quakes.json` file at build time by fetching and caching data from the USGS, you could write a data loader in a shell script like so:
@@ -281,17 +269,33 @@ Becomes this output:
 └─ ...
 ```
 
-A data loader is run during build if and only if its corresponding output file is referenced in at least one page. Observable Framework does not scour the source root (`docs`) for data loaders.
+A data loader is only run during build if its corresponding output file is referenced in at least one page. Framework does not scour the source root (`docs`) for data loaders.
 
-The data loader cache is respected during build. This allows you to bypass some or all data loaders during build, if the previously built data is still fresh. To force Observable Framework to use the data loader cache, ensure that the modification times of the cache are greater than those of the data loaders, say by using `touch` on all files in the cache.
+## Caching
+
+When a data loader runs successfully, its output is saved to a cache which lives in `.observablehq/cache` within the source root (by default `docs`).
+
+During preview, Framework considers the cache “fresh” if the modification time of the cached output is newer than the modification time of the corresponding data loader source. If you edit a data loader or update its modification time with `touch`, the cache is invalidated; when previewing a page that uses the data loader, the preview server will detect that the data loader was modified and automatically run it, pushing the new data down to the client and re-evaluating any referencing code — no reload required!
+
+During build, Framework ignores modification times and only runs a data loader if its output is not cached. Continuous integration caches typically don’t preserve modification times, so this design makes it easier to control which data loaders to run by selectively populating the cache.
+
+To purge the data loader cache and force all data loaders to run on the next build, delete the entire cache. For example:
 
 ```sh
-find docs/.observablehq/cache -type f -exec touch {} +
+rm -rf docs/.observablehq/cache
 ```
+
+To force a specific data loader to run on the next build instead, delete its corresponding output from the cache. For example, to rebuild `docs/quakes.csv`:
+
+```sh
+rm -f docs/.observablehq/cache/quakes.csv
+```
+
+See [Automated deploys: Caching](./deploying#caching) for more on caching during CI.
 
 ## Errors
 
-When a data loader fails, it _must_ return a non-zero [exit code](https://en.wikipedia.org/wiki/Exit_status). If a data loader produces a zero exit code, Observable Framework will assume that it was successful and will cache and serve the output to the client. Empty output is not by itself considered an error; however, a warning is displayed in the preview server and build logs.
+When a data loader fails, it _must_ return a non-zero [exit code](https://en.wikipedia.org/wiki/Exit_status). If a data loader produces a zero exit code, Framework will assume that it was successful and will cache and serve the output to the client. Empty output is not by itself considered an error; however, a warning is displayed in the preview server and build logs.
 
 During preview, data loader errors will be shown in the preview server log, and a 500 HTTP status code will be returned to the client that attempted to load the corresponding file. This typically results in an error such as:
 

@@ -41,7 +41,7 @@ export async function convert(
   effects: ConvertEffects = defaultEffects
 ): Promise<void> {
   const {clack} = effects;
-  clack.intro(`${inverse(" observable convert ")}`);
+  clack.intro(`${inverse(" observable convert ")} ${faint(`v${process.env.npm_package_version}`)}`);
   let n = 0;
   for (const input of inputs) {
     let start = Date.now();
