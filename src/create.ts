@@ -39,20 +39,26 @@ const defaultEffects: CreateEffects = {
 export async function create(effects: CreateEffects = defaultEffects): Promise<void> {
   const {clack} = effects;
   clack.intro(`${inverse(" observable create ")} ${faint(`v${process.env.npm_package_version}`)}`);
-  const defaultRootPath = "hello-framework";
+  const defaultRootPath = `.${op.sep}hello-framework`;
   const defaultRootPathError = validateRootPath(defaultRootPath);
+  clack.log.success(
+    wrapAnsi(
+      "Welcome to Observable Framework! 👋 This command will help you create a new project. When prompted, you can press Enter to accept the default value.",
+      Math.min(80, effects.outputColumns)
+    ) + `\n\nWant help? ${link("https://observablehq.com/framework/getting-started")}`
+  );
   await clack.group(
     {
       rootPath: () =>
         clack.text({
-          message: "Where to create your project?",
+          message: "Where should we create your project?",
           placeholder: defaultRootPath,
           defaultValue: defaultRootPathError ? undefined : defaultRootPath,
           validate: (input) => validateRootPath(input, defaultRootPathError)
         }),
       projectTitle: ({results: {rootPath}}) =>
         clack.text({
-          message: "What to title your project?",
+          message: "What should we title your project?",
           placeholder: inferTitle(rootPath!),
           defaultValue: inferTitle(rootPath!)
         }),
@@ -131,7 +137,7 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
         if (spinning) s.stop("Installed! 🎉");
         const instructions = [`cd ${rootPath}`, ...(packageManager ? [] : [installCommand]), `${runCommand} dev`];
         clack.note(instructions.map((line) => reset(cyan(line))).join("\n"), "Next steps…");
-        clack.outro(`Problems? ${link("https://observablehq.com/framework/getting-started")}`);
+        clack.outro(`Problems? ${link("https://github.com/observablehq/framework/discussions")}`);
       }
     },
     {

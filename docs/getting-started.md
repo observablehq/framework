@@ -101,10 +101,15 @@ This command will ask you a series of questions in order to initialize your new 
 
 <pre data-copy="none"><span class="muted">┌</span>  <span class="invert"> observable create </span>
 <span class="muted">│</span>
-<span class="green">◇</span>  Where to create your project?
-<span class="muted">│</span>  <span class="muted">hello-framework</span>
+<span class="green">◆</span>  Welcome to Observable Framework! 👋 This command will help you create a new
+<span class="muted">│</span>  project. When prompted, you can press Enter to accept the default value.
 <span class="muted">│</span>
-<span class="green">◇</span>  What to title your project?
+<span class="muted">│</span>  Want help? <u>https://observablehq.com/framework/getting-started</u>
+<span class="muted">│</span>
+<span class="green">◇</span>  Where should we create your project?
+<span class="muted">│</span>  <span class="muted">./hello-framework</span>
+<span class="muted">│</span>
+<span class="green">◇</span>  What should we title your project?
 <span class="muted">│</span>  <span class="muted">Hello Framework</span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Include sample files to help you get started?
@@ -125,7 +130,7 @@ This command will ask you a series of questions in order to initialize your new 
 <span class="muted">│</span>                        <span class="muted">│</span>
 <span class="muted">├────────────────────────╯</span>
 <span class="muted">│</span>
-<span class="muted">└</span>  Problems? <u><a href="https://observablehq.com/framework/getting-started" style="color: inherit;">https://observablehq.com/framework/getting-started</a></u></pre>
+<span class="muted">└</span>  Problems? <u><a href="https://github.com/observablehq/framework/discussions" style="color: inherit;">https://github.com/observablehq/framework/discussions</a></u></pre>
 
 And that’s it! Your new project is ready to go. 🎉
 
