@@ -97,7 +97,7 @@ export function usGenDemandForecastChart(width, height, data, currentHour) {
 export function countryInterchangeChart(width, height, usDemandGenForecast, countryInterchangeSeries, currentHour) {
   return Plot.plot({
     width,
-    marginTop: 0,
+    marginTop: 10,
     height: height - 50,
     color: {legend: true, range: ["#B6B5B1", "#848890"]},
     grid: true,
@@ -110,9 +110,15 @@ export function countryInterchangeChart(width, height, usDemandGenForecast, coun
         y: (d) => d.value / 1000,
         curve: "step",
         fill: "name",
-        tip: true
-      }),
-      Plot.ruleY([0], {strokeOpacity: 0.3})
+        order: "sum",
+        tip: true,
+        title: (d) =>
+          `Country: ${d.name}\nDate: ${d.date.toLocaleString("en-US", {
+            month: "short",
+            day: "numeric",
+            hour: "numeric"
+          })}\nExported: ${(d.value / 1000).toLocaleString("en-US")} GWh`
+      })
     ]
   });
 }

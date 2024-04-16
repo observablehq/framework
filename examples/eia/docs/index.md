@@ -1,6 +1,7 @@
 # U.S. electricity grid
 
 ```js
+// Import components
 import {countryInterchangeChart, top5BalancingAuthoritiesChart, usGenDemandForecastChart} from "./components/charts.js";
 import {balancingAuthoritiesLegend, balancingAuthoritiesMap} from "./components/map.js";
 ```
@@ -12,49 +13,39 @@ import {balancingAuthoritiesLegend, balancingAuthoritiesMap} from "./components/
 
 // International electricity interchange
 const countryInterchangeSeries = FileAttachment("data/country-interchange.csv").csv({typed: true});
-```
 
-```js
+// Balancing authority demand
 const baHourlyDemand = FileAttachment("data/eia-ba-hourly.csv").csv({typed: true});
-```
 
-```js
+// US total demand, generation and forecast
+const usDemandGenForecastAll = FileAttachment("data/us-demand.csv").csv({typed: true});
+
 // BA connections
 const eiaConnRef = FileAttachment("data/eia-connections-reference.csv").csv({typed: true});
-```
 
-```js
 // BA status (generating or not)
 const eiaBARef = FileAttachment("data/eia-bia-reference.csv").csv({typed: true});
-```
 
-```js
 //
 // Spatial data (country, states, BA locations)
 //
 
 // US states
-const us = await FileAttachment("data/us-states.json").json();
-const nation = us.features.find(({id}) => id === "nation");
-const statemesh = us.features.find(({id}) => id === "statemesh");
-```
+const us = FileAttachment("data/us-states.json").json();
+const nation = us.then((us) => us.features.find(({id}) => id === "nation"));
+const statemesh = us.then((us) => us.features.find(({id}) => id === "statemesh"));
 
-```js
 // Balancing authority representative locations
 const eiaPoints = FileAttachment("data/eia-system-points.json").json().then(d => d[0].data);
 ```
 
 ```js
-// US total demand, generation and forecast
-const usDemandGenForecast = FileAttachment("data/us-demand.csv").csv({typed: true});
-```
+// Omit total interchange
+const usDemandGenForecast = usDemandGenForecastAll.filter(d => d.name != "totalInterchange");
 
-```js
-// Generating only BAs
+// Get generating only balancing authorities
 const genOnlyBA = eiaBARef.filter(d => d["Generation Only BA"] == "Yes").map(d => d["BA Code"]);
-```
 
-```js
 const baHourlyClean = baHourlyDemand
   .map((d) => ({
     "Date": timeParse(d.period).toLocaleString("en-us", {month: "short", day: "2-digit", hour: "2-digit"}),
@@ -121,9 +112,10 @@ hoursAgoInput.querySelector("input[type=number]").remove();
 ```
 
 ```js
-// Establish current hour and relative day
+// Get current date in readable format
+const formatDate = d3.utcFormat("%B %d, %Y");
 const currentHour = new Date(endHour.getTime() - hoursAgo * MS_IN_AN_HOUR);
-const relativeDay = () => currentHour.getDate() === endHour.getDate() ? "Today" : "Yesterday";
+const currentDate = d3.timeFormat("%-d %b %Y")(currentHour);
 ```
 
 ```js
@@ -143,7 +135,7 @@ function centerResize(render) {
     <figure style="max-width: none;">
       <div style="display: flex; flex-direction: column; align-items: center;">
         <h1 style="margin-top: 0.5rem;">${hourFormat(currentHour)}</h1>
-        <div>${relativeDay()}</div>
+        <div>${currentDate} </div>
         <div style="display: flex; align-items: center;">
           <div>-${hoursBackOfData} hrs</div>
           ${hoursAgoInput}
@@ -167,7 +159,7 @@ function centerResize(render) {
     </figure>
   </div>
   <div class="card grid-colspan-2">
-    <h2>Top 5 balancing authorities by demand at ${hourFormat(currentHour)} ${relativeDay().toLowerCase()} (GWh)</h2>
+    <h2>Top 5 balancing authorities by demand on ${currentDate} at ${hourFormat(currentHour)} (GWh)</h2>
     ${resize((width, height) => top5BalancingAuthoritiesChart(width, height, top5LatestDemand, maxDemand))}
   </div>
   <div class="card grid-colspan-2">
