@@ -13,7 +13,7 @@ import {
 } from "./observableApiConfig.js";
 import {Telemetry} from "./telemetry.js";
 import type {TtyEffects} from "./tty.js";
-import {bold, defaultEffects as defaultTtyEffects, inverse, link, yellow} from "./tty.js";
+import {bold, defaultEffects as defaultTtyEffects, faint, inverse, link, yellow} from "./tty.js";
 
 const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
 
@@ -39,7 +39,7 @@ export const defaultEffects: AuthEffects = {
 export async function login(effects: AuthEffects = defaultEffects, overrides = {}) {
   const {clack} = effects;
   Telemetry.record({event: "login", step: "start"});
-  clack.intro(inverse(" observable login "));
+  clack.intro(`${inverse(" observable login ")} ${faint(`v${process.env.npm_package_version}`)}`);
 
   const {currentUser} = await loginInner(effects, overrides);
 

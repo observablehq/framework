@@ -235,7 +235,7 @@ The `note`, `tip`, `warning`, and `caution` classes can be used to insert labele
 <div class="caution">This is a caution.</div>
 ```
 
-Markdown is not supported within HTML, so if you want rich formatting or links within a note, you must write it as HTML. (In the future, we may add support for notes within Markdown.)
+Per [CommonMark](https://spec.commonmark.org/0.30/#html-blocks), the contents of an HTML block (such as a `<div class="note">`) are interpreted as HTML. For rich formatting or links within a note, use HTML.
 
 <div class="tip">
   <p>This is a <i>styled</i> tip using <small>HTML</small>.</p>
@@ -244,6 +244,22 @@ Markdown is not supported within HTML, so if you want rich formatting or links w
 ```html run=false
 <div class="tip">
   <p>This is a <i>styled</i> tip using <small>HTML</small>.</p>
+</div>
+```
+
+Alternatively, use blank lines to separate the contents of the note from the note container, and then the contents will be interpreted as Markdown.
+
+<div class="tip">
+
+This is a *styled* tip using **Markdown**.
+
+</div>
+
+```md run=false
+<div class="tip">
+
+This is a *styled* tip using **Markdown**.
+
 </div>
 ```
 
