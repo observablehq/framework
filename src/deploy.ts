@@ -27,7 +27,7 @@ import {defaultEffects as defaultConfigEffects, getDeployConfig, setDeployConfig
 import {slugify} from "./slugify.js";
 import {Telemetry} from "./telemetry.js";
 import type {TtyEffects} from "./tty.js";
-import {bold, defaultEffects as defaultTtyEffects, inverse, link, underline, yellow} from "./tty.js";
+import {bold, defaultEffects as defaultTtyEffects, faint, inverse, link, underline, yellow} from "./tty.js";
 
 const DEPLOY_POLL_MAX_MS = 1000 * 60 * 5;
 const DEPLOY_POLL_INTERVAL_MS = 1000 * 5;
@@ -79,7 +79,7 @@ export async function deploy(
 ): Promise<void> {
   const {clack} = effects;
   Telemetry.record({event: "deploy", step: "start", force});
-  clack.intro(inverse(" observable deploy "));
+  clack.intro(`${inverse(" observable deploy ")} ${faint(`v${process.env.npm_package_version}`)}`);
 
   let apiKey = await effects.getObservableApiKey(effects);
   const apiClient = new ObservableApiClient(apiKey ? {apiKey, clack} : {clack});
