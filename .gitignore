@@ -3,9 +3,9 @@
 .env
 /coverage/
 /dist/
-/docs/.observablehq/dist/
-/docs/theme/*.md
-/docs/themes.md
+/pages/.observablehq/dist/
+/pages/theme/*.md
+/pages/themes.md
 /test/build/
 /test/output/**/*-changed.*
 /test/output/build/**/*-changed/
