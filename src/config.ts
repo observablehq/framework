@@ -6,12 +6,14 @@ import {basename, dirname, join} from "node:path/posix";
 import {cwd} from "node:process";
 import {pathToFileURL} from "node:url";
 import type MarkdownIt from "markdown-it";
+import wrapAnsi from "wrap-ansi";
 import {LoaderResolver} from "./dataloader.js";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import {createMarkdownIt, parseMarkdownMetadata} from "./markdown.js";
 import {isAssetPath, parseRelativeUrl, resolvePath} from "./path.js";
 import {resolveTheme} from "./theme.js";
+import {bold, yellow} from "./tty.js";
 
 export interface TableOfContents {
   show: boolean;
@@ -41,7 +43,7 @@ export interface Script {
 }
 
 export interface Config {
-  root: string; // defaults to docs
+  root: string; // defaults to pages
   output: string; // defaults to dist
   base: string; // defaults to "/"
   title?: string;
@@ -128,11 +130,11 @@ export function setCurrentDate(date = new Date()): void {
 // module), we want to return the same Config instance.
 const configCache = new WeakMap<any, Config>();
 
-export function normalizeConfig(spec: any = {}, defaultRoot = "docs", watchPath?: string): Config {
+export function normalizeConfig(spec: any = {}, defaultRoot = "pages", watchPath?: string): Config {
   const cachedConfig = configCache.get(spec);
   if (cachedConfig) return cachedConfig;
   let {
-    root = defaultRoot,
+    root,
     output = "dist",
     base = "/",
     sidebar,
@@ -148,7 +150,7 @@ export function normalizeConfig(spec: any = {}, defaultRoot = "docs", watchPath?
     )}">${formatLocaleDate(currentDate)}</a>.`,
     interpreters
   } = spec;
-  root = String(root);
+  root = checkRoot(root, defaultRoot);
   output = String(output);
   base = normalizeBase(base);
   if (style === null) style = null;
@@ -192,6 +194,25 @@ export function normalizeConfig(spec: any = {}, defaultRoot = "docs", watchPath?
   if (sidebar === undefined) Object.defineProperty(config, "sidebar", {get: () => config.pages.length > 0});
   configCache.set(spec, config);
   return config;
+}
+
+function checkRoot(root, defaultRoot) {
+  if (root == null) {
+    if (!existsSync(`${defaultRoot}/index.md`) && existsSync("docs/index.md")) {
+      console.warn(
+        wrapAnsi(
+          `${yellow("Deprecation warning")}: this project seems to be using the ${bold(
+            "docs"
+          )} folder as its default markdown directory. The default directory is now ${bold(
+            defaultRoot
+          )}. You can suppress this warning by renaming docs to ${defaultRoot}, or by specifying root: "docs" in the configuration file.`,
+          process.stdout.columns ?? 80
+        )
+      );
+      return "docs";
+    } else return defaultRoot;
+  }
+  return String(root);
 }
 
 function normalizeBase(base: any): string {
