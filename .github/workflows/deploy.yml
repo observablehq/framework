@@ -29,9 +29,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            docs/.observablehq/cache
-            examples/*/docs/.observablehq/cache
-          key: data-${{ hashFiles('docs/data/*', 'examples/*/docs/data/*') }}-${{ steps.date.outputs.date }}
+            pages/.observablehq/cache
+            examples/*/pages/.observablehq/cache
+          key: data-${{ hashFiles('pages/data/*', 'examples/*/pages/data/*') }}-${{ steps.date.outputs.date }}
       - run: yarn build
       - run: yarn docs:build
       - name: Build example "api"
@@ -69,11 +69,11 @@ jobs:
         working-directory: examples/plot
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: mkdir docs/.observablehq/dist/examples && for i in examples/*; do if [ -d $i/dist ]; then mv -v $i/dist docs/.observablehq/dist/examples/$(basename $i); fi; done
+      - run: mkdir pages/.observablehq/dist/examples && for i in examples/*; do if [ -d $i/dist ]; then mv -v $i/dist pages/.observablehq/dist/examples/$(basename $i); fi; done
       - uses: cloudflare/pages-action@1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: framework
-          directory: docs/.observablehq/dist
+          directory: pages/.observablehq/dist
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
