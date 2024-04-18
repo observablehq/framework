@@ -308,13 +308,17 @@ export interface ParseOptions {
 
 export function createMarkdownIt({
   markdownIt,
+  linkify = true,
+  typographer = false,
   cleanUrls = true
 }: {
   markdownIt?: (md: MarkdownIt) => MarkdownIt;
+  linkify?: boolean;
+  typographer?: boolean;
   cleanUrls?: boolean;
 } = {}): MarkdownIt {
-  const md = MarkdownIt({html: true, linkify: true});
-  md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
+  const md = MarkdownIt({html: true, linkify, typographer});
+  if (linkify) md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);

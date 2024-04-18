@@ -35,10 +35,6 @@ describe("readConfig(undefined, root)", () => {
       header: "",
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
-      deploy: {
-        workspace: "acme",
-        project: "bi"
-      },
       search: false,
       watchPath: resolve("test/input/build/config/observablehq.config.js")
     });
@@ -62,7 +58,6 @@ describe("readConfig(undefined, root)", () => {
       header: "",
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
-      deploy: null,
       search: false,
       watchPath: undefined
     });
@@ -163,20 +158,6 @@ describe("normalizeConfig(spec, root)", () => {
   });
   it("populates default pager", () => {
     assert.strictEqual(config({pages: []}, root).pager, true);
-  });
-  describe("deploy", () => {
-    it("considers deploy optional", () => {
-      assert.strictEqual(config({pages: []}, root).deploy, null);
-    });
-    it("coerces workspace", () => {
-      assert.strictEqual(config({pages: [], deploy: {workspace: 538, project: "bi"}}, root).deploy?.workspace, "538");
-    });
-    it("strips leading @ from workspace", () => {
-      assert.strictEqual(config({pages: [], deploy: {workspace: "@acme"}}, root).deploy?.workspace, "acme");
-    });
-    it("coerces project", () => {
-      assert.strictEqual(config({pages: [], deploy: {workspace: "adams", project: 42}}, root).deploy?.project, "42");
-    });
   });
 });
 
