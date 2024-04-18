@@ -102,7 +102,7 @@ async function bundle(
       ...(isBadCommonJs(input) ? [(virtual as any)({"-": shimCommonJs(input, require)})] : []),
       importResolve(input, cacheRoot, packageRoot),
       nodeResolve({browser: true, rootDir: packageRoot}),
-      json(),
+      (json as any)(),
       (commonjs as any)({
         esmExternals: true,
         requireReturnsDefault: "preferred"
