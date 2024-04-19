@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import {formatIsoDate, formatLocaleDate} from "../src/format.js";
+import {formatByteSize, formatIsoDate, formatLocaleDate} from "../src/format.js";
 
 describe("formatIsoDate", () => {
   it("returns an ISO 8601 string in local time", () => {
@@ -19,5 +19,19 @@ describe("formatLocaleDate", () => {
     assert.strictEqual(formatLocaleDate(new Date("2013-01-02"), "fr-FR"), "1 janv. 2013");
     assert.strictEqual(formatLocaleDate(new Date("2013-01-02T08:00:00"), "fr-FR"), "2 janv. 2013");
     assert.strictEqual(formatLocaleDate(new Date("2013-01-02T08:00:00Z"), "fr-FR"), "2 janv. 2013");
+  });
+});
+
+describe("formatByteSize", () => {
+  it("returns a human-readable byte size", () => {
+    assert.strictEqual(formatByteSize(0), "0 bytes");
+    assert.strictEqual(formatByteSize(500), "500 bytes");
+    assert.strictEqual(formatByteSize(1_500), "1500 bytes");
+    assert.strictEqual(formatByteSize(3_000), "2.9 KiB");
+    assert.strictEqual(formatByteSize(400_000), "391 KiB");
+    assert.strictEqual(formatByteSize(50_000_000), "47.7 MiB");
+    assert.strictEqual(formatByteSize(1_500_000_000), "1431 MiB");
+    assert.strictEqual(formatByteSize(3_000_000_000), "2.8 GiB");
+    assert.strictEqual(formatByteSize(600_000_000_000), "559 GiB");
   });
 });
