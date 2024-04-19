@@ -77,6 +77,11 @@ interface ConfigSpec {
   pages?: unknown;
   pager?: unknown;
   toc?: unknown;
+  linkify?: unknown;
+  typographer?: unknown;
+  quotes?: unknown;
+  cleanUrls?: unknown;
+  markdownIt?: unknown;
 }
 
 interface ScriptSpec {
@@ -182,7 +187,13 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot = "docs", wat
       : spec.style !== undefined
       ? {path: String(spec.style)}
       : {theme: normalizeTheme(spec.theme === undefined ? "default" : spec.theme)};
-  const md = createMarkdownIt(spec as any); // TODO
+  const md = createMarkdownIt({
+    linkify: spec.linkify === undefined ? undefined : Boolean(spec.linkify),
+    typographer: spec.typographer === undefined ? undefined : Boolean(spec.typographer),
+    quotes: spec.quotes === undefined ? undefined : (spec.quotes as any),
+    cleanUrls: spec.cleanUrls === undefined ? undefined : Boolean(spec.cleanUrls),
+    markdownIt: spec.markdownIt as any
+  });
   const title = spec.title === undefined ? undefined : String(spec.title);
   const pages = spec.pages === undefined ? undefined : normalizePages(spec.pages);
   const pager = spec.pager === undefined ? true : Boolean(spec.pager);
