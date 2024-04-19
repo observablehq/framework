@@ -138,7 +138,7 @@ function importResolve(input: string, cacheRoot: string, packageRoot: string): P
     return typeof specifier !== "string" || // AST node?
       isNodeBuiltin(specifier) || // node built-in, e.g., "node:fs" or "fs"
       isPathImport(specifier) || // relative path, e.g., ./foo.js
-      /^\0?[\w-]+:/.test(specifier) || // windows file path, https: URL, \x00node-resove:, etc.
+      /^\0?[\w-]+:/.test(specifier) || // windows file path, https: URL, \x00node-resolve:, etc.
       specifier === input // entry point
       ? null // don’t do any additional resolution
       : {id: await resolveNodeImportInternal(cacheRoot, packageRoot, specifier), external: true}; // resolve bare import
