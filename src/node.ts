@@ -5,6 +5,7 @@ import op from "node:path";
 import {extname, join} from "node:path/posix";
 import {pathToFileURL} from "node:url";
 import commonjs from "@rollup/plugin-commonjs";
+import json from "@rollup/plugin-json";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
 import virtual from "@rollup/plugin-virtual";
 import {packageDirectory} from "pkg-dir";
@@ -101,7 +102,11 @@ async function bundle(
       ...(isBadCommonJs(input) ? [(virtual as any)({"-": shimCommonJs(input, require)})] : []),
       importResolve(input, cacheRoot, packageRoot),
       nodeResolve({browser: true, rootDir: packageRoot}),
-      (commonjs as any)({esmExternals: true}),
+      (json as any)(),
+      (commonjs as any)({
+        esmExternals: true,
+        requireReturnsDefault: "preferred"
+      }),
       esbuild({
         format: "esm",
         platform: "browser",
@@ -133,7 +138,7 @@ function importResolve(input: string, cacheRoot: string, packageRoot: string): P
     return typeof specifier !== "string" || // AST node?
       isNodeBuiltin(specifier) || // node built-in, e.g., "node:fs" or "fs"
       isPathImport(specifier) || // relative path, e.g., ./foo.js
-      /^\w+:/.test(specifier) || // windows file path, https: URL, etc.
+      /^\0?[\w-]+:/.test(specifier) || // windows file path, https: URL, \x00node-resolve:, etc.
       specifier === input // entry point
       ? null // don’t do any additional resolution
       : {id: await resolveNodeImportInternal(cacheRoot, packageRoot, specifier), external: true}; // resolve bare import

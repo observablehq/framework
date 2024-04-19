@@ -57,6 +57,7 @@
     "@observablehq/inputs": "^0.10.6",
     "@observablehq/runtime": "^5.9.4",
     "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-virtual": "^3.0.2",
     "acorn": "^8.11.2",
