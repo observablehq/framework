@@ -2,8 +2,6 @@
 index: false
 ---
 
-"Spoil fo'c'sle hands, make devils. That's my belief."
-
 <style>
 
 .hero {

@@ -265,12 +265,12 @@ export default {
 
 ## typographer <a href="https://github.com/observablehq/framework/pull/1263" class="observablehq-version-badge" data-version="prerelease" title="Added in #1263"></a>
 
-Enable some language-neutral replacement + quotes beautification. For the full list of replacements, see [markdown-it](https://github.com/markdown-it/markdown-it/blob/master/lib/rules_core/replacements.mjs).
+If true, enables simple typographic replacements in Markdown, such as replacing `(c)` with `©` and converting straight quotes to curly quotes. See also the [quotes](#quotes) option, which should be set for non-English languages if the **typographer** option is enabled. For the full list of replacements, see [markdown-it](https://github.com/markdown-it/markdown-it/blob/master/lib/rules_core/replacements.mjs). Defaults to false.
 
 ## quotes <a href="https://github.com/observablehq/framework/pull/1263" class="observablehq-version-badge" data-version="prerelease" title="Added in #1263"></a>
 
-Double + single quotes replacement pairs, when typographer enabled. Could be either a String or an Array. For example, you can use `'«»„“'` for Russian, `'„“‚‘'` for German, and `['«\xA0', '\xA0»', '‹\xA0', '\xA0›']` for French (including nbsp).
+The set of replacements for straight double and single quotes used when the [**typographer** option](#typographer) is enabled. Defaults to `["“", "”", "‘", "’"]` which is suitable for English. For example, you can use `["«", "»", "„", "“"]` for Russian, `["„", "“", "‚", "‘"]` for German, and `["«\xa0", "\xa0»", "‹\xa0", "\xa0›"]` for French.
 
 ## linkify <a href="https://github.com/observablehq/framework/pull/1263" class="observablehq-version-badge" data-version="prerelease" title="Added in #1263"></a>
 
-Autoconvert URL-like text to links.
+If true (the default), automatically convert URL-like text to links in Markdown.
