@@ -15,13 +15,13 @@ function pad(number: number, length: number): string {
 }
 
 export function formatByteSize(n: number): string {
-  const suffixes = ["bytes", "KiB", "MiB", "GiB"];
+  const suffixes = ["bytes", "KB", "MB", "GB"];
   for (const suffix of suffixes) {
-    if (n < 1024 * 2) {
+    if (n < 1300) {
       if (suffix === "bytes") return `${n} ${suffix}`;
       return `${n > 100 ? n.toFixed(0) : n.toFixed(1)} ${suffix}`;
     }
-    n /= 1024;
+    n /= 1000;
   }
   return `${n.toFixed(1)} TiB`;
 }

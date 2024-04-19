@@ -40,7 +40,7 @@ export interface DeployOptions {
   deployPollInterval?: number;
   force: "build" | "deploy" | null;
   maxConcurrency?: number;
-  largeFilesOk?: boolean;
+  allowLargeFiles?: boolean;
 }
 
 export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
@@ -82,7 +82,7 @@ export async function deploy(
     force,
     deployPollInterval = DEPLOY_POLL_INTERVAL_MS,
     maxConcurrency,
-    largeFilesOk = false
+    allowLargeFiles = false
   }: DeployOptions,
   effects = defaultEffects
 ): Promise<void> {
@@ -257,7 +257,7 @@ export async function deploy(
 
   if (!buildFilePaths) throw new Error("No build files found.");
 
-  if (!largeFilesOk) {
+  if (!allowLargeFiles) {
     if (Object.values(statCache).length === 0) {
       for await (const file of effects.visitFiles(config.output)) {
         const joinedPath = join(config.output, file);
@@ -274,7 +274,7 @@ export async function deploy(
       if (warnings.length === 1) {
         clack.log.warning(
           wrapAnsi(
-            `The file ${warnings[0].path} is ${formatByteSize(warnings[0].size)} , and may fail to deploy.`,
+            `The file ${warnings[0].path} is ${formatByteSize(warnings[0].size)}, and may fail to deploy.`,
             effects.outputColumns - 3
           )
         );
@@ -287,9 +287,9 @@ export async function deploy(
       }
       clack.log.info(
         wrapAnsi(
-          "Observable does not allow deploying files larger than 50MB, since " +
-            "large file sizes can cause negative a user experience. " +
-            "You can pass --large-files-ok to bypass this check, though the deploy will still likely fail.",
+          "Observable does not allow deploying files larger than 50MB. " +
+            "You can pass --allow-large-files to bypass this warning, " +
+            "though the deploy will still likely fail.",
           effects.outputColumns - 4
         )
       );
