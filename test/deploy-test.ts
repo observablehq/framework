@@ -35,6 +35,7 @@ interface MockDeployEffectsOptions {
   debug?: boolean;
   fixedInputStatTime?: Date;
   fixedOutputStatTime?: Date;
+  statOverideSizes?: {[path: string]: number};
 }
 
 class MockDeployEffects extends MockAuthEffects implements DeployEffects {
@@ -55,6 +56,7 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
   private authEffects: MockAuthEffects;
   private fixedInputStatTime: Date | undefined;
   private fixedOutputStatTime: Date | undefined;
+  statOverideSizes: {[path: string]: number};
 
   constructor({
     apiKey = validApiKey,
@@ -63,7 +65,8 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     outputColumns = 80,
     debug = false,
     fixedInputStatTime,
-    fixedOutputStatTime
+    fixedOutputStatTime,
+    statOverideSizes = {}
   }: MockDeployEffectsOptions = {}) {
     super();
     this.authEffects = new MockAuthEffects();
@@ -76,6 +79,7 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     this.debug = debug;
     this.fixedInputStatTime = fixedInputStatTime;
     this.fixedOutputStatTime = fixedOutputStatTime;
+    this.statOverideSizes = statOverideSizes;
 
     this.output = new Writable({
       write: (data, _enc, callback) => {
@@ -124,6 +128,7 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     } else if (path.startsWith("test/output/") && this.fixedOutputStatTime) {
       overrideTime(s, this.fixedOutputStatTime);
     }
+    if (this.statOverideSizes[path]) s.size = this.statOverideSizes[path];
     return s;
   }
 
@@ -907,5 +912,32 @@ describe("promptDeployTarget", () => {
       title: "Build test case",
       workspace
     });
+  });
+
+  it("warns about files larger than 50MB", async () => {
+    getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
+    const effects = new MockDeployEffects({
+      deployConfig: DEPLOY_CONFIG,
+      statOverideSizes: {"test/output/build/simple-public/index.html": 70e6}
+    });
+    await assert.rejects(
+      () => deploy(TEST_OPTIONS, effects),
+      /out of inputs for select: Do you want to continue deploying with large files/
+    );
+    effects.clack.log.assertLogged({message: /The file .*index\.html is 70.0 MB, and may fail/});
+    effects.close();
+  });
+
+  it("passing allowLargeFiles suppresses the warning", async () => {
+    getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
+    const effects = new MockDeployEffects({
+      deployConfig: DEPLOY_CONFIG,
+      statOverideSizes: {"test/output/build/simple-public/index.html": 70e6}
+    });
+    await assert.rejects(
+      () => deploy({...TEST_OPTIONS, allowLargeFiles: true}, effects),
+      /out of inputs for text: What changed in this deploy/
+    );
+    effects.close();
   });
 });
