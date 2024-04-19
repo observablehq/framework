@@ -11,7 +11,6 @@ try {
 export default {
   output: "docs/.observablehq/dist",
   title: "Observable Framework",
-  typographer: true,
   pages: [
     {name: "What is Framework?", path: "/what-is-framework"},
     {name: "Getting started", path: "/getting-started"},
