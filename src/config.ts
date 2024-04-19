@@ -54,11 +54,57 @@ export interface Config {
   footer: string | null; // defaults to “Built with Observable on [date].”
   toc: TableOfContents;
   style: null | Style; // defaults to {theme: ["light", "dark"]}
-  deploy: null | {workspace: string; project: string};
   search: boolean; // default to false
   md: MarkdownIt;
   loaders: LoaderResolver;
   watchPath?: string;
+}
+
+interface ConfigSpec {
+  root?: unknown;
+  output?: unknown;
+  base?: unknown;
+  sidebar?: unknown;
+  style?: unknown;
+  theme?: unknown;
+  search?: unknown;
+  scripts?: unknown;
+  head?: unknown;
+  header?: unknown;
+  footer?: unknown;
+  interpreters?: unknown;
+  title?: unknown;
+  pages?: unknown;
+  pager?: unknown;
+  toc?: unknown;
+  linkify?: unknown;
+  typographer?: unknown;
+  quotes?: unknown;
+  cleanUrls?: unknown;
+  markdownIt?: unknown;
+}
+
+interface ScriptSpec {
+  src?: unknown;
+  async?: unknown;
+  type?: unknown;
+}
+
+interface SectionSpec {
+  name?: unknown;
+  open?: unknown;
+  collapsible?: unknown;
+  pages?: unknown;
+}
+
+interface PageSpec {
+  name?: unknown;
+  path?: unknown;
+}
+
+interface TableOfContentsSpec {
+  label?: unknown;
+  show?: unknown;
 }
 
 /**
@@ -72,7 +118,7 @@ function resolveConfig(configPath: string, root = "."): string {
 
 // By using the modification time of the config, we ensure that we pick up any
 // changes to the config on reload.
-async function importConfig(path: string): Promise<any> {
+async function importConfig(path: string): Promise<ConfigSpec> {
   const {mtimeMs} = await stat(path);
   return (await import(`${pathToFileURL(path).href}?${mtimeMs}`)).default;
 }
@@ -116,9 +162,10 @@ function readPages(root: string, md: MarkdownIt): Page[] {
   return pages;
 }
 
-let currentDate = new Date();
+let currentDate: Date | null = null;
 
-export function setCurrentDate(date = new Date()): void {
+/** For testing only! */
+export function setCurrentDate(date: Date | null): void {
   currentDate = date;
 }
 
@@ -126,55 +173,45 @@ export function setCurrentDate(date = new Date()): void {
 // are used as a cache key for search indexing and the previous & next links in
 // the footer. When given the same spec (because import returned the same
 // module), we want to return the same Config instance.
-const configCache = new WeakMap<any, Config>();
+const configCache = new WeakMap<ConfigSpec, Config>();
 
-export function normalizeConfig(spec: any = {}, defaultRoot = "docs", watchPath?: string): Config {
+export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot = "docs", watchPath?: string): Config {
   const cachedConfig = configCache.get(spec);
   if (cachedConfig) return cachedConfig;
-  let {
-    root = defaultRoot,
-    output = "dist",
-    base = "/",
-    sidebar,
-    style,
-    theme = "default",
-    search,
-    deploy,
-    scripts = [],
-    head = "",
-    header = "",
-    footer = `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="${formatIsoDate(
-      currentDate
-    )}">${formatLocaleDate(currentDate)}</a>.`,
-    interpreters
-  } = spec;
-  root = String(root);
-  output = String(output);
-  base = normalizeBase(base);
-  if (style === null) style = null;
-  else if (style !== undefined) style = {path: String(style)};
-  else style = {theme: (theme = normalizeTheme(theme))};
-  const md = createMarkdownIt(spec);
-  let {title, pages, pager = true, toc = true} = spec;
-  if (title !== undefined) title = String(title);
-  if (pages !== undefined) pages = normalizePages(pages);
-  if (sidebar !== undefined) sidebar = Boolean(sidebar);
-  pager = Boolean(pager);
-  scripts = Array.from(scripts, normalizeScript);
-  head = stringOrNull(head);
-  header = stringOrNull(header);
-  footer = stringOrNull(footer);
-  toc = normalizeToc(toc);
-  deploy = deploy ? {workspace: String(deploy.workspace).replace(/^@+/, ""), project: String(deploy.project)} : null;
-  search = Boolean(search);
-  interpreters = normalizeInterpreters(interpreters);
-  const config = {
+  const root = spec.root === undefined ? defaultRoot : String(spec.root);
+  const output = spec.output === undefined ? "dist" : String(spec.output);
+  const base = spec.base === undefined ? "/" : normalizeBase(spec.base);
+  const style =
+    spec.style === null
+      ? null
+      : spec.style !== undefined
+      ? {path: String(spec.style)}
+      : {theme: normalizeTheme(spec.theme === undefined ? "default" : spec.theme)};
+  const md = createMarkdownIt({
+    linkify: spec.linkify === undefined ? undefined : Boolean(spec.linkify),
+    typographer: spec.typographer === undefined ? undefined : Boolean(spec.typographer),
+    quotes: spec.quotes === undefined ? undefined : (spec.quotes as any),
+    cleanUrls: spec.cleanUrls === undefined ? undefined : Boolean(spec.cleanUrls),
+    markdownIt: spec.markdownIt as any
+  });
+  const title = spec.title === undefined ? undefined : String(spec.title);
+  const pages = spec.pages === undefined ? undefined : normalizePages(spec.pages);
+  const pager = spec.pager === undefined ? true : Boolean(spec.pager);
+  const toc = normalizeToc(spec.toc as any);
+  const sidebar = spec.sidebar === undefined ? undefined : Boolean(spec.sidebar);
+  const scripts = spec.scripts === undefined ? [] : Array.from(spec.scripts as any, normalizeScript);
+  const head = spec.head === undefined ? "" : stringOrNull(spec.head);
+  const header = spec.header === undefined ? "" : stringOrNull(spec.header);
+  const footer = spec.footer === undefined ? defaultFooter() : stringOrNull(spec.footer);
+  const search = Boolean(spec.search);
+  const interpreters = normalizeInterpreters(spec.interpreters as any);
+  const config: Config = {
     root,
     output,
     base,
     title,
-    sidebar,
-    pages,
+    sidebar: sidebar!, // see below
+    pages: pages!, // see below
     pager,
     scripts,
     head,
@@ -182,7 +219,6 @@ export function normalizeConfig(spec: any = {}, defaultRoot = "docs", watchPath?
     footer,
     toc,
     style,
-    deploy,
     search,
     md,
     loaders: new LoaderResolver({root, interpreters}),
@@ -194,45 +230,49 @@ export function normalizeConfig(spec: any = {}, defaultRoot = "docs", watchPath?
   return config;
 }
 
-function normalizeBase(base: any): string {
-  base = String(base);
+function defaultFooter(): string {
+  const date = currentDate ?? new Date();
+  return `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="${formatIsoDate(
+    date
+  )}">${formatLocaleDate(date)}</a>.`;
+}
+
+function normalizeBase(spec: unknown): string {
+  let base = String(spec);
   if (!base.startsWith("/")) throw new Error(`base must start with slash: ${base}`);
   if (!base.endsWith("/")) base += "/";
   return base;
 }
 
-export function normalizeTheme(spec: any): string[] {
-  return resolveTheme(typeof spec === "string" ? [spec] : spec === null ? [] : Array.from(spec, String));
+export function normalizeTheme(spec: unknown): string[] {
+  return resolveTheme(typeof spec === "string" ? [spec] : spec === null ? [] : Array.from(spec as any, String));
 }
 
-function normalizeScript(spec: any): Script {
-  if (typeof spec === "string") spec = {src: spec};
-  let {src, async = false, type} = spec;
-  src = String(src);
-  async = Boolean(async);
-  type = type == null ? null : String(type);
+function normalizeScript(spec: unknown): Script {
+  const script = typeof spec === "string" ? {src: spec} : (spec as ScriptSpec);
+  const src = String(script.src);
+  const async = script.async === undefined ? false : Boolean(script.async);
+  const type = script.type == null ? null : String(script.type);
   return {src, async, type};
 }
 
-function normalizePages(spec: any): Config["pages"] {
-  return Array.from(spec, (spec: any) =>
-    "pages" in spec ? normalizeSection(spec, (spec: any) => normalizePage(spec)) : normalizePage(spec)
+function normalizePages(spec: unknown): Config["pages"] {
+  return Array.from(spec as any, (spec: SectionSpec | PageSpec) =>
+    "pages" in spec ? normalizeSection(spec, (spec: PageSpec) => normalizePage(spec)) : normalizePage(spec)
   );
 }
 
-function normalizeSection<T>(spec: any, normalizePage: (spec: any) => T): Section<T> {
-  let {name, open, collapsible = open === undefined ? false : true, pages} = spec;
-  name = String(name);
-  collapsible = Boolean(collapsible);
-  open = collapsible ? Boolean(open) : true;
-  pages = Array.from(pages, normalizePage);
+function normalizeSection<T>(spec: SectionSpec, normalizePage: (spec: PageSpec) => T): Section<T> {
+  const name = String(spec.name);
+  const collapsible = spec.collapsible === undefined ? spec.open !== undefined : Boolean(spec.collapsible);
+  const open = collapsible ? Boolean(spec.open) : true;
+  const pages = Array.from(spec.pages as any, normalizePage);
   return {name, collapsible, open, pages};
 }
 
-function normalizePage(spec: any): Page {
-  let {name, path} = spec;
-  name = String(name);
-  path = String(path);
+function normalizePage(spec: PageSpec): Page {
+  const name = String(spec.name);
+  let path = String(spec.path);
   if (isAssetPath(path)) {
     const u = parseRelativeUrl(join("/", path)); // add leading slash
     let {pathname} = u;
@@ -243,19 +283,18 @@ function normalizePage(spec: any): Page {
   return {name, path};
 }
 
-function normalizeInterpreters(spec: any): Record<string, string[] | null> {
+function normalizeInterpreters(spec: {[key: string]: unknown} = {}): {[key: string]: string[] | null} {
   return Object.fromEntries(
-    Object.entries<any>(spec ?? {}).map(([key, value]): [string, string[] | null] => {
-      return [String(key), value == null ? null : Array.from(value, String)];
+    Object.entries(spec).map(([key, value]): [string, string[] | null] => {
+      return [String(key), value == null ? null : Array.from(value as any, String)];
     })
   );
 }
 
-function normalizeToc(spec: any): TableOfContents {
-  if (typeof spec === "boolean") spec = {show: spec};
-  let {label = "Contents", show = true} = spec;
-  label = String(label);
-  show = Boolean(show);
+function normalizeToc(spec: TableOfContentsSpec | boolean = true): TableOfContents {
+  const toc = typeof spec === "boolean" ? {show: spec} : (spec as TableOfContentsSpec);
+  const label = toc.label === undefined ? "Contents" : String(toc.label);
+  const show = toc.show === undefined ? true : Boolean(toc.show);
   return {label, show};
 }
 
