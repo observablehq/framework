@@ -137,7 +137,7 @@ The `npm:canvas-confetti` import above is approximately equivalent to importing 
 import confetti from "https://cdn.jsdelivr.net/npm/canvas-confetti/+esm";
 ```
 
-Unlike `npm:` and `node_modules` imports, remove imports are not be self-hosted; the module will be fetched from the remote server at runtime. Use remote imports with caution as they are less secure and may degrade performance.
+Unlike `npm:` and `node_modules` imports, remote imports will not be self-hosted; the module will be fetched from the remote server at runtime. Use remote imports with caution as they are less secure and may degrade performance.
 
 ## Dynamic imports
 
