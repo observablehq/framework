@@ -3,7 +3,7 @@ export function getImplicitFileImports(methods: Iterable<string>): Set<string> {
   const implicits = new Set<string>();
   if (set.has("arrow")) implicits.add("npm:apache-arrow");
   if (set.has("csv") || set.has("tsv")) implicits.add("npm:d3-dsv");
-  if (set.has("parquet")) implicits.add("npm:apache-arrow").add("npm:parquet-wasm/esm/arrow1.js");
+  if (set.has("parquet")) implicits.add("npm:apache-arrow").add("npm:parquet-wasm");
   if (set.has("sqlite")) implicits.add("npm:@observablehq/sqlite");
   if (set.has("xlsx")) implicits.add("npm:@observablehq/xlsx");
   if (set.has("zip")) implicits.add("npm:@observablehq/zip");
@@ -140,11 +140,8 @@ export function getImplicitDownloads(imports: Iterable<string>): Set<string> {
     implicits.add("npm:katex/dist/fonts/KaTeX_Typewriter-Regular.woff");
     implicits.add("npm:katex/dist/fonts/KaTeX_Typewriter-Regular.woff2");
   }
-  if (set.has("npm:parquet-wasm/esm/arrow1.js")) {
-    implicits.add("npm:parquet-wasm/esm/arrow1_bg.wasm");
-  }
-  if (set.has("npm:parquet-wasm/esm/arrow2.js")) {
-    implicits.add("npm:parquet-wasm/esm/arrow2_bg.wasm");
+  if (set.has("npm:parquet-wasm")) {
+    implicits.add("npm:parquet-wasm/esm/parquet_wasm_bg.wasm");
   }
   return implicits;
 }

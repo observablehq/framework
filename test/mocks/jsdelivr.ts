@@ -20,7 +20,7 @@ const packages: [name: string, {version: string; dependencies?: Record<string, s
   ["lodash", {version: "4.17.21"}],
   ["mapbox-gl", {version: "3.1.2"}],
   ["mermaid", {version: "10.6.1"}],
-  ["parquet-wasm", {version: "0.6.0-beta.1"}],
+  ["parquet-wasm", {version: "0.6.0"}],
   ["sql.js", {version: "1.9.0"}],
   ["topojson-client", {version: "3.1.0"}]
 ];
