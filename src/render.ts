@@ -1,5 +1,5 @@
 import mime from "mime";
-import type {Config, Page, Script, Section} from "./config.js";
+import type {Config, Page, Section} from "./config.js";
 import {mergeToc} from "./config.js";
 import {getClientPath} from "./files.js";
 import type {Html, HtmlResolvers} from "./html.js";
@@ -39,7 +39,7 @@ ${
         .filter((title): title is string => !!title)
         .join(" | ")}</title>\n`
     : ""
-}${renderHead(page.head, resolvers, options)}${
+}${renderHead(page.head, resolvers)}${
     path === "/404"
       ? html.unsafe(`\n<script type="module">
 
@@ -207,26 +207,17 @@ function renderListItem(page: Page, path: string, normalizeLink: (href: string) 
   }"><a href="${normalizeLink(relativePath(path, page.path))}">${page.name}</a></li>`;
 }
 
-function renderHead(head: MarkdownPage["head"], resolvers: Resolvers, {scripts, root}: RenderOptions): Html {
+function renderHead(head: MarkdownPage["head"], resolvers: Resolvers): Html {
   const {stylesheets, staticImports, resolveImport, resolveStylesheet} = resolvers;
-  const resolveScript = (src: string) => (/^\w+:/.test(src) ? src : resolveImport(relativePath(root, src)));
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
-    Array.from(new Set(Array.from(stylesheets, (i) => resolveStylesheet(i))), renderStylesheetPreload) // <link rel=preload as=style>
+    Array.from(new Set(Array.from(stylesheets, resolveStylesheet)), renderStylesheetPreload) // <link rel=preload as=style>
   }${
-    Array.from(new Set(Array.from(stylesheets, (i) => resolveStylesheet(i))), renderStylesheet) // <link rel=stylesheet>
+    Array.from(new Set(Array.from(stylesheets, resolveStylesheet)), renderStylesheet) // <link rel=stylesheet>
   }${
-    Array.from(new Set(Array.from(staticImports, (i) => resolveImport(i))), renderModulePreload) // <link rel=modulepreload>
+    Array.from(new Set(Array.from(staticImports, resolveImport)), renderModulePreload) // <link rel=modulepreload>
   }${
     head ? html`\n${html.unsafe(rewriteHtml(head, resolvers))}` : null // arbitrary user content
-  }${
-    Array.from(scripts, (s) => renderScript(s, resolveScript)) // <script src>
   }`;
-}
-
-function renderScript(script: Script, resolve: (specifier: string) => string): Html {
-  return html`\n<script${script.type ? html` type="${script.type}"` : null}${
-    script.async ? html` async` : null
-  } src="${resolve(script.src)}"></script>`;
 }
 
 function renderStylesheet(href: string): Html {
