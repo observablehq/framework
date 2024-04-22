@@ -13,3 +13,15 @@ export function formatLocaleDate(date: Date, locale: Intl.LocalesArgument = "en-
 function pad(number: number, length: number): string {
   return String(number).padStart(length, "0");
 }
+
+export function formatByteSize(n: number): string {
+  const suffixes = ["bytes", "KB", "MB", "GB"];
+  for (const suffix of suffixes) {
+    if (n < 1300) {
+      if (suffix === "bytes") return `${n} ${suffix}`;
+      return `${n > 100 ? n.toFixed(0) : n.toFixed(1)} ${suffix}`;
+    }
+    n /= 1000;
+  }
+  return `${n.toFixed(1)} TB`;
+}

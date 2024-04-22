@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import type {ClackEffects} from "./clack.js";
 import {CliError, HttpError, isApiError} from "./error.js";
+import {formatByteSize} from "./format.js";
 import type {ApiKey} from "./observableApiConfig.js";
 import {faint, red} from "./tty.js";
 
@@ -87,9 +88,11 @@ export class ObservableApiClient {
       } catch (error) {
         // that's ok
       }
-      const error = new HttpError(`Unexpected response status ${JSON.stringify(response.status)}`, response.status, {
-        details
-      });
+      const error = new HttpError(
+        `Unexpected response status ${JSON.stringify(response.status)} for ${options.method ?? "GET"} ${url.href}`,
+        response.status,
+        {details}
+      );
 
       // check for version mismatch
       if (
@@ -183,7 +186,14 @@ export class ObservableApiClient {
     const blob = new Blob([contents]);
     body.append("file", blob);
     body.append("client_name", relativePath);
-    await this._fetch(url, {method: "POST", body});
+    try {
+      await this._fetch(url, {method: "POST", body});
+    } catch (error) {
+      const message = error instanceof Error ? error.message : `${error}`;
+      throw new CliError(`While uploading ${relativePath} (${formatByteSize(contents.length)}): ${message}`, {
+        cause: error
+      });
+    }
   }
 
   async postDeployUploaded(deployId: string): Promise<DeployInfo> {
