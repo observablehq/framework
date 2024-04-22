@@ -11,7 +11,6 @@ import {RateLimiter, runAllWithConcurrencyLimit} from "./concurrency.js";
 import type {Config} from "./config.js";
 import {CliError, isApiError, isEnoent, isHttpError} from "./error.js";
 import {visitFiles} from "./files.js";
-import {formatByteSize} from "./format.js";
 import type {Logger} from "./logger.js";
 import type {AuthEffects} from "./observableApiAuth.js";
 import {defaultEffects as defaultAuthEffects, formatUser, loginInner, validWorkspaces} from "./observableApiAuth.js";
@@ -40,7 +39,6 @@ export interface DeployOptions {
   deployPollInterval?: number;
   force: "build" | "deploy" | null;
   maxConcurrency?: number;
-  allowLargeFiles?: boolean;
 }
 
 export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
@@ -76,14 +74,7 @@ type DeployTargetInfo =
 
 /** Deploy a project to ObservableHQ */
 export async function deploy(
-  {
-    config,
-    message,
-    force,
-    deployPollInterval = DEPLOY_POLL_INTERVAL_MS,
-    maxConcurrency,
-    allowLargeFiles = false
-  }: DeployOptions,
+  {config, message, force, deployPollInterval = DEPLOY_POLL_INTERVAL_MS, maxConcurrency}: DeployOptions,
   effects = defaultEffects
 ): Promise<void> {
   const {clack} = effects;
@@ -223,9 +214,8 @@ export async function deploy(
   // build is, and whether it is stale (i.e., whether the source files are newer
   // than the build). If in a tty, ask the user if they want to build; otherwise
   // deploy as is.
-  const statCache: Record<string, Stats> = {};
   if (!doBuild && !force && effects.isTty) {
-    const leastRecentBuildMtimeMs = await findLeastRecentBuildMtimeMs(effects, config, statCache);
+    const leastRecentBuildMtimeMs = await findLeastRecentBuildMtimeMs(effects, config);
     const mostRecentSourceMtimeMs = await findMostRecentSourceMtimeMs(effects, config);
     const buildAge = Date.now() - leastRecentBuildMtimeMs;
     let initialValue = buildAge > BUILD_AGE_WARNING_MS;
@@ -256,55 +246,6 @@ export async function deploy(
   }
 
   if (!buildFilePaths) throw new Error("No build files found.");
-
-  if (!allowLargeFiles) {
-    if (Object.values(statCache).length === 0) {
-      for await (const file of effects.visitFiles(config.output)) {
-        const joinedPath = join(config.output, file);
-        statCache[joinedPath] = await effects.stat(joinedPath);
-      }
-    }
-    const warnings: {path: string; size: number}[] = [];
-    for (const [path, stat] of Object.entries(statCache)) {
-      if (stat.size > 50e6) {
-        warnings.push({path, size: stat.size});
-      }
-    }
-    if (warnings.length) {
-      if (warnings.length === 1) {
-        clack.log.warning(
-          wrapAnsi(
-            `The file ${warnings[0].path} is ${formatByteSize(warnings[0].size)}, and may fail to deploy.`,
-            effects.outputColumns - 3
-          )
-        );
-      } else {
-        const output = [
-          "The following files are too large and may fail to deploy:",
-          ...warnings.map(({path, size}) => `  - ${path} (${formatByteSize(size)})`)
-        ];
-        clack.log.warning(wrapAnsi(output.join("\n"), effects.outputColumns - 3));
-      }
-      clack.log.info(
-        wrapAnsi(
-          "Observable does not allow deploying files larger than 50MB. " +
-            "You can pass --allow-large-files to bypass this warning, " +
-            "though the deploy will still likely fail.",
-          effects.outputColumns - 4
-        )
-      );
-      if (effects.isTty) {
-        const choice = await clack.confirm({
-          message: "Do you want to continue deploying with large files?",
-          active: "Yes, continue",
-          inactive: "No, cancel"
-        });
-        if (clack.isCancel(choice) || !choice) {
-          throw new CliError("User canceled deploy", {print: false, exitCode: 0});
-        }
-      }
-    }
-  }
 
   if (!deployTarget.create) {
     // Check last deployed state. If it's not the same project, ask the user if
@@ -499,15 +440,11 @@ async function findMostRecentSourceMtimeMs(effects: DeployEffects, config: Confi
   return mostRecentMtimeMs;
 }
 
-async function findLeastRecentBuildMtimeMs(
-  effects: DeployEffects,
-  config: Config,
-  statCache: Record<string, Stats> = {}
-): Promise<number> {
+async function findLeastRecentBuildMtimeMs(effects: DeployEffects, config: Config): Promise<number> {
   let leastRecentMtimeMs = Infinity;
   for await (const file of effects.visitFiles(config.output)) {
     const joinedPath = join(config.output, file);
-    const stat = (statCache[joinedPath] ??= await effects.stat(joinedPath));
+    const stat = await effects.stat(joinedPath);
     if (stat.mtimeMs < leastRecentMtimeMs) {
       leastRecentMtimeMs = stat.mtimeMs;
     }

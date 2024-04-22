@@ -108,7 +108,7 @@ try {
     }
     case "deploy": {
       const {
-        values: {config, root, message, build, "no-build": noBuild, "allow-large-files": allowLargeFiles}
+        values: {config, root, message, build, "no-build": noBuild}
       } = helpArgs(command, {
         options: {
           ...CONFIG_OPTION,
@@ -123,10 +123,6 @@ try {
           "no-build": {
             type: "boolean",
             description: "Don’t build before deploying; deploy as is"
-          },
-          "allow-large-files": {
-            type: "boolean",
-            description: "Don't warn about large files"
           }
         }
       });
@@ -134,8 +130,7 @@ try {
         deploy.deploy({
           config: await readConfig(config, root),
           message,
-          force: build ? "build" : noBuild ? "deploy" : null,
-          allowLargeFiles
+          force: build ? "build" : noBuild ? "deploy" : null
         })
       );
       break;
