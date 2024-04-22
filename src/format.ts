@@ -23,5 +23,5 @@ export function formatByteSize(n: number): string {
     }
     n /= 1000;
   }
-  return `${n.toFixed(1)} TiB`;
+  return `${n.toFixed(1)} TB`;
 }

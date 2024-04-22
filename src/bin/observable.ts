@@ -200,7 +200,7 @@ try {
     }
   }
 } catch (error: any) {
-  const wrapWidth = process.stdout.columns ?? 100;
+  const wrapWidth = process.stdout.columns ?? 80;
   const bugMessage = "If you think this is a bug, please file an issue at";
   const bugUrl = "https://github.com/observablehq/framework/issues";
   const clackBugMessage = () => {
