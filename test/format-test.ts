@@ -36,6 +36,7 @@ describe("formatByteSize", () => {
     assert.strictEqual(formatByteSize(3_000_000_000), "3.0 GB");
     assert.strictEqual(formatByteSize(600_000_000_000), "600 GB");
     assert.strictEqual(formatByteSize(60_598_160), "60.6 MB");
-    assert.strictEqual(formatByteSize(60_598_160_000), "60.6 TB");
+    assert.strictEqual(formatByteSize(60_598_160_000), "60.6 GB");
+    assert.strictEqual(formatByteSize(60_598_160_000_000), "60.6 TB");
   });
 });
