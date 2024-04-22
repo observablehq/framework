@@ -62,15 +62,45 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
           placeholder: inferTitle(rootPath!),
           defaultValue: inferTitle(rootPath!)
         }),
-      includeSampleFiles: () =>
+      template: () =>
         clack.select({
           message: "Include sample files to help you get started?",
           options: [
-            {value: true, label: "Yes, include sample files", hint: "recommended"},
-            {value: false, label: "No, create an empty project"}
+            {value: "default", label: "Yes, include sample files", hint: "recommended"},
+            {value: "empty", label: "No, create an empty project"},
+            {value: "github", label: "Yes, show me my GitHub stats"}
           ],
-          initialValue: true
+          initialValue: "default"
         }),
+      GITHUB_TOKEN: ({results: {template}}) => {
+        if (template === "github") {
+          return clack.text({
+            message: "Your GitHub personal access token",
+            placeholder: "ghp_xxxxxxxx"
+            // validate: // TODO async?
+          });
+        }
+      },
+      asyncValidateToken: async ({results: {GITHUB_TOKEN}}) => {
+        if (GITHUB_TOKEN) {
+          const headers = {
+            authorization: `token ${GITHUB_TOKEN}`,
+            accept: "application/vnd.github.v3+json"
+          };
+          const response = await fetch("https://api.github.com/user", {headers});
+          return !response.ok
+            ? clack.log.error("Invalid token! Please review your settings in the .env file.")
+            : clack.log.success(`Token validated for GitHub user ${(await response.json()).login}`);
+        }
+      },
+      GITHUB_ORG_REPOS: async ({results: {GITHUB_TOKEN}}) => {
+        if (GITHUB_TOKEN) {
+          return clack.text({
+            message: "[Optional] The GitHub organization, or list of repos, that you want to visualize",
+            placeholder: "@observablehq or @observablehq/plot, mrdoobs/three"
+          });
+        }
+      },
       packageManager: () =>
         clack.select({
           message: "Install dependencies?",
@@ -85,13 +115,14 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
         clack.confirm({
           message: "Initialize git repository?"
         }),
-      installing: async ({results: {rootPath, projectTitle, includeSampleFiles, packageManager, initializeGit}}) => {
+      installing: async ({
+        results: {rootPath, projectTitle, template, packageManager, initializeGit, GITHUB_TOKEN, GITHUB_ORG_REPOS}
+      }) => {
         rootPath = untildify(rootPath!);
         let spinning = true;
         const s = clack.spinner();
         s.start("Copying template files");
-        const template = includeSampleFiles ? "default" : "empty";
-        const templateDir = op.resolve(fileURLToPath(import.meta.url), "..", "..", "templates", template);
+        const templateDir = op.resolve(fileURLToPath(import.meta.url), "..", "..", "templates", template!);
         const runCommand = packageManager === "yarn" ? "yarn" : `${packageManager ?? "npm"} run`;
         const installCommand = `${packageManager ?? "npm"} install`;
         await effects.sleep(1000); // this step is fast; give the spinner a chance to show
@@ -108,6 +139,11 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
           },
           effects
         );
+        if (GITHUB_TOKEN) {
+          s.message("Saving your parameters in the .env file");
+          const env = makeGitHubTemplateEnv(GITHUB_TOKEN, GITHUB_ORG_REPOS);
+          await writeFile(join(rootPath, ".env"), env);
+        }
         if (packageManager) {
           s.message(`Installing dependencies via ${packageManager}`);
           if (packageManager === "yarn") await writeFile(join(rootPath, "yarn.lock"), "");
@@ -229,4 +265,16 @@ function inferPackageManager(defaultValue: string | null): string | null {
   const [name, version] = pkgSpec.split("/");
   if (!name || !version) return defaultValue;
   return name;
+}
+
+function makeGitHubTemplateEnv(GITHUB_TOKEN: string, GITHUB_ORG_REPOS: any): string {
+  let env = `GITHUB_TOKEN=${JSON.stringify(GITHUB_TOKEN)}\n`;
+  if (typeof GITHUB_ORG_REPOS === "string" && GITHUB_ORG_REPOS) {
+    if (!GITHUB_ORG_REPOS.includes(",") && !GITHUB_ORG_REPOS.includes("/")) {
+      env += `GITHUB_ORG=${JSON.stringify(GITHUB_ORG_REPOS.trim().replace(/^@/, ""))}\n`;
+    } else {
+      env += `GITHUB_REPOS=${JSON.stringify(GITHUB_ORG_REPOS)}\n`;
+    }
+  }
+  return env;
 }
