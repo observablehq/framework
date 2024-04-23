@@ -26,7 +26,7 @@ The first time you deploy a project, you will be prompted to configure the proje
 
 When the deploy command finishes, it prints a link to observablehq.cloud where you can view your deployed project. If you choose *private* as the access level, that link will only be accessible to members of your Observable workspace. (You can invite people to your workspace by going to observablehq.com.) If you chose *public*, you can share your project link with anyone. You can change the access level of a project later [from your workspace projects page](https://observablehq.com/select-workspace?next=projects).
 
-<div class="note">The deploy command creates a file at <code>.observablehq/deploy.json</code> under the source root folder <code>pages</code> with information on where to deploy the project. This file is required for automated deploys. You will need to commit this file to git to deploy via GitHub Actions.</div>
+<div class="note">The deploy command creates a file at <code>.observablehq/deploy.json</code> under the source root (by default <code>src</code>) with information on where to deploy the project. This file is required for automated deploys. You will need to commit this file to git to deploy via GitHub Actions.</div>
 
 <div class="tip">To see more available options when deploying:<pre><code class="language-sh">npm run deploy -- --help</code></pre></div>
 
@@ -112,14 +112,14 @@ jobs:
       - id: cache-data
         uses: actions/cache@v4
         with:
-          path: pages/.observablehq/cache
-          key: data-${{ hashFiles('pages/data/*') }}-${{ steps.date.outputs.date }}
+          path: src/.observablehq/cache
+          key: data-${{ hashFiles('src/data/*') }}-${{ steps.date.outputs.date }}
       # ...
 ```
 
 This uses one cache per calendar day (in the `America/Los_Angeles` time zone). If you deploy multiple times in a day, the results of your data loaders will be reused on the second and subsequent runs. You can customize the `date` and `cache-data` steps to change the cadence of the caching. For example you could use `date +'%Y-%U'` to cache data for a week or `date +'%Y-%m-%dT%H` to cache it for only an hour.
 
-<div class="note">You’ll need to edit the paths above if you’ve configured a source root other than <code>pages</code>.</div>
+<div class="note">You’ll need to edit the paths above if you’ve configured a source root other than <code>src</code>.</div>
 
 ## Other hosting services
 
