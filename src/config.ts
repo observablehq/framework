@@ -252,9 +252,7 @@ function findDefaultRoot(defaultRoot?: string): string {
               "docs"
             )} exists and was previously the default for this option, we will use ${bold('"docs"')}.`
           : ""
-      } You can suppress this warning by specifying ${bold(
-        `root: ${JSON.stringify(root)}`
-      )} in the config file.\n`,
+      } You can suppress this warning by specifying ${bold(`root: ${JSON.stringify(root)}`)} in the config file.\n`,
       Math.min(80, process.stdout.columns ?? 80)
     )
   );
