@@ -64,7 +64,7 @@ describe("create", () => {
       "./template-github", // Where to create your project?
       "GitHub Stats", // What to title your project?
       "github", // Include sample files to help you get started?
-      "", // token
+      "ght_xxxxxx", // token
       "", // repos or org
       null, // Install dependencies?
       false // Initialize git repository?
@@ -73,6 +73,7 @@ describe("create", () => {
     assert.deepStrictEqual(
       new Set(effects.outputs.keys()),
       new Set([
+        "template-github/.env",
         "template-github/README.md",
         "template-github/docs/clone.json.ts",
         "template-github/docs/collaborations.md",
