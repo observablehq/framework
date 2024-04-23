@@ -6,12 +6,14 @@ import {basename, dirname, join} from "node:path/posix";
 import {cwd} from "node:process";
 import {pathToFileURL} from "node:url";
 import type MarkdownIt from "markdown-it";
+import wrapAnsi from "wrap-ansi";
 import {LoaderResolver} from "./dataloader.js";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import {createMarkdownIt, parseMarkdownMetadata} from "./markdown.js";
 import {isAssetPath, parseRelativeUrl, resolvePath} from "./path.js";
 import {resolveTheme} from "./theme.js";
+import {bold, yellow} from "./tty.js";
 
 export interface TableOfContents {
   show: boolean;
@@ -175,10 +177,10 @@ export function setCurrentDate(date: Date | null): void {
 // module), we want to return the same Config instance.
 const configCache = new WeakMap<ConfigSpec, Config>();
 
-export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot = "docs", watchPath?: string): Config {
+export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, watchPath?: string): Config {
   const cachedConfig = configCache.get(spec);
   if (cachedConfig) return cachedConfig;
-  const root = spec.root === undefined ? defaultRoot : String(spec.root);
+  const root = spec.root === undefined ? findDefaultRoot(defaultRoot) : String(spec.root);
   const output = spec.output === undefined ? "dist" : String(spec.output);
   const base = spec.base === undefined ? "/" : normalizeBase(spec.base);
   const style =
@@ -235,6 +237,28 @@ function defaultFooter(): string {
   return `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="${formatIsoDate(
     date
   )}">${formatLocaleDate(date)}</a>.`;
+}
+
+function findDefaultRoot(defaultRoot?: string): string {
+  if (defaultRoot !== undefined) return defaultRoot;
+  const root = existsSync("docs") ? "docs" : "src";
+  console.warn(
+    wrapAnsi(
+      `${yellow("Warning:")} the config file is missing the ${bold(
+        "root"
+      )} option, which specifies the path to the source root.${
+        root === "docs"
+          ? ` The recommended source root is ${bold('"src"')}; however, since the ${bold(
+              "docs"
+            )} exists and was previously the default for this option, we will use ${bold('"docs"')}.`
+          : ""
+      } You can suppress this warning by specifying ${bold(
+        `root: ${JSON.stringify(root)}`
+      )} in the configuration file.\n`,
+      Math.min(80, process.stdout.columns ?? 80)
+    )
+  );
+  return root;
 }
 
 function normalizeBase(spec: unknown): string {
