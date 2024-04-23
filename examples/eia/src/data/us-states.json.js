@@ -2,7 +2,7 @@ import {readFileSync} from "node:fs";
 import {merge, mesh} from "topojson-client";
 import {presimplify, simplify} from "topojson-simplify";
 
-const us = simplify(presimplify(JSON.parse(readFileSync("docs/data/us-counties-10m.json", "utf-8"))), 0.1);
+const us = simplify(presimplify(JSON.parse(readFileSync("src/data/us-counties-10m.json", "utf-8"))), 0.1);
 us.objects.states.geometries = us.objects.states.geometries.filter(
   ({properties: {name}}) =>
     ![

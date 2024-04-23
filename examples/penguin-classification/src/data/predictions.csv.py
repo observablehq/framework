@@ -3,7 +3,7 @@ from sklearn.linear_model import LogisticRegression
 import sys
 
 # Read the CSV
-df = pd.read_csv("docs/data/penguins.csv")
+df = pd.read_csv("src/data/penguins.csv")
 
 # Select columns to train the model
 X = df.iloc[:, [2, 3, 4, 5]]

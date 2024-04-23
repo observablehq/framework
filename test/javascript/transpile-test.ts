@@ -83,7 +83,7 @@ describe("transpileJavaScript(input, options)", () => {
 
 async function testFile(target: string, path: string): Promise<string> {
   const input = `import {FileAttachment} from "npm:@observablehq/stdlib";\nFileAttachment(${JSON.stringify(target)})`;
-  const output = await transpileModule(input, {root: "docs", path});
+  const output = await transpileModule(input, {root: "src", path});
   return output.split("\n").pop()!;
 }
 
@@ -108,7 +108,7 @@ describe("transpileModule(input, root, path, sourcePath)", () => {
 
 describe("transpileModule(input, root, path)", () => {
   mockJsDelivr();
-  const options: TranspileModuleOptions = {root: "docs", path: "test.js"};
+  const options: TranspileModuleOptions = {root: "src", path: "test.js"};
   it("rewrites relative files with import.meta.resolve", async () => {
     assert.strictEqual(await testFile("./test.txt", "test.js"), 'FileAttachment("../test.txt", import.meta.url)'); // prettier-ignore
     assert.strictEqual(await testFile("./sub/test.txt", "test.js"), 'FileAttachment("../sub/test.txt", import.meta.url)'); // prettier-ignore

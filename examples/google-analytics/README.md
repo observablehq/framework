@@ -1,6 +1,6 @@
 # Google analytics
 
-This dashboard tracks data from Google Analytics using the [Google Analytics Data API](https://developers.google.com/analytics/devguides/reporting/data/v1/quickstart-client-libraries). It contains a single page in `docs/index.md`.
+This dashboard tracks data from Google Analytics using the [Google Analytics Data API](https://developers.google.com/analytics/devguides/reporting/data/v1/quickstart-client-libraries). It contains a single page in `src/index.md`.
 
 View the [live project](https://observablehq.com/framework/examples/google-analytics/).
 
@@ -20,4 +20,4 @@ The Google Analytics [API Quickstart](https://developers.google.com/analytics/de
 
 ## Charts
 
-The dashboard displays a variety of charts, made with [Observable Plot](https://observablehq.com/plot/). With the key numbers at the top, a line chart or an area chart. Activity by country is represented by a choropleth map. Active users use a horizon chart, faceted by channel. The “new vs. returning” chart is a Marimekko. Finally, the activity by day and hour is a punchcard chart. The code for each of these charts is available in [docs/index.md](https://github.com/observablehq/framework/blob/main/examples/google-analytics/docs/index.md).
+The dashboard displays a variety of charts, made with [Observable Plot](https://observablehq.com/plot/). With the key numbers at the top, a line chart or an area chart. Activity by country is represented by a choropleth map. Active users use a horizon chart, faceted by channel. The “new vs. returning” chart is a Marimekko. Finally, the activity by day and hour is a punchcard chart. The code for each of these charts is available in [`src/index.md`](https://github.com/observablehq/framework/blob/main/examples/google-analytics/src/index.md).

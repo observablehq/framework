@@ -139,7 +139,7 @@ Like with any other file, files from generated archives are live in preview (ref
 
 ## Routing
 
-Data loaders live in the source root (typically `pages`) alongside your other source files. When a file is referenced from JavaScript via `FileAttachment`, if the file does not exist, Framework will look for a file of the same name with a double extension to see if there is a corresponding data loader. By default, the following second extensions are checked, in order, with the corresponding language and interpreter:
+Data loaders live in the source root (typically `src`) alongside your other source files. When a file is referenced from JavaScript via `FileAttachment`, if the file does not exist, Framework will look for a file of the same name with a double extension to see if there is a corresponding data loader. By default, the following second extensions are checked, in order, with the corresponding language and interpreter:
 
 - `.js` - JavaScript (`node`)
 - `.ts` - TypeScript (`tsx`)
@@ -185,7 +185,7 @@ You can then run the `observable preview` or `observable build` commands as usua
 
 </div>
 
-Data loaders are run in the same working directory in which you run the `observable build` or `observable preview` command, which is typically the project root. In Node, you can access the current working directory by calling `process.cwd()`, and the data loader’s source location with [`import.meta.url`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta). To compute the path of a file relative to the data loader source (rather than relative to the current working directory), use [`import.meta.resolve`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta/resolve). For example, a data loader in `pages/summary.txt.js` could read the file `pages/table.txt` as:
+Data loaders are run in the same working directory in which you run the `observable build` or `observable preview` command, which is typically the project root. In Node, you can access the current working directory by calling `process.cwd()`, and the data loader’s source location with [`import.meta.url`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta). To compute the path of a file relative to the data loader source (rather than relative to the current working directory), use [`import.meta.resolve`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta/resolve). For example, a data loader in `src/summary.txt.js` could read the file `src/table.txt` as:
 
 ```js run=false
 import {readFile} from "node:fs/promises";
@@ -197,7 +197,7 @@ const table = await readFile(fileURLToPath(import.meta.resolve("./table.txt")), 
 Executable (`.exe`) data loaders are run directly and must have the executable bit set. This is typically done via [`chmod`](https://en.wikipedia.org/wiki/Chmod). For example:
 
 ```sh
-chmod +x pages/quakes.csv.exe
+chmod +x src/quakes.csv.exe
 ```
 
 While a `.exe` data loader may be any binary executable (_e.g.,_ compiled from C), it is often convenient to specify another interpreter using a [shebang](<https://en.wikipedia.org/wiki/Shebang_(Unix)>). For example, to write a data loader in Perl:
@@ -220,7 +220,7 @@ Data loaders generate files at build time that live alongside other [static file
 
 ```ini
 .
-├─ pages
+├─ src
 │  ├─ index.md
 │  └─ quakes.json.sh
 └─ ...
@@ -249,7 +249,7 @@ As another example, say you have a `quakes.zip` archive that includes yearly fil
 
 ```ini
 .
-├─ pages
+├─ src
 │  ├─ index.md
 │  └─ quakes.zip
 └─ ...
@@ -269,11 +269,11 @@ Becomes this output:
 └─ ...
 ```
 
-A data loader is only run during build if its corresponding output file is referenced in at least one page. Framework does not scour the source root (`pages`) for data loaders.
+A data loader is only run during build if its corresponding output file is referenced in at least one page. Framework does not scour the source root (typically `src`) for data loaders.
 
 ## Caching
 
-When a data loader runs successfully, its output is saved to a cache which lives in `.observablehq/cache` within the source root (by default `pages`).
+When a data loader runs successfully, its output is saved to a cache which lives in `.observablehq/cache` within the source root (typically `src`).
 
 During preview, Framework considers the cache “fresh” if the modification time of the cached output is newer than the modification time of the corresponding data loader source. If you edit a data loader or update its modification time with `touch`, the cache is invalidated; when previewing a page that uses the data loader, the preview server will detect that the data loader was modified and automatically run it, pushing the new data down to the client and re-evaluating any referencing code — no reload required!
 
@@ -282,13 +282,13 @@ During build, Framework ignores modification times and only runs a data loader i
 To purge the data loader cache and force all data loaders to run on the next build, delete the entire cache. For example:
 
 ```sh
-rm -rf pages/.observablehq/cache
+rm -rf src/.observablehq/cache
 ```
 
-To force a specific data loader to run on the next build instead, delete its corresponding output from the cache. For example, to rebuild `pages/quakes.csv`:
+To force a specific data loader to run on the next build instead, delete its corresponding output from the cache. For example, to rebuild `src/quakes.csv`:
 
 ```sh
-rm -f pages/.observablehq/cache/quakes.csv
+rm -f src/.observablehq/cache/quakes.csv
 ```
 
 See [Automated deploys: Caching](./deploying#caching) for more on caching during CI.

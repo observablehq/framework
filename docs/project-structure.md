@@ -34,7 +34,7 @@ And a typical project is structured like this:
 
 #### `src`
 
-This is the “source root” — where your source files live. It doesn’t have to be named `src`, but that’s the default; you can change it using the **root** [config option](./config). (Prior to <a href="https://github.com/observablehq/framework/pull/1253" class="observablehq-version-badge" data-version="prerelease" title="Added in #1253"></a>, the default was <code>docs</code>.) Pages go here. Each page is a Markdown file. Framework uses [file-based routing](#routing), which means that the name of the file controls where the page is served. You can create as many pages as you like. Use folders to organize your pages.
+This is the “source root” — where your source files live. It doesn’t have to be named `src`; you can change it using the **root** [config option](./config). (Prior to <a href="https://github.com/observablehq/framework/pull/1253" class="observablehq-version-badge" data-version="prerelease" title="Added in #1253"></a>, the default was <code>docs</code>.) Pages go here. Each page is a Markdown file. Framework uses [file-based routing](#routing), which means that the name of the file controls where the page is served. You can create as many pages as you like. Use folders to organize your pages.
 
 #### `src/.observablehq/cache`
 

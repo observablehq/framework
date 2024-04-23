@@ -26,7 +26,7 @@ The first time you deploy a project, you will be prompted to configure the proje
 
 When the deploy command finishes, it prints a link to observablehq.cloud where you can view your deployed project. If you choose *private* as the access level, that link will only be accessible to members of your Observable workspace. (You can invite people to your workspace by going to observablehq.com.) If you chose *public*, you can share your project link with anyone. You can change the access level of a project later [from your workspace projects page](https://observablehq.com/select-workspace?next=projects).
 
-<div class="note">The deploy command creates a file at <code>.observablehq/deploy.json</code> under the source root (by default <code>src</code>) with information on where to deploy the project. This file is required for automated deploys. You will need to commit this file to git to deploy via GitHub Actions.</div>
+<div class="note">The deploy command creates a file at <code>.observablehq/deploy.json</code> under the source root (typically <code>src</code>) with information on where to deploy the project. This file is required for automated deploys. You will need to commit this file to git to deploy via GitHub Actions.</div>
 
 <div class="tip">To see more available options when deploying:<pre><code class="language-sh">npm run deploy -- --help</code></pre></div>
 

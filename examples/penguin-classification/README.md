@@ -6,7 +6,7 @@ View the [live project](https://observablehq.com/framework/examples/penguin-clas
 
 ## Data loader
 
-The Python [data loader](../../docs/loaders.md) `predictions.csv.py` reads in the `penguins.csv` file, then performs logistic regression using scikit-learn's [LogisticRegression](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html) function.
+The Python [data loader](https://observablehq.com/framework/loaders) `predictions.csv.py` reads in the `penguins.csv` file, then performs logistic regression using scikit-learn's [LogisticRegression](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html) function.
 
 ## Charts
 
@@ -14,7 +14,7 @@ All charts are drawn with [Observable Plot](https://observablehq/com/plot).
 
 ## Reuse this example
 
-Copy the contents of the `penguins-classification` directory into a new Observable Framework project. Then, run the following set up steps (as needed) get started: 
+Copy the contents of the `penguins-classification` directory into a new Observable Framework project. Then, run the following set up steps (as needed) get started:
 
 - If needed, install python3
 - Create and activate a virtual environment

@@ -211,7 +211,7 @@ display(total);
 
 ## Routing
 
-Attached files live in the source root (by default `src`) alongside your Markdown pages. For example, say `index.md` has some JavaScript code that references `FileAttachment("quakes.csv")`:
+Attached files live in the source root (typically `src`) alongside your Markdown pages. For example, say `index.md` has some JavaScript code that references `FileAttachment("quakes.csv")`:
 
 ```ini
 .
