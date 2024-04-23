@@ -1,4 +1,5 @@
 export default {
+  root: "src",
   title: "Observable Plot downloads",
   theme: "dashboard",
   pager: false,

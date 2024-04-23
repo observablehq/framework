@@ -1,4 +1,5 @@
 export default {
+  root: "src",
   title: "Analyzing web logs",
   pager: false,
   toc: false,

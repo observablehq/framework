@@ -1,7 +1,9 @@
 export default {
-  title: "Hello, world!",
-  toc: false,
+  root: "src",
+  title: "Primary mortgage market survey",
   pager: false,
+  toc: false,
+  sidebar: false,
   head:
     process.env.CI &&
     `<script type="module" async src="https://events.observablehq.com/client.js?pageLoad"></script>
@@ -50,7 +52,7 @@ export default {
       <span class="hide-if-small">Observable</span> Framework
     </a>
     <span style="display: flex; align-items: baseline; gap: 0.5rem; font-size: 14px;">
-      <a target="_blank" href="https://github.com/observablehq/framework/tree/main/examples/hello-world"><span>View source</span></a>
+      <a target="_blank" href="https://github.com/observablehq/framework/tree/main/examples/mortgage-rates"><span>View source</span></a>
     </span>
   </div>
 </div>`
