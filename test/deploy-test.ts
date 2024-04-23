@@ -481,8 +481,9 @@ describe("deploy", () => {
       await deploy({...TEST_OPTIONS, maxConcurrency: 1}, effects);
       fail("Should have thrown an error");
     } catch (error) {
-      assert.ok(isHttpError(error));
-      assert.equal(error.statusCode, 500);
+      CliError.assert(error, {message: /While uploading index.html.*500/});
+      assert.ok(isHttpError(error.cause));
+      assert.equal(error.cause.statusCode, 500);
     }
 
     effects.close();
