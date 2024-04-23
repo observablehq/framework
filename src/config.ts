@@ -248,13 +248,13 @@ function findDefaultRoot(defaultRoot?: string): string {
         "root"
       )} option, which specifies the path to the source root.${
         root === "docs"
-          ? ` The recommended source root is ${bold('"src"')}; however, since the ${bold(
+          ? ` The recommended source root is ${bold('"src"')}; however, since ${bold(
               "docs"
             )} exists and was previously the default for this option, we will use ${bold('"docs"')}.`
           : ""
       } You can suppress this warning by specifying ${bold(
         `root: ${JSON.stringify(root)}`
-      )} in the configuration file.\n`,
+      )} in the config file.\n`,
       Math.min(80, process.stdout.columns ?? 80)
     )
   );
