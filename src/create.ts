@@ -141,8 +141,8 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
         );
         if (GITHUB_TOKEN) {
           s.message("Saving your parameters in the .env file");
-          const env = makeGitHubTemplateEnv(GITHUB_TOKEN, GITHUB_ORG_REPOS);
-          await writeFile(join(rootPath, ".env"), env);
+          const env = makeGitHubTemplateEnv(GITHUB_TOKEN as string, GITHUB_ORG_REPOS);
+          await effects.writeFile(join(rootPath, ".env"), env);
         }
         if (packageManager) {
           s.message(`Installing dependencies via ${packageManager}`);
