@@ -1,5 +1,7 @@
 export default {
-  title: "A year of chess rankings",
+  root: "src",
+  title: "U.S. electricity grid",
+  theme: "dashboard",
   pager: false,
   toc: false,
   head:
@@ -50,7 +52,7 @@ export default {
       <span class="hide-if-small">Observable</span> Framework
     </a>
     <span style="display: flex; align-items: baseline; gap: 0.5rem; font-size: 14px;">
-      <a target="_blank" href="https://github.com/observablehq/framework/tree/main/examples/chess"><span>View source</span></a>
+      <a target="_blank" href="https://github.com/observablehq/framework/tree/main/examples/eia"><span>View source</span></a>
     </span>
   </div>
 </div>`

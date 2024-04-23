@@ -30,7 +30,7 @@ export interface TtyEffects {
 export const defaultEffects: TtyEffects = {
   isTty: isatty(process.stdin.fd),
   logger: console,
-  outputColumns: process.stdout.columns ?? 80
+  outputColumns: Math.min(80, process.stdout.columns ?? 80)
 };
 
 function stripColor(s: string): string {

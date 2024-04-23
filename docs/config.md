@@ -21,7 +21,7 @@ The following options are supported.
 
 ## root
 
-The path to the source root; defaults to `docs`.
+The path to the source root; defaults to `src`. (Prior to <a href="https://github.com/observablehq/framework/pull/1253" class="observablehq-version-badge" data-version="prerelease" title="Added in #1253"></a>, the default was `docs`.)
 
 ## output
 
@@ -67,9 +67,9 @@ See the [list of available themes](./themes) for more.
 
 ## style
 
-The path to a custom stylesheet, relative to the source root. This option takes precedence over the [theme option](#theme) (if any), providing more control by allowing you to remove or alter the default stylesheet and define a custom theme.
+The path to a custom stylesheet, relative to the source root (typically `src`). This option takes precedence over the [theme option](#theme) (if any), providing more control by allowing you to remove or alter the default stylesheet and define a custom theme.
 
-The custom stylesheet should typically import `observablehq:default.css` to build on the default styles. You can also import any of the built-in themes. For example, to create a stylesheet that builds up on the `air` theme, create a `custom-style.css` file in the `docs` folder, then set the style option to `custom-style.css`:
+The custom stylesheet should typically import `observablehq:default.css` to build on the default styles. You can also import any of the built-in themes. For example, to create a stylesheet that builds up on the `air` theme, create a `custom-style.css` file in the source root, then set the style option to `custom-style.css`:
 
 ```css
 @import url("observablehq:default.css");

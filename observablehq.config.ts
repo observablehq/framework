@@ -9,6 +9,7 @@ try {
 }
 
 export default {
+  root: "docs",
   output: "docs/.observablehq/dist",
   title: "Observable Framework",
   pages: [

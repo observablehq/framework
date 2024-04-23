@@ -67,7 +67,7 @@ If you do not specify an entry point, the default entry point is determined by t
 
 Framework downloads `npm:` imports from jsDelivr during preview and build. This improves performance, security, and stability of your built site by removing runtime dependencies on external sites.
 
-Downloads from npm are cached in `.observablehq/cache/_npm` within your [source root](./config#root) (`docs` by default). An imported module is downloaded from jsDelivr only if it is not already in the cache. You can clear the cache and restart the server to re-fetch the latest versions of libraries from npm.
+Downloads from npm are cached in `.observablehq/cache/_npm` within your [source root](./config#root) (typically `src`). An imported module is downloaded from jsDelivr only if it is not already in the cache. You can clear the cache and restart the server to re-fetch the latest versions of libraries from npm.
 
 Self-hosting of `npm:` imports applies to transitive static and [dynamic imports](#dynamic-imports). In addition to downloading modules, Framework downloads supporting files as needed for [recommended libraries](#implicit-imports) and [`import.meta.resolve`](#import-resolutions). For example, [DuckDB](./lib/duckdb) needs WebAssembly modules, and [KaTeX](./lib/tex) needs a stylesheet and fonts. For dynamic imports and `import.meta.resolve`, Framework is only able to self-host import specifiers that are static string literals.
 
@@ -97,7 +97,7 @@ import mime from "mime/lite";
 
 Unlike `npm:` imports, Node imports do not support semver ranges: the imported version is determined by what is installed in your `node_modules` directory. Use your package manager (_e.g._, edit your `package.json` and run `npm install`, or run `npm update`) to change which version is imported.
 
-Imports from `node_modules` are cached in `.observablehq/cache/_node` within your [source root](./config#root) (`docs` by default). You shouldn’t need to clear this cache as it is automatically managed, but feel free to clear it you like.
+Imports from `node_modules` are cached in `.observablehq/cache/_node` within your [source root](./config#root) (typically `src`). You shouldn’t need to clear this cache as it is automatically managed, but feel free to clear it you like.
 
 ## Local imports
 
@@ -249,7 +249,7 @@ Imported modules are copied to the output root (`dist` by default) during build,
 
 ```ini
 .
-├─ docs
+├─ src
 │  ├─ chart.js
 │  └─ index.md
 └─ ...

@@ -95,12 +95,12 @@ describe("findLink(path, options)", () => {
     assert.deepStrictEqual(pager("/c", config), {prev: {name: "b", path: "/b"}, next: undefined});
   });
   it("normalizes / to /index", async () => {
-    const config = await normalizeConfig({pages: [{name: "Home", path: "/"}]});
+    const config = normalizeConfig({pages: [{name: "Home", path: "/"}]});
     assert.strictEqual(pager("/index", config), undefined);
     assert.strictEqual(pager("/", config), undefined);
   });
   it("normalizes / to /index (2)", async () => {
-    const config = await normalizeConfig({
+    const config = normalizeConfig({
       pages: [
         {name: "Home", path: "/"},
         {name: "Second Home", path: "/second"}
@@ -111,7 +111,7 @@ describe("findLink(path, options)", () => {
     assert.strictEqual(pager("/", config), undefined);
   });
   it("normalizes / to /index (3)", async () => {
-    const config = await normalizeConfig({
+    const config = normalizeConfig({
       pages: [
         {name: "Home", path: "/"},
         {name: "Second Home", path: "/second"},

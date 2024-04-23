@@ -12,7 +12,7 @@ Search works in two stages: when Framework builds the site, it creates an index 
 
 Pages are indexed each time you build or deploy your project. When working in preview, they are reindexed every 10 minutes.
 
-By default, all the pages found in the project root (`docs` by default) or defined in the [**pages** config option](./config#pages) are indexed; you can however opt-out a page from the index by specifying an index: false property in its front matter:
+By default, all the pages found in the source root (typically `src`) or defined in the [**pages** config option](./config#pages) are indexed; you can however opt-out a page from the index by specifying an index: false property in its front matter:
 
 ```yaml
 ---

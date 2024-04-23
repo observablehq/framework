@@ -156,6 +156,7 @@ try {
         }
       });
       const {config, root, host, port, open} = values;
+      await readConfig(config, root); // Ensure the config is valid.
       await import("../preview.js").then(async (preview) =>
         preview.preview({
           config,
@@ -200,7 +201,7 @@ try {
     }
   }
 } catch (error: any) {
-  const wrapWidth = process.stdout.columns ?? 80;
+  const wrapWidth = Math.min(80, process.stdout.columns ?? 80);
   const bugMessage = "If you think this is a bug, please file an issue at";
   const bugUrl = "https://github.com/observablehq/framework/issues";
   const clackBugMessage = () => {
