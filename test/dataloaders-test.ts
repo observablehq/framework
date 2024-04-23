@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import {mkdir, readFile, rmdir, stat, unlink, utimes, writeFile} from "node:fs/promises";
+import {mkdir, readFile, rm, stat, unlink, utimes, writeFile} from "node:fs/promises";
 import os from "node:os";
 import type {LoadEffects} from "../src/dataloader.js";
 import {LoaderResolver} from "../src/dataloader.js";
@@ -140,7 +140,7 @@ describe("LoaderResolver.get{Source,Output}LastModified(path)", () => {
     // clean up
     try {
       await unlink("test/.observablehq/cache/input/loader/cached.txt");
-      await rmdir("test/.observablehq/cache/input/loader", {recursive: true});
+      await rm("test/.observablehq/cache/input/loader", {recursive: true});
     } catch {
       // ignore;
     }

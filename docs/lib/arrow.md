@@ -97,4 +97,4 @@ Plot.plot({
 })
 ```
 
-Parquet files work especially well with [DuckDB](./lib/duckdb) for in-process SQL queries. The Parquet format is optimized for this use case: data is compressed in a columnar format, allowing DuckDB to load only the subset of data needed (via [range requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests)) to execute the current query. This can give a huge performance boost when working with larger datasets.
+Parquet files work especially well with [DuckDB](./duckdb) for in-process SQL queries. The Parquet format is optimized for this use case: data is compressed in a columnar format, allowing DuckDB to load only the subset of data needed (via [range requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests)) to execute the current query. This can give a huge performance boost when working with larger datasets.

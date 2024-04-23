@@ -246,8 +246,6 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
     name,
     range = name === "@duckdb/duckdb-wasm"
       ? "1.28.0" // https://github.com/duckdb/duckdb-wasm/issues/1561
-      : name === "parquet-wasm"
-      ? "0.5.0" // https://github.com/observablehq/framework/issues/733
       : undefined,
     path = name === "mermaid"
       ? "dist/mermaid.esm.min.mjs/+esm"

@@ -98,17 +98,6 @@ export async function deploy(
     );
   }
 
-  const legacyConfig = config as unknown as {deploy: null | {project: string; workspace: string}};
-  if (legacyConfig.deploy && deployConfig.projectId) {
-    if (!deployConfig.projectSlug || !deployConfig.workspaceLogin) {
-      clack.log.info("Copying deploy information from the config file to deploy.json.");
-      deployConfig.projectSlug = legacyConfig.deploy.project;
-      deployConfig.workspaceLogin = legacyConfig.deploy.workspace.replace(/^@/, "");
-      effects.setDeployConfig(config.root, deployConfig);
-    }
-    clack.log.info("The `deploy` section of your config file is obsolete and can be deleted.");
-  }
-
   let currentUser: GetCurrentUserResponse | null = null;
   let authError: null | "unauthenticated" | "forbidden" = null;
   try {
@@ -351,7 +340,7 @@ export async function deploy(
   });
 
   // Create the new deploy on the server
-  let deployId;
+  let deployId: string;
   try {
     deployId = await apiClient.postDeploy({projectId: deployTarget.project.id, message});
   } catch (error) {
@@ -375,7 +364,7 @@ export async function deploy(
   uploadSpinner.start("");
 
   const rateLimiter = new RateLimiter(5);
-  const waitForRateLimit = buildFilePaths.length <= 300 ? () => {} : () => rateLimiter.wait();
+  const waitForRateLimit = buildFilePaths.length <= 300 ? async () => {} : () => rateLimiter.wait();
 
   await runAllWithConcurrencyLimit(
     buildFilePaths,

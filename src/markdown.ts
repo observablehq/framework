@@ -11,7 +11,7 @@ import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
 import type {FrontMatter} from "./frontMatter.js";
 import {readFrontMatter} from "./frontMatter.js";
-import {rewriteHtmlPaths} from "./html.js";
+import {html, rewriteHtmlPaths} from "./html.js";
 import {parseInfo} from "./info.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
@@ -301,6 +301,7 @@ export interface ParseOptions {
   md: MarkdownIt;
   path: string;
   style?: Config["style"];
+  scripts?: Config["scripts"];
   head?: Config["head"];
   header?: Config["header"];
   footer?: Config["footer"];
@@ -308,13 +309,19 @@ export interface ParseOptions {
 
 export function createMarkdownIt({
   markdownIt,
+  linkify = true,
+  quotes = "“”‘’",
+  typographer = false,
   cleanUrls = true
 }: {
   markdownIt?: (md: MarkdownIt) => MarkdownIt;
+  linkify?: boolean;
+  quotes?: string | string[];
+  typographer?: boolean;
   cleanUrls?: boolean;
 } = {}): MarkdownIt {
-  const md = MarkdownIt({html: true, linkify: true});
-  md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
+  const md = MarkdownIt({html: true, linkify, typographer, quotes});
+  if (linkify) md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
   md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
@@ -333,10 +340,10 @@ export function parseMarkdown(input: string, options: ParseOptions): MarkdownPag
   const tokens = md.parse(content, context);
   const body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
   return {
-    head: getHtml("head", data, options),
-    header: getHtml("header", data, options),
+    head: getHead(data, options),
+    header: getHeader(data, options),
     body,
-    footer: getHtml("footer", data, options),
+    footer: getFooter(data, options),
     data,
     title: data.title !== undefined ? data.title : findTitle(tokens),
     style: getStyle(data, options),
@@ -355,6 +362,28 @@ export function parseMarkdownMetadata(input: string, options: ParseOptions): Pic
         ? data.title
         : findTitle(md.parse(content, {code: [], startLine: 0, currentLine: 0, path}))
   };
+}
+
+function getHead(data: FrontMatter, options: ParseOptions): string | null {
+  const {scripts, path} = options;
+  let head = getHtml("head", data, options);
+  if (scripts?.length) {
+    head ??= "";
+    for (const {type, async, src} of scripts) {
+      head += html`${head ? "\n" : ""}<script${type ? html` type="${type}"` : null}${
+        async ? html` async` : null
+      } src="${isAssetPath(src) ? relativePath(path, src) : src}"></script>`;
+    }
+  }
+  return head;
+}
+
+function getHeader(data: FrontMatter, options: ParseOptions): string | null {
+  return getHtml("header", data, options);
+}
+
+function getFooter(data: FrontMatter, options: ParseOptions): string | null {
+  return getHtml("footer", data, options);
 }
 
 function getHtml(
