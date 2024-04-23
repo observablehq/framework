@@ -21,6 +21,7 @@ describe("create", () => {
       new Set(effects.outputs.keys()),
       new Set([
         "template-test/.gitignore",
+        "template-test/src/.gitignore",
         "template-test/src/aapl.csv",
         "template-test/src/observable.png",
         "template-test/src/components/timeline.js",
@@ -50,6 +51,7 @@ describe("create", () => {
       new Set(effects.outputs.keys()),
       new Set([
         "template-test/.gitignore",
+        "template-test/src/.gitignore",
         "template-test/src/observable.png",
         "template-test/src/index.md",
         "template-test/observablehq.config.js",
