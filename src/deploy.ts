@@ -1,3 +1,5 @@
+import {createHash} from "node:crypto";
+import {createReadStream} from "node:fs";
 import type {Stats} from "node:fs";
 import {stat} from "node:fs/promises";
 import {join} from "node:path/posix";
@@ -16,6 +18,7 @@ import type {AuthEffects} from "./observableApiAuth.js";
 import {defaultEffects as defaultAuthEffects, formatUser, loginInner, validWorkspaces} from "./observableApiAuth.js";
 import {ObservableApiClient} from "./observableApiClient.js";
 import type {
+  DeployManifestFile,
   GetCurrentUserResponse,
   GetDeployResponse,
   GetProjectResponse,
@@ -39,6 +42,7 @@ export interface DeployOptions {
   deployPollInterval?: number;
   force: "build" | "deploy" | null;
   maxConcurrency?: number;
+  manifest?: boolean;
 }
 
 export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
@@ -74,7 +78,14 @@ type DeployTargetInfo =
 
 /** Deploy a project to ObservableHQ */
 export async function deploy(
-  {config, message, force, deployPollInterval = DEPLOY_POLL_INTERVAL_MS, maxConcurrency}: DeployOptions,
+  {
+    config,
+    message,
+    force,
+    deployPollInterval = DEPLOY_POLL_INTERVAL_MS,
+    maxConcurrency,
+    manifest = true
+  }: DeployOptions,
   effects = defaultEffects
 ): Promise<void> {
   const {clack} = effects;
@@ -359,23 +370,63 @@ export async function deploy(
     throw error;
   }
 
-  // Upload the files
-  const uploadSpinner = clack.spinner();
-  uploadSpinner.start("");
+  const progressSpinner = clack.spinner();
+  progressSpinner.start("");
 
+  // upload a manifest before uploading the files, if configured
+  let filesToUpload: string[];
+  if (manifest) {
+    progressSpinner.message("Hashing local files");
+    const manifestFileInfo: DeployManifestFile[] = [];
+    await runAllWithConcurrencyLimit(buildFilePaths, async (path) => {
+      const fullPath = join(config.output, path);
+      const [statInfo, hash] = await Promise.all([stat(fullPath), sha512File(fullPath)]);
+      manifestFileInfo.push({path, size: statInfo.size, hash});
+    });
+    progressSpinner.message("Sending file manifest to server");
+    const instructions = await apiClient.postDeployManifest(deployId, manifestFileInfo);
+    const fileErrors: {path: string; detail: string | null}[] = [];
+    for (const fileInstruction of instructions.files) {
+      if (fileInstruction.status === "error") {
+        fileErrors.push({path: fileInstruction.path, detail: fileInstruction.detail});
+      }
+    }
+    if (fileErrors.length) {
+      clack.log.error(
+        "The server rejected some files from the upload:\n\n" +
+          fileErrors.map(({path, detail}) => `  - ${path} - ${detail ? `(${detail})` : "no details"}`).join("\n")
+      );
+    }
+    if (instructions.status === "error" || fileErrors.length) {
+      throw new CliError(`Server rejected deploy manifest: ${instructions.detail ?? "no details"}`);
+    }
+    filesToUpload = instructions.files
+      .filter((instruction) => instruction.status === "upload")
+      .map((instruction) => instruction.path);
+  } else {
+    filesToUpload = buildFilePaths;
+  }
+
+  // Upload the files
   const rateLimiter = new RateLimiter(5);
-  const waitForRateLimit = buildFilePaths.length <= 300 ? async () => {} : () => rateLimiter.wait();
+  const waitForRateLimit = filesToUpload.length <= 300 ? async () => {} : () => rateLimiter.wait();
 
   await runAllWithConcurrencyLimit(
-    buildFilePaths,
+    filesToUpload,
     async (path, i) => {
       await waitForRateLimit();
-      uploadSpinner.message(`${i + 1} / ${buildFilePaths!.length} ${path.slice(0, effects.outputColumns - 10)}`);
+      progressSpinner.message(
+        `${i + 1} / ${filesToUpload.length} ${faint("uploading")} ${path.slice(0, effects.outputColumns - 17)}`
+      );
       await apiClient.postDeployFile(deployId, join(config.output, path), path);
     },
     {maxConcurrency}
   );
-  uploadSpinner.stop(`${buildFilePaths.length} uploaded`);
+  progressSpinner.stop(
+    `${filesToUpload.length} uploaded, ${buildFilePaths.length - filesToUpload.length} unchanged, ${
+      buildFilePaths.length
+    } total.`
+  );
 
   // Mark the deploy as uploaded
   await apiClient.postDeployUploaded(deployId);
@@ -608,4 +659,16 @@ function formatAge(age: number): string {
     return `${hours} hour${hours === 1 ? "" : "s"} ago`;
   }
   return `at ${new Date(Date.now() - age).toLocaleString("en")}`;
+}
+
+async function sha512File(path: string): Promise<string> {
+  const hasher = createHash("sha512");
+  const stream = createReadStream(path);
+  const promise = new Promise<void>((resolve, reject) => {
+    hasher.once("finish", resolve);
+    hasher.once("error", reject);
+  });
+  stream.pipe(hasher);
+  await promise;
+  return (hasher.read() as Buffer).toString("base64");
 }

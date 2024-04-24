@@ -11,6 +11,7 @@ import type {ObservableApiClientOptions} from "../src/observableApiClient.js";
 import type {GetCurrentUserResponse} from "../src/observableApiClient.js";
 import {ObservableApiClient} from "../src/observableApiClient.js";
 import type {DeployConfig} from "../src/observableApiConfig.js";
+import {stripColor} from "../src/tty.js";
 import {MockAuthEffects} from "./mocks/authEffects.js";
 import {TestClackEffects} from "./mocks/clack.js";
 import {MockConfigEffects} from "./mocks/configEffects.js";
@@ -178,11 +179,11 @@ describe("deploy", () => {
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .handlePostDeployFile({deployId, clientName: "index.html"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/theme-air,near-midnight.css"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/client.js"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/runtime.js"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/stdlib.js"})
+      .expectFileUpload({deployId, path: "index.html"})
+      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
+      .expectFileUpload({deployId, path: "_observablehq/client.js"})
+      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
+      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId, deployStatus: "uploaded"})
       .start();
@@ -206,11 +207,11 @@ describe("deploy", () => {
       .handleGetProject({...DEPLOY_CONFIG, title: oldTitle})
       .handleUpdateProject({projectId: DEPLOY_CONFIG.projectId, title: TEST_CONFIG.title!})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .handlePostDeployFile({deployId, clientName: "index.html"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/theme-air,near-midnight.css"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/client.js"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/runtime.js"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/stdlib.js"})
+      .expectFileUpload({deployId, path: "index.html"})
+      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
+      .expectFileUpload({deployId, path: "_observablehq/client.js"})
+      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
+      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId})
       .start();
@@ -234,11 +235,11 @@ describe("deploy", () => {
       .handleGetCurrentUser()
       .handleGetProject(deployConfig)
       .handlePostDeploy({projectId: deployConfig.projectId, deployId})
-      .handlePostDeployFile({deployId, clientName: "index.html"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/theme-air,near-midnight.css"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/client.js"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/runtime.js"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/stdlib.js"})
+      .expectFileUpload({deployId, path: "index.html"})
+      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
+      .expectFileUpload({deployId, path: "_observablehq/client.js"})
+      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
+      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId})
       .start();
@@ -261,11 +262,11 @@ describe("deploy", () => {
       })
       .handlePostProject({projectId: DEPLOY_CONFIG.projectId})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .handlePostDeployFile({deployId, clientName: "index.html"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/theme-air,near-midnight.css"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/client.js"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/runtime.js"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/stdlib.js"})
+      .expectFileUpload({deployId, path: "index.html"})
+      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
+      .expectFileUpload({deployId, path: "_observablehq/client.js"})
+      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
+      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId})
       .start();
@@ -472,6 +473,7 @@ describe("deploy", () => {
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
+      .handlePostDeployManifest({deployId, files: [{deployId, path: "index.html", action: "upload"}]})
       .handlePostDeployFile({deployId, status: 500})
       .start();
     const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG});
@@ -495,11 +497,11 @@ describe("deploy", () => {
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .handlePostDeployFile({deployId, clientName: "index.html"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/theme-air,near-midnight.css"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/client.js"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/runtime.js"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/stdlib.js"})
+      .expectFileUpload({deployId, path: "index.html"})
+      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
+      .expectFileUpload({deployId, path: "_observablehq/client.js"})
+      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
+      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
       .handlePostDeployUploaded({deployId, status: 500})
       .start();
     const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG});
@@ -612,11 +614,11 @@ describe("deploy", () => {
           projectId: newProjectId
         })
         .handlePostDeploy({projectId: newProjectId, deployId})
-        .handlePostDeployFile({deployId, clientName: "index.html"})
-        .handlePostDeployFile({deployId, clientName: "_observablehq/theme-air,near-midnight.css"})
-        .handlePostDeployFile({deployId, clientName: "_observablehq/client.js"})
-        .handlePostDeployFile({deployId, clientName: "_observablehq/runtime.js"})
-        .handlePostDeployFile({deployId, clientName: "_observablehq/stdlib.js"})
+        .expectFileUpload({deployId, path: "index.html"})
+        .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
+        .expectFileUpload({deployId, path: "_observablehq/client.js"})
+        .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
+        .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
         .handlePostDeployUploaded({deployId})
         .handleGetDeploy({deployId})
         .start();
@@ -700,11 +702,11 @@ describe("deploy", () => {
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .handlePostDeployFile({deployId, clientName: "index.html"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/theme-air,near-midnight.css"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/client.js"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/runtime.js"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/stdlib.js"})
+      .expectFileUpload({deployId, path: "index.html"})
+      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
+      .expectFileUpload({deployId, path: "_observablehq/client.js"})
+      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
+      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId})
       .start();
@@ -727,11 +729,11 @@ describe("deploy", () => {
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .handlePostDeployFile({deployId, clientName: "index.html"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/theme-air,near-midnight.css"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/client.js"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/runtime.js"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/stdlib.js"})
+      .expectFileUpload({deployId, path: "index.html"})
+      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
+      .expectFileUpload({deployId, path: "_observablehq/client.js"})
+      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
+      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId, deployStatus: "created"})
       .handleGetDeploy({deployId, deployStatus: "pending"})
@@ -831,11 +833,11 @@ describe("deploy", () => {
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .handlePostDeployFile({deployId, clientName: "index.html"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/theme-air,near-midnight.css"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/client.js"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/runtime.js"})
-      .handlePostDeployFile({deployId, clientName: "_observablehq/stdlib.js"})
+      .expectFileUpload({deployId, path: "index.html"})
+      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
+      .expectFileUpload({deployId, path: "_observablehq/client.js"})
+      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
+      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId})
       .start();
@@ -860,6 +862,48 @@ describe("deploy", () => {
 
     effects.close();
   });
+
+  it("will skip file uploads if instructed by the server", async () => {
+    const deployId = "deploy456";
+    getCurrentObservableApi()
+      .handleGetCurrentUser()
+      .handleGetProject(DEPLOY_CONFIG)
+      .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
+      .expectFileUpload({deployId, path: "index.html", action: "upload"})
+      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css", action: "skip"})
+      .expectFileUpload({deployId, path: "_observablehq/client.js", action: "skip"})
+      .expectFileUpload({deployId, path: "_observablehq/runtime.js", action: "skip"})
+      .expectFileUpload({deployId, path: "_observablehq/stdlib.js", action: "skip"})
+      .handlePostDeployUploaded({deployId})
+      .handleGetDeploy({deployId, deployStatus: "uploaded"})
+      .start();
+
+    const effects = new MockDeployEffects({
+      deployConfig: DEPLOY_CONFIG,
+      fixedInputStatTime: new Date("2024-03-09"),
+      fixedOutputStatTime: new Date("2024-03-10")
+    });
+    effects.clack.inputs = ["fix some bugs"]; // "what changed?"
+    await deploy(TEST_OPTIONS, effects);
+
+    effects.close();
+
+    // first is the upload spinner, second is the server processing spinner
+    assert.equal(effects.clack.spinners.length, 2, JSON.stringify(effects.clack.spinners, null, 2));
+    const events = effects.clack.spinners[0]._events.map((e) => {
+      const r: {method: string; message?: string} = {method: e.method};
+      if (e.message) r.message = stripColor(e.message);
+      return r;
+    });
+    assert.deepEqual(events, [
+      {method: "start"},
+      {method: "message", message: "Hashing local files"},
+      {method: "message", message: "Sending file manifest to server"},
+      {method: "message", message: "1 / 1 uploading index.html"},
+      {method: "stop", message: "1 uploaded, 4 unchanged, 5 total."}
+    ]);
+  });
+
 });
 
 describe("promptDeployTarget", () => {

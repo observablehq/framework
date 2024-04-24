@@ -108,7 +108,7 @@ try {
     }
     case "deploy": {
       const {
-        values: {config, root, message, build, "no-build": noBuild}
+        values: {config, root, message, build, "no-build": noBuild, manifest}
       } = helpArgs(command, {
         options: {
           ...CONFIG_OPTION,
@@ -123,14 +123,17 @@ try {
           "no-build": {
             type: "boolean",
             description: "Don’t build before deploying; deploy as is"
-          }
+          },
+          manifest: {type: "boolean", description: "Use the new upload strategy"},
+          "no-manifest": {type: "boolean", description: "Use the old upload strategy"}
         }
       });
       await import("../deploy.js").then(async (deploy) =>
         deploy.deploy({
           config: await readConfig(config, root),
           message,
-          force: build ? "build" : noBuild ? "deploy" : null
+          force: build ? "build" : noBuild ? "deploy" : null,
+          manifest
         })
       );
       break;
