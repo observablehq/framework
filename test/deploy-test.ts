@@ -903,7 +903,6 @@ describe("deploy", () => {
       {method: "stop", message: "1 uploaded, 4 unchanged, 5 total."}
     ]);
   });
-
 });
 
 describe("promptDeployTarget", () => {
