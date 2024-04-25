@@ -33,7 +33,7 @@ export const defaultEffects: TtyEffects = {
   outputColumns: Math.min(80, process.stdout.columns ?? 80)
 };
 
-export function stripColor(s: string): string {
+function stripColor(s: string): string {
   // eslint-disable-next-line no-control-regex
   return s.replace(/\x1b\[[0-9;]*m/g, "");
 }

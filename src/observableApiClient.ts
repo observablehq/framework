@@ -196,14 +196,6 @@ export class ObservableApiClient {
     }
   }
 
-  async postDeployManifest(deployId: string, files: DeployManifestFile[]): Promise<PostDeployManifestResponse> {
-    return await this._fetch<PostDeployManifestResponse>(new URL(`/cli/deploy/${deployId}/manifest`, this._apiOrigin), {
-      method: "POST",
-      headers: {"content-type": "application/json"},
-      body: JSON.stringify({files})
-    });
-  }
-
   async postDeployUploaded(deployId: string): Promise<DeployInfo> {
     return await this._fetch<DeployInfo>(new URL(`/cli/deploy/${deployId}/uploaded`, this._apiOrigin), {
       method: "POST",
@@ -312,20 +304,4 @@ export interface GetDeployResponse {
   id: string;
   status: string;
   url: string;
-}
-
-export interface DeployManifestFile {
-  path: string;
-  size: number;
-  hash: string;
-}
-
-export interface PostDeployManifestResponse {
-  status: "ok" | "error";
-  detail: string | null;
-  files: {
-    path: string;
-    status: "upload" | "skip" | "error";
-    detail: string | null;
-  }[];
 }

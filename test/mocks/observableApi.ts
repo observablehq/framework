@@ -6,8 +6,7 @@ import type {
   GetProjectResponse,
   PaginatedList,
   PostAuthRequestPollResponse,
-  PostAuthRequestResponse,
-  PostDeployManifestResponse
+  PostAuthRequestResponse
 } from "../../src/observableApiClient.js";
 import {getObservableApiOrigin, getObservableUiOrigin} from "../../src/observableApiClient.js";
 import {getCurrentAgent, mockAgent} from "./undici.js";
@@ -28,7 +27,7 @@ export function mockObservableApi() {
     agent.get(getOrigin());
   });
 
-  afterEach(function () {
+  afterEach(() => {
     apiMock.after();
   });
 }
@@ -42,22 +41,14 @@ function getOrigin() {
   return getObservableApiOrigin().toString().replace(/\/$/, "");
 }
 
-type ExpectedFile = {
-  path: string;
-  deployId: string;
-  action: "skip" | "upload";
-};
-
 class ObservableApiMock {
   private _agent: MockAgent | null = null;
   private _handlers: ((pool: Interceptable) => void)[] = [];
-  private _expectedFiles: ExpectedFile[] = [];
 
   public start(): ObservableApiMock {
     this._agent = getCurrentAgent();
     const mockPool = this._agent.get(getOrigin());
     for (const handler of this._handlers) handler(mockPool);
-    this.handleExpectedFiles(mockPool);
     return this;
   }
 
@@ -80,46 +71,6 @@ class ObservableApiMock {
   addHandler(handler: (pool: Interceptable) => void): ObservableApiMock {
     this._handlers.push(handler);
     return this;
-  }
-
-  private handleExpectedFiles(mockPool: Interceptable) {
-    if (this._expectedFiles.length > 0) {
-      const headers = authorizationHeader(true);
-      for (const {path, deployId, action} of this._expectedFiles) {
-        if (action === "upload") {
-          mockPool
-            .intercept({
-              path: `/cli/deploy/${deployId}/file`,
-              method: "POST",
-              headers: headersMatcher(headers),
-              body: formDataMatcher({client_name: path})
-            })
-            .reply(204, "");
-        }
-      }
-
-      const byDeployId: Record<string, ExpectedFile[]> = this._expectedFiles.reduce((acc, file) => {
-        (acc[file.deployId] ??= []).push(file);
-        return acc;
-      }, {});
-      for (const [deployId, files] of Object.entries(byDeployId)) {
-        mockPool
-          .intercept({
-            path: `/cli/deploy/${deployId}/manifest`,
-            method: "POST",
-            headers: headersMatcher(headers)
-          })
-          .reply(
-            200,
-            JSON.stringify({
-              status: "ok",
-              detail: null,
-              files: files.map((f) => ({path: f.path, detail: null, status: f.action}))
-            } satisfies PostDeployManifestResponse),
-            {headers: {"content-type": "application/json"}}
-          );
-      }
-    }
   }
 
   handleGetCurrentUser({
@@ -270,45 +221,6 @@ class ObservableApiMock {
     this.addHandler((pool) =>
       pool
         .intercept({path: `/cli/project/${projectId}/deploy`, method: "POST", headers: headersMatcher(headers)})
-        .reply(status, response, {headers: {"content-type": "application/json"}})
-    );
-    return this;
-  }
-
-  /** Register a file that is expected to be uploaded. Also includes that file in
-   * an automatic interceptor to `/deploy/:deployId/manifest`. If the action is
-   * "upload", an interceptor for `/deploy/:deployId/file` will be registered.
-   * If it is set to "skip", that interceptor will not be registered. */
-  expectFileUpload({
-    deployId,
-    path,
-    action = "upload"
-  }: {
-    deployId: string;
-    path: string;
-    action?: "skip" | "upload";
-  }): ObservableApiMock {
-    this._expectedFiles.push({deployId, path, action});
-    return this;
-  }
-
-  handlePostDeployManifest({
-    deployId,
-    status = 200,
-    files = []
-  }: {deployId?: string; status?: number; files?: ExpectedFile[]} = {}): ObservableApiMock {
-    const response =
-      status == 200
-        ? JSON.stringify({
-            status: "ok",
-            detail: null,
-            files: files.map((f) => ({path: f.path, detail: null, status: f.action}))
-          } satisfies PostDeployManifestResponse)
-        : emptyErrorBody;
-    const headers = authorizationHeader(status !== 403);
-    this.addHandler((pool) =>
-      pool
-        .intercept({path: `/cli/deploy/${deployId}/manifest`, method: "POST", headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
     );
     return this;

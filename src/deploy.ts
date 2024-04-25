@@ -1,6 +1,5 @@
-import {createHash} from "node:crypto";
 import type {Stats} from "node:fs";
-import {readFile, stat} from "node:fs/promises";
+import {stat} from "node:fs/promises";
 import {join} from "node:path/posix";
 import * as clack from "@clack/prompts";
 import wrapAnsi from "wrap-ansi";
@@ -17,7 +16,6 @@ import type {AuthEffects} from "./observableApiAuth.js";
 import {defaultEffects as defaultAuthEffects, formatUser, loginInner, validWorkspaces} from "./observableApiAuth.js";
 import {ObservableApiClient} from "./observableApiClient.js";
 import type {
-  DeployManifestFile,
   GetCurrentUserResponse,
   GetDeployResponse,
   GetProjectResponse,
@@ -361,61 +359,23 @@ export async function deploy(
     throw error;
   }
 
-  const progressSpinner = clack.spinner();
-  progressSpinner.start("");
-
-  // upload a manifest before uploading the files
-  progressSpinner.message("Hashing local files");
-  const manifestFileInfo: DeployManifestFile[] = [];
-  await runAllWithConcurrencyLimit(buildFilePaths, async (path) => {
-    const fullPath = join(config.output, path);
-    const statInfo = await stat(fullPath);
-    const hash = createHash("sha512")
-      .update(await readFile(fullPath))
-      .digest("base64");
-    manifestFileInfo.push({path, size: statInfo.size, hash});
-  });
-  progressSpinner.message("Sending file manifest to server");
-  const instructions = await apiClient.postDeployManifest(deployId, manifestFileInfo);
-  const fileErrors: {path: string; detail: string | null}[] = [];
-  for (const fileInstruction of instructions.files) {
-    if (fileInstruction.status === "error") {
-      fileErrors.push({path: fileInstruction.path, detail: fileInstruction.detail});
-    }
-  }
-  if (fileErrors.length) {
-    clack.log.error(
-      "The server rejected some files from the upload:\n\n" +
-        fileErrors.map(({path, detail}) => `  - ${path} - ${detail ? `(${detail})` : "no details"}`).join("\n")
-    );
-  }
-  if (instructions.status === "error" || fileErrors.length) {
-    throw new CliError(`Server rejected deploy manifest: ${instructions.detail ?? "no details"}`);
-  }
-  const filesToUpload: string[] = instructions.files
-    .filter((instruction) => instruction.status === "upload")
-    .map((instruction) => instruction.path);
-
   // Upload the files
+  const uploadSpinner = clack.spinner();
+  uploadSpinner.start("");
+
   const rateLimiter = new RateLimiter(5);
-  const waitForRateLimit = filesToUpload.length <= 300 ? async () => {} : () => rateLimiter.wait();
+  const waitForRateLimit = buildFilePaths.length <= 300 ? async () => {} : () => rateLimiter.wait();
 
   await runAllWithConcurrencyLimit(
-    filesToUpload,
+    buildFilePaths,
     async (path, i) => {
       await waitForRateLimit();
-      progressSpinner.message(
-        `${i + 1} / ${filesToUpload.length} ${faint("uploading")} ${path.slice(0, effects.outputColumns - 17)}`
-      );
+      uploadSpinner.message(`${i + 1} / ${buildFilePaths!.length} ${path.slice(0, effects.outputColumns - 10)}`);
       await apiClient.postDeployFile(deployId, join(config.output, path), path);
     },
     {maxConcurrency}
   );
-  progressSpinner.stop(
-    `${filesToUpload.length} uploaded, ${buildFilePaths.length - filesToUpload.length} unchanged, ${
-      buildFilePaths.length
-    } total.`
-  );
+  uploadSpinner.stop(`${buildFilePaths.length} uploaded`);
 
   // Mark the deploy as uploaded
   await apiClient.postDeployUploaded(deployId);
