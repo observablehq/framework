@@ -320,6 +320,7 @@
   z-index: 2;
 }
 
+#observablehq-sidebar-backdrop:has(~ #observablehq-sidebar:focus-within),
 .observablehq-sidebar-open ~ #observablehq-sidebar-backdrop,
 #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar-backdrop {
   display: initial;
