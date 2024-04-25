@@ -40,15 +40,33 @@ input.addEventListener("input", () => {
   resultsContainer.innerHTML =
     results.length === 0
       ? "<div>no results</div>"
-      : `<div>${results.length.toLocaleString("en-US")} result${results.length === 1 ? "" : "s"}</div><ol>${results
-          .map(renderResult)
-          .join("")}</ol>`;
+      : `<div>${results.length.toLocaleString("en-US")} result${
+          results.length === 1 ? "" : "s"
+        }</div><ol>${renderResults(results)}</ol>`;
+  resultsContainer.querySelector(`.${activeClass}`)?.scrollIntoView({block: "nearest"});
+  for (const a of resultsContainer.querySelectorAll("a")) a.onclick = captureQuery;
 });
 
-function renderResult({id, score, title}, i) {
-  return `<li data-score="${Math.min(5, Math.round(0.6 * score))}" class="observablehq-link${
-    i === 0 ? ` ${activeClass}` : ""
-  }"><a href="${escapeDoubleQuote(import.meta.resolve(`../${id}`))}">${escapeText(String(title ?? "—"))}</a></li>`;
+function renderResults(results) {
+  const me = document.location.href.replace(/[?#].*/, "");
+  let found;
+  results = results.map(({id, score, title}) => {
+    const href = import.meta.resolve(`../${id}`);
+    return {
+      title: String(title ?? "—"),
+      href,
+      score: Math.min(5, Math.round(0.6 * score)),
+      active: me === href && (found = true)
+    };
+  });
+  if (!found) results[0].active = true;
+  return results.map(renderResult).join("");
+}
+
+function renderResult({href, score, title, active}) {
+  return `<li data-score="${score}" class="observablehq-link${
+    active ? ` ${activeClass}` : ""
+  }"><a href="${escapeDoubleQuote(href)}">${escapeText(title)}</a></li>`;
 }
 
 function escapeDoubleQuote(text) {
@@ -66,18 +84,57 @@ function entity(character) {
 // Handle a race condition where an input event fires while awaiting the index fetch.
 input.dispatchEvent(new Event("input"));
 
+// Capture 10 previous queries and restore them on ArrowUp/Down.
+function captureQuery() {
+  sessionStorage.setItem(
+    "search-queries",
+    JSON.stringify((queries = Array.from(new Set([...(input.value && [input.value]), ...queries])).slice(0, 10)))
+  );
+}
+let queries = [];
+try {
+  queries = JSON.parse(sessionStorage.getItem("search-queries") ?? "[]");
+  if (!Array.isArray(queries)) queries = [];
+} catch (error) {
+  // ignore parse errors
+}
+input.addEventListener("blur", captureQuery);
+input.addEventListener("cancel", captureQuery);
+
 input.addEventListener("keydown", (event) => {
   const {code} = event;
   if (code === "Escape" && input.value === "") return input.blur();
   if (code === "ArrowDown" || code === "ArrowUp" || code === "Enter") {
-    const results = resultsContainer.querySelector("ol");
-    if (!results) return;
-    let activeResult = results.querySelector(`.${activeClass}`);
-    if (code === "Enter") return activeResult.querySelector("a").click();
-    activeResult.classList.remove(activeClass);
-    if (code === "ArrowUp") activeResult = activeResult.previousElementSibling ?? results.lastElementChild;
-    else activeResult = activeResult.nextElementSibling ?? results.firstElementChild;
-    activeResult.classList.add(activeClass);
-    activeResult.scrollIntoView({block: "nearest"});
+    if (input.selectionStart == 0 && input.selectionEnd == input.value.length) {
+      if (code === "Enter") {
+        input.selectionStart = input.selectionEnd = input.value.length;
+      } else {
+        const i = queries.indexOf(input.value);
+        const query =
+          code === "ArrowUp" && queries.length > i + 1
+            ? queries[i + 1]
+            : code === "ArrowDown" && i > 0
+            ? queries[i - 1]
+            : null;
+        if (query) {
+          if (i === -1) captureQuery(); // capture current query if necessary.
+          input.value = query;
+          input.select();
+          input.dispatchEvent(new Event("input"));
+        }
+      }
+      event.preventDefault();
+    } else {
+      const results = resultsContainer.querySelector("ol");
+      if (results) {
+        let activeResult = results.querySelector(`.${activeClass}`);
+        if (code === "Enter") return activeResult.querySelector("a").click();
+        activeResult.classList.remove(activeClass);
+        if (code === "ArrowUp") activeResult = activeResult.previousElementSibling ?? results.lastElementChild;
+        else activeResult = activeResult.nextElementSibling ?? results.firstElementChild;
+        activeResult.classList.add(activeClass);
+        activeResult.scrollIntoView({block: "nearest"});
+      }
+    }
   }
 });

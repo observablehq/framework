@@ -22,7 +22,6 @@ addEventListener("keydown", (event) => {
     // persistently after you blur the search input.)
     toggle.classList.add("observablehq-sidebar-open");
     input.focus();
-    input.select();
     event.preventDefault();
   }
 });
