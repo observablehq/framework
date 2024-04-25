@@ -299,7 +299,7 @@
     left 150ms 0ms ease;
 }
 
-#observablehq-sidebar:hover,
+#observablehq-sidebar:focus-within,
 .observablehq-sidebar-open ~ #observablehq-sidebar,
 #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar {
   left: 0;
