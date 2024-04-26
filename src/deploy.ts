@@ -221,15 +221,19 @@ export async function deploy(
     const mostRecentSourceMtimeMs = await findMostRecentSourceMtimeMs(effects, config);
     const buildAge = Date.now() - leastRecentBuildMtimeMs;
     let initialValue = buildAge > BUILD_AGE_WARNING_MS;
-    let message = "";
     if (mostRecentSourceMtimeMs > leastRecentBuildMtimeMs) {
-      message += "Your source files have changed since the last time you built. ";
+      clack.log.warn(
+        wrapAnsi(
+          `Your source files have changed since you built ${formatAge(buildAge)}.`,
+          effects.outputColumns
+        )
+      );
       initialValue = true;
+    } else {
+      clack.log.info(wrapAnsi(`You built this project ${formatAge(buildAge)}.`, effects.outputColumns));
     }
-    message += `You built this project ${formatAge(buildAge)}. `;
-    message += "Would you like to build again before deploying?";
     const choice = await clack.confirm({
-      message,
+      message: "Would you like to build again before deploying?",
       initialValue,
       active: "Yes, build and then deploy",
       inactive: "No, deploy as is"
