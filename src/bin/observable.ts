@@ -108,7 +108,7 @@ try {
     }
     case "deploy": {
       const {
-        values: {config, root, message, build, "no-build": noBuild}
+        values: {config, root, message, build}
       } = helpArgs(command, {
         options: {
           ...CONFIG_OPTION,
@@ -130,7 +130,7 @@ try {
         deploy.deploy({
           config: await readConfig(config, root),
           message,
-          force: build ? "build" : noBuild ? "deploy" : null
+          force: build === true ? "build" : build === false ? "deploy" : null
         })
       );
       break;
