@@ -223,10 +223,7 @@ export async function deploy(
     let initialValue = buildAge > BUILD_AGE_WARNING_MS;
     if (mostRecentSourceMtimeMs > leastRecentBuildMtimeMs) {
       clack.log.warn(
-        wrapAnsi(
-          `Your source files have changed since you built ${formatAge(buildAge)}.`,
-          effects.outputColumns
-        )
+        wrapAnsi(`Your source files have changed since you built ${formatAge(buildAge)}.`, effects.outputColumns)
       );
       initialValue = true;
     } else {
