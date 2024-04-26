@@ -274,7 +274,7 @@ To personalize this code snippet to your current location, edit the <code>longit
 Your data loader should look like this:
 
 <figure class="wide">
-  <img loading="lazy" src="./getting-started/hello-loader.webp" class="crop">
+  <img loading="lazy" src="./getting-started/hello-loader.webp" style="aspect-ratio: 3248 / 2112;">
   <figcaption>A JavaScript data loader for fetching a local forecast from weather.gov.</figcaption>
 </figure>
 
