@@ -10,19 +10,20 @@ input.addEventListener("focus", load, {once: true});
 input.addEventListener("keydown", load, {once: true});
 
 // Focus on meta-K and /
-const sidebar = document.querySelector("#observablehq-sidebar")!;
+const toggle = document.querySelector<HTMLInputElement>("#observablehq-sidebar-toggle")!;
 addEventListener("keydown", (event) => {
   if (
     (event.code === "KeyK" && event.metaKey && !event.altKey && !event.ctrlKey) ||
     (event.key === "/" && !event.metaKey && !event.altKey && !event.ctrlKey && event.target === document.body)
   ) {
     // Force the sidebar to be temporarily open while the search input is
-    // focused. The class makes the sidebar visible so the input can be focused,
-    // then the :focus-within selector takes over and keeps it open until the
-    // user blurs the input.
-    sidebar.classList.add("observablehq-sidebar-open");
+    // focused. We click on the toggle if necessary to make the input visible so
+    // it be focused. Then the :focus-within selector takes over and keeps it
+    // open until the user blurs the input.
+    const check = getComputedStyle(input).visibility === "hidden";
+    if (check) toggle.click();
     input.focus();
-    sidebar.classList.remove("observablehq-sidebar-open");
+    if (check) toggle.click();
     input.select();
     event.preventDefault();
   }

@@ -299,7 +299,6 @@
     left 150ms 0ms ease;
 }
 
-#observablehq-sidebar.observablehq-sidebar-open,
 #observablehq-sidebar:focus-within,
 #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar {
   left: 0;
