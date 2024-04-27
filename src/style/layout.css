@@ -335,11 +335,9 @@
   #observablehq-sidebar {
     transition: none !important;
   }
-  #observablehq-sidebar-backdrop:has(~ #observablehq-sidebar:focus-within),
   #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar-backdrop {
     display: none;
   }
-  #observablehq-sidebar:focus-within,
   #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-sidebar {
     left: 0;
@@ -347,7 +345,6 @@
     box-shadow: none;
     border-right: solid 1px var(--theme-foreground-faintest);
   }
-  #observablehq-sidebar:focus-within ~ #observablehq-center,
   #observablehq-sidebar-toggle:checked ~ #observablehq-center,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center {
     padding-left: calc(272px + 1rem);
@@ -365,7 +362,6 @@
 }
 
 @media (min-width: calc(640px + 6rem + 272px)) {
-  #observablehq-sidebar:focus-within ~ #observablehq-toc,
   #observablehq-sidebar-toggle:checked ~ #observablehq-toc,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc {
     display: none;
@@ -373,13 +369,11 @@
 }
 
 @media (min-width: calc(640px + 6rem + 272px + 192px)) {
-  #observablehq-sidebar:focus-within ~ #observablehq-toc,
   #observablehq-sidebar-toggle:checked ~ #observablehq-toc,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc,
   #observablehq-toc {
     display: block;
   }
-  #observablehq-sidebar:focus-within ~ #observablehq-toc ~ #observablehq-center,
   #observablehq-sidebar-toggle:checked ~ #observablehq-toc ~ #observablehq-center,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc ~ #observablehq-center,
   #observablehq-toc ~ #observablehq-center {
