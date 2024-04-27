@@ -20,10 +20,8 @@ addEventListener("keydown", (event) => {
     // focused. We click on the toggle if necessary to make the input visible so
     // it be focused. Then the :focus-within selector takes over and keeps it
     // open until the user blurs the input.
-    const check = getComputedStyle(input).visibility === "hidden";
-    if (check) toggle.click();
-    input.focus();
-    if (check) toggle.click();
+    if (toggle.checked) input.focus();
+    else toggle.click(), input.focus(), toggle.click();
     input.select();
     event.preventDefault();
   }
