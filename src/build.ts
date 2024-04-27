@@ -1,6 +1,6 @@
 import {createHash} from "node:crypto";
 import {existsSync} from "node:fs";
-import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
+import {access, constants, copyFile, readFile, stat, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {CliError, isEnoent} from "./error.js";
@@ -12,7 +12,7 @@ import type {MarkdownPage} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
 import {extractNodeSpecifier} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport} from "./npm.js";
-import {isPathImport, relativePath, resolvePath} from "./path.js";
+import {isAssetPath, isPathImport, relativePath, resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
 import {getModuleResolver, getResolvers} from "./resolvers.js";
@@ -218,15 +218,12 @@ export async function build(
     await effects.writeFile(alias, contents);
   }
 
-  // Render pages, resolving against content-hashed file names!
-  for (const [sourceFile, {page, resolvers}] of pages) {
-    const sourcePath = join(root, sourceFile);
-    const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
+  // Wrap the resolvers to apply content-hashed file names.
+  for (const [sourceFile, page] of pages) {
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
-    const options = {path, ...config};
-    effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
-    const html = await renderPage(page, {
-      ...options,
+    const {resolvers} = page;
+    pages.set(sourceFile, {
+      ...page,
       resolvers: {
         ...resolvers,
         resolveFile(specifier) {
@@ -251,7 +248,50 @@ export async function build(
         }
       }
     });
+  }
+
+  // Render pages!
+  for (const [sourceFile, {page, resolvers}] of pages) {
+    const sourcePath = join(root, sourceFile);
+    const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
+    const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
+    effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
+    const html = await renderPage(page, {...config, path, resolvers});
     await effects.writeFile(outputPath, html);
+  }
+
+  // Log page sizes. TODO Log individual files that are larger than 1MB?
+  for (const [sourceFile, {resolvers}] of pages) {
+    const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
+    const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
+    const size = (await stat(join(config.output, outputPath))).size;
+    let totalFileSize = 0;
+    let totalImportSize = 0;
+    for (const file of [...resolvers.files, ...resolvers.assets]) {
+      const fileResolution = resolvers.resolveFile(file);
+      if (isAssetPath(fileResolution)) {
+        const filePath = resolvePath(path, fileResolution);
+        const fileSize = (await stat(join(config.output, filePath))).size;
+        totalFileSize += fileSize;
+        effects.logger.log(`${outputPath} → file ${filePath} ${yellow(`${fileSize}`)} bytes`);
+      }
+    }
+    for (const staticImport of resolvers.staticImports) {
+      const staticImportResolution = resolvers.resolveImport(staticImport);
+      if (isAssetPath(staticImportResolution)) {
+        const staticImportPath = resolvePath(path, staticImportResolution);
+        const staticImportSize = (await stat(join(config.output, staticImportPath))).size;
+        totalImportSize += staticImportSize;
+        effects.logger.log(`${outputPath} → import ${staticImportPath} ${yellow(`${staticImportSize}`)} bytes`);
+      }
+    }
+    effects.logger.log(
+      `${outputPath} ${[
+        `${yellow(`${size}`)} bytes page`,
+        `${yellow(`${totalFileSize}`)} bytes files`,
+        `${yellow(`${totalImportSize}`)} bytes imports`
+      ].join("; ")}`
+    );
   }
 
   Telemetry.record({event: "build", step: "finish", pageCount});
