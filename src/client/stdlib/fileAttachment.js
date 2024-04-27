@@ -23,9 +23,11 @@ async function remote_fetch(file) {
 
 export class AbstractFile {
   constructor(name, mimeType = "application/octet-stream", lastModified) {
-    Object.defineProperty(this, "name", {value: `${name}`, enumerable: true});
-    Object.defineProperty(this, "mimeType", {value: `${mimeType}`, enumerable: true});
-    if (lastModified !== undefined) Object.defineProperty(this, "lastModified", {value: Number(lastModified), enumerable: true}); // prettier-ignore
+    Object.defineProperties(this, {
+      name: {value: `${name}`, enumerable: true},
+      mimeType: {value: `${mimeType}`, enumerable: true},
+      lastModified: {value: +lastModified, enumerable: true}
+    });
   }
   async blob() {
     return (await remote_fetch(this)).blob();
