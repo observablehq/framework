@@ -44,6 +44,14 @@ The code is rendered below the output, like so:
 1 + 2
 ```
 
+Alternatively, if you just want to show the code _without_ running it, set the `run` directive to `false`:
+
+````md
+```js run=false
+1 + 2
+```
+````
+
 If an expression evaluates to a DOM node, the node is inserted into the page directly above the code block. Use this to create dynamic content such as charts and tables.
 
 ```js echo
