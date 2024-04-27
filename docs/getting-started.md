@@ -152,7 +152,7 @@ Or with Yarn:
 
 You should see something like this:
 
-<pre data-copy="none"><b class="green">Observable Framework</b> v1.6.0
+<pre data-copy="none"><b class="green">Observable Framework</b> v1.7.0
 ↳ <u><a href="http://127.0.0.1:3000/" style="color: inherit;">http://127.0.0.1:3000/</a></u></pre>
 
 <div class="note">
@@ -274,7 +274,7 @@ To personalize this code snippet to your current location, edit the <code>longit
 Your data loader should look like this:
 
 <figure class="wide">
-  <img loading="lazy" src="./getting-started/hello-loader.webp" class="crop">
+  <img loading="lazy" src="./getting-started/hello-loader.webp" style="aspect-ratio: 3248 / 2112;">
   <figcaption>A JavaScript data loader for fetching a local forecast from weather.gov.</figcaption>
 </figure>
 

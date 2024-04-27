@@ -21,7 +21,7 @@ The following options are supported.
 
 ## root
 
-The path to the source root; defaults to `src`. (Prior to <a href="https://github.com/observablehq/framework/pull/1253" class="observablehq-version-badge" data-version="prerelease" title="Added in #1253"></a>, the default was `docs`.)
+The path to the source root; defaults to `src`. (Prior to <a href="https://github.com/observablehq/framework/releases/tag/v1.7.0" class="observablehq-version-badge" data-version="^1.7.0" title="Added in 1.7.0"></a>, the default was `docs`.)
 
 ## output
 
@@ -164,13 +164,23 @@ An HTML fragment to add to the footer. Defaults to “Built with Observable.”
 
 ## scripts
 
-Additional scripts to add to the head, such as for analytics. Unlike the **head** option, this allows you to reference a local script in the source root.
+Additional scripts to add to the head, such as for analytics. For example, this:
 
 ```js run=false
 export default {
   scripts: [{type: "module", async: true, src: "analytics.js"}]
 };
 ```
+
+Is equivalent to setting the **head** option:
+
+```js run=false
+export default {
+  head: `<script type="module" async src="analytics.js"></script>`
+};
+```
+
+We recommend you use the **head** option instead of this option.
 
 ## base
 
@@ -263,14 +273,14 @@ export default {
 };
 ```
 
-## typographer <a href="https://github.com/observablehq/framework/pull/1263" class="observablehq-version-badge" data-version="prerelease" title="Added in #1263"></a>
+## typographer <a href="https://github.com/observablehq/framework/releases/tag/v1.7.0" class="observablehq-version-badge" data-version="^1.7.0" title="Added in 1.7.0"></a>
 
 If true, enables simple typographic replacements in Markdown, such as replacing `(c)` with `©` and converting straight quotes to curly quotes. See also the [quotes](#quotes) option, which should be set for non-English languages if the **typographer** option is enabled. For the full list of replacements, see [markdown-it](https://github.com/markdown-it/markdown-it/blob/master/lib/rules_core/replacements.mjs). Defaults to false.
 
-## quotes <a href="https://github.com/observablehq/framework/pull/1263" class="observablehq-version-badge" data-version="prerelease" title="Added in #1263"></a>
+## quotes <a href="https://github.com/observablehq/framework/releases/tag/v1.7.0" class="observablehq-version-badge" data-version="^1.7.0" title="Added in 1.7.0"></a>
 
 The set of replacements for straight double and single quotes used when the [**typographer** option](#typographer) is enabled. Defaults to `["“", "”", "‘", "’"]` which is suitable for English. For example, you can use `["«", "»", "„", "“"]` for Russian, `["„", "“", "‚", "‘"]` for German, and `["«\xa0", "\xa0»", "‹\xa0", "\xa0›"]` for French.
 
-## linkify <a href="https://github.com/observablehq/framework/pull/1263" class="observablehq-version-badge" data-version="prerelease" title="Added in #1263"></a>
+## linkify <a href="https://github.com/observablehq/framework/releases/tag/v1.7.0" class="observablehq-version-badge" data-version="^1.7.0" title="Added in 1.7.0"></a>
 
 If true (the default), automatically convert URL-like text to links in Markdown.

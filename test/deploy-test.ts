@@ -777,7 +777,10 @@ describe("deploy", () => {
       fixedInputStatTime: new Date("2024-03-09"),
       fixedOutputStatTime: new Date("2024-03-10")
     });
-    await assert.rejects(() => deploy(deployOptions, effects), /out of inputs for select: You built this project/);
+    await assert.rejects(
+      () => deploy(deployOptions, effects),
+      /out of inputs for select: Would you like to build again/
+    );
     effects.close();
   });
 
@@ -794,7 +797,7 @@ describe("deploy", () => {
     });
     await assert.rejects(
       () => deploy(deployOptions, effects),
-      /out of inputs for select: Your source files have changed/
+      /out of inputs for select: Would you like to build again/
     );
     effects.close();
   });
