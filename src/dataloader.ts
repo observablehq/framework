@@ -9,6 +9,7 @@ import JSZip from "jszip";
 import {extract} from "tar-stream";
 import {maybeStat, prepareOutput} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
+import {formatByteSize} from "./format.js";
 import {getFileInfo} from "./javascript/module.js";
 import type {Logger, Writer} from "./logger.js";
 import {cyan, faint, green, red, yellow} from "./tty.js";
@@ -267,8 +268,9 @@ export abstract class Loader {
     const start = performance.now();
     command.then(
       (path) => {
+        const {size} = statSync(join(this.root, path));
         effects.logger.log(
-          `${green("success")} ${cyan(formatSize(statSync(join(this.root, path)).size))} ${faint(
+          `${green("success")} ${size ? cyan(formatByteSize(size)) : yellow("empty output")} ${faint(
             `in ${formatElapsed(start)}`
           )}`
         );
@@ -394,12 +396,6 @@ const extractors = [
   [".tar.gz", TarGzExtractor],
   [".tgz", TarGzExtractor]
 ] as const;
-
-function formatSize(size: number): string {
-  if (!size) return yellow("empty output");
-  const e = Math.floor(Math.log(size) / Math.log(1024));
-  return `${+(size / 1024 ** e).toFixed(2)} ${["bytes", "KiB", "MiB", "GiB", "TiB"][e]}`;
-}
 
 function formatElapsed(start: number): string {
   const elapsed = performance.now() - start;

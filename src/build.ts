@@ -5,6 +5,7 @@ import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
+import {formatByteSize} from "./format.js";
 import {getModuleHash} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
@@ -21,7 +22,7 @@ import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {tree} from "./tree.js";
-import {faint, yellow} from "./tty.js";
+import {faint, green, red, yellow} from "./tty.js";
 
 export interface BuildOptions {
   config: Config;
@@ -277,7 +278,6 @@ export async function build(
           try {
             const fileSize = (await stat(join(config.output, filePath))).size;
             totalFileSize += fileSize;
-            // effects.logger.log(`${outputPath} → file ${filePath} ${yellow(`${fileSize}`)} bytes`);
           } catch {
             // ignore missing file
           }
@@ -290,7 +290,6 @@ export async function build(
             const staticImportPath = resolvePath(path, staticImportResolution);
             const staticImportSize = (await stat(join(config.output, staticImportPath))).size;
             totalImportSize += staticImportSize;
-            // effects.logger.log(`${outputPath} → import ${staticImportPath} ${yellow(`${staticImportSize}`)} bytes`);
           } catch {
             // ignore missing file
           }
@@ -298,17 +297,35 @@ export async function build(
       }
       effects.logger.log(
         `${faint(indent)}${name.replace(/\.md$/, "")} ${[
-          `${yellow(`${size}`)} bytes page`,
-          `${yellow(`${totalFileSize}`)} bytes files`,
-          `${yellow(`${totalImportSize}`)} bytes imports`
-        ].join("; ")}`
+          `${formatByteSizeColor(size, 12)}`,
+          `${formatByteSizeColor(totalFileSize, 12)}`,
+          `${formatByteSizeColor(totalImportSize, 12)}`
+        ].join(" ")}`
       );
     } else {
-      effects.logger.log(`${faint(indent)}${name}`);
+      effects.logger.log(
+        `${faint(indent)}${name} ${
+          indent ? "" : ["Page".padEnd(12), "Files".padEnd(12), "Imports".padEnd(12)].join(" ")
+        }`
+      );
     }
   }
 
   Telemetry.record({event: "build", step: "finish", pageCount});
+}
+
+function formatByteSizeColor(size: number, length: number): string {
+  const f = formatByteSize(size);
+  const g = f.padEnd(length); // pad before colorizing
+  return size >= 50_000_000
+    ? red(g)
+    : f.endsWith(" MB")
+    ? yellow(g)
+    : f.endsWith(" kB")
+    ? green(g)
+    : f.endsWith(" B")
+    ? faint(g)
+    : g;
 }
 
 export class FileBuildEffects implements BuildEffects {

@@ -14,14 +14,16 @@ function pad(number: number, length: number): string {
   return String(number).padStart(length, "0");
 }
 
-export function formatByteSize(n: number): string {
-  const suffixes = ["bytes", "KB", "MB", "GB"];
-  for (const suffix of suffixes) {
-    if (n < 1300) {
-      if (suffix === "bytes") return `${n} ${suffix}`;
-      return `${n > 100 ? n.toFixed(0) : n.toFixed(1)} ${suffix}`;
+export function formatByteSize(x: number, locale: Intl.LocalesArgument = "en-US"): string {
+  const formatOptions = {maximumSignificantDigits: 3, maximumFractionDigits: 2};
+  for (const [k, suffix] of [
+    [1e9, " GB"],
+    [1e6, " MB"],
+    [1e3, " kB"]
+  ] as const) {
+    if (Math.round((x / k) * 1e3) >= 1e3) {
+      return (x / k).toLocaleString(locale, formatOptions) + suffix;
     }
-    n /= 1000;
   }
-  return `${n.toFixed(1)} TB`;
+  return x.toLocaleString(locale, formatOptions) + " B";
 }
