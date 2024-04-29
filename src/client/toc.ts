@@ -12,7 +12,7 @@ if (toc) {
     // If there’s a location.hash, highlight that if it’s at the top of the viewport.
     if (location.hash) {
       for (const heading of headings) {
-        const hash = `#${heading.id}`;
+        const hash = encodeURI(`#${heading.id}`);
         if (hash === location.hash) {
           const top = heading.getBoundingClientRect().top;
           if (0 < top && top < 40) {
