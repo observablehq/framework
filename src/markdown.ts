@@ -322,7 +322,7 @@ export function createMarkdownIt({
 } = {}): MarkdownIt {
   const md = MarkdownIt({html: true, linkify, typographer, quotes});
   if (linkify) md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
-  md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
+  md.use(MarkdownItAnchor);
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
   md.renderer.rules.placeholder = makePlaceholderRenderer();
