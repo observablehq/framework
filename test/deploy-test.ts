@@ -248,8 +248,8 @@ describe("deploy", () => {
     }
 
     effects.close();
-  }); 
-  
+  });
+
   it("won't deploy to an existing deploy with an unexpected status", async () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
@@ -269,11 +269,15 @@ describe("deploy", () => {
       await deploy({...TEST_OPTIONS, deployId}, effects);
       assert.fail("expected error");
     } catch (error) {
-      CliError.assert(error, {message: "Deploy deploy456 has an unexpected status: uploaded", print: true, exitCode: 1});
+      CliError.assert(error, {
+        message: "Deploy deploy456 has an unexpected status: uploaded",
+        print: true,
+        exitCode: 1
+      });
     }
 
     effects.close();
-  });  
+  });
 
   it("updates title for existing project if it doesn't match", async () => {
     const deployId = "deploy456";
