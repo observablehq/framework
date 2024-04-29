@@ -108,7 +108,7 @@ try {
     }
     case "deploy": {
       const {
-        values: {config, root, message, build}
+        values: {config, root, message, build, id}
       } = helpArgs(command, {
         options: {
           ...CONFIG_OPTION,
@@ -123,6 +123,10 @@ try {
           "no-build": {
             type: "boolean",
             description: "Don’t build before deploying; deploy as is"
+          },
+          id: {
+            type: "string",
+            description: "Use an existing deploy ID"
           }
         }
       });
@@ -130,7 +134,8 @@ try {
         deploy.deploy({
           config: await readConfig(config, root),
           message,
-          force: build === true ? "build" : build === false ? "deploy" : null
+          force: build === true ? "build" : build === false ? "deploy" : null,
+          deployId: id
         })
       );
       break;

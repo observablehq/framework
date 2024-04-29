@@ -199,6 +199,32 @@ describe("deploy", () => {
     effects.close();
   });
 
+  it("makes expected API calls for an existing project and deploy", async () => {
+    const deployId = "deploy456";
+    getCurrentObservableApi()
+      .handleGetCurrentUser()
+      .handleGetProject(DEPLOY_CONFIG)
+      // no call to handlePostDeploy
+      .expectFileUpload({deployId, path: "index.html"})
+      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
+      .expectFileUpload({deployId, path: "_observablehq/client.js"})
+      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
+      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
+      .handlePostDeployUploaded({deployId})
+      .handleGetDeploy({deployId, deployStatus: "uploaded"})
+      .start();
+
+    const effects = new MockDeployEffects({
+      deployConfig: DEPLOY_CONFIG,
+      fixedInputStatTime: new Date("2024-03-09"),
+      fixedOutputStatTime: new Date("2024-03-10")
+    });
+    effects.clack.inputs = ["fix some bugs"]; // "what changed?"
+    await deploy({...TEST_OPTIONS, deployId}, effects);
+
+    effects.close();
+  });
+
   it("updates title for existing project if it doesn't match", async () => {
     const deployId = "deploy456";
     const oldTitle = `${TEST_CONFIG.title!} old`;

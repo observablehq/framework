@@ -41,6 +41,7 @@ export interface DeployOptions {
   deployPollInterval?: number;
   force: "build" | "deploy" | null;
   maxConcurrency?: number;
+  deployId?: string;
 }
 
 export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
@@ -76,7 +77,7 @@ type DeployTargetInfo =
 
 /** Deploy a project to ObservableHQ */
 export async function deploy(
-  {config, message, force, deployPollInterval = DEPLOY_POLL_INTERVAL_MS, maxConcurrency}: DeployOptions,
+  {config, message, force, deployPollInterval = DEPLOY_POLL_INTERVAL_MS, maxConcurrency, deployId}: DeployOptions,
   effects = defaultEffects
 ): Promise<void> {
   const {clack} = effects;
@@ -342,24 +343,25 @@ export async function deploy(
     workspaceLogin: deployTarget.workspace.login
   });
 
-  // Create the new deploy on the server
-  let deployId: string;
-  try {
-    deployId = await apiClient.postDeploy({projectId: deployTarget.project.id, message});
-  } catch (error) {
-    if (isHttpError(error)) {
-      if (error.statusCode === 404) {
-        throw new CliError(`Project @${deployTarget.workspace.login}/${deployTarget.project.slug} not found.`, {
-          cause: error
-        });
-      } else if (error.statusCode === 403) {
-        throw new CliError(
-          `You don't have permission to deploy to @${deployTarget.workspace.login}/${deployTarget.project.slug}.`,
-          {cause: error}
-        );
+  if (!deployId) {
+    // Create the new deploy on the server
+    try {
+      deployId = await apiClient.postDeploy({projectId: deployTarget.project.id, message});
+    } catch (error) {
+      if (isHttpError(error)) {
+        if (error.statusCode === 404) {
+          throw new CliError(`Project @${deployTarget.workspace.login}/${deployTarget.project.slug} not found.`, {
+            cause: error
+          });
+        } else if (error.statusCode === 403) {
+          throw new CliError(
+            `You don't have permission to deploy to @${deployTarget.workspace.login}/${deployTarget.project.slug}.`,
+            {cause: error}
+          );
+        }
       }
+      throw error;
     }
-    throw error;
   }
 
   const progressSpinner = clack.spinner();
