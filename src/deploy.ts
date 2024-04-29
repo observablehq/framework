@@ -343,7 +343,22 @@ export async function deploy(
     workspaceLogin: deployTarget.workspace.login
   });
 
-  if (!deployId) {
+  if (deployId) {
+    // Make sure deploy exists and has an expected status.
+    try {
+      const deployInfo = await apiClient.getDeploy(deployId);
+      if (deployInfo.status !== "created") {
+        throw new CliError(`Deploy ${deployId} has an unexpected status: ${deployInfo.status}`);
+      }
+    } catch (error) {
+      if (isHttpError(error)) {
+        throw new CliError(`Deploy ${deployId} not found.`, {
+          cause: error
+        });
+      }
+      throw error;
+    }
+  } else {
     // Create the new deploy on the server
     try {
       deployId = await apiClient.postDeploy({projectId: deployTarget.project.id, message});

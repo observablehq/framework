@@ -204,7 +204,7 @@ describe("deploy", () => {
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
-      // no call to handlePostDeploy
+      .handleGetDeploy({deployId, deployStatus: "created"})
       .expectFileUpload({deployId, path: "index.html"})
       .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
       .expectFileUpload({deployId, path: "_observablehq/client.js"})
@@ -224,6 +224,56 @@ describe("deploy", () => {
 
     effects.close();
   });
+
+  it("won't deploy to an non-existent deploy", async () => {
+    const deployId = "deploy456";
+    getCurrentObservableApi()
+      .handleGetCurrentUser()
+      .handleGetProject(DEPLOY_CONFIG)
+      .handleGetDeploy({deployId, status: 404})
+      .start();
+
+    const effects = new MockDeployEffects({
+      deployConfig: DEPLOY_CONFIG,
+      fixedInputStatTime: new Date("2024-03-09"),
+      fixedOutputStatTime: new Date("2024-03-10")
+    });
+    effects.clack.inputs = ["fix some bugs"]; // "what changed?"
+
+    try {
+      await deploy({...TEST_OPTIONS, deployId}, effects);
+      assert.fail("expected error");
+    } catch (error) {
+      CliError.assert(error, {message: "Deploy deploy456 not found.", print: true, exitCode: 1});
+    }
+
+    effects.close();
+  }); 
+  
+  it("won't deploy to an existing deploy with an unexpected status", async () => {
+    const deployId = "deploy456";
+    getCurrentObservableApi()
+      .handleGetCurrentUser()
+      .handleGetProject(DEPLOY_CONFIG)
+      .handleGetDeploy({deployId, deployStatus: "uploaded"})
+      .start();
+
+    const effects = new MockDeployEffects({
+      deployConfig: DEPLOY_CONFIG,
+      fixedInputStatTime: new Date("2024-03-09"),
+      fixedOutputStatTime: new Date("2024-03-10")
+    });
+    effects.clack.inputs = ["fix some bugs"]; // "what changed?"
+
+    try {
+      await deploy({...TEST_OPTIONS, deployId}, effects);
+      assert.fail("expected error");
+    } catch (error) {
+      CliError.assert(error, {message: "Deploy deploy456 has an unexpected status: uploaded", print: true, exitCode: 1});
+    }
+
+    effects.close();
+  });  
 
   it("updates title for existing project if it doesn't match", async () => {
     const deployId = "deploy456";
