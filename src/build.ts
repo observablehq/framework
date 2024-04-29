@@ -21,7 +21,7 @@ import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {tree} from "./tree.js";
-import {faint, green, red, yellow} from "./tty.js";
+import {faint, green, magenta, red, yellow} from "./tty.js";
 
 export interface BuildOptions {
   config: Config;
@@ -278,9 +278,9 @@ export async function build(
       totalImportSize += await accumulateSize(resolvers.staticImports, resolvers.resolveImport, resolveOutput);
       effects.logger.log(
         `${faint(indent)}${name}${description} ${[
-          `${formatByteSizeColor(size, 12)}`,
-          `${formatByteSizeColor(totalImportSize, 12)}`,
-          `${formatByteSizeColor(totalFileSize, 12)}`
+          `${formatBytes(size, 12)}`,
+          `${formatBytes(totalImportSize, 12)}`,
+          `${formatBytes(totalFileSize, 12)}`
         ].join(" ")}`
       );
     } else {
@@ -315,15 +315,20 @@ async function accumulateSize(
   return size;
 }
 
-function formatByteSizeColor(size: number, length: number, locale: Intl.LocalesArgument = "en-US"): string {
+function formatBytes(size: number, length: number, locale: Intl.LocalesArgument = "en-US"): string {
   let color: (text: string) => string;
-  let s: string;
-  if (size < 1e3) (s = "<1 kB"), (color = faint);
-  else if (size < 1e6) (s = (size / 1e3).toLocaleString(locale, {maximumFractionDigits: 0}) + " kB"), (color = green);
-  else
-    (s = (size / 1e6).toLocaleString(locale, {minimumFractionDigits: 3, maximumFractionDigits: 3}) + " MB"),
-      (color = size < 50e6 ? yellow : red);
-  return color(s.padStart(length));
+  let text: string;
+  if (size < 1e3) {
+    text = "<1 kB";
+    color = faint;
+  } else if (size < 1e6) {
+    text = (size / 1e3).toLocaleString(locale, {maximumFractionDigits: 0}) + " kB";
+    color = green;
+  } else {
+    text = (size / 1e6).toLocaleString(locale, {minimumFractionDigits: 3, maximumFractionDigits: 3}) + " MB";
+    color = size < 10e6 ? yellow : size < 50e6 ? magenta : red;
+  }
+  return color(text.padStart(length));
 }
 
 export class FileBuildEffects implements BuildEffects {
