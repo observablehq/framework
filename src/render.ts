@@ -177,12 +177,12 @@ interface Header {
   href: string;
 }
 
-const tocSelector = "h1:not(:first-of-type), h2:first-child, :not(h1) + h2";
+const tocSelector = "h1:not(:first-of-type)[id], h2:first-child[id], :not(h1) + h2[id]";
 
 function findHeaders(page: MarkdownPage): Header[] {
   return Array.from(parseHtml(page.body).document.querySelectorAll(tocSelector))
-    .map((node) => ({label: node.textContent, href: node.firstElementChild?.getAttribute("href")}))
-    .filter((d): d is Header => !!d.label && !!d.href);
+    .map((node) => ({label: node.textContent, href: `#${node.id}`}))
+    .filter((d): d is Header => !!d.label);
 }
 
 function renderToc(headers: Header[], label: string): Html {
