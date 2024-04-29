@@ -50,7 +50,7 @@ export interface Config {
   sidebar: boolean; // defaults to true if pages isn’t empty
   pages: (Page | Section<Page>)[];
   pager: boolean; // defaults to true
-  scripts: Script[]; // defaults to empty array
+  scripts: Script[]; // deprecated; defaults to empty array
   head: string | null; // defaults to null
   header: string | null; // defaults to null
   footer: string | null; // defaults to “Built with Observable on [date].”
@@ -275,6 +275,9 @@ function normalizeScript(spec: unknown): Script {
   const src = String(script.src);
   const async = script.async === undefined ? false : Boolean(script.async);
   const type = script.type == null ? null : String(script.type);
+  console.warn(
+    `${yellow("Deprecation notice:")} the ${bold("script")} option is deprecated, use ${bold("head")} instead.`
+  );
   return {src, async, type};
 }
 

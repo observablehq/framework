@@ -162,26 +162,6 @@ An HTML fragment to add to the header. Defaults to the empty string.
 
 An HTML fragment to add to the footer. Defaults to “Built with Observable.”
 
-## scripts
-
-Additional scripts to add to the head, such as for analytics. For example, this:
-
-```js run=false
-export default {
-  scripts: [{type: "module", async: true, src: "analytics.js"}]
-};
-```
-
-Is equivalent to setting the **head** option:
-
-```js run=false
-export default {
-  head: `<script type="module" async src="analytics.js"></script>`
-};
-```
-
-We recommend you use the **head** option instead of this option.
-
 ## base
 
 The base path when serving the site. Currently this only affects the custom 404 page, if any.
