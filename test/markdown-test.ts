@@ -8,7 +8,7 @@ import {isEnoent} from "../src/error.js";
 import type {MarkdownPage} from "../src/markdown.js";
 import {makeLinkNormalizer, parseMarkdown} from "../src/markdown.js";
 
-const {md} = normalizeConfig();
+const {md} = normalizeConfig({root: "docs"});
 
 describe("parseMarkdown(input)", () => {
   const inputRoot = "test/input";

@@ -1,6 +1,6 @@
 import {createHash} from "node:crypto";
 import {existsSync} from "node:fs";
-import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
+import {access, constants, copyFile, readFile, stat, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {CliError, isEnoent} from "./error.js";
@@ -12,7 +12,7 @@ import type {MarkdownPage} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
 import {extractNodeSpecifier} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport} from "./npm.js";
-import {isPathImport, relativePath, resolvePath} from "./path.js";
+import {isAssetPath, isPathImport, relativePath, resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
 import {getModuleResolver, getResolvers} from "./resolvers.js";
@@ -20,7 +20,8 @@ import {resolveImportPath, resolveStylesheetPath} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
-import {faint, yellow} from "./tty.js";
+import {tree} from "./tree.js";
+import {faint, green, magenta, red, yellow} from "./tty.js";
 
 export interface BuildOptions {
   config: Config;
@@ -218,15 +219,12 @@ export async function build(
     await effects.writeFile(alias, contents);
   }
 
-  // Render pages, resolving against content-hashed file names!
-  for (const [sourceFile, {page, resolvers}] of pages) {
-    const sourcePath = join(root, sourceFile);
-    const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
+  // Wrap the resolvers to apply content-hashed file names.
+  for (const [sourceFile, page] of pages) {
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
-    const options = {path, ...config};
-    effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
-    const html = await renderPage(page, {
-      ...options,
+    const {resolvers} = page;
+    pages.set(sourceFile, {
+      ...page,
       resolvers: {
         ...resolvers,
         resolveFile(specifier) {
@@ -251,10 +249,84 @@ export async function build(
         }
       }
     });
+  }
+
+  // Render pages!
+  for (const [sourceFile, {page, resolvers}] of pages) {
+    const sourcePath = join(root, sourceFile);
+    const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
+    const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
+    effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
+    const html = await renderPage(page, {...config, path, resolvers});
     await effects.writeFile(outputPath, html);
   }
 
+  // Log page sizes.
+  const columnWidth = 12;
+  effects.logger.log("");
+  for (const [indent, name, description, node] of tree(pages)) {
+    if (node.children) {
+      effects.logger.log(
+        `${faint(indent)}${name}${faint(description)} ${
+          node.depth ? "" : ["Page", "Imports", "Files"].map((name) => name.padStart(columnWidth)).join(" ")
+        }`
+      );
+    } else {
+      const [sourceFile, {resolvers}] = node.data!;
+      const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
+      const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
+      const resolveOutput = (name: string) => join(config.output, resolvePath(path, name));
+      const pageSize = (await stat(join(config.output, outputPath))).size;
+      const importSize = await accumulateSize(resolvers.staticImports, resolvers.resolveImport, resolveOutput);
+      const fileSize =
+        (await accumulateSize(resolvers.files, resolvers.resolveFile, resolveOutput)) +
+        (await accumulateSize(resolvers.assets, resolvers.resolveFile, resolveOutput)) +
+        (await accumulateSize(resolvers.stylesheets, resolvers.resolveStylesheet, resolveOutput));
+      effects.logger.log(
+        `${faint(indent)}${name}${description} ${[pageSize, importSize, fileSize]
+          .map((size) => formatBytes(size, columnWidth))
+          .join(" ")}`
+      );
+    }
+  }
+  effects.logger.log("");
+
   Telemetry.record({event: "build", step: "finish", pageCount});
+}
+
+async function accumulateSize(
+  files: Iterable<string>,
+  resolveFile: (path: string) => string,
+  resolveOutput: (path: string) => string
+): Promise<number> {
+  let size = 0;
+  for (const file of files) {
+    const fileResolution = resolveFile(file);
+    if (isAssetPath(fileResolution)) {
+      try {
+        size += (await stat(resolveOutput(fileResolution))).size;
+      } catch {
+        // ignore missing file
+      }
+    }
+  }
+  return size;
+}
+
+function formatBytes(size: number, length: number, locale: Intl.LocalesArgument = "en-US"): string {
+  let color: (text: string) => string;
+  let text: string;
+  if (size < 1e3) {
+    text = "<1 kB";
+    color = faint;
+  } else if (size < 1e6) {
+    text = (size / 1e3).toLocaleString(locale, {maximumFractionDigits: 0}) + " kB";
+    color = green;
+  } else {
+    text = (size / 1e6).toLocaleString(locale, {minimumFractionDigits: 3, maximumFractionDigits: 3}) + " MB";
+    color = size < 10e6 ? yellow : size < 50e6 ? magenta : red;
+  }
+  return color(text.padStart(length));
 }
 
 export class FileBuildEffects implements BuildEffects {
