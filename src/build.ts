@@ -5,7 +5,6 @@ import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
-import {formatByteSize} from "./format.js";
 import {getModuleHash} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
@@ -262,70 +261,69 @@ export async function build(
     await effects.writeFile(outputPath, html);
   }
 
-  // Log page sizes. TODO Log individual files that are larger than 1MB?
-  for (const [indent, name, sourceFile, data] of tree(pages)) {
-    if (data) {
-      const {resolvers} = data;
+  // Log page sizes.
+  effects.logger.log("");
+  for (const [indent, name, description, node] of tree(pages)) {
+    if (node.data?.[1]) {
+      const [sourceFile, {resolvers}] = node.data;
       const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
       const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
       const size = (await stat(join(config.output, outputPath))).size;
+      const resolveOutput = (name: string) => join(config.output, resolvePath(path, name));
       let totalFileSize = 0;
       let totalImportSize = 0;
-      for (const file of [...resolvers.files, ...resolvers.assets]) {
-        const fileResolution = resolvers.resolveFile(file);
-        if (isAssetPath(fileResolution)) {
-          const filePath = resolvePath(path, fileResolution);
-          try {
-            const fileSize = (await stat(join(config.output, filePath))).size;
-            totalFileSize += fileSize;
-          } catch {
-            // ignore missing file
-          }
-        }
-      }
-      for (const staticImport of resolvers.staticImports) {
-        const staticImportResolution = resolvers.resolveImport(staticImport);
-        if (isAssetPath(staticImportResolution)) {
-          try {
-            const staticImportPath = resolvePath(path, staticImportResolution);
-            const staticImportSize = (await stat(join(config.output, staticImportPath))).size;
-            totalImportSize += staticImportSize;
-          } catch {
-            // ignore missing file
-          }
-        }
-      }
+      totalFileSize += await accumulateSize(resolvers.files, resolvers.resolveFile, resolveOutput);
+      totalFileSize += await accumulateSize(resolvers.assets, resolvers.resolveFile, resolveOutput);
+      totalFileSize += await accumulateSize(resolvers.stylesheets, resolvers.resolveStylesheet, resolveOutput);
+      totalImportSize += await accumulateSize(resolvers.staticImports, resolvers.resolveImport, resolveOutput);
       effects.logger.log(
-        `${faint(indent)}${name.replace(/\.md$/, "")} ${[
+        `${faint(indent)}${name}${description} ${[
           `${formatByteSizeColor(size, 12)}`,
-          `${formatByteSizeColor(totalFileSize, 12)}`,
-          `${formatByteSizeColor(totalImportSize, 12)}`
+          `${formatByteSizeColor(totalImportSize, 12)}`,
+          `${formatByteSizeColor(totalFileSize, 12)}`
         ].join(" ")}`
       );
     } else {
       effects.logger.log(
-        `${faint(indent)}${name} ${
-          indent ? "" : ["Page".padEnd(12), "Files".padEnd(12), "Imports".padEnd(12)].join(" ")
+        `${faint(indent)}${name}${faint(description)} ${
+          node.depth ? "" : ["Page", "Imports", "Files"].map((name) => name.padStart(12)).join(" ")
         }`
       );
     }
   }
+  effects.logger.log("");
 
   Telemetry.record({event: "build", step: "finish", pageCount});
 }
 
-function formatByteSizeColor(size: number, length: number): string {
-  const f = formatByteSize(size);
-  const g = f.padEnd(length); // pad before colorizing
-  return size >= 50_000_000
-    ? red(g)
-    : f.endsWith(" MB")
-    ? yellow(g)
-    : f.endsWith(" kB")
-    ? green(g)
-    : f.endsWith(" B")
-    ? faint(g)
-    : g;
+async function accumulateSize(
+  files: Iterable<string>,
+  resolveFile: (path: string) => string,
+  resolveOutput: (path: string) => string
+): Promise<number> {
+  let size = 0;
+  for (const file of files) {
+    const fileResolution = resolveFile(file);
+    if (isAssetPath(fileResolution)) {
+      try {
+        size += (await stat(resolveOutput(fileResolution))).size;
+      } catch {
+        // ignore missing file
+      }
+    }
+  }
+  return size;
+}
+
+function formatByteSizeColor(size: number, length: number, locale: Intl.LocalesArgument = "en-US"): string {
+  let color: (text: string) => string;
+  let s: string;
+  if (size < 1e3) (s = "<1 kB"), (color = faint);
+  else if (size < 1e6) (s = (size / 1e3).toLocaleString(locale, {maximumFractionDigits: 0}) + " kB"), (color = green);
+  else
+    (s = (size / 1e6).toLocaleString(locale, {minimumFractionDigits: 3, maximumFractionDigits: 3}) + " MB"),
+      (color = size < 50e6 ? yellow : red);
+  return color(s.padStart(length));
 }
 
 export class FileBuildEffects implements BuildEffects {

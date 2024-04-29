@@ -1,22 +1,30 @@
 import {ascending, max} from "d3-array";
 import {stratify} from "d3-hierarchy";
 
-export type TreeItem<T> = [path: string, value?: T];
+export type TreeItem<T> = [path: string, value: T];
 
-interface TreeNode<T> {
+export interface TreeNode<T> {
   data?: TreeItem<T>;
   parent?: TreeNode<T>;
   children?: TreeNode<T>[];
+  value: number;
   height: number;
   depth: number;
   id: string;
 }
 
-export function tree<T>(items: Iterable<TreeItem<T>>): [indent: string, name: string, path: string, value?: T][] {
-  const lines: [indent: string, name: string, node: TreeNode<T>][] = [];
+export function tree<T>(
+  items: Iterable<TreeItem<T>>
+): [indent: string, name: string, description: string, node: TreeNode<T>][] {
+  const lines: [indent: string, name: string, description: string, node: TreeNode<T>][] = [];
   stratify()
-    .path(([path]) => path)([...items, ["/"]]) // add root to avoid implicit truncation
+    .path(
+      ([path]) =>
+        path.replace(/\.md$/, "") + // remove .md extension
+        (path.endsWith("/") ? "" : "?") // distinguish files from folders
+    )([...items, ["/"]]) // add root to avoid implicit truncation
     .sort(treeOrder)
+    .count()
     .eachBefore((node: TreeNode<T>) => {
       let p = node;
       let indent = "";
@@ -26,16 +34,21 @@ export function tree<T>(items: Iterable<TreeItem<T>>): [indent: string, name: st
           indent = (hasFollowingSibling(p) ? "│   " : "    ") + indent;
         }
       }
-      lines.push([indent, node.id.split("/").pop() || ".", node]);
+      lines.push([
+        indent || "┌",
+        `${node.id.split("/").pop()?.replace(/\?$/, "")}`,
+        node.height ? ` (${node.value.toLocaleString("en-US")} page${node.value === 1 ? "" : "s"})` : "",
+        node
+      ]);
     });
-  const width = (max(lines, ([indent, name]) => indent.length + stringLength(name)) || 0) + 1;
-  return lines.map(([indent, name, node]) => [indent, stringPad(name, width - indent.length), node.id, node.data?.[1]]);
-}
-
-/** Like string.padEnd, but correctly handles graphemes via Intl.Segmenter. */
-function stringPad(string: string, length: number): string {
-  const n = length - stringLength(string);
-  return n > 0 ? string + " ".repeat(n) : string;
+  const width =
+    (max(lines, ([indent, name, description]) => indent.length + description.length + stringLength(name)) || 0) + 1;
+  return lines.map(([indent, name, description, node]) => [
+    indent,
+    name,
+    description + " ".repeat(width - stringLength(name) - description.length - indent.length),
+    node
+  ]);
 }
 
 /** Counts the number of graphemes in the specified string. */
