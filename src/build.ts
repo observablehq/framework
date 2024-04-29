@@ -262,32 +262,30 @@ export async function build(
   }
 
   // Log page sizes.
+  const columnWidth = 12;
   effects.logger.log("");
   for (const [indent, name, description, node] of tree(pages)) {
-    if (node.data?.[1]) {
-      const [sourceFile, {resolvers}] = node.data;
-      const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
-      const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
-      const size = (await stat(join(config.output, outputPath))).size;
-      const resolveOutput = (name: string) => join(config.output, resolvePath(path, name));
-      let totalFileSize = 0;
-      let totalImportSize = 0;
-      totalFileSize += await accumulateSize(resolvers.files, resolvers.resolveFile, resolveOutput);
-      totalFileSize += await accumulateSize(resolvers.assets, resolvers.resolveFile, resolveOutput);
-      totalFileSize += await accumulateSize(resolvers.stylesheets, resolvers.resolveStylesheet, resolveOutput);
-      totalImportSize += await accumulateSize(resolvers.staticImports, resolvers.resolveImport, resolveOutput);
-      effects.logger.log(
-        `${faint(indent)}${name}${description} ${[
-          `${formatBytes(size, 12)}`,
-          `${formatBytes(totalImportSize, 12)}`,
-          `${formatBytes(totalFileSize, 12)}`
-        ].join(" ")}`
-      );
-    } else {
+    if (node.children) {
       effects.logger.log(
         `${faint(indent)}${name}${faint(description)} ${
-          node.depth ? "" : ["Page", "Imports", "Files"].map((name) => name.padStart(12)).join(" ")
+          node.depth ? "" : ["Page", "Imports", "Files"].map((name) => name.padStart(columnWidth)).join(" ")
         }`
+      );
+    } else {
+      const [sourceFile, {resolvers}] = node.data!;
+      const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
+      const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
+      const resolveOutput = (name: string) => join(config.output, resolvePath(path, name));
+      const pageSize = (await stat(join(config.output, outputPath))).size;
+      const importSize = await accumulateSize(resolvers.staticImports, resolvers.resolveImport, resolveOutput);
+      const fileSize =
+        (await accumulateSize(resolvers.files, resolvers.resolveFile, resolveOutput)) +
+        (await accumulateSize(resolvers.assets, resolvers.resolveFile, resolveOutput)) +
+        (await accumulateSize(resolvers.stylesheets, resolvers.resolveStylesheet, resolveOutput));
+      effects.logger.log(
+        `${faint(indent)}${name}${description} ${[pageSize, importSize, fileSize]
+          .map((size) => formatBytes(size, columnWidth))
+          .join(" ")}`
       );
     }
   }
