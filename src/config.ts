@@ -201,7 +201,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const pager = spec.pager === undefined ? true : Boolean(spec.pager);
   const toc = normalizeToc(spec.toc as any);
   const sidebar = spec.sidebar === undefined ? undefined : Boolean(spec.sidebar);
-  const scripts = spec.scripts === undefined ? [] : Array.from(spec.scripts as any, normalizeScript);
+  const scripts = spec.scripts === undefined ? [] : normalizeScripts(spec.scripts);
   const head = spec.head === undefined ? "" : stringOrNull(spec.head);
   const header = spec.header === undefined ? "" : stringOrNull(spec.header);
   const footer = spec.footer === undefined ? defaultFooter() : stringOrNull(spec.footer);
@@ -270,14 +270,16 @@ export function normalizeTheme(spec: unknown): string[] {
   return resolveTheme(typeof spec === "string" ? [spec] : spec === null ? [] : Array.from(spec as any, String));
 }
 
+function normalizeScripts(spec: unknown): Script[] {
+  console.warn(`${yellow("Warning:")} the ${bold("scripts")} option is deprecated; use ${bold("head")} instead.`);
+  return Array.from(spec as any, normalizeScript);
+}
+
 function normalizeScript(spec: unknown): Script {
   const script = typeof spec === "string" ? {src: spec} : (spec as ScriptSpec);
   const src = String(script.src);
   const async = script.async === undefined ? false : Boolean(script.async);
   const type = script.type == null ? null : String(script.type);
-  console.warn(
-    `${yellow("Deprecation notice:")} the ${bold("script")} option is deprecated, use ${bold("head")} instead.`
-  );
   return {src, async, type};
 }
 
