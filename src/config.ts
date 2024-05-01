@@ -50,7 +50,7 @@ export interface Config {
   sidebar: boolean; // defaults to true if pages isn’t empty
   pages: (Page | Section<Page>)[];
   pager: boolean; // defaults to true
-  scripts: Script[]; // defaults to empty array
+  scripts: Script[]; // deprecated; defaults to empty array
   head: string | null; // defaults to null
   header: string | null; // defaults to null
   footer: string | null; // defaults to “Built with Observable on [date].”
@@ -201,7 +201,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const pager = spec.pager === undefined ? true : Boolean(spec.pager);
   const toc = normalizeToc(spec.toc as any);
   const sidebar = spec.sidebar === undefined ? undefined : Boolean(spec.sidebar);
-  const scripts = spec.scripts === undefined ? [] : Array.from(spec.scripts as any, normalizeScript);
+  const scripts = spec.scripts === undefined ? [] : normalizeScripts(spec.scripts);
   const head = spec.head === undefined ? "" : stringOrNull(spec.head);
   const header = spec.header === undefined ? "" : stringOrNull(spec.header);
   const footer = spec.footer === undefined ? defaultFooter() : stringOrNull(spec.footer);
@@ -268,6 +268,11 @@ function normalizeBase(spec: unknown): string {
 
 export function normalizeTheme(spec: unknown): string[] {
   return resolveTheme(typeof spec === "string" ? [spec] : spec === null ? [] : Array.from(spec as any, String));
+}
+
+function normalizeScripts(spec: unknown): Script[] {
+  console.warn(`${yellow("Warning:")} the ${bold("scripts")} option is deprecated; use ${bold("head")} instead.`);
+  return Array.from(spec as any, normalizeScript);
 }
 
 function normalizeScript(spec: unknown): Script {
