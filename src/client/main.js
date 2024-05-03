@@ -27,7 +27,7 @@ export function define(cell) {
   cellsById.get(id)?.variables.forEach((v) => v.delete());
   cellsById.set(id, {cell, variables});
   const root = document.querySelector(`#cell-${id}`);
-  const loading = root.classList.contains("observablehq--loading");
+  const loading = root.querySelector(".observablehq-loading");
   const pending = () => reset(root, loading);
   const rejected = (error) => reject(root, error);
   const v = main.variable({_node: root, pending, rejected}, {shadow: {}}); // _node for visibility promise
@@ -41,7 +41,7 @@ export function define(cell) {
         let version = v._version; // capture version on input change
         return (value) => {
           if (version < displayVersion) throw new Error("stale display");
-          else if (version > displayVersion) root.classList.remove("observablehq--loading"), clear(root);
+          else if (version > displayVersion) clear(root);
           displayVersion = version;
           display(root, value);
           return value;
@@ -69,14 +69,13 @@ export function define(cell) {
 function reset(root, loading) {
   if (root.classList.contains("observablehq--error")) {
     root.classList.remove("observablehq--error");
-    root.classList.toggle("observablehq--loading", loading);
     clear(root);
+    if (loading) root.append(loading);
   }
 }
 
 function reject(root, error) {
   console.error(error);
-  root.classList.remove("observablehq--loading");
   root.classList.add("observablehq--error"); // see reset
   clear(root);
   root.append(inspectError(error));
