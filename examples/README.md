@@ -27,19 +27,19 @@ Then `cd` into the desired example directory. From there you would typically run
 
 ## Showcase examples
 
-### Analyzing web logs (`api`) {#api}
+### `api` - Analyzing web logs
 
 [View example](https://observablehq.com/framework/examples/api/) · [Source code](./api) · This report visualizes millions of requests to Observable’s API servers over a 7-day period in January 2024, revealing both traffic patterns and performance characteristics of Observable’s web service. This example showcases the flexibility of Observable Plot for creating custom, performant visualizations, and hints at the potential of Framework’s data loaders for working with large datasets. This example also demonstrates reading [Apache Arrow files](https://observablehq.com/framework/lib/arrow). (While this public example uses static data, at Observable we use Snowflake [data loaders](https://observablehq.com/framework/loaders) internally to create a similar live dashboard.)
 
-### U.S. electricity grid (`eia`) {#eia}
+### `eia` - U.S. electricity grid
 
 [View example](https://observablehq.com/framework/examples/eia/) · [Source code](./eia) · This dashboard visualizes electricity generation and demand across the U.S. electricity grid. The included data loaders demonstrate how to retrieve live data from the U.S. Energy Information Administration (EIA) API, while the dashboard demonstrates how to produce interactive maps, bar charts, and time-series charts with Observable Plot. A range input allows the user to rewind time to any point in the previous 24 hours, and a table shows details.
 
-### Observable Plot downloads (`plot`) {#plot}
+### `plot` - Observable Plot downloads
 
 [View example](https://observablehq.com/framework/examples/plot/) · [Source code](./plot) · This dashboard visualizes the popularity and development of [Observable Plot](https://github.com/observablehq/plot), our open-source visualization library. The included data loaders demonstrate how to retrieve data from GitHub and npm APIs, including star counts, releases, downloads, and open issues. A time-series chart shows daily npm downloads with 7- and 28-day moving averages, and a burndown chart shows the age of open issues over time.
 
-### Primary mortgage market survey (`mortgage-rates`) {#mortgage-rates}
+### `mortgage-rates` - Primary mortgage market survey
 
 [View example](https://observablehq.com/framework/examples/mortgage-rates/) · [Source code](./mortgage-rates) · This dashboard visualizes Freddie Mac’s historical mortgage rates data. The included data loader demonstrates how to retrieve CSV data from Freddie Mac and visualize the result as a zoomable chart with Observable Plot.
 
@@ -50,7 +50,7 @@ Then `cd` into the desired example directory. From there you would typically run
 * [`hello-world`](./hello-world) - A minimal Framework project
 * [`penguin-classification`](./penguin-classification) - Logistic regression in Python; validating models with Observable Plot
 
-### TODO
+## TODO
 
 * Big number with area chart
 * Line chart with moving averages
