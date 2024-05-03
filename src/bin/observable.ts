@@ -126,7 +126,7 @@ try {
           },
           id: {
             type: "string",
-            description: "Use an existing deploy ID"
+            hidden: true
           }
         }
       });
@@ -260,6 +260,7 @@ type DescribableParseArgsConfig = ParseArgsConfig & {
       short?: string | undefined;
       default?: string | boolean | string[] | boolean[] | undefined;
       description?: string;
+      hidden?: boolean;
     };
   };
 };
@@ -297,6 +298,12 @@ function helpArgs<T extends DescribableParseArgsConfig>(
 
   // Log automatic help.
   if ((result.values as any).help) {
+    // omit hidden flags from help
+    for (const key of Object.keys(options)) {
+      if (options[key].hidden) {
+        delete options[key];
+      }
+    }
     console.log(
       `Usage: observable ${command}${command === undefined || command === "help" ? " <command>" : ""}${Object.entries(
         options
