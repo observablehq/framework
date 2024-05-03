@@ -298,22 +298,18 @@ function helpArgs<T extends DescribableParseArgsConfig>(
 
   // Log automatic help.
   if ((result.values as any).help) {
-    // omit hidden flags from help
-    for (const key of Object.keys(options)) {
-      if (options[key].hidden) {
-        delete options[key];
-      }
-    }
+    // Omit hidden flags from help.
+    const publicOptions = Object.fromEntries(Object.entries(options).filter(([, option]) => !option.hidden));
     console.log(
       `Usage: observable ${command}${command === undefined || command === "help" ? " <command>" : ""}${Object.entries(
-        options
+        publicOptions
       )
         .map(([name, {default: def}]) => ` [--${name}${def === undefined ? "" : `=${def}`}]`)
         .join("")}`
     );
-    if (Object.values(options).some((spec) => spec.description)) {
+    if (Object.values(publicOptions).some((spec) => spec.description)) {
       console.log();
-      for (const [long, spec] of Object.entries(options)) {
+      for (const [long, spec] of Object.entries(publicOptions)) {
         if (spec.description) {
           const left = `  ${spec.short ? `-${spec.short}, ` : ""}--${long}`.padEnd(20);
           console.log(`${left}${spec.description}`);
