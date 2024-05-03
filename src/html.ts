@@ -172,6 +172,15 @@ export function rewriteHtml(
     code.innerHTML = html;
   }
 
+  // Wrap <h2 id> etc. elements in <a> tags for linking.
+  for (const h of document.querySelectorAll<HTMLHeadingElement>("h1[id], h2[id], h3[id], h4[id]")) {
+    const a = document.createElement("a");
+    a.className = "observablehq-header-anchor";
+    a.href = `#${h.id}`;
+    a.append(...h.childNodes);
+    h.append(a);
+  }
+
   return document.body.innerHTML;
 }
 

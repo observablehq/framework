@@ -30,8 +30,8 @@ jobs:
         with:
           path: |
             docs/.observablehq/cache
-            examples/*/docs/.observablehq/cache
-          key: data-${{ hashFiles('docs/data/*', 'examples/*/docs/data/*') }}-${{ steps.date.outputs.date }}
+            examples/*/src/.observablehq/cache
+          key: data-${{ hashFiles('docs/data/*', 'examples/*/src/data/*') }}-${{ steps.date.outputs.date }}
       - run: yarn build
       - run: yarn docs:build
       - name: Build example "api"

@@ -25,6 +25,22 @@ export function tree<T>(
     )([...items, ["/"]]) // add root to avoid implicit truncation
     .sort(treeOrder)
     .count()
+    .eachAfter((node: TreeNode<T>) => {
+      const children = node.children;
+      if (!children) return;
+      let height = 0;
+      for (let i = 0; i < children.length; ++i) {
+        let child = children[i];
+        if (child.children?.length === 1) {
+          child = child.children![0];
+          children[i] = child;
+          child.parent = node;
+          --child.depth;
+        }
+        height = Math.max(height, child.height + 1);
+      }
+      node.height = height;
+    })
     .eachBefore((node: TreeNode<T>) => {
       let p = node;
       let indent = "";
@@ -36,7 +52,7 @@ export function tree<T>(
       }
       lines.push([
         indent || "┌",
-        `${node.id.split("/").pop()?.replace(/\?$/, "")}`,
+        node.id.slice(node.parent?.id === "/" ? 1 : (node.parent?.id.length ?? 0) + 1).replace(/\?$/, ""),
         node.height ? ` (${node.value.toLocaleString("en-US")} page${node.value === 1 ? "" : "s"})` : "",
         node
       ]);

@@ -408,7 +408,7 @@ export async function deploy(
     );
   }
   if (instructions.status === "error" || fileErrors.length) {
-    throw new CliError(`Server rejected deploy manifest: ${instructions.detail ?? "no details"}`);
+    throw new CliError(`Server rejected deploy manifest${instructions.detail ? `: ${instructions.detail}` : ""}`);
   }
   const filesToUpload: string[] = instructions.files
     .filter((instruction) => instruction.status === "upload")
