@@ -23,7 +23,7 @@ git clone git@github.com:observablehq/framework.git
 
 Then `cd` into the desired example directory. From there you would typically run `npm install` or `yarn` to install dependencies. Please refer to each example’s `README.md` file for specific instructions; some examples may require additional configuration, such as setting environment variables to talk to external data sources.
 
-**We welcome example contributions!** If you have an example that you’d like to share with the community, please [open a pull request](https://docs.github.com/en/pull-requests). Or if there’s an example you’d like to see, please let us know by [filing an issue](https://github.com/observablehq/framework/issues). If you have questions about how any of the examples work, please [open a discussion](https://github.com/observablehq/framework/discussions).
+**We welcome contributions!** If you have an example that you’d like to share with the community, please [open a pull request](https://docs.github.com/en/pull-requests). Or if there’s an example you’d like to see, please let us know by [filing an issue](https://github.com/observablehq/framework/issues). If you have questions, please [open a discussion](https://github.com/observablehq/framework/discussions).
 
 ## Showcase examples
 

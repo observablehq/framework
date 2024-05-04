@@ -204,7 +204,9 @@ function renderToc(headers: Header[], label: string): Html {
 function renderListItem(page: Page, path: string, normalizeLink: (href: string) => string): Html {
   return html`\n    <li class="observablehq-link${
     normalizePath(page.path) === path ? " observablehq-link-active" : ""
-  }"><a href="${normalizeLink(relativePath(path, page.path))}">${page.name}</a></li>`;
+  }"><a href="${normalizeLink(relativePath(path, page.path))}"${
+    isAssetPath(page.path) ? null : html` target="_blank"`
+  }>${page.name}</a></li>`;
 }
 
 function renderHead(head: MarkdownPage["head"], resolvers: Resolvers): Html {

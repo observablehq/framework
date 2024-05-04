@@ -23,6 +23,7 @@ export interface TableOfContents {
 export interface Page {
   name: string;
   path: string;
+  pager: boolean;
 }
 
 export interface Section<T = Page> {
@@ -30,6 +31,7 @@ export interface Section<T = Page> {
   collapsible: boolean; // defaults to false
   open: boolean; // defaults to true; always true if collapsible is false
   pages: T[];
+  pager: boolean;
 }
 
 export type Style =
@@ -97,11 +99,13 @@ interface SectionSpec {
   open?: unknown;
   collapsible?: unknown;
   pages?: unknown;
+  pager?: unknown;
 }
 
 interface PageSpec {
   name?: unknown;
   path?: unknown;
+  pager?: unknown;
 }
 
 interface TableOfContentsSpec {
@@ -156,7 +160,7 @@ function readPages(root: string, md: MarkdownIt): Page[] {
     const {data, title} = parseMarkdownMetadata(source, {path: file, md});
     if (data.draft) continue;
     const name = basename(file, ".md");
-    const page = {path: join("/", dirname(file), name), name: title ?? "Untitled"};
+    const page = {path: join("/", dirname(file), name), name: title ?? "Untitled", pager: true};
     if (name === "index") pages.unshift(page);
     else pages.push(page);
   }
@@ -294,7 +298,8 @@ function normalizeSection<T>(spec: SectionSpec, normalizePage: (spec: PageSpec) 
   const collapsible = spec.collapsible === undefined ? spec.open !== undefined : Boolean(spec.collapsible);
   const open = collapsible ? Boolean(spec.open) : true;
   const pages = Array.from(spec.pages as any, normalizePage);
-  return {name, collapsible, open, pages};
+  const pager = spec.pager === undefined ? true : Boolean(spec.pager);
+  return {name, collapsible, open, pages, pager};
 }
 
 function normalizePage(spec: PageSpec): Page {
@@ -307,7 +312,8 @@ function normalizePage(spec: PageSpec): Page {
     pathname = pathname.replace(/\/$/, "/index"); // add trailing index
     path = pathname + u.search + u.hash;
   }
-  return {name, path};
+  const pager = spec.pager === undefined ? isAssetPath(path) : Boolean(spec.pager);
+  return {name, path, pager};
 }
 
 function normalizeInterpreters(spec: {[key: string]: unknown} = {}): {[key: string]: string[] | null} {
