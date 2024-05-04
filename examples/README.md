@@ -7,7 +7,7 @@
 
 We offer two types of examples: **techniques** and **showcases**.
 
-Technique examples address lower-level needs such as “how to load data from Google Analytics” or “how to make a bump chart”. They’re smaller, piecemeal examples for common development tasks. Technique examples are intended to teach you how to accomplish a specific task or to provide reusable code that can be copy-pasted into your Framework project.
+Technique examples address lower-level needs such as “how to load data from Google Analytics” or “how to make a bump chart”. They’re smaller, piecemeal examples for common development tasks. Technique examples are intended to teach you how to accomplish a specific task and to provide reusable code that can be copy-pasted into your Framework project.
 
 Showcase examples, in contrast, address higher-level user needs such as “how to analyze website traffic” or “how to show the growth of an open-source project”. These larger, complete examples demonstrate how to create useful data apps. Showcase examples are intended primarily to inspire and show Framework’s potential. As applied examples, showcase examples also demonstrate multiple techniques working together; we encourage you to view source.
 
@@ -39,7 +39,7 @@ Then `cd` into the desired example directory. From there you would typically run
 
 ### [`mortgage-rates`](./mortgage-rates) - Primary mortgage market survey
 
-[View example](https://observablehq.com/framework/examples/mortgage-rates/) · [Source code](./mortgage-rates) · This dashboard visualizes Freddie Mac’s historical mortgage rates data. The included data loader demonstrates how to retrieve CSV data from Freddie Mac and visualize the result as a zoomable chart with Observable Plot.
+[View example](https://observablehq.com/framework/examples/mortgage-rates/) · [Source code](./mortgage-rates) · This dashboard visualizes Freddie Mac’s historical mortgage rates data. The included data loader demonstrates how to retrieve CSV data from Freddie Mac and visualize the result as a zoomable chart with Observable Plot. The larger time-series line chart at the bottom allows brushing to select an arbitrary time range, while the smaller visualization above zooms to show the selected range.
 
 ## Technique examples 🛠️
 
@@ -56,6 +56,8 @@ Here are some technique examples we’d like to add:
 * Daily metric chart with moving average
 * Punchcard chart (activity by day of week and hour of day)
 * Bump chart/rank chart
+* Brushing
+* Zooming
 * JSZip data loader
 * Google Analytics data loader
 * GitHub data loader
