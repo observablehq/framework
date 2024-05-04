@@ -23,7 +23,7 @@ git clone git@github.com:observablehq/framework.git
 
 Then `cd` into the desired example directory. From there you would typically run `npm install` or `yarn` to install dependencies. Please refer to each example’s `README.md` file for specific instructions; some examples may require additional configuration, such as setting environment variables to talk to external data sources.
 
-## Showcase examples
+## Showcase examples 🖼️
 
 ### [`api`](./api) - Analyzing web logs
 
@@ -41,7 +41,7 @@ Then `cd` into the desired example directory. From there you would typically run
 
 [View example](https://observablehq.com/framework/examples/mortgage-rates/) · [Source code](./mortgage-rates) · This dashboard visualizes Freddie Mac’s historical mortgage rates data. The included data loader demonstrates how to retrieve CSV data from Freddie Mac and visualize the result as a zoomable chart with Observable Plot.
 
-## Technique examples
+## Technique examples 🛠️
 
 * [`chess`](./chess) - Loading Zip data from FIDE; creating a bump chart with Observable Plot
 * [`google-analytics`](./google-analytics) - Loading data from Google Analytics
