@@ -55,7 +55,7 @@ const x = {domain: [start, end]};
       width,
       marginRight: 40,
       x,
-      y: {insetTop: 40, domain: [0, 6000], label: "downloads"},
+      y: {insetTop: 40, label: "downloads"},
       annotations: versions.filter((d) => !/-/.test(d.version)).map((d) => ({date: d.date, text: d.version, href: `https://github.com/observablehq/plot/releases/v${d.version}`}))
     })
   )}
