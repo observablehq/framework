@@ -23,8 +23,6 @@ git clone git@github.com:observablehq/framework.git
 
 Then `cd` into the desired example directory. From there you would typically run `npm install` or `yarn` to install dependencies. Please refer to each example’s `README.md` file for specific instructions; some examples may require additional configuration, such as setting environment variables to talk to external data sources.
 
-**We welcome contributions!** If you have an example that you’d like to share with the community, please [open a pull request](https://docs.github.com/en/pull-requests). Or if there’s an example you’d like to see, please let us know by [filing an issue](https://github.com/observablehq/framework/issues). If you have questions, please [open a discussion](https://github.com/observablehq/framework/discussions).
-
 ## Showcase examples
 
 ### [`api`](./api) - Analyzing web logs
@@ -50,11 +48,13 @@ Then `cd` into the desired example directory. From there you would typically run
 * [`hello-world`](./hello-world) - A minimal Framework project
 * [`penguin-classification`](./penguin-classification) - Logistic regression in Python; validating models with Observable Plot
 
-## TODO
+**Can’t find what you need?** 🧐 If there’s an example you’d like to see, please let us know by [filing an issue](https://github.com/observablehq/framework/issues). Or if you have questions about an existing example, please [open a discussion](https://github.com/observablehq/framework/discussions). **We also welcome contributions!** If you have an example that you’d like to share with the community, please [open a pull request](https://docs.github.com/en/pull-requests).
+
+Here are some technique examples we’d like to add:
 
 * Big number with area chart
-* Line chart with moving averages
-* Punchcard chart
+* Daily metric chart with moving average
+* Punchcard chart (activity by day of week and hour of day)
 * Bump chart/rank chart
 * JSZip data loader
 * Google Analytics data loader
