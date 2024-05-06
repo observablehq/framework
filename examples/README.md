@@ -27,7 +27,7 @@ Then `cd` into the desired example directory. From there you would typically run
 
 ### [`api`](./api) - Analyzing web logs
 
-[View example](https://observablehq.com/framework/examples/api/) · [Source code](./api) · This report visualizes millions of requests to Observable’s API servers over a 7-day period in January 2024, revealing both traffic patterns and performance characteristics of Observable’s web service. This example showcases the flexibility of Observable Plot for creating custom, performant visualizations, and hints at the potential of Framework’s data loaders for working with large datasets. This example also demonstrates reading [Apache Arrow files](https://observablehq.com/framework/lib/arrow). (While this public example uses static data, at Observable we use Snowflake [data loaders](https://observablehq.com/framework/loaders) internally to create a similar live dashboard.)
+[View example](https://observablehq.com/framework/examples/api/) · [Source code](./api) · This report visualizes millions of requests to Observable’s API servers over a 7-day period in January 2024, revealing both traffic patterns and performance characteristics of Observable’s web service. This example showcases the flexibility of Observable Plot for creating custom, performant visualizations, and hints at the potential of Framework’s data loaders for working with large datasets. This example also demonstrates reading [Apache Parquet files](https://observablehq.com/framework/lib/arrow). (While this public example uses static data, at Observable we use Snowflake [data loaders](https://observablehq.com/framework/loaders) internally to create a similar live dashboard.)
 
 ### [`eia`](./eia) - U.S. electricity grid
 
