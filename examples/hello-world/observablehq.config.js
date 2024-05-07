@@ -1,8 +1,6 @@
 export default {
   root: "src",
   title: "Hello, world!",
-  toc: false,
-  pager: false,
   head:
     process.env.CI &&
     `<script type="module" async src="https://events.observablehq.com/client.js?pageLoad"></script>

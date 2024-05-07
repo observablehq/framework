@@ -1,3 +1,7 @@
+---
+toc: false
+---
+
 # Hello, world!
 
-This is a test.
+This is a minimal example of Observable Framework.

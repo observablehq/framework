@@ -1,3 +1,8 @@
+---
+theme: dashboard
+toc: false
+---
+
 # Google analytics
 
 ```js

@@ -1,8 +1,11 @@
 {
   "type": "module",
   "scripts": {
+    "clean": "rimraf src/.observablehq/cache",
+    "build": "rimraf dist && observable build",
     "dev": "observable preview",
-    "build": "rm -rf dist && observable build"
+    "deploy": "observable deploy",
+    "observable": "observable"
   },
   "dependencies": {
     "@google-analytics/data": "^4.3.0",
@@ -10,7 +13,8 @@
     "dotenv": "^16.3.1"
   },
   "devDependencies": {
-    "@types/node": "^20.10.6"
+    "@types/node": "^20.10.6",
+    "rimraf": "^5.0.5"
   },
   "engines": {
     "node": ">=18"
