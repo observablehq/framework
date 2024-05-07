@@ -17,14 +17,14 @@ describe("readConfig(undefined, root)", () => {
       style: {theme: ["air", "near-midnight"]},
       sidebar: true,
       pages: [
-        {path: "/index", name: "Index"},
-        {path: "/one", name: "One<Two"},
-        {name: "Two", path: "/sub/two"},
+        {path: "/index", name: "Index", pager: "main"},
+        {path: "/one", name: "One<Two", pager: "main"},
+        {name: "Two", path: "/sub/two", pager: "main"},
         {
           name: "Closed subsection",
           collapsible: true,
           open: false,
-          pages: [{name: "Closed page", path: "/closed/page"}]
+          pages: [{name: "Closed page", path: "/closed/page", pager: "main"}]
         }
       ],
       title: undefined,
@@ -49,7 +49,7 @@ describe("readConfig(undefined, root)", () => {
       base: "/",
       style: {theme: ["air", "near-midnight"]},
       sidebar: true,
-      pages: [{name: "Build test case", path: "/simple"}],
+      pages: [{name: "Build test case", path: "/simple", pager: "main"}],
       title: undefined,
       toc: {label: "Contents", show: true},
       pager: true,
@@ -76,11 +76,11 @@ describe("normalizeConfig(spec, root)", () => {
   });
   it("populates default pages", () => {
     assert.deepStrictEqual(config({}, root).pages, [
-      {name: "One", path: "/one"},
-      {name: "H1: Section", path: "/toc-override"},
-      {name: "H1: Section", path: "/toc"},
-      {name: "A page…", path: "/closed/page"},
-      {name: "Two", path: "/sub/two"}
+      {name: "One", path: "/one", pager: "main"},
+      {name: "H1: Section", path: "/toc-override", pager: "main"},
+      {name: "H1: Section", path: "/toc", pager: "main"},
+      {name: "A page…", path: "/closed/page", pager: "main"},
+      {name: "Two", path: "/sub/two", pager: "main"}
     ]);
   });
   it("coerces pages to an array", () => {
@@ -95,16 +95,16 @@ describe("normalizeConfig(spec, root)", () => {
       {name: "Page.html", path: "/foo.html"}
     ];
     const outpages = [
-      {name: "42", path: "/true"},
-      {name: "null", path: "/yes"},
-      {name: "Index", path: "/foo/index"},
-      {name: "Index.html", path: "/foo/index"},
-      {name: "Page.html", path: "/foo"}
+      {name: "42", path: "/true", pager: "main"},
+      {name: "null", path: "/yes", pager: "main"},
+      {name: "Index", path: "/foo/index", pager: "main"},
+      {name: "Index.html", path: "/foo/index", pager: "main"},
+      {name: "Page.html", path: "/foo", pager: "main"}
     ];
     assert.deepStrictEqual(config({pages: inpages}, root).pages, outpages);
   });
   it("allows external page paths", () => {
-    const pages = [{name: "Example.com", path: "https://example.com"}];
+    const pages = [{name: "Example.com", path: "https://example.com", pager: null}];
     assert.deepStrictEqual(config({pages}, root).pages, pages);
   });
   it("allows page paths to have query strings and anchor fragments", () => {
@@ -121,22 +121,24 @@ describe("normalizeConfig(spec, root)", () => {
       {name: "Query string", path: "/test?foo=bar"}
     ];
     const outpages = [
-      {name: "Anchor fragment on index", path: "/test/index#foo=bar"},
-      {name: "Anchor fragment on index.html", path: "/test/index#foo=bar"},
-      {name: "Anchor fragment on page.html", path: "/test#foo=bar"},
-      {name: "Anchor fragment on slash", path: "/test/index#foo=bar"},
-      {name: "Anchor fragment", path: "/test#foo=bar"},
-      {name: "Query string on index", path: "/test/index?foo=bar"},
-      {name: "Query string on index.html", path: "/test/index?foo=bar"},
-      {name: "Query string on page.html", path: "/test?foo=bar"},
-      {name: "Query string on slash", path: "/test/index?foo=bar"},
-      {name: "Query string", path: "/test?foo=bar"}
+      {name: "Anchor fragment on index", path: "/test/index#foo=bar", pager: "main"},
+      {name: "Anchor fragment on index.html", path: "/test/index#foo=bar", pager: "main"},
+      {name: "Anchor fragment on page.html", path: "/test#foo=bar", pager: "main"},
+      {name: "Anchor fragment on slash", path: "/test/index#foo=bar", pager: "main"},
+      {name: "Anchor fragment", path: "/test#foo=bar", pager: "main"},
+      {name: "Query string on index", path: "/test/index?foo=bar", pager: "main"},
+      {name: "Query string on index.html", path: "/test/index?foo=bar", pager: "main"},
+      {name: "Query string on page.html", path: "/test?foo=bar", pager: "main"},
+      {name: "Query string on slash", path: "/test/index?foo=bar", pager: "main"},
+      {name: "Query string", path: "/test?foo=bar", pager: "main"}
     ];
     assert.deepStrictEqual(config({pages: inpages}, root).pages, outpages);
   });
   it("coerces sections", () => {
     const inpages = [{name: 42, pages: new Set([{name: null, path: {toString: () => "yes"}}])}];
-    const outpages = [{name: "42", collapsible: false, open: true, pages: [{name: "null", path: "/yes"}]}];
+    const outpages = [
+      {name: "42", collapsible: false, open: true, pages: [{name: "null", path: "/yes", pager: "main"}]}
+    ];
     assert.deepStrictEqual(config({pages: inpages}, root).pages, outpages);
   });
   it("coerces toc", () => {

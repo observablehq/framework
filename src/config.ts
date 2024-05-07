@@ -23,7 +23,7 @@ export interface TableOfContents {
 export interface Page {
   name: string;
   path: string;
-  pager: boolean;
+  pager: string | null;
 }
 
 export interface Section<T = Page> {
@@ -31,7 +31,6 @@ export interface Section<T = Page> {
   collapsible: boolean; // defaults to false
   open: boolean; // defaults to true; always true if collapsible is false
   pages: T[];
-  pager: boolean;
 }
 
 export type Style =
@@ -160,7 +159,7 @@ function readPages(root: string, md: MarkdownIt): Page[] {
     const {data, title} = parseMarkdownMetadata(source, {path: file, md});
     if (data.draft) continue;
     const name = basename(file, ".md");
-    const page = {path: join("/", dirname(file), name), name: title ?? "Untitled", pager: true};
+    const page = {path: join("/", dirname(file), name), name: title ?? "Untitled", pager: data.pager ?? "main"};
     if (name === "index") pages.unshift(page);
     else pages.push(page);
   }
@@ -289,20 +288,23 @@ function normalizeScript(spec: unknown): Script {
 
 function normalizePages(spec: unknown): Config["pages"] {
   return Array.from(spec as any, (spec: SectionSpec | PageSpec) =>
-    "pages" in spec ? normalizeSection(spec, (spec: PageSpec) => normalizePage(spec)) : normalizePage(spec)
+    "pages" in spec ? normalizeSection(spec, normalizePage) : normalizePage(spec)
   );
 }
 
-function normalizeSection<T>(spec: SectionSpec, normalizePage: (spec: PageSpec) => T): Section<T> {
+function normalizeSection<T>(
+  spec: SectionSpec,
+  normalizePage: (spec: PageSpec, pager: string | null) => T
+): Section<T> {
   const name = String(spec.name);
   const collapsible = spec.collapsible === undefined ? spec.open !== undefined : Boolean(spec.collapsible);
   const open = collapsible ? Boolean(spec.open) : true;
-  const pages = Array.from(spec.pages as any, normalizePage);
-  const pager = spec.pager === undefined ? true : Boolean(spec.pager);
-  return {name, collapsible, open, pages, pager};
+  const pager = spec.pager === undefined ? "main" : stringOrNull(spec.pager);
+  const pages = Array.from(spec.pages as any, (spec: PageSpec) => normalizePage(spec, pager));
+  return {name, collapsible, open, pages};
 }
 
-function normalizePage(spec: PageSpec): Page {
+function normalizePage(spec: PageSpec, defaultPager: string | null = "main"): Page {
   const name = String(spec.name);
   let path = String(spec.path);
   if (isAssetPath(path)) {
@@ -312,7 +314,7 @@ function normalizePage(spec: PageSpec): Page {
     pathname = pathname.replace(/\/$/, "/index"); // add trailing index
     path = pathname + u.search + u.hash;
   }
-  const pager = spec.pager === undefined ? isAssetPath(path) : Boolean(spec.pager);
+  const pager = spec.pager === undefined && isAssetPath(path) ? defaultPager : stringOrNull(spec.pager);
   return {name, path, pager};
 }
 

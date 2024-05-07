@@ -30,7 +30,7 @@ export default {
     {
       name: "Inputs",
       open: false,
-      pager: false,
+      pager: "inputs",
       pages: [
         {name: "Button", path: "/inputs/button"},
         {name: "Checkbox", path: "/inputs/checkbox"},
