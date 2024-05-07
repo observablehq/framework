@@ -52,14 +52,20 @@ Then `cd` into the desired example directory. From there you would typically run
 
 Here are some technique examples we’d like to add:
 
-* Big number with area chart
-* Daily metric chart with moving average
-* Punchcard chart (activity by day of week and hour of day)
-* Bump chart/rank chart
-* Brushing
-* Zooming
-* JSZip data loader
-* Google Analytics data loader
-* GitHub data loader
-* npm data loader
-* Snowflake data loader
+* Visualization
+  * Big number with area chart
+  * Daily metric chart with moving average
+  * Punchcard chart (activity by day of week and hour of day)
+  * Bump chart/rank chart
+  * Brushing
+  * Zooming
+* Data loaders
+  * JSZip data loader
+  * Google Analytics data loader
+  * GitHub data loader
+  * npm data loader
+  * Snowflake data loader
+* Markdown
+  * Wikilinks
+  * Footnotes
+  * Inline TeX

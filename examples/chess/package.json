@@ -2,11 +2,10 @@
   "type": "module",
   "scripts": {
     "dev": "observable preview",
-    "build": "rm -rf dist && observable build",
-    "postinstall": "ln -sf ../../../../dist/bin/observable.js node_modules/.bin/observable"
+    "build": "rm -rf dist && observable build"
   },
   "dependencies": {
-    "@observablehq/framework": "link:../..",
+    "@observablehq/framework": "^1.7.0",
     "d3-fetch": "^3.0.1",
     "d3-time-format": "^4.1.0",
     "jszip": "^3.10.1"
