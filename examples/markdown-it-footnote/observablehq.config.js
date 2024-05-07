@@ -2,14 +2,14 @@ import MarkdownItFootnote from "markdown-it-footnote";
 
 export default {
   root: "src",
-  title: "markdown-it-footnote | Observable Framework",
 
   // Register the markdown-it-footnote plugin.
   markdownIt: (md) => md.use(MarkdownItFootnote),
 
   // Shared Observable example configuration; feel free to remove this.
-  toc: false,
+  title: "Observable Framework",
   pager: false,
+  toc: false,
   sidebar: false,
   head:
     process.env.CI &&

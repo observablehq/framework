@@ -2,12 +2,12 @@ import MarkdownItWikilinks from "markdown-it-wikilinks";
 
 export default {
   root: "src",
-  title: "markdown-it-wikilinks | Observable Framework",
 
   // Register the markdown-it-wikilinks plugin.
   markdownIt: (md) => md.use(MarkdownItWikilinks({})),
 
   // Shared Observable example configuration; feel free to remove this.
+  title: "Observable Framework",
   pager: false,
   toc: false,
   sidebar: false,

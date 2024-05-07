@@ -2,7 +2,6 @@ import MarkdownItContainer from "markdown-it-container";
 
 export default {
   root: "src",
-  title: "markdown-it-container | Observable Framework",
 
   // Register the markdown-it-container plugin.
   markdownIt: (md) =>
@@ -12,8 +11,9 @@ export default {
       .use(MarkdownItContainer, "warning"), // ::: warning
 
   // Shared Observable example configuration; feel free to remove this.
-  toc: false,
+  title: "Observable Framework",
   pager: false,
+  toc: false,
   sidebar: false,
   head:
     process.env.CI &&
