@@ -1,8 +1,11 @@
 {
   "type": "module",
   "scripts": {
+    "clean": "rimraf src/.observablehq/cache",
+    "build": "rimraf dist && observable build",
     "dev": "observable preview",
-    "build": "rm -rf dist && observable build"
+    "deploy": "observable deploy",
+    "observable": "observable"
   },
   "dependencies": {
     "@observablehq/framework": "^1.7.0",
@@ -10,6 +13,9 @@
     "dotenv": "^16.3.1",
     "topojson-client": "^3.1.0",
     "topojson-simplify": "^3.0.3"
+  },
+  "devDependencies": {
+    "rimraf": "^5.0.5"
   },
   "engines": {
     "node": ">=18"

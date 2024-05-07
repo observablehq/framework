@@ -1,6 +1,5 @@
 {
   "type": "module",
-  "private": true,
   "scripts": {
     "clean": "rimraf src/.observablehq/cache",
     "build": "rimraf dist && observable build",

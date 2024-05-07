@@ -1,8 +1,6 @@
 export default {
   root: "src",
   title: "A year of chess rankings",
-  pager: false,
-  toc: false,
   head:
     process.env.CI &&
     `<script type="module" async src="https://events.observablehq.com/client.js?pageLoad"></script>

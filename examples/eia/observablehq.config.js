@@ -1,9 +1,6 @@
 export default {
   root: "src",
   title: "U.S. electricity grid",
-  theme: "dashboard",
-  pager: false,
-  toc: false,
   head:
     process.env.CI &&
     `<script type="module" async src="https://events.observablehq.com/client.js?pageLoad"></script>
