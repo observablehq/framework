@@ -4,6 +4,8 @@ on:
   workflow_dispatch: {}
   push:
     branches: [main]
+  schedule:
+    - cron: "15 10 * * *"
 
 jobs:
   deploy:
@@ -22,6 +24,11 @@ jobs:
           cache-dependency-path: |
             yarn.lock
             'examples/*/yarn.lock'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: 'examples/*/requirements.txt'
       - run: yarn --frozen-lockfile
       - id: date
         run: echo "date=$(TZ=America/Los_Angeles date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
@@ -59,10 +66,7 @@ jobs:
         run: yarn --frozen-lockfile && yarn build
         working-directory: examples/mortgage-rates
       - name: Build example "penguin-classification"
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          yarn --frozen-lockfile && yarn build
+        run: pip install -r requirements.txt && yarn --frozen-lockfile && yarn build
         working-directory: examples/penguin-classification
       - name: Build example "plot"
         run: yarn --frozen-lockfile && yarn build

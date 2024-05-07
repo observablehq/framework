@@ -271,6 +271,9 @@ function getWatchFiles(resolvers: Resolvers): Iterable<string> {
       files.add(specifier);
     }
   }
+  for (const specifier of resolvers.assets) {
+    files.add(specifier);
+  }
   for (const specifier of resolvers.files) {
     files.add(specifier);
   }
