@@ -118,6 +118,8 @@ Both pages and sections have a **name**, which typically corresponds to the page
 
 Sections may be **collapsible**. <a href="https://github.com/observablehq/framework/releases/tag/v1.6.0" class="observablehq-version-badge" data-version="^1.6.0" title="Added in 1.6.0"></a> If the **open** option is set, the **collapsible** option defaults to true; otherwise it defaults to false. If the section is not collapsible, the **open** option is ignored and the section is always open; otherwise, the **open** option defaults to true. When a section is collapsible, clicking on a section header opens or closes that section. A section will always be open if the current page belongs to that section.
 
+Pages and sections may also have a **pager** field <a href="https://github.com/observablehq/framework/pull/1306" class="observablehq-version-badge" data-version="prerelease" title="Added in #1306"></a> which specifies the name of the page group; this determines which pages are linked to via the previous and next pager buttons. If the **pager** field is not specified, it defaults the current section’s **pager** field, or to `main` for top-level pages and sections. (The home page is always in the `main` pager group.) The **pager** field can be also set to `null` to disable the pager on a specific page or section, causing adjacent pages to skip the page.
+
 For example, here **pages** specifies two sections and a total of four pages:
 
 ```js run=false
