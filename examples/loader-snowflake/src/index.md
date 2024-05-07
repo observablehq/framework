@@ -1,4 +1,4 @@
-# Snowflake data loader
+# Framework + Snowflake
 
 This loads the data from Snowflake:
 
