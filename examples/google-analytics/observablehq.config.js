@@ -1,6 +1,6 @@
 export default {
   root: "src",
-  title: "Google analytics",
+  title: "Google analytics | Observable Framework",
 
   // Shared Observable example configuration; feel free to remove this.
   toc: false,

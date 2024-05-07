@@ -1,6 +1,6 @@
 export default {
   root: "src",
-  title: "A year of chess rankings",
+  title: "A year of chess rankings | Observable Framework",
 
   // Shared Observable example configuration; feel free to remove this.
   toc: false,

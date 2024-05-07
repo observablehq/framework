@@ -1,6 +1,6 @@
 export default {
   root: "src",
-  title: "U.S. electricity grid",
+  title: "U.S. electricity grid | Observable Framework",
 
   // Shared Observable example configuration; feel free to remove this.
   toc: false,

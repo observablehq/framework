@@ -1,6 +1,6 @@
 export default {
   root: "src",
-  title: "Penguin classification",
+  title: "Penguin classification | Observable Framework",
 
   // Shared Observable example configuration; feel free to remove this.
   pager: false,

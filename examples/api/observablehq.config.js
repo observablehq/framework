@@ -1,6 +1,6 @@
 export default {
   root: "src",
-  title: "Analyzing web logs",
+  title: "Analyzing web logs | Observable Framework",
 
   // Shared Observable example configuration; feel free to remove this.
   toc: false,

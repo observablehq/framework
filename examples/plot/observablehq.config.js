@@ -1,6 +1,6 @@
 export default {
   root: "src",
-  title: "Observable Plot downloads",
+  title: "Observable Plot downloads | Observable Framework",
 
   // Shared Observable example configuration; feel free to remove this.
   pager: false,

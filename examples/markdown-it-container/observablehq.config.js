@@ -2,7 +2,7 @@ import MarkdownItContainer from "markdown-it-container";
 
 export default {
   root: "src",
-  title: "Framework + markdown-it-container",
+  title: "markdown-it-container | Observable Framework",
 
   // Register the markdown-it-container plugin.
   markdownIt: (md) =>

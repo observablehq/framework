@@ -1,6 +1,6 @@
 export default {
   root: "src",
-  title: "Framework + PostgreSQL",
+  title: "PostgreSQL data loader | Observable Framework",
 
   // Shared Observable example configuration; feel free to remove this.
   toc: false,

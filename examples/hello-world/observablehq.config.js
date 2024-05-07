@@ -1,6 +1,6 @@
 export default {
   root: "src",
-  title: "Hello, world!",
+  title: "Hello, world! | Observable Framework",
 
   // Shared Observable example configuration; feel free to remove this.
   toc: false,
