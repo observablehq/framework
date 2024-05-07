@@ -1,7 +1,3 @@
----
-toc: false
----
-
 ```js
 import {ApiHeatmap} from "./components/apiHeatmap.js";
 import {ApiHistogram} from "./components/apiHistogram.js";

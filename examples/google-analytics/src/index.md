@@ -1,6 +1,5 @@
 ---
 theme: dashboard
-toc: false
 ---
 
 # Google analytics

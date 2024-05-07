@@ -1,7 +1,3 @@
----
-toc: false
----
-
 # Framework + Snowflake
 
 This loads the data from Snowflake:

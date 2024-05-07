@@ -1,6 +1,8 @@
 export default {
   root: "src",
   title: "Primary mortgage market survey",
+
+  // Shared Observable example configuration; feel free to remove this.
   pager: false,
   toc: false,
   sidebar: false,

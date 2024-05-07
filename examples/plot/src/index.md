@@ -1,3 +1,7 @@
+---
+theme: dashboard
+---
+
 # Observable Plot downloads
 
 ```js
