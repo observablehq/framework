@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 import type {ParseArgsConfig} from "node:util";
 import {parseArgs} from "node:util";
-import * as clack from "@clack/prompts";
-import wrapAnsi from "wrap-ansi";
+import {clackWithWrap as clack} from "../clack.js";
 import {readConfig} from "../config.js";
 import {CliError} from "../error.js";
 import {faint, link, red} from "../tty.js";
@@ -201,7 +200,6 @@ try {
     }
   }
 } catch (error: any) {
-  const wrapWidth = Math.min(80, process.stdout.columns ?? 80);
   const bugMessage = "If you think this is a bug, please file an issue at";
   const bugUrl = "https://github.com/observablehq/framework/issues";
   const clackBugMessage = () => {
@@ -215,7 +213,7 @@ try {
   if (error instanceof CliError) {
     if (error.print) {
       if (command && CLACKIFIED_COMMANDS.includes(command)) {
-        clack.log.error(wrapAnsi(red(`Error: ${error.message}`), wrapWidth));
+        clack.wrap.log.error(red(`Error: ${error.message}`));
         clackBugMessage();
       } else {
         console.error(red(error.message));
@@ -225,7 +223,7 @@ try {
     process.exit(error.exitCode);
   } else {
     if (command && CLACKIFIED_COMMANDS.includes(command)) {
-      clack.log.error(wrapAnsi(`${red("Error:")} ${error.message}`, wrapWidth));
+      clack.wrap.log.error(`${red("Error:")} ${error.message}`);
       if (values.debug) {
         clack.outro("The full error follows");
         throw error;
