@@ -26,5 +26,7 @@ Copy the contents of the `penguins-classification` directory into a new Observab
   - `$ yarn`
   - `$ yarn dev`
 - Make changes to the page (`index.md`) or data loader and save to see instant updates in the [live preview](https://observablehq.com/framework/getting-started#test-live-preview)
+- To exit the virtual environment when you’re done,
+  - `$ deactivate`
 
 [Learn more about deploying with Github actions](https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#requirements-file) for Python 3.6 & `requirements.txt`.
