@@ -180,7 +180,6 @@ export async function deploy(
 
   deployTarget ??= await promptDeployTarget(effects, apiClient, config, currentUser);
 
-  const previousProjectId = deployConfig?.projectId;
   let targetDescription: string;
   let buildFilePaths: string[] | null = null;
   let doBuild = force === "build";
@@ -254,8 +253,7 @@ export async function deploy(
     // Check last deployed state. If it's not the same project, ask the user if
     // they want to continue anyways. In non-interactive mode just cancel.
     targetDescription = `${deployTarget.project.title} (@${deployTarget.workspace.login}/${deployTarget.project.slug})`;
-    const previousProjectId = deployConfig.projectId;
-    if (previousProjectId && previousProjectId !== deployTarget.project.id) {
+    if (deployConfig.projectId && deployConfig.projectId !== deployTarget.project.id) {
       clack.log.warn(
         `The \`projectId\` in your deploy.json does not match. Continuing will overwrite ${bold(targetDescription)}.`
       );
@@ -274,7 +272,7 @@ export async function deploy(
       } else {
         throw new CliError("Cancelling deploy due to misconfiguration.");
       }
-    } else if (previousProjectId) {
+    } else if (deployConfig.projectId) {
       clack.log.info(`Deploying to ${bold(targetDescription)}.`);
     } else {
       clack.log.warn(
@@ -295,6 +293,10 @@ export async function deploy(
       } else {
         throw new CliError("Running non-interactively, cancelling due to conflictg");
       }
+    }
+
+    if (deployTarget.project.title !== config.title) {
+      projectUpdates.title = config.title;
     }
   }
 
@@ -451,7 +453,7 @@ export async function deploy(
   if (!deployInfo) throw new CliError("Deploy failed to process on server");
 
   // Update project title if necessary
-  if (previousProjectId && previousProjectId === deployTarget.project.id && typeof projectUpdates?.title === "string") {
+  if (typeof projectUpdates?.title === "string") {
     await apiClient.postEditProject(deployTarget.project.id, projectUpdates as PostEditProjectRequest);
   }
   clack.outro(`Deployed project now visible at ${link(deployInfo.url)}`);
