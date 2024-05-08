@@ -1,4 +1,5 @@
 import * as Arrow from "apache-arrow";
+import * as Parquet from "parquet-wasm";
 
 // Generate a daily random walk as parallel arrays of {date, value}.
 const date = [];
@@ -15,5 +16,8 @@ for (let currentValue = 0, currentDate = start; currentDate < end; ) {
 // Construct an Apache Arrow table from the parallel arrays.
 const table = Arrow.tableFromArrays({date, value});
 
-// Output the Apache Arrow table as an IPC stream to stdout.
-process.stdout.write(Arrow.tableToIPC(table));
+// Output the Apache Arrow table as a Parquet table to standard out.
+const parquetTable = Parquet.Table.fromIPCStream(Arrow.tableToIPC(table, "stream"));
+const parquetBuilder = new Parquet.WriterPropertiesBuilder().setCompression(Parquet.Compression.ZSTD).build();
+const parquetData = Parquet.writeParquet(parquetTable, parquetBuilder);
+process.stdout.write(parquetData);

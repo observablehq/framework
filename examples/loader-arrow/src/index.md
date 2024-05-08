@@ -1,23 +1,34 @@
 # Framework + Apache Arrow
 
-Here’s a JavaScript data loader that generates a random walk for each day in 2022, and outputs an Apache Arrow table to standard out.
+Here’s a JavaScript data loader that generates a random walk for each day in 2022 and outputs an Apache Arrow table to standard out.
 
 ```js run=false
 import * as Arrow from "apache-arrow";
 
+// Generate a daily random walk as parallel arrays of {date, value}.
 const date = [];
 const value = [];
 const start = new Date("2022-01-01");
 const end = new Date("2023-01-01");
-for (let d = new Date(start), v = 0; d < end; d.setUTCDate(d.getUTCDate() + 1)) {
-  date.push(new Date(d));
-  value.push((v += Math.random() - 0.5)); // random walk
+for (let currentValue = 0, currentDate = start; currentDate < end; ) {
+  date.push(currentDate);
+  value.push(currentValue);
+  (currentDate = new Date(currentDate)), currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+  currentValue += Math.random() - 0.5;
 }
 
+// Construct an Apache Arrow table from the parallel arrays.
 const table = Arrow.tableFromArrays({date, value});
 
+// Output the Apache Arrow table as an IPC stream to stdout.
 process.stdout.write(Arrow.tableToIPC(table));
 ```
+
+<div class="note">
+
+To run this data loader, you’ll need to install `apache-arrow` using your preferred package manager such as npm or Yarn.
+
+</div>
 
 The above data loader lives in `data/samples.arrow.js`, so we can load the data using `data/samples.arrow`. The `FileAttachment.arrow` method parses the file and returns a promise to an Apache Arrow table.
 
