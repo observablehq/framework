@@ -10,13 +10,11 @@
   "dependencies": {
     "@observablehq/framework": "^1.7.0",
     "d3-dsv": "^3.0.1",
-    "d3-time": "^3.1.0",
     "dotenv": "^16.4.5",
     "snowflake-sdk": "~1.9.0"
   },
   "devDependencies": {
     "@types/d3-dsv": "^3.0.7",
-    "@types/d3-time": "^3.0.3",
     "@types/snowflake-sdk": "^1.6.22",
     "rimraf": "^5.0.5"
   },
