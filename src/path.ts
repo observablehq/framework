@@ -31,7 +31,7 @@ export function resolvePath(source: string, target: string): string;
 export function resolvePath(root: string, source: string, target: string): string;
 export function resolvePath(root: string, source: string, target?: string): string {
   if (target === undefined) (target = source), (source = root), (root = ".");
-  const path = join(root, target.startsWith("/") ? "." : dirname(source), target);
+  const path = join(root, target === "" ? source : target.startsWith("/") ? "." : dirname(source), target);
   return path.startsWith("../") ? path : `/${path}`;
 }
 

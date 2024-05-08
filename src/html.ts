@@ -110,7 +110,7 @@ export function rewriteHtmlPaths(html: string, path: string): string {
   for (const [selector, src] of PATH_ATTRIBUTES) {
     for (const element of document.querySelectorAll(selector)) {
       const source = decodeURI(element.getAttribute(src)!);
-      element.setAttribute(src, src === "srcset" ? resolveSrcset(source, resolvePath) : resolvePath(source));
+      element.setAttribute(src, src === "srcset" ? resolveSrcset(source, resolvePath) : encodeURI(resolvePath(source)));
     }
   }
 
@@ -121,32 +121,34 @@ export interface HtmlResolvers {
   resolveFile: (specifier: string) => string;
   resolveImport: (specifier: string) => string;
   resolveScript: (specifier: string) => string;
+  resolveLink: (href: string) => string;
 }
 
 export function rewriteHtml(
   html: string,
-  {resolveFile = String, resolveImport = String, resolveScript = String}: Partial<HtmlResolvers>
+  {resolveFile = String, resolveImport = String, resolveScript = String, resolveLink = String}: Partial<HtmlResolvers>
 ): string {
   const {document} = parseHtml(html);
 
-  const maybeResolveFile = (specifier: string): string => {
+  const resolvePath = (specifier: string): string => {
     return isAssetPath(specifier) ? resolveFile(specifier) : resolveImport(specifier);
   };
 
   for (const [selector, src] of ASSET_ATTRIBUTES) {
     for (const element of document.querySelectorAll(selector)) {
       const source = decodeURI(element.getAttribute(src)!);
-      element.setAttribute(src, src === "srcset" ? resolveSrcset(source, maybeResolveFile) : maybeResolveFile(source));
+      element.setAttribute(src, src === "srcset" ? resolveSrcset(source, resolvePath) : encodeURI(resolvePath(source)));
     }
   }
 
   for (const script of document.querySelectorAll<HTMLScriptElement>("script[src]")) {
     const src = decodeURI(script.getAttribute("src")!);
-    script.setAttribute("src", (isJavaScript(script) ? resolveScript : maybeResolveFile)(src));
+    script.setAttribute("src", encodeURI((isJavaScript(script) ? resolveScript : resolveFile)(src)));
   }
 
   for (const a of document.querySelectorAll<HTMLAnchorElement>("a[href]")) {
-    const href = a.getAttribute("href")!;
+    const href = decodeURI(a.getAttribute("href")!);
+    a.setAttribute("href", encodeURI(resolveLink(href)));
     if (!/^(\w+:)/.test(href)) continue;
     if (!a.hasAttribute("target")) a.setAttribute("target", "_blank");
     if (!a.hasAttribute("rel")) a.setAttribute("rel", "noopener noreferrer");
@@ -200,7 +202,7 @@ function resolveSrcset(srcset: string, resolve: (specifier: string) => string): 
     .map((src) => {
       const parts = src.split(/\s+/);
       const path = resolve(parts[0]);
-      if (path) parts[0] = path;
+      if (path) parts[0] = encodeURI(path);
       return parts.join(" ");
     })
     .join(", ");

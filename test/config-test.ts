@@ -7,9 +7,10 @@ import {LoaderResolver} from "../src/dataloader.js";
 describe("readConfig(undefined, root)", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   it("imports the config file at the specified root", async () => {
-    const {md, loaders, ...config} = await readConfig(undefined, "test/input/build/config");
+    const {md, loaders, normalizePath, ...config} = await readConfig(undefined, "test/input/build/config");
     assert(md instanceof MarkdownIt);
     assert(loaders instanceof LoaderResolver);
+    assert.strictEqual(typeof normalizePath, "function");
     assert.deepStrictEqual(config, {
       root: "test/input/build/config",
       output: "dist",
@@ -40,9 +41,10 @@ describe("readConfig(undefined, root)", () => {
     });
   });
   it("returns the default config if no config file is found", async () => {
-    const {md, loaders, ...config} = await readConfig(undefined, "test/input/build/simple");
+    const {md, loaders, normalizePath, ...config} = await readConfig(undefined, "test/input/build/simple");
     assert(md instanceof MarkdownIt);
     assert(loaders instanceof LoaderResolver);
+    assert.strictEqual(typeof normalizePath, "function");
     assert.deepStrictEqual(config, {
       root: "test/input/build/simple",
       output: "dist",
@@ -160,6 +162,102 @@ describe("normalizeConfig(spec, root)", () => {
   });
   it("populates default pager", () => {
     assert.strictEqual(config({pages: []}, root).pager, true);
+  });
+});
+
+describe("normalizePath(path) with {cleanUrls: false}", () => {
+  const root = "test/input";
+  const normalize = config({cleanUrls: false}, root).normalizePath;
+  it("appends .html to extension-less links", () => {
+    assert.strictEqual(normalize("foo"), "foo.html");
+  });
+  it("does not append .html to extensioned links", () => {
+    assert.strictEqual(normalize("foo.png"), "foo.png");
+    assert.strictEqual(normalize("foo.html"), "foo.html");
+    assert.strictEqual(normalize("foo.md"), "foo.md");
+  });
+  it("preserves absolute paths", () => {
+    assert.strictEqual(normalize("/foo"), "/foo.html");
+    assert.strictEqual(normalize("/foo.html"), "/foo.html");
+    assert.strictEqual(normalize("/foo.png"), "/foo.png");
+  });
+  it("converts index links to directories", () => {
+    assert.strictEqual(normalize("foo/index"), "foo/");
+    assert.strictEqual(normalize("foo/index.html"), "foo/");
+    assert.strictEqual(normalize("../index"), "../");
+    assert.strictEqual(normalize("../index.html"), "../");
+    assert.strictEqual(normalize("./index"), "./");
+    assert.strictEqual(normalize("./index.html"), "./");
+    assert.strictEqual(normalize("/index"), "/");
+    assert.strictEqual(normalize("/index.html"), "/");
+    assert.strictEqual(normalize("index"), ".");
+    assert.strictEqual(normalize("index.html"), ".");
+  });
+  it("preserves links to directories", () => {
+    assert.strictEqual(normalize(""), "");
+    assert.strictEqual(normalize("/"), "/");
+    assert.strictEqual(normalize("./"), "./");
+    assert.strictEqual(normalize("../"), "../");
+    assert.strictEqual(normalize("foo/"), "foo/");
+    assert.strictEqual(normalize("./foo/"), "./foo/");
+    assert.strictEqual(normalize("../foo/"), "../foo/");
+    assert.strictEqual(normalize("../sub/"), "../sub/");
+  });
+  it("preserves a relative path", () => {
+    assert.strictEqual(normalize("foo"), "foo.html");
+    assert.strictEqual(normalize("./foo"), "./foo.html");
+    assert.strictEqual(normalize("../foo"), "../foo.html");
+    assert.strictEqual(normalize("./foo.png"), "./foo.png");
+    assert.strictEqual(normalize("../foo.png"), "../foo.png");
+  });
+});
+
+describe("normalizePath(path) with {cleanUrls: true}", () => {
+  const root = "test/input";
+  const normalize = config({cleanUrls: true}, root).normalizePath;
+  it("does not append .html to extension-less links", () => {
+    assert.strictEqual(normalize("foo"), "foo");
+  });
+  it("does not append .html to extensioned links", () => {
+    assert.strictEqual(normalize("foo.png"), "foo.png");
+    assert.strictEqual(normalize("foo.md"), "foo.md");
+  });
+  it("removes .html from extensioned links", () => {
+    assert.strictEqual(normalize("foo.html"), "foo");
+  });
+  it("preserves absolute paths", () => {
+    assert.strictEqual(normalize("/foo"), "/foo");
+    assert.strictEqual(normalize("/foo.html"), "/foo");
+    assert.strictEqual(normalize("/foo.png"), "/foo.png");
+  });
+  it("converts index links to directories", () => {
+    assert.strictEqual(normalize("foo/index"), "foo/");
+    assert.strictEqual(normalize("foo/index.html"), "foo/");
+    assert.strictEqual(normalize("../index"), "../");
+    assert.strictEqual(normalize("../index.html"), "../");
+    assert.strictEqual(normalize("./index"), "./");
+    assert.strictEqual(normalize("./index.html"), "./");
+    assert.strictEqual(normalize("/index"), "/");
+    assert.strictEqual(normalize("/index.html"), "/");
+    assert.strictEqual(normalize("index"), ".");
+    assert.strictEqual(normalize("index.html"), ".");
+  });
+  it("preserves links to directories", () => {
+    assert.strictEqual(normalize(""), "");
+    assert.strictEqual(normalize("/"), "/");
+    assert.strictEqual(normalize("./"), "./");
+    assert.strictEqual(normalize("../"), "../");
+    assert.strictEqual(normalize("foo/"), "foo/");
+    assert.strictEqual(normalize("./foo/"), "./foo/");
+    assert.strictEqual(normalize("../foo/"), "../foo/");
+    assert.strictEqual(normalize("../sub/"), "../sub/");
+  });
+  it("preserves a relative path", () => {
+    assert.strictEqual(normalize("foo"), "foo");
+    assert.strictEqual(normalize("./foo"), "./foo");
+    assert.strictEqual(normalize("../foo"), "../foo");
+    assert.strictEqual(normalize("./foo.png"), "./foo.png");
+    assert.strictEqual(normalize("../foo.png"), "../foo.png");
   });
 });
 

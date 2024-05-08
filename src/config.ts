@@ -2,7 +2,7 @@ import {createHash} from "node:crypto";
 import {existsSync, readFileSync} from "node:fs";
 import {stat} from "node:fs/promises";
 import op from "node:path";
-import {basename, dirname, join} from "node:path/posix";
+import {basename, dirname, extname, join} from "node:path/posix";
 import {cwd} from "node:process";
 import {pathToFileURL} from "node:url";
 import type MarkdownIt from "markdown-it";
@@ -59,11 +59,12 @@ export interface Config {
   style: null | Style; // defaults to {theme: ["light", "dark"]}
   search: boolean; // default to false
   md: MarkdownIt;
+  normalizePath: (path: string) => string;
   loaders: LoaderResolver;
   watchPath?: string;
 }
 
-interface ConfigSpec {
+export interface ConfigSpec {
   root?: unknown;
   output?: unknown;
   base?: unknown;
@@ -196,7 +197,6 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     linkify: spec.linkify === undefined ? undefined : Boolean(spec.linkify),
     typographer: spec.typographer === undefined ? undefined : Boolean(spec.typographer),
     quotes: spec.quotes === undefined ? undefined : (spec.quotes as any),
-    cleanUrls: spec.cleanUrls === undefined ? undefined : Boolean(spec.cleanUrls),
     markdownIt: spec.markdownIt as any
   });
   const title = spec.title === undefined ? undefined : String(spec.title);
@@ -226,6 +226,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     style,
     search,
     md,
+    normalizePath: getPathNormalizer(spec.cleanUrls),
     loaders: new LoaderResolver({root, interpreters}),
     watchPath
   };
@@ -233,6 +234,17 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   if (sidebar === undefined) Object.defineProperty(config, "sidebar", {get: () => config.pages.length > 0});
   configCache.set(spec, config);
   return config;
+}
+
+function getPathNormalizer(spec: unknown = true): (path: string) => string {
+  const cleanUrls = Boolean(spec);
+  return (path) => {
+    if (path && !path.endsWith("/") && !extname(path)) path += ".html";
+    if (path === "index.html") path = ".";
+    else if (path.endsWith("/index.html")) path = path.slice(0, -"index.html".length);
+    else if (cleanUrls) path = path.replace(/\.html$/, "");
+    return path;
+  };
 }
 
 function defaultFooter(): string {
