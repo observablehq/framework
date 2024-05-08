@@ -1,7 +1,7 @@
 import * as clack from "@clack/prompts";
 import isUnicodeSupported from "is-unicode-supported";
 import wrapAnsi from "wrap-ansi";
-import {blue, faint, green, red, yellow} from "./tty.js";
+import {blue, faint, green, red, stripColor, yellow} from "./tty.js";
 
 type Clack = typeof clack;
 
@@ -20,7 +20,21 @@ export interface ClackEffects {
   wrap: ClackWrapEffects;
 }
 
-export type ClackWrapEffects = Pick<ClackEffects, "intro" | "outro" | "log">;
+type TestOptions = {output?: {write: (chunk: string) => void; columns?: number}};
+
+export interface ClackWrapEffects {
+  intro: (message?: string, testOptions?: TestOptions) => void;
+  outro: (message?: string, testOptions?: TestOptions) => void;
+  log: {
+    message(message?: string, clackOptions?: clack.LogMessageOptions, testOptions?: TestOptions): void;
+    info(message?: string, testOptions?: TestOptions): void;
+    success(message?: string, testOptions?: TestOptions): void;
+    step(message?: string, testOptions?: TestOptions): void;
+    warn(message?: string, testOptions?: TestOptions): void;
+    warning(message?: string, testOptions?: TestOptions): void;
+    error(message?: string, testOptions?: TestOptions): void;
+  };
+}
 
 export const clackWithWrap: ClackEffects = {
   ...clack,
@@ -42,56 +56,69 @@ const S_BAR_START = s("┌", "T");
 const S_BAR = s("│", "|");
 const S_BAR_END = s("└", "—");
 
-function getWrapWidth(reserved = 0) {
-  const terminalWidth = process.stdout.columns ?? 80;
+function getWrapWidth({output}: TestOptions, reserved: number) {
+  const terminalWidth = output?.columns ?? 80;
   return Math.min(terminalWidth - reserved, 80);
 }
 
 function writeWrapped(
   message: string,
-  {prefix = "", prefixFirst = prefix, prefixLast = prefix}: {prefix?: string; prefixFirst?: string; prefixLast?: string}
+  {
+    prefix = "",
+    prefixFirst = prefix,
+    prefixLast = prefix
+  }: {prefix?: string; prefixFirst?: string; prefixLast?: string},
+  output: NonNullable<TestOptions["output"]>
 ): void {
-  if (prefix.length !== prefixFirst.length || prefix.length !== prefixLast.length)
+  const prefixWidth = stripColor(prefix).length;
+  if (stripColor(prefixFirst).length !== prefixWidth || stripColor(prefixLast).length !== prefixWidth)
     throw new Error("prefixes must have matching lengths");
-  const lines = wrapAnsi(message, getWrapWidth(prefixFirst.length)).split("\n");
+  const lines = wrapAnsi(message, getWrapWidth({output}, prefixWidth))
+    .split("\n")
+    .map((l) => l.trimEnd());
   const withPrefixes = [prefixFirst + lines[0], ...lines.slice(1, -1).map((l) => prefix + l)];
   if (lines.length > 1) withPrefixes.push(prefixLast + lines.at(-1));
-  process.stdout.write(withPrefixes.join("\n") + "\n");
+  output.write(withPrefixes.join("\n") + "\n");
 }
 
 export class WrappingClack implements ClackWrapEffects {
-  intro: Clack["intro"] = (message: string = "") => {
-    writeWrapped(message, {prefixFirst: `${faint(S_BAR_START)}  `, prefix: `${faint(S_BAR)}  `});
-  };
-  outro: Clack["outro"] = (message: string = "") => {
-    process.stdout.write(faint(S_BAR_END) + "\n");
-    writeWrapped(message, {prefixLast: `${faint(S_BAR_END)}  `, prefix: `${faint(S_BAR)}  `});
-  };
-  get log(): Clack["log"] {
+  intro(message: string = "", {output = process.stdout}: TestOptions = {}) {
+    writeWrapped(message, {prefixFirst: `${faint(S_BAR_START)}  `, prefix: `${faint(S_BAR)}  `}, output);
+  }
+  outro(message: string = "", {output = process.stdout}: TestOptions = {}) {
+    output.write(faint(S_BAR) + "\n");
+    writeWrapped(message, {prefixLast: `${faint(S_BAR_END)}  `, prefix: `${faint(S_BAR)}  `}, output);
+  }
+  get log(): WrappingClackLog {
     return new WrappingClackLog();
   }
 }
 
 export class WrappingClackLog {
-  message(message: string = "", {symbol}: clack.LogMessageOptions = {}): void {
-    writeWrapped(message, {prefix: `${symbol ?? faint(S_BAR)}  `});
+  message(
+    message: string = "",
+    {symbol}: clack.LogMessageOptions = {},
+    {output = process.stdout}: TestOptions = {}
+  ): void {
+    output.write(faint(S_BAR) + "\n");
+    writeWrapped(message, {prefix: `${faint(S_BAR)}  `, prefixFirst: `${symbol}  `}, output);
   }
-  info(message?: string): void {
-    this.message(message, {symbol: blue(S_INFO)});
+  info(message?: string, testOptions?: TestOptions): void {
+    this.message(message, {symbol: blue(S_INFO)}, testOptions);
   }
-  success(message?: string): void {
-    this.message(message, {symbol: green(S_SUCCESS)});
+  success(message?: string, testOptions?: TestOptions): void {
+    this.message(message, {symbol: green(S_SUCCESS)}, testOptions);
   }
-  step(message?: string): void {
-    this.message(message, {symbol: green(S_STEP_SUBMIT)});
+  step(message?: string, testOptions?: TestOptions): void {
+    this.message(message, {symbol: green(S_STEP_SUBMIT)}, testOptions);
   }
-  warn(message?: string): void {
-    this.message(message, {symbol: yellow(S_WARN)});
+  warn(message?: string, testOptions?: TestOptions): void {
+    this.message(message, {symbol: yellow(S_WARN)}, testOptions);
   }
-  warning(message?: string): void {
-    this.warn(message);
+  warning(message?: string, testOptions?: TestOptions): void {
+    this.warn(message, testOptions);
   }
-  error(message?: string): void {
-    this.message(message, {symbol: red(S_ERROR)});
+  error(message?: string, testOptions?: TestOptions): void {
+    this.message(message, {symbol: red(S_ERROR)}, testOptions);
   }
 }
