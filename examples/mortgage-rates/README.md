@@ -1,4 +1,8 @@
-# Mortage tracker
+[Framework examples →](../)
+
+# Primary mortgage market survey
+
+View live: <https://observablehq.observablehq.cloud/framework-example-mortgage-rates/>
 
 This is an example Observable Framework project that tracks mortage rates published by Freddie Mac — Federal Home Loan Mortgage Corporation — every week since 1971.
 

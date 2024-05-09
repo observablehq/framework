@@ -1,4 +1,8 @@
+[Framework examples →](../)
+
 # Framework + Snowflake
+
+View live: <https://observablehq.observablehq.cloud/framework-example-loader-snowflake/>
 
 This [Observable Framework](https://observablehq.com/framework/) [example](https://github.com/observablehq/framework/tree/main/examples) demonstrates how to write a [data loader](https://observablehq.com/framework/loaders) for Snowflake using the [Snowflake Node.js driver](https://docs.snowflake.com/en/developer-guide/node-js/nodejs-driver).
 

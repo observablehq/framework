@@ -1,6 +1,6 @@
-# Framework + IntersectionObserver
+# Hello, IntersectionObserver
 
-This is an example of scrollytelling using `IntersectionObserver`.
+This example demonstrates how to implement scrollytelling in Observable Framework using `IntersectionObserver` and `position: sticky`.
 
 <style>
 

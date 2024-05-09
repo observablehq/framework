@@ -79,8 +79,7 @@ Here are some technique examples we’d like to add:
   * Google Analytics data loader
   * GitHub data loader
   * npm data loader
-  * Snowflake data loader
 * Markdown
-  * Wikilinks
-  * Footnotes
-  * Inline TeX
+  * Inline TeX `$…$`
+* Other
+  * Custom stylesheet

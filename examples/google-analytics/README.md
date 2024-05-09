@@ -1,8 +1,10 @@
+[Framework examples →](../)
+
 # Google analytics
 
-This dashboard tracks data from Google Analytics using the [Google Analytics Data API](https://developers.google.com/analytics/devguides/reporting/data/v1/quickstart-client-libraries). It contains a single page in `src/index.md`.
+View live: <https://observablehq.observablehq.cloud/framework-example-google-analytics/>
 
-View the [live project](https://observablehq.com/framework/examples/google-analytics/).
+This dashboard tracks data from Google Analytics using the [Google Analytics Data API](https://developers.google.com/analytics/devguides/reporting/data/v1/quickstart-client-libraries). It contains a single page in `src/index.md`.
 
 ## Data loaders
 

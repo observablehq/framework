@@ -1,6 +1,8 @@
-# Example: [Analyzing web logs](https://observablehq.com/framework/examples/api/)
+[Framework examples →](../)
 
-[screenshot of example here, linking to live example]
+# Analyzing web logs
+
+View live: <https://observablehq.observablehq.cloud/framework-example-api/>
 
 This report visualizes millions of requests to Observable’s API servers over a 7-day period in January 2024, revealing both traffic patterns and performance characteristics of Observable’s web service.
 

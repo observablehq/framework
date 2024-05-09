@@ -1,10 +1,12 @@
+[Framework examples →](../)
+
 # U.S. electricity grid
+
+View live: <https://observablehq.observablehq.cloud/framework-example-eia/>
 
 This is an example Observable Framework project, based on parts of the US Energy Information Administration’s <a href="https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48">Hourly Electric Grid Monitor</a> dashboard.
 
 Visit <a href="https://www.eia.gov/electricity/gridmonitor/about">About the EIA-930 data</a> to learn more about data collection and quality, the US electric grid, and balancing authorities responsible for nationwide electricity interchange.
-
-View the [live project](https://observablehq.com/framework/examples/eia/).
 
 Move the time slider above the map to see how the “[duck curve](https://en.wikipedia.org/wiki/Duck_curve)” of electricity demand varies during the day in different regions, with greater demand in before- and after-work hours, and lower demand during typical working hours.
 

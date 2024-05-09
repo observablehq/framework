@@ -1,4 +1,8 @@
+[Framework examples →](../)
+
 # Penguin classification
+
+View live: <https://observablehq.observablehq.cloud/framework-example-penguin-classification/>
 
 This is an example Observable Framework project that uses logistic regression (performed in a Python data loader) to classify penguins by species, based on body mass measurements. Charts highlights and explore which penguins are misclassified. [Learn more](https://journal.r-project.org/articles/RJ-2022-020/) about the penguins dataset.
 

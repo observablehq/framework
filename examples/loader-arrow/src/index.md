@@ -1,4 +1,4 @@
-# Framework + Apache Arrow
+# Apache Arrow data loader
 
 Here’s a JavaScript data loader that generates a random walk for each day in 2022 and outputs an Apache Arrow table to standard out.
 
