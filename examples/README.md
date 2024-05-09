@@ -26,6 +26,7 @@
 ### Data loaders
 
 * [`loader-arrow`](./loader-arrow) - Generating Apache Arrow IPC files
+* [`loader-google-analytics`](./loader-google-analytics) - Loading data from Google Analytics
 * [`loader-parquet`](./loader-parquet) - Generating Apache Parquet files
 * [`loader-postgres`](./loader-postgres) - Loading data from PostgreSQL
 * [`loader-snowflake`](./loader-snowflake) - Loading data from Snowflake
@@ -84,7 +85,6 @@ If you have questions about an existing example, please [open a discussion](http
   * Zooming
 * Data loaders
   * JSZip data loader
-  * Google Analytics data loader
   * GitHub data loader
   * npm data loader
 * Markdown

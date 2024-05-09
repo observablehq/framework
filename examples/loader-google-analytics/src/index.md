@@ -1,0 +1,61 @@
+# Google Analytics data loader
+
+Here’s a JavaScript data loader that fetches the `activeUsers` metric from the Google Analytics API.
+
+```js run=false
+import {csvFormat} from "d3-dsv";
+import {runReport} from "./google-analytics.js";
+
+const {rows} = await runReport({
+  dateRanges: [{startDate: "2023-06-01", endDate: "2023-09-01"}],
+  dimensions: [{name: "date"}],
+  metrics: [{name: "activeUsers"}],
+  orderBys: [{dimension: {dimensionName: "date"}}]
+});
+
+process.stdout.write(
+  csvFormat(
+    rows.map((d) => ({
+      date: parseDate(d.dimensionValues[0].value),
+      value: d.metricValues[0].value
+    }))
+  )
+);
+
+function parseDate(date) {
+  return new Date(`${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}`);
+}
+```
+
+<div class="note">
+
+To run this data loader, you’ll need to install `@google-analytics/data`, `d3-dsv`, and
+`dotenv` using your preferred package manager such as npm or Yarn. You’ll also need the provided `google-analytics.js` helper file.
+
+</div>
+
+The Google Analytics API returns dates in the `YYYYMMDD` format, so we convert them to ISO 8601 `YYYY-MM-DD` format and then pass them to the `Date` constructor in the `parseDate` function. This ensures a standard representation that will be correctly parsed by `FileAttachment.csv`.
+
+The above data loader lives in `data/active-users.csv.js`, so we can load the data as `data/active-users.csv`. The `FileAttachment.csv` method parses the file and returns a promise to an array of objects.
+
+```js echo
+const activeUsers = FileAttachment("./data/active-users.csv").csv({typed: true});
+```
+
+The `activeUsers` table has two columns: `date` and `value`. We can display the table using `Inputs.table`.
+
+```js echo
+Inputs.table(activeUsers)
+```
+
+Lastly, we can pass the table to `Plot.plot` to make a simple line chart.
+
+```js echo
+Plot.plot({
+  marks: [
+    Plot.axisY({tickFormat: (d) => d / 1000, label: "Daily active users (thousands)"}),
+    Plot.ruleY([0]),
+    Plot.lineY(activeUsers, {x: "date", y: "value", curve: "step", tip: true})
+  ]
+})
+```
