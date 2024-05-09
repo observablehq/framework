@@ -145,6 +145,7 @@ Data loaders live in the source root (typically `src`) alongside your other sour
 - `.ts` - TypeScript (`tsx`)
 - `.py` - Python (`python3`)
 - `.R` - R (`Rscript`)
+- `.exs` - Elixir script (`elixir`)
 - `.rs` - Rust (`rust-script`)
 - `.go` - Go (`go run`)
 - `.java` — Java (`java`; requires Java 11+ and [single-file programs](https://openjdk.org/jeps/330))
