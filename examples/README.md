@@ -23,20 +23,20 @@
 
 ## Technique examples 🛠️
 
-### Data loader examples
+### Data loaders
 
 * [`loader-postgres`](./loader-postgres) - Loading data from PostgreSQL
 * [`loader-snowflake`](./loader-snowflake) - Loading data from Snowflake
 
-### Markdown examples
+### Markdown
 
 * [`markdown-it-container`](./markdown-it-container) - The markdown-it-container plugin
 * [`markdown-it-footnote`](./markdown-it-footnote) - The markdown-it-footnote plugin
 * [`markdown-it-wikilinks`](./markdown-it-wikilinks) - The markdown-it-wikilinks plugin
 
-### Visualization examples
+### Visualization
 
-### Other examples
+### Other
 
 * [`chess`](./chess) - Loading Zip data from FIDE; creating a bump chart with Observable Plot
 * [`google-analytics`](./google-analytics) - Loading data from Google Analytics
