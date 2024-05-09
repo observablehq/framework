@@ -67,7 +67,7 @@ Then `cd` into the desired example directory. From there you would typically run
 
 If there’s an example you’d like to see, please let us know by [filing an issue](https://github.com/observablehq/framework/issues). Or if you have questions about an existing example, please [open a discussion](https://github.com/observablehq/framework/discussions).
 
-Here are some technique examples we’d like to see:
+**We welcome contributions!** If you have an example that you’d like to share with the community, please [open a pull request](https://docs.github.com/en/pull-requests). Please follow the conventions set by the existing examples and let us know if you have any questions. Here are some technique examples we’d like to see:
 
 * Visualization
   * Big number with area chart
@@ -85,5 +85,3 @@ Here are some technique examples we’d like to see:
   * Inline TeX `$…$`
 * Other
   * Custom stylesheet
-
-**We also welcome contributions!** If you have an example that you’d like to share with the community, please [open a pull request](https://docs.github.com/en/pull-requests). Please follow the conventions set by the existing examples and let us know if you have any questions.
