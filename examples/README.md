@@ -25,6 +25,8 @@
 
 ### Data loaders
 
+* [`loader-arrow`](./loader-arrow) - Generating Apache Arrow IPC files
+* [`loader-parquet`](./loader-parquet) - Generating Apache Parquet files
 * [`loader-postgres`](./loader-postgres) - Loading data from PostgreSQL
 * [`loader-snowflake`](./loader-snowflake) - Loading data from Snowflake
 
@@ -41,6 +43,7 @@
 * [`chess`](./chess) - Loading Zip data from FIDE; creating a bump chart with Observable Plot
 * [`google-analytics`](./google-analytics) - Loading data from Google Analytics
 * [`hello-world`](./hello-world) - A minimal Framework project
+* [`intersection-observer`](./intersection-observer) - Scrollytelling with IntersectionObserver
 * [`penguin-classification`](./penguin-classification) - Logistic regression in Python; validating models with Observable Plot
 
 ## About these examples
