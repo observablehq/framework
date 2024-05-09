@@ -54,7 +54,7 @@ export default {
       <span class="hide-if-small">Observable</span> Framework
     </a>
     <span style="display: flex; align-items: baseline; gap: 0.5rem; font-size: 14px;">
-      <a target="_blank" href="https://github.com/observablehq/framework/tree/main/examples/loader-arrow"><span>View source</span></a>
+      <a target="_blank" href="https://github.com/observablehq/framework/tree/main/examples/loader-parquet"><span>View source</span></a>
     </span>
   </div>
 </div>`
