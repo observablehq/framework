@@ -41,6 +41,7 @@
 ### Other
 
 * [`chess`](./chess) - Loading Zip data from FIDE; creating a bump chart with Observable Plot
+* [`custom-stylesheet`](./custom-stylesheet) - Defining a custom stylesheet (custom theme)
 * [`google-analytics`](./google-analytics) - Loading data from Google Analytics
 * [`hello-world`](./hello-world) - A minimal Framework project
 * [`intersection-observer`](./intersection-observer) - Scrollytelling with IntersectionObserver
@@ -88,5 +89,3 @@ If you have questions about an existing example, please [open a discussion](http
   * npm data loader
 * Markdown
   * Inline TeX `$…$`
-* Other
-  * Custom stylesheet
