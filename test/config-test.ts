@@ -36,7 +36,8 @@ describe("readConfig(undefined, root)", () => {
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
       search: false,
-      watchPath: resolve("test/input/build/config/observablehq.config.js")
+      watchPath: resolve("test/input/build/config/observablehq.config.js"),
+      segments: {dataLoaders: [], values: []}
     });
   });
   it("returns the default config if no config file is found", async () => {
@@ -59,7 +60,8 @@ describe("readConfig(undefined, root)", () => {
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
       search: false,
-      watchPath: undefined
+      watchPath: undefined,
+      segments: {dataLoaders: [], values: []}
     });
   });
 });

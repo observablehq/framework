@@ -150,27 +150,38 @@ export async function build(
 
   // Copy over the referenced files, accumulating hashed aliases.
   for (const file of files) {
-    let sourcePath = join(root, file);
-    if (!existsSync(sourcePath)) {
-      const loader = loaders.find(join("/", file), {useStale: true});
+    let sourcePaths = [join(root, file)];
+    if (!existsSync(sourcePaths[0])) {
+      const loader = loaders.find(join("/", file), {useStale: true, useSegments: true});
       if (!loader) {
-        effects.logger.error("missing referenced file", sourcePath);
+        effects.logger.error("missing referenced file", sourcePaths[0]);
         continue;
       }
       try {
-        sourcePath = join(root, await loader.load(effects));
+        sourcePaths = (await loader.load(effects)).map((path) => join(root, path));
       } catch (error) {
         if (!isEnoent(error)) throw error;
         continue;
       }
     }
-    effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-    const contents = await readFile(sourcePath);
-    const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
-    const ext = extname(file);
-    const alias = `/${join("_file", dirname(file), `${basename(file, ext)}.${hash}${ext}`)}`;
-    aliases.set(loaders.resolveFilePath(file), alias);
-    await effects.writeFile(alias, contents);
+    for (const sourcePath of sourcePaths) {
+      effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
+      const contents = await readFile(sourcePath);
+      const ext = extname(file);
+      let alias;
+      let outFile;
+      const match = /.observablehq\/cache\/_segment\/(?<segments>[^/]+)\//.exec(sourcePath);
+      if (match?.groups?.["segments"]) {
+        outFile = join("/", "_segment", match.groups["segments"], file);
+        alias = join("/", "_segment", file);
+      } else {
+        const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
+        outFile = alias = `/${join("_file", dirname(file), `${basename(file, ext)}.${hash}${ext}`)}`;
+      }
+      const resolved = loaders.resolveFilePath(file);
+      aliases.set(resolved, alias);
+      await effects.writeFile(outFile, contents);
+    }
   }
 
   // Download npm imports. TODO It might be nice to use content hashes for

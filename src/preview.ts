@@ -163,7 +163,7 @@ export class PreviewServer {
         const loader = loaders.find(path);
         if (loader) {
           try {
-            send(req, await loader.load(), {root}).pipe(res);
+            send(req, await loader.load()[0], {root}).pipe(res);
             return;
           } catch (error) {
             if (!isEnoent(error)) throw error;

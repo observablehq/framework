@@ -42,6 +42,11 @@ export interface Script {
   type: string | null;
 }
 
+export interface Segments {
+  dataLoaders: string[];
+  values: Record<string, string>[];
+}
+
 export interface Config {
   root: string; // defaults to src
   output: string; // defaults to dist
@@ -60,6 +65,7 @@ export interface Config {
   md: MarkdownIt;
   loaders: LoaderResolver;
   watchPath?: string;
+  segments: Segments;
 }
 
 interface ConfigSpec {
@@ -84,6 +90,7 @@ interface ConfigSpec {
   quotes?: unknown;
   cleanUrls?: unknown;
   markdownIt?: unknown;
+  segments?: unknown;
 }
 
 interface ScriptSpec {
@@ -207,6 +214,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const footer = spec.footer === undefined ? defaultFooter() : stringOrNull(spec.footer);
   const search = Boolean(spec.search);
   const interpreters = normalizeInterpreters(spec.interpreters as any);
+  const segments = normalizeSegments(spec.segments as unknown);
   const config: Config = {
     root,
     output,
@@ -223,8 +231,9 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     style,
     search,
     md,
-    loaders: new LoaderResolver({root, interpreters}),
-    watchPath
+    loaders: new LoaderResolver({root, interpreters, segments}),
+    watchPath,
+    segments
   };
   if (pages === undefined) Object.defineProperty(config, "pages", {get: () => readPages(root, md)});
   if (sidebar === undefined) Object.defineProperty(config, "sidebar", {get: () => config.pages.length > 0});
@@ -323,6 +332,15 @@ function normalizeToc(spec: TableOfContentsSpec | boolean = true): TableOfConten
   const label = toc.label === undefined ? "Contents" : String(toc.label);
   const show = toc.show === undefined ? true : Boolean(toc.show);
   return {label, show};
+}
+
+function normalizeSegments(spec: any = {}): Segments {
+  if (!spec || typeof spec !== "object") {
+    return {dataLoaders: [], values: []};
+  }
+  const dataLoaders = Array.isArray(spec.dataLoaders) ? spec.dataLoaders.map(String) : [];
+  const values = Array.isArray(spec.values) ? spec.values.flatMap((d) => (d && typeof d === "object" ? [d] : [])) : [];
+  return {dataLoaders, values};
 }
 
 export function mergeToc(spec: Partial<TableOfContents> = {}, toc: TableOfContents): TableOfContents {

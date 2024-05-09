@@ -7,6 +7,7 @@ import {createGunzip} from "node:zlib";
 import {spawn} from "cross-spawn";
 import JSZip from "jszip";
 import {extract} from "tar-stream";
+import type {Segments} from "./config.js";
 import {maybeStat, prepareOutput} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {formatByteSize} from "./format.js";
@@ -14,7 +15,7 @@ import {getFileInfo} from "./javascript/module.js";
 import type {Logger, Writer} from "./logger.js";
 import {cyan, faint, green, red, yellow} from "./tty.js";
 
-const runningCommands = new Map<string, Promise<string>>();
+const runningCommands = new Map<string, Promise<string[]>>();
 
 export const defaultInterpreters: Record<string, string[]> = {
   ".js": ["node", "--no-warnings=ExperimentalWarning"],
@@ -45,20 +46,31 @@ export interface LoaderOptions {
   root: string;
   path: string;
   targetPath: string;
+  segments: null | Segments;
   useStale: boolean;
 }
 
 export class LoaderResolver {
   private readonly root: string;
   private readonly interpreters: Map<string, string[]>;
+  private readonly segments: Segments | null;
 
-  constructor({root, interpreters}: {root: string; interpreters?: Record<string, string[] | null>}) {
+  constructor({
+    root,
+    interpreters,
+    segments = null
+  }: {
+    root: string;
+    interpreters?: Record<string, string[] | null>;
+    segments?: Segments | null;
+  }) {
     this.root = root;
     this.interpreters = new Map(
       Object.entries({...defaultInterpreters, ...interpreters}).filter(
         (entry): entry is [string, string[]] => entry[1] != null
       )
     );
+    this.segments = segments;
   }
 
   /**
@@ -68,8 +80,8 @@ export class LoaderResolver {
    * abort if we find a matching folder or reach the source root; for example,
    * if src/data exists, we won’t look for a src/data.zip.
    */
-  find(targetPath: string, {useStale = false} = {}): Loader | undefined {
-    const exact = this.findExact(targetPath, {useStale});
+  find(targetPath: string, {useStale = false, useSegments = false} = {}): Loader | undefined {
+    const exact = this.findExact(targetPath, {useStale, useSegments});
     if (exact) return exact;
     let dir = dirname(targetPath);
     for (let parent: string; true; dir = parent) {
@@ -82,15 +94,16 @@ export class LoaderResolver {
       const archive = dir + ext;
       if (existsSync(join(this.root, archive))) {
         return new Extractor({
-          preload: async () => archive,
+          preload: async () => [archive],
           inflatePath: targetPath.slice(archive.length - ext.length + 1),
           path: join(this.root, archive),
           root: this.root,
           targetPath,
+          segments: useSegments ? this.segments : null,
           useStale
         });
       }
-      const archiveLoader = this.findExact(archive, {useStale});
+      const archiveLoader = this.findExact(archive, {useStale, useSegments});
       if (archiveLoader) {
         return new Extractor({
           preload: async (options) => archiveLoader.load(options),
@@ -98,13 +111,14 @@ export class LoaderResolver {
           path: archiveLoader.path,
           root: this.root,
           targetPath,
-          useStale
+          useStale,
+          segments: useSegments ? this.segments : null
         });
       }
     }
   }
 
-  private findExact(targetPath: string, {useStale}): Loader | undefined {
+  private findExact(targetPath: string, {useStale, useSegments}): Loader | undefined {
     for (const [ext, [command, ...args]] of this.interpreters) {
       if (!existsSync(join(this.root, targetPath + ext))) continue;
       if (extname(targetPath) === "") {
@@ -118,7 +132,8 @@ export class LoaderResolver {
         path,
         root: this.root,
         targetPath,
-        useStale
+        useStale,
+        segments: useSegments ? this.segments : null
       });
     }
   }
@@ -213,11 +228,18 @@ export abstract class Loader {
    */
   readonly useStale?: boolean;
 
-  constructor({root, path, targetPath, useStale}: LoaderOptions) {
+  /**
+   * The segment information from the configuration, if segments should be
+   * used. If segments should not be used, this is null.
+   */
+  readonly segments: Segments | null;
+
+  constructor({root, path, targetPath, useStale, segments}: LoaderOptions) {
     this.root = root;
     this.path = path;
     this.targetPath = targetPath;
     this.useStale = useStale;
+    this.segments = segments;
   }
 
   /**
@@ -225,41 +247,21 @@ export abstract class Loader {
    * to the source root; this is within the .observablehq/cache folder within
    * the source root.
    */
-  async load(effects = defaultEffects): Promise<string> {
+  async load(effects = defaultEffects): Promise<string[]> {
     const key = join(this.root, this.targetPath);
     let command = runningCommands.get(key);
+    const segmentPaths = new Set((this.segments?.dataLoaders ?? []).map((path) => join(this.root, path)));
     if (!command) {
       command = (async () => {
-        const outputPath = join(".observablehq", "cache", this.targetPath);
-        const cachePath = join(this.root, outputPath);
-        const loaderStat = await maybeStat(this.path);
-        const cacheStat = await maybeStat(cachePath);
-        if (!cacheStat) effects.output.write(faint("[missing] "));
-        else if (cacheStat.mtimeMs < loaderStat!.mtimeMs) {
-          if (this.useStale) return effects.output.write(faint("[using stale] ")), outputPath;
-          else effects.output.write(faint("[stale] "));
-        } else return effects.output.write(faint("[fresh] ")), outputPath;
-        const tempPath = join(this.root, ".observablehq", "cache", `${this.targetPath}.${process.pid}`);
-        const errorPath = tempPath + ".err";
-        const errorStat = await maybeStat(errorPath);
-        if (errorStat) {
-          if (errorStat.mtimeMs > loaderStat!.mtimeMs && errorStat.mtimeMs > -1000 + Date.now())
-            throw new Error("loader skipped due to recent error");
-          else await unlink(errorPath).catch(() => {});
+        if (segmentPaths.has(this.path)) {
+          const rv: string[] = [];
+          for (const segment of this.segments!.values) {
+            rv.push(await this.runCommand(effects, segment));
+          }
+          return rv;
+        } else {
+          return [await this.runCommand(effects, null)];
         }
-        await prepareOutput(tempPath);
-        const tempFd = await open(tempPath, "w");
-        try {
-          await this.exec(tempFd.createWriteStream({highWaterMark: 1024 * 1024}), effects);
-          await mkdir(dirname(cachePath), {recursive: true});
-          await rename(tempPath, cachePath);
-        } catch (error) {
-          await rename(tempPath, errorPath);
-          throw error;
-        } finally {
-          await tempFd.close();
-        }
-        return outputPath;
       })();
       command.finally(() => runningCommands.delete(key)).catch(() => {});
       runningCommands.set(key, command);
@@ -267,13 +269,15 @@ export abstract class Loader {
     effects.output.write(`${cyan("load")} ${this.path} ${faint("→")} `);
     const start = performance.now();
     command.then(
-      (path) => {
-        const {size} = statSync(join(this.root, path));
-        effects.logger.log(
-          `${green("success")} ${size ? cyan(formatByteSize(size)) : yellow("empty output")} ${faint(
-            `in ${formatElapsed(start)}`
-          )}`
-        );
+      (paths) => {
+        for (const path of paths) {
+          const {size} = statSync(join(this.root, path));
+          effects.logger.log(
+            `${green("success")} ${size ? cyan(formatByteSize(size)) : yellow("empty output")} ${faint(
+              `in ${formatElapsed(start)}`
+            )}`
+          );
+        }
       },
       (error) => {
         effects.logger.log(`${red("error")} ${faint(`in ${formatElapsed(start)}:`)} ${red(error.message)}`);
@@ -282,7 +286,50 @@ export abstract class Loader {
     return command;
   }
 
-  abstract exec(output: WriteStream, effects?: LoadEffects): Promise<void>;
+  private async runCommand(effects: LoadEffects, segment: null | Record<string, string>): Promise<string> {
+    let segmentPathPart: string | null = null;
+    if (segment) {
+      const segmentParts = Object.entries(segment).map(
+        ([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+      );
+      if (segmentParts.length !== 0) segmentPathPart = segmentParts.join("&");
+    }
+    const outputPath =
+      segmentPathPart && segmentPathPart.length
+        ? join(".observablehq", "cache", "_segment", segmentPathPart, this.targetPath)
+        : join(".observablehq", "cache", this.targetPath);
+    const cachePath = join(this.root, outputPath);
+    const loaderStat = await maybeStat(this.path);
+    const cacheStat = await maybeStat(cachePath);
+    if (!cacheStat) effects.output.write(faint("[missing] "));
+    else if (cacheStat.mtimeMs < loaderStat!.mtimeMs) {
+      if (this.useStale) return effects.output.write(faint("[using stale] ")), outputPath;
+      else effects.output.write(faint("[stale] "));
+    } else return effects.output.write(faint("[fresh] ")), outputPath;
+    const tempPath = join(this.root, ".observablehq", "cache", `${this.targetPath}.${process.pid}`);
+    const errorPath = tempPath + ".err";
+    const errorStat = await maybeStat(errorPath);
+    if (errorStat) {
+      if (errorStat.mtimeMs > loaderStat!.mtimeMs && errorStat.mtimeMs > -1000 + Date.now())
+        throw new Error("loader skipped due to recent error");
+      else await unlink(errorPath).catch(() => {});
+    }
+    await prepareOutput(tempPath);
+    const tempFd = await open(tempPath, "w");
+    try {
+      await this.exec(tempFd.createWriteStream({highWaterMark: 1024 * 1024}), segment ?? {}, effects);
+      await mkdir(dirname(cachePath), {recursive: true});
+      await rename(tempPath, cachePath);
+    } catch (error) {
+      await rename(tempPath, errorPath);
+      throw error;
+    } finally {
+      await tempFd.close();
+    }
+    return outputPath;
+  }
+
+  abstract exec(output: WriteStream, env: Record<string, string>, effects?: LoadEffects): Promise<void>;
 }
 
 interface CommandLoaderOptions extends LoaderOptions {
@@ -311,8 +358,8 @@ class CommandLoader extends Loader {
     this.args = args;
   }
 
-  async exec(output: WriteStream): Promise<void> {
-    const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", "pipe", "inherit"]});
+  async exec(output: WriteStream, env: Record<string, string>): Promise<void> {
+    const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", "pipe", "inherit"], env});
     subprocess.stdout.pipe(output);
     const code = await new Promise((resolve, reject) => {
       subprocess.on("error", reject);
@@ -339,8 +386,10 @@ class ZipExtractor extends Loader {
     this.inflatePath = inflatePath;
   }
 
-  async exec(output: WriteStream, effects?: LoadEffects): Promise<void> {
-    const archivePath = join(this.root, await this.preload(effects));
+  async exec(output: WriteStream, env: Record<string, string>, effects?: LoadEffects): Promise<void> {
+    const archivePaths = (await this.preload(effects)).map((path) => join(this.root, path));
+    if (archivePaths.length > 1) throw new Error("can't do segmented archives?");
+    const archivePath = archivePaths[0];
     const file = (await JSZip.loadAsync(await readFile(archivePath))).file(this.inflatePath);
     if (!file) throw Object.assign(new Error("file not found"), {code: "ENOENT"});
     const pipe = file.nodeStream().pipe(output);
@@ -366,8 +415,10 @@ class TarExtractor extends Loader {
     this.gunzip = gunzip;
   }
 
-  async exec(output: WriteStream, effects?: LoadEffects): Promise<void> {
-    const archivePath = join(this.root, await this.preload(effects));
+  async exec(output: WriteStream, env: Record<string, string>, effects?: LoadEffects): Promise<void> {
+    const archivePaths = (await this.preload(effects)).map((path) => join(this.root, path));
+    if (archivePaths.length > 1) throw new Error("can't do segmented archives?");
+    const archivePath = archivePaths[0];
     const tar = extract();
     const input = createReadStream(archivePath);
     (this.gunzip ? input.pipe(createGunzip()) : input).pipe(tar);
