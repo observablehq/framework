@@ -3,26 +3,6 @@
 > [!NOTE]
 > To get started with Framework, please read [_Getting started_](https://observablehq.com/framework/getting-started).
 
-## About these examples
-
-We offer two types of examples: **techniques** and **showcases**.
-
-Technique examples address lower-level needs such as “how to load data from Google Analytics” or “how to make a bump chart”. They’re smaller, piecemeal examples for common development tasks. Technique examples are intended to teach you how to accomplish a specific task and to provide reusable code that can be copy-pasted into your Framework project.
-
-Showcase examples, in contrast, address higher-level user needs such as “how to analyze website traffic” or “how to show the growth of an open-source project”. These larger, complete examples demonstrate how to create useful data apps. Showcase examples are intended primarily to inspire and show Framework’s potential. As applied examples, showcase examples also demonstrate multiple techniques working together; we encourage you to view source.
-
-### How to use these examples
-
-You can browse the source code for any of the examples by navigating to the respective folder on GitHub. You can then copy-paste the code into your own project or download individual files. All of the example code in this repository is covered by the same open-source [license](../LICENSE) as Framework itself.
-
-If you’d like to run (and tinker with) these examples locally, you can [clone the repo](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) like so:
-
-```sh
-git clone git@github.com:observablehq/framework.git
-```
-
-Then `cd` into the desired example directory. From there you would typically run `npm install` or `yarn` to install dependencies. Please refer to each example’s `README.md` file for specific instructions; some examples may require additional configuration, such as setting environment variables to talk to external data sources.
-
 ## Showcase examples 🖼️
 
 ### [`api`](./api) - Analyzing web logs
@@ -63,9 +43,31 @@ Then `cd` into the desired example directory. From there you would typically run
 * [`hello-world`](./hello-world) - A minimal Framework project
 * [`penguin-classification`](./penguin-classification) - Logistic regression in Python; validating models with Observable Plot
 
-**Can’t find what you need?** 🧐 If there’s an example you’d like to see, please let us know by [filing an issue](https://github.com/observablehq/framework/issues). Or if you have questions about an existing example, please [open a discussion](https://github.com/observablehq/framework/discussions). **We also welcome contributions!** If you have an example that you’d like to share with the community, please [open a pull request](https://docs.github.com/en/pull-requests).
+## About these examples
 
-Here are some technique examples we’d like to add:
+We offer two types of examples: **techniques** and **showcases**.
+
+Technique examples address lower-level needs such as “how to load data from Google Analytics” or “how to make a bump chart”. They’re smaller, piecemeal examples for common development tasks. Technique examples are intended to teach you how to accomplish a specific task and to provide reusable code that can be copy-pasted into your Framework project.
+
+Showcase examples, in contrast, address higher-level user needs such as “how to analyze website traffic” or “how to show the growth of an open-source project”. These larger, complete examples demonstrate how to create useful data apps. Showcase examples are intended primarily to inspire and show Framework’s potential. As applied examples, showcase examples also demonstrate multiple techniques working together; we encourage you to view source.
+
+### How to use these examples
+
+You can browse the source code for any of the examples by navigating to the respective folder on GitHub. You can then copy-paste the code into your own project or download individual files. All of the example code in this repository is covered by the same open-source [license](../LICENSE) as Framework itself.
+
+If you’d like to run (and tinker with) these examples locally, you can [clone the repo](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) like so:
+
+```sh
+git clone git@github.com:observablehq/framework.git
+```
+
+Then `cd` into the desired example directory. From there you would typically run `npm install` or `yarn` to install dependencies. Please refer to each example’s `README.md` file for specific instructions; some examples may require additional configuration, such as setting environment variables to talk to external data sources.
+
+### Can’t find what you need? 🧐
+
+If there’s an example you’d like to see, please let us know by [filing an issue](https://github.com/observablehq/framework/issues). Or if you have questions about an existing example, please [open a discussion](https://github.com/observablehq/framework/discussions).
+
+Here are some technique examples we’d like to see:
 
 * Visualization
   * Big number with area chart
@@ -83,3 +85,5 @@ Here are some technique examples we’d like to add:
   * Inline TeX `$…$`
 * Other
   * Custom stylesheet
+
+**We also welcome contributions!** If you have an example that you’d like to share with the community, please [open a pull request](https://docs.github.com/en/pull-requests). Please follow the conventions set by the existing examples and let us know if you have any questions.
