@@ -134,6 +134,14 @@ This command will ask you a series of questions in order to initialize your new 
 
 And that’s it! Your new project is ready to go. 🎉
 
+<div class="tip" label="Info">
+
+Under the hood, this command installs the `@observablehq/framework` package and runs:
+
+<pre>npm exec <span class="win">"</span>@observablehq/framework<span class="win">"</span> -- create</pre>
+
+</div>
+
 ## 2. Develop
 
 Next, `cd` into your new project folder.
@@ -553,6 +561,18 @@ To write the data loader in R, name it <code>forecast.json.R</code>. Or as shell
 ### Deploying automatically
 
 You can schedule builds and deploy your project automatically on commit, or on a schedule. See [deploying](./deploying) for more details.
+
+### Update Framework
+
+To update Framework to the latest [release](https://github.com/observablehq/framework/releases), cd into the project directory and run:
+
+<pre data-copy>npm update <span class="win">"</span>@observablehq/framework<span class="win">"</span></pre>
+
+or
+
+<pre data-copy>yarn upgrade <span class="win">"</span>@observablehq/framework<span class="win">"</span></pre>
+
+(See the reference for <a href="https://docs.npmjs.com/cli/v8/commands/npm-update" target="_blank">npm</a> and <a href="https://classic.yarnpkg.com/lang/en/docs/cli/upgrade/" target="_blank">yarn</a>.)
 
 ### Ask for help, or share your feedback
 
