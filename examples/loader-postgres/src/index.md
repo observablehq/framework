@@ -27,8 +27,7 @@ ORDER BY 1 DESC`
 
 <div class="note">
 
-To run this data loader, you’ll need to install `postgres`, `d3-dsv`, and
-`dotenv` using your preferred package manager such as npm or Yarn. You’ll also need the provided `postgres.ts` helper file.
+To run this data loader, you’ll need to install `postgres`, `d3-dsv`, and `dotenv` using your preferred package manager such as npm or Yarn. You’ll also need the provided `postgres.ts` helper file.
 
 </div>
 
