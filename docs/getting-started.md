@@ -558,7 +558,7 @@ json.dump(forecast, sys.stdout)
 
 To write the data loader in R, name it <code>forecast.json.R</code>. Or as shell script, <code>forecast.json.sh</code>. You get the idea. See [Data loaders: Routing](./loaders#routing) for more. The beauty of this approach is that you can leverage the strengths (and libraries) of multiple languages, and still get instant updates in the browser as you develop.
 
-### Deploying automatically
+### Deploy automatically
 
 You can schedule builds and deploy your project automatically on commit, or on a schedule. See [deploying](./deploying) for more details.
 
