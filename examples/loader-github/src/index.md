@@ -23,9 +23,52 @@ for await (const item of githubList("/repos/observablehq/framework/issues?state=
 process.stdout.write(JSON.stringify(issues));
 ```
 
+The data loader uses a helper file, `github.js`, which uses `fetch` and implements GitHub’s pagination scheme. This reduces the amount of boilerplate you need to query GitHub’s API.
+
+```js run=false
+import "dotenv/config";
+
+const {GITHUB_TOKEN} = process.env;
+
+export async function github(
+  path,
+  {authorization = GITHUB_TOKEN && `token ${GITHUB_TOKEN}`, accept = "application/vnd.github.v3+json"} = {}
+) {
+  const url = new URL(path, "https://api.github.com");
+  const headers = {...(authorization && {authorization}), accept};
+  const response = await fetch(url, {headers});
+  if (!response.ok) throw new Error(`fetch error: ${response.status} ${url}`);
+  return {headers: response.headers, body: await response.json()};
+}
+
+export async function* githubList(path, options) {
+  const url = new URL(path, "https://api.github.com");
+  url.searchParams.set("per_page", "100");
+  url.searchParams.set("page", "1");
+  const first = await github(String(url), options);
+  yield* first.body;
+  let nextUrl = findRelLink(first.headers, "next");
+  while (nextUrl) {
+    const next = await github(nextUrl, options);
+    yield* next.body;
+    nextUrl = findRelLink(next.headers, "next");
+  }
+}
+
+function findRelLink(headers, name) {
+  return headers
+    .get("link")
+    ?.split(/,\s+/g)
+    .map((link) => link.split(/;\s+/g))
+    .find(([, rel]) => rel === `rel="${name}"`)?.[0]
+    .replace(/^</, "")
+    .replace(/>$/, "");
+}
+```
+
 <div class="note">
 
-To run this data loader, you’ll need to install `dotenv` using your preferred package manager such as npm or Yarn. You’ll also need the provided `github.js` helper file.
+To run this data loader, you’ll need to install `dotenv` using your preferred package manager such as npm or Yarn.
 
 </div>
 

@@ -27,10 +27,42 @@ function parseDate(date) {
 }
 ```
 
+<div class="tip">
+
+The Google Analytics API returns dates in the `YYYYMMDD` format, so we convert them to ISO 8601 `YYYY-MM-DD` format and then pass them to the `Date` constructor in the `parseDate` function. This ensures a standard representation that will be correctly parsed by `FileAttachment.csv`.
+
+</div>
+
+The data loader uses a helper file, `google-analytics.js`, which is a thin wrapper on the `@google-analytics/data` package. This reduces the amount of boilerplate you need to run a report.
+
+```js run=false
+import "dotenv/config";
+import {BetaAnalyticsDataClient} from "@google-analytics/data";
+
+const {GA_PROPERTY_ID, GA_CLIENT_EMAIL, GA_PRIVATE_KEY} = process.env;
+
+if (!GA_CLIENT_EMAIL) throw new Error("missing GA_CLIENT_EMAIL");
+if (!GA_PRIVATE_KEY) throw new Error("missing GA_PRIVATE_KEY");
+
+const analyticsClient = new BetaAnalyticsDataClient({
+  credentials: {
+    client_email: GA_CLIENT_EMAIL,
+    private_key: GA_PRIVATE_KEY
+  }
+});
+
+const defaultProperty = GA_PROPERTY_ID && `properties/${GA_PROPERTY_ID}`;
+
+export async function runReport({property = defaultProperty, ...options} = {}) {
+  const [response] = await analyticsClient.runReport({property, ...options});
+  return response;
+}
+```
+
 <div class="note">
 
 To run this data loader, you’ll need to install `@google-analytics/data`, `d3-dsv`, and
-`dotenv` using your preferred package manager such as npm or Yarn. You’ll also need the provided `google-analytics.js` helper file.
+`dotenv` using your preferred package manager such as npm or Yarn.
 
 </div>
 
@@ -53,8 +85,6 @@ The `.env` file should not be committed to your source code repository; keep you
 See the [Google Analytics API Quickstart](https://developers.google.com/analytics/devguides/reporting/data/v1/quickstart-client-libraries) for how to create the service account needed to access the Google Analytics API.
 
 </div>
-
-The Google Analytics API returns dates in the `YYYYMMDD` format, so we convert them to ISO 8601 `YYYY-MM-DD` format and then pass them to the `Date` constructor in the `parseDate` function. This ensures a standard representation that will be correctly parsed by `FileAttachment.csv`.
 
 The above data loader lives in `data/active-users.csv.js`, so we can load the data as `data/active-users.csv`. The `FileAttachment.csv` method parses the file and returns a promise to an array of objects.
 

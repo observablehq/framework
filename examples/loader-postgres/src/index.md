@@ -25,13 +25,35 @@ ORDER BY 1 DESC`
 );
 ```
 
+The data loader uses a helper file, `postgres.ts`, which is a thin wrapper on the `postgres` package. This reduces the amount of boilerplate you need to write to issue a query.
+
+```ts run=false
+import "dotenv/config";
+import type {Row, Sql} from "postgres";
+import postgres from "postgres";
+
+const {POSTGRES_URL} = process.env;
+
+if (!POSTGRES_URL) throw new Error("missing POSTGRES_URL");
+
+// Warning: you may wish to specify a self-signed certificate rather than
+// disabling certificate verification via rejectUnauthorized: false as below.
+// See https://node-postgres.com/features/ssl for more.
+export async function run<T extends Row[]>(f: (sql: Sql) => Promise<T>): Promise<T> {
+  const sql = postgres(POSTGRES_URL!, {ssl: {rejectUnauthorized: false}});
+  try {
+    return await f(sql);
+  } finally {
+    await sql.end();
+  }
+}
+```
+
 <div class="note">
 
-To run this data loader, you’ll need to install `postgres`, `d3-dsv`, and `dotenv` using your preferred package manager such as npm or Yarn. You’ll also need the provided `postgres.ts` helper file.
+To run this data loader, you’ll need to install `postgres`, `d3-dsv`, and `dotenv` using your preferred package manager such as npm or Yarn.
 
 </div>
-
-The query above uses `GENERATE_SERIES` to compute each day in 2019; this is used to populate zeroes for days with no events. Without this, rows would be missing for days with no events. (And unless you supply the **interval** mark option, Observable Plot won’t know the expected regularity of the data and hence will interpolate over missing data — which is probably misleading.)
 
 For the data loader to authenticate with your PostgreSQL database, you will need to set the secret `POSTGRES_URL` environment variable. If you use GitHub, you can use [secrets in GitHub Actions](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions) to set environment variables; other platforms provide similar functionality for continuous deployment. For local development, we use the `dotenv` package, which allows environment variables to be defined in a `.env` file which lives in the project root and looks like this:
 
@@ -67,3 +89,9 @@ Plot.plot({
   ]
 })
 ```
+
+<div class="tip">
+
+The query uses `GENERATE_SERIES` to compute each day in 2019; this is used to populate zeroes for days with no events. Without this, rows would be missing for days with no events. (And unless you supply the **interval** mark option, Observable Plot won’t know the expected regularity of the data and hence will interpolate over missing data — which is probably misleading.)
+
+</div>

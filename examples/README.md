@@ -30,6 +30,7 @@
 ### Data loaders
 
 * [`loader-arrow`](./loader-arrow) - Generating Apache Arrow IPC files
+* [`loader-databricks`](./loader-databricks) - Loading data from Databricks
 * [`loader-github`](./loader-github) - Loading data from GitHub
 * [`loader-google-analytics`](./loader-google-analytics) - Loading data from Google Analytics
 * [`loader-parquet`](./loader-parquet) - Generating Apache Parquet files

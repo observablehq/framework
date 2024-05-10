@@ -13,30 +13,17 @@ export async function github(
   return {headers: response.headers, body: await response.json()};
 }
 
-export async function* githubList(path, {reverse = true, ...options} = {}) {
+export async function* githubList(path, options) {
   const url = new URL(path, "https://api.github.com");
   url.searchParams.set("per_page", "100");
   url.searchParams.set("page", "1");
   const first = await github(String(url), options);
-  if (reverse) {
-    let prevUrl = findRelLink(first.headers, "last");
-    if (prevUrl) {
-      do {
-        const next = await github(prevUrl, options);
-        yield* next.body.reverse(); // reverse order
-        prevUrl = findRelLink(next.headers, "prev");
-      } while (prevUrl);
-    } else {
-      yield* first.body.reverse();
-    }
-  } else {
-    yield* first.body;
-    let nextUrl = findRelLink(first.headers, "next");
-    while (nextUrl) {
-      const next = await github(nextUrl, options);
-      yield* next.body; // natural order
-      nextUrl = findRelLink(next.headers, "next");
-    }
+  yield* first.body;
+  let nextUrl = findRelLink(first.headers, "next");
+  while (nextUrl) {
+    const next = await github(nextUrl, options);
+    yield* next.body;
+    nextUrl = findRelLink(next.headers, "next");
   }
 }
 
