@@ -23,6 +23,10 @@
 
 ## Technique examples 🛠️
 
+### Charts
+
+* [`vega-responsive`](./vega-responsive) - A responsive Vega-Lite bar chart
+
 ### Data loaders
 
 * [`loader-arrow`](./loader-arrow) - Generating Apache Arrow IPC files
