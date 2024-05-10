@@ -34,6 +34,26 @@ To run this data loader, you’ll need to install `@google-analytics/data`, `d3-
 
 </div>
 
+For the data loader to authenticate with the Google Analytics API, you will need to set several environment variables containing secret credentials. If you use GitHub, you can use [secrets in GitHub Actions](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions) to set environment variables; other platforms provide similar functionality for continuous deployment. For local development, we use the `dotenv` package, which allows environment variables to be defined in a `.env` file which lives in the project root and looks like this:
+
+```
+GA_PROPERTY_ID="123456789"
+GA_CLIENT_EMAIL="xxx@yyy.iam.gserviceaccount.com"
+GA_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nxxxxxxxxxx-----END PRIVATE KEY-----\n"
+```
+
+<div class="warning">
+
+The `.env` file should not be committed to your source code repository; keep your credentials secret.
+
+</div>
+
+<div class="note">
+
+See the [Google Analytics API Quickstart](https://developers.google.com/analytics/devguides/reporting/data/v1/quickstart-client-libraries) for how to create the service account needed to access the Google Analytics API.
+
+</div>
+
 The Google Analytics API returns dates in the `YYYYMMDD` format, so we convert them to ISO 8601 `YYYY-MM-DD` format and then pass them to the `Date` constructor in the `parseDate` function. This ensures a standard representation that will be correctly parsed by `FileAttachment.csv`.
 
 The above data loader lives in `data/active-users.csv.js`, so we can load the data as `data/active-users.csv`. The `FileAttachment.csv` method parses the file and returns a promise to an array of objects.
