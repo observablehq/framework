@@ -32,19 +32,21 @@
 * [`loader-postgres`](./loader-postgres) - Loading data from PostgreSQL
 * [`loader-snowflake`](./loader-snowflake) - Loading data from Snowflake
 
+### Inputs
+
+* [`custom-input-2d`](./custom-input-2d) - A custom 2D input with bidirectional binding
+
 ### Markdown
 
 * [`markdown-it-container`](./markdown-it-container) - The markdown-it-container plugin
 * [`markdown-it-footnote`](./markdown-it-footnote) - The markdown-it-footnote plugin
 * [`markdown-it-wikilinks`](./markdown-it-wikilinks) - The markdown-it-wikilinks plugin
 
-### Visualization
-
 ### Other
 
 * [`chess`](./chess) - Loading Zip data from FIDE; creating a bump chart with Observable Plot
 * [`custom-stylesheet`](./custom-stylesheet) - Defining a custom stylesheet (custom theme)
-* [`google-analytics`](./google-analytics) - Loading data from Google Analytics
+* [`google-analytics`](./google-analytics) - A Google Analytics dashboard with numbers and charts
 * [`hello-world`](./hello-world) - A minimal Framework project
 * [`intersection-observer`](./intersection-observer) - Scrollytelling with IntersectionObserver
 * [`penguin-classification`](./penguin-classification) - Logistic regression in Python; validating models with Observable Plot
