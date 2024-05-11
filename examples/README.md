@@ -33,36 +33,36 @@
 
 ### Charts
 
-* [`vega-responsive`](https://observablehq.observablehq.cloud/framework-example-vega-responsive) - A responsive Vega-Lite bar chart
+* [`vega-responsive`](https://observablehq.observablehq.cloud/framework-example-vega-responsive/) - A responsive Vega-Lite bar chart
 
 ### Data loaders
 
-* [`loader-arrow`](https://observablehq.observablehq.cloud/framework-example-loader-arrow) - Generating Apache Arrow IPC files
-* [`loader-databricks`](https://observablehq.observablehq.cloud/framework-example-loader-databricks) - Loading data from Databricks
-* [`loader-github`](https://observablehq.observablehq.cloud/framework-example-loader-github) - Loading data from GitHub
-* [`loader-google-analytics`](https://observablehq.observablehq.cloud/framework-example-loader-google-analytics) - Loading data from Google Analytics
-* [`loader-parquet`](https://observablehq.observablehq.cloud/framework-example-loader-parquet) - Generating Apache Parquet files
-* [`loader-postgres`](https://observablehq.observablehq.cloud/framework-example-loader-postgres) - Loading data from PostgreSQL
-* [`loader-snowflake`](https://observablehq.observablehq.cloud/framework-example-loader-snowflake) - Loading data from Snowflake
+* [`loader-arrow`](https://observablehq.observablehq.cloud/framework-example-loader-arrow/) - Generating Apache Arrow IPC files
+* [`loader-databricks`](https://observablehq.observablehq.cloud/framework-example-loader-databricks/) - Loading data from Databricks
+* [`loader-github`](https://observablehq.observablehq.cloud/framework-example-loader-github/) - Loading data from GitHub
+* [`loader-google-analytics`](https://observablehq.observablehq.cloud/framework-example-loader-google-analytics/) - Loading data from Google Analytics
+* [`loader-parquet`](https://observablehq.observablehq.cloud/framework-example-loader-parquet/) - Generating Apache Parquet files
+* [`loader-postgres`](https://observablehq.observablehq.cloud/framework-example-loader-postgres/) - Loading data from PostgreSQL
+* [`loader-snowflake`](https://observablehq.observablehq.cloud/framework-example-loader-snowflake/) - Loading data from Snowflake
 
 ### Inputs
 
-* [`custom-input-2d`](https://observablehq.observablehq.cloud/framework-example-custom-input-2d) - A custom 2D input with bidirectional binding
+* [`custom-input-2d`](https://observablehq.observablehq.cloud/framework-example-custom-input-2d/) - A custom 2D input with bidirectional binding
 
 ### Markdown
 
-* [`markdown-it-container`](https://observablehq.observablehq.cloud/framework-example-markdown-it-container) - The markdown-it-container plugin
-* [`markdown-it-footnote`](https://observablehq.observablehq.cloud/framework-example-markdown-it-footnote) - The markdown-it-footnote plugin
-* [`markdown-it-wikilinks`](https://observablehq.observablehq.cloud/framework-example-markdown-it-wikilinks) - The markdown-it-wikilinks plugin
+* [`markdown-it-container`](https://observablehq.observablehq.cloud/framework-example-markdown-it-container/) - The markdown-it-container plugin
+* [`markdown-it-footnote`](https://observablehq.observablehq.cloud/framework-example-markdown-it-footnote/) - The markdown-it-footnote plugin
+* [`markdown-it-wikilinks`](https://observablehq.observablehq.cloud/framework-example-markdown-it-wikilinks/) - The markdown-it-wikilinks plugin
 
 ### Other
 
-* [`chess`](https://observablehq.observablehq.cloud/framework-example-chess) - Loading Zip data from FIDE; creating a bump chart with Observable Plot
-* [`custom-stylesheet`](https://observablehq.observablehq.cloud/framework-example-custom-stylesheet) - Defining a custom stylesheet (custom theme)
-* [`google-analytics`](https://observablehq.observablehq.cloud/framework-example-google-analytics) - A Google Analytics dashboard with numbers and charts
-* [`hello-world`](https://observablehq.observablehq.cloud/framework-example-hello-world) - A minimal Framework project
-* [`intersection-observer`](https://observablehq.observablehq.cloud/framework-example-intersection-observer) - Scrollytelling with IntersectionObserver
-* [`penguin-classification`](https://observablehq.observablehq.cloud/framework-example-penguin-classification) - Logistic regression in Python; validating models with Observable Plot
+* [`chess`](https://observablehq.observablehq.cloud/framework-example-chess/) - Loading Zip data from FIDE; creating a bump chart with Observable Plot
+* [`custom-stylesheet`](https://observablehq.observablehq.cloud/framework-example-custom-stylesheet/) - Defining a custom stylesheet (custom theme)
+* [`google-analytics`](https://observablehq.observablehq.cloud/framework-example-google-analytics/) - A Google Analytics dashboard with numbers and charts
+* [`hello-world`](https://observablehq.observablehq.cloud/framework-example-hello-world/) - A minimal Framework project
+* [`intersection-observer`](https://observablehq.observablehq.cloud/framework-example-intersection-observer/) - Scrollytelling with IntersectionObserver
+* [`penguin-classification`](https://observablehq.observablehq.cloud/framework-example-penguin-classification/) - Logistic regression in Python; validating models with Observable Plot
 
 ## About these examples
 
