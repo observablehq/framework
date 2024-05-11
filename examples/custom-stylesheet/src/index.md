@@ -1,6 +1,6 @@
 # Custom stylesheet
 
-This [Observable Framework](/) project has a custom stylesheet. It’s very blue.
+This [Observable Framework](https://observablehq.com/framework/) project has a custom stylesheet. It’s very blue.
 
 The first part of the stylesheet imports Framework’s default styles. This is essentially a “theme-less” theme that does the layout and typography but doesn’t set any colors.
 
