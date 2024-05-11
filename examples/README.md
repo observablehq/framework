@@ -5,64 +5,64 @@
 
 ## Showcase examples 🖼️
 
-### [`api`](./api) - Analyzing web logs
+### [`api`](https://observablehq.observablehq.cloud/framework-example-api/) - Analyzing web logs
 
 <a href="https://observablehq.observablehq.cloud/framework-example-api/"><img src="../docs/assets/api.webp" alt="Analyzing web logs" width="312" height="237"></a>
 
-[View live](https://observablehq.observablehq.cloud/framework-example-api/) · This report visualizes millions of requests to Observable’s API servers over a 7-day period in January 2024, revealing both traffic patterns and performance characteristics of Observable’s web service. This example showcases the flexibility of Observable Plot for creating custom, performant visualizations, and hints at the potential of Framework’s data loaders for working with large datasets. This example also demonstrates reading [Apache Parquet files](https://observablehq.com/framework/lib/arrow). (While this public example uses static data, at Observable we use [Snowflake data loaders](./loader-snowflake) internally to create a similar live dashboard.)
+[View source](./api) · This report visualizes millions of requests to Observable’s API servers over a 7-day period in January 2024, revealing both traffic patterns and performance characteristics of Observable’s web service. This example showcases the flexibility of Observable Plot for creating custom, performant visualizations, and hints at the potential of Framework’s data loaders for working with large datasets. This example also demonstrates reading [Apache Parquet files](https://observablehq.com/framework/lib/arrow). (While this public example uses static data, at Observable we use [Snowflake data loaders](./loader-snowflake) internally to create a similar live dashboard.)
 
-### [`eia`](./eia) - U.S. electricity grid
+### [`eia`](https://observablehq.observablehq.cloud/framework-example-eia/) - U.S. electricity grid
 
 <a href="https://observablehq.observablehq.cloud/framework-example-eia/"><img src="../docs/assets/eia.webp" alt="U.S. electricity grid" width="312" height="237"></a>
 
-[View live](https://observablehq.observablehq.cloud/framework-example-eia/) · This dashboard visualizes electricity generation and demand across the U.S. electricity grid. The included data loaders demonstrate how to retrieve live data from the U.S. Energy Information Administration (EIA) API, while the dashboard demonstrates how to produce interactive maps, bar charts, and time-series charts with Observable Plot. A range input allows the user to rewind time to any point in the previous 24 hours, and a table shows details.
+[View source](./eia) · This dashboard visualizes electricity generation and demand across the U.S. electricity grid. The included data loaders demonstrate how to retrieve live data from the U.S. Energy Information Administration (EIA) API, while the dashboard demonstrates how to produce interactive maps, bar charts, and time-series charts with Observable Plot. A range input allows the user to rewind time to any point in the previous 24 hours, and a table shows details.
 
-### [`plot`](./plot) - Observable Plot downloads
+### [`plot`](https://observablehq.observablehq.cloud/framework-example-plot/) - Observable Plot downloads
 
 <a href="https://observablehq.observablehq.cloud/framework-example-plot/"><img src="../docs/assets/plot.webp" alt="Observable Plot downloads" width="312" height="237"></a
 
-[View live](https://observablehq.observablehq.cloud/framework-example-plot/) · This dashboard visualizes the popularity and development of [Observable Plot](https://github.com/observablehq/plot), our open-source visualization library. The included data loaders demonstrate how to retrieve data from GitHub and npm APIs, including star counts, releases, downloads, and open issues. A time-series chart shows daily npm downloads with 7- and 28-day moving averages, and a burndown chart shows the age of open issues over time.
+[View source](./plot) · This dashboard visualizes the popularity and development of [Observable Plot](https://github.com/observablehq/plot), our open-source visualization library. The included data loaders demonstrate how to retrieve data from GitHub and npm APIs, including star counts, releases, downloads, and open issues. A time-series chart shows daily npm downloads with 7- and 28-day moving averages, and a burndown chart shows the age of open issues over time.
 
-### [`mortgage-rates`](./mortgage-rates) - Primary mortgage market survey
+### [`mortgage-rates`](https://observablehq.observablehq.cloud/framework-example-mortgage-rates/) - Primary mortgage market survey
 
 <a href="https://observablehq.observablehq.cloud/framework-example-mortgage-rates/"><img src="../docs/assets/mortgage-rates.webp" alt="Primary mortgage market survey" width="312" height="237"></a>
 
-[View live](https://observablehq.observablehq.cloud/framework-example-mortgage-rates/) · This dashboard visualizes Freddie Mac’s historical mortgage rates data. The included data loader demonstrates how to retrieve CSV data from Freddie Mac and visualize the result as a zoomable chart with Observable Plot. The larger time-series line chart at the bottom allows brushing to select an arbitrary time range, while the smaller visualization above zooms to show the selected range.
+[View source](./mortgage-rates) · This dashboard visualizes Freddie Mac’s historical mortgage rates data. The included data loader demonstrates how to retrieve CSV data from Freddie Mac and visualize the result as a zoomable chart with Observable Plot. The larger time-series line chart at the bottom allows brushing to select an arbitrary time range, while the smaller visualization above zooms to show the selected range.
 
 ## Technique examples 🛠️
 
 ### Charts
 
-* [`vega-responsive`](./vega-responsive) - A responsive Vega-Lite bar chart
+* [`vega-responsive`](https://observablehq.observablehq.cloud/framework-example-vega-responsive) - A responsive Vega-Lite bar chart
 
 ### Data loaders
 
-* [`loader-arrow`](./loader-arrow) - Generating Apache Arrow IPC files
-* [`loader-databricks`](./loader-databricks) - Loading data from Databricks
-* [`loader-github`](./loader-github) - Loading data from GitHub
-* [`loader-google-analytics`](./loader-google-analytics) - Loading data from Google Analytics
-* [`loader-parquet`](./loader-parquet) - Generating Apache Parquet files
-* [`loader-postgres`](./loader-postgres) - Loading data from PostgreSQL
-* [`loader-snowflake`](./loader-snowflake) - Loading data from Snowflake
+* [`loader-arrow`](https://observablehq.observablehq.cloud/framework-example-loader-arrow) - Generating Apache Arrow IPC files
+* [`loader-databricks`](https://observablehq.observablehq.cloud/framework-example-loader-databricks) - Loading data from Databricks
+* [`loader-github`](https://observablehq.observablehq.cloud/framework-example-loader-github) - Loading data from GitHub
+* [`loader-google-analytics`](https://observablehq.observablehq.cloud/framework-example-loader-google-analytics) - Loading data from Google Analytics
+* [`loader-parquet`](https://observablehq.observablehq.cloud/framework-example-loader-parquet) - Generating Apache Parquet files
+* [`loader-postgres`](https://observablehq.observablehq.cloud/framework-example-loader-postgres) - Loading data from PostgreSQL
+* [`loader-snowflake`](https://observablehq.observablehq.cloud/framework-example-loader-snowflake) - Loading data from Snowflake
 
 ### Inputs
 
-* [`custom-input-2d`](./custom-input-2d) - A custom 2D input with bidirectional binding
+* [`custom-input-2d`](https://observablehq.observablehq.cloud/framework-example-custom-input-2d) - A custom 2D input with bidirectional binding
 
 ### Markdown
 
-* [`markdown-it-container`](./markdown-it-container) - The markdown-it-container plugin
-* [`markdown-it-footnote`](./markdown-it-footnote) - The markdown-it-footnote plugin
-* [`markdown-it-wikilinks`](./markdown-it-wikilinks) - The markdown-it-wikilinks plugin
+* [`markdown-it-container`](https://observablehq.observablehq.cloud/framework-example-markdown-it-container) - The markdown-it-container plugin
+* [`markdown-it-footnote`](https://observablehq.observablehq.cloud/framework-example-markdown-it-footnote) - The markdown-it-footnote plugin
+* [`markdown-it-wikilinks`](https://observablehq.observablehq.cloud/framework-example-markdown-it-wikilinks) - The markdown-it-wikilinks plugin
 
 ### Other
 
-* [`chess`](./chess) - Loading Zip data from FIDE; creating a bump chart with Observable Plot
-* [`custom-stylesheet`](./custom-stylesheet) - Defining a custom stylesheet (custom theme)
-* [`google-analytics`](./google-analytics) - A Google Analytics dashboard with numbers and charts
-* [`hello-world`](./hello-world) - A minimal Framework project
-* [`intersection-observer`](./intersection-observer) - Scrollytelling with IntersectionObserver
-* [`penguin-classification`](./penguin-classification) - Logistic regression in Python; validating models with Observable Plot
+* [`chess`](https://observablehq.observablehq.cloud/framework-example-chess) - Loading Zip data from FIDE; creating a bump chart with Observable Plot
+* [`custom-stylesheet`](https://observablehq.observablehq.cloud/framework-example-custom-stylesheet) - Defining a custom stylesheet (custom theme)
+* [`google-analytics`](https://observablehq.observablehq.cloud/framework-example-google-analytics) - A Google Analytics dashboard with numbers and charts
+* [`hello-world`](https://observablehq.observablehq.cloud/framework-example-hello-world) - A minimal Framework project
+* [`intersection-observer`](https://observablehq.observablehq.cloud/framework-example-intersection-observer) - Scrollytelling with IntersectionObserver
+* [`penguin-classification`](https://observablehq.observablehq.cloud/framework-example-penguin-classification) - Logistic regression in Python; validating models with Observable Plot
 
 ## About these examples
 
