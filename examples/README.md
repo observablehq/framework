@@ -7,17 +7,25 @@
 
 ### [`api`](./api) - Analyzing web logs
 
+[![Analyzing web logs](../docs/assets/api.webp)](https://observablehq.observablehq.cloud/framework-example-api/)
+
 [View live](https://observablehq.observablehq.cloud/framework-example-api/) · This report visualizes millions of requests to Observable’s API servers over a 7-day period in January 2024, revealing both traffic patterns and performance characteristics of Observable’s web service. This example showcases the flexibility of Observable Plot for creating custom, performant visualizations, and hints at the potential of Framework’s data loaders for working with large datasets. This example also demonstrates reading [Apache Parquet files](https://observablehq.com/framework/lib/arrow). (While this public example uses static data, at Observable we use [Snowflake data loaders](./loader-snowflake) internally to create a similar live dashboard.)
 
 ### [`eia`](./eia) - U.S. electricity grid
+
+[![U.S. electricity grid](../docs/assets/eia.webp)](https://observablehq.observablehq.cloud/framework-example-eia/)
 
 [View live](https://observablehq.observablehq.cloud/framework-example-eia/) · This dashboard visualizes electricity generation and demand across the U.S. electricity grid. The included data loaders demonstrate how to retrieve live data from the U.S. Energy Information Administration (EIA) API, while the dashboard demonstrates how to produce interactive maps, bar charts, and time-series charts with Observable Plot. A range input allows the user to rewind time to any point in the previous 24 hours, and a table shows details.
 
 ### [`plot`](./plot) - Observable Plot downloads
 
+[![Observable Plot downloads](../docs/assets/plot.webp)](https://observablehq.observablehq.cloud/framework-example-plot/)
+
 [View live](https://observablehq.observablehq.cloud/framework-example-plot/) · This dashboard visualizes the popularity and development of [Observable Plot](https://github.com/observablehq/plot), our open-source visualization library. The included data loaders demonstrate how to retrieve data from GitHub and npm APIs, including star counts, releases, downloads, and open issues. A time-series chart shows daily npm downloads with 7- and 28-day moving averages, and a burndown chart shows the age of open issues over time.
 
 ### [`mortgage-rates`](./mortgage-rates) - Primary mortgage market survey
+
+[![Primary mortgage market survey](../docs/assets/mortgage-rates.webp)](https://observablehq.observablehq.cloud/framework-example-mortgage-rates/)
 
 [View live](https://observablehq.observablehq.cloud/framework-example-mortgage-rates/) · This dashboard visualizes Freddie Mac’s historical mortgage rates data. The included data loader demonstrates how to retrieve CSV data from Freddie Mac and visualize the result as a zoomable chart with Observable Plot. The larger time-series line chart at the bottom allows brushing to select an arbitrary time range, while the smaller visualization above zooms to show the selected range.
 
