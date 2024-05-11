@@ -1,4 +1,4 @@
-# Hello, IntersectionObserver
+# Scrollytelling with IntersectionObserver
 
 This example demonstrates how to implement scrollytelling in Observable Framework using `IntersectionObserver` and `position: sticky`.
 
@@ -18,7 +18,25 @@ This example demonstrates how to implement scrollytelling in Observable Framewor
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 64px;
+  transition: ease background-color 0.5s;
   background-color: var(--theme-background-alt);
+}
+
+.scroll-info--step-1 {
+  background-color: #4269d0;
+}
+
+.scroll-info--step-2 {
+  background-color: #efb118;
+}
+
+.scroll-info--step-3 {
+  background-color: #ff725c;
+}
+
+.scroll-info--step-4 {
+  background-color: #6cc5b0;
 }
 
 .scroll-section {
@@ -73,7 +91,25 @@ The CSS is:
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 64px;
+  transition: ease background-color 0.5s;
   background-color: var(--theme-background-alt);
+}
+
+.scroll-info--step-1 {
+  background-color: #4269d0;
+}
+
+.scroll-info--step-2 {
+  background-color: #efb118;
+}
+
+.scroll-info--step-3 {
+  background-color: #ff725c;
+}
+
+.scroll-info--step-4 {
+  background-color: #6cc5b0;
 }
 
 .scroll-section {
@@ -101,9 +137,11 @@ const observer = new IntersectionObserver((entries) => {
     const rect = target.getBoundingClientRect();
     if (rect.top < innerHeight / 2) {
       info.textContent = target.dataset.step;
+      info.className = `scroll-info scroll-info--step-${target.dataset.step}`;
       return;
     }
   }
+  info.className = "scroll-info";
   info.textContent = "0";
 }, {
   rootMargin: "-50% 0% -50% 0%"

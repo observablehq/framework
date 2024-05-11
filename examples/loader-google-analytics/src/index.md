@@ -1,6 +1,6 @@
 # Google Analytics data loader
 
-Here’s a JavaScript data loader that fetches the `activeUsers` metric from the Google Analytics API.
+Here’s a JavaScript data loader that fetches the `activeUsers` metric from the Google Analytics API using the [Google Analytics Data Node.js Client](https://googleapis.dev/nodejs/analytics-data/latest/).
 
 ```js run=false
 import {csvFormat} from "d3-dsv";

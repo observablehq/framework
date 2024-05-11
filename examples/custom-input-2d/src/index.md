@@ -33,10 +33,10 @@ xInput.oninput = yInput.oninput = (event) => {
 };
 ```
 
-Lastly here’s the custom 2D range input implementation. It uses a canvas element and pointer events to update the selected 2D value. Each value is in the interval [0, 1]. When the pointer is down and moves, an _input_ event is dispatched for compatibility with `Generators.input`.
+Lastly here’s the custom 2D range input implementation, which is stored in a separate module, `Range2D.js`. It uses a canvas element and pointer events to update the selected 2D value. Each value is in the interval [0, 1]. When the pointer is down and moves, an _input_ event is dispatched for compatibility with `Generators.input`.
 
-```js echo
-function Range2D({width = 100, height = 100, value = [0.5, 0.5]} = {}) {
+```js run=false
+export function Range2D({width = 100, height = 100, value = [0.5, 0.5]} = {}) {
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
@@ -69,4 +69,10 @@ function Range2D({width = 100, height = 100, value = [0.5, 0.5]} = {}) {
 
   return Object.defineProperty(canvas, "value", {get: () => value, set});
 }
+```
+
+To import `Range2D`:
+
+```js echo
+import {Range2D} from "./Range2D.js";
 ```
