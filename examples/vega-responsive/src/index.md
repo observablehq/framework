@@ -33,8 +33,11 @@ If you prefer a more reusable solution, you can create a `vlresize` function lik
 import {resize} from "npm:@observablehq/stdlib";
 import vl from "observablehq:stdlib/vega-lite";
 
-export async function vlresize(spec, {minWidth = 0, maxWidth = Infinity} = {}) {
-  const chart = await vl.render({spec});
+export async function vlresize(
+  {autosize = {type: "fit", contains: "padding"}, ...spec},
+  {minWidth = 0, maxWidth = Infinity} = {}
+) {
+  const chart = await vl.render({spec: {...spec, width: -1, autosize}});
   return resize((width) => {
     chart.value.width(Math.max(minWidth, Math.min(maxWidth, width)));
     chart.value.run();
@@ -53,10 +56,7 @@ And call it like so:
 
 ```js echo
 vlresize({
-  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-  "width": -1,
   "height": 250,
-  "autosize": {"type": "fit", "contains": "padding"},
   "data": {"url": "https://vega.github.io/vega-lite/data/cars.json"},
   "mark": "bar",
   "encoding": {
