@@ -26,3 +26,44 @@ display(resize((width) => {
   return chart;
 }));
 ```
+
+If you prefer a more reusable solution, you can create a `vlresize` function like so in a `vlresize.js` module that you can import into any page.
+
+```js run=false
+import {resize} from "npm:@observablehq/stdlib";
+import vl from "observablehq:stdlib/vega-lite";
+
+export async function vlresize(spec, {minWidth = 0, maxWidth = Infinity} = {}) {
+  const chart = await vl.render({spec});
+  return resize((width) => {
+    chart.value.width(Math.max(minWidth, Math.min(maxWidth, width)));
+    chart.value.run();
+    return chart;
+  });
+}
+```
+
+You can then import `vlresize` like so:
+
+```js echo
+import {vlresize} from "./vlresize.js";
+```
+
+And call it like so:
+
+```js echo
+vlresize({
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "width": -1,
+  "height": 250,
+  "autosize": {"type": "fit", "contains": "padding"},
+  "data": {"url": "https://vega.github.io/vega-lite/data/cars.json"},
+  "mark": "bar",
+  "encoding": {
+    "x": {"field": "Cylinders"},
+    "y": {"aggregate": "count", "title": "Number of cars"}
+  }
+}, {
+  maxWidth: 960 - 16 * 2
+})
+```
