@@ -8,6 +8,8 @@ This report visualizes millions of requests to Observable’s API servers over a
 
 This example showcases the flexibility of Observable Plot for creating custom, performant visualizations, and hints at the potential of Framework’s data loaders for working with large datasets. This example also demonstrates reading [Apache Parquet files](https://observablehq.com/framework/lib/arrow). (While this public example uses static data, at Observable we use Snowflake [data loaders](https://observablehq.com/framework/loaders) internally to create a similar live dashboard.)
 
+Watch [our webinar](https://www.youtube.com/watch?v=n5gFBQTClxc&t=1002s) where we describe how we used this very chart to optimize Observable’s web server response times.
+
 ## Implementation
 
 ```
