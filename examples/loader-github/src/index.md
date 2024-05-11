@@ -1,74 +1,43 @@
 # GitHub data loader
 
-Here’s a TypeScript data loader that talks to the GitHub API, fetching a summary of all open issues and pull requests in the Framework repo. (To produce a smaller file, only a subset of fields are included in the output.)
+Here’s a TypeScript data loader that talks to the GitHub API using [`octokit`](https://github.com/octokit/octokit.js), the official GitHub SDK. It fetches a summary of all open issues and pull requests in the Observable Framework repo. (To produce a smaller file, only a subset of fields are included in the output.)
 
 ```js run=false
-import {githubList} from "./github.js";
+import "dotenv/config";
+import {Octokit} from "octokit";
+
+const octokit = new Octokit({auth: process.env.GITHUB_TOKEN});
+
+const iterator = octokit.paginate.iterator(octokit.rest.issues.listForRepo, {
+  owner: "observablehq",
+  repo: "framework",
+  state: "open",
+  per_page: 100
+});
 
 const issues = [];
 
-for await (const item of githubList("/repos/observablehq/framework/issues?state=open")) {
-  issues.push({
-    state: item.state,
-    pull_request: !!item.pull_request,
-    created_at: item.created_at,
-    closed_at: item.closed_at,
-    draft: item.draft,
-    reactions: {...item.reactions, url: undefined},
-    title: item.title,
-    number: item.number
-  });
+for await (const {data} of iterator) {
+  for (const item of data) {
+    issues.push({
+      state: item.state,
+      pull_request: !!item.pull_request,
+      created_at: item.created_at,
+      closed_at: item.closed_at,
+      draft: item.draft,
+      reactions: {...item.reactions, url: undefined},
+      title: item.title,
+      number: item.number
+    });
+  }
 }
 
 process.stdout.write(JSON.stringify(issues));
 ```
 
-The data loader uses a helper file, `github.js`, which uses `fetch` and implements GitHub’s pagination scheme. This reduces the amount of boilerplate you need to query GitHub’s API.
-
-```js run=false
-import "dotenv/config";
-
-const {GITHUB_TOKEN} = process.env;
-
-export async function github(
-  path,
-  {authorization = GITHUB_TOKEN && `token ${GITHUB_TOKEN}`, accept = "application/vnd.github.v3+json"} = {}
-) {
-  const url = new URL(path, "https://api.github.com");
-  const headers = {...(authorization && {authorization}), accept};
-  const response = await fetch(url, {headers});
-  if (!response.ok) throw new Error(`fetch error: ${response.status} ${url}`);
-  return {headers: response.headers, body: await response.json()};
-}
-
-export async function* githubList(path, options) {
-  const url = new URL(path, "https://api.github.com");
-  url.searchParams.set("per_page", "100");
-  url.searchParams.set("page", "1");
-  const first = await github(String(url), options);
-  yield* first.body;
-  let nextUrl = findRelLink(first.headers, "next");
-  while (nextUrl) {
-    const next = await github(nextUrl, options);
-    yield* next.body;
-    nextUrl = findRelLink(next.headers, "next");
-  }
-}
-
-function findRelLink(headers, name) {
-  return headers
-    .get("link")
-    ?.split(/,\s+/g)
-    .map((link) => link.split(/;\s+/g))
-    .find(([, rel]) => rel === `rel="${name}"`)?.[0]
-    .replace(/^</, "")
-    .replace(/>$/, "");
-}
-```
-
 <div class="note">
 
-To run this data loader, you’ll need to install `dotenv` using your preferred package manager such as npm or Yarn.
+To run this data loader, you’ll need to install `dotenv` and `octokit` using your preferred package manager such as npm or Yarn.
 
 </div>
 

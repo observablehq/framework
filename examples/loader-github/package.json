@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "@observablehq/framework": "^1.7.0",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "octokit": "^4.0.2"
   },
   "devDependencies": {
     "rimraf": "^5.0.5"
