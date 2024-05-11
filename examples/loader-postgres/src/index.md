@@ -38,7 +38,7 @@ if (!POSTGRES_URL) throw new Error("missing POSTGRES_URL");
 
 // Warning: you may wish to specify a self-signed certificate rather than
 // disabling certificate verification via rejectUnauthorized: false as below.
-// See https://node-postgres.com/features/ssl for more.
+// See https://github.com/porsager/postgres/blob/master/README.md#ssl for more.
 export async function run<T extends Row[]>(f: (sql: Sql) => Promise<T>): Promise<T> {
   const sql = postgres(POSTGRES_URL!, {ssl: {rejectUnauthorized: false}});
   try {

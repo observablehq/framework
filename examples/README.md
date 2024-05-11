@@ -9,7 +9,7 @@
 
 <a href="https://observablehq.observablehq.cloud/framework-example-api/"><img src="../docs/assets/api.webp" alt="Analyzing web logs" width="312" height="237"></a>
 
-[View source](./api) · This report visualizes millions of requests to Observable’s API servers over a 7-day period in January 2024, revealing both traffic patterns and performance characteristics of Observable’s web service. This example showcases the flexibility of Observable Plot for creating custom, performant visualizations, and hints at the potential of Framework’s data loaders for working with large datasets. This example also demonstrates reading [Apache Parquet files](https://observablehq.com/framework/lib/arrow). (While this public example uses static data, at Observable we use [Snowflake data loaders](./loader-snowflake) internally to create a similar live dashboard.)
+[View source](./api) · This report visualizes millions of requests to Observable’s API servers over a 7-day period in January 2024, revealing both traffic patterns and performance characteristics of Observable’s web service. This example showcases the flexibility of Observable Plot for creating custom, performant visualizations, and hints at the potential of Framework’s data loaders for working with large datasets. This example also demonstrates reading [Apache Parquet files](https://observablehq.com/framework/lib/arrow). (While this public example uses static data, at Observable we use [Snowflake data loaders](https://observablehq.observablehq.cloud/framework-example-loader-snowflake/) internally to create a similar live dashboard.)
 
 ### [`eia`](https://observablehq.observablehq.cloud/framework-example-eia/) - U.S. electricity grid
 
@@ -21,7 +21,7 @@
 
 <a href="https://observablehq.observablehq.cloud/framework-example-plot/"><img src="../docs/assets/plot.webp" alt="Observable Plot downloads" width="312" height="237"></a
 
-[View source](./plot) · This dashboard visualizes the popularity and development of [Observable Plot](https://github.com/observablehq/plot), our open-source visualization library. The included data loaders demonstrate how to retrieve data from GitHub and npm APIs, including star counts, releases, downloads, and open issues. A time-series chart shows daily npm downloads with 7- and 28-day moving averages, and a burndown chart shows the age of open issues over time.
+[View source](./plot) · This dashboard visualizes the popularity and development of [Observable Plot](https://observablehq.com/plot/), our open-source visualization library. The included data loaders demonstrate how to retrieve data from GitHub and npm APIs, including star counts, releases, downloads, and open issues. A time-series chart shows daily npm downloads with 7- and 28-day moving averages, and a burndown chart shows the age of open issues over time.
 
 ### [`mortgage-rates`](https://observablehq.observablehq.cloud/framework-example-mortgage-rates/) - Primary mortgage market survey
 
@@ -74,7 +74,7 @@ Showcase examples, in contrast, address higher-level user needs such as “how t
 
 ### How to use these examples
 
-You can browse the source code for any of the examples by navigating to the respective folder on GitHub. You can then copy-paste the code into your own project or download individual files. All of the example code in this repository is covered by the same open-source [license](../LICENSE) as Framework itself.
+You can browse the source code for any of the examples by navigating to the respective folder on GitHub. You can then copy-paste the code into your own project or download individual files. All of the example code in this repository is covered by the same [open-source license](../LICENSE) as Framework itself.
 
 If you’d like to run (and tinker with) these examples locally, you can [clone the repo](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) like so:
 
@@ -90,7 +90,11 @@ If there’s an example you’d like to see, please let us know by [filing an is
 
 If you have questions about an existing example, please [open a discussion](https://github.com/observablehq/framework/discussions).
 
-**We welcome contributions!** If you have an example that you’d like to share with the community, please [open a pull request](https://docs.github.com/en/pull-requests). Please follow the conventions set by the existing examples and let us know if you have any questions. Here are some technique examples we’d like to see:
+### We welcome contributions! 🤗
+
+If you have an example that you’d like to share with the community, please [open a pull request](https://docs.github.com/en/pull-requests). Please follow the conventions set by the existing examples and let us know if you have any questions.
+
+Here are some technique examples we’d like to see:
 
 * Visualization
   * Big number with area chart

@@ -68,7 +68,7 @@ The `.env` file should not be committed to your source code repository; keep you
 
 </div>
 
-This example uses a [personal access token](https://docs.databricks.com/en/dev-tools/nodejs-sql-driver.html#databricks-personal-access-token-authentication) to authenticate with Databricks; please follow the linked instructions to create your own token. Replace each `XXX` above with your credentials as appropriate. Alternatively, read Databricks’s [Authenticating guide](https://docs.databricks.com/en/dev-tools/nodejs-sql-driver.html#authentication) to use a different authentication method.
+This example uses a [personal access token](https://docs.databricks.com/en/dev-tools/nodejs-sql-driver.html#databricks-personal-access-token-authentication) to authenticate with Databricks; please follow the linked instructions to create your own token. Replace each `XXX` above with your credentials as appropriate. Alternatively, read Databricks’s [Authentication guide](https://docs.databricks.com/en/dev-tools/nodejs-sql-driver.html#authentication) to use a different authentication method.
 
 The above data loader lives in `data/trips.csv.js`, so we can load the data as `data/trips.csv`. The `FileAttachment.csv` method parses the file and returns a promise to an array of objects.
 

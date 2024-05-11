@@ -6,8 +6,6 @@ View live: <https://observablehq.observablehq.cloud/framework-example-plot/>
 
 This is an example Observable Framework project that tracks several metrics about the development and usage of [Observable Plot](https://observablehq.com/plot/). It contains a single page in [`src/index.md`](./src/index.md), with no configuration file.
 
-View the [live project](https://observablehq.com/framework/examples/plot/).
-
 ## Data loaders
 
 Various datasets are loaded from GitHub’s and npm’s APIs.
