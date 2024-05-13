@@ -564,7 +564,7 @@ You can schedule builds and deploy your project automatically on commit, or on a
 
 ### Update Framework
 
-To update Framework to the latest [release](https://github.com/observablehq/framework/releases), cd into the project directory and run:
+To update Framework to the [latest release](https://github.com/observablehq/framework/releases), `cd` into the project directory and run:
 
 <pre data-copy>npm update <span class="win">"</span>@observablehq/framework<span class="win">"</span></pre>
 
