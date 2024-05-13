@@ -134,7 +134,7 @@ This command will ask you a series of questions in order to initialize your new 
 
 And that’s it! Your new project is ready to go. 🎉
 
-<div class="tip" label="Info">
+<div class="note">
 
 Under the hood, this command installs the `@observablehq/framework` package and runs:
 
