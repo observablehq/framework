@@ -1,10 +1,10 @@
 import {createHash} from "node:crypto";
 import {existsSync} from "node:fs";
-import {access, constants, copyFile, readFile, stat, writeFile} from "node:fs/promises";
+import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {CliError, isEnoent} from "./error.js";
-import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
+import {getClientPath, maybeStat, prepareOutput, visitMarkdownFiles} from "./files.js";
 import {getModuleHash} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
@@ -43,11 +43,13 @@ export interface BuildEffects {
    * example, in a local build this should be relative to the dist directory.
    */
   writeFile(outputPath: string, contents: Buffer | string): Promise<void>;
+
+  writeBuildManifest(buildManifest: BuildManifest): Promise<void>;
 }
 
 export async function build(
   {config, addPublic = true}: BuildOptions,
-  effects: BuildEffects = new FileBuildEffects(config.output)
+  effects: BuildEffects = new FileBuildEffects(config.output, join(config.root, ".observablehq", "cache"))
 ): Promise<void> {
   const {root, loaders, normalizePath} = config;
   Telemetry.record({event: "build", step: "start"});
@@ -252,6 +254,7 @@ export async function build(
   }
 
   // Render pages!
+  const buildManifest: BuildManifest = {pages: []};
   for (const [sourceFile, {page, resolvers}] of pages) {
     const sourcePath = join(root, sourceFile);
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
@@ -259,7 +262,19 @@ export async function build(
     effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
     const html = await renderPage(page, {...config, path, resolvers});
     await effects.writeFile(outputPath, html);
+    const url =
+      outputPath === "index.html"
+        ? "/"
+        : basename(outputPath) === "index.html"
+        ? join("/", dirname(outputPath), "/")
+        : extname(outputPath) === ".html"
+        ? join("/", dirname(outputPath), basename(outputPath, ".html"))
+        : outputPath;
+    buildManifest.pages.push({url, title: page.title});
   }
+
+  // Write the build manifest.
+  await effects.writeBuildManifest(buildManifest);
 
   // Log page sizes.
   const columnWidth = 12;
@@ -276,7 +291,8 @@ export async function build(
       const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
       const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
       const resolveOutput = (name: string) => join(config.output, resolvePath(path, name));
-      const pageSize = (await stat(join(config.output, outputPath))).size;
+      const pageSize = (await maybeStat(join(config.output, outputPath)))?.size;
+      if (!pageSize) continue;
       const importSize = await accumulateSize(resolvers.staticImports, resolvers.resolveImport, resolveOutput);
       const fileSize =
         (await accumulateSize(resolvers.files, resolvers.resolveFile, resolveOutput)) +
@@ -304,7 +320,7 @@ async function accumulateSize(
     const fileResolution = resolveFile(file);
     if (isAssetPath(fileResolution)) {
       try {
-        size += (await stat(resolveOutput(fileResolution))).size;
+        size += (await maybeStat(resolveOutput(fileResolution)))?.size ?? 0;
       } catch {
         // ignore missing file
       }
@@ -331,16 +347,19 @@ function formatBytes(size: number, length: number, locale: Intl.LocalesArgument 
 
 export class FileBuildEffects implements BuildEffects {
   private readonly outputRoot: string;
+  private readonly cacheDir: string;
   readonly logger: Logger;
   readonly output: Writer;
   constructor(
     outputRoot: string,
+    cacheDir: string,
     {logger = console, output = process.stdout}: {logger?: Logger; output?: Writer} = {}
   ) {
     if (!outputRoot) throw new Error("missing outputRoot");
     this.logger = logger;
     this.output = output;
     this.outputRoot = outputRoot;
+    this.cacheDir = cacheDir;
   }
   async copyFile(sourcePath: string, outputPath: string): Promise<void> {
     const destination = join(this.outputRoot, outputPath);
@@ -354,4 +373,13 @@ export class FileBuildEffects implements BuildEffects {
     await prepareOutput(destination);
     await writeFile(destination, contents);
   }
+  async writeBuildManifest(buildManifest: BuildManifest): Promise<void> {
+    const destination = join(this.cacheDir, "_buildManifest.json");
+    await prepareOutput(destination);
+    await writeFile(destination, JSON.stringify(buildManifest));
+  }
+}
+
+export interface BuildManifest {
+  pages: {url: string; title: string | null}[];
 }

@@ -336,7 +336,15 @@ class ObservableApiMock {
     return this;
   }
 
-  handlePostDeployUploaded({deployId, status = 200}: {deployId?: string; status?: number} = {}): ObservableApiMock {
+  handlePostDeployUploaded({
+    deployId,
+    status = 200,
+    pageMatch = null
+  }: {
+    deployId?: string;
+    status?: number;
+    pageMatch?: null | ((pages: {title: string; url: string}[]) => boolean);
+  } = {}): ObservableApiMock {
     const response =
       status == 200
         ? JSON.stringify({
@@ -348,7 +356,19 @@ class ObservableApiMock {
     const headers = authorizationHeader(status !== 403);
     this.addHandler((pool) =>
       pool
-        .intercept({path: `/cli/deploy/${deployId}/uploaded`, method: "POST", headers: headersMatcher(headers)})
+        .intercept({
+          path: `/cli/deploy/${deployId}/uploaded`,
+          method: "POST",
+          headers: headersMatcher(headers),
+          body: (body: string) => {
+            if (pageMatch) {
+              const pages = JSON.parse(body)?.pages;
+              if (!pages) return false;
+              return pageMatch(pages);
+            }
+            return true;
+          }
+        })
         .reply(status, response, {headers: {"content-type": "application/json"}})
     );
     return this;
