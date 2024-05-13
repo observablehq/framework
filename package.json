@@ -131,5 +131,7 @@
   },
   "engines": {
     "node": ">=18"
-  }
+  },
+  "overrides": { "nwsapi": "<2.2.10" },
+  "resolutions": { "nwsapi": "<2.2.10" }
 }
