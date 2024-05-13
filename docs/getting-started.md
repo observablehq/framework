@@ -564,13 +564,13 @@ You can schedule builds and deploy your project automatically on commit, or on a
 
 ### Update Framework
 
-To update Framework to the [latest release](https://github.com/observablehq/framework/releases), `cd` into the project directory and run:
+To update your project dependencies — in particular when a new [release](https://github.com/observablehq/framework/releases) of Framework is available, `cd` into the project directory and run:
 
-<pre data-copy>npm update <span class="win">"</span>@observablehq/framework<span class="win">"</span></pre>
+<pre data-copy>npm update</pre>
 
 or
 
-<pre data-copy>yarn upgrade <span class="win">"</span>@observablehq/framework<span class="win">"</span></pre>
+<pre data-copy>yarn upgrade</pre>
 
 (See the reference for <a href="https://docs.npmjs.com/cli/v8/commands/npm-update" target="_blank">npm</a> and <a href="https://classic.yarnpkg.com/lang/en/docs/cli/upgrade/" target="_blank">yarn</a>.)
 
