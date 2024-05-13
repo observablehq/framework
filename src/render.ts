@@ -1,17 +1,19 @@
 import mime from "mime";
-import type {Config, Page, Section} from "./config.js";
-import {mergeToc} from "./config.js";
+import type {Config, Page, Script, Section} from "./config.js";
+import {mergeStyle, mergeToc} from "./config.js";
 import {getClientPath} from "./files.js";
 import type {Html, HtmlResolvers} from "./html.js";
 import {html, parseHtml, rewriteHtml} from "./html.js";
 import {transpileJavaScript} from "./javascript/transpile.js";
-import type {MarkdownPage} from "./markdown.js";
+import type {PageConfig, PageSource} from "./page.js";
 import type {PageLink} from "./pager.js";
 import {findLink, normalizePath} from "./pager.js";
 import {isAssetPath, relativePath, resolvePath, resolveRelativePath} from "./path.js";
 import type {Resolvers} from "./resolvers.js";
 import {getResolvers} from "./resolvers.js";
 import {rollupClient} from "./rollup.js";
+import {InvalidThemeError} from "./theme.js";
+import {red} from "./tty.js";
 
 export interface RenderOptions extends Config {
   root: string;
@@ -23,7 +25,7 @@ type RenderInternalOptions =
   | {preview?: false} // build
   | {preview: true}; // preview
 
-export async function renderPage(page: MarkdownPage, options: RenderOptions & RenderInternalOptions): Promise<string> {
+export async function renderPage(page: PageSource, options: RenderOptions & RenderInternalOptions): Promise<string> {
   const {data} = page;
   const {base, path, title, preview} = options;
   const {loaders, resolvers = await getResolvers(page, options)} = options;
@@ -79,8 +81,9 @@ ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => ev
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
 <div id="observablehq-center">${renderHeader(page.header, resolvers)}
-<main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">
-${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(page.footer, resolvers, options)}
+<main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">${html.unsafe(
+    rewriteHtml(page.body, resolvers)
+  )}</main>${renderFooter(page.footer, resolvers, options)}
 </div>
 `);
 }
@@ -179,7 +182,7 @@ interface Header {
 
 const tocSelector = "h1:not(:first-of-type)[id], h2:first-child[id], :not(h1) + h2[id]";
 
-function findHeaders(page: MarkdownPage): Header[] {
+function findHeaders(page: PageSource): Header[] {
   return Array.from(parseHtml(page.body).document.querySelectorAll(tocSelector))
     .map((node) => ({label: node.textContent, href: `#${node.id}`}))
     .filter((d): d is Header => !!d.label);
@@ -207,7 +210,7 @@ function renderListItem(page: Page, path: string, normalizeLink: (href: string) 
   }"><a href="${normalizeLink(relativePath(path, page.path))}">${page.name}</a></li>`;
 }
 
-function renderHead(head: MarkdownPage["head"], resolvers: Resolvers): Html {
+function renderHead(head: PageSource["head"], resolvers: Resolvers): Html {
   const {stylesheets, staticImports, resolveImport, resolveStylesheet} = resolvers;
   return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
     Array.from(new Set(Array.from(stylesheets, resolveStylesheet)), renderStylesheetPreload) // <link rel=preload as=style>
@@ -232,13 +235,13 @@ function renderModulePreload(href: string): Html {
   return html`\n<link rel="modulepreload" href="${href}">`;
 }
 
-function renderHeader(header: MarkdownPage["header"], resolvers: HtmlResolvers): Html | null {
+function renderHeader(header: PageSource["header"], resolvers: HtmlResolvers): Html | null {
   return header
     ? html`\n<header id="observablehq-header">\n${html.unsafe(rewriteHtml(header, resolvers))}\n</header>`
     : null;
 }
 
-function renderFooter(footer: MarkdownPage["footer"], resolvers: HtmlResolvers, options: RenderOptions): Html | null {
+function renderFooter(footer: PageSource["footer"], resolvers: HtmlResolvers, options: RenderOptions): Html | null {
   const {path, md} = options;
   const link = options.pager ? findLink(path, options) : null;
   return link || footer
@@ -257,4 +260,22 @@ function renderPager(path: string, {prev, next}: PageLink, normalizeLink: (href:
 
 function renderRel(path: string, page: Page, rel: "prev" | "next", normalizeLink: (href: string) => string): Html {
   return html`<a rel="${rel}" href="${normalizeLink(relativePath(path, page.path))}"><span>${page.name}</span></a>`;
+}
+
+export function resolveStyle(
+  data: PageConfig,
+  {path, style = null}: {path: string; style?: Config["style"]}
+): string | null {
+  try {
+    style = mergeStyle(path, data.style, data.theme, style);
+  } catch (error) {
+    if (!(error instanceof InvalidThemeError)) throw error;
+    console.error(red(String(error))); // TODO error during build
+    style = {theme: []};
+  }
+  return !style
+    ? null
+    : "path" in style
+    ? relativePath(path, style.path)
+    : `observablehq:theme-${style.theme.join(",")}.css`;
 }

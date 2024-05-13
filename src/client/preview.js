@@ -48,12 +48,18 @@ export function open({hash, eval: compile} = {}) {
             case "add": {
               for (const item of items) {
                 const pos = oldPos + offset;
-                if (pos < root.children.length) {
-                  root.children[pos].insertAdjacentHTML("beforebegin", item);
+                const child =
+                  item.type === "html"
+                    ? document.createRange().createContextualFragment(item.value)
+                    : item.type === "text"
+                    ? document.createTextNode(item.value)
+                    : document.createComment(item.value);
+                if (pos < root.childNodes.length) {
+                  root.insertBefore(child, root.childNodes[pos]);
                 } else {
-                  root.insertAdjacentHTML("beforeend", item);
+                  root.appendChild(child);
                 }
-                indexCells(addedCells, root.children[pos]);
+                indexCells(addedCells, root.childNodes[pos]);
                 ++offset;
               }
               break;
@@ -62,13 +68,13 @@ export function open({hash, eval: compile} = {}) {
               let removes = 0;
               for (let i = 0; i < items.length; ++i) {
                 const pos = oldPos + offset;
-                if (pos < root.children.length) {
-                  const child = root.children[pos];
+                if (pos < root.childNodes.length) {
+                  const child = root.childNodes[pos];
                   indexCells(removedCells, child);
                   child.remove();
                   ++removes;
                 } else {
-                  console.error(`remove out of range: ${pos} ≮ ${root.children.length}`);
+                  console.error(`remove out of range: ${pos} ≮ ${root.childNode.length}`);
                 }
               }
               offset -= removes;
@@ -138,12 +144,9 @@ export function open({hash, eval: compile} = {}) {
   };
 
   function indexCells(map, node) {
-    if (node.id.startsWith("cell-")) {
-      map.set(node.id, node);
-    }
-    for (const cell of node.querySelectorAll("[id^=cell-]")) {
-      map.set(cell.id, cell);
-    }
+    if (node.nodeType !== 1) return; // ELEMENT_NODE
+    if (node.id.startsWith("cell-")) map.set(node.id, node);
+    for (const cell of node.querySelectorAll("[id^=cell-]")) map.set(cell.id, cell);
   }
 
   function send(message) {

@@ -1,6 +1,7 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
 import {extname} from "node:path/posix";
+import {transformSync} from "esbuild";
 import he from "he";
 import MarkdownIt from "markdown-it";
 import type {RuleCore} from "markdown-it/lib/parser_core.js";
@@ -8,34 +9,18 @@ import type {RuleInline} from "markdown-it/lib/parser_inline.js";
 import type {RenderRule} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
 import type {Config} from "./config.js";
-import {mergeStyle} from "./config.js";
-import type {FrontMatter} from "./frontMatter.js";
 import {readFrontMatter} from "./frontMatter.js";
 import {html, rewriteHtmlPaths} from "./html.js";
 import {parseInfo} from "./info.js";
-import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
+import type {PageCode, PageConfig, PageSource} from "./page.js";
 import {isAssetPath, parseRelativeUrl, relativePath} from "./path.js";
+import {resolveStyle} from "./render.js";
 import {transpileSql} from "./sql.js";
 import {transpileTag} from "./tag.js";
-import {InvalidThemeError} from "./theme.js";
-import {red} from "./tty.js";
 
-export interface MarkdownCode {
-  id: string;
-  node: JavaScriptNode;
-}
-
-export interface MarkdownPage {
-  title: string | null;
-  head: string | null;
-  header: string | null;
-  body: string;
-  footer: string | null;
-  data: FrontMatter;
-  style: string | null;
-  code: MarkdownCode[];
-}
+export type MarkdownCode = PageCode; // TODO remove
+export type MarkdownPage = PageSource; // TODO remove
 
 interface ParseContext {
   code: MarkdownCode[];
@@ -59,6 +44,8 @@ function isFalse(attribute: string | undefined): boolean {
 function getLiveSource(content: string, tag: string, attributes: Record<string, string>): string | undefined {
   return tag === "js"
     ? content
+    : tag === "jsx"
+    ? transformSync(content, {loader: "jsx", jsx: "automatic", jsxImportSource: "npm:react"}).code
     : tag === "tex"
     ? transpileTag(content, "tex.block", true)
     : tag === "html"
@@ -346,7 +333,7 @@ export function parseMarkdown(input: string, options: ParseOptions): MarkdownPag
     footer: getFooter(data, options),
     data,
     title: data.title !== undefined ? data.title : findTitle(tokens),
-    style: getStyle(data, options),
+    style: resolveStyle(data, options),
     code
   };
 }
@@ -364,7 +351,7 @@ export function parseMarkdownMetadata(input: string, options: ParseOptions): Pic
   };
 }
 
-function getHead(data: FrontMatter, options: ParseOptions): string | null {
+function getHead(data: PageConfig, options: ParseOptions): string | null {
   const {scripts, path} = options;
   let head = getHtml("head", data, options);
   if (scripts?.length) {
@@ -378,17 +365,17 @@ function getHead(data: FrontMatter, options: ParseOptions): string | null {
   return head;
 }
 
-function getHeader(data: FrontMatter, options: ParseOptions): string | null {
+function getHeader(data: PageConfig, options: ParseOptions): string | null {
   return getHtml("header", data, options);
 }
 
-function getFooter(data: FrontMatter, options: ParseOptions): string | null {
+function getFooter(data: PageConfig, options: ParseOptions): string | null {
   return getHtml("footer", data, options);
 }
 
 function getHtml(
   key: "head" | "header" | "footer",
-  data: FrontMatter,
+  data: PageConfig,
   {path, [key]: defaultValue}: ParseOptions
 ): string | null {
   return data[key] !== undefined
@@ -398,21 +385,6 @@ function getHtml(
     : defaultValue != null
     ? rewriteHtmlPaths(defaultValue, path)
     : null;
-}
-
-function getStyle(data: FrontMatter, {path, style = null}: ParseOptions): string | null {
-  try {
-    style = mergeStyle(path, data.style, data.theme, style);
-  } catch (error) {
-    if (!(error instanceof InvalidThemeError)) throw error;
-    console.error(red(String(error))); // TODO error during build
-    style = {theme: []};
-  }
-  return !style
-    ? null
-    : "path" in style
-    ? relativePath(path, style.path)
-    : `observablehq:theme-${style.theme.join(",")}.css`;
 }
 
 // TODO Make this smarter.

@@ -4,10 +4,11 @@ import type {FSWatcher, WatchEventType} from "node:fs";
 import {access, constants, readFile} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
-import {basename, dirname, join, normalize} from "node:path/posix";
+import {join, normalize} from "node:path/posix";
 import {difference} from "d3-array";
 import type {PatchItem} from "fast-array-diff";
 import {getPatch} from "fast-array-diff";
+import deepEqual from "fast-deep-equal";
 import mime from "mime";
 import openBrowser from "open";
 import send from "send";
@@ -19,11 +20,13 @@ import type {LoaderResolver} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import type {FileWatchers} from "./fileWatchers.js";
-import {parseHtml, rewriteHtml} from "./html.js";
-import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
+import {isComment, isElement, isText, parseHtml, rewriteHtml} from "./html.js";
+import {readJavaScript, transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import {parseMarkdown} from "./markdown.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
 import {populateNpmCache} from "./npm.js";
+import type {PageGenerator} from "./page.js";
+import {findPage} from "./page.js";
 import {isPathImport, resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
@@ -139,7 +142,7 @@ export class PreviewServer {
             end(req, res, await bundleStyles({path: filepath}), "text/css");
             return;
           } else if (pathname.endsWith(".js")) {
-            const input = await readFile(join(root, path), "utf-8");
+            const input = await readJavaScript(join(root, path));
             const output = await transpileModule(input, {root, path});
             end(req, res, output, "text/javascript");
             return;
@@ -185,21 +188,14 @@ export class PreviewServer {
         // If this path ends with a slash, then add an implicit /index to the
         // end of the path. Otherwise, remove the .html extension (we use clean
         // paths as the internal canonical representation; see normalizePage).
-        let path = join(root, pathname);
-        if (pathname.endsWith("/")) {
-          pathname = join(pathname, "index");
-          path = join(path, "index");
-        } else {
-          pathname = pathname.replace(/\.html$/, "");
-        }
+        if (pathname.endsWith("/")) pathname = join(pathname, "index");
+        else pathname = pathname.replace(/\.html$/, "");
 
-        // Lastly, serve the corresponding Markdown file, if it exists.
-        // Anything else should 404; static files should be matched above.
+        // Lastly, serve the corresponding page, if it exists. Anything else
+        // should 404; static files should be matched above.
         try {
-          const options = {path: pathname, ...config, preview: true};
-          const source = await readFile(join(dirname(path), basename(path, ".html") + ".md"), "utf8");
-          const parse = parseMarkdown(source, options);
-          const html = await renderPage(parse, options);
+          const page = await findPage(pathname, config).generate();
+          const html = await renderPage(page, {...config, path: pathname, preview: true});
           end(req, res, html, "text/html");
         } catch (error) {
           if (!isEnoent(error)) throw error; // internal error
@@ -215,8 +211,8 @@ export class PreviewServer {
       }
       if (req.method === "GET" && res.statusCode === 404) {
         try {
-          const options = {path: "/404", ...config, preview: true};
-          const source = await readFile(join(root, "404.md"), "utf8");
+          const options = {...config, path: "/404", preview: true};
+          const source = await readFile(join(root, "404.md"), "utf8"); // TODO findPage?
           const parse = parseMarkdown(source, options);
           const html = await renderPage(parse, options);
           end(req, res, html, "text/html");
@@ -287,29 +283,30 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
   let config: Config | null = null;
   let path: string | null = null;
   let hash: string | null = null;
-  let html: string[] | null = null;
+  let html: HtmlToken[] | null = null;
   let code: Map<string, string> | null = null;
   let files: Map<string, string> | null = null;
   let tables: Map<string, string> | null = null;
   let stylesheets: string[] | null = null;
   let configWatcher: FSWatcher | null = null;
-  let markdownWatcher: FSWatcher | null = null;
+  let pageGenerator: PageGenerator | null = null;
+  let pageWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
   let emptyTimeout: ReturnType<typeof setTimeout> | null = null;
 
   console.log(faint("socket open"), req.url);
 
   async function watcher(event: WatchEventType, force = false) {
-    if (!path || !config) throw new Error("not initialized");
+    if (!path || !pageGenerator || !config) throw new Error("not initialized");
     const {root, loaders} = config;
     switch (event) {
       case "rename": {
-        markdownWatcher?.close();
+        pageWatcher?.close();
         try {
-          markdownWatcher = watch(join(root, path), (event) => watcher(event));
+          pageWatcher = watch(pageGenerator.path, (event) => watcher(event));
         } catch (error) {
           if (!isEnoent(error)) throw error;
-          console.error(`file no longer exists: ${path}`);
+          console.error(`page no longer exists: ${path}`);
           socket.terminate();
           return;
         }
@@ -317,8 +314,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
         break;
       }
       case "change": {
-        const source = await readFile(join(root, path), "utf8");
-        const page = parseMarkdown(source, {path, ...config});
+        const page = await pageGenerator.generate();
         // delay to avoid a possibly-empty file
         if (!force && page.body === "") {
           if (!emptyTimeout) {
@@ -363,15 +359,14 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
   }
 
   async function hello({path: initialPath, hash: initialHash}: {path: string; hash: string}): Promise<void> {
-    if (markdownWatcher || configWatcher || attachmentWatcher) throw new Error("already watching");
+    if (pageWatcher || configWatcher || attachmentWatcher) throw new Error("already watching");
     path = decodeURI(initialPath);
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
-    path = join(dirname(path), basename(path, ".html") + ".md");
     config = await configPromise;
+    pageGenerator = findPage(path, config);
     const {root, loaders} = config;
-    const source = await readFile(join(root, path), "utf8");
-    const page = parseMarkdown(source, {path, ...config});
+    const page = await pageGenerator.generate();
     const resolvers = await getResolvers(page, {root, path, loaders});
     if (resolvers.hash !== initialHash) return void send({type: "reload"});
     hash = resolvers.hash;
@@ -381,7 +376,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     tables = getTables(page);
     stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
     attachmentWatcher = await loaders.watchFiles(path, getWatchFiles(resolvers), () => watcher("change"));
-    markdownWatcher = watch(join(root, path), (event) => watcher(event));
+    pageWatcher = watch(pageGenerator.path, (event) => watcher(event));
     if (config.watchPath) configWatcher = watch(config.watchPath, () => send({type: "reload"}));
   }
 
@@ -410,9 +405,9 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
       attachmentWatcher.close();
       attachmentWatcher = null;
     }
-    if (markdownWatcher) {
-      markdownWatcher.close();
-      markdownWatcher = null;
+    if (pageWatcher) {
+      pageWatcher.close();
+      pageWatcher = null;
     }
     if (configWatcher) {
       configWatcher.close();
@@ -427,8 +422,24 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
   }
 }
 
-function getHtml({body}: MarkdownPage, resolvers: Resolvers): string[] {
-  return Array.from(parseHtml(rewriteHtml(body, resolvers)).document.body.children, (d) => d.outerHTML);
+type HtmlToken =
+  | {type: "text"; value: string} // text
+  | {type: "comment"; value: string} // <!-- comment -->
+  | {type: "html"; value: string}; // <tag>...</tag>
+
+function getHtml({body}: MarkdownPage, resolvers: Resolvers): HtmlToken[] {
+  const {document} = parseHtml(rewriteHtml(body, resolvers));
+  return Array.from(document.body.childNodes)
+    .filter((node): node is Element | Text => isElement(node) || isText(node) || isComment(node))
+    .map(asHtmlToken);
+}
+
+function asHtmlToken(node: Element | Text | Comment): HtmlToken {
+  return isElement(node)
+    ? {type: "html", value: node.outerHTML}
+    : isText(node)
+    ? {type: "text", value: node.textContent ?? ""}
+    : {type: "comment", value: node.data};
 }
 
 function getCode({code}: MarkdownPage, resolvers: Resolvers): Map<string, string> {
@@ -528,8 +539,8 @@ function diffTables(
   return patch;
 }
 
-function diffHtml(oldHtml: string[], newHtml: string[]): RedactedPatch<string> {
-  return getPatch(oldHtml, newHtml).map(redactPatch);
+function diffHtml(oldHtml: HtmlToken[], newHtml: HtmlToken[]): RedactedPatch<HtmlToken> {
+  return getPatch(oldHtml, newHtml, deepEqual).map(redactPatch);
 }
 
 type RedactedPatch<T> = RedactedPatchItem<T>[];

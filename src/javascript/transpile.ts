@@ -1,7 +1,11 @@
+import type {Stats} from "node:fs";
+import {existsSync, readFileSync, statSync} from "node:fs";
+import {readFile} from "node:fs/promises";
 import {join} from "node:path/posix";
 import type {CallExpression, Node} from "acorn";
 import type {ImportDeclaration, ImportDefaultSpecifier, ImportNamespaceSpecifier, ImportSpecifier} from "acorn";
 import {simple} from "acorn-walk";
+import {transform, transformSync} from "esbuild";
 import {isPathImport, relativePath, resolvePath, resolveRelativePath} from "../path.js";
 import {getModuleResolver} from "../resolvers.js";
 import {Sourcemap} from "../sourcemap.js";
@@ -13,6 +17,48 @@ import type {JavaScriptNode} from "./parse.js";
 import {parseProgram} from "./parse.js";
 import type {StringLiteral} from "./source.js";
 import {getStringLiteralValue, isStringLiteral} from "./source.js";
+
+export async function readJavaScript(path: string): Promise<string> {
+  if (!existsSync(path)) {
+    const jsxPath = path.replace(/\.js$/, ".jsx");
+    if (existsSync(jsxPath)) {
+      const source = await readFile(jsxPath, "utf-8");
+      const {code} = await transform(source, {
+        loader: "jsx",
+        jsx: "automatic",
+        jsxImportSource: "npm:react",
+        sourcefile: jsxPath
+      });
+      return code;
+    }
+  }
+  return await readFile(path, "utf-8");
+}
+
+export function readJavaScriptSync(path: string): string {
+  if (!existsSync(path)) {
+    const jsxPath = path.replace(/\.js$/, ".jsx");
+    if (existsSync(jsxPath)) {
+      const source = readFileSync(jsxPath, "utf-8");
+      const {code} = transformSync(source, {
+        loader: "jsx",
+        jsx: "automatic",
+        jsxImportSource: "npm:react",
+        sourcefile: jsxPath
+      });
+      return code;
+    }
+  }
+  return readFileSync(path, "utf-8");
+}
+
+export function statJavaScriptSync(path: string): Stats {
+  if (!existsSync(path)) {
+    const jsxPath = path.replace(/\.js$/, ".jsx");
+    if (existsSync(jsxPath)) return statSync(jsxPath);
+  }
+  return statSync(path);
+}
 
 export interface TranspileOptions {
   id: string;

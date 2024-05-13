@@ -1,21 +1,9 @@
 import matter from "gray-matter";
 import {normalizeTheme, stringOrNull} from "./config.js";
+import type {PageConfig} from "./page.js";
 import {yellow} from "./tty.js";
 
-export interface FrontMatter {
-  title?: string | null;
-  toc?: {show?: boolean; label?: string};
-  style?: string | null;
-  theme?: string[];
-  head?: string | null;
-  header?: string | null;
-  footer?: string | null;
-  index?: boolean;
-  keywords?: string[];
-  draft?: boolean;
-  sidebar?: boolean;
-  sql?: {[key: string]: string};
-}
+export type FrontMatter = PageConfig;
 
 export function readFrontMatter(input: string): {content: string; data: FrontMatter} {
   try {

@@ -125,7 +125,11 @@ export class LoaderResolver {
 
   getWatchPath(path: string): string | undefined {
     const exactPath = join(this.root, path);
-    return existsSync(exactPath) ? exactPath : this.find(path)?.path;
+    return existsSync(exactPath)
+      ? exactPath
+      : path.endsWith(".js") && existsSync(exactPath.replace(/\.js$/, ".jsx"))
+      ? exactPath.replace(/\.js$/, ".jsx")
+      : this.find(path)?.path;
   }
 
   watchFiles(path: string, watchPaths: Iterable<string>, callback: (name: string) => void) {
@@ -285,12 +289,12 @@ export abstract class Loader {
   abstract exec(output: WriteStream, effects?: LoadEffects): Promise<void>;
 }
 
-interface CommandLoaderOptions extends LoaderOptions {
+export interface CommandLoaderOptions extends LoaderOptions {
   command: string;
   args: string[];
 }
 
-class CommandLoader extends Loader {
+export class CommandLoader extends Loader {
   /**
    * The command to run, such as "node" for a JavaScript loader, "tsx" for
    * TypeScript, and "sh" for a shell script. "noop" when we only need to

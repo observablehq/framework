@@ -5,6 +5,8 @@
     "module": "Node16",
     "target": "ES2022",
     "strict": true,
+    "allowJs": true,
+    "jsx": "react-jsx",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,

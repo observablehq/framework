@@ -6,6 +6,7 @@ import {resolvePath} from "../path.js";
 import {findFiles} from "./files.js";
 import {findImports} from "./imports.js";
 import {parseProgram} from "./parse.js";
+import {readJavaScriptSync, statJavaScriptSync} from "./transpile.js";
 
 export type FileInfo = {
   /** The last-modified time of the file; used to invalidate the cache. */
@@ -73,7 +74,7 @@ export function getModuleInfo(root: string, path: string): ModuleInfo | undefine
   const key = join(root, path);
   let mtimeMs: number;
   try {
-    ({mtimeMs} = statSync(key));
+    ({mtimeMs} = statJavaScriptSync(key));
   } catch {
     moduleInfoCache.delete(key); // delete stale entry
     return; // ignore missing file
@@ -83,7 +84,7 @@ export function getModuleInfo(root: string, path: string): ModuleInfo | undefine
     let source: string;
     let body: Program;
     try {
-      source = readFileSync(key, "utf-8");
+      source = readJavaScriptSync(key);
       body = parseProgram(source);
     } catch {
       moduleInfoCache.delete(key); // delete stale entry
