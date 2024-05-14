@@ -33,7 +33,8 @@
 
 ### Charts
 
-* [`vega-responsive`](https://observablehq.observablehq.cloud/framework-example-vega-responsive/) - A responsive Vega-Lite bar chart
+* [`vega-dark`](https://observablehq.observablehq.cloud/framework-example-vega-dark/) - Responsive dark mode in Vega-Lite
+* [`vega-responsive`](https://observablehq.observablehq.cloud/framework-example-vega-responsive/) - Responsive width in Vega-Lite using ResizeObserver
 
 ### Data loaders
 
