@@ -56,6 +56,7 @@ const pickMarketSegment = view(
     ${resize((width, height) => arrivalLineChart(width, height))}
   </div>
   <div class="card grid-colspan-2 grid-rowspan-2">
+  <h2>Rooms reserved by season</h2>
     ${resize((width, height) => typeSeasonBubble(width, height))}
   </div>
   <div class="card grid-colspan-2 grid-rowspan-2">
@@ -86,8 +87,8 @@ function arrivalLineChart(width, height) {
           {
             x: "arrivalDate",
             interval: d3.utcDay,
-            opacity: 0.2,
-            strokeWidth: 2,
+            opacity: 0.5,
+            strokeWidth: 1
           }
         )
       ),
@@ -100,15 +101,15 @@ function arrivalLineChart(width, height) {
             {
               x: "arrivalDate",
               interval: d3.utcDay,
-              strokeWidth: 1,
-              stroke: "black",
+              strokeWidth: 2,
+              tip: true
             }
           )
         )
       ),
       Plot.ruleY([0]),
       Plot.axisX({ ticks: 5 }),
-      Plot.axisY({ ticks: 5 }),
+      Plot.axisY({ ticks: 5 })
     ],
   });
 }
@@ -156,7 +157,7 @@ function dailyRateChart(width, height) {
         bookingsByMarketSegment,
         Plot.binX(
           { y: "count" },
-          { x: "ADR", fill: "#21C6A8", interval: 20, fill: "season" }
+          { x: "ADR", fill: "#21C6A8", interval: 20, fill: "season", tip: true}
         )
       ),
     ],
@@ -243,34 +244,16 @@ const cleanTable = bookingsByMarketSegment.map(d => ({
 ```
 
 ```js
-display(bookingsByMarketSegment);
-```
-
-```js
-display(cleanTable);
-```
-
-```js
-const observable10 = [
-  "#4269d0", // blue
-  "#efb118", // orange
-  "#ff725c", // red
-  "#6cc5b0", // cyan
-  "#3ca951", // green
-  "#ff8ab7", // pink
-  "#a463f2", // purple
-  "#97bbf5", // light blue
-];
-```
-
-```js
 function typeSeasonBubble(width, height) {
   return Plot.plot({
+    marginTop: 0,
+    marginBottom: 35,
+    marginLeft: 50,
     width,
-    height,
+    height: height - 20,
     x: {label: "Room type reserved", grid: true},
     y: {label: null, grid: true},
-    r: {range: [1, 20]},
+    r: {range: [1, 25]},
     color: {scheme: "Reds"},
     marks: [
       Plot.dot(bookingsByMarketSegment, Plot.group({r: "count", fill: "count"}, {y: "season", x: "ReservedRoomType", tip: true, stroke: "currentColor", strokeWidth: 0.5}))
