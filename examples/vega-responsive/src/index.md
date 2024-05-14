@@ -1,6 +1,6 @@
-# Vega-Lite responsive bar chart
+# Vega-Lite responsive width
 
-The bar chart below resizes to fit the container. Try resizing the window.
+The chart below resizes to fit the container. Try resizing the window.
 
 Rather than use Vega-Lite’s built-in [responsive width](https://vega.github.io/vega-lite/docs/size.html#specifying-responsive-width-and-height) — which only listens to window _resize_ events and doesn’t work correctly when the container is initially detached, or when the page content changes — we use Observable Framework’s built-in [`resize` function](https://observablehq.com/framework/javascript#responsive-display) which handles all cases thanks to [ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver).
 
@@ -26,6 +26,8 @@ display(resize((width) => {
   return chart;
 }));
 ```
+
+## vlresize(*spec*)
 
 If you prefer a more reusable solution, you can create a `vlresize` function like so in a `vlresize.js` module that you can import into any page.
 
@@ -66,4 +68,28 @@ vlresize({
 }, {
   maxWidth: 960 - 16 * 2
 })
+```
+
+## Static width
+
+If you’d prefer to set a fixed width and have the browser scale the chart to fit the container, you can override the default styles that Vega-Lite sets on the canvas element. Below, the natural width of the chart is 640px, but the chart will scale down to fit the container in narrow windows.
+
+```js echo
+const chart = display(await vl.render({
+  spec: {
+    width: 640,
+    height: 250,
+    data: {url: "https://vega.github.io/vega-lite/data/cars.json"},
+    mark: "bar",
+    encoding: {
+      x: {field: "Cylinders"},
+      y: {aggregate: "count", title: "Number of cars"}
+    }
+  }
+}));
+
+const canvas = chart.firstChild;
+canvas.style.aspectRatio = `${canvas.width} / ${canvas.height}`;
+canvas.style.maxWidth = "100%";
+canvas.style.height = "auto";
 ```
