@@ -1,8 +1,11 @@
 export default {
   root: "src",
-  title: "Analyzing web logs",
+
+  // Shared Observable example configuration; feel free to remove this.
+  title: "Observable Framework",
   pager: false,
   toc: false,
+  sidebar: false,
   head:
     process.env.CI &&
     `<script type="module" async src="https://events.observablehq.com/client.js?pageLoad"></script>

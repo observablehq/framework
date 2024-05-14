@@ -1,6 +1,5 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
-import {extname} from "node:path/posix";
 import he from "he";
 import MarkdownIt from "markdown-it";
 import type {RuleCore} from "markdown-it/lib/parser_core.js";
@@ -15,7 +14,7 @@ import {html, rewriteHtmlPaths} from "./html.js";
 import {parseInfo} from "./info.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
-import {isAssetPath, parseRelativeUrl, relativePath} from "./path.js";
+import {isAssetPath, relativePath} from "./path.js";
 import {transpileSql} from "./sql.js";
 import {transpileTag} from "./tag.js";
 import {InvalidThemeError} from "./theme.js";
@@ -281,22 +280,6 @@ function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
   };
 }
 
-export function makeLinkNormalizer(baseNormalize: (url: string) => string, clean: boolean): (url: string) => string {
-  return (url) => {
-    // Only clean local links (and ignore e.g. "https:" links).
-    if (isAssetPath(url)) {
-      const u = parseRelativeUrl(url);
-      let {pathname} = u;
-      if (pathname && !pathname.endsWith("/") && !extname(pathname)) pathname += ".html";
-      if (pathname === "index.html") pathname = ".";
-      else if (pathname.endsWith("/index.html")) pathname = pathname.slice(0, -"index.html".length);
-      else if (clean) pathname = pathname.replace(/\.html$/, "");
-      url = pathname + u.search + u.hash;
-    }
-    return baseNormalize(url);
-  };
-}
-
 export interface ParseOptions {
   md: MarkdownIt;
   path: string;
@@ -311,14 +294,12 @@ export function createMarkdownIt({
   markdownIt,
   linkify = true,
   quotes = "“”‘’",
-  typographer = false,
-  cleanUrls = true
+  typographer = false
 }: {
   markdownIt?: (md: MarkdownIt) => MarkdownIt;
   linkify?: boolean;
   quotes?: string | string[];
   typographer?: boolean;
-  cleanUrls?: boolean;
 } = {}): MarkdownIt {
   const md = MarkdownIt({html: true, linkify, typographer, quotes});
   if (linkify) md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
@@ -328,7 +309,6 @@ export function createMarkdownIt({
   md.renderer.rules.placeholder = makePlaceholderRenderer();
   md.renderer.rules.fence = makeFenceRenderer(md.renderer.rules.fence!);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
-  md.normalizeLink = makeLinkNormalizer(md.normalizeLink, cleanUrls);
   return markdownIt === undefined ? md : markdownIt(md);
 }
 

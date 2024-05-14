@@ -129,7 +129,7 @@ index: false
     </picture>
     <div class="small arrow">Observable Plot downloads</div>
   </a>
-  <a href="https://observablehq.com/framework/examples/mortgage-rates/interactive" target="_blank">
+  <a href="https://observablehq.com/framework/examples/mortgage-rates/" target="_blank">
     <picture>
       <source srcset="./assets/mortgage-rates.webp" media="(prefers-color-scheme: dark)">
       <img src="./assets/mortgage-rates-dark.webp">

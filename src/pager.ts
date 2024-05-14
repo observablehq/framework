@@ -17,19 +17,21 @@ export function findLink(path: string, options: Pick<Config, "pages" | "title"> 
   let links = linkCache.get(pages);
   if (!links) {
     links = new Map<string, PageLink>();
-    let prev: Page | undefined;
-    for (const page of walk(pages, title)) {
-      const path = normalizePath(page.path);
-      if (links.has(path)) {
-        console.warn(`ignoring duplicate page: ${page.path}`);
-      } else {
-        if (prev) {
-          links.set(path, {prev, next: undefined});
-          links.get(normalizePath(prev.path))!.next = page;
+    for (const pageGroup of walk(pages, title)) {
+      let prev: Page | undefined;
+      for (const page of pageGroup) {
+        const path = normalizePath(page.path);
+        if (links.has(path)) {
+          console.warn(`ignoring duplicate page: ${page.path}`);
         } else {
-          links.set(path, {prev: undefined, next: undefined as unknown as Page}); // next set lazily
+          if (prev) {
+            links.set(path, {prev, next: undefined});
+            links.get(normalizePath(prev.path))!.next = page;
+          } else {
+            links.set(path, {prev: undefined, next: undefined as unknown as Page}); // next set lazily
+          }
+          prev = page;
         }
-        prev = page;
       }
     }
     if (links.size === 1) links.clear(); // no links if only one page
@@ -40,10 +42,25 @@ export function findLink(path: string, options: Pick<Config, "pages" | "title"> 
 
 // Walks the unique pages in the site so as to avoid creating cycles. Implicitly
 // adds a link at the beginning to the home page (/index).
-function* walk(pages: Config["pages"], title = "Home", visited = new Set<string>()): Generator<Page> {
-  if (!visited.has("/index")) yield (visited.add("/index"), {name: title, path: "/index"});
-  for (const page of pages) {
-    if ("pages" in page) yield* walk(page.pages, title, visited);
-    else if (!visited.has(page.path)) yield (visited.add(page.path), page);
+function walk(pages: Config["pages"], title = "Home"): Iterable<Iterable<Page>> {
+  const pageQueue = [...pages];
+  const pageGroups = new Map<string, Page[]>();
+  const visited = new Set<string>();
+
+  function visit(page: Page) {
+    if (visited.has(page.path) || !page.pager) return;
+    visited.add(page.path);
+    let pageGroup = pageGroups.get(page.pager);
+    if (!pageGroup) pageGroups.set(page.pager, (pageGroup = []));
+    pageGroup.push(page);
   }
+
+  visit({name: title, path: "/index", pager: "main"});
+
+  for (const page of pageQueue) {
+    if ("pages" in page) for (const p of page.pages) pageQueue.push(p);
+    else visit(page);
+  }
+
+  return pageGroups.values();
 }

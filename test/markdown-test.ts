@@ -6,7 +6,7 @@ import deepEqual from "fast-deep-equal";
 import {normalizeConfig} from "../src/config.js";
 import {isEnoent} from "../src/error.js";
 import type {MarkdownPage} from "../src/markdown.js";
-import {makeLinkNormalizer, parseMarkdown} from "../src/markdown.js";
+import {parseMarkdown} from "../src/markdown.js";
 
 const {md} = normalizeConfig({root: "docs"});
 
@@ -61,118 +61,6 @@ describe("parseMarkdown(input)", () => {
       assert.ok(allequal, `${name} must match snapshot`);
     });
   }
-});
-
-describe("makeLinkNormalizer(normalize, false)", () => {
-  const normalize = makeLinkNormalizer(String, false);
-  it("appends .html to extension-less links", () => {
-    assert.strictEqual(normalize("foo"), "foo.html");
-  });
-  it("does not append .html to extensioned links", () => {
-    assert.strictEqual(normalize("foo.png"), "foo.png");
-    assert.strictEqual(normalize("foo.html"), "foo.html");
-    assert.strictEqual(normalize("foo.md"), "foo.md");
-  });
-  it("converts index links to directories", () => {
-    assert.strictEqual(normalize("foo/index"), "foo/");
-    assert.strictEqual(normalize("foo/index.html"), "foo/");
-    assert.strictEqual(normalize("../index"), "../");
-    assert.strictEqual(normalize("../index.html"), "../");
-    assert.strictEqual(normalize("./index"), "./");
-    assert.strictEqual(normalize("./index.html"), "./");
-    assert.strictEqual(normalize("/index"), "/");
-    assert.strictEqual(normalize("/index.html"), "/");
-    assert.strictEqual(normalize("index"), ".");
-    assert.strictEqual(normalize("index.html"), ".");
-  });
-  it("preserves links to directories", () => {
-    assert.strictEqual(normalize(""), "");
-    assert.strictEqual(normalize("/"), "/");
-    assert.strictEqual(normalize("./"), "./");
-    assert.strictEqual(normalize("../"), "../");
-    assert.strictEqual(normalize("foo/"), "foo/");
-    assert.strictEqual(normalize("./foo/"), "./foo/");
-  });
-  it("preserves a relative path", () => {
-    assert.strictEqual(normalize("./foo"), "./foo.html");
-    assert.strictEqual(normalize("./foo.png"), "./foo.png");
-    assert.strictEqual(normalize("../foo"), "../foo.html");
-    assert.strictEqual(normalize("../foo.png"), "../foo.png");
-    assert.strictEqual(normalize("/foo"), "/foo.html");
-    assert.strictEqual(normalize("/foo.png"), "/foo.png");
-  });
-  it("preserves the query", () => {
-    assert.strictEqual(normalize("foo.png?bar"), "foo.png?bar");
-    assert.strictEqual(normalize("foo.html?bar"), "foo.html?bar");
-    assert.strictEqual(normalize("foo?bar"), "foo.html?bar");
-  });
-  it("preserves the hash", () => {
-    assert.strictEqual(normalize("foo.png#bar"), "foo.png#bar");
-    assert.strictEqual(normalize("foo.html#bar"), "foo.html#bar");
-    assert.strictEqual(normalize("foo#bar"), "foo.html#bar");
-  });
-  it("preserves the query and hash", () => {
-    assert.strictEqual(normalize("foo.png?bar#baz"), "foo.png?bar#baz");
-    assert.strictEqual(normalize("foo.html?bar#baz"), "foo.html?bar#baz");
-    assert.strictEqual(normalize("foo?bar#baz"), "foo.html?bar#baz");
-  });
-});
-
-describe("makeLinkNormalizer(normalize, true)", () => {
-  const normalize = makeLinkNormalizer(String, true);
-  it("does not append .html to extension-less links", () => {
-    assert.strictEqual(normalize("foo"), "foo");
-  });
-  it("does not append .html to extensioned links", () => {
-    assert.strictEqual(normalize("foo.png"), "foo.png");
-    assert.strictEqual(normalize("foo.md"), "foo.md");
-  });
-  it("removes .html from extensioned links", () => {
-    assert.strictEqual(normalize("foo.html"), "foo");
-  });
-  it("converts index links to directories", () => {
-    assert.strictEqual(normalize("foo/index"), "foo/");
-    assert.strictEqual(normalize("foo/index.html"), "foo/");
-    assert.strictEqual(normalize("../index"), "../");
-    assert.strictEqual(normalize("../index.html"), "../");
-    assert.strictEqual(normalize("./index"), "./");
-    assert.strictEqual(normalize("./index.html"), "./");
-    assert.strictEqual(normalize("/index"), "/");
-    assert.strictEqual(normalize("/index.html"), "/");
-    assert.strictEqual(normalize("index"), ".");
-    assert.strictEqual(normalize("index.html"), ".");
-  });
-  it("preserves links to directories", () => {
-    assert.strictEqual(normalize(""), "");
-    assert.strictEqual(normalize("/"), "/");
-    assert.strictEqual(normalize("./"), "./");
-    assert.strictEqual(normalize("../"), "../");
-    assert.strictEqual(normalize("foo/"), "foo/");
-    assert.strictEqual(normalize("./foo/"), "./foo/");
-  });
-  it("preserves a relative path", () => {
-    assert.strictEqual(normalize("./foo"), "./foo");
-    assert.strictEqual(normalize("./foo.png"), "./foo.png");
-    assert.strictEqual(normalize("../foo"), "../foo");
-    assert.strictEqual(normalize("../foo.png"), "../foo.png");
-    assert.strictEqual(normalize("/foo"), "/foo");
-    assert.strictEqual(normalize("/foo.png"), "/foo.png");
-  });
-  it("preserves the query", () => {
-    assert.strictEqual(normalize("foo.png?bar"), "foo.png?bar");
-    assert.strictEqual(normalize("foo.html?bar"), "foo?bar");
-    assert.strictEqual(normalize("foo?bar"), "foo?bar");
-  });
-  it("preserves the hash", () => {
-    assert.strictEqual(normalize("foo.png#bar"), "foo.png#bar");
-    assert.strictEqual(normalize("foo.html#bar"), "foo#bar");
-    assert.strictEqual(normalize("foo#bar"), "foo#bar");
-  });
-  it("preserves the query and hash", () => {
-    assert.strictEqual(normalize("foo.png?bar#baz"), "foo.png?bar#baz");
-    assert.strictEqual(normalize("foo.html?bar#baz"), "foo?bar#baz");
-    assert.strictEqual(normalize("foo?bar#baz"), "foo?bar#baz");
-  });
 });
 
 function jsonMeta({head, header, body, footer, ...rest}: MarkdownPage): string {

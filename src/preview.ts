@@ -175,7 +175,7 @@ export class PreviewServer {
 
         // Normalize the pathname (e.g., adding ".html" if cleanUrls is false,
         // dropping ".html" if cleanUrls is true) and redirect if necessary.
-        const normalizedPathname = config.md.normalizeLink(pathname);
+        const normalizedPathname = config.normalizePath(pathname);
         if (url.pathname !== normalizedPathname) {
           res.writeHead(302, {Location: normalizedPathname + url.search});
           res.end();
@@ -301,7 +301,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
 
   async function watcher(event: WatchEventType, force = false) {
     if (!path || !config) throw new Error("not initialized");
-    const {root, loaders} = config;
+    const {root, loaders, normalizePath} = config;
     switch (event) {
       case "rename": {
         markdownWatcher?.close();
@@ -332,7 +332,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
           clearTimeout(emptyTimeout);
           emptyTimeout = null;
         }
-        const resolvers = await getResolvers(page, {root, path, loaders});
+        const resolvers = await getResolvers(page, {root, path, loaders, normalizePath});
         if (hash === resolvers.hash) break;
         const previousHash = hash!;
         const previousHtml = html!;
@@ -369,10 +369,10 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     if (path.endsWith("/")) path += "index";
     path = join(dirname(path), basename(path, ".html") + ".md");
     config = await configPromise;
-    const {root, loaders} = config;
+    const {root, loaders, normalizePath} = config;
     const source = await readFile(join(root, path), "utf8");
     const page = parseMarkdown(source, {path, ...config});
-    const resolvers = await getResolvers(page, {root, path, loaders});
+    const resolvers = await getResolvers(page, {root, path, loaders, normalizePath});
     if (resolvers.hash !== initialHash) return void send({type: "reload"});
     hash = resolvers.hash;
     html = getHtml(page, resolvers);

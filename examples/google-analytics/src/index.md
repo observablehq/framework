@@ -1,3 +1,7 @@
+---
+theme: dashboard
+---
+
 # Google analytics
 
 ```js
