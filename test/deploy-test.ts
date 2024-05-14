@@ -677,12 +677,12 @@ describe("deploy", () => {
       deployConfig: DEPLOY_CONFIG,
       fixedInputStatTime: new Date("2024-03-09"),
       fixedOutputStatTime: new Date("2024-03-10"),
-      buildManifest: {pages: [{url: "/", title: "Build test case"}]}
+      buildManifest: {pages: [{urlPath: "/", title: "Build test case"}]}
     });
     effects.clack.inputs = ["fix some bugs"]; // "what changed?"
     await deploy(TEST_OPTIONS, effects);
 
-    assert.deepEqual(buildManifestPages, [{url: "/", title: "Build test case"}]);
+    assert.deepEqual(buildManifestPages, [{urlPath: "/", title: "Build test case"}]);
 
     effects.close();
   });

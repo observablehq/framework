@@ -1,6 +1,7 @@
 import type {MockAgent} from "undici";
 import type {Interceptable} from "undici";
 import PendingInterceptorsFormatter from "undici/lib/mock/pending-interceptors-formatter.js";
+import type {BuildManifest} from "../../src/build.js";
 import type {
   GetCurrentUserResponse,
   GetProjectResponse,
@@ -343,7 +344,7 @@ class ObservableApiMock {
   }: {
     deployId?: string;
     status?: number;
-    pageMatch?: null | ((pages: {title: string; url: string}[]) => boolean);
+    pageMatch?: null | ((pages: BuildManifest["pages"]) => boolean);
   } = {}): ObservableApiMock {
     const response =
       status == 200

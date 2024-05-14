@@ -333,7 +333,7 @@ export interface PostDeployManifestResponse {
 
 export interface PostDeployUploadedRequest {
   pages: {
-    url: string;
+    urlPath: string;
     title: string | null;
   }[];
 }

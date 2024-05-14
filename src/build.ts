@@ -262,15 +262,8 @@ export async function build(
     effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
     const html = await renderPage(page, {...config, path, resolvers});
     await effects.writeFile(outputPath, html);
-    const url =
-      outputPath === "index.html"
-        ? "/"
-        : basename(outputPath) === "index.html"
-        ? join("/", dirname(outputPath), "/")
-        : extname(outputPath) === ".html"
-        ? join("/", dirname(outputPath), basename(outputPath, ".html"))
-        : outputPath;
-    buildManifest.pages.push({url, title: page.title});
+    const urlPath = config.normalizePath("/" + outputPath);
+    buildManifest.pages.push({urlPath, title: page.title});
   }
 
   // Write the build manifest.
@@ -381,5 +374,5 @@ export class FileBuildEffects implements BuildEffects {
 }
 
 export interface BuildManifest {
-  pages: {url: string; title: string | null}[];
+  pages: {urlPath: string; title: string | null}[];
 }

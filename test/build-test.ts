@@ -102,10 +102,10 @@ describe("build", () => {
     await build({config}, effects);
     assert.deepEqual(effects.buildManifest, {
       pages: [
-        {url: "/", title: "Hello, world!"},
-        {url: "/weather", title: "It's going to be !"},
-        {url: "/cities/", title: "Cities"},
-        {url: "/cities/portland", title: "Portland"}
+        {urlPath: "/", title: "Hello, world!"},
+        {urlPath: "/weather", title: "It's going to be !"},
+        {urlPath: "/cities/", title: "Cities"},
+        {urlPath: "/cities/portland", title: "Portland"}
       ]
     });
 
