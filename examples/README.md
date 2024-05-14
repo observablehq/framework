@@ -19,7 +19,7 @@
 
 ### [`plot`](https://observablehq.observablehq.cloud/framework-example-plot/) - Observable Plot downloads
 
-<a href="https://observablehq.observablehq.cloud/framework-example-plot/"><img src="../docs/assets/plot.webp" alt="Observable Plot downloads" width="312" height="237"></a
+<a href="https://observablehq.observablehq.cloud/framework-example-plot/"><img src="../docs/assets/plot.webp" alt="Observable Plot downloads" width="312" height="237"></a>
 
 [View source](./plot) · This dashboard visualizes the popularity and development of [Observable Plot](https://observablehq.com/plot/), our open-source visualization library. The included data loaders demonstrate how to retrieve data from GitHub and npm APIs, including star counts, releases, downloads, and open issues. A time-series chart shows daily npm downloads with 7- and 28-day moving averages, and a burndown chart shows the age of open issues over time.
 
