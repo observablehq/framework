@@ -197,10 +197,11 @@ function renderToc(headers: Header[], label: string): Html {
 }
 
 function renderListItem(page: Page, path: string, resolveLink: (href: string) => string): Html {
+  const external = !isAssetPath(page.path);
   return html`\n    <li class="observablehq-link${
     normalizePath(page.path) === path ? " observablehq-link-active" : ""
-  }"><a href="${encodeURI(resolveLink(page.path))}"${isAssetPath(page.path) ? null : html` target="_blank"`}>${
-    page.name
+  }"><a href="${encodeURI(resolveLink(page.path))}"${external ? html` target="_blank"` : null}>${
+    external ? html`<span>${page.name}</span>` : page.name
   }</a></li>`;
 }
 
