@@ -4,7 +4,7 @@
 
 View live: <https://observablehq.observablehq.cloud/framework-example-chess/>
 
-This page displays chess rankings from the [International Chess Federation](http://ratings.fide.com/) for the past year.
+This page displays rankings from the [International Chess Federation](https://ratings.fide.com/) for the past year.
 
 ## Data loaders
 
