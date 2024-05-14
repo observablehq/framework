@@ -428,7 +428,7 @@ export async function deploy(
   // Mark the deploy as uploaded
   let buildManifest: null | BuildManifest = null;
   try {
-    const source = await effects.readCacheFile(config.root, "_buildManifest.json");
+    const source = await effects.readCacheFile(config.root, "_build.json");
     buildManifest = JSON.parse(source);
   } catch (error) {
     if (!isEnoent(error)) {

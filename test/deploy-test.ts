@@ -154,7 +154,7 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
   }
 
   readCacheFile(sourceRoot: string, path: string): Promise<string> {
-    if (path === "_buildManifest.json") {
+    if (path === "_build.json") {
       if (this.buildManifest) return Promise.resolve(JSON.stringify(this.buildManifest));
       throw Object.assign(new Error("no build manifest configured for this test"), {code: "ENOENT"});
     }

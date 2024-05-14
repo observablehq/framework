@@ -374,7 +374,7 @@ export class FileBuildEffects implements BuildEffects {
     await writeFile(destination, contents);
   }
   async writeBuildManifest(buildManifest: BuildManifest): Promise<void> {
-    const destination = join(this.cacheDir, "_buildManifest.json");
+    const destination = join(this.cacheDir, "_build.json");
     await prepareOutput(destination);
     await writeFile(destination, JSON.stringify(buildManifest));
   }
