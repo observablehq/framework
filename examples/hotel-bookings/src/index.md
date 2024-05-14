@@ -1,5 +1,6 @@
 ---
 toc: false
+theme: wide
 ---
 
 # Reservations by market segment
