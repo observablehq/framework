@@ -40,6 +40,9 @@ export class TestClackEffects implements ClackEffects {
   isCancel(value: unknown): value is symbol {
     return value === TestClackEffects.cancelSymbol;
   }
+  get wrap() {
+    return this;
+  }
 }
 
 type ClackLogs = typeof clack.log;

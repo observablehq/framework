@@ -1,6 +1,6 @@
 import os from "node:os";
-import * as clack from "@clack/prompts";
 import type {ClackEffects} from "./clack.js";
+import {clackWithWrap} from "./clack.js";
 import {commandInstruction, commandRequiresAuthenticationMessage} from "./commandInstruction.js";
 import {CliError, isHttpError} from "./error.js";
 import type {GetCurrentUserResponse, PostAuthRequestPollResponse} from "./observableApiClient.js";
@@ -30,7 +30,7 @@ export interface AuthEffects extends ConfigEffects, TtyEffects {
 export const defaultEffects: AuthEffects = {
   ...defaultConfigEffects,
   ...defaultTtyEffects,
-  clack,
+  clack: clackWithWrap,
   getObservableApiKey,
   setObservableApiKey,
   exitSuccess: () => process.exit(0)

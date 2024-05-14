@@ -2,11 +2,10 @@ import {createHash} from "node:crypto";
 import type {Stats} from "node:fs";
 import {readFile, stat} from "node:fs/promises";
 import {join} from "node:path/posix";
-import * as clack from "@clack/prompts";
-import wrapAnsi from "wrap-ansi";
 import type {BuildEffects, BuildOptions} from "./build.js";
 import {FileBuildEffects, build} from "./build.js";
 import type {ClackEffects} from "./clack.js";
+import {clackWithWrap} from "./clack.js";
 import {commandRequiresAuthenticationMessage} from "./commandInstruction.js";
 import {RateLimiter, runAllWithConcurrencyLimit} from "./concurrency.js";
 import type {Config} from "./config.js";
@@ -61,7 +60,7 @@ const defaultEffects: DeployEffects = {
   ...defaultAuthEffects,
   getDeployConfig,
   setDeployConfig,
-  clack,
+  clack: clackWithWrap,
   logger: console,
   input: process.stdin,
   output: process.stdout,
@@ -221,12 +220,10 @@ export async function deploy(
     const buildAge = Date.now() - leastRecentBuildMtimeMs;
     let initialValue = buildAge > BUILD_AGE_WARNING_MS;
     if (mostRecentSourceMtimeMs > leastRecentBuildMtimeMs) {
-      clack.log.warn(
-        wrapAnsi(`Your source files have changed since you built ${formatAge(buildAge)}.`, effects.outputColumns)
-      );
+      clack.wrap.log.warn(`Your source files have changed since you built ${formatAge(buildAge)}.`);
       initialValue = true;
     } else {
-      clack.log.info(wrapAnsi(`You built this project ${formatAge(buildAge)}.`, effects.outputColumns));
+      clack.wrap.log.info(`You built this project ${formatAge(buildAge)}.`);
     }
     const choice = await clack.confirm({
       message: "Would you like to build again before deploying?",
@@ -254,7 +251,7 @@ export async function deploy(
     // they want to continue anyways. In non-interactive mode just cancel.
     targetDescription = `${deployTarget.project.title} (@${deployTarget.workspace.login}/${deployTarget.project.slug})`;
     if (deployConfig.projectId && deployConfig.projectId !== deployTarget.project.id) {
-      clack.log.warn(
+      clack.wrap.log.warn(
         `The \`projectId\` in your deploy.json does not match. Continuing will overwrite ${bold(targetDescription)}.`
       );
       if (effects.isTty) {
@@ -275,7 +272,7 @@ export async function deploy(
     } else if (deployConfig.projectId) {
       clack.log.info(`Deploying to ${bold(targetDescription)}.`);
     } else {
-      clack.log.warn(
+      clack.wrap.log.warn(
         `The \`projectId\` in your deploy.json is missing. Continuing will overwrite ${bold(targetDescription)}.`
       );
       if (effects.isTty) {
@@ -320,18 +317,13 @@ export async function deploy(
       deployTarget = {create: false, workspace: deployTarget.workspace, project};
     } catch (error) {
       if (isApiError(error) && error.details.errors.some((e) => e.code === "TOO_MANY_PROJECTS")) {
-        clack.log.error(
-          wrapAnsi(
-            `The Starter tier can only deploy one project. Upgrade to unlimited projects at ${link(
-              `https://observablehq.com/team/@${deployTarget.workspace.login}/settings`
-            )}`,
-            effects.outputColumns - 4
-          )
+        clack.wrap.log.error(
+          `The Starter tier can only deploy one project. Upgrade to unlimited projects at ${link(
+            `https://observablehq.com/team/@${deployTarget.workspace.login}/settings`
+          )}`
         );
       } else {
-        clack.log.error(
-          wrapAnsi(`Could not create project: ${error instanceof Error ? error.message : error}`, effects.outputColumns)
-        );
+        clack.wrap.log.error(`Could not create project: ${error instanceof Error ? error.message : error}`);
       }
       clack.outro(yellow("Deploy canceled"));
       throw new CliError("Error during deploy", {cause: error, print: false});
@@ -456,7 +448,7 @@ export async function deploy(
   if (typeof projectUpdates?.title === "string") {
     await apiClient.postEditProject(deployTarget.project.id, projectUpdates as PostEditProjectRequest);
   }
-  clack.outro(`Deployed project now visible at ${link(deployInfo.url)}`);
+  clack.wrap.outro(`Deployed project now visible at ${link(deployInfo.url)}`);
   Telemetry.record({event: "deploy", step: "finish"});
 }
 
