@@ -134,6 +134,14 @@ This command will ask you a series of questions in order to initialize your new 
 
 And that’s it! Your new project is ready to go. 🎉
 
+<div class="note">
+
+Under the hood, this command installs the `@observablehq/framework` package and runs:
+
+<pre>npm exec <span class="win">"</span>@observablehq/framework<span class="win">"</span> -- create</pre>
+
+</div>
+
 ## 2. Develop
 
 Next, `cd` into your new project folder.
@@ -152,7 +160,7 @@ Or with Yarn:
 
 You should see something like this:
 
-<pre data-copy="none"><b class="green">Observable Framework</b> v1.7.0
+<pre data-copy="none"><b class="green">Observable Framework</b> v1.7.1
 ↳ <u><a href="http://127.0.0.1:3000/" style="color: inherit;">http://127.0.0.1:3000/</a></u></pre>
 
 <div class="note">
@@ -550,9 +558,21 @@ json.dump(forecast, sys.stdout)
 
 To write the data loader in R, name it <code>forecast.json.R</code>. Or as shell script, <code>forecast.json.sh</code>. You get the idea. See [Data loaders: Routing](./loaders#routing) for more. The beauty of this approach is that you can leverage the strengths (and libraries) of multiple languages, and still get instant updates in the browser as you develop.
 
-### Deploying automatically
+### Deploy automatically
 
 You can schedule builds and deploy your project automatically on commit, or on a schedule. See [deploying](./deploying) for more details.
+
+### Update Framework
+
+To update your project dependencies — in particular when a new [release](https://github.com/observablehq/framework/releases) of Framework is available, `cd` into the project directory and run:
+
+<pre data-copy>npm update</pre>
+
+or
+
+<pre data-copy>yarn upgrade</pre>
+
+(See the reference for <a href="https://docs.npmjs.com/cli/v8/commands/npm-update" target="_blank">npm</a> and <a href="https://classic.yarnpkg.com/lang/en/docs/cli/upgrade/" target="_blank">yarn</a>.)
 
 ### Ask for help, or share your feedback
 
