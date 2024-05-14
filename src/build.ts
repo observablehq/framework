@@ -1,10 +1,10 @@
 import {createHash} from "node:crypto";
 import {existsSync} from "node:fs";
-import {access, constants, copyFile, readFile, writeFile} from "node:fs/promises";
+import {access, constants, copyFile, readFile, stat, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {CliError, isEnoent} from "./error.js";
-import {getClientPath, maybeStat, prepareOutput, visitMarkdownFiles} from "./files.js";
+import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
 import {getModuleHash} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
@@ -291,7 +291,7 @@ export async function build(
       const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
       const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
       const resolveOutput = (name: string) => join(config.output, resolvePath(path, name));
-      const pageSize = (await maybeStat(join(config.output, outputPath)))?.size;
+      const pageSize = (await stat(join(config.output, outputPath))).size;
       if (!pageSize) continue;
       const importSize = await accumulateSize(resolvers.staticImports, resolvers.resolveImport, resolveOutput);
       const fileSize =
@@ -320,7 +320,7 @@ async function accumulateSize(
     const fileResolution = resolveFile(file);
     if (isAssetPath(fileResolution)) {
       try {
-        size += (await maybeStat(resolveOutput(fileResolution)))?.size ?? 0;
+        size += (await stat(resolveOutput(fileResolution))).size;
       } catch {
         // ignore missing file
       }
