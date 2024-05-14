@@ -1,6 +1,6 @@
 // TODO Automatically disconnect the observer when the returned DIV is detached.
 export function resize(
-  render: (width: number, height: number) => Node | null | Promise<Node | null>,
+  render: (width: number, height: number) => Node | string | null | Promise<Node | string | null>,
   invalidation?: Promise<void>
 ): Node {
   const div = document.createElement("div");
@@ -24,6 +24,6 @@ export function resize(
   return div;
 }
 
-function isElement(node: Node): node is HTMLElement {
-  return node.nodeType === 1;
+function isElement(node: Node | string): node is HTMLElement {
+  return typeof node === "object" && node.nodeType === 1;
 }
