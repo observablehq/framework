@@ -227,6 +227,41 @@ describe("deploy", () => {
     effects.close();
   });
 
+  it("updates title if needed when deploy config doesn't exist but the project does", async () => {
+    const deployId = "deploy456";
+    const oldTitle = `${TEST_CONFIG.title!} old`;
+    getCurrentObservableApi()
+      .handleGetCurrentUser()
+      .handleGetWorkspaceProjects({
+        workspaceLogin: DEPLOY_CONFIG.workspaceLogin,
+        projects: [{id: DEPLOY_CONFIG.projectId, slug: DEPLOY_CONFIG.projectSlug, title: oldTitle}]
+      })
+      .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
+      .expectFileUpload({deployId, path: "index.html"})
+      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
+      .expectFileUpload({deployId, path: "_observablehq/client.js"})
+      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
+      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
+      .handlePostDeployUploaded({deployId})
+      .handleGetDeploy({deployId})
+      .handleUpdateProject({projectId: DEPLOY_CONFIG.projectId, title: TEST_CONFIG.title!})
+      .start();
+
+    const effects = new MockDeployEffects({
+      deployConfig: null,
+      fixedInputStatTime: new Date("2024-03-09"),
+      fixedOutputStatTime: new Date("2024-03-10")
+    });
+    effects.clack.inputs.push(
+      DEPLOY_CONFIG.projectSlug, // which project do you want to use?
+      true, // Do you want to continue? (and overwrite the project)
+      "change project title" // "what changed?"
+    );
+    await deploy(TEST_OPTIONS, effects);
+
+    effects.close();
+  });
+
   it("does not prompt for a message when one is supplied on the command line", async () => {
     const deployConfig = DEPLOY_CONFIG;
     const deployId = "deploy456";
