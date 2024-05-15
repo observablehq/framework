@@ -154,17 +154,21 @@ Whether to show the previous & next links in the footer; defaults to true. The p
 
 ## head
 
-An HTML fragment to add to the head. Defaults to the empty string.
+An HTML fragment to add to the head. Defaults to the empty string. If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
 
 ## header
 
-An HTML fragment to add to the header. Defaults to the empty string.
+An HTML fragment to add to the header. Defaults to the empty string. If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
 
 ## footer
 
-An HTML fragment to add to the footer. Defaults to “Built with Observable.”
+An HTML fragment to add to the footer. Defaults to “Built with Observable.” If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
 
-head, header and footer can be specified as strings, or as functions that receive as arguments the page’s title, front matter, and path, and return a string.
+For example, the following adds a link to the bottom of each page:
+
+```js run=false
+footer: ({path}) => `<a href="https://github.com/example/test/blob/main/src${path}.md?plain=1">view source</a>`,
+```
 
 ## base
 
