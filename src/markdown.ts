@@ -377,10 +377,8 @@ function getHtml(
     ? data[key]
       ? String(data[key])
       : null
-    : typeof defaultValue === "function"
-    ? rewriteHtmlPaths(defaultValue(title, data, path), path)
     : defaultValue != null
-    ? rewriteHtmlPaths(defaultValue, path)
+    ? rewriteHtmlPaths(typeof defaultValue === "function" ? defaultValue(title, data, path) : defaultValue, path)
     : null;
 }
 
