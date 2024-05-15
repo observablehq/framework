@@ -319,13 +319,14 @@ export function parseMarkdown(input: string, options: ParseOptions): MarkdownPag
   const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
   const tokens = md.parse(content, context);
   const body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
+  const title = data.title !== undefined ? data.title : findTitle(tokens);
   return {
-    head: getHead(data, options),
-    header: getHeader(data, options),
+    head: getHead(title, data, options),
+    header: getHeader(title, data, options),
     body,
-    footer: getFooter(data, options),
+    footer: getFooter(title, data, options),
     data,
-    title: data.title !== undefined ? data.title : findTitle(tokens),
+    title,
     style: getStyle(data, options),
     code
   };
@@ -344,9 +345,9 @@ export function parseMarkdownMetadata(input: string, options: ParseOptions): Pic
   };
 }
 
-function getHead(data: FrontMatter, options: ParseOptions): string | null {
+function getHead(title: string | null, data: FrontMatter, options: ParseOptions): string | null {
   const {scripts, path} = options;
-  let head = getHtml("head", data, options);
+  let head = getHtml("head", title, data, options);
   if (scripts?.length) {
     head ??= "";
     for (const {type, async, src} of scripts) {
@@ -358,16 +359,17 @@ function getHead(data: FrontMatter, options: ParseOptions): string | null {
   return head;
 }
 
-function getHeader(data: FrontMatter, options: ParseOptions): string | null {
-  return getHtml("header", data, options);
+function getHeader(title: string | null, data: FrontMatter, options: ParseOptions): string | null {
+  return getHtml("header", title, data, options);
 }
 
-function getFooter(data: FrontMatter, options: ParseOptions): string | null {
-  return getHtml("footer", data, options);
+function getFooter(title: string | null, data: FrontMatter, options: ParseOptions): string | null {
+  return getHtml("footer", title, data, options);
 }
 
 function getHtml(
   key: "head" | "header" | "footer",
+  title: string | null,
   data: FrontMatter,
   {path, [key]: defaultValue}: ParseOptions
 ): string | null {
@@ -376,7 +378,10 @@ function getHtml(
       ? String(data[key])
       : null
     : defaultValue != null
-    ? rewriteHtmlPaths(defaultValue, path)
+    ? rewriteHtmlPaths(
+        typeof defaultValue === "function" ? defaultValue({title, data, path}) ?? "" : defaultValue,
+        path
+      )
     : null;
 }
 
