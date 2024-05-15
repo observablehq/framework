@@ -268,7 +268,6 @@ export async function build(
 
   // Write the build manifest.
   await effects.writeBuildManifest(buildManifest);
-
   // Log page sizes.
   const columnWidth = 12;
   effects.logger.log("");
@@ -285,7 +284,6 @@ export async function build(
       const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
       const resolveOutput = (name: string) => join(config.output, resolvePath(path, name));
       const pageSize = (await stat(join(config.output, outputPath))).size;
-      if (!pageSize) continue;
       const importSize = await accumulateSize(resolvers.staticImports, resolvers.resolveImport, resolveOutput);
       const fileSize =
         (await accumulateSize(resolvers.files, resolvers.resolveFile, resolveOutput)) +
