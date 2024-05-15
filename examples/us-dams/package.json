@@ -1,0 +1,25 @@
+{
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "clean": "rimraf docs/.observablehq/cache",
+    "build": "rimraf dist && observable build",
+    "dev": "observable preview",
+    "deploy": "observable deploy",
+    "observable": "observable"
+  },
+  "dependencies": {
+    "@observablehq/framework": "latest",
+    "d3-dsv": "^3.0.1",
+    "d3-time-format": "^4.1.0",
+    "fs": "^0.0.1-security",
+    "topojson-client": "^3.1.0",
+    "topojson-simplify": "^3.0.3"
+  },
+  "devDependencies": {
+    "rimraf": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
