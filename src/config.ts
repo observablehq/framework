@@ -55,7 +55,7 @@ export type PageFragmentFunction = ({
   title: string | null;
   data: FrontMatter;
   path: string;
-}) => string;
+}) => string | null;
 
 export interface Config {
   root: string; // defaults to src
