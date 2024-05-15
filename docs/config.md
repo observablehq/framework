@@ -164,6 +164,8 @@ An HTML fragment to add to the header. Defaults to the empty string.
 
 An HTML fragment to add to the footer. Defaults to “Built with Observable.”
 
+head, header and footer can be specified as strings, or as functions that receive as arguments the page’s title, front matter, and path, and return a string.
+
 ## base
 
 The base path when serving the site. Currently this only affects the custom 404 page, if any.
