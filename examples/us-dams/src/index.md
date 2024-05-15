@@ -90,13 +90,14 @@ ${resize((width, height) => conditionHeatmap(width, height))}
 
 <div class="grid grid-cols-2">
 <div class="card grid-colspan-1 grid-rowspan-2">
-${damSearch}
 ${Inputs.table(damSearchValue, {columns: ["name", "yearCompleted", "hazardPotential", "conditionAssessment"], header: {name: "Name", yearCompleted: "Year completed", hazardPotential: "Hazard potential", conditionAssessment: "Condition"}})}
 </div>
 <div class="card grid-colspan-1 grid-rowspan-2">
 ${resize((width) => yearCompletedHistogram(width))}
 </div>
 </div>
+
+${damSearch}
 
 <!-- County FIPS codes from: https://github.com/kjhealy/fips-codes/blob/master/county_fips_master.csv -->
 
@@ -170,6 +171,7 @@ const conditionCounts = d3
   )
   .map(([condition, count]) => ({ condition, count }));
 
+// Stacked horizontal (1-D) bar chart of conditions
 function stackedBarChart(width) {
   return Plot.plot({
     width,
@@ -196,6 +198,7 @@ function stackedBarChart(width) {
 ```
 
 ```js
+// Bubble squares of hazard and conditiond
 function conditionHeatmap(width, height) {
   return Plot.plot({
   width,
@@ -233,9 +236,11 @@ const damSearchValue = Generators.input(damSearch);
 ```
 
 ```js
+// Year completed histogram
 function yearCompletedHistogram(width) {
   return Plot.plot({
   width,
+  height: 250,
   color: {legend: true, domain: conditions, range: colors},
   x: {tickFormat: "Y", label: "Year dam completed"},
   y: {grid: true},
@@ -247,7 +252,8 @@ function yearCompletedHistogram(width) {
 }
 ```
 
-```js
+```js echo=false run=false
+// Not currently included
 function purposeHazardChart(width, height) {
   return Plot.plot({
     height: height - 50,
