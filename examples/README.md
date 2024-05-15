@@ -33,6 +33,7 @@
 
 ### Charts
 
+* [`geotiff`](https://observablehq.observablehq.cloud/framework-example-geotiff/) - Parsing GeoTIFF with geotiff.js, then visualizing with Observable Plot
 * [`netcdf`](https://observablehq.observablehq.cloud/framework-example-netcdf/) - Parsing NetCDF with `netcdfjs`, then visualizing with Observable Plot
 * [`vega-dark`](https://observablehq.observablehq.cloud/framework-example-vega-dark/) - Responsive dark mode in Vega-Lite
 * [`vega-responsive`](https://observablehq.observablehq.cloud/framework-example-vega-responsive/) - Responsive width in Vega-Lite using ResizeObserver

@@ -1,6 +1,6 @@
 # NetCDF
 
-This example demonstrates how to read a NetCDF file using [`netcdfjs`](https://github.com/cheminfo/netcdfjs) and visualize it with Observable Plot’s [raster mark](https://observablehq.com/plot/marks/raster). The data is from [NOAA’s Pacific Marine Environmental Laboratory](https://ferret.pmel.noaa.gov/Ferret/documentation/users-guide/introduction/SAMPLE-DATA-SETS), by way of [Patrick Brockmann](https://github.com/PBrockmann/D3_netcdfjs), and represents global marine winds for the period 1982–1990.
+This example demonstrates how to read a NetCDF file using [`netcdfjs`](https://github.com/cheminfo/netcdfjs) and then visualize it with Observable Plot’s [raster mark](https://observablehq.com/plot/marks/raster). The data is from [NOAA’s Pacific Marine Environmental Laboratory](https://ferret.pmel.noaa.gov/Ferret/documentation/users-guide/introduction/SAMPLE-DATA-SETS), by way of [Patrick Brockmann](https://github.com/PBrockmann/D3_netcdfjs), and represents global marine winds for the period 1982–1990.
 
 To start, let’s import `NetCDFReader` from `netcdfjs`:
 
