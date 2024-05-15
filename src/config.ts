@@ -47,7 +47,15 @@ export interface Script {
 /**
  * A function that generates a page fragment such as head, header or footer.
  */
-type PageFragmentFunction = (title: string | null, data: FrontMatter, path: string) => string;
+export type PageFragmentFunction = ({
+  title,
+  data,
+  path
+}: {
+  title: string | null;
+  data: FrontMatter;
+  path: string;
+}) => string;
 
 export interface Config {
   root: string; // defaults to src
