@@ -66,6 +66,7 @@
 * [`hello-world`](https://observablehq.observablehq.cloud/framework-example-hello-world/) - A minimal Framework project
 * [`intersection-observer`](https://observablehq.observablehq.cloud/framework-example-intersection-observer/) - Scrollytelling with IntersectionObserver
 * [`penguin-classification`](https://observablehq.observablehq.cloud/framework-example-penguin-classification/) - Logistic regression in Python; validating models with Observable Plot
+* [`responsive-iframe`](https://observablehq.observablehq.cloud/framework-example-responsive-iframe/) - Adjust the height of an embedded iframe to fit its content
 
 ## About these examples
 
