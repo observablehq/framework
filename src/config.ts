@@ -174,7 +174,8 @@ function readPages(root: string, md: MarkdownIt): Page[] {
     const {data, title} = parseMarkdownMetadata(source, {path: file, md});
     if (data.draft) continue;
     const name = basename(file, ".md");
-    const page = {path: join("/", dirname(file), name), name: title ?? "Untitled", pager: data.pager ?? "main"};
+    const {pager = "main"} = data;
+    const page = {path: join("/", dirname(file), name), name: title ?? "Untitled", pager};
     if (name === "index") pages.unshift(page);
     else pages.push(page);
   }
