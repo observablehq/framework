@@ -253,7 +253,7 @@ function getPathNormalizer(spec: unknown = true): (path: string) => string {
   };
 }
 
-function pageFragment(spec: unknown) {
+function pageFragment(spec: unknown): PageFragmentFunction | string | null {
   return typeof spec === "function" ? (spec as PageFragmentFunction) : stringOrNull(spec);
 }
 
