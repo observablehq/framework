@@ -245,7 +245,7 @@ function yearCompletedHistogram(width) {
   x: {tickFormat: "Y", label: "Year dam completed"},
   y: {grid: true},
   marks: [
-    Plot.rectY(damsSelectedState, Plot.binX({y: "count"}, {x: "yearCompleted", fill: "conditionAssessment", interval: 10})),
+    Plot.rectY(damsSelectedState, Plot.binX({y: "count"}, {x: "yearCompleted", fill: "conditionAssessment", interval: 10, order: ["Not available", "Poor", "Unsatisfactory", "Satisfactory", "Fair"]})),
     Plot.ruleY([0])
   ]
 });
