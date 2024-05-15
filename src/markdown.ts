@@ -373,16 +373,9 @@ function getHtml(
   data: FrontMatter,
   {path, [key]: defaultValue}: ParseOptions
 ): string | null {
-  return data[key] !== undefined
-    ? data[key]
-      ? String(data[key])
-      : null
-    : defaultValue != null
-    ? rewriteHtmlPaths(
-        typeof defaultValue === "function" ? defaultValue({title, data, path}) ?? "" : defaultValue,
-        path
-      )
-    : null;
+  if (data[key] !== undefined) return data[key] != null ? String(data[key]) : null;
+  const value = typeof defaultValue === "function" ? defaultValue({title, data, path}) : defaultValue;
+  return value != null ? rewriteHtmlPaths(value, path) : null;
 }
 
 function getStyle(data: FrontMatter, {path, style = null}: ParseOptions): string | null {
