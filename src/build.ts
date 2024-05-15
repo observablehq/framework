@@ -263,7 +263,7 @@ export async function build(
     const html = await renderPage(page, {...config, path, resolvers});
     await effects.writeFile(outputPath, html);
     const urlPath = config.normalizePath("/" + outputPath);
-    buildManifest.pages.push({urlPath, title: page.title});
+    buildManifest.pages.push({path: urlPath, title: page.title});
   }
 
   // Write the build manifest.
@@ -374,5 +374,5 @@ export class FileBuildEffects implements BuildEffects {
 }
 
 export interface BuildManifest {
-  pages: {urlPath: string; title: string | null}[];
+  pages: {path: string; title: string | null}[];
 }
