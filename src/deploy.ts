@@ -430,8 +430,14 @@ export async function deploy(
   try {
     const source = await effects.readCacheFile(config.root, "_build.json");
     buildManifest = JSON.parse(source);
+    Telemetry.record({event: "deploy", buildManifest: "found"});
   } catch (error) {
-    if (!isEnoent(error)) {
+    if (isEnoent(error)) {
+      Telemetry.record({event: "deploy", buildManifest: "missing"});
+    } else {
+      // The error message here might contain sensitive information, so
+      // don't send it in telemetry.
+      Telemetry.record({event: "deploy", buildManifest: "error"});
       clack.log.warn(`Could not read build manifest: ${error}`);
     }
   }
