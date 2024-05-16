@@ -46,8 +46,8 @@ const conditions = [
   "Not available",
   "Poor",
   "Unsatisfactory",
-  "Satisfactory",
   "Fair",
+  "Satisfactory",
 ];
 ```
 
@@ -209,7 +209,7 @@ function conditionHeatmap(width, height) {
   marginBottom: 40,
   r: {range: [1, 20]},
   x: {domain: ["Undetermined", "Low", "Significant", "High"], label: "Hazard potential", grid: true},
-  y: {domain: ["Not available", "Fair", "Satisfactory", "Unsatisfactory", "Poor"], label: "Condition", grid: true, reverse: true},
+  y: {domain: ["Satisfactory", "Fair", "Unsatisfactory", "Poor", "Not available"], label: "Condition", grid: true, reverse: true},
   color: {domain: ["Low", "Significant", "High"],
   range: ["yellow", "orange", "red"]},
     marks: [
@@ -245,7 +245,7 @@ function yearCompletedHistogram(width) {
   x: {tickFormat: "Y", label: "Year dam completed"},
   y: {grid: true},
   marks: [
-    Plot.rectY(damsSelectedState, Plot.binX({y: "count"}, {x: "yearCompleted", fill: "conditionAssessment", interval: 10, order: ["Not available", "Poor", "Unsatisfactory", "Satisfactory", "Fair"]})),
+    Plot.rectY(damsSelectedState, Plot.binX({y: "count"}, {x: "yearCompleted", fill: "conditionAssessment", interval: 10, order: ["Not available", "Poor", "Unsatisfactory", "Fair", "Satisfactory"]})),
     Plot.ruleY([0])
   ]
 });
