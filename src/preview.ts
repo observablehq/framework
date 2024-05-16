@@ -77,7 +77,8 @@ export class PreviewServer {
     Telemetry.record({event: "preview", step: "start"});
     const server = createServer();
     if (port === undefined) {
-      for (port = 3000; port < 49152; ++port) {
+      const MAX_PORT = 49152;
+      for (port = 3000; port < MAX_PORT; ++port) {
         try {
           await new Promise<void>((resolve, reject) => {
             server.once("error", reject);
@@ -88,7 +89,7 @@ export class PreviewServer {
           if (!isSystemError(error) || error.code !== "EADDRINUSE") throw error;
         }
       }
-      if (port === 49152) throw new Error(`Couldn’t connect to any port on ${hostname}`);
+      if (port === MAX_PORT) throw new Error(`Couldn’t connect to any port on ${hostname}`);
     } else {
       await new Promise<void>((resolve) => server.listen(port, hostname, resolve));
     }
