@@ -175,7 +175,9 @@ For security, the preview server is by default only accessible on your local mac
 
 Port numbers below 1024 may need admin privileges. For example, to share your preview server on the default HTTP port 80:
 
-> `sudo npm run dev -- --host 0.0.0.0 --port 80`
+```sh
+sudo npm run dev -- --host 0.0.0.0 --port 80
+```
 
 </div>
 
