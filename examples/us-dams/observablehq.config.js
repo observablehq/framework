@@ -20,9 +20,9 @@ export default {
   // theme: "default", // try "light", "dark", "slate", etc.
   // header: "", // what to show in the header (HTML)
   // footer: "Built with Observable.", // what to show in the footer (HTML)
-  toc: false // whether to show the table of contents
+  toc: false, // whether to show the table of contents
   // pager: true, // whether to show previous & next links in the footer
-  // root: "src", // path to the source root for preview
+  root: "src", // path to the source root for preview
   // output: "dist", // path to the output root for build
   // search: true, // activate search
 };

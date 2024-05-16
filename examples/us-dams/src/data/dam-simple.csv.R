@@ -1,6 +1,6 @@
 library(tidyverse)
 
-dams <- read_csv("docs/data/nid-dams.csv") |>
+dams <- read_csv("src/data/nid-dams.csv") |>
   select(name = 'Dam Name',
   ownerType = 'Primary Owner Type', 
   primaryPurpose = 'Primary Purpose',
