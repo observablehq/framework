@@ -167,7 +167,9 @@ You should see something like this:
 
 If port 3000 is in use, the preview server will choose the next available port, so your actual port may vary. To specify a different port, use <nobr>`--port`</nobr>. For example, to run the preview server with npm on port 4321:
 
-> `npm run dev -- --port 4321`
+```sh
+npm run dev -- --port 4321
+```
 
 For security, the preview server is by default only accessible on your local machine using the [loopback address](https://en.wikipedia.org/wiki/Localhost) 127.0.0.1. To allow remote connections, use <nobr>`--host 0.0.0.0`</nobr>.
 
