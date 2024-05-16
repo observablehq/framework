@@ -85,7 +85,7 @@ export class PreviewServer {
           });
           break;
         } catch (error) {
-          if (!isSystemError(error) || (error.code !== "EADDRINUSE" && error.code !== "EACCES")) throw error;
+          if (!isSystemError(error) || error.code !== "EADDRINUSE") throw error;
         }
       }
       if (port === 49152) throw new Error(`Couldn’t connect to any port on ${hostname}`);
