@@ -171,7 +171,7 @@ If port 3000 is in use, the preview server will choose the next available port, 
 
 For security, the preview server is by default only accessible on your local machine using the [loopback address](https://en.wikipedia.org/wiki/Localhost) 127.0.0.1. To allow remote connections, use <nobr>`--host 0.0.0.0`</nobr>.
 
-Port numbers below 1024 are usually protected and might need admin priviledges. For example, to share your preview server on the default http port:
+Port numbers below 1024 may need admin privileges. For example, to share your preview server on the default HTTP port 80:
 
 > `sudo npm run dev -- --host 0.0.0.0 --port 80`
 
