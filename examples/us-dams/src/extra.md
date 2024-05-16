@@ -6,6 +6,11 @@ const us = FileAttachment("data/us-states.json").json();
 const nation = us.then((us) => us.features.find(({id}) => id === "nation"));
 const statemesh = us.then((us) => us.features.find(({id}) => id === "statemesh"));
 
+// From: Jesse Howe at https://gist.github.com/JesseCHowe/bd746f638088b7fce50c09fa80898abd?short_path=950d9bc
+const stateCentroidsRaw = await FileAttachment("data/us-state-centroids.json").json();
+
+const stateCentroids = stateCentroidsRaw.features;
+
 // State abbreviations
 const stateAbb = FileAttachment("data/states.csv").csv({typed: true});
 
@@ -321,21 +326,22 @@ function purposeChart(width, height) {
 }
 ```
 
-<div class="card" style="margin: 0 -1rem;">
-
 ```js echo
 import deck from "npm:deck.gl";
 ```
 
 ```js echo
-const {DeckGL, AmbientLight, GeoJsonLayer, HexagonLayer, LightingEffect, PointLight} = deck;
+const {DeckGL, AmbientLight, GeoJsonLayer, TextLayer, HexagonLayer, LightingEffect, PointLight, ScatterplotLayer} = deck;
 ```
+
+
+<div class="card" style="margin: 0 -1rem;">
 
 ## U.S. dams
 ### A subtitle!
 
 <figure style="max-width: none; position: relative;">
-  <div id="container" style="border-radius: 8px; overflow: hidden; background: white; height: 800px; margin: 1rem 0; "></div>
+  <div id="container" style="border-radius: 8px; overflow: hidden; background: var(theme-background-alt); height: 800px; margin: 1rem 0; "></div>
   <div style="position: absolute; top: 1rem; right: 1rem; filter: drop-shadow(0 0 4px rgba(0,0,0,.5));">${colorLegend}</div>
 </figure>
 
@@ -343,18 +349,17 @@ const {DeckGL, AmbientLight, GeoJsonLayer, HexagonLayer, LightingEffect, PointLi
 
 ```js
 const colorRange = [
-  [1, 152, 189],
-  [73, 227, 206],
-  [216, 254, 181],
-  [254, 237, 177],
-  [254, 173, 84],
-  [209, 55, 78]
+  [41, 63, 219],
+  [136, 92, 255],
+  [239, 0, 255],
+  [255, 97, 80],
+  [255, 149, 9]
 ];
 
 const colorLegend = Plot.plot({
   margin: 0,
   marginTop: 20,
-  width: 180,
+  width: width / 2,
   height: 35,
   style: "color: black;",
   x: {padding: 0, axis: null},
@@ -393,12 +398,12 @@ invalidation.then(() => {
 
 ```js
 const initialViewState = {
-  longitude: -122.7,
-  latitude: 45.5,
-  zoom: 3,
-  minZoom: 2,
+  longitude: -98.4,
+  latitude: 39.5,
+  zoom: 4,
+  minZoom: 1,
   maxZoom: 15,
-  pitch: 40.5,
+  pitch: 0,
   bearing: -5
 };
 ```
@@ -408,12 +413,8 @@ const dataTest = FileAttachment("data/dam-simple.csv").csv({array: true, typed: 
 ```
 
 ```js
+// just longitude/latitudes in arrays
 const data = dataTest.map(d => d.slice(3, 5).reverse()).slice(1);
-```
-
-```js
-display(dataTest);
-display(data);
 ```
 
 ```js
@@ -424,17 +425,17 @@ deckInstance.setProps({
       data: states,
       lineWidthMinPixels: 1,
       getLineColor: [60, 60, 60],
-      getFillColor: [9, 16, 29]
+      getFillColor: [0, 0, 0]
     }),
     new HexagonLayer({
       id: "heatmap",
       data,
-      coverage: 0.3,
-      radius: 10000,
-      upperPercentile: 100,
+      coverage: 0.8,
+      radius: 5000,
+      upperPercentile: 99,
       colorRange,
-      elevationScale: 200,
-      elevationRange: [0, 5000],
+      elevationScale: 5000,
+      elevationRange: [0, 300],
       extruded: true,
       getPosition: (d) => d,
       pickable: true,
@@ -444,7 +445,58 @@ deckInstance.setProps({
         shininess: 32,
         specularColor: [51, 51, 51]
       }
-    })
+    }),
+    new TextLayer({
+        id: "text-layer",
+        data: stateCentroids,
+        pickable: true,
+        getPosition: d => d.geometry.coordinates,
+        getText: d => d.properties.name,
+        getSize: 12,
+        getColor: [247,248,243],
+        getTextAnchor: 'middle',
+        getAlignmentBaseline: 'center',
+        pickable: true,
+        getPixelOffset: [20, -30]
+      })
   ]
 });
 ```
+
+<!-- cruuuuft
+
+    -- new TextLayer({
+    --     id: "text-layer",
+    --     data: stateCentroids,
+    --     pickable: true,
+    --     getPosition: d => d.geometry.coordinates,
+    --     getText: d => d.properties.name,
+    --     getSize: 16,
+    --     getColor: [247,248,243],
+    --     getTextAnchor: 'middle',
+    --     getAlignmentBaseline: 'center'
+    --   })
+
+    [0, 102, 204]
+
+
+    new ScatterplotLayer({
+          id: 'scatter-plot',
+          data: dams,
+          radiusScale: 0.0003,
+          radiusMinPixels: 2,
+          getRadius: d => d.maxStorageAcreFt,
+          getPosition: d => [d.longitude, d.latitude, 0],
+          getFillColor: d => d.conditionAssessment == "Not available" ? colorRange[0] : (d.conditionAssessment == "Poor" ? colorRange[1] : (d.conditionAssessment == "Unsatisfactory" ? colorRange[2] : (d.conditionAssessment == "Fair" ? colorRange[3] : colorRange[4]))),
+          opacity: 0.1
+        }),
+-->
+
+```js
+display(dams);
+
+display(colorRange[1]);
+
+display(new Set(dams.map(d => d.conditionAssessment)));
+```
+
