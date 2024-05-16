@@ -77,7 +77,7 @@ export class PreviewServer {
     Telemetry.record({event: "preview", step: "start"});
     const server = createServer();
     if (port === undefined) {
-      const MAX_PORT = 49152;
+      const MAX_PORT = 49152; // https://en.wikipedia.org/wiki/Registered_port
       for (port = 3000; port < MAX_PORT; ++port) {
         try {
           await new Promise<void>((resolve, reject) => {
