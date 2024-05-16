@@ -1,6 +1,6 @@
 # NetCDF
 
-This example demonstrates how to read a NetCDF file using [`netcdfjs`](https://github.com/cheminfo/netcdfjs) and visualize it with Observable Plot’s [raster mark](https://observablehq.com/plot/marks/raster). The data is from [NOAA’s Pacific Marine Environmental Laboratory](https://ferret.pmel.noaa.gov/Ferret/documentation/users-guide/introduction/SAMPLE-DATA-SETS), by way of [Patrick Brockmann](https://github.com/PBrockmann/D3_netcdfjs), and represents global marine winds for the period 1982–1990.
+This example demonstrates how to read a NetCDF file using [`netcdfjs`](https://github.com/cheminfo/netcdfjs) and then visualize it with Observable Plot’s [raster mark](https://observablehq.com/plot/marks/raster). The data is from [NOAA’s Pacific Marine Environmental Laboratory](https://ferret.pmel.noaa.gov/Ferret/documentation/users-guide/introduction/SAMPLE-DATA-SETS), by way of [Patrick Brockmann](https://github.com/PBrockmann/D3_netcdfjs), and represents global marine winds for the period 1982–1990.
 
 To start, let’s import `NetCDFReader` from `netcdfjs`:
 
@@ -16,13 +16,13 @@ const winds = FileAttachment("navy_winds_2.nc").arrayBuffer().then((data) => new
 
 Now `winds` is a promise to a `NetCDFReader`. (Promises are implicitly awaited across code blocks, so we don’t need to explicitly `await` below.)
 
-We can inspect the metadata of the NetCDF file via the `header` property. The `header.dimensions` tells us the grid resolution, while the `header.variables` tells us what values are stored in the grid. `UWND` is zonal wind, while `VWND` is meridional wind; that’s latitudinal and longitudinal, respectively.
+We can inspect the metadata of the NetCDF file via the `header` property. The `header.dimensions` tells us the grid resolution, while the `header.variables` tells us what values are stored in the grid. `UWND` is the [zonal](https://en.wikipedia.org/wiki/Zonal_and_meridional_flow) component of the wind, while `VWND` is its meridional component.
 
 ```js echo
 winds.header
 ```
 
-Now let’s visualize the zonal wind using a raster plot. The values are represented as a one-dimensional array of numbers, which we can use as the raster mark’s data; but we also need to specify the `width` and `height` of the grid. Since wind values can be both positive and negative, we can use the `rdbu` diverging color scheme.
+Now let’s visualize the zonal wind component using a raster plot. The values are represented as a one-dimensional array of numbers, which we can use as the raster mark’s data; but we also need to specify the `width` and `height` of the grid. Since values can be both <span style="border-bottom: solid 2px #a51b2c">negative</span> (westward wind) and <span style="border-bottom: solid 2px #1e5f9d">positive</span> (eastward), we can use the `rdbu` diverging color scheme.
 
 ```js echo
 Plot.plot({

@@ -1,10 +1,5 @@
-import MarkdownItWikilinks from "markdown-it-wikilinks";
-
 export default {
   root: "src",
-
-  // Register the markdown-it-wikilinks plugin.
-  markdownIt: (md) => md.use(MarkdownItWikilinks()),
 
   // Shared Observable example configuration; feel free to remove this.
   title: "Observable Framework",
@@ -59,7 +54,7 @@ export default {
         <span class="hide-if-small">Observable</span> Framework
       </a>
       <span style="display: flex; align-items: baseline; gap: 0.5rem; font-size: 14px;">
-        <a target="_blank" href="https://github.com/observablehq/framework/tree/main/examples/markdown-it-wikilinks"><span>View source</span></a>
+        <a target="_blank" href="https://github.com/observablehq/framework/tree/main/examples/geotiff"><span>View source</span></a>
       </span>
     </div>
   </div>`
