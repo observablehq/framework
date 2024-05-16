@@ -4,7 +4,7 @@ export default {
   root: "src",
 
   // Register the markdown-it-wikilinks plugin.
-  markdownIt: (md) => md.use(MarkdownItWikilinks({})),
+  markdownIt: (md) => md.use(MarkdownItWikilinks()),
 
   // Shared Observable example configuration; feel free to remove this.
   title: "Observable Framework",
