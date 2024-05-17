@@ -184,14 +184,20 @@ const conditions = [
   "Poor"
 ];
 
+const conditionsColors = [
+  "#9498a0",
+  "#4269d0",
+  "#97bbf5",
+  "#efb118",
+  "#ff725c"
+];
+
 const hazardPotential = [
     "Undetermined",
     "Low",
     "Significant",
     "High"
 ].reverse()
-
-const conditionColors = ["#9498a0", "#4269d0", "#97bbf5", "#efb118", "#ff725c"];
 
 function conditionHazardGrid(width, height) {
 return  Plot.plot({
@@ -204,7 +210,11 @@ return  Plot.plot({
   x: {domain: conditions, label: "Condition assessment"},
   y: {domain: hazardPotential, label: "Hazard potential"},
   r: {range: [3, 25]},
-  color: {domain: conditions, range: conditionColors},
+  color: {
+    domain: conditions,
+    range: conditionsColors,
+    label: "Condition assessment"
+  },
   marks: [
     Plot.dot(dams, Plot.group({r: "count"}, {x: "conditionAssessment", y: "hazardPotential", fill: "conditionAssessment", tip: true, stroke: "currentColor", strokeWidth: 0.5}))
   ]
@@ -224,7 +234,7 @@ function conditionByAge(width, height) {
         marginTop: 0,
         x: {label: "Year construction finished", tickFormat: "Y", labelAnchor: "center", labelArrow: "none"},
         y: {label: "Number of dams", grid: true, ticks: 5, tickSize: 0},
-        color: {domain: conditions, range: conditionColors, legend: true},
+        color: {domain: conditions, range: conditionsColors, legend: true},
         marks: [
             Plot.rectY(dams, Plot.binX({y: "count"}, {x: "yearCompleted", fill: "conditionAssessment", order: conditions, interval: 10, tip: true}))
         ]
@@ -241,7 +251,7 @@ function conditionsByState(width, height) {
     marginTop: 0,
     marginLeft: 100,
     marginBottom: 40,
-    color: {domain: conditions, range: conditionColors, legend: true},
+    color: {domain: conditions, range: conditionsColors, legend: true},
     y: {label: null},
     x: {label: "Number of dams", grid: true, ticks: 5, tickSize: 0},
     marks: [
