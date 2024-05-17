@@ -1,5 +1,6 @@
 # U.S. dams: national overview
-##  Data from the U.S. National Inventory of Dams (NID)
+
+## Data from the U.S. National Inventory of Dams (NID)
 
 ```js
 import deck from "npm:deck.gl";
@@ -29,39 +30,36 @@ const usCounties = await FileAttachment("./data/us-counties-10m.json").json();
 const states = topojson.feature(usCounties, usCounties.objects.states);
 ```
 
-<div class="card" style="margin: 0 -1rem; padding: 0">
-
+<div class="card" style="padding: 0px">
 <div style="padding: 1rem">
-
-## Nationwide dam locations
-### Zoom, scroll and rotate to explore dam densities in different regions
-
+  <h2>U.S. dam locations</h2>
+  <h3>Zoom, scroll and rotate to explore dam densities in different regions</h3>
 </div>
-
-<div>
-
+<div style="padding: 0px">
 <figure style="max-width: none; position: relative;">
-  <div id="container" style="border-radius: 8px; overflow: hidden; background: var(theme-background-alt); height: 600px; margin: 0rem 0;"></div>
+  <div id="container" style="border-radius: 8px; overflow: hidden; background: var(theme-background-alt); height: 600px; margin: 0rem 0;">
+  </div>
   <div style="position: absolute; top: 0rem; right: 0rem; filter: drop-shadow(0 0 4px rgba(0,0,0,.5));">${colorLegend}</div>
 </figure>
 
 </div>
 </div>
-<br>
-
-# Dam conditions overview
-
 <div class="card" style="max-width: none">
 Of ${d3.format(",")(dams.length)} dams in the U.S. included in the <a href="https://nid.sec.usace.army.mil">National Inventory of Dams</a>, ${d3.format(",")(dams.filter(d => d.conditionAssessment == "Poor").length)} are listed as being in Poor condition. Of those in Poor condition, ${d3.format(",")(dams.filter(d => d.conditionAssessment == "Poor" && d.hazardPotential == "High").length)} have High hazard potential, where "downstream flooding would likely result in loss of human life."
 </div>
 
-<div class="grid grid-cols-2" style="grid-auto-rows: 400px">
- <div class="card grid-colspan-1">
-   <h2>Dam hazard potential and condition</h2>
-   <h3>Nationwide counts</h3>
+<div class="grid grid-cols-2 grid-rows-3" style="grid-auto-rows: 300px">
+ <div class="card grid-colspan-1 grid-rowspan-1">
+   <h2>Nationwide dam risk: hazard potential and condition</h2>
+   <h3>Size indicates number of dams at each intersection</h3>
    ${resize((width, height) => conditionHazardGrid(width, height))}
  </div>
- <div class="card grid-colspan-1">
+ <div class="card grid-colspan-1 grid-rowspan-3">
+   <h2>State dam counts and conditions at-a-glance</h2>
+   ${resize((width, height) => conditionsByState(width, height))}
+ </div>
+ <div class="card grid-colspan-1 grid-rowspan-1">
+   <h2>Dam condition by year completed</h2>
    ${resize((width, height) => conditionByAge(width, height))}
  </div>
 </div>
@@ -176,7 +174,7 @@ deckInstance.setProps({
 ```
 
 ```js
-// Nationwide dam conditions and hazard potential 
+// Nationwide dam conditions and hazard potential
 
 const conditions = [
   "Not available",
@@ -193,18 +191,22 @@ const hazardPotential = [
     "High"
 ].reverse()
 
+const conditionColors = ["#9498a0", "#4269d0", "#97bbf5", "#efb118", "#ff725c"];
+
 function conditionHazardGrid(width, height) {
 return  Plot.plot({
   width,
-  height: height - 50,
+  height: height - 30,
   marginLeft: 100,
-  marginBottom: 50,
+  marginBottom: 40,
   marginTop: 0,
   grid: true,
   x: {domain: conditions, label: "Condition assessment"},
   y: {domain: hazardPotential, label: "Hazard potential"},
+  r: {range: [3, 25]},
+  color: {domain: conditions, range: conditionColors},
   marks: [
-    Plot.dot(dams, Plot.group({r: "count"}, {x: "conditionAssessment", y: "hazardPotential", fill: "gray", tip: true}))
+    Plot.dot(dams, Plot.group({r: "count"}, {x: "conditionAssessment", y: "hazardPotential", fill: "conditionAssessment", tip: true, stroke: "currentColor", strokeWidth: 0.5}))
   ]
 });
 }
@@ -217,12 +219,35 @@ return  Plot.plot({
 function conditionByAge(width, height) {
     return Plot.plot({
         width,
-        height: height,
-        x: {label: "Year completed", tickFormat: "Y"},
-        y: {grid: true, ticks: 5},
+        height: height - 50,
+        marginBottom: 40,
+        marginTop: 0,
+        x: {label: "Year construction finished", tickFormat: "Y", labelAnchor: "center", labelArrow: "none"},
+        y: {label: "Number of dams", grid: true, ticks: 5, tickSize: 0},
+        color: {domain: conditions, range: conditionColors, legend: true},
         marks: [
             Plot.rectY(dams, Plot.binX({y: "count"}, {x: "yearCompleted", fill: "conditionAssessment", order: conditions, interval: 10, tip: true}))
         ]
     })
 };
+```
+
+```js
+function conditionsByState(width, height) {
+
+  return Plot.plot({
+    width,
+    height: height - 60,
+    marginTop: 0,
+    marginLeft: 100,
+    marginBottom: 40,
+    color: {domain: conditions, range: conditionColors, legend: true},
+    y: {label: null},
+    x: {label: "Number of dams", grid: true, ticks: 5, tickSize: 0},
+    marks: [
+      Plot.barX(dams, Plot.groupY({x: "count"}, {y: "state", sort: {y: "x", reverse: true}, fill: "conditionAssessment", order: conditions, tip: true}))
+    ]
+  });
+
+}
 ```

@@ -334,10 +334,10 @@ import deck from "npm:deck.gl";
 const {DeckGL, AmbientLight, GeoJsonLayer, TextLayer, HexagonLayer, LightingEffect, PointLight, ScatterplotLayer} = deck;
 ```
 
-
 <div class="card" style="margin: 0 -1rem;">
 
 ## U.S. dams
+
 ### A subtitle!
 
 <figure style="max-width: none; position: relative;">
@@ -492,4 +492,3 @@ deckInstance.setProps({
           opacity: 0.1
         }),
 -->
-
