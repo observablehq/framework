@@ -318,3 +318,115 @@ const lastInspectionBeeswarm = Plot.plot({
 ${toggleBeeswarm}
 ${display(lastInspectionBeeswarm)}
 </div>
+
+```js
+import deck from "npm:deck.gl";
+```
+
+```js
+const {DeckGL, AmbientLight, GeoJsonLayer, TextLayer, HexagonLayer, LightingEffect, PointLight, ScatterplotLayer} = deck;
+```
+
+```js
+const dataArray = await FileAttachment("data/dam-simple.csv").csv({array: true, typed: true});
+
+// just longitude/latitudes in arrays
+const dataMap = dataArray.map(d => d.slice(3, 5).reverse()).slice(1);
+
+const stateCentroidsRaw = await FileAttachment("data/us-state-centroids.json").json();
+
+const stateCentroids = stateCentroidsRaw.features;
+```
+
+```js
+// deck.gl setup
+const colorRange = [
+  [148,152,160], // not available
+  [66,105,208], // satisfactory
+  [151,187,245], // fair
+  [239, 213, 24], // unsatisfactory
+  [255, 114, 92] // poor
+];
+
+const colorLegend = Plot.plot({
+  margin: 0,
+  marginTop: 30,
+  marginRight: 20,
+  width: width / 4,
+  height: 50,
+  style: "color: 'currentColor';",
+  x: {padding: 0, axis: null},
+  marks: [
+    Plot.cellX(colorRange, {fill: ([r, g, b]) => `rgb(${r},${g},${b})`, inset: 0.5}),
+    Plot.text(["Fewer dams"], {frameAnchor: "top-left", dy: -12}),
+    Plot.text(["More dams"], {frameAnchor: "top-right", dy: -12})
+  ]
+});
+
+const effects = [
+  new LightingEffect({
+    ambientLight: new AmbientLight({color: [255, 255, 255], intensity: 1.0}),
+    pointLight: new PointLight({color: [255, 255, 255], intensity: 0.5, position: [-0.144528, 49.739968, 80000]}),
+    pointLight2: new PointLight({color: [255, 255, 255], intensity: 0, position: [-3.807751, 54.104682, 8000]})
+  })
+];
+```
+
+```js
+const deckInstance = new DeckGL({
+  container,
+  initialViewState,
+  controller: true,
+  effects
+});
+
+// clean up if this code re-runs
+invalidation.then(() => {
+  deckInstance.finalize();
+  container.innerHTML = "";
+});
+```
+
+```js
+const initialViewState = {
+  longitude: -93.6,
+  latitude: 42,
+  zoom: 5,
+  minZoom: 1,
+  maxZoom: 15,
+  pitch: 45,
+  bearing: 20
+};
+```
+
+```js
+deckInstance.setProps({
+  layers: [
+    new GeoJsonLayer({
+      id: "base-map",
+      data: states,
+      lineWidthMinPixels: 1.5,
+      getLineColor: [84, 84, 84],
+      getFillColor: [38, 38, 38]
+    }),
+        new ScatterplotLayer({
+          id: 'scatter-plot',
+          data: dams,
+          radiusScale: 0.0003,
+          radiusMinPixels: 2,
+          getRadius: d => d.maxStorageAcreFt,
+          getPosition: d => [d.longitude, d.latitude, 0],
+          getFillColor: d => d.conditionAssessment == "Not available" ? colorRange[0] : (d.conditionAssessment == "Satisfactory" ? colorRange[1] : (d.conditionAssessment == "Fair" ? colorRange[2] : (d.conditionAssessment == "Unsatisfactory" ? colorRange[3] : colorRange[4]))),
+          opacity: 0.5
+        }),
+  ]
+});
+```
+
+<div style="padding: 0px">
+<figure style="max-width: none; position: relative;">
+  <div id="container" style="border-radius: 8px; overflow: hidden; height: 600px; margin: 0rem 0;">
+  </div>
+</figure>
+
+</div>

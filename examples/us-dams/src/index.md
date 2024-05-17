@@ -30,16 +30,16 @@ const usCounties = await FileAttachment("./data/us-counties-10m.json").json();
 const states = topojson.feature(usCounties, usCounties.objects.states);
 ```
 
-<div class="card" style="padding: 0px">
+<div class="card" style="padding: 0px;">
 <div style="padding: 1rem">
-  <h2>U.S. dam locations</h2>
-  <h3>Zoom, scroll and rotate to explore dam densities in different regions</h3>
+  <h2>U.S. dam locations and conditions</h2>
+  <h3>Zoom, scroll and rotate to explore different regions</h3>
 </div>
 <div style="padding: 0px">
 <figure style="max-width: none; position: relative;">
-  <div id="container" style="border-radius: 8px; overflow: hidden; background: var(theme-background-alt); height: 600px; margin: 0rem 0;">
+  <div id="container" style="border-radius: 8px; overflow: hidden; height: 600px; margin: 0rem 0;">
   </div>
-  <div style="position: absolute; top: 0rem; right: 0rem; filter: drop-shadow(0 0 4px rgba(0,0,0,.5));">${colorLegend}</div>
+  <div style="position: absolute; top: 0rem; left: 1rem; filter: drop-shadow(0 0 4px rgba(0,0,0,.5));">${colorLegend}</div>
 </figure>
 
 </div>
@@ -48,7 +48,7 @@ const states = topojson.feature(usCounties, usCounties.objects.states);
 <span style="color: var(--theme-foreground-muted)">Of ${d3.format(",")(dams.length)} U.S. dams included in the National Inventory of Dams,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(dams.filter(d => d.conditionAssessment == "Poor").length)}</span><span style="color: var(--theme-foreground-muted)"> are listed as being in Poor condition. Of those in Poor condition,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(dams.filter(d => d.conditionAssessment == "Poor" && d.hazardPotential == "High").length)}</span> <span style="color: var(--theme-foreground-muted)">have High hazard potential, where "downstream flooding would likely result in loss of human life."</span>
 </div>
 
-<div class="grid grid-cols-2 grid-rows-3" style="grid-auto-rows: 300px">
+<div class="grid grid-cols-2 grid-rows-3" style="grid-auto-rows: 350px">
  <div class="card grid-colspan-1 grid-rowspan-1">
    <h2>Nationwide dam risk: hazard potential and condition</h2>
    <h3>Size indicates number of dams at each intersection</h3>
@@ -71,32 +71,33 @@ const states = topojson.feature(usCounties, usCounties.objects.states);
   </div>
 
 ```js
+// deck.gl setup
 const colorRange = [
-  [41, 63, 219],
-  [136, 92, 255],
-  [239, 0, 255],
-  [255, 97, 80],
-  [255, 149, 9],
-  [255, 229, 51]
+  [148,152,160], // not available
+  [66,105,208], // satisfactory
+  [151,187,245], // fair
+  [239, 213, 24], // unsatisfactory
+  [255, 114, 92] // poor
 ];
 
 const colorLegend = Plot.plot({
   margin: 0,
   marginTop: 30,
   marginRight: 20,
-  width: width / 4,
+  width: 400,
   height: 50,
   style: "color: 'currentColor';",
   x: {padding: 0, axis: null},
   marks: [
     Plot.cellX(colorRange, {fill: ([r, g, b]) => `rgb(${r},${g},${b})`, inset: 0.5}),
-    Plot.text(["Fewer dams"], {frameAnchor: "top-left", dy: -12}),
-    Plot.text(["More dams"], {frameAnchor: "top-right", dy: -12})
+    Plot.text(["Not available"], {x: 0, dy: -20}),
+    Plot.text(["Satisfactory"], {x: 1, dy: -20}),
+    Plot.text(["Fair"], {x: 2, dy: -20}),
+    Plot.text(["Unsatisfactory"], {x: 3, dy: -20}),
+    Plot.text(["Poor"], {x: 4, dy: -20})
   ]
 });
-```
 
-```js
 const effects = [
   new LightingEffect({
     ambientLight: new AmbientLight({color: [255, 255, 255], intensity: 1.0}),
@@ -139,37 +140,32 @@ deckInstance.setProps({
     new GeoJsonLayer({
       id: "base-map",
       data: states,
-      lineWidthMinPixels: 1,
-      getLineColor: [60, 60, 60],
-      getFillColor: [0, 0, 0]
+      lineWidthMinPixels: 1.5,
+      getLineColor: [84, 84, 84],
+      getFillColor: [38, 38, 38]
     }),
-    new HexagonLayer({
-      id: "heatmap",
-      data: dataMap,
-      coverage: 0.5,
-      radius: 7000,
-      upperPercentile: 99,
-      colorRange,
-      elevationScale: 5000,
-      elevationRange: [0, 50],
-      extruded: true,
-      getPosition: (d) => d,
-      pickable: true,
-      material: {
-        ambient: 0.64,
-        diffuse: 0.6,
-        shininess: 32,
-        specularColor: [51, 51, 51]
-      }
-    }),
+    ,
+        new ScatterplotLayer({
+          id: 'scatter-plot',
+          data: dams,
+          radiusScale: 0.0003,
+          radiusMinPixels: 2,
+          getRadius: d => d.maxStorageAcreFt,
+          getPosition: d => [d.longitude, d.latitude, 0],
+          getFillColor: d => d.conditionAssessment == "Not available" ? colorRange[0] : (d.conditionAssessment == "Satisfactory" ? colorRange[1] : (d.conditionAssessment == "Fair" ? colorRange[2] : (d.conditionAssessment == "Unsatisfactory" ? colorRange[3] : colorRange[4]))),
+          opacity: 0.5
+        }),
     new TextLayer({
         id: "text-layer",
         data: stateCentroids,
         pickable: true,
         getPosition: d => d.geometry.coordinates,
         getText: d => d.properties.name,
-        getSize: 12,
-        getColor: [247,248,243],
+        fontFamily: 'Helvetica',
+        fontWeight: 700,
+        background: false,
+        getSize: 14,
+        getColor: [247,248,243, 255],
         getTextAnchor: 'middle',
         getAlignmentBaseline: 'center',
         pickable: true,
@@ -253,15 +249,17 @@ function conditionsByState(width, height) {
 
   return Plot.plot({
     width,
-    height: height - 60,
+    height: height - 55,
     marginTop: -5,
     marginLeft: 100,
-    marginBottom: 20,
+    marginBottom: 35,
+    insetTop: -5,
+    insetBottom: -5,
     color: {domain: conditions, range: conditionsColors, legend: true},
     y: {label: null},
     x: {label: "Number of dams", grid: true, ticks: 5, tickSize: 0},
     marks: [
-      Plot.barX(dams, Plot.groupY({x: "count"}, {y: "state", sort: {y: "x", reverse: true}, fill: "conditionAssessment", order: conditions, tip: true}))
+      Plot.barX(dams, Plot.groupY({x: "count"}, {y: "state", sort: {y: "x", reverse: true}, fill: "conditionAssessment", order: conditions, tip: true, insetTop: 2}))
     ]
   });
 
