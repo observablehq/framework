@@ -23,7 +23,7 @@ const dams = FileAttachment("data/dam-simple.csv").csv({typed: true});
 // Colors and conditions
 const colors = ["#ccc", "#a41301", "#ff942f", "#ecd01d", "#91bf4b"];
 
-const conditions = ["Not available", "Poor", "Unsatisfactory", "Satisfactory", "Fair"];
+const conditions = ["Not available", "Poor", "Unsatisfactory", "Fair", "Satisfactory"];
 ```
 
 ```js
@@ -341,7 +341,7 @@ const {DeckGL, AmbientLight, GeoJsonLayer, TextLayer, HexagonLayer, LightingEffe
 ### A subtitle!
 
 <figure style="max-width: none; position: relative;">
-  <div id="container" style="border-radius: 8px; overflow: hidden; background: var(theme-background-alt); height: 800px; margin: 1rem 0; "></div>
+  <div id="container" style="border-radius: 8px; overflow: hidden; background: var(theme-background-alt); height: 700px; margin: 1rem 0; "></div>
   <div style="position: absolute; top: 1rem; right: 1rem; filter: drop-shadow(0 0 4px rgba(0,0,0,.5));">${colorLegend}</div>
 </figure>
 
@@ -353,20 +353,21 @@ const colorRange = [
   [136, 92, 255],
   [239, 0, 255],
   [255, 97, 80],
-  [255, 149, 9]
+  [255, 149, 9],
+  [255, 229, 51]
 ];
 
 const colorLegend = Plot.plot({
   margin: 0,
   marginTop: 20,
-  width: width / 2,
+  width: width / 4,
   height: 35,
-  style: "color: black;",
+  style: "color: 'currentColor';",
   x: {padding: 0, axis: null},
   marks: [
     Plot.cellX(colorRange, {fill: ([r, g, b]) => `rgb(${r},${g},${b})`, inset: 0.5}),
-    Plot.text(["Fewer"], {frameAnchor: "top-left", dy: -12}),
-    Plot.text(["More"], {frameAnchor: "top-right", dy: -12})
+    Plot.text(["Fewer dams"], {frameAnchor: "top-left", dy: -12}),
+    Plot.text(["More dams"], {frameAnchor: "top-right", dy: -12})
   ]
 });
 ```
@@ -375,8 +376,8 @@ const colorLegend = Plot.plot({
 const effects = [
   new LightingEffect({
     ambientLight: new AmbientLight({color: [255, 255, 255], intensity: 1.0}),
-    pointLight: new PointLight({color: [255, 255, 255], intensity: 0.8, position: [-0.144528, 49.739968, 80000]}),
-    pointLight2: new PointLight({color: [255, 255, 255], intensity: 0.8, position: [-3.807751, 54.104682, 8000]})
+    pointLight: new PointLight({color: [255, 255, 255], intensity: 0.5, position: [-0.144528, 49.739968, 80000]}),
+    pointLight2: new PointLight({color: [255, 255, 255], intensity: 0, position: [-3.807751, 54.104682, 8000]})
   })
 ];
 ```
@@ -400,11 +401,11 @@ invalidation.then(() => {
 const initialViewState = {
   longitude: -98.4,
   latitude: 39.5,
-  zoom: 4,
+  zoom: 3.8,
   minZoom: 1,
   maxZoom: 15,
-  pitch: 0,
-  bearing: -5
+  pitch: 45,
+  bearing: 20
 };
 ```
 
@@ -430,12 +431,12 @@ deckInstance.setProps({
     new HexagonLayer({
       id: "heatmap",
       data,
-      coverage: 0.8,
-      radius: 5000,
+      coverage: 0.5,
+      radius: 7000,
       upperPercentile: 99,
       colorRange,
       elevationScale: 5000,
-      elevationRange: [0, 300],
+      elevationRange: [0, 50],
       extruded: true,
       getPosition: (d) => d,
       pickable: true,
@@ -457,13 +458,13 @@ deckInstance.setProps({
         getTextAnchor: 'middle',
         getAlignmentBaseline: 'center',
         pickable: true,
-        getPixelOffset: [20, -30]
+        getPixelOffset: [0, -10]
       })
   ]
 });
 ```
 
-<!-- cruuuuft
+<!-- unused (but not ready to throw away)
 
     -- new TextLayer({
     --     id: "text-layer",
@@ -491,12 +492,4 @@ deckInstance.setProps({
           opacity: 0.1
         }),
 -->
-
-```js
-display(dams);
-
-display(colorRange[1]);
-
-display(new Set(dams.map(d => d.conditionAssessment)));
-```
 
