@@ -1,5 +1,5 @@
 ---
-theme: ["cotton", "near-midnight"]
+theme: wide
 ---
 
 # Dam conditions by state
@@ -40,14 +40,20 @@ const selectedStateCounties = counties.filter((d) =>
 
 ```js
 // Color palette for dam conditions
-const colors = ["#9498a0", "#ff725c", "#efb118", "#97bbf5", "#4269d0"];
-
 const conditions = [
   "Not available",
-  "Poor",
-  "Unsatisfactory",
-  "Fair",
   "Satisfactory",
+  "Fair",
+  "Unsatisfactory",
+  "Poor"
+];
+
+const conditionsColors = [
+  "#9498a0",
+  "#4269d0",
+  "#97bbf5",
+  "#efb118",
+  "#ff725c"
 ];
 ```
 
@@ -62,7 +68,7 @@ const pickState = view(
       label: "Pick a state:",
       unique: true,
       sort: true,
-      value: "Massachusetts",
+      value: "Oregon",
     }
   )
 );
@@ -73,15 +79,25 @@ const pickState = view(
 const damsSelectedState = dams.filter((d) => d.state == pickState);
 ```
 
-<div class="grid grid-cols-3 grid-rows-3" style="grid-auto-rows: 200px">
-<div class="card grid-colspan-2 grid-rowspan-3">
-<h2>${pickState} dams</h2>
+<div class="card" style="font-size: 1.2rem">
+<span style="color: var(--theme-foreground-muted)">Of ${d3.format(",")(damsSelectedState.length)} ${pickState} dams listed in the NID,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(damsSelectedState.filter(d => d.conditionAssessment == "Poor").length)}</span><span style="color: var(--theme-foreground-muted)"> are listed as being in Poor condition. Of those in Poor condition,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(damsSelectedState.filter(d => d.conditionAssessment == "Poor" && d.hazardPotential == "High").length)}</span> <span style="color: var(--theme-foreground-muted)">have High hazard potential, where "downstream flooding would likely result in loss of human life."
+</div>
+
+<div class="grid grid-cols-3 grid-rows-3" style="grid-auto-rows: 200px;">
+<div class="card grid-colspan-2 grid-rowspan-3" style="padding: 0px">
+<div style="padding: 1em">
 <h3>Map dot size represents maximum storage capacity (acre-feet). The scale should only be used to compare dam sizes within ${pickState}, not across states.</h3>
 ${resize((width) => stackedBarChart(width))}
-${resize((width, height) => stateMap(width, height))}</div>
-<div class="card grid-rowspan-1" style="font-size: 1.2em">
-Of ${d3.format(",")(damsSelectedState.length)} NID recorded dams in ${pickState}, <b>${d3.format(",")(damsSelectedState.filter(d => d.conditionAssessment == "Poor").length)} ${damsSelectedState.filter(d => d.conditionAssessment == "Poor").length == 1 ? "is" : "are"} in poor condition</b>. Of those in poor condition, <b>${d3.format(",")(damsSelectedState.filter(d => d.conditionAssessment == "Poor" && d.hazardPotential == "High").length)} ${damsSelectedState.filter(d => d.conditionAssessment == "Poor" && d.hazardPotential == "High").length == 1 ? "has" : "have"} high hazard potential</b>, where "downstream flooding would likely result in loss of human life." 
 </div>
+<div>
+<figure style="max-width: none; position: relative;">
+  <div id="container" style="border-radius: 8px; overflow: hidden; height: 460px; margin: 0rem 0; padding: 0px">
+  </div>
+</figure>
+
+</div>
+</div>
+<div class="card grid-rowspan-1">Blah</div>
 <div class="card grid-colspan-1 grid-rowspan-2">
 <h2>Dam counts by hazard potential and condition</h2>
 ${resize((width, height) => conditionHeatmap(width, height))}
@@ -108,7 +124,7 @@ function stateMap(width, height) {
     height: 450,
     width,
     marginBottom: 0,
-    color: {domain: conditions, range: colors},
+    color: {domain: conditions, range: conditionsColors},
     projection: { type: "albers-usa", domain: selectedState[0].geometry },
     r: { range: [2, 15] },
     marks: [
@@ -178,7 +194,7 @@ function stackedBarChart(width) {
     height: 50,
     //marginTop: 40,
     //marginBottom: 30,
-    color: { domain: conditions, range: colors, legend: true },
+    color: { domain: conditions, range: conditionsColors, legend: true },
     x: { label: "Number of dams" },
     marks: [
       Plot.barX(
@@ -188,7 +204,8 @@ function stackedBarChart(width) {
           fill: "condition",
           order: conditions,
           tip: true,
-          rx: 5
+          rx: 2,
+          insetRight: 1
         })
       ),
       //Plot.textX(conditionCounts, Plot.stackX({x: "count", text: "condition", z: "condition", order: conditions, inset: 0.5, dy: -20, rotate: -30, textAnchor: "start"})),
@@ -207,19 +224,18 @@ function conditionHeatmap(width, height) {
   marginRight: 10,
   marginLeft: 100,
   marginBottom: 40,
-  r: {range: [1, 20]},
+  r: {range: [2, 25]},
   x: {domain: ["Undetermined", "Low", "Significant", "High"], label: "Hazard potential", grid: true},
-  y: {domain: ["Satisfactory", "Fair", "Unsatisfactory", "Poor", "Not available"], label: "Condition", grid: true, reverse: true},
-  color: {domain: ["Low", "Significant", "High"],
-  range: ["yellow", "orange", "red"]},
+  y: {domain: conditions, label: "Condition", grid: true, reverse: true},
+  color: {domain: conditions, range: conditionsColors},
     marks: [
     Plot.dot(damsSelectedState, Plot.group({r: "count"},
       {x: "hazardPotential",
       y: "conditionAssessment",
-      symbol: "square",
       tip: true,
-      fill: "currentColor",
-      opacity: 0.7
+      fill: "conditionAssessment",
+      stroke: "currentColor",
+      strokeWidth: 0.5
     }))
   ]
   });
@@ -241,11 +257,11 @@ function yearCompletedHistogram(width) {
   return Plot.plot({
   width,
   height: 250,
-  color: {legend: true, domain: conditions, range: colors},
+  color: {legend: true, domain: conditions, range: conditionsColors},
   x: {tickFormat: "Y", label: "Year dam completed"},
   y: {grid: true},
   marks: [
-    Plot.rectY(damsSelectedState, Plot.binX({y: "count"}, {x: "yearCompleted", fill: "conditionAssessment", interval: 10, order: ["Not available", "Poor", "Unsatisfactory", "Fair", "Satisfactory"]})),
+    Plot.rectY(damsSelectedState, Plot.binX({y: "count"}, {x: "yearCompleted", fill: "conditionAssessment", interval: 10, order: conditions})),
     Plot.ruleY([0])
   ]
 });
@@ -270,55 +286,6 @@ function purposeHazardChart(width, height) {
 }
 ```
 
-<!-- Fiddling with beeswarm below this point -->
-
-```js
-// Toggle input for beeswarm chart
-const toggleBeeswarm = Inputs.radio(["primary purpose", "hazard potential"], {
-  label: "Color by dam: ",
-  value: "primary purpose",
-});
-
-const toggleBeeswarmValue = Generators.input(toggleBeeswarm);
-```
-
-```js
-const lastInspectionBeeswarm = Plot.plot({
-  width,
-  height: 300,
-  //style: { overflow: "visible" },
-  color: { legend: true },
-  subtitle: ``,
-  caption: `Years since last inspection for individual dams in ${pickState}. Each dot represents a single dam; size is representative of maximum storage capacity. Dams toward the right on the chart have been inspected more recently.`,
-  r: { range: [1.5, 15] },
-  x: { tickFormat: "0f", reverse: true, label: "Years since last inspection" },
-  marks: [
-    Plot.frame({ insetPadding: 5 }),
-    Plot.dot(
-      damsSelectedState,
-      Plot.dodgeY({
-        x: (d) => +d.yearsSinceInspection,
-        r: "maxStorageAcreFt",
-        fill:
-          toggleBeeswarmValue == "primary purpose"
-            ? "primaryPurpose"
-            : "hazardPotential",
-        tip: true,
-        stroke: "white",
-        strokeWidth: 0.5,
-      })
-    ),
-  ],
-});
-```
-
-<div class="card">
-<h2>Years since last inspection</h2>
-<h3>${d3.format(",")(damsSelectedState.filter(d => d.yearsSinceInspection != "NA").length)} out of ${d3.format(",")(damsSelectedState.length)} dams in ${pickState} (${d3.format(".3s")(100 * damsSelectedState.filter(d => d.yearsSinceInspection != "NA").length / damsSelectedState.length)}%) are represented in this chart; those missing an inspection date are not shown. Based on the dams with a reported last inspection date, at least ${d3.format(".1f")(100 * damsSelectedState.filter(d => d.yearsSinceInspection <=10).length / damsSelectedState.length)}% of all ${pickState} dams have been inspected within past 10 years, and at least ${d3.format(".1f")(100 * damsSelectedState.filter(d => d.yearsSinceInspection <=10 && d.hazardPotential == "High").length / damsSelectedState.filter(d => d.hazardPotential == "High").length)}% of all ${pickState} dams considered to have High hazard potential have been inspected within past 10 years.</h3>
-${toggleBeeswarm}
-${display(lastInspectionBeeswarm)}
-</div>
-
 ```js
 import deck from "npm:deck.gl";
 ```
@@ -333,9 +300,18 @@ const dataArray = await FileAttachment("data/dam-simple.csv").csv({array: true, 
 // just longitude/latitudes in arrays
 const dataMap = dataArray.map(d => d.slice(3, 5).reverse()).slice(1);
 
-const stateCentroidsRaw = await FileAttachment("data/us-state-centroids.json").json();
+const stateCentroids = FileAttachment("data/states-centroids.csv").csv({typed: true});
 
-const stateCentroids = stateCentroidsRaw.features;
+// State bounding boxes from: https://gist.github.com/a8dx/2340f9527af64f8ef8439366de981168
+
+const stateBoundingBox = FileAttachment("data/US_State_Bounding_Boxes.csv").csv({typed: true});
+```
+
+```js
+// Get capital latitude & longitude
+const pickStateLongitude = stateCentroids.filter(d => d.state == pickState)[0].longitude;
+
+const pickStateLatitude = stateCentroids.filter(d => d.state == pickState)[0].latitude;
 ```
 
 ```js
@@ -362,14 +338,6 @@ const colorLegend = Plot.plot({
     Plot.text(["More dams"], {frameAnchor: "top-right", dy: -12})
   ]
 });
-
-const effects = [
-  new LightingEffect({
-    ambientLight: new AmbientLight({color: [255, 255, 255], intensity: 1.0}),
-    pointLight: new PointLight({color: [255, 255, 255], intensity: 0.5, position: [-0.144528, 49.739968, 80000]}),
-    pointLight2: new PointLight({color: [255, 255, 255], intensity: 0, position: [-3.807751, 54.104682, 8000]})
-  })
-];
 ```
 
 ```js
@@ -377,7 +345,6 @@ const deckInstance = new DeckGL({
   container,
   initialViewState,
   controller: true,
-  effects
 });
 
 // clean up if this code re-runs
@@ -389,13 +356,13 @@ invalidation.then(() => {
 
 ```js
 const initialViewState = {
-  longitude: -93.6,
-  latitude: 42,
-  zoom: 5,
+  longitude: pickStateLongitude,
+  latitude: pickStateLatitude,
+  zoom: 5.3,
   minZoom: 1,
   maxZoom: 15,
-  pitch: 45,
-  bearing: 20
+  pitch: 0,
+  bearing: 0
 };
 ```
 
@@ -404,29 +371,57 @@ deckInstance.setProps({
   layers: [
     new GeoJsonLayer({
       id: "base-map",
-      data: states,
+      data: selectedState,
+      lineWidthMinPixels: 1.5,
+      getLineColor: [84, 84, 84],
+      getFillColor: [38, 38, 38]
+    }),
+    new GeoJsonLayer({
+      id: "county-map",
+      data: selectedStateCounties,
       lineWidthMinPixels: 1.5,
       getLineColor: [84, 84, 84],
       getFillColor: [38, 38, 38]
     }),
         new ScatterplotLayer({
           id: 'scatter-plot',
-          data: dams,
-          radiusScale: 0.0003,
+          data: damsSelectedState,
+          radiusScale: 0.020,
           radiusMinPixels: 2,
+          radiusMaxPixels: 20,
           getRadius: d => d.maxStorageAcreFt,
           getPosition: d => [d.longitude, d.latitude, 0],
           getFillColor: d => d.conditionAssessment == "Not available" ? colorRange[0] : (d.conditionAssessment == "Satisfactory" ? colorRange[1] : (d.conditionAssessment == "Fair" ? colorRange[2] : (d.conditionAssessment == "Unsatisfactory" ? colorRange[3] : colorRange[4]))),
-          opacity: 0.5
+          opacity: 1
         }),
+        new ScatterplotLayer({
+          id: 'scatter-plot',
+          data: capitalSelectedState,
+          radiusScale: 0.0010,
+          radiusMinPixels: 8,
+          getPosition: d => [d.longitude, d.latitude],
+          getFillColor: [255, 255, 255, 255],
+          getLineWidth: 20,
+          opacity: 1
+        }),
+        new TextLayer({
+        id: "text-layer",
+        data: capitalSelectedState,
+        pickable: true,
+        getPosition: d => [d.longitude, d.latitude],
+        getText: d => d.description,
+        fontFamily: 'Helvetica',
+        fontWeight: 700,
+        background: true,
+        getBackgroundColor: [0, 0, 0, 180],
+        backgroundPadding: [2, 2, 2, 2],
+        getSize: 16,
+        getColor: [247,248,243, 255],
+        getTextAnchor: 'middle',
+        getAlignmentBaseline: 'center',
+        pickable: true,
+        getPixelOffset: [0, -20]
+      })
   ]
 });
 ```
-
-<div style="padding: 0px">
-<figure style="max-width: none; position: relative;">
-  <div id="container" style="border-radius: 8px; overflow: hidden; height: 600px; margin: 0rem 0;">
-  </div>
-</figure>
-
-</div>

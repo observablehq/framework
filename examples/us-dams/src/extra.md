@@ -492,3 +492,54 @@ deckInstance.setProps({
           opacity: 0.1
         }),
 -->
+
+<!-- Fiddling with beeswarm below this point -->
+
+<!--
+```js
+// Toggle input for beeswarm chart
+const toggleBeeswarm = Inputs.radio(["primary purpose", "hazard potential"], {
+  label: "Color by dam: ",
+  value: "primary purpose",
+});
+
+const toggleBeeswarmValue = Generators.input(toggleBeeswarm);
+```
+
+```js
+const lastInspectionBeeswarm = Plot.plot({
+  width,
+  height: 300,
+  //style: { overflow: "visible" },
+  color: { legend: true },
+  subtitle: ``,
+  caption: `Years since last inspection for individual dams in ${pickState}. Each dot represents a single dam; size is representative of maximum storage capacity. Dams toward the right on the chart have been inspected more recently.`,
+  r: { range: [1.5, 15] },
+  x: { tickFormat: "0f", reverse: true, label: "Years since last inspection" },
+  marks: [
+    Plot.frame({ insetPadding: 5 }),
+    Plot.dot(
+      damsSelectedState,
+      Plot.dodgeY({
+        x: (d) => +d.yearsSinceInspection,
+        r: "maxStorageAcreFt",
+        fill:
+          toggleBeeswarmValue == "primary purpose"
+            ? "primaryPurpose"
+            : "hazardPotential",
+        tip: true,
+        stroke: "white",
+        strokeWidth: 0.5,
+      })
+    ),
+  ],
+});
+```
+
+<div class="card">
+<h2>Years since last inspection</h2>
+<h3>${d3.format(",")(damsSelectedState.filter(d => d.yearsSinceInspection != "NA").length)} out of ${d3.format(",")(damsSelectedState.length)} dams in ${pickState} (${d3.format(".3s")(100 * damsSelectedState.filter(d => d.yearsSinceInspection != "NA").length / damsSelectedState.length)}%) are represented in this chart; those missing an inspection date are not shown. Based on the dams with a reported last inspection date, at least ${d3.format(".1f")(100 * damsSelectedState.filter(d => d.yearsSinceInspection <=10).length / damsSelectedState.length)}% of all ${pickState} dams have been inspected within past 10 years, and at least ${d3.format(".1f")(100 * damsSelectedState.filter(d => d.yearsSinceInspection <=10 && d.hazardPotential == "High").length / damsSelectedState.filter(d => d.hazardPotential == "High").length)}% of all ${pickState} dams considered to have High hazard potential have been inspected within past 10 years.</h3>
+${toggleBeeswarm}
+${display(lastInspectionBeeswarm)}
+</div>
+-->

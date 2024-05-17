@@ -1,3 +1,7 @@
+---
+theme: wide
+---
+
 # U.S. dams: national overview
 
 ## Data from the U.S. National Inventory of Dams (NID)
@@ -21,9 +25,7 @@ const dataArray = await FileAttachment("data/dam-simple.csv").csv({array: true, 
 // just longitude/latitudes in arrays
 const dataMap = dataArray.map(d => d.slice(3, 5).reverse()).slice(1);
 
-const stateCentroidsRaw = await FileAttachment("data/us-state-centroids.json").json();
-
-const stateCentroids = stateCentroidsRaw.features;
+const stateCentroids = FileAttachment("data/states-centroids.csv").csv({typed: true});
 
 const usCounties = await FileAttachment("./data/us-counties-10m.json").json();
 
@@ -31,15 +33,15 @@ const states = topojson.feature(usCounties, usCounties.objects.states);
 ```
 
 <div class="card" style="padding: 0px;">
-<div style="padding: 1rem">
+<div style="padding: 1rem;">
   <h2>U.S. dam locations and conditions</h2>
   <h3>Zoom, scroll and rotate to explore different regions</h3>
 </div>
 <div style="padding: 0px">
 <figure style="max-width: none; position: relative;">
-  <div id="container" style="border-radius: 8px; overflow: hidden; height: 600px; margin: 0rem 0;">
+  <div id="container" style="border-radius: 8px; overflow: hidden; height: 620px; margin: 0rem 0;">
   </div>
-  <div style="position: absolute; top: 0rem; left: 1rem; filter: drop-shadow(0 0 4px rgba(0,0,0,.5));">${colorLegend}</div>
+  <div style="position: absolute; top: 0rem; left: 1rem;">${colorLegend}</div>
 </figure>
 
 </div>
@@ -89,20 +91,20 @@ const colorLegend = Plot.plot({
   style: "color: 'currentColor';",
   x: {padding: 0, axis: null},
   marks: [
-    Plot.text(["Condition: "], {x: -1, dy: 0, fontWeight: 700}),
-    Plot.cellX(colorRange, {fill: ([r, g, b]) => `rgb(${r},${g},${b})`, inset: 0.5}),
-    Plot.text(["Not available"], {x: 0, dy: -20}),
-    Plot.text(["Satisfactory"], {x: 1, dy: -20}),
-    Plot.text(["Fair"], {x: 2, dy: -20}),
-    Plot.text(["Unsatisfactory"], {x: 3, dy: -20}),
-    Plot.text(["Poor"], {x: 4, dy: -20})
+    Plot.text(["Condition: "], {x: -1, dy: 0, fontWeight: 700, fill: "black", stroke: 'var(--theme-background-alt)'}),
+    Plot.cellX(colorRange, {fill: ([r, g, b]) => `rgb(${r},${g},${b})`, inset: 2}),
+    Plot.text(["Not available"], {x: 0, dy: -20, stroke: 'var(--theme-background-alt)', fill: "black"}),
+    Plot.text(["Satisfactory"], {x: 1, dy: -20, stroke: 'var(--theme-background-alt)', fill: "black"}),
+    Plot.text(["Fair"], {x: 2, dy: -20, stroke: 'var(--theme-background-alt)', fill: "black"}),
+    Plot.text(["Unsatisfactory"], {x: 3, dy: -20, stroke: 'var(--theme-background-alt)', fill: "black"}),
+    Plot.text(["Poor"], {x: 4, dy: -20, stroke: 'var(--theme-background-alt)', fill: "black"})
   ]
 });
 
 const effects = [
   new LightingEffect({
-    ambientLight: new AmbientLight({color: [255, 255, 255], intensity: 1.0}),
-    pointLight: new PointLight({color: [255, 255, 255], intensity: 0.5, position: [-0.144528, 49.739968, 80000]}),
+    ambientLight: new AmbientLight({color: [255, 255, 255], intensity: 0}),
+    pointLight: new PointLight({color: [255, 255, 255], intensity: 0, position: [-0.144528, 49.739968, 80000]}),
     pointLight2: new PointLight({color: [255, 255, 255], intensity: 0, position: [-3.807751, 54.104682, 8000]})
   })
 ];
@@ -142,26 +144,28 @@ deckInstance.setProps({
       id: "base-map",
       data: states,
       lineWidthMinPixels: 1.5,
-      getLineColor: [84, 84, 84],
+      getLineColor: [255,255,255, 100],
       getFillColor: [38, 38, 38]
     }),
     ,
         new ScatterplotLayer({
           id: 'scatter-plot',
           data: dams,
-          radiusScale: 0.0003,
-          radiusMinPixels: 2,
+          radiusScale: 0.0015,
+          radiusMinPixels: 1,
+          radiusMaxPixels: 20,
+          stroked: false,
           getRadius: d => d.maxStorageAcreFt,
           getPosition: d => [d.longitude, d.latitude, 0],
           getFillColor: d => d.conditionAssessment == "Not available" ? colorRange[0] : (d.conditionAssessment == "Satisfactory" ? colorRange[1] : (d.conditionAssessment == "Fair" ? colorRange[2] : (d.conditionAssessment == "Unsatisfactory" ? colorRange[3] : colorRange[4]))),
-          opacity: 0.5
+          opacity: 1
         }),
     new TextLayer({
         id: "text-layer",
         data: stateCentroids,
         pickable: true,
-        getPosition: d => d.geometry.coordinates,
-        getText: d => d.properties.name,
+        getPosition: d => [d.longitude, d.latitude],
+        getText: d => d.state,
         fontFamily: 'Helvetica',
         fontWeight: 700,
         background: false,
