@@ -186,6 +186,14 @@ const conditions = [
   "Poor"
 ];
 
+const conditionsColors = [
+  "#9498a0",
+  "#4269d0",
+  "#97bbf5",
+  "#efb118",
+  "#ff725c"
+];
+
 const hazardPotential = [
     "Undetermined",
     "Low",
@@ -203,8 +211,13 @@ return  Plot.plot({
   grid: true,
   x: {domain: conditions, label: "Condition assessment"},
   y: {domain: hazardPotential, label: "Hazard potential"},
+  color: {
+    domain: conditions,
+    range: conditionsColors,
+    label: "Condition assessment"
+  },
   marks: [
-    Plot.dot(dams, Plot.group({r: "count"}, {x: "conditionAssessment", y: "hazardPotential", fill: "gray", tip: true}))
+    Plot.dot(dams, Plot.group({r: "count"}, {x: "conditionAssessment", y: "hazardPotential", fill: "conditionAssessment", tip: true}))
   ]
 });
 }
@@ -215,14 +228,19 @@ return  Plot.plot({
 // TODO add interactivity here
 
 function conditionByAge(width, height) {
-    return Plot.plot({
-        width,
-        height: height,
-        x: {label: "Year completed", tickFormat: "Y"},
-        y: {grid: true, ticks: 5},
-        marks: [
-            Plot.rectY(dams, Plot.binX({y: "count"}, {x: "yearCompleted", fill: "conditionAssessment", order: conditions, interval: 10, tip: true}))
-        ]
-    })
+  return Plot.plot({
+    width,
+    height: height,
+    x: {label: "Year construction finished", tickFormat: "Y", labelAnchor: "center", labelArrow: "none"},
+    y: {label: "Number of dams", grid: true, ticks: 5, tickSize: 0},
+    color: {
+      domain: conditions,
+      range: conditionsColors.reverse(),
+      label: "Condition assessment"
+    },
+    marks: [
+      Plot.rectY(dams, Plot.binX({y: "count"}, {x: "yearCompleted", fill: "conditionAssessment", order: conditions.reverse(), interval: 10, tip: true}))
+    ]
+  })
 };
 ```
