@@ -195,7 +195,7 @@ Now visit <http://127.0.0.1:3000> in your browser, which should look like:
 
 Live preview means that as you save changes, your in-browser preview updates instantly. Live preview applies to Markdown pages, imported JavaScript modules (so-called *hot module replacement*), data loaders, and file attachments. This feature is implemented by the preview server watching files and pushing changes to the browser over a socket.
 
-To experience live preview, open <code>src/index.md</code> in your preferred text editor — below we show Zed — and position your browser window so that you can see your editor and browser side-by-side. If you then replace the text “Hello, Observable Framework” with “Hi, Mom!” and save, you should see:
+To experience live preview, open <code>src/index.md</code> in your preferred text editor — below we show Zed — and position your browser window so that you can see your editor and browser side-by-side. If you then replace the text “Hello Framework” with “Hi, Mom!” and save, you should see:
 
 <figure class="wide">
   <picture>
