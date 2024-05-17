@@ -84,11 +84,12 @@ const colorLegend = Plot.plot({
   margin: 0,
   marginTop: 30,
   marginRight: 20,
-  width: 400,
+  width: 450,
   height: 50,
   style: "color: 'currentColor';",
   x: {padding: 0, axis: null},
   marks: [
+    Plot.text(["Condition: "], {x: -1, dy: 0, fontWeight: 700}),
     Plot.cellX(colorRange, {fill: ([r, g, b]) => `rgb(${r},${g},${b})`, inset: 0.5}),
     Plot.text(["Not available"], {x: 0, dy: -20}),
     Plot.text(["Satisfactory"], {x: 1, dy: -20}),
