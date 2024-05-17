@@ -44,8 +44,8 @@ const states = topojson.feature(usCounties, usCounties.objects.states);
 
 </div>
 </div>
-<div class="card" style="max-width: none">
-Of ${d3.format(",")(dams.length)} dams in the U.S. included in the <a href="https://nid.sec.usace.army.mil">National Inventory of Dams</a>, ${d3.format(",")(dams.filter(d => d.conditionAssessment == "Poor").length)} are listed as being in Poor condition. Of those in Poor condition, ${d3.format(",")(dams.filter(d => d.conditionAssessment == "Poor" && d.hazardPotential == "High").length)} have High hazard potential, where "downstream flooding would likely result in loss of human life."
+<div class="card" style="max-width: none; font-size: 1.2rem">
+<span style="color: var(--theme-foreground-muted)">Of ${d3.format(",")(dams.length)} U.S. dams included in the National Inventory of Dams,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(dams.filter(d => d.conditionAssessment == "Poor").length)}</span><span style="color: var(--theme-foreground-muted)"> are listed as being in Poor condition. Of those in Poor condition,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(dams.filter(d => d.conditionAssessment == "Poor" && d.hazardPotential == "High").length)}</span> <span style="color: var(--theme-foreground-muted)">have High hazard potential, where "downstream flooding would likely result in loss of human life."</span>
 </div>
 
 <div class="grid grid-cols-2 grid-rows-3" style="grid-auto-rows: 300px">
@@ -54,7 +54,7 @@ Of ${d3.format(",")(dams.length)} dams in the U.S. included in the <a href="http
    <h3>Size indicates number of dams at each intersection</h3>
    ${resize((width, height) => conditionHazardGrid(width, height))}
  </div>
- <div class="card grid-colspan-1 grid-rowspan-3">
+ <div class="card grid-colspan-1 grid-rowspan-2">
    <h2>State dam counts and conditions at-a-glance</h2>
    ${resize((width, height) => conditionsByState(width, height))}
  </div>
@@ -63,6 +63,12 @@ Of ${d3.format(",")(dams.length)} dams in the U.S. included in the <a href="http
    ${resize((width, height) => conditionByAge(width, height))}
  </div>
 </div>
+ <div class="card grid-colspan-2 grid-rowspan-1" style="padding: 0">
+  <div style="padding: 1rem">
+  ${searchUsDams}
+  </div>
+  ${Inputs.table(searchUsDamsValue, {columns: ["name", "state", "county", "primaryPurpose", "hazardPotential", "conditionAssessment"], header: {name: "Name", state: "State", county: "County", primaryPurpose: "Purpose", hazardPotential: "Hazard potential", conditionAssessment: "Condition assessment"}})}
+  </div>
 
 ```js
 const colorRange = [
@@ -248,9 +254,9 @@ function conditionsByState(width, height) {
   return Plot.plot({
     width,
     height: height - 60,
-    marginTop: 0,
+    marginTop: -5,
     marginLeft: 100,
-    marginBottom: 40,
+    marginBottom: 20,
     color: {domain: conditions, range: conditionsColors, legend: true},
     y: {label: null},
     x: {label: "Number of dams", grid: true, ticks: 5, tickSize: 0},
@@ -260,4 +266,11 @@ function conditionsByState(width, height) {
   });
 
 }
+```
+
+```js
+// For search with table
+const searchUsDams = Inputs.search(dams);
+
+const searchUsDamsValue = Generators.input(searchUsDams);
 ```
