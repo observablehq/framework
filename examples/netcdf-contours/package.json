@@ -10,9 +10,7 @@
   },
   "dependencies": {
     "@observablehq/framework": "^1.7.1",
-    "d3-array": "^3.2.4",
-    "d3-contour": "^4.0.2",
-    "d3-geo-projection": "^4.0.0",
+    "d3-geo-voronoi": "^2.1.0",
     "netcdfjs": "^3.0.0"
   },
   "devDependencies": {
