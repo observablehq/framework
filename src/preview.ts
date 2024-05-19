@@ -155,7 +155,7 @@ export class PreviewServer {
         const filepath = join(root, path);
         try {
           await access(filepath, constants.R_OK);
-          const pathcase = (await realpath(filepath)).slice((await realpath(root)).length);
+          const pathcase = (await realpath(filepath)).slice((await realpath(root)).length).replaceAll("\\", "/");
           if (path !== pathcase) throw new Error(`Incorrect case for ${path}: found ${pathcase} instead.`);
           send(req, pathname.slice("/_file".length), {root}).pipe(res);
           return;

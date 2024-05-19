@@ -353,7 +353,9 @@ export class FileBuildEffects implements BuildEffects {
     this.logger.log(destination);
     await prepareOutput(destination);
     await writeFile(destination, contents);
-    const pathcase = (await realpath(destination)).slice((await realpath(this.outputRoot)).length + 1);
+    const pathcase = (await realpath(destination))
+      .slice((await realpath(this.outputRoot)).length + 1)
+      .replaceAll("\\", "/");
     if (pathcase !== outputPath.replace(/^\//, ""))
       throw new Error(`Incorrect case for ${destination}: found ${pathcase} instead.`);
   }
