@@ -1,7 +1,7 @@
 import {createHash} from "node:crypto";
 import {watch} from "node:fs";
 import type {FSWatcher, WatchEventType} from "node:fs";
-import {access, constants, readFile} from "node:fs/promises";
+import {access, constants, readFile, realpath} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
 import {basename, dirname, join, normalize} from "node:path/posix";
@@ -155,6 +155,8 @@ export class PreviewServer {
         const filepath = join(root, path);
         try {
           await access(filepath, constants.R_OK);
+          const pathcase = (await realpath(filepath)).slice((await realpath(root)).length);
+          if (path !== pathcase) throw new Error(`Incorrect case for ${path}: found ${pathcase} instead.`);
           send(req, pathname.slice("/_file".length), {root}).pipe(res);
           return;
         } catch (error) {

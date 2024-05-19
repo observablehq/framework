@@ -1,6 +1,6 @@
 import {createHash} from "node:crypto";
 import {existsSync} from "node:fs";
-import {access, constants, copyFile, readFile, stat, writeFile} from "node:fs/promises";
+import {access, constants, copyFile, readFile, realpath, stat, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {CliError, isEnoent} from "./error.js";
@@ -353,5 +353,8 @@ export class FileBuildEffects implements BuildEffects {
     this.logger.log(destination);
     await prepareOutput(destination);
     await writeFile(destination, contents);
+    const pathcase = (await realpath(destination)).slice((await realpath(this.outputRoot)).length + 1);
+    if (pathcase !== outputPath.replace(/^\//, ""))
+      throw new Error(`Incorrect case for ${destination}: found ${pathcase} instead.`);
   }
 }
