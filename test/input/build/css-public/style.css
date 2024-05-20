@@ -1,0 +1,20 @@
+@import url("observablehq:default.css");
+@import url("observablehq:theme-air.css");
+
+:root {
+  --serif: "Atkinson Hyperlegible";
+}
+
+div.bg {
+  background-image: url("horse.jpg");
+}
+
+div.dont-break-hashes {
+  offset-path: url(#path);
+}
+
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  src: url(https://fonts.gstatic.com/s/atkinsonhyperlegible/v11/9Bt23C1KxNDXMspQ1lPyU89-1h6ONRlW45G04pIoWQeCbA.woff2)
+    format("woff2");
+}

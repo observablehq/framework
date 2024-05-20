@@ -1,7 +1,8 @@
-import {extname} from "node:path/posix";
+import {extname, join} from "node:path/posix";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
 import type {CallExpression} from "acorn";
 import {simple} from "acorn-walk";
+import type {PluginBuild} from "esbuild";
 import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
@@ -36,16 +37,33 @@ function rewriteInputsNamespace(code: string) {
 export async function bundleStyles({
   minify = false,
   path,
-  theme
+  theme,
+  files,
+  aliases
 }: {
   minify?: boolean;
   path?: string;
   theme?: string[];
+  files?: Set<string>;
+  aliases?: Map<string, string>;
 }): Promise<string> {
+  const assets = {
+    name: "resolve CSS assets",
+    setup(build: PluginBuild) {
+      build.onResolve({filter: /^\w+:\/\//}, (args) => ({path: args.path, external: true}));
+      build.onResolve({filter: /./}, (args) => {
+        if (args.path.endsWith(".css") || args.path.match(/^[#.]/)) return;
+        if (files) files.add(args.path); // /!\ modifies files as a side effect
+        const path = join("..", aliases?.get(args.path) ?? join("_file", args.path));
+        return {path, external: true};
+      });
+    }
+  };
   const result = await build({
     bundle: true,
     ...(path ? {entryPoints: [path]} : {stdin: {contents: renderTheme(theme!), loader: "css"}}),
     write: false,
+    plugins: [assets],
     minify,
     alias: STYLE_MODULES
   });
