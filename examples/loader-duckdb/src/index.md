@@ -1,12 +1,12 @@
 # DuckDB data loader
 
-Here’s a data loader that uses a bash shell script to download a CSV file from Eurostat (the data portal from the statistical office of the European Union), then calls [DuckDB](https://duckdb.org/) to filter and reshape this data, and saves the result as an [Apache Parquet](https://observablehq.com/framework/lib/arrow#apache-parquet) file.
+Here’s a bash data loader that uses curl to download a CSV file from Eurostat (the data portal from the statistical office of the European Union), then calls [DuckDB](https://duckdb.org/) to filter it and saves the result as [Apache Parquet](https://observablehq.com/framework/lib/arrow#apache-parquet).
 
-The example illustrates the technique by fetching statistics about education to modern foreign languages across Europe ([educ_uoe_lang01](https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_lang01/default/table?lang=en&category=educ.educ_lang.educ_uoe_lang)).
+The example illustrates the technique with statistics about education to modern foreign languages across Europe ([educ_uoe_lang01](https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_lang01/default/table?lang=en&category=educ.educ_lang.educ_uoe_lang)).
 
 The data loader lives in [`src/educ_uoe_lang01.parquet.sh`](./src/educ_uoe_lang01.parquet.sh).
 
-Because the Eurostat API does not offer to compress data as part of the http response, but instead offers to send compressed data, we download it outside of DuckDB — here using [curl](https://curl.se/) then [gunzip](https://en.wikipedia.org/wiki/Gzip). The raw file obtained from Eurostat is saved to a temporary directory, which makes it much faster to iterate on the data loader when we want to tweak the query.
+Because the Eurostat API does not compress data as part of the http response, but instead offers to send compressed data, we download it outside of DuckDB — here using [curl](https://curl.se/) — then uncompress it with [gunzip](https://en.wikipedia.org/wiki/Gzip). The raw file is saved to a temporary directory, which makes it much faster to iterate on the data loader when we want to tweak the query, for example to change the education level or the time period considered.
 
 ```sh
 export CODE="educ_uoe_lang01"
@@ -20,8 +20,8 @@ COPY (
   SELECT *
   FROM read_csv('$TMPDIR/$CODE.csv')
   WHERE true
-    AND TIME_PERIOD = 2019
-    AND OBS_VALUE > 0 -- ignore zeros
+    AND TIME_PERIOD = 2019 -- a good year in terms of data quality
+    AND OBS_VALUE > 0 -- filter out zeros
     AND isced11 = 'ED2' -- lower secondary education
     AND unit = 'PC' -- ignore absolute numbers, keep percentages
     AND language != 'TOTAL' -- ignore total
