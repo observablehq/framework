@@ -125,11 +125,11 @@ export async function build(
         effects.output.write(`${faint("build")} ${specifier} ${faint("→")} `);
         if (specifier.startsWith("observablehq:theme-")) {
           const match = /^observablehq:theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(specifier);
-          const contents = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? [], minify: true});
+          const {contents} = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? [], minify: true});
           await effects.writeFile(path, contents);
         } else {
           const clientPath = getClientPath(path.slice("/_observablehq/".length));
-          const contents = await bundleStyles({path: clientPath, minify: true});
+          const {contents} = await bundleStyles({path: clientPath, minify: true});
           await effects.writeFile(`/_observablehq/${specifier.slice("observablehq:".length)}`, contents);
         }
       } else if (specifier.startsWith("npm:")) {
@@ -140,7 +140,7 @@ export async function build(
       } else if (!/^\w+:/.test(specifier)) {
         // Uses a side effect to register file assets on custom stylesheets
         delayedStylesheets.add(specifier);
-        await bundleStyles({path: join(root, specifier), files});
+        for (const file of (await bundleStyles({path: join(root, specifier)})).files) files.add(file);
       }
     }
   }
@@ -176,7 +176,7 @@ export async function build(
     for (const specifier of delayedStylesheets) {
       const sourcePath = join(root, specifier);
       effects.output.write(`${faint("build")} ${sourcePath} ${faint("→")} `);
-      const contents = await bundleStyles({path: sourcePath, minify: true, aliases: plainaliases});
+      const {contents} = await bundleStyles({path: sourcePath, minify: true, aliases: plainaliases});
       const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
       const ext = extname(specifier);
       const alias = `/${join("_import", dirname(specifier), `${basename(specifier, ext)}.${hash}${ext}`)}`;

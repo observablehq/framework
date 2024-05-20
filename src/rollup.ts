@@ -38,22 +38,21 @@ export async function bundleStyles({
   minify = false,
   path,
   theme,
-  files,
   aliases
 }: {
   minify?: boolean;
   path?: string;
   theme?: string[];
-  files?: Set<string>;
   aliases?: Map<string, string>;
-}): Promise<string> {
+}): Promise<{contents: string; files: Set<string>}> {
+  const files = new Set<string>();
   const assets = {
     name: "resolve CSS assets",
     setup(build: PluginBuild) {
       build.onResolve({filter: /^\w+:\/\//}, (args) => ({path: args.path, external: true}));
       build.onResolve({filter: /./}, (args) => {
         if (args.path.endsWith(".css") || args.path.match(/^[#.]/)) return;
-        if (files) files.add(args.path); // /!\ modifies files as a side effect
+        files.add(args.path);
         const path = join("..", aliases?.get(args.path) ?? join("_file", args.path));
         return {path, external: true};
       });
@@ -68,7 +67,8 @@ export async function bundleStyles({
     alias: STYLE_MODULES
   });
   const text = result.outputFiles[0].text;
-  return rewriteInputsNamespace(text); // TODO only for inputs
+  const contents = rewriteInputsNamespace(text); // TODO only for inputs
+  return {contents, files};
 }
 
 export async function rollupClient(
