@@ -99,7 +99,7 @@ const damsSelectedState = dams.filter((d) => d.state == pickState);
     </div>
   <div class="card grid-colspan-2 grid-rowspan-2">
     <h2>${pickState} dams counts by condition and hazard potential</h2>
-    <span style="color: var(--theme-foreground-muted)">Of ${d3.format(",")(damsSelectedState.length)} ${pickState} dams listed in the NID,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(damsSelectedState.filter(d => d.conditionAssessment == "Poor").length)}</span><span style="color: var(--theme-foreground-muted)"> are listed as being in Poor condition. Of those in Poor condition,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(damsSelectedState.filter(d => d.conditionAssessment == "Poor" && d.hazardPotential == "High").length)}</span> <span style="color: var(--theme-foreground-muted)">have High hazard potential, where "downstream flooding would likely result in loss of human life."
+    <span style="color: var(--theme-foreground-muted)">Of ${d3.format(",")(damsSelectedState.length)} ${pickState} dams listed in the NID,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(damsSelectedState.filter(d => d.conditionAssessment == "Poor").length)}</span><span style="color: var(--theme-foreground-muted)"> are listed as being in Poor condition. Of those in Poor condition,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(damsSelectedState.filter(d => d.conditionAssessment == "Poor" && d.hazardPotential == "High").length)}</span> <span style="color: var(--theme-foreground-muted)">have High hazard potential, where "downstream flooding would likely result in loss of human life."</span>
     ${resize((width, height) => conditionHeatmap(width, height))}
   </div>
 </div>
@@ -157,15 +157,15 @@ function purposeOwnership(width, height) {
   return Plot.plot({
     width,
     marginTop: 0,
-    marginBottom: 30,
+    marginBottom: 40,
     height: height - 55,
     marginLeft: 220,
-    y: {label: null},
-    x: {grid: true},
-    color: {legend: true, scheme: "Set2", domain: ["Private", "Public Utility", "Local Government", "State", "Federal"]},
+    y: {label: null, label: "Primary purpose"},
+    x: {grid: true, label:"Number of dams"},
+    color: {legend: true, scheme: "Set2", domain: ["Private", "Public Utility", "Local Government", "State", "Federal"], label: "Ownership"},
     marks:
     [
-      Plot.barX(damsSelectedState, Plot.groupY({x: "count"}, {y: "primaryPurpose", rx: 2, insetRight: 1, sort: {y: "x", reverse: true, limit: 10}, fill: "ownerType", order: ["Private", "Public Utility", "Local Government", "State", "Federal"]}))
+      Plot.barX(damsSelectedState, Plot.groupY({x: "count"}, {y: "primaryPurpose", rx: 2, insetRight: 1, sort: {y: "x", reverse: true, limit: 10}, fill: "ownerType", order: ["Private", "Public Utility", "Local Government", "State", "Federal"], tip: true}))
     ]
 });
 }
