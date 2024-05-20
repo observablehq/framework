@@ -1,5 +1,12 @@
 import assert from "node:assert";
-import {isPathImport, parseRelativeUrl, relativePath, resolveLocalPath, resolvePath} from "../src/path.js";
+import {
+  assertPathname,
+  isPathImport,
+  parseRelativeUrl,
+  relativePath,
+  resolveLocalPath,
+  resolvePath
+} from "../src/path.js";
 
 describe("resolvePath(source, target)", () => {
   it("returns the path to the specified target within the source root", () => {
@@ -146,5 +153,14 @@ describe("parseRelativeUrl(url)", () => {
   });
   it("handles queries and hashes", () => {
     assert.deepStrictEqual(parseRelativeUrl("foo?bar#baz"), {pathname: "foo", search: "?bar", hash: "#baz"});
+  });
+});
+
+describe("assertPathname(target, root, path)", () => {
+  it("throws an error on files with the wrong case", async () => {
+    await assert.rejects(assertPathname("./docs/HORSE.jpg", "./docs", "/HORSE.jpg"));
+  });
+  it("throws an error on paths with the wrong case", async () => {
+    await assert.rejects(assertPathname("./docs/DATA/alphabet.csv", "./docs", "/DATA/alphabet.csv"));
   });
 });

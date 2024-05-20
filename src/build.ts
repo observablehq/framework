@@ -1,6 +1,6 @@
 import {createHash} from "node:crypto";
 import {existsSync} from "node:fs";
-import {access, constants, copyFile, readFile, realpath, stat, writeFile} from "node:fs/promises";
+import {access, constants, copyFile, readFile, stat, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {CliError, isEnoent} from "./error.js";
@@ -12,7 +12,7 @@ import type {MarkdownPage} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
 import {extractNodeSpecifier} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport} from "./npm.js";
-import {isAssetPath, isPathImport, relativePath, resolvePath} from "./path.js";
+import {assertPathname, isAssetPath, isPathImport, relativePath, resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
 import {getModuleResolver, getResolvers} from "./resolvers.js";
@@ -353,10 +353,6 @@ export class FileBuildEffects implements BuildEffects {
     this.logger.log(destination);
     await prepareOutput(destination);
     await writeFile(destination, contents);
-    const pathcase = (await realpath(destination))
-      .slice((await realpath(this.outputRoot)).length + 1)
-      .replaceAll("\\", "/");
-    if (pathcase !== outputPath.replace(/^\//, ""))
-      throw new Error(`Incorrect case for ${destination}: found ${pathcase} instead.`);
+    await assertPathname(destination, this.outputRoot, outputPath);
   }
 }

@@ -1,3 +1,4 @@
+import {realpath} from "node:fs/promises";
 import {dirname, join} from "node:path/posix";
 
 /**
@@ -83,4 +84,13 @@ export function parseRelativeUrl(url: string): {pathname: string; search: string
   if (j < 0) search = "";
   else (search = url.slice(j)), (url = url.slice(0, j));
   return {pathname: url, search, hash};
+}
+
+/**
+ * Checks that the actual filename under root/path has the same case as the
+ * target.
+ */
+export async function assertPathname(target: string, root: string, path: string): Promise<undefined> {
+  const cased = (await realpath(target)).slice((await realpath(root)).length + 1).replaceAll("\\", "/");
+  if (cased !== path.replace(/^\//, "")) throw new Error(`Incorrect case for ${target}: found ${cased} instead.`);
 }
