@@ -138,7 +138,6 @@ export async function build(
         const sourcePath = await populateNpmCache(root, path); // TODO effects
         await effects.copyFile(sourcePath, path);
       } else if (!/^\w+:/.test(specifier)) {
-        // Uses a side effect to register file assets on custom stylesheets
         delayedStylesheets.add(specifier);
         for (const file of (await bundleStyles({path: join(root, specifier)})).files) files.add(file);
       }
