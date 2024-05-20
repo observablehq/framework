@@ -2,7 +2,7 @@
 theme: wide
 ---
 
-# Dam conditions by state
+# Dam summaries by state
 
 ```js
 const dams = FileAttachment("data/dam-simple.csv").csv({ typed: true });
@@ -79,104 +79,41 @@ const pickState = view(
 const damsSelectedState = dams.filter((d) => d.state == pickState);
 ```
 
-<div class="card" style="font-size: 1.2rem">
-<span style="color: var(--theme-foreground-muted)">Of ${d3.format(",")(damsSelectedState.length)} ${pickState} dams listed in the NID,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(damsSelectedState.filter(d => d.conditionAssessment == "Poor").length)}</span><span style="color: var(--theme-foreground-muted)"> are listed as being in Poor condition. Of those in Poor condition,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(damsSelectedState.filter(d => d.conditionAssessment == "Poor" && d.hazardPotential == "High").length)}</span> <span style="color: var(--theme-foreground-muted)">have High hazard potential, where "downstream flooding would likely result in loss of human life."
-</div>
+## ${pickState} overview
 
-<div class="grid grid-cols-3 grid-rows-3" style="grid-auto-rows: 200px;">
-<div class="card grid-colspan-2 grid-rowspan-3" style="padding: 0px">
-<div style="padding: 1em">
-<h3>Map dot size represents maximum storage capacity (acre-feet). The scale should only be used to compare dam sizes within ${pickState}, not across states.</h3>
-${resize((width) => stackedBarChart(width))}
-</div>
-<div>
-<figure style="max-width: none; position: relative;">
-  <div id="container" style="border-radius: 8px; overflow: hidden; height: 460px; margin: 0rem 0; padding: 0px">
+<div class="grid grid-cols-4 grid-rows-4">
+  <div class="card grid-colspan-2 grid-rowspan-2">
+    <h2>${pickState} dams by primary purpose and ownership</h2>
+    ${resize((width, height) => purposeOwnership(width, height))}
   </div>
-</figure>
-
-</div>
-</div>
-<div class="card grid-rowspan-1">Blah</div>
-<div class="card grid-colspan-1 grid-rowspan-2">
-<h2>Dam counts by hazard potential and condition</h2>
-${resize((width, height) => conditionHeatmap(width, height))}
-</div>
-</div>
-
-<div class="grid grid-cols-2">
-<div class="card grid-colspan-1 grid-rowspan-2">
-${Inputs.table(damSearchValue, {columns: ["name", "yearCompleted", "hazardPotential", "conditionAssessment"], header: {name: "Name", yearCompleted: "Year completed", hazardPotential: "Hazard potential", conditionAssessment: "Condition"}})}
-</div>
-<div class="card grid-colspan-1 grid-rowspan-2">
-${resize((width) => yearCompletedHistogram(width))}
-</div>
+  <div class="card grid-colspan-2 grid-rowspan-4" style="padding: 0px">
+    <div style="padding: 1em">
+      <h3>Size represents maximum storage capacity (acre-feet). The scale should only be used to compare dam sizes within ${pickState}, not across states.</h3>
+      ${resize((width) => stackedBarChart(width))}
+    </div>
+    <div>
+      <figure style="max-width: none; position: relative;">
+        <div id="container" style="border-radius: 8px; overflow: hidden; height: 535px; margin: 0rem 0; padding: 0px">
+      </figure>
+      </div>
+    </div>
+  <div class="card grid-colspan-2 grid-rowspan-2">
+    <h2>${pickState} dams counts by condition and hazard potential</h2>
+    <span style="color: var(--theme-foreground-muted)">Of ${d3.format(",")(damsSelectedState.length)} ${pickState} dams listed in the NID,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(damsSelectedState.filter(d => d.conditionAssessment == "Poor").length)}</span><span style="color: var(--theme-foreground-muted)"> are listed as being in Poor condition. Of those in Poor condition,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(damsSelectedState.filter(d => d.conditionAssessment == "Poor" && d.hazardPotential == "High").length)}</span> <span style="color: var(--theme-foreground-muted)">have High hazard potential, where "downstream flooding would likely result in loss of human life."
+    ${resize((width, height) => conditionHeatmap(width, height))}
+  </div>
 </div>
 
+<div class="grid">
+<div class="card" style="padding: 0px">
+<div style="padding: 1em">
 ${damSearch}
+</div>
+${Inputs.table(damSearchValue, {columns: ["name", "county", "ownerType", "primaryDamType", "maxStorageAcreFt", "hazardPotential", "conditionAssessment"], header: {name: "Name", county: "County", ownerType: "Ownership", primaryDamType: "Type (primary)", maxStorageAcreFt: "Maximum storage (acre-feet)", hazardPotential: "Hazard potential", conditionAssessment: "Condition"}})}
+</div>
+</div>
 
 <!-- County FIPS codes from: https://github.com/kjhealy/fips-codes/blob/master/county_fips_master.csv -->
-
-```js
-// Map of dams in each state
-function stateMap(width, height) {
-  return Plot.plot({
-    height: 450,
-    width,
-    marginBottom: 0,
-    color: {domain: conditions, range: conditionsColors},
-    projection: { type: "albers-usa", domain: selectedState[0].geometry },
-    r: { range: [2, 15] },
-    marks: [
-      Plot.geo(selectedState, { fill: "#ccc", opacity: 0.3 }),
-      Plot.geo(selectedStateCounties, {
-        stroke: "white",
-        strokeWidth: 1,
-        opacity: 0.3,
-      }),
-      Plot.geo(selectedState, { stroke: "#ccc", strokeWidth: 1 }),
-      Plot.dot(
-        d3
-          .sort(
-            damsSelectedState,
-            (d) => d.conditionAssessment == "Not available",
-            (d) => d.maxStorageAcreFt
-          )
-          .reverse(),
-        {
-          x: "longitude",
-          y: "latitude",
-          r: "maxStorageAcreFt",
-          opacity: 0.8,
-          fill: "conditionAssessment",
-          tip: true,
-          title: (d) =>
-            `Dam name: ${d.name}\nYear completed: ${d.yearCompleted}\nMax storage: ${d.maxStorageAcreFt} acre-ft\nPrimary purpose: ${d.primaryPurpose}\nCondition: ${d.conditionAssessment}`,
-          sort: null,
-        }
-      ),
-      Plot.dot(capitalSelectedState, {
-        x: "longitude",
-        y: "latitude",
-        fill: "#ff2272",
-        r: 6,
-        stroke: "white",
-        strokeWidth: 1,
-        symbol: "star",
-      }),
-      Plot.text(capitalSelectedState, {
-        x: "longitude",
-        y: "latitude",
-        text: "description",
-        dy: -18,
-        fontWeight: 600,
-        fontSize: 14,
-        fill: "currentColor"
-      }),
-    ],
-  });
-}
-```
 
 ```js
 const conditionCounts = d3
@@ -215,27 +152,45 @@ function stackedBarChart(width) {
 ```
 
 ```js
-// Bubble squares of hazard and conditiond
+// Bar chart of dam purpose and ownership
+function purposeOwnership(width, height) {
+  return Plot.plot({
+    width,
+    marginTop: 0,
+    marginBottom: 30,
+    height: height - 55,
+    marginLeft: 220,
+    y: {label: null},
+    x: {grid: true},
+    color: {legend: true, scheme: "Set2", domain: ["Private", "Public Utility", "Local Government", "State", "Federal"]},
+    marks:
+    [
+      Plot.barX(damsSelectedState, Plot.groupY({x: "count"}, {y: "primaryPurpose", rx: 2, insetRight: 1, sort: {y: "x", reverse: true, limit: 10}, fill: "ownerType", order: ["Private", "Public Utility", "Local Government", "State", "Federal"]}))
+    ]
+});
+}
+```
+
+```js
+// Bubble squares of hazard and condition
 function conditionHeatmap(width, height) {
   return Plot.plot({
   width,
-  height: height - 20,
-  marginTop: 10,
+  height: height - 80,
+  marginTop: -10,
   marginRight: 10,
   marginLeft: 100,
   marginBottom: 40,
-  r: {range: [2, 25]},
-  x: {domain: ["Undetermined", "Low", "Significant", "High"], label: "Hazard potential", grid: true},
-  y: {domain: conditions, label: "Condition", grid: true, reverse: true},
-  color: {domain: conditions, range: conditionsColors},
+  r: {range: [4, 20]},
+  y: {domain: ["Undetermined", "Low", "Significant", "High"], label: "Hazard potential", grid: true},
+  x: {domain: conditions, label: "Condition", grid: true, reverse: true},
+  color: {domain: conditions, range: conditionsColors, label: "Condition"},
     marks: [
     Plot.dot(damsSelectedState, Plot.group({r: "count"},
-      {x: "hazardPotential",
-      y: "conditionAssessment",
+      {y: "hazardPotential",
+      x: "conditionAssessment",
       tip: true,
-      fill: "conditionAssessment",
-      stroke: "currentColor",
-      strokeWidth: 0.5
+      fill: "conditionAssessment"
     }))
   ]
   });
@@ -251,42 +206,26 @@ const damSearch = Inputs.search(damsSelectedState);
 const damSearchValue = Generators.input(damSearch);
 ```
 
-```js
+```js run=false echo=false
 // Year completed histogram
 function yearCompletedHistogram(width) {
   return Plot.plot({
   width,
-  height: 250,
+  height: 240,
+  marginBottom: 40,
   color: {legend: true, domain: conditions, range: conditionsColors},
   x: {tickFormat: "Y", label: "Year dam completed"},
   y: {grid: true},
   marks: [
-    Plot.rectY(damsSelectedState, Plot.binX({y: "count"}, {x: "yearCompleted", fill: "conditionAssessment", interval: 10, order: conditions})),
+    Plot.rectY(damsSelectedState, Plot.binX({y: "count"}, {x: "yearCompleted", fill: "conditionAssessment", interval: 10, order: conditions, tip: true})),
     Plot.ruleY([0])
   ]
 });
 }
 ```
 
-```js echo=false run=false
-// Not currently included
-function purposeHazardChart(width, height) {
-  return Plot.plot({
-    height: height - 50,
-    width,
-    marginLeft: 220,
-    marginTop: 0,
-    x: {grid: true},
-    y: {label: null},
-    color: {legend: true, domain: ["Low", "Significant", "High", "Undetermined"], range: ["#43AE8C", "#FFA840", "#E33C18", "#CFCFCF"]},
-    marks: [
-     Plot.barX(damsSelectedState, Plot.groupY({x: "count"}, {y: "primaryPurpose", fill: "hazardPotential", sort: {y: "x", reverse: true}}))
-    ]
-  });
-}
-```
-
 ```js
+// For interactive map (deck.gl)
 import deck from "npm:deck.gl";
 ```
 
@@ -358,12 +297,17 @@ invalidation.then(() => {
 const initialViewState = {
   longitude: pickStateLongitude,
   latitude: pickStateLatitude,
-  zoom: 5.3,
-  minZoom: 1,
-  maxZoom: 15,
+  zoom: 6,
+  minZoom: 3,
+  maxZoom: 9,
   pitch: 0,
   bearing: 0
 };
+
+// Tooltip function
+function getTooltip({object}) {
+ return object && `Name: ${object.name}\nPrimary purpose: ${object.primaryPurpose}\nMaximum storage: ${d3.format(",")(object.maxStorageAcreFt)} acre feet\nYear completed: ${object.yearCompleted}\nCondition: ${object.conditionAssessment}\nHazard potential: ${object.hazardPotential}`;
+}
 ```
 
 ```js
@@ -385,19 +329,19 @@ deckInstance.setProps({
     }),
         new ScatterplotLayer({
           id: 'scatter-plot',
+          pickable: true,
           data: damsSelectedState,
-          radiusScale: 0.020,
+          radiusScale: 0.010,
           radiusMinPixels: 2,
           radiusMaxPixels: 20,
           getRadius: d => d.maxStorageAcreFt,
           getPosition: d => [d.longitude, d.latitude, 0],
           getFillColor: d => d.conditionAssessment == "Not available" ? colorRange[0] : (d.conditionAssessment == "Satisfactory" ? colorRange[1] : (d.conditionAssessment == "Fair" ? colorRange[2] : (d.conditionAssessment == "Unsatisfactory" ? colorRange[3] : colorRange[4]))),
-          opacity: 1
+          opacity: 0.6
         }),
         new ScatterplotLayer({
           id: 'scatter-plot',
           data: capitalSelectedState,
-          radiusScale: 0.0010,
           radiusMinPixels: 8,
           getPosition: d => [d.longitude, d.latitude],
           getFillColor: [255, 255, 255, 255],
@@ -412,9 +356,10 @@ deckInstance.setProps({
         getText: d => d.description,
         fontFamily: 'Helvetica',
         fontWeight: 700,
-        background: true,
-        getBackgroundColor: [0, 0, 0, 180],
-        backgroundPadding: [2, 2, 2, 2],
+        fontSettings: ({
+          sdf: true,
+          }),
+        outlineWidth: 4,
         getSize: 16,
         getColor: [247,248,243, 255],
         getTextAnchor: 'middle',
@@ -422,6 +367,7 @@ deckInstance.setProps({
         pickable: true,
         getPixelOffset: [0, -20]
       })
-  ]
+  ],
+  getTooltip
 });
 ```

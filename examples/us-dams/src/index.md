@@ -35,13 +35,12 @@ const states = topojson.feature(usCounties, usCounties.objects.states);
 <div class="card" style="padding: 0px;">
 <div style="padding: 1rem;">
   <h2>U.S. dam locations and conditions</h2>
-  <h3>Zoom, scroll and rotate to explore different regions</h3>
+  ${colorLegend}
 </div>
-<div style="padding: 0px">
+<div>
 <figure style="max-width: none; position: relative;">
   <div id="container" style="border-radius: 8px; overflow: hidden; height: 620px; margin: 0rem 0;">
   </div>
-  <div style="position: absolute; top: 0rem; left: 1rem;">${colorLegend}</div>
 </figure>
 
 </div>
@@ -91,13 +90,13 @@ const colorLegend = Plot.plot({
   style: "color: 'currentColor';",
   x: {padding: 0, axis: null},
   marks: [
-    Plot.text(["Condition: "], {x: -1, dy: 0, fontWeight: 700, fill: "black", stroke: 'var(--theme-background-alt)'}),
+    Plot.text(["Condition: "], {x: -1, dy: 0, fontWeight: 700, fill: "currentColor", stroke: 'var(--theme-background-alt)'}),
     Plot.cellX(colorRange, {fill: ([r, g, b]) => `rgb(${r},${g},${b})`, inset: 2}),
-    Plot.text(["Not available"], {x: 0, dy: -20, stroke: 'var(--theme-background-alt)', fill: "black"}),
-    Plot.text(["Satisfactory"], {x: 1, dy: -20, stroke: 'var(--theme-background-alt)', fill: "black"}),
-    Plot.text(["Fair"], {x: 2, dy: -20, stroke: 'var(--theme-background-alt)', fill: "black"}),
-    Plot.text(["Unsatisfactory"], {x: 3, dy: -20, stroke: 'var(--theme-background-alt)', fill: "black"}),
-    Plot.text(["Poor"], {x: 4, dy: -20, stroke: 'var(--theme-background-alt)', fill: "black"})
+    Plot.text(["Not available"], {x: 0, dy: -20}),
+    Plot.text(["Satisfactory"], {x: 1, dy: -20}),
+    Plot.text(["Fair"], {x: 2, dy: -20}),
+    Plot.text(["Unsatisfactory"], {x: 3, dy: -20}),
+    Plot.text(["Poor"], {x: 4, dy: -20})
   ]
 });
 
@@ -108,6 +107,10 @@ const effects = [
     pointLight2: new PointLight({color: [255, 255, 255], intensity: 0, position: [-3.807751, 54.104682, 8000]})
   })
 ];
+
+function getTooltip({object}) {
+  return object && `Name: ${object.name}\nPrimary purpose: ${object.primaryPurpose}\nYear completed: ${object.yearCompleted}\nCondition: ${object.conditionAssessment}\nHazard potential: ${object.hazardPotential}`;
+}
 ```
 
 ```js
@@ -130,8 +133,8 @@ const initialViewState = {
   longitude: -93.6,
   latitude: 42,
   zoom: 5,
-  minZoom: 1,
-  maxZoom: 15,
+  minZoom: 3,
+  maxZoom: 7,
   pitch: 45,
   bearing: 20
 };
@@ -139,6 +142,7 @@ const initialViewState = {
 
 ```js
 deckInstance.setProps({
+  controller: true,
   layers: [
     new GeoJsonLayer({
       id: "base-map",
@@ -150,33 +154,37 @@ deckInstance.setProps({
     ,
         new ScatterplotLayer({
           id: 'scatter-plot',
+          pickable: true,
           data: dams,
           radiusScale: 0.0015,
-          radiusMinPixels: 1,
-          radiusMaxPixels: 20,
+          radiusMinPixels: 2,
+          radiusMaxPixels: 30,
           stroked: false,
           getRadius: d => d.maxStorageAcreFt,
           getPosition: d => [d.longitude, d.latitude, 0],
           getFillColor: d => d.conditionAssessment == "Not available" ? colorRange[0] : (d.conditionAssessment == "Satisfactory" ? colorRange[1] : (d.conditionAssessment == "Fair" ? colorRange[2] : (d.conditionAssessment == "Unsatisfactory" ? colorRange[3] : colorRange[4]))),
-          opacity: 1
+          opacity: 0.8
         }),
     new TextLayer({
         id: "text-layer",
         data: stateCentroids,
-        pickable: true,
         getPosition: d => [d.longitude, d.latitude],
         getText: d => d.state,
         fontFamily: 'Helvetica',
         fontWeight: 700,
         background: false,
+        fontSettings: ({
+          sdf: true,
+          }),
+        outlineWidth: 4,
         getSize: 14,
         getColor: [247,248,243, 255],
         getTextAnchor: 'middle',
         getAlignmentBaseline: 'center',
-        pickable: true,
         getPixelOffset: [0, -10]
       })
-  ]
+  ],
+  getTooltip
 });
 ```
 
@@ -214,13 +222,13 @@ return  Plot.plot({
   marginBottom: 40,
   marginTop: 0,
   grid: true,
-  x: {domain: conditions, label: "Condition assessment"},
+  x: {domain: conditions, label: "Condition"},
   y: {domain: hazardPotential, label: "Hazard potential"},
   r: {range: [3, 25]},
   color: {
     domain: conditions,
     range: conditionsColors,
-    label: "Condition assessment"
+    label: "Condition"
   },
   marks: [
     Plot.dot(dams, Plot.group({r: "count"}, {x: "conditionAssessment", y: "hazardPotential", fill: "conditionAssessment", tip: true, stroke: "currentColor", strokeWidth: 0.5}))
