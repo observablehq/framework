@@ -139,7 +139,7 @@ export async function build(
         const sourcePath = join(root, specifier);
         effects.output.write(`${faint("build")} ${sourcePath} ${faint("→")} `);
         const contents = await bundleStyles({path: sourcePath, minify: true});
-        const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
+        const hash = createHash("sha256").update(contents).update(specifier).digest("hex").slice(0, 8);
         const ext = extname(specifier);
         const alias = `/${join("_import", dirname(specifier), `${basename(specifier, ext)}.${hash}${ext}`)}`;
         aliases.set(resolveStylesheetPath(root, specifier), alias);
@@ -166,7 +166,7 @@ export async function build(
     }
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     const contents = await readFile(sourcePath);
-    const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
+    const hash = createHash("sha256").update(contents).update(file).digest("hex").slice(0, 8);
     const ext = extname(file);
     const alias = `/${join("_file", dirname(file), `${basename(file, ext)}.${hash}${ext}`)}`;
     aliases.set(loaders.resolveFilePath(file), alias);
