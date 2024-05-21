@@ -1,8 +1,7 @@
-import {extname, join} from "node:path/posix";
+import {extname} from "node:path/posix";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
 import type {CallExpression} from "acorn";
 import {simple} from "acorn-walk";
-import type {PluginBuild} from "esbuild";
 import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
@@ -38,37 +37,31 @@ export async function bundleStyles({
   minify = false,
   path,
   theme,
-  aliases
+  resolve
 }: {
   minify?: boolean;
   path?: string;
   theme?: string[];
-  aliases?: Map<string, string>;
-}): Promise<{contents: string; files: Set<string>}> {
-  const files = new Set<string>();
-  const assets = {
-    name: "resolve CSS assets",
-    setup(build: PluginBuild) {
-      build.onResolve({filter: /^\w+:\/\//}, (args) => ({path: args.path, external: true}));
-      build.onResolve({filter: /./}, (args) => {
-        if (args.path.endsWith(".css") || args.path.match(/^[#.]/)) return;
-        files.add(args.path);
-        const path = join("..", aliases?.get(args.path) ?? join("_file", args.path));
-        return {path, external: true};
-      });
-    }
-  };
+  resolve?: ({path}: {path: string}) => {path: string; external: true} | undefined;
+}): Promise<string> {
   const result = await build({
     bundle: true,
     ...(path ? {entryPoints: [path]} : {stdin: {contents: renderTheme(theme!), loader: "css"}}),
     write: false,
-    plugins: [assets],
+    plugins: [
+      {
+        name: "resolve CSS assets",
+        setup(build) {
+          build.onResolve({filter: /^\w+:\/\//}, ({path}) => ({path, external: true}));
+          if (resolve) build.onResolve({filter: /./}, resolve);
+        }
+      }
+    ],
     minify,
     alias: STYLE_MODULES
   });
   const text = result.outputFiles[0].text;
-  const contents = rewriteInputsNamespace(text); // TODO only for inputs
-  return {contents, files};
+  return rewriteInputsNamespace(text); // TODO only for inputs
 }
 
 export async function rollupClient(

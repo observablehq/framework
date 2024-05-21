@@ -120,13 +120,13 @@ export class PreviewServer {
       } else if (pathname === "/_observablehq/minisearch.json") {
         end(req, res, await searchIndex(config), "application/json");
       } else if ((match = /^\/_observablehq\/theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(pathname))) {
-        end(req, res, (await bundleStyles({theme: match.groups!.theme?.split(",") ?? []})).contents, "text/css");
+        end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
       } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".js")) {
         const path = getClientPath(pathname.slice("/_observablehq/".length));
         end(req, res, await rollupClient(path, root, pathname), "text/javascript");
       } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".css")) {
         const path = getClientPath(pathname.slice("/_observablehq/".length));
-        end(req, res, (await bundleStyles({path})).contents, "text/css");
+        end(req, res, await bundleStyles({path}), "text/css");
       } else if (pathname.startsWith("/_node/")) {
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
       } else if (pathname.startsWith("/_npm/")) {
@@ -138,7 +138,19 @@ export class PreviewServer {
         try {
           if (pathname.endsWith(".css")) {
             await access(filepath, constants.R_OK);
-            end(req, res, (await bundleStyles({path: filepath})).contents, "text/css");
+            end(
+              req,
+              res,
+              await bundleStyles({
+                path: filepath,
+                resolve(args) {
+                  if (args.path.endsWith(".css") || args.path.match(/^[#?]/) || args.path.match(/^\w+:/)) return;
+                  const path = loaders.resolveFilePath(args.path);
+                  return {path, external: true};
+                }
+              }),
+              "text/css"
+            );
             return;
           } else if (pathname.endsWith(".js")) {
             const input = await readFile(join(root, path), "utf-8");

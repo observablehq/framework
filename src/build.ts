@@ -92,7 +92,6 @@ export async function build(
 
   // For cache-breaking we rename most assets to include content hashes.
   const aliases = new Map<string, string>();
-  const plainaliases = new Map<string, string>();
 
   // Add the search bundle and data, if needed.
   if (config.search) {
@@ -107,7 +106,7 @@ export async function build(
 
   // Generate the client bundles (JavaScript and styles). TODO Use a content
   // hash, or perhaps the Framework version number for built-in modules.
-  const delayedStylesheets = new Set<string>();
+  const localStylesheets = new Set<string>();
   if (addPublic) {
     for (const path of globalImports) {
       if (path.startsWith("/_observablehq/") && path.endsWith(".js")) {
@@ -125,11 +124,11 @@ export async function build(
         effects.output.write(`${faint("build")} ${specifier} ${faint("→")} `);
         if (specifier.startsWith("observablehq:theme-")) {
           const match = /^observablehq:theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(specifier);
-          const {contents} = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? [], minify: true});
+          const contents = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? [], minify: true});
           await effects.writeFile(path, contents);
         } else {
           const clientPath = getClientPath(path.slice("/_observablehq/".length));
-          const {contents} = await bundleStyles({path: clientPath, minify: true});
+          const contents = await bundleStyles({path: clientPath, minify: true});
           await effects.writeFile(`/_observablehq/${specifier.slice("observablehq:".length)}`, contents);
         }
       } else if (specifier.startsWith("npm:")) {
@@ -138,8 +137,16 @@ export async function build(
         const sourcePath = await populateNpmCache(root, path); // TODO effects
         await effects.copyFile(sourcePath, path);
       } else if (!/^\w+:/.test(specifier)) {
-        delayedStylesheets.add(specifier);
-        for (const file of (await bundleStyles({path: join(root, specifier)})).files) files.add(file);
+        localStylesheets.add(specifier);
+        await bundleStyles({
+          path: join(root, specifier),
+          resolve(args) {
+            if (args.path.endsWith(".css") || args.path.match(/^[#?]/) || args.path.match(/^\w+:/)) return;
+            files.add(args.path);
+            loaders.resolveFilePath(args.path);
+            return {path: "(pending)", external: true};
+          }
+        });
       }
     }
   }
@@ -166,16 +173,22 @@ export async function build(
     const ext = extname(file);
     const alias = `/${join("_file", dirname(file), `${basename(file, ext)}.${hash}${ext}`)}`;
     aliases.set(loaders.resolveFilePath(file), alias);
-    plainaliases.set(file, alias);
     await effects.writeFile(alias, contents);
   }
 
-  // Write delayed stylesheets
+  // Write local stylesheets.
   if (addPublic) {
-    for (const specifier of delayedStylesheets) {
+    for (const specifier of localStylesheets) {
       const sourcePath = join(root, specifier);
       effects.output.write(`${faint("build")} ${sourcePath} ${faint("→")} `);
-      const {contents} = await bundleStyles({path: sourcePath, minify: true, aliases: plainaliases});
+      const contents = await bundleStyles({
+        path: sourcePath,
+        minify: true,
+        resolve(args) {
+          if (args.path.endsWith(".css") || args.path.match(/^[#?]/) || args.path.match(/^\w+:/)) return;
+          return {path: join("..", aliases.get(loaders.resolveFilePath(args.path))!), external: true};
+        }
+      });
       const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
       const ext = extname(specifier);
       const alias = `/${join("_import", dirname(specifier), `${basename(specifier, ext)}.${hash}${ext}`)}`;
