@@ -1,8 +1,8 @@
 # DuckDB data loader
 
-Here’s a bash data loader that uses curl to download a CSV file from Eurostat (the data portal from the statistical office of the European Union), then calls [DuckDB](https://duckdb.org/) to filter it and saves the result as [Apache Parquet](https://observablehq.com/framework/lib/arrow#apache-parquet).
+Here’s a shell script data loader that uses curl to download a CSV file, then uses the [DuckDB CLI](https://duckdb.org/docs/api/cli/overview.html) to filter it, and finally outputs the result as [Apache Parquet](https://observablehq.com/framework/lib/arrow#apache-parquet).
 
-The example illustrates the technique with statistics about education to modern foreign languages across Europe ([educ_uoe_lang01](https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_lang01/default/table?lang=en&category=educ.educ_lang.educ_uoe_lang)).
+The example data is statistics about the education of modern foreign languages ([educ_uoe_lang01](https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_lang01/default/table?lang=en&category=educ.educ_lang.educ_uoe_lang)) from Eurostat, the data portal of the statistical office of the European Union.
 
 The data loader lives in [`src/educ_uoe_lang01.parquet.sh`](./src/educ_uoe_lang01.parquet.sh).
 
@@ -34,7 +34,7 @@ rm $TMPDIR/$CODE.csv $TMPDIR/$CODE.parquet  # Clean up
 
 <div class="note">
 
-To run this data loader, you’ll need to install the `duckdb` binary, as well as `curl` and `gunzip` if they are not already available on your system.
+To run this data loader, you’ll need to install the DuckDB CLI (`duckdb`), as well as `curl` and `gunzip` if they are not already installed on your system.
 
 </div>
 
@@ -50,7 +50,7 @@ We can display this dataset with Inputs.table:
 Inputs.table(languages)
 ```
 
-We can also make a quick chart of the state of learning of modern foreign languages in European countries using [Observable Plot](https://observablehq/com/plot/); note that the stacked percentages go above 100% in most countries because a lot of pupils learn at least two foreign languages. Ireland (IE) is the only exception (as English is not taught as a foreign language).
+We can also make a quick chart of most-frequently taught modern foreign languages in Europe using [Observable Plot](https://observablehq.com/plot/); note that the stacked percentages go above 100% in most countries because many pupils learn at least two foreign languages. Ireland (IE) is the only exception as English is not taught as a foreign language.
 
 ```js echo
 const domain = d3.groupSort(languages, v => -d3.sum(v, d => d.OBS_VALUE), d => d.language)
