@@ -4,38 +4,34 @@ theme: wide
 
 # U.S. dams: national overview
 
-## Data from the U.S. National Inventory of Dams (NID)
+## Data from the [National Inventory of Dams](https://nid.sec.usace.army.mil/#/)
 
 ```js
+// Import deck.gl components for interactive map
 import deck from "npm:deck.gl";
-```
 
-```js
-const dams = FileAttachment("data/dam-simple.csv").csv({typed: true});
-```
-
-```js
 const {DeckGL, AmbientLight, GeoJsonLayer, TextLayer, HexagonLayer, LightingEffect, PointLight, ScatterplotLayer} = deck;
 ```
 
 ```js
-// For deck.gl map
-const dataArray = await FileAttachment("data/dam-simple.csv").csv({array: true, typed: true});
+// NID dams data:
+const dams = FileAttachment("data/dam-simple.csv").csv({typed: true});
 
-// just longitude/latitudes in arrays
-const dataMap = dataArray.map(d => d.slice(3, 5).reverse()).slice(1);
-
+// State centroid locations:
 const stateCentroids = FileAttachment("data/states-centroids.csv").csv({typed: true});
 
+// US county-level spatial data
 const usCounties = await FileAttachment("./data/us-counties-10m.json").json();
 
+// US state outlines
 const states = topojson.feature(usCounties, usCounties.objects.states);
 ```
 
-<div class="card" style="padding: 0px;">
+<div class="grid grid-cols-3">
+<div class="card grid-colspan-2" style="padding: 0px;">
 <div style="padding: 1rem;">
-  <h2>U.S. dam locations and conditions</h2>
-  <h3>Zoom and scroll, or hold down shift to rotate.
+  <h2>U.S. dam locations</h2>
+  <h3>Zoom and scroll, or hold down Shift to rotate.
   ${colorLegend}
 </div>
 <div>
@@ -43,22 +39,26 @@ const states = topojson.feature(usCounties, usCounties.objects.states);
   <div id="container" style="border-radius: 8px; overflow: hidden; height: 620px; margin: 0rem 0;">
   </div>
 </figure>
+</div>
+</div>
+  <div class="card grid-colspan-1">
+    <h2>Dam counts by state or territory</h2>
+    <h3>Total dams listed in NID: ${d3.format(",")(dams.length)}</h3>
+    ${resize((width, height) => countsByState(width, height))}
+  </div>
+</div>
 
-</div>
-</div>
+<!-- Text box with poor condition, high risk summary -->
 <div class="card" style="max-width: none; font-size: 1.2rem">
 <span style="color: var(--theme-foreground-muted)">Of ${d3.format(",")(dams.length)} U.S. dams included in the National Inventory of Dams,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(dams.filter(d => d.conditionAssessment == "Poor").length)}</span><span style="color: var(--theme-foreground-muted)"> are listed as being in Poor condition. Of those in Poor condition,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(dams.filter(d => d.conditionAssessment == "Poor" && d.hazardPotential == "High").length)}</span> <span style="color: var(--theme-foreground-muted)">have High hazard potential, where "downstream flooding would likely result in loss of human life."</span>
 </div>
 
+<!-- Risk bubble chart and year completed histogram -->
 <div class="grid grid-cols-2 grid-rows-3" style="grid-auto-rows: 350px">
  <div class="card grid-colspan-1 grid-rowspan-1">
    <h2>Nationwide dam risk: hazard potential and condition</h2>
    <h3>Size indicates number of dams at each intersection</h3>
    ${resize((width, height) => conditionHazardGrid(width, height))}
- </div>
- <div class="card grid-colspan-1 grid-rowspan-2">
-   <h2>State dam counts and conditions at-a-glance</h2>
-   ${resize((width, height) => conditionsByState(width, height))}
  </div>
  <div class="card grid-colspan-1 grid-rowspan-1">
    <h2>Dam condition by year completed</h2>
@@ -72,8 +72,9 @@ const states = topojson.feature(usCounties, usCounties.objects.states);
   ${Inputs.table(searchUsDamsValue, {columns: ["name", "state", "county", "primaryPurpose", "hazardPotential", "conditionAssessment"], header: {name: "Name", state: "State", county: "County", primaryPurpose: "Purpose", hazardPotential: "Hazard potential", conditionAssessment: "Condition assessment"}})}
   </div>
 
+<!-- Create interactive map with deck.gl -->
+
 ```js
-// deck.gl setup
 const colorRange = [
   [59, 82, 139],
   [33, 145, 140],
@@ -103,10 +104,6 @@ const effects = [
     pointLight2: new PointLight({color: [255, 255, 255], intensity: 0.8, position: [-3.807751, 54.104682, 8000]})
   })
 ];
-
-function getTooltip({object}) {
-  return object && `Name: ${object.name}\nPrimary purpose: ${object.primaryPurpose}\nYear completed: ${object.yearCompleted}\nCondition: ${object.conditionAssessment}\nHazard potential: ${object.hazardPotential}`;
-}
 ```
 
 ```js
@@ -150,8 +147,8 @@ deckInstance.setProps({
     new HexagonLayer({
       id: 'hexbin-plot',
       data: dams,
-      coverage: 0.3,
-      radius: 7000,
+      coverage: 0.2,
+      radius: 6000,
       upperPercentile: 99,
       colorRange,
       elevationScale: 100,
@@ -182,14 +179,13 @@ deckInstance.setProps({
         getAlignmentBaseline: 'center',
         getPixelOffset: [0, -10]
       })
-  ],
-  getTooltip
+  ]
 });
 ```
 
-```js
-// Nationwide dam conditions and hazard potential
+<!-- Create bubble chart of dam risk counts -->
 
+```js
 const conditions = [
   "Not available",
   "Satisfactory",
@@ -223,7 +219,7 @@ return  Plot.plot({
   grid: true,
   x: {domain: conditions, label: "Condition"},
   y: {domain: hazardPotential, label: "Hazard potential"},
-  r: {range: [3, 25]},
+  r: {range: [3, 25], label: "Number of dams"},
   color: {
     domain: conditions,
     range: conditionsColors,
@@ -236,47 +232,51 @@ return  Plot.plot({
 }
 ```
 
-```js
-// Dam condition by year completed
-// TODO add interactivity here
+<!-- Create histogram by year completed -->
 
+```js
 function conditionByAge(width, height) {
-    return Plot.plot({
-        width,
-        height: height - 50,
-        marginBottom: 40,
-        marginTop: 0,
-        x: {label: "Year construction finished", tickFormat: "Y", labelAnchor: "center", labelArrow: "none"},
-        y: {label: "Number of dams", grid: true, ticks: 5, tickSize: 0},
-        color: {domain: conditions, range: conditionsColors, legend: true},
-        marks: [
-            Plot.rectY(dams, Plot.binX({y: "count"}, {x: "yearCompleted", fill: "conditionAssessment", order: conditions, interval: 10, tip: true}))
-        ]
-    })
+  return Plot.plot({
+    width,
+    height: height - 50,
+    marginBottom: 40,
+    marginTop: 0,
+    x: {label: "Year construction finished", tickFormat: "Y", labelAnchor: "center", labelArrow: "none"},
+    y: {label: "Number of dams", grid: true, ticks: 5, tickSize: 0},
+    color: {domain: conditions, range: conditionsColors, legend: true, label: "Condition"},
+    marks: [
+      Plot.rectY(dams, Plot.binX({y: "count"}, {x: "yearCompleted", fill: "conditionAssessment", order: conditions, interval: 10, tip: true}))
+      ]
+      })
 };
 ```
 
+<!-- Lollipop chart of dams by state / territory -->
+
 ```js
-function conditionsByState(width, height) {
+function countsByState(width, height) {
 
   return Plot.plot({
     width,
-    height: height - 55,
-    marginTop: -5,
+    height: height - 20,
+    marginTop: 10,
     marginLeft: 100,
     marginBottom: 35,
     insetTop: -5,
     insetBottom: -5,
-    color: {domain: conditions, range: conditionsColors, legend: true},
-    y: {label: null},
+    color: {scheme: "Viridis"},
+    y: {label: "State"},
     x: {label: "Number of dams", grid: true, ticks: 5, tickSize: 0},
     marks: [
-      Plot.barX(dams, Plot.groupY({x: "count"}, {y: "state", sort: {y: "x", reverse: true}, fill: "conditionAssessment", order: conditions, tip: true, insetTop: 2}))
+      Plot.ruleY(dams, Plot.groupY({x: "count"}, {y: "state", strokeWidth: 0.5, sort: {y: "x", reverse: true}})),
+      Plot.dot(dams, Plot.groupY({x: "count", fill: "count"}, {y: "state", r: 4, stroke: "currentColor", strokeWidth: 0.5, tip: true, sort: {y: "x", reverse: true}, title: d => `${d.state}`}))
     ]
   });
 
 }
 ```
+
+<!-- Searchable table -->
 
 ```js
 // For search with table

@@ -2,9 +2,10 @@
 theme: wide
 ---
 
-# Dam summaries by state
+# Dam summary by state or territory
 
 ```js
+// Read in static files
 const dams = FileAttachment("data/dam-simple.csv").csv({ typed: true });
 
 const fips = FileAttachment("data/county_fips_master.csv").csv({ typed: true });
@@ -60,15 +61,13 @@ const conditionsColors = [
 ```js
 const pickState = view(
   Inputs.select(
-    dams
-      .filter((d) => (d.state != "Guam") & (d.state != "Puerto Rico"))
-      .map((d) => d.state),
+    dams.map((d) => d.state),
     {
       multiple: false,
-      label: "Pick a state:",
+      label: "Pick a state or territory:",
       unique: true,
       sort: true,
-      value: "Oregon",
+      value: "Louisiana",
     }
   )
 );
@@ -88,7 +87,8 @@ const damsSelectedState = dams.filter((d) => d.state == pickState);
   </div>
   <div class="card grid-colspan-2 grid-rowspan-4" style="padding: 0px">
     <div style="padding: 1em">
-      <h3>Size represents maximum storage capacity (acre-feet). The scale should only be used to compare dam sizes within ${pickState}, not across states.</h3>
+      <h2>${pickState} dam locations and conditions</h2>
+      <h3>Zoom and scroll, or hold shift to rotate. Hover on individual dams for more information. Size represents maximum storage capacity (acre-feet). The scale should only be used to compare dam sizes within ${pickState}, not across states.</h3>
       ${resize((width) => stackedBarChart(width))}
     </div>
     <div>
@@ -105,15 +105,15 @@ const damsSelectedState = dams.filter((d) => d.state == pickState);
 </div>
 
 <div class="grid">
-<div class="card" style="padding: 0px">
-<div style="padding: 1em">
-${damSearch}
-</div>
-${Inputs.table(damSearchValue, {columns: ["name", "county", "ownerType", "primaryDamType", "maxStorageAcreFt", "hazardPotential", "conditionAssessment"], header: {name: "Name", county: "County", ownerType: "Ownership", primaryDamType: "Type (primary)", maxStorageAcreFt: "Maximum storage (acre-feet)", hazardPotential: "Hazard potential", conditionAssessment: "Condition"}})}
-</div>
+  <div class="card" style="padding: 0px">
+    <div style="padding: 1em">
+      ${damSearch}
+    </div>
+    ${Inputs.table(damSearchValue, {columns: ["name", "county", "ownerType", "primaryDamType", "maxStorageAcreFt", "hazardPotential", "conditionAssessment"], header: {name: "Name", county: "County", ownerType: "Ownership", primaryDamType: "Type (primary)", maxStorageAcreFt: "Maximum storage (acre-feet)", hazardPotential: "Hazard potential", conditionAssessment: "Condition"}})}
+  </div>
 </div>
 
-<!-- County FIPS codes from: https://github.com/kjhealy/fips-codes/blob/master/county_fips_master.csv -->
+<!-- Create horizontal bar chart for above map -->
 
 ```js
 const conditionCounts = d3
@@ -144,22 +144,22 @@ function stackedBarChart(width) {
           rx: 2,
           insetRight: 1
         })
-      ),
-      //Plot.textX(conditionCounts, Plot.stackX({x: "count", text: "condition", z: "condition", order: conditions, inset: 0.5, dy: -20, rotate: -30, textAnchor: "start"})),
+      )
     ],
   });
 }
 ```
 
+<!-- Create horizontal bar chart of dam types and ownership -->
+
 ```js
-// Bar chart of dam purpose and ownership
 function purposeOwnership(width, height) {
   return Plot.plot({
     width,
     marginTop: 0,
     marginBottom: 40,
     height: height - 55,
-    marginLeft: 220,
+    marginLeft: 240,
     y: {label: null, label: "Primary purpose"},
     x: {grid: true, label:"Number of dams"},
     color: {legend: true, scheme: "Set2", domain: ["Private", "Public Utility", "Local Government", "State", "Federal"], label: "Ownership"},
@@ -171,8 +171,9 @@ function purposeOwnership(width, height) {
 }
 ```
 
+<!-- Creates bubble chart of dam risk (hazard and condition) -->
+
 ```js
-// Bubble squares of hazard and condition
 function conditionHeatmap(width, height) {
   return Plot.plot({
   width,
@@ -197,56 +198,25 @@ function conditionHeatmap(width, height) {
 }
 ```
 
-```js
-// Search input (for searchable table)
-const damSearch = Inputs.search(damsSelectedState);
-```
+<!-- Create searchable table -->
 
 ```js
+const damSearch = Inputs.search(damsSelectedState);
+
 const damSearchValue = Generators.input(damSearch);
 ```
 
-```js run=false echo=false
-// Year completed histogram
-function yearCompletedHistogram(width) {
-  return Plot.plot({
-  width,
-  height: 240,
-  marginBottom: 40,
-  color: {legend: true, domain: conditions, range: conditionsColors},
-  x: {tickFormat: "Y", label: "Year dam completed"},
-  y: {grid: true},
-  marks: [
-    Plot.rectY(damsSelectedState, Plot.binX({y: "count"}, {x: "yearCompleted", fill: "conditionAssessment", interval: 10, order: conditions, tip: true})),
-    Plot.ruleY([0])
-  ]
-});
-}
-```
+<!-- Create interactived map with deck.gl -->
 
 ```js
-// For interactive map (deck.gl)
 import deck from "npm:deck.gl";
-```
 
-```js
 const {DeckGL, AmbientLight, GeoJsonLayer, TextLayer, HexagonLayer, LightingEffect, PointLight, ScatterplotLayer} = deck;
 ```
 
 ```js
-const dataArray = await FileAttachment("data/dam-simple.csv").csv({array: true, typed: true});
+const stateCentroids = await FileAttachment("data/states-centroids.csv").csv({typed: true});
 
-// just longitude/latitudes in arrays
-const dataMap = dataArray.map(d => d.slice(3, 5).reverse()).slice(1);
-
-const stateCentroids = FileAttachment("data/states-centroids.csv").csv({typed: true});
-
-// State bounding boxes from: https://gist.github.com/a8dx/2340f9527af64f8ef8439366de981168
-
-const stateBoundingBox = FileAttachment("data/US_State_Bounding_Boxes.csv").csv({typed: true});
-```
-
-```js
 // Get capital latitude & longitude
 const pickStateLongitude = stateCentroids.filter(d => d.state == pickState)[0].longitude;
 
@@ -284,12 +254,6 @@ const deckInstance = new DeckGL({
   container,
   initialViewState,
   controller: true,
-});
-
-// clean up if this code re-runs
-invalidation.then(() => {
-  deckInstance.finalize();
-  container.innerHTML = "";
 });
 ```
 
