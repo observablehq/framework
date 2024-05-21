@@ -67,7 +67,7 @@ const pickState = view(
       label: "Pick a state or territory:",
       unique: true,
       sort: true,
-      value: "Louisiana",
+      value: "Louisiana"
     }
   )
 );
@@ -254,6 +254,12 @@ const deckInstance = new DeckGL({
   container,
   initialViewState,
   controller: true,
+});
+
+// Replace (instead of overlay) map on re-run
+invalidation.then(() => {
+  deckInstance.finalize();
+  container.innerHTML = "";
 });
 ```
 
