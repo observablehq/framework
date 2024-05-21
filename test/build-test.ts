@@ -31,7 +31,8 @@ describe("build", () => {
       ? it.only
       : skip ||
         (name.endsWith(".posix") && os.platform() === "win32") ||
-        (name.endsWith(".win32") && os.platform() !== "win32")
+        (name.endsWith(".win32") && os.platform() !== "win32") ||
+        (name.endsWith(".darwin-public") && os.platform() !== "darwin")
       ? it.skip
       : it)(`${inputRoot}/${name}`, async () => {
       const actualDir = join(outputRoot, `${outname}-changed`);
