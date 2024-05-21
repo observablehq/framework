@@ -35,6 +35,7 @@ const states = topojson.feature(usCounties, usCounties.objects.states);
 <div class="card" style="padding: 0px;">
 <div style="padding: 1rem;">
   <h2>U.S. dam locations and conditions</h2>
+  <h3>Zoom and scroll, or hold down shift to rotate.
   ${colorLegend}
 </div>
 <div>
@@ -74,11 +75,10 @@ const states = topojson.feature(usCounties, usCounties.objects.states);
 ```js
 // deck.gl setup
 const colorRange = [
-  [148,152,160], // not available
-  [66,105,208], // satisfactory
-  [151,187,245], // fair
-  [239, 213, 24], // unsatisfactory
-  [255, 114, 92] // poor
+  [59, 82, 139],
+  [33, 145, 140],
+  [94, 201, 98],
+  [253, 231, 37]
 ];
 
 const colorLegend = Plot.plot({
@@ -90,21 +90,17 @@ const colorLegend = Plot.plot({
   style: "color: 'currentColor';",
   x: {padding: 0, axis: null},
   marks: [
-    Plot.text(["Condition: "], {x: -1, dy: 0, fontWeight: 700, fill: "currentColor", stroke: 'var(--theme-background-alt)'}),
     Plot.cellX(colorRange, {fill: ([r, g, b]) => `rgb(${r},${g},${b})`, inset: 2}),
-    Plot.text(["Not available"], {x: 0, dy: -20}),
-    Plot.text(["Satisfactory"], {x: 1, dy: -20}),
-    Plot.text(["Fair"], {x: 2, dy: -20}),
-    Plot.text(["Unsatisfactory"], {x: 3, dy: -20}),
-    Plot.text(["Poor"], {x: 4, dy: -20})
+    Plot.text(["Fewer dams"], {frameAnchor: "top-left", dy: -12}),
+    Plot.text(["More dams"], {frameAnchor: "top-right", dy: -12})
   ]
 });
 
 const effects = [
   new LightingEffect({
-    ambientLight: new AmbientLight({color: [255, 255, 255], intensity: 0}),
-    pointLight: new PointLight({color: [255, 255, 255], intensity: 0, position: [-0.144528, 49.739968, 80000]}),
-    pointLight2: new PointLight({color: [255, 255, 255], intensity: 0, position: [-3.807751, 54.104682, 8000]})
+    ambientLight: new AmbientLight({color: [255, 255, 255], intensity: 1}),
+    pointLight: new PointLight({color: [255, 255, 255], intensity: 0.8, position: [-0.144528, 49.739968, 80000]}),
+    pointLight2: new PointLight({color: [255, 255, 255], intensity: 0.8, position: [-3.807751, 54.104682, 8000]})
   })
 ];
 
@@ -130,9 +126,9 @@ invalidation.then(() => {
 
 ```js
 const initialViewState = {
-  longitude: -93.6,
-  latitude: 42,
-  zoom: 5,
+  longitude: -100,
+  latitude: 36,
+  zoom: 4.1,
   minZoom: 3,
   maxZoom: 7,
   pitch: 45,
@@ -151,20 +147,23 @@ deckInstance.setProps({
       getLineColor: [255,255,255, 100],
       getFillColor: [38, 38, 38]
     }),
-    ,
-        new ScatterplotLayer({
-          id: 'scatter-plot',
-          pickable: true,
-          data: dams,
-          radiusScale: 0.0015,
-          radiusMinPixels: 2,
-          radiusMaxPixels: 30,
-          stroked: false,
-          getRadius: d => d.maxStorageAcreFt,
-          getPosition: d => [d.longitude, d.latitude, 0],
-          getFillColor: d => d.conditionAssessment == "Not available" ? colorRange[0] : (d.conditionAssessment == "Satisfactory" ? colorRange[1] : (d.conditionAssessment == "Fair" ? colorRange[2] : (d.conditionAssessment == "Unsatisfactory" ? colorRange[3] : colorRange[4]))),
-          opacity: 0.8
-        }),
+    new HexagonLayer({
+      id: 'hexbin-plot',
+      data: dams,
+      coverage: 0.3,
+      radius: 7000,
+      upperPercentile: 99,
+      colorRange,
+      elevationScale: 100,
+      elevationRange: [50, 15000],
+      extruded: true,
+      getPosition: d => [d.longitude, d.latitude],
+      opacity: 1,
+      material: {
+        ambient: 1,
+        specularColor: [51, 51, 51]
+      }
+    }),
     new TextLayer({
         id: "text-layer",
         data: stateCentroids,
