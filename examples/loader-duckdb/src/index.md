@@ -4,16 +4,20 @@ Here’s a shell script data loader that uses curl to download a CSV file, then 
 
 The example data is statistics about the education of modern foreign languages ([educ_uoe_lang01](https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_lang01/default/table?lang=en&category=educ.educ_lang.educ_uoe_lang)) from Eurostat, the data portal of the statistical office of the European Union.
 
-The data loader lives in [`src/educ_uoe_lang01.parquet.sh`](https://github.com/observablehq/framework/blob/main/examples/loader-duckdb/src/educ_uoe_lang01.parquet.sh).
-
 Because the Eurostat API does not compress data as part of the http response, but instead offers to send compressed data, we download it outside of DuckDB — here using [curl](https://curl.se/) — then uncompress it with [gunzip](https://en.wikipedia.org/wiki/Gzip). The raw file is saved to a temporary directory, which makes it much faster to iterate on the data loader when we want to tweak the query, for example to change the education level or the time period considered.
 
 ```sh
 export CODE="educ_uoe_lang01"
-export URL='https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/'$CODE'/?format=SDMX-CSV&compressed=true&i'
+export URL="https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/$CODE/?format=SDMX-CSV&compressed=true&i"
 
-if [ ! -f "$TMPDIR/$CODE.csv.gz" ]; then curl "$URL" --output $TMPDIR/$CODE.csv.gz; fi
-gunzip --keep $TMPDIR/$CODE.csv.gz
+# create a temp directory to download and process the data
+export TMPDIR="src/.observablehq/cache/loaders"
+mkdir -p $TMPDIR
+
+if [ ! -f "$TMPDIR/$CODE.csv" ]; then
+  curl "$URL" --output $TMPDIR/$CODE.csv.gz
+  gunzip $TMPDIR/$CODE.csv.gz
+fi
 
 duckdb :memory: << EOF
 COPY (
@@ -26,10 +30,9 @@ COPY (
     AND unit = 'PC' -- ignore absolute numbers, keep percentages
     AND language != 'TOTAL' -- ignore total
     AND length(geo) = 2 -- ignore groupings such as EU_27
-) TO '$TMPDIR/$CODE.parquet' (COMPRESSION gzip);
+) TO '$TMPDIR/$CODE.parquet' (FORMAT parquet, COMPRESSION gzip);
 EOF
-cat $TMPDIR/$CODE.parquet >&1  # Write output to stdout
-rm $TMPDIR/$CODE.csv $TMPDIR/$CODE.parquet  # Clean up
+cat $TMPDIR/$CODE.parquet  # Write output to stdout
 ```
 
 <div class="note">

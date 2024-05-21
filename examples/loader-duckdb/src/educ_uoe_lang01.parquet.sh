@@ -1,8 +1,14 @@
 export CODE="educ_uoe_lang01"
-export URL='https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/'$CODE'/?format=SDMX-CSV&compressed=true&i'
+export URL="https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/$CODE/?format=SDMX-CSV&compressed=true&i"
 
-if [ ! -f "$TMPDIR/$CODE.csv.gz" ]; then curl "$URL" --output $TMPDIR/$CODE.csv.gz; fi
-gunzip --keep $TMPDIR/$CODE.csv.gz
+# create a temp directory to download and process the data
+export TMPDIR="src/.observablehq/cache/loaders" 
+mkdir -p $TMPDIR
+
+if [ ! -f "$TMPDIR/$CODE.csv" ]; then
+  curl "$URL" --output $TMPDIR/$CODE.csv.gz
+  gunzip $TMPDIR/$CODE.csv.gz
+fi
 
 duckdb :memory: << EOF
 COPY (
@@ -17,5 +23,4 @@ COPY (
     AND length(geo) = 2 -- ignore groupings such as EU_27
 ) TO '$TMPDIR/$CODE.parquet' (COMPRESSION gzip);
 EOF
-cat $TMPDIR/$CODE.parquet >&1  # Write output to stdout
-rm $TMPDIR/$CODE.csv $TMPDIR/$CODE.parquet  # Clean up
+cat $TMPDIR/$CODE.parquet  # Write output to stdout
