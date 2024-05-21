@@ -4,7 +4,7 @@ Here’s a shell script data loader that uses curl to download a CSV file, then 
 
 The example data is statistics about the education of modern foreign languages ([educ_uoe_lang01](https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_lang01/default/table?lang=en&category=educ.educ_lang.educ_uoe_lang)) from Eurostat, the data portal of the statistical office of the European Union.
 
-The data loader lives in [`src/educ_uoe_lang01.parquet.sh`](./src/educ_uoe_lang01.parquet.sh).
+The data loader lives in [`src/educ_uoe_lang01.parquet.sh`](https://github.com/observablehq/framework/blob/main/examples/loader-duckdb/src/educ_uoe_lang01.parquet.sh).
 
 Because the Eurostat API does not compress data as part of the http response, but instead offers to send compressed data, we download it outside of DuckDB — here using [curl](https://curl.se/) — then uncompress it with [gunzip](https://en.wikipedia.org/wiki/Gzip). The raw file is saved to a temporary directory, which makes it much faster to iterate on the data loader when we want to tweak the query, for example to change the education level or the time period considered.
 
