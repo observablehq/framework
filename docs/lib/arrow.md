@@ -60,12 +60,19 @@ Visualized with [Plot’s difference mark](https://observablehq.com/plot/marks/d
 
 ```js echo
 Plot.plot({
+  x: {type: "utc"},
   marks: [
     Plot.ruleY([0]),
     Plot.differenceY(table, {x: "date", y: "value"})
   ]
 })
 ```
+
+<div class="note">
+
+The chart above explicitly specifies _x_ as a UTC scale because, as of [apache-arrow@16.0.0](https://www.npmjs.com/package/apache-arrow/v/16.0.0), dates are represented as Unix timestamps (number of milliseconds since [Epoch](<https://en.wikipedia.org/wiki/Epoch_(computing)>)).
+
+</div>
 
 ## Apache Parquet
 
