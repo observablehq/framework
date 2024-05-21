@@ -6,18 +6,21 @@
   color: inherit;
 }
 
-#observablehq-header a[target="_blank"] {
+#observablehq-header a[target="_blank"],
+.observablehq-link a[target="_blank"] {
   display: flex;
   align-items: center;
   gap: 0.25rem;
   text-decoration: none;
 }
 
-#observablehq-header a[target="_blank"]:hover span {
+#observablehq-header a[target="_blank"]:hover span,
+.observablehq-link a[target="_blank"]:hover span {
   text-decoration: underline;
 }
 
-#observablehq-header a[target="_blank"]::after {
+#observablehq-header a[target="_blank"]::after,
+.observablehq-link a[target="_blank"]::after {
   content: "\2197";
 }
 
@@ -27,6 +30,10 @@
 
 #observablehq-header a[target="_blank"]:not(:hover, :focus)::after {
   color: var(--theme-foreground-muted);
+}
+
+.observablehq-link a[target="_blank"]:not(:hover, :focus)::after {
+  color: var(--theme-foreground-faint);
 }
 
 #observablehq-main {

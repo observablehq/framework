@@ -49,7 +49,7 @@ export async function build(
   {config, addPublic = true}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output)
 ): Promise<void> {
-  const {root, loaders} = config;
+  const {root, loaders, normalizePath} = config;
   Telemetry.record({event: "build", step: "start"});
 
   // Make sure all files are readable before starting to write output files.
@@ -79,7 +79,7 @@ export async function build(
       effects.logger.log(faint("(skipped)"));
       continue;
     }
-    const resolvers = await getResolvers(page, {root, path: sourceFile, loaders});
+    const resolvers = await getResolvers(page, {root, path: sourceFile, normalizePath, loaders});
     const elapsed = Math.floor(performance.now() - start);
     for (const f of resolvers.assets) files.add(resolvePath(sourceFile, f));
     for (const f of resolvers.files) files.add(resolvePath(sourceFile, f));

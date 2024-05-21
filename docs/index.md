@@ -115,28 +115,28 @@ index: false
 </div>
 
 <div class="gallery grid grid-cols-2">
-  <a href="https://observablehq.com/framework/examples/api/" target="_blank">
+  <a href="https://observablehq.observablehq.cloud/framework-example-api/" target="_blank">
     <picture>
       <source srcset="./assets/api.webp" media="(prefers-color-scheme: dark)">
       <img src="./assets/api-dark.webp">
     </picture>
     <div class="small arrow">Analyzing web logs</div>
   </a>
-  <a href="https://observablehq.com/framework/examples/plot/" target="_blank">
+  <a href="https://observablehq.observablehq.cloud/framework-example-plot/" target="_blank">
     <picture>
       <source srcset="./assets/plot.webp" media="(prefers-color-scheme: dark)">
       <img src="./assets/plot-dark.webp">
     </picture>
     <div class="small arrow">Observable Plot downloads</div>
   </a>
-  <a href="https://observablehq.com/framework/examples/mortgage-rates/interactive" target="_blank">
+  <a href="https://observablehq.observablehq.cloud/framework-example-mortgage-rates/" target="_blank">
     <picture>
       <source srcset="./assets/mortgage-rates.webp" media="(prefers-color-scheme: dark)">
       <img src="./assets/mortgage-rates-dark.webp">
     </picture>
     <div class="small arrow">Fixed-rate mortgages</div>
   </a>
-  <a href="https://observablehq.com/framework/examples/eia/" target="_blank">
+  <a href="https://observablehq.observablehq.cloud/framework-example-eia/" target="_blank">
     <picture>
       <source srcset="./assets/eia.webp" media="(prefers-color-scheme: dark)">
       <img src="./assets/eia-dark.webp">

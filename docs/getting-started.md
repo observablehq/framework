@@ -164,8 +164,21 @@ You should see something like this:
 ↳ <u><a href="http://127.0.0.1:3000/" style="color: inherit;">http://127.0.0.1:3000/</a></u></pre>
 
 <div class="note">
-  <p>If port 3000 is in use, the preview server will choose the next available port, so your actual port may vary. To specify port 4321 (and similarly for any other port), use <nobr><code>--port 4321</code></nobr>.</p>
-  <p>For security, the preview server is by default only accessible on your local machine using the <a href="https://en.wikipedia.org/wiki/Localhost">loopback address</a> 127.0.0.1. To allow remote connections, use <nobr><code>--host 0.0.0.0</code></nobr>.</p>
+
+If port 3000 is in use, the preview server will choose the next available port, so your actual port may vary. To specify a different port, use <nobr>`--port`</nobr>. For example, to run the preview server with npm on port 4321:
+
+```sh
+npm run dev -- --port 4321
+```
+
+For security, the preview server is by default only accessible on your local machine using the [loopback address](https://en.wikipedia.org/wiki/Localhost) 127.0.0.1. To allow remote connections, use <nobr>`--host 0.0.0.0`</nobr>.
+
+Port numbers below 1024 may need admin privileges. For example, to share your preview server on the default HTTP port 80:
+
+```sh
+sudo npm run dev -- --host 0.0.0.0 --port 80
+```
+
 </div>
 
 Now visit <http://127.0.0.1:3000> in your browser, which should look like:
@@ -182,7 +195,7 @@ Now visit <http://127.0.0.1:3000> in your browser, which should look like:
 
 Live preview means that as you save changes, your in-browser preview updates instantly. Live preview applies to Markdown pages, imported JavaScript modules (so-called *hot module replacement*), data loaders, and file attachments. This feature is implemented by the preview server watching files and pushing changes to the browser over a socket.
 
-To experience live preview, open <code>src/index.md</code> in your preferred text editor — below we show Visual Studio Code — and position your browser window so that you can see your editor and browser side-by-side. If you then replace the text “Hello, Observable Framework” with “Hi, Mom!” and save, you should see:
+To experience live preview, open <code>src/index.md</code> in your preferred text editor — below we show Zed — and position your browser window so that you can see your editor and browser side-by-side. If you then replace the text “Hello Framework” with “Hi, Mom!” and save, you should see:
 
 <figure class="wide">
   <picture>

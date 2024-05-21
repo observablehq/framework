@@ -69,7 +69,7 @@ A data app might be a set of coordinated **interactive visualizations** for “s
 … or it might be a **live dashboard** that places current events in the context of recent or historical trends;
 
 <div class="gallery grid grid-cols-2">
-  <a href="https://observablehq.com/framework/examples/plot/">
+  <a href="https://observablehq.observablehq.cloud/framework-example-plot/">
     <picture>
       <source srcset="./assets/plot.webp" media="(prefers-color-scheme: dark)">
       <img src="./assets/plot-dark.webp">
@@ -81,7 +81,7 @@ A data app might be a set of coordinated **interactive visualizations** for “s
 … or a **point-in-time report** that combines graphics and prose to present in-depth analysis, perhaps with recommendations or hypotheses about observed behavior;
 
 <div class="gallery grid grid-cols-2">
-  <a href="https://observablehq.com/framework/examples/api/">
+  <a href="https://observablehq.observablehq.cloud/framework-example-api/">
     <picture>
       <source srcset="./assets/api.webp" media="(prefers-color-scheme: dark)">
       <img src="./assets/api-dark.webp">
