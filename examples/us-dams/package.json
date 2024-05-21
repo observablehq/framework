@@ -2,7 +2,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "clean": "rimraf docs/.observablehq/cache",
+    "clean": "rimraf src/.observablehq/cache",
     "build": "rimraf dist && observable build",
     "dev": "observable preview",
     "deploy": "observable deploy",

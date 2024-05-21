@@ -50,7 +50,7 @@ const states = topojson.feature(usCounties, usCounties.objects.states);
 
 <!-- Text box with poor condition, high risk summary -->
 <div class="card" style="max-width: none; font-size: 1.2rem">
-<span style="color: var(--theme-foreground-muted)">Of ${d3.format(",")(dams.length)} U.S. dams included in the National Inventory of Dams,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(dams.filter(d => d.conditionAssessment == "Poor").length)}</span><span style="color: var(--theme-foreground-muted)"> are listed as being in Poor condition. Of those in Poor condition,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(dams.filter(d => d.conditionAssessment == "Poor" && d.hazardPotential == "High").length)}</span> <span style="color: var(--theme-foreground-muted)">have High hazard potential, where "downstream flooding would likely result in loss of human life."</span>
+<span style="color: var(--theme-foreground-muted)">Of ${d3.format(",")(dams.length)} U.S. dams included in the National Inventory of Dams,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(dams.filter(d => d.conditionAssessment == "Poor").length)}</span><span style="color: var(--theme-foreground-muted)"> are listed as being in Poor condition. Of those in Poor condition,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(dams.filter(d => d.conditionAssessment == "Poor" && d.hazardPotential == "High").length)}</span> <span style="color: var(--theme-foreground-muted)">have High hazard potential, where “downstream flooding would likely result in loss of human life.”</span>
 </div>
 
 <!-- Risk bubble chart and year completed histogram -->
@@ -258,7 +258,7 @@ function countsByState(width, height) {
 
   return Plot.plot({
     width,
-    height: height - 20,
+    height: height - 40,
     marginTop: 10,
     marginLeft: 100,
     marginBottom: 35,

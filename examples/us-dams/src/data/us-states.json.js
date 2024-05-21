@@ -3,16 +3,6 @@ import {merge, mesh} from "topojson-client";
 import {presimplify, simplify} from "topojson-simplify";
 
 const us = simplify(presimplify(JSON.parse(readFileSync("src/data/us-counties-10m.json", "utf-8"))), 0.005);
-// us.objects.states.geometries = us.objects.states.geometries.filter(
-//   ({properties: {name}}) =>
-//     ![
-//       "Guam",
-//       "Commonwealth of the Northern Mariana Islands",
-//       "American Samoa",
-//       "United States Virgin Islands",
-//       "Puerto Rico"
-//     ].includes(name)
-// );
 
 process.stdout.write(
   JSON.stringify({
