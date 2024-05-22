@@ -141,22 +141,21 @@ async function renderSidebar(options: RenderOptions, resolveLink: (href: string)
     (await rollupClient(getClientPath("search-init.js"), root, path, {minify: true})).trim()
   )}}</script>`
       : ""
-  }
-  <ol>${pages.map((p, i) =>
+  }${pages.map((p, i) =>
     "pages" in p
-      ? html`${i > 0 && "path" in pages[i - 1] ? html`</ol>` : ""}
-    <${p.collapsible ? (p.open || isSectionActive(p, path) ? "details open" : "details") : "section"}${
-      isSectionActive(p, path) ? html` class="observablehq-section-active"` : ""
-    }>
-      <summary>${p.name}</summary>
-      <ol>${p.pages.map((p) => renderListItem(p, path, resolveLink))}
-      </ol>
-    </${p.collapsible ? "details" : "section"}>`
+      ? html`\n  <${p.collapsible ? (p.open || isSectionActive(p, path) ? "details open" : "details") : "section"}${
+          isSectionActive(p, path) ? html` class="observablehq-section-active"` : ""
+        }>
+    <summary>${p.name}</summary>
+    <ol>${p.pages.map((p) => renderListItem(p, path, resolveLink))}
+    </ol>
+  </${p.collapsible ? "details" : "section"}>`
       : "path" in p
-      ? html`${i > 0 && "pages" in pages[i - 1] ? html`\n  </ol>\n  <ol>` : ""}${renderListItem(p, path, resolveLink)}`
+      ? html`${i === 0 || !("path" in pages[i - 1]) ? html`\n  <ol>` : ""}${renderListItem(p, path, resolveLink)}${
+          i === pages.length - 1 || !("path" in pages[i + 1]) ? html`\n  </ol>` : ""
+        }`
       : ""
   )}
-  </ol>
 </nav>
 <script>{${html.unsafe(
     (await rollupClient(getClientPath("sidebar-init.js"), root, path, {minify: true})).trim()
