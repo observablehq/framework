@@ -14,7 +14,16 @@ const capitals = FileAttachment("data/us-state-capitals.csv").csv({
   typed: true,
 });
 
-const usCounties = FileAttachment("./data/us-counties-10m.json").json();
+// County-level data for US
+const us = await fetch(import.meta.resolve("npm:us-atlas/counties-10m.json")).then((r) => r.json());
+
+// State polygons
+const states = topojson.feature(us, us.objects.states);
+
+// County polygons
+const counties = topojson
+  .feature(us, us.objects.counties)
+  .features.map((d) => ({ ...d, fips: +d.id }));
 ```
 
 ```js
@@ -23,20 +32,18 @@ const fipsSelectedState = fips
   .map((d) => d.fips);
 
 const capitalSelectedState = capitals.filter((d) => d.name == pickState);
-
-const states = topojson.feature(usCounties, usCounties.objects.states).features;
-
-const counties = topojson
-  .feature(usCounties, usCounties.objects.counties)
-  .features.map((d) => ({ ...d, fips: +d.id }));
 ```
 
 ```js
-const selectedState = states.filter((d) => d.properties.name === pickState);
+const selectedState = states.features.filter((d) => d.properties.name === pickState);
 
 const selectedStateCounties = counties.filter((d) =>
   fipsSelectedState.includes(d.fips)
 );
+```
+
+```js
+const stateCentroid = d3.geoCentroid(selectedState[0].geometry);
 ```
 
 ```js
@@ -215,15 +222,6 @@ const {DeckGL, AmbientLight, GeoJsonLayer, TextLayer, HexagonLayer, LightingEffe
 ```
 
 ```js
-const stateCentroids = await FileAttachment("data/states-centroids.csv").csv({typed: true});
-
-// Get capital latitude & longitude
-const pickStateLongitude = stateCentroids.filter(d => d.state == pickState)[0].longitude;
-
-const pickStateLatitude = stateCentroids.filter(d => d.state == pickState)[0].latitude;
-```
-
-```js
 // deck.gl setup
 const colorRange = [
   [148,152,160], // not available
@@ -265,8 +263,8 @@ invalidation.then(() => {
 
 ```js
 const initialViewState = {
-  longitude: pickStateLongitude,
-  latitude: pickStateLatitude,
+  longitude: stateCentroid[0],
+  latitude: stateCentroid[1],
   zoom: 6,
   minZoom: 3,
   maxZoom: 9,

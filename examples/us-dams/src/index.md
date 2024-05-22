@@ -14,17 +14,17 @@ const {DeckGL, AmbientLight, GeoJsonLayer, TextLayer, HexagonLayer, LightingEffe
 ```
 
 ```js
+// County-level data for US
+const us = await fetch(import.meta.resolve("npm:us-atlas/counties-10m.json")).then((r) => r.json());
+
+// State polygons
+const states = topojson.feature(us, us.objects.states);
+
+// Find state centroids (for text label)
+const stateCentroid = states.features.map(d => ({name: d.properties.name, longitude: d3.geoCentroid(d.geometry)[0], latitude: d3.geoCentroid(d.geometry)[1]}));
+
 // NID dams data:
 const dams = FileAttachment("data/dam-simple.csv").csv({typed: true});
-
-// State centroid locations:
-const stateCentroids = FileAttachment("data/states-centroids.csv").csv({typed: true});
-
-// US county-level spatial data
-const usCounties = await FileAttachment("./data/us-counties-10m.json").json();
-
-// US state outlines
-const states = topojson.feature(usCounties, usCounties.objects.states);
 ```
 
 <div class="grid grid-cols-3">
@@ -163,9 +163,9 @@ deckInstance.setProps({
     }),
     new TextLayer({
         id: "text-layer",
-        data: stateCentroids,
+        data: stateCentroid,
         getPosition: d => [d.longitude, d.latitude],
-        getText: d => d.state,
+        getText: d => d.name,
         fontFamily: 'Helvetica',
         fontWeight: 700,
         background: false,
