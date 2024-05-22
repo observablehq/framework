@@ -4,7 +4,7 @@ import {readFile, stat} from "node:fs/promises";
 import {join} from "node:path/posix";
 import * as clack from "@clack/prompts";
 import wrapAnsi from "wrap-ansi";
-import type {BuildEffects, BuildOptions} from "./build.js";
+import type {BuildEffects, BuildManifest, BuildOptions} from "./build.js";
 import {FileBuildEffects, build} from "./build.js";
 import type {ClackEffects} from "./clack.js";
 import {commandRequiresAuthenticationMessage} from "./commandInstruction.js";
@@ -53,6 +53,7 @@ export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
   visitFiles: (root: string) => Generator<string>;
   stat: (path: string) => Promise<Stats>;
   build: ({config, addPublic}: BuildOptions, effects?: BuildEffects) => Promise<void>;
+  readCacheFile: (sourceRoot: string, path: string) => Promise<string>;
 }
 
 const defaultEffects: DeployEffects = {
@@ -67,7 +68,8 @@ const defaultEffects: DeployEffects = {
   output: process.stdout,
   visitFiles,
   stat,
-  build
+  build,
+  readCacheFile
 };
 
 type DeployTargetInfo =
@@ -242,7 +244,10 @@ export async function deploy(
     clack.log.step("Building project");
     await effects.build(
       {config},
-      new FileBuildEffects(config.output, {logger: effects.logger, output: effects.output})
+      new FileBuildEffects(config.output, join(config.root, ".observablehq", "cache"), {
+        logger: effects.logger,
+        output: effects.output
+      })
     );
     buildFilePaths = await findBuildFiles(effects, config);
   }
@@ -421,7 +426,22 @@ export async function deploy(
   );
 
   // Mark the deploy as uploaded
-  await apiClient.postDeployUploaded(deployId);
+  let buildManifest: null | BuildManifest = null;
+  try {
+    const source = await effects.readCacheFile(config.root, "_build.json");
+    buildManifest = JSON.parse(source);
+    Telemetry.record({event: "deploy", buildManifest: "found"});
+  } catch (error) {
+    if (isEnoent(error)) {
+      Telemetry.record({event: "deploy", buildManifest: "missing"});
+    } else {
+      // The error message here might contain sensitive information, so
+      // don't send it in telemetry.
+      Telemetry.record({event: "deploy", buildManifest: "error"});
+      clack.log.warn(`Could not read build manifest: ${error}`);
+    }
+  }
+  await apiClient.postDeployUploaded(deployId, buildManifest);
 
   // Poll for processing completion
   const spinner = clack.spinner();
@@ -651,4 +671,9 @@ function formatAge(age: number): string {
     return `${hours} hour${hours === 1 ? "" : "s"} ago`;
   }
   return `at ${new Date(Date.now() - age).toLocaleString("en")}`;
+}
+
+async function readCacheFile(sourceRoot: string, path: string): Promise<string> {
+  const fullPath = join(sourceRoot, ".observablehq", "cache", path);
+  return await readFile(fullPath, "utf8");
 }
