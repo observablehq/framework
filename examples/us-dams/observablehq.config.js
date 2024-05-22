@@ -2,7 +2,7 @@ export default {
   root: "src",
 
   // Shared Observable example configuration; feel free to remove this.
-  title: "Observable Framework",
+  title: "U.S. dams overview",
   pager: false,
   toc: false,
   sidebar: true,
