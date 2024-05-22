@@ -9,10 +9,9 @@
     "observable": "observable"
   },
   "dependencies": {
-    "@observablehq/framework": "latest",
+    "@observablehq/framework": "^1.7.1",
     "d3-dsv": "^3.0.1",
     "d3-time-format": "^4.1.0",
-    "fs": "^0.0.1-security",
     "topojson-client": "^3.1.0",
     "topojson-simplify": "^3.0.3"
   },
