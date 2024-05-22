@@ -312,8 +312,7 @@ class CommandLoader extends Loader {
   }
 
   async exec(output: WriteStream): Promise<void> {
-    const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", "pipe", "inherit"]});
-    subprocess.stdout.pipe(output);
+    const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", output, "inherit"]});
     const code = await new Promise((resolve, reject) => {
       subprocess.on("error", reject);
       subprocess.on("close", resolve);
