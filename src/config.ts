@@ -10,6 +10,7 @@ import wrapAnsi from "wrap-ansi";
 import {LoaderResolver} from "./dataloader.js";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
+import type {FrontMatter} from "./frontMatter.js";
 import {createMarkdownIt, parseMarkdownMetadata} from "./markdown.js";
 import {isAssetPath, parseRelativeUrl, resolvePath} from "./path.js";
 import {resolveTheme} from "./theme.js";
@@ -30,6 +31,8 @@ export interface Section<T = Page> {
   name: string;
   collapsible: boolean; // defaults to false
   open: boolean; // defaults to true; always true if collapsible is false
+  path: string | null;
+  pager: string | null;
   pages: T[];
 }
 
@@ -43,6 +46,19 @@ export interface Script {
   type: string | null;
 }
 
+/**
+ * A function that generates a page fragment such as head, header or footer.
+ */
+export type PageFragmentFunction = ({
+  title,
+  data,
+  path
+}: {
+  title: string | null;
+  data: FrontMatter;
+  path: string;
+}) => string | null;
+
 export interface Config {
   root: string; // defaults to src
   output: string; // defaults to dist
@@ -52,9 +68,9 @@ export interface Config {
   pages: (Page | Section<Page>)[];
   pager: boolean; // defaults to true
   scripts: Script[]; // deprecated; defaults to empty array
-  head: string | null; // defaults to null
-  header: string | null; // defaults to null
-  footer: string | null; // defaults to “Built with Observable on [date].”
+  head: PageFragmentFunction | string | null; // defaults to null
+  header: PageFragmentFunction | string | null; // defaults to null
+  footer: PageFragmentFunction | string | null; // defaults to “Built with Observable on [date].”
   toc: TableOfContents;
   style: null | Style; // defaults to {theme: ["light", "dark"]}
   search: boolean; // default to false
@@ -98,6 +114,7 @@ interface SectionSpec {
   name?: unknown;
   open?: unknown;
   collapsible?: unknown;
+  path?: unknown;
   pages?: unknown;
   pager?: unknown;
 }
@@ -160,7 +177,8 @@ function readPages(root: string, md: MarkdownIt): Page[] {
     const {data, title} = parseMarkdownMetadata(source, {path: file, md});
     if (data.draft) continue;
     const name = basename(file, ".md");
-    const page = {path: join("/", dirname(file), name), name: title ?? "Untitled", pager: data.pager ?? "main"};
+    const {pager = "main"} = data;
+    const page = {path: join("/", dirname(file), name), name: title ?? "Untitled", pager};
     if (name === "index") pages.unshift(page);
     else pages.push(page);
   }
@@ -205,9 +223,9 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const toc = normalizeToc(spec.toc as any);
   const sidebar = spec.sidebar === undefined ? undefined : Boolean(spec.sidebar);
   const scripts = spec.scripts === undefined ? [] : normalizeScripts(spec.scripts);
-  const head = spec.head === undefined ? "" : stringOrNull(spec.head);
-  const header = spec.header === undefined ? "" : stringOrNull(spec.header);
-  const footer = spec.footer === undefined ? defaultFooter() : stringOrNull(spec.footer);
+  const head = pageFragment(spec.head === undefined ? "" : spec.head);
+  const header = pageFragment(spec.header === undefined ? "" : spec.header);
+  const footer = pageFragment(spec.footer === undefined ? defaultFooter() : spec.footer);
   const search = Boolean(spec.search);
   const interpreters = normalizeInterpreters(spec.interpreters as any);
   const config: Config = {
@@ -245,6 +263,10 @@ function getPathNormalizer(spec: unknown = true): (path: string) => string {
     else if (cleanUrls) path = path.replace(/\.html$/, "");
     return path;
   };
+}
+
+function pageFragment(spec: unknown): PageFragmentFunction | string | null {
+  return typeof spec === "function" ? (spec as PageFragmentFunction) : stringOrNull(spec);
 }
 
 function defaultFooter(): string {
@@ -312,13 +334,20 @@ function normalizeSection<T>(
   const collapsible = spec.collapsible === undefined ? spec.open !== undefined : Boolean(spec.collapsible);
   const open = collapsible ? Boolean(spec.open) : true;
   const pager = spec.pager === undefined ? "main" : stringOrNull(spec.pager);
+  const path = spec.path == null ? null : normalizePath(spec.path);
   const pages = Array.from(spec.pages as any, (spec: PageSpec) => normalizePage(spec, pager));
-  return {name, collapsible, open, pages};
+  return {name, collapsible, open, path, pager, pages};
 }
 
 function normalizePage(spec: PageSpec, defaultPager: string | null = "main"): Page {
   const name = String(spec.name);
-  let path = String(spec.path);
+  const path = normalizePath(spec.path);
+  const pager = spec.pager === undefined && isAssetPath(path) ? defaultPager : stringOrNull(spec.pager);
+  return {name, path, pager};
+}
+
+function normalizePath(spec: unknown): string {
+  let path = String(spec);
   if (isAssetPath(path)) {
     const u = parseRelativeUrl(join("/", path)); // add leading slash
     let {pathname} = u;
@@ -326,8 +355,7 @@ function normalizePage(spec: PageSpec, defaultPager: string | null = "main"): Pa
     pathname = pathname.replace(/\/$/, "/index"); // add trailing index
     path = pathname + u.search + u.hash;
   }
-  const pager = spec.pager === undefined && isAssetPath(path) ? defaultPager : stringOrNull(spec.pager);
-  return {name, path, pager};
+  return path;
 }
 
 function normalizeInterpreters(spec: {[key: string]: unknown} = {}): {[key: string]: string[] | null} {

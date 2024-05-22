@@ -1,3 +1,4 @@
+/* eslint-disable import/no-named-as-default-member */
 import {exec} from "node:child_process";
 import {accessSync, existsSync, readdirSync, statSync} from "node:fs";
 import {constants, copyFile, mkdir, readFile, readdir, stat, writeFile} from "node:fs/promises";
@@ -7,6 +8,7 @@ import {setTimeout as sleep} from "node:timers/promises";
 import {fileURLToPath} from "node:url";
 import {promisify} from "node:util";
 import * as clack from "@clack/prompts";
+import he from "he";
 import untildify from "untildify";
 import wrapAnsi from "wrap-ansi";
 import type {ClackEffects} from "./clack.js";
@@ -102,7 +104,7 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
             runCommand,
             installCommand,
             rootPath: rootPath!,
-            projectTitle: projectTitle as string,
+            projectTitleHtml: he.escape(projectTitle as string),
             projectTitleString: JSON.stringify(projectTitle as string),
             frameworkVersionString: JSON.stringify(`^${process.env.npm_package_version}`)
           },

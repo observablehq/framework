@@ -219,6 +219,16 @@
   align-items: center;
 }
 
+#observablehq-sidebar summary a {
+  flex-grow: 1;
+  color: inherit;
+}
+
+#observablehq-sidebar summary.observablehq-link {
+  padding: 0;
+  margin-left: 0;
+}
+
 #observablehq-sidebar details summary:hover,
 .observablehq-link-active a,
 .observablehq-link a:hover {
