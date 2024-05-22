@@ -35,8 +35,8 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
   // Get all the listed pages (which are indexed by default)
   const pagePaths = new Set(["/index"]);
   for (const p of pages) {
-    if ("path" in p) pagePaths.add(p.path);
-    else for (const {path} of p.pages) pagePaths.add(path);
+    if (p.path !== null) pagePaths.add(p.path);
+    if ("pages" in p) for (const {path} of p.pages) pagePaths.add(path);
   }
 
   // Index the pages
