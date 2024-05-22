@@ -248,10 +248,10 @@ export abstract class Loader {
           else await unlink(errorPath).catch(() => {});
         }
         await prepareOutput(tempPath);
+        await prepareOutput(cachePath);
         const tempFd = await open(tempPath, "w");
         try {
           await this.exec(tempFd.createWriteStream({highWaterMark: 1024 * 1024}), effects);
-          await mkdir(dirname(cachePath), {recursive: true});
           await rename(tempPath, cachePath);
         } catch (error) {
           await rename(tempPath, errorPath);

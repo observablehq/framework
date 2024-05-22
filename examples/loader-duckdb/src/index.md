@@ -1,24 +1,20 @@
 # DuckDB data loader
 
-Here’s a shell script data loader that uses curl to download a CSV file, then uses the [DuckDB CLI](https://duckdb.org/docs/api/cli/overview.html) to filter it, and finally outputs the result as [Apache Parquet](https://observablehq.com/framework/lib/arrow#apache-parquet).
-
-The example data is statistics about the education of modern foreign languages ([educ_uoe_lang01](https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_lang01/default/table?lang=en&category=educ.educ_lang.educ_uoe_lang)) from Eurostat, the data portal of the statistical office of the European Union.
-
-Because the Eurostat API does not compress data as part of the http response, but instead offers to send compressed data, we download it outside of DuckDB — here using [curl](https://curl.se/) — then uncompress it with [gunzip](https://en.wikipedia.org/wiki/Gzip). The raw file is saved to a temporary directory, which makes it much faster to iterate on the data loader when we want to tweak the query, for example to change the education level or the time period considered.
+Here’s a shell script data loader that uses curl to download a CSV file, then uses the [DuckDB CLI](https://duckdb.org/docs/api/cli/overview.html) to filter it, and finally outputs the result as a [Apache Parquet](https://observablehq.com/framework/lib/arrow#apache-parquet) file.
 
 ```sh
-export CODE="educ_uoe_lang01"
-export URL="https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/$CODE/?format=SDMX-CSV&compressed=true&i"
+CODE="educ_uoe_lang01"
+URL="https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/$CODE/?format=SDMX-CSV&i"
 
-# create a temp directory to download and process the data
-export TMPDIR="src/.observablehq/cache/loaders"
-mkdir -p $TMPDIR
+# Use the data loader cache directory to store the downloaded data.
+TMPDIR="src/.observablehq/cache/"
 
+# Download the data (if it’s not already in the cache).
 if [ ! -f "$TMPDIR/$CODE.csv" ]; then
-  curl "$URL" --output $TMPDIR/$CODE.csv.gz
-  gunzip $TMPDIR/$CODE.csv.gz
+  curl "$URL" -o "$TMPDIR/$CODE.csv"
 fi
 
+# Generate a Parquet file using DuckDB.
 duckdb :memory: << EOF
 COPY (
   SELECT *
@@ -30,16 +26,17 @@ COPY (
     AND unit = 'PC' -- ignore absolute numbers, keep percentages
     AND language != 'TOTAL' -- ignore total
     AND length(geo) = 2 -- ignore groupings such as EU_27
-) TO '$TMPDIR/$CODE.parquet' (FORMAT parquet, COMPRESSION gzip);
+) TO STDOUT (FORMAT 'parquet', COMPRESSION 'gzip');
 EOF
-cat $TMPDIR/$CODE.parquet  # Write output to stdout
 ```
 
 <div class="note">
 
-To run this data loader, you’ll need to install the DuckDB CLI (`duckdb`), as well as `curl` and `gunzip` if they are not already installed on your system.
+To run this data loader, you’ll need to install curl and the DuckDB CLI if they are not already installed on your system.
 
 </div>
+
+The example data is statistics about modern foreign language education ([educ_uoe_lang01](https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_lang01/default/table?lang=en&category=educ.educ_lang.educ_uoe_lang)) from Eurostat, the data portal of the statistical office of the European Union. To make it faster to iterate on the data — for example to change the education level or the time period — we save the downloaded data to Framework’s cache folder.
 
 The above data loader lives in `educ_uoe_lang01.parquet.sh`, so we can load the data as `educ_uoe_lang01.parquet`. The `FileAttachment.parquet` method parses the file and returns a promise to an Arrow table.
 
@@ -55,67 +52,27 @@ Inputs.table(languages)
 
 We can also make a quick chart of most-frequently taught modern foreign languages in Europe using [Observable Plot](https://observablehq.com/plot/); note that the stacked percentages go above 100% in most countries because many pupils learn at least two foreign languages. Ireland (IE) is the only exception as English is not taught as a foreign language.
 
-```js echo
-const domain = d3.groupSort(languages, v => -d3.sum(v, d => d.OBS_VALUE), d => d.language)
-      .slice(0, 9).concat("others");
-
-const chart = Plot.plot({
-  y: {axis: "right", grid: true},
-  color: {legend: true, domain, unknown: "grey"},
+```js
+Plot.plot({
+  x: {axis: "top", grid: true},
+  color: {legend: true, unknown: "grey"},
   marks: [
-    Plot.barY(languages, {
-      x: "geo",
-      y: "OBS_VALUE",
+    Plot.rectX(languages, {
+      y: "geo",
+      x: "OBS_VALUE",
       fill: "language",
-      order: "sum",
-      sort: {x: "-y"},
+      order: "-sum",
+      sort: {y: "-x", color: {value: "width", reduce: "sum", limit: 9}},
       tip: true
     })
   ]
-});
-
-display(chart);
+})
 ```
-
-<details>
-  <summary>Code book</summary>
 
 For reference, here are the codes used for countries and languages:
 
-<div style="max-width: 250px">
-
-| code | language       |
-| ---- | -------------- |
-| BUL  | Bulgarian      |
-| SPA  | Spanish        |
-| CZE  | Czech          |
-| DAN  | Danish         |
-| GER  | German         |
-| EST  | Estonian       |
-| GRE  | Greek          |
-| ENG  | English        |
-| FRE  | French         |
-| GLE  | Irish          |
-| HRV  | Croatian       |
-| ITA  | Italian        |
-| LAV  | Latvian        |
-| LIT  | Lithuanian     |
-| HUN  | Hungarian      |
-| MLT  | Maltese        |
-| DUT  | Dutch; Flemish |
-| POL  | Polish         |
-| POR  | Portuguese     |
-| RUM  | Romanian       |
-| SLO  | Slovak         |
-| SLV  | Slovenian      |
-| FIN  | Finnish        |
-| SWE  | Swedish        |
-| ARA  | Arabic         |
-| CHI  | Chinese        |
-| JPN  | Japanese       |
-| RUS  | Russian        |
-| OTH  | Other          |
-| UNK  | Unknown        |
+<div class="grid grid-cols-2" style="grid-auto-rows: auto; max-width: 640px;">
+  <div>
 
 | code | country                |
 | ---- | ---------------------- |
@@ -155,6 +112,41 @@ For reference, here are the codes used for countries and languages:
 | AL   | Albania                |
 | RS   | Serbia                 |
 
-</div>
+  </div>
+  <div>
 
-</details>
+| code | language       |
+| ---- | -------------- |
+| BUL  | Bulgarian      |
+| SPA  | Spanish        |
+| CZE  | Czech          |
+| DAN  | Danish         |
+| GER  | German         |
+| EST  | Estonian       |
+| GRE  | Greek          |
+| ENG  | English        |
+| FRE  | French         |
+| GLE  | Irish          |
+| HRV  | Croatian       |
+| ITA  | Italian        |
+| LAV  | Latvian        |
+| LIT  | Lithuanian     |
+| HUN  | Hungarian      |
+| MLT  | Maltese        |
+| DUT  | Dutch; Flemish |
+| POL  | Polish         |
+| POR  | Portuguese     |
+| RUM  | Romanian       |
+| SLO  | Slovak         |
+| SLV  | Slovenian      |
+| FIN  | Finnish        |
+| SWE  | Swedish        |
+| ARA  | Arabic         |
+| CHI  | Chinese        |
+| JPN  | Japanese       |
+| RUS  | Russian        |
+| OTH  | Other          |
+| UNK  | Unknown        |
+
+  </div>
+</div>

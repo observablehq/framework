@@ -1,15 +1,15 @@
-export CODE="educ_uoe_lang01"
-export URL="https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/$CODE/?format=SDMX-CSV&compressed=true&i"
+CODE="educ_uoe_lang01"
+URL="https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/$CODE/?format=SDMX-CSV&i"
 
-# create a temp directory to download and process the data
-export TMPDIR="src/.observablehq/cache/loaders" 
-mkdir -p $TMPDIR
+# Use the data loader cache directory to store the downloaded data.
+TMPDIR="src/.observablehq/cache/"
 
+# Download the data (if it’s not already in the cache).
 if [ ! -f "$TMPDIR/$CODE.csv" ]; then
-  curl "$URL" --output $TMPDIR/$CODE.csv.gz
-  gunzip $TMPDIR/$CODE.csv.gz
+  curl "$URL" -o "$TMPDIR/$CODE.csv"
 fi
 
+# Generate a Parquet file using DuckDB.
 duckdb :memory: << EOF
 COPY (
   SELECT *
@@ -21,6 +21,5 @@ COPY (
     AND unit = 'PC' -- ignore absolute numbers, keep percentages
     AND language != 'TOTAL' -- ignore total
     AND length(geo) = 2 -- ignore groupings such as EU_27
-) TO '$TMPDIR/$CODE.parquet' (COMPRESSION gzip);
+) TO STDOUT (FORMAT 'parquet', COMPRESSION 'gzip');
 EOF
-cat $TMPDIR/$CODE.parquet  # Write output to stdout
