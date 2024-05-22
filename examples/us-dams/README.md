@@ -4,7 +4,7 @@
 
 View live: <https://observablehq.observablehq.cloud/framework-example-us-dams/>
 
-This Observable Framework example explores data for over >90k dams in the United States from the [National Inventory of Dams](https://nid.sec.usace.army.mil/#/) (NID).
+This Observable Framework example explores data for 90,000+ dams in the United States from the [National Inventory of Dams](https://nid.sec.usace.army.mil/) (NID).
 
 The pages feature nationwide and state-by-state summaries of dam locations, highlighting dam conditions and hazard assessment.
 
