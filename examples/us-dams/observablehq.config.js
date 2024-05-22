@@ -5,7 +5,7 @@ export default {
   title: "Observable Framework",
   pager: false,
   toc: false,
-  sidebar: false,
+  sidebar: true,
   head:
     process.env.CI &&
     `<script type="module" async src="https://events.observablehq.com/client.js?pageLoad"></script>
