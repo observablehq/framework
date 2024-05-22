@@ -58,8 +58,12 @@ function walk(pages: Config["pages"], title = "Home"): Iterable<Iterable<Page>> 
   visit({name: title, path: "/index", pager: "main"});
 
   for (const page of pageQueue) {
-    if ("pages" in page) for (const p of page.pages) pageQueue.push(p);
-    else visit(page);
+    if ("pages" in page) {
+      if (page.path !== null) visit(page as Page);
+      for (const p of page.pages) pageQueue.push(p);
+    } else {
+      visit(page);
+    }
   }
 
   return pageGroups.values();

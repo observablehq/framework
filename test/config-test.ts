@@ -25,6 +25,8 @@ describe("readConfig(undefined, root)", () => {
           name: "Closed subsection",
           collapsible: true,
           open: false,
+          path: null,
+          pager: "main",
           pages: [{name: "Closed page", path: "/closed/page", pager: "main"}]
         }
       ],
@@ -139,7 +141,14 @@ describe("normalizeConfig(spec, root)", () => {
   it("coerces sections", () => {
     const inpages = [{name: 42, pages: new Set([{name: null, path: {toString: () => "yes"}}])}];
     const outpages = [
-      {name: "42", collapsible: false, open: true, pages: [{name: "null", path: "/yes", pager: "main"}]}
+      {
+        name: "42",
+        collapsible: false,
+        open: true,
+        path: null,
+        pager: "main",
+        pages: [{name: "null", path: "/yes", pager: "main"}]
+      }
     ];
     assert.deepStrictEqual(config({pages: inpages}, root).pages, outpages);
   });
