@@ -12,7 +12,7 @@ const reader = new NetCDFReader(data);
 const n = reader.header.dimensions[0].size; // number of columns
 const m = reader.header.dimensions[1].size; // number of rows
 
-// Create a contour generator which expects a flat n×m grid of numbers.
+// Create a contour generator.
 const contour = geoContour()
   .x((_, i) => ((i % n) * 2 - n + 1) * 180 / n)
   .y((_, i) => (Math.floor(i / n) * 2 - m + 1) * 90 / m)
