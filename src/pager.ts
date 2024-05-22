@@ -43,7 +43,6 @@ export function findLink(path: string, options: Pick<Config, "pages" | "title"> 
 // Walks the unique pages in the site so as to avoid creating cycles. Implicitly
 // adds a link at the beginning to the home page (/index).
 function walk(pages: Config["pages"], title = "Home"): Iterable<Iterable<Page>> {
-  const pageQueue = [...pages];
   const pageGroups = new Map<string, Page[]>();
   const visited = new Set<string>();
 
@@ -57,13 +56,9 @@ function walk(pages: Config["pages"], title = "Home"): Iterable<Iterable<Page>> 
 
   visit({name: title, path: "/index", pager: "main"});
 
-  for (const page of pageQueue) {
-    if ("pages" in page) {
-      if (page.path !== null) visit(page as Page);
-      for (const p of page.pages) pageQueue.push(p);
-    } else {
-      visit(page);
-    }
+  for (const page of pages) {
+    if (page.path !== null) visit(page as Page);
+    if ("pages" in page) for (const p of page.pages) visit(p);
   }
 
   return pageGroups.values();
