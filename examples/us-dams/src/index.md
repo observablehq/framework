@@ -284,7 +284,3 @@ const searchUsDams = Inputs.search(dams);
 
 const searchUsDamsValue = Generators.input(searchUsDams);
 ```
-
-```js
-display(dams);
-```
