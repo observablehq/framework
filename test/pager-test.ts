@@ -17,7 +17,8 @@ describe("findLink(path, options)", () => {
     const a = {name: "a", path: "/a", pager: "main"};
     const b = {name: "b", path: "/b", pager: "main"};
     const c = {name: "c", path: "/c", pager: "main"};
-    const config = {pages: [{name: "section", collapsible: true, open: true, pages: [a, b, c]}]};
+    const section = {name: "section", collapsible: true, open: true, path: null, pager: null, pages: [a, b, c]};
+    const config = {pages: [section]};
     assert.deepStrictEqual(pager("/index", config), {prev: undefined, next: a});
     assert.deepStrictEqual(pager("/a", config), {prev: {name: "Home", path: "/index", pager: "main"}, next: b});
     assert.deepStrictEqual(pager("/b", config), {prev: a, next: c});

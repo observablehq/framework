@@ -60,12 +60,19 @@ Visualized with [Plot’s difference mark](https://observablehq.com/plot/marks/d
 
 ```js echo
 Plot.plot({
+  x: {type: "utc"},
   marks: [
     Plot.ruleY([0]),
     Plot.differenceY(table, {x: "date", y: "value"})
   ]
 })
 ```
+
+<div class="note">
+
+The chart above specifies _x_ as a UTC scale because Apache Arrow represents dates as numbers (milliseconds since [Unix epoch](<https://en.wikipedia.org/wiki/Epoch_(computing)>)) rather than Date objects; without this hint, Plot would assume that _date_ column is quantitative rather than temporal and produce a less legible axis.
+
+</div>
 
 ## Apache Parquet
 

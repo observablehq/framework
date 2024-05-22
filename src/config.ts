@@ -31,6 +31,8 @@ export interface Section<T = Page> {
   name: string;
   collapsible: boolean; // defaults to false
   open: boolean; // defaults to true; always true if collapsible is false
+  path: string | null;
+  pager: string | null;
   pages: T[];
 }
 
@@ -112,6 +114,7 @@ interface SectionSpec {
   name?: unknown;
   open?: unknown;
   collapsible?: unknown;
+  path?: unknown;
   pages?: unknown;
   pager?: unknown;
 }
@@ -331,13 +334,20 @@ function normalizeSection<T>(
   const collapsible = spec.collapsible === undefined ? spec.open !== undefined : Boolean(spec.collapsible);
   const open = collapsible ? Boolean(spec.open) : true;
   const pager = spec.pager === undefined ? "main" : stringOrNull(spec.pager);
+  const path = spec.path == null ? null : normalizePath(spec.path);
   const pages = Array.from(spec.pages as any, (spec: PageSpec) => normalizePage(spec, pager));
-  return {name, collapsible, open, pages};
+  return {name, collapsible, open, path, pager, pages};
 }
 
 function normalizePage(spec: PageSpec, defaultPager: string | null = "main"): Page {
   const name = String(spec.name);
-  let path = String(spec.path);
+  const path = normalizePath(spec.path);
+  const pager = spec.pager === undefined && isAssetPath(path) ? defaultPager : stringOrNull(spec.pager);
+  return {name, path, pager};
+}
+
+function normalizePath(spec: unknown): string {
+  let path = String(spec);
   if (isAssetPath(path)) {
     const u = parseRelativeUrl(join("/", path)); // add leading slash
     let {pathname} = u;
@@ -345,8 +355,7 @@ function normalizePage(spec: PageSpec, defaultPager: string | null = "main"): Pa
     pathname = pathname.replace(/\/$/, "/index"); // add trailing index
     path = pathname + u.search + u.hash;
   }
-  const pager = spec.pager === undefined && isAssetPath(path) ? defaultPager : stringOrNull(spec.pager);
-  return {name, path, pager};
+  return path;
 }
 
 function normalizeInterpreters(spec: {[key: string]: unknown} = {}): {[key: string]: string[] | null} {

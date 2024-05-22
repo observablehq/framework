@@ -26,7 +26,7 @@ describe("build", () => {
     if (isEmpty(path)) continue;
     const only = name.startsWith("only.");
     const skip = name.startsWith("skip.");
-    const outname = name.replace(/^only\.|skip\./, "");
+    const outname = name.replace(/^(only|skip)\./, "");
     (only
       ? it.only
       : skip ||
