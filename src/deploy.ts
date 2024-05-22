@@ -330,7 +330,12 @@ export async function deploy(
         );
       } else {
         clack.log.error(
-          wrapAnsi(`Could not create project: ${error instanceof Error ? error.message : error}`, effects.outputColumns)
+          wrapAnsi(
+            `Could not create project: ${
+              (error as any)?.statusCode === 409 ? "conflicting slug." : error instanceof Error ? error.message : error
+            }`,
+            effects.outputColumns
+          )
         );
       }
       clack.outro(yellow("Deploy canceled"));
