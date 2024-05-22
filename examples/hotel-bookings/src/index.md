@@ -168,8 +168,6 @@ function dailyRateChart(width, height) {
 
 **Data source:** Antonio et al (2021). Hotel booking demand datasets. Data in Brief (22): 41-49. https://doi.org/10.1016/j.dib.2018.11.126
 
-**Credit:** Donut charts reuse code from [Mike Bostock's _Donut chart_ notebook](https://observablehq.com/@d3/donut-chart/2). Big number boxes are adapted from [Paul Buffa’s _Walmart growth dashboard_](https://observablehq.com/d/a156c1245672f9bd).
-
 ```js
 // Data wrangling for market segmented charts
 const bookingsByMarketSegment = hotelData.filter(
