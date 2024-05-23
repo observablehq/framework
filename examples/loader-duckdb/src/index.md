@@ -57,8 +57,8 @@ Plot.plot({
   x: {axis: "top", grid: true},
   color: {legend: true, unknown: "grey"},
   marks: [
-    Plot.rectX(languages, {
       y: "geo",
+    Plot.barX(languages, {
       x: "OBS_VALUE",
       fill: "language",
       order: "-sum",
