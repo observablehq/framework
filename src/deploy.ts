@@ -82,12 +82,9 @@ export async function deploy(deployOptions: DeployOptions, effects = defaultEffe
   Telemetry.record({event: "deploy", step: "start", force: deployOptions.force});
   effects.clack.intro(`${inverse(" observable deploy ")} ${faint(`v${process.env.npm_package_version}`)}`);
 
-  let deployInfo;
-  if (deployOptions.deployId) {
-    deployInfo = await continueExistingDeploy(deployOptions, effects, deployOptions.deployId);
-  } else {
-    deployInfo = await startNewDeploy(deployOptions, effects);
-  }
+  const deployInfo = deployOptions.deployId 
+    ? await continueExistingDeploy(deployOptions, effects, deployOptions.deployId)
+    : await startNewDeploy(deployOptions, effects);
 
   effects.clack.outro(`Deployed project now visible at ${link(deployInfo.url)}`);
   Telemetry.record({event: "deploy", step: "finish"});
