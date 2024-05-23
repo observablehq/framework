@@ -24,7 +24,7 @@ Calling `FileAttachment` doesn’t actually load the file; the contents are only
 const volcano = FileAttachment("volcano.json").json();
 ```
 
-The value of `volcano` above is a [promise](./promises). In other code blocks, the promise is [implicitly awaited](./reactivity#promises) and hence you can refer to the resolved value directly.
+The value of `volcano` above is a [promise](./reactivity#promises). In other code blocks, the promise is implicitly awaited and hence you can refer to the resolved value directly.
 
 ```js echo
 volcano

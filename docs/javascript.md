@@ -28,7 +28,7 @@ A program block looks like this (note the semicolon):
 const foo = 1 + 2;
 ```
 
-A program block doesn’t display anything by default, but you can call [`display`](#explicit-display) to display something.
+A program block doesn’t display anything by default, but you can call [`display`](#display(value)) to display something.
 
 JavaScript blocks do not show their code by default. If you want to show the code, use the `echo` directive:
 
@@ -129,7 +129,7 @@ Expressions cannot declare top-level reactive variables. To declare a variable, 
 
 ## Explicit display
 
-The built-in `display` function displays the specified value.
+The built-in [`display` function](#display(value)) displays the specified value.
 
 ```js echo
 const x = Math.random();
@@ -202,7 +202,7 @@ Inputs.button("Click me", {value: 0, reduce: (i) => displayThere(++i)})
 
 ## Implicit display
 
-JavaScript expression fenced code blocks are implicitly wrapped with a call to [`display`](#explicit-display). For example, this arithmetic expression displays implicitly:
+JavaScript expression fenced code blocks are implicitly wrapped with a call to [`display`](#display(value)). For example, this arithmetic expression displays implicitly:
 
 ```js echo
 1 + 2 // implicit display
@@ -238,23 +238,17 @@ Implicit display also implicitly awaits promises.
 
 ## Responsive display
 
-In Markdown, the built-in `width` reactive variable represents the current width of the main element. This variable is implemented by [`Generators.width`](./lib/generators#width(element)) and backed by a [`ResizeObserver`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver). The reactive width can be a handy thing to pass, say, as the **width** option to [Observable Plot](./lib/plot).
+In Markdown, the built-in [`width` reactive variable](#width) represents the current width of the main element. This variable is implemented by [`Generators.width`](./lib/generators#width(element)) and backed by a [`ResizeObserver`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver). The reactive width can be a handy thing to pass, say, as the **width** option to [Observable Plot](./lib/plot).
 
-```html echo
-The current width is ${width}.
+```js echo
+Plot.barX([9, 4, 8, 1, 11, 3, 4, 2, 7, 5]).plot({width})
 ```
 
-```js
-import {resize} from "npm:@observablehq/stdlib";
-```
-
-For more control, or in a [grid](./css/grid) where you want to respond to either width or height changing, use the built-in `resize` helper. This takes a render function which is called whenever the width or height [changes](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver), and the element returned by the render function is inserted into the DOM.
+For non-top-level elements, as when rendering content within an inline expression, use the built-in [`resize` function](#resize(render)) instead. This takes a _render_ function which is called whenever the width or height [changes](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver), and the element returned by the render function is inserted into the DOM.
 
 ```html echo
-<div class="grid grid-cols-4">
-  <div class="card">
-    ${resize((width) => `This card is ${width}px wide.`)}
-  </div>
+<div class="card">
+  ${resize((width) => Plot.barX([9, 4, 8, 1, 11, 3, 4, 2, 7, 5]).plot({width}))}
 </div>
 ```
 
@@ -272,3 +266,45 @@ If your container defines a height, such as `240px` in the example below, then y
 ```
 
 <div class="tip">If you are using <code>resize</code> with both <code>width</code> and <code>height</code> and see nothing rendered, it may be because your parent container does not have its own height specified. When both arguments are used, the rendered element is implicitly <code>position: absolute</code> to avoid affecting the size of its parent and causing a feedback loop.</div>
+
+## display(*value*)
+
+Displays the specified *value* in the current context, returning *value*. If *value* is a DOM element or node, it is inserted directly into the page. Otherwise, if the current context is a fenced code block, inspects the specified *value*; or, if the current context is an inline expression, coerces the specified *value* to a string and displays it as text.
+
+```js echo
+display(1 + 2);
+```
+
+See [Explicit display](#explicit-display) for more.
+
+## resize(*render*)
+
+Creates and returns a DIV element to contain responsive content; then, using a [`ResizeObserver`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver) to observe changes to the returned element’s size, calls the specified *render* function with the new width and height whenever the size changes. The element returned by the *render* function is inserted into the DIV element, replacing any previously-rendered content. This is useful for responsive charts.
+
+```js echo
+resize((width) => `I am ${width} pixels wide.`)
+```
+
+If the *render* function returns a promise, the promise is implicitly awaited. If the resulting value is null, the DIV element is cleared; otherwise, if the resulting value is not a DOM element, it is coerced to a string and displayed as text.
+
+See [Responsive display](#responsive-display) for more.
+
+## width
+
+The current width of the main element in pixels as a reactive variable. A fenced code block or inline expression that references `width` will re-run whenever the width of the main element changes, such as when the window is resized; often used for responsive charts.
+
+```js echo
+width
+```
+
+See [`Generators.width`](./lib/generators#width(element)) for implementation.
+
+## now
+
+The current time in milliseconds since Unix epoch as a reactive variable. A fenced code block or inline expression that references `now` will run continuously; often used for simple animations.
+
+```js echo
+now
+```
+
+See [`Generators.now`](./lib/generators#now()) for implementation.

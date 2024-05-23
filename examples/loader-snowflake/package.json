@@ -1,0 +1,25 @@
+{
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "clean": "rimraf src/.observablehq/cache",
+    "build": "rimraf dist && observable build",
+    "dev": "observable preview",
+    "deploy": "observable deploy",
+    "observable": "observable"
+  },
+  "dependencies": {
+    "@observablehq/framework": "^1.7.0",
+    "d3-dsv": "^3.0.1",
+    "dotenv": "^16.4.5",
+    "snowflake-sdk": "~1.9.0"
+  },
+  "devDependencies": {
+    "@types/d3-dsv": "^3.0.7",
+    "@types/snowflake-sdk": "^1.6.22",
+    "rimraf": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -26,9 +26,11 @@ export default {
     {name: "Themes", path: "/themes"},
     {name: "Configuration", path: "/config"},
     {name: "Deploying", path: "/deploying"},
+    {name: "Examples", path: "https://github.com/observablehq/framework/tree/main/examples"},
     {
       name: "Inputs",
       open: false,
+      pager: "inputs",
       pages: [
         {name: "Button", path: "/inputs/button"},
         {name: "Checkbox", path: "/inputs/checkbox"},
@@ -49,6 +51,7 @@ export default {
     {
       name: "Libraries",
       open: false,
+      pager: false,
       pages: [
         {name: "Apache Arrow", path: "/lib/arrow"},
         {name: "Arquero", path: "/lib/arquero"},
@@ -75,7 +78,7 @@ export default {
         {name: "ZIP", path: "/lib/zip"}
       ]
     },
-    {name: "Contributing", path: "/contributing"}
+    {name: "Contributing", path: "/contributing", pager: false}
   ],
   base: "/framework",
   head: `<link rel="apple-touch-icon" href="/observable.png">

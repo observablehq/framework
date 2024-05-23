@@ -27,7 +27,7 @@ const indexOptions = {
 };
 
 export async function searchIndex(config: Config, effects = defaultEffects): Promise<string> {
-  const {root, pages, search, md} = config;
+  const {root, pages, search, normalizePath} = config;
   if (!search) return "{}";
   const cached = indexCache.get(pages);
   if (cached && cached.freshUntil > Date.now()) return cached.json;
@@ -35,8 +35,8 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
   // Get all the listed pages (which are indexed by default)
   const pagePaths = new Set(["/index"]);
   for (const p of pages) {
-    if ("path" in p) pagePaths.add(p.path);
-    else for (const {path} of p.pages) pagePaths.add(path);
+    if (p.path !== null) pagePaths.add(p.path);
+    if ("pages" in p) for (const {path} of p.pages) pagePaths.add(path);
   }
 
   // Index the pages
@@ -69,7 +69,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
       .replace(/[^\p{L}\p{N}]/gu, " "); // keep letters & numbers
 
     effects.logger.log(`${faint("index")} ${sourcePath}`);
-    index.add({id: md.normalizeLink(path).slice("/".length), title, text, keywords: normalizeKeywords(data?.keywords)});
+    index.add({id: normalizePath(path).slice("/".length), title, text, keywords: normalizeKeywords(data?.keywords)});
   }
 
   // Pass the serializable index options to the client.
