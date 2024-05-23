@@ -169,7 +169,8 @@ async function getApiClientAndCurrentUser(effects: DeployEffects) {
     if (!choice) {
       effects.clack.outro(yellow("Deploy canceled."));
     }
-    if (effects.clack.isCancel(choice) || !choice) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
+    if (effects.clack.isCancel(choice) || !choice)
+      throw new CliError("User canceled deploy", {print: false, exitCode: 0});
 
     ({currentUser, apiKey} = await loginInner(effects));
     apiClient.setApiKey(apiKey);
@@ -252,7 +253,7 @@ async function getDeployTarget(
   apiClient,
   currentUser,
   deployConfig
-): Promise<{deployTarget: DeployTargetInfo, projectUpdates: PostEditProjectRequest}> {
+): Promise<{deployTarget: DeployTargetInfo; projectUpdates: PostEditProjectRequest}> {
   let deployTarget: DeployTargetInfo;
   const projectUpdates: PostEditProjectRequest = {};
   if (deployConfig.workspaceLogin && deployConfig.projectSlug) {
@@ -807,7 +808,11 @@ async function pollForProcessingCompletion(
   return deployInfo;
 }
 
-async function maybeUpdateProject(apiClient: ObservableApiClient, deployTarget: DeployTargetInfo, projectUpdates: PostEditProjectRequest) {
+async function maybeUpdateProject(
+  apiClient: ObservableApiClient,
+  deployTarget: DeployTargetInfo,
+  projectUpdates: PostEditProjectRequest
+) {
   if (!deployTarget.create && typeof projectUpdates?.title === "string") {
     await apiClient.postEditProject(deployTarget.project.id, projectUpdates);
   }

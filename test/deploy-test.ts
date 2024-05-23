@@ -240,10 +240,7 @@ describe("deploy", () => {
 
   it("won't deploy to a non-existent deploy", async () => {
     const deployId = "deploy456";
-    getCurrentObservableApi()
-      .handleGetCurrentUser()
-      .handleGetDeploy({deployId, status: 404})
-      .start();
+    getCurrentObservableApi().handleGetCurrentUser().handleGetDeploy({deployId, status: 404}).start();
 
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
@@ -264,10 +261,7 @@ describe("deploy", () => {
 
   it("won't deploy to an existing deploy with an unexpected status", async () => {
     const deployId = "deploy456";
-    getCurrentObservableApi()
-      .handleGetCurrentUser()
-      .handleGetDeploy({deployId, deployStatus: "uploaded"})
-      .start();
+    getCurrentObservableApi().handleGetCurrentUser().handleGetDeploy({deployId, deployStatus: "uploaded"}).start();
 
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
@@ -497,9 +491,7 @@ describe("deploy", () => {
       ...DEPLOY_CONFIG,
       workspaceLogin: "ACME Inc."
     };
-    getCurrentObservableApi()
-      .handleGetCurrentUser()
-      .start();
+    getCurrentObservableApi().handleGetCurrentUser().start();
     const effects = new MockDeployEffects({deployConfig, isTty: true});
 
     try {
@@ -520,9 +512,7 @@ describe("deploy", () => {
       ...DEPLOY_CONFIG,
       projectSlug: "Business Intelligence"
     };
-    getCurrentObservableApi()
-      .handleGetCurrentUser()
-      .start();
+    getCurrentObservableApi().handleGetCurrentUser().start();
     const effects = new MockDeployEffects({deployConfig, isTty: true});
 
     try {
