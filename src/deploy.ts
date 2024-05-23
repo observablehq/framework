@@ -83,7 +83,7 @@ export async function deploy(deployOptions: DeployOptions, effects = defaultEffe
   effects.clack.intro(`${inverse(" observable deploy ")} ${faint(`v${process.env.npm_package_version}`)}`);
 
   const deployInfo = deployOptions.deployId 
-    ? await continueExistingDeploy(deployOptions, effects, deployOptions.deployId)
+    ? await continueExistingDeploy(deployOptions, effects)
     : await startNewDeploy(deployOptions, effects);
 
   effects.clack.outro(`Deployed project now visible at ${link(deployInfo.url)}`);
@@ -92,11 +92,11 @@ export async function deploy(deployOptions: DeployOptions, effects = defaultEffe
 
 async function continueExistingDeploy(
   deployOptions: DeployOptions,
-  effects: DeployEffects,
-  deployId: string
+  effects: DeployEffects
 ): Promise<GetDeployResponse> {
   const {apiClient} = await getApiClientAndCurrentUser(effects);
 
+  const deployId = deployOptions.deployId!;
   await checkDeployCreated(apiClient, deployId);
 
   const buildFilePaths = await getBuildFilePaths(effects, deployOptions.config, deployOptions.force);
