@@ -47,7 +47,7 @@ ${pickMarketSegmentInput}
   </div>
   <div class="card grid-rowspan-1">
     ${bigNumber(
-  `Total bookings`, datesExtent, `${d3.format(",")(bookingsByMarketSegment.length)}`, `${d3.format(".1%")(bookingsByMarketSegment.length / bookingsAll.length)} of all non-complementary bookings`)}
+  `Total bookings`, datesExtent, `${d3.format(",")(bookingsByMarketSegment.length)}`, `${d3.format(".1%")(bookingsByMarketSegment.length / bookingsAll.length)} of all bookings`)}
   </div>
   <div class="card grid-rowspan-1">
     ${bigNumber(
@@ -124,7 +124,8 @@ function arrivalLineChart(width, height) {
               x: "arrivalDate",
               interval: d3.utcDay,
               strokeWidth: 2,
-              tip: true
+              tip: true,
+              title: d => `${d3.timeFormat("%b %d, %Y")(new Date(d.arrivalDate))}`
             }
           )
         )
