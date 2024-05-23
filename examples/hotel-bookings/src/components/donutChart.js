@@ -8,7 +8,7 @@ export function donutChart(data, centerText, width, colorScale) {
 
   const arc = d3
     .arc()
-    .innerRadius(radius * 0.5)
+    .innerRadius(radius * 0.6)
     .outerRadius(radius - 1);
 
   const pie = d3
@@ -35,14 +35,12 @@ export function donutChart(data, centerText, width, colorScale) {
     .data(pie(data))
     .join("path")
     .attr("fill", (d) => color(d.data.name))
-    .attr("d", arc)
-    .append("title")
-    .text((d) => `${d.data.name}: ${d.data.value.toLocaleString()}`);
+    .attr("d", arc);
 
   svg
     .append("g")
     .attr("font-family", "sans-serif")
-    .attr("font-size", 11)
+    .attr("font-size", 10)
     .attr("text-anchor", "middle")
     .selectAll()
     .data(pie(data))
@@ -52,17 +50,19 @@ export function donutChart(data, centerText, width, colorScale) {
       text
         .append("tspan")
         .filter((d) => d.endAngle - d.startAngle > 0.1)
-        .attr("y", "-0.5em")
+        .attr("y", "-0.3em")
         .attr("font-weight", "bold")
+        .attr("fill", "white")
         .text((d) => d.data.name)
     )
     .call((text) =>
       text
-        .filter((d) => d.endAngle - d.startAngle > 0.25)
+        .filter((d) => d.endAngle - d.startAngle > 0.15)
         .append("tspan")
         .attr("x", 0)
-        .attr("y", "0.7em")
-        .attr("fill-opacity", 0.7)
+        .attr("y", "0.8em")
+        .attr("fill", "white")
+        .attr("fill-opacity", 1)
         .text((d) => d.data.value.toLocaleString("en-US"))
     );
 
@@ -70,8 +70,9 @@ export function donutChart(data, centerText, width, colorScale) {
     .append("text")
     .attr("text-anchor", "middle")
     .attr("font-family", "sans-serif")
-    .attr("font-size", 12)
-    .attr("font-weight", 700)
+    .attr("font-size", "0.9rem")
+    .attr("fill", "currentColor")
+    .attr("font-weight", 600)
     .text(centerText);
 
   return svg.node();
