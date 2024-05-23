@@ -384,7 +384,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
     attachmentWatcher = await loaders.watchFiles(path, getWatchFiles(resolvers), () => watcher("change"));
     markdownWatcher = watch(join(root, path), (event) => watcher(event));
-    configWatchers = config.watchPaths.map(watchPath => watch(watchPath, () => send({type: "reload"})));
+    configWatchers = config.watchPaths.map((watchPath) => watch(watchPath, () => send({type: "reload"})));
   }
 
   socket.on("message", async (data) => {

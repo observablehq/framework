@@ -70,7 +70,10 @@ describe("readConfig([], root)", () => {
 
 describe("readConfig([…], root)", () => {
   it("loads one config", async () => {
-    const {md, loaders, normalizePath, ...config} = await readConfig(["test/input/configs/layered/config1.js"], "test/input/configs/layered");
+    const {md, loaders, normalizePath, ...config} = await readConfig(
+      ["test/input/configs/layered/config1.js"],
+      "test/input/configs/layered"
+    );
     assert.deepStrictEqual(config, {
       root: "test/input/configs/layered",
       output: "dist",
@@ -87,13 +90,14 @@ describe("readConfig([…], root)", () => {
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
       search: false,
-      watchPaths: [
-        "test/input/configs/layered/config1.js"
-      ]
+      watchPaths: ["test/input/configs/layered/config1.js"]
     });
   });
   it("can layer an object-based config", async () => {
-    const {md, loaders, normalizePath, ...config} = await readConfig(["test/input/configs/layered/config1.js", "test/input/configs/layered/config2.js"], "test/input/configs/layered");
+    const {md, loaders, normalizePath, ...config} = await readConfig(
+      ["test/input/configs/layered/config1.js", "test/input/configs/layered/config2.js"],
+      "test/input/configs/layered"
+    );
     assert.deepStrictEqual(config, {
       root: "test/input/configs/layered",
       output: "dist",
@@ -110,43 +114,43 @@ describe("readConfig([…], root)", () => {
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
       search: false,
-      watchPaths: [
-        "test/input/configs/layered/config1.js",
-        "test/input/configs/layered/config2.js"
-      ]
+      watchPaths: ["test/input/configs/layered/config1.js", "test/input/configs/layered/config2.js"]
     });
   });
-    it("can layer a function-based config", async () => {
-      const {md, loaders, normalizePath, ...config} = await readConfig([
+  it("can layer a function-based config", async () => {
+    const {md, loaders, normalizePath, ...config} = await readConfig(
+      [
         "test/input/configs/layered/config1.js",
         "test/input/configs/layered/config2.js",
         "test/input/configs/layered/config3.js"
-      ], "test/input/configs/layered");
-      assert.deepStrictEqual(config, {
-        root: "test/input/configs/layered",
-        output: "dist",
-        base: "/",
-        style: {theme: ["air", "near-midnight"]},
-        sidebar: true,
-        pages: [
-          {path: "/page1", pager: "main", name: "Page 1"},
-          {path: "/page2", pager: "main", name: "Page 2"}
-        ],
-        title: "config 3",
-        toc: {label: "Contents", show: true},
-        pager: true,
-        scripts: [],
-        head: "",
-        header: "header 1",
-        footer:
-          'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
-        search: false,
-        watchPaths: [
-          "test/input/configs/layered/config1.js",
-          "test/input/configs/layered/config2.js",
-          "test/input/configs/layered/config3.js",
-        ]
-      });
+      ],
+      "test/input/configs/layered"
+    );
+    assert.deepStrictEqual(config, {
+      root: "test/input/configs/layered",
+      output: "dist",
+      base: "/",
+      style: {theme: ["air", "near-midnight"]},
+      sidebar: true,
+      pages: [
+        {path: "/page1", pager: "main", name: "Page 1"},
+        {path: "/page2", pager: "main", name: "Page 2"}
+      ],
+      title: "config 3",
+      toc: {label: "Contents", show: true},
+      pager: true,
+      scripts: [],
+      head: "",
+      header: "header 1",
+      footer:
+        'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
+      search: false,
+      watchPaths: [
+        "test/input/configs/layered/config1.js",
+        "test/input/configs/layered/config2.js",
+        "test/input/configs/layered/config3.js"
+      ]
+    });
   });
 });
 
