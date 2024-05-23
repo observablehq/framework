@@ -238,11 +238,10 @@ describe("deploy", () => {
     effects.close();
   });
 
-  it("won't deploy to an non-existent deploy", async () => {
+  it("won't deploy to a non-existent deploy", async () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
       .handleGetCurrentUser()
-      .handleGetProject(DEPLOY_CONFIG)
       .handleGetDeploy({deployId, status: 404})
       .start();
 
@@ -267,7 +266,6 @@ describe("deploy", () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
       .handleGetCurrentUser()
-      .handleGetProject(DEPLOY_CONFIG)
       .handleGetDeploy({deployId, deployStatus: "uploaded"})
       .start();
 
@@ -499,6 +497,9 @@ describe("deploy", () => {
       ...DEPLOY_CONFIG,
       workspaceLogin: "ACME Inc."
     };
+    getCurrentObservableApi()
+      .handleGetCurrentUser()
+      .start();
     const effects = new MockDeployEffects({deployConfig, isTty: true});
 
     try {
@@ -519,6 +520,9 @@ describe("deploy", () => {
       ...DEPLOY_CONFIG,
       projectSlug: "Business Intelligence"
     };
+    getCurrentObservableApi()
+      .handleGetCurrentUser()
+      .start();
     const effects = new MockDeployEffects({deployConfig, isTty: true});
 
     try {
@@ -1079,7 +1083,7 @@ describe("promptDeployTarget", () => {
     const effects = new MockDeployEffects({isTty: false});
     const api = effects.makeApiClient();
     try {
-      await promptDeployTarget(TEST_CONFIG, effects, api, {} as GetCurrentUserResponse);
+      await promptDeployTarget(effects, TEST_CONFIG, api, {} as GetCurrentUserResponse);
     } catch (error) {
       CliError.assert(error, {message: "Deploy not configured."});
     }
@@ -1089,7 +1093,7 @@ describe("promptDeployTarget", () => {
     const effects = new MockDeployEffects();
     const api = effects.makeApiClient();
     try {
-      await promptDeployTarget(TEST_CONFIG, effects, api, userWithZeroWorkspaces);
+      await promptDeployTarget(effects, TEST_CONFIG, api, userWithZeroWorkspaces);
     } catch (error) {
       effects.clack.log.assertLogged({message: /You don’t have any Observable workspaces/});
       CliError.assert(error, {message: "No Observable workspace found.", print: false});
@@ -1109,7 +1113,7 @@ describe("promptDeployTarget", () => {
     ];
     const api = effects.makeApiClient();
     getCurrentObservableApi().handleGetWorkspaceProjects({workspaceLogin: workspace.login, projects: []}).start();
-    const result = await promptDeployTarget(TEST_CONFIG, effects, api, userWithTwoWorkspaces);
+    const result = await promptDeployTarget(effects, TEST_CONFIG, api, userWithTwoWorkspaces);
     assert.deepEqual(result, {
       accessLevel,
       create: true,

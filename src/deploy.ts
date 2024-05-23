@@ -102,11 +102,11 @@ async function continueExistingDeploy(
 
   await checkDeployCreated(apiClient, deployId);
 
-  const buildFilePaths = await getBuildFilePaths(deployOptions.config, effects, deployOptions.force);
+  const buildFilePaths = await getBuildFilePaths(effects, deployOptions.config, deployOptions.force);
 
-  await uploadFiles(deployOptions, effects, apiClient, deployId, buildFilePaths);
-  await markDeployUploaded(deployOptions.config, effects, apiClient, deployId);
-  const deployInfo = await pollForProcessingCompletion(apiClient, deployId, deployOptions.deployPollInterval);
+  await uploadFiles(effects, deployOptions.config, apiClient, deployId, buildFilePaths, deployOptions.maxConcurrency);
+  await markDeployUploaded(effects, deployOptions.config, apiClient, deployId);
+  const deployInfo = await pollForProcessingCompletion(effects, apiClient, deployId, deployOptions.deployPollInterval);
 
   return deployInfo;
 }
@@ -114,7 +114,7 @@ async function continueExistingDeploy(
 async function startNewDeploy(deployOptions: DeployOptions, effects: DeployEffects): Promise<GetDeployResponse> {
   const {apiClient, currentUser} = await getApiClientAndCurrentUser(effects);
 
-  const deployConfig = await getUpdatedDeployConfig(deployOptions.config, effects, apiClient, currentUser);
+  const deployConfig = await getUpdatedDeployConfig(effects, deployOptions.config, apiClient, currentUser);
   const {deployTarget, projectUpdates} = await getDeployTarget(
     deployOptions.config,
     effects,
@@ -122,13 +122,13 @@ async function startNewDeploy(deployOptions: DeployOptions, effects: DeployEffec
     currentUser,
     deployConfig
   );
+
+  const buildFilePaths = await getBuildFilePaths(effects, deployOptions.config, deployOptions.force);
+
   const deployId = await createNewDeploy(effects, deployOptions, apiClient, deployTarget);
-
-  const buildFilePaths = await getBuildFilePaths(deployOptions.config, effects, deployOptions.force);
-
-  await uploadFiles(deployOptions, effects, apiClient, deployId, buildFilePaths);
-  await markDeployUploaded(deployOptions.config, effects, apiClient, deployId);
-  const deployInfo = await pollForProcessingCompletion(apiClient, deployId, deployOptions.deployPollInterval);
+  await uploadFiles(effects, deployOptions.config, apiClient, deployId, buildFilePaths, deployOptions.maxConcurrency);
+  await markDeployUploaded(effects, deployOptions.config, apiClient, deployId);
+  const deployInfo = await pollForProcessingCompletion(effects, apiClient, deployId, deployOptions.deployPollInterval);
   await maybeUpdateProject(apiClient, deployTarget, projectUpdates);
 
   return deployInfo;
@@ -136,7 +136,7 @@ async function startNewDeploy(deployOptions: DeployOptions, effects: DeployEffec
 
 async function getApiClientAndCurrentUser(effects: DeployEffects) {
   let apiKey = await effects.getObservableApiKey(effects);
-  const apiClient = new ObservableApiClient(apiKey ? {apiKey, clack} : {clack});
+  const apiClient = new ObservableApiClient(apiKey ? {apiKey, clack: effects.clack} : {clack: effects.clack});
 
   let currentUser: GetCurrentUserResponse | null = null;
   let authError: null | "unauthenticated" | "forbidden" = null;
@@ -161,15 +161,15 @@ async function getApiClientAndCurrentUser(effects: DeployEffects) {
       authError === "unauthenticated" || authError === null
         ? "You must be logged in to Observable to deploy. Do you want to do that now?"
         : "Your authentication is invalid. Do you want to log in to Observable again?";
-    const choice = await clack.confirm({
+    const choice = await effects.clack.confirm({
       message,
       active: "Yes, log in",
       inactive: "No, cancel deploy"
     });
     if (!choice) {
-      clack.outro(yellow("Deploy canceled."));
+      effects.clack.outro(yellow("Deploy canceled."));
     }
-    if (clack.isCancel(choice) || !choice) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
+    if (effects.clack.isCancel(choice) || !choice) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
 
     ({currentUser, apiKey} = await loginInner(effects));
     apiClient.setApiKey(apiKey);
@@ -199,8 +199,8 @@ async function checkDeployCreated(apiClient: ObservableApiClient, deployId: stri
 
 // Get the deploy config, updating if necessary.
 async function getUpdatedDeployConfig(
-  config: Config,
   effects: DeployEffects,
+  config: Config,
   apiClient: ObservableApiClient,
   currentUser: GetCurrentUserResponse
 ) {
@@ -220,8 +220,8 @@ async function getUpdatedDeployConfig(
   }
 
   if (deployConfig.projectId && (!deployConfig.projectSlug || !deployConfig.workspaceLogin)) {
-    const spinner = clack.spinner();
-    clack.log.warn("The `projectSlug` or `workspaceLogin` is missing from your deploy.json.");
+    const spinner = effects.clack.spinner();
+    effects.clack.log.warn("The `projectSlug` or `workspaceLogin` is missing from your deploy.json.");
     spinner.start(`Searching for project ${deployConfig.projectId}`);
     let found = false;
     for (const workspace of currentUser.workspaces) {
@@ -252,7 +252,7 @@ async function getDeployTarget(
   apiClient,
   currentUser,
   deployConfig
-): Promise<{deployTarget: DeployTargetInfo; projectUpdates: PostEditProjectRequest}> {
+): Promise<{deployTarget: DeployTargetInfo, projectUpdates: PostEditProjectRequest}> {
   let deployTarget: DeployTargetInfo;
   const projectUpdates: PostEditProjectRequest = {};
   if (deployConfig.workspaceLogin && deployConfig.projectSlug) {
@@ -270,47 +270,47 @@ async function getDeployTarget(
     }
   }
 
-  deployTarget ??= await promptDeployTarget(config, effects, apiClient, currentUser);
+  deployTarget ??= await promptDeployTarget(effects, config, apiClient, currentUser);
 
   if (!deployTarget.create) {
     // Check last deployed state. If it's not the same project, ask the user if
     // they want to continue anyways. In non-interactive mode just cancel.
     const targetDescription = `${deployTarget.project.title} (@${deployTarget.workspace.login}/${deployTarget.project.slug})`;
     if (deployConfig.projectId && deployConfig.projectId !== deployTarget.project.id) {
-      clack.log.warn(
+      effects.clack.log.warn(
         `The \`projectId\` in your deploy.json does not match. Continuing will overwrite ${bold(targetDescription)}.`
       );
       if (effects.isTty) {
-        const choice = await clack.confirm({
+        const choice = await effects.clack.confirm({
           message: "Do you want to continue deploying?",
           active: "Yes, overwrite",
           inactive: "No, cancel"
         });
         if (!choice) {
-          clack.outro(yellow("Deploy canceled."));
+          effects.clack.outro(yellow("Deploy canceled."));
         }
-        if (clack.isCancel(choice) || !choice) {
+        if (effects.clack.isCancel(choice) || !choice) {
           throw new CliError("User canceled deploy", {print: false, exitCode: 0});
         }
       } else {
         throw new CliError("Cancelling deploy due to misconfiguration.");
       }
     } else if (deployConfig.projectId) {
-      clack.log.info(`Deploying to ${bold(targetDescription)}.`);
+      effects.clack.log.info(`Deploying to ${bold(targetDescription)}.`);
     } else {
-      clack.log.warn(
+      effects.clack.log.warn(
         `The \`projectId\` in your deploy.json is missing. Continuing will overwrite ${bold(targetDescription)}.`
       );
       if (effects.isTty) {
-        const choice = await clack.confirm({
+        const choice = await effects.clack.confirm({
           message: "Do you want to continue deploying?",
           active: "Yes, overwrite",
           inactive: "No, cancel"
         });
         if (!choice) {
-          clack.outro(yellow("Deploy canceled."));
+          effects.clack.outro(yellow("Deploy canceled."));
         }
-        if (clack.isCancel(choice) || !choice) {
+        if (effects.clack.isCancel(choice) || !choice) {
           throw new CliError("User canceled deploy", {print: false, exitCode: 0});
         }
       } else {
@@ -334,7 +334,7 @@ async function getDeployTarget(
       deployTarget = {create: false, workspace: deployTarget.workspace, project};
     } catch (error) {
       if (isApiError(error) && error.details.errors.some((e) => e.code === "TOO_MANY_PROJECTS")) {
-        clack.log.error(
+        effects.clack.log.error(
           wrapAnsi(
             `The Starter tier can only deploy one project. Upgrade to unlimited projects at ${link(
               `https://observablehq.com/team/@${deployTarget.workspace.login}/settings`
@@ -343,11 +343,11 @@ async function getDeployTarget(
           )
         );
       } else {
-        clack.log.error(
+        effects.clack.log.error(
           wrapAnsi(`Could not create project: ${error instanceof Error ? error.message : error}`, effects.outputColumns)
         );
       }
-      clack.outro(yellow("Deploy canceled"));
+      effects.clack.outro(yellow("Deploy canceled"));
       throw new CliError("Error during deploy", {cause: error, print: false});
     }
   }
@@ -363,18 +363,17 @@ async function getDeployTarget(
 
 // export for testing
 export async function promptDeployTarget(
-  config: Config,
   effects: DeployEffects,
+  config: Config,
   api: ObservableApiClient,
   currentUser: GetCurrentUserResponse
 ): Promise<DeployTargetInfo> {
   if (!effects.isTty) throw new CliError("Deploy not configured.");
-  const {clack} = effects;
 
-  clack.log.info("To configure deploy, we need to ask you a few questions.");
+  effects.clack.log.info("To configure deploy, we need to ask you a few questions.");
 
   if (currentUser.workspaces.length === 0) {
-    clack.log.error(
+    effects.clack.log.error(
       `You don’t have any Observable workspaces. Go to ${underline("https://observablehq.com/team/new")} to create one.`
     );
     throw new CliError("No Observable workspace found.", {print: false, exitCode: 1});
@@ -382,16 +381,16 @@ export async function promptDeployTarget(
   let workspace: WorkspaceResponse;
   if (currentUser.workspaces.length === 1) {
     workspace = currentUser.workspaces[0];
-    clack.log.step(`Deploying to the ${bold(formatUser(workspace))} workspace.`);
+    effects.clack.log.step(`Deploying to the ${bold(formatUser(workspace))} workspace.`);
   } else {
-    const chosenWorkspace = await clack.select<{value: WorkspaceResponse; label: string}[], WorkspaceResponse>({
+    const chosenWorkspace = await effects.clack.select<{value: WorkspaceResponse; label: string}[], WorkspaceResponse>({
       message: "Which Observable workspace do you want to use?",
       options: currentUser.workspaces
         .map((w) => ({value: w, label: formatUser(w)}))
         .sort((a, b) => b.value.role.localeCompare(a.value.role) || a.label.localeCompare(b.label)),
       initialValue: currentUser.workspaces[0] // the oldest workspace, maybe?
     });
-    if (clack.isCancel(chosenWorkspace)) {
+    if (effects.clack.isCancel(chosenWorkspace)) {
       throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
     }
     workspace = chosenWorkspace;
@@ -409,7 +408,7 @@ export async function promptDeployTarget(
   }
 
   if (existingProjects.length > 0) {
-    const chosenProject = await clack.select<{value: string | null; label: string}[], string | null>({
+    const chosenProject = await effects.clack.select<{value: string | null; label: string}[], string | null>({
       message: "Which project do you want to use?",
       options: [
         {value: null, label: "Create a new project"},
@@ -421,43 +420,43 @@ export async function promptDeployTarget(
           .sort((a, b) => a.label.localeCompare(b.label))
       ]
     });
-    if (clack.isCancel(chosenProject)) {
+    if (effects.clack.isCancel(chosenProject)) {
       throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
     } else if (chosenProject !== null) {
       return {create: false, workspace, project: existingProjects.find((p) => p.slug === chosenProject)!};
     }
   } else {
-    const confirmChoice = await clack.confirm({
+    const confirmChoice = await effects.clack.confirm({
       message: "No projects found. Do you want to create a new project?",
       active: "Yes, continue",
       inactive: "No, cancel"
     });
     if (!confirmChoice) {
-      clack.outro(yellow("Deploy canceled."));
+      effects.clack.outro(yellow("Deploy canceled."));
     }
-    if (clack.isCancel(confirmChoice) || !confirmChoice) {
+    if (effects.clack.isCancel(confirmChoice) || !confirmChoice) {
       throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
     }
   }
 
   let title = config.title;
   if (title === undefined) {
-    clack.log.warn("You haven’t configured a title for your project.");
-    const titleChoice = await clack.text({
+    effects.clack.log.warn("You haven’t configured a title for your project.");
+    const titleChoice = await effects.clack.text({
       message: "What title do you want to use?",
       placeholder: "Enter a project title",
       validate: (title) => (title ? undefined : "A title is required.")
     });
-    if (clack.isCancel(titleChoice)) {
+    if (effects.clack.isCancel(titleChoice)) {
       throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
     }
     title = titleChoice;
-    clack.log.info("You should add this title to your observablehq.config.js file.");
+    effects.clack.log.info("You should add this title to your observablehq.config.js file.");
   }
 
   // TODO This should refer to the URL of the project, not the slug.
   const defaultProjectSlug = config.title ? slugify(config.title) : "";
-  const projectSlugChoice = await clack.text({
+  const projectSlugChoice = await effects.clack.text({
     message: "What slug do you want to use?",
     placeholder: defaultProjectSlug,
     defaultValue: defaultProjectSlug,
@@ -466,19 +465,19 @@ export async function promptDeployTarget(
         ? undefined
         : "Slugs must be lowercase and contain only letters, numbers, and hyphens."
   });
-  if (clack.isCancel(projectSlugChoice)) {
+  if (effects.clack.isCancel(projectSlugChoice)) {
     throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
   }
   projectSlug = projectSlugChoice;
 
-  const accessLevel: string | symbol = await clack.select({
+  const accessLevel: string | symbol = await effects.clack.select({
     message: "Who is allowed to access your project?",
     options: [
       {value: "private", label: "Private", hint: "only allow workspace members"},
       {value: "public", label: "Public", hint: "allow anyone"}
     ]
   });
-  if (clack.isCancel(accessLevel)) {
+  if (effects.clack.isCancel(accessLevel)) {
     throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
   }
 
@@ -502,7 +501,7 @@ async function createNewDeploy(
       message: "What changed in this deploy?",
       placeholder: "Enter a deploy message (optional)"
     });
-    if (clack.isCancel(input)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
+    if (effects.clack.isCancel(input)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
     message = input;
   }
 
@@ -529,7 +528,7 @@ async function createNewDeploy(
 }
 
 // Get the list of build files, doing a build if necessary.
-async function getBuildFilePaths(config: Config, effects: DeployEffects, force: string | null): Promise<string[]> {
+async function getBuildFilePaths(effects: DeployEffects, config: Config, force: string | null): Promise<string[]> {
   let doBuild = force === "build";
   let buildFilePaths: string[] | null = null;
 
@@ -537,19 +536,19 @@ async function getBuildFilePaths(config: Config, effects: DeployEffects, force: 
   // if --no-build was specified, then error; otherwise if in a tty, ask the
   // user if they want to build; otherwise build automatically.
   try {
-    buildFilePaths = await findBuildFiles(config, effects);
+    buildFilePaths = await findBuildFiles(effects, config);
   } catch (error) {
     if (CliError.match(error, {message: /No build files found/})) {
       if (force === "deploy") {
         throw new CliError("No build files found.");
       } else if (!force) {
         if (effects.isTty) {
-          const choice = await clack.confirm({
+          const choice = await effects.clack.confirm({
             message: "No build files found. Do you want to build the project now?",
             active: "Yes, build and then deploy",
             inactive: "No, cancel deploy"
           });
-          if (clack.isCancel(choice) || !choice) {
+          if (effects.clack.isCancel(choice) || !choice) {
             throw new CliError("User canceled deploy", {print: false, exitCode: 0});
           }
         }
@@ -570,25 +569,25 @@ async function getBuildFilePaths(config: Config, effects: DeployEffects, force: 
     const buildAge = Date.now() - leastRecentBuildMtimeMs;
     let initialValue = buildAge > BUILD_AGE_WARNING_MS;
     if (mostRecentSourceMtimeMs > leastRecentBuildMtimeMs) {
-      clack.log.warn(
+      effects.clack.log.warn(
         wrapAnsi(`Your source files have changed since you built ${formatAge(buildAge)}.`, effects.outputColumns)
       );
       initialValue = true;
     } else {
-      clack.log.info(wrapAnsi(`You built this project ${formatAge(buildAge)}.`, effects.outputColumns));
+      effects.clack.log.info(wrapAnsi(`You built this project ${formatAge(buildAge)}.`, effects.outputColumns));
     }
-    const choice = await clack.confirm({
+    const choice = await effects.clack.confirm({
       message: "Would you like to build again before deploying?",
       initialValue,
       active: "Yes, build and then deploy",
       inactive: "No, deploy as is"
     });
-    if (clack.isCancel(choice)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
+    if (effects.clack.isCancel(choice)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
     doBuild = !!choice;
   }
 
   if (doBuild) {
-    clack.log.step("Building project");
+    effects.clack.log.step("Building project");
     await effects.build(
       {config},
       new FileBuildEffects(config.output, join(config.root, ".observablehq", "cache"), {
@@ -596,7 +595,7 @@ async function getBuildFilePaths(config: Config, effects: DeployEffects, force: 
         output: effects.output
       })
     );
-    buildFilePaths = await findBuildFiles(config, effects);
+    buildFilePaths = await findBuildFiles(effects, config);
   }
 
   if (!buildFilePaths) throw new Error("No build files found.");
@@ -624,7 +623,7 @@ async function readCacheFile(sourceRoot: string, path: string): Promise<string> 
   return await readFile(fullPath, "utf8");
 }
 
-async function findMostRecentSourceMtimeMs(config: Config, effects: DeployEffects): Promise<number> {
+async function findMostRecentSourceMtimeMs(effects: DeployEffects, config: Config): Promise<number> {
   let mostRecentMtimeMs = -Infinity;
   for await (const file of effects.visitFiles(config.root)) {
     const joinedPath = join(config.root, file);
@@ -647,7 +646,7 @@ async function findMostRecentSourceMtimeMs(config: Config, effects: DeployEffect
   return mostRecentMtimeMs;
 }
 
-async function findLeastRecentBuildMtimeMs(config: Config, effects: DeployEffects): Promise<number> {
+async function findLeastRecentBuildMtimeMs(effects: DeployEffects, config: Config): Promise<number> {
   let leastRecentMtimeMs = Infinity;
   for await (const file of effects.visitFiles(config.output)) {
     const joinedPath = join(config.output, file);
@@ -659,7 +658,7 @@ async function findLeastRecentBuildMtimeMs(config: Config, effects: DeployEffect
   return leastRecentMtimeMs;
 }
 
-async function findBuildFiles(config: Config, effects: DeployEffects): Promise<string[]> {
+async function findBuildFiles(effects: DeployEffects, config: Config): Promise<string[]> {
   const buildFilePaths: string[] = [];
   try {
     for await (const file of effects.visitFiles(config.output)) {
@@ -678,15 +677,14 @@ async function findBuildFiles(config: Config, effects: DeployEffects): Promise<s
 }
 
 async function uploadFiles(
-  deployOptions: DeployOptions,
   effects: DeployEffects,
+  config: Config,
   apiClient: ObservableApiClient,
   deployId: string,
-  buildFilePaths: string[]
+  buildFilePaths: string[],
+  maxConcurrency?: number
 ) {
-  const {config, maxConcurrency} = deployOptions;
-
-  const progressSpinner = clack.spinner();
+  const progressSpinner = effects.clack.spinner();
   progressSpinner.start("");
 
   // upload a manifest before uploading the files
@@ -709,7 +707,7 @@ async function uploadFiles(
     }
   }
   if (fileErrors.length) {
-    clack.log.error(
+    effects.clack.log.error(
       "The server rejected some files from the upload:\n\n" +
         fileErrors.map(({path, detail}) => `  - ${path} - ${detail ? `(${detail})` : "no details"}`).join("\n")
     );
@@ -744,8 +742,8 @@ async function uploadFiles(
 }
 
 async function markDeployUploaded(
-  config: Config,
   effects: DeployEffects,
+  config: Config,
   apiClient: ObservableApiClient,
   deployId: string
 ) {
@@ -762,19 +760,20 @@ async function markDeployUploaded(
       // The error message here might contain sensitive information, so
       // don't send it in telemetry.
       Telemetry.record({event: "deploy", buildManifest: "error"});
-      clack.log.warn(`Could not read build manifest: ${error}`);
+      effects.clack.log.warn(`Could not read build manifest: ${error}`);
     }
   }
   await apiClient.postDeployUploaded(deployId, buildManifest);
 }
 
 async function pollForProcessingCompletion(
+  effects: DeployEffects,
   apiClient: ObservableApiClient,
   deployId: string,
   deployPollInterval = DEPLOY_POLL_INTERVAL_MS
 ): Promise<GetDeployResponse> {
   // Poll for processing completion
-  const spinner = clack.spinner();
+  const spinner = effects.clack.spinner();
   spinner.start("Server processing deploy");
   const pollExpiration = Date.now() + DEPLOY_POLL_MAX_MS;
   let deployInfo: null | GetDeployResponse = null;
@@ -808,14 +807,8 @@ async function pollForProcessingCompletion(
   return deployInfo;
 }
 
-async function maybeUpdateProject(
-  apiClient: ObservableApiClient,
-  deployTarget: DeployTargetInfo,
-  projectUpdates: PostEditProjectRequest
-) {
-  if (deployTarget.create) {
-    if (typeof projectUpdates?.title === "string") {
-      await apiClient.postEditProject(deployTarget.project.id, projectUpdates);
-    }  
+async function maybeUpdateProject(apiClient: ObservableApiClient, deployTarget: DeployTargetInfo, projectUpdates: PostEditProjectRequest) {
+  if (!deployTarget.create && typeof projectUpdates?.title === "string") {
+    await apiClient.postEditProject(deployTarget.project.id, projectUpdates);
   }
 }
