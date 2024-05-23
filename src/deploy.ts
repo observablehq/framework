@@ -784,9 +784,6 @@ async function pollForProcessingCompletion(
       throw new CliError(`Deploy failed to process on server: status = ${deployInfo?.status}`);
     }
     deployInfo = await apiClient.getDeploy(deployId);
-    if (!deployInfo) {
-      continue;
-    }
     switch (deployInfo.status) {
       case "created":
       case "pending":
