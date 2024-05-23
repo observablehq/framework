@@ -97,7 +97,7 @@ describe("build", () => {
     const outputDir = await mkdtemp(tmpPrefix + "output-");
     const cacheDir = await mkdtemp(tmpPrefix + "output-");
 
-    const config = normalizeConfig({root: inputDir, output: outputDir}, inputDir);
+    const config = normalizeConfig({root: inputDir, output: outputDir}, {defaultRoot: inputDir});
     const effects = new LoggingBuildEffects(outputDir, cacheDir);
     await build({config}, effects);
     assert.deepEqual(effects.buildManifest, {

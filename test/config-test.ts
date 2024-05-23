@@ -66,20 +66,24 @@ describe("readConfig(undefined, root)", () => {
       watchPath: undefined
     });
   });
+  it("overrides the file's output path with a passed one", async () => {
+    const config = await readConfig(undefined, "test/input/build/simple", "override");
+    assert.equal(config.output, "override");
+  });
 });
 
 describe("normalizeConfig(spec, root)", () => {
-  const root = "test/input/build/config";
+  const defaultRoot = "test/input/build/config";
   it("coerces the title to a string", () => {
-    assert.strictEqual(config({title: 42, pages: []}, root).title, "42");
-    assert.strictEqual(config({title: null, pages: []}, root).title, "null");
+    assert.strictEqual(config({title: 42, pages: []}, {defaultRoot}).title, "42");
+    assert.strictEqual(config({title: null, pages: []}, {defaultRoot}).title, "null");
   });
   it("considers the title optional", () => {
-    assert.strictEqual(config({pages: []}, root).title, undefined);
-    assert.strictEqual(config({title: undefined, pages: []}, root).title, undefined);
+    assert.strictEqual(config({pages: []}, {defaultRoot}).title, undefined);
+    assert.strictEqual(config({title: undefined, pages: []}, {defaultRoot}).title, undefined);
   });
   it("populates default pages", () => {
-    assert.deepStrictEqual(config({}, root).pages, [
+    assert.deepStrictEqual(config({}, {defaultRoot}).pages, [
       {name: "One", path: "/one", pager: "main"},
       {name: "H1: Section", path: "/toc-override", pager: "main"},
       {name: "H1: Section", path: "/toc", pager: "main"},
@@ -88,7 +92,7 @@ describe("normalizeConfig(spec, root)", () => {
     ]);
   });
   it("coerces pages to an array", () => {
-    assert.deepStrictEqual(config({pages: new Set()}, root).pages, []);
+    assert.deepStrictEqual(config({pages: new Set()}, {defaultRoot}).pages, []);
   });
   it("coerces and normalizes page paths", () => {
     const inpages = [
@@ -105,11 +109,11 @@ describe("normalizeConfig(spec, root)", () => {
       {name: "Index.html", path: "/foo/index", pager: "main"},
       {name: "Page.html", path: "/foo", pager: "main"}
     ];
-    assert.deepStrictEqual(config({pages: inpages}, root).pages, outpages);
+    assert.deepStrictEqual(config({pages: inpages}, {defaultRoot}).pages, outpages);
   });
   it("allows external page paths", () => {
     const pages = [{name: "Example.com", path: "https://example.com", pager: null}];
-    assert.deepStrictEqual(config({pages}, root).pages, pages);
+    assert.deepStrictEqual(config({pages}, {defaultRoot}).pages, pages);
   });
   it("allows page paths to have query strings and anchor fragments", () => {
     const inpages = [
@@ -136,7 +140,7 @@ describe("normalizeConfig(spec, root)", () => {
       {name: "Query string on slash", path: "/test/index?foo=bar", pager: "main"},
       {name: "Query string", path: "/test?foo=bar", pager: "main"}
     ];
-    assert.deepStrictEqual(config({pages: inpages}, root).pages, outpages);
+    assert.deepStrictEqual(config({pages: inpages}, {defaultRoot}).pages, outpages);
   });
   it("coerces sections", () => {
     const inpages = [{name: 42, pages: new Set([{name: null, path: {toString: () => "yes"}}])}];
@@ -150,33 +154,33 @@ describe("normalizeConfig(spec, root)", () => {
         pages: [{name: "null", path: "/yes", pager: "main"}]
       }
     ];
-    assert.deepStrictEqual(config({pages: inpages}, root).pages, outpages);
+    assert.deepStrictEqual(config({pages: inpages}, {defaultRoot}).pages, outpages);
   });
   it("coerces toc", () => {
-    assert.deepStrictEqual(config({pages: [], toc: {}}, root).toc, {label: "Contents", show: true});
-    assert.deepStrictEqual(config({pages: [], toc: {label: null}}, root).toc, {label: "null", show: true});
+    assert.deepStrictEqual(config({pages: [], toc: {}}, {defaultRoot}).toc, {label: "Contents", show: true});
+    assert.deepStrictEqual(config({pages: [], toc: {label: null}}, {defaultRoot}).toc, {label: "null", show: true});
   });
   it("populates default toc", () => {
-    assert.deepStrictEqual(config({pages: []}, root).toc, {label: "Contents", show: true});
+    assert.deepStrictEqual(config({pages: []}, {defaultRoot}).toc, {label: "Contents", show: true});
   });
   it("promotes boolean toc to toc.show", () => {
-    assert.deepStrictEqual(config({pages: [], toc: true}, root).toc, {label: "Contents", show: true});
-    assert.deepStrictEqual(config({pages: [], toc: false}, root).toc, {label: "Contents", show: false});
+    assert.deepStrictEqual(config({pages: [], toc: true}, {defaultRoot}).toc, {label: "Contents", show: true});
+    assert.deepStrictEqual(config({pages: [], toc: false}, {defaultRoot}).toc, {label: "Contents", show: false});
   });
   it("coerces pager", () => {
-    assert.strictEqual(config({pages: [], pager: 0}, root).pager, false);
-    assert.strictEqual(config({pages: [], pager: 1}, root).pager, true);
-    assert.strictEqual(config({pages: [], pager: ""}, root).pager, false);
-    assert.strictEqual(config({pages: [], pager: "0"}, root).pager, true);
+    assert.strictEqual(config({pages: [], pager: 0}, {defaultRoot}).pager, false);
+    assert.strictEqual(config({pages: [], pager: 1}, {defaultRoot}).pager, true);
+    assert.strictEqual(config({pages: [], pager: ""}, {defaultRoot}).pager, false);
+    assert.strictEqual(config({pages: [], pager: "0"}, {defaultRoot}).pager, true);
   });
   it("populates default pager", () => {
-    assert.strictEqual(config({pages: []}, root).pager, true);
+    assert.strictEqual(config({pages: []}, {defaultRoot}).pager, true);
   });
 });
 
 describe("normalizePath(path) with {cleanUrls: false}", () => {
-  const root = "test/input";
-  const normalize = config({cleanUrls: false}, root).normalizePath;
+  const defaultRoot = "test/input";
+  const normalize = config({cleanUrls: false}, {defaultRoot}).normalizePath;
   it("appends .html to extension-less links", () => {
     assert.strictEqual(normalize("foo"), "foo.html");
   });
@@ -222,8 +226,8 @@ describe("normalizePath(path) with {cleanUrls: false}", () => {
 });
 
 describe("normalizePath(path) with {cleanUrls: true}", () => {
-  const root = "test/input";
-  const normalize = config({cleanUrls: true}, root).normalizePath;
+  const defaultRoot = "test/input";
+  const normalize = config({cleanUrls: true}, {defaultRoot}).normalizePath;
   it("does not append .html to extension-less links", () => {
     assert.strictEqual(normalize("foo"), "foo");
   });
@@ -271,9 +275,9 @@ describe("normalizePath(path) with {cleanUrls: true}", () => {
 });
 
 describe("mergeToc(spec, toc)", () => {
-  const root = "test/input/build/config";
+  const defaultRoot = "test/input/build/config";
   it("merges page- and project-level toc config", async () => {
-    const toc = config({pages: [], toc: true}, root).toc;
+    const toc = config({pages: [], toc: true}, {defaultRoot}).toc;
     assert.deepStrictEqual(mergeToc({show: false}, toc), {label: "Contents", show: false});
     assert.deepStrictEqual(mergeToc({label: "On this page"}, toc), {label: "On this page", show: true});
     assert.deepStrictEqual(mergeToc({label: undefined}, toc), {label: "Contents", show: true});
