@@ -217,7 +217,6 @@ describe("deploy", () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
       .handleGetCurrentUser()
-      .handleGetProject(DEPLOY_CONFIG)
       .handleGetDeploy({deployId, deployStatus: "created"})
       .expectFileUpload({deployId, path: "index.html"})
       .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
@@ -1080,7 +1079,7 @@ describe("promptDeployTarget", () => {
     const effects = new MockDeployEffects({isTty: false});
     const api = effects.makeApiClient();
     try {
-      await promptDeployTarget(effects, api, TEST_CONFIG, {} as GetCurrentUserResponse);
+      await promptDeployTarget(TEST_CONFIG, effects, api, {} as GetCurrentUserResponse);
     } catch (error) {
       CliError.assert(error, {message: "Deploy not configured."});
     }
@@ -1090,7 +1089,7 @@ describe("promptDeployTarget", () => {
     const effects = new MockDeployEffects();
     const api = effects.makeApiClient();
     try {
-      await promptDeployTarget(effects, api, TEST_CONFIG, userWithZeroWorkspaces);
+      await promptDeployTarget(TEST_CONFIG, effects, api, userWithZeroWorkspaces);
     } catch (error) {
       effects.clack.log.assertLogged({message: /You don’t have any Observable workspaces/});
       CliError.assert(error, {message: "No Observable workspace found.", print: false});
@@ -1110,7 +1109,7 @@ describe("promptDeployTarget", () => {
     ];
     const api = effects.makeApiClient();
     getCurrentObservableApi().handleGetWorkspaceProjects({workspaceLogin: workspace.login, projects: []}).start();
-    const result = await promptDeployTarget(effects, api, TEST_CONFIG, userWithTwoWorkspaces);
+    const result = await promptDeployTarget(TEST_CONFIG, effects, api, userWithTwoWorkspaces);
     assert.deepEqual(result, {
       accessLevel,
       create: true,

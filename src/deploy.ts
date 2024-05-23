@@ -77,11 +77,6 @@ type DeployTargetInfo =
   | {create: true; workspace: {id: string; login: string}; projectSlug: string; title: string; accessLevel: string}
   | {create: false; workspace: {id: string; login: string}; project: GetProjectResponse};
 
-async function readCacheFile(sourceRoot: string, path: string): Promise<string> {
-  const fullPath = join(sourceRoot, ".observablehq", "cache", path);
-  return await readFile(fullPath, "utf8");
-}
-
 /** Deploy a project to ObservableHQ */
 export async function deploy(deployOptions: DeployOptions, effects = defaultEffects): Promise<void> {
   Telemetry.record({event: "deploy", step: "start", force: deployOptions.force});
@@ -89,7 +84,7 @@ export async function deploy(deployOptions: DeployOptions, effects = defaultEffe
 
   let deployInfo;
   if (deployOptions.deployId) {
-    deployInfo = await continueExistingDeploy(deployOptions, effects, deployInfo.deployId);
+    deployInfo = await continueExistingDeploy(deployOptions, effects, deployOptions.deployId);
   } else {
     deployInfo = await startNewDeploy(deployOptions, effects);
   }
@@ -127,7 +122,7 @@ async function startNewDeploy(deployOptions: DeployOptions, effects: DeployEffec
     currentUser,
     deployConfig
   );
-  const deployId = await createNewDeploy(deployOptions, apiClient, deployTarget);
+  const deployId = await createNewDeploy(effects, deployOptions, apiClient, deployTarget);
 
   const buildFilePaths = await getBuildFilePaths(deployOptions.config, effects, deployOptions.force);
 
@@ -492,13 +487,18 @@ export async function promptDeployTarget(
 
 // Create the new deploy on the server.
 async function createNewDeploy(
+  effects: DeployEffects,
   deployOptions: DeployOptions,
   apiClient: ObservableApiClient,
-  deployTarget
+  deployTarget: DeployTargetInfo
 ): Promise<string> {
+  if (deployTarget.create) {
+    throw Error("Incorrect deployTarget state");
+  }
+
   let message = deployOptions.message;
   if (message === undefined) {
-    const input = await clack.text({
+    const input = await effects.clack.text({
       message: "What changed in this deploy?",
       placeholder: "Enter a deploy message (optional)"
     });
@@ -529,7 +529,7 @@ async function createNewDeploy(
 }
 
 // Get the list of build files, doing a build if necessary.
-async function getBuildFilePaths(config, effects, force): Promise<string[]> {
+async function getBuildFilePaths(config: Config, effects: DeployEffects, force: string | null): Promise<string[]> {
   let doBuild = force === "build";
   let buildFilePaths: string[] | null = null;
 
@@ -537,7 +537,7 @@ async function getBuildFilePaths(config, effects, force): Promise<string[]> {
   // if --no-build was specified, then error; otherwise if in a tty, ask the
   // user if they want to build; otherwise build automatically.
   try {
-    buildFilePaths = await findBuildFiles(effects, config);
+    buildFilePaths = await findBuildFiles(config, effects);
   } catch (error) {
     if (CliError.match(error, {message: /No build files found/})) {
       if (force === "deploy") {
@@ -596,7 +596,7 @@ async function getBuildFilePaths(config, effects, force): Promise<string[]> {
         output: effects.output
       })
     );
-    buildFilePaths = await findBuildFiles(effects, config);
+    buildFilePaths = await findBuildFiles(config, effects);
   }
 
   if (!buildFilePaths) throw new Error("No build files found.");
@@ -619,7 +619,12 @@ function formatAge(age: number): string {
   return `at ${new Date(Date.now() - age).toLocaleString("en")}`;
 }
 
-async function findMostRecentSourceMtimeMs(effects: DeployEffects, config: Config): Promise<number> {
+async function readCacheFile(sourceRoot: string, path: string): Promise<string> {
+  const fullPath = join(sourceRoot, ".observablehq", "cache", path);
+  return await readFile(fullPath, "utf8");
+}
+
+async function findMostRecentSourceMtimeMs(config: Config, effects: DeployEffects): Promise<number> {
   let mostRecentMtimeMs = -Infinity;
   for await (const file of effects.visitFiles(config.root)) {
     const joinedPath = join(config.root, file);
@@ -642,7 +647,7 @@ async function findMostRecentSourceMtimeMs(effects: DeployEffects, config: Confi
   return mostRecentMtimeMs;
 }
 
-async function findLeastRecentBuildMtimeMs(effects: DeployEffects, config: Config): Promise<number> {
+async function findLeastRecentBuildMtimeMs(config: Config, effects: DeployEffects): Promise<number> {
   let leastRecentMtimeMs = Infinity;
   for await (const file of effects.visitFiles(config.output)) {
     const joinedPath = join(config.output, file);
@@ -654,7 +659,7 @@ async function findLeastRecentBuildMtimeMs(effects: DeployEffects, config: Confi
   return leastRecentMtimeMs;
 }
 
-async function findBuildFiles(effects: DeployEffects, config: Config): Promise<string[]> {
+async function findBuildFiles(config: Config, effects: DeployEffects): Promise<string[]> {
   const buildFilePaths: string[] = [];
   try {
     for await (const file of effects.visitFiles(config.output)) {
@@ -672,7 +677,13 @@ async function findBuildFiles(effects: DeployEffects, config: Config): Promise<s
   return buildFilePaths;
 }
 
-async function uploadFiles(deployOptions, effects, apiClient, deployId, buildFilePaths: string[]) {
+async function uploadFiles(
+  deployOptions: DeployOptions,
+  effects: DeployEffects,
+  apiClient: ObservableApiClient,
+  deployId: string,
+  buildFilePaths: string[]
+) {
   const {config, maxConcurrency} = deployOptions;
 
   const progressSpinner = clack.spinner();
@@ -732,7 +743,12 @@ async function uploadFiles(deployOptions, effects, apiClient, deployId, buildFil
   );
 }
 
-async function markDeployUploaded(effects, config, apiClient, deployId) {
+async function markDeployUploaded(
+  config: Config,
+  effects: DeployEffects,
+  apiClient: ObservableApiClient,
+  deployId: string
+) {
   // Mark the deploy as uploaded
   let buildManifest: null | BuildManifest = null;
   try {
@@ -753,8 +769,8 @@ async function markDeployUploaded(effects, config, apiClient, deployId) {
 }
 
 async function pollForProcessingCompletion(
-  apiClient,
-  deployId,
+  apiClient: ObservableApiClient,
+  deployId: string,
   deployPollInterval = DEPLOY_POLL_INTERVAL_MS
 ): Promise<GetDeployResponse> {
   // Poll for processing completion
@@ -792,9 +808,14 @@ async function pollForProcessingCompletion(
   return deployInfo;
 }
 
-async function maybeUpdateProject(apiClient, deployTarget, projectUpdates) {
-  // Update project title if necessary
-  if (typeof projectUpdates?.title === "string") {
-    await apiClient.postEditProject(deployTarget.project.id, projectUpdates as PostEditProjectRequest);
+async function maybeUpdateProject(
+  apiClient: ObservableApiClient,
+  deployTarget: DeployTargetInfo,
+  projectUpdates: PostEditProjectRequest
+) {
+  if (deployTarget.create) {
+    if (typeof projectUpdates?.title === "string") {
+      await apiClient.postEditProject(deployTarget.project.id, projectUpdates);
+    }  
   }
 }
