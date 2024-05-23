@@ -1,6 +1,6 @@
 ---
 toc: false
-theme: wide
+theme: [ocean-floor, wide]
 ---
 
 # Reservations by market segment
@@ -33,23 +33,25 @@ const pickMarketSegment = Generators.input(pickMarketSegmentInput);
 
 ${pickMarketSegmentInput}
 
+## ${pickMarketSegment} bookings
+
 <div class="grid grid-cols-4">
   <div class="card grid-rowspan-2">
-    ${resize(width => donutChart(byCountry, "Guest nationality", width, d3.quantize(t => d3.interpolateCool(t * 0.6 - 0.4), 6)))}
+    ${resize(width => donutChart(byCountry, "Guest nationality", width, d3.quantize(t => d3.interpolateTurbo(t * 0.2 + 0.02), 6)))}
   </div>
   <div class="card grid-rowspan-2">
     ${resize(width => donutChart(byBookingOutcome, `Status`, width, ["#525252", "#8b8b8b"]))}
   </div>
   <div class="card grid-rowspan-2">
-    ${resize(width => donutChart(bookingSeason, "Visit season", width, ["#C79005", "#9c6b4e", "#708FC2", "#D9598A"]))}
+    ${resize(width => donutChart(bookingSeason, "Visit season", width, seasonColors))}
   </div>
   <div class="card grid-rowspan-1">
     ${bigNumber(
-  `Total bookings (${pickMarketSegment})`, `${d3.format(",")(bookingsByMarketSegment.length)}`, `${d3.format(".1%")(bookingsByMarketSegment.length / bookingsAll.length)} of all non-complementary bookings`)}
+  `Total bookings`, datesExtent, `${d3.format(",")(bookingsByMarketSegment.length)}`, `${d3.format(".1%")(bookingsByMarketSegment.length / bookingsAll.length)} of all non-complementary bookings`)}
   </div>
   <div class="card grid-rowspan-1">
     ${bigNumber(
-  `Average daily rate (${pickMarketSegment})`, `$ ${d3.mean(bookingsByMarketSegment.map((d) => d.ADR)).toFixed(2)}`, `${d3.format("$")(d3.mean(bookingsByMarketSegment.map((d) => d.ADR)).toFixed(2) - d3.mean(bookingsAll.map((d) => d.ADR)).toFixed(2))}`)}
+  `Average daily rate`, datesExtent, `$ ${d3.mean(bookingsByMarketSegment.map((d) => d.ADR)).toFixed(2)}`, `${d3.format("$")(Math.abs(rateDiffFromAverage))} ${rateDiffFromAverage > 0 ? `greater than combined average rate` : `less than average rate`}`)}
   </div>
 </div>
 
@@ -60,7 +62,7 @@ ${pickMarketSegmentInput}
 <div class="grid grid-cols-2"">
   <div class="card grid-colspan-1">
     <h2>${pickMarketSegment}: rooms reserved by season</h2>
-    <h3>Size indicates proportion of total bookings for either the selected segment (red) or all bookings (blue), by room type and season.</h3>
+    <h3>${pickMarketSegment == "All" ? `Size represents total bookings by room type and season.` : `Size represents number of total bookings, by room type and season, for the selected market segment (red), with all bookings shown for comparison in blue.`}</h3>
     ${resize((width) => typeSeasonBubble(width))}
   </div>
   <div class="card grid-colspan-1">
@@ -92,12 +94,12 @@ function arrivalLineChart(width, height) {
     x: { label: "Arrival date"},
     y: { label: "Bookings", grid: true },
     title: `${pickMarketSegment} bookings by arrival date`,
-    subtitle: `Daily reservation counts (blue area) and 28-day moving average (solid line).`,
+    subtitle: `Daily reservation counts (gray area) and 28-day moving average (solid line).`,
     marks: [
       () => htl.svg`<defs>
       <linearGradient id="gradient" gradientTransform="rotate(90)">
-        <stop offset="60%" stop-color="#4269d0" stop-opacity="1" />
-        <stop offset="100%" stop-color="#97bbf5" stop-opacity="0.3" />
+        <stop offset="60%" stop-color="#B5B5B5" stop-opacity="1" />
+        <stop offset="100%" stop-color="#B5B5B5" stop-opacity="0.1" />
       </linearGradient>
       </defs>`,
       Plot.areaY(
@@ -136,6 +138,12 @@ function arrivalLineChart(width, height) {
 ```
 
 ```js
+const seasonColors = ["#959C00", "#9C5A00", "#465C9C", "#109F73"];
+
+// Mean daily rate values by season (for rule mark)
+const meanRateBySeason = d3.flatRollup(bookingsByMarketSegment, v => d3.mean(v, d => d.ADR), d => d.season).map(([season, value]) => ({season, value}));
+
+
 // Daily rate stacked histogram
 function dailyRateChart(width, height) {
   return Plot.plot({
@@ -149,7 +157,7 @@ function dailyRateChart(width, height) {
     y: {nice: true, label: null},
     axis: null,
     fy: {label: null},
-    color: {domain: ["Summer", "Fall", "Winter", "Spring"], range: ["#efB118", "#9c6b4e", "#97bbf5", "#ff8ab7"], label: "Season" },
+    color: {domain: ["Summer", "Fall", "Winter", "Spring"], range: seasonColors, label: "Season" },
     marks: [
       Plot.axisX({ ticks: 4 }),
       Plot.axisY({ ticks: 2}),
@@ -172,6 +180,8 @@ function dailyRateChart(width, height) {
         }
       )
     ),
+    Plot.ruleX(meanRateBySeason, {x: "value", fy: "season", stroke: "currentColor"}),
+    Plot.text(meanRateBySeason, {x: "value", fy: "season", text: d => `${d.season} mean rate: ${d3.format("$.2f")(d.value)}`, dx: 5, dy: -20, textAnchor: "start"}),
     Plot.frame({opacity: 0.4}),
     ],
   });
@@ -245,7 +255,7 @@ const bookingSeason = d3
 ```
 
 ```js
-const cleanTable = bookingsByMarketSegment.map(d => ({
+const cleanTable = bookingsAll.map(d => ({
    "Arrival date": d.arrivalDate,
    "Total nights": d.StaysInWeekNights + d.StaysInWeekendNights,
    "Average rate (USD)": d.ADR,
@@ -271,9 +281,17 @@ function typeSeasonBubble(width, height) {
     y: {label: null, grid: true},
     r: {range: [1, 20]},
     marks: [
-      Plot.dot(bookingsAll, Plot.group({r: "proportion"}, {y: "season", x: "ReservedRoomType", fill: "#4269d0", opacity: 0.7})),
-      Plot.dot(bookingsByMarketSegment, Plot.group({r: "proportion"}, {y: "season", x: "ReservedRoomType", fill: "#ff725c", opacity: 0.4})),
+      Plot.dot(bookingsAll, Plot.group({r: "count"}, {y: "season", x: "ReservedRoomType", fill: "#4269d0", opacity: 0.9})),
+      pickMarketSegment == "All" ? null : Plot.dot(bookingsByMarketSegment, Plot.group({r: "count"}, {y: "season", x: "ReservedRoomType", fill: "#ff725c", opacity: 0.9})),
     ]
   });
 }
+```
+
+```js
+const arrivalDates = d3.extent(bookingsAll, d => d.arrivalDate)
+
+const datesExtent = [d3.timeFormat("%b %d, %Y")(new Date(arrivalDates[0])), d3.timeFormat("%b %d, %Y")(new Date(arrivalDates[1]))] ;
+
+const rateDiffFromAverage = d3.mean(bookingsByMarketSegment.map((d) => d.ADR)).toFixed(2) - d3.mean(bookingsAll.map((d) => d.ADR)).toFixed(2);
 ```

@@ -13,7 +13,7 @@ export function donutChart(data, centerText, width, colorScale) {
 
   const pie = d3
     .pie()
-    .padAngle(1 / radius)
+    .padAngle(2 / radius)
     .sort(null)
     .value((d) => d.value);
 
@@ -35,6 +35,7 @@ export function donutChart(data, centerText, width, colorScale) {
     .data(pie(data))
     .join("path")
     .attr("fill", (d) => color(d.data.name))
+    //.attr("stroke", "currentColor")
     .attr("d", arc);
 
   svg
