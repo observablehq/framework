@@ -37,6 +37,7 @@ const BUILD_AGE_WARNING_MS = 1000 * 60 * 5;
 
 export interface DeployOptions {
   config: Config;
+  deployConfigPath: string | null;
   message?: string;
   deployPollInterval?: number;
   force: "build" | "deploy" | null;
@@ -44,8 +45,17 @@ export interface DeployOptions {
 }
 
 export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
-  getDeployConfig: (sourceRoot: string) => Promise<DeployConfig>;
-  setDeployConfig: (sourceRoot: string, config: DeployConfig) => Promise<void>;
+  getDeployConfig: (
+    sourceRoot: string,
+    deployConfigPath: string | null,
+    effects: ConfigEffects
+  ) => Promise<DeployConfig>;
+  setDeployConfig: (
+    sourceRoot: string,
+    deployConfigPath: string | null,
+    config: DeployConfig,
+    effects: ConfigEffects
+  ) => Promise<void>;
   clack: ClackEffects;
   logger: Logger;
   input: NodeJS.ReadableStream;
@@ -76,7 +86,14 @@ type DeployTargetInfo =
 
 /** Deploy a project to ObservableHQ */
 export async function deploy(
-  {config, message, force, deployPollInterval = DEPLOY_POLL_INTERVAL_MS, maxConcurrency}: DeployOptions,
+  {
+    config,
+    deployConfigPath = null,
+    message,
+    force,
+    deployPollInterval = DEPLOY_POLL_INTERVAL_MS,
+    maxConcurrency
+  }: DeployOptions,
   effects = defaultEffects
 ): Promise<void> {
   const {clack} = effects;
@@ -85,7 +102,9 @@ export async function deploy(
 
   let apiKey = await effects.getObservableApiKey(effects);
   const apiClient = new ObservableApiClient(apiKey ? {apiKey, clack} : {clack});
-  const deployConfig = await effects.getDeployConfig(config.root);
+
+  if (deployConfigPath === "") throw new CliError("Invalid path for --deploy-config");
+  const deployConfig = await effects.getDeployConfig(config.root, deployConfigPath, effects);
 
   if (deployConfig.workspaceLogin && !deployConfig.workspaceLogin.match(/^@?[a-z0-9-]+$/)) {
     throw new CliError(
@@ -149,7 +168,7 @@ export async function deploy(
       if (project) {
         deployConfig.projectSlug = project.slug;
         deployConfig.workspaceLogin = workspace.login;
-        effects.setDeployConfig(config.root, deployConfig);
+        effects.setDeployConfig(config.root, deployConfigPath, deployConfig, effects);
         found = true;
         break;
       }
@@ -338,11 +357,16 @@ export async function deploy(
     }
   }
 
-  await effects.setDeployConfig(config.root, {
-    projectId: deployTarget.project.id,
-    projectSlug: deployTarget.project.slug,
-    workspaceLogin: deployTarget.workspace.login
-  });
+  await effects.setDeployConfig(
+    config.root,
+    deployConfigPath,
+    {
+      projectId: deployTarget.project.id,
+      projectSlug: deployTarget.project.slug,
+      workspaceLogin: deployTarget.workspace.login
+    },
+    effects
+  );
 
   // Create the new deploy on the server
   let deployId: string;

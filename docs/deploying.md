@@ -121,6 +121,18 @@ This uses one cache per calendar day (in the `America/Los_Angeles` time zone). I
 
 <div class="note">You’ll need to edit the paths above if you’ve configured a source root other than <code>src</code>.</div>
 
+## Deploying to multiple targets
+
+By default, Framework will store information about where to deploy your project on Observable in a file in your source root. If you want to deploy to multiple targets on Observable, it can be awkward to manage that file.
+
+Instead, you can use the `--deploy-config` argument to maintain multiple deploy configurations. If you wanted to have a separate "staging" project where you can share early versions of you project, then you can run
+
+```sh
+npm run deploy -- --deploy-config deploy-stage.json
+```
+
+This will prompt you to choose or create a project, just like the first time you manually deployed. This will be saved in the file `deploy-stage.json`. Then in the future you can choose to deploy to your stage project by using that configuration file again by passing `--deploy-config`. You can deploy to your default project by not specifying the deploy config argument.
+
 ## Other hosting services
 
 Observable Framework builds a set of static files that can be hosted by any static site hosting services. To build your project, run:
