@@ -145,7 +145,7 @@ const seasonColors = ["#959C00", "#9C5A00", "#465C9C", "#109F73"];
 const meanRateBySeason = d3.flatRollup(bookingsByMarketSegment, v => d3.mean(v, d => d.ADR), d => d.season).map(([season, value]) => ({season, value}));
 
 
-// Daily rate stacked histogram
+// Daily rate faceted histograms
 function dailyRateChart(width, height) {
   return Plot.plot({
     width,
@@ -157,7 +157,7 @@ function dailyRateChart(width, height) {
     x: { label: "Average rate($)", grid: true},
     y: {nice: true, label: null},
     axis: null,
-    fy: {label: null},
+    fy: {label: null, domain: ["Summer", "Fall", "Winter", "Spring"]},
     color: {domain: ["Summer", "Fall", "Winter", "Spring"], range: seasonColors, label: "Season" },
     marks: [
       Plot.axisX({ ticks: 4 }),
