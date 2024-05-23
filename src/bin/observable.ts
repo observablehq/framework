@@ -13,6 +13,9 @@ const CONFIG_OPTION = {
   root: {
     type: "string"
   },
+  output: {
+    type: "string"
+  },
   config: {
     type: "string",
     short: "c"
@@ -94,11 +97,11 @@ try {
     }
     case "build": {
       const {
-        values: {config, root}
+        values: {config, root, output}
       } = helpArgs(command, {
         options: {...CONFIG_OPTION}
       });
-      await import("../build.js").then(async (build) => build.build({config: await readConfig(config, root)}));
+      await import("../build.js").then(async (build) => build.build({config: await readConfig(config, root, output)}));
       break;
     }
     case "create": {
@@ -108,7 +111,7 @@ try {
     }
     case "deploy": {
       const {
-        values: {config, root, message, build}
+        values: {config, root, output, message, build}
       } = helpArgs(command, {
         options: {
           ...CONFIG_OPTION,
@@ -128,7 +131,7 @@ try {
       });
       await import("../deploy.js").then(async (deploy) =>
         deploy.deploy({
-          config: await readConfig(config, root),
+          config: await readConfig(config, root, output),
           message,
           force: build === true ? "build" : build === false ? "deploy" : null
         })

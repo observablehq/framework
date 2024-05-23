@@ -146,10 +146,10 @@ async function importConfig(path: string): Promise<ConfigSpec> {
   return (await import(`${pathToFileURL(path).href}?${mtimeMs}`)).default;
 }
 
-export async function readConfig(configPath?: string, root?: string): Promise<Config> {
+export async function readConfig(configPath?: string, root?: string, outputRoot?: string): Promise<Config> {
   if (configPath === undefined) configPath = await resolveDefaultConfig(root);
-  if (configPath === undefined) return normalizeConfig(undefined, root);
-  return normalizeConfig(await importConfig(configPath), root, configPath);
+  if (configPath === undefined) return normalizeConfig(undefined, {defaultRoot: root, outputRoot});
+  return normalizeConfig(await importConfig(configPath), {defaultRoot: root, watchPath: configPath, outputRoot});
 }
 
 async function resolveDefaultConfig(root?: string): Promise<string | undefined> {
@@ -199,11 +199,14 @@ export function setCurrentDate(date: Date | null): void {
 // module), we want to return the same Config instance.
 const configCache = new WeakMap<ConfigSpec, Config>();
 
-export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, watchPath?: string): Config {
+export function normalizeConfig(
+  spec: ConfigSpec = {},
+  {defaultRoot, watchPath, outputRoot}: {defaultRoot?: string; watchPath?: string; outputRoot?: string} = {}
+): Config {
   const cachedConfig = configCache.get(spec);
   if (cachedConfig) return cachedConfig;
   const root = spec.root === undefined ? findDefaultRoot(defaultRoot) : String(spec.root);
-  const output = spec.output === undefined ? "dist" : String(spec.output);
+  const output = outputRoot ?? (spec.output === undefined ? "dist" : String(spec.output));
   const base = spec.base === undefined ? "/" : normalizeBase(spec.base);
   const style =
     spec.style === null
