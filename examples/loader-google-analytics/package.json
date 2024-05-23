@@ -1,0 +1,23 @@
+{
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "clean": "rimraf src/.observablehq/cache",
+    "build": "rimraf dist && observable build",
+    "dev": "observable preview",
+    "deploy": "observable deploy",
+    "observable": "observable"
+  },
+  "dependencies": {
+    "@google-analytics/data": "^4.5.0",
+    "@observablehq/framework": "^1.7.0",
+    "d3-dsv": "^3.0.1",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "rimraf": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,3 +1,7 @@
+---
+theme: dashboard
+---
+
 # U.S. electricity grid
 
 ```js

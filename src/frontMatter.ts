@@ -10,6 +10,7 @@ export interface FrontMatter {
   head?: string | null;
   header?: string | null;
   footer?: string | null;
+  pager?: string | null;
   index?: boolean;
   keywords?: string[];
   draft?: boolean;
@@ -33,7 +34,7 @@ export function readFrontMatter(input: string): {content: string; data: FrontMat
 export function normalizeFrontMatter(spec: any = {}): FrontMatter {
   const frontMatter: FrontMatter = {};
   if (spec == null || typeof spec !== "object") return frontMatter;
-  const {title, sidebar, toc, index, keywords, draft, sql, head, header, footer, style, theme} = spec;
+  const {title, sidebar, toc, index, keywords, draft, sql, head, header, footer, pager, style, theme} = spec;
   if (title !== undefined) frontMatter.title = stringOrNull(title);
   if (sidebar !== undefined) frontMatter.sidebar = Boolean(sidebar);
   if (toc !== undefined) frontMatter.toc = normalizeToc(toc);
@@ -44,6 +45,7 @@ export function normalizeFrontMatter(spec: any = {}): FrontMatter {
   if (head !== undefined) frontMatter.head = stringOrNull(head);
   if (header !== undefined) frontMatter.header = stringOrNull(header);
   if (footer !== undefined) frontMatter.footer = stringOrNull(footer);
+  if (pager !== undefined) frontMatter.pager = stringOrNull(pager);
   if (style !== undefined) frontMatter.style = stringOrNull(style);
   if (theme !== undefined) frontMatter.theme = normalizeTheme(theme);
   return frontMatter;

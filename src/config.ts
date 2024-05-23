@@ -2,7 +2,7 @@ import {createHash} from "node:crypto";
 import {existsSync, readFileSync} from "node:fs";
 import {stat} from "node:fs/promises";
 import op from "node:path";
-import {basename, dirname, join} from "node:path/posix";
+import {basename, dirname, extname, join} from "node:path/posix";
 import {cwd} from "node:process";
 import {pathToFileURL} from "node:url";
 import type MarkdownIt from "markdown-it";
@@ -10,6 +10,7 @@ import wrapAnsi from "wrap-ansi";
 import {LoaderResolver} from "./dataloader.js";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
+import type {FrontMatter} from "./frontMatter.js";
 import {createMarkdownIt, parseMarkdownMetadata} from "./markdown.js";
 import {isAssetPath, parseRelativeUrl, resolvePath} from "./path.js";
 import {resolveTheme} from "./theme.js";
@@ -23,12 +24,15 @@ export interface TableOfContents {
 export interface Page {
   name: string;
   path: string;
+  pager: string | null;
 }
 
 export interface Section<T = Page> {
   name: string;
   collapsible: boolean; // defaults to false
   open: boolean; // defaults to true; always true if collapsible is false
+  path: string | null;
+  pager: string | null;
   pages: T[];
 }
 
@@ -42,6 +46,19 @@ export interface Script {
   type: string | null;
 }
 
+/**
+ * A function that generates a page fragment such as head, header or footer.
+ */
+export type PageFragmentFunction = ({
+  title,
+  data,
+  path
+}: {
+  title: string | null;
+  data: FrontMatter;
+  path: string;
+}) => string | null;
+
 export interface Config {
   root: string; // defaults to src
   output: string; // defaults to dist
@@ -51,18 +68,19 @@ export interface Config {
   pages: (Page | Section<Page>)[];
   pager: boolean; // defaults to true
   scripts: Script[]; // deprecated; defaults to empty array
-  head: string | null; // defaults to null
-  header: string | null; // defaults to null
-  footer: string | null; // defaults to “Built with Observable on [date].”
+  head: PageFragmentFunction | string | null; // defaults to null
+  header: PageFragmentFunction | string | null; // defaults to null
+  footer: PageFragmentFunction | string | null; // defaults to “Built with Observable on [date].”
   toc: TableOfContents;
   style: null | Style; // defaults to {theme: ["light", "dark"]}
   search: boolean; // default to false
   md: MarkdownIt;
+  normalizePath: (path: string) => string;
   loaders: LoaderResolver;
   watchPath?: string;
 }
 
-interface ConfigSpec {
+export interface ConfigSpec {
   root?: unknown;
   output?: unknown;
   base?: unknown;
@@ -96,12 +114,15 @@ interface SectionSpec {
   name?: unknown;
   open?: unknown;
   collapsible?: unknown;
+  path?: unknown;
   pages?: unknown;
+  pager?: unknown;
 }
 
 interface PageSpec {
   name?: unknown;
   path?: unknown;
+  pager?: unknown;
 }
 
 interface TableOfContentsSpec {
@@ -156,7 +177,8 @@ function readPages(root: string, md: MarkdownIt): Page[] {
     const {data, title} = parseMarkdownMetadata(source, {path: file, md});
     if (data.draft) continue;
     const name = basename(file, ".md");
-    const page = {path: join("/", dirname(file), name), name: title ?? "Untitled"};
+    const {pager = "main"} = data;
+    const page = {path: join("/", dirname(file), name), name: title ?? "Untitled", pager};
     if (name === "index") pages.unshift(page);
     else pages.push(page);
   }
@@ -193,7 +215,6 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     linkify: spec.linkify === undefined ? undefined : Boolean(spec.linkify),
     typographer: spec.typographer === undefined ? undefined : Boolean(spec.typographer),
     quotes: spec.quotes === undefined ? undefined : (spec.quotes as any),
-    cleanUrls: spec.cleanUrls === undefined ? undefined : Boolean(spec.cleanUrls),
     markdownIt: spec.markdownIt as any
   });
   const title = spec.title === undefined ? undefined : String(spec.title);
@@ -202,9 +223,9 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const toc = normalizeToc(spec.toc as any);
   const sidebar = spec.sidebar === undefined ? undefined : Boolean(spec.sidebar);
   const scripts = spec.scripts === undefined ? [] : normalizeScripts(spec.scripts);
-  const head = spec.head === undefined ? "" : stringOrNull(spec.head);
-  const header = spec.header === undefined ? "" : stringOrNull(spec.header);
-  const footer = spec.footer === undefined ? defaultFooter() : stringOrNull(spec.footer);
+  const head = pageFragment(spec.head === undefined ? "" : spec.head);
+  const header = pageFragment(spec.header === undefined ? "" : spec.header);
+  const footer = pageFragment(spec.footer === undefined ? defaultFooter() : spec.footer);
   const search = Boolean(spec.search);
   const interpreters = normalizeInterpreters(spec.interpreters as any);
   const config: Config = {
@@ -223,6 +244,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     style,
     search,
     md,
+    normalizePath: getPathNormalizer(spec.cleanUrls),
     loaders: new LoaderResolver({root, interpreters}),
     watchPath
   };
@@ -230,6 +252,21 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   if (sidebar === undefined) Object.defineProperty(config, "sidebar", {get: () => config.pages.length > 0});
   configCache.set(spec, config);
   return config;
+}
+
+function getPathNormalizer(spec: unknown = true): (path: string) => string {
+  const cleanUrls = Boolean(spec);
+  return (path) => {
+    if (path && !path.endsWith("/") && !extname(path)) path += ".html";
+    if (path === "index.html") path = ".";
+    else if (path.endsWith("/index.html")) path = path.slice(0, -"index.html".length);
+    else if (cleanUrls) path = path.replace(/\.html$/, "");
+    return path;
+  };
+}
+
+function pageFragment(spec: unknown): PageFragmentFunction | string | null {
+  return typeof spec === "function" ? (spec as PageFragmentFunction) : stringOrNull(spec);
 }
 
 function defaultFooter(): string {
@@ -285,21 +322,32 @@ function normalizeScript(spec: unknown): Script {
 
 function normalizePages(spec: unknown): Config["pages"] {
   return Array.from(spec as any, (spec: SectionSpec | PageSpec) =>
-    "pages" in spec ? normalizeSection(spec, (spec: PageSpec) => normalizePage(spec)) : normalizePage(spec)
+    "pages" in spec ? normalizeSection(spec, normalizePage) : normalizePage(spec)
   );
 }
 
-function normalizeSection<T>(spec: SectionSpec, normalizePage: (spec: PageSpec) => T): Section<T> {
+function normalizeSection<T>(
+  spec: SectionSpec,
+  normalizePage: (spec: PageSpec, pager: string | null) => T
+): Section<T> {
   const name = String(spec.name);
   const collapsible = spec.collapsible === undefined ? spec.open !== undefined : Boolean(spec.collapsible);
   const open = collapsible ? Boolean(spec.open) : true;
-  const pages = Array.from(spec.pages as any, normalizePage);
-  return {name, collapsible, open, pages};
+  const pager = spec.pager === undefined ? "main" : stringOrNull(spec.pager);
+  const path = spec.path == null ? null : normalizePath(spec.path);
+  const pages = Array.from(spec.pages as any, (spec: PageSpec) => normalizePage(spec, pager));
+  return {name, collapsible, open, path, pager, pages};
 }
 
-function normalizePage(spec: PageSpec): Page {
+function normalizePage(spec: PageSpec, defaultPager: string | null = "main"): Page {
   const name = String(spec.name);
-  let path = String(spec.path);
+  const path = normalizePath(spec.path);
+  const pager = spec.pager === undefined && isAssetPath(path) ? defaultPager : stringOrNull(spec.pager);
+  return {name, path, pager};
+}
+
+function normalizePath(spec: unknown): string {
+  let path = String(spec);
   if (isAssetPath(path)) {
     const u = parseRelativeUrl(join("/", path)); // add leading slash
     let {pathname} = u;
@@ -307,7 +355,7 @@ function normalizePage(spec: PageSpec): Page {
     pathname = pathname.replace(/\/$/, "/index"); // add trailing index
     path = pathname + u.search + u.hash;
   }
-  return {name, path};
+  return path;
 }
 
 function normalizeInterpreters(spec: {[key: string]: unknown} = {}): {[key: string]: string[] | null} {

@@ -1,7 +1,7 @@
 {
   "name": "@observablehq/framework",
   "license": "ISC",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "type": "module",
   "publishConfig": {
     "access": "public"
@@ -63,7 +63,6 @@
     "acorn": "^8.11.2",
     "acorn-walk": "^8.3.0",
     "ci-info": "^4.0.0",
-    "cross-env": "^7.0.3",
     "cross-spawn": "^7.0.3",
     "d3-array": "^3.2.4",
     "d3-hierarchy": "^3.1.2",
@@ -74,7 +73,7 @@
     "highlight.js": "^11.8.0",
     "is-docker": "^3.0.0",
     "is-wsl": "^3.1.0",
-    "jsdom": "^24.0.0",
+    "jsdom": "^23.2.0",
     "jszip": "^3.10.1",
     "markdown-it": "^14.0.0",
     "markdown-it-anchor": "^8.6.7",
@@ -112,6 +111,7 @@
     "chai": "^4.3.10",
     "chai-http": "^4.4.0",
     "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
     "d3-dsv": "^3.0.1",
     "d3-format": "^3.1.0",
     "eslint": "^8.50.0",

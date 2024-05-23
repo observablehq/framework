@@ -114,17 +114,18 @@ Whether to show the sidebar. Defaults to true if **pages** is not empty.
 
 An array containing pages and sections. If not specified, it defaults to all Markdown files found in the source root in directory listing order.
 
-Both pages and sections have a **name**, which typically corresponds to the page’s title. The name gets displayed in the sidebar. Clicking on a page navigates to the corresponding **path**, which should start with a leading slash and be relative to the root; the path can also be specified as a full URL to navigate to an external site. Each section must specify an array of **pages**.
+Both pages and sections have a **name**, which typically corresponds to the page’s title. The name gets displayed in the sidebar. Sections are used to group related pages; each section must specify an array of **pages**. (Sections can only contain pages; nested sections are not currently supported.)
 
-Sections may be **collapsible**. <a href="https://github.com/observablehq/framework/releases/tag/v1.6.0" class="observablehq-version-badge" data-version="^1.6.0" title="Added in 1.6.0"></a> If the **open** option is set, the **collapsible** option defaults to true; otherwise it defaults to false. If the section is not collapsible, the **open** option is ignored and the section is always open; otherwise, the **open** option defaults to true. When a section is collapsible, clicking on a section header opens or closes that section. A section will always be open if the current page belongs to that section.
+Clicking on a page in the sidebar navigates to the corresponding **path**, which should start with a leading slash and be relative to the root; the path can also be specified as a full URL to navigate to an external site. A section may specify a **path** <a href="https://github.com/observablehq/framework/pull/1383" class="observablehq-version-badge" data-version="prerelease" title="Added in #1383"></a> to navigate to when the section header is clicked; if a section does not specify a **path**, then clicking the section header toggles the section (if **collapsible**; see below).
 
-For example, here **pages** specifies two sections and a total of four pages:
+For example, here **pages** specifies two sections and a total of five pages:
 
 ```js run=false
 export default {
   pages: [
     {
       name: "Section 1",
+      path: "/s01/",
       pages: [
         {name: "Page 1", path: "/s01/page1"},
         {name: "Page 2", path: "/s01/page2"}
@@ -142,6 +143,10 @@ export default {
 }
 ```
 
+Sections may be **collapsible**. <a href="https://github.com/observablehq/framework/releases/tag/v1.6.0" class="observablehq-version-badge" data-version="^1.6.0" title="Added in 1.6.0"></a> If the **open** option is set, the **collapsible** option defaults to true; otherwise it defaults to false. If the section is not collapsible, the **open** option is ignored and the section is always open; otherwise, the **open** option defaults to true. A section will open automatically if the current page belongs to that section.
+
+Pages and sections may also have a **pager** field <a href="https://github.com/observablehq/framework/pull/1306" class="observablehq-version-badge" data-version="prerelease" title="Added in #1306"></a> which specifies the name of the page group; this determines which pages are linked to via the previous and next pager buttons. If the **pager** field is not specified, it defaults the current section’s **pager** field, or to `main` for top-level pages and sections. (The home page is always in the `main` pager group.) The **pager** field can be also set to `null` to disable the pager on a specific page or section, causing adjacent pages to skip the page.
+
 Projects can have “unlisted” pages that are not referenced in **pages**. These pages can still be linked from other pages or visited directly, but they won’t be listed in the sidebar or linked to via the previous & next pager links.
 
 The pages list should _not_ include the home page (`/`) as this is automatically linked at the top of the sidebar. We also do not recommend listing the same page multiple times (say with different query parameters or anchor fragments), as this causes the previous & next pager links to cycle.
@@ -152,15 +157,21 @@ Whether to show the previous & next links in the footer; defaults to true. The p
 
 ## head
 
-An HTML fragment to add to the head. Defaults to the empty string.
+An HTML fragment to add to the head. Defaults to the empty string. If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
 
 ## header
 
-An HTML fragment to add to the header. Defaults to the empty string.
+An HTML fragment to add to the header. Defaults to the empty string. If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
 
 ## footer
 
-An HTML fragment to add to the footer. Defaults to “Built with Observable.”
+An HTML fragment to add to the footer. Defaults to “Built with Observable.” If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
+
+For example, the following adds a link to the bottom of each page:
+
+```js run=false
+footer: ({path}) => `<a href="https://github.com/example/test/blob/main/src${path}.md?plain=1">view source</a>`,
+```
 
 ## base
 

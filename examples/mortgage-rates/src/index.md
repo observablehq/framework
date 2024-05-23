@@ -2,6 +2,7 @@
 
 ```js
 const pmms = FileAttachment("data/pmms.csv").csv({typed: true});
+const tidy = pmms.then((pmms) => pmms.flatMap(({date, pmms30, pmms15}) => [{date, rate: pmms30, type: "30Y FRM"}, {date, rate: pmms15, type: "15Y FRM"}]));
 ```
 
 ```js
@@ -10,7 +11,10 @@ const colorLegend = (y) => html`<span style="border-bottom: solid 2px ${color.ap
 ```
 
 ```js
-const tidy = pmms.flatMap(({date, pmms30, pmms15}) => [{date, rate: pmms30, type: "30Y FRM"}, {date, rate: pmms15, type: "15Y FRM"}]);
+const defaultStartEnd = [pmms.at(-53).date, pmms.at(-1).date];
+const startEnd = Mutable(defaultStartEnd);
+const setStartEnd = (se) => startEnd.value = (se ?? defaultStartEnd);
+const getStartEnd = () => startEnd.value;
 ```
 
 ```js
@@ -107,7 +111,7 @@ Each week, [Freddie Mac](https://www.freddiemac.com/pmms/about-pmms.html) survey
   <div class="card">${frmCard(30, pmms)}</div>
   <div class="card">${frmCard(15, pmms)}</div>
   <div class="card grid-colspan-2 grid-rowspan-2" style="display: flex; flex-direction: column;">
-    <h2>Rates over the past year</h2>
+    <h2>Rates ${startEnd === defaultStartEnd ? "over the past year" : startEnd.map((d) => d.toLocaleDateString("en-US")).join("–")}</h2><br>
     <span style="flex-grow: 1;">${resize((width, height) =>
       Plot.plot({
         width,
@@ -115,7 +119,7 @@ Each week, [Freddie Mac](https://www.freddiemac.com/pmms/about-pmms.html) survey
         y: {grid: true, label: "rate (%)"},
         color,
         marks: [
-          Plot.lineY(tidy.slice(-53 * 2), {x: "date", y: "rate", stroke: "type", curve: "step", tip: true, markerEnd: true})
+          Plot.lineY(tidy.filter((d) => startEnd[0] <= d.date && d.date < startEnd[1]), {x: "date", y: "rate", stroke: "type", curve: "step", tip: true, markerEnd: true})
         ]
       })
     )}</span>
@@ -125,6 +129,7 @@ Each week, [Freddie Mac](https://www.freddiemac.com/pmms/about-pmms.html) survey
 <div class="grid">
   <div class="card">
     <h2>Rates over all time (${d3.extent(pmms, (d) => d.date.getUTCFullYear()).join("–")})</h2>
+    <h3>Click or drag to zoom</h3><br>
     ${resize((width) =>
       Plot.plot({
         width,
@@ -132,7 +137,34 @@ Each week, [Freddie Mac](https://www.freddiemac.com/pmms/about-pmms.html) survey
         color,
         marks: [
           Plot.ruleY([0]),
-          Plot.lineY(tidy, {x: "date", y: "rate", stroke: "type", tip: true})
+          Plot.lineY(tidy, {x: "date", y: "rate", stroke: "type", tip: true}),
+          (index, scales, channels, dimensions, context) => {
+            const x1 = dimensions.marginLeft;
+            const y1 = 0;
+            const x2 = dimensions.width - dimensions.marginRight;
+            const y2 = dimensions.height;
+            const brushed = (event) => {
+              if (!event.sourceEvent) return;
+              let {selection} = event;
+              if (!selection) {
+                const r = 10; // radius of point-based selection
+                let [px] = d3.pointer(event, context.ownerSVGElement);
+                px = Math.max(x1 + r, Math.min(x2 - r, px));
+                selection = [px - r, px + r];
+                g.call(brush.move, selection);
+              }
+              setStartEnd(selection.map(scales.x.invert));
+            };
+            const pointerdowned = (event) => {
+              const pointerleave = new PointerEvent("pointerleave", {bubbles: true, pointerType: "mouse"});
+              event.target.dispatchEvent(pointerleave);
+            };
+            const brush = d3.brushX().extent([[x1, y1], [x2, y2]]).on("brush end", brushed);
+            const g = d3.create("svg:g").call(brush);
+            g.call(brush.move, getStartEnd().map(scales.x));
+            g.on("pointerdown", pointerdowned);
+            return g.node();
+          }
         ]
       })
     )}
