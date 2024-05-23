@@ -4,10 +4,10 @@ import MarkdownIt from "markdown-it";
 import {normalizeConfig as config, mergeToc, readConfig, setCurrentDate} from "../src/config.js";
 import {LoaderResolver} from "../src/dataloader.js";
 
-describe("readConfig(undefined, root)", () => {
+describe("readConfig([], root)", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   it("imports the config file at the specified root", async () => {
-    const {md, loaders, normalizePath, ...config} = await readConfig(undefined, "test/input/build/config");
+    const {md, loaders, normalizePath, ...config} = await readConfig([], "test/input/build/config");
     assert(md instanceof MarkdownIt);
     assert(loaders instanceof LoaderResolver);
     assert.strictEqual(typeof normalizePath, "function");
@@ -39,11 +39,11 @@ describe("readConfig(undefined, root)", () => {
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
       search: false,
-      watchPath: resolve("test/input/build/config/observablehq.config.js")
+      watchPaths: [resolve("test/input/build/config/observablehq.config.js")]
     });
   });
   it("returns the default config if no config file is found", async () => {
-    const {md, loaders, normalizePath, ...config} = await readConfig(undefined, "test/input/build/simple");
+    const {md, loaders, normalizePath, ...config} = await readConfig([], "test/input/build/simple");
     assert(md instanceof MarkdownIt);
     assert(loaders instanceof LoaderResolver);
     assert.strictEqual(typeof normalizePath, "function");
@@ -63,8 +63,90 @@ describe("readConfig(undefined, root)", () => {
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
       search: false,
-      watchPath: undefined
+      watchPaths: []
     });
+  });
+});
+
+describe("readConfig([…], root)", () => {
+  it("loads one config", async () => {
+    const {md, loaders, normalizePath, ...config} = await readConfig(["test/input/configs/layered/config1.js"], "test/input/configs/layered");
+    assert.deepStrictEqual(config, {
+      root: "test/input/configs/layered",
+      output: "dist",
+      base: "/",
+      style: {theme: ["air", "near-midnight"]},
+      sidebar: false,
+      pages: [],
+      title: "config 1",
+      toc: {label: "Contents", show: true},
+      pager: true,
+      scripts: [],
+      head: "",
+      header: "header 1",
+      footer:
+        'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
+      search: false,
+      watchPaths: [
+        "test/input/configs/layered/config1.js"
+      ]
+    });
+  });
+  it("can layer an object-based config", async () => {
+    const {md, loaders, normalizePath, ...config} = await readConfig(["test/input/configs/layered/config1.js", "test/input/configs/layered/config2.js"], "test/input/configs/layered");
+    assert.deepStrictEqual(config, {
+      root: "test/input/configs/layered",
+      output: "dist",
+      base: "/",
+      style: {theme: ["air", "near-midnight"]},
+      sidebar: true,
+      pages: [{path: "/page1", pager: "main", name: "Page 1"}],
+      title: "config 2",
+      toc: {label: "Contents", show: true},
+      pager: true,
+      scripts: [],
+      head: "",
+      header: "header 1",
+      footer:
+        'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
+      search: false,
+      watchPaths: [
+        "test/input/configs/layered/config1.js",
+        "test/input/configs/layered/config2.js"
+      ]
+    });
+  });
+    it("can layer a function-based config", async () => {
+      const {md, loaders, normalizePath, ...config} = await readConfig([
+        "test/input/configs/layered/config1.js",
+        "test/input/configs/layered/config2.js",
+        "test/input/configs/layered/config3.js"
+      ], "test/input/configs/layered");
+      assert.deepStrictEqual(config, {
+        root: "test/input/configs/layered",
+        output: "dist",
+        base: "/",
+        style: {theme: ["air", "near-midnight"]},
+        sidebar: true,
+        pages: [
+          {path: "/page1", pager: "main", name: "Page 1"},
+          {path: "/page2", pager: "main", name: "Page 2"}
+        ],
+        title: "config 3",
+        toc: {label: "Contents", show: true},
+        pager: true,
+        scripts: [],
+        head: "",
+        header: "header 1",
+        footer:
+          'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
+        search: false,
+        watchPaths: [
+          "test/input/configs/layered/config1.js",
+          "test/input/configs/layered/config2.js",
+          "test/input/configs/layered/config3.js",
+        ]
+      });
   });
 });
 

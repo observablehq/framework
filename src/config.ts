@@ -77,7 +77,7 @@ export interface Config {
   md: MarkdownIt;
   normalizePath: (path: string) => string;
   loaders: LoaderResolver;
-  watchPath?: string;
+  watchPaths: string[];
 }
 
 export interface ConfigSpec {
@@ -141,15 +141,27 @@ function resolveConfig(configPath: string, root = "."): string {
 
 // By using the modification time of the config, we ensure that we pick up any
 // changes to the config on reload.
-async function importConfig(path: string): Promise<ConfigSpec> {
+async function importConfig(path: string): Promise<ConfigSpec | ((config: ConfigSpec) => ConfigSpec | undefined)> {
   const {mtimeMs} = await stat(path);
   return (await import(`${pathToFileURL(path).href}?${mtimeMs}`)).default;
 }
 
-export async function readConfig(configPath?: string, root?: string): Promise<Config> {
-  if (configPath === undefined) configPath = await resolveDefaultConfig(root);
-  if (configPath === undefined) return normalizeConfig(undefined, root);
-  return normalizeConfig(await importConfig(configPath), root, configPath);
+export async function readConfig(configPaths: string[], root?: string): Promise<Config> {
+  let configSpec: ConfigSpec = {};
+  if (configPaths.length === 0) {
+    const defaultPath = await resolveDefaultConfig(root);
+    if (defaultPath) configPaths.push(defaultPath);
+  }
+  for (const configPath of configPaths) {
+    const importedConfig = await importConfig(configPath);
+    if (typeof importedConfig === "function") {
+      const newSpec = importedConfig(configSpec);
+      configSpec = newSpec ? {...configSpec, ...newSpec} : configSpec;
+    } else {
+      configSpec = {...configSpec, ...importedConfig};
+    }
+  }
+  return normalizeConfig(configSpec, root, configPaths);
 }
 
 async function resolveDefaultConfig(root?: string): Promise<string | undefined> {
@@ -199,7 +211,7 @@ export function setCurrentDate(date: Date | null): void {
 // module), we want to return the same Config instance.
 const configCache = new WeakMap<ConfigSpec, Config>();
 
-export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, watchPath?: string): Config {
+export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, watchPaths: string[] = []): Config {
   const cachedConfig = configCache.get(spec);
   if (cachedConfig) return cachedConfig;
   const root = spec.root === undefined ? findDefaultRoot(defaultRoot) : String(spec.root);
@@ -246,7 +258,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     md,
     normalizePath: getPathNormalizer(spec.cleanUrls),
     loaders: new LoaderResolver({root, interpreters}),
-    watchPath
+    watchPaths
   };
   if (pages === undefined) Object.defineProperty(config, "pages", {get: () => readPages(root, md)});
   if (sidebar === undefined) Object.defineProperty(config, "sidebar", {get: () => config.pages.length > 0});

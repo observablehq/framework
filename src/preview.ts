@@ -34,7 +34,7 @@ import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, link} from "./tty.js";
 
 export interface PreviewOptions {
-  config?: string;
+  configs?: string[];
   root?: string;
   hostname: string;
   open?: boolean;
@@ -47,24 +47,24 @@ export async function preview(options: PreviewOptions): Promise<PreviewServer> {
 }
 
 export class PreviewServer {
-  private readonly _config: string | undefined;
+  private readonly _configs: string[];
   private readonly _root: string | undefined;
   private readonly _server: ReturnType<typeof createServer>;
   private readonly _socketServer: WebSocketServer;
   private readonly _verbose: boolean;
 
   private constructor({
-    config,
+    configs = [],
     root,
     server,
     verbose
   }: {
-    config?: string;
+    configs?: string[];
     root?: string;
     server: Server;
     verbose: boolean;
   }) {
-    this._config = config;
+    this._configs = configs;
     this._root = root;
     this._verbose = verbose;
     this._server = server;
@@ -104,7 +104,7 @@ export class PreviewServer {
   }
 
   async _readConfig() {
-    return readConfig(this._config, this._root);
+    return readConfig(this._configs, this._root);
   }
 
   _handleRequest: RequestListener = async (req, res) => {
@@ -294,7 +294,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
   let files: Map<string, string> | null = null;
   let tables: Map<string, string> | null = null;
   let stylesheets: string[] | null = null;
-  let configWatcher: FSWatcher | null = null;
+  let configWatchers: FSWatcher[] = [];
   let markdownWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
   let emptyTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -365,7 +365,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
   }
 
   async function hello({path: initialPath, hash: initialHash}: {path: string; hash: string}): Promise<void> {
-    if (markdownWatcher || configWatcher || attachmentWatcher) throw new Error("already watching");
+    if (markdownWatcher || configWatchers.length || attachmentWatcher) throw new Error("already watching");
     path = decodeURI(initialPath);
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
@@ -384,7 +384,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
     attachmentWatcher = await loaders.watchFiles(path, getWatchFiles(resolvers), () => watcher("change"));
     markdownWatcher = watch(join(root, path), (event) => watcher(event));
-    if (config.watchPath) configWatcher = watch(config.watchPath, () => send({type: "reload"}));
+    configWatchers = config.watchPaths.map(watchPath => watch(watchPath, () => send({type: "reload"})));
   }
 
   socket.on("message", async (data) => {
@@ -416,10 +416,10 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
       markdownWatcher.close();
       markdownWatcher = null;
     }
-    if (configWatcher) {
-      configWatcher.close();
-      configWatcher = null;
+    for (const watcher of configWatchers) {
+      watcher.close();
     }
+    configWatchers = [];
     console.log(faint("socket close"), req.url);
   });
 

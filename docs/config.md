@@ -275,3 +275,15 @@ The set of replacements for straight double and single quotes used when the [**t
 ## linkify <a href="https://github.com/observablehq/framework/releases/tag/v1.7.0" class="observablehq-version-badge" data-version="^1.7.0" title="Added in 1.7.0"></a>
 
 If true (the default), automatically convert URL-like text to links in Markdown.
+
+## Layered configuration
+
+On the command line, you can use the `--config` option to use a file other than the default `observablehq.config.js`. You can pass this option multiple times to merge multiple configuration files. Earlier configurations are overwritten by later configurations.
+
+When using multiple configuration files, you can export a function instead of an object from your configuration file. It will receive the configuration so far as an argument. It should return a new object which will be merged in with the existing config just like exporting an object would have. For example, this configuration file would convert the site's title to upper case:
+
+```js run=false
+export default (config) => ({
+  title: config.title?.toUpperCase() ?? "UNTITLED"
+});
+```

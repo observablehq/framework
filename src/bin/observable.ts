@@ -15,7 +15,8 @@ const CONFIG_OPTION = {
   },
   config: {
     type: "string",
-    short: "c"
+    short: "c",
+    multiple: true
   }
 } as const;
 
@@ -94,7 +95,7 @@ try {
     }
     case "build": {
       const {
-        values: {config, root}
+        values: {config = [], root}
       } = helpArgs(command, {
         options: {...CONFIG_OPTION}
       });
@@ -108,7 +109,7 @@ try {
     }
     case "deploy": {
       const {
-        values: {config, root, message, build}
+        values: {config = [], root, message, build}
       } = helpArgs(command, {
         options: {
           ...CONFIG_OPTION,
@@ -155,11 +156,11 @@ try {
           }
         }
       });
-      const {config, root, host, port, open} = values;
+      const {config = [], root, host, port, open} = values;
       await readConfig(config, root); // Ensure the config is valid.
       await import("../preview.js").then(async (preview) =>
         preview.preview({
-          config,
+          configs: config,
           root,
           hostname: host!,
           port: port === undefined ? undefined : +port,

@@ -44,7 +44,7 @@ describe("build", () => {
 
       await rm(actualDir, {recursive: true, force: true});
       if (generate) console.warn(`! generating ${expectedDir}`);
-      const config = {...(await readConfig(undefined, path)), output: outputDir};
+      const config = {...(await readConfig([], path)), output: outputDir};
       await build({config, addPublic}, new TestEffects(outputDir, join(config.root, ".observablehq", "cache")));
 
       // In the addPublic case, we don’t want to test the contents of the public
