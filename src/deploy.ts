@@ -82,7 +82,7 @@ export async function deploy(deployOptions: DeployOptions, effects = defaultEffe
   Telemetry.record({event: "deploy", step: "start", force: deployOptions.force});
   effects.clack.intro(`${inverse(" observable deploy ")} ${faint(`v${process.env.npm_package_version}`)}`);
 
-  const deployInfo = deployOptions.deployId 
+  const deployInfo = deployOptions.deployId
     ? await continueExistingDeploy(deployOptions, effects)
     : await startNewDeploy(deployOptions, effects);
 
