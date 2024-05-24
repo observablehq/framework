@@ -3,7 +3,7 @@ toc: false
 theme: [ocean-floor, wide]
 ---
 
-# Reservations by market segment
+# Hotel reservations by market segment
 
 ## Excludes complementary reservations
 
@@ -47,12 +47,10 @@ ${pickMarketSegmentInput}
     ${resize(width => donutChart(bookingSeason, "Visit season", width, seasonColors))}
   </div>
   <div class="card grid-rowspan-1">
-    ${bigNumber(
-  `Total bookings`, datesExtent, `${d3.format(",")(bookingsByMarketSegment.length)}`, `${d3.format(".1%")(bookingsByMarketSegment.length / bookingsAll.length)} of all bookings`)}
+    ${bigNumber(`Total bookings`, datesExtent, `${d3.format(",")(bookingsByMarketSegment.length)}`, `${d3.format(".1%")(bookingsByMarketSegment.length / bookingsAll.length)} of all bookings`)}
   </div>
   <div class="card grid-rowspan-1">
-    ${bigNumber(
-  `Average daily rate`, datesExtent, `$ ${d3.mean(bookingsByMarketSegment.map((d) => d.ADR)).toFixed(2)}`, `${d3.format("$")(Math.abs(rateDiffFromAverage))} ${rateDiffFromAverage > 0 ? `greater than combined average rate` : `less than average rate`}`)}
+    ${bigNumber(`Average daily rate`, datesExtent, `$ ${d3.mean(bookingsByMarketSegment.map((d) => d.ADR)).toFixed(2)}`, `${d3.format("$")(Math.abs(rateDiffFromAverage))} ${rateDiffFromAverage > 0 ? `greater than overal average rate` : `less than overall average rate`}`)}
   </div>
 </div>
 
@@ -79,7 +77,99 @@ ${pickMarketSegmentInput}
   ${display(Inputs.table(tableSearchValue))}
 </div>
 
+**Data source:** Antonio et al (2021). Hotel booking demand datasets. Data in Brief (22): 41-49. https://doi.org/10.1016/j.dib.2018.11.126
+
 ```js
+// Filtered data for selected market segment
+const bookingsByMarketSegment = pickMarketSegment == "All" ? hotelData.filter(d => d.MarketSegment != "Complementary") : hotelData.filter(
+  (d) =>
+    d.MarketSegment == pickMarketSegment && d.MarketSegment != "Complementary"
+);
+
+// All bookings data (except complementary)
+const bookingsAll = hotelData.filter(d => d.MarketSegment != "Complementary");
+
+// Bookings by nationality
+const bookingCountry = d3
+  .flatRollup(
+    bookingsByMarketSegment,
+    (d) => d.length,
+    (v) => v.Country
+  )
+  .map(([name, value]) => ({ name, value }))
+  .sort((a, b) => d3.descending(a.value, b.value));
+
+// Limit to top 5
+const bookingCountryTopN = bookingCountry.slice(0, 5);
+
+// Bin the rest as "Other"
+const bookingCountryOther = {
+  name: "Other",
+  value: d3.sum(
+    bookingCountry.slice(5 - bookingCountry.length),
+    (d) => d.value
+  ),
+};
+
+// Combine top 5 countries and "other" for donut chart
+const byCountry = bookingCountryTopN.concat(bookingCountryOther);
+
+//Booking status (cancelled or not cancelled)
+const byBookingOutcome = d3
+  .flatRollup(
+    bookingsByMarketSegment,
+    (d) => d.length,
+    (d) => d.IsCanceled
+  )
+  .map(([name, value]) => ({ name, value }))
+  .sort((a, b) => d3.descending(a.value, b.value));
+
+// Bookings by room type
+const byRoomType = d3
+  .flatRollup(
+    bookingsByMarketSegment,
+    (d) => d.length,
+    (d) => d.ReservedRoomType
+  )
+  .map(([name, value]) => ({ name, value }))
+  .sort((a, b) => d3.descending(a.value, b.value));
+
+// Bookings by season
+const seasonOrder = {Summer: 1, Fall: 2, Winter: 3, Spring: 4};
+
+const bookingSeason = d3
+  .flatRollup(
+    bookingsByMarketSegment,
+    (d) => d.length,
+    (v) => v.season
+  )
+  .map(([name, value]) => ({ name, value })), order = seasonOrder;
+
+// Find & format arrival date extent for big number
+const arrivalDates = d3.extent(bookingsAll, d => d.arrivalDate)
+
+const datesExtent = [d3.timeFormat("%b %d, %Y")(new Date(arrivalDates[0])), d3.timeFormat("%b %d, %Y")(new Date(arrivalDates[1]))] ;
+
+// Calculate rate difference from total average for big number
+const rateDiffFromAverage = d3.mean(bookingsByMarketSegment.map((d) => d.ADR)).toFixed(2) - d3.mean(bookingsAll.map((d) => d.ADR)).toFixed(2);
+```
+
+```js
+const cleanTable = bookingsAll.map(d => ({
+   "Arrival date": d.arrivalDate,
+   "Average rate": d.ADR,
+   "Room type": d.ReservedRoomType,
+   "Market segment": d.MarketSegment,
+   "Country": d.Country,
+   "Adults": d.Adults,
+   "Children": d.Children,
+   "Lead time": d.LeadTime,
+   "Cancellation": d.IsCanceled
+}));
+```
+
+```js
+// Create searchable table
 const tableSearch = Inputs.search(cleanTable);
 
 const tableSearchValue = Generators.input(tableSearch);
@@ -140,13 +230,16 @@ function arrivalLineChart(width, height) {
 ```
 
 ```js
+//Create faceted histograms of daily rate
+
+// Season color scheme
 const seasonColors = ["#959C00", "#9C5A00", "#465C9C", "#109F73"];
 
-// Mean daily rate values by season (for rule mark)
+// Calculate mean daily rate by season (for rule mark)
 const meanRateBySeason = d3.flatRollup(bookingsByMarketSegment, v => d3.mean(v, d => d.ADR), d => d.season).map(([season, value]) => ({season, value}));
 
 
-// Daily rate faceted histograms
+// Build daily rate faceted histograms
 function dailyRateChart(width, height) {
   return Plot.plot({
     width,
@@ -190,87 +283,8 @@ function dailyRateChart(width, height) {
 }
 ```
 
-**Data source:** Antonio et al (2021). Hotel booking demand datasets. Data in Brief (22): 41-49. https://doi.org/10.1016/j.dib.2018.11.126
-
 ```js
-// Data wrangling for market segmented charts
-const bookingsByMarketSegment = pickMarketSegment == "All" ? hotelData.filter(d => d.MarketSegment != "Complementary") : hotelData.filter(
-  (d) =>
-    d.MarketSegment == pickMarketSegment && d.MarketSegment != "Complementary"
-);
-
-const bookingsAll = hotelData.filter(d => d.MarketSegment != "Complementary");
-
-const rateDiff = d3.mean(bookingsByMarketSegment.map((d) => d.ADR)).toFixed(2) - d3.mean(bookingsAll.map((d) => d.ADR)).toFixed(2);
-
-// By booking country
-const bookingCountry = d3
-  .flatRollup(
-    bookingsByMarketSegment,
-    (d) => d.length,
-    (v) => v.Country
-  )
-  .map(([name, value]) => ({ name, value }))
-  .sort((a, b) => d3.descending(a.value, b.value));
-
-const bookingCountryTopN = bookingCountry.slice(0, 5);
-
-const bookingCountryOther = {
-  name: "Other",
-  value: d3.sum(
-    bookingCountry.slice(5 - bookingCountry.length),
-    (d) => d.value
-  ),
-};
-
-const byCountry = bookingCountryTopN.concat(bookingCountryOther);
-
-//Booking outcome (cancelled or not cancelled)
-const byBookingOutcome = d3
-  .flatRollup(
-    bookingsByMarketSegment,
-    (d) => d.length,
-    (d) => d.IsCanceled
-  )
-  .map(([name, value]) => ({ name, value }))
-  .sort((a, b) => d3.descending(a.value, b.value));
-
-// Bookings by Room Type Data
-const byRoomType = d3
-  .flatRollup(
-    bookingsByMarketSegment,
-    (d) => d.length,
-    (d) => d.ReservedRoomType
-  )
-  .map(([name, value]) => ({ name, value }))
-  .sort((a, b) => d3.descending(a.value, b.value));
-
-const seasonOrder = {Summer: 1, Fall: 2, Winter: 3, Spring: 4};
-
-const bookingSeason = d3
-  .flatRollup(
-    bookingsByMarketSegment,
-    (d) => d.length,
-    (v) => v.season
-  )
-  .map(([name, value]) => ({ name, value })), order = seasonOrder;
-```
-
-```js
-const cleanTable = bookingsAll.map(d => ({
-   "Arrival date": d.arrivalDate,
-   "Average rate": d.ADR,
-   "Room type": d.ReservedRoomType,
-   "Market segment": d.MarketSegment,
-   "Country": d.Country,
-   "Adults": d.Adults,
-   "Children": d.Children,
-   "Lead time": d.LeadTime,
-   "Cancellation": d.IsCanceled
-}));
-```
-
-```js
+// Create bubble chart of bookings by room type and season
 function typeSeasonBubble(width, height) {
   return Plot.plot({
     marginTop: 0,
@@ -287,12 +301,4 @@ function typeSeasonBubble(width, height) {
     ]
   });
 }
-```
-
-```js
-const arrivalDates = d3.extent(bookingsAll, d => d.arrivalDate)
-
-const datesExtent = [d3.timeFormat("%b %d, %Y")(new Date(arrivalDates[0])), d3.timeFormat("%b %d, %Y")(new Date(arrivalDates[1]))] ;
-
-const rateDiffFromAverage = d3.mean(bookingsByMarketSegment.map((d) => d.ADR)).toFixed(2) - d3.mean(bookingsAll.map((d) => d.ADR)).toFixed(2);
 ```
