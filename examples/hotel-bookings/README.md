@@ -1,53 +1,36 @@
-# Hotel Bookings
+[Framework examples →](../)
 
-This is an [Observable Framework](https://observablehq.com/framework) project. To start the local preview server, run:
+# Hotel bookings
+
+View live: <https://observablehq.observablehq.cloud/framework-example-hotel-bookings/>
+
+This dashboard explores reservation data for a resort in Portugal from Antonio _et al._ (2021), recorded between July 2015 and August 2017 to highlight differences in daily rates, visit seasons, guest nationality, and room type reserved for different booking types (_e.g._ corporate, direct, or online reservations).
+
+**Data source:** Antonio et al (2021). Hotel booking demand datasets. Data in Brief (22): 41-49. https://doi.org/10.1016/j.dib.2018.11.126
+
+## Implementation
 
 ```
-npm run dev
-```
-
-Then visit <http://localhost:3000> to preview your project.
-
-For more, see <https://observablehq.com/framework/getting-started>.
-
-## Project structure
-
-A typical Framework project looks like this:
-
-```ini
 .
-├─ docs
-│  ├─ components
-│  │  └─ timeline.js           # an importable module
-│  ├─ data
-│  │  ├─ launches.csv.js       # a data loader
-│  │  └─ events.json           # a static data file
-│  ├─ example-dashboard.md     # a page
-│  ├─ example-report.md        # another page
-│  └─ index.md                 # the home page
-├─ .gitignore
-├─ observablehq.config.js      # the project config file
-├─ package.json
-└─ README.md
+├── README.md
+├── observablehq.config.js
+├── package.json
+└── src
+    ├── components
+    │   ├── bigNumber.js
+    │   └── donutChart.js
+    ├── data
+    │   ├── hotelData.csv.js
+    │   └── hotels.csv
+    └── index.md
 ```
 
-**`docs`** - This is the “source root” — where your source files live. Pages go here. Each page is a Markdown file. Observable Framework uses [file-based routing](https://observablehq.com/framework/routing), which means that the name of the file controls where the page is served. You can create as many pages as you like. Use folders to organize your pages.
+No dependencies other than Framework. No required configuration (static data). The project config only adds our example header and example layout.
 
-**`docs/index.md`** - This is the home page for your site. You can have as many additional pages as you’d like, but you should always have a home page, too.
+### Data
 
-**`docs/data`** - You can put [data loaders](https://observablehq.com/framework/loaders) or static data files anywhere in your source root, but we recommend putting them here.
+Data in `hotels.csv` was downloaded directly from Antonio _et al._ (2021), then pre-processed in the `hotelData.csv.js` data loader to emit the static `hotelData.csv` file used in the dashboard.
 
-**`docs/components`** - You can put shared [JavaScript modules](https://observablehq.com/framework/javascript/imports) anywhere in your source root, but we recommend putting them here. This helps you pull code out of Markdown files and into JavaScript modules, making it easier to reuse code across pages, write tests and run linters, and even share code with vanilla web applications.
+### Components
 
-**`observablehq.config.js`** - This is the [project configuration](https://observablehq.com/framework/config) file, such as the pages and sections in the sidebar navigation, and the project’s title.
-
-## Command reference
-
-| Command           | Description                                              |
-| ----------------- | -------------------------------------------------------- |
-| `npm install`            | Install or reinstall dependencies                        |
-| `npm run dev`        | Start local preview server                               |
-| `npm run build`      | Build your static site, generating `./dist`              |
-| `npm run deploy`     | Deploy your project to Observable                        |
-| `npm run clean`      | Clear the local data loader cache                        |
-| `npm run observable` | Run commands like `observable help`                      |
+This example has two reusable components for building the visualizations: `bigNumber.js` and `donutChart.js`. The `bigNumber.js` component creates a simple big number box using [Observable Plot](https://observablehq.com/plot/). The `donutChart.js` component is made with [D3](https://d3js.org/).
