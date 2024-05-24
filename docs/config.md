@@ -15,7 +15,7 @@ export default {
 
 Configuration files are optional. Any options you don’t specify will use the default values described below.
 
-Configuration files are code. This means they can be dynamic, for example referencing environment variables. The configuration is effectively baked-in to the generated static site at build time. During preview, you must restart the preview server for changes to the configuration file to take effect.
+Configuration files are code. This means they can be dynamic, for example referencing environment variables. The configuration is effectively baked-in to the generated static site at build time.
 
 The following options are supported.
 
@@ -278,12 +278,31 @@ If true (the default), automatically convert URL-like text to links in Markdown.
 
 ## Layered configuration
 
-On the command line, you can use the `--config` option to use a file other than the default `observablehq.config.js`. You can pass this option multiple times to merge multiple configuration files. Earlier configurations are overwritten by later configurations.
+Use the `--config` command-line option to specify a configuration file other than the default `observablehq.config.js` or `observablehq.config.ts`.
 
-When using multiple configuration files, you can export a function instead of an object from your configuration file. It will receive the configuration so far as an argument. It should return a new object which will be merged in with the existing config just like exporting an object would have. For example, this configuration file would convert the site's title to upper case:
+```sh
+yarn dev --config alternate.config.ts
+```
+
+A configuration file’s default export is either an object or a function. When multiple configuration files are specified, they are called in order.
+
+If the configuration exports an object, it is merged into the previous configuration, replacing any value that it specifies. For example, given a configuration file `search.js` such as:
 
 ```js run=false
-export default (config) => ({
-  title: config.title?.toUpperCase() ?? "UNTITLED"
+export {search: true};
+```
+
+the following command runs preview with the search option activated:
+
+```sh
+yarn dev --config observablehq.config.ts --config search.js
+```
+
+If the default export is a function, it receives as input the current configuration (which defaults to an empty object `{}`), and must return a new configuration object (or a promise to a new configuration object). For example, this configuration file would convert the site’s title to upper case:
+
+```js run=false
+export default ({title = "UNTITLED", ...config}) => ({
+  title: title.toUpperCase(),
+  ...config
 });
 ```

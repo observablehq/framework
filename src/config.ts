@@ -141,7 +141,9 @@ function resolveConfig(configPath: string, root = "."): string {
 
 // By using the modification time of the config, we ensure that we pick up any
 // changes to the config on reload.
-async function importConfig(path: string): Promise<ConfigSpec | ((config: ConfigSpec) => ConfigSpec | undefined)> {
+async function importConfig(
+  path: string
+): Promise<ConfigSpec | ((config: ConfigSpec) => Promise<ConfigSpec> | ConfigSpec | undefined)> {
   const {mtimeMs} = await stat(path);
   return (await import(`${pathToFileURL(path).href}?${mtimeMs}`)).default;
 }
@@ -154,12 +156,10 @@ export async function readConfig(configPaths: string[], root?: string): Promise<
   }
   for (const configPath of configPaths) {
     const importedConfig = await importConfig(configPath);
-    if (typeof importedConfig === "function") {
-      const newSpec = importedConfig(configSpec);
-      configSpec = newSpec ? {...configSpec, ...newSpec} : configSpec;
-    } else {
-      configSpec = {...configSpec, ...importedConfig};
-    }
+    configSpec =
+      typeof importedConfig === "function"
+        ? {...(await importedConfig(configSpec))}
+        : {...configSpec, ...importedConfig};
   }
   return normalizeConfig(configSpec, root, configPaths);
 }
