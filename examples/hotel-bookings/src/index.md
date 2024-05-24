@@ -202,7 +202,6 @@ function arrivalLineChart(width, height) {
               interval: d3.utcDay,
               strokeWidth: 2,
               tip: true,
-              title: d => `${d3.timeFormat("%b %d, %Y")(new Date(d.arrivalDate))}`
             }
           )
         )
