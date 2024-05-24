@@ -1,0 +1,52 @@
+@import url("observablehq:default.css");
+
+:root {
+  --theme-foreground: #ffffff;
+  --theme-foreground-focus: orange;
+  --theme-background: #4751f8;
+  --theme-background-alt: #312f2e;
+  --theme-foreground-alt: var(--theme-foreground);
+}
+
+:root {
+  --theme-foreground-muted: color-mix(in srgb, var(--theme-foreground) 60%, var(--theme-background));
+  --theme-foreground-faint: color-mix(in srgb, var(--theme-foreground) 50%, var(--theme-background));
+  --theme-foreground-fainter: color-mix(in srgb, var(--theme-foreground) 30%, var(--theme-background));
+  --theme-foreground-faintest: color-mix(in srgb, var(--theme-foreground) 14%, var(--theme-background));
+}
+
+:root {
+  --syntax-keyword: #ff7b72;
+  --syntax-entity: #d2a8ff;
+  --syntax-constant: #79c0ff;
+  --syntax-string: #a5d6ff;
+  --syntax-variable: #ffa657;
+  --syntax-comment: var(--theme-foreground-muted);
+  --syntax-entity-tag: #7ee787;
+  --syntax-storage-modifier-import: #c9d1d9;
+  --syntax-markup-heading: #1f6feb;
+  --syntax-markup-list: #f2cc60;
+  --syntax-markup-italic: #c9d1d9;
+  --syntax-markup-bold: #c9d1d9;
+  --syntax-markup-inserted: #aff5b4;
+  --syntax-markup-inserted-background: #033a16;
+  --syntax-markup-deleted: #ffdcd7;
+  --syntax-markup-deleted-background: #67060c;
+}
+
+body {
+  font-family: var(--sans-serif);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--serif);
+}
+
+#observablehq-main p a[href] {
+  text-decoration: underline;
+}

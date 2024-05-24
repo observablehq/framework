@@ -1,12 +1,12 @@
 import assert from "node:assert";
-import type {Config} from "../src/config.js";
+import type {Config, ConfigSpec} from "../src/config.js";
 import {normalizeConfig} from "../src/config.js";
 import {parseMarkdown} from "../src/markdown.js";
 import {getResolvers} from "../src/resolvers.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
 
-function getOptions({root, path}: {root: string; path: string}): Config & {path: string} {
-  return {...normalizeConfig({root}), path};
+function getOptions({path, ...config}: ConfigSpec & {path: string}): Config & {path: string} {
+  return {...normalizeConfig(config), path};
 }
 
 describe("getResolvers(page, {root, path})", () => {
@@ -85,5 +85,158 @@ describe("getResolvers(page, {root, path})", () => {
     const resolvers = await getResolvers(page, options);
     assert.deepStrictEqual(resolvers.staticImports, new Set(builtins));
     assert.deepStrictEqual(resolvers.localImports, new Set(["./foo.js"]));
+  });
+});
+
+describe("resolveLink(href) with {cleanUrls: false}", () => {
+  const options = getOptions({root: "test/input", path: "sub/index.html", cleanUrls: false});
+  const page = parseMarkdown("", options);
+  async function getResolveLink() {
+    const resolvers = await getResolvers(page, options);
+    return resolvers.resolveLink;
+  }
+  it("appends .html to extension-less links", async () => {
+    const normalize = await getResolveLink();
+    assert.strictEqual(normalize("foo"), "./foo.html");
+  });
+  it("does not append .html to extensioned links", async () => {
+    const normalize = await getResolveLink();
+    assert.strictEqual(normalize("foo.png"), "./foo.png");
+    assert.strictEqual(normalize("foo.html"), "./foo.html");
+    assert.strictEqual(normalize("foo.md"), "./foo.md");
+  });
+  it("converts absolute paths to relative paths", async () => {
+    const normalize = await getResolveLink();
+    assert.strictEqual(normalize("/foo"), "../foo.html");
+    assert.strictEqual(normalize("/foo.html"), "../foo.html");
+    assert.strictEqual(normalize("/foo.png"), "../foo.png");
+  });
+  it("converts index links to directories", async () => {
+    const normalize = await getResolveLink();
+    assert.strictEqual(normalize("foo/index"), "./foo/");
+    assert.strictEqual(normalize("foo/index.html"), "./foo/");
+    assert.strictEqual(normalize("../index"), "../");
+    assert.strictEqual(normalize("../index.html"), "../");
+    assert.strictEqual(normalize("./index"), "./");
+    assert.strictEqual(normalize("./index.html"), "./");
+    assert.strictEqual(normalize("/index"), "../");
+    assert.strictEqual(normalize("/index.html"), "../");
+    assert.strictEqual(normalize("index"), "./");
+    assert.strictEqual(normalize("index.html"), "./");
+  });
+  it("preserves links to directories", async () => {
+    const normalize = await getResolveLink();
+    assert.strictEqual(normalize(""), "./");
+    assert.strictEqual(normalize("/"), "../");
+    assert.strictEqual(normalize("./"), "./");
+    assert.strictEqual(normalize("../"), "../");
+    assert.strictEqual(normalize("foo/"), "./foo/");
+    assert.strictEqual(normalize("./foo/"), "./foo/");
+    assert.strictEqual(normalize("../foo/"), "../foo/");
+    assert.strictEqual(normalize("../sub/"), "./");
+  });
+  it("preserves a relative path", async () => {
+    const normalize = await getResolveLink();
+    assert.strictEqual(normalize("foo"), "./foo.html");
+    assert.strictEqual(normalize("./foo"), "./foo.html");
+    assert.strictEqual(normalize("../foo"), "../foo.html");
+    assert.strictEqual(normalize("./foo.png"), "./foo.png");
+    assert.strictEqual(normalize("../foo.png"), "../foo.png");
+  });
+  it("preserves the query", async () => {
+    const normalize = await getResolveLink();
+    assert.strictEqual(normalize("foo.png?bar"), "./foo.png?bar");
+    assert.strictEqual(normalize("foo.html?bar"), "./foo.html?bar");
+    assert.strictEqual(normalize("foo?bar"), "./foo.html?bar");
+  });
+  it("preserves the hash", async () => {
+    const normalize = await getResolveLink();
+    assert.strictEqual(normalize("foo.png#bar"), "./foo.png#bar");
+    assert.strictEqual(normalize("foo.html#bar"), "./foo.html#bar");
+    assert.strictEqual(normalize("foo#bar"), "./foo.html#bar");
+  });
+  it("preserves the query and hash", async () => {
+    const normalize = await getResolveLink();
+    assert.strictEqual(normalize("foo.png?bar#baz"), "./foo.png?bar#baz");
+    assert.strictEqual(normalize("foo.html?bar#baz"), "./foo.html?bar#baz");
+    assert.strictEqual(normalize("foo?bar#baz"), "./foo.html?bar#baz");
+  });
+});
+
+describe("resolveLink(href) with {cleanUrls: true}", () => {
+  const options = getOptions({root: "test/input", path: "sub/index.html", cleanUrls: true});
+  const page = parseMarkdown("", options);
+  async function getResolveLink() {
+    const resolvers = await getResolvers(page, options);
+    return resolvers.resolveLink;
+  }
+  it("does not append .html to extension-less links", async () => {
+    const normalize = await getResolveLink();
+    assert.strictEqual(normalize("foo"), "./foo");
+  });
+  it("does not append .html to extensioned links", async () => {
+    const normalize = await getResolveLink();
+    assert.strictEqual(normalize("foo.png"), "./foo.png");
+    assert.strictEqual(normalize("foo.md"), "./foo.md");
+  });
+  it("removes .html from extensioned links", async () => {
+    const normalize = await getResolveLink();
+    assert.strictEqual(normalize("foo.html"), "./foo");
+  });
+  it("converts absolute paths to relative paths", async () => {
+    const normalize = await getResolveLink();
+    assert.strictEqual(normalize("/foo"), "../foo");
+    assert.strictEqual(normalize("/foo.html"), "../foo");
+    assert.strictEqual(normalize("/foo.png"), "../foo.png");
+  });
+  it("converts index links to directories", async () => {
+    const normalize = await getResolveLink();
+    assert.strictEqual(normalize("foo/index"), "./foo/");
+    assert.strictEqual(normalize("foo/index.html"), "./foo/");
+    assert.strictEqual(normalize("../index"), "../");
+    assert.strictEqual(normalize("../index.html"), "../");
+    assert.strictEqual(normalize("./index"), "./");
+    assert.strictEqual(normalize("./index.html"), "./");
+    assert.strictEqual(normalize("/index"), "../");
+    assert.strictEqual(normalize("/index.html"), "../");
+    assert.strictEqual(normalize("index"), "./");
+    assert.strictEqual(normalize("index.html"), "./");
+  });
+  it("preserves links to directories", async () => {
+    const normalize = await getResolveLink();
+    assert.strictEqual(normalize(""), "./");
+    assert.strictEqual(normalize("/"), "../");
+    assert.strictEqual(normalize("./"), "./");
+    assert.strictEqual(normalize("../"), "../");
+    assert.strictEqual(normalize("foo/"), "./foo/");
+    assert.strictEqual(normalize("./foo/"), "./foo/");
+    assert.strictEqual(normalize("../foo/"), "../foo/");
+    assert.strictEqual(normalize("../sub/"), "./");
+  });
+  it("preserves a relative path", async () => {
+    const normalize = await getResolveLink();
+    assert.strictEqual(normalize("foo"), "./foo");
+    assert.strictEqual(normalize("./foo"), "./foo");
+    assert.strictEqual(normalize("../foo"), "../foo");
+    assert.strictEqual(normalize("./foo.png"), "./foo.png");
+    assert.strictEqual(normalize("../foo.png"), "../foo.png");
+  });
+  it("preserves the query", async () => {
+    const normalize = await getResolveLink();
+    assert.strictEqual(normalize("foo.png?bar"), "./foo.png?bar");
+    assert.strictEqual(normalize("foo.html?bar"), "./foo?bar");
+    assert.strictEqual(normalize("foo?bar"), "./foo?bar");
+  });
+  it("preserves the hash", async () => {
+    const normalize = await getResolveLink();
+    assert.strictEqual(normalize("foo.png#bar"), "./foo.png#bar");
+    assert.strictEqual(normalize("foo.html#bar"), "./foo#bar");
+    assert.strictEqual(normalize("foo#bar"), "./foo#bar");
+  });
+  it("preserves the query and hash", async () => {
+    const normalize = await getResolveLink();
+    assert.strictEqual(normalize("foo.png?bar#baz"), "./foo.png?bar#baz");
+    assert.strictEqual(normalize("foo.html?bar#baz"), "./foo?bar#baz");
+    assert.strictEqual(normalize("foo?bar#baz"), "./foo?bar#baz");
   });
 });

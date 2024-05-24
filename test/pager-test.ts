@@ -4,98 +4,73 @@ import {findLink as pager} from "../src/pager.js";
 
 describe("findLink(path, options)", () => {
   it("returns the previous and next links for three pages", () => {
-    const config = {
-      pages: [
-        {name: "a", path: "/a"},
-        {name: "b", path: "/b"},
-        {name: "c", path: "/c"}
-      ]
-    };
-    assert.deepStrictEqual(pager("/index", config), {prev: undefined, next: {name: "a", path: "/a"}});
-    assert.deepStrictEqual(pager("/a", config), {prev: {name: "Home", path: "/index"}, next: {name: "b", path: "/b"}});
-    assert.deepStrictEqual(pager("/b", config), {prev: {name: "a", path: "/a"}, next: {name: "c", path: "/c"}});
-    assert.deepStrictEqual(pager("/c", config), {prev: {name: "b", path: "/b"}, next: undefined});
+    const a = {name: "a", path: "/a", pager: "main"};
+    const b = {name: "b", path: "/b", pager: "main"};
+    const c = {name: "c", path: "/c", pager: "main"};
+    const config = {pages: [a, b, c]};
+    assert.deepStrictEqual(pager("/index", config), {prev: undefined, next: a});
+    assert.deepStrictEqual(pager("/a", config), {prev: {name: "Home", path: "/index", pager: "main"}, next: b});
+    assert.deepStrictEqual(pager("/b", config), {prev: a, next: c});
+    assert.deepStrictEqual(pager("/c", config), {prev: b, next: undefined});
   });
   it("returns the previous and next links for three pages with sections", () => {
-    const config = {
-      pages: [
-        {
-          name: "section",
-          collapsible: true,
-          open: true,
-          pages: [
-            {name: "a", path: "/a"},
-            {name: "b", path: "/b"},
-            {name: "c", path: "/c"}
-          ]
-        }
-      ]
-    };
-    assert.deepStrictEqual(pager("/index", config), {prev: undefined, next: {name: "a", path: "/a"}});
-    assert.deepStrictEqual(pager("/a", config), {prev: {name: "Home", path: "/index"}, next: {name: "b", path: "/b"}});
-    assert.deepStrictEqual(pager("/b", config), {prev: {name: "a", path: "/a"}, next: {name: "c", path: "/c"}});
-    assert.deepStrictEqual(pager("/c", config), {prev: {name: "b", path: "/b"}, next: undefined});
+    const a = {name: "a", path: "/a", pager: "main"};
+    const b = {name: "b", path: "/b", pager: "main"};
+    const c = {name: "c", path: "/c", pager: "main"};
+    const section = {name: "section", collapsible: true, open: true, path: null, pager: null, pages: [a, b, c]};
+    const config = {pages: [section]};
+    assert.deepStrictEqual(pager("/index", config), {prev: undefined, next: a});
+    assert.deepStrictEqual(pager("/a", config), {prev: {name: "Home", path: "/index", pager: "main"}, next: b});
+    assert.deepStrictEqual(pager("/b", config), {prev: a, next: c});
+    assert.deepStrictEqual(pager("/c", config), {prev: b, next: undefined});
   });
   it("returns the previous and next links for two pages", () => {
-    const config = {
-      pages: [
-        {name: "a", path: "/a"},
-        {name: "b", path: "/b"}
-      ]
-    };
-    assert.deepStrictEqual(pager("/index", config), {prev: undefined, next: {name: "a", path: "/a"}});
-    assert.deepStrictEqual(pager("/a", config), {prev: {name: "Home", path: "/index"}, next: {name: "b", path: "/b"}});
-    assert.deepStrictEqual(pager("/b", config), {prev: {name: "a", path: "/a"}, next: undefined});
+    const a = {name: "a", path: "/a", pager: "main"};
+    const b = {name: "b", path: "/b", pager: "main"};
+    const config = {pages: [a, b]};
+    assert.deepStrictEqual(pager("/index", config), {prev: undefined, next: a});
+    assert.deepStrictEqual(pager("/a", config), {prev: {name: "Home", path: "/index", pager: "main"}, next: b});
+    assert.deepStrictEqual(pager("/b", config), {prev: a, next: undefined});
   });
   it("returns the previous and next links for one pages", () => {
-    const config = {pages: [{name: "a", path: "/a"}]};
-    assert.deepStrictEqual(pager("/index", config), {prev: undefined, next: {name: "a", path: "/a"}});
-    assert.deepStrictEqual(pager("/a", config), {prev: {name: "Home", path: "/index"}, next: undefined});
+    const a = {name: "a", path: "/a", pager: "main"};
+    const config = {pages: [a]};
+    assert.deepStrictEqual(pager("/index", config), {prev: undefined, next: a});
+    assert.deepStrictEqual(pager("/a", config), {prev: {name: "Home", path: "/index", pager: "main"}, next: undefined});
   });
   it("returns undefined for zero pages", () => {
     const config = {pages: []};
     assert.deepStrictEqual(pager("/index", config), undefined);
   });
   it("returns undefined for non-referenced pages", () => {
-    const config = {
-      pages: [
-        {name: "a", path: "/a"},
-        {name: "b", path: "/b"},
-        {name: "c", path: "/c"}
-      ]
-    };
+    const a = {name: "a", path: "/a", pager: "main"};
+    const b = {name: "b", path: "/b", pager: "main"};
+    const c = {name: "c", path: "/c", pager: "main"};
+    const config = {pages: [a, b, c]};
     assert.deepStrictEqual(pager("/d", config), undefined);
   });
   it("avoids cycles when a path is listed multiple times", () => {
-    const config = {
-      pages: [
-        {name: "a", path: "/a"},
-        {name: "b", path: "/b"},
-        {name: "a", path: "/a"},
-        {name: "c", path: "/c"}
-      ]
-    };
-    assert.deepStrictEqual(pager("/index", config), {prev: undefined, next: {name: "a", path: "/a"}});
-    assert.deepStrictEqual(pager("/a", config), {prev: {name: "Home", path: "/index"}, next: {name: "b", path: "/b"}});
-    assert.deepStrictEqual(pager("/b", config), {prev: {name: "a", path: "/a"}, next: {name: "c", path: "/c"}});
-    assert.deepStrictEqual(pager("/c", config), {prev: {name: "b", path: "/b"}, next: undefined});
+    const a = {name: "a", path: "/a", pager: "main"};
+    const b = {name: "b", path: "/b", pager: "main"};
+    const c = {name: "c", path: "/c", pager: "main"};
+    const config = {pages: [a, b, a, c]};
+    assert.deepStrictEqual(pager("/index", config), {prev: undefined, next: a});
+    assert.deepStrictEqual(pager("/a", config), {prev: {name: "Home", path: "/index", pager: "main"}, next: b});
+    assert.deepStrictEqual(pager("/b", config), {prev: a, next: c});
+    assert.deepStrictEqual(pager("/c", config), {prev: b, next: undefined});
   });
   it("implicitly includes the index page if there is a title", () => {
-    const config = {
-      title: "Test",
-      pages: [
-        {name: "a", path: "/a"},
-        {name: "b", path: "/b"},
-        {name: "c", path: "/c"}
-      ]
-    };
-    assert.deepStrictEqual(pager("/index", config), {prev: undefined, next: {name: "a", path: "/a"}});
-    assert.deepStrictEqual(pager("/a", config), {prev: {name: "Test", path: "/index"}, next: {name: "b", path: "/b"}});
-    assert.deepStrictEqual(pager("/b", config), {prev: {name: "a", path: "/a"}, next: {name: "c", path: "/c"}});
-    assert.deepStrictEqual(pager("/c", config), {prev: {name: "b", path: "/b"}, next: undefined});
+    const a = {name: "a", path: "/a", pager: "main"};
+    const b = {name: "b", path: "/b", pager: "main"};
+    const c = {name: "c", path: "/c", pager: "main"};
+    const config = {title: "Test", pages: [a, b, c]};
+    assert.deepStrictEqual(pager("/index", config), {prev: undefined, next: a});
+    assert.deepStrictEqual(pager("/a", config), {prev: {name: "Test", path: "/index", pager: "main"}, next: b});
+    assert.deepStrictEqual(pager("/b", config), {prev: a, next: c});
+    assert.deepStrictEqual(pager("/c", config), {prev: b, next: undefined});
   });
   it("normalizes / to /index", async () => {
-    const config = normalizeConfig({pages: [{name: "Home", path: "/"}]});
+    const config = normalizeConfig({pages: [{name: "Home", path: "/", pager: "main"}]});
     assert.strictEqual(pager("/index", config), undefined);
     assert.strictEqual(pager("/", config), undefined);
   });
@@ -106,8 +81,14 @@ describe("findLink(path, options)", () => {
         {name: "Second Home", path: "/second"}
       ]
     });
-    assert.deepStrictEqual(pager("/second", config), {next: undefined, prev: {name: "Home", path: "/index"}});
-    assert.deepStrictEqual(pager("/index", config), {next: {name: "Second Home", path: "/second"}, prev: undefined});
+    assert.deepStrictEqual(pager("/second", config), {
+      next: undefined,
+      prev: {name: "Home", path: "/index", pager: "main"}
+    });
+    assert.deepStrictEqual(pager("/index", config), {
+      next: {name: "Second Home", path: "/second", pager: "main"},
+      prev: undefined
+    });
     assert.strictEqual(pager("/", config), undefined);
   });
   it("normalizes / to /index (3)", async () => {
@@ -119,10 +100,13 @@ describe("findLink(path, options)", () => {
       ]
     });
     assert.deepStrictEqual(pager("/second", config), {
-      next: {name: "By The Sea", path: "/by-the-sea"},
-      prev: {name: "Home", path: "/index"}
+      next: {name: "By The Sea", path: "/by-the-sea", pager: "main"},
+      prev: {name: "Home", path: "/index", pager: "main"}
     });
-    assert.deepStrictEqual(pager("/index", config), {next: {name: "Second Home", path: "/second"}, prev: undefined});
+    assert.deepStrictEqual(pager("/index", config), {
+      next: {name: "Second Home", path: "/second", pager: "main"},
+      prev: undefined
+    });
     assert.strictEqual(pager("/", config), undefined);
   });
 });

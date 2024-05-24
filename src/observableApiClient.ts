@@ -204,11 +204,12 @@ export class ObservableApiClient {
     });
   }
 
-  async postDeployUploaded(deployId: string): Promise<DeployInfo> {
+  async postDeployUploaded(deployId: string, buildManifest: PostDeployUploadedRequest | null): Promise<DeployInfo> {
+    console.log("Uploading build manifest...", buildManifest);
     return await this._fetch<DeployInfo>(new URL(`/cli/deploy/${deployId}/uploaded`, this._apiOrigin), {
       method: "POST",
       headers: {"content-type": "application/json"},
-      body: "{}"
+      body: JSON.stringify(buildManifest)
     });
   }
 
@@ -327,5 +328,12 @@ export interface PostDeployManifestResponse {
     path: string;
     status: "upload" | "skip" | "error";
     detail: string | null;
+  }[];
+}
+
+export interface PostDeployUploadedRequest {
+  pages: {
+    path: string;
+    title: string | null;
   }[];
 }

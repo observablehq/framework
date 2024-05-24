@@ -43,13 +43,15 @@ export interface BuildEffects {
    * example, in a local build this should be relative to the dist directory.
    */
   writeFile(outputPath: string, contents: Buffer | string): Promise<void>;
+
+  writeBuildManifest(buildManifest: BuildManifest): Promise<void>;
 }
 
 export async function build(
   {config, addPublic = true}: BuildOptions,
-  effects: BuildEffects = new FileBuildEffects(config.output)
+  effects: BuildEffects = new FileBuildEffects(config.output, join(config.root, ".observablehq", "cache"))
 ): Promise<void> {
-  const {root, loaders} = config;
+  const {root, loaders, normalizePath} = config;
   Telemetry.record({event: "build", step: "start"});
 
   // Make sure all files are readable before starting to write output files.
@@ -79,7 +81,7 @@ export async function build(
       effects.logger.log(faint("(skipped)"));
       continue;
     }
-    const resolvers = await getResolvers(page, {root, path: sourceFile, loaders});
+    const resolvers = await getResolvers(page, {root, path: sourceFile, normalizePath, loaders});
     const elapsed = Math.floor(performance.now() - start);
     for (const f of resolvers.assets) files.add(resolvePath(sourceFile, f));
     for (const f of resolvers.files) files.add(resolvePath(sourceFile, f));
@@ -252,6 +254,7 @@ export async function build(
   }
 
   // Render pages!
+  const buildManifest: BuildManifest = {pages: []};
   for (const [sourceFile, {page, resolvers}] of pages) {
     const sourcePath = join(root, sourceFile);
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
@@ -259,8 +262,12 @@ export async function build(
     effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
     const html = await renderPage(page, {...config, path, resolvers});
     await effects.writeFile(outputPath, html);
+    const urlPath = config.normalizePath("/" + outputPath);
+    buildManifest.pages.push({path: urlPath, title: page.title});
   }
 
+  // Write the build manifest.
+  await effects.writeBuildManifest(buildManifest);
   // Log page sizes.
   const columnWidth = 12;
   effects.logger.log("");
@@ -331,16 +338,19 @@ function formatBytes(size: number, length: number, locale: Intl.LocalesArgument 
 
 export class FileBuildEffects implements BuildEffects {
   private readonly outputRoot: string;
+  private readonly cacheDir: string;
   readonly logger: Logger;
   readonly output: Writer;
   constructor(
     outputRoot: string,
+    cacheDir: string,
     {logger = console, output = process.stdout}: {logger?: Logger; output?: Writer} = {}
   ) {
     if (!outputRoot) throw new Error("missing outputRoot");
     this.logger = logger;
     this.output = output;
     this.outputRoot = outputRoot;
+    this.cacheDir = cacheDir;
   }
   async copyFile(sourcePath: string, outputPath: string): Promise<void> {
     const destination = join(this.outputRoot, outputPath);
@@ -354,4 +364,13 @@ export class FileBuildEffects implements BuildEffects {
     await prepareOutput(destination);
     await writeFile(destination, contents);
   }
+  async writeBuildManifest(buildManifest: BuildManifest): Promise<void> {
+    const destination = join(this.cacheDir, "_build.json");
+    await prepareOutput(destination);
+    await writeFile(destination, JSON.stringify(buildManifest));
+  }
+}
+
+export interface BuildManifest {
+  pages: {path: string; title: string | null}[];
 }

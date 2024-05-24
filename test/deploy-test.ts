@@ -2,12 +2,13 @@ import assert, {fail} from "node:assert";
 import type {Stats} from "node:fs";
 import {stat} from "node:fs/promises";
 import {Readable, Writable} from "node:stream";
+import type {BuildManifest} from "../src/build.js";
 import {normalizeConfig, setCurrentDate} from "../src/config.js";
 import type {DeployEffects, DeployOptions} from "../src/deploy.js";
 import {deploy, promptDeployTarget} from "../src/deploy.js";
 import {CliError, isHttpError} from "../src/error.js";
 import {visitFiles} from "../src/files.js";
-import type {ObservableApiClientOptions} from "../src/observableApiClient.js";
+import type {ObservableApiClientOptions, PostDeployUploadedRequest} from "../src/observableApiClient.js";
 import type {GetCurrentUserResponse} from "../src/observableApiClient.js";
 import {ObservableApiClient} from "../src/observableApiClient.js";
 import type {DeployConfig} from "../src/observableApiConfig.js";
@@ -36,6 +37,7 @@ interface MockDeployEffectsOptions {
   debug?: boolean;
   fixedInputStatTime?: Date;
   fixedOutputStatTime?: Date;
+  buildManifest?: BuildManifest;
 }
 
 class MockDeployEffects extends MockAuthEffects implements DeployEffects {
@@ -56,6 +58,7 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
   private authEffects: MockAuthEffects;
   private fixedInputStatTime: Date | undefined;
   private fixedOutputStatTime: Date | undefined;
+  private buildManifest: BuildManifest | undefined;
 
   constructor({
     apiKey = validApiKey,
@@ -64,7 +67,8 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     outputColumns = 80,
     debug = false,
     fixedInputStatTime,
-    fixedOutputStatTime
+    fixedOutputStatTime,
+    buildManifest
   }: MockDeployEffectsOptions = {}) {
     super();
     this.authEffects = new MockAuthEffects();
@@ -77,6 +81,7 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     this.debug = debug;
     this.fixedInputStatTime = fixedInputStatTime;
     this.fixedOutputStatTime = fixedOutputStatTime;
+    this.buildManifest = buildManifest;
 
     this.output = new Writable({
       write: (data, _enc, callback) => {
@@ -112,6 +117,7 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
   *visitFiles(path: string) {
     yield* visitFiles(path);
   }
+
   async stat(path: string) {
     function overrideTime(s: Stats, date: Date) {
       for (const key of ["a", "c", "m", "birth"] as const) {
@@ -145,6 +151,14 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     const opts: ObservableApiClientOptions = {clack: this.clack};
     if (this.observableApiKey) opts.apiKey = {key: this.observableApiKey, source: "test"};
     return new ObservableApiClient(opts);
+  }
+
+  readCacheFile(sourceRoot: string, path: string): Promise<string> {
+    if (path === "_build.json") {
+      if (this.buildManifest) return Promise.resolve(JSON.stringify(this.buildManifest));
+      throw Object.assign(new Error("no build manifest configured for this test"), {code: "ENOENT"});
+    }
+    throw Object.assign(new Error("non-manifest cache files aren't available in tests"), {code: "ENOENT"});
   }
 }
 
@@ -635,6 +649,42 @@ describe("deploy", () => {
           err.options[2].value.projects_info.some((info) => info.project_role === "editor")
       );
     }
+  });
+
+  it("includes a build manifest if one was generated", async () => {
+    const deployId = "deploy456";
+    let buildManifestPages: PostDeployUploadedRequest["pages"] | null = null;
+    getCurrentObservableApi()
+      .handleGetCurrentUser()
+      .handleGetProject(DEPLOY_CONFIG)
+      .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
+      .expectFileUpload({deployId, path: "index.html"})
+      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
+      .expectFileUpload({deployId, path: "_observablehq/client.js"})
+      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
+      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
+      .handlePostDeployUploaded({
+        deployId,
+        pageMatch: (pages) => {
+          buildManifestPages = pages;
+          return true;
+        }
+      })
+      .handleGetDeploy({deployId, deployStatus: "uploaded"})
+      .start();
+
+    const effects = new MockDeployEffects({
+      deployConfig: DEPLOY_CONFIG,
+      fixedInputStatTime: new Date("2024-03-09"),
+      fixedOutputStatTime: new Date("2024-03-10"),
+      buildManifest: {pages: [{path: "/", title: "Build test case"}]}
+    });
+    effects.clack.inputs = ["fix some bugs"]; // "what changed?"
+    await deploy(TEST_OPTIONS, effects);
+
+    assert.deepEqual(buildManifestPages, [{path: "/", title: "Build test case"}]);
+
+    effects.close();
   });
 
   describe("when deploy state doesn't match", () => {

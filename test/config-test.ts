@@ -7,9 +7,10 @@ import {LoaderResolver} from "../src/dataloader.js";
 describe("readConfig(undefined, root)", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   it("imports the config file at the specified root", async () => {
-    const {md, loaders, ...config} = await readConfig(undefined, "test/input/build/config");
+    const {md, loaders, normalizePath, ...config} = await readConfig(undefined, "test/input/build/config");
     assert(md instanceof MarkdownIt);
     assert(loaders instanceof LoaderResolver);
+    assert.strictEqual(typeof normalizePath, "function");
     assert.deepStrictEqual(config, {
       root: "test/input/build/config",
       output: "dist",
@@ -17,14 +18,16 @@ describe("readConfig(undefined, root)", () => {
       style: {theme: ["air", "near-midnight"]},
       sidebar: true,
       pages: [
-        {path: "/index", name: "Index"},
-        {path: "/one", name: "One<Two"},
-        {name: "Two", path: "/sub/two"},
+        {path: "/index", name: "Index", pager: "main"},
+        {path: "/one", name: "One<Two", pager: "main"},
+        {name: "Two", path: "/sub/two", pager: "main"},
         {
           name: "Closed subsection",
           collapsible: true,
           open: false,
-          pages: [{name: "Closed page", path: "/closed/page"}]
+          path: null,
+          pager: "main",
+          pages: [{name: "Closed page", path: "/closed/page", pager: "main"}]
         }
       ],
       title: undefined,
@@ -40,16 +43,17 @@ describe("readConfig(undefined, root)", () => {
     });
   });
   it("returns the default config if no config file is found", async () => {
-    const {md, loaders, ...config} = await readConfig(undefined, "test/input/build/simple");
+    const {md, loaders, normalizePath, ...config} = await readConfig(undefined, "test/input/build/simple");
     assert(md instanceof MarkdownIt);
     assert(loaders instanceof LoaderResolver);
+    assert.strictEqual(typeof normalizePath, "function");
     assert.deepStrictEqual(config, {
       root: "test/input/build/simple",
       output: "dist",
       base: "/",
       style: {theme: ["air", "near-midnight"]},
       sidebar: true,
-      pages: [{name: "Build test case", path: "/simple"}],
+      pages: [{name: "Build test case", path: "/simple", pager: "main"}],
       title: undefined,
       toc: {label: "Contents", show: true},
       pager: true,
@@ -76,11 +80,11 @@ describe("normalizeConfig(spec, root)", () => {
   });
   it("populates default pages", () => {
     assert.deepStrictEqual(config({}, root).pages, [
-      {name: "One", path: "/one"},
-      {name: "H1: Section", path: "/toc-override"},
-      {name: "H1: Section", path: "/toc"},
-      {name: "A page…", path: "/closed/page"},
-      {name: "Two", path: "/sub/two"}
+      {name: "One", path: "/one", pager: "main"},
+      {name: "H1: Section", path: "/toc-override", pager: "main"},
+      {name: "H1: Section", path: "/toc", pager: "main"},
+      {name: "A page…", path: "/closed/page", pager: "main"},
+      {name: "Two", path: "/sub/two", pager: "main"}
     ]);
   });
   it("coerces pages to an array", () => {
@@ -95,16 +99,16 @@ describe("normalizeConfig(spec, root)", () => {
       {name: "Page.html", path: "/foo.html"}
     ];
     const outpages = [
-      {name: "42", path: "/true"},
-      {name: "null", path: "/yes"},
-      {name: "Index", path: "/foo/index"},
-      {name: "Index.html", path: "/foo/index"},
-      {name: "Page.html", path: "/foo"}
+      {name: "42", path: "/true", pager: "main"},
+      {name: "null", path: "/yes", pager: "main"},
+      {name: "Index", path: "/foo/index", pager: "main"},
+      {name: "Index.html", path: "/foo/index", pager: "main"},
+      {name: "Page.html", path: "/foo", pager: "main"}
     ];
     assert.deepStrictEqual(config({pages: inpages}, root).pages, outpages);
   });
   it("allows external page paths", () => {
-    const pages = [{name: "Example.com", path: "https://example.com"}];
+    const pages = [{name: "Example.com", path: "https://example.com", pager: null}];
     assert.deepStrictEqual(config({pages}, root).pages, pages);
   });
   it("allows page paths to have query strings and anchor fragments", () => {
@@ -121,22 +125,31 @@ describe("normalizeConfig(spec, root)", () => {
       {name: "Query string", path: "/test?foo=bar"}
     ];
     const outpages = [
-      {name: "Anchor fragment on index", path: "/test/index#foo=bar"},
-      {name: "Anchor fragment on index.html", path: "/test/index#foo=bar"},
-      {name: "Anchor fragment on page.html", path: "/test#foo=bar"},
-      {name: "Anchor fragment on slash", path: "/test/index#foo=bar"},
-      {name: "Anchor fragment", path: "/test#foo=bar"},
-      {name: "Query string on index", path: "/test/index?foo=bar"},
-      {name: "Query string on index.html", path: "/test/index?foo=bar"},
-      {name: "Query string on page.html", path: "/test?foo=bar"},
-      {name: "Query string on slash", path: "/test/index?foo=bar"},
-      {name: "Query string", path: "/test?foo=bar"}
+      {name: "Anchor fragment on index", path: "/test/index#foo=bar", pager: "main"},
+      {name: "Anchor fragment on index.html", path: "/test/index#foo=bar", pager: "main"},
+      {name: "Anchor fragment on page.html", path: "/test#foo=bar", pager: "main"},
+      {name: "Anchor fragment on slash", path: "/test/index#foo=bar", pager: "main"},
+      {name: "Anchor fragment", path: "/test#foo=bar", pager: "main"},
+      {name: "Query string on index", path: "/test/index?foo=bar", pager: "main"},
+      {name: "Query string on index.html", path: "/test/index?foo=bar", pager: "main"},
+      {name: "Query string on page.html", path: "/test?foo=bar", pager: "main"},
+      {name: "Query string on slash", path: "/test/index?foo=bar", pager: "main"},
+      {name: "Query string", path: "/test?foo=bar", pager: "main"}
     ];
     assert.deepStrictEqual(config({pages: inpages}, root).pages, outpages);
   });
   it("coerces sections", () => {
     const inpages = [{name: 42, pages: new Set([{name: null, path: {toString: () => "yes"}}])}];
-    const outpages = [{name: "42", collapsible: false, open: true, pages: [{name: "null", path: "/yes"}]}];
+    const outpages = [
+      {
+        name: "42",
+        collapsible: false,
+        open: true,
+        path: null,
+        pager: "main",
+        pages: [{name: "null", path: "/yes", pager: "main"}]
+      }
+    ];
     assert.deepStrictEqual(config({pages: inpages}, root).pages, outpages);
   });
   it("coerces toc", () => {
@@ -158,6 +171,102 @@ describe("normalizeConfig(spec, root)", () => {
   });
   it("populates default pager", () => {
     assert.strictEqual(config({pages: []}, root).pager, true);
+  });
+});
+
+describe("normalizePath(path) with {cleanUrls: false}", () => {
+  const root = "test/input";
+  const normalize = config({cleanUrls: false}, root).normalizePath;
+  it("appends .html to extension-less links", () => {
+    assert.strictEqual(normalize("foo"), "foo.html");
+  });
+  it("does not append .html to extensioned links", () => {
+    assert.strictEqual(normalize("foo.png"), "foo.png");
+    assert.strictEqual(normalize("foo.html"), "foo.html");
+    assert.strictEqual(normalize("foo.md"), "foo.md");
+  });
+  it("preserves absolute paths", () => {
+    assert.strictEqual(normalize("/foo"), "/foo.html");
+    assert.strictEqual(normalize("/foo.html"), "/foo.html");
+    assert.strictEqual(normalize("/foo.png"), "/foo.png");
+  });
+  it("converts index links to directories", () => {
+    assert.strictEqual(normalize("foo/index"), "foo/");
+    assert.strictEqual(normalize("foo/index.html"), "foo/");
+    assert.strictEqual(normalize("../index"), "../");
+    assert.strictEqual(normalize("../index.html"), "../");
+    assert.strictEqual(normalize("./index"), "./");
+    assert.strictEqual(normalize("./index.html"), "./");
+    assert.strictEqual(normalize("/index"), "/");
+    assert.strictEqual(normalize("/index.html"), "/");
+    assert.strictEqual(normalize("index"), ".");
+    assert.strictEqual(normalize("index.html"), ".");
+  });
+  it("preserves links to directories", () => {
+    assert.strictEqual(normalize(""), "");
+    assert.strictEqual(normalize("/"), "/");
+    assert.strictEqual(normalize("./"), "./");
+    assert.strictEqual(normalize("../"), "../");
+    assert.strictEqual(normalize("foo/"), "foo/");
+    assert.strictEqual(normalize("./foo/"), "./foo/");
+    assert.strictEqual(normalize("../foo/"), "../foo/");
+    assert.strictEqual(normalize("../sub/"), "../sub/");
+  });
+  it("preserves a relative path", () => {
+    assert.strictEqual(normalize("foo"), "foo.html");
+    assert.strictEqual(normalize("./foo"), "./foo.html");
+    assert.strictEqual(normalize("../foo"), "../foo.html");
+    assert.strictEqual(normalize("./foo.png"), "./foo.png");
+    assert.strictEqual(normalize("../foo.png"), "../foo.png");
+  });
+});
+
+describe("normalizePath(path) with {cleanUrls: true}", () => {
+  const root = "test/input";
+  const normalize = config({cleanUrls: true}, root).normalizePath;
+  it("does not append .html to extension-less links", () => {
+    assert.strictEqual(normalize("foo"), "foo");
+  });
+  it("does not append .html to extensioned links", () => {
+    assert.strictEqual(normalize("foo.png"), "foo.png");
+    assert.strictEqual(normalize("foo.md"), "foo.md");
+  });
+  it("removes .html from extensioned links", () => {
+    assert.strictEqual(normalize("foo.html"), "foo");
+  });
+  it("preserves absolute paths", () => {
+    assert.strictEqual(normalize("/foo"), "/foo");
+    assert.strictEqual(normalize("/foo.html"), "/foo");
+    assert.strictEqual(normalize("/foo.png"), "/foo.png");
+  });
+  it("converts index links to directories", () => {
+    assert.strictEqual(normalize("foo/index"), "foo/");
+    assert.strictEqual(normalize("foo/index.html"), "foo/");
+    assert.strictEqual(normalize("../index"), "../");
+    assert.strictEqual(normalize("../index.html"), "../");
+    assert.strictEqual(normalize("./index"), "./");
+    assert.strictEqual(normalize("./index.html"), "./");
+    assert.strictEqual(normalize("/index"), "/");
+    assert.strictEqual(normalize("/index.html"), "/");
+    assert.strictEqual(normalize("index"), ".");
+    assert.strictEqual(normalize("index.html"), ".");
+  });
+  it("preserves links to directories", () => {
+    assert.strictEqual(normalize(""), "");
+    assert.strictEqual(normalize("/"), "/");
+    assert.strictEqual(normalize("./"), "./");
+    assert.strictEqual(normalize("../"), "../");
+    assert.strictEqual(normalize("foo/"), "foo/");
+    assert.strictEqual(normalize("./foo/"), "./foo/");
+    assert.strictEqual(normalize("../foo/"), "../foo/");
+    assert.strictEqual(normalize("../sub/"), "../sub/");
+  });
+  it("preserves a relative path", () => {
+    assert.strictEqual(normalize("foo"), "foo");
+    assert.strictEqual(normalize("./foo"), "./foo");
+    assert.strictEqual(normalize("../foo"), "../foo");
+    assert.strictEqual(normalize("./foo.png"), "./foo.png");
+    assert.strictEqual(normalize("../foo.png"), "../foo.png");
   });
 });
 

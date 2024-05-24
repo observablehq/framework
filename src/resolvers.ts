@@ -10,7 +10,7 @@ import {getImplicitStylesheets} from "./libraries.js";
 import type {MarkdownPage} from "./markdown.js";
 import {extractNodeSpecifier, resolveNodeImport, resolveNodeImports} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
-import {isAssetPath, isPathImport, relativePath, resolveLocalPath, resolvePath} from "./path.js";
+import {isAssetPath, isPathImport, parseRelativeUrl, relativePath, resolveLocalPath, resolvePath} from "./path.js";
 
 export interface Resolvers {
   path: string;
@@ -25,6 +25,14 @@ export interface Resolvers {
   resolveImport(specifier: string): string;
   resolveStylesheet(specifier: string): string;
   resolveScript(specifier: string): string;
+  resolveLink(href: string): string;
+}
+
+export interface ResolversConfig {
+  root: string;
+  path: string;
+  normalizePath: (path: string) => string;
+  loaders: LoaderResolver;
 }
 
 const defaultImports = [
@@ -73,7 +81,7 @@ export const builtins = new Map<string, string>([
  */
 export async function getResolvers(
   page: MarkdownPage,
-  {root, path, loaders}: {root: string; path: string; loaders: LoaderResolver}
+  {root, path, normalizePath, loaders}: ResolversConfig
 ): Promise<Resolvers> {
   const hash = createHash("sha256").update(page.body).update(JSON.stringify(page.data));
   const assets = new Set<string>();
@@ -294,6 +302,15 @@ export async function getResolvers(
     }
   }
 
+  function resolveLink(href: string): string {
+    if (isAssetPath(href)) {
+      const u = parseRelativeUrl(href);
+      const localPath = resolveLocalPath(path, u.pathname);
+      if (localPath) return relativePath(path, normalizePath(localPath)) + u.search + u.hash;
+    }
+    return href;
+  }
+
   return {
     path,
     hash: hash.digest("hex"),
@@ -306,7 +323,8 @@ export async function getResolvers(
     resolveFile,
     resolveImport,
     resolveScript,
-    resolveStylesheet
+    resolveStylesheet,
+    resolveLink
   };
 }
 
