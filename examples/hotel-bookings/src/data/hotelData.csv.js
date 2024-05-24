@@ -6,7 +6,7 @@ import {readFileSync} from "fs";
 
 const hotels = await csvParse(readFileSync("src/data/hotels.csv", "utf8"));
 
-const hotelData = hotels.map((d) => ({
+const hotelData = hotels.map((d, i) => ({
   ...d,
   IsCanceled: d.IsCanceled == 0 ? "Keep" : "Cancel",
   season: ["June", "July", "August"].includes(d.ArrivalDateMonth)

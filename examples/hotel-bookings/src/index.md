@@ -259,8 +259,7 @@ const bookingSeason = d3
 ```js
 const cleanTable = bookingsAll.map(d => ({
    "Arrival date": d.arrivalDate,
-   "Total nights": d.StaysInWeekNights + d.StaysInWeekendNights,
-   "Average rate (USD)": d.ADR,
+   "Average rate": d.ADR,
    "Room type": d.ReservedRoomType,
    "Market segment": d.MarketSegment,
    "Country": d.Country,
