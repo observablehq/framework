@@ -50,7 +50,7 @@ ${pickMarketSegmentInput}
     ${bigNumber(`Total bookings`, datesExtent, `${d3.format(",")(bookingsByMarketSegment.length)}`, `${d3.format(".1%")(bookingsByMarketSegment.length / bookingsAll.length)} of all bookings`)}
   </div>
   <div class="card grid-rowspan-1">
-    ${bigNumber(`Average daily rate`, datesExtent, `$ ${d3.mean(bookingsByMarketSegment.map((d) => d.ADR)).toFixed(2)}`, `${d3.format("$")(Math.abs(rateDiffFromAverage))} ${rateDiffFromAverage > 0 ? `greater than overal average rate` : `less than overall average rate`}`)}
+    ${bigNumber(`Average daily rate`, datesExtent, `$ ${d3.mean(bookingsByMarketSegment.map((d) => d.ADR)).toFixed(2)}`, `${pickMarketSegment == "All" ? `` : d3.format("$")(Math.abs(rateDiffFromAverage))} ${rateDiffFromAverage > 0 ? `greater than overal average rate` : rateDiffFromAverage == 0 ? `` : `less than overall average rate`}`)}
   </div>
 </div>
 
@@ -175,7 +175,7 @@ function arrivalLineChart(width, height) {
     marks: [
       () => htl.svg`<defs>
       <linearGradient id="gradient" gradientTransform="rotate(90)">
-        <stop offset="60%" stop-color="#B5B5B5" stop-opacity="1" />
+        <stop offset="60%" stop-color="#B5B5B5" stop-opacity="0.7" />
         <stop offset="100%" stop-color="#B5B5B5" stop-opacity="0.1" />
       </linearGradient>
       </defs>`,
@@ -219,6 +219,7 @@ function arrivalLineChart(width, height) {
 
 // Season color scheme
 const seasonColors = ["#959C00", "#9C5A00", "#465C9C", "#109F73"];
+const seasonDomain = ["Summer", "Fall", "Winter", "Spring"];
 
 // Calculate mean daily rate by season (for rule mark)
 const meanRateBySeason = d3.flatRollup(bookingsByMarketSegment, v => d3.mean(v, d => d.ADR), d => d.season).map(([season, value]) => ({season, value}));
@@ -236,8 +237,8 @@ function dailyRateChart(width, height) {
     x: { label: "Average rate($)", grid: true},
     y: {nice: true, label: null},
     axis: null,
-    fy: {label: null, domain: ["Summer", "Fall", "Winter", "Spring"]},
-    color: {domain: ["Summer", "Fall", "Winter", "Spring"], range: seasonColors, label: "Season" },
+    fy: {label: "Season", domain: seasonDomain},
+    color: {domain: seasonDomain, range: seasonColors, label: "Season"},
     marks: [
       Plot.axisX({ ticks: 4 }),
       Plot.axisY({ ticks: 2}),
@@ -245,7 +246,7 @@ function dailyRateChart(width, height) {
         bookingsByMarketSegment,
         Plot.binX(
           { y: "count" },
-          { x: "ADR", fill: "#21C6A8", interval: 10, fill: "season", fy: "season"}
+          { x: "ADR", interval: 10, fill: "season", fy: "season", tip: true}
         )
       ),
       Plot.text(
