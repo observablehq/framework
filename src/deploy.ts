@@ -91,12 +91,14 @@ export async function deploy(deployOptions: DeployOptions, effects = defaultEffe
 }
 
 async function continueExistingDeploy(
-  deployOptions: DeployOptions & {deployId: string},
+  deployOptions: DeployOptions,
   effects: DeployEffects
 ): Promise<GetDeployResponse> {
+  const {deployId} = deployOptions;
+  if (!deployId) throw new Error("invalid deploy options");
+
   const {apiClient} = await getApiClientAndCurrentUser(effects);
 
-  const {deployId} = deployOptions;
   await checkDeployCreated(apiClient, deployId);
 
   const buildFilePaths = await getBuildFilePaths(effects, deployOptions.config, deployOptions.force);
