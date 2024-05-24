@@ -50,7 +50,7 @@ ${pickMarketSegmentInput}
     ${bigNumber(`Total bookings`, datesExtent, `${d3.format(",")(bookingsByMarketSegment.length)}`, `${d3.format(".1%")(bookingsByMarketSegment.length / bookingsAll.length)} of all bookings`)}
   </div>
   <div class="card grid-rowspan-1">
-    ${bigNumber(`Average daily rate`, datesExtent, `$ ${d3.mean(bookingsByMarketSegment.map((d) => d.ADR)).toFixed(2)}`, `${pickMarketSegment == "All" ? `` : d3.format("$")(Math.abs(rateDiffFromAverage))} ${rateDiffFromAverage > 0 ? `greater than overal average rate` : rateDiffFromAverage == 0 ? `` : `less than overall average rate`}`)}
+    ${bigNumber(`Average daily rate`, datesExtent, `$ ${d3.mean(bookingsByMarketSegment.map((d) => d.ADR)).toFixed(2)}`, `${pickMarketSegment == "All" ? `` : d3.format("$")(Math.abs(rateDiffFromAverage))} ${rateDiffFromAverage > 0 ? `greater than overall average rate` : rateDiffFromAverage == 0 ? `` : `less than overall average rate`}`)}
   </div>
 </div>
 
