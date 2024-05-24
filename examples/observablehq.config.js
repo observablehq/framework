@@ -3,6 +3,7 @@ import {pathToFileURL} from "node:url";
 import {cwd} from "process";
 
 const base = basename(cwd());
+
 const {default: baseConfig} = await import(pathToFileURL(join(cwd(), "observablehq.config.js")));
 
 export default {
@@ -10,7 +11,6 @@ export default {
   toc: false,
   sidebar: false,
   ...baseConfig,
-  root: baseConfig.root === undefined ? undefined : join(cwd(), baseConfig.root),
   title: "Observable Framework",
   head:
     process.env.CI &&
