@@ -1,3 +1,6 @@
+import {basename}from"node:path"
+import {cwd} from "process";
+
 export default {
   title: "Observable Framework",
   pager: false,
@@ -51,7 +54,7 @@ export default {
       <span class="hide-if-small">Observable</span> Framework
     </a>
     <span style="display: flex; align-items: baseline; gap: 0.5rem; font-size: 14px;">
-      <a target="_blank" href="https://github.com/observablehq/framework/tree/main/examples/api"><span>View source</span></a>
+      <a target="_blank" href="https://github.com/observablehq/framework/tree/main/examples/${basename(cwd())}"><span>View source</span></a>
     </span>
   </div>
 </div>`
