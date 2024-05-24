@@ -8,9 +8,10 @@ theme: [ocean-floor, wide]
 ## Excludes complementary reservations
 
 ```js
-import {hotelData} from "./components/hotelData.js";
 import {donutChart} from "./components/donutChart.js";
 import {bigNumber} from "./components/bigNumber.js";
+
+const hotelData = FileAttachment("data/hotelData.csv").csv({typed: true})
 ```
 
 ```js

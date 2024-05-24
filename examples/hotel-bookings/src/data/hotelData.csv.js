@@ -1,9 +1,12 @@
-import * as d3 from "npm:d3";
-import {FileAttachment} from "npm:@observablehq/stdlib";
+import {csvParse} from "d3-dsv";
+import {csvFormat} from "d3-dsv";
+import {timeParse} from "d3-time-format";
+import {readFileSync} from "fs";
+//import {FileAttachment} from "npm:@observablehq/stdlib";
 
-const hotels = await FileAttachment("../data/hotels.csv").csv({typed: true});
+const hotels = await csvParse(readFileSync("src/data/hotels.csv", "utf8"));
 
-export const hotelData = hotels.map((d) => ({
+const hotelData = hotels.map((d) => ({
   ...d,
   IsCanceled: d.IsCanceled == 0 ? "Keep" : "Cancel",
   season: ["June", "July", "August"].includes(d.ArrivalDateMonth)
@@ -23,5 +26,7 @@ export const hotelData = hotels.map((d) => ({
       : d.MarketSegment == "Offline TA/TO"
       ? "Offline travel agent / tour operator"
       : d.MarketSegment,
-  arrivalDate: d3.timeParse("%B %d, %Y")(d.ArrivalDateMonth + " " + d.ArrivalDateDayOfMonth + ", " + d.ArrivalDateYear)
+  arrivalDate: timeParse("%B %d, %Y")(d.ArrivalDateMonth + " " + d.ArrivalDateDayOfMonth + ", " + d.ArrivalDateYear)
 }));
+
+process.stdout.write(csvFormat(hotelData));
