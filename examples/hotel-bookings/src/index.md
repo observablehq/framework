@@ -74,7 +74,7 @@ ${pickMarketSegmentInput}
   <div style="padding: 1em">
     ${display(tableSearch)}
   </div>
-  ${display(Inputs.table(tableSearchValue))}
+  ${display(Inputs.table(tableSearchValue, {columns: ["arrivalDate", "ADR", "Arrival date", "ReservedRoomType", "MarketSegment", "Country", "Adults","Children", "LeadTime", "IsCanceled"], header: {arrivalDate: "Arrival date", ADR: "Average rate", ReservedRoomType: "Room type", MarketSegment: "Booking type", Country: "Guest country", Adults: "Adults", Children: "Children", LeadTime: "Lead time", IsCanceled: "Status"}}))}
 </div>
 
 **Data source:** Antonio et al (2021). Hotel booking demand datasets. Data in Brief (22): 41-49. https://doi.org/10.1016/j.dib.2018.11.126
@@ -155,22 +155,8 @@ const rateDiffFromAverage = d3.mean(bookingsByMarketSegment.map((d) => d.ADR)).t
 ```
 
 ```js
-const cleanTable = bookingsAll.map(d => ({
-   "Arrival date": d.arrivalDate,
-   "Average rate": d.ADR,
-   "Room type": d.ReservedRoomType,
-   "Market segment": d.MarketSegment,
-   "Country": d.Country,
-   "Adults": d.Adults,
-   "Children": d.Children,
-   "Lead time": d.LeadTime,
-   "Cancellation": d.IsCanceled
-}));
-```
-
-```js
-// Create searchable table
-const tableSearch = Inputs.search(cleanTable);
+// Create search input (for searchable table)
+const tableSearch = Inputs.search(bookingsAll);
 
 const tableSearchValue = Generators.input(tableSearch);
 ```
