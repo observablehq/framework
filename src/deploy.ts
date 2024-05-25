@@ -100,15 +100,12 @@ class Deployer {
   }
 
   async deploy(): Promise<GetDeployResponse> {
-    const {apiClient, currentUser} = await this.getApiClientAndCurrentUser();
-    this.apiClient = apiClient;
-    this.currentUser = currentUser;
-
+    await this.setApiClientAndCurrentUser();
     const deployInfo = this.deployOptions.deployId ? await this.continueExistingDeploy() : await this.startNewDeploy();
     return deployInfo;
   }
 
-  private async getApiClientAndCurrentUser(): Promise<{apiClient: ObservableApiClient; currentUser: GetCurrentUserResponse}> {
+  private async setApiClientAndCurrentUser() {
     let apiKey = await this.effects.getObservableApiKey(this.effects);
     const apiClient = new ObservableApiClient(
       apiKey ? {apiKey, clack: this.effects.clack} : {clack: this.effects.clack}
@@ -153,7 +150,9 @@ class Deployer {
     }
 
     if (!currentUser) throw new CliError(commandRequiresAuthenticationMessage);
-    return {apiClient, currentUser};
+
+    this.apiClient = apiClient;
+    this.currentUser = currentUser;
   }
 
   private async continueExistingDeploy(): Promise<GetDeployResponse> {
