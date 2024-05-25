@@ -661,8 +661,6 @@ class Deployer {
   }
 }
 
-// -------------------
-
 // export for testing
 export async function promptDeployTarget(
   effects: DeployEffects,
