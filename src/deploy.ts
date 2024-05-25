@@ -89,10 +89,10 @@ export async function deploy(deployOptions: DeployOptions, effects = defaultEffe
 }
 
 class Deployer {
-  deployOptions: DeployOptions;
-  effects: DeployEffects;
-  apiClient!: ObservableApiClient;
-  currentUser!: GetCurrentUserResponse;
+  private deployOptions: DeployOptions;
+  private effects: DeployEffects;
+  private apiClient!: ObservableApiClient;
+  private currentUser!: GetCurrentUserResponse;
 
   constructor(deployOptions: DeployOptions, effects = defaultEffects) {
     this.deployOptions = deployOptions;
@@ -108,7 +108,7 @@ class Deployer {
     return deployInfo;
   }
 
-  async getApiClientAndCurrentUser(): Promise<{apiClient: ObservableApiClient; currentUser: GetCurrentUserResponse}> {
+  private async getApiClientAndCurrentUser(): Promise<{apiClient: ObservableApiClient; currentUser: GetCurrentUserResponse}> {
     let apiKey = await this.effects.getObservableApiKey(this.effects);
     const apiClient = new ObservableApiClient(
       apiKey ? {apiKey, clack: this.effects.clack} : {clack: this.effects.clack}
@@ -156,7 +156,7 @@ class Deployer {
     return {apiClient, currentUser};
   }
 
-  async continueExistingDeploy(): Promise<GetDeployResponse> {
+  private async continueExistingDeploy(): Promise<GetDeployResponse> {
     const {deployId} = this.deployOptions;
     if (!deployId) throw new Error("invalid deploy options");
     await this.checkDeployCreated(deployId);
@@ -170,7 +170,7 @@ class Deployer {
     return deployInfo;
   }
 
-  async startNewDeploy(): Promise<GetDeployResponse> {
+  private async startNewDeploy(): Promise<GetDeployResponse> {
     const deployConfig = await this.getUpdatedDeployConfig();
     const {deployTarget, projectUpdates} = await this.getDeployTarget(deployConfig);
 
@@ -187,7 +187,7 @@ class Deployer {
   }
 
   // Make sure deploy exists and has an expected status.
-  async checkDeployCreated(deployId: string) {
+  private async checkDeployCreated(deployId: string) {
     try {
       const deployInfo = await this.apiClient.getDeploy(deployId);
       if (deployInfo.status !== "created") {
@@ -205,7 +205,7 @@ class Deployer {
   }
 
   // Get the deploy config, updating if necessary.
-  async getUpdatedDeployConfig() {
+  private async getUpdatedDeployConfig() {
     const deployConfig = await this.effects.getDeployConfig(this.deployOptions.config.root);
 
     if (deployConfig.workspaceLogin && !deployConfig.workspaceLogin.match(/^@?[a-z0-9-]+$/)) {
@@ -250,7 +250,7 @@ class Deployer {
   }
 
   // Get the deploy target, prompting the user as needed.
-  async getDeployTarget(
+  private async getDeployTarget(
     deployConfig: DeployConfig
   ): Promise<{deployTarget: DeployTargetInfo; projectUpdates: PostEditProjectRequest}> {
     let deployTarget: DeployTargetInfo;
@@ -370,7 +370,7 @@ class Deployer {
   }
 
   // Create the new deploy on the server.
-  async createNewDeploy(deployTarget: DeployTargetInfo): Promise<string> {
+  private async createNewDeploy(deployTarget: DeployTargetInfo): Promise<string> {
     if (deployTarget.create) {
       throw Error("Incorrect deployTarget state");
     }
@@ -408,7 +408,7 @@ class Deployer {
   }
 
   // Get the list of build files, doing a build if necessary.
-  async getBuildFilePaths(): Promise<string[]> {
+  private async getBuildFilePaths(): Promise<string[]> {
     let doBuild = this.deployOptions.force === "build";
     let buildFilePaths: string[] | null = null;
 
@@ -488,7 +488,7 @@ class Deployer {
     return buildFilePaths;
   }
 
-  async findMostRecentSourceMtimeMs(): Promise<number> {
+  private async findMostRecentSourceMtimeMs(): Promise<number> {
     let mostRecentMtimeMs = -Infinity;
     for await (const file of this.effects.visitFiles(this.deployOptions.config.root)) {
       const joinedPath = join(this.deployOptions.config.root, file);
@@ -511,7 +511,7 @@ class Deployer {
     return mostRecentMtimeMs;
   }
 
-  async findLeastRecentBuildMtimeMs(): Promise<number> {
+  private async findLeastRecentBuildMtimeMs(): Promise<number> {
     let leastRecentMtimeMs = Infinity;
     for await (const file of this.effects.visitFiles(this.deployOptions.config.output)) {
       const joinedPath = join(this.deployOptions.config.output, file);
@@ -523,7 +523,7 @@ class Deployer {
     return leastRecentMtimeMs;
   }
 
-  async findBuildFiles(): Promise<string[]> {
+  private async findBuildFiles(): Promise<string[]> {
     const buildFilePaths: string[] = [];
     try {
       for await (const file of this.effects.visitFiles(this.deployOptions.config.output)) {
@@ -541,7 +541,7 @@ class Deployer {
     return buildFilePaths;
   }
 
-  async uploadFiles(deployId: string, buildFilePaths: string[]) {
+  private async uploadFiles(deployId: string, buildFilePaths: string[]) {
     const progressSpinner = this.effects.clack.spinner();
     progressSpinner.start("");
 
@@ -599,7 +599,7 @@ class Deployer {
     );
   }
 
-  async markDeployUploaded(deployId: string) {
+  private async markDeployUploaded(deployId: string) {
     // Mark the deploy as uploaded
     let buildManifest: null | BuildManifest = null;
     try {
@@ -619,7 +619,7 @@ class Deployer {
     await this.apiClient.postDeployUploaded(deployId, buildManifest);
   }
 
-  async pollForProcessingCompletion(deployId: string): Promise<GetDeployResponse> {
+  private async pollForProcessingCompletion(deployId: string): Promise<GetDeployResponse> {
     const pollInterval = this.deployOptions.deployPollInterval || DEPLOY_POLL_INTERVAL_MS;
 
     // Poll for processing completion
@@ -654,7 +654,7 @@ class Deployer {
     return deployInfo;
   }
 
-  async maybeUpdateProject(deployTarget: DeployTargetInfo, projectUpdates: PostEditProjectRequest) {
+  private async maybeUpdateProject(deployTarget: DeployTargetInfo, projectUpdates: PostEditProjectRequest) {
     if (!deployTarget.create && typeof projectUpdates?.title === "string") {
       await this.apiClient.postEditProject(deployTarget.project.id, projectUpdates);
     }
