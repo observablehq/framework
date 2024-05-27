@@ -8,7 +8,7 @@ theme: [ocean-floor, wide]
 ## Excludes complementary reservations
 
 ```js
-import {donutChart} from "./components/donutChart.js";
+import {DonutChart} from "./components/donutChart.js";
 import {bigNumber} from "./components/bigNumber.js";
 
 const hotelData = FileAttachment("data/hotelData.csv").csv({typed: true})
@@ -38,13 +38,13 @@ ${pickMarketSegmentInput}
 
 <div class="grid grid-cols-4">
   <div class="card grid-rowspan-2">
-    ${resize(width => donutChart(byCountry, "Guest nationality", width, d3.quantize(t => d3.interpolateTurbo(t * 0.2 + 0.02), 6)))}
+    ${resize(width => DonutChart(byCountry, {centerText: "Guest nationality", width: width, colorScale: d3.quantize(t => d3.interpolateTurbo(t * 0.2 + 0.02), 6)}))}
   </div>
   <div class="card grid-rowspan-2">
-    ${resize(width => donutChart(byBookingOutcome, `Status`, width, ["#525252", "#8b8b8b"]))}
+    ${resize(width => DonutChart(byBookingOutcome, {centerText: "Status", width: width, colorScale: ["#525252", "#8b8b8b"]}))}
   </div>
   <div class="card grid-rowspan-2">
-    ${resize(width => donutChart(bookingSeason, "Visit season", width, seasonColors))}
+    ${resize(width => DonutChart(bookingSeason, {centerText: "Visit season", width: width, colorScale: seasonColors}))}
   </div>
   <div class="card grid-rowspan-1">
     ${bigNumber(`Total bookings`, datesExtent, `${d3.format(",")(bookingsByMarketSegment.length)}`, `${d3.format(".1%")(bookingsByMarketSegment.length / bookingsAll.length)} of all bookings`)}

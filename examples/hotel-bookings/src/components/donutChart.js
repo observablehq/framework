@@ -2,10 +2,9 @@
 
 import * as d3 from "npm:d3";
 
-export function donutChart(data, centerText, width, colorScale) {
+export function DonutChart(data, {centerText, width, colorScale}) {
   const height = width;
   const radius = Math.min(width, height) / 2;
-
   const arc = d3
     .arc()
     .innerRadius(radius * 0.6)
