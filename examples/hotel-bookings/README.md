@@ -25,7 +25,7 @@ This dashboard explores reservation data for a resort in Portugal from Antonio _
     └── index.md
 ```
 
-No dependencies other than Framework. No required configuration (static data). The project config only adds our example header and example layout.
+No dependencies other than Framework.
 
 ### Data
 
