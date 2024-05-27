@@ -441,6 +441,7 @@ export async function deploy(
       clack.log.warn(`Could not read build manifest: ${error}`);
     }
   }
+  clack.log.info("Uploading build manifest...");
   await apiClient.postDeployUploaded(deployId, buildManifest);
 
   // Poll for processing completion
