@@ -107,7 +107,7 @@ const damsSelectedState = dams.filter((d) => d.state == pickState);
   <div class="card grid-colspan-2 grid-rowspan-2">
     <h2>${pickState} dams counts by condition and hazard potential</h2>
     <span style="color: var(--theme-foreground-muted)">Of ${d3.format(",")(damsSelectedState.length)} ${pickState} dams listed in the NID,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(damsSelectedState.filter(d => d.conditionAssessment == "Poor").length)}</span><span style="color: var(--theme-foreground-muted)"> are listed as being in Poor condition. Of those in Poor condition,</span> <span style="color: var(--theme-foreground-alt)">${d3.format(",")(damsSelectedState.filter(d => d.conditionAssessment == "Poor" && d.hazardPotential == "High").length)}</span> <span style="color: var(--theme-foreground-muted)">have High hazard potential, where “downstream flooding would likely result in loss of human life.”</span>
-    ${resize((width, height) => conditionHeatmap(width, height))}
+    <div style="height: 250px;">${resize((width, height) => conditionHeatmap(width, height))}</div>
   </div>
 </div>
 
@@ -184,11 +184,9 @@ function purposeOwnership(width, height) {
 function conditionHeatmap(width, height) {
   return Plot.plot({
   width,
-  height: height - 80,
-  marginTop: -10,
+  height,
   marginRight: 10,
   marginLeft: 100,
-  marginBottom: 40,
   r: {range: [4, 20]},
   y: {domain: ["Undetermined", "Low", "Significant", "High"], label: "Hazard potential", grid: true},
   x: {domain: conditions, label: "Condition", grid: true, reverse: true},
