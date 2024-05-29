@@ -1,3 +1,6 @@
+import {existsSync} from "node:fs";
+import {readFile, readdir, stat} from "node:fs/promises";
+import {join} from "node:path/posix";
 import {formatPrefix} from "d3-format";
 
 let stargazers_count: number;
@@ -117,7 +120,21 @@ export default {
 </div>`,
   footer: `© ${new Date().getUTCFullYear()} Observable, Inc.`,
   style: "style.css",
-  search: true
+  search: {
+    async* index() {
+      for (const name of await readdir("examples")) {
+        const root = join("examples", name);
+        if ((await stat(root)).isDirectory() && existsSync(join(root, "README.md"))) {
+          const source = await readFile(join(root, "README.md"), "utf-8");
+          yield {
+            path: `https://observablehq.observablehq.cloud/framework-example-${name}/`,
+            title: source.split("\n").find((line) => line.startsWith("# "))?.slice(2),
+            text: source
+          };
+        }
+      }
+    }
+  }
 };
 
 async function github(

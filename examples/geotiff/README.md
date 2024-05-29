@@ -1,6 +1,6 @@
 [Framework examples →](../)
 
-# Framework + GeoTIFF
+# GeoTIFF
 
 View live: <https://observablehq.observablehq.cloud/framework-example-geotiff/>
 

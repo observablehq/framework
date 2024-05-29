@@ -38,7 +38,7 @@ describe("readConfig(undefined, root)", () => {
       header: "",
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
-      search: false,
+      search: null,
       watchPath: resolve("test/input/build/config/observablehq.config.js")
     });
   });
@@ -62,7 +62,7 @@ describe("readConfig(undefined, root)", () => {
       header: "",
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
-      search: false,
+      search: null,
       watchPath: undefined
     });
   });
