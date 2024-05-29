@@ -56,7 +56,7 @@ function renderResult({id, score, title}, i) {
   const external = /^\w+:/.test(id);
   return `<li data-score="${Math.min(5, Math.round(0.6 * score))}" class="observablehq-link${
     i === 0 ? ` ${activeClass}` : ""
-  }"><a href="${escapeDoubleQuote(external ? id : import.meta.resolve(`../${id}`))}"${
+  }"><a href="${escapeDoubleQuote(external ? id : import.meta.resolve(`..${id}`))}"${
     external ? ' target="_blank"' : ""
   }><span>${escapeText(String(title ?? "—"))}</span></a></li>`;
 }
