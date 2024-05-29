@@ -208,7 +208,32 @@ toc: false
 
 ## search
 
-Whether to enable [search](./search) on the project; defaults to false.
+If true, enable [search](./search) on the project; defaults to false. The **search** option may also be specified as an object with an **index** method <a href="https://github.com/observablehq/framework/pull/1401" class="observablehq-version-badge" data-version="prerelease" title="Added in #1401"></a>, in which case additional results can be added to the search index. Each result is specified as:
+
+```ts run=false
+interface SearchResult {
+  path: string;
+  title: string | null;
+  text: string;
+  keywords?: string;
+}
+```
+
+These additional results may also point to external links if the **path** is specified as an absolute URL. For example:
+
+```js run=false
+export default {
+  search: {
+    async* index() {
+      yield {
+        path: "https://example.com",
+        title: "Example",
+        text: "This is an example of an external link."
+      };
+    }
+  }
+};
+```
 
 ## interpreters <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" class="observablehq-version-badge" data-version="^1.3.0" title="Added in 1.3.0"></a>
 

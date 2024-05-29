@@ -26,16 +26,18 @@ const indexOptions = {
   }
 };
 
+type MiniSearchResult = Omit<SearchResult, "path" | "keywords"> & {id: string; keywords: string};
+
 export async function searchIndex(config: Config, effects = defaultEffects): Promise<string> {
-  const {pages, search} = config;
+  const {pages, search, normalizePath} = config;
   if (!search) return "{}";
   const cached = indexCache.get(pages);
   if (cached && cached.freshUntil > Date.now()) return cached.json;
 
   // Index the pages
-  const index = new MiniSearch<SearchResult>(indexOptions);
-  for await (const result of indexPages(config, effects)) index.add(result);
-  if (search.index) for await (const result of search.index()) index.add(result);
+  const index = new MiniSearch<MiniSearchResult>(indexOptions);
+  for await (const result of indexPages(config, effects)) index.add(normalizeResult(result, normalizePath));
+  if (search.index) for await (const result of search.index()) index.add(normalizeResult(result, normalizePath));
 
   // Pass the serializable index options to the client.
   const json = JSON.stringify(
@@ -55,7 +57,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
 }
 
 async function* indexPages(config: Config, effects: SearchIndexEffects): AsyncIterable<SearchResult> {
-  const {root, pages, normalizePath} = config;
+  const {root, pages} = config;
 
   // Get all the listed pages (which are indexed by default)
   const pagePaths = new Set(["/index"]);
@@ -92,8 +94,15 @@ async function* indexPages(config: Config, effects: SearchIndexEffects): AsyncIt
       .replace(/[^\p{L}\p{N}]/gu, " "); // keep letters & numbers
 
     effects.logger.log(`${faint("index")} ${sourcePath}`);
-    yield {id: normalizePath(path).slice("/".length), title, text, keywords: normalizeKeywords(data?.keywords)};
+    yield {path, title, text, keywords: normalizeKeywords(data?.keywords)};
   }
+}
+
+function normalizeResult(
+  {path, keywords, ...rest}: SearchResult,
+  normalizePath: Config["normalizePath"]
+): MiniSearchResult {
+  return {id: normalizePath(path), keywords: keywords ?? "", ...rest};
 }
 
 function normalizeKeywords(keywords: any): string {

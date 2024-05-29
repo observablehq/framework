@@ -127,7 +127,7 @@ export default {
         if ((await stat(root)).isDirectory() && existsSync(join(root, "README.md"))) {
           const source = await readFile(join(root, "README.md"), "utf-8");
           yield {
-            id: `https://observablehq.observablehq.cloud/framework-example-${name}/`,
+            path: `https://observablehq.observablehq.cloud/framework-example-${name}/`,
             title: source.split("\n").find((line) => line.startsWith("# "))?.slice(2),
             text: source
           };

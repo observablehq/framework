@@ -58,10 +58,10 @@ export type PageFragmentFunction = ({
 }) => string | null;
 
 export interface SearchResult {
-  id: string;
+  path: string;
   title: string | null;
   text: string;
-  keywords: string;
+  keywords?: string;
 }
 
 export interface SearchConfig {
