@@ -83,7 +83,12 @@ input.addEventListener("keydown", (event) => {
     const results = resultsContainer.querySelector("ol");
     if (!results) return;
     let activeResult = results.querySelector(`.${activeClass}`);
-    if (code === "Enter") return activeResult.querySelector("a").click();
+    if (code === "Enter") {
+      const a = activeResult.querySelector("a");
+      if (/Mac|iPhone/.test(navigator.platform) ? event.metaKey : event.ctrlKey) open(a.href, "_blank");
+      else a.click();
+      return;
+    }
     activeResult.classList.remove(activeClass);
     if (code === "ArrowUp") activeResult = activeResult.previousElementSibling ?? results.lastElementChild;
     else activeResult = activeResult.nextElementSibling ?? results.firstElementChild;
