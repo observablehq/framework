@@ -72,6 +72,8 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
     index.add({id: normalizePath(path).slice("/".length), title, text, keywords: normalizeKeywords(data?.keywords)});
   }
 
+  if (search?.index != null) await search.index(index);
+
   // Pass the serializable index options to the client.
   const json = JSON.stringify(
     Object.assign(

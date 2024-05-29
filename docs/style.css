@@ -36,6 +36,10 @@
   color: var(--theme-foreground-faint);
 }
 
+.observablehq-link-active a[target=_blank]:not(:hover, :focus)::after {
+  color: var(--theme-foreground-focus);
+}
+
 #observablehq-main {
   min-height: calc(100vh - 23.8rem);
 }
