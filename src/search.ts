@@ -2,7 +2,7 @@ import {readFile} from "node:fs/promises";
 import {basename, dirname, join} from "node:path/posix";
 import he from "he";
 import MiniSearch from "minisearch";
-import type {Config} from "./config.js";
+import type {Config, SearchResult} from "./config.js";
 import {visitMarkdownFiles} from "./files.js";
 import type {Logger} from "./logger.js";
 import {parseMarkdown} from "./markdown.js";
@@ -27,10 +27,35 @@ const indexOptions = {
 };
 
 export async function searchIndex(config: Config, effects = defaultEffects): Promise<string> {
-  const {root, pages, search, normalizePath} = config;
+  const {pages, search} = config;
   if (!search) return "{}";
   const cached = indexCache.get(pages);
   if (cached && cached.freshUntil > Date.now()) return cached.json;
+
+  // Index the pages
+  const index = new MiniSearch<SearchResult>(indexOptions);
+  for await (const result of indexPages(config, effects)) index.add(result);
+  if (search.index) for await (const result of search.index()) index.add(result);
+
+  // Pass the serializable index options to the client.
+  const json = JSON.stringify(
+    Object.assign(
+      {
+        options: {
+          fields: indexOptions.fields,
+          storeFields: indexOptions.storeFields
+        }
+      },
+      index.toJSON()
+    )
+  );
+
+  indexCache.set(pages, {json, freshUntil: Date.now() + reindexDelay});
+  return json;
+}
+
+async function* indexPages(config: Config, effects: SearchIndexEffects): AsyncIterable<SearchResult> {
+  const {root, pages, normalizePath} = config;
 
   // Get all the listed pages (which are indexed by default)
   const pagePaths = new Set(["/index"]);
@@ -39,8 +64,6 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
     if ("pages" in p) for (const {path} of p.pages) pagePaths.add(path);
   }
 
-  // Index the pages
-  const index = new MiniSearch(indexOptions);
   for (const file of visitMarkdownFiles(root)) {
     const sourcePath = join(root, file);
     const source = await readFile(sourcePath, "utf8");
@@ -69,26 +92,8 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
       .replace(/[^\p{L}\p{N}]/gu, " "); // keep letters & numbers
 
     effects.logger.log(`${faint("index")} ${sourcePath}`);
-    index.add({id: normalizePath(path).slice("/".length), title, text, keywords: normalizeKeywords(data?.keywords)});
+    yield {id: normalizePath(path).slice("/".length), title, text, keywords: normalizeKeywords(data?.keywords)};
   }
-
-  if (search?.index != null) await search.index(index);
-
-  // Pass the serializable index options to the client.
-  const json = JSON.stringify(
-    Object.assign(
-      {
-        options: {
-          fields: indexOptions.fields,
-          storeFields: indexOptions.storeFields
-        }
-      },
-      index.toJSON()
-    )
-  );
-
-  indexCache.set(pages, {json, freshUntil: Date.now() + reindexDelay});
-  return json;
 }
 
 function normalizeKeywords(keywords: any): string {

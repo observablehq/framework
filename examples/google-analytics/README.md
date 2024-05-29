@@ -1,6 +1,6 @@
 [Framework examples →](../)
 
-# Google analytics
+# Google Analytics
 
 View live: <https://observablehq.observablehq.cloud/framework-example-google-analytics/>
 

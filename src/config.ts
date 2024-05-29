@@ -6,7 +6,6 @@ import {basename, dirname, extname, join} from "node:path/posix";
 import {cwd} from "node:process";
 import {pathToFileURL} from "node:url";
 import type MarkdownIt from "markdown-it";
-import type MiniSearch from "minisearch";
 import wrapAnsi from "wrap-ansi";
 import {LoaderResolver} from "./dataloader.js";
 import {visitMarkdownFiles} from "./files.js";
@@ -58,8 +57,15 @@ export type PageFragmentFunction = ({
   path: string;
 }) => string | null;
 
+export interface SearchResult {
+  id: string;
+  title: string | null;
+  text: string;
+  keywords: string;
+}
+
 export interface SearchConfig {
-  index: ((search: MiniSearch<any>) => Promise<void> | void) | null;
+  index: (() => AsyncIterable<SearchResult>) | null;
 }
 
 export interface SearchConfigSpec {

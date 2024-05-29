@@ -17,7 +17,7 @@ const index = await fetch(import.meta.resolve(global.__minisearch))
     MiniSearch.loadJS(json, {
       ...json.options,
       searchOptions: {
-        boostDocument: (id) => isExternal(id) ? 1 / 3 : 1
+        boostDocument: (id) => (isExternal(id) ? 1 / 3 : 1)
       },
       processTerm: (term) =>
         term
