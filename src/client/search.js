@@ -16,6 +16,9 @@ const index = await fetch(import.meta.resolve(global.__minisearch))
   .then((json) =>
     MiniSearch.loadJS(json, {
       ...json.options,
+      searchOptions: {
+        boostDocument: (id) => isExternal(id) ? 1 / 3 : 1
+      },
       processTerm: (term) =>
         term
           .slice(0, 15)
@@ -44,6 +47,10 @@ input.addEventListener("input", () => {
           .map(renderResult)
           .join("")}</ol>`;
 });
+
+function isExternal(id) {
+  return /^\w+:/.test(id);
+}
 
 function renderResult({id, score, title}, i) {
   const external = /^\w+:/.test(id);
