@@ -882,8 +882,6 @@ describe("deploy", () => {
   it("will re-poll for both created and pending deploy statuses", async () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
-      .handlePostAuthRequest()
-      .handlePostAuthRequestPoll("accepted")
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
@@ -898,7 +896,7 @@ describe("deploy", () => {
       .handleGetDeploy({deployId, deployStatus: "uploaded"})
       .start();
 
-    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, apiKey: null});
+    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG});
     effects.clack.inputs = [
       true, // do you want to log in?
       "fix some bugs" // deploy message
@@ -989,8 +987,6 @@ describe("deploy", () => {
   it("can force a deploy", async () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
-      .handlePostAuthRequest()
-      .handlePostAuthRequestPoll("accepted")
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
@@ -1010,7 +1006,6 @@ describe("deploy", () => {
 
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
-      apiKey: null,
       fixedInputStatTime: new Date("2024-03-11"), // newer source files
       fixedOutputStatTime: new Date("2024-03-10")
     });
