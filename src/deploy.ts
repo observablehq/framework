@@ -145,7 +145,7 @@ class Deployer {
       if (this.effects.clack.isCancel(choice) || !choice)
         throw new CliError("User canceled deploy", {print: false, exitCode: 0});
 
-      ({currentUser, apiKey} = await loginInner(this.effects));
+      ({currentUser, apiKey} = await loginInner(this.effects, {pollTime: this.deployOptions.deployPollInterval}));
       apiClient.setApiKey(apiKey);
     }
 
@@ -619,7 +619,7 @@ class Deployer {
   }
 
   private async pollForProcessingCompletion(deployId: string): Promise<GetDeployResponse> {
-    const pollInterval = this.deployOptions.deployPollInterval || DEPLOY_POLL_INTERVAL_MS;
+    const {deployPollInterval: pollInterval = DEPLOY_POLL_INTERVAL_MS} = this.deployOptions;
 
     // Poll for processing completion
     const spinner = this.effects.clack.spinner();
