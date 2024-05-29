@@ -16,6 +16,9 @@ const index = await fetch(import.meta.resolve(global.__minisearch))
   .then((json) =>
     MiniSearch.loadJS(json, {
       ...json.options,
+      searchOptions: {
+        boostDocument: (id) => (isExternal(id) ? 1 / 3 : 1)
+      },
       processTerm: (term) =>
         term
           .slice(0, 15)
@@ -45,10 +48,17 @@ input.addEventListener("input", () => {
           .join("")}</ol>`;
 });
 
+function isExternal(id) {
+  return /^\w+:/.test(id);
+}
+
 function renderResult({id, score, title}, i) {
+  const external = /^\w+:/.test(id);
   return `<li data-score="${Math.min(5, Math.round(0.6 * score))}" class="observablehq-link${
     i === 0 ? ` ${activeClass}` : ""
-  }"><a href="${escapeDoubleQuote(import.meta.resolve(`../${id}`))}">${escapeText(String(title ?? "—"))}</a></li>`;
+  }"><a href="${escapeDoubleQuote(external ? id : import.meta.resolve(`../${id}`))}"${
+    external ? ' target="_blank"' : ""
+  }><span>${escapeText(String(title ?? "—"))}</span></a></li>`;
 }
 
 function escapeDoubleQuote(text) {

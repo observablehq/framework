@@ -46,9 +46,7 @@ export interface Script {
   type: string | null;
 }
 
-/**
- * A function that generates a page fragment such as head, header or footer.
- */
+/** A function that generates a page fragment such as head, header or footer. */
 export type PageFragmentFunction = ({
   title,
   data,
@@ -58,6 +56,21 @@ export type PageFragmentFunction = ({
   data: FrontMatter;
   path: string;
 }) => string | null;
+
+export interface SearchResult {
+  path: string;
+  title: string | null;
+  text: string;
+  keywords?: string;
+}
+
+export interface SearchConfig {
+  index: (() => AsyncIterable<SearchResult>) | null;
+}
+
+export interface SearchConfigSpec {
+  index?: unknown;
+}
 
 export interface Config {
   root: string; // defaults to src
@@ -73,7 +86,7 @@ export interface Config {
   footer: PageFragmentFunction | string | null; // defaults to “Built with Observable on [date].”
   toc: TableOfContents;
   style: null | Style; // defaults to {theme: ["light", "dark"]}
-  search: boolean; // default to false
+  search: SearchConfig | null; // default to null
   md: MarkdownIt;
   normalizePath: (path: string) => string;
   loaders: LoaderResolver;
@@ -226,7 +239,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const head = pageFragment(spec.head === undefined ? "" : spec.head);
   const header = pageFragment(spec.header === undefined ? "" : spec.header);
   const footer = pageFragment(spec.footer === undefined ? defaultFooter() : spec.footer);
-  const search = Boolean(spec.search);
+  const search = spec.search == null || spec.search === false ? null : normalizeSearch(spec.search as any);
   const interpreters = normalizeInterpreters(spec.interpreters as any);
   const config: Config = {
     root,
@@ -344,6 +357,12 @@ function normalizePage(spec: PageSpec, defaultPager: string | null = "main"): Pa
   const path = normalizePath(spec.path);
   const pager = spec.pager === undefined && isAssetPath(path) ? defaultPager : stringOrNull(spec.pager);
   return {name, path, pager};
+}
+
+function normalizeSearch(spec: SearchConfigSpec): SearchConfig {
+  const index = spec.index == null ? null : (spec.index as SearchConfig["index"]);
+  if (index !== null && typeof index !== "function") throw new Error("search.index is not a function");
+  return {index};
 }
 
 function normalizePath(spec: unknown): string {

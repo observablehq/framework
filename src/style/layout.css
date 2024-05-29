@@ -568,11 +568,12 @@
 }
 
 #observablehq-search-results li:after,
-#observablehq-search-results a:after {
+#observablehq-search-results a span:after {
   content: "";
   width: var(--relevance-width);
   height: 4px;
   position: absolute;
+  top: 14px;
   right: 0.5em;
   border-radius: 2px;
   background: var(--theme-foreground-muted);
@@ -582,7 +583,7 @@
   background: var(--theme-foreground-focus);
 }
 
-#observablehq-search-results a:after {
+#observablehq-search-results a span:after {
   background: var(--theme-foreground-faintest);
 }
 
