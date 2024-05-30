@@ -20,4 +20,4 @@ Please [open a discussion](https://github.com/observablehq/framework/discussions
 
 ## Contributing 🙏
 
-See [`docs/contributing.md`](./docs/contributing.md).
+See [Contributing](https://observablehq.com/framework/contributing).
