@@ -11,11 +11,13 @@ const args = process.argv.slice(2);
 
 const CONFIG_OPTION = {
   root: {
-    type: "string"
+    type: "string",
+    description: "Path to the project root"
   },
   config: {
     type: "string",
-    short: "c"
+    short: "c",
+    description: "Path to the project config file"
   }
 } as const;
 
@@ -114,7 +116,8 @@ try {
           ...CONFIG_OPTION,
           message: {
             type: "string",
-            short: "m"
+            short: "m",
+            description: "Message to associate with this deploy"
           },
           build: {
             type: "boolean",
@@ -126,7 +129,7 @@ try {
           },
           "deploy-config": {
             type: "string",
-            description: "Path to an alternate deploy.json file to use"
+            description: "Path to the deploy config file (deploy.json)"
           }
         }
       });
