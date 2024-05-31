@@ -42,6 +42,7 @@
 
 * [`loader-arrow`](https://observablehq.observablehq.cloud/framework-example-loader-arrow/) - Generating Apache Arrow IPC files
 * [`loader-databricks`](https://observablehq.observablehq.cloud/framework-example-loader-databricks/) - Loading data from Databricks
+* [`loader-duckdb`](https://observablehq.observablehq.cloud/framework-example-loader-duckdb/) - Processing data with DuckDB
 * [`loader-github`](https://observablehq.observablehq.cloud/framework-example-loader-github/) - Loading data from GitHub
 * [`loader-google-analytics`](https://observablehq.observablehq.cloud/framework-example-loader-google-analytics/) - Loading data from Google Analytics
 * [`loader-parquet`](https://observablehq.observablehq.cloud/framework-example-loader-parquet/) - Generating Apache Parquet files
@@ -51,7 +52,9 @@
 
 ### Inputs
 
+* [`codemirror`](https://observablehq.observablehq.cloud/framework-example-codemirror/) - A text input powered by CodeMirror
 * [`custom-input-2d`](https://observablehq.observablehq.cloud/framework-example-custom-input-2d/) - A custom 2D input with bidirectional binding
+* [`input-select-file`](https://observablehq.observablehq.cloud/framework-example-input-select-file/) - Selecting a file from a drop-down menu
 
 ### Markdown
 

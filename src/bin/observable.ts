@@ -110,7 +110,7 @@ try {
     }
     case "deploy": {
       const {
-        values: {config, root, message, build, "deploy-config": deployConfigPath}
+        values: {config, root, message, build, id, "deploy-config": deployConfigPath}
       } = helpArgs(command, {
         options: {
           ...CONFIG_OPTION,
@@ -127,6 +127,10 @@ try {
             type: "boolean",
             description: "Don’t build before deploying; deploy as is"
           },
+          id: {
+            type: "string",
+            hidden: true
+          },
           "deploy-config": {
             type: "string",
             description: "Path to the deploy config file (deploy.json)"
@@ -138,6 +142,7 @@ try {
           config: await readConfig(config, root),
           message,
           force: build === true ? "build" : build === false ? "deploy" : null,
+          deployId: id,
           deployConfigPath
         })
       );
@@ -263,6 +268,7 @@ type DescribableParseArgsConfig = ParseArgsConfig & {
       short?: string | undefined;
       default?: string | boolean | string[] | boolean[] | undefined;
       description?: string;
+      hidden?: boolean;
     };
   };
 };
@@ -300,16 +306,18 @@ function helpArgs<T extends DescribableParseArgsConfig>(
 
   // Log automatic help.
   if ((result.values as any).help) {
+    // Omit hidden flags from help.
+    const publicOptions = Object.fromEntries(Object.entries(options).filter(([, option]) => !option.hidden));
     console.log(
       `Usage: observable ${command}${command === undefined || command === "help" ? " <command>" : ""}${Object.entries(
-        options
+        publicOptions
       )
         .map(([name, {default: def}]) => ` [--${name}${def === undefined ? "" : `=${def}`}]`)
         .join("")}`
     );
-    if (Object.values(options).some((spec) => spec.description)) {
+    if (Object.values(publicOptions).some((spec) => spec.description)) {
       console.log();
-      for (const [long, spec] of Object.entries(options)) {
+      for (const [long, spec] of Object.entries(publicOptions)) {
         if (spec.description) {
           const left = `  ${spec.short ? `-${spec.short}, ` : ""}--${long}`.padEnd(20);
           console.log(`${left}${spec.description}`);

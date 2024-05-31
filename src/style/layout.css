@@ -146,13 +146,18 @@
 
 #observablehq-sidebar details summary::after {
   position: absolute;
-  right: 0.5rem;
+  right: 0;
   width: 1rem;
   height: 1rem;
   background: var(--theme-foreground-muted);
   content: "";
   -webkit-mask: var(--theme-caret);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
   mask: var(--theme-caret);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  padding: 0.5rem;
   transition: transform 250ms ease;
   transform: rotate(-90deg);
   transform-origin: 50% 50%;
@@ -563,11 +568,12 @@
 }
 
 #observablehq-search-results li:after,
-#observablehq-search-results a:after {
+#observablehq-search-results a span:after {
   content: "";
   width: var(--relevance-width);
   height: 4px;
   position: absolute;
+  top: 14px;
   right: 0.5em;
   border-radius: 2px;
   background: var(--theme-foreground-muted);
@@ -577,7 +583,7 @@
   background: var(--theme-foreground-focus);
 }
 
-#observablehq-search-results a:after {
+#observablehq-search-results a span:after {
   background: var(--theme-foreground-faintest);
 }
 
