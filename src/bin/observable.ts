@@ -135,7 +135,7 @@ try {
           config: await readConfig(config, root),
           message,
           force: build === true ? "build" : build === false ? "deploy" : null,
-          deployConfigPath: deployConfigPath ?? null
+          deployConfigPath
         })
       );
       break;

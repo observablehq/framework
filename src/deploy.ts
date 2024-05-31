@@ -37,7 +37,7 @@ const BUILD_AGE_WARNING_MS = 1000 * 60 * 5;
 
 export interface DeployOptions {
   config: Config;
-  deployConfigPath: string | null;
+  deployConfigPath?: string;
   message?: string;
   deployPollInterval?: number;
   force: "build" | "deploy" | null;
@@ -47,12 +47,12 @@ export interface DeployOptions {
 export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
   getDeployConfig: (
     sourceRoot: string,
-    deployConfigPath: string | null,
+    deployConfigPath: string | undefined,
     effects: ConfigEffects
   ) => Promise<DeployConfig>;
   setDeployConfig: (
     sourceRoot: string,
-    deployConfigPath: string | null,
+    deployConfigPath: string | undefined,
     config: DeployConfig,
     effects: ConfigEffects
   ) => Promise<void>;
@@ -88,7 +88,7 @@ type DeployTargetInfo =
 export async function deploy(
   {
     config,
-    deployConfigPath = null,
+    deployConfigPath,
     message,
     force,
     deployPollInterval = DEPLOY_POLL_INTERVAL_MS,
@@ -168,7 +168,7 @@ export async function deploy(
       if (project) {
         deployConfig.projectSlug = project.slug;
         deployConfig.workspaceLogin = workspace.login;
-        effects.setDeployConfig(config.root, deployConfigPath, deployConfig, effects);
+        await effects.setDeployConfig(config.root, deployConfigPath, deployConfig, effects);
         found = true;
         break;
       }

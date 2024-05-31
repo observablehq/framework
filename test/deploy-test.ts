@@ -103,18 +103,18 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     });
   }
 
-  private getDeployConfigKey(sourceRoot: string, deployConfigPath: string | null): string {
+  private getDeployConfigKey(sourceRoot: string, deployConfigPath?: string): string {
     return `${sourceRoot}::${deployConfigPath ?? "<default>"}`;
   }
 
-  async getDeployConfig(sourceRoot: string, deployConfigPath: string | null): Promise<DeployConfig> {
+  async getDeployConfig(sourceRoot: string, deployConfigPath?: string): Promise<DeployConfig> {
     const key = this.getDeployConfigKey(sourceRoot, deployConfigPath);
     return (
       this.deployConfigs[key] ?? this.defaultDeployConfig ?? {projectId: null, projectSlug: null, workspaceLogin: null}
     );
   }
 
-  async setDeployConfig(sourceRoot: string, deployConfigPath: string | null, config: DeployConfig) {
+  async setDeployConfig(sourceRoot: string, deployConfigPath: string | undefined, config: DeployConfig) {
     const key = this.getDeployConfigKey(sourceRoot, deployConfigPath);
     this.deployConfigs[key] = config;
   }
@@ -122,6 +122,7 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
   *visitFiles(path: string) {
     yield* visitFiles(path);
   }
+
   async stat(path: string) {
     function overrideTime(s: Stats, date: Date) {
       for (const key of ["a", "c", "m", "birth"] as const) {
@@ -171,7 +172,7 @@ const TEST_OPTIONS: DeployOptions = {
   message: undefined,
   deployPollInterval: 0,
   force: "deploy", // default to not re-building and just deploying output as-is
-  deployConfigPath: null
+  deployConfigPath: undefined
 };
 const DEPLOY_CONFIG: DeployConfig & {projectId: string; projectSlug: string; workspaceLogin: string} = {
   projectId: "project123",
