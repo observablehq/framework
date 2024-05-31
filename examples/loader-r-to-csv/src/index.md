@@ -2,7 +2,7 @@
 
 Here’s an R data loader that performs k-means clustering with penguin body size measurements then outputs a CSV file to standard out.
 
-```js run=false
+```r
 # Attach libraries (must be installed)
 library(readr)
 library(dplyr)
