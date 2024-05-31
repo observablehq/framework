@@ -1,9 +1,9 @@
 [Framework examples →](../)
 
-# DuckDB data loader
+# R data loader to generate a JSON
 
-View live: <https://observablehq.observablehq.cloud/framework-example-loader-duckdb/>
+View live: <https://observablehq.observablehq.cloud/framework-example-loader-r-to-json/>
 
-This Observable Framework example demonstrates how to write a data loader as a shell script that downloads a CSV file, then uses the DuckDB CLI to filter and reshape this data, finally outputting the result as Apache Parquet. The example data is statistics about the education of modern foreign languages from Eurostat, the data portal of the statistical office of the European Union.
+This Observable Framework example demonstrates how to write a data loader in R that accesses text from Tolstoy's _War and Peace_ from Project Gutenberg, does some basic text mining, then generates a JSON with top word counts by book and chapter.
 
-The data loader lives in [`src/educ_uoe_lang01.parquet.sh`](./src/educ_uoe_lang01.parquet.sh).
+The data loader lives in [`src/data/tolstoy.json.R`](./src/data/tolstoy.json.R).
