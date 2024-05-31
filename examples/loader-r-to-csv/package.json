@@ -9,9 +9,7 @@
     "observable": "observable"
   },
   "dependencies": {
-    "@observablehq/framework": "^1.7.0",
-    "apache-arrow": "^16.0.0",
-    "parquet-wasm": "^0.6.1"
+    "@observablehq/framework": "^1.7.0"
   },
   "devDependencies": {
     "rimraf": "^5.0.5"
