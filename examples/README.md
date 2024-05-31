@@ -52,6 +52,7 @@
 
 ### Inputs
 
+* [`codemirror`](https://observablehq.observablehq.cloud/framework-example-codemirror/) - A text input powered by CodeMirror
 * [`custom-input-2d`](https://observablehq.observablehq.cloud/framework-example-custom-input-2d/) - A custom 2D input with bidirectional binding
 
 ### Markdown
