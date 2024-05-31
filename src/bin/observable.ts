@@ -11,11 +11,13 @@ const args = process.argv.slice(2);
 
 const CONFIG_OPTION = {
   root: {
-    type: "string"
+    type: "string",
+    description: "Path to the project root"
   },
   config: {
     type: "string",
-    short: "c"
+    short: "c",
+    description: "Path to the project config file"
   }
 } as const;
 
@@ -108,13 +110,14 @@ try {
     }
     case "deploy": {
       const {
-        values: {config, root, message, build, id}
+        values: {config, root, message, build, id, "deploy-config": deployConfigPath}
       } = helpArgs(command, {
         options: {
           ...CONFIG_OPTION,
           message: {
             type: "string",
-            short: "m"
+            short: "m",
+            description: "Message to associate with this deploy"
           },
           build: {
             type: "boolean",
@@ -127,6 +130,10 @@ try {
           id: {
             type: "string",
             hidden: true
+          },
+          "deploy-config": {
+            type: "string",
+            description: "Path to the deploy config file (deploy.json)"
           }
         }
       });
@@ -135,7 +142,8 @@ try {
           config: await readConfig(config, root),
           message,
           force: build === true ? "build" : build === false ? "deploy" : null,
-          deployId: id
+          deployId: id,
+          deployConfigPath
         })
       );
       break;
