@@ -53,6 +53,7 @@
 ### Inputs
 
 * [`custom-input-2d`](https://observablehq.observablehq.cloud/framework-example-custom-input-2d/) - A custom 2D input with bidirectional binding
+* [`input-select-file`](https://observablehq.observablehq.cloud/framework-example-input-select-file/) - Selecting a file from a drop-down menu
 
 ### Markdown
 
