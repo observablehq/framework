@@ -77,7 +77,13 @@ export function open({hash, eval: compile} = {}) {
           }
         }
         for (const [id, removed] of removedCells) {
-          addedCells.get(id)?.replaceWith(removed);
+          const added = addedCells.get(id);
+          if (added) {
+            added.replaceWith(removed);
+            for (const n of removed._nodes) {
+              removed.parentNode.insertBefore(n, removed);
+            }
+          }
         }
         for (const id of message.code.removed) {
           undefine(id);
@@ -138,9 +144,6 @@ export function open({hash, eval: compile} = {}) {
   };
 
   function indexCells(map, node) {
-    if (node.id.startsWith("cell-")) {
-      map.set(node.id, node);
-    }
     for (const cell of node.querySelectorAll("[id^=cell-]")) {
       map.set(cell.id, cell);
     }

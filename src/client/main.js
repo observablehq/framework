@@ -27,7 +27,9 @@ export function define(cell) {
   cellsById.get(id)?.variables.forEach((v) => v.delete());
   cellsById.set(id, {cell, variables});
   const root = document.querySelector(`#cell-${id}`);
-  const loading = root.querySelector(".observablehq-loading");
+  const loading = root.querySelector("o-loading");
+  root._nodes = [];
+  if (loading) root._nodes.push(loading);
   const pending = () => reset(root, loading);
   const rejected = (error) => reject(root, error);
   const v = main.variable({_node: root, pending, rejected}, {shadow: {}}); // _node for visibility promise
@@ -67,31 +69,55 @@ export function define(cell) {
 // original loading indicator in this case, which applies to inline expressions
 // and expression code blocks.
 function reset(root, loading) {
-  if (root.classList.contains("observablehq--error")) {
-    root.classList.remove("observablehq--error");
+  if (root._error) {
+    root._error = false;
     clear(root);
-    if (loading) root.append(loading);
+    if (loading) {
+      root._nodes.push(loading);
+      root.appendChild(loading);
+    }
   }
 }
 
 function reject(root, error) {
   console.error(error);
-  root.classList.add("observablehq--error"); // see reset
+  root._error = true; // see reset
   clear(root);
-  root.append(inspectError(error));
+  displayNode(root, inspectError(error));
+}
+
+function displayNode(root, node) {
+  if (node.nodeType === 11) {
+    let child;
+    while ((child = node.firstChild)) {
+      root._nodes.push(child);
+      root.parentNode.insertBefore(child, root);
+    }
+  } else {
+    root._nodes.push(node);
+    root.parentNode.insertBefore(node, root);
+  }
 }
 
 function clear(root) {
-  root.textContent = "";
+  for (const v of root._nodes) v.remove();
+  root._nodes.length = 0;
 }
 
 function displayInline(root, value) {
-  if (isNode(value) || typeof value === "string" || !value?.[Symbol.iterator]) root.append(value);
-  else root.append(...value);
+  if (!isNode(value)) {
+    if (typeof value === "string" || !value?.[Symbol.iterator]) {
+      value = document.createTextNode(value);
+    } else {
+      for (const v of value) displayNode(root, v);
+      return;
+    }
+  }
+  displayNode(root, value);
 }
 
 function displayBlock(root, value) {
-  root.append(isNode(value) ? value : inspect(value));
+  displayNode(root, isNode(value) ? value : inspect(value));
 }
 
 export function undefine(id) {
