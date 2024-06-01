@@ -1,4 +1,4 @@
-# R data loader to generate a CSV
+# R data loader to generate a CSV file
 
 Here’s an R data loader that performs k-means clustering with penguin body size measurements then outputs a CSV file to standard out.
 
@@ -42,7 +42,7 @@ We can display the contents of `penguinKmeans` with `Inputs.table`:
 Inputs.table(penguinKmeans)
 ```
 
-Lastly, we can pass the data to `Plot.plot` to make a simple scatterplot of penguin size (body mass and flipper length) with text indicating the assigned cluster and color mapped tod penguin species.
+We can pass the data to `Plot.plot` to make a scatterplot of penguin size (body mass and flipper length) with text indicating the assigned cluster number and color mapped to penguin species.
 
 ```js echo
 Plot.plot({
