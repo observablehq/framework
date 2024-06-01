@@ -73,10 +73,7 @@ function reset(root, loading) {
   if (root._error) {
     root._error = false;
     clear(root);
-    if (loading) {
-      root._nodes.push(loading);
-      root.parentNode.insertBefore(loading, root);
-    }
+    if (loading) displayNode(root, loading);
   }
 }
 
@@ -106,15 +103,15 @@ function clear(root) {
 }
 
 function displayInline(root, value) {
-  if (!isNode(value)) {
-    if (typeof value === "string" || !value?.[Symbol.iterator]) {
-      value = document.createTextNode(value);
-    } else {
-      for (const v of value) displayNode(root, v);
-      return;
+  if (isNode(value)) {
+    displayNode(root, value);
+  } else if (typeof value === "string" || !value?.[Symbol.iterator]) {
+    displayNode(root, document.createTextNode(value));
+  } else {
+    for (const v of value) {
+      displayNode(root, isNode(v) ? v : document.createTextNode(v));
     }
   }
-  displayNode(root, value);
 }
 
 function displayBlock(root, value) {
