@@ -57,7 +57,7 @@ You can then access individual files (estimates.csv, or predictions.csv) from th
 const modelEstimates = modelZip.file("estimates.csv").csv({typed: true});
 ```
 
-We can display this dataset with Inputs.table:
+We can quickly display the model estimates with Inputs.table:
 
 ```js echo
 Inputs.table(modelEstimates)
