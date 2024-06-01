@@ -264,11 +264,9 @@ function makePlaceholderRenderer(): RenderRule {
       return `<o-cell id="cell-${id}"><o-loading></o-loading></o-cell>`;
     } catch (error) {
       if (!(error instanceof SyntaxError)) throw error;
-      return `<span id="cell-${id}">
-  <span class="observablehq--inspect observablehq--error" style="display: block;">SyntaxError: ${he.escape(
-    error.message
-  )}</span>
-</span>`;
+      return `<span class="observablehq--inspect observablehq--error" style="display: block;">SyntaxError: ${he.escape(
+        error.message
+      )}</span>`;
     }
   };
 }
