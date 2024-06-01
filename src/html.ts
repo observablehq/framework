@@ -183,6 +183,18 @@ export function rewriteHtml(
     h.append(a);
   }
 
+  // For incremental update during preview, we need to know the direct children
+  // of the body statically; therefore we must wrap any top-level cells with a
+  // span to avoid polluting the direct children with dynamic content.
+  for (let child = document.body.firstChild; child; child = child.nextSibling) {
+    if (isElement(child) && child.tagName === "O-CELL") {
+      const parent = document.createElement("span");
+      child.replaceWith(parent);
+      parent.appendChild(child);
+      child = parent;
+    }
+  }
+
   return document.body.innerHTML;
 }
 
@@ -208,11 +220,11 @@ function resolveSrcset(srcset: string, resolve: (specifier: string) => string): 
     .join(", ");
 }
 
-function isText(node: Node): node is Text {
+export function isText(node: Node): node is Text {
   return node.nodeType === 3;
 }
 
-function isElement(node: Node): node is Element {
+export function isElement(node: Node): node is Element {
   return node.nodeType === 1;
 }
 
