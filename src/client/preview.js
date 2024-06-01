@@ -1,5 +1,6 @@
 import {FileAttachment, registerFile} from "npm:@observablehq/stdlib";
 import {main, runtime, undefine} from "./main.js";
+import {findLoading, findRoots, registerRoot} from "./main.js";
 import {enableCopyButtons} from "./pre.js";
 
 export * from "./index.js";
@@ -59,12 +60,16 @@ export function open({hash, eval: compile} = {}) {
                     }
                   } else if (item.type === 3) {
                     root.insertBefore(document.createTextNode(item.value), child);
+                  } else if (item.type === 8) {
+                    root.insertBefore(document.createComment(item.value), child);
                   }
                 } else {
                   if (item.type === 1) {
                     root.insertAdjacentHTML("beforeend", item.value);
                   } else if (item.type === 3) {
                     root.appendChild(document.createTextNode(item.value));
+                  } else if (item.type === 8) {
+                    root.appendChild(document.createComment(item.value));
                   }
                 }
                 indexCells(addedCells, root.childNodes[pos]);
@@ -91,12 +96,15 @@ export function open({hash, eval: compile} = {}) {
           }
         }
         for (const [id, removed] of removedCells) {
-          const added = addedCells.get(id);
-          if (added) {
-            added.replaceWith(removed);
-            for (const n of removed._nodes) {
-              removed.parentNode.insertBefore(n, removed);
-            }
+          if (!addedCells.has(id)) {
+            registerRoot(id, null);
+          } else {
+            replaceRoot(addedCells.get(id), removed);
+          }
+        }
+        for (const [id, root] of addedCells) {
+          if (!removedCells.has(id)) {
+            registerRoot(id, root);
           }
         }
         for (const id of message.code.removed) {
@@ -158,15 +166,21 @@ export function open({hash, eval: compile} = {}) {
   };
 
   function indexCells(map, node) {
-    if (node.nodeType === 1) {
-      for (const cell of node.querySelectorAll("[id^=cell-]")) {
-        map.set(cell.id, cell);
-      }
+    for (const [id, root] of findRoots(node)) {
+      map.set(id, root);
     }
   }
 
   function send(message) {
     console.info("↑", message);
     socket.send(JSON.stringify(message));
+  }
+}
+
+export function replaceRoot(added, removed) {
+  findLoading(added)?.remove();
+  added.replaceWith(removed);
+  for (const n of removed._nodes) {
+    removed.parentNode.insertBefore(n, removed);
   }
 }

@@ -20,14 +20,15 @@ export const runtime = new Runtime(library);
 export const main = runtime.module();
 
 const cellsById = new Map();
+const rootsById = findRoots(document.body);
 
 export function define(cell) {
   const {id, inline, inputs = [], outputs = [], body} = cell;
   const variables = [];
   cellsById.get(id)?.variables.forEach((v) => v.delete());
   cellsById.set(id, {cell, variables});
-  const root = document.querySelector(`#cell-${id}`);
-  const loading = root.querySelector("o-loading");
+  const root = rootsById.get(id);
+  const loading = findLoading(root);
   root._nodes = [];
   if (loading) root._nodes.push(loading);
   const pending = () => reset(root, loading);
@@ -74,7 +75,7 @@ function reset(root, loading) {
     clear(root);
     if (loading) {
       root._nodes.push(loading);
-      root.appendChild(loading);
+      root.parentNode.insertBefore(loading, root);
     }
   }
 }
@@ -128,4 +129,34 @@ export function undefine(id) {
 // Note: Element.prototype is instanceof Node, but cannot be inserted!
 function isNode(value) {
   return value instanceof Node && value instanceof value.constructor;
+}
+
+export function findRoots(root) {
+  const roots = new Map();
+  const iterator = document.createNodeIterator(root, 128, null);
+  let node;
+  while ((node = iterator.nextNode())) {
+    if (isRoot(node)) {
+      roots.set(node.data.slice(1, -1), node);
+    }
+  }
+  return roots;
+}
+
+function isRoot(node) {
+  return node.nodeType === 8 && /^:[0-9a-f]{8}:$/.test(node.data);
+}
+
+function isLoading(node) {
+  return node.nodeType === 1 && node.tagName === "O-LOADING";
+}
+
+export function findLoading(root) {
+  const sibling = root.previousSibling;
+  return sibling && isLoading(sibling) ? sibling : null;
+}
+
+export function registerRoot(id, node) {
+  if (node == null) rootsById.delete(id);
+  else rootsById.set(id, node);
 }

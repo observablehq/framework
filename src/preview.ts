@@ -20,7 +20,7 @@ import type {LoaderResolver} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import type {FileWatchers} from "./fileWatchers.js";
-import {isElement, isText, parseHtml, rewriteHtml} from "./html.js";
+import {isComment, isElement, isText, parseHtml, rewriteHtml} from "./html.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import {parseMarkdown} from "./markdown.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
@@ -440,6 +440,8 @@ function serializeHtml(node: ChildNode): HtmlPart | undefined {
     ? {type: 1, value: node.outerHTML}
     : isText(node)
     ? {type: 3, value: node.nodeValue!}
+    : isComment(node)
+    ? {type: 8, value: node.data}
     : undefined;
 }
 

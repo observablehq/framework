@@ -187,9 +187,11 @@ export function rewriteHtml(
   // of the body statically; therefore we must wrap any top-level cells with a
   // span to avoid polluting the direct children with dynamic content.
   for (let child = document.body.firstChild; child; child = child.nextSibling) {
-    if (isElement(child) && child.tagName === "O-CELL") {
+    if (isComment(child) && /^:[0-9a-f]{8}:$/.test(child.data)) {
       const parent = document.createElement("span");
+      const loading = findLoading(child);
       child.replaceWith(parent);
+      if (loading) parent.appendChild(loading);
       parent.appendChild(child);
       child = parent;
     }
@@ -224,8 +226,17 @@ export function isText(node: Node): node is Text {
   return node.nodeType === 3;
 }
 
+export function isComment(node: Node): node is Comment {
+  return node.nodeType === 8;
+}
+
 export function isElement(node: Node): node is Element {
   return node.nodeType === 1;
+}
+
+function findLoading(node: Node): Element | null {
+  const sibling = node.previousSibling;
+  return sibling && isElement(sibling) && sibling.tagName === "O-LOADING" ? sibling : null;
 }
 
 /**
