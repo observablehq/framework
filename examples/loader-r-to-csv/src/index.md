@@ -39,16 +39,25 @@ const penguinKmeans = FileAttachment("data/penguin-kmeans.csv").csv({typed: true
 We can display the contents of `penguinKmeans` with `Inputs.table`:
 
 ```js echo
-display(Inputs.table(penguinKmeans));
+Inputs.table(penguinKmeans)
 ```
 
 Lastly, we can pass the data to `Plot.plot` to make a simple scatterplot of penguin size (body mass and flipper length) with text indicating the assigned cluster and color mapped tod penguin species.
 
 ```js echo
-display(Plot.plot({
-  color: {legend: true, range: ["teal", "orchid", "darkorange"]},
+Plot.plot({
+  color: {
+    legend: true,
+    range: ["teal", "orchid", "darkorange"]
+  },
   marks: [
-    Plot.text(penguinKmeans, {text: "cluster", x: "body_mass_g", y: "flipper_length_mm", fill: "species", fontWeight: 600})
+    Plot.text(penguinKmeans, {
+      text: "cluster",
+      x: "body_mass_g",
+      y: "flipper_length_mm",
+      fill: "species",
+      fontWeight: 600
+    })
   ]
-}));
+})
 ```
