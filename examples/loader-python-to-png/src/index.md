@@ -1,6 +1,6 @@
-# Python data loader to generate a PNG
+# Python data loader to generate PNG
 
-Here’s a Python data loader that accesses [birth data for Lake County, Illinois](https://data-lakecountyil.opendata.arcgis.com/datasets/lakecountyil::birth-statistics/explore) from a local geoJSON file, creates a choropleth map using matplotlib, then returns a PNG to standard out.
+Here’s a Python data loader that accesses [birth data for Lake County, Illinois](https://data-lakecountyil.opendata.arcgis.com/datasets/lakecountyil::birth-statistics/explore) from a local geoJSON file, creates a choropleth map using matplotlib, then returns the map as PNG to standard out.
 
 ```python
 # Import libraries (must be installed and available in environment)
@@ -30,6 +30,10 @@ To run this data loader, you’ll need python3 and the geopandas, matplotlib, io
 
 - `$ python3 -m venv .venv`
 - `$ source .venv/bin/activate`
+
+Then install the required modules:
+
+- `$ pip install -r requirements.txt`
 
 </div>
 
