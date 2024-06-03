@@ -15,6 +15,7 @@ import {parseInfo} from "./info.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
 import {isAssetPath, relativePath} from "./path.js";
+import {parsePlaceholder} from "./placeholder.js";
 import {transpileSql} from "./sql.js";
 import {transpileTag} from "./tag.js";
 import {InvalidThemeError} from "./theme.js";
@@ -125,73 +126,16 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
 
 const CODE_DOLLAR = 36;
 const CODE_BRACEL = 123;
-const CODE_BRACER = 125;
-const CODE_BACKSLASH = 92;
-const CODE_QUOTE = 34;
-const CODE_SINGLE_QUOTE = 39;
-const CODE_BACKTICK = 96;
-
-function parsePlaceholder(content: string, replacer: (i: number, j: number) => void) {
-  let afterDollar = false;
-  for (let j = 0, n = content.length; j < n; ++j) {
-    const cj = content.charCodeAt(j);
-    if (cj === CODE_BACKSLASH) {
-      ++j; // skip next character
-      continue;
-    }
-    if (cj === CODE_DOLLAR) {
-      afterDollar = true;
-      continue;
-    }
-    if (afterDollar) {
-      if (cj === CODE_BRACEL) {
-        let quote = 0; // TODO detect comments, too
-        let braces = 0;
-        let k = j + 1;
-        inner: for (; k < n; ++k) {
-          const ck = content.charCodeAt(k);
-          if (ck === CODE_BACKSLASH) {
-            ++k;
-            continue;
-          }
-          if (quote) {
-            if (ck === quote) quote = 0;
-            continue;
-          }
-          switch (ck) {
-            case CODE_QUOTE:
-            case CODE_SINGLE_QUOTE:
-            case CODE_BACKTICK:
-              quote = ck;
-              break;
-            case CODE_BRACEL:
-              ++braces;
-              break;
-            case CODE_BRACER:
-              if (--braces < 0) {
-                replacer(j - 1, k + 1);
-                break inner;
-              }
-              break;
-          }
-        }
-        j = k;
-      }
-      afterDollar = false;
-    }
-  }
-}
 
 function transformPlaceholderBlock(token) {
   const input = token.content;
-  if (/^\s*<script[\s>]/.test(input)) return [token]; // ignore <script> elements
   const output: any[] = [];
   let i = 0;
-  parsePlaceholder(input, (j, k) => {
-    output.push({...token, level: i > 0 ? token.level + 1 : token.level, content: input.slice(i, j)});
-    output.push({type: "placeholder", level: token.level + 1, content: input.slice(j + 2, k - 1)});
-    i = k;
-  });
+  for (const [j, k] of parsePlaceholder(input)) {
+    output.push({...token, level: i > 0 ? token.level + 1 : token.level, content: input.slice(i, j - 2)});
+    output.push({type: "placeholder", level: token.level + 1, content: input.slice(j, k)});
+    i = k + 1;
+  }
   if (i === 0) return [token];
   else if (i < input.length) output.push({...token, content: input.slice(i), nesting: -1});
   return output;
@@ -199,39 +143,15 @@ function transformPlaceholderBlock(token) {
 
 const transformPlaceholderInline: RuleInline = (state, silent) => {
   if (silent || state.pos + 2 > state.posMax) return false;
-  const marker1 = state.src.charCodeAt(state.pos);
-  const marker2 = state.src.charCodeAt(state.pos + 1);
-  if (!(marker1 === CODE_DOLLAR && marker2 === CODE_BRACEL)) return false;
-  let quote = 0;
-  let braces = 0;
-  for (let pos = state.pos + 2; pos < state.posMax; ++pos) {
-    const code = state.src.charCodeAt(pos);
-    if (code === CODE_BACKSLASH) {
-      ++pos; // skip next character
-      continue;
-    }
-    if (quote) {
-      if (code === quote) quote = 0;
-      continue;
-    }
-    switch (code) {
-      case CODE_QUOTE:
-      case CODE_SINGLE_QUOTE:
-      case CODE_BACKTICK:
-        quote = code;
-        break;
-      case CODE_BRACEL:
-        ++braces;
-        break;
-      case CODE_BRACER:
-        if (--braces < 0) {
-          const token = state.push("placeholder", "", 0);
-          token.content = state.src.slice(state.pos + 2, pos);
-          state.pos = pos + 1;
-          return true;
-        }
-        break;
-    }
+  const code1 = state.src.charCodeAt(state.pos);
+  const code2 = state.src.charCodeAt(state.pos + 1);
+  if (!(code1 === CODE_DOLLAR && code2 === CODE_BRACEL)) return false;
+  for (const [i, j] of parsePlaceholder(state.src, state.pos)) {
+    if (j >= state.posMax) break;
+    const token = state.push("placeholder", "", 0);
+    token.content = state.src.slice(i, j);
+    state.pos = j + 1;
+    return true;
   }
   return false;
 };
