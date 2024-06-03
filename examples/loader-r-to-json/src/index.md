@@ -44,7 +44,7 @@ cat(toJSON(tolstoy_word_counts, pretty = TRUE))
 
 <div class="note">
 
-To run this data loader, you’ll need R installed, along with the tidytext, readr, dplyr, stringr, and jsonlite libraries, _e.g._ with `install.packages("dplyr")`.
+To run this data loader, you’ll need R installed, along with all required packages, _e.g._ by running `install.packages(c("tidytext", "readr", "dplyr", "stringr", "jsonlite"))`.
 
 </div>
 
