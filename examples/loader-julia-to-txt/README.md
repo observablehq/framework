@@ -1,6 +1,6 @@
 [Framework examples →](../)
 
-# Julia data loader to generate a text file
+# Julia data loader to generate TXT
 
 View live: <https://observablehq.observablehq.cloud/framework-example-loader-julia-to-txt/>
 

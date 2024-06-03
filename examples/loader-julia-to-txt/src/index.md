@@ -1,6 +1,6 @@
-# Julia data loader to generate a text file
+# Julia data loader to generate TXT
 
-Here’s a Julia data loader that accesses Edgar Allen Poe’s _The Raven_ from [Project Gutenberg](https://www.gutenberg.org/cache/epub/1065/pg1065.txt), splits the text by stanza, then returns a single stanza (specified by number in the loader).
+Here’s a Julia data loader that accesses Edgar Allen Poe’s _The Raven_ from [Project Gutenberg](https://www.gutenberg.org/cache/epub/1065/pg1065.txt), splits the text by stanza, then outputs a single stanza (specified by number in the loader) as text to standard out.
 
 ```julia
 # Load Julia packages (must be installed)
@@ -42,7 +42,7 @@ println(result_paragraph)
 
 <div class="note">
 
-To run this data loader, you’ll need Julia installed, along with the HTTP, Gumbo, and TextAnalysis packages.
+To run this data loader, you’ll need Julia installed, along with the HTTP, Gumbo, and TextAnalysis packages, _e.g._ with `pkg> add HTTP Gumbo TextAnalysis` in the [Pkg REPL](https://pkgdocs.julialang.org/v1/managing-packages/#Adding-packages).
 
 </div>
 
@@ -51,8 +51,6 @@ The above data loader lives in `data/raven.txt.jl`, so we can load the data as `
 ```js echo
 const ravenStanza = FileAttachment("data/raven.txt").text()
 ```
-
-Which returns stanza 29 of _The Raven_:
 
 ```js echo
 ravenStanza
