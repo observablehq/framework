@@ -47,6 +47,7 @@
 - [`loader-google-analytics`](https://observablehq.observablehq.cloud/framework-example-loader-google-analytics/) - Loading data from Google Analytics
 - [`loader-parquet`](https://observablehq.observablehq.cloud/framework-example-loader-parquet/) - Generating Apache Parquet files
 - [`loader-postgres`](https://observablehq.observablehq.cloud/framework-example-loader-postgres/) - Loading data from PostgreSQL
+- [`loader-python-to-zip`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-zip/) - Generating ZIP from Python
 - [`loader-r-to-json`](https://observablehq.observablehq.cloud/framework-example-loader-r-to-json/) - Generating JSON from R
 - [`loader-snowflake`](https://observablehq.observablehq.cloud/framework-example-loader-snowflake/) - Loading data from Snowflake
 - [`netcdf-contours`](https://observablehq.observablehq.cloud/framework-example-netcdf-contours/) - Converting NetCDF to GeoJSON with `netcdfjs` and `d3-geo-voronoi`

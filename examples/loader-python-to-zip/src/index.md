@@ -1,6 +1,6 @@
-# Python data loader to generate a ZIP file
+# Python data loader to generate ZIP
 
-This Python data loader accesses data on [earthquakes from the USGS](https://www.usgs.gov/programs/earthquake-hazards/earthquakes), then combines metadata (as JSON) and selected earthquake magnitude and location (as a CSV) in a ZIP file.
+This Python data loader accesses data on [earthquakes from the USGS](https://www.usgs.gov/programs/earthquake-hazards/earthquakes), then combines metadata (as JSON) and selected earthquake magnitude and location (as a CSV) in a ZIP archive.
 
 ```python
 # Import libraries (must be installed)
@@ -49,10 +49,14 @@ sys.stdout.buffer.write(zip_buffer.getvalue())
 
 <div class="note">
 
-To run this data loader, you’ll need python3 and the requests, pandas, json, zipfile, io, and sys modules installed and available on your `$PATH`. We recommend setting up a virtual environment, for example using:
+To run this data loader, you’ll need python3, and the requests and pandas modules, installed and available on your `$PATH` (json, zipfile, io, and sys are part of the python3 standard library). We recommend setting up a virtual environment, for example using:
 
 - `$ python3 -m venv .venv`
 - `$ source .venv/bin/activate`
+
+Install the requests and pandas modules (included in requirements.txt):
+
+- `$ pip install -r requirements.txt`
 
 </div>
 
