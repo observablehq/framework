@@ -1,6 +1,6 @@
-# Python data loader to generate an Apache Parquet file
+# Python data loader to generate Apache Parquet
 
-Here’s a Python data loader that access records for over 91,000 dams from the [National Inventory of Dams](https://nid.sec.usace.army.mil/#/), limits the data to only four columns, then outputs an Apache Parquet file to standard out.
+Here’s a Python data loader that accesses records for over 91,000 dams from the [National Inventory of Dams](https://nid.sec.usace.army.mil/#/), limits the data to only four columns, then outputs an Apache Parquet file to standard out.
 
 ```python
 # Load libraries (must be installed in environment)
@@ -29,6 +29,10 @@ To run this data loader you’ll need python3, and the `pandas` and `pyarrow` li
 
 - `$ python3 -m venv .venv`
 - `$ source .venv/bin/activate`
+
+Then install the required modules
+
+- `$ pip install -r requirements.txt`
 
 </div>
 

@@ -1,6 +1,6 @@
 [Framework examples →](../)
 
-# Python data loader to generate a parquet file
+# Python data loader to generate Apache Parquet
 
 View live: <https://observablehq.observablehq.cloud/framework-example-loader-python-to-parquet/>
 
