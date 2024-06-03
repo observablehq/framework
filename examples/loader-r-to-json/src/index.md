@@ -1,6 +1,6 @@
-# R data loader to generate a JSON
+# R data loader to generate JSON
 
-Here’s an R data loader that accesses Tolstoy's _War and Peace_ from the [Gutenberg Project](https://www.gutenberg.org/ebooks/2600), finds the most common words by book and chapter, then returns a JSON.
+Here’s an R data loader that accesses Tolstoy’s _War and Peace_ from the [Gutenberg Project](https://www.gutenberg.org/ebooks/2600), finds the most common words by book and chapter, then outputs JSON.
 
 ```r
 # Attach libraries (must be installed)
@@ -51,7 +51,7 @@ To run this data loader, you’ll need R installed, along with the tidytext, rea
 The above data loader lives in `data/tolstoy.json.R`, so we can load the data as `data/tolstoy.json` using `FileAttachment`.
 
 ```js echo
-const text = FileAttachment("data/tolstoy.json").json()
+const text = FileAttachment("data/tolstoy.json").json();
 ```
 
 We can display this dataset with Inputs.table:
@@ -66,7 +66,7 @@ We can make a quick chart of top words in Book 1, with color mapped to book chap
 Plot.plot({
   marks: [
     Plot.barY(text, {
-      filter: d => d.book == "Book 1",
+      filter: (d) => d.book === "Book 1",
       x: "word",
       y: "n",
       fill: "chapter",
