@@ -23,7 +23,9 @@ buf_bytes = buf.getvalue().to_pybytes()
 sys.stdout.buffer.write(buf_bytes)
 ```
 
-To run this data loader, you’ll need python3, and the `pandas` and `pyarrow` libraries, installed and available in your environment. We recommend setting up a virtual environment, for example using:
+<div class="note">
+
+To run this data loader you’ll need python3, and the `pandas` and `pyarrow` libraries, installed and available in your environment. We recommend setting up a virtual environment, for example using:
 
 - `$ python3 -m venv .venv`
 - `$ source .venv/bin/activate`
