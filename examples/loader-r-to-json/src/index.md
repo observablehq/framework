@@ -65,12 +65,14 @@ We can make a quick chart of top words in Book 1, with color mapped to book chap
 ```js echo
 Plot.plot({
   marks: [
-    Plot.barY(text, {filter: d => d.book == "Book 1",
-    x: "word",
-    y: "n",
-    fill: "chapter",
-    tip: true,
-    sort: {x: "y", limit: 5, reverse: true}})
+    Plot.barY(text, {
+      filter: d => d.book == "Book 1",
+      x: "word",
+      y: "n",
+      fill: "chapter",
+      tip: true,
+      sort: {x: "y", limit: 5, reverse: true}
+    })
   ]
 })
 ```
