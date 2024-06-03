@@ -1,4 +1,4 @@
-# R data loader to generate a CSV file
+# R data loader to generate CSV
 
 Here’s an R data loader that performs k-means clustering with penguin body size measurements then outputs a CSV file to standard out.
 
@@ -30,7 +30,7 @@ To run this data loader, you’ll need R installed, along with the `readr`, `dpl
 
 </div>
 
-The above data loader lives in `data/penguin-kmeans.csv.R`, so we can load the data using `data/penguin-kmeans.csv`. You can access the output in a markdown page using `FileAttachment`:
+The above data loader lives in `data/penguin-kmeans.csv.R`, so we can load the data using `data/penguin-kmeans.csv`. You can access the output in a markdown page using the `FileAttachment.csv` method:
 
 ```js echo
 const penguinKmeans = FileAttachment("data/penguin-kmeans.csv").csv({typed: true});
