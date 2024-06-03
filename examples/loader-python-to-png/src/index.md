@@ -37,7 +37,7 @@ Then install the required modules:
 
 </div>
 
-The above data loader lives in `data/birth-statistics.png.py`, so we can load the data using `data/birth-statistics.png`. Access the PNG in a markdown page using FileAttachment:
+The above data loader lives in `data/birth-statistics.png.py`, so we can access the image using `data/birth-statistics.png`:
 
 ```html run=false
 <img src="data/birth-statistics.png" style="max-width: 500px;">
