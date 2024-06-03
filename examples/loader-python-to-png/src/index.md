@@ -39,10 +39,8 @@ Then install the required modules:
 
 The above data loader lives in `data/birth-statistics.png.py`, so we can load the data using `data/birth-statistics.png`. Access the PNG in a markdown page using FileAttachment:
 
-```js echo
-const birthRateMap = FileAttachment("data/birth-statistics.png").image();
+```html run=false
+<img src="data/birth-statistics.png" style="max-width: 500px;">
 ```
 
-```js echo
-birthRateMap
-```
+<img src="data/birth-statistics.png">
