@@ -1,6 +1,6 @@
-# R data loader to generate a JPEG
+# R data loader to generate JPEG
 
-Here’s an R data loader that creates a scatterplot using ggplot2, then writes the chart to standard output as a JPEG. The scatterplot shows patterns for diamond price and clarity using the [diamonds](https://ggplot2.tidyverse.org/reference/diamonds.html) dataset, which is built into the [ggplot2 package](https://ggplot2.tidyverse.org/).
+Here’s an R data loader that creates a scatterplot using [ggplot2](https://ggplot2.tidyverse.org/), then outputs the chart as JPEG to standard out. The scatterplot shows patterns for diamond price and clarity using the [diamonds](https://ggplot2.tidyverse.org/reference/diamonds.html) dataset, which is built into ggplot2 package.
 
 ```r
 # Load ggplot2
@@ -26,12 +26,10 @@ To run this data loader, you’ll need R and the `ggplot2` package installed, _e
 
 </div>
 
-The above data loader lives in `data/diamonds.jpeg.R`, so we can load the data using `data/diamonds.jpeg`. Access the image in a markdown page using FileAttachment:
+The above data loader lives in `data/diamonds.jpeg.R`, so we can add the static image to our page using `data/diamonds.jpeg`:
 
-```js echo
-const diamonds = FileAttachment("data/diamonds.jpeg").image({width: 500});
+```html run=false
+<img src="data/diamonds.jpeg" style="max-width: 500px;">
 ```
 
-```js echo
-diamonds
-```
+<img src="data/diamonds.jpeg" style="max-width: 500px;">
