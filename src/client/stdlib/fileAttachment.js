@@ -1,18 +1,21 @@
 const files = new Map();
 
-export function registerFile(name, file) {
+export function registerFile(name, info) {
   const href = new URL(name, location).href;
-  if (file == null) files.delete(href);
-  else files.set(href, file);
+  if (info == null) {
+    files.delete(href);
+  } else {
+    const {path, mimeType, lastModified} = info;
+    const file = new FileAttachmentImpl(new URL(path, location).href, name.split("/").pop(), mimeType, lastModified);
+    files.set(href, file);
+  }
 }
 
 export function FileAttachment(name, base = location) {
   if (new.target !== undefined) throw new TypeError("FileAttachment is not a constructor");
-  const href = new URL(name, base).href;
-  const file = files.get(href);
+  const file = files.get(new URL(name, base).href);
   if (!file) throw new Error(`File not found: ${name}`);
-  const {path, mimeType, lastModified} = file;
-  return new FileAttachmentImpl(new URL(path, location).href, name.split("/").pop(), mimeType, lastModified);
+  return file;
 }
 
 async function remote_fetch(file) {

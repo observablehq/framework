@@ -19,7 +19,9 @@
 
 ### [`hotel-bookings`](https://observablehq.observablehq.cloud/framework-example-hotel-bookings) - Resort hotel bookings
 
-[Source](./hotel-bookings) · This dashboard visualizes hotel bookings by market segment for a Portuguese resort from 2015 to 2017. The dashboard demonstrates how to produce interactive charts with D3 and Observable Plot, either created as JavaScript components or directly within a markdown file. Donut charts, histograms, a bubble chart and a line chart reveal patterns in room bookings, prices, guest nationalities, and cancellations across market segments.
+<a href="https://observablehq.observablehq.cloud/framework-example-hotel-bookings/"><img src="../docs/assets/hotel-bookings.webp" alt="Resort hotel bookings" width="312" height="237"></a>
+
+[Source](./hotel-bookings) · This dashboard visualizes hotel bookings by market segment for a Portuguese resort from 2015 to 2017. The dashboard demonstrates how to produce interactive charts with D3 and Observable Plot, either created as JavaScript components or directly within a markdown file. Donut charts, histograms, a bubble chart and a line chart reveal patterns in room bookings, prices, guest nationalities, and cancellations across different market segments and seasons.
 
 ### [`plot`](https://observablehq.observablehq.cloud/framework-example-plot/) - Observable Plot downloads
 
@@ -51,12 +53,16 @@
 - [`loader-google-analytics`](https://observablehq.observablehq.cloud/framework-example-loader-google-analytics/) - Loading data from Google Analytics
 - [`loader-parquet`](https://observablehq.observablehq.cloud/framework-example-loader-parquet/) - Generating Apache Parquet files
 - [`loader-postgres`](https://observablehq.observablehq.cloud/framework-example-loader-postgres/) - Loading data from PostgreSQL
+- [`loader-r-to-json`](https://observablehq.observablehq.cloud/framework-example-loader-r-to-json/) - Generating JSON from R
 - [`loader-snowflake`](https://observablehq.observablehq.cloud/framework-example-loader-snowflake/) - Loading data from Snowflake
 - [`netcdf-contours`](https://observablehq.observablehq.cloud/framework-example-netcdf-contours/) - Converting NetCDF to GeoJSON with `netcdfjs` and `d3-geo-voronoi`
 
 ### Inputs
 
 - [`custom-input-2d`](https://observablehq.observablehq.cloud/framework-example-custom-input-2d/) - A custom 2D input with bidirectional binding
+- [`codemirror`](https://observablehq.observablehq.cloud/framework-example-codemirror/) - A text input powered by CodeMirror
+- [`custom-input-2d`](https://observablehq.observablehq.cloud/framework-example-custom-input-2d/) - A custom 2D input with bidirectional binding
+- [`input-select-file`](https://observablehq.observablehq.cloud/framework-example-input-select-file/) - Selecting a file from a drop-down menu
 
 ### Markdown
 

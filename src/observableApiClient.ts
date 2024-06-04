@@ -205,7 +205,6 @@ export class ObservableApiClient {
   }
 
   async postDeployUploaded(deployId: string, buildManifest: PostDeployUploadedRequest | null): Promise<DeployInfo> {
-    console.log("Uploading build manifest...", buildManifest);
     return await this._fetch<DeployInfo>(new URL(`/cli/deploy/${deployId}/uploaded`, this._apiOrigin), {
       method: "POST",
       headers: {"content-type": "application/json"},
