@@ -2,8 +2,6 @@
 import {createHash} from "node:crypto";
 import he from "he";
 import MarkdownIt from "markdown-it";
-import type {RuleCore} from "markdown-it/lib/parser_core.js";
-import type {RuleInline} from "markdown-it/lib/parser_inline.js";
 import type {RenderRule} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
 import type {Config} from "./config.js";
@@ -19,11 +17,16 @@ import {parsePlaceholder} from "./placeholder.js";
 import {transpileSql} from "./sql.js";
 import {transpileTag} from "./tag.js";
 import {InvalidThemeError} from "./theme.js";
-import {red} from "./tty.js";
+import {red, yellow} from "./tty.js";
 
 export interface MarkdownCode {
   id: string;
   node: JavaScriptNode;
+}
+
+interface MarkdownCodeError {
+  id: string;
+  message: string;
 }
 
 export interface MarkdownPage {
@@ -37,10 +40,9 @@ export interface MarkdownPage {
   code: MarkdownCode[];
 }
 
-interface ParseContext {
+export interface ParseContext {
   code: MarkdownCode[];
-  startLine: number;
-  currentLine: number;
+  codeErrors: MarkdownCodeError[];
   path: string;
 }
 
@@ -104,7 +106,6 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
       source = isFalse(attributes.run) ? undefined : getLiveSource(token.content, tag, attributes);
       if (source != null) {
         const id = uniqueCodeId(context, source);
-        // TODO const sourceLine = context.startLine + context.currentLine;
         const node = parseJavaScript(source, {path});
         context.code.push({id, node});
         html += `<div id="cell-${id}" class="observablehq observablehq--block">${
@@ -124,80 +125,67 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
   };
 }
 
-const CODE_DOLLAR = 36;
-const CODE_BRACEL = 123;
+const CODE_REPLACEMENT = 65533; // �
 
-function transformPlaceholderBlock(token) {
-  const input = token.content;
-  const output: any[] = [];
+// escape �; replace ${…} with �{id}
+// TODO remove backslash when parsing \${…} or $\{…}
+function preparePlaceholders(input: string, context: ParseContext): string {
+  input = input.replaceAll("�", "��");
+  const outputs: string[] = [];
   let i = 0;
   for (const [j, k] of parsePlaceholder(input)) {
-    output.push({...token, level: i > 0 ? token.level + 1 : token.level, content: input.slice(i, j - 2)});
-    output.push({type: "placeholder", level: token.level + 1, content: input.slice(j, k)});
-    i = k + 1;
-  }
-  if (i === 0) return [token];
-  else if (i < input.length) output.push({...token, content: input.slice(i), nesting: -1});
-  return output;
-}
-
-const transformPlaceholderInline: RuleInline = (state, silent) => {
-  if (silent || state.pos + 2 > state.posMax) return false;
-  const code1 = state.src.charCodeAt(state.pos);
-  const code2 = state.src.charCodeAt(state.pos + 1);
-  if (!(code1 === CODE_DOLLAR && code2 === CODE_BRACEL)) return false;
-  for (const [i, j] of parsePlaceholder(state.src, state.pos)) {
-    if (j >= state.posMax) break;
-    const token = state.push("placeholder", "", 0);
-    token.content = state.src.slice(i, j);
-    state.pos = j + 1;
-    return true;
-  }
-  return false;
-};
-
-const transformPlaceholderCore: RuleCore = (state) => {
-  const input = state.tokens;
-  const output: any[] = [];
-  for (const token of input) {
-    switch (token.type) {
-      case "html_block":
-        output.push(...transformPlaceholderBlock(token));
-        break;
-      default:
-        output.push(token);
-        break;
-    }
-  }
-  state.tokens = output;
-};
-
-function makePlaceholderRenderer(): RenderRule {
-  return (tokens, idx, options, context: ParseContext) => {
-    const {path} = context;
-    const token = tokens[idx];
-    const id = uniqueCodeId(context, token.content);
+    const source = input.slice(j, k);
+    const id = uniqueCodeId(context, source);
     try {
-      // TODO sourceLine: context.startLine + context.currentLine
-      const node = parseJavaScript(token.content, {path, inline: true});
+      const node = parseJavaScript(source, {path: context.path, inline: true});
       context.code.push({id, node});
-      return `<span id="cell-${id}"><span class="observablehq-loading"></span></span>`;
     } catch (error) {
       if (!(error instanceof SyntaxError)) throw error;
-      return `<span id="cell-${id}">
-  <span class="observablehq--inspect observablehq--error" style="display: block;">SyntaxError: ${he.escape(
-    error.message
-  )}</span>
-</span>`;
+      context.codeErrors.push({id, message: error.message});
     }
-  };
+    outputs.push(input.slice(i, j - 2), `�${id}`);
+    i = k + 1;
+  }
+  outputs.push(input.slice(i));
+  return outputs.join("");
 }
 
-function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
-  return (tokens, idx, options, context: ParseContext, self) => {
-    context.currentLine++;
-    return baseRenderer(tokens, idx, options, context, self);
-  };
+// replace �{id} with <span id="cell-{id}">; unescape �
+// TODO render syntax errors
+function applyPlaceholders(body: string, context: ParseContext): string {
+  const outputs: string[] = [];
+  const unbound = new Set(context.code.filter((c) => c.node.inline).map((c) => c.id));
+  let o = 0;
+  for (let i = 0, n = body.length; i < n; ++i) {
+    if (body.charCodeAt(i) === CODE_REPLACEMENT) {
+      if (body.charCodeAt(i + 1) === CODE_REPLACEMENT) {
+        outputs.push(body.slice(o, ++i)), (o = i + 1);
+      } else {
+        const id = body.slice(i + 1, i + 9);
+        if (/^[0-9a-f]{8}$/.test(id)) {
+          outputs.push(body.slice(o, i));
+          if (context.code.some((c) => c.id === id)) {
+            outputs.push(`<span id="cell-${id}"><span class="observablehq-loading"></span></span>`);
+            unbound.delete(id);
+          } else {
+            const error = context.codeErrors.find((c) => c.id === id);
+            if (error) {
+              outputs.push(
+                `<span class="observablehq--inspect observablehq--error" style="display: block;">SyntaxError: ${he.escape(
+                  error.message
+                )}</span>`
+              );
+              unbound.delete(id);
+            }
+          }
+          o = i + 9;
+        }
+      }
+    }
+  }
+  outputs.push(body.slice(o));
+  for (const id of unbound) console.warn(`${yellow("Warning:")} unable to interpolate cell ${id}`);
+  return outputs.join("");
 }
 
 export interface ParseOptions {
@@ -224,11 +212,7 @@ export function createMarkdownIt({
   const md = MarkdownIt({html: true, linkify, typographer, quotes});
   if (linkify) md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
   md.use(MarkdownItAnchor);
-  md.inline.ruler.push("placeholder", transformPlaceholderInline);
-  md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
-  md.renderer.rules.placeholder = makePlaceholderRenderer();
   md.renderer.rules.fence = makeFenceRenderer(md.renderer.rules.fence!);
-  md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
   return markdownIt === undefined ? md : markdownIt(md);
 }
 
@@ -236,10 +220,10 @@ export function parseMarkdown(input: string, options: ParseOptions): MarkdownPag
   const {md, path} = options;
   const {content, data} = readFrontMatter(input);
   const code: MarkdownCode[] = [];
-  const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
-  const tokens = md.parse(content, context);
-  const body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
-  const title = data.title !== undefined ? data.title : findTitle(tokens);
+  const context: ParseContext = {code, codeErrors: [], path};
+  const tokens = md.parse(preparePlaceholders(content, context), context);
+  const body = applyPlaceholders(md.renderer.render(tokens, md.options, context), context); // Note: mutates code!
+  const title = data.title !== undefined ? data.title : findTitle(tokens); // TODO placeholders
   return {
     head: getHead(title, data, options),
     header: getHeader(title, data, options),
@@ -258,10 +242,7 @@ export function parseMarkdownMetadata(input: string, options: ParseOptions): Pic
   const {content, data} = readFrontMatter(input);
   return {
     data,
-    title:
-      data.title !== undefined
-        ? data.title
-        : findTitle(md.parse(content, {code: [], startLine: 0, currentLine: 0, path}))
+    title: data.title !== undefined ? data.title : findTitle(md.parse(content, {code: [], path})) // TODO placeholders?
   };
 }
 

@@ -26,7 +26,7 @@ export function define(cell) {
   const variables = [];
   cellsById.get(id)?.variables.forEach((v) => v.delete());
   cellsById.set(id, {cell, variables});
-  const root = document.querySelector(`#cell-${id}`);
+  const root = document.querySelector(`#cell-${id}`) ?? document.createElement("span");
   const loading = root.querySelector(".observablehq-loading");
   const pending = () => reset(root, loading);
   const rejected = (error) => reject(root, error);

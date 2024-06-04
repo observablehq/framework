@@ -21,6 +21,7 @@ const CODE_TAB = 9,
   CODE_QUESTION = 63,
   CODE_DOLLAR = 36,
   CODE_LBRACE = 123,
+  CODE_RBRACE = 125,
   CODE_BACKSLASH = 92,
   STATE_DATA = 1,
   STATE_TAG_OPEN = 2,
@@ -65,6 +66,16 @@ export function* parsePlaceholder(input: string, start = 0): Generator<[i: numbe
     if (state === STATE_DATA) {
       if (afterBackslash) {
         afterBackslash = false;
+        if (code === CODE_DOLLAR) {
+          // TODO drop the backslash
+          console.log("drop backslash before dollar");
+          continue;
+        }
+        if (afterDollar && code === CODE_LBRACE) {
+          // TODO drop the backslash
+          console.log("drop backslash before lbrace");
+          continue;
+        }
       } else {
         if (code === CODE_BACKSLASH) {
           afterBackslash = true;
@@ -82,7 +93,7 @@ export function* parsePlaceholder(input: string, start = 0): Generator<[i: numbe
             try {
               do {
                 parser.nextToken();
-                if (parser.type === tokTypes.braceL) {
+                if (parser.type === tokTypes.braceL || parser.type === tokTypes.dollarBraceL) {
                   ++braces;
                 } else if (parser.type === tokTypes.braceR && !--braces) {
                   yield [i + 1, (i = parser.pos - 1)];
@@ -91,7 +102,15 @@ export function* parsePlaceholder(input: string, start = 0): Generator<[i: numbe
               } while (parser.type !== tokTypes.eof);
             } catch (error) {
               if (!(error instanceof SyntaxError)) throw error;
-              // ignore invalid syntax (e.g., unterminated template)
+              // on invalid token (e.g., unterminated template, invalid unicode escape),
+              // read until the braces are closed
+              let j = parser.pos;
+              for (; j < n; ++j) {
+                if (input.charCodeAt(j) === CODE_RBRACE && !--braces) {
+                  yield [i + 1, (i = j)];
+                  break;
+                }
+              }
             }
             continue;
           }
