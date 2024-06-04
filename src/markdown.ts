@@ -108,9 +108,9 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
         const id = uniqueCodeId(context, source);
         const node = parseJavaScript(source, {path});
         context.code.push({id, node});
-        html += `<div id="cell-${id}" class="observablehq observablehq--block">${
-          node.expression ? '<span class="observablehq-loading"></span>' : ""
-        }</div>\n`;
+        html += `<div class="observablehq observablehq--block">${
+          node.expression ? "<o-loading></o-loading>" : ""
+        }<!--:${id}:--></div>\n`;
       }
     } catch (error) {
       if (!(error instanceof SyntaxError)) throw error;
@@ -151,7 +151,6 @@ function preparePlaceholders(input: string, context: ParseContext): string {
 }
 
 // replace �{id} with <span id="cell-{id}">; unescape �
-// TODO render syntax errors
 function applyPlaceholders(body: string, context: ParseContext): string {
   const outputs: string[] = [];
   const unbound = new Set(context.code.filter((c) => c.node.inline).map((c) => c.id));
@@ -165,7 +164,7 @@ function applyPlaceholders(body: string, context: ParseContext): string {
         if (/^[0-9a-f]{8}$/.test(id)) {
           outputs.push(body.slice(o, i));
           if (context.code.some((c) => c.id === id)) {
-            outputs.push(`<span id="cell-${id}"><span class="observablehq-loading"></span></span>`);
+            outputs.push(`<o-loading></o-loading><!--:${id}:-->`);
             unbound.delete(id);
           } else {
             const error = context.codeErrors.find((c) => c.id === id);
