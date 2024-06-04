@@ -246,7 +246,7 @@ export function isElement(node: Node): node is Element {
 }
 
 function isRoot(node: Node): node is Comment {
-  return isComment(node) && /^:[0-9a-f]{8}:$/.test(node.data);
+  return isComment(node) && /^:[0-9a-f]{8}(?:-\d+)?:$/.test(node.data);
 }
 
 function isLoading(node: Node): node is Element {

@@ -141,7 +141,7 @@ export function findRoots(root) {
 }
 
 function isRoot(node) {
-  return node.nodeType === 8 && /^:[0-9a-f]{8}:$/.test(node.data);
+  return node.nodeType === 8 && /^:[0-9a-f]{8}(?:-\d+)?:$/.test(node.data);
 }
 
 function isLoading(node) {

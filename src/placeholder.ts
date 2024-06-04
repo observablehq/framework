@@ -23,6 +23,8 @@ const CODE_TAB = 9,
   CODE_LBRACE = 123,
   CODE_RBRACE = 125,
   CODE_BACKSLASH = 92,
+  CODE_BACKTICK = 96,
+  CODE_TILDE = 126,
   STATE_DATA = 1,
   STATE_TAG_OPEN = 2,
   STATE_END_TAG_OPEN = 3,
@@ -62,14 +64,60 @@ export function* parsePlaceholder(input: string, start = 0): Generator<Placehold
   let state: number | undefined = STATE_DATA;
   let tagNameStart: number | undefined; // either an open tag or an end tag
   let tagName: string | undefined; // only open; beware nesting! used only for rawtext
+  let lineStart = true;
+  let lineOffset = 0;
   let afterDollar = false;
   let afterBackslash = false;
+  let fenceMarkerCode = 0;
+  let fenceMarkerLength = 0;
   let index = start;
 
   for (let i = start, n = input.length; i < n; ++i) {
     const code = input.charCodeAt(i);
 
-    if (state === STATE_DATA) {
+    if (code === CODE_LF) {
+      lineStart = true;
+      lineOffset = 0;
+    } else if (lineStart) {
+      if (code === CODE_TAB) {
+        lineOffset += 4 - (lineOffset % 4);
+      } else if (code === CODE_SPACE) {
+        ++lineOffset;
+      } else {
+        lineStart = false;
+        if (lineOffset < 4 && (code === CODE_BACKTICK || code === CODE_TILDE)) {
+          let j = i + 1;
+          for (; j < n && input.charCodeAt(j) === code; ++j);
+          if (fenceMarkerCode) {
+            if (fenceMarkerCode === code && fenceMarkerLength >= j - i) {
+              fenceMarkerCode = 0;
+              fenceMarkerLength = 0;
+            }
+          } else {
+            fenceMarkerCode = code;
+            fenceMarkerLength = j - i;
+            for (; j < n && input.charCodeAt(j) !== CODE_LF; ++j);
+            // Don’t interpret ```code``` as a fenced code block.
+            if (code === CODE_BACKTICK) {
+              for (let k = i + fenceMarkerLength; k < j; ++k) {
+                if (input.charCodeAt(k) === code) {
+                  j = i + 1;
+                  fenceMarkerCode = 0;
+                  fenceMarkerLength = 0;
+                  break;
+                }
+              }
+            }
+          }
+          i = j - 1;
+          continue;
+        }
+      }
+    }
+
+    // TODO non-empty line with negative indent should terminate the fenced code block?
+
+    if (state === STATE_DATA && fenceMarkerCode === 0) {
       if (afterBackslash) {
         afterBackslash = false;
         if (code === CODE_DOLLAR || (afterDollar && code === CODE_LBRACE)) {

@@ -2,6 +2,7 @@
 import {createHash} from "node:crypto";
 import he from "he";
 import MarkdownIt from "markdown-it";
+import type {RuleCore} from "markdown-it/lib/parser_core.js";
 import type {RenderRule} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
 import type {Config} from "./config.js";
@@ -119,12 +120,11 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
   };
 }
 
-function preparePlaceholders(input: string, context: ParseContext): string {
+const transformPlaceholders: RuleCore = (state) => {
+  const context: ParseContext = state.env;
   const outputs: string[] = [];
-  for (const {type, value} of parsePlaceholder(input)) {
-    if (type === "content") {
-      outputs.push(value);
-    } else if (type === "code") {
+  for (const {type, value} of parsePlaceholder(state.src)) {
+    if (type === "code") {
       const id = uniqueCodeId(context, value);
       try {
         const node = parseJavaScript(value, {path: context.path, inline: true});
@@ -138,10 +138,12 @@ function preparePlaceholders(input: string, context: ParseContext): string {
           )}</span>`
         );
       }
+    } else {
+      outputs.push(value);
     }
   }
-  return outputs.join("");
-}
+  state.src = outputs.join("");
+};
 
 export interface ParseOptions {
   md: MarkdownIt;
@@ -167,6 +169,7 @@ export function createMarkdownIt({
   const md = MarkdownIt({html: true, linkify, typographer, quotes});
   if (linkify) md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
   md.use(MarkdownItAnchor);
+  md.core.ruler.after("normalize", "placeholders", transformPlaceholders);
   md.renderer.rules.fence = makeFenceRenderer(md.renderer.rules.fence!);
   return markdownIt === undefined ? md : markdownIt(md);
 }
@@ -176,7 +179,7 @@ export function parseMarkdown(input: string, options: ParseOptions): MarkdownPag
   const {content, data} = readFrontMatter(input);
   const code: MarkdownCode[] = [];
   const context: ParseContext = {code, path};
-  const tokens = md.parse(preparePlaceholders(content, context), context);
+  const tokens = md.parse(content, context);
   const body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
   const title = data.title !== undefined ? data.title : findTitle(tokens);
   return {
