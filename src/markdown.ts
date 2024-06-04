@@ -175,7 +175,7 @@ export function parseMarkdown(input: string, options: ParseOptions): MarkdownPag
   const {md, path} = options;
   const {content, data} = readFrontMatter(input);
   const code: MarkdownCode[] = [];
-  const context: ParseContext = {code, codeErrors: [], path};
+  const context: ParseContext = {code, path};
   const tokens = md.parse(preparePlaceholders(content, context), context);
   const body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
   const title = data.title !== undefined ? data.title : findTitle(tokens);
