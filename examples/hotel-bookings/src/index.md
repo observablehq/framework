@@ -1,6 +1,6 @@
 ---
 toc: false
-theme: [ocean-floor, wide]
+theme: [air, ocean-floor, wide]
 ---
 
 # Hotel reservations by market segment
@@ -74,7 +74,35 @@ ${pickMarketSegmentInput}
   <div style="padding: 1em">
     ${display(tableSearch)}
   </div>
-  ${display(Inputs.table(tableSearchValue, {columns: ["arrivalDate", "ADR", "Arrival date", "ReservedRoomType", "MarketSegment", "Country", "Adults","Children", "LeadTime", "IsCanceled"], header: {arrivalDate: "Arrival date", ADR: "Average rate", ReservedRoomType: "Room type", MarketSegment: "Booking type", Country: "Guest country", Adults: "Adults", Children: "Children", LeadTime: "Lead time", IsCanceled: "Status"}}))}
+  ${display(Inputs.table(tableSearchValue, {
+      columns: [
+        "arrivalDate", 
+        "ADR", 
+        "Arrival date", 
+        "ReservedRoomType", 
+        "MarketSegment", 
+        "Country", 
+        "Adults",
+        "Children", 
+        "LeadTime", 
+        "IsCanceled"
+      ],
+      header: 
+        {
+          arrivalDate: "Arrival date", 
+          ADR: "Average rate", 
+          ReservedRoomType: "Room type", 
+          MarketSegment: "Booking type", 
+          Country: "Guest country", 
+          Adults: "Adults", 
+          Children: "Children", 
+          LeadTime: "Lead time", 
+          IsCanceled: "Status"
+          },
+        width: {arrivalDate: 100},
+        format: {arrivalDate: d3.utcFormat("%d %b %Y")}
+        }
+      ))}
 </div>
 
 **Data source:** Antonio et al (2021). Hotel booking demand datasets. Data in Brief (22): 41-49. https://doi.org/10.1016/j.dib.2018.11.126
@@ -257,7 +285,7 @@ function dailyRateChart(width, height) {
           fy: "season",
           frameAnchor: "top-right",
           dx: -6,
-          dy: 9
+          dy: 6
         }
       )
     ),
@@ -275,15 +303,32 @@ function typeSeasonBubble(width, height) {
   return Plot.plot({
     marginTop: 0,
     marginBottom: 35,
-    marginLeft: 50,
+    marginLeft: 70,
     width,
     height: 250,
-    x: {label: "Room type reserved", grid: true},
-    y: {label: null, grid: true},
+    x: {label: "Room type", grid: true},
+    y: {label: "Season", fontSize:0, grid: true},
     r: {range: [1, 20]},
     marks: [
-      Plot.dot(bookingsAll, Plot.group({r: "count"}, {y: "season", x: "ReservedRoomType", fill: "#4269d0", opacity: 0.9})),
-      pickMarketSegment == "All" ? null : Plot.dot(bookingsByMarketSegment, Plot.group({r: "count"}, {y: "season", x: "ReservedRoomType", fill: "#ff725c", opacity: 0.9})),
+      Plot.dot(bookingsAll, Plot.group({r: "count"},
+        {
+          y: "season",
+          x: "ReservedRoomType",
+          fill: "#4269d0",
+          opacity: 0.9
+        }
+      )),
+      pickMarketSegment == "All" ? null :
+        Plot.dot(bookingsByMarketSegment,
+          Plot.group({r: "count"},
+          {
+            y: "season",
+            x: "ReservedRoomType",
+            fill: "#ff725c",
+            opacity: 0.9,
+            tip: true
+          }
+        )),
     ]
   });
 }
