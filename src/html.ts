@@ -169,6 +169,8 @@ export function rewriteHtml(
         ? hljs.highlight(child.textContent!, {language}).value
         : isElement(child)
         ? child.outerHTML
+        : isComment(child)
+        ? `<!--${he.escape(child.data)}-->`
         : "";
     }
     code.innerHTML = html;
