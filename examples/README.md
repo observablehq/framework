@@ -17,6 +17,10 @@
 
 [Source](./eia) · This dashboard visualizes electricity generation and demand across the U.S. electricity grid. The included data loaders demonstrate how to retrieve live data from the U.S. Energy Information Administration (EIA) API, while the dashboard demonstrates how to produce interactive maps, bar charts, and time-series charts with Observable Plot. A range input allows the user to rewind time to any point in the previous 24 hours, and a table shows details.
 
+### [`hotel-bookings`](https://observablehq.observablehq.cloud/framework-example-hotel-bookings) - Resort hotel bookings
+
+[Source](./hotel-bookings) · This dashboard visualizes hotel bookings by market segment for a Portuguese resort from 2015 to 2017. The dashboard demonstrates how to produce interactive charts with D3 and Observable Plot, either created as JavaScript components or directly within a markdown file. Donut charts, histograms, a bubble chart and a line chart reveal patterns in room bookings, prices, guest nationalities, and cancellations across market segments.
+
 ### [`plot`](https://observablehq.observablehq.cloud/framework-example-plot/) - Observable Plot downloads
 
 <a href="https://observablehq.observablehq.cloud/framework-example-plot/"><img src="../docs/assets/plot.webp" alt="Observable Plot downloads" width="312" height="237"></a>
@@ -33,42 +37,42 @@
 
 ### Charts
 
-* [`geotiff`](https://observablehq.observablehq.cloud/framework-example-geotiff/) - Parsing GeoTIFF with geotiff.js, then visualizing with Observable Plot
-* [`netcdf`](https://observablehq.observablehq.cloud/framework-example-netcdf/) - Parsing NetCDF with `netcdfjs`, then visualizing with Observable Plot
-* [`vega-dark`](https://observablehq.observablehq.cloud/framework-example-vega-dark/) - Responsive dark mode in Vega-Lite
-* [`vega-responsive`](https://observablehq.observablehq.cloud/framework-example-vega-responsive/) - Responsive width in Vega-Lite using ResizeObserver
+- [`geotiff`](https://observablehq.observablehq.cloud/framework-example-geotiff/) - Parsing GeoTIFF with geotiff.js, then visualizing with Observable Plot
+- [`netcdf`](https://observablehq.observablehq.cloud/framework-example-netcdf/) - Parsing NetCDF with `netcdfjs`, then visualizing with Observable Plot
+- [`vega-dark`](https://observablehq.observablehq.cloud/framework-example-vega-dark/) - Responsive dark mode in Vega-Lite
+- [`vega-responsive`](https://observablehq.observablehq.cloud/framework-example-vega-responsive/) - Responsive width in Vega-Lite using ResizeObserver
 
 ### Data loaders
 
-* [`loader-arrow`](https://observablehq.observablehq.cloud/framework-example-loader-arrow/) - Generating Apache Arrow IPC files
-* [`loader-databricks`](https://observablehq.observablehq.cloud/framework-example-loader-databricks/) - Loading data from Databricks
-* [`loader-duckdb`](https://observablehq.observablehq.cloud/framework-example-loader-duckdb/) - Processing data with DuckDB
-* [`loader-github`](https://observablehq.observablehq.cloud/framework-example-loader-github/) - Loading data from GitHub
-* [`loader-google-analytics`](https://observablehq.observablehq.cloud/framework-example-loader-google-analytics/) - Loading data from Google Analytics
-* [`loader-parquet`](https://observablehq.observablehq.cloud/framework-example-loader-parquet/) - Generating Apache Parquet files
-* [`loader-postgres`](https://observablehq.observablehq.cloud/framework-example-loader-postgres/) - Loading data from PostgreSQL
-* [`loader-snowflake`](https://observablehq.observablehq.cloud/framework-example-loader-snowflake/) - Loading data from Snowflake
-* [`netcdf-contours`](https://observablehq.observablehq.cloud/framework-example-netcdf-contours/) - Converting NetCDF to GeoJSON with `netcdfjs` and `d3-geo-voronoi`
+- [`loader-arrow`](https://observablehq.observablehq.cloud/framework-example-loader-arrow/) - Generating Apache Arrow IPC files
+- [`loader-databricks`](https://observablehq.observablehq.cloud/framework-example-loader-databricks/) - Loading data from Databricks
+- [`loader-duckdb`](https://observablehq.observablehq.cloud/framework-example-loader-duckdb/) - Processing data with DuckDB
+- [`loader-github`](https://observablehq.observablehq.cloud/framework-example-loader-github/) - Loading data from GitHub
+- [`loader-google-analytics`](https://observablehq.observablehq.cloud/framework-example-loader-google-analytics/) - Loading data from Google Analytics
+- [`loader-parquet`](https://observablehq.observablehq.cloud/framework-example-loader-parquet/) - Generating Apache Parquet files
+- [`loader-postgres`](https://observablehq.observablehq.cloud/framework-example-loader-postgres/) - Loading data from PostgreSQL
+- [`loader-snowflake`](https://observablehq.observablehq.cloud/framework-example-loader-snowflake/) - Loading data from Snowflake
+- [`netcdf-contours`](https://observablehq.observablehq.cloud/framework-example-netcdf-contours/) - Converting NetCDF to GeoJSON with `netcdfjs` and `d3-geo-voronoi`
 
 ### Inputs
 
-* [`custom-input-2d`](https://observablehq.observablehq.cloud/framework-example-custom-input-2d/) - A custom 2D input with bidirectional binding
+- [`custom-input-2d`](https://observablehq.observablehq.cloud/framework-example-custom-input-2d/) - A custom 2D input with bidirectional binding
 
 ### Markdown
 
-* [`markdown-it-container`](https://observablehq.observablehq.cloud/framework-example-markdown-it-container/) - The markdown-it-container plugin
-* [`markdown-it-footnote`](https://observablehq.observablehq.cloud/framework-example-markdown-it-footnote/) - The markdown-it-footnote plugin
-* [`markdown-it-wikilinks`](https://observablehq.observablehq.cloud/framework-example-markdown-it-wikilinks/) - The markdown-it-wikilinks plugin
+- [`markdown-it-container`](https://observablehq.observablehq.cloud/framework-example-markdown-it-container/) - The markdown-it-container plugin
+- [`markdown-it-footnote`](https://observablehq.observablehq.cloud/framework-example-markdown-it-footnote/) - The markdown-it-footnote plugin
+- [`markdown-it-wikilinks`](https://observablehq.observablehq.cloud/framework-example-markdown-it-wikilinks/) - The markdown-it-wikilinks plugin
 
 ### Other
 
-* [`chess`](https://observablehq.observablehq.cloud/framework-example-chess/) - Loading Zip data from FIDE; creating a bump chart with Observable Plot
-* [`custom-stylesheet`](https://observablehq.observablehq.cloud/framework-example-custom-stylesheet/) - Defining a custom stylesheet (custom theme)
-* [`google-analytics`](https://observablehq.observablehq.cloud/framework-example-google-analytics/) - A Google Analytics dashboard with numbers and charts
-* [`hello-world`](https://observablehq.observablehq.cloud/framework-example-hello-world/) - A minimal Framework project
-* [`intersection-observer`](https://observablehq.observablehq.cloud/framework-example-intersection-observer/) - Scrollytelling with IntersectionObserver
-* [`penguin-classification`](https://observablehq.observablehq.cloud/framework-example-penguin-classification/) - Logistic regression in Python; validating models with Observable Plot
-* [`responsive-iframe`](https://observablehq.observablehq.cloud/framework-example-responsive-iframe/) - Adjust the height of an embedded iframe to fit its content
+- [`chess`](https://observablehq.observablehq.cloud/framework-example-chess/) - Loading Zip data from FIDE; creating a bump chart with Observable Plot
+- [`custom-stylesheet`](https://observablehq.observablehq.cloud/framework-example-custom-stylesheet/) - Defining a custom stylesheet (custom theme)
+- [`google-analytics`](https://observablehq.observablehq.cloud/framework-example-google-analytics/) - A Google Analytics dashboard with numbers and charts
+- [`hello-world`](https://observablehq.observablehq.cloud/framework-example-hello-world/) - A minimal Framework project
+- [`intersection-observer`](https://observablehq.observablehq.cloud/framework-example-intersection-observer/) - Scrollytelling with IntersectionObserver
+- [`penguin-classification`](https://observablehq.observablehq.cloud/framework-example-penguin-classification/) - Logistic regression in Python; validating models with Observable Plot
+- [`responsive-iframe`](https://observablehq.observablehq.cloud/framework-example-responsive-iframe/) - Adjust the height of an embedded iframe to fit its content
 
 ## About these examples
 
@@ -102,15 +106,15 @@ If you have an example that you’d like to share with the community, please [op
 
 Here are some technique examples we’d like to see:
 
-* Visualization
-  * Big number with area chart
-  * Daily metric chart with moving average
-  * Punchcard chart (activity by day of week and hour of day)
-  * Bump chart/rank chart
-  * Brushing
-  * Zooming
-* Data loaders
-  * JSZip data loader
-  * npm data loader
-* Markdown
-  * Inline TeX `$…$`
+- Visualization
+  - Big number with area chart
+  - Daily metric chart with moving average
+  - Punchcard chart (activity by day of week and hour of day)
+  - Bump chart/rank chart
+  - Brushing
+  - Zooming
+- Data loaders
+  - JSZip data loader
+  - npm data loader
+- Markdown
+  - Inline TeX `$…$`
