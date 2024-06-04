@@ -183,7 +183,11 @@ function applyPlaceholders(body: string, context: ParseContext): string {
     }
   }
   outputs.push(body.slice(o));
-  for (const id of unbound) console.warn(`${yellow("Warning:")} unable to interpolate cell ${id}`);
+  for (const id of unbound) {
+    console.warn(`${yellow("Warning:")} unable to interpolate cell ${id}`);
+    const i = context.code.findIndex((c) => c.id === id);
+    context.code.splice(i, 1);
+  }
   return outputs.join("");
 }
 

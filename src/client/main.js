@@ -27,7 +27,7 @@ export function define(cell) {
   const variables = [];
   cellsById.get(id)?.variables.forEach((v) => v.delete());
   cellsById.set(id, {cell, variables});
-  const root = rootsById.get(id) ?? document.createElement("span");
+  const root = rootsById.get(id);
   const loading = findLoading(root);
   root._nodes = [];
   if (loading) root._nodes.push(loading);
