@@ -29,6 +29,12 @@
 
 [Source](./mortgage-rates) · This dashboard visualizes Freddie Mac’s historical mortgage rates data. The included data loader demonstrates how to retrieve CSV data from Freddie Mac and visualize the result as a zoomable chart with Observable Plot. The larger time-series line chart at the bottom allows brushing to select an arbitrary time range, while the smaller visualization above zooms to show the selected range.
 
+### [`us-dams`](https://observablehq.observablehq.cloud/framework-example-us-dams/) - U.S. dam conditions
+
+<a href="https://observablehq.observablehq.cloud/framework-example-us-dams/"><img src="../docs/assets/us-dams.webp" alt="U.S. dams" width="312" height="237"></a>
+
+[Source](./us-dams) · This dashboard visualizes locations and conditions for 90k+ dams in the U.S. with data from the National Inventory of Dams (NID). An R data loader accesses the data directly from the NID and generates a simplified CSV. Maps created with deck.gl allow a user to zoom and scroll while exploring dam locations nationwide, or by state. Bar and bubble charts made in Observable Plot highlight dam conditions and hazard potential.
+
 ## Technique examples 🛠️
 
 ### Charts
