@@ -128,7 +128,6 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
 const CODE_REPLACEMENT = 65533; // �
 
 // escape �; replace ${…} with �{id}
-// TODO remove backslash when parsing \${…} or $\{…}
 function preparePlaceholders(input: string, context: ParseContext): string {
   input = input.replaceAll("�", "��");
   const outputs: string[] = [];
@@ -164,6 +163,7 @@ function applyPlaceholders(body: string, context: ParseContext): string {
         if (/^[0-9a-f]{8}$/.test(id)) {
           outputs.push(body.slice(o, i));
           if (context.code.some((c) => c.id === id)) {
+            // TODO render differently if this an attribute interpolation
             outputs.push(`<o-loading></o-loading><!--:${id}:-->`);
             unbound.delete(id);
           } else {
