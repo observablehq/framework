@@ -39,6 +39,11 @@ describe("FileAttachment(name)", () => {
     assert.strictEqual(f.mimeType, "text/csv");
     assert.strictEqual(await f.url(), "http://localhost:3000/_file/test.csv?sha=edd06c0d902e9ce083a9a5d8d0e655732c72e8129d3c60bfe69d228265e892d6"); // prettier-ignore
   });
+  it("returns a canonical instance", async () => {
+    const f1 = FileAttachment("/test.csv");
+    const f2 = FileAttachment("/test.csv");
+    assert.strictEqual(f1, f2);
+  });
   it("throws an error if the file does not exist", async () => {
     assert.throws(() => FileAttachment("does-not-exist.csv"), /file not found/i);
     assert.throws(() => FileAttachment("test.csv?found=not"), /file not found/i);
