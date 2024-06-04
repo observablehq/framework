@@ -53,12 +53,18 @@ const CODE_TAB = 9,
   STATE_RAWTEXT_END_TAG_OPEN = 28,
   STATE_RAWTEXT_END_TAG_NAME = 29;
 
-export function* parsePlaceholder(input: string, start = 0): Generator<[i: number, j: number]> {
+export interface PlaceholderToken {
+  type: "content" | "code";
+  value: string;
+}
+
+export function* parsePlaceholder(input: string, start = 0): Generator<PlaceholderToken> {
   let state: number | undefined = STATE_DATA;
   let tagNameStart: number | undefined; // either an open tag or an end tag
   let tagName: string | undefined; // only open; beware nesting! used only for rawtext
   let afterDollar = false;
   let afterBackslash = false;
+  let index = start;
 
   for (let i = start, n = input.length; i < n; ++i) {
     const code = input.charCodeAt(i);
@@ -66,14 +72,8 @@ export function* parsePlaceholder(input: string, start = 0): Generator<[i: numbe
     if (state === STATE_DATA) {
       if (afterBackslash) {
         afterBackslash = false;
-        if (code === CODE_DOLLAR) {
-          // TODO drop the backslash
-          console.log("drop backslash before dollar");
-          continue;
-        }
-        if (afterDollar && code === CODE_LBRACE) {
-          // TODO drop the backslash
-          console.log("drop backslash before lbrace");
+        if (code === CODE_DOLLAR || (afterDollar && code === CODE_LBRACE)) {
+          yield {type: "content", value: input.slice(index, (index = i) - 1)};
           continue;
         }
       } else {
@@ -96,7 +96,9 @@ export function* parsePlaceholder(input: string, start = 0): Generator<[i: numbe
                 if (parser.type === tokTypes.braceL || parser.type === tokTypes.dollarBraceL) {
                   ++braces;
                 } else if (parser.type === tokTypes.braceR && !--braces) {
-                  yield [i + 1, (i = parser.pos - 1)];
+                  if (i > index + 1) yield {type: "content", value: input.slice(index, i - 1)};
+                  yield {type: "code", value: input.slice(i + 1, (i = parser.pos - 1))};
+                  index = parser.pos;
                   break;
                 }
               } while (parser.type !== tokTypes.eof);
@@ -107,7 +109,9 @@ export function* parsePlaceholder(input: string, start = 0): Generator<[i: numbe
               let j = parser.pos;
               for (; j < n; ++j) {
                 if (input.charCodeAt(j) === CODE_RBRACE && !--braces) {
-                  yield [i + 1, (i = j)];
+                  if (i > index + 1) yield {type: "content", value: input.slice(index, i - 1)};
+                  yield {type: "code", value: input.slice(i + 1, (i = j))};
+                  index = j;
                   break;
                 }
               }
@@ -393,6 +397,8 @@ export function* parsePlaceholder(input: string, start = 0): Generator<[i: numbe
       }
     }
   }
+
+  if (index < input.length) yield {type: "content", value: input.slice(index)};
 }
 
 function isAsciiAlphaCode(code: number): boolean {

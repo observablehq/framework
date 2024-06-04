@@ -132,25 +132,25 @@ const CODE_REPLACEMENT = 65533; // �
 function preparePlaceholders(input: string, context: ParseContext): string {
   input = input.replaceAll("�", "��");
   const outputs: string[] = [];
-  let i = 0;
-  for (const [j, k] of parsePlaceholder(input)) {
-    const source = input.slice(j, k);
-    const id = uniqueCodeId(context, source);
-    try {
-      const node = parseJavaScript(source, {path: context.path, inline: true});
-      context.code.push({id, node});
-    } catch (error) {
-      if (!(error instanceof SyntaxError)) throw error;
-      context.codeErrors.push({id, message: error.message});
+  for (const {type, value} of parsePlaceholder(input)) {
+    if (type === "content") {
+      outputs.push(value);
+    } else if (type === "code") {
+      const id = uniqueCodeId(context, value);
+      try {
+        const node = parseJavaScript(value, {path: context.path, inline: true});
+        context.code.push({id, node});
+      } catch (error) {
+        if (!(error instanceof SyntaxError)) throw error;
+        context.codeErrors.push({id, message: error.message});
+      }
+      outputs.push(`�${id}`);
     }
-    outputs.push(input.slice(i, j - 2), `�${id}`);
-    i = k + 1;
   }
-  outputs.push(input.slice(i));
   return outputs.join("");
 }
 
-// replace �{id} with <span id="cell-{id}">; unescape �
+// replace �{id} with <!--:{id}:-->; unescape �
 function applyPlaceholders(body: string, context: ParseContext): string {
   const outputs: string[] = [];
   const unbound = new Set(context.code.filter((c) => c.node.inline).map((c) => c.id));
