@@ -17,16 +17,11 @@ import {parsePlaceholder} from "./placeholder.js";
 import {transpileSql} from "./sql.js";
 import {transpileTag} from "./tag.js";
 import {InvalidThemeError} from "./theme.js";
-import {red, yellow} from "./tty.js";
+import {red} from "./tty.js";
 
 export interface MarkdownCode {
   id: string;
   node: JavaScriptNode;
-}
-
-interface MarkdownCodeError {
-  id: string;
-  message: string;
 }
 
 export interface MarkdownPage {
@@ -42,7 +37,6 @@ export interface MarkdownPage {
 
 export interface ParseContext {
   code: MarkdownCode[];
-  codeErrors: MarkdownCodeError[];
   path: string;
 }
 
@@ -125,11 +119,7 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
   };
 }
 
-const CODE_REPLACEMENT = 65533; // �
-
-// escape �; replace ${…} with �{id}
 function preparePlaceholders(input: string, context: ParseContext): string {
-  input = input.replaceAll("�", "��");
   const outputs: string[] = [];
   for (const {type, value} of parsePlaceholder(input)) {
     if (type === "content") {
@@ -139,54 +129,16 @@ function preparePlaceholders(input: string, context: ParseContext): string {
       try {
         const node = parseJavaScript(value, {path: context.path, inline: true});
         context.code.push({id, node});
+        outputs.push(`<o-loading></o-loading><!--:${id}:-->`);
       } catch (error) {
         if (!(error instanceof SyntaxError)) throw error;
-        context.codeErrors.push({id, message: error.message});
-      }
-      outputs.push(`�${id}`);
-    }
-  }
-  return outputs.join("");
-}
-
-// replace �{id} with <!--:{id}:-->; unescape �
-function applyPlaceholders(body: string, context: ParseContext): string {
-  const outputs: string[] = [];
-  const unbound = new Set(context.code.filter((c) => c.node.inline).map((c) => c.id));
-  let o = 0;
-  for (let i = 0, n = body.length; i < n; ++i) {
-    if (body.charCodeAt(i) === CODE_REPLACEMENT) {
-      if (body.charCodeAt(i + 1) === CODE_REPLACEMENT) {
-        outputs.push(body.slice(o, ++i)), (o = i + 1);
-      } else {
-        const id = body.slice(i + 1, i + 9);
-        if (/^[0-9a-f]{8}$/.test(id)) {
-          outputs.push(body.slice(o, i));
-          if (context.code.some((c) => c.id === id)) {
-            // TODO render differently if this an attribute interpolation
-            outputs.push(`<o-loading></o-loading><!--:${id}:-->`);
-            unbound.delete(id);
-          } else {
-            const error = context.codeErrors.find((c) => c.id === id);
-            if (error) {
-              outputs.push(
-                `<span class="observablehq--inspect observablehq--error" style="display: block;">SyntaxError: ${he.escape(
-                  error.message
-                )}</span>`
-              );
-              unbound.delete(id);
-            }
-          }
-          o = i + 9;
-        }
+        outputs.push(
+          `<span class="observablehq--inspect observablehq--error" style="display: block;">SyntaxError: ${he.escape(
+            error.message
+          )}</span>`
+        );
       }
     }
-  }
-  outputs.push(body.slice(o));
-  for (const id of unbound) {
-    console.warn(`${yellow("Warning:")} unable to interpolate cell ${id}`);
-    const i = context.code.findIndex((c) => c.id === id);
-    context.code.splice(i, 1);
   }
   return outputs.join("");
 }
@@ -225,8 +177,8 @@ export function parseMarkdown(input: string, options: ParseOptions): MarkdownPag
   const code: MarkdownCode[] = [];
   const context: ParseContext = {code, codeErrors: [], path};
   const tokens = md.parse(preparePlaceholders(content, context), context);
-  const body = applyPlaceholders(md.renderer.render(tokens, md.options, context), context); // Note: mutates code!
-  const title = data.title !== undefined ? data.title : findTitle(tokens); // TODO placeholders
+  const body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
+  const title = data.title !== undefined ? data.title : findTitle(tokens);
   return {
     head: getHead(title, data, options),
     header: getHeader(title, data, options),
@@ -245,7 +197,7 @@ export function parseMarkdownMetadata(input: string, options: ParseOptions): Pic
   const {content, data} = readFrontMatter(input);
   return {
     data,
-    title: data.title !== undefined ? data.title : findTitle(md.parse(content, {code: [], path})) // TODO placeholders?
+    title: data.title !== undefined ? data.title : findTitle(md.parse(content, {code: [], path}))
   };
 }
 
