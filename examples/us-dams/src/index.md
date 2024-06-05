@@ -1,7 +1,3 @@
----
-theme: wide
----
-
 # U.S. dams: national overview
 
 ## Data from the [National Inventory of Dams](https://nid.sec.usace.army.mil/#/)

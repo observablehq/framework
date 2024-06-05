@@ -1,7 +1,3 @@
----
-theme: wide
----
-
 # Dam summary by state or territory
 
 ```js
@@ -306,7 +302,7 @@ deckInstance.setProps({
           opacity: 0.6
         }),
         new ScatterplotLayer({
-          id: 'scatter-plot',
+          id: 'scatter-plot-2',
           data: capitalSelectedState,
           radiusMinPixels: 8,
           getPosition: d => [d.longitude, d.latitude],
