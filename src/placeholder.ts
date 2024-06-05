@@ -69,7 +69,8 @@ export function* parsePlaceholder(input: string, start = 0): Generator<Placehold
   let fenceMarkerCode = 0; // within a fenced code block, either CODE_BACKTICK or CODE_TILDE
   let fenceMarkerLength = 0; // within a fenced code block, the number of backticks or tildes
   let afterDollar = false; // immediately following $?
-  let afterBackslash = false; // immediate following \?
+  let afterBackslash = false; // immediately following \?
+  let content = ""; // accumulated content
   let index = start;
 
   out: for (let i = start, n = input.length; i < n; ++i) {
@@ -154,60 +155,58 @@ export function* parsePlaceholder(input: string, start = 0): Generator<Placehold
       }
     }
 
+    // Detect inline expressions (but only in data contexts).
     if (state === STATE_DATA) {
-      if (afterBackslash) {
-        afterBackslash = false;
-        if (code === CODE_DOLLAR || (afterDollar && code === CODE_LBRACE)) {
-          yield {type: "content", value: input.slice(index, (index = i) - 1)};
-          continue;
-        }
-      } else {
-        if (code === CODE_BACKSLASH) {
-          afterBackslash = true;
-          continue;
-        }
-        if (code === CODE_DOLLAR) {
+      if (code === CODE_BACKSLASH) {
+        afterBackslash = true;
+      } else if (code === CODE_DOLLAR) {
+        if (afterBackslash) {
+          content += input.slice(index, (index = i) - 1);
+          afterBackslash = false;
+        } else {
           afterDollar = true;
-          continue;
         }
-        if (afterDollar) {
-          afterDollar = false;
-          if (code === CODE_LBRACE) {
-            const parser = new (Parser as any)(acornOptions, input, i + 1); // private constructor
-            let braces = 1;
-            try {
-              do {
-                parser.nextToken();
-                if (parser.type === tokTypes.braceL || parser.type === tokTypes.dollarBraceL) {
-                  ++braces;
-                } else if (parser.type === tokTypes.braceR && !--braces) {
-                  if (i > index + 1) yield {type: "content", value: input.slice(index, i - 1)};
-                  yield {type: "code", value: input.slice(i + 1, (i = parser.pos - 1))};
-                  index = parser.pos;
-                  break;
-                }
-              } while (parser.type !== tokTypes.eof);
-            } catch (error) {
-              if (!(error instanceof SyntaxError)) throw error;
-              // on invalid token (e.g., unterminated template, invalid unicode escape),
-              // read until the braces are closed
-              let j = parser.pos;
-              for (; j < n; ++j) {
-                if (input.charCodeAt(j) === CODE_RBRACE && !--braces) {
-                  if (i > index + 1) yield {type: "content", value: input.slice(index, i - 1)};
-                  yield {type: "code", value: input.slice(i + 1, (i = j))};
-                  index = j;
-                  break;
-                }
+      } else if (afterBackslash) {
+        afterBackslash = false;
+        if (afterDollar && code === CODE_LBRACE) {
+          content += input.slice(index, (index = i) - 1);
+        }
+      } else if (afterDollar) {
+        afterDollar = false;
+        if (code === CODE_LBRACE) {
+          const parser = new (Parser as any)(acornOptions, input, i + 1); // private constructor
+          let braces = 1;
+          try {
+            do {
+              parser.nextToken();
+              if (parser.type === tokTypes.braceL || parser.type === tokTypes.dollarBraceL) {
+                ++braces;
+              } else if (parser.type === tokTypes.braceR && !--braces) {
+                if ((content += input.slice(index, i - 1))) yield {type: "content", value: content}, (content = "");
+                yield {type: "code", value: input.slice(i + 1, (i = parser.pos - 1))};
+                index = parser.pos;
+                break;
+              }
+            } while (parser.type !== tokTypes.eof);
+          } catch (error) {
+            if (!(error instanceof SyntaxError)) throw error;
+            // on invalid token (e.g., unterminated template, invalid unicode escape),
+            // read until the braces are closed
+            let j = parser.pos;
+            for (; j < n; ++j) {
+              if (input.charCodeAt(j) === CODE_RBRACE && !--braces) {
+                if ((content += input.slice(index, i - 1))) yield {type: "content", value: content}, (content = "");
+                yield {type: "code", value: input.slice(i + 1, (i = j))};
+                index = j;
+                break;
               }
             }
-            continue;
           }
         }
+      } else {
+        afterBackslash = false;
+        afterDollar = false;
       }
-    } else {
-      afterBackslash = false;
-      afterDollar = false;
     }
 
     switch (state) {
@@ -483,7 +482,7 @@ export function* parsePlaceholder(input: string, start = 0): Generator<Placehold
     }
   }
 
-  if (index < input.length) yield {type: "content", value: input.slice(index)};
+  if ((content += input.slice(index))) yield {type: "content", value: content};
 }
 
 function isAsciiAlphaCode(code: number): boolean {

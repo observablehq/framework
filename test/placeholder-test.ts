@@ -101,22 +101,42 @@ describe("parsePlaceholder", () => {
       placeholders("${}${}")
     );
   });
-  it("removes backslashes before dollar signs", () => {
+  it("removes backslash before dollar sign", () => {
+    assert.deepStrictEqual([{type: "content", value: "(${})"}], placeholders("(\\${})"));
     assert.deepStrictEqual(
-      [
-        {type: "content", value: "("},
-        {type: "content", value: "${})"}
-      ],
-      placeholders("(\\${})")
+      [{type: "content", value: "($)"}],
+      placeholders("(\\$)") // curly braces not required
+    );
+    assert.deepStrictEqual(
+      [{type: "content", value: "(\\${})"}],
+      placeholders("(\\\\${})") // only the last backslash is special
+    );
+    assert.deepStrictEqual(
+      [{type: "content", value: "(\\\\${})"}],
+      placeholders("(\\\\\\${})") // only the last backslash is special
     );
   });
   it("removes backslashes after dollar signs and before left braces", () => {
+    assert.deepStrictEqual([{type: "content", value: "(${})"}], placeholders("($\\{})"));
     assert.deepStrictEqual(
-      [
-        {type: "content", value: "($"},
-        {type: "content", value: "{})"}
-      ],
-      placeholders("($\\{})")
+      [{type: "content", value: "(${)"}],
+      placeholders("($\\{)") // curly braces not required
+    );
+    assert.deepStrictEqual(
+      [{type: "content", value: "(\\{})"}],
+      placeholders("(\\{})") // dollar sign is required
+    );
+    assert.deepStrictEqual(
+      [{type: "content", value: "($\\{})"}],
+      placeholders("(\\$\\{})") // dollar sign must not be escaped
+    );
+    assert.deepStrictEqual(
+      [{type: "content", value: "($\\{})"}],
+      placeholders("($\\\\{})") // only the last backslash is special
+    );
+    assert.deepStrictEqual(
+      [{type: "content", value: "($\\\\{})"}],
+      placeholders("($\\\\\\{})") // only the last backslash is special
     );
   });
   it("does not remove backslashes before other left braces", () => {
