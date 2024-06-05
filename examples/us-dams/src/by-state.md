@@ -170,7 +170,7 @@ function purposeOwnership(width, height) {
     [
       Plot.barX(damsSelectedState, Plot.groupY({x: "count"}, {y: "primaryPurpose", rx: 2, insetRight: 1, sort: {y: "x", reverse: true, limit: 10}, fill: "ownerType", order: ["Private", "Public Utility", "Local Government", "State", "Federal"], tip: true}))
     ]
-});
+  });
 }
 ```
 
@@ -184,8 +184,15 @@ function conditionHeatmap(width, height) {
   marginRight: 10,
   marginLeft: 100,
   r: {range: [4, 20]},
-  y: {domain: ["Undetermined", "Low", "Significant", "High"], label: "Hazard potential", grid: true},
-  x: {domain: conditions, label: "Condition", grid: true, reverse: true},
+  y: {domain: ["Undetermined", "Low", "Significant", "High"],
+     label: "Hazard potential",
+     grid: true,
+     reverse: true},
+  x: {
+    domain: conditions,
+    label: "Condition",
+    grid: true
+    },
   color: {domain: conditions, range: conditionsColors, label: "Condition"},
     marks: [
     Plot.dot(damsSelectedState, Plot.group({r: "count"},
@@ -193,7 +200,8 @@ function conditionHeatmap(width, height) {
       x: "conditionAssessment",
       tip: true,
       fill: "conditionAssessment"
-    }))
+      })
+    )
   ]
   });
 }
