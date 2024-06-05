@@ -76,7 +76,7 @@ export function* parsePlaceholder(input: string, start = 0): Generator<Placehold
   out: for (let i = start, n = input.length; i < n; ++i) {
     const code = input.charCodeAt(i);
 
-    // Detect indentation and fenced code blocks.
+    // Detect indentation.
     if (code === CODE_LF) {
       lineStart = true;
       lineIndent = 0;
@@ -87,46 +87,50 @@ export function* parsePlaceholder(input: string, start = 0): Generator<Placehold
         ++lineIndent;
       } else {
         lineStart = false;
-        if (lineIndent < 4 && (code === CODE_BACKTICK || code === CODE_TILDE)) {
-          const j = skipCode(input, code, i + 1);
-          if (fenceMarkerCode) {
-            // Terminate the fenced code block when a matching marker or at
-            // least the same length is found; ignore the matching marker if
-            // it’s followed by anything other than spaces or a newline.
-            if (fenceMarkerCode === code && fenceMarkerLength >= j - i) {
-              const k = skipToEnd(input, j);
-              if (k === skipSpace(input, j)) {
-                fenceMarkerCode = 0;
-                fenceMarkerLength = 0;
-                i = k - 1;
-                continue;
-              }
-            }
-          } else if (j >= i + 3) {
-            // Three or more backticks (```) or tildes (~~~) at the start of a
-            // line initiates a new fenced code block, but don’t interpret
-            // ```code``` as a fenced code block: if the fenced code block was
-            // declared with backticks, the info string (if any) isn’t allowed
-            // to contain any backticks.
-            const k = skipToEnd(input, j);
-            if (!(code === CODE_BACKTICK && containsCode(input, code, j, k))) {
-              fenceMarkerCode = code;
-              fenceMarkerLength = j - i;
-              i = k - 1;
-              continue;
-            }
+      }
+    }
+
+    // Skip indented code blocks (4 or more leading spaces).
+    if (lineIndent >= 4) continue;
+
+    // Detect fenced code blocks.
+    if (state === STATE_DATA && (code === CODE_BACKTICK || code === CODE_TILDE)) {
+      const j = skipCode(input, code, i + 1);
+      if (fenceMarkerCode) {
+        // Terminate the fenced code block when a matching marker of at least
+        // the same length is found; ignore the matching marker if it’s followed
+        // by anything other than spaces or a newline.
+        if (fenceMarkerCode === code && fenceMarkerLength >= j - i) {
+          const k = skipToEnd(input, j);
+          if (k === skipSpace(input, j)) {
+            fenceMarkerCode = 0;
+            fenceMarkerLength = 0;
+            i = k - 1;
+            continue;
           }
+        }
+      } else if (j >= i + 3) {
+        // Three or more backticks (```) or tildes (~~~) at the start of a line
+        // initiates a new fenced code block, but don’t interpret ```code``` as
+        // a fenced code block: if the fenced code block was declared with
+        // backticks, the info string (if any) isn’t allowed to contain any
+        // backticks.
+        const k = skipToEnd(input, j);
+        if (!(code === CODE_BACKTICK && containsCode(input, code, j, k))) {
+          fenceMarkerCode = code;
+          fenceMarkerLength = j - i;
+          i = k - 1;
+          continue;
         }
       }
     }
 
-    // Skip fenced code blocks (``` or ~~~) and indented code blocks (4 or more
-    // leading spaces; tab size of 4).
-    if (fenceMarkerCode !== 0 || lineIndent >= 4) continue;
+    // Skip fenced code blocks (``` or ~~~).
+    if (fenceMarkerCode !== 0) continue;
 
     // Skip code spans. Code spans are terminated either by the same number of
     // backticks (``foo``) or by a blank line (only spaces).
-    if (code === CODE_BACKTICK) {
+    if (state === STATE_DATA && code === CODE_BACKTICK) {
       const j = skipCode(input, code, i + 1);
       for (let k = j; k < n; ++k) {
         switch (input.charCodeAt(k)) {
@@ -155,7 +159,7 @@ export function* parsePlaceholder(input: string, start = 0): Generator<Placehold
       }
     }
 
-    // Detect inline expressions (but only in data contexts).
+    // Detect inline expressions.
     if (state === STATE_DATA) {
       if (code === CODE_BACKSLASH) {
         afterBackslash = true;

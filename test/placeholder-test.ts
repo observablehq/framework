@@ -231,9 +231,21 @@ describe("parsePlaceholder", () => {
       placeholders("<title>${1 + 2}</title>")
     );
   });
+  it("ignores placeholders within code", () => {
+    assert.deepStrictEqual([{type: "content", value: "`${1 + 2}`"}], placeholders("`${1 + 2}`"));
+    assert.deepStrictEqual([{type: "content", value: "``${1 + 2}``"}], placeholders("``${1 + 2}``"));
+    assert.deepStrictEqual([{type: "content", value: "``${`1 + 2`}``"}], placeholders("``${`1 + 2`}``"));
+  });
   it("ignores placeholders within comment", () => {
     assert.deepStrictEqual([{type: "content", value: "<!--${1 + 2}-->"}], placeholders("<!--${1 + 2}-->"));
     assert.deepStrictEqual([{type: "content", value: "<!-- ${1 + 2} -->"}], placeholders("<!-- ${1 + 2} -->"));
+    assert.deepStrictEqual(
+      [
+        {type: "content", value: "<!--```\n\n${1}\n\n```-->\n"},
+        {type: "code", value: "1"}
+      ],
+      placeholders("<!--```\n\n${1}\n\n```-->\n${1}")
+    );
   });
   it("ignores unteriminated placeholders", () => {
     assert.deepStrictEqual([{type: "content", value: "${1 + 2"}], placeholders("${1 + 2"));
