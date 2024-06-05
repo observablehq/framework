@@ -8,6 +8,7 @@ import {basename, dirname, join, normalize} from "node:path/posix";
 import {difference} from "d3-array";
 import type {PatchItem} from "fast-array-diff";
 import {getPatch} from "fast-array-diff";
+import deepEqual from "fast-deep-equal";
 import mime from "mime";
 import openBrowser from "open";
 import send from "send";
@@ -19,7 +20,7 @@ import type {LoaderResolver} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import type {FileWatchers} from "./fileWatchers.js";
-import {parseHtml, rewriteHtml} from "./html.js";
+import {isComment, isElement, isText, parseHtml, rewriteHtml} from "./html.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import {parseMarkdown} from "./markdown.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
@@ -285,11 +286,16 @@ function getWatchFiles(resolvers: Resolvers): Iterable<string> {
   return files;
 }
 
+interface HtmlPart {
+  type: number;
+  value: string;
+}
+
 function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Promise<Config>) {
   let config: Config | null = null;
   let path: string | null = null;
   let hash: string | null = null;
-  let html: string[] | null = null;
+  let html: HtmlPart[] | null = null;
   let code: Map<string, string> | null = null;
   let files: Map<string, string> | null = null;
   let tables: Map<string, string> | null = null;
@@ -429,8 +435,19 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
   }
 }
 
-function getHtml({body}: MarkdownPage, resolvers: Resolvers): string[] {
-  return Array.from(parseHtml(rewriteHtml(body, resolvers)).document.body.children, (d) => d.outerHTML);
+function serializeHtml(node: ChildNode): HtmlPart | undefined {
+  return isElement(node)
+    ? {type: 1, value: node.outerHTML}
+    : isText(node)
+    ? {type: 3, value: node.nodeValue!}
+    : isComment(node)
+    ? {type: 8, value: node.data}
+    : undefined;
+}
+
+function getHtml({body}: MarkdownPage, resolvers: Resolvers): HtmlPart[] {
+  const {document} = parseHtml(`\n${rewriteHtml(body, resolvers)}`);
+  return Array.from(document.body.childNodes, serializeHtml).filter((d): d is HtmlPart => d != null);
 }
 
 function getCode({code}: MarkdownPage, resolvers: Resolvers): Map<string, string> {
@@ -530,8 +547,8 @@ function diffTables(
   return patch;
 }
 
-function diffHtml(oldHtml: string[], newHtml: string[]): RedactedPatch<string> {
-  return getPatch(oldHtml, newHtml).map(redactPatch);
+function diffHtml(oldHtml: HtmlPart[], newHtml: HtmlPart[]): RedactedPatch<HtmlPart> {
+  return getPatch(oldHtml, newHtml, deepEqual).map(redactPatch);
 }
 
 type RedactedPatch<T> = RedactedPatchItem<T>[];
