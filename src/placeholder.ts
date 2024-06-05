@@ -55,7 +55,7 @@ const CODE_TAB = 9,
   STATE_RAWTEXT_END_TAG_NAME = 29;
 
 export interface PlaceholderToken {
-  type: "content" | "code";
+  type: "content" | "code" | "code-attr";
   value: string;
 }
 
@@ -159,7 +159,7 @@ export function* parsePlaceholder(input: string, start = 0): Generator<Placehold
     }
 
     // Detect inline expressions.
-    if (state === STATE_DATA) {
+    if (state === STATE_DATA || state === STATE_ATTRIBUTE_VALUE_UNQUOTED) {
       if (code === CODE_BACKSLASH) {
         afterBackslash = true;
       } else if (code === CODE_DOLLAR) {
@@ -186,7 +186,11 @@ export function* parsePlaceholder(input: string, start = 0): Generator<Placehold
                 ++braces;
               } else if (parser.type === tokTypes.braceR && !--braces) {
                 if ((content += input.slice(index, i - 1))) yield {type: "content", value: content}, (content = "");
-                yield {type: "code", value: input.slice(i + 1, (i = parser.pos - 1))};
+                if (state === STATE_ATTRIBUTE_VALUE_UNQUOTED) console.warn({tagName});
+                yield {
+                  type: state === STATE_DATA ? "code" : "code-attr",
+                  value: input.slice(i + 1, (i = parser.pos - 1))
+                };
                 index = parser.pos;
                 break;
               }

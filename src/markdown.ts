@@ -124,12 +124,12 @@ const transformPlaceholders: RuleCore = (state) => {
   const context: ParseContext = state.env;
   const outputs: string[] = [];
   for (const {type, value} of parsePlaceholder(state.src)) {
-    if (type === "code") {
+    if (type === "code" || type === "code-attr") {
       const id = uniqueCodeId(context, value);
       try {
         const node = parseJavaScript(value, {path: context.path, inline: true});
         context.code.push({id, node});
-        outputs.push(`<o-loading></o-loading><!--:${id}:-->`);
+        outputs.push(type === "code-attr" ? `:${id}:` : `<o-loading></o-loading><!--:${id}:-->`);
       } catch (error) {
         if (!(error instanceof SyntaxError)) throw error;
         outputs.push(
