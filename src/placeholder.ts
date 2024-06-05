@@ -64,12 +64,12 @@ export function* parsePlaceholder(input: string, start = 0): Generator<Placehold
   let state: number | undefined = STATE_DATA;
   let tagNameStart: number | undefined; // either an open tag or an end tag
   let tagName: string | undefined; // only open; beware nesting! used only for rawtext
-  let lineStart = true;
-  let lineIndent = 0;
-  let afterDollar = false;
-  let afterBackslash = false;
-  let fenceMarkerCode = 0;
-  let fenceMarkerLength = 0;
+  let lineStart = true; // at the start of a line, possibly indented
+  let lineIndent = 0; // number of leading spaces for the current line
+  let fenceMarkerCode = 0; // within a fenced code block, either CODE_BACKTICK or CODE_TILDE
+  let fenceMarkerLength = 0; // within a fenced code block, the number of backticks or tildes
+  let afterDollar = false; // immediately following $?
+  let afterBackslash = false; // immediate following \?
   let index = start;
 
   out: for (let i = start, n = input.length; i < n; ++i) {
@@ -90,8 +90,8 @@ export function* parsePlaceholder(input: string, start = 0): Generator<Placehold
           const j = skipCode(input, code, i + 1);
           if (fenceMarkerCode) {
             // Terminate the fenced code block when a matching marker or at
-            // least the same length is found. Ignore the matching marker if
-            // it’s followed by anything except spaces or a newline.
+            // least the same length is found; ignore the matching marker if
+            // it’s followed by anything other than spaces or a newline.
             if (fenceMarkerCode === code && fenceMarkerLength >= j - i) {
               const k = skipToEnd(input, j);
               if (k === skipSpace(input, j)) {
@@ -102,9 +102,12 @@ export function* parsePlaceholder(input: string, start = 0): Generator<Placehold
               }
             }
           } else if (j >= i + 3) {
+            // Three or more backticks (```) or tildes (~~~) at the start of a
+            // line initiates a new fenced code block, but don’t interpret
+            // ```code``` as a fenced code block: if the fenced code block was
+            // declared with backticks, the info string (if any) isn’t allowed
+            // to contain any backticks.
             const k = skipToEnd(input, j);
-            // Don’t interpret ```code``` as a fenced code block; skip info
-            // string following the start of a fenced code block.
             if (!(code === CODE_BACKTICK && containsCode(input, code, j, k))) {
               fenceMarkerCode = code;
               fenceMarkerLength = j - i;
@@ -116,31 +119,36 @@ export function* parsePlaceholder(input: string, start = 0): Generator<Placehold
       }
     }
 
-    // Skip fenced code blocks (with ``` or ~~~ of various length, possibly
-    // followed by an info string) and indented code blocks (4 or more leading
-    // spaces; tab size of 4).
+    // Skip fenced code blocks (``` or ~~~) and indented code blocks (4 or more
+    // leading spaces; tab size of 4).
     if (fenceMarkerCode !== 0 || lineIndent >= 4) continue;
 
     // Skip code spans. Code spans are terminated either by the same number of
     // backticks (``foo``) or by a blank line (only spaces).
     if (code === CODE_BACKTICK) {
       const j = skipCode(input, code, i + 1);
-      const markerLength = j - i;
       for (let k = j; k < n; ++k) {
-        const codek = input.charCodeAt(k);
-        if (codek === code) {
-          const l = skipCode(input, code, k);
-          if (l - k === markerLength) {
-            // paired terminator
-            i = l - 1;
-            continue out;
+        switch (input.charCodeAt(k)) {
+          case code: {
+            const l = skipCode(input, code, k);
+            if (l - k === j - i) {
+              // paired terminator
+              i = l - 1;
+              continue out;
+            } else {
+              // skip unpaired terminator
+              k = l - 1;
+            }
+            break;
           }
-        } else if (codek === CODE_LF) {
-          const s = skipSpace(input, k + 1);
-          if (input.charCodeAt(s) === CODE_LF) {
-            // blank line
-            i = s - 1;
-            continue out;
+          case CODE_LF: {
+            const l = skipSpace(input, k + 1);
+            if (input.charCodeAt(l) === CODE_LF) {
+              // blank line
+              i = l - 1;
+              continue out;
+            }
+            break;
           }
         }
       }
