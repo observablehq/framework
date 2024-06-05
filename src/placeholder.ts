@@ -21,7 +21,6 @@ const CODE_TAB = 9,
   CODE_QUESTION = 63,
   CODE_DOLLAR = 36,
   CODE_LBRACE = 123,
-  CODE_RBRACE = 125,
   CODE_BACKSLASH = 92,
   CODE_BACKTICK = 96,
   CODE_TILDE = 126,
@@ -194,17 +193,7 @@ export function* parsePlaceholder(input: string, start = 0): Generator<Placehold
             } while (parser.type !== tokTypes.eof);
           } catch (error) {
             if (!(error instanceof SyntaxError)) throw error;
-            // on invalid token (e.g., unterminated template, invalid unicode escape),
-            // read until the braces are closed
-            let j = parser.pos;
-            for (; j < n; ++j) {
-              if (input.charCodeAt(j) === CODE_RBRACE && !--braces) {
-                if ((content += input.slice(index, i - 1))) yield {type: "content", value: content}, (content = "");
-                yield {type: "code", value: input.slice(i + 1, (i = j))};
-                index = j;
-                break;
-              }
-            }
+            // ignore invalid token (e.g., unterminated template, bad unicode escape)
           }
         }
       } else {

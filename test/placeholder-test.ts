@@ -198,6 +198,10 @@ describe("parsePlaceholder", () => {
       placeholders("Hello, ${yield 42}")
     );
   });
+  it("ignores placeholders with invalid tokens", () => {
+    assert.deepStrictEqual([{type: "content", value: "Hello, ${`1,}!"}], placeholders("Hello, ${`1,}!"));
+    assert.deepStrictEqual([{type: "content", value: "Hello, ${'\\u'}!"}], placeholders("Hello, ${'\\u'}!"));
+  });
   // Note: this case is not encountered in practice due to markdown-it tokenization.
   it("ignores placeholders within attributes", () => {
     assert.deepStrictEqual(
