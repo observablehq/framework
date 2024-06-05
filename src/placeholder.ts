@@ -65,59 +65,88 @@ export function* parsePlaceholder(input: string, start = 0): Generator<Placehold
   let tagNameStart: number | undefined; // either an open tag or an end tag
   let tagName: string | undefined; // only open; beware nesting! used only for rawtext
   let lineStart = true;
-  let lineOffset = 0;
+  let lineIndent = 0;
   let afterDollar = false;
   let afterBackslash = false;
   let fenceMarkerCode = 0;
   let fenceMarkerLength = 0;
   let index = start;
 
-  for (let i = start, n = input.length; i < n; ++i) {
+  out: for (let i = start, n = input.length; i < n; ++i) {
     const code = input.charCodeAt(i);
 
+    // Detect indentation and fenced code blocks.
     if (code === CODE_LF) {
       lineStart = true;
-      lineOffset = 0;
+      lineIndent = 0;
     } else if (lineStart) {
       if (code === CODE_TAB) {
-        lineOffset += 4 - (lineOffset % 4);
+        lineIndent += 4 - (lineIndent % 4);
       } else if (code === CODE_SPACE) {
-        ++lineOffset;
+        ++lineIndent;
       } else {
         lineStart = false;
-        if (lineOffset < 4 && (code === CODE_BACKTICK || code === CODE_TILDE)) {
-          let j = i + 1;
-          for (; j < n && input.charCodeAt(j) === code; ++j);
+        if (lineIndent < 4 && (code === CODE_BACKTICK || code === CODE_TILDE)) {
+          const j = skipCode(input, code, i + 1);
           if (fenceMarkerCode) {
+            // Terminate the fenced code block when a matching marker or at
+            // least the same length is found. Ignore the matching marker if
+            // it’s followed by anything except spaces or a newline.
             if (fenceMarkerCode === code && fenceMarkerLength >= j - i) {
-              fenceMarkerCode = 0;
-              fenceMarkerLength = 0;
-            }
-          } else {
-            fenceMarkerCode = code;
-            fenceMarkerLength = j - i;
-            for (; j < n && input.charCodeAt(j) !== CODE_LF; ++j);
-            // Don’t interpret ```code``` as a fenced code block.
-            if (code === CODE_BACKTICK) {
-              for (let k = i + fenceMarkerLength; k < j; ++k) {
-                if (input.charCodeAt(k) === code) {
-                  j = i + 1;
-                  fenceMarkerCode = 0;
-                  fenceMarkerLength = 0;
-                  break;
-                }
+              const k = skipToEnd(input, j);
+              if (k === skipSpace(input, j)) {
+                fenceMarkerCode = 0;
+                fenceMarkerLength = 0;
+                i = k - 1;
+                continue;
               }
             }
+          } else if (j >= i + 3) {
+            const k = skipToEnd(input, j);
+            // Don’t interpret ```code``` as a fenced code block; skip info
+            // string following the start of a fenced code block.
+            if (!(code === CODE_BACKTICK && containsCode(input, code, j, k))) {
+              fenceMarkerCode = code;
+              fenceMarkerLength = j - i;
+              i = k - 1;
+              continue;
+            }
           }
-          i = j - 1;
-          continue;
         }
       }
     }
 
-    // TODO non-empty line with negative indent should terminate the fenced code block?
+    // Skip fenced code blocks (with ``` or ~~~ of various length, possibly
+    // followed by an info string) and indented code blocks (4 or more leading
+    // spaces; tab size of 4).
+    if (fenceMarkerCode !== 0 || lineIndent >= 4) continue;
 
-    if (state === STATE_DATA && fenceMarkerCode === 0) {
+    // Skip code spans. Code spans are terminated either by the same number of
+    // backticks (``foo``) or by a blank line (only spaces).
+    if (code === CODE_BACKTICK) {
+      const j = skipCode(input, code, i + 1);
+      const markerLength = j - i;
+      for (let k = j; k < n; ++k) {
+        const codek = input.charCodeAt(k);
+        if (codek === code) {
+          const l = skipCode(input, code, k);
+          if (l - k === markerLength) {
+            // paired terminator
+            i = l - 1;
+            continue out;
+          }
+        } else if (codek === CODE_LF) {
+          const s = skipSpace(input, k + 1);
+          if (input.charCodeAt(s) === CODE_LF) {
+            // blank line
+            i = s - 1;
+            continue out;
+          }
+        }
+      }
+    }
+
+    if (state === STATE_DATA) {
       if (afterBackslash) {
         afterBackslash = false;
         if (code === CODE_DOLLAR || (afterDollar && code === CODE_LBRACE)) {
@@ -467,4 +496,30 @@ function isEscapableRawText(tagName: string): boolean {
 
 function lower(input: string, start?: number | undefined, end?: number | undefined): string {
   return input.slice(start, end).toLowerCase();
+}
+
+function skipCode(input: string, code: number, index: number): number {
+  while (input.charCodeAt(index) === code) ++index;
+  return index;
+}
+
+function skipSpace(input: string, index: number): number {
+  let c: number;
+  while (((c = input.charCodeAt(index)), c === CODE_SPACE || c === CODE_TAB)) ++index;
+  return index;
+}
+
+function skipToEnd(input: string, index: number): number {
+  const length = input.length;
+  while (index < length && input.charCodeAt(index) !== CODE_LF) ++index;
+  return index;
+}
+
+function containsCode(input: string, code: number, start: number, end: number): boolean {
+  for (let index = start; index < end; ++index) {
+    if (input.charCodeAt(index) === code) {
+      return true;
+    }
+  }
+  return false;
 }
