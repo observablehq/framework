@@ -162,13 +162,26 @@ function purposeOwnership(width, height) {
     marginTop: 0,
     marginBottom: 40,
     height: height - 55,
-    marginLeft: 240,
+    marginLeft: 170,
     y: {label: null, label: "Primary purpose"},
     x: {grid: true, label:"Number of dams"},
-    color: {legend: true, scheme: "Set2", domain: ["Private", "Public Utility", "Local Government", "State", "Federal"], label: "Ownership"},
+    color: {
+      legend: true,
+      scheme: "Set2",
+      domain: ["Private", "Public Utility", "Local Government", "State", "Federal"],
+      label: "Ownership"},
     marks:
     [
-      Plot.barX(damsSelectedState, Plot.groupY({x: "count"}, {y: "primaryPurpose", rx: 2, insetRight: 1, sort: {y: "x", reverse: true, limit: 10}, fill: "ownerType", order: ["Private", "Public Utility", "Local Government", "State", "Federal"], tip: true}))
+      Plot.barX(damsSelectedState,
+        Plot.groupY({x: "count"},
+          {
+            y: "primaryPurpose",
+            rx: 2,
+            insetRight: 1,
+            sort: {y: "x", reverse: true, limit: 10},
+            fill: "ownerType",
+            order: ["Private", "Public Utility", "Local Government", "State", "Federal"],
+            tip: true}))
     ]
   });
 }

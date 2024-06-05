@@ -241,9 +241,16 @@ function conditionByAge(width, height) {
     y: {label: "Number of dams", grid: true, ticks: 5, tickSize: 0},
     color: {domain: conditions, range: conditionsColors, legend: true, label: "Condition"},
     marks: [
-      Plot.rectY(dams, Plot.binX({y: "count"}, {x: "yearCompleted", fill: "conditionAssessment", order: conditions, interval: 10, tip: true}))
-      ]
-      })
+      Plot.rectY(dams, Plot.binX({y: "count"},
+        {x: "yearCompleted",
+        fill: "conditionAssessment",
+         order: conditions,
+         interval: 10,
+         tip: true
+         })
+       )
+     ]
+   })
 };
 ```
 

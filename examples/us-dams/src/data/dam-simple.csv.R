@@ -27,6 +27,11 @@ dams <- fread("https://nid.sec.usace.army.mil/api/nation/csv") |>
   dplyr::mutate(conditionAssessment = case_when(
     conditionAssessment %in% c(NA, "Not Available", "Not Rated") ~ "Not available",
     TRUE ~ conditionAssessment
+  )) |>
+  dplyr::mutate(primaryPurpose = case_when(
+    primaryPurpose == "" ~ "Unrecorded",
+    primaryPurpose == "Fire Protection, Stock, Or Small Fish Pond" ~ "Fire, Stock, or Small Fish Pond",
+    TRUE ~ primaryPurpose
   ))
 
 
