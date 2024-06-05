@@ -247,7 +247,7 @@ describe("parsePlaceholder", () => {
       placeholders("<!--```\n\n${1}\n\n```-->\n${1}")
     );
   });
-  it("ignores unteriminated placeholders", () => {
+  it("ignores unterminated placeholders", () => {
     assert.deepStrictEqual([{type: "content", value: "${1 + 2"}], placeholders("${1 + 2"));
     assert.deepStrictEqual(
       [{type: "content", value: "Hello, ${{foo: [1, 2]}"}],
