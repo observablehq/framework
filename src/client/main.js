@@ -33,7 +33,7 @@ export function define(cell) {
   if (loading) root._nodes.push(loading);
   const pending = () => reset(root, loading);
   const rejected = (error) => reject(root, error);
-  const v = main.variable({_node: root, pending, rejected}, {shadow: {}}); // _node for visibility promise
+  const v = main.variable({_node: root.parentNode, pending, rejected}, {shadow: {}}); // _node for visibility promise
   if (inputs.includes("display") || inputs.includes("view")) {
     let displayVersion = -1; // the variable._version of currently-displayed values
     const display = inline ? displayInline : displayBlock;
