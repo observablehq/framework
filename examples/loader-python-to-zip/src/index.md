@@ -66,7 +66,7 @@ The above data loader lives in `data/earthquakes.zip.py`. You can load the entir
 const quakeZip = FileAttachment("data/earthquakes.zip").zip()
 ```
 
-Or access individual files (quakes_metadata.json and quakes.csv) directly:
+Or access individual files (`quakes_metadata.json` and `quakes.csv`) directly:
 
 ```js echo
 const quakeMetadata = FileAttachment("data/earthquakes/quakes_metadata.json").json()
@@ -82,7 +82,7 @@ Take a quick look at the quakes data using Inputs.table:
 Inputs.table(quakeData)
 ```
 
-Then explore the distribution of earthquake magnitudes using Observable Plot.
+Then explore the distribution of earthquake magnitudes using Observable Plot:
 
 ```js echo
 Plot.plot({
