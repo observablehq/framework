@@ -24,6 +24,7 @@ const cellsById = new Map();
 export function define(cell) {
   const {id, inline, inputs = [], outputs = [], body} = cell;
   const variables = [];
+  cellsById.get(id)?.variables.forEach((v) => v.delete());
   cellsById.set(id, {cell, variables});
   const root = document.querySelector(`#cell-${id}`);
   const loading = root.querySelector(".observablehq-loading");
@@ -94,8 +95,7 @@ function displayBlock(root, value) {
 }
 
 export function undefine(id) {
-  clear(rootsById.get(id));
-  cellsById.get(id).variables.forEach((v) => v.delete());
+  cellsById.get(id)?.variables.forEach((v) => v.delete());
   cellsById.delete(id);
 }
 
