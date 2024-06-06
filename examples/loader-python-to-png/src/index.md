@@ -43,4 +43,4 @@ The above data loader lives in `data/birth-statistics.png.py`, so we can access 
 <img src="data/birth-statistics.png" style="max-width: 500px;">
 ```
 
-<img src="data/birth-statistics.png">
+<img src="data/birth-statistics.png" style="max-width: 500px;">
