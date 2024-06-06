@@ -25,7 +25,6 @@ const rootsById = findRoots(document.body);
 export function define(cell) {
   const {id, inline, inputs = [], outputs = [], body} = cell;
   const variables = [];
-  cellsById.get(id)?.variables.forEach((v) => v.delete());
   cellsById.set(id, {cell, variables});
   const root = rootsById.get(id);
   const loading = findLoading(root);
@@ -119,7 +118,8 @@ function displayBlock(root, value) {
 }
 
 export function undefine(id) {
-  cellsById.get(id)?.variables.forEach((v) => v.delete());
+  clear(rootsById.get(id));
+  cellsById.get(id).variables.forEach((v) => v.delete());
   cellsById.delete(id);
 }
 
