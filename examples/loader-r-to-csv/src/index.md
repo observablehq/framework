@@ -48,7 +48,7 @@ We can pass the data to `Plot.plot` to make a scatterplot of penguin size (body 
 Plot.plot({
   color: {
     legend: true,
-    range: ["teal", "orchid", "darkorange"]
+    range: ["lightseagreen", "orchid", "darkorange"]
   },
   marks: [
     Plot.text(penguinKmeans, {
