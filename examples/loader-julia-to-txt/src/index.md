@@ -1,6 +1,6 @@
 # Julia data loader to generate TXT
 
-Here’s a Julia data loader that accesses Edgar Allen Poe’s _The Raven_ from [Project Gutenberg](https://www.gutenberg.org/cache/epub/1065/pg1065.txt), splits the text by stanza, then outputs a single stanza (specified by number in the loader) as text to standard out.
+Here’s a Julia data loader that accesses Edgar Allen Poe’s _The Raven_ from [Project Gutenberg](https://www.gutenberg.org/cache/epub/1065/pg1065.txt), splits the text by stanza (paragraph), then outputs its 29th stanza as text to standard out.
 
 ```julia
 # Load Julia packages (must be installed)
