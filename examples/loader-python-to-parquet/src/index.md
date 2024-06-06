@@ -1,6 +1,6 @@
 # Python data loader to generate Apache Parquet
 
-Here’s a Python data loader that accesses records for over 91,000 dams from the [National Inventory of Dams](https://nid.sec.usace.army.mil/#/), limits the data to only four columns, then outputs an Apache Parquet file to standard out.
+Here’s a Python data loader that accesses records for over 91,000 dams from the [National Inventory of Dams](https://nid.sec.usace.army.mil/), limits the data to only four columns, then outputs an Apache Parquet file to standard out.
 
 ```python
 # Load libraries (must be installed in environment)
@@ -48,7 +48,7 @@ We can display the table using `Inputs.table`.
 Inputs.table(dams)
 ```
 
-Lastly, we can pass the table to `Plot.plot` to make a simple bar chart of dam counts by purpose, with color mapped to hazard classification.
+Lastly, we can pass the table to Observable Plot to make a simple bar chart of dam counts by purpose, with color mapped to hazard classification.
 
 ```js echo
 Plot.plot({
