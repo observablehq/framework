@@ -184,7 +184,6 @@ function parsePlaceholder(content: string, replacer: (i: number, j: number) => v
 
 function transformPlaceholderBlock(token) {
   const input = token.content;
-  if (/^\s*<script[\s>]/.test(input)) return [token]; // ignore <script> elements
   const output: any[] = [];
   let i = 0;
   parsePlaceholder(input, (j, k) => {
@@ -242,7 +241,11 @@ const transformPlaceholderCore: RuleCore = (state) => {
   for (const token of input) {
     switch (token.type) {
       case "html_block":
-        output.push(...transformPlaceholderBlock(token));
+        if (/^\s*<(!--|script|style|textarea|title)[\s>]/.test(token.content)) {
+          output.push(token);
+        } else {
+          output.push(...transformPlaceholderBlock(token));
+        }
         break;
       default:
         output.push(token);
