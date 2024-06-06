@@ -125,7 +125,12 @@ export class LoaderResolver {
 
   getWatchPath(path: string): string | undefined {
     const exactPath = join(this.root, path);
-    return existsSync(exactPath) ? exactPath : this.find(path)?.path;
+    if (existsSync(exactPath)) return exactPath;
+    if (exactPath.endsWith(".js")) {
+      const jsxPath = exactPath + "x";
+      if (existsSync(jsxPath)) return jsxPath;
+    }
+    return this.find(path)?.path;
   }
 
   watchFiles(path: string, watchPaths: Iterable<string>, callback: (name: string) => void) {

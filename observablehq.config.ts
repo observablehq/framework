@@ -26,6 +26,7 @@ export default {
     {name: "Data loaders", path: "/loaders"},
     {name: "Files", path: "/files"},
     {name: "SQL", path: "/sql"},
+    {name: "JSX", path: "/jsx"},
     {name: "Themes", path: "/themes"},
     {name: "Configuration", path: "/config"},
     {name: "Deploying", path: "/deploying"},

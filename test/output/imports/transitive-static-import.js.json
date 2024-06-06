@@ -56,6 +56,5 @@
     }
   ],
   "expression": false,
-  "async": false,
-  "inline": false
+  "async": false
 }

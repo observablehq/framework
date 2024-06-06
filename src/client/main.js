@@ -23,7 +23,7 @@ const cellsById = new Map();
 const rootsById = findRoots(document.body);
 
 export function define(cell) {
-  const {id, inline, inputs = [], outputs = [], body} = cell;
+  const {id, mode, inputs = [], outputs = [], body} = cell;
   const variables = [];
   cellsById.set(id, {cell, variables});
   const root = rootsById.get(id);
@@ -35,7 +35,7 @@ export function define(cell) {
   const v = main.variable({_node: root.parentNode, pending, rejected}, {shadow: {}}); // _node for visibility promise
   if (inputs.includes("display") || inputs.includes("view")) {
     let displayVersion = -1; // the variable._version of currently-displayed values
-    const display = inline ? displayInline : displayBlock;
+    const display = mode === "inline" ? displayInline : mode === "jsx" ? displayJsx : displayBlock;
     const vd = new v.constructor(2, v._module);
     vd.define(
       inputs.filter((i) => i !== "display" && i !== "view"),
@@ -81,6 +81,14 @@ function reject(root, error) {
   root._error = true; // see reset
   clear(root);
   displayNode(root, inspectError(error));
+}
+
+function displayJsx(root, value) {
+  return (root._root ??= (async () => {
+    const node = root.parentNode.insertBefore(document.createElement("DIV"), root);
+    const {createRoot} = await import("npm:react-dom/client");
+    return createRoot(node);
+  })()).then((root) => root.render(value));
 }
 
 function displayNode(root, node) {
