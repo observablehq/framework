@@ -35,7 +35,8 @@ export function transpileJavaScript(node: JavaScriptNode, {id, path, resolveImpo
   output.insertLeft(0, `, body: ${async ? "async " : ""}(${inputs}) => {\n`);
   if (outputs.length) output.insertLeft(0, `, outputs: ${JSON.stringify(outputs)}`);
   if (inputs.length) output.insertLeft(0, `, inputs: ${JSON.stringify(inputs)}`);
-  if (node.inline) output.insertLeft(0, ", inline: true");
+  if (node.inline) output.insertLeft(0, ", inline: true"); // TODO combine inline and attr
+  if (node.attr) output.insertLeft(0, `, attr: ${JSON.stringify(node.attr)}`);
   output.insertLeft(0, `define({id: ${JSON.stringify(id)}`);
   if (outputs.length) output.insertRight(node.input.length, `\nreturn {${outputs}};`);
   output.insertRight(node.input.length, "\n}});\n");

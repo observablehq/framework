@@ -98,12 +98,12 @@ export function open({hash, eval: compile} = {}) {
         for (const [id, removed] of removedCells) {
           if (!addedCells.has(id)) {
             registerRoot(id, null);
-          } else {
+          } else if (removed._nodes) {
             replaceRoot(addedCells.get(id), removed);
           }
         }
         for (const [id, root] of addedCells) {
-          if (!removedCells.has(id)) {
+          if (!removedCells.has(id) || !removedCells.get(id)._nodes) {
             registerRoot(id, root);
           }
         }
@@ -178,6 +178,7 @@ export function open({hash, eval: compile} = {}) {
 }
 
 export function replaceRoot(added, removed) {
+  if (!removed._nodes) return; // attr expression
   findLoading(added)?.remove();
   added.replaceWith(removed);
   for (const n of removed._nodes) {

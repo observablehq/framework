@@ -56,6 +56,7 @@ const CODE_TAB = 9,
 
 export interface PlaceholderToken {
   type: "content" | "code" | "code-attr";
+  name?: string; // if attr
   value: string;
 }
 
@@ -63,6 +64,8 @@ export function* parsePlaceholder(input: string, start = 0): Generator<Placehold
   let state: number | undefined = STATE_DATA;
   let tagNameStart: number | undefined; // either an open tag or an end tag
   let tagName: string | undefined; // only open; beware nesting! used only for rawtext
+  let attributeNameStart: number | undefined; // start of current attribute
+  let attributeNameEnd: number | undefined; // end of current attribute
   let lineStart = true; // at the start of a line, possibly indented
   let lineIndent = 0; // number of leading spaces for the current line
   let fenceMarkerCode = 0; // within a fenced code block, either CODE_BACKTICK or CODE_TILDE
@@ -185,10 +188,17 @@ export function* parsePlaceholder(input: string, start = 0): Generator<Placehold
               if (parser.type === tokTypes.braceL || parser.type === tokTypes.dollarBraceL) {
                 ++braces;
               } else if (parser.type === tokTypes.braceR && !--braces) {
+                let name: string | undefined;
+                if (state === STATE_ATTRIBUTE_VALUE_UNQUOTED) {
+                  name = input.slice(attributeNameStart, attributeNameEnd);
+                  content += input.slice(index, attributeNameStart);
+                  content += `data-attr data-attr-${name}=`;
+                  index = i - 1;
+                }
                 if ((content += input.slice(index, i - 1))) yield {type: "content", value: content}, (content = "");
-                if (state === STATE_ATTRIBUTE_VALUE_UNQUOTED) console.warn({tagName});
                 yield {
                   type: state === STATE_DATA ? "code" : "code-attr",
+                  name,
                   value: input.slice(i + 1, (i = parser.pos - 1))
                 };
                 index = parser.pos;
@@ -257,16 +267,20 @@ export function* parsePlaceholder(input: string, start = 0): Generator<Placehold
           (state = STATE_AFTER_ATTRIBUTE_NAME), --i;
         } else if (code === CODE_EQ) {
           state = STATE_ATTRIBUTE_NAME;
+          (attributeNameStart = i + 1), (attributeNameEnd = undefined);
         } else {
           (state = STATE_ATTRIBUTE_NAME), --i;
+          (attributeNameStart = i + 1), (attributeNameEnd = undefined);
         }
         break;
       }
       case STATE_ATTRIBUTE_NAME: {
         if (isSpaceCode(code) || code === CODE_SLASH || code === CODE_GT) {
           (state = STATE_AFTER_ATTRIBUTE_NAME), --i;
+          attributeNameEnd = i;
         } else if (code === CODE_EQ) {
           state = STATE_BEFORE_ATTRIBUTE_VALUE;
+          attributeNameEnd = i;
         }
         break;
       }
@@ -281,6 +295,7 @@ export function* parsePlaceholder(input: string, start = 0): Generator<Placehold
           state = isRawText(tagName!) ? STATE_RAWTEXT : STATE_DATA;
         } else {
           (state = STATE_ATTRIBUTE_NAME), --i;
+          (attributeNameStart = i + 1), (attributeNameEnd = undefined);
         }
         break;
       }

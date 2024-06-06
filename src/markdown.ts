@@ -123,11 +123,11 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
 const transformPlaceholders: RuleCore = (state) => {
   const context: ParseContext = state.env;
   const outputs: string[] = [];
-  for (const {type, value} of parsePlaceholder(state.src)) {
+  for (const {type, name, value} of parsePlaceholder(state.src)) {
     if (type === "code" || type === "code-attr") {
       const id = uniqueCodeId(context, value);
       try {
-        const node = parseJavaScript(value, {path: context.path, inline: true});
+        const node = parseJavaScript(value, {path: context.path, inline: true, attr: name});
         context.code.push({id, node});
         outputs.push(type === "code-attr" ? `:${id}:` : `<o-loading></o-loading><!--:${id}:-->`);
       } catch (error) {

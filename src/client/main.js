@@ -23,20 +23,20 @@ const cellsById = new Map();
 const rootsById = findRoots(document.body);
 
 export function define(cell) {
-  const {id, inline, inputs = [], outputs = [], body} = cell;
+  const {id, inline, attr, inputs = [], outputs = [], body} = cell;
   const variables = [];
   cellsById.get(id)?.variables.forEach((v) => v.delete());
   cellsById.set(id, {cell, variables});
   const root = rootsById.get(id);
-  const loading = findLoading(root);
-  root._nodes = [];
+  const loading = attr ? null : findLoading(root);
+  if (!attr) root._nodes = [];
   if (loading) root._nodes.push(loading);
-  const pending = () => reset(root, loading);
-  const rejected = (error) => reject(root, error);
-  const v = main.variable({_node: root.parentNode, pending, rejected}, {shadow: {}}); // _node for visibility promise
+  const pending = attr ? () => {} : () => reset(root, loading);
+  const rejected = attr ? () => {} : (error) => reject(root, error);
+  const v = main.variable({_node: attr ? root : root.parentNode, pending, rejected}, {shadow: {}}); // _node for visibility promise
   if (inputs.includes("display") || inputs.includes("view")) {
     let displayVersion = -1; // the variable._version of currently-displayed values
-    const display = inline ? displayInline : displayBlock;
+    const display = attr ? displayAttr(attr) : inline ? displayInline : displayBlock;
     const vd = new v.constructor(2, v._module);
     vd.define(
       inputs.filter((i) => i !== "display" && i !== "view"),
@@ -44,7 +44,7 @@ export function define(cell) {
         let version = v._version; // capture version on input change
         return (value) => {
           if (version < displayVersion) throw new Error("stale display");
-          else if (version > displayVersion) clear(root);
+          else if (version > displayVersion && !attr) clear(root);
           displayVersion = version;
           display(root, value);
           return value;
@@ -102,6 +102,12 @@ function clear(root) {
   root._nodes.length = 0;
 }
 
+function displayAttr(name) {
+  return (root, value) => {
+    root.setAttribute(name, value); // TODO remove if nullish value
+  };
+}
+
 function displayInline(root, value) {
   if (isNode(value)) {
     displayNode(root, value);
@@ -135,6 +141,13 @@ export function findRoots(root) {
   while ((node = iterator.nextNode())) {
     if (isRoot(node)) {
       roots.set(node.data.slice(1, -1), node);
+    }
+  }
+  for (const element of document.querySelectorAll("[data-attr]")) {
+    for (const attr of element.attributes) {
+      if (attr.name.startsWith("data-attr-")) {
+        roots.set(attr.value.slice(1, -1), element);
+      }
     }
   }
   return roots;

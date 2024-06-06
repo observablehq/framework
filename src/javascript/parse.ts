@@ -14,7 +14,9 @@ export interface ParseOptions {
   /** The path to the source within the source root. */
   path: string;
   /** If true, treat the input as an inline expression instead of a fenced code block. */
-  inline?: boolean;
+  inline?: boolean; // TODO combine inline and attr
+  /** TODO */
+  attr?: string;
 }
 
 export const acornOptions: Options = {
@@ -30,7 +32,8 @@ export interface JavaScriptNode {
   imports: ImportReference[];
   expression: boolean; // is this an expression or a program cell?
   async: boolean; // does this use top-level await?
-  inline: boolean;
+  inline: boolean; // TODO combine inline and attr
+  attr?: string;
   input: string;
 }
 
@@ -39,7 +42,7 @@ export interface JavaScriptNode {
  * the specified inline JavaScript expression.
  */
 export function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
-  const {inline = false, path} = options;
+  const {inline = false, attr, path} = options;
   let expression = maybeParseExpression(input); // first attempt to parse as expression
   if (expression?.type === "ClassExpression" && expression.id) expression = null; // treat named class as program
   if (expression?.type === "FunctionExpression" && expression.id) expression = null; // treat named function as program
@@ -58,6 +61,7 @@ export function parseJavaScript(input: string, options: ParseOptions): JavaScrip
     expression: !!expression,
     async: findAwaits(body).length > 0,
     inline,
+    attr,
     input
   };
 }
