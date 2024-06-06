@@ -11,7 +11,7 @@
   }
 }
 
-o-loading {
+.observablehq-loading {
   font: var(--monospace-font);
   color: var(--theme-foreground-muted);
   display: inline-block;
@@ -22,11 +22,11 @@ o-loading {
   animation-iteration-count: infinite;
 }
 
-o-loading::before {
+.observablehq-loading::before {
   content: "↻";
 }
 
-.observablehq--block o-loading {
+.observablehq--block .observablehq-loading {
   display: block;
 }
 
