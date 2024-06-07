@@ -1,4 +1,4 @@
-import {extname} from "node:path/posix";
+import {extname, join} from "node:path/posix";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
 import type {CallExpression} from "acorn";
 import {simple} from "acorn-walk";
@@ -111,6 +111,8 @@ function importResolve(input: string, root: string, path: string): Plugin {
   async function resolve(specifier: string | AstNode): Promise<ResolveIdResult> {
     return typeof specifier !== "string" || specifier === input
       ? null
+      : specifier === "observablehq:builtins"
+      ? {id: join(root, "_builtins.js")}
       : specifier.startsWith("observablehq:")
       ? {id: relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`), external: true} // prettier-ignore
       : specifier === "npm:@observablehq/runtime"
