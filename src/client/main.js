@@ -20,17 +20,19 @@ export const runtime = new Runtime(library);
 export const main = runtime.module();
 
 const cellsById = new Map();
+const rootsById = findRoots(document.body);
 
 export function define(cell) {
   const {id, inline, inputs = [], outputs = [], body} = cell;
   const variables = [];
-  cellsById.get(id)?.variables.forEach((v) => v.delete());
   cellsById.set(id, {cell, variables});
-  const root = document.querySelector(`#cell-${id}`);
-  const loading = root.querySelector(".observablehq-loading");
+  const root = rootsById.get(id);
+  const loading = findLoading(root);
+  root._nodes = [];
+  if (loading) root._nodes.push(loading);
   const pending = () => reset(root, loading);
   const rejected = (error) => reject(root, error);
-  const v = main.variable({_node: root, pending, rejected}, {shadow: {}}); // _node for visibility promise
+  const v = main.variable({_node: root.parentNode, pending, rejected}, {shadow: {}}); // _node for visibility promise
   if (inputs.includes("display") || inputs.includes("view")) {
     let displayVersion = -1; // the variable._version of currently-displayed values
     const display = inline ? displayInline : displayBlock;
@@ -67,39 +69,91 @@ export function define(cell) {
 // original loading indicator in this case, which applies to inline expressions
 // and expression code blocks.
 function reset(root, loading) {
-  if (root.classList.contains("observablehq--error")) {
-    root.classList.remove("observablehq--error");
+  if (root._error) {
+    root._error = false;
     clear(root);
-    if (loading) root.append(loading);
+    if (loading) displayNode(root, loading);
   }
 }
 
 function reject(root, error) {
   console.error(error);
-  root.classList.add("observablehq--error"); // see reset
+  root._error = true; // see reset
   clear(root);
-  root.append(inspectError(error));
+  displayNode(root, inspectError(error));
+}
+
+function displayNode(root, node) {
+  if (node.nodeType === 11) {
+    let child;
+    while ((child = node.firstChild)) {
+      root._nodes.push(child);
+      root.parentNode.insertBefore(child, root);
+    }
+  } else {
+    root._nodes.push(node);
+    root.parentNode.insertBefore(node, root);
+  }
 }
 
 function clear(root) {
-  root.textContent = "";
+  for (const v of root._nodes) v.remove();
+  root._nodes.length = 0;
 }
 
 function displayInline(root, value) {
-  if (isNode(value) || typeof value === "string" || !value?.[Symbol.iterator]) root.append(value);
-  else root.append(...value);
+  if (isNode(value)) {
+    displayNode(root, value);
+  } else if (typeof value === "string" || !value?.[Symbol.iterator]) {
+    displayNode(root, document.createTextNode(value));
+  } else {
+    for (const v of value) {
+      displayNode(root, isNode(v) ? v : document.createTextNode(v));
+    }
+  }
 }
 
 function displayBlock(root, value) {
-  root.append(isNode(value) ? value : inspect(value));
+  displayNode(root, isNode(value) ? value : inspect(value));
 }
 
 export function undefine(id) {
-  cellsById.get(id)?.variables.forEach((v) => v.delete());
+  clear(rootsById.get(id));
+  cellsById.get(id).variables.forEach((v) => v.delete());
   cellsById.delete(id);
 }
 
 // Note: Element.prototype is instanceof Node, but cannot be inserted!
 function isNode(value) {
   return value instanceof Node && value instanceof value.constructor;
+}
+
+export function findRoots(root) {
+  const roots = new Map();
+  const iterator = document.createNodeIterator(root, 128, null);
+  let node;
+  while ((node = iterator.nextNode())) {
+    if (isRoot(node)) {
+      roots.set(node.data.slice(1, -1), node);
+    }
+  }
+  return roots;
+}
+
+function isRoot(node) {
+  return node.nodeType === 8 && /^:[0-9a-f]{8}(?:-\d+)?:$/.test(node.data);
+}
+
+function isLoading(node) {
+  return node.nodeType === 1 && node.tagName === "OBSERVABLEHQ-LOADING";
+}
+
+export function findLoading(root) {
+  const sibling = root.previousSibling;
+  return sibling && isLoading(sibling) ? sibling : null;
+}
+
+export function registerRoot(id, node) {
+  if (node == null) rootsById.delete(id);
+  else rootsById.set(id, node);
 }
