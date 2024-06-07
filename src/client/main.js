@@ -35,6 +35,7 @@ export function define(cell) {
   const v = main.variable({_node: root.parentNode, pending, rejected}, {shadow: {}}); // _node for visibility promise
   if (inputs.includes("display") || inputs.includes("view")) {
     let displayVersion = -1; // the variable._version of currently-displayed values
+    const predisplay = mode === "jsx" ? noop : clear; // jsx replaces previous display naturally
     const display = mode === "inline" ? displayInline : mode === "jsx" ? displayJsx : displayBlock;
     const vd = new v.constructor(2, v._module);
     vd.define(
@@ -43,7 +44,7 @@ export function define(cell) {
         let version = v._version; // capture version on input change
         return (value) => {
           if (version < displayVersion) throw new Error("stale display");
-          else if (version > displayVersion) clear(root);
+          else if (version > displayVersion) predisplay(root);
           displayVersion = version;
           display(root, value);
           return value;
@@ -61,6 +62,13 @@ export function define(cell) {
   v.define(outputs.length ? `cell ${id}` : null, inputs, body);
   variables.push(v);
   for (const o of outputs) variables.push(main.variable(true).define(o, [`cell ${id}`], (exports) => exports[o]));
+}
+
+function noop() {}
+
+function clear(root) {
+  for (const v of root._nodes) v.remove();
+  root._nodes.length = 0;
 }
 
 // If the variable previously rejected, it will show an error even if it doesn’t
@@ -88,7 +96,7 @@ function displayJsx(root, value) {
     const node = document.createElement("DIV");
     return [node, createRoot(node)];
   })).then(([node, client]) => {
-    if (!root._nodes.length) {
+    if (!node.parentNode) {
       root._nodes.push(node);
       root.parentNode.insertBefore(node, root);
     }
@@ -107,11 +115,6 @@ function displayNode(root, node) {
     root._nodes.push(node);
     root.parentNode.insertBefore(node, root);
   }
-}
-
-function clear(root) {
-  for (const v of root._nodes) v.remove();
-  root._nodes.length = 0;
 }
 
 function displayInline(root, value) {
