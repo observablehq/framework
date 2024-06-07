@@ -202,8 +202,10 @@ export function rewriteHtml(
   // In some contexts, such as a table, the <observablehq-loading> element may
   // be reparented; enforce the requirement that the <observablehq-loading>
   // element immediately precedes its root by removing any violating elements.
+  // Also, <observablehq-loading> only works in an HTML context and won’t work
+  // in SVG or MathML or other non-HTML markup.
   for (const l of document.querySelectorAll("observablehq-loading")) {
-    if (!l.nextSibling || !isRoot(l.nextSibling)) {
+    if (!l.nextSibling || !isRoot(l.nextSibling) || l.namespaceURI !== "http://www.w3.org/1999/xhtml") {
       l.remove();
     }
   }
