@@ -106,9 +106,9 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
         // TODO const sourceLine = context.startLine + context.currentLine;
         const node = parseJavaScript(source, {path});
         context.code.push({id, node});
-        html += `<div id="cell-${id}" class="observablehq observablehq--block">${
-          node.expression ? '<span class="observablehq-loading"></span>' : ""
-        }</div>\n`;
+        html += `<div class="observablehq observablehq--block">${
+          node.expression ? "<observablehq-loading></observablehq-loading>" : ""
+        }<!--:${id}:--></div>\n`;
       }
     } catch (error) {
       if (!(error instanceof SyntaxError)) throw error;
@@ -261,14 +261,12 @@ function makePlaceholderRenderer(): RenderRule {
       // TODO sourceLine: context.startLine + context.currentLine
       const node = parseJavaScript(token.content, {path, inline: true});
       context.code.push({id, node});
-      return `<span id="cell-${id}"><span class="observablehq-loading"></span></span>`;
+      return `<observablehq-loading></observablehq-loading><!--:${id}:-->`;
     } catch (error) {
       if (!(error instanceof SyntaxError)) throw error;
-      return `<span id="cell-${id}">
-  <span class="observablehq--inspect observablehq--error" style="display: block;">SyntaxError: ${he.escape(
-    error.message
-  )}</span>
-</span>`;
+      return `<span class="observablehq--inspect observablehq--error" style="display: block;">SyntaxError: ${he.escape(
+        error.message
+      )}</span>`;
     }
   };
 }
