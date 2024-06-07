@@ -587,7 +587,7 @@ describe("deploy", () => {
     const effects = new MockDeployEffects({isTty: false, apiKey: invalidApiKey});
     await assert.rejects(
       async () => await deploy(TEST_OPTIONS, effects),
-      (error) => (CliError.assert(error, {message: "Authentication was rejected by the server"}), true)
+      (error) => (CliError.assert(error, {message: "Authentication was rejected by the server: forbidden"}), true)
     );
   });
 
