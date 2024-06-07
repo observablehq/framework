@@ -47,19 +47,19 @@ With a JSX fenced code block, the [display function](./javascript#explicit-displ
 
 In addition, JSX fenced code blocks should always display explicitly; JSX fenced code blocks do not support implicit display of expressions.
 
-You don’t need to import `React` when using JSX; `React` is implicitly imported. `React` is also available by default in Markdown. If you need to, you can import it explicitly:
+React is available by default as `React` in Markdown, and you don’t need to import React when authoring components in JSX modules. If needed, you can import React explicitly like so:
 
 ```js run=false
 import * as React from "npm:react";
 ```
 
-You can also import specific symbols such as hooks:
+You can also import specific symbols, such as hooks:
 
 ```js run=false
 import {useState} from "npm:react";
 ```
 
-Always use the `.js` extension to import JSX modules.
+Always use the `.js` file extension to import JSX modules. JSX modules are transpiled to JavaScript during build and served with a `.js` extension.
 
 ```jsx run=false
 import {useState} from "npm:react";
@@ -76,7 +76,9 @@ export function Counter({title = "Untitled"} = {}) {
       <div
         style={{
           transition: "background 250ms ease",
+          color: "white",
           backgroundColor: counter & 1 ? "brown" : "steelblue",
+          borderRadius: "0.5rem",
           padding: "1rem"
         }}
       >

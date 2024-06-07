@@ -12,7 +12,9 @@ export function Counter({title = "Untitled"} = {}) {
       <div
         style={{
           transition: "background 250ms ease",
+          color: "white",
           backgroundColor: counter & 1 ? "brown" : "steelblue",
+          borderRadius: "0.5rem",
           padding: "1rem"
         }}
       >
