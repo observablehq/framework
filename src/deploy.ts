@@ -414,12 +414,16 @@ class Deployer {
 
     let message = this.deployOptions.message;
     if (message === undefined) {
-      const input = await this.effects.clack.text({
-        message: "What changed in this deploy?",
-        placeholder: "Enter a deploy message (optional)"
-      });
-      if (this.effects.clack.isCancel(input)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
-      message = input;
+      if (this.effects.isTty) {
+        const input = await this.effects.clack.text({
+          message: "What changed in this deploy?",
+          placeholder: "Enter a deploy message (optional)"
+        });
+        if (this.effects.clack.isCancel(input)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
+        message = input;
+      } else {
+        message = "";
+      }
     }
 
     let deployId;
