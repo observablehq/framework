@@ -145,7 +145,7 @@ function isRoot(node) {
 }
 
 function isLoading(node) {
-  return node.nodeType === 1 && node.tagName === "O-LOADING";
+  return node.nodeType === 1 && node.tagName === "OBSERVABLEHQ-LOADING";
 }
 
 export function findLoading(root) {

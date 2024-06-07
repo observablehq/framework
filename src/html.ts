@@ -199,10 +199,10 @@ export function rewriteHtml(
     }
   }
 
-  // In some contexts, such as a table, the <o-loading> element may be
-  // reparented; enforce the requirement that the <o-loading> element
-  // immediately precedes its root by removing any violating elements.
-  for (const l of document.querySelectorAll("o-loading")) {
+  // In some contexts, such as a table, the <observablehq-loading> element may
+  // be reparented; enforce the requirement that the <observablehq-loading>
+  // element immediately precedes its root by removing any violating elements.
+  for (const l of document.querySelectorAll("observablehq-loading")) {
     if (!l.nextSibling || !isRoot(l.nextSibling)) {
       l.remove();
     }
@@ -250,7 +250,7 @@ function isRoot(node: Node): node is Comment {
 }
 
 function isLoading(node: Node): node is Element {
-  return isElement(node) && node.tagName === "O-LOADING";
+  return isElement(node) && node.tagName === "OBSERVABLEHQ-LOADING";
 }
 
 function findLoading(node: Node): Element | null {

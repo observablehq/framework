@@ -107,7 +107,7 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
         const node = parseJavaScript(source, {path});
         context.code.push({id, node});
         html += `<div class="observablehq observablehq--block">${
-          node.expression ? "<o-loading></o-loading>" : ""
+          node.expression ? "<observablehq-loading></observablehq-loading>" : ""
         }<!--:${id}:--></div>\n`;
       }
     } catch (error) {
@@ -261,7 +261,7 @@ function makePlaceholderRenderer(): RenderRule {
       // TODO sourceLine: context.startLine + context.currentLine
       const node = parseJavaScript(token.content, {path, inline: true});
       context.code.push({id, node});
-      return `<o-loading></o-loading><!--:${id}:-->`;
+      return `<observablehq-loading></observablehq-loading><!--:${id}:-->`;
     } catch (error) {
       if (!(error instanceof SyntaxError)) throw error;
       return `<span class="observablehq--inspect observablehq--error" style="display: block;">SyntaxError: ${he.escape(
