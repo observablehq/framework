@@ -1,1 +1,5 @@
 <!-- this is a comment -->
+
+<!--- comment dash --->
+
+<!--<!- test ->-->
