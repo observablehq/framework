@@ -146,12 +146,12 @@ class Deployer {
           throw new CliError("No authentication provided");
         } else {
           const source =
-            apiKey?.source == "file"
+            apiKey.source == "file"
               ? ` from ${apiKey.filePath}`
               : apiKey?.source === "env"
               ? ` from $${apiKey.envVar}`
               : "";
-          throw new CliError(`Authentication${source} was rejected by the server`);
+          throw new CliError(`Authentication${source} was rejected by the server: ${authError ?? "unknown error"}`);
         }
       }
       const message =
