@@ -84,11 +84,16 @@ function reject(root, error) {
 }
 
 function displayJsx(root, value) {
-  return (root._root ??= (async () => {
-    const node = root.parentNode.insertBefore(document.createElement("DIV"), root);
-    const {createRoot} = await import("npm:react-dom/client");
-    return createRoot(node);
-  })()).then((root) => root.render(value));
+  return (root._root ??= import("npm:react-dom/client").then(({createRoot}) => {
+    const node = document.createElement("DIV");
+    return [node, createRoot(node)];
+  })).then(([node, client]) => {
+    if (!root._nodes.length) {
+      root._nodes.push(node);
+      root.parentNode.insertBefore(node, root);
+    }
+    client.render(value);
+  });
 }
 
 function displayNode(root, node) {
