@@ -30,9 +30,9 @@
         "imports": [],
         "expression": true,
         "async": false,
-        "inline": true,
         "input": "`}'\"`"
-      }
+      },
+      "mode": "inline"
     }
   ]
 }

@@ -23,7 +23,7 @@ const cellsById = new Map();
 const rootsById = findRoots(document.body);
 
 export function define(cell) {
-  const {id, inline, inputs = [], outputs = [], body} = cell;
+  const {id, mode, inputs = [], outputs = [], body} = cell;
   const variables = [];
   cellsById.set(id, {cell, variables});
   const root = rootsById.get(id);
@@ -35,7 +35,8 @@ export function define(cell) {
   const v = main.variable({_node: root.parentNode, pending, rejected}, {shadow: {}}); // _node for visibility promise
   if (inputs.includes("display") || inputs.includes("view")) {
     let displayVersion = -1; // the variable._version of currently-displayed values
-    const display = inline ? displayInline : displayBlock;
+    const predisplay = mode === "jsx" ? noop : clear; // jsx replaces previous display naturally
+    const display = mode === "inline" ? displayInline : mode === "jsx" ? displayJsx : displayBlock;
     const vd = new v.constructor(2, v._module);
     vd.define(
       inputs.filter((i) => i !== "display" && i !== "view"),
@@ -43,7 +44,7 @@ export function define(cell) {
         let version = v._version; // capture version on input change
         return (value) => {
           if (version < displayVersion) throw new Error("stale display");
-          else if (version > displayVersion) clear(root);
+          else if (version > displayVersion) predisplay(root);
           displayVersion = version;
           display(root, value);
           return value;
@@ -61,6 +62,13 @@ export function define(cell) {
   v.define(outputs.length ? `cell ${id}` : null, inputs, body);
   variables.push(v);
   for (const o of outputs) variables.push(main.variable(true).define(o, [`cell ${id}`], (exports) => exports[o]));
+}
+
+function noop() {}
+
+function clear(root) {
+  for (const v of root._nodes) v.remove();
+  root._nodes.length = 0;
 }
 
 // If the variable previously rejected, it will show an error even if it doesn’t
@@ -83,6 +91,19 @@ function reject(root, error) {
   displayNode(root, inspectError(error));
 }
 
+function displayJsx(root, value) {
+  return (root._root ??= import("npm:react-dom/client").then(({createRoot}) => {
+    const node = document.createElement("DIV");
+    return [node, createRoot(node)];
+  })).then(([node, client]) => {
+    if (!node.parentNode) {
+      root._nodes.push(node);
+      root.parentNode.insertBefore(node, root);
+    }
+    client.render(value);
+  });
+}
+
 function displayNode(root, node) {
   if (node.nodeType === 11) {
     let child;
@@ -94,11 +115,6 @@ function displayNode(root, node) {
     root._nodes.push(node);
     root.parentNode.insertBefore(node, root);
   }
-}
-
-function clear(root) {
-  for (const v of root._nodes) v.remove();
-  root._nodes.length = 0;
 }
 
 function displayInline(root, value) {

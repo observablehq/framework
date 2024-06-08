@@ -170,6 +170,12 @@ export async function getResolvers(
     globalImports.add(i);
   }
 
+  // Add React for JSX blocks.
+  if (page.code.some((c) => c.mode === "jsx")) {
+    staticImports.add("npm:react-dom/client");
+    globalImports.add("npm:react-dom/client");
+  }
+
   // Add transitive imports for built-in libraries.
   for (const i of getImplicitDependencies(staticImports)) {
     staticImports.add(i);

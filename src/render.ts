@@ -73,7 +73,7 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
       : ""
   }${data?.sql ? `\n${registerTables(data.sql, options)}` : ""}
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
-    .map(({node, id}) => `\n${transpileJavaScript(node, {id, path, resolveImport})}`)
+    .map(({node, id, mode}) => `\n${transpileJavaScript(node, {id, path, mode, resolveImport})}`)
     .join("")}`)}
 </script>${sidebar ? html`\n${await renderSidebar(options, resolvers.resolveLink)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""

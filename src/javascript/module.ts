@@ -1,7 +1,9 @@
 import {createHash} from "node:crypto";
-import {accessSync, constants, readFileSync, statSync} from "node:fs";
+import {accessSync, constants, existsSync, readFileSync, statSync} from "node:fs";
+import {readFile} from "node:fs/promises";
 import {join} from "node:path/posix";
 import type {Program} from "acorn";
+import {transform, transformSync} from "esbuild";
 import {resolvePath} from "../path.js";
 import {findFiles} from "./files.js";
 import {findImports} from "./imports.js";
@@ -73,7 +75,7 @@ export function getModuleInfo(root: string, path: string): ModuleInfo | undefine
   const key = join(root, path);
   let mtimeMs: number;
   try {
-    ({mtimeMs} = statSync(key));
+    ({mtimeMs} = statSync(resolveJsx(key) ?? key));
   } catch {
     moduleInfoCache.delete(key); // delete stale entry
     return; // ignore missing file
@@ -83,7 +85,7 @@ export function getModuleInfo(root: string, path: string): ModuleInfo | undefine
     let source: string;
     let body: Program;
     try {
-      source = readFileSync(key, "utf-8");
+      source = readJavaScriptSync(key);
       body = parseProgram(source);
     } catch {
       moduleInfoCache.delete(key); // delete stale entry
@@ -156,4 +158,38 @@ export function getFileInfo(root: string, path: string): FileInfo | undefined {
     fileInfoCache.set(key, (entry = {mtimeMs, hash}));
   }
   return entry;
+}
+
+function resolveJsx(path: string): string | null {
+  return !existsSync(path) && path.endsWith(".js") && existsSync((path += "x")) ? path : null;
+}
+
+export async function readJavaScript(path: string): Promise<string> {
+  const jsxPath = resolveJsx(path);
+  if (jsxPath !== null) {
+    const source = await readFile(jsxPath, "utf-8");
+    const {code} = await transform(source, {
+      loader: "jsx",
+      jsx: "automatic",
+      jsxImportSource: "npm:react",
+      sourcefile: jsxPath
+    });
+    return code;
+  }
+  return await readFile(path, "utf-8");
+}
+
+export function readJavaScriptSync(path: string): string {
+  const jsxPath = resolveJsx(path);
+  if (jsxPath !== null) {
+    const source = readFileSync(jsxPath, "utf-8");
+    const {code} = transformSync(source, {
+      loader: "jsx",
+      jsx: "automatic",
+      jsxImportSource: "npm:react",
+      sourcefile: jsxPath
+    });
+    return code;
+  }
+  return readFileSync(path, "utf-8");
 }

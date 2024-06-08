@@ -21,6 +21,7 @@ import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import type {FileWatchers} from "./fileWatchers.js";
 import {isComment, isElement, isText, parseHtml, rewriteHtml} from "./html.js";
+import {readJavaScript} from "./javascript/module.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import {parseMarkdown} from "./markdown.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
@@ -142,7 +143,7 @@ export class PreviewServer {
             end(req, res, await bundleStyles({path: filepath}), "text/css");
             return;
           } else if (pathname.endsWith(".js")) {
-            const input = await readFile(join(root, path), "utf-8");
+            const input = await readJavaScript(join(root, path));
             const output = await transpileModule(input, {root, path});
             end(req, res, output, "text/javascript");
             return;
@@ -188,19 +189,14 @@ export class PreviewServer {
         // If this path ends with a slash, then add an implicit /index to the
         // end of the path. Otherwise, remove the .html extension (we use clean
         // paths as the internal canonical representation; see normalizePage).
-        let path = join(root, pathname);
-        if (pathname.endsWith("/")) {
-          pathname = join(pathname, "index");
-          path = join(path, "index");
-        } else {
-          pathname = pathname.replace(/\.html$/, "");
-        }
+        if (pathname.endsWith("/")) pathname = join(pathname, "index");
+        else pathname = pathname.replace(/\.html$/, "");
 
         // Lastly, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
         try {
-          const options = {path: pathname, ...config, preview: true};
-          const source = await readFile(join(dirname(path), basename(path, ".html") + ".md"), "utf8");
+          const options = {...config, path: pathname, preview: true};
+          const source = await readFile(join(root, pathname + ".md"), "utf8");
           const parse = parseMarkdown(source, options);
           const html = await renderPage(parse, options);
           end(req, res, html, "text/html");
@@ -218,7 +214,7 @@ export class PreviewServer {
       }
       if (req.method === "GET" && res.statusCode === 404) {
         try {
-          const options = {path: "/404", ...config, preview: true};
+          const options = {...config, path: "/404", preview: true};
           const source = await readFile(join(root, "404.md"), "utf8");
           const parse = parseMarkdown(source, options);
           const html = await renderPage(parse, options);
@@ -459,10 +455,10 @@ function getCode({code}: MarkdownPage, resolvers: Resolvers): Map<string, string
 // transitive import changes, or when a file referenced by a transitive import
 // changes, the sha is already included in the transpiled code, and hence will
 // likewise be re-evaluated.
-function transpileCode({id, node}: MarkdownCode, resolvers: Resolvers): string {
+function transpileCode({id, node, mode}: MarkdownCode, resolvers: Resolvers): string {
   const hash = createHash("sha256");
   for (const f of node.files) hash.update(resolvers.resolveFile(f.name));
-  return `${transpileJavaScript(node, {id, ...resolvers})} // ${hash.digest("hex")}`;
+  return `${transpileJavaScript(node, {id, mode, ...resolvers})} // ${hash.digest("hex")}`;
 }
 
 function getFiles({files, resolveFile}: Resolvers): Map<string, string> {

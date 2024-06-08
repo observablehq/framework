@@ -1,5 +1,6 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
+import {transformSync} from "esbuild";
 import he from "he";
 import MarkdownIt from "markdown-it";
 import type {Token} from "markdown-it";
@@ -25,6 +26,7 @@ import {red} from "./tty.js";
 export interface MarkdownCode {
   id: string;
   node: JavaScriptNode;
+  mode: "inline" | "block" | "jsx";
 }
 
 export interface MarkdownPage {
@@ -57,9 +59,19 @@ function isFalse(attribute: string | undefined): boolean {
   return attribute?.toLowerCase() === "false";
 }
 
+function transformJsx(content: string): string {
+  try {
+    return transformSync(content, {loader: "jsx", jsx: "automatic", jsxImportSource: "npm:react"}).code;
+  } catch (error: any) {
+    throw new SyntaxError(error.message);
+  }
+}
+
 function getLiveSource(content: string, tag: string, attributes: Record<string, string>): string | undefined {
   return tag === "js"
     ? content
+    : tag === "jsx"
+    ? transformJsx(content)
     : tag === "tex"
     ? transpileTag(content, "tex.block", true)
     : tag === "html"
@@ -107,7 +119,7 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
         const id = uniqueCodeId(context, source);
         // TODO const sourceLine = context.startLine + context.currentLine;
         const node = parseJavaScript(source, {path});
-        context.code.push({id, node});
+        context.code.push({id, node, mode: tag === "jsx" ? "jsx" : "block"});
         html += `<div class="observablehq observablehq--block">${
           node.expression ? "<observablehq-loading></observablehq-loading>" : ""
         }<!--:${id}:--></div>\n`;
@@ -173,7 +185,7 @@ function makePlaceholderRenderer(): RenderRule {
     try {
       // TODO sourceLine: context.startLine + context.currentLine
       const node = parseJavaScript(token.content, {path, inline: true});
-      context.code.push({id, node});
+      context.code.push({id, node, mode: "inline"});
       return `<observablehq-loading></observablehq-loading><!--:${id}:-->`;
     } catch (error) {
       if (!(error instanceof SyntaxError)) throw error;
