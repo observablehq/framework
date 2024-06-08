@@ -148,7 +148,7 @@ class Deployer {
           const source =
             apiKey.source == "file"
               ? ` from ${apiKey.filePath}`
-              : apiKey?.source === "env"
+              : apiKey.source === "env"
               ? ` from $${apiKey.envVar}`
               : "";
           throw new CliError(`Authentication${source} was rejected by the server: ${authError ?? "unknown error"}`);
