@@ -1,95 +1,73 @@
 # JSX
 
-Framework supports [React](https://react.dev/) and [JSX](https://react.dev/learn/writing-markup-with-jsx). This provides a convenient way of writing dynamic HTML in JavaScript, using React to manage state and rendering. To use JSX, declare a JSX fenced code block (<code>```jsx</code>), and then call the built-in display function to display some content.
+[React](https://react.dev/) is a popular and powerful library for building interactive interfaces. React is typically written in [JSX](https://react.dev/learn/writing-markup-with-jsx), an extension of JavaScript that allows HTML-like markup. To use JSX and React, declare a JSX fenced code block (<code>```jsx</code>). For example, to define a `Greeting` component that accepts a `subject` prop:
 
 ````md
 ```jsx
-display(<i>Hello, <b>JSX</b>!</i>);
+function Greeting({subject}) {
+  return <div>Hello, <b>{subject}</b>!</div>
+}
 ```
 ````
 
-This produces:
-
 ```jsx
-display(<i>Hello, <b>JSX</b>!</i>);
-```
-
-JSX is especially convenient for authoring reusable components. These components are typically imported from JSX modules (`.jsx`), but you can also declare them within JSX fenced code blocks.
-
-```jsx echo
-function Greeting({subject = "you"} = {}) {
+function Greeting({subject}) {
   return <div>Hello, <b>{subject}</b>!</div>
 }
 ```
 
-Naturally, you can combine JSX with Framework’s built-in reactivity. This is typically done by passing in reactive values as props. Try changing the `name` below.
+Then call the built-in display function to render content:
 
 ```jsx echo
-display(<Greeting subject={name} />);
+display(<Greeting subject="JSX" />);
+```
+
+You can combine React with Framework’s built-in [reactivity](./reactivity) by passing reactive values as props. Try changing the `name` below.
+
+```jsx echo
+display(<Greeting subject={name || "anonymous"} />);
 ```
 
 ```js echo
-const name = view(Inputs.text({label: "Name", value: "Anonymous"}));
+const name = view(Inputs.text({label: "Name", placeholder: "Anonymous"}));
 ```
 
-Below we import a JSX component and render it.
+You can use hooks such as [`useState`](https://react.dev/reference/react/useState), [`useEffect`](https://react.dev/reference/react/useEffect), and [`useRef`](https://react.dev/reference/react/useRef). The `Counter` component below counts the number of times you click the button.
 
 ```jsx echo
-import {Counter} from "./components/Counter.js";
-
-display(<Counter title="Hello, JSX" />);
+function Counter() {
+  const [count, setCount] = React.useState(0);
+  return (
+    <button onClick={() => setCount(count + 1)}>
+      You clicked {count} times
+    </button>
+  );
+}
 ```
 
-With a JSX fenced code block, the [display function](./javascript#explicit-display) behaves a bit differently:
+```jsx echo
+display(<Counter />);
+```
 
-- It replaces the previously-displayed content, if any
-- It never uses the inspector
-
-In addition, JSX fenced code blocks should always display explicitly; JSX fenced code blocks do not support implicit display of expressions.
-
-React is available by default as `React` in Markdown, and you don’t need to import React when authoring components in JSX modules. If needed, you can import React explicitly like so:
+React is available by default as `React` in Markdown, but you can import it explicitly like so:
 
 ```js run=false
 import * as React from "npm:react";
 ```
 
-You can also import specific symbols, such as hooks:
+If you prefer, you can import specific symbols, such as hooks:
 
 ```js run=false
 import {useState} from "npm:react";
 ```
 
-Always use the `.js` file extension to import JSX modules. JSX modules are transpiled to JavaScript during build and served with a `.js` extension.
+React DOM is also available as `ReactDOM` in Markdown, or can be imported as:
 
-```jsx run=false
-import {useState} from "npm:react";
-import {Card} from "./Card.js";
-
-export function Counter({title = "Untitled"} = {}) {
-  const [counter, setCounter] = useState(0);
-  return (
-    <Card title={title}>
-      <p>
-        <button onClick={() => setCounter(counter + 1)}>Click me</button>
-      </p>
-      <p>The current count is {counter}.</p>
-      <div
-        style={{
-          transition: "background 250ms ease",
-          color: "white",
-          backgroundColor: counter & 1 ? "brown" : "steelblue",
-          borderRadius: "0.5rem",
-          padding: "1rem"
-        }}
-      >
-        This element has a background color that changes.
-      </div>
-    </Card>
-  );
-}
+```js run=false
+import * as ReactDOM from "npm:react-dom";
 ```
 
-JSX components can import other JSX components. The component above imports `Card.jsx`, which looks like this:
+You can define components in JSX modules. For example, if this were `components/Card.jsx`:
 
 ```jsx run=false
 export function Card({title, children} = {}) {
@@ -100,4 +78,60 @@ export function Card({title, children} = {}) {
     </div>
   );
 }
+```
+
+You could then import the `Card` component as:
+
+```js echo
+import {Card} from "./components/Card.js";
+```
+
+<div class="note">
+
+Use the `.js` file extension when importing JSX (`.jsx`) modules; JSX is transpiled to JavaScript during build.
+
+</div>
+
+And, as before, you can render a card using the display function:
+
+```jsx echo
+display(<Card title="A test of cards">If you can read this, success!</Card>);
+```
+
+Within a JSX fenced code block, the [display function](./javascript#explicit-display) behaves a bit differently from a JavaScript fenced code block or inline expression:
+it replaces the previously-displayed content, if any. In addition, JSX fenced code blocks do not support implicit display; content can only be displayed explicitly.
+
+<div class="note">
+
+In the future we intend to support other JSX-compatible frameworks, such as Preact. We are also working on server-side rendering with client-side hydration; please upvote [#931](https://github.com/observablehq/framework/issues/931) if you are interested in this feature.
+
+</div>
+
+## Inline expressions
+
+JSX is not currently supported in inline expression `${…}`; only JavaScript is allowed in inline expressions. However, you can declare a detached root using [`createRoot`](https://react.dev/reference/react-dom/client/createRoot):
+
+```js echo
+const node = document.createElement("SPAN");
+const root = ReactDOM.createRoot(node);
+```
+
+Then use a JSX code block to render the desired content into the root:
+
+```jsx echo
+root.render(<>Hello, <i>{name || "anonymous"}</i>!</>);
+```
+
+Lastly, interpolate the root into the desired location with an inline expression:
+
+<div class="card">
+  <h2>Rendering into an inline expression</h2>
+  ${node}
+</div>
+
+```md run=false
+<div class="card">
+  <h2>Rendering into an inline expression</h2>
+  ${node}
+</div>
 ```
