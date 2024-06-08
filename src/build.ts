@@ -5,7 +5,7 @@ import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
-import {getModuleHash} from "./javascript/module.js";
+import {getModuleHash, readJavaScript} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
@@ -153,20 +153,21 @@ export async function build(
   // Copy over the referenced files, accumulating hashed aliases.
   for (const file of files) {
     let sourcePath = join(root, file);
+    effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     if (!existsSync(sourcePath)) {
       const loader = loaders.find(join("/", file), {useStale: true});
       if (!loader) {
-        effects.logger.error("missing referenced file", sourcePath);
+        effects.logger.error(red("error: missing referenced file"));
         continue;
       }
       try {
         sourcePath = join(root, await loader.load(effects));
       } catch (error) {
         if (!isEnoent(error)) throw error;
+        effects.logger.error(red("error: missing referenced file"));
         continue;
       }
     }
-    effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     const contents = await readFile(sourcePath);
     const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
     const ext = extname(file);
@@ -200,13 +201,16 @@ export async function build(
   };
   for (const path of localImports) {
     const sourcePath = join(root, path);
-    if (!existsSync(sourcePath)) {
-      effects.logger.error("missing referenced file", sourcePath);
-      continue;
-    }
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     const resolveImport = getModuleResolver(root, path);
-    const input = await readFile(sourcePath, "utf-8");
+    let input: string;
+    try {
+      input = await readJavaScript(sourcePath);
+    } catch (error) {
+      if (!isEnoent(error)) throw error;
+      effects.logger.error(red("error: missing referenced import"));
+      continue;
+    }
     const contents = await transpileModule(input, {
       root,
       path,
