@@ -22,7 +22,6 @@ describe("create", () => {
       new Set([
         "template-test/.gitignore",
         "template-test/src/.gitignore",
-        "template-test/src/aapl.csv",
         "template-test/src/observable.png",
         "template-test/src/components/timeline.js",
         "template-test/src/data/events.json",
@@ -30,7 +29,6 @@ describe("create", () => {
         "template-test/src/example-dashboard.md",
         "template-test/src/example-report.md",
         "template-test/src/index.md",
-        "template-test/src/penguins.csv",
         "template-test/observablehq.config.js",
         "template-test/package.json",
         "template-test/README.md"
