@@ -73,7 +73,7 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
       : ""
   }${data?.sql ? `\n${registerTables(data.sql, options)}` : ""}
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
-    .map(({node, id}) => `\n${transpileJavaScript(node, {id, path, resolveImport})}`)
+    .map(({node, id, mode}) => `\n${transpileJavaScript(node, {id, path, mode, resolveImport})}`)
     .join("")}`)}
 </script>${sidebar ? html`\n${await renderSidebar(options, resolvers.resolveLink)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
@@ -141,22 +141,21 @@ async function renderSidebar(options: RenderOptions, resolveLink: (href: string)
     (await rollupClient(getClientPath("search-init.js"), root, path, {minify: true})).trim()
   )}}</script>`
       : ""
-  }
-  <ol>${pages.map((p, i) =>
+  }${pages.map((p, i) =>
     "pages" in p
-      ? html`${i > 0 && "path" in pages[i - 1] ? html`</ol>` : ""}
-    <${p.collapsible ? (p.open || isSectionActive(p, path) ? "details open" : "details") : "section"}${
-      isSectionActive(p, path) ? html` class="observablehq-section-active"` : ""
-    }>
-      <summary>${p.name}</summary>
-      <ol>${p.pages.map((p) => renderListItem(p, path, resolveLink))}
-      </ol>
-    </${p.collapsible ? "details" : "section"}>`
-      : "path" in p
-      ? html`${i > 0 && "pages" in pages[i - 1] ? html`\n  </ol>\n  <ol>` : ""}${renderListItem(p, path, resolveLink)}`
-      : ""
+      ? html`\n  <${p.collapsible ? (p.open || isSectionActive(p, path) ? "details open" : "details") : "section"}${
+          isSectionActive(p, path) ? html` class="observablehq-section-active"` : ""
+        }>
+    ${renderSectionHeader(p, path, resolveLink)}
+    <ol>${p.pages.map((p) => renderListItem(p, path, resolveLink))}
+    </ol>
+  </${p.collapsible ? "details" : "section"}>`
+      : "pages" in p
+      ? ""
+      : html`${i === 0 || "pages" in pages[i - 1] ? html`\n  <ol>` : ""}${renderListItem(p, path, resolveLink)}${
+          i === pages.length - 1 || "pages" in pages[i + 1] ? html`\n  </ol>` : ""
+        }`
   )}
-  </ol>
 </nav>
 <script>{${html.unsafe(
     (await rollupClient(getClientPath("sidebar-init.js"), root, path, {minify: true})).trim()
@@ -164,7 +163,7 @@ async function renderSidebar(options: RenderOptions, resolveLink: (href: string)
 }
 
 function isSectionActive(s: Section<Page>, path: string): boolean {
-  return s.pages.some((p) => normalizePath(p.path) === path);
+  return s.pages.some((p) => normalizePath(p.path) === path) || (s.path !== null && normalizePath(s.path) === path);
 }
 
 interface Header {
@@ -194,6 +193,16 @@ function renderToc(headers: Header[], label: string): Html {
   }
 </nav>
 </aside>`;
+}
+
+function renderSectionHeader(section: Section<Page>, path: string, resolveLink: (href: string) => string): Html {
+  if (section.path === null) return html`<summary>${section.name}</summary>`;
+  const external = !isAssetPath(section.path);
+  return html`<summary class="observablehq-link${
+    normalizePath(section.path) === path ? " observablehq-link-active" : ""
+  }"><a href="${encodeURI(resolveLink(section.path))}"${external ? html` target="_blank"` : null}>${
+    external ? html`<span>${section.name}</span>` : section.name
+  }</a></summary>`;
 }
 
 function renderListItem(page: Page, path: string, resolveLink: (href: string) => string): Html {

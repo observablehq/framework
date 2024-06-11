@@ -5,7 +5,7 @@ import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {CliError, isEnoent} from "./error.js";
 import {getClientPath, maybeStat, prepareOutput, visitMarkdownFiles} from "./files.js";
-import {getModuleHash} from "./javascript/module.js";
+import {getModuleHash, readJavaScript} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
@@ -43,11 +43,13 @@ export interface BuildEffects {
    * example, in a local build this should be relative to the dist directory.
    */
   writeFile(outputPath: string, contents: Buffer | string): Promise<void>;
+
+  writeBuildManifest(buildManifest: BuildManifest): Promise<void>;
 }
 
 export async function build(
   {config, addPublic = true}: BuildOptions,
-  effects: BuildEffects = new FileBuildEffects(config.output)
+  effects: BuildEffects = new FileBuildEffects(config.output, join(config.root, ".observablehq", "cache"))
 ): Promise<void> {
   const {root, loaders, normalizePath} = config;
   Telemetry.record({event: "build", step: "start"});
@@ -151,20 +153,21 @@ export async function build(
   // Copy over the referenced files, accumulating hashed aliases.
   for (const file of files) {
     let sourcePath = join(root, file);
+    effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     if (!existsSync(sourcePath)) {
       const loader = loaders.find(join("/", file), {useStale: true});
       if (!loader) {
-        effects.logger.error("missing referenced file", sourcePath);
+        effects.logger.error(red("error: missing referenced file"));
         continue;
       }
       try {
         sourcePath = join(root, await loader.load(effects));
       } catch (error) {
         if (!isEnoent(error)) throw error;
+        effects.logger.error(red("error: missing referenced file"));
         continue;
       }
     }
-    effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     const contents = await readFile(sourcePath);
     const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
     const ext = extname(file);
@@ -198,13 +201,16 @@ export async function build(
   };
   for (const path of localImports) {
     const sourcePath = join(root, path);
-    if (!existsSync(sourcePath)) {
-      effects.logger.error("missing referenced file", sourcePath);
-      continue;
-    }
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     const resolveImport = getModuleResolver(root, path);
-    const input = await readFile(sourcePath, "utf-8");
+    let input: string;
+    try {
+      input = await readJavaScript(sourcePath);
+    } catch (error) {
+      if (!isEnoent(error)) throw error;
+      effects.logger.error(red("error: missing referenced import"));
+      continue;
+    }
     const contents = await transpileModule(input, {
       root,
       path,
@@ -252,6 +258,7 @@ export async function build(
   }
 
   // Render pages!
+  const buildManifest: BuildManifest = {pages: []};
   for (const [sourceFile, {page, resolvers}] of pages) {
     const sourcePath = join(root, sourceFile);
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
@@ -259,8 +266,12 @@ export async function build(
     effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
     const html = await renderPage(page, {...config, path, resolvers});
     await effects.writeFile(outputPath, html);
+    const urlPath = config.normalizePath("/" + outputPath);
+    buildManifest.pages.push({path: urlPath, title: page.title});
   }
 
+  // Write the build manifest.
+  await effects.writeBuildManifest(buildManifest);
   // Log page sizes.
   const columnWidth = 12;
   effects.logger.log("");
@@ -331,16 +342,19 @@ function formatBytes(size: number, length: number, locale: Intl.LocalesArgument 
 
 export class FileBuildEffects implements BuildEffects {
   private readonly outputRoot: string;
+  private readonly cacheDir: string;
   readonly logger: Logger;
   readonly output: Writer;
   constructor(
     outputRoot: string,
+    cacheDir: string,
     {logger = console, output = process.stdout}: {logger?: Logger; output?: Writer} = {}
   ) {
     if (!outputRoot) throw new Error("missing outputRoot");
     this.logger = logger;
     this.output = output;
     this.outputRoot = outputRoot;
+    this.cacheDir = cacheDir;
   }
   async copyFile(sourcePath: string, outputPath: string): Promise<void> {
     const destination = join(this.outputRoot, outputPath);
@@ -356,6 +370,15 @@ export class FileBuildEffects implements BuildEffects {
     await prepareOutput(destination);
     await writeFile(destination, contents);
   }
+  async writeBuildManifest(buildManifest: BuildManifest): Promise<void> {
+    const destination = join(this.cacheDir, "_build.json");
+    await prepareOutput(destination);
+    await writeFile(destination, JSON.stringify(buildManifest));
+  }
+}
+
+export interface BuildManifest {
+  pages: {path: string; title: string | null}[];
 }
 
 // Asserts that the destination file is not already present. This can happen if

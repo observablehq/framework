@@ -3,6 +3,7 @@ export default {
     {
       name: "Sub",
       open: false,
+      path: "/sub/",
       pages: [
         {name: "Page 0", path: "/sub/page0"},
         {name: "Page 1 ?x=1", path: "/sub/page1?x=1"},

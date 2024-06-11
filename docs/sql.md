@@ -189,3 +189,19 @@ The `sql` tag is available by default in Markdown. You can also import it explic
 ```js run=false
 import {sql} from "npm:@observablehq/duckdb";
 ```
+
+The `sql` tag is also useful for working around a current limitation of DuckDB-Wasm: prepared statements do not support array arguments. (Please upvote [#447](https://github.com/duckdb/duckdb-wasm/issues/447) if you run into this issue.) Instead of passing the array as a parameter, you can interpolate the array values directly into the SQL query.
+
+```js echo
+const source_ids = [2028328031008716288n, 2076498116457016960n, 4315266827603868160n, 4123529214004874624n, 5312548578630777344n];
+```
+
+```js echo
+Inputs.table(await sql([`SELECT * FROM gaia WHERE source_id IN (${[source_ids]})`]))
+```
+
+<div class="warning">
+
+When interpolating values into SQL queries, be careful to avoid [SQL injection](https://en.wikipedia.org/wiki/SQL_injection) by properly escaping or sanitizing user input. The example above is safe only because `source_ids` are known to be numeric.
+
+</div>
