@@ -1,4 +1,3 @@
-#!/usr/bin/env rust-script
 //! Since Framework uses rust-script, we can define dependencies here.
 //!
 //! ```cargo
@@ -50,7 +49,7 @@ fn main() {
 
     serde_json::to_writer(std::io::stdout(), &json!({
         "summary": tidy_data,
-        "meta": { "count": COUNT, "duration_s": start.elapsed().as_secs_f64() },
+        "meta": { "count": COUNT, "duration_ms": start.elapsed().as_millis() },
     })).unwrap();
 }
 

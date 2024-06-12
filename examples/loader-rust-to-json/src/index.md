@@ -55,7 +55,7 @@ fn main() {
 
     serde_json::to_writer(std::io::stdout(), &json!({
         "summary": tidy_data,
-        "meta": { "count": COUNT, "duration_s": start.elapsed().as_secs_f64() },
+        "meta": { "count": COUNT, "duration_ms": start.elapsed().as_millis() },
     })).unwrap();
 }
 
@@ -188,7 +188,7 @@ Inputs.table(hands.summary)
 
 </div>
 
-Taking advantage of Rust’s performance and simple parallelism, the data loader above was able to summarize ${hands.meta.count / 1e6} million hands in ${hands.meta.duration_s.toFixed(1)} seconds.
+Taking advantage of Rust’s performance and simple parallelism, the data loader above was able to summarize ${hands.meta.count / 1e6} million hands in ${hands.meta.duration_ms.toLocaleString()} ms.
 
 We can make a quick chart of the poker hands with Plot
 
@@ -197,7 +197,7 @@ Plot.plot({
   x: {tickFormat: "%", grid: true},
   y: {domain: hands.summary.map(d => d.category)},
   marginLeft: 100,
-  marginRight: 30,
+  marginRight: 35,
   marks: [
     Plot.ruleX([0]),
     Plot.barX(hands.summary, {
@@ -217,16 +217,23 @@ Plot.plot({
 ```
 
 ```js echo
-function formatPercent(x) {
-  // Displays both large and small percentages by adding decimal places
-  // until there is something besides zeroes, or until the limit is hit.
-  for (let decimals = 0; decimals <= 5; decimals++) {
+/**
+ * Formats both large and small percentages by adding decimal places
+ * until there is something besides zeroes, or until the limit is hit.
+ * Additionally, don't show "100%" for values less than 1.
+ */
+function formatPercent(x, {maxDecimals = 5} = {}) {
+  let rv;
+  for (let decimals = 0; decimals <= maxDecimals; decimals++) {
     const f = d3.format(`.${decimals}%`);
-    let s = f(x);
-    if (s.match(/[1-9]\d/)) {
-      return s;
+    const s = f(x);
+    if (s.match(/[1-9]\.?\d/)) {
+      rv = s;
+      break;
     }
   }
-  return "0%";
+  if (!rv) return "0%";
+  if (rv.startsWith("100") && x < 1) return "99.9%";
+  return rv;
 }
 ```
