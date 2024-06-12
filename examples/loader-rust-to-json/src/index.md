@@ -174,10 +174,14 @@ To run this data loader, you’ll need [rust-script](https://rust-script.org/) i
 
 </div>
 
-The above data loader lives in `data/poker.json.rs`, so we can load the data as `data/poker.json` using `FileAttachment`.
+The above data loader lives in [`data/poker.json.rs`](data/poker.json.rs), so we can load the data as `data/poker.json` using `FileAttachment`.
 
 ```js echo
 const hands = FileAttachment("data/poker.json").json();
+```
+
+```js echo
+const handsTs = FileAttachment("data/poker-ts.json").json();
 ```
 
 <div style="max-width: 300px;">
@@ -186,9 +190,13 @@ const hands = FileAttachment("data/poker.json").json();
 Inputs.table(hands.summary)
 ```
 
+```js
+const extrapolatedTsTime = handsTs.meta.duration_ms * (hands.meta.count / handsTs.meta.count);
+```
+
 </div>
 
-Taking advantage of Rust’s performance and simple parallelism, the data loader above was able to summarize ${hands.meta.count / 1e6} million hands in ${hands.meta.duration_ms.toLocaleString()} ms.
+Taking advantage of Rust’s performance and simple parallelism, the data loader above was able to summarize ${hands.meta.count / 1e6} million hands in ${hands.meta.duration_ms.toLocaleString("en-US")} ms. For comparison, an equivalent data loader written in TypeScript (which you can see in `data/poker-ts.json.ts`) would take ${Math.floor(extrapolatedTsTime / 1000).toLocaleString("en-US")} seconds to do the same simulation.
 
 We can make a quick chart of the poker hands with Plot
 
