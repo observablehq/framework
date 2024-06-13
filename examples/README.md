@@ -53,6 +53,7 @@
 - [`loader-r-to-csv`](https://observablehq.observablehq.cloud/framework-example-loader-r-to-csv/) - Generating CSV from R
 - [`loader-r-to-jpeg`](https://observablehq.observablehq.cloud/framework-example-loader-r-to-jpeg/) - Generating JPEG from R
 - [`loader-r-to-json`](https://observablehq.observablehq.cloud/framework-example-loader-r-to-json/) - Generating JSON from R
+- [`loader-rust-to-json`](https://observablehq.observablehq.cloud/framework-example-loader-rust-to-json/) - Generating JSON from Rust
 - [`loader-snowflake`](https://observablehq.observablehq.cloud/framework-example-loader-snowflake/) - Loading data from Snowflake
 - [`netcdf-contours`](https://observablehq.observablehq.cloud/framework-example-netcdf-contours/) - Converting NetCDF to GeoJSON with `netcdfjs` and `d3-geo-voronoi`
 
