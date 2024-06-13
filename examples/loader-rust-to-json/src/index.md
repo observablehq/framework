@@ -198,7 +198,7 @@ const extrapolatedTsTime = handsTs.meta.duration_ms * (hands.meta.count / handsT
 
 Taking advantage of Rust’s performance and simple parallelism, the data loader above was able to summarize ${hands.meta.count / 1e6} million hands in ${hands.meta.duration_ms.toLocaleString("en-US")} ms. For comparison, an equivalent data loader written in TypeScript (which you can see in `data/poker-ts.json.ts`) would take ${Math.floor(extrapolatedTsTime / 1000).toLocaleString("en-US")} seconds to do the same simulation.
 
-We can make a quick chart of the poker hands with Plot
+We can make a quick chart of the poker hands with Plot:
 
 ```js echo
 Plot.plot({
