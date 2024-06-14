@@ -31,7 +31,6 @@ export function DonutChart(data, {centerText, width, order, colorScale}) {
     .data(pie(data))
     .join("path")
     .attr("fill", (d) => color(d.data.name))
-    //.attr("stroke", "currentColor")
     .attr("d", arc);
 
   svg
@@ -58,9 +57,6 @@ export function DonutChart(data, {centerText, width, order, colorScale}) {
         .append("tspan")
         .attr("x", 0)
         .attr("y", "0.8em")
-        //.attr("paint-order", "stroke")
-        //.attr("stroke", "white")
-        //.attr("stroke-width", 2.5)
         .attr("fill", "white")
         .attr("fill-opacity", 1)
         .text((d) => d.data.value.toLocaleString("en-US"))
