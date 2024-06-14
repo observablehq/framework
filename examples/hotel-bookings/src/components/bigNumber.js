@@ -1,35 +1,11 @@
-import * as Plot from "npm:@observablehq/plot";
+import {html} from "npm:htl";
 
 export function bigNumber(metric, dateArray, value, compare, width) {
-  return Plot.plot({
-    width,
-    height: 250,
-    marks: [
-      Plot.text([metric], {
-        frameAnchor: "left",
-        fontSize: 30,
-        dy: -100,
-        opacity: 0.8,
-        fontWeight: 800
-      }),
-      Plot.text([dateArray], {
-        frameAnchor: "left",
-        fontSize: 30,
-        fontStyle: "italic",
-        text: (d) => `${d[0]} to ${d[1]}`,
-        dy: -50
-      }),
-      Plot.text([value], {
-        frameAnchor: "left",
-        fontSize: 80,
-        fontWeight: 800,
-        dy: 30
-      }),
-      Plot.text([compare], {
-        frameAnchor: "left",
-        fontSize: 30,
-        dy: 120
-      })
-    ]
-  });
+  return html`
+  <h2>${metric}</h2>
+  <div style="font-size: ${width / 250}rem">
+  <h3><i>${dateArray[0]} to ${dateArray[1]}</i></h3>
+  <h1>${value}</h1>
+  <div>${compare}</div>
+  <div>`;
 }
