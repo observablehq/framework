@@ -4,6 +4,7 @@ import {mergeToc} from "./config.js";
 import {getClientPath} from "./files.js";
 import type {Html, HtmlResolvers} from "./html.js";
 import {html, parseHtml, rewriteHtml} from "./html.js";
+import {isJavaScript} from "./javascript/imports.js";
 import {transpileJavaScript} from "./javascript/transpile.js";
 import type {MarkdownPage} from "./markdown.js";
 import type {PageLink} from "./pager.js";
@@ -73,7 +74,7 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
       : ""
   }${data?.sql ? `\n${registerTables(data.sql, options)}` : ""}
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
-    .map(({node, id}) => `\n${transpileJavaScript(node, {id, path, resolveImport})}`)
+    .map(({node, id, mode}) => `\n${transpileJavaScript(node, {id, path, mode, resolveImport})}`)
     .join("")}`)}
 </script>${sidebar ? html`\n${await renderSidebar(options, resolvers.resolveLink)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
@@ -235,8 +236,8 @@ function renderStylesheetPreload(href: string): Html {
   return html`\n<link rel="preload" as="style" href="${href}"${/^\w+:/.test(href) ? " crossorigin" : ""}>`;
 }
 
-function renderModulePreload(href: string): Html {
-  return html`\n<link rel="modulepreload" href="${href}">`;
+function renderModulePreload(href: string): Html | null {
+  return isJavaScript(href) ? html`\n<link rel="modulepreload" href="${href}">` : null;
 }
 
 function renderHeader(header: MarkdownPage["header"], resolvers: HtmlResolvers): Html | null {

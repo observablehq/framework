@@ -32,6 +32,18 @@ export function getImplicitInputImports(inputs: Iterable<string>): Set<string> {
   if (set.has("topojson")) implicits.add("npm:topojson-client");
   if (set.has("vl")) implicits.add("observablehq:stdlib/vega-lite");
   if (set.has("vg")) implicits.add("observablehq:stdlib/vgplot");
+  if (set.has("aapl")) implicits.add("npm:@observablehq/sample-datasets/aapl.csv");
+  if (set.has("alphabet")) implicits.add("npm:@observablehq/sample-datasets/alphabet.csv");
+  if (set.has("cars")) implicits.add("npm:@observablehq/sample-datasets/cars.csv");
+  if (set.has("citywages")) implicits.add("npm:@observablehq/sample-datasets/citywages.csv");
+  if (set.has("diamonds")) implicits.add("npm:@observablehq/sample-datasets/diamonds.csv");
+  if (set.has("flare")) implicits.add("npm:@observablehq/sample-datasets/flare.csv");
+  if (set.has("industries")) implicits.add("npm:@observablehq/sample-datasets/industries.csv");
+  if (set.has("miserables")) implicits.add("npm:@observablehq/sample-datasets/miserables.json");
+  if (set.has("olympians")) implicits.add("npm:@observablehq/sample-datasets/olympians.csv");
+  if (set.has("penguins")) implicits.add("npm:@observablehq/sample-datasets/penguins.csv");
+  if (set.has("pizza")) implicits.add("npm:@observablehq/sample-datasets/pizza.csv");
+  if (set.has("weather")) implicits.add("npm:@observablehq/sample-datasets/weather.csv");
   return implicits;
 }
 

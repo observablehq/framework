@@ -51,7 +51,7 @@ const quakes = FileAttachment("quakes.csv").csv({typed: true});
 Now you can display the earthquakes in a map using [Observable Plot](./lib/plot):
 
 ```js
-const world = await fetch(import.meta.resolve("npm:world-atlas@1/world/110m.json")).then((response) => response.json());
+const world = await fetch(import.meta.resolve("npm:world-atlas/land-110m.json")).then((response) => response.json());
 const land = topojson.feature(world, world.objects.land);
 ```
 
