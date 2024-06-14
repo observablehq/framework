@@ -574,6 +574,23 @@ describe("deploy", () => {
     }
   });
 
+  it("non interactive terminals throw an error when unauthenticated", async () => {
+    const effects = new MockDeployEffects({isTty: false, apiKey: null});
+    await assert.rejects(
+      async () => await deploy(TEST_OPTIONS, effects),
+      (error) => (CliError.assert(error, {message: "No authentication provided"}), true)
+    );
+  });
+
+  it("non interactive terminals throw an error when unauthorized", async () => {
+    getCurrentObservableApi().handleGetCurrentUser({status: 403}).start();
+    const effects = new MockDeployEffects({isTty: false, apiKey: invalidApiKey});
+    await assert.rejects(
+      async () => await deploy(TEST_OPTIONS, effects),
+      (error) => (CliError.assert(error, {message: "Authentication was rejected by the server: forbidden"}), true)
+    );
+  });
+
   it("throws an error if deploy creation fails", async () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
