@@ -53,10 +53,10 @@ const countryColors = ["#4269d0", "#efb118", "#ff725c", "#6cc5b0", "#3ca951","#f
     ${resize(width => DonutChart(bookingSeason, {centerText: "Visit season", width: width, order: ["Summer", "Fall", "Winter", "Spring"], colorScale: seasonColors}))}
   </div>
   <div class="card grid-rowspan-1">
-    ${bigNumber(`Total bookings`, datesExtent, `${d3.format(",")(bookingsByMarketSegment.length)}`, `${d3.format(".1%")(bookingsByMarketSegment.length / bookingsAll.length)} of all bookings`)}
+    ${resize((width) => bigNumber(`Number of bookings, ${pickMarketSegment}`, datesExtent, `${d3.format(",")(bookingsByMarketSegment.length)}`, `${d3.format(".1%")(bookingsByMarketSegment.length / bookingsAll.length)} of all bookings`, width))}
   </div>
   <div class="card grid-rowspan-1">
-    ${bigNumber(`Average daily rate`, datesExtent, `$ ${d3.mean(bookingsByMarketSegment.map((d) => d.ADR)).toFixed(2)}`, `${pickMarketSegment == "All" ? `` : d3.format("$")(Math.abs(rateDiffFromAverage))} ${rateDiffFromAverage > 0 ? `greater than overall average rate` : rateDiffFromAverage == 0 ? `` : `less than overall average rate`}`)}
+    ${resize((width) => bigNumber(`Average daily rate`, datesExtent, `$ ${d3.mean(bookingsByMarketSegment.map((d) => d.ADR)).toFixed(2)}`, `${pickMarketSegment == "All" ? `` : d3.format("$")(Math.abs(rateDiffFromAverage))} ${rateDiffFromAverage > 0 ? `greater than average rate` : rateDiffFromAverage == 0 ? `` : `less than average rate`}`, width))}
   </div>
 </div>
 
@@ -66,9 +66,9 @@ const countryColors = ["#4269d0", "#efb118", "#ff725c", "#6cc5b0", "#3ca951","#f
 
 <div class="grid grid-cols-2"">
   <div class="card grid-colspan-1">
-    <h2>${pickMarketSegment}: rooms reserved by season</h2>
-    <h3>${pickMarketSegment == "All" ? `Size represents total bookings by room type and season.` : `Size represents number of total bookings, by room type and season, for the selected market segment (red), with all bookings shown for comparison in blue.`}</h3>
-    ${resize((width) => typeSeasonBubble(width))}
+    <h2>Bookings by room type and season.</h2>
+    <h3>Market segment: ${pickMarketSegment}</h3>
+    ${resize((width) => typeSeasonChart(width))}
   </div>
   <div class="card grid-colspan-1">
     <h2>${pickMarketSegment} reservations: rate distribution by season</h2>
@@ -216,12 +216,11 @@ function arrivalLineChart(width, height) {
       Plot.areaY(
         bookingsByMarketSegment,
         Plot.binX(
-          { y: "count" },
+          { y: "count", thresholds: "day", filter: null },
           {
             x: "arrivalDate",
-            interval: d3.utcDay,
+            curve: "step",
             fill: "url(#gradient)",
-            strokeWidth: 1
           }
         )
       ),
@@ -230,18 +229,17 @@ function arrivalLineChart(width, height) {
         Plot.windowY(
           { k: 28 },
           Plot.binX(
-            { y: "count" },
+            { y: "count", interval: "day", filter: null },
             {
               x: "arrivalDate",
-              interval: d3.utcDay,
               strokeWidth: 2,
               tip: {
                 format: {
                   arrivalDate: true,
                   bookings: true,
-                  x: d => d3.timeFormat("%d %b %Y")(d),
-                  }
-                  }
+                  x: "%d %b %Y"
+                }
+              }
             }
           )
         )
@@ -311,36 +309,27 @@ function dailyRateChart(width, height) {
 
 ```js
 // Create bubble chart of bookings by room type and season
-function typeSeasonBubble(width, height) {
+function typeSeasonChart(width, height) {
   return Plot.plot({
-    marginTop: 0,
-    marginBottom: 35,
-    marginLeft: 70,
+    marginTop: 20,
+    marginBottom: 30,
+    marginLeft: 40,
     width,
-    height: 250,
-    x: {label: "Room type", grid: true},
-    y: {label: "Season", fontSize:0, grid: true},
-    r: {range: [1, 20]},
+    height: 270,
+    x: {domain: seasonDomain, tickSize: 0, axis: null},
+    y: {label: "Count", fontSize:0, grid: true, insetTop: 5},
+    fx: {label: "Room type"},
+    color: {legend: true, domain: seasonDomain, range: seasonColors},
     marks: [
-      Plot.dot(bookingsAll, Plot.group({r: "count"},
+      Plot.frame({opacity: 0.4}),
+      Plot.barY(bookingsByMarketSegment, Plot.groupX({y: "count"},
         {
-          y: "season",
-          x: "ReservedRoomType",
-          fill: "#4269d0",
-          opacity: 0.9
+          x: "season",
+          fx: "ReservedRoomType",
+          fill: "season",
+          tip: true,
         }
       )),
-      pickMarketSegment == "All" ? null :
-        Plot.dot(bookingsByMarketSegment,
-          Plot.group({r: "count"},
-          {
-            y: "season",
-            x: "ReservedRoomType",
-            fill: "#ff725c",
-            opacity: 0.9,
-            tip: true
-          }
-        )),
     ]
   });
 }
