@@ -48,7 +48,7 @@
 - [`loader-julia-to-txt`](https://observablehq.observablehq.cloud/framework-example-loader-julia-to-txt/) - Generating TXT from Julia
 - [`loader-parquet`](https://observablehq.observablehq.cloud/framework-example-loader-parquet/) - Generating Apache Parquet files
 - [`loader-postgres`](https://observablehq.observablehq.cloud/framework-example-loader-postgres/) - Loading data from PostgreSQL
-- [`loader-python-to-csv`](https://observablehq.observablehq.cloud/framework-example-penguin-classification/) - Generating CSV from Python
+- [`loader-python-to-csv`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-csv/) - Generating CSV from Python
 - [`loader-python-to-png`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-png/) - Generating PNG from Python
 - [`loader-python-to-zip`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-zip/) - Generating ZIP from Python
 - [`loader-r-to-csv`](https://observablehq.observablehq.cloud/framework-example-loader-r-to-csv/) - Generating CSV from R
