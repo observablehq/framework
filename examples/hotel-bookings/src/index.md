@@ -235,7 +235,13 @@ function arrivalLineChart(width, height) {
               x: "arrivalDate",
               interval: d3.utcDay,
               strokeWidth: 2,
-              tip: true,
+              tip: {
+                format: {
+                  arrivalDate: true,
+                  bookings: true,
+                  x: d => d3.timeFormat("%d %b %Y")(d),
+                  }
+                  }
             }
           )
         )
