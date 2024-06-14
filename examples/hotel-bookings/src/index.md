@@ -36,15 +36,21 @@ ${pickMarketSegmentInput}
 
 ## ${pickMarketSegment} bookings
 
+```js
+const countryOrder = ["PRT", "ESP", "GBR", "DEU", "FRA", "IRL", "AUT", "Other", "Unknown"];
+
+const countryColors = ["#4269d0", "#efb118", "#ff725c", "#6cc5b0", "#3ca951","#ff8ab7", "#a463f2", "#97bbf5", "#9c6b4e"];
+```
+
 <div class="grid grid-cols-4">
   <div class="card grid-rowspan-2">
-    ${resize(width => DonutChart(byCountry, {centerText: "Guest nationality", width: width, colorScale: d3.quantize(t => d3.interpolateTurbo(t * 0.2 + 0.02), 6)}))}
+    ${resize(width => DonutChart(byCountry, {centerText: "Guest nationality", width: width, order: countryOrder,colorScale: countryColors}))}
   </div>
   <div class="card grid-rowspan-2">
-    ${resize(width => DonutChart(byBookingOutcome, {centerText: "Status", width: width, colorScale: ["#525252", "#8b8b8b"]}))}
+    ${resize(width => DonutChart(byBookingOutcome, {centerText: "Status", width: width, order: ["Cancel", "Keep"], colorScale: ["#525252", "#8b8b8b"]}))}
   </div>
   <div class="card grid-rowspan-2">
-    ${resize(width => DonutChart(bookingSeason, {centerText: "Visit season", width: width, colorScale: seasonColors}))}
+    ${resize(width => DonutChart(bookingSeason, {centerText: "Visit season", width: width, order: ["Summer", "Fall", "Winter", "Spring"], colorScale: seasonColors}))}
   </div>
   <div class="card grid-rowspan-1">
     ${bigNumber(`Total bookings`, datesExtent, `${d3.format(",")(bookingsByMarketSegment.length)}`, `${d3.format(".1%")(bookingsByMarketSegment.length / bookingsAll.length)} of all bookings`)}

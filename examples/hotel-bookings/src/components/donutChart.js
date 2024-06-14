@@ -2,7 +2,7 @@
 
 import * as d3 from "npm:d3";
 
-export function DonutChart(data, {centerText, width, colorScale}) {
+export function DonutChart(data, {centerText, width, order, colorScale}) {
   const height = width;
   const radius = Math.min(width, height) / 2;
   const arc = d3
@@ -16,10 +16,7 @@ export function DonutChart(data, {centerText, width, colorScale}) {
     .sort(null)
     .value((d) => d.value);
 
-  const color = d3
-    .scaleOrdinal()
-    .domain(data.map((d) => d.name))
-    .range(colorScale);
+  const color = d3.scaleOrdinal().domain(order).range(colorScale);
 
   const svg = d3
     .create("svg")
