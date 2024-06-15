@@ -22,6 +22,7 @@ export default {
     {name: "Markdown", path: "/markdown"},
     {name: "JavaScript", path: "/javascript"},
     {name: "Reactivity", path: "/reactivity"},
+    {name: "JSX", path: "/jsx"},
     {name: "Imports", path: "/imports"},
     {name: "Data loaders", path: "/loaders"},
     {name: "Files", path: "/files"},

@@ -1,7 +1,9 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
+import {transformSync} from "esbuild";
 import he from "he";
 import MarkdownIt from "markdown-it";
+import type {Token} from "markdown-it";
 import type {RuleCore} from "markdown-it/lib/parser_core.js";
 import type {RuleInline} from "markdown-it/lib/parser_inline.js";
 import type {RenderRule} from "markdown-it/lib/renderer.js";
@@ -15,6 +17,7 @@ import {parseInfo} from "./info.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
 import {isAssetPath, relativePath} from "./path.js";
+import {parsePlaceholder} from "./placeholder.js";
 import {transpileSql} from "./sql.js";
 import {transpileTag} from "./tag.js";
 import {InvalidThemeError} from "./theme.js";
@@ -23,6 +26,7 @@ import {red} from "./tty.js";
 export interface MarkdownCode {
   id: string;
   node: JavaScriptNode;
+  mode: "inline" | "block" | "jsx";
 }
 
 export interface MarkdownPage {
@@ -55,9 +59,19 @@ function isFalse(attribute: string | undefined): boolean {
   return attribute?.toLowerCase() === "false";
 }
 
+function transformJsx(content: string): string {
+  try {
+    return transformSync(content, {loader: "jsx", jsx: "automatic", jsxImportSource: "npm:react"}).code;
+  } catch (error: any) {
+    throw new SyntaxError(error.message);
+  }
+}
+
 function getLiveSource(content: string, tag: string, attributes: Record<string, string>): string | undefined {
   return tag === "js"
     ? content
+    : tag === "jsx"
+    ? transformJsx(content)
     : tag === "tex"
     ? transpileTag(content, "tex.block", true)
     : tag === "html"
@@ -105,10 +119,10 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
         const id = uniqueCodeId(context, source);
         // TODO const sourceLine = context.startLine + context.currentLine;
         const node = parseJavaScript(source, {path});
-        context.code.push({id, node});
-        html += `<div id="cell-${id}" class="observablehq observablehq--block">${
-          node.expression ? '<span class="observablehq-loading"></span>' : ""
-        }</div>\n`;
+        context.code.push({id, node, mode: tag === "jsx" ? "jsx" : "block"});
+        html += `<div class="observablehq observablehq--block">${
+          node.expression ? "<observablehq-loading></observablehq-loading>" : ""
+        }<!--:${id}:--></div>\n`;
       }
     } catch (error) {
       if (!(error instanceof SyntaxError)) throw error;
@@ -125,131 +139,42 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
 
 const CODE_DOLLAR = 36;
 const CODE_BRACEL = 123;
-const CODE_BRACER = 125;
-const CODE_BACKSLASH = 92;
-const CODE_QUOTE = 34;
-const CODE_SINGLE_QUOTE = 39;
-const CODE_BACKTICK = 96;
-
-function parsePlaceholder(content: string, replacer: (i: number, j: number) => void) {
-  let afterDollar = false;
-  for (let j = 0, n = content.length; j < n; ++j) {
-    const cj = content.charCodeAt(j);
-    if (cj === CODE_BACKSLASH) {
-      ++j; // skip next character
-      continue;
-    }
-    if (cj === CODE_DOLLAR) {
-      afterDollar = true;
-      continue;
-    }
-    if (afterDollar) {
-      if (cj === CODE_BRACEL) {
-        let quote = 0; // TODO detect comments, too
-        let braces = 0;
-        let k = j + 1;
-        inner: for (; k < n; ++k) {
-          const ck = content.charCodeAt(k);
-          if (ck === CODE_BACKSLASH) {
-            ++k;
-            continue;
-          }
-          if (quote) {
-            if (ck === quote) quote = 0;
-            continue;
-          }
-          switch (ck) {
-            case CODE_QUOTE:
-            case CODE_SINGLE_QUOTE:
-            case CODE_BACKTICK:
-              quote = ck;
-              break;
-            case CODE_BRACEL:
-              ++braces;
-              break;
-            case CODE_BRACER:
-              if (--braces < 0) {
-                replacer(j - 1, k + 1);
-                break inner;
-              }
-              break;
-          }
-        }
-        j = k;
-      }
-      afterDollar = false;
-    }
-  }
-}
-
-function transformPlaceholderBlock(token) {
-  const input = token.content;
-  if (/^\s*<script[\s>]/.test(input)) return [token]; // ignore <script> elements
-  const output: any[] = [];
-  let i = 0;
-  parsePlaceholder(input, (j, k) => {
-    output.push({...token, level: i > 0 ? token.level + 1 : token.level, content: input.slice(i, j)});
-    output.push({type: "placeholder", level: token.level + 1, content: input.slice(j + 2, k - 1)});
-    i = k;
-  });
-  if (i === 0) return [token];
-  else if (i < input.length) output.push({...token, content: input.slice(i), nesting: -1});
-  return output;
-}
 
 const transformPlaceholderInline: RuleInline = (state, silent) => {
   if (silent || state.pos + 2 > state.posMax) return false;
   const marker1 = state.src.charCodeAt(state.pos);
   const marker2 = state.src.charCodeAt(state.pos + 1);
-  if (!(marker1 === CODE_DOLLAR && marker2 === CODE_BRACEL)) return false;
-  let quote = 0;
-  let braces = 0;
-  for (let pos = state.pos + 2; pos < state.posMax; ++pos) {
-    const code = state.src.charCodeAt(pos);
-    if (code === CODE_BACKSLASH) {
-      ++pos; // skip next character
-      continue;
-    }
-    if (quote) {
-      if (code === quote) quote = 0;
-      continue;
-    }
-    switch (code) {
-      case CODE_QUOTE:
-      case CODE_SINGLE_QUOTE:
-      case CODE_BACKTICK:
-        quote = code;
-        break;
-      case CODE_BRACEL:
-        ++braces;
-        break;
-      case CODE_BRACER:
-        if (--braces < 0) {
-          const token = state.push("placeholder", "", 0);
-          token.content = state.src.slice(state.pos + 2, pos);
-          state.pos = pos + 1;
-          return true;
-        }
-        break;
-    }
+  if (marker1 !== CODE_DOLLAR || marker2 !== CODE_BRACEL) return false;
+  for (const {type, content, pos} of parsePlaceholder(state.src, state.pos, state.posMax)) {
+    if (type !== "placeholder") break;
+    const token = state.push(type, "", 0);
+    token.content = content;
+    state.pos = pos;
+    return true;
   }
   return false;
 };
 
 const transformPlaceholderCore: RuleCore = (state) => {
-  const input = state.tokens;
-  const output: any[] = [];
-  for (const token of input) {
-    switch (token.type) {
-      case "html_block":
-        output.push(...transformPlaceholderBlock(token));
-        break;
-      default:
-        output.push(token);
-        break;
+  const {tokens} = state;
+  for (let i = 0, n = tokens.length; i < n; ++i) {
+    const token = tokens[i];
+    if (token.type === "html_block") {
+      const children: Token[] = [];
+      for (const {type, content} of parsePlaceholder(token.content)) {
+        const child = new state.Token(type, "", 0);
+        child.content = content;
+        children.push(child);
+      }
+      if (children.length === 1 && children[0].type === "html_block") {
+        tokens[i].content = children[0].content;
+      } else {
+        const inline = new state.Token("inline", "", 0);
+        inline.children = children;
+        tokens[i] = inline;
+      }
     }
   }
-  state.tokens = output;
 };
 
 function makePlaceholderRenderer(): RenderRule {
@@ -260,15 +185,13 @@ function makePlaceholderRenderer(): RenderRule {
     try {
       // TODO sourceLine: context.startLine + context.currentLine
       const node = parseJavaScript(token.content, {path, inline: true});
-      context.code.push({id, node});
-      return `<span id="cell-${id}"><span class="observablehq-loading"></span></span>`;
+      context.code.push({id, node, mode: "inline"});
+      return `<observablehq-loading></observablehq-loading><!--:${id}:-->`;
     } catch (error) {
       if (!(error instanceof SyntaxError)) throw error;
-      return `<span id="cell-${id}">
-  <span class="observablehq--inspect observablehq--error" style="display: block;">SyntaxError: ${he.escape(
-    error.message
-  )}</span>
-</span>`;
+      return `<span class="observablehq--inspect observablehq--error" style="display: block;">SyntaxError: ${he.escape(
+        error.message
+      )}</span>`;
     }
   };
 }
@@ -305,7 +228,7 @@ export function createMarkdownIt({
   if (linkify) md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
   md.use(MarkdownItAnchor);
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
-  md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
+  md.core.ruler.after("inline", "placeholder", transformPlaceholderCore);
   md.renderer.rules.placeholder = makePlaceholderRenderer();
   md.renderer.rules.fence = makeFenceRenderer(md.renderer.rules.fence!);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);

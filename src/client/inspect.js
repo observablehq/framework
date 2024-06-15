@@ -1,15 +1,14 @@
 import {Inspector} from "observablehq:runtime";
 
 export function inspect(value) {
-  const inspector = new Inspector(document.createElement("div"));
-  inspector.fulfilled(value);
-  return inspector._node.firstChild;
+  const node = document.createElement("div");
+  new Inspector(node).fulfilled(value);
+  return node;
 }
 
 export function inspectError(value) {
-  const inspector = new Inspector(document.createElement("div"));
-  inspector.rejected(value);
-  const node = inspector._node.firstChild;
+  const node = document.createElement("div");
+  new Inspector(node).rejected(value);
   node.classList.add("observablehq--error");
   return node;
 }

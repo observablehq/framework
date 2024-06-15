@@ -141,6 +141,19 @@ class Deployer {
     }
 
     if (!currentUser) {
+      if (!this.effects.isTty) {
+        if (authError === "unauthenticated" || !apiKey) {
+          throw new CliError("No authentication provided");
+        } else {
+          const source =
+            apiKey.source == "file"
+              ? ` from ${apiKey.filePath}`
+              : apiKey.source === "env"
+              ? ` from $${apiKey.envVar}`
+              : "";
+          throw new CliError(`Authentication${source} was rejected by the server: ${authError ?? "unknown error"}`);
+        }
+      }
       const message =
         authError === "unauthenticated" || authError === null
           ? "You must be logged in to Observable to deploy. Do you want to do that now?"
@@ -401,12 +414,16 @@ class Deployer {
 
     let message = this.deployOptions.message;
     if (message === undefined) {
-      const input = await this.effects.clack.text({
-        message: "What changed in this deploy?",
-        placeholder: "Enter a deploy message (optional)"
-      });
-      if (this.effects.clack.isCancel(input)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
-      message = input;
+      if (this.effects.isTty) {
+        const input = await this.effects.clack.text({
+          message: "What changed in this deploy?",
+          placeholder: "Enter a deploy message (optional)"
+        });
+        if (this.effects.clack.isCancel(input)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
+        message = input;
+      } else {
+        message = "";
+      }
     }
 
     let deployId;

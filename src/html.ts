@@ -169,6 +169,8 @@ export function rewriteHtml(
         ? hljs.highlight(child.textContent!, {language}).value
         : isElement(child)
         ? child.outerHTML
+        : isComment(child)
+        ? `<!--${he.escape(child.data)}-->`
         : "";
     }
     code.innerHTML = html;
@@ -181,6 +183,31 @@ export function rewriteHtml(
     a.href = `#${h.id}`;
     a.append(...h.childNodes);
     h.append(a);
+  }
+
+  // For incremental update during preview, we need to know the direct children
+  // of the body statically; therefore we must wrap any top-level cells with a
+  // span to avoid polluting the direct children with dynamic content.
+  for (let child = document.body.firstChild; child; child = child.nextSibling) {
+    if (isRoot(child)) {
+      const parent = document.createElement("span");
+      const loading = findLoading(child);
+      child.replaceWith(parent);
+      if (loading) parent.appendChild(loading);
+      parent.appendChild(child);
+      child = parent;
+    }
+  }
+
+  // In some contexts, such as a table, the <observablehq-loading> element may
+  // be reparented; enforce the requirement that the <observablehq-loading>
+  // element immediately precedes its root by removing any violating elements.
+  // Also, <observablehq-loading> only works in an HTML context and won’t work
+  // in SVG or MathML or other non-HTML markup.
+  for (const l of document.querySelectorAll("observablehq-loading")) {
+    if (!l.nextSibling || !isRoot(l.nextSibling) || l.namespaceURI !== "http://www.w3.org/1999/xhtml") {
+      l.remove();
+    }
   }
 
   return document.body.innerHTML;
@@ -208,12 +235,29 @@ function resolveSrcset(srcset: string, resolve: (specifier: string) => string): 
     .join(", ");
 }
 
-function isText(node: Node): node is Text {
+export function isText(node: Node): node is Text {
   return node.nodeType === 3;
 }
 
-function isElement(node: Node): node is Element {
+export function isComment(node: Node): node is Comment {
+  return node.nodeType === 8;
+}
+
+export function isElement(node: Node): node is Element {
   return node.nodeType === 1;
+}
+
+function isRoot(node: Node): node is Comment {
+  return isComment(node) && /^:[0-9a-f]{8}(?:-\d+)?:$/.test(node.data);
+}
+
+function isLoading(node: Node): node is Element {
+  return isElement(node) && node.tagName === "OBSERVABLEHQ-LOADING";
+}
+
+function findLoading(node: Node): Element | null {
+  const sibling = node.previousSibling;
+  return sibling && isLoading(sibling) ? sibling : null;
 }
 
 /**

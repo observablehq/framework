@@ -4,6 +4,7 @@ const packages: [name: string, {version: string; dependencies?: Record<string, s
   ["@duckdb/duckdb-wasm", {version: "1.28.0"}],
   ["@observablehq/inputs", {version: "0.10.6"}],
   ["@observablehq/plot", {version: "0.6.11"}],
+  ["@observablehq/sample-datasets", {version: "1.0.1"}],
   ["@viz-js/viz", {version: "3.2.3"}],
   ["apache-arrow", {version: "15.0.1"}],
   ["arquero", {version: "5.3.0"}],
@@ -21,6 +22,8 @@ const packages: [name: string, {version: string; dependencies?: Record<string, s
   ["mapbox-gl", {version: "3.1.2"}],
   ["mermaid", {version: "10.6.1"}],
   ["parquet-wasm", {version: "0.6.0"}],
+  ["react", {version: "18.3.1"}],
+  ["react-dom", {version: "18.3.1"}],
   ["sql.js", {version: "1.9.0"}],
   ["topojson-client", {version: "3.1.0"}]
 ];

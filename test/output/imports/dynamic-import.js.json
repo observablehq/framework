@@ -61,6 +61,5 @@
     }
   ],
   "expression": false,
-  "async": true,
-  "inline": false
+  "async": true
 }

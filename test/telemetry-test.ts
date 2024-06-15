@@ -104,8 +104,8 @@ describe("telemetry", () => {
   it("saves a signal record on exit", async () => {
     const logger = new MockLogger();
     const listeners = {};
-    let exit: (value: unknown) => void;
-    const exited = new Promise((resolve) => (exit = resolve));
+    let kill: (value: unknown) => void;
+    const killed = new Promise((resolve) => (kill = resolve));
     new Telemetry({
       ...noopEffects,
       logger,
@@ -115,14 +115,14 @@ describe("telemetry", () => {
           listeners[event] = listener;
           return this;
         },
-        exit(code?: number) {
-          exit(code);
+        kill(pid: number, signal?: string) {
+          kill(signal);
           throw new Error("exit");
         }
       })
     });
     listeners["SIGINT"]("SIGINT");
-    assert.equal(await exited, 130);
+    assert.equal(await killed, "SIGINT");
     assert.equal(logger.errorLines.length, 1);
     assert.deepEqual(logger.errorLines[0][1].data, {event: "signal", signal: "SIGINT"});
   });
