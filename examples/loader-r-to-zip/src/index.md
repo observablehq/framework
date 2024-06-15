@@ -45,20 +45,22 @@ The system function invokes the system command `"zip - -r ."`, where:
 - `-r`, the recursive option, means all files are added to the zip archive
 - `.` compresses the current working directory
 
-Access the output of the data loader from the client using FileAttachment:
+Access individual files (`estimates.csv`, or `predictions.csv`) from the generated ZIP archive using FileAttachment:
 
 ```js echo
-const modelZip = FileAttachment("data/penguin-mlr.zip").zip();
+const modelEstimates = FileAttachment("data/penguin-mlr/estimates.csv").csv({typed: true});
 ```
-
-You can then access individual files (estimates.csv, or predictions.csv) from the ZIP archive:
 
 ```js echo
-const modelEstimates = modelZip.file("estimates.csv").csv({typed: true});
+const modelPredictions = FileAttachment("data/penguin-mlr/predictions.csv").csv({typed: true});
 ```
 
-We can quickly display the model estimates with Inputs.table:
+We can quickly display the model estimates and predictions using [Inputs.table](https://observablehq.com/framework/inputs/table):
 
 ```js echo
 Inputs.table(modelEstimates)
+```
+
+```js echo
+Inputs.table(modelPredictions)
 ```
