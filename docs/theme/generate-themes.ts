@@ -236,12 +236,6 @@ sidebar: false
 ---
 
 \`\`\`js
-const alphabet = FileAttachment("../data/alphabet.csv").csv({typed: true});
-const industries = FileAttachment("../data/industries.csv").csv({typed: true});
-const penguins = FileAttachment("../data/penguins.csv").csv({typed: true});
-\`\`\`
-
-\`\`\`js
 const subset = new Set(["Transportation and Utilities", "Mining and Extraction", "Finance", "Agriculture", "Information"]);
 const industriesSubset = industries.filter(d => subset.has(d.industry));
 const barData = [

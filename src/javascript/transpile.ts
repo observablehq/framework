@@ -17,10 +17,11 @@ import {getStringLiteralValue, isStringLiteral} from "./source.js";
 export interface TranspileOptions {
   id: string;
   path: string;
+  mode?: string;
   resolveImport?: (specifier: string) => string;
 }
 
-export function transpileJavaScript(node: JavaScriptNode, {id, path, resolveImport}: TranspileOptions): string {
+export function transpileJavaScript(node: JavaScriptNode, {id, path, mode, resolveImport}: TranspileOptions): string {
   let async = node.async;
   const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
   const outputs = Array.from(new Set<string>(node.declarations?.map((r) => r.name)));
@@ -35,7 +36,7 @@ export function transpileJavaScript(node: JavaScriptNode, {id, path, resolveImpo
   output.insertLeft(0, `, body: ${async ? "async " : ""}(${inputs}) => {\n`);
   if (outputs.length) output.insertLeft(0, `, outputs: ${JSON.stringify(outputs)}`);
   if (inputs.length) output.insertLeft(0, `, inputs: ${JSON.stringify(inputs)}`);
-  if (node.inline) output.insertLeft(0, ", inline: true");
+  if (mode && mode !== "block") output.insertLeft(0, `, mode: ${JSON.stringify(mode)}`);
   output.insertLeft(0, `define({id: ${JSON.stringify(id)}`);
   if (outputs.length) output.insertRight(node.input.length, `\nreturn {${outputs}};`);
   output.insertRight(node.input.length, "\n}});\n");

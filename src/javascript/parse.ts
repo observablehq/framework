@@ -13,7 +13,7 @@ import {syntaxError} from "./syntaxError.js";
 export interface ParseOptions {
   /** The path to the source within the source root. */
   path: string;
-  /** If true, treat the input as an inline expression instead of a fenced code block. */
+  /** If true, require the input to be an expresssion. */
   inline?: boolean;
 }
 
@@ -30,7 +30,6 @@ export interface JavaScriptNode {
   imports: ImportReference[];
   expression: boolean; // is this an expression or a program cell?
   async: boolean; // does this use top-level await?
-  inline: boolean;
   input: string;
 }
 
@@ -57,7 +56,6 @@ export function parseJavaScript(input: string, options: ParseOptions): JavaScrip
     imports: findImports(body, path, input),
     expression: !!expression,
     async: findAwaits(body).length > 0,
-    inline,
     input
   };
 }

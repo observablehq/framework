@@ -1,7 +1,7 @@
 {
   "name": "@observablehq/framework",
   "license": "ISC",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "type": "module",
   "publishConfig": {
     "access": "public"
@@ -19,7 +19,7 @@
     "observable": "dist/bin/observable.js"
   },
   "scripts": {
-    "dev": "rimraf --glob docs/themes.md docs/theme/*.md && (tsx watch docs/theme/generate-themes.ts & tsx watch --no-warnings=ExperimentalWarning ./src/bin/observable.ts preview --no-open)",
+    "dev": "rimraf --glob docs/themes.md docs/theme/*.md && (tsx watch docs/theme/generate-themes.ts & tsx watch --ignore docs --no-warnings=ExperimentalWarning ./src/bin/observable.ts preview --no-open)",
     "docs:themes": "rimraf --glob docs/themes.md docs/theme/*.md && tsx docs/theme/generate-themes.ts",
     "docs:build": "yarn docs:themes && rimraf docs/.observablehq/dist && tsx --no-warnings=ExperimentalWarning ./src/bin/observable.ts build",
     "docs:deploy": "yarn docs:themes && tsx --no-warnings=ExperimentalWarning ./src/bin/observable.ts deploy",
@@ -68,6 +68,7 @@
     "d3-hierarchy": "^3.1.2",
     "esbuild": "^0.20.1",
     "fast-array-diff": "^1.1.0",
+    "fast-deep-equal": "^3.1.3",
     "gray-matter": "^4.0.3",
     "he": "^1.2.0",
     "highlight.js": "^11.8.0",
@@ -118,7 +119,6 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-import-resolver-typescript": "^3.6.1",
     "eslint-plugin-import": "^2.29.0",
-    "fast-deep-equal": "^3.1.3",
     "glob": "^10.3.10",
     "mocha": "^10.2.0",
     "prettier": "^3.0.3 <3.1",
