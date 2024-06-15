@@ -26,14 +26,13 @@ sys.stdout.buffer.write(img_buffer.getvalue())
 
 <div class="note">
 
-To run this data loader, you’ll need python3 and the geopandas, matplotlib, io, and sys modules installed and available on your `$PATH`. We recommend setting up a virtual environment, _e.g._ with:
+To run this data loader, you’ll need python3 and the geopandas, matplotlib, io, and sys modules installed and available on your `$PATH`.
 
-- `$ python3 -m venv .venv`
-- `$ source .venv/bin/activate`
+</div>
 
-Then install the required modules:
+<div class="tip">
 
-- `$ pip install -r requirements.txt`
+We recommend using a [Python virtual environment](https://observablehq.com/framework/loaders#venv), such as with venv or uv, and managing required packages via `requirements.txt` rather than installing them globally.
 
 </div>
 
