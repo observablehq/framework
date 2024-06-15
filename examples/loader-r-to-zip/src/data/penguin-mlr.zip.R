@@ -14,8 +14,8 @@ mlr_est <- tidy(penguins_mlr)
 
 mlr_fit <- penguins |>
     mutate(
-        body_mass_g_predict = penguins_mlr$fitted.values,
-        body_mass_g_residual = penguins_mlr$residuals
+        predicted_mass = penguins_mlr$fitted.values,
+        residual = penguins_mlr$residuals
     )
 
 # Write the data frames as CSVs to a temporary directory
