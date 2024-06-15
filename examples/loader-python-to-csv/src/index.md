@@ -28,22 +28,15 @@ results.to_csv(sys.stdout)
 
 <div class="note">
 
-To run this data loader, you’ll need python3 and the geopandas, matplotlib, io, and sys modules installed and available on your `$PATH`. We recommend setting up a virtual environment.
+To run this data loader, you’ll need python3 and the geopandas, matplotlib, io, and sys modules installed and available on your `$PATH`.
 
 </div>
 
-To start and activate a virtual Python environment, run the following commands:
+<div class="tip">
 
-```
-$ python3 -m venv .venv
-$ source .venv/bin/activate
-```
+We recommend using a [Python virtual environment](https://observablehq.com/framework/loaders#venv), such as with venv or uv, and managing required packages via `requirements.txt` rather than installing them globally.
 
-Then install the required modules from `requirements.txt` using:
-
-```
-$ pip install -r requirements.txt
-```
+</div>
 
 The above data loader lives in `data/predictions.csv.py`, so we can load the data using `data/predictions.csv` with `FileAttachment`:
 

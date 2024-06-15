@@ -49,14 +49,13 @@ sys.stdout.buffer.write(zip_buffer.getvalue())
 
 <div class="note">
 
-To run this data loader, you’ll need python3, and the requests and pandas modules, installed and available on your `$PATH` (json, zipfile, io, and sys are part of the python3 standard library). We recommend setting up a virtual environment, for example using:
+To run this data loader, you’ll need python3, and the requests and pandas modules, installed and available on your `$PATH`. (json, zipfile, io, and sys are part of the python3 standard library.)
 
-- `$ python3 -m venv .venv`
-- `$ source .venv/bin/activate`
+</div>
 
-Install the requests and pandas modules (included in requirements.txt):
+<div class="tip">
 
-- `$ pip install -r requirements.txt`
+We recommend using a [Python virtual environment](https://observablehq.com/framework/loaders#venv), such as with venv or uv, and managing required packages via `requirements.txt` rather than installing them globally.
 
 </div>
 
