@@ -9,7 +9,7 @@ df = pd.read_csv("https://nid.sec.usace.army.mil/api/nation/csv", low_memory=Fal
 # Write DataFrame to a temporary file-like object
 buf = pa.BufferOutputStream()
 table = pa.Table.from_pandas(df)
-pq.write_table(table, buf)
+pq.write_table(table, buf, compression="snappy")
 
 # Get the buffer as a bytes object
 buf_bytes = buf.getvalue().to_pybytes()
