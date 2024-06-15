@@ -11,10 +11,10 @@ import sys
 
 df = pd.read_csv("https://nid.sec.usace.army.mil/api/nation/csv", low_memory=False, skiprows=1).loc[:, ["Dam Name", "Primary Purpose", "Primary Dam Type", "Hazard Potential Classification"]]
 
-# Write pandas DataFrame to a temporary object
+# Write DataFrame to a temporary file-like object
 buf = pa.BufferOutputStream()
 table = pa.Table.from_pandas(df)
-pq.write_table(table, buf)
+pq.write_table(table, buf, compression="snappy")
 
 # Get the buffer as a bytes object
 buf_bytes = buf.getvalue().to_pybytes()
@@ -25,21 +25,29 @@ sys.stdout.buffer.write(buf_bytes)
 
 <div class="note">
 
-To run this data loader you’ll need python3, and the `pandas` and `pyarrow` libraries, installed and available in your environment. We recommend setting up a virtual environment, for example using:
-
-- `$ python3 -m venv .venv`
-- `$ source .venv/bin/activate`
-
-Then install the required modules
-
-- `$ pip install -r requirements.txt`
+To run this data loader you’ll need python3, and the `pandas` and `pyarrow` libraries, installed and available in your environment. We recommend setting up a virtual environment.
 
 </div>
+
+To start and activate a virtual Python environment, run the following commands:
+
+```
+$ python3 -m venv .venv
+$ source .venv/bin/activate
+```
+
+Then install the required modules from `requirements.txt` using:
+
+```
+$ pip install -r requirements.txt
+```
+
+This example uses the default Snappy compression algorithm. See other [options for compression](https://parquet.apache.org/docs/file-format/data-pages/compression/) available in pyarrow’s [`write_table()`](https://arrow.apache.org/docs/python/generated/pyarrow.parquet.write_table.html) function.
 
 The above data loader lives in `data/us-dams.parquet.py`, so we can load the data using `data/us-dams.parquet`. The `FileAttachment.parquet` method parses the file and returns a promise to an Apache Arrow table.
 
 ```js echo
-const dams = FileAttachment("./data/us-dams.parquet").parquet();
+const dams = FileAttachment("data/us-dams.parquet").parquet();
 ```
 
 We can display the table using `Inputs.table`.
