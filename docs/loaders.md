@@ -189,6 +189,12 @@ Or on Windows:
 .venv\Scripts\activate
 ```
 
+To install required packages:
+
+```sh
+pip install -r requirements.txt
+```
+
 You can then run the `observable preview` or `observable build` (or `npm run dev` or `npm run build`) commands as usual; data loaders will run within the virtual environment. Run the `deactivate` command or use Control-D to exit the virtual environment.
 
 </div>
