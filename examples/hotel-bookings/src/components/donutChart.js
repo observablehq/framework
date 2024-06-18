@@ -1,4 +1,4 @@
-// Code adapted (barely) from Mike Bostock's Donut chart notebook (https://observablehq.com/@d3/donut-chart/2)
+// https://observablehq.com/@d3/donut-chart/2
 
 import * as d3 from "npm:d3";
 
