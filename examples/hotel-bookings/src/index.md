@@ -66,7 +66,7 @@ const countryColors = ["#4269d0", "#efb118", "#ff725c", "#6cc5b0", "#3ca951","#f
 
 <div class="grid grid-cols-2"">
   <div class="card grid-colspan-1">
-    <h2>Bookings by room type and season.</h2>
+    <h2>Bookings by room type and season</h2>
     <h3>Market segment: ${pickMarketSegment}</h3>
     ${resize((width) => typeSeasonChart(width))}
   </div>
