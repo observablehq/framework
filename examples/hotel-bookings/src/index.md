@@ -334,6 +334,7 @@ function typeSeasonChart(width, height) {
     fx: {label: "Room type"},
     color: {legend: true, domain: seasonDomain, range: seasonColors},
     marks: [
+      Plot.text("ABCDEFGHLP", {fx: Plot.identity, text: null}),
       Plot.frame({opacity: 0.4}),
       Plot.barY(bookingsByMarketSegment, Plot.groupX({y: "count"},
         {
