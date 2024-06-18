@@ -1,12 +1,11 @@
+import {readFileSync} from "fs";
 import {csvParse} from "d3-dsv";
 import {csvFormat} from "d3-dsv";
 import {timeParse} from "d3-time-format";
-import {readFileSync} from "fs";
-//import {FileAttachment} from "npm:@observablehq/stdlib";
 
 const hotels = await csvParse(readFileSync("src/data/hotels.csv", "utf8"));
 
-const hotelData = hotels.map((d, i) => ({
+const hotelData = hotels.map((d) => ({
   ...d,
   IsCanceled: d.IsCanceled == 0 ? "Keep" : "Cancel",
   season: ["June", "July", "August"].includes(d.ArrivalDateMonth)
