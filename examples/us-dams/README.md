@@ -30,7 +30,7 @@ The R data loader `dam-simple.csv.R` accesses data directly from the NID (at htt
 
 ### Data
 
-- Dam records are downloaded from the NID as a CSV then minimally wrangled by the `dam-simple.csv.R` data loader to produce the static file with dam records used in our dashboard (`dam-simple.csv`)
+- Dam records are accessed from the NID API as a CSV, then minimally wrangled by the `dam-simple.csv.R` data loader to produce the static file with dam records used in our dashboard (`dam-simple.csv`)
 
 - County FIPS codes (`src/data/county_fips_master.csv`) are from https://github.com/kjhealy/fips-codes/blob/master/county_fips_master.csv
 
