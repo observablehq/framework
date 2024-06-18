@@ -202,6 +202,7 @@ function arrivalLineChart(width, height) {
     width,
     x: { label: "Arrival date"},
     y: { label: "Bookings", grid: true },
+    color: {domain: seasonDomain,  range: seasonColors},
     title: `${pickMarketSegment} bookings by arrival date`,
     subtitle: `Daily reservation counts (gray area) and 28-day moving average (solid line).`,
     marks: [
@@ -231,6 +232,8 @@ function arrivalLineChart(width, height) {
             {
               x: "arrivalDate",
               strokeWidth: 2,
+              stroke: "season",
+              z: null,
               tip: {
                 format: {
                   arrivalDate: true,
