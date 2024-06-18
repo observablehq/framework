@@ -56,7 +56,7 @@ const countryColors = ["#4269d0", "#efb118", "#ff725c", "#6cc5b0", "#3ca951","#f
     ${resize((width) => bigNumber(`Number of bookings, ${pickMarketSegment}`, datesExtent, `${d3.format(",")(bookingsByMarketSegment.length)}`, `${d3.format(".1%")(bookingsByMarketSegment.length / bookingsAll.length)} of all bookings`, width))}
   </div>
   <div class="card grid-rowspan-1">
-    ${resize((width) => bigNumber(`Average daily rate`, datesExtent, `$ ${d3.mean(bookingsByMarketSegment.map((d) => d.ADR)).toFixed(2)}`, `${pickMarketSegment == "All" ? `` : d3.format("$")(Math.abs(rateDiffFromAverage))} ${rateDiffFromAverage > 0 ? `greater than average rate` : rateDiffFromAverage == 0 ? `` : `less than average rate`}`, width))}
+    ${resize((width) => bigNumber(`Average daily rate`, datesExtent, `$${d3.mean(bookingsByMarketSegment.map((d) => d.ADR)).toFixed(2)}`, `${pickMarketSegment == "All" ? `` : d3.format("$.2f")(Math.abs(rateDiffFromAverage))} ${rateDiffFromAverage > 0 ? `greater than average rate` : rateDiffFromAverage === 0 ? `` : `less than average rate`}`, width))}
   </div>
 </div>
 
@@ -115,17 +115,17 @@ const countryColors = ["#4269d0", "#efb118", "#ff725c", "#6cc5b0", "#3ca951","#f
 
 ```js
 // Filtered data for selected market segment
-const bookingsByMarketSegment = pickMarketSegment == "All" ? hotelData.filter(d => d.MarketSegment != "Complementary") : hotelData.filter(
+const bookingsByMarketSegment = pickMarketSegment == "All" ? hotelData.filter((d) => d.MarketSegment != "Complementary") : hotelData.filter(
   (d) =>
     d.MarketSegment == pickMarketSegment && d.MarketSegment != "Complementary"
 );
 
 // All bookings data (except complementary)
-const bookingsAll = hotelData.filter(d => d.MarketSegment != "Complementary");
+const bookingsAll = hotelData.filter((d) => d.MarketSegment != "Complementary");
 
 // Bookings by nationality
 const bookingCountry = d3
-  .flatRollup(
+  .rollups(
     bookingsByMarketSegment,
     (d) => d.length,
     (v) => v.Country
@@ -150,7 +150,7 @@ const byCountry = bookingCountryTopN.concat(bookingCountryOther);
 
 //Booking status (cancelled or not cancelled)
 const byBookingOutcome = d3
-  .flatRollup(
+  .rollups(
     bookingsByMarketSegment,
     (d) => d.length,
     (d) => d.IsCanceled
@@ -160,7 +160,7 @@ const byBookingOutcome = d3
 
 // Bookings by room type
 const byRoomType = d3
-  .flatRollup(
+  .rollups(
     bookingsByMarketSegment,
     (d) => d.length,
     (d) => d.ReservedRoomType
@@ -169,30 +169,28 @@ const byRoomType = d3
   .sort((a, b) => d3.descending(a.value, b.value));
 
 // Bookings by season
-const seasonOrder = {Summer: 1, Fall: 2, Winter: 3, Spring: 4};
-
 const bookingSeason = d3
-  .flatRollup(
+  .rollups(
     bookingsByMarketSegment,
     (d) => d.length,
     (v) => v.season
   )
-  .map(([name, value]) => ({ name, value })), order = seasonOrder;
+  .map(([name, value]) => ({ name, value }));
 
 // Find & format arrival date extent for big number
-const arrivalDates = d3.extent(bookingsAll, d => d.arrivalDate)
+const arrivalDates = d3.extent(bookingsAll, (d) => d.arrivalDate)
 
 const datesExtent = [d3.timeFormat("%b %d, %Y")(new Date(arrivalDates[0])), d3.timeFormat("%b %d, %Y")(new Date(arrivalDates[1]))] ;
 
 // Calculate rate difference from total average for big number
-const rateDiffFromAverage = d3.mean(bookingsByMarketSegment.map((d) => d.ADR)).toFixed(2) - d3.mean(bookingsAll.map((d) => d.ADR)).toFixed(2);
+const rateDiffFromAverage = d3.mean(bookingsByMarketSegment, (d) => d.ADR) - d3.mean(bookingsAll, (d) => d.ADR);
 ```
 
 ```js
 // Create search input (for searchable table)
 const tableSearch = Inputs.search(bookingsAll);
 
-const tableSearchValue = Generators.input(tableSearch);
+const tableSearchValue = view(tableSearch);
 ```
 
 ```js
@@ -260,10 +258,15 @@ const seasonColors = ["#959C00", "#9C5A00", "#465C9C", "#109F73"];
 const seasonDomain = ["Summer", "Fall", "Winter", "Spring"];
 
 // Calculate mean daily rate by season (for rule mark)
-const meanRateBySeason = d3.flatRollup(bookingsByMarketSegment, v => d3.mean(v, d => d.ADR), d => d.season).map(([season, value]) => ({season, value}));
-
+const meanRateBySeason = d3.rollups(
+  bookingsByMarketSegment,
+  (v) => d3.mean(v, (d) => d.ADR),
+  (d) => d.season
+).map(([season, value]) => ({season, value}));
 
 // Build daily rate faceted histograms
+const dollarFormat = d3.format("$.2f");
+const defaultFormat = d3.format(",");
 function dailyRateChart(width, height) {
   return Plot.plot({
     width,
@@ -290,7 +293,7 @@ function dailyRateChart(width, height) {
       Plot.text(
       bookingsByMarketSegment,
       Plot.groupZ(
-        { text: (v) => `${v[0].season} (n = ${d3.format(",")(v.length)})` },
+        { text: (v) => `${v[0].season} (n = ${defaultFormat(v.length)})` },
         {
           fy: "season",
           frameAnchor: "top-right",
@@ -300,7 +303,14 @@ function dailyRateChart(width, height) {
       )
     ),
     Plot.ruleX(meanRateBySeason, {x: "value", fy: "season", stroke: "currentColor"}),
-    Plot.text(meanRateBySeason, {x: "value", fy: "season", text: d => `${d.season} mean rate: ${d3.format("$.2f")(d.value)}`, dx: 5, dy: -20, textAnchor: "start"}),
+    Plot.text(meanRateBySeason, {
+      x: "value",
+      fy: "season",
+      text: (d) => `${d.season} mean rate: ${dollarFormat(d.value)}`,
+      dx: 5,
+      dy: -20,
+      textAnchor: "start"
+    }),
     Plot.frame({opacity: 0.4}),
     ],
   });
