@@ -36,7 +36,7 @@ zip_buffer = io.BytesIO()
 
 # Write JSON string to the zip file
 with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-    zip_file.writestr("quakes_metadata.json", earthquake_meta_json)
+    zip_file.writestr("quakes-metadata.json", earthquake_meta_json)
 
 # Write DataFrame to a CSV file in the zip file
 with zipfile.ZipFile(zip_buffer, "a") as zip_file:
@@ -49,45 +49,40 @@ sys.stdout.buffer.write(zip_buffer.getvalue())
 
 <div class="note">
 
-To run this data loader, you’ll need python3, and the requests and pandas modules, installed and available on your `$PATH` (json, zipfile, io, and sys are part of the python3 standard library). We recommend setting up a virtual environment, for example using:
-
-- `$ python3 -m venv .venv`
-- `$ source .venv/bin/activate`
-
-Install the requests and pandas modules (included in requirements.txt):
-
-- `$ pip install -r requirements.txt`
+To run this data loader, you’ll need python3, and the requests and pandas modules, installed and available on your `$PATH`. (json, zipfile, io, and sys are part of the python3 standard library.)
 
 </div>
 
-The above data loader lives in `data/earthquakes.zip.py`. You can load the entire ZIP archive in a markdown page using FileAttachment:
+<div class="tip">
+
+We recommend using a [Python virtual environment](https://observablehq.com/framework/loaders#venv), such as with venv or uv, and managing required packages via `requirements.txt` rather than installing them globally.
+
+</div>
+
+The above data loader lives in `data/earthquakes.zip.py`. You can load the entire ZIP archive in a markdown page using `FileAttachment`:
 
 ```js echo
-const quakeZip = FileAttachment("data/earthquakes.zip").zip()
+const earthquakes = FileAttachment("data/earthquakes.zip").zip();
 ```
 
-Or access individual files (`quakes_metadata.json` and `quakes.csv`) directly:
+Or access individual files (`quakes-metadata.json` and `quakes.csv`) directly:
 
 ```js echo
-const quakeMetadata = FileAttachment("data/earthquakes/quakes_metadata.json").json()
+const quakesMetadata = FileAttachment("data/earthquakes/quakes-metadata.json").json();
 ```
 
 ```js echo
-const quakeData = FileAttachment("data/earthquakes/quakes.csv").csv({typed: true})
+const quakes = FileAttachment("data/earthquakes/quakes.csv").csv({typed: true});
 ```
 
-Take a quick look at the quakes data using Inputs.table:
+Take a quick look at the quakes data using `Inputs.table`:
 
 ```js echo
-Inputs.table(quakeData)
+Inputs.table(quakes)
 ```
 
 Then explore the distribution of earthquake magnitudes using Observable Plot:
 
 ```js echo
-Plot.plot({
-  marks: [
-    Plot.rectY(quakeData, Plot.binX({y: "count"}, {x: "mag", interval: 0.5}))
-  ]
-})
+Plot.rectY(quakes, Plot.binX({y: "count"}, {x: "mag"})).plot()
 ```

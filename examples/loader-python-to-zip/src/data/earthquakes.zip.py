@@ -31,7 +31,7 @@ zip_buffer = io.BytesIO()
 
 # Write JSON string to the zip file
 with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-    zip_file.writestr("quakes_metadata.json", earthquake_meta_json)
+    zip_file.writestr("quakes-metadata.json", earthquake_meta_json)
 
 # Write DataFrame to a CSV file in the zip file
 with zipfile.ZipFile(zip_buffer, "a") as zip_file:
