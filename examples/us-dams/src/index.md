@@ -65,7 +65,7 @@ const dams = FileAttachment("data/dam-simple.csv").csv({typed: true});
   <div style="padding: 1rem">
   ${searchUsDams}
   </div>
-  ${Inputs.table(searchUsDamsValue, {columns: ["name", "state", "county", "primaryPurpose", "hazardPotential", "conditionAssessment"], header: {name: "Name", state: "State", county: "County", primaryPurpose: "Purpose", hazardPotential: "Hazard potential", conditionAssessment: "Condition assessment"}})}
+  ${Inputs.table(searchUsDamsValue, {columns: ["name", "state", "county", "primaryPurpose", "hazardPotential", "conditionAssessment"], header: {name: "Name", state: "State", county: "County", primaryPurpose: "Purpose", hazardPotential: "Hazard potential", conditionAssessment: "Condition"}})}
   </div>
 
 <!-- Create interactive map with deck.gl -->
