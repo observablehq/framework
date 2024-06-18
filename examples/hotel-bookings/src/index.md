@@ -11,24 +11,19 @@ theme: [air, ocean-floor, wide]
 import {DonutChart} from "./components/donutChart.js";
 import {bigNumber} from "./components/bigNumber.js";
 
-const hotelData = FileAttachment("data/hotelData.csv").csv({typed: true})
+const hotelData = FileAttachment("data/hotelData.csv").csv({typed: true});
 ```
 
 ```js
 // Radio button input to choose market segment
-const pickMarketSegmentInput =
-  Inputs.radio(
-    ["All"].concat(hotelData
-      .filter((d) => d.MarketSegment != "Complementary")
-      .map((d) => d.MarketSegment)),
-    {
-      label: "Booking type:",
-      value: "All",
-      unique: true
-    }
-  )
-;
-
+const pickMarketSegmentInput = Inputs.radio(
+  ["All"].concat(hotelData.filter((d) => d.MarketSegment != "Complementary").map((d) => d.MarketSegment)),
+  {
+    label: "Booking type:",
+    value: "All",
+    unique: true
+  }
+);
 const pickMarketSegment = Generators.input(pickMarketSegmentInput);
 ```
 
@@ -39,7 +34,17 @@ ${pickMarketSegmentInput}
 ```js
 const countryOrder = ["PRT", "ESP", "GBR", "DEU", "FRA", "IRL", "AUT", "Other", "Unknown"];
 
-const countryColors = ["#4269d0", "#efb118", "#ff725c", "#6cc5b0", "#3ca951","#ff8ab7", "#a463f2", "#97bbf5", "#9c6b4e"];
+const countryColors = [
+  "#4269d0",
+  "#efb118",
+  "#ff725c",
+  "#6cc5b0",
+  "#3ca951",
+  "#ff8ab7",
+  "#a463f2",
+  "#97bbf5",
+  "#9c6b4e"
+];
 ```
 
 <div class="grid grid-cols-4">
@@ -115,10 +120,10 @@ const countryColors = ["#4269d0", "#efb118", "#ff725c", "#6cc5b0", "#3ca951","#f
 
 ```js
 // Filtered data for selected market segment
-const bookingsByMarketSegment = pickMarketSegment == "All" ? hotelData.filter((d) => d.MarketSegment != "Complementary") : hotelData.filter(
-  (d) =>
-    d.MarketSegment == pickMarketSegment && d.MarketSegment != "Complementary"
-);
+const bookingsByMarketSegment =
+  pickMarketSegment == "All"
+    ? hotelData.filter((d) => d.MarketSegment != "Complementary")
+    : hotelData.filter((d) => d.MarketSegment == pickMarketSegment && d.MarketSegment != "Complementary");
 
 // All bookings data (except complementary)
 const bookingsAll = hotelData.filter((d) => d.MarketSegment != "Complementary");
@@ -130,7 +135,7 @@ const bookingCountry = d3
     (d) => d.length,
     (v) => v.Country
   )
-  .map(([name, value]) => ({ name, value }))
+  .map(([name, value]) => ({name, value}))
   .sort((a, b) => d3.descending(a.value, b.value));
 
 // Limit to top 5
@@ -139,10 +144,7 @@ const bookingCountryTopN = bookingCountry.slice(0, 5);
 // Bin the rest as "Other"
 const bookingCountryOther = {
   name: "Other",
-  value: d3.sum(
-    bookingCountry.slice(5 - bookingCountry.length),
-    (d) => d.value
-  ),
+  value: d3.sum(bookingCountry.slice(5 - bookingCountry.length), (d) => d.value)
 };
 
 // Combine top 5 countries and "other" for donut chart
@@ -155,7 +157,7 @@ const byBookingOutcome = d3
     (d) => d.length,
     (d) => d.IsCanceled
   )
-  .map(([name, value]) => ({ name, value }))
+  .map(([name, value]) => ({name, value}))
   .sort((a, b) => d3.descending(a.value, b.value));
 
 // Bookings by room type
@@ -165,7 +167,7 @@ const byRoomType = d3
     (d) => d.length,
     (d) => d.ReservedRoomType
   )
-  .map(([name, value]) => ({ name, value }))
+  .map(([name, value]) => ({name, value}))
   .sort((a, b) => d3.descending(a.value, b.value));
 
 // Bookings by season
@@ -175,12 +177,15 @@ const bookingSeason = d3
     (d) => d.length,
     (v) => v.season
   )
-  .map(([name, value]) => ({ name, value }));
+  .map(([name, value]) => ({name, value}));
 
 // Find & format arrival date extent for big number
-const arrivalDates = d3.extent(bookingsAll, (d) => d.arrivalDate)
+const arrivalDates = d3.extent(bookingsAll, (d) => d.arrivalDate);
 
-const datesExtent = [d3.timeFormat("%b %d, %Y")(new Date(arrivalDates[0])), d3.timeFormat("%b %d, %Y")(new Date(arrivalDates[1]))] ;
+const datesExtent = [
+  d3.timeFormat("%b %d, %Y")(new Date(arrivalDates[0])),
+  d3.timeFormat("%b %d, %Y")(new Date(arrivalDates[1]))
+];
 
 // Calculate rate difference from total average for big number
 const rateDiffFromAverage = d3.mean(bookingsByMarketSegment, (d) => d.ADR) - d3.mean(bookingsAll, (d) => d.ADR);
@@ -200,9 +205,9 @@ function arrivalLineChart(width, height) {
     height: height - 50,
     marginBottom: 35,
     width,
-    x: { label: "Arrival date"},
-    y: { label: "Bookings", grid: true },
-    color: {domain: seasonDomain,  range: seasonColors},
+    x: {label: "Arrival date"},
+    y: {label: "Bookings", grid: true},
+    color: {domain: seasonDomain, range: seasonColors, label: "Season"},
     title: `${pickMarketSegment} bookings by arrival date`,
     subtitle: `Daily reservation counts (gray area) and 28-day moving average (solid line).`,
     marks: [
@@ -215,20 +220,20 @@ function arrivalLineChart(width, height) {
       Plot.areaY(
         bookingsByMarketSegment,
         Plot.binX(
-          { y: "count", thresholds: "day", filter: null },
+          {y: "count", thresholds: "day", filter: null},
           {
             x: "arrivalDate",
             curve: "step",
-            fill: "url(#gradient)",
+            fill: "url(#gradient)"
           }
         )
       ),
       Plot.lineY(
         bookingsByMarketSegment,
         Plot.windowY(
-          { k: 28 },
+          {k: 28},
           Plot.binX(
-            { y: "count", interval: "day", filter: null },
+            {y: "count", interval: "day", filter: null},
             {
               x: "arrivalDate",
               strokeWidth: 2,
@@ -246,9 +251,9 @@ function arrivalLineChart(width, height) {
         )
       ),
       Plot.ruleY([0]),
-      Plot.axisX({ ticks: 5 }),
-      Plot.axisY({ ticks: 5 })
-    ],
+      Plot.axisX({ticks: 5}),
+      Plot.axisY({ticks: 5})
+    ]
   });
 }
 ```
@@ -261,11 +266,13 @@ const seasonColors = ["#959C00", "#9C5A00", "#465C9C", "#109F73"];
 const seasonDomain = ["Summer", "Fall", "Winter", "Spring"];
 
 // Calculate mean daily rate by season (for rule mark)
-const meanRateBySeason = d3.rollups(
-  bookingsByMarketSegment,
-  (v) => d3.mean(v, (d) => d.ADR),
-  (d) => d.season
-).map(([season, value]) => ({season, value}));
+const meanRateBySeason = d3
+  .rollups(
+    bookingsByMarketSegment,
+    (v) => d3.mean(v, (d) => d.ADR),
+    (d) => d.season
+  )
+  .map(([season, value]) => ({season, value}));
 
 // Build daily rate faceted histograms
 const dollarFormat = d3.format("$.2f");
@@ -278,50 +285,47 @@ function dailyRateChart(width, height) {
     marginRight: 0,
     marginTop: 10,
     marginBottom: 30,
-    x: { label: "Average rate($)", grid: true},
+    x: {label: "Average rate($)", grid: true},
     y: {nice: true, label: null},
     axis: null,
     fy: {label: "Season", domain: seasonDomain},
     color: {domain: seasonDomain, range: seasonColors, label: "Season"},
     marks: [
-      Plot.axisX({ ticks: 4 }),
-      Plot.axisY({ ticks: 2}),
+      Plot.axisX({ticks: 4}),
+      Plot.axisY({ticks: 2}),
       Plot.rectY(
         bookingsByMarketSegment,
-        Plot.binX(
-          { y: "count" },
-          { x: "ADR", interval: 10, fill: "season", fy: "season", tip: true}
-        )
+        Plot.binX({y: "count"}, {x: "ADR", interval: 10, fill: "season", fy: "season", tip: true})
       ),
       Plot.text(
-      bookingsByMarketSegment,
-      Plot.groupZ(
-        { text: (v) => `${v[0].season} (n = ${defaultFormat(v.length)})` },
-        {
-          fy: "season",
-          frameAnchor: "top-right",
-          dx: -6,
-          dy: 6
-        }
-      )
-    ),
-    Plot.ruleX(meanRateBySeason, {x: "value", fy: "season", stroke: "currentColor"}),
-    Plot.text(meanRateBySeason, {
-      x: "value",
-      fy: "season",
-      text: (d) => `${d.season} mean rate: ${dollarFormat(d.value)}`,
-      dx: 5,
-      dy: -20,
-      textAnchor: "start"
-    }),
-    Plot.frame({opacity: 0.4}),
-    ],
+        bookingsByMarketSegment,
+        Plot.groupZ(
+          {text: (v) => `${v[0].season} (n = ${defaultFormat(v.length)})`},
+          {
+            fy: "season",
+            frameAnchor: "top-right",
+            dx: -6,
+            dy: 6
+          }
+        )
+      ),
+      Plot.ruleX(meanRateBySeason, {x: "value", fy: "season", stroke: "currentColor"}),
+      Plot.text(meanRateBySeason, {
+        x: "value",
+        fy: "season",
+        text: (d) => `${d.season} mean rate: ${dollarFormat(d.value)}`,
+        dx: 5,
+        dy: -20,
+        textAnchor: "start"
+      }),
+      Plot.frame({opacity: 0.4})
+    ]
   });
 }
 ```
 
 ```js
-// Create bubble chart of bookings by room type and season
+// Faceted bar charts of bookings by room type
 function typeSeasonChart(width, height) {
   return Plot.plot({
     marginTop: 20,
@@ -329,21 +333,25 @@ function typeSeasonChart(width, height) {
     marginLeft: 40,
     width,
     height: 270,
-    x: {domain: seasonDomain, tickSize: 0, axis: null},
-    y: {label: "Count", fontSize:0, grid: true, insetTop: 5},
+    x: {domain: seasonDomain, tickSize: 0, axis: null, label: "Season"},
+    y: {label: "Count", fontSize: 0, grid: true, insetTop: 5},
     fx: {label: "Room type"},
-    color: {legend: true, domain: seasonDomain, range: seasonColors},
+    color: {legend: true, domain: seasonDomain, range: seasonColors, label: "Season"},
     marks: [
       Plot.text("ABCDEFGHLP", {fx: Plot.identity, text: null}),
       Plot.frame({opacity: 0.4}),
-      Plot.barY(bookingsByMarketSegment, Plot.groupX({y: "count"},
-        {
-          x: "season",
-          fx: "ReservedRoomType",
-          fill: "season",
-          tip: true,
-        }
-      )),
+      Plot.barY(
+        bookingsByMarketSegment,
+        Plot.groupX(
+          {y: "count"},
+          {
+            x: "season",
+            fx: "ReservedRoomType",
+            fill: "season",
+            tip: true
+          }
+        )
+      )
     ]
   });
 }
