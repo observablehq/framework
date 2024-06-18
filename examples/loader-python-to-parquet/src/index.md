@@ -53,7 +53,7 @@ const dams = FileAttachment("data/us-dams.parquet").parquet();
 We can display the table using `Inputs.table`.
 
 ```js echo
-Inputs.table(dams)
+Inputs.table(dams);
 ```
 
 Lastly, we can pass the table to Observable Plot to make a simple bar chart of dam counts by purpose, with color mapped to hazard classification.
@@ -63,10 +63,13 @@ Plot.plot({
   marginLeft: 220,
   color: {legend: true, domain: ["Undetermined", "Low", "Significant", "High"]},
   marks: [
-    Plot.barX(dams,
-      Plot.groupY({x: "count"}, {y: "Primary Purpose", fill: "Hazard Potential Classification", sort: {y: "x", reverse: true}
-      })
+    Plot.barX(
+      dams,
+      Plot.groupY(
+        {x: "count"},
+        {y: "Primary Purpose", fill: "Hazard Potential Classification", sort: {y: "x", reverse: true}}
+      )
     )
   ]
-})
+});
 ```
