@@ -200,6 +200,10 @@ const tableSearchValue = view(tableSearch);
 
 ```js
 // Line chart (arrival dates)
+let mem;
+function firstOrRecent(values) {
+  return values.length ? (mem = values[0]) : mem;
+}
 function arrivalLineChart(width, height) {
   return Plot.plot({
     height: height - 50,
@@ -233,7 +237,7 @@ function arrivalLineChart(width, height) {
         Plot.windowY(
           {k: 28},
           Plot.binX(
-            {y: "count", interval: "day", filter: null},
+            {y: "count", interval: "day", stroke: firstOrRecent, filter: null},
             {
               x: "arrivalDate",
               strokeWidth: 2,
