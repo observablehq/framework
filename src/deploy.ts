@@ -359,7 +359,7 @@ class Deployer {
             throw new CliError("User canceled deploy", {print: false, exitCode: 0});
           }
         } else {
-          throw new CliError("Running non-interactively, cancelling due to conflictg");
+          throw new CliError("Running non-interactively, cancelling due to conflict.");
         }
       }
 
