@@ -108,6 +108,7 @@ export async function build(
 
   // Generate the client bundles (JavaScript and styles). TODO Use a content
   // hash, or perhaps the Framework version number for built-in modules.
+  const localStylesheets = new Set<string>();
   if (addPublic) {
     for (const path of globalImports) {
       if (path.startsWith("/_observablehq/") && path.endsWith(".js")) {
@@ -138,14 +139,16 @@ export async function build(
         const sourcePath = await populateNpmCache(root, path); // TODO effects
         await effects.copyFile(sourcePath, path);
       } else if (!/^\w+:/.test(specifier)) {
-        const sourcePath = join(root, specifier);
-        effects.output.write(`${faint("build")} ${sourcePath} ${faint("→")} `);
-        const contents = await bundleStyles({path: sourcePath, minify: true});
-        const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
-        const ext = extname(specifier);
-        const alias = `/${join("_import", dirname(specifier), `${basename(specifier, ext)}.${hash}${ext}`)}`;
-        aliases.set(resolveStylesheetPath(root, specifier), alias);
-        await effects.writeFile(alias, contents);
+        localStylesheets.add(specifier);
+        await bundleStyles({
+          path: join(root, specifier),
+          resolve(args) {
+            if (args.path.endsWith(".css") || args.path.match(/^[#?]/) || args.path.match(/^\w+:/)) return;
+            files.add(args.path);
+            loaders.resolveFilePath(args.path);
+            return {path: "(pending)", external: true};
+          }
+        });
       }
     }
   }
@@ -174,6 +177,27 @@ export async function build(
     const alias = `/${join("_file", dirname(file), `${basename(file, ext)}.${hash}${ext}`)}`;
     aliases.set(loaders.resolveFilePath(file), alias);
     await effects.writeFile(alias, contents);
+  }
+
+  // Write local stylesheets.
+  if (addPublic) {
+    for (const specifier of localStylesheets) {
+      const sourcePath = join(root, specifier);
+      effects.output.write(`${faint("build")} ${sourcePath} ${faint("→")} `);
+      const contents = await bundleStyles({
+        path: sourcePath,
+        minify: true,
+        resolve(args) {
+          if (args.path.endsWith(".css") || args.path.match(/^[#?]/) || args.path.match(/^\w+:/)) return;
+          return {path: join("..", aliases.get(loaders.resolveFilePath(args.path))!), external: true};
+        }
+      });
+      const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
+      const ext = extname(specifier);
+      const alias = `/${join("_import", dirname(specifier), `${basename(specifier, ext)}.${hash}${ext}`)}`;
+      aliases.set(resolveStylesheetPath(root, specifier), alias);
+      await effects.writeFile(alias, contents);
+    }
   }
 
   // Download npm imports. TODO It might be nice to use content hashes for
