@@ -312,10 +312,15 @@ class Deployer {
     if (!deployTarget.create) {
       // Check last deployed state. If it's not the same project, ask the user if
       // they want to continue anyways. In non-interactive mode just cancel.
-      const targetDescription = `${deployTarget.project.title} (@${deployTarget.workspace.login}/${deployTarget.project.slug})`;
+      const targetDescription = `${deployTarget.project.title} (${deployTarget.project.slug}) in the @${deployTarget.workspace.login} workspace`;
       if (deployConfig.projectId && deployConfig.projectId !== deployTarget.project.id) {
         this.effects.clack.log.warn(
-          `The \`projectId\` in your deploy.json does not match. Continuing will overwrite ${bold(targetDescription)}.`
+          wrapAnsi(
+            `The \`projectId\` in your deploy.json does not match. Continuing will overwrite ${bold(
+              targetDescription
+            )}.`,
+            this.effects.outputColumns
+          )
         );
         if (this.effects.isTty) {
           const choice = await this.effects.clack.confirm({
@@ -333,10 +338,13 @@ class Deployer {
           throw new CliError("Cancelling deploy due to misconfiguration.");
         }
       } else if (deployConfig.projectId) {
-        this.effects.clack.log.info(`Deploying to ${bold(targetDescription)}.`);
+        this.effects.clack.log.info(wrapAnsi(`Deploying to ${bold(targetDescription)}.`, this.effects.outputColumns));
       } else {
         this.effects.clack.log.warn(
-          `The \`projectId\` in your deploy.json is missing. Continuing will overwrite ${bold(targetDescription)}.`
+          wrapAnsi(
+            `The \`projectId\` in your deploy.json is missing. Continuing will overwrite ${bold(targetDescription)}.`,
+            this.effects.outputColumns
+          )
         );
         if (this.effects.isTty) {
           const choice = await this.effects.clack.confirm({
@@ -351,7 +359,7 @@ class Deployer {
             throw new CliError("User canceled deploy", {print: false, exitCode: 0});
           }
         } else {
-          throw new CliError("Running non-interactively, cancelling due to conflictg");
+          throw new CliError("Running non-interactively, cancelling due to conflict.");
         }
       }
 

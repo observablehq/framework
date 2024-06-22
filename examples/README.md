@@ -17,6 +17,12 @@
 
 [Source](./eia) · This dashboard visualizes electricity generation and demand across the U.S. electricity grid. The included data loaders demonstrate how to retrieve live data from the U.S. Energy Information Administration (EIA) API, while the dashboard demonstrates how to produce interactive maps, bar charts, and time-series charts with Observable Plot. A range input allows the user to rewind time to any point in the previous 24 hours, and a table shows details.
 
+### [`hotel-bookings`](https://observablehq.observablehq.cloud/framework-example-hotel-bookings) - Resort hotel bookings
+
+<a href="https://observablehq.observablehq.cloud/framework-example-hotel-bookings/"><img src="../docs/assets/hotel-bookings.webp" alt="Resort hotel bookings" width="312" height="237"></a>
+
+[Source](./hotel-bookings) · This dashboard visualizes hotel bookings by market segment for a Portuguese resort from 2015 to 2017. The dashboard demonstrates how to produce interactive charts with D3 and Observable Plot, either created as JavaScript components or directly within a markdown file. Donut charts, histograms, a bubble chart and a line chart reveal patterns in room bookings, prices, guest nationalities, and cancellations across different market segments and seasons.
+
 ### [`plot`](https://observablehq.observablehq.cloud/framework-example-plot/) - Observable Plot downloads
 
 <a href="https://observablehq.observablehq.cloud/framework-example-plot/"><img src="../docs/assets/plot.webp" alt="Observable Plot downloads" width="312" height="237"></a>
@@ -29,6 +35,12 @@
 
 [Source](./mortgage-rates) · This dashboard visualizes Freddie Mac’s historical mortgage rates data. The included data loader demonstrates how to retrieve CSV data from Freddie Mac and visualize the result as a zoomable chart with Observable Plot. The larger time-series line chart at the bottom allows brushing to select an arbitrary time range, while the smaller visualization above zooms to show the selected range.
 
+### [`us-dams`](https://observablehq.observablehq.cloud/framework-example-us-dams/) - U.S. dam conditions
+
+<a href="https://observablehq.observablehq.cloud/framework-example-us-dams/"><img src="../docs/assets/us-dams.webp" alt="U.S. dams" width="312" height="237"></a>
+
+[Source](./us-dams) · This dashboard visualizes locations and conditions for 90k+ dams in the U.S. with data from the National Inventory of Dams (NID). An R data loader accesses the data directly from the NID and generates a simplified CSV. Maps created with deck.gl allow a user to zoom and scroll while exploring dam locations nationwide, or by state. Bar and bubble charts made in Observable Plot highlight dam conditions and hazard potential.
+
 ## Technique examples 🛠️
 
 ### Charts
@@ -40,6 +52,7 @@
 
 ### Data loaders
 
+- [`loader-airtable`](https://observablehq.observablehq.cloud/framework-example-loader-airtable/) - Loading data from Airtable
 - [`loader-arrow`](https://observablehq.observablehq.cloud/framework-example-loader-arrow/) - Generating Apache Arrow IPC files
 - [`loader-databricks`](https://observablehq.observablehq.cloud/framework-example-loader-databricks/) - Loading data from Databricks
 - [`loader-duckdb`](https://observablehq.observablehq.cloud/framework-example-loader-duckdb/) - Processing data with DuckDB
@@ -48,11 +61,13 @@
 - [`loader-julia-to-txt`](https://observablehq.observablehq.cloud/framework-example-loader-julia-to-txt/) - Generating TXT from Julia
 - [`loader-parquet`](https://observablehq.observablehq.cloud/framework-example-loader-parquet/) - Generating Apache Parquet files
 - [`loader-postgres`](https://observablehq.observablehq.cloud/framework-example-loader-postgres/) - Loading data from PostgreSQL
+- [`loader-python-to-csv`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-csv/) - Generating CSV from Python
 - [`loader-python-to-png`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-png/) - Generating PNG from Python
 - [`loader-python-to-zip`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-zip/) - Generating ZIP from Python
 - [`loader-r-to-csv`](https://observablehq.observablehq.cloud/framework-example-loader-r-to-csv/) - Generating CSV from R
 - [`loader-r-to-jpeg`](https://observablehq.observablehq.cloud/framework-example-loader-r-to-jpeg/) - Generating JPEG from R
 - [`loader-r-to-json`](https://observablehq.observablehq.cloud/framework-example-loader-r-to-json/) - Generating JSON from R
+- [`loader-rust-to-json`](https://observablehq.observablehq.cloud/framework-example-loader-rust-to-json/) - Generating JSON from Rust
 - [`loader-snowflake`](https://observablehq.observablehq.cloud/framework-example-loader-snowflake/) - Loading data from Snowflake
 - [`netcdf-contours`](https://observablehq.observablehq.cloud/framework-example-netcdf-contours/) - Converting NetCDF to GeoJSON with `netcdfjs` and `d3-geo-voronoi`
 
@@ -75,7 +90,6 @@
 - [`google-analytics`](https://observablehq.observablehq.cloud/framework-example-google-analytics/) - A Google Analytics dashboard with numbers and charts
 - [`hello-world`](https://observablehq.observablehq.cloud/framework-example-hello-world/) - A minimal Framework project
 - [`intersection-observer`](https://observablehq.observablehq.cloud/framework-example-intersection-observer/) - Scrollytelling with IntersectionObserver
-- [`penguin-classification`](https://observablehq.observablehq.cloud/framework-example-penguin-classification/) - Logistic regression in Python; validating models with Observable Plot
 - [`responsive-iframe`](https://observablehq.observablehq.cloud/framework-example-responsive-iframe/) - Adjust the height of an embedded iframe to fit its content
 
 ## About these examples
