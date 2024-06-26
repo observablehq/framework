@@ -13,6 +13,7 @@ export const Inputs = () => import("npm:@observablehq/inputs");
 export const L = () => import("npm:leaflet");
 export const mapboxgl = () => import("npm:mapbox-gl").then((module) => module.default);
 export const mermaid = () => import("observablehq:stdlib/mermaid").then((mermaid) => mermaid.default);
+export const p5 = () => import("observablehq:stdlib/p5").then((p5) => p5.default);
 export const Plot = () => import("npm:@observablehq/plot");
 export const React = () => import("npm:react");
 export const ReactDOM = () => import("npm:react-dom");
