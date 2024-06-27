@@ -150,7 +150,9 @@ ES_NODE="https://USERNAME:PASSWORD@HOST:9200"
 ```
 
 <div class="warning">
+
 The `.env` file should not be committed to your source code repository; keep your credentials secret.
+
 </div>
 
 The above data loader lives in `data/kibana_sample_data_logs.csv.ts`, so we can load the data as `data/kibana_sample_data_logs.csv`. The `FileAttachment.csv` method parses the file and returns a promise to an array of objects.
