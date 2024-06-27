@@ -40,14 +40,10 @@ const resp = await esClient.search<unknown, AggsResponseFormat>({
   },
 });
 
-if (!resp.aggregations) {
-  throw new Error("aggregations not defined");
-}
-
 process.stdout.write(
   csvFormat(
     // This transforms the nested response from Elasticsearch into a flat array.
-    resp.aggregations.logs_histogram.buckets.reduce<Array<LoaderOutputFormat>>(
+    resp.aggregations!.logs_histogram.buckets.reduce<Array<LoaderOutputFormat>>(
       (p, c) => {
         p.push(
           ...c.response_code.buckets.map((d) => ({

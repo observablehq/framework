@@ -47,18 +47,15 @@ const resp = await esClient.search<unknown, AggsResponseFormat>({
   },
 });
 
-if (!resp.aggregations) {
-  throw new Error("aggregations not defined");
-}
-
 process.stdout.write(
   csvFormat(
     // This transforms the nested response from Elasticsearch into a flat array.
-    resp.aggregations.logs_histogram.buckets.reduce<Array<LoaderOutputFormat>>(
+    resp.aggregations!.logs_histogram.buckets.reduce<Array<LoaderOutputFormat>>(
       (p, c) => {
         p.push(
           ...c.response_code.buckets.map((d) => ({
-            date: c.key_as_string,
+            // Just keep the date from the full ISO string.
+            date: c.key_as_string.split("T")[0],
             count: d.doc_count,
             response_code: d.key,
           })),
@@ -70,7 +67,6 @@ process.stdout.write(
     ),
   ),
 );
-
 ```
 
 The data loader uses a helper file, `es_client.ts`, which provides a wrapper on the `@elastic/elasticsearch` package. This reduces the amount of boilerplate you need to write to issue a query.
