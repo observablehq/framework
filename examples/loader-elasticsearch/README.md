@@ -24,8 +24,14 @@ cd kibana-8.14.1
 
 The commands for both will output instructions how to finish the setup with security enabled. Once you have both running, you can create the sample data in Kibana via this URL: http://localhost:5601/app/home#/tutorial_directory/sampleData
 
-Finally, create the `.env` file with the credentials shared for the user `elastic` that were logged when starting Elasticsearch like this:
+Finally, create the `.env` file with the credentials shared for the user `elastic` that were logged when starting Elasticsearch like this. To get the CA fingerprint for the config, run the following command from the directory you started installing Elasticsearch:
+
+```
+openssl x509 -fingerprint -sha256 -noout -in ./elasticsearch-8.14.1/config/certs/http_ca.crt
+```
 
 ```
 ES_NODE=https://elastic:<PASSWORD>@localhost:9200
+ES_CA_FINGERPRINT=<CA_FINGERPRINT>
+ES_UNSAFE_TLS_REJECT_UNAUTHORIZED=FALSE
 ```
