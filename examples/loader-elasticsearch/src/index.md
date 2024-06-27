@@ -1,5 +1,3 @@
-# PostgreSQL data loader
-
 # Elasticsearch data loader
 
 Here’s a TypeScript data loader that queries an Elasticsearch cluster.
