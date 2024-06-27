@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@elastic/elasticsearch": "^8.14.0",
-    "@observablehq/framework": "^1.7.0",
+    "@observablehq/framework": "latest",
     "d3-dsv": "^3.0.1",
     "d3-time": "^3.1.0",
     "dotenv": "^16.4.5"
