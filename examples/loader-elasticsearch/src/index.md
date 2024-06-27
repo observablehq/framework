@@ -100,7 +100,7 @@ const {
   ES_CA_FINGERPRINT,
   // Warning: This option should be considered an insecure workaround for local development only.
   // You may wish to specify a self-signed certificate rather than disabling certificate verification.
-  // ES_UNSAFE_TLS_REJECT_UNAUTHORIZED can be set to TRUE to disable certificate verification.
+  // ES_UNSAFE_TLS_REJECT_UNAUTHORIZED can be set to FALSE to disable certificate verification.
   // See https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/client-connecting.html#auth-tls for more.
   ES_UNSAFE_TLS_REJECT_UNAUTHORIZED,
 } = process.env;
