@@ -140,7 +140,9 @@ export const esClient = new Client({
 ```
 
 <div class="note">
+
 To run this data loader, you’ll need to install `@elastic/elasticsearch`, `d3-dsv` and `dotenv` using your preferred package manager such as npm or Yarn.
+
 </div>
 
 For the data loader to authenticate with your Elasticsearch cluster, you need to set the environment variables defined in the helper. If you use GitHub, you can use [secrets in GitHub Actions](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions) to set environment variables; other platforms provide similar functionality for continuous deployment. For local development, we use the `dotenv` package, which allows environment variables to be defined in a `.env` file which lives in the project root and looks like this:
