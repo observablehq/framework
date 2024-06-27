@@ -17,6 +17,9 @@ const {
   ES_API_KEY,
   ES_USERNAME,
   ES_PASSWORD,
+  // the fingerprint (SHA256) of the CA certificate that is used to sign
+  // the certificate that the Elasticsearch node presents for TLS.
+  ES_CA_FINGERPRINT,
   // Warning: This option should be considered an insecure workaround for local development only.
   // You may wish to specify a self-signed certificate rather than disabling certificate verification.
   // ES_UNSAFE_TLS_REJECT_UNAUTHORIZED can be set to TRUE to disable certificate verification.
@@ -36,6 +39,7 @@ const isLocalhost = esUrl?.hostname === "localhost";
 export const esClient = new Client({
   ...(ES_NODE ? { node: ES_NODE } : {}),
   ...(ES_CLOUD_ID ? { cloud: { id: ES_CLOUD_ID } } : {}),
+  ...(ES_CA_FINGERPRINT ? { caFingerprint: ES_CA_FINGERPRINT } : {}),
   ...(ES_API_KEY
     ? {
       auth: {
@@ -53,7 +57,7 @@ export const esClient = new Client({
     : {}),
   ...(isHTTPS &&
     isLocalhost &&
-    ES_UNSAFE_TLS_REJECT_UNAUTHORIZED?.toLowerCase() === "true"
+    ES_UNSAFE_TLS_REJECT_UNAUTHORIZED?.toLowerCase() === "false"
     ? {
       tls: {
         rejectUnauthorized: false,
