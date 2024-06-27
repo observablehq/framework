@@ -165,7 +165,7 @@ The `logs` table has three columns: `date`, `count` and `response_code`. We can 
 Inputs.table(logs)
 ```
 
-Lastly, we can pass the table to `Plot.plot` to make a line chart.
+Lastly, we can pass the table to Observable Plot to make a line chart.
 
 ```js echo
 Plot.plot({
