@@ -42,4 +42,4 @@ if (name === undefined) {
   const pck = await github(`/repos/${nameWithOwner}/contents/package.json`);
   ({ name } = JSON.parse(atob(pck.body.content)));
 }
-process.stdout.write(csvFormat(await load(name)));
+if (name) process.stdout.write(csvFormat(await load(name)));
