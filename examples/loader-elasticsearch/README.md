@@ -6,7 +6,7 @@ View live: <https://observablehq.observablehq.cloud/framework-example-loader-ela
 
 This Observable Framework example demonstrates how to write a TypeScript data loader that runs a query on Elasticsearch using the [Elasticsearch Node.js client](https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/index.html). The data loader lives in [`src/data/kibana_sample_data_logs.csv.ts`](./src/data/kibana_sample_data_logs.csv.ts) and uses the helper [`src/data/es_client.ts`](./src/data/es_client.ts).
 
-To fully reproduce the example, you need to have a setup with both Elasticsearch and Kibana running to create the sample data. Here's how to set up both on macOS:
+To fully reproduce the example, you need to have a setup with both Elasticsearch and Kibana running to create the sample data. Here’s how to set up both on macOS:
 
 ```bash
 # Download and run Elasticsearch
