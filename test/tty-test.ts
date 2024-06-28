@@ -1,4 +1,5 @@
 import assert from "node:assert";
+import * as clack from "@clack/prompts";
 import type {TtyEffects} from "../src/tty.js";
 import {blue, bold, green, hangingIndentLog, red} from "../src/tty.js";
 
@@ -50,6 +51,7 @@ describe("hangingIndentLog", () => {
 });
 
 const noopEffects: TtyEffects = {
+  clack,
   isTty: true,
   logger: {log() {}, warn() {}, error() {}},
   outputColumns: 80
