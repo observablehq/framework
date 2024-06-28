@@ -1,24 +1,18 @@
-import { GITHUB_TOKEN } from "./config.js";
-import { graphql as gql } from "@octokit/graphql";
+import {GITHUB_TOKEN} from "./config.js";
+import {graphql as gql} from "@octokit/graphql";
 
 export async function github(
   path: string,
-  {
-    authorization = GITHUB_TOKEN && `token ${GITHUB_TOKEN}`,
-    accept = "application/vnd.github.v3+json",
-  } = {}
+  {authorization = GITHUB_TOKEN && `token ${GITHUB_TOKEN}`, accept = "application/vnd.github.v3+json"} = {}
 ) {
   const url = new URL(path, "https://api.github.com");
-  const headers = { ...(authorization && { authorization }), accept };
-  const response = await fetch(url, { headers });
+  const headers = {...(authorization && {authorization}), accept};
+  const response = await fetch(url, {headers});
   if (!response.ok) throw new Error(`fetch error: ${response.status} ${url}`);
-  return { headers: response.headers, body: await response.json() };
+  return {headers: response.headers, body: await response.json()};
 }
 
-export async function* githubList<T = any>(
-  path: string,
-  { reverse = true, ...options }: any = {}
-): AsyncGenerator<T> {
+export async function* githubList<T = any>(path: string, {reverse = true, ...options}: any = {}): AsyncGenerator<T> {
   const url = new URL(path, "https://api.github.com");
   url.searchParams.set("per_page", "100");
   url.searchParams.set("page", "1");
@@ -56,5 +50,5 @@ function findRelLink(headers, name) {
 }
 
 export const graphql = gql.defaults({
-  headers: { authorization: `token ${GITHUB_TOKEN}` },
+  headers: {authorization: `token ${GITHUB_TOKEN}`}
 });

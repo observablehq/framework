@@ -1,6 +1,6 @@
-import { utcDay } from "d3-time";
-import { githubList } from "./github.js";
-import { getRepo } from "./github-repo.js";
+import {utcDay} from "d3-time";
+import {githubList} from "./github.js";
+import {getRepo} from "./github-repo.js";
 
 const repo = await getRepo();
 
@@ -18,10 +18,10 @@ async function load() {
 async function* loadItems() {
   const end = utcDay();
   const start = utcDay.offset(end, -28 * 6);
-  const { nameWithOwner } = repo;
+  const {nameWithOwner} = repo;
   for await (const item of githubList(
     `/repos/${nameWithOwner}/issues/comments?since=${start.toISOString()}&until=${end.toISOString()}`,
-    { reverse: true }
+    {reverse: true}
   ))
     yield item;
 }
@@ -32,7 +32,7 @@ function redactItem(item) {
     login: item.user.login,
     date: item.created_at,
     html_url: item.html_url,
-    body: truncateBody(item.body),
+    body: truncateBody(item.body)
   };
 }
 
