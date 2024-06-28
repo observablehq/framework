@@ -6,7 +6,7 @@ const {AIRTABLE_PAT, AIRTABLE_DB} = process.env;
 
 Airtable.configure({apiKey: AIRTABLE_PAT});
 
-const base = Airtable.base(AIRTABLE_DB as string);
+const base = Airtable.base(AIRTABLE_DB!);
 
 const data: any[] = [];
 
