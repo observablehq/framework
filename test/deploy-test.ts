@@ -1135,4 +1135,49 @@ describe("promptDeployTarget", () => {
       workspace
     });
   });
+
+  it("allows selecting a project when there are a few options", async () => {
+    const effects = new MockDeployEffects();
+    const workspace = userWithOneWorkspace.workspaces[0];
+    getCurrentObservableApi()
+      .handleGetWorkspaceProjects({
+        workspaceLogin: workspace.login,
+        projects: Array.from({length: 3}, (d, i) => ({id: `project${i}`, slug: `project${i}`, title: `Project ${i}`}))
+      })
+      .start();
+    effects.clack.inputs.push(
+      "project0" // which project do you want to use
+    );
+
+    const api = effects.makeApiClient();
+    const result = await promptDeployTarget(effects, TEST_CONFIG, api, userWithOneWorkspace);
+
+    // manual assertion so Typescript is happy.
+    if (result.create) throw new Error("assertion error, expected project creation");
+    assert.equal(result.create, false);
+    assert.equal(result.project.id, "project0");
+  });
+
+  it("prompts to type a project slug if there are many options", async () => {
+    const effects = new MockDeployEffects();
+    const workspace = userWithOneWorkspace.workspaces[0];
+    getCurrentObservableApi()
+      .handleGetWorkspaceProjects({
+        workspaceLogin: workspace.login,
+        projects: Array.from({length: 20}, (d, i) => ({id: `project${i}`, slug: `project${i}`, title: `Project ${i}`}))
+      })
+      .start();
+    effects.clack.inputs.push(
+      "existing", // Do you want to create a new project?
+      "project12" // what is the slug of the project you want to deploy to?
+    );
+
+    const api = effects.makeApiClient();
+    const result = await promptDeployTarget(effects, TEST_CONFIG, api, userWithOneWorkspace);
+
+    // manual assertion so Typescript is happy.
+    if (result.create) throw new Error("assertion error, expected project creation");
+    assert.equal(result.create, false);
+    assert.equal(result.project.id, "project12");
+  });
 });

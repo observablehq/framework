@@ -88,7 +88,11 @@ type DeployTargetInfo =
 /** Deploy a project to ObservableHQ */
 export async function deploy(deployOptions: DeployOptions, effects = defaultEffects): Promise<void> {
   Telemetry.record({event: "deploy", step: "start", force: deployOptions.force});
-  effects.clack.intro(`${inverse(" observable deploy ")} ${faint(`v${process.env.npm_package_version}`)}`);
+  effects.clack.intro(
+    `${inverse(" observable deploy ")}${
+      process.env.npm_pacakge_version ? faint(` v${process.env.npm_package_version}`) : ""
+    }`
+  );
 
   const deployInfo = await new Deployer(deployOptions, effects).deploy();
 
@@ -754,7 +758,7 @@ export async function promptDeployTarget(
     throw error;
   }
 
-  if (existingProjects.length > 0) {
+  if (existingProjects.length > 0 && existingProjects.length < 10) {
     const chosenProject = await effects.clack.select<{value: string | null; label: string}[], string | null>({
       message: "Which project do you want to use?",
       options: [
@@ -771,6 +775,38 @@ export async function promptDeployTarget(
       throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
     } else if (chosenProject !== null) {
       return {create: false, workspace, project: existingProjects.find((p) => p.slug === chosenProject)!};
+    }
+  } else if (existingProjects.length >= 10) {
+    const action = await effects.clack.select<{value: string; label: string}[], string>({
+      message: "Do you want to create a new project?",
+      options: [
+        {value: "create", label: "Create a new project"},
+        {value: "existing", label: "Use an existing project"}
+      ]
+    });
+    if (effects.clack.isCancel(action)) {
+      throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
+    } else if (action === "existing") {
+      effects.clack.log.info(
+        wrapAnsi(
+          `Projects in this workspace: ${existingProjects.map((p) => p.slug).join(", ")}`,
+          effects.outputColumns - 4
+        )
+      );
+      const chosenProject = await effects.clack.text({
+        message: "What is the slug of the project you want to deploy to?",
+        validate: (slug) => {
+          if (existingProjects.some((p) => p.slug === slug)) return undefined;
+          return "Project not found";
+        }
+      });
+      if (effects.clack.isCancel(chosenProject)) {
+        throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
+      } else if (chosenProject !== null) {
+        const project = existingProjects.find((p) => p.slug === chosenProject);
+        if (!project) throw new Error("selected a non-existent project");
+        return {create: false, workspace, project};
+      }
     }
   } else {
     const confirmChoice = await effects.clack.confirm({
