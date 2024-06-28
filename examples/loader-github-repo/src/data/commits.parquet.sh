@@ -1,12 +1,12 @@
 set -a; source .env; set +a
 
-CLONE=repos/$GITHUB_REPOS
+CLONE=repos/$GITHUB_REPO
 
 if [ -d "$CLONE" ]; then
   echo "using cached clone $CLONE" >&2
 else
-  echo "cloning $GITHUB_REPOS into $CLONE" >&2
-  git clone "https://github.com/${GITHUB_REPOS}.git" "$CLONE/"
+  echo "cloning $GITHUB_REPO into $CLONE" >&2
+  git clone "https://github.com/${GITHUB_REPO}.git" "$CLONE/"
 fi
 
 cd "$CLONE/"
