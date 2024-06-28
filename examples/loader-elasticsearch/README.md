@@ -22,7 +22,7 @@ cd kibana-8.14.1
 ./bin/kibana
 ```
 
-The commands for both will output instructions how to finish the setup with security enabled. Once you have both running, you can create the "Sample web logs" dataset in Kibana via this URL: http://localhost:5601/app/home#/tutorial_directory/sampleData
+The commands for both will output instructions how to finish the setup with security enabled. Once you have both running, you can create the “Sample web logs” dataset in Kibana via this URL: http://localhost:5601/app/home#/tutorial_directory/sampleData
 
 Finally, create the `.env` file with the credentials shared for the user `elastic` that were logged when starting Elasticsearch like this. To get the CA fingerprint for the config, run the following command from the directory you started installing Elasticsearch:
 
