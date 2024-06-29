@@ -12,7 +12,7 @@ describe("create", () => {
     effects.clack.inputs.push(
       "./template-test", // Where to create your project?
       "Template Test", // What to title your project?
-      true, // Include sample files to help you get started?
+      "default", // Include sample files to help you get started?
       null, // Install dependencies?
       false // Initialize git repository?
     );
@@ -40,7 +40,7 @@ describe("create", () => {
     effects.clack.inputs.push(
       "./template-test", // Where to create your project?
       "Template Test", // What to title your project?
-      false, // Include sample files to help you get started?
+      "empty", // Include sample files to help you get started?
       null, // Install dependencies?
       false // Initialize git repository?
     );
@@ -55,6 +55,48 @@ describe("create", () => {
         "template-test/observablehq.config.js",
         "template-test/package.json",
         "template-test/README.md"
+      ])
+    );
+  });
+  it("instantiates the github template", async () => {
+    const effects = new TestCreateEffects();
+    effects.clack.inputs.push(
+      "./template-github", // Where to create your project?
+      "GitHub Stats", // What to title your project?
+      "github", // Include sample files to help you get started?
+      "ght_xxxxxx", // token
+      "", // repos or org
+      null, // Install dependencies?
+      false // Initialize git repository?
+    );
+    await create(effects);
+    assert.deepStrictEqual(
+      new Set(effects.outputs.keys()),
+      new Set([
+        "template-github/.env",
+        "template-github/README.md",
+        "template-github/docs/clone.json.ts",
+        "template-github/docs/collaborations.md",
+        "template-github/docs/commits.json.ts",
+        "template-github/docs/components/DOM.js",
+        "template-github/docs/components/color-legend.js",
+        "template-github/docs/components/force-graph.js",
+        "template-github/docs/components/plural.js",
+        "template-github/docs/components/treemap.js",
+        "template-github/docs/config.json.ts",
+        "template-github/docs/config.ts",
+        "template-github/docs/files.json.ts",
+        "template-github/docs/files.md",
+        "template-github/docs/github-repos.ts",
+        "template-github/docs/github.ts",
+        "template-github/docs/index.md",
+        "template-github/docs/issues.json.ts",
+        "template-github/docs/issues.md",
+        "template-github/docs/repos.json.ts",
+        "template-github/docs/repos.md",
+        "template-github/docs/user.json.ts",
+        "template-github/docs/user.md",
+        "template-github/package.json"
       ])
     );
   });
