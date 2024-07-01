@@ -67,7 +67,12 @@ export function define(cell) {
 function noop() {}
 
 function clear(root) {
-  for (const v of root._nodes) v.remove();
+  delete root._inspectorState;
+  for (const v of root._nodes) {
+    // If this was an inspector, note whether it is expanded.
+    if (v.firstChild?.classList.contains("observablehq--expanded")) root._inspectorExpanded = true;
+    v.remove();
+  }
   root._nodes.length = 0;
 }
 
@@ -130,7 +135,7 @@ function displayInline(root, value) {
 }
 
 function displayBlock(root, value) {
-  displayNode(root, isNode(value) ? value : inspect(value));
+  displayNode(root, isNode(value) ? value : inspect(value, root._inspectorExpanded));
 }
 
 export function undefine(id) {
