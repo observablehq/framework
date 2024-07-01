@@ -8,6 +8,11 @@ const input = container.querySelector<HTMLInputElement>("input")!;
 const load = () => import("observablehq:search");
 input.addEventListener("focus", load, {once: true});
 input.addEventListener("keydown", load, {once: true});
+input.addEventListener("focus", () => {
+  if (input.value) return; // only restore the query if empty
+  input.value = sessionStorage.getItem("search-query") ?? "";
+  input.select();
+});
 
 // Focus on meta-K and /
 const toggle = document.querySelector<HTMLInputElement>("#observablehq-sidebar-toggle")!;
@@ -22,6 +27,7 @@ addEventListener("keydown", (event) => {
     // open until the user blurs the input.
     if (toggle.checked) input.focus();
     else toggle.click(), input.focus(), toggle.click();
+    input.value = sessionStorage.getItem("search-query") ?? "";
     input.select();
     event.preventDefault();
   }
