@@ -54,6 +54,7 @@
 
 - [`loader-airtable`](https://observablehq.observablehq.cloud/framework-example-loader-airtable/) - Loading data from Airtable
 - [`loader-arrow`](https://observablehq.observablehq.cloud/framework-example-loader-arrow/) - Generating Apache Arrow IPC files
+- [`loader-census`](https://observablehq.observablehq.cloud/framework-example-loader-census/) - Loading and transform shapefiles from the U.S. Census Bureau
 - [`loader-databricks`](https://observablehq.observablehq.cloud/framework-example-loader-databricks/) - Loading data from Databricks
 - [`loader-duckdb`](https://observablehq.observablehq.cloud/framework-example-loader-duckdb/) - Processing data with DuckDB
 - [`loader-elasticsearch`](https://observablehq.observablehq.cloud/framework-example-loader-elasticsearch/) - Loading data from Elasticsearch
