@@ -20,8 +20,8 @@ fi
 unzip -oqd src/.observablehq/cache src/.observablehq/cache/cb_2023_06_cousub_500k.zip
 
 # Convert the shapefile to GeoJSON, then to TopoJSON, simplify, and merge counties.
-shp2json --encoding utf-8 -n src/.observablehq/cache/cb_2023_06_cousub_500k.shp > src/.observablehq/cache/cb_2023_06_cousub_500k.json
-geo2topo -q 1e5 -n counties=src/.observablehq/cache/cb_2023_06_cousub_500k.json \
+shp2json --encoding utf-8 -n src/.observablehq/cache/cb_2023_06_cousub_500k.shp > src/.observablehq/cache/cb_2023_06_cousub_500k.ndjson
+geo2topo -q 1e5 -n counties=src/.observablehq/cache/cb_2023_06_cousub_500k.ndjson \
   | toposimplify -f -s 1e-7 \
   | topomerge state=counties
 ```
