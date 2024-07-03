@@ -67,7 +67,7 @@ export function define(cell) {
 function noop() {}
 
 function clear(root) {
-  // If this was an inspector, note whether it is expanded.
+  // If this contain inspector nodes, note whether they are expanded.
   root._inspectorExpanded = root._nodes.map((v) => {
     const expanded = !!v.firstChild?.classList?.contains("observablehq--expanded");
     v.remove();
