@@ -1,14 +1,13 @@
 import {existsSync} from "node:fs";
 import {utimes, writeFile} from "node:fs/promises";
 import {join} from "node:path/posix";
-import * as clack from "@clack/prompts";
 import wrapAnsi from "wrap-ansi";
 import type {ClackEffects} from "./clack.js";
 import {CliError} from "./error.js";
 import {prepareOutput} from "./files.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
 import type {TtyEffects} from "./tty.js";
-import {bold, cyan, faint, inverse, link, reset, defaultEffects as ttyEffects} from "./tty.js";
+import {bold, cyan, defaultEffects as defaultTtyEffects, faint, inverse, link, reset} from "./tty.js";
 
 export interface ConvertEffects extends TtyEffects {
   clack: ClackEffects;
@@ -19,8 +18,7 @@ export interface ConvertEffects extends TtyEffects {
 }
 
 const defaultEffects: ConvertEffects = {
-  ...ttyEffects,
-  clack,
+  ...defaultTtyEffects,
   async prepareOutput(outputPath: string): Promise<void> {
     await prepareOutput(outputPath);
   },

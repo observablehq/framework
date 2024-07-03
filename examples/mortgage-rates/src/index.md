@@ -25,7 +25,7 @@ function frmCard(y, pmms) {
   const range = d3.extent(pmms.slice(-52), (d) => d[key]);
   const stroke = color.apply(`${y}Y FRM`);
   return html.fragment`
-    <h2 style="color: ${stroke}">${y}-year fixed-rate</b></h2>
+    <h2 style="color: ${stroke}">${y}-year fixed-rate</h2>
     <h1>${formatPercent(pmms.at(-1)[key])}</h1>
     <table>
       <tr>
