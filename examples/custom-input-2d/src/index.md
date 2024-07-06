@@ -44,7 +44,11 @@ export function Range2D({width = 100, height = 100, value = [0.5, 0.5]} = {}) {
 
   let down = false;
   canvas.onpointerup = () => (down = false);
-  canvas.onpointerdown = (event) => (down = true, canvas.onpointermove(event));
+  canvas.onpointerdown = (event) => {
+    down = true;
+    canvas.setPointerCapture(event.pointerId);
+    canvas.onpointermove(event);
+  };
   canvas.onpointermove = (event) => {
     if (!down) return;
     event.preventDefault(); // prevent scrolling and text selection

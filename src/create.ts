@@ -7,7 +7,6 @@ import {basename, dirname, join, normalize} from "node:path/posix";
 import {setTimeout as sleep} from "node:timers/promises";
 import {fileURLToPath} from "node:url";
 import {promisify} from "node:util";
-import * as clack from "@clack/prompts";
 import he from "he";
 import untildify from "untildify";
 import wrapAnsi from "wrap-ansi";
@@ -25,7 +24,6 @@ export interface CreateEffects extends TtyEffects {
 
 const defaultEffects: CreateEffects = {
   ...defaultTtyEffects,
-  clack,
   sleep,
   async mkdir(outputPath: string, options): Promise<void> {
     await mkdir(outputPath, options);

@@ -18,8 +18,5 @@ COPY (SELECT
   ST_Y(drop)::INTEGER AS dy  -- extract dropff y-coord
 FROM rides
 ORDER BY 2,3,4,5,1 -- optimize output size by sorting
-) TO 'trips.parquet' (COMPRESSION 'ZSTD', row_group_size 10000000);
+) TO STDOUT (FORMAT 'parquet', COMPRESSION 'zstd', ROW_GROUP_SIZE 10_000_000);
 EOF
-
-cat trips.parquet >&1  # Copy payload to stdout
-rm trips.parquet       # Clean up

@@ -34,7 +34,7 @@ This example showcases the flexibility of Observable Plot for creating custom, p
     └── index.md
 ```
 
-No dependencies other than Framework. No required configuration (static data). The project config only adds our example header and example layout.
+No dependencies other than Framework. No required configuration (static data).
 
 ### Data
 

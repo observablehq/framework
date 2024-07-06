@@ -85,9 +85,9 @@
         "imports": [],
         "expression": false,
         "async": false,
-        "inline": false,
         "input": "function add(a, b) {\n  return a + b;\n}\n"
-      }
+      },
+      "mode": "block"
     }
   ]
 }

@@ -31,6 +31,8 @@ export interface Section<T = Page> {
   name: string;
   collapsible: boolean; // defaults to false
   open: boolean; // defaults to true; always true if collapsible is false
+  path: string | null;
+  pager: string | null;
   pages: T[];
 }
 
@@ -44,9 +46,7 @@ export interface Script {
   type: string | null;
 }
 
-/**
- * A function that generates a page fragment such as head, header or footer.
- */
+/** A function that generates a page fragment such as head, header or footer. */
 export type PageFragmentFunction = ({
   title,
   data,
@@ -56,6 +56,21 @@ export type PageFragmentFunction = ({
   data: FrontMatter;
   path: string;
 }) => string | null;
+
+export interface SearchResult {
+  path: string;
+  title: string | null;
+  text: string;
+  keywords?: string;
+}
+
+export interface SearchConfig {
+  index: (() => AsyncIterable<SearchResult>) | null;
+}
+
+export interface SearchConfigSpec {
+  index?: unknown;
+}
 
 export interface Config {
   root: string; // defaults to src
@@ -71,7 +86,7 @@ export interface Config {
   footer: PageFragmentFunction | string | null; // defaults to “Built with Observable on [date].”
   toc: TableOfContents;
   style: null | Style; // defaults to {theme: ["light", "dark"]}
-  search: boolean; // default to false
+  search: SearchConfig | null; // default to null
   md: MarkdownIt;
   normalizePath: (path: string) => string;
   loaders: LoaderResolver;
@@ -112,6 +127,7 @@ interface SectionSpec {
   name?: unknown;
   open?: unknown;
   collapsible?: unknown;
+  path?: unknown;
   pages?: unknown;
   pager?: unknown;
 }
@@ -223,7 +239,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const head = pageFragment(spec.head === undefined ? "" : spec.head);
   const header = pageFragment(spec.header === undefined ? "" : spec.header);
   const footer = pageFragment(spec.footer === undefined ? defaultFooter() : spec.footer);
-  const search = Boolean(spec.search);
+  const search = spec.search == null || spec.search === false ? null : normalizeSearch(spec.search as any);
   const interpreters = normalizeInterpreters(spec.interpreters as any);
   const config: Config = {
     root,
@@ -331,13 +347,26 @@ function normalizeSection<T>(
   const collapsible = spec.collapsible === undefined ? spec.open !== undefined : Boolean(spec.collapsible);
   const open = collapsible ? Boolean(spec.open) : true;
   const pager = spec.pager === undefined ? "main" : stringOrNull(spec.pager);
+  const path = spec.path == null ? null : normalizePath(spec.path);
   const pages = Array.from(spec.pages as any, (spec: PageSpec) => normalizePage(spec, pager));
-  return {name, collapsible, open, pages};
+  return {name, collapsible, open, path, pager, pages};
 }
 
 function normalizePage(spec: PageSpec, defaultPager: string | null = "main"): Page {
   const name = String(spec.name);
-  let path = String(spec.path);
+  const path = normalizePath(spec.path);
+  const pager = spec.pager === undefined && isAssetPath(path) ? defaultPager : stringOrNull(spec.pager);
+  return {name, path, pager};
+}
+
+function normalizeSearch(spec: SearchConfigSpec): SearchConfig {
+  const index = spec.index == null ? null : (spec.index as SearchConfig["index"]);
+  if (index !== null && typeof index !== "function") throw new Error("search.index is not a function");
+  return {index};
+}
+
+function normalizePath(spec: unknown): string {
+  let path = String(spec);
   if (isAssetPath(path)) {
     const u = parseRelativeUrl(join("/", path)); // add leading slash
     let {pathname} = u;
@@ -345,8 +374,7 @@ function normalizePage(spec: PageSpec, defaultPager: string | null = "main"): Pa
     pathname = pathname.replace(/\/$/, "/index"); // add trailing index
     path = pathname + u.search + u.hash;
   }
-  const pager = spec.pager === undefined && isAssetPath(path) ? defaultPager : stringOrNull(spec.pager);
-  return {name, path, pager};
+  return path;
 }
 
 function normalizeInterpreters(spec: {[key: string]: unknown} = {}): {[key: string]: string[] | null} {

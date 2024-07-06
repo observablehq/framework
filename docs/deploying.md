@@ -22,13 +22,35 @@ Once that is done you can deploy to Observable:
 npm run deploy
 ```
 
-The first time you deploy a project, you will be prompted to configure the project’s _slug_ (which determines its URL), access level, and other details. If you don’t yet have an Observable account or aren’t signed-in, you will also be prompted to sign-up or sign-in.
+The first time you deploy a project, you will be prompted to configure the project’s _slug_ (which determines its URL), access level, and other details. If you aren’t yet signed-in to Observable, you will also be prompted to sign-in.
 
 When the deploy command finishes, it prints a link to observablehq.cloud where you can view your deployed project. If you choose *private* as the access level, that link will only be accessible to members of your Observable workspace. (You can invite people to your workspace by going to observablehq.com.) If you chose *public*, you can share your project link with anyone. You can change the access level of a project later [from your workspace projects page](https://observablehq.com/select-workspace?next=projects).
 
-<div class="note">The deploy command creates a file at <code>.observablehq/deploy.json</code> under the source root (typically <code>src</code>) with information on where to deploy the project. This file is required for automated deploys. You will need to commit this file to git to deploy via GitHub Actions.</div>
-
 <div class="tip">To see more available options when deploying:<pre><code class="language-sh">npm run deploy -- --help</code></pre></div>
+
+## Deploy configuration
+
+The deploy command creates a file at <code>.observablehq/deploy.json</code> under the source root (typically <code>src</code>) with information on where to deploy the project. This file allows you to re-deploy a project without having to repeat where you want the project to live on Observable.
+
+The contents of the deploy config file look like this:
+
+```json run=false
+{
+  "projectId": "0123456789abcdef",
+  "workspaceLogin": "acme",
+  "projectSlug": "hello-framework"
+}
+```
+
+A deploy config file is required for automated deploys. You will need to commit this file to git to deploy via GitHub Actions.
+
+To store the deploy config file somewhere else, use the `--deploy-config` argument. For example, to create a “staging” deploy to share early versions of you project, you could use a `deploy-staging.json` like so:
+
+```sh
+npm run deploy -- --deploy-config=src/.observablehq/deploy-staging.json
+```
+
+If the specified config file does not yet exist, you will again be prompted to choose or create a new project; the resulting configuration will then be saved to the specified file. You can re-deploy to staging by passing the same `--deploy-config` argument; or you can deploy to “production” by not specifying the `--deploy-config` argument to use the default deploy config.
 
 ## Automated deploys
 

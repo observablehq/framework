@@ -1,7 +1,7 @@
 import {createHash} from "node:crypto";
 import type {WriteStream} from "node:fs";
 import {createReadStream, existsSync, statSync} from "node:fs";
-import {mkdir, open, readFile, rename, unlink} from "node:fs/promises";
+import {open, readFile, rename, unlink} from "node:fs/promises";
 import {dirname, extname, join, relative} from "node:path/posix";
 import {createGunzip} from "node:zlib";
 import {spawn} from "cross-spawn";
@@ -125,7 +125,12 @@ export class LoaderResolver {
 
   getWatchPath(path: string): string | undefined {
     const exactPath = join(this.root, path);
-    return existsSync(exactPath) ? exactPath : this.find(path)?.path;
+    if (existsSync(exactPath)) return exactPath;
+    if (exactPath.endsWith(".js")) {
+      const jsxPath = exactPath + "x";
+      if (existsSync(jsxPath)) return jsxPath;
+    }
+    return this.find(path)?.path;
   }
 
   watchFiles(path: string, watchPaths: Iterable<string>, callback: (name: string) => void) {
@@ -248,10 +253,10 @@ export abstract class Loader {
           else await unlink(errorPath).catch(() => {});
         }
         await prepareOutput(tempPath);
+        await prepareOutput(cachePath);
         const tempFd = await open(tempPath, "w");
         try {
           await this.exec(tempFd.createWriteStream({highWaterMark: 1024 * 1024}), effects);
-          await mkdir(dirname(cachePath), {recursive: true});
           await rename(tempPath, cachePath);
         } catch (error) {
           await rename(tempPath, errorPath);
@@ -312,8 +317,7 @@ class CommandLoader extends Loader {
   }
 
   async exec(output: WriteStream): Promise<void> {
-    const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", "pipe", "inherit"]});
-    subprocess.stdout.pipe(output);
+    const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", output, "inherit"]});
     const code = await new Promise((resolve, reject) => {
       subprocess.on("error", reject);
       subprocess.on("close", resolve);
