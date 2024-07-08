@@ -101,6 +101,7 @@ function displayJsx(root, value) {
       root.parentNode.insertBefore(node, root);
     }
     client.render(value);
+    if (typeof value?.props?.onMount === "function") requestAnimationFrame(() => value.props.onMount(node.firstChild));
   });
 }
 
