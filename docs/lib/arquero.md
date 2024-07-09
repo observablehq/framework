@@ -78,4 +78,10 @@ dt.fold(aq.all(), {as: ["city", "sun"]})
   .objects()
 ```
 
+To load data from a [file](../files), use the appropriate method — such as `loadArrow` for the [arrow](./arrow) format:
+
+```js echo
+aq.loadArrow(FileAttachment("flights-200k.arrow").href)
+```
+
 For more, see [Arquero’s official documentation](https://uwdata.github.io/arquero/).
