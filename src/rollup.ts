@@ -36,16 +36,29 @@ function rewriteInputsNamespace(code: string) {
 export async function bundleStyles({
   minify = false,
   path,
-  theme
+  theme,
+  resolve
 }: {
   minify?: boolean;
   path?: string;
   theme?: string[];
+  resolve?: ({path}: {path: string}) => {path: string; external: true} | undefined;
 }): Promise<string> {
   const result = await build({
     bundle: true,
     ...(path ? {entryPoints: [path]} : {stdin: {contents: renderTheme(theme!), loader: "css"}}),
     write: false,
+    // plugins: resolve
+    //   ? [
+    //       {
+    //         name: "resolve",
+    //         setup(build) {
+    //           build.onResolve({filter: /^\w+:/}, ({path}) => ({path, external: true}));
+    //           build.onResolve({filter: /./}, resolve);
+    //         }
+    //       }
+    //     ]
+    //   : undefined,
     minify,
     alias: STYLE_MODULES
   });

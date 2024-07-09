@@ -11,6 +11,7 @@ import type {MarkdownPage} from "./markdown.js";
 import {extractNodeSpecifier, resolveNodeImport, resolveNodeImports} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
 import {isAssetPath, isPathImport, parseRelativeUrl, relativePath, resolveLocalPath, resolvePath} from "./path.js";
+import {bundleStyles} from "./rollup.js";
 
 export interface Resolvers {
   path: string;
@@ -259,6 +260,26 @@ export async function getResolvers(
       const path = await resolveNpmImport(root, specifier.slice("npm:".length));
       resolutions.set(specifier, path);
       await populateNpmCache(root, path);
+    }
+  }
+
+  // Resolve assets referenced by stylesheets.
+  // TODO This causes a lot of duplicate effort during build since the same
+  // stylesheet is often referenced by multiple pages.
+  // TODO Do these need to be included in the page hash, too? Maybe
+  for (const specifier of stylesheets) {
+    if (!/^\w+:/.test(specifier)) {
+      // await bundleStyles({
+      //   path: join(root, resolvePath(path, specifier)),
+      //   _resolve(args) {
+      //     console.log(args);
+      //     return undefined;
+      //     // if (args.path.endsWith(".css") || args.path.match(/^[#?]/) || args.path.match(/^\w+:/)) return;
+      //     // files.add(args.path);
+      //     // loaders.resolveFilePath(args.path);
+      //     // return {path: "(pending)", external: true};
+      //   }
+      // });
     }
   }
 
