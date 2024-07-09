@@ -28,7 +28,7 @@ results.to_csv(sys.stdout)
 
 <div class="note">
 
-To run this data loader, you’ll need python3 and the geopandas, matplotlib, io, and sys modules installed and available on your `$PATH`.
+To run this data loader, you’ll need python3 and the pandas, matplotlib, io, and sys modules installed and available on your `$PATH`.
 
 </div>
 
