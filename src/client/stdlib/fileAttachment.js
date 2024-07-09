@@ -76,6 +76,10 @@ export class AbstractFile {
     const [Arrow, response] = await Promise.all([import("npm:apache-arrow"), remote_fetch(this)]);
     return Arrow.tableFromIPC(response);
   }
+  async arquero(options) {
+    const [aq, arrow] = await Promise.all([import("npm:arquero"), this.arrow()]);
+    return aq.fromArrow(arrow, options);
+  }
   async parquet() {
     const [Arrow, Parquet, buffer] = await Promise.all([import("npm:apache-arrow"), import("npm:parquet-wasm").then(async (Parquet) => (await Parquet.default(import.meta.resolve("npm:parquet-wasm/esm/parquet_wasm_bg.wasm")), Parquet)), this.arrayBuffer()]); // prettier-ignore
     return Arrow.tableFromIPC(Parquet.readParquet(new Uint8Array(buffer)).intoIPCStream());
