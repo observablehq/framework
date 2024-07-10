@@ -18,6 +18,9 @@ context.lineJoin = "round";
 context.lineCap = "round";
 const path = d3.geoPath(null, context);
 
+context.fillStyle = "#fff";
+context.fillRect(0, 0, width, height);
+
 context.beginPath();
 path(topojson.mesh(us, us.objects.counties, (a, b) => a !== b && (a.id / 1000 | 0) === (b.id / 1000 | 0)));
 context.lineWidth = 0.5;
