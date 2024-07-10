@@ -10,7 +10,7 @@ const us = await fetch(url).then(response => response.json());
 // Create and configure a canvas
 const width = 975;
 const height = 610;
-const cvs = canvas.createCanvas(width, height);
+const canvas = createCanvas(width, height);
 const context = cvs.getContext("2d");
 
 // Draw the map based on the official d3 example
