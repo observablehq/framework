@@ -1,6 +1,6 @@
 [Framework examples →](../)
 
-# Python data loader to generate PNG
+# Data loader to generate PNG from canvas
 
 View live: <https://observablehq.observablehq.cloud/framework-example-loader-canvas-to-png/>
 
