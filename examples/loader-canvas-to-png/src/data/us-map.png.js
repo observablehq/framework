@@ -16,6 +16,7 @@ const context = canvas.getContext("2d");
 // https://observablehq.com/@d3/u-s-map-canvas
 context.lineJoin = "round";
 context.lineCap = "round";
+// Use the null projection, since coordinates in US Atlas are already projected.
 const path = d3.geoPath(null, context);
 
 context.fillStyle = "#fff";
