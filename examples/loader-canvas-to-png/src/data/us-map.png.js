@@ -13,7 +13,6 @@ const height = 610;
 const canvas = createCanvas(width, height);
 const context = canvas.getContext("2d");
 
-// Draw the map based on the official d3 example
 // https://observablehq.com/@d3/u-s-map-canvas
 context.lineJoin = "round";
 context.lineCap = "round";
