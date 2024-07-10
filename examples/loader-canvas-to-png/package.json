@@ -9,7 +9,7 @@
     "observable": "observable"
   },
   "dependencies": {
-    "@observablehq/framework": "^1.7.0",
+    "@observablehq/framework": "latest",
     "topojson-client": "^3.0.0",
     "d3": "^7.0.0",
     "canvas": "^2.8.0"
