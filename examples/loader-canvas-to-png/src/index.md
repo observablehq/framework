@@ -53,7 +53,7 @@ process.stdout.write(buffer);
 
 <div class="note">
 
-To run this data loader, you’ll need the `d3`, `topojson-client` and `canvas` libraries available on your `$PATH`.
+To run this data loader, you’ll need to add the `d3`, `topojson-client` and `canvas` libraries as dependencies with `npm add d3 topojson-client canvas` or `yarn add d3 topojson-client canvas`.
 
 </div>
 
