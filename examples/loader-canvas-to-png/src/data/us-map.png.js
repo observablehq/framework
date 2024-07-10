@@ -1,5 +1,5 @@
-import * as canvas from 'canvas';
-import * as d3 from 'd3';
+import {createCanvas} from "canvas";
+import * as d3 from "d3";
 import * as topojson from "topojson-client";
 
 // Get the map file from the US Atlas package
