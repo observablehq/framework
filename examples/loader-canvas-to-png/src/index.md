@@ -1,6 +1,6 @@
 # Data loader to generate PNG from canvas
 
-Here’s a Node.js data loader that fetches creates a canvas map using d3, and then returns the map as a PNG file to standard out.
+Here’s a Node.js data loader that creates a canvas map using d3, and then returns the map as a PNG file to standard out.
 
 This pattern could be used to render maps that require with a large amount of data as lightweight static files.
 
