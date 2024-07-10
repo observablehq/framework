@@ -11,7 +11,7 @@ const us = await fetch(url).then(response => response.json());
 const width = 975;
 const height = 610;
 const canvas = createCanvas(width, height);
-const context = cvs.getContext("2d");
+const context = canvas.getContext("2d");
 
 // Draw the map based on the official d3 example
 // https://observablehq.com/@d3/u-s-map-canvas
