@@ -2,7 +2,7 @@
 
 Here’s a Node.js data loader that creates a map using [node-canvas](https://github.com/Automattic/node-canvas) and D3, then writes the map to standard out as a PNG.
 
-This pattern can be used to render maps that require with a large amount of data as lightweight static files.
+This pattern can be used to render maps that require a large amount of data as lightweight static files.
 
 ```js run=false
 import {createCanvas} from "canvas";
