@@ -78,4 +78,16 @@ dt.fold(aq.all(), {as: ["city", "sun"]})
   .objects()
 ```
 
+To load data from a file into Arquero, you can use FileAttachment’s [arquero](../files#arquero) method<a href="https://github.com/observablehq/framework/pull/1510" class="observablehq-version-badge" data-version="prerelease" title="Added in #1510"></a>, which works with arrow, csv, json, and tsv files:
+
+```js run=false
+const flights = FileAttachment("flights-200k.arrow").arquero();
+```
+
+This is equivalent to an explicit call to Arquero’s relevant file loader method:
+
+```js run=false
+const flights = aq.loadArrow(FileAttachment("flights-200k.arrow").href);
+```
+
 For more, see [Arquero’s official documentation](https://uwdata.github.io/arquero/).

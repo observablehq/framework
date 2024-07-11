@@ -60,8 +60,9 @@ For missing files, `file.lastModified` is undefined. The `file.mimeType` is dete
 
 | method                       | return type
 | -                            | -
+| [`file.arquero`][arquero]    | [`Arquero table`][arquero-table]
 | [`file.arrayBuffer`][binary] | [`ArrayBuffer`][array-buffer]
-| [`file.arrow`][arrow]        | [`Table`][arrow-table]
+| [`file.arrow`][arrow]        | [`Arrow table`][arrow-table]
 | [`file.blob`][binary]        | [`Blob`][blob]
 | [`file.csv`][csv]            | [`Array`][array]
 | [`file.dsv`][csv]            | [`Array`][array]
@@ -77,6 +78,8 @@ For missing files, `file.lastModified` is undefined. The `file.mimeType` is dete
 | [`file.xml`][markup]         | [`Document`][document]
 | [`file.zip`][zip]            | [`ZipArchive`][zip]
 
+[arquero]: https://idl.uw.edu/arquero/api/#load
+[arquero-table]: https://idl.uw.edu/arquero/api/#table
 [array-buffer]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
 [arrow-table]: https://arrow.apache.org/docs/js/classes/Arrow_dom.Table.html
 [blob]: https://developer.mozilla.org/en-US/docs/Web/API/Blob
@@ -98,7 +101,7 @@ For missing files, `file.lastModified` is undefined. The `file.mimeType` is dete
 [xlsx]: ./lib/xlsx
 [zip]: ./lib/zip
 
-The contents of a file often dictate the appropriate method — for example, an Apache Arrow file is almost always read with `file.arrow`. When multiple methods are valid, choose based on your needs. For example, you can load a CSV file using `file.text` to implement parsing yourself.
+The contents of a file often dictate the appropriate method — for example, an XLSX file is almost always read with `file.xlsx`. When multiple methods are valid, choose based on your needs. For example, you can load a CSV file using `file.arquero` to load it into [arquero](./lib/arquero)<a href="https://github.com/observablehq/framework/pull/1510" class="observablehq-version-badge" data-version="prerelease" title="Added in #1510"></a>, or even using `file.text` to implement parsing yourself.
 
 In addition to the above, you can get the resolved absolute URL of the file using `file.href`: <a href="https://github.com/observablehq/framework/releases/tag/v1.5.0" class="observablehq-version-badge" data-version="^1.5.0" title="Added in 1.5.0"></a>
 
