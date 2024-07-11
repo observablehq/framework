@@ -5,8 +5,8 @@ Here’s a Node.js data loader that creates a map using [node-canvas](https://gi
 This pattern can be used to render maps that require with a large amount of data as lightweight static files.
 
 ```js run=false
-import * as canvas from 'canvas';
-import * as d3 from 'd3';
+import {createCanvas} from "canvas";
+import {geoPath} from "d3";
 import * as topojson from "topojson-client";
 
 // Get the map file from the US Atlas package
@@ -17,14 +17,18 @@ const us = await fetch(url).then(response => response.json());
 // Create and configure a canvas
 const width = 975;
 const height = 610;
-const cvs = canvas.createCanvas(width, height);
-const context = cvs.getContext("2d");
+const canvas = createCanvas(width * 2, height * 2);
+const context = canvas.getContext("2d");
+context.scale(2, 2);
 
-// Draw the map based on the official d3 example
 // https://observablehq.com/@d3/u-s-map-canvas
 context.lineJoin = "round";
 context.lineCap = "round";
-const path = d3.geoPath(null, context);
+// Use the null projection, since coordinates in US Atlas are already projected.
+const path = geoPath(null, context);
+
+context.fillStyle = "#fff";
+context.fillRect(0, 0, width, height);
 
 context.beginPath();
 path(topojson.mesh(us, us.objects.counties, (a, b) => a !== b && (a.id / 1000 | 0) === (b.id / 1000 | 0)));
@@ -45,7 +49,7 @@ context.strokeStyle = "#000";
 context.stroke();
 
 // Write the canvas to a PNG buffer
-const buffer = cvs.toBuffer("image/png");
+const buffer = canvas.toBuffer("image/png");
 
 // Pipe the buffer to process.stdout
 process.stdout.write(buffer);

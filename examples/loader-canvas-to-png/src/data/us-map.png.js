@@ -1,5 +1,5 @@
 import {createCanvas} from "canvas";
-import * as d3 from "d3";
+import {geoPath} from "d3";
 import * as topojson from "topojson-client";
 
 // Get the map file from the US Atlas package
@@ -10,14 +10,15 @@ const us = await fetch(url).then(response => response.json());
 // Create and configure a canvas
 const width = 975;
 const height = 610;
-const canvas = createCanvas(width, height);
+const canvas = createCanvas(width * 2, height * 2);
 const context = canvas.getContext("2d");
+context.scale(2, 2);
 
 // https://observablehq.com/@d3/u-s-map-canvas
 context.lineJoin = "round";
 context.lineCap = "round";
 // Use the null projection, since coordinates in US Atlas are already projected.
-const path = d3.geoPath(null, context);
+const path = geoPath(null, context);
 
 context.fillStyle = "#fff";
 context.fillRect(0, 0, width, height);
@@ -41,7 +42,7 @@ context.strokeStyle = "#000";
 context.stroke();
 
 // Write the canvas to a PNG buffer
-const buffer = cvs.toBuffer("image/png");
+const buffer = canvas.toBuffer("image/png");
 
 // Pipe the buffer to process.stdout
 process.stdout.write(buffer);
