@@ -1,6 +1,6 @@
 # R data loader to generate a ZIP archive
 
-The data loader below reads in the [penguins data](https://journal.r-project.org/articles/RJ-2022-020/) from a local file, performs multiple linear regression, then outputs multiple files (with model estimates and predictions) as a ZIP archive.
+The data loader below reads in the [penguins data](https://journal.r-project.org/articles/RJ-2022-020/) from a local file, performs multiple linear regressions, then outputs multiple files (with model estimates and predictions) as a ZIP archive.
 
 ```r
 # Attach required packages (must be installed)
