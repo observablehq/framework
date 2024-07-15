@@ -25,22 +25,15 @@ sys.stdout.buffer.write(buf_bytes)
 
 <div class="note">
 
-To run this data loader you’ll need python3, and the `pandas` and `pyarrow` libraries, installed and available in your environment. We recommend setting up a virtual environment.
+To run this data loader you’ll need python3, and the `pandas` and `pyarrow` libraries installed and available on your `$PATH`.
 
 </div>
 
-To start and activate a virtual Python environment, run the following commands:
+<div class="tip">
 
-```
-$ python3 -m venv .venv
-$ source .venv/bin/activate
-```
+We recommend using a [Python virtual environment](https://observablehq.com/framework/loaders#venv), such as with venv or uv, and managing required packages via `requirements.txt` rather than installing them globally.
 
-Then install the required modules from `requirements.txt` using:
-
-```
-$ pip install -r requirements.txt
-```
+</div>
 
 This example uses the default Snappy compression algorithm. See other [options for compression](https://parquet.apache.org/docs/file-format/data-pages/compression/) available in pyarrow’s [`write_table()`](https://arrow.apache.org/docs/python/generated/pyarrow.parquet.write_table.html) function.
 
@@ -53,23 +46,26 @@ const dams = FileAttachment("data/us-dams.parquet").parquet();
 We can display the table using `Inputs.table`.
 
 ```js echo
-Inputs.table(dams);
+Inputs.table(dams)
 ```
 
 Lastly, we can pass the table to Observable Plot to make a simple bar chart of dam counts by purpose, with color mapped to hazard classification.
 
 ```js echo
-Plot.plot({
-  marginLeft: 220,
-  color: {legend: true, domain: ["Undetermined", "Low", "Significant", "High"]},
-  marks: [
-    Plot.barX(
-      dams,
-      Plot.groupY(
-        {x: "count"},
-        {y: "Primary Purpose", fill: "Hazard Potential Classification", sort: {y: "x", reverse: true}}
+  Plot.plot({
+    marginLeft: 220,
+    color: {legend: true, domain: ["Undetermined", "Low", "Significant", "High"]},
+    marks: [
+      Plot.barX(dams,
+        Plot.groupY(
+          {x: "count"},
+          {
+            y: "Primary Purpose",
+            fill: "Hazard Potential Classification",
+            sort: {y: "x", reverse: true}
+          }
+        )
       )
-    )
-  ]
-});
+    ]
+  })
 ```
