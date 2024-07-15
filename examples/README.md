@@ -65,6 +65,7 @@
 - [`loader-parquet`](https://observablehq.observablehq.cloud/framework-example-loader-parquet/) - Generat Apache Parquet files
 - [`loader-postgres`](https://observablehq.observablehq.cloud/framework-example-loader-postgres/) - Load data from PostgreSQL
 - [`loader-python-to-csv`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-csv/) - Generate CSV from Python
+- [`loader-python-to-parquet`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-parquet) - Generate Apache Parquet from Python
 - [`loader-python-to-png`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-png/) - Generate PNG from Python
 - [`loader-python-to-zip`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-zip/) - Generate ZIP from Python
 - [`loader-r-to-csv`](https://observablehq.observablehq.cloud/framework-example-loader-r-to-csv/) - Generate CSV from R
