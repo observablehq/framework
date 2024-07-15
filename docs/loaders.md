@@ -161,12 +161,20 @@ For example, for the file `quakes.csv`, the following data loaders are considere
 
 To use an interpreted data loader (anything other than `.exe`), the corresponding interpreter must be installed and available on your `$PATH`. Any additional modules, packages, libraries, _etc._, must also be installed. Some interpreters are not available on all platforms; for example `sh` is only available on Unix-like systems.
 
-<div class="tip">
+<div class="tip" id="venv">
 
-You can use a virtual environment in Python, such as [uv](https://github.com/astral-sh/uv), to install libraries locally to the project. This is useful when working in multiple projects, and when collaborating; you can also track dependencies in a `requirements.txt` file. To create a virtual environment with uv, run:
+You can use a virtual environment in Python, such as [venv](https://docs.python.org/3/tutorial/venv.html) or  [uv](https://github.com/astral-sh/uv), to install libraries locally to the project. This is useful when working in multiple projects, and when collaborating; you can also track dependencies in a `requirements.txt` file.
+
+To create a virtual environment with venv:
 
 ```sh
-uv venv # Create a virtual environment at .venv.
+python3 -m venv .venv
+```
+
+Or with uv:
+
+```sh
+uv venv
 ```
 
 To activate the virtual environment on macOS or Linux:
@@ -181,7 +189,13 @@ Or on Windows:
 .venv\Scripts\activate
 ```
 
-You can then run the `observable preview` or `observable build` commands as usual; data loaders will run within the virtual environment. Run the `deactivate` command to exit the virtual environment.
+To install required packages:
+
+```sh
+pip install -r requirements.txt
+```
+
+You can then run the `observable preview` or `observable build` (or `npm run dev` or `npm run build`) commands as usual; data loaders will run within the virtual environment. Run the `deactivate` command or use Control-D to exit the virtual environment.
 
 </div>
 
