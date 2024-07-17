@@ -1,12 +1,13 @@
 import {createHash} from "node:crypto";
 import type {WriteStream} from "node:fs";
-import {createReadStream, existsSync, statSync} from "node:fs";
+import {createReadStream, existsSync, readdirSync, statSync} from "node:fs";
 import {open, readFile, rename, unlink} from "node:fs/promises";
-import {dirname, extname, join, relative} from "node:path/posix";
+import {basename, dirname, extname, join, relative} from "node:path/posix";
 import {createGunzip} from "node:zlib";
 import {spawn} from "cross-spawn";
 import JSZip from "jszip";
 import {extract} from "tar-stream";
+import {isEnoent} from "./error.js";
 import {maybeStat, prepareOutput} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {formatByteSize} from "./format.js";
@@ -120,6 +121,40 @@ export class LoaderResolver {
         targetPath,
         useStale
       });
+    }
+    // check for parameterized path
+    let dir = targetPath;
+    for (let parent: string; true; dir = parent) {
+      parent = dirname(dir);
+      console.warn("findExact", {targetPath, parent});
+      try {
+        for (const file of readdirSync(join(this.root, parent))) {
+          const match = /^\[(\w+)\](\.\w+)*$/.exec(file);
+          if (!match) continue;
+          const interpreter = this.interpreters.get(match[2]);
+          if (!interpreter) continue;
+          const [command, ...args] = interpreter;
+          const path = join(this.root, parent, file);
+          if (command != null) args.push(path);
+          // TODO extract parameter
+          // TODO decodeURI? probably should have happened earlier
+          args.push(`--${match[1]}`, basename(targetPath));
+          return new CommandLoader({
+            command: command ?? path,
+            args,
+            path,
+            root: this.root,
+            targetPath,
+            useStale
+          });
+        }
+      } catch (error) {
+        if (!isEnoent(error)) throw error;
+      }
+      return; // TODO
+      // if (parent === dir) return; // reached source root
+      // if (existsSync(join(this.root, dir))) return; // found folder
+      // if (existsSync(join(this.root, parent))) break; // found parent
     }
   }
 
