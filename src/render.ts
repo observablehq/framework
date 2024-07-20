@@ -76,10 +76,10 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
     .map(({node, id, mode}) => `\n${transpileJavaScript(node, {id, path, mode, resolveImport})}`)
     .join("")}`)}
-</script>${sidebar ? html`\n${await renderSidebar(options, resolvers.resolveLink)}` : ""}${
+</script>${sidebar ? html`\n${await renderSidebar(options, resolvers.resolveLink)}` : ""}
+<div id="observablehq-center">${renderHeader(page.header, resolvers)}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
-<div id="observablehq-center">${renderHeader(page.header, resolvers)}
 <main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">
 ${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(page.footer, resolvers, options)}
 </div>

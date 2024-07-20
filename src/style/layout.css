@@ -245,23 +245,13 @@
 }
 
 #observablehq-toc {
-  display: none;
-  position: fixed;
+  display: block;
   color: var(--theme-foreground-muted);
   font: 400 14px var(--sans-serif);
-  z-index: 1;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  overflow-y: auto;
 }
 
 #observablehq-toc nav {
-  width: 192px;
-  margin: 2rem 0;
-  padding: 0 1rem;
-  box-sizing: border-box;
-  border-left: solid 1px var(--theme-foreground-faintest);
+  margin-bottom: 2rem;
 }
 
 #observablehq-toc div {
@@ -368,30 +358,42 @@
 }
 
 @media (min-width: calc(640px + 6rem + 192px)) {
-  #observablehq-toc ~ #observablehq-center {
+  #observablehq-center:has(#observablehq-toc) {
     padding-right: calc(192px + 1rem);
   }
   #observablehq-toc {
-    display: block;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    overflow-y: auto;
+  }
+  #observablehq-toc nav {
+    width: 192px;
+    margin: 2rem 0;
+    padding: 0 1rem;
+    box-sizing: border-box;
+    border-left: solid 1px var(--theme-foreground-faintest);
   }
 }
 
 @media (min-width: calc(640px + 6rem + 272px)) {
-  #observablehq-sidebar-toggle:checked ~ #observablehq-toc,
-  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc {
+  #observablehq-sidebar-toggle:checked ~ #observablehq-center #observablehq-toc,
+  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center #observablehq-toc {
     display: none;
   }
 }
 
 @media (min-width: calc(640px + 6rem + 272px + 192px)) {
-  #observablehq-sidebar-toggle:checked ~ #observablehq-toc,
-  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc,
+  #observablehq-sidebar-toggle:checked ~ #observablehq-center #observablehq-toc,
+  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center #observablehq-toc,
   #observablehq-toc {
     display: block;
   }
-  #observablehq-sidebar-toggle:checked ~ #observablehq-toc ~ #observablehq-center,
-  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc ~ #observablehq-center,
-  #observablehq-toc ~ #observablehq-center {
+  #observablehq-sidebar-toggle:checked ~ #observablehq-center:has(#observablehq-toc),
+  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center:has(#observablehq-toc),
+  #observablehq-center:has(#observablehq-toc) {
     padding-right: calc(192px + 1rem);
   }
 }

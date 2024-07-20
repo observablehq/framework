@@ -1,4 +1,6 @@
-#observablehq-center {
+#observablehq-header,
+#observablehq-main,
+#observablehq-footer {
   container-type: inline-size;
 }
 
