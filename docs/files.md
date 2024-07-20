@@ -60,9 +60,9 @@ For missing files, `file.lastModified` is undefined. The `file.mimeType` is dete
 
 | method                       | return type
 | -                            | -
-| [`file.arquero`][arquero]    | [`Arquero table`][arquero-table]
+| [`file.arquero`][arquero]    | [`Table`][arquero-table]
 | [`file.arrayBuffer`][binary] | [`ArrayBuffer`][array-buffer]
-| [`file.arrow`][arrow]        | [`Arrow table`][arrow-table]
+| [`file.arrow`][arrow]        | [`Table`][arrow-table]
 | [`file.blob`][binary]        | [`Blob`][blob]
 | [`file.csv`][csv]            | [`Array`][array]
 | [`file.dsv`][csv]            | [`Array`][array]
