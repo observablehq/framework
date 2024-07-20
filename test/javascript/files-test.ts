@@ -63,6 +63,7 @@ describe("findFiles(node, input)", () => {
     assert.deepStrictEqual(files('FileAttachment("foo").arrayBuffer'), [{name: "./foo", method: "arrayBuffer"}]);
     assert.deepStrictEqual(files('FileAttachment("foo").arrow'), [{name: "./foo", method: "arrow"}]);
     assert.deepStrictEqual(files('FileAttachment("foo").arquero'), [{name: "./foo", method: "arquero"}]);
+    assert.deepStrictEqual(files('FileAttachment("foo.parquet").arquero'), [{name: "./foo.parquet", method: "arquero-parquet"}]);
     assert.deepStrictEqual(files('FileAttachment("foo").blob'), [{name: "./foo", method: "blob"}]);
     assert.deepStrictEqual(files('FileAttachment("foo").csv'), [{name: "./foo", method: "csv"}]);
     assert.deepStrictEqual(files('FileAttachment("foo").html'), [{name: "./foo", method: "html"}]);
