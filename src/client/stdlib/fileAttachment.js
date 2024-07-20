@@ -92,8 +92,15 @@ export class AbstractFile {
         from = "fromCSV";
         break;
       default:
-        request = this.arrow();
-        from = "fromArrow";
+        if (/\.arrow$/i.test(this.name)) {
+          request = this.arrow();
+          from = "fromArrow";
+        } else if (/\.parquet$/i.test(this.name)) {
+          request = this.parquet();
+          from = "fromArrow";
+        } else {
+          throw new Error(`unable to determine Arquero loader: ${this.name}`);
+        }
         break;
     }
     const [aq, body] = await Promise.all([import("npm:arquero"), request]);
