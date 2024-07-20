@@ -60,16 +60,16 @@ For missing files, `file.lastModified` is undefined. The `file.mimeType` is dete
 
 | method                       | return type
 | -                            | -
-| [`file.arquero`][arquero]    | [`Table`][arquero-table]
+| [`file.arquero`][arquero]    | Arquero [`Table`][arquero-table]
 | [`file.arrayBuffer`][binary] | [`ArrayBuffer`][array-buffer]
-| [`file.arrow`][arrow]        | [`Table`][arrow-table]
+| [`file.arrow`][arrow]        | Arrow [`Table`][arrow-table]
 | [`file.blob`][binary]        | [`Blob`][blob]
 | [`file.csv`][csv]            | [`Array`][array]
 | [`file.dsv`][csv]            | [`Array`][array]
 | [`file.html`][markup]        | [`Document`][document]
 | [`file.image`][media]        | [`HTMLImageElement`][image]
 | [`file.json`][json]          | [`Array`][array], [`Object`][object], _etc._
-| [`file.parquet`][arrow]      | [`Table`][arrow-table]
+| [`file.parquet`][arrow]      | Arrow [`Table`][arrow-table]
 | [`file.sqlite`][sqlite]      | [`SQLiteDatabaseClient`][sqlite]
 | [`file.stream`][binary]      | [`ReadableStream`][stream]
 | [`file.text`][text]          | [`string`][string]
