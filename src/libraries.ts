@@ -2,6 +2,8 @@ export function getImplicitFileImports(methods: Iterable<string>): Set<string> {
   const set = setof(methods);
   const implicits = new Set<string>();
   if (set.has("arrow")) implicits.add("npm:apache-arrow");
+  if (set.has("arquero")) implicits.add("npm:apache-arrow").add("npm:arquero");
+  if (set.has("arquero-parquet")) implicits.add("npm:apache-arrow").add("npm:arquero").add("npm:parquet-wasm");
   if (set.has("csv") || set.has("tsv")) implicits.add("npm:d3-dsv");
   if (set.has("parquet")) implicits.add("npm:apache-arrow").add("npm:parquet-wasm");
   if (set.has("sqlite")) implicits.add("npm:@observablehq/sqlite");
