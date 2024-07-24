@@ -68,3 +68,22 @@ digraph G {
   end [shape = square]
 }
 ```
+
+If you don’t mind losing the conveniences of the built-in wrapper such as responsive light and dark mode, you can also use Viz.js directly. For example:
+
+```js echo
+import {instance} from "npm:@viz-js/viz";
+
+const viz = await instance();
+
+display(
+  viz.renderSVGElement({
+    directed: false,
+    edges: [
+      {tail: "a", head: "b"},
+      {tail: "b", head: "c"},
+      {tail: "c", head: "a"}
+    ]
+  })
+);
+```
