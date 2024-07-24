@@ -1,3 +1,4 @@
+import builtins from "observablehq:builtins";
 import {Runtime} from "observablehq:runtime";
 import {FileAttachment, Generators, Mutable, resize} from "observablehq:stdlib";
 import {inspect, inspectError} from "./inspect.js";
@@ -13,7 +14,8 @@ const library = {
   Generators: () => Generators,
   Mutable: () => Mutable,
   ...recommendedLibraries,
-  ...sampleDatasets
+  ...sampleDatasets,
+  ...builtins
 };
 
 export const runtime = new Runtime(library);
