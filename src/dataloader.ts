@@ -125,7 +125,7 @@ export class LoaderResolver {
   }
 
   private findDynamic(targetPath: string, {useStale}): Loader | undefined {
-    const found = this.findDynamicParams(this.root, join(".", targetPath).split("/"), []);
+    const found = this.findDynamicParams(this.root, join(".", targetPath).split("/"));
     if (!found) return;
     const {path, params, ext} = found;
     const [command, ...args] = this.interpreters.get(ext)!;

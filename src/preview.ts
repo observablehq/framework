@@ -1,14 +1,15 @@
 import {createHash} from "node:crypto";
-import {watch} from "node:fs";
+import {existsSync, watch} from "node:fs";
 import type {FSWatcher, WatchEventType} from "node:fs";
 import {access, constants, readFile} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
-import {basename, dirname, join, normalize} from "node:path/posix";
+import {basename, dirname, extname, join, normalize, relative} from "node:path/posix";
 import {difference} from "d3-array";
 import type {PatchItem} from "fast-array-diff";
 import {getPatch} from "fast-array-diff";
 import deepEqual from "fast-deep-equal";
+import {globSync} from "glob";
 import mime from "mime";
 import openBrowser from "open";
 import send from "send";
@@ -196,7 +197,8 @@ export class PreviewServer {
         // Anything else should 404; static files should be matched above.
         try {
           const options = {...config, path: pathname, preview: true};
-          const source = await readFile(join(root, pathname + ".md"), "utf8");
+          const sourcePath = resolvePage(root, `${pathname}.md`);
+          const source = await readFile(sourcePath, "utf8");
           const parse = parseMarkdown(source, options);
           const html = await renderPage(parse, options);
           end(req, res, html, "text/html");
@@ -260,6 +262,38 @@ function end(req: IncomingMessage, res: ServerResponse, content: string, type: s
   }
 }
 
+function resolvePage(root: string, path: string): string {
+  const exactPath = join(root, path);
+  if (existsSync(exactPath)) return exactPath;
+  return resolvePageParams(root, join(".", path).split("/")) ?? exactPath;
+}
+
+/**
+ * Finds a parameterized page (dynamic route) recursively, such that the most
+ * specific match is returned.
+ */
+function resolvePageParams(cwd: string, parts: string[]): string | undefined {
+  switch (parts.length) {
+    case 0:
+      return;
+    case 1: {
+      const [first] = parts;
+      if (existsSync(join(cwd, first))) return join(cwd, first);
+      const ext = extname(first);
+      for (const file of globSync(`\\[*\\]${ext}`, {cwd})) return join(cwd, file);
+      return;
+    }
+    default: {
+      const [first, ...rest] = parts;
+      if (existsSync(join(cwd, first))) return resolvePageParams(join(cwd, first), rest);
+      for (const dir of globSync("\\[*\\]", {cwd})) {
+        const found = resolvePageParams(join(cwd, dir), rest);
+        if (found) return found;
+      }
+    }
+  }
+}
+
 // Note that while we appear to be watching the referenced files here,
 // FileWatchers will magically watch the corresponding data loader if a
 // referenced file does not exist!
@@ -289,6 +323,7 @@ interface HtmlPart {
 
 function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Promise<Config>) {
   let config: Config | null = null;
+  let sourcePath: string | null = null;
   let path: string | null = null;
   let hash: string | null = null;
   let html: HtmlPart[] | null = null;
@@ -304,13 +339,13 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
   console.log(faint("socket open"), req.url);
 
   async function watcher(event: WatchEventType, force = false) {
-    if (!path || !config) throw new Error("not initialized");
+    if (!sourcePath || !path || !config) throw new Error("not initialized");
     const {root, loaders, normalizePath} = config;
     switch (event) {
       case "rename": {
         markdownWatcher?.close();
         try {
-          markdownWatcher = watch(join(root, path), (event) => watcher(event));
+          markdownWatcher = watch(sourcePath, (event) => watcher(event));
         } catch (error) {
           if (!isEnoent(error)) throw error;
           console.error(`file no longer exists: ${path}`);
@@ -321,7 +356,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
         break;
       }
       case "change": {
-        const source = await readFile(join(root, path), "utf8");
+        const source = await readFile(sourcePath, "utf8");
         const page = parseMarkdown(source, {path, ...config});
         // delay to avoid a possibly-empty file
         if (!force && page.body === "") {
@@ -371,10 +406,11 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     path = decodeURI(initialPath);
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
-    path = join(dirname(path), basename(path, ".html") + ".md");
+    path = join(dirname(path), `${basename(path, ".html")}.md`);
     config = await configPromise;
     const {root, loaders, normalizePath} = config;
-    const source = await readFile(join(root, path), "utf8");
+    sourcePath = resolvePage(root, path);
+    const source = await readFile(sourcePath, "utf8");
     const page = parseMarkdown(source, {path, ...config});
     const resolvers = await getResolvers(page, {root, path, loaders, normalizePath});
     if (resolvers.hash !== initialHash) return void send({type: "reload"});
@@ -385,7 +421,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     tables = getTables(page);
     stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
     attachmentWatcher = await loaders.watchFiles(path, getWatchFiles(resolvers), () => watcher("change"));
-    markdownWatcher = watch(join(root, path), (event) => watcher(event));
+    markdownWatcher = watch(sourcePath, (event) => watcher(event));
     if (config.watchPath) configWatcher = watch(config.watchPath, () => send({type: "reload"}));
   }
 
