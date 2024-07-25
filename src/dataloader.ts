@@ -126,7 +126,6 @@ export class LoaderResolver {
     let dir = targetPath;
     for (let parent: string; true; dir = parent) {
       parent = dirname(dir);
-      console.warn("findExact", {targetPath, parent});
       try {
         for (const file of readdirSync(join(this.root, parent))) {
           const match = /^\[(\w+)\](\.\w+)*$/.exec(file);

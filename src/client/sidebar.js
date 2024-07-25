@@ -1,14 +1,25 @@
 const toggle = document.querySelector("#observablehq-sidebar-toggle");
 if (toggle) {
   let indeterminate = toggle.indeterminate;
+  const match = () => matchMedia("(min-width: calc(640px + 6rem + 272px))").matches;
   toggle.onclick = () => {
-    const matches = matchMedia("(min-width: calc(640px + 6rem + 272px))").matches;
+    const matches = match();
     if (indeterminate) (toggle.checked = !matches), (indeterminate = false);
     else if (toggle.checked === matches) indeterminate = true;
     toggle.indeterminate = indeterminate;
     if (indeterminate) sessionStorage.removeItem("observablehq-sidebar");
     else sessionStorage.setItem("observablehq-sidebar", toggle.checked);
   };
+  addEventListener("keydown", (event) => {
+    if (
+      event.code === "Escape" &&
+      !match() &&
+      ((!toggle.indeterminate && toggle.checked && (event.target === document.body || event.target === toggle)) ||
+        event.target?.closest("#observablehq-sidebar"))
+    ) {
+      toggle.click();
+    }
+  });
   addEventListener("keypress", (event) => {
     if (
       event.code === "KeyB" &&
