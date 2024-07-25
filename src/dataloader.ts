@@ -69,9 +69,9 @@ export class LoaderResolver {
    * abort if we find a matching folder or reach the source root; for example,
    * if src/data exists, we won’t look for a src/data.zip.
    */
-  find(targetPath: string, {useStale = false} = {}): Loader | undefined {
-    const loader = this.findExact(targetPath, {useStale}) ?? this.findDynamic(targetPath, {useStale});
-    if (loader) return loader;
+  find(targetPath: string, {useStale = false} = {}): Asset | Loader | undefined {
+    const result = this.findExact(targetPath, {useStale}) ?? this.findDynamic(targetPath, {useStale});
+    if (result) return result;
     let dir = dirname(targetPath);
     for (let parent: string; true; dir = parent) {
       parent = dirname(dir);
@@ -81,31 +81,35 @@ export class LoaderResolver {
     }
     for (const [ext, Extractor] of extractors) {
       const archive = dir + ext;
-      if (existsSync(join(this.root, archive))) {
-        return new Extractor({
-          preload: async () => archive,
-          inflatePath: targetPath.slice(archive.length - ext.length + 1),
-          path: join(this.root, archive),
-          root: this.root,
-          targetPath,
-          useStale
-        });
-      }
       const archiveLoader = this.findExact(archive, {useStale}) ?? this.findDynamic(archive, {useStale});
       if (archiveLoader) {
-        return new Extractor({
-          preload: async (options) => archiveLoader.load(options),
-          inflatePath: targetPath.slice(archive.length - ext.length + 1),
-          path: archiveLoader.path,
-          root: this.root,
-          targetPath,
-          useStale
-        });
+        if ("load" in archiveLoader) {
+          // archive.zip.js
+          return new Extractor({
+            preload: async (options) => archiveLoader.load(options),
+            inflatePath: targetPath.slice(archive.length - ext.length + 1),
+            path: archiveLoader.path,
+            root: this.root,
+            targetPath,
+            useStale
+          });
+        } else {
+          // archive.zip
+          return new Extractor({
+            preload: async () => archive,
+            inflatePath: targetPath.slice(archive.length - ext.length + 1),
+            path: join(this.root, archive),
+            root: this.root,
+            targetPath,
+            useStale
+          });
+        }
       }
     }
   }
 
-  private findExact(targetPath: string, {useStale}): Loader | undefined {
+  private findExact(targetPath: string, {useStale}): Asset | Loader | undefined {
+    if (existsSync(join(this.root, targetPath))) return {path: targetPath};
     for (const [ext, [command, ...args]] of this.interpreters) {
       if (!existsSync(join(this.root, targetPath + ext))) continue;
       if (extname(targetPath) === "") {
@@ -124,16 +128,17 @@ export class LoaderResolver {
     }
   }
 
-  private findDynamic(targetPath: string, {useStale}): Loader | undefined {
-    const found = this.findDynamicParams(this.root, join(".", targetPath).split("/"));
+  private findDynamic(targetPath: string, {useStale}): Asset | Loader | undefined {
+    const found = this.findDynamicParams(".", join(".", targetPath).split("/"));
     if (!found) return;
     const {path, params, ext} = found;
+    if (!ext) return {path};
     const [command, ...args] = this.interpreters.get(ext)!;
-    if (command != null) args.push(path);
+    if (command != null) args.push(join(this.root, path));
     return new CommandLoader({
       command: command ?? path,
       args: args.concat(params),
-      path,
+      path: join(this.root, path),
       root: this.root,
       targetPath,
       useStale
@@ -144,17 +149,18 @@ export class LoaderResolver {
    * Finds a parameterized data loader (dynamic route) recursively, such that
    * the most specific match is returned.
    */
-  private findDynamicParams(cwd: string, parts: string[]): {path: string; params: string[]; ext: string} | undefined {
+  private findDynamicParams(cwd: string, parts: string[]): {path: string; params: string[]; ext?: string} | undefined {
     switch (parts.length) {
       case 0:
         return;
       case 1: {
         const [first] = parts;
+        if (existsSync(join(this.root, cwd, first))) return {path: join(cwd, first), params: []};
         const ext1 = extname(first);
         for (const ext of this.interpreters.keys()) {
           const ext2 = `${ext1}${ext}`;
-          if (existsSync(join(cwd, first + ext))) return {path: join(cwd, first + ext), params: [], ext};
-          for (const file of globSync(`\\[*\\]${ext2}`, {cwd})) {
+          if (existsSync(join(this.root, cwd, first + ext))) return {path: join(cwd, first + ext), params: [], ext};
+          for (const file of globSync(`\\[*\\]${ext2}`, {cwd: join(this.root, cwd)})) {
             const params = [`--${basename(file, ext2).slice(1, -1)}`, basename(first, ext1)];
             return {path: join(cwd, file), params, ext};
           }
@@ -163,8 +169,11 @@ export class LoaderResolver {
       }
       default: {
         const [first, ...rest] = parts;
-        if (existsSync(join(cwd, first))) return this.findDynamicParams(join(cwd, first), rest);
-        for (const dir of globSync("\\[*\\]", {cwd})) {
+        if (existsSync(join(this.root, cwd, first))) {
+          const found = this.findDynamicParams(join(cwd, first), rest);
+          if (found) return found;
+        }
+        for (const dir of globSync("\\[*\\]", {cwd: join(this.root, cwd)})) {
           const found = this.findDynamicParams(join(cwd, dir), rest);
           if (found) return {...found, params: found.params.concat(`--${dir.slice(1, -1)}`, first)};
         }
@@ -240,6 +249,12 @@ export class LoaderResolver {
   resolveFilePath(path: string): string {
     return `/${join("_file", path)}?sha=${this.getSourceFileHash(path)}`;
   }
+}
+
+/** Used by LoaderResolver.find to represent a static file resolution. */
+export interface Asset {
+  /** The path to the (static) file. */
+  path: string;
 }
 
 export abstract class Loader {

@@ -20,4 +20,4 @@ import {foo} from "./foo.js";
 display(foo);
 ```
 
-<img src="./foo.png">
+<!-- img src="./foo.png" -->

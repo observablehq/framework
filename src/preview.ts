@@ -137,6 +137,7 @@ export class PreviewServer {
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
         const path = pathname.slice("/_import".length);
+        // TODO resolve parameterized paths
         const filepath = join(root, path);
         try {
           if (pathname.endsWith(".css")) {
@@ -154,27 +155,18 @@ export class PreviewServer {
         }
         throw new HttpError(`Not found: ${pathname}`, 404);
       } else if (pathname.startsWith("/_file/")) {
-        const path = pathname.slice("/_file".length);
-        const filepath = join(root, path);
-        try {
-          await access(filepath, constants.R_OK);
-          send(req, pathname.slice("/_file".length), {root}).pipe(res);
-          return;
-        } catch (error) {
-          if (!isEnoent(error)) throw error;
-        }
-
-        // Look for a data loader for this file.
-        const loader = loaders.find(path);
-        if (loader) {
+        const loader = loaders.find(pathname.slice("/_file".length));
+        if (!loader) throw new HttpError(`Not found: ${pathname}`, 404);
+        if ("load" in loader) {
           try {
             send(req, await loader.load(), {root}).pipe(res);
-            return;
           } catch (error) {
             if (!isEnoent(error)) throw error;
+            throw new HttpError(`Not found: ${pathname}`, 404);
           }
+        } else {
+          send(req, loader.path, {root}).pipe(res);
         }
-        throw new HttpError(`Not found: ${pathname}`, 404);
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
 
@@ -215,6 +207,11 @@ export class PreviewServer {
         console.error(error);
       }
       if (req.method === "GET" && res.statusCode === 404) {
+        if (req.url?.startsWith("/_file/") || req.url?.startsWith("/_import/")) {
+          res.setHeader("Content-Type", "text/plain; charset=utf-8");
+          res.end("File not found");
+          return;
+        }
         try {
           const options = {...config, path: "/404", preview: true};
           const source = await readFile(join(root, "404.md"), "utf8");
