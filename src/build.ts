@@ -152,14 +152,14 @@ export async function build(
 
   // Copy over the referenced files, accumulating hashed aliases.
   for (const file of files) {
-    let sourcePath = join(root, file);
-    effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-    if (!existsSync(sourcePath)) {
-      const loader = loaders.find(join("/", file), {useStale: true});
-      if (!loader) {
-        effects.logger.error(red("error: missing referenced file"));
-        continue;
-      }
+    let sourcePath: string;
+    effects.output.write(`${faint("copy")} ${join(root, file)} ${faint("→")} `);
+    const loader = loaders.find(join("/", file), {useStale: true});
+    if (!loader) {
+      effects.logger.error(red("error: missing referenced file"));
+      continue;
+    }
+    if ("load" in loader) {
       try {
         sourcePath = join(root, await loader.load(effects));
       } catch (error) {
@@ -167,6 +167,8 @@ export async function build(
         effects.logger.error(red("error: missing referenced file"));
         continue;
       }
+    } else {
+      sourcePath = loader.path;
     }
     const contents = await readFile(sourcePath);
     const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
