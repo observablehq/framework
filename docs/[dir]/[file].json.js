@@ -5,7 +5,7 @@ const {values} = parseArgs({
     dir: {
       type: "string"
     },
-    bar: {
+    file: {
       type: "string"
     }
   }

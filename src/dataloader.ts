@@ -144,42 +144,29 @@ export class LoaderResolver {
    * Finds a parameterized data loader (dynamic route) recursively, such that
    * the most specific match is returned.
    */
-  private findDynamicParams(
-    cwd: string,
-    parts: string[],
-    params: string[]
-  ): {path: string; params: string[]; ext: string} | undefined {
+  private findDynamicParams(cwd: string, parts: string[]): {path: string; params: string[]; ext: string} | undefined {
     switch (parts.length) {
       case 0:
         return;
       case 1: {
         const [first] = parts;
+        const ext1 = extname(first);
         for (const ext of this.interpreters.keys()) {
-          const ext1 = extname(first);
           const ext2 = `${ext1}${ext}`;
-          if (existsSync(join(cwd, first + ext))) {
-            return {
-              path: join(cwd, first + ext),
-              params,
-              ext
-            };
-          }
+          if (existsSync(join(cwd, first + ext))) return {path: join(cwd, first + ext), params: [], ext};
           for (const file of globSync(`\\[*\\]${ext2}`, {cwd})) {
-            return {
-              path: join(cwd, file),
-              params: params.concat(`--${basename(file, ext2).slice(1, -1)}`, basename(first, ext1)),
-              ext
-            };
+            const params = [`--${basename(file, ext2).slice(1, -1)}`, basename(first, ext1)];
+            return {path: join(cwd, file), params, ext};
           }
         }
         return;
       }
       default: {
         const [first, ...rest] = parts;
-        if (existsSync(join(cwd, first))) return this.findDynamicParams(join(cwd, first), rest, params);
+        if (existsSync(join(cwd, first))) return this.findDynamicParams(join(cwd, first), rest);
         for (const dir of globSync("\\[*\\]", {cwd})) {
-          const found = this.findDynamicParams(join(cwd, dir), rest, params.concat(`--${dir.slice(1, -1)}`, first));
-          if (found) return found;
+          const found = this.findDynamicParams(join(cwd, dir), rest);
+          if (found) return {...found, params: found.params.concat(`--${dir.slice(1, -1)}`, first)};
         }
       }
     }
