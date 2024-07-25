@@ -120,7 +120,7 @@ export function isImportMetaResolve(node: CallExpression): boolean {
 }
 
 export function isJavaScript(path: string): boolean {
-  return /\.(m|c)?js$/i.test(path);
+  return /\.(m|c)?js(\?|$)/i.test(path);
 }
 
 const parseImportsCache = new Map<string, Promise<ImportReference[]>>();
