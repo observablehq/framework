@@ -1,13 +1,13 @@
 import {createHash} from "node:crypto";
 import type {WriteStream} from "node:fs";
-import {createReadStream, existsSync, readdirSync, statSync} from "node:fs";
+import {createReadStream, existsSync, statSync} from "node:fs";
 import {open, readFile, rename, unlink} from "node:fs/promises";
 import {basename, dirname, extname, join, relative} from "node:path/posix";
 import {createGunzip} from "node:zlib";
 import {spawn} from "cross-spawn";
+import {globSync} from "glob";
 import JSZip from "jszip";
 import {extract} from "tar-stream";
-import {isEnoent} from "./error.js";
 import {maybeStat, prepareOutput} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {formatByteSize} from "./format.js";
@@ -70,8 +70,8 @@ export class LoaderResolver {
    * if src/data exists, we won’t look for a src/data.zip.
    */
   find(targetPath: string, {useStale = false} = {}): Loader | undefined {
-    const exact = this.findExact(targetPath, {useStale});
-    if (exact) return exact;
+    const loader = this.findExact(targetPath, {useStale}) ?? this.findDynamic(targetPath, {useStale});
+    if (loader) return loader;
     let dir = dirname(targetPath);
     for (let parent: string; true; dir = parent) {
       parent = dirname(dir);
@@ -91,7 +91,7 @@ export class LoaderResolver {
           useStale
         });
       }
-      const archiveLoader = this.findExact(archive, {useStale});
+      const archiveLoader = this.findExact(archive, {useStale}) ?? this.findDynamic(archive, {useStale});
       if (archiveLoader) {
         return new Extractor({
           preload: async (options) => archiveLoader.load(options),
@@ -122,38 +122,66 @@ export class LoaderResolver {
         useStale
       });
     }
-    // check for parameterized path
-    let dir = targetPath;
-    for (let parent: string; true; dir = parent) {
-      parent = dirname(dir);
-      try {
-        for (const file of readdirSync(join(this.root, parent))) {
-          const match = /^\[(\w+)\](\.\w+)*$/.exec(file);
-          if (!match) continue;
-          const interpreter = this.interpreters.get(match[2]);
-          if (!interpreter) continue;
-          const [command, ...args] = interpreter;
-          const path = join(this.root, parent, file);
-          if (command != null) args.push(path);
-          // TODO extract parameter
-          // TODO decodeURI? probably should have happened earlier
-          args.push(`--${match[1]}`, basename(targetPath));
-          return new CommandLoader({
-            command: command ?? path,
-            args,
-            path,
-            root: this.root,
-            targetPath,
-            useStale
-          });
+  }
+
+  private findDynamic(targetPath: string, {useStale}): Loader | undefined {
+    const found = this.findDynamicParams(this.root, join(".", targetPath).split("/"), []);
+    if (!found) return;
+    const {path, params, ext} = found;
+    const [command, ...args] = this.interpreters.get(ext)!;
+    if (command != null) args.push(path);
+    return new CommandLoader({
+      command: command ?? path,
+      args: args.concat(params),
+      path,
+      root: this.root,
+      targetPath,
+      useStale
+    });
+  }
+
+  /**
+   * Finds a parameterized data loader (dynamic route) recursively, such that
+   * the most specific match is returned.
+   */
+  private findDynamicParams(
+    cwd: string,
+    parts: string[],
+    params: string[]
+  ): {path: string; params: string[]; ext: string} | undefined {
+    switch (parts.length) {
+      case 0:
+        return;
+      case 1: {
+        const [first] = parts;
+        for (const ext of this.interpreters.keys()) {
+          const ext1 = extname(first);
+          const ext2 = `${ext1}${ext}`;
+          if (existsSync(join(cwd, first + ext))) {
+            return {
+              path: join(cwd, first + ext),
+              params,
+              ext
+            };
+          }
+          for (const file of globSync(`\\[*\\]${ext2}`, {cwd})) {
+            return {
+              path: join(cwd, file),
+              params: params.concat(`--${basename(file, ext2).slice(1, -1)}`, basename(first, ext1)),
+              ext
+            };
+          }
         }
-      } catch (error) {
-        if (!isEnoent(error)) throw error;
+        return;
       }
-      return; // TODO
-      // if (parent === dir) return; // reached source root
-      // if (existsSync(join(this.root, dir))) return; // found folder
-      // if (existsSync(join(this.root, parent))) break; // found parent
+      default: {
+        const [first, ...rest] = parts;
+        if (existsSync(join(cwd, first))) return this.findDynamicParams(join(cwd, first), rest, params);
+        for (const dir of globSync("\\[*\\]", {cwd})) {
+          const found = this.findDynamicParams(join(cwd, dir), rest, params.concat(`--${dir.slice(1, -1)}`, first));
+          if (found) return found;
+        }
+      }
     }
   }
 

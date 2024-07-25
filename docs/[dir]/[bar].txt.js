@@ -2,7 +2,10 @@ import {parseArgs} from "node:util";
 
 const {values} = parseArgs({
   options: {
-    test: {
+    dir: {
+      type: "string"
+    },
+    bar: {
       type: "string"
     }
   }
