@@ -137,7 +137,7 @@ export class PreviewServer {
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
         const path = pathname.slice("/_import".length);
-        // TODO resolve parameterized paths
+        // TODO parameterized path
         const filepath = join(root, path);
         try {
           if (pathname.endsWith(".css")) {
@@ -145,7 +145,7 @@ export class PreviewServer {
             end(req, res, await bundleStyles({path: filepath}), "text/css");
             return;
           } else if (pathname.endsWith(".js")) {
-            const input = await readJavaScript(join(root, path));
+            const input = await readJavaScript(root, path);
             const output = await transpileModule(input, {root, path});
             end(req, res, output, "text/javascript");
             return;

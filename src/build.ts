@@ -206,7 +206,7 @@ export async function build(
     const resolveImport = getModuleResolver(root, path);
     let input: string;
     try {
-      input = await readJavaScript(sourcePath);
+      input = await readJavaScript(root, path);
     } catch (error) {
       if (!isEnoent(error)) throw error;
       effects.logger.error(red("error: missing referenced import"));
