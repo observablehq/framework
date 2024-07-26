@@ -161,28 +161,32 @@ export function getFileInfo(root: string, path: string): FileInfo | undefined {
   return entry;
 }
 
-export function resolveModule(root: string, path: string): {path: string; params: string[]} {
-  return resolveModuleParams(root, ".", join(".", path).split("/")) ?? {path, params: []};
+export function resolveModule(root: string, path: string): {path: string; params?: Record<string, string>} {
+  return resolveModuleParams(root, ".", join(".", path).split("/")) ?? {path};
 }
 
 /**
  * Finds a parameterized module (dynamic route) recursively, such that the most
  * specific match is returned.
  */
-function resolveModuleParams(root: string, cwd: string, parts: string[]): {path: string; params: string[]} | undefined {
+function resolveModuleParams(
+  root: string,
+  cwd: string,
+  parts: string[]
+): {path: string; params?: Record<string, string>} | undefined {
   switch (parts.length) {
     case 0:
       return;
     case 1: {
       const [first] = parts;
       if (existsSync(join(root, cwd, first))) {
-        return {path: join(cwd, first), params: []};
+        return {path: join(cwd, first)};
       }
       if (first.endsWith(".js") && existsSync(join(root, cwd, first + "x"))) {
-        return {path: join(cwd, first + "x"), params: []};
+        return {path: join(cwd, first + "x")};
       }
       for (const file of globSync("\\[*\\].{js,jsx}", {cwd: join(root, cwd)})) {
-        const params = [`--${basename(file, extname(file)).slice(1, -1)}`, basename(first, extname(first))];
+        const params = {[`${basename(file, extname(file)).slice(1, -1)}`]: basename(first, extname(first))};
         return {path: join(cwd, file), params};
       }
       return;
@@ -195,7 +199,7 @@ function resolveModuleParams(root: string, cwd: string, parts: string[]): {path:
       }
       for (const dir of globSync("\\[*\\]", {cwd: join(root, cwd)})) {
         const found = resolveModuleParams(root, join(cwd, dir), rest);
-        if (found) return {...found, params: found.params.concat(`--${dir.slice(1, -1)}`, first)};
+        if (found) return {...found, params: {...found.params, [`${dir.slice(1, -1)}`]: first}};
       }
     }
   }
@@ -203,14 +207,23 @@ function resolveModuleParams(root: string, cwd: string, parts: string[]): {path:
 
 // TODO bake-in parameters
 export async function readJavaScript(root: string, path: string): Promise<string> {
-  const sourcePath = join(root, resolveModule(root, path).path);
+  const module = resolveModule(root, path);
+  const sourcePath = join(root, module.path);
   const source = await readFile(sourcePath, "utf-8");
   if (sourcePath.endsWith(".jsx")) {
     const {code} = await transform(source, {
       loader: "jsx",
       jsx: "automatic",
       jsxImportSource: "npm:react",
-      sourcefile: sourcePath
+      sourcefile: sourcePath,
+      define: defineParams(module.params)
+    });
+    return code;
+  }
+  if (module.params) {
+    const {code} = await transform(source, {
+      sourcefile: sourcePath,
+      define: defineParams(module.params)
     });
     return code;
   }
@@ -219,16 +232,32 @@ export async function readJavaScript(root: string, path: string): Promise<string
 
 // TODO bake-in parameters
 export function readJavaScriptSync(root: string, path: string): string {
-  const sourcePath = join(root, resolveModule(root, path).path);
+  const module = resolveModule(root, path);
+  const sourcePath = join(root, module.path);
   const source = readFileSync(sourcePath, "utf-8");
   if (sourcePath.endsWith(".jsx")) {
     const {code} = transformSync(source, {
       loader: "jsx",
       jsx: "automatic",
       jsxImportSource: "npm:react",
-      sourcefile: sourcePath
+      sourcefile: sourcePath,
+      define: defineParams(module.params)
+    });
+    return code;
+  }
+  if (module.params) {
+    const {code} = transformSync(source, {
+      sourcefile: sourcePath,
+      define: defineParams(module.params)
     });
     return code;
   }
   return source;
+}
+
+// TODO require that param names are valid JavaScript fields
+function defineParams(params: Record<string, string> = {}): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(params).map(([name, value]) => [`observable.params.${name}`, JSON.stringify(value)])
+  );
 }
