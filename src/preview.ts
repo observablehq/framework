@@ -267,7 +267,8 @@ function resolvePage(root: string, path: string): string {
 
 /**
  * Finds a parameterized page (dynamic route) recursively, such that the most
- * specific match is returned.
+ * specific match is returned. TODO Preserve the params so they can be baked-in
+ * to JavaScript code blocks.
  */
 function resolvePageParams(cwd: string, parts: string[]): string | undefined {
   switch (parts.length) {
