@@ -186,7 +186,7 @@ function resolveModuleParams(
         return {path: join(cwd, first + "x")};
       }
       for (const file of globSync("\\[*\\].{js,jsx}", {cwd: join(root, cwd)})) {
-        const params = {[`${basename(file, extname(file)).slice(1, -1)}`]: basename(first, extname(first))};
+        const params = {[basename(file, extname(file)).slice(1, -1)]: basename(first, extname(first))};
         return {path: join(cwd, file), params};
       }
       return;
@@ -199,13 +199,12 @@ function resolveModuleParams(
       }
       for (const dir of globSync("\\[*\\]", {cwd: join(root, cwd)})) {
         const found = resolveModuleParams(root, join(cwd, dir), rest);
-        if (found) return {...found, params: {...found.params, [`${dir.slice(1, -1)}`]: first}};
+        if (found) return {...found, params: {...found.params, [dir.slice(1, -1)]: first}};
       }
     }
   }
 }
 
-// TODO bake-in parameters
 export async function readJavaScript(root: string, path: string): Promise<string> {
   const module = resolveModule(root, path);
   const sourcePath = join(root, module.path);
@@ -230,7 +229,6 @@ export async function readJavaScript(root: string, path: string): Promise<string
   return source;
 }
 
-// TODO bake-in parameters
 export function readJavaScriptSync(root: string, path: string): string {
   const module = resolveModule(root, path);
   const sourcePath = join(root, module.path);
@@ -255,9 +253,10 @@ export function readJavaScriptSync(root: string, path: string): string {
   return source;
 }
 
-// TODO require that param names are valid JavaScript fields
 function defineParams(params: Record<string, string> = {}): Record<string, string> {
   return Object.fromEntries(
-    Object.entries(params).map(([name, value]) => [`observable.params.${name}`, JSON.stringify(value)])
+    Object.entries(params)
+      .filter(([name]) => /^[a-z0-9_]+$/i.test(name)) // ignore non-ASCII parameters
+      .map(([name, value]) => [`observable.params.${name}`, JSON.stringify(value)])
   );
 }
