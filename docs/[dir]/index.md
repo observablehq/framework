@@ -11,7 +11,7 @@ FileAttachment("./foo.json").json()
 ```
 
 ```js
-FileAttachment("./bar.json").json()
+FileAttachment("./file.json").json()
 ```
 
 ```js
@@ -20,4 +20,4 @@ import {foo} from "./foo.js";
 display(foo);
 ```
 
-<!-- img src="./foo.png" -->
+<img src="./w3c.png">
