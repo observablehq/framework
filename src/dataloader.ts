@@ -96,9 +96,9 @@ export class LoaderResolver {
         } else {
           // archive.zip
           return new Extractor({
-            preload: async () => archive,
+            preload: async () => relative(this.root, archiveLoader.path),
             inflatePath: targetPath.slice(archive.length - ext.length + 1),
-            path: join(this.root, archive),
+            path: archiveLoader.path,
             root: this.root,
             targetPath,
             useStale
@@ -109,7 +109,7 @@ export class LoaderResolver {
   }
 
   private findExact(targetPath: string, {useStale}): Asset | Loader | undefined {
-    if (existsSync(join(this.root, targetPath))) return {path: targetPath};
+    if (existsSync(join(this.root, targetPath))) return {path: join(this.root, targetPath)};
     for (const [ext, [command, ...args]] of this.interpreters) {
       if (!existsSync(join(this.root, targetPath + ext))) continue;
       if (extname(targetPath) === "") {
@@ -132,7 +132,7 @@ export class LoaderResolver {
     const found = this.findDynamicParams(".", join(".", targetPath).split("/"));
     if (!found) return;
     const {path, params, ext} = found;
-    if (!ext) return {path};
+    if (!ext) return {path: join(this.root, path)};
     const [command, ...args] = this.interpreters.get(ext)!;
     if (command != null) args.push(join(this.root, path));
     return new CommandLoader({
@@ -253,7 +253,7 @@ export class LoaderResolver {
 
 /** Used by LoaderResolver.find to represent a static file resolution. */
 export interface Asset {
-  /** The path to the (static) file. */
+  /** The path to the file relative to the current working directory. */
   path: string;
 }
 

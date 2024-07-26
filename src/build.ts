@@ -167,7 +167,7 @@ export async function build(
         continue;
       }
     } else {
-      sourcePath = join(root, loader.path);
+      sourcePath = loader.path;
     }
     const contents = await readFile(sourcePath);
     const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);

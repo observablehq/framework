@@ -165,7 +165,7 @@ export class PreviewServer {
             throw new HttpError(`Not found: ${pathname}`, 404);
           }
         } else {
-          send(req, loader.path, {root}).pipe(res);
+          send(req, loader.path).pipe(res);
         }
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
