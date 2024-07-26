@@ -59,7 +59,7 @@ describe("preview server", () => {
   it("handles missing imports", async () => {
     const res = await chai.request(testServerUrl).get("/_import/idontexist.js");
     expect(res).to.have.status(404);
-    expect(res.text).to.have.string("404 page");
+    expect(res.text).to.have.string("File not found");
   });
 
   it("serves local files", async () => {
@@ -71,6 +71,6 @@ describe("preview server", () => {
   it("handles missing files", async () => {
     const res = await chai.request(testServerUrl).get("/_file/idontexist.csv");
     expect(res).to.have.status(404);
-    expect(res.text).to.have.string("404 page");
+    expect(res.text).to.have.string("File not found");
   });
 });

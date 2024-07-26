@@ -1,5 +1,4 @@
 import {createHash} from "node:crypto";
-import {existsSync} from "node:fs";
 import {access, constants, copyFile, readFile, stat, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
@@ -168,7 +167,7 @@ export async function build(
         continue;
       }
     } else {
-      sourcePath = loader.path;
+      sourcePath = join(root, loader.path);
     }
     const contents = await readFile(sourcePath);
     const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
