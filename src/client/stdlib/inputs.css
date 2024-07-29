@@ -1,5 +1,5 @@
 /* The root namespace; either a form (for inputs) or a div (for Table). */
-.inputs-3a86ea {
+.__ns__ {
   --length1: 3.25px;
   --length2: 6.5px;
   --length3: 13px;
@@ -11,7 +11,7 @@
 /* The minimum height of a form should match the minimum allowed cell height.
  * The vertical margins ensure adequate separation in narrow windows when used
  * with Inputs.form. */
-form.inputs-3a86ea {
+form.__ns__ {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -21,34 +21,34 @@ form.inputs-3a86ea {
 
 /* On narrow screens, the label is drawn as a block element on top of the
  * inputs, and a small amount of vertical padding is desired for separation. */
-form.inputs-3a86ea > label {
+form.__ns__ > label {
   width: 100%;
   padding-bottom: 3px;
 }
 
 /* On narrow screens, a toggle is small enough to fit inline with the label;
  * we don’t need to force it onto its own line as we do with other inputs. */
-form.inputs-3a86ea-toggle {
+form.__ns__-toggle {
   flex-wrap: nowrap;
 }
 
 /* Since toggles won’t wrap on narrow screens, always align them vertically. */
-form.inputs-3a86ea-toggle > label {
+form.__ns__-toggle > label {
   align-self: start;
   padding: 5px 0 4px 0;
   margin-right: var(--length2);
 }
 
 /* Since toggles won’t wrap on narrow screens, collpase to content. */
-form.inputs-3a86ea-toggle > label,
-form.inputs-3a86ea-toggle .inputs-3a86ea-input {
+form.__ns__-toggle > label,
+form.__ns__-toggle .__ns__-input {
   width: initial;
 }
 
 @media only screen and (min-width: 30em) {
   /* On wide screens, the label and inputs are side-by-side, with the label
    * having a fixed width for consistent layout across cells. */
-  form.inputs-3a86ea {
+  form.__ns__ {
     flex-wrap: nowrap;
     width: calc(var(--input-width) + var(--label-width));
     max-width: 100%;
@@ -60,7 +60,7 @@ form.inputs-3a86ea-toggle .inputs-3a86ea-input {
    * within the minimum cell height of 25.5px. In the other cases, we want the
    * two to be vertically-aligned at the top. In all cases we also want a small
    * amount of horizontal separation. */
-  form.inputs-3a86ea > label {
+  form.__ns__ > label {
     flex-shrink: 0;
     align-self: start;
     padding: 5px 0 4px 0;
@@ -70,40 +70,40 @@ form.inputs-3a86ea-toggle .inputs-3a86ea-input {
 }
 
 /* A kind of “reset.css” to make these elements well-behaved. */
-.inputs-3a86ea button,
-.inputs-3a86ea input,
-.inputs-3a86ea select,
-.inputs-3a86ea table,
-.inputs-3a86ea textarea {
+.__ns__ button,
+.__ns__ input,
+.__ns__ select,
+.__ns__ table,
+.__ns__ textarea {
   color: inherit;
   font: inherit;
   box-sizing: border-box;
 }
 
-.inputs-3a86ea button,
-.inputs-3a86ea input {
+.__ns__ button,
+.__ns__ input {
   line-height: normal;
 }
 
-.inputs-3a86ea button {
+.__ns__ button {
   margin: 0;
 }
 
 /* Separate adjacent buttons. */
-.inputs-3a86ea button + button {
+.__ns__ button + button {
   margin-left: var(--length1);
 }
 
-.inputs-3a86ea-textarea {
+.__ns__-textarea {
   --input-width: 520px;
 }
 
-.inputs-3a86ea-textarea > div {
+.__ns__-textarea > div {
   width: 100%;
   text-align: right;
 }
 
-.inputs-3a86ea-textarea > div textarea {
+.__ns__-textarea > div textarea {
   display: block;
   width: 100%;
   margin: 0;
@@ -113,102 +113,102 @@ form.inputs-3a86ea-toggle .inputs-3a86ea-input {
   resize: vertical;
 }
 
-.inputs-3a86ea-textarea > div button {
+.__ns__-textarea > div button {
   margin: 4px 0 0;
 }
 
 /* Consistent horizontal spacing for labeled radios and checkboxes. */
-.inputs-3a86ea input[type="radio"],
-.inputs-3a86ea input[type="checkbox"] {
+.__ns__ input[type="radio"],
+.__ns__ input[type="checkbox"] {
   margin-right: var(--length2);
 }
 
 /* For compound inputs (e.g., text input + submit), use flex to ensure vertical
  * alignment and to allow responsive sizing. For all inputs except Checkbox,
  * Radio, and Button, we want the inputs to span the full width of the form. */
-.inputs-3a86ea-input {
+.__ns__-input {
   display: flex;
   align-items: center;
   width: 100%;
 }
 
 /* Have these elements observe flex layout, per above. */
-.inputs-3a86ea-input > input,
-.inputs-3a86ea-input > button,
-.inputs-3a86ea-input > output {
+.__ns__-input > input,
+.__ns__-input > button,
+.__ns__-input > output {
   width: inherit;
   min-width: 0;
 }
 
 /* Tell the secondary element to shrink more; e.g., the submit button should be
  * smaller than the text input, but both should grow proportionally. */
-.inputs-3a86ea-input > button,
-.inputs-3a86ea-input > output,
-.inputs-3a86ea-input > input[type="number"] {
+.__ns__-input > button,
+.__ns__-input > output,
+.__ns__-input > input[type="number"] {
   flex-shrink: 2.5;
 }
 
 /* Don’t allow text to wrap in search result counts (unless intended), and
  * separate the output from the preceding input. */
-.inputs-3a86ea-input > output {
+.__ns__-input > output {
   white-space: pre;
   margin-left: var(--length2);
 }
 
 /* Separate the submit button from the preceding text input. */
-.inputs-3a86ea-input > button {
+.__ns__-input > button {
   margin-left: var(--length1);
 }
 
 /* Use tabular-nums to avoid jitter when moving the range slider. */
-.inputs-3a86ea-input > input[type="number"] {
+.__ns__-input > input[type="number"] {
   font-variant-numeric: tabular-nums;
   flex-shrink: 1.5;
   text-overflow: ellipsis;
 }
 
 /* If possible, show the color input output in the system’s monospace font. */
-.inputs-3a86ea-input > input[type="color"] ~ output {
+.__ns__-input > input[type="color"] ~ output {
   font-family: ui-monospace, var(--monospace);
 }
 
 /* When a color input has a submit button, reserve more space for the output. */
-.inputs-3a86ea-input:not(:only-child) > input[type="color"] ~ output {
+.__ns__-input:not(:only-child) > input[type="color"] ~ output {
   flex-shrink: 1;
 }
 
 /* Separate the range input from the preceding number input. */
-.inputs-3a86ea-input > input[type="range"] {
+.__ns__-input > input[type="range"] {
   margin: 0;
   margin-left: var(--length2);
 }
 
 /* Tweak the height so that date inputs match text (and others). */
-.inputs-3a86ea-input > input[type="date"],
-.inputs-3a86ea-input > input[type="datetime-local"] {
+.__ns__-input > input[type="date"],
+.__ns__-input > input[type="datetime-local"] {
   height: 22px;
 }
 
 /* Checkboxes and radios aren’t constrained by their input width; */
-form.inputs-3a86ea-checkbox {
+form.__ns__-checkbox {
   width: auto;
   max-width: 640px;
 }
 
 /* Vertically-align the label contents, and give ample horizontal separation. */
-.inputs-3a86ea-checkbox div label {
+.__ns__-checkbox div label {
   display: inline-flex;
   align-items: center;
   margin-right: var(--length3);
 }
 
-form.inputs-3a86ea-table {
+form.__ns__-table {
   display: block;
   overflow-y: auto;
   width: 100%;
 }
 
-.inputs-3a86ea-table table {
+.__ns__-table table {
   max-width: initial;
   min-height: 33px;
   margin: 0;
@@ -217,66 +217,66 @@ form.inputs-3a86ea-table {
   font-variant-numeric: tabular-nums;
 }
 
-.inputs-3a86ea-table tr:not(:last-child) td,
-.inputs-3a86ea-table tr:not(:last-child) th {
+.__ns__-table tr:not(:last-child) td,
+.__ns__-table tr:not(:last-child) th {
   border-bottom: solid 1px var(--theme-foreground-faintest);
 }
 
-.inputs-3a86ea-table thead tr td,
-.inputs-3a86ea-table thead tr th {
+.__ns__-table thead tr td,
+.__ns__-table thead tr th {
   border-bottom: solid 1px var(--theme-foreground-fainter);
 }
 
-.inputs-3a86ea-table thead th span {
+.__ns__-table thead th span {
   display: inline-block;
   width: 0.5em;
   margin-left: -0.5em;
 }
 
-.inputs-3a86ea-table td,
-.inputs-3a86ea-table th {
+.__ns__-table td,
+.__ns__-table th {
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
   padding: 3px 6.5px 3px 0;
 }
 
-.inputs-3a86ea-table tr > :not(:first-of-type) {
+.__ns__-table tr > :not(:first-of-type) {
   padding-left: var(--length2);
 }
 
-.inputs-3a86ea-table tr > :last-of-type {
+.__ns__-table tr > :last-of-type {
   padding-right: var(--length3);
 }
 
-.inputs-3a86ea-table tr > :first-of-type {
+.__ns__-table tr > :first-of-type {
   text-overflow: unset;
   width: 19px;
 }
 
-.inputs-3a86ea-table tr > :first-of-type input {
+.__ns__-table tr > :first-of-type input {
   opacity: 0;
   margin: 0 3px 1px 4px;
 }
 
-.inputs-3a86ea-table tr:hover > :first-of-type input:enabled,
-.inputs-3a86ea-table tr > :first-of-type input:focus,
-.inputs-3a86ea-table tr > :first-of-type input:checked,
-.inputs-3a86ea-table tr > :first-of-type input[type="checkbox"]:indeterminate {
+.__ns__-table tr:hover > :first-of-type input:enabled,
+.__ns__-table tr > :first-of-type input:focus,
+.__ns__-table tr > :first-of-type input:checked,
+.__ns__-table tr > :first-of-type input[type="checkbox"]:indeterminate {
   opacity: inherit;
 }
 
-.inputs-3a86ea-table thead tr {
+.__ns__-table thead tr {
   border-bottom: none;
 }
 
-.inputs-3a86ea-table thead th {
+.__ns__-table thead th {
   position: sticky;
   top: 0;
   background: var(--theme-background);
   cursor: ns-resize;
 }
 
-.inputs-3a86ea-table tbody tr:first-child td {
+.__ns__-table tbody tr:first-child td {
   padding-top: 4px;
 }

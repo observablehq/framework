@@ -6,7 +6,7 @@ import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
-import {getStylePath} from "./files.js";
+import {getClientPath, getStylePath} from "./files.js";
 import type {StringLiteral} from "./javascript/source.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/source.js";
 import {resolveNpmImport} from "./npm.js";
@@ -29,6 +29,10 @@ const BUNDLED_MODULES = [
   "minisearch" // observablehq:search.js
 ];
 
+function rewriteInputsNamespace(code: string) {
+  return code.replace(/\b__ns__\b/g, "inputs-3a86ea");
+}
+
 export async function bundleStyles({
   minify = false,
   path,
@@ -45,7 +49,9 @@ export async function bundleStyles({
     minify,
     alias: STYLE_MODULES
   });
-  return result.outputFiles[0].text;
+  let text = result.outputFiles[0].text;
+  if (path === getClientPath("stdlib/inputs.css")) text = rewriteInputsNamespace(text);
+  return text;
 }
 
 export async function rollupClient(
