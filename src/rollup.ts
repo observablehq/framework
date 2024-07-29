@@ -29,10 +29,6 @@ const BUNDLED_MODULES = [
   "minisearch" // observablehq:search.js
 ];
 
-function rewriteInputsNamespace(code: string) {
-  return code.replace(/\b__ns__\b/g, "inputs-3a86ea");
-}
-
 export async function bundleStyles({
   minify = false,
   path,
@@ -49,8 +45,7 @@ export async function bundleStyles({
     minify,
     alias: STYLE_MODULES
   });
-  const text = result.outputFiles[0].text;
-  return rewriteInputsNamespace(text); // TODO only for inputs
+  return result.outputFiles[0].text;
 }
 
 export async function rollupClient(
@@ -87,10 +82,8 @@ export async function rollupClient(
   });
   try {
     const output = await bundle.generate({format: "es"});
-    let code = output.output.find((o): o is OutputChunk => o.type === "chunk")!.code; // TODO don’t assume one chunk?
-    code = rewriteTypeScriptImports(code);
-    code = rewriteInputsNamespace(code); // TODO only for inputs
-    return code;
+    const code = output.output.find((o): o is OutputChunk => o.type === "chunk")!.code; // TODO don’t assume one chunk?
+    return rewriteTypeScriptImports(code);
   } finally {
     await bundle.close();
   }
@@ -122,7 +115,7 @@ function importResolve(input: string, root: string, path: string): Plugin {
       : specifier === "npm:@observablehq/duckdb"
       ? {id: relativePath(path, "/_observablehq/stdlib/duckdb.js"), external: true} // TODO publish to npm
       : specifier === "npm:@observablehq/inputs"
-      ? {id: relativePath(path, "/_observablehq/stdlib/inputs.js"), external: true} // TODO publish to npm
+      ? {id: relativePath(path, "/_observablehq/stdlib/inputs.js"), external: true}
       : specifier === "npm:@observablehq/mermaid"
       ? {id: relativePath(path, "/_observablehq/stdlib/mermaid.js"), external: true} // TODO publish to npm
       : specifier === "npm:@observablehq/tex"
