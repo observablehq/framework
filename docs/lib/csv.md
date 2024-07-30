@@ -18,7 +18,7 @@ The column names are listed in the `columns` property:
 gistemp.columns
 ```
 
-You can also load a tab-separated values (TSV) file using `FileAttachment.tsv`:
+You can also load a tab-separated values (TSV) file using `file.tsv`:
 
 ```js echo
 const capitals = FileAttachment("us-state-capitals.tsv").tsv({typed: true});
@@ -28,7 +28,7 @@ const capitals = FileAttachment("us-state-capitals.tsv").tsv({typed: true});
 Inputs.table(capitals)
 ```
 
-For a different delimiter, use `FileAttachment.dsv`. <a href="https://github.com/observablehq/framework/releases/tag/v1.6.0" class="observablehq-version-badge" data-version="^1.6.0" title="Added in 1.6.0"></a> For example, for semicolon separated values:
+For a different delimiter, use `file.dsv`. <a href="https://github.com/observablehq/framework/releases/tag/v1.6.0" class="observablehq-version-badge" data-version="^1.6.0" title="Added in 1.6.0"></a> For example, for semicolon separated values:
 
 ```js run=false
 const capitals = FileAttachment("us-state-capitals.csv").dsv({delimiter: ";", typed: true});

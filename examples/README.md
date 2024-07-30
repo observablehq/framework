@@ -45,39 +45,42 @@
 
 ### Charts
 
-- [`geotiff`](https://observablehq.observablehq.cloud/framework-example-geotiff/) - Parsing GeoTIFF with geotiff.js, then visualizing with Observable Plot
-- [`netcdf`](https://observablehq.observablehq.cloud/framework-example-netcdf/) - Parsing NetCDF with `netcdfjs`, then visualizing with Observable Plot
+- [`geotiff`](https://observablehq.observablehq.cloud/framework-example-geotiff/) - Parse GeoTIFF with geotiff.js, then visualize with Observable Plot
+- [`netcdf`](https://observablehq.observablehq.cloud/framework-example-netcdf/) - Parse NetCDF with `netcdfjs`, then visualize with Observable Plot
 - [`vega-dark`](https://observablehq.observablehq.cloud/framework-example-vega-dark/) - Responsive dark mode in Vega-Lite
 - [`vega-responsive`](https://observablehq.observablehq.cloud/framework-example-vega-responsive/) - Responsive width in Vega-Lite using ResizeObserver
 
 ### Data loaders
 
-- [`loader-airtable`](https://observablehq.observablehq.cloud/framework-example-loader-airtable/) - Loading data from Airtable
-- [`loader-arrow`](https://observablehq.observablehq.cloud/framework-example-loader-arrow/) - Generating Apache Arrow IPC files
-- [`loader-census`](https://observablehq.observablehq.cloud/framework-example-loader-census/) - Loading and transform shapefiles from the U.S. Census Bureau
-- [`loader-databricks`](https://observablehq.observablehq.cloud/framework-example-loader-databricks/) - Loading data from Databricks
-- [`loader-duckdb`](https://observablehq.observablehq.cloud/framework-example-loader-duckdb/) - Processing data with DuckDB
-- [`loader-elasticsearch`](https://observablehq.observablehq.cloud/framework-example-loader-elasticsearch/) - Loading data from Elasticsearch
-- [`loader-github`](https://observablehq.observablehq.cloud/framework-example-loader-github/) - Loading data from GitHub
-- [`loader-google-analytics`](https://observablehq.observablehq.cloud/framework-example-loader-google-analytics/) - Loading data from Google Analytics
-- [`loader-julia-to-txt`](https://observablehq.observablehq.cloud/framework-example-loader-julia-to-txt/) - Generating TXT from Julia
-- [`loader-parquet`](https://observablehq.observablehq.cloud/framework-example-loader-parquet/) - Generating Apache Parquet files
-- [`loader-postgres`](https://observablehq.observablehq.cloud/framework-example-loader-postgres/) - Loading data from PostgreSQL
-- [`loader-python-to-csv`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-csv/) - Generating CSV from Python
-- [`loader-python-to-png`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-png/) - Generating PNG from Python
-- [`loader-python-to-zip`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-zip/) - Generating ZIP from Python
-- [`loader-r-to-csv`](https://observablehq.observablehq.cloud/framework-example-loader-r-to-csv/) - Generating CSV from R
-- [`loader-r-to-jpeg`](https://observablehq.observablehq.cloud/framework-example-loader-r-to-jpeg/) - Generating JPEG from R
-- [`loader-r-to-json`](https://observablehq.observablehq.cloud/framework-example-loader-r-to-json/) - Generating JSON from R
-- [`loader-rust-to-json`](https://observablehq.observablehq.cloud/framework-example-loader-rust-to-json/) - Generating JSON from Rust
-- [`loader-snowflake`](https://observablehq.observablehq.cloud/framework-example-loader-snowflake/) - Loading data from Snowflake
-- [`netcdf-contours`](https://observablehq.observablehq.cloud/framework-example-netcdf-contours/) - Converting NetCDF to GeoJSON with `netcdfjs` and `d3-geo-voronoi`
+- [`loader-airtable`](https://observablehq.observablehq.cloud/framework-example-loader-airtable/) - Load data from Airtable
+- [`loader-arrow`](https://observablehq.observablehq.cloud/framework-example-loader-arrow/) - Generate Apache Arrow IPC files
+- [`loader-canvas-to-png`](https://observablehq.observablehq.cloud/framework-example-loader-canvas-to-png/) - Generate PNG using node-canvas
+- [`loader-census`](https://observablehq.observablehq.cloud/framework-example-loader-census/) - Load and transform shapefiles from the U.S. Census Bureau
+- [`loader-databricks`](https://observablehq.observablehq.cloud/framework-example-loader-databricks/) - Load data from Databricks
+- [`loader-duckdb`](https://observablehq.observablehq.cloud/framework-example-loader-duckdb/) - Process data with DuckDB
+- [`loader-elasticsearch`](https://observablehq.observablehq.cloud/framework-example-loader-elasticsearch/) - Load data from Elasticsearch
+- [`loader-github`](https://observablehq.observablehq.cloud/framework-example-loader-github/) - Load data from GitHub
+- [`loader-google-analytics`](https://observablehq.observablehq.cloud/framework-example-loader-google-analytics/) - Load data from Google Analytics
+- [`loader-julia-to-txt`](https://observablehq.observablehq.cloud/framework-example-loader-julia-to-txt/) - Generate TXT from Julia
+- [`loader-parquet`](https://observablehq.observablehq.cloud/framework-example-loader-parquet/) - Generat Apache Parquet files
+- [`loader-postgres`](https://observablehq.observablehq.cloud/framework-example-loader-postgres/) - Load data from PostgreSQL
+- [`loader-python-to-csv`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-csv/) - Generate CSV from Python
+- [`loader-python-to-parquet`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-parquet) - Generate Apache Parquet from Python
+- [`loader-python-to-png`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-png/) - Generate PNG from Python
+- [`loader-python-to-zip`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-zip/) - Generate ZIP from Python
+- [`loader-r-to-csv`](https://observablehq.observablehq.cloud/framework-example-loader-r-to-csv/) - Generate CSV from R
+- [`loader-r-to-jpeg`](https://observablehq.observablehq.cloud/framework-example-loader-r-to-jpeg/) - Generate JPEG from R
+- [`loader-r-to-json`](https://observablehq.observablehq.cloud/framework-example-loader-r-to-json/) - Generate JSON from R
+- [`loader-r-to-zip`](https://observablehq.observablehq.cloud/framework-example-loader-r-to-zip/) - Generate ZIP from R
+- [`loader-rust-to-json`](https://observablehq.observablehq.cloud/framework-example-loader-rust-to-json/) - Generate JSON from Rust
+- [`loader-snowflake`](https://observablehq.observablehq.cloud/framework-example-loader-snowflake/) - Load data from Snowflake
+- [`netcdf-contours`](https://observablehq.observablehq.cloud/framework-example-netcdf-contours/) - Convert NetCDF to GeoJSON with `netcdfjs` and `d3-geo-voronoi`
 
 ### Inputs
 
 - [`codemirror`](https://observablehq.observablehq.cloud/framework-example-codemirror/) - A text input powered by CodeMirror
 - [`custom-input-2d`](https://observablehq.observablehq.cloud/framework-example-custom-input-2d/) - A custom 2D input with bidirectional binding
-- [`input-select-file`](https://observablehq.observablehq.cloud/framework-example-input-select-file/) - Selecting a file from a drop-down menu
+- [`input-select-file`](https://observablehq.observablehq.cloud/framework-example-input-select-file/) - Select a file from a drop-down menu
 
 ### Markdown
 
@@ -87,8 +90,8 @@
 
 ### Other
 
-- [`chess`](https://observablehq.observablehq.cloud/framework-example-chess/) - Loading Zip data from FIDE; creating a bump chart with Observable Plot
-- [`custom-stylesheet`](https://observablehq.observablehq.cloud/framework-example-custom-stylesheet/) - Defining a custom stylesheet (custom theme)
+- [`chess`](https://observablehq.observablehq.cloud/framework-example-chess/) - Load Zip data from FIDE; create a bump chart with Observable Plot
+- [`custom-stylesheet`](https://observablehq.observablehq.cloud/framework-example-custom-stylesheet/) - Define a custom stylesheet (custom theme)
 - [`google-analytics`](https://observablehq.observablehq.cloud/framework-example-google-analytics/) - A Google Analytics dashboard with numbers and charts
 - [`hello-world`](https://observablehq.observablehq.cloud/framework-example-hello-world/) - A minimal Framework project
 - [`intersection-observer`](https://observablehq.observablehq.cloud/framework-example-intersection-observer/) - Scrollytelling with IntersectionObserver

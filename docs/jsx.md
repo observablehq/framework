@@ -18,7 +18,13 @@ function Greeting({subject}) {
 
 Then call the built-in display function to render content:
 
-```jsx echo
+````md
+```jsx
+display(<Greeting subject="JSX" />);
+```
+````
+
+```jsx
 display(<Greeting subject="JSX" />);
 ```
 

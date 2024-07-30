@@ -64,7 +64,7 @@ In Framework, when one code block refers to a promise defined in another code bl
 
 <div class="note">Implicit <code>await</code> only applies <i>across</i> code blocks, not <i>within</i> a code block. Within a code block, a promise is just a promise.</div>
 
-For example, below `FileAttachment.json` returns a promise, and so the value of `volcano` inside the code block is a promise.
+For example, below `file.json` returns a promise, and so the value of `volcano` inside the code block is a promise.
 
 ```js echo
 const volcano = FileAttachment("volcano.json").json();

@@ -76,6 +76,36 @@ export class AbstractFile {
     const [Arrow, response] = await Promise.all([import("npm:apache-arrow"), remote_fetch(this)]);
     return Arrow.tableFromIPC(response);
   }
+  async arquero(options) {
+    let request;
+    let from;
+    switch (this.mimeType) {
+      case "application/json":
+        request = this.text();
+        from = "fromJSON";
+        break;
+      case "text/tab-separated-values":
+        if (options?.delimiter === undefined) options = {...options, delimiter: "\t"};
+      // fall through
+      case "text/csv":
+        request = this.text();
+        from = "fromCSV";
+        break;
+      default:
+        if (/\.arrow$/i.test(this.name)) {
+          request = this.arrow();
+          from = "fromArrow";
+        } else if (/\.parquet$/i.test(this.name)) {
+          request = this.parquet();
+          from = "fromArrow";
+        } else {
+          throw new Error(`unable to determine Arquero loader: ${this.name}`);
+        }
+        break;
+    }
+    const [aq, body] = await Promise.all([import("npm:arquero"), request]);
+    return aq[from](body, options);
+  }
   async parquet() {
     const [Arrow, Parquet, buffer] = await Promise.all([import("npm:apache-arrow"), import("npm:parquet-wasm").then(async (Parquet) => (await Parquet.default(import.meta.resolve("npm:parquet-wasm/esm/parquet_wasm_bg.wasm")), Parquet)), this.arrayBuffer()]); // prettier-ignore
     return Arrow.tableFromIPC(Parquet.readParquet(new Uint8Array(buffer)).intoIPCStream());

@@ -128,7 +128,7 @@ const metadata = FileAttachment("quakes/metadata.json").json();
 const features = FileAttachment("quakes/features.csv").csv({typed: true});
 ```
 
-The ZIP file itself can be also referenced as a whole — for example if the names of the files are not known in advance — with [`FileAttachment.zip`](./lib/zip):
+The ZIP file itself can be also referenced as a whole — for example if the names of the files are not known in advance — with [`file.zip`](./lib/zip):
 
 ```js echo
 const zip = FileAttachment("quakes.zip").zip();

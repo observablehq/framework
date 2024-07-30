@@ -262,12 +262,12 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@observablehq/inputs@^0.10.6":
-  version "0.10.6"
-  resolved "https://registry.yarnpkg.com/@observablehq/inputs/-/inputs-0.10.6.tgz#7a52f3be08774dd9d87757853b7180aec9b720de"
-  integrity sha512-fOcpJvyBwPqr9I1QdW55J5x36nxRbfyqRQXVT3li9AvMpy6m14WPo5K0m4cPCxr4IlLIDtM/lq6z1GL3ElA14g==
+"@observablehq/inputs@^0.11.0":
+  version "0.11.0"
+  resolved "https://registry.yarnpkg.com/@observablehq/inputs/-/inputs-0.11.0.tgz#930f5c16eef8e0d14f0e6fc3e5f2c7589b38ecd0"
+  integrity sha512-af8H7Ncg+B+5t9MVKA/GiR2oG1nK7P4g36a92jkgIaBSUDLcmta/FDiJKIyjJ3Pc+FNOGkfRcPCRWEgqVl+Q9A==
   dependencies:
-    htl "0.3"
+    htl "^0.3.1"
     isoformat "^0.2.0"
 
 "@observablehq/inspector@^5.0.0":
@@ -2048,7 +2048,7 @@ highlight.js@^11.8.0:
   resolved "https://registry.yarnpkg.com/highlight.js/-/highlight.js-11.9.0.tgz#04ab9ee43b52a41a047432c8103e2158a1b8b5b0"
   integrity sha512-fJ7cW7fQGCYAkgv4CPfwFHrfd/cLS4Hau96JuJ+ZTOWhjnhoeN1ub1tFmALm/+lW5z4WCAuAV9bm05AP0mS6Gw==
 
-htl@0.3:
+htl@^0.3.1:
   version "0.3.1"
   resolved "https://registry.yarnpkg.com/htl/-/htl-0.3.1.tgz#13c5a32fa46434f33b84d4553dd37e58a80e8d8a"
   integrity sha512-1LBtd+XhSc+++jpOOt0lCcEycXs/zTQSupOISnVAUmvGBpV7DH+C2M6hwV7zWYfpTMMg9ch4NO0lHiOTAMHdVA==

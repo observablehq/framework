@@ -6,7 +6,7 @@ import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
-import {getStylePath} from "./files.js";
+import {getClientPath, getStylePath} from "./files.js";
 import type {StringLiteral} from "./javascript/source.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/source.js";
 import {resolveNpmImport} from "./npm.js";
@@ -49,8 +49,9 @@ export async function bundleStyles({
     minify,
     alias: STYLE_MODULES
   });
-  const text = result.outputFiles[0].text;
-  return rewriteInputsNamespace(text); // TODO only for inputs
+  let text = result.outputFiles[0].text;
+  if (path === getClientPath("stdlib/inputs.css")) text = rewriteInputsNamespace(text);
+  return text;
 }
 
 export async function rollupClient(
@@ -87,10 +88,8 @@ export async function rollupClient(
   });
   try {
     const output = await bundle.generate({format: "es"});
-    let code = output.output.find((o): o is OutputChunk => o.type === "chunk")!.code; // TODO don’t assume one chunk?
-    code = rewriteTypeScriptImports(code);
-    code = rewriteInputsNamespace(code); // TODO only for inputs
-    return code;
+    const code = output.output.find((o): o is OutputChunk => o.type === "chunk")!.code; // TODO don’t assume one chunk?
+    return rewriteTypeScriptImports(code);
   } finally {
     await bundle.close();
   }
@@ -122,7 +121,7 @@ function importResolve(input: string, root: string, path: string): Plugin {
       : specifier === "npm:@observablehq/duckdb"
       ? {id: relativePath(path, "/_observablehq/stdlib/duckdb.js"), external: true} // TODO publish to npm
       : specifier === "npm:@observablehq/inputs"
-      ? {id: relativePath(path, "/_observablehq/stdlib/inputs.js"), external: true} // TODO publish to npm
+      ? {id: relativePath(path, "/_observablehq/stdlib/inputs.js"), external: true}
       : specifier === "npm:@observablehq/mermaid"
       ? {id: relativePath(path, "/_observablehq/stdlib/mermaid.js"), external: true} // TODO publish to npm
       : specifier === "npm:@observablehq/tex"

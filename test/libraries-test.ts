@@ -7,6 +7,8 @@ describe("getImplicitFileImports(files)", () => {
     assert.deepStrictEqual(getImplicitFileImports(["csv"]), new Set(["npm:d3-dsv"]));
     assert.deepStrictEqual(getImplicitFileImports(["tsv"]), new Set(["npm:d3-dsv"]));
     assert.deepStrictEqual(getImplicitFileImports(["arrow"]), new Set(["npm:apache-arrow"]));
+    assert.deepStrictEqual(getImplicitFileImports(["arquero"]), new Set(["npm:apache-arrow", "npm:arquero"]));
+    assert.deepStrictEqual(getImplicitFileImports(["arquero-parquet"]), new Set(["npm:apache-arrow", "npm:arquero", "npm:parquet-wasm"])); // prettier-ignore
     assert.deepStrictEqual(getImplicitFileImports(["parquet"]), new Set(["npm:apache-arrow", "npm:parquet-wasm"]));
     assert.deepStrictEqual(getImplicitFileImports(["sqlite"]), new Set(["npm:@observablehq/sqlite"]));
     assert.deepStrictEqual(getImplicitFileImports(["xlsx"]), new Set(["npm:@observablehq/xlsx"]));
