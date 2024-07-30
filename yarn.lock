@@ -271,9 +271,9 @@
     isoformat "^0.2.0"
 
 "@observablehq/inspector@^5.0.0":
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/@observablehq/inspector/-/inspector-5.0.0.tgz#7dec08d4fa20dfb79977ce62f7cc4a814b44e595"
-  integrity sha512-Vvg/TQdsZTUaeYbH0IKxYEz37FbRO6kdowoz2PrHLQif54NC1CjEihEjg+ZMSBn587GQxTFABu0CGkFZgtR1UQ==
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/@observablehq/inspector/-/inspector-5.0.1.tgz#586280d0bc5da55da8e715ade86ba438dc14b056"
+  integrity sha512-euwWxwDa6KccU4G3D2JBD7GI/2McJh/z7HHEzJKbj2TDa7zhI37eTbTxiwE9rgTWBagvVBel+hAmnJRYBYOv2Q==
   dependencies:
     isoformat "^0.2.0"
 
