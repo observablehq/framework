@@ -176,7 +176,8 @@ export function registerRoot(id, node) {
 }
 
 function getExpanded(node) {
-  return Array.from(node.querySelectorAll(".observablehq--expanded"), (e) => getNodePath(node, e));
+  const expanded = node.querySelectorAll(".observablehq--expanded");
+  return expanded.length ? Array.from(expanded, (e) => getNodePath(node, e)) : undefined;
 }
 
 function getNodePath(node, descendant) {

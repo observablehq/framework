@@ -3,10 +3,12 @@ import {Inspector} from "observablehq:runtime";
 export function inspect(value, expanded) {
   const node = document.createElement("div");
   new Inspector(node).fulfilled(value);
-  for (const path of expanded) {
-    let child = node;
-    for (const i of path) child = child?.childNodes[i];
-    child?.dispatchEvent(new Event("mouseup")); // restore expanded state
+  if (expanded) {
+    for (const path of expanded) {
+      let child = node;
+      for (const i of path) child = child?.childNodes[i];
+      child?.dispatchEvent(new Event("mouseup")); // restore expanded state
+    }
   }
   return node;
 }
