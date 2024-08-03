@@ -188,8 +188,8 @@ export class PreviewServer {
         // Lastly, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
         try {
-          const options = {...config, path: pathname, preview: true};
-          const sourcePath = resolvePage(root, `${pathname}.md`);
+          const {path: sourcePath, params} = findPage(root, `${pathname}.md`);
+          const options = {...config, params, path: pathname, preview: true};
           const source = await readFile(sourcePath, "utf8");
           const parse = parseMarkdown(source, options);
           const html = await renderPage(parse, options);
@@ -213,7 +213,7 @@ export class PreviewServer {
           return;
         }
         try {
-          const options = {...config, path: "/404", preview: true};
+          const options = {...config, path: "/404", preview: true, params: {}}; // TODO remove params
           const source = await readFile(join(root, "404.md"), "utf8");
           const parse = parseMarkdown(source, options);
           const html = await renderPage(parse, options);
@@ -259,34 +259,39 @@ function end(req: IncomingMessage, res: ServerResponse, content: string, type: s
   }
 }
 
-function resolvePage(root: string, path: string): string {
+function findPage(root: string, path: string): {path: string; params: {[name: string]: string}} {
   const exactPath = join(root, path);
-  if (existsSync(exactPath)) return exactPath;
-  return resolvePageParams(root, join(".", path).split("/")) ?? exactPath;
+  if (existsSync(exactPath)) return {path: exactPath, params: {}};
+  return findPageParams(root, join(".", path).split("/")) ?? {path: exactPath, params: {}};
 }
 
 /**
  * Finds a parameterized page (dynamic route) recursively, such that the most
- * specific match is returned. TODO Preserve the params so they can be baked-in
- * to JavaScript code blocks.
+ * specific match is returned.
  */
-function resolvePageParams(cwd: string, parts: string[]): string | undefined {
+function findPageParams(cwd: string, parts: string[]): {path: string; params: {[name: string]: string}} | undefined {
   switch (parts.length) {
     case 0:
       return;
     case 1: {
       const [first] = parts;
-      if (existsSync(join(cwd, first))) return join(cwd, first);
+      if (existsSync(join(cwd, first))) return {path: join(cwd, first), params: {}};
       const ext = extname(first);
-      for (const file of globSync(`\\[*\\]${ext}`, {cwd})) return join(cwd, file);
+      for (const file of globSync(`\\[*\\]${ext}`, {cwd})) {
+        const params = {[basename(file, ext).slice(1, -1)]: basename(first, ext)};
+        return {path: join(cwd, file), params};
+      }
       return;
     }
     default: {
       const [first, ...rest] = parts;
-      if (existsSync(join(cwd, first))) return resolvePageParams(join(cwd, first), rest);
+      if (existsSync(join(cwd, first))) return findPageParams(join(cwd, first), rest);
       for (const dir of globSync("\\[*\\]", {cwd})) {
-        const found = resolvePageParams(join(cwd, dir), rest);
-        if (found) return found;
+        const found = findPageParams(join(cwd, dir), rest);
+        if (found) {
+          const params = {[dir.slice(1, -1)]: first};
+          return {...found, params: {...found.params, ...params}};
+        }
       }
     }
   }
@@ -323,6 +328,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
   let config: Config | null = null;
   let sourcePath: string | null = null;
   let path: string | null = null;
+  let params: {[name: string]: string} | null = null;
   let hash: string | null = null;
   let html: HtmlPart[] | null = null;
   let code: Map<string, string> | null = null;
@@ -337,7 +343,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
   console.log(faint("socket open"), req.url);
 
   async function watcher(event: WatchEventType, force = false) {
-    if (!sourcePath || !path || !config) throw new Error("not initialized");
+    if (!sourcePath || !path || !params || !config) throw new Error("not initialized");
     const {root, loaders, normalizePath} = config;
     switch (event) {
       case "rename": {
@@ -379,7 +385,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
         const previousStylesheets = stylesheets!;
         hash = resolvers.hash;
         html = getHtml(page, resolvers);
-        code = getCode(page, resolvers);
+        code = getCode(page, resolvers, params);
         files = getFiles(resolvers);
         tables = getTables(page);
         stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
@@ -407,14 +413,14 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     path = join(dirname(path), `${basename(path, ".html")}.md`);
     config = await configPromise;
     const {root, loaders, normalizePath} = config;
-    sourcePath = resolvePage(root, path);
+    ({path: sourcePath, params} = findPage(root, path));
     const source = await readFile(sourcePath, "utf8");
     const page = parseMarkdown(source, {path, ...config});
     const resolvers = await getResolvers(page, {root, path, loaders, normalizePath});
     if (resolvers.hash !== initialHash) return void send({type: "reload"});
     hash = resolvers.hash;
     html = getHtml(page, resolvers);
-    code = getCode(page, resolvers);
+    code = getCode(page, resolvers, params);
     files = getFiles(resolvers);
     tables = getTables(page);
     stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
@@ -480,8 +486,9 @@ function getHtml({body}: MarkdownPage, resolvers: Resolvers): HtmlPart[] {
   return Array.from(document.body.childNodes, serializeHtml).filter((d): d is HtmlPart => d != null);
 }
 
-function getCode({code}: MarkdownPage, resolvers: Resolvers): Map<string, string> {
-  return new Map(code.map((code) => [code.id, transpileCode(code, resolvers)]));
+function getCode({code}: MarkdownPage, resolvers: Resolvers, params: {[name: string]: string}): Map<string, string> {
+  if (!params) throw new Error();
+  return new Map(code.map((code) => [code.id, transpileCode(code, resolvers, params)]));
 }
 
 // Including the file has as a comment ensures that the code changes when a
@@ -489,10 +496,11 @@ function getCode({code}: MarkdownPage, resolvers: Resolvers): Map<string, string
 // transitive import changes, or when a file referenced by a transitive import
 // changes, the sha is already included in the transpiled code, and hence will
 // likewise be re-evaluated.
-function transpileCode({id, node, mode}: MarkdownCode, resolvers: Resolvers): string {
+function transpileCode({id, node, mode}: MarkdownCode, resolvers: Resolvers, params: {[name: string]: string}): string {
+  if (!params) throw new Error();
   const hash = createHash("sha256");
   for (const f of node.files) hash.update(resolvers.resolveFile(f.name));
-  return `${transpileJavaScript(node, {id, mode, ...resolvers})} // ${hash.digest("hex")}`;
+  return `${transpileJavaScript(node, {id, mode, ...resolvers, params})} // ${hash.digest("hex")}`;
 }
 
 function getFiles({files, resolveFile}: Resolvers): Map<string, string> {

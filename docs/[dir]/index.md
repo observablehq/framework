@@ -20,4 +20,12 @@ import {foo} from "./foo.js";
 display(foo);
 ```
 
+```js
+`${observable.params.dir}.json`
+```
+
+```js
+FileAttachment(`${observable.params.dir}.json`).json()
+```
+
 <img src="./w3c.png">

@@ -47,6 +47,7 @@ export const defaultGlobals = new Set([
   "Number",
   "navigator",
   "Object",
+  "observable",
   "parseFloat",
   "parseInt",
   "performance",
