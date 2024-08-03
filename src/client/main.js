@@ -29,6 +29,7 @@ export function define(cell) {
   const root = rootsById.get(id);
   const loading = findLoading(root);
   root._nodes = [];
+  root._expanded = [];
   if (loading) root._nodes.push(loading);
   const pending = () => reset(root, loading);
   const rejected = (error) => reject(root, error);
@@ -67,7 +68,7 @@ export function define(cell) {
 function noop() {}
 
 function clear(root) {
-  for (const v of root._nodes) v.remove();
+  root._expanded = root._nodes.map((v) => (v.remove(), getExpanded(v)));
   root._nodes.length = 0;
 }
 
@@ -130,7 +131,7 @@ function displayInline(root, value) {
 }
 
 function displayBlock(root, value) {
-  displayNode(root, isNode(value) ? value : inspect(value));
+  displayNode(root, isNode(value) ? value : inspect(value, root._expanded[root._nodes.length]));
 }
 
 export function undefine(id) {
@@ -172,4 +173,22 @@ export function findLoading(root) {
 export function registerRoot(id, node) {
   if (node == null) rootsById.delete(id);
   else rootsById.set(id, node);
+}
+
+function getExpanded(node) {
+  const expanded = node.querySelectorAll(".observablehq--expanded");
+  return expanded.length ? Array.from(expanded, (e) => getNodePath(node, e)) : undefined;
+}
+
+function getNodePath(node, descendant) {
+  const path = [];
+  while (descendant !== node) {
+    path.push(getChildIndex(descendant));
+    descendant = descendant.parentNode;
+  }
+  return path.reverse();
+}
+
+function getChildIndex(node) {
+  return Array.prototype.indexOf.call(node.parentNode.childNodes, node);
 }
