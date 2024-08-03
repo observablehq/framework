@@ -3,15 +3,15 @@
 is it working
 
 ```js
-FileAttachment("./foo.txt").text()
+display(await FileAttachment("./foo.txt").text());
 ```
 
 ```js
-FileAttachment("./foo.json").json()
+display(await FileAttachment("./foo.json").json());
 ```
 
 ```js
-FileAttachment("./file.json").json()
+display(await FileAttachment("./file.json").json());
 ```
 
 ```js
@@ -21,11 +21,11 @@ display(foo);
 ```
 
 ```js
-`${observable.params.dir}.json`
+display(`${observable.params.dir}.json`);
 ```
 
 ```js
-FileAttachment(`${observable.params.dir}.json`).json()
+display(await FileAttachment("./" + observable.params.dir + ".json").json());
 ```
 
 <img src="./w3c.png">

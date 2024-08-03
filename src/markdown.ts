@@ -45,6 +45,7 @@ interface ParseContext {
   startLine: number;
   currentLine: number;
   path: string;
+  params?: {[name: string]: string};
 }
 
 function uniqueCodeId(context: ParseContext, content: string): string {
@@ -108,7 +109,7 @@ function getLiveSource(content: string, tag: string, attributes: Record<string, 
 
 function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
-    const {path} = context;
+    const {path, params} = context;
     const token = tokens[idx];
     const {tag, attributes} = parseInfo(token.info);
     token.info = tag;
@@ -119,6 +120,8 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
       if (source != null) {
         const id = uniqueCodeId(context, source);
         // TODO const sourceLine = context.startLine + context.currentLine;
+        // TODO esbuild converts expressions into expression statements, losing implicit display
+        if (params) ({code: source} = transformSync(source, {define: defineParams(params)}));
         const node = parseJavaScript(source, {path});
         context.code.push({id, node, mode: tag === "jsx" ? "jsx" : "block"});
         html += `<div class="observablehq observablehq--block">${
@@ -136,6 +139,15 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
     }
     return html;
   };
+}
+
+// TODO don’t duplicate
+function defineParams(params: Record<string, string> = {}): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(params)
+      .filter(([name]) => /^[a-z0-9_]+$/i.test(name)) // ignore non-ASCII parameters; TODO pre-filter
+      .map(([name, value]) => [`observable.params.${name}`, JSON.stringify(value)])
+  );
 }
 
 const CODE_DOLLAR = 36;
@@ -212,6 +224,7 @@ export interface ParseOptions {
   head?: Config["head"];
   header?: Config["header"];
   footer?: Config["footer"];
+  params?: {[name: string]: string};
 }
 
 export function createMarkdownIt({
@@ -237,10 +250,10 @@ export function createMarkdownIt({
 }
 
 export function parseMarkdown(input: string, options: ParseOptions): MarkdownPage {
-  const {md, path} = options;
+  const {md, path, params} = options;
   const {content, data} = readFrontMatter(input);
   const code: MarkdownCode[] = [];
-  const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
+  const context: ParseContext = {code, startLine: 0, currentLine: 0, path, params};
   const tokens = md.parse(content, context);
   const body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
   const title = data.title !== undefined ? data.title : findTitle(tokens);

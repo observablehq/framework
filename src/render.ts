@@ -18,7 +18,6 @@ export interface RenderOptions extends Config {
   root: string;
   path: string;
   resolvers?: Resolvers;
-  params: {[name: string]: string};
 }
 
 type RenderInternalOptions =
@@ -27,7 +26,7 @@ type RenderInternalOptions =
 
 export async function renderPage(page: MarkdownPage, options: RenderOptions & RenderInternalOptions): Promise<string> {
   const {data} = page;
-  const {base, path, title, preview, params} = options;
+  const {base, path, title, preview} = options;
   const {loaders, resolvers = await getResolvers(page, options)} = options;
   const {draft = false, sidebar = options.sidebar} = data;
   const toc = mergeToc(data.toc, options.toc);
@@ -75,7 +74,7 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
       : ""
   }${data?.sql ? `\n${registerTables(data.sql, options)}` : ""}
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
-    .map(({node, id, mode}) => `\n${transpileJavaScript(node, {id, path, mode, resolveImport, params})}`)
+    .map(({node, id, mode}) => `\n${transpileJavaScript(node, {id, path, mode, resolveImport})}`)
     .join("")}`)}
 </script>${sidebar ? html`\n${await renderSidebar(options, resolvers.resolveLink)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""

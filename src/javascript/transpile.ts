@@ -2,7 +2,6 @@ import {join} from "node:path/posix";
 import type {CallExpression, Node} from "acorn";
 import type {ImportDeclaration, ImportDefaultSpecifier, ImportNamespaceSpecifier, ImportSpecifier} from "acorn";
 import {simple} from "acorn-walk";
-import {transformSync} from "esbuild";
 import {isPathImport, relativePath, resolvePath, resolveRelativePath} from "../path.js";
 import {getModuleResolver} from "../resolvers.js";
 import {Sourcemap} from "../sourcemap.js";
@@ -18,15 +17,11 @@ import {getStringLiteralValue, isStringLiteral} from "./source.js";
 export interface TranspileOptions {
   id: string;
   path: string;
-  params?: {[name: string]: string};
   mode?: string;
   resolveImport?: (specifier: string) => string;
 }
 
-export function transpileJavaScript(
-  node: JavaScriptNode,
-  {id, path, mode, resolveImport, params}: TranspileOptions
-): string {
+export function transpileJavaScript(node: JavaScriptNode, {id, path, mode, resolveImport}: TranspileOptions): string {
   let async = node.async;
   const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
   const outputs = Array.from(new Set<string>(node.declarations?.map((r) => r.name)));
@@ -45,18 +40,7 @@ export function transpileJavaScript(
   output.insertLeft(0, `define({id: ${JSON.stringify(id)}`);
   if (outputs.length) output.insertRight(node.input.length, `\nreturn {${outputs}};`);
   output.insertRight(node.input.length, "\n}});\n");
-  let code = String(output);
-  if (params) ({code} = transformSync(code, {define: defineParams(params)}));
-  return code;
-}
-
-// TODO don’t duplicate
-function defineParams(params: Record<string, string> = {}): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(params)
-      .filter(([name]) => /^[a-z0-9_]+$/i.test(name)) // ignore non-ASCII parameters; TODO pre-filter
-      .map(([name, value]) => [`observable.params.${name}`, JSON.stringify(value)])
-  );
+  return String(output);
 }
 
 export interface TranspileModuleOptions {

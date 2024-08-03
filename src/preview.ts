@@ -213,7 +213,7 @@ export class PreviewServer {
           return;
         }
         try {
-          const options = {...config, path: "/404", preview: true, params: {}}; // TODO remove params
+          const options = {...config, path: "/404", preview: true};
           const source = await readFile(join(root, "404.md"), "utf8");
           const parse = parseMarkdown(source, options);
           const html = await renderPage(parse, options);
@@ -361,7 +361,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
       }
       case "change": {
         const source = await readFile(sourcePath, "utf8");
-        const page = parseMarkdown(source, {path, ...config});
+        const page = parseMarkdown(source, {path, params, ...config});
         // delay to avoid a possibly-empty file
         if (!force && page.body === "") {
           if (!emptyTimeout) {
@@ -385,7 +385,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
         const previousStylesheets = stylesheets!;
         hash = resolvers.hash;
         html = getHtml(page, resolvers);
-        code = getCode(page, resolvers, params);
+        code = getCode(page, resolvers);
         files = getFiles(resolvers);
         tables = getTables(page);
         stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
@@ -415,12 +415,12 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     const {root, loaders, normalizePath} = config;
     ({path: sourcePath, params} = findPage(root, path));
     const source = await readFile(sourcePath, "utf8");
-    const page = parseMarkdown(source, {path, ...config});
+    const page = parseMarkdown(source, {path, params, ...config});
     const resolvers = await getResolvers(page, {root, path, loaders, normalizePath});
     if (resolvers.hash !== initialHash) return void send({type: "reload"});
     hash = resolvers.hash;
     html = getHtml(page, resolvers);
-    code = getCode(page, resolvers, params);
+    code = getCode(page, resolvers);
     files = getFiles(resolvers);
     tables = getTables(page);
     stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
@@ -486,9 +486,8 @@ function getHtml({body}: MarkdownPage, resolvers: Resolvers): HtmlPart[] {
   return Array.from(document.body.childNodes, serializeHtml).filter((d): d is HtmlPart => d != null);
 }
 
-function getCode({code}: MarkdownPage, resolvers: Resolvers, params: {[name: string]: string}): Map<string, string> {
-  if (!params) throw new Error();
-  return new Map(code.map((code) => [code.id, transpileCode(code, resolvers, params)]));
+function getCode({code}: MarkdownPage, resolvers: Resolvers): Map<string, string> {
+  return new Map(code.map((code) => [code.id, transpileCode(code, resolvers)]));
 }
 
 // Including the file has as a comment ensures that the code changes when a
@@ -496,11 +495,10 @@ function getCode({code}: MarkdownPage, resolvers: Resolvers, params: {[name: str
 // transitive import changes, or when a file referenced by a transitive import
 // changes, the sha is already included in the transpiled code, and hence will
 // likewise be re-evaluated.
-function transpileCode({id, node, mode}: MarkdownCode, resolvers: Resolvers, params: {[name: string]: string}): string {
-  if (!params) throw new Error();
+function transpileCode({id, node, mode}: MarkdownCode, resolvers: Resolvers): string {
   const hash = createHash("sha256");
   for (const f of node.files) hash.update(resolvers.resolveFile(f.name));
-  return `${transpileJavaScript(node, {id, mode, ...resolvers, params})} // ${hash.digest("hex")}`;
+  return `${transpileJavaScript(node, {id, mode, ...resolvers})} // ${hash.digest("hex")}`;
 }
 
 function getFiles({files, resolveFile}: Resolvers): Map<string, string> {
