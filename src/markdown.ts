@@ -10,11 +10,11 @@ import type {RenderRule} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
 import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
-import type {Params} from "./dataloader.js";
 import type {FrontMatter} from "./frontMatter.js";
 import {readFrontMatter} from "./frontMatter.js";
 import {html, rewriteHtmlPaths} from "./html.js";
 import {parseInfo} from "./info.js";
+import type {Params} from "./javascript/params.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
 import {isAssetPath, relativePath} from "./path.js";
@@ -121,9 +121,7 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
       if (source != null) {
         const id = uniqueCodeId(context, source);
         // TODO const sourceLine = context.startLine + context.currentLine;
-        // TODO esbuild converts expressions into expression statements, losing implicit display
-        if (params) ({code: source} = transformSync(source, {define: defineParams(params)}));
-        const node = parseJavaScript(source, {path});
+        const node = parseJavaScript(source, {path, params});
         context.code.push({id, node, mode: tag === "jsx" ? "jsx" : "block"});
         html += `<div class="observablehq observablehq--block">${
           node.expression ? "<observablehq-loading></observablehq-loading>" : ""
@@ -140,15 +138,6 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
     }
     return html;
   };
-}
-
-// TODO don’t duplicate
-function defineParams(params: Params): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(params)
-      .filter(([name]) => /^[a-z0-9_]+$/i.test(name)) // ignore non-ASCII parameters; TODO pre-filter
-      .map(([name, value]) => [`observable.params.${name}`, JSON.stringify(value)])
-  );
 }
 
 const CODE_DOLLAR = 36;
@@ -193,12 +182,12 @@ const transformPlaceholderCore: RuleCore = (state) => {
 
 function makePlaceholderRenderer(): RenderRule {
   return (tokens, idx, options, context: ParseContext) => {
-    const {path} = context;
+    const {path, params} = context;
     const token = tokens[idx];
     const id = uniqueCodeId(context, token.content);
     try {
       // TODO sourceLine: context.startLine + context.currentLine
-      const node = parseJavaScript(token.content, {path, inline: true});
+      const node = parseJavaScript(token.content, {path, params, inline: true});
       context.code.push({id, node, mode: "inline"});
       return `<observablehq-loading></observablehq-loading><!--:${id}:-->`;
     } catch (error) {

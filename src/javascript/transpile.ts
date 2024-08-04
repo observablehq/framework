@@ -9,6 +9,8 @@ import type {FileExpression} from "./files.js";
 import {findFiles} from "./files.js";
 import type {ExportNode, ImportNode} from "./imports.js";
 import {hasImportDeclaration, isImportMetaResolve} from "./imports.js";
+import type {Params} from "./params.js";
+import {findParams} from "./params.js";
 import type {JavaScriptNode} from "./parse.js";
 import {parseProgram} from "./parse.js";
 import type {StringLiteral} from "./source.js";
@@ -17,11 +19,15 @@ import {getStringLiteralValue, isStringLiteral} from "./source.js";
 export interface TranspileOptions {
   id: string;
   path: string;
+  params?: Params;
   mode?: string;
   resolveImport?: (specifier: string) => string;
 }
 
-export function transpileJavaScript(node: JavaScriptNode, {id, path, mode, resolveImport}: TranspileOptions): string {
+export function transpileJavaScript(
+  node: JavaScriptNode,
+  {id, path, params, mode, resolveImport}: TranspileOptions
+): string {
   let async = node.async;
   const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
   const outputs = Array.from(new Set<string>(node.declarations?.map((r) => r.name)));
@@ -29,6 +35,7 @@ export function transpileJavaScript(node: JavaScriptNode, {id, path, mode, resol
   if (display) inputs.push("display"), (async = true);
   if (hasImportDeclaration(node.body)) async = true;
   const output = new Sourcemap(node.input).trim();
+  if (params) rewriteParams(output, node.body, params);
   rewriteImportDeclarations(output, node.body, resolveImport);
   rewriteImportExpressions(output, node.body, resolveImport);
   rewriteFileExpressions(output, node.files, path);
@@ -46,19 +53,22 @@ export function transpileJavaScript(node: JavaScriptNode, {id, path, mode, resol
 export interface TranspileModuleOptions {
   root: string;
   path: string;
+  params?: Params;
   resolveImport?: (specifier: string) => Promise<string>;
 }
 
 /** Rewrites import specifiers and FileAttachment calls in the specified ES module. */
 export async function transpileModule(
   input: string,
-  {root, path, resolveImport = getModuleResolver(root, path)}: TranspileModuleOptions
+  {root, path, params, resolveImport = getModuleResolver(root, path)}: TranspileModuleOptions
 ): Promise<string> {
   const servePath = `/${join("_import", path)}`;
-  const body = parseProgram(input); // TODO ignore syntax error?
+  const body = parseProgram(input, params); // TODO ignore syntax error?
   const output = new Sourcemap(input);
   const imports: (ImportNode | ExportNode)[] = [];
   const calls: CallExpression[] = [];
+
+  if (params) rewriteParams(output, body, params);
 
   simple(body, {
     ImportDeclaration: rewriteImport,
@@ -210,4 +220,10 @@ function isNotNamespaceSpecifier(
   node: ImportSpecifier | ImportDefaultSpecifier | ImportNamespaceSpecifier
 ): node is ImportSpecifier | ImportDefaultSpecifier {
   return node.type !== "ImportNamespaceSpecifier";
+}
+
+export function rewriteParams(output: Sourcemap, body: Node, params: Params): void {
+  for (const node of findParams(body, params)) {
+    output.replaceLeft(node.start, node.end, JSON.stringify(params[node.property.name]));
+  }
 }

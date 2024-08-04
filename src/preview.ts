@@ -17,12 +17,13 @@ import type {WebSocket} from "ws";
 import {WebSocketServer} from "ws";
 import type {Config} from "./config.js";
 import {readConfig} from "./config.js";
-import type {LoaderResolver, Params} from "./dataloader.js";
+import type {LoaderResolver} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import type {FileWatchers} from "./fileWatchers.js";
 import {isComment, isElement, isText, parseHtml, rewriteHtml} from "./html.js";
-import {readJavaScript} from "./javascript/module.js";
+import {findModule, readJavaScript} from "./javascript/module.js";
+import type {Params} from "./javascript/params.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import {parseMarkdown} from "./markdown.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
@@ -137,16 +138,17 @@ export class PreviewServer {
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
         const path = pathname.slice("/_import".length);
-        // TODO parameterized path
-        const filepath = join(root, path);
         try {
           if (pathname.endsWith(".css")) {
+            // TODO allow parameterized path?
+            const filepath = join(root, path);
             await access(filepath, constants.R_OK);
             end(req, res, await bundleStyles({path: filepath}), "text/css");
             return;
           } else if (pathname.endsWith(".js")) {
-            const input = await readJavaScript(root, path);
-            const output = await transpileModule(input, {root, path});
+            const module = findModule(root, path);
+            const input = await readJavaScript(join(root, module.path));
+            const output = await transpileModule(input, {root, path, params: module.params});
             end(req, res, output, "text/javascript");
             return;
           }
@@ -382,7 +384,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
         const previousStylesheets = stylesheets!;
         hash = resolvers.hash;
         html = getHtml(page, resolvers);
-        code = getCode(page, resolvers);
+        code = getCode(page, resolvers, params);
         files = getFiles(resolvers);
         tables = getTables(page);
         stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
@@ -417,7 +419,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     if (resolvers.hash !== initialHash) return void send({type: "reload"});
     hash = resolvers.hash;
     html = getHtml(page, resolvers);
-    code = getCode(page, resolvers);
+    code = getCode(page, resolvers, params);
     files = getFiles(resolvers);
     tables = getTables(page);
     stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
@@ -483,8 +485,8 @@ function getHtml({body}: MarkdownPage, resolvers: Resolvers): HtmlPart[] {
   return Array.from(document.body.childNodes, serializeHtml).filter((d): d is HtmlPart => d != null);
 }
 
-function getCode({code}: MarkdownPage, resolvers: Resolvers): Map<string, string> {
-  return new Map(code.map((code) => [code.id, transpileCode(code, resolvers)]));
+function getCode({code}: MarkdownPage, resolvers: Resolvers, params?: Params): Map<string, string> {
+  return new Map(code.map((code) => [code.id, transpileCode(code, resolvers, params)]));
 }
 
 // Including the file has as a comment ensures that the code changes when a
@@ -492,10 +494,10 @@ function getCode({code}: MarkdownPage, resolvers: Resolvers): Map<string, string
 // transitive import changes, or when a file referenced by a transitive import
 // changes, the sha is already included in the transpiled code, and hence will
 // likewise be re-evaluated.
-function transpileCode({id, node, mode}: MarkdownCode, resolvers: Resolvers): string {
+function transpileCode({id, node, mode}: MarkdownCode, resolvers: Resolvers, params?: Params): string {
   const hash = createHash("sha256");
   for (const f of node.files) hash.update(resolvers.resolveFile(f.name));
-  return `${transpileJavaScript(node, {id, mode, ...resolvers})} // ${hash.digest("hex")}`;
+  return `${transpileJavaScript(node, {id, mode, params, ...resolvers})} // ${hash.digest("hex")}`;
 }
 
 function getFiles({files, resolveFile}: Resolvers): Map<string, string> {

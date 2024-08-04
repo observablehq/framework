@@ -5,10 +5,10 @@ import {basename, extname, join} from "node:path/posix";
 import type {Program} from "acorn";
 import {transform, transformSync} from "esbuild";
 import {globSync} from "glob";
-import type {Params} from "../dataloader.js";
 import {resolvePath} from "../path.js";
 import {findFiles} from "./files.js";
 import {findImports} from "./imports.js";
+import type {Params} from "./params.js";
 import {parseProgram} from "./parse.js";
 
 export type FileInfo = {
@@ -74,7 +74,8 @@ export function getModuleHash(root: string, path: string): string {
  * source root, or undefined if the module does not exist or has invalid syntax.
  */
 export function getModuleInfo(root: string, path: string): ModuleInfo | undefined {
-  const key = join(root, findModule(root, path).path);
+  const module = findModule(root, path);
+  const key = join(root, module.path);
   let mtimeMs: number;
   try {
     ({mtimeMs} = statSync(key));
@@ -87,8 +88,8 @@ export function getModuleInfo(root: string, path: string): ModuleInfo | undefine
     let source: string;
     let body: Program;
     try {
-      source = readJavaScriptSync(root, path);
-      body = parseProgram(source);
+      source = readJavaScriptSync(key);
+      body = parseProgram(source, module.params);
     } catch {
       moduleInfoCache.delete(key); // delete stale entry
       return; // ignore parse error
@@ -202,59 +203,30 @@ function findModuleParams(root: string, cwd: string, parts: string[]): {path: st
   }
 }
 
-export async function readJavaScript(root: string, path: string): Promise<string> {
-  const module = findModule(root, path);
-  const sourcePath = join(root, module.path);
+export async function readJavaScript(sourcePath: string): Promise<string> {
   const source = await readFile(sourcePath, "utf-8");
   if (sourcePath.endsWith(".jsx")) {
     const {code} = await transform(source, {
       loader: "jsx",
       jsx: "automatic",
       jsxImportSource: "npm:react",
-      sourcefile: sourcePath,
-      define: module.params ? defineParams(module.params) : undefined
-    });
-    return code;
-  }
-  if (module.params) {
-    const {code} = await transform(source, {
-      sourcefile: sourcePath,
-      define: defineParams(module.params)
+      sourcefile: sourcePath
     });
     return code;
   }
   return source;
 }
 
-export function readJavaScriptSync(root: string, path: string): string {
-  const module = findModule(root, path);
-  const sourcePath = join(root, module.path);
+export function readJavaScriptSync(sourcePath: string): string {
   const source = readFileSync(sourcePath, "utf-8");
   if (sourcePath.endsWith(".jsx")) {
     const {code} = transformSync(source, {
       loader: "jsx",
       jsx: "automatic",
       jsxImportSource: "npm:react",
-      sourcefile: sourcePath,
-      define: module.params ? defineParams(module.params) : undefined
-    });
-    return code;
-  }
-  if (module.params) {
-    const {code} = transformSync(source, {
-      sourcefile: sourcePath,
-      define: defineParams(module.params)
+      sourcefile: sourcePath
     });
     return code;
   }
   return source;
-}
-
-// TODO don’t duplicate
-function defineParams(params: Params): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(params)
-      .filter(([name]) => /^[a-z0-9_]+$/i.test(name)) // ignore non-ASCII parameters
-      .map(([name, value]) => [`observable.params.${name}`, JSON.stringify(value)])
-  );
 }

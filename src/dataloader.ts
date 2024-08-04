@@ -12,6 +12,7 @@ import {maybeStat, prepareOutput} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {formatByteSize} from "./format.js";
 import {getFileInfo} from "./javascript/module.js";
+import type {Params} from "./javascript/params.js";
 import type {Logger, Writer} from "./logger.js";
 import {cyan, faint, green, red, yellow} from "./tty.js";
 
@@ -48,8 +49,6 @@ export interface LoaderOptions {
   targetPath: string;
   useStale: boolean;
 }
-
-export type Params = {[name: string]: string};
 
 export class LoaderResolver {
   private readonly root: string;

@@ -176,7 +176,7 @@ describe("transpileModule(input, root, path)", () => {
     assert.strictEqual(output, 'FileAttachment("../test.txt", import.meta.url)');
   });
   it("throws a syntax error with non-literal calls", async () => {
-    const input = "import {FileAttachment} from \"npm:@observablehq/stdlib\";\nFileAttachment(`./${'test'}.txt`)";
+    const input = 'import {FileAttachment} from "npm:@observablehq/stdlib";\nFileAttachment(`./${test}.txt`)';
     await assert.rejects(() => transpileModule(input, options), /FileAttachment requires a single literal string/); // prettier-ignore
   });
   it("throws a syntax error with URL fetches", async () => {

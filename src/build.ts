@@ -4,7 +4,7 @@ import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
-import {getModuleHash, readJavaScript} from "./javascript/module.js";
+import {findModule, getModuleHash, readJavaScript} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
@@ -201,12 +201,13 @@ export async function build(
     return `/${join("_import", dirname(path), basename(path, ext))}.${hash}${ext}`;
   };
   for (const path of localImports) {
-    const sourcePath = join(root, path);
+    const module = findModule(root, path);
+    const sourcePath = join(root, module.path);
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     const resolveImport = getModuleResolver(root, path);
     let input: string;
     try {
-      input = await readJavaScript(root, path);
+      input = await readJavaScript(sourcePath);
     } catch (error) {
       if (!isEnoent(error)) throw error;
       effects.logger.error(red("error: missing referenced import"));
@@ -215,6 +216,7 @@ export async function build(
     const contents = await transpileModule(input, {
       root,
       path,
+      params: module.params,
       async resolveImport(specifier) {
         return isPathImport(specifier)
           ? relativePath(join("_import", path), resolveImportAlias(resolvePath(path, specifier)))
