@@ -74,7 +74,7 @@ export function getModuleHash(root: string, path: string): string {
  * source root, or undefined if the module does not exist or has invalid syntax.
  */
 export function getModuleInfo(root: string, path: string): ModuleInfo | undefined {
-  const key = join(root, resolveModule(root, path).path);
+  const key = join(root, findModule(root, path).path);
   let mtimeMs: number;
   try {
     ({mtimeMs} = statSync(key));
@@ -162,15 +162,15 @@ export function getFileInfo(root: string, path: string): FileInfo | undefined {
   return entry;
 }
 
-export function resolveModule(root: string, path: string): {path: string; params?: Params} {
-  return resolveModuleParams(root, ".", join(".", path).split("/")) ?? {path};
+export function findModule(root: string, path: string): {path: string; params?: Params} {
+  return findModuleParams(root, ".", join(".", path).split("/")) ?? {path};
 }
 
 /**
  * Finds a parameterized module (dynamic route) recursively, such that the most
  * specific match is returned.
  */
-function resolveModuleParams(root: string, cwd: string, parts: string[]): {path: string; params?: Params} | undefined {
+function findModuleParams(root: string, cwd: string, parts: string[]): {path: string; params?: Params} | undefined {
   switch (parts.length) {
     case 0:
       return;
@@ -191,11 +191,11 @@ function resolveModuleParams(root: string, cwd: string, parts: string[]): {path:
     default: {
       const [first, ...rest] = parts;
       if (existsSync(join(root, cwd, first))) {
-        const found = resolveModuleParams(root, join(cwd, first), rest);
+        const found = findModuleParams(root, join(cwd, first), rest);
         if (found) return found;
       }
       for (const dir of globSync("\\[*\\]", {cwd: join(root, cwd)})) {
-        const found = resolveModuleParams(root, join(cwd, dir), rest);
+        const found = findModuleParams(root, join(cwd, dir), rest);
         if (found) return {...found, params: {...found.params, [dir.slice(1, -1)]: first}};
       }
     }
@@ -203,7 +203,7 @@ function resolveModuleParams(root: string, cwd: string, parts: string[]): {path:
 }
 
 export async function readJavaScript(root: string, path: string): Promise<string> {
-  const module = resolveModule(root, path);
+  const module = findModule(root, path);
   const sourcePath = join(root, module.path);
   const source = await readFile(sourcePath, "utf-8");
   if (sourcePath.endsWith(".jsx")) {
@@ -227,7 +227,7 @@ export async function readJavaScript(root: string, path: string): Promise<string
 }
 
 export function readJavaScriptSync(root: string, path: string): string {
-  const module = resolveModule(root, path);
+  const module = findModule(root, path);
   const sourcePath = join(root, module.path);
   const source = readFileSync(sourcePath, "utf-8");
   if (sourcePath.endsWith(".jsx")) {

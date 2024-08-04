@@ -1,6 +1,5 @@
 import {extname} from "node:path/posix";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
-import type {CallExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {build} from "esbuild";
 import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
@@ -150,7 +149,7 @@ function importMetaResolve(root: string, path: string): Plugin {
     name: "resolve-import-meta-resolve",
     async transform(code) {
       const program = this.parse(code);
-      const resolves: CallExpression[] = [];
+      const resolves: StringLiteral[] = [];
 
       simple(program, {
         CallExpression(node) {
@@ -162,7 +161,7 @@ function importMetaResolve(root: string, path: string): Plugin {
             node.arguments.length === 1 &&
             isStringLiteral(node.arguments[0])
           ) {
-            resolves.push(node);
+            resolves.push(node.arguments[0]);
           }
         }
       });
@@ -170,9 +169,8 @@ function importMetaResolve(root: string, path: string): Plugin {
       if (!resolves.length) return null;
 
       const output = new Sourcemap(code);
-      for (const node of resolves) {
-        const source = node.arguments[0];
-        const specifier = getStringLiteralValue(source as StringLiteral);
+      for (const source of resolves) {
+        const specifier = getStringLiteralValue(source);
         if (specifier.startsWith("npm:")) {
           const resolution = relativePath(path, await resolveNpmImport(root, specifier.slice("npm:".length)));
           output.replaceLeft(source.start, source.end, JSON.stringify(resolution));
