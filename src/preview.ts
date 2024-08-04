@@ -17,7 +17,7 @@ import type {WebSocket} from "ws";
 import {WebSocketServer} from "ws";
 import type {Config} from "./config.js";
 import {readConfig} from "./config.js";
-import type {LoaderResolver} from "./dataloader.js";
+import type {LoaderResolver, Params} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import type {FileWatchers} from "./fileWatchers.js";
@@ -259,23 +259,23 @@ function end(req: IncomingMessage, res: ServerResponse, content: string, type: s
   }
 }
 
-function findPage(root: string, path: string): {path: string; params: {[name: string]: string}} {
+function findPage(root: string, path: string): {path: string; params?: Params} {
   const exactPath = join(root, path);
-  if (existsSync(exactPath)) return {path: exactPath, params: {}};
-  return findPageParams(root, join(".", path).split("/")) ?? {path: exactPath, params: {}};
+  if (existsSync(exactPath)) return {path: exactPath};
+  return findPageParams(root, join(".", path).split("/")) ?? {path: exactPath};
 }
 
 /**
  * Finds a parameterized page (dynamic route) recursively, such that the most
  * specific match is returned.
  */
-function findPageParams(cwd: string, parts: string[]): {path: string; params: {[name: string]: string}} | undefined {
+function findPageParams(cwd: string, parts: string[]): {path: string; params?: Params} | undefined {
   switch (parts.length) {
     case 0:
       return;
     case 1: {
       const [first] = parts;
-      if (existsSync(join(cwd, first))) return {path: join(cwd, first), params: {}};
+      if (existsSync(join(cwd, first))) return {path: join(cwd, first)};
       const ext = extname(first);
       for (const file of globSync(`\\[*\\]${ext}`, {cwd})) {
         const params = {[basename(file, ext).slice(1, -1)]: basename(first, ext)};
@@ -288,10 +288,7 @@ function findPageParams(cwd: string, parts: string[]): {path: string; params: {[
       if (existsSync(join(cwd, first))) return findPageParams(join(cwd, first), rest);
       for (const dir of globSync("\\[*\\]", {cwd})) {
         const found = findPageParams(join(cwd, dir), rest);
-        if (found) {
-          const params = {[dir.slice(1, -1)]: first};
-          return {...found, params: {...found.params, ...params}};
-        }
+        if (found) return {...found, params: {...found.params, [dir.slice(1, -1)]: first}};
       }
     }
   }
@@ -328,7 +325,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
   let config: Config | null = null;
   let sourcePath: string | null = null;
   let path: string | null = null;
-  let params: {[name: string]: string} | null = null;
+  let params: Params | undefined | null = null;
   let hash: string | null = null;
   let html: HtmlPart[] | null = null;
   let code: Map<string, string> | null = null;
@@ -343,7 +340,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
   console.log(faint("socket open"), req.url);
 
   async function watcher(event: WatchEventType, force = false) {
-    if (!sourcePath || !path || !params || !config) throw new Error("not initialized");
+    if (sourcePath === null || path === null || params === null || config === null) throw new Error("not initialized");
     const {root, loaders, normalizePath} = config;
     switch (event) {
       case "rename": {

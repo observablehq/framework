@@ -5,6 +5,7 @@ import {basename, extname, join} from "node:path/posix";
 import type {Program} from "acorn";
 import {transform, transformSync} from "esbuild";
 import {globSync} from "glob";
+import type {Params} from "../dataloader.js";
 import {resolvePath} from "../path.js";
 import {findFiles} from "./files.js";
 import {findImports} from "./imports.js";
@@ -161,7 +162,7 @@ export function getFileInfo(root: string, path: string): FileInfo | undefined {
   return entry;
 }
 
-export function resolveModule(root: string, path: string): {path: string; params?: Record<string, string>} {
+export function resolveModule(root: string, path: string): {path: string; params?: Params} {
   return resolveModuleParams(root, ".", join(".", path).split("/")) ?? {path};
 }
 
@@ -169,11 +170,7 @@ export function resolveModule(root: string, path: string): {path: string; params
  * Finds a parameterized module (dynamic route) recursively, such that the most
  * specific match is returned.
  */
-function resolveModuleParams(
-  root: string,
-  cwd: string,
-  parts: string[]
-): {path: string; params?: Record<string, string>} | undefined {
+function resolveModuleParams(root: string, cwd: string, parts: string[]): {path: string; params?: Params} | undefined {
   switch (parts.length) {
     case 0:
       return;
@@ -215,7 +212,7 @@ export async function readJavaScript(root: string, path: string): Promise<string
       jsx: "automatic",
       jsxImportSource: "npm:react",
       sourcefile: sourcePath,
-      define: defineParams(module.params)
+      define: module.params ? defineParams(module.params) : undefined
     });
     return code;
   }
@@ -239,7 +236,7 @@ export function readJavaScriptSync(root: string, path: string): string {
       jsx: "automatic",
       jsxImportSource: "npm:react",
       sourcefile: sourcePath,
-      define: defineParams(module.params)
+      define: module.params ? defineParams(module.params) : undefined
     });
     return code;
   }
@@ -253,7 +250,8 @@ export function readJavaScriptSync(root: string, path: string): string {
   return source;
 }
 
-function defineParams(params: Record<string, string> = {}): Record<string, string> {
+// TODO don’t duplicate
+function defineParams(params: Params): Record<string, string> {
   return Object.fromEntries(
     Object.entries(params)
       .filter(([name]) => /^[a-z0-9_]+$/i.test(name)) // ignore non-ASCII parameters

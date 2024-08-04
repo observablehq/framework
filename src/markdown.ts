@@ -10,6 +10,7 @@ import type {RenderRule} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
 import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
+import type {Params} from "./dataloader.js";
 import type {FrontMatter} from "./frontMatter.js";
 import {readFrontMatter} from "./frontMatter.js";
 import {html, rewriteHtmlPaths} from "./html.js";
@@ -45,7 +46,7 @@ interface ParseContext {
   startLine: number;
   currentLine: number;
   path: string;
-  params?: {[name: string]: string};
+  params?: Params;
 }
 
 function uniqueCodeId(context: ParseContext, content: string): string {
@@ -142,7 +143,7 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
 }
 
 // TODO don’t duplicate
-function defineParams(params: Record<string, string> = {}): Record<string, string> {
+function defineParams(params: Params): Record<string, string> {
   return Object.fromEntries(
     Object.entries(params)
       .filter(([name]) => /^[a-z0-9_]+$/i.test(name)) // ignore non-ASCII parameters; TODO pre-filter
@@ -224,7 +225,7 @@ export interface ParseOptions {
   head?: Config["head"];
   header?: Config["header"];
   footer?: Config["footer"];
-  params?: {[name: string]: string};
+  params?: Params;
 }
 
 export function createMarkdownIt({

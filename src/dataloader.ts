@@ -49,6 +49,8 @@ export interface LoaderOptions {
   useStale: boolean;
 }
 
+export type Params = {[name: string]: string};
+
 export class LoaderResolver {
   private readonly root: string;
   private readonly interpreters: Map<string, string[]>;
@@ -137,7 +139,7 @@ export class LoaderResolver {
     if (command != null) args.push(join(this.root, path));
     return new CommandLoader({
       command: command ?? path,
-      args: args.concat(params),
+      args: params ? args.concat(defineParams(params)) : args,
       path: join(this.root, path),
       root: this.root,
       targetPath,
@@ -149,19 +151,19 @@ export class LoaderResolver {
    * Finds a parameterized data loader (dynamic route) recursively, such that
    * the most specific match is returned.
    */
-  private findDynamicParams(cwd: string, parts: string[]): {path: string; params: string[]; ext?: string} | undefined {
+  private findDynamicParams(cwd: string, parts: string[]): {path: string; params?: Params; ext?: string} | undefined {
     switch (parts.length) {
       case 0:
         return;
       case 1: {
         const [first] = parts;
-        if (existsSync(join(this.root, cwd, first))) return {path: join(cwd, first), params: []};
+        if (existsSync(join(this.root, cwd, first))) return {path: join(cwd, first)};
         const ext1 = extname(first);
         for (const ext of this.interpreters.keys()) {
           const ext2 = `${ext1}${ext}`;
-          if (existsSync(join(this.root, cwd, first + ext))) return {path: join(cwd, first + ext), params: [], ext};
+          if (existsSync(join(this.root, cwd, first + ext))) return {path: join(cwd, first + ext), ext};
           for (const file of globSync(`\\[*\\]${ext2}`, {cwd: join(this.root, cwd)})) {
-            const params = [`--${basename(file, ext2).slice(1, -1)}`, basename(first, ext1)];
+            const params = {[basename(file, ext2).slice(1, -1)]: basename(first, ext1)};
             return {path: join(cwd, file), params, ext};
           }
         }
@@ -175,7 +177,7 @@ export class LoaderResolver {
         }
         for (const dir of globSync("\\[*\\]", {cwd: join(this.root, cwd)})) {
           const found = this.findDynamicParams(join(cwd, dir), rest);
-          if (found) return {...found, params: found.params.concat(`--${dir.slice(1, -1)}`, first)};
+          if (found) return {...found, params: {...found.params, [dir.slice(1, -1)]: first}};
         }
       }
     }
@@ -249,6 +251,13 @@ export class LoaderResolver {
   resolveFilePath(path: string): string {
     return `/${join("_file", path)}?sha=${this.getSourceFileHash(path)}`;
   }
+}
+
+// TODO don’t duplicate
+function defineParams(params: Params): string[] {
+  return Object.entries(params)
+    .filter(([name]) => /^[a-z0-9_]+$/i.test(name)) // ignore non-ASCII parameters
+    .flatMap(([name, value]) => [`--${name}`, value]);
 }
 
 /** Used by LoaderResolver.find to represent a static file resolution. */
