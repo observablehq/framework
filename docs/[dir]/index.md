@@ -28,4 +28,8 @@ display(foo);
 FileAttachment(`./${observable.params.dir}.json`).json()
 ```
 
+```js
+FileAttachment("./" + observable.params.dir + ".json").json()
+```
+
 <img src="./w3c.png">

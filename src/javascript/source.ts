@@ -1,6 +1,6 @@
-import type {Literal, MemberExpression, Node, TemplateLiteral} from "acorn";
+import type {BinaryExpression, Literal, MemberExpression, Node, TemplateLiteral} from "acorn";
 
-export type StringLiteral = (Literal & {value: string}) | TemplateLiteral;
+export type StringLiteral = (Literal & {value: string}) | TemplateLiteral | BinaryExpression;
 
 export function isLiteral(node: Node): node is Literal {
   return node.type === "Literal";
@@ -15,11 +15,22 @@ export function isStringLiteral(node: Node): node is StringLiteral {
     ? /^['"]/.test(node.raw!)
     : isTemplateLiteral(node)
     ? node.expressions.every(isStringLiteral)
-    : isMemberExpression(node) && "value" in node; // param
+    : isBinaryExpression(node)
+    ? node.operator === "+" && isStringLiteral(node.left) && isStringLiteral(node.right)
+    : isMemberExpression(node)
+    ? "value" in node // param
+    : false;
 }
 
 export function getStringLiteralValue(node: StringLiteral): string {
-  if ("value" in node) return node.value; // literal or param
+  return node.type === "TemplateLiteral"
+    ? getTemplateLiteralValue(node)
+    : node.type === "BinaryExpression"
+    ? getBinaryExpressionValue(node)
+    : node.value; // Literal or ParamReference
+}
+
+function getTemplateLiteralValue(node: TemplateLiteral): string {
   let value = node.quasis[0].value.cooked!;
   for (let i = 0; i < node.expressions.length; ++i) {
     value += getStringLiteralValue(node.expressions[i] as StringLiteral);
@@ -28,6 +39,14 @@ export function getStringLiteralValue(node: StringLiteral): string {
   return value;
 }
 
-export function isMemberExpression(node: Node): node is MemberExpression {
+function getBinaryExpressionValue(node: BinaryExpression): string {
+  return getStringLiteralValue(node.left as StringLiteral) + getStringLiteralValue(node.right as StringLiteral);
+}
+
+function isMemberExpression(node: Node): node is MemberExpression {
   return node.type === "MemberExpression";
+}
+
+function isBinaryExpression(node: Node): node is BinaryExpression {
+  return node.type === "BinaryExpression";
 }
