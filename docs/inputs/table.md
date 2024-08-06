@@ -49,7 +49,7 @@ const selection = view(Inputs.table(penguins, {required: false}));
 selection // Try selecting rows above!
 ```
 
-The _required_ option determines the selection when no items are selected from the table: if it is true (default), the selection contains the full dataset; otherwise, the selection is empty. The _select_ option <a href="https://github.com/observablehq/framework/pull/1541" class="observablehq-version-badge" data-version="^1.10.0" title="Added in 1.10.0"></a> disables user selection of rows, hiding the checkboxes in the first column.
+The _required_ option determines the selection when no items are selected from the table: if it is true (default), the selection contains the full dataset; otherwise, the selection is empty. The _select_ option <a href="https://github.com/observablehq/framework/releases/tag/v1.10.0" class="observablehq-version-badge" data-version="^1.10.0" title="Added in 1.10.0"></a> disables user selection of rows, hiding the checkboxes in the first column.
 
 The table input assumes that all values in a given column are the same type, and chooses a suitable formatter based on the first non-null value in each column.
 
@@ -180,7 +180,7 @@ The available table input options are:
 - _maxHeight_ - the maximum table height, if any; defaults to (_rows_ + 1) \* 22 - 1
 - _layout_ - the [table layout](https://developer.mozilla.org/en-US/docs/Web/CSS/table-layout); defaults to fixed for ≤12 columns
 - _required_ - if true, the table’s value is all _data_ if no selection; defaults to true
-- _select_ <a href="https://github.com/observablehq/framework/pull/1541" class="observablehq-version-badge" data-version="^1.10.0" title="Added in 1.10.0"></a> - if true, allows the user to modify the table’s value by selecting rows; defaults to true
+- _select_ <a href="https://github.com/observablehq/framework/releases/tag/v1.10.0" class="observablehq-version-badge" data-version="^1.10.0" title="Added in 1.10.0"></a> - if true, allows the user to modify the table’s value by selecting rows; defaults to true
 - _multiple_ - if true, allow multiple rows to be selected; defaults to true
 
 If _width_ is _auto_, the table width will be based on the table contents; note that this may cause the table to resize as rows are lazily rendered.

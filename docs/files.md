@@ -101,7 +101,7 @@ For missing files, `file.lastModified` is undefined. The `file.mimeType` is dete
 [xlsx]: ./lib/xlsx
 [zip]: ./lib/zip
 
-The contents of a file often dictate the appropriate method — for example, an Excel XLSX file is almost always read with `file.xlsx`. When multiple methods are valid, choose based on your needs. For example, you can load a CSV file using `file.arquero` to load it into [Arquero](./lib/arquero)<a href="https://github.com/observablehq/framework/pull/1509" class="observablehq-version-badge" data-version="^1.10.0" title="Added in 1.10.0"></a>, or even using `file.text` to implement parsing yourself.
+The contents of a file often dictate the appropriate method — for example, an Excel XLSX file is almost always read with `file.xlsx`. When multiple methods are valid, choose based on your needs. For example, you can load a CSV file using `file.arquero` to load it into [Arquero](./lib/arquero)<a href="https://github.com/observablehq/framework/releases/tag/v1.10.0" class="observablehq-version-badge" data-version="^1.10.0" title="Added in 1.10.0"></a>, or even using `file.text` to implement parsing yourself.
 
 In addition to the above, you can get the resolved absolute URL of the file using `file.href`: <a href="https://github.com/observablehq/framework/releases/tag/v1.5.0" class="observablehq-version-badge" data-version="^1.5.0" title="Added in 1.5.0"></a>
 
