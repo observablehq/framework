@@ -184,7 +184,9 @@ export async function getResolvers(
     globalImports.add(i);
   }
 
-  // Resolve npm: and bare imports.
+  // Resolve npm: and bare imports. This has the side-effect of populating the
+  // npm import cache with direct dependencies, and the node import cache with
+  // all transitive dependencies.
   for (const i of globalImports) {
     if (i.startsWith("npm:") && !builtins.has(i)) {
       resolutions.set(i, await resolveNpmImport(root, i.slice("npm:".length)));
@@ -197,9 +199,8 @@ export async function getResolvers(
     }
   }
 
-  // Follow transitive imports of npm and bare imports. This has the side-effect
-  // of populating the npm cache; the node import cache is already transitively
-  // populated above.
+  // Follow transitive imports of npm and bare imports. This populates the
+  // remainder of the npm import cache.
   for (const [key, value] of resolutions) {
     if (key.startsWith("npm:")) {
       for (const i of await resolveNpmImports(root, value)) {

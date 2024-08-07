@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import {existsSync, readdirSync, statSync} from "node:fs";
-import {mkdir, mkdtemp, open, readFile, rm, writeFile} from "node:fs/promises";
+import {mkdir, mkdtemp, readFile, rm, writeFile} from "node:fs/promises";
 import os from "node:os";
 import {join, normalize, relative} from "node:path/posix";
 import {PassThrough} from "node:stream";
@@ -46,17 +46,6 @@ describe("build", () => {
       if (generate) console.warn(`! generating ${expectedDir}`);
       const config = {...(await readConfig(undefined, path)), output: outputDir};
       await build({config, addPublic}, new TestEffects(outputDir, join(config.root, ".observablehq", "cache")));
-
-      // In the addPublic case, we don’t want to test the contents of the public
-      // files because they change often; replace them with empty files so we
-      // can at least check that the expected files exist.
-      if (addPublic) {
-        const publicDir = join(outputDir, "_observablehq");
-        for (const file of findFiles(publicDir)) {
-          if (file.endsWith(".json")) continue; // e.g., minisearch.json
-          await (await open(join(publicDir, file), "w")).close();
-        }
-      }
 
       if (generate) return;
 

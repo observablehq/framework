@@ -276,6 +276,14 @@ class ObservableApiMock {
     return this;
   }
 
+  expectStandardFiles({deployId}) {
+    return this.expectFileUpload({deployId, path: "index.html"})
+      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
+      .expectFileUpload({deployId, path: "_observablehq/client.c35dfd1a.js"})
+      .expectFileUpload({deployId, path: "_observablehq/runtime.c45c72e0.js"})
+      .expectFileUpload({deployId, path: "_observablehq/stdlib.1b8a97c3.js"});
+  }
+
   /** Register a file that is expected to be uploaded. Also includes that file in
    * an automatic interceptor to `/deploy/:deployId/manifest`. If the action is
    * "upload", an interceptor for `/deploy/:deployId/file` will be registered.

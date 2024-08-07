@@ -10,8 +10,7 @@ import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
-import {extractNodeSpecifier} from "./node.js";
-import {extractNpmSpecifier, populateNpmCache, resolveNpmImport} from "./npm.js";
+import {populateNpmCache, resolveNpmImport, rewriteNpmImports} from "./npm.js";
 import {isAssetPath, isPathImport, relativePath, resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
@@ -86,7 +85,7 @@ export async function build(
     for (const f of resolvers.assets) files.add(resolvePath(sourceFile, f));
     for (const f of resolvers.files) files.add(resolvePath(sourceFile, f));
     for (const i of resolvers.localImports) localImports.add(resolvePath(sourceFile, i));
-    for (const i of resolvers.globalImports) globalImports.add(resolvePath(sourceFile, resolvers.resolveImport(i)));
+    for (let i of resolvers.globalImports) if (isPathImport((i = resolvers.resolveImport(i)))) globalImports.add(resolvePath(sourceFile, i)); // prettier-ignore
     for (const s of resolvers.stylesheets) stylesheets.add(/^\w+:/.test(s) ? s : resolvePath(sourceFile, s));
     effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
     pages.set(sourceFile, {page, resolvers});
@@ -94,6 +93,7 @@ export async function build(
 
   // For cache-breaking we rename most assets to include content hashes.
   const aliases = new Map<string, string>();
+  const cacheRoot = join(root, ".observablehq", "cache");
 
   // Add the search bundle and data, if needed.
   if (config.search) {
@@ -106,19 +106,8 @@ export async function build(
     await effects.writeFile(join("_observablehq", `minisearch.${hash}.json`), contents);
   }
 
-  // Generate the client bundles (JavaScript and styles). TODO Use a content
-  // hash, or perhaps the Framework version number for built-in modules.
+  // Copy over the stylesheets.
   if (addPublic) {
-    for (const path of globalImports) {
-      if (path.startsWith("/_observablehq/") && path.endsWith(".js")) {
-        const clientPath = getClientPath(path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)); // prettier-ignore
-        effects.output.write(`${faint("build")} ${clientPath} ${faint("→")} `);
-        const define: {[key: string]: string} = {};
-        if (config.search) define["global.__minisearch"] = JSON.stringify(relativePath(path, aliases.get("/_observablehq/minisearch.json")!)); // prettier-ignore
-        const contents = await rollupClient(clientPath, root, path, {minify: true, keepNames: true, define});
-        await effects.writeFile(path, contents);
-      }
-    }
     for (const specifier of stylesheets) {
       if (specifier.startsWith("observablehq:")) {
         const path = `/_observablehq/${specifier.slice("observablehq:".length)}`;
@@ -126,11 +115,11 @@ export async function build(
         if (specifier.startsWith("observablehq:theme-")) {
           const match = /^observablehq:theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(specifier);
           const contents = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? [], minify: true});
-          await effects.writeFile(path, contents);
+          await effects.writeFile(path, contents); // TODO content hash or version
         } else {
           const clientPath = getClientPath(path.slice("/_observablehq/".length));
           const contents = await bundleStyles({path: clientPath, minify: true});
-          await effects.writeFile(`/_observablehq/${specifier.slice("observablehq:".length)}`, contents);
+          await effects.writeFile(`/_observablehq/${specifier.slice("observablehq:".length)}`, contents); // TODO content hash or version
         }
       } else if (specifier.startsWith("npm:")) {
         effects.output.write(`${faint("copy")} ${specifier} ${faint("→")} `);
@@ -176,17 +165,42 @@ export async function build(
     await effects.writeFile(alias, contents);
   }
 
-  // Download npm imports. TODO It might be nice to use content hashes for
-  // these, too, but it would involve rewriting the files since populateNpmCache
-  // doesn’t let you pass in a resolver.
+  // Generate the client bundles. These are initially generated into the cache
+  // because we need to rewrite any npm and node imports to be hashed; this is
+  // handled generally for all global imports below.
+  if (addPublic) {
+    for (const path of globalImports) {
+      if (path.startsWith("/_observablehq/") && path.endsWith(".js")) {
+        const clientPath = getClientPath(path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)); // prettier-ignore
+        const define: {[key: string]: string} = {};
+        if (config.search) define["global.__minisearch"] = JSON.stringify(relativePath(path, aliases.get("/_observablehq/minisearch.json")!)); // prettier-ignore
+        const contents = await rollupClient(clientPath, root, path, {minify: true, keepNames: true, define});
+        const cachePath = join(cacheRoot, path);
+        await prepareOutput(cachePath);
+        await writeFile(cachePath, contents);
+      }
+    }
+  }
+
+  // Copy over global imports.
+  const resolveGlobalImport = (path: string): string => {
+    const hash = getModuleHash(cacheRoot, path).slice(0, 8);
+    const ext = extname(path);
+    const name = basename(path, ext).replace(/(^|\.)_esm$/, ""); // allow hash to replace _esm
+    return join("/", dirname(path), `${name && `${name}.`}${hash}${ext}`);
+  };
   for (const path of globalImports) {
-    if (path.startsWith("/_npm/")) {
-      effects.output.write(`${faint("copy")} npm:${extractNpmSpecifier(path)} ${faint("→")} `);
-      const sourcePath = await populateNpmCache(root, path); // TODO effects
+    if (path.startsWith("/_observablehq/") && !addPublic) continue;
+    const sourcePath = join(cacheRoot, path);
+    effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
+    if (path.endsWith(".js")) {
+      const contents = await readFile(sourcePath, "utf-8");
+      const resolveImport = (i: string) => relativePath(path, resolveGlobalImport(resolvePath(path, i)));
+      const alias = resolveGlobalImport(path);
+      aliases.set(path, alias);
+      await effects.writeFile(alias, rewriteNpmImports(contents, resolveImport));
+    } else {
       await effects.copyFile(sourcePath, path);
-    } else if (path.startsWith("/_node/")) {
-      effects.output.write(`${faint("copy")} ${extractNodeSpecifier(path)} ${faint("→")} `);
-      await effects.copyFile(join(root, ".observablehq", "cache", path), path);
     }
   }
 
@@ -194,10 +208,10 @@ export async function build(
   // module hash is incorporated into the file name rather than in the query
   // string. Note that this hash is not of the content of the module itself, but
   // of the transitive closure of the module and its imports and files.
-  const resolveImportAlias = (path: string): string => {
+  const resolveLocalImport = (path: string): string => {
     const hash = getModuleHash(root, path).slice(0, 8);
     const ext = extname(path);
-    return `/${join("_import", dirname(path), basename(path, ext))}.${hash}${ext}`;
+    return join("/_import", dirname(path), `${basename(path, ext)}.${hash}${ext}`);
   };
   for (const path of localImports) {
     const sourcePath = join(root, path);
@@ -216,11 +230,11 @@ export async function build(
       path,
       async resolveImport(specifier) {
         return isPathImport(specifier)
-          ? relativePath(join("_import", path), resolveImportAlias(resolvePath(path, specifier)))
+          ? relativePath(join("_import", path), resolveLocalImport(resolvePath(path, specifier)))
           : resolveImport(specifier);
       }
     });
-    const alias = resolveImportAlias(path);
+    const alias = resolveLocalImport(path);
     aliases.set(resolveImportPath(root, path), alias);
     await effects.writeFile(alias, contents);
   }
