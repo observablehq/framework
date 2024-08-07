@@ -768,11 +768,7 @@ describe("deploy", () => {
           projectId: newProjectId
         })
         .handlePostDeploy({projectId: newProjectId, deployId})
-        .expectFileUpload({deployId, path: "index.html"})
-        .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
-        .expectFileUpload({deployId, path: "_observablehq/client.c35dfd1a.js"})
-        .expectFileUpload({deployId, path: "_observablehq/runtime.c45c72e0.js"})
-        .expectFileUpload({deployId, path: "_observablehq/stdlib.1b8a97c3.js"})
+        .expectStandardFiles({deployId})
         .handlePostDeployUploaded({deployId})
         .handleGetDeploy({deployId})
         .start();
