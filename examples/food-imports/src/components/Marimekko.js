@@ -1,9 +1,10 @@
 import * as d3 from "npm:d3";
  
 // based on @d3/marimekko-chart
- export function Marimekko(data) {
-  const width = 1152;
-  const height = 400;
+ export function Marimekko(data, {
+  width = 1152, 
+  height = 600,
+ } = {}) {
   const marginTop = 30;
   const marginRight = -1;
   const marginBottom = -1;
@@ -11,7 +12,7 @@ import * as d3 from "npm:d3";
 
   // Create the color scale.
   const color = d3.scaleOrdinal(d3.schemeSet1.concat(d3.schemeSet2).slice(0,14))
-    .domain(Array.from(new Set(data.map(d => d.segment))));
+    .domain(Array.from(new Set(data.map(d => d.Category))));
 
   // Compute the layout.
   const treemap = data => d3.treemap()
@@ -21,7 +22,7 @@ import * as d3 from "npm:d3";
         width - marginLeft - marginRight,
         height - marginTop - marginBottom
       ])
-    (d3.hierarchy(d3.group(data, d => d.market, d => d.segment)).sum(d => d.value))
+    (d3.hierarchy(d3.group(data, d => d.Country, d => d.Category)).sum(d => d.value))
     .each(d => {
       d.x0 += marginLeft;
       d.x1 += marginLeft;
