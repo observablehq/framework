@@ -24,7 +24,6 @@ import {faint, green, magenta, red, yellow} from "./tty.js";
 
 export interface BuildOptions {
   config: Config;
-  addPublic?: boolean;
 }
 
 export interface BuildEffects {
@@ -47,7 +46,7 @@ export interface BuildEffects {
 }
 
 export async function build(
-  {config, addPublic = true}: BuildOptions,
+  {config}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output, join(config.root, ".observablehq", "cache"))
 ): Promise<void> {
   const {root, loaders, normalizePath} = config;
@@ -107,35 +106,33 @@ export async function build(
   }
 
   // Copy over the stylesheets.
-  if (addPublic) {
-    for (const specifier of stylesheets) {
-      if (specifier.startsWith("observablehq:")) {
-        const path = `/_observablehq/${specifier.slice("observablehq:".length)}`;
-        effects.output.write(`${faint("build")} ${specifier} ${faint("→")} `);
-        if (specifier.startsWith("observablehq:theme-")) {
-          const match = /^observablehq:theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(specifier);
-          const contents = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? [], minify: true});
-          await effects.writeFile(path, contents); // TODO content hash or version
-        } else {
-          const clientPath = getClientPath(path.slice("/_observablehq/".length));
-          const contents = await bundleStyles({path: clientPath, minify: true});
-          await effects.writeFile(`/_observablehq/${specifier.slice("observablehq:".length)}`, contents); // TODO content hash or version
-        }
-      } else if (specifier.startsWith("npm:")) {
-        effects.output.write(`${faint("copy")} ${specifier} ${faint("→")} `);
-        const path = await resolveNpmImport(root, specifier.slice("npm:".length));
-        const sourcePath = await populateNpmCache(root, path); // TODO effects
-        await effects.copyFile(sourcePath, path);
-      } else if (!/^\w+:/.test(specifier)) {
-        const sourcePath = join(root, specifier);
-        effects.output.write(`${faint("build")} ${sourcePath} ${faint("→")} `);
-        const contents = await bundleStyles({path: sourcePath, minify: true});
-        const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
-        const ext = extname(specifier);
-        const alias = `/${join("_import", dirname(specifier), `${basename(specifier, ext)}.${hash}${ext}`)}`;
-        aliases.set(resolveStylesheetPath(root, specifier), alias);
-        await effects.writeFile(alias, contents);
+  for (const specifier of stylesheets) {
+    if (specifier.startsWith("observablehq:")) {
+      const path = `/_observablehq/${specifier.slice("observablehq:".length)}`;
+      effects.output.write(`${faint("build")} ${specifier} ${faint("→")} `);
+      if (specifier.startsWith("observablehq:theme-")) {
+        const match = /^observablehq:theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(specifier);
+        const contents = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? [], minify: true});
+        await effects.writeFile(path, contents); // TODO content hash or version
+      } else {
+        const clientPath = getClientPath(path.slice("/_observablehq/".length));
+        const contents = await bundleStyles({path: clientPath, minify: true});
+        await effects.writeFile(`/_observablehq/${specifier.slice("observablehq:".length)}`, contents); // TODO content hash or version
       }
+    } else if (specifier.startsWith("npm:")) {
+      effects.output.write(`${faint("copy")} ${specifier} ${faint("→")} `);
+      const path = await resolveNpmImport(root, specifier.slice("npm:".length));
+      const sourcePath = await populateNpmCache(root, path); // TODO effects
+      await effects.copyFile(sourcePath, path);
+    } else if (!/^\w+:/.test(specifier)) {
+      const sourcePath = join(root, specifier);
+      effects.output.write(`${faint("build")} ${sourcePath} ${faint("→")} `);
+      const contents = await bundleStyles({path: sourcePath, minify: true});
+      const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
+      const ext = extname(specifier);
+      const alias = `/${join("_import", dirname(specifier), `${basename(specifier, ext)}.${hash}${ext}`)}`;
+      aliases.set(resolveStylesheetPath(root, specifier), alias);
+      await effects.writeFile(alias, contents);
     }
   }
 
@@ -168,17 +165,15 @@ export async function build(
   // Generate the client bundles. These are initially generated into the cache
   // because we need to rewrite any npm and node imports to be hashed; this is
   // handled generally for all global imports below.
-  if (addPublic) {
-    for (const path of globalImports) {
-      if (path.startsWith("/_observablehq/") && path.endsWith(".js")) {
-        const clientPath = getClientPath(path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)); // prettier-ignore
-        const define: {[key: string]: string} = {};
-        if (config.search) define["global.__minisearch"] = JSON.stringify(relativePath(path, aliases.get("/_observablehq/minisearch.json")!)); // prettier-ignore
-        const contents = await rollupClient(clientPath, root, path, {minify: true, keepNames: true, define});
-        const cachePath = join(cacheRoot, path);
-        await prepareOutput(cachePath);
-        await writeFile(cachePath, contents);
-      }
+  for (const path of globalImports) {
+    if (path.startsWith("/_observablehq/") && path.endsWith(".js")) {
+      const clientPath = getClientPath(path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)); // prettier-ignore
+      const define: {[key: string]: string} = {};
+      if (config.search) define["global.__minisearch"] = JSON.stringify(relativePath(path, aliases.get("/_observablehq/minisearch.json")!)); // prettier-ignore
+      const contents = await rollupClient(clientPath, root, path, {minify: true, keepNames: true, define});
+      const cachePath = join(cacheRoot, path);
+      await prepareOutput(cachePath);
+      await writeFile(cachePath, contents);
     }
   }
 
@@ -191,7 +186,6 @@ export async function build(
     return join("/", dirname(path), `${name && `${name}.`}${hash}${ext}`);
   };
   for (const path of globalImports) {
-    if (path.startsWith("/_observablehq/") && !addPublic) continue;
     const sourcePath = join(cacheRoot, path);
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     if (path.endsWith(".js")) {

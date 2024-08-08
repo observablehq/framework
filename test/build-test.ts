@@ -40,12 +40,15 @@ describe("build", () => {
       const expectedDir = join(outputRoot, outname);
       const generate = !existsSync(expectedDir) && process.env.CI !== "true";
       const outputDir = generate ? expectedDir : actualDir;
-      const addPublic = name.endsWith("-public");
 
       await rm(actualDir, {recursive: true, force: true});
       if (generate) console.warn(`! generating ${expectedDir}`);
       const config = {...(await readConfig(undefined, path)), output: outputDir};
-      await build({config, addPublic}, new TestEffects(outputDir, join(config.root, ".observablehq", "cache")));
+      await build({config}, new TestEffects(outputDir, join(config.root, ".observablehq", "cache")));
+
+      // For non-public tests (most of them), we don’t want to test the contents
+      // of the _observablehq files because they change often.
+      if (!name.endsWith("-public")) await rm(join(outputDir, "_observablehq"), {recursive: true, force: true});
 
       if (generate) return;
 
