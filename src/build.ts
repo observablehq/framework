@@ -16,7 +16,7 @@ import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
 import {getModuleResolver, getResolvers} from "./resolvers.js";
 import {resolveImportPath, resolveStylesheetPath} from "./resolvers.js";
-import {bundleStyles, getClientResolver, rollupClient} from "./rollup.js";
+import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {tree} from "./tree.js";
@@ -114,8 +114,7 @@ export async function build(
       effects.output.write(`${faint("bundle")} ${path} ${faint("→")} `);
       const clientPath = getClientPath(path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)); // prettier-ignore
       const define: {[key: string]: string} = {};
-      const resolve = getClientResolver(root);
-      const contents = await rollupClient(clientPath, path, resolve, {minify: true, keepNames: true, define});
+      const contents = await rollupClient(clientPath, root, path, {minify: true, keepNames: true, define});
       await prepareOutput(cachePath);
       await writeFile(cachePath, contents);
       effects.logger.log(cachePath);

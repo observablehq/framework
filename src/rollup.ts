@@ -58,9 +58,14 @@ type ImportResolver = (specifier: string) => Promise<string | undefined> | strin
 
 export async function rollupClient(
   input: string,
+  root: string,
   path: string,
-  resolveImport: ImportResolver,
-  {define, keepNames, minify}: {define?: {[key: string]: string}; keepNames?: boolean; minify?: boolean} = {}
+  {
+    define,
+    keepNames,
+    minify,
+    resolveImport = getDefaultResolver(root)
+  }: {define?: {[key: string]: string}; keepNames?: boolean; minify?: boolean; resolveImport?: ImportResolver} = {}
 ): Promise<string> {
   if (typeof resolveImport !== "function") throw new Error(`invalid resolveImport: ${resolveImport}`);
   const bundle = await rollup({
@@ -108,7 +113,7 @@ function rewriteTypeScriptImports(code: string): string {
   return code.replace(/(?<=\bimport\(([`'"])[\w./]+)\.ts(?=\1\))/g, ".js");
 }
 
-export function getClientResolver(root: string): ImportResolver {
+function getDefaultResolver(root: string): ImportResolver {
   return (specifier: string) => resolveImport(root, specifier);
 }
 
