@@ -110,17 +110,20 @@ export async function build(
   // Copy over the stylesheets.
   for (const specifier of stylesheets) {
     if (specifier.startsWith("observablehq:")) {
+      let contents: string;
       const path = `/_observablehq/${specifier.slice("observablehq:".length)}`;
       effects.output.write(`${faint("build")} ${specifier} ${faint("→")} `);
       if (specifier.startsWith("observablehq:theme-")) {
         const match = /^observablehq:theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(specifier);
-        const contents = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? [], minify: true});
-        await effects.writeFile(path, contents); // TODO content hash or version
+        contents = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? [], minify: true});
       } else {
         const clientPath = getClientPath(path.slice("/_observablehq/".length));
-        const contents = await bundleStyles({path: clientPath, minify: true});
-        await effects.writeFile(`/_observablehq/${specifier.slice("observablehq:".length)}`, contents); // TODO content hash or version
+        contents = await bundleStyles({path: clientPath, minify: true});
       }
+      const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
+      const alias = `${join(dirname(path), basename(path, ".css"))}.${hash}.css`;
+      aliases.set(path, alias);
+      await effects.writeFile(alias, contents);
     } else if (specifier.startsWith("npm:")) {
       effects.output.write(`${faint("copy")} ${specifier} ${faint("→")} `);
       const path = await resolveNpmImport(root, specifier.slice("npm:".length));
