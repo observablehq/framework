@@ -1,0 +1,11 @@
+@import url("observablehq:default.css");
+@import url("observablehq:theme-air.css");
+@import url("atkinson.css");
+
+div.bg {
+  background-image: url("horse.jpg");
+}
+
+div.dont-break-hashes {
+  offset-path: url(#path);
+}

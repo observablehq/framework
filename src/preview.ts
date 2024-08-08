@@ -140,7 +140,19 @@ export class PreviewServer {
         try {
           if (pathname.endsWith(".css")) {
             await access(filepath, constants.R_OK);
-            end(req, res, await bundleStyles({path: filepath}), "text/css");
+            end(
+              req,
+              res,
+              await bundleStyles({
+                path: filepath,
+                resolve(args) {
+                  if (args.path.endsWith(".css") || args.path.match(/^[#?]/) || args.path.match(/^\w+:/)) return;
+                  const path = loaders.resolveFilePath(args.path);
+                  return {path, external: true};
+                }
+              }),
+              "text/css"
+            );
             return;
           } else if (pathname.endsWith(".js")) {
             const input = await readJavaScript(join(root, path));
