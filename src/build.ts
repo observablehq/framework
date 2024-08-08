@@ -182,7 +182,9 @@ export async function build(
     }
   }
 
-  // Copy over global imports.
+  // Copy over global imports. By computing the hash on the file in the cache
+  // root, this will take into consideration the resolved exact versions of npm
+  // and node imports for transitive dependencies.
   const resolveGlobalImport = (path: string): string => {
     if (!path.endsWith(".js")) return path;
     const hash = getModuleHash(cacheRoot, path).slice(0, 8);
