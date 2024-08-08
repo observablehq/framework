@@ -78,7 +78,7 @@ export async function rollupClient(
           ...define
         }
       }),
-      importMetaResolve(input, root, path)
+      importMetaResolve(root, path)
     ],
     onwarn(message, warn) {
       if (message.code === "CIRCULAR_DEPENDENCY") return;
@@ -105,37 +105,42 @@ function rewriteTypeScriptImports(code: string): string {
   return code.replace(/(?<=\bimport\(([`'"])[\w./]+)\.ts(?=\1\))/g, ".js");
 }
 
+async function resolveImport(root: string, specifier: string): Promise<string | undefined> {
+  return specifier.startsWith("observablehq:")
+    ? `/_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`
+    : specifier === "npm:@observablehq/runtime"
+    ? "/_observablehq/runtime.js"
+    : specifier === "npm:@observablehq/stdlib" || specifier === "@observablehq/stdlib"
+    ? "/_observablehq/stdlib.js"
+    : specifier === "npm:@observablehq/dot"
+    ? "/_observablehq/stdlib/dot.js"
+    : specifier === "npm:@observablehq/duckdb"
+    ? "/_observablehq/stdlib/duckdb.js"
+    : specifier === "npm:@observablehq/inputs"
+    ? "/_observablehq/stdlib/inputs.js"
+    : specifier === "npm:@observablehq/mermaid"
+    ? "/_observablehq/stdlib/mermaid.js"
+    : specifier === "npm:@observablehq/tex"
+    ? "/_observablehq/stdlib/tex.js"
+    : specifier === "npm:@observablehq/sqlite"
+    ? "/_observablehq/stdlib/sqlite.js"
+    : specifier === "npm:@observablehq/xlsx"
+    ? "/_observablehq/stdlib/xlsx.js"
+    : specifier === "npm:@observablehq/zip"
+    ? "/_observablehq/stdlib/zip.js"
+    : specifier.startsWith("npm:")
+    ? await resolveNpmImport(root, specifier.slice("npm:".length))
+    : !/^[a-z]:\\/i.test(specifier) && !isPathImport(specifier) && !BUNDLED_MODULES.includes(specifier) // e.g., inputs.js imports "htl"
+    ? await resolveNpmImport(root, specifier)
+    : undefined;
+}
+
 function importResolve(input: string, root: string, path: string): Plugin {
   async function resolve(specifier: string | AstNode): Promise<ResolveIdResult> {
-    return typeof specifier !== "string" || specifier === input
-      ? null
-      : specifier.startsWith("observablehq:")
-      ? {id: relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`), external: true} // prettier-ignore
-      : specifier === "npm:@observablehq/runtime"
-      ? {id: relativePath(path, "/_observablehq/runtime.js"), external: true}
-      : specifier === "npm:@observablehq/stdlib" || specifier === "@observablehq/stdlib"
-      ? {id: relativePath(path, "/_observablehq/stdlib.js"), external: true}
-      : specifier === "npm:@observablehq/dot"
-      ? {id: relativePath(path, "/_observablehq/stdlib/dot.js"), external: true} // TODO publish to npm
-      : specifier === "npm:@observablehq/duckdb"
-      ? {id: relativePath(path, "/_observablehq/stdlib/duckdb.js"), external: true} // TODO publish to npm
-      : specifier === "npm:@observablehq/inputs"
-      ? {id: relativePath(path, "/_observablehq/stdlib/inputs.js"), external: true}
-      : specifier === "npm:@observablehq/mermaid"
-      ? {id: relativePath(path, "/_observablehq/stdlib/mermaid.js"), external: true} // TODO publish to npm
-      : specifier === "npm:@observablehq/tex"
-      ? {id: relativePath(path, "/_observablehq/stdlib/tex.js"), external: true} // TODO publish to npm
-      : specifier === "npm:@observablehq/sqlite"
-      ? {id: relativePath(path, "/_observablehq/stdlib/sqlite.js"), external: true} // TODO publish to npm
-      : specifier === "npm:@observablehq/xlsx"
-      ? {id: relativePath(path, "/_observablehq/stdlib/xlsx.js"), external: true} // TODO publish to npm
-      : specifier === "npm:@observablehq/zip"
-      ? {id: relativePath(path, "/_observablehq/stdlib/zip.js"), external: true} // TODO publish to npm
-      : specifier.startsWith("npm:")
-      ? {id: relativePath(path, await resolveNpmImport(root, specifier.slice("npm:".length))), external: true}
-      : !/^[a-z]:\\/i.test(specifier) && !isPathImport(specifier) && !BUNDLED_MODULES.includes(specifier) // e.g., inputs.js imports "htl"
-      ? {id: relativePath(path, await resolveNpmImport(root, specifier)), external: true}
-      : null;
+    if (typeof specifier !== "string" || specifier === input) return null;
+    const resolution = await resolveImport(root, specifier);
+    if (resolution) return {id: relativePath(path, resolution), external: true};
+    return null;
   }
   return {
     name: "resolve-import",
@@ -144,8 +149,7 @@ function importResolve(input: string, root: string, path: string): Plugin {
   };
 }
 
-function importMetaResolve(input: string, root: string, path: string): Plugin {
-  const baseResolve = importResolve(input, root, path); // TODO cleaner
+function importMetaResolve(root: string, path: string): Plugin {
   return {
     name: "resolve-import-meta-resolve",
     async transform(code) {
@@ -173,8 +177,8 @@ function importMetaResolve(input: string, root: string, path: string): Plugin {
       for (const node of resolves) {
         const source = node.arguments[0];
         const specifier = getStringLiteralValue(source as StringLiteral);
-        const resolution = await (baseResolve.resolveId as any)(specifier); // TODO cleaner
-        if (resolution) output.replaceLeft(source.start, source.end, JSON.stringify(resolution.id));
+        const resolution = await resolveImport(root, specifier);
+        if (resolution) output.replaceLeft(source.start, source.end, JSON.stringify(relativePath(path, resolution)));
       }
 
       return {code: String(output)};
