@@ -262,7 +262,7 @@ function isLoading(node: Node): node is Element {
 }
 
 function isExternal(a: Element): boolean {
-  return /(?:^|\s)external(?:\s|$)/.test(a.getAttribute("rel") ?? ""); // e.g., <a href rel="external">
+  return /(?:^|\s)external(?:\s|$)/i.test(a.getAttribute("rel") ?? ""); // e.g., <a href rel="external">
 }
 
 function findLoading(node: Node): Element | null {
