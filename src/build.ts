@@ -5,18 +5,16 @@ import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
-import {parseImports} from "./javascript/imports.js";
-import {getModuleHash, getModuleHash2, getModuleInfo, readJavaScript} from "./javascript/module.js";
+import {getLocalModuleHash, getModuleHash, readJavaScript} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
-import {resolveNodeImport} from "./node.js";
 import {populateNpmCache, resolveNpmImport, rewriteNpmImports} from "./npm.js";
 import {isAssetPath, isPathImport, relativePath, resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
-import {builtins, getModuleResolver, getResolvers} from "./resolvers.js";
+import {getModuleResolver, getResolvers} from "./resolvers.js";
 import {resolveImportPath, resolveStylesheetPath} from "./resolvers.js";
 import {bundleStyles, getClientResolver, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
@@ -228,7 +226,7 @@ export async function build(
   // string. Note that this hash is not of the content of the module itself, but
   // of the transitive closure of the module and its imports and files.
   const resolveLocalImport = async (path: string): Promise<string> => {
-    const hash = (await getLocalHash(root, path)).slice(0, 8);
+    const hash = (await getLocalModuleHash(root, path)).slice(0, 8);
     return applyHash(join("/_import", path), hash);
   };
   for (const path of localImports) {
@@ -343,33 +341,6 @@ export async function build(
   effects.logger.log("");
 
   Telemetry.record({event: "build", step: "finish", pageCount});
-}
-
-async function getLocalHash(root: string, path: string): Promise<string> {
-  const hash = getModuleHash2(root, path);
-  const info = getModuleInfo(root, path);
-  if (info) {
-    const globalPaths = new Set<string>();
-    const globalImports = new Set<string>();
-    for (const o of info.globalStaticImports) globalImports.add(o);
-    for (const o of info.globalDynamicImports) globalImports.add(o);
-    for (const i of globalImports) {
-      if (i.startsWith("npm:") && !builtins.has(i)) {
-        globalPaths.add(await resolveNpmImport(root, i.slice("npm:".length)));
-      } else if (!/^\w+:/.test(i)) {
-        globalPaths.add(await resolveNodeImport(root, i));
-      }
-    }
-    for (const p of globalPaths) {
-      hash.update(p);
-      for (const i of await parseImports(join(root, ".observablehq", "cache"), p)) {
-        if (i.type === "local") {
-          globalPaths.add(resolvePath(p, i.name));
-        }
-      }
-    }
-  }
-  return hash.digest("hex");
 }
 
 function applyHash(path: string, hash: string): string {

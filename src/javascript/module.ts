@@ -5,9 +5,12 @@ import {readFile} from "node:fs/promises";
 import {join} from "node:path/posix";
 import type {Program} from "acorn";
 import {transform, transformSync} from "esbuild";
+import {resolveNodeImport} from "../node.js";
+import {resolveNpmImport} from "../npm.js";
 import {resolvePath} from "../path.js";
+import {builtins} from "../resolvers.js";
 import {findFiles} from "./files.js";
-import {findImports} from "./imports.js";
+import {findImports, parseImports} from "./imports.js";
 import {parseProgram} from "./parse.js";
 
 export type FileInfo = {
@@ -47,10 +50,10 @@ const moduleInfoCache = new Map<string, ModuleInfo>();
  * transitive imports or files that are invalid or do not exist.
  */
 export function getModuleHash(root: string, path: string): string {
-  return getModuleHash2(root, path).digest("hex");
+  return getModuleHashInternal(root, path).digest("hex");
 }
 
-export function getModuleHash2(root: string, path: string): Hash {
+function getModuleHashInternal(root: string, path: string): Hash {
   const hash = createHash("sha256");
   const paths = new Set([path]);
   for (const path of paths) {
@@ -70,6 +73,36 @@ export function getModuleHash2(root: string, path: string): Hash {
     }
   }
   return hash;
+}
+
+/**
+ * Like getModuleHash, but further takes into consideration the resolved exact
+ * versions of any npm imports (and their transitive imports). This is needed
+ * during build because we want the hash of the built module to change if the
+ * version of an imported npm package changes.
+ */
+export async function getLocalModuleHash(root: string, path: string): Promise<string> {
+  const hash = getModuleHashInternal(root, path);
+  const info = getModuleInfo(root, path);
+  if (info) {
+    const globalPaths = new Set<string>();
+    for (const i of [...info.globalStaticImports, ...info.globalDynamicImports]) {
+      if (i.startsWith("npm:") && !builtins.has(i)) {
+        globalPaths.add(await resolveNpmImport(root, i.slice("npm:".length)));
+      } else if (!/^\w+:/.test(i)) {
+        globalPaths.add(await resolveNodeImport(root, i));
+      }
+    }
+    for (const p of globalPaths) {
+      hash.update(p);
+      for (const i of await parseImports(join(root, ".observablehq", "cache"), p)) {
+        if (i.type === "local") {
+          globalPaths.add(resolvePath(p, i.name));
+        }
+      }
+    }
+  }
+  return hash.digest("hex");
 }
 
 /**
