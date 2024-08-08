@@ -54,18 +54,21 @@ export async function bundleStyles({
   return text;
 }
 
+type ImportResolver = (specifier: string) => Promise<string | undefined> | string | undefined;
+
 export async function rollupClient(
   input: string,
-  root: string,
   path: string,
+  resolveImport: ImportResolver,
   {define, keepNames, minify}: {define?: {[key: string]: string}; keepNames?: boolean; minify?: boolean} = {}
 ): Promise<string> {
+  if (typeof resolveImport !== "function") throw new Error(`invalid resolveImport: ${resolveImport}`);
   const bundle = await rollup({
     input,
     external: [/^https:/],
     plugins: [
       nodeResolve({resolveOnly: BUNDLED_MODULES}),
-      importResolve(input, root, path),
+      importResolve(input, path, resolveImport),
       esbuild({
         format: "esm",
         platform: "browser",
@@ -78,7 +81,7 @@ export async function rollupClient(
           ...define
         }
       }),
-      importMetaResolve(root, path)
+      importMetaResolve(path, resolveImport)
     ],
     onwarn(message, warn) {
       if (message.code === "CIRCULAR_DEPENDENCY") return;
@@ -105,7 +108,11 @@ function rewriteTypeScriptImports(code: string): string {
   return code.replace(/(?<=\bimport\(([`'"])[\w./]+)\.ts(?=\1\))/g, ".js");
 }
 
-async function resolveImport(root: string, specifier: string): Promise<string | undefined> {
+export function getClientResolver(root: string): ImportResolver {
+  return (specifier: string) => resolveImport(root, specifier);
+}
+
+export async function resolveImport(root: string, specifier: string): Promise<string | undefined> {
   return specifier.startsWith("observablehq:")
     ? `/_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`
     : specifier === "npm:@observablehq/runtime"
@@ -135,10 +142,10 @@ async function resolveImport(root: string, specifier: string): Promise<string | 
     : undefined;
 }
 
-function importResolve(input: string, root: string, path: string): Plugin {
+function importResolve(input: string, path: string, resolveImport: ImportResolver): Plugin {
   async function resolve(specifier: string | AstNode): Promise<ResolveIdResult> {
     if (typeof specifier !== "string" || specifier === input) return null;
-    const resolution = await resolveImport(root, specifier);
+    const resolution = await resolveImport(specifier);
     if (resolution) return {id: relativePath(path, resolution), external: true};
     return null;
   }
@@ -149,7 +156,7 @@ function importResolve(input: string, root: string, path: string): Plugin {
   };
 }
 
-function importMetaResolve(root: string, path: string): Plugin {
+function importMetaResolve(path: string, resolveImport: ImportResolver): Plugin {
   return {
     name: "resolve-import-meta-resolve",
     async transform(code) {
@@ -177,7 +184,7 @@ function importMetaResolve(root: string, path: string): Plugin {
       for (const node of resolves) {
         const source = node.arguments[0];
         const specifier = getStringLiteralValue(source as StringLiteral);
-        const resolution = await resolveImport(root, specifier);
+        const resolution = await resolveImport(specifier);
         if (resolution) output.replaceLeft(source.start, source.end, JSON.stringify(relativePath(path, resolution)));
       }
 

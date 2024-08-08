@@ -30,7 +30,7 @@ import {isPathImport, resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
 import {getResolvers} from "./resolvers.js";
-import {bundleStyles, rollupClient} from "./rollup.js";
+import {bundleStyles, getClientResolver, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, link} from "./tty.js";
@@ -118,14 +118,15 @@ export class PreviewServer {
       let pathname = decodeURI(url.pathname);
       let match: RegExpExecArray | null;
       if (pathname === "/_observablehq/client.js") {
-        end(req, res, await rollupClient(getClientPath("preview.js"), root, pathname), "text/javascript");
+        const path = getClientPath("preview.js");
+        end(req, res, await rollupClient(path, pathname, getClientResolver(root)), "text/javascript");
       } else if (pathname === "/_observablehq/minisearch.json") {
         end(req, res, await searchIndex(config), "application/json");
       } else if ((match = /^\/_observablehq\/theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(pathname))) {
         end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
       } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".js")) {
         const path = getClientPath(pathname.slice("/_observablehq/".length));
-        end(req, res, await rollupClient(path, root, pathname), "text/javascript");
+        end(req, res, await rollupClient(path, pathname, getClientResolver(root)), "text/javascript");
       } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".css")) {
         const path = getClientPath(pathname.slice("/_observablehq/".length));
         end(req, res, await bundleStyles({path}), "text/css");

@@ -76,7 +76,7 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
     .map(({node, id, mode}) => `\n${transpileJavaScript(node, {id, path, mode, resolveImport})}`)
     .join("")}`)}
-</script>${sidebar ? html`\n${await renderSidebar(options, resolvers.resolveLink)}` : ""}${
+</script>${sidebar ? html`\n${await renderSidebar(options, resolvers)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
 <div id="observablehq-center">${renderHeader(page.header, resolvers)}
@@ -124,8 +124,8 @@ function registerFile(
   })});`;
 }
 
-async function renderSidebar(options: RenderOptions, resolveLink: (href: string) => string): Promise<Html> {
-  const {title = "Home", pages, root, path, search} = options;
+async function renderSidebar(options: RenderOptions, {resolveImport, resolveLink}: Resolvers): Promise<Html> {
+  const {title = "Home", pages, path, search} = options;
   return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
@@ -139,7 +139,7 @@ async function renderSidebar(options: RenderOptions, resolveLink: (href: string)
       ? html`\n  <div id="observablehq-search"><input type="search" placeholder="Search"></div>
   <div id="observablehq-search-results"></div>
   <script>{${html.unsafe(
-    (await rollupClient(getClientPath("search-init.js"), root, path, {minify: true})).trim() // TODO content hashes
+    (await rollupClient(getClientPath("search-init.js"), path, resolveImport, {minify: true})).trim()
   )}}</script>`
       : ""
   }${pages.map((p, i) =>
@@ -159,7 +159,7 @@ async function renderSidebar(options: RenderOptions, resolveLink: (href: string)
   )}
 </nav>
 <script>{${html.unsafe(
-    (await rollupClient(getClientPath("sidebar-init.js"), root, path, {minify: true})).trim() // TODO content hashes
+    (await rollupClient(getClientPath("sidebar-init.js"), path, resolveImport, {minify: true})).trim()
   )}}</script>`;
 }
 
