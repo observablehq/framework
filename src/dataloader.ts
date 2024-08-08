@@ -22,6 +22,7 @@ export const defaultInterpreters: Record<string, string[]> = {
   ".py": ["python3"],
   ".r": ["Rscript"],
   ".R": ["Rscript"],
+  ".exs": ["elixir"],
   ".rs": ["rust-script"],
   ".go": ["go", "run"],
   ".java": ["java"],
