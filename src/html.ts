@@ -65,6 +65,7 @@ export function findAssets(html: string, path: string): Assets {
 
   for (const [selector, src] of ASSET_ATTRIBUTES) {
     for (const element of document.querySelectorAll(selector)) {
+      if (isExternal(element)) continue;
       const source = decodeURI(element.getAttribute(src)!);
       if (src === "srcset") {
         for (const s of parseSrcset(source)) {
@@ -77,6 +78,7 @@ export function findAssets(html: string, path: string): Assets {
   }
 
   for (const script of document.querySelectorAll<HTMLScriptElement>("script[src]")) {
+    if (isExternal(script)) continue;
     let src = script.getAttribute("src")!;
     if (isJavaScript(script)) {
       if (isAssetPath(src)) {
@@ -109,6 +111,7 @@ export function rewriteHtmlPaths(html: string, path: string): string {
 
   for (const [selector, src] of PATH_ATTRIBUTES) {
     for (const element of document.querySelectorAll(selector)) {
+      if (isExternal(element)) continue;
       const source = decodeURI(element.getAttribute(src)!);
       element.setAttribute(src, src === "srcset" ? resolveSrcset(source, resolvePath) : encodeURI(resolvePath(source)));
     }
@@ -136,17 +139,20 @@ export function rewriteHtml(
 
   for (const [selector, src] of ASSET_ATTRIBUTES) {
     for (const element of document.querySelectorAll(selector)) {
+      if (isExternal(element)) continue;
       const source = decodeURI(element.getAttribute(src)!);
       element.setAttribute(src, src === "srcset" ? resolveSrcset(source, resolvePath) : encodeURI(resolvePath(source)));
     }
   }
 
   for (const script of document.querySelectorAll<HTMLScriptElement>("script[src]")) {
+    if (isExternal(script)) continue;
     const src = decodeURI(script.getAttribute("src")!);
     script.setAttribute("src", encodeURI((isJavaScript(script) ? resolveScript : resolveFile)(src)));
   }
 
   for (const a of document.querySelectorAll<HTMLAnchorElement>("a[href]")) {
+    if (isExternal(a)) continue;
     const href = decodeURI(a.getAttribute("href")!);
     a.setAttribute("href", encodeURI(resolveLink(href)));
     if (!/^(\w+:)/.test(href)) continue;
@@ -253,6 +259,10 @@ function isRoot(node: Node): node is Comment {
 
 function isLoading(node: Node): node is Element {
   return isElement(node) && node.tagName === "OBSERVABLEHQ-LOADING";
+}
+
+function isExternal(a: Element): boolean {
+  return /(?:^|\s)external(?:\s|$)/.test(a.getAttribute("rel") ?? ""); // e.g., <a href rel="external">
 }
 
 function findLoading(node: Node): Element | null {
