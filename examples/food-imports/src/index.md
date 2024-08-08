@@ -31,10 +31,10 @@ const nInput = Inputs.range(
     step: 1
   }
 );
-const n = Generators.input(nInput);
+const n = Generators.input(nInput)
 ```
 
-${nInput}
+<div>${nInput}</div>
 
 ```js
 // data wrangling – should this all be moved to a data loader..?
@@ -92,23 +92,26 @@ const byCountryAndCategory = d3.groups(sample, d => d.Country, d => d.Category)
   )).flat()
 ```
 
-
 <div class="grid grid-cols-2" style="grid-auto-rows: 520px;">
   <div class="card grid-colspan-1">
-    <h2>Share of food imports to the US</h2>
-    <h3>from top ${n} countries, 1999–2023</h3>
+    <h2>Relative share of food imports to the US</h2>
+    <h3>across top ${n} countries, 1999–2023</h3>
     ${resize((width, height) => Plot.plot({
       marginLeft: 50,
       width,
       height: height - 40,
+      color: {
+        type: "ordinal",
+        scheme: "Set3"
+      },
       y: {
         grid: true,
         label: "↑ Percent of food imports"
       },
       marks: [
         Plot.areaY(
-          byYearAndCountry.filter(d => tops.includes(d.country)),
-          {x: "year", y: "value", fill: "country",offset: 'normalize' , order: "group", reverse: true}
+          byYearAndCountry.map(d => tops.includes(d.country) ? {...d} : {...d, value: 0}),
+          {x: "year", y: "value", fill: "country", offset: 'normalize', order: "group", reverse: true}
         ),
         Plot.ruleY([0])
       ]
@@ -127,10 +130,11 @@ const byCountryAndCategory = d3.groups(sample, d => d.Country, d => d.Category)
   </div>
 </div>
 
-<div class="grid card">
-  <h2>Distribution of food imports by country and category</h2>
-   <h3>from top ${n} countries, 2023</h3>
-  ${resize((width, height) => Marimekko(byCountryAndCategory, {
-    width,
-  }))}
+<div class=" card" >
+  <h2 >Distribution of food imports by country and category</h2>
+   <h3 >from top ${n} countries, 2023</h3>
+   ${Marimekko(byCountryAndCategory, {
+    width
+    })} 
 </div>
+
