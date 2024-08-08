@@ -184,6 +184,7 @@ export async function build(
 
   // Copy over global imports.
   const resolveGlobalImport = (path: string): string => {
+    if (!path.endsWith(".js")) return path;
     const hash = getModuleHash(cacheRoot, path).slice(0, 8);
     const ext = extname(path);
     const name = basename(path, ext).replace(/(^|\.)_esm$/, ""); // allow hash to replace _esm
@@ -229,9 +230,18 @@ export async function build(
       root,
       path,
       async resolveImport(specifier) {
-        return isPathImport(specifier)
-          ? relativePath(join("_import", path), resolveLocalImport(resolvePath(path, specifier)))
-          : resolveImport(specifier);
+        const importPath = join("_import", path);
+        let resolution: string;
+        if (isPathImport(specifier)) {
+          resolution = resolveLocalImport(resolvePath(path, specifier));
+        } else {
+          resolution = await resolveImport(specifier);
+          if (isPathImport(resolution)) {
+            resolution = resolvePath(importPath, resolution);
+            resolution = aliases.get(resolution) ?? resolution;
+          }
+        }
+        return relativePath(importPath, resolution);
       }
     });
     const alias = resolveLocalImport(path);
