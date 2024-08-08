@@ -42,6 +42,8 @@ const defaultImports = [
 ];
 
 export const builtins = new Map<string, string>([
+  ["@observablehq/runtime", "/_observablehq/runtime.js"],
+  ["@observablehq/stdlib", "/_observablehq/stdlib.js"],
   ["npm:@observablehq/runtime", "/_observablehq/runtime.js"],
   ["npm:@observablehq/stdlib", "/_observablehq/stdlib.js"],
   ["npm:@observablehq/dot", "/_observablehq/stdlib/dot.js"], // TODO publish to npm

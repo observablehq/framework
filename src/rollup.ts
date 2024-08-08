@@ -12,6 +12,7 @@ import {getStringLiteralValue, isStringLiteral} from "./javascript/source.js";
 import {resolveNpmImport} from "./npm.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
 import {isPathImport, relativePath} from "./path.js";
+import {builtins} from "./resolvers.js";
 import {Sourcemap} from "./sourcemap.js";
 import {THEMES, renderTheme} from "./theme.js";
 
@@ -118,31 +119,15 @@ function getDefaultResolver(root: string): ImportResolver {
 }
 
 export async function resolveImport(root: string, specifier: string): Promise<string | undefined> {
-  return specifier.startsWith("observablehq:")
+  return BUNDLED_MODULES.includes(specifier)
+    ? undefined
+    : builtins.has(specifier)
+    ? builtins.get(specifier)
+    : specifier.startsWith("observablehq:")
     ? `/_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`
-    : specifier === "npm:@observablehq/runtime"
-    ? "/_observablehq/runtime.js"
-    : specifier === "npm:@observablehq/stdlib" || specifier === "@observablehq/stdlib"
-    ? "/_observablehq/stdlib.js"
-    : specifier === "npm:@observablehq/dot"
-    ? "/_observablehq/stdlib/dot.js"
-    : specifier === "npm:@observablehq/duckdb"
-    ? "/_observablehq/stdlib/duckdb.js"
-    : specifier === "npm:@observablehq/inputs"
-    ? "/_observablehq/stdlib/inputs.js"
-    : specifier === "npm:@observablehq/mermaid"
-    ? "/_observablehq/stdlib/mermaid.js"
-    : specifier === "npm:@observablehq/tex"
-    ? "/_observablehq/stdlib/tex.js"
-    : specifier === "npm:@observablehq/sqlite"
-    ? "/_observablehq/stdlib/sqlite.js"
-    : specifier === "npm:@observablehq/xlsx"
-    ? "/_observablehq/stdlib/xlsx.js"
-    : specifier === "npm:@observablehq/zip"
-    ? "/_observablehq/stdlib/zip.js"
     : specifier.startsWith("npm:")
     ? await resolveNpmImport(root, specifier.slice("npm:".length))
-    : !/^[a-z]:\\/i.test(specifier) && !isPathImport(specifier) && !BUNDLED_MODULES.includes(specifier) // e.g., inputs.js imports "htl"
+    : !/^[a-z]:\\/i.test(specifier) && !isPathImport(specifier)
     ? await resolveNpmImport(root, specifier)
     : undefined;
 }
