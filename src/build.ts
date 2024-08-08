@@ -183,15 +183,21 @@ export async function build(
   }
 
   // Copy over global assets (e.g., minisearch.json, DuckDB’s WebAssembly).
+  // Anything in _observablehq also needs a content hash, but anything in _npm
+  // or _node does not (because they are already necessarily immutable).
   for (const path of globalImports) {
     if (path.endsWith(".js")) continue;
     const sourcePath = join(cacheRoot, path);
     effects.output.write(`${faint("build")} ${path} ${faint("→")} `);
-    const contents = await readFile(sourcePath, "utf-8");
-    const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
-    const alias = applyHash(path, hash);
-    aliases.set(path, alias);
-    await effects.writeFile(alias, contents);
+    if (path.startsWith("/_observablehq/")) {
+      const contents = await readFile(sourcePath, "utf-8");
+      const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
+      const alias = applyHash(path, hash);
+      aliases.set(path, alias);
+      await effects.writeFile(alias, contents);
+    } else {
+      await effects.copyFile(sourcePath, path);
+    }
   }
 
   // Compute the hashes for global modules. By computing the hash on the file in
