@@ -74,12 +74,11 @@ export async function rollupClient(
         keepNames,
         minify,
         define: {
-          "global.__minisearch": '"./minisearch.json"',
           "process.env.OBSERVABLE_ORIGIN": JSON.stringify(String(getObservableUiOrigin()).replace(/\/$/, "")),
           ...define
         }
       }),
-      importMetaResolve(root, path)
+      importMetaResolve(input, root, path)
     ],
     onwarn(message, warn) {
       if (message.code === "CIRCULAR_DEPENDENCY") return;
@@ -145,7 +144,8 @@ function importResolve(input: string, root: string, path: string): Plugin {
   };
 }
 
-function importMetaResolve(root: string, path: string): Plugin {
+function importMetaResolve(input: string, root: string, path: string): Plugin {
+  const baseResolve = importResolve(input, root, path); // TODO cleaner
   return {
     name: "resolve-import-meta-resolve",
     async transform(code) {
@@ -173,10 +173,8 @@ function importMetaResolve(root: string, path: string): Plugin {
       for (const node of resolves) {
         const source = node.arguments[0];
         const specifier = getStringLiteralValue(source as StringLiteral);
-        if (specifier.startsWith("npm:")) {
-          const resolution = relativePath(path, await resolveNpmImport(root, specifier.slice("npm:".length)));
-          output.replaceLeft(source.start, source.end, JSON.stringify(resolution));
-        }
+        const resolution = await (baseResolve.resolveId as any)(specifier); // TODO cleaner
+        if (resolution) output.replaceLeft(source.start, source.end, JSON.stringify(resolution.id));
       }
 
       return {code: String(output)};

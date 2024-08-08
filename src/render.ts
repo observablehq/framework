@@ -139,7 +139,7 @@ async function renderSidebar(options: RenderOptions, resolveLink: (href: string)
       ? html`\n  <div id="observablehq-search"><input type="search" placeholder="Search"></div>
   <div id="observablehq-search-results"></div>
   <script>{${html.unsafe(
-    (await rollupClient(getClientPath("search-init.js"), root, path, {minify: true})).trim()
+    (await rollupClient(getClientPath("search-init.js"), root, path, {minify: true})).trim() // TODO content hashes
   )}}</script>`
       : ""
   }${pages.map((p, i) =>
@@ -159,7 +159,7 @@ async function renderSidebar(options: RenderOptions, resolveLink: (href: string)
   )}
 </nav>
 <script>{${html.unsafe(
-    (await rollupClient(getClientPath("sidebar-init.js"), root, path, {minify: true})).trim()
+    (await rollupClient(getClientPath("sidebar-init.js"), root, path, {minify: true})).trim() // TODO content hashes
   )}}</script>`;
 }
 
