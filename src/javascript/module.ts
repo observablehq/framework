@@ -1,3 +1,4 @@
+import type {Hash} from "node:crypto";
 import {createHash} from "node:crypto";
 import {accessSync, constants, existsSync, readFileSync, statSync} from "node:fs";
 import {readFile} from "node:fs/promises";
@@ -46,6 +47,10 @@ const moduleInfoCache = new Map<string, ModuleInfo>();
  * transitive imports or files that are invalid or do not exist.
  */
 export function getModuleHash(root: string, path: string): string {
+  return getModuleHash2(root, path).digest("hex");
+}
+
+export function getModuleHash2(root: string, path: string): Hash {
   const hash = createHash("sha256");
   const paths = new Set([path]);
   for (const path of paths) {
@@ -64,7 +69,7 @@ export function getModuleHash(root: string, path: string): string {
       hash.update(f.hash);
     }
   }
-  return hash.digest("hex");
+  return hash;
 }
 
 /**
