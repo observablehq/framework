@@ -33,4 +33,4 @@ jobs:
       - run: yarn docs:build
       - run: yarn docs:deploy
         env:
-          OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_TOKEN }}
+          OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_API_TOKEN }}
