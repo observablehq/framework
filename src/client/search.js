@@ -8,7 +8,11 @@ const resultsContainer = document.querySelector("#observablehq-search-results");
 const activeClass = "observablehq-link-active";
 let currentValue;
 
-const index = await fetch(import.meta.resolve("observablehq:minisearch.json"))
+// Note: we use import.meta.url here instead of import.meta.resolve because
+// minisearch.json is not content-hashed and we don’t want the hash of this
+// module changing whenever the search index changes (because that in turn would
+// change the hash of every page whenever any page changes).
+const index = await fetch(new URL("./minisearch.json", import.meta.url))
   .then((response) => {
     if (!response.ok) throw new Error(`unable to load minisearch.json: ${response.status}`);
     return response.json();

@@ -99,10 +99,7 @@ export async function build(
     globalImports.add("/_observablehq/search.js").add("/_observablehq/minisearch.json");
     const contents = await searchIndex(config, effects);
     effects.output.write(`${faint("index →")} `);
-    const cachePath = join(cacheRoot, "_observablehq", "minisearch.json");
-    await prepareOutput(cachePath);
-    await writeFile(cachePath, contents);
-    effects.logger.log(cachePath);
+    await effects.writeFile("/_observablehq/minisearch.json", contents);
   }
 
   // Generate the client bundles. These are initially generated into the cache
@@ -180,10 +177,14 @@ export async function build(
   }
 
   // Copy over global assets (e.g., minisearch.json, DuckDB’s WebAssembly).
-  // Anything in _observablehq also needs a content hash, but anything in _npm
-  // or _node does not (because they are already necessarily immutable).
+  // Anything in _observablehq also needs a content hash, except for
+  // minisearch.json which we expressly avoid hashing so that a change to a
+  // single page don’t cause the content of all pages to change due to the hash
+  // of search.js changing. Any asset (not a JavaScript module!) in _npm or
+  // _node does not need hashing because they are already immutable.
   for (const path of globalImports) {
     if (path.endsWith(".js")) continue;
+    if (path === "/_observablehq/minisearch.json") continue; // see above
     const sourcePath = join(cacheRoot, path);
     effects.output.write(`${faint("build")} ${path} ${faint("→")} `);
     if (path.startsWith("/_observablehq/")) {
