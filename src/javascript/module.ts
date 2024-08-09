@@ -57,19 +57,25 @@ function getModuleHashInternal(root: string, path: string): Hash {
   const hash = createHash("sha256");
   const paths = new Set([path]);
   for (const path of paths) {
-    const info = getModuleInfo(root, path);
-    if (!info) continue; // ignore missing file
-    hash.update(info.hash);
-    for (const i of info.localStaticImports) {
-      paths.add(resolvePath(path, i));
-    }
-    for (const i of info.localDynamicImports) {
-      paths.add(resolvePath(path, i));
-    }
-    for (const i of info.files) {
-      const f = getFileInfo(root, resolvePath(path, i));
-      if (!f) continue; // ignore missing file
-      hash.update(f.hash);
+    if (path.endsWith(".js")) {
+      const info = getModuleInfo(root, path);
+      if (!info) continue; // ignore missing file
+      hash.update(info.hash);
+      for (const i of info.localStaticImports) {
+        paths.add(resolvePath(path, i));
+      }
+      for (const i of info.localDynamicImports) {
+        paths.add(resolvePath(path, i));
+      }
+      for (const i of info.files) {
+        const f = getFileInfo(root, resolvePath(path, i));
+        if (!f) continue; // ignore missing file
+        hash.update(f.hash);
+      }
+    } else {
+      const info = getFileInfo(root, path); // e.g., import.meta.resolve("foo.json")
+      if (!info) continue; // ignore missing file
+      hash.update(info.hash);
     }
   }
   return hash;
