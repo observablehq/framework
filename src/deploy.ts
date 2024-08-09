@@ -2,6 +2,7 @@ import {createHash} from "node:crypto";
 import type {Stats} from "node:fs";
 import {readFile, stat} from "node:fs/promises";
 import {join} from "node:path/posix";
+import slugify from "@sindresorhus/slugify";
 import wrapAnsi from "wrap-ansi";
 import type {BuildEffects, BuildManifest, BuildOptions} from "./build.js";
 import {FileBuildEffects, build} from "./build.js";
@@ -25,7 +26,6 @@ import type {
 } from "./observableApiClient.js";
 import type {ConfigEffects, DeployConfig} from "./observableApiConfig.js";
 import {defaultEffects as defaultConfigEffects, getDeployConfig, setDeployConfig} from "./observableApiConfig.js";
-import {slugify} from "./slugify.js";
 import {Telemetry} from "./telemetry.js";
 import type {TtyEffects} from "./tty.js";
 import {bold, defaultEffects as defaultTtyEffects, faint, inverse, link, underline, yellow} from "./tty.js";
