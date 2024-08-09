@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import {existsSync, readdirSync, statSync} from "node:fs";
-import {mkdir, mkdtemp, readFile, rm, writeFile} from "node:fs/promises";
+import {mkdir, mkdtemp, open, readFile, rm, unlink, writeFile} from "node:fs/promises";
 import os from "node:os";
 import {join, normalize, relative} from "node:path/posix";
 import {PassThrough} from "node:stream";
@@ -14,6 +14,16 @@ const silentEffects = {
   logger: {log() {}, warn() {}, error() {}},
   output: {write() {}}
 };
+
+function getHashNormalizer() {
+  const hashes = new Map<string, string>();
+  let nextHashId = 0;
+  return (key: string) => {
+    let hash = hashes.get(key);
+    if (!hash) hashes.set(key, (hash = String(++nextHashId).padStart(8, "0")));
+    return hash;
+  };
+}
 
 describe("build", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
@@ -40,15 +50,32 @@ describe("build", () => {
       const expectedDir = join(outputRoot, outname);
       const generate = !existsSync(expectedDir) && process.env.CI !== "true";
       const outputDir = generate ? expectedDir : actualDir;
+      const normalizeHash = getHashNormalizer();
 
       await rm(actualDir, {recursive: true, force: true});
       if (generate) console.warn(`! generating ${expectedDir}`);
       const config = {...(await readConfig(undefined, path)), output: outputDir};
       await build({config}, new TestEffects(outputDir, join(config.root, ".observablehq", "cache")));
 
-      // For non-public tests (most of them), we don’t want to test the contents
-      // of the _observablehq files because they change often.
-      if (!name.endsWith("-public")) await rm(join(outputDir, "_observablehq"), {recursive: true, force: true});
+      // Replace any hashed files in _observablehq with empty files, and
+      // renumber the hashes so they are sequential. This way we don’t have to
+      // update the test snapshots whenever Framework’s client code changes.
+      for (let path of findFiles(join(actualDir, "_observablehq"))) {
+        const match = /^((.+)\.[0-9a-f]{8})\.(\w+)$/.exec(path);
+        if (match) {
+          const [, key, name, ext] = match;
+          await unlink(join(actualDir, "_observablehq", path));
+          path = `${name}.${normalizeHash(key)}.${ext}`;
+        }
+        await (await open(join(actualDir, "_observablehq", path), "w")).close();
+      }
+
+      // Replace any reference to re-numbered files in _observablehq.
+      for (const path of findFiles(actualDir)) {
+        const actual = await readFile(join(actualDir, path), "utf8");
+        const normalized = actual.replace(/\/_observablehq\/((\w+)\.[0-9a-f]{8})\.js\b/g, (match, key, name) => `/_observablehq/${name}.${normalizeHash(key)}.js`); // prettier-ignore
+        if (normalized !== actual) await writeFile(join(actualDir, path), normalized);
+      }
 
       if (generate) return;
 
