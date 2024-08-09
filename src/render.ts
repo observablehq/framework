@@ -5,6 +5,7 @@ import {getClientPath} from "./files.js";
 import type {Html, HtmlResolvers} from "./html.js";
 import {html, parseHtml, rewriteHtml} from "./html.js";
 import {isJavaScript} from "./javascript/imports.js";
+import type {Params} from "./javascript/params.js";
 import {transpileJavaScript} from "./javascript/transpile.js";
 import type {MarkdownPage} from "./markdown.js";
 import type {PageLink} from "./pager.js";
@@ -17,6 +18,7 @@ import {rollupClient} from "./rollup.js";
 export interface RenderOptions extends Config {
   root: string;
   path: string;
+  params?: Params;
   resolvers?: Resolvers;
 }
 
@@ -26,7 +28,7 @@ type RenderInternalOptions =
 
 export async function renderPage(page: MarkdownPage, options: RenderOptions & RenderInternalOptions): Promise<string> {
   const {data} = page;
-  const {base, path, title, preview} = options;
+  const {base, path, params, title, preview} = options;
   const {loaders, resolvers = await getResolvers(page, options)} = options;
   const {draft = false, sidebar = options.sidebar} = data;
   const toc = mergeToc(data.toc, options.toc);
@@ -74,7 +76,7 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
       : ""
   }${data?.sql ? `\n${registerTables(data.sql, options)}` : ""}
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
-    .map(({node, id, mode}) => `\n${transpileJavaScript(node, {id, path, mode, resolveImport})}`)
+    .map(({node, id, mode}) => `\n${transpileJavaScript(node, {id, path, params, mode, resolveImport})}`)
     .join("")}`)}
 </script>${sidebar ? html`\n${await renderSidebar(options, resolvers.resolveLink)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""

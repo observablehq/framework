@@ -7,6 +7,8 @@ import type {FileExpression} from "./files.js";
 import {findFiles} from "./files.js";
 import type {ImportReference} from "./imports.js";
 import {findExports, findImports} from "./imports.js";
+import type {Params} from "./params.js";
+import {checkParams} from "./params.js";
 import {findReferences} from "./references.js";
 import {syntaxError} from "./syntaxError.js";
 
@@ -15,6 +17,8 @@ export interface ParseOptions {
   path: string;
   /** If true, require the input to be an expresssion. */
   inline?: boolean;
+  /** TODO */
+  params?: Params;
 }
 
 export const acornOptions: Options = {
@@ -38,7 +42,7 @@ export interface JavaScriptNode {
  * the specified inline JavaScript expression.
  */
 export function parseJavaScript(input: string, options: ParseOptions): JavaScriptNode {
-  const {inline = false, path} = options;
+  const {inline = false, path, params} = options;
   let expression = maybeParseExpression(input); // first attempt to parse as expression
   if (expression?.type === "ClassExpression" && expression.id) expression = null; // treat named class as program
   if (expression?.type === "FunctionExpression" && expression.id) expression = null; // treat named function as program
@@ -47,6 +51,7 @@ export function parseJavaScript(input: string, options: ParseOptions): JavaScrip
   const exports = findExports(body);
   if (exports.length) throw syntaxError("Unexpected token 'export'", exports[0], input); // disallow exports
   const references = findReferences(body);
+  if (params) checkParams(body, input, params);
   checkAssignments(body, references, input);
   return {
     body,
@@ -60,8 +65,10 @@ export function parseJavaScript(input: string, options: ParseOptions): JavaScrip
   };
 }
 
-export function parseProgram(input: string): Program {
-  return Parser.parse(input, acornOptions);
+export function parseProgram(input: string, params?: Params): Program {
+  const body = Parser.parse(input, acornOptions);
+  if (params) checkParams(body, input, params);
+  return body;
 }
 
 /**

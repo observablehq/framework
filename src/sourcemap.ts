@@ -39,6 +39,15 @@ export class Sourcemap {
     }
     return lo;
   }
+  private _subsume(start: number, end: number): void {
+    let n = 0;
+    for (let i = 0; i < this._edits.length; ++i) {
+      const e = this._edits[i];
+      if (start <= e.start && e.end < end) continue;
+      this._edits[n++] = e;
+    }
+    this._edits.length = n;
+  }
   insertLeft(index: number, value: string): typeof this {
     return this.replaceLeft(index, index, value);
   }
@@ -49,10 +58,14 @@ export class Sourcemap {
     return this.replaceRight(start, end, "");
   }
   replaceLeft(start: number, end: number, value: string): typeof this {
-    return this._edits.splice(this._bisectLeft(start), 0, {start, end, value}), this;
+    this._subsume(start, end);
+    this._edits.splice(this._bisectLeft(start), 0, {start, end, value});
+    return this;
   }
   replaceRight(start: number, end: number, value: string): typeof this {
-    return this._edits.splice(this._bisectRight(start), 0, {start, end, value}), this;
+    this._subsume(start, end);
+    this._edits.splice(this._bisectRight(start), 0, {start, end, value});
+    return this;
   }
   translate(position: Position): Position {
     let index = 0;

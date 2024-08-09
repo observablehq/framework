@@ -1,14 +1,15 @@
 import {createHash} from "node:crypto";
-import {watch} from "node:fs";
+import {existsSync, watch} from "node:fs";
 import type {FSWatcher, WatchEventType} from "node:fs";
 import {access, constants, readFile} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
-import {basename, dirname, join, normalize} from "node:path/posix";
+import {basename, dirname, extname, join, normalize} from "node:path/posix";
 import {difference} from "d3-array";
 import type {PatchItem} from "fast-array-diff";
 import {getPatch} from "fast-array-diff";
 import deepEqual from "fast-deep-equal";
+import {globSync} from "glob";
 import mime from "mime";
 import openBrowser from "open";
 import send from "send";
@@ -21,7 +22,8 @@ import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import type {FileWatchers} from "./fileWatchers.js";
 import {isComment, isElement, isText, parseHtml, rewriteHtml} from "./html.js";
-import {readJavaScript} from "./javascript/module.js";
+import {findModule, readJavaScript} from "./javascript/module.js";
+import type {Params} from "./javascript/params.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import {parseMarkdown} from "./markdown.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
@@ -136,15 +138,17 @@ export class PreviewServer {
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
         const path = pathname.slice("/_import".length);
-        const filepath = join(root, path);
         try {
           if (pathname.endsWith(".css")) {
+            // TODO allow parameterized path?
+            const filepath = join(root, path);
             await access(filepath, constants.R_OK);
             end(req, res, await bundleStyles({path: filepath}), "text/css");
             return;
           } else if (pathname.endsWith(".js")) {
-            const input = await readJavaScript(join(root, path));
-            const output = await transpileModule(input, {root, path});
+            const module = findModule(root, path);
+            const input = await readJavaScript(join(root, module.path));
+            const output = await transpileModule(input, {root, path, params: module.params});
             end(req, res, output, "text/javascript");
             return;
           }
@@ -153,27 +157,18 @@ export class PreviewServer {
         }
         throw new HttpError(`Not found: ${pathname}`, 404);
       } else if (pathname.startsWith("/_file/")) {
-        const path = pathname.slice("/_file".length);
-        const filepath = join(root, path);
-        try {
-          await access(filepath, constants.R_OK);
-          send(req, pathname.slice("/_file".length), {root}).pipe(res);
-          return;
-        } catch (error) {
-          if (!isEnoent(error)) throw error;
-        }
-
-        // Look for a data loader for this file.
-        const loader = loaders.find(path);
-        if (loader) {
+        const loader = loaders.find(pathname.slice("/_file".length));
+        if (!loader) throw new HttpError(`Not found: ${pathname}`, 404);
+        if ("load" in loader) {
           try {
             send(req, await loader.load(), {root}).pipe(res);
-            return;
           } catch (error) {
             if (!isEnoent(error)) throw error;
+            throw new HttpError(`Not found: ${pathname}`, 404);
           }
+        } else {
+          send(req, loader.path).pipe(res);
         }
-        throw new HttpError(`Not found: ${pathname}`, 404);
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
 
@@ -195,8 +190,9 @@ export class PreviewServer {
         // Lastly, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
         try {
-          const options = {...config, path: pathname, preview: true};
-          const source = await readFile(join(root, pathname + ".md"), "utf8");
+          const {path: sourcePath, params} = findPage(root, `${pathname}.md`);
+          const options = {...config, params, path: pathname, preview: true};
+          const source = await readFile(sourcePath, "utf8");
           const parse = parseMarkdown(source, options);
           const html = await renderPage(parse, options);
           end(req, res, html, "text/html");
@@ -213,6 +209,11 @@ export class PreviewServer {
         console.error(error);
       }
       if (req.method === "GET" && res.statusCode === 404) {
+        if (req.url?.startsWith("/_file/") || req.url?.startsWith("/_import/")) {
+          res.setHeader("Content-Type", "text/plain; charset=utf-8");
+          res.end("File not found");
+          return;
+        }
         try {
           const options = {...config, path: "/404", preview: true};
           const source = await readFile(join(root, "404.md"), "utf8");
@@ -260,6 +261,41 @@ function end(req: IncomingMessage, res: ServerResponse, content: string, type: s
   }
 }
 
+function findPage(root: string, path: string): {path: string; params?: Params} {
+  const exactPath = join(root, path);
+  if (existsSync(exactPath)) return {path: exactPath};
+  return findPageParams(root, join(".", path).split("/")) ?? {path: exactPath};
+}
+
+/**
+ * Finds a parameterized page (dynamic route) recursively, such that the most
+ * specific match is returned.
+ */
+function findPageParams(cwd: string, parts: string[]): {path: string; params?: Params} | undefined {
+  switch (parts.length) {
+    case 0:
+      return;
+    case 1: {
+      const [first] = parts;
+      if (existsSync(join(cwd, first))) return {path: join(cwd, first)};
+      const ext = extname(first);
+      for (const file of globSync(`\\[*\\]${ext}`, {cwd})) {
+        const params = {[basename(file, ext).slice(1, -1)]: basename(first, ext)};
+        return {path: join(cwd, file), params};
+      }
+      return;
+    }
+    default: {
+      const [first, ...rest] = parts;
+      if (existsSync(join(cwd, first))) return findPageParams(join(cwd, first), rest);
+      for (const dir of globSync("\\[*\\]", {cwd})) {
+        const found = findPageParams(join(cwd, dir), rest);
+        if (found) return {...found, params: {...found.params, [dir.slice(1, -1)]: first}};
+      }
+    }
+  }
+}
+
 // Note that while we appear to be watching the referenced files here,
 // FileWatchers will magically watch the corresponding data loader if a
 // referenced file does not exist!
@@ -289,7 +325,9 @@ interface HtmlPart {
 
 function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Promise<Config>) {
   let config: Config | null = null;
+  let sourcePath: string | null = null;
   let path: string | null = null;
+  let params: Params | undefined | null = null;
   let hash: string | null = null;
   let html: HtmlPart[] | null = null;
   let code: Map<string, string> | null = null;
@@ -304,13 +342,13 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
   console.log(faint("socket open"), req.url);
 
   async function watcher(event: WatchEventType, force = false) {
-    if (!path || !config) throw new Error("not initialized");
+    if (sourcePath === null || path === null || params === null || config === null) throw new Error("not initialized");
     const {root, loaders, normalizePath} = config;
     switch (event) {
       case "rename": {
         markdownWatcher?.close();
         try {
-          markdownWatcher = watch(join(root, path), (event) => watcher(event));
+          markdownWatcher = watch(sourcePath, (event) => watcher(event));
         } catch (error) {
           if (!isEnoent(error)) throw error;
           console.error(`file no longer exists: ${path}`);
@@ -321,8 +359,8 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
         break;
       }
       case "change": {
-        const source = await readFile(join(root, path), "utf8");
-        const page = parseMarkdown(source, {path, ...config});
+        const source = await readFile(sourcePath, "utf8");
+        const page = parseMarkdown(source, {path, params, ...config});
         // delay to avoid a possibly-empty file
         if (!force && page.body === "") {
           if (!emptyTimeout) {
@@ -346,7 +384,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
         const previousStylesheets = stylesheets!;
         hash = resolvers.hash;
         html = getHtml(page, resolvers);
-        code = getCode(page, resolvers);
+        code = getCode(page, resolvers, params);
         files = getFiles(resolvers);
         tables = getTables(page);
         stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
@@ -371,21 +409,22 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     path = decodeURI(initialPath);
     if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
     if (path.endsWith("/")) path += "index";
-    path = join(dirname(path), basename(path, ".html") + ".md");
+    path = join(dirname(path), `${basename(path, ".html")}.md`);
     config = await configPromise;
     const {root, loaders, normalizePath} = config;
-    const source = await readFile(join(root, path), "utf8");
-    const page = parseMarkdown(source, {path, ...config});
+    ({path: sourcePath, params} = findPage(root, path));
+    const source = await readFile(sourcePath, "utf8");
+    const page = parseMarkdown(source, {path, params, ...config});
     const resolvers = await getResolvers(page, {root, path, loaders, normalizePath});
     if (resolvers.hash !== initialHash) return void send({type: "reload"});
     hash = resolvers.hash;
     html = getHtml(page, resolvers);
-    code = getCode(page, resolvers);
+    code = getCode(page, resolvers, params);
     files = getFiles(resolvers);
     tables = getTables(page);
     stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
     attachmentWatcher = await loaders.watchFiles(path, getWatchFiles(resolvers), () => watcher("change"));
-    markdownWatcher = watch(join(root, path), (event) => watcher(event));
+    markdownWatcher = watch(sourcePath, (event) => watcher(event));
     if (config.watchPath) configWatcher = watch(config.watchPath, () => send({type: "reload"}));
   }
 
@@ -446,8 +485,8 @@ function getHtml({body}: MarkdownPage, resolvers: Resolvers): HtmlPart[] {
   return Array.from(document.body.childNodes, serializeHtml).filter((d): d is HtmlPart => d != null);
 }
 
-function getCode({code}: MarkdownPage, resolvers: Resolvers): Map<string, string> {
-  return new Map(code.map((code) => [code.id, transpileCode(code, resolvers)]));
+function getCode({code}: MarkdownPage, resolvers: Resolvers, params?: Params): Map<string, string> {
+  return new Map(code.map((code) => [code.id, transpileCode(code, resolvers, params)]));
 }
 
 // Including the file has as a comment ensures that the code changes when a
@@ -455,10 +494,10 @@ function getCode({code}: MarkdownPage, resolvers: Resolvers): Map<string, string
 // transitive import changes, or when a file referenced by a transitive import
 // changes, the sha is already included in the transpiled code, and hence will
 // likewise be re-evaluated.
-function transpileCode({id, node, mode}: MarkdownCode, resolvers: Resolvers): string {
+function transpileCode({id, node, mode}: MarkdownCode, resolvers: Resolvers, params?: Params): string {
   const hash = createHash("sha256");
   for (const f of node.files) hash.update(resolvers.resolveFile(f.name));
-  return `${transpileJavaScript(node, {id, mode, ...resolvers})} // ${hash.digest("hex")}`;
+  return `${transpileJavaScript(node, {id, mode, params, ...resolvers})} // ${hash.digest("hex")}`;
 }
 
 function getFiles({files, resolveFile}: Resolvers): Map<string, string> {

@@ -39,9 +39,17 @@ describe("isStringLiteral(node)", () => {
     assert.strictEqual(isStringLiteral(parseExpression("'foo'")), true);
     assert.strictEqual(isStringLiteral(parseExpression("`foo`")), true);
   });
+  it("allows binary expressions of string literals", () => {
+    assert.strictEqual(isStringLiteral(parseExpression("'1' + '2'")), true);
+    assert.strictEqual(isStringLiteral(parseExpression("'1' + `${'2'}`")), true);
+  });
+  it("allows template literals of string literals", () => {
+    assert.strictEqual(isStringLiteral(parseExpression("`${'1'}${'2'}`")), true);
+    assert.strictEqual(isStringLiteral(parseExpression("`${'1'+'2'}`")), true);
+  });
   it("returns false for other nodes", () => {
     assert.strictEqual(isStringLiteral(parseExpression("42")), false);
-    assert.strictEqual(isStringLiteral(parseExpression("'1' + '2'")), false);
+    assert.strictEqual(isStringLiteral(parseExpression("1 + 2")), false);
     assert.strictEqual(isStringLiteral(parseExpression("`${42}`")), false);
   });
 });
