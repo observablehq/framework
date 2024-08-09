@@ -1,5 +1,6 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
+import slugify from "@sindresorhus/slugify";
 import {transformSync} from "esbuild";
 import he from "he";
 import MarkdownIt from "markdown-it";
@@ -226,7 +227,7 @@ export function createMarkdownIt({
 } = {}): MarkdownIt {
   const md = MarkdownIt({html: true, linkify, typographer, quotes});
   if (linkify) md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
-  md.use(MarkdownItAnchor);
+  md.use(MarkdownItAnchor, {slugify: (s) => slugify(s)});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.after("inline", "placeholder", transformPlaceholderCore);
   md.renderer.rules.placeholder = makePlaceholderRenderer();
