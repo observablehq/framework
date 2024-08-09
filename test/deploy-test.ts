@@ -1007,9 +1007,9 @@ describe("deploy", () => {
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .expectFileUpload({deployId, path: "index.html", action: "upload"})
       .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.e68849dc.css", action: "skip"})
-      .expectFileUpload({deployId, path: "_observablehq/client.0425226e.js", action: "skip"})
-      .expectFileUpload({deployId, path: "_observablehq/runtime.c45c72e0.js", action: "skip"})
-      .expectFileUpload({deployId, path: "_observablehq/stdlib.1b8a97c3.js", action: "skip"})
+      .expectFileUpload({deployId, path: "_observablehq/client.e153837f.js", action: "skip"})
+      .expectFileUpload({deployId, path: "_observablehq/runtime.4d065c03.js", action: "skip"})
+      .expectFileUpload({deployId, path: "_observablehq/stdlib.11a0ff13.js", action: "skip"})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId, deployStatus: "uploaded"})
       .start();
