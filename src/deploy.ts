@@ -62,7 +62,7 @@ export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
   output: NodeJS.WritableStream;
   visitFiles: (root: string) => Generator<string>;
   stat: (path: string) => Promise<Stats>;
-  build: ({config, addPublic}: BuildOptions, effects?: BuildEffects) => Promise<void>;
+  build: ({config}: BuildOptions, effects?: BuildEffects) => Promise<void>;
   readCacheFile: (sourceRoot: string, path: string) => Promise<string>;
 }
 

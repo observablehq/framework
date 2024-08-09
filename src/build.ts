@@ -5,13 +5,12 @@ import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {CliError, isEnoent} from "./error.js";
 import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
-import {getModuleHash, readJavaScript} from "./javascript/module.js";
+import {getLocalModuleHash, getModuleHash, readJavaScript} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
-import {extractNodeSpecifier} from "./node.js";
-import {extractNpmSpecifier, populateNpmCache, resolveNpmImport} from "./npm.js";
+import {populateNpmCache, resolveNpmImport, rewriteNpmImports} from "./npm.js";
 import {isAssetPath, isPathImport, relativePath, resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
@@ -25,7 +24,6 @@ import {faint, green, magenta, red, yellow} from "./tty.js";
 
 export interface BuildOptions {
   config: Config;
-  addPublic?: boolean;
 }
 
 export interface BuildEffects {
@@ -48,7 +46,7 @@ export interface BuildEffects {
 }
 
 export async function build(
-  {config, addPublic = true}: BuildOptions,
+  {config}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output, join(config.root, ".observablehq", "cache"))
 ): Promise<void> {
   const {root, loaders, normalizePath} = config;
@@ -65,10 +63,10 @@ export async function build(
 
   // Parse .md files, building a list of additional assets as we go.
   const pages = new Map<string, {page: MarkdownPage; resolvers: Resolvers}>();
-  const files = new Set<string>();
-  const localImports = new Set<string>();
-  const globalImports = new Set<string>();
-  const stylesheets = new Set<string>();
+  const files = new Set<string>(); // e.g., "/assets/foo.png"
+  const localImports = new Set<string>(); // e.g., "/components/foo.js"
+  const globalImports = new Set<string>(); // e.g., "/_observablehq/search.js"
+  const stylesheets = new Set<string>(); // e.g., "/style.css"
   for (const sourceFile of visitMarkdownFiles(root)) {
     const sourcePath = join(root, sourceFile);
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
@@ -86,7 +84,7 @@ export async function build(
     for (const f of resolvers.assets) files.add(resolvePath(sourceFile, f));
     for (const f of resolvers.files) files.add(resolvePath(sourceFile, f));
     for (const i of resolvers.localImports) localImports.add(resolvePath(sourceFile, i));
-    for (const i of resolvers.globalImports) globalImports.add(resolvePath(sourceFile, resolvers.resolveImport(i)));
+    for (let i of resolvers.globalImports) if (isPathImport((i = resolvers.resolveImport(i)))) globalImports.add(resolvePath(sourceFile, i)); // prettier-ignore
     for (const s of resolvers.stylesheets) stylesheets.add(/^\w+:/.test(s) ? s : resolvePath(sourceFile, s));
     effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
     pages.set(sourceFile, {page, resolvers});
@@ -94,63 +92,69 @@ export async function build(
 
   // For cache-breaking we rename most assets to include content hashes.
   const aliases = new Map<string, string>();
+  const cacheRoot = join(root, ".observablehq", "cache");
 
   // Add the search bundle and data, if needed.
   if (config.search) {
-    globalImports.add("/_observablehq/search.js");
+    globalImports.add("/_observablehq/search.js").add("/_observablehq/minisearch.json");
     const contents = await searchIndex(config, effects);
     effects.output.write(`${faint("index →")} `);
-    const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
-    const alias = `/_observablehq/minisearch.${hash}.json`;
-    aliases.set("/_observablehq/minisearch.json", alias);
-    await effects.writeFile(join("_observablehq", `minisearch.${hash}.json`), contents);
+    const cachePath = join(cacheRoot, "_observablehq", "minisearch.json");
+    await prepareOutput(cachePath);
+    await writeFile(cachePath, contents);
+    effects.logger.log(cachePath);
   }
 
-  // Generate the client bundles (JavaScript and styles). TODO Use a content
-  // hash, or perhaps the Framework version number for built-in modules.
-  if (addPublic) {
-    for (const path of globalImports) {
-      if (path.startsWith("/_observablehq/") && path.endsWith(".js")) {
-        const clientPath = getClientPath(path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)); // prettier-ignore
-        effects.output.write(`${faint("build")} ${clientPath} ${faint("→")} `);
-        const define: {[key: string]: string} = {};
-        if (config.search) define["global.__minisearch"] = JSON.stringify(relativePath(path, aliases.get("/_observablehq/minisearch.json")!)); // prettier-ignore
-        const contents = await rollupClient(clientPath, root, path, {minify: true, keepNames: true, define});
-        await effects.writeFile(path, contents);
-      }
-    }
-    for (const specifier of stylesheets) {
-      if (specifier.startsWith("observablehq:")) {
-        const path = `/_observablehq/${specifier.slice("observablehq:".length)}`;
-        effects.output.write(`${faint("build")} ${specifier} ${faint("→")} `);
-        if (specifier.startsWith("observablehq:theme-")) {
-          const match = /^observablehq:theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(specifier);
-          const contents = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? [], minify: true});
-          await effects.writeFile(path, contents);
-        } else {
-          const clientPath = getClientPath(path.slice("/_observablehq/".length));
-          const contents = await bundleStyles({path: clientPath, minify: true});
-          await effects.writeFile(`/_observablehq/${specifier.slice("observablehq:".length)}`, contents);
-        }
-      } else if (specifier.startsWith("npm:")) {
-        effects.output.write(`${faint("copy")} ${specifier} ${faint("→")} `);
-        const path = await resolveNpmImport(root, specifier.slice("npm:".length));
-        const sourcePath = await populateNpmCache(root, path); // TODO effects
-        await effects.copyFile(sourcePath, path);
-      } else if (!/^\w+:/.test(specifier)) {
-        const sourcePath = join(root, specifier);
-        effects.output.write(`${faint("build")} ${sourcePath} ${faint("→")} `);
-        const contents = await bundleStyles({path: sourcePath, minify: true});
-        const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
-        const ext = extname(specifier);
-        const alias = `/${join("_import", dirname(specifier), `${basename(specifier, ext)}.${hash}${ext}`)}`;
-        aliases.set(resolveStylesheetPath(root, specifier), alias);
-        await effects.writeFile(alias, contents);
-      }
+  // Generate the client bundles. These are initially generated into the cache
+  // because we need to rewrite any npm and node imports to be hashed; this is
+  // handled generally for all global imports below.
+  for (const path of globalImports) {
+    if (path.startsWith("/_observablehq/") && path.endsWith(".js")) {
+      const cachePath = join(cacheRoot, path);
+      effects.output.write(`${faint("bundle")} ${path} ${faint("→")} `);
+      const clientPath = getClientPath(path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)); // prettier-ignore
+      const define: {[key: string]: string} = {};
+      const contents = await rollupClient(clientPath, root, path, {minify: true, keepNames: true, define});
+      await prepareOutput(cachePath);
+      await writeFile(cachePath, contents);
+      effects.logger.log(cachePath);
     }
   }
 
-  // Copy over the referenced files, accumulating hashed aliases.
+  // Copy over the stylesheets, accumulating hashed aliases.
+  for (const specifier of stylesheets) {
+    if (specifier.startsWith("observablehq:")) {
+      let contents: string;
+      const path = `/_observablehq/${specifier.slice("observablehq:".length)}`;
+      effects.output.write(`${faint("build")} ${path} ${faint("→")} `);
+      if (specifier.startsWith("observablehq:theme-")) {
+        const match = /^observablehq:theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(specifier);
+        contents = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? [], minify: true});
+      } else {
+        const clientPath = getClientPath(path.slice("/_observablehq/".length));
+        contents = await bundleStyles({path: clientPath, minify: true});
+      }
+      const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
+      const alias = applyHash(path, hash);
+      aliases.set(path, alias);
+      await effects.writeFile(alias, contents);
+    } else if (specifier.startsWith("npm:")) {
+      effects.output.write(`${faint("copy")} ${specifier} ${faint("→")} `);
+      const path = await resolveNpmImport(root, specifier.slice("npm:".length));
+      const sourcePath = await populateNpmCache(root, path); // TODO effects
+      await effects.copyFile(sourcePath, path);
+    } else if (!/^\w+:/.test(specifier)) {
+      const sourcePath = join(root, specifier);
+      effects.output.write(`${faint("build")} ${sourcePath} ${faint("→")} `);
+      const contents = await bundleStyles({path: sourcePath, minify: true});
+      const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
+      const alias = applyHash(join("/_import", specifier), hash);
+      aliases.set(resolveStylesheetPath(root, specifier), alias);
+      await effects.writeFile(alias, contents);
+    }
+  }
+
+  // Copy over referenced files, accumulating hashed aliases.
   for (const file of files) {
     let sourcePath = join(root, file);
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
@@ -170,37 +174,63 @@ export async function build(
     }
     const contents = await readFile(sourcePath);
     const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
-    const ext = extname(file);
-    const alias = `/${join("_file", dirname(file), `${basename(file, ext)}.${hash}${ext}`)}`;
+    const alias = applyHash(join("/_file", file), hash);
     aliases.set(loaders.resolveFilePath(file), alias);
     await effects.writeFile(alias, contents);
   }
 
-  // Download npm imports. TODO It might be nice to use content hashes for
-  // these, too, but it would involve rewriting the files since populateNpmCache
-  // doesn’t let you pass in a resolver.
+  // Copy over global assets (e.g., minisearch.json, DuckDB’s WebAssembly).
+  // Anything in _observablehq also needs a content hash, but anything in _npm
+  // or _node does not (because they are already necessarily immutable).
   for (const path of globalImports) {
-    if (path.startsWith("/_npm/")) {
-      effects.output.write(`${faint("copy")} npm:${extractNpmSpecifier(path)} ${faint("→")} `);
-      const sourcePath = await populateNpmCache(root, path); // TODO effects
+    if (path.endsWith(".js")) continue;
+    const sourcePath = join(cacheRoot, path);
+    effects.output.write(`${faint("build")} ${path} ${faint("→")} `);
+    if (path.startsWith("/_observablehq/")) {
+      const contents = await readFile(sourcePath, "utf-8");
+      const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
+      const alias = applyHash(path, hash);
+      aliases.set(path, alias);
+      await effects.writeFile(alias, contents);
+    } else {
       await effects.copyFile(sourcePath, path);
-    } else if (path.startsWith("/_node/")) {
-      effects.output.write(`${faint("copy")} ${extractNodeSpecifier(path)} ${faint("→")} `);
-      await effects.copyFile(join(root, ".observablehq", "cache", path), path);
     }
+  }
+
+  // Compute the hashes for global modules. By computing the hash on the file in
+  // the cache root, this takes into consideration the resolved exact versions
+  // of npm and node imports for transitive dependencies.
+  for (const path of globalImports) {
+    if (!path.endsWith(".js")) continue;
+    const hash = getModuleHash(cacheRoot, path).slice(0, 8);
+    const alias = applyHash(path, hash);
+    effects.logger.log(`${faint("alias")} ${path} ${faint("→")} ${alias}`);
+    aliases.set(path, alias);
+  }
+
+  // Copy over global imports, applying aliases. Note that unused standard
+  // library imports (say parquet-wasm if you never use FileAttachment.parquet)
+  // may not be present in aliases and not included in the output build; these
+  // imports therefore will not have associated hashes.
+  for (const path of globalImports) {
+    if (!path.endsWith(".js")) continue;
+    const sourcePath = join(cacheRoot, path);
+    effects.output.write(`${faint("build")} ${path} ${faint("→")} `);
+    const resolveImport = (i: string) => relativePath(path, aliases.get((i = resolvePath(path, i))) ?? i);
+    await effects.writeFile(aliases.get(path)!, rewriteNpmImports(await readFile(sourcePath, "utf-8"), resolveImport));
   }
 
   // Copy over imported local modules, overriding import resolution so that
   // module hash is incorporated into the file name rather than in the query
   // string. Note that this hash is not of the content of the module itself, but
   // of the transitive closure of the module and its imports and files.
-  const resolveImportAlias = (path: string): string => {
-    const hash = getModuleHash(root, path).slice(0, 8);
-    const ext = extname(path);
-    return `/${join("_import", dirname(path), basename(path, ext))}.${hash}${ext}`;
+  const resolveLocalImport = async (path: string): Promise<string> => {
+    const hash = (await getLocalModuleHash(root, path)).slice(0, 8);
+    return applyHash(join("/_import", path), hash);
   };
   for (const path of localImports) {
     const sourcePath = join(root, path);
+    const importPath = join("_import", path);
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     const resolveImport = getModuleResolver(root, path);
     let input: string;
@@ -215,12 +245,20 @@ export async function build(
       root,
       path,
       async resolveImport(specifier) {
-        return isPathImport(specifier)
-          ? relativePath(join("_import", path), resolveImportAlias(resolvePath(path, specifier)))
-          : resolveImport(specifier);
+        let resolution: string;
+        if (isPathImport(specifier)) {
+          resolution = await resolveLocalImport(resolvePath(path, specifier));
+        } else {
+          resolution = await resolveImport(specifier);
+          if (isPathImport(resolution)) {
+            resolution = resolvePath(importPath, resolution);
+            resolution = aliases.get(resolution) ?? resolution;
+          }
+        }
+        return relativePath(importPath, resolution);
       }
     });
-    const alias = resolveImportAlias(path);
+    const alias = await resolveLocalImport(path);
     aliases.set(resolveImportPath(root, path), alias);
     await effects.writeFile(alias, contents);
   }
@@ -260,10 +298,9 @@ export async function build(
   // Render pages!
   const buildManifest: BuildManifest = {pages: []};
   for (const [sourceFile, {page, resolvers}] of pages) {
-    const sourcePath = join(root, sourceFile);
     const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
     const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
-    effects.output.write(`${faint("render")} ${sourcePath} ${faint("→")} `);
+    effects.output.write(`${faint("render")} ${path} ${faint("→")} `);
     const html = await renderPage(page, {...config, path, resolvers});
     await effects.writeFile(outputPath, html);
     const urlPath = config.normalizePath("/" + outputPath);
@@ -303,6 +340,13 @@ export async function build(
   effects.logger.log("");
 
   Telemetry.record({event: "build", step: "finish", pageCount});
+}
+
+function applyHash(path: string, hash: string): string {
+  const ext = extname(path);
+  let name = basename(path, ext);
+  if (path.endsWith(".js")) name = name.replace(/(^|\.)_esm$/, ""); // allow hash to replace _esm
+  return join(dirname(path), `${name && `${name}.`}${hash}${ext}`);
 }
 
 async function accumulateSize(

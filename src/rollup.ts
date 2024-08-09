@@ -1,4 +1,4 @@
-import {extname} from "node:path/posix";
+import {extname, resolve} from "node:path/posix";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
 import type {CallExpression} from "acorn";
 import {simple} from "acorn-walk";
@@ -11,7 +11,8 @@ import type {StringLiteral} from "./javascript/source.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/source.js";
 import {resolveNpmImport} from "./npm.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
-import {isPathImport, relativePath} from "./path.js";
+import {isAssetPath, isPathImport, relativePath} from "./path.js";
+import {builtins} from "./resolvers.js";
 import {Sourcemap} from "./sourcemap.js";
 import {THEMES, renderTheme} from "./theme.js";
 
@@ -54,18 +55,26 @@ export async function bundleStyles({
   return text;
 }
 
+type ImportResolver = (specifier: string) => Promise<string | undefined> | string | undefined;
+
 export async function rollupClient(
   input: string,
   root: string,
   path: string,
-  {define, keepNames, minify}: {define?: {[key: string]: string}; keepNames?: boolean; minify?: boolean} = {}
+  {
+    define,
+    keepNames,
+    minify,
+    resolveImport = getDefaultResolver(root)
+  }: {define?: {[key: string]: string}; keepNames?: boolean; minify?: boolean; resolveImport?: ImportResolver} = {}
 ): Promise<string> {
+  if (typeof resolveImport !== "function") throw new Error(`invalid resolveImport: ${resolveImport}`);
   const bundle = await rollup({
     input,
     external: [/^https:/],
     plugins: [
       nodeResolve({resolveOnly: BUNDLED_MODULES}),
-      importResolve(input, root, path),
+      importResolve(input, path, resolveImport),
       esbuild({
         format: "esm",
         platform: "browser",
@@ -74,12 +83,11 @@ export async function rollupClient(
         keepNames,
         minify,
         define: {
-          "global.__minisearch": '"./minisearch.json"',
           "process.env.OBSERVABLE_ORIGIN": JSON.stringify(String(getObservableUiOrigin()).replace(/\/$/, "")),
           ...define
         }
       }),
-      importMetaResolve(root, path)
+      importMetaResolve(path, resolveImport)
     ],
     onwarn(message, warn) {
       if (message.code === "CIRCULAR_DEPENDENCY") return;
@@ -106,46 +114,43 @@ function rewriteTypeScriptImports(code: string): string {
   return code.replace(/(?<=\bimport\(([`'"])[\w./]+)\.ts(?=\1\))/g, ".js");
 }
 
-function importResolve(input: string, root: string, path: string): Plugin {
-  async function resolve(specifier: string | AstNode): Promise<ResolveIdResult> {
-    return typeof specifier !== "string" || specifier === input
-      ? null
-      : specifier.startsWith("observablehq:")
-      ? {id: relativePath(path, `/_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`), external: true} // prettier-ignore
-      : specifier === "npm:@observablehq/runtime"
-      ? {id: relativePath(path, "/_observablehq/runtime.js"), external: true}
-      : specifier === "npm:@observablehq/stdlib" || specifier === "@observablehq/stdlib"
-      ? {id: relativePath(path, "/_observablehq/stdlib.js"), external: true}
-      : specifier === "npm:@observablehq/dot"
-      ? {id: relativePath(path, "/_observablehq/stdlib/dot.js"), external: true} // TODO publish to npm
-      : specifier === "npm:@observablehq/duckdb"
-      ? {id: relativePath(path, "/_observablehq/stdlib/duckdb.js"), external: true} // TODO publish to npm
-      : specifier === "npm:@observablehq/inputs"
-      ? {id: relativePath(path, "/_observablehq/stdlib/inputs.js"), external: true}
-      : specifier === "npm:@observablehq/mermaid"
-      ? {id: relativePath(path, "/_observablehq/stdlib/mermaid.js"), external: true} // TODO publish to npm
-      : specifier === "npm:@observablehq/tex"
-      ? {id: relativePath(path, "/_observablehq/stdlib/tex.js"), external: true} // TODO publish to npm
-      : specifier === "npm:@observablehq/sqlite"
-      ? {id: relativePath(path, "/_observablehq/stdlib/sqlite.js"), external: true} // TODO publish to npm
-      : specifier === "npm:@observablehq/xlsx"
-      ? {id: relativePath(path, "/_observablehq/stdlib/xlsx.js"), external: true} // TODO publish to npm
-      : specifier === "npm:@observablehq/zip"
-      ? {id: relativePath(path, "/_observablehq/stdlib/zip.js"), external: true} // TODO publish to npm
-      : specifier.startsWith("npm:")
-      ? {id: relativePath(path, await resolveNpmImport(root, specifier.slice("npm:".length))), external: true}
-      : !/^[a-z]:\\/i.test(specifier) && !isPathImport(specifier) && !BUNDLED_MODULES.includes(specifier) // e.g., inputs.js imports "htl"
-      ? {id: relativePath(path, await resolveNpmImport(root, specifier)), external: true}
-      : null;
+function getDefaultResolver(root: string): ImportResolver {
+  return (specifier: string) => resolveImport(root, specifier);
+}
+
+export async function resolveImport(root: string, specifier: string): Promise<string | undefined> {
+  return BUNDLED_MODULES.includes(specifier)
+    ? undefined
+    : builtins.has(specifier)
+    ? builtins.get(specifier)
+    : specifier.startsWith("observablehq:")
+    ? `/_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`
+    : specifier.startsWith("npm:")
+    ? await resolveNpmImport(root, specifier.slice("npm:".length))
+    : !/^[a-z]:\\/i.test(specifier) && !isPathImport(specifier)
+    ? await resolveNpmImport(root, specifier)
+    : undefined;
+}
+
+function importResolve(input: string, path: string, resolveImport: ImportResolver): Plugin {
+  input = resolve(input);
+
+  async function resolveId(specifier: string | AstNode): Promise<ResolveIdResult> {
+    if (typeof specifier !== "string") return null;
+    if (isAssetPath(specifier) && resolve(specifier) === input) return null;
+    const resolution = await resolveImport(specifier);
+    if (resolution) return {id: relativePath(path, resolution), external: true};
+    return null;
   }
+
   return {
     name: "resolve-import",
-    resolveId: resolve,
-    resolveDynamicImport: resolve
+    resolveId,
+    resolveDynamicImport: resolveId
   };
 }
 
-function importMetaResolve(root: string, path: string): Plugin {
+function importMetaResolve(path: string, resolveImport: ImportResolver): Plugin {
   return {
     name: "resolve-import-meta-resolve",
     async transform(code) {
@@ -173,10 +178,8 @@ function importMetaResolve(root: string, path: string): Plugin {
       for (const node of resolves) {
         const source = node.arguments[0];
         const specifier = getStringLiteralValue(source as StringLiteral);
-        if (specifier.startsWith("npm:")) {
-          const resolution = relativePath(path, await resolveNpmImport(root, specifier.slice("npm:".length)));
-          output.replaceLeft(source.start, source.end, JSON.stringify(resolution));
-        }
+        const resolution = await resolveImport(specifier);
+        if (resolution) output.replaceLeft(source.start, source.end, JSON.stringify(relativePath(path, resolution)));
       }
 
       return {code: String(output)};

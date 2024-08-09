@@ -1,4 +1,4 @@
-import {foo} from "../foo/foo.821499d0.js";
+import {foo} from "../foo/foo.5963bf78.js";
 
 export const bar = "bar";
 export const foobar = foo + "bar";

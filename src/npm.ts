@@ -215,25 +215,25 @@ function getNpmVersionCache(root: string): Promise<Map<string, string[]>> {
   return cache;
 }
 
-async function resolveNpmVersion(root: string, specifier: NpmSpecifier): Promise<string> {
-  const {name, range} = specifier;
+async function resolveNpmVersion(root: string, {name, range}: NpmSpecifier): Promise<string> {
   if (range && /^\d+\.\d+\.\d+([-+].*)?$/.test(range)) return range; // exact version specified
   const cache = await getNpmVersionCache(root);
-  const versions = cache.get(specifier.name);
+  const versions = cache.get(name);
   if (versions) for (const version of versions) if (!range || satisfies(version, range)) return version;
   const href = `https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${range ? `?specifier=${range}` : ""}`;
   let promise = npmVersionRequests.get(href);
   if (promise) return promise; // coalesce concurrent requests
   promise = (async function () {
-    process.stdout.write(`npm:${formatNpmSpecifier(specifier)} ${faint("→")} `);
+    const input = formatNpmSpecifier({name, range});
+    process.stdout.write(`npm:${input} ${faint("→")} `);
     const response = await fetch(href);
     if (!response.ok) throw new Error(`unable to fetch: ${href}`);
     const {version} = await response.json();
-    if (!version) throw new Error(`unable to resolve version: ${formatNpmSpecifier({name, range})}`);
-    const spec = formatNpmSpecifier({name, range: version});
-    process.stdout.write(`npm:${spec}\n`);
-    cache.set(specifier.name, versions ? rsort(versions.concat(version)) : [version]);
-    mkdir(join(root, ".observablehq", "cache", "_npm", spec), {recursive: true}); // disk cache
+    if (!version) throw new Error(`unable to resolve version: ${input}`);
+    const output = formatNpmSpecifier({name, range: version});
+    process.stdout.write(`npm:${output}\n`);
+    cache.set(name, versions ? rsort(versions.concat(version)) : [version]);
+    mkdir(join(root, ".observablehq", "cache", "_npm", output), {recursive: true}); // disk cache
     return version;
   })();
   promise.catch(console.error).then(() => npmVersionRequests.delete(href));
