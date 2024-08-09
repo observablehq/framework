@@ -29,7 +29,7 @@ export function define(cell) {
   const root = rootsById.get(id);
   const loading = findLoading(root);
   root._nodes = [];
-  root._expanded = [];
+  if (mode === undefined) root._expanded = []; // only blocks have inspectors
   if (loading) root._nodes.push(loading);
   const pending = () => reset(root, loading);
   const rejected = (error) => reject(root, error);
@@ -68,7 +68,8 @@ export function define(cell) {
 function noop() {}
 
 function clear(root) {
-  root._expanded = root._nodes.map((v) => (v.remove(), getExpanded(v)));
+  if (root._expanded) root._expanded = root._nodes.map(getExpanded);
+  root._nodes.forEach((v) => v.remove());
   root._nodes.length = 0;
 }
 
@@ -176,8 +177,9 @@ export function registerRoot(id, node) {
 }
 
 function getExpanded(node) {
+  if (node.nodeType !== 1 || !node.classList.contains("observablehq")) return; // only inspectors
   const expanded = node.querySelectorAll(".observablehq--expanded");
-  return expanded.length ? Array.from(expanded, (e) => getNodePath(node, e)) : undefined;
+  if (expanded.length) return Array.from(expanded, (e) => getNodePath(node, e));
 }
 
 function getNodePath(node, descendant) {
