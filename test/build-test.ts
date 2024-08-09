@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import {existsSync, readdirSync, statSync} from "node:fs";
-import {mkdir, mkdtemp, open, readFile, rm, unlink, writeFile} from "node:fs/promises";
+import {mkdir, mkdtemp, open, readFile, rename, rm, unlink, writeFile} from "node:fs/promises";
 import os from "node:os";
 import {join, normalize, relative} from "node:path/posix";
 import {PassThrough} from "node:stream";
@@ -59,21 +59,26 @@ describe("build", () => {
 
       // Replace any hashed files in _observablehq with empty files, and
       // renumber the hashes so they are sequential. This way we don’t have to
-      // update the test snapshots whenever Framework’s client code changes.
-      for (let path of findFiles(join(actualDir, "_observablehq"))) {
+      // update the test snapshots whenever Framework’s client code changes. We
+      // make an exception for minisearch.json because to test the content.
+      for (const path of findFiles(join(actualDir, "_observablehq"))) {
         const match = /^((.+)\.[0-9a-f]{8})\.(\w+)$/.exec(path);
-        if (match) {
-          const [, key, name, ext] = match;
-          await unlink(join(actualDir, "_observablehq", path));
-          path = `${name}.${normalizeHash(key)}.${ext}`;
+        if (!match) throw new Error(`no hash found: ${path}`);
+        const [, key, name, ext] = match;
+        const oldPath = join(actualDir, "_observablehq", path);
+        const newPath = join(actualDir, "_observablehq", `${name}.${normalizeHash(key)}.${ext}`);
+        if (/^minisearch\.[0-9a-f]{8}\.json$/.test(path)) {
+          await rename(oldPath, newPath);
+        } else {
+          await unlink(oldPath);
+          await (await open(newPath, "w")).close();
         }
-        await (await open(join(actualDir, "_observablehq", path), "w")).close();
       }
 
       // Replace any reference to re-numbered files in _observablehq.
       for (const path of findFiles(actualDir)) {
         const actual = await readFile(join(actualDir, path), "utf8");
-        const normalized = actual.replace(/\/_observablehq\/((\w+)\.[0-9a-f]{8})\.js\b/g, (match, key, name) => `/_observablehq/${name}.${normalizeHash(key)}.js`); // prettier-ignore
+        const normalized = actual.replace(/\/_observablehq\/((.+)\.[0-9a-f]{8})\.(\w+)\b/g, (match, key, name, ext) => `/_observablehq/${name}.${normalizeHash(key)}.${ext}`); // prettier-ignore
         if (normalized !== actual) await writeFile(join(actualDir, path), normalized);
       }
 
