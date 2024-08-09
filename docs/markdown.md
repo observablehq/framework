@@ -354,7 +354,7 @@ For privacy and convenience, external links are given a default `rel` attribute 
 
 Framework normalizes page links, converting absolute paths into relative paths. This allows built sites to be served correctly under any root when deployed. This means you can use absolute paths, such as `/index` for the main page, to link to pages from any other page, including the global [header](./config#header) or [footer](./config#footer).
 
-To link to a page or asset that’s _not_ controlled by Framework (or to disable link normalization), set the [`rel` attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel) to `external`. <a href="https://github.com/observablehq/framework/pull/1560" class="observablehq-version-badge" data-version="prerelease" title="Added in #1560"></a> For example:
+To link to a page or asset that’s _not_ controlled by Framework (or to disable link normalization), set the [`rel` attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel) to `external`. <a href="https://github.com/observablehq/framework/releases/tag/v1.10.1" class="observablehq-version-badge" data-version="^1.10.1" title="Added in 1.10.1"></a> For example:
 
 ```html run=false
 <a href="/robots.txt" rel="external">robots.txt</a>
