@@ -31,10 +31,6 @@ jobs:
           key: data-${{ hashFiles('docs/data/*') }}-${{ steps.date.outputs.date }}
       - run: yarn build
       - run: yarn docs:build
-      - uses: cloudflare/pages-action@1
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: framework
-          directory: docs/.observablehq/dist
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+      - run: yarn docs:deploy
+        env:
+          OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_TOKEN }}
