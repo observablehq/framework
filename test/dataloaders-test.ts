@@ -6,7 +6,8 @@ import {LoaderResolver} from "../src/dataloader.js";
 
 const noopEffects: LoadEffects = {
   logger: {log() {}, warn() {}, error() {}},
-  output: {write() {}}
+  output: {write() {}},
+  address: "not implemented"
 };
 
 describe("LoaderResolver.find(path)", () => {
@@ -55,7 +56,8 @@ describe("LoaderResolver.find(path, {useStale: true})", () => {
         write(a) {
           out.push(a);
         }
-      }
+      },
+      address: "not implemented"
     };
     const loader = loaders.find("dataloaders/data1.txt")!;
     // save the loader times.

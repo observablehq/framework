@@ -34,12 +34,8 @@ export const defaultInterpreters: Record<string, string[]> = {
 export interface LoadEffects {
   logger: Logger;
   output: Writer;
+  address?: string;
 }
-
-const defaultEffects: LoadEffects = {
-  logger: console,
-  output: process.stdout
-};
 
 export interface LoaderOptions {
   root: string;
@@ -230,7 +226,7 @@ export abstract class Loader {
    * to the source root; this is within the .observablehq/cache folder within
    * the source root.
    */
-  async load(effects = defaultEffects): Promise<string> {
+  async load(effects): Promise<string> {
     const key = join(this.root, this.targetPath);
     let command = runningCommands.get(key);
     if (!command) {
@@ -287,7 +283,7 @@ export abstract class Loader {
     return command;
   }
 
-  abstract exec(output: WriteStream, effects?: LoadEffects): Promise<void>;
+  abstract exec(output: WriteStream, effects: LoadEffects): Promise<void>;
 }
 
 interface CommandLoaderOptions extends LoaderOptions {
@@ -316,8 +312,10 @@ class CommandLoader extends Loader {
     this.args = args;
   }
 
-  async exec(output: WriteStream): Promise<void> {
-    const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", output, "inherit"]});
+  async exec(output: WriteStream, effects: LoadEffects): Promise<void> {
+    if (effects.address == null) throw new Error("chained data loaders are not implemented in this context");
+    const env = {...process.env, SERVER: `${effects.address}_chain${this.targetPath}::`};
+    const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", output, "inherit"], env});
     const code = await new Promise((resolve, reject) => {
       subprocess.on("error", reject);
       subprocess.on("close", resolve);
@@ -343,7 +341,7 @@ class ZipExtractor extends Loader {
     this.inflatePath = inflatePath;
   }
 
-  async exec(output: WriteStream, effects?: LoadEffects): Promise<void> {
+  async exec(output: WriteStream, effects: LoadEffects): Promise<void> {
     const archivePath = join(this.root, await this.preload(effects));
     const file = (await JSZip.loadAsync(await readFile(archivePath))).file(this.inflatePath);
     if (!file) throw Object.assign(new Error("file not found"), {code: "ENOENT"});
@@ -370,7 +368,7 @@ class TarExtractor extends Loader {
     this.gunzip = gunzip;
   }
 
-  async exec(output: WriteStream, effects?: LoadEffects): Promise<void> {
+  async exec(output: WriteStream, effects: LoadEffects): Promise<void> {
     const archivePath = join(this.root, await this.preload(effects));
     const tar = extract();
     const input = createReadStream(archivePath);

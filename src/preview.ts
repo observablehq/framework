@@ -16,7 +16,7 @@ import type {WebSocket} from "ws";
 import {WebSocketServer} from "ws";
 import type {Config} from "./config.js";
 import {readConfig} from "./config.js";
-import type {LoaderResolver} from "./dataloader.js";
+import type {LoadEffects, LoaderResolver} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import type {FileWatchers} from "./fileWatchers.js";
@@ -33,7 +33,7 @@ import {getResolvers} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
-import {bold, faint, green, link} from "./tty.js";
+import {bold, faint, green, link, red} from "./tty.js";
 
 export interface PreviewOptions {
   config?: string;
@@ -54,17 +54,21 @@ export class PreviewServer {
   private readonly _server: ReturnType<typeof createServer>;
   private readonly _socketServer: WebSocketServer;
   private readonly _verbose: boolean;
+  private readonly _effects: LoadEffects;
+  private _dag: Map<string, Set<string>>;
 
   private constructor({
     config,
     root,
     server,
-    verbose
+    verbose,
+    effects
   }: {
     config?: string;
     root?: string;
     server: Server;
     verbose: boolean;
+    effects: LoadEffects;
   }) {
     this._config = config;
     this._root = root;
@@ -73,6 +77,8 @@ export class PreviewServer {
     this._server.on("request", this._handleRequest);
     this._socketServer = new WebSocketServer({server: this._server});
     this._socketServer.on("connection", this._handleConnection);
+    this._effects = effects;
+    this._dag = new Map(); // TODO: read state
   }
 
   static async start({verbose = true, hostname, port, open, ...options}: PreviewOptions) {
@@ -95,14 +101,19 @@ export class PreviewServer {
     } else {
       await new Promise<void>((resolve) => server.listen(port, hostname, resolve));
     }
-    const url = `http://${hostname}:${port}/`;
+    const address = `http://${hostname}:${port}/`;
     if (verbose) {
       console.log(`${green(bold("Observable Framework"))} ${faint(`v${process.env.npm_package_version}`)}`);
-      console.log(`${faint("↳")} ${link(url)}`);
+      console.log(`${faint("↳")} ${link(address)}`);
       console.log("");
     }
-    if (open) openBrowser(url);
-    return new PreviewServer({server, verbose, ...options});
+    if (open) openBrowser(address);
+    const effects: LoadEffects = {
+      logger: console,
+      output: process.stdout,
+      address
+    };
+    return new PreviewServer({server, verbose, effects, ...options});
   }
 
   async _readConfig() {
@@ -113,6 +124,7 @@ export class PreviewServer {
     const config = await this._readConfig();
     const {root, loaders} = config;
     if (this._verbose) console.log(faint(req.method!), req.url);
+    let machine = false; // machine queries don't get a full 404 error page
     try {
       const url = new URL(req.url!, "http://localhost");
       let pathname = decodeURI(url.pathname);
@@ -152,27 +164,19 @@ export class PreviewServer {
           if (!isEnoent(error)) throw error;
         }
         throw new HttpError(`Not found: ${pathname}`, 404);
+      } else if (pathname.startsWith("/_chain/")) {
+        machine = true;
+        const [caller, path] = pathname.slice("/_chain".length).split("::");
+        this.updateDag(caller, path);
+        this._dag.delete(path); // reset path for this file
+        const file = await this.getFile(path, root, loaders);
+        if (file !== undefined) return void send(req, file, {root}).pipe(res);
+        throw new HttpError(`Not found: ${pathname}`, 404);
       } else if (pathname.startsWith("/_file/")) {
         const path = pathname.slice("/_file".length);
-        const filepath = join(root, path);
-        try {
-          await access(filepath, constants.R_OK);
-          send(req, pathname.slice("/_file".length), {root}).pipe(res);
-          return;
-        } catch (error) {
-          if (!isEnoent(error)) throw error;
-        }
-
-        // Look for a data loader for this file.
-        const loader = loaders.find(path);
-        if (loader) {
-          try {
-            send(req, await loader.load(), {root}).pipe(res);
-            return;
-          } catch (error) {
-            if (!isEnoent(error)) throw error;
-          }
-        }
+        this._dag.delete(path); // reset path for this file
+        const file = await this.getFile(path, root, loaders);
+        if (file !== undefined) return void send(req, file, {root}).pipe(res);
         throw new HttpError(`Not found: ${pathname}`, 404);
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
@@ -212,7 +216,7 @@ export class PreviewServer {
         res.statusCode = 500;
         console.error(error);
       }
-      if (req.method === "GET" && res.statusCode === 404) {
+      if (req.method === "GET" && res.statusCode === 404 && !machine) {
         try {
           const options = {...config, path: "/404", preview: true};
           const source = await readFile(join(root, "404.md"), "utf8");
@@ -224,8 +228,10 @@ export class PreviewServer {
           // ignore secondary error (e.g., no 404.md); show the original 404
         }
       }
-      res.setHeader("Content-Type", "text/plain; charset=utf-8");
-      res.end(error instanceof Error ? error.message : "Oops, an error occurred");
+      if (!machine) {
+        res.setHeader("Content-Type", "text/plain; charset=utf-8");
+        res.end(error instanceof Error ? error.message : "Oops, an error occurred");
+      } else res.end();
     }
   };
 
@@ -239,6 +245,40 @@ export class PreviewServer {
 
   get server(): PreviewServer["_server"] {
     return this._server;
+  }
+
+  async getFile(path: string, root: string, loaders: LoaderResolver): Promise<string | undefined> {
+    const filepath = join(root, path);
+    try {
+      await access(filepath, constants.R_OK);
+      return path;
+    } catch (error) {
+      if (!isEnoent(error)) throw error;
+    }
+
+    // Look for a data loader for this file.
+    const loader = loaders.find(path);
+    if (loader) {
+      try {
+        return await loader.load(this._effects);
+      } catch (error) {
+        if (!isEnoent(error)) throw error;
+      }
+    }
+  }
+
+  updateDag(caller: string, path: string) {
+    if (!this._dag.has(caller)) this._dag.set(caller, new Set());
+    this._dag.get(caller)!.add(path);
+    const seen = new Set<string>();
+    const q = [caller];
+    while (q.length) {
+      const node = q.shift()!;
+      if (seen.has(node))
+        throw new Error(`${red("Circular dependency detected")}: ${[...seen, node].map(bold).join(" ← ")}`);
+      q.push(...(this._dag.get(node) ?? []));
+      seen.add(node);
+    }
   }
 }
 

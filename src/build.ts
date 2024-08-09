@@ -13,6 +13,7 @@ import {parseMarkdown} from "./markdown.js";
 import {extractNodeSpecifier} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport} from "./npm.js";
 import {isAssetPath, isPathImport, relativePath, resolvePath} from "./path.js";
+import {preview} from "./preview.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
 import {getModuleResolver, getResolvers} from "./resolvers.js";
@@ -150,6 +151,12 @@ export async function build(
     }
   }
 
+  // Launch a server for chained data loaders. TODO configure host & port?
+  const {server} = await preview({root, verbose: false, hostname: "127.0.0.1"});
+  const a = server.address();
+  if (!a || typeof a !== "object") throw new Error("Couldn't launch server for chained data loaders!");
+  const address = `http://${a.address}:${a.port}/`;
+
   // Copy over the referenced files, accumulating hashed aliases.
   for (const file of files) {
     let sourcePath = join(root, file);
@@ -161,7 +168,7 @@ export async function build(
         continue;
       }
       try {
-        sourcePath = join(root, await loader.load(effects));
+        sourcePath = join(root, await loader.load({...effects, address}));
       } catch (error) {
         if (!isEnoent(error)) throw error;
         effects.logger.error(red("error: missing referenced file"));
@@ -175,6 +182,9 @@ export async function build(
     aliases.set(loaders.resolveFilePath(file), alias);
     await effects.writeFile(alias, contents);
   }
+
+  // TODO: server.close() might be enough?
+  await new Promise((closed) => server.close(closed));
 
   // Download npm imports. TODO It might be nice to use content hashes for
   // these, too, but it would involve rewriting the files since populateNpmCache
