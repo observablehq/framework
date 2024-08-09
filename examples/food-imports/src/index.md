@@ -92,27 +92,6 @@ const byCountryAndCategory = d3.groups(sample, d => d.Country, d => d.Category)
 const yearParse = d3.utcParse('%Y')
 ```
 
-```js
-// todo: find a way to insert these labels without breaking things
-  // Plot.textY(
-  //   byYearAndCountry.filter(d => tops.includes(d.country)),
-  //   Plot.selectLast(
-  //     Plot.stackY({
-  //       x: "year",
-  //       y: "value",
-  //       order: "sum",
-  //       stroke: "country",
-  //       strokeWidth: 1,
-  //       fill: "country",
-  //       text: "country",
-  //       interval: "year",
-  //       textAnchor: 'start',
-  //       z: "country"
-  //     })
-  //   )
-  // )
-  ```
-
 <div class="grid grid-cols-2" style="grid-auto-rows: 520px;">
   <div class="card grid-colspan-1">
     <h2>Relative share of food imports to the US</h2>
@@ -144,6 +123,23 @@ const yearParse = d3.utcParse('%Y')
           }
         ),
         Plot.ruleY([0]),
+        Plot.textY(byYearAndCountry.filter(d => tops.includes(d.country)),
+          Plot.selectLast(
+            Plot.stackY({
+              x: "year",
+              y: "value",
+              fill: "country",
+              stroke: "country",
+              strokeWidth: 1,
+              order: "group",
+              text: "country",
+              interval: "year",
+              textAnchor: 'start',
+              offset: 'normalize',
+              reverse: true
+            })
+          )
+        )
       ]
     }))}
   </div>
