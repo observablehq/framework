@@ -1,4 +1,4 @@
-import {extname} from "node:path/posix";
+import {extname, resolve} from "node:path/posix";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
 import type {CallExpression} from "acorn";
 import {simple} from "acorn-walk";
@@ -11,7 +11,7 @@ import type {StringLiteral} from "./javascript/source.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/source.js";
 import {resolveNpmImport} from "./npm.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
-import {isPathImport, relativePath} from "./path.js";
+import {isAssetPath, isPathImport, relativePath} from "./path.js";
 import {builtins} from "./resolvers.js";
 import {Sourcemap} from "./sourcemap.js";
 import {THEMES, renderTheme} from "./theme.js";
@@ -133,16 +133,20 @@ export async function resolveImport(root: string, specifier: string): Promise<st
 }
 
 function importResolve(input: string, path: string, resolveImport: ImportResolver): Plugin {
-  async function resolve(specifier: string | AstNode): Promise<ResolveIdResult> {
-    if (typeof specifier !== "string" || specifier === input) return null;
+  input = resolve(input);
+
+  async function resolveId(specifier: string | AstNode): Promise<ResolveIdResult> {
+    if (typeof specifier !== "string") return null;
+    if (isAssetPath(specifier) && resolve(specifier) === input) return null;
     const resolution = await resolveImport(specifier);
     if (resolution) return {id: relativePath(path, resolution), external: true};
     return null;
   }
+
   return {
     name: "resolve-import",
-    resolveId: resolve,
-    resolveDynamicImport: resolve
+    resolveId,
+    resolveDynamicImport: resolveId
   };
 }
 
