@@ -1,11 +1,16 @@
 import * as d3 from "npm:d3";
  
 // based on @d3/marimekko-chart
+
+// todo: genericize into a true component
+// todo: figure out how to make this vertical
+// todo: make color scheme match other graphics
+
  export function Marimekko(data, {
-  width = 1152, 
-  height = 600,
+  width = 800, 
+  height = 800,
  } = {}) {
-  const marginTop = 30;
+  const marginTop = 100;
   const marginRight = -1;
   const marginBottom = -1;
   const marginLeft = 1;
@@ -36,13 +41,14 @@ import * as d3 from "npm:d3";
       .attr("viewBox", [0, 0, width, height])
       .attr("width", width)
       .attr("height", height)
+      //.attr('transform', 'rotate(90)')
       .attr("style", "max-width: 100%; height: auto; font: 10px sans-serif;");
 
   // Position the nodes.
   const node = svg.selectAll("g")
     .data(root.descendants())
     .join("g")
-      .attr("transform", d => `translate(${d.x0},${d.y0})`);
+    .attr("transform", d => `translate(${d.x0},${d.y0})`);
 
   const format = d => d.toLocaleString();
 
@@ -50,12 +56,14 @@ import * as d3 from "npm:d3";
   const column = node.filter(d => d.depth === 1);
 
   column.append("text")
+    .attr('transform', 'rotate(-90) translate(0,30) ')
       .attr("x", 3)
       .attr("y", "-1.7em")
       .style("font-weight", "bold")
       .text(d => d.data[0]);
 
   column.append("text")
+    .attr('transform', 'rotate(-90) translate(0,30) ')
       .attr("x", 3)
       .attr("y", "-0.5em")
       .attr("fill-opacity", 0.7)

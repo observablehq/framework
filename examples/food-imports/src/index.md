@@ -11,11 +11,6 @@ import {Marimekko} from './components/Marimekko.js'
 import {Sunburst} from './components/Sunburst.js'
 ```
 
-```js
-// helper functions
-const yearParse = d3.utcParse('%Y')
-```
-
 ```js 
 // raw data
 const raw = FileAttachment("./data/FoodImports.csv").csv();
@@ -92,16 +87,44 @@ const byCountryAndCategory = d3.groups(sample, d => d.Country, d => d.Category)
   )).flat()
 ```
 
+```js
+// helper functions
+const yearParse = d3.utcParse('%Y')
+```
+
+```js
+// todo: find a way to insert these labels without breaking things
+  // Plot.textY(
+  //   byYearAndCountry.filter(d => tops.includes(d.country)),
+  //   Plot.selectLast(
+  //     Plot.stackY({
+  //       x: "year",
+  //       y: "value",
+  //       order: "sum",
+  //       stroke: "country",
+  //       strokeWidth: 1,
+  //       fill: "country",
+  //       text: "country",
+  //       interval: "year",
+  //       textAnchor: 'start',
+  //       z: "country"
+  //     })
+  //   )
+  // )
+  ```
+
 <div class="grid grid-cols-2" style="grid-auto-rows: 520px;">
   <div class="card grid-colspan-1">
     <h2>Relative share of food imports to the US</h2>
     <h3>across top ${n} countries, 1999–2023</h3>
     ${resize((width, height) => Plot.plot({
       marginLeft: 50,
+      marginRight: 50,
       width,
       height: height - 40,
       color: {
         type: "ordinal",
+        domain: tops, 
         scheme: "Set3"
       },
       y: {
@@ -110,10 +133,17 @@ const byCountryAndCategory = d3.groups(sample, d => d.Country, d => d.Category)
       },
       marks: [
         Plot.areaY(
-          byYearAndCountry.map(d => tops.includes(d.country) ? {...d} : {...d, value: 0}),
-          {x: "year", y: "value", fill: "country", offset: 'normalize', order: "group", reverse: true}
+          byYearAndCountry.filter(d => tops.includes(d.country)),
+          {
+            x: "year", 
+            y: "value", 
+            fill: "country", 
+            offset: 'normalize', 
+            order: "group", 
+            reverse: true
+          }
         ),
-        Plot.ruleY([0])
+        Plot.ruleY([0]),
       ]
     }))}
   </div>
