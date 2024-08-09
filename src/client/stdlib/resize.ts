@@ -8,8 +8,11 @@ export function resize(
   if (render.length !== 1) div.style.height = "100%";
   let currentRender = 0;
   let currentDisplay = 0;
+  let currentWidth: number;
   const observer = new ResizeObserver(async ([entry]) => {
     const {width, height} = entry.contentRect;
+    if (render.length === 1 && width === currentWidth) return; // ignore height-only change
+    currentWidth = width;
     const childRender = ++currentRender;
     const child = width > 0 ? await render(width, height) : null; // don’t render if detached
     if (currentDisplay > childRender) return; // ignore stale renders
