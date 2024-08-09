@@ -18,7 +18,7 @@ describe("getModuleHash(root, path)", () => {
     assert.strictEqual(getModuleHash("test/input/build/imports", "does-not-exist.js"), emptyHash);
   });
   it("returns the file hash if the specified path is not a module", () => {
-    assert.strictEqual(getModuleHash("test/input/build/imports", "foo/foo.md"), "1df6958fdef208d873474d91da45d08277944f4a1400e7ab0e6934c07d5670ed");
+    assert.strictEqual(getModuleHash("test/input/build/imports", "foo/foo.md"), "1df6958fdef208d873474d91da45d08277944f4a1400e7ab0e6934c07d5670ed"); // prettier-ignore
   });
 });
 
