@@ -35,7 +35,7 @@ export function transpileJavaScript(
   if (display) inputs.push("display"), (async = true);
   if (hasImportDeclaration(node.body)) async = true;
   const output = new Sourcemap(node.input).trim();
-  if (params) rewriteParams(output, node.body, params);
+  if (params) rewriteParams(output, node.body, params, node.input);
   rewriteImportDeclarations(output, node.body, resolveImport);
   rewriteImportExpressions(output, node.body, resolveImport);
   rewriteFileExpressions(output, node.files, path);
@@ -68,7 +68,7 @@ export async function transpileModule(
   const imports: (ImportNode | ExportNode)[] = [];
   const calls: CallExpression[] = [];
 
-  if (params) rewriteParams(output, body, params);
+  if (params) rewriteParams(output, body, params, input);
 
   simple(body, {
     ImportDeclaration: rewriteImport,
@@ -222,8 +222,8 @@ function isNotNamespaceSpecifier(
   return node.type !== "ImportNamespaceSpecifier";
 }
 
-export function rewriteParams(output: Sourcemap, body: Node, params: Params): void {
-  for (const node of findParams(body, params)) {
-    output.replaceLeft(node.start, node.end, JSON.stringify(params[node.property.name]));
+export function rewriteParams(output: Sourcemap, body: Node, params: Params, input: string): void {
+  for (const [name, node] of findParams(body, params, input)) {
+    output.replaceLeft(node.start, node.end, JSON.stringify(params[name]));
   }
 }
