@@ -49,6 +49,12 @@ type ExpectedFile = {
   action: "skip" | "upload";
 };
 
+type ExpectedFileSpec = {
+  path: string;
+  deployId: string;
+  action?: "skip" | "upload";
+};
+
 class ObservableApiMock {
   private _agent: MockAgent | null = null;
   private _handlers: ((pool: Interceptable) => void)[] = [];
@@ -276,19 +282,19 @@ class ObservableApiMock {
     return this;
   }
 
+  expectStandardFiles(options: Omit<ExpectedFileSpec, "path">) {
+    return this.expectFileUpload({...options, path: "index.html"})
+      .expectFileUpload({...options, path: "_observablehq/client.00000001.js"})
+      .expectFileUpload({...options, path: "_observablehq/runtime.00000002.js"})
+      .expectFileUpload({...options, path: "_observablehq/stdlib.00000003.js"})
+      .expectFileUpload({...options, path: "_observablehq/theme-air,near-midnight.00000004.css"});
+  }
+
   /** Register a file that is expected to be uploaded. Also includes that file in
    * an automatic interceptor to `/deploy/:deployId/manifest`. If the action is
    * "upload", an interceptor for `/deploy/:deployId/file` will be registered.
    * If it is set to "skip", that interceptor will not be registered. */
-  expectFileUpload({
-    deployId,
-    path,
-    action = "upload"
-  }: {
-    deployId: string;
-    path: string;
-    action?: "skip" | "upload";
-  }): ObservableApiMock {
+  expectFileUpload({deployId, path, action = "upload"}: ExpectedFileSpec): ObservableApiMock {
     this._expectedFiles.push({deployId, path, action});
     return this;
   }

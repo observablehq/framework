@@ -37,8 +37,8 @@ The contents of the deploy config file look like this:
 ```json run=false
 {
   "projectId": "0123456789abcdef",
-  "workspaceLogin": "acme",
-  "projectSlug": "hello-framework"
+  "projectSlug": "hello-framework",
+  "workspaceLogin": "acme"
 }
 ```
 

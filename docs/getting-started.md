@@ -160,7 +160,7 @@ Or with Yarn:
 
 You should see something like this:
 
-<pre data-copy="none"><b class="green">Observable Framework</b> v1.9.0
+<pre data-copy="none"><b class="green">Observable Framework</b> v1.10.1
 ↳ <u><a href="http://127.0.0.1:3000/" style="color: inherit;">http://127.0.0.1:3000/</a></u></pre>
 
 <div class="note">

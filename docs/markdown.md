@@ -352,6 +352,16 @@ Cell 1-2   |   Cell 2-2   |    Cell 3-2
 
 For privacy and convenience, external links are given a default `rel` attribute of [`noreferrer`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noreferrer) [`noopener`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noopener) and a default `target` attribute of [`_blank`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#target). <a href="https://github.com/observablehq/framework/releases/tag/v1.5.0" class="observablehq-version-badge" data-version="^1.5.0" title="Added in 1.5.0"></a> Hence by default an external link will open in a new window and not pass the (potentially sensitive) referrer to the (potentially untrusted) external site. You can override this behavior by specifying the `rel` or `target` attribute explicitly. For example `<a href="https://example.com" target="_self">` will open in the same window, and `<a href="https://acme.com" rel="">` will allow the referrer.
 
+Framework normalizes page links, converting absolute paths into relative paths. This allows built sites to be served correctly under any root when deployed. This means you can use absolute paths, such as `/index` for the main page, to link to pages from any other page, including the global [header](./config#header) or [footer](./config#footer).
+
+To link to a page or asset that’s _not_ controlled by Framework (or to disable link normalization), set the [`rel` attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel) to `external`. <a href="https://github.com/observablehq/framework/releases/tag/v1.10.1" class="observablehq-version-badge" data-version="^1.10.1" title="Added in 1.10.1"></a> For example:
+
+```html run=false
+<a href="/robots.txt" rel="external">robots.txt</a>
+```
+
+You may also want to add `noopener noreferrer` if linking to an untrusted origin. See also [Files: Media](./files#media) regarding images and other linked assets.
+
 ### Images
 
 ```md

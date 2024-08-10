@@ -1,3 +1,4 @@
+import type {Hash} from "node:crypto";
 import {createHash} from "node:crypto";
 import {accessSync, constants, existsSync, readFileSync, statSync} from "node:fs";
 import {readFile} from "node:fs/promises";
@@ -5,9 +6,12 @@ import {basename, extname, join} from "node:path/posix";
 import type {Program} from "acorn";
 import {transform, transformSync} from "esbuild";
 import {globSync} from "glob";
+import {resolveNodeImport} from "../node.js";
+import {resolveNpmImport} from "../npm.js";
 import {resolvePath} from "../path.js";
+import {builtins} from "../resolvers.js";
 import {findFiles} from "./files.js";
-import {findImports} from "./imports.js";
+import {findImports, parseImports} from "./imports.js";
 import type {Params} from "./params.js";
 import {parseProgram} from "./parse.js";
 
@@ -48,22 +52,62 @@ const moduleInfoCache = new Map<string, ModuleInfo>();
  * transitive imports or files that are invalid or do not exist.
  */
 export function getModuleHash(root: string, path: string): string {
+  return getModuleHashInternal(root, path).digest("hex");
+}
+
+function getModuleHashInternal(root: string, path: string): Hash {
   const hash = createHash("sha256");
   const paths = new Set([path]);
   for (const path of paths) {
-    const info = getModuleInfo(root, path);
-    if (!info) continue; // ignore missing file
-    hash.update(info.hash);
-    for (const i of info.localStaticImports) {
-      paths.add(resolvePath(path, i));
+    if (path.endsWith(".js")) {
+      const info = getModuleInfo(root, path);
+      if (!info) continue; // ignore missing file
+      hash.update(info.hash);
+      for (const i of info.localStaticImports) {
+        paths.add(resolvePath(path, i));
+      }
+      for (const i of info.localDynamicImports) {
+        paths.add(resolvePath(path, i));
+      }
+      for (const i of info.files) {
+        const f = getFileInfo(root, resolvePath(path, i));
+        if (!f) continue; // ignore missing file
+        hash.update(f.hash);
+      }
+    } else {
+      const info = getFileInfo(root, path); // e.g., import.meta.resolve("foo.json")
+      if (!info) continue; // ignore missing file
+      hash.update(info.hash);
     }
-    for (const i of info.localDynamicImports) {
-      paths.add(resolvePath(path, i));
+  }
+  return hash;
+}
+
+/**
+ * Like getModuleHash, but further takes into consideration the resolved exact
+ * versions of any npm imports (and their transitive imports). This is needed
+ * during build because we want the hash of the built module to change if the
+ * version of an imported npm package changes.
+ */
+export async function getLocalModuleHash(root: string, path: string): Promise<string> {
+  const hash = getModuleHashInternal(root, path);
+  const info = getModuleInfo(root, path);
+  if (info) {
+    const globalPaths = new Set<string>();
+    for (const i of [...info.globalStaticImports, ...info.globalDynamicImports]) {
+      if (i.startsWith("npm:") && !builtins.has(i)) {
+        globalPaths.add(await resolveNpmImport(root, i.slice("npm:".length)));
+      } else if (!/^\w+:/.test(i)) {
+        globalPaths.add(await resolveNodeImport(root, i));
+      }
     }
-    for (const i of info.files) {
-      const f = getFileInfo(root, resolvePath(path, i));
-      if (!f) continue; // ignore missing file
-      hash.update(f.hash);
+    for (const p of globalPaths) {
+      hash.update(p);
+      for (const i of await parseImports(join(root, ".observablehq", "cache"), p)) {
+        if (i.type === "local") {
+          globalPaths.add(resolvePath(p, i.name));
+        }
+      }
     }
   }
   return hash.digest("hex");
