@@ -17,7 +17,7 @@ export interface ParseOptions {
   path: string;
   /** If true, require the input to be an expresssion. */
   inline?: boolean;
-  /** TODO */
+  /** Any dynamic route parameters for observable.params. */
   params?: Params;
 }
 
