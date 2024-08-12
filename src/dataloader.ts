@@ -189,7 +189,6 @@ export class LoaderResolver {
   }
 }
 
-// TODO don’t duplicate
 function defineParams(params: Params): string[] {
   return Object.entries(params)
     .filter(([name]) => /^[a-z0-9_]+$/i.test(name)) // ignore non-ASCII parameters
