@@ -1,5 +1,6 @@
 import type {Identifier, Literal, MemberExpression, Node} from "acorn";
 import {simple} from "acorn-walk";
+import {findReferences} from "./references.js";
 import {syntaxError} from "./syntaxError.js";
 
 export type Params = {[name: string]: string};
@@ -18,9 +19,7 @@ export function checkParams(node: Node, input: string, params: Params): void {
 
 export function findParams(body: Node, params: Params, input: string): [name: string, node: ParamReference][] {
   const matches: [string, ParamReference][] = [];
-
-  // TODO Replace only if observable is not shadowed by a local reference.
-  // const references = findReferences(body, {globals: new Set()});
+  const references = findReferences(body, {filterReference: ({name}) => name === "observable"});
 
   simple(body, {
     MemberExpression(node) {
@@ -32,18 +31,14 @@ export function findParams(body: Node, params: Params, input: string): [name: st
     }
   });
 
-  // Warning: this function tells you whether the member expression looks like a
-  // param reference (observable.params.foo), but it doesn’t check whether
-  // observable is masked by a local variable instead; you should check whether a
-  // param has been resolved by looking at node.value instead, which is assigned
-  // in checkParams.
   function isParamReference(node: MemberExpression): node is ParamReference {
     if (
       node.object.type !== "MemberExpression" ||
       node.object.object.type !== "Identifier" ||
       node.object.object.name !== "observable" ||
       node.object.property.type !== "Identifier" ||
-      node.object.property.name !== "params"
+      node.object.property.name !== "params" ||
+      !references.includes(node.object.object)
     ) {
       return false;
     }
