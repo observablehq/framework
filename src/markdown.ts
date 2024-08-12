@@ -70,7 +70,6 @@ function transformJsx(content: string): string {
   }
 }
 
-// TODO bake-in parameters
 function getLiveSource(content: string, tag: string, attributes: Record<string, string>): string | undefined {
   return tag === "js"
     ? content
