@@ -1,5 +1,5 @@
 import {createHash} from "node:crypto";
-import {existsSync, watch} from "node:fs";
+import {watch} from "node:fs";
 import type {FSWatcher, WatchEventType} from "node:fs";
 import {access, constants, readFile} from "node:fs/promises";
 import {createServer} from "node:http";
@@ -9,7 +9,6 @@ import {difference} from "d3-array";
 import type {PatchItem} from "fast-array-diff";
 import {getPatch} from "fast-array-diff";
 import deepEqual from "fast-deep-equal";
-import {globSync} from "glob";
 import mime from "mime";
 import openBrowser from "open";
 import send from "send";
@@ -32,7 +31,7 @@ import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
 import {getResolvers} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
-import type {Params} from "./route.js";
+import type {Params, RouteResult} from "./route.js";
 import {route} from "./route.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
@@ -194,17 +193,14 @@ export class PreviewServer {
 
         // Lastly, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
-        try {
-          const {path: sourcePath, params} = findPage(root, `${pathname}.md`);
-          const options = {...config, params, path: pathname, preview: true};
-          const source = await readFile(sourcePath, "utf8");
-          const parse = parseMarkdown(source, options);
-          const html = await renderPage(parse, options);
-          end(req, res, html, "text/html");
-        } catch (error) {
-          if (!isEnoent(error)) throw error; // internal error
-          throw new HttpError("Not found", 404);
-        }
+        const found = findPage(root, `${pathname}.md`);
+        if (!found) throw new HttpError("Not found", 404);
+        const {path: sourcePath, params} = found;
+        const options = {...config, params, path: pathname, preview: true};
+        const source = await readFile(sourcePath, "utf8");
+        const parse = parseMarkdown(source, options);
+        const html = await renderPage(parse, options);
+        end(req, res, html, "text/html");
       }
     } catch (error) {
       if (isHttpError(error)) {
@@ -266,39 +262,10 @@ function end(req: IncomingMessage, res: ServerResponse, content: string, type: s
   }
 }
 
-function findPage(root: string, path: string): {path: string; params?: Params} {
-  const exactPath = join(root, path);
-  if (existsSync(exactPath)) return {path: exactPath};
-  return findPageParams(root, join(".", path).split("/")) ?? {path: exactPath};
-}
-
-/**
- * Finds a parameterized page (dynamic route) recursively, such that the most
- * specific match is returned.
- */
-function findPageParams(cwd: string, parts: string[]): {path: string; params?: Params} | undefined {
-  switch (parts.length) {
-    case 0:
-      return;
-    case 1: {
-      const [first] = parts;
-      if (existsSync(join(cwd, first))) return {path: join(cwd, first)};
-      const ext = extname(first);
-      for (const file of globSync(`\\[*\\]${ext}`, {cwd})) {
-        const params = {[basename(file, ext).slice(1, -1)]: basename(first, ext)};
-        return {path: join(cwd, file), params};
-      }
-      return;
-    }
-    default: {
-      const [first, ...rest] = parts;
-      if (existsSync(join(cwd, first))) return findPageParams(join(cwd, first), rest);
-      for (const dir of globSync("\\[*\\]", {cwd})) {
-        const found = findPageParams(join(cwd, dir), rest);
-        if (found) return {...found, params: {...found.params, [dir.slice(1, -1)]: first}};
-      }
-    }
-  }
+function findPage(root: string, path: string): RouteResult | undefined {
+  const ext = extname(path);
+  const found = route(root, path.slice(0, -ext.length), [ext]);
+  if (found) return {...found, path: join(root, found.path)};
 }
 
 // Note that while we appear to be watching the referenced files here,
@@ -412,12 +379,14 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
   async function hello({path: initialPath, hash: initialHash}: {path: string; hash: string}): Promise<void> {
     if (markdownWatcher || configWatcher || attachmentWatcher) throw new Error("already watching");
     path = decodeURI(initialPath);
-    if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
+    if (!(path = normalize(path)).startsWith("/")) throw new Error(`Invalid path: ${initialPath}`);
     if (path.endsWith("/")) path += "index";
     path = join(dirname(path), `${basename(path, ".html")}.md`);
     config = await configPromise;
     const {root, loaders, normalizePath} = config;
-    ({path: sourcePath, params} = findPage(root, path));
+    const found = findPage(root, path);
+    if (!found) throw new Error(`Page not found: ${path}`);
+    ({path: sourcePath, params} = found);
     const source = await readFile(sourcePath, "utf8");
     const page = parseMarkdown(source, {path, params, ...config});
     const resolvers = await getResolvers(page, {root, path, loaders, normalizePath});
