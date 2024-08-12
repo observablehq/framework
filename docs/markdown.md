@@ -368,3 +368,49 @@ You may also want to add `noopener noreferrer` if linking to an untrusted origin
 ![A horse](./horse.jpg)
 ![A happy kitten](https://placekitten.com/200/300)
 ```
+
+## Converting from a notebook
+
+To create a Markdown file from a public notebook, use the `observable convert` command:
+
+```sh echo
+npm run observable convert <notebook url>
+```
+Or with Yarn:
+```sh echo
+yarn observable convert <notebook url>
+```
+Note that, due to [syntax differences](https://observablehq.com/framework/javascript) between Observable notebooks and
+Observable Framework, converted notebooks may require further
+changes to function correctly. For example, to convert the notebook at `https://observablehq.com/@d3/zoomable-sunburst` to Markdown, run the following command in your `docs` directory:
+  
+```sh echo
+npm run observable convert https://observablehq.com/@d3/zoomable-sunburst
+```
+
+This will create 2 files: `zoomable-sunburst.md` and `flare-2.json` (the file attachment in the notebook). You can then view the markdown file in your dev environment, but you will see a few errors that needs to be corrected:
+
+Change the `chart` cell definition to an arrow function:
+```js run=false
+const chart = () => {
+  // Specify the chart’s dimensions.
+  const width = 928;
+  const height = width;
+  ...
+```
+
+and the file attachment code to:
+~~~js run=false
+```js 
+const data = FileAttachment("flare-2.json").json()
+```
+~~~
+
+and then, finally, add a JavaScript code block to display the chart:
+~~~js run=false
+```js
+display(chart());
+```
+~~~
+
+
