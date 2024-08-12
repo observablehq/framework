@@ -71,7 +71,7 @@ export class LoaderResolver {
    * if src/data exists, we won’t look for a src/data.zip.
    */
   find(targetPath: string, {useStale = false} = {}): Asset | Loader | undefined {
-    const result = this.findExact(targetPath, {useStale}) ?? this.findDynamic(targetPath, {useStale});
+    const result = this.findRoute(targetPath, {useStale});
     if (result) return result;
     let dir = dirname(targetPath);
     for (let parent: string; true; dir = parent) {
@@ -82,7 +82,7 @@ export class LoaderResolver {
     }
     for (const [ext, Extractor] of extractors) {
       const archive = dir + ext;
-      const archiveLoader = this.findExact(archive, {useStale}) ?? this.findDynamic(archive, {useStale});
+      const archiveLoader = this.findRoute(archive, {useStale});
       if (archiveLoader) {
         return new Extractor({
           preload:
@@ -99,39 +99,20 @@ export class LoaderResolver {
     }
   }
 
-  private findExact(targetPath: string, {useStale}): Asset | Loader | undefined {
-    if (existsSync(join(this.root, targetPath))) return {path: join(this.root, targetPath)};
-    for (const [ext, [command, ...args]] of this.interpreters) {
-      if (!existsSync(join(this.root, targetPath + ext))) continue;
-      if (extname(targetPath) === "") {
-        console.warn(`invalid data loader path: ${targetPath + ext}`);
-        return;
-      }
-      const path = join(this.root, targetPath + ext);
-      return new CommandLoader({
-        command: command ?? path,
-        args: command == null ? args : [...args, path],
-        path,
-        root: this.root,
-        targetPath,
-        useStale
-      });
-    }
-  }
-
-  private findDynamic(targetPath: string, {useStale}): Asset | Loader | undefined {
+  private findRoute(targetPath: string, {useStale}): Asset | Loader | undefined {
     const ext = extname(targetPath);
     const exts = [ext, ...Array.from(this.interpreters.keys(), (e) => ext + e)];
     const found = route(this.root, targetPath.slice(0, -ext.length), exts);
     if (!found) return;
     const {path, params, ext: iext} = found;
-    if (iext === ext) return {path: join(this.root, path)};
+    const foundPath = join(this.root, path);
+    if (iext === ext) return {path: foundPath};
     const [command, ...args] = this.interpreters.get(iext.slice(ext.length))!;
-    if (command != null) args.push(join(this.root, path));
+    if (command != null) args.push(foundPath);
     return new CommandLoader({
-      command: command ?? path,
+      command: command ?? foundPath,
       args: params ? args.concat(defineParams(params)) : args,
-      path: join(this.root, path),
+      path: foundPath,
       root: this.root,
       targetPath,
       useStale
