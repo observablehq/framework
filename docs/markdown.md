@@ -369,28 +369,30 @@ You may also want to add `noopener noreferrer` if linking to an untrusted origin
 ![A happy kitten](https://placekitten.com/200/300)
 ```
 
-## Converting from a notebook
+## Converting notebooks
 
-To create a Markdown file from a public notebook, use the `observable convert` command:
+To help you convert a public Observable notebook to Observable Markdown, Framework includes the `observable convert` utility. Just run:
 
 ```sh echo
 npm run observable convert <notebook url>
 ```
+
 Or with Yarn:
+
 ```sh echo
 yarn observable convert <notebook url>
 ```
-Note that, due to [syntax differences](https://observablehq.com/framework/javascript) between Observable notebooks and
-Observable Framework, converted notebooks may require further
-changes to function correctly. For example, to convert the notebook at `https://observablehq.com/@d3/zoomable-sunburst` to Markdown, run the following command in your `docs` directory:
-  
+
+Note that, due to [syntax differences](./javascript) between notebooks and Framework, the resulting page may require further changes to function correctly. For example, to convert the notebook at `https://observablehq.com/@d3/zoomable-sunburst` to Observable Markdown, run the following command in the project directory:
+
 ```sh echo
 npm run observable convert https://observablehq.com/@d3/zoomable-sunburst
 ```
 
-This will create 2 files: `zoomable-sunburst.md` and `flare-2.json` (the file attachment in the notebook). You can then view the markdown file in your dev environment, but you will see a few errors that needs to be corrected:
+This creates two files: `zoomable-sunburst.md` (combining Markdown and JavaScript) and `flare-2.json` (data). Move them to your documents folder (_e.g._, `src/`), then [preview](./getting-started#test-live-preview) the page (typically at `http://127.0.0.1:3000/zoomable-sunburst`). You should see a few errors that need to be corrected:
 
-Change the `chart` cell definition to an arrow function:
+a) Change the `chart` cell definition to an arrow function:
+
 ```js run=false
 const chart = () => {
   // Specify the chart’s dimensions.
@@ -399,18 +401,20 @@ const chart = () => {
   ...
 ```
 
-and the file attachment code to:
-~~~js run=false
-```js 
-const data = FileAttachment("flare-2.json").json()
-```
-~~~
+b) Edit the file attachment code block like so:
 
-and then, finally, add a JavaScript code block to display the chart:
-~~~js run=false
+````js run=false
+```js
+const data = FileAttachment("flare-2.json").json();
+```
+````
+
+c) Add a JavaScript code block to display the chart:
+
+````js run=false
 ```js
 display(chart());
 ```
-~~~
+````
 
-
+Enjoy! 🚀
