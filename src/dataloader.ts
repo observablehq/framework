@@ -84,27 +84,17 @@ export class LoaderResolver {
       const archive = dir + ext;
       const archiveLoader = this.findExact(archive, {useStale}) ?? this.findDynamic(archive, {useStale});
       if (archiveLoader) {
-        if ("load" in archiveLoader) {
-          // archive.zip.js
-          return new Extractor({
-            preload: async (options) => archiveLoader.load(options),
-            inflatePath: targetPath.slice(archive.length - ext.length + 1),
-            path: archiveLoader.path,
-            root: this.root,
-            targetPath,
-            useStale
-          });
-        } else {
-          // archive.zip
-          return new Extractor({
-            preload: async () => relative(this.root, archiveLoader.path),
-            inflatePath: targetPath.slice(archive.length - ext.length + 1),
-            path: archiveLoader.path,
-            root: this.root,
-            targetPath,
-            useStale
-          });
-        }
+        return new Extractor({
+          preload:
+            "load" in archiveLoader
+              ? async (options) => archiveLoader.load(options) // archive.zip.js
+              : async () => relative(this.root, archiveLoader.path), // archive.zip
+          inflatePath: targetPath.slice(archive.length - ext.length + 1),
+          path: archiveLoader.path,
+          root: this.root,
+          targetPath,
+          useStale
+        });
       }
     }
   }
