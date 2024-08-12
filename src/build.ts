@@ -231,6 +231,10 @@ export async function build(
   };
   for (const path of localImports) {
     const module = findModule(root, path);
+    if (!module) {
+      effects.logger.error(red(`error: import not found: ${path}`));
+      continue;
+    }
     const sourcePath = join(root, module.path);
     const importPath = join("_import", module.path);
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);

@@ -5,7 +5,6 @@ import {getClientPath} from "./files.js";
 import type {Html, HtmlResolvers} from "./html.js";
 import {html, parseHtml, rewriteHtml} from "./html.js";
 import {isJavaScript} from "./javascript/imports.js";
-import type {Params} from "./javascript/params.js";
 import {transpileJavaScript} from "./javascript/transpile.js";
 import type {MarkdownPage} from "./markdown.js";
 import type {PageLink} from "./pager.js";
@@ -14,6 +13,7 @@ import {isAssetPath, resolvePath, resolveRelativePath} from "./path.js";
 import type {Resolvers} from "./resolvers.js";
 import {getResolvers} from "./resolvers.js";
 import {rollupClient} from "./rollup.js";
+import type {Params} from "./route.js";
 
 export interface RenderOptions extends Config {
   root: string;

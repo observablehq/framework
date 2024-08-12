@@ -2,18 +2,18 @@ import {createHash} from "node:crypto";
 import type {WriteStream} from "node:fs";
 import {createReadStream, existsSync, statSync} from "node:fs";
 import {open, readFile, rename, unlink} from "node:fs/promises";
-import {basename, dirname, extname, join, relative} from "node:path/posix";
+import {dirname, extname, join, relative} from "node:path/posix";
 import {createGunzip} from "node:zlib";
 import {spawn} from "cross-spawn";
-import {globSync} from "glob";
 import JSZip from "jszip";
 import {extract} from "tar-stream";
 import {maybeStat, prepareOutput} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {formatByteSize} from "./format.js";
 import {getFileInfo} from "./javascript/module.js";
-import type {Params} from "./javascript/params.js";
 import type {Logger, Writer} from "./logger.js";
+import type {Params} from "./route.js";
+import {route} from "./route.js";
 import {cyan, faint, green, red, yellow} from "./tty.js";
 
 const runningCommands = new Map<string, Promise<string>>();
@@ -130,11 +130,13 @@ export class LoaderResolver {
   }
 
   private findDynamic(targetPath: string, {useStale}): Asset | Loader | undefined {
-    const found = this.findDynamicParams(".", join(".", targetPath).split("/"));
+    const ext = extname(targetPath);
+    const exts = [ext, ...Array.from(this.interpreters.keys(), (e) => ext + e)];
+    const found = route(this.root, targetPath.slice(0, -ext.length), exts);
     if (!found) return;
-    const {path, params, ext} = found;
-    if (!ext) return {path: join(this.root, path)};
-    const [command, ...args] = this.interpreters.get(ext)!;
+    const {path, params, ext: iext} = found;
+    if (iext === ext) return {path: join(this.root, path)};
+    const [command, ...args] = this.interpreters.get(iext.slice(ext.length))!;
     if (command != null) args.push(join(this.root, path));
     return new CommandLoader({
       command: command ?? path,
@@ -144,42 +146,6 @@ export class LoaderResolver {
       targetPath,
       useStale
     });
-  }
-
-  /**
-   * Finds a parameterized data loader (dynamic route) recursively, such that
-   * the most specific match is returned.
-   */
-  private findDynamicParams(cwd: string, parts: string[]): {path: string; params?: Params; ext?: string} | undefined {
-    switch (parts.length) {
-      case 0:
-        return;
-      case 1: {
-        const [first] = parts;
-        if (existsSync(join(this.root, cwd, first))) return {path: join(cwd, first)};
-        const ext1 = extname(first);
-        for (const ext of this.interpreters.keys()) {
-          const ext2 = `${ext1}${ext}`;
-          if (existsSync(join(this.root, cwd, first + ext))) return {path: join(cwd, first + ext), ext};
-          for (const file of globSync(`\\[*\\]${ext2}`, {cwd: join(this.root, cwd)})) {
-            const params = {[basename(file, ext2).slice(1, -1)]: basename(first, ext1)};
-            return {path: join(cwd, file), params, ext};
-          }
-        }
-        return;
-      }
-      default: {
-        const [first, ...rest] = parts;
-        if (existsSync(join(this.root, cwd, first))) {
-          const found = this.findDynamicParams(join(cwd, first), rest);
-          if (found) return found;
-        }
-        for (const dir of globSync("\\[*\\]", {cwd: join(this.root, cwd)})) {
-          const found = this.findDynamicParams(join(cwd, dir), rest);
-          if (found) return {...found, params: {...found.params, [dir.slice(1, -1)]: first}};
-        }
-      }
-    }
   }
 
   getWatchPath(path: string): string | undefined {

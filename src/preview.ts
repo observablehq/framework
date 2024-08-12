@@ -23,7 +23,6 @@ import {getClientPath} from "./files.js";
 import type {FileWatchers} from "./fileWatchers.js";
 import {isComment, isElement, isText, parseHtml, rewriteHtml} from "./html.js";
 import {findModule, readJavaScript} from "./javascript/module.js";
-import type {Params} from "./javascript/params.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import {parseMarkdown} from "./markdown.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
@@ -33,6 +32,8 @@ import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
 import {getResolvers} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
+import type {Params} from "./route.js";
+import {route} from "./route.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, link} from "./tty.js";
@@ -140,17 +141,21 @@ export class PreviewServer {
         const path = pathname.slice("/_import".length);
         try {
           if (pathname.endsWith(".css")) {
-            // TODO allow parameterized path?
-            const filepath = join(root, path);
-            await access(filepath, constants.R_OK);
-            end(req, res, await bundleStyles({path: filepath}), "text/css");
-            return;
+            const module = route(root, path.slice(0, -".css".length), [".css"]);
+            if (module) {
+              const sourcePath = join(root, path);
+              await access(sourcePath, constants.R_OK);
+              end(req, res, await bundleStyles({path: sourcePath}), "text/css");
+              return;
+            }
           } else if (pathname.endsWith(".js")) {
             const module = findModule(root, path);
-            const input = await readJavaScript(join(root, module.path));
-            const output = await transpileModule(input, {root, path, params: module.params});
-            end(req, res, output, "text/javascript");
-            return;
+            if (module) {
+              const input = await readJavaScript(join(root, module.path));
+              const output = await transpileModule(input, {root, path, params: module.params});
+              end(req, res, output, "text/javascript");
+              return;
+            }
           }
         } catch (error) {
           if (!isEnoent(error)) throw error;

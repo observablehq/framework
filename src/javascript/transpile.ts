@@ -4,12 +4,12 @@ import type {ImportDeclaration, ImportDefaultSpecifier, ImportNamespaceSpecifier
 import {simple} from "acorn-walk";
 import {isPathImport, relativePath, resolvePath, resolveRelativePath} from "../path.js";
 import {getModuleResolver} from "../resolvers.js";
+import type {Params} from "../route.js";
 import {Sourcemap} from "../sourcemap.js";
 import type {FileExpression} from "./files.js";
 import {findFiles} from "./files.js";
 import type {ExportNode, ImportNode} from "./imports.js";
 import {hasImportDeclaration, isImportMetaResolve} from "./imports.js";
-import type {Params} from "./params.js";
 import {findParams} from "./params.js";
 import type {JavaScriptNode} from "./parse.js";
 import {parseProgram} from "./parse.js";

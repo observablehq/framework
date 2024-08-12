@@ -1,9 +1,8 @@
 import type {Identifier, Literal, MemberExpression, Node} from "acorn";
 import {simple} from "acorn-walk";
+import type {Params} from "../route.js";
 import {findReferences} from "./references.js";
 import {syntaxError} from "./syntaxError.js";
-
-export type Params = {[name: string]: string};
 
 export type ParamReference = MemberExpression & {property: Identifier | (Literal & {value: string}); value: string};
 

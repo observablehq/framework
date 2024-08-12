@@ -1,18 +1,18 @@
 import type {Hash} from "node:crypto";
 import {createHash} from "node:crypto";
-import {accessSync, constants, existsSync, readFileSync, statSync} from "node:fs";
+import {accessSync, constants, readFileSync, statSync} from "node:fs";
 import {readFile} from "node:fs/promises";
-import {basename, extname, join} from "node:path/posix";
+import {extname, join} from "node:path/posix";
 import type {Program} from "acorn";
 import {transform, transformSync} from "esbuild";
-import {globSync} from "glob";
 import {resolveNodeImport} from "../node.js";
 import {resolveNpmImport} from "../npm.js";
 import {resolvePath} from "../path.js";
 import {builtins} from "../resolvers.js";
+import type {RouteResult} from "../route.js";
+import {route} from "../route.js";
 import {findFiles} from "./files.js";
 import {findImports, parseImports} from "./imports.js";
-import type {Params} from "./params.js";
 import {parseProgram} from "./parse.js";
 
 export type FileInfo = {
@@ -119,6 +119,7 @@ export async function getLocalModuleHash(root: string, path: string): Promise<st
  */
 export function getModuleInfo(root: string, path: string): ModuleInfo | undefined {
   const module = findModule(root, path);
+  if (!module) return; // TODO delete stale entry?
   const key = join(root, module.path);
   let mtimeMs: number;
   try {
@@ -207,44 +208,11 @@ export function getFileInfo(root: string, path: string): FileInfo | undefined {
   return entry;
 }
 
-export function findModule(root: string, path: string): {path: string; params?: Params} {
-  return findModuleParams(root, ".", join(".", path).split("/")) ?? {path};
-}
-
-/**
- * Finds a parameterized module (dynamic route) recursively, such that the most
- * specific match is returned.
- */
-function findModuleParams(root: string, cwd: string, parts: string[]): {path: string; params?: Params} | undefined {
-  switch (parts.length) {
-    case 0:
-      return;
-    case 1: {
-      const [first] = parts;
-      if (existsSync(join(root, cwd, first))) {
-        return {path: join(cwd, first)};
-      }
-      if (first.endsWith(".js") && existsSync(join(root, cwd, first + "x"))) {
-        return {path: join(cwd, first + "x")};
-      }
-      for (const file of globSync("\\[*\\].{js,jsx}", {cwd: join(root, cwd)})) {
-        const params = {[basename(file, extname(file)).slice(1, -1)]: basename(first, extname(first))};
-        return {path: join(cwd, file), params};
-      }
-      return;
-    }
-    default: {
-      const [first, ...rest] = parts;
-      if (existsSync(join(root, cwd, first))) {
-        const found = findModuleParams(root, join(cwd, first), rest);
-        if (found) return found;
-      }
-      for (const dir of globSync("\\[*\\]", {cwd: join(root, cwd)})) {
-        const found = findModuleParams(root, join(cwd, dir), rest);
-        if (found) return {...found, params: {...found.params, [dir.slice(1, -1)]: first}};
-      }
-    }
-  }
+export function findModule(root: string, path: string): RouteResult | undefined {
+  const ext = extname(path);
+  const exts = [ext];
+  if (ext === ".js") exts.push(".jsx");
+  return route(root, path.slice(0, -ext.length), exts);
 }
 
 export async function readJavaScript(sourcePath: string): Promise<string> {

@@ -1,5 +1,6 @@
 import {Parser, tokTypes} from "acorn";
 import type {Expression, Identifier, Options, Program} from "acorn";
+import type {Params} from "../route.js";
 import {checkAssignments} from "./assignments.js";
 import {findAwaits} from "./awaits.js";
 import {findDeclarations} from "./declarations.js";
@@ -7,7 +8,6 @@ import type {FileExpression} from "./files.js";
 import {findFiles} from "./files.js";
 import type {ImportReference} from "./imports.js";
 import {findExports, findImports} from "./imports.js";
-import type {Params} from "./params.js";
 import {checkParams} from "./params.js";
 import {findReferences} from "./references.js";
 import {syntaxError} from "./syntaxError.js";
