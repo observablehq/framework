@@ -50,3 +50,10 @@ display(chart());
 ```
 ````
 
+## Things to note
+
+- The `convert` utility only works with **public notebooks** at this point. We may add support for private notebooks in the future.
+- It doesn't support **notebook imports**. If your notebook imports cells from other notebooks, you could manually copy the code from those notebooks into your converted markdown file.
+- No support for **Observable JavaScript syntax**. You will need to adjust the code to work with [Framework's JavaScript syntax](/javascript).
+- **Reactivity** works slightly differently in Framework. For example, instead of using `viewof` with the Inputs library, you use `view`. See the [Reactivity](/reactivity) section for more details.
+- Framework uses a slightly different **Standard Library** than notebooks. You may need to adjust the code to work with Framework's Standard Library.
