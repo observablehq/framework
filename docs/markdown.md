@@ -368,4 +368,3 @@ You may also want to add `noopener noreferrer` if linking to an untrusted origin
 ![A horse](./horse.jpg)
 ![A happy kitten](https://placekitten.com/200/300)
 ```
-
