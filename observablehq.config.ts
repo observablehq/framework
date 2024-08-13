@@ -30,6 +30,7 @@ export default {
     {name: "Themes", path: "/themes"},
     {name: "Configuration", path: "/config"},
     {name: "Deploying", path: "/deploying"},
+    {name: "Converting notebooks", path: "/converting-notebooks"},
     {name: "Examples", path: "https://github.com/observablehq/framework/tree/main/examples"},
     {
       name: "Inputs",
