@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import {join} from "node:path";
+import {join} from "node:path/posix";
 import type {ParseArgsConfig} from "node:util";
 import {parseArgs} from "node:util";
 import * as clack from "@clack/prompts";
