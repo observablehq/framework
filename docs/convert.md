@@ -356,34 +356,33 @@ For the latter, `file.arrow` now imports `npm:apache-arrow` internally, and thus
 
 ## Recommended libraries
 
-One big (but subtle) change: you can now control the version of recommended libraries, and recommended libraries are self-hosted (along with all other npm imports), and default to the latest versions.
+One big (but subtle) change: you can now control the version of recommended libraries, and recommended libraries are self-hosted (along with all other npm imports), and default to the latest versions. (you can still request any version explicitly by using an explicit `import … from "npm:module@version"` statement)
 
 Upgrades (as of current writing):
-- `@duckdb/duckdb-wasm` from 1.24.0 to 1.28.0
-- `apache-arrow` from 4.0.1 to 17.0.0
-- `arquero` from 4.8.8 to 6.0.1
-- `dot` from `viz.js` 2.0.0 to `@viz-js/viz` at 3.7.0
-- `exceljs` from 4.3.0 to 4.4.0
-- `katex` from 0.11.0 to 0.16.11
-- `leaflet` from 1.9.3 to 1.9.4
-- `mermaid` from 9.2.2 to 10.9.1
-- `vega-lite-api` from 5.0.0 to 5.6.0
-- `vega-lite` from 5.6.0 to 5.20.1
-- `vega` from 5.22.1 to 5.30.0
+- [`@duckdb/duckdb-wasm`](./lib/duckdb) from 1.24.0 to 1.28.0
+- [`apache-arrow`](./lib/arrow) from 4.0.1 to 17.0.0
+- [`arquero`](./lib/arquero) from 4.8.8 to 6.0.1
+- [`dot`](./lib/dot) from `viz.js` 2.0.0 to `@viz-js/viz` at 3.7.0
+- [`exceljs`](./lib/xlsx) from 4.3.0 to 4.4.0
+- [`katex`](./lib/tex) from 0.11.0 to 0.16.11
+- [`leaflet`](./lib/leaflet) from 1.9.3 to 1.9.4
+- [`mermaid`](./lib/mermaid) from 9.2.2 to 10.9.1
+- [`vega`](./lib/vega-lite) from 5.22.1 to 5.30.0
+- [`vega-lite`](./lib/vega-lite) from 5.6.0 to 5.20.1
+- [`vega-lite-api`](./lib/vega-lite) from 5.0.0 to 5.6.0
 
 Changes:
-- `html` uses `htl.html`
-- `svg` uses `htl.svg`
+- [`html`](./lib/htl) uses `htl.html`
+- [`svg`](./lib/htl) uses `htl.svg`
+- [`dot`](./lib/dot) implements responsive dark mode & styling
 
 Additions:
-- `ReactDOM`
-- `React`
-- `duckdb`
-- `echarts`
-- `mapboxgl`
-- `vg`
-
-In Observable Framework, the recommended [libraries](./imports#implicit-imports) are generally not pinned to a given version — instead you get the latest version that was published on npm (you can still request any version explicitly by using an explicit `import … from "npm:module@version"` statement). Some of them, such as [graphviz](./lib/dot), have been slightly adapted in support of dark mode. For details, see the documentation for each library.
+- [`ReactDOM`](./jsx)
+- [`React`](./jsx)
+- [`duckdb`](./lib/duckdb)
+- [`echarts`](./lib/echarts)
+- [`mapboxgl`](./lib/mapbox-gl)
+- [`vg`](./lib/mosaic)
 
 ## Sample datasets
 
