@@ -30,7 +30,6 @@ export default {
     {name: "Themes", path: "/themes"},
     {name: "Configuration", path: "/config"},
     {name: "Deploying", path: "/deploying"},
-    {name: "Converting notebooks", path: "/converting-notebooks"},
     {name: "Examples", path: "https://github.com/observablehq/framework/tree/main/examples"},
     {
       name: "Inputs",
@@ -83,6 +82,7 @@ export default {
         {name: "ZIP", path: "/lib/zip"}
       ]
     },
+    {name: "Converting notebooks", path: "/convert"},
     {name: "Contributing", path: "/contributing", pager: false}
   ],
   base: "/framework",
