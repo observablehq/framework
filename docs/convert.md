@@ -170,7 +170,7 @@ Database connectors can be replaced by [data loaders](./loaders). We recommend u
 
 ## Command-line flags
 
-The `convert` command supports the following command-line flags:
+Besides `--config` and `--root`, the `convert` command supports the following additional command-line flags:
 
-- `--output` - the path to the output directory; defaults to `.` for the current working directory.
+- `--output` - the path to the output directory; defaults to the [source root](./config#root).
 - `--force` - if true, always download and overwrite existing resources; by default, the script will ask for user input when a file already exists in the output directory.
