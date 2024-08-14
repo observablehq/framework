@@ -59,21 +59,21 @@ This will output something like:
 
 The `convert` command generates files in the current working directory. The command above generates two files: <code>zoomable-sunburst.md</code>, a Markdown file representing the converted notebook; and <code>flare-2.json</code>, an attached JSON file. You can change the output directory using the <code>--output</code> command-line flag.
 
-Due to differences between Observable Framework and Observable notebooks, the `convert` command typically won’t produce a working Markdown page out of the box; you’ll often need to make further edits to the generated Markdown. We describe these differences below, along with suggestions of how to make the remaining conversions manually.
+Due to differences between Observable Framework and Observable notebooks, the `convert` command typically won’t produce a working Markdown page out of the box; you’ll often need to make further edits to the generated Markdown. We describe these differences below, along with examples of manual conversion.
 
 <div class="note">
 
-The `convert` command has minimal “magic” so that its behavior is easy to understand and because converting notebook code into standard Markdown and JavaScript requires interpretation. Still, we’re considering making `convert` smarter; let us know if you’re interested.
+The `convert` command has minimal “magic” so that its behavior is easier to understand and because converting notebook code into standard Markdown and JavaScript requires human interpretation. Still, we’re considering making `convert` smarter; let us know if you’re interested.
 
 </div>
 
 ## JavaScript syntax
 
-While Framework uses vanilla [JavaScript syntax](./javascript), notebooks use a nonstandard dialect called [Observable JavaScript](https://observablehq.com/documentation/cells/observable-javascript). A JavaScript cell in an notebook is not a standard JavaScript program (_i.e._, a sequence of statements), but a _cell declaration_; it can be either an _expression cell_ consisting of a single JavaScript expression (such as `1 + 2`) or a _block cell_ consisting of any number of JavaScript statements (such as `console.log("hello");`) surrounded by curly braces. These two forms of cell require slightly different treatment. The `convert` command converts both into JavaScript [fenced code blocks](./javascript#fenced-code-blocks).
+Framework uses vanilla [JavaScript syntax](./javascript), while notebooks use a nonstandard dialect called [Observable JavaScript](https://observablehq.com/documentation/cells/observable-javascript). A JavaScript cell in an notebook is not a JavaScript program (_i.e._, a sequence of statements) but rather a _cell declaration_; it can be either an _expression cell_ consisting of a single JavaScript expression (such as `1 + 2`) or a _block cell_ consisting of any number of JavaScript statements (such as `console.log("hello");`) surrounded by curly braces. These two forms of cell require slightly different treatment. The `convert` command converts both into JavaScript [fenced code blocks](./javascript#fenced-code-blocks).
 
 ### Expression cells
 
-Named expression cells in notebooks should be converted into standard variable declarations, typically using `const`.
+Named expression cells in notebooks can be converted into standard variable declarations, typically using `const`.
 
 Before:
 
@@ -99,7 +99,7 @@ Framework allows multiple variable declarations in the same code block, so you c
 
 </div>
 
-Unnamed expression cells become expression code blocks in Framework, and they work the same way, so you shouldn’t have to make any changes.
+Anonymous expression cells become expression code blocks in Framework, which work the same, so you shouldn’t have to make any changes.
 
 ```js run=false
 1 + 2
@@ -113,9 +113,7 @@ While a notebook is limited to a linear sequence of cells, Framework allows you 
 
 ### Block cells
 
-Consider a more elaborate block cell, here an abridged example of the typical D3 chart pattern (adapted from D3’s [_Bar chart_](https://observablehq.com/@d3/bar-chart/2) example):
-
-Before:
+Block cells are typically used for more elaborate definitions. They are characterized by curly braces (`{…}`) and a return statement to indicate the cell’s value. Here is an abridged example of the typical D3 chart pattern (adapted from D3’s [_Bar chart_](https://observablehq.com/@d3/bar-chart/2)):
 
 ```js run=false
 chart = {
@@ -130,11 +128,8 @@ chart = {
 }
 ```
 
-Block cells are characterized by curl braces (`{…}`) and a return statement that indicates the (displayed) value of the cell.
 
-To convert a block cell to a JavaScript fenced code block: remove the surrounding curly braces, and replace the return statement with a variable declaration and (if desired) an explicit call to [`display`](./javascript#explicit-display).
-
-After:
+To convert a block cell: delete the cell name (`chart`), assignment operator (`=`), and surrounding curly braces (`{` and `}`); then replace the return statement with a variable declaration and a call to [`display`](./javascript#explicit-display) as desired.
 
 ```js run=false
 const width = 960;
@@ -149,7 +144,20 @@ const chart = display(svg.node());
 
 <div class="tip">
 
-An alternative transformation would be to create a function called `chart`, and invoke `chart()` as an inline expression where we want to display the output.
+If you prefer, you can instead convert a block cell into a function such as:
+
+<pre><code class="language-js">function chart() {
+  const width = 960;
+  const height = 500;
+
+  const svg = d3.create("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+  return svg.node();
+}</code></pre>
+
+Then call the function from an [inline expression](./javascript#inline-expressions) (_e.g._, `${chart()}`) to display its output anywhere on the page. This technique is also useful for importing a chart definition into multiple pages.
 
 </div>
 
