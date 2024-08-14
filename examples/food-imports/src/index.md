@@ -14,6 +14,9 @@ import {Sunburst} from './components/Sunburst.js'
 ```js 
 // raw data
 const raw = FileAttachment("./data/FoodImports.csv").csv();
+// full palette from dictionary-of-colour-combinations bySanzo Wada, 
+// source: https://github.com/mattdesl/dictionary-of-colour-combinations/blob/master/colors.json
+const colors = FileAttachment("./data/colors.json").json();
 ```
 
 ```js
@@ -27,9 +30,28 @@ const nInput = Inputs.range(
   }
 );
 const n = Generators.input(nInput)
-```
 
-<div>${nInput}</div>
+const sInput = Inputs.range(
+  [0,150],
+  {
+    label: "Spectrum A start",
+    value: 0,
+    step: 1
+  }
+);
+const s = Generators.input(sInput)
+
+const qInput = Inputs.range(
+  [0,150],
+  {
+    label: "Spectrum B start",
+    value: 0,
+    step: 1
+  }
+);
+const q = Generators.input(qInput)
+
+```
 
 ```js
 // data wrangling – should this all be moved to a data loader..?
@@ -88,79 +110,106 @@ const byCountryAndCategory = d3.groups(sample, d => d.Country, d => d.Category)
 ```
 
 ```js
-// helper functions
-const yearParse = d3.utcParse('%Y')
+const colorMap = new Map(d3.rollups(byYearAndCountry, v => d3.sum(v, d => d.value), d => d.country).sort((a,b) => b[1] - a[1]).map((d,i) => ([d[0], i%n])))
 ```
 
-<div class="grid grid-cols-2" style="grid-auto-rows: 520px;">
-  <div class="card grid-colspan-1">
-    <h2>Relative share of food imports to the US</h2>
+```js
+const areaData = byYearAndCountry.map(d => ({...d, colorIndex: colorMap.get(d.country)}))
+```
+
+<div>${nInput}</div>
+<div>${sInput}</div>
+<div>${qInput}</div>
+
+```js
+// helper functions
+const yearParse = d3.utcParse('%Y')
+const areaColors = colors.slice(s,s+n).map(d => d.hex)
+const sunburstColors = colors.slice(q,q+14).map(d => d.hex)
+```
+
+<!-- <div class="grid grid-cols-2" style="grid-auto-rows: 520px;">
+  <div class="card grid-colspan-1"> -->
+  <!-- ${resize((width, height) => Sunburst(nest, {
+    value: d => d.value,
+    label: d => d.name,
+    color: d3.scaleOrdinal().range(sunburstColors),
+    title: (d, n) => `${n.ancestors().reverse().map(d => d.data.name).join(".")}\n${n.value.toLocaleString("en")}`, // hover text
+    width,
+    height,
+  }))} -->
+
+<div class=" card" >
+  <h2>Relative share of food imports to the US</h2>
     <h3>across top ${n} countries, 1999–2023</h3>
-    ${resize((width, height) => Plot.plot({
+    ${Plot.plot({
+      height: 800,
       marginLeft: 50,
       marginRight: 50,
-      width,
-      height: height - 40,
       color: {
         type: "ordinal",
-        domain: tops, 
-        scheme: "Set3"
+        range: areaColors
       },
       y: {
         grid: true,
-        label: "↑ Percent of food imports"
+        label: "↑ Food Import $"
       },
       marks: [
         Plot.areaY(
-          byYearAndCountry.filter(d => tops.includes(d.country)),
+          areaData.filter(d => tops.includes(d.country)),
           {
-            x: "year", 
-            y: "value", 
-            fill: "country", 
-            offset: 'normalize', 
-            order: "group", 
-            reverse: true
+              x: "year",
+              y: "value",
+              z: "country",
+              order: "sum",
+              fill: "colorIndex",
+              interval: "year",
+              textAnchor: 'start',
+              reverse: true, 
+              offset: 'normalize',
           }
         ),
-        Plot.ruleY([0]),
-        Plot.textY(byYearAndCountry.filter(d => tops.includes(d.country)),
+        Plot.textY(
+          areaData.filter((d) => tops.includes(d.country)),
           Plot.selectLast(
             Plot.stackY({
               x: "year",
               y: "value",
-              fill: "country",
-              stroke: "country",
-              strokeWidth: 1,
-              order: "group",
+              z: "country",
+              order: "sum",
+              fill: "colorIndex",
               text: "country",
               interval: "year",
               textAnchor: 'start',
               offset: 'normalize',
-              reverse: true
             })
           )
-        )
-      ]
-    }))}
-  </div>
-  <div class="card grid-colspan-1">
+        ),
+        Plot.ruleY([0])
+      ]})}
+
+</div>
+
+<div class=" card" >
   <h2>Food imports to the Unites States, 2023</h2>
-  <h3>Global share by category and subcategory</h3>
-  ${resize((width, height) => Sunburst(nest, {
-    value: d => d.value,
-    label: d => d.name,
-    title: (d, n) => `${n.ancestors().reverse().map(d => d.data.name).join(".")}\n${n.value.toLocaleString("en")}`, // hover text
-    width,
-    height,
-  }))}
-  </div>
+    <h3>Global share by category and subcategory</h3>
+    ${Sunburst(nest, {
+      value: d => d.value,
+      label: d => d.name,
+      color: d3.scaleOrdinal().range(sunburstColors),
+      title: (d, n) => `${n.ancestors().reverse().map(d => d.data.name).join(".")}\n${n.value.toLocaleString("en")}`, 
+      width,
+    })}
+
 </div>
 
 <div class=" card" >
   <h2 >Distribution of food imports by country and category</h2>
    <h3 >from top ${n} countries, 2023</h3>
    ${Marimekko(byCountryAndCategory, {
-    width
-    })} 
+    width,
+    color: d3.scaleOrdinal().range(sunburstColors)
+    })}
+
 </div>
 

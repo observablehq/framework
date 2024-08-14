@@ -27,7 +27,7 @@ export function Sunburst(data, { // data is either tabular (array of objects) or
   radius = Math.min(width - marginLeft - marginRight, height - marginTop - marginBottom) / 2, // outer radius
   color = d3.interpolateRainbow, // color scheme, if any
   fill = "#ccc", // fill for arcs (if no color encoding)
-  fillOpacity = 0.6, // fill opacity for arcs
+  fillOpacity = 0.99, // fill opacity for arcs
 } = {}) {
 
   // If id and parentId options are specified, or the path option, use d3.stratify
