@@ -294,7 +294,7 @@ Then replace any assignments to `mutable foo` with calls to `setFoo`.
 
 ## Standard library
 
-As part of our modernization efforts with Framework, we’ve pruned deprecated methods from the standard library used in notebooks. The following built-ins are not available in Framework:
+As part of our modernization efforts with Framework, we’ve pruned deprecated methods from the standard library used in notebooks. The following notebook built-ins are not available in Framework:
 
 - [`DOM`](https://github.com/observablehq/stdlib/blob/493bf210f5fcd9360cf87a961403aa963ba08c96/src/dom/index.js)
 - [`Files`](https://github.com/observablehq/stdlib/blob/493bf210f5fcd9360cf87a961403aa963ba08c96/src/files/index.js)
@@ -309,7 +309,7 @@ As part of our modernization efforts with Framework, we’ve pruned deprecated m
 - [`require`](https://github.com/observablehq/stdlib/blob/493bf210f5fcd9360cf87a961403aa963ba08c96/src/require.js)
 - [`resolve`](https://github.com/observablehq/stdlib/blob/493bf210f5fcd9360cf87a961403aa963ba08c96/src/require.js)
 
-For convenience, we’ve linked above to the implementations so that you can see how they work, and if desired, copy the code into your own Framework app as vanilla JavaScript. For example, for a [2D canvas](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D), you can replace `DOM.context2d` with:
+For convenience, we’ve linked to the implementations above so that you can see how they work, and if desired, copy the code into your own Framework app as vanilla JavaScript. For example, for a [2D canvas](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D), you can replace `DOM.context2d` with:
 
 ```js run=false
 function context2d(width, height, dpi = devicePixelRatio) {
@@ -356,9 +356,9 @@ For the latter, `file.arrow` now imports `npm:apache-arrow` internally, and thus
 
 ## Recommended libraries
 
-One big (but subtle) change: you can now control the version of recommended libraries, and recommended libraries are self-hosted (along with all other npm imports), and default to the latest versions. (you can still request any version explicitly by using an explicit `import … from "npm:module@version"` statement)
+In Framework, implicit imports of recommended libraries are normal [npm imports](./imports#npm-imports), and thus are self-hosted, giving you control over versioning. If a requested library is not in your [npm cache](./imports#self-hosting-of-npm-imports), then by default the latest version will be downloaded. You can request a more specific version either by seeding the npm cache or by including a semver range in the import specifier (_e.g._, `import * as d3 from "npm:d3@6"`).
 
-Upgrades (as of current writing):
+Because Framework defaults to the latest version of recommended libraries, you will typically get a more recent version than what is available in notebooks. As of August 2024, here is a comparison of recommended library versions between notebooks and Framework:
 - [`@duckdb/duckdb-wasm`](./lib/duckdb) from 1.24.0 to 1.28.0
 - [`apache-arrow`](./lib/arrow) from 4.0.1 to 17.0.0
 - [`arquero`](./lib/arquero) from 4.8.8 to 6.0.1
@@ -371,33 +371,15 @@ Upgrades (as of current writing):
 - [`vega-lite`](./lib/vega-lite) from 5.6.0 to 5.20.1
 - [`vega-lite-api`](./lib/vega-lite) from 5.0.0 to 5.6.0
 
-Changes:
-- [`html`](./lib/htl) uses `htl.html`
-- [`svg`](./lib/htl) uses `htl.svg`
-- [`dot`](./lib/dot) implements responsive dark mode & styling
-
-Additions:
-- [`ReactDOM`](./jsx)
-- [`React`](./jsx)
-- [`duckdb`](./lib/duckdb)
-- [`echarts`](./lib/echarts)
-- [`mapboxgl`](./lib/mapbox-gl)
-- [`vg`](./lib/mosaic)
+In Framework, the [`html`](./lib/htl) and [`svg`](./lib/htl) built-in template literals are implemented with [Hypertext Literal](./lib/htl) which automatically escapes interpolated values. The [`dot`](./lib/dot) template literal implements responsive dark mode & better styling. And Framework has several additional recommended libraries that are not available in notebooks: [`ReactDOM`](./jsx), [`React`](./jsx), [`duckdb`](./lib/duckdb), [`echarts`](./lib/echarts), [`mapboxgl`](./lib/mapbox-gl), and [`vg`](./lib/mosaic).
 
 ## Sample datasets
 
-Self-hosted.
+Like recommended libraries, Framework’s built-in sample datasets (_e.g._, `aapl` and `penguins`) are backed by npm imports that are self-hosted.
 
 ## Cell modes
 
-Framework doesn’t support non-code cell modes, so these features can’t be converted:
-
-- Data table cells
-- Chart cells
-
-Framework’s SQL cell is very different from notebooks.
-
-Some cell types cannot be converted to Observable Markdown. Data table cells can be replaced by `Inputs.table` (see [#23](https://github.com/observablehq/framework/issues/23) for future enhancements), and chart cells can be replaced by Observable Plot’s [auto mark](https://observablehq.com/plot/marks/auto).
+The `convert` command only supports code cell modes: Markdown, JavaScript, HTML, TeX, and SQL. It does not support non-code cell modes: data table and chart. You can use the “Convert to SQL” or “Convert to JavaScript” feature to convert data table cells and chart cells to their code equivalents prior to conversion. Alternatively, you can manually replace data table cells with `Inputs.table` (see [#23](https://github.com/observablehq/framework/issues/23) for future enhancements), and chart cells with Observable Plot’s [auto mark](https://observablehq.com/plot/marks/auto).
 
 ## Databases
 
@@ -405,4 +387,4 @@ Database connectors can be replaced by [data loaders](./loaders).
 
 ## Secrets
 
-We recommend using the `.env` file to store your secrets (such as database passwords and API keys) in a central place outside of your checked-in code; see [Google Analytics](https://observablehq.observablehq.cloud/framework-example-google-analytics/) for an example.
+We recommend using a `.env` file with [dotenv](https://github.com/motdotla/dotenv) to store your secrets (such as database passwords and API keys) in a central place outside of your checked-in code; see our [Google Analytics dashboard](https://github.com/observablehq/framework/tree/main/examples/google-analytics/) example.
