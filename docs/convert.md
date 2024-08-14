@@ -18,7 +18,7 @@ You can pass multiple URLs to convert many notebooks simultaneously.
 
 </div>
 
-For example, to convert D3’s [_Zoomable sunburst_](https://observablehq.com/@d3/zoomable-sunburst) example:
+For example, to convert D3’s [_Zoomable sunburst_](https://observablehq.com/@d3/zoomable-sunburst):
 
 ```sh echo
 npm run observable convert https://observablehq.com/@d3/zoomable-sunburst
@@ -65,43 +65,108 @@ We’ll describe each of these below with examples.
 
 While Framework uses [vanilla JavaScript](./javascript), Observable notebooks do not; notebooks use [Observable JavaScript](https://observablehq.com/documentation/cells/observable-javascript), which extends JavaScript syntax with a few critical differences. While these differences are often small, you will likely have to edit the converted code to make it conform to vanilla JavaScript syntax and work correctly in Framework.
 
-TK Example of a `chart` cell declaration.
-
-a) Change the `chart` cell definition to an arrow function:
-
-```js run=false
-const chart = () => {
-  // Specify the chart’s dimensions.
-  const width = 928;
-  const height = width;
-  ...
-```
-
-b) Edit the file attachment code block like so:
+For instance, let’s see how we fix the page converted from the [Zoomable sunburst](https://observablehq.com/@d3/zoomable-sunburst) notebook. At the bottom of the page we see that the `data` cell was transformed into:
 
 ````js run=false
-```js
+```js echo
+data = FileAttachment("flare-2.json").json()
+```
+````
+
+Fix this with the `const` keyword:
+
+````js run=false
+```js echo
 const data = FileAttachment("flare-2.json").json();
 ```
 ````
 
-c) Add a JavaScript code block to display the chart:
+The largest code block at the top, named `chart`, contains the following:
 
 ````js run=false
 ```js
-display(chart());
+chart = {
+  // Specify the chart’s dimensions.
+  const width = 928;
+  const height = width;
+  ...
+  return svg.node();
+}
 ```
 ````
 
-- It doesn't support **notebook imports**. If your notebook imports cells from other notebooks, you could manually copy the code from those notebooks into your converted markdown file.
+There are various ways to make this into vanilla JavaScript. One possibility is to remove the main curly braces, like so:
+
+````js run=false
+```js
+// Specify the chart’s dimensions.
+const width = 928;
+const height = width;
+...
+const chart = svg.node();
+```
+````
+
+Furthermore, we’ll need to [explicitly display](./javascript#explicit-display) the `chart` variable:
+
+````js run=false
+```js
+// Specify the chart’s dimensions.
+const width = 928;
+const height = width;
+...
+const chart = display(svg.node());
+```
+````
+
+(An alternative transformation would be to create a function called `chart`, and invoke `chart()` as an inline expression where we want to display the output.)
+
+Observable Markdown doesn’t support **notebook imports**. If your notebook imports cells from other notebooks, you could manually copy the code from those notebooks into your converted markdown file. If you import functions and other helpers, it could be useful to add them to a [local module](./imports#local-imports).
 
 ### Standard library differences
 
-TK
+The `md` template literal is not available in Observable Markdown; instead, write Markdown directly (or import the `markdown-it` library from npm for advanced usage).
+
+The `require` and `resolve` functions are not available in Observable Markdown; instead, use `import` and `import.meta.resolve`.
+
+The `DOM.*`, `Files.*`, `Generators.*` and `Promises.*` methods are not available in Observable Markdown. Instead, use the appropriate vanilla JavaScript code — which you can grab from [observablehq/stdlib](https://github.com/observablehq/stdlib/). For example, to create an image with a [2D context](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D), you can copy the code from [context2d.js](https://github.com/observablehq/stdlib/blob/main/src/dom/context2d.js):
+
+```js run=false
+function context2d(width, height, dpi) {
+  if (dpi == null) dpi = devicePixelRatio;
+  var canvas = document.createElement("canvas");
+  canvas.width = width * dpi;
+  canvas.height = height * dpi;
+  canvas.style.width = width + "px";
+  var context = canvas.getContext("2d");
+  context.scale(dpi, dpi);
+  return context;
+}
+```
+
+Or, to create a Promise that resolves to a given `value` after a given [delay](https://github.com/observablehq/stdlib/blob/main/src/promises/delay.js):
+
+```js run=false
+function delay(duration, value) {
+  return new Promise(function(resolve) {
+    setTimeout(function() {
+      resolve(value);
+    }, duration);
+  });
+}
+```
+
+If you use a specific function often, you can save it to a local module.
 
 ### Recommended library differences
 
 TK
+
+### Other differences
+
+Some cell types cannot be converted to Observable Markdown. Data table cells can be replaced by `Inputs.table` (see [issue #23](https://github.com/observablehq/framework/issues/23) for future enhancements), and chart cells can be replaced by Observable Plot’s [auto mark](https://observablehq.com/plot/marks/auto).
+
+Database connectors can be replaced by [data loaders](./loaders). We recommend using the `.env` file to store your secrets (such as database passwords and API keys) in a central place outside of your checked-in code; see [Google Analytics](https://observablehq.observablehq.cloud/framework-example-google-analytics/) for an example.
 
 ## Command-line flags
 
