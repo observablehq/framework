@@ -309,7 +309,7 @@ As part of our modernization efforts with Framework, we’ve pruned deprecated m
 - [`require`](https://github.com/observablehq/stdlib/blob/493bf210f5fcd9360cf87a961403aa963ba08c96/src/require.js)
 - [`resolve`](https://github.com/observablehq/stdlib/blob/493bf210f5fcd9360cf87a961403aa963ba08c96/src/require.js)
 
-For convenience, we’ve linked above to the implementations so that you can see how they work, and if desired, copy the code into your own Framework app as vanilla JavaScript. For example, to create a [2D canvas](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D), you replace `DOM.context2d` with:
+For convenience, we’ve linked above to the implementations so that you can see how they work, and if desired, copy the code into your own Framework app as vanilla JavaScript. For example, for a [2D canvas](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D), you can replace `DOM.context2d` with:
 
 ```js run=false
 function context2d(width, height, dpi = devicePixelRatio) {
@@ -338,23 +338,38 @@ The Framework standard library also includes several new methods that are not av
 
 ## File attachments
 
-Additions:
+Framework’s [`FileAttachment`](./files) includes a few new features:
 
 - `file.href`
 - `file.lastModified`
-- `file.arquero`
-- `file.parquet`
-
-Changes:
-
-- `file.csv` _etc._ don’t support `typed: "auto"` (only `typed: true`)
-- `file.text` supports `encoding` option
-- `file.arrow` doesn’t take a version and instead whatever `npm:apache-arrow` is
 - `file.mimeType` is always defined
+- `file.text` now supports an `encoding` option
+- [`file.arquero`](./lib/arquero)
+- [`file.parquet`](./lib/arrow#apache-parquet)
+
+And two removals:
+
+- `file.csv` _etc._ treats the `typed: "auto"` option as `typed: true`
+- `file.arrow` doesn’t take a `version` option
+
+For the latter, `file.arrow` now imports `npm:apache-arrow` internally, and thus uses the same version of Arrow as if you imported Arrow directly.
 
 ## Recommended libraries
 
-Self-hosted. You control the version. They default to the latest versions.
+One big (but subtle) change: you can now control the version of recommended libraries, and recommended libraries are self-hosted (along with all other npm imports), and default to the latest versions.
+
+Upgrades (as of current writing):
+- `@duckdb/duckdb-wasm` from 1.24.0 to 1.28.0
+- `apache-arrow` from 4.0.1 to 17.0.0
+- `arquero` from 4.8.8 to 6.0.1
+- `dot` from `viz.js` 2.0.0 to `@viz-js/viz` at 3.7.0
+- `exceljs` from 4.3.0 to 4.4.0
+- `katex` from 0.11.0 to 0.16.11
+- `leaflet` from 1.9.3 to 1.9.4
+- `mermaid` from 9.2.2 to 10.9.1
+- `vega-lite-api` from 5.0.0 to 5.6.0
+- `vega-lite` from 5.6.0 to 5.20.1
+- `vega` from 5.22.1 to 5.30.0
 
 Changes:
 - `html` uses `htl.html`
