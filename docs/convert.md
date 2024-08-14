@@ -260,29 +260,26 @@ See also the recommended libraries section next.
 
 The `md` template literal is not available in Observable Markdown; instead, write Markdown directly (or import the `markdown-it` library from npm for advanced usage).
 
-The `DOM.*`, `Files.*`, `Generators.*` and `Promises.*` methods are not available in Observable Markdown. Instead, use the appropriate vanilla JavaScript code — which you can grab from [observablehq/stdlib](https://github.com/observablehq/stdlib/). For example, to create an image with a [2D context](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D), you can copy the code from [context2d.js](https://github.com/observablehq/stdlib/blob/main/src/dom/context2d.js):
+For removed methods, you’ll need to provide your own implementation in vanilla JavaScript. If you like, you can refer to the source code from the notebook implementations in the [@observablehq/stdlib repo](https://github.com/observablehq/stdlib/). For example, to create an image with a [2D context](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D), you can copy the code from [context2d.js](https://github.com/observablehq/stdlib/blob/main/src/dom/context2d.js):
 
 ```js run=false
-function context2d(width, height, dpi) {
-  if (dpi == null) dpi = devicePixelRatio;
-  var canvas = document.createElement("canvas");
+function context2d(width, height, dpi = devicePixelRatio) {
+  const canvas = document.createElement("canvas");
   canvas.width = width * dpi;
   canvas.height = height * dpi;
-  canvas.style.width = width + "px";
-  var context = canvas.getContext("2d");
+  canvas.style = `width: ${width}px;`;
+  const context = canvas.getContext("2d");
   context.scale(dpi, dpi);
   return context;
 }
 ```
 
-Or, to create a Promise that resolves to a given `value` after a given [delay](https://github.com/observablehq/stdlib/blob/main/src/promises/delay.js):
+To create a Promise that resolves after a given delay ([`Promises.delay`](https://github.com/observablehq/stdlib/blob/main/src/promises/delay.js)):
 
 ```js run=false
 function delay(duration, value) {
-  return new Promise(function(resolve) {
-    setTimeout(function() {
-      resolve(value);
-    }, duration);
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(value), duration);
   });
 }
 ```
@@ -300,8 +297,8 @@ Additions:
 
 Changes:
 
-- `file.csv`, `file.tsv,` and `file.dsv` don’t support `typed: "auto"` (only `typed: true`)
-- `file.text` supports *encoding* option
+- `file.csv` _etc._ don’t support `typed: "auto"` (only `typed: true`)
+- `file.text` supports `encoding` option
 - `file.arrow` doesn’t take a version and instead whatever `npm:apache-arrow` is
 - `file.mimeType` is always defined
 
