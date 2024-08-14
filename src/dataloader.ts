@@ -71,43 +71,35 @@ export class LoaderResolver {
    * if src/data exists, we won’t look for a src/data.zip.
    */
   find(targetPath: string, {useStale = false} = {}): Asset | Loader | undefined {
-    const result = this.findRoute(targetPath, {useStale});
-    if (result) return result;
-    let dir = dirname(targetPath);
-    for (let parent: string; true; dir = parent) {
-      parent = dirname(dir);
-      if (parent === dir) return; // reached source root
-      if (existsSync(join(this.root, dir))) return; // found folder
-      if (existsSync(join(this.root, parent))) break; // found parent
-    }
-    for (const [ext, Extractor] of extractors) {
-      const archive = dir + ext;
-      const archiveLoader = this.findRoute(archive, {useStale});
-      if (archiveLoader) {
-        return new Extractor({
-          preload:
-            "load" in archiveLoader
-              ? async (options) => archiveLoader.load(options) // archive.zip.js
-              : async () => relative(this.root, archiveLoader.path), // archive.zip
-          inflatePath: targetPath.slice(archive.length - ext.length + 1),
-          path: archiveLoader.path,
-          root: this.root,
-          targetPath,
-          useStale
-        });
-      }
-    }
+    return this.findFile(targetPath, {useStale}) ?? this.findArchive(targetPath, {useStale});
   }
 
-  private findRoute(targetPath: string, {useStale}): Asset | Loader | undefined {
+  // Finding a file:
+  // - /path/to/file.csv
+  // - /path/to/file.csv.js
+  // - /path/to/[param].csv
+  // - /path/to/[param].csv.js
+  // - /path/[param]/file.csv
+  // - /path/[param]/file.csv.js
+  // - /path/[param1]/[param2].csv
+  // - /path/[param1]/[param2].csv.js
+  // - /[param]/to/file.csv
+  // - /[param]/to/file.csv.js
+  // - /[param1]/to/[param2].csv
+  // - /[param1]/to/[param2].csv.js
+  // - /[param1]/[param2]/file.csv
+  // - /[param1]/[param2]/file.csv.js
+  // - /[param1]/[param2]/[param3].csv
+  // - /[param1]/[param2]/[param3].csv.js
+  private findFile(targetPath: string, {useStale}): Asset | Loader | undefined {
     const ext = extname(targetPath);
-    const exts = [ext, ...Array.from(this.interpreters.keys(), (e) => ext + e)];
+    const exts = [ext, ...Array.from(this.interpreters.keys(), (iext) => ext + iext)];
     const found = route(this.root, targetPath.slice(0, -ext.length), exts);
     if (!found) return;
-    const {path, params, ext: iext} = found;
+    const {path, params, ext: fext} = found;
     const foundPath = join(this.root, path);
-    if (iext === ext) return {path: foundPath};
-    const [command, ...args] = this.interpreters.get(iext.slice(ext.length))!;
+    if (fext === ext) return {path: foundPath};
+    const [command, ...args] = this.interpreters.get(fext.slice(ext.length))!;
     if (command != null) args.push(foundPath);
     return new CommandLoader({
       command: command ?? foundPath,
@@ -117,6 +109,81 @@ export class LoaderResolver {
       targetPath,
       useStale
     });
+  }
+
+  // Finding a file in an archive:
+  // - /path/to.zip
+  // - /path/to.tgz
+  // - /path/to.zip.js
+  // - /path/to.tgz.js
+  // - /path/[param].zip
+  // - /path/[param].tgz
+  // - /path/[param].zip.js
+  // - /path/[param].tgz.js
+  // - /[param]/to.zip
+  // - /[param]/to.tgz
+  // - /[param]/to.zip.js
+  // - /[param]/to.tgz.js
+  // - /[param1]/[param2].zip
+  // - /[param1]/[param2].tgz
+  // - /[param1]/[param2].zip.js
+  // - /[param1]/[param2].tgz.js
+  // - /path.zip
+  // - /path.tgz
+  // - /path.zip.js
+  // - /path.tgz.js
+  // - /[param].zip
+  // - /[param].tgz
+  // - /[param].zip.js
+  // - /[param].tgz.js
+  private findArchive(targetPath: string, {useStale}): Asset | Loader | undefined {
+    const exts = this.getArchiveExtensions();
+    for (let dir = dirname(targetPath), parent: string; (parent = dirname(dir)) !== dir; dir = parent) {
+      const found = route(this.root, dir, exts);
+      if (!found) continue;
+      const {path, params, ext: fext} = found;
+      const foundPath = join(this.root, path);
+      const inflatePath = targetPath.slice(dir.length + 1); // file.jpeg
+      if (extractors.has(fext)) {
+        const Extractor = extractors.get(fext)!;
+        return new Extractor({
+          preload: async () => path, // /path/to.zip
+          inflatePath,
+          path: foundPath,
+          root: this.root,
+          targetPath, // /path/to/file.jpg
+          useStale
+        });
+      }
+      const iext = extname(fext);
+      const [command, ...args] = this.interpreters.get(iext)!;
+      if (command != null) args.push(foundPath);
+      const eext = fext.slice(0, -iext.length); // .zip
+      const loader = new CommandLoader({
+        command: command ?? foundPath,
+        args: params ? args.concat(defineParams(params)) : args,
+        path: foundPath,
+        root: this.root,
+        targetPath: dir + eext, // /path/to.zip
+        useStale
+      });
+      const Extractor = extractors.get(eext)!;
+      return new Extractor({
+        preload: async (options) => loader.load(options), // /path/to.zip.js
+        inflatePath,
+        path: loader.path,
+        root: this.root,
+        targetPath,
+        useStale
+      });
+    }
+  }
+
+  // .zip, .tar, .tgz, .zip.js, .zip.py, etc.
+  getArchiveExtensions(): string[] {
+    const exts = Array.from(extractors.keys());
+    for (const e of extractors.keys()) for (const i of this.interpreters.keys()) exts.push(e + i);
+    return exts;
   }
 
   getWatchPath(path: string): string | undefined {
@@ -402,12 +469,12 @@ class TarGzExtractor extends TarExtractor {
   }
 }
 
-const extractors = [
+const extractors = new Map<string, typeof ZipExtractor | typeof TarExtractor | typeof TarGzExtractor>([
   [".zip", ZipExtractor],
   [".tar", TarExtractor],
   [".tar.gz", TarGzExtractor],
   [".tgz", TarGzExtractor]
-] as const;
+]);
 
 function formatElapsed(start: number): string {
   const elapsed = performance.now() - start;
