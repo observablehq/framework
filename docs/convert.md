@@ -12,6 +12,12 @@ The `convert` command currently only supports public notebooks. To convert a pri
 
 </div>
 
+<div class="tip">
+
+You can pass multiple URLs to convert many notebooks simultaneously.
+
+</div>
+
 For example, to convert D3’s [_Zoomable sunburst_](https://observablehq.com/@d3/zoomable-sunburst) example:
 
 ```sh echo
