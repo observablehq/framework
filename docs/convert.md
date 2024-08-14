@@ -231,9 +231,7 @@ If you expressly do not want to self-host the import, say because you want the l
 
 ## Generators
 
-Notebooks allow you to use the `yield` operator to turn any cell into a generator. As vanilla JavaScript, Framework only allows the `yield` operator within generator functions. Therefore you’ll need to wrap a generator cell with an immediately-invoked generator function expression (IIGFE).
-
-Before:
+Notebooks allow you to use the `yield` operator to turn any cell [into a generator](https://observablehq.com/documentation/cells/observable-javascript#cells-implicitly-iterate-over-generators). In vanilla JavaScript, the `yield` operator is only allowed within generator functions. Therefore in Framework you’ll need to wrap a generator cell declaration with an immediately-invoked generator function expression (IIGFE). So this:
 
 ```js run=false
 foo = {
@@ -243,7 +241,7 @@ foo = {
 }
 ```
 
-After:
+Can be converted to:
 
 ```js run=false
 const foo = (function* () {
@@ -253,7 +251,13 @@ const foo = (function* () {
 })();
 ```
 
-Framework doesn’t allow the `yield` operator outside of generators
+<div class="note">
+
+Since variables are evaluated lazily, the generator `foo` will only run above if it is referenced by another code block. If you’re using a generator to perform asynchronous side effects, consider using an animation loop and the [invalidation promise](./reactivity#invalidation) instead of a generator.
+
+</div>
+
+If you need to use `await` with the generator, too, then use `async function*` to declare an async generator function instead.
 
 ## Views
 
