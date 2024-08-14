@@ -160,7 +160,7 @@ If you use a specific function often, you can save it to a local module.
 
 ### Recommended library differences
 
-TK
+In Observable Framework, the recommended [libraries](./imports#implicit-imports) are generally not pinned to a given version — instead you get the latest version that was published on npm (you can still request any version explicitly by using an explicit `import … from "npm:module@version"` statement). Some of them, such as [graphviz](./lib/dot), have been slightly adapted in support of dark mode. For details, see the documentation for each library.
 
 ### Other differences
 
@@ -170,10 +170,7 @@ Database connectors can be replaced by [data loaders](./loaders). We recommend u
 
 ## Command-line flags
 
-```
---output
-```
+The `convert` command supports the following command-line flags:
 
-```
---force
-```
+- `--output` - the path to the output directory; defaults to `.` for the current working directory.
+- `--force` - if true, always download and overwrite existing resources; by default, the script will ask for user input when a file already exists in the output directory.
