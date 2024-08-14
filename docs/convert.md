@@ -209,7 +209,25 @@ Should be converted to:
 import.meta.resolve("npm:regl")
 ```
 
-Dynamic imports should be converted into static imports.
+Notebooks also support dynamic import, so you might also see libraries being loaded from CDNs such as [jsDelivr](https://www.jsdelivr.com/esm) or [esm.sh](https://esm.sh/). While you can use dynamic imports in Framework, for security and performance, we recommend also converting these into static `npm:` imports. So this:
+
+```js run=false
+isoformat = import("https://esm.sh/isoformat")
+```
+
+Should be converted to:
+
+```js run=false
+import * as isoformat from "https://esm.sh/isoformat";
+```
+
+<div class="tip">
+
+If you expressly do not want to self-host the import, say because you want the latest version of the library to update without having to rebuild your app, you can load it from an external server by providing an absolute URL.
+
+<pre><code class="language-js">import * as isoformat from "https://esm.sh/isoformat";</code></pre>
+
+</div>
 
 ## Generators
 
