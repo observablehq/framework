@@ -111,7 +111,7 @@ While a notebook is limited to a linear sequence of cells, Framework allows you 
 
 ### Block cells
 
-Block cells are typically used for more elaborate definitions. They are characterized by curly braces (`{…}`) and a return statement to indicate the cell’s value. Here is an abridged example of the typical D3 chart pattern (adapted from D3’s [_Bar chart_](https://observablehq.com/@d3/bar-chart/2)):
+Block cells are typically used for more elaborate definitions. They are characterized by curly braces (`{…}`) and a return statement to indicate the cell’s value. Here is an abridged typical example adapted from D3’s [_Bar chart_](https://observablehq.com/@d3/bar-chart/2):
 
 ```js run=false
 chart = {
@@ -127,7 +127,7 @@ chart = {
 ```
 
 
-To convert a block cell: delete the cell name (`chart`), assignment operator (`=`), and surrounding curly braces (`{` and `}`); then replace the return statement with a variable declaration and a call to [`display`](./javascript#explicit-display) as desired.
+To convert a named block cell: delete the cell name (`chart`), assignment operator (`=`), and surrounding curly braces (`{` and `}`); then replace the return statement with a variable declaration and a call to [`display`](./javascript#explicit-display) as desired.
 
 ```js run=false
 const width = 960;
@@ -139,6 +139,8 @@ const svg = d3.create("svg")
 
 const chart = display(svg.node());
 ```
+
+For an anonymous block cell, omit the variable declaration. To display nothing, omit the call to `display`; you can use an [inline expression](./javascript#inline-expressions) (_e.g._, `${chart}`) to display the chart elsewhere.
 
 <div class="tip">
 
@@ -155,7 +157,7 @@ If you prefer, you can instead convert a block cell into a function such as:
   return svg.node();
 }</code></pre>
 
-Then call the function from an [inline expression](./javascript#inline-expressions) (_e.g._, `${chart()}`) to display its output anywhere on the page. This technique is also useful for importing a chart definition into multiple pages.
+Then call the function from an inline expression (_e.g._, `${chart()}`) to display its output anywhere on the page. This technique is also useful for importing a chart definition into multiple pages.
 
 </div>
 
@@ -286,6 +288,22 @@ function delay(duration, value) {
 ```
 
 If you use a specific function often, you can save it to a local module.
+
+## File attachments
+
+Additions:
+
+- `file.href`
+- `file.lastModified`
+- `file.arquero`
+- `file.parquet`
+
+Changes:
+
+- `file.csv`, `file.tsv,` and `file.dsv` don’t support `typed: "auto"` (only `typed: true`)
+- `file.text` supports *encoding* option
+- `file.arrow` doesn’t take a version and instead whatever `npm:apache-arrow` is
+- `file.mimeType` is always defined
 
 ## Recommended libraries
 
