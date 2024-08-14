@@ -30,9 +30,7 @@ The `convert` command currently only supports public notebooks. To convert a pri
 
 For example, to convert D3’s [_Zoomable sunburst_](https://observablehq.com/@d3/zoomable-sunburst):
 
-```sh echo
-npm run observable convert https://observablehq.com/@d3/zoomable-sunburst
-```
+<pre><code class="language-sh">npm run observable convert <span class="win">"</span>https://observablehq.com/@d3/zoomable-sunburst</span></code></pre>
 
 This will output something like:
 
@@ -69,7 +67,7 @@ The `convert` command has minimal “magic” so that its behavior is easier to 
 
 ## JavaScript syntax
 
-Framework uses vanilla [JavaScript syntax](./javascript) while notebooks use a nonstandard dialect called [Observable JavaScript](https://observablehq.com/documentation/cells/observable-javascript). A JavaScript cell in an notebook is not a JavaScript program (_i.e._, a sequence of statements) but rather a _cell declaration_; it can be either an _expression cell_ consisting of a single JavaScript expression (such as `1 + 2`) or a _block cell_ consisting of any number of JavaScript statements (such as `console.log("hello");`) surrounded by curly braces. These two forms of cell require slightly different treatment. The `convert` command converts both into JavaScript [fenced code blocks](./javascript#fenced-code-blocks).
+Framework uses vanilla [JavaScript syntax](./javascript) while notebooks use a nonstandard dialect called [Observable JavaScript](https://observablehq.com/documentation/cells/observable-javascript). A JavaScript cell in a notebook is technically not a JavaScript program (_i.e._, a sequence of statements) but rather a _cell declaration_; it can be either an _expression cell_ consisting of a single JavaScript expression (such as `1 + 2`) or a _block cell_ consisting of any number of JavaScript statements (such as `console.log("hello");`) surrounded by curly braces. These two forms of cell require slightly different treatment. The `convert` command converts both into JavaScript [fenced code blocks](./javascript#fenced-code-blocks).
 
 ### Expression cells
 
@@ -111,7 +109,7 @@ While a notebook is limited to a linear sequence of cells, Framework allows you 
 
 ### Block cells
 
-Block cells are typically used for more elaborate definitions. They are characterized by curly braces (`{…}`) and a return statement to indicate the cell’s value. Here is an abridged typical example adapted from D3’s [_Bar chart_](https://observablehq.com/@d3/bar-chart/2):
+Block cells are typically used for more elaborate definitions in notebooks. They are characterized by curly braces (`{…}`) and a return statement to indicate the cell’s value. Here is an abridged typical example adapted from D3’s [_Bar chart_](https://observablehq.com/@d3/bar-chart/2):
 
 ```js run=false
 chart = {
@@ -127,7 +125,7 @@ chart = {
 ```
 
 
-To convert a named block cell: delete the cell name (`chart`), assignment operator (`=`), and surrounding curly braces (`{` and `}`); then replace the return statement with a variable declaration and a call to [`display`](./javascript#explicit-display) as desired.
+To convert a named block cell to vanilla JavaScript: delete the cell name (`chart`), assignment operator (`=`), and surrounding curly braces (`{` and `}`); then replace the return statement with a variable declaration and a call to [`display`](./javascript#explicit-display) as desired.
 
 ```js run=false
 const width = 960;
@@ -140,7 +138,7 @@ const svg = d3.create("svg")
 const chart = display(svg.node());
 ```
 
-For an anonymous block cell, omit the variable declaration. To display nothing, omit the call to `display`; you can use an [inline expression](./javascript#inline-expressions) (_e.g._, `${chart}`) to display the chart elsewhere.
+For an anonymous block cell, omit the variable declaration. To hide the display, omit the call to `display`; you can use an [inline expression](./javascript#inline-expressions) (_e.g._, `${chart}`) to display the chart elsewhere.
 
 <div class="tip">
 
@@ -161,21 +159,59 @@ Then call the function from an inline expression (_e.g._, `${chart()}`) to displ
 
 </div>
 
-## Import
+## Imports
 
-Notebook imports _vs._ JavaScript imports _vs._ require.
+Notebooks often import other notebooks from Observable, or open-source libraries from npm. Imports (and requires) require additional manual conversion.
 
-Convert doesn’t convert imported notebooks. If your notebook imports cells from other notebooks, you should convert those notebooks too, and then extract the desired JavaScript code into standard [JavaScript modules](./imports#local-imports) that you can import.
+If the converted notebook [imports other notebooks](https://observablehq.com/documentation/notebooks/imports), you should convert the imported notebooks, too. Extract the desired JavaScript code from the imported notebooks into standard [JavaScript modules](./imports#local-imports) which you can then import in Framework.
 
-Convert doesn’t support [`import with`](https://observablehq.com/documentation/notebooks/imports#import-with). You’ll need to redesign code that uses this feature.
+<div class="note">
+
+In Framework, reactivity only applies to [top-level variables](./reactivity#top-level-variables) declared in fenced code blocks. If the imported code depends on reactivity or uses [`import-with`](https://observablehq.com/documentation/notebooks/imports#import-with), you will likely need to do some additional refactoring, say converting JavaScript cells into functions that take options.
+
+</div>
+
+Many notebooks use [`require`](https://observablehq.com/documentation/cells/require) to load open-source libraries from npm. Framework discourages the use of `require` and does not include built-in support for it because the asynchronous module definition (AMD) convention has been superseded by standard [JavaScript modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules). Also, Framework preloads transitive dependencies using static analysis to improve performance, and self-hosts [npm imports](./imports#npm-imports) to eliminate a runtime dependency on external servers to improve security and give you control over library versioning. So this:
+
+```js run=false
+regl = require("regl")
+```
+
+Should be converted to a static `npm:` import:
+
+```js run=false
+import regl from "npm:regl";
+```
+
+<div class="tip">
+
+The code above imports the default export from [regl](https://github.com/regl-project/regl). For other libraries, such as D3, you should use a namespace import instead:
+
+<pre><code class="language-js">import * as d3 from "npm:d3";</code></pre>
+
+</div>
+
+<div class="note">
+
+You can import [d3-require](https://github.com/d3/d3-require) if you really want to a `require` implementation; we just don’t recommend it.
+
+</div>
+
+Likewise, instead of `resolve` or `require.resolve`, use [`import.meta.resolve`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta/resolve). So this:
+
+```js run=false
+require.resolve("regl")
+```
+
+Should be converted to:
+
+```js run=false
+import.meta.resolve("npm:regl")
+```
 
 Dynamic imports should be converted into static imports.
 
-Imports from a CDN should be converted into self-hosted `npm:` imports.
-
-Framework doesn’t include built-in support for `require` because the asynchronous module definition (AMD) convention has been superseded by standard [JavaScript modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules). You should use a static `npm:` import instead. That said, you can import [d3-require](https://github.com/d3/d3-require) if you want to a `require` implementation; we just don’t recommend it. And instead of `resolve`, use `import.meta.resolve`.
-
-## Yield
+## Generators
 
 Notebooks allow you to use the `yield` operator to turn any cell into a generator. As vanilla JavaScript, Framework only allows the `yield` operator within generator functions. Therefore you’ll need to wrap a generator cell with an immediately-invoked generator function expression (IIGFE).
 
@@ -201,11 +237,11 @@ const foo = (function* () {
 
 Framework doesn’t allow the `yield` operator outside of generators
 
-## Viewof
+## Views
 
 [./reactivity#inputs](./reactivity#inputs)
 
-## Mutable
+## Mutables
 
 [./reactivity#mutables](./reactivity#mutables)
 
