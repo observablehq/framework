@@ -165,9 +165,9 @@ Then call the function from an inline expression (_e.g._, `${chart()}`) to displ
 
 Notebook imports _vs._ JavaScript imports _vs._ require.
 
-Convert doesn’t convert imported notebooks. If your notebook imports cells from other notebooks, you should convert those notebooks, too, and then extract the desired JavaScript code into a standard [JavaScript module](./imports#local-imports) that you can import.
+Convert doesn’t convert imported notebooks. If your notebook imports cells from other notebooks, you should convert those notebooks too, and then extract the desired JavaScript code into standard [JavaScript modules](./imports#local-imports) that you can import.
 
-Convert doesn’t support [`import with`](https://observablehq.com/documentation/notebooks/imports#import-with). You’ll need to redesign your code if you want to use this feature.
+Convert doesn’t support [`import with`](https://observablehq.com/documentation/notebooks/imports#import-with). You’ll need to redesign code that uses this feature.
 
 Dynamic imports should be converted into static imports.
 
@@ -321,7 +321,7 @@ Framework doesn’t support non-code cell modes, so these features can’t be co
 
 Framework’s SQL cell is very different from notebooks.
 
-Some cell types cannot be converted to Observable Markdown. Data table cells can be replaced by `Inputs.table` (see [issue #23](https://github.com/observablehq/framework/issues/23) for future enhancements), and chart cells can be replaced by Observable Plot’s [auto mark](https://observablehq.com/plot/marks/auto).
+Some cell types cannot be converted to Observable Markdown. Data table cells can be replaced by `Inputs.table` (see [#23](https://github.com/observablehq/framework/issues/23) for future enhancements), and chart cells can be replaced by Observable Plot’s [auto mark](https://observablehq.com/plot/marks/auto).
 
 ## Databases
 
