@@ -69,19 +69,17 @@ The `convert` command has minimal “magic” so that its behavior is easier to 
 
 ## JavaScript syntax
 
-Framework uses vanilla [JavaScript syntax](./javascript), while notebooks use a nonstandard dialect called [Observable JavaScript](https://observablehq.com/documentation/cells/observable-javascript). A JavaScript cell in an notebook is not a JavaScript program (_i.e._, a sequence of statements) but rather a _cell declaration_; it can be either an _expression cell_ consisting of a single JavaScript expression (such as `1 + 2`) or a _block cell_ consisting of any number of JavaScript statements (such as `console.log("hello");`) surrounded by curly braces. These two forms of cell require slightly different treatment. The `convert` command converts both into JavaScript [fenced code blocks](./javascript#fenced-code-blocks).
+Framework uses vanilla [JavaScript syntax](./javascript) while notebooks use a nonstandard dialect called [Observable JavaScript](https://observablehq.com/documentation/cells/observable-javascript). A JavaScript cell in an notebook is not a JavaScript program (_i.e._, a sequence of statements) but rather a _cell declaration_; it can be either an _expression cell_ consisting of a single JavaScript expression (such as `1 + 2`) or a _block cell_ consisting of any number of JavaScript statements (such as `console.log("hello");`) surrounded by curly braces. These two forms of cell require slightly different treatment. The `convert` command converts both into JavaScript [fenced code blocks](./javascript#fenced-code-blocks).
 
 ### Expression cells
 
-Named expression cells in notebooks can be converted into standard variable declarations, typically using `const`.
-
-Before:
+Named expression cells in notebooks can be converted into standard variable declarations, typically using `const`. So this:
 
 ```js run=false
 foo = 42
 ```
 
-After:
+Becomes this:
 
 ```js run=false
 const foo = 42;
@@ -173,9 +171,7 @@ Dynamic imports should be converted into static imports.
 
 Imports from a CDN should be converted into self-hosted `npm:` imports.
 
-## Require
-
-Framework doesn’t support `require`. You should use a static `npm:` import instead.
+Framework doesn’t include built-in support for `require` because the asynchronous module definition (AMD) convention has been superseded by standard [JavaScript modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules). You should use a static `npm:` import instead. That said, you can import [d3-require](https://github.com/d3/d3-require) if you want to a `require` implementation; we just don’t recommend it. And instead of `resolve`, use `import.meta.resolve`.
 
 ## Yield
 
@@ -205,11 +201,11 @@ Framework doesn’t allow the `yield` operator outside of generators
 
 ## Viewof
 
-…
+[./reactivity#inputs](./reactivity#inputs)
 
 ## Mutable
 
-…
+[./reactivity#mutables](./reactivity#mutables)
 
 ## Standard library
 
@@ -261,8 +257,6 @@ Changes:
 See also the recommended libraries section next.
 
 The `md` template literal is not available in Observable Markdown; instead, write Markdown directly (or import the `markdown-it` library from npm for advanced usage).
-
-The `require` and `resolve` functions are not available in Observable Markdown; instead, use `import` and `import.meta.resolve`.
 
 The `DOM.*`, `Files.*`, `Generators.*` and `Promises.*` methods are not available in Observable Markdown. Instead, use the appropriate vanilla JavaScript code — which you can grab from [observablehq/stdlib](https://github.com/observablehq/stdlib/). For example, to create an image with a [2D context](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D), you can copy the code from [context2d.js](https://github.com/observablehq/stdlib/blob/main/src/dom/context2d.js):
 
@@ -321,10 +315,3 @@ Database connectors can be replaced by [data loaders](./loaders).
 ## Secrets
 
 We recommend using the `.env` file to store your secrets (such as database passwords and API keys) in a central place outside of your checked-in code; see [Google Analytics](https://observablehq.observablehq.cloud/framework-example-google-analytics/) for an example.
-
-## Command-line flags
-
-The `convert` command supports the following command-line flags:
-
-- `--output` - the path to the output directory; defaults to `.` for the current working directory.
-- `--force` - if true, always download and overwrite existing resources; by default, the script will ask for user input when a file already exists in the output directory.
