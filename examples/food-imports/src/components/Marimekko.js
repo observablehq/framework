@@ -13,7 +13,7 @@ import * as d3 from "npm:d3";
   opacity = .99
  } = {}) {
   const marginTop = 10;
-  const marginRight = 10;
+  const marginRight = 100;
   const marginBottom = 20;
   const marginLeft = 10;
 
@@ -39,7 +39,7 @@ const root = treemap(data);
       .attr("width", width)
       .attr("height", height)
       //.attr('transform', 'rotate(90)')
-      .attr("style", "max-width: 100%; height: auto; font: 10px sans-serif;")
+      //.attr("style", "max-width: 100%; height: auto; font: 10px sans-serif;")
       //test these
       .attr("style", "max-width: 100%; min-height: 100%; font: 10px sans-serif;");
 
@@ -47,26 +47,27 @@ const root = treemap(data);
   const node = svg.selectAll("g")
     .data(root.descendants())
     .join("g")
-      .attr("transform", d => `translate(${d.y0},${d.x0})`);
+    .attr("transform", d => `translate(${d.y0},${d.x0})`);
 
   const format = d => d.toLocaleString();
 
   // Draw column labels.
   const column = node.filter(d => d.depth === 1);
 
-  // column.append("text")
-  //   .attr('transform', 'rotate(-90) translate(0,30) ')
-  //     .attr("x", 3)
-  //     .attr("y", "-1.7em")
-  //     .style("font-weight", "bold")
-  //     .text(d => d.data[0]);
+  column.append("text")
+      .attr("x", `${100*(width - marginLeft - marginRight)/width}%`)
+      .attr("dx", 8)
+      .attr("y", d => d.y0)
+      .attr('fill', 'white')
+      .text(d => d.data[0]);
 
-  // column.append("text")
-  //   .attr('transform', 'rotate(-90) translate(0,30) ')
-  //     .attr("x", 3)
-  //     .attr("y", "-0.5em")
-  //     .attr("fill-opacity", 0.7)
-  //     .text(d => format(d.value));
+  column.append("text")
+    .attr("x", `${100*(width - marginLeft - marginRight)/width}%`)
+    .attr("dx", 8)
+    .attr("y", d => d.y0 + 16)
+    .attr('fill', 'white')
+    .attr("fill-opacity", 0.7)
+    .text((d,i) => i < 2 ? format(d.value) : '');
 
   // column.append("line")
   //     .attr("x1", -0.5)
@@ -81,20 +82,26 @@ const root = treemap(data);
   cell.append("rect")
       .attr("fill", d => color(d.data[0]))
       .attr("fill-opacity", opacity)//(d, i) => d.value / d.parent.value)
-      .attr("height", d => d.x1 - d.x0 - 1)
-      .attr("width", d => d.y1 - d.y0 - 1)
-      .on('mouseover', (e,d) => console.log(d.data[0]))
+      .attr("height", d => d.x1 - d.x0 - 1 > 0 ? d.x1 - d.x0 - 1 : 0) // to prevent negative heights
+      .attr("width", d => d.y1 - d.y0 - 1 > 0 ? d.y1 - d.y0 - 1 : 0)
+      //.on('mouseover', (e,d) => console.log(d.data[0]))
 
-  // cell.append("text")
-  //     .attr("x", 3)
-  //     .attr("y", "1.1em")
-  //     .text(d => d.data[0]);
+  cell.append("text")
+      .attr("x", 3)
+      .attr("y", "1.1em")
+      .text(function(d) {
+        const thresh = d.y1 - d.y0
+        return d.y1 - d.y0 > 60 ? d.data[0] : ''
+      });
 
   // cell.append("text")
   //     .attr("x", 3)
   //     .attr("y", "2.3em")
   //     .attr("fill-opacity", 0.7)
-  //     .text(d => format(d.value));
+  //     .text(function(d) {
+  //       const thresh = d.y1 - d.y0
+  //       return d.y1 - d.y0 > 60 ? format(d.value) : ''
+  //     });
 
     return svg.node();
 }
