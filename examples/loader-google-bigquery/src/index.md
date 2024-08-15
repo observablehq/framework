@@ -93,7 +93,7 @@ export async function runQuery(query) {
 
 <div class="note">
 
-To run this data loader, you’ll need to install `@google-cloud/bigquery`, `d3-dsv`, `d3-time-format`, and `dotenv` using your preferred package manager such as npm or Yarn.
+This data loader depends on `@google-cloud/bigquery`, `d3-dsv`, `d3-time-format`, and `dotenv`, which we reference in `package.json`.
 
 </div>
 
