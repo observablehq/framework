@@ -253,7 +253,7 @@ const foo = (function* () {
 
 <div class="note">
 
-Since variables are evaluated lazily, the generator `foo` will only run above if it is referenced by another code block. If you want to perform asynchronous side effects, consider using an animation loop and the [invalidation promise](./reactivity#invalidation) instead of a generator.
+Since variables are evaluated lazily, the generator `foo` above will only run if it is referenced by another code block. If you want to perform asynchronous side effects, consider using an animation loop and the [invalidation promise](./reactivity#invalidation) instead of a generator.
 
 </div>
 
