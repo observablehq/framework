@@ -1,15 +1,9 @@
-import { csvFormat, csvParse } from "d3-dsv";
-import { runQuery } from "./google-bigquery.js";
-import { promises as fs } from "fs";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import {csvFormat} from "d3-dsv";
+import {runQuery} from "./google-bigquery.js";
 
 const query = `
   SELECT 
-    FORMAT_TIMESTAMP('%Y-%m-%d', date) as formatted_date, 
+    FORMAT_TIMESTAMP('%Y-%m-%d', date) as date, 
     confirmed_cases 
   FROM 
     \`bigquery-public-data.covid19_italy.data_by_province\` 
@@ -22,24 +16,7 @@ const query = `
 `;
 
 (async () => {
-  try {
-    const rows = await runQuery(query);
-
-    console.log("Query Results:", rows);
-
-    if (rows.length === 0) {
-      console.log("No data returned from the query.");
-      return;
-    }
-
-    const csvData = csvFormat(
-      rows.map(d => ({
-        formatted_date: d.formatted_date,
-        confirmed_cases: d.confirmed_cases
-      }))
-    );
-
-  } catch (error) {
-    console.error('Error running query or processing file:', error);
-  }
+  const rows = await runQuery(query);
+  if (rows.length === 0) throw new Error("No data returned from the query.");
+  process.stdout.write(csvFormat(rows));
 })();
