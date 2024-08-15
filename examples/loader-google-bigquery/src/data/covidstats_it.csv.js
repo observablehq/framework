@@ -39,15 +39,6 @@ const query = `
       }))
     );
 
-    const filePath = join(__dirname, "covidstats_it.csv");
-    await fs.writeFile(filePath, csvData);
-    console.log(`CSV file written successfully to ${filePath}`);
-
-    const fileContent = await fs.readFile(filePath, "utf8");
-    const parsedData = csvParse(fileContent, { typed: true });
-
-    console.log("Parsed Data:", parsedData);
-
   } catch (error) {
     console.error('Error running query or processing file:', error);
   }
