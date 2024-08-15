@@ -290,7 +290,7 @@ const foo = Mutable(42);
 const setFoo = (x) => (foo.value = x);
 ```
 
-Then replace any assignments to `mutable foo` with calls to `setFoo`.
+Then replace any assignments to `mutable foo` with calls to `setFoo`. Note that `setFoo` must be declared in the same code block as `foo`, and that outside of that block, `foo` represents the value; any code that depends on foo will update reactively after setFoo is invoked.
 
 ## Standard library
 
