@@ -11,7 +11,7 @@ const bigQueryClient = new BigQuery({
   projectId: BQ_PROJECT_ID,
   credentials: {
     client_email: BQ_CLIENT_EMAIL,
-    private_key: BQ_PRIVATE_KEY.replace(/\\n/g, "\n")
+    private_key: BQ_PRIVATE_KEY
   }
 });
 
