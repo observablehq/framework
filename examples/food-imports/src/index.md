@@ -3,7 +3,9 @@ theme: dashboard
 ---
 
 # Food imports to the United States
+
 <!-- ## By category, subcategory, and country of origin -->
+
 In 2023, the United States imported more than \$${d3.format(",~r")(Math.floor(d3.sum(sample, d => +d.FoodValue)/1000))} billion in edible products from its ${n} leading exporters. The variety is vast, with distinctive contribitions arriving from each major supplier. Data courtesy of the [US Department of Agriculture](https://www.ers.usda.gov/data-products/u-s-food-imports/).
 
 ```js
@@ -12,13 +14,13 @@ import {Marimekko} from './components/Marimekko.js'
 import {Sunburst} from './components/Sunburst.js'
 ```
 
-```js 
+```js
 // raw data
 const raw = FileAttachment("./data/FoodImports.csv").csv();
 ```
 
 ```js
-// full palette from dictionary-of-colour-combinations by Sanzo Wada, 
+// full palette from dictionary-of-colour-combinations by Sanzo Wada,
 // source: https://github.com/mattdesl/dictionary-of-colour-combinations/blob/master/colors.json
 const colors = FileAttachment("./data/colors.json").json();
 ```
@@ -58,7 +60,7 @@ const q = Generators.input(qInput)
 ```js
 // tidy & filter out precomputed aggregations
 const tidy = raw
-  .filter(d => d.SubCategory === 'Foods') 
+  .filter(d => d.SubCategory === 'Foods')
   .filter(d => d.Category !== 'Food Dollars' && d.Category !== 'Food volume')
   .filter(d => !d.Commodity.includes('Total'))
   .filter(d => d.Country !== "WORLD" && d.Country !== "WORLD (Quantity)")
@@ -133,10 +135,9 @@ const sunburstColors = colors.slice(q,q+14).map(d => d.hex)
 
 ```js
 // expand the height of the marimekko for each country beyond 12
-const h = n < 12 ? 600 : 600 + 60 * (n-12)
+const h = n * 60;
 
 ```
-
 <div class="grid grid-cols-2" style="grid-auto-rows: auto;">
   <div class="card grid-colspan-2">
     <h2>Distribution of food imports by country and category</h2>
@@ -146,74 +147,73 @@ const h = n < 12 ? 600 : 600 + 60 * (n-12)
       height: h,
       color: d3.scaleOrdinal().range(sunburstColors)
     }))}
-
   </div>
-
   <div class="card" style="min-height: 600px;">
     <h2>Food imports to the Unites States, 2023</h2>
     <h3>Share of imports by category and subcategory</h3>
     ${resize((width) => Sunburst(nest, {
-      width, 
+      width,
       value: d => d.value,
       label: d => d.name,
       color: d3.scaleOrdinal().range(sunburstColors),
       title: (d, n) => `${n.ancestors().reverse().map(d => d.data.name).join(".")}\n${n.value.toLocaleString("en")}`
     }))}
-
   </div>
   <div class="card">
     <h2>Relative share of food imports to the US</h2>
-      <h3>across top ${n} countries, 1999–2023</h3>
-      ${resize((width) => Plot.plot({
-        width,
-        height: 600,
-        marginLeft: 50,
-        marginRight: 120,
-        color: {
-          type: "ordinal",
-          range: areaColors
-        },
-        y: {
-          grid: true,
-          label: "↑ Food Import $"
-        },
-        marks: [
-          Plot.axisY({
-            ticks: 10,
-            tickFormat: (d, i, _) => `${Math.round(100*d)}%`
-          }),
-          Plot.areaY(
-            areaData.filter(d => tops.includes(d.country)),
-            {
-                x: "year",
-                y: "value",
-                z: "country",
-                order: "sum",
-                fill: "colorIndex",
-                interval: "year",
-                textAnchor: 'start',
-                reverse: true, 
-                offset: 'normalize',
-            }
-          ),
-          Plot.textY(
-            areaData.filter((d) => tops.includes(d.country)),
-            Plot.selectLast(
-              Plot.stackY({
-                x: "year",
-                dx: "8",
-                y: "value",
-                z: "country",
-                order: "sum",
-                fill: "colorIndex",
-                text: "country",
-                interval: "year",
-                textAnchor: 'start',
-                offset: 'normalize',
-              })
-            )
-          ),
-          Plot.ruleY([0])
-        ]}))}
+    <h3>Across top ${n} countries, 1999–2023</h3>
+    ${resize((width) => Plot.plot({
+      width,
+      height: 600,
+      marginLeft: 50,
+      marginRight: 120,
+      color: {
+        type: "ordinal",
+        range: areaColors
+      },
+      y: {
+        grid: true,
+        label: "↑ Food Import $"
+      },
+      marks: [
+        Plot.axisY({
+          ticks: 10,
+          tickFormat: (d, i, _) => `${Math.round(100*d)}%`
+        }),
+        Plot.areaY(
+          areaData.filter(d => tops.includes(d.country)),
+          {
+            x: "year",
+            y: "value",
+            z: "country",
+            order: "sum",
+            fill: "colorIndex",
+            stroke: "colorIndex",
+            interval: "year",
+            textAnchor: 'start',
+            reverse: true,
+            offset: 'normalize',
+            curve: "catmull-rom"
+          }
+        ),
+        Plot.textY(
+          areaData.filter((d) => tops.includes(d.country)),
+          Plot.selectLast(
+            Plot.stackY({
+              x: "year",
+              dx: "8",
+              y: "value",
+              z: "country",
+              order: "sum",
+              fill: "colorIndex",
+              text: "country",
+              interval: "year",
+              textAnchor: 'start',
+              offset: 'normalize',
+            })
+          )
+        ),
+        Plot.ruleY([0])
+      ]}))}
   </div>
 </div>
