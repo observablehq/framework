@@ -75,7 +75,7 @@ The `.env` file should not be committed to your source code repository; keep you
 
 <div class="note">
 
-See the [Google Bigquery API Quickstart](https://cloud.google.com/bigquery/docs/authentication) for how to create the service account needed to access the Google BigQuery API after it has been enable in the GCP console. The following [Google codelab](https://codelabs.developers.google.com/codelabs/cloud-bigquery-nodejs#0) might be helpful walk-through before getting started. Although the data in this example lives in the public database `bigquery-public-data.covid19_italy`, you still need to set up a service account and authenticate into one of your projects to access it.
+See the [Google BigQuery API Quickstart](https://cloud.google.com/bigquery/docs/authentication) for how to create the service account needed to access the Google BigQuery API after it has been enable in the GCP console. The following [Google codelab](https://codelabs.developers.google.com/codelabs/cloud-bigquery-nodejs#0) might be helpful walk-through before getting started. Although the data in this example lives in the public database `bigquery-public-data.covid19_italy`, you still need to set up a service account and authenticate into one of your projects to access it.
 
 </div>
 
