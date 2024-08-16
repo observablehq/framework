@@ -6,7 +6,7 @@ Here’s a JavaScript data loader that fetches the `confirmed_cases` metric from
 import {csvFormat} from "d3-dsv";
 import {runQuery} from "./google-bigquery.js";
 
-const query = `
+const rows = await runQuery(`
   SELECT
     FORMAT_TIMESTAMP('%Y-%m-%d', date) as date,
     confirmed_cases
@@ -18,14 +18,9 @@ const query = `
     AND date BETWEEN '2020-05-01 00:00:00 UTC' AND '2020-05-15 00:00:00 UTC'
   GROUP BY 1,2
   ORDER BY 1 ASC;
-`;
+`);
 
-(async () => {
-  const rows = await runQuery(query);
-  if (rows.length === 0) throw new Error("No data returned from the query.");
-  process.stdout.write(csvFormat(rows));
-})();
-
+process.stdout.write(csvFormat(rows));
 ```
 
 <div class="note">
@@ -42,20 +37,20 @@ import {BigQuery} from "@google-cloud/bigquery";
 
 const {BQ_PROJECT_ID, BQ_CLIENT_EMAIL, BQ_PRIVATE_KEY} = process.env;
 
-if (!BQ_PROJECT_ID) throw new Error(".env missing BQ_PROJECT_ID");
-if (!BQ_CLIENT_EMAIL) throw new Error(".env missing BQ_CLIENT_EMAIL");
-if (!BQ_PRIVATE_KEY) throw new Error(".env missing BQ_PRIVATE_KEY");
+if (!BQ_PROJECT_ID) throw new Error("missing BQ_PROJECT_ID");
+if (!BQ_CLIENT_EMAIL) throw new Error("missing BQ_CLIENT_EMAIL");
+if (!BQ_PRIVATE_KEY) throw new Error("missing BQ_PRIVATE_KEY");
 
 const bigQueryClient = new BigQuery({
   projectId: BQ_PROJECT_ID,
   credentials: {
     client_email: BQ_CLIENT_EMAIL,
-    private_key: BQ_PRIVATE_KEY.replace(/\\n/g, "\n")
+    private_key: BQ_PRIVATE_KEY
   }
 });
 
 export async function runQuery(query) {
-  return (await bigQueryClient.query({query})).rows;
+  return (await bigQueryClient.query({query}))[0];
 }
 ```
 

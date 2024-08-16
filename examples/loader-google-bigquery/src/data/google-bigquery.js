@@ -16,5 +16,5 @@ const bigQueryClient = new BigQuery({
 });
 
 export async function runQuery(query) {
-  return (await bigQueryClient.query({query})).rows;
+  return (await bigQueryClient.query({query}))[0];
 }
