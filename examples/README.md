@@ -54,6 +54,7 @@
 
 - [`loader-airtable`](https://observablehq.observablehq.cloud/framework-example-loader-airtable/) - Load data from Airtable
 - [`loader-arrow`](https://observablehq.observablehq.cloud/framework-example-loader-arrow/) - Generate Apache Arrow IPC files
+- [`loader-bigquery`](https://observablehq.observablehq.cloud/framework-example-loader-google-bigquery/) - Load data from Google BigQuery
 - [`loader-canvas-to-png`](https://observablehq.observablehq.cloud/framework-example-loader-canvas-to-png/) - Generate PNG using node-canvas
 - [`loader-census`](https://observablehq.observablehq.cloud/framework-example-loader-census/) - Load and transform shapefiles from the U.S. Census Bureau
 - [`loader-databricks`](https://observablehq.observablehq.cloud/framework-example-loader-databricks/) - Load data from Databricks
