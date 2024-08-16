@@ -2,7 +2,7 @@ import * as d3 from "npm:d3";
 
 // Copyright 2021-2023 Observable, Inc.
 // Released under the ISC license.
-// https://observablehq.com/@d3/sunburst
+// adapted from https://observablehq.com/@d3/sunburst
 export function Sunburst(data, { // data is either tabular (array of objects) or hierarchy (nested objects)
   path, // as an alternative to id and parentId, returns an array identifier, imputing internal nodes
   id = Array.isArray(data) ? d => d.id : null, // if tabular data, given a d in data, returns a unique identifier (string)
@@ -15,7 +15,7 @@ export function Sunburst(data, { // data is either tabular (array of objects) or
   link, // given a node d, its link (if any)
   linkTarget = "_blank", // the target attribute for links (if any)
   width = 640, // outer width, in pixels
-  height = 400, // outer height, in pixels
+  height = 600, // outer height, in pixels
   margin = 1, // shorthand for margins
   marginTop = margin, // top margin, in pixels
   marginRight = margin, // right margin, in pixels
@@ -26,7 +26,7 @@ export function Sunburst(data, { // data is either tabular (array of objects) or
   endAngle = 2 * Math.PI, // the ending angle for the sunburst
   radius = Math.min(width - marginLeft - marginRight, height - marginTop - marginBottom) / 2, // outer radius
   color = d3.interpolateRainbow, // color scheme, if any
-  fill = "#ccc", // fill for arcs (if no color encoding)
+  fill = "#1e1e1e", // fill for arcs (if no color encoding)
   fillOpacity = 0.99, // fill opacity for arcs
 } = {}) {
 
@@ -98,10 +98,11 @@ export function Sunburst(data, { // data is either tabular (array of objects) or
         return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
       })
       .attr("dy", "0.32em")
-      .text(d => label(d.data, d));
+      .attr('pointer-events', 'none')
+      .text(d => label(d.data, d).length < 15  && (d.depth) ? label(d.data, d) : ''); // max length of labels
 
   if (title != null) cell.append("title")
-      .text(d => title(d.data, d));
+      .text(d => label(d.data, d)); 
 
   return svg.node();
 }

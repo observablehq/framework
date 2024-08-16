@@ -3,7 +3,8 @@ theme: dashboard
 ---
 
 # Food imports to the United States
-## By category, subcategory, and country of origin
+<!-- ## By category, subcategory, and country of origin -->
+In 2023, the United States imported more than \$${d3.format(",~r")(Math.floor(d3.sum(sample, d => +d.FoodValue)/1000))} billion in edible products from its ${n} leading exporters. The variety is vast, with distinctive contribitions arriving from each major supplier. Data courtesy of the [US Department of Agriculture](https://www.ers.usda.gov/data-products/u-s-food-imports/).
 
 ```js
 // components
@@ -17,19 +18,17 @@ const raw = FileAttachment("./data/FoodImports.csv").csv();
 ```
 
 ```js
-// full palette from dictionary-of-colour-combinations bySanzo Wada, 
+// full palette from dictionary-of-colour-combinations by Sanzo Wada, 
 // source: https://github.com/mattdesl/dictionary-of-colour-combinations/blob/master/colors.json
 const colors = FileAttachment("./data/colors.json").json();
 ```
 
 ```js
-// Slider to 
-const nInput = Inputs.range(
-  [2,20],
+const nInput = Inputs.radio(
+  [4,8,12,16],
   {
     label: "Number of importers:",
-    value: 12,
-    step: 1
+    value: 12
   }
 );
 const n = Generators.input(nInput)
@@ -57,8 +56,6 @@ const q = Generators.input(qInput)
 ```
 
 ```js
-// data wrangling – should this all be moved to a data loader..?
-
 // tidy & filter out precomputed aggregations
 const tidy = raw
   .filter(d => d.SubCategory === 'Foods') 
@@ -109,7 +106,9 @@ const byCountryAndCategory = d3.groups(sample, d => d.Country, d => d.Category)
     Category: k[0],
     value: d3.sum(k[1], j => +j['FoodValue'])
     })
-  )).flat()
+  ))
+  .sort((a,b) => d3.sum(b, d => d.value) - d3.sum(a, d => d.value))
+  .flat()
 ```
 
 ```js
@@ -121,8 +120,9 @@ const areaData = byYearAndCountry.map(d => ({...d, colorIndex: colorMap.get(d.co
 ```
 
 <div>${nInput}</div>
-<div>${sInput}</div>
-<div>${qInput}</div>
+
+<!-- <div>${sInput}</div>
+<div>${qInput}</div> -->
 
 ```js
 // helper functions
@@ -131,27 +131,35 @@ const areaColors = colors.slice(s,s+n).map(d => d.hex)
 const sunburstColors = colors.slice(q,q+14).map(d => d.hex)
 ```
 
+```js
+// expand the height of the marimekko for each country beyond 12
+const h = n < 12 ? 600 : 600 + 60 * (n-12)
+
+```
+
 <div class="grid grid-cols-2" style="grid-auto-rows: auto;">
   <div class="card grid-colspan-2">
-    <h2 >Distribution of food imports by country and category</h2>
-    <h3 >from top ${n} countries, 2023</h3>
+    <h2>Distribution of food imports by country and category</h2>
+    <h3>from top ${n} countries, 2023</h3>
     ${resize((width) => Marimekko(byCountryAndCategory, {
       width,
+      height: h,
       color: d3.scaleOrdinal().range(sunburstColors)
     }))}
 
   </div>
-  <div class="card">
+
+  <div class="card" style="min-height: 600px;">
     <h2>Food imports to the Unites States, 2023</h2>
-      <h3>Global share by category and subcategory</h3>
-      ${resize((width, height) => Sunburst(nest, {
-        value: d => d.value,
-        label: d => d.name,
-        color: d3.scaleOrdinal().range(sunburstColors),
-        title: (d, n) => `${n.ancestors().reverse().map(d => d.data.name).join(".")}\n${n.value.toLocaleString("en")}`, 
-        width, 
-        height
-      }))}
+    <h3>Share of imports by category and subcategory</h3>
+    ${resize((width) => Sunburst(nest, {
+      width, 
+      value: d => d.value,
+      label: d => d.name,
+      color: d3.scaleOrdinal().range(sunburstColors),
+      title: (d, n) => `${n.ancestors().reverse().map(d => d.data.name).join(".")}\n${n.value.toLocaleString("en")}`
+    }))}
+
   </div>
   <div class="card">
     <h2>Relative share of food imports to the US</h2>
@@ -170,6 +178,10 @@ const sunburstColors = colors.slice(q,q+14).map(d => d.hex)
           label: "↑ Food Import $"
         },
         marks: [
+          Plot.axisY({
+            ticks: 10,
+            tickFormat: (d, i, _) => `${Math.round(100*d)}%`
+          }),
           Plot.areaY(
             areaData.filter(d => tops.includes(d.country)),
             {
