@@ -59,7 +59,7 @@ export async function runQuery(query) {
 }
 ```
 
-For the data loader to authenticate with the Google Bigquery API, you will need to set several environment variables containing secret credentials. If you use GitHub, you can use [secrets in GitHub Actions](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions) to set environment variables; other platforms provide similar functionality for continuous deployment. For local development, we use the `dotenv` package, which allows environment variables to be defined in a `.env` file which lives in the project root and looks like this:
+For the data loader to authenticate with the Google BigQuery API, you will need to set several environment variables containing secret credentials. If you use GitHub, you can use [secrets in GitHub Actions](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions) to set environment variables; other platforms provide similar functionality for continuous deployment. For local development, we use the `dotenv` package, which allows environment variables to be defined in a `.env` file which lives in the project root and looks like this:
 
 ```
 BQ_PROJECT_ID="123456789-abc"
