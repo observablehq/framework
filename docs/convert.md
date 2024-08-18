@@ -209,7 +209,7 @@ Should be converted to:
 import.meta.resolve("npm:regl")
 ```
 
-Since notebooks also support [dynamic import](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import), you might see libraries being loaded from CDNs such as [jsDelivr](https://www.jsdelivr.com/esm) or [esm.sh](https://esm.sh/). While you can use dynamic imports in Framework, for security and performance, we recommend converting these into static imports. So this:
+Some notebooks use [dynamic import](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import) to load libraries from npm-backed CDNs such as [jsDelivr](https://www.jsdelivr.com/esm) and [esm.sh](https://esm.sh/). While you can use dynamic imports in Framework, for security and performance, we recommend converting these into static imports. So this:
 
 ```js run=false
 isoformat = import("https://esm.sh/isoformat")
@@ -290,7 +290,7 @@ const foo = Mutable(42);
 const setFoo = (x) => (foo.value = x);
 ```
 
-Then replace any assignments to `mutable foo` with calls to `setFoo`. Note that `setFoo` must be declared in the same code block as `foo`, and that outside of that block, `foo` represents the value; any code that depends on foo will update reactively after setFoo is invoked.
+Then replace any assignments to `mutable foo` with calls to `setFoo`. Note that `setFoo` must be declared in the same code block as `foo`, and that outside of that block, `foo` represents the value; any code that depends on `foo` will update reactively after `setFoo` is invoked.
 
 ## Standard library
 
