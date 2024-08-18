@@ -82,6 +82,7 @@ export default {
         {name: "ZIP", path: "/lib/zip"}
       ]
     },
+    {name: "Converting notebooks", path: "/convert"},
     {name: "Contributing", path: "/contributing", pager: false}
   ],
   base: "/framework",
