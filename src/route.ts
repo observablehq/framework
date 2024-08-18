@@ -45,6 +45,7 @@ export type RouteResult = {path: string; ext: string; params?: Params};
  * we’d use /path/to/[param].csv over /path/to.zip.
  */
 export function route(root: string, path: string, exts: string[]): RouteResult | undefined {
+  for (const ext of exts) if (!ext) throw new Error("empty extension");
   return routeParams(root, ".", join(".", path).split("/"), exts);
 }
 
@@ -63,10 +64,13 @@ function routeParams(root: string, cwd: string, parts: string[], exts: string[])
           return {path: join(cwd, first + ext), ext};
         }
       }
-      for (const ext of exts) {
-        for (const file of globSync(`\\[?*\\]${ext}`, {cwd: join(root, cwd), nodir: true})) {
-          const params = {[file.slice(file.indexOf("[") + 1, file.indexOf("]"))]: basename(first, extname(first))};
-          return {path: join(cwd, file), params, ext};
+      const value = basename(first, extname(first));
+      if (value) {
+        for (const ext of exts) {
+          for (const file of globSync(`\\[?*\\]${ext}`, {cwd: join(root, cwd), nodir: true})) {
+            const params = {[file.slice(file.indexOf("[") + 1, file.indexOf("]"))]: value};
+            return {path: join(cwd, file), params, ext};
+          }
         }
       }
       return;
@@ -77,9 +81,11 @@ function routeParams(root: string, cwd: string, parts: string[], exts: string[])
         const found = routeParams(root, join(cwd, first), rest, exts);
         if (found) return found;
       }
-      for (const dir of globSync("\\[?*\\]/", {cwd: join(root, cwd)})) {
-        const found = routeParams(root, join(cwd, dir), rest, exts);
-        if (found) return {...found, params: {...found.params, [dir.slice(1, -1)]: first}};
+      if (first) {
+        for (const dir of globSync("\\[?*\\]/", {cwd: join(root, cwd)})) {
+          const found = routeParams(root, join(cwd, dir), rest, exts);
+          if (found) return {...found, params: {...found.params, [dir.slice(1, -1)]: first}};
+        }
       }
     }
   }

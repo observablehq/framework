@@ -4,11 +4,9 @@ import {route} from "../src/route.js";
 describe("route(root, path, exts)", () => {
   it("finds an exact file", () => {
     assert.deepStrictEqual(route("test/input/build/simple", "simple", [".md"]), {path: "simple.md", ext: ".md"}); // prettier-ignore
-    assert.deepStrictEqual(route("test/input/build/simple", "simple.md", [""]), {path: "simple.md", ext: ""}); // prettier-ignore
   });
   it("finds an exact file with multiple extensions", () => {
     assert.deepStrictEqual(route("test/input/build/simple", "data", [".txt", ".txt.js", ".txt.py"]), {path: "data.txt.js", ext: ".txt.js"}); // prettier-ignore
-    assert.deepStrictEqual(route("test/input/build/simple", "data.txt", ["", ".js", ".py"]), {path: "data.txt.js", ext: ".js"}); // prettier-ignore
   });
   it("finds a parameterized file", () => {
     assert.deepStrictEqual(route("test/input/params", "bar", [".md"]), {path: "[file].md", ext: ".md", params: {file: "bar"}}); // prettier-ignore
@@ -35,5 +33,13 @@ describe("route(root, path, exts)", () => {
     assert.strictEqual(route("test/input/build/simple", "not-found", [".md"]), undefined);
     assert.strictEqual(route("test/input/build/simple", "simple", [".js"]), undefined);
     assert.strictEqual(route("test/input/params", "foo/bar/baz", [".md"]), undefined);
+  });
+  it("does not allow an empty match", () => {
+    assert.deepStrictEqual(route("test/input/params", "foo/", [".md"]), undefined);
+    assert.deepStrictEqual(route("test/input/params", "bar/", [".md"]), undefined);
+  });
+  it("does not allow the empty extension", () => {
+    assert.throws(() => route("test/input/build/simple", "simple.md", [""]), /empty extension/);
+    assert.throws(() => route("test/input/build/simple", "data.txt", ["", ".js", ".py"]), /empty extension/);
   });
 });
