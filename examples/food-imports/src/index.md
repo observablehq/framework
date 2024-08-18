@@ -6,7 +6,7 @@ theme: dashboard
 
 <!-- ## By category, subcategory, and country of origin -->
 
-In 2023, the United States imported more than \$${d3.format(",~r")(Math.floor(d3.sum(sample, d => +d.FoodValue)/1000))} billion in edible products from its ${n} leading exporters. The variety is vast, with distinctive contribitions arriving from each major supplier. Data courtesy of the [US Department of Agriculture](https://www.ers.usda.gov/data-products/u-s-food-imports/).
+In 2023, the United States imported more than \$${d3.format(",~r")(Math.floor(d3.sum(sample, d => +d.FoodValue)/1000))} billion in edible products from its ${n} leading exporters. The variety is vast, with distinctive contribitions arriving from each major supplier. Data: [US Department of Agriculture](https://www.ers.usda.gov/data-products/u-s-food-imports/)
 
 ```js
 // components
