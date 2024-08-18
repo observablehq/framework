@@ -1,10 +1,23 @@
 @import url("observablehq:default.css");
 @import url("observablehq:theme-air.css") (prefers-color-scheme: light);
 @import url("observablehq:theme-near-midnight.css") (prefers-color-scheme: dark);
-@import url('https://fonts.googleapis.com/css2?family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap');
 
 :root {
   --theme-phosphate: #148576;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--theme-foreground);
+  background: var(--theme-background);
+}
+
+p a {
+  color: var(--theme-foreground) !important;
+  text-decoration: underline !important;
 }
 
 #observablehq-header a[href] {
@@ -72,4 +85,8 @@ a.observablehq-version-badge {
 h1 {
   font-family: "Spline-Sans Mono", monospace;
   font-weight: 500 !important;
+}
+
+h2 {
+margin-bottom: 0.5rem;
 }

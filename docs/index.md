@@ -25,7 +25,7 @@ index: false
 .hero h2 {
   font-style: normal;
   font-size: 18px;
-  line-height: normal;
+  line-height: 1.5;
   color: var(--theme-foreground-muted);
 }
 
