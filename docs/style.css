@@ -1,6 +1,11 @@
 @import url("observablehq:default.css");
 @import url("observablehq:theme-air.css") (prefers-color-scheme: light);
 @import url("observablehq:theme-near-midnight.css") (prefers-color-scheme: dark);
+@import url('https://fonts.googleapis.com/css2?family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap');
+
+:root {
+  --theme-phosphate: #148576;
+}
 
 #observablehq-header a[href] {
   color: inherit;
@@ -62,4 +67,9 @@ a.observablehq-version-badge {
 
 .observablehq-version-badge::before {
   content: attr(data-version);
+}
+
+h1 {
+  font-family: "Spline-Sans Mono", monospace;
+  font-weight: 500 !important;
 }

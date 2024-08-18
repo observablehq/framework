@@ -12,9 +12,14 @@ index: false
 
 .hero h1 {
   font-size: 64px;
-  font-family: var(--serif);
+  font-family: "Spline-Sans Mono", monospace;
+  font-weight: 500 !important;
   line-height: 1;
   margin: 2rem 0;
+}
+
+.phosphate {
+  color: var(--theme-phosphate);
 }
 
 .hero h2 {
@@ -99,14 +104,14 @@ index: false
 
 @media (prefers-color-scheme: light) {
   h1 {
-    --theme-red: #d75c48;
+    --theme-phosphate: #148576;
   }
 }
 
 </style>
 
 <div class="hero">
-  <h1>The best dashboards are built with <em class="red">code.</em></h1>
+  <h1>The best dashboards are built with <em class="phosphate">code.</em></h1>
   <h2>Create fast, beautiful data apps, dashboards, and reports from the command line. Write Markdown, JavaScript, SQL, Python, R… and any language you like. Free and open-source.</h2>
   <div class="cta">
     <pre data-copy>npx <span class="win">"</span>@observablehq/framework@latest<span class="win">"</span> create</pre>
