@@ -64,7 +64,7 @@ function routeParams(root: string, cwd: string, parts: string[], exts: string[])
         }
       }
       for (const ext of exts) {
-        for (const file of globSync(`\\[*\\]${ext}`, {cwd: join(root, cwd), nodir: true})) {
+        for (const file of globSync(`\\[?*\\]${ext}`, {cwd: join(root, cwd), nodir: true})) {
           const params = {[file.slice(file.indexOf("[") + 1, file.indexOf("]"))]: basename(first, extname(first))};
           return {path: join(cwd, file), params, ext};
         }
@@ -77,7 +77,7 @@ function routeParams(root: string, cwd: string, parts: string[], exts: string[])
         const found = routeParams(root, join(cwd, first), rest, exts);
         if (found) return found;
       }
-      for (const dir of globSync("\\[*\\]/", {cwd: join(root, cwd)})) {
+      for (const dir of globSync("\\[?*\\]/", {cwd: join(root, cwd)})) {
         const found = routeParams(root, join(cwd, dir), rest, exts);
         if (found) return {...found, params: {...found.params, [dir.slice(1, -1)]: first}};
       }
