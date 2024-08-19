@@ -43,7 +43,6 @@ chart_config = dw.create_chart(
             "color-category": {
                 "map": {
                     "Male": "#94c4d1",
-                    "Total": "#000000",
                     "Female": "#ffca76",
                     "Combined": "#545a5d"
                 },
