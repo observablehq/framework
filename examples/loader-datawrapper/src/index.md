@@ -8,38 +8,58 @@ import sys
 import pandas as pd
 from datawrapper import Datawrapper
 
-# Get an extract of arrests made by the Baltimore Police Department
-df = pd.read_csv(
-    "https://raw.githubusercontent.com/palewire/first-automated-chart/main/_notebooks/arrests.csv",
-    parse_dates=["ArrestDateTime"]
-)
+# Read in the data file, which is drawn from a Datawrapper example
+# https://academy.datawrapper.de/article/281-examples-of-datawrapper-dot-charts
+df = pd.read_csv("src/data/chart.csv")
 
-# Create a year column
-df['year'] = df.ArrestDateTime.dt.year
-
-# Calculate the total number by year
-totals_by_year = df.year.value_counts().sort_index().reset_index()
-
-# Connect to the datawrapper api
+# Connect to the Datawrapper api
 dw = Datawrapper()
 
-# Create a chart
+# Create the chart
 chart_config = dw.create_chart(
     # Headline the chart
-    title="Baltimore Arrests",
+    title="Germany is the third-oldest country in the world",
     # Set the type
-    chart_type="column-chart",
+    chart_type="d3-dot-plot",
     # Give the data
-    data=totals_by_year,
-    # Configure other bits
+    data=df,
+    # Configure everything about the chart
     metadata={
         # Set the description
         "describe": {
-            "source-name": "OpenBaltimore",
-            "source-url": "https://data.baltimorecity.gov/datasets/baltimore::bpd-arrests/about",
+            "intro": "Median age in the three countries with the oldest population and selected other countries, in years",
+            "source-name": "Estimates by the CIA World Factbook, 2018",
+            "source-url": "https://www.cia.gov/library/publications/resources/the-world-factbook/fields/343rank.html",
+        },
+        # Configure the chart
+        "visualize": {
+            "custom-range": [
+                "35",
+                "55"
+            ],
+            "range-extent": "custom",
+            "highlight-range": True,
+            "replace-flags": {
+                "style": "4x3",
+                "enabled": True
+            },
+            "color-by-column": True,
+            "show-color-key": True,
+            "color-category": {
+                "map": {
+                    "Male": "#94c4d1",
+                    "Total": "#000000",
+                    "Female": "#ffca76",
+                    "Combined": "#545a5d"
+                },
+            },
+        },
+        # Set the embed height
+        "publish": {
+            "embed-height": 512
         }
     }
-)
+) 
 
 # Pull out the chart's unique identifier
 chart_id = chart_config["id"]
