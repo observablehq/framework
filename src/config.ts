@@ -13,6 +13,7 @@ import {formatIsoDate, formatLocaleDate} from "./format.js";
 import type {FrontMatter} from "./frontMatter.js";
 import {createMarkdownIt, parseMarkdownMetadata} from "./markdown.js";
 import {isAssetPath, parseRelativeUrl, resolvePath} from "./path.js";
+import {isParameterizedPath} from "./route.js";
 import {resolveTheme} from "./theme.js";
 import {bold, yellow} from "./tty.js";
 
@@ -80,6 +81,7 @@ export interface Config {
   sidebar: boolean; // defaults to true if pages isn’t empty
   pages: (Page | Section<Page>)[];
   pager: boolean; // defaults to true
+  paths: string[];
   scripts: Script[]; // deprecated; defaults to empty array
   head: PageFragmentFunction | string | null; // defaults to null
   header: PageFragmentFunction | string | null; // defaults to null
@@ -109,6 +111,7 @@ export interface ConfigSpec {
   title?: unknown;
   pages?: unknown;
   pager?: unknown;
+  paths?: unknown;
   toc?: unknown;
   linkify?: unknown;
   typographer?: unknown;
@@ -233,6 +236,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const title = spec.title === undefined ? undefined : String(spec.title);
   const pages = spec.pages === undefined ? undefined : normalizePages(spec.pages);
   const pager = spec.pager === undefined ? true : Boolean(spec.pager);
+  const paths = getDefaultPaths(root).concat(normalizePaths(spec.paths));
   const toc = normalizeToc(spec.toc as any);
   const sidebar = spec.sidebar === undefined ? undefined : Boolean(spec.sidebar);
   const scripts = spec.scripts === undefined ? [] : normalizeScripts(spec.scripts);
@@ -249,6 +253,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     sidebar: sidebar!, // see below
     pages: pages!, // see below
     pager,
+    paths,
     scripts,
     head,
     header,
@@ -261,10 +266,20 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     loaders: new LoaderResolver({root, interpreters}),
     watchPath
   };
-  if (pages === undefined) Object.defineProperty(config, "pages", {get: () => readPages(root, md)});
+  if (pages === undefined) Object.defineProperty(config, "pages", {get: () => readPages(root, md)}); // TODO rename to sidebar.pages?
   if (sidebar === undefined) Object.defineProperty(config, "sidebar", {get: () => config.pages.length > 0});
   configCache.set(spec, config);
   return config;
+}
+
+function getDefaultPaths(root: string): string[] {
+  return Array.from(visitMarkdownFiles(root))
+    .filter((path) => !isParameterizedPath(path))
+    .map((path) => join("/", dirname(path), basename(path, ".md")));
+}
+
+function normalizePaths(spec: unknown = []): Config["paths"] {
+  return Array.from(spec as any, String);
 }
 
 function getPathNormalizer(spec: unknown = true): (path: string) => string {

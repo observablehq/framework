@@ -4,7 +4,7 @@ import type {FSWatcher, WatchEventType} from "node:fs";
 import {access, constants, readFile} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
-import {basename, dirname, extname, join, normalize} from "node:path/posix";
+import {basename, dirname, join, normalize} from "node:path/posix";
 import {difference} from "d3-array";
 import type {PatchItem} from "fast-array-diff";
 import {getPatch} from "fast-array-diff";
@@ -31,8 +31,8 @@ import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
 import {getResolvers} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
-import type {Params, RouteResult} from "./route.js";
-import {route} from "./route.js";
+import type {Params} from "./route.js";
+import {find, route} from "./route.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, link} from "./tty.js";
@@ -193,11 +193,11 @@ export class PreviewServer {
 
         // Lastly, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
-        const found = findPage(root, `${pathname}.md`);
+        const found = find(root, `${pathname}.md`);
         if (!found) throw new HttpError("Not found", 404);
         const {path: sourcePath, params} = found;
         const options = {...config, params, path: pathname, preview: true};
-        const source = await readFile(sourcePath, "utf8");
+        const source = await readFile(join(root, sourcePath), "utf8");
         const parse = parseMarkdown(source, options);
         const html = await renderPage(parse, options);
         end(req, res, html, "text/html");
@@ -260,12 +260,6 @@ function end(req: IncomingMessage, res: ServerResponse, content: string, type: s
   } else {
     res.end(content);
   }
-}
-
-function findPage(root: string, path: string): RouteResult | undefined {
-  const ext = extname(path);
-  const found = route(root, path.slice(0, -ext.length), [ext]);
-  if (found) return {...found, path: join(root, found.path)};
 }
 
 // Note that while we appear to be watching the referenced files here,
@@ -384,9 +378,10 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     path = join(dirname(path), `${basename(path, ".html")}.md`);
     config = await configPromise;
     const {root, loaders, normalizePath} = config;
-    const found = findPage(root, path);
+    const found = find(root, path);
     if (!found) throw new Error(`Page not found: ${path}`);
-    ({path: sourcePath, params} = found);
+    sourcePath = join(root, found.path);
+    params = found.params;
     const source = await readFile(sourcePath, "utf8");
     const page = parseMarkdown(source, {path, params, ...config});
     const resolvers = await getResolvers(page, {root, path, loaders, normalizePath});

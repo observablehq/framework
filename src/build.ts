@@ -1,9 +1,9 @@
 import {createHash} from "node:crypto";
-import {access, constants, copyFile, readFile, stat, writeFile} from "node:fs/promises";
+import {copyFile, readFile, stat, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {CliError, isEnoent} from "./error.js";
-import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
+import {getClientPath, prepareOutput} from "./files.js";
 import {findModule, getLocalModuleHash, getModuleHash, readJavaScript} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
@@ -16,6 +16,8 @@ import type {Resolvers} from "./resolvers.js";
 import {getModuleResolver, getResolvers} from "./resolvers.js";
 import {resolveImportPath, resolveStylesheetPath} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
+import type {Params} from "./route.js";
+import {find} from "./route.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {tree} from "./tree.js";
@@ -48,28 +50,36 @@ export async function build(
   {config}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output, join(config.root, ".observablehq", "cache"))
 ): Promise<void> {
-  const {root, loaders, normalizePath} = config;
+  const {paths, root, loaders, normalizePath} = config;
   Telemetry.record({event: "build", step: "start"});
 
-  // Make sure all files are readable before starting to write output files.
-  let pageCount = 0;
-  for (const sourceFile of visitMarkdownFiles(root)) {
-    await access(join(root, sourceFile), constants.R_OK);
-    pageCount++;
+  // If this path ends with a slash, then add an implicit /index to the
+  // end of the path. Otherwise, remove the .html extension (we use clean
+  // paths as the internal canonical representation; see normalizePage).
+  function normalizePagePath(pathname: string): string {
+    pathname = normalizePath(pathname);
+    if (pathname.endsWith("/")) pathname = join(pathname, "index");
+    else pathname = pathname.replace(/\.html$/, "");
+    return pathname;
   }
+
+  // Check that there’s at least one page.
+  const pageCount = paths.length;
   if (!pageCount) throw new CliError(`Nothing to build: no page files found in your ${root} directory.`);
   effects.logger.log(`${faint("found")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
 
   // Parse .md files, building a list of additional assets as we go.
-  const pages = new Map<string, {page: MarkdownPage; resolvers: Resolvers}>();
+  const pages = new Map<string, {sourcePath: string; page: MarkdownPage; params?: Params; resolvers: Resolvers}>();
   const files = new Set<string>(); // e.g., "/assets/foo.png"
   const localImports = new Set<string>(); // e.g., "/components/foo.js"
   const globalImports = new Set<string>(); // e.g., "/_observablehq/search.js"
   const stylesheets = new Set<string>(); // e.g., "/style.css"
-  for (const sourceFile of visitMarkdownFiles(root)) {
+  for (const path of paths.map(normalizePagePath)) {
+    const found = find(root, `${path}.md`);
+    if (!found) throw new Error(`page not found: ${path}`);
+    const {path: sourceFile, params} = found;
     const sourcePath = join(root, sourceFile);
-    const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
-    const options = {path, ...config};
+    const options = {...config, params, path};
     effects.output.write(`${faint("parse")} ${sourcePath} `);
     const start = performance.now();
     const source = await readFile(sourcePath, "utf8");
@@ -78,15 +88,15 @@ export async function build(
       effects.logger.log(faint("(skipped)"));
       continue;
     }
-    const resolvers = await getResolvers(page, {root, path: sourceFile, normalizePath, loaders});
+    const resolvers = await getResolvers(page, {root, path, normalizePath, loaders});
     const elapsed = Math.floor(performance.now() - start);
-    for (const f of resolvers.assets) files.add(resolvePath(sourceFile, f));
-    for (const f of resolvers.files) files.add(resolvePath(sourceFile, f));
-    for (const i of resolvers.localImports) localImports.add(resolvePath(sourceFile, i));
-    for (let i of resolvers.globalImports) if (isPathImport((i = resolvers.resolveImport(i)))) globalImports.add(resolvePath(sourceFile, i)); // prettier-ignore
-    for (const s of resolvers.stylesheets) stylesheets.add(/^\w+:/.test(s) ? s : resolvePath(sourceFile, s));
+    for (const f of resolvers.assets) files.add(resolvePath(path, f));
+    for (const f of resolvers.files) files.add(resolvePath(path, f));
+    for (const i of resolvers.localImports) localImports.add(resolvePath(path, i));
+    for (let i of resolvers.globalImports) if (isPathImport((i = resolvers.resolveImport(i)))) globalImports.add(resolvePath(path, i)); // prettier-ignore
+    for (const s of resolvers.stylesheets) stylesheets.add(/^\w+:/.test(s) ? s : resolvePath(path, s));
     effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
-    pages.set(sourceFile, {page, resolvers});
+    pages.set(path, {sourcePath: sourceFile, page, params, resolvers});
   }
 
   // For cache-breaking we rename most assets to include content hashes.
@@ -271,10 +281,9 @@ export async function build(
   }
 
   // Wrap the resolvers to apply content-hashed file names.
-  for (const [sourceFile, page] of pages) {
-    const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
+  for (const [path, page] of pages) {
     const {resolvers} = page;
-    pages.set(sourceFile, {
+    pages.set(path, {
       ...page,
       resolvers: {
         ...resolvers,
@@ -304,14 +313,11 @@ export async function build(
 
   // Render pages!
   const buildManifest: BuildManifest = {pages: []};
-  for (const [sourceFile, {page, resolvers}] of pages) {
-    const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
-    const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
+  for (const [path, {page, params, resolvers}] of pages) {
     effects.output.write(`${faint("render")} ${path} ${faint("→")} `);
-    const html = await renderPage(page, {...config, path, resolvers});
-    await effects.writeFile(outputPath, html);
-    const urlPath = config.normalizePath("/" + outputPath);
-    buildManifest.pages.push({path: urlPath, title: page.title});
+    const html = await renderPage(page, {...config, path, params, resolvers});
+    await effects.writeFile(`${path}.html`, html);
+    buildManifest.pages.push({path: config.normalizePath(path), title: page.title});
   }
 
   // Write the build manifest.
@@ -327,11 +333,9 @@ export async function build(
         }`
       );
     } else {
-      const [sourceFile, {resolvers}] = node.data!;
-      const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
-      const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
+      const [path, {resolvers}] = node.data!;
       const resolveOutput = (name: string) => join(config.output, resolvePath(path, name));
-      const pageSize = (await stat(join(config.output, outputPath))).size;
+      const pageSize = (await stat(join(config.output, `${path}.html`))).size;
       const importSize = await accumulateSize(resolvers.staticImports, resolvers.resolveImport, resolveOutput);
       const fileSize =
         (await accumulateSize(resolvers.files, resolvers.resolveFile, resolveOutput)) +

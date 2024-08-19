@@ -30,6 +30,7 @@ describe("readConfig(undefined, root)", () => {
           pages: [{name: "Closed page", path: "/closed/page", pager: "main"}]
         }
       ],
+      paths: ["/index", "/one", "/toc-override", "/toc", "/closed/page", "/sub/two"],
       title: undefined,
       toc: {label: "On this page", show: true},
       pager: true,
@@ -54,6 +55,7 @@ describe("readConfig(undefined, root)", () => {
       style: {theme: ["air", "near-midnight"]},
       sidebar: true,
       pages: [{name: "Build test case", path: "/simple", pager: "main"}],
+      paths: ["/simple"],
       title: undefined,
       toc: {label: "Contents", show: true},
       pager: true,

@@ -1,5 +1,27 @@
 import assert from "node:assert";
-import {route} from "../src/route.js";
+import {isParameterizedPath, route} from "../src/route.js";
+
+describe("isParameterizedPath(path)", () => {
+  it("returns true for a parameterized file name", () => {
+    assert.strictEqual(isParameterizedPath("/[file].md"), true);
+    assert.strictEqual(isParameterizedPath("/path/[file].md"), true);
+    assert.strictEqual(isParameterizedPath("/path/to/[file].md"), true);
+    assert.strictEqual(isParameterizedPath("/path/[dir]/[file].md"), true);
+  });
+  it("returns true for a parameterized directory name", () => {
+    assert.strictEqual(isParameterizedPath("/[dir]/file.md"), true);
+    assert.strictEqual(isParameterizedPath("/path/[dir]/file.md"), true);
+    assert.strictEqual(isParameterizedPath("/[dir1]/[dir2]/file.md"), true);
+  });
+  it("doesn’t consider an empty parameter to be valid", () => {
+    assert.strictEqual(isParameterizedPath("/[]/file.md"), false);
+    assert.strictEqual(isParameterizedPath("/path/to/[].md"), false);
+  });
+  it("returns false for a non-parameterized path", () => {
+    assert.strictEqual(isParameterizedPath("/file.md"), false);
+    assert.strictEqual(isParameterizedPath("/path/to/file.md"), false);
+  });
+});
 
 describe("route(root, path, exts)", () => {
   it("finds an exact file", () => {

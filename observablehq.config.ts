@@ -85,6 +85,7 @@ export default {
     {name: "Converting notebooks", path: "/convert"},
     {name: "Contributing", path: "/contributing", pager: false}
   ],
+  paths: ["/foo/index", "/bar/index"],
   base: "/framework",
   head: `<link rel="apple-touch-icon" href="/observable.png">
 <link rel="icon" type="image/png" href="/observable.png" sizes="32x32">${
@@ -122,14 +123,17 @@ export default {
   footer: `© ${new Date().getUTCFullYear()} Observable, Inc.`,
   style: "style.css",
   search: {
-    async* index() {
+    async *index() {
       for (const name of await readdir("examples")) {
         const root = join("examples", name);
         if ((await stat(root)).isDirectory() && existsSync(join(root, "README.md"))) {
           const source = await readFile(join(root, "README.md"), "utf-8");
           yield {
             path: `https://observablehq.observablehq.cloud/framework-example-${name}/`,
-            title: source.split("\n").find((line) => line.startsWith("# "))?.slice(2),
+            title: source
+              .split("\n")
+              .find((line) => line.startsWith("# "))
+              ?.slice(2),
             text: source
           };
         }
