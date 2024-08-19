@@ -1,23 +1,16 @@
 @import url("observablehq:default.css");
 @import url("observablehq:theme-air.css") (prefers-color-scheme: light);
 @import url("observablehq:theme-near-midnight.css") (prefers-color-scheme: dark);
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap");
 
 :root {
   --theme-phosphate: #148576;
 }
 
-body {
-  font-family: "Inter", sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
-  color: var(--theme-foreground);
-  background: var(--theme-background);
-}
-
-p a {
-  color: var(--theme-foreground) !important;
-  text-decoration: underline !important;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --theme-phosphate: #37d5be;
+  }
 }
 
 #observablehq-header a[href] {
@@ -54,12 +47,41 @@ p a {
   color: var(--theme-foreground-faint);
 }
 
-.observablehq-link-active a[target=_blank]:not(:hover, :focus)::after {
+.observablehq-link-active a[target="_blank"]:not(:hover, :focus)::after {
   color: var(--theme-foreground-focus);
 }
 
 #observablehq-main {
   min-height: calc(100vh - 23.8rem);
+}
+
+#observablehq-main {
+  font-family: "Inter", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--theme-foreground);
+  background: var(--theme-background);
+  font-weight: 500;
+}
+
+#observablehq-main p a {
+  color: var(--theme-foreground) !important;
+  text-decoration: underline !important;
+}
+
+#observablehq-main h1 {
+  font-family: "Spline Sans Mono", monospace !important;
+  font-weight: 500 !important;
+  margin-bottom: 1rem;
+}
+
+#observablehq-main h2,
+#observablehq-main h3,
+#observablehq-main h4,
+#observablehq-main h5,
+#observablehq-main h6 {
+  font-family: "Inter", sans-serif;
+  margin-bottom: 0.5rem;
 }
 
 @container not (min-width: 640px) {
@@ -80,13 +102,4 @@ a.observablehq-version-badge {
 
 .observablehq-version-badge::before {
   content: attr(data-version);
-}
-
-h1 {
-  font-family: "Spline-Sans Mono", monospace;
-  font-weight: 500 !important;
-}
-
-h2 {
-margin-bottom: 0.5rem;
 }
