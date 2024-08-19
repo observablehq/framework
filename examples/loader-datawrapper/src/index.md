@@ -54,30 +54,18 @@ sys.stdout.write(html)
 
 <div class="note">
 
-To run this data loader, you will need to create an API token in Datawrapper and set it as an environment variable named `DATAWRAPPER_ACCESS_TOKEN`.
-
-You’ll also need python3 and the pandas and datawrapper modules installed and available on your `$PATH`.
-
-</div>
-
-<div class="tip">
+You’ll also need python3 and the [`pandas`](https://pypi.org/project/pandas/) and [`datawrapper`](https://pypi.org/project/datawrapper/) modules installed and available on your `$PATH`. 
 
 We recommend using a [Python virtual environment](https://observablehq.com/framework/loaders#venv), such as with venv or uv, and managing required packages via `requirements.txt` rather than installing them globally.
 
+You will also need to create an API token with [Datawrapper](https://www.datawrapper.de/) and set it as an environment variable named `DATAWRAPPER_ACCESS_TOKEN`. You can learn how by visiting the site's [“Getting Started” guide](https://developer.datawrapper.de/docs/getting-started). You'll want to give the token permission to read all of the options and to read and write charts.
+
+Be aware that this example will publish a new chart to your account each time it runs.
 </div>
 
-The above data loader lives in `data/chart.html.py`, so we can load the data using `data/chart.html` with `FileAttachment`:
+The above data loader lives in `data/chart.html.py`, so we can load the data into an HTML element using `data/chart.html` with `FileAttachment`:
 
 ```js echo
-const iframe = FileAttachment("data/chart.html").text();
-```
-
-We can then insert the HTML into the page by creating an element and setting its `innerHTML` attribute:
-
-```html echo
-<div id="chart"></div>
-```
-
-```js echo
-document.getElementById("chart").innerHTML = iframe;
+const div = display(document.createElement("DIV"));  
+div.innerHTML = await FileAttachment("data/chart.html").text();  
 ```

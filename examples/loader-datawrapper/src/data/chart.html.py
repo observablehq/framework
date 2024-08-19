@@ -34,7 +34,7 @@ chart_config = dw.create_chart(
             "source-url": "https://data.baltimorecity.gov/datasets/baltimore::bpd-arrests/about",
         }
     }
-)
+) 
 
 # Pull out the chart's unique identifier
 chart_id = chart_config["id"]
