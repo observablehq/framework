@@ -28,7 +28,7 @@ export function Sunburst(
     startAngle = 0, // the starting angle for the sunburst
     endAngle = 2 * Math.PI, // the ending angle for the sunburst
     radius = Math.min(width - marginLeft - marginRight, height - marginTop - marginBottom) / 2, // outer radius
-    color = d3.interpolateRainbow, // color scheme, if any
+    color = d3.interpolateRainbow, // color scheme or scale, if any
     fill = "var(--theme-background)", // fill for arcs (if no color encoding)
     fillOpacity = 0.99 // fill opacity for arcs
   } = {}
@@ -54,7 +54,7 @@ export function Sunburst(
   d3.partition().size([endAngle - startAngle, radius])(root);
 
   // Construct a color scale.
-  if (color != null) {
+  if (Array.isArray(color)) {
     color = d3.scaleSequential([0, root.children.length], color).unknown(fill);
     root.children.forEach((child, i) => (child.index = i));
   }
@@ -89,7 +89,15 @@ export function Sunburst(
   cell
     .append("path")
     .attr("d", arc)
-    .attr("fill", color ? (d) => color(d.ancestors().reverse()[1]?.index) : fill)
+    .attr(
+      "fill",
+      color
+        ? (d) => {
+            const branch = d.ancestors().reverse()[1];
+            return branch ? color(branch.data.name) : fill;
+          }
+        : fill
+    )
     .attr("fill-opacity", fillOpacity);
 
   if (label != null)

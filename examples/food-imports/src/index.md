@@ -4,19 +4,12 @@ theme: dashboard
 
 # Food imports to the United States
 
-<!-- ## By category, subcategory, and country of origin -->
-
-In 2023, the United States imported more than \$${d3.format(",~r")(Math.floor(d3.sum(sample, d => +d.FoodValue)/1000))} billion in edible products from its ${n} leading exporters. The variety is vast, with distinctive contribitions arriving from each major supplier. Data: [US Department of Agriculture](https://www.ers.usda.gov/data-products/u-s-food-imports/)
+In 2023, the United States imported more than ${d3.format("$d")(d3.sum(sample, d => +d.FoodValue)/1000)} billion in edible products from its ${n} leading exporters. The variety is vast, with distinctive contributions arriving from each major supplier. Data: [US Department of Agriculture](https://www.ers.usda.gov/data-products/u-s-food-imports/)
 
 ```js
 // components
 import {Marimekko} from './components/Marimekko.js'
 import {Sunburst} from './components/Sunburst.js'
-```
-
-```js
-// raw data
-const raw = FileAttachment("./data/FoodImports.csv").csv();
 ```
 
 ```js
@@ -26,126 +19,90 @@ const colors = FileAttachment("./data/colors.json").json();
 ```
 
 ```js
-const nInput = Inputs.radio(
-  [4,8,12,16],
-  {
-    label: "Number of importers:",
-    value: 12
-  }
-);
-const n = Generators.input(nInput)
-
-const sInput = Inputs.range(
-  [0,150],
-  {
-    label: "Spectrum A start",
-    value: 87,
-    step: 1
-  }
-);
-const s = Generators.input(sInput)
-
-const qInput = Inputs.range(
-  [0,150],
-  {
-    label: "Spectrum B start",
-    value: 110,
-    step: 1
-  }
-);
-const q = Generators.input(qInput)
-
+const n = view(Inputs.radio([4, 8, 12, 16], {
+  label: html`Top <em>n</em> importers`,
+  value: 12
+}));
 ```
 
 ```js
-// tidy & filter out precomputed aggregations
-const tidy = raw
-  .filter(d => d.SubCategory === 'Foods')
-  .filter(d => d.Category !== 'Food Dollars' && d.Category !== 'Food volume')
-  .filter(d => !d.Commodity.includes('Total'))
-  .filter(d => d.Country !== "WORLD" && d.Country !== "WORLD (Quantity)")
-  .filter(d => d.Country !== "REST OF WORLD") // cleaner without this, needs annotation
+const tidy = await FileAttachment("./data/FoodImports.csv").csv({typed: true});
 
-const timely = tidy
-  .map(d => ({year: d.YearNum, value: +d.FoodValue, country: d.Country}))
+// Values from the most recent year
+const recent = tidy.filter(d => d.YearNum === 2023);
 
-// data for area chart: year, country, total
+// Top-n from the most recent year
+const topN = d3.groupSort(recent, (v) => d3.sum(v, (k) => k.FoodValue), (d) => d.Country).slice(-n).reverse();
+
+// Sample from the most recent year (for Marimekko and Sunburst)
+const sample = recent.filter((d) => topN.includes(d.Country));
+```
+
+```js
+// Food categories
+const categories = d3.groupSort(sample, (v) => -d3.sum(v, (d) => d.FoodValue), (d) => d.Category);
+
+const categoryColor = d3.scaleOrdinal().domain(categories).range(["#bce4e5", "#a7d4e4", "#a5c8d1", "#97acc8", "#96d1aa", "#78cdd0", "#62c6bf", "#0093a5", "#00939b", "#099197", "#5a82b3", "#006eb8", "#007190", "#005b8d"]);
+```
+
+```js
+// Marimekko: by Country and Category for 2023
+const byCountryAndCategory = d3.sort(
+  d3.flatRollup(
+    sample,
+    (v) => d3.sum(v, (d) => d.FoodValue),
+    (d) => d.Country,
+    (d) => d.Category
+  )
+  .map(([Country, Category, value]) => ({Country, Category, value})),
+  ({Country}) => topN.indexOf(Country),
+  ({Category}) => -categories.indexOf(Category),
+);
+```
+
+```js
+// Sunburst: category and subcategory totals for 2023 across all countries
+const nest = {
+  name: "Food imports",
+  children: d3.rollups(
+    sample,
+    (v) => d3.sum(v, (d) => d.FoodValue),
+    (d) => d.Category,
+    (d) => d.Commodity
+  ).map(([name, children]) => ({
+    name,
+    children: Array.from(children, ([name, value]) => ({name, value}))
+  }))
+};
+```
+
+```js
+// Timeline: year, country, total
+// All-time values for the timeline
+const timely = tidy.filter((d) => topN.includes(d.Country))
+  .map(d => ({year: d.YearNum, value: d.FoodValue, country: d.Country}));
+
 const byYearAndCountry = d3.groups(timely, d => d.year, d => d.country)
   .map(d => d[1].map(k => ({
-    year: yearParse(d[0]),
+    year: new Date(d[0], 0, 1), // UTC dates
     country: k[0],
-    value: d3.sum(k[1], j => j.value)
+    value: d3.sum(k[1], (j) => j.value)
     })
   ))
-  .flat()
+  .flat();
 
-const tops = d3.groups(byYearAndCountry, d => d.country)
-  .map(d => [d[0], d3.sum(d[1], k => k.value)])
-  .sort((a,b) => b[1] - a[1])
-  .map(d => d[0])
-  .filter((_,i) => i < n)
-
-const sample = tidy
-  .filter(d => d.YearNum === "2023")
-  .filter(d => tops.includes(d.Country))
-
-const nested = d3.groups(sample, d => d.Category, d => d.Commodity)
-  .map(d => ({
-      name: d[0],
-      children: d[1].map(j => ({
-          name: j[0],
-          value: +j[1][0]['FoodValue']
-      }))
-  }))
-
-//  data for suburst: category and subcategory totals for 2023 across all nations
-const nest = { name: 'food imports', children: nested}
-
-//  data for Marimekko: byCountryAndCategory for 2023
-const byCountryAndCategory = d3.groups(sample, d => d.Country, d => d.Category)
-  .map(d => d[1].map(k => ({
-    Country: d[0],
-    Category: k[0],
-    value: d3.sum(k[1], j => +j['FoodValue'])
-    })
-  ))
-  .sort((a,b) => d3.sum(b, d => d.value) - d3.sum(a, d => d.value))
-  .flat()
+const areaColors = ["#ffdd00", "#cab356", "#d6b43e", "#e2b540", "#fcb315", "#f99d1b", "#f68c50", "#f37420", "#f15a30", "#d96629", "#c27544", "#c16b27", "#c19f2c", "#bc892b", "#b2b73e", "#b09f36"];
+const areaData = byYearAndCountry;
 ```
 
-```js
-const colorMap = new Map(d3.rollups(byYearAndCountry, v => d3.sum(v, d => d.value), d => d.country).sort((a,b) => b[1] - a[1]).map((d,i) => ([d[0], i%n])))
-```
-
-```js
-const areaData = byYearAndCountry.map(d => ({...d, colorIndex: colorMap.get(d.country)}))
-```
-
-<div>${nInput}</div>
-
-<!-- <div>${sInput}</div>
-<div>${qInput}</div> -->
-
-```js
-// helper functions
-const yearParse = d3.utcParse('%Y')
-const areaColors = colors.slice(s,s+n).map(d => d.hex)
-const sunburstColors = colors.slice(q,q+14).map(d => d.hex)
-```
-
-```js
-// expand the height of the marimekko for each country beyond 12
-const h = n * 60;
-
-```
 <div class="grid grid-cols-2" style="grid-auto-rows: auto;">
   <div class="card grid-colspan-2">
     <h2>Distribution of food imports by country and category</h2>
     <h3>from top ${n} countries, 2023</h3>
     ${resize((width) => Marimekko(byCountryAndCategory, {
       width,
-      height: h,
-      color: d3.scaleOrdinal().range(sunburstColors)
+      height: n * 60, // TODO constant scaling
+      color: categoryColor
     }))}
   </div>
   <div class="card" style="min-height: 600px;">
@@ -153,9 +110,9 @@ const h = n * 60;
     <h3>Share of imports by category and subcategory</h3>
     ${resize((width) => Sunburst(nest, {
       width,
-      value: d => d.value,
-      label: d => d.name,
-      color: d3.scaleOrdinal().range(sunburstColors),
+      value: (d) => d.value,
+      label: (d) => d.name,
+      color: categoryColor,
       title: (d, n) => `${n.ancestors().reverse().map(d => d.data.name).join(".")}\n${n.value.toLocaleString("en")}`
     }))}
   </div>
@@ -168,52 +125,42 @@ const h = n * 60;
       marginLeft: 50,
       marginRight: 120,
       color: {
-        type: "ordinal",
+        domain: topN,
         range: areaColors
       },
       y: {
         grid: true,
-        label: "↑ Food Import $"
+        label: "↑ Food Import $",
+        tickFormat: "%"
       },
       marks: [
-        Plot.axisY({
-          ticks: 10,
-          tickFormat: (d, i, _) => `${Math.round(100*d)}%`
-        }),
         Plot.areaY(
-          areaData.filter(d => tops.includes(d.country)),
+          areaData,
           {
             x: "year",
             y: "value",
-            z: "country",
-            order: "sum",
-            fill: "colorIndex",
-            stroke: "colorIndex",
-            interval: "year",
-            textAnchor: 'start',
-            reverse: true,
-            offset: 'normalize',
-            curve: "catmull-rom"
+            order: "sum", // option to use "value" instead
+            fill: "country",
+            offset: "normalize",
+            curve: "monotone-x"
           }
         ),
         Plot.textY(
-          areaData.filter((d) => tops.includes(d.country)),
-          Plot.selectLast(
+          areaData,
+          Plot.selectMaxX(
             Plot.stackY({
               x: "year",
-              dx: "8",
               y: "value",
-              z: "country",
               order: "sum",
-              fill: "colorIndex",
+              z: "country",
               text: "country",
-              interval: "year",
-              textAnchor: 'start',
-              offset: 'normalize',
+              dx: "8",
+              textAnchor: "start",
+              offset: "normalize",
             })
           )
         ),
-        Plot.ruleY([0])
+        Plot.ruleY([0, 1])
       ]}))}
   </div>
 </div>

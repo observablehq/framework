@@ -97,5 +97,9 @@ export function Marimekko(
     .attr("y", "1.1em")
     .text((d) => (d.y1 - d.y0 > 60 && d.x1 - d.x0 > 14 ? d.data[0] : ""));
 
+  cell
+    .append("title")
+    .text((d) => d.data[0]);
+
   return svg.node();
 }
