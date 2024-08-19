@@ -58,6 +58,7 @@
 - [`loader-canvas-to-png`](https://observablehq.observablehq.cloud/framework-example-loader-canvas-to-png/) - Generate PNG using node-canvas
 - [`loader-census`](https://observablehq.observablehq.cloud/framework-example-loader-census/) - Load and transform shapefiles from the U.S. Census Bureau
 - [`loader-databricks`](https://observablehq.observablehq.cloud/framework-example-loader-databricks/) - Load data from Databricks
+- [`loader-datawrapper`](https://observablehq.observablehq.cloud/framework-example-loader-datawrapper/) - Create a chart with the Datawrapper API and embed it as an iframe
 - [`loader-duckdb`](https://observablehq.observablehq.cloud/framework-example-loader-duckdb/) - Process data with DuckDB
 - [`loader-elasticsearch`](https://observablehq.observablehq.cloud/framework-example-loader-elasticsearch/) - Load data from Elasticsearch
 - [`loader-github`](https://observablehq.observablehq.cloud/framework-example-loader-github/) - Load data from GitHub
