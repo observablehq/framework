@@ -9,6 +9,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    --theme-foreground: #F5F5F5;
     --theme-phosphate: #37d5be;
   }
 }

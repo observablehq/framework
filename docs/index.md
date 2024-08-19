@@ -25,7 +25,7 @@ index: false
 .hero h2 {
   font-style: normal;
   font-size: 18px;
-  line-height: 1.5;
+  line-height: normal;
   color: var(--theme-foreground-muted);
 }
 
@@ -100,12 +100,6 @@ index: false
   content: "→";
   display: inline-block;
   margin-left: 0.25rem;
-}
-
-@media (prefers-color-scheme: light) {
-  h1 {
-    --theme-phosphate: #148576;
-  }
 }
 
 </style>
