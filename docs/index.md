@@ -10,7 +10,8 @@ index: false
 }
 
 .hero h1 {
-  font-size: 64px;
+  font-size: 56px;
+  max-width: fit-content;
   line-height: 1;
   margin: 2rem 0;
 }
