@@ -17,6 +17,12 @@
 
 [Source](./eia) · This dashboard visualizes electricity generation and demand across the U.S. electricity grid. The included data loaders demonstrate how to retrieve live data from the U.S. Energy Information Administration (EIA) API, while the dashboard demonstrates how to produce interactive maps, bar charts, and time-series charts with Observable Plot. A range input allows the user to rewind time to any point in the previous 24 hours, and a table shows details.
 
+### [`food-imports`](https://observablehq.observablehq.cloud/framework-example-food-imports/) - Food imports
+
+<a href="https://observablehq.observablehq.cloud/framework-example-food-imports/"><img src="../docs/assets/eia.webp" alt="U.S. electricity grid" width="312" height="237"></a>
+
+[Source](./food-imports) · This dashboard ….
+
 ### [`hotel-bookings`](https://observablehq.observablehq.cloud/framework-example-hotel-bookings) - Resort hotel bookings
 
 <a href="https://observablehq.observablehq.cloud/framework-example-hotel-bookings/"><img src="../docs/assets/hotel-bookings.webp" alt="Resort hotel bookings" width="312" height="237"></a>
