@@ -66,7 +66,7 @@ p a[href] {
 }
 
 h1 {
-  font-family: "Spline Sans Mono", monospace;
+  font-family: "Spline Sans Mono", var(--monospace);
   font-weight: 500;
   margin-bottom: 1rem;
 }
