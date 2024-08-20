@@ -5,15 +5,12 @@ index: false
 <style>
 
 .hero {
-  font-family: var(--sans-serif);
   margin: 4rem 0;
   text-wrap: balance;
 }
 
 .hero h1 {
   font-size: 64px;
-  font-family: "Spline-Sans Mono", monospace;
-  font-weight: 500 !important;
   line-height: 1;
   margin: 2rem 0;
 }
