@@ -84,7 +84,6 @@ export interface Config {
   head: PageFragmentFunction | string | null; // defaults to null
   header: PageFragmentFunction | string | null; // defaults to null
   footer: PageFragmentFunction | string | null; // defaults to “Built with Observable on [date].”
-  googlefonts: string | null; // defaults to Source Pro URL
   toc: TableOfContents;
   style: null | Style; // defaults to {theme: ["light", "dark"]}
   search: SearchConfig | null; // default to null
@@ -106,7 +105,7 @@ export interface ConfigSpec {
   head?: unknown;
   header?: unknown;
   footer?: unknown;
-  googlefonts?: unknown;
+  extraHead?: unknown;
   interpreters?: unknown;
   title?: unknown;
   pages?: unknown;
@@ -238,15 +237,12 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const toc = normalizeToc(spec.toc as any);
   const sidebar = spec.sidebar === undefined ? undefined : Boolean(spec.sidebar);
   const scripts = spec.scripts === undefined ? [] : normalizeScripts(spec.scripts);
-  const head = pageFragment(spec.head === undefined ? "" : spec.head);
+  const head = combine(
+    pageFragment(spec.extraHead === undefined ? defaultExtraHead() : spec.extraHead),
+    pageFragment(spec.head === undefined ? "" : spec.head)
+  );
   const header = pageFragment(spec.header === undefined ? "" : spec.header);
   const footer = pageFragment(spec.footer === undefined ? defaultFooter() : spec.footer);
-  const googlefonts =
-    spec.googlefonts === undefined
-      ? "https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"
-      : spec.googlefonts === null
-      ? null
-      : String(spec.googlefonts);
   const search = spec.search == null || spec.search === false ? null : normalizeSearch(spec.search as any);
   const interpreters = normalizeInterpreters(spec.interpreters as any);
   const config: Config = {
@@ -261,7 +257,6 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     head,
     header,
     footer,
-    googlefonts,
     toc,
     style,
     search,
@@ -296,6 +291,14 @@ function defaultFooter(): string {
   return `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="${formatIsoDate(
     date
   )}">${formatLocaleDate(date)}</a>.`;
+}
+
+function defaultExtraHead(): string {
+  const href =
+    "https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap";
+  return `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="${href}" crossorigin>
+<link rel="stylesheet" type="text/css" href="${href}" crossorigin>`;
 }
 
 function findDefaultRoot(defaultRoot?: string): string {
@@ -425,4 +428,15 @@ export function mergeStyle(
 
 export function stringOrNull(spec: unknown): string | null {
   return spec == null || spec === false ? null : String(spec);
+}
+
+function combine(...parts: (PageFragmentFunction | string | null)[]): PageFragmentFunction | string | null {
+  parts = parts.filter((d) => d);
+  return parts.length > 1
+    ? function ({title, data, path}) {
+        return Array.from(parts, (f) => (typeof f === "function" ? f({title, data, path}) : f))
+          .filter((d) => d != null)
+          .join("\n");
+      }
+    : parts[0] ?? null;
 }
