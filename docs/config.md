@@ -300,3 +300,11 @@ The set of replacements for straight double and single quotes used when the [**t
 ## linkify <a href="https://github.com/observablehq/framework/releases/tag/v1.7.0" class="observablehq-version-badge" data-version="^1.7.0" title="Added in 1.7.0"></a>
 
 If true (the default), automatically convert URL-like text to links in Markdown.
+
+<!--
+
+## googlefonts <a href="https://github.com/observablehq/framework/pull/1588" class="observablehq-version-badge" data-version="prerelease" title="Added in #1588"></a>
+
+The URL of a Google Fonts resource. This is a **temporary** configuration element, which will be superseded when fonts are self-hosted (see [#423](https://github.com/observablehq/framework/issues/423)).
+
+-->

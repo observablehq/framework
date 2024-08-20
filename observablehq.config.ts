@@ -15,6 +15,8 @@ export default {
   root: "docs",
   output: "docs/.observablehq/dist",
   title: "Observable Framework",
+  googlefonts:
+    "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap",
   pages: [
     {name: "What is Framework?", path: "/what-is-framework"},
     {name: "Getting started", path: "/getting-started"},

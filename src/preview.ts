@@ -305,7 +305,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
 
   async function watcher(event: WatchEventType, force = false) {
     if (!path || !config) throw new Error("not initialized");
-    const {root, loaders, normalizePath} = config;
+    const {root, loaders, normalizePath, googlefonts} = config;
     switch (event) {
       case "rename": {
         markdownWatcher?.close();
@@ -336,7 +336,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
           clearTimeout(emptyTimeout);
           emptyTimeout = null;
         }
-        const resolvers = await getResolvers(page, {root, path, loaders, normalizePath});
+        const resolvers = await getResolvers(page, {root, path, loaders, normalizePath, googlefonts});
         if (hash === resolvers.hash) break;
         const previousHash = hash!;
         const previousHtml = html!;
@@ -373,10 +373,10 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     if (path.endsWith("/")) path += "index";
     path = join(dirname(path), basename(path, ".html") + ".md");
     config = await configPromise;
-    const {root, loaders, normalizePath} = config;
+    const {root, loaders, normalizePath, googlefonts} = config;
     const source = await readFile(join(root, path), "utf8");
     const page = parseMarkdown(source, {path, ...config});
-    const resolvers = await getResolvers(page, {root, path, loaders, normalizePath});
+    const resolvers = await getResolvers(page, {root, path, loaders, normalizePath, googlefonts});
     if (resolvers.hash !== initialHash) return void send({type: "reload"});
     hash = resolvers.hash;
     html = getHtml(page, resolvers);

@@ -84,6 +84,7 @@ export interface Config {
   head: PageFragmentFunction | string | null; // defaults to null
   header: PageFragmentFunction | string | null; // defaults to null
   footer: PageFragmentFunction | string | null; // defaults to “Built with Observable on [date].”
+  googlefonts: string | null; // defaults to Source Pro URL
   toc: TableOfContents;
   style: null | Style; // defaults to {theme: ["light", "dark"]}
   search: SearchConfig | null; // default to null
@@ -105,6 +106,7 @@ export interface ConfigSpec {
   head?: unknown;
   header?: unknown;
   footer?: unknown;
+  googlefonts?: unknown;
   interpreters?: unknown;
   title?: unknown;
   pages?: unknown;
@@ -239,6 +241,12 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const head = pageFragment(spec.head === undefined ? "" : spec.head);
   const header = pageFragment(spec.header === undefined ? "" : spec.header);
   const footer = pageFragment(spec.footer === undefined ? defaultFooter() : spec.footer);
+  const googlefonts =
+    spec.googlefonts === undefined
+      ? "https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"
+      : spec.googlefonts === null
+      ? null
+      : String(spec.googlefonts);
   const search = spec.search == null || spec.search === false ? null : normalizeSearch(spec.search as any);
   const interpreters = normalizeInterpreters(spec.interpreters as any);
   const config: Config = {
@@ -253,6 +261,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     head,
     header,
     footer,
+    googlefonts,
     toc,
     style,
     search,

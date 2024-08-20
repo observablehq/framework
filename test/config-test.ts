@@ -38,6 +38,8 @@ describe("readConfig(undefined, root)", () => {
       header: "",
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
+      googlefonts:
+        "https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap",
       search: null,
       watchPath: resolve("test/input/build/config/observablehq.config.js")
     });
@@ -62,6 +64,8 @@ describe("readConfig(undefined, root)", () => {
       header: "",
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
+      googlefonts:
+        "https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap",
       search: null,
       watchPath: undefined
     });

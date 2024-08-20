@@ -33,6 +33,7 @@ export interface ResolversConfig {
   path: string;
   normalizePath: (path: string) => string;
   loaders: LoaderResolver;
+  googlefonts: string | null;
 }
 
 const defaultImports = [
@@ -83,7 +84,7 @@ export const builtins = new Map<string, string>([
  */
 export async function getResolvers(
   page: MarkdownPage,
-  {root, path, normalizePath, loaders}: ResolversConfig
+  {root, path, normalizePath, loaders, googlefonts}: ResolversConfig
 ): Promise<Resolvers> {
   const hash = createHash("sha256").update(page.body).update(JSON.stringify(page.data));
   const assets = new Set<string>();
@@ -107,7 +108,7 @@ export async function getResolvers(
 
   // Add stylesheets. TODO Instead of hard-coding Source Serif Pro, parse the
   // page’s stylesheet to look for external imports.
-  stylesheets.add("https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"); // prettier-ignore
+  if (googlefonts) stylesheets.add(googlefonts);
   if (page.style) stylesheets.add(page.style);
 
   // Collect directly-attached files, local imports, and static imports.
