@@ -2,6 +2,19 @@
 @import url("observablehq:theme-air.css") (prefers-color-scheme: light);
 @import url("observablehq:theme-near-midnight.css") (prefers-color-scheme: dark);
 
+:root {
+  --sans-mono: "Spline Sans Mono", var(--monospace);
+  --sans-text: Inter, var(--sans-serif);
+  --theme-phosphate: #148576;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --theme-foreground: #f5f5f5;
+    --theme-phosphate: #37d5be;
+  }
+}
+
 #observablehq-header a[href] {
   color: inherit;
 }
@@ -36,12 +49,28 @@
   color: var(--theme-foreground-faint);
 }
 
-.observablehq-link-active a[target=_blank]:not(:hover, :focus)::after {
+.observablehq-link-active a[target="_blank"]:not(:hover, :focus)::after {
   color: var(--theme-foreground-focus);
 }
 
 #observablehq-main {
+  font-family: var(--sans-text);
+  font-size: 16px;
+  font-weight: 500;
+}
+
+#observablehq-main {
   min-height: calc(100vh - 23.8rem);
+}
+
+#observablehq-main a[href]:not(.observablehq-header-anchor) {
+  color: inherit;
+  text-decoration: underline;
+}
+
+h1 {
+  font-family: var(--sans-mono);
+  font-weight: 500;
 }
 
 @container not (min-width: 640px) {
