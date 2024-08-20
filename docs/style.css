@@ -4,8 +4,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap");
 
 :root {
-  --serif: Inter, sans-serif;
-  --sans-serif: Inter, sans-serif;
+  --sans-mono: "Spline Sans Mono", var(--monospace);
+  --sans-text: Inter, var(--sans-serif);
   --theme-phosphate: #148576;
 }
 
@@ -54,19 +54,23 @@
   color: var(--theme-foreground-focus);
 }
 
-#observablehq-main {
-  min-height: calc(100vh - 23.8rem);
+body {
+  font-family: var(--sans-text);
   font-size: 16px;
   font-weight: 500;
 }
 
-p a[href] {
+#observablehq-main {
+  min-height: calc(100vh - 23.8rem);
+}
+
+#observablehq-main a[href]:not(.observablehq-header-anchor) {
   color: inherit;
   text-decoration: underline;
 }
 
 h1 {
-  font-family: "Spline Sans Mono", var(--monospace);
+  font-family: var(--sans-mono);
   font-weight: 500;
   margin-bottom: 1rem;
 }
