@@ -60,7 +60,7 @@
   font-weight: 500;
 }
 
-p a {
+p a[href] {
   color: inherit;
   text-decoration: underline;
 }
