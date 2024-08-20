@@ -74,14 +74,6 @@ h1 {
   font-weight: 500;
 }
 
-h2,
-h3,
-h4,
-h5,
-h6 {
-  margin-bottom: 0.5rem;
-}
-
 @container not (min-width: 640px) {
   .hide-if-small {
     display: none;
