@@ -301,10 +301,6 @@ The set of replacements for straight double and single quotes used when the [**t
 
 If true (the default), automatically convert URL-like text to links in Markdown.
 
-<!--
+## extraHead <a href="https://github.com/observablehq/framework/pull/1588" class="observablehq-version-badge" data-version="prerelease" title="Added in #1588"></a>
 
-## googlefonts <a href="https://github.com/observablehq/framework/pull/1588" class="observablehq-version-badge" data-version="prerelease" title="Added in #1588"></a>
-
-The URL of a Google Fonts resource. This is a **temporary** configuration element, which will be superseded when fonts are self-hosted (see [#423](https://github.com/observablehq/framework/issues/423)).
-
--->
+An HTML fragment to add at the beginning of the [head](#head). Defaults to the links necessary to use the Source Serif Pro font from Google Fonts (see [#423](https://github.com/observablehq/framework/issues/423)).
