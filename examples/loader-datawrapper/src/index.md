@@ -55,8 +55,8 @@ chart_config = dw.create_chart(
         },
         # Set the embed height
         "publish": {
-            "embed-height": 512
-        }
+            "autoDarkMode": True,
+        },
     }
 )
 

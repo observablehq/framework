@@ -47,7 +47,10 @@ chart_config = dw.create_chart(
                     "Combined": "#545a5d"
                 },
             },
-        }
+        },
+        "publish": {
+            "autoDarkMode": True,
+        },
     }
 ) 
 
