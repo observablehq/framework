@@ -94,6 +94,17 @@ ${
 }
 </div>
 
+```html run=false
+<div class="card" style="max-width: calc(640px - 2 * 16px);">
+${
+  dataWrapperEmbed(
+    await FileAttachment("data/chart.html").text(),
+    {dark, invalidation}
+  )
+}
+</div>
+```
+
 The `dataWrapperEmbed` helper function takes care of the integration; it creates an iframe and resizes it when the Datawrapper chart has loaded. Its second parameter, `options`, supports two options:
 
 - `dark` for dark mode — defaults to false; the example above uses Framework built-in reactive value, loading the light or dark version of the chart depending on the current page’s mode.
