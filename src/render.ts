@@ -217,7 +217,7 @@ function renderListItem(page: Page, path: string, resolveLink: (href: string) =>
 
 function renderHead(head: MarkdownPage["head"], resolvers: Resolvers): Html {
   const {stylesheets, staticImports, resolveImport, resolveStylesheet} = resolvers;
-  return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
+  return html`${
     Array.from(new Set(Array.from(stylesheets, resolveStylesheet)), renderStylesheetPreload) // <link rel=preload as=style>
   }${
     Array.from(new Set(Array.from(stylesheets, resolveStylesheet)), renderStylesheet) // <link rel=stylesheet>

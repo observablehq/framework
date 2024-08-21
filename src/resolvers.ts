@@ -105,9 +105,7 @@ export async function getResolvers(
     for (const i of info.staticImports) staticImports.add(i);
   }
 
-  // Add stylesheets. TODO Instead of hard-coding Source Serif Pro, parse the
-  // page’s stylesheet to look for external imports.
-  stylesheets.add("https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"); // prettier-ignore
+  // Add stylesheets.
   if (page.style) stylesheets.add(page.style);
 
   // Collect directly-attached files, local imports, and static imports.
