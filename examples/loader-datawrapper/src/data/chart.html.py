@@ -47,10 +47,6 @@ chart_config = dw.create_chart(
                     "Combined": "#545a5d"
                 },
             },
-        },
-        # Set the embed height
-        "publish": {
-            "embed-height": 512
         }
     }
 ) 
