@@ -1,10 +1,9 @@
 :root {
   --monospace: Menlo, Consolas, monospace;
   --monospace-font: 14px/1.5 var(--monospace);
-  --serif: "Source Serif Pro", "Iowan Old Style", "Apple Garamond", "Palatino Linotype", "Times New Roman",
-    "Droid Serif", Times, serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   --sans-serif: -apple-system, BlinkMacSystemFont, "avenir next", avenir, helvetica, "helvetica neue", ubuntu, roboto,
     noto, "segoe ui", arial, sans-serif;
+  --serif: Charter, "Bitstream Charter", "Sitka Text", Cambria, serif;
   --theme-blue: #4269d0;
   --theme-green: #3ca951;
   --theme-red: #ff725c;
