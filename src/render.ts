@@ -33,14 +33,13 @@ export async function renderPage(page: MarkdownPage, options: RenderOptions & Re
   const {files, resolveFile, resolveImport} = resolvers;
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-${
-  page.title || title
-    ? html`<title>${[page.title, page.title === title ? null : title]
-        .filter((title): title is string => !!title)
-        .join(" | ")}</title>\n`
-    : ""
-}${renderHead(page.head, resolvers)}${
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">${
+    page.title || title
+      ? html`\n<title>${[page.title, page.title === title ? null : title]
+          .filter((title): title is string => !!title)
+          .join(" | ")}</title>`
+      : ""
+  }${renderHead(page.head, resolvers)}${
     path === "/404"
       ? html.unsafe(`\n<script type="module">
 
