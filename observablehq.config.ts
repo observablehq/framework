@@ -15,9 +15,6 @@ export default {
   root: "docs",
   output: "docs/.observablehq/dist",
   title: "Observable Framework",
-  extraHead: `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap" crossorigin>
-<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap" crossorigin>`,
   pages: [
     {name: "What is Framework?", path: "/what-is-framework"},
     {name: "Getting started", path: "/getting-started"},
@@ -89,7 +86,8 @@ export default {
     {name: "Contributing", path: "/contributing", pager: false}
   ],
   base: "/framework",
-  head: `<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap" crossorigin>
+  head: `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap" crossorigin>
 <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap" crossorigin>
 <link rel="apple-touch-icon" href="/observable.png">
 <link rel="icon" type="image/png" href="/observable.png" sizes="32x32">${
@@ -100,6 +98,7 @@ export default {
       : ""
   }
 <script type="module">/Win/.test(navigator.platform) || Array.from(document.querySelectorAll(".win"), (e) => e.remove())</script>`,
+  _ignoreDefaultFontLinks: true,
   header: `<div style="display: flex; align-items: center; gap: 0.5rem; height: 2.2rem; margin: -1.5rem -2rem 2rem -2rem; padding: 0.5rem 2rem; border-bottom: solid 1px var(--theme-foreground-faintest); font: 500 16px var(--sans-serif);">
   <a href="https://observablehq.com/" target="_self" rel="" style="display: flex; align-items: center;">
     <svg width="22" height="22" viewBox="0 0 21.92930030822754 22.68549919128418" fill="currentColor">

@@ -300,7 +300,3 @@ The set of replacements for straight double and single quotes used when the [**t
 ## linkify <a href="https://github.com/observablehq/framework/releases/tag/v1.7.0" class="observablehq-version-badge" data-version="^1.7.0" title="Added in 1.7.0"></a>
 
 If true (the default), automatically convert URL-like text to links in Markdown.
-
-## extraHead <a href="https://github.com/observablehq/framework/pull/1588" class="observablehq-version-badge" data-version="prerelease" title="Added in #1588"></a>
-
-An HTML fragment to add at the beginning of the [head](#head). Defaults to the links necessary to use the Source Serif Pro font from Google Fonts (see [#423](https://github.com/observablehq/framework/issues/423)).

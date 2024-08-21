@@ -105,7 +105,6 @@ export interface ConfigSpec {
   head?: unknown;
   header?: unknown;
   footer?: unknown;
-  extraHead?: unknown;
   interpreters?: unknown;
   title?: unknown;
   pages?: unknown;
@@ -116,6 +115,7 @@ export interface ConfigSpec {
   quotes?: unknown;
   cleanUrls?: unknown;
   markdownIt?: unknown;
+  _ignoreDefaultFontLinks?: unknown;
 }
 
 interface ScriptSpec {
@@ -238,7 +238,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const sidebar = spec.sidebar === undefined ? undefined : Boolean(spec.sidebar);
   const scripts = spec.scripts === undefined ? [] : normalizeScripts(spec.scripts);
   const head = combine(
-    pageFragment(spec.extraHead === undefined ? defaultExtraHead() : spec.extraHead),
+    spec._ignoreDefaultFontLinks ? null : defaultFontHeaders(),
     pageFragment(spec.head === undefined ? "" : spec.head)
   );
   const header = pageFragment(spec.header === undefined ? "" : spec.header);
@@ -293,7 +293,7 @@ function defaultFooter(): string {
   )}">${formatLocaleDate(date)}</a>.`;
 }
 
-function defaultExtraHead(): string {
+function defaultFontHeaders(): string {
   const href =
     "https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap";
   return `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -430,13 +430,18 @@ export function stringOrNull(spec: unknown): string | null {
   return spec == null || spec === false ? null : String(spec);
 }
 
-function combine(...parts: (PageFragmentFunction | string | null)[]): PageFragmentFunction | string | null {
-  parts = parts.filter((d) => d);
-  return parts.length > 1
-    ? function ({title, data, path}) {
-        return Array.from(parts, (f) => (typeof f === "function" ? f({title, data, path}) : f))
-          .filter((d) => d != null)
-          .join("\n");
-      }
-    : parts[0] ?? null;
+function combine(
+  links: string | null,
+  head: PageFragmentFunction | string | null
+): PageFragmentFunction | string | null {
+  return links
+    ? typeof head === "function"
+      ? (d) => {
+          const h = head(d);
+          return h ? `${links}\n${h}` : links;
+        }
+      : head
+      ? `${links}\n${head}`
+      : links
+    : head;
 }
