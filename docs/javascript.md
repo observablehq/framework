@@ -28,7 +28,7 @@ A program block looks like this (note the semicolon):
 const foo = 1 + 2;
 ```
 
-A program block doesn’t display anything by default, but you can call [`display`](#display(value)) to display something.
+A program block doesn’t display anything by default, but you can call [`display`](#display-value) to display something.
 
 JavaScript blocks do not show their code by default. If you want to show the code, use the `echo` directive:
 
@@ -129,7 +129,7 @@ Expressions cannot declare top-level reactive variables. To declare a variable, 
 
 ## Explicit display
 
-The built-in [`display` function](#display(value)) displays the specified value.
+The built-in [`display` function](#display-value) displays the specified value.
 
 ```js echo
 const x = Math.random();
@@ -202,7 +202,7 @@ Inputs.button("Click me", {value: 0, reduce: (i) => displayThere(++i)})
 
 ## Implicit display
 
-JavaScript expression fenced code blocks are implicitly wrapped with a call to [`display`](#display(value)). For example, this arithmetic expression displays implicitly:
+JavaScript expression fenced code blocks are implicitly wrapped with a call to [`display`](#display-value). For example, this arithmetic expression displays implicitly:
 
 ```js echo
 1 + 2 // implicit display
@@ -297,7 +297,7 @@ The current width of the main element in pixels as a reactive variable. A fenced
 width
 ```
 
-See [`Generators.width`](./lib/generators#width(element)) for implementation.
+See [`Generators.width`](./lib/generators#width-element) for implementation.
 
 ## now
 
@@ -307,4 +307,4 @@ The current time in milliseconds since Unix epoch as a reactive variable. A fenc
 now
 ```
 
-See [`Generators.now`](./lib/generators#now()) for implementation.
+See [`Generators.now`](./lib/generators#now) for implementation.

@@ -126,7 +126,7 @@ Values that change over time — such as interactive inputs, animation parameter
 
 <div class="note">As with implicit await and promises, implicit iteration of generators only applies <i>across</i> code blocks, not <i>within</i> a code block.</div>
 
-As an example, here’s an HTML input element. By passing it to [`Generators.input`](<../lib/generators#input(element)>), we can define a generator that yields the input’s value each time it changes.
+As an example, here’s an HTML input element. By passing it to [`Generators.input`](<../lib/generators#input-element>), we can define a generator that yields the input’s value each time it changes.
 
 <input id="nameInput">
 
@@ -298,7 +298,7 @@ The `view` function does two things:
 1. it [displays](../javascript#explicit-display) the given DOM *element*, and then
 2. returns a corresponding value generator.
 
-The `view` function uses [`Generators.input`](../lib/generators#input(element)) under the hood. As shown above, you can call `Generators.input` directly, say to declare the input as a top-level variable without immediately displaying it.
+The `view` function uses [`Generators.input`](../lib/generators#input-element) under the hood. As shown above, you can call `Generators.input` directly, say to declare the input as a top-level variable without immediately displaying it.
 
 ```js echo
 const subjectInput = html`<input type="text" placeholder="anonymous">`;

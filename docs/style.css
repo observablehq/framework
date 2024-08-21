@@ -9,9 +9,31 @@
   --theme-foreground-focus: #148576;
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-top: revert;
+}
+
+h1 code,
+h2 code,
+h3 code,
+h4 code,
+h5 code,
+h6 code,
 code,
 tt {
-  font-size: inherit;
+  font-size: revert;
+}
+
+code:not(pre code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code) {
+  color: var(--theme-foreground-alt);
+  background-color: var(--theme-background-alt);
+  padding: 2px 4px;
+  border-radius: 4px;
 }
 
 @media (prefers-color-scheme: dark) {
