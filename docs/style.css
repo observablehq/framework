@@ -3,15 +3,21 @@
 @import url("observablehq:theme-near-midnight.css") (prefers-color-scheme: dark);
 
 :root {
-  --sans-mono: "Spline Sans Mono", var(--monospace);
-  --sans-text: Inter, var(--sans-serif);
-  --theme-phosphate: #148576;
+  --sans-serif: Inter, -apple-system, BlinkMacSystemFont, "avenir next", avenir, helvetica, "helvetica neue", ubuntu, roboto,
+    noto, "segoe ui", arial, sans-serif;
+  --monospace: "Spline Sans Mono", Menlo, Consolas, monospace;
+  --theme-foreground-focus: #148576;
+}
+
+code,
+tt {
+  font-size: inherit;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --theme-foreground: #f5f5f5;
-    --theme-phosphate: #37d5be;
+    --theme-foreground-focus: #37d5be;
   }
 }
 
@@ -53,10 +59,8 @@
   color: var(--theme-foreground-focus);
 }
 
-#observablehq-main {
-  font-family: var(--sans-text);
-  font-size: 16px;
-  font-weight: 500;
+body {
+  font: 16px/1.5 var(--sans-serif);
 }
 
 #observablehq-main {
@@ -69,7 +73,7 @@
 }
 
 h1 {
-  font-family: var(--sans-mono);
+  font-family: var(--monospace);
   font-weight: 500;
 }
 

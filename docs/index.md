@@ -11,13 +11,9 @@ index: false
 
 .hero h1 {
   font-size: 56px;
-  max-width: fit-content;
+  max-width: none;
   line-height: 1;
   margin: 2rem 0;
-}
-
-.phosphate {
-  color: var(--theme-phosphate);
 }
 
 .hero h2 {
@@ -103,11 +99,11 @@ index: false
 </style>
 
 <div class="hero">
-  <h1>The best dashboards are built with <span class="phosphate">code.</span></h1>
+  <h1>The best dashboards are built with <span style="color: var(--theme-foreground-focus);">code.</span></h1>
   <h2>Create fast, beautiful data apps, dashboards, and reports from the command line. Write Markdown, JavaScript, SQL, Python, R… and any language you like. Free and open-source.</h2>
   <div class="cta">
     <pre data-copy>npx <span class="win">"</span>@observablehq/framework@latest<span class="win">"</span> create</pre>
-    <a href="./getting-started" class="small arrow" style="color: var(--theme-red);">Get started</a>
+    <a href="./getting-started" class="small arrow" style="color: var(--theme-foreground-focus);">Get started</a>
   </div>
 </div>
 
