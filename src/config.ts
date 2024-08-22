@@ -226,10 +226,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
       : spec.style !== undefined
       ? {path: String(spec.style)}
       : {theme: normalizeTheme(spec.theme === undefined ? "default" : spec.theme)};
-  const globalStylesheets =
-    spec.globalStylesheets === undefined
-      ? defaultGlobalStylesheets()
-      : Array.from(spec.globalStylesheets as any, String);
+  const globalStylesheets = normalizeGlobalStylesheets(spec.globalStylesheets as any);
   const md = createMarkdownIt({
     linkify: spec.linkify === undefined ? undefined : Boolean(spec.linkify),
     typographer: spec.typographer === undefined ? undefined : Boolean(spec.typographer),
@@ -327,6 +324,12 @@ function normalizeBase(spec: unknown): string {
   if (!base.startsWith("/")) throw new Error(`base must start with slash: ${base}`);
   if (!base.endsWith("/")) base += "/";
   return base;
+}
+
+function normalizeGlobalStylesheets(sheets: Iterable<string> | undefined) {
+  if (sheets === undefined) return defaultGlobalStylesheets();
+  if (Array.isArray(sheets)) return Array.from(sheets, String);
+  throw new Error(`unsupported globalStyleSheets option: ${sheets}`);
 }
 
 export function normalizeTheme(spec: unknown): string[] {
