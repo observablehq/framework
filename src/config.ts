@@ -105,7 +105,6 @@ export interface ConfigSpec {
   head?: unknown;
   header?: unknown;
   footer?: unknown;
-  extraHead?: unknown;
   interpreters?: unknown;
   title?: unknown;
   pages?: unknown;
@@ -116,6 +115,7 @@ export interface ConfigSpec {
   quotes?: unknown;
   cleanUrls?: unknown;
   markdownIt?: unknown;
+  _extraHead?: unknown;
 }
 
 interface ScriptSpec {
@@ -237,12 +237,9 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const toc = normalizeToc(spec.toc as any);
   const sidebar = spec.sidebar === undefined ? undefined : Boolean(spec.sidebar);
   const scripts = spec.scripts === undefined ? [] : normalizeScripts(spec.scripts);
-  const head = combine(
-    pageFragment(spec.extraHead === undefined ? defaultExtraHead() : spec.extraHead),
-    pageFragment(spec.head === undefined ? "" : spec.head)
-  );
-  const header = pageFragment(spec.header === undefined ? "" : spec.header);
-  const footer = pageFragment(spec.footer === undefined ? defaultFooter() : spec.footer);
+  const head = pageFragments(spec._extraHead === undefined ? defaultExtraHead() : spec._extraHead, spec.head === undefined ? "" : spec.head); // prettier-ignore
+  const header = spec.header === undefined ? "" : pageFragment(spec.header);
+  const footer = spec.footer === undefined ? defaultFooter() : pageFragment(spec.footer);
   const search = spec.search == null || spec.search === false ? null : normalizeSearch(spec.search as any);
   const interpreters = normalizeInterpreters(spec.interpreters as any);
   const config: Config = {
@@ -286,6 +283,32 @@ function pageFragment(spec: unknown): PageFragmentFunction | string | null {
   return typeof spec === "function" ? (spec as PageFragmentFunction) : stringOrNull(spec);
 }
 
+function pageFragments(speca: unknown, specb: unknown): PageFragmentFunction | string | null {
+  const a = pageFragment(speca);
+  const b = pageFragment(specb);
+  return !b
+    ? a
+    : !a
+    ? b
+    : typeof a === "function"
+    ? typeof b === "function"
+      ? (d) => {
+          const ad = a(d);
+          const bd = b(d);
+          return !bd ? ad : !ad ? bd : `${ad}\n${bd}`;
+        }
+      : (d) => {
+          const ad = a(d);
+          return !ad ? b : `${ad}\n${b}`;
+        }
+    : typeof b === "function"
+    ? (d) => {
+        const bd = b(d);
+        return !bd ? a : `${a}\n${bd}`;
+      }
+    : `${a}\n${b}`;
+}
+
 function defaultFooter(): string {
   const date = currentDate ?? new Date();
   return `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="${formatIsoDate(
@@ -294,11 +317,9 @@ function defaultFooter(): string {
 }
 
 function defaultExtraHead(): string {
-  const href =
-    "https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap";
   return `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="${href}" crossorigin>
-<link rel="stylesheet" type="text/css" href="${href}" crossorigin>`;
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
+<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>`;
 }
 
 function findDefaultRoot(defaultRoot?: string): string {
@@ -428,15 +449,4 @@ export function mergeStyle(
 
 export function stringOrNull(spec: unknown): string | null {
   return spec == null || spec === false ? null : String(spec);
-}
-
-function combine(...parts: (PageFragmentFunction | string | null)[]): PageFragmentFunction | string | null {
-  parts = parts.filter((d) => d);
-  return parts.length > 1
-    ? function ({title, data, path}) {
-        return Array.from(parts, (f) => (typeof f === "function" ? f({title, data, path}) : f))
-          .filter((d) => d != null)
-          .join("\n");
-      }
-    : parts[0] ?? null;
 }
