@@ -55,7 +55,7 @@ This will output something like:
 <span class="muted">│</span>
 <span class="muted">└</span>  1 notebook converted; 2 files written</code></pre>
 
-The `convert` command generates files in the current working directory. The command above generates two files: <code>zoomable-sunburst.md</code>, a Markdown file representing the converted notebook; and <code>flare-2.json</code>, an attached JSON file. You can change the output directory using the <code>--output</code> command-line flag.
+The `convert` command generates files in the source root of the current project by default (typically `src`); you can change the output directory using the `--output` command-line flag. The command above generates two files: `zoomable-sunburst.md`, a Markdown file representing the converted notebook; and `flare-2.json`, an attached JSON file.
 
 Due to differences between Observable Framework and Observable notebooks, the `convert` command typically won’t produce a working Markdown page out of the box; you’ll often need to make further edits to the generated Markdown. We describe these differences below, along with examples of manual conversion.
 
