@@ -205,6 +205,7 @@ try {
         options: {
           output: {
             type: "string",
+            short: "o",
             description: "Output directory (defaults to the source root)"
           },
           force: {
