@@ -32,7 +32,7 @@ export interface ResolversConfig {
   root: string;
   path: string;
   normalizePath: (path: string) => string;
-  defaultStylesheets?: string[];
+  globalStylesheets?: string[];
   loaders: LoaderResolver;
 }
 
@@ -84,7 +84,7 @@ export const builtins = new Map<string, string>([
  */
 export async function getResolvers(
   page: MarkdownPage,
-  {root, path, normalizePath, defaultStylesheets, loaders}: ResolversConfig
+  {root, path, normalizePath, globalStylesheets: defaultStylesheets, loaders}: ResolversConfig
 ): Promise<Resolvers> {
   const hash = createHash("sha256").update(page.body).update(JSON.stringify(page.data));
   const assets = new Set<string>();

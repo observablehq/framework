@@ -86,7 +86,7 @@ export interface Config {
   footer: PageFragmentFunction | string | null; // defaults to “Built with Observable on [date].”
   toc: TableOfContents;
   style: null | Style; // defaults to {theme: ["light", "dark"]}
-  defaultStylesheets: string[]; // defaults to Source Serif from Google Fonts
+  globalStylesheets: string[]; // defaults to Source Serif from Google Fonts
   search: SearchConfig | null; // default to null
   md: MarkdownIt;
   normalizePath: (path: string) => string;
@@ -100,7 +100,7 @@ export interface ConfigSpec {
   base?: unknown;
   sidebar?: unknown;
   style?: unknown;
-  defaultStylesheets?: unknown;
+  globalStylesheets?: unknown;
   theme?: unknown;
   search?: unknown;
   scripts?: unknown;
@@ -226,10 +226,10 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
       : spec.style !== undefined
       ? {path: String(spec.style)}
       : {theme: normalizeTheme(spec.theme === undefined ? "default" : spec.theme)};
-  const defaultStylesheets =
-    spec.defaultStylesheets === undefined
-      ? defaultDefaultStylesheets()
-      : Array.from(spec.defaultStylesheets as any, String);
+  const globalStylesheets =
+    spec.globalStylesheets === undefined
+      ? defaultGlobalStylesheets()
+      : Array.from(spec.globalStylesheets as any, String);
   const md = createMarkdownIt({
     linkify: spec.linkify === undefined ? undefined : Boolean(spec.linkify),
     typographer: spec.typographer === undefined ? undefined : Boolean(spec.typographer),
@@ -261,7 +261,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     footer,
     toc,
     style,
-    defaultStylesheets,
+    globalStylesheets,
     search,
     md,
     normalizePath: getPathNormalizer(spec.cleanUrls),
@@ -289,7 +289,7 @@ function pageFragment(spec: unknown): PageFragmentFunction | string | null {
   return typeof spec === "function" ? (spec as PageFragmentFunction) : stringOrNull(spec);
 }
 
-function defaultDefaultStylesheets(): string[] {
+function defaultGlobalStylesheets(): string[] {
   return [
     "https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap"
   ];
