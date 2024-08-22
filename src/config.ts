@@ -226,7 +226,10 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
       : spec.style !== undefined
       ? {path: String(spec.style)}
       : {theme: normalizeTheme(spec.theme === undefined ? "default" : spec.theme)};
-  const globalStylesheets = normalizeGlobalStylesheets(spec.globalStylesheets as any);
+  const globalStylesheets =
+    spec.globalStylesheets === undefined
+      ? defaultGlobalStylesheets()
+      : normalizeGlobalStylesheets(spec.globalStylesheets);
   const md = createMarkdownIt({
     linkify: spec.linkify === undefined ? undefined : Boolean(spec.linkify),
     typographer: spec.typographer === undefined ? undefined : Boolean(spec.typographer),
@@ -319,6 +322,10 @@ function findDefaultRoot(defaultRoot?: string): string {
   return root;
 }
 
+function normalizeArray<T>(spec: unknown, f: (spec: unknown) => T): T[] {
+  return spec == null ? [] : Array.from(spec as ArrayLike<unknown>, f);
+}
+
 function normalizeBase(spec: unknown): string {
   let base = String(spec);
   if (!base.startsWith("/")) throw new Error(`base must start with slash: ${base}`);
@@ -326,19 +333,17 @@ function normalizeBase(spec: unknown): string {
   return base;
 }
 
-function normalizeGlobalStylesheets(sheets: Iterable<string> | undefined) {
-  if (sheets === undefined) return defaultGlobalStylesheets();
-  if (Array.isArray(sheets)) return Array.from(sheets, String);
-  throw new Error(`unsupported globalStyleSheets option: ${sheets}`);
+function normalizeGlobalStylesheets(spec: unknown): string[] {
+  return normalizeArray(spec, String);
 }
 
 export function normalizeTheme(spec: unknown): string[] {
-  return resolveTheme(typeof spec === "string" ? [spec] : spec === null ? [] : Array.from(spec as any, String));
+  return resolveTheme(typeof spec === "string" ? [spec] : normalizeArray(spec, String));
 }
 
 function normalizeScripts(spec: unknown): Script[] {
   console.warn(`${yellow("Warning:")} the ${bold("scripts")} option is deprecated; use ${bold("head")} instead.`);
-  return Array.from(spec as any, normalizeScript);
+  return normalizeArray(spec, normalizeScript);
 }
 
 function normalizeScript(spec: unknown): Script {
@@ -350,7 +355,7 @@ function normalizeScript(spec: unknown): Script {
 }
 
 function normalizePages(spec: unknown): Config["pages"] {
-  return Array.from(spec as any, (spec: SectionSpec | PageSpec) =>
+  return normalizeArray(spec, (spec: any) =>
     "pages" in spec ? normalizeSection(spec, normalizePage) : normalizePage(spec)
   );
 }
@@ -364,7 +369,7 @@ function normalizeSection<T>(
   const open = collapsible ? Boolean(spec.open) : true;
   const pager = spec.pager === undefined ? "main" : stringOrNull(spec.pager);
   const path = spec.path == null ? null : normalizePath(spec.path);
-  const pages = Array.from(spec.pages as any, (spec: PageSpec) => normalizePage(spec, pager));
+  const pages = normalizeArray(spec.pages, (spec: any) => normalizePage(spec, pager));
   return {name, collapsible, open, path, pager, pages};
 }
 
@@ -396,7 +401,7 @@ function normalizePath(spec: unknown): string {
 function normalizeInterpreters(spec: {[key: string]: unknown} = {}): {[key: string]: string[] | null} {
   return Object.fromEntries(
     Object.entries(spec).map(([key, value]): [string, string[] | null] => {
-      return [String(key), value == null ? null : Array.from(value as any, String)];
+      return [String(key), normalizeArray(value, String)];
     })
   );
 }

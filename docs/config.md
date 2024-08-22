@@ -303,4 +303,4 @@ If true (the default), automatically convert URL-like text to links in Markdown.
 
 ## globalStylesheets <a href="https://github.com/observablehq/framework/pull/1597" class="observablehq-version-badge" data-version="prerelease" title="Added in #1597"></a>
 
-An array of links to global stylesheets to add to every page’s head. Defaults to loading [Source Serif 4](https://fonts.google.com/specimen/Source+Serif+4) from Google Fonts.
+An array of links to global stylesheets to add to every page’s head, in addition to the [page stylesheet](#style). Defaults to loading [Source Serif 4](https://fonts.google.com/specimen/Source+Serif+4) from Google Fonts.
