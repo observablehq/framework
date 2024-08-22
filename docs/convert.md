@@ -1,10 +1,26 @@
 # Converting notebooks
 
-Framework’s built-in `convert` command helps you convert an [Observable notebook](https://observablehq.com/documentation/notebooks/) to standard [Markdown](./markdown) for use with Observable Framework. To convert a notebook, you just need its URL; pass it to the `convert` command like so:
+Framework’s built-in `convert` command helps you convert an [Observable notebook](https://observablehq.com/documentation/notebooks/) to standard [Markdown](./markdown) for use with Observable Framework. To convert a notebook, you need its URL; pass it to the `convert` command like so:
 
 ```sh echo
 npm run observable convert <notebook-url>
 ```
+
+<div class="tip">
+
+The above command assumes you’re running `convert` within an existing project. Outside of a project, you can use npx:
+
+<pre><code class="language-sh">npx <span class="win">"</span>@observablehq/framework@latest<span class="win">"</span> convert &lt;notebook-url&gt;</code></pre>
+
+</div>
+
+<div class="tip">
+
+You can convert multiple notebooks by passing multiple URLs:
+
+<pre><code class="language-sh">npm run observable convert &lt;url1&gt; &lt;url2&gt; &lt;url3&gt;</code></pre>
+
+</div>
 
 <div class="note">
 
@@ -12,17 +28,9 @@ The `convert` command currently only supports public notebooks. To convert a pri
 
 </div>
 
-<div class="tip">
-
-You can pass multiple URLs to convert many notebooks simultaneously.
-
-</div>
-
 For example, to convert D3’s [_Zoomable sunburst_](https://observablehq.com/@d3/zoomable-sunburst):
 
-```sh echo
-npm run observable convert https://observablehq.com/@d3/zoomable-sunburst
-```
+<pre><code class="language-sh">npm run observable convert <span class="win">"</span>https://observablehq.com/@d3/zoomable-sunburst</span></code></pre>
 
 This will output something like:
 
@@ -47,130 +55,336 @@ This will output something like:
 <span class="muted">│</span>
 <span class="muted">└</span>  1 notebook converted; 2 files written</code></pre>
 
-The `convert` command generates files in the current working directory. The command above generates two files: <code>zoomable-sunburst.md</code>, a Markdown file representing the converted notebook; and <code>flare-2.json</code>, an attached JSON file.
+The `convert` command generates files in the current working directory. The command above generates two files: <code>zoomable-sunburst.md</code>, a Markdown file representing the converted notebook; and <code>flare-2.json</code>, an attached JSON file. You can change the output directory using the <code>--output</code> command-line flag.
 
-## Limitations
+Due to differences between Observable Framework and Observable notebooks, the `convert` command typically won’t produce a working Markdown page out of the box; you’ll often need to make further edits to the generated Markdown. We describe these differences below, along with examples of manual conversion.
 
-Due to differences between Observable Framework and Observable notebooks, the `convert` command typically won’t produce a working Markdown page out of the box. You’ll need to make some further edits to the generated Markdown.
+<div class="note">
 
-Differences between Framework and notebooks fall into three categories:
+The `convert` command has minimal “magic” so that its behavior is easier to understand and because converting notebook code into standard Markdown and JavaScript requires human interpretation. Still, we’re considering making `convert` smarter; let us know if you’re interested.
 
-- JavaScript syntax, including imports
-- the standard library
-- recommended libraries
+</div>
 
-We’ll describe each of these below with examples.
+## JavaScript syntax
 
-### Syntax differences
+Framework uses vanilla [JavaScript syntax](./javascript) while notebooks use a nonstandard dialect called [Observable JavaScript](https://observablehq.com/documentation/cells/observable-javascript). A JavaScript cell in a notebook is technically not a JavaScript program (_i.e._, a sequence of statements) but rather a _cell declaration_; it can be either an _expression cell_ consisting of a single JavaScript expression (such as `1 + 2`) or a _block cell_ consisting of any number of JavaScript statements (such as `console.log("hello");`) surrounded by curly braces. These two forms of cell require slightly different treatment. The `convert` command converts both into JavaScript [fenced code blocks](./javascript#fenced-code-blocks).
 
-While Framework uses [vanilla JavaScript](./javascript), Observable notebooks do not; notebooks use [Observable JavaScript](https://observablehq.com/documentation/cells/observable-javascript), which extends JavaScript syntax with a few critical differences. While these differences are often small, you will likely have to edit the converted code to make it conform to vanilla JavaScript syntax and work correctly in Framework.
+### Expression cells
 
-For instance, let’s see how we fix the page converted from the [Zoomable sunburst](https://observablehq.com/@d3/zoomable-sunburst) notebook. At the bottom of the page we see that the `data` cell was transformed into:
+Named expression cells in notebooks can be converted into standard variable declarations, typically using `const`. So this:
 
-````js run=false
-```js echo
-data = FileAttachment("flare-2.json").json()
+```js run=false
+foo = 42
 ```
-````
 
-Fix this with the `const` keyword:
+Becomes this:
 
-````js run=false
-```js echo
-const data = FileAttachment("flare-2.json").json();
+```js run=false
+const foo = 42;
 ```
-````
 
-The largest code block at the top, named `chart`, contains the following:
+<div class="tip">
 
-````js run=false
-```js
+Variable declarations in Framework don’t implicitly display. To inspect the value of a variable (such as `foo` above), call `display` explicitly.
+
+</div>
+
+<div class="tip">
+
+Framework allows multiple variable declarations in the same code block, so you can coalesce multiple JavaScript cells from a notebook into a single JavaScript code block in Framework. Though note that there’s no [implicit `await`](./reactivity#promises) when referring to a variable declared in the same code block, so beware of promises.
+
+</div>
+
+Anonymous expression cells become expression code blocks in Framework, which work the same, so you shouldn’t have to make any changes.
+
+```js echo
+1 + 2
+```
+
+<div class="tip">
+
+While a notebook is limited to a linear sequence of cells, Framework allows you to interpolate dynamic values anywhere on the page: consider using an [inline expression](./javascript#inline-expressions) instead of a fenced code block.
+
+</div>
+
+### Block cells
+
+Block cells are used in notebooks for more elaborate definitions. They are characterized by curly braces (`{…}`) and a return statement to indicate the cell’s value. Here is an abridged typical example adapted from D3’s [_Bar chart_](https://observablehq.com/@d3/bar-chart/2):
+
+```js run=false
 chart = {
-  // Specify the chart’s dimensions.
-  const width = 928;
-  const height = width;
-  ...
+  const width = 960;
+  const height = 500;
+
+  const svg = d3.create("svg")
+      .attr("width", width)
+      .attr("height", height);
+
   return svg.node();
 }
 ```
-````
 
-There are various ways to make this into vanilla JavaScript. One possibility is to remove the main curly braces, like so:
 
-````js run=false
-```js
-// Specify the chart’s dimensions.
-const width = 928;
-const height = width;
-...
-const chart = svg.node();
-```
-````
-
-Furthermore, we’ll need to [explicitly display](./javascript#explicit-display) the `chart` variable:
-
-````js run=false
-```js
-// Specify the chart’s dimensions.
-const width = 928;
-const height = width;
-...
-const chart = display(svg.node());
-```
-````
-
-(An alternative transformation would be to create a function called `chart`, and invoke `chart()` as an inline expression where we want to display the output.)
-
-Observable Markdown doesn’t support **notebook imports**. If your notebook imports cells from other notebooks, you could manually copy the code from those notebooks into your converted markdown file. If you import functions and other helpers, it could be useful to add them to a [local module](./imports#local-imports).
-
-### Standard library differences
-
-The `md` template literal is not available in Observable Markdown; instead, write Markdown directly (or import the `markdown-it` library from npm for advanced usage).
-
-The `require` and `resolve` functions are not available in Observable Markdown; instead, use `import` and `import.meta.resolve`.
-
-The `DOM.*`, `Files.*`, `Generators.*` and `Promises.*` methods are not available in Observable Markdown. Instead, use the appropriate vanilla JavaScript code — which you can grab from [observablehq/stdlib](https://github.com/observablehq/stdlib/). For example, to create an image with a [2D context](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D), you can copy the code from [context2d.js](https://github.com/observablehq/stdlib/blob/main/src/dom/context2d.js):
+To convert a named block cell to vanilla JavaScript: delete the cell name (`chart`), assignment operator (`=`), and surrounding curly braces (`{` and `}`); then replace the return statement with a variable declaration and a call to [`display`](./javascript#explicit-display) as desired.
 
 ```js run=false
-function context2d(width, height, dpi) {
-  if (dpi == null) dpi = devicePixelRatio;
-  var canvas = document.createElement("canvas");
+const width = 960;
+const height = 500;
+
+const svg = d3.create("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+const chart = display(svg.node());
+```
+
+For an anonymous block cell, omit the variable declaration. To hide the display, omit the call to `display`; you can use an [inline expression](./javascript#inline-expressions) (_e.g._, `${chart}`) to display the chart elsewhere.
+
+<div class="tip">
+
+If you prefer, you can instead convert a block cell into a function such as:
+
+<pre><code class="language-js">function chart() {
+  const width = 960;
+  const height = 500;
+
+  const svg = d3.create("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+  return svg.node();
+}</code></pre>
+
+Then call the function from an inline expression (_e.g._, `${chart()}`) to display its output anywhere on the page. This technique is also useful for importing a chart definition into multiple pages.
+
+</div>
+
+## Imports
+
+Notebooks often import other notebooks from Observable or open-source libraries from npm. Imports require additional manual conversion.
+
+If the converted notebook [imports other notebooks](https://observablehq.com/documentation/notebooks/imports), you should convert the imported notebooks, too. Extract the desired JavaScript code from the imported notebooks into standard [JavaScript modules](./imports#local-imports) which you can then import in Framework.
+
+<div class="note">
+
+In Framework, reactivity only applies to [top-level variables](./reactivity#top-level-variables) declared in fenced code blocks. If the imported code depends on reactivity or uses [`import-with`](https://observablehq.com/documentation/notebooks/imports#import-with), you will likely need to do some additional refactoring, say converting JavaScript cells into functions that take options.
+
+</div>
+
+Some notebooks use [`require`](https://observablehq.com/documentation/cells/require) to load libraries from npm. Framework discourages the use of `require` and does not include built-in support for it because the asynchronous module definition (AMD) convention has been superseded by standard [JavaScript modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules). Also, Framework preloads transitive dependencies using static analysis to improve performance, and self-hosts imports to eliminate a runtime dependency on external servers to improve security and give you control over library versioning. So this:
+
+```js run=false
+regl = require("regl")
+```
+
+Should be converted to a static [npm import](./imports#npm-imports):
+
+```js run=false
+import regl from "npm:regl";
+```
+
+<div class="tip">
+
+The code above imports the default export from [regl](https://github.com/regl-project/regl). For other libraries, such as D3, you should use a namespace import instead:
+
+<pre><code class="language-js">import * as d3 from "npm:d3";</code></pre>
+
+</div>
+
+<div class="note">
+
+You can import [d3-require](https://github.com/d3/d3-require) if you really want to a `require` implementation; we just don’t recommend it.
+
+</div>
+
+Likewise, instead of `resolve` or `require.resolve`, use [`import.meta.resolve`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta/resolve). So this:
+
+```js run=false
+require.resolve("regl")
+```
+
+Should be converted to:
+
+```js run=false
+import.meta.resolve("npm:regl")
+```
+
+Some notebooks use [dynamic import](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import) to load libraries from npm-backed CDNs such as [jsDelivr](https://www.jsdelivr.com/esm) and [esm.sh](https://esm.sh/). While you can use dynamic imports in Framework, for security and performance, we recommend converting these into static imports. So this:
+
+```js run=false
+isoformat = import("https://esm.sh/isoformat")
+```
+
+Should be converted to:
+
+```js run=false
+import * as isoformat from "npm:isoformat";
+```
+
+<div class="tip">
+
+If you do not want to self-host an import, say because you want the latest version of the library to update without having to rebuild your app, you can load it from an external server by providing an absolute URL:
+
+<pre><code class="language-js">import * as isoformat from "https://esm.sh/isoformat";</code></pre>
+
+</div>
+
+## Generators
+
+In notebooks, the `yield` operator turns any cell [into a generator](https://observablehq.com/documentation/cells/observable-javascript#cells-implicitly-iterate-over-generators). In vanilla JavaScript, the `yield` operator is only allowed within generator functions. Therefore in Framework you’ll need to wrap a generator cell declaration with an immediately-invoked generator function expression (IIGFE). So this:
+
+```js run=false
+foo = {
+  for (let i = 0; i < 10; ++i) {
+    yield i;
+  }
+}
+```
+
+Can be converted to:
+
+```js run=false
+const foo = (function* () {
+  for (let i = 0; i < 10; ++i) {
+    yield i;
+  }
+})();
+```
+
+<div class="note">
+
+Since variables are evaluated lazily, the generator `foo` above will only run if it is referenced by another code block. If you want to perform asynchronous side effects, consider using an animation loop and the [invalidation promise](./reactivity#invalidation) instead of a generator.
+
+</div>
+
+If you need to use `await` with the generator, too, then use `async function*` to declare an async generator function instead.
+
+## Views
+
+In notebooks, the nonstandard [`viewof` operator](https://observablehq.com/@observablehq/views) is used to declare a reactive value that is controlled by a user interface element such as a range input. In Framework, the [`view` function](./reactivity#inputs) performs the equivalent task with vanilla syntax. So this:
+
+```js run=false
+viewof gain = Inputs.range([0, 11], {value: 5, step: 0.1, label: "Gain"})
+```
+
+Can be converted to:
+
+```js run=false
+const gain = view(Inputs.range([0, 11], {value: 5, step: 0.1, label: "Gain"}));
+```
+
+In other words: replace `viewof` with `const`, and then wrap the input declaration with a call to `view`. The `view` function both displays the given input and returns the corresponding value generator so you can define a top-level reactive value.
+
+## Mutables
+
+In notebooks, the nonstandard [`mutable` operator](https://observablehq.com/@observablehq/mutable) is used to declare a reactive value that can be assigned from another cell. In Framework, the [`Mutable` function](./reactivity#mutables) performs the equivalent task with vanilla syntax. So this:
+
+```js run=false
+mutable foo = 42
+```
+
+Can be converted to:
+
+```js run=false
+const foo = Mutable(42);
+const setFoo = (x) => (foo.value = x);
+```
+
+Then replace any assignments to `mutable foo` with calls to `setFoo`. Note that `setFoo` must be declared in the same code block as `foo`, and that outside of that block, `foo` represents the value; any code that depends on `foo` will update reactively after `setFoo` is invoked.
+
+## Standard library
+
+As part of our modernization efforts with Framework, we’ve pruned deprecated methods from the standard library used in notebooks. The following notebook built-ins are not available in Framework:
+
+- [`DOM`](https://github.com/observablehq/stdlib/blob/493bf210f5fcd9360cf87a961403aa963ba08c96/src/dom/index.js)
+- [`Files`](https://github.com/observablehq/stdlib/blob/493bf210f5fcd9360cf87a961403aa963ba08c96/src/files/index.js)
+- [`Generators.disposable`](https://github.com/observablehq/stdlib/blob/493bf210f5fcd9360cf87a961403aa963ba08c96/src/generators/disposable.js)
+- [`Generators.filter`](https://github.com/observablehq/stdlib/blob/493bf210f5fcd9360cf87a961403aa963ba08c96/src/generators/filter.js)
+- [`Generators.map`](https://github.com/observablehq/stdlib/blob/493bf210f5fcd9360cf87a961403aa963ba08c96/src/generators/map.js)
+- [`Generators.range`](https://github.com/observablehq/stdlib/blob/493bf210f5fcd9360cf87a961403aa963ba08c96/src/generators/range.js)
+- [`Generators.valueAt`](https://github.com/observablehq/stdlib/blob/493bf210f5fcd9360cf87a961403aa963ba08c96/src/generators/valueAt.js)
+- [`Generators.worker`](https://github.com/observablehq/stdlib/blob/493bf210f5fcd9360cf87a961403aa963ba08c96/src/generators/worker.js)
+- [`Promises`](https://github.com/observablehq/stdlib/blob/493bf210f5fcd9360cf87a961403aa963ba08c96/src/promises/index.js)
+- [`md`](https://github.com/observablehq/stdlib/blob/493bf210f5fcd9360cf87a961403aa963ba08c96/src/md.js)
+- [`require`](https://github.com/observablehq/stdlib/blob/493bf210f5fcd9360cf87a961403aa963ba08c96/src/require.js)
+- [`resolve`](https://github.com/observablehq/stdlib/blob/493bf210f5fcd9360cf87a961403aa963ba08c96/src/require.js)
+
+For convenience, we’ve linked to the implementations above so that you can see how they work, and if desired, copy the code into your own Framework app as vanilla JavaScript. For example, for a [2D canvas](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D), you can replace `DOM.context2d` with:
+
+```js run=false
+function context2d(width, height, dpi = devicePixelRatio) {
+  const canvas = document.createElement("canvas");
   canvas.width = width * dpi;
   canvas.height = height * dpi;
-  canvas.style.width = width + "px";
-  var context = canvas.getContext("2d");
+  canvas.style = `width: ${width}px;`;
+  const context = canvas.getContext("2d");
   context.scale(dpi, dpi);
   return context;
 }
 ```
 
-Or, to create a Promise that resolves to a given `value` after a given [delay](https://github.com/observablehq/stdlib/blob/main/src/promises/delay.js):
+For `md`, we recommend writing literal Markdown. To parse dynamic Markdown, you can also import your preferred parser such as [markdown-it](https://github.com/markdown-it/markdown-it) from npm.
 
-```js run=false
-function delay(duration, value) {
-  return new Promise(function(resolve) {
-    setTimeout(function() {
-      resolve(value);
-    }, duration);
-  });
-}
-```
+In addition to the above removals, a few of the built-in methods have changed:
 
-If you use a specific function often, you can save it to a local module.
+- `FileAttachment` (see [below](#file-attachments))
+- `Generators.input` is now an async generator
+- `Generators.observe` is now an async generator
+- `Generators.queue` is now an async generator
+- `Mutable` (see [above](#mutables))
+- `width` uses [`ResizeObserver`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver) instead of window _resize_ events
 
-### Recommended library differences
+The Framework standard library also includes several new methods that are not available in notebooks. These are covered elsewhere: [`Generators.dark`](./lib/generators#dark) and [`dark`](./lib/generators#dark); [`Generators.now`](./lib/generators#now); [`Generators.width`](./lib/generators#width-element) and [`resize`](./javascript#resize-render); [`display`](./javascript#display-value); and [`sql`](./sql#sql-literals).
 
-In Observable Framework, the recommended [libraries](./imports#implicit-imports) are generally not pinned to a given version — instead you get the latest version that was published on npm (you can still request any version explicitly by using an explicit `import … from "npm:module@version"` statement). Some of them, such as [graphviz](./lib/dot), have been slightly adapted in support of dark mode. For details, see the documentation for each library.
+## File attachments
 
-### Other differences
+Framework’s [`FileAttachment`](./files) includes a few new features:
 
-Some cell types cannot be converted to Observable Markdown. Data table cells can be replaced by `Inputs.table` (see [issue #23](https://github.com/observablehq/framework/issues/23) for future enhancements), and chart cells can be replaced by Observable Plot’s [auto mark](https://observablehq.com/plot/marks/auto).
+- `file.href`
+- `file.lastModified`
+- `file.mimeType` is always defined
+- `file.text` now supports an `encoding` option
+- [`file.arquero`](./lib/arquero)
+- [`file.parquet`](./lib/arrow#apache-parquet)
 
-Database connectors can be replaced by [data loaders](./loaders). We recommend using the `.env` file to store your secrets (such as database passwords and API keys) in a central place outside of your checked-in code; see [Google Analytics](https://observablehq.observablehq.cloud/framework-example-google-analytics/) for an example.
+And two removals:
 
-## Command-line flags
+- `file.csv` _etc._ treats the `typed: "auto"` option as `typed: true`
+- `file.arrow` doesn’t take a `version` option
 
-Besides `--config` and `--root`, the `convert` command supports the following additional command-line flags:
+For the latter, `file.arrow` now imports `npm:apache-arrow` internally, and thus uses the same version of Arrow as if you imported Arrow directly.
 
-- `--output` - the path to the output directory; defaults to the [source root](./config#root).
-- `--force` - if true, always download and overwrite existing resources; by default, the script will ask for user input when a file already exists in the output directory.
+## Recommended libraries
+
+In Framework, implicit imports of recommended libraries are normal [npm imports](./imports#npm-imports), and thus are self-hosted, giving you control over versioning. If a requested library is not in your [npm cache](./imports#self-hosting-of-npm-imports), then by default the latest version will be downloaded. You can request a more specific version either by seeding the npm cache or by including a semver range in the import specifier (_e.g._, `import * as d3 from "npm:d3@6"`).
+
+Because Framework defaults to the latest version of recommended libraries, you will typically get a more recent version than what is available in notebooks. As of August 2024, here is a comparison of recommended library versions between notebooks and Framework:
+- [`@duckdb/duckdb-wasm`](./lib/duckdb) from 1.24.0 to 1.28.0
+- [`apache-arrow`](./lib/arrow) from 4.0.1 to 17.0.0
+- [`arquero`](./lib/arquero) from 4.8.8 to 6.0.1
+- [`dot`](./lib/dot) from `viz.js` 2.0.0 to `@viz-js/viz` at 3.7.0
+- [`exceljs`](./lib/xlsx) from 4.3.0 to 4.4.0
+- [`katex`](./lib/tex) from 0.11.0 to 0.16.11
+- [`leaflet`](./lib/leaflet) from 1.9.3 to 1.9.4
+- [`mermaid`](./lib/mermaid) from 9.2.2 to 10.9.1
+- [`vega`](./lib/vega-lite) from 5.22.1 to 5.30.0
+- [`vega-lite`](./lib/vega-lite) from 5.6.0 to 5.20.1
+- [`vega-lite-api`](./lib/vega-lite) from 5.0.0 to 5.6.0
+
+In Framework, the [`html`](./lib/htl) and [`svg`](./lib/htl) built-in template literals are implemented with [Hypertext Literal](./lib/htl) which automatically escapes interpolated values. The [`dot`](./lib/dot) template literal implements responsive dark mode & better styling. And Framework has several additional recommended libraries that are not available in notebooks: [`ReactDOM`](./jsx), [`React`](./jsx), [`duckdb`](./lib/duckdb), [`echarts`](./lib/echarts), [`mapboxgl`](./lib/mapbox-gl), and [`vg`](./lib/mosaic).
+
+## Sample datasets
+
+Like recommended libraries, Framework’s built-in sample datasets (_e.g._, `aapl` and `penguins`) are backed by npm imports that are self-hosted.
+
+## Cell modes
+
+The `convert` command only supports code cell modes: Markdown, JavaScript, HTML, TeX, and SQL. It does not support non-code cell modes: data table and chart. You can use the “Convert to SQL” or “Convert to JavaScript” feature to convert data table cells and chart cells to their code equivalents prior to conversion. Alternatively, you can manually replace data table cells with `Inputs.table` (see [#23](https://github.com/observablehq/framework/issues/23) for future enhancements), and chart cells with Observable Plot’s [auto mark](https://observablehq.com/plot/marks/auto).
+
+## Databases
+
+Database connectors can be replaced by [data loaders](./loaders).
+
+## Secrets
+
+We recommend using a `.env` file with [dotenv](https://github.com/motdotla/dotenv) to store your secrets (such as database passwords and API keys) in a central place outside of your checked-in code; see our [Google Analytics dashboard](https://github.com/observablehq/framework/tree/main/examples/google-analytics/) example.

@@ -305,7 +305,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
 
   async function watcher(event: WatchEventType, force = false) {
     if (!path || !config) throw new Error("not initialized");
-    const {root, loaders, normalizePath} = config;
+    const {root, loaders} = config;
     switch (event) {
       case "rename": {
         markdownWatcher?.close();
@@ -336,7 +336,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
           clearTimeout(emptyTimeout);
           emptyTimeout = null;
         }
-        const resolvers = await getResolvers(page, {root, path, loaders, normalizePath});
+        const resolvers = await getResolvers(page, {path, ...config});
         if (hash === resolvers.hash) break;
         const previousHash = hash!;
         const previousHtml = html!;
