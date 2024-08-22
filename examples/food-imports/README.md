@@ -8,6 +8,7 @@ This page displays statistics about food imports to the United States.
 
 ## Charts
 
+Elaborate...
 A combination of charts express various aspects of the data:
 
 - a Marimekko chart shows the relative sizes of various commodities by origin country;

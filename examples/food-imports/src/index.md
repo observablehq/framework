@@ -13,6 +13,17 @@ import {Sunburst} from './components/Sunburst.js'
 ```
 
 ```js
+// todo:
+// make sure color schemes work
+// delete colors
+// attend to color arg for sunburst and marimekko
+// make sure marimekko rows don't change height
+// flesh out read mes
+// add selector to alternate btw views of stream graph
+// final clean-up
+```
+
+```js
 // full palette from dictionary-of-colour-combinations by Sanzo Wada,
 // source: https://github.com/mattdesl/dictionary-of-colour-combinations/blob/master/colors.json
 const colors = FileAttachment("./data/colors.json").json();
@@ -39,9 +50,10 @@ const sample = recent.filter((d) => topN.includes(d.Country));
 ```
 
 ```js
-// Food categories
-const categories = d3.groupSort(sample, (v) => -d3.sum(v, (d) => d.FoodValue), (d) => d.Category);
-
+// Food categories, sorted by size over first 4 countries, with "other" moved to the end
+const sampleSlice = sample.filter(d => topN.slice(0,4).includes(d.Country))
+const categories = d3.groupSort(recent, (v) => -d3.sum(v, (d) => d.FoodValue), (d) => d.Category)
+categories.push(categories.splice(categories.indexOf('Other'), 1)[0]);
 const categoryColor = d3.scaleOrdinal().domain(categories).range(["#bce4e5", "#a7d4e4", "#a5c8d1", "#97acc8", "#96d1aa", "#78cdd0", "#62c6bf", "#0093a5", "#00939b", "#099197", "#5a82b3", "#006eb8", "#007190", "#005b8d"]);
 ```
 
@@ -55,9 +67,14 @@ const byCountryAndCategory = d3.sort(
     (d) => d.Category
   )
   .map(([Country, Category, value]) => ({Country, Category, value})),
-  ({Country}) => topN.indexOf(Country),
-  ({Category}) => -categories.indexOf(Category),
+  ({Country}) => topN.indexOf(Country), 
+  ({Category}) => categories.indexOf(Category),
 );
+
+const rowOneHeight = 200
+const rowOnePortion = d3.sum(byCountryAndCategory.filter(d => d.Country === topN[0]), d => d.value)
+const all = d3.sum(byCountryAndCategory, d => d.value)
+const mekkoHeight = rowOneHeight * all / rowOnePortion
 ```
 
 ```js
@@ -74,6 +91,8 @@ const nest = {
     children: Array.from(children, ([name, value]) => ({name, value}))
   }))
 };
+// reorder nodes to match category order established above
+nest.children = d3.sort(nest.children, (a,b) => categories.indexOf(a.name) - categories.indexOf(b.name))
 ```
 
 ```js
@@ -101,7 +120,7 @@ const areaData = byYearAndCountry;
     <h3>from top ${n} countries, 2023</h3>
     ${resize((width) => Marimekko(byCountryAndCategory, {
       width,
-      height: n * 60, // TODO constant scaling
+      height: mekkoHeight,
       color: categoryColor
     }))}
   </div>
@@ -113,6 +132,7 @@ const areaData = byYearAndCountry;
       value: (d) => d.value,
       label: (d) => d.name,
       color: categoryColor,
+      sort: null, // to avoid default sorting and instead inherit order in the data
       title: (d, n) => `${n.ancestors().reverse().map(d => d.data.name).join(".")}\n${n.value.toLocaleString("en")}`
     }))}
   </div>

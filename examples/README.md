@@ -21,7 +21,7 @@
 
 <a href="https://observablehq.observablehq.cloud/framework-example-food-imports/"><img src="../docs/assets/eia.webp" alt="U.S. electricity grid" width="312" height="237"></a>
 
-[Source](./food-imports) · This dashboard ….
+[Source](./food-imports) · This dashboard visualizes the distribution of food imports to the United States. With complex data, advanced chart types. Hierarchical and relative values, adapting / small ammendations to existing chart types. Marimekko, Sunburst, and normalized stream graph. Explain each, mention source. Approach.
 
 ### [`hotel-bookings`](https://observablehq.observablehq.cloud/framework-example-hotel-bookings) - Resort hotel bookings
 
