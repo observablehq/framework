@@ -12,6 +12,7 @@ index: false
 .hero h1 {
   font-size: 56px;
   max-width: none;
+  min-width: min-content;
   line-height: 1;
   margin: 2rem 0;
 }
