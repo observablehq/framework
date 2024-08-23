@@ -8,9 +8,4 @@ This page displays statistics about food imports to the United States.
 
 ## Charts
 
-Elaborate...
-A combination of charts express various aspects of the data:
-
-- a Marimekko chart shows the relative sizes of various commodities by origin country;
-- a Sunburst chart shows the share of these commodities across all countries in 2023;
-- a timeline shows the ranking of origin countries over more than two decades.
+This dashboard combines three chart types to highlight different facets of the data. The first two charts are made with [D3](https://d3js.org/) components and limit data to 2023. The [Marimekko chart](https://observablehq.com/@d3/marimekko-chart) displays the portion of edible imports by country of origin and category; and the [Sunburst chart]() shows which commodities make up each category. The third chart uses [Observable Plot](https://observablehq.com/plot/) to visualize each country's total food exports to the US over time.
