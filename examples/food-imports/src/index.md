@@ -92,7 +92,7 @@ const nest = {
   }))
 };
 // reorder nodes to match category order established above
-nest.children = d3.sort(nest.children, (a,b) => categories.indexOf(a.name) - categories.indexOf(b.name))
+nest.children = d3.sort(nest.children, (d) => categories.indexOf(d.name))
 ```
 
 ```js
@@ -110,7 +110,7 @@ const byYearAndCountry = d3.groups(timely, d => d.year, d => d.country)
   ))
   .flat();
 
-const areaColors = ["#ffdd00", "#cab356", "#d6b43e", "#e2b540", "#fcb315", "#f99d1b", "#f68c50", "#f37420", "#f15a30", "#d96629", "#c27544", "#c16b27", "#c19f2c", "#bc892b", "#b2b73e", "#b09f36"];
+const areaColors = ["#cc1236", "#c53c69", "#b73f74", "#b71f57", "#a94151", "#a84222", "#a62c37", "#ab2439", "#a72144", "#7c4226", "#793327", "#82241f", "#7d133a", "#802626", "#642d5e", "#6d4145"];
 const areaData = byYearAndCountry;
 ```
 
@@ -159,9 +159,10 @@ const areaData = byYearAndCountry;
           {
             x: "year",
             y: "value",
-            order: "sum", // option to use "value" instead
-            fill: "country",
+            z: "country",
             offset: "normalize",
+            fill: "country",
+            sort: d => -topN.indexOf(d.country), 
             curve: "monotone-x"
           }
         ),
@@ -171,12 +172,12 @@ const areaData = byYearAndCountry;
             Plot.stackY({
               x: "year",
               y: "value",
-              order: "sum",
               z: "country",
+              offset: "normalize",
+              sort: d => -topN.indexOf(d.country), 
               text: "country",
               dx: "8",
               textAnchor: "start",
-              offset: "normalize",
             })
           )
         ),
