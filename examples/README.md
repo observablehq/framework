@@ -58,7 +58,6 @@
 - [`loader-canvas-to-png`](https://observablehq.observablehq.cloud/framework-example-loader-canvas-to-png/) - Generate PNG using node-canvas
 - [`loader-census`](https://observablehq.observablehq.cloud/framework-example-loader-census/) - Load and transform shapefiles from the U.S. Census Bureau
 - [`loader-databricks`](https://observablehq.observablehq.cloud/framework-example-loader-databricks/) - Load data from Databricks
-- [`loader-datawrapper`](https://observablehq.observablehq.cloud/framework-example-loader-datawrapper/) - Create a chart with the Datawrapper API and embed it as an iframe
 - [`loader-duckdb`](https://observablehq.observablehq.cloud/framework-example-loader-duckdb/) - Process data with DuckDB
 - [`loader-elasticsearch`](https://observablehq.observablehq.cloud/framework-example-loader-elasticsearch/) - Load data from Elasticsearch
 - [`loader-github`](https://observablehq.observablehq.cloud/framework-example-loader-github/) - Load data from GitHub
@@ -94,6 +93,7 @@
 
 - [`chess`](https://observablehq.observablehq.cloud/framework-example-chess/) - Load Zip data from FIDE; create a bump chart with Observable Plot
 - [`custom-stylesheet`](https://observablehq.observablehq.cloud/framework-example-custom-stylesheet/) - Define a custom stylesheet (custom theme)
+- [`datawrapper-api`](https://observablehq.observablehq.cloud/framework-example-loader-datawrapper/) - Create a chart with the Datawrapper API and embed it as a web component
 - [`google-analytics`](https://observablehq.observablehq.cloud/framework-example-google-analytics/) - A Google Analytics dashboard with numbers and charts
 - [`hello-world`](https://observablehq.observablehq.cloud/framework-example-hello-world/) - A minimal Framework project
 - [`intersection-observer`](https://observablehq.observablehq.cloud/framework-example-intersection-observer/) - Scrollytelling with IntersectionObserver
