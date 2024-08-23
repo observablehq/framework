@@ -1,6 +1,14 @@
 # Datawrapper API
 
-Here’s a Python data loader that generates an HTML [iframe](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe) tag that embeds a [Datawrapper](https://www.datawrapper.de/) chart.
+Datawrapper charts can be embedded in Framework using the chartmaker's [web components](https://blog.datawrapper.de/web-component-embedding/) service. All that's required is a published chart's identifer.
+
+```js echo
+const chartId = 'XA2EM';
+const tag = display(document.createElement('script'));
+tag.setAttribute('src', `https://datawrapper.dwcdn.net/${chartId}/embed.js`);
+```
+
+You can dynamically generate charts with a Python data loader that uses the [Datawrapper API](https://datawrapper.readthedocs.io/en/latest/). The loader will return the chart's unique identifier, which you can then use to embed the chart in your page.
 
 ```python
 import sys
@@ -88,7 +96,7 @@ We recommend using a [Python virtual environment](https://observablehq.com/frame
 You will also need to create an API token with [Datawrapper](https://www.datawrapper.de/) and set it as an environment variable named `DATAWRAPPER_ACCESS_TOKEN`. You can learn how by visiting the site's [“Getting Started” guide](https://developer.datawrapper.de/docs/getting-started). You'll want to give the token permission to create and publish charts (see the [reference documentation](https://developer.datawrapper.de/reference/postchartsidpublish) for details).
 </div>
 
-The above data loader lives in `data/chart.txt.py`, so we can load the data into an HTML element using `data/chart.txt` with `FileAttachment`. We'll embed the chart in the page using Datawrapper's [web components](https://blog.datawrapper.de/web-component-embedding/).
+The above data loader lives in `data/chart.txt.py`, so we can load the data into an HTML element using `data/chart.txt` with `FileAttachment`.
 
 ```js echo
 const chartId = await FileAttachment("data/chart.txt").text()
