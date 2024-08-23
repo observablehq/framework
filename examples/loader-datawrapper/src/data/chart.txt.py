@@ -60,6 +60,5 @@ chart_id = chart_config["id"]
 # Publish the chart
 dw.publish_chart(chart_id)
 
-# Write the chart's embed code to stdout
-html = dw.get_iframe_code(chart_id, responsive=True)
-sys.stdout.write(html)
+# Write the chart's unique identifier to stdout
+sys.stdout.write(chart_id)

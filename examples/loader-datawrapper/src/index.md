@@ -67,8 +67,7 @@ chart_id = chart_config["id"]
 dw.publish_chart(chart_id)
 
 # Write the chart's embed code to stdout
-html = dw.get_iframe_code(chart_id, responsive=True)
-sys.stdout.write(html)
+sys.stdout.write(chart_id)
 ```
 
 <div class="note">
@@ -83,33 +82,10 @@ Be aware that this example will publish a new chart to your account each time it
 
 </div>
 
-The above data loader lives in `data/chart.html.py`, so we can load the data into an HTML element using `data/chart.html` with `FileAttachment`:
-
-<div class="card" style="max-width: calc(640px - 2 * 16px);">
-${
-  dataWrapperEmbed(
-    await FileAttachment("data/chart.html").text(),
-    {dark, invalidation}
-  )
-}
-</div>
-
-```html run=false
-<div class="card" style="max-width: calc(640px - 2 * 16px);">
-${
-  dataWrapperEmbed(
-    await FileAttachment("data/chart.html").text(),
-    {dark, invalidation}
-  )
-}
-</div>
-```
-
-The `dataWrapperEmbed` helper function takes care of the integration; it creates an iframe and resizes it when the Datawrapper chart has loaded. Its second parameter, `options`, supports two options:
-
-- `dark` for dark mode — defaults to false; the example above uses Framework built-in reactive value, loading the light or dark version of the chart depending on the current page’s mode.
-- `invalidation` — enables the chart to track page size changes over time and adapt its height accordingly.
+The above data loader lives in `data/chart.txt.py`, so we can load the data into an HTML element using `data/chart.txt` with `FileAttachment`:
 
 ```js echo
-import {dataWrapperEmbed} from "./components/datawrapper.js";
+const chartId = await FileAttachment("data/chart.txt").text()
+const tag = display(document.createElement('script'));
+tag.setAttribute('src', `https://datawrapper.dwcdn.net/${chartId}/embed.js?v=14`);
 ```
