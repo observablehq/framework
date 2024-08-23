@@ -1,14 +1,40 @@
 # Datawrapper API
 
-Datawrapper charts can be embedded in Framework using the chartmaker's [web components](https://blog.datawrapper.de/web-component-embedding/) service. All that's required is a published chart's identifer.
+Datawrapper charts can be embedded in Framework using the chartmaker’s [web components](https://blog.datawrapper.de/web-component-embedding/) service. All that’s required is a published chart’s identifier.
+
+## Simple embedding
+
+<div class="card" style="max-width: 908px;">${DatawrapperChart("OuHrk")}</div>
+
+For example, the chart above (from [this blog post](https://blog.datawrapper.de/spotify-music-trends/)) has the identifier `OuHrk`. To embed it in the page, just include this helper:
 
 ```js echo
-const chartId = 'XA2EM';
-const tag = display(document.createElement('script'));
-tag.setAttribute('src', `https://datawrapper.dwcdn.net/${chartId}/embed.js`);
+function DatawrapperChart(chartId) {
+  const src = `https://datawrapper.dwcdn.net/${chartId}/embed.js`;
+  const div = document.createElement("div");
+  const tag = document.createElement("script");
+  tag.setAttribute("data-dark", dark);
+  tag.setAttribute("src", src);
+  div.append(tag);
+  return div;
+}
 ```
 
-You can dynamically generate charts with a Python data loader that uses the [Datawrapper API](https://datawrapper.readthedocs.io/en/latest/). The loader will return the chart's unique identifier, which you can then use to embed the chart in your page.
+then you can call:
+
+```html run=false
+<div class="card" style="max-width: 908px;">${embedDatawrapperChart("OuHrk")}</div>
+```
+
+<div class="tip">
+
+This function is designed to keep your charts in sync with Framework’s [dark mode](https://observablehq.com/framework/lib/generators#dark).
+
+</div>
+
+## Using a data loader
+
+You can dynamically generate charts with a Python data loader that uses the [Datawrapper API](https://datawrapper.readthedocs.io/en/latest/). The loader will return the chart’s unique identifier, which you can then use to embed the chart in your page.
 
 ```python
 import sys
@@ -96,10 +122,14 @@ We recommend using a [Python virtual environment](https://observablehq.com/frame
 You will also need to create an API token with [Datawrapper](https://www.datawrapper.de/) and set it as an environment variable named `DATAWRAPPER_ACCESS_TOKEN`. You can learn how by visiting the site's [“Getting Started” guide](https://developer.datawrapper.de/docs/getting-started). You'll want to give the token permission to create and publish charts (see the [reference documentation](https://developer.datawrapper.de/reference/postchartsidpublish) for details).
 </div>
 
-The above data loader lives in `data/chart.txt.py`, so we can load the data into an HTML element using `data/chart.txt` with `FileAttachment`.
+The above data loader lives in `data/chart.txt.py`, and creates the `data/chart.txt` file attachment, which contains the identifier. We read this file’s contents and pass it to the helper:
 
-```js echo
-const chartId = await FileAttachment("data/chart.txt").text()
-const tag = display(document.createElement('script'));
-tag.setAttribute('src', `https://datawrapper.dwcdn.net/${chartId}/embed.js`);
+```html echo
+<div class="card" style="max-width: 908px;">${DatawrapperChart(await FileAttachment("data/chart.txt").text())}</div>
+```
+
+or, more simply:
+
+```js echo run=false
+DatawrapperChart(await FileAttachment("data/chart.txt").text())
 ```
