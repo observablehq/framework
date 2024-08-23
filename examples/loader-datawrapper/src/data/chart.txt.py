@@ -10,10 +10,20 @@ df = pd.read_csv("src/data/chart.csv")
 # Connect to the Datawrapper api
 dw = Datawrapper()
 
-# Create the chart
+# Search if the chart already exists
+title = "Germany is the third-oldest country in the world"
+search_result = dw.get_charts(search=title)
+
+# If the chart already exists, return its id
+if search_result['list']:
+    chart_id = search_result['list'][0]["id"]
+    sys.stdout.write(chart_id)
+    sys.exit()
+
+# If it doesn't exist, create the chart
 chart_config = dw.create_chart(
     # Headline the chart
-    title="Germany is the third-oldest country in the world",
+    title=title,
     # Set the type
     chart_type="d3-dot-plot",
     # Give the data
