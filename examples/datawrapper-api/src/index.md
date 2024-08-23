@@ -1,4 +1,4 @@
-# Datawrapper data loader
+# Datawrapper API
 
 Here’s a Python data loader that generates an HTML [iframe](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe) tag that embeds a [Datawrapper](https://www.datawrapper.de/) chart.
 
