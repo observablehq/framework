@@ -28,6 +28,7 @@ export default {
     {name: "Files", path: "/files"},
     {name: "SQL", path: "/sql"},
     {name: "Themes", path: "/themes"},
+    {name: "Parameterized routes", path: "/params"},
     {name: "Configuration", path: "/config"},
     {name: "Deploying", path: "/deploying"},
     {name: "Examples", path: "https://github.com/observablehq/framework/tree/main/examples"},

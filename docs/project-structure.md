@@ -69,7 +69,7 @@ Framework uses file-based routing: each page in your project has a corresponding
 ├─ src
 │  ├─ hello.md
 │  └─ index.md
-└─ ...
+└─ ⋯
 ```
 
 <!-- In addition to pages, you can have [importable](./imports) JavaScript modules (`.js`), [data loaders](./loaders) for generating data snapshots (_e.g._, `.csv.py`), and [static assets](./files) such as images and files (_e.g._, `.png`). -->
@@ -80,11 +80,17 @@ When the site is built, the output root (`dist`) will contain two corresponding 
 .
 ├─ dist
 │  ├─ _observablehq
-│  │  └─ ... # additional assets for serving the site
+│  │  └─ ⋯ # additional assets for serving the site
 │  ├─ hello.html
 │  └─ index.html
-└─ ...
+└─ ⋯
 ```
+
+<div class="tip">
+
+While normally a Markdown file generates only a single page, Framework also supports [parameterized pages](./params) (also called _dynamic routes_), allowing a Markdown file to generate many pages with different data.
+
+</div>
 
 For this site, routes map to files as:
 
@@ -103,11 +109,11 @@ Pages can live in folders. For example:
 .
 ├─ src
 │  ├─ missions
-|  |  ├─ index.md
-|  |  ├─ apollo.md
+│  │  ├─ index.md
+│  │  ├─ apollo.md
 │  │  └─ gemini.md
 │  └─ index.md
-└─ ...
+└─ ⋯
 ```
 
 With this setup, routes are served as:
@@ -125,11 +131,11 @@ As a variant of the above structure, you can move the `missions/index.md` up to 
 .
 ├─ src
 │  ├─ missions
-|  |  ├─ apollo.md
+│  │  ├─ apollo.md
 │  │  └─ gemini.md
 │  ├─ missions.md
 │  └─ index.md
-└─ ...
+└─ ⋯
 ```
 
 Now routes are served as:

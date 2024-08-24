@@ -155,6 +155,10 @@ The pages list should _not_ include the home page (`/`) as this is automatically
 
 Whether to show the previous & next links in the footer; defaults to true. The pages are linked in the same order as they appear in the sidebar.
 
+## paths <a href="https://github.com/observablehq/framework/pulls/1523" class="observablehq-version-badge" data-version="prerelease" title="Added in #1523"></a>
+
+The list of [parameterized pages](./params) to generate.
+
 ## head
 
 An HTML fragment to add to the head. Defaults to the empty string. If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
