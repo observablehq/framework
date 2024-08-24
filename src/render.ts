@@ -219,7 +219,9 @@ function renderListItem(page: Page, path: string, resolveLink: (href: string) =>
 
 function renderHead(head: MarkdownPage["head"], resolvers: Resolvers): Html {
   const {stylesheets, staticImports, resolveImport, resolveStylesheet} = resolvers;
-  return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
+  return html`${
+    hasGoogleFonts(stylesheets) ? html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>` : null
+  }${
     Array.from(new Set(Array.from(stylesheets, resolveStylesheet)), renderStylesheetPreload) // <link rel=preload as=style>
   }${
     Array.from(new Set(Array.from(stylesheets, resolveStylesheet)), renderStylesheet) // <link rel=stylesheet>
@@ -267,4 +269,9 @@ function renderPager({prev, next}: PageLink, resolveLink: (href: string) => stri
 
 function renderRel(page: Page, rel: "prev" | "next", resolveLink: (href: string) => string): Html {
   return html`<a rel="${rel}" href="${encodeURI(resolveLink(page.path))}"><span>${page.name}</span></a>`;
+}
+
+function hasGoogleFonts(stylesheets: Set<string>): boolean {
+  for (const s of stylesheets) if (s.startsWith("https://fonts.googleapis.com/")) return true;
+  return false;
 }

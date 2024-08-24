@@ -16,6 +16,9 @@ describe("readConfig(undefined, root)", () => {
       output: "dist",
       base: "/",
       style: {theme: ["air", "near-midnight"]},
+      globalStylesheets: [
+        "https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap"
+      ],
       sidebar: true,
       pages: [
         {path: "/index", name: "Index", pager: "main"},
@@ -53,6 +56,9 @@ describe("readConfig(undefined, root)", () => {
       output: "dist",
       base: "/",
       style: {theme: ["air", "near-midnight"]},
+      globalStylesheets: [
+        "https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap"
+      ],
       sidebar: true,
       pages: [{name: "Build test case", path: "/simple", pager: "main"}],
       paths: ["/simple"],

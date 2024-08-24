@@ -88,7 +88,7 @@ export async function build(
       effects.logger.log(faint("(skipped)"));
       continue;
     }
-    const resolvers = await getResolvers(page, {root, path, normalizePath, loaders});
+    const resolvers = await getResolvers(page, {path: sourceFile, ...config});
     const elapsed = Math.floor(performance.now() - start);
     for (const f of resolvers.assets) files.add(resolvePath(path, f));
     for (const f of resolvers.files) files.add(resolvePath(path, f));
