@@ -1,8 +1,8 @@
-# Parameterized routes
+# Parameterized routes <a href="https://github.com/observablehq/framework/pull/1523" class="observablehq-version-badge" data-version="prerelease" title="Added in #1523"></a>
 
-Parameterized routes allow a single Markdown source file to generate many pages, or a single [data loader](./loaders) to generate many files.
+Parameterized routes allow a single [Markdown](./markdown) source file to generate many pages, or a single [data loader](./loaders) to generate many files.
 
-A parameterized route is denoted by square brackets, such as `[param]`, in a file or directory name. For example, the following project structure could be used to generate a separate page for each product:
+A parameterized route is denoted by square brackets, such as `[param]`, in a file or directory name. For example, the following project structure could be used to generate a page for many products:
 
 ```
 .
@@ -13,7 +13,7 @@ A parameterized route is denoted by square brackets, such as `[param]`, in a fil
 └─ ⋯
 ```
 
-Then using the [**paths** config option](./config#paths), you can specify the list of product pages.
+Then using the [**paths** config option](./config#paths), you can specify the list of product pages:
 
 ```js run=false
 export default {
@@ -27,12 +27,36 @@ export default {
 };
 ```
 
-More commonly, you’d use code to enumerate the list of paths, such as by querying a database to get the list of product identifiers. For example, using [Postgres.js](https://github.com/porsager/postgres/blob/master/README.md#usage) you might say:
+More commonly, you’d use code to enumerate the list of paths, say by querying a database for product identifiers. For example, using [Postgres.js](https://github.com/porsager/postgres/blob/master/README.md#usage) you might say:
 
 ```js run=false
+import postgres from "postgres";
+
+const sql = postgres(); // Note: uses psql environment variables
+
 export default {
   paths: (await sql`SELECT id FROM products`).map(({id}) => `/products/${id}`)
 };
 ```
 
-Within a parameterized page, `observable.params.param` exposes the value of the parameter `param` to JavaScript (and likewise for any imported JavaScript modules with parameterized routes). While for a parameterized data loader, parameter values are passed as command-line flags such as `--param`.
+Within a parameterized page, `observable.params.param` exposes the value of the parameter `param` to JavaScript (and likewise for any imported JavaScript modules with parameterized routes). For example, to display the value of the `product` parameter in Markdown:
+
+```md run=false
+${observable.params.product}
+```
+
+Since parameter values are known statically, you can reference parameter values in calls to `FileAttachment`. (This is an exception: normally `FileAttachment` accepts only a static string literal as an argument since Framework uses [static analysis](./files#static-analysis) to determine referenced files.) For example, to load the JSON file `/products/475651.json` from the corresponding product page `/products/475651`, you could say:
+
+```js run=false
+const info = FileAttachment(`${observable.params.product}.json`).json();
+```
+
+For parameterized data loaders, parameter values are passed as command-line flags such as `--param`. For example, to parse the `--product` flag in Node.js, you can use [`parseArgs`](https://nodejs.org/api/util.html#utilparseargsconfig) from `node:util`:
+
+```js run=false
+import {parseArgs} from "node:util";
+
+const {values} = parseArgs({options: {product: {type: "string"}}});
+
+console.log(values.product);
+```

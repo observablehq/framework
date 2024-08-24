@@ -155,7 +155,7 @@ The pages list should _not_ include the home page (`/`) as this is automatically
 
 Whether to show the previous & next links in the footer; defaults to true. The pages are linked in the same order as they appear in the sidebar.
 
-## paths <a href="https://github.com/observablehq/framework/pulls/1523" class="observablehq-version-badge" data-version="prerelease" title="Added in #1523"></a>
+## paths <a href="https://github.com/observablehq/framework/pull/1523" class="observablehq-version-badge" data-version="prerelease" title="Added in #1523"></a>
 
 The list of [parameterized pages](./params) to generate.
 
