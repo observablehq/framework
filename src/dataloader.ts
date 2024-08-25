@@ -231,7 +231,7 @@ export class LoaderResolver {
   private getOutputFilePath(path: string): string {
     if (!existsSync(join(this.root, path))) {
       const loader = this.find(path);
-      if (loader) return join(".observablehq", "cache", path); // TODO Is this true for static files?
+      if (loader) return join(".observablehq", "cache", path);
     }
     return path;
   }
