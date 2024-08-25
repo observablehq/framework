@@ -368,7 +368,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
           hash: {previous: previousHash, current: hash}
         });
         attachmentWatcher?.close();
-        attachmentWatcher = await loaders.watchFiles(sourcePath, getWatchFiles(resolvers), () => watcher("change"));
+        attachmentWatcher = await loaders.watchFiles(path, getWatchFiles(resolvers), () => watcher("change"));
         break;
       }
     }
@@ -395,7 +395,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     files = getFiles(resolvers);
     tables = getTables(page);
     stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
-    attachmentWatcher = await loaders.watchFiles(sourcePath, getWatchFiles(resolvers), () => watcher("change"));
+    attachmentWatcher = await loaders.watchFiles(path, getWatchFiles(resolvers), () => watcher("change"));
     loaderWatcher = watch(join(root, loader.path), (event) => watcher(event));
     if (config.watchPath) configWatcher = watch(config.watchPath, () => send({type: "reload"}));
   }
