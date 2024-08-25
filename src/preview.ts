@@ -16,7 +16,7 @@ import type {WebSocket} from "ws";
 import {WebSocketServer} from "ws";
 import type {Config} from "./config.js";
 import {readConfig} from "./config.js";
-import type {LoaderResolver} from "./dataloader.js";
+import type {Loader, LoaderResolver} from "./dataloader.js";
 import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import type {FileWatchers} from "./fileWatchers.js";
@@ -32,7 +32,7 @@ import type {Resolvers} from "./resolvers.js";
 import {getResolvers} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import type {Params} from "./route.js";
-import {find, route} from "./route.js";
+import {route} from "./route.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, link} from "./tty.js";
@@ -163,16 +163,14 @@ export class PreviewServer {
       } else if (pathname.startsWith("/_file/")) {
         const loader = loaders.find(pathname.slice("/_file".length));
         if (!loader) throw new HttpError(`Not found: ${pathname}`, 404);
-        if ("load" in loader) {
-          try {
-            send(req, await loader.load(), {root}).pipe(res);
-          } catch (error) {
-            if (!isEnoent(error)) throw error;
-            throw new HttpError(`Not found: ${pathname}`, 404);
-          }
-        } else {
-          send(req, loader.path).pipe(res);
+        let sourcePath: string;
+        try {
+          sourcePath = await loader.load();
+        } catch (error) {
+          if (!isEnoent(error)) throw error;
+          throw new HttpError(`Not found: ${pathname}`, 404);
         }
+        send(req, sourcePath, {root}).pipe(res);
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
 
@@ -193,10 +191,16 @@ export class PreviewServer {
 
         // Lastly, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
-        const found = find(root, `${pathname}.md`);
-        if (!found) throw new HttpError("Not found", 404);
-        const {path: sourcePath, params} = found;
-        const options = {...config, params, path: pathname, preview: true};
+        const loader = loaders.find(`${pathname}.md`);
+        if (!loader) throw new HttpError(`Not found: ${pathname}`, 404);
+        let sourcePath: string;
+        try {
+          sourcePath = await loader.load();
+        } catch (error) {
+          if (!isEnoent(error)) throw error;
+          throw new HttpError(`Not found: ${pathname}`, 404);
+        }
+        const options = {...config, params: loader.params, path: pathname, preview: true};
         const source = await readFile(join(root, sourcePath), "utf8");
         const parse = parseMarkdown(source, options);
         const html = await renderPage(parse, options);
@@ -291,9 +295,8 @@ interface HtmlPart {
 
 function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Promise<Config>) {
   let config: Config | null = null;
-  let sourcePath: string | null = null;
+  let loader: Loader | null = null;
   let path: string | null = null;
-  let params: Params | undefined | null = null;
   let hash: string | null = null;
   let html: HtmlPart[] | null = null;
   let code: Map<string, string> | null = null;
@@ -301,20 +304,20 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
   let tables: Map<string, string> | null = null;
   let stylesheets: string[] | null = null;
   let configWatcher: FSWatcher | null = null;
-  let markdownWatcher: FSWatcher | null = null;
+  let loaderWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
   let emptyTimeout: ReturnType<typeof setTimeout> | null = null;
 
   console.log(faint("socket open"), req.url);
 
   async function watcher(event: WatchEventType, force = false) {
-    if (sourcePath === null || path === null || params === null || config === null) throw new Error("not initialized");
-    const {loaders} = config;
+    if (loader === null || path === null || config === null) throw new Error("not initialized");
+    const {root, loaders} = config;
     switch (event) {
       case "rename": {
-        markdownWatcher?.close();
+        loaderWatcher?.close();
         try {
-          markdownWatcher = watch(sourcePath, (event) => watcher(event));
+          loaderWatcher = watch(join(root, loader.path), (event) => watcher(event));
         } catch (error) {
           if (!isEnoent(error)) throw error;
           console.error(`file no longer exists: ${path}`);
@@ -325,8 +328,9 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
         break;
       }
       case "change": {
+        const sourcePath = join(root, await loader.load());
         const source = await readFile(sourcePath, "utf8");
-        const page = parseMarkdown(source, {path, params, ...config});
+        const page = parseMarkdown(source, {path, params: loader.params, ...config});
         // delay to avoid a possibly-empty file
         if (!force && page.body === "") {
           if (!emptyTimeout) {
@@ -350,7 +354,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
         const previousStylesheets = stylesheets!;
         hash = resolvers.hash;
         html = getHtml(page, resolvers);
-        code = getCode(page, resolvers, params);
+        code = getCode(page, resolvers, loader.params);
         files = getFiles(resolvers);
         tables = getTables(page);
         stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
@@ -364,36 +368,35 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
           hash: {previous: previousHash, current: hash}
         });
         attachmentWatcher?.close();
-        attachmentWatcher = await loaders.watchFiles(path, getWatchFiles(resolvers), () => watcher("change"));
+        attachmentWatcher = await loaders.watchFiles(sourcePath, getWatchFiles(resolvers), () => watcher("change"));
         break;
       }
     }
   }
 
   async function hello({path: initialPath, hash: initialHash}: {path: string; hash: string}): Promise<void> {
-    if (markdownWatcher || configWatcher || attachmentWatcher) throw new Error("already watching");
+    if (loaderWatcher || configWatcher || attachmentWatcher) throw new Error("already watching");
     path = decodeURI(initialPath);
     if (!(path = normalize(path)).startsWith("/")) throw new Error(`Invalid path: ${initialPath}`);
     if (path.endsWith("/")) path += "index";
     path = join(dirname(path), `${basename(path, ".html")}.md`);
     config = await configPromise;
     const {root, loaders, normalizePath} = config;
-    const found = find(root, path);
-    if (!found) throw new Error(`Page not found: ${path}`);
-    sourcePath = join(root, found.path);
-    params = found.params;
+    loader = loaders.find(path)!; // TODO fix non-null assertion
+    if (!loader) throw new Error(`Page not found: ${path}`); // TODO HttpError?
+    const sourcePath = join(root, await loader.load());
     const source = await readFile(sourcePath, "utf8");
-    const page = parseMarkdown(source, {path, params, ...config});
+    const page = parseMarkdown(source, {path, params: loader.params, ...config});
     const resolvers = await getResolvers(page, {root, path, loaders, normalizePath});
     if (resolvers.hash !== initialHash) return void send({type: "reload"});
     hash = resolvers.hash;
     html = getHtml(page, resolvers);
-    code = getCode(page, resolvers, params);
+    code = getCode(page, resolvers, loader.params);
     files = getFiles(resolvers);
     tables = getTables(page);
     stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
-    attachmentWatcher = await loaders.watchFiles(path, getWatchFiles(resolvers), () => watcher("change"));
-    markdownWatcher = watch(sourcePath, (event) => watcher(event));
+    attachmentWatcher = await loaders.watchFiles(sourcePath, getWatchFiles(resolvers), () => watcher("change"));
+    loaderWatcher = watch(join(root, loader.path), (event) => watcher(event));
     if (config.watchPath) configWatcher = watch(config.watchPath, () => send({type: "reload"}));
   }
 
@@ -422,9 +425,9 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
       attachmentWatcher.close();
       attachmentWatcher = null;
     }
-    if (markdownWatcher) {
-      markdownWatcher.close();
-      markdownWatcher = null;
+    if (loaderWatcher) {
+      loaderWatcher.close();
+      loaderWatcher = null;
     }
     if (configWatcher) {
       configWatcher.close();

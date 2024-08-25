@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import {mkdir, readFile, rm, stat, unlink, utimes, writeFile} from "node:fs/promises";
 import os from "node:os";
+import {join} from "node:path/posix";
 import type {LoadEffects, Loader} from "../src/dataloader.js";
 import {LoaderResolver} from "../src/dataloader.js";
 
@@ -64,11 +65,12 @@ describe("LoaderResolver.find(path, {useStale: true})", () => {
       }
     };
     const loader = findLoader(loaders, "dataloaders/data1.txt");
+    const loaderPath = join(loader.root, loader.path);
     // save the loader times.
-    const {atime, mtime} = await stat(loader.path);
+    const {atime, mtime} = await stat(loaderPath);
     // set the loader mtime to Dec. 1st, 2023.
     const time = new Date(2023, 11, 1);
-    await utimes(loader.path, atime, time);
+    await utimes(loaderPath, atime, time);
     // remove the cache set by another test (unless we it.only this test).
     try {
       await unlink("test/.observablehq/cache/dataloaders/data1.txt");
@@ -80,14 +82,14 @@ describe("LoaderResolver.find(path, {useStale: true})", () => {
     // run again (fresh)
     await loader.load(outputEffects);
     // touch the loader
-    await utimes(loader.path, atime, new Date(Date.now() + 100));
+    await utimes(loaderPath, atime, new Date(Date.now() + 100));
     // run it with useStale=true (using stale)
     const loader2 = findLoader(loaders, "dataloaders/data1.txt", {useStale: true});
     await loader2.load(outputEffects);
     // run it with useStale=false (stale)
     await loader.load(outputEffects);
     // revert the loader to its original mtime
-    await utimes(loader.path, atime, mtime);
+    await utimes(loaderPath, atime, mtime);
     assert.deepStrictEqual(
       // eslint-disable-next-line no-control-regex
       out.map((l) => l.replaceAll(/\x1b\[[0-9]+m/g, "")),

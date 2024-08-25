@@ -10,11 +10,6 @@ export function isParameterizedPath(path: string): boolean {
   return path.split("/").some((name) => /\[.+\]/.test(name));
 }
 
-export function find(root: string, path: string): RouteResult | undefined {
-  const ext = extname(path);
-  return route(root, path.slice(0, -ext.length), [ext]);
-}
-
 /**
  * Finds a parameterized file (dynamic route).
  *

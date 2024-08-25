@@ -17,7 +17,6 @@ import {getModuleResolver, getResolvers} from "./resolvers.js";
 import {resolveImportPath, resolveStylesheetPath} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import type {Params} from "./route.js";
-import {find} from "./route.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {tree} from "./tree.js";
@@ -75,9 +74,10 @@ export async function build(
   const globalImports = new Set<string>(); // e.g., "/_observablehq/search.js"
   const stylesheets = new Set<string>(); // e.g., "/style.css"
   for (const path of paths.map(normalizePagePath)) {
-    const found = find(root, `${path}.md`);
-    if (!found) throw new Error(`page not found: ${path}`);
-    const {path: sourceFile, params} = found;
+    const loader = loaders.find(`${path}.md`);
+    if (!loader) throw new Error(`page not found: ${path}`);
+    const {params} = loader;
+    const sourceFile = await loader.load(effects);
     const sourcePath = join(root, sourceFile);
     const options = {...config, params, path};
     effects.output.write(`${faint("parse")} ${sourcePath} `);
@@ -165,23 +165,19 @@ export async function build(
 
   // Copy over referenced files, accumulating hashed aliases.
   for (const file of files) {
-    let sourcePath: string;
     effects.output.write(`${faint("copy")} ${join(root, file)} ${faint("→")} `);
     const loader = loaders.find(join("/", file), {useStale: true});
     if (!loader) {
       effects.logger.error(red("error: missing referenced file"));
       continue;
     }
-    if ("load" in loader) {
-      try {
-        sourcePath = join(root, await loader.load(effects));
-      } catch (error) {
-        if (!isEnoent(error)) throw error;
-        effects.logger.error(red("error: missing referenced file"));
-        continue;
-      }
-    } else {
-      sourcePath = loader.path;
+    let sourcePath: string;
+    try {
+      sourcePath = join(root, await loader.load(effects));
+    } catch (error) {
+      if (!isEnoent(error)) throw error;
+      effects.logger.error(red("error: missing referenced file"));
+      continue;
     }
     const contents = await readFile(sourcePath);
     const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
