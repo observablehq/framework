@@ -1,3 +1,7 @@
+---
+keywords: [dark, width]
+---
+
 # Observable Generators
 
 The Observable standard library includes several generator utilities. These are available by default in Markdown as `Generators`, but you can import them explicitly:
