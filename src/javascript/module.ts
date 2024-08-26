@@ -189,6 +189,7 @@ export function getFileHash(root: string, path: string): string {
  */
 export function getFileInfo(root: string, path: string): FileInfo | undefined {
   const key = join(root, path);
+  fileInfoCache.delete(key); // TODO remove me, just for testing
   let mtimeMs: number;
   try {
     const stat = statSync(key);
