@@ -11,7 +11,7 @@ import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
 import {populateNpmCache, resolveNpmImport, rewriteNpmImports} from "./npm.js";
-import {isAssetPath, isPathImport, relativePath, resolvePath} from "./path.js";
+import {isAssetPath, isPathImport, relativePath, resolvePath, within} from "./path.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
 import {getModuleResolver, getResolvers} from "./resolvers.js";
@@ -409,7 +409,15 @@ export class FileBuildEffects implements BuildEffects {
     this.cacheDir = cacheDir;
   }
   async prepare(): Promise<void> {
-    await rm(this.outputRoot, {recursive: true, force: true});
+    if (within(process.cwd(), this.outputRoot)) {
+      await rm(this.outputRoot, {recursive: true, force: true});
+    } else {
+      this.logger.warn(
+        `${yellow("Warning:")} the output root ${
+          this.outputRoot
+        } is not within the current working directory and will not be cleared.`
+      );
+    }
   }
   async copyFile(sourcePath: string, outputPath: string): Promise<void> {
     const destination = join(this.outputRoot, outputPath);
