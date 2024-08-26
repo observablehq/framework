@@ -13,23 +13,6 @@ import {Sunburst} from './components/Sunburst.js'
 ```
 
 ```js
-// todo:
-// make sure color schemes work
-// delete colors
-// attend to color arg for sunburst and marimekko
-// make sure marimekko rows don't change height
-// flesh out read mes
-// add selector to alternate btw views of stream graph
-// final clean-up
-```
-
-```js
-// full palette from dictionary-of-colour-combinations by Sanzo Wada,
-// source: https://github.com/mattdesl/dictionary-of-colour-combinations/blob/master/colors.json
-const colors = FileAttachment("./data/colors.json").json();
-```
-
-```js
 const n = view(Inputs.radio([4, 8, 12, 16], {
   label: html`Top <em>n</em> importers`,
   value: 12
@@ -45,6 +28,9 @@ const recent = tidy.filter(d => d.YearNum === 2023);
 // Top-n from the most recent year
 const topN = d3.groupSort(recent, (v) => d3.sum(v, (k) => k.FoodValue), (d) => d.Country).slice(-n).reverse();
 
+// Top-16 for the whole data set
+const topAllTime = d3.groupSort(tidy, (v) => d3.sum(v, (k) => k.FoodValue), (d) => d.Country).slice(-16).reverse();
+
 // Sample from the most recent year (for Marimekko and Sunburst)
 const sample = recent.filter((d) => topN.includes(d.Country));
 ```
@@ -54,6 +40,9 @@ const sample = recent.filter((d) => topN.includes(d.Country));
 const sampleSlice = sample.filter(d => topN.slice(0,4).includes(d.Country))
 const categories = d3.groupSort(recent, (v) => -d3.sum(v, (d) => d.FoodValue), (d) => d.Category)
 categories.push(categories.splice(categories.indexOf('Other'), 1)[0]);
+
+// full palette from dictionary-of-colour-combinations by Sanzo Wada,
+// source: https://github.com/mattdesl/dictionary-of-colour-combinations/blob/master/colors.json
 const categoryColor = d3.scaleOrdinal().domain(categories).range(["#bce4e5", "#a7d4e4", "#a5c8d1", "#97acc8", "#96d1aa", "#78cdd0", "#62c6bf", "#0093a5", "#00939b", "#099197", "#5a82b3", "#006eb8", "#007190", "#005b8d"]);
 ```
 
@@ -98,7 +87,8 @@ nest.children = d3.sort(nest.children, (d) => categories.indexOf(d.name))
 ```js
 // Timeline: year, country, total
 // All-time values for the timeline
-const timely = tidy.filter((d) => topN.includes(d.Country))
+const timely = tidy
+  .filter((d) => topAllTime.includes(d.Country))
   .map(d => ({year: d.YearNum, value: d.FoodValue, country: d.Country}));
 
 const byYearAndCountry = d3.groups(timely, d => d.year, d => d.country)
@@ -126,7 +116,7 @@ const areaData = byYearAndCountry;
   </div>
   <div class="card" style="min-height: 600px;">
     <h2>Food imports to the Unites States, 2023</h2>
-    <h3>Share of imports by category and subcategory</h3>
+    <h3>Share of imports from top ${n} countries by category and subcategory</h3>
     ${resize((width) => Sunburst(nest, {
       width,
       value: (d) => d.value,
@@ -138,14 +128,14 @@ const areaData = byYearAndCountry;
   </div>
   <div class="card">
     <h2>Relative share of food imports to the US</h2>
-    <h3>Across top ${n} countries, 1999–2023</h3>
+    <h3>Across top 16 countries, 1999–2023</h3>
     ${resize((width) => Plot.plot({
       width,
       height: 600,
       marginLeft: 50,
       marginRight: 120,
       color: {
-        domain: topN,
+        domain: topAllTime,
         range: areaColors
       },
       y: {
@@ -160,9 +150,9 @@ const areaData = byYearAndCountry;
             x: "year",
             y: "value",
             z: "country",
+            order: "sum",
             offset: "normalize",
-            fill: "country",
-            sort: d => -topN.indexOf(d.country), 
+            fill: "country", 
             curve: "monotone-x"
           }
         ),
@@ -173,8 +163,8 @@ const areaData = byYearAndCountry;
               x: "year",
               y: "value",
               z: "country",
+              order: "sum",
               offset: "normalize",
-              sort: d => -topN.indexOf(d.country), 
               text: "country",
               dx: "8",
               textAnchor: "start",
