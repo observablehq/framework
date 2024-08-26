@@ -189,7 +189,6 @@ export function getFileHash(root: string, path: string): string {
  */
 export function getFileInfo(root: string, path: string): FileInfo | undefined {
   const key = join(root, path);
-  fileInfoCache.delete(key); // TODO remove me, just for testing
   let mtimeMs: number;
   try {
     const stat = statSync(key);
@@ -207,6 +206,11 @@ export function getFileInfo(root: string, path: string): FileInfo | undefined {
     fileInfoCache.set(key, (entry = {mtimeMs, hash}));
   }
   return entry;
+}
+
+// For testing only!
+export function clearFileInfo(root: string, path: string): boolean {
+  return fileInfoCache.delete(join(root, path));
 }
 
 export function findModule(root: string, path: string): RouteResult | undefined {

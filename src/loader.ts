@@ -248,10 +248,7 @@ export class LoaderResolver {
     const info = getFileInfo(this.root, path);
     if (!info) return createHash("sha256").digest("hex");
     const {hash} = info;
-    return path === name
-      ? hash
-      : (console.warn(`getSourceFileHash: ${path}, ${name}, ${info.mtimeMs}`),
-        createHash("sha256").update(hash).update(String(info.mtimeMs)).digest("hex"));
+    return path === name ? hash : createHash("sha256").update(hash).update(String(info.mtimeMs)).digest("hex");
   }
 
   getSourceLastModified(name: string): number | undefined {

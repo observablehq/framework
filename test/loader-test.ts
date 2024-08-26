@@ -3,6 +3,7 @@ import {statSync} from "node:fs";
 import {mkdir, readFile, rm, stat, unlink, utimes, writeFile} from "node:fs/promises";
 import os from "node:os";
 import {join} from "node:path/posix";
+import {clearFileInfo} from "../src/javascript/module.js";
 import type {LoadEffects} from "../src/loader.js";
 import {LoaderResolver} from "../src/loader.js";
 
@@ -106,9 +107,9 @@ describe("LoaderResolver.getSourceFileHash(path)", () => {
   const time = new Date(Date.UTC(2023, 11, 1));
   it("returns the content hash for the specified file’s data loader", async () => {
     await utimes("test/input/build/archives.posix/dynamic.zip.sh", time, time);
-    assert.strictEqual(Math.floor(statSync("test/input/build/archives.posix/dynamic.zip.sh").mtimeMs), +time);
     await utimes("test/input/build/archives.posix/static.zip", time, time);
-    assert.strictEqual(Math.floor(statSync("test/input/build/archives.posix/static.zip").mtimeMs), +time);
+    clearFileInfo("test/input/build/archives.posix", "dynamic.zip.sh");
+    clearFileInfo("test/input/build/archives.posix", "static.zip");
     const loaders = new LoaderResolver({root: "test/input/build/archives.posix"});
     assert.strictEqual(loaders.getSourceFileHash("dynamic.zip.sh"), "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"); // prettier-ignore
     assert.strictEqual(loaders.getSourceFileHash("dynamic.zip"), "64acd011e27907a2594fda3272bfc951e75db4c80495ce41e84ced61383bbb60"); // prettier-ignore
