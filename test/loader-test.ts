@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import {statSync} from "node:fs";
 import {mkdir, readFile, rm, stat, unlink, utimes, writeFile} from "node:fs/promises";
 import os from "node:os";
 import {join} from "node:path/posix";
