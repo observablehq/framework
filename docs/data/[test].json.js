@@ -1,11 +1,9 @@
 import {parseArgs} from "node:util";
 
-const {values} = parseArgs({
-  options: {
-    test: {
-      type: "string"
-    }
-  }
+const {
+  values: {test}
+} = parseArgs({
+  options: {test: {type: "string"}}
 });
 
-console.log(JSON.stringify(values));
+console.log(JSON.stringify({test}));

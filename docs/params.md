@@ -1,6 +1,6 @@
 # Parameterized routes <a href="https://github.com/observablehq/framework/pull/1523" class="observablehq-version-badge" data-version="prerelease" title="Added in #1523"></a>
 
-Parameterized routes allow a single [Markdown](./markdown) source file to generate many pages, or a single [data loader](./data-loaders) to generate many files.
+Parameterized routes allow a single [Markdown](./markdown) source file or [page loader](./page-loaders) to generate many pages, or a single [data loader](./data-loaders) to generate many files.
 
 A parameterized route is denoted by square brackets, such as `[param]`, in a file or directory name. For example, the following project structure could be used to generate a page for many products:
 
@@ -56,7 +56,11 @@ For parameterized data loaders, parameter values are passed as command-line flag
 ```js run=false
 import {parseArgs} from "node:util";
 
-const {values} = parseArgs({options: {product: {type: "string"}}});
+const {
+  values: {product}
+} = parseArgs({
+  options: {product: {type: "string"}}
+});
 
-console.log(values.product);
+console.log(product);
 ```

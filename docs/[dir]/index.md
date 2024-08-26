@@ -1,6 +1,6 @@
 # Hello dynamic route
 
-is it working
+is it working ${observable.params.dir}
 
 ```js
 FileAttachment("./foo.txt").text()
