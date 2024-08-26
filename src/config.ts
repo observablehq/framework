@@ -183,7 +183,7 @@ function readPages(root: string, md: MarkdownIt): Page[] {
   const files: {file: string; source: string}[] = [];
   const hash = createHash("sha256");
   for (const file of visitMarkdownFiles(root)) {
-    if (file === "index.md" || file === "404.md") continue;
+    if (isParameterizedPath(file) || file === "index.md" || file === "404.md") continue;
     const source = readFileSync(join(root, file), "utf8");
     files.push({file, source});
     hash.update(file).update(source);
@@ -273,7 +273,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     loaders: new LoaderResolver({root, interpreters}),
     watchPath
   };
-  if (pages === undefined) Object.defineProperty(config, "pages", {get: () => readPages(root, md)}); // TODO rename to sidebar.pages?
+  if (pages === undefined) Object.defineProperty(config, "pages", {get: () => readPages(root, md)});
   if (sidebar === undefined) Object.defineProperty(config, "sidebar", {get: () => config.pages.length > 0});
   configCache.set(spec, config);
   return config;
