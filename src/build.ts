@@ -1,5 +1,5 @@
 import {createHash} from "node:crypto";
-import {copyFile, readFile, stat, writeFile} from "node:fs/promises";
+import {copyFile, readFile, rm, stat, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {CliError, isEnoent} from "./error.js";
@@ -10,7 +10,7 @@ import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
 import {populateNpmCache, resolveNpmImport, rewriteNpmImports} from "./npm.js";
-import {isAssetPath, isPathImport, relativePath, resolvePath} from "./path.js";
+import {isAssetPath, isPathImport, relativePath, resolvePath, within} from "./path.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
 import {getModuleResolver, getResolvers} from "./resolvers.js";
@@ -29,6 +29,11 @@ export interface BuildOptions {
 export interface BuildEffects {
   logger: Logger;
   output: Writer;
+
+  /**
+   * Does any pre-build work, such as emptying the existing outputRoot.
+   */
+  prepare(): Promise<void>;
 
   /**
    * @param outputPath The path of this file relative to the outputRoot. For
@@ -66,6 +71,9 @@ export async function build(
   const pageCount = paths.length;
   if (!pageCount) throw new CliError(`Nothing to build: no page files found in your ${root} directory.`);
   effects.logger.log(`${faint("found")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
+
+  // Prepare for build (such as by emptying the existing output root).
+  await effects.prepare();
 
   // Parse .md files, building a list of additional assets as we go.
   const pages = new Map<string, {sourcePath: string; page: MarkdownPage; params?: Params; resolvers: Resolvers}>();
@@ -406,6 +414,17 @@ export class FileBuildEffects implements BuildEffects {
     this.output = output;
     this.outputRoot = outputRoot;
     this.cacheDir = cacheDir;
+  }
+  async prepare(): Promise<void> {
+    if (within(process.cwd(), this.outputRoot)) {
+      await rm(this.outputRoot, {recursive: true, force: true});
+    } else {
+      this.logger.warn(
+        `${yellow("Warning:")} the output root ${
+          this.outputRoot
+        } is not within the current working directory and will not be cleared.`
+      );
+    }
   }
   async copyFile(sourcePath: string, outputPath: string): Promise<void> {
     const destination = join(this.outputRoot, outputPath);

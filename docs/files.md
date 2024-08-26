@@ -32,7 +32,7 @@ volcano
 
 ## Static analysis
 
-The `FileAttachment` function can _only_ be passed a static string literal; constructing a dynamic path such as `FileAttachment("my" + "file.csv")` is invalid syntax. Static analysis is used to invoke [data loaders](./loaders) at build time, and ensures that only referenced files are included in the generated output during build. This also allows a content hash in the file name for cache breaking during deploy.
+The `FileAttachment` function can _only_ be passed a static string literal; constructing a dynamic path such as <code>FileAttachment(\`frame$\{i}.png\`)</code> is invalid syntax. Static analysis is used to invoke [data loaders](./loaders) at build time, and ensures that only referenced files are included in the generated output during build. This also allows a content hash in the file name for cache breaking during deploy.
 
 If you have multiple files, you can enumerate them explicitly like so:
 
