@@ -295,7 +295,7 @@ If this barfs a bunch of JSON in the terminal, it’s working as intended. 😅 
 
 ### File attachments
 
-Framework uses [file-based routing](./loaders#routing) for data loaders: the data loader <code>forecast.json.js</code> serves the file <code>forecast.json</code>. To load this file from <code>src<span class="wbr">/</span>weather.md</code> we use the relative path <code>./data<span class="wbr">/</span>forecast.json</code>. In effect, data loaders are simply a naming convention for generating “static” files — a big advantage of which is that you can edit a data loader and the changes immediately propagate to the live preview without needing a reload.
+Framework uses [file-based routing](./data-loaders#routing) for data loaders: the data loader <code>forecast.json.js</code> serves the file <code>forecast.json</code>. To load this file from <code>src<span class="wbr">/</span>weather.md</code> we use the relative path <code>./data<span class="wbr">/</span>forecast.json</code>. In effect, data loaders are simply a naming convention for generating “static” files — a big advantage of which is that you can edit a data loader and the changes immediately propagate to the live preview without needing a reload.
 
 To load a file in JavaScript, use the built-in [`FileAttachment`](./files). In `weather.md`, replace the contents of the JavaScript code block (the parts inside the triple backticks <code>```</code>) with the following code:
 
@@ -557,7 +557,7 @@ forecast = requests.get(station["properties"]["forecastHourly"]).json()
 json.dump(forecast, sys.stdout)
 ```
 
-To write the data loader in R, name it <code>forecast.json.R</code>. Or as shell script, <code>forecast.json.sh</code>. You get the idea. See [Data loaders: Routing](./loaders#routing) for more. The beauty of this approach is that you can leverage the strengths (and libraries) of multiple languages, and still get instant updates in the browser as you develop.
+To write the data loader in R, name it <code>forecast.json.R</code>. Or as shell script, <code>forecast.json.sh</code>. You get the idea. See [Data loaders: Routing](./data-loaders#routing) for more. The beauty of this approach is that you can leverage the strengths (and libraries) of multiple languages, and still get instant updates in the browser as you develop.
 
 ### Deploy automatically
 
