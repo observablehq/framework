@@ -4,12 +4,18 @@ import {isParameterizedPath, route} from "../src/route.js";
 describe("isParameterizedPath(path)", () => {
   it("returns true for a parameterized file name", () => {
     assert.strictEqual(isParameterizedPath("/[file].md"), true);
+    assert.strictEqual(isParameterizedPath("/prefix-[file].md"), true);
+    assert.strictEqual(isParameterizedPath("/[file]-suffix.md"), true);
+    assert.strictEqual(isParameterizedPath("/[file]-[number].md"), true);
     assert.strictEqual(isParameterizedPath("/path/[file].md"), true);
     assert.strictEqual(isParameterizedPath("/path/to/[file].md"), true);
     assert.strictEqual(isParameterizedPath("/path/[dir]/[file].md"), true);
   });
   it("returns true for a parameterized directory name", () => {
     assert.strictEqual(isParameterizedPath("/[dir]/file.md"), true);
+    assert.strictEqual(isParameterizedPath("/prefix-[dir]/file.md"), true);
+    assert.strictEqual(isParameterizedPath("/[dir]-suffix/file.md"), true);
+    assert.strictEqual(isParameterizedPath("/[dir]-[number]/file.md"), true);
     assert.strictEqual(isParameterizedPath("/path/[dir]/file.md"), true);
     assert.strictEqual(isParameterizedPath("/[dir1]/[dir2]/file.md"), true);
   });
@@ -50,6 +56,14 @@ describe("route(root, path, exts)", () => {
     assert.deepStrictEqual(route("test/input/params", "baz/foo", [".md"]), {path: "[dir]/foo.md", ext: ".md", params: {dir: "baz"}}); // prettier-ignore
     assert.deepStrictEqual(route("test/input/params", "baz/bar", [".md"]), {path: "[dir]/[file].md", ext: ".md", params: {dir: "baz", file: "bar"}}); // prettier-ignore
     assert.deepStrictEqual(route("test/input/params", "baz/baz", [".md"]), {path: "[dir]/[file].md", ext: ".md", params: {dir: "baz", file: "baz"}}); // prettier-ignore
+  });
+  it("finds a partially-parameterized match", () => {
+    assert.deepStrictEqual(route("test/input/params", "prefix-foo", [".js"]), {path: "prefix-[file].js", ext: ".js", params: {file: "foo"}}); // prettier-ignore
+    assert.deepStrictEqual(route("test/input/params", "foo-suffix", [".js"]), {path: "[file]-suffix.js", ext: ".js", params: {file: "foo"}}); // prettier-ignore
+  });
+  it("finds a multi-parameterized match", () => {
+    assert.deepStrictEqual(route("test/input/params", "day-14", [".json.js"]), {path: "[period]-[number].json.js", ext: ".json.js", params: {period: "day", number: "14"}}); // prettier-ignore
+    assert.deepStrictEqual(route("test/input/params", "week-4", [".json.js"]), {path: "[period]-[number].json.js", ext: ".json.js", params: {period: "week", number: "4"}}); // prettier-ignore
   });
   it("returns undefined when there is no match", () => {
     assert.strictEqual(route("test/input/build/simple", "not-found", [".md"]), undefined);

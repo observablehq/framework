@@ -1,5 +1,5 @@
 import {existsSync} from "node:fs";
-import {basename, extname, join} from "node:path/posix";
+import {basename, join} from "node:path/posix";
 import {globSync} from "glob";
 
 export type Params = {[name: string]: string};
@@ -68,12 +68,11 @@ function routeParams(root: string, cwd: string, parts: string[], exts: string[])
           return {path: join(cwd, first + ext), ext};
         }
       }
-      const value = basename(first, extname(first));
-      if (value) {
+      if (first) {
         for (const ext of exts) {
-          for (const file of globSync(`\\[?*\\]${ext}`, {cwd: join(root, cwd), nodir: true})) {
-            const params = {[file.slice(file.indexOf("[") + 1, file.indexOf("]"))]: value};
-            return {path: join(cwd, file), params, ext};
+          for (const file of globSync(`*\\[?*\\]*${ext}`, {cwd: join(root, cwd), nodir: true})) {
+            const params = matchParams(basename(file, ext), first);
+            if (params) return {path: join(cwd, file), params: {...params}, ext};
           }
         }
       }
@@ -86,11 +85,31 @@ function routeParams(root: string, cwd: string, parts: string[], exts: string[])
         if (found) return found;
       }
       if (first) {
-        for (const dir of globSync("\\[?*\\]/", {cwd: join(root, cwd)})) {
+        for (const dir of globSync("*\\[?*\\]*/", {cwd: join(root, cwd)})) {
+          const params = matchParams(dir, first);
+          if (!params) continue;
           const found = routeParams(root, join(cwd, dir), rest, exts);
-          if (found) return {...found, params: {...found.params, [dir.slice(1, -1)]: first}};
+          if (found) return {...found, params: {...found.params, ...params}};
         }
       }
     }
   }
+}
+
+function matchParams(file: string, input: string): Params | undefined {
+  return compilePattern(file).exec(input)?.groups;
+}
+
+function compilePattern(file: string): RegExp {
+  let pattern = "^";
+  let i = 0;
+  for (let match: RegExpExecArray | null, re = /\[([a-z_]\w*)\]/gi; (match = re.exec(file)); i = re.lastIndex) {
+    pattern += `${requote(file.slice(i, match.index))}(?<${match[1]}>.+)`;
+  }
+  pattern += `${requote(file.slice(i))}$`;
+  return new RegExp(pattern, "i");
+}
+
+function requote(text: string): string {
+  return text.replace(/[\\^$*+?|[\]().{}]/g, "\\$&");
 }
