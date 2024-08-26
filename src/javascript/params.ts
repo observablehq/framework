@@ -10,6 +10,7 @@ function getParamName(param: ParamReference): string {
   return param.property.type === "Identifier" ? param.property.name : param.property.value;
 }
 
+// Note: mutates node by materializing the values of the param references it contains
 export function checkParams(node: Node, input: string, params: Params): void {
   for (const [name, param] of findParams(node, params, input)) {
     param.value = params[name];
