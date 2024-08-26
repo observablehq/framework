@@ -2,8 +2,8 @@ import assert from "node:assert";
 import {mkdir, readFile, rm, stat, unlink, utimes, writeFile} from "node:fs/promises";
 import os from "node:os";
 import {join} from "node:path/posix";
-import type {LoadEffects} from "../src/dataloader.js";
-import {LoaderResolver} from "../src/dataloader.js";
+import type {LoadEffects} from "../src/loader.js";
+import {LoaderResolver} from "../src/loader.js";
 
 const noopEffects: LoadEffects = {
   logger: {log() {}, warn() {}, error() {}},
