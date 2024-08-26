@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {join} from "node:path/posix";
 import type {ParseArgsConfig} from "node:util";
 import {parseArgs} from "node:util";
 import * as clack from "@clack/prompts";
@@ -199,12 +200,27 @@ try {
     case "convert": {
       const {
         positionals,
-        values: {output, force}
+        values: {config, root, output: out, force}
       } = helpArgs(command, {
-        options: {output: {type: "string", default: "."}, force: {type: "boolean", short: "f"}},
+        options: {
+          output: {
+            type: "string",
+            short: "o",
+            description: "Output directory (defaults to the source root)"
+          },
+          force: {
+            type: "boolean",
+            short: "f",
+            description: "If true, overwrite existing resources"
+          },
+          ...CONFIG_OPTION
+        },
         allowPositionals: true
       });
-      await import("../convert.js").then((convert) => convert.convert(positionals, {output: output!, force}));
+      // The --output command-line option is relative to the cwd, but the root
+      // config option (typically "src") is relative to the project root.
+      const output = out ?? join(root ?? ".", (await readConfig(config, root)).root);
+      await import("../convert.js").then((convert) => convert.convert(positionals, {output, force}));
       break;
     }
     default: {

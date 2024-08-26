@@ -89,11 +89,7 @@ Framework includes a helper script (`observable create`) for creating new projec
 
 To create a new project with npm, run:
 
-<pre data-copy>npm init <span class="win">"</span>@observablehq<span class="win">"</span></pre>
-
-If you prefer Yarn, run:
-
-<pre data-copy>yarn create <span class="win">"</span>@observablehq<span class="win">"</span></pre>
+<pre data-copy>npx <span class="win">"</span>@observablehq/framework@latest<span class="win">"</span> create</pre>
 
 You can run the above command anywhere, but you may want to `cd` to your `~/Development` directory first (or wherever you do local development).
 
@@ -134,14 +130,6 @@ This command will ask you a series of questions in order to initialize your new 
 
 And that’s it! Your new project is ready to go. 🎉
 
-<div class="note">
-
-Under the hood, this command installs the `@observablehq/framework` package and runs:
-
-<pre>npm exec <span class="win">"</span>@observablehq/framework<span class="win">"</span> -- create</pre>
-
-</div>
-
 ## 2. Develop
 
 Next, `cd` into your new project folder.
@@ -160,7 +148,7 @@ Or with Yarn:
 
 You should see something like this:
 
-<pre data-copy="none"><b class="green">Observable Framework</b> v1.10.0
+<pre data-copy="none"><b class="green">Observable Framework</b> v1.10.1
 ↳ <u><a href="http://127.0.0.1:3000/" style="color: inherit;">http://127.0.0.1:3000/</a></u></pre>
 
 <div class="note">
