@@ -209,7 +209,8 @@ export function getFileInfo(root: string, path: string): FileInfo | undefined {
 }
 
 export function findModule(root: string, path: string): RouteResult | undefined {
-  const ext = extname(path) || ".js";
+  const ext = extname(path);
+  if (!ext) throw new Error(`empty extension: ${path}`);
   const exts = [ext];
   if (ext === ".js") exts.push(".jsx");
   return route(root, path.slice(0, -ext.length), exts);
