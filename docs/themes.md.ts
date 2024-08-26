@@ -23,7 +23,11 @@ function renderThemeSection(themes: readonly string[]): string {
 }
 
 export default function render(): string {
-  return `# Themes
+  return `---
+keywords: [light, dark]
+---
+
+# Themes
 
 <style>
 

@@ -21,7 +21,7 @@
   "scripts": {
     "dev": "rimraf --glob docs/themes.md docs/theme/*.md && (tsx watch docs/theme/generate-themes.ts & tsx watch --ignore docs --no-warnings=ExperimentalWarning ./src/bin/observable.ts preview --no-open)",
     "docs:themes": "rimraf --glob docs/themes.md docs/theme/*.md && tsx docs/theme/generate-themes.ts",
-    "docs:build": "yarn docs:themes && rimraf docs/.observablehq/dist && tsx --no-warnings=ExperimentalWarning ./src/bin/observable.ts build",
+    "docs:build": "yarn docs:themes && tsx --no-warnings=ExperimentalWarning ./src/bin/observable.ts build",
     "docs:deploy": "yarn docs:themes && tsx --no-warnings=ExperimentalWarning ./src/bin/observable.ts deploy",
     "build": "rimraf dist && node build.js --outdir=dist --outbase=src \"src/**/*.{ts,js,css}\" --ignore \"**/*.d.ts\"",
     "test": "concurrently npm:test:mocha npm:test:tsc npm:test:lint npm:test:prettier",
