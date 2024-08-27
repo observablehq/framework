@@ -7,7 +7,7 @@
   font: 14px var(--sans-serif);
 }
 
-.grid > .card  {
+.grid > .card {
   margin: 0;
 }
 
@@ -17,7 +17,7 @@
 }
 
 .card > :last-child,
-.card > :last-child > :last-child{
+.card > :last-child > :last-child {
   margin-bottom: 0;
 }
 
