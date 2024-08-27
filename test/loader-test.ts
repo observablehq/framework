@@ -122,26 +122,26 @@ describe("LoaderResolver.getSourceFileHash(path)", () => {
   });
 });
 
-describe("LoaderResolver.get{Source,Output}LastModified(path)", () => {
+describe("LoaderResolver.get{Source,Output}Info(path)", () => {
   const time1 = new Date(Date.UTC(2023, 11, 1));
   const time2 = new Date(Date.UTC(2024, 2, 1));
   const loaders = new LoaderResolver({root: "test"});
   it("both return the last modification time for a simple file", async () => {
     await utimes("test/input/loader/simple.txt", time1, time1);
-    assert.strictEqual(loaders.getSourceLastModified("input/loader/simple.txt"), +time1);
-    assert.strictEqual(loaders.getOutputLastModified("input/loader/simple.txt"), +time1);
+    assert.deepStrictEqual(loaders.getSourceInfo("input/loader/simple.txt"), {hash: "3b09aeb6f5f5336beb205d7f720371bc927cd46c21922e334d47ba264acb5ba4", mtimeMs: +time1, size: 6}); // prettier-ignore
+    assert.deepStrictEqual(loaders.getOutputInfo("input/loader/simple.txt"), {hash: "3b09aeb6f5f5336beb205d7f720371bc927cd46c21922e334d47ba264acb5ba4", mtimeMs: +time1, size: 6}); // prettier-ignore
   });
   it("both return an undefined last modification time for a missing file", async () => {
-    assert.strictEqual(loaders.getSourceLastModified("input/loader/missing.txt"), undefined);
-    assert.strictEqual(loaders.getOutputLastModified("input/loader/missing.txt"), undefined);
+    assert.deepStrictEqual(loaders.getSourceInfo("input/loader/missing.txt"), undefined);
+    assert.deepStrictEqual(loaders.getOutputInfo("input/loader/missing.txt"), undefined);
   });
   it("returns the last modification time of the loader in preview, and of the cache, on build", async () => {
     await utimes("test/input/loader/cached.txt.sh", time1, time1);
     await mkdir("test/.observablehq/cache/input/loader/", {recursive: true});
     await writeFile("test/.observablehq/cache/input/loader/cached.txt", "2024-03-01 00:00:00");
     await utimes("test/.observablehq/cache/input/loader/cached.txt", time2, time2);
-    assert.strictEqual(loaders.getSourceLastModified("input/loader/cached.txt"), +time1);
-    assert.strictEqual(loaders.getOutputLastModified("input/loader/cached.txt"), +time2);
+    assert.deepStrictEqual(loaders.getSourceInfo("input/loader/cached.txt"), {hash: "6493b08929c0ff92d9cf9ea9a03a2c8c74b03800f63c1ec986c40c8bd9a48405", mtimeMs: +time1, size: 29}); // prettier-ignore
+    assert.deepStrictEqual(loaders.getOutputInfo("input/loader/cached.txt"), {hash: "1174b3f8f206b9be09f89eceea3799f60389d7d62897e8b2767847b2bc259a8c", mtimeMs: +time2, size: 19}); // prettier-ignore
     // clean up
     try {
       await unlink("test/.observablehq/cache/input/loader/cached.txt");
@@ -152,7 +152,7 @@ describe("LoaderResolver.get{Source,Output}LastModified(path)", () => {
   });
   it("returns the last modification time of the data loader in preview, and null in build, when there is no cache", async () => {
     await utimes("test/input/loader/not-cached.txt.sh", time1, time1);
-    assert.strictEqual(loaders.getSourceLastModified("input/loader/not-cached.txt"), +time1);
-    assert.strictEqual(loaders.getOutputLastModified("input/loader/not-cached.txt"), undefined);
+    assert.deepStrictEqual(loaders.getSourceInfo("input/loader/not-cached.txt"), {hash: "6493b08929c0ff92d9cf9ea9a03a2c8c74b03800f63c1ec986c40c8bd9a48405", mtimeMs: +time1, size: 29}); // prettier-ignore
+    assert.deepStrictEqual(loaders.getOutputInfo("input/loader/not-cached.txt"), undefined);
   });
 });

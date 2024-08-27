@@ -10,6 +10,7 @@ import {extract} from "tar-stream";
 import {maybeStat, prepareOutput} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {formatByteSize} from "./format.js";
+import type {FileInfo} from "./javascript/module.js";
 import {getFileInfo} from "./javascript/module.js";
 import type {Logger, Writer} from "./logger.js";
 import type {Params} from "./route.js";
@@ -251,12 +252,12 @@ export class LoaderResolver {
     return path === name ? hash : createHash("sha256").update(hash).update(String(info.mtimeMs)).digest("hex");
   }
 
-  getSourceLastModified(name: string): number | undefined {
-    return getFileInfo(this.root, this.getSourceFilePath(name))?.mtimeMs;
+  getSourceInfo(name: string): FileInfo | undefined {
+    return getFileInfo(this.root, this.getSourceFilePath(name));
   }
 
-  getOutputLastModified(name: string): number | undefined {
-    return getFileInfo(this.root, this.getOutputFilePath(name))?.mtimeMs;
+  getOutputInfo(name: string): FileInfo | undefined {
+    return getFileInfo(this.root, this.getOutputFilePath(name));
   }
 
   resolveFilePath(path: string): string {

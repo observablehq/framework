@@ -341,6 +341,7 @@ The Framework standard library also includes several new methods that are not av
 Framework’s [`FileAttachment`](./files) includes a few new features:
 
 - `file.href`
+- `file.size`
 - `file.lastModified`
 - `file.mimeType` is always defined
 - `file.text` now supports an `encoding` option

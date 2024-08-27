@@ -18,6 +18,8 @@ import {parseProgram} from "./parse.js";
 export type FileInfo = {
   /** The last-modified time of the file; used to invalidate the cache. */
   mtimeMs: number;
+  /** The size of the file in bytes. */
+  size: number;
   /** The SHA-256 content hash of the file contents. */
   hash: string;
 };
@@ -190,11 +192,13 @@ export function getFileHash(root: string, path: string): string {
 export function getFileInfo(root: string, path: string): FileInfo | undefined {
   const key = join(root, path);
   let mtimeMs: number;
+  let size: number;
   try {
     const stat = statSync(key);
     if (!stat.isFile()) return; // ignore non-files
     accessSync(key, constants.R_OK); // verify that file is readable
     mtimeMs = Math.floor(stat.mtimeMs);
+    size = stat.size;
   } catch {
     fileInfoCache.delete(key); // delete stale entry
     return; // ignore missing, non-readable file
@@ -203,7 +207,7 @@ export function getFileInfo(root: string, path: string): FileInfo | undefined {
   if (!entry || entry.mtimeMs < mtimeMs) {
     const contents = readFileSync(key);
     const hash = createHash("sha256").update(contents).digest("hex");
-    fileInfoCache.set(key, (entry = {mtimeMs, hash}));
+    fileInfoCache.set(key, (entry = {mtimeMs, size, hash}));
   }
   return entry;
 }
