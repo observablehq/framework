@@ -376,7 +376,7 @@ abstract class AbstractLoader implements Loader {
       command.finally(() => runningCommands.delete(key)).catch(() => {});
       runningCommands.set(key, command);
     }
-    effects.output.write(`${cyan("load")} ${loaderPath} ${faint("→")} `);
+    effects.output.write(`${cyan("load")} ${key} ${faint("→")} `);
     const start = performance.now();
     command.then(
       (path) => {

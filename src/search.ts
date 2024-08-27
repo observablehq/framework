@@ -1,10 +1,9 @@
 import {readFile} from "node:fs/promises";
-import {basename, dirname, join} from "node:path/posix";
+import {join} from "node:path/posix";
 import he from "he";
 import MiniSearch from "minisearch";
 import type {Config, SearchResult} from "./config.js";
-import {visitMarkdownFiles} from "./files.js";
-import type {Logger} from "./logger.js";
+import type {Logger, Writer} from "./logger.js";
 import {parseMarkdown} from "./markdown.js";
 import {faint, strikethrough} from "./tty.js";
 
@@ -14,9 +13,13 @@ const reindexDelay = 10 * 60 * 1000; // 10 minutes
 
 export interface SearchIndexEffects {
   logger: Logger;
+  output: Writer;
 }
 
-const defaultEffects: SearchIndexEffects = {logger: console};
+const defaultEffects: SearchIndexEffects = {
+  logger: console,
+  output: process.stdout
+};
 
 const indexOptions = {
   fields: ["title", "text", "keywords"], // fields to return with search results
@@ -57,7 +60,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
 }
 
 async function* indexPages(config: Config, effects: SearchIndexEffects): AsyncIterable<SearchResult> {
-  const {root, pages} = config;
+  const {root, pages, loaders} = config;
 
   // Get all the listed pages (which are indexed by default)
   const pagePaths = new Set(["/index"]);
@@ -66,11 +69,14 @@ async function* indexPages(config: Config, effects: SearchIndexEffects): AsyncIt
     if ("pages" in p) for (const {path} of p.pages) pagePaths.add(path);
   }
 
-  for (const file of visitMarkdownFiles(root)) {
-    const sourcePath = join(root, file);
+  for await (const path of config.paths()) {
+    const loader = loaders.find(`${path}.md`);
+    if (!loader) throw new Error(`page not found: ${path}`);
+    const {params} = loader;
+    const sourceFile = await loader.load(effects);
+    const sourcePath = join(root, sourceFile);
     const source = await readFile(sourcePath, "utf8");
-    const path = `/${join(dirname(file), basename(file, ".md"))}`;
-    const {body, title, data} = parseMarkdown(source, {...config, path});
+    const {body, title, data} = parseMarkdown(source, {...config, path, params});
 
     // Skip pages that opt-out of indexing, and skip unlisted pages unless
     // opted-in. We only log the first case.

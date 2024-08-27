@@ -81,7 +81,7 @@ export interface Config {
   sidebar: boolean; // defaults to true if pages isn’t empty
   pages: (Page | Section<Page>)[];
   pager: boolean; // defaults to true
-  paths: string[];
+  paths: () => AsyncIterable<string>; // defaults to static Markdown files
   scripts: Script[]; // deprecated; defaults to empty array
   head: PageFragmentFunction | string | null; // defaults to null
   header: PageFragmentFunction | string | null; // defaults to null
@@ -113,7 +113,7 @@ export interface ConfigSpec {
   title?: unknown;
   pages?: unknown;
   pager?: unknown;
-  paths?: unknown;
+  dynamicPaths?: unknown;
   toc?: unknown;
   linkify?: unknown;
   typographer?: unknown;
@@ -242,7 +242,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const title = spec.title === undefined ? undefined : String(spec.title);
   const pages = spec.pages === undefined ? undefined : normalizePages(spec.pages);
   const pager = spec.pager === undefined ? true : Boolean(spec.pager);
-  const paths = getDefaultPaths(root).concat(normalizePaths(spec.paths));
+  const dynamicPaths = normalizePaths(spec.dynamicPaths);
   const toc = normalizeToc(spec.toc as any);
   const sidebar = spec.sidebar === undefined ? undefined : Boolean(spec.sidebar);
   const scripts = spec.scripts === undefined ? [] : normalizeScripts(spec.scripts);
@@ -251,6 +251,18 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const footer = pageFragment(spec.footer === undefined ? defaultFooter() : spec.footer);
   const search = spec.search == null || spec.search === false ? null : normalizeSearch(spec.search as any);
   const interpreters = normalizeInterpreters(spec.interpreters as any);
+  const normalizePath = getPathNormalizer(spec.cleanUrls);
+
+  // If this path ends with a slash, then add an implicit /index to the
+  // end of the path. Otherwise, remove the .html extension (we use clean
+  // paths as the internal canonical representation; see normalizePage).
+  function normalizePagePath(pathname: string): string {
+    pathname = normalizePath(pathname);
+    if (pathname.endsWith("/")) pathname = join(pathname, "index");
+    else pathname = pathname.replace(/\.html$/, "");
+    return pathname;
+  }
+
   const config: Config = {
     root,
     output,
@@ -259,7 +271,14 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     sidebar: sidebar!, // see below
     pages: pages!, // see below
     pager,
-    paths,
+    async *paths() {
+      for await (const path of getDefaultPaths(root)) {
+        yield normalizePagePath(path);
+      }
+      for await (const path of dynamicPaths()) {
+        yield normalizePagePath(path);
+      }
+    },
     scripts,
     head,
     header,
@@ -269,7 +288,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     globalStylesheets,
     search,
     md,
-    normalizePath: getPathNormalizer(spec.cleanUrls),
+    normalizePath,
     loaders: new LoaderResolver({root, interpreters}),
     watchPath
   };
@@ -285,8 +304,10 @@ function getDefaultPaths(root: string): string[] {
     .map((path) => join("/", dirname(path), basename(path, ".md")));
 }
 
-function normalizePaths(spec: unknown = []): Config["paths"] {
-  return Array.from(spec as any, String);
+function normalizePaths(spec: unknown): Config["paths"] {
+  if (typeof spec === "function") return spec as () => AsyncIterable<string>;
+  if (spec == null || spec === false) return async function* () {};
+  throw new Error(`invalid paths: ${spec}`);
 }
 
 function getPathNormalizer(spec: unknown = true): (path: string) => string {

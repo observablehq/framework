@@ -89,13 +89,13 @@ describe("LoaderResolver.find(path, {useStale: true})", () => {
       // eslint-disable-next-line no-control-regex
       out.map((l) => l.replaceAll(/\x1b\[[0-9]+m/g, "")),
       [
-        "load test/dataloaders/data1.txt.js → ",
+        "load test/dataloaders/data1.txt → ",
         "[missing] ",
-        "load test/dataloaders/data1.txt.js → ",
+        "load test/dataloaders/data1.txt → ",
         "[fresh] ",
-        "load test/dataloaders/data1.txt.js → ",
+        "load test/dataloaders/data1.txt → ",
         "[using stale] ",
-        "load test/dataloaders/data1.txt.js → ",
+        "load test/dataloaders/data1.txt → ",
         "[stale] "
       ]
     );

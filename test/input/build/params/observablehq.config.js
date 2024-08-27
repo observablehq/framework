@@ -1,7 +1,5 @@
 export default {
-  paths: [
-    "/bar/index",
-    "/foo/bar",
-    "/foo/index"
-  ]
+  async *dynamicPaths() {
+    yield* ["/bar/index", "/foo/bar", "/foo/index"];
+  }
 };

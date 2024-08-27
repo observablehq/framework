@@ -54,23 +54,8 @@ export async function build(
   {config}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output, join(config.root, ".observablehq", "cache"))
 ): Promise<void> {
-  const {paths, root, loaders, normalizePath} = config;
+  const {root, loaders} = config;
   Telemetry.record({event: "build", step: "start"});
-
-  // If this path ends with a slash, then add an implicit /index to the
-  // end of the path. Otherwise, remove the .html extension (we use clean
-  // paths as the internal canonical representation; see normalizePage).
-  function normalizePagePath(pathname: string): string {
-    pathname = normalizePath(pathname);
-    if (pathname.endsWith("/")) pathname = join(pathname, "index");
-    else pathname = pathname.replace(/\.html$/, "");
-    return pathname;
-  }
-
-  // Check that there’s at least one page.
-  const pageCount = paths.length;
-  if (!pageCount) throw new CliError(`Nothing to build: no page files found in your ${root} directory.`);
-  effects.logger.log(`${faint("found")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
 
   // Prepare for build (such as by emptying the existing output root).
   await effects.prepare();
@@ -81,7 +66,7 @@ export async function build(
   const localImports = new Set<string>(); // e.g., "/components/foo.js"
   const globalImports = new Set<string>(); // e.g., "/_observablehq/search.js"
   const stylesheets = new Set<string>(); // e.g., "/style.css"
-  for (const path of paths.map(normalizePagePath)) {
+  for await (const path of config.paths()) {
     const loader = loaders.find(`${path}.md`);
     if (!loader) throw new Error(`page not found: ${path}`);
     const {params} = loader;
@@ -106,6 +91,11 @@ export async function build(
     effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
     pages.set(path, {sourcePath: sourceFile, page, params, resolvers});
   }
+
+  // Check that there’s at least one page.
+  const pageCount = pages.size;
+  if (!pageCount) throw new CliError(`Nothing to build: no page files found in your ${root} directory.`);
+  effects.logger.log(`${faint("built")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
 
   // For cache-breaking we rename most assets to include content hashes.
   const aliases = new Map<string, string>();

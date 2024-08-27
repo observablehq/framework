@@ -13,17 +13,19 @@ A parameterized route is denoted by square brackets, such as `[param]`, in a fil
 └─ ⋯
 ```
 
-Then using the [**paths** config option](./config#paths), you can specify the list of product pages:
+Then using the [**dynamicPaths** config option](./config#dynamicPaths), you can specify the list of product pages:
 
 ```js run=false
 export default {
-  paths: [
-    "/products/100736",
-    "/products/221797",
-    "/products/399145",
-    "/products/475651",
-    …
-  ]
+  async *dynamicPaths() {
+    yield* [
+      "/products/100736",
+      "/products/221797",
+      "/products/399145",
+      "/products/475651",
+      …
+    ];
+  }
 };
 ```
 
@@ -35,7 +37,11 @@ import postgres from "postgres";
 const sql = postgres(); // Note: uses psql environment variables
 
 export default {
-  paths: (await sql`SELECT id FROM products`).map(({id}) => `/products/${id}`)
+  async *dynamicPaths() {
+    for await (const {id} of sql`SELECT id FROM products`.cursor()) {
+      yield `/products/${id}`;
+    }
+  }
 };
 ```
 

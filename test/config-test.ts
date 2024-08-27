@@ -7,7 +7,7 @@ import {LoaderResolver} from "../src/loader.js";
 describe("readConfig(undefined, root)", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   it("imports the config file at the specified root", async () => {
-    const {md, loaders, normalizePath, ...config} = await readConfig(undefined, "test/input/build/config");
+    const {md, loaders, paths, normalizePath, ...config} = await readConfig(undefined, "test/input/build/config");
     assert(md instanceof MarkdownIt);
     assert(loaders instanceof LoaderResolver);
     assert.strictEqual(typeof normalizePath, "function");
@@ -33,7 +33,6 @@ describe("readConfig(undefined, root)", () => {
           pages: [{name: "Closed page", path: "/closed/page", pager: "main"}]
         }
       ],
-      paths: ["/index", "/one", "/toc-override", "/toc", "/closed/page", "/sub/two"],
       title: undefined,
       toc: {label: "On this page", show: true},
       pager: true,
@@ -47,7 +46,7 @@ describe("readConfig(undefined, root)", () => {
     });
   });
   it("returns the default config if no config file is found", async () => {
-    const {md, loaders, normalizePath, ...config} = await readConfig(undefined, "test/input/build/simple");
+    const {md, loaders, paths, normalizePath, ...config} = await readConfig(undefined, "test/input/build/simple");
     assert(md instanceof MarkdownIt);
     assert(loaders instanceof LoaderResolver);
     assert.strictEqual(typeof normalizePath, "function");
@@ -61,7 +60,6 @@ describe("readConfig(undefined, root)", () => {
       ],
       sidebar: true,
       pages: [{name: "Build test case", path: "/simple", pager: "main"}],
-      paths: ["/simple"],
       title: undefined,
       toc: {label: "Contents", show: true},
       pager: true,
