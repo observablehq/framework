@@ -36,6 +36,7 @@ export async function renderPage(page: MarkdownPage, options: RenderOptions & Re
   return String(html`<!DOCTYPE html>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="generator" content="Observable Framework v${process.env.npm_package_version}">
 ${
   page.title || title
     ? html`<title>${[page.title, page.title === title ? null : title]

@@ -190,6 +190,7 @@ export class Telemetry {
         const cpus = os.cpus() || [];
         return {
           version: process.env.npm_package_version!,
+          userAgent: process.env.npm_config_user_agent,
           node: process.versions.node,
           systemPlatform: os.platform(),
           systemRelease: os.release(),

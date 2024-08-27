@@ -93,6 +93,7 @@
 
 - [`chess`](https://observablehq.observablehq.cloud/framework-example-chess/) - Load Zip data from FIDE; create a bump chart with Observable Plot
 - [`custom-stylesheet`](https://observablehq.observablehq.cloud/framework-example-custom-stylesheet/) - Define a custom stylesheet (custom theme)
+- [`datawrapper-api`](https://observablehq.observablehq.cloud/framework-example-datawrapper-api/) - Create a chart with the Datawrapper API and embed it in your page
 - [`google-analytics`](https://observablehq.observablehq.cloud/framework-example-google-analytics/) - A Google Analytics dashboard with numbers and charts
 - [`hello-world`](https://observablehq.observablehq.cloud/framework-example-hello-world/) - A minimal Framework project
 - [`intersection-observer`](https://observablehq.observablehq.cloud/framework-example-intersection-observer/) - Scrollytelling with IntersectionObserver
