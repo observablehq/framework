@@ -21,6 +21,7 @@ import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import type {FileWatchers} from "./fileWatchers.js";
 import {isComment, isElement, isText, parseHtml, rewriteHtml} from "./html.js";
+import type {FileInfo} from "./javascript/module.js";
 import {readJavaScript} from "./javascript/module.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import {parseMarkdown} from "./markdown.js";
@@ -354,7 +355,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
           type: "update",
           html: diffHtml(previousHtml, html),
           code: diffCode(previousCode, code),
-          files: diffFiles(previousFiles, files, getLastModifiedResolver(loaders, path)),
+          files: diffFiles(previousFiles, files, getInfoResolver(loaders, path)),
           tables: diffTables(previousTables, tables, previousFiles, files),
           stylesheets: diffStylesheets(previousStylesheets, stylesheets),
           hash: {previous: previousHash, current: hash}
@@ -486,13 +487,13 @@ function diffCode(oldCode: Map<string, string>, newCode: Map<string, string>): C
   return patch;
 }
 
-type FileDeclaration = {name: string; mimeType: string; lastModified: number; path: string};
+type FileDeclaration = {name: string; mimeType: string; lastModified: number; size: number; path: string};
 type FilePatch = {removed: string[]; added: FileDeclaration[]};
 
 function diffFiles(
   oldFiles: Map<string, string>,
   newFiles: Map<string, string>,
-  getLastModified: (name: string) => number | undefined
+  getInfo: (name: string) => FileInfo | undefined
 ): FilePatch {
   const patch: FilePatch = {removed: [], added: []};
   for (const [name, path] of oldFiles) {
@@ -502,10 +503,12 @@ function diffFiles(
   }
   for (const [name, path] of newFiles) {
     if (oldFiles.get(name) !== path) {
+      const info = getInfo(name);
       patch.added.push({
         name,
         mimeType: mime.getType(name) ?? "application/octet-stream",
-        lastModified: getLastModified(name) ?? NaN,
+        lastModified: info?.mtimeMs ?? NaN,
+        size: info?.size ?? NaN,
         path
       });
     }
@@ -513,8 +516,8 @@ function diffFiles(
   return patch;
 }
 
-function getLastModifiedResolver(loaders: LoaderResolver, path: string): (name: string) => number | undefined {
-  return (name) => loaders.getSourceLastModified(resolvePath(path, name));
+function getInfoResolver(loaders: LoaderResolver, path: string): (name: string) => FileInfo | undefined {
+  return (name) => loaders.getSourceInfo(resolvePath(path, name));
 }
 
 type TableDeclaration = {name: string; path: string};

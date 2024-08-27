@@ -377,10 +377,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@observablehq/inputs@^0.11.0":
-  version "0.11.0"
-  resolved "https://registry.yarnpkg.com/@observablehq/inputs/-/inputs-0.11.0.tgz#930f5c16eef8e0d14f0e6fc3e5f2c7589b38ecd0"
-  integrity sha512-af8H7Ncg+B+5t9MVKA/GiR2oG1nK7P4g36a92jkgIaBSUDLcmta/FDiJKIyjJ3Pc+FNOGkfRcPCRWEgqVl+Q9A==
+"@observablehq/inputs@^0.12.0":
+  version "0.12.0"
+  resolved "https://registry.yarnpkg.com/@observablehq/inputs/-/inputs-0.12.0.tgz#865acb8f3292efdfedfdd5291e69dd88f7086ef3"
+  integrity sha512-1ln7+PYe31cMx00K9awVbiCscQM0THnXRJ/AEzd+FfTA25Gu3KRWknAGECxU49QzHyKqiXpLl5LCg3XtYm70eQ==
   dependencies:
     htl "^0.3.1"
     isoformat "^0.2.0"

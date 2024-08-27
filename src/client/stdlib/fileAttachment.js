@@ -5,8 +5,14 @@ export function registerFile(name, info) {
   if (info == null) {
     files.delete(href);
   } else {
-    const {path, mimeType, lastModified} = info;
-    const file = new FileAttachmentImpl(new URL(path, location).href, name.split("/").pop(), mimeType, lastModified);
+    const {path, mimeType, lastModified, size} = info;
+    const file = new FileAttachmentImpl(
+      new URL(path, location).href,
+      name.split("/").pop(),
+      mimeType,
+      lastModified,
+      size
+    );
     files.set(href, file);
   }
 }
@@ -25,11 +31,12 @@ async function remote_fetch(file) {
 }
 
 export class AbstractFile {
-  constructor(name, mimeType = "application/octet-stream", lastModified) {
+  constructor(name, mimeType = "application/octet-stream", lastModified, size) {
     Object.defineProperties(this, {
       name: {value: `${name}`, enumerable: true},
       mimeType: {value: `${mimeType}`, enumerable: true},
-      lastModified: {value: +lastModified, enumerable: true}
+      lastModified: {value: +lastModified, enumerable: true},
+      size: {value: +size, enumerable: true}
     });
   }
   async blob() {
@@ -131,8 +138,8 @@ export class AbstractFile {
 }
 
 class FileAttachmentImpl extends AbstractFile {
-  constructor(href, name, mimeType, lastModified) {
-    super(name, mimeType, lastModified);
+  constructor(href, name, mimeType, lastModified, size) {
+    super(name, mimeType, lastModified, size);
     Object.defineProperty(this, "href", {value: href});
   }
   async url() {
