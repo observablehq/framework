@@ -29,7 +29,7 @@ process.stdout.write(\`# Recent quakes
 
 ## Parameterized pages
 
-Page loaders are often used in conjunction with [parameterized routes](./params) to generate multiple pages from the same page loader. The value of each parameter is passed as a command-line argument. In a JavaScript page loader, you can use [\`parseArgs\`](https://nodejs.org/api/util.html#utilparseargsconfig) from \`node:util\` to parse command-line arguments. You can then bake the parameter values into the resulting page, or reference them dynamically in JavaScript using \`observable.params\`.
+Page loaders often use [parameterized routes](./params) to generate multiple pages from a single program. Parameter values are passed as command-line arguments. In a JavaScript page loader, you can use [\`parseArgs\`](https://nodejs.org/api/util.html#utilparseargsconfig) from \`node:util\` to parse command-line arguments. You can then bake parameter values into the resulting page, or reference them dynamically in JavaScript using \`observable.params\`.
 
 ~~~~js run=false
 import {parseArgs} from "node:util";
