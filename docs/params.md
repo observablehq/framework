@@ -13,6 +13,8 @@ A parameterized route is denoted by square brackets, such as `[param]`, in a fil
 └─ ⋯
 ```
 
+(File and directory names can also be partially parameterized such as `prefix-[param].md` or `[param]-suffix.md`, or contain multiple parameters such as `[year]-[month]-[day].md`.)
+
 The [**dynamicPaths** config option](./config#dynamicPaths) would then specify the list of product pages:
 
 ```js run=false
@@ -57,7 +59,7 @@ Since parameter values are known statically at build time, you can reference par
 const info = FileAttachment(`${observable.params.product}.json`).json();
 ```
 
-This is an exception: otherwise `FileAttachment` only accepts a static string literal as an argument since Framework uses [static analysis](./files#static-analysis) to find referenced files.
+This is an exception: otherwise `FileAttachment` only accepts a static string literal as an argument since Framework uses [static analysis](./files#static-analysis) to find referenced files. If you need more flexibility, consider using a [page loader](./page-loaders) to generate the page.
 
 ## Params in loaders
 
@@ -72,12 +74,12 @@ const {
   options: {product: {type: "string"}}
 });
 
-console.log(product);
+process.stdout.write(JSON.stringify({product}));
 ```
 
 ## Precedence
 
-If multiple sources match a particular request, Framework choses the most-specific match. Exact matches are preferred over parameterized matches, and higher directories (closer to the root) are given priority over lower directories.
+If multiple sources match a particular route, Framework choses the most-specific match. Exact matches are preferred over parameterized matches, and higher directories (closer to the root) are given priority over lower directories.
 
 For example, for the page `/product/42`, the following sources might be considered:
 

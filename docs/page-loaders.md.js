@@ -6,7 +6,9 @@ keywords: server-side rendering, ssr
 
 Page loaders are like [data loaders](./data-loaders), but for generating (or “server-side rendering”) dynamic pages. Page loaders are programs that emit [Markdown](./markdown) to standard out, and have a double extension starting with \`.md\`, such as \`.md.js\` for a JavaScript page loader or \`.md.py\` for a Python page loader.
 
-For example, to render a static map of recent earthquakes in SVG using D3:
+By “baking” dynamically-generated content into static Markdown, you can further improve the performance of pages since the content exists on page load rather than waiting for JavaScript to run. You may even be able to avoid loading additional assets and JavaScript libraries.
+
+For example, to render a map of recent earthquakes into static SVG using D3:
 
 ~~~js run=false
 import * as d3 from "d3-geo";
@@ -27,6 +29,12 @@ process.stdout.write(\`# Recent quakes
 \`);
 ~~~
 
+<div class="tip">
+
+When using page loaders, keep an eye on the generated page size, particularly with complex maps and data visualizations in SVG. To keep the page size small, consider server-side rendering a low-fidelity placeholder and then replacing it with the full graphic using JavaScript on the client.
+
+</div>
+
 ## Parameterized pages
 
 Page loaders often use [parameterized routes](./params) to generate multiple pages from a single program. Parameter values are passed as command-line arguments. In a JavaScript page loader, you can use [\`parseArgs\`](https://nodejs.org/api/util.html#utilparseargsconfig) from \`node:util\` to parse command-line arguments. You can then bake parameter values into the resulting page, or reference them dynamically in JavaScript using \`observable.params\`.
@@ -42,18 +50,7 @@ const {
 
 process.stdout.write(\`# Hello $\{product}
 
-I can also refer to it dynamically as $\\{observable.params.product}.
-
-But not sure why I would do that over $\{product}.
-
-~~~js
-1 + observable.params.product
-~~~
-
-~~~js
-1 + $\{JSON.stringify(product)}
-~~~
-
+Or alternatively, $\\{observable.params.product}.
 \`);
 ~~~~
 
