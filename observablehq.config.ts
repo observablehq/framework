@@ -89,13 +89,14 @@ export default {
     {name: "Contributing", path: "/contributing", pager: false}
   ],
   dynamicPaths: [
+    "/page-loaders", // TODO remove
     "/theme/dark",
     "/theme/dark-alt",
     "/theme/dashboard",
     "/theme/light",
     "/theme/light-alt",
     "/theme/wide",
-    "/themes",
+    "/themes", // TODO remove
     ...themes.dark.map((theme) => `/theme/${theme}`),
     ...themes.light.map((theme) => `/theme/${theme}`)
   ],
