@@ -121,7 +121,7 @@ export function getModuleInfo(root: string, path: string): ModuleInfo | undefine
   const key = join(root, path);
   let mtimeMs: number;
   try {
-    ({mtimeMs} = statSync(resolveJsx(key) ?? key));
+    mtimeMs = Math.floor(statSync(resolveJsx(key) ?? key).mtimeMs);
   } catch {
     moduleInfoCache.delete(key); // delete stale entry
     return; // ignore missing file
@@ -193,7 +193,8 @@ export function getFileInfo(root: string, path: string): FileInfo | undefined {
     const stat = statSync(key);
     if (!stat.isFile()) return; // ignore non-files
     accessSync(key, constants.R_OK); // verify that file is readable
-    ({mtimeMs, size} = stat);
+    mtimeMs = Math.floor(stat.mtimeMs);
+    size = stat.size;
   } catch {
     fileInfoCache.delete(key); // delete stale entry
     return; // ignore missing, non-readable file

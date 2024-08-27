@@ -10,6 +10,7 @@ import {extract} from "tar-stream";
 import {maybeStat, prepareOutput} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {formatByteSize} from "./format.js";
+import type {FileInfo} from "./javascript/module.js";
 import {getFileInfo} from "./javascript/module.js";
 import type {Logger, Writer} from "./logger.js";
 import {cyan, faint, green, red, yellow} from "./tty.js";
@@ -178,24 +179,12 @@ export class LoaderResolver {
     return path === name ? hash : createHash("sha256").update(hash).update(String(info.mtimeMs)).digest("hex");
   }
 
-  getSourceLastModified(name: string): number | undefined {
-    const entry = getFileInfo(this.root, this.getSourceFilePath(name));
-    return entry && Math.floor(entry.mtimeMs);
+  getSourceInfo(name: string): FileInfo | undefined {
+    return getFileInfo(this.root, this.getSourceFilePath(name));
   }
 
-  getSourceSize(name: string): number | undefined {
-    const entry = getFileInfo(this.root, this.getSourceFilePath(name));
-    return entry && Math.floor(entry.size);
-  }
-
-  getOutputLastModified(name: string): number | undefined {
-    const entry = getFileInfo(this.root, this.getOutputFilePath(name));
-    return entry && Math.floor(entry.mtimeMs);
-  }
-
-  getOutputSize(name: string): number | undefined {
-    const entry = getFileInfo(this.root, this.getOutputFilePath(name));
-    return entry && Math.floor(entry.size);
+  getOutputInfo(name: string): FileInfo | undefined {
+    return getFileInfo(this.root, this.getOutputFilePath(name));
   }
 
   resolveFilePath(path: string): string {
