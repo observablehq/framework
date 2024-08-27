@@ -120,7 +120,7 @@ The above data loader lives in `data/chart.txt.py`, and creates the `data/chart.
 ```js echo
 function DatawrapperChart(chartId) {
   const script = document.createElement("script");
-  script.setAttribute("data-dark", "auto");
+  script.setAttribute("data-dark", dark);
   script.setAttribute("src", `https://datawrapper.dwcdn.net/${chartId}/embed.js`);
   return script;
 }
