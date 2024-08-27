@@ -20,7 +20,7 @@ To embed a Datawrapper chart in Framework, copy and paste its script embed code.
 
 <div class="tip">
 
-Setting the `data-dark` attribute to `auto` will respect the user’s preferred color scheme. If you are forcing a [dark theme](https://observablehq.com/framework/themes#dark-mode), set this attribute to `true` instead.
+Setting the `data-dark` attribute to `auto` will respect the user’s preferred color scheme and assumes you are using a [responsive theme](https://observablehq.com/framework/themes#auto-mode) in Framework. If you are forcing a [dark theme](https://observablehq.com/framework/themes#dark-mode), set this attribute to `true` instead; or for a [light theme](https://observablehq.com/framework/themes#dark-mode), set this attribute to `false`.
 
 </div>
 
