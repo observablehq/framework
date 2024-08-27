@@ -61,7 +61,7 @@ export async function build(
   await effects.prepare();
 
   // Parse .md files, building a list of additional assets as we go.
-  const pages = new Map<string, {sourcePath: string; page: MarkdownPage; params?: Params; resolvers: Resolvers}>();
+  const pages = new Map<string, {page: MarkdownPage; params?: Params; resolvers: Resolvers}>();
   const files = new Set<string>(); // e.g., "/assets/foo.png"
   const localImports = new Set<string>(); // e.g., "/components/foo.js"
   const globalImports = new Set<string>(); // e.g., "/_observablehq/search.js"
@@ -89,7 +89,7 @@ export async function build(
     for (let i of resolvers.globalImports) if (isPathImport((i = resolvers.resolveImport(i)))) globalImports.add(resolvePath(path, i)); // prettier-ignore
     for (const s of resolvers.stylesheets) stylesheets.add(/^\w+:/.test(s) ? s : resolvePath(path, s));
     effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
-    pages.set(path, {sourcePath: sourceFile, page, params, resolvers});
+    pages.set(path, {page, params, resolvers});
   }
 
   // Check that there’s at least one page.
