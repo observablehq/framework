@@ -29,3 +29,15 @@ But not sure why I would do that over ${dir}.
 
 `);
 ```
+
+<div class="tip">
+
+To allow importing of a JavaScript page loader without running it, have the page loader check whether `process.argv[1]` is the same as `import.meta.url` before running:
+
+```js run=false
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  process.stdout.write(`# Hello page`);
+}
+```
+
+</div>
