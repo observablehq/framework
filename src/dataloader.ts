@@ -183,9 +183,19 @@ export class LoaderResolver {
     return entry && Math.floor(entry.mtimeMs);
   }
 
+  getSourceSize(name: string): number | undefined {
+    const entry = getFileInfo(this.root, this.getSourceFilePath(name));
+    return entry && Math.floor(entry.size);
+  }
+
   getOutputLastModified(name: string): number | undefined {
     const entry = getFileInfo(this.root, this.getOutputFilePath(name));
     return entry && Math.floor(entry.mtimeMs);
+  }
+
+  getOutputSize(name: string): number | undefined {
+    const entry = getFileInfo(this.root, this.getOutputFilePath(name));
+    return entry && Math.floor(entry.size);
   }
 
   resolveFilePath(path: string): string {

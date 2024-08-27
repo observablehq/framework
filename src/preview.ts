@@ -354,7 +354,12 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
           type: "update",
           html: diffHtml(previousHtml, html),
           code: diffCode(previousCode, code),
-          files: diffFiles(previousFiles, files, getLastModifiedResolver(loaders, path)),
+          files: diffFiles(
+            previousFiles,
+            files,
+            getLastModifiedResolver(loaders, path),
+            getSizeResolver(loaders, path)
+          ),
           tables: diffTables(previousTables, tables, previousFiles, files),
           stylesheets: diffStylesheets(previousStylesheets, stylesheets),
           hash: {previous: previousHash, current: hash}
@@ -486,13 +491,14 @@ function diffCode(oldCode: Map<string, string>, newCode: Map<string, string>): C
   return patch;
 }
 
-type FileDeclaration = {name: string; mimeType: string; lastModified: number; path: string};
+type FileDeclaration = {name: string; mimeType: string; lastModified: number; size: number; path: string};
 type FilePatch = {removed: string[]; added: FileDeclaration[]};
 
 function diffFiles(
   oldFiles: Map<string, string>,
   newFiles: Map<string, string>,
-  getLastModified: (name: string) => number | undefined
+  getLastModified: (name: string) => number | undefined,
+  getSize: (name: string) => number | undefined
 ): FilePatch {
   const patch: FilePatch = {removed: [], added: []};
   for (const [name, path] of oldFiles) {
@@ -506,6 +512,7 @@ function diffFiles(
         name,
         mimeType: mime.getType(name) ?? "application/octet-stream",
         lastModified: getLastModified(name) ?? NaN,
+        size: getSize(name) ?? NaN,
         path
       });
     }
@@ -515,6 +522,10 @@ function diffFiles(
 
 function getLastModifiedResolver(loaders: LoaderResolver, path: string): (name: string) => number | undefined {
   return (name) => loaders.getSourceLastModified(resolvePath(path, name));
+}
+
+function getSizeResolver(loaders: LoaderResolver, path: string): (name: string) => number | undefined {
+  return (name) => loaders.getSourceSize(resolvePath(path, name));
 }
 
 type TableDeclaration = {name: string; path: string};

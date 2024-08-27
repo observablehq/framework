@@ -10,7 +10,7 @@ Load files — whether static or generated dynamically by a [data loader](./load
 import {FileAttachment} from "npm:@observablehq/stdlib";
 ```
 
-The `FileAttachment` function takes a path and returns a file handle. This handle exposes the file’s name, [MIME type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types), and modification time <a href="https://github.com/observablehq/framework/releases/tag/v1.4.0" class="observablehq-version-badge" data-version="^1.4.0" title="Added in 1.4.0"></a> (represented as the number of milliseconds since UNIX epoch).
+The `FileAttachment` function takes a path and returns a file handle. This handle exposes the file’s name, [MIME type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types), size in bytes <a href="https://github.com/observablehq/framework/pulls/1608" class="observablehq-version-badge" data-version="prerelease" title="Added in #1608"></a>, and modification time <a href="https://github.com/observablehq/framework/releases/tag/v1.4.0" class="observablehq-version-badge" data-version="^1.4.0" title="Added in 1.4.0"></a> (represented as the number of milliseconds since UNIX epoch).
 
 ```js echo
 FileAttachment("volcano.json")
@@ -52,7 +52,7 @@ const frames = [
 
 None of the files in `frames` above are loaded until a [content method](#supported-formats) is invoked, for example by saying `frames[0].image()`.
 
-For missing files, `file.lastModified` is undefined. The `file.mimeType` is determined by checking the file extension against the [`mime-db` media type database](https://github.com/jshttp/mime-db); it defaults to `application/octet-stream`.
+For missing files, `file.size` and `file.lastModified` are undefined. The `file.mimeType` is determined by checking the file extension against the [`mime-db` media type database](https://github.com/jshttp/mime-db); it defaults to `application/octet-stream`.
 
 ## Supported formats
 

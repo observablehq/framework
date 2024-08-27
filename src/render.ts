@@ -69,7 +69,10 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
           resolveFile,
           preview
             ? (name) => loaders.getSourceLastModified(resolvePath(path, name))
-            : (name) => loaders.getOutputLastModified(resolvePath(path, name))
+            : (name) => loaders.getOutputLastModified(resolvePath(path, name)),
+          preview
+            ? (name) => loaders.getSourceSize(resolvePath(path, name))
+            : (name) => loaders.getOutputSize(resolvePath(path, name))
         )}`
       : ""
   }${data?.sql ? `\n${registerTables(data.sql, options)}` : ""}
@@ -103,24 +106,27 @@ function registerTable(name: string, source: string, {path}: RenderOptions): str
 function registerFiles(
   files: Iterable<string>,
   resolve: (name: string) => string,
-  getLastModified: (name: string) => number | undefined
+  getLastModified: (name: string) => number | undefined,
+  getSize: (name: string) => number | undefined
 ): string {
   return Array.from(files)
     .sort()
-    .map((f) => registerFile(f, resolve, getLastModified))
+    .map((f) => registerFile(f, resolve, getLastModified, getSize))
     .join("");
 }
 
 function registerFile(
   name: string,
   resolve: (name: string) => string,
-  getLastModified: (name: string) => number | undefined
+  getLastModified: (name: string) => number | undefined,
+  getSize: (name: string) => number | undefined
 ): string {
   return `\nregisterFile(${JSON.stringify(name)}, ${JSON.stringify({
     name,
     mimeType: mime.getType(name) ?? undefined,
     path: resolve(name),
-    lastModified: getLastModified(name)
+    lastModified: getLastModified(name),
+    size: getSize(name)
   })});`;
 }
 
