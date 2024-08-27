@@ -43,7 +43,6 @@
       "test/build/src/bin/",
       "test/build/src/client/",
       "test/build/src/convert.js",
-      "test/build/src/javascript/params.js",
       "test/build/src/observableApiConfig.js",
       "test/build/src/preview.js"
     ],
