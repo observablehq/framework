@@ -177,7 +177,7 @@ export class PreviewServer {
 
         // Normalize the pathname (e.g., adding ".html" if cleanUrls is false,
         // dropping ".html" if cleanUrls is true) and redirect if necessary.
-        const normalizedPathname = config.normalizePath(pathname);
+        const normalizedPathname = encodeURI(config.normalizePath(pathname));
         if (url.pathname !== normalizedPathname) {
           res.writeHead(302, {Location: normalizedPathname + url.search});
           res.end();
