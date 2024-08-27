@@ -157,7 +157,7 @@ Whether to show the previous & next links in the footer; defaults to true. The p
 
 ## dynamicPaths <a href="https://github.com/observablehq/framework/pull/1523" class="observablehq-version-badge" data-version="prerelease" title="Added in #1523"></a>
 
-The list of [parameterized pages](./params) to generate, either as a (synchronous) iterable of strings, or a function that returns an async iterable of strings if you wish to load the list of dynamic pages asynchronously.
+The list of [parameterized pages](./params) and [dynamic pages](./page-loaders) to generate, either as a (synchronous) iterable of strings, or a function that returns an async iterable of strings if you wish to load the list of dynamic pages asynchronously.
 
 ## head
 
