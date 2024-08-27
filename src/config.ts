@@ -242,7 +242,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const title = spec.title === undefined ? undefined : String(spec.title);
   const pages = spec.pages === undefined ? undefined : normalizePages(spec.pages);
   const pager = spec.pager === undefined ? true : Boolean(spec.pager);
-  const dynamicPaths = normalizePaths(spec.dynamicPaths);
+  const dynamicPaths = normalizeDynamicPaths(spec.dynamicPaths);
   const toc = normalizeToc(spec.toc as any);
   const sidebar = spec.sidebar === undefined ? undefined : Boolean(spec.sidebar);
   const scripts = spec.scripts === undefined ? [] : normalizeScripts(spec.scripts);
@@ -304,10 +304,10 @@ function getDefaultPaths(root: string): string[] {
     .map((path) => join("/", dirname(path), basename(path, ".md")));
 }
 
-function normalizePaths(spec: unknown): Config["paths"] {
+function normalizeDynamicPaths(spec: unknown): Config["paths"] {
   if (typeof spec === "function") return spec as () => AsyncIterable<string>;
-  if (spec == null || spec === false) return async function* () {};
-  throw new Error(`invalid paths: ${spec}`);
+  const paths = Array.from((spec ?? []) as ArrayLike<string>, String);
+  return async function* () { yield* paths; }; // prettier-ignore
 }
 
 function getPathNormalizer(spec: unknown = true): (path: string) => string {

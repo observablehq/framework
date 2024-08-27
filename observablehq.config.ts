@@ -88,19 +88,17 @@ export default {
     {name: "Converting notebooks", path: "/convert"},
     {name: "Contributing", path: "/contributing", pager: false}
   ],
-  async *dynamicPaths() {
-    yield* [
-      "/theme/dark",
-      "/theme/dark-alt",
-      "/theme/dashboard",
-      "/theme/light",
-      "/theme/light-alt",
-      "/theme/wide",
-      "/themes",
-      ...themes.dark.map((theme) => `/theme/${theme}`),
-      ...themes.light.map((theme) => `/theme/${theme}`)
-    ];
-  },
+  dynamicPaths: [
+    "/theme/dark",
+    "/theme/dark-alt",
+    "/theme/dashboard",
+    "/theme/light",
+    "/theme/light-alt",
+    "/theme/wide",
+    "/themes",
+    ...themes.dark.map((theme) => `/theme/${theme}`),
+    ...themes.light.map((theme) => `/theme/${theme}`)
+  ],
   base: "/framework",
   globalStylesheets: [
     "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap"

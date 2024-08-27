@@ -17,19 +17,17 @@ The [**dynamicPaths** config option](./config#dynamicPaths) would then specify t
 
 ```js run=false
 export default {
-  async *dynamicPaths() {
-    yield* [
-      "/products/100736",
-      "/products/221797",
-      "/products/399145",
-      "/products/475651",
-      …
-    ];
-  }
+  dynamicPaths: [
+    "/products/100736",
+    "/products/221797",
+    "/products/399145",
+    "/products/475651",
+    …
+  ]
 };
 ```
 
-Rather than hard-coding the list of paths as above, you’d more commonly use code to enumerate them, say by querying a database for products. For example, using [Postgres.js](https://github.com/porsager/postgres/blob/master/README.md#usage) you might say:
+Rather than hard-coding the list of paths as above, you’d more commonly use code to enumerate them, say by querying a database for products. In this case, you can either use [top-level await](https://v8.dev/features/top-level-await) or specify the **dynamicPaths** config option as a function that returns an [async iterable](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols). For example, using [Postgres.js](https://github.com/porsager/postgres/blob/master/README.md#usage) you might say:
 
 ```js run=false
 import postgres from "postgres";
