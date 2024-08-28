@@ -17,8 +17,8 @@ export class HttpError extends Error {
   }
 }
 
-export function enoent(path?: string): NodeJS.ErrnoException {
-  return Object.assign(new Error(`Not found${path ? `: ${path}` : ""}`), {code: "ENOENT"});
+export function enoent(path: string): NodeJS.ErrnoException {
+  return Object.assign(new Error(`Not found: ${path}`), {code: "ENOENT"});
 }
 
 export function isEnoent(error: unknown): error is NodeJS.ErrnoException {

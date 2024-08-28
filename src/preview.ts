@@ -155,7 +155,7 @@ export class PreviewServer {
             return;
           }
         }
-        throw enoent();
+        throw enoent(path);
       } else if (pathname.startsWith("/_file/")) {
         send(req, await loaders.loadFile(pathname.slice("/_file".length)), {root}).pipe(res);
       } else {
