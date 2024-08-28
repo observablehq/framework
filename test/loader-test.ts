@@ -14,34 +14,34 @@ const noopEffects: LoadEffects = {
 describe("LoaderResolver.find(path)", () => {
   const loaders = new LoaderResolver({root: "test"});
   it("a .js data loader is called with node", async () => {
-    const loader = loaders.find("dataloaders/data1.txt")!;
+    const loader = loaders.find("/dataloaders/data1.txt")!;
     const out = await loader.load(noopEffects);
     assert.strictEqual(await readFile("test/" + out, "utf-8"), "node\n");
   });
   it("a .ts data loader is called with tsx", async () => {
-    const loader = loaders.find("dataloaders/data2.txt")!;
+    const loader = loaders.find("/dataloaders/data2.txt")!;
     const out = await loader.load(noopEffects);
     assert.strictEqual(await readFile("test/" + out, "utf-8"), "tsx\n");
   });
   it("a .sh data loader is called with sh", async function () {
     if (os.platform() === "win32") this.skip();
-    const loader = loaders.find("dataloaders/data3.txt")!;
+    const loader = loaders.find("/dataloaders/data3.txt")!;
     const out = await loader.load(noopEffects);
     assert.strictEqual(await readFile("test/" + out, "utf-8"), "shell\n");
   });
   it("a .exe data loader is invoked directly", async () => {
-    const loader = loaders.find("dataloaders/data4.txt")!;
+    const loader = loaders.find("/dataloaders/data4.txt")!;
     const out = await loader.load(noopEffects);
     assert.strictEqual(await readFile("test/" + out, "utf-8"), `python3${os.EOL}`);
   });
   it("a .py data loader is called with python3", async () => {
-    const loader = loaders.find("dataloaders/data5.txt")!;
+    const loader = loaders.find("/dataloaders/data5.txt")!;
     const out = await loader.load(noopEffects);
     assert.strictEqual(await readFile("test/" + out, "utf-8"), `python3${os.EOL}`);
   });
   // Skipping because this requires R to be installed (which is slow in CI).
   it.skip("a .R data loader is called with Rscript", async () => {
-    const loader = loaders.find("dataloaders/data6.txt")!;
+    const loader = loaders.find("/dataloaders/data6.txt")!;
     const out = await loader.load(noopEffects);
     assert.strictEqual(await readFile("test/" + out, "utf-8"), "Rscript\n");
   });
@@ -59,7 +59,7 @@ describe("LoaderResolver.find(path, {useStale: true})", () => {
         }
       }
     };
-    const loader = loaders.find("dataloaders/data1.txt")!;
+    const loader = loaders.find("/dataloaders/data1.txt")!;
     const loaderPath = join(loader.root, loader.path);
     // save the loader times.
     const {atime, mtime} = await stat(loaderPath);
@@ -79,7 +79,7 @@ describe("LoaderResolver.find(path, {useStale: true})", () => {
     // touch the loader
     await utimes(loaderPath, atime, new Date(Date.now() + 100));
     // run it with useStale=true (using stale)
-    const loader2 = loaders.find("dataloaders/data1.txt", {useStale: true})!;
+    const loader2 = loaders.find("/dataloaders/data1.txt", {useStale: true})!;
     await loader2.load(outputEffects);
     // run it with useStale=false (stale)
     await loader.load(outputEffects);
@@ -89,13 +89,13 @@ describe("LoaderResolver.find(path, {useStale: true})", () => {
       // eslint-disable-next-line no-control-regex
       out.map((l) => l.replaceAll(/\x1b\[[0-9]+m/g, "")),
       [
-        "load test/dataloaders/data1.txt → ",
+        "load /dataloaders/data1.txt → ",
         "[missing] ",
-        "load test/dataloaders/data1.txt → ",
+        "load /dataloaders/data1.txt → ",
         "[fresh] ",
-        "load test/dataloaders/data1.txt → ",
+        "load /dataloaders/data1.txt → ",
         "[using stale] ",
-        "load test/dataloaders/data1.txt → ",
+        "load /dataloaders/data1.txt → ",
         "[stale] "
       ]
     );

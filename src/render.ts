@@ -14,12 +14,10 @@ import {isAssetPath, resolvePath, resolveRelativePath} from "./path.js";
 import type {Resolvers} from "./resolvers.js";
 import {getResolvers} from "./resolvers.js";
 import {rollupClient} from "./rollup.js";
-import type {Params} from "./route.js";
 
 export interface RenderOptions extends Config {
   root: string;
   path: string;
-  params?: Params;
   resolvers?: Resolvers;
 }
 
@@ -28,8 +26,8 @@ type RenderInternalOptions =
   | {preview: true}; // preview
 
 export async function renderPage(page: MarkdownPage, options: RenderOptions & RenderInternalOptions): Promise<string> {
-  const {data} = page;
-  const {base, path, params, title, preview} = options;
+  const {data, params} = page;
+  const {base, path, title, preview} = options;
   const {loaders, resolvers = await getResolvers(page, options)} = options;
   const {draft = false, sidebar = options.sidebar} = data;
   const toc = mergeToc(data.toc, options.toc);

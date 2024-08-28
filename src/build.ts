@@ -8,7 +8,6 @@ import {findModule, getLocalModuleHash, getModuleHash, readJavaScript} from "./j
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
-import {parseMarkdown} from "./markdown.js";
 import {populateNpmCache, resolveNpmImport, rewriteNpmImports} from "./npm.js";
 import {isAssetPath, isPathImport, relativePath, resolvePath, within} from "./path.js";
 import {renderPage} from "./render.js";
@@ -16,7 +15,6 @@ import type {Resolvers} from "./resolvers.js";
 import {getModuleResolver, getResolvers} from "./resolvers.js";
 import {resolveImportPath, resolveStylesheetPath} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
-import type {Params} from "./route.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {tree} from "./tree.js";
@@ -61,27 +59,21 @@ export async function build(
   await effects.prepare();
 
   // Parse .md files, building a list of additional assets as we go.
-  const pages = new Map<string, {page: MarkdownPage; params?: Params; resolvers: Resolvers}>();
+  const pages = new Map<string, {page: MarkdownPage; resolvers: Resolvers}>();
   const files = new Set<string>(); // e.g., "/assets/foo.png"
   const localImports = new Set<string>(); // e.g., "/components/foo.js"
   const globalImports = new Set<string>(); // e.g., "/_observablehq/search.js"
   const stylesheets = new Set<string>(); // e.g., "/style.css"
   for await (const path of config.paths()) {
-    const loader = loaders.find(`${path}.md`);
-    if (!loader) throw new Error(`page not found: ${path}`);
-    const {params} = loader;
-    const sourceFile = await loader.load(effects);
-    const sourcePath = join(root, sourceFile);
-    const options = {...config, params, path};
-    effects.output.write(`${faint("parse")} ${sourcePath} `);
+    effects.output.write(`${faint("parse")} ${path} `);
     const start = performance.now();
-    const source = await readFile(sourcePath, "utf8");
-    const page = parseMarkdown(source, options);
+    const options = {path, ...config};
+    const page = await loaders.loadPage(path, options, effects);
     if (page.data.draft) {
       effects.logger.log(faint("(skipped)"));
       continue;
     }
-    const resolvers = await getResolvers(page, {path, ...config});
+    const resolvers = await getResolvers(page, options);
     const elapsed = Math.floor(performance.now() - start);
     for (const f of resolvers.assets) files.add(resolvePath(path, f));
     for (const f of resolvers.files) files.add(resolvePath(path, f));
@@ -89,7 +81,7 @@ export async function build(
     for (let i of resolvers.globalImports) if (isPathImport((i = resolvers.resolveImport(i)))) globalImports.add(resolvePath(path, i)); // prettier-ignore
     for (const s of resolvers.stylesheets) stylesheets.add(/^\w+:/.test(s) ? s : resolvePath(path, s));
     effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
-    pages.set(path, {page, params, resolvers});
+    pages.set(path, {page, resolvers});
   }
 
   // Check that there’s at least one page.
@@ -164,14 +156,9 @@ export async function build(
   // Copy over referenced files, accumulating hashed aliases.
   for (const file of files) {
     effects.output.write(`${faint("copy")} ${join(root, file)} ${faint("→")} `);
-    const loader = loaders.find(join("/", file), {useStale: true});
-    if (!loader) {
-      effects.logger.error(red("error: missing referenced file"));
-      continue;
-    }
     let sourcePath: string;
     try {
-      sourcePath = join(root, await loader.load(effects));
+      sourcePath = join(root, await loaders.loadFile(join("/", file), {useStale: true}, effects));
     } catch (error) {
       if (!isEnoent(error)) throw error;
       effects.logger.error(red("error: missing referenced file"));
@@ -307,9 +294,9 @@ export async function build(
 
   // Render pages!
   const buildManifest: BuildManifest = {pages: []};
-  for (const [path, {page, params, resolvers}] of pages) {
+  for (const [path, {page, resolvers}] of pages) {
     effects.output.write(`${faint("render")} ${path} ${faint("→")} `);
-    const html = await renderPage(page, {...config, path, params, resolvers});
+    const html = await renderPage(page, {...config, path, resolvers});
     await effects.writeFile(`${path}.html`, html);
     buildManifest.pages.push({path: config.normalizePath(path), title: page.title});
   }

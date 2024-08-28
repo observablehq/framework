@@ -1,18 +1,21 @@
 import {createHash} from "node:crypto";
-import type {WriteStream} from "node:fs";
-import {createReadStream, existsSync, statSync} from "node:fs";
+import type {FSWatcher, WatchListener, WriteStream} from "node:fs";
+import {createReadStream, existsSync, statSync, watch} from "node:fs";
 import {open, readFile, rename, unlink} from "node:fs/promises";
 import {dirname, extname, join} from "node:path/posix";
 import {createGunzip} from "node:zlib";
 import {spawn} from "cross-spawn";
 import JSZip from "jszip";
 import {extract} from "tar-stream";
+import {enoent} from "./error.js";
 import {maybeStat, prepareOutput} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {formatByteSize} from "./format.js";
 import type {FileInfo} from "./javascript/module.js";
 import {getFileInfo} from "./javascript/module.js";
 import type {Logger, Writer} from "./logger.js";
+import type {MarkdownPage, ParseOptions} from "./markdown.js";
+import {parseMarkdown} from "./markdown.js";
 import type {Params} from "./route.js";
 import {route} from "./route.js";
 import {cyan, faint, green, red, yellow} from "./tty.js";
@@ -44,6 +47,10 @@ const defaultEffects: LoadEffects = {
   output: process.stdout
 };
 
+export interface LoadOptions {
+  useStale?: boolean;
+}
+
 export interface LoaderOptions {
   root: string;
   path: string;
@@ -66,14 +73,44 @@ export class LoaderResolver {
   }
 
   /**
-   * Finds the loader for the specified target path, relative to the specified
-   * source root, if it exists. If there is no such loader, returns undefined.
+   * Loads the file at the specified path, returning a promise to the path to
+   * the (possibly generated) file relative to the source root.
+   */
+  async loadFile(path: string, options?: LoadOptions, effects?: LoadEffects): Promise<string> {
+    const loader = this.find(path, options);
+    if (!loader) throw enoent(path);
+    return await loader.load(effects);
+  }
+
+  /**
+   * Loads the page at the specified path, returning a promise to the parsed
+   * page object.
+   */
+  async loadPage(path: string, options: LoadOptions & ParseOptions, effects?: LoadEffects): Promise<MarkdownPage> {
+    const loader = this.find(`${path}.md`);
+    if (!loader) throw enoent(path);
+    const source = await readFile(join(this.root, await loader.load(effects)), "utf8");
+    return parseMarkdown(source, {params: loader.params, ...options});
+  }
+
+  /**
+   * Returns a watcher for the page at the specified path.
+   */
+  watchPage(path: string, listener: WatchListener<string>): FSWatcher {
+    const loader = this.find(`${path}.md`);
+    if (!loader) throw enoent(path);
+    return watch(join(this.root, loader.path), listener);
+  }
+
+  /**
+   * Finds the loader for the specified target path, relative to the source
+   * root, if the loader exists. If there is no such loader, returns undefined.
    * For files within archives, we find the first parent folder that exists, but
    * abort if we find a matching folder or reach the source root; for example,
    * if src/data exists, we won’t look for a src/data.zip.
    */
-  find(targetPath: string, {useStale = false} = {}): Loader | undefined {
-    return this.findFile(targetPath, {useStale}) ?? this.findArchive(targetPath, {useStale});
+  find(path: string, {useStale = false}: LoadOptions = {}): Loader | undefined {
+    return this.findFile(path, {useStale}) ?? this.findArchive(path, {useStale});
   }
 
   // Finding a file:
@@ -93,7 +130,7 @@ export class LoaderResolver {
   // - /[param1]/[param2]/file.csv.js
   // - /[param1]/[param2]/[param3].csv
   // - /[param1]/[param2]/[param3].csv.js
-  private findFile(targetPath: string, {useStale}): Loader | undefined {
+  private findFile(targetPath: string, {useStale}: {useStale: boolean}): Loader | undefined {
     const ext = extname(targetPath);
     const exts = [ext, ...Array.from(this.interpreters.keys(), (iext) => ext + iext)];
     const found = route(this.root, targetPath.slice(0, -ext.length), exts);
@@ -139,7 +176,7 @@ export class LoaderResolver {
   // - /[param].tgz
   // - /[param].zip.js
   // - /[param].tgz.js
-  private findArchive(targetPath: string, {useStale}): Loader | undefined {
+  private findArchive(targetPath: string, {useStale}: {useStale: boolean}): Loader | undefined {
     const exts = this.getArchiveExtensions();
     for (let dir = dirname(targetPath), parent: string; (parent = dirname(dir)) !== dir; dir = parent) {
       const found = route(this.root, dir, exts);
@@ -377,7 +414,7 @@ abstract class AbstractLoader implements Loader {
       command.finally(() => runningCommands.delete(key)).catch(() => {});
       runningCommands.set(key, command);
     }
-    effects.output.write(`${cyan("load")} ${key} ${faint("→")} `);
+    effects.output.write(`${cyan("load")} ${this.targetPath} ${faint("→")} `);
     const start = performance.now();
     command.then(
       (path) => {
@@ -454,7 +491,7 @@ class ZipExtractor extends AbstractLoader {
   async exec(output: WriteStream, effects?: LoadEffects): Promise<void> {
     const archivePath = join(this.root, await this.preload(effects));
     const file = (await JSZip.loadAsync(await readFile(archivePath))).file(this.inflatePath);
-    if (!file) throw Object.assign(new Error("file not found"), {code: "ENOENT"});
+    if (!file) throw enoent(this.inflatePath);
     const pipe = file.nodeStream().pipe(output);
     await new Promise((resolve, reject) => pipe.on("error", reject).on("finish", resolve));
   }
@@ -492,7 +529,7 @@ class TarExtractor extends AbstractLoader {
         entry.resume();
       }
     }
-    throw Object.assign(new Error("file not found"), {code: "ENOENT"});
+    throw enoent(this.inflatePath);
   }
 }
 

@@ -40,6 +40,7 @@ export interface MarkdownPage {
   data: FrontMatter;
   style: string | null;
   code: MarkdownCode[];
+  params?: Params;
 }
 
 interface ParseContext {
@@ -255,7 +256,8 @@ export function parseMarkdown(input: string, options: ParseOptions): MarkdownPag
     data,
     title,
     style: getStyle(data, options),
-    code
+    code,
+    params
   };
 }
 
