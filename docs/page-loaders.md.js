@@ -12,20 +12,23 @@ For example, to render a map of recent earthquakes into static SVG using D3:
 
 ~~~js run=false
 import * as d3 from "d3-geo";
+import * as topojson from "topojson-client";
 
-const projection = d3.geoOrthographic().rotate([110, -40]);
-const path = d3.geoPath(projection);
 const quakes = await (await fetch("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson")).json();
+const world = await (await fetch("https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/land-110m.json")).json();
+const land = topojson.feature(world, world.objects.land);
+
+const projection = d3.geoOrthographic().rotate([110, -40]).fitExtent([[2, 2], [638, 638]], {type: "Sphere"});
+const path = d3.geoPath(projection);
 
 process.stdout.write(\`# Recent quakes
 
-<div class="card" style="max-width: 960px;">
-  <svg style="width: 100%; height: auto;" viewBox="0 0 960 500" width="960" height="500" xmlns="http://www.w3.org/2000/svg">
-    <path stroke="currentColor" d="$\{path({type: "Sphere"})}"></path>
-    <path stroke="currentColor" d="$\{path(d3.geoGraticule10())}"></path>
-    <path fill="var(--theme-red)" fill-opacity="0.8" d="$\{path(quakes)}"></path>
-  </svg>
-</div>
+<svg style="max-width: 640px; width: 100%; height: auto;" viewBox="0 0 640 640" width="640" height="640" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <path stroke="currentColor" stroke-opacity="0.1" d="$\{path(d3.geoGraticule10())}"></path>
+  <path stroke="currentColor" stroke-width="1.5" d="$\{path({type: "Sphere"})}"></path>
+  <path stroke="var(--theme-foreground-faint)" d="$\{path(land)}"></path>
+  <path stroke="var(--theme-red)" stroke-width="1.5" d="$\{path(quakes)}"></path>
+</svg>
 \`);
 ~~~
 
@@ -53,6 +56,8 @@ process.stdout.write(\`# Hello $\{product}
 Or alternatively, $\\{observable.params.product}.
 \`);
 ~~~~
+
+Framework’s [theme previews](./themes) are implemented as parameterized page loaders; see [their source](https://github.com/observablehq/framework/blob/main/docs/theme/%5Btheme%5D.md.ts) for a practical example.
 
 <div class="tip">
 
