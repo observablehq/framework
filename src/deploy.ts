@@ -732,6 +732,7 @@ export async function promptDeployTarget(
   } else {
     const chosenWorkspace = await effects.clack.select<{value: WorkspaceResponse; label: string}[], WorkspaceResponse>({
       message: "Which Observable workspace do you want to use?",
+      maxItems: Math.max(process.stdout.rows - 4, 0),
       options: currentUser.workspaces
         .map((w) => ({value: w, label: formatUser(w)}))
         .sort((a, b) => b.value.role.localeCompare(a.value.role) || a.label.localeCompare(b.label)),
@@ -757,6 +758,7 @@ export async function promptDeployTarget(
   if (existingProjects.length > 0) {
     const chosenProject = await effects.clack.select<{value: string | null; label: string}[], string | null>({
       message: "Which project do you want to use?",
+      maxItems: Math.max(process.stdout.rows - 4, 0),
       options: [
         {value: null, label: "Create a new project"},
         ...existingProjects
