@@ -473,7 +473,7 @@ class CommandLoader extends AbstractLoader {
   }
 }
 
-interface ZipExtractorOptions extends LoaderOptions {
+interface ExtractorOptions extends LoaderOptions {
   preload: Loader["load"];
   inflatePath: string;
 }
@@ -482,7 +482,7 @@ class ZipExtractor extends AbstractLoader {
   private readonly preload: Loader["load"];
   private readonly inflatePath: string;
 
-  constructor({preload, inflatePath, ...options}: ZipExtractorOptions) {
+  constructor({preload, inflatePath, ...options}: ExtractorOptions) {
     super(options);
     this.preload = preload;
     this.inflatePath = inflatePath;
@@ -497,9 +497,7 @@ class ZipExtractor extends AbstractLoader {
   }
 }
 
-interface TarExtractorOptions extends LoaderOptions {
-  preload: Loader["load"];
-  inflatePath: string;
+interface TarExtractorOptions extends ExtractorOptions {
   gunzip?: boolean;
 }
 
@@ -539,7 +537,7 @@ class TarGzExtractor extends TarExtractor {
   }
 }
 
-const extractors = new Map<string, typeof ZipExtractor | typeof TarExtractor | typeof TarGzExtractor>([
+const extractors = new Map<string, new (options: ExtractorOptions) => Loader>([
   [".zip", ZipExtractor],
   [".tar", TarExtractor],
   [".tar.gz", TarGzExtractor],
