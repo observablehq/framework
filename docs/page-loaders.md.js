@@ -4,7 +4,7 @@ keywords: server-side rendering, ssr
 
 # Page loaders <a href="https://github.com/observablehq/framework/pull/1523" class="observablehq-version-badge" data-version="prerelease" title="Added in #1523"></a>
 
-Page loaders are like [data loaders](./data-loaders), but for generating (or “server-side rendering”) dynamic pages. Page loaders are programs that emit [Markdown](./markdown) to standard out, and have a double extension starting with \`.md\`, such as \`.md.js\` for a JavaScript page loader or \`.md.py\` for a Python page loader.
+Page loaders are like [data loaders](./data-loaders), but for dynamically generating (or “server-side rendering”) pages. Page loaders are programs that emit [Markdown](./markdown) to standard out, and have a double extension starting with \`.md\`, such as \`.md.js\` for a JavaScript page loader or \`.md.py\` for a Python page loader.
 
 By “baking” dynamically-generated content into static Markdown, you can further improve the performance of pages since the content exists on page load rather than waiting for JavaScript to run. You may even be able to avoid loading additional assets and JavaScript libraries.
 
