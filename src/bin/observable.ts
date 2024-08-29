@@ -18,7 +18,7 @@ const CONFIG_OPTION = {
   config: {
     type: "string",
     short: "c",
-    description: "Path to the project config file"
+    description: "Path to the app config file"
   }
 } as const;
 
@@ -76,12 +76,12 @@ try {
       helpArgs(command, {allowPositionals: true});
       console.log(
         `usage: observable <command>
-  create       create a new project from a template
+  create       create a new app from a template
   preview      start the preview server
   build        generate a static site
   login        sign-in to Observable
   logout       sign-out of Observable
-  deploy       deploy a project to Observable
+  deploy       deploy an app to Observable
   whoami       check authentication status
   convert      convert an Observable notebook to Markdown
   help         print usage information

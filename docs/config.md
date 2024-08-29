@@ -1,10 +1,10 @@
 # Configuration
 
-A `observablehq.config.js` (or `observablehq.config.ts`) file located in the project root allows configuration of your project. For example, a site might use a config file to set the project’s title and the sidebar contents:
+A `observablehq.config.js` (or `observablehq.config.ts`) file located in the project root allows configuration of your app. For example, you might use a config file to set the app’s title and sidebar contents:
 
 ```js run=false
 export default {
-  title: "My awesome project",
+  title: "My awesome app",
   pages: [
     {name: "Getting ever more awesome", path: "/getting-awesome"},
     {name: "Being totally awesome", path: "/being-awesome"},
@@ -104,7 +104,7 @@ In this case, the path to the stylesheet is resolved relative to the page’s Ma
 
 ## title
 
-The project’s title. If specified, this text is used for the link to the home page in the sidebar, and to complement the titles of the webpages. For instance, a page titled “Sales” in a project titled “ACME, Inc.” will display “Sales | ACME, Inc.” in the browser’s title bar. If not specified, the home page link will appear as “Home” in the sidebar, and page titles will be shown as-is.
+The app’s title. If specified, this text is used for the link to the home page in the sidebar, and to complement the titles of the webpages. For instance, a page titled “Sales” in a app titled “ACME, Inc.” will display “Sales | ACME, Inc.” in the browser’s title bar. If not specified, the home page link will appear as “Home” in the sidebar, and page titles will be shown as-is.
 
 ## sidebar
 
@@ -147,7 +147,7 @@ Sections may be **collapsible**. <a href="https://github.com/observablehq/framew
 
 Pages and sections may also have a **pager** field <a href="https://github.com/observablehq/framework/releases/tag/v1.8.0" class="observablehq-version-badge" data-version="^1.8.0" title="Added in 1.8.0"></a> which specifies the name of the page group; this determines which pages are linked to via the previous and next pager buttons. If the **pager** field is not specified, it defaults the current section’s **pager** field, or to `main` for top-level pages and sections. (The home page is always in the `main` pager group.) The **pager** field can be also set to `null` to disable the pager on a specific page or section, causing adjacent pages to skip the page.
 
-Projects can have “unlisted” pages that are not referenced in **pages**. These pages can still be linked from other pages or visited directly, but they won’t be listed in the sidebar or linked to via the previous & next pager links.
+Apps can have “unlisted” pages that are not referenced in **pages**. These pages can still be linked from other pages or visited directly, but they won’t be listed in the sidebar or linked to via the previous & next pager links.
 
 The pages list should _not_ include the home page (`/`) as this is automatically linked at the top of the sidebar. We also do not recommend listing the same page multiple times (say with different query parameters or anchor fragments), as this causes the previous & next pager links to cycle.
 
@@ -202,7 +202,7 @@ If **show** is not set, it defaults to true. If **label** is not set, it default
 
 If shown, the table of contents enumerates the second-level headings (H2 elements, such as `## Section name`) on the right-hand side of the page. The currently-shown section is highlighted in the table of contents.
 
-The table of contents configuration can also be set in the page’s YAML front matter. The page-level configuration takes precedence over the project-level configuration. For example, to disable the table of contents on a particular page:
+The table of contents configuration can also be set in the page’s YAML front matter. The page-level configuration takes precedence over the app-level configuration. For example, to disable the table of contents on a particular page:
 
 ```yaml
 ---
@@ -212,7 +212,7 @@ toc: false
 
 ## search
 
-If true, enable [search](./search) on the project; defaults to false. The **search** option may also be specified as an object with an **index** method <a href="https://github.com/observablehq/framework/releases/tag/v1.9.0" class="observablehq-version-badge" data-version="^1.9.0" title="Added in 1.9.0"></a>, in which case additional results can be added to the search index. Each result is specified as:
+If true, enable [search](./search); defaults to false. The **search** option may also be specified as an object with an **index** method <a href="https://github.com/observablehq/framework/releases/tag/v1.9.0" class="observablehq-version-badge" data-version="^1.9.0" title="Added in 1.9.0"></a>, in which case additional results can be added to the search index. Each result is specified as:
 
 ```ts run=false
 interface SearchResult {

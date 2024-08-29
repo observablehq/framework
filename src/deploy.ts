@@ -92,7 +92,7 @@ export async function deploy(deployOptions: DeployOptions, effects = defaultEffe
 
   const deployInfo = await new Deployer(deployOptions, effects).deploy();
 
-  effects.clack.outro(`Deployed project now visible at ${link(deployInfo.url)}`);
+  effects.clack.outro(`Deployed app now visible at ${link(deployInfo.url)}`);
   Telemetry.record({event: "deploy", step: "finish"});
 }
 
@@ -242,7 +242,7 @@ class Deployer {
     }
     if (deployConfig.projectSlug && !deployConfig.projectSlug.match(/^[a-z0-9-]+$/)) {
       throw new CliError(
-        `Found invalid project slug in ${join(this.deployOptions.config.root, ".observablehq", "deploy.json")}: ${
+        `Found invalid \`projectSlug\` in ${join(this.deployOptions.config.root, ".observablehq", "deploy.json")}: ${
           deployConfig.projectSlug
         }.`
       );
@@ -251,7 +251,7 @@ class Deployer {
     if (deployConfig.projectId && (!deployConfig.projectSlug || !deployConfig.workspaceLogin)) {
       const spinner = this.effects.clack.spinner();
       this.effects.clack.log.warn("The `projectSlug` or `workspaceLogin` is missing from your deploy.json.");
-      spinner.start(`Searching for project ${deployConfig.projectId}`);
+      spinner.start(`Searching for app ${deployConfig.projectId}`);
       let found = false;
       for (const workspace of this.currentUser.workspaces) {
         const projects = await this.apiClient.getWorkspaceProjects(workspace.login);
@@ -270,9 +270,9 @@ class Deployer {
         }
       }
       if (found) {
-        spinner.stop(`Project @${deployConfig.workspaceLogin}/${deployConfig.projectSlug} found.`);
+        spinner.stop(`App ${deployConfig.projectSlug} found in workspace @${deployConfig.workspaceLogin}.`);
       } else {
-        spinner.stop(`Project ${deployConfig.projectId} not found. Ignoring…`);
+        spinner.stop(`App ${deployConfig.projectId} not found. Ignoring…`);
       }
     }
 
@@ -379,7 +379,7 @@ class Deployer {
         if (isApiError(error) && error.details.errors.some((e) => e.code === "TOO_MANY_PROJECTS")) {
           this.effects.clack.log.error(
             wrapAnsi(
-              `The Starter tier can only deploy one project. Upgrade to unlimited projects at ${link(
+              `The Starter tier can only deploy one app. Upgrade to unlimited apps at ${link(
                 `https://observablehq.com/team/@${deployTarget.workspace.login}/settings`
               )}`,
               this.effects.outputColumns - 4
@@ -388,7 +388,7 @@ class Deployer {
         } else {
           this.effects.clack.log.error(
             wrapAnsi(
-              `Could not create project: ${error instanceof Error ? error.message : error}`,
+              `Could not create app: ${error instanceof Error ? error.message : error}`,
               this.effects.outputColumns
             )
           );
@@ -438,12 +438,15 @@ class Deployer {
     } catch (error) {
       if (isHttpError(error)) {
         if (error.statusCode === 404) {
-          throw new CliError(`Project @${deployTarget.workspace.login}/${deployTarget.project.slug} not found.`, {
-            cause: error
-          });
+          throw new CliError(
+            `App ${deployTarget.project.slug} in workspace @${deployTarget.workspace.login} not found.`,
+            {
+              cause: error
+            }
+          );
         } else if (error.statusCode === 403) {
           throw new CliError(
-            `You don't have permission to deploy to @${deployTarget.workspace.login}/${deployTarget.project.slug}.`,
+            `You don't have permission to deploy to ${deployTarget.project.slug} in workspace @${deployTarget.workspace.login}.`,
             {cause: error}
           );
         }
@@ -471,7 +474,7 @@ class Deployer {
         } else if (!this.deployOptions.force) {
           if (this.effects.isTty) {
             const choice = await this.effects.clack.confirm({
-              message: "No build files found. Do you want to build the project now?",
+              message: "No build files found. Do you want to build the app now?",
               active: "Yes, build and then deploy",
               inactive: "No, cancel deploy"
             });
@@ -501,9 +504,7 @@ class Deployer {
         );
         initialValue = true;
       } else {
-        this.effects.clack.log.info(
-          wrapAnsi(`You built this project ${formatAge(buildAge)}.`, this.effects.outputColumns)
-        );
+        this.effects.clack.log.info(wrapAnsi(`You built this app ${formatAge(buildAge)}.`, this.effects.outputColumns));
       }
       const choice = await this.effects.clack.confirm({
         message: "Would you like to build again before deploying?",
@@ -516,7 +517,7 @@ class Deployer {
     }
 
     if (doBuild) {
-      this.effects.clack.log.step("Building project");
+      this.effects.clack.log.step("Building app");
       await this.effects.build(
         {config: this.deployOptions.config},
         new FileBuildEffects(
@@ -757,10 +758,10 @@ export async function promptDeployTarget(
 
   if (existingProjects.length > 0) {
     const chosenProject = await effects.clack.select<{value: string | null; label: string}[], string | null>({
-      message: "Which project do you want to use?",
+      message: "Which app do you want to use?",
       maxItems: Math.max(process.stdout.rows - 4, 0),
       options: [
-        {value: null, label: "Create a new project"},
+        {value: null, label: "Create a new app"},
         ...existingProjects
           .map((p) => ({
             value: p.slug,
@@ -776,7 +777,7 @@ export async function promptDeployTarget(
     }
   } else {
     const confirmChoice = await effects.clack.confirm({
-      message: "No projects found. Do you want to create a new project?",
+      message: "No apps found. Do you want to create a new app?",
       active: "Yes, continue",
       inactive: "No, cancel"
     });
@@ -790,10 +791,10 @@ export async function promptDeployTarget(
 
   let title = config.title;
   if (title === undefined) {
-    effects.clack.log.warn("You haven’t configured a title for your project.");
+    effects.clack.log.warn("You haven’t configured a title for your app.");
     const titleChoice = await effects.clack.text({
       message: "What title do you want to use?",
-      placeholder: "Enter a project title",
+      placeholder: "Enter a app title",
       validate: (title) => (title ? undefined : "A title is required.")
     });
     if (effects.clack.isCancel(titleChoice)) {
@@ -820,7 +821,7 @@ export async function promptDeployTarget(
   projectSlug = projectSlugChoice;
 
   const accessLevel: string | symbol = await effects.clack.select({
-    message: "Who is allowed to access your project?",
+    message: "Who is allowed to access your app?",
     options: [
       {value: "private", label: "Private", hint: "only allow workspace members"},
       {value: "public", label: "Public", hint: "allow anyone"}

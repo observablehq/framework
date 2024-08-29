@@ -19,6 +19,7 @@ export default {
   pages: [
     {name: "What is Framework?", path: "/what-is-framework"},
     {name: "Getting started", path: "/getting-started"},
+    {name: "Deploying", path: "/deploying"},
     {name: "Project structure", path: "/project-structure"},
     {name: "Markdown", path: "/markdown"},
     {name: "JavaScript", path: "/javascript"},
@@ -32,7 +33,6 @@ export default {
     {name: "Page loaders", path: "/page-loaders"},
     {name: "Parameterized routes", path: "/params"},
     {name: "Configuration", path: "/config"},
-    {name: "Deploying", path: "/deploying"},
     {name: "Examples", path: "https://github.com/observablehq/framework/tree/main/examples"},
     {
       name: "Inputs",

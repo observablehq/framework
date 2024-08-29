@@ -6,7 +6,7 @@ index: true
 
 To help you get started, Observable Framework provides a handful of sample datasets by default. If you reference any of these variables (`aapl`, `alphabet`, `cars`, `citywages`, `diamonds`, `flare`, `industries`, `miserables`, `olympians`, `penguins`, `pizza`, or `weather`) in your code, their definition defaults to a Promise loading the corresponding file and returning the data. This makes it easier to get started, with simpler examples of charts and data transformations.
 
-The source data files are downloaded on demand from the [@observablehq/sample-datasets](https://www.npmjs.com/package/@observablehq/sample-datasets) npm package, and served from your project’s cache. Note that these names are not “reserved”: you can define `alphabet` or `industries` as you see fit, if you need a variable or a function with that name in your project.
+The source data files are downloaded on demand from the [@observablehq/sample-datasets](https://www.npmjs.com/package/@observablehq/sample-datasets) npm package, and served from your app’s cache. Note that these names are not “reserved”: you can define `alphabet` or `industries` as you see fit, if you need a variable or a function with that name in your app.
 
 The following lists the provenance of each of the sample datasets:
 

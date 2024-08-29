@@ -43,7 +43,7 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
   const defaultRootPathError = validateRootPath(defaultRootPath);
   clack.log.success(
     wrapAnsi(
-      "Welcome to Observable Framework! 👋 This command will help you create a new project. When prompted, you can press Enter to accept the default value.",
+      "Welcome to Observable Framework! 👋 This command will help you create a new app. When prompted, you can press Enter to accept the default value.",
       Math.min(80, effects.outputColumns)
     ) + `\n\nWant help? ${link("https://observablehq.com/framework/getting-started")}`
   );
@@ -56,9 +56,9 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
           defaultValue: defaultRootPathError ? undefined : defaultRootPath,
           validate: (input) => validateRootPath(input, defaultRootPathError)
         }),
-      projectTitle: ({results: {rootPath}}) =>
+      appTitle: ({results: {rootPath}}) =>
         clack.text({
-          message: "What should we title your project?",
+          message: "What should we title your app?",
           placeholder: inferTitle(rootPath!),
           defaultValue: inferTitle(rootPath!)
         }),
@@ -85,7 +85,7 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
         clack.confirm({
           message: "Initialize git repository?"
         }),
-      installing: async ({results: {rootPath, projectTitle, includeSampleFiles, packageManager, initializeGit}}) => {
+      installing: async ({results: {rootPath, appTitle, includeSampleFiles, packageManager, initializeGit}}) => {
         rootPath = untildify(rootPath!);
         let spinning = true;
         const s = clack.spinner();
@@ -102,8 +102,8 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
             runCommand,
             installCommand,
             rootPath: rootPath!,
-            projectTitleHtml: he.escape(projectTitle as string),
-            projectTitleString: JSON.stringify(projectTitle as string),
+            appTitleHtml: he.escape(appTitle as string),
+            appTitleString: JSON.stringify(appTitle as string),
             frameworkVersionString: JSON.stringify(`^${process.env.npm_package_version}`)
           },
           effects
