@@ -167,7 +167,7 @@ To use an interpreted data loader (anything other than `.exe`), the correspondin
 
 <div class="tip" id="venv">
 
-You can use a virtual environment in Python, such as [venv](https://docs.python.org/3/tutorial/venv.html) or [uv](https://github.com/astral-sh/uv), to install libraries locally to the app. This is useful when working in multiple apps, and when collaborating; you can also track dependencies in a `requirements.txt` file.
+You can use a virtual environment in Python, such as [venv](https://docs.python.org/3/tutorial/venv.html) or [uv](https://github.com/astral-sh/uv), to install libraries locally to the project. This is useful when working in multiple projects, and when collaborating; you can also track dependencies in a `requirements.txt` file.
 
 To create a virtual environment with venv:
 
