@@ -17,6 +17,7 @@ type TelemetryIds = {
 
 type TelemetryEnvironment = {
   version: string; // version from package.json
+  userAgent: string; // npm_config_user_agent
   node: string; // node.js version
   systemPlatform: string; // linux, darwin, win32, ...
   systemRelease: string; // 20.04, 11.2.3, ...
