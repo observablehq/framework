@@ -155,7 +155,7 @@ The pages list should _not_ include the home page (`/`) as this is automatically
 
 Whether to show the previous & next links in the footer; defaults to true. The pages are linked in the same order as they appear in the sidebar.
 
-## dynamicPaths <a href="https://github.com/observablehq/framework/pull/1523" class="observablehq-version-badge" data-version="prerelease" title="Added in #1523"></a>
+## dynamicPaths <a href="https://github.com/observablehq/framework/releases/tag/v1.11.0" class="observablehq-version-badge" data-version="^1.11.0" title="Added in 1.11.0"></a>
 
 The list of [parameterized pages](./params) and [dynamic pages](./page-loaders) to generate, either as a (synchronous) iterable of strings, or a function that returns an async iterable of strings if you wish to load the list of dynamic pages asynchronously.
 
@@ -305,6 +305,6 @@ The set of replacements for straight double and single quotes used when the [**t
 
 If true (the default), automatically convert URL-like text to links in Markdown.
 
-## globalStylesheets <a href="https://github.com/observablehq/framework/pull/1597" class="observablehq-version-badge" data-version="prerelease" title="Added in #1597"></a>
+## globalStylesheets <a href="https://github.com/observablehq/framework/releases/tag/v1.11.0" class="observablehq-version-badge" data-version="^1.11.0" title="Added in 1.11.0"></a>
 
 An array of links to global stylesheets to add to every page’s head, in addition to the [page stylesheet](#style). Defaults to loading [Source Serif 4](https://fonts.google.com/specimen/Source+Serif+4) from Google Fonts.

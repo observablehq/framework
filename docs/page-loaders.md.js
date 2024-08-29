@@ -2,7 +2,7 @@ process.stdout.write(`---
 keywords: server-side rendering, ssr
 ---
 
-# Page loaders <a href="https://github.com/observablehq/framework/pull/1523" class="observablehq-version-badge" data-version="prerelease" title="Added in #1523"></a>
+# Page loaders <a href="https://github.com/observablehq/framework/releases/tag/v1.11.0" class="observablehq-version-badge" data-version="^1.11.0" title="Added in 1.11.0"></a>
 
 Page loaders are a special type of [data loader](./data-loaders) for dynamically generating (or “server-side rendering”) pages. Page loaders are programs that emit [Markdown](./markdown) to standard out, and have a double extension starting with \`.md\`, such as \`.md.js\` for a JavaScript page loader or \`.md.py\` for a Python page loader.
 

@@ -1,4 +1,4 @@
-# Parameterized routes <a href="https://github.com/observablehq/framework/pull/1523" class="observablehq-version-badge" data-version="prerelease" title="Added in #1523"></a>
+# Parameterized routes <a href="https://github.com/observablehq/framework/releases/tag/v1.11.0" class="observablehq-version-badge" data-version="^1.11.0" title="Added in 1.11.0"></a>
 
 Parameterized routes allow a single [Markdown](./markdown) source file or [page loader](./page-loaders) to generate many pages, or a single [data loader](./data-loaders) to generate many files.
 
