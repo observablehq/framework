@@ -1,8 +1,10 @@
 import assert from "node:assert";
 import {mkdir, readFile, rm, stat, unlink, utimes, writeFile} from "node:fs/promises";
 import os from "node:os";
-import type {LoadEffects} from "../src/dataloader.js";
-import {LoaderResolver} from "../src/dataloader.js";
+import {join} from "node:path/posix";
+import {clearFileInfo} from "../src/javascript/module.js";
+import type {LoadEffects} from "../src/loader.js";
+import {LoaderResolver} from "../src/loader.js";
 
 const noopEffects: LoadEffects = {
   logger: {log() {}, warn() {}, error() {}},
@@ -12,34 +14,34 @@ const noopEffects: LoadEffects = {
 describe("LoaderResolver.find(path)", () => {
   const loaders = new LoaderResolver({root: "test"});
   it("a .js data loader is called with node", async () => {
-    const loader = loaders.find("dataloaders/data1.txt")!;
+    const loader = loaders.find("/dataloaders/data1.txt")!;
     const out = await loader.load(noopEffects);
     assert.strictEqual(await readFile("test/" + out, "utf-8"), "node\n");
   });
   it("a .ts data loader is called with tsx", async () => {
-    const loader = loaders.find("dataloaders/data2.txt")!;
+    const loader = loaders.find("/dataloaders/data2.txt")!;
     const out = await loader.load(noopEffects);
     assert.strictEqual(await readFile("test/" + out, "utf-8"), "tsx\n");
   });
   it("a .sh data loader is called with sh", async function () {
     if (os.platform() === "win32") this.skip();
-    const loader = loaders.find("dataloaders/data3.txt")!;
+    const loader = loaders.find("/dataloaders/data3.txt")!;
     const out = await loader.load(noopEffects);
     assert.strictEqual(await readFile("test/" + out, "utf-8"), "shell\n");
   });
   it("a .exe data loader is invoked directly", async () => {
-    const loader = loaders.find("dataloaders/data4.txt")!;
+    const loader = loaders.find("/dataloaders/data4.txt")!;
     const out = await loader.load(noopEffects);
     assert.strictEqual(await readFile("test/" + out, "utf-8"), `python3${os.EOL}`);
   });
   it("a .py data loader is called with python3", async () => {
-    const loader = loaders.find("dataloaders/data5.txt")!;
+    const loader = loaders.find("/dataloaders/data5.txt")!;
     const out = await loader.load(noopEffects);
     assert.strictEqual(await readFile("test/" + out, "utf-8"), `python3${os.EOL}`);
   });
   // Skipping because this requires R to be installed (which is slow in CI).
   it.skip("a .R data loader is called with Rscript", async () => {
-    const loader = loaders.find("dataloaders/data6.txt")!;
+    const loader = loaders.find("/dataloaders/data6.txt")!;
     const out = await loader.load(noopEffects);
     assert.strictEqual(await readFile("test/" + out, "utf-8"), "Rscript\n");
   });
@@ -57,12 +59,13 @@ describe("LoaderResolver.find(path, {useStale: true})", () => {
         }
       }
     };
-    const loader = loaders.find("dataloaders/data1.txt")!;
+    const loader = loaders.find("/dataloaders/data1.txt")!;
+    const loaderPath = join(loader.root, loader.path);
     // save the loader times.
-    const {atime, mtime} = await stat(loader.path);
+    const {atime, mtime} = await stat(loaderPath);
     // set the loader mtime to Dec. 1st, 2023.
     const time = new Date(2023, 11, 1);
-    await utimes(loader.path, atime, time);
+    await utimes(loaderPath, atime, time);
     // remove the cache set by another test (unless we it.only this test).
     try {
       await unlink("test/.observablehq/cache/dataloaders/data1.txt");
@@ -74,25 +77,25 @@ describe("LoaderResolver.find(path, {useStale: true})", () => {
     // run again (fresh)
     await loader.load(outputEffects);
     // touch the loader
-    await utimes(loader.path, atime, new Date(Date.now() + 100));
+    await utimes(loaderPath, atime, new Date(Date.now() + 100));
     // run it with useStale=true (using stale)
-    const loader2 = loaders.find("dataloaders/data1.txt", {useStale: true})!;
+    const loader2 = loaders.find("/dataloaders/data1.txt", {useStale: true})!;
     await loader2.load(outputEffects);
     // run it with useStale=false (stale)
     await loader.load(outputEffects);
     // revert the loader to its original mtime
-    await utimes(loader.path, atime, mtime);
+    await utimes(loaderPath, atime, mtime);
     assert.deepStrictEqual(
       // eslint-disable-next-line no-control-regex
       out.map((l) => l.replaceAll(/\x1b\[[0-9]+m/g, "")),
       [
-        "load test/dataloaders/data1.txt.js → ",
+        "load /dataloaders/data1.txt → ",
         "[missing] ",
-        "load test/dataloaders/data1.txt.js → ",
+        "load /dataloaders/data1.txt → ",
         "[fresh] ",
-        "load test/dataloaders/data1.txt.js → ",
+        "load /dataloaders/data1.txt → ",
         "[using stale] ",
-        "load test/dataloaders/data1.txt.js → ",
+        "load /dataloaders/data1.txt → ",
         "[stale] "
       ]
     );
@@ -104,6 +107,8 @@ describe("LoaderResolver.getSourceFileHash(path)", () => {
   it("returns the content hash for the specified file’s data loader", async () => {
     await utimes("test/input/build/archives.posix/dynamic.zip.sh", time, time);
     await utimes("test/input/build/archives.posix/static.zip", time, time);
+    clearFileInfo("test/input/build/archives.posix", "dynamic.zip.sh");
+    clearFileInfo("test/input/build/archives.posix", "static.zip");
     const loaders = new LoaderResolver({root: "test/input/build/archives.posix"});
     assert.strictEqual(loaders.getSourceFileHash("dynamic.zip.sh"), "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"); // prettier-ignore
     assert.strictEqual(loaders.getSourceFileHash("dynamic.zip"), "64acd011e27907a2594fda3272bfc951e75db4c80495ce41e84ced61383bbb60"); // prettier-ignore

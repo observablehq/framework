@@ -48,9 +48,11 @@ export function findReferences(
   node: Node,
   {
     globals = defaultGlobals,
+    filterReference = (identifier: Identifier) => !globals.has(identifier.name),
     filterDeclaration = () => true
   }: {
     globals?: Set<string>;
+    filterReference?: (identifier: Identifier) => any;
     filterDeclaration?: (identifier: {name: string}) => any;
   } = {}
 ): Identifier[] {
@@ -149,7 +151,7 @@ export function findReferences(
         return;
       }
     }
-    if (!globals.has(name)) {
+    if (filterReference(node)) {
       references.push(node);
     }
   }

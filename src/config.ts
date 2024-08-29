@@ -7,12 +7,13 @@ import {cwd} from "node:process";
 import {pathToFileURL} from "node:url";
 import type MarkdownIt from "markdown-it";
 import wrapAnsi from "wrap-ansi";
-import {LoaderResolver} from "./dataloader.js";
 import {visitMarkdownFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import type {FrontMatter} from "./frontMatter.js";
+import {LoaderResolver} from "./loader.js";
 import {createMarkdownIt, parseMarkdownMetadata} from "./markdown.js";
 import {isAssetPath, parseRelativeUrl, resolvePath} from "./path.js";
+import {isParameterizedPath} from "./route.js";
 import {resolveTheme} from "./theme.js";
 import {bold, yellow} from "./tty.js";
 
@@ -80,6 +81,7 @@ export interface Config {
   sidebar: boolean; // defaults to true if pages isn’t empty
   pages: (Page | Section<Page>)[];
   pager: boolean; // defaults to true
+  paths: () => AsyncIterable<string>; // defaults to static Markdown files
   scripts: Script[]; // deprecated; defaults to empty array
   head: PageFragmentFunction | string | null; // defaults to null
   header: PageFragmentFunction | string | null; // defaults to null
@@ -111,6 +113,7 @@ export interface ConfigSpec {
   title?: unknown;
   pages?: unknown;
   pager?: unknown;
+  dynamicPaths?: unknown;
   toc?: unknown;
   linkify?: unknown;
   typographer?: unknown;
@@ -180,7 +183,7 @@ function readPages(root: string, md: MarkdownIt): Page[] {
   const files: {file: string; source: string}[] = [];
   const hash = createHash("sha256");
   for (const file of visitMarkdownFiles(root)) {
-    if (file === "index.md" || file === "404.md") continue;
+    if (isParameterizedPath(file) || file === "index.md" || file === "404.md") continue;
     const source = readFileSync(join(root, file), "utf8");
     files.push({file, source});
     hash.update(file).update(source);
@@ -239,6 +242,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const title = spec.title === undefined ? undefined : String(spec.title);
   const pages = spec.pages === undefined ? undefined : normalizePages(spec.pages);
   const pager = spec.pager === undefined ? true : Boolean(spec.pager);
+  const dynamicPaths = normalizeDynamicPaths(spec.dynamicPaths);
   const toc = normalizeToc(spec.toc as any);
   const sidebar = spec.sidebar === undefined ? undefined : Boolean(spec.sidebar);
   const scripts = spec.scripts === undefined ? [] : normalizeScripts(spec.scripts);
@@ -247,6 +251,18 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const footer = pageFragment(spec.footer === undefined ? defaultFooter() : spec.footer);
   const search = spec.search == null || spec.search === false ? null : normalizeSearch(spec.search as any);
   const interpreters = normalizeInterpreters(spec.interpreters as any);
+  const normalizePath = getPathNormalizer(spec.cleanUrls);
+
+  // If this path ends with a slash, then add an implicit /index to the
+  // end of the path. Otherwise, remove the .html extension (we use clean
+  // paths as the internal canonical representation; see normalizePage).
+  function normalizePagePath(pathname: string): string {
+    pathname = normalizePath(pathname);
+    if (pathname.endsWith("/")) pathname = join(pathname, "index");
+    else pathname = pathname.replace(/\.html$/, "");
+    return pathname;
+  }
+
   const config: Config = {
     root,
     output,
@@ -255,6 +271,14 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     sidebar: sidebar!, // see below
     pages: pages!, // see below
     pager,
+    async *paths() {
+      for await (const path of getDefaultPaths(root)) {
+        yield normalizePagePath(path);
+      }
+      for await (const path of dynamicPaths()) {
+        yield normalizePagePath(path);
+      }
+    },
     scripts,
     head,
     header,
@@ -264,7 +288,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     globalStylesheets,
     search,
     md,
-    normalizePath: getPathNormalizer(spec.cleanUrls),
+    normalizePath,
     loaders: new LoaderResolver({root, interpreters}),
     watchPath
   };
@@ -272,6 +296,18 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   if (sidebar === undefined) Object.defineProperty(config, "sidebar", {get: () => config.pages.length > 0});
   configCache.set(spec, config);
   return config;
+}
+
+function getDefaultPaths(root: string): string[] {
+  return Array.from(visitMarkdownFiles(root))
+    .filter((path) => !isParameterizedPath(path))
+    .map((path) => join("/", dirname(path), basename(path, ".md")));
+}
+
+function normalizeDynamicPaths(spec: unknown): Config["paths"] {
+  if (typeof spec === "function") return spec as () => AsyncIterable<string>;
+  const paths = Array.from((spec ?? []) as ArrayLike<string>, String);
+  return async function* () { yield* paths; }; // prettier-ignore
 }
 
 function getPathNormalizer(spec: unknown = true): (path: string) => string {

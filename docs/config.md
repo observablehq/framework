@@ -155,6 +155,10 @@ The pages list should _not_ include the home page (`/`) as this is automatically
 
 Whether to show the previous & next links in the footer; defaults to true. The pages are linked in the same order as they appear in the sidebar.
 
+## dynamicPaths <a href="https://github.com/observablehq/framework/pull/1523" class="observablehq-version-badge" data-version="prerelease" title="Added in #1523"></a>
+
+The list of [parameterized pages](./params) and [dynamic pages](./page-loaders) to generate, either as a (synchronous) iterable of strings, or a function that returns an async iterable of strings if you wish to load the list of dynamic pages asynchronously.
+
 ## head
 
 An HTML fragment to add to the head. Defaults to the empty string. If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
@@ -224,7 +228,7 @@ These additional results may also point to external links if the **path** is spe
 ```js run=false
 export default {
   search: {
-    async* index() {
+    async *index() {
       yield {
         path: "https://example.com",
         title: "Example",
@@ -237,7 +241,7 @@ export default {
 
 ## interpreters <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" class="observablehq-version-badge" data-version="^1.3.0" title="Added in 1.3.0"></a>
 
-The **interpreters** option specifies additional interpreted languages for data loaders, indicating the file extension and associated interpreter. (See [loader routing](./loaders#routing) for more.) The default list of interpreters is:
+The **interpreters** option specifies additional interpreted languages for data loaders, indicating the file extension and associated interpreter. (See [loader routing](./data-loaders#routing) for more.) The default list of interpreters is:
 
 ```js run=false
 {

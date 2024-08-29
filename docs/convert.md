@@ -384,7 +384,7 @@ The `convert` command only supports code cell modes: Markdown, JavaScript, HTML,
 
 ## Databases
 
-Database connectors can be replaced by [data loaders](./loaders).
+Database connectors can be replaced by [data loaders](./data-loaders).
 
 ## Secrets
 

@@ -26,7 +26,7 @@ const db = SQLiteDatabaseClient.open(FileAttachment("chinook.db"));
 
 (Note that unlike [`DuckDBClient`](./duckdb), a `SQLiteDatabaseClient` takes a single argument representing _all_ of the tables in the database; that’s because a SQLite file stores multiple tables, whereas DuckDB typically uses separate Apache Parquet, CSV, or JSON files for each table.)
 
-Using `FileAttachment` means that referenced files are automatically copied to `dist` during build, and you can even generate SQLite files using [data loaders](../loaders). But if you want to “hot” load a live file from an external server, pass a string to `SQLiteDatabaseClient.open`:
+Using `FileAttachment` means that referenced files are automatically copied to `dist` during build, and you can even generate SQLite files using [data loaders](../data-loaders). But if you want to “hot” load a live file from an external server, pass a string to `SQLiteDatabaseClient.open`:
 
 ```js run=false
 const db = SQLiteDatabaseClient.open("https://static.observableusercontent.com/files/b3711cfd9bdf50cbe4e74751164d28e907ce366cd4bf56a39a980a48fdc5f998c42a019716a8033e2b54defdd97e4a55ebe4f6464b4f0678ea0311532605a115");

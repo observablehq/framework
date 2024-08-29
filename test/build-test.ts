@@ -61,12 +61,12 @@ describe("build", () => {
       // renumber the hashes so they are sequential. This way we don’t have to
       // update the test snapshots whenever Framework’s client code changes. We
       // make an exception for minisearch.json because to test the content.
-      for (const path of findFiles(join(actualDir, "_observablehq"))) {
+      for (const path of findFiles(join(outputDir, "_observablehq"))) {
         const match = /^((.+)\.[0-9a-f]{8})\.(\w+)$/.exec(path);
         if (!match) throw new Error(`no hash found: ${path}`);
         const [, key, name, ext] = match;
-        const oldPath = join(actualDir, "_observablehq", path);
-        const newPath = join(actualDir, "_observablehq", `${name}.${normalizeHash(key)}.${ext}`);
+        const oldPath = join(outputDir, "_observablehq", path);
+        const newPath = join(outputDir, "_observablehq", `${name}.${normalizeHash(key)}.${ext}`);
         if (/^minisearch\.[0-9a-f]{8}\.json$/.test(path)) {
           await rename(oldPath, newPath);
         } else {
@@ -76,10 +76,10 @@ describe("build", () => {
       }
 
       // Replace any reference to re-numbered files in _observablehq.
-      for (const path of findFiles(actualDir)) {
-        const actual = await readFile(join(actualDir, path), "utf8");
+      for (const path of findFiles(outputDir)) {
+        const actual = await readFile(join(outputDir, path), "utf8");
         const normalized = actual.replace(/\/_observablehq\/((.+)\.[0-9a-f]{8})\.(\w+)\b/g, (match, key, name, ext) => `/_observablehq/${name}.${normalizeHash(key)}.${ext}`); // prettier-ignore
-        if (normalized !== actual) await writeFile(join(actualDir, path), normalized);
+        if (normalized !== actual) await writeFile(join(outputDir, path), normalized);
       }
 
       if (generate) return;

@@ -4,7 +4,7 @@ keywords: file, fileattachment, attachment
 
 # Files
 
-Load files — whether static or generated dynamically by a [data loader](./loaders) — using the built-in `FileAttachment` function. This is available by default in Markdown, but you can import it explicitly like so:
+Load files — whether static or generated dynamically by a [data loader](./data-loaders) — using the built-in `FileAttachment` function. This is available by default in Markdown, but you can import it explicitly like so:
 
 ```js echo
 import {FileAttachment} from "npm:@observablehq/stdlib";
@@ -16,7 +16,7 @@ The `FileAttachment` function takes a path and returns a file handle. This handl
 FileAttachment("volcano.json")
 ```
 
-Like a [local import](./imports#local-imports), the path is relative to the calling code’s source file: either the page’s Markdown file or the imported local JavaScript module. To load a remote file, use [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API), or use a [data loader](./loaders) to download the file at build time.
+Like a [local import](./imports#local-imports), the path is relative to the calling code’s source file: either the page’s Markdown file or the imported local JavaScript module. To load a remote file, use [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API), or use a [data loader](./data-loaders) to download the file at build time.
 
 Calling `FileAttachment` doesn’t actually load the file; the contents are only loaded when you invoke a [file contents method](#supported-formats). For example, to load a JSON file:
 
@@ -32,7 +32,7 @@ volcano
 
 ## Static analysis
 
-The `FileAttachment` function can _only_ be passed a static string literal; constructing a dynamic path such as `FileAttachment("my" + "file.csv")` is invalid syntax. Static analysis is used to invoke [data loaders](./loaders) at build time, and ensures that only referenced files are included in the generated output during build. This also allows a content hash in the file name for cache breaking during deploy.
+The `FileAttachment` function can _only_ be passed a static string literal; constructing a dynamic path such as <code>FileAttachment(\`frame$\{i}.png\`)</code> is invalid syntax. Static analysis is used to invoke [data loaders](./data-loaders) at build time, and ensures that only referenced files are included in the generated output during build. This also allows a content hash in the file name for cache breaking during deploy.
 
 If you have multiple files, you can enumerate them explicitly like so:
 

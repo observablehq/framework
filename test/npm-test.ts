@@ -134,14 +134,14 @@ describe("rewriteNpmImports(input, resolve)", () => {
     assert.strictEqual(rewriteNpmImports("import('/npm/d3-array@3.2.4/+esm');\n", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import("../d3-array@3.2.4/_esm.js");\n');
   });
   it("ignores dynamic imports with dynamic module specifiers", () => {
-    assert.strictEqual(rewriteNpmImports('import(`/npm/d3-array@${"3.2.4"}/+esm`);\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import(`/npm/d3-array@${"3.2.4"}/+esm`);\n');
+    assert.strictEqual(rewriteNpmImports("import(`/npm/d3-array@${version}/+esm`);\n", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), "import(`/npm/d3-array@${version}/+esm`);\n");
   });
   it("ignores dynamic imports with dynamic module specifiers", () => {
-    assert.strictEqual(rewriteNpmImports('import(`/npm/d3-array@${"3.2.4"}/+esm`);\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import(`/npm/d3-array@${"3.2.4"}/+esm`);\n');
+    assert.strictEqual(rewriteNpmImports("import(`/npm/d3-array@${version}/+esm`);\n", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), "import(`/npm/d3-array@${version}/+esm`);\n");
   });
   it("strips the sourceMappingURL declaration", () => {
-    assert.strictEqual(rewriteNpmImports('import(`/npm/d3-array@${"3.2.4"}/+esm`);\n//# sourceMappingURL=index.js.map', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import(`/npm/d3-array@${"3.2.4"}/+esm`);\n');
-    assert.strictEqual(rewriteNpmImports('import(`/npm/d3-array@${"3.2.4"}/+esm`);\n//# sourceMappingURL=index.js.map\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import(`/npm/d3-array@${"3.2.4"}/+esm`);\n');
+    assert.strictEqual(rewriteNpmImports("import(`/npm/d3-array@3.2.4/+esm`);\n//# sourceMappingURL=index.js.map", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import("../d3-array@3.2.4/_esm.js");\n');
+    assert.strictEqual(rewriteNpmImports("import(`/npm/d3-array@3.2.4/+esm`);\n//# sourceMappingURL=index.js.map\n", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import("../d3-array@3.2.4/_esm.js");\n');
   });
 });
 

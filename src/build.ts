@@ -1,15 +1,13 @@
 import {createHash} from "node:crypto";
-import {existsSync} from "node:fs";
-import {access, constants, copyFile, readFile, rm, stat, writeFile} from "node:fs/promises";
+import {copyFile, readFile, rm, stat, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {CliError, isEnoent} from "./error.js";
-import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
-import {getLocalModuleHash, getModuleHash, readJavaScript} from "./javascript/module.js";
+import {getClientPath, prepareOutput} from "./files.js";
+import {findModule, getLocalModuleHash, getModuleHash, readJavaScript} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
-import {parseMarkdown} from "./markdown.js";
 import {populateNpmCache, resolveNpmImport, rewriteNpmImports} from "./npm.js";
 import {isAssetPath, isPathImport, relativePath, resolvePath, within} from "./path.js";
 import {renderPage} from "./render.js";
@@ -57,15 +55,6 @@ export async function build(
   const {root, loaders} = config;
   Telemetry.record({event: "build", step: "start"});
 
-  // Make sure all files are readable before starting to write output files.
-  let pageCount = 0;
-  for (const sourceFile of visitMarkdownFiles(root)) {
-    await access(join(root, sourceFile), constants.R_OK);
-    pageCount++;
-  }
-  if (!pageCount) throw new CliError(`Nothing to build: no page files found in your ${root} directory.`);
-  effects.logger.log(`${faint("found")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
-
   // Prepare for build (such as by emptying the existing output root).
   await effects.prepare();
 
@@ -75,28 +64,30 @@ export async function build(
   const localImports = new Set<string>(); // e.g., "/components/foo.js"
   const globalImports = new Set<string>(); // e.g., "/_observablehq/search.js"
   const stylesheets = new Set<string>(); // e.g., "/style.css"
-  for (const sourceFile of visitMarkdownFiles(root)) {
-    const sourcePath = join(root, sourceFile);
-    const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
-    const options = {path, ...config};
-    effects.output.write(`${faint("parse")} ${sourcePath} `);
+  for await (const path of config.paths()) {
+    effects.output.write(`${faint("parse")} ${path} `);
     const start = performance.now();
-    const source = await readFile(sourcePath, "utf8");
-    const page = parseMarkdown(source, options);
+    const options = {path, ...config};
+    const page = await loaders.loadPage(path, options, effects);
     if (page.data.draft) {
       effects.logger.log(faint("(skipped)"));
       continue;
     }
-    const resolvers = await getResolvers(page, {path: sourceFile, ...config});
+    const resolvers = await getResolvers(page, options);
     const elapsed = Math.floor(performance.now() - start);
-    for (const f of resolvers.assets) files.add(resolvePath(sourceFile, f));
-    for (const f of resolvers.files) files.add(resolvePath(sourceFile, f));
-    for (const i of resolvers.localImports) localImports.add(resolvePath(sourceFile, i));
-    for (let i of resolvers.globalImports) if (isPathImport((i = resolvers.resolveImport(i)))) globalImports.add(resolvePath(sourceFile, i)); // prettier-ignore
-    for (const s of resolvers.stylesheets) stylesheets.add(/^\w+:/.test(s) ? s : resolvePath(sourceFile, s));
+    for (const f of resolvers.assets) files.add(resolvePath(path, f));
+    for (const f of resolvers.files) files.add(resolvePath(path, f));
+    for (const i of resolvers.localImports) localImports.add(resolvePath(path, i));
+    for (let i of resolvers.globalImports) if (isPathImport((i = resolvers.resolveImport(i)))) globalImports.add(resolvePath(path, i)); // prettier-ignore
+    for (const s of resolvers.stylesheets) stylesheets.add(/^\w+:/.test(s) ? s : resolvePath(path, s));
     effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
-    pages.set(sourceFile, {page, resolvers});
+    pages.set(path, {page, resolvers});
   }
+
+  // Check that there’s at least one page.
+  const pageCount = pages.size;
+  if (!pageCount) throw new CliError(`Nothing to build: no page files found in your ${root} directory.`);
+  effects.logger.log(`${faint("built")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
 
   // For cache-breaking we rename most assets to include content hashes.
   const aliases = new Map<string, string>();
@@ -164,21 +155,14 @@ export async function build(
 
   // Copy over referenced files, accumulating hashed aliases.
   for (const file of files) {
-    let sourcePath = join(root, file);
-    effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-    if (!existsSync(sourcePath)) {
-      const loader = loaders.find(join("/", file), {useStale: true});
-      if (!loader) {
-        effects.logger.error(red("error: missing referenced file"));
-        continue;
-      }
-      try {
-        sourcePath = join(root, await loader.load(effects));
-      } catch (error) {
-        if (!isEnoent(error)) throw error;
-        effects.logger.error(red("error: missing referenced file"));
-        continue;
-      }
+    effects.output.write(`${faint("copy")} ${join(root, file)} ${faint("→")} `);
+    let sourcePath: string;
+    try {
+      sourcePath = join(root, await loaders.loadFile(join("/", file), {useStale: true}, effects));
+    } catch (error) {
+      if (!isEnoent(error)) throw error;
+      effects.logger.error(red("error: missing referenced file"));
+      continue;
     }
     const contents = await readFile(sourcePath);
     const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
@@ -237,8 +221,13 @@ export async function build(
     return applyHash(join("/_import", path), hash);
   };
   for (const path of localImports) {
-    const sourcePath = join(root, path);
-    const importPath = join("_import", path);
+    const module = findModule(root, path);
+    if (!module) {
+      effects.logger.error(red(`error: import not found: ${path}`));
+      continue;
+    }
+    const sourcePath = join(root, module.path);
+    const importPath = join("_import", module.path);
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     const resolveImport = getModuleResolver(root, path);
     let input: string;
@@ -252,6 +241,7 @@ export async function build(
     const contents = await transpileModule(input, {
       root,
       path,
+      params: module.params,
       async resolveImport(specifier) {
         let resolution: string;
         if (isPathImport(specifier)) {
@@ -272,10 +262,9 @@ export async function build(
   }
 
   // Wrap the resolvers to apply content-hashed file names.
-  for (const [sourceFile, page] of pages) {
-    const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
+  for (const [path, page] of pages) {
     const {resolvers} = page;
-    pages.set(sourceFile, {
+    pages.set(path, {
       ...page,
       resolvers: {
         ...resolvers,
@@ -305,14 +294,11 @@ export async function build(
 
   // Render pages!
   const buildManifest: BuildManifest = {pages: []};
-  for (const [sourceFile, {page, resolvers}] of pages) {
-    const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
-    const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
+  for (const [path, {page, resolvers}] of pages) {
     effects.output.write(`${faint("render")} ${path} ${faint("→")} `);
     const html = await renderPage(page, {...config, path, resolvers});
-    await effects.writeFile(outputPath, html);
-    const urlPath = config.normalizePath("/" + outputPath);
-    buildManifest.pages.push({path: urlPath, title: page.title});
+    await effects.writeFile(`${path}.html`, html);
+    buildManifest.pages.push({path: config.normalizePath(path), title: page.title});
   }
 
   // Write the build manifest.
@@ -328,11 +314,9 @@ export async function build(
         }`
       );
     } else {
-      const [sourceFile, {resolvers}] = node.data!;
-      const outputPath = join(dirname(sourceFile), basename(sourceFile, ".md") + ".html");
-      const path = join("/", dirname(sourceFile), basename(sourceFile, ".md"));
+      const [path, {resolvers}] = node.data!;
       const resolveOutput = (name: string) => join(config.output, resolvePath(path, name));
-      const pageSize = (await stat(join(config.output, outputPath))).size;
+      const pageSize = (await stat(join(config.output, `${path}.html`))).size;
       const importSize = await accumulateSize(resolvers.staticImports, resolvers.resolveImport, resolveOutput);
       const fileSize =
         (await accumulateSize(resolvers.files, resolvers.resolveFile, resolveOutput)) +

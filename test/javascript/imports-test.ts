@@ -93,7 +93,7 @@ describe("findImports(body, path, input)", () => {
     ]);
   });
   it("ignores import expressions with dynamic sources", () => {
-    const input = "import('./bar'+'.js');\nimport(`/${'baz'}.js`);\n";
+    const input = "import(bar+'.js');\nimport(`/${baz}.js`);\n";
     const program = parse(input);
     assert.deepStrictEqual(findImports(program, "foo/bar.js", input), []);
   });

@@ -2,6 +2,7 @@ import {existsSync} from "node:fs";
 import {readFile, readdir, stat} from "node:fs/promises";
 import {join} from "node:path/posix";
 import {formatPrefix} from "d3-format";
+import {themes} from "./docs/themes.md.ts";
 
 let stargazers_count: number;
 try {
@@ -24,10 +25,12 @@ export default {
     {name: "Reactivity", path: "/reactivity"},
     {name: "JSX", path: "/jsx"},
     {name: "Imports", path: "/imports"},
-    {name: "Data loaders", path: "/loaders"},
+    {name: "Data loaders", path: "/data-loaders"},
     {name: "Files", path: "/files"},
     {name: "SQL", path: "/sql"},
     {name: "Themes", path: "/themes"},
+    {name: "Page loaders", path: "/page-loaders"},
+    {name: "Parameterized routes", path: "/params"},
     {name: "Configuration", path: "/config"},
     {name: "Deploying", path: "/deploying"},
     {name: "Examples", path: "https://github.com/observablehq/framework/tree/main/examples"},
@@ -85,6 +88,18 @@ export default {
     {name: "Converting notebooks", path: "/convert"},
     {name: "Contributing", path: "/contributing", pager: false}
   ],
+  dynamicPaths: [
+    "/page-loaders",
+    "/theme/dark",
+    "/theme/dark-alt",
+    "/theme/dashboard",
+    "/theme/light",
+    "/theme/light-alt",
+    "/theme/wide",
+    "/themes",
+    ...themes.dark.map((theme) => `/theme/${theme}`),
+    ...themes.light.map((theme) => `/theme/${theme}`)
+  ],
   base: "/framework",
   globalStylesheets: [
     "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap"
@@ -125,14 +140,17 @@ export default {
   footer: `© ${new Date().getUTCFullYear()} Observable, Inc.`,
   style: "style.css",
   search: {
-    async* index() {
+    async *index() {
       for (const name of await readdir("examples")) {
         const root = join("examples", name);
         if ((await stat(root)).isDirectory() && existsSync(join(root, "README.md"))) {
           const source = await readFile(join(root, "README.md"), "utf-8");
           yield {
             path: `https://observablehq.observablehq.cloud/framework-example-${name}/`,
-            title: source.split("\n").find((line) => line.startsWith("# "))?.slice(2),
+            title: source
+              .split("\n")
+              .find((line) => line.startsWith("# "))
+              ?.slice(2),
             text: source
           };
         }

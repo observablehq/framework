@@ -19,6 +19,7 @@ import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
 import {isAssetPath, relativePath} from "./path.js";
 import {parsePlaceholder} from "./placeholder.js";
+import type {Params} from "./route.js";
 import {transpileSql} from "./sql.js";
 import {transpileTag} from "./tag.js";
 import {InvalidThemeError} from "./theme.js";
@@ -39,6 +40,7 @@ export interface MarkdownPage {
   data: FrontMatter;
   style: string | null;
   code: MarkdownCode[];
+  params?: Params;
 }
 
 interface ParseContext {
@@ -46,6 +48,7 @@ interface ParseContext {
   startLine: number;
   currentLine: number;
   path: string;
+  params?: Params;
 }
 
 function uniqueCodeId(context: ParseContext, content: string): string {
@@ -108,7 +111,7 @@ function getLiveSource(content: string, tag: string, attributes: Record<string, 
 
 function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
-    const {path} = context;
+    const {path, params} = context;
     const token = tokens[idx];
     const {tag, attributes} = parseInfo(token.info);
     token.info = tag;
@@ -119,7 +122,7 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
       if (source != null) {
         const id = uniqueCodeId(context, source);
         // TODO const sourceLine = context.startLine + context.currentLine;
-        const node = parseJavaScript(source, {path});
+        const node = parseJavaScript(source, {path, params});
         context.code.push({id, node, mode: tag === "jsx" ? "jsx" : "block"});
         html += `<div class="observablehq observablehq--block">${
           node.expression ? "<observablehq-loading></observablehq-loading>" : ""
@@ -180,12 +183,12 @@ const transformPlaceholderCore: RuleCore = (state) => {
 
 function makePlaceholderRenderer(): RenderRule {
   return (tokens, idx, options, context: ParseContext) => {
-    const {path} = context;
+    const {path, params} = context;
     const token = tokens[idx];
     const id = uniqueCodeId(context, token.content);
     try {
       // TODO sourceLine: context.startLine + context.currentLine
-      const node = parseJavaScript(token.content, {path, inline: true});
+      const node = parseJavaScript(token.content, {path, params, inline: true});
       context.code.push({id, node, mode: "inline"});
       return `<observablehq-loading></observablehq-loading><!--:${id}:-->`;
     } catch (error) {
@@ -212,6 +215,7 @@ export interface ParseOptions {
   head?: Config["head"];
   header?: Config["header"];
   footer?: Config["footer"];
+  params?: Params;
 }
 
 export function createMarkdownIt({
@@ -237,10 +241,10 @@ export function createMarkdownIt({
 }
 
 export function parseMarkdown(input: string, options: ParseOptions): MarkdownPage {
-  const {md, path} = options;
+  const {md, path, params} = options;
   const {content, data} = readFrontMatter(input);
   const code: MarkdownCode[] = [];
-  const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
+  const context: ParseContext = {code, startLine: 0, currentLine: 0, path, params};
   const tokens = md.parse(content, context);
   const body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
   const title = data.title !== undefined ? data.title : findTitle(tokens);
@@ -252,7 +256,8 @@ export function parseMarkdown(input: string, options: ParseOptions): MarkdownPag
     data,
     title,
     style: getStyle(data, options),
-    code
+    code,
+    params
   };
 }
 

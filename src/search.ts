@@ -1,11 +1,7 @@
-import {readFile} from "node:fs/promises";
-import {basename, dirname, join} from "node:path/posix";
 import he from "he";
 import MiniSearch from "minisearch";
 import type {Config, SearchResult} from "./config.js";
-import {visitMarkdownFiles} from "./files.js";
-import type {Logger} from "./logger.js";
-import {parseMarkdown} from "./markdown.js";
+import type {Logger, Writer} from "./logger.js";
 import {faint, strikethrough} from "./tty.js";
 
 // Avoid reindexing too often in preview.
@@ -14,9 +10,13 @@ const reindexDelay = 10 * 60 * 1000; // 10 minutes
 
 export interface SearchIndexEffects {
   logger: Logger;
+  output: Writer;
 }
 
-const defaultEffects: SearchIndexEffects = {logger: console};
+const defaultEffects: SearchIndexEffects = {
+  logger: console,
+  output: process.stdout
+};
 
 const indexOptions = {
   fields: ["title", "text", "keywords"], // fields to return with search results
@@ -57,7 +57,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
 }
 
 async function* indexPages(config: Config, effects: SearchIndexEffects): AsyncIterable<SearchResult> {
-  const {root, pages} = config;
+  const {pages, loaders} = config;
 
   // Get all the listed pages (which are indexed by default)
   const pagePaths = new Set(["/index"]);
@@ -66,18 +66,15 @@ async function* indexPages(config: Config, effects: SearchIndexEffects): AsyncIt
     if ("pages" in p) for (const {path} of p.pages) pagePaths.add(path);
   }
 
-  for (const file of visitMarkdownFiles(root)) {
-    const sourcePath = join(root, file);
-    const source = await readFile(sourcePath, "utf8");
-    const path = `/${join(dirname(file), basename(file, ".md"))}`;
-    const {body, title, data} = parseMarkdown(source, {...config, path});
+  for await (const path of config.paths()) {
+    const {body, title, data} = await loaders.loadPage(path, {...config, path});
 
     // Skip pages that opt-out of indexing, and skip unlisted pages unless
     // opted-in. We only log the first case.
     const listed = pagePaths.has(path);
     const indexed = data?.index === undefined ? listed : Boolean(data.index);
     if (!indexed) {
-      if (listed) effects.logger.log(`${faint("index")} ${strikethrough(sourcePath)} ${faint("(skipped)")}`);
+      if (listed) effects.logger.log(`${faint("index")} ${strikethrough(path)} ${faint("(skipped)")}`);
       continue;
     }
 
@@ -93,7 +90,7 @@ async function* indexPages(config: Config, effects: SearchIndexEffects): AsyncIt
       .replaceAll(/[\u0300-\u036f]/g, "")
       .replace(/[^\p{L}\p{N}]/gu, " "); // keep letters & numbers
 
-    effects.logger.log(`${faint("index")} ${sourcePath}`);
+    effects.logger.log(`${faint("index")} ${path}`);
     yield {path, title, text, keywords: normalizeKeywords(data?.keywords)};
   }
 }

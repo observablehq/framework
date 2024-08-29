@@ -1,7 +1,7 @@
 import {createHash} from "node:crypto";
 import {watch} from "node:fs";
 import type {FSWatcher, WatchEventType} from "node:fs";
-import {access, constants, readFile} from "node:fs/promises";
+import {access, constants} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
 import {basename, dirname, join, normalize} from "node:path/posix";
@@ -16,15 +16,14 @@ import type {WebSocket} from "ws";
 import {WebSocketServer} from "ws";
 import type {Config} from "./config.js";
 import {readConfig} from "./config.js";
-import type {LoaderResolver} from "./dataloader.js";
-import {HttpError, isEnoent, isHttpError, isSystemError} from "./error.js";
+import {enoent, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import type {FileWatchers} from "./fileWatchers.js";
 import {isComment, isElement, isText, parseHtml, rewriteHtml} from "./html.js";
 import type {FileInfo} from "./javascript/module.js";
-import {readJavaScript} from "./javascript/module.js";
+import {findModule, readJavaScript} from "./javascript/module.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
-import {parseMarkdown} from "./markdown.js";
+import type {LoaderResolver} from "./loader.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
 import {populateNpmCache} from "./npm.js";
 import {isPathImport, resolvePath} from "./path.js";
@@ -32,6 +31,8 @@ import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
 import {getResolvers} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
+import type {Params} from "./route.js";
+import {route} from "./route.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {bold, faint, green, link} from "./tty.js";
@@ -114,9 +115,9 @@ export class PreviewServer {
     const config = await this._readConfig();
     const {root, loaders} = config;
     if (this._verbose) console.log(faint(req.method!), req.url);
+    const url = new URL(req.url!, "http://localhost");
+    let pathname = decodeURI(url.pathname);
     try {
-      const url = new URL(req.url!, "http://localhost");
-      let pathname = decodeURI(url.pathname);
       let match: RegExpExecArray | null;
       if (pathname === "/_observablehq/client.js") {
         end(req, res, await rollupClient(getClientPath("preview.js"), root, pathname), "text/javascript");
@@ -137,50 +138,32 @@ export class PreviewServer {
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
         const path = pathname.slice("/_import".length);
-        const filepath = join(root, path);
-        try {
-          if (pathname.endsWith(".css")) {
-            await access(filepath, constants.R_OK);
-            end(req, res, await bundleStyles({path: filepath}), "text/css");
+        if (pathname.endsWith(".css")) {
+          const module = route(root, path.slice(0, -".css".length), [".css"]);
+          if (module) {
+            const sourcePath = join(root, path);
+            await access(sourcePath, constants.R_OK);
+            end(req, res, await bundleStyles({path: sourcePath}), "text/css");
             return;
-          } else if (pathname.endsWith(".js")) {
-            const input = await readJavaScript(join(root, path));
-            const output = await transpileModule(input, {root, path});
+          }
+        } else if (pathname.endsWith(".js")) {
+          const module = findModule(root, path);
+          if (module) {
+            const input = await readJavaScript(join(root, module.path));
+            const output = await transpileModule(input, {root, path, params: module.params});
             end(req, res, output, "text/javascript");
             return;
           }
-        } catch (error) {
-          if (!isEnoent(error)) throw error;
         }
-        throw new HttpError(`Not found: ${pathname}`, 404);
+        throw enoent(path);
       } else if (pathname.startsWith("/_file/")) {
-        const path = pathname.slice("/_file".length);
-        const filepath = join(root, path);
-        try {
-          await access(filepath, constants.R_OK);
-          send(req, pathname.slice("/_file".length), {root}).pipe(res);
-          return;
-        } catch (error) {
-          if (!isEnoent(error)) throw error;
-        }
-
-        // Look for a data loader for this file.
-        const loader = loaders.find(path);
-        if (loader) {
-          try {
-            send(req, await loader.load(), {root}).pipe(res);
-            return;
-          } catch (error) {
-            if (!isEnoent(error)) throw error;
-          }
-        }
-        throw new HttpError(`Not found: ${pathname}`, 404);
+        send(req, await loaders.loadFile(pathname.slice("/_file".length)), {root}).pipe(res);
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
 
         // Normalize the pathname (e.g., adding ".html" if cleanUrls is false,
         // dropping ".html" if cleanUrls is true) and redirect if necessary.
-        const normalizedPathname = config.normalizePath(pathname);
+        const normalizedPathname = encodeURI(config.normalizePath(pathname));
         if (url.pathname !== normalizedPathname) {
           res.writeHead(302, {Location: normalizedPathname + url.search});
           res.end();
@@ -195,29 +178,28 @@ export class PreviewServer {
 
         // Lastly, serve the corresponding Markdown file, if it exists.
         // Anything else should 404; static files should be matched above.
-        try {
-          const options = {...config, path: pathname, preview: true};
-          const source = await readFile(join(root, pathname + ".md"), "utf8");
-          const parse = parseMarkdown(source, options);
-          const html = await renderPage(parse, options);
-          end(req, res, html, "text/html");
-        } catch (error) {
-          if (!isEnoent(error)) throw error; // internal error
-          throw new HttpError("Not found", 404);
-        }
+        const options = {...config, path: pathname, preview: true};
+        const parse = await loaders.loadPage(pathname, options);
+        end(req, res, await renderPage(parse, options), "text/html");
       }
     } catch (error) {
-      if (isHttpError(error)) {
+      if (isEnoent(error)) {
+        res.statusCode = 404;
+      } else if (isHttpError(error)) {
         res.statusCode = error.statusCode;
       } else {
         res.statusCode = 500;
         console.error(error);
       }
       if (req.method === "GET" && res.statusCode === 404) {
+        if (req.url?.startsWith("/_file/") || req.url?.startsWith("/_import/")) {
+          res.setHeader("Content-Type", "text/plain; charset=utf-8");
+          res.end("File not found");
+          return;
+        }
         try {
           const options = {...config, path: "/404", preview: true};
-          const source = await readFile(join(root, "404.md"), "utf8");
-          const parse = parseMarkdown(source, options);
+          const parse = await loaders.loadPage("/404", options);
           const html = await renderPage(parse, options);
           end(req, res, html, "text/html");
           return;
@@ -298,20 +280,20 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
   let tables: Map<string, string> | null = null;
   let stylesheets: string[] | null = null;
   let configWatcher: FSWatcher | null = null;
-  let markdownWatcher: FSWatcher | null = null;
+  let loaderWatcher: FSWatcher | null = null;
   let attachmentWatcher: FileWatchers | null = null;
   let emptyTimeout: ReturnType<typeof setTimeout> | null = null;
 
   console.log(faint("socket open"), req.url);
 
   async function watcher(event: WatchEventType, force = false) {
-    if (!path || !config) throw new Error("not initialized");
-    const {root, loaders} = config;
+    if (path === null || config === null) throw new Error("not initialized");
+    const {loaders} = config;
     switch (event) {
       case "rename": {
-        markdownWatcher?.close();
+        loaderWatcher?.close();
         try {
-          markdownWatcher = watch(join(root, path), (event) => watcher(event));
+          loaderWatcher = loaders.watchPage(path, (event) => watcher(event));
         } catch (error) {
           if (!isEnoent(error)) throw error;
           console.error(`file no longer exists: ${path}`);
@@ -322,8 +304,14 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
         break;
       }
       case "change": {
-        const source = await readFile(join(root, path), "utf8");
-        const page = parseMarkdown(source, {path, ...config});
+        let page: MarkdownPage;
+        try {
+          page = await loaders.loadPage(path, {path, ...config});
+        } catch (error) {
+          console.error(error);
+          socket.terminate();
+          return;
+        }
         // delay to avoid a possibly-empty file
         if (!force && page.body === "") {
           if (!emptyTimeout) {
@@ -368,17 +356,17 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
   }
 
   async function hello({path: initialPath, hash: initialHash}: {path: string; hash: string}): Promise<void> {
-    if (markdownWatcher || configWatcher || attachmentWatcher) throw new Error("already watching");
+    if (loaderWatcher || configWatcher || attachmentWatcher) throw new Error("already watching");
     path = decodeURI(initialPath);
-    if (!(path = normalize(path)).startsWith("/")) throw new Error("Invalid path: " + initialPath);
+    if (!(path = normalize(path)).startsWith("/")) throw new Error(`Invalid path: ${initialPath}`);
     if (path.endsWith("/")) path += "index";
-    path = join(dirname(path), basename(path, ".html") + ".md");
+    path = join(dirname(path), basename(path, ".html"));
     config = await configPromise;
     const {root, loaders, normalizePath} = config;
-    const source = await readFile(join(root, path), "utf8");
-    const page = parseMarkdown(source, {path, ...config});
+    const page = await loaders.loadPage(path, {path, ...config});
     const resolvers = await getResolvers(page, {root, path, loaders, normalizePath});
-    if (resolvers.hash !== initialHash) return void send({type: "reload"});
+    if (resolvers.hash === initialHash) send({type: "welcome"});
+    else return void send({type: "reload"});
     hash = resolvers.hash;
     html = getHtml(page, resolvers);
     code = getCode(page, resolvers);
@@ -386,7 +374,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     tables = getTables(page);
     stylesheets = Array.from(resolvers.stylesheets, resolvers.resolveStylesheet);
     attachmentWatcher = await loaders.watchFiles(path, getWatchFiles(resolvers), () => watcher("change"));
-    markdownWatcher = watch(join(root, path), (event) => watcher(event));
+    loaderWatcher = loaders.watchPage(path, (event) => watcher(event));
     if (config.watchPath) configWatcher = watch(config.watchPath, () => send({type: "reload"}));
   }
 
@@ -415,9 +403,9 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
       attachmentWatcher.close();
       attachmentWatcher = null;
     }
-    if (markdownWatcher) {
-      markdownWatcher.close();
-      markdownWatcher = null;
+    if (loaderWatcher) {
+      loaderWatcher.close();
+      loaderWatcher = null;
     }
     if (configWatcher) {
       configWatcher.close();
@@ -447,8 +435,8 @@ function getHtml({body}: MarkdownPage, resolvers: Resolvers): HtmlPart[] {
   return Array.from(document.body.childNodes, serializeHtml).filter((d): d is HtmlPart => d != null);
 }
 
-function getCode({code}: MarkdownPage, resolvers: Resolvers): Map<string, string> {
-  return new Map(code.map((code) => [code.id, transpileCode(code, resolvers)]));
+function getCode({code, params}: MarkdownPage, resolvers: Resolvers): Map<string, string> {
+  return new Map(code.map((code) => [code.id, transpileCode(code, resolvers, params)]));
 }
 
 // Including the file has as a comment ensures that the code changes when a
@@ -456,10 +444,10 @@ function getCode({code}: MarkdownPage, resolvers: Resolvers): Map<string, string
 // transitive import changes, or when a file referenced by a transitive import
 // changes, the sha is already included in the transpiled code, and hence will
 // likewise be re-evaluated.
-function transpileCode({id, node, mode}: MarkdownCode, resolvers: Resolvers): string {
+function transpileCode({id, node, mode}: MarkdownCode, resolvers: Resolvers, params?: Params): string {
   const hash = createHash("sha256");
   for (const f of node.files) hash.update(resolvers.resolveFile(f.name));
-  return `${transpileJavaScript(node, {id, mode, ...resolvers})} // ${hash.digest("hex")}`;
+  return `${transpileJavaScript(node, {id, mode, params, ...resolvers})} // ${hash.digest("hex")}`;
 }
 
 function getFiles({files, resolveFile}: Resolvers): Map<string, string> {

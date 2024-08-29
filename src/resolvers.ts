@@ -1,12 +1,12 @@
 import {createHash} from "node:crypto";
 import {extname, join} from "node:path/posix";
-import type {LoaderResolver} from "./dataloader.js";
 import {findAssets} from "./html.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js";
 import {getImplicitDependencies, getImplicitDownloads} from "./libraries.js";
 import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
 import {getImplicitStylesheets} from "./libraries.js";
+import type {LoaderResolver} from "./loader.js";
 import type {MarkdownPage} from "./markdown.js";
 import {extractNodeSpecifier, resolveNodeImport, resolveNodeImports} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";

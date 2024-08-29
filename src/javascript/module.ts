@@ -1,14 +1,16 @@
 import type {Hash} from "node:crypto";
 import {createHash} from "node:crypto";
-import {accessSync, constants, existsSync, readFileSync, statSync} from "node:fs";
+import {accessSync, constants, readFileSync, statSync} from "node:fs";
 import {readFile} from "node:fs/promises";
-import {join} from "node:path/posix";
+import {extname, join} from "node:path/posix";
 import type {Program} from "acorn";
 import {transform, transformSync} from "esbuild";
 import {resolveNodeImport} from "../node.js";
 import {resolveNpmImport} from "../npm.js";
 import {resolvePath} from "../path.js";
 import {builtins} from "../resolvers.js";
+import type {RouteResult} from "../route.js";
+import {route} from "../route.js";
 import {findFiles} from "./files.js";
 import {findImports, parseImports} from "./imports.js";
 import {parseProgram} from "./parse.js";
@@ -118,10 +120,12 @@ export async function getLocalModuleHash(root: string, path: string): Promise<st
  * source root, or undefined if the module does not exist or has invalid syntax.
  */
 export function getModuleInfo(root: string, path: string): ModuleInfo | undefined {
-  const key = join(root, path);
+  const module = findModule(root, path);
+  if (!module) return; // TODO delete stale entry?
+  const key = join(root, module.path);
   let mtimeMs: number;
   try {
-    mtimeMs = Math.floor(statSync(resolveJsx(key) ?? key).mtimeMs);
+    mtimeMs = Math.floor(statSync(key).mtimeMs);
   } catch {
     moduleInfoCache.delete(key); // delete stale entry
     return; // ignore missing file
@@ -132,7 +136,7 @@ export function getModuleInfo(root: string, path: string): ModuleInfo | undefine
     let body: Program;
     try {
       source = readJavaScriptSync(key);
-      body = parseProgram(source);
+      body = parseProgram(source, module.params);
     } catch {
       moduleInfoCache.delete(key); // delete stale entry
       return; // ignore parse error
@@ -208,36 +212,43 @@ export function getFileInfo(root: string, path: string): FileInfo | undefined {
   return entry;
 }
 
-function resolveJsx(path: string): string | null {
-  return !existsSync(path) && path.endsWith(".js") && existsSync((path += "x")) ? path : null;
+// For testing only!
+export function clearFileInfo(root: string, path: string): boolean {
+  return fileInfoCache.delete(join(root, path));
 }
 
-export async function readJavaScript(path: string): Promise<string> {
-  const jsxPath = resolveJsx(path);
-  if (jsxPath !== null) {
-    const source = await readFile(jsxPath, "utf-8");
+export function findModule(root: string, path: string): RouteResult | undefined {
+  const ext = extname(path);
+  if (!ext) throw new Error(`empty extension: ${path}`);
+  const exts = [ext];
+  if (ext === ".js") exts.push(".jsx");
+  return route(root, path.slice(0, -ext.length), exts);
+}
+
+export async function readJavaScript(sourcePath: string): Promise<string> {
+  const source = await readFile(sourcePath, "utf-8");
+  if (sourcePath.endsWith(".jsx")) {
     const {code} = await transform(source, {
       loader: "jsx",
       jsx: "automatic",
       jsxImportSource: "npm:react",
-      sourcefile: jsxPath
+      sourcefile: sourcePath
     });
     return code;
   }
-  return await readFile(path, "utf-8");
+  return source;
 }
 
-export function readJavaScriptSync(path: string): string {
-  const jsxPath = resolveJsx(path);
-  if (jsxPath !== null) {
-    const source = readFileSync(jsxPath, "utf-8");
+export function readJavaScriptSync(sourcePath: string): string {
+  const source = readFileSync(sourcePath, "utf-8");
+  if (sourcePath.endsWith(".jsx")) {
     const {code} = transformSync(source, {
       loader: "jsx",
       jsx: "automatic",
       jsxImportSource: "npm:react",
-      sourcefile: jsxPath
+      sourcefile: sourcePath
     });
     return code;
   }
-  return readFileSync(path, "utf-8");
+  return source;
 }

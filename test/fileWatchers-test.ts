@@ -3,7 +3,7 @@ import {mkdirSync, renameSync, unlinkSync, utimesSync, writeFileSync} from "node
 import {basename, dirname, extname, join} from "node:path/posix";
 import {InternSet, difference} from "d3-array";
 import {temporaryDirectoryTask} from "tempy";
-import {LoaderResolver} from "../src/dataloader.js";
+import {LoaderResolver} from "../src/loader.js";
 import {resolvePath} from "../src/path.js";
 
 describe("FileWatchers.of(loaders, path, names, callback)", () => {
