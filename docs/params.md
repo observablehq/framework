@@ -47,7 +47,7 @@ export default {
 
 ## Params in JavaScript
 
-Within a parameterized page, <code>observable.params.<i>param</i></code> exposes the value of the parameter <code><i>param</i></code> to JavaScript (and likewise for any imported JavaScript modules with parameterized routes). For example, to display the value of the `product` parameter in Markdown:
+Within a parameterized page, <code>observable.params.<i>param</i></code> exposes the value of the parameter <code><i>param</i></code> to JavaScript [fenced code blocks](./javascript#fenced-code-blocks) and [inline expressions](./javascript#inline-expressions), and likewise for any imported [local modules](./imports#local-imports) with parameterized routes. For example, to display the value of the `product` parameter in Markdown:
 
 ```md run=false
 The current product is ${observable.params.product}.
