@@ -304,7 +304,14 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
         break;
       }
       case "change": {
-        const page = await loaders.loadPage(path, {path, ...config});
+        let page: MarkdownPage;
+        try {
+          page = await loaders.loadPage(path, {path, ...config});
+        } catch (error) {
+          console.error(error);
+          socket.terminate();
+          return;
+        }
         // delay to avoid a possibly-empty file
         if (!force && page.body === "") {
           if (!emptyTimeout) {
@@ -358,7 +365,8 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     const {root, loaders, normalizePath} = config;
     const page = await loaders.loadPage(path, {path, ...config});
     const resolvers = await getResolvers(page, {root, path, loaders, normalizePath});
-    if (resolvers.hash !== initialHash) return void send({type: "reload"});
+    if (resolvers.hash === initialHash) send({type: "welcome"});
+    else return void send({type: "reload"});
     hash = resolvers.hash;
     html = getHtml(page, resolvers);
     code = getCode(page, resolvers);
