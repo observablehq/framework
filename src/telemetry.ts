@@ -18,6 +18,7 @@ type TelemetryIds = {
 
 type TelemetryEnvironment = {
   version: string; // version from package.json
+  userAgent: string; // npm_config_user_agent
   node: string; // node.js version
   systemPlatform: string; // linux, darwin, win32, ...
   systemRelease: string; // 20.04, 11.2.3, ...
@@ -77,17 +78,17 @@ export class Telemetry {
   private debug: boolean;
   private endpoint: URL;
   private timeZoneOffset = new Date().getTimezoneOffset();
-  private readonly _pending = new Set<Promise<any>>();
+  private readonly _pending = new Set<Promise<unknown>>();
   private _config: Promise<Record<string, uuid>> | undefined;
   private _ids: Promise<TelemetryIds> | undefined;
   private _environment: Promise<TelemetryEnvironment> | undefined;
 
   static _instance: Telemetry;
-  static get instance() {
+  static get instance(): Telemetry {
     return (this._instance ??= new Telemetry());
   }
 
-  static record(data: TelemetryData) {
+  static record(data: TelemetryData): void {
     return Telemetry.instance.record(data);
   }
 
@@ -122,7 +123,7 @@ export class Telemetry {
     return Promise.all(this._pending);
   }
 
-  private handleSignal(name: string) {
+  private handleSignal(name: string): void {
     const {process} = this.effects;
     let exiting = false;
     const signaled = async (signal: NodeJS.Signals) => {
@@ -141,7 +142,7 @@ export class Telemetry {
     process.on(name, signaled);
   }
 
-  private async getPersistentId(name: string, generator = randomUUID) {
+  private async getPersistentId(name: string, generator = randomUUID): Promise<uuid | null> {
     const {readFile, writeFile} = this.effects;
     const file = join(os.homedir(), ".observablehq");
     if (!this._config) {
@@ -162,7 +163,7 @@ export class Telemetry {
     return config[name];
   }
 
-  private async getProjectId() {
+  private async getProjectId(): Promise<string | null> {
     const salt = await this.getPersistentId("cli_telemetry_salt");
     if (!salt) return null;
     const remote: string | null = await new Promise((resolve) => {
@@ -174,23 +175,26 @@ export class Telemetry {
     return hash.digest("base64");
   }
 
-  private get ids() {
+  private get ids(): Promise<TelemetryIds> {
     return (this._ids ??= Promise.all([this.getPersistentId("cli_telemetry_device"), this.getProjectId()]).then(
-      ([device, project]) => ({
-        session: randomUUID(),
-        device,
-        project
-      })
+      ([device, project]) => {
+        const ids: TelemetryIds = {
+          session: randomUUID(),
+          device,
+          project
+        };
+        return ids;
+      }
     ));
   }
 
-  private get environment() {
+  private get environment(): Promise<TelemetryEnvironment> {
     return (this._environment ??= Promise.all([import("ci-info"), import("is-docker"), import("is-wsl")]).then(
       ([ci, {default: isDocker}, {default: isWSL}]) => {
         const cpus = os.cpus() || [];
-        return {
+        const environment: TelemetryEnvironment = {
           version: process.env.npm_package_version!,
-          userAgent: process.env.npm_config_user_agent,
+          userAgent: process.env.npm_config_user_agent!,
           node: process.versions.node,
           systemPlatform: os.platform(),
           systemRelease: os.release(),
@@ -203,6 +207,7 @@ export class Telemetry {
           isDocker: isDocker(),
           isWSL
         };
+        return environment;
       }
     ));
   }
