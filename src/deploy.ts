@@ -794,7 +794,7 @@ export async function promptDeployTarget(
     effects.clack.log.warn("You haven’t configured a title for your app.");
     const titleChoice = await effects.clack.text({
       message: "What title do you want to use?",
-      placeholder: "Enter a app title",
+      placeholder: "Enter an app title",
       validate: (title) => (title ? undefined : "A title is required.")
     });
     if (effects.clack.isCancel(titleChoice)) {
