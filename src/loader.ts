@@ -305,7 +305,7 @@ export class LoaderResolver {
 function defineParams(params: Params): string[] {
   return Object.entries(params)
     .filter(([name]) => /^[a-z0-9_]+$/i.test(name)) // ignore non-ASCII parameters
-    .flatMap(([name, value]) => [`--${name}`, value]);
+    .map(([name, value]) => `--${name}=${value}`);
 }
 
 export interface Loader {
