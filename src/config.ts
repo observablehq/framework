@@ -12,7 +12,7 @@ import {formatIsoDate, formatLocaleDate} from "./format.js";
 import type {FrontMatter} from "./frontMatter.js";
 import {LoaderResolver} from "./loader.js";
 import {createMarkdownIt, parseMarkdownMetadata} from "./markdown.js";
-import {walk} from "./pager.js";
+import {getPagePaths} from "./pager.js";
 import {isAssetPath, parseRelativeUrl, resolvePath} from "./path.js";
 import {isParameterizedPath} from "./route.js";
 import {resolveTheme} from "./theme.js";
@@ -283,10 +283,8 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
       for (const path of getDefaultPaths(root)) {
         yield* visit(path);
       }
-      for (const pages of walk(this.pages)) {
-        for (const page of pages) {
-          yield* visit(page.path);
-        }
+      for (const path of getPagePaths(this.pages)) {
+        yield* visit(path);
       }
       for await (const path of dynamicPaths()) {
         yield* visit(path);
