@@ -40,9 +40,11 @@ export function findLink(path: string, options: Pick<Config, "pages" | "title"> 
   return links.get(path);
 }
 
-// Walks the unique pages in the site so as to avoid creating cycles. Implicitly
-// adds a link at the beginning to the home page (/index).
-function walk(pages: Config["pages"], title = "Home"): Iterable<Iterable<Page>> {
+/**
+ * Walks the unique pages in the site so as to avoid creating cycles. Implicitly
+ * adds a link at the beginning to the home page (/index).
+ */
+export function walk(pages: Config["pages"], title = "Home"): Iterable<Iterable<Page>> {
   const pageGroups = new Map<string, Page[]>();
   const visited = new Set<string>();
 
