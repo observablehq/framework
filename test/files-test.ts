@@ -1,7 +1,9 @@
 import assert from "node:assert";
 import {stat} from "node:fs/promises";
 import os from "node:os";
-import {getClientPath, getStylePath, maybeStat, prepareOutput, visitFiles, visitMarkdownFiles} from "../src/files.js";
+import {extname} from "node:path/posix";
+import {getClientPath, getStylePath, maybeStat, prepareOutput, visitFiles} from "../src/files.js";
+import {isParameterized} from "../src/route.js";
 
 describe("getClientPath(entry)", () => {
   it("returns the relative path to the specified source", () => {
@@ -67,11 +69,14 @@ describe("visitFiles(root)", () => {
   });
 });
 
-describe("visitMarkdownFiles(root)", () => {
-  it("visits all Markdown files in a directory, return the relative path from the root", () => {
-    assert.deepStrictEqual(collect(visitMarkdownFiles("test/input/build/files")), [
-      "files.md",
-      "subsection/subfiles.md"
+describe("visitFiles(root, test)", () => {
+  it("skips directories and files that don’t pass the specified test", () => {
+    assert.deepStrictEqual(
+      collect(visitFiles("test/input/build/params", (name) => isParameterized(name) || extname(name) !== "")),
+      ["observablehq.config.js", "[dir]/index.md", "[dir]/loaded.md.js"]
+    );
+    assert.deepStrictEqual(collect(visitFiles("test/input/build/params", (name) => !isParameterized(name))), [
+      "observablehq.config.js"
     ]);
   });
 });

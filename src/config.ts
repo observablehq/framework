@@ -7,13 +7,14 @@ import {cwd} from "node:process";
 import {pathToFileURL} from "node:url";
 import type MarkdownIt from "markdown-it";
 import wrapAnsi from "wrap-ansi";
-import {visitMarkdownFiles} from "./files.js";
+import {visitFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import type {FrontMatter} from "./frontMatter.js";
 import {LoaderResolver} from "./loader.js";
 import {createMarkdownIt, parseMarkdownMetadata} from "./markdown.js";
+import {getPagePaths} from "./pager.js";
 import {isAssetPath, parseRelativeUrl, resolvePath} from "./path.js";
-import {isParameterizedPath} from "./route.js";
+import {isParameterized} from "./route.js";
 import {resolveTheme} from "./theme.js";
 import {bold, yellow} from "./tty.js";
 
@@ -182,8 +183,8 @@ let cachedPages: {key: string; pages: Page[]} | null = null;
 function readPages(root: string, md: MarkdownIt): Page[] {
   const files: {file: string; source: string}[] = [];
   const hash = createHash("sha256");
-  for (const file of visitMarkdownFiles(root)) {
-    if (isParameterizedPath(file) || file === "index.md" || file === "404.md") continue;
+  for (const file of visitFiles(root, (name) => !isParameterized(name))) {
+    if (extname(file) !== ".md" || file === "index.md" || file === "404.md") continue;
     const source = readFileSync(join(root, file), "utf8");
     files.push({file, source});
     hash.update(file).update(source);
@@ -257,6 +258,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   // end of the path. Otherwise, remove the .html extension (we use clean
   // paths as the internal canonical representation; see normalizePage).
   function normalizePagePath(pathname: string): string {
+    ({pathname} = parseRelativeUrl(pathname)); // ignore query & anchor
     pathname = normalizePath(pathname);
     if (pathname.endsWith("/")) pathname = join(pathname, "index");
     else pathname = pathname.replace(/\.html$/, "");
@@ -272,11 +274,21 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     pages: pages!, // see below
     pager,
     async *paths() {
-      for await (const path of getDefaultPaths(root)) {
-        yield normalizePagePath(path);
+      const visited = new Set<string>();
+      function* visit(path: string): Generator<string> {
+        if (!visited.has((path = normalizePagePath(path)))) {
+          visited.add(path);
+          yield path;
+        }
+      }
+      for (const path of this.loaders.findPagePaths()) {
+        yield* visit(path);
+      }
+      for (const path of getPagePaths(this)) {
+        yield* visit(path);
       }
       for await (const path of dynamicPaths()) {
-        yield normalizePagePath(path);
+        yield* visit(path);
       }
     },
     scripts,
@@ -296,12 +308,6 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   if (sidebar === undefined) Object.defineProperty(config, "sidebar", {get: () => config.pages.length > 0});
   configCache.set(spec, config);
   return config;
-}
-
-function getDefaultPaths(root: string): string[] {
-  return Array.from(visitMarkdownFiles(root))
-    .filter((path) => !isParameterizedPath(path))
-    .map((path) => join("/", dirname(path), basename(path, ".md")));
 }
 
 function normalizeDynamicPaths(spec: unknown): Config["paths"] {
