@@ -12,6 +12,7 @@ import {formatIsoDate, formatLocaleDate} from "./format.js";
 import type {FrontMatter} from "./frontMatter.js";
 import {LoaderResolver} from "./loader.js";
 import {createMarkdownIt, parseMarkdownMetadata} from "./markdown.js";
+import {getPagePaths} from "./pager.js";
 import {isAssetPath, parseRelativeUrl, resolvePath} from "./path.js";
 import {isParameterizedPath} from "./route.js";
 import {resolveTheme} from "./theme.js";
@@ -257,6 +258,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   // end of the path. Otherwise, remove the .html extension (we use clean
   // paths as the internal canonical representation; see normalizePage).
   function normalizePagePath(pathname: string): string {
+    ({pathname} = parseRelativeUrl(pathname)); // ignore query & anchor
     pathname = normalizePath(pathname);
     if (pathname.endsWith("/")) pathname = join(pathname, "index");
     else pathname = pathname.replace(/\.html$/, "");
@@ -272,11 +274,21 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     pages: pages!, // see below
     pager,
     async *paths() {
-      for await (const path of getDefaultPaths(root)) {
-        yield normalizePagePath(path);
+      const visited = new Set<string>();
+      function* visit(path: string): Generator<string> {
+        if (!visited.has((path = normalizePagePath(path)))) {
+          visited.add(path);
+          yield path;
+        }
+      }
+      for (const path of getDefaultPaths(root)) {
+        yield* visit(path);
+      }
+      for (const path of getPagePaths(this)) {
+        yield* visit(path);
       }
       for await (const path of dynamicPaths()) {
-        yield normalizePagePath(path);
+        yield* visit(path);
       }
     },
     scripts,
