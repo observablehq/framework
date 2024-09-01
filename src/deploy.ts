@@ -735,8 +735,7 @@ export async function promptDeployTarget(
       maxItems: Math.max(process.stdout.rows - 4, 0),
       options: currentUser.workspaces
         .map((w) => ({value: w, label: formatUser(w)}))
-        .sort((a, b) => b.value.role.localeCompare(a.value.role) || a.label.localeCompare(b.label)),
-      initialValue: currentUser.workspaces[0] // the oldest workspace, maybe?
+        .sort((a, b) => b.value.role.localeCompare(a.value.role) || a.label.localeCompare(b.label))
     });
     if (effects.clack.isCancel(chosenWorkspace)) {
       throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
