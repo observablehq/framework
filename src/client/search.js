@@ -31,6 +31,7 @@ const index = await fetch(import.meta.resolve("observablehq:minisearch.json"))
 input.addEventListener("input", () => {
   if (currentValue === input.value) return;
   currentValue = input.value;
+  sessionStorage.setItem("search-query", currentValue);
   if (!currentValue.length) {
     container.setAttribute("data-shortcut", shortcut);
     sidebar.classList.remove("observablehq-search-results");
@@ -43,22 +44,40 @@ input.addEventListener("input", () => {
   resultsContainer.innerHTML =
     results.length === 0
       ? "<div>no results</div>"
-      : `<div>${results.length.toLocaleString("en-US")} result${results.length === 1 ? "" : "s"}</div><ol>${results
-          .map(renderResult)
-          .join("")}</ol>`;
+      : `<div>${results.length.toLocaleString("en-US")} result${
+          results.length === 1 ? "" : "s"
+        }</div><ol>${renderResults(results)}</ol>`;
+  resultsContainer.querySelector(`.${activeClass}`)?.scrollIntoView({block: "nearest"});
 });
+
+function renderResults(results) {
+  const me = document.location.href.replace(/[?#].*/, "");
+  let found;
+  results = results.map(({id, score, title}) => {
+    const external = /^\w+:/.test(id);
+    const href = external ? id : import.meta.resolve(`..${id}`);
+    return {
+      title: String(title ?? "—"),
+      href,
+      external,
+      score: Math.min(5, Math.round(0.6 * score)),
+      active: me === href && (found = true)
+    };
+  });
+  if (!found) results[0].active = true;
+  return results.map(renderResult).join("");
+}
 
 function isExternal(id) {
   return /^\w+:/.test(id);
 }
 
-function renderResult({id, score, title}, i) {
-  const external = /^\w+:/.test(id);
-  return `<li data-score="${Math.min(5, Math.round(0.6 * score))}" class="observablehq-link${
-    i === 0 ? ` ${activeClass}` : ""
-  }"><a href="${escapeDoubleQuote(external ? id : import.meta.resolve(`..${id}`))}"${
-    external ? ' target="_blank"' : ""
-  }><span>${escapeText(String(title ?? "—"))}</span></a></li>`;
+function renderResult({href, score, external, title, active}) {
+  return `<li data-score="${score}" class="observablehq-link${
+    active ? ` ${activeClass}` : ""
+  }"><a href="${escapeDoubleQuote(href)}"${external ? ' target="_blank"' : ""}><span>${escapeText(
+    title
+  )}</span></a></li>`;
 }
 
 function escapeDoubleQuote(text) {
