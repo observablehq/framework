@@ -8,7 +8,7 @@ import {spawn} from "cross-spawn";
 import JSZip from "jszip";
 import {extract} from "tar-stream";
 import {enoent} from "./error.js";
-import {maybeStat, prepareOutput} from "./files.js";
+import {maybeStat, prepareOutput, visitFiles} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {formatByteSize} from "./format.js";
 import type {FileInfo} from "./javascript/module.js";
@@ -17,7 +17,7 @@ import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage, ParseOptions} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
 import type {Params} from "./route.js";
-import {route} from "./route.js";
+import {isParameterized, requote, route} from "./route.js";
 import {cyan, faint, green, red, yellow} from "./tty.js";
 
 const runningCommands = new Map<string, Promise<string>>();
@@ -100,6 +100,17 @@ export class LoaderResolver {
     const loader = this.find(`${path}.md`);
     if (!loader) throw enoent(path);
     return watch(join(this.root, loader.path), listener);
+  }
+
+  /**
+   * Finds the paths of all non-parameterized pages within the source root.
+   */
+  *findPagePaths(): Generator<string> {
+    const ext = new RegExp(`\\.md(${["", ...this.interpreters.keys()].map(requote).join("|")})$`);
+    for (const path of visitFiles(this.root, (name) => !isParameterized(name))) {
+      if (!ext.test(path)) continue;
+      yield `/${path.slice(0, path.lastIndexOf(".md"))}`;
+    }
   }
 
   /**

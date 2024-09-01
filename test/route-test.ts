@@ -1,31 +1,26 @@
 import assert from "node:assert";
-import {isParameterizedPath, route} from "../src/route.js";
+import {isParameterized, route} from "../src/route.js";
 
-describe("isParameterizedPath(path)", () => {
+describe("isParameterizedName(path)", () => {
   it("returns true for a parameterized file name", () => {
-    assert.strictEqual(isParameterizedPath("/[file].md"), true);
-    assert.strictEqual(isParameterizedPath("/prefix-[file].md"), true);
-    assert.strictEqual(isParameterizedPath("/[file]-suffix.md"), true);
-    assert.strictEqual(isParameterizedPath("/[file]-[number].md"), true);
-    assert.strictEqual(isParameterizedPath("/path/[file].md"), true);
-    assert.strictEqual(isParameterizedPath("/path/to/[file].md"), true);
-    assert.strictEqual(isParameterizedPath("/path/[dir]/[file].md"), true);
+    assert.strictEqual(isParameterized("[file].md"), true);
+    assert.strictEqual(isParameterized("prefix-[file].md"), true);
+    assert.strictEqual(isParameterized("[file]-suffix.md"), true);
+    assert.strictEqual(isParameterized("[file]-[number].md"), true);
   });
   it("returns true for a parameterized directory name", () => {
-    assert.strictEqual(isParameterizedPath("/[dir]/file.md"), true);
-    assert.strictEqual(isParameterizedPath("/prefix-[dir]/file.md"), true);
-    assert.strictEqual(isParameterizedPath("/[dir]-suffix/file.md"), true);
-    assert.strictEqual(isParameterizedPath("/[dir]-[number]/file.md"), true);
-    assert.strictEqual(isParameterizedPath("/path/[dir]/file.md"), true);
-    assert.strictEqual(isParameterizedPath("/[dir1]/[dir2]/file.md"), true);
+    assert.strictEqual(isParameterized("[dir]"), true);
+    assert.strictEqual(isParameterized("prefix-[dir]"), true);
+    assert.strictEqual(isParameterized("[dir]-suffix"), true);
+    assert.strictEqual(isParameterized("[dir]-[number]"), true);
   });
   it("doesn’t consider an empty parameter to be valid", () => {
-    assert.strictEqual(isParameterizedPath("/[]/file.md"), false);
-    assert.strictEqual(isParameterizedPath("/path/to/[].md"), false);
+    assert.strictEqual(isParameterized("[]"), false);
+    assert.strictEqual(isParameterized("[].md"), false);
   });
   it("returns false for a non-parameterized path", () => {
-    assert.strictEqual(isParameterizedPath("/file.md"), false);
-    assert.strictEqual(isParameterizedPath("/path/to/file.md"), false);
+    assert.strictEqual(isParameterized("file.md"), false);
+    assert.strictEqual(isParameterized("dir"), false);
   });
 });
 
