@@ -87,7 +87,7 @@ export class LoaderResolver {
    * page object.
    */
   async loadPage(path: string, options: LoadOptions & ParseOptions, effects?: LoadEffects): Promise<MarkdownPage> {
-    const loader = this.find(`${path}.md`);
+    const loader = this.findPage(path, options);
     if (!loader) throw enoent(path);
     const source = await readFile(join(this.root, await loader.load(effects)), "utf8");
     return parseMarkdown(source, {params: loader.params, ...options});
@@ -100,6 +100,14 @@ export class LoaderResolver {
     const loader = this.find(`${path}.md`);
     if (!loader) throw enoent(path);
     return watch(join(this.root, loader.path), listener);
+  }
+
+  /**
+   * Finds the page loader for the specified target path, relative to the source
+   * root, if the loader exists. If there is no such loader, returns undefined.
+   */
+  findPage(path: string, options?: LoadOptions): Loader | undefined {
+    return this.find(`${path}.md`, options);
   }
 
   /**

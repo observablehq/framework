@@ -12,12 +12,12 @@ export function normalizePath(path: string): string {
   return path.replace(/[?#].*$/, "");
 }
 
-export function findLink(path: string, options: Pick<Config, "pages" | "title"> = {pages: []}): PageLink | undefined {
-  const {pages, title} = options;
+export function findLink(path: string, config: Config): PageLink | undefined {
+  const {pages} = config;
   let links = linkCache.get(pages);
   if (!links) {
     links = new Map<string, PageLink>();
-    for (const pageGroup of walk(pages, title)) {
+    for (const pageGroup of walk(config)) {
       let prev: Page | undefined;
       for (const page of pageGroup) {
         const path = normalizePath(page.path);
@@ -44,7 +44,8 @@ export function findLink(path: string, options: Pick<Config, "pages" | "title"> 
  * Walks the unique pages in the site so as to avoid creating cycles. Implicitly
  * adds a link at the beginning to the home page (/index).
  */
-function walk(pages: Config["pages"], title = "Home"): Iterable<Iterable<Page>> {
+function walk(config: Config): Iterable<Iterable<Page>> {
+  const {pages, loaders, title = "Home"} = config;
   const pageGroups = new Map<string, Page[]>();
   const visited = new Set<string>();
 
@@ -56,7 +57,7 @@ function walk(pages: Config["pages"], title = "Home"): Iterable<Iterable<Page>> 
     pageGroup.push(page);
   }
 
-  visit({name: title, path: "/index", pager: "main"});
+  if (loaders.findPage("/index")) visit({name: title, path: "/index", pager: "main"});
 
   for (const page of pages) {
     if (page.path !== null) visit(page as Page);
@@ -66,8 +67,8 @@ function walk(pages: Config["pages"], title = "Home"): Iterable<Iterable<Page>> 
   return pageGroups.values();
 }
 
-export function* getPagePaths(pages: Config["pages"]): Generator<string> {
-  for (const pageGroup of walk(pages)) {
+export function* getPagePaths(config: Config): Generator<string> {
+  for (const pageGroup of walk(config)) {
     for (const page of pageGroup) {
       yield page.path;
     }

@@ -258,6 +258,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   // end of the path. Otherwise, remove the .html extension (we use clean
   // paths as the internal canonical representation; see normalizePage).
   function normalizePagePath(pathname: string): string {
+    ({pathname} = parseRelativeUrl(pathname)); // ignore query & anchor
     pathname = normalizePath(pathname);
     if (pathname.endsWith("/")) pathname = join(pathname, "index");
     else pathname = pathname.replace(/\.html$/, "");
@@ -283,7 +284,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
       for (const path of getDefaultPaths(root)) {
         yield* visit(path);
       }
-      for (const path of getPagePaths(this.pages)) {
+      for (const path of getPagePaths(this)) {
         yield* visit(path);
       }
       for await (const path of dynamicPaths()) {
