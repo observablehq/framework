@@ -4,7 +4,7 @@ import {mkdir, mkdtemp, open, readFile, rename, rm, unlink, writeFile} from "nod
 import os from "node:os";
 import {join, normalize, relative} from "node:path/posix";
 import {PassThrough} from "node:stream";
-import {difference} from "d3-array";
+import {ascending, difference} from "d3-array";
 import type {BuildManifest} from "../src/build.js";
 import {FileBuildEffects, build} from "../src/build.js";
 import {normalizeConfig, readConfig, setCurrentDate} from "../src/config.js";
@@ -124,12 +124,13 @@ describe("build", () => {
     const config = normalizeConfig({root: inputDir, output: outputDir}, inputDir);
     const effects = new LoggingBuildEffects(outputDir, cacheDir);
     await build({config}, effects);
+    effects.buildManifest!.pages.sort((a, b) => ascending(a.path, b.path));
     assert.deepEqual(effects.buildManifest, {
       pages: [
         {path: "/", title: "Hello, world!"},
-        {path: "/weather", title: "It's going to be !"},
         {path: "/cities/", title: "Cities"},
-        {path: "/cities/portland", title: "Portland"}
+        {path: "/cities/portland", title: "Portland"},
+        {path: "/weather", title: "It's going to be !"}
       ]
     });
 

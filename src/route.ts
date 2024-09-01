@@ -6,8 +6,8 @@ export type Params = {[name: string]: string};
 
 export type RouteResult = {path: string; ext: string; params?: Params};
 
-export function isParameterizedPath(path: string): boolean {
-  return path.split("/").some((name) => /\[.+\]/.test(name));
+export function isParameterized(name: string): boolean {
+  return /\[([a-z_]\w*)\]/i.test(name);
 }
 
 /**
@@ -110,6 +110,6 @@ function compilePattern(file: string): RegExp {
   return new RegExp(pattern, "i");
 }
 
-function requote(text: string): string {
+export function requote(text: string): string {
   return text.replace(/[\\^$*+?|[\]().{}]/g, "\\$&");
 }
