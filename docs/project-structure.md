@@ -80,7 +80,7 @@ When the site is built, the output root (`dist`) will contain two corresponding 
 .
 ├─ dist
 │  ├─ _observablehq
-│  │  └─ ⋯ # additional assets for serving the site
+│  │  └─ ⋯ # additional assets
 │  ├─ hello.html
 │  └─ index.html
 └─ ⋯

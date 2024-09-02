@@ -252,7 +252,7 @@ Imported modules are copied to the output root (`dist` by default) during build,
 ├─ src
 │  ├─ chart.js
 │  └─ index.md
-└─ ...
+└─ …
 ```
 
 And `index.md` includes a JavaScript code block that says:
@@ -269,9 +269,9 @@ The resulting output root is:
 │  ├─ _import
 │  │  └─ chart.c79c2048.js
 │  ├─ _observablehq
-│  │  └─ ... # additional assets
+│  │  └─ … # additional assets
 │  └─ index.html
-└─ ...
+└─ …
 ```
 
 The import declaration is automatically rewritten during build to point to `./_import/chart.c79c2048.js` instead of `./chart.js`. The content hash `c79c2048` ensures cache-breaking during deploy, and allows assets to be marked as `cache-control: immutable` to improve performance.

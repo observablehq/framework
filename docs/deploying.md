@@ -128,7 +128,7 @@ If some of your data loaders take a long time to run, or simply don’t need to 
 jobs:
   deploy:
     steps:
-      # ...
+      # …
       - id: date
         run: echo "date=$(TZ=America/Los_Angeles date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
       - id: cache-data
@@ -136,7 +136,7 @@ jobs:
         with:
           path: src/.observablehq/cache
           key: data-${{ hashFiles('src/data/*') }}-${{ steps.date.outputs.date }}
-      # ...
+      # …
 ```
 
 This uses one cache per calendar day (in the `America/Los_Angeles` time zone). If you deploy multiple times in a day, the results of your data loaders will be reused on the second and subsequent runs. You can customize the `date` and `cache-data` steps to change the cadence of the caching. For example you could use `date +'%Y-%U'` to cache data for a week or `date +'%Y-%m-%dT%H` to cache it for only an hour.

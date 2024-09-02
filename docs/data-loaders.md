@@ -241,7 +241,7 @@ Data loaders generate files at build time that live alongside other [static file
 ├─ src
 │  ├─ index.md
 │  └─ quakes.json.sh
-└─ ...
+└─ …
 ```
 
 Where `quakes.json.sh` is:
@@ -258,9 +258,9 @@ This will produce the following output root:
 │  ├─ _file
 │  │  └─ quakes.99da78d9.json
 │  ├─ _observablehq
-│  │  └─ ... # additional assets for serving the site
+│  │  └─ … # additional assets
 │  └─ index.html
-└─ ...
+└─ …
 ```
 
 As another example, say you have a `quakes.zip` archive that includes yearly files for observed earthquakes. If you reference `FileAttachment("quakes/2021.csv")`, Framework will pull the `2021.csv` from `quakes.zip`. So this source root:
@@ -270,7 +270,7 @@ As another example, say you have a `quakes.zip` archive that includes yearly fil
 ├─ src
 │  ├─ index.md
 │  └─ quakes.zip
-└─ ...
+└─ …
 ```
 
 Becomes this output:
@@ -282,9 +282,9 @@ Becomes this output:
 │  │  └─ quakes
 │  │     └─ 2021.e5f2eb94.csv
 │  ├─ _observablehq
-│  │  └─ ... # additional assets for serving the site
+│  │  └─ … # additional assets
 │  └─ index.html
-└─ ...
+└─ …
 ```
 
 A data loader is only run during build if its corresponding output file is referenced in at least one page. Framework does not scour the source root (typically `src`) for data loaders.
