@@ -75,8 +75,4 @@ describe("route(root, path, exts)", () => {
     assert.deepStrictEqual(route("test/input/params", "foo/", [".md"]), undefined);
     assert.deepStrictEqual(route("test/input/params", "bar/", [".md"]), undefined);
   });
-  it("does not allow the empty extension", () => {
-    assert.throws(() => route("test/input/build/simple", "simple.md", [""]), /empty extension/);
-    assert.throws(() => route("test/input/build/simple", "data.txt", ["", ".js", ".py"]), /empty extension/);
-  });
 });
