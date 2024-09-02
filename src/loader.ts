@@ -151,8 +151,8 @@ export class LoaderResolver {
   // - /[param1]/[param2]/[param3].csv.js
   private findFile(targetPath: string, {useStale}: {useStale: boolean}): Loader | undefined {
     const ext = extname(targetPath);
-    const exts = [ext, ...Array.from(this.interpreters.keys(), (iext) => ext + iext)];
-    const found = route(this.root, targetPath.slice(0, -ext.length), exts);
+    const exts = ext ? [ext, ...Array.from(this.interpreters.keys(), (iext) => ext + iext)] : [ext];
+    const found = route(this.root, ext ? targetPath.slice(0, -ext.length) : targetPath, exts);
     if (!found) return;
     const {path, params, ext: fext} = found;
     if (fext === ext) return new StaticLoader({root: this.root, path, params});

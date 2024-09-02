@@ -1,4 +1,4 @@
-import {existsSync} from "node:fs";
+import {existsSync, statSync} from "node:fs";
 import {basename, join} from "node:path/posix";
 import {globSync} from "glob";
 
@@ -49,7 +49,6 @@ export function isParameterized(name: string): boolean {
  * we’d use /path/to/[param].csv over /path/to.zip.
  */
 export function route(root: string, path: string, exts: string[]): RouteResult | undefined {
-  for (const ext of exts) if (!ext) throw new Error("empty extension");
   return routeParams(root, ".", join(".", path).split("/"), exts);
 }
 
@@ -64,7 +63,9 @@ function routeParams(root: string, cwd: string, parts: string[], exts: string[])
     case 1: {
       const [first] = parts;
       for (const ext of exts) {
-        if (existsSync(join(root, cwd, first + ext))) {
+        const path = join(root, cwd, first + ext);
+        if (existsSync(path)) {
+          if (!statSync(path).isFile()) return; // ignore non-files
           return {path: join(cwd, first + ext), ext};
         }
       }
@@ -80,7 +81,9 @@ function routeParams(root: string, cwd: string, parts: string[], exts: string[])
     }
     default: {
       const [first, ...rest] = parts;
-      if (existsSync(join(root, cwd, first))) {
+      const path = join(root, cwd, first);
+      if (existsSync(path)) {
+        if (!statSync(path).isDirectory()) return; // ignore non-directories
         const found = routeParams(root, join(cwd, first), rest, exts);
         if (found) return found;
       }
