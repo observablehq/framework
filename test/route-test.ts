@@ -31,12 +31,18 @@ describe("route(root, path, exts)", () => {
   it("finds an exact file with multiple extensions", () => {
     assert.deepStrictEqual(route("test/input/build/simple", "data", [".txt", ".txt.js", ".txt.py"]), {path: "data.txt.js", ext: ".txt.js"}); // prettier-ignore
   });
+  it("finds an exact file with the empty extension", () => {
+    assert.deepStrictEqual(route("test/input/params", "README", [""]), {path: "README", ext: ""}); // prettier-ignore
+  });
   it("finds a parameterized file", () => {
     assert.deepStrictEqual(route("test/input/params", "bar", [".md"]), {path: "[file].md", ext: ".md", params: {file: "bar"}}); // prettier-ignore
     assert.deepStrictEqual(route("test/input/params", "baz", [".md"]), {path: "[file].md", ext: ".md", params: {file: "baz"}}); // prettier-ignore
   });
   it("finds a parameterized file with multiple extensions", () => {
     assert.deepStrictEqual(route("test/input/params", "data", [".csv", ".csv.js", ".csv.py"]), {path: "[file].csv.js", ext: ".csv.js", params: {file: "data"}}); // prettier-ignore
+  });
+  it("finds a parameterized file with the empty extension", () => {
+    assert.deepStrictEqual(route("test/input/params/bar", "README", [""]), {path: "[file]", ext: "", params: {file: "README"}}); // prettier-ignore
   });
   it("finds a non-parameterized file ahead of a parameterized file", () => {
     assert.deepStrictEqual(route("test/input/params", "foo", [".md"]), {path: "foo.md", ext: ".md"}); // prettier-ignore
